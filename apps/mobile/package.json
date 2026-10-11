@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "eas-build-post-install": "pnpm --dir ../.. build:pack \"$SLOVO_EDITION\""
+    "eas-build-post-install": "pnpm --dir ../.. build:pack \"$SLOVO_EDITION\"",
+    "test:smoke": "maestro test maestro/smoke.yaml"
   },
   "dependencies": {
     "@slovo/contracts": "workspace:*",
