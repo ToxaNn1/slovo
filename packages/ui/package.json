@@ -14,6 +14,6 @@
   "devDependencies": {
     "@slovo/config": "workspace:*",
     "eslint": "^10.12.0",
-    "typescript": "~6.0.3"
+    "typescript": "~7.0.2"
   }
 }
