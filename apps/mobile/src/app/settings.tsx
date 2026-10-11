@@ -1,5 +1,12 @@
-import { ThemeSchema } from '@slovo/contracts';
-import { ScreenTitle, SectionLabel, SegmentedControl, space, useTokens } from '@slovo/ui';
+import { FontSizeSchema, ThemeSchema } from '@slovo/contracts';
+import {
+  FontSizePreview,
+  ScreenTitle,
+  SectionLabel,
+  SegmentedControl,
+  space,
+  useTokens,
+} from '@slovo/ui';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -14,7 +21,13 @@ const themeSegments = ThemeSchema.options.map((theme) => ({
   testID: `settings-theme-${theme}`,
 }));
 
-/** Settings in 0.2: the Theme. The other rows arrive with their features. */
+const fontSizeSegments = FontSizeSchema.options.map((fontSize) => ({
+  value: fontSize,
+  label: strings.fontSizes[fontSize],
+  testID: `settings-font-size-${fontSize}`,
+}));
+
+/** Settings in 0.2: the Theme and the font size. The other rows arrive with their features. */
 export default function SettingsScreen() {
   const { current, update } = useSettings();
   const { colors } = useTokens();
@@ -34,6 +47,22 @@ export default function SettingsScreen() {
             selected={current.theme}
             onSelect={(theme) => {
               update({ theme });
+            }}
+          />
+        </View>
+        <View style={styles.section}>
+          <SectionLabel>{strings.fontSize}</SectionLabel>
+          <FontSizePreview
+            testID="settings-font-size-preview"
+            lemma={strings.fontSizePreview.lemma}
+            definition={strings.fontSizePreview.definition}
+          />
+          <SegmentedControl
+            accessibilityLabel={strings.fontSize}
+            segments={fontSizeSegments}
+            selected={current.fontSize}
+            onSelect={(fontSize) => {
+              update({ fontSize });
             }}
           />
         </View>

@@ -55,7 +55,8 @@ env:
 - assertVisible:
     id: word-definition
 
-# Settings: the Theme follows the choice, which survives a relaunch.
+# Settings: the Theme and the font size follow the choice, which survives a
+# relaunch. The preview card shows the Lemma at the chosen size.
 - tapOn:
     id: tab-settings
 - tapOn:
@@ -63,6 +64,16 @@ env:
 - assertVisible:
     id: settings-theme-dark
     selected: true
+- assertVisible:
+    id: settings-font-size-M
+    selected: true
+- tapOn:
+    id: settings-font-size-L
+- assertVisible:
+    id: settings-font-size-L
+    selected: true
+- assertVisible:
+    id: font-size-preview-lemma
 - stopApp
 - launchApp:
     clearState: false
@@ -76,10 +87,18 @@ env:
 - assertVisible:
     id: settings-theme-dark
     selected: true
+- assertVisible:
+    id: settings-font-size-L
+    selected: true
 - tapOn:
     id: settings-theme-system
 - assertVisible:
     id: settings-theme-system
+    selected: true
+- tapOn:
+    id: settings-font-size-M
+- assertVisible:
+    id: settings-font-size-M
     selected: true
 - tapOn:
     id: tab-game

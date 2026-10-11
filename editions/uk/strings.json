@@ -27,6 +27,17 @@
       "system": "Системна",
       "light": "Світла",
       "dark": "Темна"
+    },
+    "fontSize": "Розмір шрифту",
+    "fontSizes": {
+      "S": "S",
+      "M": "M",
+      "L": "L",
+      "XL": "XL"
+    },
+    "fontSizePreview": {
+      "lemma": "шпарки\u0301й",
+      "definition": "Швидкий, жвавий."
     }
   }
 }

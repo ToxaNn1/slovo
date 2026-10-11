@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { ThemeSchema } from './edition';
+import { FontSizeSchema, ThemeSchema } from './edition';
 import { PartOfSpeechSchema } from './word';
 
 const TextSchema = z.string().min(1);
@@ -31,6 +31,16 @@ export const EditionStringsSchema = z.strictObject({
     theme: TextSchema,
     /** The name of every Theme. */
     themes: z.record(ThemeSchema, TextSchema),
+    /** The label over the font-size choice. */
+    fontSize: TextSchema,
+    /** The name of every font size. */
+    fontSizes: z.record(FontSizeSchema, TextSchema),
+    /** The sample Word the font-size preview shows. */
+    fontSizePreview: z.strictObject({
+      /** The sample Lemma, Stress marks included. */
+      lemma: TextSchema,
+      definition: TextSchema,
+    }),
   }),
 });
 
