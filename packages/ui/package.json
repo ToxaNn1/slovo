@@ -15,9 +15,9 @@
     "@slovo/config": "workspace:*",
     "eslint": "^10.12.0",
     "typescript": "~6.0.3",
-    "@types/react": "~19.2.18",
-    "react": "19.2.3",
-    "react-native": "0.86.3"
+    "@types/react": "~19.3.0",
+    "react": "19.3.0",
+    "react-native": "0.87.1"
   },
   "peerDependencies": {
     "react": "*",
