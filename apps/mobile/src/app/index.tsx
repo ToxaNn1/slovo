@@ -1,5 +1,14 @@
 import { renderStress, type FeedCard } from '@slovo/core';
-import { Placeholder, space, useTokens, VerticalPager, WordCard } from '@slovo/ui';
+import {
+  CardCorners,
+  DecorBackground,
+  OrnamentDivider,
+  Placeholder,
+  space,
+  useTokens,
+  VerticalPager,
+  WordCard,
+} from '@slovo/ui';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -20,6 +29,8 @@ export default function HomeScreen() {
 
   return (
     <View testID="home" style={[styles.screen, { backgroundColor: colors.background }]}>
+      {/* The background stays put while the cards move over it. */}
+      <DecorBackground />
       <VerticalPager
         testID="feed"
         items={feed.cards}
@@ -43,6 +54,8 @@ function FeedPage({ card, position }: { card: FeedCard; position: number }) {
           lemma={renderStress(entry)}
           partOfSpeech={editionStrings.partsOfSpeech[entry.partOfSpeech]}
           primaryDefinition={entry.primaryDefinition}
+          frame={<CardCorners />}
+          divider={<OrnamentDivider />}
         />
       ) : null}
     </View>
