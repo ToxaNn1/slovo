@@ -20,6 +20,25 @@ export interface ContentReadPort {
   listLinkedWordIds(correctionId: string): Promise<readonly string[]>;
 }
 
+/**
+ * Changes to the user state, by key: a value replaces the record, `undefined`
+ * deletes it.
+ */
+export type UserStateChanges = ReadonlyMap<string, string | undefined>;
+
+/**
+ * Keeps the user's state on the device as text records by key, in a writable
+ * store apart from the read-only Language Pack. Each platform supplies an
+ * adapter (in memory for tests, expo-sqlite in the mobile shell); the Core
+ * owns the keys, the values and the schema version.
+ */
+export interface UserStatePort {
+  /** The record stored under the key, if any. */
+  get(key: string): Promise<string | undefined>;
+  /** Applies every change at once, or none of them. */
+  write(changes: UserStateChanges): Promise<void>;
+}
+
 /** The source of the current time, injected so behaviour stays testable. */
 export interface Clock {
   now(): Date;
