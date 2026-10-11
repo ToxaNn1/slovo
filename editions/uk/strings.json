@@ -1,0 +1,23 @@
+{
+  "tabs": {
+    "home": "Головна",
+    "settings": "Налаштування",
+    "game": "Гра",
+    "saved": "Збережене"
+  },
+  "placeholder": "Цей розділ з'явиться згодом.",
+  "loadFailed": "Не вдалося відкрити словник.",
+  "noWords": "У словнику ще немає слів.",
+  "partsOfSpeech": {
+    "noun": "іменник",
+    "verb": "дієслово",
+    "adjective": "прикметник",
+    "adverb": "прислівник",
+    "pronoun": "займенник",
+    "numeral": "числівник",
+    "preposition": "прийменник",
+    "conjunction": "сполучник",
+    "particle": "частка",
+    "interjection": "вигук"
+  }
+}
