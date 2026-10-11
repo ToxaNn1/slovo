@@ -1,10 +1,37 @@
-import { EditionConfigSchema, type LanguageTraits } from '@slovo/contracts';
+import {
+  EditionConfigSchema,
+  type Category,
+  type FeatureSwitch,
+  type FontSize,
+  type LanguageTraits,
+  type Theme,
+} from '@slovo/contracts';
+
+/** The Categories, plus Corrections as a whole, that the user sees. */
+export interface Mix {
+  readonly categoryIds: readonly string[];
+  readonly corrections: boolean;
+}
+
+/** The settings a new user starts with, as declared by the Edition. */
+export interface UserSettingDefaults {
+  readonly theme: Theme;
+  readonly fontSize: FontSize;
+  /** Local times of day, `HH:MM` on a 24-hour clock. */
+  readonly notificationTimes: readonly string[];
+  readonly mix: Mix;
+}
 
 /** What the Core knows about the Edition it runs as. */
 export interface Edition {
   readonly id: string;
   readonly locale: string;
   readonly languageTraits: LanguageTraits;
+  /** Every Category of the Edition, in the order the Edition declares them. */
+  readonly categories: readonly Category[];
+  readonly userSettingDefaults: UserSettingDefaults;
+  /** Whether the Edition turns the given Core feature on. */
+  isFeatureEnabled(feature: FeatureSwitch): boolean;
 }
 
 /** Thrown when an Edition config doesn't match the contracts. */
@@ -24,6 +51,21 @@ export function loadEdition(config: unknown): Edition {
     );
     throw new InvalidEditionConfigError(`Invalid Edition config:\n${problems.join('\n')}`);
   }
-  const { id, locale, languageTraits } = result.data;
-  return { id, locale, languageTraits };
+  const { id, locale, languageTraits, featureSwitches, userSettingDefaults, categories } =
+    result.data;
+  const { mix, ...settings } = userSettingDefaults;
+  return {
+    id,
+    locale,
+    languageTraits,
+    categories,
+    userSettingDefaults: {
+      ...settings,
+      mix: {
+        categoryIds: mix.categories === 'all' ? categories.map(({ id }) => id) : mix.categories,
+        corrections: mix.corrections,
+      },
+    },
+    isFeatureEnabled: (feature) => featureSwitches[feature],
+  };
 }
