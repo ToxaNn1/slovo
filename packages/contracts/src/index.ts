@@ -4,10 +4,25 @@
  */
 export {
   CategorySchema,
+  DistractorRuleSchema,
   EditionConfigSchema,
+  FeatureSwitchesSchema,
+  FontSizeSchema,
   LanguageTraitsSchema,
+  MAX_NOTIFICATION_TIMES,
+  MixConfigSchema,
+  ThemeSchema,
+  TimeOfDaySchema,
+  UserSettingDefaultsConfigSchema,
   type Category,
+  type DistractorRule,
   type EditionConfig,
+  type FeatureSwitch,
+  type FeatureSwitches,
+  type FontSize,
   type LanguageTraits,
+  type MixConfig,
+  type Theme,
+  type UserSettingDefaultsConfig,
 } from './edition';
 export { PartOfSpeechSchema, WordSchema, type PartOfSpeech, type Word } from './word';
