@@ -1,4 +1,13 @@
-import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -251,6 +260,13 @@ describe('buildLanguagePack', () => {
     it.each([
       ['a duplicate id', 'w_fx1001_copy.json', 'w_fx1001', 'id', /duplicate.*w_fx1001\.json/i],
       [
+        'a file name that differs from the id',
+        'w_fx1021.json',
+        'w_fx1022',
+        'id',
+        /named w_fx1022\.json/i,
+      ],
+      [
         'an unknown Category',
         'w_fx1002.json',
         'w_fx1002',
@@ -324,8 +340,16 @@ describe('buildLanguagePack', () => {
       });
     });
 
+    it('rejects a file that is not an Entry file', () => {
+      expect(errors()).toContainEqual({
+        file: 'content/words/notes.txt',
+        message: expect.stringMatching(/<id>\.json/) as string,
+      });
+    });
+
     it('reports nothing but those errors', () => {
-      expect(errors()).toHaveLength(20);
+      // The copy with a duplicate id is also misnamed, so it fails twice.
+      expect(errors()).toHaveLength(23);
     });
   });
 
@@ -397,9 +421,46 @@ describe('buildLanguagePack', () => {
         file: 'content/corrections/c_fx0002_copy.json',
         entryId: 'c_fx0002',
         field: 'id',
+        message: expect.stringMatching(/named c_fx0002\.json/i) as string,
+      },
+      {
+        file: 'content/corrections/c_fx0002_copy.json',
+        entryId: 'c_fx0002',
+        field: 'id',
         message: expect.stringMatching(/duplicate.*c_fx0002\.json/i) as string,
       },
     ]);
+  });
+
+  it.each(['content/words', 'content/corrections'])(
+    'fails when the %s folder is missing instead of building without it',
+    (dir) => {
+      const editionDir = copyFixture('valid');
+      renameSync(join(editionDir, dir), join(editionDir, `${dir}-renamed`));
+
+      expect(buildErrors(editionDir)).toContainEqual({
+        file: dir,
+        message: expect.stringMatching(/folder not found/i) as string,
+      });
+    },
+  );
+
+  it('rejects a nested folder or a file with another extension among the Entry files', () => {
+    const editionDir = copyFixture('valid');
+    mkdirSync(join(editionDir, 'content/words/more'));
+    renameSync(
+      join(editionDir, 'content/words/w_fx0002.json'),
+      join(editionDir, 'content/words/w_fx0002.JSON'),
+    );
+
+    expect(buildErrors(editionDir)).toEqual(
+      expect.arrayContaining(
+        ['content/words/more', 'content/words/w_fx0002.JSON'].map((file) => ({
+          file,
+          message: expect.stringMatching(/<id>\.json/) as string,
+        })),
+      ),
+    );
   });
 
   it('reports Words per Category, the rarity histogram and field coverage', () => {

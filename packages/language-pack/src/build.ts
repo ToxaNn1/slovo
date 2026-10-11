@@ -1,5 +1,5 @@
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { basename, join } from 'node:path';
 
 import { CorrectionSchema, EditionConfigSchema, WordSchema, type Entry } from '@slovo/contracts';
 import { z } from 'zod';
@@ -78,10 +78,38 @@ export function buildLanguagePack({
   }
 
   function parseEntries<T extends Entry>(dir: string, schema: z.ZodType<T>): Authored<T>[] {
-    return listJsonFiles(editionDir, dir).flatMap((file) => {
+    return listEntryFiles(dir).flatMap((file) => {
       const entry = parseFile(file, schema, true);
-      return entry === undefined ? [] : [{ file, entry }];
+      if (entry === undefined) return [];
+      if (basename(file) !== `${entry.id}.json`) {
+        const message = `Expected the file to be named ${entry.id}.json, after its id`;
+        errors.push({ file, entryId: entry.id, field: 'id', message });
+      }
+      return [{ file, entry }];
     });
+  }
+
+  /**
+   * The files of an Entry folder, relative to the Edition folder, in a stable
+   * order. The folder must exist and hold `<id>.json` files only; hidden files
+   * such as `.DS_Store` are skipped.
+   */
+  function listEntryFiles(dir: string): string[] {
+    const path = join(editionDir, dir);
+    if (!existsSync(path) || !statSync(path).isDirectory()) {
+      errors.push({ file: dir, message: 'Folder not found' });
+      return [];
+    }
+    const files: string[] = [];
+    for (const item of readdirSync(path, { withFileTypes: true }).toSorted((a, b) =>
+      compare(a.name, b.name),
+    )) {
+      if (item.name.startsWith('.')) continue;
+      const file = `${dir}/${item.name}`;
+      if (item.isFile() && item.name.endsWith('.json')) files.push(file);
+      else errors.push({ file, message: 'Expected only Entry files named <id>.json here' });
+    }
+    return files;
   }
 
   const config = parseFile(EDITION_CONFIG_FILE, EditionConfigSchema);
@@ -137,16 +165,6 @@ function readJson(
   } catch (error) {
     return { ok: false, message: `Invalid JSON: ${(error as Error).message}` };
   }
-}
-
-/** The JSON files of a content folder, relative to the Edition folder, in a stable order. */
-function listJsonFiles(editionDir: string, dir: string): string[] {
-  const path = join(editionDir, dir);
-  if (!existsSync(path)) return [];
-  return readdirSync(path)
-    .filter((name) => name.endsWith('.json'))
-    .sort(compare)
-    .map((name) => `${dir}/${name}`);
 }
 
 function entryIdOf(value: unknown): string | undefined {
