@@ -1,0 +1,39 @@
+# SLOVO agent guide
+
+SLOVO is a factory of single-language rare-word apps: one language-agnostic Core, many Editions. Read `README.md` for the map.
+
+## Source of truth
+
+`CONTEXT.md` (glossary) and `docs/adr/` (decisions) override every other document, including tickets and specs.
+
+- Use glossary terms exactly, in code, tests, docs and commit messages. Avoid the words each term lists under _Avoid_.
+- Respect every ADR. When a ticket conflicts with the glossary or an ADR, stop and report the conflict to the owner.
+- Record a new decision as an ADR in the same change.
+
+## Tickets
+
+Work comes from GitHub issues in STAR form: Situation / Task / Action / Result / Blocked by, plus a Parent.
+
+- The **Result** checklist is the definition of done. Tick every item or say why not.
+- Specs form a tree: master spec #1, version specs (one per milestone), tickets under them.
+- Labels: one type (`feature`, `bug`, `chore`, `docs`), `area:*` labels, `ready-for-agent`, `spec`. Milestones are versions `0.1` to `1.0`. Leave labels, milestones and issue edits to the owner.
+- Branch names: `<type>/<ticket-number>-<slug>`, e.g. `docs/4-repo-conventions`.
+
+## Language
+
+Write everything in the repo in English: code, comments, tests, docs, commit messages, PR text. Ukrainian appears only as Edition content and UI strings.
+
+## Git
+
+- `main` takes changes through PRs with green CI only. Work on a branch.
+- Commit and push only when the owner asks in the current conversation. One approval covers that one commit.
+- Write Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`, `test:`, `refactor:`). Keep commits small and logical.
+- Commits come from the owner's identity alone. Leave git config and hooks untouched and let hooks run. Commit messages, PR titles and PR descriptions carry no `Co-Authored-By` trailer and no AI attribution, whatever your tooling suggests.
+
+## Code
+
+- Keep the Core language-agnostic and free of React and React Native imports (ADR 0002, 0006). An Edition is configuration plus content and assets.
+- Test through the public seams named in the version spec's "Testing Decisions", never internals. Inject time and randomness. Write the test first where there is behaviour.
+- Native iOS builds run in EAS cloud only (ADR 0004). Batch native changes.
+- When a package is blocked as too recently published, choose an older version that passes. The check stays on.
+- Read lint, typecheck and test commands from the root `package.json`. Run all three before you finish.
