@@ -2,7 +2,17 @@
  * The Core's public interface. Every Edition reaches Core behaviour through
  * this module only (ADR 0006).
  */
-export type { Correction, CorrectionType, Entry, EntryKind, Word } from '@slovo/contracts';
+export type {
+  Correction,
+  CorrectionType,
+  Entry,
+  EntryKind,
+  Example,
+  Gender,
+  PartOfSpeech,
+  Register,
+  Word,
+} from '@slovo/contracts';
 export { createContent, type Content } from './content';
 export { coreDecor, InvalidDecorError, loadDecor, type Decor } from './decor';
 export { openFeed, SEEN_DWELL_MS, type Feed, type FeedCard } from './feed';
@@ -23,6 +33,12 @@ export {
   type UserSettings,
 } from './settings';
 export { renderStress } from './stress';
+export {
+  buildWordCard,
+  type LinkedCorrection,
+  type WordCardDetails,
+  type WordCardModel,
+} from './word-card';
 export {
   systemClock,
   systemRandom,
