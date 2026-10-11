@@ -17,6 +17,12 @@ env:
     clearState: false
 # Point the development client at the local Metro server.
 - openLink: ${SCHEME}://expo-development-client/?url=${METRO_URL}
+# A simulator asks once whether the link may open the app.
+- runFlow:
+    when:
+      visible: Open
+    commands:
+      - tapOn: Open
 # The development client explains its menu on the first launch.
 - runFlow:
     when:
@@ -103,6 +109,11 @@ env:
     selected: true
 - assertVisible:
     id: font-size-preview-lemma
+# The Feed redraws in the dark Theme at the new size.
+- tapOn:
+    id: tab-home
+- assertVisible:
+    id: word-lemma
 - stopApp
 - launchApp:
     clearState: false
