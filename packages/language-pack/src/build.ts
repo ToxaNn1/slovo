@@ -1,27 +1,12 @@
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
-import { basename, join } from 'node:path';
-
-import { CorrectionSchema, EditionConfigSchema, WordSchema, type Entry } from '@slovo/contracts';
-import { z } from 'zod';
-
 import type { BuildError } from './build-error';
-import { checkContent, type Authored } from './check-content';
 import { contentChecksum } from './checksum';
-import { ContentTargetsSchema, missedTargets, type MissedTarget } from './content-targets';
-import type { PackContent, PackMetadata } from './pack-layout';
+import { unrecordedContentErrors } from './content-manifest';
+import { missedTargets, type MissedTarget } from './content-targets';
+import { unregisteredEntries } from './id-registry';
+import type { PackMetadata } from './pack-layout';
+import { readEdition } from './read-edition';
 import { contentReport, type ContentReport } from './report';
 import { writePack } from './write-pack';
-
-const EDITION_CONFIG_FILE = 'edition.json';
-const MANIFEST_FILE = 'content/manifest.json';
-const WORDS_DIR = 'content/words';
-const CORRECTIONS_DIR = 'content/corrections';
-const TARGETS_FILE = 'content/targets.json';
-
-/** Describes the content as a whole; the content version grows with every content release. */
-const ContentManifestSchema = z.strictObject({
-  contentVersion: z.int().positive(),
-});
 
 export type BuildResult =
   | {
@@ -36,10 +21,11 @@ export type BuildResult =
   | { readonly ok: false; readonly errors: readonly BuildError[] };
 
 /**
- * Validates an Edition's config and content, Entry by Entry and across
- * Entries, and compiles them into a SQLite Language Pack at `outFile` with a
- * content report, checked against the content targets the Edition declares.
- * Nothing is written when there are errors; missed targets are not errors.
+ * Validates an Edition's config and content, Entry by Entry, across Entries
+ * and against the id registry and the content manifest, and compiles them
+ * into a SQLite Language Pack at `outFile` with a content report, checked
+ * against the content targets the Edition declares. Nothing is written when
+ * there are errors; missed targets are not errors.
  */
 export function buildLanguagePack({
   editionDir,
@@ -48,100 +34,32 @@ export function buildLanguagePack({
   editionDir: string;
   outFile: string;
 }): BuildResult {
-  const errors: BuildError[] = [];
+  const source = readEdition(editionDir, { registryRequired: true });
+  const command = `pnpm build:pack ${source.editionId ?? '<edition-id>'} --record`;
+  const unregistered =
+    source.registry === undefined
+      ? []
+      : unregisteredEntries([...source.words, ...source.corrections], source.registry);
+  const errors = [
+    ...source.errors,
+    ...unregistered.map(({ file, entry }) => ({
+      file,
+      entryId: entry.id,
+      field: 'id',
+      message: `Not in content/ids.json: record new ids with ${command}`,
+    })),
+  ];
+  if (errors.length > 0 || source.valid === undefined) return { ok: false, errors };
 
-  function parseFile<T>(file: string, schema: z.ZodType<T>, isEntry = false): T | undefined {
-    const json = readJson(editionDir, file);
-    if (!json.ok) {
-      errors.push({ file, message: json.message });
-      return undefined;
-    }
-    const result = schema.safeParse(json.value);
-    if (result.success) return result.data;
-    const entryId = isEntry ? entryIdOf(json.value) : undefined;
-    for (const issue of result.error.issues) {
-      // An unknown key is reported on the object holding it, so name each key as the field.
-      const problems =
-        issue.code === 'unrecognized_keys'
-          ? issue.keys.map((key) => ({ path: [...issue.path, key], message: 'Unknown field' }))
-          : [{ path: issue.path, message: issue.message }];
-      for (const { path, message } of problems) {
-        errors.push({
-          file,
-          ...(entryId === undefined ? {} : { entryId }),
-          ...(path.length === 0 ? {} : { field: path.join('.') }),
-          message,
-        });
-      }
-    }
-    return undefined;
-  }
-
-  function parseEntries<T extends Entry>(dir: string, schema: z.ZodType<T>): Authored<T>[] {
-    return listEntryFiles(dir).flatMap((file) => {
-      const entry = parseFile(file, schema, true);
-      if (entry === undefined) return [];
-      if (basename(file) !== `${entry.id}.json`) {
-        const message = `Expected the file to be named ${entry.id}.json, after its id`;
-        errors.push({ file, entryId: entry.id, field: 'id', message });
-      }
-      return [{ file, entry }];
-    });
-  }
-
-  /**
-   * The files of an Entry folder, relative to the Edition folder, in a stable
-   * order. The folder must exist and hold `<id>.json` files only; hidden files
-   * such as `.DS_Store` are skipped.
-   */
-  function listEntryFiles(dir: string): string[] {
-    const path = join(editionDir, dir);
-    if (!existsSync(path) || !statSync(path).isDirectory()) {
-      errors.push({ file: dir, message: 'Folder not found' });
-      return [];
-    }
-    const files: string[] = [];
-    for (const item of readdirSync(path, { withFileTypes: true }).toSorted((a, b) =>
-      compare(a.name, b.name),
-    )) {
-      if (item.name.startsWith('.')) continue;
-      const file = `${dir}/${item.name}`;
-      if (item.isFile() && item.name.endsWith('.json')) files.push(file);
-      else errors.push({ file, message: 'Expected only Entry files named <id>.json here' });
-    }
-    return files;
-  }
-
-  const config = parseFile(EDITION_CONFIG_FILE, EditionConfigSchema);
-  const manifest = parseFile(MANIFEST_FILE, ContentManifestSchema);
-  const words = parseEntries(WORDS_DIR, WordSchema);
-  const corrections = parseEntries(CORRECTIONS_DIR, CorrectionSchema);
-  const targets = existsSync(join(editionDir, TARGETS_FILE))
-    ? parseFile(TARGETS_FILE, ContentTargetsSchema)
-    : {};
-  if (config !== undefined) errors.push(...checkContent(config, words, corrections));
-
-  if (
-    errors.length > 0 ||
-    config === undefined ||
-    manifest === undefined ||
-    targets === undefined
-  ) {
-    return { ok: false, errors };
-  }
-
-  const content: PackContent = {
-    editionId: config.id,
-    contentVersion: manifest.contentVersion,
-    categories: config.categories,
-    words: sortedById(words),
-    corrections: sortedById(corrections),
-  };
+  const { content, manifest, targets } = source.valid;
   const metadata: PackMetadata = {
     editionId: content.editionId,
     contentVersion: content.contentVersion,
     checksum: contentChecksum(content),
   };
+  const unrecorded = unrecordedContentErrors(manifest, metadata.checksum, content.editionId);
+  if (unrecorded.length > 0) return { ok: false, errors: unrecorded };
+
   writePack(outFile, content, metadata);
   const report = contentReport(content);
   return {
@@ -152,31 +70,4 @@ export function buildLanguagePack({
     report,
     missedTargets: missedTargets(report, targets),
   };
-}
-
-function readJson(
-  editionDir: string,
-  file: string,
-): { ok: true; value: unknown } | { ok: false; message: string } {
-  const path = join(editionDir, file);
-  if (!existsSync(path)) return { ok: false, message: 'File not found' };
-  try {
-    return { ok: true, value: JSON.parse(readFileSync(path, 'utf8')) };
-  } catch (error) {
-    return { ok: false, message: `Invalid JSON: ${(error as Error).message}` };
-  }
-}
-
-function entryIdOf(value: unknown): string | undefined {
-  if (typeof value !== 'object' || value === null || !('id' in value)) return undefined;
-  return typeof value.id === 'string' && value.id !== '' ? value.id : undefined;
-}
-
-function sortedById<T extends Entry>(authored: readonly Authored<T>[]): T[] {
-  return authored.map(({ entry }) => entry).toSorted((a, b) => compare(a.id, b.id));
-}
-
-/** Code-unit order, independent of the machine's locale. */
-function compare(a: string, b: string): number {
-  return a < b ? -1 : a > b ? 1 : 0;
 }
