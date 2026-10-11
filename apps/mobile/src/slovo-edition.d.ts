@@ -1,6 +1,6 @@
 /**
  * The Edition selected by SLOVO_EDITION. Metro resolves these modules into
- * that Edition's folder (see metro.config.js); the app validates what it reads.
+ * that Edition's folder (see metro.config.cjs); the app validates what it reads.
  */
 declare module 'slovo-edition/config' {
   const config: unknown;

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { edition, editionStrings } from '../edition';
+import { editionStrings } from '../edition';
 import { useContent } from '../language-pack';
 
 type HomeWord =
@@ -40,7 +40,7 @@ export default function HomeScreen() {
   return (
     <SafeAreaView testID="home" style={[styles.screen, { backgroundColor: palette.background }]}>
       <WordCard
-        lemma={edition.languageTraits.marksStress ? renderStress(word) : word.lemma}
+        lemma={renderStress(word)}
         partOfSpeech={editionStrings.partsOfSpeech[word.partOfSpeech]}
         primaryDefinition={word.primaryDefinition}
       />
