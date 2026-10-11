@@ -266,6 +266,21 @@ describe('buildLanguagePack', () => {
         'primaryDefinition',
         /same lemma and primary definition as w_fx1014/i,
       ],
+      ['a Lemma that is not in Unicode NFC', 'w_fx1016.json', 'w_fx1016', 'lemma', /NFC/],
+      [
+        'a Stress mark written into the Lemma',
+        'w_fx1017.json',
+        'w_fx1017',
+        'lemma',
+        /combining mark U\+0301/i,
+      ],
+      [
+        'a Lemma with a letter outside the alphabet',
+        'w_fx1018.json',
+        'w_fx1018',
+        'lemma',
+        /"i" \(U\+0069\) is not a letter of the alphabet/i,
+      ],
       [
         'a file name that differs from the id',
         'w_fx1021.json',
@@ -356,7 +371,7 @@ describe('buildLanguagePack', () => {
 
     it('reports nothing but those errors', () => {
       // The copy with a duplicate id is also misnamed, so it fails twice.
-      expect(errors()).toHaveLength(24);
+      expect(errors()).toHaveLength(27);
     });
   });
 
@@ -435,6 +450,47 @@ describe('buildLanguagePack', () => {
         entryId: 'c_fx0002',
         field: 'id',
         message: expect.stringMatching(/duplicate.*c_fx0002\.json/i) as string,
+      },
+    ]);
+  });
+
+  it('builds a Lemma with a capital letter, its Stress on a capital vowel', async () => {
+    const editionDir = copyFixture('valid');
+    editJson(editionDir, 'content/words/w_fx0003.json', (word) => ({
+      ...word,
+      lemma: 'Аврора',
+      stress: [0, 3],
+    }));
+    const outFile = packPath();
+
+    const result = buildLanguagePack({ editionDir, outFile });
+
+    expect(result.ok ? [] : result.errors).toEqual([]);
+    await withContent(outFile, async (content) => {
+      expect(await content.wordById('w_fx0003')).toMatchObject({ lemma: 'Аврора' });
+    });
+  });
+
+  it('accepts in a Lemma only the punctuation the Edition allows', () => {
+    const editionDir = copyFixture('valid');
+    editJson(editionDir, 'content/words/w_fx0002.json', (word) => ({
+      ...word,
+      lemma: "п'ятий-десятий",
+      stress: [2],
+    }));
+    const result = buildLanguagePack({ editionDir, outFile: packPath() });
+    expect(result.ok ? [] : result.errors).toEqual([]);
+
+    editJson(editionDir, 'edition.json', (config) => ({
+      ...config,
+      languageTraits: { ...(config['languageTraits'] as Json), lemmaPunctuation: "'" },
+    }));
+    expect(buildErrors(editionDir)).toEqual([
+      {
+        file: 'content/words/w_fx0002.json',
+        entryId: 'w_fx0002',
+        field: 'lemma',
+        message: expect.stringMatching(/"-" \(U\+002D\) is not a letter/) as string,
       },
     ]);
   });

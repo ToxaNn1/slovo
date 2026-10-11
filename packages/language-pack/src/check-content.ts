@@ -18,7 +18,9 @@ export function checkContent(
   corrections: readonly Authored<Correction>[],
 ): BuildError[] {
   const errors: BuildError[] = [];
-  const { marksStress, vowels } = config.languageTraits;
+  const { marksStress, vowels, alphabet, lemmaPunctuation = [] } = config.languageTraits;
+  // Longest first, so a letter written with several characters wins over its first character.
+  const lemmaTokens = [...alphabet, ...lemmaPunctuation].toSorted((a, b) => b.length - a.length);
   const categoryIds = new Set(config.categories.map((category) => category.id));
   const correctionIds = new Set(corrections.map(({ entry }) => entry.id));
   const fileById = new Map<string, string>();
@@ -41,6 +43,17 @@ export function checkContent(
     const fail = (field: string, message: string) => {
       errors.push({ file, entryId: word.id, field, message });
     };
+
+    const stray = strayCharacter(word.lemma.toLocaleLowerCase(config.locale), lemmaTokens);
+    if (stray !== undefined) {
+      const code = codePointLabel(stray);
+      fail(
+        'lemma',
+        /\p{M}/u.test(stray)
+          ? `Holds the combining mark ${code}: mark Stress in the stress field and write every letter whole`
+          : `"${stray}" (${code}) is not a letter of the alphabet or punctuation the Edition allows`,
+      );
+    }
 
     if (!word.retired) {
       const key = JSON.stringify([word.lemma, word.primaryDefinition.trim()]);
@@ -90,4 +103,21 @@ export function checkContent(
     });
   }
   return errors;
+}
+
+/** The first character of the text that no token covers, reading the tokens off from the start. */
+function strayCharacter(text: string, tokens: readonly string[]): string | undefined {
+  let rest = text;
+  while (rest !== '') {
+    const token = tokens.find((candidate) => rest.startsWith(candidate));
+    if (token === undefined) return Array.from(rest)[0];
+    rest = rest.slice(token.length);
+  }
+  return undefined;
+}
+
+/** A character's Unicode code point, such as U+0301. */
+function codePointLabel(character: string): string {
+  const hex = (character.codePointAt(0) ?? 0).toString(16).toUpperCase();
+  return `U+${hex.padStart(4, '0')}`;
 }

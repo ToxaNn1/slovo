@@ -10,10 +10,11 @@ const targetsFile = new URL('../../../editions/uk/content/targets.json', import.
 describe('the Ukrainian Edition', () => {
   const edition = loadEdition(JSON.parse(readFileSync(configFile, 'utf8')));
 
-  it('marks Stress and sorts with the Ukrainian alphabet', () => {
+  it('marks Stress, sorts with the Ukrainian alphabet and allows the apostrophe and hyphen in a Lemma', () => {
     expect(edition.languageTraits).toEqual({
       marksStress: true,
       alphabet: 'а б в г ґ д е є ж з и і ї й к л м н о п р с т у ф х ц ч ш щ ь ю я'.split(' '),
+      lemmaPunctuation: ["'", '-'],
       sortLocale: 'uk',
       distractorRule: 'same-part-of-speech',
       vowels: 'а е є и і ї о у ю я'.split(' '),
