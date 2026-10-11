@@ -27,6 +27,11 @@ env:
     visible:
       id: word-lemma
     timeout: 120000
+# The app's splash covers everything for a moment, then fades out.
+- extendedWaitUntil:
+    notVisible:
+      id: splash
+    timeout: 10000
 
 # The four tabs, in order: Home, Settings, Game, Saved.
 - assertVisible:
@@ -82,6 +87,11 @@ env:
     visible:
       id: word-lemma
     timeout: 120000
+# The app's splash covers everything for a moment, then fades out.
+- extendedWaitUntil:
+    notVisible:
+      id: splash
+    timeout: 10000
 - tapOn:
     id: tab-settings
 - assertVisible:

@@ -20,6 +20,10 @@
     "particle": "частка",
     "interjection": "вигук"
   },
+  "splash": {
+    "wordmark": "SLOVO",
+    "tagline": "рідкісні слова рідної мови"
+  },
   "settings": {
     "title": "Налаштування",
     "theme": "Тема",

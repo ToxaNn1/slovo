@@ -1,6 +1,6 @@
 /**
- * The UI: Edition-neutral components that read every text and design token
- * from the Edition.
+ * The UI: Edition-neutral components that read every text, design token and
+ * Decor from the Edition.
  */
 export { FontSizePreview } from './FontSizePreview';
 export {
@@ -10,9 +10,17 @@ export {
   type TextSize,
   type WordTextSizes,
 } from './FontSizeProvider';
+export { DecorProvider, useDecor } from './DecorProvider';
+export {
+  CardCorners,
+  DecorBackground,
+  EmptyStateIllustration,
+  OrnamentDivider,
+} from './DecorSlots';
 export { ScreenTitle, SectionLabel } from './headings';
 export { Placeholder } from './Placeholder';
 export { SegmentedControl, type Segment } from './SegmentedControl';
+export { SplashOverlay, type SplashOverlayProps } from './SplashOverlay';
 export {
   coreTokens,
   designTokens,

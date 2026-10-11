@@ -24,6 +24,12 @@ export const EditionStringsSchema = z.strictObject({
   noWords: TextSchema,
   /** The display label of every part of speech. */
   partsOfSpeech: z.record(PartOfSpeechSchema, TextSchema),
+  /** The words on the splash, under the Edition's mark. */
+  splash: z.strictObject({
+    /** The app's name as a wordmark, e.g. "SLOVO". */
+    wordmark: TextSchema,
+    tagline: TextSchema,
+  }),
   settings: z.strictObject({
     /** The Settings screen title. */
     title: TextSchema,

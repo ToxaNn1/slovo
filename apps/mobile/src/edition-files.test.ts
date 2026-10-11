@@ -1,7 +1,12 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-import { EditionStringsSchema, EditionTokensSchema } from '@slovo/contracts';
+import {
+  EditionDecorSchema,
+  EditionStringsSchema,
+  EditionTokensSchema,
+  type ColorTokens,
+} from '@slovo/contracts';
 import { describe, expect, it } from 'vitest';
 
 const editionsDir = fileURLToPath(new URL('../../../editions/', import.meta.url));
@@ -44,3 +49,99 @@ describe('Edition design tokens', () => {
     expect(EditionTokensSchema.safeParse(tokens).success).toBe(false);
   });
 });
+
+describe('Edition Decor', () => {
+  const withDecor = editions.filter((edition) =>
+    existsSync(`${editionsDir}${edition}/decor/decor.json`),
+  );
+
+  it.each(withDecor)('the %s Edition supplies valid Decor', (edition) => {
+    expect(
+      EditionDecorSchema.safeParse(readJson(edition, 'decor/decor.json')).error,
+    ).toBeUndefined();
+  });
+
+  it('the Ukrainian Edition fills every Decor slot the Feed and the splash use', () => {
+    const decor = EditionDecorSchema.parse(readJson('uk', 'decor/decor.json'));
+
+    expect(Object.keys(decor).sort()).toEqual([
+      'background',
+      'corners',
+      'divider',
+      'emptyState',
+      'splash',
+    ]);
+    expect(decor.emptyState?.error).toBeDefined();
+    expect(decor.splash?.band).toBeDefined();
+  });
+
+  /** The text colour roles drawn straight on the screen background. */
+  const textRoles = ['ink', 'muted', 'inkSecondary', 'accent'] as const;
+
+  describe.each(withDecor.filter((edition) => existsSync(`${editionsDir}${edition}/tokens.json`)))(
+    'the %s Edition',
+    (edition) => {
+      const { colors } = EditionTokensSchema.parse(readJson(edition, 'tokens.json'));
+      const { background } = EditionDecorSchema.parse(readJson(edition, 'decor/decor.json'));
+
+      it.each(['light', 'dark'] as const)(
+        'keeps text at WCAG AA contrast over its background Decor in %s',
+        (scheme) => {
+          if (colors === undefined || background === undefined) return;
+          const screen = colors[scheme].background;
+          const stitched = background.tile.layers.map((layer) => over(layer[scheme], screen));
+
+          for (const role of textRoles) {
+            const text = colors[scheme][role satisfies keyof ColorTokens];
+            for (const behind of [parseColor(screen), ...stitched]) {
+              expect(
+                contrast(parseColor(text), behind),
+                `${role} over ${String(behind)}`,
+              ).toBeGreaterThanOrEqual(4.5);
+            }
+          }
+        },
+      );
+    },
+  );
+});
+
+type Rgb = readonly [number, number, number];
+
+/** `#RRGGBB` or `rgba(r, g, b, a)` as red, green, blue and alpha. */
+function parseRgba(color: string): readonly [number, number, number, number] {
+  const hex = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(color);
+  if (hex !== null) {
+    const [, r = '', g = '', b = ''] = hex;
+    return [parseInt(r, 16), parseInt(g, 16), parseInt(b, 16), 1];
+  }
+  const [r = 0, g = 0, b = 0, a = 1] = (/\(([^)]*)\)/.exec(color)?.[1] ?? '')
+    .split(',')
+    .map(Number);
+  return [r, g, b, a];
+}
+
+function parseColor(color: string): Rgb {
+  const [r, g, b] = parseRgba(color);
+  return [r, g, b];
+}
+
+/** A colour drawn over an opaque one. */
+function over(color: string, behind: string): Rgb {
+  const [r, g, b, a] = parseRgba(color);
+  const [br, bg, bb] = parseColor(behind);
+  return [r * a + br * (1 - a), g * a + bg * (1 - a), b * a + bb * (1 - a)];
+}
+
+/** The WCAG 2 contrast ratio of two opaque colours. */
+function contrast(first: Rgb, second: Rgb): number {
+  const luminance = (rgb: Rgb) => {
+    const [r = 0, g = 0, b = 0] = rgb.map((channel) => {
+      const c = channel / 255;
+      return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const [light, dark] = [luminance(first), luminance(second)].sort((a, b) => b - a);
+  return ((light ?? 0) + 0.05) / ((dark ?? 0) + 0.05);
+}

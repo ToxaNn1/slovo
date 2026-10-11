@@ -17,13 +17,16 @@
     "typescript": "~6.0.3",
     "@types/react": "~19.2.18",
     "react": "19.2.3",
-    "react-native": "0.86.3"
+    "react-native": "0.86.3",
+    "react-native-svg": "15.15.4"
   },
   "peerDependencies": {
     "react": "*",
-    "react-native": "*"
+    "react-native": "*",
+    "react-native-svg": "*"
   },
   "dependencies": {
-    "@slovo/contracts": "workspace:*"
+    "@slovo/contracts": "workspace:*",
+    "@slovo/core": "workspace:*"
   }
 }

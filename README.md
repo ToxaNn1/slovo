@@ -31,11 +31,11 @@ Parts marked as placeholders are reserved and filled by later versions.
 | `apps/widget`            | The native SwiftUI home-screen widget (placeholder until 0.6).                          |
 | `apps/backend`           | The API (placeholder until 0.7).                                                        |
 | `packages/core`          | Pure TypeScript domain logic (no React, no React Native).                               |
-| `packages/ui`            | Screens, components and design tokens.                                                  |
+| `packages/ui`            | Screens, components, design tokens and Decor slots.                                     |
 | `packages/contracts`     | Zod schemas for Entries, the Edition config and the Language Pack.                      |
 | `packages/language-pack` | Builds an Edition's content into a read-only SQLite Language Pack and reads packs back. |
 | `packages/config`        | Shared TypeScript, ESLint and Prettier configuration.                                   |
-| `editions/<edition>`     | One folder per Edition: configuration, strings, design tokens, content and assets.      |
+| `editions/<edition>`     | One folder per Edition: configuration, strings, design tokens, Decor, content, assets.  |
 | `tools/sourcing`         | Dev-only tool that drafts Words from goroh.pp.ua and СУМ-11 for human review.           |
 | `docs/`                  | Architecture decision records in `docs/adr/` and the design brief in `docs/design/`.    |
 
@@ -51,7 +51,7 @@ Parts marked as placeholders are reserved and filled by later versions.
 
 The native app is a development build made in EAS cloud ([ADR 0004](docs/adr/0004-native-builds-in-eas-cloud.md)). The JavaScript runs locally against it, served by Metro with fast refresh, so day-to-day work never waits for a cloud build.
 
-The `SLOVO_EDITION` environment variable selects the Edition. Every Expo and EAS command fails with a clear message when it is missing or names an unknown Edition. The app name, bundle id, icon, locale, fonts and splash come from `editions/<edition>/`: the fonts are every file in `assets/fonts/`, and the splash is Decor slot 7, described by `decor/splash.json`. An Edition without a splash gets the Core's plain one.
+The `SLOVO_EDITION` environment variable selects the Edition. Every Expo and EAS command fails with a clear message when it is missing or names an unknown Edition. The app name, bundle id, icon, locale, fonts and splash come from `editions/<edition>/`: the fonts are every file in `assets/fonts/`, and the splash is Decor slot 7, described by `decor/splash.json`. An Edition without a splash gets the Core's plain one. Once the JavaScript runs, the app draws the rest of slot 7 over the native splash (the background, the wordmark, the tagline and the band from `decor/decor.json`) and fades it out.
 
 You need the Node version in [`.nvmrc`](.nvmrc), pnpm, Xcode with an iOS Simulator (iOS 17 or later) and access to the Expo account `anton_de`. The commands below run the Expo CLI and `eas-cli` through `npx`, so neither needs a global install.
 
@@ -85,7 +85,9 @@ You need the Node version in [`.nvmrc`](.nvmrc), pnpm, Xcode with an iOS Simulat
    SLOVO_EDITION=uk pnpm start
    ```
 
-   The app draws itself with the Edition's design tokens (`editions/<edition>/tokens.json`). To check the Core's neutral look instead, start Metro with `SLOVO_CORE_TOKENS=1 SLOVO_EDITION=uk pnpm start --clear`, and drop the variable (with `--clear` again) to go back.
+   The app draws itself with the Edition's design tokens (`editions/<edition>/tokens.json`) and Decor (`editions/<edition>/decor/decor.json`, [ADR 0014](docs/adr/0014-editions-supply-decor-as-vector-motifs.md)). To check the Core's neutral look instead, start Metro with `SLOVO_CORE_TOKENS=1 SLOVO_EDITION=uk pnpm start --clear`, and drop the variable (with `--clear` again) to go back.
+
+   In a development build, `xcrun simctl openurl booted slovo-uk://decor` opens a showcase of every Decor slot 0.2 uses. Its switches show the Edition's Decor or the Core's, light or dark; the link takes `?look=core`, `?scheme=dark` and `?splash=1` to start in that state.
 
 4. Check the result. The tabs read Головна, Налаштування, Гра, Збережене (Home, Settings, Game, Saved). Home shows one Word from the bundled Language Pack: its Lemma with the Stress mark, its part of speech and its primary Definition. Settings offers the Theme (System, Light or Dark); the choice is kept on the device in a user-state database apart from the Language Pack, and System follows the iOS appearance. Game and Saved are placeholders. The app needs no network: the Language Pack ships inside the app and is opened read-only. At launch the app checks that the native app, the JavaScript bundle and the Language Pack are of the same Edition, and shows its load-failed screen when they are not. [Verify the app with networking off](#verify-the-app-with-networking-off) by hand once per release candidate.
 

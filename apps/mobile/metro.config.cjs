@@ -13,9 +13,9 @@ const { exp } = getConfig(__dirname, { skipSDKVersionRequirement: true });
 const editionId = exp.extra.edition.id;
 const editionDir = join(__dirname, '../../editions', editionId);
 
-// SLOVO_CORE_TOKENS=1 draws the app with the Core's neutral tokens instead of
-// the Edition's, to check the Core look. Restart Metro with --clear after
-// changing it.
+// SLOVO_CORE_TOKENS=1 draws the app with the Core's neutral tokens and Decor
+// instead of the Edition's, to check the Core look. Restart Metro with --clear
+// after changing it.
 const useCoreTokens = process.env.SLOVO_CORE_TOKENS === '1';
 
 const editionModules = {
@@ -23,6 +23,9 @@ const editionModules = {
   'slovo-edition/strings': { type: 'sourceFile', file: 'strings.json' },
   // Optional: an Edition without tokens.json gets the Core's neutral tokens.
   'slovo-edition/tokens': { type: 'sourceFile', file: 'tokens.json', optional: true },
+  // Optional: an Edition without Decor gets the Core's neutral Decor.
+  'slovo-edition/decor': { type: 'sourceFile', file: 'decor/decor.json', optional: true },
+  'slovo-edition/splash': { type: 'sourceFile', file: 'decor/splash.json', optional: true },
   'slovo-edition/language-pack': {
     type: 'assetFiles',
     file: 'dist/language-pack.db',
