@@ -13,9 +13,16 @@ const { exp } = getConfig(__dirname, { skipSDKVersionRequirement: true });
 const editionId = exp.extra.edition.id;
 const editionDir = join(__dirname, '../../editions', editionId);
 
+// SLOVO_CORE_TOKENS=1 draws the app with the Core's neutral tokens instead of
+// the Edition's, to check the Core look. Restart Metro with --clear after
+// changing it.
+const useCoreTokens = process.env.SLOVO_CORE_TOKENS === '1';
+
 const editionModules = {
   'slovo-edition/config': { type: 'sourceFile', file: 'edition.json' },
   'slovo-edition/strings': { type: 'sourceFile', file: 'strings.json' },
+  // Optional: an Edition without tokens.json gets the Core's neutral tokens.
+  'slovo-edition/tokens': { type: 'sourceFile', file: 'tokens.json', optional: true },
   'slovo-edition/language-pack': {
     type: 'assetFiles',
     file: 'dist/language-pack.db',
@@ -33,6 +40,9 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
     return (resolveRequest ?? context.resolveRequest)(context, moduleName, platform);
   }
   const filePath = join(editionDir, editionModule.file);
+  if (editionModule.optional && (useCoreTokens || !existsSync(filePath))) {
+    return { type: 'empty' };
+  }
   if (!existsSync(filePath)) {
     throw new Error(
       `Edition "${editionId}" has no ${editionModule.file}. ${editionModule.missing ?? ''}`,

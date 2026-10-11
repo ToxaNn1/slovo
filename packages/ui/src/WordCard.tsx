@@ -1,6 +1,7 @@
-import { StyleSheet, Text, useColorScheme, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
-import { colors, fontSize, space } from './tokens';
+import { fontSizeSteps, space, typeSize } from './tokens';
+import { useTokens } from './TokensProvider';
 
 export interface WordCardProps {
   /** The Lemma as the Core renders it, Stress marks included. */
@@ -10,18 +11,29 @@ export interface WordCardProps {
   primaryDefinition: string;
 }
 
+const { lemma: lemmaSize, definition: definitionSize } = fontSizeSteps.M;
+
 /** The placeholder Word card: Lemma, part of speech and primary Definition. */
 export function WordCard({ lemma, partOfSpeech, primaryDefinition }: WordCardProps) {
-  const palette = colors[useColorScheme() === 'dark' ? 'dark' : 'light'];
+  const { colors, fontFamilies } = useTokens();
   return (
     <View style={styles.card}>
-      <Text testID="word-lemma" style={[styles.lemma, { color: palette.text }]}>
+      <Text
+        testID="word-lemma"
+        style={[styles.lemma, { color: colors.ink, fontFamily: fontFamilies.word }]}
+      >
         {lemma}
       </Text>
-      <Text testID="word-part-of-speech" style={[styles.partOfSpeech, { color: palette.muted }]}>
+      <Text
+        testID="word-part-of-speech"
+        style={[styles.partOfSpeech, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+      >
         {partOfSpeech}
       </Text>
-      <Text testID="word-definition" style={[styles.definition, { color: palette.text }]}>
+      <Text
+        testID="word-definition"
+        style={[styles.definition, { color: colors.ink, fontFamily: fontFamilies.word }]}
+      >
         {primaryDefinition}
       </Text>
     </View>
@@ -29,9 +41,13 @@ export function WordCard({ lemma, partOfSpeech, primaryDefinition }: WordCardPro
 }
 
 const styles = StyleSheet.create({
-  card: { gap: space.s, paddingHorizontal: space.l },
+  card: { gap: space[2], paddingHorizontal: space[6] },
   // Room above the glyphs so the Stress mark over a capital or tall vowel isn't clipped.
-  lemma: { fontSize: fontSize.lemma, lineHeight: fontSize.lemma * 1.35, fontWeight: '600' },
-  partOfSpeech: { fontSize: fontSize.caption, fontStyle: 'italic' },
-  definition: { fontSize: fontSize.body, lineHeight: fontSize.body * 1.4, marginTop: space.s },
+  lemma: { fontSize: lemmaSize, lineHeight: lemmaSize * 1.3, fontWeight: '500' },
+  partOfSpeech: { fontSize: typeSize.partOfSpeech, fontWeight: '500' },
+  definition: {
+    fontSize: definitionSize,
+    lineHeight: definitionSize * 1.5,
+    marginTop: space[3],
+  },
 });

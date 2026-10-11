@@ -22,5 +22,8 @@
   "peerDependencies": {
     "react": "*",
     "react-native": "*"
+  },
+  "dependencies": {
+    "@slovo/contracts": "workspace:*"
   }
 }

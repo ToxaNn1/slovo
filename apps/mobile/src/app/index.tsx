@@ -1,7 +1,7 @@
 import { renderStress, type Word } from '@slovo/core';
-import { colors, Placeholder, WordCard } from '@slovo/ui';
+import { Placeholder, useTokens, WordCard } from '@slovo/ui';
 import { useEffect, useState } from 'react';
-import { StyleSheet, useColorScheme } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { editionStrings } from '../edition';
@@ -14,7 +14,7 @@ type HomeWord =
 export default function HomeScreen() {
   const content = useContent();
   const [state, setState] = useState<HomeWord>({ status: 'loading' });
-  const palette = colors[useColorScheme() === 'dark' ? 'dark' : 'light'];
+  const { colors } = useTokens();
 
   useEffect(() => {
     let active = true;
@@ -38,7 +38,7 @@ export default function HomeScreen() {
   if (word === undefined) return <Placeholder message={editionStrings.noWords} />;
 
   return (
-    <SafeAreaView testID="home" style={[styles.screen, { backgroundColor: palette.background }]}>
+    <SafeAreaView testID="home" style={[styles.screen, { backgroundColor: colors.background }]}>
       <WordCard
         lemma={renderStress(word)}
         partOfSpeech={editionStrings.partsOfSpeech[word.partOfSpeech]}

@@ -12,6 +12,12 @@ declare module 'slovo-edition/strings' {
   export default strings;
 }
 
+/** The Edition's design tokens; empty when it supplies none. */
+declare module 'slovo-edition/tokens' {
+  const tokens: unknown;
+  export default tokens;
+}
+
 declare module 'slovo-edition/language-pack' {
   /** The asset id of the compiled Language Pack. */
   const assetId: number;
