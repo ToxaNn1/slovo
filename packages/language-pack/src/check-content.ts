@@ -12,20 +12,9 @@ export interface AuthoredWord {
  * The checks the schema can't make on one Entry alone: they need the Edition
  * config or the other Entries.
  */
-export function checkContent(
-  config: EditionConfig,
-  configFile: string,
-  words: readonly AuthoredWord[],
-): BuildError[] {
+export function checkContent(config: EditionConfig, words: readonly AuthoredWord[]): BuildError[] {
   const errors: BuildError[] = [];
   const { marksStress, vowels } = config.languageTraits;
-  if (marksStress && vowels === undefined) {
-    errors.push({
-      file: configFile,
-      field: 'languageTraits.vowels',
-      message: 'Required when the Edition marks Stress',
-    });
-  }
   const categoryIds = new Set(config.categories.map((category) => category.id));
   const fileById = new Map<string, string>();
 

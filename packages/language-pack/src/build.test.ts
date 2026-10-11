@@ -207,7 +207,7 @@ describe('buildLanguagePack', () => {
     const editionDir = copyFixture('valid');
     editJson(editionDir, 'edition.json', (config) => ({
       ...config,
-      languageTraits: { marksStress: true },
+      languageTraits: { ...(config['languageTraits'] as Json), vowels: undefined },
     }));
 
     expect(buildErrors(editionDir)).toEqual([
@@ -223,7 +223,11 @@ describe('buildLanguagePack', () => {
     const editionDir = copyFixture('valid');
     editJson(editionDir, 'edition.json', (config) => ({
       ...config,
-      languageTraits: { marksStress: false },
+      languageTraits: {
+        ...(config['languageTraits'] as Json),
+        marksStress: false,
+        vowels: undefined,
+      },
     }));
     for (const file of validWordFiles) {
       editJson(editionDir, file, (word) => ({ ...word, stress: undefined }));
@@ -240,7 +244,11 @@ describe('buildLanguagePack', () => {
     const editionDir = copyFixture('valid');
     editJson(editionDir, 'edition.json', (config) => ({
       ...config,
-      languageTraits: { marksStress: false },
+      languageTraits: {
+        ...(config['languageTraits'] as Json),
+        marksStress: false,
+        vowels: undefined,
+      },
     }));
 
     expect(buildErrors(editionDir)).toEqual(

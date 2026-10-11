@@ -5,7 +5,23 @@
   "bundleId": "app.slovo.fixture",
   "languageTraits": {
     "marksStress": true,
-    "vowels": "аеєиіїоуюя"
+    "vowels": "а е є и і ї о у ю я",
+    "alphabet": "а б в г ґ д е є ж з и і ї й к л м н о п р с т у ф х ц ч ш щ ь ю я",
+    "sortLocale": "uk",
+    "distractorRule": "same-part-of-speech"
+  },
+  "featureSwitches": {
+    "game": true,
+    "corrections": true
+  },
+  "userSettingDefaults": {
+    "theme": "system",
+    "fontSize": "M",
+    "notificationTimes": ["09:00"],
+    "mix": {
+      "categories": "all",
+      "corrections": true
+    }
   },
   "categories": [
     {

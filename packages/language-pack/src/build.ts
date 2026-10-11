@@ -43,7 +43,7 @@ export function buildLanguagePack({
 }): BuildResult {
   const errors: BuildError[] = [];
 
-  function parseFile<T>(file: string, schema: z.ZodType<T>): T | undefined {
+  function parseFile<T>(file: string, schema: z.ZodType<T>, isEntry = false): T | undefined {
     const json = readJson(editionDir, file);
     if (!json.ok) {
       errors.push({ file, message: json.message });
@@ -51,7 +51,7 @@ export function buildLanguagePack({
     }
     const result = schema.safeParse(json.value);
     if (result.success) return result.data;
-    const entryId = entryIdOf(json.value);
+    const entryId = isEntry ? entryIdOf(json.value) : undefined;
     for (const issue of result.error.issues) {
       errors.push({
         file,
@@ -66,10 +66,10 @@ export function buildLanguagePack({
   const config = parseFile(EDITION_CONFIG_FILE, EditionConfigSchema);
   const manifest = parseFile(MANIFEST_FILE, ContentManifestSchema);
   const words = listJsonFiles(editionDir, WORDS_DIR).flatMap((file): AuthoredWord[] => {
-    const word = parseFile(file, WordSchema);
+    const word = parseFile(file, WordSchema, true);
     return word === undefined ? [] : [{ file, word }];
   });
-  if (config !== undefined) errors.push(...checkContent(config, EDITION_CONFIG_FILE, words));
+  if (config !== undefined) errors.push(...checkContent(config, words));
 
   if (errors.length > 0 || config === undefined || manifest === undefined) {
     return { ok: false, errors };
