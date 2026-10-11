@@ -39,9 +39,14 @@ export interface UserStatePort {
   write(changes: UserStateChanges): Promise<void>;
 }
 
-/** The source of the current time, injected so behaviour stays testable. */
+/**
+ * The source of the current time and the device's time zone, injected so
+ * behaviour stays testable. Local calendar days follow the time zone.
+ */
 export interface Clock {
   now(): Date;
+  /** The IANA name of the current time zone, such as `Europe/Kyiv`. */
+  timeZone(): string;
 }
 
 /** A source of random numbers in [0, 1), injected so behaviour stays testable. */
@@ -49,6 +54,9 @@ export interface Random {
   next(): number;
 }
 
-export const systemClock: Clock = { now: () => new Date() };
+export const systemClock: Clock = {
+  now: () => new Date(),
+  timeZone: () => Intl.DateTimeFormat().resolvedOptions().timeZone,
+};
 
 export const systemRandom: Random = { next: () => Math.random() };

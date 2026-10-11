@@ -1,0 +1,160 @@
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+
+import {
+  createMemoryUserStatePort,
+  openFeed,
+  openUserState,
+  SEEN_DWELL_MS,
+  type Clock,
+  type Feed,
+  type Random,
+} from '@slovo/core';
+
+import { buildLanguagePack, openLanguagePack, type NodeLanguagePack } from './index';
+
+// The Core's Feed over the real Ukrainian Language Pack (spec #51, seam 1). It
+// lives here because only this package can build and read a pack in Node.
+
+const editionDir = fileURLToPath(new URL('../../../editions/uk', import.meta.url));
+
+let workDir: string;
+let pack: NodeLanguagePack;
+let liveIds: readonly string[];
+
+beforeAll(async () => {
+  workDir = mkdtempSync(join(tmpdir(), 'slovo-feed-'));
+  const outFile = join(workDir, 'language-pack.db');
+  const result = buildLanguagePack({ editionDir, outFile });
+  if (!result.ok) throw new Error('The Ukrainian Language Pack does not build');
+  pack = openLanguagePack(outFile);
+  liveIds = await pack.listWordIds();
+});
+
+afterAll(() => {
+  pack.close();
+  rmSync(workDir, { recursive: true, force: true });
+});
+
+/** A seeded random port (a linear congruential generator), so every run draws the same. */
+function seededRandom(seed: number): Random {
+  let state = seed;
+  return {
+    next() {
+      state = (state * 1_664_525 + 1_013_904_223) % 2 ** 32;
+      return state / 2 ** 32;
+    },
+  };
+}
+
+function fakeClock(start: string) {
+  let now = new Date(start).getTime();
+  const clock: Clock = { now: () => new Date(now), timeZone: () => 'Europe/Kyiv' };
+  return {
+    clock,
+    advance(ms: number) {
+      now += ms;
+    },
+  };
+}
+
+async function run(records: Map<string, string>, clock: Clock, seed = 7): Promise<Feed> {
+  const userState = await openUserState({ port: createMemoryUserStatePort(records) });
+  return openFeed({ content: pack, userState, clock, random: seededRandom(seed) });
+}
+
+/** Every card the Feed offers from where it stands, until it repeats or runs out. */
+async function walk(feed: Feed): Promise<string[]> {
+  const ids = feed.cards.map((card) => card.entry.id);
+  for (;;) {
+    const card = await feed.next();
+    if (card === undefined || ids.includes(card.entry.id)) return ids;
+    ids.push(card.entry.id);
+  }
+}
+
+async function look(feed: Feed, time: ReturnType<typeof fakeClock>, position: number, ms: number) {
+  await feed.cardVisible(position);
+  time.advance(ms);
+  await feed.cardHidden(position);
+}
+
+/** The Words a fresh run offers the next day, when the Feed doesn't reopen on the last card. */
+async function unseenNextDay(records: Map<string, string>): Promise<string[]> {
+  return walk(await run(records, fakeClock('2026-10-12T09:00:00+03:00').clock));
+}
+
+const today = '2026-10-11T09:00:00+03:00';
+
+describe('the Feed over the Ukrainian Language Pack', () => {
+  it('offers each live Word once and never a Retired Word', async () => {
+    const offered = await walk(await run(new Map(), fakeClock(today).clock));
+
+    const words = await Promise.all(offered.map((id) => pack.getWord(id)));
+    expect(offered).toHaveLength(liveIds.length);
+    expect(new Set(offered)).toEqual(new Set(liveIds));
+    expect(words.filter((word) => word?.retired !== false)).toEqual([]);
+    // The content has Retired Words, so leaving them out is tested for real.
+    expect(await pack.getWord('w_z21mlp')).toMatchObject({ retired: true });
+  });
+
+  it('shuffles the same way for the same seed, also after a restart', async () => {
+    const records = new Map<string, string>();
+    const first = await walk(await run(records, fakeClock(today).clock, 7));
+    const sameSeed = await walk(await run(new Map(), fakeClock(today).clock, 7));
+    const otherSeed = await walk(await run(new Map(), fakeClock(today).clock, 8));
+
+    // The Cycle keeps the seed it started with, whatever the random port draws now.
+    const restarted = await walk(await run(records, fakeClock(today).clock, 99));
+
+    expect(sameSeed).toEqual(first);
+    expect(restarted).toEqual(first);
+    expect(otherSeed).not.toEqual(first);
+    expect(first).not.toEqual(liveIds);
+  });
+
+  it(`makes a Word Seen only after ${String(SEEN_DWELL_MS)} ms on screen, never on a quick swipe, and never by going back`, async () => {
+    const records = new Map<string, string>();
+    const time = fakeClock(today);
+    const feed = await run(records, time.clock);
+    await feed.next();
+    await feed.next();
+    const [read, skipped, almost] = feed.cards.map((card) => card.entry.id);
+
+    await look(feed, time, 0, SEEN_DWELL_MS);
+    await look(feed, time, 1, 250);
+    await look(feed, time, 2, SEEN_DWELL_MS - 1);
+    // Back over the skipped card to the one already read.
+    await look(feed, time, 1, 250);
+    await look(feed, time, 0, 10_000);
+
+    const unseen = await unseenNextDay(records);
+    expect(unseen).toHaveLength(liveIds.length - 1);
+    expect(unseen).not.toContain(read);
+    expect(unseen).toContain(skipped);
+    expect(unseen).toContain(almost);
+  });
+
+  it('offers no Seen Word again after a restart in the same Cycle', async () => {
+    const records = new Map<string, string>();
+    const time = fakeClock(today);
+    const feed = await run(records, time.clock);
+    for (let position = 0; position < 5; position++) {
+      if (position > 0) await feed.next();
+      await look(feed, time, position, 2000);
+    }
+    const read = feed.cards.map((card) => card.entry.id);
+
+    const restarted = await run(records, time.clock);
+    // It reopens on the card the reader was on; every card after it is new.
+    const [reopenedOn, ...after] = await walk(restarted);
+
+    expect(reopenedOn).toBe(read.at(-1));
+    expect(after).toHaveLength(liveIds.length - read.length);
+    for (const id of read) expect(after).not.toContain(id);
+  });
+});
