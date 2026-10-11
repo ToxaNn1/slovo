@@ -11,6 +11,21 @@ updates:
       # typescript-eslint only supports TypeScript below 6.1; lift this once it supports 7.
       - dependency-name: typescript
         update-types: ['version-update:semver-major']
+      # Node is pinned to 22 (.nvmrc); its types follow that major.
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
+      # React, React Native and the Expo ecosystem must match the Expo SDK
+      # (expo/bundledNativeModules.json). They move together with an SDK
+      # upgrade via `expo install --fix`, never one by one.
+      - dependency-name: 'expo'
+      - dependency-name: 'expo-*'
+      - dependency-name: '@expo/*'
+      - dependency-name: 'react'
+      - dependency-name: 'react-dom'
+      - dependency-name: '@types/react'
+      - dependency-name: 'react-native'
+      - dependency-name: 'react-native-*'
+      - dependency-name: '@react-native/*'
 
   - package-ecosystem: github-actions
     directory: /
