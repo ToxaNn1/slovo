@@ -31,4 +31,20 @@ export default [
       ],
     },
   },
+  {
+    // Language-specific values come from the Edition, never from Core code.
+    // Cyrillic text is the tripwire for the Ukrainian Edition leaking in.
+    files: ['**/*.ts'],
+    ignores: ['**/*.test.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            'Literal[value=/[\\u0400-\\u04FF]/], TemplateElement[value.raw=/[\\u0400-\\u04FF]/]',
+          message: 'The Core must not contain language-specific text; read it from the Edition.',
+        },
+      ],
+    },
+  },
 ];
