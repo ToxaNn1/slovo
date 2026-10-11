@@ -1,10 +1,11 @@
-import { FontSizeProvider, TokensProvider, typeSize } from '@slovo/ui';
+import { DecorProvider, FontSizeProvider, TokensProvider, typeSize } from '@slovo/ui';
 import { DarkTheme, DefaultTheme, Tabs, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useMemo } from 'react';
 
-import { editionStrings, editionTokens } from '../edition';
+import { editionDecor, editionStrings, editionTokens } from '../edition';
 import { LanguagePackProvider } from '../language-pack';
+import { LaunchSplash } from '../launch-splash';
 import { SettingsProvider, useColorSchemeInEffect, useSettings } from '../settings';
 
 const { tabs } = editionStrings;
@@ -12,7 +13,9 @@ const { tabs } = editionStrings;
 export default function RootLayout() {
   return (
     <SettingsProvider>
-      <ThemedTabs />
+      <DecorProvider decor={editionDecor}>
+        <ThemedTabs />
+      </DecorProvider>
     </SettingsProvider>
   );
 }
@@ -76,9 +79,12 @@ function ThemedTabs() {
                 name="saved"
                 options={{ title: tabs.saved, tabBarButtonTestID: 'tab-saved' }}
               />
+              {/* The dev-only Decor showcase; no tab leads to it. */}
+              <Tabs.Screen name="decor" options={{ href: null }} />
             </Tabs>
           </LanguagePackProvider>
         </FontSizeProvider>
+        <LaunchSplash />
       </ThemeProvider>
     </TokensProvider>
   );

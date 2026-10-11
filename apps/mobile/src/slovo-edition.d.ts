@@ -18,6 +18,18 @@ declare module 'slovo-edition/tokens' {
   export default tokens;
 }
 
+/** The Edition's Decor; empty when it supplies none. */
+declare module 'slovo-edition/decor' {
+  const decor: unknown;
+  export default decor;
+}
+
+/** The native splash the Edition's Decor describes; empty when it has none. */
+declare module 'slovo-edition/splash' {
+  const splash: unknown;
+  export default splash;
+}
+
 declare module 'slovo-edition/language-pack' {
   /** The asset id of the compiled Language Pack. */
   const assetId: number;
