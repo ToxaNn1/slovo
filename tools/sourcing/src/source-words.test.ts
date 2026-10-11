@@ -40,6 +40,8 @@ const savedPages: Record<string, { status: number; file: string }> = {
   [`${GOROH}Тлумачення/товмач`]: { status: 200, file: 'goroh/definitions-tovmach.html' },
   [`${GOROH}Словозміна/товмач`]: { status: 200, file: 'goroh/inflection-tovmach.html' },
   [`${GOROH}Тлумачення/плесо`]: { status: 200, file: 'goroh/definitions-pleso.html' },
+  // A verb whose endings give the plural form: «влю, виш; мн. гарка́влять; недок.».
+  [`${GOROH}Тлумачення/гаркавити`]: { status: 200, file: 'goroh/definitions-harkavyty.html' },
 };
 
 function savedLemma(
@@ -500,6 +502,17 @@ describe('sourceWords', () => {
       'Той, хто усно перекладає з однієї мови на іншу під час бесіди, офіційних переговорів і т. ін.; перекладач.',
     );
     expect(word.registers).toEqual(['archaic']);
+  });
+
+  it('reads a verb whose endings give its plural form as a verb', async () => {
+    const { options } = setup({ lemmaList: 'гаркавити language-speech 2\n' });
+
+    const result = await sourceWords(options);
+
+    const [draft] = readDrafts(options.outDir);
+    expect(draft).toMatchObject({ lemma: 'гаркавити', partOfSpeech: 'verb' });
+    expect(draft).not.toHaveProperty('gender');
+    expect(flagsOf(result, 'гаркавити').map((flag) => flag.kind)).not.toContain('plural-only');
   });
 
   it('flags the labels of the other meanings, which the Word cannot carry', async () => {

@@ -776,6 +776,10 @@ function grammarOf(labels: readonly string[]): { partOfSpeech?: PartOfSpeech; ge
     const gender = SUM_GENDERS[label];
     return gender === undefined ? [] : [gender];
   });
+  // After a verb's endings, `множина` introduces its plural form (`мн. гарка́влять`).
+  const isVerb = labels.some((label) => SUM_PARTS_OF_SPEECH[label] === 'verb');
+  if (isVerb && genders.every((gender) => gender === 'plural-only'))
+    return { partOfSpeech: 'verb' };
   if (genders.length > 0) {
     // A gender wins over `множина`, which may just note a usual plural; two
     // genders (`ч. і ж.`) leave the choice to a human.
