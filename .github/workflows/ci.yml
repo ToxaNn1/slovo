@@ -17,7 +17,7 @@ env:
 
 jobs:
   checks:
-    name: Lint, typecheck and test
+    name: Lint, typecheck, test and Language Pack
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -30,6 +30,8 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
+      - name: Build the Ukrainian Language Pack
+        run: pnpm build:pack uk
 
   audit:
     name: Dependency audit

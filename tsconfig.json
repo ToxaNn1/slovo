@@ -1,8 +1,17 @@
 {
   "files": [],
   "references": [
-    { "path": "packages/core" },
-    { "path": "packages/contracts" },
-    { "path": "packages/ui" }
+    {
+      "path": "packages/core"
+    },
+    {
+      "path": "packages/contracts"
+    },
+    {
+      "path": "packages/ui"
+    },
+    {
+      "path": "packages/language-pack"
+    }
   ]
 }
