@@ -11,8 +11,10 @@ env:
   SCHEME: slovo-uk
   METRO_URL: http%3A%2F%2Flocalhost%3A8081
 ---
+# Keep the app state: clearing it brings back the development client's
+# first-launch menu sheet, which covers Home.
 - launchApp:
-    clearState: true
+    clearState: false
 # Point the development client at the local Metro server.
 - openLink: ${SCHEME}://expo-development-client/?url=${METRO_URL}
 # The development client explains its menu on the first launch.
