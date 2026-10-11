@@ -1,0 +1,12 @@
+{
+  "id": "uk",
+  "locale": "uk-UA",
+  "displayName": "SLOVO",
+  "bundleId": "app.slovo.uk",
+  "languageTraits": { "marksStress": true },
+  "categories": [
+    { "id": "nature-weather", "displayName": "Природа і погода" },
+    { "id": "household-crafts", "displayName": "Побут і ремесла" },
+    { "id": "language-speech", "displayName": "Мова і мовлення" }
+  ]
+}
