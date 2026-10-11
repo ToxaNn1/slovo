@@ -4,11 +4,11 @@ import { renderStress } from './index';
 
 describe('renderStress', () => {
   it('puts a combining acute accent after the stressed vowel', () => {
-    expect(renderStress({ lemma: 'мжичка', stress: [2] })).toBe('мжи́чка');
+    expect(renderStress({ lemma: 'drizzle', stress: [2] })).toBe('dri\u0301zzle');
   });
 
   it('marks every valid Stress of a Lemma', () => {
-    expect(renderStress({ lemma: 'завжди', stress: [5, 1] })).toBe('за́вжди́');
+    expect(renderStress({ lemma: 'always', stress: [3, 0] })).toBe('a\u0301lwa\u0301ys');
   });
 
   it('leaves a Lemma without Stress unchanged', () => {
