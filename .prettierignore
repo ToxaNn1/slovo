@@ -5,3 +5,6 @@ tools/sourcing/fixtures/
 
 # Id registries, appended to one id per line by `pnpm build:pack <edition-id> --record`
 **/content/ids.json
+
+# The Claude Design export, kept byte for byte as exported
+docs/design/claude-design/

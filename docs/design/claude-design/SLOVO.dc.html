@@ -1,0 +1,1492 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;1,7..72,400&amp;family=Manrope:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#E9E3D8;font-family:Manrope,system-ui,sans-serif;color:#1E1813}
+a{color:#A3221B}a:hover{color:#6E1611}
+button{font-family:inherit}
+@keyframes heartPop{0%{transform:scale(1)}35%{transform:scale(1.35)}70%{transform:scale(.92)}100%{transform:scale(1)}}
+@keyframes lifeLost{0%{transform:scale(1);opacity:1}50%{transform:scale(1.4) rotate(-12deg);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+@keyframes jiggle{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.dv-turn{padding:48px 56px 40px;border-bottom:1px solid rgba(0,0,0,.08);scroll-margin-top:16px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 24px}
+.dv-tid{font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#1a1a1a;color:#fff;border-radius:4px;text-decoration:none}
+.dv-tname{font:600 13px/1.2 Manrope,sans-serif;color:#1a1a1a}
+.dv-opts{display:flex;flex-wrap:wrap;gap:56px 48px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:14px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none}
+.dv-olabel{display:flex;align-items:baseline;gap:8px;font:500 12px/1.3 Manrope,sans-serif;color:rgba(0,0,0,.6)}
+.dv-opt:target .dv-oid{background:#A3221B;color:#fff}
+.dv-next{margin:32px 0 0;font:12px/1.5 Manrope,sans-serif;color:rgba(0,0,0,.55)}
+</style>
+</helmet>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <pattern id="zzGold" width="16" height="10" patternUnits="userSpaceOnUse"><path fill="#D4AE5C" d="M0 8h2v2H0zM2 6h2v2H2zM4 4h2v2H4zM6 2h2v2H6zM8 0h2v2H8zM10 2h2v2h-2zM12 4h2v2h-2zM14 6h2v2h-2z"></path></pattern>
+    <pattern id="zzRed" width="16" height="10" patternUnits="userSpaceOnUse"><path fill="#A3221B" d="M0 8h2v2H0zM2 6h2v2H2zM4 4h2v2H4zM6 2h2v2H6zM8 0h2v2H8zM10 2h2v2h-2zM12 4h2v2h-2zM14 6h2v2h-2z"></path></pattern>
+    <pattern id="bgDark" width="44" height="44" patternUnits="userSpaceOnUse"><path fill="#D4AE5C" fill-opacity=".06" d="M20 14h4v16h-4zM14 20h16v4H14z"></path></pattern>
+    <pattern id="bgLight" width="44" height="44" patternUnits="userSpaceOnUse"><path fill="#A3221B" fill-opacity=".05" d="M20 14h4v16h-4zM14 20h16v4H14z"></path></pattern>
+    <g id="rosGold"><path fill="#D4AE5C" d="M8 0h2v2H8zM6 2h2v2H6zM10 2h2v2h-2zM4 4h2v2H4zM12 4h2v2h-2zM2 6h2v2H2zM14 6h2v2h-2zM0 8h2v2H0zM16 8h2v2h-2zM2 10h2v2H2zM14 10h2v2h-2zM4 12h2v2H4zM12 12h2v2h-2zM6 14h2v2H6zM10 14h2v2h-2zM8 16h2v2H8z"></path><path fill="#C8372D" d="M8 4h2v10H8zM4 8h10v2H4z"></path></g>
+    <g id="rosLight"><path fill="#A3221B" d="M8 0h2v2H8zM6 2h2v2H6zM10 2h2v2h-2zM4 4h2v2H4zM12 4h2v2h-2zM2 6h2v2H2zM14 6h2v2h-2zM0 8h2v2H0zM16 8h2v2h-2zM2 10h2v2H2zM14 10h2v2h-2zM4 12h2v2H4zM12 12h2v2h-2zM6 14h2v2H6zM10 14h2v2h-2zM8 16h2v2H8z"></path><path fill="#1E1813" d="M8 4h2v10H8zM4 8h10v2H4z"></path></g>
+    <g id="cornGold"><path fill="#D4AE5C" d="M0 0h16v2H0zM0 2h2v14H0z"></path><path fill="#C8372D" d="M4 4h6v2H4zM4 6h2v4H4z"></path></g>
+    <g id="cornLight"><path fill="#9C7A2E" d="M0 0h16v2H0zM0 2h2v14H0z"></path><path fill="#A3221B" d="M4 4h6v2H4zM4 6h2v4H4z"></path></g>
+  </defs>
+</svg>
+
+<header style="padding:56px 56px 8px;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:56px;max-width:1500px">
+  <div style="display:flex;flex-direction:column;gap:18px">
+    <div style="font:600 12px/1 Manrope;letter-spacing:.28em;color:#A3221B">SLOVO · УКРАЇНСЬКЕ ВИДАННЯ · ПРОХІД 1</div>
+    <h1 style="margin:0;font:500 64px/1.02 Literata,serif;letter-spacing:-.02em;text-wrap:balance">Стара добра книжка, яку гортають великим пальцем.</h1>
+    <p style="margin:0;font:400 17px/1.6 Manrope;color:#5A4E40;max-width:620px;text-wrap:pretty">Перший прохід за брифом: токени, набір Декору, порівняння Core ↔ Українське видання, Стрічка (жива — гортайте й ставте серце), Виправлення, Гра (жива — оберіть відповідь), Збережене, Share-картка, splash та іконка. Решта екранів — наступним кроком.</p>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:14px;font:400 14px/1.55 Manrope;color:#3E342A;padding-top:28px">
+    <div style="font:700 11px/1 Manrope;letter-spacing:.16em;color:#8A7B66">РІШЕННЯ</div>
+    <div style="display:grid;grid-template-columns:120px minmax(0,1fr);gap:10px 18px">
+      <b style="font-weight:600">Слово</b><span><span style="font-family:Literata">Literata</span> — книжкова антиква з оптичними розмірами; чиста кирилиця й комбінований акут U+0301 на будь-якому кеглі.</span>
+      <b style="font-weight:600">Інтерфейс</b><span>Manrope — спокійний гротеск, не конкурує зі словом.</span>
+      <b style="font-weight:600">Кольори</b><span>Чорна нитка, червона нитка, золото, полотно. Червоний — тільки декор і акцент, ніколи «помилка».</span>
+      <b style="font-weight:600">Декор</b><span>Усе — «хрестик» 2×2 pt: зигзаг-роздільник, розетка-восьмикутник, кутові L-стібки, ледь помітний фон. Жодних ілюстрацій поверх слова.</span>
+      <b style="font-weight:600">Фабрика</b><span>Core не знає про вишивку: ті самі макети, у слотах — тонка лінія й крапка.</span>
+    </div>
+  </div>
+</header>
+
+<section class="dv-turn" id="t5">
+  <div class="dv-thd"><a class="dv-tid" href="#t5">5</a><span class="dv-tname">Про застосунок і відгук</span></div>
+  <div class="dv-opts">
+
+    <div class="dv-opt" id="5a">
+      <div class="dv-olabel"><a class="dv-oid" href="#5a">5a</a>Про застосунок · світла</div>
+      <div style="padding:12px">
+        <div data-screen-label="About" style="width:393px;height:852px;border-radius:54px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#F5EEE2;box-shadow:0 0 0 10px #111,0 30px 60px rgba(0,0,0,.25)">
+          <div style="height:54px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:6px 34px 0 42px;font:600 16px Manrope;color:#1E1813"><span>9:41</span><svg width="26" height="12" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3" fill="none" stroke="currentColor" opacity=".4"></rect><rect x="2" y="2" width="17" height="8" rx="1.6" fill="currentColor"></rect></svg></div>
+          <div style="height:44px;flex:none;display:flex;align-items:center;padding:0 6px"><button style="height:44px;padding:0 8px;border:none;background:none;display:flex;align-items:center;gap:2px;font:600 16px Manrope;color:#A3221B"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"></path></svg>Налаштування</button></div>
+          <div style="flex:1;overflow-y:auto;scrollbar-width:none;padding:10px 20px 24px;display:flex;flex-direction:column;gap:20px">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:8px 0 4px;text-align:center">
+              <div style="width:84px;height:84px;border-radius:19px;background:#15110E;position:relative;overflow:hidden;display:grid;place-items:center;box-shadow:0 8px 20px rgba(0,0,0,.18)"><span style="font:500 56px/1 Literata,serif;color:#F3EADB;margin-top:-8px">S</span><svg aria-hidden="true" style="position:absolute;left:0;bottom:12px" width="100%" height="6"><rect width="100%" height="6" fill="#D4AE5C"></rect></svg></div>
+              <span style="font:500 26px Literata,serif;letter-spacing:.28em;padding-left:.28em;color:#1E1813">SLOVO</span>
+              <span style="font:500 13px Manrope;color:#6B5E4E">Українське видання · версія 1.0 (42)</span>
+            </div>
+            <div style="position:relative;padding:22px 22px 20px;background:#FBF7F0;border:1px solid rgba(156,122,46,.32);border-radius:4px;display:flex;flex-direction:column;gap:12px">
+              <svg aria-hidden="true" width="16" height="16" style="position:absolute;left:8px;top:8px"><use href="#cornLight"></use></svg>
+              <svg aria-hidden="true" width="16" height="16" style="position:absolute;right:8px;bottom:8px;transform:scale(-1,-1)"><use href="#cornLight"></use></svg>
+              <p style="margin:0;font:400 17px/1.55 Literata,serif;color:#1E1813;text-wrap:pretty">Ми збираємо рідкісні, забуті й просто гарні слова, щоб говорити українською багатше — щодня потроху.</p>
+              <span style="font:500 13px/1.5 Manrope;color:#6B5E4E">Джерела: тлумачні та діалектні словники, класична й сучасна література.</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <span style="padding:0 4px;font:700 11px Manrope;letter-spacing:.14em;color:#6B5E4E">ВІДГУК</span>
+              <div style="display:flex;flex-direction:column;background:#FBF7F0;border:1px solid rgba(156,122,46,.3);border-radius:4px">
+                <button onClick="{{ fbOpenWord }}" style="display:flex;align-items:center;gap:14px;min-height:56px;padding:0 16px;border:none;border-bottom:1px solid rgba(156,122,46,.18);background:none;text-align:left;cursor:pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#A3221B" stroke-width="1.8"><path d="M12 5v14M5 12h14"></path></svg><span style="flex:1;display:flex;flex-direction:column"><span style="font:600 15px Manrope;color:#1E1813">Запропонувати слово</span><span style="font:400 12.5px Manrope;color:#6B5E4E">або Виправлення</span></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B5E4E" stroke-width="2"><path d="M9 6l6 6-6 6"></path></svg></button>
+                <button onClick="{{ fbOpenBug }}" style="display:flex;align-items:center;gap:14px;min-height:56px;padding:0 16px;border:none;border-bottom:1px solid rgba(156,122,46,.18);background:none;text-align:left;cursor:pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#A3221B" stroke-width="1.8"><path d="M12 4v10M12 18v.5"></path><circle cx="12" cy="12" r="9.5"></circle></svg><span style="flex:1;display:flex;flex-direction:column"><span style="font:600 15px Manrope;color:#1E1813">Повідомити про помилку</span><span style="font:400 12.5px Manrope;color:#6B5E4E">у слові, наголосі чи застосунку</span></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B5E4E" stroke-width="2"><path d="M9 6l6 6-6 6"></path></svg></button>
+                <div style="display:flex;align-items:center;gap:14px;min-height:56px;padding:0 16px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#A3221B" stroke-width="1.8"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"></path></svg><span style="flex:1;font:600 15px Manrope;color:#1E1813">Оцінити в App Store</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B5E4E" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"></path></svg></div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;background:#FBF7F0;border:1px solid rgba(156,122,46,.3);border-radius:4px">
+              <div style="display:flex;align-items:center;justify-content:space-between;min-height:52px;padding:0 16px;border-bottom:1px solid rgba(156,122,46,.18)"><span style="font:500 15px Manrope;color:#1E1813">Поділитися SLOVO</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B5E4E" stroke-width="1.8"><path d="M12 3.5v11M8 7.5l4-4 4 4M6 11v8.5h12V11"></path></svg></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;min-height:52px;padding:0 16px;border-bottom:1px solid rgba(156,122,46,.18)"><span style="font:500 15px Manrope;color:#1E1813">Політика конфіденційності</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B5E4E" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"></path></svg></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;min-height:52px;padding:0 16px"><span style="font:500 15px Manrope;color:#1E1813">Умови використання</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B5E4E" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"></path></svg></div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:6px 0 0">
+              <svg height="10" width="140" aria-hidden="true"><rect width="100%" height="10" fill="url(#zzRed)"></rect></svg>
+              <span style="font:italic 400 14px Literata,serif;color:#6B5E4E">Зроблено з любов’ю до мови</span>
+            </div>
+          </div>
+          <sc-if value="{{ fbOpen }}" hint-placeholder-val="{{ false }}">
+            <div onClick="{{ fbClose }}" style="position:absolute;inset:0;background:rgba(30,24,19,.45)"></div>
+            <div role="dialog" aria-label="{{ fbTitle }}" style="position:absolute;left:0;right:0;bottom:0;top:70px;background:#F5EEE2;border-radius:22px 22px 0 0;padding:12px 20px 34px;display:flex;flex-direction:column;gap:14px;animation:sheetUp .32s cubic-bezier(.2,.8,.2,1)">
+              <div style="align-self:center;width:38px;height:5px;border-radius:3px;background:rgba(30,24,19,.2)"></div>
+              <sc-if value="{{ fbSent }}" hint-placeholder-val="{{ false }}">
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;padding:0 20px 60px">
+                  <svg width="90" height="90" viewBox="0 0 18 18" aria-hidden="true"><use href="#rosLight"></use></svg>
+                  <h3 style="margin:0;font:500 26px/1.2 Literata,serif;color:#1E1813">Дякуємо!</h3>
+                  <p style="margin:0;font:400 15px/1.5 Manrope;color:#6B5E4E">{{ fbThanks }}</p>
+                  <button onClick="{{ fbClose }}" style="margin-top:8px;height:50px;padding:0 28px;border:none;border-radius:4px;background:#1E1813;color:#F5EEE2;font:700 15px Manrope;cursor:pointer">Готово</button>
+                </div>
+              </sc-if>
+              <sc-if value="{{ fbForm }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;justify-content:space-between;align-items:center"><button onClick="{{ fbClose }}" style="height:44px;border:none;background:none;padding:0;font:600 15px Manrope;color:#6B5E4E;cursor:pointer">Скасувати</button><span style="font:700 15px Manrope;color:#1E1813">{{ fbTitle }}</span><button onClick="{{ fbSend }}" style="height:44px;border:none;background:none;padding:0;font:700 15px Manrope;cursor:pointer;color:{{ fbSendColor }}">Надіслати</button></div>
+                <div style="display:grid;grid-template-columns:repeat(2,1fr);padding:3px;background:#EADFCB;border-radius:4px" role="radiogroup">
+                  <sc-for list="{{ fbTypes }}" as="t" hint-placeholder-count="2">
+                    <button onClick="{{ t.onTap }}" role="radio" aria-checked="{{ t.on }}" style="height:40px;border:none;border-radius:3px;font:600 14px Manrope;cursor:pointer;color:#1E1813;background:{{ t.bg }};box-shadow:{{ t.shadow }}">{{ t.label }}</button>
+                  </sc-for>
+                </div>
+                <label style="display:flex;flex-direction:column;gap:6px"><span style="font:700 11px Manrope;letter-spacing:.14em;color:#6B5E4E">{{ fbField1 }}</span><input value="{{ fbWord }}" onChange="{{ onFbWord }}" placeholder="{{ fbPh1 }}" style="height:52px;padding:0 14px;border-radius:4px;border:1px solid rgba(156,122,46,.4);background:#FBF7F0;font:500 20px Literata,serif;color:#1E1813;outline:none"></input></label>
+                <label style="display:flex;flex-direction:column;gap:6px"><span style="font:700 11px Manrope;letter-spacing:.14em;color:#6B5E4E">{{ fbField2 }}</span><textarea value="{{ fbText }}" onChange="{{ onFbText }}" placeholder="{{ fbPh2 }}" rows="5" style="padding:12px 14px;border-radius:4px;border:1px solid rgba(156,122,46,.4);background:#FBF7F0;font:400 15px/1.5 Manrope;color:#1E1813;outline:none;resize:none"></textarea></label>
+                <span style="font:500 12.5px/1.5 Manrope;color:#6B5E4E">Наголос можна позначити так: ке'бета — ми перетворимо на ке́бета.</span>
+              </sc-if>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Далі: «темна версія <a class="dv-oid" href="#5a">5a</a>» · «екран акаунта SLOVO ID» · «друге видання для перевірки фабрики»</p>
+</section>
+
+<section class="dv-turn" id="t4">
+  <div class="dv-thd"><a class="dv-tid" href="#t4">4</a><span class="dv-tname">Стани завантаження й помилки, гайд віджетів, приховані записи, токени для розробки</span></div>
+  <div class="dv-opts">
+
+    <!-- 4a Loading + error -->
+    <div class="dv-opt" id="4a">
+      <div class="dv-olabel"><a class="dv-oid" href="#4a">4a</a>Стрічка · завантаження (темна) та помилка мережі (світла)</div>
+      <div style="display:flex;gap:40px;padding:12px">
+        <div data-screen-label="Feed loading" style="width:393px;height:852px;border-radius:54px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#15110E;box-shadow:0 0 0 10px #000,0 30px 60px rgba(0,0,0,.3)">
+          <div style="height:54px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:6px 34px 0 42px;font:600 16px Manrope;color:#F3EADB"><span>9:41</span><svg width="26" height="12" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3" fill="none" stroke="currentColor" opacity=".4"></rect><rect x="2" y="2" width="17" height="8" rx="1.6" fill="currentColor"></rect></svg></div>
+          <div style="flex:1;padding:6px 24px 0;display:flex;flex-direction:column" aria-busy="true" aria-label="Завантаження слів">
+            <div style="height:44px;display:flex;align-items:center"><div style="width:72px;height:40px;border-radius:20px;background:#1F1915"></div></div>
+            <div style="margin-top:22px;padding:32px 26px 26px;background:#1F1915;border:1px solid rgba(212,174,92,.18);border-radius:4px;display:flex;flex-direction:column;gap:18px">
+              <div style="width:62%;height:50px;border-radius:2px;background:#2A221C;animation:{{ pulse }}"></div>
+              <div style="width:30%;height:14px;border-radius:2px;background:#2A221C;animation:{{ pulse }}"></div>
+              <div aria-hidden="true" style="display:flex;gap:4px;padding:6px 0">
+                <sc-for list="{{ stitches }}" as="st" hint-placeholder-count="14">
+                  <span style="width:10px;height:10px;transition:background .2s;background:{{ st.c }}"></span>
+                </sc-for>
+              </div>
+              <div style="width:100%;height:16px;border-radius:2px;background:#2A221C;animation:{{ pulse }}"></div>
+              <div style="width:84%;height:16px;border-radius:2px;background:#2A221C;animation:{{ pulse }}"></div>
+              <div style="width:70%;height:16px;border-radius:2px;background:#2A221C;animation:{{ pulse }}"></div>
+            </div>
+            <p style="margin:18px 0 0;text-align:center;font:500 13px Manrope;color:#B5A893">Вишиваємо слова…</p>
+          </div>
+          <nav style="height:84px;flex:none;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid rgba(212,174,92,.2);background:#15110E;padding-top:8px">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:700 10.5px Manrope;color:#D4AE5C"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10.5 12 4l8 6.5V20h-5v-6H9v6H4z"></path></svg>Головна</div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:600 10.5px Manrope;color:#B5A893"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"></path><circle cx="15" cy="7" r="2"></circle><circle cx="9" cy="17" r="2"></circle></svg>Налаштування</div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:600 10.5px Manrope;color:#B5A893"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="3"></rect><path d="M12 8l3 4-3 4-3-4z"></path></svg>Гра</div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:600 10.5px Manrope;color:#B5A893"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 4h12v16l-6-4-6 4z"></path></svg>Збережене</div>
+          </nav>
+        </div>
+
+        <div data-screen-label="Feed error" style="width:393px;height:852px;border-radius:54px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#F5EEE2;box-shadow:0 0 0 10px #111,0 30px 60px rgba(0,0,0,.25)">
+          <svg aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%"><rect width="100%" height="100%" fill="url(#bgLight)"></rect></svg>
+          <div style="position:relative;height:54px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:6px 34px 0 42px;font:600 16px Manrope;color:#1E1813"><span>9:41</span><svg width="26" height="12" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3" fill="none" stroke="currentColor" opacity=".4"></rect><rect x="2" y="2" width="5" height="8" rx="1.6" fill="currentColor"></rect></svg></div>
+          <div style="position:relative;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:0 40px 60px;text-align:center">
+            <svg width="120" height="40" viewBox="0 0 48 16" aria-hidden="true"><path fill="#A3221B" d="M0 12h2v2H0zM2 10h2v2H2zM4 8h2v2H4zM6 6h2v2H6zM8 4h2v2H8zM10 6h2v2h-2zM12 8h2v2h-2zM14 10h2v2h-2z"></path><path fill="#A3221B" fill-opacity=".35" d="M20 12h2v2h-2zM24 8h2v2h-2zM28 4h2v2h-2z"></path><path fill="#A3221B" d="M32 12h2v2h-2zM34 10h2v2h-2zM36 8h2v2h-2zM38 6h2v2h-2zM40 4h2v2h-2zM42 6h2v2h-2zM44 8h2v2h-2zM46 10h2v2h-2z"></path></svg>
+            <h3 style="margin:0;font:500 28px/1.2 Literata,serif;color:#1E1813">Нитка урвалася</h3>
+            <p style="margin:0;font:400 15px/1.5 Manrope;color:#6B5E4E">Немає з'єднання з інтернетом. Збережені слова доступні й без нього.</p>
+            <div style="display:flex;flex-direction:column;gap:8px;width:100%;margin-top:6px">
+              <button style="height:54px;border:none;border-radius:4px;background:#1E1813;color:#F5EEE2;font:700 16px Manrope">Спробувати ще</button>
+              <button style="height:48px;border:none;background:none;font:600 15px Manrope;color:#A3221B">Відкрити Збережене</button>
+            </div>
+          </div>
+          <nav style="position:relative;height:84px;flex:none;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid rgba(156,122,46,.25);background:#F5EEE2;padding-top:8px">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:700 10.5px Manrope;color:#A3221B"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10.5 12 4l8 6.5V20h-5v-6H9v6H4z"></path></svg>Головна</div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:600 10.5px Manrope;color:#6B5E4E"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"></path><circle cx="15" cy="7" r="2"></circle><circle cx="9" cy="17" r="2"></circle></svg>Налаштування</div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:600 10.5px Manrope;color:#6B5E4E"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="3"></rect><path d="M12 8l3 4-3 4-3-4z"></path></svg>Гра</div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:600 10.5px Manrope;color:#6B5E4E"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 4h12v16l-6-4-6 4z"></path></svg>Збережене</div>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4b Widget guide -->
+    <div class="dv-opt" id="4b">
+      <div class="dv-olabel"><a class="dv-oid" href="#4b">4b</a>Налаштування → «Віджети: як додати» · живе: кроки</div>
+      <div style="padding:12px">
+        <div data-screen-label="Widget guide" style="width:393px;height:852px;border-radius:54px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#F5EEE2;box-shadow:0 0 0 10px #111,0 30px 60px rgba(0,0,0,.25)">
+          <div style="height:54px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:6px 34px 0 42px;font:600 16px Manrope;color:#1E1813"><span>9:41</span><svg width="26" height="12" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3" fill="none" stroke="currentColor" opacity=".4"></rect><rect x="2" y="2" width="17" height="8" rx="1.6" fill="currentColor"></rect></svg></div>
+          <div style="height:44px;flex:none;display:flex;align-items:center;padding:0 6px"><button style="height:44px;padding:0 8px;border:none;background:none;display:flex;align-items:center;gap:2px;font:600 16px Manrope;color:#A3221B"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"></path></svg>Налаштування</button></div>
+          <div style="flex:1;padding:6px 24px 0;display:flex;flex-direction:column;gap:18px">
+            <h1 style="margin:0;font:500 32px/1.15 Literata,serif;color:#1E1813">Слово на головному екрані</h1>
+            <div style="height:300px;border-radius:28px;background:linear-gradient(160deg,#5C4A3B,#2A211B);position:relative;overflow:hidden;display:grid;place-items:center">
+              <div style="display:grid;grid-template-columns:repeat(4,46px);gap:18px;opacity:{{ wgGridOp }};transition:opacity .3s">
+                <sc-for list="{{ wgIcons }}" as="i" hint-placeholder-count="8"><div style="width:46px;height:46px;border-radius:11px;background:rgba(245,238,226,.22);animation:{{ i.anim }}"></div></sc-for>
+              </div>
+              <sc-if value="{{ wgShowGallery }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute;left:16px;right:16px;bottom:16px;background:#FBF7F0;border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:10px;animation:sheetUp .35s cubic-bezier(.2,.8,.2,1)">
+                  <div style="display:flex;align-items:center;gap:10px;height:36px;padding:0 12px;border-radius:10px;background:#F0E5D3;font:500 14px Manrope;color:#6B5E4E"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="6"></circle><path d="M20 20l-4.5-4.5"></path></svg>SLOVO</div>
+                  <div style="display:flex;align-items:center;gap:12px;padding:6px"><div style="width:42px;height:42px;border-radius:10px;background:#15110E;display:grid;place-items:center"><span style="font:500 26px/1 Literata;color:#F3EADB;margin-top:-3px">S</span></div><div style="display:flex;flex-direction:column"><span style="font:700 15px Manrope;color:#1E1813">SLOVO</span><span style="font:500 12px Manrope;color:#6B5E4E">Малий · Середній</span></div></div>
+                </div>
+              </sc-if>
+              <sc-if value="{{ wgShowWidget }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute;top:34px;left:50%;margin-left:-146px;width:292px;height:136px;border-radius:22px;background:#15110E;padding:16px 18px;box-sizing:border-box;display:flex;flex-direction:column;gap:4px;animation:heartPop .5s cubic-bezier(.3,1.6,.5,1)">
+                  <span style="font:700 9px Manrope;letter-spacing:.16em;color:#D4AE5C">УСІ СЛОВА</span>
+                  <span style="margin-top:auto;font:500 28px/1.05 Literata,serif;color:#F3EADB">ке́бета</span>
+                  <span style="font:400 13px Literata;color:#D9CDB9">кмітливість, тямущість</span>
+                  <svg style="margin-top:6px" height="8" width="100%"><rect width="100%" height="8" fill="url(#zzGold)"></rect></svg>
+                </div>
+              </sc-if>
+            </div>
+            <div style="display:flex;flex-direction:column">
+              <sc-for list="{{ wgSteps }}" as="s" hint-placeholder-count="3">
+                <button onClick="{{ s.onTap }}" style="display:flex;gap:14px;align-items:flex-start;padding:12px 0;border:none;border-bottom:1px solid rgba(156,122,46,.22);background:none;text-align:left;cursor:pointer;opacity:{{ s.op }};transition:opacity .2s">
+                  <span style="width:28px;height:28px;flex:none;border-radius:2px;display:grid;place-items:center;font:700 13px Manrope;background:{{ s.numBg }};color:{{ s.numColor }}">{{ s.n }}</span>
+                  <span style="display:flex;flex-direction:column;gap:2px"><span style="font:700 15px Manrope;color:#1E1813">{{ s.title }}</span><span style="font:400 13.5px/1.45 Manrope;color:#6B5E4E">{{ s.sub }}</span></span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4c Hidden entries -->
+    <div class="dv-opt" id="4c">
+      <div class="dv-olabel"><a class="dv-oid" href="#4c">4c</a>Приховані записи · темна · живе: «Повернути» з undo-тостом</div>
+      <div style="padding:12px">
+        <div data-screen-label="Hidden entries" style="width:393px;height:852px;border-radius:54px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#15110E;box-shadow:0 0 0 10px #000,0 30px 60px rgba(0,0,0,.3)">
+          <div style="height:54px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:6px 34px 0 42px;font:600 16px Manrope;color:#F3EADB"><span>9:41</span><svg width="26" height="12" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3" fill="none" stroke="currentColor" opacity=".4"></rect><rect x="2" y="2" width="17" height="8" rx="1.6" fill="currentColor"></rect></svg></div>
+          <div style="height:44px;flex:none;display:flex;align-items:center;padding:0 6px"><button style="height:44px;padding:0 8px;border:none;background:none;display:flex;align-items:center;gap:2px;font:600 16px Manrope;color:#D4AE5C"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"></path></svg>Налаштування</button></div>
+          <h1 style="margin:0;padding:6px 24px 4px;font:500 32px Literata,serif;color:#F3EADB">Приховане</h1>
+          <p style="margin:0;padding:0 24px 16px;font:400 14px/1.5 Manrope;color:#B5A893">Ці записи й категорії не з’являються у Стрічці.</p>
+          <div style="flex:1;padding:0 24px;display:flex;flex-direction:column">
+            <span style="font:700 11px Manrope;letter-spacing:.14em;color:#D4AE5C;padding:8px 0">ЗАПИСИ</span>
+            <sc-for list="{{ hiddenList }}" as="h" hint-placeholder-count="3">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:60px;border-bottom:1px solid rgba(212,174,92,.14)">
+                <div style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font:400 20px Literata,serif;color:#F3EADB">{{ h.lemma }}</span><span style="font:500 12px Manrope;color:#B5A893">{{ h.kind }}</span></div>
+                <button onClick="{{ h.onRestore }}" style="height:40px;padding:0 14px;border:1px solid rgba(212,174,92,.4);border-radius:3px;background:none;color:#D4AE5C;font:700 13px Manrope;cursor:pointer;flex:none">Повернути</button>
+              </div>
+            </sc-for>
+            <sc-if value="{{ hiddenEmpty }}" hint-placeholder-val="{{ false }}"><p style="margin:14px 0;font:400 15px Manrope;color:#B5A893">Прихованих записів немає.</p></sc-if>
+            <span style="font:700 11px Manrope;letter-spacing:.14em;color:#D4AE5C;padding:22px 0 8px">КАТЕГОРІЇ</span>
+            <div style="display:flex;justify-content:space-between;align-items:center;min-height:60px;border-bottom:1px solid rgba(212,174,92,.14)"><span style="font:600 16px Manrope;color:#F3EADB">Застарілі</span><button style="height:40px;padding:0 14px;border:1px solid rgba(212,174,92,.4);border-radius:3px;background:none;color:#D4AE5C;font:700 13px Manrope">Увімкнути</button></div>
+          </div>
+          <sc-if value="{{ undoShow }}" hint-placeholder-val="{{ false }}">
+            <div role="status" style="position:absolute;left:16px;right:16px;bottom:40px;padding:12px 12px 12px 18px;background:#F3EADB;border-radius:6px;display:flex;align-items:center;justify-content:space-between;gap:12px;animation:sheetUp .25s ease-out;box-shadow:0 10px 30px rgba(0,0,0,.4)">
+              <span style="font:500 14px Manrope;color:#15110E">{{ undoText }}</span>
+              <button onClick="{{ undo }}" style="height:40px;padding:0 14px;border:none;border-radius:3px;background:#15110E;color:#F3EADB;font:700 13px Manrope;cursor:pointer">Скасувати</button>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4d Dev tokens -->
+    <div class="dv-opt" id="4d">
+      <div class="dv-olabel"><a class="dv-oid" href="#4d">4d</a>Токени для розробки · Core-імена, значення скіна UA</div>
+      <div style="width:880px;background:#FBF7F0;border:1px solid rgba(0,0,0,.08);border-radius:6px;padding:36px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:36px 40px;font:400 13px/1.5 Manrope;color:#1E1813">
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <span style="font:700 11px Manrope;letter-spacing:.16em;color:#6B5E4E">ВІДСТУПИ · 4-pt СІТКА</span>
+          <sc-for list="{{ tkSpace }}" as="t" hint-placeholder-count="7">
+            <div style="display:grid;grid-template-columns:110px 44px minmax(0,1fr);gap:12px;align-items:center"><code style="font:500 12px ui-monospace,Menlo,monospace">{{ t.name }}</code><span style="color:#6B5E4E">{{ t.v }}</span><div style="height:10px;background:#A3221B;width:{{ t.w }}"></div></div>
+          </sc-for>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <span style="font:700 11px Manrope;letter-spacing:.16em;color:#6B5E4E">РАДІУСИ · Core → UA</span>
+          <div style="display:grid;grid-template-columns:110px repeat(2,minmax(0,1fr));gap:12px;align-items:center">
+            <span></span><span style="font:600 11px Manrope;color:#6B5E4E">Core</span><span style="font:600 11px Manrope;color:#A3221B">UA</span>
+            <code style="font:500 12px ui-monospace,Menlo,monospace">radius.card</code><div style="display:flex;align-items:center;gap:8px"><div style="width:44px;height:32px;border:1.5px solid #1E1813;border-radius:22px 22px 22px 22px / 16px"></div>22</div><div style="display:flex;align-items:center;gap:8px"><div style="width:44px;height:32px;border:1.5px solid #A3221B;border-radius:4px"></div>4</div>
+            <code style="font:500 12px ui-monospace,Menlo,monospace">radius.chip</code><div style="display:flex;align-items:center;gap:8px"><div style="width:44px;height:24px;border:1.5px solid #1E1813;border-radius:12px"></div>14</div><div style="display:flex;align-items:center;gap:8px"><div style="width:44px;height:24px;border:1.5px solid #A3221B;border-radius:2px"></div>2</div>
+            <code style="font:500 12px ui-monospace,Menlo,monospace">radius.button</code><div style="display:flex;align-items:center;gap:8px"><div style="width:44px;height:28px;border:1.5px solid #1E1813;border-radius:14px"></div>14</div><div style="display:flex;align-items:center;gap:8px"><div style="width:44px;height:28px;border:1.5px solid #A3221B;border-radius:4px"></div>4</div>
+            <code style="font:500 12px ui-monospace,Menlo,monospace">radius.sheet</code><div>22</div><div>22 <span style="color:#6B5E4E">(системний)</span></div>
+          </div>
+          <span style="font:400 12px/1.5 Manrope;color:#6B5E4E">Гострі кути UA — від полотна й стібка. Радіус — токен, не макет.</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <span style="font:700 11px Manrope;letter-spacing:.16em;color:#6B5E4E">ТІНІ ТА ЛІНІЇ</span>
+          <div style="display:grid;grid-template-columns:110px minmax(0,1fr);gap:10px 12px;align-items:center">
+            <code style="font:500 12px ui-monospace,Menlo,monospace">elev.card</code><span>none · лише 1 pt рамка <span style="color:#6B5E4E">decor/line 30%</span></span>
+            <code style="font:500 12px ui-monospace,Menlo,monospace">elev.sheet</code><span>0 −1 0 decor/line · scrim 45–60%</span>
+            <code style="font:500 12px ui-monospace,Menlo,monospace">elev.toast</code><span>0 10 30 rgba(0,0,0,.4)</span>
+            <code style="font:500 12px ui-monospace,Menlo,monospace">line.hair</code><span>1 pt · decor 14–22%</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <span style="font:700 11px Manrope;letter-spacing:.16em;color:#6B5E4E">ТИПОГРАФІКА · DYNAMIC TYPE</span>
+          <div style="display:grid;grid-template-columns:110px repeat(4,minmax(0,1fr));gap:8px 10px;align-items:center;font-variant-numeric:tabular-nums">
+            <span></span><b style="font-weight:600">S</b><b style="font-weight:600">M</b><b style="font-weight:600">L</b><b style="font-weight:600">XL</b>
+            <code style="font:500 12px ui-monospace,Menlo,monospace">type.lemma</code><span>40</span><span>48–52</span><span>56</span><span>64</span>
+            <code style="font:500 12px ui-monospace,Menlo,monospace">type.def</code><span>17</span><span>19</span><span>21</span><span>23</span>
+            <code style="font:500 12px ui-monospace,Menlo,monospace">type.example</code><span>15</span><span>17</span><span>19</span><span>21</span>
+            <code style="font:500 12px ui-monospace,Menlo,monospace">type.ui</code><span colspan="4" style="grid-column:span 4">15 → iOS Dynamic Type (body)</span>
+          </div>
+        </div>
+        <div style="grid-column:1 / -1;display:flex;flex-direction:column;gap:10px;padding-top:8px;border-top:1px solid rgba(156,122,46,.25)">
+          <span style="font:700 11px Manrope;letter-spacing:.16em;color:#6B5E4E;padding-top:20px">ФАБРИКА · ЩО МІНЯЄТЬСЯ МІЖ ВИДАННЯМИ</span>
+          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px">
+            <div style="padding:14px;background:#F0E5D3;border-radius:2px;display:flex;flex-direction:column;gap:4px"><b style="font-weight:700">Токени</b><span style="color:#3E342A">color.*, type.family.*, radius.*, motion.sound.*</span></div>
+            <div style="padding:14px;background:#F0E5D3;border-radius:2px;display:flex;flex-direction:column;gap:4px"><b style="font-weight:700">Декор</b><span style="color:#3E342A">7 слотів × світла/темна — SVG-патерни, без тексту</span></div>
+            <div style="padding:14px;background:#1E1813;color:#F3EADB;border-radius:2px;display:flex;flex-direction:column;gap:4px"><b style="font-weight:700">Ніколи</b><span style="color:#D9CDB9">макети, порядок блоків, розміри зон дотику, таббар</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Далі: «друге видання для перевірки фабрики (напр. польське) на картці слова» · «Про застосунок / відгук» · «екран акаунта SLOVO ID»</p>
+</section>
+
+<section class="dv-turn" id="t3">
+  <div class="dv-thd"><a class="dv-tid" href="#t3">3</a><span class="dv-tname">Режими Гри, списки Збереженого, порожні стани, motion і гаптика</span></div>
+  <div class="dv-opts">
+
+    <!-- 3a Game modes + correction round -->
+    <div class="dv-opt" id="3a">
+      <div class="dv-olabel"><a class="dv-oid" href="#3a">3a</a>Гра · вибір режиму (темна) та раунд «Обери правильне» (світла, після відповіді)</div>
+      <div style="display:flex;gap:40px;padding:12px">
+        <div data-screen-label="Game mode select" style="width:393px;height:852px;border-radius:54px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#15110E;box-shadow:0 0 0 10px #000,0 30px 60px rgba(0,0,0,.3)">
+          <svg aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%"><rect width="100%" height="100%" fill="url(#bgDark)"></rect></svg>
+          <div style="position:relative;height:54px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:6px 34px 0 42px;font:600 16px Manrope;color:#F3EADB"><span>9:41</span><svg width="26" height="12" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3" fill="none" stroke="currentColor" opacity=".4"></rect><rect x="2" y="2" width="17" height="8" rx="1.6" fill="currentColor"></rect></svg></div>
+          <div style="position:relative;flex:1;padding:14px 20px 0;display:flex;flex-direction:column;gap:16px">
+            <h1 style="margin:0 4px;font:500 36px Literata,serif;color:#F3EADB">Гра</h1>
+            <p style="margin:0 4px 6px;font:400 15px/1.5 Manrope;color:#B5A893">15 раундів, 5 життів. Найкраще — 13 / 15.</p>
+            <button style="position:relative;text-align:left;padding:24px 22px;background:#1F1915;border:1px solid rgba(212,174,92,.35);border-radius:4px;display:flex;flex-direction:column;gap:12px;cursor:pointer">
+              <svg aria-hidden="true" width="16" height="16" style="position:absolute;left:8px;top:8px"><use href="#cornGold"></use></svg>
+              <span style="font:700 11px Manrope;letter-spacing:.14em;color:#D4AE5C">ВИЗНАЧЕННЯ → СЛОВО</span>
+              <span style="font:500 28px/1.15 Literata,serif;color:#F3EADB">Вгадай слово</span>
+              <span style="font:400 14.5px/1.5 Manrope;color:#B5A893">Читаєте визначення — обираєте одне слово з чотирьох.</span>
+              <span style="display:flex;justify-content:space-between;align-items:center;margin-top:4px"><span style="font:400 16px Literata;font-style:italic;color:#D9CDB9">«метушня, безлад» → веремі́я</span><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D4AE5C" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span>
+            </button>
+            <button style="position:relative;text-align:left;padding:24px 22px;background:#F3EADB;border:none;border-radius:4px;display:flex;flex-direction:column;gap:12px;cursor:pointer">
+              <span style="font:700 11px Manrope;letter-spacing:.14em;color:#A3221B">ВИПРАВЛЕННЯ</span>
+              <span style="font:500 28px/1.15 Literata,serif;color:#15110E">Обери правильне</span>
+              <span style="font:400 14.5px/1.5 Manrope;color:#3E342A">У реченні — поширена ненормативна форма. Знайдіть нормативну.</span>
+              <span style="display:flex;justify-content:space-between;align-items:center;margin-top:4px"><span style="font:400 16px Literata;color:#3E342A"><s style="text-decoration-color:rgba(163,34,27,.6)">слідуючий</s> → наступний</span><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#A3221B" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span>
+            </button>
+          </div>
+          <nav style="position:relative;height:84px;flex:none;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid rgba(212,174,92,.2);background:#15110E;padding-top:8px">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:600 10.5px Manrope;color:#B5A893"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10.5 12 4l8 6.5V20h-5v-6H9v6H4z"></path></svg>Головна</div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:600 10.5px Manrope;color:#B5A893"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"></path><circle cx="15" cy="7" r="2"></circle><circle cx="9" cy="17" r="2"></circle></svg>Налаштування</div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:700 10.5px Manrope;color:#D4AE5C"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="3"></rect><path d="M12 8l3 4-3 4-3-4z"></path></svg>Гра</div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:600 10.5px Manrope;color:#B5A893"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 4h12v16l-6-4-6 4z"></path></svg>Збережене</div>
+          </nav>
+        </div>
+
+        <div data-screen-label="Correction round answered" style="width:393px;height:852px;border-radius:54px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#F5EEE2;box-shadow:0 0 0 10px #111,0 30px 60px rgba(0,0,0,.25)">
+          <div style="height:54px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:6px 34px 0 42px;font:600 16px Manrope;color:#1E1813"><span>9:41</span><svg width="26" height="12" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3" fill="none" stroke="currentColor" opacity=".4"></rect><rect x="2" y="2" width="17" height="8" rx="1.6" fill="currentColor"></rect></svg></div>
+          <div style="padding:6px 16px 0 12px;display:flex;align-items:center;gap:10px;height:52px">
+            <button aria-label="Вийти з гри" style="width:44px;height:44px;border:none;background:none;display:grid;place-items:center;color:#1E1813"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>
+            <div style="flex:1;display:flex;flex-direction:column;gap:6px"><span style="font:700 13px Manrope;color:#1E1813">4 / 15</span><div style="height:4px;background:#EADFCB;border-radius:2px;overflow:hidden"><div style="width:26.6%;height:100%;background:#A3221B"></div></div></div>
+            <div style="display:flex;gap:3px" aria-label="Життів: 4 з 5">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="#A3221B" stroke="#A3221B" stroke-width="1.8"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"></path></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="#A3221B" stroke="#A3221B" stroke-width="1.8"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"></path></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="#A3221B" stroke="#A3221B" stroke-width="1.8"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"></path></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="#A3221B" stroke="#A3221B" stroke-width="1.8"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"></path></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(30,24,19,.3)" stroke-width="1.8"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"></path></svg>
+            </div>
+          </div>
+          <div style="flex:1;padding:24px 24px 0;display:flex;flex-direction:column;gap:20px">
+            <div style="position:relative;padding:28px 24px;background:#FBF7F0;border:1px solid rgba(156,122,46,.32);border-radius:4px;display:flex;flex-direction:column;gap:14px">
+              <svg aria-hidden="true" width="16" height="16" style="position:absolute;left:8px;top:8px"><use href="#cornLight"></use></svg>
+              <svg aria-hidden="true" width="16" height="16" style="position:absolute;right:8px;bottom:8px;transform:scale(-1,-1)"><use href="#cornLight"></use></svg>
+              <span style="font:700 11px Manrope;letter-spacing:.14em;color:#6B5E4E">ЯК СКАЗАТИ КРАЩЕ?</span>
+              <p style="margin:0;font:400 24px/1.4 Literata,serif;color:#1E1813">Ремонт тривав <span style="padding:0 4px;background:#F0E5D3;border-bottom:2px solid #A3221B">на протязі</span> року.</p>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <button style="min-height:58px;padding:0 20px;border-radius:4px;display:flex;align-items:center;justify-content:space-between;font:500 21px Literata,serif;background:#2F6B45;border:1px solid #2F6B45;color:#fff">протягом<span style="font:700 13px Manrope">Правильно</span></button>
+              <button style="min-height:58px;padding:0 20px;border-radius:4px;display:flex;align-items:center;font:500 21px Literata,serif;background:#FBF7F0;border:1px solid rgba(156,122,46,.35);color:#1E1813;opacity:.45">в протязі</button>
+              <button style="min-height:58px;padding:0 20px;border-radius:4px;display:flex;align-items:center;font:500 21px Literata,serif;background:#FBF7F0;border:1px solid rgba(156,122,46,.35);color:#1E1813;opacity:.45">на протязі</button>
+              <button style="min-height:58px;padding:0 20px;border-radius:4px;display:flex;align-items:center;font:500 21px Literata,serif;background:#FBF7F0;border:1px solid rgba(156,122,46,.35);color:#1E1813;opacity:.45">під час протягу</button>
+            </div>
+          </div>
+          <div style="position:absolute;left:0;right:0;bottom:0;background:#1E1813;color:#F3EADB;border-radius:22px 22px 0 0;padding:22px 24px 40px;display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font:700 17px Manrope;color:#8FC79F">Правильно!</span><span style="display:flex;align-items:center;gap:6px;padding:4px 8px;border:1px dashed rgba(212,174,92,.6);border-radius:2px;font:600 10.5px Manrope;letter-spacing:.06em;color:#D4AE5C"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 12h2l2-5 4 10 2-5h6"></path></svg>ГАПТИКА · SUCCESS</span></div>
+            <p style="margin:0;font:400 16px/1.5 Manrope;color:#D9CDB9">«Протяг» — рух повітря. Для часу — «протягом» або «упродовж».</p>
+            <button style="height:54px;border:none;border-radius:4px;background:#F3EADB;color:#15110E;font:700 16px Manrope">Далі</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3b Favorites list live (swipe) -->
+    <div class="dv-opt" id="3b">
+      <div class="dv-olabel"><a class="dv-oid" href="#3b">3b</a>Улюблене · живе: свайп рядка вліво → «Видалити»; видаліть усі — побачите порожній стан</div>
+      <div style="padding:12px">
+        <div data-screen-label="Favorites list" style="width:393px;height:852px;border-radius:54px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#F5EEE2;box-shadow:0 0 0 10px #111,0 30px 60px rgba(0,0,0,.25)">
+          <div style="height:54px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:6px 34px 0 42px;font:600 16px Manrope;color:#1E1813"><span>9:41</span><svg width="26" height="12" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3" fill="none" stroke="currentColor" opacity=".4"></rect><rect x="2" y="2" width="17" height="8" rx="1.6" fill="currentColor"></rect></svg></div>
+          <div style="height:44px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 12px 0 6px">
+            <button style="height:44px;padding:0 8px;border:none;background:none;display:flex;align-items:center;gap:2px;font:600 16px Manrope;color:#A3221B"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"></path></svg>Збережене</button>
+            <button onClick="{{ restoreFavs }}" style="height:44px;padding:0 10px;border:none;background:none;font:600 14px Manrope;color:#6B5E4E;cursor:pointer">Відновити демо</button>
+          </div>
+          <div style="padding:6px 24px 14px;display:flex;align-items:baseline;justify-content:space-between"><h1 style="margin:0;font:500 34px Literata,serif;color:#1E1813">Улюблене</h1><span style="font:500 22px Literata;color:#A3221B">{{ favListCount }}</span></div>
+          <div style="flex:1;overflow-y:auto;scrollbar-width:none">
+            <sc-if value="{{ hasFavList }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;flex-direction:column;border-top:1px solid rgba(156,122,46,.22)">
+                <sc-for list="{{ favList }}" as="f" hint-placeholder-count="5">
+                  <div style="overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;border-bottom:1px solid rgba(156,122,46,.22)">
+                    <div style="display:flex;width:calc(100% + 96px)">
+                      <div style="flex:none;width:calc(100% - 96px);scroll-snap-align:start;box-sizing:border-box;padding:14px 24px;display:flex;flex-direction:column;gap:3px;background:#F5EEE2">
+                        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><span style="font:500 22px Literata,serif;color:#1E1813">{{ f.lemma }}</span><span style="font:500 12px Manrope;color:#6B5E4E;flex:none">{{ f.when }}</span></div>
+                        <span style="font:400 14px/1.4 Manrope;color:#3E342A">{{ f.def }}</span>
+                      </div>
+                      <button onClick="{{ f.onDel }}" aria-label="{{ f.delLabel }}" style="flex:none;width:96px;scroll-snap-align:end;border:none;background:#A3271F;color:#fff;font:700 14px Manrope;cursor:pointer">Видалити</button>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+              <p style="margin:16px 24px;font:500 12.5px/1.5 Manrope;color:#6B5E4E">Найновіші — першими. Тап відкриває повну картку.</p>
+            </sc-if>
+            <sc-if value="{{ favEmpty }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:18px;padding:80px 40px 0">
+                <svg width="96" height="96" viewBox="0 0 18 18" aria-hidden="true"><use href="#rosLight"></use></svg>
+                <h3 style="margin:0;font:500 26px/1.2 Literata,serif;color:#1E1813">Тут поки порожньо</h3>
+                <p style="margin:0;font:400 15px/1.5 Manrope;color:#6B5E4E">Торкніться ♥ під словом у Стрічці — і воно оселиться тут.</p>
+                <button style="margin-top:6px;height:50px;padding:0 22px;border:none;border-radius:4px;background:#1E1813;color:#F5EEE2;font:700 15px Manrope">До Стрічки</button>
+              </div>
+            </sc-if>
+          </div>
+          <nav style="height:84px;flex:none;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid rgba(156,122,46,.25);background:#F5EEE2;padding-top:8px">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:600 10.5px Manrope;color:#6B5E4E"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10.5 12 4l8 6.5V20h-5v-6H9v6H4z"></path></svg>Головна</div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:600 10.5px Manrope;color:#6B5E4E"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"></path><circle cx="15" cy="7" r="2"></circle><circle cx="9" cy="17" r="2"></circle></svg>Налаштування</div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:600 10.5px Manrope;color:#6B5E4E"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="3"></rect><path d="M12 8l3 4-3 4-3-4z"></path></svg>Гра</div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:700 10.5px Manrope;color:#A3221B"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8"><path d="M6 4h12v16l-6-4-6 4z"></path></svg>Збережене</div>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3c History dark + clear confirm -->
+    <div class="dv-opt" id="3c">
+      <div class="dv-olabel"><a class="dv-oid" href="#3c">3c</a>Історія · темна · живе: «Очистити» з підтвердженням</div>
+      <div style="padding:12px">
+        <div data-screen-label="History" style="width:393px;height:852px;border-radius:54px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#15110E;box-shadow:0 0 0 10px #000,0 30px 60px rgba(0,0,0,.3)">
+          <div style="height:54px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:6px 34px 0 42px;font:600 16px Manrope;color:#F3EADB"><span>9:41</span><svg width="26" height="12" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3" fill="none" stroke="currentColor" opacity=".4"></rect><rect x="2" y="2" width="17" height="8" rx="1.6" fill="currentColor"></rect></svg></div>
+          <div style="height:44px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 12px 0 6px">
+            <button style="height:44px;padding:0 8px;border:none;background:none;display:flex;align-items:center;gap:2px;font:600 16px Manrope;color:#D4AE5C"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"></path></svg>Збережене</button>
+            <sc-if value="{{ histHas }}" hint-placeholder-val="{{ true }}"><button onClick="{{ askClear }}" style="height:44px;padding:0 10px;border:none;background:none;font:600 15px Manrope;color:#F3EADB;cursor:pointer">Очистити</button></sc-if>
+            <sc-if value="{{ histEmpty }}" hint-placeholder-val="{{ false }}"><button onClick="{{ restoreHist }}" style="height:44px;padding:0 10px;border:none;background:none;font:600 14px Manrope;color:#B5A893;cursor:pointer">Відновити демо</button></sc-if>
+          </div>
+          <div style="padding:6px 24px 6px;display:flex;align-items:baseline;justify-content:space-between"><h1 style="margin:0;font:500 34px Literata,serif;color:#F3EADB">Історія</h1><span style="font:500 13px Manrope;color:#B5A893">останні 500</span></div>
+          <div style="flex:1;overflow-y:auto;scrollbar-width:none;padding:0 24px">
+            <sc-if value="{{ histHas }}" hint-placeholder-val="{{ true }}">
+              <sc-for list="{{ histGroups }}" as="g" hint-placeholder-count="2">
+                <div style="display:flex;flex-direction:column;padding-top:18px">
+                  <span style="font:700 11px Manrope;letter-spacing:.14em;color:#D4AE5C;padding-bottom:6px">{{ g.day }}</span>
+                  <sc-for list="{{ g.items }}" as="h" hint-placeholder-count="3">
+                    <div style="display:flex;justify-content:space-between;align-items:center;min-height:52px;border-bottom:1px solid rgba(212,174,92,.14)"><span style="font:400 20px Literata,serif;color:#F3EADB">{{ h.lemma }}</span><span style="font:500 12px Manrope;color:#B5A893">{{ h.tag }}</span></div>
+                  </sc-for>
+                </div>
+              </sc-for>
+            </sc-if>
+            <sc-if value="{{ histEmpty }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:18px;padding:90px 16px 0">
+                <svg width="96" height="96" viewBox="0 0 18 18" aria-hidden="true"><use href="#rosGold"></use></svg>
+                <h3 style="margin:0;font:500 26px/1.2 Literata,serif;color:#F3EADB">Історія чиста</h3>
+                <p style="margin:0;font:400 15px/1.5 Manrope;color:#B5A893">Нові слова з’являться тут, щойно ви їх погортаєте.</p>
+              </div>
+            </sc-if>
+          </div>
+          <nav style="height:84px;flex:none;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid rgba(212,174,92,.2);background:#15110E;padding-top:8px">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:600 10.5px Manrope;color:#B5A893"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10.5 12 4l8 6.5V20h-5v-6H9v6H4z"></path></svg>Головна</div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:600 10.5px Manrope;color:#B5A893"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"></path><circle cx="15" cy="7" r="2"></circle><circle cx="9" cy="17" r="2"></circle></svg>Налаштування</div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:600 10.5px Manrope;color:#B5A893"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="3"></rect><path d="M12 8l3 4-3 4-3-4z"></path></svg>Гра</div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:700 10.5px Manrope;color:#D4AE5C"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8"><path d="M6 4h12v16l-6-4-6 4z"></path></svg>Збережене</div>
+          </nav>
+          <sc-if value="{{ clearAsk }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;inset:0;background:rgba(0,0,0,.6);display:grid;place-items:center;padding:32px">
+              <div role="alertdialog" style="width:100%;background:#1F1915;border:1px solid rgba(212,174,92,.3);border-radius:6px;padding:26px 22px 20px;display:flex;flex-direction:column;gap:10px;text-align:center">
+                <h3 style="margin:0;font:500 24px Literata,serif;color:#F3EADB">Очистити Історію?</h3>
+                <p style="margin:0 0 10px;font:400 15px/1.5 Manrope;color:#B5A893">Улюблене й Колекції залишаться.</p>
+                <button onClick="{{ doClear }}" style="height:50px;border:none;border-radius:4px;background:#A3271F;color:#fff;font:700 15px Manrope;cursor:pointer">Очистити</button>
+                <button onClick="{{ cancelClear }}" style="height:50px;border:1px solid rgba(243,234,219,.2);border-radius:4px;background:none;color:#F3EADB;font:600 15px Manrope;cursor:pointer">Скасувати</button>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3d Collections list mgmt light -->
+    <div class="dv-opt" id="3d">
+      <div class="dv-olabel"><a class="dv-oid" href="#3d">3d</a>Колекції · світла · перейменування та видалення з підтвердженням</div>
+      <div style="padding:12px">
+        <div data-screen-label="Collections" style="width:393px;height:852px;border-radius:54px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#F5EEE2;box-shadow:0 0 0 10px #111,0 30px 60px rgba(0,0,0,.25)">
+          <div style="height:54px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:6px 34px 0 42px;font:600 16px Manrope;color:#1E1813"><span>9:41</span><svg width="26" height="12" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3" fill="none" stroke="currentColor" opacity=".4"></rect><rect x="2" y="2" width="17" height="8" rx="1.6" fill="currentColor"></rect></svg></div>
+          <div style="height:44px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 12px 0 6px">
+            <button style="height:44px;padding:0 8px;border:none;background:none;display:flex;align-items:center;gap:2px;font:600 16px Manrope;color:#A3221B"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"></path></svg>Збережене</button>
+            <button aria-label="Нова колекція" style="width:44px;height:44px;border:none;background:none;display:grid;place-items:center;color:#A3221B"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"></path></svg></button>
+          </div>
+          <h1 style="margin:0;padding:6px 24px 16px;font:500 34px Literata,serif;color:#1E1813">Колекції</h1>
+          <div style="flex:1;padding:0 20px;display:flex;flex-direction:column;gap:10px">
+            <div style="padding:16px 18px;background:#FBF7F0;border:1px solid rgba(156,122,46,.3);border-radius:4px;display:flex;flex-direction:column;gap:6px"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font:700 16px Manrope;color:#1E1813">Для листів</span><span style="font:500 13px Manrope;color:#6B5E4E">17 слів</span></div><span style="font:400 16px Literata;color:#3E342A">веремі́я · ке́бета · протягом</span></div>
+            <div style="padding:14px 18px;background:#FBF7F0;border:1.5px solid #A3221B;border-radius:4px;display:flex;flex-direction:column;gap:10px">
+              <span style="font:700 11px Manrope;letter-spacing:.14em;color:#A3221B">ПЕРЕЙМЕНУВАННЯ</span>
+              <div style="display:flex;align-items:center;height:44px;padding:0 12px;background:#fff;border-radius:3px;font:600 16px Manrope;color:#1E1813">Бабусині слова<span style="width:2px;height:20px;background:#A3221B;margin-left:1px"></span></div>
+            </div>
+            <div style="display:flex;border-radius:4px;overflow:hidden;border:1px solid rgba(156,122,46,.3)">
+              <div style="flex:1;padding:16px 18px;background:#FBF7F0;display:flex;flex-direction:column;gap:6px;transform:translateX(0)"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font:700 16px Manrope;color:#1E1813">Робота</span><span style="font:500 13px Manrope;color:#6B5E4E">15 слів</span></div><span style="font:400 16px Literata;color:#3E342A">брати участь · наступний</span></div>
+              <div style="width:84px;flex:none;background:#6B5E4E;color:#fff;display:grid;place-items:center;font:700 13px Manrope">Назва</div>
+              <div style="width:84px;flex:none;background:#A3271F;color:#fff;display:grid;place-items:center;font:700 13px Manrope">Видалити</div>
+            </div>
+          </div>
+          <div style="position:absolute;inset:0;background:rgba(30,24,19,.45);display:flex;align-items:flex-end;padding:0 10px 30px">
+            <div role="alertdialog" style="width:100%;display:flex;flex-direction:column;gap:8px">
+              <div style="background:#FBF7F0;border-radius:14px;overflow:hidden;display:flex;flex-direction:column;text-align:center">
+                <div style="padding:16px 20px 14px;display:flex;flex-direction:column;gap:4px;border-bottom:1px solid rgba(156,122,46,.2)"><span style="font:700 14px Manrope;color:#1E1813">Видалити колекцію «Робота»?</span><span style="font:400 13px Manrope;color:#6B5E4E">15 слів залишаться в Історії та Улюбленому.</span></div>
+                <button style="height:56px;border:none;background:none;font:700 17px Manrope;color:#A3271F">Видалити</button>
+              </div>
+              <button style="height:56px;border:none;border-radius:14px;background:#FBF7F0;font:700 17px Manrope;color:#1E1813">Скасувати</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3e Motion + haptics spec -->
+    <div class="dv-opt" id="3e">
+      <div class="dv-olabel"><a class="dv-oid" href="#3e">3e</a>Motion, звук і гаптика · живі демо (натисніть «Програти»)</div>
+      <div style="width:880px;background:#15110E;border-radius:6px;padding:36px;display:flex;flex-direction:column;gap:22px;color:#F3EADB">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font:700 11px Manrope;letter-spacing:.16em;color:#D4AE5C">MOTION-ТОКЕНИ</span>
+          <button onClick="{{ playMotion }}" style="height:44px;padding:0 18px;border:none;border-radius:4px;background:#D4AE5C;color:#15110E;font:700 14px Manrope;cursor:pointer">Програти</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px">
+          <div style="padding:18px;background:#1F1915;border-radius:4px;display:flex;flex-direction:column;gap:12px">
+            <div style="height:90px;display:grid;place-items:center;overflow:hidden;position:relative"><div style="width:80px;height:56px;background:#F3EADB;border-radius:2px;display:grid;place-items:center;font:500 16px Literata;color:#15110E;transition:transform .42s cubic-bezier(.2,.8,.2,1),opacity .42s;transform:{{ mFeedT }};opacity:{{ mFeedO }}">ке́бета</div></div>
+            <span style="font:700 14px Manrope">Гортання Стрічки</span>
+            <span style="font:400 12.5px/1.5 Manrope;color:#B5A893">420 мс · cubic-bezier(.2,.8,.2,1) · snap. Гаптика: selection на кожну картку.<br>Reduce Motion: кросфейд 200 мс.</span>
+          </div>
+          <div style="padding:18px;background:#1F1915;border-radius:4px;display:flex;flex-direction:column;gap:12px">
+            <div style="height:90px;display:grid;place-items:center"><svg width="44" height="44" viewBox="0 0 24 24" fill="#C8372D" stroke="#C8372D" stroke-width="1.7" style="animation:{{ mHeart }}"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"></path></svg></div>
+            <span style="font:700 14px Manrope">Серце</span>
+            <span style="font:400 12.5px/1.5 Manrope;color:#B5A893">450 мс · 1 → 1.35 → 0.92 → 1, пружина. Гаптика: impact light. Звук: тихий «тук».<br>Reduce Motion: лише заливка.</span>
+          </div>
+          <div style="padding:18px;background:#1F1915;border-radius:4px;display:flex;flex-direction:column;gap:12px">
+            <div style="height:90px;display:grid;place-items:center"><div style="width:150px;height:44px;border-radius:4px;display:grid;place-items:center;font:500 16px Literata;transition:background .25s,transform .25s;background:{{ mCorrBg }};transform:{{ mCorrT }}">веремі́я</div></div>
+            <span style="font:700 14px Manrope">Правильна відповідь</span>
+            <span style="font:400 12.5px/1.5 Manrope;color:#B5A893">250 мс заливка + scale 1.03. Гаптика: notification success. Звук: щипок струни (вгору).</span>
+          </div>
+          <div style="padding:18px;background:#1F1915;border-radius:4px;display:flex;flex-direction:column;gap:12px">
+            <div style="height:90px;display:grid;place-items:center"><div style="width:150px;height:44px;border-radius:4px;display:grid;place-items:center;font:500 16px Literata;transition:background .2s;background:{{ mWrongBg }};animation:{{ mWrongA }}">ошу́я</div></div>
+            <span style="font:700 14px Manrope">Неправильна відповідь</span>
+            <span style="font:400 12.5px/1.5 Manrope;color:#B5A893">200 мс заливка, легке похитування ±4 pt ×2. Гаптика: notification warning (не error). Звук: приглушена струна.</span>
+          </div>
+          <div style="padding:18px;background:#1F1915;border-radius:4px;display:flex;flex-direction:column;gap:12px">
+            <div style="height:90px;display:flex;align-items:center;justify-content:center;gap:4px"><svg width="26" height="26" viewBox="0 0 24 24" fill="#C8372D" stroke="#C8372D" stroke-width="1.8"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"></path></svg><svg width="26" height="26" viewBox="0 0 24 24" fill="#C8372D" stroke="#C8372D" stroke-width="1.8"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"></path></svg><svg width="26" height="26" viewBox="0 0 24 24" stroke-width="1.8" style="animation:{{ mLifeA }};fill:{{ mLifeFill }};stroke:{{ mLifeStroke }}"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"></path></svg></div>
+            <span style="font:700 14px Manrope">Втрата життя</span>
+            <span style="font:400 12.5px/1.5 Manrope;color:#B5A893">500 мс · scale 1.4 + поворот −12°, потім контур. Гаптика: impact medium.</span>
+          </div>
+          <div style="padding:18px;background:#1F1915;border-radius:4px;display:flex;flex-direction:column;gap:12px">
+            <div style="height:90px;display:flex;align-items:center;justify-content:center;gap:8px"><svg width="26" height="26" viewBox="0 0 18 18" style="transition:transform .5s cubic-bezier(.3,1.6,.5,1) .0s,opacity .3s;transform:{{ mWinT }};opacity:{{ mWinO }}"><use href="#rosGold"></use></svg><svg width="44" height="44" viewBox="0 0 18 18" style="transition:transform .5s cubic-bezier(.3,1.6,.5,1) .12s,opacity .3s .12s;transform:{{ mWinT }};opacity:{{ mWinO }}"><use href="#rosGold"></use></svg><svg width="26" height="26" viewBox="0 0 18 18" style="transition:transform .5s cubic-bezier(.3,1.6,.5,1) .24s,opacity .3s .24s;transform:{{ mWinT }};opacity:{{ mWinO }}"><use href="#rosGold"></use></svg></div>
+            <span style="font:700 14px Manrope">Перемога</span>
+            <span style="font:400 12.5px/1.5 Manrope;color:#B5A893">Розетки «вишиваються» по черзі, крок 120 мс. Гаптика: success ×2. Звук: акорд бандури.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Далі: «дизайн-токени як таблиця для розробки (відступи, радіуси, тіні)» · «стани завантаження й помилки» · «гайд “Як додати віджет”»</p>
+</section>
+
+<section class="dv-turn" id="t2">
+  <div class="dv-thd"><a class="dv-tid" href="#t2">2</a><span class="dv-tname">Онбординг, Налаштування, Колекції, віджети, сповіщення, SE · у мові <a class="dv-oid" href="#1b">1b</a></span></div>
+  <div class="dv-opts">
+
+    <!-- 2a Onboarding -->
+    <div class="dv-opt" id="2a">
+      <div class="dv-olabel"><a class="dv-oid" href="#2a">2a</a>Онбординг · 4 екрани · живе: чипи Міксу, перемикач Виправлень, часи</div>
+      <div style="display:flex;gap:40px;padding:12px">
+
+        <div data-screen-label="Onboarding 1 welcome" style="width:393px;height:852px;border-radius:54px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#15110E;box-shadow:0 0 0 10px #000,0 30px 60px rgba(0,0,0,.3)">
+          <svg aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%"><rect width="100%" height="100%" fill="url(#bgDark)"></rect></svg>
+          <div style="position:relative;height:54px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:6px 34px 0 42px;font:600 16px Manrope;color:#F3EADB"><span>9:41</span><svg width="26" height="12" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3" fill="none" stroke="currentColor" opacity=".4"></rect><rect x="2" y="2" width="17" height="8" rx="1.6" fill="currentColor"></rect></svg></div>
+          <div style="position:relative;flex:1;padding:40px 32px 0;display:flex;flex-direction:column;gap:22px">
+            <span style="font:500 18px Literata;letter-spacing:.32em;color:#D4AE5C">SLOVO</span>
+            <div style="margin-top:auto;display:flex;flex-direction:column;gap:14px">
+              <span style="font:500 76px/1 Literata,serif;color:#F3EADB;letter-spacing:-.02em">ке́бета</span>
+              <span style="font:400 18px/1.45 Literata,serif;color:#D9CDB9">кмітливість, тямущість</span>
+            </div>
+            <svg height="10" width="100%" aria-hidden="true"><rect width="100%" height="10" fill="url(#zzGold)"></rect></svg>
+            <h1 style="margin:0;font:500 30px/1.2 Literata,serif;color:#F3EADB;text-wrap:balance">Рідкісні слова рідної мови — щодня по одному.</h1>
+            <p style="margin:0;font:400 16px/1.5 Manrope;color:#B5A893">Гортайте, зберігайте, діліться й тренуйтеся.</p>
+          </div>
+          <div style="position:relative;padding:28px 32px 44px;display:flex;flex-direction:column;gap:18px">
+            <div style="display:flex;gap:6px;justify-content:center"><span style="width:22px;height:4px;background:#D4AE5C"></span><span style="width:8px;height:4px;background:rgba(243,234,219,.25)"></span><span style="width:8px;height:4px;background:rgba(243,234,219,.25)"></span><span style="width:8px;height:4px;background:rgba(243,234,219,.25)"></span></div>
+            <button style="height:56px;border:none;border-radius:4px;background:#D4AE5C;color:#15110E;font:700 16px Manrope">Почати</button>
+          </div>
+        </div>
+
+        <div data-screen-label="Onboarding 2 mix" style="width:393px;height:852px;border-radius:54px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#F5EEE2;box-shadow:0 0 0 10px #111,0 30px 60px rgba(0,0,0,.25)">
+          <div style="height:54px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:6px 34px 0 42px;font:600 16px Manrope;color:#1E1813"><span>9:41</span><svg width="26" height="12" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3" fill="none" stroke="currentColor" opacity=".4"></rect><rect x="2" y="2" width="17" height="8" rx="1.6" fill="currentColor"></rect></svg></div>
+          <div style="flex:1;padding:28px 28px 0;display:flex;flex-direction:column;gap:18px">
+            <span style="font:700 11px Manrope;letter-spacing:.16em;color:#A3221B">КРОК 2 З 4</span>
+            <h1 style="margin:0;font:500 34px/1.15 Literata,serif;color:#1E1813">Оберіть свій Мікс</h1>
+            <p style="margin:0;font:400 15px/1.5 Manrope;color:#6B5E4E">Які слова показувати у Стрічці. Змінити можна будь-коли в Налаштуваннях.</p>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
+              <button onClick="{{ toggleAll }}" aria-pressed="{{ allOn }}" style="min-height:44px;padding:0 16px;border-radius:2px;font:600 14px Manrope;cursor:pointer;background:{{ allBg }};color:{{ allColor }};border:1px solid {{ allBorder }}">Усі</button>
+              <sc-for list="{{ mixChips }}" as="c" hint-placeholder-count="8">
+                <button onClick="{{ c.onTap }}" aria-pressed="{{ c.on }}" style="min-height:44px;padding:0 16px;border-radius:2px;font:600 14px Manrope;cursor:pointer;display:flex;align-items:center;gap:6px;background:{{ c.bg }};color:{{ c.color }};border:1px solid {{ c.border }}">{{ c.name }}</button>
+              </sc-for>
+            </div>
+            <div style="margin-top:8px;padding:16px;background:#FBF7F0;border:1px solid rgba(156,122,46,.3);border-radius:4px;display:flex;align-items:center;gap:14px">
+              <div style="flex:1;display:flex;flex-direction:column;gap:4px"><span style="font:700 15px Manrope;color:#1E1813">Виправлення</span><span style="font:400 13px/1.4 Manrope;color:#6B5E4E">«Так часто кажуть → Українською краще»</span></div>
+              <button onClick="{{ toggleCorr }}" role="switch" aria-checked="{{ corrOn }}" aria-label="Виправлення" style="width:51px;height:31px;border-radius:16px;border:none;padding:2px;cursor:pointer;display:flex;transition:background .2s;background:{{ corrTrack }};justify-content:{{ corrJustify }}"><span style="width:27px;height:27px;border-radius:14px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25)"></span></button>
+            </div>
+          </div>
+          <div style="padding:20px 28px 44px;display:flex;flex-direction:column;gap:10px">
+            <button style="height:56px;border:none;border-radius:4px;background:#1E1813;color:#F5EEE2;font:700 16px Manrope">Далі</button>
+            <span style="text-align:center;font:500 13px Manrope;color:#6B5E4E">{{ mixCountLabel }}</span>
+          </div>
+        </div>
+
+        <div data-screen-label="Onboarding 3 notifications" style="width:393px;height:852px;border-radius:54px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#F5EEE2;box-shadow:0 0 0 10px #111,0 30px 60px rgba(0,0,0,.25)">
+          <div style="height:54px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:6px 34px 0 42px;font:600 16px Manrope;color:#1E1813"><span>9:41</span><svg width="26" height="12" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3" fill="none" stroke="currentColor" opacity=".4"></rect><rect x="2" y="2" width="17" height="8" rx="1.6" fill="currentColor"></rect></svg></div>
+          <div style="flex:1;padding:28px 28px 0;display:flex;flex-direction:column;gap:18px">
+            <span style="font:700 11px Manrope;letter-spacing:.16em;color:#A3221B">КРОК 3 З 4</span>
+            <h1 style="margin:0;font:500 34px/1.15 Literata,serif;color:#1E1813">Слово саме прийде до вас</h1>
+            <p style="margin:0;font:400 15px/1.5 Manrope;color:#6B5E4E">Коротке сповіщення: слово з наголосом і визначення. Без реклами й нагадувань «повернись».</p>
+            <div style="padding:14px 14px 14px 12px;background:rgba(255,255,255,.75);border-radius:18px;display:flex;gap:12px;box-shadow:0 6px 20px rgba(0,0,0,.08)">
+              <div style="width:38px;height:38px;flex:none;border-radius:9px;background:#15110E;display:grid;place-items:center"><span style="font:500 24px/1 Literata;color:#F3EADB;margin-top:-3px">S</span></div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:2px;min-width:0"><div style="display:flex;justify-content:space-between;font:600 13px Manrope;color:#1E1813"><span>SLOVO</span><span style="font-weight:500;color:#6B5E4E">09:00</span></div><span style="font:600 15px Literata;color:#1E1813">шпарки́й</span><span style="font:400 13.5px Manrope;color:#3E342A">швидкий, жвавий</span></div>
+            </div>
+            <div style="display:flex;flex-direction:column;margin-top:4px">
+              <sc-for list="{{ times }}" as="t" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;justify-content:space-between;min-height:56px;border-bottom:1px solid rgba(156,122,46,.22)">
+                  <span style="font:500 26px Literata;color:{{ t.color }}">{{ t.time }}</span>
+                  <button onClick="{{ t.onTap }}" role="switch" aria-checked="{{ t.on }}" aria-label="{{ t.label }}" style="width:51px;height:31px;border-radius:16px;border:none;padding:2px;cursor:pointer;display:flex;transition:background .2s;background:{{ t.track }};justify-content:{{ t.justify }}"><span style="width:27px;height:27px;border-radius:14px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25)"></span></button>
+                </div>
+              </sc-for>
+              <button style="align-self:flex-start;min-height:48px;border:none;background:none;padding:0;font:700 15px Manrope;color:#A3221B">+ Додати час</button>
+            </div>
+          </div>
+          <div style="padding:20px 28px 44px;display:flex;flex-direction:column;gap:6px">
+            <button style="height:56px;border:none;border-radius:4px;background:#1E1813;color:#F5EEE2;font:700 16px Manrope">Дозволити сповіщення</button>
+            <button style="height:44px;border:none;background:none;font:600 15px Manrope;color:#6B5E4E">Пізніше</button>
+          </div>
+        </div>
+
+        <div data-screen-label="Onboarding 4 SLOVO ID" style="width:393px;height:852px;border-radius:54px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#15110E;box-shadow:0 0 0 10px #000,0 30px 60px rgba(0,0,0,.3)">
+          <svg aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%"><rect width="100%" height="100%" fill="url(#bgDark)"></rect></svg>
+          <div style="position:relative;height:54px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:6px 34px 0 42px;font:600 16px Manrope;color:#F3EADB"><span>9:41</span><svg width="26" height="12" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3" fill="none" stroke="currentColor" opacity=".4"></rect><rect x="2" y="2" width="17" height="8" rx="1.6" fill="currentColor"></rect></svg></div>
+          <div style="position:relative;flex:1;padding:28px 28px 0;display:flex;flex-direction:column;gap:18px">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font:700 11px Manrope;letter-spacing:.16em;color:#D4AE5C">КРОК 4 З 4</span><span style="padding:3px 8px;border:1px solid rgba(212,174,92,.45);border-radius:2px;font:600 11px Manrope;color:#D4AE5C">ПІЗНІША ВЕРСІЯ</span></div>
+            <h1 style="margin:0;font:500 34px/1.15 Literata,serif;color:#F3EADB">Збережіть свої слова</h1>
+            <p style="margin:0;font:400 15px/1.5 Manrope;color:#B5A893">SLOVO ID переносить Улюблене, Колекції та серію між пристроями.</p>
+            <div style="flex:1;display:grid;place-items:center"><svg width="120" height="120" viewBox="0 0 18 18" aria-hidden="true"><use href="#rosGold"></use></svg></div>
+          </div>
+          <div style="position:relative;padding:20px 28px 44px;display:flex;flex-direction:column;gap:10px">
+            <button style="height:56px;border:none;border-radius:4px;background:#F3EADB;color:#15110E;font:700 16px Manrope;display:flex;align-items:center;justify-content:center;gap:10px"><span aria-hidden="true" style="width:24px;height:24px;border-radius:5px;background:#15110E;display:grid;place-items:center;font:500 16px/1 Literata,serif;color:#F3EADB">S</span>Увійти через SLOVO ID</button>
+            <button style="height:52px;border:1px solid rgba(243,234,219,.22);border-radius:4px;background:none;color:#F3EADB;font:600 15px Manrope">Продовжити без акаунта</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2b Settings + font live -->
+    <div class="dv-opt" id="2b">
+      <div class="dv-olabel"><a class="dv-oid" href="#2b">2b</a>Налаштування · світла · живе: тема й розмір шрифту з прев'ю</div>
+      <div style="display:flex;gap:40px;padding:12px">
+        <div data-screen-label="Settings" style="width:393px;height:852px;border-radius:54px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#F5EEE2;box-shadow:0 0 0 10px #111,0 30px 60px rgba(0,0,0,.25)">
+          <div style="height:54px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:6px 34px 0 42px;font:600 16px Manrope;color:#1E1813"><span>9:41</span><svg width="26" height="12" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3" fill="none" stroke="currentColor" opacity=".4"></rect><rect x="2" y="2" width="17" height="8" rx="1.6" fill="currentColor"></rect></svg></div>
+          <div style="flex:1;overflow-y:auto;scrollbar-width:none;padding:14px 20px 24px;display:flex;flex-direction:column;gap:22px">
+            <h1 style="margin:0 4px;font:500 36px Literata,serif;color:#1E1813">Налаштування</h1>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <span style="padding:0 4px;font:700 11px Manrope;letter-spacing:.14em;color:#6B5E4E">ТЕМА</span>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);padding:3px;background:#EADFCB;border-radius:4px" role="radiogroup" aria-label="Тема">
+                <sc-for list="{{ themeOpts }}" as="o" hint-placeholder-count="3">
+                  <button onClick="{{ o.onTap }}" role="radio" aria-checked="{{ o.on }}" style="height:40px;border:none;border-radius:3px;font:600 14px Manrope;cursor:pointer;background:{{ o.bg }};color:#1E1813;box-shadow:{{ o.shadow }}">{{ o.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <span style="padding:0 4px;font:700 11px Manrope;letter-spacing:.14em;color:#6B5E4E">РОЗМІР ШРИФТУ</span>
+              <div style="padding:18px;background:{{ prevBg }};border:1px solid rgba(156,122,46,.3);border-radius:4px;display:flex;flex-direction:column;gap:10px;transition:background .25s">
+                <span style="font-family:Literata,serif;font-weight:500;line-height:1.05;transition:font-size .2s;font-size:{{ prevLemma }};color:{{ prevInk }}">шпарки́й</span>
+                <svg height="10" width="100%" aria-hidden="true"><rect width="100%" height="10" fill="{{ prevZz }}"></rect></svg>
+                <span style="font-family:Literata,serif;line-height:1.45;transition:font-size .2s;font-size:{{ prevDef }};color:{{ prevInk }}">Швидкий, жвавий.</span>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(4,1fr);padding:3px;background:#EADFCB;border-radius:4px" role="radiogroup" aria-label="Розмір шрифту">
+                <sc-for list="{{ sizeOpts }}" as="o" hint-placeholder-count="4">
+                  <button onClick="{{ o.onTap }}" role="radio" aria-checked="{{ o.on }}" style="height:40px;border:none;border-radius:3px;font:700 14px Manrope;cursor:pointer;background:{{ o.bg }};color:#1E1813;box-shadow:{{ o.shadow }}">{{ o.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;background:#FBF7F0;border:1px solid rgba(156,122,46,.3);border-radius:4px">
+              <div style="display:flex;align-items:center;justify-content:space-between;min-height:52px;padding:0 16px;border-bottom:1px solid rgba(156,122,46,.18)"><span style="font:500 15px Manrope;color:#1E1813">Сповіщення</span><span style="display:flex;align-items:center;gap:6px;font:500 14px Manrope;color:#6B5E4E">09:00, 13:00, 19:00<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"></path></svg></span></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;min-height:52px;padding:0 16px;border-bottom:1px solid rgba(156,122,46,.18)"><span style="font:500 15px Manrope;color:#1E1813">Мій Мікс</span><span style="display:flex;align-items:center;gap:6px;font:500 14px Manrope;color:#6B5E4E">{{ mixShort }}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"></path></svg></span></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;min-height:52px;padding:0 16px"><span style="font:500 15px Manrope;color:#1E1813">Приховані записи</span><span style="display:flex;align-items:center;gap:6px;font:500 14px Manrope;color:#6B5E4E">4<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"></path></svg></span></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <span style="padding:0 4px;font:700 11px Manrope;letter-spacing:.14em;color:#6B5E4E">ЗВУКИ</span>
+              <div style="display:flex;flex-direction:column;background:#FBF7F0;border:1px solid rgba(156,122,46,.3);border-radius:4px">
+                <sc-for list="{{ soundRows }}" as="r" hint-placeholder-count="2">
+                  <div style="display:flex;align-items:center;justify-content:space-between;min-height:52px;padding:0 16px;border-bottom:1px solid rgba(156,122,46,.18)"><span style="font:500 15px Manrope;color:#1E1813">{{ r.label }}</span><button onClick="{{ r.onTap }}" role="switch" aria-checked="{{ r.on }}" aria-label="{{ r.label }}" style="width:51px;height:31px;border-radius:16px;border:none;padding:2px;cursor:pointer;display:flex;transition:background .2s;background:{{ r.track }};justify-content:{{ r.justify }}"><span style="width:27px;height:27px;border-radius:14px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25)"></span></button></div>
+                </sc-for>
+                <div style="display:flex;flex-direction:column;gap:10px;padding:14px 16px 16px;opacity:.55"><div style="display:flex;justify-content:space-between"><span style="font:500 15px Manrope;color:#1E1813">Музика</span><span style="font:600 11px Manrope;letter-spacing:.1em;color:#6B5E4E">СКОРО</span></div><div style="height:4px;background:#EADFCB;border-radius:2px;position:relative"><div style="width:40%;height:100%;background:#A3221B;border-radius:2px"></div><div style="position:absolute;left:40%;top:50%;width:20px;height:20px;margin:-10px 0 0 -10px;border-radius:10px;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.25)"></div></div></div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;background:#FBF7F0;border:1px solid rgba(156,122,46,.3);border-radius:4px">
+              <div style="display:flex;align-items:center;justify-content:space-between;min-height:52px;padding:0 16px;border-bottom:1px solid rgba(156,122,46,.18)"><span style="font:500 15px Manrope;color:#1E1813">Віджети: як додати</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B5E4E" stroke-width="2"><path d="M9 6l6 6-6 6"></path></svg></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;min-height:52px;padding:0 16px"><span style="font:500 15px Manrope;color:#1E1813">Про застосунок і відгук</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B5E4E" stroke-width="2"><path d="M9 6l6 6-6 6"></path></svg></div>
+            </div>
+          </div>
+          <nav style="height:84px;flex:none;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid rgba(156,122,46,.25);background:#F5EEE2;padding-top:8px">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:600 10.5px Manrope;color:#6B5E4E"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10.5 12 4l8 6.5V20h-5v-6H9v6H4z"></path></svg>Головна</div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:700 10.5px Manrope;color:#A3221B"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"></path><circle cx="15" cy="7" r="2"></circle><circle cx="9" cy="17" r="2"></circle></svg>Налаштування</div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:600 10.5px Manrope;color:#6B5E4E"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="3"></rect><path d="M12 8l3 4-3 4-3-4z"></path></svg>Гра</div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:600 10.5px Manrope;color:#6B5E4E"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 4h12v16l-6-4-6 4z"></path></svg>Збережене</div>
+          </nav>
+        </div>
+
+        <!-- 2c Collections sheet -->
+        <div class="dv-opt" id="2c" style="gap:14px">
+          <div class="dv-olabel"><a class="dv-oid" href="#2c">2c</a>Шіт «Додати до колекції» · темна · живе</div>
+          <div data-screen-label="Add to collection sheet" style="width:393px;height:852px;border-radius:54px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#15110E;box-shadow:0 0 0 10px #000,0 30px 60px rgba(0,0,0,.3)">
+            <div style="padding:120px 24px 0;opacity:.35;display:flex;flex-direction:column;gap:12px"><span style="font:500 48px Literata;color:#F3EADB">ке́бета</span><svg height="10" width="100%"><rect width="100%" height="10" fill="url(#zzGold)"></rect></svg></div>
+            <div style="position:absolute;inset:0;background:rgba(0,0,0,.45)"></div>
+            <div role="dialog" aria-label="Додати до колекції" style="position:absolute;left:0;right:0;bottom:0;background:#1F1915;border-top:1px solid rgba(212,174,92,.3);border-radius:22px 22px 0 0;padding:12px 20px 40px;display:flex;flex-direction:column;gap:14px">
+              <div style="align-self:center;width:38px;height:5px;border-radius:3px;background:rgba(243,234,219,.25)"></div>
+              <div style="display:flex;justify-content:space-between;align-items:baseline;padding:0 4px"><h3 style="margin:0;font:500 24px Literata,serif;color:#F3EADB">До колекції</h3><span style="font:500 18px Literata;color:#D4AE5C">ке́бета</span></div>
+              <div style="display:flex;flex-direction:column">
+                <sc-for list="{{ cols }}" as="c" hint-placeholder-count="3">
+                  <button onClick="{{ c.onTap }}" role="checkbox" aria-checked="{{ c.on }}" style="display:flex;align-items:center;gap:14px;min-height:56px;padding:0 4px;background:none;border:none;border-bottom:1px solid rgba(212,174,92,.15);cursor:pointer;text-align:left">
+                    <span style="width:24px;height:24px;flex:none;border-radius:3px;display:grid;place-items:center;transition:background .15s;background:{{ c.boxBg }};border:1.5px solid {{ c.boxBorder }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#15110E" stroke-width="3" style="opacity:{{ c.checkOp }}"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>
+                    <span style="flex:1;font:600 16px Manrope;color:#F3EADB">{{ c.name }}</span>
+                    <span style="font:500 13px Manrope;color:#B5A893">{{ c.count }}</span>
+                  </button>
+                </sc-for>
+              </div>
+              <sc-if value="{{ newOpen }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;gap:8px">
+                  <input value="{{ newName }}" onChange="{{ onNewName }}" placeholder="Назва колекції" aria-label="Назва нової колекції" style="flex:1;min-width:0;height:50px;padding:0 14px;border-radius:4px;border:1.5px solid #D4AE5C;background:#15110E;color:#F3EADB;font:500 16px Manrope;outline:none"></input>
+                  <button onClick="{{ addCol }}" style="height:50px;padding:0 18px;border:none;border-radius:4px;background:#D4AE5C;color:#15110E;font:700 15px Manrope;cursor:pointer">Створити</button>
+                </div>
+              </sc-if>
+              <sc-if value="{{ newClosed }}" hint-placeholder-val="{{ true }}">
+                <button onClick="{{ openNew }}" style="align-self:flex-start;min-height:48px;padding:0 4px;border:none;background:none;font:700 15px Manrope;color:#D4AE5C;cursor:pointer">+ Нова колекція</button>
+              </sc-if>
+              <button style="height:54px;border:none;border-radius:4px;background:#F3EADB;color:#15110E;font:700 16px Manrope">Готово</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2d Widgets + notification -->
+    <div class="dv-opt" id="2d">
+      <div class="dv-olabel"><a class="dv-oid" href="#2d">2d</a>Віджети (малий / середній, світлий / темний) та сповіщення</div>
+      <div style="width:760px;padding:36px;background:linear-gradient(160deg,#5C4A3B,#2A211B);border-radius:8px;display:flex;flex-direction:column;gap:28px">
+        <div style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap">
+          <div style="width:170px;height:170px;border-radius:24px;background:#15110E;position:relative;overflow:hidden;padding:16px;box-sizing:border-box;display:flex;flex-direction:column">
+            <span style="font:700 9.5px Manrope;letter-spacing:.16em;color:#D4AE5C">УЛЮБЛЕНЕ</span>
+            <span style="margin-top:auto;font:500 30px/1.05 Literata,serif;color:#F3EADB">ке́бета</span>
+            <svg style="margin-top:12px" height="8" width="100%"><rect width="100%" height="8" fill="url(#zzGold)"></rect></svg>
+          </div>
+          <div style="width:170px;height:170px;border-radius:24px;background:#F5EEE2;position:relative;overflow:hidden;padding:16px;box-sizing:border-box;display:flex;flex-direction:column">
+            <span style="font:700 9.5px Manrope;letter-spacing:.16em;color:#A3221B">УСІ СЛОВА</span>
+            <span style="margin-top:auto;font:500 30px/1.05 Literata,serif;color:#1E1813">ошу́я</span>
+            <svg style="margin-top:12px" height="8" width="100%"><rect width="100%" height="8" fill="url(#zzRed)"></rect></svg>
+          </div>
+          <div style="width:364px;height:170px;border-radius:24px;background:#15110E;position:relative;overflow:hidden;padding:18px 20px;box-sizing:border-box;display:flex;gap:16px">
+            <svg style="position:absolute;inset:0;width:100%;height:100%"><rect width="100%" height="100%" fill="url(#bgDark)"></rect></svg>
+            <div style="position:relative;flex:1;display:flex;flex-direction:column;gap:6px">
+              <span style="font:700 9.5px Manrope;letter-spacing:.16em;color:#D4AE5C">КОЛЕКЦІЯ · ДЛЯ ЛИСТІВ</span>
+              <span style="margin-top:auto;font:500 34px/1.05 Literata,serif;color:#F3EADB">веремі́я</span>
+              <span style="font:400 14px/1.4 Literata,serif;color:#D9CDB9">метушня, безлад, сум'яття</span>
+              <svg style="margin-top:6px" height="8" width="100%"><rect width="100%" height="8" fill="url(#zzGold)"></rect></svg>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap">
+          <div style="width:364px;height:170px;border-radius:24px;background:#F5EEE2;position:relative;overflow:hidden;padding:18px 20px;box-sizing:border-box;display:flex;flex-direction:column;gap:6px">
+            <svg aria-hidden="true" width="14" height="14" style="position:absolute;right:12px;top:12px;transform:scaleX(-1)"><use href="#cornLight"></use></svg>
+            <span style="font:700 9.5px Manrope;letter-spacing:.16em;color:#A3221B">УСІ СЛОВА</span>
+            <span style="margin-top:auto;font:500 34px/1.05 Literata,serif;color:#1E1813">шпарки́й</span>
+            <span style="font:400 14px/1.4 Literata,serif;color:#3E342A">швидкий, жвавий</span>
+            <svg style="margin-top:6px" height="8" width="100%"><rect width="100%" height="8" fill="url(#zzRed)"></rect></svg>
+          </div>
+          <div style="flex:1;min-width:280px;display:flex;flex-direction:column;gap:10px">
+            <div style="padding:12px 14px;background:rgba(245,238,226,.82);border-radius:20px;display:flex;gap:12px;backdrop-filter:blur(10px)">
+              <div style="width:38px;height:38px;flex:none;border-radius:9px;background:#15110E;display:grid;place-items:center"><span style="font:500 24px/1 Literata;color:#F3EADB;margin-top:-3px">S</span></div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:2px;min-width:0"><div style="display:flex;justify-content:space-between;font:600 13px Manrope;color:#1E1813"><span>SLOVO</span><span style="font-weight:500;color:#6B5E4E">зараз</span></div><span style="font:600 15px Literata;color:#1E1813">ке́бета</span><span style="font:400 13.5px Manrope;color:#3E342A">кмітливість, тямущість</span></div>
+            </div>
+            <span style="font:500 12px/1.5 Manrope;color:#D9CDB9">Сповіщення: лема з наголосом + коротке визначення. Власний звук — тихий щипок струни бандури (0,6 с).</span>
+          </div>
+        </div>
+        <span style="font:500 12px/1.5 Manrope;color:#D9CDB9">Режими змінюються кожні 5 хв: Улюблене · Колекція · Усі слова. Малий — лише лема; середній — лема й визначення.</span>
+      </div>
+    </div>
+
+    <!-- 2e SE check -->
+    <div class="dv-opt" id="2e">
+      <div class="dv-olabel"><a class="dv-oid" href="#2e">2e</a>Перевірка iPhone SE 375×667 · картка слова, M</div>
+      <div style="padding:12px">
+        <div data-screen-label="SE word card" style="width:375px;height:667px;border-radius:12px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#F5EEE2;box-shadow:0 0 0 10px #111,0 30px 60px rgba(0,0,0,.25)">
+          <svg aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%"><rect width="100%" height="100%" fill="url(#bgLight)"></rect></svg>
+          <div style="position:relative;height:20px;flex:none;display:flex;align-items:center;justify-content:center;font:600 12px Manrope;color:#1E1813">9:41</div>
+          <div style="position:relative;flex:1;padding:6px 18px 0;display:flex;flex-direction:column">
+            <div style="height:44px;display:flex;align-items:center"><button aria-label="Статистика" style="height:36px;padding:0 12px 0 8px;border-radius:18px;border:1px solid rgba(163,34,27,.25);background:#FBF7F0;display:flex;align-items:center;gap:6px;font:700 14px Manrope;color:#1E1813"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A3221B" stroke-width="1.8"><path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2.2 1-3.6 2.2-4.6.2 1.6 1 2.6 2 3C11 8.6 11 6 12 3z"></path></svg>12</button></div>
+            <article style="position:relative;margin-top:8px;padding:22px 20px 18px;background:#FBF7F0;border:1px solid rgba(156,122,46,.32);border-radius:4px;display:flex;flex-direction:column;gap:13px">
+              <svg aria-hidden="true" width="16" height="16" style="position:absolute;left:6px;top:6px"><use href="#cornLight"></use></svg>
+              <svg aria-hidden="true" width="16" height="16" style="position:absolute;right:6px;bottom:6px;transform:scale(-1,-1)"><use href="#cornLight"></use></svg>
+              <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start"><div style="display:flex;flex-direction:column;gap:6px"><h2 style="margin:0;font:500 44px/1.05 Literata,serif;color:#1E1813">шпарки́й</h2><span style="font:500 13px Manrope;color:#6B5E4E">прикм.</span></div><button aria-label="Вимова" style="width:44px;height:44px;flex:none;border-radius:22px;border:1px solid rgba(163,34,27,.28);background:transparent;display:grid;place-items:center;color:#A3221B"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"></path><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"></path></svg></button></div>
+              <div aria-hidden="true" style="display:flex;align-items:center;gap:8px"><svg height="10" style="flex:1;min-width:0"><rect width="100%" height="10" fill="url(#zzRed)"></rect></svg><svg width="18" height="18"><use href="#rosLight"></use></svg><svg height="10" style="flex:1;min-width:0"><rect width="100%" height="10" fill="url(#zzRed)"></rect></svg></div>
+              <p style="margin:0;font:400 17px/1.45 Literata,serif;color:#1E1813">Швидкий, жвавий; моторний у русі.</p>
+              <p style="margin:0;font:italic 400 15px/1.45 Literata,serif;color:#3E342A">«Шпаркий кінь до вечора й до міста домчав».<br><span style="font:500 12px Manrope;font-style:normal;color:#6B5E4E">— з народного мовлення</span></p>
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span style="font:400 14px Manrope;color:#3E342A"><span style="color:#6B5E4E">Синонім:</span> прудкий</span><span style="padding:6px 10px;border-radius:2px;background:#F0E5D3;font:600 12px Manrope;color:#1E1813">Рух</span></div>
+            </article>
+            <div style="display:flex;justify-content:space-around;margin-top:6px">
+              <button aria-label="Улюблене" style="width:48px;height:48px;border:none;background:none;display:grid;place-items:center;color:#1E1813"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"></path></svg></button>
+              <button aria-label="Поділитися" style="width:48px;height:48px;border:none;background:none;display:grid;place-items:center;color:#1E1813"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3.5v11M8 7.5l4-4 4 4M6 11v8.5h12V11"></path></svg></button>
+              <button aria-label="Додати до колекції" style="width:48px;height:48px;border:none;background:none;display:grid;place-items:center;color:#1E1813"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 3.5h12v17l-6-4-6 4z"></path><path d="M12 7.5v6M9 10.5h6"></path></svg></button>
+              <button aria-label="Не показувати" style="width:48px;height:48px;border:none;background:none;display:grid;place-items:center;color:#1E1813"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 14V4.5H5.5v9.5zM8 13.5l3.5 6.5c1.6 0 2.4-1 2-2.6l-.8-3.4h5.1c1.2 0 2-1 1.8-2.2l-1.2-6c-.2-1-1-1.8-2-1.8H8"></path></svg></button>
+            </div>
+          </div>
+          <nav style="position:relative;height:50px;flex:none;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid rgba(156,122,46,.25);background:#F5EEE2;padding-top:5px">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;font:700 10px Manrope;color:#A3221B"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10.5 12 4l8 6.5V20h-5v-6H9v6H4z"></path></svg>Головна</div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;font:600 10px Manrope;color:#6B5E4E"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"></path><circle cx="15" cy="7" r="2"></circle><circle cx="9" cy="17" r="2"></circle></svg>Налаштування</div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;font:600 10px Manrope;color:#6B5E4E"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="3"></rect><path d="M12 8l3 4-3 4-3-4z"></path></svg>Гра</div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;font:600 10px Manrope;color:#6B5E4E"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 4h12v16l-6-4-6 4z"></path></svg>Збережене</div>
+          </nav>
+        </div>
+        <p style="margin:14px 0 0;max-width:375px;font:400 12.5px/1.5 Manrope;color:#5A4E40">На SE: лема 44 pt замість 52, відступи картки −25%, категорія переходить у рядок синоніма. На XL визначення скорочується до 3 рядків з «Ще».</p>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Далі: «Гра — вибір режиму й «Обери правильне»» · «списки Улюбленого й Історії зі свайпом та порожні стани» · «нотатки про motion і гаптику»</p>
+</section>
+
+<section class="dv-turn" id="t1">
+  <div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Система та ключові екрани</span></div>
+  <div class="dv-opts">
+
+    <!-- 1a Core vs UA -->
+    <div class="dv-opt" id="1a">
+      <div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Один макет картки слова · Core-скін ліворуч, Українське видання праворуч (світла тема)</div>
+      <div style="display:flex;gap:40px;padding:12px">
+        <div style="display:flex;flex-direction:column;gap:14px;align-items:center">
+          <div data-screen-label="Core word card" style="width:393px;height:852px;border-radius:54px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#F4F4F2;box-shadow:0 0 0 10px #111,0 30px 60px rgba(0,0,0,.25)">
+            <div style="height:54px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:6px 34px 0 42px;font:600 16px Manrope;color:#161616"><span>9:41</span><svg width="26" height="12" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3" fill="none" stroke="currentColor" opacity=".4"></rect><rect x="2" y="2" width="17" height="8" rx="1.6" fill="currentColor"></rect><rect x="23.5" y="4" width="1.6" height="4" rx=".8" fill="currentColor" opacity=".4"></rect></svg></div>
+            <div style="flex:1;padding:6px 24px 0;display:flex;flex-direction:column">
+              <div style="display:flex;justify-content:space-between;align-items:center;height:44px">
+                <button aria-label="Статистика: серія 12 днів" style="height:40px;padding:0 14px 0 10px;border-radius:20px;border:1px solid rgba(0,0,0,.12);background:#fff;display:flex;align-items:center;gap:6px;font:700 15px Manrope;color:#161616"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2.2 1-3.6 2.2-4.6.2 1.6 1 2.6 2 3C11 8.6 11 6 12 3z"></path></svg>12</button>
+              </div>
+              <article style="margin-top:22px;padding:32px 26px 26px;background:#FFFFFF;border:1px solid rgba(0,0,0,.08);border-radius:22px;display:flex;flex-direction:column;gap:20px">
+                <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">
+                  <div style="display:flex;flex-direction:column;gap:8px">
+                    <h2 style="margin:0;font:500 52px/1.05 Literata,serif;letter-spacing:-.01em;color:#161616">веремі́я</h2>
+                    <div style="font:500 14px Manrope;color:#6A6A6A">ім., ж. р.</div>
+                  </div>
+                  <button aria-label="Вимова" style="width:44px;height:44px;flex:none;border-radius:22px;border:1px solid rgba(0,0,0,.12);background:transparent;display:grid;place-items:center;color:#161616"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"></path><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"></path></svg></button>
+                </div>
+                <div aria-hidden="true" style="display:flex;align-items:center;gap:10px"><div style="flex:1;height:1px;background:rgba(0,0,0,.14)"></div><div style="width:5px;height:5px;border-radius:3px;background:#161616"></div><div style="flex:1;height:1px;background:rgba(0,0,0,.14)"></div></div>
+                <p style="margin:0;font:400 19px/1.5 Literata,serif;color:#161616;text-wrap:pretty">Метушня, безлад, сум'яття; гамірне товкання багатьох людей.</p>
+                <p style="margin:0;font:italic 400 17px/1.5 Literata,serif;color:#3D3D3D;text-wrap:pretty">«На ярмарку зчинилася така веремія, що й слова свого не почуєш».<br><span style="font:500 13px Manrope;font-style:normal;color:#6A6A6A">— з народного мовлення</span></p>
+                <div style="font:400 15px Manrope;color:#3D3D3D"><span style="color:#6A6A6A">Синонім:</span> колотнеча</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap"><span style="padding:7px 12px;border-radius:14px;background:#EFEFEC;font:600 12.5px Manrope;color:#161616">Побут і гомін</span></div>
+              </article>
+              <div style="display:flex;justify-content:space-around;margin-top:14px">
+                <button aria-label="Улюблене" style="width:52px;height:52px;border:none;background:none;display:grid;place-items:center;color:#161616"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"></path></svg></button>
+                <button aria-label="Поділитися" style="width:52px;height:52px;border:none;background:none;display:grid;place-items:center;color:#161616"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3.5v11M8 7.5l4-4 4 4M6 11v8.5h12V11"></path></svg></button>
+                <button aria-label="Додати до колекції" style="width:52px;height:52px;border:none;background:none;display:grid;place-items:center;color:#161616"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 3.5h12v17l-6-4-6 4z"></path><path d="M12 7.5v6M9 10.5h6"></path></svg></button>
+                <button aria-label="Не показувати" style="width:52px;height:52px;border:none;background:none;display:grid;place-items:center;color:#161616"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 14V4.5H5.5v9.5zM8 13.5l3.5 6.5c1.6 0 2.4-1 2-2.6l-.8-3.4h5.1c1.2 0 2-1 1.8-2.2l-1.2-6c-.2-1-1-1.8-2-1.8H8"></path></svg></button>
+              </div>
+            </div>
+            <nav style="height:84px;flex:none;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid rgba(0,0,0,.08);background:#F4F4F2;padding-top:8px">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:700 10.5px Manrope;color:#161616"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10.5 12 4l8 6.5V20h-5v-6H9v6H4z"></path></svg>Головна</div>
+              <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:600 10.5px Manrope;color:#8A8A8A"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"></path><circle cx="15" cy="7" r="2"></circle><circle cx="9" cy="17" r="2"></circle></svg>Налаштування</div>
+              <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:600 10.5px Manrope;color:#8A8A8A"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="3"></rect><path d="M12 8l3 4-3 4-3-4z"></path></svg>Гра</div>
+              <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:600 10.5px Manrope;color:#8A8A8A"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 4h12v16l-6-4-6 4z"></path></svg>Збережене</div>
+            </nav>
+          </div>
+          <div style="font:600 12px Manrope;letter-spacing:.14em;color:#5A4E40;margin-top:14px">CORE · НЕЙТРАЛЬНИЙ</div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:14px;align-items:center">
+          <div data-screen-label="UA word card light" style="width:393px;height:852px;border-radius:54px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#F5EEE2;box-shadow:0 0 0 10px #111,0 30px 60px rgba(0,0,0,.25)">
+            <svg aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%"><rect width="100%" height="100%" fill="url(#bgLight)"></rect></svg>
+            <div style="position:relative;height:54px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:6px 34px 0 42px;font:600 16px Manrope;color:#1E1813"><span>9:41</span><svg width="26" height="12" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3" fill="none" stroke="currentColor" opacity=".4"></rect><rect x="2" y="2" width="17" height="8" rx="1.6" fill="currentColor"></rect><rect x="23.5" y="4" width="1.6" height="4" rx=".8" fill="currentColor" opacity=".4"></rect></svg></div>
+            <div style="position:relative;flex:1;padding:6px 24px 0;display:flex;flex-direction:column">
+              <div style="display:flex;justify-content:space-between;align-items:center;height:44px">
+                <button aria-label="Статистика: серія 12 днів" style="height:40px;padding:0 14px 0 10px;border-radius:20px;border:1px solid rgba(163,34,27,.25);background:#FBF7F0;display:flex;align-items:center;gap:6px;font:700 15px Manrope;color:#1E1813"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A3221B" stroke-width="1.8"><path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2.2 1-3.6 2.2-4.6.2 1.6 1 2.6 2 3C11 8.6 11 6 12 3z"></path></svg>12</button>
+              </div>
+              <article style="position:relative;margin-top:22px;padding:32px 26px 26px;background:#FBF7F0;border:1px solid rgba(156,122,46,.32);border-radius:4px;display:flex;flex-direction:column;gap:20px">
+                <svg aria-hidden="true" width="16" height="16" style="position:absolute;left:8px;top:8px"><use href="#cornLight"></use></svg>
+                <svg aria-hidden="true" width="16" height="16" style="position:absolute;right:8px;top:8px;transform:scaleX(-1)"><use href="#cornLight"></use></svg>
+                <svg aria-hidden="true" width="16" height="16" style="position:absolute;left:8px;bottom:8px;transform:scaleY(-1)"><use href="#cornLight"></use></svg>
+                <svg aria-hidden="true" width="16" height="16" style="position:absolute;right:8px;bottom:8px;transform:scale(-1,-1)"><use href="#cornLight"></use></svg>
+                <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">
+                  <div style="display:flex;flex-direction:column;gap:8px">
+                    <h2 style="margin:0;font:500 52px/1.05 Literata,serif;letter-spacing:-.01em;color:#1E1813">веремі́я</h2>
+                    <div style="font:500 14px Manrope;color:#6B5E4E">ім., ж. р.</div>
+                  </div>
+                  <button aria-label="Вимова" style="width:44px;height:44px;flex:none;border-radius:22px;border:1px solid rgba(163,34,27,.28);background:transparent;display:grid;place-items:center;color:#A3221B"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"></path><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"></path></svg></button>
+                </div>
+                <div aria-hidden="true" style="display:flex;align-items:center;gap:8px"><svg height="10" style="flex:1;min-width:0"><rect width="100%" height="10" fill="url(#zzRed)"></rect></svg><svg width="18" height="18"><use href="#rosLight"></use></svg><svg height="10" style="flex:1;min-width:0"><rect width="100%" height="10" fill="url(#zzRed)"></rect></svg></div>
+                <p style="margin:0;font:400 19px/1.5 Literata,serif;color:#1E1813;text-wrap:pretty">Метушня, безлад, сум'яття; гамірне товкання багатьох людей.</p>
+                <p style="margin:0;font:italic 400 17px/1.5 Literata,serif;color:#3E342A;text-wrap:pretty">«На ярмарку зчинилася така веремія, що й слова свого не почуєш».<br><span style="font:500 13px Manrope;font-style:normal;color:#6B5E4E">— з народного мовлення</span></p>
+                <div style="font:400 15px Manrope;color:#3E342A"><span style="color:#6B5E4E">Синонім:</span> колотнеча</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap"><span style="padding:7px 12px;border-radius:3px;background:#F0E5D3;font:600 12.5px Manrope;color:#1E1813">Побут і гомін</span></div>
+              </article>
+              <div style="display:flex;justify-content:space-around;margin-top:14px">
+                <button aria-label="Улюблене" style="width:52px;height:52px;border:none;background:none;display:grid;place-items:center;color:#1E1813"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"></path></svg></button>
+                <button aria-label="Поділитися" style="width:52px;height:52px;border:none;background:none;display:grid;place-items:center;color:#1E1813"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3.5v11M8 7.5l4-4 4 4M6 11v8.5h12V11"></path></svg></button>
+                <button aria-label="Додати до колекції" style="width:52px;height:52px;border:none;background:none;display:grid;place-items:center;color:#1E1813"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 3.5h12v17l-6-4-6 4z"></path><path d="M12 7.5v6M9 10.5h6"></path></svg></button>
+                <button aria-label="Не показувати" style="width:52px;height:52px;border:none;background:none;display:grid;place-items:center;color:#1E1813"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 14V4.5H5.5v9.5zM8 13.5l3.5 6.5c1.6 0 2.4-1 2-2.6l-.8-3.4h5.1c1.2 0 2-1 1.8-2.2l-1.2-6c-.2-1-1-1.8-2-1.8H8"></path></svg></button>
+              </div>
+            </div>
+            <nav style="position:relative;height:84px;flex:none;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid rgba(156,122,46,.25);background:#F5EEE2;padding-top:8px">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:700 10.5px Manrope;color:#A3221B"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10.5 12 4l8 6.5V20h-5v-6H9v6H4z"></path></svg>Головна</div>
+              <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:600 10.5px Manrope;color:#6B5E4E"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"></path><circle cx="15" cy="7" r="2"></circle><circle cx="9" cy="17" r="2"></circle></svg>Налаштування</div>
+              <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:600 10.5px Manrope;color:#6B5E4E"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="3"></rect><path d="M12 8l3 4-3 4-3-4z"></path></svg>Гра</div>
+              <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:600 10.5px Manrope;color:#6B5E4E"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 4h12v16l-6-4-6 4z"></path></svg>Збережене</div>
+            </nav>
+          </div>
+          <div style="font:600 12px Manrope;letter-spacing:.14em;color:#A3221B;margin-top:14px">УКРАЇНСЬКЕ ВИДАННЯ · ТОКЕНИ + ДЕКОР</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1b live feed dark -->
+    <div class="dv-opt" id="1b">
+      <div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Головна · Стрічка, темна тема · живе: гортайте, ставте ♥</div>
+      <div style="padding:12px">
+        <div data-screen-label="Feed dark live" style="width:393px;height:852px;border-radius:54px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#15110E;box-shadow:0 0 0 10px #000,0 30px 60px rgba(0,0,0,.3)">
+          <svg aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%"><rect width="100%" height="100%" fill="url(#bgDark)"></rect></svg>
+          <div style="position:relative;height:54px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:6px 34px 0 42px;font:600 16px Manrope;color:#F3EADB"><span>9:41</span><svg width="26" height="12" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3" fill="none" stroke="currentColor" opacity=".4"></rect><rect x="2" y="2" width="17" height="8" rx="1.6" fill="currentColor"></rect><rect x="23.5" y="4" width="1.6" height="4" rx=".8" fill="currentColor" opacity=".4"></rect></svg></div>
+          <div style="position:relative;flex:none;padding:6px 24px 0;height:50px;display:flex;align-items:center;justify-content:space-between">
+            <button onClick="{{ toggleStats }}" aria-label="Статистика: серія 12 днів" style="height:40px;padding:0 14px 0 10px;border-radius:20px;border:1px solid rgba(212,174,92,.35);background:#1F1915;display:flex;align-items:center;gap:6px;font:700 15px Manrope;color:#F3EADB;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4AE5C" stroke-width="1.8"><path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2.2 1-3.6 2.2-4.6.2 1.6 1 2.6 2 3C11 8.6 11 6 12 3z"></path></svg>12</button>
+            <span style="font:600 12px Manrope;letter-spacing:.1em;color:#B5A893">{{ feedPos }}</span>
+          </div>
+          <div onScroll="{{ onFeedScroll }}" style="position:relative;flex:1;overflow-y:auto;scroll-snap-type:y mandatory;scrollbar-width:none">
+            <sc-for list="{{ entries }}" as="e" hint-placeholder-count="1">
+              <div style="height:664px;scroll-snap-align:start;padding:10px 24px 0;box-sizing:border-box;display:flex;flex-direction:column">
+                <sc-if value="{{ e.isWord }}" hint-placeholder-val="{{ true }}">
+                  <article style="position:relative;padding:32px 26px 26px;background:#1F1915;border:1px solid rgba(212,174,92,.3);border-radius:4px;display:flex;flex-direction:column;gap:18px">
+                    <svg aria-hidden="true" width="16" height="16" style="position:absolute;left:8px;top:8px"><use href="#cornGold"></use></svg>
+                    <svg aria-hidden="true" width="16" height="16" style="position:absolute;right:8px;top:8px;transform:scaleX(-1)"><use href="#cornGold"></use></svg>
+                    <svg aria-hidden="true" width="16" height="16" style="position:absolute;left:8px;bottom:8px;transform:scaleY(-1)"><use href="#cornGold"></use></svg>
+                    <svg aria-hidden="true" width="16" height="16" style="position:absolute;right:8px;bottom:8px;transform:scale(-1,-1)"><use href="#cornGold"></use></svg>
+                    <sc-if value="{{ e.isWotd }}" hint-placeholder-val="{{ false }}">
+                      <div style="align-self:flex-start;display:flex;align-items:center;gap:8px;padding:6px 10px;background:#D4AE5C;color:#15110E;font:700 11px Manrope;letter-spacing:.14em;border-radius:2px">СЛОВО ДНЯ · 11 ЖОВТНЯ</div>
+                    </sc-if>
+                    <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">
+                      <div style="display:flex;flex-direction:column;gap:8px;min-width:0">
+                        <h2 style="margin:0;font-family:Literata,serif;font-weight:500;line-height:1.05;letter-spacing:-.01em;color:#F3EADB;font-size:{{ lemmaPx }}">{{ e.lemma }}</h2>
+                        <div style="display:flex;gap:8px;align-items:center;font:500 14px Manrope;color:#B5A893">{{ e.pos }}<sc-if value="{{ e.reg }}" hint-placeholder-val="{{ false }}"><span style="padding:2px 7px;border:1px solid rgba(212,174,92,.45);border-radius:2px;font:600 11.5px Manrope;color:#D4AE5C">{{ e.reg }}</span></sc-if></div>
+                      </div>
+                      <button aria-label="Вимова" style="width:44px;height:44px;flex:none;border-radius:22px;border:1px solid rgba(212,174,92,.4);background:transparent;display:grid;place-items:center;color:#D4AE5C;cursor:pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"></path><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"></path></svg></button>
+                    </div>
+                    <div aria-hidden="true" style="display:flex;align-items:center;gap:8px"><svg height="10" style="flex:1;min-width:0"><rect width="100%" height="10" fill="url(#zzGold)"></rect></svg><svg width="18" height="18"><use href="#rosGold"></use></svg><svg height="10" style="flex:1;min-width:0"><rect width="100%" height="10" fill="url(#zzGold)"></rect></svg></div>
+                    <p style="margin:0;font:400 19px/1.5 Literata,serif;color:#F3EADB;text-wrap:pretty">{{ e.def }}</p>
+                    <p style="margin:0;font:italic 400 17px/1.5 Literata,serif;color:#D9CDB9;text-wrap:pretty">{{ e.ex }}<br><span style="font:500 13px Manrope;font-style:normal;color:#B5A893">— з народного мовлення</span></p>
+                    <div style="font:400 15px Manrope;color:#D9CDB9"><span style="color:#B5A893">{{ e.synLabel }}</span> {{ e.syn }}</div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap"><span style="padding:7px 12px;border-radius:2px;background:#2A221C;font:600 12.5px Manrope;color:#F3EADB">{{ e.cat }}</span></div>
+                    <sc-if value="{{ e.often }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:flex;gap:8px;align-items:center;padding-top:12px;border-top:1px solid rgba(212,174,92,.18);font:500 14px Manrope;color:#B5A893"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4AE5C" stroke-width="1.8"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"></path></svg>Часто кажуть: <i style="font-family:Literata;color:#D9CDB9">{{ e.often }}</i></div>
+                    </sc-if>
+                  </article>
+                </sc-if>
+                <sc-if value="{{ e.isCorr }}" hint-placeholder-val="{{ false }}">
+                  <article style="position:relative;padding:28px 26px 24px;background:#1F1915;border:1px solid rgba(212,174,92,.3);border-radius:4px;display:flex;flex-direction:column;gap:16px">
+                    <div style="display:flex;justify-content:space-between;align-items:center"><span style="font:700 11px Manrope;letter-spacing:.14em;color:#B5A893">ВИПРАВЛЕННЯ</span><span style="padding:3px 8px;border:1px solid rgba(212,174,92,.45);border-radius:2px;font:600 11.5px Manrope;color:#D4AE5C">{{ e.kind }}</span></div>
+                    <div style="display:flex;flex-direction:column;gap:6px">
+                      <span style="font:500 13px Manrope;color:#B5A893">Так часто кажуть</span>
+                      <span style="font:400 26px/1.2 Literata,serif;color:#B5A893;text-decoration:line-through;text-decoration-color:rgba(212,174,92,.6);text-decoration-thickness:1.5px">{{ e.wrong }}</span>
+                    </div>
+                    <div aria-hidden="true" style="display:flex;align-items:center;gap:8px"><svg height="10" style="flex:1;min-width:0"><rect width="100%" height="10" fill="url(#zzGold)"></rect></svg><svg width="18" height="18" style="transform:rotate(90deg)" viewBox="0 0 24 24" fill="none" stroke="#D4AE5C" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"></path></svg><svg height="10" style="flex:1;min-width:0"><rect width="100%" height="10" fill="url(#zzGold)"></rect></svg></div>
+                    <div style="display:flex;flex-direction:column;gap:6px">
+                      <span style="font:500 13px Manrope;color:#D4AE5C">Українською краще</span>
+                      <span style="font-family:Literata,serif;font-weight:500;line-height:1.05;color:#F3EADB;font-size:{{ lemmaPx }}">{{ e.right }}</span>
+                    </div>
+                    <p style="margin:0;font:400 16px/1.55 Manrope;color:#D9CDB9;text-wrap:pretty">{{ e.why }}</p>
+                    <div style="display:flex;flex-direction:column;gap:8px;padding:14px;background:#2A221C;border-radius:2px">
+                      <div style="display:flex;gap:10px;font:400 15px/1.45 Literata,serif;color:#B5A893"><span style="font:700 12px Manrope;color:#B5A893;flex:none;width:18px;padding-top:2px">—</span>{{ e.exBad }}</div>
+                      <div style="display:flex;gap:10px;font:400 15px/1.45 Literata,serif;color:#F3EADB"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8FC79F" stroke-width="2.2" style="flex:none;margin-top:1px"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>{{ e.exGood }}</div>
+                    </div>
+                  </article>
+                </sc-if>
+                <sc-if value="{{ e.isEnd }}" hint-placeholder-val="{{ false }}">
+                  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;text-align:center;padding:0 20px 80px">
+                    <svg width="108" height="108" viewBox="0 0 18 18" aria-hidden="true"><use href="#rosGold"></use></svg>
+                    <h3 style="margin:0;font:500 30px/1.2 Literata,serif;color:#F3EADB;text-wrap:balance">Ви переглянули всі слова</h3>
+                    <p style="margin:0;font:400 16px/1.5 Manrope;color:#B5A893">Чекайте оновлення. Гортайте далі — почнемо нове коло.</p>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ e.hasActions }}" hint-placeholder-val="{{ true }}">
+                  <div style="display:flex;justify-content:space-around;margin-top:12px">
+                    <button onClick="{{ e.onFav }}" aria-label="{{ e.favLabel }}" style="width:52px;height:52px;border:none;background:none;display:grid;place-items:center;cursor:pointer"><svg width="27" height="27" viewBox="0 0 24 24" stroke-width="1.7" style="animation:{{ e.heartAnim }};fill:{{ e.heartFill }};stroke:{{ e.heartStroke }}"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"></path></svg></button>
+                    <button aria-label="Поділитися" style="width:52px;height:52px;border:none;background:none;display:grid;place-items:center;color:#F3EADB"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3.5v11M8 7.5l4-4 4 4M6 11v8.5h12V11"></path></svg></button>
+                    <button aria-label="Додати до колекції" style="width:52px;height:52px;border:none;background:none;display:grid;place-items:center;color:#F3EADB"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 3.5h12v17l-6-4-6 4z"></path><path d="M12 7.5v6M9 10.5h6"></path></svg></button>
+                    <button aria-label="Не показувати" style="width:52px;height:52px;border:none;background:none;display:grid;place-items:center;color:#F3EADB"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 14V4.5H5.5v9.5zM8 13.5l3.5 6.5c1.6 0 2.4-1 2-2.6l-.8-3.4h5.1c1.2 0 2-1 1.8-2.2l-1.2-6c-.2-1-1-1.8-2-1.8H8"></path></svg></button>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+          <sc-if value="{{ showSwipeHint }}" hint-placeholder-val="{{ true }}">
+            <div style="position:absolute;left:0;right:0;bottom:100px;display:flex;justify-content:center;pointer-events:none"><div style="display:flex;align-items:center;gap:8px;padding:9px 14px;background:rgba(243,234,219,.92);color:#15110E;border-radius:20px;font:600 13px Manrope"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M6 11l6-6 6 6"></path></svg>Гортайте вгору — наступне слово</div></div>
+          </sc-if>
+          <nav style="position:relative;height:84px;flex:none;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid rgba(212,174,92,.2);background:#15110E;padding-top:8px">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:700 10.5px Manrope;color:#D4AE5C"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10.5 12 4l8 6.5V20h-5v-6H9v6H4z"></path></svg>Головна</div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:600 10.5px Manrope;color:#B5A893"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"></path><circle cx="15" cy="7" r="2"></circle><circle cx="9" cy="17" r="2"></circle></svg>Налаштування</div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:600 10.5px Manrope;color:#B5A893"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="3"></rect><path d="M12 8l3 4-3 4-3-4z"></path></svg>Гра</div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:600 10.5px Manrope;color:#B5A893"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 4h12v16l-6-4-6 4z"></path></svg>Збережене</div>
+          </nav>
+          <sc-if value="{{ statsOpen }}" hint-placeholder-val="{{ false }}">
+            <div onClick="{{ toggleStats }}" style="position:absolute;inset:0;background:rgba(0,0,0,.5)"></div>
+            <div role="dialog" aria-label="Статистика" style="position:absolute;left:0;right:0;bottom:0;background:#1F1915;border-top:1px solid rgba(212,174,92,.3);border-radius:22px 22px 0 0;padding:12px 24px 40px;display:flex;flex-direction:column;gap:20px;animation:sheetUp .32s cubic-bezier(.2,.8,.2,1)">
+              <div style="align-self:center;width:38px;height:5px;border-radius:3px;background:rgba(243,234,219,.25)"></div>
+              <div style="display:flex;align-items:flex-end;gap:14px">
+                <span style="font:500 64px/1 Literata,serif;color:#F3EADB">12</span>
+                <div style="display:flex;flex-direction:column;gap:2px;padding-bottom:8px"><span style="font:600 15px Manrope;color:#F3EADB">днів поспіль</span><span style="font:500 13px Manrope;color:#B5A893">найкраща серія — 31</span></div>
+              </div>
+              <div aria-hidden="true"><svg height="10" width="100%"><rect width="100%" height="10" fill="url(#zzGold)"></rect></svg></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px 12px">
+                <div style="display:flex;flex-direction:column;gap:4px"><span style="font:500 28px Literata;color:#F3EADB">18</span><span style="font:500 13px Manrope;color:#B5A893">слів сьогодні</span></div>
+                <div style="display:flex;flex-direction:column;gap:4px"><span style="font:500 28px Literata;color:#F3EADB">{{ favCount }}</span><span style="font:500 13px Manrope;color:#B5A893">в Улюбленому</span></div>
+                <div style="display:flex;flex-direction:column;gap:4px"><span style="font:500 28px Literata;color:#F3EADB">41</span><span style="font:500 13px Manrope;color:#B5A893">слово в Колекціях</span></div>
+                <div style="display:flex;flex-direction:column;gap:4px"><span style="font:500 28px Literata;color:#F3EADB">13 / 15</span><span style="font:500 13px Manrope;color:#B5A893">найкраще у Грі</span></div>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1c Game live -->
+    <div class="dv-opt" id="1c">
+      <div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>Гра · «Вгадай слово», раунд · живе: оберіть відповідь, ✕ — вихід</div>
+      <div style="padding:12px">
+        <div data-screen-label="Game round live" style="width:393px;height:852px;border-radius:54px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#15110E;box-shadow:0 0 0 10px #000,0 30px 60px rgba(0,0,0,.3)">
+          <div style="height:54px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:6px 34px 0 42px;font:600 16px Manrope;color:#F3EADB"><span>9:41</span><svg width="26" height="12" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3" fill="none" stroke="currentColor" opacity=".4"></rect><rect x="2" y="2" width="17" height="8" rx="1.6" fill="currentColor"></rect><rect x="23.5" y="4" width="1.6" height="4" rx=".8" fill="currentColor" opacity=".4"></rect></svg></div>
+          <div style="padding:6px 16px 0 12px;display:flex;align-items:center;gap:10px;height:52px">
+            <button onClick="{{ askExit }}" aria-label="Вийти з гри" style="width:44px;height:44px;border:none;background:none;display:grid;place-items:center;color:#F3EADB;cursor:pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>
+            <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+              <span style="font:700 13px Manrope;color:#F3EADB" aria-label="Раунд">{{ roundLabel }}</span>
+              <div style="height:4px;background:#2A221C;border-radius:2px;overflow:hidden"><div style="height:100%;background:#D4AE5C;width:{{ roundPct }};transition:width .4s"></div></div>
+            </div>
+            <div style="display:flex;gap:3px" aria-label="{{ livesLabel }}">
+              <sc-for list="{{ lives }}" as="l" hint-placeholder-count="5">
+                <svg width="20" height="20" viewBox="0 0 24 24" stroke-width="1.8" style="fill:{{ l.fill }};stroke:{{ l.stroke }};animation:{{ l.anim }}"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"></path></svg>
+              </sc-for>
+            </div>
+          </div>
+          <div style="flex:1;padding:24px 24px 0;display:flex;flex-direction:column;gap:20px">
+            <div style="position:relative;padding:30px 24px;background:#1F1915;border:1px solid rgba(212,174,92,.3);border-radius:4px;display:flex;flex-direction:column;gap:16px;min-height:220px;justify-content:center">
+              <svg aria-hidden="true" width="16" height="16" style="position:absolute;left:8px;top:8px"><use href="#cornGold"></use></svg>
+              <svg aria-hidden="true" width="16" height="16" style="position:absolute;right:8px;bottom:8px;transform:scale(-1,-1)"><use href="#cornGold"></use></svg>
+              <span style="font:700 11px Manrope;letter-spacing:.14em;color:#B5A893">ВИЗНАЧЕННЯ</span>
+              <p style="margin:0;font:400 25px/1.35 Literata,serif;color:#F3EADB;text-wrap:pretty">{{ qDef }}</p>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <sc-for list="{{ opts }}" as="o" hint-placeholder-count="4">
+                <button onClick="{{ o.onPick }}" style="min-height:58px;padding:0 20px;border-radius:4px;display:flex;align-items:center;justify-content:space-between;font:500 21px Literata,serif;cursor:pointer;transition:background .2s,opacity .2s;background:{{ o.bg }};border:1px solid {{ o.border }};color:{{ o.color }};opacity:{{ o.op }}">{{ o.w }}<span style="font:700 13px Manrope">{{ o.tag }}</span></button>
+              </sc-for>
+            </div>
+          </div>
+          <sc-if value="{{ showResultSheet }}" hint-placeholder-val="{{ false }}">
+            <div role="dialog" style="position:absolute;left:0;right:0;bottom:0;background:#F3EADB;color:#15110E;border-radius:22px 22px 0 0;padding:24px 24px 40px;display:flex;flex-direction:column;gap:14px;animation:sheetUp .32s cubic-bezier(.2,.8,.2,1)">
+              <div style="display:flex;align-items:center;gap:10px;font:700 17px Manrope;color:{{ sheetColor }}">{{ sheetTitle }}</div>
+              <div style="font:500 30px Literata,serif">{{ qAnswer }}</div>
+              <p style="margin:0;font:italic 400 17px/1.5 Literata,serif;color:#3E342A">{{ qEx }}</p>
+              <button onClick="{{ next }}" style="margin-top:6px;height:54px;border:none;border-radius:4px;background:#15110E;color:#F3EADB;font:700 16px Manrope;cursor:pointer">Далі</button>
+            </div>
+          </sc-if>
+          <sc-if value="{{ confirmExit }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;inset:0;background:rgba(0,0,0,.6);display:grid;place-items:center;padding:32px">
+              <div role="alertdialog" style="width:100%;background:#1F1915;border:1px solid rgba(212,174,92,.3);border-radius:6px;padding:26px 22px 20px;display:flex;flex-direction:column;gap:10px;text-align:center">
+                <h3 style="margin:0;font:500 24px Literata,serif;color:#F3EADB">Вийти з гри?</h3>
+                <p style="margin:0 0 10px;font:400 15px Manrope;color:#B5A893">Прогрес буде втрачено.</p>
+                <button onClick="{{ restart }}" style="height:50px;border:none;border-radius:4px;background:#F3EADB;color:#15110E;font:700 15px Manrope;cursor:pointer">Вийти</button>
+                <button onClick="{{ cancelExit }}" style="height:50px;border:1px solid rgba(243,234,219,.2);border-radius:4px;background:none;color:#F3EADB;font:600 15px Manrope;cursor:pointer">Грати далі</button>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ over }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;inset:0;background:#15110E;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:40px 32px;text-align:center">
+              <svg width="{{ overIcon }}" height="{{ overIcon }}" viewBox="0 0 18 18" aria-hidden="true"><use href="#rosGold"></use></svg>
+              <h3 style="margin:0;font:500 38px/1.1 Literata,serif;color:#F3EADB">{{ overTitle }}</h3>
+              <p style="margin:0;font:400 16px/1.5 Manrope;color:#B5A893">{{ overSub }}</p>
+              <div style="display:flex;gap:28px;margin:8px 0 16px">
+                <div style="display:flex;flex-direction:column;gap:2px"><span style="font:500 26px Literata;color:#F3EADB">{{ roundsDone }}</span><span style="font:500 12px Manrope;color:#B5A893">раундів</span></div>
+                <div style="display:flex;flex-direction:column;gap:2px"><span style="font:500 26px Literata;color:#F3EADB">{{ livesLeft }}</span><span style="font:500 12px Manrope;color:#B5A893">життів</span></div>
+                <div style="display:flex;flex-direction:column;gap:2px"><span style="font:500 26px Literata;color:#F3EADB">13</span><span style="font:500 12px Manrope;color:#B5A893">рекорд</span></div>
+              </div>
+              <button onClick="{{ restart }}" style="width:100%;height:54px;border:none;border-radius:4px;background:#D4AE5C;color:#15110E;font:700 16px Manrope;cursor:pointer">Ще раз</button>
+              <button style="width:100%;height:50px;border:1px solid rgba(243,234,219,.2);border-radius:4px;background:none;color:#F3EADB;font:600 15px Manrope">На головну</button>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1d Correction light -->
+    <div class="dv-opt" id="1d">
+      <div class="dv-olabel"><a class="dv-oid" href="#1d">1d</a>Картка Виправлення · світла · «Так часто кажуть → Українською краще»</div>
+      <div style="padding:12px">
+        <div data-screen-label="Correction light" style="width:393px;height:852px;border-radius:54px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#F5EEE2;box-shadow:0 0 0 10px #111,0 30px 60px rgba(0,0,0,.25)">
+          <svg aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%"><rect width="100%" height="100%" fill="url(#bgLight)"></rect></svg>
+          <div style="position:relative;height:54px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:6px 34px 0 42px;font:600 16px Manrope;color:#1E1813"><span>9:41</span><svg width="26" height="12" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3" fill="none" stroke="currentColor" opacity=".4"></rect><rect x="2" y="2" width="17" height="8" rx="1.6" fill="currentColor"></rect></svg></div>
+          <div style="position:relative;flex:1;padding:6px 24px 0;display:flex;flex-direction:column">
+            <div style="height:44px;display:flex;align-items:center"><button aria-label="Статистика" style="height:40px;padding:0 14px 0 10px;border-radius:20px;border:1px solid rgba(163,34,27,.25);background:#FBF7F0;display:flex;align-items:center;gap:6px;font:700 15px Manrope;color:#1E1813"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A3221B" stroke-width="1.8"><path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2.2 1-3.6 2.2-4.6.2 1.6 1 2.6 2 3C11 8.6 11 6 12 3z"></path></svg>12</button></div>
+            <article style="margin-top:22px;padding:28px 26px 24px;background:#FBF7F0;border:1px solid rgba(156,122,46,.32);border-radius:4px;display:flex;flex-direction:column;gap:16px">
+              <div style="display:flex;justify-content:space-between;align-items:center"><span style="font:700 11px Manrope;letter-spacing:.14em;color:#6B5E4E">ВИПРАВЛЕННЯ</span><span style="padding:3px 8px;border:1px solid rgba(163,34,27,.35);border-radius:2px;font:600 11.5px Manrope;color:#A3221B">росіянізм</span></div>
+              <div style="display:flex;flex-direction:column;gap:6px"><span style="font:500 13px Manrope;color:#6B5E4E">Так часто кажуть</span><span style="font:400 26px/1.2 Literata,serif;color:#6B5E4E;text-decoration:line-through;text-decoration-color:rgba(163,34,27,.5);text-decoration-thickness:1.5px">на протязі року</span></div>
+              <div aria-hidden="true" style="display:flex;align-items:center;gap:8px"><svg height="10" style="flex:1;min-width:0"><rect width="100%" height="10" fill="url(#zzRed)"></rect></svg><svg width="18" height="18" style="transform:rotate(90deg)" viewBox="0 0 24 24" fill="none" stroke="#A3221B" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"></path></svg><svg height="10" style="flex:1;min-width:0"><rect width="100%" height="10" fill="url(#zzRed)"></rect></svg></div>
+              <div style="display:flex;flex-direction:column;gap:6px"><span style="font:500 13px Manrope;color:#A3221B">Українською краще</span><span style="font:500 46px/1.05 Literata,serif;color:#1E1813">протягом ро́ку</span></div>
+              <p style="margin:0;font:400 16px/1.55 Manrope;color:#3E342A;text-wrap:pretty">«Протяг» — це рух повітря. Для тривалості часу маємо прийменник «протягом» або «упродовж».</p>
+              <div style="display:flex;flex-direction:column;gap:8px;padding:14px;background:#F0E5D3;border-radius:2px">
+                <div style="display:flex;gap:10px;font:400 15px/1.45 Literata,serif;color:#6B5E4E"><span style="font:700 12px Manrope;flex:none;width:18px;padding-top:2px">—</span>Ремонт тривав на протязі року.</div>
+                <div style="display:flex;gap:10px;font:400 15px/1.45 Literata,serif;color:#1E1813"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2F6B45" stroke-width="2.2" style="flex:none;margin-top:1px"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Ремонт тривав протягом року.</div>
+              </div>
+            </article>
+          </div>
+          <nav style="position:relative;height:84px;flex:none;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid rgba(156,122,46,.25);background:#F5EEE2;padding-top:8px">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:700 10.5px Manrope;color:#A3221B"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10.5 12 4l8 6.5V20h-5v-6H9v6H4z"></path></svg>Головна</div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:600 10.5px Manrope;color:#6B5E4E"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"></path><circle cx="15" cy="7" r="2"></circle><circle cx="9" cy="17" r="2"></circle></svg>Налаштування</div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:600 10.5px Manrope;color:#6B5E4E"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="3"></rect><path d="M12 8l3 4-3 4-3-4z"></path></svg>Гра</div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:600 10.5px Manrope;color:#6B5E4E"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 4h12v16l-6-4-6 4z"></path></svg>Збережене</div>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1e Saved light -->
+    <div class="dv-opt" id="1e">
+      <div class="dv-olabel"><a class="dv-oid" href="#1e">1e</a>Збережене · світла</div>
+      <div style="padding:12px">
+        <div data-screen-label="Saved light" style="width:393px;height:852px;border-radius:54px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:#F5EEE2;box-shadow:0 0 0 10px #111,0 30px 60px rgba(0,0,0,.25)">
+          <div style="height:54px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:6px 34px 0 42px;font:600 16px Manrope;color:#1E1813"><span>9:41</span><svg width="26" height="12" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3" fill="none" stroke="currentColor" opacity=".4"></rect><rect x="2" y="2" width="17" height="8" rx="1.6" fill="currentColor"></rect></svg></div>
+          <div style="flex:1;padding:14px 20px 0;display:flex;flex-direction:column;gap:14px">
+            <h1 style="margin:0 4px 6px;font:500 36px Literata,serif;color:#1E1813">Збережене</h1>
+            <div style="padding:22px 20px;background:#1E1813;color:#F3EADB;border-radius:4px;display:flex;flex-direction:column;gap:16px;position:relative;overflow:hidden">
+              <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:700 17px Manrope">Улюблене</span><span style="font:500 30px Literata;color:#D4AE5C">24</span></div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;font:400 18px Literata,serif;color:#D9CDB9"><span>ке́бета</span><span style="color:#6B5E4E">·</span><span>шпарки́й</span><span style="color:#6B5E4E">·</span><span>ошу́я</span></div>
+              <svg height="10" width="100%" aria-hidden="true"><rect width="100%" height="10" fill="url(#zzGold)"></rect></svg>
+            </div>
+            <div style="padding:20px;background:#FBF7F0;border:1px solid rgba(156,122,46,.3);border-radius:4px;display:flex;flex-direction:column;gap:14px">
+              <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:700 17px Manrope;color:#1E1813">Колекції</span><span style="font:500 30px Literata;color:#A3221B">3</span></div>
+              <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
+                <div style="padding:12px 10px;background:#F0E5D3;border-radius:2px;display:flex;flex-direction:column;gap:4px"><span style="font:600 13px Manrope;color:#1E1813">Для листів</span><span style="font:500 12px Manrope;color:#6B5E4E">17 слів</span></div>
+                <div style="padding:12px 10px;background:#F0E5D3;border-radius:2px;display:flex;flex-direction:column;gap:4px"><span style="font:600 13px Manrope;color:#1E1813">Бабусині</span><span style="font:500 12px Manrope;color:#6B5E4E">9 слів</span></div>
+                <div style="padding:12px 10px;background:#F0E5D3;border-radius:2px;display:flex;flex-direction:column;gap:4px"><span style="font:600 13px Manrope;color:#1E1813">Робота</span><span style="font:500 12px Manrope;color:#6B5E4E">15 слів</span></div>
+              </div>
+            </div>
+            <div style="padding:20px;background:#FBF7F0;border:1px solid rgba(156,122,46,.3);border-radius:4px;display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:700 17px Manrope;color:#1E1813">Історія</span><span style="font:500 30px Literata;color:#A3221B">312</span></div>
+              <div style="display:flex;flex-direction:column">
+                <div style="display:flex;justify-content:space-between;align-items:center;min-height:44px;border-top:1px solid rgba(156,122,46,.2)"><span style="font:400 18px Literata;color:#1E1813">веремі́я</span><span style="font:500 12px Manrope;color:#6B5E4E">щойно</span></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;min-height:44px;border-top:1px solid rgba(156,122,46,.2)"><span style="font:400 18px Literata;color:#1E1813">брати участь</span><span style="font:500 12px Manrope;color:#6B5E4E">5 хв тому</span></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;min-height:44px;border-top:1px solid rgba(156,122,46,.2)"><span style="font:400 18px Literata;color:#1E1813">ке́бета</span><span style="font:500 12px Manrope;color:#6B5E4E">сьогодні, 09:02</span></div>
+              </div>
+            </div>
+          </div>
+          <nav style="height:84px;flex:none;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid rgba(156,122,46,.25);background:#F5EEE2;padding-top:8px">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:600 10.5px Manrope;color:#6B5E4E"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10.5 12 4l8 6.5V20h-5v-6H9v6H4z"></path></svg>Головна</div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:600 10.5px Manrope;color:#6B5E4E"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"></path><circle cx="15" cy="7" r="2"></circle><circle cx="9" cy="17" r="2"></circle></svg>Налаштування</div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:600 10.5px Manrope;color:#6B5E4E"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="3"></rect><path d="M12 8l3 4-3 4-3-4z"></path></svg>Гра</div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;font:700 10.5px Manrope;color:#A3221B"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8"><path d="M6 4h12v16l-6-4-6 4z"></path></svg>Збережене</div>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1f Share cards -->
+    <div class="dv-opt" id="1f">
+      <div class="dv-olabel"><a class="dv-oid" href="#1f">1f</a>Share-картки · Story 9:16 (Слово) та 1:1 (Виправлення)</div>
+      <div style="display:flex;gap:28px;align-items:flex-start;padding:12px">
+        <div style="width:324px;height:576px;background:#15110E;position:relative;display:flex;flex-direction:column;justify-content:center;padding:0 34px;gap:22px;box-shadow:0 20px 50px rgba(0,0,0,.25)">
+          <svg aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%"><rect width="100%" height="100%" fill="url(#bgDark)"></rect></svg>
+          <svg aria-hidden="true" style="position:absolute;left:0;right:0;top:28px" width="100%" height="10"><rect width="100%" height="10" fill="url(#zzGold)"></rect></svg>
+          <svg aria-hidden="true" style="position:absolute;left:0;right:0;bottom:28px;transform:scaleY(-1)" width="100%" height="10"><rect width="100%" height="10" fill="url(#zzGold)"></rect></svg>
+          <span style="position:relative;font:700 10px Manrope;letter-spacing:.22em;color:#D4AE5C">СЛОВО ДНЯ</span>
+          <span style="position:relative;font:500 54px/1 Literata,serif;color:#F3EADB">ке́бета</span>
+          <span style="position:relative;font:500 13px Manrope;color:#B5A893">ім., ж. р., розм.</span>
+          <p style="position:relative;margin:0;font:400 19px/1.45 Literata,serif;color:#F3EADB">Кмітливість, тямущість; уміння швидко зміркувати.</p>
+          <span style="position:absolute;left:0;right:0;bottom:52px;text-align:center;font:600 11px Manrope;letter-spacing:.32em;color:#B5A893">SLOVO</span>
+        </div>
+        <div style="width:300px;height:300px;background:#F5EEE2;position:relative;padding:30px 28px;box-sizing:border-box;display:flex;flex-direction:column;gap:10px;box-shadow:0 20px 50px rgba(0,0,0,.18)">
+          <svg aria-hidden="true" width="16" height="16" style="position:absolute;left:10px;top:10px"><use href="#cornLight"></use></svg>
+          <svg aria-hidden="true" width="16" height="16" style="position:absolute;right:10px;top:10px;transform:scaleX(-1)"><use href="#cornLight"></use></svg>
+          <svg aria-hidden="true" width="16" height="16" style="position:absolute;left:10px;bottom:10px;transform:scaleY(-1)"><use href="#cornLight"></use></svg>
+          <svg aria-hidden="true" width="16" height="16" style="position:absolute;right:10px;bottom:10px;transform:scale(-1,-1)"><use href="#cornLight"></use></svg>
+          <span style="font:500 12px Manrope;color:#6B5E4E">Так часто кажуть</span>
+          <span style="font:400 20px Literata,serif;color:#6B5E4E;text-decoration:line-through;text-decoration-color:rgba(163,34,27,.5)">приймати участь</span>
+          <svg height="10" width="100%" aria-hidden="true"><rect width="100%" height="10" fill="url(#zzRed)"></rect></svg>
+          <span style="font:500 12px Manrope;color:#A3221B">Українською краще</span>
+          <span style="font:500 34px/1.05 Literata,serif;color:#1E1813">брати участь</span>
+          <span style="margin-top:auto;display:flex;justify-content:space-between;font:600 10px Manrope;letter-spacing:.24em;color:#6B5E4E"><span>КАЛЬКА</span><span>SLOVO</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1g Splash + icon -->
+    <div class="dv-opt" id="1g">
+      <div class="dv-olabel"><a class="dv-oid" href="#1g">1g</a>Splash (слот 7) та іконка застосунку</div>
+      <div style="display:flex;gap:40px;align-items:flex-start;padding:12px">
+        <div data-screen-label="Splash" style="width:393px;height:852px;border-radius:54px;overflow:hidden;position:relative;background:#15110E;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;box-shadow:0 0 0 10px #000,0 30px 60px rgba(0,0,0,.3)">
+          <svg aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%"><rect width="100%" height="100%" fill="url(#bgDark)"></rect></svg>
+          <svg aria-hidden="true" width="72" height="72" viewBox="0 0 18 18" style="position:relative"><use href="#rosGold"></use></svg>
+          <span style="position:relative;font:500 44px Literata,serif;letter-spacing:.32em;padding-left:.32em;color:#F3EADB">SLOVO</span>
+          <span style="position:relative;font:500 14px Manrope;color:#B5A893">рідкісні слова рідної мови</span>
+          <svg aria-hidden="true" style="position:absolute;left:0;bottom:64px" width="100%" height="10"><rect width="100%" height="10" fill="url(#zzGold)"></rect></svg>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:24px">
+          <div style="width:180px;height:180px;border-radius:40px;background:#15110E;position:relative;overflow:hidden;display:grid;place-items:center;box-shadow:0 14px 30px rgba(0,0,0,.25)">
+            <span style="font:500 118px/1 Literata,serif;color:#F3EADB;margin-top:-14px">S</span>
+            <svg aria-hidden="true" style="position:absolute;left:0;bottom:26px" width="100%" height="10"><rect width="100%" height="10" fill="url(#zzGold)"></rect></svg>
+          </div>
+          <div style="display:flex;gap:16px;align-items:center">
+            <div style="width:60px;height:60px;border-radius:14px;background:#15110E;position:relative;overflow:hidden;display:grid;place-items:center"><span style="font:500 40px/1 Literata,serif;color:#F3EADB;margin-top:-6px">S</span><svg aria-hidden="true" style="position:absolute;left:0;bottom:8px" width="100%" height="5" viewBox="0 0 60 5" preserveAspectRatio="none"><rect width="60" height="5" fill="#D4AE5C" fill-opacity=".85"></rect></svg></div>
+            <div style="width:60px;height:60px;border-radius:14px;background:#F5EEE2;position:relative;overflow:hidden;display:grid;place-items:center;border:1px solid rgba(0,0,0,.08)"><span style="font:500 40px/1 Literata,serif;color:#1E1813;margin-top:-6px">S</span><svg aria-hidden="true" style="position:absolute;left:0;bottom:8px" width="100%" height="5"><rect width="100%" height="5" fill="#A3221B"></rect></svg></div>
+            <span style="font:500 12px/1.4 Manrope;color:#5A4E40">60 pt · темна<br>та світла</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1h Tokens + decor kit -->
+    <div class="dv-opt" id="1h">
+      <div class="dv-olabel"><a class="dv-oid" href="#1h">1h</a>Токени та набір Декору</div>
+      <div style="width:880px;background:#FBF7F0;border:1px solid rgba(0,0,0,.08);border-radius:6px;padding:36px;display:flex;flex-direction:column;gap:36px">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <span style="font:700 11px Manrope;letter-spacing:.16em;color:#6B5E4E">КОЛЬОРИ</span>
+          <div style="display:grid;grid-template-columns:110px repeat(6,minmax(0,1fr));gap:8px;font:500 11.5px Manrope;color:#3E342A;align-items:center">
+            <span></span><span>тло</span><span>поверхня</span><span>чорнило</span><span>приглушене</span><span>акцент</span><span>декор</span>
+            <b style="font-weight:600">Core світла</b><div style="height:44px;background:#F4F4F2;border:1px solid #0001"></div><div style="height:44px;background:#FFFFFF;border:1px solid #0001"></div><div style="height:44px;background:#161616"></div><div style="height:44px;background:#6A6A6A"></div><div style="height:44px;background:#161616"></div><div style="height:44px;background:#D6D6D2"></div>
+            <b style="font-weight:600">Core темна</b><div style="height:44px;background:#111111"></div><div style="height:44px;background:#1C1C1C"></div><div style="height:44px;background:#F2F2F0;border:1px solid #0001"></div><div style="height:44px;background:#9C9C9C"></div><div style="height:44px;background:#F2F2F0;border:1px solid #0001"></div><div style="height:44px;background:#3A3A3A"></div>
+            <b style="font-weight:600;color:#A3221B">UA світла</b><div style="height:44px;background:#F5EEE2;border:1px solid #0001"></div><div style="height:44px;background:#FBF7F0;border:1px solid #0001"></div><div style="height:44px;background:#1E1813"></div><div style="height:44px;background:#6B5E4E"></div><div style="height:44px;background:#A3221B"></div><div style="height:44px;background:#9C7A2E"></div>
+            <b style="font-weight:600;color:#A3221B">UA темна</b><div style="height:44px;background:#15110E"></div><div style="height:44px;background:#1F1915"></div><div style="height:44px;background:#F3EADB;border:1px solid #0001"></div><div style="height:44px;background:#B5A893"></div><div style="height:44px;background:#D4AE5C"></div><div style="height:44px;background:#C8372D"></div>
+          </div>
+          <span style="font:400 12.5px/1.5 Manrope;color:#6B5E4E">Відповіді Гри — окремі семантичні токени (правильно #2F6B45 / неправильно #A3271F), щоб червоний вишивки ніколи не читався як помилка. Усі пари текст/тло ≥ 4.5:1.</span>
+        </div>
+        <div style="display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:36px">
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <span style="font:700 11px Manrope;letter-spacing:.16em;color:#6B5E4E">ЛЕМА · S / M / L / XL · ТЕСТ АКУТА U+0301</span>
+            <div style="display:flex;align-items:baseline;gap:18px;flex-wrap:wrap;color:#1E1813;font-family:Literata,serif;font-weight:500">
+              <span style="font-size:40px">ке́бета</span><span style="font-size:48px">ошу́я</span><span style="font-size:56px">шпарки́й</span><span style="font-size:64px">одесну́</span>
+            </div>
+            <div style="display:flex;gap:18px;flex-wrap:wrap;font:400 16px Literata,serif;color:#3E342A"><span>ве́ремі́я (два наголоси)</span><span style="font-size:13px">ке́бета 13 pt</span><span style="font-style:italic">курсив: ке́бета</span><span style="font-weight:600">600: шпарки́й</span></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <span style="font:700 11px Manrope;letter-spacing:.16em;color:#6B5E4E">ІНТЕРФЕЙС · MANROPE</span>
+            <span style="font:700 17px Manrope;color:#1E1813">Заголовок блоку 17 / 700</span>
+            <span style="font:500 15px Manrope;color:#1E1813">Текст інтерфейсу 15 / 500</span>
+            <span style="font:600 12.5px Manrope;color:#1E1813">Чип 12.5 / 600</span>
+            <span style="font:700 11px Manrope;letter-spacing:.14em;color:#1E1813">МІТКА 11 / 700 / +14%</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <span style="font:700 11px Manrope;letter-spacing:.16em;color:#6B5E4E">ДЕКОР · 7 СЛОТІВ (Core → UA)</span>
+          <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px">
+            <div style="display:flex;flex-direction:column;gap:8px"><div style="height:84px;background:#15110E;position:relative"><svg style="position:absolute;inset:0;width:100%;height:100%"><rect width="100%" height="100%" fill="url(#bgDark)"></rect></svg></div><span style="font:500 12px Manrope;color:#3E342A">1 · Тло — хрестик 6% на полотні</span></div>
+            <div style="display:flex;flex-direction:column;gap:8px"><div style="height:84px;background:#15110E;display:flex;align-items:center;gap:6px;padding:0 12px"><svg height="10" style="flex:1;min-width:0"><rect width="100%" height="10" fill="url(#zzGold)"></rect></svg><svg width="18" height="18"><use href="#rosGold"></use></svg><svg height="10" style="flex:1;min-width:0"><rect width="100%" height="10" fill="url(#zzGold)"></rect></svg></div><span style="font:500 12px Manrope;color:#3E342A">2 · Роздільник — зигзаг + розетка</span></div>
+            <div style="display:flex;flex-direction:column;gap:8px"><div style="height:84px;background:#15110E;position:relative"><svg width="16" height="16" style="position:absolute;left:10px;top:10px"><use href="#cornGold"></use></svg><svg width="16" height="16" style="position:absolute;right:10px;bottom:10px;transform:scale(-1,-1)"><use href="#cornGold"></use></svg></div><span style="font:500 12px Manrope;color:#3E342A">3 · Кути картки — L-стібок</span></div>
+            <div style="display:flex;flex-direction:column;gap:8px"><div style="height:84px;background:#15110E;display:grid;place-items:center"><svg width="54" height="54" viewBox="0 0 18 18"><use href="#rosGold"></use></svg></div><span style="font:500 12px Manrope;color:#3E342A">4 · Порожній стан — велика розетка</span></div>
+            <div style="display:flex;flex-direction:column;gap:8px"><div style="height:84px;background:#15110E;position:relative"><svg style="position:absolute;left:0;top:10px" width="100%" height="10"><rect width="100%" height="10" fill="url(#zzGold)"></rect></svg><svg style="position:absolute;left:0;bottom:10px;transform:scaleY(-1)" width="100%" height="10"><rect width="100%" height="10" fill="url(#zzGold)"></rect></svg></div><span style="font:500 12px Manrope;color:#3E342A">5 · Share — стрічки вгорі й унизу</span></div>
+            <div style="display:flex;flex-direction:column;gap:8px"><div style="height:84px;background:#15110E;display:flex;align-items:center;justify-content:center;gap:10px"><svg width="30" height="30" viewBox="0 0 18 18"><use href="#rosGold"></use></svg><svg width="44" height="44" viewBox="0 0 18 18"><use href="#rosGold"></use></svg><svg width="30" height="30" viewBox="0 0 18 18"><use href="#rosGold"></use></svg></div><span style="font:500 12px Manrope;color:#3E342A">6 · Перемога — три розетки (TBD)</span></div>
+            <div style="display:flex;flex-direction:column;gap:8px"><div style="height:84px;background:#15110E;display:grid;place-items:center"><span style="font:500 18px Literata;letter-spacing:.3em;color:#F3EADB">SLOVO</span></div><span style="font:500 12px Manrope;color:#3E342A">7 · Splash — вордмарк + розетка</span></div>
+            <div style="display:flex;flex-direction:column;gap:8px"><div style="height:84px;background:#F4F4F2;display:flex;align-items:center;gap:10px;padding:0 14px;border:1px solid #0001"><div style="flex:1;height:1px;background:rgba(0,0,0,.14)"></div><div style="width:5px;height:5px;border-radius:3px;background:#161616"></div><div style="flex:1;height:1px;background:rgba(0,0,0,.14)"></div></div><span style="font:500 12px Manrope;color:#3E342A">Core за замовчуванням — лінія й крапка</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Далі: «онбординг і налаштування в стилі <a class="dv-oid" href="#1b">1b</a>» · «віджети та сповіщення» · «перевірка на SE 375×667» · «шіт Колекцій і списки зі свайпом»</p>
+</section>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;lemmaSize&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;S&quot;,&quot;M&quot;,&quot;L&quot;,&quot;XL&quot;],&quot;default&quot;:&quot;M&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Стрічка&quot;},&quot;reduceMotion&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Доступність&quot;}}">
+class Component extends DCLogic {
+  state = { favs: {}, pop: null, statsOpen: false, feedIdx: 0, scrolled: false,
+    q: 0, picked: null, lives: 5, round: 7, lostAt: null, confirmExit: false, over: null,
+    mix: { 'Розум і характер': true, 'Побут і гомін': true, 'Час': true, 'Простір і рух': false, 'Почуття': true, 'Природа': false, 'Застарілі': false, 'Діалектні': true },
+    corrOn: true, times: [true, false, true], theme: 'Системна', fsz: 'M', sounds: true, haptics: true,
+    cols: [{ name: 'Для листів', n: 17, on: true }, { name: 'Бабусині', n: 9, on: false }, { name: 'Робота', n: 15, on: false }],
+    newOpen: false, newName: '', favList: null, histCleared: false, clearAsk: false, mPlay: 0, mOn: false,
+    stitch: 0, wg: 0, hidden: null, undo: null,
+    fb: null, fbType: 'word', fbWord: '', fbText: '', fbSent: false };
+
+  hiddenSeed = [
+    { id: 'h1', lemma: 'одесну́', kind: 'слово · присл., заст.' },
+    { id: 'h2', lemma: 'слідуючий → наступний', kind: 'виправлення · росіянізм' },
+    { id: 'h3', lemma: 'колотне́ча', kind: 'слово · ім., ж. р.' }
+  ];
+
+  componentDidMount() {
+    this._si = setInterval(() => this.setState(s => ({ stitch: (s.stitch + 1) % 15 })), 140);
+  }
+  componentWillUnmount() { clearInterval(this._si); clearTimeout(this._ut); }
+
+  favSeed = [
+    { id: 'a', lemma: 'шпарки́й', def: 'швидкий, жвавий', when: 'сьогодні' },
+    { id: 'b', lemma: 'ке́бета', def: 'кмітливість, тямущість', when: 'сьогодні' },
+    { id: 'c', lemma: 'ошу́я', def: 'ліворуч, з лівого боку', when: 'вчора' },
+    { id: 'd', lemma: 'брати участь', def: 'замість «приймати участь»', when: '9 жовт.' },
+    { id: 'e', lemma: 'веремі́я', def: "метушня, безлад, сум'яття", when: '7 жовт.' }
+  ];
+
+  play() {
+    clearTimeout(this._mt);
+    this.setState(s => ({ mOn: false, mPlay: s.mPlay + 1 }));
+    requestAnimationFrame(() => requestAnimationFrame(() => this.setState({ mOn: true })));
+    this._mt = setTimeout(() => this.setState({ mOn: false }), 1800);
+  }
+
+  entries = [
+    { id: 1, type: 'word', wotd: true, lemma: 'ке́бета', pos: 'ім., ж. р.', reg: 'розм.', def: 'Кмітливість, тямущість; уміння швидко зміркувати, що до чого.', ex: '«Е, хлопче, кебета в тебе є — далеко підеш».', synLabel: 'Синонім:', syn: 'тяма', cat: 'Розум і характер' },
+    { id: 2, type: 'word', lemma: 'веремі́я', pos: 'ім., ж. р.', def: "Метушня, безлад, сум'яття; гамірне товкання багатьох людей.", ex: '«На ярмарку зчинилася така веремія, що й слова свого не почуєш».', synLabel: 'Синонім:', syn: 'колотнеча', cat: 'Побут і гомін' },
+    { id: 3, type: 'corr', kind: 'калька', wrong: 'приймати участь', right: 'брати участь', why: 'Участь не приймають, як подарунок, — її беруть. Так само: брати до уваги, брати до серця.', exBad: 'Ми приймали участь у конкурсі.', exGood: 'Ми брали участь у конкурсі.' },
+    { id: 4, type: 'word', lemma: 'ошу́я', pos: 'присл.', reg: 'заст.', def: 'Ліворуч, з лівого боку.', ex: '«Сів ошуя від господаря, як велить звичай».', synLabel: 'Антонім:', syn: 'одесну́', cat: 'Простір і рух' },
+    { id: 5, type: 'word', lemma: 'протягом', pos: 'прийм.', def: 'Упродовж певного часу; поки триває щось.', ex: '«Протягом року ми вивчили сотню нових слів».', synLabel: 'Синонім:', syn: 'упродовж', cat: 'Час', often: 'на протязі' },
+    { id: 6, type: 'end' }
+  ];
+
+  questions = [
+    { def: "Метушня, безлад, сум'яття.", options: ['ке́бета', 'веремі́я', 'шпарки́й', 'ошу́я'], a: 1, ex: '«На ярмарку зчинилася така веремія, що й слова свого не почуєш».' },
+    { def: 'Кмітливість, тямущість.', options: ['одесну́', 'шпарки́й', 'ке́бета', 'веремі́я'], a: 2, ex: '«Е, хлопче, кебета в тебе є — далеко підеш».' },
+    { def: 'Швидкий, жвавий.', options: ['шпарки́й', 'ошу́я', 'веремі́я', 'ке́бета'], a: 0, ex: '«Шпаркий кінь до вечора й до міста домчав».' },
+    { def: 'Ліворуч, з лівого боку.', options: ['ке́бета', 'одесну́', 'веремі́я', 'ошу́я'], a: 3, ex: '«Сів ошуя від господаря, як велить звичай».' }
+  ];
+
+  fav(id) {
+    this.setState(s => ({ favs: { ...s.favs, [id]: !s.favs[id] }, pop: s.favs[id] ? null : id }));
+    clearTimeout(this._pt); this._pt = setTimeout(() => this.setState({ pop: null }), 500);
+  }
+
+  pick(i) {
+    if (this.state.picked !== null) return;
+    const q = this.questions[this.state.q % this.questions.length];
+    const wrong = i !== q.a;
+    this.setState(s => ({ picked: i, lives: wrong ? s.lives - 1 : s.lives, lostAt: wrong ? s.lives - 1 : null }));
+  }
+
+  next() {
+    const s = this.state;
+    if (s.lives <= 0) return this.setState({ over: 'lose', picked: null });
+    if (s.round >= 15) return this.setState({ over: 'win', picked: null });
+    this.setState({ picked: null, q: s.q + 1, round: s.round + 1, lostAt: null });
+  }
+
+  restart() { this.setState({ q: 0, picked: null, lives: 5, round: 7, lostAt: null, confirmExit: false, over: null }); }
+
+  renderVals() {
+    const s = this.state, rm = !!this.props.reduceMotion;
+    const px = { S: '40px', M: '48px', L: '56px', XL: '64px' }[this.props.lemmaSize || 'M'] || '48px';
+    const entries = this.entries.map(e => ({
+      ...e, isWord: e.type === 'word', isCorr: e.type === 'corr', isEnd: e.type === 'end', isWotd: !!e.wotd,
+      reg: e.reg || null, often: e.often || null, hasActions: e.type !== 'end',
+      onFav: () => this.fav(e.id),
+      favLabel: s.favs[e.id] ? 'Прибрати з Улюбленого' : 'Додати в Улюблене',
+      heartFill: s.favs[e.id] ? '#C8372D' : 'none',
+      heartStroke: s.favs[e.id] ? '#C8372D' : '#F3EADB',
+      heartAnim: s.pop === e.id && !rm ? 'heartPop .45s cubic-bezier(.3,1.6,.5,1)' : 'none'
+    }));
+    const q = this.questions[s.q % this.questions.length];
+    const answered = s.picked !== null, correct = answered && s.picked === q.a;
+    const opts = q.options.map((w, i) => {
+      let bg = '#1F1915', border = 'rgba(243,234,219,.16)', color = '#F3EADB', op = 1, tag = '';
+      if (answered) {
+        if (i === q.a) { bg = '#2F6B45'; border = '#2F6B45'; color = '#FFFFFF'; tag = 'Правильно'; }
+        else if (i === s.picked) { bg = '#A3271F'; border = '#A3271F'; color = '#FFFFFF'; tag = 'Ваш вибір'; }
+        else op = .45;
+      }
+      return { w, bg, border, color, op, tag, onPick: () => this.pick(i) };
+    });
+    const lives = [0, 1, 2, 3, 4].map(i => ({
+      fill: i < s.lives ? '#C8372D' : 'none',
+      stroke: i < s.lives ? '#C8372D' : 'rgba(243,234,219,.35)',
+      anim: s.lostAt === i && !rm ? 'lifeLost .5s ease-out' : 'none'
+    }));
+    const win = s.over === 'win';
+    const sw = (on) => ({ track: on ? '#A3221B' : '#D8CCB8', justify: on ? 'flex-end' : 'flex-start' });
+    const mixKeys = Object.keys(s.mix), mixOn = mixKeys.filter(k => s.mix[k]).length, allOn = mixOn === mixKeys.length;
+    const seg = (on) => ({ bg: on ? '#FBF7F0' : 'transparent', shadow: on ? '0 1px 3px rgba(0,0,0,.12)' : 'none' });
+    const dark = s.theme === 'Темна';
+    const sizes = { S: ['38px', '15px'], M: ['46px', '17px'], L: ['54px', '19px'], XL: ['62px', '21px'] };
+    const fl = s.favList || this.favSeed, on = s.mOn && !rm;
+    const hl = s.hidden || this.hiddenSeed;
+    const wgData = [
+      ['Утримуйте порожнє місце', 'Іконки почнуть хитатися.'],
+      ['Натисніть «+» і знайдіть SLOVO', 'Оберіть малий або середній розмір.'],
+      ['Торкніться віджета, щоб обрати режим', 'Улюблене, Колекція чи Усі слова.']
+    ];
+    const isWordFb = s.fbType === 'word', fbReady = s.fbWord.trim().length > 0;
+    const fbOpen = (t) => this.setState({ fb: true, fbType: t, fbSent: false, fbWord: '', fbText: '' });
+    return {
+      fbOpen: !!s.fb, fbForm: !s.fbSent, fbSent: s.fbSent,
+      fbOpenWord: () => fbOpen('word'), fbOpenBug: () => fbOpen('bug'),
+      fbClose: () => this.setState({ fb: null }),
+      fbTitle: isWordFb ? 'Нове слово' : 'Помилка',
+      fbTypes: [['word', 'Слово / Виправлення'], ['bug', 'Помилка']].map(([k, label]) => ({ label, on: s.fbType === k, ...seg(s.fbType === k), onTap: () => this.setState({ fbType: k }) })),
+      fbField1: isWordFb ? 'СЛОВО' : 'ДЕ САМЕ',
+      fbPh1: isWordFb ? 'напр. ке\'бета' : 'напр. веремі́я',
+      fbField2: isWordFb ? 'ЗНАЧЕННЯ, ПРИКЛАД, ДЖЕРЕЛО' : 'ЩО НЕ ТАК',
+      fbPh2: isWordFb ? 'Що означає, де ви його почули чи прочитали…' : 'Неправильний наголос, хибне визначення, збій…',
+      fbWord: s.fbWord, fbText: s.fbText,
+      onFbWord: (ev) => this.setState({ fbWord: ev.target.value.replace(/'/g, '\u0301') }),
+      onFbText: (ev) => this.setState({ fbText: ev.target.value }),
+      fbSendColor: fbReady ? '#A3221B' : 'rgba(30,24,19,.35)',
+      fbSend: () => { if (fbReady) this.setState({ fbSent: true }); },
+      fbThanks: isWordFb ? 'Редактори перевірять слово. Якщо воно потрапить до SLOVO — ви побачите його у Стрічці.' : 'Ми виправимо це в найближчому оновленні.',
+      pulse: rm ? 'none' : 'pulse 1.4s ease-in-out infinite',
+      stitches: Array.from({ length: 14 }, (_, i) => ({ c: (rm ? 14 : s.stitch) > i ? (i % 2 ? '#C8372D' : '#D4AE5C') : '#2A221C' })),
+      wgSteps: wgData.map(([title, sub], i) => ({ n: i + 1, title, sub, op: s.wg === i ? 1 : .5, numBg: s.wg === i ? '#A3221B' : '#EADFCB', numColor: s.wg === i ? '#fff' : '#1E1813', onTap: () => this.setState({ wg: i }) })),
+      wgIcons: Array.from({ length: 8 }, () => ({ anim: s.wg === 0 && !rm ? 'jiggle .3s ease-in-out infinite' : 'none' })),
+      wgGridOp: s.wg === 2 ? .35 : 1, wgShowGallery: s.wg === 1, wgShowWidget: s.wg === 2,
+      hiddenList: hl.map(h => ({ ...h, onRestore: () => {
+        clearTimeout(this._ut);
+        this.setState(st => ({ hidden: (st.hidden || this.hiddenSeed).filter(x => x.id !== h.id), undo: h }));
+        this._ut = setTimeout(() => this.setState({ undo: null }), 4000);
+      } })),
+      hiddenEmpty: hl.length === 0,
+      undoShow: !!s.undo, undoText: s.undo ? `«${s.undo.lemma.split(' →')[0]}» знову у Стрічці` : '',
+      undo: () => { clearTimeout(this._ut); this.setState(st => { const cur = st.hidden || this.hiddenSeed; const order = this.hiddenSeed.map(x => x.id); const next = [...cur, st.undo].sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id)); return { hidden: next, undo: null }; }); },
+      tkSpace: [['space.1', 4], ['space.2', 8], ['space.3', 12], ['space.4', 16], ['space.5', 20], ['space.6', 24], ['space.8', 32]].map(([name, v]) => ({ name, v: `${v}`, w: `${v * 4}px` })),
+      favList: fl.map(f => ({ ...f, delLabel: `Видалити «${f.lemma}»`, onDel: () => this.setState(st => ({ favList: (st.favList || this.favSeed).filter(x => x.id !== f.id) })) })),
+      favListCount: fl.length, hasFavList: fl.length > 0, favEmpty: fl.length === 0,
+      restoreFavs: () => this.setState({ favList: null }),
+      histHas: !s.histCleared, histEmpty: s.histCleared,
+      histGroups: [
+        { day: 'СЬОГОДНІ', items: [{ lemma: 'веремі́я', tag: 'слово' }, { lemma: 'брати участь', tag: 'виправлення' }, { lemma: 'ке́бета', tag: 'слово дня' }] },
+        { day: 'УЧОРА', items: [{ lemma: 'ошу́я', tag: 'слово' }, { lemma: 'наступний', tag: 'виправлення' }, { lemma: 'шпарки́й', tag: 'слово' }] }
+      ],
+      askClear: () => this.setState({ clearAsk: true }), cancelClear: () => this.setState({ clearAsk: false }),
+      doClear: () => this.setState({ clearAsk: false, histCleared: true }), restoreHist: () => this.setState({ histCleared: false }),
+      clearAsk: s.clearAsk,
+      playMotion: () => this.play(),
+      mFeedT: on ? 'translateY(-110px)' : 'translateY(0)', mFeedO: on ? 0 : 1,
+      mHeart: on ? 'heartPop .45s cubic-bezier(.3,1.6,.5,1)' : 'none',
+      mCorrBg: on ? '#2F6B45' : '#2A221C', mCorrT: on ? 'scale(1.03)' : 'scale(1)',
+      mWrongBg: on ? '#A3271F' : '#2A221C', mWrongA: on ? 'shake .4s ease-in-out' : 'none',
+      mLifeA: on ? 'lifeLost .5s ease-out' : 'none', mLifeFill: on ? 'none' : '#C8372D', mLifeStroke: on ? 'rgba(243,234,219,.35)' : '#C8372D',
+      mWinT: on ? 'scale(1)' : 'scale(.3)', mWinO: on ? 1 : .25,
+      mixChips: mixKeys.map(k => ({ name: k, on: s.mix[k], bg: s.mix[k] ? '#1E1813' : '#FBF7F0', color: s.mix[k] ? '#F5EEE2' : '#1E1813', border: s.mix[k] ? '#1E1813' : 'rgba(156,122,46,.4)', onTap: () => this.setState(st => ({ mix: { ...st.mix, [k]: !st.mix[k] } })) })),
+      allOn, allBg: allOn ? '#A3221B' : '#FBF7F0', allColor: allOn ? '#FFFFFF' : '#1E1813', allBorder: allOn ? '#A3221B' : 'rgba(156,122,46,.4)',
+      toggleAll: () => this.setState(st => { const v = !allOn; const m = {}; mixKeys.forEach(k => m[k] = v); return { mix: m }; }),
+      corrOn: s.corrOn, corrTrack: sw(s.corrOn).track, corrJustify: sw(s.corrOn).justify, toggleCorr: () => this.setState(st => ({ corrOn: !st.corrOn })),
+      mixCountLabel: `Обрано ${mixOn} з ${mixKeys.length}${s.corrOn ? ' + Виправлення' : ''}`,
+      mixShort: allOn ? 'Усі' : `${mixOn} категорій`,
+      times: ['09:00', '13:00', '19:00'].map((t, i) => ({ time: t, on: s.times[i], label: `Сповіщення о ${t}`, color: s.times[i] ? '#1E1813' : '#6B5E4E', ...sw(s.times[i]), onTap: () => this.setState(st => { const a = [...st.times]; a[i] = !a[i]; return { times: a }; }) })),
+      themeOpts: ['Системна', 'Світла', 'Темна'].map(l => ({ label: l, on: s.theme === l, ...seg(s.theme === l), onTap: () => this.setState({ theme: l }) })),
+      sizeOpts: ['S', 'M', 'L', 'XL'].map(l => ({ label: l, on: s.fsz === l, ...seg(s.fsz === l), onTap: () => this.setState({ fsz: l }) })),
+      prevLemma: sizes[s.fsz][0], prevDef: sizes[s.fsz][1], prevBg: dark ? '#1F1915' : '#FBF7F0', prevInk: dark ? '#F3EADB' : '#1E1813', prevZz: dark ? 'url(#zzGold)' : 'url(#zzRed)',
+      soundRows: [['Звуки', 'sounds'], ['Вібрація', 'haptics']].map(([label, k]) => ({ label, on: s[k], ...sw(s[k]), onTap: () => this.setState(st => ({ [k]: !st[k] })) })),
+      cols: s.cols.map((c, i) => ({ name: c.name, on: c.on, count: `${c.n + (c.on ? 1 : 0)} слів`, boxBg: c.on ? '#D4AE5C' : 'transparent', boxBorder: c.on ? '#D4AE5C' : 'rgba(243,234,219,.4)', checkOp: c.on ? 1 : 0, onTap: () => this.setState(st => ({ cols: st.cols.map((x, j) => j === i ? { ...x, on: !x.on } : x) })) })),
+      newOpen: s.newOpen, newClosed: !s.newOpen, newName: s.newName,
+      openNew: () => this.setState({ newOpen: true }),
+      onNewName: (ev) => this.setState({ newName: ev.target.value }),
+      addCol: () => { const n = s.newName.trim(); if (!n) return; this.setState(st => ({ cols: [...st.cols, { name: n, n: 0, on: true }], newOpen: false, newName: '' })); },
+      entries, lemmaPx: px, favCount: 24 + Object.values(s.favs).filter(Boolean).length,
+      feedPos: `${Math.min(s.feedIdx + 1, 6)} / 6`, showSwipeHint: !s.scrolled,
+      onFeedScroll: (ev) => { const i = Math.round(ev.currentTarget.scrollTop / 664); if (i !== s.feedIdx || !s.scrolled) this.setState({ feedIdx: i, scrolled: true }); },
+      statsOpen: s.statsOpen, toggleStats: () => this.setState(st => ({ statsOpen: !st.statsOpen })),
+      roundLabel: `${s.round} / 15`, roundPct: `${(s.round / 15) * 100}%`,
+      lives, livesLabel: `Життів: ${s.lives} з 5`,
+      qDef: q.def, opts, qAnswer: q.options[q.a], qEx: q.ex,
+      showResultSheet: answered && !s.over,
+      sheetTitle: correct ? 'Правильно!' : 'Не цього разу',
+      sheetColor: correct ? '#2F6B45' : '#A3271F',
+      next: () => this.next(),
+      askExit: () => this.setState({ confirmExit: true }), cancelExit: () => this.setState({ confirmExit: false }),
+      restart: () => this.restart(), confirmExit: s.confirmExit,
+      over: !!s.over, overIcon: win ? 120 : 64,
+      overTitle: win ? 'Перемога!' : 'Життя закінчилися',
+      overSub: win ? 'Усі 15 раундів пройдено.' : 'Нічого — слова нікуди не дінуться.',
+      roundsDone: win ? '15 / 15' : `${s.round} / 15`, livesLeft: s.lives
+    };
+  }
+}
+
+</script>
+</body>
+</html>
