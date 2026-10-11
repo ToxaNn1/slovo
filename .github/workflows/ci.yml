@@ -30,8 +30,21 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
-      - name: Build the Ukrainian Language Pack
-        run: pnpm build:pack uk
+      # Fails on invalid content and on any missed content target of the Edition.
+      - name: Build the Ukrainian Language Pack and check its content targets
+        id: pack
+        shell: bash
+        run: pnpm build:pack uk 2>&1 | tee "$RUNNER_TEMP/content-report.txt"
+      - name: Publish the content report to the job summary
+        if: ${{ !cancelled() && steps.pack.outcome != 'skipped' }}
+        shell: bash
+        run: |
+          {
+            echo '## Ukrainian content report'
+            echo '```text'
+            cat "$RUNNER_TEMP/content-report.txt"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
   audit:
     name: Dependency audit
