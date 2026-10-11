@@ -21,8 +21,14 @@ export default tseslint.config(
     },
   },
   {
-    files: ['**/*.js'],
+    files: ['**/*.{js,cjs}'],
     extends: [tseslint.configs.disableTypeChecked],
+  },
+  {
+    // Tools that only load CommonJS config files, such as Metro.
+    files: ['**/*.cjs'],
+    languageOptions: { sourceType: 'commonjs' },
+    rules: { '@typescript-eslint/no-require-imports': 'off' },
   },
   prettier,
 );

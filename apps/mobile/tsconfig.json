@@ -1,0 +1,14 @@
+{
+  "extends": "@slovo/config/tsconfig.base.json",
+  "compilerOptions": {
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "emitDeclarationOnly": false,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "types": ["node"]
+  },
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules", "ios", "android"]
+}
