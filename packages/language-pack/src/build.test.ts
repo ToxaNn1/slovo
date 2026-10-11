@@ -260,6 +260,13 @@ describe('buildLanguagePack', () => {
     it.each([
       ['a duplicate id', 'w_fx1001_copy.json', 'w_fx1001', 'id', /duplicate.*w_fx1001\.json/i],
       [
+        'a Word that repeats the Lemma and primary Definition of another Word',
+        'w_fx1015.json',
+        'w_fx1015',
+        'primaryDefinition',
+        /same lemma and primary definition as w_fx1014/i,
+      ],
+      [
         'a file name that differs from the id',
         'w_fx1021.json',
         'w_fx1022',
@@ -349,7 +356,7 @@ describe('buildLanguagePack', () => {
 
     it('reports nothing but those errors', () => {
       // The copy with a duplicate id is also misnamed, so it fails twice.
-      expect(errors()).toHaveLength(23);
+      expect(errors()).toHaveLength(24);
     });
   });
 
@@ -430,6 +437,23 @@ describe('buildLanguagePack', () => {
         message: expect.stringMatching(/duplicate.*c_fx0002\.json/i) as string,
       },
     ]);
+  });
+
+  it('builds homonyms, and a Word that takes over from a Retired Word', () => {
+    const editionDir = copyFixture('valid');
+    const write = (word: Json) => {
+      writeFileSync(
+        join(editionDir, `content/words/${String(word['id'])}.json`),
+        JSON.stringify(word),
+      );
+    };
+    const retired = readJsonFile(join(editionDir, 'content/words/w_fx0001.json'));
+    const live = readJsonFile(join(editionDir, 'content/words/w_fx0002.json'));
+    write({ ...retired, id: 'w_fx0004', retired: false, correctionIds: [] });
+    write({ ...live, id: 'w_fx0005', primaryDefinition: 'Інше значення.', correctionIds: [] });
+
+    const result = buildLanguagePack({ editionDir, outFile: packPath() });
+    expect(result.ok ? [] : result.errors).toEqual([]);
   });
 
   it.each(['content/words', 'content/corrections'])(
@@ -625,7 +649,13 @@ describe('content targets', () => {
       const id = `w_fxr00${String(rarity)}`;
       writeFileSync(
         join(editionDir, `content/words/${id}.json`),
-        JSON.stringify({ ...word, id, rarity, correctionIds: [] }),
+        JSON.stringify({
+          ...word,
+          id,
+          rarity,
+          primaryDefinition: `Значення рідкісності ${String(rarity)}.`,
+          correctionIds: [],
+        }),
       );
     }
 

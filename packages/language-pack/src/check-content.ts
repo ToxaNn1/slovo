@@ -33,10 +33,27 @@ export function checkContent(
     }
   }
 
+  // Homonyms are separate Words with their own Definitions, so two live Words
+  // with the same Lemma and primary Definition are one Word authored twice.
+  const wordByLemmaAndDefinition = new Map<string, Authored<Word>>();
+
   for (const { file, entry: word } of words) {
     const fail = (field: string, message: string) => {
       errors.push({ file, entryId: word.id, field, message });
     };
+
+    if (!word.retired) {
+      const key = JSON.stringify([word.lemma, word.primaryDefinition.trim()]);
+      const first = wordByLemmaAndDefinition.get(key);
+      if (first === undefined) {
+        wordByLemmaAndDefinition.set(key, { file, entry: word });
+      } else if (first.entry.id !== word.id) {
+        fail(
+          'primaryDefinition',
+          `Same Lemma and primary Definition as ${first.entry.id} in ${first.file}: author it once, or retire one of them`,
+        );
+      }
+    }
 
     word.correctionIds.forEach((id, index) => {
       if (!correctionIds.has(id)) {
