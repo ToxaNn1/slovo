@@ -42,6 +42,11 @@ export const LanguageTraitsSchema = z.strictObject({
   /** The language tag used to sort text in the Edition's language. */
   sortLocale: LanguageTagSchema,
   distractorRule: DistractorRuleSchema,
+  /**
+   * The lowercase vowel letters, the only letters Stress may fall on. The
+   * Language Pack build requires them when the Edition marks Stress.
+   */
+  vowels: z.string().min(1).optional(),
 });
 
 export type LanguageTraits = z.infer<typeof LanguageTraitsSchema>;

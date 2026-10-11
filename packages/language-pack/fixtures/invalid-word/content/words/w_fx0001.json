@@ -3,6 +3,13 @@
   "lemma": "заметіль",
   "stress": [5],
   "partOfSpeech": "noun",
+  "gender": "feminine",
   "primaryDefinition": "Сильний вітер зі снігом.",
-  "categoryId": "nature"
+  "categoryId": "nature",
+  "rarity": 2,
+  "sources": [
+    {
+      "title": "Тестове джерело"
+    }
+  ]
 }

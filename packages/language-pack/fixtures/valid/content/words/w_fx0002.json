@@ -4,5 +4,11 @@
   "stress": [5],
   "partOfSpeech": "adjective",
   "primaryDefinition": "Який любить багато говорити.",
-  "categoryId": "speech"
+  "categoryId": "speech",
+  "rarity": 3,
+  "sources": [
+    {
+      "title": "Тестове джерело"
+    }
+  ]
 }

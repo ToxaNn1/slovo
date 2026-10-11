@@ -3,6 +3,15 @@
   "lemma": "мжичка",
   "stress": [2],
   "partOfSpeech": "noun",
+  "gender": "feminine",
   "primaryDefinition": "Дуже дрібні краплі води, які насичують повітря; дрібний, густий дощ; мряка (у 1 знач.).",
-  "categoryId": "nature-weather"
+  "categoryId": "nature-weather",
+  "rarity": 2,
+  "sources": [
+    {
+      "title": "Словник української мови: в 11 томах. — Том 4, 1973. — Стор. 698.",
+      "url": "https://sum.in.ua/s/mzhychka",
+      "archivedUrl": "https://web.archive.org/web/20241216072945/https://sum.in.ua/s/mzhychka"
+    }
+  ]
 }

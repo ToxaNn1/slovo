@@ -5,8 +5,12 @@ import type { Word } from '@slovo/contracts';
  * tests and tooling, expo-sqlite in the mobile shell); the Core only sees this.
  */
 export interface ContentReadPort {
-  /** Every Word id in the pack, in a stable order. */
+  /**
+   * The ids of the Words that are not retired, in a stable order. A Retired
+   * Word is left out, so nothing new picks it.
+   */
   listWordIds(): Promise<readonly string[]>;
+  /** Any Word by id, a Retired Word included, so kept Words stay reachable. */
   getWord(id: string): Promise<Word | undefined>;
 }
 
