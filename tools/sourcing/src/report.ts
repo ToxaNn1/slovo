@@ -11,7 +11,10 @@ export function formatReviewReport(report: ReviewReport): string {
     `- Drafts ready for review: ${String(ready)} (in \`drafts/\`)`,
     `- Drafts missing required data: ${String(drafts.length - ready)} (in \`incomplete/\`)`,
     `- Lemmas without a draft: ${String(report.lemmas.filter((lemma) => lemma.drafts.length === 0).length)}`,
-    `- Requests: ${String(report.requests.network)} to the network, ${String(report.requests.cached)} from the cache`,
+    `- Requests: ${String(report.requests.network)} to the network, ${String(report.requests.cached)} from the cache, ${String(report.requests.backoffs)} back-off(s)`,
+    ...Object.entries(report.requests.unreachable).map(
+      ([host, reason]) => `- Skipped for this run: ${host} (${reason})`,
+    ),
     '',
     'Every field comes from the sources named in the draft. Nothing below was resolved by the tool.',
   ];

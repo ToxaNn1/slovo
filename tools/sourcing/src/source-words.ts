@@ -16,6 +16,7 @@ import {
   fetchGoroh,
   gorohUrl,
   isSameWord,
+  parseDefinitions,
   parseEtymologies,
   parseInflections,
   parseSynonymGroups,
@@ -25,7 +26,8 @@ import {
 } from './goroh';
 import { PoliteClient, type Clock, type Fetch, type RequestStats } from './polite-client';
 import { formatReviewReport } from './report';
-import { SumDictionary, type SumAccess, type SumArticle, type SumPage } from './sum';
+import type { DictionaryArticle } from './article';
+import { SumDictionary, type SumAccess } from './sum';
 import { matchKey, readStress, unstressed } from './text';
 
 export interface SourcingOptions {
@@ -35,15 +37,20 @@ export interface SourcingOptions {
   readonly editionDir: string;
   /** The review folder: drafts, incomplete drafts and the review report go here. */
   readonly outDir: string;
-  /** Where fetched pages are kept, so re-runs don't ask the sites again. */
+  /**
+   * Where fetched pages and each host's request schedule are kept. Runs that
+   * share it never fetch a page twice and share the throttle.
+   */
   readonly cacheDir: string;
   readonly fetch: Fetch;
   readonly clock: Clock;
   /** A source of numbers in [0, 1), for new Word ids. */
   readonly random: () => number;
   readonly sumAccess?: SumAccess;
-  /** The least time between two network requests. */
+  /** The least time between two requests to one host, across every process sharing the cache. */
   readonly minIntervalMs?: number;
+  /** Hears about back-offs and hosts taken out of the run. */
+  readonly log?: (message: string) => void;
 }
 
 export type SourcingResult =
@@ -70,7 +77,7 @@ export interface DraftOutcome {
   readonly file: string;
   /** Whether the draft passes the Word schema and the Edition's checks. */
   readonly ready: boolean;
-  /** The СУМ headword it was drafted from, e.g. `КОСА 2`. */
+  /** The dictionary headword it was drafted from, e.g. `КОСА́ 2`. */
   readonly headword: string;
   /** What stops the draft from being ready, as `field: message`. */
   readonly issues: readonly string[];
@@ -103,8 +110,10 @@ const INCOMPLETE_DIR = 'incomplete';
 const DEFAULT_MIN_INTERVAL_MS = 2000;
 
 /**
- * Drafts Words for a list of Lemmas from СУМ-11 (sum.in.ua, or its Wayback
- * Machine copies) and goroh.pp.ua, and writes them with a review report to
+ * Drafts Words for a list of Lemmas from goroh.pp.ua (its explanatory
+ * dictionaries, inflection, synonym and etymological dictionaries), with
+ * СУМ-11 on sum.in.ua or its Wayback Machine copies as a fallback for
+ * Definitions, and writes them with a review report to
  * the review folder. Every field comes from a source; what the sources leave
  * open stays empty and is flagged for a human.
  */
@@ -119,6 +128,7 @@ export async function sourceWords(options: SourcingOptions): Promise<SourcingRes
     options.clock,
     options.cacheDir,
     options.minIntervalMs ?? DEFAULT_MIN_INTERVAL_MS,
+    options.log,
   );
   const sum = new SumDictionary(client, options.sumAccess ?? 'auto');
   const newId = idMaker(options.random, edition.takenIds);
@@ -140,7 +150,10 @@ export async function sourceWords(options: SourcingOptions): Promise<SourcingRes
     lemmas.push({ ...outcome, drafts: outcome.drafts.map((draft) => draft.outcome) });
   }
 
-  const report: ReviewReport = { lemmas, requests: { ...client.stats } };
+  const report: ReviewReport = {
+    lemmas,
+    requests: { ...client.stats, unreachable: { ...client.stats.unreachable } },
+  };
   writeFileSync(join(options.outDir, REPORT_FILE), formatReviewReport(report));
   return { ok: true, report };
 }
@@ -257,53 +270,78 @@ async function draftLemma(
 ): Promise<{ lemma: string; line: number; drafts: Draft[]; flags: Flag[] }> {
   const { lemma, line } = request;
   const flags: Flag[] = [];
-  let page: SumPage;
+  let articles: readonly DictionaryArticle[];
   let goroh: GorohEntry;
   try {
-    const lookup = await context.sum.lookUp(lemma);
-    if (!lookup.found) {
+    // Definitions: goroh's explanatory dictionaries first, sum.in.ua only as a fallback.
+    const definitionsPage = await fetchGoroh(context.client, 'Тлумачення', lemma);
+    const definitions =
+      definitionsPage === undefined
+        ? { articles: [], leftOut: [] }
+        : parseDefinitions(definitionsPage, lemma);
+    if (definitions.leftOut.length > 0) {
       flags.push({
-        kind: 'no-entry',
-        message: `No СУМ-11 entry found; tried ${lookup.tried.join(', ')}`,
+        kind: 'check',
+        message: `goroh articles left out because they don't come from an explanatory dictionary: ${definitions.leftOut.join('; ')}`,
       });
-      return { lemma, line, drafts: [], flags };
     }
-    page = lookup.page;
-    const [inflection, synonyms, etymology] = [
-      await fetchGoroh(context.client, 'Словозміна', lemma),
-      await fetchGoroh(context.client, 'Синонімія', lemma),
-      await fetchGoroh(context.client, 'Етимологія', lemma),
-    ];
+    articles = definitions.articles;
+    if (articles.length === 0) {
+      const lookup = await context.sum.lookUp(lemma);
+      if (!lookup.found) {
+        const tried = [gorohUrl('Тлумачення', lemma), ...lookup.tried];
+        flags.push({
+          kind: 'no-entry',
+          message: `No dictionary entry found; tried ${tried.join(', ')}`,
+        });
+        return { lemma, line, drafts: [], flags };
+      }
+      articles = lookup.articles.filter((article) => sumKey(article.headword) === sumKey(lemma));
+      if (articles.length === 0) {
+        flags.push({
+          kind: 'no-entry',
+          message: `${lookup.articles[0]?.source.url ?? 'sum.in.ua'} has no article for "${lemma}" (it has ${lookup.articles.map((article) => article.headword).join(', ')})`,
+        });
+        return { lemma, line, drafts: [], flags };
+      }
+    }
+
+    // The inflection dictionary is only asked when an article lacks Stress or grammar.
+    const needsInflections = articles.some((article) => {
+      const grammar = grammarOf(article.labels);
+      return (
+        readStress(article.headword).length === 0 ||
+        grammar.partOfSpeech === undefined ||
+        (grammar.partOfSpeech === 'noun' && grammar.gender === undefined)
+      );
+    });
+    const inflection = needsInflections
+      ? await fetchGoroh(context.client, 'Словозміна', lemma)
+      : undefined;
+    const synonyms = await fetchGoroh(context.client, 'Синонімія', lemma);
+    const etymology = await fetchGoroh(context.client, 'Етимологія', lemma);
     goroh = {
       inflections: inflection === undefined ? [] : parseInflections(inflection, lemma),
       synonymGroups: synonyms === undefined ? [] : parseSynonymGroups(synonyms, lemma),
       etymologies: etymology === undefined ? [] : parseEtymologies(etymology),
     };
+    if (needsInflections && goroh.inflections.length === 0) {
+      flags.push({
+        kind: 'check',
+        message:
+          'goroh has no inflection entry: Stress and grammar come from the explanatory dictionary only',
+      });
+    }
   } catch (error) {
     flags.push({ kind: 'fetch-failed', message: (error as Error).message });
     return { lemma, line, drafts: [], flags };
-  }
-
-  const articles = page.articles.filter((article) => sumKey(article.headword) === sumKey(lemma));
-  if (articles.length === 0) {
-    flags.push({
-      kind: 'no-entry',
-      message: `${page.archivedUrl ?? page.url} has no article for "${lemma}" (it has ${page.articles.map((article) => article.headword).join(', ')})`,
-    });
-    return { lemma, line, drafts: [], flags };
-  }
-  if (goroh.inflections.length === 0) {
-    flags.push({
-      kind: 'check',
-      message: 'goroh has no inflection entry: Stress and grammar come from СУМ only',
-    });
   }
 
   const isHomonym = articles.length > 1;
   if (isHomonym) {
     flags.push({
       kind: 'homonym',
-      message: `СУМ has ${String(articles.length)} homonyms, drafted as separate Words; check each one is worth keeping`,
+      message: `The dictionary has ${String(articles.length)} homonyms, drafted as separate Words; check each one is worth keeping`,
     });
     if (goroh.synonymGroups.length > 0) {
       flags.push({
@@ -323,22 +361,20 @@ async function draftLemma(
   }
 
   const drafts = articles.map((article) =>
-    draftArticle(article, { request, page, goroh, isHomonym, context }),
+    draftArticle(article, { request, goroh, isHomonym, context }),
   );
   return { lemma, line, drafts, flags };
 }
 
 function draftArticle(
-  article: SumArticle,
+  article: DictionaryArticle,
   {
     request,
-    page,
     goroh,
     isHomonym,
     context,
   }: {
     request: WordRequest;
-    page: SumPage;
     goroh: GorohEntry;
     isHomonym: boolean;
     context: Context;
@@ -358,24 +394,21 @@ function draftArticle(
       `One of the homonyms: ${headword} — ${article.definitions[0]?.text ?? '(no Definition)'}`,
     );
   if (matchKey(article.headword) !== matchKey(lemma)) {
-    flag('spelling-differs', `СУМ spells the headword ${unstressed(article.headword)}`);
+    flag('spelling-differs', `The dictionary spells the headword ${unstressed(article.headword)}`);
   }
 
-  // Stress: goroh is the reference; СУМ marks it on some headwords only.
-  const sumStress = readStress(article.headword);
+  // Stress: the article's own mark, checked against the inflection dictionary.
+  const articleStress = readStress(article.headword);
   const candidates = uniqueStresses(goroh.inflections);
   let stress: number[] | undefined;
-  if (sumStress.length > 0) {
-    if (candidates.length === 0) {
-      stress = sumStress;
-      flag('check', 'Only СУМ marks the Stress; goroh has no entry to check it against');
-    } else if (candidates.some((candidate) => sameNumbers(candidate.stress, sumStress))) {
-      stress = sumStress;
+  if (articleStress.length > 0) {
+    stress = articleStress;
+    if (candidates.some((candidate) => sameNumbers(candidate.stress, articleStress))) {
       usedInflections = true;
-    } else {
+    } else if (candidates.length > 0) {
       flag(
         'sources-disagree',
-        `Stress: СУМ has ${article.headword}, goroh has ${candidates.map((candidate) => candidate.headword).join(', ')}`,
+        `Stress: the explanatory dictionary has ${article.headword}, goroh's inflection dictionary has ${candidates.map((candidate) => candidate.headword).join(', ')}; the draft keeps ${article.headword}`,
       );
     }
   } else if (candidates.length === 1) {
@@ -394,15 +427,18 @@ function draftArticle(
   if (stress !== undefined && stress.length > 1) {
     flag(
       'several-stresses',
-      `Several valid Stresses: ${goroh.inflections[0]?.headword ?? article.headword}`,
+      `Several valid Stresses: ${articleStress.length > 0 ? article.headword : (goroh.inflections[0]?.headword ?? lemma)}`,
     );
   }
 
-  // Part of speech and gender: СУМ's own labels first, goroh when they agree.
+  // Part of speech and gender: the article's own labels first, then goroh's
+  // entries for the same word (same Stress, when the article marks it).
   const sumGrammar = grammarOf(article.labels);
-  const gorohParts = unique(
-    goroh.inflections.flatMap((entry) => tagValues(entry.tags, PARTS_OF_SPEECH)),
-  );
+  const sameWord =
+    articleStress.length > 0
+      ? goroh.inflections.filter((entry) => sameNumbers(readStress(entry.headword), articleStress))
+      : goroh.inflections;
+  const gorohParts = unique(sameWord.flatMap((entry) => tagValues(entry.tags, PARTS_OF_SPEECH)));
   let partOfSpeech = sumGrammar.partOfSpeech;
   if (partOfSpeech === undefined && gorohParts.length === 1) {
     partOfSpeech = gorohParts[0];
@@ -415,13 +451,16 @@ function draftArticle(
         : `goroh names several parts of speech: ${gorohParts.join(', ')}`,
     );
   } else if (!isHomonym && gorohParts.length === 1 && gorohParts[0] !== partOfSpeech) {
-    flag('sources-disagree', `Part of speech: СУМ ${partOfSpeech}, goroh ${String(gorohParts[0])}`);
+    flag(
+      'sources-disagree',
+      `Part of speech: the explanatory dictionary has ${partOfSpeech}, goroh ${String(gorohParts[0])}`,
+    );
   }
 
   let gender: string | undefined;
   if (partOfSpeech === 'noun') {
     const gorohGenders = unique(
-      goroh.inflections
+      sameWord
         .filter((entry) => entry.tags.includes('іменник'))
         .flatMap((entry) => tagValues(entry.tags, GENDERS)),
     );
@@ -432,7 +471,10 @@ function draftArticle(
     } else if (gender === undefined) {
       flag('missing-data', 'No source names the gender');
     } else if (!isHomonym && gorohGenders.length === 1 && gorohGenders[0] !== gender) {
-      flag('sources-disagree', `Gender: СУМ ${gender}, goroh ${String(gorohGenders[0])}`);
+      flag(
+        'sources-disagree',
+        `Gender: the explanatory dictionary has ${gender}, goroh ${String(gorohGenders[0])}`,
+      );
     }
   }
 
@@ -447,22 +489,15 @@ function draftArticle(
     [...article.labels, ...(primary?.labels ?? [])].filter((label) => !KNOWN_LABELS.has(label)),
   );
   if (otherLabels.length > 0)
-    flag('other-labels', `СУМ labels not carried over: ${otherLabels.join(', ')}`);
+    flag('other-labels', `Dictionary labels not carried over: ${otherLabels.join(', ')}`);
   if (article.unmarkedExamples) {
     flag(
       'unmarked-examples',
-      'СУМ prints some Examples without italics; they are left out, and the Definition is cut at its first sentence',
+      'sum.in.ua prints some Examples without italics; they are left out, and the Definition is cut at its first sentence',
     );
   }
 
-  const sources: Source[] = [
-    {
-      title:
-        article.sourceTitle === '' ? 'Словник української мови: в 11 томах' : article.sourceTitle,
-      url: page.url,
-      ...(page.archivedUrl === undefined ? {} : { archivedUrl: page.archivedUrl }),
-    },
-  ];
+  const sources: Source[] = [article.source];
   if (usedInflections)
     sources.push({ title: 'Горох: словозміна', url: gorohUrl('Словозміна', lemma) });
 
@@ -721,9 +756,13 @@ function grammarOf(labels: readonly string[]): { partOfSpeech?: PartOfSpeech; ge
     const gender = SUM_GENDERS[label];
     return gender === undefined ? [] : [gender];
   });
-  // A gender wins over `множина`, which may just note a usual plural.
-  const gender = genders.find((value) => value !== 'plural-only') ?? genders[0];
-  if (gender !== undefined) return { partOfSpeech: 'noun', gender };
+  if (genders.length > 0) {
+    // A gender wins over `множина`, which may just note a usual plural; two
+    // genders (`ч. і ж.`) leave the choice to a human.
+    const proper = unique(genders.filter((value) => value !== 'plural-only'));
+    if (proper.length > 1) return { partOfSpeech: 'noun' };
+    return { partOfSpeech: 'noun', gender: proper[0] ?? 'plural-only' };
+  }
   for (const label of labels) {
     const partOfSpeech = SUM_PARTS_OF_SPEECH[label];
     if (partOfSpeech !== undefined) return { partOfSpeech };
@@ -739,17 +778,25 @@ function tagValues<T>(tags: readonly string[], values: Readonly<Record<string, T
 }
 
 /**
- * The author from a СУМ citation such as `Михайло Коцюбинський, II, 1955, 244`:
- * its first part when that reads as a person's name, not a book or a paper.
+ * The author from a citation such as `Михайло Коцюбинський, II, 1955, 244` or
+ * `В. Кучер`: its first part when that reads as a person's name (initials
+ * allowed), not a book, a paper or `із журналу`.
  */
 function authorOf(citation: string | undefined): string | undefined {
   const first = citation?.split(',')[0]?.trim();
-  if (first === undefined || first === '' || first.includes('.')) return undefined;
-  const words = first.split(/[\s-]+/);
-  return words.length <= 3 && words.every((word) => /^\p{Lu}/u.test(word)) ? first : undefined;
+  if (first === undefined || first === '') return undefined;
+  const words = first.split(/\s+/);
+  const surname = words.at(-1) ?? '';
+  const isName =
+    words.length <= 4 &&
+    words.every((word) => /^\p{Lu}/u.test(word)) &&
+    !surname.endsWith('.') &&
+    Array.from(surname).length > 2 &&
+    words.slice(0, -1).every((word) => !word.endsWith('.') || /^\p{Lu}\.$/u.test(word));
+  return isName ? first : undefined;
 }
 
-/** СУМ prints Examples without their final full stop. */
+/** sum.in.ua prints Examples without their final full stop. */
 function asSentence(text: string): string {
   return /[.!?…»"”)\]]$/.test(text) ? text : `${text}.`;
 }

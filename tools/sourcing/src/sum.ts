@@ -5,59 +5,26 @@
  */
 import { HTMLElement, NodeType, parse, type Node } from 'node-html-parser';
 
-import type { PoliteClient } from './polite-client';
+import type { ArticleDefinition, ArticleExample, DictionaryArticle } from './article';
+import { HostUnreachableError, type PoliteClient } from './polite-client';
 import { matchKey, squeeze } from './text';
 
-/** How to reach sum.in.ua: try the site and fall back to the archive, or use one of them only. */
-export type SumAccess = 'auto' | 'direct' | 'wayback';
-
-export interface SumExample {
-  readonly text: string;
-  /** The citation in brackets after the Example, e.g. `Михайло Коцюбинський, II, 1955, 244`. */
-  readonly citation?: string;
-}
-
-export interface SumDefinition {
-  readonly text: string;
-  /** The labels in front of the Definition, by their full names (e.g. `діалектне`). */
-  readonly labels: readonly string[];
-}
-
-/** One article of the dictionary: homonyms get one article each. */
-export interface SumArticle {
-  /** The headword as printed, uppercase, with its stress mark when the page has one. */
-  readonly headword: string;
-  /** The homonym number printed after the headword. */
-  readonly homonymNumber?: number;
-  /** The labels after the headword, by their full names (e.g. `жіночий рід`, `застаріле`). */
-  readonly labels: readonly string[];
-  /** The meanings in order, each followed by its shades (`//`). */
-  readonly definitions: readonly SumDefinition[];
-  readonly examples: readonly SumExample[];
-  /** Some Examples are printed without italics, so Definitions and Examples can't be told apart. */
-  readonly unmarkedExamples: boolean;
-  /** The printed citation, e.g. `Словник української мови: в 11 томах. — Том 4, 1973. — Стор. 698.` */
-  readonly sourceTitle: string;
-}
-
-export interface SumPage {
-  readonly url: string;
-  readonly archivedUrl?: string;
-  readonly articles: readonly SumArticle[];
-}
+/** How to reach sum.in.ua: try the site and fall back to the archive, use one of them only, or neither. */
+export type SumAccess = 'auto' | 'direct' | 'wayback' | 'off';
 
 export type SumLookup =
-  | { readonly found: true; readonly page: SumPage }
+  | { readonly found: true; readonly articles: readonly DictionaryArticle[] }
   | { readonly found: false; readonly tried: readonly string[] };
 
 const SITE = 'https://sum.in.ua/s/';
 const WAYBACK = 'https://web.archive.org/web/';
 const CDX = 'https://web.archive.org/cdx/search/cdx';
 
-/** Reaches sum.in.ua, remembering within a run that the site is down. */
+/**
+ * Reaches sum.in.ua or its Wayback Machine copies, as a fallback only: one
+ * quick try each, and a host that fails is left alone for the rest of the run.
+ */
 export class SumDictionary {
-  private siteUnreachable = false;
-
   constructor(
     private readonly client: PoliteClient,
     private readonly access: SumAccess,
@@ -65,42 +32,52 @@ export class SumDictionary {
 
   async lookUp(lemma: string): Promise<SumLookup> {
     const tried: string[] = [];
+    if (this.access === 'off') return { found: false, tried };
     for (const slug of sumSlugs(lemma)) {
       const url = SITE + slug;
       // A page found in the archive on an earlier run is read from the cache again.
       const archived = this.access === 'auto' && this.client.isCached(cdxQuery(slug));
-      if (this.access !== 'wayback' && !this.siteUnreachable && !archived) {
-        const page = await this.fromSite(url);
-        if (page !== 'unreachable') {
-          if (page !== undefined) return { found: true, page };
+      if (this.access !== 'wayback' && !archived) {
+        const articles = await this.reach(() => this.fromSite(url));
+        if (articles !== 'unreachable') {
+          if (articles !== undefined) return { found: true, articles };
           tried.push(url);
           continue;
         }
+        if (this.access === 'direct') {
+          tried.push(`${url} (unreachable)`);
+          continue;
+        }
       }
-      const page = await this.fromWayback(slug, url);
-      if (page !== undefined) return { found: true, page };
-      tried.push(`${url} (Wayback Machine)`);
+      const articles = await this.reach(() => this.fromWayback(slug, url));
+      if (articles !== undefined && articles !== 'unreachable') return { found: true, articles };
+      tried.push(`${url} (Wayback Machine${articles === 'unreachable' ? ', unreachable' : ''})`);
     }
     return { found: false, tried };
   }
 
-  private async fromSite(url: string): Promise<SumPage | undefined | 'unreachable'> {
-    let response;
+  /** Runs a lookup that a skipped host turns into `unreachable`. */
+  private async reach(
+    lookUp: () => Promise<DictionaryArticle[] | undefined>,
+  ): Promise<DictionaryArticle[] | undefined | 'unreachable'> {
     try {
-      response = await this.client.get(url);
+      return await lookUp();
     } catch (error) {
-      if (this.access === 'direct') throw error;
-      this.siteUnreachable = true;
-      return 'unreachable';
+      if (error instanceof HostUnreachableError) return 'unreachable';
+      throw error;
     }
+  }
+
+  private async fromSite(url: string): Promise<DictionaryArticle[] | undefined> {
+    const response = await this.client.get(url, { fallback: true });
     if (response.status !== 200) return undefined;
-    const articles = parseSumPage(response.body);
-    return articles.length === 0 ? undefined : { url, articles };
+    const articles = parseSumPage(response.body, { url });
+    return articles.length === 0 ? undefined : articles;
   }
 
   /** The newest archived copy of the page, if the Wayback Machine has one. */
-  private async fromWayback(slug: string, url: string): Promise<SumPage | undefined> {
-    const listing = await this.client.get(cdxQuery(slug), { retries: 2 });
+  private async fromWayback(slug: string, url: string): Promise<DictionaryArticle[] | undefined> {
+    const listing = await this.client.get(cdxQuery(slug), { fallback: true });
     if (listing.status !== 200) return undefined;
     const latest = listing.body
       .split('\n')
@@ -116,12 +93,14 @@ export class SumDictionary {
     const [timestamp, original] = latest;
     const snapshot = await this.client.get(`${WAYBACK}${timestamp}id_/${original}`, {
       accept: (body) => !body.includes('<title>Wayback Machine</title>'),
-      retries: 2,
+      fallback: true,
     });
     if (snapshot.status !== 200) return undefined;
-    const articles = parseSumPage(snapshot.body);
-    if (articles.length === 0) return undefined;
-    return { url, archivedUrl: `${WAYBACK}${timestamp}/${original}`, articles };
+    const articles = parseSumPage(snapshot.body, {
+      url,
+      archivedUrl: `${WAYBACK}${timestamp}/${original}`,
+    });
+    return articles.length === 0 ? undefined : articles;
   }
 }
 
@@ -193,15 +172,21 @@ export function sumSlugs(lemma: string): string[] {
 }
 
 /** Reads every article on a sum.in.ua page. */
-export function parseSumPage(html: string): SumArticle[] {
+export function parseSumPage(
+  html: string,
+  address: { url: string; archivedUrl?: string },
+): DictionaryArticle[] {
   const root = parse(html);
   return root.querySelectorAll('[itemprop="articleBody"]').flatMap((body) => {
-    const article = parseArticle(body);
+    const article = parseArticle(body, address);
     return article === undefined ? [] : [article];
   });
 }
 
-function parseArticle(body: HTMLElement): SumArticle | undefined {
+function parseArticle(
+  body: HTMLElement,
+  address: { url: string; archivedUrl?: string },
+): DictionaryArticle | undefined {
   const paragraphs = body.querySelectorAll(':scope > p');
   const [head, ...rest] = paragraphs;
   const headline = head?.querySelector('[itemprop="headline"]');
@@ -251,13 +236,19 @@ function parseArticle(body: HTMLElement): SumArticle | undefined {
     definitions: definitions.filter((definition) => definition.text !== ''),
     examples: senses.flatMap((sense) => sense.examples),
     unmarkedExamples: senses.some((sense) => sense.unmarkedExamples),
-    sourceTitle: tom?.classList.contains('tom') === true ? squeeze(tom.text) : '',
+    source: {
+      title:
+        tom?.classList.contains('tom') === true
+          ? squeeze(tom.text)
+          : 'Словник української мови: в 11 томах',
+      ...address,
+    },
   };
 }
 
 interface Sense {
-  definitions: SumDefinition[];
-  examples: SumExample[];
+  definitions: ArticleDefinition[];
+  examples: ArticleExample[];
   unmarkedExamples: boolean;
 }
 

@@ -30,6 +30,12 @@ const savedPages: Record<string, { status: number; file: string }> = {
     synonyms: false,
   }),
   ...savedLemma('завжди', 'zavzhdy', '20230903211240', 'http://sum.in.ua/s/zavzhdy'),
+  // goroh «Тлумачення» pages: СУМ-20 for дратва, коса and ножиці, СУМ-11 for ятір.
+  [`${GOROH}Тлумачення/дратва`]: { status: 200, file: 'goroh/definitions-dratva.html' },
+  [`${GOROH}Тлумачення/коса`]: { status: 200, file: 'goroh/definitions-kosa.html' },
+  [`${GOROH}Тлумачення/ножиці`]: { status: 200, file: 'goroh/definitions-nozhyci.html' },
+  [`${GOROH}Тлумачення/ятір`]: { status: 200, file: 'goroh/definitions-jatir.html' },
+  [`${GOROH}Словозміна/ятір`]: { status: 200, file: 'goroh/inflection-jatir.html' },
 };
 
 function savedLemma(
@@ -53,6 +59,19 @@ function savedLemma(
   };
 }
 
+interface NetworkOptions {
+  /** Pages sum.in.ua serves directly; without any, the site doesn't answer. */
+  readonly sumReachable?: Record<string, string>;
+  /** goroh has no entries at all. */
+  readonly gorohEmpty?: boolean;
+  /** goroh has no «Тлумачення» pages, so Definitions come from sum.in.ua. */
+  readonly withoutGorohDefinitions?: boolean;
+  /** The Wayback Machine refuses connections. */
+  readonly waybackDown?: boolean;
+  /** Addresses answered with this status, that many times, before the real page. */
+  readonly rateLimited?: Record<string, { status: number; times: number }>;
+}
+
 interface FakeNetwork {
   readonly fetch: Fetch;
   /** The decoded address of every request that reached the network, in order. */
@@ -62,27 +81,43 @@ interface FakeNetwork {
 }
 
 /**
- * The saved pages stand in for the sites. sum.in.ua itself is unreachable
- * unless `sumReachable` lists pages it serves directly, and goroh has no
- * entries at all when `gorohEmpty` is set. Any other address
- * answers with goroh's real "not found" page or fails like a dead host.
+ * The saved pages stand in for the sites. Any other goroh address answers with
+ * goroh's real "not found" page, the Wayback Machine has no copy of it, and
+ * anything else fails like a dead host.
  */
 function fakeNetwork(
   clock: { now: () => number },
   {
     sumReachable = {},
     gorohEmpty = false,
-  }: { sumReachable?: Record<string, string>; gorohEmpty?: boolean } = {},
+    withoutGorohDefinitions = false,
+    waybackDown = false,
+    rateLimited = {},
+  }: NetworkOptions = {},
 ): FakeNetwork {
   const requests: string[] = [];
   const requestTimes: number[] = [];
+  const limits = new Map(
+    Object.entries(rateLimited).map(([address, limit]) => [address, { ...limit }]),
+  );
   const fetch: Fetch = (url) => {
     const address = decodeURI(url);
     requests.push(address);
     requestTimes.push(clock.now());
+    const limit = limits.get(address);
+    if (limit !== undefined && limit.times > 0) {
+      limit.times -= 1;
+      return Promise.resolve({ status: limit.status, body: 'Too Many Requests' });
+    }
+    if (waybackDown && address.startsWith('https://web.archive.org/')) {
+      return Promise.reject(new TypeError('fetch failed: ECONNREFUSED'));
+    }
     const direct = sumReachable[address];
     if (direct !== undefined) return Promise.resolve({ status: 200, body: readFixture(direct) });
-    const saved = gorohEmpty && address.startsWith(GOROH) ? undefined : savedPages[address];
+    const hidden =
+      (gorohEmpty && address.startsWith(GOROH)) ||
+      (withoutGorohDefinitions && address.startsWith(`${GOROH}Тлумачення/`));
+    const saved = hidden ? undefined : savedPages[address];
     if (saved !== undefined) {
       return Promise.resolve({ status: saved.status, body: readFixture(saved.file) });
     }
@@ -99,15 +134,29 @@ function readFixture(file: string): string {
   return readFileSync(join(fixturesDir, file), 'utf8');
 }
 
-/** A clock whose sleep only moves time forward. */
+/**
+ * A virtual clock shared by every run in a test: a sleep ends when virtual
+ * time reaches it, earliest first, so parallel runs interleave as they would
+ * on a real machine.
+ */
 function fakeClock() {
   let time = 1_000_000;
+  let order = 0;
+  const timers: { at: number; order: number; wake: () => void }[] = [];
+  const fireEarliest = () => {
+    timers.sort((a, b) => a.at - b.at || a.order - b.order);
+    const timer = timers.shift();
+    if (timer === undefined) return;
+    time = Math.max(time, timer.at);
+    timer.wake();
+  };
   return {
     now: () => time,
-    sleep: (ms: number) => {
-      time += ms;
-      return Promise.resolve();
-    },
+    sleep: (ms: number) =>
+      new Promise<void>((wake) => {
+        timers.push({ at: time + ms, order: (order += 1), wake });
+        setImmediate(fireEarliest);
+      }),
   };
 }
 
@@ -120,10 +169,7 @@ function seededRandom(seed = 7) {
   };
 }
 
-function setup(
-  overrides: Partial<SourcingOptions> = {},
-  network?: { sumReachable?: Record<string, string>; gorohEmpty?: boolean },
-) {
+function setup(overrides: Partial<SourcingOptions> = {}, network?: NetworkOptions) {
   const clock = fakeClock();
   const net = fakeNetwork(clock, network);
   const workDir = mkdtempSync(join(tmpdir(), 'slovo-sourcing-'));
@@ -137,7 +183,7 @@ function setup(
     random: seededRandom(),
     ...overrides,
   };
-  return { options, net, workDir };
+  return { options, net, workDir, clock };
 }
 
 function readDrafts(outDir: string, folder = 'drafts'): unknown[] {
@@ -242,8 +288,11 @@ describe('sourceWords', () => {
     expect(flagsOf(result, 'завжди').map((flag) => flag.kind)).toContain('stress-unresolved');
   });
 
-  it('drafts every homonym separately and flags each one', async () => {
-    const { options } = setup({ lemmaList: 'коса household-crafts 2\n' });
+  it('drafts every homonym from sum.in.ua separately and flags each one', async () => {
+    const { options } = setup(
+      { lemmaList: 'коса household-crafts 2\n' },
+      { withoutGorohDefinitions: true },
+    );
 
     const result = await sourceWords(options);
 
@@ -283,7 +332,7 @@ describe('sourceWords', () => {
     // КОСА 2 prints its Examples without italics.
     expect(outcome.drafts[1]?.flags.map((flag) => flag.kind)).toContain('unmarked-examples');
     const report = readFileSync(join(options.outDir, 'review-report.md'), 'utf8');
-    expect(report).toContain('СУМ has 4 homonyms');
+    expect(report).toContain('The dictionary has 4 homonyms');
   });
 
   it('gives a plural-only noun the plural-only gender', async () => {
@@ -345,24 +394,172 @@ describe('sourceWords', () => {
 
     expect(second.net.requests).toEqual([]);
     expect(readDrafts(second.options.outDir)).toEqual(firstDrafts);
+    // Only the failed try of sum.in.ua was not cached.
     expect(result.ok && result.report.requests).toEqual({
       network: 0,
       cached: first.net.requests.length - 1,
+      backoffs: 0,
+      unreachable: {},
     });
   });
 
-  it('waits at least two seconds between requests to the sites', async () => {
+  it('waits at least two seconds between requests to one host', async () => {
     const { options, net } = setup({
-      lemmaList: 'мжичка nature-weather 2\nножиці household-crafts 1\n',
+      lemmaList: 'мжичка nature-weather 2\nножиці household-crafts 1\nдратва household-crafts 2\n',
     });
 
     await sourceWords(options);
 
-    const gaps = net.requestTimes
-      .slice(1)
-      .map((time, index) => time - (net.requestTimes[index] ?? 0));
+    const gaps = gapsPerHost(net);
     expect(gaps.length).toBeGreaterThan(5);
     for (const gap of gaps) expect(gap).toBeGreaterThanOrEqual(2000);
+  });
+
+  it('shares the cache and the throttle with runs in parallel', async () => {
+    const first = setup({ lemmaList: 'дратва household-crafts 2\nножиці household-crafts 1\n' });
+    const second = setup({
+      lemmaList: 'дратва household-crafts 2\nятір household-crafts 3\n',
+      cacheDir: first.options.cacheDir,
+      clock: first.clock,
+      fetch: first.net.fetch,
+    });
+
+    await Promise.all([sourceWords(first.options), sourceWords(second.options)]);
+
+    for (const gap of gapsPerHost(first.net)) expect(gap).toBeGreaterThanOrEqual(2000);
+    // At most one run asked for each dratva page; the other read it from the cache.
+    const dratva = first.net.requests.filter((address) => address.endsWith('/дратва'));
+    expect(dratva.length).toBe(new Set(dratva).size);
+  });
+
+  it("drafts from goroh's explanatory dictionary and records the dictionary it cites", async () => {
+    const { options, net } = setup({ lemmaList: 'дратва household-crafts 2\n' });
+
+    await sourceWords(options);
+
+    const word = WordSchema.parse(readDrafts(options.outDir)[0]);
+    expect(word).toMatchObject({
+      lemma: 'дратва',
+      stress: [2],
+      partOfSpeech: 'noun',
+      gender: 'feminine',
+      primaryDefinition:
+        'Міцна просмолена або навощена нитка, якою шиють взуття, шкіряні вироби і т. ін.',
+    });
+    expect(word.examples[0]).toEqual({
+      text: 'Землю білою нам дратвою Дід Мороз прошив на славу.',
+      author: 'Д. Білоус',
+    });
+    expect(word.examples).toContainEqual({
+      text: '– Бачите, можу тепер і шилом орудувати, й дратву всунути – порядок!',
+      author: 'Б. Антоненко-Давидович',
+    });
+    expect(word.sources).toEqual([
+      {
+        title: "Тлумачний словник української мови. Томи 1-15 (А-П'ЯТЬ)",
+        url: 'https://goroh.pp.ua/Тлумачення/дратва',
+      },
+    ]);
+    // The article gives Stress and grammar, so neither sum.in.ua nor the inflection dictionary is asked.
+    expect(net.requests.filter((address) => !address.startsWith(GOROH))).toEqual([]);
+    expect(net.requests).not.toContain(`${GOROH}Словозміна/дратва`);
+  });
+
+  it('reads the citation from the page, and grammar from goroh when the article has none', async () => {
+    const { options } = setup({ lemmaList: 'ятір household-crafts 3\n' });
+
+    await sourceWords(options);
+
+    const word = WordSchema.parse(readDrafts(options.outDir)[0]);
+    expect(word).toMatchObject({
+      lemma: 'ятір',
+      stress: [0],
+      partOfSpeech: 'noun',
+      gender: 'masculine',
+    });
+    expect(word.sources).toEqual([
+      {
+        title: 'Тлумачний словник української мови в 11-ти томах',
+        url: 'https://goroh.pp.ua/Тлумачення/ятір',
+      },
+      { title: 'Горох: словозміна', url: 'https://goroh.pp.ua/Словозміна/ятір' },
+    ]);
+  });
+
+  it('drafts goroh homonyms separately, each from its explanatory dictionary', async () => {
+    const { options } = setup({ lemmaList: 'коса household-crafts 2\n' });
+
+    const result = await sourceWords(options);
+
+    const outcome = lemmaOutcome(result, 'коса');
+    expect(outcome.drafts.map((draft) => draft.headword)).toEqual([
+      'КОСА́ 1',
+      'КОСА́ 2',
+      'КОСА́ 3',
+      'КОСА́ 4',
+      'КО́СА 5',
+    ]);
+    const ready = readDrafts(options.outDir).map((draft) => WordSchema.parse(draft));
+    expect(ready.map((word) => word.primaryDefinition)).toContain('Заплетене волосся.');
+    for (const word of ready) {
+      expect(word.sources[0]?.title).toBe(
+        "Тлумачний словник української мови. Томи 1-15 (А-П'ЯТЬ)",
+      );
+    }
+    // КО́СА, the people, is masculine and feminine at once: a human picks.
+    const [kosa] = readDrafts(options.outDir, 'incomplete');
+    expect(kosa).toMatchObject({ stress: [1], partOfSpeech: 'noun' });
+    expect(kosa).not.toHaveProperty('gender');
+    // The page also carries articles written by a language model and from ВТС; none is drafted.
+    const all = [...ready, ...readDrafts(options.outDir, 'incomplete')] as {
+      sources: { title: string }[];
+    }[];
+    for (const draft of all) {
+      expect(draft.sources.map((source) => source.title).join()).not.toMatch(/Велик/);
+    }
+  });
+
+  it('tries sum.in.ua and the Wayback Machine once per run, and skips them once they fail', async () => {
+    const { options, net } = setup(
+      { lemmaList: 'кшпфтлеон science 3\nабвгджик science 3\n' },
+      { waybackDown: true },
+    );
+
+    const result = await sourceWords(options);
+
+    const hits = (host: string) => net.requests.filter((address) => address.includes(host)).length;
+    expect(hits('sum.in.ua/s/')).toBeLessThanOrEqual(2);
+    expect(hits('://sum.in.ua/')).toBe(1);
+    expect(hits('web.archive.org')).toBe(1);
+    expect(result.ok && Object.keys(result.report.requests.unreachable).sort()).toEqual([
+      'sum.in.ua',
+      'web.archive.org',
+    ]);
+    const report = readFileSync(join(options.outDir, 'review-report.md'), 'utf8');
+    expect(report).toContain('Skipped for this run: web.archive.org');
+  });
+
+  it('backs off more and more when a host rate-limits, and says so', async () => {
+    const messages: string[] = [];
+    const { options, net } = setup(
+      { lemmaList: 'дратва household-crafts 2\n', log: (message) => messages.push(message) },
+      { rateLimited: { [`${GOROH}Тлумачення/дратва`]: { status: 429, times: 2 } } },
+    );
+
+    const result = await sourceWords(options);
+
+    expect(readDrafts(options.outDir)).toHaveLength(1);
+    const times = net.requests.flatMap((address, index) =>
+      address === `${GOROH}Тлумачення/дратва` ? [net.requestTimes[index] ?? 0] : [],
+    );
+    expect(times).toHaveLength(3);
+    expect((times[1] ?? 0) - (times[0] ?? 0)).toBeGreaterThanOrEqual(5000);
+    expect((times[2] ?? 0) - (times[1] ?? 0)).toBeGreaterThanOrEqual(10_000);
+    expect(result.ok && result.report.requests.backoffs).toBe(2);
+    expect(messages).toEqual([
+      'goroh.pp.ua: HTTP 429; backing off for 5 s (1/4)',
+      'goroh.pp.ua: HTTP 429; backing off for 10 s (2/4)',
+    ]);
   });
 
   it('reads sum.in.ua itself when the site is reachable', async () => {
@@ -420,6 +617,20 @@ describe('sourceWords', () => {
     expect(net.requests).toEqual([]);
   });
 });
+
+/** The time between consecutive requests to the same host. */
+function gapsPerHost(net: FakeNetwork): number[] {
+  const last = new Map<string, number>();
+  const gaps: number[] = [];
+  net.requests.forEach((address, index) => {
+    const host = new URL(encodeURI(address)).hostname;
+    const time = net.requestTimes[index] ?? 0;
+    const previous = last.get(host);
+    if (previous !== undefined) gaps.push(time - previous);
+    last.set(host, time);
+  });
+  return gaps;
+}
 
 function lemmaOutcome(result: SourcingResult, lemma: string): LemmaOutcome {
   if (!result.ok) throw new Error(result.errors.join('\n'));
