@@ -12,6 +12,9 @@
     },
     {
       "path": "packages/language-pack"
+    },
+    {
+      "path": "tools/sourcing"
     }
   ]
 }

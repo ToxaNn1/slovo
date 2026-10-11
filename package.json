@@ -8,6 +8,7 @@
   },
   "scripts": {
     "build:pack": "pnpm --filter @slovo/language-pack build-pack",
+    "source:words": "pnpm --filter @slovo/sourcing source-words",
     "lint": "turbo run lint && prettier --check .",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
