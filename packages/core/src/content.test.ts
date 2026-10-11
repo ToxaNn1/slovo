@@ -39,6 +39,7 @@ function correction(
     explanation: 'An explanation.',
     examplePair: { nonStandard: 'People say this.', standard: 'Better say this.' },
     sources: [{ title: 'Test source' }],
+    retired: false,
   };
 }
 
@@ -131,6 +132,20 @@ describe('content', () => {
         corrections[1],
         corrections[0],
       ]);
+    });
+
+    it('leaves a Retired Correction out of the Corrections linked to a Word, but returns it by id', async () => {
+      const retired = { ...correction('c_old', 'oldform', ['always']), retired: true };
+      const withRetired = createContent({
+        port: inMemoryPort(
+          [word('w_linked', 'always', [0], ['c_old', 'c_a'])],
+          [...corrections, retired],
+        ),
+        random: fixedRandom(0),
+      });
+
+      expect(await withRetired.linkedCorrections('w_linked')).toEqual([corrections[0]]);
+      expect(await withRetired.correctionById('c_old')).toEqual(retired);
     });
 
     it('returns no Corrections for a Word without links or an unknown Word', async () => {

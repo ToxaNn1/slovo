@@ -45,6 +45,7 @@ interface CorrectionRow {
   explanation: string;
   example_non_standard: string;
   example_standard: string;
+  retired: number;
 }
 
 interface SourceRow {
@@ -148,6 +149,7 @@ export function createPackReader(db: PackDatabase): PackReader {
       explanation: row.explanation,
       examplePair: { nonStandard: row.example_non_standard, standard: row.example_standard },
       sources: correctionSources,
+      retired: row.retired === 1,
     });
   }
 

@@ -74,6 +74,10 @@ The editorial standard for every Word: a normative dictionary word that an educa
 A non-standard form people commonly use (often a phrase) paired with one or more standard equivalents in the Edition's language, plus a short neutral explanation, e.g. «на протязі року» → «протягом року». A Core concept; each Edition supplies its own Corrections. A Word may point to the Corrections it is the standard form for (протягом → «на протязі»), so each is reachable from the other without duplicating data.
 _Avoid_: Mistake, error, surzhyk card
 
+**Retired Correction**:
+A Correction withdrawn from the Language Pack. Like a Retired Word, it never appears anywhere new and is no longer linked from Words, but stays visible wherever the user already keeps it.
+_Avoid_: Deleted correction
+
 **Correction Type**:
 Why the form is non-standard: russianism, calque, surzhyk or officialese (канцелярит).
 

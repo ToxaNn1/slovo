@@ -8,7 +8,10 @@ export interface Content {
   firstWord(): Promise<Word | undefined>;
   randomWord(): Promise<Word | undefined>;
   correctionById(id: string): Promise<Correction | undefined>;
-  /** The Corrections a Word is the standard form for, in the order the Word links them. */
+  /**
+   * The Corrections, not retired, that a Word is the standard form for, in the
+   * order the Word links them.
+   */
   linkedCorrections(wordId: string): Promise<Correction[]>;
   /** The Words, not retired, that are the standard form for a Correction. */
   linkedWords(correctionId: string): Promise<Word[]>;
@@ -34,9 +37,10 @@ export function createContent({
     correctionById: (id) => port.getCorrection(id),
     async linkedCorrections(wordId) {
       const word = await port.getWord(wordId);
-      return present(
+      const corrections = present(
         await Promise.all((word?.correctionIds ?? []).map((id) => port.getCorrection(id))),
       );
+      return corrections.filter((correction) => !correction.retired);
     },
     async linkedWords(correctionId) {
       const ids = await port.listLinkedWordIds(correctionId);
