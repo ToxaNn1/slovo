@@ -19,5 +19,14 @@
     "conjunction": "сполучник",
     "particle": "частка",
     "interjection": "вигук"
+  },
+  "settings": {
+    "title": "Налаштування",
+    "theme": "Тема",
+    "themes": {
+      "system": "Системна",
+      "light": "Світла",
+      "dark": "Темна"
+    }
   }
 }

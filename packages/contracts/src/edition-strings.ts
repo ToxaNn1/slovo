@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { ThemeSchema } from './edition';
 import { PartOfSpeechSchema } from './word';
 
 const TextSchema = z.string().min(1);
@@ -23,6 +24,14 @@ export const EditionStringsSchema = z.strictObject({
   noWords: TextSchema,
   /** The display label of every part of speech. */
   partsOfSpeech: z.record(PartOfSpeechSchema, TextSchema),
+  settings: z.strictObject({
+    /** The Settings screen title. */
+    title: TextSchema,
+    /** The label over the Theme choice. */
+    theme: TextSchema,
+    /** The name of every Theme. */
+    themes: z.record(ThemeSchema, TextSchema),
+  }),
 });
 
 export type EditionStrings = z.infer<typeof EditionStringsSchema>;

@@ -35,7 +35,7 @@ Parts marked as placeholders are reserved and filled by later versions.
 | `packages/contracts`     | Zod schemas for Entries, the Edition config and the Language Pack.                      |
 | `packages/language-pack` | Builds an Edition's content into a read-only SQLite Language Pack and reads packs back. |
 | `packages/config`        | Shared TypeScript, ESLint and Prettier configuration.                                   |
-| `editions/<edition>`     | One folder per Edition: configuration, strings, content and assets.                     |
+| `editions/<edition>`     | One folder per Edition: configuration, strings, design tokens, content and assets.      |
 | `tools/sourcing`         | Dev-only tool that drafts Words from goroh.pp.ua and СУМ-11 for human review.           |
 | `docs/`                  | Architecture decision records in `docs/adr/` and the design brief in `docs/design/`.    |
 
@@ -85,7 +85,9 @@ You need the Node version in [`.nvmrc`](.nvmrc), pnpm, Xcode with an iOS Simulat
    SLOVO_EDITION=uk pnpm start
    ```
 
-4. Check the result. The tabs read Головна, Налаштування, Гра, Збережене (Home, Settings, Game, Saved). Home shows one Word from the bundled Language Pack: its Lemma with the Stress mark, its part of speech and its primary Definition. The other tabs are placeholders. The app needs no network: the Language Pack ships inside the app and is opened read-only. At launch the app checks that the native app, the JavaScript bundle and the Language Pack are of the same Edition, and shows its load-failed screen when they are not. [Verify the app with networking off](#verify-the-app-with-networking-off) by hand once per release candidate.
+   The app draws itself with the Edition's design tokens (`editions/<edition>/tokens.json`). To check the Core's neutral look instead, start Metro with `SLOVO_CORE_TOKENS=1 SLOVO_EDITION=uk pnpm start --clear`, and drop the variable (with `--clear` again) to go back.
+
+4. Check the result. The tabs read Головна, Налаштування, Гра, Збережене (Home, Settings, Game, Saved). Home shows one Word from the bundled Language Pack: its Lemma with the Stress mark, its part of speech and its primary Definition. Settings offers the Theme (System, Light or Dark); the choice is kept on the device in a user-state database apart from the Language Pack, and System follows the iOS appearance. Game and Saved are placeholders. The app needs no network: the Language Pack ships inside the app and is opened read-only. At launch the app checks that the native app, the JavaScript bundle and the Language Pack are of the same Edition, and shows its load-failed screen when they are not. [Verify the app with networking off](#verify-the-app-with-networking-off) by hand once per release candidate.
 
 5. Run the smoke flow with [Maestro](https://maestro.mobile.dev) while Metro is running. It is a local check and does not run in CI.
 
