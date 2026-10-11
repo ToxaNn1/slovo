@@ -1,0 +1,20 @@
+{
+  "id": "w_fx0003",
+  "lemma": "завжди",
+  "stress": [1, 5],
+  "partOfSpeech": "adverb",
+  "primaryDefinition": "У будь-який час, постійно.",
+  "examples": [
+    {
+      "text": "Він завжди приходить вчасно."
+    }
+  ],
+  "synonyms": ["постійно"],
+  "categoryId": "speech",
+  "rarity": 1,
+  "sources": [
+    {
+      "title": "Тестове джерело"
+    }
+  ]
+}

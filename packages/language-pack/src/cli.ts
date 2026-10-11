@@ -4,15 +4,17 @@
  *   pnpm build:pack <edition-id> [--out <file>]
  *
  * The pack goes to `editions/<edition-id>/dist/language-pack.db` unless
- * `--out` says otherwise. Exits non-zero, listing every error, when the
- * content is invalid.
+ * `--out` says otherwise. Prints the content report after every successful
+ * build. Exits non-zero, listing every error, when the content is invalid.
  */
 import { existsSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 
-import { buildLanguagePack, formatBuildError } from './build';
+import { buildLanguagePack } from './build';
+import { formatBuildError } from './build-error';
+import { formatContentReport } from './report';
 
 const repoRoot = fileURLToPath(new URL('../../../', import.meta.url));
 const editionsDir = join(repoRoot, 'editions');
@@ -47,12 +49,14 @@ function main(): number {
     return 1;
   }
 
-  const { metadata, wordCount } = result;
+  const { metadata, wordCount, report } = result;
   console.log(`Built the Language Pack for "${metadata.editionId}"`);
   console.log(`  file:            ${displayPath(outFile)}`);
   console.log(`  content version: ${String(metadata.contentVersion)}`);
   console.log(`  checksum:        ${metadata.checksum}`);
   console.log(`  Words:           ${String(wordCount)}`);
+  console.log('');
+  console.log(formatContentReport(report));
   return 0;
 }
 

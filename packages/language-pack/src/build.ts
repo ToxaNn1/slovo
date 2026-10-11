@@ -1,11 +1,14 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { EditionConfigSchema, WordSchema, type Word } from '@slovo/contracts';
+import { EditionConfigSchema, WordSchema } from '@slovo/contracts';
 import { z } from 'zod';
 
+import type { BuildError } from './build-error';
+import { checkContent, type AuthoredWord } from './check-content';
 import { contentChecksum } from './checksum';
 import type { PackContent, PackMetadata } from './pack-layout';
+import { contentReport, type ContentReport } from './report';
 import { writePack } from './write-pack';
 
 const EDITION_CONFIG_FILE = 'edition.json';
@@ -17,30 +20,19 @@ const ContentManifestSchema = z.strictObject({
   contentVersion: z.int().positive(),
 });
 
-/** One problem that stops the build, located as precisely as possible. */
-export interface BuildError {
-  /** The file at fault, relative to the Edition folder. */
-  readonly file: string;
-  readonly entryId?: string;
-  /** The dotted path of the field at fault. */
-  readonly field?: string;
-  readonly message: string;
-}
-
 export type BuildResult =
-  | { readonly ok: true; readonly metadata: PackMetadata; readonly wordCount: number }
+  | {
+      readonly ok: true;
+      readonly metadata: PackMetadata;
+      readonly wordCount: number;
+      readonly report: ContentReport;
+    }
   | { readonly ok: false; readonly errors: readonly BuildError[] };
 
-export function formatBuildError({ file, entryId, field, message }: BuildError): string {
-  const location = [file, entryId === undefined ? undefined : `Word ${entryId}`, field]
-    .filter((part) => part !== undefined)
-    .join(' › ');
-  return `${location}: ${message}`;
-}
-
 /**
- * Validates an Edition's config and content and compiles them into a SQLite
- * Language Pack at `outFile`. Nothing is written when there are errors.
+ * Validates an Edition's config and content, Entry by Entry and across
+ * Entries, and compiles them into a SQLite Language Pack at `outFile` with a
+ * content report. Nothing is written when there are errors.
  */
 export function buildLanguagePack({
   editionDir,
@@ -51,7 +43,7 @@ export function buildLanguagePack({
 }): BuildResult {
   const errors: BuildError[] = [];
 
-  function parseFile<T>(file: string, schema: z.ZodType<T>): T | undefined {
+  function parseFile<T>(file: string, schema: z.ZodType<T>, isEntry = false): T | undefined {
     const json = readJson(editionDir, file);
     if (!json.ok) {
       errors.push({ file, message: json.message });
@@ -59,7 +51,7 @@ export function buildLanguagePack({
     }
     const result = schema.safeParse(json.value);
     if (result.success) return result.data;
-    const entryId = entryIdOf(json.value);
+    const entryId = isEntry ? entryIdOf(json.value) : undefined;
     for (const issue of result.error.issues) {
       errors.push({
         file,
@@ -73,9 +65,11 @@ export function buildLanguagePack({
 
   const config = parseFile(EDITION_CONFIG_FILE, EditionConfigSchema);
   const manifest = parseFile(MANIFEST_FILE, ContentManifestSchema);
-  const words = listJsonFiles(editionDir, WORDS_DIR)
-    .map((file) => parseFile(file, WordSchema))
-    .filter((word): word is Word => word !== undefined);
+  const words = listJsonFiles(editionDir, WORDS_DIR).flatMap((file): AuthoredWord[] => {
+    const word = parseFile(file, WordSchema, true);
+    return word === undefined ? [] : [{ file, word }];
+  });
+  if (config !== undefined) errors.push(...checkContent(config, words));
 
   if (errors.length > 0 || config === undefined || manifest === undefined) {
     return { ok: false, errors };
@@ -85,7 +79,7 @@ export function buildLanguagePack({
     editionId: config.id,
     contentVersion: manifest.contentVersion,
     categories: config.categories,
-    words: words.toSorted((a, b) => compare(a.id, b.id)),
+    words: words.map(({ word }) => word).toSorted((a, b) => compare(a.id, b.id)),
   };
   const metadata: PackMetadata = {
     editionId: content.editionId,
@@ -93,7 +87,12 @@ export function buildLanguagePack({
     checksum: contentChecksum(content),
   };
   writePack(outFile, content, metadata);
-  return { ok: true, metadata, wordCount: content.words.length };
+  return {
+    ok: true,
+    metadata,
+    wordCount: content.words.length,
+    report: contentReport(content.categories, content.words),
+  };
 }
 
 function readJson(

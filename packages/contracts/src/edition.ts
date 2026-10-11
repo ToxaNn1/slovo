@@ -22,27 +22,56 @@ export const DistractorRuleSchema = z.enum(['same-part-of-speech']);
 
 export type DistractorRule = z.infer<typeof DistractorRuleSchema>;
 
-export const LanguageTraitsSchema = z.strictObject({
-  /** Whether the language marks Stress, so every Lemma must carry it. */
-  marksStress: z.boolean(),
-  /**
-   * The lowercase letters of the alphabet in alphabetical order, authored as
-   * one string separated by spaces (a letter may span several characters) and
-   * parsed into a list.
-   */
-  alphabet: z
-    .string()
-    .transform((letters) => letters.split(' ').filter((letter) => letter !== ''))
-    .pipe(
-      z
-        .array(z.string())
-        .min(1, 'Expected at least one letter')
-        .refine((letters) => new Set(letters).size === letters.length, 'Expected unique letters'),
-    ),
-  /** The language tag used to sort text in the Edition's language. */
-  sortLocale: LanguageTagSchema,
-  distractorRule: DistractorRuleSchema,
-});
+/**
+ * Letters authored as one string separated by spaces (a letter may span
+ * several characters) and parsed into a list of unique letters.
+ */
+const LetterListSchema = z
+  .string()
+  .transform((letters) => letters.split(' ').filter((letter) => letter !== ''))
+  .pipe(
+    z
+      .array(z.string())
+      .min(1, 'Expected at least one letter')
+      .refine((letters) => new Set(letters).size === letters.length, 'Expected unique letters'),
+  );
+
+export const LanguageTraitsSchema = z
+  .strictObject({
+    /** Whether the language marks Stress, so every Lemma must carry it. */
+    marksStress: z.boolean(),
+    /** The lowercase letters of the alphabet in alphabetical order. */
+    alphabet: LetterListSchema,
+    /** The language tag used to sort text in the Edition's language. */
+    sortLocale: LanguageTagSchema,
+    distractorRule: DistractorRuleSchema,
+    /**
+     * The lowercase vowels, each a letter of the alphabet: the only letters
+     * Stress may fall on. Required when the Edition marks Stress.
+     */
+    vowels: LetterListSchema.optional(),
+  })
+  .superRefine(({ marksStress, alphabet, vowels }, context) => {
+    if (vowels === undefined) {
+      if (marksStress) {
+        context.addIssue({
+          code: 'custom',
+          path: ['vowels'],
+          message: 'Required when the Edition marks Stress',
+        });
+      }
+      return;
+    }
+    vowels.forEach((vowel, index) => {
+      if (!alphabet.includes(vowel)) {
+        context.addIssue({
+          code: 'custom',
+          path: ['vowels', index],
+          message: `"${vowel}" is not a letter of the alphabet`,
+        });
+      }
+    });
+  });
 
 export type LanguageTraits = z.infer<typeof LanguageTraitsSchema>;
 

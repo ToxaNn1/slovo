@@ -25,4 +25,20 @@ export {
   type Theme,
   type UserSettingDefaultsConfig,
 } from './edition';
-export { PartOfSpeechSchema, WordSchema, type PartOfSpeech, type Word } from './word';
+export {
+  ExampleSchema,
+  GenderSchema,
+  PartOfSpeechSchema,
+  RaritySchema,
+  RegisterSchema,
+  SourceSchema,
+  WordIdSchema,
+  WordSchema,
+  type Example,
+  type Gender,
+  type PartOfSpeech,
+  type Register,
+  type Source,
+  type Word,
+  type WordInput,
+} from './word';

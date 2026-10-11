@@ -4,5 +4,11 @@
   "stress": [5],
   "partOfSpeech": "chatter",
   "primaryDefinition": "Який любить багато говорити.",
-  "categoryId": "speech"
+  "categoryId": "speech",
+  "rarity": 2,
+  "sources": [
+    {
+      "title": "Тестове джерело"
+    }
+  ]
 }

@@ -3,6 +3,31 @@
   "lemma": "вітійство",
   "stress": [3],
   "partOfSpeech": "noun",
+  "gender": "neuter",
   "primaryDefinition": "Красномовство.",
-  "categoryId": "language-speech"
+  "examples": [
+    {
+      "text": "Гей, підходьте до мого ви До високого вікна! Не скажу я вам промови, Бо вітійство — річ нудна.",
+      "author": "Максим Рильський"
+    }
+  ],
+  "synonyms": ["красномовство", "красномовність", "пишномовність", "риторика"],
+  "registers": ["archaic", "bookish"],
+  "categoryId": "language-speech",
+  "rarity": 4,
+  "sources": [
+    {
+      "title": "Словник української мови: в 11 томах. — Том 1, 1970. — Стор. 687.",
+      "url": "http://sum.in.ua/s/vitijstvo",
+      "archivedUrl": "https://web.archive.org/web/20220806021701/http://sum.in.ua/s/vitijstvo"
+    },
+    {
+      "title": "Горох: тлумачення (Словник української мови у 20 томах)",
+      "url": "https://goroh.pp.ua/Тлумачення/вітійство"
+    },
+    {
+      "title": "Горох: синонімія (Словник синонімів Караванського)",
+      "url": "https://goroh.pp.ua/Синонімія/вітійство"
+    }
+  ]
 }

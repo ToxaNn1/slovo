@@ -4,31 +4,29 @@ import type { Word } from '@slovo/contracts';
 
 import { createContent, type ContentReadPort, type Random } from './index';
 
+function word(id: string, lemma: string, stress: number[]): Word {
+  return {
+    id,
+    lemma,
+    stress,
+    partOfSpeech: 'adjective',
+    primaryDefinition: 'Значення.',
+    extraDefinitions: [],
+    examples: [],
+    synonyms: [],
+    antonyms: [],
+    registers: [],
+    categoryId: 'test',
+    rarity: 1,
+    sources: [{ title: 'Тестове джерело' }],
+    retired: false,
+  };
+}
+
 const words: Word[] = [
-  {
-    id: 'w_a',
-    lemma: 'перший',
-    stress: [1],
-    partOfSpeech: 'adjective',
-    primaryDefinition: 'Перше значення.',
-    categoryId: 'test',
-  },
-  {
-    id: 'w_b',
-    lemma: 'другий',
-    stress: [4],
-    partOfSpeech: 'adjective',
-    primaryDefinition: 'Друге значення.',
-    categoryId: 'test',
-  },
-  {
-    id: 'w_c',
-    lemma: 'третій',
-    stress: [2],
-    partOfSpeech: 'adjective',
-    primaryDefinition: 'Третє значення.',
-    categoryId: 'test',
-  },
+  word('w_a', 'перший', [1]),
+  word('w_b', 'другий', [4]),
+  word('w_c', 'третій', [2]),
 ];
 
 function inMemoryPort(content: readonly Word[]): ContentReadPort {

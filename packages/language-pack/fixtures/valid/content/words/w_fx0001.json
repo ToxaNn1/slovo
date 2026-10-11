@@ -3,6 +3,33 @@
   "lemma": "заметіль",
   "stress": [5],
   "partOfSpeech": "noun",
+  "gender": "feminine",
   "primaryDefinition": "Сильний вітер зі снігом.",
-  "categoryId": "nature"
+  "extraDefinitions": ["Велика кількість чогось, що кружляє в повітрі."],
+  "examples": [
+    {
+      "text": "За вікном мела заметіль.",
+      "author": "Тестовий Автор"
+    },
+    {
+      "text": "Заметіль не вщухала до ранку."
+    }
+  ],
+  "synonyms": ["хуртовина", "завірюха"],
+  "antonyms": ["затишшя"],
+  "etymology": "Від дієслова замітати.",
+  "registers": ["bookish", "colloquial"],
+  "categoryId": "nature",
+  "rarity": 2,
+  "sources": [
+    {
+      "title": "Тестове джерело",
+      "url": "https://example.org/zametil",
+      "archivedUrl": "https://web.archive.org/web/2024/https://example.org/zametil"
+    },
+    {
+      "title": "Друге тестове джерело"
+    }
+  ],
+  "retired": true
 }

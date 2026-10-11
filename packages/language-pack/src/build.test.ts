@@ -5,9 +5,16 @@ import { fileURLToPath } from 'node:url';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { WordSchema } from '@slovo/contracts';
 import { createContent, systemRandom } from '@slovo/core';
 
-import { buildLanguagePack, formatBuildError, openLanguagePack } from './index';
+import {
+  buildLanguagePack,
+  formatBuildError,
+  formatContentReport,
+  openLanguagePack,
+  type BuildError,
+} from './index';
 
 const fixture = (name: string) => fileURLToPath(new URL(`../fixtures/${name}`, import.meta.url));
 
@@ -21,6 +28,26 @@ function workDir(): string {
 
 const packPath = () => join(workDir(), 'language-pack.db');
 
+/** A writable copy of a fixture Edition, for tests that need a variation of it. */
+function copyFixture(name: string): string {
+  const editionDir = join(workDir(), 'edition');
+  cpSync(fixture(name), editionDir, { recursive: true });
+  return editionDir;
+}
+
+type Json = Record<string, unknown>;
+
+function readJsonFile(path: string): Json {
+  return JSON.parse(readFileSync(path, 'utf8')) as Json;
+}
+
+function editJson(editionDir: string, file: string, edit: (json: Json) => Json): void {
+  const path = join(editionDir, file);
+  writeFileSync(path, JSON.stringify(edit(readJsonFile(path))));
+}
+
+const validWordFiles = ['w_fx0001', 'w_fx0002', 'w_fx0003'].map((id) => `content/words/${id}.json`);
+
 async function readBack(outFile: string) {
   const pack = openLanguagePack(outFile);
   try {
@@ -28,6 +55,25 @@ async function readBack(outFile: string) {
   } finally {
     pack.close();
   }
+}
+
+async function withContent<T>(
+  outFile: string,
+  use: (content: ReturnType<typeof createContent>) => Promise<T>,
+): Promise<T> {
+  const pack = openLanguagePack(outFile);
+  try {
+    return await use(createContent({ port: pack, random: systemRandom }));
+  } finally {
+    pack.close();
+  }
+}
+
+function buildErrors(editionDir: string): readonly BuildError[] {
+  const outFile = packPath();
+  const result = buildLanguagePack({ editionDir, outFile });
+  expect(existsSync(outFile)).toBe(false);
+  return result.ok ? [] : result.errors;
 }
 
 afterEach(() => {
@@ -41,37 +87,207 @@ describe('buildLanguagePack', () => {
     const result = buildLanguagePack({ editionDir: fixture('valid'), outFile });
 
     expect(result.ok).toBe(true);
-    const pack = openLanguagePack(outFile);
-    try {
-      const content = createContent({ port: pack, random: systemRandom });
+    await withContent(outFile, async (content) => {
       expect(await content.wordById('w_fx0002')).toEqual({
         id: 'w_fx0002',
         lemma: 'балакучий',
         stress: [5],
         partOfSpeech: 'adjective',
         primaryDefinition: 'Який любить багато говорити.',
+        extraDefinitions: [],
+        examples: [],
+        synonyms: [],
+        antonyms: [],
+        registers: [],
         categoryId: 'speech',
+        rarity: 3,
+        sources: [{ title: 'Тестове джерело' }],
+        retired: false,
       });
-      expect((await content.firstWord())?.id).toBe('w_fx0001');
-    } finally {
-      pack.close();
-    }
+      expect((await content.firstWord())?.id).toBe('w_fx0002');
+    });
+  });
+
+  it('round-trips a full Word: every field written to the pack comes back from the Core', async () => {
+    const outFile = packPath();
+    const authored = readJsonFile(join(fixture('valid'), 'content/words/w_fx0001.json'));
+    // The fixture must fill every Word field, so a new field can't skip the pack.
+    expect(Object.keys(authored).toSorted()).toEqual(Object.keys(WordSchema.shape).toSorted());
+
+    buildLanguagePack({ editionDir: fixture('valid'), outFile });
+
+    await withContent(outFile, async (content) => {
+      expect(await content.wordById('w_fx0001')).toEqual(authored);
+    });
+  });
+
+  it('round-trips a Word with two valid Stresses', async () => {
+    const outFile = packPath();
+
+    buildLanguagePack({ editionDir: fixture('valid'), outFile });
+
+    await withContent(outFile, async (content) => {
+      expect(await content.wordById('w_fx0003')).toMatchObject({
+        lemma: 'завжди',
+        stress: [1, 5],
+      });
+    });
+  });
+
+  it('keeps a Retired Word reachable by id but out of the first and random Words', async () => {
+    const outFile = packPath();
+
+    buildLanguagePack({ editionDir: fixture('valid'), outFile });
+
+    expect((await readBack(outFile)).ids).toEqual(['w_fx0002', 'w_fx0003']);
+    await withContent(outFile, async (content) => {
+      expect(await content.wordById('w_fx0001')).toMatchObject({ retired: true });
+    });
   });
 
   it('fails on an invalid Word with an error naming the Entry id and field', () => {
-    const outFile = packPath();
+    const errors = buildErrors(fixture('invalid-word'));
 
-    const result = buildLanguagePack({ editionDir: fixture('invalid-word'), outFile });
-
-    expect(result.ok).toBe(false);
-    if (result.ok) return;
-    expect(result.errors).toEqual([
+    expect(errors).toEqual([
       expect.objectContaining({ entryId: 'w_fx0002', field: 'partOfSpeech' }),
     ]);
-    expect(result.errors.map(formatBuildError)).toEqual([
-      expect.stringMatching(/w_fx0002.*partOfSpeech/),
+    expect(errors.map(formatBuildError)).toEqual([expect.stringMatching(/w_fx0002.*partOfSpeech/)]);
+  });
+
+  describe('rejects broken Entries, naming the Entry id and the field', () => {
+    const errors = () => buildErrors(fixture('invalid-entries'));
+
+    it.each([
+      ['a duplicate id', 'w_fx1001_copy.json', 'w_fx1001', 'id', /duplicate.*w_fx1001\.json/i],
+      [
+        'an unknown Category',
+        'w_fx1002.json',
+        'w_fx1002',
+        'categoryId',
+        /unknown category.*space/i,
+      ],
+      [
+        'a missing Stress in a Stress-marking Edition',
+        'w_fx1003.json',
+        'w_fx1003',
+        'stress',
+        /required/i,
+      ],
+      ['a Stress position out of range', 'w_fx1004.json', 'w_fx1004', 'stress.0', /out of range/i],
+      ['a Stress position on a consonant', 'w_fx1005.json', 'w_fx1005', 'stress.0', /not a vowel/i],
+      ['Stress positions out of order', 'w_fx1011.json', 'w_fx1011', 'stress', /ascending/i],
+      ['a rarity outside 1–5', 'w_fx1006.json', 'w_fx1006', 'rarity', /5/],
+      [
+        'a missing primary Definition',
+        'w_fx1007.json',
+        'w_fx1007',
+        'primaryDefinition',
+        /expected string/i,
+      ],
+      ['a noun without gender', 'w_fx1008.json', 'w_fx1008', 'gender', /required for a noun/i],
+      ['a gender on a non-noun', 'w_fx1012.json', 'w_fx1012', 'gender', /only nouns/i],
+      ['a Word without sources', 'w_fx1009.json', 'w_fx1009', 'sources', /1/],
+      ['an id without the Word prefix', 'word-10.json', 'word-10', 'id', /w_/],
+      ['a repeated register label', 'w_fx1013.json', 'w_fx1013', 'registers', /repeat/i],
+    ])('%s', (_rule, file, entryId, field, message) => {
+      expect(errors()).toContainEqual({
+        file: `content/words/${file}`,
+        entryId,
+        field,
+        message: expect.stringMatching(message) as string,
+      });
+    });
+
+    it('reports nothing but those errors', () => {
+      expect(errors()).toHaveLength(13);
+    });
+  });
+
+  it('requires the vowels of an Edition that marks Stress', () => {
+    const editionDir = copyFixture('valid');
+    editJson(editionDir, 'edition.json', (config) => ({
+      ...config,
+      languageTraits: { ...(config['languageTraits'] as Json), vowels: undefined },
+    }));
+
+    expect(buildErrors(editionDir)).toEqual([
+      {
+        file: 'edition.json',
+        field: 'languageTraits.vowels',
+        message: expect.stringMatching(/marks stress/i) as string,
+      },
     ]);
-    expect(existsSync(outFile)).toBe(false);
+  });
+
+  it('builds Words without Stress in an Edition that does not mark Stress', async () => {
+    const editionDir = copyFixture('valid');
+    editJson(editionDir, 'edition.json', (config) => ({
+      ...config,
+      languageTraits: {
+        ...(config['languageTraits'] as Json),
+        marksStress: false,
+        vowels: undefined,
+      },
+    }));
+    for (const file of validWordFiles) {
+      editJson(editionDir, file, (word) => ({ ...word, stress: undefined }));
+    }
+    const outFile = packPath();
+
+    expect(buildLanguagePack({ editionDir, outFile }).ok).toBe(true);
+    await withContent(outFile, async (content) => {
+      expect(await content.wordById('w_fx0003')).toMatchObject({ stress: [] });
+    });
+  });
+
+  it('rejects Stress in an Edition that does not mark Stress', () => {
+    const editionDir = copyFixture('valid');
+    editJson(editionDir, 'edition.json', (config) => ({
+      ...config,
+      languageTraits: {
+        ...(config['languageTraits'] as Json),
+        marksStress: false,
+        vowels: undefined,
+      },
+    }));
+
+    expect(buildErrors(editionDir)).toEqual(
+      ['w_fx0001', 'w_fx0002', 'w_fx0003'].map((entryId) => ({
+        file: `content/words/${entryId}.json`,
+        entryId,
+        field: 'stress',
+        message: expect.stringMatching(/does not mark stress/i) as string,
+      })),
+    );
+  });
+
+  it('reports Words per Category, the rarity histogram and field coverage', () => {
+    const result = buildLanguagePack({ editionDir: fixture('valid'), outFile: packPath() });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.report).toEqual({
+      words: 2,
+      retiredWords: 1,
+      wordsPerCategory: [
+        { categoryId: 'nature', displayName: 'Природа', words: 0 },
+        { categoryId: 'speech', displayName: 'Мовлення', words: 2 },
+      ],
+      rarity: [
+        { rarity: 1, words: 1 },
+        { rarity: 2, words: 0 },
+        { rarity: 3, words: 1 },
+        { rarity: 4, words: 0 },
+        { rarity: 5, words: 0 },
+      ],
+      coverage: { examples: 1, synonyms: 1, etymology: 0 },
+    });
+    const printed = formatContentReport(result.report);
+    expect(printed).toMatch(/Words:\s+2 \(1 Retired Word left out\)/);
+    expect(printed).toMatch(/speech\s.*Мовлення\s+2/);
+    expect(printed).toMatch(/rarity 3\s+1/);
+    expect(printed).toMatch(/Examples\s+1\/2 \(50%\)/);
+    expect(printed).toMatch(/etymology\s+0\/2 \(0%\)/);
   });
 
   it('yields the same ids, checksum and file when the same content is built twice', async () => {
@@ -83,7 +299,7 @@ describe('buildLanguagePack', () => {
 
     const a = await readBack(first);
     const b = await readBack(second);
-    expect(a.ids).toEqual(['w_fx0001', 'w_fx0002']);
+    expect(a.ids).toEqual(['w_fx0002', 'w_fx0003']);
     expect(b.ids).toEqual(a.ids);
     expect(a.metadata).toEqual({
       editionId: 'fixture',
@@ -95,11 +311,11 @@ describe('buildLanguagePack', () => {
   });
 
   it('changes the checksum when the content changes', async () => {
-    const editionDir = join(workDir(), 'edition');
-    cpSync(fixture('valid'), editionDir, { recursive: true });
-    const wordFile = join(editionDir, 'content/words/w_fx0001.json');
-    const word = JSON.parse(readFileSync(wordFile, 'utf8')) as Record<string, unknown>;
-    writeFileSync(wordFile, JSON.stringify({ ...word, primaryDefinition: 'Інше значення.' }));
+    const editionDir = copyFixture('valid');
+    editJson(editionDir, 'content/words/w_fx0001.json', (word) => ({
+      ...word,
+      primaryDefinition: 'Інше значення.',
+    }));
     const original = packPath();
     const edited = packPath();
 

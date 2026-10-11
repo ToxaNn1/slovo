@@ -20,7 +20,11 @@ CREATE TABLE words (
   id TEXT PRIMARY KEY,
   lemma TEXT NOT NULL,
   part_of_speech TEXT NOT NULL,
-  category_id TEXT NOT NULL REFERENCES categories (id)
+  gender TEXT,
+  category_id TEXT NOT NULL REFERENCES categories (id),
+  rarity INTEGER NOT NULL,
+  etymology TEXT,
+  retired INTEGER NOT NULL
 ) WITHOUT ROWID;
 
 CREATE TABLE word_stress (
@@ -29,12 +33,46 @@ CREATE TABLE word_stress (
   PRIMARY KEY (word_id, position)
 ) WITHOUT ROWID;
 
--- Position 0 is the primary Definition.
+-- Position 0 is the primary Definition, the rest are extra Definitions.
 CREATE TABLE definitions (
   word_id TEXT NOT NULL REFERENCES words (id),
   position INTEGER NOT NULL,
   text TEXT NOT NULL,
   PRIMARY KEY (word_id, position)
+) WITHOUT ROWID;
+
+CREATE TABLE examples (
+  word_id TEXT NOT NULL REFERENCES words (id),
+  position INTEGER NOT NULL,
+  text TEXT NOT NULL,
+  author TEXT,
+  PRIMARY KEY (word_id, position)
+) WITHOUT ROWID;
+
+-- Synonyms and antonyms.
+CREATE TABLE related_words (
+  word_id TEXT NOT NULL REFERENCES words (id),
+  relation TEXT NOT NULL CHECK (relation IN ('synonym', 'antonym')),
+  position INTEGER NOT NULL,
+  text TEXT NOT NULL,
+  PRIMARY KEY (word_id, relation, position)
+) WITHOUT ROWID;
+
+CREATE TABLE word_registers (
+  word_id TEXT NOT NULL REFERENCES words (id),
+  position INTEGER NOT NULL,
+  register TEXT NOT NULL,
+  PRIMARY KEY (word_id, position)
+) WITHOUT ROWID;
+
+-- Keyed by Entry id, so every kind of Entry can record its sources here.
+CREATE TABLE sources (
+  entry_id TEXT NOT NULL,
+  position INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  url TEXT,
+  archived_url TEXT,
+  PRIMARY KEY (entry_id, position)
 ) WITHOUT ROWID;
 `;
 

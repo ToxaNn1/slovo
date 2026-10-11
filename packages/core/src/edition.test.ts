@@ -12,6 +12,7 @@ const validConfig = {
     alphabet: 'a b c',
     sortLocale: 'xx',
     distractorRule: 'same-part-of-speech',
+    vowels: 'a',
   },
   featureSwitches: { game: true, corrections: true },
   userSettingDefaults: {
@@ -60,6 +61,7 @@ describe('loadEdition', () => {
     expect(languageTraits.alphabet).toEqual(['a', 'b', 'c']);
     expect(languageTraits.sortLocale).toBe('xx');
     expect(languageTraits.distractorRule).toBe('same-part-of-speech');
+    expect(languageTraits.vowels).toEqual(['a']);
   });
 
   it('reports the Categories in the order the Edition declares them', () => {
@@ -123,6 +125,16 @@ describe('loadEdition', () => {
       'a repeated letter in the alphabet',
       { languageTraits: { ...languageTraits, alphabet: 'a b a' } },
       'languageTraits.alphabet',
+    ],
+    [
+      'a Stress-marking Edition without vowels',
+      { languageTraits: { ...languageTraits, vowels: undefined } },
+      'languageTraits.vowels',
+    ],
+    [
+      'a vowel that is not a letter of the alphabet',
+      { languageTraits: { ...languageTraits, vowels: 'a e' } },
+      'languageTraits.vowels.1',
     ],
     [
       'an unknown Theme',
