@@ -72,9 +72,10 @@ export function writePack(outFile: string, content: PackContent, metadata: PackM
 
     const insertCorrection = db.prepare(`
       INSERT INTO corrections (
-        id, non_standard_form, correction_type, explanation, example_non_standard, example_standard
+        id, non_standard_form, correction_type, explanation, example_non_standard, example_standard,
+        retired
       )
-      VALUES (?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `);
     const insertEquivalent = db.prepare(
       'INSERT INTO correction_equivalents (correction_id, position, text) VALUES (?, ?, ?)',
@@ -87,6 +88,7 @@ export function writePack(outFile: string, content: PackContent, metadata: PackM
         correction.explanation,
         correction.examplePair.nonStandard,
         correction.examplePair.standard,
+        correction.retired ? 1 : 0,
       );
       correction.standardEquivalents.forEach((text, position) => {
         insertEquivalent.run(correction.id, position, text);

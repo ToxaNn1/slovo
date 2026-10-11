@@ -77,7 +77,8 @@ CREATE TABLE corrections (
   correction_type TEXT NOT NULL,
   explanation TEXT NOT NULL,
   example_non_standard TEXT NOT NULL,
-  example_standard TEXT NOT NULL
+  example_standard TEXT NOT NULL,
+  retired INTEGER NOT NULL
 ) WITHOUT ROWID;
 
 -- Position 0 is the main standard equivalent.

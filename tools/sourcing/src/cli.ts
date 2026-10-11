@@ -1,7 +1,7 @@
 /**
  * Drafts Words for a list of Lemmas, for human review:
  *
- *   pnpm source:words <lemma-list> [--edition <id>] [--out <dir>] [--cache <dir>]
+ *   pnpm source:words <lemma-list> --edition <id> [--out <dir>] [--cache <dir>]
  *                     [--sum auto|direct|wayback|off]
  *
  * The list has one Lemma per line, `<lemma> <category id> <rarity>`, with
@@ -23,7 +23,7 @@ import { REPORT_FILE, sourceWords, type Fetch, type SumAccess } from './index';
 const repoRoot = fileURLToPath(new URL('../../../', import.meta.url));
 const toolDir = fileURLToPath(new URL('../', import.meta.url));
 const USAGE =
-  'Usage: pnpm source:words <lemma-list> [--edition <id>] [--out <dir>] [--cache <dir>] [--sum auto|direct|wayback|off]';
+  'Usage: pnpm source:words <lemma-list> --edition <id> [--out <dir>] [--cache <dir>] [--sum auto|direct|wayback|off]';
 const SUM_ACCESS: readonly SumAccess[] = ['auto', 'direct', 'wayback', 'off'];
 
 const fetchPage: Fetch = async (url, { timeoutMs }) => {
@@ -39,7 +39,7 @@ async function main(): Promise<number> {
   const { positionals, values } = parseArgs({
     allowPositionals: true,
     options: {
-      edition: { type: 'string', default: 'uk' },
+      edition: { type: 'string' },
       out: { type: 'string' },
       cache: { type: 'string' },
       sum: { type: 'string', default: 'auto' },
@@ -47,7 +47,13 @@ async function main(): Promise<number> {
   });
   const [listFile] = positionals;
   const sumAccess = SUM_ACCESS.find((access) => access === values.sum);
-  if (listFile === undefined || positionals.length > 1 || sumAccess === undefined) {
+  const { edition } = values;
+  if (
+    listFile === undefined ||
+    positionals.length > 1 ||
+    edition === undefined ||
+    sumAccess === undefined
+  ) {
     console.error(USAGE);
     return 2;
   }
@@ -61,7 +67,7 @@ async function main(): Promise<number> {
 
   const result = await sourceWords({
     lemmaList: readFileSync(listPath, 'utf8'),
-    editionDir: join(repoRoot, 'editions', values.edition),
+    editionDir: join(repoRoot, 'editions', edition),
     outDir,
     cacheDir: values.cache === undefined ? defaultCacheDir() : resolve(cwd, values.cache),
     fetch: fetchPage,

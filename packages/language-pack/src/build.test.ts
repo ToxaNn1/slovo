@@ -162,6 +162,7 @@ describe('buildLanguagePack', () => {
           standard: 'Який він балакучий!',
         },
         sources: [{ title: 'Тестове джерело' }],
+        retired: false,
       });
       expect(await content.correctionById('c_missing')).toBeUndefined();
     });
@@ -192,6 +193,29 @@ describe('buildLanguagePack', () => {
         'c_fx0003',
       ]);
       expect(await content.linkedWords('c_fx0003')).toEqual([]);
+    });
+  });
+
+  it('keeps a Retired Correction reachable by id, but out of the Corrections linked to a Word and out of the counts', async () => {
+    const editionDir = copyFixture('valid');
+    editJson(editionDir, 'content/corrections/c_fx0002.json', (correction) => ({
+      ...correction,
+      retired: true,
+    }));
+    record(editionDir);
+    const outFile = packPath();
+
+    const result = buildLanguagePack({ editionDir, outFile });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.report).toMatchObject({ corrections: 3, retiredCorrections: 1 });
+    expect(formatContentReport(result.report)).toMatch(
+      /Corrections:\s+3 \(1 Retired Correction left out\)/,
+    );
+    await withContent(outFile, async (content) => {
+      expect(await content.correctionById('c_fx0002')).toMatchObject({ retired: true });
+      expect(await content.linkedCorrections('w_fx0002')).toEqual([]);
     });
   });
 
@@ -609,6 +633,7 @@ describe('buildLanguagePack', () => {
       ],
       coverage: { examples: 1, synonyms: 1, etymology: 0, stress: 2 },
       corrections: 4,
+      retiredCorrections: 0,
       correctionsPerType: [
         { correctionType: 'russianism', corrections: 2 },
         { correctionType: 'calque', corrections: 0 },
@@ -623,7 +648,7 @@ describe('buildLanguagePack', () => {
     expect(printed).toMatch(/Examples\s+1\/2 \(50%\)/);
     expect(printed).toMatch(/etymology\s+0\/2 \(0%\)/);
     expect(printed).toMatch(/Stress\s+2\/2 \(100%\)/);
-    expect(printed).toMatch(/Corrections:\s+4/);
+    expect(printed).toMatch(/Corrections:\s+4 \(0 Retired Corrections left out\)/);
     expect(printed).toMatch(/russianism\s+2/);
     expect(printed).toMatch(/calque\s+0/);
   });

@@ -29,7 +29,8 @@ export type ExamplePair = z.infer<typeof ExamplePairSchema>;
  * equivalents (the main one first) and a short neutral explanation.
  *
  * `kind` tells Entries apart. Authored files may leave it out, because the
- * folder already says what they hold.
+ * folder already says what they hold. `retired` defaults to false; a Retired
+ * Correction stays reachable by id but is left out like a Retired Word.
  */
 export const CorrectionSchema = z.strictObject({
   kind: z.literal('correction').default('correction'),
@@ -43,6 +44,7 @@ export const CorrectionSchema = z.strictObject({
   explanation: TextSchema,
   examplePair: ExamplePairSchema,
   sources: z.array(SourceSchema).min(1),
+  retired: z.boolean().default(false),
 });
 
 /** A Correction with every default filled in, as the Core returns it. */

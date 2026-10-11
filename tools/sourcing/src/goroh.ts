@@ -4,7 +4,7 @@
  * dictionary, Synonyms from its synonym dictionaries, and etymology from the
  * Etymological Dictionary of the Ukrainian Language (ЕСУМ).
  */
-import { NodeType, parse } from 'node-html-parser';
+import { HTMLElement, NodeType, parse, type Node } from 'node-html-parser';
 
 import type { DictionaryArticle } from './article';
 import type { PoliteClient } from './polite-client';
@@ -61,16 +61,19 @@ export function parseDefinitions(html: string, lemma: string): GorohDefinitions 
       return [
         {
           headword,
-          labels: titlesIn(block.querySelector('h2 .block-remark')),
+          labels: labelsIn(block.querySelector('h2 .block-remark'), { plainText: false }),
           definitions: senses
             .map((sense) => ({
               text: squeeze(sense.querySelector('.interpret-formula')?.text ?? ''),
-              labels: titlesIn(sense.querySelector('.interpret-remark')),
+              labels: labelsIn(sense.querySelector('.interpret-remark'), { plainText: true }),
             }))
             .filter((definition) => definition.text !== ''),
           examples: senses.flatMap((sense) =>
             sense.querySelectorAll('.examples li').flatMap((item) => {
-              const text = squeeze(item.querySelector('.example-text')?.text ?? '');
+              const text = squeeze(item.querySelector('.example-text')?.text ?? '').replace(
+                EXAMPLE_MARKERS,
+                '',
+              );
               if (text === '') return [];
               const citation = squeeze(item.querySelector('.example-source')?.text ?? '')
                 .replace(/^\(/, '')
@@ -89,13 +92,80 @@ export function parseDefinitions(html: string, lemma: string): GorohDefinitions 
   return { articles, leftOut };
 }
 
-/** The full names of the labels in a remark, e.g. `жіночий рід` for `ж.`. */
-function titlesIn(remark: ReturnType<ReturnType<typeof parse>['querySelector']>): string[] {
+/**
+ * The markers СУМ puts in front of an Example to say how the word is used
+ * in it (`* У порівн.` in a comparison, `* Образно.` figuratively); they are
+ * not part of the quotation.
+ */
+const EXAMPLE_MARKERS = /^(?:\*\s*(?:У порівн\.|Образно\.)\s*)+/u;
+
+/**
+ * Labels goroh prints as plain text, without the full name it gives the same
+ * label elsewhere (СУМ-11 articles mostly), by those full names. Grammar is
+ * left out: in plain text it comes mixed with endings and government.
+ */
+const PLAIN_LABELS: Readonly<Record<string, string>> = {
+  'заст.': 'застаріле',
+  'розм.': 'розмовне',
+  'діал.': 'діалектизм',
+  'книжн.': 'книжне',
+  'рідко.': 'рідковживане',
+  'перен.': 'переносне значення',
+  'іст.': 'історія; історизм',
+  'зневажл.': 'зневажливе',
+  'ірон.': 'іронічне',
+  'жарт.': 'жартівливо',
+  'фам.': 'фамільярне',
+  'уроч.': 'урочисте',
+  'поет.': 'поетичне слово (вислів)',
+  'лайл.': 'лайливе',
+  'вульг.': 'вульгарне',
+  'спец.': 'спеціальне слово',
+  'техн.': 'технічний термін',
+  'збірн.': 'збірне значення',
+  'рел.-церк.': 'релігійно-церковне слово (вислів)',
+  'військ.': 'військова справа',
+  'мор.': 'морська справа',
+  'архт.': 'архітектура',
+  'муз.': 'музика',
+  'літ.': 'літературознавство; література',
+  'лінгв.': 'лінгвістика',
+  'етн.': 'етнографія',
+  'фіз.': 'фізика',
+  'хім.': 'хімія',
+  'мат.': 'математика',
+  'астр.': 'астрономія',
+  'геол.': 'геологія',
+  'біол.': 'біологія',
+  'бот.': 'ботаніка',
+  'зоол.': 'зоологія',
+  'анат.': 'анатомія',
+  'мед.': 'медицина',
+};
+
+/**
+ * The full names of the labels in a remark, e.g. `жіночий рід` for `ж.`:
+ * those goroh names in a title, and, when `plainText` is on, the known
+ * labels it prints as bare text.
+ */
+function labelsIn(remark: HTMLElement | null, { plainText }: { plainText: boolean }): string[] {
   if (remark === null) return [];
-  return remark
-    .querySelectorAll('[title]')
-    .map((label) => squeeze(label.getAttribute('title') ?? ''))
-    .filter((title) => title !== '');
+  const labels: string[] = [];
+  const visit = (node: Node): void => {
+    if (node.nodeType === NodeType.TEXT_NODE) {
+      if (!plainText) return;
+      for (const word of node.text.split(/[\s,;]+/)) {
+        const label = PLAIN_LABELS[word];
+        if (label !== undefined) labels.push(label);
+      }
+      return;
+    }
+    const title = node instanceof HTMLElement ? node.getAttribute('title') : undefined;
+    if (title === undefined) node.childNodes.forEach(visit);
+    else if (squeeze(title) !== '') labels.push(squeeze(title));
+  };
+  remark.childNodes.forEach(visit);
+  return labels;
 }
 
 /** One entry of the inflection dictionary. */
