@@ -17,8 +17,11 @@ overrides:
 
 # High advisories with no patched release yet, reachable only through
 # build-time tooling (Expo CLI code signing, Metro's file watcher) and never
-# shipped in the app. Revisit when patches land; Dependabot will surface them.
+# shipped in the app. Last reviewed 2026-10-11; revisit by 2027-01-11, or
+# sooner when either package ships a fix: drop the entry and let `pnpm audit`
+# run unfiltered. Surfacing these on GitHub needs Dependabot alerts, a
+# repository setting that is not part of the repo.
 auditConfig:
   ignoreGhsas:
-    - GHSA-86w9-cpqp-85rv # node-forge, via @expo/cli
-    - GHSA-vfj7-8cjw-p6xm # braces, via metro
+    - GHSA-86w9-cpqp-85rv # node-forge, via @expo/cli; reviewed 2026-10-11
+    - GHSA-vfj7-8cjw-p6xm # braces, via metro; reviewed 2026-10-11
