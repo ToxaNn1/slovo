@@ -12,4 +12,5 @@ export {
   type UserSettingDefaults,
 } from './edition';
 export type { Category, FeatureSwitch, FontSize, LanguageTraits, Theme } from '@slovo/contracts';
+export { renderStress } from './stress';
 export { systemClock, systemRandom, type Clock, type ContentReadPort, type Random } from './ports';
