@@ -10,7 +10,9 @@ permissions:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # A newer push supersedes an older pull request run, but every push to main
+  # keeps its own run, so a red main points at the commit that broke it.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   TURBO_TELEMETRY_DISABLED: 1
@@ -19,6 +21,7 @@ jobs:
   checks:
     name: Lint, typecheck, test and Language Pack
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
@@ -49,6 +52,7 @@ jobs:
   audit:
     name: Dependency audit
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
@@ -61,6 +65,7 @@ jobs:
   secrets:
     name: Secret scanning
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
       # The gitleaks action lists the PR's commits to scan only those.
