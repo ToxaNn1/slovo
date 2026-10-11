@@ -7,7 +7,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { edition, editionStrings } from '../edition';
 import { useContent } from '../language-pack';
 
-type HomeWord = { status: 'loading' } | { status: 'ready'; word: Word | undefined };
+type HomeWord =
+  { status: 'loading' } | { status: 'failed' } | { status: 'ready'; word: Word | undefined };
 
 /** Home shows one Word from the bundled Language Pack until the Feed arrives in 0.2. */
 export default function HomeScreen() {
@@ -17,15 +18,22 @@ export default function HomeScreen() {
 
   useEffect(() => {
     let active = true;
-    void content.firstWord().then((word) => {
-      if (active) setState({ status: 'ready', word });
-    });
+    content.firstWord().then(
+      (word) => {
+        if (active) setState({ status: 'ready', word });
+      },
+      (error: unknown) => {
+        console.error('Could not read a Word from the Language Pack', error);
+        if (active) setState({ status: 'failed' });
+      },
+    );
     return () => {
       active = false;
     };
   }, [content]);
 
   if (state.status === 'loading') return null;
+  if (state.status === 'failed') return <Placeholder message={editionStrings.loadFailed} />;
   const { word } = state;
   if (word === undefined) return <Placeholder message={editionStrings.noWords} />;
 

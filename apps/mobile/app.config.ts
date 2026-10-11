@@ -29,7 +29,7 @@ function knownEditions(editionsDir: string): string[] {
 
 function selectEdition(editionsDir: string): { dir: string; config: NativeEditionConfig } {
   const known = knownEditions(editionsDir);
-  const hint = `Known Editions: ${known.join(', ')}. Example: ${EDITION_VARIABLE}=${known[0] ?? 'uk'} pnpm start`;
+  const hint = `Known Editions: ${known.join(', ')}. Example: ${EDITION_VARIABLE}=${known[0] ?? '<edition>'} pnpm start`;
   // Expo types every environment variable as `any`; narrow it here.
   const value: unknown = process.env[EDITION_VARIABLE];
   const id = typeof value === 'string' ? value : undefined;
