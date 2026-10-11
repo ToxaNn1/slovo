@@ -1,9 +1,9 @@
 ---
 name: STAR ticket
 about: A unit of work, written as Situation / Task / Action / Result
-title: ""
-labels: ""
-assignees: ""
+title: ''
+labels: ''
+assignees: ''
 ---
 
 <!--

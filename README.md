@@ -16,18 +16,19 @@ The vocabulary used here and in the code is defined in [`CONTEXT.md`](CONTEXT.md
 
 ## Repo map
 
-Planned layout, from the [0.1 spec](https://github.com/ToxaNn1/slovo/issues/2). Ticket #3 sets the final folder names.
+Planned layout from the [0.1 spec](https://github.com/ToxaNn1/slovo/issues/2). Empty parts are reserved and filled by later versions.
 
-| Part         | Role                                                                                 |
-| ------------ | ------------------------------------------------------------------------------------ |
-| Mobile shell | One Expo app that builds whichever Edition the environment variable selects.         |
-| Core         | Pure TypeScript domain logic (no React, no React Native).                            |
-| UI           | Screens, components, design tokens and Decor slots.                                  |
-| Contracts    | Zod schemas for Entries, the Language Pack and the API.                              |
-| Editions     | One folder per Edition: configuration, content, design tokens, Decor and assets.     |
-| Widget       | The native SwiftUI home-screen widget (placeholder until 0.6).                       |
-| Backend      | The API (placeholder until 0.7).                                                     |
-| `docs/`      | Architecture decision records in `docs/adr/` and the design brief in `docs/design/`. |
+| Path                 | Role                                                                                 |
+| -------------------- | ------------------------------------------------------------------------------------ |
+| `apps/mobile`        | One Expo app that builds whichever Edition the environment variable selects.         |
+| `apps/widget`        | The native SwiftUI home-screen widget (placeholder until 0.6).                       |
+| `apps/backend`       | The API (placeholder until 0.7).                                                     |
+| `packages/core`      | Pure TypeScript domain logic (no React, no React Native).                            |
+| `packages/ui`        | Screens, components, design tokens and Decor slots.                                  |
+| `packages/contracts` | Zod schemas for Entries, the Language Pack and the API.                              |
+| `packages/config`    | Shared TypeScript, ESLint and Prettier configuration.                                |
+| `editions/<edition>` | One folder per Edition: configuration, content, design tokens, Decor and assets.     |
+| `docs/`              | Architecture decision records in `docs/adr/` and the design brief in `docs/design/`. |
 
 ## Documents
 

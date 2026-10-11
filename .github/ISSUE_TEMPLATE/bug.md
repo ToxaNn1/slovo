@@ -1,9 +1,9 @@
 ---
 name: Bug report
 about: Something behaves differently from what the spec, glossary or an ADR says
-title: ""
+title: ''
 labels: bug
-assignees: ""
+assignees: ''
 ---
 
 <!-- Add one or more area:* labels. Use the vocabulary from CONTEXT.md. -->
