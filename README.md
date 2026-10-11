@@ -89,7 +89,7 @@ You need the Node version in [`.nvmrc`](.nvmrc), pnpm, Xcode with an iOS Simulat
 
    In a development build, `xcrun simctl openurl booted slovo-uk://decor` opens a showcase of every Decor slot 0.2 uses. Its switches show the Edition's Decor or the Core's, light or dark; the link takes `?look=core`, `?scheme=dark` and `?splash=1` to start in that state.
 
-4. Check the result. The tabs read Головна, Налаштування, Гра, Збережене (Home, Settings, Game, Saved). Home shows one Word from the bundled Language Pack: its Lemma with the Stress mark, its part of speech and its primary Definition. Settings offers the Theme (System, Light or Dark); the choice is kept on the device in a user-state database apart from the Language Pack, and System follows the iOS appearance. Game and Saved are placeholders. The app needs no network: the Language Pack ships inside the app and is opened read-only. At launch the app checks that the native app, the JavaScript bundle and the Language Pack are of the same Edition, and shows its load-failed screen when they are not. [Verify the app with networking off](#verify-the-app-with-networking-off) by hand once per release candidate.
+4. Check the result. The tabs read Головна, Налаштування, Гра, Збережене (Home, Settings, Game, Saved). Home is the Feed: Words from the bundled Language Pack, one card per screen, each with its Lemma and Stress marks, its part of speech and its primary Definition. Swipe up for the next Word and down to go back. A Word that stays on screen for 1.5 s is Seen and doesn't come back in the same Cycle, and the Feed reopens on the last card the same day. Settings offers the Theme (System, Light or Dark); the choice is kept on the device in a user-state database apart from the Language Pack, and System follows the iOS appearance. Game and Saved are placeholders. The app needs no network: the Language Pack ships inside the app and is opened read-only. At launch the app checks that the native app, the JavaScript bundle and the Language Pack are of the same Edition, and shows its load-failed screen when they are not. [Verify the app with networking off](#verify-the-app-with-networking-off) by hand once per release candidate.
 
 5. Run the smoke flow with [Maestro](https://maestro.mobile.dev) while Metro is running. It is a local check and does not run in CI.
 
@@ -104,7 +104,7 @@ The Ukrainian Edition must work offline (ticket #6). No automated check covers t
 1. Do steps 1 to 3 above, so that the development build is installed and Metro is running.
 2. Turn off Wi-Fi and unplug Ethernet on the Mac. Check that the network is down, e.g. `ping -c 1 1.1.1.1` fails.
 3. Force-quit SLOVO in the simulator, then open it again and connect to Metro on `localhost:8081`.
-4. Run `pnpm test:smoke` from `apps/mobile`, or check by hand that the four tabs show and Home shows a Word with its Stress mark and Definition.
+4. Run `pnpm test:smoke` from `apps/mobile`, or check by hand that the four tabs show and the Feed shows a Word with its Stress mark and Definition and swipes to the next one.
 5. Look for network errors in the Metro log. There must be none.
 
 A development build still needs Metro, so this does not prove that a release build starts with no connection. Repeat the check on a preview or release build once such a build exists.

@@ -1,53 +1,68 @@
-import { renderStress, type Word } from '@slovo/core';
-import { Placeholder, useTokens, WordCard } from '@slovo/ui';
-import { useEffect, useState } from 'react';
-import { StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { renderStress, type FeedCard } from '@slovo/core';
+import {
+  CardCorners,
+  DecorBackground,
+  OrnamentDivider,
+  Placeholder,
+  space,
+  useTokens,
+  VerticalPager,
+  WordCard,
+} from '@slovo/ui';
+import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { editionStrings } from '../edition';
-import { useContent } from '../language-pack';
+import { useFeed } from '../feed';
 
-type HomeWord =
-  { status: 'loading' } | { status: 'failed' } | { status: 'ready'; word: Word | undefined };
+/** The Feed's top row, kept for the Stats pill (0.4). */
+const TOP_ROW = 48;
 
-/** Home shows one Word from the bundled Language Pack until the Feed arrives in 0.2. */
+/** Home is the Feed: a vertical stream of Entry cards, one per screen. */
 export default function HomeScreen() {
-  const content = useContent();
-  const [state, setState] = useState<HomeWord>({ status: 'loading' });
+  const feed = useFeed();
   const { colors } = useTokens();
 
-  useEffect(() => {
-    let active = true;
-    content.firstWord().then(
-      (word) => {
-        if (active) setState({ status: 'ready', word });
-      },
-      (error: unknown) => {
-        console.error('Could not read a Word from the Language Pack', error);
-        if (active) setState({ status: 'failed' });
-      },
-    );
-    return () => {
-      active = false;
-    };
-  }, [content]);
-
-  if (state.status === 'loading') return null;
-  if (state.status === 'failed') return <Placeholder message={editionStrings.loadFailed} />;
-  const { word } = state;
-  if (word === undefined) return <Placeholder message={editionStrings.noWords} />;
+  if (feed.status === 'loading') return null;
+  if (feed.status === 'failed') return <Placeholder message={editionStrings.loadFailed} />;
+  if (feed.cards.length === 0) return <Placeholder message={editionStrings.noWords} />;
 
   return (
-    <SafeAreaView testID="home" style={[styles.screen, { backgroundColor: colors.background }]}>
-      <WordCard
-        lemma={renderStress(word)}
-        partOfSpeech={editionStrings.partsOfSpeech[word.partOfSpeech]}
-        primaryDefinition={word.primaryDefinition}
+    <View testID="home" style={[styles.screen, { backgroundColor: colors.background }]}>
+      {/* The background stays put while the cards move over it. */}
+      <DecorBackground />
+      <VerticalPager
+        testID="feed"
+        items={feed.cards}
+        renderPage={(card, position) => <FeedPage card={card} position={position} />}
+        onIndexChange={feed.onCardChange}
       />
-    </SafeAreaView>
+    </View>
+  );
+}
+
+function FeedPage({ card, position }: { card: FeedCard; position: number }) {
+  const { top } = useSafeAreaInsets();
+  const { entry } = card;
+  return (
+    <View
+      testID={`feed-card-${String(position)}`}
+      style={[styles.page, { paddingTop: top + TOP_ROW }]}
+    >
+      {entry.kind === 'word' ? (
+        <WordCard
+          lemma={renderStress(entry)}
+          partOfSpeech={editionStrings.partsOfSpeech[entry.partOfSpeech]}
+          primaryDefinition={entry.primaryDefinition}
+          frame={<CardCorners />}
+          divider={<OrnamentDivider />}
+        />
+      ) : null}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, justifyContent: 'center' },
+  screen: { flex: 1 },
+  page: { flex: 1, paddingHorizontal: space[6], paddingBottom: space[6], overflow: 'hidden' },
 });
