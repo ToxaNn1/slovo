@@ -4,6 +4,7 @@
  */
 export type { Correction, CorrectionType, Entry, EntryKind, Word } from '@slovo/contracts';
 export { createContent, type Content } from './content';
+export { coreDecor, InvalidDecorError, loadDecor, type Decor } from './decor';
 export {
   InvalidEditionConfigError,
   loadEdition,

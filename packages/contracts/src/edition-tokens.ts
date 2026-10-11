@@ -1,12 +1,6 @@
 import { z } from 'zod';
 
-/** `#RRGGBB`, or `rgba(r, g, b, a)` for a colour drawn over others. */
-const ColorSchema = z
-  .string()
-  .regex(
-    /^(#[0-9A-Fa-f]{6}|rgba\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*(0|1|0?\.\d+)\s*\))$/,
-    'Expected #RRGGBB or rgba(r, g, b, a)',
-  );
+import { ColorSchema } from './shared';
 
 /**
  * The colour roles of one colour scheme (`docs/design/design-system.md`). The

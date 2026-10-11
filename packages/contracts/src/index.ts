@@ -26,7 +26,16 @@ export {
   type UserSettingDefaultsConfig,
 } from './edition';
 export { EditionStringsSchema, type EditionStrings } from './edition-strings';
-export { SplashDecorSchema, type SplashDecor } from './decor';
+export {
+  DecorLayerSchema,
+  DecorMotifSchema,
+  EditionDecorSchema,
+  SplashDecorSchema,
+  type DecorLayer,
+  type DecorMotif,
+  type EditionDecor,
+  type SplashDecor,
+} from './decor';
 export {
   ColorTokensSchema,
   EditionTokensSchema,
