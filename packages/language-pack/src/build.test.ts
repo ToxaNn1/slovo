@@ -268,6 +268,8 @@ describe('buildLanguagePack', () => {
       ['a Stress position on a consonant', 'w_fx1005.json', 'w_fx1005', 'stress.0', /not a vowel/i],
       ['Stress positions out of order', 'w_fx1011.json', 'w_fx1011', 'stress', /ascending/i],
       ['a rarity outside 1–5', 'w_fx1006.json', 'w_fx1006', 'rarity', /5/],
+      ['a rarity that is not a whole number', 'w_fx1020.json', 'w_fx1020', 'rarity', /int/i],
+      ['an unknown field', 'w_fx1019.json', 'w_fx1019', 'lemmma', /unknown field/i],
       [
         'a missing primary Definition',
         'w_fx1007.json',
@@ -323,7 +325,7 @@ describe('buildLanguagePack', () => {
     });
 
     it('reports nothing but those errors', () => {
-      expect(errors()).toHaveLength(18);
+      expect(errors()).toHaveLength(20);
     });
   });
 
@@ -598,7 +600,8 @@ describe('content targets', () => {
     expect(buildErrors(editionDir)).toEqual([
       {
         file: 'content/targets.json',
-        message: expect.stringMatching(/minWordz/) as string,
+        field: 'minWordz',
+        message: expect.stringMatching(/unknown field/i) as string,
       },
     ]);
   });

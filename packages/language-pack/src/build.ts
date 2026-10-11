@@ -60,12 +60,19 @@ export function buildLanguagePack({
     if (result.success) return result.data;
     const entryId = isEntry ? entryIdOf(json.value) : undefined;
     for (const issue of result.error.issues) {
-      errors.push({
-        file,
-        ...(entryId === undefined ? {} : { entryId }),
-        ...(issue.path.length === 0 ? {} : { field: issue.path.join('.') }),
-        message: issue.message,
-      });
+      // An unknown key is reported on the object holding it, so name each key as the field.
+      const problems =
+        issue.code === 'unrecognized_keys'
+          ? issue.keys.map((key) => ({ path: [...issue.path, key], message: 'Unknown field' }))
+          : [{ path: issue.path, message: issue.message }];
+      for (const { path, message } of problems) {
+        errors.push({
+          file,
+          ...(entryId === undefined ? {} : { entryId }),
+          ...(path.length === 0 ? {} : { field: path.join('.') }),
+          message,
+        });
+      }
     }
     return undefined;
   }
