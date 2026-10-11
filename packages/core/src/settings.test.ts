@@ -37,7 +37,7 @@ describe('settings', () => {
     expect(await (await settingsOver(records)).read()).toEqual({ theme: 'light', fontSize: 'S' });
   });
 
-  it("changes one setting without touching the other", async () => {
+  it('changes one setting without touching the other', async () => {
     const settings = await settingsOver();
     await settings.update({ theme: 'dark' });
 
