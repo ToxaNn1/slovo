@@ -34,7 +34,7 @@ Planned layout from the [0.1 spec](https://github.com/ToxaNn1/slovo/issues/2). E
 ## Documents
 
 - [`CONTEXT.md`](CONTEXT.md): the domain glossary.
-- [`docs/adr/`](docs/adr/): architecture decision records, ADR 0001 to 0008.
+- [`docs/adr/`](docs/adr/): architecture decision records, ADR 0001 to 0009.
 - [Master spec, issue #1](https://github.com/ToxaNn1/slovo/issues/1): product vision, every decision so far and the roadmap from 0.1 to 1.0.
 - [0.1 Foundation spec, issue #2](https://github.com/ToxaNn1/slovo/issues/2): the current version and its tickets.
 - [`CLAUDE.md`](CLAUDE.md): the guide for coding agents (`AGENTS.md` points to it).
@@ -47,7 +47,7 @@ The `SLOVO_EDITION` environment variable selects the Edition. Every Expo and EAS
 
 You need Node 22, pnpm, Xcode with an iOS Simulator (iOS 17 or later) and access to the Expo account `anton_de`. The commands below run the Expo CLI and `eas-cli` through `npx`, so neither needs a global install.
 
-1. Install the dependencies and build the Language Pack. Rebuild the pack whenever the content changes; Metro picks up the new file.
+1. Install the dependencies and build the Language Pack. Rebuild the pack whenever the content changes; Metro picks up the new file. The build prints the content report and fails when the content misses a target in `editions/<edition>/content/targets.json` (ADR 0009).
 
    ```sh
    pnpm install

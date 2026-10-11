@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { loadEdition } from '@slovo/core';
 
 const configFile = new URL('../../../editions/uk/edition.json', import.meta.url);
+const targetsFile = new URL('../../../editions/uk/content/targets.json', import.meta.url);
 
 describe('the Ukrainian Edition', () => {
   const edition = loadEdition(JSON.parse(readFileSync(configFile, 'utf8')));
@@ -51,6 +52,16 @@ describe('the Ukrainian Edition', () => {
       fontSize: 'M',
       notificationTimes: ['09:00', '13:00', '19:00'],
       mix: { categoryIds: edition.categories.map(({ id }) => id), corrections: true },
+    });
+  });
+
+  it('holds its content to the 0.1 targets', () => {
+    expect(JSON.parse(readFileSync(targetsFile, 'utf8'))).toEqual({
+      minWords: 500,
+      minCorrections: 50,
+      minWordsPerCategory: 45,
+      everyRarity: true,
+      everyWordHasStress: true,
     });
   });
 });

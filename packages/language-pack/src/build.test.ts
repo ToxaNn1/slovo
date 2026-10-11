@@ -419,7 +419,7 @@ describe('buildLanguagePack', () => {
         { rarity: 4, words: 0 },
         { rarity: 5, words: 0 },
       ],
-      coverage: { examples: 1, synonyms: 1, etymology: 0 },
+      coverage: { examples: 1, synonyms: 1, etymology: 0, stress: 2 },
       corrections: 4,
       correctionsPerType: [
         { correctionType: 'russianism', corrections: 2 },
@@ -434,6 +434,7 @@ describe('buildLanguagePack', () => {
     expect(printed).toMatch(/rarity 3\s+1/);
     expect(printed).toMatch(/Examples\s+1\/2 \(50%\)/);
     expect(printed).toMatch(/etymology\s+0\/2 \(0%\)/);
+    expect(printed).toMatch(/Stress\s+2\/2 \(100%\)/);
     expect(printed).toMatch(/Corrections:\s+4/);
     expect(printed).toMatch(/russianism\s+2/);
     expect(printed).toMatch(/calque\s+0/);
@@ -491,5 +492,114 @@ describe('buildLanguagePack', () => {
     const a = await readBack(original);
     const b = await readBack(edited);
     expect(b.metadata.checksum).not.toBe(a.metadata.checksum);
+  });
+});
+
+describe('content targets', () => {
+  /** A copy of the valid fixture: 2 live Words (rarity 1 and 3, both in "speech"), 4 Corrections. */
+  function editionWithTargets(targets: Json): string {
+    const editionDir = copyFixture('valid');
+    writeFileSync(join(editionDir, 'content/targets.json'), JSON.stringify(targets));
+    return editionDir;
+  }
+
+  function missedTargets(editionDir: string) {
+    const result = buildLanguagePack({ editionDir, outFile: packPath() });
+    if (!result.ok) throw new Error(result.errors.map(formatBuildError).join('\n'));
+    return result.missedTargets;
+  }
+
+  it('misses nothing when the content meets every target the Edition declares', () => {
+    const editionDir = editionWithTargets({
+      minWords: 2,
+      minCorrections: 4,
+      minWordsPerCategory: 0,
+      everyWordHasStress: true,
+    });
+
+    expect(missedTargets(editionDir)).toEqual([]);
+  });
+
+  it('misses the Word count when there are fewer live Words than the target', () => {
+    const editionDir = editionWithTargets({ minWords: 3 });
+
+    expect(missedTargets(editionDir)).toEqual([
+      { target: 'minWords', message: '2 Words, below the target of 3' },
+    ]);
+  });
+
+  it('misses the Correction count when there are fewer Corrections than the target', () => {
+    const editionDir = editionWithTargets({ minCorrections: 5 });
+
+    expect(missedTargets(editionDir)).toEqual([
+      { target: 'minCorrections', message: '4 Corrections, below the target of 5' },
+    ]);
+  });
+
+  it('misses the per-Category target, naming every Category that falls short', () => {
+    const editionDir = editionWithTargets({ minWordsPerCategory: 1 });
+
+    expect(missedTargets(editionDir)).toEqual([
+      {
+        target: 'minWordsPerCategory',
+        message: 'Category "nature" has 0 Words, below the target of 1',
+      },
+    ]);
+  });
+
+  it('misses the rarity target, naming every rarity without Words', () => {
+    const editionDir = editionWithTargets({ everyRarity: true });
+
+    expect(missedTargets(editionDir)).toEqual([
+      { target: 'everyRarity', message: 'No Words of rarity 2, 4, 5' },
+    ]);
+  });
+
+  it('meets the rarity target once every rarity has a Word', () => {
+    const editionDir = editionWithTargets({ everyRarity: true });
+    const word = readJsonFile(join(editionDir, 'content/words/w_fx0002.json'));
+    for (const rarity of [2, 4, 5]) {
+      const id = `w_fxr00${String(rarity)}`;
+      writeFileSync(
+        join(editionDir, `content/words/${id}.json`),
+        JSON.stringify({ ...word, id, rarity, correctionIds: [] }),
+      );
+    }
+
+    expect(missedTargets(editionDir)).toEqual([]);
+  });
+
+  it('misses the Stress target when Words have no Stress', () => {
+    const editionDir = editionWithTargets({ everyWordHasStress: true });
+    editJson(editionDir, 'edition.json', (config) => ({
+      ...config,
+      languageTraits: {
+        ...(config['languageTraits'] as Json),
+        marksStress: false,
+        vowels: undefined,
+      },
+    }));
+    for (const file of validWordFiles) {
+      editJson(editionDir, file, (word) => ({ ...word, stress: undefined }));
+    }
+
+    expect(missedTargets(editionDir)).toEqual([
+      { target: 'everyWordHasStress', message: '2 of 2 Words have no Stress' },
+    ]);
+  });
+
+  it('declares no targets when the Edition has no targets file', () => {
+    expect(missedTargets(fixture('valid'))).toEqual([]);
+  });
+
+  it('rejects a targets file it cannot read, so a typo never switches a target off', () => {
+    const editionDir = editionWithTargets({ minWords: 2, minWordz: 900 });
+
+    expect(buildErrors(editionDir)).toEqual([
+      {
+        file: 'content/targets.json',
+        message: expect.stringMatching(/minWordz/) as string,
+      },
+    ]);
   });
 });

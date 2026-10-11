@@ -7,6 +7,7 @@ import { z } from 'zod';
 import type { BuildError } from './build-error';
 import { checkContent, type Authored } from './check-content';
 import { contentChecksum } from './checksum';
+import { ContentTargetsSchema, missedTargets, type MissedTarget } from './content-targets';
 import type { PackContent, PackMetadata } from './pack-layout';
 import { contentReport, type ContentReport } from './report';
 import { writePack } from './write-pack';
@@ -15,6 +16,7 @@ const EDITION_CONFIG_FILE = 'edition.json';
 const MANIFEST_FILE = 'content/manifest.json';
 const WORDS_DIR = 'content/words';
 const CORRECTIONS_DIR = 'content/corrections';
+const TARGETS_FILE = 'content/targets.json';
 
 /** Describes the content as a whole; the content version grows with every content release. */
 const ContentManifestSchema = z.strictObject({
@@ -28,13 +30,16 @@ export type BuildResult =
       readonly wordCount: number;
       readonly correctionCount: number;
       readonly report: ContentReport;
+      /** The content targets the Edition declares and the content misses. */
+      readonly missedTargets: readonly MissedTarget[];
     }
   | { readonly ok: false; readonly errors: readonly BuildError[] };
 
 /**
  * Validates an Edition's config and content, Entry by Entry and across
  * Entries, and compiles them into a SQLite Language Pack at `outFile` with a
- * content report. Nothing is written when there are errors.
+ * content report, checked against the content targets the Edition declares.
+ * Nothing is written when there are errors; missed targets are not errors.
  */
 export function buildLanguagePack({
   editionDir,
@@ -76,9 +81,17 @@ export function buildLanguagePack({
   const manifest = parseFile(MANIFEST_FILE, ContentManifestSchema);
   const words = parseEntries(WORDS_DIR, WordSchema);
   const corrections = parseEntries(CORRECTIONS_DIR, CorrectionSchema);
+  const targets = existsSync(join(editionDir, TARGETS_FILE))
+    ? parseFile(TARGETS_FILE, ContentTargetsSchema)
+    : {};
   if (config !== undefined) errors.push(...checkContent(config, words, corrections));
 
-  if (errors.length > 0 || config === undefined || manifest === undefined) {
+  if (
+    errors.length > 0 ||
+    config === undefined ||
+    manifest === undefined ||
+    targets === undefined
+  ) {
     return { ok: false, errors };
   }
 
@@ -95,12 +108,14 @@ export function buildLanguagePack({
     checksum: contentChecksum(content),
   };
   writePack(outFile, content, metadata);
+  const report = contentReport(content);
   return {
     ok: true,
     metadata,
     wordCount: content.words.length,
     correctionCount: content.corrections.length,
-    report: contentReport(content),
+    report,
+    missedTargets: missedTargets(report, targets),
   };
 }
 

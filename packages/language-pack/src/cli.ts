@@ -5,7 +5,9 @@
  *
  * The pack goes to `editions/<edition-id>/dist/language-pack.db` unless
  * `--out` says otherwise. Prints the content report after every successful
- * build. Exits non-zero, listing every error, when the content is invalid.
+ * build. Exits non-zero, listing every error, when the content is invalid,
+ * and listing every miss when the content falls short of the Edition's
+ * content targets (`content/targets.json`); the pack is still written then.
  */
 import { existsSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
@@ -49,7 +51,7 @@ function main(): number {
     return 1;
   }
 
-  const { metadata, wordCount, correctionCount, report } = result;
+  const { metadata, wordCount, correctionCount, report, missedTargets } = result;
   console.log(`Built the Language Pack for "${metadata.editionId}"`);
   console.log(`  file:            ${displayPath(outFile)}`);
   console.log(`  content version: ${String(metadata.contentVersion)}`);
@@ -58,7 +60,14 @@ function main(): number {
   console.log(`  Corrections:     ${String(correctionCount)}`);
   console.log('');
   console.log(formatContentReport(report));
-  return 0;
+  console.log('');
+  if (missedTargets.length === 0) {
+    console.log('Content targets: none missed');
+    return 0;
+  }
+  console.error(`Content targets: ${String(missedTargets.length)} missed`);
+  for (const { target, message } of missedTargets) console.error(`  ${target}: ${message}`);
+  return 1;
 }
 
 /** A path relative to the repo root when it lies inside the repo, absolute otherwise. */
