@@ -11,7 +11,7 @@ function word(id: string, lemma: string, stress: number[], correctionIds: string
     lemma,
     stress,
     partOfSpeech: 'adjective',
-    primaryDefinition: 'Значення.',
+    primaryDefinition: 'A meaning.',
     extraDefinitions: [],
     examples: [],
     synonyms: [],
@@ -19,7 +19,7 @@ function word(id: string, lemma: string, stress: number[], correctionIds: string
     registers: [],
     categoryId: 'test',
     rarity: 1,
-    sources: [{ title: 'Тестове джерело' }],
+    sources: [{ title: 'Test source' }],
     correctionIds,
     retired: false,
   };
@@ -36,16 +36,16 @@ function correction(
     nonStandardForm,
     correctionType: 'surzhyk',
     standardEquivalents,
-    explanation: 'Пояснення.',
-    examplePair: { nonStandard: 'Так кажуть.', standard: 'Так краще.' },
-    sources: [{ title: 'Тестове джерело' }],
+    explanation: 'An explanation.',
+    examplePair: { nonStandard: 'People say this.', standard: 'Better say this.' },
+    sources: [{ title: 'Test source' }],
   };
 }
 
 const words: Word[] = [
-  word('w_a', 'перший', [1]),
-  word('w_b', 'другий', [4]),
-  word('w_c', 'третій', [2]),
+  word('w_a', 'first', [1]),
+  word('w_b', 'second', [1]),
+  word('w_c', 'third', [2]),
 ];
 
 function inMemoryPort(
@@ -105,13 +105,13 @@ describe('content', () => {
 
   describe('Corrections', () => {
     const corrections = [
-      correction('c_a', 'всігда', ['завжди']),
-      correction('c_b', 'разговорчивий', ['балакучий', 'говіркий']),
+      correction('c_a', 'allways', ['always']),
+      correction('c_b', 'talkive', ['talkative', 'chatty']),
     ];
     const linkedWords = [
-      word('w_always', 'завжди', [1, 5], ['c_a']),
-      word('w_talkative', 'балакучий', [5], ['c_b', 'c_a']),
-      word('w_plain', 'простий', [4]),
+      word('w_always', 'always', [0], ['c_a']),
+      word('w_talkative', 'talkative', [1], ['c_b', 'c_a']),
+      word('w_plain', 'plain', [2]),
     ];
     const content = createContent({
       port: inMemoryPort(linkedWords, corrections),

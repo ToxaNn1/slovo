@@ -1,4 +1,13 @@
-import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -6,13 +15,14 @@ import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { CorrectionSchema, WordSchema } from '@slovo/contracts';
-import { createContent, systemRandom } from '@slovo/core';
+import { createContent, type Random } from '@slovo/core';
 
 import {
   buildLanguagePack,
   formatBuildError,
   formatContentReport,
   openLanguagePack,
+  recordContent,
   type BuildError,
 } from './index';
 
@@ -46,6 +56,12 @@ function editJson(editionDir: string, file: string, edit: (json: Json) => Json):
   writeFileSync(path, JSON.stringify(edit(readJsonFile(path))));
 }
 
+/** Records edited content, as `pnpm build:pack --record` does, so the copy builds again. */
+function record(editionDir: string): void {
+  const result = recordContent({ editionDir });
+  if (!result.ok) throw new Error(result.errors.map(formatBuildError).join('\n'));
+}
+
 const validWordFiles = ['w_fx0001', 'w_fx0002', 'w_fx0003'].map((id) => `content/words/${id}.json`);
 
 async function readBack(outFile: string) {
@@ -57,13 +73,16 @@ async function readBack(outFile: string) {
   }
 }
 
+const fixedRandom = (value: number): Random => ({ next: () => value });
+
 async function withContent<T>(
   outFile: string,
   use: (content: ReturnType<typeof createContent>) => Promise<T>,
+  random: Random = fixedRandom(0),
 ): Promise<T> {
   const pack = openLanguagePack(outFile);
   try {
-    return await use(createContent({ port: pack, random: systemRandom }));
+    return await use(createContent({ port: pack, random }));
   } finally {
     pack.close();
   }
@@ -217,6 +236,7 @@ describe('buildLanguagePack', () => {
       sources: [{ title: 'Тестове джерело' }],
     };
     writeFileSync(join(editionDir, 'content/words/w_fx0004.json'), JSON.stringify(pluralOnly));
+    record(editionDir);
     const outFile = packPath();
 
     expect(buildLanguagePack({ editionDir, outFile }).ok).toBe(true);
@@ -233,7 +253,20 @@ describe('buildLanguagePack', () => {
     expect((await readBack(outFile)).ids).toEqual(['w_fx0002', 'w_fx0003']);
     await withContent(outFile, async (content) => {
       expect(await content.wordById('w_fx0001')).toMatchObject({ retired: true });
+      expect((await content.firstWord())?.id).toBe('w_fx0002');
     });
+    // Across the whole range of the random port, only live Words come up.
+    const picked = [];
+    for (const value of [0, 0.25, 0.5, 0.75, 0.999]) {
+      picked.push(
+        await withContent(
+          outFile,
+          async (content) => (await content.randomWord())?.id,
+          fixedRandom(value),
+        ),
+      );
+    }
+    expect(picked).toEqual(['w_fx0002', 'w_fx0002', 'w_fx0003', 'w_fx0003', 'w_fx0003']);
   });
 
   it('fails on an invalid Word with an error naming the Entry id and field', () => {
@@ -250,6 +283,35 @@ describe('buildLanguagePack', () => {
 
     it.each([
       ['a duplicate id', 'w_fx1001_copy.json', 'w_fx1001', 'id', /duplicate.*w_fx1001\.json/i],
+      [
+        'a Word that repeats the Lemma and primary Definition of another Word',
+        'w_fx1015.json',
+        'w_fx1015',
+        'primaryDefinition',
+        /same lemma and primary definition as w_fx1014/i,
+      ],
+      ['a Lemma that is not in Unicode NFC', 'w_fx1016.json', 'w_fx1016', 'lemma', /NFC/],
+      [
+        'a Stress mark written into the Lemma',
+        'w_fx1017.json',
+        'w_fx1017',
+        'lemma',
+        /combining mark U\+0301/i,
+      ],
+      [
+        'a Lemma with a letter outside the alphabet',
+        'w_fx1018.json',
+        'w_fx1018',
+        'lemma',
+        /"i" \(U\+0069\) is not a letter of the alphabet/i,
+      ],
+      [
+        'a file name that differs from the id',
+        'w_fx1021.json',
+        'w_fx1022',
+        'id',
+        /named w_fx1022\.json/i,
+      ],
       [
         'an unknown Category',
         'w_fx1002.json',
@@ -268,6 +330,8 @@ describe('buildLanguagePack', () => {
       ['a Stress position on a consonant', 'w_fx1005.json', 'w_fx1005', 'stress.0', /not a vowel/i],
       ['Stress positions out of order', 'w_fx1011.json', 'w_fx1011', 'stress', /ascending/i],
       ['a rarity outside 1–5', 'w_fx1006.json', 'w_fx1006', 'rarity', /5/],
+      ['a rarity that is not a whole number', 'w_fx1020.json', 'w_fx1020', 'rarity', /int/i],
+      ['an unknown field', 'w_fx1019.json', 'w_fx1019', 'lemmma', /unknown field/i],
       [
         'a missing primary Definition',
         'w_fx1007.json',
@@ -322,8 +386,33 @@ describe('buildLanguagePack', () => {
       });
     });
 
+    it('rejects a file that is not an Entry file', () => {
+      expect(errors()).toContainEqual({
+        file: 'content/words/notes.txt',
+        message: expect.stringMatching(/<id>\.json/) as string,
+      });
+    });
+
+    it('rejects an Entry whose id is not in the registry', () => {
+      expect(errors()).toContainEqual({
+        file: 'content/words/w_fx1023.json',
+        entryId: 'w_fx1023',
+        field: 'id',
+        message: expect.stringMatching(/not in content\/ids\.json/i) as string,
+      });
+    });
+
+    it('rejects a known id that has no file', () => {
+      expect(errors()).toContainEqual({
+        file: 'content/ids.json',
+        entryId: 'w_fx1099',
+        message: expect.stringMatching(/no file/i) as string,
+      });
+    });
+
     it('reports nothing but those errors', () => {
-      expect(errors()).toHaveLength(18);
+      // The copy with a duplicate id is also misnamed, so it fails twice.
+      expect(errors()).toHaveLength(29);
     });
   });
 
@@ -356,6 +445,7 @@ describe('buildLanguagePack', () => {
     for (const file of validWordFiles) {
       editJson(editionDir, file, (word) => ({ ...word, stress: undefined }));
     }
+    record(editionDir);
     const outFile = packPath();
 
     expect(buildLanguagePack({ editionDir, outFile }).ok).toBe(true);
@@ -395,9 +485,107 @@ describe('buildLanguagePack', () => {
         file: 'content/corrections/c_fx0002_copy.json',
         entryId: 'c_fx0002',
         field: 'id',
+        message: expect.stringMatching(/named c_fx0002\.json/i) as string,
+      },
+      {
+        file: 'content/corrections/c_fx0002_copy.json',
+        entryId: 'c_fx0002',
+        field: 'id',
         message: expect.stringMatching(/duplicate.*c_fx0002\.json/i) as string,
       },
     ]);
+  });
+
+  it('builds a Lemma with a capital letter, its Stress on a capital vowel', async () => {
+    const editionDir = copyFixture('valid');
+    editJson(editionDir, 'content/words/w_fx0003.json', (word) => ({
+      ...word,
+      lemma: 'Аврора',
+      stress: [0, 3],
+    }));
+    record(editionDir);
+    const outFile = packPath();
+
+    const result = buildLanguagePack({ editionDir, outFile });
+
+    expect(result.ok ? [] : result.errors).toEqual([]);
+    await withContent(outFile, async (content) => {
+      expect(await content.wordById('w_fx0003')).toMatchObject({ lemma: 'Аврора' });
+    });
+  });
+
+  it('accepts in a Lemma only the punctuation the Edition allows', () => {
+    const editionDir = copyFixture('valid');
+    editJson(editionDir, 'content/words/w_fx0002.json', (word) => ({
+      ...word,
+      lemma: "п'ятий-десятий",
+      stress: [2],
+    }));
+    record(editionDir);
+    const result = buildLanguagePack({ editionDir, outFile: packPath() });
+    expect(result.ok ? [] : result.errors).toEqual([]);
+
+    editJson(editionDir, 'edition.json', (config) => ({
+      ...config,
+      languageTraits: { ...(config['languageTraits'] as Json), lemmaPunctuation: "'" },
+    }));
+    expect(buildErrors(editionDir)).toEqual([
+      {
+        file: 'content/words/w_fx0002.json',
+        entryId: 'w_fx0002',
+        field: 'lemma',
+        message: expect.stringMatching(/"-" \(U\+002D\) is not a letter/) as string,
+      },
+    ]);
+  });
+
+  it('builds homonyms, and a Word that takes over from a Retired Word', () => {
+    const editionDir = copyFixture('valid');
+    const write = (word: Json) => {
+      writeFileSync(
+        join(editionDir, `content/words/${String(word['id'])}.json`),
+        JSON.stringify(word),
+      );
+    };
+    const retired = readJsonFile(join(editionDir, 'content/words/w_fx0001.json'));
+    const live = readJsonFile(join(editionDir, 'content/words/w_fx0002.json'));
+    write({ ...retired, id: 'w_fx0004', retired: false, correctionIds: [] });
+    write({ ...live, id: 'w_fx0005', primaryDefinition: 'Інше значення.', correctionIds: [] });
+    record(editionDir);
+
+    const result = buildLanguagePack({ editionDir, outFile: packPath() });
+    expect(result.ok ? [] : result.errors).toEqual([]);
+  });
+
+  it.each(['content/words', 'content/corrections'])(
+    'fails when the %s folder is missing instead of building without it',
+    (dir) => {
+      const editionDir = copyFixture('valid');
+      renameSync(join(editionDir, dir), join(editionDir, `${dir}-renamed`));
+
+      expect(buildErrors(editionDir)).toContainEqual({
+        file: dir,
+        message: expect.stringMatching(/folder not found/i) as string,
+      });
+    },
+  );
+
+  it('rejects a nested folder or a file with another extension among the Entry files', () => {
+    const editionDir = copyFixture('valid');
+    mkdirSync(join(editionDir, 'content/words/more'));
+    renameSync(
+      join(editionDir, 'content/words/w_fx0002.json'),
+      join(editionDir, 'content/words/w_fx0002.JSON'),
+    );
+
+    expect(buildErrors(editionDir)).toEqual(
+      expect.arrayContaining(
+        ['content/words/more', 'content/words/w_fx0002.JSON'].map((file) => ({
+          file,
+          message: expect.stringMatching(/<id>\.json/) as string,
+        })),
+      ),
+    );
   });
 
   it('reports Words per Category, the rarity histogram and field coverage', () => {
@@ -440,6 +628,21 @@ describe('buildLanguagePack', () => {
     expect(printed).toMatch(/calque\s+0/);
   });
 
+  it('rounds coverage down in the printed report, so 100% means every Word', () => {
+    const result = buildLanguagePack({ editionDir: fixture('valid'), outFile: packPath() });
+    if (!result.ok) throw new Error(result.errors.map(formatBuildError).join('\n'));
+
+    const printed = formatContentReport({
+      ...result.report,
+      words: 521,
+      coverage: { examples: 519, synonyms: 2, etymology: 0, stress: 521 },
+    });
+
+    expect(printed).toMatch(/Examples\s+519\/521 \(99%\)/);
+    expect(printed).toMatch(/Synonyms\s+2\/521 \(0%\)/);
+    expect(printed).toMatch(/Stress\s+521\/521 \(100%\)/);
+  });
+
   it('yields the same ids, checksum and file when the same content is built twice', async () => {
     const first = packPath();
     const second = packPath();
@@ -460,38 +663,202 @@ describe('buildLanguagePack', () => {
     expect(readFileSync(second).equals(readFileSync(first))).toBe(true);
   });
 
-  it('changes the checksum when the content changes', async () => {
+  it.each([
+    ['a Word', 'content/words/w_fx0001.json', { primaryDefinition: 'Інше значення.' }],
+    ['a Correction', 'content/corrections/c_fx0004.json', { standardEquivalents: ['нині'] }],
+  ])(
+    'fails when %s changed and the content version was not raised',
+    (_kind, file, change: Json) => {
+      const editionDir = copyFixture('valid');
+      editJson(editionDir, file, (entry) => ({ ...entry, ...change }));
+
+      expect(buildErrors(editionDir)).toEqual([
+        {
+          file: 'content/manifest.json',
+          field: 'checksum',
+          message: expect.stringMatching(
+            /content changed since content version 3.*pnpm build:pack fixture --record/i,
+          ) as string,
+        },
+      ]);
+    },
+  );
+
+  it('fails when the manifest records no checksum', () => {
     const editionDir = copyFixture('valid');
-    editJson(editionDir, 'content/words/w_fx0001.json', (word) => ({
-      ...word,
-      primaryDefinition: 'Інше значення.',
-    }));
-    const original = packPath();
-    const edited = packPath();
+    editJson(editionDir, 'content/manifest.json', () => ({ contentVersion: 3 }));
 
-    buildLanguagePack({ editionDir: fixture('valid'), outFile: original });
-    buildLanguagePack({ editionDir, outFile: edited });
+    expect(buildErrors(editionDir)).toEqual([
+      {
+        file: 'content/manifest.json',
+        field: 'checksum',
+        message: expect.stringMatching(/not recorded.*--record/i) as string,
+      },
+    ]);
+  });
+});
 
-    const a = await readBack(original);
-    const b = await readBack(edited);
-    expect(b.metadata.checksum).not.toBe(a.metadata.checksum);
+describe('the id registry', () => {
+  const registryOf = (editionDir: string) =>
+    JSON.parse(readFileSync(join(editionDir, 'content/ids.json'), 'utf8')) as string[];
+
+  it('fails when a known id has no file, so the id is never freed for another Entry', () => {
+    const editionDir = copyFixture('valid');
+    rmSync(join(editionDir, 'content/words/w_fx0002.json'));
+
+    expect(buildErrors(editionDir)).toEqual([
+      {
+        file: 'content/ids.json',
+        entryId: 'w_fx0002',
+        message: expect.stringMatching(/no file content\/words\/w_fx0002\.json.*retire/i) as string,
+      },
+    ]);
   });
 
-  it('changes the checksum when a Correction changes', async () => {
+  it('fails on an Entry whose id is not in the registry yet', () => {
     const editionDir = copyFixture('valid');
-    editJson(editionDir, 'content/corrections/c_fx0004.json', (correction) => ({
-      ...correction,
-      standardEquivalents: ['нині', 'сьогодні'],
-    }));
+    const word = readJsonFile(join(editionDir, 'content/words/w_fx0002.json'));
+    writeFileSync(
+      join(editionDir, 'content/words/w_fx0004.json'),
+      JSON.stringify({ ...word, id: 'w_fx0004', primaryDefinition: 'Нове значення.' }),
+    );
+
+    expect(buildErrors(editionDir)).toEqual([
+      {
+        file: 'content/words/w_fx0004.json',
+        entryId: 'w_fx0004',
+        field: 'id',
+        message: expect.stringMatching(/not in content\/ids\.json.*--record/i) as string,
+      },
+    ]);
+  });
+
+  it('fails without a registry', () => {
+    const editionDir = copyFixture('valid');
+    rmSync(join(editionDir, 'content/ids.json'));
+
+    expect(buildErrors(editionDir)).toEqual([
+      { file: 'content/ids.json', message: expect.stringMatching(/not found/i) as string },
+    ]);
+  });
+
+  it('rejects a registry that lists an id twice', () => {
+    const editionDir = copyFixture('valid');
+    const ids = registryOf(editionDir);
+    writeFileSync(join(editionDir, 'content/ids.json'), JSON.stringify([...ids, ids[0]]));
+
+    expect(buildErrors(editionDir)).toEqual([
+      { file: 'content/ids.json', message: expect.stringMatching(/repeat/i) as string },
+    ]);
+  });
+});
+
+describe('recordContent', () => {
+  const registryOf = (editionDir: string) =>
+    JSON.parse(readFileSync(join(editionDir, 'content/ids.json'), 'utf8')) as string[];
+  const manifestOf = (editionDir: string) =>
+    readJsonFile(join(editionDir, 'content/manifest.json'));
+
+  it('leaves recorded content as it is', () => {
+    const editionDir = copyFixture('valid');
+    const manifest = readFileSync(join(editionDir, 'content/manifest.json'), 'utf8');
+    const registry = readFileSync(join(editionDir, 'content/ids.json'), 'utf8');
+
+    expect(recordContent({ editionDir })).toEqual({
+      ok: true,
+      previousContentVersion: 3,
+      contentVersion: 3,
+      checksum: manifestOf(editionDir)['checksum'],
+      newIds: [],
+    });
+    expect(readFileSync(join(editionDir, 'content/manifest.json'), 'utf8')).toBe(manifest);
+    expect(readFileSync(join(editionDir, 'content/ids.json'), 'utf8')).toBe(registry);
+  });
+
+  it('raises the content version of changed content and records its checksum', async () => {
+    const editionDir = copyFixture('valid');
+    editJson(editionDir, 'content/words/w_fx0002.json', (word) => ({ ...word, rarity: 4 }));
     const original = packPath();
     const edited = packPath();
-
     buildLanguagePack({ editionDir: fixture('valid'), outFile: original });
-    buildLanguagePack({ editionDir, outFile: edited });
 
-    const a = await readBack(original);
-    const b = await readBack(edited);
-    expect(b.metadata.checksum).not.toBe(a.metadata.checksum);
+    const recorded = recordContent({ editionDir });
+    const result = buildLanguagePack({ editionDir, outFile: edited });
+
+    expect(recorded).toMatchObject({ ok: true, previousContentVersion: 3, contentVersion: 4 });
+    expect(result.ok).toBe(true);
+    const { metadata } = await readBack(edited);
+    expect(metadata).toMatchObject({ contentVersion: 4 });
+    expect(manifestOf(editionDir)).toEqual({ contentVersion: 4, checksum: metadata.checksum });
+    expect(metadata.checksum).not.toBe((await readBack(original)).metadata.checksum);
+  });
+
+  it('adds new ids to the end of the registry and keeps every known one', () => {
+    const editionDir = copyFixture('valid');
+    const known = registryOf(editionDir);
+    const word = readJsonFile(join(editionDir, 'content/words/w_fx0002.json'));
+    for (const id of ['w_fx0005', 'w_fx0004']) {
+      writeFileSync(
+        join(editionDir, `content/words/${id}.json`),
+        JSON.stringify({ ...word, id, primaryDefinition: `Значення ${id}.`, correctionIds: [] }),
+      );
+    }
+
+    expect(recordContent({ editionDir })).toMatchObject({
+      ok: true,
+      newIds: ['w_fx0004', 'w_fx0005'],
+    });
+    expect(registryOf(editionDir)).toEqual([...known, 'w_fx0004', 'w_fx0005']);
+  });
+
+  it('keeps the id of a Word that was retired instead of deleted', () => {
+    const editionDir = copyFixture('valid');
+    const known = registryOf(editionDir);
+    editJson(editionDir, 'content/words/w_fx0002.json', (word) => ({ ...word, retired: true }));
+
+    record(editionDir);
+
+    expect(registryOf(editionDir)).toEqual(known);
+    expect(buildLanguagePack({ editionDir, outFile: packPath() }).ok).toBe(true);
+  });
+
+  it('records nothing while a known id has no file', () => {
+    const editionDir = copyFixture('valid');
+    rmSync(join(editionDir, 'content/words/w_fx0002.json'));
+    const manifest = readFileSync(join(editionDir, 'content/manifest.json'), 'utf8');
+
+    expect(recordContent({ editionDir })).toEqual({
+      ok: false,
+      errors: [expect.objectContaining({ file: 'content/ids.json', entryId: 'w_fx0002' })],
+    });
+    expect(readFileSync(join(editionDir, 'content/manifest.json'), 'utf8')).toBe(manifest);
+  });
+
+  it('records nothing while the content has errors', () => {
+    const editionDir = copyFixture('valid');
+    editJson(editionDir, 'content/words/w_fx0002.json', (word) => ({ ...word, rarity: 9 }));
+
+    expect(recordContent({ editionDir })).toEqual({
+      ok: false,
+      errors: [expect.objectContaining({ entryId: 'w_fx0002', field: 'rarity' })],
+    });
+    expect(manifestOf(editionDir)).toMatchObject({ contentVersion: 3 });
+  });
+
+  it('starts the registry of an Edition that has none with every id, in order', () => {
+    const editionDir = copyFixture('valid');
+    rmSync(join(editionDir, 'content/ids.json'));
+
+    expect(recordContent({ editionDir })).toMatchObject({ ok: true, contentVersion: 3 });
+    expect(registryOf(editionDir)).toEqual([
+      'c_fx0001',
+      'c_fx0002',
+      'c_fx0003',
+      'c_fx0004',
+      'w_fx0001',
+      'w_fx0002',
+      'w_fx0003',
+    ]);
   });
 });
 
@@ -562,9 +929,16 @@ describe('content targets', () => {
       const id = `w_fxr00${String(rarity)}`;
       writeFileSync(
         join(editionDir, `content/words/${id}.json`),
-        JSON.stringify({ ...word, id, rarity, correctionIds: [] }),
+        JSON.stringify({
+          ...word,
+          id,
+          rarity,
+          primaryDefinition: `Значення рідкісності ${String(rarity)}.`,
+          correctionIds: [],
+        }),
       );
     }
+    record(editionDir);
 
     expect(missedTargets(editionDir)).toEqual([]);
   });
@@ -582,6 +956,7 @@ describe('content targets', () => {
     for (const file of validWordFiles) {
       editJson(editionDir, file, (word) => ({ ...word, stress: undefined }));
     }
+    record(editionDir);
 
     expect(missedTargets(editionDir)).toEqual([
       { target: 'everyWordHasStress', message: '2 of 2 Words have no Stress' },
@@ -598,7 +973,8 @@ describe('content targets', () => {
     expect(buildErrors(editionDir)).toEqual([
       {
         file: 'content/targets.json',
-        message: expect.stringMatching(/minWordz/) as string,
+        field: 'minWordz',
+        message: expect.stringMatching(/unknown field/i) as string,
       },
     ]);
   });

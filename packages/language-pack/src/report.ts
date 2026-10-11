@@ -81,7 +81,7 @@ export function formatContentReport(report: ContentReport): string {
   const mostOfOneRarity = Math.max(1, ...rarity.map((bucket) => bucket.words));
   const typeWidth = Math.max(...correctionsPerType.map((bucket) => bucket.correctionType.length));
   const share = (part: number) =>
-    `${String(part)}/${String(words)} (${String(words === 0 ? 0 : Math.round((part / words) * 100))}%)`;
+    `${String(part)}/${String(words)} (${String(words === 0 ? 0 : Math.floor((part * 100) / words))}%)`;
 
   return [
     'Content report',

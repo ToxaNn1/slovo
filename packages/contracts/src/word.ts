@@ -57,6 +57,9 @@ export const RaritySchema = z.int().min(1).max(5);
 /**
  * A Word as authored in an Edition's content and as returned by the Core.
  *
+ * The Lemma is in Unicode NFC; which letters it may hold depends on the
+ * Edition, so the Language Pack build checks them.
+ *
  * Stress lists the zero-based positions of the stressed vowels within the
  * Lemma's characters, in ascending order; a Lemma may have more than one
  * valid Stress. It stays empty in Editions that don't mark Stress.
@@ -72,7 +75,10 @@ export const WordSchema = z
   .strictObject({
     kind: z.literal('word').default('word'),
     id: WordIdSchema,
-    lemma: TextSchema,
+    lemma: TextSchema.refine(
+      (lemma) => lemma === lemma.normalize('NFC'),
+      'Expected the Lemma in Unicode NFC, with every letter composed',
+    ),
     stress: z
       .array(z.int().nonnegative())
       .refine(

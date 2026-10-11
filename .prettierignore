@@ -2,3 +2,6 @@ pnpm-lock.yaml
 
 # Saved pages from the dictionary sites, kept byte for byte
 tools/sourcing/fixtures/
+
+# Id registries, appended to one id per line by `pnpm build:pack <edition-id> --record`
+**/content/ids.json

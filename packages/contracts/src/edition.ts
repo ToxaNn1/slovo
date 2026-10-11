@@ -42,6 +42,11 @@ export const LanguageTraitsSchema = z
     marksStress: z.boolean(),
     /** The lowercase letters of the alphabet in alphabetical order. */
     alphabet: LetterListSchema,
+    /**
+     * The characters besides letters that a Lemma may hold, such as an
+     * apostrophe or a hyphen. None when left out.
+     */
+    lemmaPunctuation: LetterListSchema.optional(),
     /** The language tag used to sort text in the Edition's language. */
     sortLocale: LanguageTagSchema,
     distractorRule: DistractorRuleSchema,

@@ -1,13 +1,18 @@
 /**
  * Builds an Edition's Language Pack:
  *
- *   pnpm build:pack <edition-id> [--out <file>]
+ *   pnpm build:pack <edition-id> [--record] [--out <file>]
  *
  * The pack goes to `editions/<edition-id>/dist/language-pack.db` unless
  * `--out` says otherwise. Prints the content report after every successful
  * build. Exits non-zero, listing every error, when the content is invalid,
  * and listing every miss when the content falls short of the Edition's
  * content targets (`content/targets.json`); the pack is still written then.
+ *
+ * After editing the content, `--record` first appends the new ids to the id
+ * registry (`content/ids.json`) and, when the content changed, raises the
+ * content version in `content/manifest.json`. Without it, a build of
+ * unrecorded content fails, so CI catches it.
  */
 import { existsSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
@@ -16,6 +21,7 @@ import { parseArgs } from 'node:util';
 
 import { buildLanguagePack } from './build';
 import { formatBuildError } from './build-error';
+import { recordContent } from './record';
 import { formatContentReport } from './report';
 
 const repoRoot = fileURLToPath(new URL('../../../', import.meta.url));
@@ -24,11 +30,11 @@ const editionsDir = join(repoRoot, 'editions');
 function main(): number {
   const { positionals, values } = parseArgs({
     allowPositionals: true,
-    options: { out: { type: 'string' } },
+    options: { out: { type: 'string' }, record: { type: 'boolean' } },
   });
   const [editionId] = positionals;
   if (editionId === undefined || positionals.length > 1) {
-    console.error('Usage: pnpm build:pack <edition-id> [--out <file>]');
+    console.error('Usage: pnpm build:pack <edition-id> [--record] [--out <file>]');
     return 2;
   }
 
@@ -41,6 +47,24 @@ function main(): number {
     values.out === undefined
       ? join(editionDir, 'dist', 'language-pack.db')
       : resolve(process.env['INIT_CWD'] ?? process.cwd(), values.out);
+
+  if (values.record === true) {
+    const recorded = recordContent({ editionDir });
+    if (!recorded.ok) {
+      console.error(
+        `Content of "${editionId}" not recorded: ${String(recorded.errors.length)} error(s)`,
+      );
+      for (const error of recorded.errors) console.error(`  ${formatBuildError(error)}`);
+      return 1;
+    }
+    const { previousContentVersion, contentVersion, newIds } = recorded;
+    console.log(`Recorded the content of "${editionId}"`);
+    console.log(
+      `  content version: ${String(contentVersion)}${contentVersion === previousContentVersion ? ' (unchanged)' : ` (was ${String(previousContentVersion)})`}`,
+    );
+    console.log(`  new ids:         ${String(newIds.length)}`);
+    console.log('');
+  }
 
   const result = buildLanguagePack({ editionDir, outFile });
   if (!result.ok) {
