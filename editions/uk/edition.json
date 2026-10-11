@@ -17,8 +17,15 @@
     "mix": { "categories": "all", "corrections": true }
   },
   "categories": [
+    { "id": "human-body", "displayName": "Людина і тіло" },
+    { "id": "emotions-character", "displayName": "Емоції та характер" },
     { "id": "nature-weather", "displayName": "Природа і погода" },
     { "id": "household-crafts", "displayName": "Побут і ремесла" },
+    { "id": "technology", "displayName": "Техніка" },
+    { "id": "military", "displayName": "Військова справа" },
+    { "id": "arts-culture", "displayName": "Мистецтво і культура" },
+    { "id": "history-antiquity", "displayName": "Історія та старовина" },
+    { "id": "science", "displayName": "Наука" },
     { "id": "language-speech", "displayName": "Мова і мовлення" }
   ]
 }
