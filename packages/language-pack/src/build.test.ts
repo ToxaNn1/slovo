@@ -628,6 +628,21 @@ describe('buildLanguagePack', () => {
     expect(printed).toMatch(/calque\s+0/);
   });
 
+  it('rounds coverage down in the printed report, so 100% means every Word', () => {
+    const result = buildLanguagePack({ editionDir: fixture('valid'), outFile: packPath() });
+    if (!result.ok) throw new Error(result.errors.map(formatBuildError).join('\n'));
+
+    const printed = formatContentReport({
+      ...result.report,
+      words: 521,
+      coverage: { examples: 519, synonyms: 2, etymology: 0, stress: 521 },
+    });
+
+    expect(printed).toMatch(/Examples\s+519\/521 \(99%\)/);
+    expect(printed).toMatch(/Synonyms\s+2\/521 \(0%\)/);
+    expect(printed).toMatch(/Stress\s+521\/521 \(100%\)/);
+  });
+
   it('yields the same ids, checksum and file when the same content is built twice', async () => {
     const first = packPath();
     const second = packPath();
