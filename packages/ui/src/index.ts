@@ -2,6 +2,14 @@
  * The UI: Edition-neutral components that read every text and design token
  * from the Edition.
  */
+export { FontSizePreview } from './FontSizePreview';
+export {
+  FontSizeProvider,
+  useWordTextSizes,
+  wordTextSizes,
+  type TextSize,
+  type WordTextSizes,
+} from './FontSizeProvider';
 export { ScreenTitle, SectionLabel } from './headings';
 export { Placeholder } from './Placeholder';
 export { SegmentedControl, type Segment } from './SegmentedControl';

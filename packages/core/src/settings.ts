@@ -1,10 +1,11 @@
-import { ThemeSchema, type Theme } from '@slovo/contracts';
+import { FontSizeSchema, ThemeSchema, type FontSize, type Theme } from '@slovo/contracts';
 
 import type { UserState } from './user-state';
 
 /** The user settings in effect. */
 export interface UserSettings {
   readonly theme: Theme;
+  readonly fontSize: FontSize;
 }
 
 /** The user's settings: their own choices over the Edition's defaults. */
@@ -31,7 +32,10 @@ export function colorSchemeFor(
 }
 
 /** The user-state record of each setting. */
-const KEYS = { theme: 'settings.theme' } as const satisfies Record<keyof UserSettings, string>;
+const KEYS = {
+  theme: 'settings.theme',
+  fontSize: 'settings.fontSize',
+} as const satisfies Record<keyof UserSettings, string>;
 
 export function createSettings({
   userState,
@@ -42,7 +46,11 @@ export function createSettings({
 }): Settings {
   async function read(): Promise<UserSettings> {
     const theme = ThemeSchema.safeParse(await userState.get(KEYS.theme));
-    return { theme: theme.success ? theme.data : defaults.theme };
+    const fontSize = FontSizeSchema.safeParse(await userState.get(KEYS.fontSize));
+    return {
+      theme: theme.success ? theme.data : defaults.theme,
+      fontSize: fontSize.success ? fontSize.data : defaults.fontSize,
+    };
   }
 
   return {

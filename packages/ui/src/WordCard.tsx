@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { fontSizeSteps, space, typeSize } from './tokens';
+import { useWordTextSizes } from './FontSizeProvider';
+import { space, typeSize } from './tokens';
 import { useTokens } from './TokensProvider';
 
 export interface WordCardProps {
@@ -11,16 +12,15 @@ export interface WordCardProps {
   primaryDefinition: string;
 }
 
-const { lemma: lemmaSize, definition: definitionSize } = fontSizeSteps.M;
-
 /** The placeholder Word card: Lemma, part of speech and primary Definition. */
 export function WordCard({ lemma, partOfSpeech, primaryDefinition }: WordCardProps) {
   const { colors, fontFamilies } = useTokens();
+  const { lemma: lemmaSize, definition: definitionSize } = useWordTextSizes();
   return (
     <View style={styles.card}>
       <Text
         testID="word-lemma"
-        style={[styles.lemma, { color: colors.ink, fontFamily: fontFamilies.word }]}
+        style={[styles.lemma, lemmaSize, { color: colors.ink, fontFamily: fontFamilies.word }]}
       >
         {lemma}
       </Text>
@@ -32,7 +32,11 @@ export function WordCard({ lemma, partOfSpeech, primaryDefinition }: WordCardPro
       </Text>
       <Text
         testID="word-definition"
-        style={[styles.definition, { color: colors.ink, fontFamily: fontFamilies.word }]}
+        style={[
+          styles.definition,
+          definitionSize,
+          { color: colors.ink, fontFamily: fontFamilies.word },
+        ]}
       >
         {primaryDefinition}
       </Text>
@@ -42,12 +46,7 @@ export function WordCard({ lemma, partOfSpeech, primaryDefinition }: WordCardPro
 
 const styles = StyleSheet.create({
   card: { gap: space[2], paddingHorizontal: space[6] },
-  // Room above the glyphs so the Stress mark over a capital or tall vowel isn't clipped.
-  lemma: { fontSize: lemmaSize, lineHeight: lemmaSize * 1.3, fontWeight: '500' },
+  lemma: { fontWeight: '500' },
   partOfSpeech: { fontSize: typeSize.partOfSpeech, fontWeight: '500' },
-  definition: {
-    fontSize: definitionSize,
-    lineHeight: definitionSize * 1.5,
-    marginTop: space[3],
-  },
+  definition: { marginTop: space[3] },
 });
