@@ -1,0 +1,11 @@
+{
+  "id": "fixture",
+  "locale": "uk-UA",
+  "displayName": "SLOVO Fixture",
+  "bundleId": "app.slovo.fixture",
+  "languageTraits": { "marksStress": true },
+  "categories": [
+    { "id": "nature", "displayName": "Природа" },
+    { "id": "speech", "displayName": "Мовлення" }
+  ]
+}
