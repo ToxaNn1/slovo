@@ -1,0 +1,21 @@
+{
+  "name": "@slovo/core",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The language-agnostic Core shared by every Edition. Pure TypeScript: no React or React Native.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --build",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@slovo/config": "workspace:*",
+    "eslint": "^10.12.0",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.3"
+  }
+}
