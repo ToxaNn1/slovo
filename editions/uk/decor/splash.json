@@ -1,0 +1,11 @@
+{
+  "imageWidth": 72,
+  "light": {
+    "image": "splash-light.png",
+    "backgroundColor": "#F5EEE2"
+  },
+  "dark": {
+    "image": "splash-dark.png",
+    "backgroundColor": "#15110E"
+  }
+}

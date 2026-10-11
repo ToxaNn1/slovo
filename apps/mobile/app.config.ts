@@ -7,11 +7,31 @@ import { require as tsxRequire } from 'tsx/cjs/api';
 
 type EditionConfig = Contracts.EditionConfig;
 
+/** What the config needs from a contract schema. */
+interface Schema<T> {
+  safeParse(
+    data: unknown,
+  ):
+    | { success: true; data: T }
+    | { success: false; error: { issues: { path: PropertyKey[]; message: string }[] } };
+}
+
+/** The options of the `expo-splash-screen` config plugin that the config sets. */
+interface SplashPluginOptions {
+  image?: string;
+  backgroundColor: string;
+  imageWidth?: number;
+  dark: { image?: string; backgroundColor: string };
+}
+
 // Expo evaluates this file with plain Node, which cannot load the TypeScript
 // sources of the workspace packages (their relative imports have no file
 // extension). tsx loads them, so the config is checked by the same schema as
 // the Language Pack build and the app.
-const { EditionConfigSchema } = tsxRequire('@slovo/contracts', import.meta.url) as typeof Contracts;
+const { EditionConfigSchema, SplashDecorSchema } = tsxRequire(
+  '@slovo/contracts',
+  import.meta.url,
+) as typeof Contracts;
 
 /**
  * The one mobile shell builds whichever Edition the SLOVO_EDITION environment
@@ -29,21 +49,65 @@ function knownEditions(editionsDir: string): string[] {
     .sort();
 }
 
-/** The Edition config, checked against the contracts, with every problem named by its field. */
-function readEditionConfig(editionDir: string, id: string): EditionConfig {
-  const file = join(editionDir, 'edition.json');
-  const result = EditionConfigSchema.safeParse(JSON.parse(readFileSync(file, 'utf8')));
+/** A JSON file checked against a contract, with every problem named by its field. */
+function readJson<T>(file: string, schema: Schema<T>, what: string): T {
+  const result = schema.safeParse(JSON.parse(readFileSync(file, 'utf8')));
   if (!result.success) {
     const problems = result.error.issues.map(
-      ({ path, message }) => `  ${path.length === 0 ? '(config)' : path.join('.')}: ${message}`,
+      ({ path, message }) => `  ${path.length === 0 ? '(file)' : path.join('.')}: ${message}`,
     );
-    throw new Error(`${file} is not a valid Edition config:\n${problems.join('\n')}`);
-  }
-  // Metro and the Language Pack look the Edition up by this id.
-  if (result.data.id !== id) {
-    throw new Error(`${file} has id "${result.data.id}" but lives in the folder "${id}"`);
+    throw new Error(`${file} is not a valid ${what}:\n${problems.join('\n')}`);
   }
   return result.data;
+}
+
+function readEditionConfig(editionDir: string, id: string): EditionConfig {
+  const file = join(editionDir, 'edition.json');
+  const config = readJson(file, EditionConfigSchema, 'Edition config');
+  // Metro and the Language Pack look the Edition up by this id.
+  if (config.id !== id) {
+    throw new Error(`${file} has id "${config.id}" but lives in the folder "${id}"`);
+  }
+  return config;
+}
+
+/** Every font file the Edition brings in `assets/fonts/`, embedded in the native app. */
+function editionFonts(editionDir: string, projectRoot: string): string[] {
+  const fontsDir = join(editionDir, 'assets/fonts');
+  if (!existsSync(fontsDir)) return [];
+  return readdirSync(fontsDir)
+    .filter((file) => /\.(otf|ttf)$/.test(file))
+    .sort()
+    .map((file) => relative(projectRoot, join(fontsDir, file)));
+}
+
+/**
+ * The Core shows nothing in Decor slot 7: its splash is a plain screen in the
+ * Core's neutral background colours (docs/design/design-system.md).
+ */
+const CORE_SPLASH: SplashPluginOptions = {
+  backgroundColor: '#F4F4F2',
+  dark: { backgroundColor: '#111111' },
+};
+
+/** The splash from the Edition's Decor (`decor/splash.json`), or the Core's plain one. */
+function editionSplash(editionDir: string, projectRoot: string): SplashPluginOptions {
+  const decorDir = join(editionDir, 'decor');
+  const file = join(decorDir, 'splash.json');
+  if (!existsSync(file)) return CORE_SPLASH;
+  const { imageWidth, light, dark } = readJson(file, SplashDecorSchema, 'splash Decor');
+  const image = (name: string) => {
+    const path = join(decorDir, name);
+    if (!existsSync(path))
+      throw new Error(`${file} names a missing splash image: expected ${path}`);
+    return relative(projectRoot, path);
+  };
+  return {
+    image: image(light.image),
+    backgroundColor: light.backgroundColor,
+    imageWidth,
+    dark: { image: image(dark.image), backgroundColor: dark.backgroundColor },
+  };
 }
 
 function selectEdition(editionsDir: string): { dir: string; config: EditionConfig } {
@@ -92,6 +156,8 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
     plugins: [
       'expo-router',
       'expo-sqlite',
+      ['expo-font', { fonts: editionFonts(edition.dir, projectRoot) }],
+      ['expo-splash-screen', editionSplash(edition.dir, projectRoot)],
       ['expo-build-properties', { ios: { deploymentTarget: '17.0' } }],
     ],
     extra: {

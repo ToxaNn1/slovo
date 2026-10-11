@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import type { ConfigContext } from 'expo/config';
+import type { ConfigContext, ExpoConfig } from 'expo/config';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import appConfig from './app.config';
@@ -26,12 +26,16 @@ afterEach(() => {
 
 /**
  * A throwaway repo layout (`apps/mobile` next to `editions/uk`) holding a copy
- * of the Ukrainian Edition's config, changed by `edit`. The icon is copied
- * unless `withIcon` is false.
+ * of the Ukrainian Edition's config, changed by `edit`, with its assets and
+ * Decor. The icon is copied unless `withIcon` is false; `change` may then edit
+ * the copied Edition folder.
  */
 function repoWithEdition(
   edit: (config: Record<string, unknown>) => void,
-  { withIcon = true }: { withIcon?: boolean } = {},
+  {
+    withIcon = true,
+    change = () => undefined,
+  }: { withIcon?: boolean; change?: (editionDir: string) => void } = {},
 ): ConfigContext {
   const repo = mkdtempSync(join(tmpdir(), 'slovo-app-config-'));
   temporaryRepos.push(repo);
@@ -44,9 +48,20 @@ function repoWithEdition(
   ) as Record<string, unknown>;
   edit(config);
   writeFileSync(join(editionDir, 'edition.json'), JSON.stringify(config));
-  if (withIcon)
-    cpSync(join(ukrainianEditionDir, 'assets'), join(editionDir, 'assets'), { recursive: true });
+  for (const folder of ['assets', 'decor']) {
+    cpSync(join(ukrainianEditionDir, folder), join(editionDir, folder), { recursive: true });
+  }
+  if (!withIcon) rmSync(join(editionDir, 'assets/icon.png'));
+  change(editionDir);
   return { ...context, projectRoot };
+}
+
+/** The options the config passes to the named config plugin. */
+function pluginOptions(config: ExpoConfig, name: string): unknown {
+  const plugin = config.plugins?.find(
+    (entry) => (Array.isArray(entry) ? entry[0] : entry) === name,
+  );
+  return Array.isArray(plugin) ? plugin[1] : undefined;
 }
 
 describe('app config', () => {
@@ -112,5 +127,89 @@ describe('app config', () => {
     vi.stubEnv('SLOVO_EDITION', 'uk');
 
     expect(appConfig(repoWithEdition(() => undefined)).ios?.bundleIdentifier).toBe('app.slovo.uk');
+  });
+
+  it('embeds every font file of the Edition in the native app', () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+
+    const { fonts } = pluginOptions(appConfig(context), 'expo-font') as { fonts: string[] };
+
+    expect(fonts).toEqual(
+      [
+        'Literata-Italic.ttf',
+        'Literata-Medium.ttf',
+        'Literata-Regular.ttf',
+        'Literata-SemiBold.ttf',
+        'Manrope-Bold.ttf',
+        'Manrope-Medium.ttf',
+        'Manrope-Regular.ttf',
+        'Manrope-SemiBold.ttf',
+      ].map((file) => `../../editions/uk/assets/fonts/${file}`),
+    );
+  });
+
+  it('embeds no fonts when the Edition brings none', () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+    const withoutFonts = repoWithEdition(() => undefined, {
+      change: (editionDir) => {
+        rmSync(join(editionDir, 'assets/fonts'), { recursive: true });
+      },
+    });
+
+    expect(pluginOptions(appConfig(withoutFonts), 'expo-font')).toEqual({ fonts: [] });
+  });
+
+  it("takes the splash from the Edition's Decor in both Themes", () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+
+    expect(pluginOptions(appConfig(context), 'expo-splash-screen')).toEqual({
+      image: '../../editions/uk/decor/splash-light.png',
+      backgroundColor: '#F5EEE2',
+      imageWidth: 72,
+      dark: { image: '../../editions/uk/decor/splash-dark.png', backgroundColor: '#15110E' },
+    });
+  });
+
+  it('falls back to the plain Core splash when the Edition has no splash Decor', () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+    const withoutSplash = repoWithEdition(() => undefined, {
+      change: (editionDir) => {
+        rmSync(join(editionDir, 'decor/splash.json'));
+      },
+    });
+
+    expect(pluginOptions(appConfig(withoutSplash), 'expo-splash-screen')).toEqual({
+      backgroundColor: '#F4F4F2',
+      dark: { backgroundColor: '#111111' },
+    });
+  });
+
+  it('names the field when the splash Decor is invalid', () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+    const broken = repoWithEdition(() => undefined, {
+      change: (editionDir) => {
+        const file = join(editionDir, 'decor/splash.json');
+        const splash = JSON.parse(readFileSync(file, 'utf8')) as Record<string, unknown>;
+        splash['dark'] = { image: 'splash-dark.png', backgroundColor: 'black' };
+        writeFileSync(file, JSON.stringify(splash));
+      },
+    });
+
+    expect(() => appConfig(broken)).toThrow(
+      /editions\/uk\/decor\/splash\.json is not a valid splash Decor.*dark\.backgroundColor/s,
+    );
+  });
+
+  it('fails clearly when a splash image is missing', () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+    const withoutImage = repoWithEdition(() => undefined, {
+      change: (editionDir) => {
+        rmSync(join(editionDir, 'decor/splash-dark.png'));
+      },
+    });
+
+    expect(() => appConfig(withoutImage)).toThrow(
+      /splash image.*editions\/uk\/decor\/splash-dark\.png/s,
+    );
   });
 });
