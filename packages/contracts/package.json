@@ -1,0 +1,19 @@
+{
+  "name": "@slovo/contracts",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Schemas shared by the mobile shell, the Language Pack build and the backend.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --build"
+  },
+  "devDependencies": {
+    "@slovo/config": "workspace:*",
+    "eslint": "^10.12.0",
+    "typescript": "~6.0.3"
+  }
+}

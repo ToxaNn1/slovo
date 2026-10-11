@@ -24,6 +24,7 @@ SLOVO is a **factory**: one shared **Core** design powers many single-language a
 A second Edition must be possible by only swapping tokens and Decor, never layouts. Please show this: render one screen (the word card) in the neutral Core skin and in the Ukrainian skin side by side.
 
 **Decor slots** (the Core provides a neutral default for each):
+
 1. Screen background (colour / gradient / texture / pattern)
 2. Ornament divider between blocks of the word card
 3. Word card frame or corner ornaments
@@ -67,15 +68,17 @@ Each slot needs a light and a dark variant.
 For every screen, show light and dark, plus empty, loading and error states where they apply.
 
 ### 5.1 Onboarding (4 screens, shown once)
+
 1. Welcome: what SLOVO is, in one line, with a beautiful hero word.
 2. Choose your Mix: category chips, plus "Усі", plus a "Виправлення" (Corrections) toggle.
 3. Notifications: explanation, permission, three default times (09:00, 13:00, 19:00), editable.
 4. (Later version, design now) "Увійти через SLOVO ID / Продовжити без акаунта".
 
 ### 5.2 Home: the Feed (most important screen)
+
 - Full-screen vertical swipe feed, one card per screen.
 - **Top-left:** Stats button (streak flame + number).
-- **Word card:** lemma (large, with stress); part of speech; pronunciation button 🔊; ornament divider (Decor); definition; example in italics with author; synonym; category chip; register label if any. If the word is the standard form for a Correction, show a small line at the bottom: «💡 Часто кажуть: *на протязі*».
+- **Word card:** lemma (large, with stress); part of speech; pronunciation button 🔊; ornament divider (Decor); definition; example in italics with author; synonym; category chip; register label if any. If the word is the standard form for a Correction, show a small line at the bottom: «💡 Часто кажуть: _на протязі_».
 - **"Word of the Day" badge** variant of the card.
 - **Correction card** variant: crossed-out/soft-muted non-standard form → highlighted standard form(s), type label (росіянізм / калька / суржик / канцелярит), explanation, ❌/✅ example pair. It must feel friendly, not like a red error.
 - **Action row** under the card: ♥ Favorite · Share · Add to Collection · 👎 Hide ("не показувати").
@@ -83,15 +86,19 @@ For every screen, show light and dark, plus empty, loading and error states wher
 - Micro-interactions: heart animation, swipe hint on first launch.
 
 ### 5.3 Stats sheet (from the top-left button)
+
 Current streak and best streak; words seen today; Favorites count; words in Collections; best Game result.
 
 ### 5.4 Add to Collection sheet
+
 A list of Collections with checkmarks, plus "+ Нова колекція" with an inline name field.
 
 ### 5.5 Share Card
+
 Instagram Story (9:16) and square (1:1) images for a Word and for a Correction. Use the edition Decor and a small **SLOVO** watermark, then the iOS share sheet.
 
 ### 5.6 Saved (Збережене)
+
 - Three big cards: **Улюблене**, **Колекції**, **Історія**, each with a count and a mini preview.
 - Lists: newest first, swipe to remove, tap opens the full card.
 - Collections list: create, rename, delete (with confirmation).
@@ -99,6 +106,7 @@ Instagram Story (9:16) and square (1:1) images for a Word and for a Correction. 
 - Empty states use Decor slot 4.
 
 ### 5.7 Game (Гра)
+
 - **Mode select:** "Вгадай слово" (definition → word) and "Обери правильне" (sentence with a non-standard form → pick the standard one).
 - **Round screen:**
   - top-left ✕ (exit);
@@ -113,6 +121,7 @@ Instagram Story (9:16) and square (1:1) images for a Word and for a Correction. 
 - Sounds and haptics exist; please indicate where feedback happens.
 
 ### 5.8 Settings (Налаштування)
+
 1. SLOVO ID / account (hidden in MVP; design it for later: sign in, sign out everywhere, delete account)
 2. Theme: System / Light / Dark
 3. Font size: S / M / L / XL with a live preview of the word card
@@ -124,19 +133,22 @@ Instagram Story (9:16) and square (1:1) images for a Word and for a Correction. 
 9. About / feedback
 
 ### 5.9 Home-screen widgets
+
 Small and medium sizes, light and dark. Three modes, each rotating every 5 minutes: **Улюблене**, **Колекція** (chosen collection), **Усі слова**. Show the lemma with stress and a short definition (medium only). The widget must use the edition Decor.
 
 ### 5.10 Notification
+
 Show how a notification reads: the lemma with stress plus a short definition, plus the custom notification sound (mention it only).
 
 ### 5.11 App icon & splash
+
 The **SLOVO** wordmark (Latin script, kept for the Ukrainian Edition), an icon in the Ukrainian skin, and the splash (Decor slot 7).
 
 ## 6. Sample content (placeholders)
 
-- **ке́бета** (ім., ж. р., розм.): кмітливість, тямущість. *Synonym:* тяма.
-- **веремі́я** (ім., ж. р.): метушня, безлад, сум'яття. *Synonym:* колотнеча.
-- **ошу́я** (присл., заст.): ліворуч. *Antonym:* одесну́.
+- **ке́бета** (ім., ж. р., розм.): кмітливість, тямущість. _Synonym:_ тяма.
+- **веремі́я** (ім., ж. р.): метушня, безлад, сум'яття. _Synonym:_ колотнеча.
+- **ошу́я** (присл., заст.): ліворуч. _Antonym:_ одесну́.
 - **шпарки́й** (прикм.): швидкий, жвавий.
 - Corrections:
   - «приймати участь» → **«брати участь»** (калька);
@@ -159,4 +171,5 @@ Monetization and paywalls, Instagram-Stories-specific UI, the in-app word search
 ## 9. References
 
 <!-- Add your references here: screenshots, links, mood boards. -->
-- 
+
+-
