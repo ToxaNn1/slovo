@@ -2,8 +2,12 @@
 
 Dev-only tooling, never shipped in an app. It turns a list of Lemmas into draft Words for the Ukrainian Edition, taken from real dictionaries:
 
-- **СУМ-11** on [sum.in.ua](https://sum.in.ua): Definitions, Examples with their authors, register labels, part of speech and gender. When the site doesn't answer, the newest copy in the [Wayback Machine](https://web.archive.org) is used and both addresses go into the Word's sources (`url` and `archivedUrl`).
-- **[goroh.pp.ua](https://goroh.pp.ua)**: Stress, part of speech and gender (inflection dictionary), Synonyms (Karavansky's and the mphdict synonym dictionaries only) and etymology (ЕСУМ).
+- **[goroh.pp.ua](https://goroh.pp.ua)**, the main source:
+  - «Тлумачення»: Definitions, Examples with their authors, register labels, part of speech, gender and Stress, from the explanatory dictionary the page cites (СУМ-20 up to П'ЯТЬ, СУМ-11 after it). The draft records that citation exactly as goroh prints it, with the goroh address. Articles from other dictionaries or written by a language model are never drafted from.
+  - «Словозміна»: Stress, part of speech and gender when the article lacks them (asked only then).
+  - «Синонімія»: Synonyms, from Karavansky's and the mphdict synonym dictionaries only.
+  - «Етимологія»: etymology from ЕСУМ.
+- **СУМ-11** on [sum.in.ua](https://sum.in.ua), or the newest copy in the [Wayback Machine](https://web.archive.org): a fallback for Lemmas goroh has no explanatory article for. Both addresses go into the sources (`url` and `archivedUrl`). Each host gets one quick try per run; once it refuses or times out, it is skipped for the rest of the run.
 
 Every field comes from one of these sources. What they leave open stays empty and is flagged. A human checks every draft and moves it into `editions/uk/content/words/` by hand.
 
@@ -21,14 +25,20 @@ Write a Lemma list, one Lemma per line, with the Category and rarity you chose f
 pnpm source:words path/to/lemmas.txt
 ```
 
-| Option                        | Default                 | Meaning                                                                      |
-| ----------------------------- | ----------------------- | ---------------------------------------------------------------------------- |
-| `--edition <id>`              | `uk`                    | The Edition whose Categories, Stress rules and taken ids apply.              |
-| `--out <dir>`                 | `tools/sourcing/review` | The review folder.                                                           |
-| `--cache <dir>`               | `tools/sourcing/.cache` | Fetched pages. Delete it to fetch everything again.                          |
-| `--sum auto\|direct\|wayback` | `auto`                  | Try sum.in.ua and fall back to the Wayback Machine, or use only one of them. |
+| Option                             | Default                 | Meaning                                                                     |
+| ---------------------------------- | ----------------------- | --------------------------------------------------------------------------- |
+| `--edition <id>`                   | `uk`                    | The Edition whose Categories, Stress rules and taken ids apply.             |
+| `--out <dir>`                      | `tools/sourcing/review` | The review folder (git-ignored).                                            |
+| `--cache <dir>`                    | see below               | Fetched pages and the shared request schedule.                              |
+| `--sum auto\|direct\|wayback\|off` | `auto`                  | The sum.in.ua fallback: the site then the archive, one of them, or neither. |
 
-The tool sends at most one request every 2 seconds and keeps every answer on disk, so a re-run doesn't touch the network. Both folders are git-ignored.
+### Running several at once
+
+Every run on the machine shares one cache: `--cache`, else `$SLOVO_SOURCING_CACHE`, else `$XDG_CACHE_HOME/slovo-sourcing`, else `~/.cache/slovo-sourcing`. Through it, parallel runs (one per worktree, say) are polite together:
+
+- a page is fetched once, by whichever run asks first, and read from disk by every other run, now and later;
+- each host gets at most one request every 2 seconds across all runs, booked in a schedule file under `hosts/` behind a lock;
+- on HTTP 429 or 503, or a failed connection, goroh gets a rest of 5, 10, 20 and then 40 seconds, which every run honours, before the Lemma is reported as `fetch-failed`. Each back-off is printed, and the totals are in the report.
 
 ## What comes out
 
@@ -39,7 +49,7 @@ The tool sends at most one request every 2 seconds and keeps every answer on dis
 | Flag                | Meaning                                                                                         |
 | ------------------- | ----------------------------------------------------------------------------------------------- |
 | `no-entry`          | СУМ-11 has no article for the Lemma (the addresses tried are listed). No draft is written.      |
-| `fetch-failed`      | A site kept failing; run again later.                                                           |
+| `fetch-failed`      | goroh kept refusing or rate-limiting after the last back-off; run again later.                  |
 | `homonym`           | СУМ has several articles; each became its own draft. Synonyms and etymology are left to assign. |
 | `needs-assignment`  | Synonym groups or ЕСУМ articles the tool can't tie to one draft.                                |
 | `several-stresses`  | The Lemma has more than one valid Stress; all are kept.                                         |
@@ -54,4 +64,4 @@ The tool sends at most one request every 2 seconds and keeps every answer on dis
 
 ## Tests
 
-`pnpm --filter @slovo/sourcing test` runs the tool against pages saved in `fixtures/` (sum.in.ua through the Wayback Machine, goroh, and the Wayback Machine's index). The tests never touch the network.
+`pnpm --filter @slovo/sourcing test` runs the tool against pages saved in `fixtures/` (goroh, sum.in.ua through the Wayback Machine, and the Wayback Machine's index) on a virtual clock. The tests never touch the network.

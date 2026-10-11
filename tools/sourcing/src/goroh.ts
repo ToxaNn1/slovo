@@ -1,16 +1,18 @@
 /**
- * goroh.pp.ua: Stress, part of speech and gender from its inflection
+ * goroh.pp.ua: Definitions and Examples from the explanatory dictionaries it
+ * carries (СУМ-20, and СУМ-11 after П'ЯТЬ), Stress, part of speech and gender from its inflection
  * dictionary, Synonyms from its synonym dictionaries, and etymology from the
  * Etymological Dictionary of the Ukrainian Language (ЕСУМ).
  */
 import { NodeType, parse } from 'node-html-parser';
 
+import type { DictionaryArticle } from './article';
 import type { PoliteClient } from './polite-client';
-import { squeeze, unstressed } from './text';
+import { matchKey, squeeze, unstressed } from './text';
 
 const SITE = 'https://goroh.pp.ua/';
 
-export type GorohSection = 'Словозміна' | 'Синонімія' | 'Етимологія';
+export type GorohSection = 'Тлумачення' | 'Словозміна' | 'Синонімія' | 'Етимологія';
 
 /** The readable address of a goroh page, as recorded in sources. */
 export function gorohUrl(section: GorohSection, lemma: string): string {
@@ -25,11 +27,75 @@ export async function fetchGoroh(
 ): Promise<string | undefined> {
   const response = await client.get(
     `${SITE}${encodeURIComponent(section)}/${encodeURIComponent(lemma)}`,
-    {
-      retries: 1,
-    },
   );
   return response.status === 200 ? response.body : undefined;
+}
+
+/**
+ * The explanatory dictionaries whose articles become drafts. goroh also shows
+ * articles from other dictionaries and text written by a language model; those
+ * are only reported.
+ */
+const EXPLANATORY_DICTIONARY = 'Тлумачний словник української мови';
+
+export interface GorohDefinitions {
+  readonly articles: readonly DictionaryArticle[];
+  /** Articles for the Lemma from sources that are not drafted from, as `dictionary: headword`. */
+  readonly leftOut: readonly string[];
+}
+
+/** Reads the articles for the Lemma on a «Тлумачення» page, each with the dictionary it cites. */
+export function parseDefinitions(html: string, lemma: string): GorohDefinitions {
+  const leftOut: string[] = [];
+  const matching = parse(html)
+    .querySelectorAll('div.article-block')
+    .flatMap((block): Omit<DictionaryArticle, 'homonymNumber'>[] => {
+      const headword = squeeze(block.querySelector('h2 .uppercase')?.text ?? '');
+      if (headword === '' || matchKey(headword) !== matchKey(lemma)) return [];
+      const dictionary = squeeze(block.querySelector('.source-info')?.text ?? '');
+      if (!dictionary.startsWith(EXPLANATORY_DICTIONARY)) {
+        leftOut.push(`${dictionary === '' ? '(no source)' : dictionary}: ${headword}`);
+        return [];
+      }
+      const senses = block.querySelectorAll('.interpret.list-item');
+      return [
+        {
+          headword,
+          labels: titlesIn(block.querySelector('h2 .block-remark')),
+          definitions: senses
+            .map((sense) => ({
+              text: squeeze(sense.querySelector('.interpret-formula')?.text ?? ''),
+              labels: titlesIn(sense.querySelector('.interpret-remark')),
+            }))
+            .filter((definition) => definition.text !== ''),
+          examples: senses.flatMap((sense) =>
+            sense.querySelectorAll('.examples li').flatMap((item) => {
+              const text = squeeze(item.querySelector('.example-text')?.text ?? '');
+              if (text === '') return [];
+              const citation = squeeze(item.querySelector('.example-source')?.text ?? '')
+                .replace(/^\(/, '')
+                .replace(/\)$/, '');
+              return [citation === '' ? { text } : { text, citation }];
+            }),
+          ),
+          unmarkedExamples: false,
+          source: { title: dictionary, url: gorohUrl('Тлумачення', lemma) },
+        },
+      ];
+    });
+  const articles = matching.map((article, index) =>
+    matching.length > 1 ? { ...article, homonymNumber: index + 1 } : article,
+  );
+  return { articles, leftOut };
+}
+
+/** The full names of the labels in a remark, e.g. `жіночий рід` for `ж.`. */
+function titlesIn(remark: ReturnType<ReturnType<typeof parse>['querySelector']>): string[] {
+  if (remark === null) return [];
+  return remark
+    .querySelectorAll('[title]')
+    .map((label) => squeeze(label.getAttribute('title') ?? ''))
+    .filter((title) => title !== '');
 }
 
 /** One entry of the inflection dictionary. */
