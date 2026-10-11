@@ -202,6 +202,29 @@ describe('buildLanguagePack', () => {
     });
   });
 
+  it('round-trips a plural-only noun', async () => {
+    const editionDir = copyFixture('valid');
+    const pluralOnly = {
+      kind: 'word',
+      id: 'w_fx0004',
+      lemma: 'ножиці',
+      stress: [1],
+      partOfSpeech: 'noun',
+      gender: 'plural-only',
+      primaryDefinition: 'Знаряддя для різання з двох лез.',
+      categoryId: 'speech',
+      rarity: 1,
+      sources: [{ title: 'Тестове джерело' }],
+    };
+    writeFileSync(join(editionDir, 'content/words/w_fx0004.json'), JSON.stringify(pluralOnly));
+    const outFile = packPath();
+
+    expect(buildLanguagePack({ editionDir, outFile }).ok).toBe(true);
+    await withContent(outFile, async (content) => {
+      expect(await content.wordById('w_fx0004')).toMatchObject(pluralOnly);
+    });
+  });
+
   it('keeps a Retired Word reachable by id but out of the first and random Words', async () => {
     const outFile = packPath();
 

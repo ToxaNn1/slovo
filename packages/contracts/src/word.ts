@@ -21,8 +21,12 @@ export const PartOfSpeechSchema = z.enum([
 
 export type PartOfSpeech = z.infer<typeof PartOfSpeechSchema>;
 
-/** Language-agnostic grammatical gender codes, carried by nouns only. */
-export const GenderSchema = z.enum(['masculine', 'feminine', 'neuter', 'common']);
+/**
+ * Language-agnostic grammatical gender codes, carried by nouns only.
+ * `plural-only` marks pluralia tantum: nouns with only a plural form, and so
+ * no gender of their own.
+ */
+export const GenderSchema = z.enum(['masculine', 'feminine', 'neuter', 'common', 'plural-only']);
 
 export type Gender = z.infer<typeof GenderSchema>;
 
