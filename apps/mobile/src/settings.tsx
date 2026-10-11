@@ -1,43 +1,21 @@
 import {
   colorSchemeFor,
-  createMemoryUserStatePort,
   createSettings,
-  openUserState,
   type ColorScheme,
   type Settings,
   type UserSettings,
-  type UserState,
 } from '@slovo/core';
-import { openDatabaseAsync } from 'expo-sqlite';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { Appearance, useColorScheme } from 'react-native';
 
 import { edition } from './edition';
-import { openSqliteUserState } from './user-state-sqlite';
-
-/**
- * The user state lives in its own writable database in the app's documents
- * directory, never in the read-only Language Pack (spec #51).
- */
-const DATABASE_NAME = 'user-state.db';
-
-async function openStoredUserState(): Promise<UserState> {
-  try {
-    const db = await openDatabaseAsync(DATABASE_NAME);
-    await db.execAsync('PRAGMA journal_mode = WAL');
-    return await openUserState({ port: await openSqliteUserState(db) });
-  } catch (error) {
-    // The app still works on the Edition's defaults; choices last until it quits.
-    console.error('Could not open the user state; nothing will be kept', error);
-    return openUserState({ port: createMemoryUserStatePort() });
-  }
-}
+import { storedUserState } from './stored-user-state';
 
 // Opened once per app run, however often the provider mounts.
 let opening: Promise<{ settings: Settings; current: UserSettings }> | undefined;
 
 function openSettings() {
-  opening ??= openStoredUserState().then(async (userState) => {
+  opening ??= storedUserState().then(async (userState) => {
     const settings = createSettings({ userState, defaults: edition.userSettingDefaults });
     return { settings, current: await settings.read() };
   });

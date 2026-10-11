@@ -1,4 +1,4 @@
-# Simulator smoke flow (spec #2, seam 3). Run it locally, never in CI:
+# Simulator smoke flow (spec #2, seam 3; spec #51, seam 4). Run it locally, never in CI:
 #
 #   SLOVO_EDITION=uk pnpm start          # Metro, in one terminal
 #   pnpm test:smoke                      # in another, with the dev build installed
@@ -59,6 +59,30 @@ env:
     id: word-part-of-speech
 - assertVisible:
     id: word-definition
+
+# Home is the Feed: swipe up to the next Word and down back to the first.
+- assertVisible:
+    id: feed-card-0
+- swipe:
+    start: 50%, 70%
+    end: 50%, 20%
+    duration: 300
+- waitForAnimationToEnd
+- assertVisible:
+    id: feed-card-1
+- assertNotVisible:
+    id: feed-card-0
+# prettier-ignore
+- assertVisible:
+    id: word-lemma
+    text: ".*\u0301.*"
+- swipe:
+    start: 50%, 30%
+    end: 50%, 80%
+    duration: 300
+- waitForAnimationToEnd
+- assertVisible:
+    id: feed-card-0
 
 # Settings: the Theme and the font size follow the choice, which survives a
 # relaunch. The preview card shows the Lemma at the chosen size.
