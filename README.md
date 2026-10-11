@@ -51,7 +51,7 @@ Parts marked as placeholders are reserved and filled by later versions.
 
 The native app is a development build made in EAS cloud ([ADR 0004](docs/adr/0004-native-builds-in-eas-cloud.md)). The JavaScript runs locally against it, served by Metro with fast refresh, so day-to-day work never waits for a cloud build.
 
-The `SLOVO_EDITION` environment variable selects the Edition. Every Expo and EAS command fails with a clear message when it is missing or names an unknown Edition. The app name, bundle id, icon and locale come from `editions/<edition>/`.
+The `SLOVO_EDITION` environment variable selects the Edition. Every Expo and EAS command fails with a clear message when it is missing or names an unknown Edition. The app name, bundle id, icon, locale, fonts and splash come from `editions/<edition>/`: the fonts are every file in `assets/fonts/`, and the splash is Decor slot 7, described by `decor/splash.json`. An Edition without a splash gets the Core's plain one.
 
 You need the Node version in [`.nvmrc`](.nvmrc), pnpm, Xcode with an iOS Simulator (iOS 17 or later) and access to the Expo account `anton_de`. The commands below run the Expo CLI and `eas-cli` through `npx`, so neither needs a global install.
 
@@ -62,7 +62,9 @@ You need the Node version in [`.nvmrc`](.nvmrc), pnpm, Xcode with an iOS Simulat
    pnpm build:pack uk
    ```
 
-2. Get the development build. It is needed once, and again only after a native change: a new native module, an Expo SDK upgrade, or a new name, bundle id or icon. Each build counts against the free tier of 15 iOS builds a month.
+2. Get the development build. It is needed once, and again only after a native change: a new native module, an Expo SDK upgrade, or a new name, bundle id, icon, font or splash. Each build counts against the free tier of 15 iOS builds a month.
+
+   Version 0.2 needs a build made from 0.2 code (ticket #52) or later. It adds every native module 0.2 uses (`expo-speech` for Pronunciation, `react-native-svg` for Decor, `expo-haptics`, `expo-localization`, `expo-system-ui`), the Literata and Manrope fonts and the Edition's splash. A 0.1 build lacks them, and the 0.2 JavaScript needs them. The rest of 0.2 changes JavaScript only, so this one build serves the whole version.
 
    ```sh
    cd apps/mobile
