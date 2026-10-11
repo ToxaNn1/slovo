@@ -291,10 +291,9 @@ describe('the Feed', () => {
       expect(reopened.cards.map((card) => card.entry.id)).toEqual([last]);
     });
 
-    it('opens on the first unseen card of the Cycle on another local day, in the clock time zone', async () => {
+    it("opens on the day's Word of the Day on another local day, in the clock time zone", async () => {
       const records = new Map<string, string>();
-      const firstOfCycle = (await walk(await run()))[0];
-      await readUntil(records, '2026-10-11T23:30:00+03:00', 3);
+      const last = await readUntil(records, '2026-10-11T23:30:00+03:00', 3);
 
       // Still 11 October in UTC, but already 12 October in Kyiv.
       const reopened = await run({
@@ -302,7 +301,9 @@ describe('the Feed', () => {
         clock: fakeClock('2026-10-12T00:10:00+03:00').clock,
       });
 
-      expect(reopened.cards.map((card) => card.entry.id)).toEqual([firstOfCycle]);
+      expect(reopened.cards).toHaveLength(1);
+      expect(reopened.cards[0]?.entry.id).not.toBe(last);
+      expect(reopened.cards[0]?.wordOfTheDay).toEqual({ year: 2026, month: 10, day: 12 });
     });
 
     it('does not open on a Word that was retired since', async () => {
@@ -318,5 +319,136 @@ describe('the Feed', () => {
       expect(reopened.cards.map((card) => card.entry.id)).not.toContain(last);
       expect(reopened.cards).toHaveLength(1);
     });
+  });
+});
+
+describe('the Word of the Day', () => {
+  it('opens the first Feed of the local day, marked with that day', async () => {
+    const feed = await run({ clock: fakeClock('2026-10-11T09:00:00+03:00').clock });
+
+    expect(feed.cards).toHaveLength(1);
+    expect(feed.cards[0]?.wordOfTheDay).toEqual({ year: 2026, month: 10, day: 11 });
+    expect(liveIds).toContain(feed.cards[0]?.entry.id);
+  });
+
+  it('stays the same, with its mark, when the app reopens later the same local day', async () => {
+    const records = new Map<string, string>();
+    const morning = fakeClock('2026-10-11T00:05:00+03:00');
+    const first = await run({ records, clock: morning.clock });
+    await first.cardVisible(0);
+    morning.advance(300);
+    await first.cardHidden(0);
+
+    const evening = await run({
+      records,
+      clock: fakeClock('2026-10-11T23:55:00+03:00').clock,
+      random: randomOf(0.75),
+    });
+
+    expect(
+      evening.cards.map(({ entry, wordOfTheDay }) => ({ id: entry.id, wordOfTheDay })),
+    ).toEqual([{ id: first.cards[0]?.entry.id, wordOfTheDay: { year: 2026, month: 10, day: 11 } }]);
+  });
+
+  it('changes at local midnight, even when the reader only glanced at the one before', async () => {
+    const records = new Map<string, string>();
+    const lateEvening = fakeClock('2026-10-11T23:50:00+03:00');
+    const yesterday = await run({ records, clock: lateEvening.clock });
+    await yesterday.cardVisible(0);
+    lateEvening.advance(300);
+    await yesterday.cardHidden(0);
+
+    const beforeMidnight = await run({
+      records,
+      clock: fakeClock('2026-10-11T23:59:59+03:00').clock,
+    });
+    const afterMidnight = await run({
+      records,
+      clock: fakeClock('2026-10-12T00:00:00+03:00').clock,
+    });
+
+    expect(beforeMidnight.cards[0]?.entry.id).toBe(yesterday.cards[0]?.entry.id);
+    expect(afterMidnight.cards).toHaveLength(1);
+    expect(afterMidnight.cards[0]?.entry.id).not.toBe(yesterday.cards[0]?.entry.id);
+    expect(afterMidnight.cards[0]?.wordOfTheDay).toEqual({ year: 2026, month: 10, day: 12 });
+  });
+
+  it('follows the clock to a new time zone: a new Word on a new local day, the same one on the same day', async () => {
+    const records = new Map<string, string>();
+    const time = fakeClock('2026-10-11T20:00:00+03:00', 'Europe/Kyiv');
+    const inKyiv = await run({ records, clock: time.clock });
+
+    // The same moment is still 11 October in London, but 12 October in Tokyo.
+    time.moveTo('Europe/London');
+    const inLondon = await run({ records, clock: time.clock });
+    time.moveTo('Asia/Tokyo');
+    const inTokyo = await run({ records, clock: time.clock });
+
+    expect(inLondon.cards[0]?.entry.id).toBe(inKyiv.cards[0]?.entry.id);
+    expect(inLondon.cards[0]?.wordOfTheDay).toEqual({ year: 2026, month: 10, day: 11 });
+    expect(inTokyo.cards[0]?.entry.id).not.toBe(inKyiv.cards[0]?.entry.id);
+    expect(inTokyo.cards[0]?.wordOfTheDay).toEqual({ year: 2026, month: 10, day: 12 });
+  });
+
+  /** Opens the Feed on each of `days` mornings in turn and reads the Word of the Day only. */
+  async function readWordsOfTheDay(records: Map<string, string>, days: number, words = pack) {
+    const read: string[] = [];
+    for (let day = 0; day < days; day++) {
+      const time = fakeClock(`2026-10-${String(11 + day)}T09:00:00+03:00`);
+      const feed = await run({ records, clock: time.clock, words });
+      await feed.cardVisible(0);
+      time.advance(SEEN_DWELL_MS);
+      await feed.cardHidden(0);
+      read.push(feed.cards[0]?.entry.id ?? '');
+    }
+    return read;
+  }
+
+  it('is never a Word already Seen in the Cycle', async () => {
+    const read = await readWordsOfTheDay(new Map(), liveIds.length);
+
+    expect(new Set(read)).toEqual(new Set(liveIds));
+  });
+
+  it('starts a new Cycle when every Word is Seen, with a Word other than the day before', async () => {
+    const records = new Map<string, string>();
+    const read = await readWordsOfTheDay(records, liveIds.length);
+
+    const time = fakeClock('2026-10-21T09:00:00+03:00');
+    const feed = await run({ records, clock: time.clock, random: randomOf(0.75) });
+
+    expect(feed.cards[0]?.wordOfTheDay).toEqual({ year: 2026, month: 10, day: 21 });
+    expect(feed.cards[0]?.entry.id).not.toBe(read.at(-1));
+    // Nothing is Seen in the new Cycle: the Feed offers every live Word again.
+    expect(new Set(await walk(feed))).toEqual(new Set(liveIds));
+  });
+
+  it('starts the new local day in a Feed left open over midnight', async () => {
+    const time = fakeClock('2026-10-11T23:58:00+03:00');
+    const feed = await run({ clock: time.clock });
+    await feed.next();
+
+    time.advance(5 * 60_000);
+    const card = await feed.next();
+
+    expect(card?.wordOfTheDay).toEqual({ year: 2026, month: 10, day: 12 });
+    expect(feed.cards.slice(0, 2).map((shown) => shown.entry.id)).not.toContain(card?.entry.id);
+    expect((await feed.next())?.wordOfTheDay).toBeUndefined();
+  });
+
+  it('is chosen again when the Word of the Day was retired since, never shown retired', async () => {
+    const records = new Map<string, string>();
+    const morning = await run({ records, clock: fakeClock('2026-10-11T09:00:00+03:00').clock });
+    const retired = morning.cards[0]?.entry.id;
+
+    const evening = await run({
+      records,
+      clock: fakeClock('2026-10-11T21:00:00+03:00').clock,
+      words: pack.map((w) => (w.id === retired ? { ...w, retired: true } : w)),
+    });
+
+    expect(evening.cards).toHaveLength(1);
+    expect(evening.cards[0]?.entry.id).not.toBe(retired);
+    expect(evening.cards[0]?.wordOfTheDay).toEqual({ year: 2026, month: 10, day: 11 });
   });
 });

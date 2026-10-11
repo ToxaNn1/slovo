@@ -6,6 +6,7 @@ export type { Correction, CorrectionType, Entry, EntryKind, Word } from '@slovo/
 export { createContent, type Content } from './content';
 export { coreDecor, InvalidDecorError, loadDecor, type Decor } from './decor';
 export { openFeed, SEEN_DWELL_MS, type Feed, type FeedCard } from './feed';
+export type { LocalDate } from './local-date';
 export {
   InvalidEditionConfigError,
   loadEdition,
