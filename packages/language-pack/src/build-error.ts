@@ -9,7 +9,7 @@ export interface BuildError {
 }
 
 export function formatBuildError({ file, entryId, field, message }: BuildError): string {
-  const location = [file, entryId === undefined ? undefined : `Word ${entryId}`, field]
+  const location = [file, entryId === undefined ? undefined : `Entry ${entryId}`, field]
     .filter((part) => part !== undefined)
     .join(' › ');
   return `${location}: ${message}`;

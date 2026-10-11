@@ -1,4 +1,5 @@
 {
+  "kind": "word",
   "id": "w_fx0001",
   "lemma": "заметіль",
   "stress": [5],
@@ -31,5 +32,6 @@
       "title": "Друге тестове джерело"
     }
   ],
+  "correctionIds": ["c_fx0003"],
   "retired": true
 }

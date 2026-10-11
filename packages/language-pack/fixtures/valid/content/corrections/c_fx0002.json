@@ -1,0 +1,16 @@
+{
+  "id": "c_fx0002",
+  "nonStandardForm": "разговорчивий",
+  "correctionType": "russianism",
+  "standardEquivalents": ["балакучий", "говіркий"],
+  "explanation": "Тестове пояснення.",
+  "examplePair": {
+    "nonStandard": "Який він разговорчивий!",
+    "standard": "Який він балакучий!"
+  },
+  "sources": [
+    {
+      "title": "Тестове джерело"
+    }
+  ]
+}

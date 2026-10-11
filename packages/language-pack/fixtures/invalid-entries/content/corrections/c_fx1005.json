@@ -1,0 +1,16 @@
+{
+  "id": "c_fx1005",
+  "nonStandardForm": "всігда",
+  "correctionType": "surzhyk",
+  "standardEquivalents": ["завжди"],
+  "explanation": "Тестове пояснення.",
+  "examplePair": {
+    "nonStandard": "Він всігда приходить вчасно.",
+    "standard": "Він завжди приходить вчасно."
+  },
+  "sources": [
+    {
+      "title": "Тестове джерело"
+    }
+  ]
+}

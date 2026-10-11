@@ -1,0 +1,16 @@
+{
+  "id": "c_fx0003",
+  "nonStandardForm": "метель",
+  "correctionType": "russianism",
+  "standardEquivalents": ["заметіль", "хуртовина"],
+  "explanation": "Тестове пояснення.",
+  "examplePair": {
+    "nonStandard": "За вікном мела метель.",
+    "standard": "За вікном мела заметіль."
+  },
+  "sources": [
+    {
+      "title": "Тестове джерело"
+    }
+  ]
+}

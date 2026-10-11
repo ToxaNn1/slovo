@@ -2,6 +2,8 @@ import { mkdirSync, renameSync, rmSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 
+import type { Entry } from '@slovo/contracts';
+
 import { PACK_SCHEMA, type PackContent, type PackMetadata } from './pack-layout';
 
 /**
@@ -31,6 +33,11 @@ export function writePack(outFile: string, content: PackContent, metadata: PackM
       insertCategory.run(category.id, category.displayName, position);
     });
 
+    const insertEntry = db.prepare('INSERT INTO entries (id, kind) VALUES (?, ?)');
+    for (const entry of [...content.words, ...content.corrections]) {
+      insertEntry.run(entry.id, entry.kind);
+    }
+
     const insertWord = db.prepare(`
       INSERT INTO words (id, lemma, part_of_speech, gender, category_id, rarity, etymology, retired)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -50,6 +57,45 @@ export function writePack(outFile: string, content: PackContent, metadata: PackM
     );
     const insertSource = db.prepare(
       'INSERT INTO sources (entry_id, position, title, url, archived_url) VALUES (?, ?, ?, ?, ?)',
+    );
+    const insertSources = ({ id, sources }: Entry) => {
+      sources.forEach((source, position) => {
+        insertSource.run(
+          id,
+          position,
+          source.title,
+          source.url ?? null,
+          source.archivedUrl ?? null,
+        );
+      });
+    };
+
+    const insertCorrection = db.prepare(`
+      INSERT INTO corrections (
+        id, non_standard_form, correction_type, explanation, example_non_standard, example_standard
+      )
+      VALUES (?, ?, ?, ?, ?, ?)
+    `);
+    const insertEquivalent = db.prepare(
+      'INSERT INTO correction_equivalents (correction_id, position, text) VALUES (?, ?, ?)',
+    );
+    for (const correction of content.corrections) {
+      insertCorrection.run(
+        correction.id,
+        correction.nonStandardForm,
+        correction.correctionType,
+        correction.explanation,
+        correction.examplePair.nonStandard,
+        correction.examplePair.standard,
+      );
+      correction.standardEquivalents.forEach((text, position) => {
+        insertEquivalent.run(correction.id, position, text);
+      });
+      insertSources(correction);
+    }
+
+    const insertCorrectionLink = db.prepare(
+      'INSERT INTO word_corrections (word_id, position, correction_id) VALUES (?, ?, ?)',
     );
     for (const word of content.words) {
       insertWord.run(
@@ -78,15 +124,10 @@ export function writePack(outFile: string, content: PackContent, metadata: PackM
       word.registers.forEach((register, position) => {
         insertRegister.run(word.id, position, register);
       });
-      word.sources.forEach((source, position) => {
-        insertSource.run(
-          word.id,
-          position,
-          source.title,
-          source.url ?? null,
-          source.archivedUrl ?? null,
-        );
+      word.correctionIds.forEach((correctionId, position) => {
+        insertCorrectionLink.run(word.id, position, correctionId);
       });
+      insertSources(word);
     }
 
     db.exec('COMMIT');
