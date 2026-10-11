@@ -25,6 +25,7 @@ export {
   type Theme,
   type UserSettingDefaultsConfig,
 } from './edition';
+export { EditionStringsSchema, type EditionStrings } from './edition-strings';
 export {
   CorrectionIdSchema,
   CorrectionSchema,

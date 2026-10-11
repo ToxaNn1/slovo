@@ -1,6 +1,7 @@
 /**
  * The Language Pack: compiles an Edition's content into a read-only SQLite
- * file, and opens such files in Node for tests and tooling.
+ * file, and opens such files in Node for tests and tooling. The mobile shell
+ * reads packs through `@slovo/language-pack/reader`, which needs no Node APIs.
  */
 export { buildLanguagePack, type BuildResult } from './build';
 export { formatBuildError, type BuildError } from './build-error';

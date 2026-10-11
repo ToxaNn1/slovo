@@ -2,10 +2,11 @@
   "name": "@slovo/language-pack",
   "version": "0.0.0",
   "private": true,
-  "description": "Builds an Edition's content into a read-only SQLite Language Pack, and reads packs in Node.",
+  "description": "Builds an Edition's content into a read-only SQLite Language Pack, and reads packs in Node or through any SQLite driver.",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./reader": "./src/pack-reader.ts"
   },
   "scripts": {
     "build-pack": "tsx --disable-warning=ExperimentalWarning src/cli.ts",

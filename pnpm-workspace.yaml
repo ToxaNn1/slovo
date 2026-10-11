@@ -8,3 +8,17 @@ packages:
 # binary in a platform package, so its postinstall check isn't needed.
 allowBuilds:
   esbuild: false
+
+# Peers that pnpm installs on its own, pinned to the versions Expo SDK 57
+# expects (see expo/bundledNativeModules.json).
+overrides:
+  '@react-native/metro-config': 0.86.3
+  react-dom: 19.2.3
+
+# High advisories with no patched release yet, reachable only through
+# build-time tooling (Expo CLI code signing, Metro's file watcher) and never
+# shipped in the app. Revisit when patches land; Dependabot will surface them.
+auditConfig:
+  ignoreGhsas:
+    - GHSA-86w9-cpqp-85rv # node-forge, via @expo/cli
+    - GHSA-vfj7-8cjw-p6xm # braces, via metro

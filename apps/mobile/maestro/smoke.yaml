@@ -1,0 +1,71 @@
+# Simulator smoke flow (spec #2, seam 3). Run it locally, never in CI:
+#
+#   SLOVO_EDITION=uk pnpm start          # Metro, in one terminal
+#   pnpm test:smoke                      # in another, with the dev build installed
+#
+# For another Edition, pass its bundle id and scheme:
+#   pnpm test:smoke -e APP_ID=<bundle id> -e SCHEME=slovo-<edition id>
+appId: ${APP_ID}
+env:
+  APP_ID: app.slovo.uk
+  SCHEME: slovo-uk
+  METRO_URL: http%3A%2F%2Flocalhost%3A8081
+---
+- launchApp:
+    clearState: true
+# Point the development client at the local Metro server.
+- openLink: ${SCHEME}://expo-development-client/?url=${METRO_URL}
+# The development client explains its menu on the first launch.
+- runFlow:
+    when:
+      visible: Continue
+    commands:
+      - tapOn: Continue
+- extendedWaitUntil:
+    visible:
+      id: word-lemma
+    timeout: 120000
+
+# The four tabs, in order: Home, Settings, Game, Saved.
+- assertVisible:
+    id: tab-home
+- assertVisible:
+    id: tab-settings
+    rightOf:
+      id: tab-home
+- assertVisible:
+    id: tab-game
+    rightOf:
+      id: tab-settings
+- assertVisible:
+    id: tab-saved
+    rightOf:
+      id: tab-game
+
+# Home shows a Word from the bundled Language Pack, with a Stress mark
+# (U+0301, the combining acute accent) in its Lemma.
+# prettier-ignore
+- assertVisible:
+    id: word-lemma
+    text: ".*\u0301.*"
+- assertVisible:
+    id: word-part-of-speech
+- assertVisible:
+    id: word-definition
+
+- tapOn:
+    id: tab-settings
+- assertVisible:
+    id: settings-placeholder
+- tapOn:
+    id: tab-game
+- assertVisible:
+    id: game-placeholder
+- tapOn:
+    id: tab-saved
+- assertVisible:
+    id: saved-placeholder
+- tapOn:
+    id: tab-home
+- assertVisible:
+    id: word-lemma

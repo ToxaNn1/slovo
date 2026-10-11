@@ -1,0 +1,46 @@
+{
+  "name": "@slovo/mobile",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The mobile shell: one Expo app that builds whichever Edition SLOVO_EDITION selects.",
+  "type": "module",
+  "main": "expo-router/entry",
+  "scripts": {
+    "start": "expo start --dev-client",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "eas-build-post-install": "pnpm --dir ../.. build:pack \"$SLOVO_EDITION\"",
+    "test:smoke": "maestro test maestro/smoke.yaml"
+  },
+  "dependencies": {
+    "@slovo/contracts": "workspace:*",
+    "@slovo/core": "workspace:*",
+    "@slovo/language-pack": "workspace:*",
+    "@slovo/ui": "workspace:*",
+    "expo": "~57.0.27",
+    "expo-asset": "~57.0.19",
+    "expo-build-properties": "~57.0.22",
+    "expo-constants": "~57.0.21",
+    "expo-dev-client": "~57.0.19",
+    "expo-linking": "~57.0.12",
+    "expo-router": "~57.0.25",
+    "expo-sqlite": "~57.0.4",
+    "expo-status-bar": "~57.0.1",
+    "react": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-gesture-handler": "~2.32.0",
+    "react-native-reanimated": "4.5.1",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "~4.26.0",
+    "react-native-worklets": "0.10.1"
+  },
+  "devDependencies": {
+    "@slovo/config": "workspace:*",
+    "@types/node": "^22.20.5",
+    "@types/react": "~19.2.18",
+    "eslint": "^10.12.0",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.3"
+  }
+}

@@ -51,7 +51,7 @@ const validWordFiles = ['w_fx0001', 'w_fx0002', 'w_fx0003'].map((id) => `content
 async function readBack(outFile: string) {
   const pack = openLanguagePack(outFile);
   try {
-    return { metadata: pack.metadata(), ids: await pack.listWordIds() };
+    return { metadata: await pack.metadata(), ids: await pack.listWordIds() };
   } finally {
     pack.close();
   }
