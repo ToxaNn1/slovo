@@ -28,6 +28,7 @@ Planned layout from the [0.1 spec](https://github.com/ToxaNn1/slovo/issues/2). E
 | `packages/contracts` | Zod schemas for Entries, the Language Pack and the API.                              |
 | `packages/config`    | Shared TypeScript, ESLint and Prettier configuration.                                |
 | `editions/<edition>` | One folder per Edition: configuration, content, design tokens, Decor and assets.     |
+| `tools/sourcing`     | Dev-only tool that drafts Words from СУМ-11 and goroh.pp.ua for review.              |
 | `docs/`              | Architecture decision records in `docs/adr/` and the design brief in `docs/design/`. |
 
 ## Documents

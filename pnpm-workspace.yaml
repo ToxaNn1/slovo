@@ -1,6 +1,7 @@
 packages:
   - apps/*
   - packages/*
+  - tools/*
   - editions/*
 
 # Dependencies allowed to run install scripts. esbuild (used by tsx) ships its

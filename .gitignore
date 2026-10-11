@@ -9,3 +9,7 @@ dist/
 coverage/
 *.tsbuildinfo
 .turbo/
+
+# Sourcing tool: the HTTP cache and the drafts awaiting review
+tools/sourcing/.cache/
+tools/sourcing/review/

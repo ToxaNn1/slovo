@@ -1,0 +1,29 @@
+{
+  "name": "@slovo/sourcing",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Dev-only tool that drafts Words from dictionary sources (СУМ-11 on sum.in.ua, goroh.pp.ua) for human review.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "source-words": "tsx --disable-warning=ExperimentalWarning src/cli.ts",
+    "lint": "eslint .",
+    "typecheck": "tsc --build",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@slovo/contracts": "workspace:*",
+    "node-html-parser": "^9.0.4",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@slovo/config": "workspace:*",
+    "@types/node": "^22.20.5",
+    "eslint": "^10.12.0",
+    "tsx": "^4.23.15",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.3"
+  }
+}
