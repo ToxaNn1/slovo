@@ -1,7 +1,17 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
+import type * as Contracts from '@slovo/contracts';
 import type { ConfigContext, ExpoConfig } from 'expo/config';
+import { require as tsxRequire } from 'tsx/cjs/api';
+
+type EditionConfig = Contracts.EditionConfig;
+
+// Expo evaluates this file with plain Node, which cannot load the TypeScript
+// sources of the workspace packages (their relative imports have no file
+// extension). tsx loads them, so the config is checked by the same schema as
+// the Language Pack build and the app.
+const { EditionConfigSchema } = tsxRequire('@slovo/contracts', import.meta.url) as typeof Contracts;
 
 /**
  * The one mobile shell builds whichever Edition the SLOVO_EDITION environment
@@ -9,14 +19,6 @@ import type { ConfigContext, ExpoConfig } from 'expo/config';
  * the Edition folder; a missing or unknown Edition stops the build.
  */
 const EDITION_VARIABLE = 'SLOVO_EDITION';
-
-/** The fields of the Edition config the native app needs. */
-interface NativeEditionConfig {
-  id: string;
-  locale: string;
-  displayName: string;
-  bundleId: string;
-}
 
 function knownEditions(editionsDir: string): string[] {
   return readdirSync(editionsDir, { withFileTypes: true })
@@ -27,7 +29,24 @@ function knownEditions(editionsDir: string): string[] {
     .sort();
 }
 
-function selectEdition(editionsDir: string): { dir: string; config: NativeEditionConfig } {
+/** The Edition config, checked against the contracts, with every problem named by its field. */
+function readEditionConfig(editionDir: string, id: string): EditionConfig {
+  const file = join(editionDir, 'edition.json');
+  const result = EditionConfigSchema.safeParse(JSON.parse(readFileSync(file, 'utf8')));
+  if (!result.success) {
+    const problems = result.error.issues.map(
+      ({ path, message }) => `  ${path.length === 0 ? '(config)' : path.join('.')}: ${message}`,
+    );
+    throw new Error(`${file} is not a valid Edition config:\n${problems.join('\n')}`);
+  }
+  // Metro and the Language Pack look the Edition up by this id.
+  if (result.data.id !== id) {
+    throw new Error(`${file} has id "${result.data.id}" but lives in the folder "${id}"`);
+  }
+  return result.data;
+}
+
+function selectEdition(editionsDir: string): { dir: string; config: EditionConfig } {
   const known = knownEditions(editionsDir);
   const hint = `Known Editions: ${known.join(', ')}. Example: ${EDITION_VARIABLE}=${known[0] ?? '<edition>'} pnpm start`;
   // Expo types every environment variable as `any`; narrow it here.
@@ -40,14 +59,16 @@ function selectEdition(editionsDir: string): { dir: string; config: NativeEditio
     throw new Error(`Unknown Edition "${id}" in ${EDITION_VARIABLE}.\n${hint}`);
   }
   const dir = join(editionsDir, id);
-  // The Language Pack build validates the whole config against the contracts.
-  const config = JSON.parse(readFileSync(join(dir, 'edition.json'), 'utf8')) as NativeEditionConfig;
-  return { dir, config };
+  return { dir, config: readEditionConfig(dir, id) };
 }
 
 export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
   const edition = selectEdition(join(projectRoot, '../../editions'));
   const [language] = edition.config.locale.split('-');
+  const icon = join(edition.dir, 'assets/icon.png');
+  if (!existsSync(icon)) {
+    throw new Error(`Edition "${edition.config.id}" has no icon: expected ${icon}`);
+  }
 
   return {
     ...config,
@@ -58,7 +79,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
     scheme: `slovo-${edition.config.id}`,
     orientation: 'portrait',
     userInterfaceStyle: 'automatic',
-    icon: relative(projectRoot, join(edition.dir, 'assets/icon.png')),
+    icon: relative(projectRoot, icon),
     ios: {
       bundleIdentifier: edition.config.bundleId,
       supportsTablet: false,
