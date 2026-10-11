@@ -15,7 +15,7 @@ import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { CorrectionSchema, WordSchema } from '@slovo/contracts';
-import { createContent, systemRandom } from '@slovo/core';
+import { createContent, type Random } from '@slovo/core';
 
 import {
   buildLanguagePack,
@@ -73,13 +73,16 @@ async function readBack(outFile: string) {
   }
 }
 
+const fixedRandom = (value: number): Random => ({ next: () => value });
+
 async function withContent<T>(
   outFile: string,
   use: (content: ReturnType<typeof createContent>) => Promise<T>,
+  random: Random = fixedRandom(0),
 ): Promise<T> {
   const pack = openLanguagePack(outFile);
   try {
-    return await use(createContent({ port: pack, random: systemRandom }));
+    return await use(createContent({ port: pack, random }));
   } finally {
     pack.close();
   }
@@ -250,7 +253,20 @@ describe('buildLanguagePack', () => {
     expect((await readBack(outFile)).ids).toEqual(['w_fx0002', 'w_fx0003']);
     await withContent(outFile, async (content) => {
       expect(await content.wordById('w_fx0001')).toMatchObject({ retired: true });
+      expect((await content.firstWord())?.id).toBe('w_fx0002');
     });
+    // Across the whole range of the random port, only live Words come up.
+    const picked = [];
+    for (const value of [0, 0.25, 0.5, 0.75, 0.999]) {
+      picked.push(
+        await withContent(
+          outFile,
+          async (content) => (await content.randomWord())?.id,
+          fixedRandom(value),
+        ),
+      );
+    }
+    expect(picked).toEqual(['w_fx0002', 'w_fx0002', 'w_fx0003', 'w_fx0003', 'w_fx0003']);
   });
 
   it('fails on an invalid Word with an error naming the Entry id and field', () => {
