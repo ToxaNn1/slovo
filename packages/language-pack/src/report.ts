@@ -1,6 +1,11 @@
-import type { Category, Word } from '@slovo/contracts';
+import { CorrectionTypeSchema, type CorrectionType, type Word } from '@slovo/contracts';
 
-/** How much content a pack holds and how complete it is, counted over the Words that are not retired. */
+import type { PackContent } from './pack-layout';
+
+/**
+ * How much content a pack holds and how complete it is. Word counts leave
+ * Retired Words out.
+ */
 export interface ContentReport {
   readonly words: number;
   readonly retiredWords: number;
@@ -18,14 +23,21 @@ export interface ContentReport {
     readonly synonyms: number;
     readonly etymology: number;
   };
+  readonly corrections: number;
+  /** One bucket per Correction Type, in the order the contracts list them. */
+  readonly correctionsPerType: readonly {
+    readonly correctionType: CorrectionType;
+    readonly corrections: number;
+  }[];
 }
 
 const RARITIES = [1, 2, 3, 4, 5];
 
-export function contentReport(
-  categories: readonly Category[],
-  allWords: readonly Word[],
-): ContentReport {
+export function contentReport({
+  categories,
+  words: allWords,
+  corrections,
+}: PackContent): ContentReport {
   const words = allWords.filter((word) => !word.retired);
   const count = (test: (word: Word) => boolean) => words.filter(test).length;
   return {
@@ -42,15 +54,30 @@ export function contentReport(
       synonyms: count((word) => word.synonyms.length > 0),
       etymology: count((word) => word.etymology !== undefined),
     },
+    corrections: corrections.length,
+    correctionsPerType: CorrectionTypeSchema.options.map((correctionType) => ({
+      correctionType,
+      corrections: corrections.filter((correction) => correction.correctionType === correctionType)
+        .length,
+    })),
   };
 }
 
 export function formatContentReport(report: ContentReport): string {
-  const { words, retiredWords, wordsPerCategory, rarity, coverage } = report;
+  const {
+    words,
+    retiredWords,
+    wordsPerCategory,
+    rarity,
+    coverage,
+    corrections,
+    correctionsPerType,
+  } = report;
   const retired = `${String(retiredWords)} Retired Word${retiredWords === 1 ? '' : 's'} left out`;
   const idWidth = Math.max(...wordsPerCategory.map((category) => category.categoryId.length));
   const nameWidth = Math.max(...wordsPerCategory.map((category) => category.displayName.length));
   const mostOfOneRarity = Math.max(1, ...rarity.map((bucket) => bucket.words));
+  const typeWidth = Math.max(...correctionsPerType.map((bucket) => bucket.correctionType.length));
   const share = (part: number) =>
     `${String(part)}/${String(words)} (${String(words === 0 ? 0 : Math.round((part / words) * 100))}%)`;
 
@@ -70,5 +97,11 @@ export function formatContentReport(report: ContentReport): string {
     `    Examples   ${share(coverage.examples)}`,
     `    Synonyms   ${share(coverage.synonyms)}`,
     `    etymology  ${share(coverage.etymology)}`,
+    `  Corrections: ${String(corrections)}`,
+    '  Corrections per Correction Type:',
+    ...correctionsPerType.map(
+      ({ correctionType, corrections: ofType }) =>
+        `    ${correctionType.padEnd(typeWidth)}  ${String(ofType)}`,
+    ),
   ].join('\n');
 }

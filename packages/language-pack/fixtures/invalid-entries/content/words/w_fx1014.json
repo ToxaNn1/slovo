@@ -1,0 +1,15 @@
+{
+  "id": "w_fx1014",
+  "lemma": "завжди",
+  "stress": [1, 5],
+  "partOfSpeech": "adverb",
+  "primaryDefinition": "У будь-який час, постійно.",
+  "categoryId": "speech",
+  "rarity": 1,
+  "sources": [
+    {
+      "title": "Тестове джерело"
+    }
+  ],
+  "correctionIds": ["c_fx1005", "c_fx9999"]
+}

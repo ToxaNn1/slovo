@@ -1,31 +1,48 @@
-import type { EditionConfig, Word } from '@slovo/contracts';
+import type { Correction, EditionConfig, Entry, Word } from '@slovo/contracts';
 
 import type { BuildError } from './build-error';
 
-/** A Word that passed the schema, with the file it was authored in. */
-export interface AuthoredWord {
+/** An Entry that passed the schema, with the file it was authored in. */
+export interface Authored<T extends Entry> {
   readonly file: string;
-  readonly word: Word;
+  readonly entry: T;
 }
 
 /**
  * The checks the schema can't make on one Entry alone: they need the Edition
  * config or the other Entries.
  */
-export function checkContent(config: EditionConfig, words: readonly AuthoredWord[]): BuildError[] {
+export function checkContent(
+  config: EditionConfig,
+  words: readonly Authored<Word>[],
+  corrections: readonly Authored<Correction>[],
+): BuildError[] {
   const errors: BuildError[] = [];
   const { marksStress, vowels } = config.languageTraits;
   const categoryIds = new Set(config.categories.map((category) => category.id));
+  const correctionIds = new Set(corrections.map(({ entry }) => entry.id));
   const fileById = new Map<string, string>();
 
-  for (const { file, word } of words) {
+  for (const { file, entry } of [...words, ...corrections]) {
+    const firstFile = fileById.get(entry.id);
+    if (firstFile === undefined) {
+      fileById.set(entry.id, file);
+    } else {
+      const message = `Duplicate id, already used in ${firstFile}`;
+      errors.push({ file, entryId: entry.id, field: 'id', message });
+    }
+  }
+
+  for (const { file, entry: word } of words) {
     const fail = (field: string, message: string) => {
       errors.push({ file, entryId: word.id, field, message });
     };
 
-    const firstFile = fileById.get(word.id);
-    if (firstFile === undefined) fileById.set(word.id, file);
-    else fail('id', `Duplicate id, already used in ${firstFile}`);
+    word.correctionIds.forEach((id, index) => {
+      if (!correctionIds.has(id)) {
+        fail(`correctionIds.${String(index)}`, `Unknown Correction "${id}"`);
+      }
+    });
 
     if (!categoryIds.has(word.categoryId)) {
       fail('categoryId', `Unknown Category "${word.categoryId}"`);

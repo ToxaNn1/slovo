@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+import { CorrectionIdSchema } from './correction';
+import { hasNoRepeats, SourceSchema, TextSchema } from './shared';
+
 /**
  * Language-agnostic part-of-speech codes. Editions supply the display labels.
  */
@@ -36,10 +39,6 @@ export const WordIdSchema = z
   .string()
   .regex(/^w_[a-z0-9]+$/, 'Expected a Word id: w_ followed by lowercase letters and digits');
 
-const TextSchema = z.string().min(1);
-
-const WebAddressSchema = z.url({ protocol: /^https?$/ });
-
 /** A sentence showing the Word in use, with its author when the source names one. */
 export const ExampleSchema = z.strictObject({
   text: TextSchema,
@@ -48,19 +47,8 @@ export const ExampleSchema = z.strictObject({
 
 export type Example = z.infer<typeof ExampleSchema>;
 
-/** Where content was taken from: a citation, its web address and an archived copy. */
-export const SourceSchema = z.strictObject({
-  title: TextSchema,
-  url: WebAddressSchema.optional(),
-  archivedUrl: WebAddressSchema.optional(),
-});
-
-export type Source = z.infer<typeof SourceSchema>;
-
 /** From 1 ("heard it, never use it") to 5 ("almost nobody knows it"). */
 export const RaritySchema = z.int().min(1).max(5);
-
-const hasNoRepeats = (items: readonly unknown[]) => new Set(items).size === items.length;
 
 /**
  * A Word as authored in an Edition's content and as returned by the Core.
@@ -69,11 +57,16 @@ const hasNoRepeats = (items: readonly unknown[]) => new Set(items).size === item
  * Lemma's characters, in ascending order; a Lemma may have more than one
  * valid Stress. It stays empty in Editions that don't mark Stress.
  *
+ * `correctionIds` links the Corrections the Word is the standard form for.
+ *
  * List fields default to empty and `retired` to false, so authored content
- * only spells out what the sources provide.
+ * only spells out what the sources provide. `kind` tells Entries apart;
+ * authored files may leave it out, because the folder already says what they
+ * hold.
  */
 export const WordSchema = z
   .strictObject({
+    kind: z.literal('word').default('word'),
     id: WordIdSchema,
     lemma: TextSchema,
     stress: z
@@ -98,6 +91,10 @@ export const WordSchema = z
     categoryId: z.string().min(1),
     rarity: RaritySchema,
     sources: z.array(SourceSchema).min(1),
+    correctionIds: z
+      .array(CorrectionIdSchema)
+      .refine(hasNoRepeats, 'Linked Correction ids must not repeat')
+      .default([]),
     retired: z.boolean().default(false),
   })
   .superRefine((word, context) => {

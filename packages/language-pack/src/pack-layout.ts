@@ -1,4 +1,4 @@
-import type { Category, Word } from '@slovo/contracts';
+import type { Category, Correction, Word } from '@slovo/contracts';
 
 /**
  * The SQLite layout of a Language Pack. It is internal to this package: the
@@ -16,8 +16,14 @@ CREATE TABLE categories (
   position INTEGER NOT NULL
 ) WITHOUT ROWID;
 
-CREATE TABLE words (
+-- Every Entry, whatever its kind.
+CREATE TABLE entries (
   id TEXT PRIMARY KEY,
+  kind TEXT NOT NULL CHECK (kind IN ('word', 'correction'))
+) WITHOUT ROWID;
+
+CREATE TABLE words (
+  id TEXT PRIMARY KEY REFERENCES entries (id),
   lemma TEXT NOT NULL,
   part_of_speech TEXT NOT NULL,
   gender TEXT,
@@ -65,9 +71,36 @@ CREATE TABLE word_registers (
   PRIMARY KEY (word_id, position)
 ) WITHOUT ROWID;
 
--- Keyed by Entry id, so every kind of Entry can record its sources here.
+CREATE TABLE corrections (
+  id TEXT PRIMARY KEY REFERENCES entries (id),
+  non_standard_form TEXT NOT NULL,
+  correction_type TEXT NOT NULL,
+  explanation TEXT NOT NULL,
+  example_non_standard TEXT NOT NULL,
+  example_standard TEXT NOT NULL
+) WITHOUT ROWID;
+
+-- Position 0 is the main standard equivalent.
+CREATE TABLE correction_equivalents (
+  correction_id TEXT NOT NULL REFERENCES corrections (id),
+  position INTEGER NOT NULL,
+  text TEXT NOT NULL,
+  PRIMARY KEY (correction_id, position)
+) WITHOUT ROWID;
+
+-- A Word links the Corrections it is the standard form for.
+CREATE TABLE word_corrections (
+  word_id TEXT NOT NULL REFERENCES words (id),
+  position INTEGER NOT NULL,
+  correction_id TEXT NOT NULL REFERENCES corrections (id),
+  PRIMARY KEY (word_id, position)
+) WITHOUT ROWID;
+
+CREATE INDEX word_corrections_by_correction ON word_corrections (correction_id, word_id);
+
+-- Keyed by Entry id, so every kind of Entry records its sources here.
 CREATE TABLE sources (
-  entry_id TEXT NOT NULL,
+  entry_id TEXT NOT NULL REFERENCES entries (id),
   position INTEGER NOT NULL,
   title TEXT NOT NULL,
   url TEXT,
@@ -90,4 +123,5 @@ export interface PackContent {
   readonly contentVersion: number;
   readonly categories: readonly Category[];
   readonly words: readonly Word[];
+  readonly corrections: readonly Correction[];
 }

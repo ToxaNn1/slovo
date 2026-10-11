@@ -1,0 +1,22 @@
+{
+  "kind": "correction",
+  "id": "c_fx0001",
+  "nonStandardForm": "всігда",
+  "correctionType": "surzhyk",
+  "standardEquivalents": ["завжди"],
+  "explanation": "Тестове пояснення: так кажуть під впливом іншої мови.",
+  "examplePair": {
+    "nonStandard": "Він всігда приходить вчасно.",
+    "standard": "Він завжди приходить вчасно."
+  },
+  "sources": [
+    {
+      "title": "Тестове джерело",
+      "url": "https://example.org/vsihda",
+      "archivedUrl": "https://web.archive.org/web/2024/https://example.org/vsihda"
+    },
+    {
+      "title": "Друге тестове джерело"
+    }
+  ]
+}

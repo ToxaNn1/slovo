@@ -26,19 +26,29 @@ export {
   type UserSettingDefaultsConfig,
 } from './edition';
 export {
+  CorrectionIdSchema,
+  CorrectionSchema,
+  CorrectionTypeSchema,
+  ExamplePairSchema,
+  type Correction,
+  type CorrectionInput,
+  type CorrectionType,
+  type ExamplePair,
+} from './correction';
+export { EntrySchema, type Entry, type EntryKind } from './entry';
+export { SourceSchema, type Source } from './shared';
+export {
   ExampleSchema,
   GenderSchema,
   PartOfSpeechSchema,
   RaritySchema,
   RegisterSchema,
-  SourceSchema,
   WordIdSchema,
   WordSchema,
   type Example,
   type Gender,
   type PartOfSpeech,
   type Register,
-  type Source,
   type Word,
   type WordInput,
 } from './word';

@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Word } from '@slovo/contracts';
+import type { Correction, Word } from '@slovo/contracts';
 
 import { createContent, type ContentReadPort, type Random } from './index';
 
-function word(id: string, lemma: string, stress: number[]): Word {
+function word(id: string, lemma: string, stress: number[], correctionIds: string[] = []): Word {
   return {
+    kind: 'word',
     id,
     lemma,
     stress,
@@ -19,7 +20,25 @@ function word(id: string, lemma: string, stress: number[]): Word {
     categoryId: 'test',
     rarity: 1,
     sources: [{ title: 'Тестове джерело' }],
+    correctionIds,
     retired: false,
+  };
+}
+
+function correction(
+  id: string,
+  nonStandardForm: string,
+  standardEquivalents: string[],
+): Correction {
+  return {
+    kind: 'correction',
+    id,
+    nonStandardForm,
+    correctionType: 'surzhyk',
+    standardEquivalents,
+    explanation: 'Пояснення.',
+    examplePair: { nonStandard: 'Так кажуть.', standard: 'Так краще.' },
+    sources: [{ title: 'Тестове джерело' }],
   };
 }
 
@@ -29,10 +48,20 @@ const words: Word[] = [
   word('w_c', 'третій', [2]),
 ];
 
-function inMemoryPort(content: readonly Word[]): ContentReadPort {
+function inMemoryPort(
+  content: readonly Word[],
+  corrections: readonly Correction[] = [],
+): ContentReadPort {
   return {
     listWordIds: () => Promise.resolve(content.map((word) => word.id)),
     getWord: (id) => Promise.resolve(content.find((word) => word.id === id)),
+    getCorrection: (id) => Promise.resolve(corrections.find((item) => item.id === id)),
+    listLinkedWordIds: (correctionId) =>
+      Promise.resolve(
+        content
+          .filter((word) => !word.retired && word.correctionIds.includes(correctionId))
+          .map((word) => word.id),
+      ),
   };
 }
 
@@ -72,5 +101,46 @@ describe('content', () => {
 
     expect(await content.firstWord()).toBeUndefined();
     expect(await content.randomWord()).toBeUndefined();
+  });
+
+  describe('Corrections', () => {
+    const corrections = [
+      correction('c_a', 'всігда', ['завжди']),
+      correction('c_b', 'разговорчивий', ['балакучий', 'говіркий']),
+    ];
+    const linkedWords = [
+      word('w_always', 'завжди', [1, 5], ['c_a']),
+      word('w_talkative', 'балакучий', [5], ['c_b', 'c_a']),
+      word('w_plain', 'простий', [4]),
+    ];
+    const content = createContent({
+      port: inMemoryPort(linkedWords, corrections),
+      random: fixedRandom(0),
+    });
+
+    it('returns a Correction by id', async () => {
+      expect(await content.correctionById('c_b')).toEqual(corrections[1]);
+    });
+
+    it('returns nothing for an unknown Correction id', async () => {
+      expect(await content.correctionById('c_missing')).toBeUndefined();
+    });
+
+    it('returns the Corrections a Word is the standard form for, in the Word order', async () => {
+      expect(await content.linkedCorrections('w_talkative')).toEqual([
+        corrections[1],
+        corrections[0],
+      ]);
+    });
+
+    it('returns no Corrections for a Word without links or an unknown Word', async () => {
+      expect(await content.linkedCorrections('w_plain')).toEqual([]);
+      expect(await content.linkedCorrections('w_missing')).toEqual([]);
+    });
+
+    it('returns the Words that are the standard form for a Correction', async () => {
+      expect(await content.linkedWords('c_a')).toEqual([linkedWords[0], linkedWords[1]]);
+      expect(await content.linkedWords('c_missing')).toEqual([]);
+    });
   });
 });

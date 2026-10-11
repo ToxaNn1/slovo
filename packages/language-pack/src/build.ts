@@ -1,11 +1,11 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { EditionConfigSchema, WordSchema } from '@slovo/contracts';
+import { CorrectionSchema, EditionConfigSchema, WordSchema, type Entry } from '@slovo/contracts';
 import { z } from 'zod';
 
 import type { BuildError } from './build-error';
-import { checkContent, type AuthoredWord } from './check-content';
+import { checkContent, type Authored } from './check-content';
 import { contentChecksum } from './checksum';
 import type { PackContent, PackMetadata } from './pack-layout';
 import { contentReport, type ContentReport } from './report';
@@ -14,6 +14,7 @@ import { writePack } from './write-pack';
 const EDITION_CONFIG_FILE = 'edition.json';
 const MANIFEST_FILE = 'content/manifest.json';
 const WORDS_DIR = 'content/words';
+const CORRECTIONS_DIR = 'content/corrections';
 
 /** Describes the content as a whole; the content version grows with every content release. */
 const ContentManifestSchema = z.strictObject({
@@ -25,6 +26,7 @@ export type BuildResult =
       readonly ok: true;
       readonly metadata: PackMetadata;
       readonly wordCount: number;
+      readonly correctionCount: number;
       readonly report: ContentReport;
     }
   | { readonly ok: false; readonly errors: readonly BuildError[] };
@@ -63,13 +65,18 @@ export function buildLanguagePack({
     return undefined;
   }
 
+  function parseEntries<T extends Entry>(dir: string, schema: z.ZodType<T>): Authored<T>[] {
+    return listJsonFiles(editionDir, dir).flatMap((file) => {
+      const entry = parseFile(file, schema, true);
+      return entry === undefined ? [] : [{ file, entry }];
+    });
+  }
+
   const config = parseFile(EDITION_CONFIG_FILE, EditionConfigSchema);
   const manifest = parseFile(MANIFEST_FILE, ContentManifestSchema);
-  const words = listJsonFiles(editionDir, WORDS_DIR).flatMap((file): AuthoredWord[] => {
-    const word = parseFile(file, WordSchema, true);
-    return word === undefined ? [] : [{ file, word }];
-  });
-  if (config !== undefined) errors.push(...checkContent(config, words));
+  const words = parseEntries(WORDS_DIR, WordSchema);
+  const corrections = parseEntries(CORRECTIONS_DIR, CorrectionSchema);
+  if (config !== undefined) errors.push(...checkContent(config, words, corrections));
 
   if (errors.length > 0 || config === undefined || manifest === undefined) {
     return { ok: false, errors };
@@ -79,7 +86,8 @@ export function buildLanguagePack({
     editionId: config.id,
     contentVersion: manifest.contentVersion,
     categories: config.categories,
-    words: words.map(({ word }) => word).toSorted((a, b) => compare(a.id, b.id)),
+    words: sortedById(words),
+    corrections: sortedById(corrections),
   };
   const metadata: PackMetadata = {
     editionId: content.editionId,
@@ -91,7 +99,8 @@ export function buildLanguagePack({
     ok: true,
     metadata,
     wordCount: content.words.length,
-    report: contentReport(content.categories, content.words),
+    correctionCount: content.corrections.length,
+    report: contentReport(content),
   };
 }
 
@@ -121,6 +130,10 @@ function listJsonFiles(editionDir: string, dir: string): string[] {
 function entryIdOf(value: unknown): string | undefined {
   if (typeof value !== 'object' || value === null || !('id' in value)) return undefined;
   return typeof value.id === 'string' && value.id !== '' ? value.id : undefined;
+}
+
+function sortedById<T extends Entry>(authored: readonly Authored<T>[]): T[] {
+  return authored.map(({ entry }) => entry).toSorted((a, b) => compare(a.id, b.id));
 }
 
 /** Code-unit order, independent of the machine's locale. */

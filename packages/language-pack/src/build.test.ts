@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { WordSchema } from '@slovo/contracts';
+import { CorrectionSchema, WordSchema } from '@slovo/contracts';
 import { createContent, systemRandom } from '@slovo/core';
 
 import {
@@ -89,6 +89,7 @@ describe('buildLanguagePack', () => {
     expect(result.ok).toBe(true);
     await withContent(outFile, async (content) => {
       expect(await content.wordById('w_fx0002')).toEqual({
+        kind: 'word',
         id: 'w_fx0002',
         lemma: 'балакучий',
         stress: [5],
@@ -102,9 +103,76 @@ describe('buildLanguagePack', () => {
         categoryId: 'speech',
         rarity: 3,
         sources: [{ title: 'Тестове джерело' }],
+        correctionIds: ['c_fx0002'],
         retired: false,
       });
       expect((await content.firstWord())?.id).toBe('w_fx0002');
+    });
+  });
+
+  it('round-trips a full Correction: every field written to the pack comes back from the Core', async () => {
+    const outFile = packPath();
+    const authored = readJsonFile(join(fixture('valid'), 'content/corrections/c_fx0001.json'));
+    // The fixture must fill every Correction field, so a new field can't skip the pack.
+    expect(Object.keys(authored).toSorted()).toEqual(
+      Object.keys(CorrectionSchema.shape).toSorted(),
+    );
+
+    buildLanguagePack({ editionDir: fixture('valid'), outFile });
+
+    await withContent(outFile, async (content) => {
+      expect(await content.correctionById('c_fx0001')).toEqual(authored);
+    });
+  });
+
+  it('returns a Correction with its standard equivalents, the main one first', async () => {
+    const outFile = packPath();
+
+    buildLanguagePack({ editionDir: fixture('valid'), outFile });
+
+    await withContent(outFile, async (content) => {
+      expect(await content.correctionById('c_fx0002')).toEqual({
+        kind: 'correction',
+        id: 'c_fx0002',
+        nonStandardForm: 'разговорчивий',
+        correctionType: 'russianism',
+        standardEquivalents: ['балакучий', 'говіркий'],
+        explanation: 'Тестове пояснення.',
+        examplePair: {
+          nonStandard: 'Який він разговорчивий!',
+          standard: 'Який він балакучий!',
+        },
+        sources: [{ title: 'Тестове джерело' }],
+      });
+      expect(await content.correctionById('c_missing')).toBeUndefined();
+    });
+  });
+
+  it('reaches a Word ↔ Correction link in both directions', async () => {
+    const outFile = packPath();
+
+    buildLanguagePack({ editionDir: fixture('valid'), outFile });
+
+    await withContent(outFile, async (content) => {
+      const ids = (entries: readonly { id: string }[]) => entries.map(({ id }) => id);
+      expect(ids(await content.linkedCorrections('w_fx0002'))).toEqual(['c_fx0002']);
+      expect(ids(await content.linkedWords('c_fx0002'))).toEqual(['w_fx0002']);
+      expect(ids(await content.linkedCorrections('w_fx0003'))).toEqual(['c_fx0001']);
+      expect(ids(await content.linkedWords('c_fx0001'))).toEqual(['w_fx0003']);
+      expect(await content.linkedWords('c_fx0004')).toEqual([]);
+    });
+  });
+
+  it('keeps the links of a Retired Word, but leaves it out of the Words linked to a Correction', async () => {
+    const outFile = packPath();
+
+    buildLanguagePack({ editionDir: fixture('valid'), outFile });
+
+    await withContent(outFile, async (content) => {
+      expect((await content.linkedCorrections('w_fx0001')).map(({ id }) => id)).toEqual([
+        'c_fx0003',
+      ]);
+      expect(await content.linkedWords('c_fx0003')).toEqual([]);
     });
   });
 
@@ -189,6 +257,13 @@ describe('buildLanguagePack', () => {
       ['a Word without sources', 'w_fx1009.json', 'w_fx1009', 'sources', /1/],
       ['an id without the Word prefix', 'word-10.json', 'word-10', 'id', /w_/],
       ['a repeated register label', 'w_fx1013.json', 'w_fx1013', 'registers', /repeat/i],
+      [
+        'a link to a Correction that does not exist',
+        'w_fx1014.json',
+        'w_fx1014',
+        'correctionIds.1',
+        /unknown correction.*c_fx9999/i,
+      ],
     ])('%s', (_rule, file, entryId, field, message) => {
       expect(errors()).toContainEqual({
         file: `content/words/${file}`,
@@ -198,8 +273,34 @@ describe('buildLanguagePack', () => {
       });
     });
 
+    it.each([
+      [
+        'a Correction without standard equivalents',
+        'c_fx1001.json',
+        'c_fx1001',
+        'standardEquivalents',
+        /1/,
+      ],
+      ['an unknown Correction Type', 'c_fx1002.json', 'c_fx1002', 'correctionType', /russianism/],
+      [
+        'repeated standard equivalents',
+        'c_fx1003.json',
+        'c_fx1003',
+        'standardEquivalents',
+        /repeat/i,
+      ],
+      ['an id without the Correction prefix', 'correction-4.json', 'correction-4', 'id', /c_/],
+    ])('%s', (_rule, file, entryId, field, message) => {
+      expect(errors()).toContainEqual({
+        file: `content/corrections/${file}`,
+        entryId,
+        field,
+        message: expect.stringMatching(message) as string,
+      });
+    });
+
     it('reports nothing but those errors', () => {
-      expect(errors()).toHaveLength(13);
+      expect(errors()).toHaveLength(18);
     });
   });
 
@@ -261,6 +362,21 @@ describe('buildLanguagePack', () => {
     );
   });
 
+  it('rejects a Correction id already used by another Correction', () => {
+    const editionDir = copyFixture('valid');
+    const copy = readJsonFile(join(editionDir, 'content/corrections/c_fx0002.json'));
+    writeFileSync(join(editionDir, 'content/corrections/c_fx0002_copy.json'), JSON.stringify(copy));
+
+    expect(buildErrors(editionDir)).toEqual([
+      {
+        file: 'content/corrections/c_fx0002_copy.json',
+        entryId: 'c_fx0002',
+        field: 'id',
+        message: expect.stringMatching(/duplicate.*c_fx0002\.json/i) as string,
+      },
+    ]);
+  });
+
   it('reports Words per Category, the rarity histogram and field coverage', () => {
     const result = buildLanguagePack({ editionDir: fixture('valid'), outFile: packPath() });
 
@@ -281,6 +397,13 @@ describe('buildLanguagePack', () => {
         { rarity: 5, words: 0 },
       ],
       coverage: { examples: 1, synonyms: 1, etymology: 0 },
+      corrections: 4,
+      correctionsPerType: [
+        { correctionType: 'russianism', corrections: 2 },
+        { correctionType: 'calque', corrections: 0 },
+        { correctionType: 'surzhyk', corrections: 1 },
+        { correctionType: 'officialese', corrections: 1 },
+      ],
     });
     const printed = formatContentReport(result.report);
     expect(printed).toMatch(/Words:\s+2 \(1 Retired Word left out\)/);
@@ -288,6 +411,9 @@ describe('buildLanguagePack', () => {
     expect(printed).toMatch(/rarity 3\s+1/);
     expect(printed).toMatch(/Examples\s+1\/2 \(50%\)/);
     expect(printed).toMatch(/etymology\s+0\/2 \(0%\)/);
+    expect(printed).toMatch(/Corrections:\s+4/);
+    expect(printed).toMatch(/russianism\s+2/);
+    expect(printed).toMatch(/calque\s+0/);
   });
 
   it('yields the same ids, checksum and file when the same content is built twice', async () => {
@@ -315,6 +441,23 @@ describe('buildLanguagePack', () => {
     editJson(editionDir, 'content/words/w_fx0001.json', (word) => ({
       ...word,
       primaryDefinition: 'Інше значення.',
+    }));
+    const original = packPath();
+    const edited = packPath();
+
+    buildLanguagePack({ editionDir: fixture('valid'), outFile: original });
+    buildLanguagePack({ editionDir, outFile: edited });
+
+    const a = await readBack(original);
+    const b = await readBack(edited);
+    expect(b.metadata.checksum).not.toBe(a.metadata.checksum);
+  });
+
+  it('changes the checksum when a Correction changes', async () => {
+    const editionDir = copyFixture('valid');
+    editJson(editionDir, 'content/corrections/c_fx0004.json', (correction) => ({
+      ...correction,
+      standardEquivalents: ['нині', 'сьогодні'],
     }));
     const original = packPath();
     const edited = packPath();

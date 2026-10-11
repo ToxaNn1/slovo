@@ -1,0 +1,16 @@
+{
+  "id": "c_fx0004",
+  "nonStandardForm": "на сьогоднішній день",
+  "correctionType": "officialese",
+  "standardEquivalents": ["сьогодні", "нині"],
+  "explanation": "Тестове пояснення.",
+  "examplePair": {
+    "nonStandard": "На сьогоднішній день план виконано.",
+    "standard": "Сьогодні план виконано."
+  },
+  "sources": [
+    {
+      "title": "Тестове джерело"
+    }
+  ]
+}
