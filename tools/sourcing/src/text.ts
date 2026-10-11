@@ -27,7 +27,14 @@ export function readStress(marked: string): number[] {
   return positions;
 }
 
+/**
+ * The language of every dictionary the tool reads (goroh.pp.ua, СУМ, ЕСУМ),
+ * as a BCP 47 language subtag. Their text is cased by its rules, and only an
+ * Edition in this language can be sourced from them.
+ */
+export const SOURCE_LANGUAGE = 'uk';
+
 /** The form two spellings of a Lemma are compared in: unmarked, lowercase, one apostrophe. */
 export function matchKey(text: string): string {
-  return squeeze(unstressed(text)).toLocaleLowerCase('uk').replace(APOSTROPHES, "'");
+  return squeeze(unstressed(text)).toLocaleLowerCase(SOURCE_LANGUAGE).replace(APOSTROPHES, "'");
 }

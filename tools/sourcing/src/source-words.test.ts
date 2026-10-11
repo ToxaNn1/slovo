@@ -1,4 +1,4 @@
-import { mkdtempSync, readdirSync, readFileSync } from 'node:fs';
+import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -36,6 +36,10 @@ const savedPages: Record<string, { status: number; file: string }> = {
   [`${GOROH}Тлумачення/ножиці`]: { status: 200, file: 'goroh/definitions-nozhyci.html' },
   [`${GOROH}Тлумачення/ятір`]: { status: 200, file: 'goroh/definitions-jatir.html' },
   [`${GOROH}Словозміна/ятір`]: { status: 200, file: 'goroh/inflection-jatir.html' },
+  // СУМ-11 for товмач, whose labels goroh prints as plain text; СУМ-20 for плесо.
+  [`${GOROH}Тлумачення/товмач`]: { status: 200, file: 'goroh/definitions-tovmach.html' },
+  [`${GOROH}Словозміна/товмач`]: { status: 200, file: 'goroh/inflection-tovmach.html' },
+  [`${GOROH}Тлумачення/плесо`]: { status: 200, file: 'goroh/definitions-pleso.html' },
 };
 
 function savedLemma(
@@ -486,6 +490,64 @@ describe('sourceWords', () => {
     ]);
   });
 
+  it('keeps register labels that goroh prints as plain text', async () => {
+    const { options } = setup({ lemmaList: 'товмач history-antiquity 4\n' });
+
+    await sourceWords(options);
+
+    const word = WordSchema.parse(readDrafts(options.outDir)[0]);
+    expect(word.primaryDefinition).toBe(
+      'Той, хто усно перекладає з однієї мови на іншу під час бесіди, офіційних переговорів і т. ін.; перекладач.',
+    );
+    expect(word.registers).toEqual(['archaic']);
+  });
+
+  it('flags the labels of the other meanings, which the Word cannot carry', async () => {
+    const { options } = setup({ lemmaList: 'плесо nature-weather 2\n' });
+
+    const result = await sourceWords(options);
+
+    const word = WordSchema.parse(readDrafts(options.outDir)[0]);
+    expect(word.registers).toEqual([]);
+    expect(word.extraDefinitions).toContain('Грядка чотирикутної форми.');
+    expect(flagsOf(result, 'плесо')).toContainEqual({
+      kind: 'other-labels',
+      message:
+        'Labels of other meanings, not carried over: «Грядка чотирикутної форми.» діалектизм',
+    });
+  });
+
+  it('drops the СУМ markers in front of an Example and keeps every author', async () => {
+    const { options } = setup({ lemmaList: 'ятір household-crafts 3\nплесо nature-weather 2\n' });
+
+    await sourceWords(options);
+
+    const examples = readDrafts(options.outDir).flatMap(
+      (draft) => WordSchema.parse(draft).examples,
+    );
+    expect(examples).toContainEqual({
+      text: "Захарові здалося, що доля його залишила ще там, у окопчику за Дінцем, і тепер він ось який уже рік самотужки б'ється в ятері життя.",
+      author: 'Іван Ле',
+    });
+    expect(examples).toContainEqual({
+      text: 'Перевізники закотили рукави й довгими дрюками відштовхнули нас з прибережної мілини на плесо.',
+      author: 'Б.-І. Антонич',
+    });
+    for (const example of examples) expect(example.text).not.toMatch(/\*/);
+  });
+
+  it('names the ЕСУМ article when the etymology is that of a related word', async () => {
+    const { options } = setup({ lemmaList: 'мжичка nature-weather 2\n' });
+
+    await sourceWords(options);
+
+    const word = WordSchema.parse(readDrafts(options.outDir)[0]);
+    expect(word.sources.at(-1)).toEqual({
+      title: 'Горох: етимологія (Етимологічний словник української мови, стаття «мжи́ти»)',
+      url: 'https://goroh.pp.ua/Етимологія/мжичка',
+    });
+  });
+
   it('drafts goroh homonyms separately, each from its explanatory dictionary', async () => {
     const { options } = setup({ lemmaList: 'коса household-crafts 2\n' });
 
@@ -597,6 +659,23 @@ describe('sourceWords', () => {
     const word = WordSchema.parse(readDrafts(options.outDir)[0]);
     expect(word.id).not.toBe(`w_${taken}`);
     expect(word.id).toMatch(/^w_[a-z0-9]{6}$/);
+  });
+
+  it('refuses an Edition in another language than its dictionaries, before fetching', async () => {
+    const editionDir = mkdtempSync(join(tmpdir(), 'slovo-edition-'));
+    const config = JSON.parse(readFileSync(join(ukrainianEditionDir, 'edition.json'), 'utf8')) as {
+      locale: string;
+    };
+    writeFileSync(join(editionDir, 'edition.json'), JSON.stringify({ ...config, locale: 'pl-PL' }));
+    const { options, net } = setup({ lemmaList: 'мжичка nature-weather 2\n', editionDir });
+
+    const result = await sourceWords(options);
+
+    expect(result).toEqual({
+      ok: false,
+      errors: ['The sources are Ukrainian dictionaries, but the Edition is in pl-PL'],
+    });
+    expect(net.requests).toEqual([]);
   });
 
   it('rejects a Lemma list with unknown Categories or rarities out of range, before fetching', async () => {

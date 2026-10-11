@@ -28,7 +28,7 @@ import { PoliteClient, type Clock, type Fetch, type RequestStats } from './polit
 import { formatReviewReport } from './report';
 import type { DictionaryArticle } from './article';
 import { SumDictionary, type SumAccess } from './sum';
-import { matchKey, readStress, unstressed } from './text';
+import { matchKey, readStress, SOURCE_LANGUAGE, unstressed } from './text';
 
 export interface SourcingOptions {
   /** The Lemmas to draft, one per line: `<lemma> <category id> <rarity>`; `#` starts a comment. */
@@ -120,6 +120,13 @@ const DEFAULT_MIN_INTERVAL_MS = 2000;
 export async function sourceWords(options: SourcingOptions): Promise<SourcingResult> {
   const edition = readEdition(options.editionDir);
   if (!edition.ok) return { ok: false, errors: edition.errors };
+  const { locale } = edition.config;
+  if (new Intl.Locale(locale).language !== SOURCE_LANGUAGE) {
+    return {
+      ok: false,
+      errors: [`The sources are Ukrainian dictionaries, but the Edition is in ${locale}`],
+    };
+  }
   const list = parseLemmaList(options.lemmaList, edition.config);
   if (!list.ok) return { ok: false, errors: list.errors };
 
@@ -490,6 +497,15 @@ function draftArticle(
   );
   if (otherLabels.length > 0)
     flag('other-labels', `Dictionary labels not carried over: ${otherLabels.join(', ')}`);
+  const labelledMeanings = extra.filter((definition) => definition.labels.length > 0);
+  if (labelledMeanings.length > 0) {
+    flag(
+      'other-labels',
+      `Labels of other meanings, not carried over: ${labelledMeanings
+        .map((definition) => `«${definition.text}» ${unique(definition.labels).join(', ')}`)
+        .join('; ')}`,
+    );
+  }
   if (article.unmarkedExamples) {
     flag(
       'unmarked-examples',
@@ -534,7 +550,9 @@ function draftArticle(
     if (entries.length === 1 && chosen !== undefined && chosen.text !== '') {
       etymology = chosen.text.replace(/;$/, '.');
       sources.push({
-        title: 'Горох: етимологія (Етимологічний словник української мови)',
+        title: underOtherHeadword
+          ? `Горох: етимологія (Етимологічний словник української мови, стаття «${chosen.headword}»)`
+          : 'Горох: етимологія (Етимологічний словник української мови)',
         url: gorohUrl('Етимологія', lemma),
       });
       if (underOtherHeadword) {
@@ -618,7 +636,7 @@ function checkDraft(word: Record<string, unknown>, config: EditionConfig): strin
     const letter = letters[position];
     if (
       letter === undefined ||
-      (vowels !== undefined && !vowels.includes(letter.toLocaleLowerCase('uk')))
+      (vowels !== undefined && !vowels.includes(letter.toLocaleLowerCase(config.locale)))
     ) {
       issues.push(
         `stress: Position ${String(position)} is not a vowel of "${String(word['lemma'])}"`,
@@ -738,9 +756,11 @@ const SUM_PARTS_OF_SPEECH: Readonly<Record<string, PartOfSpeech>> = {
   'недоконаний вид': 'verb',
 };
 
+/** Register labels by their full names: sum.in.ua says `діалектне`, goroh `діалектизм`. */
 const REGISTERS: Readonly<Record<string, Register>> = {
   застаріле: 'archaic',
   діалектне: 'dialectal',
+  діалектизм: 'dialectal',
   книжне: 'bookish',
   розмовне: 'colloquial',
 };
@@ -778,9 +798,9 @@ function tagValues<T>(tags: readonly string[], values: Readonly<Record<string, T
 }
 
 /**
- * The author from a citation such as `Михайло Коцюбинський, II, 1955, 244` or
- * `В. Кучер`: its first part when that reads as a person's name (initials
- * allowed), not a book, a paper or `із журналу`.
+ * The author from a citation such as `Михайло Коцюбинський, II, 1955, 244`,
+ * `В. Кучер`, `Іван Ле` or `Б.-І. Антонич`: its first part when that reads as
+ * a person's name (initials allowed), not a book, a paper or `із журналу`.
  */
 function authorOf(citation: string | undefined): string | undefined {
   const first = citation?.split(',')[0]?.trim();
@@ -791,8 +811,10 @@ function authorOf(citation: string | undefined): string | undefined {
     words.length <= 4 &&
     words.every((word) => /^\p{Lu}/u.test(word)) &&
     !surname.endsWith('.') &&
-    Array.from(surname).length > 2 &&
-    words.slice(0, -1).every((word) => !word.endsWith('.') || /^\p{Lu}\.$/u.test(word));
+    Array.from(surname).length >= 2 &&
+    words
+      .slice(0, -1)
+      .every((word) => !word.endsWith('.') || /^\p{Lu}\.(?:-\p{Lu}\.)*$/u.test(word));
   return isName ? first : undefined;
 }
 
