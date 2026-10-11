@@ -28,6 +28,12 @@ export {
 export { EditionStringsSchema, type EditionStrings } from './edition-strings';
 export { SplashDecorSchema, type SplashDecor } from './decor';
 export {
+  ColorTokensSchema,
+  EditionTokensSchema,
+  type ColorTokens,
+  type EditionTokens,
+} from './edition-tokens';
+export {
   CorrectionIdSchema,
   CorrectionSchema,
   CorrectionTypeSchema,

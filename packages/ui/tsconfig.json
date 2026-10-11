@@ -6,5 +6,10 @@
     "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo",
     "jsx": "react-jsx"
   },
-  "include": ["src"]
+  "include": ["src"],
+  "references": [
+    {
+      "path": "../contracts"
+    }
+  ]
 }

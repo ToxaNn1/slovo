@@ -55,10 +55,32 @@ env:
 - assertVisible:
     id: word-definition
 
+# Settings: the Theme follows the choice, which survives a relaunch.
+- tapOn:
+    id: tab-settings
+- tapOn:
+    id: settings-theme-dark
+- assertVisible:
+    id: settings-theme-dark
+    selected: true
+- stopApp
+- launchApp:
+    clearState: false
+- openLink: ${SCHEME}://expo-development-client/?url=${METRO_URL}
+- extendedWaitUntil:
+    visible:
+      id: word-lemma
+    timeout: 120000
 - tapOn:
     id: tab-settings
 - assertVisible:
-    id: settings-placeholder
+    id: settings-theme-dark
+    selected: true
+- tapOn:
+    id: settings-theme-system
+- assertVisible:
+    id: settings-theme-system
+    selected: true
 - tapOn:
     id: tab-game
 - assertVisible:

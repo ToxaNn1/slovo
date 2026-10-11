@@ -12,5 +12,27 @@ export {
   type UserSettingDefaults,
 } from './edition';
 export type { Category, FeatureSwitch, FontSize, LanguageTraits, Theme } from '@slovo/contracts';
+export {
+  colorSchemeFor,
+  createSettings,
+  type ColorScheme,
+  type Settings,
+  type UserSettings,
+} from './settings';
 export { renderStress } from './stress';
-export { systemClock, systemRandom, type Clock, type ContentReadPort, type Random } from './ports';
+export {
+  systemClock,
+  systemRandom,
+  type Clock,
+  type ContentReadPort,
+  type Random,
+  type UserStateChanges,
+  type UserStatePort,
+} from './ports';
+export {
+  createMemoryUserStatePort,
+  openUserState,
+  UserStateTooNewError,
+  type UserState,
+  type UserStateMigration,
+} from './user-state';
