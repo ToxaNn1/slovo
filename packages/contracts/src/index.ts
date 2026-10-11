@@ -26,6 +26,7 @@ export {
   type UserSettingDefaultsConfig,
 } from './edition';
 export { EditionStringsSchema, type EditionStrings } from './edition-strings';
+export { SplashDecorSchema, type SplashDecor } from './decor';
 export {
   CorrectionIdSchema,
   CorrectionSchema,
