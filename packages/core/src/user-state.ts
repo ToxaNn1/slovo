@@ -26,7 +26,7 @@ export interface UserStateMigration {
  * never edit or remove one that has shipped.
  */
 export const userStateMigrations: readonly UserStateMigration[] = [
-  // 0.2: the user settings (Theme). A new store has nothing to bring forward.
+  // 0.2: the user settings (Theme, font size). A new store has nothing to bring forward.
   { version: 1, migrate: () => Promise.resolve(new Map()) },
 ];
 
