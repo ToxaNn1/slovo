@@ -29,10 +29,8 @@ function main(): number {
   }
 
   const editionDir = join(editionsDir, editionId);
-  if (!existsSync(join(editionDir, 'edition.json'))) {
-    console.error(
-      `Unknown Edition "${editionId}": no ${relative(repoRoot, editionDir)}/edition.json`,
-    );
+  if (!/^[a-z][a-z0-9-]*$/.test(editionId) || !existsSync(join(editionDir, 'edition.json'))) {
+    console.error(`Unknown Edition "${editionId}": expected editions/${editionId}/edition.json`);
     return 2;
   }
   const outFile =
@@ -51,11 +49,17 @@ function main(): number {
 
   const { metadata, wordCount } = result;
   console.log(`Built the Language Pack for "${metadata.editionId}"`);
-  console.log(`  file:            ${relative(repoRoot, outFile)}`);
+  console.log(`  file:            ${displayPath(outFile)}`);
   console.log(`  content version: ${String(metadata.contentVersion)}`);
   console.log(`  checksum:        ${metadata.checksum}`);
   console.log(`  Words:           ${String(wordCount)}`);
   return 0;
+}
+
+/** A path relative to the repo root when it lies inside the repo, absolute otherwise. */
+function displayPath(path: string): string {
+  const fromRoot = relative(repoRoot, path);
+  return fromRoot.startsWith('..') ? path : fromRoot;
 }
 
 process.exitCode = main();
