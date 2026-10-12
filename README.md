@@ -2,14 +2,16 @@
 
 SLOVO helps people discover, learn and share rare words of a single language. The first app is the **Ukrainian Edition**: a vertical Feed of Rare Words with stress marks and definitions, Corrections of common non-standard phrases, a Game, a home-screen widget and optional sync across devices.
 
-> Status: version 0.1 (Foundation) is built; 0.2 is next. What exists today:
+> Status: version 0.2 (Feed) is built; 0.3 (My words) is next. What exists today:
 >
 > - the monorepo with the Core, the shared contracts, the Language Pack build and a UI package;
-> - the mobile shell: one Expo app that builds the Ukrainian Edition, with the final four tabs and one Word from the bundled Language Pack on Home;
+> - the mobile shell: one Expo app that builds the Ukrainian Edition, with the final four tabs;
+> - Home is the Feed: the Word of the Day, Word cards with Pronunciation, Corrections mixed in, Seen and Cycles kept on the device, in the Ukrainian Decor;
+> - Settings with the Theme and the font size;
 > - the Ukrainian Edition's content (Words and Corrections) and a content quality gate that CI runs on every change;
 > - CI with lint, typecheck, tests, a dependency audit and secret scanning.
 >
-> The Feed, My words, the Game, the widget and the backend arrive in later versions; see the [master spec](https://github.com/ToxaNn1/slovo/issues/1) for the roadmap.
+> My words, the Game, the widget and the backend arrive in later versions; see the [master spec](https://github.com/ToxaNn1/slovo/issues/1) for the roadmap.
 
 ## The factory idea
 
@@ -44,7 +46,7 @@ Parts marked as placeholders are reserved and filled by later versions.
 - [`CONTEXT.md`](CONTEXT.md): the domain glossary.
 - [`docs/adr/`](docs/adr/): architecture decision records.
 - [Master spec, issue #1](https://github.com/ToxaNn1/slovo/issues/1): product vision, every decision so far and the roadmap from 0.1 to 1.0.
-- [0.1 Foundation spec, issue #2](https://github.com/ToxaNn1/slovo/issues/2): the current version and its tickets.
+- [0.1 Foundation spec, issue #2](https://github.com/ToxaNn1/slovo/issues/2) and [0.2 Feed spec, issue #51](https://github.com/ToxaNn1/slovo/issues/51): the versions built so far and their tickets.
 - [`CLAUDE.md`](CLAUDE.md): the guide for coding agents (`AGENTS.md` points to it).
 
 ## Run the Ukrainian Edition on the simulator
@@ -79,7 +81,7 @@ You need the Node version in [`.nvmrc`](.nvmrc), pnpm, Xcode with an iOS Simulat
 
    To install a build by hand instead, download its `.tar.gz` from the EAS dashboard, unpack it and run `xcrun simctl install booted SLOVO.app`.
 
-3. Start Metro from `apps/mobile`, then open SLOVO on the simulator. The development client connects to the server on `localhost:8081`; pressing `i` in the Metro terminal opens the app for you.
+3. Start Metro from `apps/mobile`, then open SLOVO on the simulator. The development client connects to the server on `localhost:8081`; pressing `i` in the Metro terminal opens the app for you. When port 8081 is taken, pass another one, e.g. `SLOVO_EDITION=uk pnpm start --port 8162`, and give the smoke flow the same port (step 5).
 
    ```sh
    SLOVO_EDITION=uk pnpm start
@@ -89,13 +91,30 @@ You need the Node version in [`.nvmrc`](.nvmrc), pnpm, Xcode with an iOS Simulat
 
    In a development build, `xcrun simctl openurl booted slovo-uk://decor` opens a showcase of every Decor slot 0.2 uses. Its switches show the Edition's Decor or the Core's, light or dark; the link takes `?look=core`, `?scheme=dark` and `?splash=1` to start in that state.
 
-4. Check the result. The tabs read Головна, Налаштування, Гра, Збережене (Home, Settings, Game, Saved). Home is the Feed: Words from the bundled Language Pack, one card per screen, each with its Lemma and Stress marks, its part of speech and its primary Definition. Swipe up for the next Word and down to go back. A Word that stays on screen for 1.5 s is Seen and doesn't come back in the same Cycle, and the Feed reopens on the last card the same day. Settings offers the Theme (System, Light or Dark); the choice is kept on the device in a user-state database apart from the Language Pack, and System follows the iOS appearance. Game and Saved are placeholders. The app needs no network: the Language Pack ships inside the app and is opened read-only. At launch the app checks that the native app, the JavaScript bundle and the Language Pack are of the same Edition, and shows its load-failed screen when they are not. [Verify the app with networking off](#verify-the-app-with-networking-off) by hand once per release candidate.
+4. Check the result. The tabs read Головна, Налаштування, Гра, Збережене (Home, Settings, Game, Saved). Home is the Feed, one card per screen:
+   - Each local day opens on its Word of the Day, badged «Слово дня · 12 жовтня». Swipe up for the next card and down to go back; a hint says so on the first launch only.
+   - A Word card shows the Lemma with its Stress marks, the part of speech, the Definition, an Example, Synonyms, register and Category chips, and «Детальніше» for the rest. The speaker button reads the Lemma aloud with the device's Ukrainian voice, or explains how to get one.
+   - About every fifth card is a Correction («Так часто кажуть → Українською краще»).
+   - A card that stays on screen for 1.5 s is Seen and doesn't come back in the same Cycle. Once everything is Seen, the end-of-Cycle card says so, and the next swipe starts a new Cycle. The Feed reopens on the last card the same day.
+   - While the Language Pack opens, the Feed shows a skeleton card with the divider being stitched; if the pack can't be opened, a local error state («Нитка урвалася») offers to try again.
 
-5. Run the smoke flow with [Maestro](https://maestro.mobile.dev) while Metro is running. It is a local check and does not run in CI.
+   Settings offers the Theme (System, Light or Dark) and the font size (S, M, L, XL) with a live preview. The choices are kept on the device in a user-state database apart from the Language Pack, and System follows the iOS appearance. Game and Saved are placeholders.
+
+   With Reduce Motion on (Settings › Accessibility › Motion), the cards cross-fade in 200 ms instead of sliding, and the loading skeleton holds still. With VoiceOver, every card element, chip and button has a label, the Lemma's Stress is spoken («наголос на а»), and the actions «Наступний запис» and «Попередній запис» on the Lemma and the Definition stand in for the swipes. The app needs no network: the Language Pack ships inside the app and is opened read-only. At launch the app checks that the native app, the JavaScript bundle and the Language Pack are of the same Edition, and shows its load-failed screen when they are not. [Verify the app with networking off](#verify-the-app-with-networking-off) by hand once per release candidate.
+
+5. Run the smoke flow with [Maestro](https://maestro.mobile.dev) from `apps/mobile` while Metro is running. It is a local check and does not run in CI. It walks the 0.2 flow: launch, the Word of the Day badge, a swipe to the next card and back, the Pronunciation button, Settings with the Dark Theme and font size L, the Feed again, and a relaunch that keeps all of it and the day's Word. On a new simulator it also closes the development client's menu when it opens over the app.
 
    ```sh
    pnpm test:smoke
    ```
+
+   Every setting of the flow has a default that `-e` overrides: `METRO_URL` (default `http://localhost:8081`, given as a plain URL), `APP_ID` (default `app.slovo.uk`) and `SCHEME` (default `slovo-uk`). For Metro on another port:
+
+   ```sh
+   pnpm test:smoke -e METRO_URL=http://localhost:8162
+   ```
+
+   The defaults live in JavaScript in the flow rather than in its `env:` block, because Maestro lets a flow's `env:` win over `-e`.
 
 ## Verify the app with networking off
 
