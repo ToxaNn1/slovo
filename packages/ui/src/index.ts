@@ -7,6 +7,7 @@ export {
   type CorrectionCardProps,
   type CorrectionCardStrings,
 } from './CorrectionCard';
+export { FeedError, FeedLoading, SwipeHint } from './FeedStates';
 export { FontSizePreview } from './FontSizePreview';
 export {
   FontSizeProvider,
@@ -45,9 +46,11 @@ export {
 export { TokensProvider, useTokens, type Tokens } from './TokensProvider';
 export {
   PagerScrollView,
+  usePageTurnActions,
   VerticalPager,
   type VerticalPagerHandle,
   type VerticalPagerProps,
 } from './VerticalPager';
+export { useReduceMotion } from './useReduceMotion';
 export { WordCard, type WordCardProps, type WordCardStrings } from './WordCard';
 export { WordOfTheDayBadge } from './WordOfTheDayBadge';
