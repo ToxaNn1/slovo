@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Word } from '@slovo/contracts';
+import type { Correction, Word } from '@slovo/contracts';
 
 import {
   createMemoryUserStatePort,
@@ -9,6 +9,7 @@ import {
   SEEN_DWELL_MS,
   type Clock,
   type ContentReadPort,
+  type Edition,
   type Feed,
   type FeedCard,
   type Random,
@@ -35,19 +36,40 @@ function word(id: string, retired = false): Word {
   };
 }
 
+function correction(id: string, retired = false): Correction {
+  return {
+    kind: 'correction',
+    id,
+    nonStandardForm: `not ${id.slice(2)}`,
+    correctionType: 'calque',
+    standardEquivalents: [id.slice(2), `also ${id.slice(2)}`],
+    explanation: 'An explanation.',
+    examplePair: { nonStandard: 'People say this.', standard: 'Better say this.' },
+    sources: [{ title: 'Test source' }],
+    retired,
+  };
+}
+
 /** A small pack: ten live Words and two Retired ones. */
 const liveIds = Array.from({ length: 10 }, (_, index) => `w_live${String(index)}`);
 const retiredIds = ['w_retired0', 'w_retired1'];
 const pack = [...liveIds.map((id) => word(id)), ...retiredIds.map((id) => word(id, true))];
 
-function contentOf(words: readonly Word[]): ContentReadPort {
+function contentOf(words: readonly Word[], corrections: readonly Correction[]): ContentReadPort {
   return {
     listWordIds: () => Promise.resolve(words.filter((w) => !w.retired).map((w) => w.id)),
     getWord: (id) => Promise.resolve(words.find((w) => w.id === id)),
-    getCorrection: () => Promise.resolve(undefined),
+    listCorrectionIds: () =>
+      Promise.resolve(corrections.filter((c) => !c.retired).map((c) => c.id)),
+    getCorrection: (id) => Promise.resolve(corrections.find((c) => c.id === id)),
     listLinkedWordIds: () => Promise.resolve([]),
   };
 }
+
+/** An Edition with the Corrections Feature Switch on or off. */
+const editionWith = (corrections: boolean): Pick<Edition, 'isFeatureEnabled'> => ({
+  isFeatureEnabled: (feature) => feature === 'corrections' && corrections,
+});
 
 /** A clock the test moves by hand, in a time zone it can change. */
 function fakeClock(start: string, timeZone = 'Europe/Kyiv') {
@@ -76,15 +98,22 @@ function randomSequence(...values: number[]): Random {
 
 /** The id of the Entry a card shows, if it shows one. */
 const entryIdOf = (card: FeedCard | undefined) =>
-  card?.kind === 'entry' ? card.entry.id : undefined;
+  card === undefined || card.kind === 'end-of-cycle' ? undefined : card.entry.id;
 
 /** The local day a card is the Word of the Day of, if it is. */
 const wordOfTheDayOf = (card: FeedCard | undefined) =>
-  card?.kind === 'entry' ? card.wordOfTheDay : undefined;
+  card?.kind === 'word' ? card.wordOfTheDay : undefined;
+
+/** The Word card a card shows, if it shows one. */
+const wordCardOf = (card: FeedCard | undefined) =>
+  card?.kind === 'word' ? card.wordCard : undefined;
+
+/** The Correction card a card shows, if it shows one. */
+const correctionCardOf = (card: FeedCard | undefined) =>
+  card?.kind === 'correction' ? card.correctionCard : undefined;
 
 /** The ids of the Entries the cards show, in order. */
-const entryIdsOf = (cards: readonly FeedCard[]) =>
-  cards.flatMap((card) => (card.kind === 'entry' ? [card.entry.id] : []));
+const entryIdsOf = (cards: readonly FeedCard[]) => cards.flatMap((card) => entryIdOf(card) ?? []);
 
 /** One app run over the given records: the user state survives between runs. */
 async function run({
@@ -92,14 +121,24 @@ async function run({
   clock = fakeClock('2026-10-11T09:00:00+03:00').clock,
   random = randomOf(0.25),
   words = pack,
+  corrections = [],
+  correctionsSwitch = true,
 }: {
   records?: Map<string, string>;
   clock?: Clock;
   random?: Random;
   words?: readonly Word[];
+  corrections?: readonly Correction[];
+  correctionsSwitch?: boolean;
 } = {}): Promise<Feed> {
   const userState = await openUserState({ port: createMemoryUserStatePort(records) });
-  return openFeed({ content: contentOf(words), userState, clock, random });
+  return openFeed({
+    content: contentOf(words, corrections),
+    edition: editionWith(correctionsSwitch),
+    userState,
+    clock,
+    random,
+  });
 }
 
 /**
@@ -157,7 +196,7 @@ describe('the Feed', () => {
     const next = await feed.next();
 
     for (const card of [feed.cards[0], next]) {
-      expect(card?.kind === 'entry' ? card.wordCard : undefined).toMatchObject({
+      expect(card?.kind === 'word' ? card.wordCard : undefined).toMatchObject({
         kind: 'word',
         wordId: entryIdOf(card),
         primaryDefinition: 'A meaning.',
@@ -321,7 +360,7 @@ describe('the Feed', () => {
       for (let card = 0; card < 3; card++)
         kinds.push((await readLastCard(feed, time, SEEN_DWELL_MS))?.kind);
 
-      expect(kinds).toEqual(['entry', 'entry', 'end-of-cycle']);
+      expect(kinds).toEqual(['word', 'word', 'end-of-cycle']);
       expect(new Set(entryIdsOf(feed.cards))).toEqual(new Set(['w_one', 'w_two', 'w_three']));
     });
 
@@ -608,5 +647,269 @@ describe('the Word of the Day', () => {
     expect(evening.cards).toHaveLength(1);
     expect(entryIdOf(evening.cards[0])).not.toBe(retired);
     expect(wordOfTheDayOf(evening.cards[0])).toEqual({ year: 2026, month: 10, day: 11 });
+  });
+});
+
+describe('Corrections in the Feed', () => {
+  const liveCorrections = ['c_live0', 'c_live1', 'c_live2', 'c_live3'].map((id) => correction(id));
+  const corrections = [...liveCorrections, correction('c_retired', true)];
+  const liveCorrectionIds = liveCorrections.map(({ id }) => id);
+
+  /** 'W' for a Word card, 'C' for a Correction card. */
+  const kindsOf = (ids: readonly string[]) =>
+    ids.map((id) => (id.startsWith('c_') ? 'C' : 'W')).join('');
+
+  /** Shows the card at `position` for `ms`, as the UI reports it. */
+  async function look(
+    feed: Feed,
+    time: ReturnType<typeof fakeClock>,
+    position: number,
+    ms: number,
+  ) {
+    await feed.cardVisible(position);
+    time.advance(ms);
+    await feed.cardHidden(position);
+  }
+
+  it('mixes a Correction in as every fifth card while unseen Corrections remain', async () => {
+    const ids = await walk(await run({ corrections }));
+
+    expect(kindsOf(ids.slice(0, 10))).toBe('WWWWCWWWWC');
+  });
+
+  it('offers every live Correction once and never a Retired Correction, after the Words when the Words run out first', async () => {
+    const ids = await walk(await run({ corrections }));
+
+    expect(ids).toHaveLength(liveIds.length + liveCorrectionIds.length);
+    expect(new Set(ids)).toEqual(new Set([...liveIds, ...liveCorrectionIds]));
+    expect(kindsOf(ids)).toBe('WWWWCWWWWCWWCC');
+  });
+
+  it('offers Words only once every Correction was shown', async () => {
+    const ids = await walk(await run({ corrections: [correction('c_only')] }));
+
+    expect(kindsOf(ids)).toBe('WWWWCWWWWWW');
+  });
+
+  it('offers no Correction when the Corrections Feature Switch is off', async () => {
+    const ids = await walk(await run({ corrections, correctionsSwitch: false }));
+
+    expect(new Set(ids)).toEqual(new Set(liveIds));
+  });
+
+  it('gives a Correction card the Correction card model of its Correction', async () => {
+    const feed = await run({ corrections });
+    while (feed.cards.length < 5) await feed.next();
+
+    const card = feed.cards[4];
+
+    expect(card?.kind).toBe('correction');
+    const name = entryIdOf(card)?.slice(2) ?? '';
+    expect(correctionCardOf(card)).toMatchObject({
+      kind: 'correction',
+      correctionId: entryIdOf(card),
+      nonStandardForm: `not ${name}`,
+      mainEquivalent: name,
+      otherEquivalents: [`also ${name}`],
+      correctionType: 'calque',
+    });
+  });
+
+  it('shuffles the Corrections with the Cycle seed and keeps their order across a restart', async () => {
+    const records = new Map<string, string>();
+    const before = await walk(await run({ records, corrections, random: randomOf(0.25) }));
+    const after = await walk(await run({ records, corrections, random: randomOf(0.75) }));
+    const other = await walk(await run({ corrections, random: randomOf(0.75) }));
+
+    const correctionsIn = (ids: readonly string[]) => ids.filter((id) => id.startsWith('c_'));
+    expect(after).toEqual(before);
+    expect(correctionsIn(other)).not.toEqual(correctionsIn(before));
+  });
+
+  it('marks a Correction Seen after the dwell, never offering it again in the Cycle, and not after a quick swipe', async () => {
+    const records = new Map<string, string>();
+    const time = fakeClock('2026-10-11T09:00:00+03:00');
+    const feed = await run({ records, corrections, clock: time.clock });
+    while (feed.cards.length < 10) await feed.next();
+    const [read, skipped] = [entryIdOf(feed.cards[4]), entryIdOf(feed.cards[9])];
+
+    await look(feed, time, 4, SEEN_DWELL_MS);
+    await look(feed, time, 9, 300);
+
+    const nextDay = fakeClock('2026-10-12T09:00:00+03:00').clock;
+    const unseen = await walk(await run({ records, corrections, clock: nextDay }));
+    expect(unseen).not.toContain(read);
+    expect(unseen).toContain(skipped);
+  });
+
+  it('goes on offering the unseen Corrections once every Word is Seen, so the Cycle covers them too', async () => {
+    const small = [word('w_one'), word('w_two')];
+    const time = fakeClock('2026-10-11T09:00:00+03:00');
+    const feed = await run({ words: small, corrections: [correction('c_one')], clock: time.clock });
+    await feed.next();
+    await look(feed, time, 0, SEEN_DWELL_MS);
+    await look(feed, time, 1, SEEN_DWELL_MS);
+
+    const card = await feed.next();
+
+    expect(entryIdOf(card)).toBe('c_one');
+  });
+
+  it('ends the Cycle only once every live Word and Correction is Seen, and starts the next one with the Corrections unseen again', async () => {
+    const small = [word('w_one'), word('w_two')];
+    const smallCorrections = [correction('c_one'), correction('c_old', true)];
+    const time = fakeClock('2026-10-11T09:00:00+03:00');
+    const feed = await run({ words: small, corrections: smallCorrections, clock: time.clock });
+
+    // Each card read as the app does: the next card is got ready while the reader looks.
+    const offered = [];
+    for (let card = 0; card < 6; card++) {
+      const position = feed.cards.length - 1;
+      await feed.cardVisible(position);
+      const next = await feed.next();
+      time.advance(SEEN_DWELL_MS);
+      await feed.cardHidden(position);
+      offered.push(next?.kind === 'end-of-cycle' ? 'end' : entryIdOf(next));
+    }
+
+    // After the Word of the Day: the other Word, the Correction, the end, then a new Cycle.
+    expect(offered.slice(0, 2)).toEqual([expect.stringMatching(/^w_/), 'c_one']);
+    expect(offered[2]).toBe('end');
+    expect(new Set(offered.slice(3))).toEqual(new Set(['w_one', 'w_two', 'c_one']));
+  });
+
+  it('ends the Cycle after the Words alone when the Corrections Feature Switch is off', async () => {
+    const small = [word('w_one'), word('w_two')];
+    const time = fakeClock('2026-10-11T09:00:00+03:00');
+    const feed = await run({
+      words: small,
+      corrections: [correction('c_one')],
+      correctionsSwitch: false,
+      clock: time.clock,
+    });
+    await feed.next();
+    await look(feed, time, 0, SEEN_DWELL_MS);
+    await look(feed, time, 1, SEEN_DWELL_MS);
+
+    expect((await feed.next())?.kind).toBe('end-of-cycle');
+  });
+
+  it('opens on the Correction card the reader was on when the app reopens the same day', async () => {
+    const records = new Map<string, string>();
+    const time = fakeClock('2026-10-11T09:00:00+03:00');
+    const feed = await run({ records, corrections, clock: time.clock });
+    while (feed.cards.length < 5) await feed.next();
+    await feed.cardVisible(4);
+
+    const reopened = await run({
+      records,
+      corrections,
+      clock: fakeClock('2026-10-11T21:00:00+03:00').clock,
+    });
+
+    expect(reopened.cards).toHaveLength(1);
+    expect(entryIdOf(reopened.cards[0])).toBe(entryIdOf(feed.cards[4]));
+    expect(correctionCardOf(reopened.cards[0])?.correctionId).toBe(entryIdOf(feed.cards[4]));
+  });
+
+  it('never makes a Correction the Word of the Day', async () => {
+    const read: string[] = [];
+    const records = new Map<string, string>();
+    for (let day = 0; day < liveIds.length; day++) {
+      const time = fakeClock(`2026-10-${String(11 + day)}T09:00:00+03:00`);
+      const feed = await run({ records, corrections, clock: time.clock });
+      await look(feed, time, 0, SEEN_DWELL_MS);
+      read.push(entryIdOf(feed.cards[0]) ?? '');
+    }
+
+    expect(new Set(read)).toEqual(new Set(liveIds));
+  });
+
+  describe('a Word linked to a Correction («Часто кажуть»)', () => {
+    const linked = { ...word('w_protiahom'), correctionIds: ['c_protiazi', 'c_retired'] };
+    const words = [linked, ...liveIds.map((id) => word(id))];
+    const linkedCorrections = [
+      correction('c_protiazi'),
+      correction('c_retired', true),
+      ...liveCorrections,
+    ];
+
+    /** A Feed whose card at `position` is the linked Word, with the next card ready. */
+    async function feedOnLinkedWord(options: Parameters<typeof run>[0] = {}) {
+      const feed = await run({ words, corrections: linkedCorrections, ...options });
+      while (!feed.cards.some((card) => entryIdOf(card) === linked.id)) await feed.next();
+      const position = feed.cards.findIndex((card) => entryIdOf(card) === linked.id);
+      if (feed.cards.length === position + 1) await feed.next();
+      return { feed, position };
+    }
+
+    it('shows the live Corrections the Word links on its card', async () => {
+      const { feed, position } = await feedOnLinkedWord();
+
+      expect(wordCardOf(feed.cards[position])?.linkedCorrections).toEqual([
+        { correctionId: 'c_protiazi', nonStandardForm: 'not protiazi' },
+      ]);
+    });
+
+    it('opens the linked Correction as the card right after the Word, and goes on after it', async () => {
+      const { feed, position } = await feedOnLinkedWord();
+      const before = feed.cards.map((card) => entryIdOf(card));
+      expect(before).not.toContain('c_protiazi');
+
+      const opened = await feed.openLinkedCorrection(position, 'c_protiazi');
+
+      expect(opened).toBe(position + 1);
+      const card: FeedCard | undefined = feed.cards[position + 1];
+      expect(entryIdOf(card)).toBe('c_protiazi');
+      expect(correctionCardOf(card)?.mainEquivalent).toBe('protiazi');
+      expect(feed.cards.map((shown) => entryIdOf(shown))).toEqual([
+        ...before.slice(0, position + 1),
+        'c_protiazi',
+        ...before.slice(position + 1),
+      ]);
+      const next = await feed.next();
+      expect(entryIdOf(next)).not.toBe('c_protiazi');
+      expect(before).not.toContain(entryIdOf(next));
+    });
+
+    it('opens the same card again when tapped twice', async () => {
+      const { feed, position } = await feedOnLinkedWord();
+      await feed.openLinkedCorrection(position, 'c_protiazi');
+      const count = feed.cards.length;
+
+      expect(await feed.openLinkedCorrection(position, 'c_protiazi')).toBe(position + 1);
+      expect(feed.cards).toHaveLength(count);
+    });
+
+    it('marks the opened Correction Seen after the dwell, like any card', async () => {
+      const records = new Map<string, string>();
+      const time = fakeClock('2026-10-11T09:00:00+03:00');
+      const { feed, position } = await feedOnLinkedWord({ records, clock: time.clock });
+      const opened = await feed.openLinkedCorrection(position, 'c_protiazi');
+
+      await look(feed, time, opened ?? -1, SEEN_DWELL_MS);
+
+      const nextDay = fakeClock('2026-10-12T09:00:00+03:00').clock;
+      const unseen = await walk(
+        await run({ records, words, corrections: linkedCorrections, clock: nextDay }),
+      );
+      expect(unseen).not.toContain('c_protiazi');
+    });
+
+    it('opens nothing for a Correction the Word does not link, or links but is retired', async () => {
+      const { feed, position } = await feedOnLinkedWord();
+      const count = feed.cards.length;
+
+      expect(await feed.openLinkedCorrection(position, 'c_retired')).toBeUndefined();
+      expect(await feed.openLinkedCorrection(position, 'c_live0')).toBeUndefined();
+      expect(feed.cards).toHaveLength(count);
+    });
+
+    it('links no Correction, and opens none, when the Corrections Feature Switch is off', async () => {
+      const { feed, position } = await feedOnLinkedWord({ correctionsSwitch: false });
+
+      expect(wordCardOf(feed.cards[position])?.linkedCorrections).toEqual([]);
+      expect(await feed.openLinkedCorrection(position, 'c_protiazi')).toBeUndefined();
+    });
   });
 });

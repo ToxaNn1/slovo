@@ -12,6 +12,12 @@ export interface ContentReadPort {
   listWordIds(): Promise<readonly string[]>;
   /** Any Word by id, a Retired Word included, so kept Words stay reachable. */
   getWord(id: string): Promise<Word | undefined>;
+  /**
+   * The ids of the Corrections that are not retired, in a stable order. A
+   * Retired Correction is left out, so nothing new picks it.
+   */
+  listCorrectionIds(): Promise<readonly string[]>;
+  /** Any Correction by id, a Retired Correction included, so kept Corrections stay reachable. */
   getCorrection(id: string): Promise<Correction | undefined>;
   /**
    * The ids of the Words that are not retired and are the standard form for

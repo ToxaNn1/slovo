@@ -56,6 +56,8 @@ function inMemoryPort(
   return {
     listWordIds: () => Promise.resolve(content.map((word) => word.id)),
     getWord: (id) => Promise.resolve(content.find((word) => word.id === id)),
+    listCorrectionIds: () =>
+      Promise.resolve(corrections.filter((item) => !item.retired).map((item) => item.id)),
     getCorrection: (id) => Promise.resolve(corrections.find((item) => item.id === id)),
     listLinkedWordIds: (correctionId) =>
       Promise.resolve(

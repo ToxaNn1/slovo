@@ -8,14 +8,25 @@ export type {
   Entry,
   EntryKind,
   Example,
+  ExamplePair,
   Gender,
   PartOfSpeech,
   Register,
   Word,
 } from '@slovo/contracts';
 export { createContent, type Content } from './content';
+export { buildCorrectionCard, type CorrectionCardModel } from './correction-card';
 export { coreDecor, InvalidDecorError, loadDecor, type Decor } from './decor';
-export { openFeed, SEEN_DWELL_MS, type Feed, type FeedCard } from './feed';
+export {
+  CORRECTION_EVERY,
+  openFeed,
+  SEEN_DWELL_MS,
+  type CorrectionFeedCard,
+  type EntryFeedCard,
+  type Feed,
+  type FeedCard,
+  type WordFeedCard,
+} from './feed';
 export type { LocalDate } from './local-date';
 export {
   InvalidEditionConfigError,

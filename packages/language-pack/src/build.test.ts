@@ -219,6 +219,24 @@ describe('buildLanguagePack', () => {
     });
   });
 
+  it('lists the ids of the live Corrections in a stable order, leaving a Retired Correction out', async () => {
+    const editionDir = copyFixture('valid');
+    editJson(editionDir, 'content/corrections/c_fx0002.json', (correction) => ({
+      ...correction,
+      retired: true,
+    }));
+    record(editionDir);
+    const outFile = packPath();
+    buildLanguagePack({ editionDir, outFile });
+
+    const pack = openLanguagePack(outFile);
+    try {
+      expect(await pack.listCorrectionIds()).toEqual(['c_fx0001', 'c_fx0003', 'c_fx0004']);
+    } finally {
+      pack.close();
+    }
+  });
+
   it('round-trips a full Word: every field written to the pack comes back from the Core', async () => {
     const outFile = packPath();
     const authored = readJsonFile(join(fixture('valid'), 'content/words/w_fx0001.json'));

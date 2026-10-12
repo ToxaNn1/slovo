@@ -5,6 +5,7 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 
+import { edition } from './edition';
 import { storedUserState } from './stored-user-state';
 
 export type FeedState =
@@ -15,6 +16,14 @@ export type FeedState =
       readonly cards: readonly FeedCard[];
       /** Tells the Feed which card is on screen now. */
       readonly onCardChange: (position: number) => void;
+      /**
+       * Opens a Correction the Word card at `position` links, as the card
+       * right after it. Resolves to that card's position, or nothing.
+       */
+      readonly openLinkedCorrection: (
+        position: number,
+        correctionId: string,
+      ) => Promise<number | undefined>;
     };
 
 /**
@@ -40,6 +49,7 @@ export function useFeed(): FeedState {
       .then((userState) =>
         openFeed({
           content: createPackReader(db),
+          edition,
           userState,
           clock: systemClock,
           random: systemRandom,
@@ -93,9 +103,19 @@ export function useFeed(): FeedState {
     setPosition(next);
   }, []);
 
+  const openLinkedCorrection = useCallback(
+    async (at: number, correctionId: string) => {
+      if (feed === undefined) return undefined;
+      const opened = await feed.openLinkedCorrection(at, correctionId);
+      if (opened !== undefined) setCards([...feed.cards]);
+      return opened;
+    },
+    [feed],
+  );
+
   if (failed) return { status: 'failed' };
   if (feed === undefined) return { status: 'loading' };
-  return { status: 'ready', cards, onCardChange };
+  return { status: 'ready', cards, onCardChange, openLinkedCorrection };
 }
 
 function report(done: Promise<void>): void {

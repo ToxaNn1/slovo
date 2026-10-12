@@ -2,9 +2,11 @@ import {
   createContext,
   useContext,
   useEffect,
+  useImperativeHandle,
   useRef,
   useState,
   type ReactNode,
+  type Ref,
   type RefObject,
 } from 'react';
 import {
@@ -45,8 +47,14 @@ const TURN_VELOCITY = 500;
 /** How much of a drag past the first or last page still moves it. */
 const EDGE_RESISTANCE = 0.3;
 
+/** Turns a `VerticalPager` from code. */
+export interface VerticalPagerHandle {
+  /** Moves to the page at `index` with the swipe's motion, as if the reader swiped there. */
+  turnTo(index: number): void;
+}
+
 export interface VerticalPagerProps<Item> {
-  /** The pages in order. The pager only ever adds pages at the end. */
+  /** The pages in order. Pages change or join only after the current one. */
   readonly items: readonly Item[];
   readonly renderPage: (item: Item, index: number) => ReactNode;
   /** The page shown first. */
@@ -54,6 +62,7 @@ export interface VerticalPagerProps<Item> {
   /** Called once a swipe settles on another page. */
   readonly onIndexChange: (index: number) => void;
   readonly testID?: string;
+  readonly ref?: Ref<VerticalPagerHandle>;
 }
 
 /** Where a page's scroll stands: its offset and the furthest it can go. */
@@ -92,6 +101,7 @@ export function VerticalPager<Item>({
   initialIndex = 0,
   onIndexChange,
   testID,
+  ref,
 }: VerticalPagerProps<Item>) {
   const [index, setIndex] = useState(initialIndex);
   const [height, setHeight] = useState(0);
@@ -115,6 +125,16 @@ export function VerticalPager<Item>({
     setIndex(target);
     onIndexChange(target);
   }
+
+  useImperativeHandle(ref, () => ({
+    turnTo(target) {
+      const clamped = Math.min(Math.max(target, 0), items.length - 1);
+      if (clamped === index) return;
+      position.value = withTiming(clamped, SWIPE, (finished) => {
+        if (finished === true) scheduleOnRN(settle, clamped);
+      });
+    },
+  }));
 
   const pan = Gesture.Pan()
     .withRef(panRef)

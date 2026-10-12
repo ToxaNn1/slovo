@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { CorrectionTypeSchema } from './correction';
 import { FontSizeSchema, ThemeSchema } from './edition';
 import { GenderSchema, PartOfSpeechSchema, RegisterSchema } from './word';
 
@@ -107,6 +108,25 @@ export const EditionStringsSchema = z.strictObject({
     moreExamples: TextSchema,
     /** The label before the non-standard forms of the linked Corrections. */
     oftenSaid: TextSchema,
+    /** What VoiceOver says a linked Correction's form does when tapped, e.g. "Відкриває виправлення". */
+    oftenSaidHint: TextSchema,
+  }),
+  correctionCard: z.strictObject({
+    /** The overline at the top of the card, e.g. "Виправлення". */
+    title: TextSchema,
+    /** The name of every Correction Type, e.g. "калька". */
+    correctionTypes: z.record(CorrectionTypeSchema, TextSchema),
+    /** The VoiceOver label of the Correction Type chip, e.g. "Тип: {type}". */
+    correctionType: templateOf('type'),
+    /** The label over the non-standard form, e.g. "Так часто кажуть". */
+    nonStandard: TextSchema,
+    /** The label over the main standard equivalent, e.g. "Українською краще". */
+    standard: TextSchema,
+    /** The line with the other standard equivalents, e.g. "також: {equivalents}". */
+    otherEquivalents: templateOf('equivalents'),
+    /** What VoiceOver says for each sentence of the example pair. */
+    exampleNonStandard: templateOf('text'),
+    exampleStandard: templateOf('text'),
   }),
 });
 

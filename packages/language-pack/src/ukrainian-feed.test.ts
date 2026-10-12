@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -6,11 +6,14 @@ import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
+  CORRECTION_EVERY,
   createMemoryUserStatePort,
+  loadEdition,
   openFeed,
   openUserState,
   SEEN_DWELL_MS,
   type Clock,
+  type Edition,
   type Feed,
   type FeedCard,
   type Random,
@@ -26,6 +29,18 @@ const editionDir = fileURLToPath(new URL('../../../editions/uk', import.meta.url
 let workDir: string;
 let pack: NodeLanguagePack;
 let liveIds: readonly string[];
+let liveCorrectionIds: readonly string[];
+
+/** The Ukrainian Edition as it ships, with the Corrections Feature Switch on. */
+const ukrainian = loadEdition(
+  JSON.parse(readFileSync(join(editionDir, 'edition.json'), 'utf8')) as unknown,
+);
+
+/** The Ukrainian Edition with Corrections turned off, so a test counts Words only. */
+const wordsOnly: Edition = {
+  ...ukrainian,
+  isFeatureEnabled: (feature) => feature !== 'corrections' && ukrainian.isFeatureEnabled(feature),
+};
 
 beforeAll(async () => {
   workDir = mkdtempSync(join(tmpdir(), 'slovo-feed-'));
@@ -34,6 +49,7 @@ beforeAll(async () => {
   if (!result.ok) throw new Error('The Ukrainian Language Pack does not build');
   pack = openLanguagePack(outFile);
   liveIds = await pack.listWordIds();
+  liveCorrectionIds = await pack.listCorrectionIds();
 });
 
 afterAll(() => {
@@ -63,22 +79,30 @@ function fakeClock(start: string) {
   };
 }
 
-async function run(records: Map<string, string>, clock: Clock, seed = 7): Promise<Feed> {
+async function run(
+  records: Map<string, string>,
+  clock: Clock,
+  seed = 7,
+  edition: Edition = wordsOnly,
+): Promise<Feed> {
   const userState = await openUserState({ port: createMemoryUserStatePort(records) });
-  return openFeed({ content: pack, userState, clock, random: seededRandom(seed) });
+  return openFeed({ content: pack, edition, userState, clock, random: seededRandom(seed) });
 }
 
 /** The id of the Entry a card shows, if it shows one. */
 const entryIdOf = (card: FeedCard | undefined) =>
-  card?.kind === 'entry' ? card.entry.id : undefined;
+  card === undefined || card.kind === 'end-of-cycle' ? undefined : card.entry.id;
 
 /** The local day a card is the Word of the Day of, if it is. */
 const wordOfTheDayOf = (card: FeedCard | undefined) =>
-  card?.kind === 'entry' ? card.wordOfTheDay : undefined;
+  card?.kind === 'word' ? card.wordOfTheDay : undefined;
+
+/** The Correction card a card shows, if it shows one. */
+const correctionCardOf = (card: FeedCard | undefined) =>
+  card?.kind === 'correction' ? card.correctionCard : undefined;
 
 /** The ids of the Entries the cards show, in order. */
-const entryIdsOf = (cards: readonly FeedCard[]) =>
-  cards.flatMap((card) => (card.kind === 'entry' ? [card.entry.id] : []));
+const entryIdsOf = (cards: readonly FeedCard[]) => cards.flatMap((card) => entryIdOf(card) ?? []);
 
 /**
  * Every Entry the Feed offers from where it stands, until it repeats, reaches
@@ -193,5 +217,43 @@ describe('the Feed over the Ukrainian Language Pack', () => {
     expect(wordOfTheDayOf(nextDay.cards[0])).toEqual({ year: 2026, month: 10, day: 12 });
     expect(read).not.toContain(entryIdOf(nextDay.cards[0]));
     expect(lateThatDay.cards).toEqual(nextDay.cards.slice(0, 1));
+  });
+});
+
+describe('Corrections in the Feed over the Ukrainian Language Pack', () => {
+  it('turns the Corrections Feature Switch on and has live Corrections to mix in', () => {
+    expect(ukrainian.isFeatureEnabled('corrections')).toBe(true);
+    expect(liveCorrectionIds.length).toBeGreaterThan(0);
+  });
+
+  it(`makes every ${String(CORRECTION_EVERY)}th card a Correction until the Corrections run out, and offers each live Entry once`, async () => {
+    const offered = await walk(await run(new Map(), fakeClock(today).clock, 7, ukrainian));
+
+    const mixed = offered.slice(0, liveCorrectionIds.length * CORRECTION_EVERY);
+    mixed.forEach((id, position) => {
+      const correctionTurn = (position + 1) % CORRECTION_EVERY === 0;
+      expect(id.startsWith('c_'), `card ${String(position)}: ${id}`).toBe(correctionTurn);
+    });
+    expect(offered).toHaveLength(liveIds.length + liveCorrectionIds.length);
+    expect(new Set(offered)).toEqual(new Set([...liveIds, ...liveCorrectionIds]));
+  });
+
+  it('gives each Correction card the Correction card model of its Correction', async () => {
+    const feed = await run(new Map(), fakeClock(today).clock, 7, ukrainian);
+    while (feed.cards.length < CORRECTION_EVERY) await feed.next();
+
+    const card = feed.cards[CORRECTION_EVERY - 1];
+    const correction = await pack.getCorrection(entryIdOf(card) ?? '');
+
+    expect(correctionCardOf(card)).toEqual({
+      kind: 'correction',
+      correctionId: correction?.id,
+      nonStandardForm: correction?.nonStandardForm,
+      mainEquivalent: correction?.standardEquivalents[0],
+      otherEquivalents: correction?.standardEquivalents.slice(1),
+      correctionType: correction?.correctionType,
+      explanation: correction?.explanation,
+      examplePair: correction?.examplePair,
+    });
   });
 });

@@ -46,6 +46,7 @@ function contentWith(corrections: readonly Correction[] = []): ContentReadPort {
   return {
     listWordIds: () => Promise.resolve([]),
     getWord: () => Promise.resolve(undefined),
+    listCorrectionIds: () => Promise.resolve([]),
     getCorrection: (id) => Promise.resolve(corrections.find((item) => item.id === id)),
     listLinkedWordIds: () => Promise.resolve([]),
   };
