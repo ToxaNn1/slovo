@@ -53,6 +53,7 @@ export {
   type WordCardModel,
 } from './word-card';
 export { openWordOfTheDay, type WordOfTheDay, type WordOfTheDayChoice } from './word-of-the-day';
+export { createMemoryContentPort } from './memory-content';
 export {
   systemClock,
   systemRandom,
