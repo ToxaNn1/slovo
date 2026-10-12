@@ -16,3 +16,18 @@ Per-record keys (one record per setting, and later one per Favorite or Collectio
 One record per Favorite or per Collection only works if the Core can find them all, so the port gains a third operation: list every record whose key starts with a prefix. The prefix is matched as it is, with case counting and no wildcards (the SQLite adapter uses `instr`, since `LIKE` ignores case and reads `%` and `_` as wildcards), and the records come in no set order. The contract suite holds both adapters to it. The `records` table is unchanged.
 
 The Core declares each record once, in `packages/core/src/user-state-schema.ts`: a key, or a key prefix for records of one kind, and the schema of the value. Every value is kept as JSON and read through its schema, so a record that holds no value of its schema reads as absent. 0.2 kept the settings as bare text, so migration 2 re-encodes them as JSON; the other 0.2 records were JSON already and keep their keys.
+
+## Amendment: Seen per Entry, and state kept in memory for the app session (after 0.2)
+
+0.2 kept Seen as one array record, `feed.seen`, and every Seen mark rewrote the whole array. That is the one-JSON-blob shape this ADR rejected: two devices' Seen sets could not merge under last-write-wins sync (ADR 0005). Seen is now one record per Entry, `feed.seen.` + Entry id, holding `true`. Migration 3 splits the stored array into those records and deletes `feed.seen` in one write; an array that does not parse is dropped, since 0.2 read nothing Seen from it either. Starting a new Cycle deletes every `feed.seen.` record it can list in the same write as the new Cycle, also records it never read.
+
+The Cycle and the Word of the Day read the user state once, when they open, and keep it in memory for the app session, so the Feed never waits on a read to pick its next card. The trade-offs:
+
+- **One of each per app session, shared.** A second instance over the same user state would not see the first one's changes. So the shell opens one Cycle and one Word of the Day per app session and hands them to the Feed, and later to History, notifications, the widget and the Game; the Feed no longer opens its own.
+- **A change is made in memory only after its write.** A Cycle change (a Seen mark, a new Cycle) returns the user-state changes that keep it and a commit step. The caller writes the changes, alone or in one write with its own (the Word of the Day writes a new Cycle with its choice), and commits once the write succeeds. A failed write is never committed, so memory and the user state agree and the next try starts one new Cycle, not two. The Word of the Day keeps its choice in memory the same way. The caller must commit one change before it asks for the next; the Feed does this by writing and committing in its one-request-at-a-time queue.
+
+### Considered Options
+
+- **Keep Seen as one record and say so here**: rejected. History (0.3) and sync (0.8) build on Seen, and a later split would need the same migration with more data to carry.
+- **The Cycle writes its own changes**: rejected. Callers need a Cycle change in the same write as their own records (the Word of the Day now, History in 0.3), so the Cycle would need to take extra changes, and the Word of the Day must choose from the new Cycle's order before anything is written.
+- **Read the user state on every question**: rejected for now. The Feed asks for the unseen Entries on every card, and a shared instance per session gives the same consistency without the reads. Revisit when sync can change records under a running app.
