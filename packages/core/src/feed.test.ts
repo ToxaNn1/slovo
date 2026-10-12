@@ -6,14 +6,19 @@ import {
   createEntries,
   createMemoryContentPort,
   createMemoryUserStatePort,
+  openCycle,
   openFeed,
   openUserState,
+  openWordOfTheDay,
   SEEN_DWELL_MS,
   type Clock,
   type Edition,
+  type Entries,
   type Feed,
   type FeedCard,
   type Random,
+  type UserState,
+  type UserStatePort,
 } from './index';
 
 function word(id: string, retired = false): Word {
@@ -105,9 +110,28 @@ const correctionCardOf = (card: FeedCard | undefined) =>
 /** The ids of the Entries the cards show, in order. */
 const entryIdsOf = (cards: readonly FeedCard[]) => cards.flatMap((card) => entryIdOf(card) ?? []);
 
+/** Opens the Cycle and the Word of the Day once, as the shell does, and the Feed over them. */
+async function openSession({
+  entries,
+  userState,
+  clock,
+  random,
+}: {
+  entries: Entries;
+  userState: UserState;
+  clock: Clock;
+  random: Random;
+}) {
+  const cycle = await openCycle({ entries, userState, random });
+  const wordOfTheDay = await openWordOfTheDay({ cycle, userState, clock });
+  const feed = await openFeed({ entries, userState, clock, cycle, wordOfTheDay });
+  return { feed, cycle, wordOfTheDay };
+}
+
 /** One app run over the given records: the user state survives between runs. */
-async function run({
+async function session({
   records = new Map<string, string>(),
+  port = createMemoryUserStatePort(records),
   clock = fakeClock('2026-10-11T09:00:00+03:00').clock,
   random = randomOf(0.25),
   words = pack,
@@ -115,22 +139,37 @@ async function run({
   correctionsSwitch = true,
 }: {
   records?: Map<string, string>;
+  port?: UserStatePort;
   clock?: Clock;
   random?: Random;
   words?: readonly Word[];
   corrections?: readonly Correction[];
   correctionsSwitch?: boolean;
-} = {}): Promise<Feed> {
-  const userState = await openUserState({ port: createMemoryUserStatePort(records) });
-  return openFeed({
+} = {}) {
+  return openSession({
     entries: createEntries({
       content: createMemoryContentPort({ words, corrections }),
       edition: editionWith(correctionsSwitch),
     }),
-    userState,
+    userState: await openUserState({ port }),
     clock,
     random,
   });
+}
+
+/** The Feed of one app run over the given records. */
+async function run(options: Parameters<typeof session>[0] = {}): Promise<Feed> {
+  return (await session(options)).feed;
+}
+
+/** A user-state port over the records whose writes fail while `failing` says so. */
+function failingPort(records: Map<string, string>, failing: () => boolean): UserStatePort {
+  const port = createMemoryUserStatePort(records);
+  return {
+    ...port,
+    write: (changes) =>
+      failing() ? Promise.reject(new Error('The disk is full')) : port.write(changes),
+  };
 }
 
 /**
@@ -207,6 +246,39 @@ describe('the Feed', () => {
       const unseen = await unseenNextDay(records);
       expect(unseen).toHaveLength(liveIds.length - 1);
       expect(unseen).not.toContain(first);
+    });
+
+    it('marks Seen in the Cycle it is given, which other features share, and opens on the Word of the Day it is given', async () => {
+      const time = fakeClock('2026-10-11T09:00:00+03:00');
+      const { feed, cycle, wordOfTheDay } = await session({ clock: time.clock });
+      const first = entryIdOf(feed.cards[0]);
+
+      await look(feed, time, 0, SEEN_DWELL_MS);
+
+      expect(wordOfTheDay.chosen()?.wordId).toBe(first);
+      expect(cycle.unseen().words).not.toContain(first);
+    });
+
+    it('leaves the Entry unseen in memory, as on disk, when keeping it Seen fails', async () => {
+      const records = new Map<string, string>();
+      let failing = false;
+      const time = fakeClock('2026-10-11T09:00:00+03:00');
+      const { feed, cycle } = await session({
+        records,
+        port: failingPort(records, () => failing),
+        clock: time.clock,
+      });
+      const first = entryIdOf(feed.cards[0]);
+      await feed.show(0);
+      time.advance(SEEN_DWELL_MS);
+
+      failing = true;
+      await expect(feed.show(undefined)).rejects.toThrow('The disk is full');
+
+      expect(cycle.unseen().words).toContain(first);
+      expect(cycle.unseen()).toEqual(
+        (await session({ records, clock: time.clock })).cycle.unseen(),
+      );
     });
 
     it('leaves an Entry unseen when its card is swiped past quickly', async () => {
@@ -341,7 +413,7 @@ describe('the Feed', () => {
     it('gets the next card ready again when the card on screen is reported again after it failed', async () => {
       const content = createMemoryContentPort({ words: pack });
       let failing = false;
-      const feed = await openFeed({
+      const { feed } = await openSession({
         entries: createEntries({
           content: {
             ...content,
@@ -510,6 +582,38 @@ describe('the Feed', () => {
       expect((await readLastCard(feed, time, SEEN_DWELL_MS))?.kind).toBe('end-of-cycle');
     });
 
+    it('keeps the last Cycle in memory, as on disk, when keeping the new Cycle fails, and starts it on the next try', async () => {
+      const records = new Map<string, string>();
+      let failing = false;
+      const time = fakeClock('2026-10-11T09:00:00+03:00');
+      const { feed, cycle } = await session({
+        records,
+        port: failingPort(records, () => failing),
+        words: small,
+        clock: time.clock,
+        random: randomSequence(0.25, 0.75, 0.5),
+      });
+      await readToTheEnd(feed, time);
+      const lastCycle = cycle.order();
+      /** The Cycle as the next app run reads it from disk. */
+      const onDisk = async () =>
+        (await session({ records, words: small, clock: time.clock })).cycle;
+
+      failing = true;
+      await expect(feed.next()).rejects.toThrow('The disk is full');
+
+      expect(cycle.order()).toEqual(lastCycle);
+      expect(cycle.unseen()).toEqual({ words: [], corrections: [] });
+      expect(cycle.unseen()).toEqual((await onDisk()).unseen());
+      expect(feed.cards.at(-1)?.kind).toBe('end-of-cycle');
+
+      failing = false;
+      const card = await feed.next();
+      expect(card?.kind).toBe('word');
+      expect(cycle.order()).toEqual((await onDisk()).order());
+      expect(cycle.unseen()).toEqual(cycle.order());
+    });
+
     it('keeps the new Cycle across a restart: nothing from the last Cycle Seen, the order of the new seed', async () => {
       const records = new Map<string, string>();
       const time = fakeClock('2026-10-11T09:00:00+03:00');
@@ -582,23 +686,19 @@ describe('the Feed', () => {
       const port = createMemoryUserStatePort();
       // Holds the next write until the test lets it through.
       let held: { came: () => void; through: Promise<void> } | undefined;
-      const feed = await openFeed({
-        entries: createEntries({
-          content: createMemoryContentPort({ words: small }),
-          edition: editionWith(false),
-        }),
-        userState: await openUserState({
-          port: {
-            ...port,
-            async write(changes) {
-              const hold = held;
-              held = undefined;
-              hold?.came();
-              await hold?.through;
-              return port.write(changes);
-            },
+      const feed = await run({
+        port: {
+          ...port,
+          async write(changes) {
+            const hold = held;
+            held = undefined;
+            hold?.came();
+            await hold?.through;
+            return port.write(changes);
           },
-        }),
+        },
+        words: small,
+        correctionsSwitch: false,
         clock: time.clock,
         random: randomSequence(0.25, 0.75),
       });

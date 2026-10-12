@@ -4,27 +4,40 @@ import type { UserState } from './user-state';
 import { userStateRecords } from './user-state-schema';
 
 /**
+ * A change of the Cycle not made yet: the user-state changes that keep it,
+ * for the caller to write, alone or in one write with other changes, and the
+ * step that makes it in memory once they are written. A change whose write
+ * fails is never committed, so memory keeps what the user state keeps.
+ */
+export interface CycleChange {
+  readonly changes: UserStateChanges;
+  /** Makes the change in memory. Call it once the changes are written, and before the next change. */
+  commit(): void;
+}
+
+/**
  * The current Cycle: every Entry it covers in an order shuffled with its seed,
  * and the Entries Seen in it. It is read from the user state once, when it
  * opens, and kept in memory after that, so open one per app session and share
- * it. A change returns the user-state changes that keep it, for the caller to
- * write, so it can go in one write with other changes.
+ * it (ADR 0013). A change is made in memory only once the caller has written
+ * it, see `CycleChange`.
  */
 export interface Cycle {
   /** Every Entry the Cycle covers, each kind in the Cycle order. */
   order(): EntryIds;
   /** The Entries of the Cycle not Seen yet, each kind in the Cycle order. */
   unseen(): EntryIds;
-  /** Makes the Entry Seen in the Cycle. Returns no changes when it was Seen already. */
-  markSeen(entryId: string): UserStateChanges;
+  /** The change that makes the Entry Seen. It changes nothing when the Entry is Seen already. */
+  markSeen(entryId: string): CycleChange;
   /**
-   * Starts a new Cycle: nothing Seen, the Entries eligible now, in a new
-   * shuffle from a new seed drawn from the random port.
+   * The change that starts a new Cycle: nothing Seen, the Entries eligible
+   * now, in a new shuffle from a new seed drawn from the random port. `order`
+   * is the new Cycle's order.
    */
-  start(): Promise<UserStateChanges>;
+  start(): Promise<CycleChange & { readonly order: EntryIds }>;
 }
 
-const { cycle: cycleRecord, seen: seenRecord } = userStateRecords;
+const { cycle: cycleRecord, seen: seenRecords } = userStateRecords;
 
 /** A seed for the shuffle of a new Cycle. */
 function drawSeed(random: Random): number {
@@ -72,7 +85,7 @@ export async function openCycle({
     return { words: shuffle(words, seed), corrections: shuffle(corrections, seed) };
   }
   let order = await orderOf(cycle.seed);
-  const seen = new Set(await userState.read(seenRecord));
+  const seen = new Set((await userState.list(seenRecords)).keys());
 
   return {
     order: () => order,
@@ -81,15 +94,31 @@ export async function openCycle({
       corrections: order.corrections.filter((id) => !seen.has(id)),
     }),
     markSeen(entryId) {
-      if (seen.has(entryId)) return new Map();
-      seen.add(entryId);
-      return seenRecord.change([...seen]);
+      if (seen.has(entryId)) return { changes: new Map(), commit: () => undefined };
+      return {
+        changes: seenRecords.record(entryId).change(true),
+        commit() {
+          seen.add(entryId);
+        },
+      };
     },
     async start() {
-      cycle = { id: cycle.id + 1, seed: drawSeed(random) };
-      order = await orderOf(cycle.seed);
-      seen.clear();
-      return new Map([...cycleRecord.change(cycle), ...seenRecord.change(undefined)]);
+      const started = { id: cycle.id + 1, seed: drawSeed(random) };
+      const startedOrder = await orderOf(started.seed);
+      // Every Seen record, also any kept by another Cycle over the user state.
+      const seenIds = (await userState.list(seenRecords)).keys();
+      return {
+        order: startedOrder,
+        changes: new Map([
+          ...cycleRecord.change(started),
+          ...[...seenIds].flatMap((id) => [...seenRecords.record(id).change(undefined)]),
+        ]),
+        commit() {
+          cycle = started;
+          order = startedOrder;
+          seen.clear();
+        },
+      };
     },
   };
 }

@@ -1,8 +1,9 @@
-import { openFeed, systemClock, systemRandom, type Feed, type FeedCard } from '@slovo/core';
+import { openFeed, systemClock, type Feed, type FeedCard } from '@slovo/core';
 import { useIsFocused } from 'expo-router';
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { AppState } from 'react-native';
 
+import { sharedCycle } from './cycle';
 import { useEntries } from './language-pack';
 import { storedUserState } from './stored-user-state';
 
@@ -30,7 +31,8 @@ export type FeedState =
 const noCards: readonly FeedCard[] = [];
 
 /**
- * The Core's Feed over the bundled Language Pack and the stored user state.
+ * The Core's Feed over the bundled Language Pack, the stored user state and
+ * the session's shared Cycle and Word of the Day.
  * It tells the Feed which card is on screen while Home is focused and the app
  * is in the foreground, and that none is otherwise.
  */
@@ -52,14 +54,9 @@ export function useFeed(): FeedState {
 
   useEffect(() => {
     let active = true;
-    storedUserState()
-      .then((userState) =>
-        openFeed({
-          entries,
-          userState,
-          clock: systemClock,
-          random: systemRandom,
-        }),
+    Promise.all([storedUserState(), sharedCycle(entries)])
+      .then(([userState, { cycle, wordOfTheDay }]) =>
+        openFeed({ entries, userState, clock: systemClock, cycle, wordOfTheDay }),
       )
       .then(
         (opened) => {

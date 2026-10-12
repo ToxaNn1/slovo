@@ -1,14 +1,14 @@
 import type { Correction, Entry, Word } from '@slovo/contracts';
 
 import { buildCorrectionCard, type CorrectionCardModel } from './correction-card';
-import { openCycle } from './cycle';
+import type { Cycle, CycleChange } from './cycle';
 import type { Entries } from './entries';
 import { localDate, type LocalDate } from './local-date';
-import type { Clock, Random, UserStateChanges } from './ports';
+import type { Clock } from './ports';
 import type { UserState } from './user-state';
 import { userStateRecords } from './user-state-schema';
 import { buildWordCard, type WordCardModel } from './word-card';
-import { openWordOfTheDay, type WordOfTheDayChoice } from './word-of-the-day';
+import type { WordOfTheDay, WordOfTheDayChoice } from './word-of-the-day';
 
 /** How long a card must stay on screen before its Entry counts as Seen. */
 export const SEEN_DWELL_MS = 1500;
@@ -95,9 +95,11 @@ export interface Feed {
 const { feedPosition } = userStateRecords;
 
 /**
- * Opens the Feed for a new app session. It opens on the card the reader was
- * on when they come back the same local day, and otherwise on the Word of the
- * Day, which also opens a new local day in a Feed left open over midnight.
+ * Opens the Feed for a new app session, over the session's Cycle and Word of
+ * the Day, which it shares with every other feature. It opens on the card the
+ * reader was on when they come back the same local day, and otherwise on the
+ * Word of the Day, which also opens a new local day in a Feed left open over
+ * midnight.
  *
  * After the Cycle's last unseen Entry comes the end-of-Cycle card, and the
  * card after that starts a new Cycle: nothing Seen, a new shuffle from a new
@@ -116,15 +118,15 @@ export async function openFeed({
   entries,
   userState,
   clock,
-  random,
+  cycle,
+  wordOfTheDay,
 }: {
   entries: Entries;
   userState: UserState;
   clock: Clock;
-  random: Random;
+  cycle: Cycle;
+  wordOfTheDay: WordOfTheDay;
 }): Promise<Feed> {
-  const cycle = await openCycle({ entries, userState, random });
-  const wordOfTheDay = await openWordOfTheDay({ cycle, userState, clock });
   let cards: readonly FeedCard[] = [];
   const listeners = new Set<() => void>();
   /** The position of the current Cycle's first card: the cards before it belong to an earlier Cycle. */
@@ -222,8 +224,10 @@ export async function openFeed({
     if (words.length === 0 && corrections.length === 0) return undefined;
     // The card after the end-of-Cycle card starts a new Cycle.
     if (atEnd && kept === cards) {
+      const started = await cycle.start();
+      await userState.write(started.changes);
+      started.commit();
       cycleStart = cards.length;
-      await userState.write(await cycle.start());
     }
     const id = nextEntryId();
     if (id === undefined) {
@@ -321,13 +325,13 @@ export async function openFeed({
     return gettingReady ?? Promise.resolve();
   }
 
-  /** The changes that make the Entry of a card that left the screen Seen, if it stayed long enough. */
-  function seenOnLeaving(left: FeedCard | undefined, stayed: number): UserStateChanges {
+  /** The change that makes the Entry of a card that left the screen Seen, if it stayed long enough. */
+  function seenOnLeaving(left: FeedCard | undefined, stayed: number): CycleChange | undefined {
     const entryId = entryIdOf(left);
     // A card of an earlier Cycle counts for that Cycle only.
     if (left === undefined || entryId === undefined || cards.indexOf(left) < cycleStart)
-      return new Map();
-    if (stayed < SEEN_DWELL_MS) return new Map();
+      return undefined;
+    if (stayed < SEEN_DWELL_MS) return undefined;
     return cycle.markSeen(entryId);
   }
 
@@ -341,18 +345,16 @@ export async function openFeed({
     const date = localDate(clock);
     // In turn with the requests that change the cards, so a new Cycle never
     // starts between the card leaving the screen and its Entry becoming Seen.
-    const changes = inTurn(() =>
-      Promise.resolve(
-        new Map([
-          ...seenOnLeaving(left, stayed),
-          ...(entryId === undefined ? [] : feedPosition.change({ entryId, date })),
-        ]),
-      ),
-    );
-    await Promise.all([
-      changes.then((kept) => (kept.size > 0 ? userState.write(kept) : undefined)),
-      keepNextCardReady(),
-    ]);
+    const kept = inTurn(async () => {
+      const seen = seenOnLeaving(left, stayed);
+      const changes = new Map([
+        ...(seen?.changes ?? []),
+        ...(entryId === undefined ? [] : feedPosition.change({ entryId, date })),
+      ]);
+      if (changes.size > 0) await userState.write(changes);
+      seen?.commit();
+    });
+    await Promise.all([kept, keepNextCardReady()]);
   }
 
   if (!(await restore())) await addWordOfTheDay();

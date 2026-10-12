@@ -1,7 +1,7 @@
 import { FontSizeSchema, ThemeSchema } from '@slovo/contracts';
 import { z } from 'zod';
 
-import { declareRecord } from './user-state-record';
+import { declareRecord, declareRecords } from './user-state-record';
 import type { UserStateMigration } from './user-state';
 
 /**
@@ -18,7 +18,7 @@ const EntryOnDateSchema = z.object({ entryId: z.string(), date: z.string() });
 
 /**
  * Every record of the user state. The Cycle and the Word of the Day keep the
- * `feed.` keys from 0.2, when the Feed held them, so no migration is needed.
+ * `feed.` keys from 0.2, when the Feed held them.
  */
 export const userStateRecords = {
   /** The user's Theme. */
@@ -34,8 +34,8 @@ export const userStateRecords = {
     'feed.cycle',
     z.object({ id: z.number().int().positive(), seed: z.number().int().nonnegative() }),
   ),
-  /** The ids of the Entries Seen in the current Cycle. */
-  seen: declareRecord('feed.seen', z.array(z.string())),
+  /** The Entries Seen in the current Cycle, one record per Entry, by Entry id. */
+  seen: declareRecords('feed.seen.', z.literal(true)),
   /** The Word of the Day and the local date it belongs to. */
   wordOfTheDay: declareRecord('feed.wordOfTheDay', EntryOnDateSchema),
 };
@@ -60,4 +60,27 @@ export const userStateMigrations: readonly UserStateMigration[] = [
       return changes;
     },
   },
+  // After 0.2: Seen is one record per Entry (`feed.seen.` + id), not one array, so
+  // sync can merge it record by record (ADR 0013). An unreadable array is dropped,
+  // as 0.2 read nothing Seen from it.
+  {
+    version: 3,
+    async migrate({ get }) {
+      const text = await get('feed.seen');
+      if (text === undefined) return new Map();
+      const changes = new Map<string, string | undefined>([['feed.seen', undefined]]);
+      const ids = z.array(z.string()).safeParse(parseJson(text));
+      for (const id of ids.data ?? []) changes.set(`feed.seen.${id}`, JSON.stringify(true));
+      return changes;
+    },
+  },
 ];
+
+/** The value the text holds as JSON, or nothing when it is not JSON. */
+function parseJson(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return undefined;
+  }
+}

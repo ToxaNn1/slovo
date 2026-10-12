@@ -5,8 +5,8 @@ import {
   openCycle,
   openUserState,
   type Cycle,
+  type CycleChange,
   type Random,
-  type UserStateChanges,
 } from './index';
 
 const wordIds = Array.from({ length: 10 }, (_, index) => `w_${String(index)}`);
@@ -41,9 +41,10 @@ async function open({
   });
 }
 
-/** Writes the changes a step returns, as its caller does. */
-function keep(records: Map<string, string>, changes: UserStateChanges): Promise<void> {
-  return createMemoryUserStatePort(records).write(changes);
+/** Writes the changes of a Cycle change and then applies it, as its caller does. */
+async function keep(records: Map<string, string>, change: CycleChange): Promise<void> {
+  await createMemoryUserStatePort(records).write(change.changes);
+  change.commit();
 }
 
 describe('the Cycle', () => {
@@ -87,8 +88,8 @@ describe('the Cycle', () => {
       const [word, ...otherWords] = cycle.order().words;
       const [correction, ...otherCorrections] = cycle.order().corrections;
 
-      cycle.markSeen(word ?? '');
-      cycle.markSeen(correction ?? '');
+      cycle.markSeen(word ?? '').commit();
+      cycle.markSeen(correction ?? '').commit();
 
       expect(cycle.unseen()).toEqual({ words: otherWords, corrections: otherCorrections });
       expect(cycle.order().words).toContain(word);
@@ -108,26 +109,83 @@ describe('the Cycle', () => {
       expect(restarted.unseen().words).toContain(second);
     });
 
+    it('makes nothing Seen until the change is committed, so a failed write changes nothing', async () => {
+      const records = new Map<string, string>();
+      const cycle = await open({ records });
+      const [first = ''] = cycle.order().words;
+
+      const change = cycle.markSeen(first);
+
+      expect(cycle.unseen().words).toContain(first);
+      change.commit();
+      expect(cycle.unseen().words).not.toContain(first);
+    });
+
     it('returns no changes for an Entry Seen already', async () => {
       const cycle = await open();
       const [first = ''] = cycle.order().words;
-      cycle.markSeen(first);
+      cycle.markSeen(first).commit();
 
-      expect(cycle.markSeen(first).size).toBe(0);
+      expect(cycle.markSeen(first).changes.size).toBe(0);
+    });
+
+    it("keeps one record per Seen Entry, so two Cycles over one user state keep each other's marks", async () => {
+      const records = new Map<string, string>();
+      const one = await open({ records });
+      const other = await open({ records });
+      const [first, second] = one.order().words;
+
+      await keep(records, one.markSeen(first ?? ''));
+      await keep(records, other.markSeen(second ?? ''));
+
+      const restarted = await open({ records });
+      expect(restarted.unseen().words).not.toContain(first);
+      expect(restarted.unseen().words).not.toContain(second);
     });
   });
 
   describe('a new Cycle', () => {
     it('has nothing Seen and a new order from a new seed', async () => {
       const cycle = await open({ random: randomSequence(0.25, 0.75) });
-      for (const id of cycle.order().words) cycle.markSeen(id);
+      for (const id of cycle.order().words) cycle.markSeen(id).commit();
       expect(cycle.unseen().words).toEqual([]);
 
-      await cycle.start();
+      const started = await cycle.start();
+      started.commit();
 
       // The order a first Cycle shuffled with the second seed has.
       expect(cycle.order()).toEqual((await open({ random: randomOf(0.75) })).order());
+      expect(started.order).toEqual(cycle.order());
       expect(cycle.unseen()).toEqual(cycle.order());
+    });
+
+    it('leaves the Cycle as it is until the change is committed, so a failed write changes nothing', async () => {
+      const records = new Map<string, string>();
+      const cycle = await open({ records, random: randomSequence(0.25, 0.75) });
+      const [first = ''] = cycle.order().words;
+      await keep(records, cycle.markSeen(first));
+      const before = { order: cycle.order(), unseen: cycle.unseen() };
+
+      const started = await cycle.start();
+
+      expect(started.order).not.toEqual(before.order);
+      expect({ order: cycle.order(), unseen: cycle.unseen() }).toEqual(before);
+      const restarted = await open({ records });
+      expect({ order: restarted.order(), unseen: restarted.unseen() }).toEqual(before);
+    });
+
+    it('deletes every Seen record, also those another Cycle over the user state kept', async () => {
+      const records = new Map<string, string>();
+      const one = await open({ records });
+      const other = await open({ records });
+      const [first, second] = one.order().words;
+      await keep(records, one.markSeen(first ?? ''));
+      await keep(records, other.markSeen(second ?? ''));
+
+      await keep(records, await one.start());
+
+      const restarted = await open({ records });
+      expect(restarted.unseen()).toEqual(restarted.order());
     });
 
     it('is kept across a restart once its changes are written: nothing Seen, the order of the new seed', async () => {
@@ -152,7 +210,7 @@ describe('the Cycle', () => {
       });
 
       words.splice(0, 2, 'w_new');
-      await cycle.start();
+      (await cycle.start()).commit();
 
       expect(new Set(cycle.order().words)).toEqual(new Set(words));
       expect(cycle.order().corrections).toEqual([]);

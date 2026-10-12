@@ -15,7 +15,7 @@ export type {
   Word,
 } from '@slovo/contracts';
 export { buildCorrectionCard, type CorrectionCardModel } from './correction-card';
-export { openCycle, type Cycle } from './cycle';
+export { openCycle, type Cycle, type CycleChange } from './cycle';
 export { coreDecor, InvalidDecorError, loadDecor, type Decor } from './decor';
 export { createEntries, type Entries, type EntryIds } from './entries';
 export {

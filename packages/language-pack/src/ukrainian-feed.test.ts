@@ -10,8 +10,10 @@ import {
   createEntries,
   createMemoryUserStatePort,
   loadEdition,
+  openCycle,
   openFeed,
   openUserState,
+  openWordOfTheDay,
   SEEN_DWELL_MS,
   type Clock,
   type Edition,
@@ -87,12 +89,10 @@ async function run(
   edition: Edition = wordsOnly,
 ): Promise<Feed> {
   const userState = await openUserState({ port: createMemoryUserStatePort(records) });
-  return openFeed({
-    entries: createEntries({ content: pack, edition }),
-    userState,
-    clock,
-    random: seededRandom(seed),
-  });
+  const entries = createEntries({ content: pack, edition });
+  const cycle = await openCycle({ entries, userState, random: seededRandom(seed) });
+  const wordOfTheDay = await openWordOfTheDay({ cycle, userState, clock });
+  return openFeed({ entries, userState, clock, cycle, wordOfTheDay });
 }
 
 /** The id of the Entry a card shows, if it shows one. */
