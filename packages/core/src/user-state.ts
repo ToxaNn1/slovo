@@ -98,6 +98,8 @@ export async function openUserState({
 export function createMemoryUserStatePort(records = new Map<string, string>()): UserStatePort {
   return {
     get: (key) => Promise.resolve(records.get(key)),
+    list: (prefix) =>
+      Promise.resolve(new Map([...records].filter(([key]) => key.startsWith(prefix)))),
     write(changes) {
       for (const [key, value] of changes) {
         if (value === undefined) records.delete(key);

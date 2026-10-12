@@ -49,6 +49,8 @@ function nodeDriver(db: DatabaseSync): UserStateDatabase {
     },
     getFirstAsync: <T>(sql: string, params: string[]) =>
       Promise.resolve((db.prepare(sql).get(...params) as T | undefined) ?? null),
+    getAllAsync: <T>(sql: string, params: string[]) =>
+      Promise.resolve(db.prepare(sql).all(...params) as T[]),
     runAsync: (sql, params) => Promise.resolve(db.prepare(sql).run(...params)),
     async withTransactionAsync(task) {
       db.exec('BEGIN');
@@ -115,6 +117,61 @@ describe.each(adapters)('the user state %s', (_, createStore) => {
     await (await store.open()).write(new Map([['kept', 'yes']]));
 
     expect(await (await store.open()).get('kept')).toBe('yes');
+  });
+
+  it('lists every record under a prefix, and only those', async () => {
+    const port = await createStore().open();
+    await port.write(
+      new Map([
+        ['favorites.w_1', 'one'],
+        ['favorites.w_2', 'two'],
+        ['favorites', 'no dot'],
+        ['Favorites.w_3', 'other case'],
+        ['old.favorites.w_4', 'prefix inside'],
+        ['history', 'other kind'],
+      ]),
+    );
+
+    expect(await port.list('favorites.')).toEqual(
+      new Map([
+        ['favorites.w_1', 'one'],
+        ['favorites.w_2', 'two'],
+      ]),
+    );
+    expect(await port.list('collections.')).toEqual(new Map());
+  });
+
+  it('lists what is kept now: a deleted record is gone, a replaced one has its new value', async () => {
+    const port = await createStore().open();
+    await port.write(
+      new Map([
+        ['favorites.w_1', 'one'],
+        ['favorites.w_2', 'two'],
+      ]),
+    );
+    await port.write(
+      new Map([
+        ['favorites.w_1', undefined],
+        ['favorites.w_2', 'zwei'],
+      ]),
+    );
+
+    expect(await port.list('favorites.')).toEqual(new Map([['favorites.w_2', 'zwei']]));
+  });
+
+  it('reads no character of a prefix as a wildcard', async () => {
+    const port = await createStore().open();
+    await port.write(
+      new Map([
+        ['a%b.1', 'percent'],
+        ['axb.1', 'x'],
+        ['a_b.1', 'underscore'],
+        ['ayb.1', 'y'],
+      ]),
+    );
+
+    expect(await port.list('a%b.')).toEqual(new Map([['a%b.1', 'percent']]));
+    expect(await port.list('a_b.')).toEqual(new Map([['a_b.1', 'underscore']]));
   });
 
   it('applies writes made at the same time in the order they were made', async () => {

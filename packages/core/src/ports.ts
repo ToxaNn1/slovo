@@ -42,6 +42,12 @@ export type UserStateChanges = ReadonlyMap<string, string | undefined>;
 export interface UserStatePort {
   /** The record stored under the key, if any. */
   get(key: string): Promise<string | undefined>;
+  /**
+   * Every record whose key starts with the prefix, by key, in no set order.
+   * The prefix is matched as it is: case counts, and no character is a
+   * wildcard.
+   */
+  list(prefix: string): Promise<ReadonlyMap<string, string>>;
   /** Applies every change at once, or none of them. */
   write(changes: UserStateChanges): Promise<void>;
 }

@@ -193,6 +193,7 @@ describe('the Word of the Day', () => {
       let writesLeft = 1;
       const fillingUp: UserStatePort = {
         get: (key) => memory.get(key),
+        list: (prefix) => memory.list(prefix),
         write: (changes) =>
           writesLeft-- > 0 ? memory.write(changes) : Promise.reject(new Error('The disk is full')),
       };
