@@ -1,11 +1,19 @@
-import { DecorProvider, fill, FontSizeProvider, TokensProvider, typeSize } from '@slovo/ui';
+import {
+  DecorProvider,
+  EditionProvider,
+  fill,
+  FontSizeProvider,
+  TokensProvider,
+  typeSize,
+} from '@slovo/ui';
 import { DarkTheme, DefaultTheme, Tabs, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useMemo } from 'react';
 
-import { editionDecor, editionStrings, editionTokens } from '../edition';
+import { edition, editionDecor, editionStrings, editionTokens } from '../edition';
 import { LanguagePackProvider } from '../language-pack';
 import { LaunchSplash } from '../launch-splash';
+import { LemmaPronunciation } from '../pronunciation-button';
 import { SettingsProvider, useColorSchemeInEffect, useSettings } from '../settings';
 
 const { tabs } = editionStrings;
@@ -32,9 +40,15 @@ function tabOptions(tab: (typeof tabOrder)[number]) {
 export default function RootLayout() {
   return (
     <SettingsProvider>
-      <DecorProvider decor={editionDecor}>
-        <ThemedTabs />
-      </DecorProvider>
+      <EditionProvider
+        edition={edition}
+        strings={editionStrings}
+        pronunciation={LemmaPronunciation}
+      >
+        <DecorProvider decor={editionDecor}>
+          <ThemedTabs />
+        </DecorProvider>
+      </EditionProvider>
     </SettingsProvider>
   );
 }

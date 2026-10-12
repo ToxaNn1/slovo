@@ -1,85 +1,45 @@
-import type { EditionStrings } from '@slovo/contracts';
-import type { Example, WordCardModel } from '@slovo/core';
+import type { Example, LocalDate, WordCardModel } from '@slovo/core';
 import { useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
+import { OrnamentDivider } from './DecorSlots';
+import { fill, useEdition } from './EditionProvider';
 import { useWordTextSizes, type TextSize } from './FontSizeProvider';
-import { minTouchTarget, space, typeSize } from './tokens';
+import { minTouchTarget, space, typeSize, withAlpha } from './tokens';
 import { useTokens } from './TokensProvider';
 import { usePageTurnActions } from './VerticalPager';
-
-/** The Edition's Word card strings. */
-export type WordCardStrings = EditionStrings['wordCard'];
-
-export interface WordCardProps {
-  /** What the card shows, as the Core built it. */
-  card: WordCardModel;
-  strings: WordCardStrings;
-  /** The display name of the card's Category, from the Edition. */
-  categoryName: string | undefined;
-  /** The Edition's language (BCP 47), so VoiceOver reads the card in its voice. */
-  language?: string;
-  /** A badge over the Lemma, such as the Word of the Day's. */
-  badge?: ReactNode;
-  /** Decor drawn over the card's edges, such as corner ornaments (Decor slot 3). */
-  frame?: ReactNode;
-  /** Decor between the header and the Definition, such as an ornament divider (Decor slot 2). */
-  divider?: ReactNode;
-  /** The Pronunciation button, at the right of the Lemma. */
-  pronunciation?: ReactNode;
-  /** Opens a linked Correction when the reader taps its form in the «often said» line. */
-  onOpenCorrection?: (correctionId: string) => void;
-}
-
-/** Below this window width the card takes the design's compact iPhone SE layout. */
-export const COMPACT_WIDTH = 390;
-
-/** On the SE the Lemma drops from 48 to 44 at M, and the padding shrinks by 25%. */
-export const COMPACT_LEMMA = 44 / 48;
-export const COMPACT_PADDING = 0.75;
-
-/** `{name}` placeholders filled from `values`. */
-export function fill(template: string, values: Readonly<Record<string, string>>): string {
-  return template.replace(/\{(\w+)\}/g, (match, name: string) => values[name] ?? match);
-}
-
-/** A `#RRGGBB` colour at the given opacity; any other colour as it is. */
-export function withAlpha(color: string, alpha: number): string {
-  const hex = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(color);
-  if (hex === null) return color;
-  const [r, g, b] = hex.slice(1).map((pair) => parseInt(pair, 16));
-  return `rgba(${String(r)}, ${String(g)}, ${String(b)}, ${String(alpha)})`;
-}
+import { WordOfTheDayBadge } from './WordOfTheDayBadge';
 
 /**
- * The Word card: the Lemma with Stress, part of speech and register chips,
- * the primary Definition, the first Example, Synonyms and antonyms, the
- * Category chip, the details behind "more" and the linked Corrections. It
- * draws only the sections the Core put in the card, at the user's font size.
+ * The Word card's blocks inside the Entry card's frame: the Lemma with Stress,
+ * part of speech and register chips, the primary Definition, the first
+ * Example, Synonyms and antonyms, the Category chip, the details behind
+ * "more" and the linked Corrections. It draws only the sections the Core put
+ * in the card, at the user's font size.
  */
-export function WordCard({
+export function WordCardBody({
   card,
-  strings,
-  categoryName,
-  language,
-  badge,
-  frame,
-  divider,
-  pronunciation,
+  wordOfTheDay,
+  compact,
+  lemmaSize,
   onOpenCorrection,
-}: WordCardProps) {
+}: {
+  card: WordCardModel;
+  /** On the card of the Word of the Day: the local day it is the Word of. */
+  wordOfTheDay: LocalDate | undefined;
+  /** The design's compact iPhone SE layout. */
+  compact: boolean;
+  /** The Lemma's size at the user's font size, smaller in the compact layout. */
+  lemmaSize: TextSize;
+  onOpenCorrection: ((correctionId: string) => void) | undefined;
+}) {
   const { colors, fontFamilies, radii } = useTokens();
   const sizes = useWordTextSizes();
-  const compact = useWindowDimensions().width < COMPACT_WIDTH;
-  const lemmaSize = compact
-    ? {
-        fontSize: sizes.lemma.fontSize * COMPACT_LEMMA,
-        lineHeight: sizes.lemma.lineHeight * COMPACT_LEMMA,
-      }
-    : sizes.lemma;
-  const padding = compact ? COMPACT_PADDING : 1;
-  const voice = language === undefined ? {} : { accessibilityLanguage: language };
+  const edition = useEdition();
+  const { voice, Pronunciation } = edition;
+  const strings = edition.strings.wordCard;
+  const categoryName = edition.categoryName(card.categoryId);
   // In the Feed, VoiceOver turns to the next or previous card from the Lemma and the Definition.
   const turnActions = usePageTurnActions();
 
@@ -120,22 +80,8 @@ export function WordCard({
   ].filter(({ words }) => words.length > 0);
 
   return (
-    <View
-      testID="word-card"
-      style={[
-        styles.card,
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.line,
-          borderRadius: radii.card,
-          paddingTop: space[8] * padding,
-          paddingHorizontal: CARD_SIDE * padding,
-          paddingBottom: CARD_SIDE * padding,
-          gap: CARD_GAP * padding,
-        },
-      ]}
-    >
-      {badge}
+    <>
+      {wordOfTheDay === undefined ? null : <WordOfTheDayBadge day={wordOfTheDay} />}
       <View style={styles.header}>
         <View style={styles.headline}>
           <Text
@@ -193,9 +139,12 @@ export function WordCard({
             ))}
           </View>
         </View>
-        {pronunciation}
+        {Pronunciation === undefined ? null : <Pronunciation lemma={card.lemma} />}
       </View>
-      {divider === undefined ? null : <View>{divider}</View>}
+      <View>
+        {/* Decor slot 2, between the header and the Definition. */}
+        <OrnamentDivider />
+      </View>
       <Text
         testID="word-definition"
         {...voice}
@@ -205,13 +154,7 @@ export function WordCard({
         {card.primaryDefinition}
       </Text>
       {card.example === undefined ? null : (
-        <ExampleText
-          testID="word-example"
-          example={card.example}
-          strings={strings}
-          size={sizes.example}
-          voice={voice}
-        />
+        <ExampleText testID="word-example" example={card.example} size={sizes.example} />
       )}
       {relations.length === 0 && !compact ? null : (
         <View style={compact ? styles.compactRow : styles.relations}>
@@ -237,9 +180,7 @@ export function WordCard({
         </View>
       )}
       {compact ? null : categoryChip}
-      {card.details === undefined ? null : (
-        <Details details={card.details} strings={strings} voice={voice} />
-      )}
+      {card.details === undefined ? null : <Details details={card.details} />}
       {card.linkedCorrections.length === 0 ? null : (
         <View
           testID="word-often-said"
@@ -290,35 +231,22 @@ export function WordCard({
           </View>
         </View>
       )}
-      {frame === undefined ? null : (
-        <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-          {frame}
-        </View>
-      )}
-    </View>
+    </>
   );
-}
-
-/** The props that give VoiceOver the Edition's language. */
-interface Voice {
-  accessibilityLanguage?: string;
 }
 
 /** An Example in italics, with its author's line only when the source names one. */
 function ExampleText({
   example,
-  strings,
   size,
-  voice,
   testID,
 }: {
   example: Example;
-  strings: WordCardStrings;
   size: TextSize;
-  voice: Voice;
   testID?: string;
 }) {
   const { colors, fontFamilies } = useTokens();
+  const { strings, voice } = useEdition();
   return (
     <View testID={testID} accessible {...voice}>
       <Text
@@ -328,11 +256,11 @@ function ExampleText({
           { color: colors.inkSecondary, fontFamily: fontFamilies.word },
         ]}
       >
-        {fill(strings.example, { text: example.text })}
+        {fill(strings.wordCard.example, { text: example.text })}
       </Text>
       {example.author === undefined ? null : (
         <Text style={[styles.author, { color: colors.muted, fontFamily: fontFamilies.ui }]}>
-          {fill(strings.exampleAuthor, { author: example.author })}
+          {fill(strings.wordCard.exampleAuthor, { author: example.author })}
         </Text>
       )}
     </View>
@@ -340,16 +268,9 @@ function ExampleText({
 }
 
 /** "More": the etymology, extra Definitions and further Examples, opened on demand. */
-function Details({
-  details,
-  strings,
-  voice,
-}: {
-  details: NonNullable<WordCardModel['details']>;
-  strings: WordCardStrings;
-  voice: Voice;
-}) {
+function Details({ details }: { details: NonNullable<WordCardModel['details']> }) {
   const { colors, fontFamilies } = useTokens();
+  const { strings, voice } = useEdition();
   const sizes = useWordTextSizes();
   const [open, setOpen] = useState(false);
   const bodyText = [sizes.example, { color: colors.ink, fontFamily: fontFamilies.word }];
@@ -367,7 +288,7 @@ function Details({
         style={styles.moreButton}
       >
         <Text style={[styles.moreText, { color: colors.accent, fontFamily: fontFamilies.ui }]}>
-          {strings.more}
+          {strings.wordCard.more}
         </Text>
         <Svg
           width={14}
@@ -382,7 +303,7 @@ function Details({
       {open ? (
         <View testID="word-details" style={styles.details}>
           {details.extraDefinitions.length === 0 ? null : (
-            <DetailSection title={strings.extraDefinitions} voice={voice}>
+            <DetailSection title={strings.wordCard.extraDefinitions}>
               {details.extraDefinitions.map((definition, index) => (
                 <Text key={index} {...voice} style={bodyText}>
                   {/* The primary Definition is the first; these number on from 2. */}
@@ -392,20 +313,14 @@ function Details({
             </DetailSection>
           )}
           {details.examples.length === 0 ? null : (
-            <DetailSection title={strings.moreExamples} voice={voice}>
+            <DetailSection title={strings.wordCard.moreExamples}>
               {details.examples.map((example, index) => (
-                <ExampleText
-                  key={index}
-                  example={example}
-                  strings={strings}
-                  size={sizes.example}
-                  voice={voice}
-                />
+                <ExampleText key={index} example={example} size={sizes.example} />
               ))}
             </DetailSection>
           )}
           {details.etymology === undefined ? null : (
-            <DetailSection title={strings.etymology} voice={voice}>
+            <DetailSection title={strings.wordCard.etymology}>
               <Text
                 {...voice}
                 style={[
@@ -423,16 +338,9 @@ function Details({
   );
 }
 
-function DetailSection({
-  title,
-  voice,
-  children,
-}: {
-  title: string;
-  voice: Voice;
-  children: ReactNode;
-}) {
+function DetailSection({ title, children }: { title: string; children: ReactNode }) {
   const { colors, fontFamilies } = useTokens();
+  const { voice } = useEdition();
   return (
     <View style={styles.detailSection}>
       <Text
@@ -447,13 +355,10 @@ function DetailSection({
   );
 }
 
-/** Padding 32 / 26 / 26 from the design; 18 between blocks. */
-const CARD_SIDE = 26;
-const CARD_GAP = 18;
+/** The details keep the card's 18 between blocks. */
+const DETAILS_GAP = 18;
 
 const styles = StyleSheet.create({
-  // The border is the card's only elevation.
-  card: { borderWidth: 1 },
   // Over the blocks below it, so the Pronunciation message can open over them.
   header: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3], zIndex: 1 },
   headline: { flex: 1, minWidth: 0, gap: space[2] },
@@ -492,7 +397,7 @@ const styles = StyleSheet.create({
   },
   moreText: { fontSize: typeSize.body, fontWeight: '700' },
   chevronOpen: { transform: [{ rotate: '180deg' }] },
-  details: { gap: CARD_GAP, marginTop: space[4] },
+  details: { gap: DETAILS_GAP, marginTop: space[4] },
   detailSection: { gap: space[2] },
   overline: {
     fontSize: typeSize.overline,

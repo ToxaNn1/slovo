@@ -9,9 +9,9 @@ import {
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
-import { minTouchTarget, space } from './tokens';
+import { useEdition } from './EditionProvider';
+import { minTouchTarget, space, withAlpha } from './tokens';
 import { useTokens } from './TokensProvider';
-import { withAlpha, type WordCardStrings } from './WordCard';
 
 /**
  * What the button shows: ready, the Lemma being spoken, or the message that
@@ -21,13 +21,10 @@ export type PronunciationButtonState = 'idle' | 'playing' | 'no-voice';
 
 export interface PronunciationButtonProps {
   state: PronunciationButtonState;
-  strings: WordCardStrings['pronunciation'];
   /** Speaks the Lemma, or stops it while it plays. */
   onPress: () => void;
   /** Hides the missing-voice message. */
   onDismissMessage: () => void;
-  /** The Edition's language (BCP 47), so VoiceOver reads the message in its voice. */
-  language?: string;
 }
 
 /** How long the missing-voice message stays when the reader leaves it. */
@@ -44,15 +41,14 @@ const MESSAGE_MARGIN = 64;
  */
 export function PronunciationButton({
   state,
-  strings,
   onPress,
   onDismissMessage,
-  language,
 }: PronunciationButtonProps) {
   const { colors, fontFamilies } = useTokens();
+  const { strings: editionStrings, voice } = useEdition();
+  const strings = editionStrings.wordCard.pronunciation;
   const window = useWindowDimensions();
   const playing = state === 'playing';
-  const voice = language === undefined ? {} : { accessibilityLanguage: language };
 
   useEffect(() => {
     if (state !== 'no-voice') return;

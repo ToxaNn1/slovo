@@ -1,4 +1,7 @@
+import type { LocalDate } from '@slovo/core';
 import { StyleSheet, Text, View } from 'react-native';
+
+import { fill, useEdition } from './EditionProvider';
 
 import { space, typeSize } from './tokens';
 import { useTokens } from './TokensProvider';
@@ -8,8 +11,10 @@ import { useTokens } from './TokensProvider';
  * "Слово дня · 11 жовтня", drawn in capitals over the Lemma. VoiceOver reads
  * the label as written.
  */
-export function WordOfTheDayBadge({ label }: { label: string }) {
+export function WordOfTheDayBadge({ day: { month, day } }: { day: LocalDate }) {
   const { colors, fontFamilies, radii } = useTokens();
+  const { badge, months } = useEdition().strings.wordOfTheDay;
+  const label = fill(badge, { day: String(day), month: months[month - 1] ?? '' });
   return (
     <View
       testID="word-of-the-day-badge"

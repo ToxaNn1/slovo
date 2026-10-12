@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
+import { useEdition } from './EditionProvider';
 import { useWordTextSizes } from './FontSizeProvider';
 import { space } from './tokens';
 import { useTokens } from './TokensProvider';
@@ -11,24 +12,22 @@ import { useTokens } from './TokensProvider';
 export function FontSizePreview({
   lemma,
   definition,
-  language,
   testID,
 }: {
   /** The sample Lemma, Stress marks included. */
   lemma: string;
   definition: string;
-  /** The Edition's language (BCP 47), so VoiceOver reads the sample in its voice. */
-  language?: string;
   testID?: string;
 }) {
   const { colors, fontFamilies, radii } = useTokens();
   const { lemma: lemmaSize, definition: definitionSize } = useWordTextSizes();
+  const { voice } = useEdition();
   return (
     <View
       testID={testID}
       accessible
       accessibilityLabel={`${lemma}. ${definition}`}
-      {...(language === undefined ? {} : { accessibilityLanguage: language })}
+      {...voice}
       style={[
         styles.card,
         { backgroundColor: colors.surface, borderColor: colors.line, borderRadius: radii.card },

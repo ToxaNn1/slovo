@@ -1,27 +1,24 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { EmptyStateIllustration } from './DecorSlots';
+import { useEdition } from './EditionProvider';
 import { space, typeSize } from './tokens';
 import { useTokens } from './TokensProvider';
 import { usePageTurnActions } from './VerticalPager';
-
-export interface EndOfCycleCardProps {
-  /** Says the reader has Seen every live Entry, in the Edition's language. */
-  title: string;
-  /** Asks the reader to wait for new Entries and swipe on to start a new Cycle. */
-  message: string;
-}
 
 /** The width of the empty-state illustration (Decor slot 4), within the design's 90–120. */
 const ILLUSTRATION_WIDTH = 108;
 
 /**
  * The end-of-Cycle card: the Edition's empty-state illustration over a
- * title and one line of muted text, centred on the Feed's background. It has
- * no surface of its own. VoiceOver reads it as one element.
+ * title and one line of muted text, centred on the Feed's background: it
+ * says the reader has Seen every live Entry and asks them to wait for new
+ * ones or swipe on to start a new Cycle. It has no surface of its own.
+ * VoiceOver reads it as one element.
  */
-export function EndOfCycleCard({ title, message }: EndOfCycleCardProps) {
+export function EndOfCycleCard() {
   const { colors, fontFamilies } = useTokens();
+  const { title, message } = useEdition().strings.endOfCycle;
   // In the Feed, VoiceOver turns to the card that starts the new Cycle from here.
   const turnActions = usePageTurnActions();
   return (
