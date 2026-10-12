@@ -44,8 +44,9 @@ export function EndOfCycleCard({ title, message }: EndOfCycleCardProps) {
 const styles = StyleSheet.create({
   card: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   illustration: { marginBottom: space[6] },
+  // Narrow enough that the design's title breaks into two balanced lines.
   title: {
-    maxWidth: 300,
+    maxWidth: 260,
     fontSize: typeSize.emptyStateTitle,
     lineHeight: typeSize.emptyStateTitle * 1.2,
     fontWeight: '500',
