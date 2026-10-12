@@ -1,6 +1,6 @@
 import type { Cycle } from './cycle';
 import { localDate, parseLocalDate, type LocalDate } from './local-date';
-import type { Clock, UserStateChanges } from './ports';
+import type { Clock } from './ports';
 import type { UserState } from './user-state';
 import { userStateRecords } from './user-state-schema';
 
@@ -14,7 +14,8 @@ export interface WordOfTheDayChoice {
  * The Word of the Day: one Word unseen in the Cycle, chosen once per local
  * day in the clock's time zone and kept in the user state with its date. It
  * is read from the user state once, when it opens, like the Cycle it chooses
- * from.
+ * from, so open one per app session over that Cycle and share it. A choice is
+ * made in memory only once it is written.
  */
 export interface WordOfTheDay {
   /** Today's Word of the Day if it is chosen already. Never chooses one. */
@@ -48,9 +49,15 @@ export async function openWordOfTheDay({
 }): Promise<WordOfTheDay> {
   let record = await userState.read(wordOfTheDayRecord);
 
-  /** The next unseen Word in the Cycle order, other than the day before's where it can be. */
-  function nextWordId(dayBefore: string | undefined, avoid: ReadonlySet<string>) {
-    const unseen = cycle.unseen().words;
+  /**
+   * The next of the unseen Words in the Cycle order, other than the day
+   * before's where it can be.
+   */
+  function nextWordId(
+    unseen: readonly string[],
+    dayBefore: string | undefined,
+    avoid: ReadonlySet<string>,
+  ) {
     const fresh = unseen.filter((id) => id !== dayBefore);
     return fresh.find((id) => !avoid.has(id)) ?? fresh[0] ?? unseen[0];
   }
@@ -68,18 +75,19 @@ export async function openWordOfTheDay({
         return { wordId: record.entryId, date: parseLocalDate(today), startedCycle: false };
       }
       const dayBefore = record?.entryId;
-      let changes: UserStateChanges = new Map();
-      let id = nextWordId(dayBefore, avoid);
-      const startedCycle = id === undefined && cycle.order().words.length > 0;
-      if (startedCycle) {
-        // Every Word is Seen, so the day starts a new Cycle.
-        changes = await cycle.start();
-        id = nextWordId(dayBefore, new Set());
-      }
+      let id = nextWordId(cycle.unseen().words, dayBefore, avoid);
+      // Every Word is Seen, so the day starts a new Cycle, where nothing is Seen.
+      const started =
+        id === undefined && cycle.order().words.length > 0 ? await cycle.start() : undefined;
+      if (started !== undefined) id = nextWordId(started.order.words, dayBefore, new Set());
       if (id === undefined) return undefined;
-      record = { entryId: id, date: today };
-      await userState.write(new Map([...changes, ...wordOfTheDayRecord.change(record)]));
-      return { wordId: id, date: parseLocalDate(today), startedCycle };
+      const chosen = { entryId: id, date: today };
+      await userState.write(
+        new Map([...(started?.changes ?? []), ...wordOfTheDayRecord.change(chosen)]),
+      );
+      started?.commit();
+      record = chosen;
+      return { wordId: id, date: parseLocalDate(today), startedCycle: started !== undefined };
     },
   };
 }

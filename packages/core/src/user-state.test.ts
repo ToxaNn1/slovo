@@ -67,6 +67,34 @@ describe('openUserState', () => {
     expect(new Set(cycle.unseen().words)).toEqual(new Set(['w_0', 'w_3', 'w_4']));
     expect(wordOfTheDay.chosen()?.wordId).toBe('w_3');
   });
+
+  it('splits the Seen array 0.2 kept into one record per Entry', async () => {
+    const records = new Map([
+      ['schema.version', '1'],
+      ['feed.seen', '["w_1","w_2"]'],
+    ]);
+
+    await openUserState({ port: createMemoryUserStatePort(records) });
+
+    expect(records.has('feed.seen')).toBe(false);
+    expect(await createMemoryUserStatePort(records).list('feed.seen.')).toEqual(
+      new Map([
+        ['feed.seen.w_1', 'true'],
+        ['feed.seen.w_2', 'true'],
+      ]),
+    );
+  });
+
+  it('drops a Seen array that is not one, as 0.2 would have read nothing Seen from it', async () => {
+    const records = new Map([
+      ['schema.version', '2'],
+      ['feed.seen', '{"w_1":true}'],
+    ]);
+
+    await openUserState({ port: createMemoryUserStatePort(records) });
+
+    expect([...records.keys()].filter((key) => key.startsWith('feed.seen'))).toEqual([]);
+  });
 });
 
 describe('the user-state records', () => {

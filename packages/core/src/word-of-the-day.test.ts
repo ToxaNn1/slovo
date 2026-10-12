@@ -31,6 +31,12 @@ function fakeClock(start: string, timeZone = 'Europe/Kyiv') {
 /** A random port that always draws the same number, so the Cycle seed is fixed. */
 const randomOf = (value: number): Random => ({ next: () => value });
 
+/** A random port that draws the given numbers in turn, so each new Cycle gets the next seed. */
+function randomSequence(...values: number[]): Random {
+  let drawn = 0;
+  return { next: () => values[drawn++ % values.length] ?? 0 };
+}
+
 /** One app run over the given records: the user state survives between runs. */
 async function open({
   records = new Map<string, string>(),
@@ -61,7 +67,11 @@ async function open({
   return {
     cycle,
     wordOfTheDay,
-    keepSeen: (id) => userState.write(cycle.markSeen(id)),
+    async keepSeen(id) {
+      const change = cycle.markSeen(id);
+      await userState.write(change.changes);
+      change.commit();
+    },
   };
 }
 
@@ -207,6 +217,33 @@ describe('the Word of the Day', () => {
       expect(reopened.wordOfTheDay.chosen()?.wordId).toBe(today?.wordId);
       expect(new Set(reopened.cycle.unseen().words)).toEqual(new Set(wordIds));
     });
+
+    it('changes neither the Cycle nor the choice in memory when the write fails, so a retry starts one new Cycle', async () => {
+      const records = new Map<string, string>();
+      for (let day = 11; day < 11 + wordIds.length; day++) await readOn(records, day);
+      const memory = createMemoryUserStatePort(records);
+      let full = true;
+      const port: UserStatePort = {
+        ...memory,
+        write: (changes) =>
+          full ? Promise.reject(new Error('The disk is full')) : memory.write(changes),
+      };
+      const nextDay = fakeClock('2026-10-21T09:00:00+03:00').clock;
+      const run = await open({ records, port, clock: nextDay, random: randomSequence(0.75, 0.5) });
+      const before = run.cycle.order();
+
+      await expect(run.wordOfTheDay.today()).rejects.toThrow('The disk is full');
+
+      expect(run.cycle.order()).toEqual(before);
+      expect(run.cycle.unseen().words).toEqual([]);
+      expect(run.wordOfTheDay.chosen()).toBeUndefined();
+      full = false;
+      const today = await run.wordOfTheDay.today();
+      const reopened = await open({ records, clock: nextDay });
+      expect(run.cycle.order()).toEqual(reopened.cycle.order());
+      expect(run.cycle.unseen()).toEqual(reopened.cycle.unseen());
+      expect(reopened.wordOfTheDay.chosen()?.wordId).toBe(today?.wordId);
+    });
   });
 
   it('is chosen again when the Word of the Day was retired since, never shown retired', async () => {
@@ -231,7 +268,7 @@ describe('the Word of the Day', () => {
     expect((await withCorrections.wordOfTheDay.today())?.wordId).toMatch(/^w_/);
 
     const correctionsOnly = await open({ words: [], corrections: correctionIds });
-    for (const id of correctionIds) correctionsOnly.cycle.markSeen(id);
+    for (const id of correctionIds) correctionsOnly.cycle.markSeen(id).commit();
 
     expect(await correctionsOnly.wordOfTheDay.today()).toBeUndefined();
     // No Word to choose is no reason to start a new Cycle.
