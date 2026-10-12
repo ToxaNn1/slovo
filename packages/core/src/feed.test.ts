@@ -92,8 +92,10 @@ function randomSequence(...values: number[]): Random {
 }
 
 /** The id of the Entry a card shows, if it shows one. */
-const entryIdOf = (card: FeedCard | undefined) =>
-  card === undefined || card.kind === 'end-of-cycle' ? undefined : card.entry.id;
+const entryIdOf = (card: FeedCard | undefined) => {
+  if (card?.kind === 'word') return card.wordCard.wordId;
+  return card?.kind === 'correction' ? card.correctionCard.correctionId : undefined;
+};
 
 /** The local day a card is the Word of the Day of, if it is. */
 const wordOfTheDayOf = (card: FeedCard | undefined) =>

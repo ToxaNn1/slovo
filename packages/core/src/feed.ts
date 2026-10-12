@@ -1,4 +1,4 @@
-import type { Correction, Entry, Word } from '@slovo/contracts';
+import type { Entry, Word } from '@slovo/contracts';
 
 import { buildCorrectionCard, type CorrectionCardModel } from './correction-card';
 import type { Cycle, CycleChange } from './cycle';
@@ -19,7 +19,6 @@ export const CORRECTION_EVERY = 5;
 /** The card of a Word. */
 export interface WordFeedCard {
   readonly kind: 'word';
-  readonly entry: Word;
   /** What the card shows, built by the Core. */
   readonly wordCard: WordCardModel;
   /** On the card of the Word of the Day: the local day it is the Word of. */
@@ -29,7 +28,6 @@ export interface WordFeedCard {
 /** The card of a Correction. */
 export interface CorrectionFeedCard {
   readonly kind: 'correction';
-  readonly entry: Correction;
   /** What the card shows, built by the Core. */
   readonly correctionCard: CorrectionCardModel;
 }
@@ -45,7 +43,8 @@ export type FeedCard = EntryFeedCard | { readonly kind: 'end-of-cycle' };
 
 /** The id of the Entry a card shows, if it shows one. */
 function entryIdOf(card: FeedCard | undefined): string | undefined {
-  return card === undefined || card.kind === 'end-of-cycle' ? undefined : card.entry.id;
+  if (card?.kind === 'word') return card.wordCard.wordId;
+  return card?.kind === 'correction' ? card.correctionCard.correctionId : undefined;
 }
 
 /**
@@ -151,20 +150,23 @@ export async function openFeed({
     if (entry === undefined) return false;
     const today = wordOfTheDay.chosen();
     const opening =
-      today !== undefined && cycle.covers(today.wordId)
-        ? await wordOfTheDayCard(today)
-        : undefined;
-    if (opening?.entry.id === entry.id) changeCards([opening]);
+      today !== undefined && cycle.covers(today.wordId) ? await wordOfTheDayCard(today) : undefined;
+    if (opening?.wordCard.wordId === entry.id) changeCards([opening]);
     else changeCards([...(opening === undefined ? [] : [opening]), await entryCard(entry)]);
     return true;
   }
 
-  /** The card of an Entry. */
-  async function entryCard(entry: Entry): Promise<EntryFeedCard> {
+  /** The card of an Entry; of a Word, the card of the Word of the Day of the day, if it is one. */
+  async function entryCard(entry: Word, wordOfTheDay?: LocalDate): Promise<WordFeedCard>;
+  async function entryCard(entry: Entry): Promise<EntryFeedCard>;
+  async function entryCard(entry: Entry, wordOfTheDay?: LocalDate): Promise<EntryFeedCard> {
     if (entry.kind === 'correction') {
-      return { kind: 'correction', entry, correctionCard: buildCorrectionCard(entry) };
+      return { kind: 'correction', correctionCard: buildCorrectionCard(entry) };
     }
-    return { kind: 'word', entry, wordCard: await buildWordCard({ word: entry, entries }) };
+    const wordCard = await buildWordCard({ word: entry, entries });
+    return wordOfTheDay === undefined
+      ? { kind: 'word', wordCard }
+      : { kind: 'word', wordCard, wordOfTheDay };
   }
 
   /** The ids of the Entries shown in this session in the current Cycle. */
@@ -263,13 +265,7 @@ export async function openFeed({
   /** The card of a day's Word of the Day. */
   async function wordOfTheDayCard(choice: WordOfTheDayChoice): Promise<WordFeedCard | undefined> {
     const entry = await entries.get(choice.wordId);
-    if (entry?.kind !== 'word') return undefined;
-    return {
-      kind: 'word',
-      entry,
-      wordCard: await buildWordCard({ word: entry, entries }),
-      wordOfTheDay: choice.date,
-    };
+    return entry?.kind === 'word' ? entryCard(entry, choice.date) : undefined;
   }
 
   /**
