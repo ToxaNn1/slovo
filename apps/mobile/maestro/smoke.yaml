@@ -26,5 +26,6 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - runFlow: flows/swipes.yaml
 - runFlow: flows/pronunciation.yaml
 - runFlow: flows/settings.yaml
+- runFlow: flows/quick-swipes.yaml
 - runFlow: flows/relaunch.yaml
 - runFlow: flows/placeholders.yaml

@@ -1,0 +1,99 @@
+# Quick swipes, and swiping on after a new font size: the Feed lands on the
+# right card and turns forward (#90).
+# A subflow of `smoke.yaml`; run it from there, after `settings.yaml`.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+# Swipe up to the third card without waiting for the cards to stop. A card
+# taller than the screen scrolls first, so swipe until the page turns.
+- repeat:
+    while:
+      notVisible:
+        id: feed-card-2
+    times: 8
+    commands:
+      - swipe:
+          start: 50%, 80%
+          end: 50%, 20%
+          duration: 150
+# The card on screen is the current one: VoiceOver and taps reach it.
+- assertVisible:
+    id: feed-card-2
+- assertNotVisible:
+    id: feed-card-1
+- runFlow:
+    when:
+      visible:
+        id: word-pronunciation
+    file: pronunciation.yaml
+# The next card is ready, so the next swipe goes forward.
+- repeat:
+    while:
+      notVisible:
+        id: feed-card-3
+    times: 6
+    commands:
+      - swipe:
+          start: 50%, 80%
+          end: 50%, 20%
+          duration: 150
+- assertVisible:
+    id: feed-card-3
+
+# A new font size redraws every card. Back on Home, swiping forward still
+# turns the page, at a smaller size and back at the larger one.
+- tapOn:
+    id: tab-settings
+- tapOn:
+    id: settings-font-size-M
+- tapOn:
+    id: tab-home
+- repeat:
+    while:
+      notVisible:
+        id: feed-card-4
+    times: 6
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 20%
+          duration: 300
+      - waitForAnimationToEnd
+- assertVisible:
+    id: feed-card-4
+- tapOn:
+    id: tab-settings
+- tapOn:
+    id: settings-font-size-L
+- assertVisible:
+    id: settings-font-size-L
+    selected: true
+- tapOn:
+    id: tab-home
+- repeat:
+    while:
+      notVisible:
+        id: feed-card-5
+    times: 6
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 20%
+          duration: 300
+      - waitForAnimationToEnd
+- assertVisible:
+    id: feed-card-5
+
+# Back down to the first card, where the next flow expects the reader.
+- repeat:
+    while:
+      notVisible:
+        id: feed-card-0
+    times: 20
+    commands:
+      - swipe:
+          start: 50%, 30%
+          end: 50%, 80%
+          duration: 300
+      - waitForAnimationToEnd
+- assertVisible:
+    id: feed-card-0
