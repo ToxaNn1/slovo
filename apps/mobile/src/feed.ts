@@ -1,6 +1,6 @@
 import { openFeed, systemClock, systemRandom, type Feed, type FeedCard } from '@slovo/core';
 import { useIsFocused } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { AppState } from 'react-native';
 
 import { useEntries } from './language-pack';
@@ -22,17 +22,15 @@ export type FeedState =
        * Opens a Correction the Word card at `position` links, as the card
        * right after it. Resolves to that card's position, or nothing.
        */
-      readonly openLinkedCorrection: (
-        position: number,
-        correctionId: string,
-      ) => Promise<number | undefined>;
+      readonly openLinkedCorrection: Feed['openLinkedCorrection'];
     };
+
+const noCards: readonly FeedCard[] = [];
 
 /**
  * The Core's Feed over the bundled Language Pack and the stored user state.
- * It reports the card on screen to the Core while Home is focused and the app
- * is in the foreground, so the Core can tell what the reader has Seen, and it
- * keeps one card ready after the current one.
+ * It tells the Feed which card is on screen while Home is focused and the app
+ * is in the foreground, and that none is otherwise.
  */
 export function useFeed(): FeedState {
   const entries = useEntries();
@@ -40,12 +38,15 @@ export function useFeed(): FeedState {
   const [failed, setFailed] = useState(false);
   /** Counts the tries to open the Feed, so a retry opens it again. */
   const [attempt, setAttempt] = useState(0);
-  const [cards, setCards] = useState<readonly FeedCard[]>([]);
   const [position, setPosition] = useState(0);
-  const loadingNext = useRef(false);
   const focused = useIsFocused();
   const appActive = useAppActive();
   const onScreen = focused && appActive;
+  const subscribe = useCallback(
+    (listener: () => void) => feed?.subscribe(listener) ?? (() => undefined),
+    [feed],
+  );
+  const cards = useSyncExternalStore(subscribe, () => feed?.cards ?? noCards);
 
   useEffect(() => {
     let active = true;
@@ -60,9 +61,7 @@ export function useFeed(): FeedState {
       )
       .then(
         (opened) => {
-          if (!active) return;
-          setFeed(opened);
-          setCards([...opened.cards]);
+          if (active) setFeed(opened);
         },
         (error: unknown) => {
           console.error('Could not open the Feed', error);
@@ -74,47 +73,13 @@ export function useFeed(): FeedState {
     };
   }, [entries, attempt]);
 
-  // The card on screen, as the Core counts dwell time for Seen.
   useEffect(() => {
-    if (feed === undefined || !onScreen || position >= feed.cards.length) return;
-    report(feed.cardVisible(position));
+    if (feed === undefined || !onScreen) return;
+    report(feed.show(position));
     return () => {
-      report(feed.cardHidden(position));
+      report(feed.show(undefined));
     };
   }, [feed, onScreen, position]);
-
-  // One card ready after the current one, so the next swipe never waits.
-  useEffect(() => {
-    if (feed === undefined || loadingNext.current || position < cards.length - 1) return;
-    loadingNext.current = true;
-    feed
-      .next()
-      .then(
-        (card) => {
-          if (card !== undefined) setCards([...feed.cards]);
-        },
-        (error: unknown) => {
-          console.error('Could not read the next card of the Feed', error);
-        },
-      )
-      .finally(() => {
-        loadingNext.current = false;
-      });
-  }, [feed, position, cards.length]);
-
-  const onCardChange = useCallback((next: number) => {
-    setPosition(next);
-  }, []);
-
-  const openLinkedCorrection = useCallback(
-    async (at: number, correctionId: string) => {
-      if (feed === undefined) return undefined;
-      const opened = await feed.openLinkedCorrection(at, correctionId);
-      if (opened !== undefined) setCards([...feed.cards]);
-      return opened;
-    },
-    [feed],
-  );
 
   const retry = useCallback(() => {
     setFailed(false);
@@ -123,12 +88,17 @@ export function useFeed(): FeedState {
 
   if (failed) return { status: 'failed', retry };
   if (feed === undefined) return { status: 'loading' };
-  return { status: 'ready', cards, onCardChange, openLinkedCorrection };
+  return {
+    status: 'ready',
+    cards,
+    onCardChange: setPosition,
+    openLinkedCorrection: (at, correctionId) => feed.openLinkedCorrection(at, correctionId),
+  };
 }
 
 function report(done: Promise<void>): void {
   done.catch((error: unknown) => {
-    console.error('Could not keep the Feed state', error);
+    console.error('Could not keep the Feed state or get the next card ready', error);
   });
 }
 
