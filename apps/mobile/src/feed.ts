@@ -10,7 +10,11 @@ import { storedUserState } from './stored-user-state';
 
 export type FeedState =
   | { readonly status: 'loading' }
-  | { readonly status: 'failed' }
+  | {
+      readonly status: 'failed';
+      /** Tries to open the Feed again. */
+      readonly retry: () => void;
+    }
   | {
       readonly status: 'ready';
       readonly cards: readonly FeedCard[];
@@ -36,6 +40,8 @@ export function useFeed(): FeedState {
   const db = useSQLiteContext();
   const [feed, setFeed] = useState<Feed>();
   const [failed, setFailed] = useState(false);
+  /** Counts the tries to open the Feed, so a retry opens it again. */
+  const [attempt, setAttempt] = useState(0);
   const [cards, setCards] = useState<readonly FeedCard[]>([]);
   const [position, setPosition] = useState(0);
   const loadingNext = useRef(false);
@@ -69,7 +75,7 @@ export function useFeed(): FeedState {
     return () => {
       active = false;
     };
-  }, [db]);
+  }, [db, attempt]);
 
   // The card on screen, as the Core counts dwell time for Seen.
   useEffect(() => {
@@ -113,7 +119,12 @@ export function useFeed(): FeedState {
     [feed],
   );
 
-  if (failed) return { status: 'failed' };
+  const retry = useCallback(() => {
+    setFailed(false);
+    setAttempt((count) => count + 1);
+  }, []);
+
+  if (failed) return { status: 'failed', retry };
   if (feed === undefined) return { status: 'loading' };
   return { status: 'ready', cards, onCardChange, openLinkedCorrection };
 }

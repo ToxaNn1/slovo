@@ -5,7 +5,8 @@
   "description": "Edition-neutral screens, components, design tokens and Decor slots.",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./tokens": "./src/tokens.ts"
   },
   "scripts": {
     "lint": "eslint .",

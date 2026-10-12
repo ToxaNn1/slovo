@@ -32,7 +32,7 @@ The screens also use these values, which the token table does not name. The prop
 | `color.line`                 | `rgba(0,0,0,.08–.14)` | `rgba(156,122,46,.18–.32)` | `rgba(212,174,92,.14–.35)`         | Card borders (≈30%), list separators (≈14–22%), tab bar top line |
 | `color.scrim`                | n/a                   | `rgba(30,24,19,.45)`       | `rgba(0,0,0,.45–.6)`               | Behind sheets and dialogs                                        |
 | `color.primaryButton` / `On` | n/a                   | `#1E1813` / `#F5EEE2`      | `#D4AE5C` or `#F3EADB` / `#15110E` | Primary button fill / label                                      |
-| `color.inactiveTab`          | `#8A8A8A`             | `#6B5E4E`                  | `#B5A893`                          | Tab bar items that are not selected                              |
+| `color.inactiveTab`          | `#6A6A6A` (see below) | `#6B5E4E`                  | `#B5A893`                          | Tab bar items that are not selected                              |
 
 Semantic colours that every skin must keep apart from the Decor red (artboard 1h: "Game answers are separate semantic tokens, so that the embroidery red never reads as an error"):
 
@@ -43,6 +43,8 @@ Semantic colours that every skin must keep apart from the Decor red (artboard 1h
 | `color.wrong`         | `#A3271F` | Wrong answer fill, "Не цього разу"                                            |
 | `color.destructive`   | `#A3271F` | Delete and Clear actions (swipe action, confirmation buttons)                 |
 | `color.heart`         | `#C8372D` | Filled Favorites heart and filled Lives in dark; Lives use `#A3221B` in light |
+
+The canvas draws the Core's inactive tabs in `#8A8A8A`, which is only 3.1:1 on `#F4F4F2`; the Core uses `#6A6A6A` (its `color.muted`, 4.9:1) instead. A test in `apps/mobile` holds every text colour of the 0.2 screens at 4.5:1 or more on what it is drawn on, in both Themes, for the Core and for every Edition.
 
 All text and background pairs above pass WCAG AA (4.5:1): we checked, for example, `#6B5E4E` on `#F5EEE2` at 5.5:1, `#B5A893` on `#1F1915` at 7.4:1, white on `#2F6B45` at 6.3:1 and white on `#A3271F` at 7.3:1. The decor colours (`#9C7A2E` at 3.5:1, `#C8372D` at 3.6:1) are only for graphics and never carry text.
 
@@ -217,6 +219,8 @@ The brief defines seven slots; the Core provides a neutral default for each, and
 | 6   | Game victory illustration | Three rosettes stitched in one after another (marked "TBD" on the canvas); the result screen shows one 120 pt rosette.                                                                                            | Not shown                                 | `game-result-win-dark`, `motion-sound-haptics-dark`                     |
 | 7   | Splash / launch           | A 72 pt rosette, the letter-spaced "SLOVO" wordmark, the tagline "рідкісні слова рідної мови" and a zig-zag band near the bottom, on the dark pattern.                                                            | Not shown                                 | `splash-dark`                                                           |
 
+**The Core's neutral Decor stays minimal** (the owner's decision in 0.2, closing gap 22). It fills slot 2 only, with the 1 pt line and the 5 pt dot; slots 1, 3, 4 and 7 stay empty, so an Edition without Decor shows a plain background, cards with just their rounded corners, empty states and the error state without an illustration, and the native splash alone. Both Themes draw it from the Core's token table.
+
 What changes between Editions (artboard 4d): tokens (`color.*`, `type.family.*`, `radius.*`, `motion.sound.*`) and Decor (7 slots × light/dark, SVG patterns without text). What never changes: layouts, block order, touch-target sizes and the tab bar.
 
 ## Screen index
@@ -240,7 +244,7 @@ All PNGs are in [`screens/`](screens/), rendered at 2× from the canvas, includi
 | `feed-correction-card-light.png`               | Feed, Correction card (росіянізм), light, without the action row                              | 1d       |
 | `feed-word-card-iphone-se-light.png`           | Feed, Word card on iPhone SE 375×667, font size M, light                                      | 2e       |
 | `feed-loading-dark.png`                        | Feed, loading skeleton with the divider being stitched, dark                                  | 4a       |
-| `feed-error-light.png`                         | Feed, network error, light                                                                    | 4a       |
+| `feed-error-light.png`                         | Feed, error state, light; 0.2 ships it as a local error, without the network copy (gap 8)     | 4a       |
 | `splash-dark.png`                              | Splash (Decor slot 7), dark                                                                   | 1g       |
 | `app-icon-light-dark.png`                      | App icon at 180 pt, and at 60 pt in dark and light                                            | 1g       |
 | `tokens-and-decor-kit.png`                     | Colour tokens, Lemma specimens S–XL with the U+0301 test, UI type, the 7 Decor slots          | 1h       |
@@ -310,19 +314,19 @@ All PNGs are in [`screens/`](screens/), rendered at 2× from the canvas, includi
 
 ## Gaps and contradictions
 
-Listed for the owner to decide; the design itself is left unchanged.
+Listed for the owner to decide; the design itself is left unchanged. Gaps marked **Closed in 0.2** were settled by the 0.2 Feed spec (#51) and built in 0.2.
 
 ### Against `CONTEXT.md` and the data model
 
 1. **Categories and register labels are mixed up.** The Mix chips include "Застарілі" and "Діалектні", and the Hidden screen lists "Застарілі" under Categories. These are register labels (`archaic`, `dialectal`), not Categories. The other chip names ("Розум і характер", "Побут і гомін", "Час", "Простір і рух", "Почуття", "Природа") are not the Ukrainian Edition's Categories (`editions/uk/edition.json`: "Людина і тіло", "Емоції та характер", "Природа і погода", "Побут і ремесла", "Техніка", "Військова справа", "Мистецтво і культура", "Історія та старовина", "Наука", "Мова і мовлення").
 2. **Lives and Favorites share one glyph.** Both are the same heart in the same red (`#C8372D`). The glossary keeps them apart (Life: _Avoid_ "Heart"), and the brief itself says "5 lives (hearts)". A different Life glyph, or at least a different colour, would avoid confusion.
-3. **The Word card shows less than a Word holds.** The contract has `extraDefinitions`, several `examples`, both `synonyms` and `antonyms`, `etymology` and several `registers`. The design shows one Definition, one Example, one synonym _or_ one antonym, one register chip, and no Etymology at all. The brief asked for optional extra Definitions and Etymology.
-4. **Example author is hard-coded.** Every Example reads "— з народного мовлення"; the contract's `author` is optional, and the design has no state without an author.
-5. **Part of speech is abbreviated** ("ім., ж. р.", "прикм.", "присл.") while `editions/uk/strings.json` has full labels ("іменник"…) and no gender labels yet. Decide on one form; the gender abbreviation needs new strings.
-6. **Stress inside a Correction.** The light Correction card shows «протягом ро́ку» with a stress mark, but a Correction's `standardEquivalents` are plain text with no Stress field.
-7. **A Correction with several standard equivalents** (e.g. «наступний / такий» in the brief) is not designed.
-8. **The Feed network error contradicts offline-first.** "Нитка урвалася — Немає з'єднання з інтернетом" assumes the Feed needs the network, but the Language Pack ships with the app (ADR 0005). A local failure state is more likely; the current Core string is "Не вдалося відкрити словник.".
-9. **The Feed position counter "1 / 6"** suggests a finite, counted Feed. The Feed is an endless stream until the end of a Cycle; the counter looks like a canvas demo aid. Confirm whether it ships.
+3. **The Word card shows less than a Word holds.** The contract has `extraDefinitions`, several `examples`, both `synonyms` and `antonyms`, `etymology` and several `registers`. The design shows one Definition, one Example, one synonym _or_ one antonym, one register chip, and no Etymology at all. The brief asked for optional extra Definitions and Etymology. **Closed in 0.2:** the card shows the primary Definition, the first Example, up to three Synonyms, antonyms, every register chip and the Category chip, and «Детальніше» opens the etymology, extra Definitions and further Examples.
+4. **Example author is hard-coded.** Every Example reads "— з народного мовлення"; the contract's `author` is optional, and the design has no state without an author. **Closed in 0.2:** the author line shows only when the Example names one.
+5. **Part of speech is abbreviated** ("ім., ж. р.", "прикм.", "присл.") while `editions/uk/strings.json` has full labels ("іменник"…) and no gender labels yet. Decide on one form; the gender abbreviation needs new strings. **Closed in 0.2:** the card shows the dictionary short forms, VoiceOver reads the full words, and the Edition strings hold both, gender included.
+6. **Stress inside a Correction.** The light Correction card shows «протягом ро́ку» with a stress mark, but a Correction's `standardEquivalents` are plain text with no Stress field. **Closed in 0.2:** Corrections carry no Stress.
+7. **A Correction with several standard equivalents** (e.g. «наступний / такий» in the brief) is not designed. **Closed in 0.2:** the main equivalent at the Lemma's size, the others as «також: …».
+8. **The Feed network error contradicts offline-first.** "Нитка урвалася — Немає з'єднання з інтернетом" assumes the Feed needs the network, but the Language Pack ships with the app (ADR 0005). A local failure state is more likely; the current Core string is "Не вдалося відкрити словник.". **Closed in 0.2:** a local error state, «Нитка урвалася» over «Не вдалося відкрити словник.» with «Спробувати ще» and the broken-thread illustration (slot 4); no network copy and no «Відкрити Збережене».
+9. **The Feed position counter "1 / 6"** suggests a finite, counted Feed. The Feed is an endless stream until the end of a Cycle; the counter looks like a canvas demo aid. Confirm whether it ships. **Closed in 0.2:** no counter ships.
 10. **Hidden copy is narrower than the concept.** "Ці записи й категорії не з'являються у Стрічці" says Feed only; a Hidden Entry is also excluded from notifications, widgets and the Game. The restore buttons differ too: "Повернути" for Entries, "Увімкнути" for Categories.
 11. **Deleting a Collection** says "15 слів залишаться в Історії та Улюбленому". That is only true for Entries already in History or Favorites; deleting a Collection adds nothing to Favorites.
 12. **"слів" for Entries.** Collection counts, the Stats sheet and Favorites say "слів"/"слово", but Collections and Favorites hold Entries, which include Corrections (the demo Collections contain «брати участь»).
@@ -330,8 +334,8 @@ Listed for the owner to decide; the design itself is left unchanged.
 
 ### Inconsistencies inside the design
 
-14. **Font-size steps disagree.** The Feed uses Lemma 40 / 48 / 56 / 64; the token table says 40 / 48–52 / 56 / 64; the Settings preview uses 38 / 46 / 54 / 62 for the Lemma and 15 / 17 / 19 / 21 for the Definition, where the token table says 17 / 19 / 21 / 23. Static mockups use a Lemma of 52 at M. One table must be chosen.
-15. **The UA chip radius** is 2 in the token table and the Feed, but 3 on the light Word card.
+14. **Font-size steps disagree.** The Feed uses Lemma 40 / 48 / 56 / 64; the token table says 40 / 48–52 / 56 / 64; the Settings preview uses 38 / 46 / 54 / 62 for the Lemma and 15 / 17 / 19 / 21 for the Definition, where the token table says 17 / 19 / 21 / 23. Static mockups use a Lemma of 52 at M. One table must be chosen. **Closed in 0.2:** one table, Lemma 40 / 48 / 56 / 64 and Definition 17 / 19 / 21 / 23, for the Feed and the Settings preview alike.
+15. **The UA chip radius** is 2 in the token table and the Feed, but 3 on the light Word card. **Closed in 0.2:** 2.
 16. **The light Correction card has no action row**, while Corrections in the dark Feed have one.
 17. **The story Share Card is not 9:16.** It is 324 wide plus 34 padding on each side (content-box), so it renders at 392×576, not 324×576.
 18. **The wrong-answer sheet hides the correct option.** The brief wants the chosen button red and the correct one green; the sheet covers the lower buttons, so the green one is often out of sight (the sheet does name the right Word).
@@ -340,8 +344,8 @@ Listed for the owner to decide; the design itself is left unchanged.
 
 ### Missing screens and states (the brief asked for light and dark of every screen)
 
-21. **Most screens exist in one theme only.** No light Feed with Word of the Day, end of Cycle or loading; no dark Correction card outside the Feed; no dark Settings, Saved, Favorites, Collections, About or widget guide; no light Game, Stats, History, Hidden or Add to Collection; no light splash; dark error state missing.
-22. **The Core skin is shown only as a light Word card.** There is no Core dark screen and no Core default for Decor slots 1 and 3–7 (only slot 2's line and dot), though the token table lists Core dark values.
+21. **Most screens exist in one theme only.** No light Feed with Word of the Day, end of Cycle or loading; no dark Correction card outside the Feed; no dark Settings, Saved, Favorites, Collections, About or widget guide; no light Game, Stats, History, Hidden or Add to Collection; no light splash; dark error state missing. **Closed in 0.2 for the 0.2 screens:** each is built from the tokens and checked in both Themes; the other screens stay open for their versions.
+22. **The Core skin is shown only as a light Word card.** There is no Core dark screen and no Core default for Decor slots 1 and 3–7 (only slot 2's line and dot), though the token table lists Core dark values. **Closed in 0.2:** the Core dark skin comes from the token table, and the Core's neutral Decor stays minimal (see [Decor slots](#decor-slots)).
 23. **Decor slot 6 is marked "TBD"**, and the slots are shown in dark only on the Decor board.
 24. **Settings sub-screens are missing:** the notification times list (add / edit / remove, up to 10), the My Mix screen, and the SLOVO ID / Account section (sign in, sign out everywhere, delete Account).
 25. **Other missing pieces:** a Collection's detail list; the full card opened from a list; the share flow (choosing story or square, the iOS share sheet); a Word Share Card in square and a Correction in story; the Pronunciation playing state; the Word of the Day in light; notification-permission-denied; loading, empty and error states for the Game, Saved and Settings.
@@ -369,7 +373,8 @@ Ukrainian copy from the canvas, quoted as is, for implementers to reuse. Sample 
 - Swipe hint: «Гортайте вгору — наступне слово»
 - End of Cycle: «Ви переглянули всі слова» / «Чекайте оновлення. Гортайте далі — почнемо нове коло.»
 - Loading: «Вишиваємо слова…» (VoiceOver: «Завантаження слів»)
-- Error: «Нитка урвалася» / «Немає з'єднання з інтернетом. Збережені слова доступні й без нього.» / «Спробувати ще» / «Відкрити Збережене»
+- Error: «Нитка урвалася» / «Немає з'єднання з інтернетом. Збережені слова доступні й без нього.» / «Спробувати ще» / «Відкрити Збережене». 0.2 ships «Нитка урвалася» / «Не вдалося відкрити словник.» / «Спробувати ще» (gap 8).
+- VoiceOver actions that stand in for the swipe (0.2): «Наступний запис», «Попередній запис»; tabs read «Головна, вкладка 1 з 4»
 
 ### Stats sheet
 

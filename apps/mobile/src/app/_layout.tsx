@@ -1,4 +1,4 @@
-import { DecorProvider, FontSizeProvider, TokensProvider, typeSize } from '@slovo/ui';
+import { DecorProvider, fill, FontSizeProvider, TokensProvider, typeSize } from '@slovo/ui';
 import { DarkTheme, DefaultTheme, Tabs, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useMemo } from 'react';
@@ -9,6 +9,25 @@ import { LaunchSplash } from '../launch-splash';
 import { SettingsProvider, useColorSchemeInEffect, useSettings } from '../settings';
 
 const { tabs } = editionStrings;
+
+/** The tabs in their final order: Home, Settings, Game, Saved. */
+const tabOrder = ['home', 'settings', 'game', 'saved'] as const;
+
+/**
+ * A tab's name, test id and VoiceOver label. The label counts the four tabs
+ * only, not the hidden routes beside them, in the Edition's language.
+ */
+function tabOptions(tab: (typeof tabOrder)[number]) {
+  return {
+    title: tabs[tab],
+    tabBarButtonTestID: `tab-${tab}`,
+    tabBarAccessibilityLabel: fill(tabs.accessibilityLabel, {
+      tab: tabs[tab],
+      position: String(tabOrder.indexOf(tab) + 1),
+      count: String(tabOrder.length),
+    }),
+  };
+}
 
 export default function RootLayout() {
   return (
@@ -63,22 +82,10 @@ function ThemedTabs() {
                 },
               }}
             >
-              <Tabs.Screen
-                name="index"
-                options={{ title: tabs.home, tabBarButtonTestID: 'tab-home' }}
-              />
-              <Tabs.Screen
-                name="settings"
-                options={{ title: tabs.settings, tabBarButtonTestID: 'tab-settings' }}
-              />
-              <Tabs.Screen
-                name="game"
-                options={{ title: tabs.game, tabBarButtonTestID: 'tab-game' }}
-              />
-              <Tabs.Screen
-                name="saved"
-                options={{ title: tabs.saved, tabBarButtonTestID: 'tab-saved' }}
-              />
+              <Tabs.Screen name="index" options={tabOptions('home')} />
+              <Tabs.Screen name="settings" options={tabOptions('settings')} />
+              <Tabs.Screen name="game" options={tabOptions('game')} />
+              <Tabs.Screen name="saved" options={tabOptions('saved')} />
               {/* The dev-only Decor showcase; no tab leads to it. */}
               <Tabs.Screen name="decor" options={{ href: null }} />
             </Tabs>

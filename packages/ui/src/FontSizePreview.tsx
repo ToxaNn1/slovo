@@ -11,11 +11,14 @@ import { useTokens } from './TokensProvider';
 export function FontSizePreview({
   lemma,
   definition,
+  language,
   testID,
 }: {
   /** The sample Lemma, Stress marks included. */
   lemma: string;
   definition: string;
+  /** The Edition's language (BCP 47), so VoiceOver reads the sample in its voice. */
+  language?: string;
   testID?: string;
 }) {
   const { colors, fontFamilies, radii } = useTokens();
@@ -25,6 +28,7 @@ export function FontSizePreview({
       testID={testID}
       accessible
       accessibilityLabel={`${lemma}. ${definition}`}
+      {...(language === undefined ? {} : { accessibilityLanguage: language })}
       style={[
         styles.card,
         { backgroundColor: colors.surface, borderColor: colors.line, borderRadius: radii.card },

@@ -1,0 +1,16 @@
+# Closes the development client's menu if it opened over the app, as it does
+# once on a new simulator: first its introduction, then the menu itself.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- runFlow:
+    when:
+      visible: Continue
+    commands:
+      - tapOn: Continue
+- runFlow:
+    when:
+      visible:
+        id: xmark
+    commands:
+      - tapOn:
+          id: xmark

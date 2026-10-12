@@ -37,6 +37,8 @@ export function SegmentedControl<Value extends string>({
             key={value}
             testID={testID}
             accessibilityRole="button"
+            // VoiceOver says what is chosen, e.g. "Тема: Темна".
+            accessibilityLabel={`${accessibilityLabel}: ${label}`}
             accessibilityState={{ selected: isSelected }}
             onPress={() => {
               if (!isSelected) onSelect(value);

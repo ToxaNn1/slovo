@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { EmptyStateIllustration } from './DecorSlots';
 import { space, typeSize } from './tokens';
 import { useTokens } from './TokensProvider';
+import { usePageTurnActions } from './VerticalPager';
 
 export interface EndOfCycleCardProps {
   /** Says the reader has Seen every live Entry, in the Edition's language. */
@@ -21,11 +22,14 @@ const ILLUSTRATION_WIDTH = 108;
  */
 export function EndOfCycleCard({ title, message }: EndOfCycleCardProps) {
   const { colors, fontFamilies } = useTokens();
+  // In the Feed, VoiceOver turns to the card that starts the new Cycle from here.
+  const turnActions = usePageTurnActions();
   return (
     <View
       testID="end-of-cycle-card"
       accessible
       accessibilityLabel={`${title}. ${message}`}
+      {...turnActions}
       style={styles.card}
     >
       <View style={styles.illustration}>

@@ -4,10 +4,12 @@ import {
   CorrectionCard,
   DecorBackground,
   EndOfCycleCard,
+  FeedLoading,
   OrnamentDivider,
   PagerScrollView,
   Placeholder,
   space,
+  SwipeHint,
   useTokens,
   VerticalPager,
   WordCard,
@@ -20,7 +22,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { edition, editionStrings } from '../edition';
 import { useFeed } from '../feed';
+import { LoadFailed } from '../language-pack';
 import { LemmaPronunciation } from '../pronunciation-button';
+import { useSwipeHint } from '../swipe-hint';
 import { wordOfTheDayLabel } from '../word-of-the-day';
 
 /** The display name of every Category of the Edition, by id. */
@@ -29,10 +33,14 @@ const categoryNames = new Map(edition.categories.map(({ id, displayName }) => [i
 /** The Feed's top row, kept for the Stats pill (0.4). */
 const TOP_ROW = 48;
 
+const { feed: feedStrings } = editionStrings;
+
 /** Home is the Feed: a vertical stream of Entry cards, one per screen. */
 export default function HomeScreen() {
   const feed = useFeed();
+  const swipeHint = useSwipeHint();
   const { colors } = useTokens();
+  const { top } = useSafeAreaInsets();
   const pager = useRef<VerticalPagerHandle>(null);
   /** The page to turn to once it is drawn, such as a Correction opened from a Word. */
   const [turnTo, setTurnTo] = useState<number>();
@@ -43,8 +51,16 @@ export default function HomeScreen() {
     setTurnTo(undefined);
   }, [turnTo]);
 
-  if (feed.status === 'loading') return null;
-  if (feed.status === 'failed') return <Placeholder message={editionStrings.loadFailed} />;
+  if (feed.status === 'loading')
+    return (
+      <View style={[styles.screen, { backgroundColor: colors.background }]}>
+        <DecorBackground />
+        <View style={[styles.content, { paddingTop: top + TOP_ROW }]}>
+          <FeedLoading text={feedStrings.loading} accessibilityLabel={feedStrings.loadingLabel} />
+        </View>
+      </View>
+    );
+  if (feed.status === 'failed') return <LoadFailed onRetry={feed.retry} />;
   if (feed.cards.length === 0) return <Placeholder message={editionStrings.noWords} />;
 
   return (
@@ -68,8 +84,15 @@ export default function HomeScreen() {
             }}
           />
         )}
-        onIndexChange={feed.onCardChange}
+        onIndexChange={(position) => {
+          feed.onCardChange(position);
+          swipeHint.dismiss();
+        }}
+        turnActionLabels={{ next: feedStrings.nextEntry, previous: feedStrings.previousEntry }}
       />
+      {swipeHint.visible ? (
+        <SwipeHint text={feedStrings.swipeHint} onDismiss={swipeHint.dismiss} />
+      ) : null}
     </View>
   );
 }
