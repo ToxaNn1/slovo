@@ -18,7 +18,8 @@ const ILLUSTRATION_WIDTH = 108;
  */
 export function EndOfCycleCard() {
   const { colors, fontFamilies } = useTokens();
-  const { title, message } = useEdition().strings.endOfCycle;
+  const { strings, voice } = useEdition();
+  const { title, message } = strings.endOfCycle;
   // In the Feed, VoiceOver turns to the card that starts the new Cycle from here.
   const turnActions = usePageTurnActions();
   return (
@@ -26,6 +27,7 @@ export function EndOfCycleCard() {
       testID="end-of-cycle-card"
       accessible
       accessibilityLabel={`${title}. ${message}`}
+      {...voice}
       {...turnActions}
       style={styles.card}
     >

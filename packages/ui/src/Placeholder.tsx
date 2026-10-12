@@ -1,14 +1,19 @@
 import { StyleSheet, Text, View } from 'react-native';
 
+import { useEdition } from './EditionProvider';
 import { space, typeSize } from './tokens';
 import { useTokens } from './TokensProvider';
 
 /** Stands in for a screen that a later version builds. */
 export function Placeholder({ message, testID }: { message: string; testID?: string }) {
   const { colors, fontFamilies } = useTokens();
+  const { voice } = useEdition();
   return (
     <View testID={testID} style={[styles.screen, { backgroundColor: colors.background }]}>
-      <Text style={[styles.message, { color: colors.muted, fontFamily: fontFamilies.ui }]}>
+      <Text
+        {...voice}
+        style={[styles.message, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+      >
         {message}
       </Text>
     </View>

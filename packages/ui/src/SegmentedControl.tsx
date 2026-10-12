@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { useEdition } from './EditionProvider';
 import { minTouchTarget, typeSize } from './tokens';
 import { useTokens } from './TokensProvider';
 
@@ -25,9 +26,11 @@ export function SegmentedControl<Value extends string>({
   accessibilityLabel: string;
 }) {
   const { colors, fontFamilies, radii } = useTokens();
+  const { voice } = useEdition();
   return (
     <View
       accessibilityLabel={accessibilityLabel}
+      {...voice}
       style={[styles.track, { backgroundColor: colors.track, borderRadius: radii.button }]}
     >
       {segments.map(({ value, label, testID }) => {
@@ -40,6 +43,7 @@ export function SegmentedControl<Value extends string>({
             // VoiceOver says what is chosen, e.g. "Тема: Темна".
             accessibilityLabel={`${accessibilityLabel}: ${label}`}
             accessibilityState={{ selected: isSelected }}
+            {...voice}
             onPress={() => {
               if (!isSelected) onSelect(value);
             }}

@@ -13,13 +13,15 @@ import { useTokens } from './TokensProvider';
  */
 export function WordOfTheDayBadge({ day: { month, day } }: { day: LocalDate }) {
   const { colors, fontFamilies, radii } = useTokens();
-  const { badge, months } = useEdition().strings.wordOfTheDay;
+  const { strings, voice } = useEdition();
+  const { badge, months } = strings.wordOfTheDay;
   const label = fill(badge, { day: String(day), month: months[month - 1] ?? '' });
   return (
     <View
       testID="word-of-the-day-badge"
       accessible
       accessibilityLabel={label}
+      {...voice}
       style={[styles.badge, { backgroundColor: colors.accent, borderRadius: radii.chip }]}
     >
       <Text style={[styles.label, { color: colors.background, fontFamily: fontFamilies.ui }]}>

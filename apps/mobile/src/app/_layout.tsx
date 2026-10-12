@@ -5,10 +5,12 @@ import {
   FontSizeProvider,
   TokensProvider,
   typeSize,
+  useEdition,
 } from '@slovo/ui';
 import { DarkTheme, DefaultTheme, Tabs, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useMemo } from 'react';
+import { useMemo, type ComponentProps } from 'react';
+import { Pressable } from 'react-native';
 
 import { edition, editionDecor, editionStrings, editionTokens } from '../edition';
 import { LanguagePackProvider } from '../language-pack';
@@ -35,6 +37,49 @@ function tabOptions(tab: (typeof tabOrder)[number]) {
       count: String(tabOrder.length),
     }),
   };
+}
+
+type TabOptions = Exclude<
+  ComponentProps<typeof Tabs>['screenOptions'],
+  ((...args: never[]) => unknown) | undefined
+>;
+type TabButtonProps = Parameters<NonNullable<TabOptions['tabBarButton']>>[0];
+
+/**
+ * A tab's button, which VoiceOver reads in the Edition's language: the
+ * navigator's own button has no way to set it. It is a plain Pressable with
+ * what the navigator hands the button, as the effects of the navigator's
+ * (hover, press colour) are off in this tab bar.
+ */
+function TabButton({
+  onPress,
+  onLongPress,
+  testID,
+  role,
+  style,
+  children,
+  'aria-label': ariaLabel,
+  'aria-selected': ariaSelected,
+  accessibilityLargeContentTitle,
+  accessibilityShowsLargeContentViewer,
+}: TabButtonProps) {
+  const { voice } = useEdition();
+  return (
+    <Pressable
+      onPress={onPress}
+      onLongPress={onLongPress}
+      testID={testID}
+      role={role}
+      style={style}
+      aria-label={ariaLabel}
+      aria-selected={ariaSelected}
+      accessibilityLargeContentTitle={accessibilityLargeContentTitle}
+      accessibilityShowsLargeContentViewer={accessibilityShowsLargeContentViewer}
+      {...voice}
+    >
+      {children}
+    </Pressable>
+  );
 }
 
 export default function RootLayout() {
@@ -87,6 +132,7 @@ function ThemedTabs() {
               screenOptions={{
                 headerShown: false,
                 tabBarIcon: () => null,
+                tabBarButton: TabButton,
                 tabBarActiveTintColor: colors.accent,
                 tabBarInactiveTintColor: colors.inactiveTab,
                 tabBarLabelStyle: {

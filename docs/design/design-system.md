@@ -334,7 +334,7 @@ Listed for the owner to decide; the design itself is left unchanged. Gaps marked
 
 ### Inconsistencies inside the design
 
-14. **Font-size steps disagree.** The Feed uses Lemma 40 / 48 / 56 / 64; the token table says 40 / 48–52 / 56 / 64; the Settings preview uses 38 / 46 / 54 / 62 for the Lemma and 15 / 17 / 19 / 21 for the Definition, where the token table says 17 / 19 / 21 / 23. Static mockups use a Lemma of 52 at M. One table must be chosen. **Closed in 0.2:** one table, Lemma 40 / 48 / 56 / 64 and Definition 17 / 19 / 21 / 23, for the Feed and the Settings preview alike.
+14. **Font-size steps disagree.** The Feed uses Lemma 40 / 48 / 56 / 64; the token table says 40 / 48–52 / 56 / 64; the Settings preview uses 38 / 46 / 54 / 62 for the Lemma and 15 / 17 / 19 / 21 for the Definition, where the token table says 17 / 19 / 21 / 23. Static mockups use a Lemma of 52 at M. One table must be chosen. **Closed in 0.2:** one table, Lemma 40 / 48 / 56 / 64 and Definition 17 / 19 / 21 / 23, for the Feed and the Settings preview alike. On a screen narrower than 390 pt (the SE) the Lemma drops by 44/48 at every step, in the Feed and in the preview alike (44 at M).
 15. **The UA chip radius** is 2 in the token table and the Feed, but 3 on the light Word card. **Closed in 0.2:** 2.
 16. **The light Correction card has no action row**, while Corrections in the dark Feed have one.
 17. **The story Share Card is not 9:16.** It is 324 wide plus 34 padding on each side (content-box), so it renders at 392×576, not 324×576.

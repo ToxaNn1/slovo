@@ -12,7 +12,7 @@ export {
   type WordTextSizes,
 } from './FontSizeProvider';
 export { DecorProvider, useDecor } from './DecorProvider';
-export { EditionProvider, fill } from './EditionProvider';
+export { EditionProvider, fill, useEdition } from './EditionProvider';
 export { EndOfCycleCard } from './EndOfCycleCard';
 export { EntryCard, type EntryCardProps } from './EntryCard';
 export {

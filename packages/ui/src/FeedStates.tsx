@@ -4,6 +4,7 @@ import Svg, { Path } from 'react-native-svg';
 
 import { useDecor } from './DecorProvider';
 import { EmptyStateIllustration, OrnamentDivider } from './DecorSlots';
+import { useEdition } from './EditionProvider';
 import { minTouchTarget, space, typeSize } from './tokens';
 import { useTokens } from './TokensProvider';
 import { useReduceMotion } from './useReduceMotion';
@@ -80,6 +81,7 @@ export function FeedLoading({
   accessibilityLabel: string;
 }) {
   const { colors, fontFamilies, radii } = useTokens();
+  const { voice } = useEdition();
   const reduceMotion = useReduceMotion();
   const pulse = useRef(new Animated.Value(1)).current;
 
@@ -108,6 +110,7 @@ export function FeedLoading({
       accessibilityRole="progressbar"
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ busy: true }}
+      {...voice}
       style={styles.loading}
     >
       <View
@@ -127,7 +130,10 @@ export function FeedLoading({
           <Block width="70%" height={16} />
         </Animated.View>
       </View>
-      <Text style={[styles.loadingText, { color: colors.muted, fontFamily: fontFamilies.ui }]}>
+      <Text
+        {...voice}
+        style={[styles.loadingText, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+      >
         {text}
       </Text>
     </View>
@@ -158,12 +164,18 @@ export function FeedError({
   testID?: string;
 }) {
   const { colors, fontFamilies, radii } = useTokens();
+  const { voice } = useEdition();
   return (
     <View testID={testID} style={styles.error}>
       <View style={styles.illustration}>
         <EmptyStateIllustration kind="error" width={ERROR_ILLUSTRATION_WIDTH} />
       </View>
-      <View accessible accessibilityRole="alert" accessibilityLabel={`${title}. ${message}`}>
+      <View
+        accessible
+        accessibilityRole="alert"
+        accessibilityLabel={`${title}. ${message}`}
+        {...voice}
+      >
         <Text style={[styles.errorTitle, { color: colors.ink, fontFamily: fontFamilies.word }]}>
           {title}
         </Text>
@@ -174,6 +186,7 @@ export function FeedError({
       <Pressable
         testID={`${testID}-retry`}
         accessibilityRole="button"
+        {...voice}
         onPress={onRetry}
         style={({ pressed }) => [
           styles.button,
@@ -195,11 +208,25 @@ const HINT_FADE_MS = 300;
 /**
  * The first-launch swipe hint: an inverted pill with an arrow over the bottom
  * of the Feed. It fades in, or just appears with Reduce Motion. A tap hides it.
+ * `onShown` is called once it is drawn, so the caller can keep that it was seen.
  */
-export function SwipeHint({ text, onDismiss }: { text: string; onDismiss: () => void }) {
+export function SwipeHint({
+  text,
+  onShown,
+  onDismiss,
+}: {
+  text: string;
+  onShown: () => void;
+  onDismiss: () => void;
+}) {
   const { colors, fontFamilies } = useTokens();
+  const { voice } = useEdition();
   const reduceMotion = useReduceMotion();
   const opacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    onShown();
+  }, [onShown]);
 
   useEffect(() => {
     if (reduceMotion) {
@@ -215,6 +242,7 @@ export function SwipeHint({ text, onDismiss }: { text: string; onDismiss: () => 
         testID="swipe-hint"
         accessibilityRole="button"
         accessibilityLabel={text}
+        {...voice}
         onPress={onDismiss}
         style={[styles.hint, { backgroundColor: colors.ink }]}
       >

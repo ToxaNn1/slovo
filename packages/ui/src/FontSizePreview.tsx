@@ -1,7 +1,8 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { useEdition } from './EditionProvider';
-import { useWordTextSizes } from './FontSizeProvider';
+import { OrnamentDivider } from './DecorSlots';
+import { useLemmaSize, useWordTextSizes } from './FontSizeProvider';
 import { space } from './tokens';
 import { useTokens } from './TokensProvider';
 
@@ -20,7 +21,8 @@ export function FontSizePreview({
   testID?: string;
 }) {
   const { colors, fontFamilies, radii } = useTokens();
-  const { lemma: lemmaSize, definition: definitionSize } = useWordTextSizes();
+  const lemmaSize = useLemmaSize();
+  const { definition: definitionSize } = useWordTextSizes();
   const { voice } = useEdition();
   return (
     <View
@@ -39,7 +41,7 @@ export function FontSizePreview({
       >
         {lemma}
       </Text>
-      <View style={[styles.divider, { backgroundColor: colors.decor }]} />
+      <OrnamentDivider />
       <Text
         testID="font-size-preview-definition"
         style={[definitionSize, { color: colors.ink, fontFamily: fontFamilies.word }]}
@@ -58,5 +60,4 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   lemma: { fontWeight: '500' },
-  divider: { height: 2 },
 });
