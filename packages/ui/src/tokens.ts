@@ -40,7 +40,8 @@ export const coreTokens: DesignTokens = {
       surfaceSunken: '#EFEFEC',
       track: '#E8E8E5', // derived
       line: 'rgba(0, 0, 0, 0.1)',
-      inactiveTab: '#8A8A8A',
+      // The design's #8A8A8A is only 3.1:1 on the background; muted keeps AA.
+      inactiveTab: '#6A6A6A',
       correct: '#2F6B45',
     },
     dark: {

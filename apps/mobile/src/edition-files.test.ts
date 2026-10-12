@@ -7,6 +7,7 @@ import {
   EditionTokensSchema,
   type ColorTokens,
 } from '@slovo/contracts';
+import { coreTokens } from '@slovo/ui/tokens';
 import { describe, expect, it } from 'vitest';
 
 const editionsDir = fileURLToPath(new URL('../../../editions/', import.meta.url));
@@ -104,6 +105,54 @@ describe('Edition Decor', () => {
       );
     },
   );
+});
+
+/**
+ * Every pair of a text colour and the colour it is drawn on in the 0.2
+ * screens: the Feed, its cards and states, Settings and the tab bar.
+ */
+const textPairs: readonly (readonly [text: keyof ColorTokens, behind: keyof ColorTokens])[] = [
+  // Screen titles, the end-of-Cycle and error states, the loading line, the tab bar.
+  ['ink', 'background'],
+  ['muted', 'background'],
+  ['accent', 'background'],
+  ['inactiveTab', 'background'],
+  // The Word card and the Correction card.
+  ['ink', 'surface'],
+  ['muted', 'surface'],
+  ['inkSecondary', 'surface'],
+  ['accent', 'surface'],
+  // The Category chip and the Correction's example pair.
+  ['ink', 'surfaceSunken'],
+  ['muted', 'surfaceSunken'],
+  // The segmented control.
+  ['ink', 'track'],
+  // Inverted: the Word of the Day badge, the error button, the swipe hint.
+  ['background', 'accent'],
+  ['background', 'ink'],
+];
+
+describe('WCAG AA contrast of the 0.2 screens', () => {
+  const skins = [
+    ['the Core', coreTokens.colors] as const,
+    ...editions
+      .filter((edition) => existsSync(`${editionsDir}${edition}/tokens.json`))
+      .flatMap((edition) => {
+        const { colors } = EditionTokensSchema.parse(readJson(edition, 'tokens.json'));
+        return colors === undefined ? [] : [[`the ${edition} Edition`, colors] as const];
+      }),
+  ];
+
+  describe.each(skins)('%s', (_, colors) => {
+    it.each(['light', 'dark'] as const)('keeps every text at 4.5:1 or more in %s', (scheme) => {
+      for (const [text, behind] of textPairs) {
+        expect(
+          contrast(parseColor(colors[scheme][text]), parseColor(colors[scheme][behind])),
+          `${text} on ${behind}`,
+        ).toBeGreaterThanOrEqual(4.5);
+      }
+    });
+  });
 });
 
 type Rgb = readonly [number, number, number];
