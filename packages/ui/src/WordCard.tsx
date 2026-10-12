@@ -271,7 +271,8 @@ export function WordCard({
                 accessibilityHint={strings.oftenSaidHint}
                 {...voice}
                 disabled={onOpenCorrection === undefined}
-                hitSlop={{ top: space[3], bottom: space[3] }}
+                // The 14 pt line grows to a full touch target.
+                hitSlop={{ top: space[4], bottom: space[4], left: space[1], right: space[1] }}
                 onPress={() => onOpenCorrection?.(correctionId)}
               >
                 <Text
