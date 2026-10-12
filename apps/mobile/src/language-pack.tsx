@@ -4,11 +4,12 @@ import { DecorBackground, FeedError, useTokens } from '@slovo/ui';
 import Constants from 'expo-constants';
 import { SQLiteProvider, useSQLiteContext, type SQLiteDatabase } from 'expo-sqlite';
 import languagePack from 'slovo-edition/language-pack';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { edition, editionStrings } from './edition';
 import { checkEditionsMatch } from './edition-match';
+import { FeedLoadingScreen } from './feed-loading';
 
 const DATABASE_NAME = 'language-pack.db';
 
@@ -26,15 +27,28 @@ async function prepare(db: SQLiteDatabase): Promise<void> {
   checkEditionsMatch({ native: nativeEditionId(), bundle: edition.id, languagePack: editionId });
 }
 
+/** Calls `onMount` once drawn: inside the provider, that is when the pack is open. */
+function OnMount({ onMount }: { onMount: () => void }) {
+  useEffect(() => {
+    onMount();
+  }, [onMount]);
+  return null;
+}
+
 /**
  * Copies the Language Pack bundled with the app into place on every launch,
  * so the app always reads the pack it shipped with, and opens it read-only.
- * It refuses to run when the pack is of another Edition than the app.
+ * It refuses to run when the pack is of another Edition than the app. While
+ * the pack opens, the Feed's loading state covers the screen.
  */
 export function LanguagePackProvider({ children }: { children: ReactNode }) {
+  const [opened, setOpened] = useState(false);
   const [failed, setFailed] = useState(false);
   /** Counts the tries to open the pack, so a retry opens it again. */
   const [attempt, setAttempt] = useState(0);
+  const markOpened = useCallback(() => {
+    setOpened(true);
+  }, []);
   if (failed)
     return (
       <LoadFailed
@@ -46,18 +60,27 @@ export function LanguagePackProvider({ children }: { children: ReactNode }) {
       />
     );
   return (
-    <SQLiteProvider
-      key={attempt}
-      databaseName={DATABASE_NAME}
-      assetSource={{ assetId: languagePack, forceOverwrite: true }}
-      onInit={prepare}
-      onError={(error) => {
-        console.error('Could not open the Language Pack', error);
-        setFailed(true);
-      }}
-    >
-      {children}
-    </SQLiteProvider>
+    <>
+      <SQLiteProvider
+        key={attempt}
+        databaseName={DATABASE_NAME}
+        assetSource={{ assetId: languagePack, forceOverwrite: true }}
+        onInit={prepare}
+        onError={(error) => {
+          console.error('Could not open the Language Pack', error);
+          setFailed(true);
+        }}
+      >
+        {children}
+        <OnMount onMount={markOpened} />
+      </SQLiteProvider>
+      {/* Over the children, so the screen is never blank between the two. */}
+      {opened ? null : (
+        <View style={StyleSheet.absoluteFill}>
+          <FeedLoadingScreen />
+        </View>
+      )}
+    </>
   );
 }
 

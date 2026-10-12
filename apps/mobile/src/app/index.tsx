@@ -3,7 +3,6 @@ import {
   DecorBackground,
   EndOfCycleCard,
   EntryCard,
-  FeedLoading,
   PagerScrollView,
   Placeholder,
   space,
@@ -18,11 +17,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { editionStrings } from '../edition';
 import { useFeed } from '../feed';
+import { FeedLoadingScreen, TOP_ROW } from '../feed-loading';
 import { LoadFailed } from '../language-pack';
 import { useSwipeHint } from '../swipe-hint';
-
-/** The Feed's top row, kept for the Stats pill (0.4). */
-const TOP_ROW = 48;
 
 const { feed: feedStrings } = editionStrings;
 
@@ -31,7 +28,6 @@ export default function HomeScreen() {
   const feed = useFeed();
   const swipeHint = useSwipeHint();
   const { colors } = useTokens();
-  const { top } = useSafeAreaInsets();
   const pager = useRef<VerticalPagerHandle>(null);
   /** The page to turn to once it is drawn, such as a Correction opened from a Word. */
   const [turnTo, setTurnTo] = useState<number>();
@@ -42,15 +38,7 @@ export default function HomeScreen() {
     setTurnTo(undefined);
   }, [turnTo]);
 
-  if (feed.status === 'loading')
-    return (
-      <View style={[styles.screen, { backgroundColor: colors.background }]}>
-        <DecorBackground />
-        <View style={[styles.content, { paddingTop: top + TOP_ROW }]}>
-          <FeedLoading text={feedStrings.loading} accessibilityLabel={feedStrings.loadingLabel} />
-        </View>
-      </View>
-    );
+  if (feed.status === 'loading') return <FeedLoadingScreen />;
   if (feed.status === 'failed') return <LoadFailed onRetry={feed.retry} />;
   if (feed.cards.length === 0) return <Placeholder message={editionStrings.noWords} />;
 
