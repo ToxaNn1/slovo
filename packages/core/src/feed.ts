@@ -10,17 +10,19 @@ import { buildWordCard, type WordCardModel } from './word-card';
 export const SEEN_DWELL_MS = 1500;
 
 /**
- * One card of the Feed. Every card shows an Entry for now; other kinds of
- * card join this union.
+ * One card of the Feed: an Entry, or the end-of-Cycle card that tells the
+ * reader every live Entry is Seen and the next card starts a new Cycle.
  */
-export interface FeedCard {
-  readonly kind: 'entry';
-  readonly entry: Entry;
-  /** What the card shows, built by the Core. The Feed offers Words only for now. */
-  readonly wordCard: WordCardModel;
-  /** On the card of the Word of the Day: the local day it is the Word of. */
-  readonly wordOfTheDay?: LocalDate;
-}
+export type FeedCard =
+  | {
+      readonly kind: 'entry';
+      readonly entry: Entry;
+      /** What the card shows, built by the Core. The Feed offers Words only for now. */
+      readonly wordCard: WordCardModel;
+      /** On the card of the Word of the Day: the local day it is the Word of. */
+      readonly wordOfTheDay?: LocalDate;
+    }
+  | { readonly kind: 'end-of-cycle' };
 
 /**
  * The Feed of one app session. Its cards are the ones shown so far, oldest
@@ -30,14 +32,16 @@ export interface Feed {
   readonly cards: readonly FeedCard[];
   /**
    * Adds the next card to the session and returns it, or nothing when the
-   * Cycle has no unseen Entry left.
+   * Language Pack has no live Entry. After the last unseen Entry of the Cycle
+   * comes the end-of-Cycle card.
    */
   next(): Promise<FeedCard | undefined>;
   /** Reports that the card at `position` is on screen now. */
   cardVisible(position: number): Promise<void>;
   /**
    * Reports that the card at `position` left the screen. Its Entry becomes
-   * Seen if the card stayed on screen for at least `SEEN_DWELL_MS`.
+   * Seen if the card stayed on screen for at least `SEEN_DWELL_MS` and belongs
+   * to the current Cycle.
    */
   cardHidden(position: number): Promise<void>;
 }
@@ -121,6 +125,12 @@ function shuffle(ids: readonly string[], seed: number): string[] {
  * on when they come back the same local day, and otherwise on the Word of the
  * Day: one Word unseen in the Cycle, chosen once per local day in the clock's
  * time zone and kept in the user state with its date.
+ *
+ * After the Cycle's last unseen Entry comes the end-of-Cycle card, and the
+ * card after that starts a new Cycle: nothing Seen, a new shuffle from a new
+ * seed. A new local day that finds every Word Seen starts the new Cycle
+ * itself, with its Word of the Day and no end-of-Cycle card, because the
+ * Word of the Day always opens the day.
  */
 export async function openFeed({
   content,
@@ -138,6 +148,8 @@ export async function openFeed({
   const seen = new Set(await readRecord(userState, KEYS.seen, SeenSchema));
   let wordOfTheDay = await readRecord(userState, KEYS.wordOfTheDay, WordOfTheDaySchema);
   const cards: FeedCard[] = [];
+  /** The position of the current Cycle's first card: the cards before it belong to an earlier Cycle. */
+  let cycleStart = 0;
   /** When each card on screen now became visible, by position. */
   const visibleSince = new Map<number, number>();
 
@@ -159,15 +171,40 @@ export async function openFeed({
       : { kind: 'entry', entry, wordCard };
   }
 
+  /** The ids of the Entries shown in this session in the current Cycle. */
+  function shownIds(): Set<string> {
+    return new Set(
+      cards.slice(cycleStart).flatMap((card) => (card.kind === 'entry' ? [card.entry.id] : [])),
+    );
+  }
+
+  /**
+   * Starts a new Cycle, in which nothing is Seen, with a new shuffle from a
+   * new seed. Returns the changes that keep it in the user state.
+   */
+  async function startCycle(): Promise<Map<string, string | undefined>> {
+    cycle = { id: cycle.id + 1, seed: drawSeed(random) };
+    order = shuffle(await content.listWordIds(), cycle.seed);
+    seen.clear();
+    cycleStart = cards.length;
+    return new Map([
+      [KEYS.cycle, JSON.stringify(cycle)],
+      [KEYS.seen, undefined],
+    ]);
+  }
+
   /**
    * The next Entry in the Cycle order: one not shown in this session yet, else
-   * one the reader swiped past too quickly to be Seen.
+   * one the reader swiped past too quickly to be Seen. Never the Entry of the
+   * last card, which the reader is on while the app gets the next card ready:
+   * when it is the only unseen Entry left, the Cycle ends after it.
    */
   function nextEntryId(): string | undefined {
     const unseen = order.filter((id) => !seen.has(id));
-    const shown = new Set(cards.map((card) => card.entry.id));
-    const last = cards.at(-1)?.entry.id;
-    return unseen.find((id) => !shown.has(id)) ?? unseen.find((id) => id !== last) ?? unseen[0];
+    const shown = shownIds();
+    const lastCard = cards.at(-1);
+    const last = lastCard?.kind === 'entry' ? lastCard.entry.id : undefined;
+    return unseen.find((id) => !shown.has(id)) ?? unseen.find((id) => id !== last);
   }
 
   /**
@@ -178,7 +215,7 @@ export async function openFeed({
   function nextWordOfTheDayId(dayBefore: string | undefined): string | undefined {
     const unseen = order.filter((id) => !seen.has(id));
     const fresh = unseen.filter((id) => id !== dayBefore);
-    const shown = new Set(cards.map((card) => card.entry.id));
+    const shown = shownIds();
     return fresh.find((id) => !shown.has(id)) ?? fresh[0] ?? unseen[0];
   }
 
@@ -196,8 +233,15 @@ export async function openFeed({
       const card = await addWordOfTheDay();
       if (card !== undefined) return card;
     }
+    if (order.length === 0) return undefined;
+    // The card after the end-of-Cycle card starts a new Cycle.
+    if (cards.at(-1)?.kind === 'end-of-cycle') await userState.write(await startCycle());
     const id = nextEntryId();
-    if (id === undefined) return undefined;
+    if (id === undefined) {
+      const card: FeedCard = { kind: 'end-of-cycle' };
+      cards.push(card);
+      return card;
+    }
     const entry = await content.getWord(id);
     if (entry === undefined) return undefined;
     const card: FeedCard = {
@@ -221,14 +265,11 @@ export async function openFeed({
     // A Word of the Day retired since is chosen again, so no Retired Word shows.
     if (wordOfTheDay?.date !== today || !order.includes(wordOfTheDay.entryId)) {
       const dayBefore = wordOfTheDay?.entryId;
-      const changes = new Map<string, string | undefined>();
+      let changes = new Map<string, string | undefined>();
       let id = nextWordOfTheDayId(dayBefore);
       if (id === undefined && order.length > 0) {
         // Every Word is Seen, so the day starts a new Cycle.
-        cycle = { id: cycle.id + 1, seed: drawSeed(random) };
-        order = shuffle(await content.listWordIds(), cycle.seed);
-        seen.clear();
-        changes.set(KEYS.cycle, JSON.stringify(cycle)).set(KEYS.seen, undefined);
+        changes = await startCycle();
         id = nextWordOfTheDayId(dayBefore);
       }
       if (id === undefined) return undefined;
@@ -254,7 +295,7 @@ export async function openFeed({
     next,
     async cardVisible(position) {
       const card = cards[position];
-      if (card === undefined) return;
+      if (card?.kind !== 'entry') return;
       visibleSince.set(position, clock.now().getTime());
       const lastPosition = { entryId: card.entry.id, date: localDate(clock) };
       await userState.write(new Map([[KEYS.position, JSON.stringify(lastPosition)]]));
@@ -263,7 +304,8 @@ export async function openFeed({
       const since = visibleSince.get(position);
       visibleSince.delete(position);
       const card = cards[position];
-      if (since === undefined || card === undefined) return;
+      // A card of an earlier Cycle counts for that Cycle only.
+      if (since === undefined || card?.kind !== 'entry' || position < cycleStart) return;
       if (clock.now().getTime() - since >= SEEN_DWELL_MS) await markSeen(card.entry.id);
     },
   };

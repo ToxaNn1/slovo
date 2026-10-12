@@ -12,6 +12,7 @@ import {
   SEEN_DWELL_MS,
   type Clock,
   type Feed,
+  type FeedCard,
   type Random,
 } from '@slovo/core';
 
@@ -67,13 +68,28 @@ async function run(records: Map<string, string>, clock: Clock, seed = 7): Promis
   return openFeed({ content: pack, userState, clock, random: seededRandom(seed) });
 }
 
-/** Every card the Feed offers from where it stands, until it repeats or runs out. */
+/** The id of the Entry a card shows, if it shows one. */
+const entryIdOf = (card: FeedCard | undefined) =>
+  card?.kind === 'entry' ? card.entry.id : undefined;
+
+/** The local day a card is the Word of the Day of, if it is. */
+const wordOfTheDayOf = (card: FeedCard | undefined) =>
+  card?.kind === 'entry' ? card.wordOfTheDay : undefined;
+
+/** The ids of the Entries the cards show, in order. */
+const entryIdsOf = (cards: readonly FeedCard[]) =>
+  cards.flatMap((card) => (card.kind === 'entry' ? [card.entry.id] : []));
+
+/**
+ * Every Entry the Feed offers from where it stands, until it repeats, reaches
+ * the end of the Cycle or runs out.
+ */
 async function walk(feed: Feed): Promise<string[]> {
-  const ids = feed.cards.map((card) => card.entry.id);
+  const ids = entryIdsOf(feed.cards);
   for (;;) {
-    const card = await feed.next();
-    if (card === undefined || ids.includes(card.entry.id)) return ids;
-    ids.push(card.entry.id);
+    const id = entryIdOf(await feed.next());
+    if (id === undefined || ids.includes(id)) return ids;
+    ids.push(id);
   }
 }
 
@@ -123,7 +139,7 @@ describe('the Feed over the Ukrainian Language Pack', () => {
     const feed = await run(records, time.clock);
     await feed.next();
     await feed.next();
-    const [read, skipped, almost] = feed.cards.map((card) => card.entry.id);
+    const [read, skipped, almost] = entryIdsOf(feed.cards);
 
     await look(feed, time, 0, SEEN_DWELL_MS);
     await look(feed, time, 1, 250);
@@ -147,7 +163,7 @@ describe('the Feed over the Ukrainian Language Pack', () => {
       if (position > 0) await feed.next();
       await look(feed, time, position, 2000);
     }
-    const read = feed.cards.map((card) => card.entry.id);
+    const read = entryIdsOf(feed.cards);
 
     const restarted = await run(records, time.clock);
     // It reopens on the card the reader was on; every card after it is new.
@@ -166,16 +182,16 @@ describe('the Feed over the Ukrainian Language Pack', () => {
       if (position > 0) await feed.next();
       await look(feed, time, position, 2000);
     }
-    const read = feed.cards.map((card) => card.entry.id);
+    const read = entryIdsOf(feed.cards);
 
     const midnight = fakeClock('2026-10-12T00:00:00+03:00');
     const nextDay = await run(records, midnight.clock);
     await look(nextDay, midnight, 0, 300);
     const lateThatDay = await run(records, fakeClock('2026-10-12T23:59:00+03:00').clock);
 
-    expect(feed.cards[0]?.wordOfTheDay).toEqual({ year: 2026, month: 10, day: 11 });
-    expect(nextDay.cards[0]?.wordOfTheDay).toEqual({ year: 2026, month: 10, day: 12 });
-    expect(read).not.toContain(nextDay.cards[0]?.entry.id);
+    expect(wordOfTheDayOf(feed.cards[0])).toEqual({ year: 2026, month: 10, day: 11 });
+    expect(wordOfTheDayOf(nextDay.cards[0])).toEqual({ year: 2026, month: 10, day: 12 });
+    expect(read).not.toContain(entryIdOf(nextDay.cards[0]));
     expect(lateThatDay.cards).toEqual(nextDay.cards.slice(0, 1));
   });
 });

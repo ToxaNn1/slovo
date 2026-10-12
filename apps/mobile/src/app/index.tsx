@@ -2,6 +2,7 @@ import type { FeedCard } from '@slovo/core';
 import {
   CardCorners,
   DecorBackground,
+  EndOfCycleCard,
   OrnamentDivider,
   PagerScrollView,
   Placeholder,
@@ -49,6 +50,18 @@ export default function HomeScreen() {
 
 function FeedPage({ card, position }: { card: FeedCard; position: number }) {
   const { top } = useSafeAreaInsets();
+  if (card.kind === 'end-of-cycle')
+    return (
+      <View
+        testID={`feed-card-${String(position)}`}
+        style={[styles.page, styles.endOfCycle, { paddingTop: top + TOP_ROW }]}
+      >
+        <EndOfCycleCard
+          title={editionStrings.endOfCycle.title}
+          message={editionStrings.endOfCycle.message}
+        />
+      </View>
+    );
   const { wordCard } = card;
   return (
     // The content scrolls under the top row but stops at the status bar.
@@ -76,4 +89,5 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   page: { flex: 1 },
   content: { paddingTop: TOP_ROW, paddingHorizontal: space[6], paddingBottom: space[6] },
+  endOfCycle: { paddingHorizontal: space[6], paddingBottom: space[6] },
 });
