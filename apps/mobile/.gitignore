@@ -3,6 +3,3 @@
 ios/
 android/
 expo-env.d.ts
-
-# Screenshots the Maestro flows take
-maestro/screenshots/
