@@ -71,7 +71,7 @@ export async function openWordOfTheDay({
     async today({ avoid = new Set<string>() } = {}) {
       const today = localDate(clock);
       // A Word of the Day no longer eligible, such as one Retired since, is chosen again.
-      if (record?.date === today && cycle.order().words.includes(record.entryId)) {
+      if (record?.date === today && cycle.covers(record.entryId)) {
         return { wordId: record.entryId, date: parseLocalDate(today), startedCycle: false };
       }
       const dayBefore = record?.entryId;

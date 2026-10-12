@@ -146,13 +146,12 @@ export async function openFeed({
   async function restore(): Promise<boolean> {
     const position = await userState.read(feedPosition);
     if (position?.date !== localDate(clock)) return false;
-    const { words, corrections } = cycle.order();
-    if (!words.includes(position.entryId) && !corrections.includes(position.entryId)) return false;
+    if (!cycle.covers(position.entryId)) return false;
     const entry = await entries.get(position.entryId);
     if (entry === undefined) return false;
     const today = wordOfTheDay.chosen();
     const opening =
-      today !== undefined && words.includes(today.wordId)
+      today !== undefined && cycle.covers(today.wordId)
         ? await wordOfTheDayCard(today)
         : undefined;
     if (opening?.entry.id === entry.id) changeCards([opening]);
@@ -220,8 +219,7 @@ export async function openFeed({
       const card = await addWordOfTheDay(kept);
       if (card !== undefined) return card;
     }
-    const { words, corrections } = cycle.order();
-    if (words.length === 0 && corrections.length === 0) return undefined;
+    if (cycle.isEmpty()) return undefined;
     // The card after the end-of-Cycle card starts a new Cycle.
     if (atEnd && kept === cards) {
       const started = await cycle.start();

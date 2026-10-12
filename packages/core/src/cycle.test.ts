@@ -80,6 +80,17 @@ describe('the Cycle', () => {
     const cycle = await open({ words: [], corrections: [] });
 
     expect(cycle.order()).toEqual({ words: [], corrections: [] });
+    expect(cycle.isEmpty()).toBe(true);
+  });
+
+  it('covers the Entries it is given of either kind, and no others', async () => {
+    const cycle = await open();
+
+    expect(cycle.isEmpty()).toBe(false);
+    expect(cycle.covers('w_3')).toBe(true);
+    expect(cycle.covers('c_3')).toBe(true);
+    expect(cycle.covers('w_10')).toBe(false);
+    expect((await open({ words: [] })).isEmpty()).toBe(false);
   });
 
   describe('Seen', () => {
