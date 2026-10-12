@@ -81,6 +81,10 @@ _Avoid_: Deleted correction
 **Correction Type**:
 Why the form is non-standard: russianism, calque, surzhyk or officialese (канцелярит).
 
+**Entry card**:
+How the app shows one Entry: a Word card or a Correction card in the same frame, with the action row (heart, Collections, share, hide) under it. The Feed and every screen that opens a kept Entry show the same Entry card.
+_Avoid_: Item, tile
+
 ### User's words
 
 **Favorites**:

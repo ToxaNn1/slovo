@@ -1,34 +1,25 @@
 import type { FeedCard } from '@slovo/core';
 import {
-  CardCorners,
-  CorrectionCard,
   DecorBackground,
   EndOfCycleCard,
+  EntryCard,
   FeedLoading,
-  OrnamentDivider,
   PagerScrollView,
   Placeholder,
   space,
   SwipeHint,
   useTokens,
   VerticalPager,
-  WordCard,
-  WordOfTheDayBadge,
   type VerticalPagerHandle,
 } from '@slovo/ui';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { edition, editionStrings } from '../edition';
+import { editionStrings } from '../edition';
 import { useFeed } from '../feed';
 import { LoadFailed } from '../language-pack';
-import { LemmaPronunciation } from '../pronunciation-button';
 import { useSwipeHint } from '../swipe-hint';
-import { wordOfTheDayLabel } from '../word-of-the-day';
-
-/** The display name of every Category of the Edition, by id. */
-const categoryNames = new Map(edition.categories.map(({ id, displayName }) => [id, displayName]));
 
 /** The Feed's top row, kept for the Stats pill (0.4). */
 const TOP_ROW = 48;
@@ -113,40 +104,14 @@ function FeedPage({
         testID={`feed-card-${String(position)}`}
         style={[styles.page, styles.endOfCycle, { paddingTop: top + TOP_ROW }]}
       >
-        <EndOfCycleCard
-          title={editionStrings.endOfCycle.title}
-          message={editionStrings.endOfCycle.message}
-        />
+        <EndOfCycleCard />
       </View>
     );
   return (
     // The content scrolls under the top row but stops at the status bar.
     <View testID={`feed-card-${String(position)}`} style={[styles.page, { paddingTop: top }]}>
       <PagerScrollView contentContainerStyle={styles.content}>
-        {card.kind === 'correction' ? (
-          <CorrectionCard
-            card={card.correctionCard}
-            strings={editionStrings.correctionCard}
-            language={edition.locale}
-            divider={<OrnamentDivider centre="arrow" />}
-          />
-        ) : (
-          <WordCard
-            card={card.wordCard}
-            strings={editionStrings.wordCard}
-            categoryName={categoryNames.get(card.wordCard.categoryId)}
-            language={edition.locale}
-            badge={
-              card.wordOfTheDay === undefined ? undefined : (
-                <WordOfTheDayBadge label={wordOfTheDayLabel(card.wordOfTheDay)} />
-              )
-            }
-            frame={<CardCorners />}
-            divider={<OrnamentDivider />}
-            onOpenCorrection={onOpenCorrection}
-            pronunciation={<LemmaPronunciation lemma={card.wordCard.lemma} />}
-          />
-        )}
+        <EntryCard card={card} onOpenCorrection={onOpenCorrection} />
       </PagerScrollView>
     </View>
   );

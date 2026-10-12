@@ -10,7 +10,7 @@ import {
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { edition, editionStrings } from '../edition';
+import { editionStrings } from '../edition';
 import { useSettings } from '../settings';
 
 const strings = editionStrings.settings;
@@ -56,7 +56,6 @@ export default function SettingsScreen() {
             testID="settings-font-size-preview"
             lemma={strings.fontSizePreview.lemma}
             definition={strings.fontSizePreview.definition}
-            language={edition.locale}
           />
           <SegmentedControl
             accessibilityLabel={strings.fontSize}

@@ -2,7 +2,7 @@ import { PronunciationButton } from '@slovo/ui';
 import * as Speech from 'expo-speech';
 import { useCallback, useEffect, useSyncExternalStore } from 'react';
 
-import { edition, editionStrings } from './edition';
+import { edition } from './edition';
 import { createPronunciation } from './pronunciation';
 
 /** One for the whole app: the device speaks one Lemma at a time. */
@@ -31,13 +31,5 @@ export function LemmaPronunciation({ lemma }: { lemma: string }) {
     void pronunciation.toggle(lemma);
   }, [lemma]);
 
-  return (
-    <PronunciationButton
-      state={state}
-      strings={editionStrings.wordCard.pronunciation}
-      onPress={toggle}
-      onDismissMessage={dismiss}
-      language={edition.locale}
-    />
-  );
+  return <PronunciationButton state={state} onPress={toggle} onDismissMessage={dismiss} />;
 }

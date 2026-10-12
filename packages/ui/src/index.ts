@@ -2,11 +2,6 @@
  * The UI: Edition-neutral components that read every text, design token and
  * Decor from the Edition.
  */
-export {
-  CorrectionCard,
-  type CorrectionCardProps,
-  type CorrectionCardStrings,
-} from './CorrectionCard';
 export { FeedError, FeedLoading, SwipeHint } from './FeedStates';
 export { FontSizePreview } from './FontSizePreview';
 export {
@@ -17,7 +12,9 @@ export {
   type WordTextSizes,
 } from './FontSizeProvider';
 export { DecorProvider, useDecor } from './DecorProvider';
-export { EndOfCycleCard, type EndOfCycleCardProps } from './EndOfCycleCard';
+export { EditionProvider, fill } from './EditionProvider';
+export { EndOfCycleCard } from './EndOfCycleCard';
+export { EntryCard, type EntryCardProps } from './EntryCard';
 export {
   CardCorners,
   DecorBackground,
@@ -52,5 +49,3 @@ export {
   type VerticalPagerProps,
 } from './VerticalPager';
 export { useReduceMotion } from './useReduceMotion';
-export { fill, WordCard, type WordCardProps, type WordCardStrings } from './WordCard';
-export { WordOfTheDayBadge } from './WordOfTheDayBadge';

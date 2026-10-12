@@ -1,70 +1,42 @@
-import type { EditionStrings } from '@slovo/contracts';
 import type { CorrectionCardModel } from '@slovo/core';
 import type { ReactNode } from 'react';
-import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
-import { useWordTextSizes } from './FontSizeProvider';
-import { space, typeSize } from './tokens';
+import { OrnamentDivider } from './DecorSlots';
+import { fill, useEdition } from './EditionProvider';
+import { useWordTextSizes, type TextSize } from './FontSizeProvider';
+import { space, typeSize, withAlpha } from './tokens';
 import { useTokens } from './TokensProvider';
 import { usePageTurnActions } from './VerticalPager';
-import { COMPACT_LEMMA, COMPACT_PADDING, COMPACT_WIDTH, fill, withAlpha } from './WordCard';
-
-/** The Edition's Correction card strings. */
-export type CorrectionCardStrings = EditionStrings['correctionCard'];
-
-export interface CorrectionCardProps {
-  /** What the card shows, as the Core built it. */
-  card: CorrectionCardModel;
-  strings: CorrectionCardStrings;
-  /** The Edition's language (BCP 47), so VoiceOver reads the card in its voice. */
-  language?: string;
-  /**
-   * Decor between the non-standard form and the standard one, such as an
-   * ornament divider with an arrow in its centre (Decor slot 2).
-   */
-  divider?: ReactNode;
-}
 
 /**
- * The Correction card: the Correction Type, the non-standard form muted and
- * struck through, the main standard equivalent at the Lemma's size with the
- * others under it, the explanation and the example pair. A Correction carries
- * no Stress, and nothing on the card reads as an error.
+ * The Correction card's blocks inside the Entry card's frame: the Correction
+ * Type, the non-standard form muted and struck through, the main standard
+ * equivalent at the Lemma's size with the others under it, the explanation and
+ * the example pair. A Correction carries no Stress, and nothing on the card
+ * reads as an error.
  */
-export function CorrectionCard({ card, strings, language, divider }: CorrectionCardProps) {
+export function CorrectionCardBody({
+  card,
+  lemmaSize: mainSize,
+}: {
+  card: CorrectionCardModel;
+  /** The Lemma's size at the user's font size, which the main standard equivalent takes. */
+  lemmaSize: TextSize;
+}) {
   const { colors, fontFamilies, radii } = useTokens();
   const sizes = useWordTextSizes();
-  const compact = useWindowDimensions().width < COMPACT_WIDTH;
-  const mainSize = compact
-    ? {
-        fontSize: sizes.lemma.fontSize * COMPACT_LEMMA,
-        lineHeight: sizes.lemma.lineHeight * COMPACT_LEMMA,
-      }
-    : sizes.lemma;
-  const padding = compact ? COMPACT_PADDING : 1;
-  const voice = language === undefined ? {} : { accessibilityLanguage: language };
+  const edition = useEdition();
+  const { voice } = edition;
+  const strings = edition.strings.correctionCard;
   // In the Feed, VoiceOver turns to the next or previous card from the two forms.
   const turnActions = usePageTurnActions();
   const correctionType = strings.correctionTypes[card.correctionType];
   const sentence = [sizes.example, { fontFamily: fontFamilies.word }];
 
   return (
-    <View
-      testID="correction-card"
-      style={[
-        styles.card,
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.line,
-          borderRadius: radii.card,
-          paddingTop: CARD_TOP * padding,
-          paddingHorizontal: CARD_SIDE * padding,
-          paddingBottom: CARD_BOTTOM * padding,
-          gap: CARD_GAP * padding,
-        },
-      ]}
-    >
+    <>
       <View style={styles.header}>
         <Text
           accessibilityRole="header"
@@ -112,7 +84,10 @@ export function CorrectionCard({ card, strings, language, divider }: CorrectionC
           {card.nonStandardForm}
         </Text>
       </View>
-      {divider === undefined ? null : <View>{divider}</View>}
+      <View>
+        {/* Decor slot 2 with an arrow from the non-standard form to the standard one. */}
+        <OrnamentDivider centre="arrow" />
+      </View>
       <View style={styles.form}>
         <View
           testID="correction-standard"
@@ -198,7 +173,7 @@ export function CorrectionCard({ card, strings, language, divider }: CorrectionC
           </Text>
         </View>
       </View>
-    </View>
+    </>
   );
 }
 
@@ -213,16 +188,9 @@ function Mark({ lineHeight, children }: { lineHeight: number; children: ReactNod
   );
 }
 
-/** Padding 28 / 26 / 24 from the design; 16 between blocks. */
-const CARD_TOP = 28;
-const CARD_SIDE = 26;
-const CARD_BOTTOM = 24;
-const CARD_GAP = 16;
 const MARK_SIZE = 18;
 
 const styles = StyleSheet.create({
-  // The border is the card's only elevation.
-  card: { borderWidth: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

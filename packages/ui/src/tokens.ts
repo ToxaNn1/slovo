@@ -72,6 +72,14 @@ export function designTokens(edition: EditionTokens): DesignTokens {
   };
 }
 
+/** A `#RRGGBB` colour at the given opacity; any other colour as it is. */
+export function withAlpha(color: string, alpha: number): string {
+  const hex = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(color);
+  if (hex === null) return color;
+  const [r, g, b] = hex.slice(1).map((pair) => parseInt(pair, 16));
+  return `rgba(${String(r)}, ${String(g)}, ${String(b)}, ${String(alpha)})`;
+}
+
 /** The 4-pt spacing grid. */
 export const space = { 1: 4, 2: 8, 3: 12, 4: 16, 5: 20, 6: 24, 8: 32 } as const;
 
