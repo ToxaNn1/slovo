@@ -29,6 +29,7 @@ import Animated, {
   Easing,
   ReduceMotion,
   scrollTo,
+  useAnimatedReaction,
   useAnimatedRef,
   useAnimatedScrollHandler,
   useAnimatedStyle,
@@ -73,7 +74,10 @@ export interface VerticalPagerProps<Item> {
   readonly renderPage: (item: Item, index: number) => ReactNode;
   /** The page shown first. */
   readonly initialIndex?: number;
-  /** Called once a swipe settles on another page. */
+  /**
+   * Called as soon as a swipe or `turnTo` heads for another page, while that
+   * page still moves in, so the next swipe can follow on from it.
+   */
   readonly onIndexChange: (index: number) => void;
   /**
    * The names of the VoiceOver actions that turn to the next and the previous
@@ -121,7 +125,7 @@ const PageIndexContext = createContext(0);
 /**
  * Full-screen pages stacked vertically: swipe up for the next page, down for
  * the one before. It snaps one page per swipe and draws only the pages next
- * to the current one. A page taller than the screen puts its content in a
+ * to the current one and those a swipe passes. A page taller than the screen puts its content in a
  * `PagerScrollView`: a swipe then scrolls it, and turns the page only once the
  * content is scrolled to its end in that direction.
  */
@@ -136,10 +140,15 @@ export function VerticalPager<Item>({
 }: VerticalPagerProps<Item>) {
   const reduceMotion = useReduceMotion();
   const motion = reduceMotion ? CROSS_FADE : SWIPE;
+  /** The page the last swipe went to, which may still be moving in. */
   const [index, setIndex] = useState(initialIndex);
+  /** The page nearest to the screen's position, while a swipe moves. */
+  const [nearest, setNearest] = useState(initialIndex);
   const [height, setHeight] = useState(0);
   /** The page on screen, in pages; fractional while a swipe moves. */
   const position = useSharedValue(initialIndex);
+  /** `index` for the gestures, which read it on the UI thread. */
+  const turnedTo = useSharedValue(initialIndex);
   const pageHeight = useSharedValue(0);
   const lastIndex = useSharedValue(items.length - 1);
   const dragStart = useSharedValue(0);
@@ -154,7 +163,14 @@ export function VerticalPager<Item>({
     lastIndex.value = items.length - 1;
   }, [items.length, lastIndex]);
 
-  function settle(target: number) {
+  useAnimatedReaction(
+    () => Math.round(position.value),
+    (near, previous) => {
+      if (near !== previous) scheduleOnRN(setNearest, near);
+    },
+  );
+
+  function turn(target: number) {
     setIndex(target);
     onIndexChange(target);
   }
@@ -162,9 +178,9 @@ export function VerticalPager<Item>({
   function turnTo(target: number) {
     const clamped = Math.min(Math.max(target, 0), items.length - 1);
     if (clamped === index) return;
-    position.value = withTiming(clamped, motion, (finished) => {
-      if (finished === true) scheduleOnRN(settle, clamped);
-    });
+    turnedTo.value = clamped;
+    turn(clamped);
+    position.value = withTiming(clamped, motion);
   }
 
   useImperativeHandle(ref, () => ({ turnTo }));
@@ -200,7 +216,7 @@ export function VerticalPager<Item>({
       if (pageHeight.value === 0) return;
       if (drag.value === DRAG.undecided) {
         // The page turns only from the end of its scroll in the swipe's direction.
-        const scroll = scrolls.value[Math.round(dragStart.value)] ?? { y: 0, max: 0 };
+        const scroll = scrolls.value[turnedTo.value] ?? { y: 0, max: 0 };
         const atEnd =
           translationY < 0 ? scroll.y >= scroll.max - SCROLL_EDGE : scroll.y <= SCROLL_EDGE;
         drag.value = atEnd ? DRAG.page : DRAG.scroll;
@@ -214,16 +230,19 @@ export function VerticalPager<Item>({
     })
     .onEnd(({ translationY, velocityY }) => {
       if (drag.value !== DRAG.page) return;
-      const start = Math.round(dragStart.value);
+      // A swipe during the last one's motion turns on from the page that one went to.
+      const start = turnedTo.value;
       const turned = translationY - turnFrom.value;
       const share = pageHeight.value === 0 ? 0 : turned / pageHeight.value;
       let target = start;
       if (velocityY < -TURN_VELOCITY || share < -TURN_DISTANCE) target = start + 1;
       else if (velocityY > TURN_VELOCITY || share > TURN_DISTANCE) target = start - 1;
       target = Math.min(Math.max(target, 0), lastIndex.value);
-      position.value = withTiming(target, motion, (finished) => {
-        if (finished === true && target !== start) scheduleOnRN(settle, target);
-      });
+      if (target !== start) {
+        turnedTo.value = target;
+        scheduleOnRN(turn, target);
+      }
+      position.value = withTiming(target, motion);
     })
     .onFinalize(() => {
       turning.value = false;
@@ -235,9 +254,10 @@ export function VerticalPager<Item>({
     setHeight(measured);
   }
 
-  // The current page and its neighbours, ready to move in.
-  const first = Math.max(index - 1, 0);
-  const visible = items.slice(first, index + 2);
+  // The current page and its neighbours, ready to move in, and while a swipe
+  // moves, the pages it passes on its way.
+  const first = Math.max(Math.min(index, nearest) - 1, 0);
+  const visible = items.slice(first, Math.max(index, nearest) + 2);
 
   return (
     <PagerContext value={{ panRef, scrolls, turning, current: index, turnActions }}>
