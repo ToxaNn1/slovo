@@ -36,7 +36,7 @@ import Animated, {
   withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
-import { scheduleOnRN } from 'react-native-worklets';
+import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
 
 import { useReduceMotion } from './useReduceMotion';
 
@@ -313,6 +313,29 @@ export function usePageTurnActions(): Partial<TurnActions> {
 
 const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView);
 
+// The pages' scrolls change on the UI thread only, where the scroll handler
+// changes them too. A change from the JS thread reaches the UI thread later,
+// so the next page to read the scrolls in the same frame would miss it and
+// write it back over: a page that grew too tall to fit, or shrank to fit, as
+// a new font size does to every page at once, would keep its old scroll and
+// stop the swipe from turning it.
+
+/** Keeps the furthest `index`'s page can scroll, after its content or viewport changed. */
+function keepMax(scrolls: SharedValue<Record<number, PageScroll>>, index: number, max: number) {
+  'worklet';
+  const y = Math.min(scrolls.value[index]?.y ?? 0, max);
+  scrolls.value = { ...scrolls.value, [index]: { y, max } };
+}
+
+/** Forgets the scroll of `index`'s page, once that page is no longer drawn. */
+function forget(scrolls: SharedValue<Record<number, PageScroll>>, index: number) {
+  'worklet';
+  const others = { ...scrolls.value };
+  // eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- keyed by page index
+  delete others[index];
+  scrolls.value = others;
+}
+
 /**
  * The scrolling content of a `VerticalPager` page, for a page that may be
  * taller than the screen. It scrolls with the same swipe that turns pages,
@@ -338,17 +361,12 @@ export function PagerScrollView({
   const heldAt = useSharedValue(0);
 
   function measure() {
-    const max = Math.max(content.current - viewport.current, 0);
-    const y = Math.min(scrolls.value[index]?.y ?? 0, max);
-    scrolls.value = { ...scrolls.value, [index]: { y, max } };
+    scheduleOnUI(keepMax, scrolls, index, Math.max(content.current - viewport.current, 0));
   }
 
   useEffect(
     () => () => {
-      const others = { ...scrolls.value };
-      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- keyed by page index
-      delete others[index];
-      scrolls.value = others;
+      scheduleOnUI(forget, scrolls, index);
     },
     [index, scrolls],
   );
