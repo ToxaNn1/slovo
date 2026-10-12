@@ -64,7 +64,9 @@ const SQL = {
     'SELECT text FROM related_words WHERE word_id = ? AND relation = ? ORDER BY position',
   registers: 'SELECT register FROM word_registers WHERE word_id = ? ORDER BY position',
   sources: 'SELECT title, url, archived_url FROM sources WHERE entry_id = ? ORDER BY position',
-  correctionIds: 'SELECT correction_id FROM word_corrections WHERE word_id = ? ORDER BY position',
+  linkedCorrectionIds:
+    'SELECT correction_id FROM word_corrections WHERE word_id = ? ORDER BY position',
+  correctionIds: 'SELECT id FROM corrections WHERE retired = 0 ORDER BY id',
   correction: 'SELECT * FROM corrections WHERE id = ?',
   equivalents: 'SELECT text FROM correction_equivalents WHERE correction_id = ? ORDER BY position',
   linkedWordIds: `
@@ -108,7 +110,7 @@ export function createPackReader(db: PackDatabase): PackReader {
         column(SQL.relatedWords, [id, 'antonym'], 'text'),
         column(SQL.registers, [id], 'register'),
         sources(id),
-        column(SQL.correctionIds, [id], 'correction_id'),
+        column(SQL.linkedCorrectionIds, [id], 'correction_id'),
       ]);
     const [primaryDefinition, ...extraDefinitions] = definitions;
     // Parsing checks the pack against the contracts and types the Word.
@@ -156,6 +158,7 @@ export function createPackReader(db: PackDatabase): PackReader {
   return {
     listWordIds: () => column(SQL.wordIds, [], 'id'),
     getWord,
+    listCorrectionIds: () => column(SQL.correctionIds, [], 'id'),
     getCorrection,
     listLinkedWordIds: (correctionId) => column(SQL.linkedWordIds, [correctionId], 'id'),
     async metadata() {
