@@ -11,6 +11,7 @@ export {
   type WordTextSizes,
 } from './FontSizeProvider';
 export { DecorProvider, useDecor } from './DecorProvider';
+export { EndOfCycleCard, type EndOfCycleCardProps } from './EndOfCycleCard';
 export {
   CardCorners,
   DecorBackground,

@@ -37,6 +37,12 @@ export const EditionStringsSchema = z.strictObject({
   loadFailed: TextSchema,
   /** Shown when the Language Pack holds no Words. */
   noWords: TextSchema,
+  /** The end-of-Cycle card, shown once the reader has Seen every live Entry. */
+  endOfCycle: z.strictObject({
+    title: TextSchema,
+    /** Asks the reader to wait for new Entries and says the next swipe starts a new Cycle. */
+    message: TextSchema,
+  }),
   /** The badge on the card of the Word of the Day. */
   wordOfTheDay: z.strictObject({
     /** The badge text; `{day}` stands for the day of the month and `{month}` for its name. */

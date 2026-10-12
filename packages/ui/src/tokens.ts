@@ -77,6 +77,7 @@ export const space = { 1: 4, 2: 8, 3: 12, 4: 16, 5: 20, 6: 24, 8: 32 } as const;
 /** Type sizes of the UI roles; the UI body follows iOS Dynamic Type. */
 export const typeSize = {
   screenTitle: 34,
+  emptyStateTitle: 28,
   overline: 11,
   body: 15,
   partOfSpeech: 14,
