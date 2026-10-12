@@ -66,7 +66,8 @@ export interface Feed {
    * screen makes its Entry Seen if it stayed there for at least
    * `SEEN_DWELL_MS` and belongs to the current Cycle. While a card is on
    * screen, the Feed keeps the card after it ready, so the next swipe never
-   * waits. Reporting the card already on screen again keeps its dwell time
+   * waits; on a new local day, today's Word of the Day takes the place of a
+   * card got ready the day before. Reporting the card already on screen again keeps its dwell time
    * and only gets the next card ready if that failed before. Resolves once
    * the report is kept and the next card is ready.
    */
@@ -159,8 +160,8 @@ export async function openFeed({
   }
 
   /** The ids of the Entries shown in this session in the current Cycle. */
-  function shownIds(): Set<string> {
-    return new Set(cards.slice(cycleStart).flatMap((card) => entryIdOf(card) ?? []));
+  function shownIds(shown = cards): Set<string> {
+    return new Set(shown.slice(cycleStart).flatMap((card) => entryIdOf(card) ?? []));
   }
 
   /**
@@ -255,7 +256,7 @@ export async function openFeed({
    * it first if today has none yet.
    */
   async function addWordOfTheDay(kept = cards): Promise<FeedCard | undefined> {
-    const today = await wordOfTheDay.today({ avoid: shownIds() });
+    const today = await wordOfTheDay.today({ avoid: shownIds(kept) });
     if (today === undefined) return undefined;
     if (today.startedCycle) cycleStart = kept.length;
     const entry = await entries.get(today.wordId);
@@ -275,15 +276,30 @@ export async function openFeed({
   /** Whether the card on screen is the last one, so the card after it is not ready yet. */
   const nextCardMissing = () => onScreen !== undefined && onScreen.position >= cards.length - 1;
 
+  /**
+   * Whether the ready card, the last one, which the reader hasn't reached, was
+   * got ready on an earlier local day: today has no Word of the Day yet.
+   */
+  const readyCardStale = () =>
+    onScreen !== undefined &&
+    onScreen.position < cards.length - 1 &&
+    wordOfTheDay.chosen() === undefined;
+
+  /** Puts today's Word of the Day in place of a ready card got ready on an earlier local day. */
+  async function replaceStaleReadyCard(): Promise<void> {
+    if (readyCardStale()) await addWordOfTheDay(cards.slice(0, -1));
+  }
+
   // One card is got ready at a time; it goes on while the card on screen is the last.
   let gettingReady: Promise<void> | undefined;
   function keepNextCardReady(): Promise<void> {
-    if (gettingReady === undefined && nextCardMissing()) {
+    if (gettingReady === undefined && (nextCardMissing() || readyCardStale())) {
       gettingReady = (async () => {
         try {
-          do {
+          await inTurn(replaceStaleReadyCard);
+          while (nextCardMissing()) {
             if ((await next()) === undefined) return;
-          } while (nextCardMissing());
+          }
         } finally {
           gettingReady = undefined;
         }

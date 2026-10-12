@@ -673,6 +673,32 @@ describe('the Word of the Day in the Feed', () => {
     expect(entryIdsOf(feed.cards.slice(0, 2))).not.toContain(entryIdOf(card));
     expect(wordOfTheDayOf(await feed.next())).toBeUndefined();
   });
+
+  it('comes next, in place of the card got ready the day before, when the app comes back from the background on a new local day', async () => {
+    const time = fakeClock('2026-10-11T23:58:00+03:00');
+    const feed = await run({ clock: time.clock });
+    await feed.show(0);
+    await feed.show(undefined);
+
+    time.advance(8 * 60 * 60_000);
+    await feed.show(0);
+
+    expect(feed.cards).toHaveLength(2);
+    expect(wordOfTheDayOf(feed.cards[1])).toEqual({ year: 2026, month: 10, day: 12 });
+    expect(entryIdOf(feed.cards[1])).not.toBe(entryIdOf(feed.cards[0]));
+  });
+
+  it('comes next on a new local day when the card on screen is reported again', async () => {
+    const time = fakeClock('2026-10-11T23:58:00+03:00');
+    const feed = await run({ clock: time.clock });
+    await feed.show(0);
+
+    time.advance(5 * 60_000);
+    await feed.show(0);
+
+    expect(feed.cards).toHaveLength(2);
+    expect(wordOfTheDayOf(feed.cards[1])).toEqual({ year: 2026, month: 10, day: 12 });
+  });
 });
 
 describe('Corrections in the Feed', () => {
