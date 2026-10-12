@@ -604,7 +604,7 @@ describe('the Feed', () => {
       });
       await readToTheEnd(feed, time);
       const end = feed.cards.length - 1;
-      let letThrough = () => undefined as void;
+      let letThrough: () => void = () => undefined;
       const came = new Promise<void>((resolve) => {
         held = { came: resolve, through: new Promise((resolve) => (letThrough = resolve)) };
       });

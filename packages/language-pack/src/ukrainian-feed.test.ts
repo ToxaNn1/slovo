@@ -195,7 +195,7 @@ describe('the Feed over the Ukrainian Language Pack', () => {
 
     const restarted = await run(records, time.clock);
     // It reopens on the card the reader was on; every card after it is new.
-    const [reopenedOn, ...after] = await walk(restarted);
+    const [reopenedOn, ...after] = (await walk(restarted)).slice(restarted.startPosition);
 
     expect(reopenedOn).toBe(read.at(-1));
     expect(after).toHaveLength(liveIds.length - read.length);
