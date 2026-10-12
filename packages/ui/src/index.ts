@@ -34,3 +34,4 @@ export {
 export { TokensProvider, useTokens, type Tokens } from './TokensProvider';
 export { VerticalPager, type VerticalPagerProps } from './VerticalPager';
 export { WordCard, type WordCardProps } from './WordCard';
+export { WordOfTheDayBadge } from './WordOfTheDayBadge';
