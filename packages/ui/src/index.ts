@@ -25,6 +25,11 @@ export {
 } from './DecorSlots';
 export { ScreenTitle, SectionLabel } from './headings';
 export { Placeholder } from './Placeholder';
+export {
+  PronunciationButton,
+  type PronunciationButtonProps,
+  type PronunciationButtonState,
+} from './PronunciationButton';
 export { SegmentedControl, type Segment } from './SegmentedControl';
 export { SplashOverlay, type SplashOverlayProps } from './SplashOverlay';
 export {

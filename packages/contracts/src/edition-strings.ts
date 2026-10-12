@@ -80,6 +80,15 @@ export const EditionStringsSchema = z.strictObject({
     stress: templateOf('vowels'),
     /** The word between two valid stressed vowels, e.g. "або". */
     stressOr: TextSchema,
+    /** The Pronunciation button and its missing-voice message. */
+    pronunciation: z.strictObject({
+      /** The button's VoiceOver label, e.g. "Вимова". */
+      label: TextSchema,
+      /** Its VoiceOver label while the Lemma is being spoken, e.g. "Зупинити вимову". */
+      stop: TextSchema,
+      /** Shown when the device has no voice for the Edition's language. */
+      noVoice: TextSchema,
+    }),
     /** Every part of speech, e.g. "ім." / "іменник". */
     partsOfSpeech: z.record(PartOfSpeechSchema, LabelSchema),
     /** Every gender of a noun, e.g. "ж. р." / "жіночий рід". */
