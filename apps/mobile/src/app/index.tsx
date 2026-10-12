@@ -70,7 +70,11 @@ export default function HomeScreen() {
         turnActionLabels={{ next: feedStrings.nextEntry, previous: feedStrings.previousEntry }}
       />
       {swipeHint.visible ? (
-        <SwipeHint text={feedStrings.swipeHint} onDismiss={swipeHint.dismiss} />
+        <SwipeHint
+          text={feedStrings.swipeHint}
+          onShown={swipeHint.markShown}
+          onDismiss={swipeHint.dismiss}
+        />
       ) : null}
     </View>
   );

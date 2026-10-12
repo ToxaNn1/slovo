@@ -208,11 +208,25 @@ const HINT_FADE_MS = 300;
 /**
  * The first-launch swipe hint: an inverted pill with an arrow over the bottom
  * of the Feed. It fades in, or just appears with Reduce Motion. A tap hides it.
+ * `onShown` is called once it is drawn, so the caller can keep that it was seen.
  */
-export function SwipeHint({ text, onDismiss }: { text: string; onDismiss: () => void }) {
+export function SwipeHint({
+  text,
+  onShown,
+  onDismiss,
+}: {
+  text: string;
+  onShown: () => void;
+  onDismiss: () => void;
+}) {
   const { colors, fontFamilies } = useTokens();
+  const { voice } = useEdition();
   const reduceMotion = useReduceMotion();
   const opacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    onShown();
+  }, [onShown]);
 
   useEffect(() => {
     if (reduceMotion) {
@@ -228,6 +242,7 @@ export function SwipeHint({ text, onDismiss }: { text: string; onDismiss: () => 
         testID="swipe-hint"
         accessibilityRole="button"
         accessibilityLabel={text}
+        {...voice}
         onPress={onDismiss}
         style={[styles.hint, { backgroundColor: colors.ink }]}
       >
