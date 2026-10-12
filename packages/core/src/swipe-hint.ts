@@ -1,7 +1,7 @@
 import type { UserState } from './user-state';
+import { userStateRecords } from './user-state-schema';
 
-/** The user-state record that says the swipe hint was shown. */
-const SHOWN_KEY = 'feed.swipeHintShown';
+const { swipeHintShown } = userStateRecords;
 
 /**
  * The Feed's swipe hint, which shows how to reach the next card on the first
@@ -17,10 +17,10 @@ export interface SwipeHint {
 export function createSwipeHint({ userState }: { userState: UserState }): SwipeHint {
   return {
     async isDue() {
-      return (await userState.get(SHOWN_KEY)) === undefined;
+      return (await userState.read(swipeHintShown)) === undefined;
     },
     markShown() {
-      return userState.write(new Map([[SHOWN_KEY, 'true']]));
+      return userState.write(swipeHintShown.change(true));
     },
   };
 }

@@ -1,9 +1,8 @@
-import { z } from 'zod';
-
 import type { Cycle } from './cycle';
 import { localDate, parseLocalDate, type LocalDate } from './local-date';
-import type { Clock } from './ports';
-import { readRecord, type UserState } from './user-state';
+import type { Clock, UserStateChanges } from './ports';
+import type { UserState } from './user-state';
+import { userStateRecords } from './user-state-schema';
 
 /** The Word of the Day of one local day. */
 export interface WordOfTheDayChoice {
@@ -36,14 +35,7 @@ export interface WordOfTheDay {
   }): Promise<(WordOfTheDayChoice & { readonly startedCycle: boolean }) | undefined>;
 }
 
-/**
- * The user-state record of the Word of the Day. Its key is from 0.2, when the
- * Feed held it, and stays as it is so no migration is needed.
- */
-const KEY = 'feed.wordOfTheDay';
-
-/** The Word of the Day and the local date it belongs to. */
-const RecordSchema = z.object({ entryId: z.string(), date: z.string() });
+const { wordOfTheDay: wordOfTheDayRecord } = userStateRecords;
 
 export async function openWordOfTheDay({
   cycle,
@@ -54,7 +46,7 @@ export async function openWordOfTheDay({
   userState: UserState;
   clock: Clock;
 }): Promise<WordOfTheDay> {
-  let record = await readRecord(userState, KEY, RecordSchema);
+  let record = await userState.read(wordOfTheDayRecord);
 
   /** The next unseen Word in the Cycle order, other than the day before's where it can be. */
   function nextWordId(dayBefore: string | undefined, avoid: ReadonlySet<string>) {
@@ -76,18 +68,17 @@ export async function openWordOfTheDay({
         return { wordId: record.entryId, date: parseLocalDate(today), startedCycle: false };
       }
       const dayBefore = record?.entryId;
-      let changes = new Map<string, string | undefined>();
+      let changes: UserStateChanges = new Map();
       let id = nextWordId(dayBefore, avoid);
       const startedCycle = id === undefined && cycle.order().words.length > 0;
       if (startedCycle) {
         // Every Word is Seen, so the day starts a new Cycle.
-        changes = new Map(await cycle.start());
+        changes = await cycle.start();
         id = nextWordId(dayBefore, new Set());
       }
       if (id === undefined) return undefined;
       record = { entryId: id, date: today };
-      changes.set(KEY, JSON.stringify(record));
-      await userState.write(changes);
+      await userState.write(new Map([...changes, ...wordOfTheDayRecord.change(record)]));
       return { wordId: id, date: parseLocalDate(today), startedCycle };
     },
   };

@@ -1,33 +1,22 @@
-import type { z } from 'zod';
-
 import type { UserStateChanges, UserStatePort } from './ports';
-
-/** The record that holds the schema version of the user state. */
-const VERSION_KEY = 'schema.version';
+import type { UserStateRecord, UserStateRecords } from './user-state-record';
+import { SCHEMA_VERSION_KEY, userStateMigrations } from './user-state-schema';
 
 /**
- * The user state at the schema version this Core reads and writes. Only
- * `openUserState` makes one, so no feature ever reads an older schema.
+ * The user state at the schema version this Core reads and writes, read and
+ * written through the records the Core declares. Only `openUserState` makes
+ * one, so no feature ever reads an older schema.
  */
 export interface UserState {
-  get(key: string): Promise<string | undefined>;
+  /** The value of the record, if it holds one of its schema. */
+  read<T>(record: UserStateRecord<T>): Promise<T | undefined>;
+  /**
+   * The value of each record of the kind, by id. A record that holds no value
+   * of its schema is left out.
+   */
+  list<T>(records: UserStateRecords<T>): Promise<ReadonlyMap<string, T>>;
+  /** Applies every change at once, or none of them. */
   write(changes: UserStateChanges): Promise<void>;
-}
-
-/** A JSON record of the user state, if it holds a value of the schema. */
-export async function readRecord<T>(
-  userState: Pick<UserState, 'get'>,
-  key: string,
-  schema: z.ZodType<T>,
-): Promise<T | undefined> {
-  const record = await userState.get(key);
-  if (record === undefined) return undefined;
-  try {
-    const parsed = schema.safeParse(JSON.parse(record));
-    return parsed.success ? parsed.data : undefined;
-  } catch {
-    return undefined;
-  }
 }
 
 /**
@@ -36,17 +25,8 @@ export async function readRecord<T>(
  */
 export interface UserStateMigration {
   readonly version: number;
-  migrate(state: Pick<UserState, 'get'>): Promise<UserStateChanges>;
+  migrate(state: Pick<UserStatePort, 'get' | 'list'>): Promise<UserStateChanges>;
 }
-
-/**
- * The user-state schema, one step per version. Append a step to change it;
- * never edit or remove one that has shipped.
- */
-export const userStateMigrations: readonly UserStateMigration[] = [
-  // 0.2: the user settings (Theme, font size). A new store has nothing to bring forward.
-  { version: 1, migrate: () => Promise.resolve(new Map()) },
-];
 
 /** Thrown when the user state was written by a newer Core than this one. */
 export class UserStateTooNewError extends Error {
@@ -73,7 +53,7 @@ export async function openUserState({
       );
     }
   });
-  const record = await port.get(VERSION_KEY);
+  const record = await port.get(SCHEMA_VERSION_KEY);
   const stored = record === undefined ? 0 : Number(record);
   if (!Number.isSafeInteger(stored) || stored < 0) {
     throw new Error(`The user state has an unreadable schema version "${String(record)}".`);
@@ -85,9 +65,21 @@ export async function openUserState({
   }
   for (const migration of migrations.slice(stored)) {
     const changes = await migration.migrate(port);
-    await port.write(new Map([...changes, [VERSION_KEY, String(migration.version)]]));
+    await port.write(new Map([...changes, [SCHEMA_VERSION_KEY, String(migration.version)]]));
   }
-  return { get: (key) => port.get(key), write: (changes) => port.write(changes) };
+  return {
+    read: async (record) => record.decode(await port.get(record.key)),
+    async list<T>(records: UserStateRecords<T>) {
+      const values = new Map<string, T>();
+      for (const [key, text] of await port.list(records.prefix)) {
+        const id = key.slice(records.prefix.length);
+        const value = records.record(id).decode(text);
+        if (value !== undefined) values.set(id, value);
+      }
+      return values;
+    },
+    write: (changes) => port.write(changes),
+  };
 }
 
 /**

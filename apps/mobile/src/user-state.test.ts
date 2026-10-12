@@ -187,13 +187,12 @@ describe.each(adapters)('the user state %s', (_, createStore) => {
     const v1 = await openUserState({ port: await store.open(), migrations: [greet] });
     await v1.write(new Map([['kept', 'yes']]));
 
-    const v2 = await openUserState({ port: await store.open(), migrations: [greet, expand] });
-    const again = await openUserState({ port: await store.open(), migrations: [greet, expand] });
-
-    for (const state of [v2, again]) {
-      expect(await state.get('message')).toBe('hello, world');
-      expect(await state.get('greeting')).toBeUndefined();
-      expect(await state.get('kept')).toBe('yes');
+    for (let run = 0; run < 2; run++) {
+      const port = await store.open();
+      await openUserState({ port, migrations: [greet, expand] });
+      expect(await port.get('message')).toBe('hello, world');
+      expect(await port.get('greeting')).toBeUndefined();
+      expect(await port.get('kept')).toBe('yes');
     }
   });
 
@@ -204,8 +203,9 @@ describe.each(adapters)('the user state %s', (_, createStore) => {
     await expect(openUserState({ port: await store.open(), migrations: [greet] })).rejects.toThrow(
       UserStateTooNewError,
     );
-    const current = await openUserState({ port: await store.open(), migrations: [greet, expand] });
-    expect(await current.get('message')).toBe('hello, world');
+    const port = await store.open();
+    await openUserState({ port, migrations: [greet, expand] });
+    expect(await port.get('message')).toBe('hello, world');
   });
 
   it("opens a new store at the Core's current schema", async () => {
@@ -213,6 +213,8 @@ describe.each(adapters)('the user state %s', (_, createStore) => {
     const state = await openUserState({ port: await store.open() });
     await state.write(new Map([['kept', 'yes']]));
 
-    expect(await (await openUserState({ port: await store.open() })).get('kept')).toBe('yes');
+    const port = await store.open();
+    await openUserState({ port });
+    expect(await port.get('kept')).toBe('yes');
   });
 });

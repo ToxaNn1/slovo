@@ -1,6 +1,7 @@
-import { FontSizeSchema, ThemeSchema, type FontSize, type Theme } from '@slovo/contracts';
+import type { FontSize, Theme } from '@slovo/contracts';
 
 import type { UserState } from './user-state';
+import { userStateRecords } from './user-state-schema';
 
 /** The user settings in effect. */
 export interface UserSettings {
@@ -31,12 +32,6 @@ export function colorSchemeFor(
   return deviceAppearance ?? 'light';
 }
 
-/** The user-state record of each setting. */
-const KEYS = {
-  theme: 'settings.theme',
-  fontSize: 'settings.fontSize',
-} as const satisfies Record<keyof UserSettings, string>;
-
 export function createSettings({
   userState,
   defaults,
@@ -45,11 +40,9 @@ export function createSettings({
   defaults: UserSettings;
 }): Settings {
   async function read(): Promise<UserSettings> {
-    const theme = ThemeSchema.safeParse(await userState.get(KEYS.theme));
-    const fontSize = FontSizeSchema.safeParse(await userState.get(KEYS.fontSize));
     return {
-      theme: theme.success ? theme.data : defaults.theme,
-      fontSize: fontSize.success ? fontSize.data : defaults.fontSize,
+      theme: (await userState.read(userStateRecords.theme)) ?? defaults.theme,
+      fontSize: (await userState.read(userStateRecords.fontSize)) ?? defaults.fontSize,
     };
   }
 
@@ -57,12 +50,10 @@ export function createSettings({
     read,
     async update(changes) {
       await userState.write(
-        new Map(
-          Object.entries(changes).map(([setting, value]) => [
-            KEYS[setting as keyof UserSettings],
-            value,
-          ]),
-        ),
+        new Map([
+          ...('theme' in changes ? userStateRecords.theme.change(changes.theme) : []),
+          ...('fontSize' in changes ? userStateRecords.fontSize.change(changes.fontSize) : []),
+        ]),
       );
       return read();
     },

@@ -30,9 +30,9 @@ describe('the swipe hint', () => {
   });
 
   it('leaves the other user state untouched', async () => {
-    const records = new Map([['settings.theme', 'dark']]);
+    const records = new Map([['feed.seen', '["w_1"]']]);
     await (await swipeHintOver(records)).markShown();
 
-    expect(records.get('settings.theme')).toBe('dark');
+    expect(records.get('feed.seen')).toBe('["w_1"]');
   });
 });
