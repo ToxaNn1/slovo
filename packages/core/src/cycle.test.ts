@@ -35,10 +35,7 @@ async function open({
 } = {}): Promise<Cycle> {
   const userState = await openUserState({ port: createMemoryUserStatePort(records) });
   return openCycle({
-    entries: {
-      listWordIds: () => Promise.resolve(words),
-      listCorrectionIds: () => Promise.resolve(corrections),
-    },
+    entries: { eligible: () => Promise.resolve({ words, corrections }) },
     userState,
     random,
   });
@@ -145,14 +142,11 @@ describe('the Cycle', () => {
       expect(restarted.unseen()).toEqual(restarted.order());
     });
 
-    it('covers the Entries the source gives when it starts', async () => {
+    it('covers the Entries eligible when it starts', async () => {
       const words = [...wordIds];
       const userState = await openUserState({ port: createMemoryUserStatePort() });
       const cycle = await openCycle({
-        entries: {
-          listWordIds: () => Promise.resolve([...words]),
-          listCorrectionIds: () => Promise.resolve([]),
-        },
+        entries: { eligible: () => Promise.resolve({ words: [...words], corrections: [] }) },
         userState,
         random: randomOf(0.25),
       });

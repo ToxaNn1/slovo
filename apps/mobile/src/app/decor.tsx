@@ -20,7 +20,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { editionDecor, editionStrings, editionTokens, splashImageWidth } from '../edition';
-import { useContent } from '../language-pack';
+import { useEntries } from '../language-pack';
 
 type Look = 'edition' | 'core';
 
@@ -176,19 +176,22 @@ function Slot({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-/** The first Word of the Language Pack, as real Edition content for the cards. */
+/** The first eligible Word of the Language Pack, as real Edition content for the cards. */
 function useFirstWord(): Word | undefined {
-  const content = useContent();
+  const entries = useEntries();
   const [word, setWord] = useState<Word>();
   useEffect(() => {
     let active = true;
-    void content.firstWord().then((first) => {
-      if (active) setWord(first);
-    });
+    void entries
+      .eligible()
+      .then(({ words: [firstId] }) => (firstId === undefined ? undefined : entries.get(firstId)))
+      .then((first) => {
+        if (active && first?.kind === 'word') setWord(first);
+      });
     return () => {
       active = false;
     };
-  }, [content]);
+  }, [entries]);
   return word;
 }
 

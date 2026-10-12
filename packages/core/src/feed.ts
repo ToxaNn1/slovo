@@ -3,9 +3,9 @@ import { z } from 'zod';
 
 import { buildCorrectionCard, type CorrectionCardModel } from './correction-card';
 import { openCycle } from './cycle';
-import type { Edition } from './edition';
+import type { Entries } from './entries';
 import { localDate, type LocalDate } from './local-date';
-import type { Clock, ContentReadPort, Random } from './ports';
+import type { Clock, Random } from './ports';
 import { readRecord, type UserState } from './user-state';
 import { buildWordCard, type WordCardModel } from './word-card';
 import { openWordOfTheDay } from './word-of-the-day';
@@ -94,36 +94,24 @@ const PositionSchema = z.object({ entryId: z.string(), date: z.string() });
  * itself, with its Word of the Day and no end-of-Cycle card, because the
  * Word of the Day always opens the day.
  *
- * When the Edition turns the Corrections Feature Switch on, every
+ * The Cycle covers the eligible Entries. When they hold Corrections, every
  * `CORRECTION_EVERY`th card is a Correction's while the Cycle has unseen
  * Corrections. Corrections are shuffled and Seen like Words, and the Cycle
- * ends only once every live Word and Correction is Seen. The Word of the Day
- * is always a Word.
+ * ends only once every eligible Word and Correction is Seen. The Word of the
+ * Day is always a Word.
  */
 export async function openFeed({
-  content,
-  edition,
+  entries,
   userState,
   clock,
   random,
 }: {
-  content: ContentReadPort;
-  edition: Pick<Edition, 'isFeatureEnabled'>;
+  entries: Entries;
   userState: UserState;
   clock: Clock;
   random: Random;
 }): Promise<Feed> {
-  const withCorrections = edition.isFeatureEnabled('corrections');
-  // The Cycle covers the live Words, and the live Corrections when the Edition turns them on.
-  const cycle = await openCycle({
-    entries: {
-      listWordIds: () => content.listWordIds(),
-      listCorrectionIds: () =>
-        withCorrections ? content.listCorrectionIds() : Promise.resolve([]),
-    },
-    userState,
-    random,
-  });
+  const cycle = await openCycle({ entries, userState, random });
   const wordOfTheDay = await openWordOfTheDay({ cycle, userState, clock });
   const cards: FeedCard[] = [];
   /** The position of the current Cycle's first card: the cards before it belong to an earlier Cycle. */
@@ -131,12 +119,14 @@ export async function openFeed({
   /** When each card on screen now became visible, by position. */
   const visibleSince = new Map<number, number>();
 
-  /** Opens on the card the reader was on, if it was today and its Entry is still live. */
+  /** Opens on the card the reader was on, if it was today and the Cycle still covers its Entry. */
   async function restore(): Promise<boolean> {
     const position = await readRecord(userState, POSITION_KEY, PositionSchema);
     if (position?.date !== localDate(clock)) return false;
-    const entry = await entryById(position.entryId);
-    if (entry === undefined || entry.retired) return false;
+    const { words, corrections } = cycle.order();
+    if (!words.includes(position.entryId) && !corrections.includes(position.entryId)) return false;
+    const entry = await entries.get(position.entryId);
+    if (entry === undefined) return false;
     const card = await entryCard(entry);
     const today = wordOfTheDay.chosen();
     cards.push(
@@ -147,25 +137,12 @@ export async function openFeed({
     return true;
   }
 
-  /** Any Entry by id: a Word, or a Correction when the Edition turns them on. */
-  async function entryById(id: string): Promise<Entry | undefined> {
-    const entry = await content.getWord(id);
-    if (entry !== undefined || !withCorrections) return entry;
-    return content.getCorrection(id);
-  }
-
   /** The card of an Entry. */
   async function entryCard(entry: Entry): Promise<EntryFeedCard> {
     if (entry.kind === 'correction') {
       return { kind: 'correction', entry, correctionCard: buildCorrectionCard(entry) };
     }
-    return { kind: 'word', entry, wordCard: await wordCardOf(entry) };
-  }
-
-  /** The Word card of a Word, linking no Correction when the Edition turns them off. */
-  async function wordCardOf(word: Word): Promise<WordCardModel> {
-    const card = await buildWordCard({ word, content });
-    return withCorrections ? card : { ...card, linkedCorrections: [] };
+    return { kind: 'word', entry, wordCard: await buildWordCard({ word: entry, entries }) };
   }
 
   /** The ids of the Entries shown in this session in the current Cycle. */
@@ -227,7 +204,7 @@ export async function openFeed({
       cards.push(card);
       return card;
     }
-    const entry = await entryById(id);
+    const entry = await entries.get(id);
     if (entry === undefined) return undefined;
     const card = await entryCard(entry);
     cards.push(card);
@@ -243,8 +220,8 @@ export async function openFeed({
     if (!linked.some((link) => link.correctionId === correctionId)) return undefined;
     // Tapped again: the Correction's card is already there.
     if (entryIdOf(cards[position + 1]) === correctionId) return position + 1;
-    const correction = await content.getCorrection(correctionId);
-    if (correction === undefined) return undefined;
+    const correction = await entries.get(correctionId);
+    if (correction?.kind !== 'correction') return undefined;
     cards.splice(position + 1, 0, await entryCard(correction));
     // The cards after it move one position on, and so do their dwell times.
     if (cycleStart > position) cycleStart += 1;
@@ -262,12 +239,12 @@ export async function openFeed({
     const today = await wordOfTheDay.today({ avoid: shownIds() });
     if (today === undefined) return undefined;
     if (today.startedCycle) cycleStart = cards.length;
-    const entry = await content.getWord(today.wordId);
-    if (entry === undefined) return undefined;
+    const entry = await entries.get(today.wordId);
+    if (entry?.kind !== 'word') return undefined;
     const card: FeedCard = {
       kind: 'word',
       entry,
-      wordCard: await wordCardOf(entry),
+      wordCard: await buildWordCard({ word: entry, entries }),
       wordOfTheDay: today.date,
     };
     cards.push(card);

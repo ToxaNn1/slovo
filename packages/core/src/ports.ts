@@ -6,10 +6,11 @@ import type { Correction, Word } from '@slovo/contracts';
  */
 export interface ContentReadPort {
   /**
-   * The ids of the Words that are not retired, in a stable order. A Retired
-   * Word is left out, so nothing new picks it.
+   * The ids of the Words that are not retired, in a stable order; only those
+   * of the Category when one is given. A Retired Word is left out, so nothing
+   * new picks it.
    */
-  listWordIds(): Promise<readonly string[]>;
+  listWordIds(categoryId?: string): Promise<readonly string[]>;
   /** Any Word by id, a Retired Word included, so kept Words stay reachable. */
   getWord(id: string): Promise<Word | undefined>;
   /**

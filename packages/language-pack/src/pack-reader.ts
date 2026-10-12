@@ -56,6 +56,7 @@ interface SourceRow {
 
 const SQL = {
   wordIds: 'SELECT id FROM words WHERE retired = 0 ORDER BY id',
+  wordIdsInCategory: 'SELECT id FROM words WHERE retired = 0 AND category_id = ? ORDER BY id',
   word: 'SELECT * FROM words WHERE id = ?',
   stress: 'SELECT position FROM word_stress WHERE word_id = ? ORDER BY position',
   definitions: 'SELECT text FROM definitions WHERE word_id = ? ORDER BY position',
@@ -156,7 +157,10 @@ export function createPackReader(db: PackDatabase): PackReader {
   }
 
   return {
-    listWordIds: () => column(SQL.wordIds, [], 'id'),
+    listWordIds: (categoryId) =>
+      categoryId === undefined
+        ? column(SQL.wordIds, [], 'id')
+        : column(SQL.wordIdsInCategory, [categoryId], 'id'),
     getWord,
     listCorrectionIds: () => column(SQL.correctionIds, [], 'id'),
     getCorrection,

@@ -122,7 +122,7 @@ An Entry is Seen in the current Cycle once its card stayed on screen for a minim
 _Avoid_: Viewed, read
 
 **Cycle**:
-One pass through all non-hidden Entries. When every Entry is Seen, the user is told to wait for new Words, and the next swipe starts a new Cycle in which nothing is Seen yet.
+One pass through all eligible Entries. When every Entry is Seen, the user is told to wait for new Words, and the next swipe starts a new Cycle in which nothing is Seen yet.
 _Avoid_: Round (that is a Game term), loop
 
 **Mix**:
@@ -136,6 +136,10 @@ _Avoid_: Disliked, blocked, muted, hidden word
 **Hidden Category**:
 A Category excluded from everything the same way as a Hidden Entry.
 _Avoid_: Muted topic
+
+**Eligible Entry**:
+An Entry that may appear anywhere new (the Feed, notifications, widgets, the Game): not Retired, of a kind the Edition turns on, in the user's Mix and not Hidden. An Entry that is not eligible stays visible wherever the user already keeps it.
+_Avoid_: Available, visible, active entry
 
 **Reserved**:
 A Word already promised to a scheduled notification, so no other notification picks it. Reserved is not Seen.
