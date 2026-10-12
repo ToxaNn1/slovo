@@ -8,7 +8,7 @@ import type { Clock, Random, UserStateChanges } from './ports';
 import type { UserState } from './user-state';
 import { userStateRecords } from './user-state-schema';
 import { buildWordCard, type WordCardModel } from './word-card';
-import { openWordOfTheDay } from './word-of-the-day';
+import { openWordOfTheDay, type WordOfTheDayChoice } from './word-of-the-day';
 
 /** How long a card must stay on screen before its Entry counts as Seen. */
 export const SEEN_DWELL_MS = 1500;
@@ -58,6 +58,11 @@ export interface Feed {
    * one and tells the subscribers.
    */
   readonly cards: readonly FeedCard[];
+  /**
+   * The position of the card the Feed opens on: the card the reader was on,
+   * after today's Word of the Day, when they come back the same local day.
+   */
+  readonly startPosition: number;
   /** Calls `listener` after each change of the cards. Returns the call that stops it. */
   subscribe(listener: () => void): () => void;
   /**
@@ -132,7 +137,10 @@ export async function openFeed({
     for (const listener of listeners) listener();
   }
 
-  /** Opens on the card the reader was on, if it was today and the Cycle still covers its Entry. */
+  /**
+   * Opens on the card the reader was on, if it was today and the Cycle still
+   * covers its Entry, after today's Word of the Day, so the reader can go back to it.
+   */
   async function restore(): Promise<boolean> {
     const position = await userState.read(feedPosition);
     if (position?.date !== localDate(clock)) return false;
@@ -140,14 +148,13 @@ export async function openFeed({
     if (!words.includes(position.entryId) && !corrections.includes(position.entryId)) return false;
     const entry = await entries.get(position.entryId);
     if (entry === undefined) return false;
-    const card = await entryCard(entry);
     const today = wordOfTheDay.chosen();
-    changeCards([
-      ...cards,
-      card.kind === 'word' && today?.wordId === entry.id
-        ? { ...card, wordOfTheDay: today.date }
-        : card,
-    ]);
+    const opening =
+      today !== undefined && words.includes(today.wordId)
+        ? await wordOfTheDayCard(today)
+        : undefined;
+    if (opening?.entry.id === entry.id) changeCards([opening]);
+    else changeCards([...(opening === undefined ? [] : [opening]), await entryCard(entry)]);
     return true;
   }
 
@@ -251,6 +258,18 @@ export async function openFeed({
     return position + 1;
   }
 
+  /** The card of a day's Word of the Day. */
+  async function wordOfTheDayCard(choice: WordOfTheDayChoice): Promise<WordFeedCard | undefined> {
+    const entry = await entries.get(choice.wordId);
+    if (entry?.kind !== 'word') return undefined;
+    return {
+      kind: 'word',
+      entry,
+      wordCard: await buildWordCard({ word: entry, entries }),
+      wordOfTheDay: choice.date,
+    };
+  }
+
   /**
    * Adds the card of today's Word of the Day after the `kept` cards, choosing
    * it first if today has none yet.
@@ -259,14 +278,8 @@ export async function openFeed({
     const today = await wordOfTheDay.today({ avoid: shownIds(kept) });
     if (today === undefined) return undefined;
     if (today.startedCycle) cycleStart = kept.length;
-    const entry = await entries.get(today.wordId);
-    if (entry?.kind !== 'word') return undefined;
-    const card: FeedCard = {
-      kind: 'word',
-      entry,
-      wordCard: await buildWordCard({ word: entry, entries }),
-      wordOfTheDay: today.date,
-    };
+    const card = await wordOfTheDayCard(today);
+    if (card === undefined) return undefined;
     changeCards([...kept, card]);
     return card;
   }
@@ -343,10 +356,12 @@ export async function openFeed({
   }
 
   if (!(await restore())) await addWordOfTheDay();
+  const startPosition = Math.max(cards.length - 1, 0);
   return {
     get cards() {
       return cards;
     },
+    startPosition,
     subscribe(listener) {
       listeners.add(listener);
       return () => {

@@ -50,6 +50,7 @@ export default function HomeScreen() {
         ref={pager}
         testID="feed"
         items={feed.cards}
+        initialIndex={feed.startPosition}
         renderPage={(card, position) => (
           <FeedPage
             card={card}

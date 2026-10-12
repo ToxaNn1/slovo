@@ -283,7 +283,7 @@ describe('the Feed', () => {
 
       time.advance(60_000);
       const restarted = await run({ records, clock: time.clock });
-      const offered = (await walk(restarted)).slice(1);
+      const offered = (await walk(restarted)).slice(restarted.startPosition + 1);
 
       expect(offered).toHaveLength(liveIds.length - read.length);
       for (const id of read) expect(offered).not.toContain(id);
@@ -521,8 +521,13 @@ describe('the Feed', () => {
       time.advance(60_000);
       const restarted = await run({ records, clock: time.clock, random: randomOf(0.5) });
 
-      // It reopens on the new Cycle's first card and goes on in that Cycle's order.
-      expect(await walk(restarted)).toEqual(await walk(await run({ random: randomOf(0.75) })));
+      // It reopens on the new Cycle's first card, after today's Word of the Day
+      // of the last Cycle, and goes on in the new Cycle's order.
+      const offered = await walk(restarted);
+      const newOrder = await walk(await run({ random: randomOf(0.75) }));
+      expect(offered.slice(restarted.startPosition)).toEqual(
+        newOrder.filter((id) => id !== offered[0]),
+      );
     });
 
     it('leaves the last position on the last Word, so the app reopens there and the end-of-Cycle card follows again', async () => {
@@ -534,7 +539,9 @@ describe('the Feed', () => {
       time.advance(60_000);
       const restarted = await run({ records, words: small, clock: time.clock });
 
-      expect(entryIdsOf(restarted.cards)).toEqual(entryIdsOf(feed.cards).slice(-1));
+      expect(entryIdOf(restarted.cards[restarted.startPosition])).toBe(
+        entryIdOf(feed.cards.at(-2)),
+      );
       expect((await restarted.next())?.kind).toBe('end-of-cycle');
     });
 
@@ -645,7 +652,7 @@ describe('the Feed', () => {
         clock: fakeClock('2026-10-11T21:00:00+03:00').clock,
       });
 
-      expect(entryIdsOf(reopened.cards)).toEqual([last]);
+      expect(entryIdOf(reopened.cards[reopened.startPosition])).toBe(last);
     });
 
     it("opens on the day's Word of the Day on another local day, in the clock time zone", async () => {
@@ -707,6 +714,24 @@ describe('the Word of the Day in the Feed', () => {
     ).toEqual([
       { id: entryIdOf(first.cards[0]), wordOfTheDay: { year: 2026, month: 10, day: 11 } },
     ]);
+  });
+
+  it('can be reached by going back when the app reopens the same local day on another card', async () => {
+    const records = new Map<string, string>();
+    const time = fakeClock('2026-10-11T09:00:00+03:00');
+    const first = await run({ records, clock: time.clock });
+    await first.show(0);
+    await first.show(1);
+    await first.show(2);
+
+    const reopened = await run({ records, clock: fakeClock('2026-10-11T21:00:00+03:00').clock });
+
+    expect(entryIdsOf(reopened.cards)).toEqual([
+      entryIdOf(first.cards[0]),
+      entryIdOf(first.cards[2]),
+    ]);
+    expect(wordOfTheDayOf(reopened.cards[0])).toEqual({ year: 2026, month: 10, day: 11 });
+    expect(reopened.startPosition).toBe(1);
   });
 
   it('starts the new local day in a Feed left open over midnight', async () => {
@@ -895,9 +920,9 @@ describe('Corrections in the Feed', () => {
       clock: fakeClock('2026-10-11T21:00:00+03:00').clock,
     });
 
-    expect(reopened.cards).toHaveLength(1);
-    expect(entryIdOf(reopened.cards[0])).toBe(entryIdOf(feed.cards[4]));
-    expect(correctionCardOf(reopened.cards[0])?.correctionId).toBe(entryIdOf(feed.cards[4]));
+    const card = reopened.cards[reopened.startPosition];
+    expect(entryIdOf(card)).toBe(entryIdOf(feed.cards[4]));
+    expect(correctionCardOf(card)?.correctionId).toBe(entryIdOf(feed.cards[4]));
   });
 
   describe('a Word linked to a Correction («Часто кажуть»)', () => {
