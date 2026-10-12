@@ -12,6 +12,8 @@ import {
 import {
   StyleSheet,
   View,
+  type AccessibilityActionEvent,
+  type AccessibilityActionInfo,
   type LayoutChangeEvent,
   type StyleProp,
   type ViewStyle,
@@ -25,6 +27,7 @@ import {
 } from 'react-native-gesture-handler';
 import Animated, {
   Easing,
+  ReduceMotion,
   scrollTo,
   useAnimatedRef,
   useAnimatedScrollHandler,
@@ -35,8 +38,19 @@ import Animated, {
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
-/** The Feed swipe from the design: 420 ms, `cubic-bezier(.2, .8, .2, 1)`. */
-const SWIPE = { duration: 420, easing: Easing.bezier(0.2, 0.8, 0.2, 1) };
+import { useReduceMotion } from './useReduceMotion';
+
+/**
+ * The Feed swipe from the design: 420 ms, `cubic-bezier(.2, .8, .2, 1)`. With
+ * Reduce Motion the pages stay put and cross-fade in 200 ms instead. Both run
+ * whatever the system setting, which would otherwise skip the cross-fade too.
+ */
+const SWIPE = {
+  duration: 420,
+  easing: Easing.bezier(0.2, 0.8, 0.2, 1),
+  reduceMotion: ReduceMotion.Never,
+};
+const CROSS_FADE = { duration: 200, easing: Easing.linear, reduceMotion: ReduceMotion.Never };
 
 /** How far, as a share of the page, a slow drag must go to turn the page. */
 const TURN_DISTANCE = 0.2;
@@ -61,6 +75,12 @@ export interface VerticalPagerProps<Item> {
   readonly initialIndex?: number;
   /** Called once a swipe settles on another page. */
   readonly onIndexChange: (index: number) => void;
+  /**
+   * The names of the VoiceOver actions that turn to the next and the previous
+   * page, in the Edition's language. Pages offer them through
+   * `usePageTurnActions`.
+   */
+  readonly turnActionLabels?: { readonly next: string; readonly previous: string };
   readonly testID?: string;
   readonly ref?: Ref<VerticalPagerHandle>;
 }
@@ -83,6 +103,16 @@ interface PagerContextValue {
   readonly scrolls: SharedValue<Record<number, PageScroll>>;
   /** Whether a drag is turning the page now, so the page's content holds still. */
   readonly turning: SharedValue<boolean>;
+  /** The page on screen, once a swipe settles. */
+  readonly current: number;
+  /** The VoiceOver actions of the current page, which turn it as a swipe would. */
+  readonly turnActions: TurnActions | undefined;
+}
+
+/** The props that give an accessible element the page-turn actions. */
+interface TurnActions {
+  readonly accessibilityActions: readonly AccessibilityActionInfo[];
+  readonly onAccessibilityAction: (event: AccessibilityActionEvent) => void;
 }
 
 const PagerContext = createContext<PagerContextValue | undefined>(undefined);
@@ -100,9 +130,12 @@ export function VerticalPager<Item>({
   renderPage,
   initialIndex = 0,
   onIndexChange,
+  turnActionLabels,
   testID,
   ref,
 }: VerticalPagerProps<Item>) {
+  const reduceMotion = useReduceMotion();
+  const motion = reduceMotion ? CROSS_FADE : SWIPE;
   const [index, setIndex] = useState(initialIndex);
   const [height, setHeight] = useState(0);
   /** The page on screen, in pages; fractional while a swipe moves. */
@@ -126,15 +159,34 @@ export function VerticalPager<Item>({
     onIndexChange(target);
   }
 
-  useImperativeHandle(ref, () => ({
-    turnTo(target) {
-      const clamped = Math.min(Math.max(target, 0), items.length - 1);
-      if (clamped === index) return;
-      position.value = withTiming(clamped, SWIPE, (finished) => {
-        if (finished === true) scheduleOnRN(settle, clamped);
-      });
-    },
-  }));
+  function turnTo(target: number) {
+    const clamped = Math.min(Math.max(target, 0), items.length - 1);
+    if (clamped === index) return;
+    position.value = withTiming(clamped, motion, (finished) => {
+      if (finished === true) scheduleOnRN(settle, clamped);
+    });
+  }
+
+  useImperativeHandle(ref, () => ({ turnTo }));
+
+  const actions = [
+    ...(turnActionLabels !== undefined && index < items.length - 1
+      ? [{ name: 'next', label: turnActionLabels.next }]
+      : []),
+    ...(turnActionLabels !== undefined && index > 0
+      ? [{ name: 'previous', label: turnActionLabels.previous }]
+      : []),
+  ];
+  const turnActions: TurnActions | undefined =
+    actions.length === 0
+      ? undefined
+      : {
+          accessibilityActions: actions,
+          onAccessibilityAction({ nativeEvent }) {
+            if (nativeEvent.actionName === 'next') turnTo(index + 1);
+            else if (nativeEvent.actionName === 'previous') turnTo(index - 1);
+          },
+        };
 
   const pan = Gesture.Pan()
     .withRef(panRef)
@@ -169,7 +221,7 @@ export function VerticalPager<Item>({
       if (velocityY < -TURN_VELOCITY || share < -TURN_DISTANCE) target = start + 1;
       else if (velocityY > TURN_VELOCITY || share > TURN_DISTANCE) target = start - 1;
       target = Math.min(Math.max(target, 0), lastIndex.value);
-      position.value = withTiming(target, SWIPE, (finished) => {
+      position.value = withTiming(target, motion, (finished) => {
         if (finished === true && target !== start) scheduleOnRN(settle, target);
       });
     })
@@ -188,7 +240,7 @@ export function VerticalPager<Item>({
   const visible = items.slice(first, index + 2);
 
   return (
-    <PagerContext value={{ panRef, scrolls, turning }}>
+    <PagerContext value={{ panRef, scrolls, turning, current: index, turnActions }}>
       <GestureHandlerRootView style={styles.fill}>
         <GestureDetector gesture={pan}>
           <View testID={testID} style={styles.fill} onLayout={onLayout}>
@@ -200,6 +252,7 @@ export function VerticalPager<Item>({
                   current={first + offset === index}
                   position={position}
                   height={height}
+                  crossFade={reduceMotion}
                 >
                   {renderPage(item, first + offset)}
                 </Page>
@@ -216,27 +269,46 @@ function Page({
   current,
   position,
   height,
+  crossFade,
   children,
 }: {
   index: number;
   current: boolean;
   position: SharedValue<number>;
   height: number;
+  /** Reduce Motion: the page stays in place and fades in and out instead of moving. */
+  crossFade: boolean;
   children: ReactNode;
 }) {
-  const style = useAnimatedStyle(() => ({
-    transform: [{ translateY: (index - position.value) * height }],
-  }));
+  const style = useAnimatedStyle(() =>
+    crossFade
+      ? { opacity: Math.max(1 - Math.abs(index - position.value), 0), transform: [] }
+      : { opacity: 1, transform: [{ translateY: (index - position.value) * height }] },
+  );
   return (
-    // Only the current page is there for VoiceOver; its neighbours wait off screen.
+    // Only the current page is there for VoiceOver and touches; its neighbours
+    // wait off screen, or invisible under it with Reduce Motion.
     <Animated.View
       accessibilityElementsHidden={!current}
       importantForAccessibility={current ? 'auto' : 'no-hide-descendants'}
+      pointerEvents={current ? 'auto' : 'none'}
       style={[StyleSheet.absoluteFill, { height }, style]}
     >
       <PageIndexContext value={index}>{children}</PageIndexContext>
     </Animated.View>
   );
+}
+
+/**
+ * The VoiceOver actions that turn the page as a swipe would ("next",
+ * "previous"), as props for an accessible element on the current page of a
+ * `VerticalPager`. Nothing outside a pager or on a page that isn't current.
+ */
+export function usePageTurnActions(): Partial<TurnActions> {
+  const pager = useContext(PagerContext);
+  const page = useContext(PageIndexContext);
+  if (pager?.current !== page) return {};
+  return pager.turnActions ?? {};
 }
 
 const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView);

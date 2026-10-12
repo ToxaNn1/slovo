@@ -7,6 +7,7 @@ import Svg, { Path } from 'react-native-svg';
 import { useWordTextSizes } from './FontSizeProvider';
 import { space, typeSize } from './tokens';
 import { useTokens } from './TokensProvider';
+import { usePageTurnActions } from './VerticalPager';
 import { COMPACT_LEMMA, COMPACT_PADDING, COMPACT_WIDTH, fill, withAlpha } from './WordCard';
 
 /** The Edition's Correction card strings. */
@@ -43,6 +44,8 @@ export function CorrectionCard({ card, strings, language, divider }: CorrectionC
     : sizes.lemma;
   const padding = compact ? COMPACT_PADDING : 1;
   const voice = language === undefined ? {} : { accessibilityLanguage: language };
+  // In the Feed, VoiceOver turns to the next or previous card from the two forms.
+  const turnActions = usePageTurnActions();
   const correctionType = strings.correctionTypes[card.correctionType];
   const sentence = [sizes.example, { fontFamily: fontFamilies.word }];
 
@@ -90,6 +93,7 @@ export function CorrectionCard({ card, strings, language, divider }: CorrectionC
         accessible
         accessibilityLabel={`${strings.nonStandard}: ${card.nonStandardForm}`}
         {...voice}
+        {...turnActions}
         style={styles.form}
       >
         <Text style={[styles.label, { color: colors.muted, fontFamily: fontFamilies.ui }]}>
@@ -115,6 +119,7 @@ export function CorrectionCard({ card, strings, language, divider }: CorrectionC
           accessible
           accessibilityLabel={`${strings.standard}: ${card.mainEquivalent}`}
           {...voice}
+          {...turnActions}
           style={styles.form}
         >
           <Text style={[styles.label, { color: colors.accent, fontFamily: fontFamilies.ui }]}>

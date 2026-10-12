@@ -7,6 +7,7 @@ import Svg, { Path } from 'react-native-svg';
 import { useWordTextSizes, type TextSize } from './FontSizeProvider';
 import { minTouchTarget, space, typeSize } from './tokens';
 import { useTokens } from './TokensProvider';
+import { usePageTurnActions } from './VerticalPager';
 
 /** The Edition's Word card strings. */
 export type WordCardStrings = EditionStrings['wordCard'];
@@ -79,6 +80,8 @@ export function WordCard({
     : sizes.lemma;
   const padding = compact ? COMPACT_PADDING : 1;
   const voice = language === undefined ? {} : { accessibilityLanguage: language };
+  // In the Feed, VoiceOver turns to the next or previous card from the Lemma and the Definition.
+  const turnActions = usePageTurnActions();
 
   const partOfSpeech = strings.partsOfSpeech[card.partOfSpeech];
   const gender = card.gender === undefined ? undefined : strings.genders[card.gender];
@@ -143,6 +146,7 @@ export function WordCard({
               stressHint === undefined ? card.lemma : `${card.lemma}, ${stressHint}`
             }
             {...voice}
+            {...turnActions}
             // A long Lemma shrinks to fit rather than break inside a word.
             numberOfLines={card.lemma.includes(' ') ? 2 : 1}
             adjustsFontSizeToFit
@@ -195,6 +199,7 @@ export function WordCard({
       <Text
         testID="word-definition"
         {...voice}
+        {...turnActions}
         style={[sizes.definition, { color: colors.ink, fontFamily: fontFamilies.word }]}
       >
         {card.primaryDefinition}
