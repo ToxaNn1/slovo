@@ -60,6 +60,7 @@ describe('the Word card', () => {
       kind: 'word',
       wordId: 'w_veremija',
       lemma: 'веремі́я',
+      stressedVowels: ['і'],
       partOfSpeech: 'noun',
       gender: 'feminine',
       primaryDefinition: 'Метушня, безлад.',
@@ -135,6 +136,17 @@ describe('the Word card', () => {
 
     // за́вжди and завжди́, written with U+0301 after each stressed vowel.
     expect(card.lemma).toBe('за\u0301вжди\u0301');
+  });
+
+  it('names the stressed vowels, so VoiceOver can say where the Stress falls', async () => {
+    expect((await build(word())).stressedVowels).toEqual(['і']);
+    expect(
+      (
+        await build(
+          word({ lemma: 'завжди', stress: [1, 5], partOfSpeech: 'adverb', gender: undefined }),
+        )
+      ).stressedVowels,
+    ).toEqual(['а', 'и']);
   });
 
   describe('linked Corrections', () => {

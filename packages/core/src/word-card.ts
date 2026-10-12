@@ -30,6 +30,11 @@ export interface WordCardModel {
   readonly wordId: string;
   /** The Lemma with every Stress mark applied. */
   readonly lemma: string;
+  /**
+   * The stressed vowels of the Lemma, in order: one per valid Stress. Empty in
+   * an Edition that doesn't mark Stress.
+   */
+  readonly stressedVowels: readonly string[];
   readonly partOfSpeech: PartOfSpeech;
   readonly gender: Gender | undefined;
   readonly primaryDefinition: string;
@@ -59,6 +64,7 @@ export async function buildWordCard({
     kind: 'word',
     wordId: word.id,
     lemma: renderStress(word),
+    stressedVowels: word.stress.flatMap((position) => Array.from(word.lemma)[position] ?? []),
     partOfSpeech: word.partOfSpeech,
     gender: word.gender,
     primaryDefinition: word.primaryDefinition,
