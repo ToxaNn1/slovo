@@ -6,7 +6,9 @@ import Svg, { Path } from 'react-native-svg';
 import { OrnamentDivider } from './DecorSlots';
 import { fill, useEdition } from './EditionProvider';
 import { useWordTextSizes, type TextSize } from './FontSizeProvider';
-import { minTouchTarget, space, typeSize, withAlpha } from './tokens';
+import { SectionLabel } from './headings';
+import { OutlinedChip } from './OutlinedChip';
+import { minTouchTarget, space, typeSize } from './tokens';
 import { useTokens } from './TokensProvider';
 import { usePageTurnActions } from './VerticalPager';
 import { WholeWordsText } from './WholeWordsText';
@@ -113,26 +115,13 @@ export function WordCardBody({
               {grammar('short')}
             </Text>
             {card.registers.map((register) => (
-              <View
+              <OutlinedChip
                 key={register}
                 testID={`word-register-${register}`}
-                accessible
+                text={strings.registers[register].short}
                 accessibilityLabel={strings.registers[register].full}
-                {...voice}
-                style={[
-                  styles.registerChip,
-                  { borderColor: withAlpha(colors.accent, 0.45), borderRadius: radii.chip },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.registerText,
-                    { color: colors.accent, fontFamily: fontFamilies.ui },
-                  ]}
-                >
-                  {strings.registers[register].short}
-                </Text>
-              </View>
+                size="tight"
+              />
             ))}
           </View>
         </View>
@@ -336,17 +325,9 @@ function Details({ details }: { details: NonNullable<WordCardModel['details']> }
 }
 
 function DetailSection({ title, children }: { title: string; children: ReactNode }) {
-  const { colors, fontFamilies } = useTokens();
-  const { voice } = useEdition();
   return (
     <View style={styles.detailSection}>
-      <Text
-        accessibilityRole="header"
-        {...voice}
-        style={[styles.overline, { color: colors.muted, fontFamily: fontFamilies.ui }]}
-      >
-        {title}
-      </Text>
+      <SectionLabel>{title}</SectionLabel>
       {children}
     </View>
   );
@@ -362,8 +343,6 @@ const styles = StyleSheet.create({
   lemma: { fontWeight: '500' },
   grammar: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2] },
   partOfSpeech: { fontSize: typeSize.partOfSpeech, fontWeight: '500' },
-  registerChip: { borderWidth: 1, paddingHorizontal: 7, paddingVertical: 2 },
-  registerText: { fontSize: 11.5, fontWeight: '600' },
   example: { fontStyle: 'italic' },
   author: { marginTop: space[1], fontSize: 13, fontWeight: '500' },
   relations: { gap: space[1] },
@@ -382,7 +361,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: space[3],
     paddingVertical: 7,
   },
-  categoryText: { fontSize: 12.5, fontWeight: '600' },
+  categoryText: { fontSize: typeSize.chip, fontWeight: '600' },
   // A full touch target that looks no taller than its label.
   moreButton: {
     alignSelf: 'flex-start',
@@ -396,12 +375,6 @@ const styles = StyleSheet.create({
   chevronOpen: { transform: [{ rotate: '180deg' }] },
   details: { gap: DETAILS_GAP, marginTop: space[4] },
   detailSection: { gap: space[2] },
-  overline: {
-    fontSize: typeSize.overline,
-    fontWeight: '700',
-    letterSpacing: typeSize.overline * 0.14,
-    textTransform: 'uppercase',
-  },
   etymology: { fontSize: typeSize.body, lineHeight: typeSize.body * 1.5 },
   oftenSaid: {
     flexDirection: 'row',

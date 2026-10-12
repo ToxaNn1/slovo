@@ -88,9 +88,19 @@ export const typeSize = {
   screenTitle: 34,
   emptyStateTitle: 28,
   overline: 11,
+  chip: 12.5,
+  outlinedChip: 11.5,
   body: 15,
   partOfSpeech: 14,
   tabLabel: 10.5,
+} as const;
+
+/** The overline label's type: bold capitals spaced 0.14em apart. */
+export const overlineType = {
+  fontSize: typeSize.overline,
+  fontWeight: '700',
+  letterSpacing: typeSize.overline * 0.14,
+  textTransform: 'uppercase',
 } as const;
 
 /** The Word card's type sizes at each font-size step (spec #51: one table). */

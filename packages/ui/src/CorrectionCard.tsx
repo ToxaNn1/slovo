@@ -6,6 +6,8 @@ import Svg, { Path } from 'react-native-svg';
 import { OrnamentDivider } from './DecorSlots';
 import { fill, useEdition } from './EditionProvider';
 import { useWordTextSizes, type TextSize } from './FontSizeProvider';
+import { SectionLabel } from './headings';
+import { OutlinedChip } from './OutlinedChip';
 import { space, typeSize, withAlpha } from './tokens';
 import { useTokens } from './TokensProvider';
 import { usePageTurnActions } from './VerticalPager';
@@ -39,27 +41,13 @@ export function CorrectionCardBody({
   return (
     <>
       <View style={styles.header}>
-        <Text
-          accessibilityRole="header"
-          {...voice}
-          style={[styles.overline, { color: colors.muted, fontFamily: fontFamilies.ui }]}
-        >
-          {strings.title}
-        </Text>
-        <View
+        <SectionLabel style={styles.title}>{strings.title}</SectionLabel>
+        <OutlinedChip
           testID="correction-type"
-          accessible
+          text={correctionType}
           accessibilityLabel={fill(strings.correctionType, { type: correctionType })}
-          {...voice}
-          style={[
-            styles.typeChip,
-            { borderColor: withAlpha(colors.accent, 0.45), borderRadius: radii.chip },
-          ]}
-        >
-          <Text style={[styles.typeText, { color: colors.accent, fontFamily: fontFamilies.ui }]}>
-            {correctionType}
-          </Text>
-        </View>
+          size="roomy"
+        />
       </View>
       <View
         testID="correction-non-standard"
@@ -194,15 +182,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: space[3],
   },
-  overline: {
-    flexShrink: 1,
-    fontSize: typeSize.overline,
-    fontWeight: '700',
-    letterSpacing: typeSize.overline * 0.14,
-    textTransform: 'uppercase',
-  },
-  typeChip: { borderWidth: 1, paddingHorizontal: 9, paddingVertical: 4 },
-  typeText: { fontSize: 11.5, fontWeight: '600' },
+  title: { flexShrink: 1 },
   form: { gap: space[2] },
   label: { fontSize: typeSize.body, fontWeight: '500' },
   nonStandardForm: {
