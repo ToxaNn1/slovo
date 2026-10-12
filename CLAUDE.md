@@ -2,6 +2,12 @@
 
 SLOVO is a factory of single-language rare-word apps: one language-agnostic Core, many Editions. Read `README.md` for the map.
 
+## Core Principles
+
+- **Simplicity First**: Make every change as simple as possible. Impact minimal code.
+- **No Laziness**: Find root causes. No temporary fixes. Senior developer standards.
+- **Minimal Impact**: Changes should only touch what's necessary. Avoid introducing bugs.
+
 ## Source of truth
 
 `CONTEXT.md` (glossary) and `docs/adr/` (decisions) override every other document, including tickets and specs.
