@@ -69,6 +69,13 @@ env:
 # Home is the Feed: swipe up to the next Word and down back to the first.
 - assertVisible:
     id: feed-card-0
+# The day opens on its Word of the Day, with the badge over the Lemma. Its
+# Lemma is kept to check that it stays the same after a relaunch.
+- assertVisible:
+    id: word-of-the-day-badge
+    text: 'Слово дня · .*'
+- copyTextFrom:
+    id: word-lemma
 - swipe:
     start: 50%, 70%
     end: 50%, 20%
@@ -78,6 +85,8 @@ env:
     id: feed-card-1
 - assertNotVisible:
     id: feed-card-0
+- assertNotVisible:
+    id: word-of-the-day-badge
 # prettier-ignore
 - assertVisible:
     id: word-lemma
@@ -127,6 +136,12 @@ env:
     notVisible:
       id: splash
     timeout: 10000
+# The same Word of the Day the same day, badged, now in the dark Theme.
+- assertVisible:
+    id: word-of-the-day-badge
+- assertVisible:
+    id: word-lemma
+    text: ${maestro.copiedText}
 - tapOn:
     id: tab-settings
 - assertVisible:

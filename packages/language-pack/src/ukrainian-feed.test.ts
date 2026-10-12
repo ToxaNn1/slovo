@@ -157,4 +157,25 @@ describe('the Feed over the Ukrainian Language Pack', () => {
     expect(after).toHaveLength(liveIds.length - read.length);
     for (const id of read) expect(after).not.toContain(id);
   });
+
+  it('starts each local day with an unseen Word of the Day that stays until midnight', async () => {
+    const records = new Map<string, string>();
+    const time = fakeClock(today);
+    const feed = await run(records, time.clock);
+    for (let position = 0; position < 3; position++) {
+      if (position > 0) await feed.next();
+      await look(feed, time, position, 2000);
+    }
+    const read = feed.cards.map((card) => card.entry.id);
+
+    const midnight = fakeClock('2026-10-12T00:00:00+03:00');
+    const nextDay = await run(records, midnight.clock);
+    await look(nextDay, midnight, 0, 300);
+    const lateThatDay = await run(records, fakeClock('2026-10-12T23:59:00+03:00').clock);
+
+    expect(feed.cards[0]?.wordOfTheDay).toEqual({ year: 2026, month: 10, day: 11 });
+    expect(nextDay.cards[0]?.wordOfTheDay).toEqual({ year: 2026, month: 10, day: 12 });
+    expect(read).not.toContain(nextDay.cards[0]?.entry.id);
+    expect(lateThatDay.cards).toEqual(nextDay.cards.slice(0, 1));
+  });
 });

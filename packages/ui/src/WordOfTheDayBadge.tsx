@@ -1,0 +1,40 @@
+import { StyleSheet, Text, View } from 'react-native';
+
+import { space, typeSize } from './tokens';
+import { useTokens } from './TokensProvider';
+
+/**
+ * The filled accent badge that marks the Word of the Day, such as
+ * "Слово дня · 11 жовтня", drawn in capitals over the Lemma. VoiceOver reads
+ * the label as written.
+ */
+export function WordOfTheDayBadge({ label }: { label: string }) {
+  const { colors, fontFamilies, radii } = useTokens();
+  return (
+    <View
+      testID="word-of-the-day-badge"
+      accessible
+      accessibilityLabel={label}
+      style={[styles.badge, { backgroundColor: colors.accent, borderRadius: radii.chip }]}
+    >
+      <Text style={[styles.label, { color: colors.background, fontFamily: fontFamilies.ui }]}>
+        {label}
+      </Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  badge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginBottom: space[3],
+  },
+  label: {
+    fontSize: typeSize.overline,
+    fontWeight: '700',
+    letterSpacing: typeSize.overline * 0.14,
+    textTransform: 'uppercase',
+  },
+});

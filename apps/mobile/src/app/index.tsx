@@ -8,12 +8,14 @@ import {
   useTokens,
   VerticalPager,
   WordCard,
+  WordOfTheDayBadge,
 } from '@slovo/ui';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { editionStrings } from '../edition';
 import { useFeed } from '../feed';
+import { wordOfTheDayLabel } from '../word-of-the-day';
 
 /** The Feed's top row, kept for the Stats pill (0.4). */
 const TOP_ROW = 48;
@@ -54,6 +56,11 @@ function FeedPage({ card, position }: { card: FeedCard; position: number }) {
           lemma={renderStress(entry)}
           partOfSpeech={editionStrings.partsOfSpeech[entry.partOfSpeech]}
           primaryDefinition={entry.primaryDefinition}
+          badge={
+            card.wordOfTheDay === undefined ? undefined : (
+              <WordOfTheDayBadge label={wordOfTheDayLabel(card.wordOfTheDay)} />
+            )
+          }
           frame={<CardCorners />}
           divider={<OrnamentDivider />}
         />

@@ -22,6 +22,13 @@ export const EditionStringsSchema = z.strictObject({
   loadFailed: TextSchema,
   /** Shown when the Language Pack holds no Words. */
   noWords: TextSchema,
+  /** The badge on the card of the Word of the Day. */
+  wordOfTheDay: z.strictObject({
+    /** The badge text; `{day}` stands for the day of the month and `{month}` for its name. */
+    badge: TextSchema,
+    /** The month names as the badge uses them, January first. */
+    months: z.array(TextSchema).length(12),
+  }),
   /** The display label of every part of speech. */
   partsOfSpeech: z.record(PartOfSpeechSchema, TextSchema),
   /** The words on the splash, under the Edition's mark. */

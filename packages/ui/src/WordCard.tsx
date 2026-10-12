@@ -11,6 +11,8 @@ export interface WordCardProps {
   /** The part of speech in the Edition's language. */
   partOfSpeech: string;
   primaryDefinition: string;
+  /** A badge over the Lemma, such as the Word of the Day's. */
+  badge?: ReactNode;
   /** Decor drawn over the card's edges, such as corner ornaments (Decor slot 3). */
   frame?: ReactNode;
   /** Decor between the Lemma and the Definition, such as an ornament divider (Decor slot 2). */
@@ -25,6 +27,7 @@ export function WordCard({
   lemma,
   partOfSpeech,
   primaryDefinition,
+  badge,
   frame,
   divider,
 }: WordCardProps) {
@@ -38,6 +41,7 @@ export function WordCard({
         { backgroundColor: colors.surface, borderColor: colors.line, borderRadius: radii.card },
       ]}
     >
+      {badge}
       <Text
         testID="word-lemma"
         // A long Lemma shrinks to fit rather than break inside a word.
