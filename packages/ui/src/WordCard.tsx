@@ -27,22 +27,24 @@ export interface WordCardProps {
   divider?: ReactNode;
   /** The Pronunciation button, at the right of the Lemma. */
   pronunciation?: ReactNode;
+  /** Opens a linked Correction when the reader taps its form in the «often said» line. */
+  onOpenCorrection?: (correctionId: string) => void;
 }
 
 /** Below this window width the card takes the design's compact iPhone SE layout. */
-const COMPACT_WIDTH = 390;
+export const COMPACT_WIDTH = 390;
 
 /** On the SE the Lemma drops from 48 to 44 at M, and the padding shrinks by 25%. */
-const COMPACT_LEMMA = 44 / 48;
-const COMPACT_PADDING = 0.75;
+export const COMPACT_LEMMA = 44 / 48;
+export const COMPACT_PADDING = 0.75;
 
 /** `{name}` placeholders filled from `values`. */
-function fill(template: string, values: Readonly<Record<string, string>>): string {
+export function fill(template: string, values: Readonly<Record<string, string>>): string {
   return template.replace(/\{(\w+)\}/g, (match, name: string) => values[name] ?? match);
 }
 
 /** A `#RRGGBB` colour at the given opacity; any other colour as it is. */
-function withAlpha(color: string, alpha: number): string {
+export function withAlpha(color: string, alpha: number): string {
   const hex = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(color);
   if (hex === null) return color;
   const [r, g, b] = hex.slice(1).map((pair) => parseInt(pair, 16));
@@ -64,6 +66,7 @@ export function WordCard({
   frame,
   divider,
   pronunciation,
+  onOpenCorrection,
 }: WordCardProps) {
   const { colors, fontFamilies, radii } = useTokens();
   const sizes = useWordTextSizes();
@@ -235,7 +238,6 @@ export function WordCard({
       {card.linkedCorrections.length === 0 ? null : (
         <View
           testID="word-often-said"
-          accessible
           {...voice}
           style={[styles.oftenSaid, { borderTopColor: colors.line }]}
         >
@@ -246,19 +248,40 @@ export function WordCard({
               strokeWidth={1.8}
             />
           </Svg>
-          <Text
-            style={[styles.oftenSaidText, { color: colors.muted, fontFamily: fontFamilies.ui }]}
-          >
-            {strings.oftenSaid}{' '}
+          <View style={styles.oftenSaidLine}>
+            {/* Each form below says the label for VoiceOver. */}
             <Text
-              style={[
-                styles.oftenSaidForms,
-                { color: colors.inkSecondary, fontFamily: fontFamilies.word },
-              ]}
+              accessibilityElementsHidden
+              importantForAccessibility="no"
+              style={[styles.oftenSaidText, { color: colors.muted, fontFamily: fontFamilies.ui }]}
             >
-              {card.linkedCorrections.map(({ nonStandardForm }) => nonStandardForm).join(', ')}
+              {strings.oftenSaid}
             </Text>
-          </Text>
+            {card.linkedCorrections.map(({ correctionId, nonStandardForm }, index) => (
+              <Pressable
+                key={correctionId}
+                testID={`word-often-said-${correctionId}`}
+                accessibilityRole="button"
+                accessibilityLabel={`${strings.oftenSaid} ${nonStandardForm}`}
+                accessibilityHint={strings.oftenSaidHint}
+                {...voice}
+                disabled={onOpenCorrection === undefined}
+                hitSlop={{ top: space[3], bottom: space[3] }}
+                onPress={() => onOpenCorrection?.(correctionId)}
+              >
+                <Text
+                  style={[
+                    styles.oftenSaidForms,
+                    { color: colors.inkSecondary, fontFamily: fontFamilies.word },
+                  ]}
+                >
+                  {index < card.linkedCorrections.length - 1
+                    ? `${nonStandardForm},`
+                    : nonStandardForm}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
         </View>
       )}
       {frame === undefined ? null : (
@@ -478,6 +501,13 @@ const styles = StyleSheet.create({
     paddingTop: space[3],
     borderTopWidth: 1,
   },
-  oftenSaidText: { flex: 1, fontSize: typeSize.partOfSpeech, fontWeight: '500' },
-  oftenSaidForms: { fontStyle: 'italic', fontWeight: '400' },
+  oftenSaidLine: {
+    flex: 1,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'baseline',
+    columnGap: space[2],
+  },
+  oftenSaidText: { fontSize: typeSize.partOfSpeech, fontWeight: '500' },
+  oftenSaidForms: { fontSize: typeSize.partOfSpeech, fontStyle: 'italic', fontWeight: '400' },
 });

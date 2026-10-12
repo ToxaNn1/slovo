@@ -150,6 +150,22 @@
     "etymology": "Етимологія",
     "extraDefinitions": "Інші значення",
     "moreExamples": "Ще приклади",
-    "oftenSaid": "Часто кажуть:"
+    "oftenSaid": "Часто кажуть:",
+    "oftenSaidHint": "Відкриває виправлення"
+  },
+  "correctionCard": {
+    "title": "Виправлення",
+    "correctionTypes": {
+      "russianism": "росіянізм",
+      "calque": "калька",
+      "surzhyk": "суржик",
+      "officialese": "канцелярит"
+    },
+    "correctionType": "Тип: {type}",
+    "nonStandard": "Так часто кажуть",
+    "standard": "Українською краще",
+    "otherEquivalents": "також: {equivalents}",
+    "exampleNonStandard": "Так кажуть: {text}",
+    "exampleStandard": "Краще: {text}"
   }
 }
