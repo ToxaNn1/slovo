@@ -185,9 +185,9 @@ describe('the Feed', () => {
       position: number,
       ms: number,
     ) {
-      await feed.cardVisible(position);
+      await feed.show(position);
       time.advance(ms);
-      await feed.cardHidden(position);
+      await feed.show(undefined);
     }
 
     /** The Words still unseen in the Cycle, as the next app run offers them a day later. */
@@ -248,13 +248,14 @@ describe('the Feed', () => {
       const feed = await run({ clock: time.clock });
       const expected = await walk(await run());
       await feed.next();
+      // The Feed gets card 2 ready while card 1 is on screen.
       await look(feed, time, 1, 200);
       await look(feed, time, 0, 200);
 
       const card = await feed.next();
 
-      expect(entryIdOf(card)).toBe(expected[2]);
-      expect(entryIdsOf(feed.cards)).toEqual(expected.slice(0, 3));
+      expect(entryIdOf(card)).toBe(expected[3]);
+      expect(entryIdsOf(feed.cards)).toEqual(expected.slice(0, 4));
     });
 
     it('marks a card Seen when the reader goes back to it and stays, as for any card on screen', async () => {
@@ -277,7 +278,8 @@ describe('the Feed', () => {
       await feed.next();
       await feed.next();
       for (const position of [0, 1, 2]) await look(feed, time, position, SEEN_DWELL_MS);
-      const read = entryIdsOf(feed.cards);
+      // The card after them is ready, but not read.
+      const read = entryIdsOf(feed.cards).slice(0, 3);
 
       time.advance(60_000);
       const restarted = await run({ records, clock: time.clock });
@@ -285,6 +287,127 @@ describe('the Feed', () => {
 
       expect(offered).toHaveLength(liveIds.length - read.length);
       for (const id of read) expect(offered).not.toContain(id);
+    });
+  });
+
+  describe('the card on screen', () => {
+    /** Whether the Entry of the first card is Seen, as the next app run a day later tells. */
+    async function firstSeen(feed: Feed, records: Map<string, string>) {
+      const nextDay = fakeClock('2026-10-12T09:00:00+03:00').clock;
+      return !(await walk(await run({ records, clock: nextDay }))).includes(
+        entryIdOf(feed.cards[0]) ?? '',
+      );
+    }
+
+    it('keeps the card after the one on screen ready, and only that one', async () => {
+      const feed = await run();
+
+      await feed.show(0);
+      expect(feed.cards).toHaveLength(2);
+
+      await feed.show(1);
+      expect(feed.cards).toHaveLength(3);
+
+      await feed.show(0);
+      await feed.show(undefined);
+      expect(feed.cards).toHaveLength(3);
+    });
+
+    it('gets nothing ready while no card is on screen', async () => {
+      const feed = await run();
+
+      await feed.show(undefined);
+
+      expect(feed.cards).toHaveLength(1);
+    });
+
+    it('gets the next card ready once when the card goes off screen and back before it is ready', async () => {
+      const feed = await run();
+
+      await Promise.all([feed.show(0), feed.show(undefined), feed.show(0)]);
+
+      expect(feed.cards).toHaveLength(2);
+    });
+
+    it('gets the card after the ready one too when the reader turns onto it before that came', async () => {
+      const feed = await run();
+      await feed.show(0);
+
+      await Promise.all([feed.show(1), feed.show(2)]);
+
+      expect(feed.cards).toHaveLength(4);
+    });
+
+    it('gets the next card ready again when the card on screen is reported again after it failed', async () => {
+      const content = createMemoryContentPort({ words: pack });
+      let failing = false;
+      const feed = await openFeed({
+        entries: createEntries({
+          content: {
+            ...content,
+            getWord: (id) => (failing ? Promise.reject(new Error('disk')) : content.getWord(id)),
+          },
+          edition: editionWith(false),
+        }),
+        userState: await openUserState({ port: createMemoryUserStatePort() }),
+        clock: fakeClock('2026-10-11T09:00:00+03:00').clock,
+        random: randomOf(0.25),
+      });
+
+      failing = true;
+      await expect(feed.show(0)).rejects.toThrow('disk');
+      expect(feed.cards).toHaveLength(1);
+
+      failing = false;
+      await feed.show(0);
+      expect(feed.cards).toHaveLength(2);
+    });
+
+    it('keeps counting the dwell time when the card on screen is reported again', async () => {
+      const records = new Map<string, string>();
+      const time = fakeClock('2026-10-11T09:00:00+03:00');
+      const feed = await run({ records, clock: time.clock });
+
+      await feed.show(0);
+      time.advance(SEEN_DWELL_MS - 500);
+      await feed.show(0);
+      time.advance(500);
+      await feed.show(undefined);
+
+      expect(await firstSeen(feed, records)).toBe(true);
+    });
+
+    it('stops counting the dwell time while no card is on screen, as when the app is in the background', async () => {
+      const records = new Map<string, string>();
+      const time = fakeClock('2026-10-11T09:00:00+03:00');
+      const feed = await run({ records, clock: time.clock });
+
+      await feed.show(0);
+      time.advance(SEEN_DWELL_MS - 500);
+      await feed.show(undefined);
+      time.advance(60_000);
+      await feed.show(0);
+      time.advance(SEEN_DWELL_MS - 500);
+      await feed.show(1);
+
+      expect(await firstSeen(feed, records)).toBe(false);
+    });
+
+    it('tells its subscribers when the cards change, each time in a new array', async () => {
+      const feed = await run();
+      const before = feed.cards;
+      const told: (readonly FeedCard[])[] = [];
+      const stop = feed.subscribe(() => told.push(feed.cards));
+
+      await feed.show(0);
+
+      expect(told).toEqual([feed.cards]);
+      expect(feed.cards).not.toBe(before);
+      expect(before).toHaveLength(1);
+
+      stop();
+      await feed.next();
+      expect(told).toHaveLength(1);
     });
   });
 
@@ -307,17 +430,16 @@ describe('the Feed', () => {
     const small = [word('w_one'), word('w_two'), word('w_three'), word('w_old', true)];
 
     /**
-     * Reads the last card as the app does: the card comes on screen, the app
-     * asks for the next card at once to have it ready, and the reader stays
-     * `ms` before swiping on. Returns the card the app got ready.
+     * Reads the last card: it comes on screen, the Feed gets the next card
+     * ready, and the reader stays `ms` before swiping on. Returns the card the
+     * Feed got ready.
      */
     async function readLastCard(feed: Feed, time: ReturnType<typeof fakeClock>, ms: number) {
       const position = feed.cards.length - 1;
-      await feed.cardVisible(position);
-      const next = await feed.next();
+      await feed.show(position);
       time.advance(ms);
-      await feed.cardHidden(position);
-      return next;
+      await feed.show(undefined);
+      return feed.cards[position + 1];
     }
 
     /** Reads every Word of the Cycle as the app does, up to the end-of-Cycle card. */
@@ -388,7 +510,6 @@ describe('the Feed', () => {
       const time = fakeClock('2026-10-11T09:00:00+03:00');
       const feed = await run({ records, words: small, clock: time.clock });
       await readToTheEnd(feed, time);
-      await feed.cardVisible(feed.cards.length - 1);
 
       time.advance(60_000);
       const restarted = await run({ records, words: small, clock: time.clock });
@@ -417,9 +538,9 @@ describe('the Feed', () => {
       await readToTheEnd(feed, time);
       await readLastCard(feed, time, SEEN_DWELL_MS);
 
-      await feed.cardVisible(0);
+      await feed.show(0);
       time.advance(10_000);
-      await feed.cardHidden(0);
+      await feed.show(undefined);
 
       const nextDay = await run({
         records,
@@ -442,7 +563,7 @@ describe('the Feed', () => {
       const time = fakeClock(start);
       const feed = await run({ records, clock: time.clock });
       while (feed.cards.length <= position) await feed.next();
-      await feed.cardVisible(position);
+      await feed.show(position);
       time.advance(500);
       return entryIdOf(feed.cards[position]);
     }
@@ -503,9 +624,9 @@ describe('the Word of the Day in the Feed', () => {
     const records = new Map<string, string>();
     const morning = fakeClock('2026-10-11T00:05:00+03:00');
     const first = await run({ records, clock: morning.clock });
-    await first.cardVisible(0);
+    await first.show(0);
     morning.advance(300);
-    await first.cardHidden(0);
+    await first.show(undefined);
 
     const evening = await run({
       records,
@@ -550,9 +671,9 @@ describe('Corrections in the Feed', () => {
     position: number,
     ms: number,
   ) {
-    await feed.cardVisible(position);
+    await feed.show(position);
     time.advance(ms);
-    await feed.cardHidden(position);
+    await feed.show(undefined);
   }
 
   it('mixes a Correction in as every fifth card while unseen Corrections remain', async () => {
@@ -623,9 +744,8 @@ describe('Corrections in the Feed', () => {
     await look(feed, time, 0, SEEN_DWELL_MS);
     await look(feed, time, 1, SEEN_DWELL_MS);
 
-    const card = await feed.next();
-
-    expect(entryIdOf(card)).toBe('c_one');
+    // The card the Feed got ready while the last Word was on screen.
+    expect(entryIdOf(feed.cards[2])).toBe('c_one');
   });
 
   it('ends the Cycle only once every live Word and Correction is Seen, and starts the next one with the Corrections unseen again', async () => {
@@ -634,14 +754,14 @@ describe('Corrections in the Feed', () => {
     const time = fakeClock('2026-10-11T09:00:00+03:00');
     const feed = await run({ words: small, corrections: smallCorrections, clock: time.clock });
 
-    // Each card read as the app does: the next card is got ready while the reader looks.
+    // The Feed gets the next card ready while the reader looks at each card.
     const offered = [];
     for (let card = 0; card < 6; card++) {
       const position = feed.cards.length - 1;
-      await feed.cardVisible(position);
-      const next = await feed.next();
+      await feed.show(position);
       time.advance(SEEN_DWELL_MS);
-      await feed.cardHidden(position);
+      await feed.show(undefined);
+      const next = feed.cards[position + 1];
       offered.push(next?.kind === 'end-of-cycle' ? 'end' : entryIdOf(next));
     }
 
@@ -664,7 +784,8 @@ describe('Corrections in the Feed', () => {
     await look(feed, time, 0, SEEN_DWELL_MS);
     await look(feed, time, 1, SEEN_DWELL_MS);
 
-    expect((await feed.next())?.kind).toBe('end-of-cycle');
+    // The card the Feed got ready while the last Word was on screen.
+    expect(feed.cards[2]?.kind).toBe('end-of-cycle');
   });
 
   it('opens on the Correction card the reader was on when the app reopens the same day', async () => {
@@ -672,7 +793,7 @@ describe('Corrections in the Feed', () => {
     const time = fakeClock('2026-10-11T09:00:00+03:00');
     const feed = await run({ records, corrections, clock: time.clock });
     while (feed.cards.length < 5) await feed.next();
-    await feed.cardVisible(4);
+    await feed.show(4);
 
     const reopened = await run({
       records,

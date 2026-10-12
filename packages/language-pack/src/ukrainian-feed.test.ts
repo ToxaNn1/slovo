@@ -124,9 +124,9 @@ async function walk(feed: Feed): Promise<string[]> {
 }
 
 async function look(feed: Feed, time: ReturnType<typeof fakeClock>, position: number, ms: number) {
-  await feed.cardVisible(position);
+  await feed.show(position);
   time.advance(ms);
-  await feed.cardHidden(position);
+  await feed.show(undefined);
 }
 
 /** The Words a fresh run offers the next day, when the Feed doesn't reopen on the last card. */
@@ -189,11 +189,9 @@ describe('the Feed over the Ukrainian Language Pack', () => {
     const records = new Map<string, string>();
     const time = fakeClock(today);
     const feed = await run(records, time.clock);
-    for (let position = 0; position < 5; position++) {
-      if (position > 0) await feed.next();
-      await look(feed, time, position, 2000);
-    }
-    const read = entryIdsOf(feed.cards);
+    // The Feed gets each next card ready while the one before it is on screen.
+    for (let position = 0; position < 5; position++) await look(feed, time, position, 2000);
+    const read = entryIdsOf(feed.cards).slice(0, 5);
 
     const restarted = await run(records, time.clock);
     // It reopens on the card the reader was on; every card after it is new.
@@ -208,11 +206,9 @@ describe('the Feed over the Ukrainian Language Pack', () => {
     const records = new Map<string, string>();
     const time = fakeClock(today);
     const feed = await run(records, time.clock);
-    for (let position = 0; position < 3; position++) {
-      if (position > 0) await feed.next();
-      await look(feed, time, position, 2000);
-    }
-    const read = entryIdsOf(feed.cards);
+    // The Feed gets each next card ready while the one before it is on screen.
+    for (let position = 0; position < 3; position++) await look(feed, time, position, 2000);
+    const read = entryIdsOf(feed.cards).slice(0, 3);
 
     const midnight = fakeClock('2026-10-12T00:00:00+03:00');
     const nextDay = await run(records, midnight.clock);

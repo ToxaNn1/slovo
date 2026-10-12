@@ -5,7 +5,7 @@ import { buildCorrectionCard, type CorrectionCardModel } from './correction-card
 import { openCycle } from './cycle';
 import type { Entries } from './entries';
 import { localDate, type LocalDate } from './local-date';
-import type { Clock, Random } from './ports';
+import type { Clock, Random, UserStateChanges } from './ports';
 import { readRecord, type UserState } from './user-state';
 import { buildWordCard, type WordCardModel } from './word-card';
 import { openWordOfTheDay } from './word-of-the-day';
@@ -53,7 +53,24 @@ function entryIdOf(card: FeedCard | undefined): string | undefined {
  * first; a card's position is its index there, so going back walks them.
  */
 export interface Feed {
+  /**
+   * The cards shown so far. A change never edits this array: it makes a new
+   * one and tells the subscribers.
+   */
   readonly cards: readonly FeedCard[];
+  /** Calls `listener` after each change of the cards. Returns the call that stops it. */
+  subscribe(listener: () => void): () => void;
+  /**
+   * Tells the Feed which card is on screen now, or that none is (the screen
+   * is out of focus or the app in the background). The card that leaves the
+   * screen makes its Entry Seen if it stayed there for at least
+   * `SEEN_DWELL_MS` and belongs to the current Cycle. While a card is on
+   * screen, the Feed keeps the card after it ready, so the next swipe never
+   * waits. Reporting the card already on screen again keeps its dwell time
+   * and only gets the next card ready if that failed before. Resolves once
+   * the report is kept and the next card is ready.
+   */
+  show(position: number | undefined): Promise<void>;
   /**
    * Adds the next card to the session and returns it, or nothing when the
    * Language Pack has no live Entry. After the last unseen Entry of the Cycle
@@ -67,14 +84,6 @@ export interface Feed {
    * doesn't link that Correction.
    */
   openLinkedCorrection(position: number, correctionId: string): Promise<number | undefined>;
-  /** Reports that the card at `position` is on screen now. */
-  cardVisible(position: number): Promise<void>;
-  /**
-   * Reports that the card at `position` left the screen. Its Entry becomes
-   * Seen if the card stayed on screen for at least `SEEN_DWELL_MS` and belongs
-   * to the current Cycle.
-   */
-  cardHidden(position: number): Promise<void>;
 }
 
 /** The user-state record of the card the reader was on last. */
@@ -113,11 +122,17 @@ export async function openFeed({
 }): Promise<Feed> {
   const cycle = await openCycle({ entries, userState, random });
   const wordOfTheDay = await openWordOfTheDay({ cycle, userState, clock });
-  const cards: FeedCard[] = [];
+  let cards: readonly FeedCard[] = [];
+  const listeners = new Set<() => void>();
   /** The position of the current Cycle's first card: the cards before it belong to an earlier Cycle. */
   let cycleStart = 0;
-  /** When each card on screen now became visible, by position. */
-  const visibleSince = new Map<number, number>();
+  /** The card on screen now, and since when, if one is. */
+  let onScreen: { readonly position: number; readonly since: number } | undefined;
+
+  function changeCards(changed: readonly FeedCard[]): void {
+    cards = changed;
+    for (const listener of listeners) listener();
+  }
 
   /** Opens on the card the reader was on, if it was today and the Cycle still covers its Entry. */
   async function restore(): Promise<boolean> {
@@ -129,11 +144,12 @@ export async function openFeed({
     if (entry === undefined) return false;
     const card = await entryCard(entry);
     const today = wordOfTheDay.chosen();
-    cards.push(
+    changeCards([
+      ...cards,
       card.kind === 'word' && today?.wordId === entry.id
         ? { ...card, wordOfTheDay: today.date }
         : card,
-    );
+    ]);
     return true;
   }
 
@@ -201,13 +217,13 @@ export async function openFeed({
     const id = nextEntryId();
     if (id === undefined) {
       const card: FeedCard = { kind: 'end-of-cycle' };
-      cards.push(card);
+      changeCards([...cards, card]);
       return card;
     }
     const entry = await entries.get(id);
     if (entry === undefined) return undefined;
     const card = await entryCard(entry);
-    cards.push(card);
+    changeCards([...cards, card]);
     return card;
   }
 
@@ -222,15 +238,12 @@ export async function openFeed({
     if (entryIdOf(cards[position + 1]) === correctionId) return position + 1;
     const correction = await entries.get(correctionId);
     if (correction?.kind !== 'correction') return undefined;
-    cards.splice(position + 1, 0, await entryCard(correction));
-    // The cards after it move one position on, and so do their dwell times.
+    const opened = await entryCard(correction);
+    // The cards after it move one position on, the one on screen too.
     if (cycleStart > position) cycleStart += 1;
-    const shifted = [...visibleSince].map(([at, since]): [number, number] => [
-      at > position ? at + 1 : at,
-      since,
-    ]);
-    visibleSince.clear();
-    for (const [at, since] of shifted) visibleSince.set(at, since);
+    if (onScreen !== undefined && onScreen.position > position)
+      onScreen = { ...onScreen, position: onScreen.position + 1 };
+    changeCards([...cards.slice(0, position + 1), opened, ...cards.slice(position + 1)]);
     return position + 1;
   }
 
@@ -247,32 +260,72 @@ export async function openFeed({
       wordCard: await buildWordCard({ word: entry, entries }),
       wordOfTheDay: today.date,
     };
-    cards.push(card);
+    changeCards([...cards, card]);
     return card;
+  }
+
+  const next = () => inTurn(addNextCard);
+
+  /** Whether the card on screen is the last one, so the card after it is not ready yet. */
+  const nextCardMissing = () => onScreen !== undefined && onScreen.position >= cards.length - 1;
+
+  // One card is got ready at a time; it goes on while the card on screen is the last.
+  let gettingReady: Promise<void> | undefined;
+  function keepNextCardReady(): Promise<void> {
+    if (gettingReady === undefined && nextCardMissing()) {
+      gettingReady = (async () => {
+        try {
+          do {
+            if ((await next()) === undefined) return;
+          } while (nextCardMissing());
+        } finally {
+          gettingReady = undefined;
+        }
+      })();
+    }
+    return gettingReady ?? Promise.resolve();
+  }
+
+  /** The changes that make the Entry of the card on screen Seen as it leaves, if it stayed long enough. */
+  function seenOnLeaving(now: number): UserStateChanges {
+    if (onScreen === undefined) return new Map();
+    const entryId = entryIdOf(cards[onScreen.position]);
+    // A card of an earlier Cycle counts for that Cycle only.
+    if (entryId === undefined || onScreen.position < cycleStart) return new Map();
+    if (now - onScreen.since < SEEN_DWELL_MS) return new Map();
+    return cycle.markSeen(entryId);
+  }
+
+  async function show(position: number | undefined): Promise<void> {
+    if (position === onScreen?.position) return keepNextCardReady();
+    const now = clock.now().getTime();
+    const changes = new Map(seenOnLeaving(now));
+    onScreen = position === undefined ? undefined : { position, since: now };
+    const entryId = position === undefined ? undefined : entryIdOf(cards[position]);
+    if (entryId !== undefined) {
+      const lastPosition = { entryId, date: localDate(clock) };
+      changes.set(POSITION_KEY, JSON.stringify(lastPosition));
+    }
+    await Promise.all([
+      changes.size > 0 ? userState.write(changes) : undefined,
+      keepNextCardReady(),
+    ]);
   }
 
   if (!(await restore())) await addWordOfTheDay();
   return {
-    cards,
-    next: () => inTurn(addNextCard),
+    get cards() {
+      return cards;
+    },
+    subscribe(listener) {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+    show,
+    next,
     openLinkedCorrection: (position, correctionId) =>
       inTurn(() => insertLinkedCorrection(position, correctionId)),
-    async cardVisible(position) {
-      const entryId = entryIdOf(cards[position]);
-      if (entryId === undefined) return;
-      visibleSince.set(position, clock.now().getTime());
-      const lastPosition = { entryId, date: localDate(clock) };
-      await userState.write(new Map([[POSITION_KEY, JSON.stringify(lastPosition)]]));
-    },
-    async cardHidden(position) {
-      const since = visibleSince.get(position);
-      visibleSince.delete(position);
-      const entryId = entryIdOf(cards[position]);
-      // A card of an earlier Cycle counts for that Cycle only.
-      if (since === undefined || entryId === undefined || position < cycleStart) return;
-      if (clock.now().getTime() - since < SEEN_DWELL_MS) return;
-      const changes = cycle.markSeen(entryId);
-      if (changes.size > 0) await userState.write(changes);
-    },
   };
 }
