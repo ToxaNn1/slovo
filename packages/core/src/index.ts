@@ -16,6 +16,7 @@ export type {
 } from '@slovo/contracts';
 export { createContent, type Content } from './content';
 export { buildCorrectionCard, type CorrectionCardModel } from './correction-card';
+export { openCycle, type Cycle, type CycleIds } from './cycle';
 export { coreDecor, InvalidDecorError, loadDecor, type Decor } from './decor';
 export {
   CORRECTION_EVERY,
@@ -51,6 +52,7 @@ export {
   type WordCardDetails,
   type WordCardModel,
 } from './word-card';
+export { openWordOfTheDay, type WordOfTheDay, type WordOfTheDayChoice } from './word-of-the-day';
 export {
   systemClock,
   systemRandom,

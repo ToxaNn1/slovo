@@ -1,3 +1,5 @@
+import type { z } from 'zod';
+
 import type { UserStateChanges, UserStatePort } from './ports';
 
 /** The record that holds the schema version of the user state. */
@@ -10,6 +12,22 @@ const VERSION_KEY = 'schema.version';
 export interface UserState {
   get(key: string): Promise<string | undefined>;
   write(changes: UserStateChanges): Promise<void>;
+}
+
+/** A JSON record of the user state, if it holds a value of the schema. */
+export async function readRecord<T>(
+  userState: Pick<UserState, 'get'>,
+  key: string,
+  schema: z.ZodType<T>,
+): Promise<T | undefined> {
+  const record = await userState.get(key);
+  if (record === undefined) return undefined;
+  try {
+    const parsed = schema.safeParse(JSON.parse(record));
+    return parsed.success ? parsed.data : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 /**
