@@ -83,7 +83,7 @@ Why the form is non-standard: russianism, calque, surzhyk or officialese (кан
 
 **Entry card**:
 How the app shows one Entry: a Word card or a Correction card in the same frame, with the action row (heart, Collections, share, hide) under it. The Feed and every screen that opens a kept Entry show the same Entry card.
-_Avoid_: Item, tile
+_Avoid_: Item, tile (for a card; a tile is the motif Decor slot 1 repeats)
 
 ### User's words
 

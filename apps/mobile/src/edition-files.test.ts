@@ -133,7 +133,7 @@ const textPairs: readonly (readonly [text: keyof ColorTokens, behind: keyof Colo
 ];
 
 describe('WCAG AA contrast of the 0.2 screens', () => {
-  const skins = [
+  const tokenSets = [
     ['the Core', coreTokens.colors] as const,
     ...editions
       .filter((edition) => existsSync(`${editionsDir}${edition}/tokens.json`))
@@ -143,7 +143,7 @@ describe('WCAG AA contrast of the 0.2 screens', () => {
       }),
   ];
 
-  describe.each(skins)('%s', (_, colors) => {
+  describe.each(tokenSets)('%s', (_, colors) => {
     it.each(['light', 'dark'] as const)('keeps every text at 4.5:1 or more in %s', (scheme) => {
       for (const [text, behind] of textPairs) {
         expect(

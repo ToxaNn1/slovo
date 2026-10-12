@@ -8,7 +8,7 @@ All sizes are in pt (CSS px on the canvas). Screens are drawn at 393×852 (iPhon
 
 ## Colour tokens
 
-The canvas defines six semantic roles per skin and theme (artboard 1h). The names below are the canvas's roles translated to English; the Core owns the names, and an Edition supplies the values (ADR 0006).
+The canvas defines six semantic roles per Edition and Theme (artboard 1h). The names below are the canvas's roles translated to English; the Core owns the names, and an Edition supplies the values (ADR 0006).
 
 | Token              | Core light | Core dark | UA light  | UA dark   |
 | ------------------ | ---------- | --------- | --------- | --------- |
@@ -32,9 +32,9 @@ The screens also use these values, which the token table does not name. The prop
 | `color.line`                 | `rgba(0,0,0,.08–.14)` | `rgba(156,122,46,.18–.32)` | `rgba(212,174,92,.14–.35)`         | Card borders (≈30%), list separators (≈14–22%), tab bar top line |
 | `color.scrim`                | n/a                   | `rgba(30,24,19,.45)`       | `rgba(0,0,0,.45–.6)`               | Behind sheets and dialogs                                        |
 | `color.primaryButton` / `On` | n/a                   | `#1E1813` / `#F5EEE2`      | `#D4AE5C` or `#F3EADB` / `#15110E` | Primary button fill / label                                      |
-| `color.inactiveTab`          | `#6A6A6A` (see below) | `#6B5E4E`                  | `#B5A893`                          | Tab bar items that are not selected                              |
+| `color.inactiveTab`          | `#6A6A6A` (see below) | `#6B5E4E`                  | `#B5A893`                          | Tabs that are not selected                                       |
 
-Semantic colours that every skin must keep apart from the Decor red (artboard 1h: "Game answers are separate semantic tokens, so that the embroidery red never reads as an error"):
+Semantic colours that every Edition must keep apart from the Decor red (artboard 1h: "Game answers are separate semantic tokens, so that the embroidery red never reads as an error"):
 
 | Proposed token        | Value     | Used for                                                                      |
 | --------------------- | --------- | ----------------------------------------------------------------------------- |
@@ -164,7 +164,7 @@ The notification has its own sound: a quiet bandura pluck of 0.6 s.
 
 ## Components
 
-Each component is shown in the screens listed; light and dark refer to the Ukrainian skin unless marked Core.
+Each component is shown in the screens listed; light and dark refer to the Ukrainian Edition unless marked Core.
 
 **Word card** (`feed-word-card-*`). A surface card with `radius.card`, a 1 pt line border and four corner ornaments (Decor slot 3). Top row: the Lemma with Stress, and under it the part of speech (abbreviated, e.g. "ім., ж. р.") with an optional register chip (an outlined accent chip, e.g. "розм.", "заст."); the pronunciation button (44 pt outlined circle, speaker icon, accent) on the right. Then the ornament divider (Decor slot 2), the primary Definition, the Example in italics with its author, the synonym line ("Синонім:" or "Антонім:") and the Category chip (`surfaceSunken`, `radius.chip`). Variants:
 
@@ -238,9 +238,9 @@ All PNGs are in [`screens/`](screens/), rendered at 2× from the canvas, includi
 | `feed-word-card-often-said-dark.png`           | Feed, Word card linked to a Correction («Часто кажуть»), dark                                 | 1b       |
 | `feed-correction-card-dark.png`                | Feed, Correction card (калька), dark                                                          | 1b       |
 | `feed-end-of-cycle-dark.png`                   | Feed, end-of-Cycle card, dark                                                                 | 1b       |
-| `feed-word-card-light.png`                     | Feed, Word card, Ukrainian skin, light                                                        | 1a       |
-| `feed-word-card-core-light.png`                | Feed, Word card, neutral Core skin, light                                                     | 1a       |
-| `feed-word-card-core-vs-ukrainian-light.png`   | The same Word card in the Core skin and the Ukrainian skin side by side, light                | 1a       |
+| `feed-word-card-light.png`                     | Feed, Word card, Ukrainian Edition, light                                                     | 1a       |
+| `feed-word-card-core-light.png`                | Feed, Word card, Core tokens, light                                                           | 1a       |
+| `feed-word-card-core-vs-ukrainian-light.png`   | The same Word card with the Core tokens and the Ukrainian Edition side by side, light         | 1a       |
 | `feed-correction-card-light.png`               | Feed, Correction card (росіянізм), light, without the action row                              | 1d       |
 | `feed-word-card-iphone-se-light.png`           | Feed, Word card on iPhone SE 375×667, font size M, light                                      | 2e       |
 | `feed-loading-dark.png`                        | Feed, loading skeleton with the divider being stitched, dark                                  | 4a       |
@@ -345,7 +345,7 @@ Listed for the owner to decide; the design itself is left unchanged. Gaps marked
 ### Missing screens and states (the brief asked for light and dark of every screen)
 
 21. **Most screens exist in one theme only.** No light Feed with Word of the Day, end of Cycle or loading; no dark Correction card outside the Feed; no dark Settings, Saved, Favorites, Collections, About or widget guide; no light Game, Stats, History, Hidden or Add to Collection; no light splash; dark error state missing. **Closed in 0.2 for the 0.2 screens:** each is built from the tokens and checked in both Themes; the other screens stay open for their versions.
-22. **The Core skin is shown only as a light Word card.** There is no Core dark screen and no Core default for Decor slots 1 and 3–7 (only slot 2's line and dot), though the token table lists Core dark values. **Closed in 0.2:** the Core dark skin comes from the token table, and the Core's neutral Decor stays minimal (see [Decor slots](#decor-slots)).
+22. **The Core tokens are shown only as a light Word card.** There is no Core dark screen and no Core default for Decor slots 1 and 3–7 (only slot 2's line and dot), though the token table lists Core dark values. **Closed in 0.2:** the Core dark tokens come from the token table, and the Core's neutral Decor stays minimal (see [Decor slots](#decor-slots)).
 23. **Decor slot 6 is marked "TBD"**, and the slots are shown in dark only on the Decor board.
 24. **Settings sub-screens are missing:** the notification times list (add / edit / remove, up to 10), the My Mix screen, and the SLOVO ID / Account section (sign in, sign out everywhere, delete Account).
 25. **Other missing pieces:** a Collection's detail list; the full card opened from a list; the share flow (choosing story or square, the iOS share sheet); a Word Share Card in square and a Correction in story; the Pronunciation playing state; the Word of the Day in light; notification-permission-denied; loading, empty and error states for the Game, Saved and Settings.
