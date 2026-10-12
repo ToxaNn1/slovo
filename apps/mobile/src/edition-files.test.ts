@@ -5,6 +5,7 @@ import {
   EditionDecorSchema,
   EditionStringsSchema,
   EditionTokensSchema,
+  SplashDecorSchema,
   type ColorTokens,
 } from '@slovo/contracts';
 import { coreTokens } from '@slovo/ui/tokens';
@@ -76,6 +77,20 @@ describe('Edition Decor', () => {
     expect(decor.splash?.band).toBeDefined();
   });
 
+  it.each(
+    editions.filter(
+      (edition) =>
+        existsSync(`${editionsDir}${edition}/tokens.json`) &&
+        existsSync(`${editionsDir}${edition}/decor/splash.json`),
+    ),
+  )('the %s Edition has a native splash on its own background colour in both Themes', (edition) => {
+    const { colors } = EditionTokensSchema.parse(readJson(edition, 'tokens.json'));
+    const splash = SplashDecorSchema.parse(readJson(edition, 'decor/splash.json'));
+
+    expect(splash.light.backgroundColor).toBe(colors?.light.background);
+    expect(splash.dark.backgroundColor).toBe(colors?.dark.background);
+  });
+
   /** The text colour roles drawn straight on the screen background. */
   const textRoles = ['ink', 'muted', 'inkSecondary', 'accent'] as const;
 
@@ -130,6 +145,9 @@ const textPairs: readonly (readonly [text: keyof ColorTokens, behind: keyof Colo
   // Inverted: the Word of the Day badge, the error button, the swipe hint.
   ['background', 'accent'],
   ['background', 'ink'],
+  // The Pronunciation message on ink, and the speaker while it plays on accent.
+  ['surface', 'ink'],
+  ['surface', 'accent'],
 ];
 
 describe('WCAG AA contrast of the 0.2 screens', () => {

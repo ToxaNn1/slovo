@@ -10,6 +10,7 @@
         "$TURBO_DEFAULT$",
         "$TURBO_ROOT$/editions/*/edition.json",
         "$TURBO_ROOT$/editions/*/strings.json",
+        "$TURBO_ROOT$/editions/*/tokens.json",
         "$TURBO_ROOT$/editions/*/assets/**",
         "$TURBO_ROOT$/editions/*/decor/**"
       ]
