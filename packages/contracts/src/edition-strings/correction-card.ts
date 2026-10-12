@@ -1,7 +1,8 @@
 import { z } from 'zod';
 
 import { CorrectionTypeSchema } from '../correction';
-import { templateOf, TextSchema } from './shared';
+import { TextSchema } from '../shared';
+import { templateOf } from './shared';
 
 export const CorrectionCardStringsSchema = z.strictObject({
   /** The overline at the top of the card, e.g. "Виправлення". */

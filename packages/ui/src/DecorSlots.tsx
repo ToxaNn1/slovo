@@ -67,20 +67,15 @@ const cornerPlacements = {
 } as const;
 
 /**
- * Decor slot 3, the card frame: the Edition's corner in the card's corners,
- * all four on the Word card and the top two on other cards. Place it inside
- * the card. Nothing when the Decor has no corners.
+ * Decor slot 3, the card frame: the Edition's corner in all four corners of
+ * a Word card. Place it inside the card. Nothing when the Decor has no corners.
  */
-export function CardCorners({ placement = 'all' }: { placement?: 'all' | 'top' }) {
+export function CardCorners() {
   const { corners } = useDecor();
   if (corners === undefined) return null;
-  const shown =
-    placement === 'all'
-      ? (['topLeft', 'topRight', 'bottomLeft', 'bottomRight'] as const)
-      : (['topLeft', 'topRight'] as const);
   return (
     <DecorView style={StyleSheet.absoluteFill}>
-      {shown.map((corner) => (
+      {(['topLeft', 'topRight', 'bottomLeft', 'bottomRight'] as const).map((corner) => (
         <View key={corner} style={[styles.corner, cornerPlacements[corner]]}>
           <MotifImage motif={corners.corner} width={corners.corner.width} />
         </View>

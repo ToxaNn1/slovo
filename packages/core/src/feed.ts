@@ -1,9 +1,9 @@
-import type { Correction, Entry, Word } from '@slovo/contracts';
+import type { Entry, Word } from '@slovo/contracts';
 
 import { buildCorrectionCard, type CorrectionCardModel } from './correction-card';
 import type { Cycle, CycleChange } from './cycle';
 import type { Entries } from './entries';
-import { localDate, type LocalDate } from './local-date';
+import { todayKey, type LocalDate } from './local-date';
 import type { Clock } from './ports';
 import type { UserState } from './user-state';
 import { userStateRecords } from './user-state-schema';
@@ -19,7 +19,6 @@ export const CORRECTION_EVERY = 5;
 /** The card of a Word. */
 export interface WordFeedCard {
   readonly kind: 'word';
-  readonly entry: Word;
   /** What the card shows, built by the Core. */
   readonly wordCard: WordCardModel;
   /** On the card of the Word of the Day: the local day it is the Word of. */
@@ -29,7 +28,6 @@ export interface WordFeedCard {
 /** The card of a Correction. */
 export interface CorrectionFeedCard {
   readonly kind: 'correction';
-  readonly entry: Correction;
   /** What the card shows, built by the Core. */
   readonly correctionCard: CorrectionCardModel;
 }
@@ -45,7 +43,8 @@ export type FeedCard = EntryFeedCard | { readonly kind: 'end-of-cycle' };
 
 /** The id of the Entry a card shows, if it shows one. */
 function entryIdOf(card: FeedCard | undefined): string | undefined {
-  return card === undefined || card.kind === 'end-of-cycle' ? undefined : card.entry.id;
+  if (card?.kind === 'word') return card.wordCard.wordId;
+  return card?.kind === 'correction' ? card.correctionCard.correctionId : undefined;
 }
 
 /**
@@ -90,6 +89,30 @@ export interface Feed {
    * doesn't link that Correction.
    */
   openLinkedCorrection(position: number, correctionId: string): Promise<number | undefined>;
+}
+
+/**
+ * The card of an Entry, built from the Language Pack's Entries. The card of a
+ * Word on the day it is the Word of the Day carries that day.
+ */
+export async function buildEntryCard(
+  entries: Entries,
+  entry: Word,
+  wordOfTheDay?: LocalDate,
+): Promise<WordFeedCard>;
+export async function buildEntryCard(entries: Entries, entry: Entry): Promise<EntryFeedCard>;
+export async function buildEntryCard(
+  entries: Entries,
+  entry: Entry,
+  wordOfTheDay?: LocalDate,
+): Promise<EntryFeedCard> {
+  if (entry.kind === 'correction') {
+    return { kind: 'correction', correctionCard: buildCorrectionCard(entry) };
+  }
+  const wordCard = await buildWordCard({ word: entry, entries });
+  return wordOfTheDay === undefined
+    ? { kind: 'word', wordCard }
+    : { kind: 'word', wordCard, wordOfTheDay };
 }
 
 const { feedPosition } = userStateRecords;
@@ -145,27 +168,20 @@ export async function openFeed({
    */
   async function restore(): Promise<boolean> {
     const position = await userState.read(feedPosition);
-    if (position?.date !== localDate(clock)) return false;
-    const { words, corrections } = cycle.order();
-    if (!words.includes(position.entryId) && !corrections.includes(position.entryId)) return false;
+    if (position?.date !== todayKey(clock)) return false;
+    if (!cycle.covers(position.entryId)) return false;
     const entry = await entries.get(position.entryId);
     if (entry === undefined) return false;
     const today = wordOfTheDay.chosen();
     const opening =
-      today !== undefined && words.includes(today.wordId)
-        ? await wordOfTheDayCard(today)
-        : undefined;
-    if (opening?.entry.id === entry.id) changeCards([opening]);
-    else changeCards([...(opening === undefined ? [] : [opening]), await entryCard(entry)]);
+      today !== undefined && cycle.covers(today.wordId) ? await wordOfTheDayCard(today) : undefined;
+    if (opening?.wordCard.wordId === entry.id) changeCards([opening]);
+    else
+      changeCards([
+        ...(opening === undefined ? [] : [opening]),
+        await buildEntryCard(entries, entry),
+      ]);
     return true;
-  }
-
-  /** The card of an Entry. */
-  async function entryCard(entry: Entry): Promise<EntryFeedCard> {
-    if (entry.kind === 'correction') {
-      return { kind: 'correction', entry, correctionCard: buildCorrectionCard(entry) };
-    }
-    return { kind: 'word', entry, wordCard: await buildWordCard({ word: entry, entries }) };
   }
 
   /** The ids of the Entries shown in this session in the current Cycle. */
@@ -220,8 +236,7 @@ export async function openFeed({
       const card = await addWordOfTheDay(kept);
       if (card !== undefined) return card;
     }
-    const { words, corrections } = cycle.order();
-    if (words.length === 0 && corrections.length === 0) return undefined;
+    if (cycle.isEmpty()) return undefined;
     // The card after the end-of-Cycle card starts a new Cycle.
     if (atEnd && kept === cards) {
       const started = await cycle.start();
@@ -237,7 +252,7 @@ export async function openFeed({
     }
     const entry = await entries.get(id);
     if (entry === undefined) return undefined;
-    const card = await entryCard(entry);
+    const card = await buildEntryCard(entries, entry);
     changeCards([...kept, card]);
     return card;
   }
@@ -253,7 +268,7 @@ export async function openFeed({
     if (entryIdOf(cards[position + 1]) === correctionId) return position + 1;
     const correction = await entries.get(correctionId);
     if (correction?.kind !== 'correction') return undefined;
-    const opened = await entryCard(correction);
+    const opened = await buildEntryCard(entries, correction);
     // The cards after it move one position on, the one on screen too.
     if (cycleStart > position) cycleStart += 1;
     if (onScreen !== undefined && onScreen.position > position)
@@ -265,13 +280,7 @@ export async function openFeed({
   /** The card of a day's Word of the Day. */
   async function wordOfTheDayCard(choice: WordOfTheDayChoice): Promise<WordFeedCard | undefined> {
     const entry = await entries.get(choice.wordId);
-    if (entry?.kind !== 'word') return undefined;
-    return {
-      kind: 'word',
-      entry,
-      wordCard: await buildWordCard({ word: entry, entries }),
-      wordOfTheDay: choice.date,
-    };
+    return entry?.kind === 'word' ? buildEntryCard(entries, entry, choice.date) : undefined;
   }
 
   /**
@@ -342,7 +351,7 @@ export async function openFeed({
     const stayed = onScreen === undefined ? 0 : now - onScreen.since;
     onScreen = position === undefined ? undefined : { position, since: now };
     const entryId = position === undefined ? undefined : entryIdOf(cards[position]);
-    const date = localDate(clock);
+    const date = todayKey(clock);
     // In turn with the requests that change the cards, so a new Cycle never
     // starts between the card leaving the screen and its Entry becoming Seen.
     const kept = inTurn(async () => {

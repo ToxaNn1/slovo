@@ -1,8 +1,11 @@
 import {
   colorSchemeFor,
+  createMemoryUserStatePort,
   createSettings,
+  openUserState,
   type ColorScheme,
   type Settings,
+  type UserState,
   type UserSettings,
 } from '@slovo/core';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
@@ -14,11 +17,19 @@ import { storedUserState } from './stored-user-state';
 // Opened once per app run, however often the provider mounts.
 let opening: Promise<{ settings: Settings; current: UserSettings }> | undefined;
 
+async function openSettingsOver(userState: UserState) {
+  const settings = createSettings({ userState, defaults: edition.userSettingDefaults });
+  return { settings, current: await settings.read() };
+}
+
 function openSettings() {
-  opening ??= storedUserState().then(async (userState) => {
-    const settings = createSettings({ userState, defaults: edition.userSettingDefaults });
-    return { settings, current: await settings.read() };
-  });
+  opening ??= storedUserState()
+    .then(openSettingsOver)
+    .catch(async (error: unknown) => {
+      // The app still starts on the Edition's defaults; choices last until it quits.
+      console.error('Could not read the settings; using the Edition defaults', error);
+      return openSettingsOver(await openUserState({ port: createMemoryUserStatePort() }));
+    });
   return opening;
 }
 

@@ -2,8 +2,7 @@ import type { LocalDate } from '@slovo/core';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { fill, useEdition } from './EditionProvider';
-
-import { space, typeSize } from './tokens';
+import { overlineType, space } from './tokens';
 import { useTokens } from './TokensProvider';
 
 /**
@@ -38,10 +37,5 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     marginBottom: space[3],
   },
-  label: {
-    fontSize: typeSize.overline,
-    fontWeight: '700',
-    letterSpacing: typeSize.overline * 0.14,
-    textTransform: 'uppercase',
-  },
+  label: overlineType,
 });

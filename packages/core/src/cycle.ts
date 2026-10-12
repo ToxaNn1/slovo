@@ -25,6 +25,10 @@ export interface CycleChange {
 export interface Cycle {
   /** Every Entry the Cycle covers, each kind in the Cycle order. */
   order(): EntryIds;
+  /** Whether the Cycle covers the Entry. */
+  covers(entryId: string): boolean;
+  /** Whether the Cycle covers no Entry at all. */
+  isEmpty(): boolean;
   /** The Entries of the Cycle not Seen yet, each kind in the Cycle order. */
   unseen(): EntryIds;
   /** The change that makes the Entry Seen. It changes nothing when the Entry is Seen already. */
@@ -89,6 +93,8 @@ export async function openCycle({
 
   return {
     order: () => order,
+    covers: (entryId) => order.words.includes(entryId) || order.corrections.includes(entryId),
+    isEmpty: () => order.words.length === 0 && order.corrections.length === 0,
     unseen: () => ({
       words: order.words.filter((id) => !seen.has(id)),
       corrections: order.corrections.filter((id) => !seen.has(id)),

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { TextSchema } from './shared';
+import { TextSchema } from '../shared';
 
 /** The words on the splash, under the Edition's mark. */
 export const SplashStringsSchema = z.strictObject({

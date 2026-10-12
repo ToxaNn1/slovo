@@ -1,7 +1,8 @@
 import { z } from 'zod';
 
 import { GenderSchema, PartOfSpeechSchema, RegisterSchema } from '../word';
-import { LabelSchema, templateOf, TextSchema } from './shared';
+import { TextSchema } from '../shared';
+import { LabelSchema, templateOf } from './shared';
 
 export const WordCardStringsSchema = z.strictObject({
   /** What VoiceOver says after the Lemma about its Stress, e.g. "наголос на {vowels}". */

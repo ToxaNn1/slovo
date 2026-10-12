@@ -80,6 +80,17 @@ describe('the Cycle', () => {
     const cycle = await open({ words: [], corrections: [] });
 
     expect(cycle.order()).toEqual({ words: [], corrections: [] });
+    expect(cycle.isEmpty()).toBe(true);
+  });
+
+  it('covers the Entries it is given of either kind, and no others', async () => {
+    const cycle = await open();
+
+    expect(cycle.isEmpty()).toBe(false);
+    expect(cycle.covers('w_3')).toBe(true);
+    expect(cycle.covers('c_3')).toBe(true);
+    expect(cycle.covers('w_10')).toBe(false);
+    expect((await open({ words: [] })).isEmpty()).toBe(false);
   });
 
   describe('Seen', () => {
@@ -127,6 +138,21 @@ describe('the Cycle', () => {
       cycle.markSeen(first).commit();
 
       expect(cycle.markSeen(first).changes.size).toBe(0);
+    });
+
+    it('reads only the Seen records that hold true, under the Seen prefix', async () => {
+      const [first = '', second = '', third = ''] = wordIds;
+      const records = new Map([
+        [`feed.seen.${first}`, 'true'],
+        [`feed.seen.${second}`, 'not JSON'],
+        [`feed.seen${third}`, 'true'],
+      ]);
+
+      const cycle = await open({ records });
+
+      expect(cycle.unseen().words).not.toContain(first);
+      expect(cycle.unseen().words).toContain(second);
+      expect(cycle.unseen().words).toContain(third);
     });
 
     it("keeps one record per Seen Entry, so two Cycles over one user state keep each other's marks", async () => {

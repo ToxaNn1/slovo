@@ -1,11 +1,11 @@
-import { coreDecor, renderStress, type Word } from '@slovo/core';
+import { buildEntryCard, coreDecor, type EntryFeedCard } from '@slovo/core';
 import {
-  CardCorners,
   coreTokens,
   DecorBackground,
   DecorProvider,
   EmptyStateIllustration,
-  OrnamentDivider,
+  EntryCard,
+  minTouchTarget,
   SegmentedControl,
   space,
   SplashOverlay,
@@ -70,15 +70,10 @@ function Showcase({
   splashFirst: boolean;
 }) {
   const { colors, fontFamilies, radii } = useTokens();
-  const word = useFirstWord();
+  const cards = useFirstCards();
   const [splash, setSplash] = useState<'hidden' | 'shown' | 'fading'>(
     splashFirst ? 'shown' : 'hidden',
   );
-  const card = [
-    styles.card,
-    { backgroundColor: colors.surface, borderColor: colors.line, borderRadius: radii.card },
-  ];
-  const lemma = [styles.lemma, { color: colors.ink, fontFamily: fontFamilies.word }];
 
   return (
     <View testID="decor-showcase" style={[styles.screen, { backgroundColor: colors.background }]}>
@@ -104,19 +99,12 @@ function Showcase({
             onSelect={onScheme}
           />
 
-          <Slot label="1 background · 2 divider · 3 corners (all four)">
-            <View style={card}>
-              <CardCorners />
-              <Text style={lemma}>{word === undefined ? ' ' : renderStress(word)}</Text>
-              <OrnamentDivider />
-            </View>
+          <Slot label="1 background · 2 divider · 3 corners: a Word card">
+            {cards.word === undefined ? null : <EntryCard card={cards.word} />}
           </Slot>
 
-          <Slot label="2 divider with the arrow · 3 corners (top two)">
-            <View style={card}>
-              <CardCorners placement="top" />
-              <OrnamentDivider centre="arrow" />
-            </View>
+          <Slot label="2 divider with the arrow: a Correction card">
+            {cards.correction === undefined ? null : <EntryCard card={cards.correction} />}
           </Slot>
 
           <Slot label="4 empty state (108 pt) · error (120 pt)">
@@ -176,23 +164,38 @@ function Slot({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-/** The first eligible Word of the Language Pack, as real Edition content for the cards. */
-function useFirstWord(): Word | undefined {
+interface ShowcaseCards {
+  readonly word: EntryFeedCard | undefined;
+  readonly correction: EntryFeedCard | undefined;
+}
+
+/**
+ * The Entry cards of the first eligible Word and Correction of the Language
+ * Pack, built by the Core as the Feed builds them: real Edition content.
+ */
+function useFirstCards(): ShowcaseCards {
   const entries = useEntries();
-  const [word, setWord] = useState<Word>();
+  const [cards, setCards] = useState<ShowcaseCards>({ word: undefined, correction: undefined });
   useEffect(() => {
     let active = true;
+    async function firstCard(id: string | undefined) {
+      const entry = id === undefined ? undefined : await entries.get(id);
+      return entry === undefined ? undefined : buildEntryCard(entries, entry);
+    }
     void entries
       .eligible()
-      .then(({ words: [firstId] }) => (firstId === undefined ? undefined : entries.get(firstId)))
-      .then((first) => {
-        if (active && first?.kind === 'word') setWord(first);
+      .then(async ({ words: [word], corrections: [correction] }) => ({
+        word: await firstCard(word),
+        correction: await firstCard(correction),
+      }))
+      .then((built) => {
+        if (active) setCards(built);
       });
     return () => {
       active = false;
     };
   }, [entries]);
-  return word;
+  return cards;
 }
 
 const styles = StyleSheet.create({
@@ -200,14 +203,11 @@ const styles = StyleSheet.create({
   content: { padding: space[6], gap: space[3] },
   slot: { gap: space[2], marginTop: space[2] },
   label: { fontSize: typeSize.body, fontWeight: '500' },
-  card: {
-    borderWidth: 1,
-    paddingTop: space[8],
-    paddingHorizontal: 26,
-    paddingBottom: 26,
-    gap: space[5],
-  },
-  lemma: { fontSize: 48, lineHeight: 48 * 1.3, fontWeight: '500' },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around' },
-  button: { minHeight: 44, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  button: {
+    minHeight: minTouchTarget,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

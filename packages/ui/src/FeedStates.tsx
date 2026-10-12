@@ -63,8 +63,12 @@ function StitchedDivider() {
 
 /** A grey block of the skeleton card, `width` wide (a number, or a share such as `'85%'`). */
 function Block({ width, height }: { width: number | `${number}%`; height: number }) {
-  const { colors } = useTokens();
-  return <View style={{ width, height, backgroundColor: colors.surfaceSunken, borderRadius: 2 }} />;
+  const { colors, radii } = useTokens();
+  return (
+    <View
+      style={{ width, height, backgroundColor: colors.surfaceSunken, borderRadius: radii.chip }}
+    />
+  );
 }
 
 /**

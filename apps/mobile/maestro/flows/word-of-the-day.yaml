@@ -1,4 +1,4 @@
-# The Word of the Day and the first-launch swipe hint.
+# The Word of the Day.
 # A subflow of `smoke.yaml`; run it from there.
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
@@ -23,10 +23,3 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: word-category
 - copyTextFrom:
     id: word-lemma
-# The first launch shows the swipe hint; it never comes back once seen.
-- runFlow:
-    when:
-      visible:
-        id: swipe-hint
-    commands:
-      - evalScript: ${output.sawSwipeHint = true}

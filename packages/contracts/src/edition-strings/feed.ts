@@ -1,22 +1,9 @@
 import { z } from 'zod';
 
-import { TextSchema } from './shared';
+import { TextSchema } from '../shared';
 
 /** The Feed's own texts: its screen states, the hint and the Word of the Day badge. */
 export const feedStringsShape = {
-  /** Shown on a screen that a later version builds. */
-  placeholder: TextSchema,
-  /**
-   * The Feed's local error state, shown when the Language Pack can't be
-   * opened. The Feed never needs the network, so there is no network error.
-   */
-  loadFailed: z.strictObject({
-    title: TextSchema,
-    /** Says what went wrong, e.g. "Не вдалося відкрити словник.". */
-    message: TextSchema,
-    /** The button that tries to open the Language Pack again. */
-    retry: TextSchema,
-  }),
   /** Shown when the Language Pack holds no Words. */
   noWords: TextSchema,
   /** The end-of-Cycle card, shown once the reader has Seen every live Entry. */

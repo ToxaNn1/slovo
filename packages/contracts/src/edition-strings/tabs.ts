@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
-import { templateOf, TextSchema } from './shared';
+import { TextSchema } from '../shared';
+import { templateOf } from './shared';
 
 export const TabsStringsSchema = z.strictObject({
   home: TextSchema,

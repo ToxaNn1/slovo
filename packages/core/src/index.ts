@@ -19,6 +19,7 @@ export { openCycle, type Cycle, type CycleChange } from './cycle';
 export { coreDecor, InvalidDecorError, loadDecor, type Decor } from './decor';
 export { createEntries, type Entries, type EntryIds } from './entries';
 export {
+  buildEntryCard,
   CORRECTION_EVERY,
   openFeed,
   SEEN_DWELL_MS,
@@ -70,9 +71,3 @@ export {
   type UserState,
   type UserStateMigration,
 } from './user-state';
-export {
-  declareRecord,
-  declareRecords,
-  type UserStateRecord,
-  type UserStateRecords,
-} from './user-state-record';

@@ -64,8 +64,8 @@ const adapters: [
     (editionDir) => ({
       content: createMemoryContentPort({
         words: authored(editionDir, 'words').map((word) => WordSchema.parse(word)),
-        corrections: authored(editionDir, 'corrections').map((item) =>
-          CorrectionSchema.parse(item),
+        corrections: authored(editionDir, 'corrections').map((correction) =>
+          CorrectionSchema.parse(correction),
         ),
       }),
       close: () => undefined,

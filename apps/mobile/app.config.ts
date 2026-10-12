@@ -2,6 +2,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
 import type * as Contracts from '@slovo/contracts';
+import type * as UiTokens from '@slovo/ui/tokens';
 import type { ConfigContext, ExpoConfig } from 'expo/config';
 import { require as tsxRequire } from 'tsx/cjs/api';
 
@@ -32,6 +33,7 @@ const { EditionConfigSchema, SplashDecorSchema } = tsxRequire(
   '@slovo/contracts',
   import.meta.url,
 ) as typeof Contracts;
+const { coreTokens } = tsxRequire('@slovo/ui/tokens', import.meta.url) as typeof UiTokens;
 
 /**
  * The one mobile shell builds whichever Edition the SLOVO_EDITION environment
@@ -86,8 +88,8 @@ function editionFonts(editionDir: string, projectRoot: string): string[] {
  * Core's neutral background colours (docs/design/design-system.md).
  */
 const CORE_SPLASH: SplashPluginOptions = {
-  backgroundColor: '#F4F4F2',
-  dark: { backgroundColor: '#111111' },
+  backgroundColor: coreTokens.colors.light.background,
+  dark: { backgroundColor: coreTokens.colors.dark.background },
 };
 
 /** The splash from the Edition's Decor (`decor/splash.json`), or the Core's plain one. */
