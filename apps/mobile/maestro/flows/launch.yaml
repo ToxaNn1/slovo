@@ -16,4 +16,3 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: tab-saved
     rightOf:
       id: tab-game
-

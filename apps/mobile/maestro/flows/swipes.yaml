@@ -37,4 +37,3 @@ appId: ${APP_ID || 'app.slovo.uk'}
       - waitForAnimationToEnd
 - assertVisible:
     id: feed-card-0
-

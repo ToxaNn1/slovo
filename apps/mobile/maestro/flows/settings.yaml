@@ -29,4 +29,3 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - assertVisible:
     id: word-lemma
     text: ${maestro.copiedText}
-

@@ -16,4 +16,3 @@ appId: ${APP_ID || 'app.slovo.uk'}
           id: pronunciation-no-voice
 - assertVisible:
     id: word-pronunciation
-

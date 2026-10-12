@@ -30,4 +30,3 @@ appId: ${APP_ID || 'app.slovo.uk'}
         id: swipe-hint
     commands:
       - evalScript: ${output.sawSwipeHint = true}
-
