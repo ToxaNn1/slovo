@@ -83,15 +83,11 @@ async function withEntries<T>(outFile: string, use: (entries: Entries) => Promis
   }
 }
 
-/** The ids of the Entries linked to the Entry with the given id, both ways. */
+/** The ids of the live Corrections linked to the Word with the given id. */
 async function linkedIds(entries: Entries, id: string): Promise<string[]> {
-  const entry = await entries.get(id);
-  if (entry === undefined) throw new Error(`No Entry ${id}`);
-  const linked =
-    entry.kind === 'word'
-      ? await entries.linkedCorrections(entry)
-      : await entries.linkedWords(entry);
-  return linked.map((item) => item.id);
+  const word = await entries.get(id);
+  if (word?.kind !== 'word') throw new Error(`No Word ${id}`);
+  return (await entries.linkedCorrections(word)).map((correction) => correction.id);
 }
 
 function buildErrors(editionDir: string): readonly BuildError[] {
@@ -174,28 +170,24 @@ describe('buildLanguagePack', () => {
     });
   });
 
-  it('reaches a Word ↔ Correction link in both directions', async () => {
+  it('reaches the Corrections a Word links', async () => {
     const outFile = packPath();
 
     buildLanguagePack({ editionDir: fixture('valid'), outFile });
 
     await withEntries(outFile, async (entries) => {
       expect(await linkedIds(entries, 'w_fx0002')).toEqual(['c_fx0002']);
-      expect(await linkedIds(entries, 'c_fx0002')).toEqual(['w_fx0002']);
       expect(await linkedIds(entries, 'w_fx0003')).toEqual(['c_fx0001']);
-      expect(await linkedIds(entries, 'c_fx0001')).toEqual(['w_fx0003']);
-      expect(await linkedIds(entries, 'c_fx0004')).toEqual([]);
     });
   });
 
-  it('keeps the links of a Retired Word, but leaves it out of the Words linked to a Correction', async () => {
+  it('keeps the links of a Retired Word', async () => {
     const outFile = packPath();
 
     buildLanguagePack({ editionDir: fixture('valid'), outFile });
 
     await withEntries(outFile, async (entries) => {
       expect(await linkedIds(entries, 'w_fx0001')).toEqual(['c_fx0003']);
-      expect(await linkedIds(entries, 'c_fx0003')).toEqual([]);
     });
   });
 

@@ -126,12 +126,5 @@ describe('the Entries', () => {
     it('lead from a Retired Word to its live Corrections, so a kept Word keeps its links', async () => {
       expect(ids(await open().linkedCorrections(gone))).toEqual(['c_always']);
     });
-
-    it('lead from a Correction to its live Words, past Retired ones', async () => {
-      const entries = open();
-
-      expect(ids(await entries.linkedWords(always))).toEqual(['w_always', 'w_talkative']);
-      expect(await entries.linkedWords(correction('c_unlinked'))).toEqual([]);
-    });
   });
 });

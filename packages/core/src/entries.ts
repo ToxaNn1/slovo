@@ -36,8 +36,6 @@ export interface Entries {
    * Correction missing from the Language Pack is skipped.
    */
   linkedCorrections(word: Word): Promise<Correction[]>;
-  /** The live Words that are the standard form for the Correction, in a stable order. */
-  linkedWords(correction: Correction): Promise<Word[]>;
 }
 
 export function createEntries({
@@ -68,11 +66,6 @@ export function createEntries({
       return corrections.filter(
         (correction): correction is Correction => correction?.retired === false,
       );
-    },
-    async linkedWords(correction) {
-      const ids = await content.listLinkedWordIds(correction.id);
-      const words = await Promise.all(ids.map((id) => content.getWord(id)));
-      return words.filter((word) => word !== undefined);
     },
   };
 }
