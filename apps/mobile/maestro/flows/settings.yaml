@@ -21,7 +21,8 @@ appId: ${APP_ID || 'app.slovo.uk'}
     selected: true
 - assertVisible:
     id: font-size-preview-lemma
-# The Feed redraws in the dark Theme at the new size, on the same card.
+# The Feed redraws in the dark Theme at the new size, on the same card. Maestro
+# cannot assert a colour or a size, so the screenshot is the record of it.
 - tapOn:
     id: tab-home
 - assertVisible:
@@ -29,3 +30,4 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - assertVisible:
     id: word-lemma
     text: ${maestro.copiedText}
+- takeScreenshot: maestro/screenshots/settings-feed-dark-l
