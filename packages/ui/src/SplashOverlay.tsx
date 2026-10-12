@@ -3,6 +3,7 @@ import { Animated, StyleSheet, Text, View } from 'react-native';
 
 import { DecorBackground } from './DecorSlots';
 import { useDecor } from './DecorProvider';
+import { useEdition } from './EditionProvider';
 import { DecorView, MotifImage, MotifPattern } from './Motif';
 import { space } from './tokens';
 import { useTokens } from './TokensProvider';
@@ -34,7 +35,9 @@ const GAP = 28;
  * Decor slot 7 as the app draws it: it takes over from the native splash,
  * which shows only the mark, and adds the background, the wordmark, the
  * tagline and the band. The mark stays exactly where the native splash put
- * it, in the middle of the screen.
+ * it, in the middle of the screen. An Edition without splash Decor has
+ * nothing to add to the native splash, so this draws nothing and reports
+ * itself shown and hidden at once.
  */
 export function SplashOverlay({
   wordmark,
@@ -45,28 +48,43 @@ export function SplashOverlay({
   onHidden,
 }: SplashOverlayProps) {
   const { colors, fontFamilies } = useTokens();
+  const { voice } = useEdition();
   const { splash } = useDecor();
   const opacity = useRef(new Animated.Value(1)).current;
   const shown = useRef(false);
 
   useEffect(() => {
-    if (visible) return;
+    if (splash !== undefined || shown.current) return;
+    shown.current = true;
+    onShown?.();
+    onHidden?.();
+  }, [splash, onShown, onHidden]);
+
+  useEffect(() => {
+    if (visible || splash === undefined) return;
     Animated.timing(opacity, { toValue: 0, duration: FADE_MS, useNativeDriver: true }).start(
       ({ finished }) => {
         if (finished) onHidden?.();
       },
     );
-  }, [visible, opacity, onHidden]);
+  }, [visible, splash, opacity, onHidden]);
 
-  const markHeight =
-    splash === undefined ? 0 : (markWidth * splash.mark.height) / splash.mark.width;
+  if (splash === undefined) return null;
+
+  const markHeight = (markWidth * splash.mark.height) / splash.mark.width;
 
   const words = (
     <View style={styles.words}>
-      <Text style={[styles.wordmark, { color: colors.ink, fontFamily: fontFamilies.word }]}>
+      <Text
+        {...voice}
+        style={[styles.wordmark, { color: colors.ink, fontFamily: fontFamilies.word }]}
+      >
         {wordmark}
       </Text>
-      <Text style={[styles.tagline, { color: colors.muted, fontFamily: fontFamilies.ui }]}>
+      <Text
+        {...voice}
+        style={[styles.tagline, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+      >
         {tagline}
       </Text>
     </View>
@@ -84,20 +102,14 @@ export function SplashOverlay({
       style={[StyleSheet.absoluteFill, { backgroundColor: colors.background, opacity }]}
     >
       <DecorBackground />
-      {splash === undefined ? (
-        <View style={styles.centre}>{words}</View>
-      ) : (
-        <>
-          <DecorView style={styles.centre}>
-            <MotifImage motif={splash.mark} width={markWidth} />
-          </DecorView>
-          <View style={[styles.below, { marginTop: markHeight / 2 + GAP }]}>{words}</View>
-          {splash.band !== undefined && (
-            <DecorView style={[styles.band, { height: splash.band.height }]}>
-              <MotifPattern motif={splash.band} />
-            </DecorView>
-          )}
-        </>
+      <DecorView style={styles.centre}>
+        <MotifImage motif={splash.mark} width={markWidth} />
+      </DecorView>
+      <View style={[styles.below, { marginTop: markHeight / 2 + GAP }]}>{words}</View>
+      {splash.band !== undefined && (
+        <DecorView style={[styles.band, { height: splash.band.height }]}>
+          <MotifPattern motif={splash.band} />
+        </DecorView>
       )}
     </Animated.View>
   );
