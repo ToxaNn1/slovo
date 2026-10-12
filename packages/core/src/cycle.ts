@@ -1,8 +1,7 @@
-import { z } from 'zod';
-
 import type { Entries, EntryIds } from './entries';
 import type { Random, UserStateChanges } from './ports';
-import { readRecord, type UserState } from './user-state';
+import type { UserState } from './user-state';
+import { userStateRecords } from './user-state-schema';
 
 /**
  * The current Cycle: every Entry it covers in an order shuffled with its seed,
@@ -25,20 +24,7 @@ export interface Cycle {
   start(): Promise<UserStateChanges>;
 }
 
-/**
- * The user-state records of the Cycle. Their keys are from 0.2, when the Feed
- * held the Cycle, and stay as they are so no migration is needed.
- */
-const KEYS = { cycle: 'feed.cycle', seen: 'feed.seen' } as const;
-
-/** The current Cycle: its number and the seed of its shuffle. */
-const CycleSchema = z.object({
-  id: z.number().int().positive(),
-  seed: z.number().int().nonnegative(),
-});
-
-/** The ids of the Entries Seen in the current Cycle. */
-const SeenSchema = z.array(z.string());
+const { cycle: cycleRecord, seen: seenRecord } = userStateRecords;
 
 /** A seed for the shuffle of a new Cycle. */
 function drawSeed(random: Random): number {
@@ -78,15 +64,15 @@ export async function openCycle({
   userState: UserState;
   random: Random;
 }): Promise<Cycle> {
-  const stored = await readRecord(userState, KEYS.cycle, CycleSchema);
+  const stored = await userState.read(cycleRecord);
   let cycle = stored ?? { id: 1, seed: drawSeed(random) };
-  if (stored === undefined) await userState.write(new Map([[KEYS.cycle, JSON.stringify(cycle)]]));
+  if (stored === undefined) await userState.write(cycleRecord.change(cycle));
   async function orderOf(seed: number): Promise<EntryIds> {
     const { words, corrections } = await entries.eligible();
     return { words: shuffle(words, seed), corrections: shuffle(corrections, seed) };
   }
   let order = await orderOf(cycle.seed);
-  const seen = new Set(await readRecord(userState, KEYS.seen, SeenSchema));
+  const seen = new Set(await userState.read(seenRecord));
 
   return {
     order: () => order,
@@ -97,16 +83,13 @@ export async function openCycle({
     markSeen(entryId) {
       if (seen.has(entryId)) return new Map();
       seen.add(entryId);
-      return new Map([[KEYS.seen, JSON.stringify([...seen])]]);
+      return seenRecord.change([...seen]);
     },
     async start() {
       cycle = { id: cycle.id + 1, seed: drawSeed(random) };
       order = await orderOf(cycle.seed);
       seen.clear();
-      return new Map([
-        [KEYS.cycle, JSON.stringify(cycle)],
-        [KEYS.seen, undefined],
-      ]);
+      return new Map([...cycleRecord.change(cycle), ...seenRecord.change(undefined)]);
     },
   };
 }

@@ -1,12 +1,12 @@
 import type { Correction, Entry, Word } from '@slovo/contracts';
-import { z } from 'zod';
 
 import { buildCorrectionCard, type CorrectionCardModel } from './correction-card';
 import { openCycle } from './cycle';
 import type { Entries } from './entries';
 import { localDate, type LocalDate } from './local-date';
 import type { Clock, Random, UserStateChanges } from './ports';
-import { readRecord, type UserState } from './user-state';
+import type { UserState } from './user-state';
+import { userStateRecords } from './user-state-schema';
 import { buildWordCard, type WordCardModel } from './word-card';
 import { openWordOfTheDay } from './word-of-the-day';
 
@@ -86,11 +86,7 @@ export interface Feed {
   openLinkedCorrection(position: number, correctionId: string): Promise<number | undefined>;
 }
 
-/** The user-state record of the card the reader was on last. */
-const POSITION_KEY = 'feed.position';
-
-/** The card the reader was on last, and the local date they were on it. */
-const PositionSchema = z.object({ entryId: z.string(), date: z.string() });
+const { feedPosition } = userStateRecords;
 
 /**
  * Opens the Feed for a new app session. It opens on the card the reader was
@@ -136,7 +132,7 @@ export async function openFeed({
 
   /** Opens on the card the reader was on, if it was today and the Cycle still covers its Entry. */
   async function restore(): Promise<boolean> {
-    const position = await readRecord(userState, POSITION_KEY, PositionSchema);
+    const position = await userState.read(feedPosition);
     if (position?.date !== localDate(clock)) return false;
     const { words, corrections } = cycle.order();
     if (!words.includes(position.entryId) && !corrections.includes(position.entryId)) return false;
@@ -299,13 +295,13 @@ export async function openFeed({
   async function show(position: number | undefined): Promise<void> {
     if (position === onScreen?.position) return keepNextCardReady();
     const now = clock.now().getTime();
-    const changes = new Map(seenOnLeaving(now));
+    const seen = seenOnLeaving(now);
     onScreen = position === undefined ? undefined : { position, since: now };
     const entryId = position === undefined ? undefined : entryIdOf(cards[position]);
-    if (entryId !== undefined) {
-      const lastPosition = { entryId, date: localDate(clock) };
-      changes.set(POSITION_KEY, JSON.stringify(lastPosition));
-    }
+    const changes = new Map([
+      ...seen,
+      ...(entryId === undefined ? [] : feedPosition.change({ entryId, date: localDate(clock) })),
+    ]);
     await Promise.all([
       changes.size > 0 ? userState.write(changes) : undefined,
       keepNextCardReady(),

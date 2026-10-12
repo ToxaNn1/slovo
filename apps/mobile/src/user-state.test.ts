@@ -49,6 +49,8 @@ function nodeDriver(db: DatabaseSync): UserStateDatabase {
     },
     getFirstAsync: <T>(sql: string, params: string[]) =>
       Promise.resolve((db.prepare(sql).get(...params) as T | undefined) ?? null),
+    getAllAsync: <T>(sql: string, params: string[]) =>
+      Promise.resolve(db.prepare(sql).all(...params) as T[]),
     runAsync: (sql, params) => Promise.resolve(db.prepare(sql).run(...params)),
     async withTransactionAsync(task) {
       db.exec('BEGIN');
@@ -117,6 +119,61 @@ describe.each(adapters)('the user state %s', (_, createStore) => {
     expect(await (await store.open()).get('kept')).toBe('yes');
   });
 
+  it('lists every record under a prefix, and only those', async () => {
+    const port = await createStore().open();
+    await port.write(
+      new Map([
+        ['favorites.w_1', 'one'],
+        ['favorites.w_2', 'two'],
+        ['favorites', 'no dot'],
+        ['Favorites.w_3', 'other case'],
+        ['old.favorites.w_4', 'prefix inside'],
+        ['history', 'other kind'],
+      ]),
+    );
+
+    expect(await port.list('favorites.')).toEqual(
+      new Map([
+        ['favorites.w_1', 'one'],
+        ['favorites.w_2', 'two'],
+      ]),
+    );
+    expect(await port.list('collections.')).toEqual(new Map());
+  });
+
+  it('lists what is kept now: a deleted record is gone, a replaced one has its new value', async () => {
+    const port = await createStore().open();
+    await port.write(
+      new Map([
+        ['favorites.w_1', 'one'],
+        ['favorites.w_2', 'two'],
+      ]),
+    );
+    await port.write(
+      new Map([
+        ['favorites.w_1', undefined],
+        ['favorites.w_2', 'zwei'],
+      ]),
+    );
+
+    expect(await port.list('favorites.')).toEqual(new Map([['favorites.w_2', 'zwei']]));
+  });
+
+  it('reads no character of a prefix as a wildcard', async () => {
+    const port = await createStore().open();
+    await port.write(
+      new Map([
+        ['a%b.1', 'percent'],
+        ['axb.1', 'x'],
+        ['a_b.1', 'underscore'],
+        ['ayb.1', 'y'],
+      ]),
+    );
+
+    expect(await port.list('a%b.')).toEqual(new Map([['a%b.1', 'percent']]));
+    expect(await port.list('a_b.')).toEqual(new Map([['a_b.1', 'underscore']]));
+  });
+
   it('applies writes made at the same time in the order they were made', async () => {
     const port = await createStore().open();
 
@@ -130,13 +187,12 @@ describe.each(adapters)('the user state %s', (_, createStore) => {
     const v1 = await openUserState({ port: await store.open(), migrations: [greet] });
     await v1.write(new Map([['kept', 'yes']]));
 
-    const v2 = await openUserState({ port: await store.open(), migrations: [greet, expand] });
-    const again = await openUserState({ port: await store.open(), migrations: [greet, expand] });
-
-    for (const state of [v2, again]) {
-      expect(await state.get('message')).toBe('hello, world');
-      expect(await state.get('greeting')).toBeUndefined();
-      expect(await state.get('kept')).toBe('yes');
+    for (let run = 0; run < 2; run++) {
+      const port = await store.open();
+      await openUserState({ port, migrations: [greet, expand] });
+      expect(await port.get('message')).toBe('hello, world');
+      expect(await port.get('greeting')).toBeUndefined();
+      expect(await port.get('kept')).toBe('yes');
     }
   });
 
@@ -147,8 +203,9 @@ describe.each(adapters)('the user state %s', (_, createStore) => {
     await expect(openUserState({ port: await store.open(), migrations: [greet] })).rejects.toThrow(
       UserStateTooNewError,
     );
-    const current = await openUserState({ port: await store.open(), migrations: [greet, expand] });
-    expect(await current.get('message')).toBe('hello, world');
+    const port = await store.open();
+    await openUserState({ port, migrations: [greet, expand] });
+    expect(await port.get('message')).toBe('hello, world');
   });
 
   it("opens a new store at the Core's current schema", async () => {
@@ -156,6 +213,8 @@ describe.each(adapters)('the user state %s', (_, createStore) => {
     const state = await openUserState({ port: await store.open() });
     await state.write(new Map([['kept', 'yes']]));
 
-    expect(await (await openUserState({ port: await store.open() })).get('kept')).toBe('yes');
+    const port = await store.open();
+    await openUserState({ port });
+    expect(await port.get('kept')).toBe('yes');
   });
 });

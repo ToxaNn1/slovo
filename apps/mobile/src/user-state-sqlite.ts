@@ -8,6 +8,7 @@ import type { UserStatePort } from '@slovo/core';
 export interface UserStateDatabase {
   execAsync(sql: string): Promise<void>;
   getFirstAsync<T>(sql: string, params: string[]): Promise<T | null>;
+  getAllAsync<T>(sql: string, params: string[]): Promise<T[]>;
   runAsync(sql: string, params: string[]): Promise<unknown>;
   withTransactionAsync(task: () => Promise<void>): Promise<void>;
 }
@@ -25,6 +26,8 @@ CREATE TABLE IF NOT EXISTS records (
 
 const SQL = {
   get: 'SELECT value FROM records WHERE key = ?',
+  // instr, not LIKE: LIKE ignores case and reads % and _ as wildcards.
+  list: 'SELECT key, value FROM records WHERE instr(key, ?) = 1',
   set: 'INSERT INTO records (key, value) VALUES (?, ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value',
   delete: 'DELETE FROM records WHERE key = ?',
 };
@@ -43,6 +46,10 @@ export async function openSqliteUserState(db: UserStateDatabase): Promise<UserSt
     async get(key) {
       const row = await db.getFirstAsync<{ value: string }>(SQL.get, [key]);
       return row?.value;
+    },
+    async list(prefix) {
+      const rows = await db.getAllAsync<{ key: string; value: string }>(SQL.list, [prefix]);
+      return new Map(rows.map(({ key, value }) => [key, value]));
     },
     write(changes) {
       const write = lastWrite.then(() =>
