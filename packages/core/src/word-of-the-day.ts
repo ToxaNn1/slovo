@@ -1,5 +1,5 @@
 import type { Cycle } from './cycle';
-import { localDate, parseLocalDate, type LocalDate } from './local-date';
+import { todayKey, parseLocalDate, type LocalDate } from './local-date';
 import type { Clock } from './ports';
 import type { UserState } from './user-state';
 import { userStateRecords } from './user-state-schema';
@@ -64,12 +64,12 @@ export async function openWordOfTheDay({
 
   return {
     chosen() {
-      return record?.date === localDate(clock)
+      return record?.date === todayKey(clock)
         ? { wordId: record.entryId, date: parseLocalDate(record.date) }
         : undefined;
     },
     async today({ avoid = new Set<string>() } = {}) {
-      const today = localDate(clock);
+      const today = todayKey(clock);
       // A Word of the Day no longer eligible, such as one Retired since, is chosen again.
       if (record?.date === today && cycle.covers(record.entryId)) {
         return { wordId: record.entryId, date: parseLocalDate(today), startedCycle: false };

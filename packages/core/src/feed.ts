@@ -3,7 +3,7 @@ import type { Entry, Word } from '@slovo/contracts';
 import { buildCorrectionCard, type CorrectionCardModel } from './correction-card';
 import type { Cycle, CycleChange } from './cycle';
 import type { Entries } from './entries';
-import { localDate, type LocalDate } from './local-date';
+import { todayKey, type LocalDate } from './local-date';
 import type { Clock } from './ports';
 import type { UserState } from './user-state';
 import { userStateRecords } from './user-state-schema';
@@ -144,7 +144,7 @@ export async function openFeed({
    */
   async function restore(): Promise<boolean> {
     const position = await userState.read(feedPosition);
-    if (position?.date !== localDate(clock)) return false;
+    if (position?.date !== todayKey(clock)) return false;
     if (!cycle.covers(position.entryId)) return false;
     const entry = await entries.get(position.entryId);
     if (entry === undefined) return false;
@@ -336,7 +336,7 @@ export async function openFeed({
     const stayed = onScreen === undefined ? 0 : now - onScreen.since;
     onScreen = position === undefined ? undefined : { position, since: now };
     const entryId = position === undefined ? undefined : entryIdOf(cards[position]);
-    const date = localDate(clock);
+    const date = todayKey(clock);
     // In turn with the requests that change the cards, so a new Cycle never
     // starts between the card leaving the screen and its Entry becoming Seen.
     const kept = inTurn(async () => {

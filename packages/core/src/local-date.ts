@@ -8,8 +8,8 @@ export interface LocalDate {
   readonly day: number;
 }
 
-/** Today's local calendar date in the clock's time zone, as `YYYY-MM-DD`. */
-export function localDate(clock: Clock): string {
+/** The key of today's local calendar date in the clock's time zone: `YYYY-MM-DD`. */
+export function todayKey(clock: Clock): string {
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone: clock.timeZone(),
     year: 'numeric',
