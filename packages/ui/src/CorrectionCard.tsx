@@ -9,6 +9,7 @@ import { useWordTextSizes, type TextSize } from './FontSizeProvider';
 import { space, typeSize, withAlpha } from './tokens';
 import { useTokens } from './TokensProvider';
 import { usePageTurnActions } from './VerticalPager';
+import { WholeWordsText } from './WholeWordsText';
 
 /**
  * The Correction card's blocks inside the Entry card's frame: the Correction
@@ -100,20 +101,16 @@ export function CorrectionCardBody({
           <Text style={[styles.label, { color: colors.accent, fontFamily: fontFamilies.ui }]}>
             {strings.standard}
           </Text>
-          <Text
+          <WholeWordsText
+            text={card.mainEquivalent}
+            size={mainSize}
+            tracking={-0.01}
             // A phrase wraps; a single word shrinks to fit rather than break.
             numberOfLines={card.mainEquivalent.includes(' ') ? 3 : 1}
             adjustsFontSizeToFit
             minimumFontScale={0.5}
-            style={[
-              styles.mainEquivalent,
-              mainSize,
-              { letterSpacing: mainSize.fontSize * -0.01 },
-              { color: colors.ink, fontFamily: fontFamilies.word },
-            ]}
-          >
-            {card.mainEquivalent}
-          </Text>
+            style={[styles.mainEquivalent, { color: colors.ink, fontFamily: fontFamilies.word }]}
+          />
         </View>
         {card.otherEquivalents.length === 0 ? null : (
           <Text

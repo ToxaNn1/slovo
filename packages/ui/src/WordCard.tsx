@@ -9,6 +9,7 @@ import { useWordTextSizes, type TextSize } from './FontSizeProvider';
 import { minTouchTarget, space, typeSize, withAlpha } from './tokens';
 import { useTokens } from './TokensProvider';
 import { usePageTurnActions } from './VerticalPager';
+import { WholeWordsText } from './WholeWordsText';
 import { WordOfTheDayBadge } from './WordOfTheDayBadge';
 
 /**
@@ -84,7 +85,10 @@ export function WordCardBody({
       {wordOfTheDay === undefined ? null : <WordOfTheDayBadge day={wordOfTheDay} />}
       <View style={styles.header}>
         <View style={styles.headline}>
-          <Text
+          <WholeWordsText
+            text={card.lemma}
+            size={lemmaSize}
+            tracking={-0.01}
             testID="word-lemma"
             accessibilityRole="header"
             // The voices skip the Stress mark, so VoiceOver also says where it falls.
@@ -97,15 +101,8 @@ export function WordCardBody({
             numberOfLines={card.lemma.includes(' ') ? 2 : 1}
             adjustsFontSizeToFit
             minimumFontScale={0.5}
-            style={[
-              styles.lemma,
-              lemmaSize,
-              { letterSpacing: lemmaSize.fontSize * -0.01 },
-              { color: colors.ink, fontFamily: fontFamilies.word },
-            ]}
-          >
-            {card.lemma}
-          </Text>
+            style={[styles.lemma, { color: colors.ink, fontFamily: fontFamilies.word }]}
+          />
           <View style={styles.grammar}>
             <Text
               testID="word-part-of-speech"
