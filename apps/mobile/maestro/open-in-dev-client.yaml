@@ -1,0 +1,31 @@
+# Opens the app's JavaScript from Metro in the development client and waits
+# for the Feed, setting aside the development client's own sheets on the way.
+# `smoke.yaml` runs it after launching the app, with `output.devClientLink`
+# set to the development client's link to Metro.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- openLink: ${output.devClientLink}
+# A simulator asks once whether the link may open the app.
+- runFlow:
+    when:
+      visible: Open
+    commands:
+      - tapOn: Open
+# The development client may explain its menu before the JavaScript loads.
+- runFlow:
+    file: dismiss-dev-menu.yaml
+- extendedWaitUntil:
+    visible:
+      id: word-lemma
+    timeout: 120000
+# On a new simulator the development client's menu may open over the app
+# once the JavaScript is in; close it.
+- runFlow:
+    file: dismiss-dev-menu.yaml
+# The app's splash covers everything for a moment, then fades out.
+- extendedWaitUntil:
+    notVisible:
+      id: splash
+    timeout: 10000
+- runFlow:
+    file: dismiss-dev-menu.yaml

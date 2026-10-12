@@ -1,45 +1,26 @@
-# Simulator smoke flow (spec #2, seam 3; spec #51, seam 4). Run it locally, never in CI:
+# Simulator smoke flow, the 0.2 flow (spec #2, seam 3; spec #51, seam 4).
+# Run it locally, never in CI:
 #
 #   SLOVO_EDITION=uk pnpm start          # Metro, in one terminal
 #   pnpm test:smoke                      # in another, with the dev build installed
 #
-# For another Edition, pass its bundle id and scheme:
+# Every setting has a default, and `-e` overrides it:
+#   pnpm test:smoke -e METRO_URL=http://localhost:8162
 #   pnpm test:smoke -e APP_ID=<bundle id> -e SCHEME=slovo-<edition id>
-appId: ${APP_ID}
-env:
-  APP_ID: app.slovo.uk
-  SCHEME: slovo-uk
-  METRO_URL: http%3A%2F%2Flocalhost%3A8081
+#
+# The defaults live in JavaScript rather than in an `env:` block, because
+# Maestro lets the flow's `env:` win over `-e`.
+appId: ${APP_ID || 'app.slovo.uk'}
 ---
+- evalScript: ${output.devClientLink = (SCHEME || 'slovo-uk') + '://expo-development-client/?url=' + encodeURIComponent(METRO_URL || 'http://localhost:8081')}
 # Keep the app state: clearing it brings back the development client's
 # first-launch menu sheet, which covers Home.
 - launchApp:
     clearState: false
-# Point the development client at the local Metro server.
-- openLink: ${SCHEME}://expo-development-client/?url=${METRO_URL}
-# A simulator asks once whether the link may open the app.
 - runFlow:
-    when:
-      visible: Open
-    commands:
-      - tapOn: Open
-# The development client explains its menu on the first launch.
-- runFlow:
-    when:
-      visible: Continue
-    commands:
-      - tapOn: Continue
-- extendedWaitUntil:
-    visible:
-      id: word-lemma
-    timeout: 120000
-# The app's splash covers everything for a moment, then fades out.
-- extendedWaitUntil:
-    notVisible:
-      id: splash
-    timeout: 10000
+    file: open-in-dev-client.yaml
 
-# The four tabs, in order: Home, Settings, Game, Saved.
+# Launch: the four tabs, in order: Home, Settings, Game, Saved.
 - assertVisible:
     id: tab-home
 - assertVisible:
@@ -55,45 +36,37 @@ env:
     rightOf:
       id: tab-game
 
-# Home shows a Word from the bundled Language Pack, with a Stress mark
-# (U+0301, the combining acute accent) in its Lemma.
+# The day opens on its Word of the Day: a Word from the bundled Language Pack
+# with the badge over its Lemma and a Stress mark (U+0301, the combining
+# acute accent) in it. Its Lemma is kept to check that it stays the same
+# after a relaunch.
+- assertVisible:
+    id: feed-card-0
+- assertVisible:
+    id: word-of-the-day-badge
+    text: 'Слово дня · .*'
 # prettier-ignore
 - assertVisible:
     id: word-lemma
-    text: ".*\u0301.*"
+    text: ".*́.*"
 - assertVisible:
     id: word-part-of-speech
 - assertVisible:
     id: word-definition
-# The full Word card: the part of speech in short form and the Category chip.
 - assertVisible:
     id: word-category
-# The Pronunciation button reads the Lemma aloud; on a device without a voice
-# for the Edition's language it explains why instead. A tap on the message
-# closes it.
-- tapOn:
-    id: word-pronunciation
+- copyTextFrom:
+    id: word-lemma
+# The first launch shows the swipe hint; it never comes back once seen.
 - runFlow:
     when:
       visible:
-        id: pronunciation-no-voice
+        id: swipe-hint
     commands:
-      - tapOn:
-          id: pronunciation-no-voice
-- assertVisible:
-    id: word-pronunciation
+      - evalScript: ${output.sawSwipeHint = true}
 
-# Home is the Feed: swipe up to the next Word and down back to the first.
-- assertVisible:
-    id: feed-card-0
-# The day opens on its Word of the Day, with the badge over the Lemma. Its
-# Lemma is kept to check that it stays the same after a relaunch.
-- assertVisible:
-    id: word-of-the-day-badge
-    text: 'Слово дня · .*'
-- copyTextFrom:
-    id: word-lemma
-# A card taller than the screen scrolls first, so swipe until the page turns.
+# Swipe up to the next card. A card taller than the screen scrolls first, so
+# swipe until the page turns.
 - repeat:
     while:
       notVisible:
@@ -111,10 +84,9 @@ env:
     id: feed-card-0
 - assertNotVisible:
     id: word-of-the-day-badge
-# prettier-ignore
-- assertVisible:
-    id: word-lemma
-    text: ".*\u0301.*"
+- assertNotVisible:
+    id: swipe-hint
+# Back down to the first card.
 - repeat:
     while:
       notVisible:
@@ -129,8 +101,23 @@ env:
 - assertVisible:
     id: feed-card-0
 
-# Settings: the Theme and the font size follow the choice, which survives a
-# relaunch. The preview card shows the Lemma at the chosen size.
+# The Pronunciation button reads the Lemma aloud; on a device without a voice
+# for the Edition's language it explains why instead. A tap on the message
+# closes it.
+- tapOn:
+    id: word-pronunciation
+- runFlow:
+    when:
+      visible:
+        id: pronunciation-no-voice
+    commands:
+      - tapOn:
+          id: pronunciation-no-voice
+- assertVisible:
+    id: word-pronunciation
+
+# Settings: Theme Dark and font size L. The preview card shows the Lemma at
+# the chosen size.
 - tapOn:
     id: tab-settings
 - tapOn:
@@ -148,30 +135,29 @@ env:
     selected: true
 - assertVisible:
     id: font-size-preview-lemma
-# The Feed redraws in the dark Theme at the new size.
+# The Feed redraws in the dark Theme at the new size, on the same card.
 - tapOn:
     id: tab-home
 - assertVisible:
+    id: feed-card-0
+- assertVisible:
     id: word-lemma
+    text: ${maestro.copiedText}
+
+# The choices and the day's Word survive a relaunch, and the swipe hint
+# stays away.
 - stopApp
 - launchApp:
     clearState: false
-- openLink: ${SCHEME}://expo-development-client/?url=${METRO_URL}
-- extendedWaitUntil:
-    visible:
-      id: word-lemma
-    timeout: 120000
-# The app's splash covers everything for a moment, then fades out.
-- extendedWaitUntil:
-    notVisible:
-      id: splash
-    timeout: 10000
-# The same Word of the Day the same day, badged, now in the dark Theme.
+- runFlow:
+    file: open-in-dev-client.yaml
 - assertVisible:
     id: word-of-the-day-badge
 - assertVisible:
     id: word-lemma
     text: ${maestro.copiedText}
+- assertNotVisible:
+    id: swipe-hint
 - tapOn:
     id: tab-settings
 - assertVisible:
@@ -180,6 +166,7 @@ env:
 - assertVisible:
     id: settings-font-size-L
     selected: true
+# Back to the defaults, so the next run starts the same way.
 - tapOn:
     id: settings-theme-system
 - assertVisible:
