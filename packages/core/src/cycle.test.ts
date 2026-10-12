@@ -129,6 +129,21 @@ describe('the Cycle', () => {
       expect(cycle.markSeen(first).changes.size).toBe(0);
     });
 
+    it('reads only the Seen records that hold true, under the Seen prefix', async () => {
+      const [first = '', second = '', third = ''] = wordIds;
+      const records = new Map([
+        [`feed.seen.${first}`, 'true'],
+        [`feed.seen.${second}`, 'not JSON'],
+        [`feed.seen${third}`, 'true'],
+      ]);
+
+      const cycle = await open({ records });
+
+      expect(cycle.unseen().words).not.toContain(first);
+      expect(cycle.unseen().words).toContain(second);
+      expect(cycle.unseen().words).toContain(third);
+    });
+
     it("keeps one record per Seen Entry, so two Cycles over one user state keep each other's marks", async () => {
       const records = new Map<string, string>();
       const one = await open({ records });

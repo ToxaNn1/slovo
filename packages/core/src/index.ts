@@ -70,9 +70,3 @@ export {
   type UserState,
   type UserStateMigration,
 } from './user-state';
-export {
-  declareRecord,
-  declareRecords,
-  type UserStateRecord,
-  type UserStateRecords,
-} from './user-state-record';
