@@ -1,5 +1,6 @@
 import type { FontSize } from '@slovo/contracts';
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
+import { useWindowDimensions } from 'react-native';
 
 import { fontSizeSteps } from './tokens';
 
@@ -53,4 +54,32 @@ export function FontSizeProvider({
 /** The Word card's type sizes in effect: step M outside a provider. */
 export function useWordTextSizes(): WordTextSizes {
   return useContext(FontSizeContext);
+}
+
+/** Below this window width the cards take the design's compact iPhone SE layout. */
+const COMPACT_WIDTH = 390;
+
+/** On the SE the Lemma drops from 48 to 44 at M, whatever the step. */
+const COMPACT_LEMMA = 44 / 48;
+
+/** Whether the window is narrow enough for the compact layout. */
+export function useCompactLayout(): boolean {
+  return useWindowDimensions().width < COMPACT_WIDTH;
+}
+
+/**
+ * The Lemma's size at the user's font size, as the Feed and the Settings
+ * preview both draw it: the table's size, or the compact layout's smaller
+ * one on a narrow screen.
+ */
+export function useLemmaSize(): TextSize {
+  const { lemma } = useWordTextSizes();
+  const compact = useCompactLayout();
+  return useMemo(
+    () =>
+      compact
+        ? { fontSize: lemma.fontSize * COMPACT_LEMMA, lineHeight: lemma.lineHeight * COMPACT_LEMMA }
+        : lemma,
+    [lemma, compact],
+  );
 }

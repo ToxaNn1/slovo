@@ -1,10 +1,10 @@
 import type { EntryFeedCard } from '@slovo/core';
 import type { ReactNode } from 'react';
-import { StyleSheet, useWindowDimensions, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { CorrectionCardBody } from './CorrectionCard';
 import { CardCorners } from './DecorSlots';
-import { useWordTextSizes } from './FontSizeProvider';
+import { useCompactLayout, useLemmaSize } from './FontSizeProvider';
 import { space } from './tokens';
 import { useTokens } from './TokensProvider';
 import { WordCardBody } from './WordCard';
@@ -18,11 +18,7 @@ export interface EntryCardProps {
   actions?: ReactNode;
 }
 
-/** Below this window width the card takes the design's compact iPhone SE layout. */
-const COMPACT_WIDTH = 390;
-
-/** On the SE the Lemma drops from 48 to 44 at M, and the padding shrinks by 25%. */
-const COMPACT_LEMMA = 44 / 48;
+/** On the SE the padding shrinks by 25% (the Lemma's size is in `useLemmaSize`). */
 const COMPACT_PADDING = 0.75;
 
 /** The padding and the space between blocks from the design, for each kind of card. */
@@ -39,11 +35,8 @@ const SPACING = {
  */
 export function EntryCard({ card, onOpenCorrection, actions }: EntryCardProps) {
   const { colors, radii } = useTokens();
-  const { lemma } = useWordTextSizes();
-  const compact = useWindowDimensions().width < COMPACT_WIDTH;
-  const lemmaSize = compact
-    ? { fontSize: lemma.fontSize * COMPACT_LEMMA, lineHeight: lemma.lineHeight * COMPACT_LEMMA }
-    : lemma;
+  const lemmaSize = useLemmaSize();
+  const compact = useCompactLayout();
   const padding = compact ? COMPACT_PADDING : 1;
   const spacing = SPACING[card.kind];
 
