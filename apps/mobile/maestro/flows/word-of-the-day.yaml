@@ -1,0 +1,33 @@
+# The Word of the Day and the first-launch swipe hint.
+# A subflow of `smoke.yaml`; run it from there.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+# The day opens on its Word of the Day: a Word from the bundled Language Pack
+# with the badge over its Lemma and a Stress mark (U+0301, the combining
+# acute accent) in it. Its Lemma is kept to check that it stays the same
+# after a relaunch.
+- assertVisible:
+    id: feed-card-0
+- assertVisible:
+    id: word-of-the-day-badge
+    text: 'Слово дня · .*'
+# prettier-ignore
+- assertVisible:
+    id: word-lemma
+    text: ".*́.*"
+- assertVisible:
+    id: word-part-of-speech
+- assertVisible:
+    id: word-definition
+- assertVisible:
+    id: word-category
+- copyTextFrom:
+    id: word-lemma
+# The first launch shows the swipe hint; it never comes back once seen.
+- runFlow:
+    when:
+      visible:
+        id: swipe-hint
+    commands:
+      - evalScript: ${output.sawSwipeHint = true}
+

@@ -1,0 +1,19 @@
+# The Pronunciation button.
+# A subflow of `smoke.yaml`; run it from there.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+# The Pronunciation button reads the Lemma aloud; on a device without a voice
+# for the Edition's language it explains why instead. A tap on the message
+# closes it.
+- tapOn:
+    id: word-pronunciation
+- runFlow:
+    when:
+      visible:
+        id: pronunciation-no-voice
+    commands:
+      - tapOn:
+          id: pronunciation-no-voice
+- assertVisible:
+    id: word-pronunciation
+

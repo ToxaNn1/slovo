@@ -1,0 +1,19 @@
+# Launch: the four tabs, in order.
+# A subflow of `smoke.yaml`; run it from there.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- assertVisible:
+    id: tab-home
+- assertVisible:
+    id: tab-settings
+    rightOf:
+      id: tab-home
+- assertVisible:
+    id: tab-game
+    rightOf:
+      id: tab-settings
+- assertVisible:
+    id: tab-saved
+    rightOf:
+      id: tab-game
+

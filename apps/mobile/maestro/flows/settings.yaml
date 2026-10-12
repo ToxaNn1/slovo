@@ -1,0 +1,32 @@
+# Settings: Theme and font size, and how the Feed redraws.
+# A subflow of `smoke.yaml`; run it from there.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+# Settings: Theme Dark and font size L. The preview card shows the Lemma at
+# the chosen size.
+- tapOn:
+    id: tab-settings
+- tapOn:
+    id: settings-theme-dark
+- assertVisible:
+    id: settings-theme-dark
+    selected: true
+- assertVisible:
+    id: settings-font-size-M
+    selected: true
+- tapOn:
+    id: settings-font-size-L
+- assertVisible:
+    id: settings-font-size-L
+    selected: true
+- assertVisible:
+    id: font-size-preview-lemma
+# The Feed redraws in the dark Theme at the new size, on the same card.
+- tapOn:
+    id: tab-home
+- assertVisible:
+    id: feed-card-0
+- assertVisible:
+    id: word-lemma
+    text: ${maestro.copiedText}
+
