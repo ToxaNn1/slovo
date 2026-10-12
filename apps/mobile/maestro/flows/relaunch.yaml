@@ -1,12 +1,41 @@
-# The choices and the day's Word survive a relaunch.
+# The choices and the day's Word survive a relaunch: the Feed reopens on the
+# card the reader was on, with the day's Word of the Day one swipe back.
 # A subflow of `smoke.yaml`; run it from there.
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
+- repeat:
+    while:
+      notVisible:
+        id: feed-card-1
+    times: 6
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 20%
+          duration: 300
+      - waitForAnimationToEnd
+- assertVisible:
+    id: feed-card-1
 - stopApp
 - launchApp:
     clearState: false
 - runFlow:
     file: ../open-in-dev-client.yaml
+- assertVisible:
+    id: feed-card-1
+- assertNotVisible:
+    id: word-of-the-day-badge
+- repeat:
+    while:
+      notVisible:
+        id: feed-card-0
+    times: 6
+    commands:
+      - swipe:
+          start: 50%, 30%
+          end: 50%, 80%
+          duration: 300
+      - waitForAnimationToEnd
 - assertVisible:
     id: word-of-the-day-badge
 - assertVisible:

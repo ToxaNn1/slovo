@@ -16,6 +16,8 @@ export type FeedState =
   | {
       readonly status: 'ready';
       readonly cards: readonly FeedCard[];
+      /** The position of the card the Feed opens on. */
+      readonly startPosition: number;
       /** Tells the Feed which card is on screen now. */
       readonly onCardChange: (position: number) => void;
       /**
@@ -61,7 +63,9 @@ export function useFeed(): FeedState {
       )
       .then(
         (opened) => {
-          if (active) setFeed(opened);
+          if (!active) return;
+          setFeed(opened);
+          setPosition(opened.startPosition);
         },
         (error: unknown) => {
           console.error('Could not open the Feed', error);
@@ -91,6 +95,7 @@ export function useFeed(): FeedState {
   return {
     status: 'ready',
     cards,
+    startPosition: feed.startPosition,
     onCardChange: setPosition,
     openLinkedCorrection: (at, correctionId) => feed.openLinkedCorrection(at, correctionId),
   };

@@ -8,7 +8,7 @@ import type { Clock, Random, UserStateChanges } from './ports';
 import type { UserState } from './user-state';
 import { userStateRecords } from './user-state-schema';
 import { buildWordCard, type WordCardModel } from './word-card';
-import { openWordOfTheDay } from './word-of-the-day';
+import { openWordOfTheDay, type WordOfTheDayChoice } from './word-of-the-day';
 
 /** How long a card must stay on screen before its Entry counts as Seen. */
 export const SEEN_DWELL_MS = 1500;
@@ -58,6 +58,11 @@ export interface Feed {
    * one and tells the subscribers.
    */
   readonly cards: readonly FeedCard[];
+  /**
+   * The position of the card the Feed opens on: the card the reader was on,
+   * after today's Word of the Day, when they come back the same local day.
+   */
+  readonly startPosition: number;
   /** Calls `listener` after each change of the cards. Returns the call that stops it. */
   subscribe(listener: () => void): () => void;
   /**
@@ -66,7 +71,8 @@ export interface Feed {
    * screen makes its Entry Seen if it stayed there for at least
    * `SEEN_DWELL_MS` and belongs to the current Cycle. While a card is on
    * screen, the Feed keeps the card after it ready, so the next swipe never
-   * waits. Reporting the card already on screen again keeps its dwell time
+   * waits; on a new local day, today's Word of the Day takes the place of a
+   * card got ready the day before. Reporting the card already on screen again keeps its dwell time
    * and only gets the next card ready if that failed before. Resolves once
    * the report is kept and the next card is ready.
    */
@@ -95,7 +101,8 @@ const { feedPosition } = userStateRecords;
  *
  * After the Cycle's last unseen Entry comes the end-of-Cycle card, and the
  * card after that starts a new Cycle: nothing Seen, a new shuffle from a new
- * seed. A new local day that finds every Word Seen starts the new Cycle
+ * seed. When the reader swipes past that Entry before it is Seen, its card
+ * comes again in place of the end-of-Cycle card. A new local day that finds every Word Seen starts the new Cycle
  * itself, with its Word of the Day and no end-of-Cycle card, because the
  * Word of the Day always opens the day.
  *
@@ -130,7 +137,10 @@ export async function openFeed({
     for (const listener of listeners) listener();
   }
 
-  /** Opens on the card the reader was on, if it was today and the Cycle still covers its Entry. */
+  /**
+   * Opens on the card the reader was on, if it was today and the Cycle still
+   * covers its Entry, after today's Word of the Day, so the reader can go back to it.
+   */
   async function restore(): Promise<boolean> {
     const position = await userState.read(feedPosition);
     if (position?.date !== localDate(clock)) return false;
@@ -138,14 +148,13 @@ export async function openFeed({
     if (!words.includes(position.entryId) && !corrections.includes(position.entryId)) return false;
     const entry = await entries.get(position.entryId);
     if (entry === undefined) return false;
-    const card = await entryCard(entry);
     const today = wordOfTheDay.chosen();
-    changeCards([
-      ...cards,
-      card.kind === 'word' && today?.wordId === entry.id
-        ? { ...card, wordOfTheDay: today.date }
-        : card,
-    ]);
+    const opening =
+      today !== undefined && words.includes(today.wordId)
+        ? await wordOfTheDayCard(today)
+        : undefined;
+    if (opening?.entry.id === entry.id) changeCards([opening]);
+    else changeCards([...(opening === undefined ? [] : [opening]), await entryCard(entry)]);
     return true;
   }
 
@@ -158,8 +167,8 @@ export async function openFeed({
   }
 
   /** The ids of the Entries shown in this session in the current Cycle. */
-  function shownIds(): Set<string> {
-    return new Set(cards.slice(cycleStart).flatMap((card) => entryIdOf(card) ?? []));
+  function shownIds(shown = cards): Set<string> {
+    return new Set(shown.slice(cycleStart).flatMap((card) => entryIdOf(card) ?? []));
   }
 
   /**
@@ -198,28 +207,34 @@ export async function openFeed({
   }
 
   async function addNextCard(): Promise<FeedCard | undefined> {
+    const atEnd = cards.at(-1)?.kind === 'end-of-cycle';
+    const { words: unseenWords, corrections: unseenCorrections } = cycle.unseen();
+    // The end-of-Cycle card came too early when the reader left the last unseen
+    // Entry before it was Seen: the next card takes its place.
+    const kept =
+      atEnd && unseenWords.length + unseenCorrections.length > 0 ? cards.slice(0, -1) : cards;
     // A new local day starts with its Word of the Day, also in a Feed left open over midnight.
     if (wordOfTheDay.chosen() === undefined) {
-      const card = await addWordOfTheDay();
+      const card = await addWordOfTheDay(kept);
       if (card !== undefined) return card;
     }
     const { words, corrections } = cycle.order();
     if (words.length === 0 && corrections.length === 0) return undefined;
     // The card after the end-of-Cycle card starts a new Cycle.
-    if (cards.at(-1)?.kind === 'end-of-cycle') {
+    if (atEnd && kept === cards) {
       cycleStart = cards.length;
       await userState.write(await cycle.start());
     }
     const id = nextEntryId();
     if (id === undefined) {
       const card: FeedCard = { kind: 'end-of-cycle' };
-      changeCards([...cards, card]);
+      changeCards([...kept, card]);
       return card;
     }
     const entry = await entries.get(id);
     if (entry === undefined) return undefined;
     const card = await entryCard(entry);
-    changeCards([...cards, card]);
+    changeCards([...kept, card]);
     return card;
   }
 
@@ -243,20 +258,29 @@ export async function openFeed({
     return position + 1;
   }
 
-  /** Adds the card of today's Word of the Day, choosing it first if today has none yet. */
-  async function addWordOfTheDay(): Promise<FeedCard | undefined> {
-    const today = await wordOfTheDay.today({ avoid: shownIds() });
-    if (today === undefined) return undefined;
-    if (today.startedCycle) cycleStart = cards.length;
-    const entry = await entries.get(today.wordId);
+  /** The card of a day's Word of the Day. */
+  async function wordOfTheDayCard(choice: WordOfTheDayChoice): Promise<WordFeedCard | undefined> {
+    const entry = await entries.get(choice.wordId);
     if (entry?.kind !== 'word') return undefined;
-    const card: FeedCard = {
+    return {
       kind: 'word',
       entry,
       wordCard: await buildWordCard({ word: entry, entries }),
-      wordOfTheDay: today.date,
+      wordOfTheDay: choice.date,
     };
-    changeCards([...cards, card]);
+  }
+
+  /**
+   * Adds the card of today's Word of the Day after the `kept` cards, choosing
+   * it first if today has none yet.
+   */
+  async function addWordOfTheDay(kept = cards): Promise<FeedCard | undefined> {
+    const today = await wordOfTheDay.today({ avoid: shownIds(kept) });
+    if (today === undefined) return undefined;
+    if (today.startedCycle) cycleStart = kept.length;
+    const card = await wordOfTheDayCard(today);
+    if (card === undefined) return undefined;
+    changeCards([...kept, card]);
     return card;
   }
 
@@ -265,15 +289,30 @@ export async function openFeed({
   /** Whether the card on screen is the last one, so the card after it is not ready yet. */
   const nextCardMissing = () => onScreen !== undefined && onScreen.position >= cards.length - 1;
 
+  /**
+   * Whether the ready card, the last one, which the reader hasn't reached, was
+   * got ready on an earlier local day: today has no Word of the Day yet.
+   */
+  const readyCardStale = () =>
+    onScreen !== undefined &&
+    onScreen.position < cards.length - 1 &&
+    wordOfTheDay.chosen() === undefined;
+
+  /** Puts today's Word of the Day in place of a ready card got ready on an earlier local day. */
+  async function replaceStaleReadyCard(): Promise<void> {
+    if (readyCardStale()) await addWordOfTheDay(cards.slice(0, -1));
+  }
+
   // One card is got ready at a time; it goes on while the card on screen is the last.
   let gettingReady: Promise<void> | undefined;
   function keepNextCardReady(): Promise<void> {
-    if (gettingReady === undefined && nextCardMissing()) {
+    if (gettingReady === undefined && (nextCardMissing() || readyCardStale())) {
       gettingReady = (async () => {
         try {
-          do {
+          await inTurn(replaceStaleReadyCard);
+          while (nextCardMissing()) {
             if ((await next()) === undefined) return;
-          } while (nextCardMissing());
+          }
         } finally {
           gettingReady = undefined;
         }
@@ -282,37 +321,47 @@ export async function openFeed({
     return gettingReady ?? Promise.resolve();
   }
 
-  /** The changes that make the Entry of the card on screen Seen as it leaves, if it stayed long enough. */
-  function seenOnLeaving(now: number): UserStateChanges {
-    if (onScreen === undefined) return new Map();
-    const entryId = entryIdOf(cards[onScreen.position]);
+  /** The changes that make the Entry of a card that left the screen Seen, if it stayed long enough. */
+  function seenOnLeaving(left: FeedCard | undefined, stayed: number): UserStateChanges {
+    const entryId = entryIdOf(left);
     // A card of an earlier Cycle counts for that Cycle only.
-    if (entryId === undefined || onScreen.position < cycleStart) return new Map();
-    if (now - onScreen.since < SEEN_DWELL_MS) return new Map();
+    if (left === undefined || entryId === undefined || cards.indexOf(left) < cycleStart)
+      return new Map();
+    if (stayed < SEEN_DWELL_MS) return new Map();
     return cycle.markSeen(entryId);
   }
 
   async function show(position: number | undefined): Promise<void> {
     if (position === onScreen?.position) return keepNextCardReady();
     const now = clock.now().getTime();
-    const seen = seenOnLeaving(now);
+    const left = onScreen === undefined ? undefined : cards[onScreen.position];
+    const stayed = onScreen === undefined ? 0 : now - onScreen.since;
     onScreen = position === undefined ? undefined : { position, since: now };
     const entryId = position === undefined ? undefined : entryIdOf(cards[position]);
-    const changes = new Map([
-      ...seen,
-      ...(entryId === undefined ? [] : feedPosition.change({ entryId, date: localDate(clock) })),
-    ]);
+    const date = localDate(clock);
+    // In turn with the requests that change the cards, so a new Cycle never
+    // starts between the card leaving the screen and its Entry becoming Seen.
+    const changes = inTurn(() =>
+      Promise.resolve(
+        new Map([
+          ...seenOnLeaving(left, stayed),
+          ...(entryId === undefined ? [] : feedPosition.change({ entryId, date })),
+        ]),
+      ),
+    );
     await Promise.all([
-      changes.size > 0 ? userState.write(changes) : undefined,
+      changes.then((kept) => (kept.size > 0 ? userState.write(kept) : undefined)),
       keepNextCardReady(),
     ]);
   }
 
   if (!(await restore())) await addWordOfTheDay();
+  const startPosition = Math.max(cards.length - 1, 0);
   return {
     get cards() {
       return cards;
     },
+    startPosition,
     subscribe(listener) {
       listeners.add(listener);
       return () => {
