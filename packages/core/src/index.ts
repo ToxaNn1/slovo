@@ -44,6 +44,7 @@ export {
   type UserSettings,
 } from './settings';
 export { renderStress } from './stress';
+export { createSwipeHint, type SwipeHint } from './swipe-hint';
 export {
   buildWordCard,
   type LinkedCorrection,
