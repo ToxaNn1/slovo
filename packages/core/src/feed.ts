@@ -91,6 +91,30 @@ export interface Feed {
   openLinkedCorrection(position: number, correctionId: string): Promise<number | undefined>;
 }
 
+/**
+ * The card of an Entry, built from the Language Pack's Entries. The card of a
+ * Word on the day it is the Word of the Day carries that day.
+ */
+export async function buildEntryCard(
+  entries: Entries,
+  entry: Word,
+  wordOfTheDay?: LocalDate,
+): Promise<WordFeedCard>;
+export async function buildEntryCard(entries: Entries, entry: Entry): Promise<EntryFeedCard>;
+export async function buildEntryCard(
+  entries: Entries,
+  entry: Entry,
+  wordOfTheDay?: LocalDate,
+): Promise<EntryFeedCard> {
+  if (entry.kind === 'correction') {
+    return { kind: 'correction', correctionCard: buildCorrectionCard(entry) };
+  }
+  const wordCard = await buildWordCard({ word: entry, entries });
+  return wordOfTheDay === undefined
+    ? { kind: 'word', wordCard }
+    : { kind: 'word', wordCard, wordOfTheDay };
+}
+
 const { feedPosition } = userStateRecords;
 
 /**
@@ -152,21 +176,12 @@ export async function openFeed({
     const opening =
       today !== undefined && cycle.covers(today.wordId) ? await wordOfTheDayCard(today) : undefined;
     if (opening?.wordCard.wordId === entry.id) changeCards([opening]);
-    else changeCards([...(opening === undefined ? [] : [opening]), await entryCard(entry)]);
+    else
+      changeCards([
+        ...(opening === undefined ? [] : [opening]),
+        await buildEntryCard(entries, entry),
+      ]);
     return true;
-  }
-
-  /** The card of an Entry; of a Word, the card of the Word of the Day of the day, if it is one. */
-  async function entryCard(entry: Word, wordOfTheDay?: LocalDate): Promise<WordFeedCard>;
-  async function entryCard(entry: Entry): Promise<EntryFeedCard>;
-  async function entryCard(entry: Entry, wordOfTheDay?: LocalDate): Promise<EntryFeedCard> {
-    if (entry.kind === 'correction') {
-      return { kind: 'correction', correctionCard: buildCorrectionCard(entry) };
-    }
-    const wordCard = await buildWordCard({ word: entry, entries });
-    return wordOfTheDay === undefined
-      ? { kind: 'word', wordCard }
-      : { kind: 'word', wordCard, wordOfTheDay };
   }
 
   /** The ids of the Entries shown in this session in the current Cycle. */
@@ -237,7 +252,7 @@ export async function openFeed({
     }
     const entry = await entries.get(id);
     if (entry === undefined) return undefined;
-    const card = await entryCard(entry);
+    const card = await buildEntryCard(entries, entry);
     changeCards([...kept, card]);
     return card;
   }
@@ -253,7 +268,7 @@ export async function openFeed({
     if (entryIdOf(cards[position + 1]) === correctionId) return position + 1;
     const correction = await entries.get(correctionId);
     if (correction?.kind !== 'correction') return undefined;
-    const opened = await entryCard(correction);
+    const opened = await buildEntryCard(entries, correction);
     // The cards after it move one position on, the one on screen too.
     if (cycleStart > position) cycleStart += 1;
     if (onScreen !== undefined && onScreen.position > position)
@@ -265,7 +280,7 @@ export async function openFeed({
   /** The card of a day's Word of the Day. */
   async function wordOfTheDayCard(choice: WordOfTheDayChoice): Promise<WordFeedCard | undefined> {
     const entry = await entries.get(choice.wordId);
-    return entry?.kind === 'word' ? entryCard(entry, choice.date) : undefined;
+    return entry?.kind === 'word' ? buildEntryCard(entries, entry, choice.date) : undefined;
   }
 
   /**

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { Correction, Word } from '@slovo/contracts';
 
 import {
+  buildEntryCard,
   createEntries,
   createMemoryContentPort,
   createMemoryUserStatePort,
@@ -1113,5 +1114,27 @@ describe('Corrections in the Feed', () => {
       expect(wordCardOf(feed.cards[position])?.linkedCorrections).toEqual([]);
       expect(await feed.openLinkedCorrection(position, 'c_protiazi')).toBeUndefined();
     });
+  });
+});
+
+describe('buildEntryCard', () => {
+  const entries = createEntries({
+    content: createMemoryContentPort({ words: pack, corrections: [correction('c_calque')] }),
+    edition: editionWith(true),
+  });
+
+  it('builds the card of a Word, or of a Correction, from the Entries', async () => {
+    const wordCard = await buildEntryCard(entries, word('w_live0'));
+    const correctionCard = await buildEntryCard(entries, correction('c_calque'));
+
+    expect(wordCardOf(wordCard)?.wordId).toBe('w_live0');
+    expect(wordOfTheDayOf(wordCard)).toBeUndefined();
+    expect(correctionCardOf(correctionCard)?.correctionId).toBe('c_calque');
+  });
+
+  it('marks the card of a Word as the Word of the Day of the day it is given', async () => {
+    const day = { year: 2026, month: 10, day: 11 };
+
+    expect(wordOfTheDayOf(await buildEntryCard(entries, word('w_live0'), day))).toEqual(day);
   });
 });
