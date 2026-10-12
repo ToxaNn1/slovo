@@ -448,7 +448,8 @@ const CARD_GAP = 18;
 const styles = StyleSheet.create({
   // The border is the card's only elevation.
   card: { borderWidth: 1 },
-  header: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3] },
+  // Over the blocks below it, so the Pronunciation message can open over them.
+  header: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3], zIndex: 1 },
   headline: { flex: 1, minWidth: 0, gap: space[2] },
   lemma: { fontWeight: '500' },
   grammar: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2] },

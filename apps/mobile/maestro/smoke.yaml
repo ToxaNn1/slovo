@@ -68,6 +68,20 @@ env:
 # The full Word card: the part of speech in short form and the Category chip.
 - assertVisible:
     id: word-category
+# The Pronunciation button reads the Lemma aloud; on a device without a voice
+# for the Edition's language it explains why instead. A tap on the message
+# closes it.
+- tapOn:
+    id: word-pronunciation
+- runFlow:
+    when:
+      visible:
+        id: pronunciation-no-voice
+    commands:
+      - tapOn:
+          id: pronunciation-no-voice
+- assertVisible:
+    id: word-pronunciation
 
 # Home is the Feed: swipe up to the next Word and down back to the first.
 - assertVisible:

@@ -20,6 +20,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { edition, editionStrings } from '../edition';
 import { useFeed } from '../feed';
+import { LemmaPronunciation } from '../pronunciation-button';
 import { wordOfTheDayLabel } from '../word-of-the-day';
 
 /** The display name of every Category of the Edition, by id. */
@@ -120,6 +121,7 @@ function FeedPage({
             frame={<CardCorners />}
             divider={<OrnamentDivider />}
             onOpenCorrection={onOpenCorrection}
+            pronunciation={<LemmaPronunciation lemma={card.wordCard.lemma} />}
           />
         )}
       </PagerScrollView>
