@@ -473,6 +473,26 @@ describe('the Feed', () => {
       expect(end?.kind).toBe('end-of-cycle');
     });
 
+    it('shows the last unseen Word again in place of the end-of-Cycle card when the reader swipes past it quickly', async () => {
+      const time = fakeClock('2026-10-11T09:00:00+03:00');
+      const feed = await run({ words: small, clock: time.clock });
+      await readLastCard(feed, time, SEEN_DWELL_MS);
+      await readLastCard(feed, time, SEEN_DWELL_MS);
+      await feed.show(2);
+      const last = entryIdOf(feed.cards[2]);
+
+      // Off the last unseen Word after 200 ms, onto the card the Feed got ready.
+      time.advance(200);
+      await feed.show(3);
+
+      expect(entryIdOf(feed.cards[3])).toBe(last);
+      // The end-of-Cycle card comes once that Word is Seen.
+      expect(feed.cards[4]?.kind).toBe('end-of-cycle');
+      time.advance(SEEN_DWELL_MS);
+      await feed.show(4);
+      expect(entryIdsOf(feed.cards.slice(5))).toHaveLength(1);
+    });
+
     it('starts a new Cycle on the card after it: nothing Seen, in a new order from a new seed', async () => {
       const time = fakeClock('2026-10-11T09:00:00+03:00');
       const feed = await run({ clock: time.clock, random: randomSequence(0.25, 0.75) });

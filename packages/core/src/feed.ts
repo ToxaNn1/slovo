@@ -95,7 +95,8 @@ const { feedPosition } = userStateRecords;
  *
  * After the Cycle's last unseen Entry comes the end-of-Cycle card, and the
  * card after that starts a new Cycle: nothing Seen, a new shuffle from a new
- * seed. A new local day that finds every Word Seen starts the new Cycle
+ * seed. When the reader swipes past that Entry before it is Seen, its card
+ * comes again in place of the end-of-Cycle card. A new local day that finds every Word Seen starts the new Cycle
  * itself, with its Word of the Day and no end-of-Cycle card, because the
  * Word of the Day always opens the day.
  *
@@ -198,28 +199,34 @@ export async function openFeed({
   }
 
   async function addNextCard(): Promise<FeedCard | undefined> {
+    const atEnd = cards.at(-1)?.kind === 'end-of-cycle';
+    const { words: unseenWords, corrections: unseenCorrections } = cycle.unseen();
+    // The end-of-Cycle card came too early when the reader left the last unseen
+    // Entry before it was Seen: the next card takes its place.
+    const kept =
+      atEnd && unseenWords.length + unseenCorrections.length > 0 ? cards.slice(0, -1) : cards;
     // A new local day starts with its Word of the Day, also in a Feed left open over midnight.
     if (wordOfTheDay.chosen() === undefined) {
-      const card = await addWordOfTheDay();
+      const card = await addWordOfTheDay(kept);
       if (card !== undefined) return card;
     }
     const { words, corrections } = cycle.order();
     if (words.length === 0 && corrections.length === 0) return undefined;
     // The card after the end-of-Cycle card starts a new Cycle.
-    if (cards.at(-1)?.kind === 'end-of-cycle') {
+    if (atEnd && kept === cards) {
       cycleStart = cards.length;
       await userState.write(await cycle.start());
     }
     const id = nextEntryId();
     if (id === undefined) {
       const card: FeedCard = { kind: 'end-of-cycle' };
-      changeCards([...cards, card]);
+      changeCards([...kept, card]);
       return card;
     }
     const entry = await entries.get(id);
     if (entry === undefined) return undefined;
     const card = await entryCard(entry);
-    changeCards([...cards, card]);
+    changeCards([...kept, card]);
     return card;
   }
 
@@ -243,11 +250,14 @@ export async function openFeed({
     return position + 1;
   }
 
-  /** Adds the card of today's Word of the Day, choosing it first if today has none yet. */
-  async function addWordOfTheDay(): Promise<FeedCard | undefined> {
+  /**
+   * Adds the card of today's Word of the Day after the `kept` cards, choosing
+   * it first if today has none yet.
+   */
+  async function addWordOfTheDay(kept = cards): Promise<FeedCard | undefined> {
     const today = await wordOfTheDay.today({ avoid: shownIds() });
     if (today === undefined) return undefined;
-    if (today.startedCycle) cycleStart = cards.length;
+    if (today.startedCycle) cycleStart = kept.length;
     const entry = await entries.get(today.wordId);
     if (entry?.kind !== 'word') return undefined;
     const card: FeedCard = {
@@ -256,7 +266,7 @@ export async function openFeed({
       wordCard: await buildWordCard({ word: entry, entries }),
       wordOfTheDay: today.date,
     };
-    changeCards([...cards, card]);
+    changeCards([...kept, card]);
     return card;
   }
 
