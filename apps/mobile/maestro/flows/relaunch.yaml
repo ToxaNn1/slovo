@@ -1,0 +1,35 @@
+# The choices and the day's Word survive a relaunch.
+# A subflow of `smoke.yaml`; run it from there.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- stopApp
+- launchApp:
+    clearState: false
+- runFlow:
+    file: ../open-in-dev-client.yaml
+- assertVisible:
+    id: word-of-the-day-badge
+- assertVisible:
+    id: word-lemma
+    text: ${maestro.copiedText}
+- assertNotVisible:
+    id: swipe-hint
+- tapOn:
+    id: tab-settings
+- assertVisible:
+    id: settings-theme-dark
+    selected: true
+- assertVisible:
+    id: settings-font-size-L
+    selected: true
+# Back to the defaults, so the next run starts the same way.
+- tapOn:
+    id: settings-theme-system
+- assertVisible:
+    id: settings-theme-system
+    selected: true
+- tapOn:
+    id: settings-font-size-M
+- assertVisible:
+    id: settings-font-size-M
+    selected: true

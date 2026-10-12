@@ -1,0 +1,16 @@
+# The Game and Saved placeholder screens.
+# A subflow of `smoke.yaml`; run it from there.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- tapOn:
+    id: tab-game
+- assertVisible:
+    id: game-placeholder
+- tapOn:
+    id: tab-saved
+- assertVisible:
+    id: saved-placeholder
+- tapOn:
+    id: tab-home
+- assertVisible:
+    id: word-lemma

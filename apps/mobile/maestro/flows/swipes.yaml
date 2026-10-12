@@ -1,0 +1,39 @@
+# Swiping between cards.
+# A subflow of `smoke.yaml`; run it from there.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+# Swipe up to the next card. A card taller than the screen scrolls first, so
+# swipe until the page turns.
+- repeat:
+    while:
+      notVisible:
+        id: feed-card-1
+    times: 6
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 20%
+          duration: 300
+      - waitForAnimationToEnd
+- assertVisible:
+    id: feed-card-1
+- assertNotVisible:
+    id: feed-card-0
+- assertNotVisible:
+    id: word-of-the-day-badge
+- assertNotVisible:
+    id: swipe-hint
+# Back down to the first card.
+- repeat:
+    while:
+      notVisible:
+        id: feed-card-0
+    times: 6
+    commands:
+      - swipe:
+          start: 50%, 30%
+          end: 50%, 80%
+          duration: 300
+      - waitForAnimationToEnd
+- assertVisible:
+    id: feed-card-0
