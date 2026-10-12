@@ -52,5 +52,5 @@ export {
   type VerticalPagerProps,
 } from './VerticalPager';
 export { useReduceMotion } from './useReduceMotion';
-export { WordCard, type WordCardProps, type WordCardStrings } from './WordCard';
+export { fill, WordCard, type WordCardProps, type WordCardStrings } from './WordCard';
 export { WordOfTheDayBadge } from './WordOfTheDayBadge';

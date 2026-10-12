@@ -31,6 +31,8 @@ export const EditionStringsSchema = z.strictObject({
     settings: TextSchema,
     game: TextSchema,
     saved: TextSchema,
+    /** What VoiceOver says for a tab, e.g. "{tab}, вкладка {position} з {count}". */
+    accessibilityLabel: templateOf('tab', 'position', 'count'),
   }),
   /** Shown on a screen that a later version builds. */
   placeholder: TextSchema,
