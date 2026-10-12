@@ -308,28 +308,36 @@ export async function openFeed({
     return gettingReady ?? Promise.resolve();
   }
 
-  /** The changes that make the Entry of the card on screen Seen as it leaves, if it stayed long enough. */
-  function seenOnLeaving(now: number): UserStateChanges {
-    if (onScreen === undefined) return new Map();
-    const entryId = entryIdOf(cards[onScreen.position]);
+  /** The changes that make the Entry of a card that left the screen Seen, if it stayed long enough. */
+  function seenOnLeaving(left: FeedCard | undefined, stayed: number): UserStateChanges {
+    const entryId = entryIdOf(left);
     // A card of an earlier Cycle counts for that Cycle only.
-    if (entryId === undefined || onScreen.position < cycleStart) return new Map();
-    if (now - onScreen.since < SEEN_DWELL_MS) return new Map();
+    if (left === undefined || entryId === undefined || cards.indexOf(left) < cycleStart)
+      return new Map();
+    if (stayed < SEEN_DWELL_MS) return new Map();
     return cycle.markSeen(entryId);
   }
 
   async function show(position: number | undefined): Promise<void> {
     if (position === onScreen?.position) return keepNextCardReady();
     const now = clock.now().getTime();
-    const seen = seenOnLeaving(now);
+    const left = onScreen === undefined ? undefined : cards[onScreen.position];
+    const stayed = onScreen === undefined ? 0 : now - onScreen.since;
     onScreen = position === undefined ? undefined : { position, since: now };
     const entryId = position === undefined ? undefined : entryIdOf(cards[position]);
-    const changes = new Map([
-      ...seen,
-      ...(entryId === undefined ? [] : feedPosition.change({ entryId, date: localDate(clock) })),
-    ]);
+    const date = localDate(clock);
+    // In turn with the requests that change the cards, so a new Cycle never
+    // starts between the card leaving the screen and its Entry becoming Seen.
+    const changes = inTurn(() =>
+      Promise.resolve(
+        new Map([
+          ...seenOnLeaving(left, stayed),
+          ...(entryId === undefined ? [] : feedPosition.change({ entryId, date })),
+        ]),
+      ),
+    );
     await Promise.all([
-      changes.size > 0 ? userState.write(changes) : undefined,
+      changes.then((kept) => (kept.size > 0 ? userState.write(kept) : undefined)),
       keepNextCardReady(),
     ]);
   }

@@ -570,6 +570,54 @@ describe('the Feed', () => {
       expect(await walk(nextDay)).toHaveLength(3);
     });
 
+    it('counts nothing Seen in the new Cycle when a card of the last one leaves the screen while the new Cycle is being kept', async () => {
+      const time = fakeClock('2026-10-11T23:00:00+03:00');
+      const port = createMemoryUserStatePort();
+      // Holds the next write until the test lets it through.
+      let held: { came: () => void; through: Promise<void> } | undefined;
+      const feed = await openFeed({
+        entries: createEntries({
+          content: createMemoryContentPort({ words: small }),
+          edition: editionWith(false),
+        }),
+        userState: await openUserState({
+          port: {
+            ...port,
+            async write(changes) {
+              const hold = held;
+              held = undefined;
+              hold?.came();
+              await hold?.through;
+              return port.write(changes);
+            },
+          },
+        }),
+        clock: time.clock,
+        random: randomSequence(0.25, 0.75),
+      });
+      await readToTheEnd(feed, time);
+      const end = feed.cards.length - 1;
+      let letThrough = () => undefined as void;
+      const came = new Promise<void>((resolve) => {
+        held = { came: resolve, through: new Promise((resolve) => (letThrough = resolve)) };
+      });
+
+      // On a new local day, the end-of-Cycle card comes on screen and the
+      // Word of the Day starts a new Cycle, whose write is held.
+      time.advance(2 * 60 * 60_000);
+      const shown = [feed.show(end)];
+      await came;
+      // Meanwhile the reader goes back to a Word of the last Cycle and stays.
+      shown.push(feed.show(end - 1));
+      time.advance(10_000);
+      shown.push(feed.show(undefined));
+      letThrough();
+      await Promise.all(shown);
+
+      const newCycle = [feed.cards[end + 1], await feed.next(), await feed.next()];
+      expect(new Set(newCycle.map(entryIdOf))).toEqual(new Set(['w_one', 'w_two', 'w_three']));
+    });
+
     it('never comes when the Language Pack has no live Word', async () => {
       const feed = await run({ words: [word('w_old', true)] });
 
