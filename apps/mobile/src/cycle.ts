@@ -1,13 +1,13 @@
 import {
   openCycle,
   openWordOfTheDay,
-  systemClock,
   systemRandom,
   type Cycle,
   type Entries,
   type WordOfTheDay,
 } from '@slovo/core';
 
+import { deviceClock } from './device-clock';
 import { storedUserState } from './stored-user-state';
 
 /** The Cycle and the Word of the Day that every feature shares. */
@@ -21,7 +21,7 @@ const opened = new WeakMap<Entries, Promise<SharedCycle>>();
 async function openSharedCycle(entries: Entries): Promise<SharedCycle> {
   const userState = await storedUserState();
   const cycle = await openCycle({ entries, userState, random: systemRandom });
-  const wordOfTheDay = await openWordOfTheDay({ cycle, userState, clock: systemClock });
+  const wordOfTheDay = await openWordOfTheDay({ cycle, userState, clock: deviceClock });
   return { cycle, wordOfTheDay };
 }
 

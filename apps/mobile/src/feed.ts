@@ -1,9 +1,10 @@
-import { openFeed, systemClock, type Feed, type FeedCard } from '@slovo/core';
+import { openFeed, type Feed, type FeedCard } from '@slovo/core';
 import { useIsFocused } from 'expo-router';
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { AppState } from 'react-native';
 
 import { sharedCycle } from './cycle';
+import { deviceClock } from './device-clock';
 import { useEntries } from './language-pack';
 import { storedUserState } from './stored-user-state';
 
@@ -56,7 +57,7 @@ export function useFeed(): FeedState {
     let active = true;
     Promise.all([storedUserState(), sharedCycle(entries)])
       .then(([userState, { cycle, wordOfTheDay }]) =>
-        openFeed({ entries, userState, clock: systemClock, cycle, wordOfTheDay }),
+        openFeed({ entries, userState, clock: deviceClock, cycle, wordOfTheDay }),
       )
       .then(
         (opened) => {
