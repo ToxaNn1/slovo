@@ -1,11 +1,9 @@
 import { openFeed, systemClock, systemRandom, type Feed, type FeedCard } from '@slovo/core';
-import { createPackReader } from '@slovo/language-pack/reader';
 import { useIsFocused } from 'expo-router';
-import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 
-import { edition } from './edition';
+import { useEntries } from './language-pack';
 import { storedUserState } from './stored-user-state';
 
 export type FeedState =
@@ -37,7 +35,7 @@ export type FeedState =
  * keeps one card ready after the current one.
  */
 export function useFeed(): FeedState {
-  const db = useSQLiteContext();
+  const entries = useEntries();
   const [feed, setFeed] = useState<Feed>();
   const [failed, setFailed] = useState(false);
   /** Counts the tries to open the Feed, so a retry opens it again. */
@@ -54,8 +52,7 @@ export function useFeed(): FeedState {
     storedUserState()
       .then((userState) =>
         openFeed({
-          content: createPackReader(db),
-          edition,
+          entries,
           userState,
           clock: systemClock,
           random: systemRandom,
@@ -75,7 +72,7 @@ export function useFeed(): FeedState {
     return () => {
       active = false;
     };
-  }, [db, attempt]);
+  }, [entries, attempt]);
 
   // The card on screen, as the Core counts dwell time for Seen.
   useEffect(() => {

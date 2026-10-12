@@ -15,7 +15,7 @@ import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { CorrectionSchema, WordSchema } from '@slovo/contracts';
-import { createContent, type Random } from '@slovo/core';
+import { createEntries, type Entries } from '@slovo/core';
 
 import {
   buildLanguagePack,
@@ -73,19 +73,25 @@ async function readBack(outFile: string) {
   }
 }
 
-const fixedRandom = (value: number): Random => ({ next: () => value });
-
-async function withContent<T>(
-  outFile: string,
-  use: (content: ReturnType<typeof createContent>) => Promise<T>,
-  random: Random = fixedRandom(0),
-): Promise<T> {
+/** Reads the pack through the Core's Entries, with every Feature Switch on. */
+async function withEntries<T>(outFile: string, use: (entries: Entries) => Promise<T>): Promise<T> {
   const pack = openLanguagePack(outFile);
   try {
-    return await use(createContent({ port: pack, random }));
+    return await use(createEntries({ content: pack, edition: { isFeatureEnabled: () => true } }));
   } finally {
     pack.close();
   }
+}
+
+/** The ids of the Entries linked to the Entry with the given id, both ways. */
+async function linkedIds(entries: Entries, id: string): Promise<string[]> {
+  const entry = await entries.get(id);
+  if (entry === undefined) throw new Error(`No Entry ${id}`);
+  const linked =
+    entry.kind === 'word'
+      ? await entries.linkedCorrections(entry)
+      : await entries.linkedWords(entry);
+  return linked.map((item) => item.id);
 }
 
 function buildErrors(editionDir: string): readonly BuildError[] {
@@ -106,8 +112,8 @@ describe('buildLanguagePack', () => {
     const result = buildLanguagePack({ editionDir: fixture('valid'), outFile });
 
     expect(result.ok).toBe(true);
-    await withContent(outFile, async (content) => {
-      expect(await content.wordById('w_fx0002')).toEqual({
+    await withEntries(outFile, async (entries) => {
+      expect(await entries.get('w_fx0002')).toEqual({
         kind: 'word',
         id: 'w_fx0002',
         lemma: 'балакучий',
@@ -125,7 +131,7 @@ describe('buildLanguagePack', () => {
         correctionIds: ['c_fx0002'],
         retired: false,
       });
-      expect((await content.firstWord())?.id).toBe('w_fx0002');
+      expect((await entries.eligible()).words[0]).toBe('w_fx0002');
     });
   });
 
@@ -139,8 +145,8 @@ describe('buildLanguagePack', () => {
 
     buildLanguagePack({ editionDir: fixture('valid'), outFile });
 
-    await withContent(outFile, async (content) => {
-      expect(await content.correctionById('c_fx0001')).toEqual(authored);
+    await withEntries(outFile, async (entries) => {
+      expect(await entries.get('c_fx0001')).toEqual(authored);
     });
   });
 
@@ -149,8 +155,8 @@ describe('buildLanguagePack', () => {
 
     buildLanguagePack({ editionDir: fixture('valid'), outFile });
 
-    await withContent(outFile, async (content) => {
-      expect(await content.correctionById('c_fx0002')).toEqual({
+    await withEntries(outFile, async (entries) => {
+      expect(await entries.get('c_fx0002')).toEqual({
         kind: 'correction',
         id: 'c_fx0002',
         nonStandardForm: 'разговорчивий',
@@ -164,7 +170,7 @@ describe('buildLanguagePack', () => {
         sources: [{ title: 'Тестове джерело' }],
         retired: false,
       });
-      expect(await content.correctionById('c_missing')).toBeUndefined();
+      expect(await entries.get('c_missing')).toBeUndefined();
     });
   });
 
@@ -173,13 +179,12 @@ describe('buildLanguagePack', () => {
 
     buildLanguagePack({ editionDir: fixture('valid'), outFile });
 
-    await withContent(outFile, async (content) => {
-      const ids = (entries: readonly { id: string }[]) => entries.map(({ id }) => id);
-      expect(ids(await content.linkedCorrections('w_fx0002'))).toEqual(['c_fx0002']);
-      expect(ids(await content.linkedWords('c_fx0002'))).toEqual(['w_fx0002']);
-      expect(ids(await content.linkedCorrections('w_fx0003'))).toEqual(['c_fx0001']);
-      expect(ids(await content.linkedWords('c_fx0001'))).toEqual(['w_fx0003']);
-      expect(await content.linkedWords('c_fx0004')).toEqual([]);
+    await withEntries(outFile, async (entries) => {
+      expect(await linkedIds(entries, 'w_fx0002')).toEqual(['c_fx0002']);
+      expect(await linkedIds(entries, 'c_fx0002')).toEqual(['w_fx0002']);
+      expect(await linkedIds(entries, 'w_fx0003')).toEqual(['c_fx0001']);
+      expect(await linkedIds(entries, 'c_fx0001')).toEqual(['w_fx0003']);
+      expect(await linkedIds(entries, 'c_fx0004')).toEqual([]);
     });
   });
 
@@ -188,11 +193,9 @@ describe('buildLanguagePack', () => {
 
     buildLanguagePack({ editionDir: fixture('valid'), outFile });
 
-    await withContent(outFile, async (content) => {
-      expect((await content.linkedCorrections('w_fx0001')).map(({ id }) => id)).toEqual([
-        'c_fx0003',
-      ]);
-      expect(await content.linkedWords('c_fx0003')).toEqual([]);
+    await withEntries(outFile, async (entries) => {
+      expect(await linkedIds(entries, 'w_fx0001')).toEqual(['c_fx0003']);
+      expect(await linkedIds(entries, 'c_fx0003')).toEqual([]);
     });
   });
 
@@ -213,9 +216,9 @@ describe('buildLanguagePack', () => {
     expect(formatContentReport(result.report)).toMatch(
       /Corrections:\s+3 \(1 Retired Correction left out\)/,
     );
-    await withContent(outFile, async (content) => {
-      expect(await content.correctionById('c_fx0002')).toMatchObject({ retired: true });
-      expect(await content.linkedCorrections('w_fx0002')).toEqual([]);
+    await withEntries(outFile, async (entries) => {
+      expect(await entries.get('c_fx0002')).toMatchObject({ retired: true });
+      expect(await linkedIds(entries, 'w_fx0002')).toEqual([]);
     });
   });
 
@@ -245,8 +248,8 @@ describe('buildLanguagePack', () => {
 
     buildLanguagePack({ editionDir: fixture('valid'), outFile });
 
-    await withContent(outFile, async (content) => {
-      expect(await content.wordById('w_fx0001')).toEqual(authored);
+    await withEntries(outFile, async (entries) => {
+      expect(await entries.get('w_fx0001')).toEqual(authored);
     });
   });
 
@@ -255,8 +258,8 @@ describe('buildLanguagePack', () => {
 
     buildLanguagePack({ editionDir: fixture('valid'), outFile });
 
-    await withContent(outFile, async (content) => {
-      expect(await content.wordById('w_fx0003')).toMatchObject({
+    await withEntries(outFile, async (entries) => {
+      expect(await entries.get('w_fx0003')).toMatchObject({
         lemma: 'завжди',
         stress: [1, 5],
       });
@@ -282,33 +285,21 @@ describe('buildLanguagePack', () => {
     const outFile = packPath();
 
     expect(buildLanguagePack({ editionDir, outFile }).ok).toBe(true);
-    await withContent(outFile, async (content) => {
-      expect(await content.wordById('w_fx0004')).toMatchObject(pluralOnly);
+    await withEntries(outFile, async (entries) => {
+      expect(await entries.get('w_fx0004')).toMatchObject(pluralOnly);
     });
   });
 
-  it('keeps a Retired Word reachable by id but out of the first and random Words', async () => {
+  it('keeps a Retired Word reachable by id but out of the eligible Words', async () => {
     const outFile = packPath();
 
     buildLanguagePack({ editionDir: fixture('valid'), outFile });
 
     expect((await readBack(outFile)).ids).toEqual(['w_fx0002', 'w_fx0003']);
-    await withContent(outFile, async (content) => {
-      expect(await content.wordById('w_fx0001')).toMatchObject({ retired: true });
-      expect((await content.firstWord())?.id).toBe('w_fx0002');
+    await withEntries(outFile, async (entries) => {
+      expect(await entries.get('w_fx0001')).toMatchObject({ retired: true });
+      expect((await entries.eligible()).words).toEqual(['w_fx0002', 'w_fx0003']);
     });
-    // Across the whole range of the random port, only live Words come up.
-    const picked = [];
-    for (const value of [0, 0.25, 0.5, 0.75, 0.999]) {
-      picked.push(
-        await withContent(
-          outFile,
-          async (content) => (await content.randomWord())?.id,
-          fixedRandom(value),
-        ),
-      );
-    }
-    expect(picked).toEqual(['w_fx0002', 'w_fx0002', 'w_fx0003', 'w_fx0003', 'w_fx0003']);
   });
 
   it('fails on an invalid Word with an error naming the Entry id and field', () => {
@@ -491,8 +482,8 @@ describe('buildLanguagePack', () => {
     const outFile = packPath();
 
     expect(buildLanguagePack({ editionDir, outFile }).ok).toBe(true);
-    await withContent(outFile, async (content) => {
-      expect(await content.wordById('w_fx0003')).toMatchObject({ stress: [] });
+    await withEntries(outFile, async (entries) => {
+      expect(await entries.get('w_fx0003')).toMatchObject({ stress: [] });
     });
   });
 
@@ -551,8 +542,8 @@ describe('buildLanguagePack', () => {
     const result = buildLanguagePack({ editionDir, outFile });
 
     expect(result.ok ? [] : result.errors).toEqual([]);
-    await withContent(outFile, async (content) => {
-      expect(await content.wordById('w_fx0003')).toMatchObject({ lemma: 'Аврора' });
+    await withEntries(outFile, async (entries) => {
+      expect(await entries.get('w_fx0003')).toMatchObject({ lemma: 'Аврора' });
     });
   });
 

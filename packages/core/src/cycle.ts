@@ -1,13 +1,8 @@
 import { z } from 'zod';
 
-import type { ContentReadPort, Random, UserStateChanges } from './ports';
+import type { Entries, EntryIds } from './entries';
+import type { Random, UserStateChanges } from './ports';
 import { readRecord, type UserState } from './user-state';
-
-/** The ids of Entries, each kind in the Cycle order. */
-export interface CycleIds {
-  readonly words: readonly string[];
-  readonly corrections: readonly string[];
-}
 
 /**
  * The current Cycle: every Entry it covers in an order shuffled with its seed,
@@ -18,14 +13,14 @@ export interface CycleIds {
  */
 export interface Cycle {
   /** Every Entry the Cycle covers, each kind in the Cycle order. */
-  order(): CycleIds;
+  order(): EntryIds;
   /** The Entries of the Cycle not Seen yet, each kind in the Cycle order. */
-  unseen(): CycleIds;
+  unseen(): EntryIds;
   /** Makes the Entry Seen in the Cycle. Returns no changes when it was Seen already. */
   markSeen(entryId: string): UserStateChanges;
   /**
-   * Starts a new Cycle: nothing Seen, the Entries the source gives now, in a
-   * new shuffle from a new seed drawn from the random port.
+   * Starts a new Cycle: nothing Seen, the Entries eligible now, in a new
+   * shuffle from a new seed drawn from the random port.
    */
   start(): Promise<UserStateChanges>;
 }
@@ -71,26 +66,24 @@ function shuffle(ids: readonly string[], seed: number): string[] {
 
 /**
  * Opens the current Cycle, or starts the first one with a seed from the
- * random port. `entries` gives the Entries a Cycle covers, each kind in a
- * stable order; the Cycle shuffles them with its seed.
+ * random port. A Cycle covers the Entries eligible when it opens or starts,
+ * and shuffles them with its seed.
  */
 export async function openCycle({
   entries,
   userState,
   random,
 }: {
-  entries: Pick<ContentReadPort, 'listWordIds' | 'listCorrectionIds'>;
+  entries: Pick<Entries, 'eligible'>;
   userState: UserState;
   random: Random;
 }): Promise<Cycle> {
   const stored = await readRecord(userState, KEYS.cycle, CycleSchema);
   let cycle = stored ?? { id: 1, seed: drawSeed(random) };
   if (stored === undefined) await userState.write(new Map([[KEYS.cycle, JSON.stringify(cycle)]]));
-  async function orderOf(seed: number): Promise<CycleIds> {
-    return {
-      words: shuffle(await entries.listWordIds(), seed),
-      corrections: shuffle(await entries.listCorrectionIds(), seed),
-    };
+  async function orderOf(seed: number): Promise<EntryIds> {
+    const { words, corrections } = await entries.eligible();
+    return { words: shuffle(words, seed), corrections: shuffle(corrections, seed) };
   }
   let order = await orderOf(cycle.seed);
   const seen = new Set(await readRecord(userState, KEYS.seen, SeenSchema));

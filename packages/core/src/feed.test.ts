@@ -3,12 +3,13 @@ import { describe, expect, it } from 'vitest';
 import type { Correction, Word } from '@slovo/contracts';
 
 import {
+  createEntries,
+  createMemoryContentPort,
   createMemoryUserStatePort,
   openFeed,
   openUserState,
   SEEN_DWELL_MS,
   type Clock,
-  type ContentReadPort,
   type Edition,
   type Feed,
   type FeedCard,
@@ -54,17 +55,6 @@ function correction(id: string, retired = false): Correction {
 const liveIds = Array.from({ length: 10 }, (_, index) => `w_live${String(index)}`);
 const retiredIds = ['w_retired0', 'w_retired1'];
 const pack = [...liveIds.map((id) => word(id)), ...retiredIds.map((id) => word(id, true))];
-
-function contentOf(words: readonly Word[], corrections: readonly Correction[]): ContentReadPort {
-  return {
-    listWordIds: () => Promise.resolve(words.filter((w) => !w.retired).map((w) => w.id)),
-    getWord: (id) => Promise.resolve(words.find((w) => w.id === id)),
-    listCorrectionIds: () =>
-      Promise.resolve(corrections.filter((c) => !c.retired).map((c) => c.id)),
-    getCorrection: (id) => Promise.resolve(corrections.find((c) => c.id === id)),
-    listLinkedWordIds: () => Promise.resolve([]),
-  };
-}
 
 /** An Edition with the Corrections Feature Switch on or off. */
 const editionWith = (corrections: boolean): Pick<Edition, 'isFeatureEnabled'> => ({
@@ -133,8 +123,10 @@ async function run({
 } = {}): Promise<Feed> {
   const userState = await openUserState({ port: createMemoryUserStatePort(records) });
   return openFeed({
-    content: contentOf(words, corrections),
-    edition: editionWith(correctionsSwitch),
+    entries: createEntries({
+      content: createMemoryContentPort({ words, corrections }),
+      edition: editionWith(correctionsSwitch),
+    }),
     userState,
     clock,
     random,

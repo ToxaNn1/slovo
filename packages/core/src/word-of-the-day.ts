@@ -21,9 +21,9 @@ export interface WordOfTheDay {
   /** Today's Word of the Day if it is chosen already. Never chooses one. */
   chosen(): WordOfTheDayChoice | undefined;
   /**
-   * Today's Word of the Day, chosen first when today has none yet or it was
-   * retired since: the next unseen Word in the Cycle order, other than the day
-   * before's, so every day starts with a new Word. Words in `avoid` are passed
+   * Today's Word of the Day, chosen first when today has none yet or it is
+   * no longer eligible: the next unseen Word in the Cycle order, other than
+   * the day before's, so every day starts with a new Word. Words in `avoid` are passed
    * over while the Cycle has other unseen Words.
    *
    * When every Word is Seen, it starts a new Cycle first (`startedCycle`),
@@ -71,7 +71,7 @@ export async function openWordOfTheDay({
     },
     async today({ avoid = new Set<string>() } = {}) {
       const today = localDate(clock);
-      // A Word of the Day retired since is chosen again, so no Retired Word shows.
+      // A Word of the Day no longer eligible, such as one Retired since, is chosen again.
       if (record?.date === today && cycle.order().words.includes(record.entryId)) {
         return { wordId: record.entryId, date: parseLocalDate(today), startedCycle: false };
       }

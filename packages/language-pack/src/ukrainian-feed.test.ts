@@ -7,6 +7,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
   CORRECTION_EVERY,
+  createEntries,
   createMemoryUserStatePort,
   loadEdition,
   openFeed,
@@ -86,7 +87,12 @@ async function run(
   edition: Edition = wordsOnly,
 ): Promise<Feed> {
   const userState = await openUserState({ port: createMemoryUserStatePort(records) });
-  return openFeed({ content: pack, edition, userState, clock, random: seededRandom(seed) });
+  return openFeed({
+    entries: createEntries({ content: pack, edition }),
+    userState,
+    clock,
+    random: seededRandom(seed),
+  });
 }
 
 /** The id of the Entry a card shows, if it shows one. */

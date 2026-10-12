@@ -14,10 +14,10 @@ export type {
   Register,
   Word,
 } from '@slovo/contracts';
-export { createContent, type Content } from './content';
 export { buildCorrectionCard, type CorrectionCardModel } from './correction-card';
-export { openCycle, type Cycle, type CycleIds } from './cycle';
+export { openCycle, type Cycle } from './cycle';
 export { coreDecor, InvalidDecorError, loadDecor, type Decor } from './decor';
+export { createEntries, type Entries, type EntryIds } from './entries';
 export {
   CORRECTION_EVERY,
   openFeed,

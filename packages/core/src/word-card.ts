@@ -1,6 +1,6 @@
-import type { Correction, Example, Gender, PartOfSpeech, Register, Word } from '@slovo/contracts';
+import type { Example, Gender, PartOfSpeech, Register, Word } from '@slovo/contracts';
 
-import type { ContentReadPort } from './ports';
+import type { Entries } from './entries';
 import { renderStress } from './stress';
 
 /** A Correction the Word is the standard form for, as its card links it. */
@@ -52,13 +52,13 @@ export interface WordCardModel {
 /** The most Synonyms a Word card shows. */
 export const MAX_SYNONYMS = 3;
 
-/** The Word card of a Word. */
+/** The Word card of a Word, linking the Corrections the Entries give for it. */
 export async function buildWordCard({
   word,
-  content,
+  entries,
 }: {
   word: Word;
-  content: ContentReadPort;
+  entries: Pick<Entries, 'linkedCorrections'>;
 }): Promise<WordCardModel> {
   return {
     kind: 'word',
@@ -74,22 +74,11 @@ export async function buildWordCard({
     registers: word.registers,
     categoryId: word.categoryId,
     details: detailsOf(word),
-    linkedCorrections: await linkedCorrectionsOf(word, content),
+    linkedCorrections: (await entries.linkedCorrections(word)).map(({ id, nonStandardForm }) => ({
+      correctionId: id,
+      nonStandardForm,
+    })),
   };
-}
-
-/**
- * The Corrections the Word links, in its order. A Retired Correction is no
- * longer linked from Words, and one missing from the Language Pack is skipped.
- */
-async function linkedCorrectionsOf(
-  word: Word,
-  content: ContentReadPort,
-): Promise<LinkedCorrection[]> {
-  const corrections = await Promise.all(word.correctionIds.map((id) => content.getCorrection(id)));
-  return corrections
-    .filter((correction): correction is Correction => correction?.retired === false)
-    .map(({ id, nonStandardForm }) => ({ correctionId: id, nonStandardForm }));
 }
 
 /** What "more" opens, or nothing when the card already shows all the Word has. */

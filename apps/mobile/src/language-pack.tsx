@@ -1,4 +1,4 @@
-import { createContent, systemRandom, type Content } from '@slovo/core';
+import { createEntries, type Entries } from '@slovo/core';
 import { createPackReader } from '@slovo/language-pack/reader';
 import { DecorBackground, FeedError, useTokens } from '@slovo/ui';
 import Constants from 'expo-constants';
@@ -81,8 +81,8 @@ export function LoadFailed({
 
 const styles = StyleSheet.create({ screen: { flex: 1 } });
 
-/** The Core's content, read from the bundled Language Pack. */
-export function useContent(): Content {
+/** The Core's Entries of this Edition, read from the bundled Language Pack. */
+export function useEntries(): Entries {
   const db = useSQLiteContext();
-  return useMemo(() => createContent({ port: createPackReader(db), random: systemRandom }), [db]);
+  return useMemo(() => createEntries({ content: createPackReader(db), edition }), [db]);
 }

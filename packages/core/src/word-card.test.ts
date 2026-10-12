@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { Correction, Word } from '@slovo/contracts';
 
-import { buildWordCard, type ContentReadPort } from './index';
+import { buildWordCard, createEntries, createMemoryContentPort } from './index';
 
 /** A Word with only what every Word has; each test adds what it needs. */
 function word(overrides: Partial<Word> = {}): Word {
@@ -42,18 +42,14 @@ function correction(id: string, nonStandardForm: string, retired = false): Corre
   };
 }
 
-function contentWith(corrections: readonly Correction[] = []): ContentReadPort {
-  return {
-    listWordIds: () => Promise.resolve([]),
-    getWord: () => Promise.resolve(undefined),
-    listCorrectionIds: () => Promise.resolve([]),
-    getCorrection: (id) => Promise.resolve(corrections.find((item) => item.id === id)),
-    listLinkedWordIds: () => Promise.resolve([]),
-  };
-}
-
 const build = (from: Word, corrections: readonly Correction[] = []) =>
-  buildWordCard({ word: from, content: contentWith(corrections) });
+  buildWordCard({
+    word: from,
+    entries: createEntries({
+      content: createMemoryContentPort({ corrections }),
+      edition: { isFeatureEnabled: () => true },
+    }),
+  });
 
 describe('the Word card', () => {
   it('shows the Lemma with Stress, the part of speech, gender, primary Definition and Category of a bare Word, and no other section', async () => {
