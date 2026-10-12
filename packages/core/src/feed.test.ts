@@ -130,6 +130,19 @@ describe('the Feed', () => {
     expect(after).toEqual(before);
   });
 
+  it('gives every card the Word card of its Entry', async () => {
+    const feed = await run();
+    const next = await feed.next();
+
+    for (const card of [feed.cards[0], next]) {
+      expect(card?.wordCard).toMatchObject({
+        kind: 'word',
+        wordId: card?.entry.id,
+        primaryDefinition: 'A meaning.',
+      });
+    }
+  });
+
   describe('Seen', () => {
     /** Shows the card at `position` for `ms`, as the UI reports it. */
     async function look(

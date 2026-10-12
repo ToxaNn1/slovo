@@ -25,18 +25,6 @@
       "грудня"
     ]
   },
-  "partsOfSpeech": {
-    "noun": "іменник",
-    "verb": "дієслово",
-    "adjective": "прикметник",
-    "adverb": "прислівник",
-    "pronoun": "займенник",
-    "numeral": "числівник",
-    "preposition": "прийменник",
-    "conjunction": "сполучник",
-    "particle": "частка",
-    "interjection": "вигук"
-  },
   "splash": {
     "wordmark": "SLOVO",
     "tagline": "рідкісні слова рідної мови"
@@ -60,5 +48,104 @@
       "lemma": "шпарки\u0301й",
       "definition": "Швидкий, жвавий."
     }
+  },
+  "wordCard": {
+    "stress": "наголос на {vowels}",
+    "stressOr": "або",
+    "partsOfSpeech": {
+      "noun": {
+        "short": "ім.",
+        "full": "іменник"
+      },
+      "verb": {
+        "short": "дієсл.",
+        "full": "дієслово"
+      },
+      "adjective": {
+        "short": "прикм.",
+        "full": "прикметник"
+      },
+      "adverb": {
+        "short": "присл.",
+        "full": "прислівник"
+      },
+      "pronoun": {
+        "short": "займ.",
+        "full": "займенник"
+      },
+      "numeral": {
+        "short": "числ.",
+        "full": "числівник"
+      },
+      "preposition": {
+        "short": "прийм.",
+        "full": "прийменник"
+      },
+      "conjunction": {
+        "short": "спол.",
+        "full": "сполучник"
+      },
+      "particle": {
+        "short": "част.",
+        "full": "частка"
+      },
+      "interjection": {
+        "short": "виг.",
+        "full": "вигук"
+      }
+    },
+    "genders": {
+      "masculine": {
+        "short": "ч. р.",
+        "full": "чоловічий рід"
+      },
+      "feminine": {
+        "short": "ж. р.",
+        "full": "жіночий рід"
+      },
+      "neuter": {
+        "short": "с. р.",
+        "full": "середній рід"
+      },
+      "common": {
+        "short": "спільн. р.",
+        "full": "спільний рід"
+      },
+      "plural-only": {
+        "short": "мн.",
+        "full": "лише множина"
+      }
+    },
+    "partOfSpeechWithGender": "{partOfSpeech}, {gender}",
+    "registers": {
+      "archaic": {
+        "short": "заст.",
+        "full": "застаріле"
+      },
+      "dialectal": {
+        "short": "діал.",
+        "full": "діалектне"
+      },
+      "bookish": {
+        "short": "книжн.",
+        "full": "книжне"
+      },
+      "colloquial": {
+        "short": "розм.",
+        "full": "розмовне"
+      }
+    },
+    "example": "«{text}»",
+    "exampleAuthor": "— {author}",
+    "synonym": "Синонім:",
+    "synonyms": "Синоніми:",
+    "antonym": "Антонім:",
+    "antonyms": "Антоніми:",
+    "category": "Категорія: {category}",
+    "more": "Детальніше",
+    "etymology": "Етимологія",
+    "extraDefinitions": "Інші значення",
+    "moreExamples": "Ще приклади",
+    "oftenSaid": "Часто кажуть:"
   }
 }

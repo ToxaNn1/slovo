@@ -1,8 +1,9 @@
-import { renderStress, type FeedCard } from '@slovo/core';
+import type { FeedCard } from '@slovo/core';
 import {
   CardCorners,
   DecorBackground,
   OrnamentDivider,
+  PagerScrollView,
   Placeholder,
   space,
   useTokens,
@@ -13,9 +14,12 @@ import {
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { editionStrings } from '../edition';
+import { edition, editionStrings } from '../edition';
 import { useFeed } from '../feed';
 import { wordOfTheDayLabel } from '../word-of-the-day';
+
+/** The display name of every Category of the Edition, by id. */
+const categoryNames = new Map(edition.categories.map(({ id, displayName }) => [id, displayName]));
 
 /** The Feed's top row, kept for the Stats pill (0.4). */
 const TOP_ROW = 48;
@@ -45,17 +49,16 @@ export default function HomeScreen() {
 
 function FeedPage({ card, position }: { card: FeedCard; position: number }) {
   const { top } = useSafeAreaInsets();
-  const { entry } = card;
+  const { wordCard } = card;
   return (
-    <View
-      testID={`feed-card-${String(position)}`}
-      style={[styles.page, { paddingTop: top + TOP_ROW }]}
-    >
-      {entry.kind === 'word' ? (
+    // The content scrolls under the top row but stops at the status bar.
+    <View testID={`feed-card-${String(position)}`} style={[styles.page, { paddingTop: top }]}>
+      <PagerScrollView contentContainerStyle={styles.content}>
         <WordCard
-          lemma={renderStress(entry)}
-          partOfSpeech={editionStrings.partsOfSpeech[entry.partOfSpeech]}
-          primaryDefinition={entry.primaryDefinition}
+          card={wordCard}
+          strings={editionStrings.wordCard}
+          categoryName={categoryNames.get(wordCard.categoryId)}
+          language={edition.locale}
           badge={
             card.wordOfTheDay === undefined ? undefined : (
               <WordOfTheDayBadge label={wordOfTheDayLabel(card.wordOfTheDay)} />
@@ -64,12 +67,13 @@ function FeedPage({ card, position }: { card: FeedCard; position: number }) {
           frame={<CardCorners />}
           divider={<OrnamentDivider />}
         />
-      ) : null}
+      </PagerScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  page: { flex: 1, paddingHorizontal: space[6], paddingBottom: space[6], overflow: 'hidden' },
+  page: { flex: 1 },
+  content: { paddingTop: TOP_ROW, paddingHorizontal: space[6], paddingBottom: space[6] },
 });

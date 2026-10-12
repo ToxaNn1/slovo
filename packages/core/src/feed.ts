@@ -1,9 +1,10 @@
-import type { Entry } from '@slovo/contracts';
+import type { Entry, Word } from '@slovo/contracts';
 import { z } from 'zod';
 
 import { localDate, parseLocalDate, type LocalDate } from './local-date';
 import type { Clock, ContentReadPort, Random } from './ports';
 import type { UserState } from './user-state';
+import { buildWordCard, type WordCardModel } from './word-card';
 
 /** How long a card must stay on screen before its Entry counts as Seen. */
 export const SEEN_DWELL_MS = 1500;
@@ -15,6 +16,8 @@ export const SEEN_DWELL_MS = 1500;
 export interface FeedCard {
   readonly kind: 'entry';
   readonly entry: Entry;
+  /** What the card shows, built by the Core. The Feed offers Words only for now. */
+  readonly wordCard: WordCardModel;
   /** On the card of the Word of the Day: the local day it is the Word of. */
   readonly wordOfTheDay?: LocalDate;
 }
@@ -144,15 +147,16 @@ export async function openFeed({
     if (position?.date !== localDate(clock)) return false;
     const entry = await content.getWord(position.entryId);
     if (entry === undefined || entry.retired) return false;
-    cards.push(cardOf(entry));
+    cards.push(await cardOf(entry));
     return true;
   }
 
   /** The card of an Entry, marked if it is the Word of the Day. */
-  function cardOf(entry: Entry): FeedCard {
+  async function cardOf(entry: Word): Promise<FeedCard> {
+    const wordCard = await buildWordCard({ word: entry, content });
     return wordOfTheDay?.entryId === entry.id && wordOfTheDay.date === localDate(clock)
-      ? { kind: 'entry', entry, wordOfTheDay: parseLocalDate(wordOfTheDay.date) }
-      : { kind: 'entry', entry };
+      ? { kind: 'entry', entry, wordCard, wordOfTheDay: parseLocalDate(wordOfTheDay.date) }
+      : { kind: 'entry', entry, wordCard };
   }
 
   /**
@@ -196,7 +200,11 @@ export async function openFeed({
     if (id === undefined) return undefined;
     const entry = await content.getWord(id);
     if (entry === undefined) return undefined;
-    const card: FeedCard = { kind: 'entry', entry };
+    const card: FeedCard = {
+      kind: 'entry',
+      entry,
+      wordCard: await buildWordCard({ word: entry, content }),
+    };
     cards.push(card);
     return card;
   }
@@ -233,6 +241,7 @@ export async function openFeed({
     const card: FeedCard = {
       kind: 'entry',
       entry,
+      wordCard: await buildWordCard({ word: entry, content }),
       wordOfTheDay: parseLocalDate(wordOfTheDay.date),
     };
     cards.push(card);
