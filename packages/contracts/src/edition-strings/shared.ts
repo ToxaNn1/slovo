@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const TextSchema = z.string().min(1);
+import { TextSchema } from '../shared';
 
 /** A label in two forms: short for the screen, full for VoiceOver. */
 export const LabelSchema = z.strictObject({

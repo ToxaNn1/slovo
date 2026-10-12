@@ -1,11 +1,6 @@
 import { z } from 'zod';
 
-import { ColorSchema } from './shared';
-
-/** A colour as six hex digits, e.g. `#F5EEE2`. */
-const HexColorSchema = z
-  .string()
-  .regex(/^#[0-9A-Fa-f]{6}$/, 'Expected a six-digit hex colour such as #F5EEE2');
+import { ColorSchema, HexColorSchema } from './shared';
 
 /** The splash in one Theme: an image from the Edition's `decor/` folder on a plain colour. */
 const SplashThemeSchema = z.strictObject({

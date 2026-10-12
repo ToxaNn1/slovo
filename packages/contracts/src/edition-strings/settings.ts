@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { FontSizeSchema, ThemeSchema } from '../edition';
-import { TextSchema } from './shared';
+import { TextSchema } from '../shared';
 
 export const SettingsStringsSchema = z.strictObject({
   /** The Settings screen title. */

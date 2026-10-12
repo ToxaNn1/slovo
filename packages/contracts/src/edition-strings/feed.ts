@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { TextSchema } from './shared';
+import { TextSchema } from '../shared';
 
 /** The Feed's own texts: its screen states, the hint and the Word of the Day badge. */
 export const feedStringsShape = {
