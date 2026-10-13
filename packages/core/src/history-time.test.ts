@@ -13,6 +13,12 @@ import {
   type Clock,
 } from './index';
 
+/** The Edition's one Category, the test Words' own, and its default Mix of every Category. */
+const testCategories = {
+  categories: [{ id: 'test', displayName: 'Test' }],
+  userSettingDefaults: { mix: { categoryIds: ['test'], corrections: true } },
+};
+
 /** A clock at a fixed instant in a time zone the test can change, and move on. */
 function fakeClock(start: string, timeZone = 'Europe/Kyiv') {
   let now = new Date(start).getTime();
@@ -155,7 +161,7 @@ describe('History read through the Core composition', () => {
     const time = fakeClock('2026-10-10T23:00:00+03:00');
     const app = await openComposition({
       content: createMemoryContentPort({ words: [word('w_one'), word('w_two')], corrections: [] }),
-      edition: { isFeatureEnabled: () => false },
+      edition: { ...testCategories, isFeatureEnabled: () => false },
       userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
       clock: time.clock,
       random: { next: () => 0.25 },

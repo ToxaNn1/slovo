@@ -13,6 +13,12 @@ import {
   type Random,
 } from './index';
 
+/** The Edition's one Category, the test Words' own, and its default Mix of every Category. */
+const testCategories = {
+  categories: [{ id: 'test', displayName: 'Test' }],
+  userSettingDefaults: { mix: { categoryIds: ['test'], corrections: true } },
+};
+
 function word(id: string, retired = false): Word {
   return {
     kind: 'word',
@@ -86,7 +92,7 @@ async function run({
 }: { records?: Map<string, string>; clock?: Clock; random?: Random } = {}): Promise<Composition> {
   return openComposition({
     content,
-    edition: { isFeatureEnabled: (feature) => feature === 'corrections' },
+    edition: { ...testCategories, isFeatureEnabled: (feature) => feature === 'corrections' },
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock,
     random,
@@ -362,7 +368,7 @@ describe('Collections', () => {
     let failing = false;
     const app = await openComposition({
       content,
-      edition: { isFeatureEnabled: () => false },
+      edition: { ...testCategories, isFeatureEnabled: () => false },
       userState: await openUserState({
         port: {
           ...port,
@@ -494,7 +500,7 @@ describe('Collections', () => {
       const open = async () =>
         openComposition({
           content,
-          edition: { isFeatureEnabled: () => false },
+          edition: { ...testCategories, isFeatureEnabled: () => false },
           userState: await openUserState({
             port: {
               ...port,
@@ -525,7 +531,7 @@ describe('Collections', () => {
       const port = createMemoryUserStatePort(records);
       const app = await openComposition({
         content,
-        edition: { isFeatureEnabled: () => true },
+        edition: { ...testCategories, isFeatureEnabled: () => true },
         userState: await openUserState({
           port: {
             ...port,
@@ -620,7 +626,7 @@ describe('Collections', () => {
       let failing = false;
       const app = await openComposition({
         content,
-        edition: { isFeatureEnabled: () => false },
+        edition: { ...testCategories, isFeatureEnabled: () => false },
         userState: await openUserState({
           port: {
             ...port,

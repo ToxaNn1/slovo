@@ -7,8 +7,8 @@ import {
   type Theme,
 } from '@slovo/contracts';
 
-/** The Categories, plus Corrections as a whole, that the user sees. */
-export interface Mix {
+/** The Edition's default Mix: the Categories, plus Corrections as a whole, a new user sees. */
+export interface DefaultMix {
   readonly categoryIds: readonly string[];
   readonly corrections: boolean;
 }
@@ -21,7 +21,7 @@ export interface UserSettingDefaults {
   readonly vibration: boolean;
   /** Local times of day, `HH:MM` on a 24-hour clock. */
   readonly notificationTimes: readonly string[];
-  readonly mix: Mix;
+  readonly mix: DefaultMix;
 }
 
 /** What the Core knows about the Edition it runs as. */

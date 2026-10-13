@@ -193,6 +193,16 @@ describe('loadEdition', () => {
       'userSettingDefaults.mix.categories.1',
     ],
     [
+      'a default Mix with no Category',
+      {
+        userSettingDefaults: {
+          ...userSettingDefaults,
+          mix: { categories: [], corrections: true },
+        },
+      },
+      'userSettingDefaults.mix.categories',
+    ],
+    [
       'a repeated Category id',
       {
         categories: [

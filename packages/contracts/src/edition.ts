@@ -109,7 +109,11 @@ export const MAX_NOTIFICATION_TIMES = 10;
 
 export const MixConfigSchema = z.strictObject({
   /** Either every Category of the Edition, or the listed Category ids. */
-  categories: z.union([z.literal('all'), z.array(KebabCaseIdSchema)]),
+  categories: z.union([
+    z.literal('all'),
+    // At least one Category always stays in the Mix (ADR 0019).
+    z.array(KebabCaseIdSchema).min(1, 'Expected at least one Category'),
+  ]),
   /** Whether Corrections, as a whole, are in the Mix. */
   corrections: z.boolean(),
 });

@@ -48,7 +48,7 @@ export {
   InvalidEditionConfigError,
   loadEdition,
   type Edition,
-  type Mix,
+  type DefaultMix,
   type UserSettingDefaults,
 } from './edition';
 export type { Category, FeatureSwitch, FontSize, LanguageTraits, Theme } from '@slovo/contracts';
@@ -69,6 +69,7 @@ export {
 } from './word-card';
 export { openWordOfTheDay, type WordOfTheDay, type WordOfTheDayChoice } from './word-of-the-day';
 export { createMemoryContentPort } from './memory-content';
+export { type Mix, type MixEdition, type MixState } from './mix';
 export {
   systemClock,
   systemRandom,

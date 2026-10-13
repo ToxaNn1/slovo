@@ -13,6 +13,12 @@ import { describe, expect, it } from 'vitest';
 
 import { refusalText } from './collection-refusal';
 
+/** The Edition's one Category, the test Words' own, and its default Mix of every Category. */
+const testCategories = {
+  categories: [{ id: 'test', displayName: 'Test' }],
+  userSettingDefaults: { mix: { categoryIds: ['test'], corrections: true } },
+};
+
 const strings = EditionStringsSchema.parse(
   JSON.parse(
     readFileSync(
@@ -25,7 +31,7 @@ const strings = EditionStringsSchema.parse(
 async function open(): Promise<Composition> {
   return openComposition({
     content: createMemoryContentPort(),
-    edition: { isFeatureEnabled: () => false },
+    edition: { ...testCategories, isFeatureEnabled: () => false },
     userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
     clock: { now: () => new Date('2026-10-13T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     random: systemRandom,
