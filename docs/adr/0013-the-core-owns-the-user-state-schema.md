@@ -31,3 +31,9 @@ The Cycle and the Word of the Day read the user state once, when they open, and 
 - **Keep Seen as one record and say so here**: rejected. History (0.3) and sync (0.8) build on Seen, and a later split would need the same migration with more data to carry.
 - **The Cycle writes its own changes**: rejected. Callers need a Cycle change in the same write as their own records (the Word of the Day now, History in 0.3), so the Cycle would need to take extra changes, and the Word of the Day must choose from the new Cycle's order before anything is written.
 - **Read the user state on every question**: rejected for now. The Feed asks for the unseen Entries on every card, and a shared instance per session gives the same consistency without the reads. Revisit when sync can change records under a running app.
+
+## Amendment: History joins the Feed's Seen write (0.3)
+
+History is one record per Entry, `history.` + Entry id, holding the instant it was Seen and whether it was the Word of the Day's card. An Entry joins History only when it becomes Seen in the Feed, in the same write as its Seen mark (ADR 0018): going back to a card already Seen in the Cycle records nothing, and an Entry Seen again in a later Cycle moves to the top with the new time. The write that adds the 501st entry also deletes the oldest. History starts empty in 0.3: 0.2 kept no times for what was Seen, so there is nothing to bring forward.
+
+Here the Feed hands its changes (the Seen mark and its position) to History, which writes them with its own record in one write and then updates its list; the Feed commits the Cycle change after that write, as before. History does not return a change for the Feed to write, unlike the Cycle, because clearing History runs outside the Feed. History takes its record and a clear one at a time, so a clear never lands between a record's choice of the entry to evict and its write.

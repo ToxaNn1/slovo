@@ -42,20 +42,20 @@ export interface History {
 /** How the Feed records History in its Seen write; the shell never gets it. */
 export interface HistoryRecorder {
   /**
-   * Writes `changes` (the Feed's Seen mark) and the Entry's History entry in
-   * one write, the Entry on top with the time it was Seen, evicting the
+   * Writes `changes` (the Feed's new Seen mark) and the Entry's History entry
+   * in one write, the Entry on top with the time it was Seen, evicting the
    * oldest beyond `HISTORY_CAP`.
    */
-  record(
-    seen: { readonly entryId: string; readonly seenAt: Date; readonly wordOfTheDay: boolean },
-    changes: UserStateChanges,
-  ): Promise<void>;
+  record(seen: Seen, changes: UserStateChanges): Promise<void>;
 }
+
+/** An Entry the Feed marked Seen: a History entry without its row. */
+export type Seen = Omit<HistoryEntry, 'row'>;
 
 const { history: historyRecords } = userStateRecords;
 
 /** A History entry as kept, with its row when the Language Pack has the Entry. */
-type Kept = Omit<HistoryEntry, 'row'> & { readonly row: EntryRowModel | undefined };
+type Kept = Seen & { readonly row: EntryRowModel | undefined };
 
 /** Newest first; Entries Seen at the same instant in a stable order. */
 function newestFirst(first: Kept, second: Kept): number {
@@ -104,7 +104,7 @@ export async function openHistory({
   }
 
   async function record(
-    { entryId, seenAt, wordOfTheDay }: Parameters<HistoryRecorder['record']>[0],
+    { entryId, seenAt, wordOfTheDay }: Seen,
     changes: UserStateChanges,
   ): Promise<void> {
     const row = await rows.row(entryId);

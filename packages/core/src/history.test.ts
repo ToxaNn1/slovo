@@ -186,18 +186,34 @@ describe('History', () => {
     expect(idsUnder(records, 'history.')).toEqual([]);
   });
 
-  it('keeps one entry per Entry, moving a re-seen Entry to the top with the new time', async () => {
+  it('leaves History as it is when the reader goes back to a card already Seen in the Cycle', async () => {
     const time = fakeClock();
     const app = await run({ clock: time.clock });
     await readLastCard(app, time);
     await readLastCard(app, time);
+    const before = app.history.list;
 
-    // The reader goes back to the first card and stays on it again.
     time.advance(60_000);
     await look(app, time, 0);
 
-    expect(idsOf(app)).toEqual([idAt(app, 0), idAt(app, 1)]);
+    expect(app.history.list).toBe(before);
+  });
+
+  it('keeps one entry per Entry, moving an Entry Seen again in a new Cycle to the top with the new time', async () => {
+    const records = new Map<string, string>();
+    const time = fakeClock();
+    const app = await run({ records, clock: time.clock });
+    while ((await readLastCard(app, time))?.kind !== 'end-of-cycle');
+    const lastCycle = idsOf(app);
+
+    // On the end-of-Cycle card, then the first card of the new Cycle.
+    await app.feed.show(app.feed.cards.length - 1);
+    await readLastCard(app, time);
+    const again = idAt(app, app.feed.cards.length - 2);
+
+    expect(idsOf(app)).toEqual([again, ...lastCycle.filter((id) => id !== again)]);
     expect(app.history.list[0]?.seenAt).toEqual(new Date(time.clock.now()));
+    expect(idsUnder(records, 'history.')).toHaveLength(lastCycle.length);
   });
 
   it(`keeps the last ${String(HISTORY_CAP)} Entries, evicting the oldest in the same write`, async () => {

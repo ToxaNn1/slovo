@@ -365,8 +365,8 @@ export async function openFeed({
         ...(seen?.changes ?? []),
         ...(entryId === undefined ? [] : feedPosition.change({ entryId, date })),
       ]);
-      // History is recorded in the same write as Seen, also for an Entry Seen already.
-      if (seenId !== undefined) {
+      // An Entry that becomes Seen joins History in the same write (ADR 0018).
+      if (seenId !== undefined && (seen?.changes.size ?? 0) > 0) {
         const wordOfTheDay = left?.kind === 'word' && left.wordOfTheDay !== undefined;
         await history.record({ entryId: seenId, seenAt: new Date(now), wordOfTheDay }, changes);
       } else if (changes.size > 0) await userState.write(changes);
