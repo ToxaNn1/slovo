@@ -78,11 +78,11 @@ export function useCollectionChanges(): {
   remove: (collectionId: string) => void;
 } {
   const collections = useCollections();
-  const notOpen = () => Promise.reject(new Error('Collections are not open yet.'));
+  const rejectNotOpen = () => Promise.reject(new Error('Collections are not open yet.'));
   // A name that could not be kept rejects: the field stays open with the name as typed.
   return {
-    create: (name) => collections?.create(name) ?? notOpen(),
-    rename: (collectionId, name) => collections?.rename(collectionId, name) ?? notOpen(),
+    create: (name) => collections?.create(name) ?? rejectNotOpen(),
+    rename: (collectionId, name) => collections?.rename(collectionId, name) ?? rejectNotOpen(),
     remove(collectionId) {
       if (collections === undefined) return;
       void keep(collections.delete(collectionId), undefined);

@@ -183,7 +183,7 @@ export default function CollectionsScreen() {
             </>
           }
           ListEmptyComponent={
-            ready && editing === undefined ? (
+            ready && editing?.kind !== 'new' ? (
               <EmptyState
                 testID="collections-empty"
                 title={strings.empty.title}

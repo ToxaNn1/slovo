@@ -74,7 +74,7 @@ export function CollectionRow({
  * The card in which a Collection is named: one for a new Collection and one
  * in place of a row being renamed. The name field takes the focus; the
  * keyboard's return key keeps the name, and leaving the field drops the
- * change. A refused name stays in the field with the reason under it.
+ * change (unless a name is being kept). A refused name stays in the field with the reason under it.
  */
 export function CollectionNameField({
   overline,
@@ -143,7 +143,10 @@ export function CollectionNameField({
           setRefusal(undefined);
         }}
         onSubmitEditing={() => void submit()}
-        onBlur={onCancel}
+        onBlur={() => {
+          // A name being kept settles itself: it closes the field, or shows why it is refused.
+          if (!submitting.current) onCancel();
+        }}
         // Keeps the field focused after a return, so a refused name can be corrected.
         submitBehavior="submit"
         placeholder={placeholder}
