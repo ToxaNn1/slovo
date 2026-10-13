@@ -5,6 +5,9 @@ import { useEdition } from './EditionProvider';
 import { minTouchTarget, space, typeSize } from './tokens';
 import { useTokens } from './TokensProvider';
 
+/** How far the largest text sizes of iOS may scale the label. */
+const LABEL_MAX_FONT_SCALE = 1.3;
+
 /** The link at the top of a pushed screen that goes back, named for the screen it returns to. */
 export function BackLink({
   label,
@@ -36,7 +39,11 @@ export function BackLink({
           strokeLinejoin="round"
         />
       </Svg>
-      <Text style={[styles.label, { color: colors.accent, fontFamily: fontFamilies.ui }]}>
+      <Text
+        // At the largest accessibility sizes the screen's name would break across lines.
+        maxFontSizeMultiplier={LABEL_MAX_FONT_SCALE}
+        style={[styles.label, { color: colors.accent, fontFamily: fontFamilies.ui }]}
+      >
         {label}
       </Text>
     </Pressable>
