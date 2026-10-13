@@ -1,4 +1,5 @@
-# Settings: Theme and font size, and how the Feed redraws.
+# Settings: Theme, font size, the rows under them, Vibration and About, and how
+# the Feed redraws.
 # A subflow of `smoke.yaml`; run it from there.
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
@@ -21,6 +22,51 @@ appId: ${APP_ID || 'app.slovo.uk'}
     selected: true
 - assertVisible:
     id: font-size-preview-lemma
+# The rows under the font size: a row of a later version is dimmed with its
+# "soon" tag, and Vibration is a switch that is on until the reader turns it off.
+- scrollUntilVisible:
+    element:
+      id: settings-vibration
+- assertVisible:
+    id: settings-row-notifications
+- assertVisible:
+    id: settings-row-music
+- assertVisible:
+    id: settings-vibration
+    checked: true
+- tapOn:
+    id: settings-vibration
+- assertVisible:
+    id: settings-vibration
+    checked: false
+- tapOn:
+    id: settings-vibration
+- assertVisible:
+    id: settings-vibration
+    checked: true
+- takeScreenshot: settings-rows-dark-l
+# About opens in the Settings stack: the Edition's line, the description and
+# the sources, and back leads to the list.
+- scrollUntilVisible:
+    element:
+      id: settings-row-about
+- tapOn:
+    id: settings-row-about
+- assertVisible:
+    id: about
+- assertVisible:
+    id: about-description
+- assertVisible:
+    id: about-sources
+- assertVisible:
+    id: about-row-suggest-word
+- assertVisible:
+    id: about-row-report-error
+- takeScreenshot: about-dark-l
+- tapOn:
+    id: about-back
+- assertVisible:
+    id: settings-row-about
 # The Feed redraws in the dark Theme at the new size, on the same card. Maestro
 # cannot assert a colour or a size, so the screenshot is the record of it.
 - tapOn:

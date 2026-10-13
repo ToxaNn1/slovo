@@ -17,6 +17,8 @@ export interface Mix {
 export interface UserSettingDefaults {
   readonly theme: Theme;
   readonly fontSize: FontSize;
+  /** Whether haptics are on. */
+  readonly vibration: boolean;
   /** Local times of day, `HH:MM` on a 24-hour clock. */
   readonly notificationTimes: readonly string[];
   readonly mix: Mix;

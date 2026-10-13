@@ -20,4 +20,36 @@ export const SettingsStringsSchema = z.strictObject({
     lemma: TextSchema,
     definition: TextSchema,
   }),
+  /** The tag on a row that a later version brings. */
+  soon: TextSchema,
+  /** What VoiceOver reads for a row that a later version brings. Takes `{label}`. */
+  soonAccessibilityLabel: TextSchema,
+  /** The names of the rows under the Theme and the font size. */
+  rows: z.strictObject({
+    notifications: TextSchema,
+    myMix: TextSchema,
+    hidden: TextSchema,
+    widgets: TextSchema,
+    about: TextSchema,
+  }),
+  /** The Sounds section and its rows. */
+  sounds: z.strictObject({
+    section: TextSchema,
+    sounds: TextSchema,
+    vibration: TextSchema,
+    music: TextSchema,
+  }),
+  /** The About screen. */
+  about: z.strictObject({
+    /** The Edition's line under its name. Takes `{version}`. */
+    editionLine: TextSchema,
+    /** What SLOVO is. */
+    description: TextSchema,
+    /** Where the words come from. */
+    sources: TextSchema,
+    /** The label over the feedback rows. */
+    feedback: TextSchema,
+    suggestWord: z.strictObject({ title: TextSchema, subtitle: TextSchema }),
+    reportError: z.strictObject({ title: TextSchema, subtitle: TextSchema }),
+  }),
 });

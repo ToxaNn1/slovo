@@ -1,17 +1,22 @@
 import { FontSizeSchema, ThemeSchema } from '@slovo/contracts';
 import {
   FontSizePreview,
+  NavigationRow,
   ScreenTitle,
   SectionLabel,
   SegmentedControl,
+  SettingsGroup,
+  SoonRow,
+  SwitchRow,
   space,
   useTokens,
 } from '@slovo/ui';
+import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { editionStrings } from '../edition';
-import { useSettings } from '../settings';
+import { editionStrings } from '../../edition';
+import { useSettings } from '../../settings';
 
 const strings = editionStrings.settings;
 
@@ -27,10 +32,15 @@ const fontSizeSegments = FontSizeSchema.options.map((fontSize) => ({
   testID: `settings-font-size-${fontSize}`,
 }));
 
-/** Settings in 0.2: the Theme and the font size. The other rows arrive with their features. */
+/**
+ * Settings: the Theme, the font size and the rows of the design. The rows of
+ * later versions show as soon; the My Mix and Hidden rows wait for their
+ * screens (#109, #110).
+ */
 export default function SettingsScreen() {
   const { current, update } = useSettings();
   const { colors } = useTokens();
+  const router = useRouter();
   return (
     <SafeAreaView
       testID="settings"
@@ -65,6 +75,40 @@ export default function SettingsScreen() {
               update({ fontSize });
             }}
           />
+        </View>
+        <View style={styles.section}>
+          <SettingsGroup>
+            <SoonRow testID="settings-row-notifications" label={strings.rows.notifications} />
+            <SoonRow testID="settings-row-my-mix" label={strings.rows.myMix} />
+            <SoonRow testID="settings-row-hidden" label={strings.rows.hidden} />
+          </SettingsGroup>
+        </View>
+        <View style={styles.section}>
+          <SectionLabel>{strings.sounds.section}</SectionLabel>
+          <SettingsGroup>
+            <SoonRow testID="settings-row-sounds" label={strings.sounds.sounds} control="switch" />
+            <SwitchRow
+              testID="settings-vibration"
+              label={strings.sounds.vibration}
+              value={current.vibration}
+              onChange={(vibration) => {
+                update({ vibration });
+              }}
+            />
+            <SoonRow testID="settings-row-music" label={strings.sounds.music} control="slider" />
+          </SettingsGroup>
+        </View>
+        <View style={styles.section}>
+          <SettingsGroup>
+            <SoonRow testID="settings-row-widgets" label={strings.rows.widgets} />
+            <NavigationRow
+              testID="settings-row-about"
+              label={strings.rows.about}
+              onPress={() => {
+                router.push('/settings/about');
+              }}
+            />
+          </SettingsGroup>
         </View>
       </ScrollView>
     </SafeAreaView>

@@ -51,7 +51,10 @@ describe('openUserState', () => {
     };
 
     const userState = await openUserState({ port: createMemoryUserStatePort(records) });
-    const settings = createSettings({ userState, defaults: { theme: 'system', fontSize: 'M' } });
+    const settings = createSettings({
+      userState,
+      defaults: { theme: 'system', fontSize: 'M', vibration: true },
+    });
     const cycle = await openCycle({
       entries: { eligible: () => Promise.resolve({ words, corrections: [] }) },
       userState,
@@ -59,7 +62,7 @@ describe('openUserState', () => {
     });
     const wordOfTheDay = await openWordOfTheDay({ cycle, userState, clock });
 
-    expect(await settings.read()).toEqual({ theme: 'dark', fontSize: 'L' });
+    expect(await settings.read()).toEqual({ theme: 'dark', fontSize: 'L', vibration: true });
     expect(await createSwipeHint({ userState }).isDue()).toBe(false);
     expect(new Set(cycle.unseen().words)).toEqual(new Set(['w_0', 'w_3', 'w_4']));
     expect(wordOfTheDay.chosen()?.wordId).toBe('w_3');

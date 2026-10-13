@@ -25,6 +25,8 @@ export const userStateRecords = {
   theme: declareRecord('settings.theme', ThemeSchema),
   /** The user's font size. */
   fontSize: declareRecord('settings.fontSize', FontSizeSchema),
+  /** Whether the user has haptics on. */
+  vibration: declareRecord('settings.vibration', z.boolean()),
   /** That the Feed's swipe hint was shown. */
   swipeHintShown: declareRecord('feed.swipeHintShown', z.literal(true)),
   /** The card the reader was on last, and the local date they were on it. */
