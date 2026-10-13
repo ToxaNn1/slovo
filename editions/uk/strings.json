@@ -398,8 +398,15 @@
   },
   "hiding": {
     "button": "Не показувати",
-    "choice": { "entry": "Не показувати цей запис", "cancel": "Скасувати" },
+    "choice": {
+      "entry": "Не показувати цей запис",
+      "category": "Не показувати категорію «{category}»",
+      "corrections": "Не показувати Виправлення",
+      "cancel": "Скасувати"
+    },
     "entryHidden": "«{title}» приховано",
+    "categoryHidden": "Категорію «{category}» приховано",
+    "correctionsHidden": "Виправлення приховано",
     "undo": "Скасувати"
   },
   "mix": {

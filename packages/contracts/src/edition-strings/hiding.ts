@@ -11,10 +11,18 @@ export const HidingStringsSchema = z.strictObject({
   choice: z.strictObject({
     /** Hides this Entry. */
     entry: TextSchema,
+    /** On a Word card: takes the Word's Category, `{category}`, out of the Mix. */
+    category: templateOf('category'),
+    /** On a Correction card: takes Corrections, as a whole, out of the Mix. */
+    corrections: TextSchema,
     cancel: TextSchema,
   }),
   /** The undo toast after hiding an Entry. Takes `{title}`, what the Entry's row leads with. */
   entryHidden: templateOf('title'),
+  /** The undo toast after hiding a Category. Takes `{category}`, its name. */
+  categoryHidden: templateOf('category'),
+  /** The undo toast after hiding Corrections. */
+  correctionsHidden: TextSchema,
   /** The undo button of the toasts. */
   undo: TextSchema,
 });
