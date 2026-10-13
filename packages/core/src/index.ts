@@ -29,6 +29,7 @@ export {
   type FeedCard,
   type WordFeedCard,
 } from './feed';
+export { createHaptics, type HapticEngine, type Haptics } from './haptics';
 export type { LocalDate } from './local-date';
 export {
   InvalidEditionConfigError,

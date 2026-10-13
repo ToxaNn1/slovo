@@ -19,14 +19,22 @@ describe('settings', () => {
   it("uses the user's Theme over the Edition's default, and returns the settings in effect", async () => {
     const settings = await settingsOver();
 
-    expect(await settings.update({ theme: 'dark' })).toEqual({ theme: 'dark', fontSize: 'M', vibration: true });
+    expect(await settings.update({ theme: 'dark' })).toEqual({
+      theme: 'dark',
+      fontSize: 'M',
+      vibration: true,
+    });
     expect(await settings.read()).toEqual({ theme: 'dark', fontSize: 'M', vibration: true });
   });
 
   it("uses the user's font size over the Edition's default, and returns the settings in effect", async () => {
     const settings = await settingsOver();
 
-    expect(await settings.update({ fontSize: 'XL' })).toEqual({ theme: 'system', fontSize: 'XL', vibration: true });
+    expect(await settings.update({ fontSize: 'XL' })).toEqual({
+      theme: 'system',
+      fontSize: 'XL',
+      vibration: true,
+    });
     expect(await settings.read()).toEqual({ theme: 'system', fontSize: 'XL', vibration: true });
   });
 
@@ -34,14 +42,22 @@ describe('settings', () => {
     const records = new Map<string, string>();
     await (await settingsOver(records)).update({ theme: 'light', fontSize: 'S', vibration: true });
 
-    expect(await (await settingsOver(records)).read()).toEqual({ theme: 'light', fontSize: 'S', vibration: true });
+    expect(await (await settingsOver(records)).read()).toEqual({
+      theme: 'light',
+      fontSize: 'S',
+      vibration: true,
+    });
   });
 
   it('changes one setting without touching the other', async () => {
     const settings = await settingsOver();
     await settings.update({ theme: 'dark' });
 
-    expect(await settings.update({ fontSize: 'L' })).toEqual({ theme: 'dark', fontSize: 'L', vibration: true });
+    expect(await settings.update({ fontSize: 'L' })).toEqual({
+      theme: 'dark',
+      fontSize: 'L',
+      vibration: true,
+    });
   });
 
   it("falls back to the Edition's default when the stored Theme is not one the Core knows", async () => {
@@ -63,9 +79,12 @@ describe('settings', () => {
 
   it("starts from a different Edition's default font size", async () => {
     const userState = await openUserState({ port: createMemoryUserStatePort() });
-    const settings = createSettings({ userState, defaults: { theme: 'light', fontSize: 'L' } });
+    const settings = createSettings({
+      userState,
+      defaults: { theme: 'light', fontSize: 'L', vibration: false },
+    });
 
-    expect(await settings.read()).toEqual({ theme: 'light', fontSize: 'L' });
+    expect(await settings.read()).toEqual({ theme: 'light', fontSize: 'L', vibration: false });
   });
 });
 
