@@ -15,6 +15,12 @@ export type {
   Word,
 } from '@slovo/contracts';
 export { openComposition, type Composition } from './composition';
+export {
+  type Collection,
+  type CollectionNameRefusal,
+  type CollectionResult,
+  type Collections,
+} from './collections';
 export { buildCorrectionCard, type CorrectionCardModel } from './correction-card';
 export { openCycle, type Cycle, type CycleChange } from './cycle';
 export { coreDecor, InvalidDecorError, loadDecor, type Decor } from './decor';
