@@ -2,7 +2,7 @@ import type { EditionStrings, Plural } from '@slovo/contracts';
 import type { Edition, MixState } from '@slovo/core';
 
 /** A Category's chip on the Mix screen. */
-export interface MixChip {
+export interface MixChipModel {
   readonly id: string;
   readonly name: string;
   readonly on: boolean;
@@ -13,7 +13,7 @@ export interface MixChip {
 /** What the Mix screen draws, from the Mix and the Edition. */
 export interface MixScreenModel {
   /** The chip of every Category of the Edition, in its order. */
-  readonly chips: readonly MixChip[];
+  readonly chips: readonly MixChipModel[];
   /** Whether every Category is in the Mix, which is when «Усі» is on. */
   readonly allOn: boolean;
   /** Whether to say why a chip is disabled. */

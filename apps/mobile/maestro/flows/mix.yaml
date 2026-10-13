@@ -75,8 +75,9 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: mix-chip-history-antiquity
 - tapOn:
     id: mix-chip-science
-- assertVisible:
-    id: mix-last-category-hint
+# The hint line under the chips is hidden from the accessibility tree (VoiceOver
+# reads it as the disabled chip's hint), so Maestro cannot see it; the
+# screenshot records it.
 - assertVisible:
     id: mix-chip-language-speech
     selected: true
@@ -94,8 +95,9 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - assertVisible:
     id: mix-chip-all
     selected: true
-- assertNotVisible:
-    id: mix-last-category-hint
+- assertVisible:
+    id: mix-chip-language-speech
+    enabled: true
 - tapOn:
     id: mix-corrections
 - assertVisible:

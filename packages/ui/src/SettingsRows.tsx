@@ -105,7 +105,6 @@ export function SwitchRow({
       <Switch
         testID={testID}
         accessibilityLabel={label}
-        accessibilityHint={subtitle}
         {...look.voice}
         value={value}
         onValueChange={onChange}

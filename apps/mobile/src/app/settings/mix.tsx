@@ -88,6 +88,9 @@ export default function MixScreen() {
             {model.lastCategoryHint && (
               <Text
                 testID="mix-last-category-hint"
+                // VoiceOver reads it as the hint of the disabled chip instead.
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
                 {...voice}
                 style={[styles.hint, { color: colors.muted, fontFamily: fontFamilies.ui }]}
               >
