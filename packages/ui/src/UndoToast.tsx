@@ -11,14 +11,11 @@ import {
 import { AccessibilityInfo, Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useEdition } from './EditionProvider';
-import { minTouchTarget, space } from './tokens';
+import { minTouchTarget, space, toastElevation, toastRadius } from './tokens';
 import { useTokens } from './TokensProvider';
 
 /** How long the toast stays, from the design. */
 const TOAST_MS = 4000;
-
-/** The toast's corner radius, from the design; not a token. */
-const TOAST_RADIUS = 6;
 
 /** The toast's fade in. */
 const FADE_MS = 200;
@@ -95,18 +92,21 @@ function UndoToast({
   const timeOut = useEffectEvent(close);
 
   useEffect(() => {
-    Animated.timing(opacity, { toValue: 1, duration: FADE_MS, useNativeDriver: true }).start();
     let active = true;
     let timer: ReturnType<typeof setTimeout> | undefined;
     void AccessibilityInfo.isScreenReaderEnabled().then((screenReader) => {
       if (!active) return;
       if (!screenReader) {
+        Animated.timing(opacity, { toValue: 1, duration: FADE_MS, useNativeDriver: true }).start();
         timer = setTimeout(() => {
           timeOut();
         }, TOAST_MS);
-      } else if (messageRef.current !== null) {
-        AccessibilityInfo.sendAccessibilityEvent(messageRef.current, 'focus');
+        return;
       }
+      // VoiceOver skips a view that is still fading in, so the toast shows at once.
+      opacity.setValue(1);
+      if (messageRef.current !== null)
+        AccessibilityInfo.sendAccessibilityEvent(messageRef.current, 'focus');
     });
     return () => {
       active = false;
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
   fill: { flex: 1 },
   toast: {
     position: 'absolute',
-    borderRadius: TOAST_RADIUS,
+    borderRadius: toastRadius,
     left: space[4],
     right: space[4],
     bottom: space[4],
@@ -171,11 +171,7 @@ const styles = StyleSheet.create({
     paddingLeft: space[5],
     paddingRight: space[3],
     paddingVertical: space[3],
-    // `elev.toast`: 0 10 30 rgba(0, 0, 0, .4).
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.4,
-    shadowRadius: 15,
+    ...toastElevation,
   },
   message: { flex: 1, fontSize: 15, lineHeight: 21, fontWeight: '500' },
   undo: {

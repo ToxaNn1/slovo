@@ -70,7 +70,7 @@ export interface VerticalPagerHandle {
   /**
    * Puts the page at `index` on screen at once, without motion, as when pages
    * before the current one left or came back and the page on screen moved
-   * with them.
+   * with them. Nothing turned, so it doesn't call `onIndexChange`.
    */
   showPage(index: number): void;
 }
@@ -204,7 +204,7 @@ export function VerticalPager<Item>({
     const clamped = Math.min(Math.max(target, 0), items.length - 1);
     if (clamped === index) return;
     turnedTo.value = clamped;
-    turn(clamped);
+    setIndex(clamped);
     setNearest(clamped);
     position.value = clamped;
   }

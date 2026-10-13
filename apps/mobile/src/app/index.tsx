@@ -25,8 +25,19 @@ import { useSwipeHint } from '../swipe-hint';
 
 const { feed: feedStrings } = editionStrings;
 
-/** Home is the Feed: a vertical stream of Entry cards, one per screen. */
+/**
+ * Home is the Feed: a vertical stream of Entry cards, one per screen. Its undo
+ * toasts outlive the card they came from, also when no card is left.
+ */
 export default function HomeScreen() {
+  return (
+    <UndoToastProvider>
+      <FeedScreen />
+    </UndoToastProvider>
+  );
+}
+
+function FeedScreen() {
   const feed = useFeed();
   const swipeHint = useSwipeHint();
   const { colors } = useTokens();
@@ -40,60 +51,62 @@ export default function HomeScreen() {
     setTurnTo(undefined);
   }, [turnTo]);
 
-  const cards = feed.status === 'ready' ? feed.cards : undefined;
-  const onScreen = feed.status === 'ready' ? feed.onScreen : undefined;
+  const ready = feed.status === 'ready' ? feed : undefined;
+  const cards = ready?.cards;
+  const positionOnScreen = ready?.positionOnScreen;
+  const onCardChange = ready?.onCardChange;
   // A hide or its undo drops or puts back cards, and the card on screen moves
-  // with them: the pager follows at once, so it is never left on a blank page.
+  // with them: the pager shows it at once. When no card comes after a hidden
+  // one yet, the pager waits on its page for the next card.
   useEffect(() => {
-    const position = onScreen?.();
-    if (cards !== undefined && position !== undefined && position < cards.length)
-      pager.current?.showPage(position);
-  }, [cards, onScreen]);
+    const position = positionOnScreen?.();
+    if (cards === undefined || position === undefined || position >= cards.length) return;
+    pager.current?.showPage(position);
+    onCardChange?.(position);
+  }, [cards, positionOnScreen, onCardChange]);
 
   if (feed.status === 'loading') return <FeedLoadingScreen />;
   if (feed.status === 'failed') return <LoadFailed onRetry={feed.retry} />;
   if (feed.cards.length === 0) return <Placeholder message={editionStrings.noWords} />;
 
   return (
-    <UndoToastProvider>
-      <View testID="home" style={[styles.screen, { backgroundColor: colors.background }]}>
-        {/* The background stays put while the cards move over it. */}
-        <DecorBackground />
-        <VerticalPager
-          ref={pager}
-          testID="feed"
-          items={feed.cards}
-          initialIndex={feed.startPosition}
-          renderPage={(card, position) => (
-            <FeedPage
-              // A card that takes the place of a hidden one starts afresh, scrolled to its top.
-              key={entryIdOf(card) ?? card.kind}
-              card={card}
-              position={position}
-              onOpenCorrection={(correctionId) => {
-                feed
-                  .openLinkedCorrection(position, correctionId)
-                  .then(setTurnTo, (error: unknown) => {
-                    console.error('Could not open the linked Correction', error);
-                  });
-              }}
-            />
-          )}
-          onIndexChange={(position) => {
-            feed.onCardChange(position);
-            swipeHint.dismiss();
-          }}
-          turnActionLabels={{ next: feedStrings.nextEntry, previous: feedStrings.previousEntry }}
-        />
-        {swipeHint.visible ? (
-          <SwipeHint
-            text={feedStrings.swipeHint}
-            onShown={swipeHint.markShown}
-            onDismiss={swipeHint.dismiss}
+    <View testID="home" style={[styles.screen, { backgroundColor: colors.background }]}>
+      {/* The background stays put while the cards move over it. */}
+      <DecorBackground />
+      <VerticalPager
+        ref={pager}
+        testID="feed"
+        items={feed.cards}
+        initialIndex={feed.startPosition}
+        renderPage={(card, position) => (
+          <FeedPage
+            // A card that takes the place of a hidden one starts afresh, scrolled to its top.
+            key={entryIdOf(card) ?? card.kind}
+            card={card}
+            position={position}
+            onOpenCorrection={(correctionId) => {
+              feed
+                .openLinkedCorrection(position, correctionId)
+                .then(setTurnTo, (error: unknown) => {
+                  console.error('Could not open the linked Correction', error);
+                });
+            }}
           />
-        ) : null}
-      </View>
-    </UndoToastProvider>
+        )}
+        onIndexChange={(position) => {
+          feed.onCardChange(position);
+          swipeHint.dismiss();
+        }}
+        turnActionLabels={{ next: feedStrings.nextEntry, previous: feedStrings.previousEntry }}
+      />
+      {swipeHint.visible ? (
+        <SwipeHint
+          text={feedStrings.swipeHint}
+          onShown={swipeHint.markShown}
+          onDismiss={swipeHint.dismiss}
+        />
+      ) : null}
+    </View>
   );
 }
 
