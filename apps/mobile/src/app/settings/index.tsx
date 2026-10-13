@@ -16,6 +16,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { editionStrings } from '../../edition';
+import { useMixSummary } from '../../mix';
 import { useSettings } from '../../settings';
 
 const strings = editionStrings.settings;
@@ -34,13 +35,13 @@ const fontSizeSegments = FontSizeSchema.options.map((fontSize) => ({
 
 /**
  * Settings: the Theme, the font size and the rows of the design. The rows of
- * later versions show as soon; the My Mix and Hidden rows wait for their
- * screens (#109, #110).
+ * later versions show as soon; the Hidden row waits for its screen (#110).
  */
 export default function SettingsScreen() {
   const { current, update } = useSettings();
   const { colors } = useTokens();
   const router = useRouter();
+  const mixSummary = useMixSummary();
   return (
     <SafeAreaView
       testID="settings"
@@ -79,7 +80,14 @@ export default function SettingsScreen() {
         <View style={styles.section}>
           <SettingsGroup>
             <SoonRow testID="settings-row-notifications" label={strings.rows.notifications} />
-            <SoonRow testID="settings-row-my-mix" label={strings.rows.myMix} />
+            <NavigationRow
+              testID="settings-row-my-mix"
+              label={strings.rows.myMix}
+              value={mixSummary}
+              onPress={() => {
+                router.push('/settings/mix');
+              }}
+            />
             <SoonRow testID="settings-row-hidden" label={strings.rows.hidden} />
           </SettingsGroup>
         </View>

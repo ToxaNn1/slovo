@@ -30,6 +30,7 @@ export { type RowAction } from './SwipeableRow';
 export { FavoriteButton } from './FavoriteButton';
 export { HapticsProvider, useHaptics } from './HapticsProvider';
 export { ScreenTitle, SectionLabel } from './headings';
+export { MixChip } from './MixChip';
 export {
   SavedCard,
   SavedCardCollection,

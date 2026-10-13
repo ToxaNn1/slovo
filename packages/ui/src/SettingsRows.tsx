@@ -69,7 +69,7 @@ export function NavigationRow({
   value,
   onPress,
   testID,
-}: RowProps & { value?: string; onPress: () => void }) {
+}: RowProps & { value?: string | undefined; onPress: () => void }) {
   const look = useRowLook();
   return (
     <Pressable
@@ -87,17 +87,21 @@ export function NavigationRow({
   );
 }
 
-/** A row with an on/off switch. */
+/** A row with an on/off switch, and an optional line of muted text under its label. */
 export function SwitchRow({
   label,
+  subtitle,
   value,
   onChange,
   testID,
-}: RowProps & { value: boolean; onChange: (value: boolean) => void }) {
+}: RowProps & { subtitle?: string; value: boolean; onChange: (value: boolean) => void }) {
   const look = useRowLook();
   return (
     <View style={styles.row}>
-      <Text style={[look.label, styles.grow]}>{label}</Text>
+      <View style={styles.grow}>
+        <Text style={look.label}>{label}</Text>
+        {subtitle !== undefined && <Text style={look.value}>{subtitle}</Text>}
+      </View>
       <Switch
         testID={testID}
         accessibilityLabel={label}
