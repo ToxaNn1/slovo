@@ -39,6 +39,7 @@ export {
   type WordFeedCard,
 } from './feed';
 export { HISTORY_CAP, type History, type HistoryEntry } from './history';
+export { type HiddenEntries, type HiddenEntry } from './hidden-entries';
 export { createHaptics, type HapticEngine, type Haptics } from './haptics';
 export { localDayOf, type LocalDate, type LocalDay } from './local-date';
 export {
