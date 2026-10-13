@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { TextSchema } from '../shared';
 import { PluralSchema, templateOf } from './shared';
 
-/** The texts of Collections: the Collections card of the Saved tab and the Add to Collection sheet. The Collections screens add theirs in 0.3. */
+/** The texts of Collections: the Collections card of the Saved tab and the Add to Collection sheet. The Collections screen adds its own; a Collection's screen follows in 0.3. */
 export const CollectionsStringsSchema = z.strictObject({
   /** The name of Collections: the Saved tab's card. */
   title: TextSchema,
@@ -17,6 +17,41 @@ export const CollectionsStringsSchema = z.strictObject({
   collectionLabel: templateOf('name', 'count'),
   /** The action row's Collections button, as VoiceOver reads it: what a tap will do. */
   button: TextSchema,
+  /** The Collections screen: its rows, its swipe actions, the name fields, the delete confirmation and the empty list. */
+  screen: z.strictObject({
+    /** The «+» that opens the field for a new Collection, as VoiceOver reads it. */
+    add: TextSchema,
+    /** The small capitals over the field for a new Collection. */
+    newOverline: TextSchema,
+    /** The small capitals over the field of a Collection being renamed. */
+    renameOverline: TextSchema,
+    /** A Collection as VoiceOver reads it, with its newest Lemmas. Takes `{name}`, `{count}` (the Entries in words) and `{lemmas}`. */
+    rowLabel: templateOf('name', 'count', 'lemmas'),
+    /** The swipe action that renames a Collection in place. */
+    rename: TextSchema,
+    /** The same action as VoiceOver reads it. Takes `{name}`. */
+    renameLabel: templateOf('name'),
+    /** The swipe action that deletes a Collection. */
+    delete: TextSchema,
+    /** The same action as VoiceOver reads it. Takes `{name}`. */
+    deleteLabel: templateOf('name'),
+    /** The system action sheet that confirms deleting a Collection. */
+    confirmDelete: z.strictObject({
+      /** Takes `{name}`. */
+      title: templateOf('name'),
+      /** Says what stays: the Entries of the Collection are kept wherever else they are. */
+      message: TextSchema,
+      confirm: TextSchema,
+      cancel: TextSchema,
+    }),
+    /** The empty list. */
+    empty: z.strictObject({
+      title: TextSchema,
+      message: TextSchema,
+      /** The button that opens the field for a new Collection. */
+      create: TextSchema,
+    }),
+  }),
   /** The «До колекції» sheet. */
   sheet: z.strictObject({
     title: TextSchema,

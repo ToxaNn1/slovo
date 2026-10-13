@@ -67,3 +67,25 @@ export function useEntryCollections(entryId: string): {
         : collections.create(name, entryId),
   };
 }
+
+/** The calls of the Collections screen that change a Collection. */
+export function useCollectionChanges(): {
+  /** Makes an empty Collection; resolves to the Collection, or why its name is refused. */
+  create: (name: string) => ReturnType<Collections['create']>;
+  /** Renames a Collection; resolves to the Collection, or why the name is refused. */
+  rename: (collectionId: string, name: string) => ReturnType<Collections['rename']>;
+  /** Deletes a Collection with its Entry records; the Entries stay wherever else they are kept. */
+  remove: (collectionId: string) => void;
+} {
+  const collections = useCollections();
+  const notOpen = () => Promise.reject(new Error('Collections are not open yet.'));
+  // A name that could not be kept rejects: the field stays open with the name as typed.
+  return {
+    create: (name) => collections?.create(name) ?? notOpen(),
+    rename: (collectionId, name) => collections?.rename(collectionId, name) ?? notOpen(),
+    remove(collectionId) {
+      if (collections === undefined) return;
+      void keep(collections.delete(collectionId), undefined);
+    },
+  };
+}
