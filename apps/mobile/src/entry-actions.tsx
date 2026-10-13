@@ -1,9 +1,10 @@
 import { ActionRow, CollectionButton, CollectionSheet, FavoriteButton } from '@slovo/ui';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { refusalText } from './collection-refusal';
 import { editionStrings } from './edition';
-import { useEntryCollections, useEntryTitle } from './collections';
+import { useEntryCollections } from './collections';
+import { useComposition } from './composition';
 import { useFavorite } from './favorites';
 
 /**
@@ -64,4 +65,27 @@ function EntryCollectionSheet({
       }}
     />
   );
+}
+
+/** What the Entry's row leads with, once it is known; read when `enabled`. */
+function useEntryTitle(entryId: string, enabled: boolean): string {
+  const composition = useComposition();
+  const [title, setTitle] = useState('');
+  const open = composition.status === 'ready' ? composition.composition : undefined;
+  useEffect(() => {
+    if (!enabled || open === undefined) return;
+    let active = true;
+    open.entryRow(entryId).then(
+      (row) => {
+        if (active) setTitle(row?.title ?? '');
+      },
+      (error: unknown) => {
+        console.error('Could not read the Entry', error);
+      },
+    );
+    return () => {
+      active = false;
+    };
+  }, [open, entryId, enabled]);
+  return title;
 }

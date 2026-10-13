@@ -1,5 +1,5 @@
 import type { Collection, Collections } from '@slovo/core';
-import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
+import { useCallback, useSyncExternalStore } from 'react';
 
 import { useComposition } from './composition';
 
@@ -66,27 +66,4 @@ export function useEntryCollections(entryId: string): {
         ? Promise.reject(new Error('Collections are not open yet.'))
         : collections.create(name, entryId),
   };
-}
-
-/** What the Entry's row leads with, once it is known; read when `enabled`. */
-export function useEntryTitle(entryId: string, enabled: boolean): string {
-  const composition = useComposition();
-  const [title, setTitle] = useState('');
-  const open = composition.status === 'ready' ? composition.composition : undefined;
-  useEffect(() => {
-    if (!enabled || open === undefined) return;
-    let active = true;
-    open.entryRow(entryId).then(
-      (row) => {
-        if (active) setTitle(row?.title ?? '');
-      },
-      (error: unknown) => {
-        console.error('Could not read the Entry', error);
-      },
-    );
-    return () => {
-      active = false;
-    };
-  }, [open, entryId, enabled]);
-  return title;
 }

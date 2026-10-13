@@ -2,8 +2,8 @@ import {
   fill,
   OrnamentBand,
   SavedCard,
-  SavedCardTile,
-  SavedCardTiles,
+  SavedCardCollection,
+  SavedCardCollections,
   SavedCardTitles,
   ScreenTitle,
   space,
@@ -79,23 +79,23 @@ export default function SavedScreen() {
             })}
           >
             {collections.length > 0 && (
-              <SavedCardTiles>
+              <SavedCardCollections>
                 {collections.slice(0, NEWEST_COLLECTIONS_SHOWN).map((collection) => {
                   const entries = count(collectionStrings.count, collection.count);
                   return (
-                    <SavedCardTile
+                    <SavedCardCollection
                       key={collection.id}
                       testID={`saved-collection-${collection.id}`}
                       name={collection.name}
                       count={entries}
-                      accessibilityLabel={fill(collectionStrings.tileLabel, {
+                      accessibilityLabel={fill(collectionStrings.collectionLabel, {
                         name: collection.name,
                         count: entries,
                       })}
                     />
                   );
                 })}
-              </SavedCardTiles>
+              </SavedCardCollections>
             )}
           </SavedCard>
         )}

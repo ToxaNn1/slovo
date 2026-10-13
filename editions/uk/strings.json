@@ -269,7 +269,7 @@
       "other": "{count} колекції"
     },
     "cardLabel": "Колекції, {count}",
-    "tileLabel": "{name}, {count}",
+    "collectionLabel": "{name}, {count}",
     "button": "Додати до колекції",
     "sheet": {
       "title": "До колекції",

@@ -7,14 +7,14 @@ import { PluralSchema, templateOf } from './shared';
 export const CollectionsStringsSchema = z.strictObject({
   /** The name of Collections: the Saved tab's card. */
   title: TextSchema,
-  /** How many Entries a Collection holds, as the sheet and the card's tiles say it and VoiceOver reads it. */
+  /** How many Entries a Collection holds, as the sheet and the Collections card says it and VoiceOver reads it. */
   count: PluralSchema,
   /** How many Collections there are, as VoiceOver reads the count of the Saved tab's card. */
   collectionCount: PluralSchema,
   /** What VoiceOver reads for the Collections card of the Saved tab. Takes `{count}`, the count in words. */
   cardLabel: templateOf('count'),
-  /** The Collection tile of the card, as VoiceOver reads it. Takes `{name}` and `{count}`, the Entries in words. */
-  tileLabel: templateOf('name', 'count'),
+  /** A Collection on the card, as VoiceOver reads it. Takes `{name}` and `{count}`, the Entries in words. */
+  collectionLabel: templateOf('name', 'count'),
   /** The action row's Collections button, as VoiceOver reads it: what a tap will do. */
   button: TextSchema,
   /** The «До колекції» sheet. */

@@ -34,7 +34,7 @@ const SLIDE_IN = {
   easing: Easing.bezier(0.2, 0.8, 0.2, 1),
   reduceMotion: ReduceMotion.Never,
 };
-/** Leaving is quicker than arriving, as the reader asked for it. */
+/** Leaving is quicker than arriving. */
 const SLIDE_OUT = {
   duration: 220,
   easing: Easing.in(Easing.quad),

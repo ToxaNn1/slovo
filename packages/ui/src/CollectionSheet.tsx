@@ -211,7 +211,6 @@ function SheetContent({
                 autoCapitalize="sentences"
                 autoCorrect={false}
                 spellCheck={false}
-                maxLength={80}
                 selectionColor={colors.accent}
                 style={[
                   styles.field,
@@ -247,7 +246,6 @@ function SheetContent({
             {refusal !== undefined && (
               <Text
                 testID="collection-refusal"
-                accessibilityRole="alert"
                 {...voice}
                 style={[styles.refusal, { color: colors.ink, fontFamily: fontFamilies.ui }]}
               >
