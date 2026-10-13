@@ -29,7 +29,14 @@ export { EntryRow, type EntryRowAction } from './EntryRow';
 export { FavoriteButton } from './FavoriteButton';
 export { HapticsProvider, useHaptics } from './HapticsProvider';
 export { ScreenTitle, SectionLabel } from './headings';
-export { SavedCard, SavedCardCollections, SavedCardCollection, SavedCardTitles } from './SavedCard';
+export {
+  SavedCard,
+  SavedCardCollection,
+  SavedCardCollections,
+  SavedCardRows,
+  SavedCardTitles,
+  type SavedCardRow,
+} from './SavedCard';
 export { CollectionButton } from './CollectionButton';
 export { CollectionSheet } from './CollectionSheet';
 export { BottomSheet } from './BottomSheet';

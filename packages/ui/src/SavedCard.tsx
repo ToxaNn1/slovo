@@ -150,6 +150,38 @@ export function SavedCardCollection({
   );
 }
 
+/** A row of a card's short list: a title and what goes on its right, such as a relative time. */
+export interface SavedCardRow {
+  readonly title: string;
+  readonly trailing: string;
+}
+
+/**
+ * The latest rows of a list on its card (History): each a title with its
+ * trailing text, under a hairline. The card reads them to VoiceOver in its own
+ * label, so these are not read again.
+ */
+export function SavedCardRows({ rows }: { rows: readonly SavedCardRow[] }) {
+  const { colors, fontFamilies } = useTokens();
+  return (
+    <View importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
+      {rows.map(({ title, trailing }, index) => (
+        <View key={index} style={[styles.row, { borderColor: colors.line }]}>
+          <Text
+            style={[styles.rowTitle, { color: colors.ink, fontFamily: fontFamilies.word }]}
+            numberOfLines={1}
+          >
+            {title}
+          </Text>
+          <Text style={[styles.rowTrailing, { color: colors.muted, fontFamily: fontFamilies.ui }]}>
+            {trailing}
+          </Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
 /** The Collections of a card in one row, of one width each. */
 export function SavedCardCollections({ children }: { children: ReactNode }) {
   return <View style={styles.collections}>{children}</View>;
@@ -172,4 +204,14 @@ const styles = StyleSheet.create({
   titles: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: space[2] },
   titleItem: { flexDirection: 'row', alignItems: 'baseline', gap: space[2] },
   titleText: { fontSize: 18 },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    gap: space[3],
+    borderTopWidth: 1,
+    paddingVertical: space[3],
+  },
+  rowTitle: { flexShrink: 1, fontSize: 20 },
+  rowTrailing: { flexShrink: 0, fontSize: 13, fontWeight: '500' },
 });

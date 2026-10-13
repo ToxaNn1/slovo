@@ -31,3 +31,4 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - runFlow: flows/placeholders.yaml
 - runFlow: flows/favorites.yaml
 - runFlow: flows/collection-sheet.yaml
+- runFlow: flows/history.yaml

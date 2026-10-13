@@ -26,7 +26,7 @@ export interface EntryRowAction {
 }
 
 /**
- * One Entry in a list (Favorites, and later Collections and History), built
+ * One Entry in a list (Favorites, History and later Collections), built
  * from the Core's row model: a Word's Lemma with its Stress over its
  * Definition on one line, or a Correction's standard equivalent over the
  * non-standard form it replaces. The trailing text is what the screen puts
@@ -39,21 +39,30 @@ export function EntryRow({
   trailing,
   onPress,
   actions = [],
+  compact = false,
   testID = `entry-row-${row.entryId}`,
 }: {
   row: EntryRowModel;
   trailing?: string;
   onPress: () => void;
   actions?: readonly EntryRowAction[];
+  /**
+   * Only the title and the trailing text, on a tighter row whose separator is
+   * inset to the text, as History draws its rows.
+   */
+  compact?: boolean;
   testID?: string;
 }) {
   const { colors, fontFamilies } = useTokens();
   const { strings, voice } = useEdition();
   const swipeable = useRef<SwipeableMethods>(null);
-  const subtitle =
-    row.kind === 'word'
-      ? row.definition
-      : fill(strings.correctionCard.insteadOf, { form: row.nonStandardForm });
+  let subtitle: string | undefined;
+  if (!compact) {
+    subtitle =
+      row.kind === 'word'
+        ? row.definition
+        : fill(strings.correctionCard.insteadOf, { form: row.nonStandardForm });
+  }
 
   return (
     <ReanimatedSwipeable
@@ -63,7 +72,11 @@ export function EntryRow({
       rightThreshold={ACTION_WIDTH / 2}
       overshootRight={false}
       enabled={actions.length > 0}
-      containerStyle={[styles.container, { borderColor: colors.line }]}
+      containerStyle={[
+        styles.container,
+        { borderColor: colors.line },
+        compact && styles.containerCompact,
+      ]}
       renderRightActions={() => (
         <View style={styles.actions}>
           {actions.map((action) => (
@@ -105,7 +118,9 @@ export function EntryRow({
       <Pressable
         testID={`${testID}-open`}
         accessibilityRole="button"
-        accessibilityLabel={[row.title, subtitle, trailing].filter(Boolean).join(', ')}
+        accessibilityLabel={[row.title, subtitle, trailing]
+          .filter((part) => part !== undefined && part !== '')
+          .join(', ')}
         accessibilityActions={actions.map(({ name, accessibilityLabel }) => ({
           name,
           label: accessibilityLabel,
@@ -117,6 +132,7 @@ export function EntryRow({
         onPress={onPress}
         style={({ pressed }) => [
           styles.row,
+          compact && styles.rowCompact,
           { backgroundColor: pressed ? colors.surfaceSunken : colors.background },
         ]}
       >
@@ -130,12 +146,14 @@ export function EntryRow({
             </Text>
           )}
         </View>
-        <Text
-          style={[styles.subtitle, { color: colors.inkSecondary, fontFamily: fontFamilies.ui }]}
-          numberOfLines={1}
-        >
-          {subtitle}
-        </Text>
+        {subtitle !== undefined && (
+          <Text
+            style={[styles.subtitle, { color: colors.inkSecondary, fontFamily: fontFamilies.ui }]}
+            numberOfLines={1}
+          >
+            {subtitle}
+          </Text>
+        )}
       </Pressable>
     </ReanimatedSwipeable>
   );
@@ -143,7 +161,9 @@ export function EntryRow({
 
 const styles = StyleSheet.create({
   container: { borderBottomWidth: 1 },
+  containerCompact: { marginHorizontal: space[6] },
   row: { minHeight: 60, paddingVertical: 14, paddingHorizontal: space[6], gap: 3 },
+  rowCompact: { minHeight: 52, paddingVertical: 12, paddingHorizontal: 0 },
   titleLine: {
     flexDirection: 'row',
     alignItems: 'baseline',

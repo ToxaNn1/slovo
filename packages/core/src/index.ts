@@ -41,7 +41,8 @@ export {
 export { createHaptics, type HapticEngine, type Haptics } from './haptics';
 export { type HiddenEntries, type HiddenEntry } from './hidden-entries';
 export { HISTORY_CAP, type History, type HistoryEntry } from './history';
-export { localDayOf, type LocalDate, type LocalDay } from './local-date';
+export { groupByLocalDay, relativeTimeOf, type DayGroup, type RelativeTime } from './history-time';
+export { localDayOf, localTimeOf, type LocalDate, type LocalDay } from './local-date';
 export {
   InvalidEditionConfigError,
   loadEdition,

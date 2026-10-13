@@ -27,6 +27,7 @@ export {
 } from './edition';
 export {
   EditionStringsSchema,
+  fill,
   PluralSchema,
   type EditionStrings,
   type Plural,

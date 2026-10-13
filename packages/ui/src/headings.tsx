@@ -4,6 +4,9 @@ import { useEdition } from './EditionProvider';
 import { overlineType, typeSize } from './tokens';
 import { useTokens } from './TokensProvider';
 
+/** How far the largest text sizes of iOS may scale a screen title. */
+const TITLE_MAX_FONT_SCALE = 1.3;
+
 /** A screen's title, such as Settings, in the word family. */
 export function ScreenTitle({ children }: { children: string }) {
   const { colors, fontFamilies } = useTokens();
@@ -12,6 +15,8 @@ export function ScreenTitle({ children }: { children: string }) {
     <Text
       accessibilityRole="header"
       {...voice}
+      // A 34 pt title at the largest accessibility sizes would break a word across lines.
+      maxFontSizeMultiplier={TITLE_MAX_FONT_SCALE}
       style={[styles.title, { color: colors.ink, fontFamily: fontFamilies.word }]}
     >
       {children}

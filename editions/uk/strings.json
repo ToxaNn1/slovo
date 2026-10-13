@@ -285,7 +285,87 @@
       }
     }
   },
-  "history": {},
+  "history": {
+    "title": "Історія",
+    "count": {
+      "one": "{count} запис",
+      "few": "{count} записи",
+      "many": "{count} записів",
+      "other": "{count} запису"
+    },
+    "cardLabel": "Історія, {count}",
+    "limit": "останні {count}",
+    "empty": {
+      "title": "Історія чиста",
+      "message": "Нові слова з’являться тут, щойно ви їх погортаєте."
+    },
+    "clear": {
+      "action": "Очистити",
+      "actionLabel": "Очистити Історію",
+      "title": "Очистити Історію?",
+      "message": "Улюблене й Колекції залишаться.",
+      "confirm": "Очистити",
+      "cancel": "Скасувати"
+    },
+    "kinds": {
+      "word": "слово",
+      "correction": "виправлення",
+      "wordOfTheDay": "слово дня"
+    },
+    "days": {
+      "today": "Сьогодні",
+      "yesterday": "Учора",
+      "date": "{day} {month}",
+      "dateInYear": "{day} {month} {year}",
+      "months": [
+        "січня",
+        "лютого",
+        "березня",
+        "квітня",
+        "травня",
+        "червня",
+        "липня",
+        "серпня",
+        "вересня",
+        "жовтня",
+        "листопада",
+        "грудня"
+      ]
+    },
+    "relative": {
+      "now": "щойно",
+      "minutesAgo": {
+        "one": "{count} хв тому",
+        "few": "{count} хв тому",
+        "many": "{count} хв тому",
+        "other": "{count} хв тому"
+      },
+      "minutesAgoSpoken": {
+        "one": "{count} хвилину тому",
+        "few": "{count} хвилини тому",
+        "many": "{count} хвилин тому",
+        "other": "{count} хвилини тому"
+      },
+      "today": "сьогодні, {time}",
+      "yesterday": "вчора, {time}",
+      "date": "{day} {month}, {time}",
+      "dateInYear": "{day} {month} {year}, {time}",
+      "months": [
+        "січ.",
+        "лют.",
+        "бер.",
+        "квіт.",
+        "трав.",
+        "черв.",
+        "лип.",
+        "серп.",
+        "вер.",
+        "жовт.",
+        "лист.",
+        "груд."
+      ]
+    }
+  },
   "hiding": {},
   "mix": {},
   "hidden": {}
