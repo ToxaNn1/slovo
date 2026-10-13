@@ -120,12 +120,7 @@ export default function SavedScreen() {
             testID="saved-history"
             title={historyStrings.title}
             count={history.length}
-            accessibilityLabel={[
-              fill(historyStrings.cardLabel, {
-                count: count(historyStrings.count, history.length),
-              }),
-              ...latest.map(({ title, spoken }) => `${title}, ${spoken}`),
-            ].join('. ')}
+            accessibilityLabel={historyText.cardLabel(history.length, latest)}
             onPress={() => {
               router.push('/saved/history');
             }}

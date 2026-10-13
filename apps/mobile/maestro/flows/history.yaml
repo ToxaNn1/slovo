@@ -1,4 +1,4 @@
-# History: a card that stayed on screen is listed in History, with its kind
+# History: an Entry whose card stayed on screen is listed in History, with its kind
 # and its place on the Saved tab, opens as an Entry screen, and clearing History
 # empties it. A subflow of `smoke.yaml`; run it from there.
 appId: ${APP_ID || 'app.slovo.uk'}
@@ -61,9 +61,8 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - tapOn:
     id: history-clear
     point: 15%,50%
-- tapOn:
-    text: Очистити
-    index: 1
+# The alert's button; the screen's own button is named «Очистити Історію» for VoiceOver.
+- tapOn: Очистити
 - assertVisible:
     id: history-empty
 - assertNotVisible:

@@ -50,7 +50,10 @@ describe('the History texts', () => {
       spoken: 'сьогодні, 08:02',
     });
     expect(relative('2026-10-10T21:40:00+03:00').text).toBe('вчора, 21:40');
-    expect(relative('2026-09-30T08:05:00+03:00').text).toBe('30 вер., 08:05');
+    expect(relative('2026-09-30T08:05:00+03:00')).toEqual({
+      text: '30 вер., 08:05',
+      spoken: '30 вересня, 08:05',
+    });
     expect(relative('2025-12-31T12:00:00+02:00').text).toBe('31 груд. 2025, 12:00');
   });
 
@@ -89,5 +92,15 @@ describe('the History texts', () => {
     expect(text.kind(entry('word', false))).toBe('слово');
     expect(text.kind(entry('correction', false))).toBe('виправлення');
     expect(text.kind(entry('word', true))).toBe('слово дня');
+  });
+
+  it('reads the Saved card to VoiceOver in full: the count, then each row with its age', () => {
+    expect(
+      text.cardLabel(312, [
+        { title: 'веремія', spoken: 'щойно' },
+        { title: 'брати участь', spoken: '5 хвилин тому' },
+      ]),
+    ).toBe('Історія, 312 записів. веремія, щойно. брати участь, 5 хвилин тому');
+    expect(text.cardLabel(0, [])).toBe('Історія, 0 записів');
   });
 });

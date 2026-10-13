@@ -100,6 +100,7 @@ export default function HistoryScreen() {
                   <Pressable
                     testID="history-clear"
                     accessibilityRole="button"
+                    accessibilityLabel={strings.clear.actionLabel}
                     {...voice}
                     onPress={confirmClear}
                     style={styles.clear}

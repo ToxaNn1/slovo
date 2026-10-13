@@ -19,6 +19,8 @@ export const HistoryStringsSchema = z.strictObject({
   clear: z.strictObject({
     /** The action beside the title. */
     action: TextSchema,
+    /** The same action as VoiceOver reads it, naming what it clears. */
+    actionLabel: TextSchema,
     title: TextSchema,
     message: TextSchema,
     /** The destructive button. */

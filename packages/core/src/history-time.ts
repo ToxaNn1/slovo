@@ -29,7 +29,7 @@ export function groupByLocalDay<T>(
 
 /**
  * How long ago an instant was, as a row says it. Data only: the Edition's
- * strings turn it into words («щойно», «5 хв тому», «сьогодні, 09:02»).
+ * strings turn it into words ("just now", "5 min ago", "today, 09:02").
  */
 export type RelativeTime =
   | { readonly kind: 'now' }

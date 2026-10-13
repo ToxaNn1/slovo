@@ -3,6 +3,7 @@ import {
   localDayOf,
   type Clock,
   type HistoryEntry,
+  type LocalDate,
   type LocalDay,
   type RelativeTime,
 } from '@slovo/core';
@@ -31,6 +32,19 @@ export function historyText({
   clock: Clock;
 }) {
   const thisYear = () => localDayOf(clock.now(), clock).date.year;
+  /** A date as a template takes it: the one without the year in this year, the other in another. */
+  const dateText = (
+    date: LocalDate,
+    months: readonly string[],
+    templates: { readonly date: string; readonly dateInYear: string },
+    extra: Readonly<Record<string, string>> = {},
+  ) =>
+    fill(date.year === thisYear() ? templates.date : templates.dateInYear, {
+      ...extra,
+      day: String(date.day),
+      month: months[date.month - 1] ?? '',
+      year: String(date.year),
+    });
 
   return {
     /** «слово», «виправлення» or «слово дня». */
@@ -43,11 +57,18 @@ export function historyText({
     dayHeading({ date, daysAgo }: LocalDay): string {
       if (daysAgo <= 0) return strings.days.today;
       if (daysAgo === 1) return strings.days.yesterday;
-      return fill(date.year === thisYear() ? strings.days.date : strings.days.dateInYear, {
-        day: String(date.day),
-        month: strings.days.months[date.month - 1] ?? '',
-        year: String(date.year),
-      });
+      return dateText(date, strings.days.months, strings.days);
+    },
+
+    /**
+     * What VoiceOver reads for the Saved card: the name and the count in full,
+     * then each latest row with how long ago it was Seen in full words.
+     */
+    cardLabel(total: number, rows: readonly { title: string; spoken: string }[]): string {
+      return [
+        fill(strings.cardLabel, { count: count(strings.count, total) }),
+        ...rows.map(({ title, spoken }) => `${title}, ${spoken}`),
+      ].join('. ');
     },
 
     /** «щойно», «5 хв тому», «сьогодні, 09:02»; VoiceOver gets «5 хвилин тому» in full. */
@@ -61,18 +82,14 @@ export function historyText({
         };
       }
       const clockTime = `${twoDigits(time.hour)}:${twoDigits(time.minute)}`;
-      let said: string;
-      if (time.kind === 'today') said = fill(relative.today, { time: clockTime });
-      else if (time.kind === 'yesterday') said = fill(relative.yesterday, { time: clockTime });
-      else {
-        said = fill(time.date.year === thisYear() ? relative.date : relative.dateInYear, {
-          day: String(time.date.day),
-          month: relative.months[time.date.month - 1] ?? '',
-          year: String(time.date.year),
-          time: clockTime,
-        });
+      if (time.kind === 'today' || time.kind === 'yesterday') {
+        const said = fill(relative[time.kind], { time: clockTime });
+        return { text: said, spoken: said };
       }
-      return { text: said, spoken: said };
+      // The screen abbreviates the month; VoiceOver gets it whole.
+      const on = (months: readonly string[]) =>
+        dateText(time.date, months, relative, { time: clockTime });
+      return { text: on(relative.months), spoken: on(strings.days.months) };
     },
   };
 }
