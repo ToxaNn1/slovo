@@ -1,6 +1,6 @@
 import type { Feed, FeedCard } from '@slovo/core';
 import { useIsFocused } from 'expo-router';
-import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { AppState } from 'react-native';
 
 import { useComposition } from './composition';
@@ -19,6 +19,12 @@ export type FeedState =
       readonly startPosition: number;
       /** Tells the Feed which card is on screen now. */
       readonly onCardChange: (position: number) => void;
+      /**
+       * The position of the card on screen now, or nothing when it is not
+       * known. It moves when a hide or its undo drops or puts back cards, also
+       * while Home is out of focus, so the pager shows it after the cards change.
+       */
+      readonly positionOnScreen: () => number | undefined;
       /**
        * Opens a Correction the Word card at `position` links, as the card
        * right after it. Resolves to that card's position, or nothing.
@@ -47,14 +53,29 @@ export function useFeed(): FeedState {
     [feed],
   );
   const cards = useSyncExternalStore(subscribe, () => feed?.cards ?? noCards);
+  /** The card last told to the Feed as on screen, which Home keeps while out of focus. */
+  const shown = useRef<FeedCard>(undefined);
+  const positionOnScreen = useCallback(() => {
+    if (feed === undefined) return undefined;
+    if (feed.position !== undefined) return feed.position;
+    // With no card on screen the Feed keeps no place, so follow the card the reader left.
+    const at = shown.current === undefined ? -1 : feed.cards.indexOf(shown.current);
+    return at === -1 ? undefined : at;
+  }, [feed]);
 
+  // A new position goes straight to the Feed, which takes the card that left
+  // off the screen itself; only leaving Home or the foreground reports none.
   useEffect(() => {
     if (feed === undefined || position === undefined || !onScreen) return;
+    shown.current = feed.cards[position];
     report(feed.show(position));
+  }, [feed, onScreen, position]);
+  useEffect(() => {
+    if (feed === undefined || !onScreen) return;
     return () => {
       report(feed.show(undefined));
     };
-  }, [feed, onScreen, position]);
+  }, [feed, onScreen]);
 
   if (composition.status === 'failed') return { status: 'failed', retry: composition.retry };
   if (feed === undefined) return { status: 'loading' };
@@ -63,6 +84,7 @@ export function useFeed(): FeedState {
     cards,
     startPosition: feed.startPosition,
     onCardChange: setTurnedTo,
+    positionOnScreen,
     openLinkedCorrection: (at, correctionId) => feed.openLinkedCorrection(at, correctionId),
   };
 }

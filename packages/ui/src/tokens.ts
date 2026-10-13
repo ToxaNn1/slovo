@@ -122,3 +122,14 @@ export const fontSizeSteps: Readonly<
 
 /** The smallest side of anything the user taps. */
 export const minTouchTarget = 44;
+
+/** A toast's corner radius, from the design; layout, not an Edition token. */
+export const toastRadius = 6;
+
+/** `elev.toast`: `0 10 30 rgba(0, 0, 0, .4)`. */
+export const toastElevation = {
+  shadowColor: '#000000',
+  shadowOffset: { width: 0, height: 10 },
+  shadowOpacity: 0.4,
+  shadowRadius: 15,
+} as const;

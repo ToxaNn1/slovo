@@ -29,6 +29,7 @@ export { EntryRow, type EntryRowAction } from './EntryRow';
 export { type RowAction } from './SwipeableRow';
 export { FavoriteButton } from './FavoriteButton';
 export { HapticsProvider, useHaptics } from './HapticsProvider';
+export { HideButton } from './HideButton';
 export { ScreenTitle, SectionLabel } from './headings';
 export { MixChip } from './MixChip';
 export {
@@ -63,6 +64,7 @@ export {
   type DesignTokens,
 } from './tokens';
 export { InvertedTokens, TokensProvider, useTokens, type Tokens } from './TokensProvider';
+export { UndoToastProvider, useUndoToast, type UndoToastContent } from './UndoToast';
 export {
   PagerScrollView,
   usePageTurnActions,

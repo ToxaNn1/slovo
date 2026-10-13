@@ -7,6 +7,7 @@ import {
   Placeholder,
   space,
   SwipeHint,
+  UndoToastProvider,
   useTokens,
   VerticalPager,
   type VerticalPagerHandle,
@@ -24,8 +25,19 @@ import { useSwipeHint } from '../swipe-hint';
 
 const { feed: feedStrings } = editionStrings;
 
-/** Home is the Feed: a vertical stream of Entry cards, one per screen. */
+/**
+ * Home is the Feed: a vertical stream of Entry cards, one per screen. Its undo
+ * toasts outlive the card they came from, also when no card is left.
+ */
 export default function HomeScreen() {
+  return (
+    <UndoToastProvider>
+      <FeedScreen />
+    </UndoToastProvider>
+  );
+}
+
+function FeedScreen() {
   const feed = useFeed();
   const swipeHint = useSwipeHint();
   const { colors } = useTokens();
@@ -38,6 +50,20 @@ export default function HomeScreen() {
     pager.current?.turnTo(turnTo);
     setTurnTo(undefined);
   }, [turnTo]);
+
+  const ready = feed.status === 'ready' ? feed : undefined;
+  const cards = ready?.cards;
+  const positionOnScreen = ready?.positionOnScreen;
+  const onCardChange = ready?.onCardChange;
+  // A hide or its undo drops or puts back cards, and the card on screen moves
+  // with them: the pager shows it at once. When no card comes after a hidden
+  // one yet, the pager waits on its page for the next card.
+  useEffect(() => {
+    const position = positionOnScreen?.();
+    if (cards === undefined || position === undefined || position >= cards.length) return;
+    pager.current?.showPage(position);
+    onCardChange?.(position);
+  }, [cards, positionOnScreen, onCardChange]);
 
   if (feed.status === 'loading') return <FeedLoadingScreen />;
   if (feed.status === 'failed') return <LoadFailed onRetry={feed.retry} />;
@@ -54,6 +80,8 @@ export default function HomeScreen() {
         initialIndex={feed.startPosition}
         renderPage={(card, position) => (
           <FeedPage
+            // A card that takes the place of a hidden one starts afresh, scrolled to its top.
+            key={entryIdOf(card) ?? card.kind}
             card={card}
             position={position}
             onOpenCorrection={(correctionId) => {
