@@ -61,7 +61,7 @@ export function useComposition(): CompositionState {
         if (active) setComposition(open);
       },
       (error: unknown) => {
-        console.error('Could not open the Feed', error);
+        console.error('Could not open the Core composition', error);
         if (active) setFailed(true);
       },
     );

@@ -22,7 +22,8 @@ import {
 import { buildLanguagePack, openLanguagePack, type NodeLanguagePack } from './index';
 
 // The Core's Feed over the real Ukrainian Language Pack, opened through the
-// Core composition (spec #96, seam 1). It lives here because only this package can build and read a pack in Node.
+// Core composition (spec #96, seam 1). It lives here because only this
+// package can build and read a pack in Node.
 
 const editionDir = fileURLToPath(new URL('../../../editions/uk', import.meta.url));
 

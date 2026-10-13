@@ -110,8 +110,11 @@ const correctionCardOf = (card: FeedCard | undefined) =>
 /** The ids of the Entries the cards show, in order. */
 const entryIdsOf = (cards: readonly FeedCard[]) => cards.flatMap((card) => entryIdOf(card) ?? []);
 
-/** One app run over the given records: the user state survives between runs. */
-async function session({
+/**
+ * The Feed of one app run over the given records, opened through the Core
+ * composition: the user state survives between runs.
+ */
+async function run({
   records = new Map<string, string>(),
   port = createMemoryUserStatePort(records),
   clock = fakeClock('2026-10-11T09:00:00+03:00').clock,
@@ -129,19 +132,15 @@ async function session({
   corrections?: readonly Correction[];
   content?: ContentReadPort;
   correctionsSwitch?: boolean;
-} = {}) {
-  return openComposition({
+} = {}): Promise<Feed> {
+  const composition = await openComposition({
     content,
     edition: editionWith(correctionsSwitch),
     userState: await openUserState({ port }),
     clock,
     random,
   });
-}
-
-/** The Feed of one app run over the given records. */
-async function run(options: Parameters<typeof session>[0] = {}): Promise<Feed> {
-  return (await session(options)).feed;
+  return composition.feed;
 }
 
 /** A user-state port over the records whose writes fail while `failing` says so. */
@@ -155,11 +154,12 @@ function failingPort(records: Map<string, string>, failing: () => boolean): User
 }
 
 /**
- * The ids of every Entry the Feed offers from where it stands, until it
- * repeats, reaches the end of the Cycle or runs out.
+ * The ids of every Entry the Feed offers from where it stands, after the
+ * `shown` ones (every card so far, unless given), until it repeats, reaches
+ * the end of the Cycle or runs out.
  */
-async function walk(feed: Feed): Promise<string[]> {
-  const ids = entryIdsOf(feed.cards);
+async function walk(feed: Feed, shown = entryIdsOf(feed.cards)): Promise<string[]> {
+  const ids = [...shown];
   for (;;) {
     const id = entryIdOf(await feed.next());
     if (id === undefined || ids.includes(id)) return ids;
@@ -594,11 +594,7 @@ describe('the Feed', () => {
       failing = false;
       const card = await feed.next();
       expect(card?.kind).toBe('word');
-      const newCycle = [entryIdOf(card) ?? 'none'];
-      for (let id = entryIdOf(await feed.next()); id !== undefined && !newCycle.includes(id);) {
-        newCycle.push(id);
-        id = entryIdOf(await feed.next());
-      }
+      const newCycle = await walk(feed, entryIdsOf(card === undefined ? [] : [card]));
       // Nothing Seen, in the order of the seed drawn on the next try.
       expect(newCycle).toEqual(await walk(await run({ words: small, random: randomOf(0.5) })));
       // The next app run reads the same new Cycle; its Word of the Day is
