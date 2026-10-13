@@ -164,6 +164,45 @@ describe('Hidden Entries', () => {
     expect(app.hiddenEntries.list).toEqual([]);
   });
 
+  it('hides an Entry with the time it had before, so undoing a restore leaves the list exactly as it was', async () => {
+    const time = fakeClock();
+    const app = await run({ clock: time.clock });
+    await app.hiddenEntries.hide('w_live1');
+    time.advance(MINUTE);
+    await app.hiddenEntries.hide('w_live2');
+    time.advance(MINUTE);
+    await app.hiddenEntries.hide('c_one');
+    const before = app.hiddenEntries.list;
+    const oldest = before.find(({ entryId }) => entryId === 'w_live1');
+
+    await app.hiddenEntries.restore('w_live1');
+    time.advance(MINUTE);
+    await app.hiddenEntries.hide('w_live1', oldest?.hiddenAt);
+
+    expect(app.hiddenEntries.list).toEqual(before);
+    expect(idsOf(app)).toEqual(['c_one', 'w_live2', 'w_live1']);
+  });
+
+  it('keeps the time it had before across reopening, and a fresh hide still uses the clock', async () => {
+    const records = new Map<string, string>();
+    const time = fakeClock();
+    const first = await run({ records, clock: time.clock });
+    await first.hiddenEntries.hide('w_live1');
+    const hiddenAt = first.hiddenEntries.list[0]?.hiddenAt;
+    time.advance(MINUTE);
+    await first.hiddenEntries.restore('w_live1');
+    time.advance(MINUTE);
+    await first.hiddenEntries.hide('w_live1', hiddenAt);
+    await first.hiddenEntries.hide('w_live2');
+
+    const app = await run({ records, clock: time.clock });
+
+    expect(app.hiddenEntries.list.map(({ entryId, hiddenAt }) => [entryId, hiddenAt])).toEqual([
+      ['w_live2', new Date('2026-10-11T09:02:00+03:00')],
+      ['w_live1', new Date('2026-10-11T09:00:00+03:00')],
+    ]);
+  });
+
   it('lists the newest first, Corrections like Words', async () => {
     const time = fakeClock();
     const app = await run({ clock: time.clock });

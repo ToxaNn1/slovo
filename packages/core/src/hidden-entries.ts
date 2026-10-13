@@ -30,10 +30,12 @@ export interface HiddenEntries {
   /** Whether the Entry is Hidden. */
   has(entryId: string): boolean;
   /**
-   * Hides the Entry, as of now. A Hidden Entry keeps the time it was hidden,
-   * and an id the Language Pack doesn't have is skipped.
+   * Hides the Entry, as of now, or as of `hiddenAt` when given: the undo of a
+   * restore passes the time the Entry was hidden before, so it returns to its
+   * old place in the list. A Hidden Entry keeps the time it was hidden, and an
+   * id the Language Pack doesn't have is skipped.
    */
-  hide(entryId: string): Promise<void>;
+  hide(entryId: string, hiddenAt?: Date): Promise<void>;
   /** Makes a Hidden Entry eligible again. It is also the undo of a hide. */
   restore(entryId: string): Promise<void>;
   /** Calls `listener` after each change of the list. Returns the call that stops it. */
@@ -93,11 +95,10 @@ export async function openHiddenEntries({
 
   const has = (entryId: string) => list.some((hiddenEntry) => hiddenEntry.entryId === entryId);
 
-  async function hide(entryId: string): Promise<void> {
+  async function hide(entryId: string, hiddenAt: Date = clock.now()): Promise<void> {
     if (has(entryId)) return;
     const row = await rows.row(entryId);
     if (row === undefined) return;
-    const hiddenAt = clock.now();
     await userState.write(hiddenRecords.record(entryId).change(hiddenAt.toISOString()));
     await changeList([...list, { entryId, hiddenAt, row }].sort(newestFirst));
   }
@@ -121,7 +122,7 @@ export async function openHiddenEntries({
       return list;
     },
     has,
-    hide: (entryId) => inTurn(() => hide(entryId)),
+    hide: (entryId, hiddenAt) => inTurn(() => hide(entryId, hiddenAt)),
     restore: (entryId) => inTurn(() => restore(entryId)),
     subscribe(listener) {
       listeners.add(listener);
