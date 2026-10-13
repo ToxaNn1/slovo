@@ -462,6 +462,28 @@ describe('eligibility over the Mix', () => {
     expect(await walk(app.feed)).toEqual(twin);
   });
 
+  it('a Category taken out leaves the Feed at once, the card on screen included, and comes back where it was when put back', async () => {
+    const app = await run();
+    await app.feed.show(0);
+    await app.feed.show(1);
+    const before = entryIdsOf(app.feed.cards);
+    const onScreen = before[1] ?? '';
+    const hidden = categories.find((category) => isWordOf(category)(onScreen)) ?? nature;
+
+    await app.mix.takeOut(hidden.id);
+
+    expect(entryIdsOf(app.feed.cards).filter(isWordOf(hidden))).toEqual([]);
+    expect(entryIdsOf(app.feed.cards).slice(0, 1)).toEqual(
+      before.filter((id) => !isWordOf(hidden)(id)).slice(0, 1),
+    );
+    expect(app.feed.cards[(app.feed.position ?? -1) + 1]).toBeDefined();
+
+    await app.mix.putBack(hidden.id);
+
+    expect(entryIdsOf(app.feed.cards).slice(0, before.length)).toEqual(before);
+    expect(entryIdOf(app.feed.cards[app.feed.position ?? -1])).toBe(onScreen);
+  });
+
   it('a Word of the Day whose Category is taken out is chosen again', async () => {
     const records = new Map<string, string>();
     const time = fakeClock();

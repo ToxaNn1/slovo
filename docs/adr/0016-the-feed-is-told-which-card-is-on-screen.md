@@ -11,3 +11,14 @@ The Core's Feed holds every rule that decides whether Seen is right. A shell tel
 ## Amendment: one composition from 0.3
 
 The composition left open above is adopted in ADR 0018: from 0.3 the Feed opens together with Favorites, Collections, History, Hidden Entries and the Mix, while the settings still open before the Language Pack.
+
+## Amendment: the Feed moves the card on screen when eligibility changes (0.3)
+
+A hide or a Mix change drops cards from the Feed at once, the one on screen included, and an undo puts them back (ADR 0015). The shell can't tell where the reader is after that, so the Feed keeps it and tells the shell: it keeps the card on screen in place, gives the place to the next card when the card on screen is dropped, and gives it back to that card when its Entry is eligible again before the reader moved. The shell turns its pager to the Feed's position after the cards change. A card that leaves the screen this way is Seen by the dwell rule, like any card that leaves it.
+
+A dropped card keeps its place among the session's cards while it is out, so an undo puts it back exactly where it left, also when cards were got ready after it.
+
+### Considered Options
+
+- **The shell keeps its pager index and the Feed follows it**: rejected. A card dropped before the one on screen would move the reader one card on without a swipe.
+- **Forget a dropped card and get it again like any next card**: rejected. Undo must put the card back where it was, not after the ready card.
