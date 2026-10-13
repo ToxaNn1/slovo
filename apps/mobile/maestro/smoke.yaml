@@ -37,3 +37,4 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - runFlow: flows/mix.yaml
 - runFlow: flows/hiding.yaml
 - runFlow: flows/hiding-mix.yaml
+- runFlow: flows/hidden.yaml

@@ -32,6 +32,7 @@ export { HapticsProvider, useHaptics } from './HapticsProvider';
 export { HideButton } from './HideButton';
 export { ScreenTitle, SectionLabel } from './headings';
 export { MixChip } from './MixChip';
+export { OutlineButton } from './OutlineButton';
 export {
   SavedCard,
   SavedCardCollection,
