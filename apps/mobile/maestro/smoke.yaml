@@ -35,3 +35,4 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - runFlow: flows/collections.yaml
 - runFlow: flows/history.yaml
 - runFlow: flows/mix.yaml
+- runFlow: flows/hiding.yaml

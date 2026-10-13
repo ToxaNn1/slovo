@@ -1,0 +1,55 @@
+# Hiding: hide the card on screen from its action row, see the next card take
+# its place under the undo toast, and undo, which brings the card back. A
+# subflow of `smoke.yaml`; run it from there. It expects no Hidden Entry, as it
+# leaves none.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- tapOn:
+    id: tab-home
+# The hide button sits under the card, which may be taller than the screen.
+- scrollUntilVisible:
+    element:
+      id: hide-button
+    # Off the tab bar, which covers the bottom of a card that barely fits.
+    centerElement: true
+# A tap while the card still glides only stops it.
+- waitForAnimationToEnd
+- assertVisible:
+    id: hide-button
+    text: Не показувати
+- tapOn:
+    id: hide-button
+# The hide choice is the system action sheet; cancel leaves the card.
+- assertVisible: Не показувати цей запис
+- takeScreenshot: hiding-choice
+- tapOn: Скасувати
+- assertNotVisible: Не показувати цей запис
+- assertNotVisible:
+    id: undo-toast
+- tapOn:
+    id: hide-button
+- tapOn: Не показувати цей запис
+# The toast names the hidden Entry; keep its name to find the card again. The
+# toast stays 4 s, so the checks before the undo are quick.
+- assertVisible:
+    id: undo-toast-message
+    text: «.+» приховано
+- copyTextFrom:
+    id: undo-toast-message
+- evalScript: ${output.hidden = maestro.copiedText.slice(1, maestro.copiedText.lastIndexOf('»'))}
+# The next card took its place: a card is on screen, and it is another Entry's.
+- assertVisible:
+    id: (word|correction)-card
+- assertNotVisible:
+    id: word-lemma|correction-standard
+    text: .*${output.hidden}.*
+- tapOn:
+    id: undo-toast-undo
+    text: Скасувати
+- assertNotVisible:
+    id: undo-toast
+# Undo puts the hidden card back on screen, scrolled to its top.
+- assertVisible:
+    id: word-lemma|correction-standard
+    text: .*${output.hidden}.*
+- takeScreenshot: hiding-undone
