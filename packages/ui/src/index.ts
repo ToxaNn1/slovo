@@ -29,7 +29,10 @@ export { EntryRow, type EntryRowAction } from './EntryRow';
 export { FavoriteButton } from './FavoriteButton';
 export { HapticsProvider, useHaptics } from './HapticsProvider';
 export { ScreenTitle, SectionLabel } from './headings';
-export { SavedCard, SavedCardTitles } from './SavedCard';
+export { SavedCard, SavedCardCollections, SavedCardCollection, SavedCardTitles } from './SavedCard';
+export { CollectionButton } from './CollectionButton';
+export { CollectionSheet } from './CollectionSheet';
+export { BottomSheet } from './BottomSheet';
 export { Placeholder } from './Placeholder';
 export {
   PronunciationButton,

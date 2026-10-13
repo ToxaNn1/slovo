@@ -67,7 +67,12 @@ export function EntryScreen({
         />
       </View>
       {card !== undefined && entryIdOf(card) === entryId && (
-        <ScrollView contentContainerStyle={styles.content}>
+        <ScrollView
+          // The sheet of the action row is a child in React's tree, so a tap in its
+          // name field must not be swallowed to put the keyboard away.
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.content}
+        >
           <EntryCard
             card={card}
             onOpenCorrection={(correctionId) => {

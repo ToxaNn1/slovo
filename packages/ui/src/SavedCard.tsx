@@ -25,7 +25,9 @@ function Header({ title, count }: { title: string; count: number }) {
  * over what the list shows in brief. The `primary` card (Favorites) sits on
  * the ink fill and draws its content in the other colour scheme; the others
  * sit on the surface. A tap opens the list; VoiceOver reads the card as one
- * button with its full count.
+ * button with its full count. A card without `onPress` is no button yet (its
+ * list comes with a later ticket): it is one element for VoiceOver with the
+ * same label, and a tap does nothing.
  */
 export function SavedCard({
   title,
@@ -41,7 +43,7 @@ export function SavedCard({
   /** The card as VoiceOver reads it, the count in full words, e.g. «Улюблене, 24 записи». */
   accessibilityLabel: string;
   primary?: boolean;
-  onPress: () => void;
+  onPress?: () => void;
   testID?: string;
   children?: ReactNode;
 }) {
@@ -53,6 +55,26 @@ export function SavedCard({
       {children}
     </>
   );
+  const cardStyle = [
+    styles.card,
+    primary
+      ? { backgroundColor: colors.ink, paddingVertical: 22, gap: space[4] }
+      : { backgroundColor: colors.surface, borderColor: colors.line, borderWidth: 1 },
+    { borderRadius: radii.card },
+  ];
+  const inner = primary ? <InvertedTokens>{content}</InvertedTokens> : content;
+  if (onPress === undefined)
+    return (
+      <View
+        testID={testID}
+        accessible
+        accessibilityLabel={accessibilityLabel}
+        {...voice}
+        style={cardStyle}
+      >
+        {inner}
+      </View>
+    );
   return (
     <Pressable
       testID={testID}
@@ -60,15 +82,9 @@ export function SavedCard({
       accessibilityLabel={accessibilityLabel}
       {...voice}
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.card,
-        primary
-          ? { backgroundColor: colors.ink, paddingVertical: 22, gap: space[4] }
-          : { backgroundColor: colors.surface, borderColor: colors.line, borderWidth: 1 },
-        { borderRadius: radii.card, opacity: pressed ? 0.85 : 1 },
-      ]}
+      style={({ pressed }) => [cardStyle, { opacity: pressed ? 0.85 : 1 }]}
     >
-      {primary ? <InvertedTokens>{content}</InvertedTokens> : content}
+      {inner}
     </Pressable>
   );
 }
@@ -97,7 +113,53 @@ export function SavedCardTitles({ titles }: { titles: readonly string[] }) {
   );
 }
 
+/** A Collection on the Collections card: its name over its count, on the sunken fill. */
+export function SavedCardCollection({
+  name,
+  count,
+  accessibilityLabel,
+  testID,
+}: {
+  name: string;
+  /** The Entries it holds, in the Edition's plural form, e.g. «17 записів». */
+  count: string;
+  /** The Collection as VoiceOver reads it, e.g. «Для листів, 17 записів». */
+  accessibilityLabel: string;
+  testID?: string;
+}) {
+  const { colors, fontFamilies, radii } = useTokens();
+  const { voice } = useEdition();
+  return (
+    <View
+      testID={testID}
+      accessible
+      accessibilityLabel={accessibilityLabel}
+      {...voice}
+      style={[
+        styles.collection,
+        { backgroundColor: colors.surfaceSunken, borderRadius: radii.chip },
+      ]}
+    >
+      <Text style={[styles.collectionName, { color: colors.ink, fontFamily: fontFamilies.ui }]}>
+        {name}
+      </Text>
+      <Text style={[styles.collectionCount, { color: colors.muted, fontFamily: fontFamilies.ui }]}>
+        {count}
+      </Text>
+    </View>
+  );
+}
+
+/** The Collections of a card in one row, of one width each. */
+export function SavedCardCollections({ children }: { children: ReactNode }) {
+  return <View style={styles.collections}>{children}</View>;
+}
+
 const styles = StyleSheet.create({
+  collections: { flexDirection: 'row', gap: space[3] },
+  collection: { flex: 1, paddingHorizontal: space[3], paddingVertical: space[3], gap: space[1] },
+  collectionName: { fontSize: 15, fontWeight: '700' },
+  collectionCount: { fontSize: 14 },
   card: { padding: space[5], gap: 14, overflow: 'hidden' },
   header: {
     flexDirection: 'row',

@@ -1,0 +1,93 @@
+# The «До колекції» sheet: file a card from the Feed into a new Collection,
+# see the Collections card of the Saved tab show it at once, then undo and redo
+# the filing from the sheet. A subflow of `smoke.yaml`; run it from there. It
+# expects no Collections, as it leaves one (named «Poets», a Latin name so the
+# keyboard of any simulator can type it).
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- tapOn:
+    id: tab-home
+# The Collections button sits under the card, which may be taller than the screen.
+- scrollUntilVisible:
+    element:
+      id: collection-button
+    # Off the tab bar, which covers the bottom of a card that barely fits.
+    centerElement: true
+# A tap while the card still glides only stops it.
+- waitForAnimationToEnd
+- assertVisible:
+    id: collection-button
+    text: Додати до колекції
+- tapOn:
+    id: collection-button
+# With no Collection yet the name field is open at once.
+- assertVisible:
+    id: collection-name
+- waitForAnimationToEnd
+- takeScreenshot: collection-sheet-empty
+# A name that breaks a rule is refused, with its reason.
+- tapOn:
+    id: collection-create
+- assertVisible:
+    id: collection-refusal
+    text: Дайте колекції назву.
+- tapOn:
+    id: collection-name
+- inputText: Poets
+- waitForAnimationToEnd
+- tapOn:
+    id: collection-create
+# The new Collection has the card in it, already checked.
+- assertVisible:
+    id: collection-row-.*
+    text: Poets, 1 запис
+- assertVisible:
+    id: collection-new
+- takeScreenshot: collection-sheet-created
+# The same name again, in another letter case, is refused.
+- tapOn:
+    id: collection-new
+- inputText: poets
+- waitForAnimationToEnd
+- tapOn:
+    id: collection-create
+- assertVisible:
+    id: collection-refusal
+    text: Колекція з такою назвою вже є.
+- takeScreenshot: collection-sheet-refused
+# «Готово» only closes: the filing was applied when it was made.
+- tapOn:
+    id: collection-done
+- assertNotVisible:
+    id: collection-done
+- tapOn:
+    id: tab-saved
+- assertVisible:
+    id: saved-collections
+    text: Колекції, 1 колекція
+- assertVisible:
+    id: saved-collection-.*
+    text: Poets, 1 запис
+- takeScreenshot: collection-saved-overview
+# Back on the card, a checkbox applies at once: unfiled, and the card counts it.
+- tapOn:
+    id: tab-home
+- tapOn:
+    id: collection-button
+- tapOn:
+    id: collection-row-.*
+    text: Poets, 1 запис
+- assertVisible:
+    id: collection-row-.*
+    text: Poets, 0 записів
+- tapOn:
+    id: collection-done
+- tapOn:
+    id: tab-saved
+- assertVisible:
+    id: saved-collection-.*
+    text: Poets, 0 записів
+- tapOn:
+    id: tab-home
+- assertVisible:
+    id: home

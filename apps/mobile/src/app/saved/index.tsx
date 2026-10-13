@@ -2,6 +2,8 @@ import {
   fill,
   OrnamentBand,
   SavedCard,
+  SavedCardCollection,
+  SavedCardCollections,
   SavedCardTitles,
   ScreenTitle,
   space,
@@ -13,23 +15,28 @@ import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useComposition } from '../../composition';
+import { useCollectionList } from '../../collections';
 import { editionStrings } from '../../edition';
 import { useFavoriteList } from '../../favorites';
 import { LoadFailed } from '../../language-pack';
 
-const { favorites: strings } = editionStrings;
+const { favorites: strings, collections: collectionStrings } = editionStrings;
 
 /** How many of the newest Lemmas the Favorites card shows. */
 const NEWEST_SHOWN = 3;
+/** How many of the newest Collections the Collections card shows. */
+const NEWEST_COLLECTIONS_SHOWN = 3;
 
 /**
  * The Saved tab's overview: a card per list with its count. Favorites comes
  * first, on the ink fill, with its newest Lemmas and the ornament band
- * (Decor slot 2). Collections and History join it later in 0.3.
+ * (Decor slot 2). Collections follows on the surface with its count and
+ * its newest Collections; History joins later in 0.3.
  */
 export default function SavedScreen() {
   const composition = useComposition();
   const favorites = useFavoriteList();
+  const collections = useCollectionList();
   const { colors } = useTokens();
   const { count } = useEdition();
   const router = useRouter();
@@ -60,6 +67,36 @@ export default function SavedScreen() {
               titles={favorites.slice(0, NEWEST_SHOWN).map((favorite) => favorite.row.title)}
             />
             <OrnamentBand />
+          </SavedCard>
+        )}
+        {composition.status === 'ready' && (
+          <SavedCard
+            testID="saved-collections"
+            title={collectionStrings.title}
+            count={collections.length}
+            accessibilityLabel={fill(collectionStrings.cardLabel, {
+              count: count(collectionStrings.collectionCount, collections.length),
+            })}
+          >
+            {collections.length > 0 && (
+              <SavedCardCollections>
+                {collections.slice(0, NEWEST_COLLECTIONS_SHOWN).map((collection) => {
+                  const entries = count(collectionStrings.count, collection.count);
+                  return (
+                    <SavedCardCollection
+                      key={collection.id}
+                      testID={`saved-collection-${collection.id}`}
+                      name={collection.name}
+                      count={entries}
+                      accessibilityLabel={fill(collectionStrings.collectionLabel, {
+                        name: collection.name,
+                        count: entries,
+                      })}
+                    />
+                  );
+                })}
+              </SavedCardCollections>
+            )}
           </SavedCard>
         )}
       </ScrollView>

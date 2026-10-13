@@ -254,7 +254,37 @@
       "toFeed": "До Стрічки"
     }
   },
-  "collections": {},
+  "collections": {
+    "title": "Колекції",
+    "count": {
+      "one": "{count} запис",
+      "few": "{count} записи",
+      "many": "{count} записів",
+      "other": "{count} запису"
+    },
+    "collectionCount": {
+      "one": "{count} колекція",
+      "few": "{count} колекції",
+      "many": "{count} колекцій",
+      "other": "{count} колекції"
+    },
+    "cardLabel": "Колекції, {count}",
+    "collectionLabel": "{name}, {count}",
+    "button": "Додати до колекції",
+    "sheet": {
+      "title": "До колекції",
+      "rowLabel": "{name}, {count}",
+      "newCollection": "+ Нова колекція",
+      "namePlaceholder": "Назва колекції",
+      "create": "Створити",
+      "done": "Готово",
+      "refusal": {
+        "empty": "Дайте колекції назву.",
+        "tooLong": "Назва задовга: не більше 40 символів.",
+        "duplicate": "Колекція з такою назвою вже є."
+      }
+    }
+  },
   "history": {},
   "hiding": {},
   "mix": {},
