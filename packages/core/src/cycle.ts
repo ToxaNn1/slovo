@@ -20,7 +20,8 @@ export interface CycleChange {
  * and the Entries Seen in it. It is read from the user state once, when it
  * opens, and kept in memory after that, so open one per app session and share
  * it (ADR 0013). A change is made in memory only once the caller has written
- * it, see `CycleChange`.
+ * it, see `CycleChange`. When eligibility changes, it reads the eligible
+ * Entries again (ADR 0015).
  */
 export interface Cycle {
   /** Every Entry the Cycle covers, each kind in the Cycle order. */
@@ -39,6 +40,14 @@ export interface Cycle {
    * is the new Cycle's order.
    */
   start(): Promise<CycleChange & { readonly order: EntryIds }>;
+  /**
+   * Reads the eligible Entries again, once eligibility has changed (a Hidden
+   * Entry, the Mix), and covers those from now on. The seed and what is Seen
+   * stay, and so does the order of the Entries that stay: an Entry eligible
+   * again takes back its place. It writes nothing. Of reads that overlap,
+   * here or in `start`, the one asked for last wins.
+   */
+  readEligibleAgain(): Promise<void>;
 }
 
 const { cycle: cycleRecord, seen: seenRecords } = userStateRecords;
@@ -48,24 +57,37 @@ function drawSeed(random: Random): number {
   return Math.floor(random.next() * 2 ** 32);
 }
 
+/** The value with its bits mixed by the murmur3 finalizer. */
+function mix(value: number): number {
+  let hash = Math.imul(value ^ (value >>> 16), 0x85ebca6b);
+  hash = Math.imul(hash ^ (hash >>> 13), 0xc2b2ae35);
+  return (hash ^ (hash >>> 16)) >>> 0;
+}
+
+/** The place of the id in a shuffle with the seed: an FNV-1a hash of the id that starts from the seed. */
+function rank(id: string, seed: number): number {
+  let hash = mix(seed);
+  for (let index = 0; index < id.length; index += 1) {
+    hash = Math.imul(hash ^ id.charCodeAt(index), 0x01000193);
+  }
+  return mix(hash);
+}
+
 /**
- * The ids in an order that depends only on the seed (drawn one by one with
- * the mulberry32 generator), so a Cycle keeps its order across restarts.
+ * The ids in an order that depends only on the seed and each id, so a Cycle
+ * keeps its order across restarts, and the ids that stay keep theirs when
+ * some leave or come back.
  */
 function shuffle(ids: readonly string[], seed: number): string[] {
-  let state = seed >>> 0;
-  function nextNumber(): number {
-    state = (state + 0x6d2b79f5) >>> 0;
-    let t = state;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 2 ** 32;
-  }
-  const pool = [...ids];
-  const order: string[] = [];
-  while (pool.length > 0) order.push(...pool.splice(Math.floor(nextNumber() * pool.length), 1));
-  return order;
+  const ranked = ids.map((id) => ({ id, rank: rank(id, seed) }));
+  ranked.sort((first, second) => first.rank - second.rank || (first.id < second.id ? -1 : 1));
+  return ranked.map(({ id }) => id);
 }
+
+const orderOf = ({ words, corrections }: EntryIds, seed: number): EntryIds => ({
+  words: shuffle(words, seed),
+  corrections: shuffle(corrections, seed),
+});
 
 /**
  * Opens the current Cycle, or starts the first one with a seed from the
@@ -84,12 +106,25 @@ export async function openCycle({
   const stored = await userState.read(cycleRecord);
   let cycle = stored ?? { id: 1, seed: drawSeed(random) };
   if (stored === undefined) await userState.write(cycleRecord.change(cycle));
-  async function orderOf(seed: number): Promise<EntryIds> {
-    const { words, corrections } = await entries.eligible();
-    return { words: shuffle(words, seed), corrections: shuffle(corrections, seed) };
-  }
-  let order = await orderOf(cycle.seed);
+  let order = orderOf(await entries.eligible(), cycle.seed);
   const seen = new Set((await userState.list(seenRecords)).keys());
+
+  // Each read of the eligible Entries is numbered as it is asked for, and the
+  // Cycle keeps what the last one asked for read, whichever ends last.
+  let readsAsked = 0;
+  let readKept = 0;
+  async function readEligible(): Promise<{ eligible: EntryIds; keep(): boolean }> {
+    const asked = (readsAsked += 1);
+    const eligible = await entries.eligible();
+    return {
+      eligible,
+      keep() {
+        if (asked < readKept) return false;
+        readKept = asked;
+        return true;
+      },
+    };
+  }
 
   return {
     order: () => order,
@@ -110,7 +145,8 @@ export async function openCycle({
     },
     async start() {
       const started = { id: cycle.id + 1, seed: drawSeed(random) };
-      const startedOrder = await orderOf(started.seed);
+      const read = await readEligible();
+      const startedOrder = orderOf(read.eligible, started.seed);
       // Every Seen record, also any kept by another Cycle over the user state.
       const seenIds = (await userState.list(seenRecords)).keys();
       return {
@@ -120,11 +156,16 @@ export async function openCycle({
           ...[...seenIds].flatMap((id) => [...seenRecords.record(id).change(undefined)]),
         ]),
         commit() {
+          // Entries read again since are covered with the new seed.
+          order = read.keep() ? startedOrder : orderOf(order, started.seed);
           cycle = started;
-          order = startedOrder;
           seen.clear();
         },
       };
+    },
+    async readEligibleAgain() {
+      const read = await readEligible();
+      if (read.keep()) order = orderOf(read.eligible, cycle.seed);
     },
   };
 }
