@@ -1,8 +1,9 @@
 import type { Entry, Word } from '@slovo/contracts';
 
 import { buildCorrectionCard, type CorrectionCardModel } from './correction-card';
-import type { Cycle, CycleChange } from './cycle';
+import type { Cycle } from './cycle';
 import type { Entries } from './entries';
+import type { HistoryRecorder } from './history';
 import { todayKey, type LocalDate } from './local-date';
 import type { Clock } from './ports';
 import type { UserState } from './user-state';
@@ -145,12 +146,14 @@ export async function openFeed({
   clock,
   cycle,
   wordOfTheDay,
+  history,
 }: {
   entries: Entries;
   userState: UserState;
   clock: Clock;
   cycle: Cycle;
   wordOfTheDay: WordOfTheDay;
+  history: HistoryRecorder;
 }): Promise<Feed> {
   let cards: readonly FeedCard[] = [];
   const listeners = new Set<() => void>();
@@ -336,14 +339,13 @@ export async function openFeed({
     return gettingReady ?? Promise.resolve();
   }
 
-  /** The change that makes the Entry of a card that left the screen Seen, if it stayed long enough. */
-  function seenOnLeaving(left: FeedCard | undefined, stayed: number): CycleChange | undefined {
+  /** The Entry of a card that left the screen, if it stayed there long enough to be Seen. */
+  function seenOnLeaving(left: FeedCard | undefined, stayed: number): string | undefined {
     const entryId = entryIdOf(left);
     // A card of an earlier Cycle counts for that Cycle only.
     if (left === undefined || entryId === undefined || cards.indexOf(left) < cycleStart)
       return undefined;
-    if (stayed < SEEN_DWELL_MS) return undefined;
-    return cycle.markSeen(entryId);
+    return stayed < SEEN_DWELL_MS ? undefined : entryId;
   }
 
   async function show(position: number | undefined): Promise<void> {
@@ -357,12 +359,17 @@ export async function openFeed({
     // In turn with the requests that change the cards, so a new Cycle never
     // starts between the card leaving the screen and its Entry becoming Seen.
     const kept = inTurn(async () => {
-      const seen = seenOnLeaving(left, stayed);
+      const seenId = seenOnLeaving(left, stayed);
+      const seen = seenId === undefined ? undefined : cycle.markSeen(seenId);
       const changes = new Map([
         ...(seen?.changes ?? []),
         ...(entryId === undefined ? [] : feedPosition.change({ entryId, date })),
       ]);
-      if (changes.size > 0) await userState.write(changes);
+      // History is recorded in the same write as Seen, also for an Entry Seen already.
+      if (seenId !== undefined) {
+        const wordOfTheDay = left?.kind === 'word' && left.wordOfTheDay !== undefined;
+        await history.record({ entryId: seenId, seenAt: new Date(now), wordOfTheDay }, changes);
+      } else if (changes.size > 0) await userState.write(changes);
       seen?.commit();
     });
     await Promise.all([kept, keepNextCardReady()]);

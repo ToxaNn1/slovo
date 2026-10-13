@@ -5,6 +5,7 @@ import { createEntries } from './entries';
 import { createEntryRows, type EntryRowModel } from './entry-row';
 import { openFavorites, type Favorites } from './favorites';
 import { buildEntryCard, openFeed, type EntryFeedCard, type Feed } from './feed';
+import { openHistory, type History } from './history';
 import type { Clock, ContentReadPort, Random } from './ports';
 import type { UserState } from './user-state';
 import { openWordOfTheDay } from './word-of-the-day';
@@ -22,6 +23,8 @@ export interface Composition {
   readonly favorites: Favorites;
   /** Collections, which the sheet and the Collections screens change. */
   readonly collections: Collections;
+  /** History, which the Feed records in the same write as Seen. */
+  readonly history: History;
   /**
    * The Entry card of any Entry, Retired or not, for a screen that opens a
    * kept Entry; nothing for an id the Language Pack doesn't have. Opening it
@@ -56,15 +59,24 @@ export async function openComposition({
   const rows = createEntryRows(entries);
   const cycle = await openCycle({ entries, userState, random });
   const wordOfTheDay = await openWordOfTheDay({ cycle, userState, clock });
-  const [feed, favorites, collections] = await Promise.all([
-    openFeed({ entries, userState, clock, cycle, wordOfTheDay }),
+  const [{ history, recorder }, favorites, collections] = await Promise.all([
+    openHistory({ rows, userState }),
     openFavorites({ rows, userState, clock }),
     openCollections({ rows, userState, clock, random }),
   ]);
+  const feed = await openFeed({
+    entries,
+    userState,
+    clock,
+    cycle,
+    wordOfTheDay,
+    history: recorder,
+  });
   return {
     feed,
     favorites,
     collections,
+    history,
     async entryCard(entryId) {
       const entry = await entries.get(entryId);
       return entry === undefined ? undefined : buildEntryCard(entries, entry);
