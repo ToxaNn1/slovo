@@ -17,6 +17,8 @@ export type CompositionState =
   | { readonly status: 'ready'; readonly composition: Composition };
 
 const opened = new WeakMap<SQLiteDatabase, Promise<Composition>>();
+/** The composition once it is open, so a screen mounted later draws it at once. */
+const ready = new WeakMap<SQLiteDatabase, Composition>();
 
 async function openOver(db: SQLiteDatabase): Promise<Composition> {
   return openComposition({
@@ -37,10 +39,16 @@ async function openOver(db: SQLiteDatabase): Promise<Composition> {
 function compositionOver(db: SQLiteDatabase): Promise<Composition> {
   let opening = opened.get(db);
   if (opening === undefined) {
-    opening = openOver(db).catch((error: unknown) => {
-      opened.delete(db);
-      throw error;
-    });
+    opening = openOver(db).then(
+      (composition) => {
+        ready.set(db, composition);
+        return composition;
+      },
+      (error: unknown) => {
+        opened.delete(db);
+        throw error;
+      },
+    );
     opened.set(db, opening);
   }
   return opening;
@@ -49,7 +57,7 @@ function compositionOver(db: SQLiteDatabase): Promise<Composition> {
 /** The Core composition of the app session, once it is open. */
 export function useComposition(): CompositionState {
   const db = useSQLiteContext();
-  const [composition, setComposition] = useState<Composition>();
+  const [composition, setComposition] = useState(() => ready.get(db));
   const [failed, setFailed] = useState(false);
   /** Counts the tries to open the composition, so a retry opens it again. */
   const [attempt, setAttempt] = useState(0);

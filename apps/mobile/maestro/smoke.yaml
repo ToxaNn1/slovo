@@ -1,4 +1,4 @@
-# Simulator smoke flow, the 0.2 flow (spec #2, seam 3; spec #51, seam 4).
+# Simulator smoke flow (spec #2, seam 3; spec #51, seam 4; spec #96, seam 4).
 # Run it locally, never in CI:
 #
 #   SLOVO_EDITION=uk pnpm start          # Metro, in one terminal
@@ -29,3 +29,4 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - runFlow: flows/quick-swipes.yaml
 - runFlow: flows/relaunch.yaml
 - runFlow: flows/placeholders.yaml
+- runFlow: flows/favorites.yaml

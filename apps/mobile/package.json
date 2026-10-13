@@ -14,6 +14,7 @@
     "test:smoke": "maestro test maestro/smoke.yaml"
   },
   "dependencies": {
+    "@formatjs/intl-pluralrules": "^6.3.15",
     "@slovo/contracts": "workspace:*",
     "@slovo/core": "workspace:*",
     "@slovo/language-pack": "workspace:*",

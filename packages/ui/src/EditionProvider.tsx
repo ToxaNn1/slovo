@@ -1,4 +1,4 @@
-import type { EditionStrings } from '@slovo/contracts';
+import type { EditionStrings, Plural } from '@slovo/contracts';
 import type { Edition } from '@slovo/core';
 import { createContext, useContext, useMemo, type ComponentType, type ReactNode } from 'react';
 
@@ -13,6 +13,8 @@ export interface EditionPresentation {
   readonly voice: { readonly accessibilityLanguage: string };
   /** The display name of a Category of the Edition, by id. */
   categoryName(categoryId: string): string | undefined;
+  /** A count in the plural form the Edition's language takes for it, e.g. «17 записів». */
+  readonly count: (forms: Plural, count: number) => string;
   /** The Pronunciation button for a Lemma; a Word card has none without it. */
   readonly Pronunciation: ComponentType<{ lemma: string }> | undefined;
 }
@@ -36,10 +38,13 @@ export function EditionProvider({
 }) {
   const value = useMemo((): EditionPresentation => {
     const names = new Map(edition.categories.map(({ id, displayName }) => [id, displayName]));
+    const pluralRules = new Intl.PluralRules(edition.locale);
     return {
       strings,
       voice: { accessibilityLanguage: edition.locale },
       categoryName: (categoryId) => names.get(categoryId),
+      count: (forms, count) =>
+        fill(forms[pluralRules.select(count)] ?? forms.other, { count: String(count) }),
       Pronunciation: pronunciation,
     };
   }, [edition, strings, pronunciation]);

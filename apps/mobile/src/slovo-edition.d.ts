@@ -35,3 +35,6 @@ declare module 'slovo-edition/language-pack' {
   const assetId: number;
   export default assetId;
 }
+
+/** The plural rules of the Edition's language, which it adds to the `Intl.PluralRules` polyfill. */
+declare module 'slovo-edition/plural-rules';

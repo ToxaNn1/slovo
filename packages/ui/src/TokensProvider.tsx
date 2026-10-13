@@ -22,6 +22,9 @@ function tokensFor(tokens: DesignTokens, colorScheme: ColorScheme): Tokens {
 
 const TokensContext = createContext<Tokens>(tokensFor(coreTokens, 'light'));
 
+/** Both colour schemes, so a part of the screen can be drawn in the other one. */
+const DesignTokensContext = createContext<DesignTokens>(coreTokens);
+
 /** Gives every component below the tokens for the colour scheme in effect. */
 export function TokensProvider({
   tokens,
@@ -33,7 +36,25 @@ export function TokensProvider({
   children: ReactNode;
 }) {
   const value = useMemo(() => tokensFor(tokens, colorScheme), [tokens, colorScheme]);
-  return <TokensContext value={value}>{children}</TokensContext>;
+  return (
+    <DesignTokensContext value={tokens}>
+      <TokensContext value={value}>{children}</TokensContext>
+    </DesignTokensContext>
+  );
+}
+
+/**
+ * Draws everything below in the other colour scheme's tokens, Decor included,
+ * as the design's inverted surfaces have it: a card on the ink fill, a toast.
+ */
+export function InvertedTokens({ children }: { children: ReactNode }) {
+  const tokens = useContext(DesignTokensContext);
+  const { colorScheme } = useTokens();
+  return (
+    <TokensProvider tokens={tokens} colorScheme={colorScheme === 'light' ? 'dark' : 'light'}>
+      {children}
+    </TokensProvider>
+  );
 }
 
 /** The design tokens in effect; the Core's light tokens outside a provider. */
