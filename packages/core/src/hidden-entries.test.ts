@@ -152,6 +152,8 @@ describe('Hidden Entries', () => {
           entryId: 'w_live2',
           title: 'ĺive2',
           definition: 'The meaning of live2.',
+          partOfSpeech: 'noun',
+          registers: [],
         },
       },
     ]);
@@ -177,6 +179,34 @@ describe('Hidden Entries', () => {
       entryId: 'c_one',
       title: 'one',
       nonStandardForm: 'not one',
+      correctionType: 'calque',
+    });
+  });
+
+  it('carries what labels a row: a Word\u2019s part of speech, gender and registers, a Correction\u2019s type', async () => {
+    const labelled: Word = {
+      ...word('w_labelled'),
+      partOfSpeech: 'noun',
+      gender: 'feminine',
+      registers: ['archaic', 'dialectal'],
+    };
+    const app = await openComposition({
+      content: createMemoryContentPort({ words: [labelled], corrections: [correction('c_one')] }),
+      edition: { ...testCategories, isFeatureEnabled: (feature) => feature === 'corrections' },
+      userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
+      clock: fakeClock().clock,
+      random: { next: () => 0.25 },
+    });
+
+    expect(await app.entryRow('w_labelled')).toMatchObject({
+      kind: 'word',
+      partOfSpeech: 'noun',
+      gender: 'feminine',
+      registers: ['archaic', 'dialectal'],
+    });
+    expect(await app.entryRow('c_one')).toMatchObject({
+      kind: 'correction',
+      correctionType: 'calque',
     });
   });
 
