@@ -23,7 +23,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - assertVisible:
     id: font-size-preview-lemma
 # The rows under the font size: a row of a later version is dimmed with its
-# «СКОРО» tag, and Vibration is a switch that is on until the reader turns it off.
+# "soon" tag, and Vibration is a switch that is on until the reader turns it off.
 - scrollUntilVisible:
     element:
       id: settings-vibration

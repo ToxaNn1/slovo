@@ -34,7 +34,7 @@ const fontSizeSegments = FontSizeSchema.options.map((fontSize) => ({
 
 /**
  * Settings: the Theme, the font size and the rows of the design. The rows of
- * later versions show as soon; Мій Мікс and Приховані записи wait for their
+ * later versions show as soon; the My Mix and Hidden rows wait for their
  * screens (#109, #110).
  */
 export default function SettingsScreen() {
