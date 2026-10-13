@@ -58,6 +58,19 @@ export interface Collections {
    */
   create(name: string, entryId?: string): Promise<CollectionResult>;
   /**
+   * Gives the Collection a new name, by the same rules as `create`; its own
+   * name, in any letter case, is not a duplicate. The time it was created, its
+   * Entries and its place in the list stay. Nothing for a Collection that
+   * doesn't exist.
+   */
+  rename(collectionId: string, name: string): Promise<CollectionResult | undefined>;
+  /**
+   * Deletes the Collection, its record and the records of its Entries in one
+   * write. The Entries stay wherever else they are kept (Favorites, History,
+   * other Collections). A Collection that doesn't exist is skipped.
+   */
+  delete(collectionId: string): Promise<void>;
+  /**
    * Adds the Entry to the Collection, as of now. An Entry already in it keeps
    * the time it was added; an Entry the Language Pack doesn't have, and a
    * Collection that doesn't exist, are skipped.
@@ -205,12 +218,15 @@ export async function openCollections({
   const has = (collectionId: string, entryId: string) =>
     collections.get(collectionId)?.filed.has(entryId) ?? false;
 
-  function refusalOf(name: string): CollectionNameRefusal | undefined {
+  /** Why the name is refused for the Collection (a new one, or the one of `ownId`), if it is. */
+  function refusalOf(name: string, ownId?: string): CollectionNameRefusal | undefined {
     if (name === '') return 'empty';
     // Count characters, not UTF-16 code units.
     if (Array.from(name).length > NAME_MAX_LENGTH) return 'too-long';
     const key = nameKey(name);
-    return list.some((collection) => nameKey(collection.name) === key) ? 'duplicate' : undefined;
+    return list.some((collection) => collection.id !== ownId && nameKey(collection.name) === key)
+      ? 'duplicate'
+      : undefined;
   }
 
   function newId(): string {
@@ -241,6 +257,45 @@ export async function openCollections({
     }
     await userState.write(changes);
     return { ok: true, collection: change({ id, name, createdAt, filed }) };
+  }
+
+  async function rename(
+    collectionId: string,
+    untrimmed: string,
+  ): Promise<CollectionResult | undefined> {
+    const collection = collections.get(collectionId);
+    if (collection === undefined) return undefined;
+    const name = untrimmed.trim();
+    const reason = refusalOf(name, collectionId);
+    if (reason !== undefined) return { ok: false, reason };
+    // Keeping the name as it is changes nothing.
+    const view = views.get(collectionId);
+    if (name === collection.name && view !== undefined) return { ok: true, collection: view };
+    await userState.write(
+      collectionRecords
+        .record(collectionId)
+        .change({ name, createdAt: collection.createdAt.toISOString() }),
+    );
+    return { ok: true, collection: change({ ...collection, name }) };
+  }
+
+  async function deleteCollection(collectionId: string): Promise<void> {
+    if (!collections.has(collectionId)) return;
+    // Every record of its Entries, also one of an Entry the Language Pack no longer has.
+    const prefix = `${collectionId}.`;
+    const changes = new Map<string, string | undefined>(
+      collectionRecords.record(collectionId).change(undefined),
+    );
+    for (const key of (await userState.list(collectionEntryRecords)).keys()) {
+      if (key.startsWith(prefix)) {
+        mergeInto(changes, collectionEntryRecords.record(key).change(undefined));
+      }
+    }
+    await userState.write(changes);
+    collections.delete(collectionId);
+    views.delete(collectionId);
+    remake();
+    for (const listener of listeners) listener();
   }
 
   async function add(collectionId: string, entryId: string): Promise<void> {
@@ -277,6 +332,8 @@ export async function openCollections({
     of: (entryId) => byEntry.get(entryId) ?? NONE,
     has,
     create: (name, entryId) => inTurn(() => create(name, entryId)),
+    rename: (collectionId, name) => inTurn(() => rename(collectionId, name)),
+    delete: (collectionId) => inTurn(() => deleteCollection(collectionId)),
     add: (collectionId, entryId) => inTurn(() => add(collectionId, entryId)),
     remove: (collectionId, entryId) => inTurn(() => remove(collectionId, entryId)),
     subscribe(listener) {

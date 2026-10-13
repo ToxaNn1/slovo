@@ -8,6 +8,7 @@ import {
   openComposition,
   openUserState,
   type Clock,
+  SEEN_DWELL_MS,
   type Composition,
   type Random,
 } from './index';
@@ -395,6 +396,249 @@ describe('Collections', () => {
 
     expect(results.map((result) => result.ok)).toEqual([true, false]);
     expect(namesOf(app)).toEqual(['Same']);
+  });
+
+  describe('renaming', () => {
+    it('gives the Collection the trimmed name and keeps its time, Entries and place in the order', async () => {
+      const time = fakeClock();
+      const records = new Map<string, string>();
+      const app = await run({ records, clock: time.clock });
+      const old = await create(app, 'Old', 'w_one');
+      time.advance(MINUTE);
+      await create(app, 'Recent');
+
+      const result = await app.collections.rename(old.id, '  Older  ');
+
+      expect(result).toEqual({
+        ok: true,
+        collection: { ...old, name: 'Older', newestLemmas: old.newestLemmas },
+      });
+      expect(namesOf(app)).toEqual(['Recent', 'Older']);
+      expect(app.collections.has(old.id, 'w_one')).toBe(true);
+      expect(app.collections.of('w_one').map((collection) => collection.name)).toEqual(['Older']);
+      expect(JSON.parse(records.get(`collections.${old.id}`) ?? 'null')).toEqual({
+        name: 'Older',
+        createdAt: '2026-10-11T06:00:00.000Z',
+      });
+    });
+
+    it('follows the name rules: empty, too long and taken in another letter case', async () => {
+      const app = await run();
+      await create(app, 'Taken');
+      const { id } = await create(app, 'Mine');
+
+      expect(await app.collections.rename(id, '  ')).toEqual({ ok: false, reason: 'empty' });
+      expect(await app.collections.rename(id, 'я'.repeat(41))).toEqual({
+        ok: false,
+        reason: 'too-long',
+      });
+      expect(await app.collections.rename(id, ' tAKEN ')).toEqual({
+        ok: false,
+        reason: 'duplicate',
+      });
+
+      expect(namesOf(app).sort()).toEqual(['Mine', 'Taken']);
+    });
+
+    it('lets a Collection keep its own name, in another letter case too', async () => {
+      const app = await run();
+      const { id } = await create(app, 'Work');
+
+      expect((await app.collections.rename(id, 'Work'))?.ok).toBe(true);
+      expect((await app.collections.rename(id, 'WORK'))?.ok).toBe(true);
+
+      expect(namesOf(app)).toEqual(['WORK']);
+    });
+
+    it('frees the old name for another Collection', async () => {
+      const app = await run();
+      const { id } = await create(app, 'Old name');
+      await app.collections.rename(id, 'New name');
+
+      expect((await app.collections.create('Old name')).ok).toBe(true);
+    });
+
+    it('tells the subscribers, and leaves the snapshot alone when nothing changes', async () => {
+      const app = await run();
+      const { id } = await create(app, 'List');
+      let told = 0;
+      app.collections.subscribe(() => {
+        told += 1;
+      });
+      const before = app.collections.list;
+
+      await app.collections.rename(id, 'List');
+      await app.collections.rename(id, '');
+      await app.collections.rename('k_gone', 'Anything');
+      expect(app.collections.list).toBe(before);
+      expect(told).toBe(0);
+
+      await app.collections.rename(id, 'Renamed');
+      expect(app.collections.list).not.toBe(before);
+      expect(told).toBe(1);
+    });
+
+    it('skips a Collection that does not exist', async () => {
+      const records = new Map<string, string>();
+      const app = await run({ records });
+
+      expect(await app.collections.rename('k_gone', 'Name')).toBeUndefined();
+
+      expect([...records.keys()].filter((key) => key.startsWith('collections.'))).toEqual([]);
+    });
+
+    it('survives reopening, and changes nothing when keeping it fails', async () => {
+      const records = new Map<string, string>();
+      const port = createMemoryUserStatePort(records);
+      let failing = false;
+      const open = async () =>
+        openComposition({
+          content,
+          edition: { isFeatureEnabled: () => false },
+          userState: await openUserState({
+            port: {
+              ...port,
+              write: (changes) =>
+                failing ? Promise.reject(new Error('The disk is full')) : port.write(changes),
+            },
+          }),
+          clock: fakeClock().clock,
+          random: steppingRandom(),
+        });
+      const app = await open();
+      const { id } = await create(app, 'First');
+
+      failing = true;
+      await expect(app.collections.rename(id, 'Second')).rejects.toThrow('The disk is full');
+      expect(namesOf(app)).toEqual(['First']);
+
+      failing = false;
+      await app.collections.rename(id, 'Second');
+      expect(namesOf(await open())).toEqual(['Second']);
+    });
+  });
+
+  describe('deleting', () => {
+    it('deletes the Collection record and its Entry records in one write, and no other record', async () => {
+      const records = new Map<string, string>();
+      const writes: Map<string, string | undefined>[] = [];
+      const port = createMemoryUserStatePort(records);
+      const app = await openComposition({
+        content,
+        edition: { isFeatureEnabled: () => true },
+        userState: await openUserState({
+          port: {
+            ...port,
+            write(changes) {
+              writes.push(new Map(changes));
+              return port.write(changes);
+            },
+          },
+        }),
+        clock: fakeClock().clock,
+        random: steppingRandom(),
+      });
+      const doomed = await create(app, 'Doomed', 'w_one');
+      await app.collections.add(doomed.id, 'c_one');
+      const kept = await create(app, 'Kept', 'w_one');
+      // A record of an Entry the Language Pack no longer has goes with its Collection too.
+      records.set(
+        `collectionEntries.${doomed.id}.w_gone`,
+        JSON.stringify('2026-10-11T07:00:00.000Z'),
+      );
+      writes.length = 0;
+
+      await app.collections.delete(doomed.id);
+
+      expect(writes).toHaveLength(1);
+      expect([...(writes[0] ?? [])].sort()).toEqual(
+        [
+          [`collectionEntries.${doomed.id}.c_one`, undefined],
+          [`collectionEntries.${doomed.id}.w_gone`, undefined],
+          [`collectionEntries.${doomed.id}.w_one`, undefined],
+          [`collections.${doomed.id}`, undefined],
+        ].sort(),
+      );
+      expect([...records.keys()].filter((key) => key.startsWith('collection')).sort()).toEqual([
+        `collectionEntries.${kept.id}.w_one`,
+        `collections.${kept.id}`,
+      ]);
+      expect(namesOf(app)).toEqual(['Kept']);
+      expect(app.collections.of('w_one').map((collection) => collection.name)).toEqual(['Kept']);
+      expect(app.collections.of('c_one')).toEqual([]);
+      expect(app.collections.has(doomed.id, 'w_one')).toBe(false);
+    });
+
+    it('leaves the Entry in Favorites, in History and in other Collections', async () => {
+      const time = fakeClock();
+      const records = new Map<string, string>();
+      const app = await run({ records, clock: time.clock });
+      await app.feed.show(0);
+      time.advance(SEEN_DWELL_MS);
+      await app.feed.show(undefined);
+      const seen = app.history.list[0];
+      if (seen === undefined) throw new Error('The card was not Seen');
+      const doomed = await create(app, 'Doomed', seen.entryId);
+      const other = await create(app, 'Other', seen.entryId);
+      await app.favorites.add(seen.entryId);
+
+      await app.collections.delete(doomed.id);
+
+      expect(app.favorites.has(seen.entryId)).toBe(true);
+      expect(app.history.list.map((entry) => entry.entryId)).toEqual([seen.entryId]);
+      expect(app.collections.of(seen.entryId).map((collection) => collection.id)).toEqual([
+        other.id,
+      ]);
+      expect(app.collections.has(other.id, seen.entryId)).toBe(true);
+      const reopened = await run({ records, clock: time.clock });
+      expect(namesOf(reopened)).toEqual(['Other']);
+      expect(reopened.favorites.has(seen.entryId)).toBe(true);
+      expect(reopened.history.list).toHaveLength(1);
+    });
+
+    it('frees the name, tells the subscribers once, and skips a Collection that does not exist', async () => {
+      const app = await run();
+      const { id } = await create(app, 'Gone', 'w_one');
+      let told = 0;
+      app.collections.subscribe(() => {
+        told += 1;
+      });
+
+      await app.collections.delete('k_gone');
+      expect(told).toBe(0);
+
+      await app.collections.delete(id);
+      await app.collections.delete(id);
+
+      expect(told).toBe(1);
+      expect(app.collections.list).toEqual([]);
+      expect((await app.collections.create('Gone')).ok).toBe(true);
+    });
+
+    it('changes nothing in memory when keeping the change fails', async () => {
+      const port = createMemoryUserStatePort();
+      let failing = false;
+      const app = await openComposition({
+        content,
+        edition: { isFeatureEnabled: () => false },
+        userState: await openUserState({
+          port: {
+            ...port,
+            write: (changes) =>
+              failing ? Promise.reject(new Error('The disk is full')) : port.write(changes),
+          },
+        }),
+        clock: fakeClock().clock,
+        random: steppingRandom(),
+      });
+      const { id } = await create(app, 'Safe', 'w_one');
+      failing = true;
+
+      await expect(app.collections.delete(id)).rejects.toThrow('The disk is full');
+
+      expect(namesOf(app)).toEqual(['Safe']);
+      expect(app.collections.has(id, 'w_one')).toBe(true);
+    });
   });
 
   describe('the snapshot', () => {
