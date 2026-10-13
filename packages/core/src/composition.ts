@@ -1,7 +1,9 @@
 import { openCycle } from './cycle';
 import type { Edition } from './edition';
 import { createEntries } from './entries';
-import { openFeed, type Feed } from './feed';
+import { createEntryRows, type EntryRowModel } from './entry-row';
+import { openFavorites, type Favorites } from './favorites';
+import { buildEntryCard, openFeed, type EntryFeedCard, type Feed } from './feed';
 import type { Clock, ContentReadPort, Random } from './ports';
 import type { UserState } from './user-state';
 import { openWordOfTheDay } from './word-of-the-day';
@@ -15,6 +17,16 @@ import { openWordOfTheDay } from './word-of-the-day';
 export interface Composition {
   /** The Feed of the app session. */
   readonly feed: Feed;
+  /** Favorites, which a heart tapped anywhere changes. */
+  readonly favorites: Favorites;
+  /**
+   * The Entry card of any Entry, Retired or not, for a screen that opens a
+   * kept Entry; nothing for an id the Language Pack doesn't have. Opening it
+   * never makes the Entry Seen: Seen comes from the Feed alone.
+   */
+  entryCard(entryId: string): Promise<EntryFeedCard | undefined>;
+  /** The row model of any Entry, Retired or not, for a list; nothing for an id the Language Pack doesn't have. */
+  entryRow(entryId: string): Promise<EntryRowModel | undefined>;
 }
 
 /**
@@ -38,8 +50,20 @@ export async function openComposition({
   random: Random;
 }): Promise<Composition> {
   const entries = createEntries({ content, edition });
+  const rows = createEntryRows(entries);
   const cycle = await openCycle({ entries, userState, random });
   const wordOfTheDay = await openWordOfTheDay({ cycle, userState, clock });
-  const feed = await openFeed({ entries, userState, clock, cycle, wordOfTheDay });
-  return { feed };
+  const [feed, favorites] = await Promise.all([
+    openFeed({ entries, userState, clock, cycle, wordOfTheDay }),
+    openFavorites({ rows, userState, clock }),
+  ]);
+  return {
+    feed,
+    favorites,
+    async entryCard(entryId) {
+      const entry = await entries.get(entryId);
+      return entry === undefined ? undefined : buildEntryCard(entries, entry);
+    },
+    entryRow: (entryId) => rows.row(entryId),
+  };
 }

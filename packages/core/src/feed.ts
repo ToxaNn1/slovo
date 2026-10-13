@@ -42,7 +42,9 @@ export type EntryFeedCard = WordFeedCard | CorrectionFeedCard;
 export type FeedCard = EntryFeedCard | { readonly kind: 'end-of-cycle' };
 
 /** The id of the Entry a card shows, if it shows one. */
-function entryIdOf(card: FeedCard | undefined): string | undefined {
+export function entryIdOf(card: EntryFeedCard): string;
+export function entryIdOf(card: FeedCard | undefined): string | undefined;
+export function entryIdOf(card: FeedCard | undefined): string | undefined {
   if (card?.kind === 'word') return card.wordCard.wordId;
   return card?.kind === 'correction' ? card.correctionCard.correctionId : undefined;
 }

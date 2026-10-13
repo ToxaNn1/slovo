@@ -13,6 +13,9 @@ import type { UserStateMigration } from './user-state';
 /** The record that holds the schema version of the user state, a whole number. */
 export const SCHEMA_VERSION_KEY = 'schema.version';
 
+/** An instant, kept as an ISO 8601 date and time in UTC. */
+const InstantSchema = z.iso.datetime();
+
 /** A card's Entry and the local date it was on screen. */
 const EntryOnDateSchema = z.object({ entryId: z.string(), date: z.string() });
 
@@ -40,6 +43,8 @@ export const userStateRecords = {
   seen: declareRecords('feed.seen.', z.literal(true)),
   /** The Word of the Day and the local date it belongs to. */
   wordOfTheDay: declareRecord('feed.wordOfTheDay', EntryOnDateSchema),
+  /** The Entries in Favorites, one record per Entry, by Entry id: the instant it was added. */
+  favorites: declareRecords('favorites.', InstantSchema),
 };
 
 /**
