@@ -375,13 +375,25 @@ describe('a Hidden Entry', () => {
     expect(await walk(app.feed)).not.toContain(wordOfTheDay);
   });
 
-  it('stays in Favorites', async () => {
-    const app = await run();
-    await app.favorites.add('w_live3');
+  it('stays in Favorites, Collections and History, also after reopening', async () => {
+    const records = new Map<string, string>();
+    const time = fakeClock();
+    const app = await run({ records, clock: time.clock });
+    const entryId = entryIdOf(app.feed.cards[0]) ?? '';
+    await app.feed.show(0);
+    time.advance(SEEN_DWELL_MS);
+    await app.feed.show(1);
+    await app.favorites.add(entryId);
+    const created = await app.collections.create('Kept', entryId);
+    if (!created.ok) throw new Error('The Collection was refused');
 
-    await app.hiddenEntries.hide('w_live3');
+    await app.hiddenEntries.hide(entryId);
 
-    expect(app.favorites.has('w_live3')).toBe(true);
-    expect(app.favorites.list.map(({ entryId }) => entryId)).toEqual(['w_live3']);
+    for (const opened of [app, await run({ records, clock: time.clock })]) {
+      expect(opened.hiddenEntries.has(entryId)).toBe(true);
+      expect(opened.favorites.has(entryId)).toBe(true);
+      expect(opened.collections.has(created.collection.id, entryId)).toBe(true);
+      expect(opened.history.list.map((seen) => seen.entryId)).toEqual([entryId]);
+    }
   });
 });
