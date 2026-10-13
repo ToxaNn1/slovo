@@ -403,3 +403,169 @@ describe('a Hidden Entry', () => {
     }
   });
 });
+
+/** Turns the Feed page by page from its first card to `position`, each too quickly to be Seen. */
+async function turnTo(feed: Feed, position: number): Promise<void> {
+  for (let page = 0; page <= position; page += 1) await feed.show(page);
+}
+
+describe('the Feed, when an Entry is hidden or restored', () => {
+  it('drops the hidden card on screen at once: the next card takes its place and the card after it is ready', async () => {
+    const app = await run();
+    await turnTo(app.feed, 1);
+    const [first, hidden, next] = entryIdsOf(app.feed.cards);
+    let told = 0;
+    app.feed.subscribe(() => {
+      told += 1;
+    });
+
+    await app.hiddenEntries.hide(hidden ?? '');
+
+    const ids = entryIdsOf(app.feed.cards);
+    expect(ids.slice(0, 2)).toEqual([first, next]);
+    expect(ids).not.toContain(hidden);
+    expect(ids).toHaveLength(3);
+    expect(app.feed.position).toBe(1);
+    expect(told).toBeGreaterThan(0);
+  });
+
+  it('drops every card of the hidden Entry, also one before the card on screen, and keeps the reader on their card', async () => {
+    const app = await run();
+    await turnTo(app.feed, 2);
+    const [hidden, second, onScreen] = entryIdsOf(app.feed.cards);
+
+    await app.hiddenEntries.hide(hidden ?? '');
+
+    expect(entryIdsOf(app.feed.cards).slice(0, 2)).toEqual([second, onScreen]);
+    expect(entryIdOf(app.feed.cards[app.feed.position ?? -1])).toBe(onScreen);
+  });
+
+  it('drops a hidden card that is ready but not on screen, and gets the next one ready', async () => {
+    const app = await run();
+    const twin = await walk((await run()).feed);
+    await app.feed.show(0);
+    const hidden = entryIdOf(app.feed.cards[1]) ?? '';
+
+    await app.hiddenEntries.hide(hidden);
+
+    expect(entryIdsOf(app.feed.cards)).toEqual(twin.filter((id) => id !== hidden).slice(0, 2));
+    expect(app.feed.position).toBe(0);
+  });
+
+  it('drops the hidden cards while no card is on screen, and keeps nothing on screen', async () => {
+    const app = await run();
+    await turnTo(app.feed, 1);
+    await app.feed.show(undefined);
+    const before = entryIdsOf(app.feed.cards);
+    const hidden = before[1] ?? '';
+
+    await app.hiddenEntries.hide(hidden);
+
+    expect(entryIdsOf(app.feed.cards)).toEqual(before.filter((id) => id !== hidden));
+    expect(app.feed.position).toBeUndefined();
+  });
+
+  it('puts the card back where it was on undo, on screen again, with the card after it ready', async () => {
+    const app = await run();
+    await turnTo(app.feed, 1);
+    const before = entryIdsOf(app.feed.cards);
+    const hidden = before[1] ?? '';
+    await app.hiddenEntries.hide(hidden);
+
+    await app.hiddenEntries.restore(hidden);
+
+    const ids = entryIdsOf(app.feed.cards);
+    expect(ids.slice(0, 3)).toEqual(before);
+    expect(app.feed.position).toBe(1);
+    expect(entryIdOf(app.feed.cards[1])).toBe(hidden);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('puts back a card that left from before the card on screen, and keeps the reader on their card', async () => {
+    const app = await run();
+    await turnTo(app.feed, 2);
+    const before = entryIdsOf(app.feed.cards);
+    const hidden = before[0] ?? '';
+    await app.hiddenEntries.hide(hidden);
+
+    await app.hiddenEntries.restore(hidden);
+
+    expect(entryIdsOf(app.feed.cards).slice(0, before.length)).toEqual(before);
+    expect(app.feed.position).toBe(2);
+  });
+
+  it('puts the card back without taking the screen once the reader has moved on', async () => {
+    const app = await run();
+    await turnTo(app.feed, 1);
+    const hidden = entryIdOf(app.feed.cards[1]) ?? '';
+    await app.hiddenEntries.hide(hidden);
+    await app.feed.show(2);
+    const onScreen = entryIdOf(app.feed.cards[2]);
+
+    await app.hiddenEntries.restore(hidden);
+
+    expect(entryIdOf(app.feed.cards[1])).toBe(hidden);
+    expect(entryIdOf(app.feed.cards[app.feed.position ?? -1])).toBe(onScreen);
+  });
+
+  it(`makes the hidden card on screen Seen, into History, once it stayed there ${String(SEEN_DWELL_MS)} ms`, async () => {
+    const records = new Map<string, string>();
+    const time = fakeClock();
+    const app = await run({ records, clock: time.clock });
+    await turnTo(app.feed, 1);
+    const hidden = entryIdOf(app.feed.cards[1]) ?? '';
+    time.advance(SEEN_DWELL_MS);
+
+    await app.hiddenEntries.hide(hidden);
+
+    expect(records.get(`feed.seen.${hidden}`)).toBe('true');
+    expect(app.history.list.map(({ entryId }) => entryId)).toEqual([hidden]);
+  });
+
+  it('leaves the hidden card on screen unseen when it left before the dwell time', async () => {
+    const records = new Map<string, string>();
+    const time = fakeClock();
+    const app = await run({ records, clock: time.clock });
+    await turnTo(app.feed, 1);
+    const hidden = entryIdOf(app.feed.cards[1]) ?? '';
+    time.advance(SEEN_DWELL_MS - 1);
+
+    await app.hiddenEntries.hide(hidden);
+
+    expect(records.has(`feed.seen.${hidden}`)).toBe(false);
+    expect(app.history.list).toEqual([]);
+  });
+
+  it('counts the dwell time of the card that takes the place from the moment it does', async () => {
+    const records = new Map<string, string>();
+    const time = fakeClock();
+    const app = await run({ records, clock: time.clock });
+    await turnTo(app.feed, 1);
+    time.advance(SEEN_DWELL_MS);
+    await app.hiddenEntries.hide(entryIdOf(app.feed.cards[1]) ?? '');
+    const next = entryIdOf(app.feed.cards[1]) ?? '';
+
+    time.advance(SEEN_DWELL_MS - 1);
+    await app.feed.show(2);
+    expect(records.has(`feed.seen.${next}`)).toBe(false);
+
+    await app.feed.show(1);
+    time.advance(SEEN_DWELL_MS);
+    await app.feed.show(2);
+    expect(records.get(`feed.seen.${next}`)).toBe('true');
+  });
+
+  it('reopens the same day on the card that took the hidden one’s place', async () => {
+    const records = new Map<string, string>();
+    const time = fakeClock();
+    const app = await run({ records, clock: time.clock });
+    await turnTo(app.feed, 1);
+    await app.hiddenEntries.hide(entryIdOf(app.feed.cards[1]) ?? '');
+    const onScreen = entryIdOf(app.feed.cards[1]);
+    time.advance(MINUTE);
+
+    const reopened = await run({ records, clock: time.clock });
+
+    expect(entryIdOf(reopened.feed.cards[reopened.feed.startPosition])).toBe(onScreen);
+  });
+});

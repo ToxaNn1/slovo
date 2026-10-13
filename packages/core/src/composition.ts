@@ -65,17 +65,8 @@ export async function openComposition({
   const rows = createEntryRows(entries);
   const cycle = await openCycle({ entries, userState, random });
   const wordOfTheDay = await openWordOfTheDay({ cycle, userState, clock });
-  // A hide, a restore or a Mix change changes which Entries are eligible, so the
-  // Cycle reads them again.
-  const eligibilityChanged = () => cycle.readEligibleAgain();
-  const [{ history, recorder }, favorites, collections, hiddenEntries, mix] = await Promise.all([
-    openHistory({ rows, userState }),
-    openFavorites({ rows, userState, clock }),
-    openCollections({ rows, userState, clock, random }),
-    openHiddenEntries({ rows, userState, clock, eligibilityChanged }),
-    openMix({ edition, userState, eligibilityChanged }),
-  ]);
-  const feed = await openFeed({
+  const { history, recorder } = await openHistory({ rows, userState });
+  const { feed, followEligibility } = await openFeed({
     entries,
     userState,
     clock,
@@ -83,6 +74,20 @@ export async function openComposition({
     wordOfTheDay,
     history: recorder,
   });
+  /**
+   * After a hide, a restore or a Mix change, the Cycle reads the eligible
+   * Entries again and the Feed follows.
+   */
+  async function eligibilityChanged(): Promise<void> {
+    await cycle.readEligibleAgain();
+    await followEligibility();
+  }
+  const [favorites, collections, hiddenEntries, mix] = await Promise.all([
+    openFavorites({ rows, userState, clock }),
+    openCollections({ rows, userState, clock, random }),
+    openHiddenEntries({ rows, userState, clock, eligibilityChanged }),
+    openMix({ edition, userState, eligibilityChanged }),
+  ]);
   return {
     feed,
     favorites,
