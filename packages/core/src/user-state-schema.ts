@@ -56,6 +56,14 @@ export const userStateRecords = {
    * it was added.
    */
   collectionEntries: declareRecords('collectionEntries.', InstantSchema),
+  /**
+   * The Entries in History, one record per Entry, by Entry id: the instant
+   * the Feed last marked it Seen, and whether it was the Word of the Day's card.
+   */
+  history: declareRecords(
+    'history.',
+    z.object({ seenAt: InstantSchema, wordOfTheDay: z.boolean() }),
+  ),
 };
 
 /**
