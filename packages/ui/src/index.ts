@@ -3,6 +3,7 @@
  * Decor from the Edition.
  */
 export { ActionRow, type ActionRowProps } from './ActionRow';
+export { BackLink } from './BackLink';
 export { FeedError, FeedLoading, SwipeHint } from './FeedStates';
 export { FontSizePreview } from './FontSizePreview';
 export {
@@ -22,6 +23,7 @@ export {
   EmptyStateIllustration,
   OrnamentDivider,
 } from './DecorSlots';
+export { HapticsProvider, useHaptics } from './HapticsProvider';
 export { ScreenTitle, SectionLabel } from './headings';
 export { Placeholder } from './Placeholder';
 export {
@@ -30,6 +32,7 @@ export {
   type PronunciationButtonState,
 } from './PronunciationButton';
 export { SegmentedControl, type Segment } from './SegmentedControl';
+export { NavigationRow, SettingsGroup, SoonRow, SwitchRow } from './SettingsRows';
 export { SplashOverlay, type SplashOverlayProps } from './SplashOverlay';
 export {
   coreTokens,

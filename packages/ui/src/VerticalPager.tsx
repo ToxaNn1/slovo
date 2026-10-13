@@ -39,6 +39,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
 
+import { useHaptics } from './HapticsProvider';
 import { useReduceMotion } from './useReduceMotion';
 
 /**
@@ -139,6 +140,7 @@ export function VerticalPager<Item>({
   ref,
 }: VerticalPagerProps<Item>) {
   const reduceMotion = useReduceMotion();
+  const haptics = useHaptics();
   const motion = reduceMotion ? CROSS_FADE : SWIPE;
   /** The page the last swipe went to, which may still be moving in. */
   const [index, setIndex] = useState(initialIndex);
@@ -173,6 +175,12 @@ export function VerticalPager<Item>({
   function turn(target: number) {
     setIndex(target);
     onIndexChange(target);
+  }
+
+  /** A swipe turned the page: the page turns, with the light tick of a selection. */
+  function swipeTo(target: number) {
+    haptics.selection();
+    turn(target);
   }
 
   function turnTo(target: number) {
@@ -240,7 +248,7 @@ export function VerticalPager<Item>({
       target = Math.min(Math.max(target, 0), lastIndex.value);
       if (target !== start) {
         turnedTo.value = target;
-        scheduleOnRN(turn, target);
+        scheduleOnRN(swipeTo, target);
       }
       position.value = withTiming(target, motion);
     })

@@ -1,8 +1,10 @@
+import { createHaptics } from '@slovo/core';
 import {
   DecorProvider,
   EditionProvider,
   fill,
   FontSizeProvider,
+  HapticsProvider,
   TokensProvider,
   typeSize,
   useEdition,
@@ -13,6 +15,7 @@ import { useMemo, type ComponentProps } from 'react';
 import { Pressable } from 'react-native';
 
 import { edition, editionDecor, editionStrings, editionTokens } from '../edition';
+import { hapticEngine } from '../haptics';
 import { LanguagePackProvider } from '../language-pack';
 import { LaunchSplash } from '../launch-splash';
 import { LemmaPronunciation } from '../pronunciation-button';
@@ -101,7 +104,11 @@ export default function RootLayout() {
 /** The four tabs in their final order: Home, Settings, Game, Saved. */
 function ThemedTabs() {
   const colorScheme = useColorSchemeInEffect();
-  const { fontSize } = useSettings().current;
+  const { fontSize, vibration } = useSettings().current;
+  const haptics = useMemo(
+    () => createHaptics({ engine: hapticEngine, vibration: () => vibration }),
+    [vibration],
+  );
   const colors = editionTokens.colors[colorScheme];
   const { ui } = editionTokens.fontFamilies;
 
@@ -126,30 +133,32 @@ function ThemedTabs() {
     <TokensProvider tokens={editionTokens} colorScheme={colorScheme}>
       <ThemeProvider value={navigationTheme}>
         <FontSizeProvider fontSize={fontSize}>
-          <LanguagePackProvider>
-            <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-            <Tabs
-              screenOptions={{
-                headerShown: false,
-                tabBarIcon: () => null,
-                tabBarButton: TabButton,
-                tabBarActiveTintColor: colors.accent,
-                tabBarInactiveTintColor: colors.inactiveTab,
-                tabBarLabelStyle: {
-                  fontFamily: ui,
-                  fontSize: typeSize.tabLabel,
-                  fontWeight: '600',
-                },
-              }}
-            >
-              <Tabs.Screen name="index" options={tabOptions('home')} />
-              <Tabs.Screen name="settings" options={tabOptions('settings')} />
-              <Tabs.Screen name="game" options={tabOptions('game')} />
-              <Tabs.Screen name="saved" options={tabOptions('saved')} />
-              {/* The dev-only Decor showcase; no tab leads to it. */}
-              <Tabs.Screen name="decor" options={{ href: null }} />
-            </Tabs>
-          </LanguagePackProvider>
+          <HapticsProvider haptics={haptics}>
+            <LanguagePackProvider>
+              <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+              <Tabs
+                screenOptions={{
+                  headerShown: false,
+                  tabBarIcon: () => null,
+                  tabBarButton: TabButton,
+                  tabBarActiveTintColor: colors.accent,
+                  tabBarInactiveTintColor: colors.inactiveTab,
+                  tabBarLabelStyle: {
+                    fontFamily: ui,
+                    fontSize: typeSize.tabLabel,
+                    fontWeight: '600',
+                  },
+                }}
+              >
+                <Tabs.Screen name="index" options={tabOptions('home')} />
+                <Tabs.Screen name="settings" options={tabOptions('settings')} />
+                <Tabs.Screen name="game" options={tabOptions('game')} />
+                <Tabs.Screen name="saved" options={tabOptions('saved')} />
+                {/* The dev-only Decor showcase; no tab leads to it. */}
+                <Tabs.Screen name="decor" options={{ href: null }} />
+              </Tabs>
+            </LanguagePackProvider>
+          </HapticsProvider>
         </FontSizeProvider>
         <LaunchSplash />
       </ThemeProvider>
