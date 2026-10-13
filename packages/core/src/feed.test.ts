@@ -7,18 +7,15 @@ import {
   createEntries,
   createMemoryContentPort,
   createMemoryUserStatePort,
-  openCycle,
-  openFeed,
+  openComposition,
   openUserState,
-  openWordOfTheDay,
   SEEN_DWELL_MS,
   type Clock,
+  type ContentReadPort,
   type Edition,
-  type Entries,
   type Feed,
   type FeedCard,
   type Random,
-  type UserState,
   type UserStatePort,
 } from './index';
 
@@ -113,32 +110,18 @@ const correctionCardOf = (card: FeedCard | undefined) =>
 /** The ids of the Entries the cards show, in order. */
 const entryIdsOf = (cards: readonly FeedCard[]) => cards.flatMap((card) => entryIdOf(card) ?? []);
 
-/** Opens the Cycle and the Word of the Day once, as the shell does, and the Feed over them. */
-async function openSession({
-  entries,
-  userState,
-  clock,
-  random,
-}: {
-  entries: Entries;
-  userState: UserState;
-  clock: Clock;
-  random: Random;
-}) {
-  const cycle = await openCycle({ entries, userState, random });
-  const wordOfTheDay = await openWordOfTheDay({ cycle, userState, clock });
-  const feed = await openFeed({ entries, userState, clock, cycle, wordOfTheDay });
-  return { feed, cycle, wordOfTheDay };
-}
-
-/** One app run over the given records: the user state survives between runs. */
-async function session({
+/**
+ * The Feed of one app run over the given records, opened through the Core
+ * composition: the user state survives between runs.
+ */
+async function run({
   records = new Map<string, string>(),
   port = createMemoryUserStatePort(records),
   clock = fakeClock('2026-10-11T09:00:00+03:00').clock,
   random = randomOf(0.25),
   words = pack,
   corrections = [],
+  content = createMemoryContentPort({ words, corrections }),
   correctionsSwitch = true,
 }: {
   records?: Map<string, string>;
@@ -147,22 +130,17 @@ async function session({
   random?: Random;
   words?: readonly Word[];
   corrections?: readonly Correction[];
+  content?: ContentReadPort;
   correctionsSwitch?: boolean;
-} = {}) {
-  return openSession({
-    entries: createEntries({
-      content: createMemoryContentPort({ words, corrections }),
-      edition: editionWith(correctionsSwitch),
-    }),
+} = {}): Promise<Feed> {
+  const composition = await openComposition({
+    content,
+    edition: editionWith(correctionsSwitch),
     userState: await openUserState({ port }),
     clock,
     random,
   });
-}
-
-/** The Feed of one app run over the given records. */
-async function run(options: Parameters<typeof session>[0] = {}): Promise<Feed> {
-  return (await session(options)).feed;
+  return composition.feed;
 }
 
 /** A user-state port over the records whose writes fail while `failing` says so. */
@@ -176,11 +154,12 @@ function failingPort(records: Map<string, string>, failing: () => boolean): User
 }
 
 /**
- * The ids of every Entry the Feed offers from where it stands, until it
- * repeats, reaches the end of the Cycle or runs out.
+ * The ids of every Entry the Feed offers from where it stands, after the
+ * `shown` ones (every card so far, unless given), until it repeats, reaches
+ * the end of the Cycle or runs out.
  */
-async function walk(feed: Feed): Promise<string[]> {
-  const ids = entryIdsOf(feed.cards);
+async function walk(feed: Feed, shown = entryIdsOf(feed.cards)): Promise<string[]> {
+  const ids = [...shown];
   for (;;) {
     const id = entryIdOf(await feed.next());
     if (id === undefined || ids.includes(id)) return ids;
@@ -251,24 +230,31 @@ describe('the Feed', () => {
       expect(unseen).not.toContain(first);
     });
 
-    it('marks Seen in the Cycle it is given, which other features share, and opens on the Word of the Day it is given', async () => {
+    it('opens on the Word of the Day the composition keeps, and a Seen mark made through the Feed survives reopening the composition', async () => {
+      const records = new Map<string, string>();
       const time = fakeClock('2026-10-11T09:00:00+03:00');
-      const { feed, cycle, wordOfTheDay } = await session({ clock: time.clock });
+      const feed = await run({ records, clock: time.clock });
       const first = entryIdOf(feed.cards[0]);
 
       await look(feed, time, 0, SEEN_DWELL_MS);
+      time.advance(60_000);
+      const reopened = await run({ records, clock: time.clock });
 
-      expect(wordOfTheDay.chosen()?.wordId).toBe(first);
-      expect(cycle.unseen().words).not.toContain(first);
+      expect(wordOfTheDayOf(feed.cards[0])).toEqual({ year: 2026, month: 10, day: 11 });
+      expect(entryIdOf(reopened.cards[0])).toBe(first);
+      expect(wordOfTheDayOf(reopened.cards[0])).toEqual({ year: 2026, month: 10, day: 11 });
+      expect(await unseenNextDay(records)).not.toContain(first);
     });
 
     it('leaves the Entry unseen in memory, as on disk, when keeping it Seen fails', async () => {
       const records = new Map<string, string>();
+      const words = [word('w_one'), word('w_two')];
       let failing = false;
       const time = fakeClock('2026-10-11T09:00:00+03:00');
-      const { feed, cycle } = await session({
+      const feed = await run({
         records,
         port: failingPort(records, () => failing),
+        words,
         clock: time.clock,
       });
       const first = entryIdOf(feed.cards[0]);
@@ -277,11 +263,14 @@ describe('the Feed', () => {
 
       failing = true;
       await expect(feed.show(undefined)).rejects.toThrow('The disk is full');
+      failing = false;
+      await look(feed, time, 1, SEEN_DWELL_MS);
 
-      expect(cycle.unseen().words).toContain(first);
-      expect(cycle.unseen()).toEqual(
-        (await session({ records, clock: time.clock })).cycle.unseen(),
-      );
+      // The other Word is Seen, so the Entry whose Seen mark failed is the
+      // only one left: it comes again instead of the end-of-Cycle card.
+      expect(entryIdOf(feed.cards.at(-1))).toBe(first);
+      const nextDay = fakeClock('2026-10-12T09:00:00+03:00').clock;
+      expect(await walk(await run({ records, words, clock: nextDay }))).toEqual([first]);
     });
 
     it('leaves an Entry unseen when its card is swiped past quickly', async () => {
@@ -416,17 +405,12 @@ describe('the Feed', () => {
     it('gets the next card ready again when the card on screen is reported again after it failed', async () => {
       const content = createMemoryContentPort({ words: pack });
       let failing = false;
-      const { feed } = await openSession({
-        entries: createEntries({
-          content: {
-            ...content,
-            getWord: (id) => (failing ? Promise.reject(new Error('disk')) : content.getWord(id)),
-          },
-          edition: editionWith(false),
-        }),
-        userState: await openUserState({ port: createMemoryUserStatePort() }),
-        clock: fakeClock('2026-10-11T09:00:00+03:00').clock,
-        random: randomOf(0.25),
+      const feed = await run({
+        content: {
+          ...content,
+          getWord: (id) => (failing ? Promise.reject(new Error('disk')) : content.getWord(id)),
+        },
+        correctionsSwitch: false,
       });
 
       failing = true;
@@ -589,7 +573,7 @@ describe('the Feed', () => {
       const records = new Map<string, string>();
       let failing = false;
       const time = fakeClock('2026-10-11T09:00:00+03:00');
-      const { feed, cycle } = await session({
+      const feed = await run({
         records,
         port: failingPort(records, () => failing),
         words: small,
@@ -597,24 +581,30 @@ describe('the Feed', () => {
         random: randomSequence(0.25, 0.75, 0.5),
       });
       await readToTheEnd(feed, time);
-      const lastCycle = cycle.order();
-      /** The Cycle as the next app run reads it from disk. */
-      const onDisk = async () =>
-        (await session({ records, words: small, clock: time.clock })).cycle;
+      const wordOfTheDay = entryIdOf(feed.cards[0]);
 
       failing = true;
       await expect(feed.next()).rejects.toThrow('The disk is full');
 
-      expect(cycle.order()).toEqual(lastCycle);
-      expect(cycle.unseen()).toEqual({ words: [], corrections: [] });
-      expect(cycle.unseen()).toEqual((await onDisk()).unseen());
       expect(feed.cards.at(-1)?.kind).toBe('end-of-cycle');
+      // The next app run reads the last Cycle too: every Word Seen.
+      const reopened = await run({ records, words: small, clock: time.clock });
+      expect((await reopened.next())?.kind).toBe('end-of-cycle');
 
       failing = false;
       const card = await feed.next();
       expect(card?.kind).toBe('word');
-      expect(cycle.order()).toEqual((await onDisk()).order());
-      expect(cycle.unseen()).toEqual(cycle.order());
+      const newCycle = await walk(feed, entryIdsOf(card === undefined ? [] : [card]));
+      // Nothing Seen, in the order of the seed drawn on the next try.
+      expect(newCycle).toEqual(await walk(await run({ words: small, random: randomOf(0.5) })));
+      // The next app run reads the same new Cycle; its Word of the Day is
+      // the first Word of the order other than the day before's.
+      const nextDay = fakeClock('2026-10-12T09:00:00+03:00').clock;
+      const opening = newCycle.find((id) => id !== wordOfTheDay);
+      expect(await walk(await run({ records, words: small, clock: nextDay }))).toEqual([
+        opening,
+        ...newCycle.filter((id) => id !== opening),
+      ]);
     });
 
     it('keeps the new Cycle across a restart: nothing from the last Cycle Seen, the order of the new seed', async () => {

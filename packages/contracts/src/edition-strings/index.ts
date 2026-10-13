@@ -1,8 +1,14 @@
 import { z } from 'zod';
 
 import { appStringsShape } from './app';
+import { CollectionsStringsSchema } from './collections';
 import { CorrectionCardStringsSchema } from './correction-card';
+import { FavoritesStringsSchema } from './favorites';
 import { feedStringsShape } from './feed';
+import { HiddenStringsSchema } from './hidden';
+import { HidingStringsSchema } from './hiding';
+import { HistoryStringsSchema } from './history';
+import { MixStringsSchema } from './mix';
 import { SettingsStringsSchema } from './settings';
 import { SplashStringsSchema } from './splash';
 import { TabsStringsSchema } from './tabs';
@@ -23,6 +29,12 @@ export const EditionStringsSchema = z.strictObject({
   settings: SettingsStringsSchema,
   wordCard: WordCardStringsSchema,
   correctionCard: CorrectionCardStringsSchema,
+  favorites: FavoritesStringsSchema,
+  collections: CollectionsStringsSchema,
+  history: HistoryStringsSchema,
+  hiding: HidingStringsSchema,
+  mix: MixStringsSchema,
+  hidden: HiddenStringsSchema,
 });
 
 export type EditionStrings = z.infer<typeof EditionStringsSchema>;

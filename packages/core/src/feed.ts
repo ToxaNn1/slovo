@@ -118,11 +118,11 @@ export async function buildEntryCard(
 const { feedPosition } = userStateRecords;
 
 /**
- * Opens the Feed for a new app session, over the session's Cycle and Word of
- * the Day, which it shares with every other feature. It opens on the card the
- * reader was on when they come back the same local day, and otherwise on the
- * Word of the Day, which also opens a new local day in a Feed left open over
- * midnight.
+ * Opens the Feed for a new app session, over the Entries, the Cycle and the
+ * Word of the Day the Core composition opened and shares with every other
+ * feature. It opens on the card the reader was on when they come back the
+ * same local day, and otherwise on the Word of the Day, which also opens a
+ * new local day in a Feed left open over midnight.
  *
  * After the Cycle's last unseen Entry comes the end-of-Cycle card, and the
  * card after that starts a new Cycle: nothing Seen, a new shuffle from a new

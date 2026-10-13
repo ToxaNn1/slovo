@@ -14,6 +14,7 @@ export type {
   Register,
   Word,
 } from '@slovo/contracts';
+export { openComposition, type Composition } from './composition';
 export { buildCorrectionCard, type CorrectionCardModel } from './correction-card';
 export { openCycle, type Cycle, type CycleChange } from './cycle';
 export { coreDecor, InvalidDecorError, loadDecor, type Decor } from './decor';
@@ -21,7 +22,6 @@ export { createEntries, type Entries, type EntryIds } from './entries';
 export {
   buildEntryCard,
   CORRECTION_EVERY,
-  openFeed,
   SEEN_DWELL_MS,
   type CorrectionFeedCard,
   type EntryFeedCard,

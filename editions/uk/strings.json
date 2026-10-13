@@ -184,5 +184,11 @@
     "otherEquivalents": "також: {equivalents}",
     "exampleNonStandard": "Так кажуть: {text}",
     "exampleStandard": "Краще: {text}"
-  }
+  },
+  "favorites": {},
+  "collections": {},
+  "history": {},
+  "hiding": {},
+  "mix": {},
+  "hidden": {}
 }
