@@ -207,6 +207,22 @@ describe('the Entries', () => {
       expect(await entries.linkedCorrections(talkative)).toEqual([]);
     });
 
+    it('lead from a Word to no Correction while Corrections are out of the Mix, and back when they return', async () => {
+      const port = createMemoryUserStatePort();
+      const entries = createEntries({
+        content: createMemoryContentPort({ words: [talkative], corrections: [chatty, always] }),
+        edition: editionWith(true),
+        userState: await openUserState({ port }),
+      });
+      expect(ids(await entries.linkedCorrections(talkative))).toEqual(['c_chatty', 'c_always']);
+
+      await port.write(new Map([['mix.corrections', JSON.stringify(false)]]));
+      expect(await entries.linkedCorrections(talkative)).toEqual([]);
+
+      await port.write(new Map([['mix.corrections', JSON.stringify(true)]]));
+      expect(ids(await entries.linkedCorrections(talkative))).toEqual(['c_chatty', 'c_always']);
+    });
+
     it('lead from a Retired Word to its live Corrections, so a kept Word keeps its links', async () => {
       expect(ids(await open().linkedCorrections(gone))).toEqual(['c_always']);
     });

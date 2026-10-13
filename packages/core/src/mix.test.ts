@@ -12,6 +12,7 @@ import {
   type Category,
   type Clock,
   type Composition,
+  type ContentReadPort,
   type Feed,
   type FeedCard,
   type UserStatePort,
@@ -84,6 +85,7 @@ const MINUTE = 60_000;
 /** The Core composition of one app run over the records, so the user state survives between runs. */
 async function run({
   records = new Map<string, string>(),
+  pack = content,
   port = createMemoryUserStatePort(records),
   clock = fakeClock().clock,
   defaultCategoryIds = categories.map(({ id }) => id),
@@ -91,13 +93,14 @@ async function run({
 }: {
   records?: Map<string, string>;
   port?: UserStatePort;
+  pack?: ContentReadPort;
   clock?: Clock;
   /** The Categories of the Edition's default Mix. */
   defaultCategoryIds?: readonly string[];
   correctionsSwitch?: boolean;
 } = {}): Promise<Composition> {
   return openComposition({
-    content,
+    content: pack,
     edition: {
       isFeatureEnabled: (feature) => feature === 'corrections' && correctionsSwitch,
       categories,
@@ -546,5 +549,100 @@ describe('eligibility over the Mix', () => {
       wordOfTheDay: { year: 2026, month: 10, day: 11 },
     });
     expect(isWordOf(category)(entryIdOf(opening) ?? '')).toBe(false);
+  });
+});
+
+describe('linked Corrections («Часто кажуть») over the Mix', () => {
+  const linked = { ...word('w_linked', 'nature'), correctionIds: ['c_one', 'c_two'] };
+  const pack = createMemoryContentPort({
+    words: [
+      linked,
+      ...categories.flatMap((category) => wordIdsOf(category).map((id) => word(id, category.id))),
+    ],
+    corrections: correctionIds.map((id) => correction(id)),
+  });
+  const links = [
+    { correctionId: 'c_one', nonStandardForm: 'not one' },
+    { correctionId: 'c_two', nonStandardForm: 'not two' },
+  ];
+
+  /** The linked Corrections of the Word's card in the Feed, once the Feed holds it. */
+  async function feedLinks(app: Composition) {
+    while (!entryIdsOf(app.feed.cards).includes(linked.id)) {
+      if ((await app.feed.next()) === undefined) break;
+    }
+    const card = app.feed.cards.find((shown) => entryIdOf(shown) === linked.id);
+    return { card, links: card?.kind === 'word' ? card.wordCard.linkedCorrections : undefined };
+  }
+
+  /** The linked Corrections of the Word on the Entry screen. */
+  async function entryScreenLinks(app: Composition) {
+    const card = await app.entryCard(linked.id);
+    return card?.kind === 'word' ? card.wordCard.linkedCorrections : undefined;
+  }
+
+  it('leaves the block off the Entry screen while Corrections are out of the Mix, and brings it back with them', async () => {
+    const app = await run({ pack });
+    expect(await entryScreenLinks(app)).toEqual(links);
+
+    await app.mix.setCorrections(false);
+    expect(await entryScreenLinks(app)).toEqual([]);
+
+    await app.mix.setCorrections(true);
+    expect(await entryScreenLinks(app)).toEqual(links);
+  });
+
+  it('leaves the block off the Entry screen after reopening with Corrections out of the Mix', async () => {
+    const records = new Map<string, string>();
+    await (await run({ records, pack })).mix.setCorrections(false);
+
+    expect(await entryScreenLinks(await run({ records, pack }))).toEqual([]);
+  });
+
+  it('keeps the block while only a Category is out of the Mix', async () => {
+    const app = await run({ pack });
+
+    await app.mix.takeOut('speech');
+
+    expect(await entryScreenLinks(app)).toEqual(links);
+  });
+
+  it('takes the block off a Word card already in the Feed, and puts it back, at once', async () => {
+    const app = await run({ pack });
+    const before = await feedLinks(app);
+    expect(before.links).toEqual(links);
+    let told = 0;
+    app.feed.subscribe(() => {
+      told += 1;
+    });
+    const position = entryIdsOf(app.feed.cards).indexOf(linked.id);
+
+    await app.mix.setCorrections(false);
+
+    expect(told).toBeGreaterThan(0);
+    const out = app.feed.cards[position];
+    expect(out).not.toBe(before.card);
+    expect(entryIdOf(out)).toBe(linked.id);
+    expect(out?.kind === 'word' ? out.wordCard.linkedCorrections : undefined).toEqual([]);
+    expect(await app.feed.openLinkedCorrection(position, 'c_one')).toBeUndefined();
+    const toldOut = told;
+
+    await app.mix.setCorrections(true);
+
+    expect(told).toBeGreaterThan(toldOut);
+    const back = app.feed.cards[position];
+    expect(back?.kind === 'word' ? back.wordCard.linkedCorrections : undefined).toEqual(links);
+    expect(await app.feed.openLinkedCorrection(position, 'c_one')).toBe(position + 1);
+  });
+
+  it('keeps the cards of the Feed as they are when the Mix change leaves the block alone', async () => {
+    const app = await run({ pack });
+    await feedLinks(app);
+    const cards = app.feed.cards;
+
+    await app.mix.takeOut('crafts');
+    await app.mix.putBack('crafts');
+
+    expect(app.feed.cards).toEqual(cards);
   });
 });

@@ -493,11 +493,39 @@ export async function openFeed({
   }
 
   /**
+   * Builds the Word cards of the session again where the Entries now link
+   * other Corrections than the card does (Corrections went out of the Mix, or
+   * came back). Each card keeps its place, and so does the reader. Resolves to
+   * whether a card changed.
+   */
+  async function refreshLinkedCorrections(): Promise<boolean> {
+    const rebuilt = new Map<FeedCard, FeedCard>();
+    for (const card of session) {
+      if (card.kind !== 'word') continue;
+      const entry = await entries.get(card.wordCard.wordId);
+      if (entry?.kind !== 'word') continue;
+      const links = (await entries.linkedCorrections(entry)).map(({ id }) => id);
+      const shown = card.wordCard.linkedCorrections.map(({ correctionId }) => correctionId);
+      if (links.length === shown.length && links.every((id, index) => id === shown[index]))
+        continue;
+      rebuilt.set(card, await buildEntryCard(entries, entry, card.wordOfTheDay));
+    }
+    if (rebuilt.size === 0) return false;
+    const renewed = (card: FeedCard) => rebuilt.get(card) ?? card;
+    setSession(session.map(renewed), new Set([...dropped].map(renewed)));
+    if (droppedFromScreen !== undefined) droppedFromScreen = renewed(droppedFromScreen);
+    return true;
+  }
+
+  /**
    * Drops every card whose Entry the Cycle no longer covers and puts back the
-   * dropped ones it covers again, then keeps the next card ready.
+   * dropped ones it covers again, then keeps the next card ready. The Word
+   * cards follow the Mix too: a Word card links no Correction while
+   * Corrections are out of the Mix.
    */
   async function followEligibility(): Promise<void> {
     await inTurn(async () => {
+      const refreshed = await refreshLinkedCorrections();
       const out = new Set(
         session.filter((card) => {
           const entryId = entryIdOf(card);
@@ -512,7 +540,10 @@ export async function openFeed({
         droppedFromScreen = undefined;
       const moved = was !== undefined && place !== undefined && place !== was.place;
       const sameDropped = out.size === dropped.size && [...out].every((card) => dropped.has(card));
-      if (!moved && sameDropped) return;
+      if (!moved && sameDropped) {
+        if (refreshed) tellSubscribers();
+        return;
+      }
       const now = clock.now().getTime();
       if (moved) onScreen = { place, since: now };
       if (moved && place === session.length) {
