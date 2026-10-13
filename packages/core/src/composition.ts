@@ -1,3 +1,4 @@
+import { openCollections, type Collections } from './collections';
 import { openCycle } from './cycle';
 import type { Edition } from './edition';
 import { createEntries } from './entries';
@@ -19,6 +20,8 @@ export interface Composition {
   readonly feed: Feed;
   /** Favorites, which a heart tapped anywhere changes. */
   readonly favorites: Favorites;
+  /** Collections, which the sheet and the Collections screens change. */
+  readonly collections: Collections;
   /**
    * The Entry card of any Entry, Retired or not, for a screen that opens a
    * kept Entry; nothing for an id the Language Pack doesn't have. Opening it
@@ -53,13 +56,15 @@ export async function openComposition({
   const rows = createEntryRows(entries);
   const cycle = await openCycle({ entries, userState, random });
   const wordOfTheDay = await openWordOfTheDay({ cycle, userState, clock });
-  const [feed, favorites] = await Promise.all([
+  const [feed, favorites, collections] = await Promise.all([
     openFeed({ entries, userState, clock, cycle, wordOfTheDay }),
     openFavorites({ rows, userState, clock }),
+    openCollections({ rows, userState, clock, random }),
   ]);
   return {
     feed,
     favorites,
+    collections,
     async entryCard(entryId) {
       const entry = await entries.get(entryId);
       return entry === undefined ? undefined : buildEntryCard(entries, entry);

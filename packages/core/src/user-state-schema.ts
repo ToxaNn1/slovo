@@ -45,6 +45,17 @@ export const userStateRecords = {
   wordOfTheDay: declareRecord('feed.wordOfTheDay', EntryOnDateSchema),
   /** The Entries in Favorites, one record per Entry, by Entry id: the instant it was added. */
   favorites: declareRecords('favorites.', InstantSchema),
+  /** The Collections, one record per Collection, by Collection id: its name and the instant it was created. */
+  collections: declareRecords(
+    'collections.',
+    z.object({ name: z.string(), createdAt: InstantSchema }),
+  ),
+  /**
+   * The Entries in Collections, one record per Entry in a Collection, by
+   * Collection id, a `.` and the Entry id (neither holds a `.`): the instant
+   * it was added.
+   */
+  collectionEntries: declareRecords('collectionEntries.', InstantSchema),
 };
 
 /**
