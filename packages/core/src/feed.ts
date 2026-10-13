@@ -73,7 +73,8 @@ export interface Feed {
    * or puts back cards: the card on screen keeps its place, the next card
    * takes it when the card on screen is dropped, and a card put back takes
    * the screen back if it left it and the reader hasn't moved since. A shell
-   * turns to it after the cards change.
+   * turns to it after the cards change. When no card after the dropped one
+   * stays, it is one past the last card until the next card is ready.
    */
   readonly position: number | undefined;
   /** Calls `listener` after each change of the cards. Returns the call that stops it. */
@@ -212,8 +213,20 @@ export async function openFeed({
   }
 
   /** The cards shown in the current Cycle. */
-  const cycleCards = (shown = session) =>
-    shown.slice(cycleStart).filter((card) => !dropped.has(card));
+  const cycleCards = () => session.slice(cycleStart).filter((card) => !dropped.has(card));
+
+  /**
+   * The session without the card, if given, for the change about to be made:
+   * the places after it move one back, the one on screen too.
+   */
+  function without(card: FeedCard | undefined): readonly FeedCard[] {
+    const place = card === undefined ? -1 : session.indexOf(card);
+    if (place === -1) return session;
+    if (cycleStart > place) cycleStart -= 1;
+    if (onScreen !== undefined && onScreen.place > place)
+      onScreen = { ...onScreen, place: onScreen.place - 1 };
+    return session.filter((kept) => kept !== card);
+  }
 
   /**
    * Opens on the card the reader was on, if it was today and the Cycle still
@@ -278,13 +291,14 @@ export async function openFeed({
   }
 
   async function addNextCard(): Promise<FeedCard | undefined> {
-    const atEnd = cards.at(-1)?.kind === 'end-of-cycle';
+    const last = cards.at(-1);
+    // The last card shown is the current Cycle's end-of-Cycle card, not one of
+    // an earlier Cycle whose next cards were all dropped.
+    const atEnd = last?.kind === 'end-of-cycle' && session.indexOf(last) >= cycleStart;
     const { words: unseenWords, corrections: unseenCorrections } = cycle.unseen();
     // The end-of-Cycle card came too early when the reader left the last unseen
     // Entry before it was Seen: the next card takes its place.
-    const tooEarly =
-      atEnd && unseenWords.length + unseenCorrections.length > 0 ? cards.at(-1) : undefined;
-    const kept = session.filter((card) => card !== tooEarly);
+    const tooEarly = atEnd && unseenWords.length + unseenCorrections.length > 0 ? last : undefined;
     // A new local day starts with its Word of the Day, also in a Feed left open over midnight.
     if (wordOfTheDay.chosen() === undefined) {
       const card = await addWordOfTheDay(tooEarly);
@@ -301,13 +315,13 @@ export async function openFeed({
     const id = nextEntryId();
     if (id === undefined) {
       const card: FeedCard = { kind: 'end-of-cycle' };
-      changeSession([...kept, card]);
+      changeSession([...without(tooEarly), card]);
       return card;
     }
     const entry = await entries.get(id);
     if (entry === undefined) return undefined;
     const card = await buildEntryCard(entries, entry);
-    changeSession([...kept, card]);
+    changeSession([...without(tooEarly), card]);
     return card;
   }
 
@@ -344,12 +358,14 @@ export async function openFeed({
    * `replaced` card if given, choosing it first if today has none yet.
    */
   async function addWordOfTheDay(replaced?: FeedCard): Promise<FeedCard | undefined> {
-    const kept = session.filter((card) => card !== replaced);
-    const today = await wordOfTheDay.today({ avoid: shownIds(kept) });
+    const today = await wordOfTheDay.today({
+      avoid: shownIds(session.filter((card) => card !== replaced)),
+    });
     if (today === undefined) return undefined;
-    if (today.startedCycle) cycleStart = kept.length;
     const card = await wordOfTheDayCard(today);
     if (card === undefined) return undefined;
+    const kept = without(replaced);
+    if (today.startedCycle) cycleStart = kept.length;
     changeSession([...kept, card]);
     return card;
   }
@@ -479,28 +495,25 @@ export async function openFeed({
         }),
       );
       const was = onScreen;
-      if (was === undefined) {
-        changeSession(session, out);
-        return;
-      }
-      const place = placeOnScreen(was.place, out);
-      const left = session[was.place];
+      const place = was === undefined ? undefined : placeOnScreen(was.place, out);
+      const left = was === undefined ? undefined : session[was.place];
       if (left !== undefined && out.has(left)) droppedFromScreen = left;
-      else if (session[place] === droppedFromScreen) droppedFromScreen = undefined;
-      if (place === was.place) {
-        changeSession(session, out);
-        return;
-      }
+      else if (place !== undefined && session[place] === droppedFromScreen)
+        droppedFromScreen = undefined;
+      const moved = was !== undefined && place !== undefined && place !== was.place;
+      const sameDropped = out.size === dropped.size && [...out].every((card) => dropped.has(card));
+      if (!moved && sameDropped) return;
       const now = clock.now().getTime();
-      onScreen = { place, since: now };
+      if (moved) onScreen = { place, since: now };
       changeSession(session, out);
-      await keepScreenChange({
-        left,
-        stayed: now - was.since,
-        entryId: entryIdOf(session[place]),
-        now,
-        date: todayKey(clock),
-      });
+      if (moved)
+        await keepScreenChange({
+          left,
+          stayed: now - was.since,
+          entryId: entryIdOf(session[place]),
+          now,
+          date: todayKey(clock),
+        });
     });
     await keepNextCardReady();
   }

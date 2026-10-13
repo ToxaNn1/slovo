@@ -414,10 +414,8 @@ describe('the Feed, when an Entry is hidden or restored', () => {
     const app = await run();
     await turnTo(app.feed, 1);
     const [first, hidden, next] = entryIdsOf(app.feed.cards);
-    let told = 0;
-    app.feed.subscribe(() => {
-      told += 1;
-    });
+    const told: (readonly string[])[] = [];
+    app.feed.subscribe(() => told.push(entryIdsOf(app.feed.cards)));
 
     await app.hiddenEntries.hide(hidden ?? '');
 
@@ -426,7 +424,7 @@ describe('the Feed, when an Entry is hidden or restored', () => {
     expect(ids).not.toContain(hidden);
     expect(ids).toHaveLength(3);
     expect(app.feed.position).toBe(1);
-    expect(told).toBeGreaterThan(0);
+    expect(told[0]).toEqual([first, next]);
   });
 
   it('drops every card of the hidden Entry, also one before the card on screen, and keeps the reader on their card', async () => {
@@ -553,6 +551,40 @@ describe('the Feed, when an Entry is hidden or restored', () => {
     time.advance(SEEN_DWELL_MS);
     await app.feed.show(2);
     expect(records.get(`feed.seen.${next}`)).toBe('true');
+  });
+
+  it('keeps the reader on the end-of-Cycle card when the first card of the next Cycle is hidden, and puts that card back into the next Cycle on undo', async () => {
+    const records = new Map<string, string>();
+    const time = fakeClock();
+    const app = await run({ records, clock: time.clock });
+    let end = app.feed.startPosition;
+    for (; app.feed.cards[end]?.kind !== 'end-of-cycle'; end += 1) {
+      await app.feed.show(end);
+      time.advance(SEEN_DWELL_MS);
+    }
+    await app.feed.show(end);
+    const hidden = entryIdOf(app.feed.cards[end + 1]) ?? '';
+    /** The card on screen and the one after it. */
+    const onScreenAndNext = () => {
+      const position = app.feed.position ?? -1;
+      return [app.feed.cards[position]?.kind, entryIdOf(app.feed.cards[position + 1])];
+    };
+
+    await app.hiddenEntries.hide(hidden);
+
+    const [onScreen, next] = onScreenAndNext();
+    expect(onScreen).toBe('end-of-cycle');
+    expect(next).toBeDefined();
+    expect(entryIdsOf(app.feed.cards)).not.toContain(hidden);
+
+    await app.hiddenEntries.restore(hidden);
+
+    expect(onScreenAndNext()).toEqual(['end-of-cycle', hidden]);
+    const position = app.feed.position ?? -1;
+    await app.feed.show(position + 1);
+    time.advance(SEEN_DWELL_MS);
+    await app.feed.show(position + 2);
+    expect(records.get(`feed.seen.${hidden}`)).toBe('true');
   });
 
   it('reopens the same day on the card that took the hidden one’s place', async () => {
