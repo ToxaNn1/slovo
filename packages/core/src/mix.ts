@@ -59,8 +59,11 @@ interface MixChoices {
   readonly corrections: boolean | undefined;
 }
 
-/** Whether the Category is in the Mix by the user's choice or, untouched, by the Edition's default (ADR 0019). */
-function chosen(edition: MixEdition, choices: MixChoices, categoryId: string): boolean {
+/**
+ * Whether the Category is in the Mix by the user's choice or, untouched, by
+ * the Edition's default (ADR 0019).
+ */
+function inMixByChoice(edition: MixEdition, choices: MixChoices, categoryId: string): boolean {
   return (
     choices.categories.get(categoryId) ??
     edition.userSettingDefaults.mix.categoryIds.includes(categoryId)
@@ -70,14 +73,14 @@ function chosen(edition: MixEdition, choices: MixChoices, categoryId: string): b
 /** The Mix of the user's choices over the Edition's default Mix. */
 function mixStateOf(edition: MixEdition, choices: MixChoices): MixState {
   const { mix } = edition.userSettingDefaults;
-  let shown = edition.categories.filter(({ id }) => chosen(edition, choices, id));
+  let inMix = edition.categories.filter(({ id }) => inMixByChoice(edition, choices, id));
   // At least one Category always stays in the Mix (ADR 0019). Taking out the last
   // one is refused, but a later default or a Category gone from the Edition could
   // still leave none in; then the default's Categories are in.
-  if (shown.length === 0) {
-    shown = edition.categories.filter(({ id }) => mix.categoryIds.includes(id));
+  if (inMix.length === 0) {
+    inMix = edition.categories.filter(({ id }) => mix.categoryIds.includes(id));
   }
-  const categoryIds = shown.map(({ id }) => id);
+  const categoryIds = inMix.map(({ id }) => id);
   return {
     categoryIds,
     corrections: choices.corrections ?? mix.corrections,
@@ -143,7 +146,7 @@ export async function openMix({
     const changed = new Map(choices.categories);
     const writes = new Map<string, string | undefined>();
     for (const [id, isIn] of wanted) {
-      if (chosen(edition, choices, id) === isIn) continue;
+      if (inMixByChoice(edition, choices, id) === isIn) continue;
       changed.set(id, isIn);
       for (const [key, value] of categoryRecords.record(id).change(isIn)) writes.set(key, value);
     }

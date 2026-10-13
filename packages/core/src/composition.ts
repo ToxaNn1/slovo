@@ -65,7 +65,8 @@ export async function openComposition({
   const rows = createEntryRows(entries);
   const cycle = await openCycle({ entries, userState, random });
   const wordOfTheDay = await openWordOfTheDay({ cycle, userState, clock });
-  // A hide, a restore or a Mix change changes which Entries are eligible, so the Cycle reads them again.
+  // A hide, a restore or a Mix change changes which Entries are eligible, so the
+  // Cycle reads them again.
   const eligibilityChanged = () => cycle.readEligibleAgain();
   const [{ history, recorder }, favorites, collections, hiddenEntries, mix] = await Promise.all([
     openHistory({ rows, userState }),

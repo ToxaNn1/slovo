@@ -63,7 +63,10 @@ export function createEntries(
   const { content, edition } = options;
   const withCorrections = () => edition.isFeatureEnabled('corrections');
 
-  /** The live Words of the Categories in the Mix, one query per Category, or every live Word without a Mix. */
+  /**
+   * The live Words of the Categories in the Mix, one query per Category, or
+   * every live Word without a Mix.
+   */
   async function wordIds(categoryIds: readonly string[] | undefined): Promise<readonly string[]> {
     if (categoryIds === undefined) return content.listWordIds();
     const words = await Promise.all(categoryIds.map((id) => content.listWordIds(id)));

@@ -41,7 +41,6 @@ export {
 } from './feed';
 export { createHaptics, type HapticEngine, type Haptics } from './haptics';
 export { type HiddenEntries, type HiddenEntry } from './hidden-entries';
-export { type Mix, type MixEdition, type MixState } from './mix';
 export { HISTORY_CAP, type History, type HistoryEntry } from './history';
 export { groupByLocalDay, relativeTimeOf, type DayGroup, type RelativeTime } from './history-time';
 export { localDayOf, localTimeOf, type LocalDate, type LocalDay } from './local-date';
@@ -70,6 +69,7 @@ export {
 } from './word-card';
 export { openWordOfTheDay, type WordOfTheDay, type WordOfTheDayChoice } from './word-of-the-day';
 export { createMemoryContentPort } from './memory-content';
+export { type Mix, type MixEdition, type MixState } from './mix';
 export {
   systemClock,
   systemRandom,
