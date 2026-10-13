@@ -100,11 +100,13 @@ const styles = StyleSheet.create({
   containerCompact: { marginHorizontal: space[6] },
   row: { minHeight: 60, paddingVertical: 14, paddingHorizontal: space[6], gap: 3 },
   rowCompact: { minHeight: 52, paddingVertical: 12, paddingHorizontal: 0 },
+  // At the largest text sizes the trailing text drops under the title instead of squeezing it.
   titleLine: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'baseline',
     justifyContent: 'space-between',
-    gap: 10,
+    columnGap: 10,
   },
   title: { flexShrink: 1, fontSize: 22, fontWeight: '500' },
   trailing: { flexShrink: 0, fontSize: 12, fontWeight: '500' },
