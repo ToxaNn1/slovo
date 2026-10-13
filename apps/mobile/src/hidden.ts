@@ -3,7 +3,7 @@ import { fill, useEdition, useUndoToast } from '@slovo/ui';
 import { useCallback, useMemo, useSyncExternalStore } from 'react';
 
 import { useComposition } from './composition';
-import { editionStrings } from './edition';
+import { edition, editionStrings } from './edition';
 import { hiddenScreenModel, hiddenSummary, type HiddenScreenModel } from './hidden-screen';
 import { useMix, useMixState } from './mix';
 
@@ -49,7 +49,7 @@ export function useHiddenScreenModel(): HiddenScreenModel | undefined {
     () =>
       mix === undefined
         ? undefined
-        : hiddenScreenModel({ hiddenEntries: list, mix, strings: editionStrings }),
+        : hiddenScreenModel({ edition, hiddenEntries: list, mix, strings: editionStrings }),
     [list, mix],
   );
 }
@@ -63,6 +63,7 @@ export function useHiddenScreenModel(): HiddenScreenModel | undefined {
 export function useHiddenChanges(): {
   restoreEntry: (entry: { entryId: string; title: string }) => void;
   turnCategoryOn: (categoryId: string) => void;
+  turnCorrectionsOn: () => void;
 } {
   const hiddenEntries = useHiddenEntries();
   const mix = useMix();
@@ -85,6 +86,11 @@ export function useHiddenChanges(): {
         .catch((error: unknown) => {
           console.error('Could not restore the Hidden Entry', error);
         });
+    },
+    turnCorrectionsOn() {
+      mix?.setCorrections(true).catch((error: unknown) => {
+        console.error('Could not put Corrections back in the Mix', error);
+      });
     },
     turnCategoryOn(categoryId) {
       mix?.putBack(categoryId).catch((error: unknown) => {

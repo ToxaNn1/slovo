@@ -1,5 +1,5 @@
 import { fill, type EditionStrings, type Plural } from '@slovo/contracts';
-import type { EntryRowModel, HiddenEntry, MixState } from '@slovo/core';
+import type { Edition, EntryRowModel, HiddenEntry, MixState } from '@slovo/core';
 
 /** A Hidden Entry's row on the Hidden screen. */
 export interface HiddenEntryModel {
@@ -21,6 +21,11 @@ export interface HiddenScreenModel {
   readonly entries: readonly HiddenEntryModel[];
   /** The Hidden Categories, in the Edition's order: the Categories out of the Mix (ADR 0019). */
   readonly categories: readonly HiddenCategoryModel[];
+  /**
+   * Corrections as a whole, when they are out of the Mix (ADR 0019) and the
+   * Edition turns them on; nothing otherwise.
+   */
+  readonly corrections: { readonly name: string } | undefined;
   /** Whether nothing is hidden, which is when the screen says so. */
   readonly empty: boolean;
 }
@@ -63,10 +68,12 @@ function entryModel({ entryId, row }: HiddenEntry, strings: EditionStrings): Hid
 }
 
 export function hiddenScreenModel({
+  edition,
   hiddenEntries,
   mix,
   strings,
 }: {
+  edition: Pick<Edition, 'isFeatureEnabled'>;
   hiddenEntries: readonly HiddenEntry[];
   mix: MixState;
   strings: EditionStrings;
@@ -76,7 +83,16 @@ export function hiddenScreenModel({
     id,
     name: displayName,
   }));
-  return { entries, categories, empty: entries.length === 0 && categories.length === 0 };
+  const corrections =
+    edition.isFeatureEnabled('corrections') && !mix.corrections
+      ? { name: strings.correctionCard.title }
+      : undefined;
+  return {
+    entries,
+    categories,
+    corrections,
+    empty: entries.length === 0 && categories.length === 0 && corrections === undefined,
+  };
 }
 
 /** The value of the «Приховані записи» row of Settings: how many Entries are hidden. */

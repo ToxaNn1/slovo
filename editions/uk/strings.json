@@ -440,6 +440,7 @@
     "restoreLabel": "Повернути «{title}»",
     "turnOn": "Увімкнути",
     "turnOnLabel": "Увімкнути категорію «{name}»",
+    "turnOnCorrectionsLabel": "Увімкнути Виправлення",
     "rowLabels": "{kind} · {labels}",
     "rowLabelsSpoken": "{kind}, {labels}",
     "labelSeparator": ", ",

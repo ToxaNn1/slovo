@@ -7,6 +7,7 @@ import {
   openUserState,
   type Clock,
   type Composition,
+  type Edition,
 } from '@slovo/core';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -102,8 +103,9 @@ async function open(): Promise<{ app: Composition; advance: () => void }> {
   };
 }
 
-const modelOf = (app: Composition) =>
+const modelOf = (app: Composition, edition: Pick<Edition, 'isFeatureEnabled'> = ukrainian) =>
   hiddenScreenModel({
+    edition,
     hiddenEntries: app.hiddenEntries.list,
     mix: app.mix.state,
     strings,
@@ -156,6 +158,31 @@ describe('the «Приховане» screen', () => {
       { id: second.id, name: second.displayName },
     ]);
     expect(model.empty).toBe(false);
+  });
+
+  it('lists Corrections taken out of the Mix as hidden too, so the screen is not empty, and drops them once they are on', async () => {
+    const { app } = await open();
+    expect(modelOf(app).corrections).toBe(undefined);
+
+    await app.mix.setCorrections(false);
+
+    expect(modelOf(app).corrections).toEqual({ name: 'Виправлення' });
+    expect(modelOf(app).empty).toBe(false);
+
+    await app.mix.setCorrections(true);
+
+    expect(modelOf(app).corrections).toBe(undefined);
+    expect(modelOf(app).empty).toBe(true);
+  });
+
+  it('leaves Corrections out of the screen when the Edition does not turn them on', async () => {
+    const { app } = await open();
+    await app.mix.setCorrections(false);
+
+    const model = modelOf(app, { isFeatureEnabled: () => false });
+
+    expect(model.corrections).toBe(undefined);
+    expect(model.empty).toBe(true);
   });
 
   it('puts a Category back in the Mix, so the Mix and the screen never disagree', async () => {

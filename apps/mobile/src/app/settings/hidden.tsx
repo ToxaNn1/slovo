@@ -43,11 +43,10 @@ export default function HiddenScreen() {
 function HiddenList() {
   const composition = useComposition();
   const model = useHiddenScreenModel();
-  const { restoreEntry, turnCategoryOn } = useHiddenChanges();
+  const { restoreEntry, turnCategoryOn, turnCorrectionsOn } = useHiddenChanges();
   const { colors, fontFamilies } = useTokens();
   const { voice } = useEdition();
   const router = useRouter();
-  const stacked = useWindowDimensions().fontScale > STACK_AT_FONT_SCALE;
 
   if (composition.status === 'failed') return <LoadFailed onRetry={composition.retry} />;
 
@@ -110,45 +109,76 @@ function HiddenList() {
               ))}
             </View>
           )}
-          {model !== undefined && model.categories.length > 0 && (
-            <View testID="hidden-categories" style={styles.section}>
-              <SectionLabel style={styles.sectionLabel}>{strings.categories}</SectionLabel>
-              {model.categories.map(({ id, name }) => (
-                <View
-                  key={id}
-                  testID={`hidden-category-${id}`}
-                  style={[
-                    styles.categoryRow,
-                    { borderColor: colors.line },
-                    stacked && styles.categoryRowStacked,
-                  ]}
-                >
-                  <Text
-                    {...voice}
-                    // A name stops growing at 1.3×, so it never breaks a word.
-                    maxFontSizeMultiplier={1.3}
-                    style={[
-                      styles.categoryName,
-                      { color: colors.ink, fontFamily: fontFamilies.ui },
-                    ]}
-                  >
-                    {name}
-                  </Text>
-                  <OutlineButton
-                    testID={`hidden-category-${id}-turn-on`}
-                    label={strings.turnOn}
+          {model !== undefined &&
+            (model.categories.length > 0 || model.corrections !== undefined) && (
+              <View testID="hidden-categories" style={styles.section}>
+                <SectionLabel style={styles.sectionLabel}>{strings.categories}</SectionLabel>
+                {model.categories.map(({ id, name }) => (
+                  <TurnOnRow
+                    key={id}
+                    testID={`hidden-category-${id}`}
+                    name={name}
                     accessibilityLabel={fill(strings.turnOnLabel, { name })}
-                    onPress={() => {
+                    onTurnOn={() => {
                       turnCategoryOn(id);
                     }}
                   />
-                </View>
-              ))}
-            </View>
-          )}
+                ))}
+                {model.corrections !== undefined && (
+                  <TurnOnRow
+                    testID="hidden-corrections"
+                    name={model.corrections.name}
+                    accessibilityLabel={strings.turnOnCorrectionsLabel}
+                    onTurnOn={turnCorrectionsOn}
+                  />
+                )}
+              </View>
+            )}
         </ScrollView>
       </GestureHandlerRootView>
     </SafeAreaView>
+  );
+}
+
+/** A row of the Categories section: a name and the button that puts it back in the Mix. */
+function TurnOnRow({
+  testID,
+  name,
+  accessibilityLabel,
+  onTurnOn,
+}: {
+  testID: string;
+  name: string;
+  accessibilityLabel: string;
+  onTurnOn: () => void;
+}) {
+  const { colors, fontFamilies } = useTokens();
+  const { voice } = useEdition();
+  const stacked = useWindowDimensions().fontScale > STACK_AT_FONT_SCALE;
+  return (
+    <View
+      testID={testID}
+      style={[
+        styles.categoryRow,
+        { borderColor: colors.line },
+        stacked && styles.categoryRowStacked,
+      ]}
+    >
+      <Text
+        {...voice}
+        // A name stops growing at 1.3×, so it never breaks a word.
+        maxFontSizeMultiplier={1.3}
+        style={[styles.categoryName, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+      >
+        {name}
+      </Text>
+      <OutlineButton
+        testID={`${testID}-turn-on`}
+        label={strings.turnOn}
+        accessibilityLabel={accessibilityLabel}
+        onPress={onTurnOn}
+      />
+    </View>
   );
 }
 
