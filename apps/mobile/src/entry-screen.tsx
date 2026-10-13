@@ -11,12 +11,22 @@ import { LoadFailed } from './language-pack';
 
 /**
  * The Entry screen a list opens: one Entry card with its action row, under a
- * link back to the list, named `back`. It shows the Entry by id whether or
- * not the list still holds it, so it stays open when a tap on the heart takes
- * the Entry out, until the reader goes back. Opening it never makes the
- * Entry Seen.
+ * link back to the screen before, named `back`. It shows the Entry by id
+ * whether or not the list still holds it, so it stays open when a tap on the
+ * heart takes the Entry out, until the reader goes back. A Correction a Word
+ * card links opens as the next Entry screen of the same `route`, its link
+ * back named for the Word. Opening it never makes the Entry Seen.
  */
-export function EntryScreen({ entryId, back }: { entryId: string; back: string }) {
+export function EntryScreen({
+  entryId,
+  back,
+  route,
+}: {
+  entryId: string;
+  back: string;
+  /** The route of the list's Entry screen, such as `/saved/favorites`. */
+  route: string;
+}) {
   const composition = useComposition();
   const { colors } = useTokens();
   const router = useRouter();
@@ -58,7 +68,14 @@ export function EntryScreen({ entryId, back }: { entryId: string; back: string }
       </View>
       {card !== undefined && entryIdOf(card) === entryId && (
         <ScrollView contentContainerStyle={styles.content}>
-          <EntryCard card={card} actions={<EntryActions entryId={entryId} />} />
+          <EntryCard
+            card={card}
+            onOpenCorrection={(correctionId) => {
+              const word = card.kind === 'word' ? card.wordCard.lemma : back;
+              router.push(`${route}/${correctionId}?back=${encodeURIComponent(word)}`);
+            }}
+            actions={<EntryActions entryId={entryId} />}
+          />
         </ScrollView>
       )}
     </SafeAreaView>

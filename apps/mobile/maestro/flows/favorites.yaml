@@ -6,12 +6,12 @@ appId: ${APP_ID || 'app.slovo.uk'}
 ---
 - tapOn:
     id: tab-home
-- copyTextFrom:
-    id: word-lemma
 # The heart sits under the card, which may be taller than the screen.
 - scrollUntilVisible:
     element:
       id: favorite-button
+    # Off the tab bar, which covers the bottom of a card that barely fits.
+    centerElement: true
 # A tap while the card still glides only stops it.
 - waitForAnimationToEnd
 - assertVisible:
@@ -23,8 +23,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: favorite-button
     text: Прибрати з Улюбленого
 - takeScreenshot: favorites-heart-filled
-# The Saved tab counts it at once, in the right plural form, and the
-# Favorites card shows its Lemma.
+# The Saved tab counts it at once, in the right plural form.
 - tapOn:
     id: tab-saved
 - assertVisible:
@@ -39,17 +38,17 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - assertVisible:
     id: entry-row-.*-open
 - takeScreenshot: favorites-list
-# The row opens the Entry screen: the card of the Entry the heart kept.
+# The row opens the Entry screen: the card of the one Entry the heart kept,
+# a Word or a Correction, with its heart filled.
 - tapOn:
     id: entry-row-.*-open
 - assertVisible:
     id: entry-screen
-- assertVisible:
-    id: word-lemma
-    text: ${maestro.copiedText}
 - scrollUntilVisible:
     element:
       id: favorite-button
+    # Off the tab bar, which covers the bottom of a card that barely fits.
+    centerElement: true
 # A tap while the card still glides only stops it.
 - waitForAnimationToEnd
 - tapOn:
@@ -75,4 +74,4 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - tapOn:
     id: tab-home
 - assertVisible:
-    id: word-lemma
+    id: home

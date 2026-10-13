@@ -9,6 +9,8 @@ export const FavoritesStringsSchema = z.strictObject({
   title: TextSchema,
   /** How many Entries Favorites holds, as VoiceOver reads the count. */
   count: PluralSchema,
+  /** What VoiceOver reads for the Favorites card of the Saved tab. Takes `{count}`, the count in words. */
+  cardLabel: templateOf('count'),
   /** The heart's VoiceOver labels: what a tap will do. */
   heart: z.strictObject({ add: TextSchema, remove: TextSchema }),
   /** The line under the list. */

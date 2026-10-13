@@ -25,8 +25,26 @@ export function useFavoriteList(): readonly Favorite[] {
   return useSyncExternalStore(useSubscribe(favorites), () => favorites?.list ?? noFavorites);
 }
 
-/** Whether the Entry is in Favorites, kept up to date, and the call that adds or removes it. */
-export function useFavorite(entryId: string): { inFavorites: boolean; toggle: () => void } {
+/**
+ * Waits for a change of Favorites. One that could not be kept is logged and
+ * resolves to `unchanged`, as Favorites stay as they were.
+ */
+async function keep<T>(change: Promise<T>, unchanged: T): Promise<T> {
+  try {
+    return await change;
+  } catch (error) {
+    console.error('Could not keep the change of Favorites', error);
+    return unchanged;
+  }
+}
+
+/** Whether the Entry is in Favorites, kept up to date, and the calls that change that. */
+export function useFavorite(entryId: string): {
+  inFavorites: boolean;
+  /** Adds the Entry or takes it out; resolves to whether it is in Favorites now. */
+  toggle: () => Promise<boolean>;
+  remove: () => void;
+} {
   const favorites = useFavorites();
   const inFavorites = useSyncExternalStore(
     useSubscribe(favorites),
@@ -34,17 +52,12 @@ export function useFavorite(entryId: string): { inFavorites: boolean; toggle: ()
   );
   return {
     inFavorites,
-    toggle() {
-      favorites?.toggle(entryId).catch((error: unknown) => {
-        console.error('Could not keep the change of Favorites', error);
-      });
+    toggle: () =>
+      favorites === undefined
+        ? Promise.resolve(false)
+        : keep(favorites.toggle(entryId), favorites.has(entryId)),
+    remove: () => {
+      if (favorites !== undefined) void keep(favorites.remove(entryId), undefined);
     },
   };
-}
-
-/** Takes the Entry out of Favorites. */
-export function removeFavorite(favorites: Favorites | undefined, entryId: string): void {
-  favorites?.remove(entryId).catch((error: unknown) => {
-    console.error('Could not keep the change of Favorites', error);
-  });
 }

@@ -121,10 +121,7 @@ export function EntryRow({
         ]}
       >
         <View style={styles.titleLine}>
-          <Text
-            style={[styles.title, { color: colors.ink, fontFamily: fontFamilies.word }]}
-            numberOfLines={1}
-          >
+          <Text style={[styles.title, { color: colors.ink, fontFamily: fontFamilies.word }]}>
             {row.title}
           </Text>
           {trailing !== undefined && (

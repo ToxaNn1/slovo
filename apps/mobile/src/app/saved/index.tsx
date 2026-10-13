@@ -1,4 +1,5 @@
 import {
+  fill,
   OrnamentBand,
   SavedCard,
   SavedCardTitles,
@@ -48,7 +49,9 @@ export default function SavedScreen() {
             primary
             title={strings.title}
             count={favorites.length}
-            accessibilityLabel={`${strings.title}, ${count(strings.count, favorites.length)}`}
+            accessibilityLabel={fill(strings.cardLabel, {
+              count: count(strings.count, favorites.length),
+            })}
             onPress={() => {
               router.push('/saved/favorites');
             }}

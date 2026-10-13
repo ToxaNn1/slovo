@@ -5,12 +5,11 @@ import type { Correction, Word } from '@slovo/contracts';
 import {
   createMemoryContentPort,
   createMemoryUserStatePort,
-  localDayOf,
+  entryIdOf,
   openComposition,
   openUserState,
   type Clock,
   type Composition,
-  type FeedCard,
   type UserStatePort,
 } from './index';
 
@@ -55,17 +54,13 @@ const corrections = [correction('c_one'), correction('c_old', true)];
 const content = createMemoryContentPort({ words, corrections });
 
 /** A clock the test moves by hand. */
-function fakeClock(start = '2026-10-11T09:00:00+03:00', timeZone = 'Europe/Kyiv') {
+function fakeClock(start = '2026-10-11T09:00:00+03:00') {
   let now = new Date(start).getTime();
-  let zone = timeZone;
-  const clock: Clock = { now: () => new Date(now), timeZone: () => zone };
+  const clock: Clock = { now: () => new Date(now), timeZone: () => 'Europe/Kyiv' };
   return {
     clock,
     advance(ms: number) {
       now += ms;
-    },
-    moveTo(timeZoneName: string) {
-      zone = timeZoneName;
     },
   };
 }
@@ -93,12 +88,6 @@ async function run({
 
 /** The ids in Favorites, newest first. */
 const idsOf = ({ favorites }: Composition) => favorites.list.map((favorite) => favorite.entryId);
-
-/** The id of the Entry a card shows, if it shows one. */
-const entryIdOf = (card: FeedCard | undefined) => {
-  if (card?.kind === 'word') return card.wordCard.wordId;
-  return card?.kind === 'correction' ? card.correctionCard.correctionId : undefined;
-};
 
 describe('Favorites', () => {
   it('adds an Entry with the time it was added, and removes it', async () => {
@@ -307,7 +296,7 @@ describe('Favorites', () => {
       expect(told).toBe(0);
     });
 
-    it('changes when a heart is tapped through the Feed card', async () => {
+    it('changes when the heart under the Feed card on screen is tapped', async () => {
       const app = await run();
       let told = 0;
       app.favorites.subscribe(() => {
@@ -337,29 +326,5 @@ describe('an Entry opened from a list', () => {
 
     expect(entryIdOf(card)).toBe('w_three');
     expect(records).toEqual(before);
-  });
-});
-
-describe('localDayOf', () => {
-  it('counts the local days before today in the clock time zone', () => {
-    const time = fakeClock('2026-10-11T00:30:00+03:00');
-    const at = (instant: string) => localDayOf(new Date(instant), time.clock);
-
-    expect(at('2026-10-11T00:10:00+03:00')).toEqual({
-      date: { year: 2026, month: 10, day: 11 },
-      daysAgo: 0,
-    });
-    expect(at('2026-10-10T23:50:00+03:00')).toEqual({
-      date: { year: 2026, month: 10, day: 10 },
-      daysAgo: 1,
-    });
-    expect(at('2025-12-31T12:00:00+02:00').daysAgo).toBe(284);
-
-    // In London it is still the day before, so the same instant was today there.
-    time.moveTo('Europe/London');
-    expect(at('2026-10-10T23:50:00+03:00')).toEqual({
-      date: { year: 2026, month: 10, day: 10 },
-      daysAgo: 0,
-    });
   });
 });

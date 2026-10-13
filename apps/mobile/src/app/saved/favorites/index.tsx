@@ -17,7 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useComposition } from '../../../composition';
 import { deviceClock } from '../../../device-clock';
 import { editionStrings } from '../../../edition';
-import { removeFavorite, useFavoriteList, useFavorites } from '../../../favorites';
+import { useFavorite, useFavoriteList } from '../../../favorites';
 import { LoadFailed } from '../../../language-pack';
 
 const { favorites: strings } = editionStrings;
@@ -36,6 +36,30 @@ function addedOn(addedAt: Date): string {
   });
 }
 
+/** A row of Favorites: a tap opens the Entry screen, the swipe action takes the Entry out. */
+function FavoriteRow({ favorite: { entryId, row, addedAt } }: { favorite: Favorite }) {
+  const { remove } = useFavorite(entryId);
+  const router = useRouter();
+  return (
+    <EntryRow
+      row={row}
+      trailing={addedOn(addedAt)}
+      onPress={() => {
+        router.push(`/saved/favorites/${entryId}`);
+      }}
+      actions={[
+        {
+          name: 'remove',
+          label: strings.remove,
+          accessibilityLabel: fill(strings.removeLabel, { title: row.title }),
+          tone: 'destructive',
+          onPress: remove,
+        },
+      ]}
+    />
+  );
+}
+
 /**
  * Favorites: every Entry the reader keeps, newest first, each row with when
  * it was added. A tap opens the Entry screen; a swipe (or the VoiceOver
@@ -43,7 +67,6 @@ function addedOn(addedAt: Date): string {
  */
 export default function FavoritesScreen() {
   const composition = useComposition();
-  const favorites = useFavorites();
   const list = useFavoriteList();
   const { colors, fontFamilies } = useTokens();
   const { count, voice } = useEdition();
@@ -51,29 +74,6 @@ export default function FavoritesScreen() {
 
   if (composition.status === 'failed') return <LoadFailed onRetry={composition.retry} />;
   const ready = composition.status === 'ready';
-
-  function row({ item }: { item: Favorite }) {
-    return (
-      <EntryRow
-        row={item.row}
-        trailing={addedOn(item.addedAt)}
-        onPress={() => {
-          router.push(`/saved/favorites/${item.entryId}`);
-        }}
-        actions={[
-          {
-            name: 'remove',
-            label: strings.remove,
-            accessibilityLabel: fill(strings.removeLabel, { title: item.row.title }),
-            tone: 'destructive',
-            onPress: () => {
-              removeFavorite(favorites, item.entryId);
-            },
-          },
-        ]}
-      />
-    );
-  }
 
   return (
     <SafeAreaView
@@ -85,7 +85,7 @@ export default function FavoritesScreen() {
         <FlatList
           data={ready ? list : []}
           keyExtractor={(favorite) => favorite.entryId}
-          renderItem={row}
+          renderItem={({ item }) => <FavoriteRow favorite={item} />}
           ListHeaderComponent={
             <>
               <View style={styles.back}>

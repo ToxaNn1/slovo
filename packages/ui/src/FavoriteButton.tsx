@@ -33,7 +33,8 @@ export function FavoriteButton({
   testID = 'favorite-button',
 }: {
   inFavorites: boolean;
-  onToggle: () => void;
+  /** Adds the Entry or takes it out; resolves to whether it is in Favorites now, and never rejects. */
+  onToggle: () => Promise<boolean>;
   testID?: string;
 }) {
   const { colors } = useTokens();
@@ -42,19 +43,23 @@ export function FavoriteButton({
   const reduceMotion = useReduceMotion();
   const scale = useRef(new Animated.Value(1)).current;
 
+  /** Pops the heart that just filled, with its haptic. */
+  function pop() {
+    haptics.impactLight();
+    if (reduceMotion) return;
+    scale.setValue(1);
+    Animated.sequence(
+      POP.map((step) =>
+        Animated.timing(scale, { ...step, easing: popEasing, useNativeDriver: true }),
+      ),
+    ).start();
+  }
+
   function onPress() {
-    if (!inFavorites) {
-      haptics.impactLight();
-      if (!reduceMotion) {
-        scale.setValue(1);
-        Animated.sequence(
-          POP.map((step) =>
-            Animated.timing(scale, { ...step, easing: popEasing, useNativeDriver: true }),
-          ),
-        ).start();
-      }
-    }
-    onToggle();
+    // Pops on what the tap did, so a quick second tap that empties it again doesn't.
+    void onToggle().then((added) => {
+      if (added) pop();
+    });
   }
 
   const color = inFavorites ? colors.heart : colors.ink;
