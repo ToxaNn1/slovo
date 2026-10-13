@@ -12,8 +12,11 @@ export interface Collection {
   readonly createdAt: Date;
   /** How many Entries are in it. */
   readonly count: number;
-  /** The titles of its newest Entries (the Lemma of a Word, as its row leads with), newest first. */
-  readonly newestTitles: readonly string[];
+  /**
+   * What the rows of its newest Entries lead with, newest first: the Lemma of a
+   * Word, and for a Correction the standard equivalent.
+   */
+  readonly newestLemmas: readonly string[];
 }
 
 /** Why a name is refused, for the UI to say in the Edition's words. */
@@ -30,7 +33,7 @@ export type CollectionResult =
   | { readonly ok: false; readonly reason: CollectionNameRefusal };
 
 /**
- * Collections: the lists of Entries the user created and named, with an Entry
+ * Collections: the groups of Entries the user created and named, with an Entry
  * in as many as the user likes. They keep any Entry the Language Pack has,
  * Retired or not, and are read from the user state once, when they open, like
  * Favorites, so open one per app session (the Core composition does). A change
@@ -50,7 +53,7 @@ export interface Collections {
   has(collectionId: string, entryId: string): boolean;
   /**
    * Creates a Collection, as of now, with the Entry already in it when one is
-   * given. The name is refused with a reason when it breaks the name rules,
+   * given (skipped when the Language Pack doesn't have it). The name is refused with a reason when it breaks the name rules,
    * and nothing is kept.
    */
   create(name: string, entryId?: string): Promise<CollectionResult>;
@@ -71,8 +74,8 @@ const { collections: collectionRecords, collectionEntries: collectionEntryRecord
 
 /** The longest name a Collection may have, in characters. */
 const NAME_MAX_LENGTH = 40;
-/** How many titles a Collection shows of its newest Entries. */
-const NEWEST_TITLES = 3;
+/** How many Lemmas a Collection shows of its newest Entries. */
+const NEWEST_LEMMAS = 3;
 const ID_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyz';
 const ID_LENGTH = 8;
 const ID_ATTEMPTS = 5;
@@ -118,12 +121,16 @@ function viewOf({ id, name, createdAt, filed }: Stored): Collection {
     name,
     createdAt,
     count: filed.size,
-    newestTitles: newest.slice(0, NEWEST_TITLES).map((item) => item.row.title),
+    newestLemmas: newest.slice(0, NEWEST_LEMMAS).map((item) => item.row.title),
   };
 }
 
-/** The key of a name for comparing: trimmed text in one letter case. */
-const nameKey = (name: string) => name.toLowerCase();
+/** The record of an Entry in a Collection: its id is the Collection id, a `.` and the Entry id. */
+const entryRecord = (collectionId: string, entryId: string) =>
+  collectionEntryRecords.record(`${collectionId}.${entryId}`);
+
+/** The key of a name for comparing: one Unicode form in one letter case. */
+const nameKey = (name: string) => name.normalize('NFC').toLowerCase();
 
 /** Opens Collections over the user state, for the Core composition. */
 export async function openCollections({
@@ -230,10 +237,7 @@ export async function openCollections({
     const filed = new Map<string, Filed>();
     if (row !== undefined) {
       filed.set(row.entryId, { addedAt: createdAt, row });
-      mergeInto(
-        changes,
-        collectionEntryRecords.record(`${id}.${row.entryId}`).change(createdAt.toISOString()),
-      );
+      mergeInto(changes, entryRecord(id, row.entryId).change(createdAt.toISOString()));
     }
     await userState.write(changes);
     return { ok: true, collection: change({ id, name, createdAt, filed }) };
@@ -245,18 +249,14 @@ export async function openCollections({
     const row = await rows.row(entryId);
     if (row === undefined) return;
     const addedAt = clock.now();
-    await userState.write(
-      collectionEntryRecords.record(`${collectionId}.${entryId}`).change(addedAt.toISOString()),
-    );
+    await userState.write(entryRecord(collectionId, entryId).change(addedAt.toISOString()));
     change({ ...collection, filed: new Map([...collection.filed, [entryId, { addedAt, row }]]) });
   }
 
   async function remove(collectionId: string, entryId: string): Promise<void> {
     const collection = collections.get(collectionId);
     if (collection?.filed.has(entryId) !== true) return;
-    await userState.write(
-      collectionEntryRecords.record(`${collectionId}.${entryId}`).change(undefined),
-    );
+    await userState.write(entryRecord(collectionId, entryId).change(undefined));
     const filed = new Map(collection.filed);
     filed.delete(entryId);
     change({ ...collection, filed });

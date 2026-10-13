@@ -116,7 +116,7 @@ describe('Collections', () => {
         name: 'Old words',
         createdAt: new Date('2026-10-11T09:00:00+03:00'),
         count: 0,
-        newestTitles: [],
+        newestLemmas: [],
       },
     });
     expect(app.collections.list).toEqual([result.ok ? result.collection : undefined]);
@@ -162,6 +162,16 @@ describe('Collections', () => {
       expect(await app.collections.create(' цІкаве ')).toEqual({ ok: false, reason: 'duplicate' });
 
       expect(namesOf(app)).toEqual(['Цікаве']);
+    });
+
+    it('sees the same letters as the same name, however they are composed', async () => {
+      const app = await run();
+      await create(app, 'Кіт \u0439');
+
+      expect(await app.collections.create('кіт \u0438\u0306')).toEqual({
+        ok: false,
+        reason: 'duplicate',
+      });
     });
 
     it('checks the length before the duplicate, and makes no record for a refusal', async () => {
@@ -244,7 +254,7 @@ describe('Collections', () => {
     expect([...records.keys()].filter((key) => key.startsWith('collectionEntries.'))).toEqual([]);
   });
 
-  it('lists the Collections newest first, each with its count and its newest titles', async () => {
+  it('lists the Collections newest first, each with its count and its newest Lemmas', async () => {
     const time = fakeClock();
     const app = await run({ clock: time.clock });
     const old = await create(app, 'Old');
@@ -260,8 +270,8 @@ describe('Collections', () => {
       { name: 'Recent', count: 1 },
       { name: 'Old', count: 5 },
     ]);
-    expect(app.collections.list[0]?.newestTitles).toEqual(['o\u0301ld']);
-    expect(app.collections.list[1]?.newestTitles).toEqual([
+    expect(app.collections.list[0]?.newestLemmas).toEqual(['o\u0301ld']);
+    expect(app.collections.list[1]?.newestLemmas).toEqual([
       'f\u0301our',
       't\u0301hree',
       't\u0301wo',
