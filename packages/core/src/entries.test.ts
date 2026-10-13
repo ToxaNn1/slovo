@@ -8,6 +8,7 @@ import {
   createMemoryUserStatePort,
   openUserState,
   type Edition,
+  type MixEdition,
 } from './index';
 
 function word(id: string, overrides: Partial<Word> = {}): Word {
@@ -60,9 +61,17 @@ const words = [
   word('w_plain', { categoryId: 'nature' }),
 ];
 
-/** An Edition with the Corrections Feature Switch on or off. */
-const editionWith = (corrections: boolean): Pick<Edition, 'isFeatureEnabled'> => ({
+/**
+ * An Edition with the Corrections Feature Switch on or off, and its
+ * Categories, every one of them in its default Mix.
+ */
+const editionWith = (corrections: boolean): Pick<Edition, 'isFeatureEnabled'> & MixEdition => ({
   isFeatureEnabled: (feature) => feature === 'corrections' && corrections,
+  categories: [
+    { id: 'speech', displayName: 'Speech' },
+    { id: 'nature', displayName: 'Nature' },
+  ],
+  userSettingDefaults: { mix: { categoryIds: ['speech', 'nature'], corrections: true } },
 });
 
 const open = ({ correctionsSwitch = true } = {}) =>
@@ -113,6 +122,48 @@ describe('the Entries', () => {
       expect(await entries.eligible()).toEqual({
         words: ['w_always', 'w_talkative', 'w_plain'],
         corrections: ['c_always'],
+      });
+    });
+
+    it('are only the Words of the Categories in the Mix, Category by Category in the Edition order, and Corrections only while in the Mix', async () => {
+      const port = createMemoryUserStatePort();
+      const asked: (string | undefined)[] = [];
+      const content = createMemoryContentPort({ words, corrections });
+      const entries = createEntries({
+        content: {
+          ...content,
+          listWordIds(categoryId) {
+            asked.push(categoryId);
+            return content.listWordIds(categoryId);
+          },
+        },
+        edition: {
+          ...editionWith(true),
+          categories: [
+            { id: 'nature', displayName: 'Nature' },
+            { id: 'speech', displayName: 'Speech' },
+            { id: 'crafts', displayName: 'Crafts' },
+          ],
+        },
+        userState: await openUserState({ port }),
+      });
+
+      expect(await entries.eligible()).toEqual({
+        words: ['w_plain', 'w_always', 'w_talkative'],
+        corrections: ['c_always', 'c_chatty'],
+      });
+      expect(asked).toEqual(['nature', 'speech']);
+
+      await port.write(
+        new Map([
+          ['mix.categories.nature', JSON.stringify(false)],
+          ['mix.corrections', JSON.stringify(false)],
+        ]),
+      );
+
+      expect(await entries.eligible()).toEqual({
+        words: ['w_always', 'w_talkative'],
+        corrections: [],
       });
     });
 

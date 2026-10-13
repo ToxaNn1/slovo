@@ -1,0 +1,483 @@
+import { describe, expect, it } from 'vitest';
+
+import type { Correction, Word } from '@slovo/contracts';
+
+import {
+  createMemoryContentPort,
+  createMemoryUserStatePort,
+  entryIdOf,
+  openComposition,
+  openUserState,
+  SEEN_DWELL_MS,
+  type Category,
+  type Clock,
+  type Composition,
+  type Feed,
+  type FeedCard,
+  type UserStatePort,
+} from './index';
+
+function word(id: string, categoryId: string): Word {
+  return {
+    kind: 'word',
+    id,
+    lemma: id.slice(2),
+    stress: [0],
+    partOfSpeech: 'noun',
+    primaryDefinition: `The meaning of ${id.slice(2)}.`,
+    extraDefinitions: [],
+    examples: [],
+    synonyms: [],
+    antonyms: [],
+    registers: [],
+    categoryId,
+    rarity: 3,
+    sources: [{ title: 'Test source' }],
+    correctionIds: [],
+    retired: false,
+  };
+}
+
+function correction(id: string): Correction {
+  return {
+    kind: 'correction',
+    id,
+    nonStandardForm: `not ${id.slice(2)}`,
+    correctionType: 'calque',
+    standardEquivalents: [id.slice(2)],
+    explanation: 'An explanation.',
+    examplePair: { nonStandard: 'People say this.', standard: 'Better say this.' },
+    sources: [{ title: 'Test source' }],
+    retired: false,
+  };
+}
+
+/** The Edition's Categories, in its order. */
+const nature: Category = { id: 'nature', displayName: 'Nature' };
+const speech: Category = { id: 'speech', displayName: 'Speech' };
+const crafts: Category = { id: 'crafts', displayName: 'Crafts' };
+const categories = [nature, speech, crafts];
+
+/** A small pack: three live Words in each Category, and two live Corrections. */
+const wordIdsOf = (category: Category) =>
+  [0, 1, 2].map((index) => `w_${category.id}${String(index)}`);
+const correctionIds = ['c_one', 'c_two'];
+const content = createMemoryContentPort({
+  words: categories.flatMap((category) => wordIdsOf(category).map((id) => word(id, category.id))),
+  corrections: correctionIds.map((id) => correction(id)),
+});
+
+/** A clock the test moves by hand. */
+function fakeClock(start = '2026-10-11T09:00:00+03:00') {
+  let now = new Date(start).getTime();
+  const clock: Clock = { now: () => new Date(now), timeZone: () => 'Europe/Kyiv' };
+  return {
+    clock,
+    advance(ms: number) {
+      now += ms;
+    },
+  };
+}
+
+const MINUTE = 60_000;
+
+/** The Core composition of one app run over the records, so the user state survives between runs. */
+async function run({
+  records = new Map<string, string>(),
+  port = createMemoryUserStatePort(records),
+  clock = fakeClock().clock,
+  defaultCategoryIds = categories.map(({ id }) => id),
+  correctionsSwitch = true,
+}: {
+  records?: Map<string, string>;
+  port?: UserStatePort;
+  clock?: Clock;
+  /** The Categories of the Edition's default Mix. */
+  defaultCategoryIds?: readonly string[];
+  correctionsSwitch?: boolean;
+} = {}): Promise<Composition> {
+  return openComposition({
+    content,
+    edition: {
+      isFeatureEnabled: (feature) => feature === 'corrections' && correctionsSwitch,
+      categories,
+      userSettingDefaults: { mix: { categoryIds: defaultCategoryIds, corrections: true } },
+    },
+    userState: await openUserState({ port }),
+    clock,
+    random: { next: () => 0.25 },
+  });
+}
+
+/** The ids of the Entries the cards show, in order. */
+const entryIdsOf = (cards: readonly FeedCard[]) => cards.flatMap((card) => entryIdOf(card) ?? []);
+
+/**
+ * The ids of every Entry the Feed offers from where it stands, after the
+ * cards so far, until it repeats, reaches the end of the Cycle or runs out.
+ */
+async function walk(feed: Feed): Promise<string[]> {
+  const ids = entryIdsOf(feed.cards);
+  for (;;) {
+    const id = entryIdOf(await feed.next());
+    if (id === undefined || ids.includes(id)) return ids;
+    ids.push(id);
+  }
+}
+
+/** The ids the Feed offers past the cards it holds already. */
+async function offeredNext(feed: Feed): Promise<string[]> {
+  const held = entryIdsOf(feed.cards).length;
+  return (await walk(feed)).slice(held);
+}
+
+/**
+ * Reads every card of the current Cycle to its end, each long enough to be
+ * Seen, and swipes on to the first card of the next Cycle. Returns the ids
+ * of the Entries read.
+ */
+async function readToTheNextCycle(feed: Feed, time: ReturnType<typeof fakeClock>) {
+  const read: string[] = [];
+  for (let position = feed.startPosition; ; position += 1) {
+    await feed.show(position);
+    const card = feed.cards[position];
+    if (card?.kind === 'end-of-cycle') {
+      await feed.show(position + 1);
+      return read;
+    }
+    read.push(entryIdOf(card) ?? '');
+    time.advance(SEEN_DWELL_MS);
+  }
+}
+
+/** The Mix records the user state keeps, by key. */
+const mixRecordsOf = (records: Map<string, string>) =>
+  Object.fromEntries([...records].filter(([key]) => key.startsWith('mix.')));
+
+const isWordOf = (category: Category) => (id: string) => wordIdsOf(category).includes(id);
+const isCorrection = (id: string) => id.startsWith('c_');
+
+describe('the Mix', () => {
+  it('starts as the Edition default: every Category and Corrections in, no Hidden Category', async () => {
+    const app = await run();
+
+    expect(app.mix.state).toEqual({
+      categoryIds: ['nature', 'speech', 'crafts'],
+      corrections: true,
+      hiddenCategories: [],
+      lastCategoryId: undefined,
+    });
+  });
+
+  it('takes a Category out and puts it back, one `mix.categories.` record per Category', async () => {
+    const records = new Map<string, string>();
+    const app = await run({ records });
+
+    expect(await app.mix.takeOut('speech')).toBe(true);
+
+    expect(app.mix.state.categoryIds).toEqual(['nature', 'crafts']);
+    expect(app.mix.state.hiddenCategories).toEqual([speech]);
+    expect(mixRecordsOf(records)).toEqual({ 'mix.categories.speech': 'false' });
+
+    await app.mix.putBack('speech');
+
+    expect(app.mix.state.categoryIds).toEqual(['nature', 'speech', 'crafts']);
+    expect(app.mix.state.hiddenCategories).toEqual([]);
+    expect(mixRecordsOf(records)).toEqual({ 'mix.categories.speech': 'true' });
+  });
+
+  it('lists the Hidden Categories in the Edition order, whatever the order they were taken out in', async () => {
+    const app = await run();
+
+    await app.mix.takeOut('crafts');
+    await app.mix.takeOut('nature');
+
+    expect(app.mix.state.hiddenCategories).toEqual([nature, crafts]);
+    expect(app.mix.state.categoryIds).toEqual(['speech']);
+  });
+
+  it('refuses to take out the last Category, and names it', async () => {
+    const records = new Map<string, string>();
+    const app = await run({ records });
+    await app.mix.takeOut('nature');
+    expect(app.mix.state.lastCategoryId).toBeUndefined();
+    await app.mix.takeOut('crafts');
+    const state = app.mix.state;
+
+    expect(state.lastCategoryId).toBe('speech');
+    expect(await app.mix.takeOut('speech')).toBe(false);
+
+    expect(app.mix.state).toBe(state);
+    expect(state.categoryIds).toEqual(['speech']);
+    expect(records.has('mix.categories.speech')).toBe(false);
+  });
+
+  it('applies the Edition default to every Category the user never touched', async () => {
+    const records = new Map<string, string>();
+    const app = await run({ records, defaultCategoryIds: ['speech'] });
+
+    expect(app.mix.state.categoryIds).toEqual(['speech']);
+    expect(app.mix.state.hiddenCategories).toEqual([nature, crafts]);
+    expect(app.mix.state.lastCategoryId).toBe('speech');
+    expect(new Set(await walk(app.feed))).toEqual(
+      new Set([...wordIdsOf(speech), ...correctionIds]),
+    );
+
+    await app.mix.putBack('crafts');
+    // A later default, such as one that comes with a Category added by a content update.
+    const updated = await run({ records, defaultCategoryIds: ['nature', 'speech'] });
+
+    expect(updated.mix.state.categoryIds).toEqual(['nature', 'speech', 'crafts']);
+    const later = await run({ records, defaultCategoryIds: [] });
+    expect(later.mix.state.categoryIds).toEqual(['crafts']);
+  });
+
+  it('keeps the default Categories in when the records and a later default would leave none', async () => {
+    const records = new Map<string, string>();
+    const first = await run({ records });
+    await first.mix.takeOut('nature');
+    await first.mix.takeOut('speech');
+    await first.mix.putBack('nature');
+    await first.mix.takeOut('crafts');
+    // A later default without the one Category the user kept in, by the default before.
+    records.delete('mix.categories.nature');
+    const app = await run({ records, defaultCategoryIds: ['speech'] });
+
+    expect(app.mix.state.categoryIds).toEqual(['speech']);
+    expect(app.mix.state.lastCategoryId).toBe('speech');
+    expect(new Set(await walk(app.feed))).toEqual(
+      new Set([...wordIdsOf(speech), ...correctionIds]),
+    );
+
+    await app.mix.putBack('crafts');
+
+    expect(app.mix.state.categoryIds).toEqual(['speech', 'crafts']);
+    const reopened = await run({ records, defaultCategoryIds: ['speech'] });
+    expect(reopened.mix.state).toEqual(app.mix.state);
+  });
+
+  it('turns every Category on at once, leaving Corrections as they are', async () => {
+    const records = new Map<string, string>();
+    const app = await run({ records, defaultCategoryIds: ['speech'] });
+    await app.mix.setCorrections(false);
+
+    await app.mix.turnAllOn();
+
+    expect(app.mix.state.categoryIds).toEqual(['nature', 'speech', 'crafts']);
+    expect(app.mix.state.corrections).toBe(false);
+    expect(mixRecordsOf(records)).toEqual({
+      'mix.categories.nature': 'true',
+      'mix.categories.crafts': 'true',
+      'mix.corrections': 'false',
+    });
+  });
+
+  it('turns Corrections off and on with the `mix.corrections` record', async () => {
+    const records = new Map<string, string>();
+    const app = await run({ records });
+
+    await app.mix.setCorrections(false);
+
+    expect(app.mix.state.corrections).toBe(false);
+    expect(records.get('mix.corrections')).toBe('false');
+
+    await app.mix.setCorrections(true);
+
+    expect(app.mix.state.corrections).toBe(true);
+    expect(records.get('mix.corrections')).toBe('true');
+  });
+
+  it('skips a Category the Edition does not have', async () => {
+    const records = new Map<string, string>();
+    records.set('mix.categories.military', JSON.stringify(true));
+    const app = await run({ records });
+
+    expect(await app.mix.takeOut('history')).toBe(false);
+    await app.mix.putBack('poetry');
+
+    expect(app.mix.state.categoryIds).toEqual(['nature', 'speech', 'crafts']);
+    expect(mixRecordsOf(records)).toEqual({ 'mix.categories.military': 'true' });
+  });
+
+  it('survives reopening', async () => {
+    const records = new Map<string, string>();
+    const first = await run({ records });
+    await first.mix.takeOut('nature');
+    await first.mix.setCorrections(false);
+
+    const app = await run({ records });
+
+    expect(app.mix.state).toEqual(first.mix.state);
+    expect(app.mix.state).toMatchObject({ categoryIds: ['speech', 'crafts'], corrections: false });
+  });
+
+  it('changes nothing in memory when keeping the change fails', async () => {
+    const records = new Map<string, string>();
+    const port = createMemoryUserStatePort(records);
+    let failing = false;
+    const app = await run({
+      port: {
+        ...port,
+        write: (changes) =>
+          failing ? Promise.reject(new Error('The disk is full')) : port.write(changes),
+      },
+    });
+    await app.mix.takeOut('nature');
+    const state = app.mix.state;
+    failing = true;
+
+    await expect(app.mix.takeOut('speech')).rejects.toThrow('The disk is full');
+    await expect(app.mix.putBack('nature')).rejects.toThrow('The disk is full');
+    await expect(app.mix.turnAllOn()).rejects.toThrow('The disk is full');
+    await expect(app.mix.setCorrections(false)).rejects.toThrow('The disk is full');
+
+    expect(app.mix.state).toBe(state);
+    const offered = await offeredNext(app.feed);
+    expect(offered.filter(isWordOf(nature))).toEqual([]);
+    expect(offered.filter(isWordOf(speech))).not.toEqual([]);
+    expect(offered.filter(isCorrection)).not.toEqual([]);
+  });
+
+  describe('the snapshot', () => {
+    it('is a new object after each change, telling the subscribers, and the same one otherwise', async () => {
+      const app = await run();
+      let told = 0;
+      app.mix.subscribe(() => {
+        told += 1;
+      });
+      const all = app.mix.state;
+
+      await app.mix.putBack('speech');
+      await app.mix.turnAllOn();
+      await app.mix.setCorrections(true);
+      expect(app.mix.state).toBe(all);
+      expect(told).toBe(0);
+
+      await app.mix.takeOut('speech');
+      const out = app.mix.state;
+      expect(out).not.toBe(all);
+      await app.mix.takeOut('speech');
+      expect(app.mix.state).toBe(out);
+      expect(told).toBe(1);
+
+      await app.mix.setCorrections(false);
+      expect(app.mix.state).not.toBe(out);
+      expect(told).toBe(2);
+    });
+
+    it('stops telling a subscriber that unsubscribed', async () => {
+      const app = await run();
+      let told = 0;
+      const stop = app.mix.subscribe(() => {
+        told += 1;
+      });
+
+      stop();
+      await app.mix.takeOut('speech');
+
+      expect(told).toBe(0);
+    });
+  });
+});
+
+describe('eligibility over the Mix', () => {
+  it('Corrections out of the Mix means no Correction cards, in this Cycle, the next one and after reopening', async () => {
+    const records = new Map<string, string>();
+    const time = fakeClock();
+    const app = await run({ records, clock: time.clock });
+
+    await app.mix.setCorrections(false);
+
+    expect((await offeredNext(app.feed)).filter(isCorrection)).toEqual([]);
+    expect((await readToTheNextCycle(app.feed, time)).slice(2).filter(isCorrection)).toEqual([]);
+    expect((await walk(app.feed)).filter(isCorrection)).toEqual([]);
+    const reopened = await run({ records, clock: time.clock });
+    expect((await walk(reopened.feed)).filter(isCorrection)).toEqual([]);
+  });
+
+  it('holds no Correction while the Edition turns Corrections off, even with Corrections in the Mix', async () => {
+    const app = await run({ correctionsSwitch: false });
+
+    expect(app.mix.state.corrections).toBe(true);
+    expect((await walk(app.feed)).filter(isCorrection)).toEqual([]);
+  });
+
+  it('a Hidden Category is exactly a Category out of the Mix: none of its Words is offered until it is put back', async () => {
+    const records = new Map<string, string>();
+    const time = fakeClock();
+    const app = await run({ records, clock: time.clock });
+    const twin = await walk((await run()).feed);
+    // A Category none of whose Words the Feed holds yet.
+    const held = entryIdsOf(app.feed.cards);
+    const hidden =
+      categories.find((category) => !held.some(isWordOf(category))) ?? categories[0] ?? nature;
+
+    await app.mix.takeOut(hidden.id);
+
+    expect(app.mix.state.hiddenCategories).toEqual([hidden]);
+    expect(await walk(app.feed)).toEqual(twin.filter((id) => !isWordOf(hidden)(id)));
+    expect((await readToTheNextCycle(app.feed, time)).filter(isWordOf(hidden))).toEqual([]);
+    const reopened = await run({ records, clock: time.clock });
+    expect((await walk(reopened.feed)).filter(isWordOf(hidden))).toEqual([]);
+
+    await reopened.mix.putBack(hidden.id);
+
+    expect(reopened.mix.state.hiddenCategories).toEqual([]);
+    expect((await walk(reopened.feed)).filter(isWordOf(hidden))).not.toEqual([]);
+  });
+
+  it('a Mix change keeps what is Seen, the seed and the order of the Entries that stay', async () => {
+    const records = new Map<string, string>();
+    const time = fakeClock();
+    const app = await run({ records, clock: time.clock });
+    const twin = await walk((await run()).feed);
+    await app.feed.show(0);
+    time.advance(SEEN_DWELL_MS);
+    await app.feed.show(1);
+    const seen = entryIdOf(app.feed.cards[0]) ?? '';
+    const cycle = records.get('feed.cycle');
+    const held = entryIdsOf(app.feed.cards);
+    const hidden = categories.find((category) => !held.some(isWordOf(category))) ?? nature;
+
+    await app.mix.takeOut(hidden.id);
+    await app.mix.setCorrections(false);
+
+    expect(records.get('feed.cycle')).toBe(cycle);
+    expect(records.get(`feed.seen.${seen}`)).toBe('true');
+    const words = (ids: readonly string[]) => ids.filter((id) => id.startsWith('w_'));
+    expect(words(await walk(app.feed))).toEqual(words(twin).filter((id) => !isWordOf(hidden)(id)));
+  });
+
+  it('a Category put back and Corrections turned on again take back their places in the Cycle', async () => {
+    const app = await run();
+    const twin = await walk((await run()).feed);
+    const held = entryIdsOf(app.feed.cards);
+    const hidden = categories.find((category) => !held.some(isWordOf(category))) ?? nature;
+
+    await app.mix.takeOut(hidden.id);
+    await app.mix.setCorrections(false);
+    await app.mix.turnAllOn();
+    await app.mix.setCorrections(true);
+
+    expect(await walk(app.feed)).toEqual(twin);
+  });
+
+  it('a Word of the Day whose Category is taken out is chosen again', async () => {
+    const records = new Map<string, string>();
+    const time = fakeClock();
+    const first = await run({ records, clock: time.clock });
+    const wordOfTheDay = entryIdOf(first.feed.cards[0]) ?? '';
+    const category = categories.find((each) => isWordOf(each)(wordOfTheDay)) ?? nature;
+
+    await first.mix.takeOut(category.id);
+    time.advance(MINUTE);
+    const app = await run({ records, clock: time.clock });
+
+    const opening = app.feed.cards[app.feed.startPosition];
+    expect(opening).toMatchObject({
+      kind: 'word',
+      wordOfTheDay: { year: 2026, month: 10, day: 11 },
+    });
+    expect(isWordOf(category)(entryIdOf(opening) ?? '')).toBe(false);
+  });
+});

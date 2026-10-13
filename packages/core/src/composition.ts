@@ -7,6 +7,7 @@ import { openFavorites, type Favorites } from './favorites';
 import { buildEntryCard, openFeed, type EntryFeedCard, type Feed } from './feed';
 import { openHistory, type History } from './history';
 import { openHiddenEntries, type HiddenEntries } from './hidden-entries';
+import { openMix, type Mix, type MixEdition } from './mix';
 import type { Clock, ContentReadPort, Random } from './ports';
 import type { UserState } from './user-state';
 import { openWordOfTheDay } from './word-of-the-day';
@@ -28,6 +29,8 @@ export interface Composition {
   readonly history: History;
   /** The Hidden Entries, eligible nowhere until restored. */
   readonly hiddenEntries: HiddenEntries;
+  /** The Mix, whose Categories out of it are the Hidden Categories (ADR 0019). */
+  readonly mix: Mix;
   /**
    * The Entry card of any Entry, Retired or not, for a screen that opens a
    * kept Entry; nothing for an id the Language Pack doesn't have. Opening it
@@ -53,7 +56,7 @@ export async function openComposition({
   random,
 }: {
   content: ContentReadPort;
-  edition: Pick<Edition, 'isFeatureEnabled'>;
+  edition: Pick<Edition, 'isFeatureEnabled'> & MixEdition;
   userState: UserState;
   clock: Clock;
   random: Random;
@@ -62,17 +65,14 @@ export async function openComposition({
   const rows = createEntryRows(entries);
   const cycle = await openCycle({ entries, userState, random });
   const wordOfTheDay = await openWordOfTheDay({ cycle, userState, clock });
-  const [{ history, recorder }, favorites, collections, hiddenEntries] = await Promise.all([
+  // A hide, a restore or a Mix change changes which Entries are eligible, so the Cycle reads them again.
+  const eligibilityChanged = () => cycle.readEligibleAgain();
+  const [{ history, recorder }, favorites, collections, hiddenEntries, mix] = await Promise.all([
     openHistory({ rows, userState }),
     openFavorites({ rows, userState, clock }),
     openCollections({ rows, userState, clock, random }),
-    // A hide or a restore changes which Entries are eligible, so the Cycle reads them again.
-    openHiddenEntries({
-      rows,
-      userState,
-      clock,
-      eligibilityChanged: () => cycle.readEligibleAgain(),
-    }),
+    openHiddenEntries({ rows, userState, clock, eligibilityChanged }),
+    openMix({ edition, userState, eligibilityChanged }),
   ]);
   const feed = await openFeed({
     entries,
@@ -88,6 +88,7 @@ export async function openComposition({
     collections,
     history,
     hiddenEntries,
+    mix,
     async entryCard(entryId) {
       const entry = await entries.get(entryId);
       return entry === undefined ? undefined : buildEntryCard(entries, entry);

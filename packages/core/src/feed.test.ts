@@ -13,6 +13,7 @@ import {
   type Clock,
   type ContentReadPort,
   type Edition,
+  type MixEdition,
   type Feed,
   type FeedCard,
   type Random,
@@ -59,9 +60,14 @@ const liveIds = Array.from({ length: 10 }, (_, index) => `w_live${String(index)}
 const retiredIds = ['w_retired0', 'w_retired1'];
 const pack = [...liveIds.map((id) => word(id)), ...retiredIds.map((id) => word(id, true))];
 
-/** An Edition with the Corrections Feature Switch on or off. */
-const editionWith = (corrections: boolean): Pick<Edition, 'isFeatureEnabled'> => ({
+/**
+ * An Edition with the Corrections Feature Switch on or off, whose one
+ * Category, the test Words' own, is in its default Mix.
+ */
+const editionWith = (corrections: boolean): Pick<Edition, 'isFeatureEnabled'> & MixEdition => ({
   isFeatureEnabled: (feature) => feature === 'corrections' && corrections,
+  categories: [{ id: 'test', displayName: 'Test' }],
+  userSettingDefaults: { mix: { categoryIds: ['test'], corrections: true } },
 });
 
 /** A clock the test moves by hand, in a time zone it can change. */

@@ -16,6 +16,12 @@ import {
   type UserStatePort,
 } from './index';
 
+/** The Edition's one Category, the test Words' own, and its default Mix of every Category. */
+const testCategories = {
+  categories: [{ id: 'test', displayName: 'Test' }],
+  userSettingDefaults: { mix: { categoryIds: ['test'], corrections: true } },
+};
+
 function word(id: string, retired = false): Word {
   return {
     kind: 'word',
@@ -85,7 +91,7 @@ async function run({
 } = {}): Promise<Composition> {
   return openComposition({
     content,
-    edition: { isFeatureEnabled: (feature) => feature === 'corrections' },
+    edition: { ...testCategories, isFeatureEnabled: (feature) => feature === 'corrections' },
     userState: await openUserState({ port }),
     clock,
     random: { next: () => 0.25 },

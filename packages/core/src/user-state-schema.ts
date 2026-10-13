@@ -66,6 +66,14 @@ export const userStateRecords = {
   ),
   /** The Hidden Entries, one record per Entry, by Entry id: the instant it was hidden. */
   hiddenEntries: declareRecords('hidden.', InstantSchema),
+  /**
+   * The Categories the user put in the Mix or took out of it, one record per
+   * Category, by Category id (which holds no `.`): whether it is in. A
+   * Category without one follows the Edition's default Mix (ADR 0019).
+   */
+  mixCategories: declareRecords('mix.categories.', z.boolean()),
+  /** Whether the user has Corrections, as a whole, in the Mix; without it, the Edition's default Mix. */
+  mixCorrections: declareRecord('mix.corrections', z.boolean()),
 };
 
 /**

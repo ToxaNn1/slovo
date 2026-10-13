@@ -41,6 +41,7 @@ export {
 } from './feed';
 export { createHaptics, type HapticEngine, type Haptics } from './haptics';
 export { type HiddenEntries, type HiddenEntry } from './hidden-entries';
+export { type Mix, type MixEdition, type MixState } from './mix';
 export { HISTORY_CAP, type History, type HistoryEntry } from './history';
 export { groupByLocalDay, relativeTimeOf, type DayGroup, type RelativeTime } from './history-time';
 export { localDayOf, localTimeOf, type LocalDate, type LocalDay } from './local-date';
@@ -48,7 +49,7 @@ export {
   InvalidEditionConfigError,
   loadEdition,
   type Edition,
-  type Mix,
+  type DefaultMix,
   type UserSettingDefaults,
 } from './edition';
 export type { Category, FeatureSwitch, FontSize, LanguageTraits, Theme } from '@slovo/contracts';
