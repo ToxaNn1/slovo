@@ -425,5 +425,26 @@
     },
     "lastCategoryHint": "Хоча б одна категорія лишається завжди, щоб було слово дня."
   },
-  "hidden": {}
+  "hidden": {
+    "title": "Приховане",
+    "subtitle": "Вони більше не трапляться вам ніде, доки ви їх не повернете.",
+    "entries": "ЗАПИСИ",
+    "categories": "КАТЕГОРІЇ",
+    "count": {
+      "one": "{count} запис",
+      "few": "{count} записи",
+      "many": "{count} записів",
+      "other": "{count} запису"
+    },
+    "restore": "Повернути",
+    "restoreLabel": "Повернути «{title}»",
+    "turnOn": "Увімкнути",
+    "turnOnLabel": "Увімкнути категорію «{name}»",
+    "rowLabels": "{kind} · {labels}",
+    "rowLabelsSpoken": "{kind}, {labels}",
+    "labelSeparator": ", ",
+    "entryRestored": "«{title}» знову у Стрічці",
+    "undo": "Скасувати",
+    "empty": "Прихованих записів немає."
+  }
 }
