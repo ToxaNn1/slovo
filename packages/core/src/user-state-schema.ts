@@ -65,7 +65,7 @@ export const userStateRecords = {
     z.object({ seenAt: InstantSchema, wordOfTheDay: z.boolean() }),
   ),
   /** The Hidden Entries, one record per Entry, by Entry id: the instant it was hidden. */
-  hidden: declareRecords('hidden.', InstantSchema),
+  hiddenEntries: declareRecords('hidden.', InstantSchema),
 };
 
 /**

@@ -113,12 +113,12 @@ export async function openCycle({
   // Cycle keeps what the last one asked for read, whichever ends last.
   let readsAsked = 0;
   let readKept = 0;
-  async function readEligible(): Promise<{ eligible: EntryIds; keep(): boolean }> {
+  async function readEligible(): Promise<{ eligible: EntryIds; keepIfLatest(): boolean }> {
     const asked = (readsAsked += 1);
     const eligible = await entries.eligible();
     return {
       eligible,
-      keep() {
+      keepIfLatest() {
         if (asked < readKept) return false;
         readKept = asked;
         return true;
@@ -157,7 +157,7 @@ export async function openCycle({
         ]),
         commit() {
           // Entries read again since are covered with the new seed.
-          order = read.keep() ? startedOrder : orderOf(order, started.seed);
+          order = read.keepIfLatest() ? startedOrder : orderOf(order, started.seed);
           cycle = started;
           seen.clear();
         },
@@ -165,7 +165,7 @@ export async function openCycle({
     },
     async readEligibleAgain() {
       const read = await readEligible();
-      if (read.keep()) order = orderOf(read.eligible, cycle.seed);
+      if (read.keepIfLatest()) order = orderOf(read.eligible, cycle.seed);
     },
   };
 }

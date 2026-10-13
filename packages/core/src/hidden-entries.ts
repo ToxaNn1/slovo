@@ -40,7 +40,7 @@ export interface HiddenEntries {
   subscribe(listener: () => void): () => void;
 }
 
-const { hidden: hiddenRecords } = userStateRecords;
+const { hiddenEntries: hiddenRecords } = userStateRecords;
 
 /** Newest first; Entries hidden at the same instant in a stable order. */
 function newestFirst(first: HiddenEntry, second: HiddenEntry): number {
@@ -78,7 +78,9 @@ export async function openHiddenEntries({
 
   /**
    * Makes the written change in memory: eligibility first, so a subscriber
-   * told of the new list finds it read again.
+   * told of the new list finds it read again. The list follows the written
+   * change even when reading eligibility again fails; the next change or the
+   * next app session reads it again.
    */
   async function changeList(changed: readonly HiddenEntry[]): Promise<void> {
     try {

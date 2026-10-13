@@ -41,7 +41,7 @@ export interface Entries {
   linkedCorrections(word: Word): Promise<Correction[]>;
 }
 
-const { hidden: hiddenRecords } = userStateRecords;
+const { hiddenEntries: hiddenRecords } = userStateRecords;
 
 /**
  * The Entries over the Language Pack, and over the user's choices in the user
