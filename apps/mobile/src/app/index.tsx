@@ -1,4 +1,4 @@
-import type { FeedCard } from '@slovo/core';
+import { entryIdOf, type FeedCard } from '@slovo/core';
 import {
   DecorBackground,
   EndOfCycleCard,
@@ -105,7 +105,11 @@ function FeedPage({
     // The content scrolls under the top row but stops at the status bar.
     <View testID={`feed-card-${String(position)}`} style={[styles.page, { paddingTop: top }]}>
       <PagerScrollView contentContainerStyle={styles.content}>
-        <EntryCard card={card} onOpenCorrection={onOpenCorrection} actions={<EntryActions />} />
+        <EntryCard
+          card={card}
+          onOpenCorrection={onOpenCorrection}
+          actions={<EntryActions entryId={entryIdOf(card)} />}
+        />
       </PagerScrollView>
     </View>
   );

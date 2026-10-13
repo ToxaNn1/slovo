@@ -209,9 +209,51 @@
     "standard": "Українською краще",
     "otherEquivalents": "також: {equivalents}",
     "exampleNonStandard": "Так кажуть: {text}",
-    "exampleStandard": "Краще: {text}"
+    "exampleStandard": "Краще: {text}",
+    "insteadOf": "замість «{form}»"
   },
-  "favorites": {},
+  "favorites": {
+    "title": "Улюблене",
+    "count": {
+      "one": "{count} запис",
+      "few": "{count} записи",
+      "many": "{count} записів",
+      "other": "{count} запису"
+    },
+    "cardLabel": "Улюблене, {count}",
+    "heart": {
+      "add": "Додати в Улюблене",
+      "remove": "Прибрати з Улюбленого"
+    },
+    "footer": "Найновіші — першими. Тап відкриває повну картку.",
+    "remove": "Видалити",
+    "removeLabel": "Видалити «{title}»",
+    "added": {
+      "today": "сьогодні",
+      "yesterday": "вчора",
+      "date": "{day} {month}",
+      "dateInYear": "{day} {month} {year}",
+      "months": [
+        "січ.",
+        "лют.",
+        "бер.",
+        "квіт.",
+        "трав.",
+        "черв.",
+        "лип.",
+        "серп.",
+        "вер.",
+        "жовт.",
+        "лист.",
+        "груд."
+      ]
+    },
+    "empty": {
+      "title": "Тут поки порожньо",
+      "message": "Торкніться ♥\ufe0e під словом у Стрічці — і воно оселиться тут.",
+      "toFeed": "До Стрічки"
+    }
+  },
   "collections": {},
   "history": {},
   "hiding": {},

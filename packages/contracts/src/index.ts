@@ -25,7 +25,12 @@ export {
   type Theme,
   type UserSettingDefaultsConfig,
 } from './edition';
-export { EditionStringsSchema, type EditionStrings } from './edition-strings';
+export {
+  EditionStringsSchema,
+  PluralSchema,
+  type EditionStrings,
+  type Plural,
+} from './edition-strings';
 export {
   DecorLayerSchema,
   DecorMotifSchema,

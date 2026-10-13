@@ -31,6 +31,10 @@ export const ColorTokensSchema = z.strictObject({
   inactiveTab: ColorSchema,
   /** A correct answer and the ✓ of a Correction's example pair; never Decor. */
   correct: ColorSchema,
+  /** The filled heart of an Entry in Favorites; never Decor. */
+  heart: ColorSchema,
+  /** Delete and Clear actions, with white text on them; never Decor. */
+  destructive: ColorSchema,
 });
 
 export type ColorTokens = z.infer<typeof ColorTokensSchema>;

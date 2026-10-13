@@ -19,9 +19,12 @@ export { buildCorrectionCard, type CorrectionCardModel } from './correction-card
 export { openCycle, type Cycle, type CycleChange } from './cycle';
 export { coreDecor, InvalidDecorError, loadDecor, type Decor } from './decor';
 export { createEntries, type Entries, type EntryIds } from './entries';
+export { type EntryRowModel } from './entry-row';
+export { type Favorite, type Favorites } from './favorites';
 export {
   buildEntryCard,
   CORRECTION_EVERY,
+  entryIdOf,
   SEEN_DWELL_MS,
   type CorrectionFeedCard,
   type EntryFeedCard,
@@ -30,7 +33,7 @@ export {
   type WordFeedCard,
 } from './feed';
 export { createHaptics, type HapticEngine, type Haptics } from './haptics';
-export type { LocalDate } from './local-date';
+export { localDayOf, type LocalDate, type LocalDay } from './local-date';
 export {
   InvalidEditionConfigError,
   loadEdition,

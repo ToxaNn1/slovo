@@ -1,4 +1,4 @@
-# The Game and Saved placeholder screens.
+# The Game placeholder screen, and the Saved tab that replaced its placeholder.
 # A subflow of `smoke.yaml`; run it from there.
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
@@ -9,7 +9,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - tapOn:
     id: tab-saved
 - assertVisible:
-    id: saved-placeholder
+    id: saved
 - tapOn:
     id: tab-home
 - assertVisible:

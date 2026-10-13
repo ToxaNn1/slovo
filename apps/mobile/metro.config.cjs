@@ -1,4 +1,4 @@
-const { existsSync } = require('node:fs');
+const { existsSync, readFileSync } = require('node:fs');
 const { join } = require('node:path');
 
 const { getConfig } = require('expo/config');
@@ -33,11 +33,34 @@ const editionModules = {
   },
 };
 
+/**
+ * The CLDR plural rules of the Edition's language for the `Intl.PluralRules`
+ * polyfill, which Hermes needs (see src/intl-polyfill.ts): the data of its
+ * locale, or of the locale's language when the polyfill has no data for the
+ * locale itself.
+ */
+function pluralRulesData() {
+  const { locale } = JSON.parse(readFileSync(join(editionDir, 'edition.json'), 'utf8'));
+  for (const tag of [locale, locale.split('-')[0]]) {
+    try {
+      return require.resolve(`@formatjs/intl-pluralrules/locale-data/${tag}.js`, {
+        paths: [__dirname],
+      });
+    } catch {
+      // Try the language next.
+    }
+  }
+  throw new Error(`The Intl.PluralRules polyfill has no plural rules for "${locale}".`);
+}
+
 const config = getDefaultConfig(__dirname);
 config.resolver.assetExts.push('db');
 
 const resolveRequest = config.resolver.resolveRequest;
 config.resolver.resolveRequest = (context, moduleName, platform) => {
+  if (moduleName === 'slovo-edition/plural-rules') {
+    return { type: 'sourceFile', filePath: pluralRulesData() };
+  }
   const editionModule = editionModules[moduleName];
   if (editionModule === undefined) {
     return (resolveRequest ?? context.resolveRequest)(context, moduleName, platform);

@@ -1,3 +1,6 @@
+// Before anything that counts in the Edition's language.
+import '../intl-polyfill';
+
 import { createHaptics } from '@slovo/core';
 import {
   DecorProvider,

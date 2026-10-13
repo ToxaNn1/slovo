@@ -5,6 +5,7 @@ import {
   EditionDecorSchema,
   EditionStringsSchema,
   EditionTokensSchema,
+  PluralSchema,
   SplashDecorSchema,
   type ColorTokens,
 } from '@slovo/contracts';
@@ -25,6 +26,26 @@ function readJson(edition: string, file: string): unknown {
 describe('Edition UI strings', () => {
   it.each(editions)('the %s Edition has every UI string the shell needs', (edition) => {
     expect(EditionStringsSchema.safeParse(readJson(edition, 'strings.json')).error).toBeUndefined();
+  });
+});
+
+describe('plural forms of a count', () => {
+  it('takes the forms a language has, each with the count in it', () => {
+    expect(
+      PluralSchema.safeParse({
+        one: '{count} запис',
+        few: '{count} записи',
+        other: '{count} записів',
+      }).success,
+    ).toBe(true);
+  });
+
+  it.each([
+    ['a form without the count', { one: 'один запис', other: '{count} записів' }],
+    ['no `other` form', { one: '{count} запис', many: '{count} записів' }],
+    ['a form that is not a CLDR category', { single: '{count} запис', other: '{count} записів' }],
+  ])('rejects %s', (_, forms) => {
+    expect(PluralSchema.safeParse(forms).success).toBe(false);
   });
 });
 
@@ -150,17 +171,21 @@ const textPairs: readonly (readonly [text: keyof ColorTokens, behind: keyof Colo
   ['surface', 'accent'],
 ];
 
-describe('WCAG AA contrast of the 0.2 screens', () => {
-  const tokenSets = [
-    ['the Core', coreTokens.colors] as const,
-    ...editions
-      .filter((edition) => existsSync(`${editionsDir}${edition}/tokens.json`))
-      .flatMap((edition) => {
-        const { colors } = EditionTokensSchema.parse(readJson(edition, 'tokens.json'));
-        return colors === undefined ? [] : [[`the ${edition} Edition`, colors] as const];
-      }),
-  ];
+/** The Core's colours and those of every Edition that supplies its own. */
+const tokenSets = [
+  ['the Core', coreTokens.colors] as const,
+  ...editions
+    .filter((edition) => existsSync(`${editionsDir}${edition}/tokens.json`))
+    .flatMap((edition) => {
+      const { colors } = EditionTokensSchema.parse(readJson(edition, 'tokens.json'));
+      return colors === undefined ? [] : [[`the ${edition} Edition`, colors] as const];
+    }),
+];
 
+/** The other colour scheme, whose colours an inverted card draws its content in. */
+const otherScheme = { light: 'dark', dark: 'light' } as const;
+
+describe('WCAG AA contrast of the 0.2 screens', () => {
   describe.each(tokenSets)('%s', (_, colors) => {
     it.each(['light', 'dark'] as const)('keeps every text at 4.5:1 or more in %s', (scheme) => {
       for (const [text, behind] of textPairs) {
@@ -170,6 +195,35 @@ describe('WCAG AA contrast of the 0.2 screens', () => {
         ).toBeGreaterThanOrEqual(4.5);
       }
     });
+  });
+});
+
+describe('WCAG AA contrast of the 0.3 Favorites screens', () => {
+  describe.each(tokenSets)('%s', (_, colors) => {
+    it.each(['light', 'dark'] as const)(
+      'keeps the Favorites card, drawn in the other scheme on the ink fill, at 4.5:1 or more in %s',
+      (scheme) => {
+        const fill = parseColor(colors[scheme].ink);
+        for (const text of ['ink', 'muted', 'inkSecondary', 'accent'] as const) {
+          expect(
+            contrast(parseColor(colors[otherScheme[scheme]][text]), fill),
+            `the other scheme's ${text} on ink`,
+          ).toBeGreaterThanOrEqual(4.5);
+        }
+      },
+    );
+
+    it.each(['light', 'dark'] as const)(
+      'keeps white on the destructive action at 4.5:1 and the filled heart at 3:1 in %s',
+      (scheme) => {
+        const { destructive, heart, background, surface } = colors[scheme];
+        expect(contrast([255, 255, 255], parseColor(destructive))).toBeGreaterThanOrEqual(4.5);
+        // The heart is a graphic, which needs 3:1 against what it sits on (WCAG 1.4.11).
+        for (const behind of [background, surface]) {
+          expect(contrast(parseColor(heart), parseColor(behind))).toBeGreaterThanOrEqual(3);
+        }
+      },
+    );
   });
 });
 

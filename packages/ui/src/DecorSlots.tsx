@@ -52,6 +52,19 @@ export function OrnamentDivider({ centre = 'ornament' }: { centre?: 'ornament' |
   );
 }
 
+/**
+ * Decor slot 2's band alone, across the whole width, as the design uses it
+ * on the Favorites card, sheets and widgets.
+ */
+export function OrnamentBand() {
+  const { divider } = useDecor();
+  return (
+    <DecorView style={[styles.band, { height: divider.band.height }]}>
+      <MotifPattern motif={divider.band} />
+    </DecorView>
+  );
+}
+
 /** How far the corners sit inside the card's edge. */
 const CORNER_INSET = space[2];
 

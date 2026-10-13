@@ -1,7 +1,7 @@
 import { openComposition, systemRandom, type Composition } from '@slovo/core';
 import { createPackReader } from '@slovo/language-pack/reader';
 import { useSQLiteContext, type SQLiteDatabase } from 'expo-sqlite';
-import { useCallback, useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 
 import { deviceClock } from './device-clock';
 import { edition } from './edition';
@@ -16,8 +16,6 @@ export type CompositionState =
     }
   | { readonly status: 'ready'; readonly composition: Composition };
 
-const opened = new WeakMap<SQLiteDatabase, Promise<Composition>>();
-
 async function openOver(db: SQLiteDatabase): Promise<Composition> {
   return openComposition({
     content: createPackReader(db),
@@ -28,54 +26,73 @@ async function openOver(db: SQLiteDatabase): Promise<Composition> {
   });
 }
 
+/** The opening of the composition over one Language Pack, which every screen shares. */
+interface Opening {
+  readonly state: () => CompositionState;
+  readonly subscribe: (listener: () => void) => () => void;
+}
+
+const loading: CompositionState = { status: 'loading' };
+
+/** Opens the composition over the Language Pack, and again on a retry after a failure. */
+function startOpening(db: SQLiteDatabase): Opening {
+  let state = loading;
+  const listeners = new Set<() => void>();
+
+  function change(changed: CompositionState): void {
+    state = changed;
+    for (const listener of listeners) listener();
+  }
+
+  function open(): void {
+    openOver(db).then(
+      (composition) => {
+        change({ status: 'ready', composition });
+      },
+      (error: unknown) => {
+        console.error('Could not open the Core composition', error);
+        change({
+          status: 'failed',
+          retry() {
+            change(loading);
+            open();
+          },
+        });
+      },
+    );
+  }
+
+  open();
+  return {
+    state: () => state,
+    subscribe(listener) {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+  };
+}
+
+const openings = new WeakMap<SQLiteDatabase, Opening>();
+
 /**
  * The Core composition over the open Language Pack, opened once per app
  * session and shared by every screen, since its Cycle and Word of the Day
- * keep their state in memory (ADR 0013, 0018). An open that failed is tried
- * again on the next call.
+ * keep their state in memory (ADR 0013, 0018). Every screen sees the same
+ * state, so a retry from any of them opens it again for all.
  */
-function compositionOver(db: SQLiteDatabase): Promise<Composition> {
-  let opening = opened.get(db);
+function openingOver(db: SQLiteDatabase): Opening {
+  let opening = openings.get(db);
   if (opening === undefined) {
-    opening = openOver(db).catch((error: unknown) => {
-      opened.delete(db);
-      throw error;
-    });
-    opened.set(db, opening);
+    opening = startOpening(db);
+    openings.set(db, opening);
   }
   return opening;
 }
 
 /** The Core composition of the app session, once it is open. */
 export function useComposition(): CompositionState {
-  const db = useSQLiteContext();
-  const [composition, setComposition] = useState<Composition>();
-  const [failed, setFailed] = useState(false);
-  /** Counts the tries to open the composition, so a retry opens it again. */
-  const [attempt, setAttempt] = useState(0);
-
-  useEffect(() => {
-    let active = true;
-    compositionOver(db).then(
-      (open) => {
-        if (active) setComposition(open);
-      },
-      (error: unknown) => {
-        console.error('Could not open the Core composition', error);
-        if (active) setFailed(true);
-      },
-    );
-    return () => {
-      active = false;
-    };
-  }, [db, attempt]);
-
-  const retry = useCallback(() => {
-    setFailed(false);
-    setAttempt((count) => count + 1);
-  }, []);
-
-  if (failed) return { status: 'failed', retry };
-  if (composition === undefined) return { status: 'loading' };
-  return { status: 'ready', composition };
+  const opening = openingOver(useSQLiteContext());
+  return useSyncExternalStore(opening.subscribe, opening.state);
 }

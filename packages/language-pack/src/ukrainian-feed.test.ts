@@ -263,3 +263,44 @@ describe('Corrections in the Feed over the Ukrainian Language Pack', () => {
     });
   });
 });
+
+describe('Favorites over the Ukrainian Language Pack', () => {
+  async function open(records: Map<string, string>, clock: Clock) {
+    return openComposition({
+      content: pack,
+      edition: ukrainian,
+      userState: await openUserState({ port: createMemoryUserStatePort(records) }),
+      clock,
+      random: seededRandom(7),
+    });
+  }
+
+  it('keeps a Word and a Correction hearted on their Feed cards across a restart, newest first', async () => {
+    const records = new Map<string, string>();
+    const time = fakeClock('2026-10-11T09:00:00+03:00');
+    const first = await open(records, time.clock);
+    const word = first.feed.cards[0];
+    const correctionId = liveCorrectionIds[0];
+    if (word?.kind !== 'word' || correctionId === undefined)
+      throw new Error('No Word or Correction');
+
+    await first.favorites.toggle(word.wordCard.wordId);
+    time.advance(60_000);
+    await first.favorites.toggle(correctionId);
+    const app = await open(records, time.clock);
+
+    expect(app.favorites.list.map((favorite) => favorite.entryId)).toEqual([
+      correctionId,
+      word.wordCard.wordId,
+    ]);
+    expect(app.favorites.list[1]?.row).toMatchObject({
+      kind: 'word',
+      title: word.wordCard.lemma,
+      definition: word.wordCard.primaryDefinition,
+    });
+    expect(await app.entryCard(correctionId)).toMatchObject({
+      kind: 'correction',
+      correctionCard: { correctionId, mainEquivalent: app.favorites.list[0]?.row.title },
+    });
+  });
+});
