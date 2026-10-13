@@ -67,10 +67,19 @@ const EDGE_RESISTANCE = 0.3;
 export interface VerticalPagerHandle {
   /** Moves to the page at `index` with the swipe's motion, as if the reader swiped there. */
   turnTo(index: number): void;
+  /**
+   * Puts the page at `index` on screen at once, without motion, as when pages
+   * before the current one left or came back and the page on screen moved
+   * with them.
+   */
+  showPage(index: number): void;
 }
 
 export interface VerticalPagerProps<Item> {
-  /** The pages in order. Pages change or join only after the current one. */
+  /**
+   * The pages in order. Pages change or join after the current one; when the
+   * current page or one before it changes, `showPage` keeps the page on screen.
+   */
   readonly items: readonly Item[];
   readonly renderPage: (item: Item, index: number) => ReactNode;
   /** The page shown first. */
@@ -191,7 +200,16 @@ export function VerticalPager<Item>({
     position.value = withTiming(clamped, motion);
   }
 
-  useImperativeHandle(ref, () => ({ turnTo }));
+  function showPage(target: number) {
+    const clamped = Math.min(Math.max(target, 0), items.length - 1);
+    if (clamped === index) return;
+    turnedTo.value = clamped;
+    turn(clamped);
+    setNearest(clamped);
+    position.value = clamped;
+  }
+
+  useImperativeHandle(ref, () => ({ turnTo, showPage }));
 
   const actions = [
     ...(turnActionLabels !== undefined && index < items.length - 1
