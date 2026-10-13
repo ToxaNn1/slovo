@@ -7,8 +7,8 @@ import { editionStrings } from './edition';
 const { added } = editionStrings.favorites;
 
 /**
- * When an Entry was added to a list (Favorites, a Collection), as its row says
- * it: today, yesterday or the date, by the device's clock.
+ * When an Entry was added to Favorites or to a Collection, as its row says it:
+ * today, yesterday or the date, by the device's clock.
  */
 export function addedOn(addedAt: Date): string {
   const { date, daysAgo } = localDayOf(addedAt, deviceClock);

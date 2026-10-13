@@ -681,7 +681,7 @@ describe('Collections', () => {
       expect(app.collections.entries('k_gone')).toEqual([]);
     });
 
-    it('keeps the Retired Entries', async () => {
+    it('keeps Retired Words', async () => {
       const app = await run();
       const { id } = await create(app, 'Kept', 'w_old');
 

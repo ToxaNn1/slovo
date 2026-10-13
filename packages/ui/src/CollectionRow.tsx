@@ -11,8 +11,7 @@ import { useTokens } from './TokensProvider';
  * A Collection on the Collections screen: a card with its name over its
  * newest Lemmas, and how many Entries it holds on the right. A tap opens the
  * Collection; swipe actions slide out inside the card and are VoiceOver
- * actions too. Needs a
- * `GestureHandlerRootView` above it.
+ * actions too. Needs a `GestureHandlerRootView` above it.
  */
 export function CollectionRow({
   name,
