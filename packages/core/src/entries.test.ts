@@ -2,7 +2,13 @@ import { describe, expect, it } from 'vitest';
 
 import type { Correction, Word } from '@slovo/contracts';
 
-import { createEntries, createMemoryContentPort, type Edition } from './index';
+import {
+  createEntries,
+  createMemoryContentPort,
+  createMemoryUserStatePort,
+  openUserState,
+  type Edition,
+} from './index';
 
 function word(id: string, overrides: Partial<Word> = {}): Word {
   return {
@@ -80,6 +86,33 @@ describe('the Entries', () => {
       expect(await open({ correctionsSwitch: false }).eligible()).toEqual({
         words: ['w_always', 'w_talkative', 'w_plain'],
         corrections: [],
+      });
+    });
+
+    it('leave out every Hidden Entry, read afresh on every call', async () => {
+      const port = createMemoryUserStatePort();
+      const entries = createEntries({
+        content: createMemoryContentPort({ words, corrections }),
+        edition: editionWith(true),
+        userState: await openUserState({ port }),
+      });
+      await port.write(
+        new Map([
+          ['hidden.w_talkative', JSON.stringify('2026-10-11T06:00:00.000Z')],
+          ['hidden.c_chatty', JSON.stringify('2026-10-11T06:00:00.000Z')],
+        ]),
+      );
+
+      expect(await entries.eligible()).toEqual({
+        words: ['w_always', 'w_plain'],
+        corrections: ['c_always'],
+      });
+
+      await port.write(new Map([['hidden.w_talkative', undefined]]));
+
+      expect(await entries.eligible()).toEqual({
+        words: ['w_always', 'w_talkative', 'w_plain'],
+        corrections: ['c_always'],
       });
     });
 

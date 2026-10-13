@@ -11,3 +11,12 @@ A change of eligibility applies at once, not from the next Cycle: a Cycle covers
 - **Each feature checks the rules it needs**: rejected. Retired was checked in four places and the Corrections Feature Switch in three, and Mix and Hidden would add two more rules to the Feed, notifications, widgets and the Game each.
 - **The Core filters Retired Entries out of everything the port lists**: rejected. Listing ids would mean reading every Entry in full, about eight queries per Word.
 - **Eligibility changes apply from the next Cycle**: rejected. A Hidden Entry must never appear again, and a Cycle can last weeks.
+
+## Amendment: the Cycle order is a function of the seed and each Entry (0.3)
+
+Reading the eligible Entries again must leave the order of the Entries that stay as it was, and give an Entry that is eligible again back its place, also across a restart, when the Cycle shuffles the eligible Entries of that moment with its seed. A shuffle that draws from a generator one Entry at a time gives a different order as soon as one Entry leaves. So each Entry's place is a hash of its id that starts from the seed, and the Cycle order is the Entries sorted by it. The seed and Seen stay as they were; a Cycle open when this shipped shows its unseen Entries in a new order once.
+
+### Considered Options
+
+- **Keep the shuffled order in memory and only remove or insert the Entries that change**: rejected. A restart shuffles the Entries eligible then, so the order would change anyway, and an Entry eligible again would have no place to go back to.
+- **Keep the whole order in the user state**: rejected. One record for the Cycle order is the one-blob shape ADR 0013 rejects, and the order follows from the seed.

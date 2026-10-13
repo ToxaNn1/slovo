@@ -6,6 +6,7 @@ import { createEntryRows, type EntryRowModel } from './entry-row';
 import { openFavorites, type Favorites } from './favorites';
 import { buildEntryCard, openFeed, type EntryFeedCard, type Feed } from './feed';
 import { openHistory, type History } from './history';
+import { openHiddenEntries, type HiddenEntries } from './hidden-entries';
 import type { Clock, ContentReadPort, Random } from './ports';
 import type { UserState } from './user-state';
 import { openWordOfTheDay } from './word-of-the-day';
@@ -25,6 +26,8 @@ export interface Composition {
   readonly collections: Collections;
   /** History, which the Feed records in the same write as Seen. */
   readonly history: History;
+  /** The Hidden Entries, eligible nowhere until restored. */
+  readonly hiddenEntries: HiddenEntries;
   /**
    * The Entry card of any Entry, Retired or not, for a screen that opens a
    * kept Entry; nothing for an id the Language Pack doesn't have. Opening it
@@ -55,14 +58,21 @@ export async function openComposition({
   clock: Clock;
   random: Random;
 }): Promise<Composition> {
-  const entries = createEntries({ content, edition });
+  const entries = createEntries({ content, edition, userState });
   const rows = createEntryRows(entries);
   const cycle = await openCycle({ entries, userState, random });
   const wordOfTheDay = await openWordOfTheDay({ cycle, userState, clock });
-  const [{ history, recorder }, favorites, collections] = await Promise.all([
+  const [{ history, recorder }, favorites, collections, hiddenEntries] = await Promise.all([
     openHistory({ rows, userState }),
     openFavorites({ rows, userState, clock }),
     openCollections({ rows, userState, clock, random }),
+    // A hide or a restore changes which Entries are eligible, so the Cycle reads them again.
+    openHiddenEntries({
+      rows,
+      userState,
+      clock,
+      eligibilityChanged: () => cycle.readEligibleAgain(),
+    }),
   ]);
   const feed = await openFeed({
     entries,
@@ -77,6 +87,7 @@ export async function openComposition({
     favorites,
     collections,
     history,
+    hiddenEntries,
     async entryCard(entryId) {
       const entry = await entries.get(entryId);
       return entry === undefined ? undefined : buildEntryCard(entries, entry);

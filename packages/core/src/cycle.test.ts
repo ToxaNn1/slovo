@@ -170,6 +170,93 @@ describe('the Cycle', () => {
     });
   });
 
+  describe('eligibility read again', () => {
+    /** A Cycle over Entries whose eligibility the test changes between reads. */
+    async function openOver(records = new Map<string, string>()) {
+      const eligible = { words: [...wordIds], corrections: [...correctionIds] };
+      const userState = await openUserState({ port: createMemoryUserStatePort(records) });
+      const cycle = await openCycle({
+        entries: { eligible: () => Promise.resolve({ ...eligible }) },
+        userState,
+        random: randomOf(0.25),
+      });
+      return { cycle, eligible };
+    }
+
+    it('leaves out the Entries no longer eligible, keeping the order of those that stay', async () => {
+      const { cycle, eligible } = await openOver();
+      const before = cycle.order();
+      const [, word = ''] = before.words;
+      const [correction = ''] = before.corrections;
+
+      eligible.words = eligible.words.filter((id) => id !== word);
+      eligible.corrections = eligible.corrections.filter((id) => id !== correction);
+      await cycle.readEligibleAgain();
+
+      expect(cycle.order()).toEqual({
+        words: before.words.filter((id) => id !== word),
+        corrections: before.corrections.filter((id) => id !== correction),
+      });
+      expect(cycle.covers(word)).toBe(false);
+      expect(cycle.covers(correction)).toBe(false);
+    });
+
+    it('puts an Entry eligible again back in its place in the order', async () => {
+      const { cycle, eligible } = await openOver();
+      const before = cycle.order();
+      const [, , word = ''] = before.words;
+
+      eligible.words = eligible.words.filter((id) => id !== word);
+      await cycle.readEligibleAgain();
+      eligible.words = [...wordIds];
+      await cycle.readEligibleAgain();
+
+      expect(cycle.order()).toEqual(before);
+    });
+
+    it('keeps the seed and what is Seen, and writes nothing', async () => {
+      const records = new Map<string, string>();
+      const { cycle, eligible } = await openOver(records);
+      const [first = '', second = ''] = cycle.order().words;
+      await keep(records, cycle.markSeen(first));
+      const kept = new Map(records);
+
+      eligible.words = eligible.words.filter((id) => id !== second);
+      await cycle.readEligibleAgain();
+
+      expect(records).toEqual(kept);
+      expect(cycle.unseen().words).not.toContain(first);
+      eligible.words = [...wordIds];
+      await cycle.readEligibleAgain();
+      expect(cycle.unseen().words).not.toContain(first);
+      expect(cycle.unseen().words).toContain(second);
+    });
+
+    it('gives the order a restart gives, with the same eligible Entries', async () => {
+      const records = new Map<string, string>();
+      const { cycle, eligible } = await openOver(records);
+      const [, word = ''] = cycle.order().words;
+
+      eligible.words = eligible.words.filter((id) => id !== word);
+      await cycle.readEligibleAgain();
+      const restarted = await open({ records, words: eligible.words });
+
+      expect(restarted.order()).toEqual(cycle.order());
+    });
+
+    it('wins over a new Cycle whose Entries were read before it', async () => {
+      const { cycle, eligible } = await openOver();
+      const [word = ''] = cycle.order().words;
+
+      const started = cycle.start();
+      eligible.words = eligible.words.filter((id) => id !== word);
+      await cycle.readEligibleAgain();
+      (await started).commit();
+
+      expect(cycle.covers(word)).toBe(false);
+    });
+  });
+
   describe('a new Cycle', () => {
     it('has nothing Seen and a new order from a new seed', async () => {
       const cycle = await open({ random: randomSequence(0.25, 0.75) });
