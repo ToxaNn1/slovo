@@ -11,8 +11,13 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - scrollUntilVisible:
     element:
       id: collection-button
-    # Off the tab bar, which covers the bottom of a card that barely fits.
-    centerElement: true
+# Then off the tab bar, which covers the bottom of a card that barely fits: a
+# short slow drag scrolls the card further, or to its end, and is too short
+# and slow to turn the page.
+- swipe:
+    start: 50%, 60%
+    end: 50%, 48%
+    duration: 800
 # A tap while the card still glides only stops it.
 - waitForAnimationToEnd
 - tapOn:

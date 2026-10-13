@@ -1,8 +1,8 @@
 # Мій Мікс: the Settings row says «Усі»; taking a Category out changes the row
 # at once; Corrections go off with their switch; the last Category's chip can't
 # be turned off; «Усі» brings every Category back. A subflow of `smoke.yaml`;
-# run it from there. It leaves the Mix as it found it (every Category and
-# Corrections in), so the flows after it see the same Feed.
+# run it from there. It starts by putting every Category and Corrections back
+# into the Mix, and leaves it so, for the flows after it.
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
 - tapOn:
@@ -13,6 +13,29 @@ appId: ${APP_ID || 'app.slovo.uk'}
     # Off the tab bar, which covers the bottom of the list at the largest font size.
     centerElement: true
     visibilityPercentage: 50
+# Start from the full Mix, whatever an earlier run left.
+- tapOn:
+    id: settings-row-my-mix
+- assertVisible:
+    id: mix
+- runFlow:
+    when:
+      visible:
+        id: mix-chip-all
+        selected: false
+    commands:
+      - tapOn:
+          id: mix-chip-all
+- runFlow:
+    when:
+      visible:
+        id: mix-corrections
+        checked: false
+    commands:
+      - tapOn:
+          id: mix-corrections
+- tapOn:
+    id: mix-back
 - assertVisible:
     id: settings-row-my-mix
     text: Мій Мікс, Усі

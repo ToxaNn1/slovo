@@ -61,8 +61,14 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - tapOn:
     id: history-clear
     point: 15%,50%
-# The alert's button; the screen's own button is named «Очистити Історію» for VoiceOver.
-- tapOn: Очистити
+- assertVisible: Очистити Історію?
+# A tap while the alert still opens is lost.
+- waitForAnimationToEnd
+# The alert's button, below the screen's own button of the same label.
+- tapOn:
+    text: Очистити
+    below:
+      id: history-clear
 - assertVisible:
     id: history-empty
 - assertNotVisible:
