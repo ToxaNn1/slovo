@@ -415,6 +415,10 @@ export function PagerScrollView({
       ref={scrollRef}
       testID={testID}
       simultaneousHandlers={panRef}
+      // A sheet opened from the card is a child in React's tree (it is a Modal), and a
+      // scroll view that persists no taps would swallow the first tap in the sheet's
+      // name field to put the keyboard away.
+      keyboardShouldPersistTaps="handled"
       // The page turns at the ends, so the content never bounces past them.
       bounces={false}
       scrollEventThrottle={16}
