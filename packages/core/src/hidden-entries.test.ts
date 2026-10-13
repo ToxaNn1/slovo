@@ -173,14 +173,19 @@ describe('Hidden Entries', () => {
     time.advance(MINUTE);
     await app.hiddenEntries.hide('c_one');
     const before = app.hiddenEntries.list;
-    const oldest = before.find(({ entryId }) => entryId === 'w_live1');
 
-    await app.hiddenEntries.restore('w_live1');
+    const hiddenAt = await app.hiddenEntries.restore('w_live1');
     time.advance(MINUTE);
-    await app.hiddenEntries.hide('w_live1', oldest?.hiddenAt);
+    await app.hiddenEntries.hide('w_live1', hiddenAt);
 
     expect(app.hiddenEntries.list).toEqual(before);
     expect(idsOf(app)).toEqual(['c_one', 'w_live2', 'w_live1']);
+  });
+
+  it('gives nothing back when restoring an Entry that is not Hidden', async () => {
+    const app = await run();
+
+    expect(await app.hiddenEntries.restore('w_live1')).toBeUndefined();
   });
 
   it('keeps the time it had before across reopening, and a fresh hide still uses the clock', async () => {
@@ -188,9 +193,8 @@ describe('Hidden Entries', () => {
     const time = fakeClock();
     const first = await run({ records, clock: time.clock });
     await first.hiddenEntries.hide('w_live1');
-    const hiddenAt = first.hiddenEntries.list[0]?.hiddenAt;
     time.advance(MINUTE);
-    await first.hiddenEntries.restore('w_live1');
+    const hiddenAt = await first.hiddenEntries.restore('w_live1');
     time.advance(MINUTE);
     await first.hiddenEntries.hide('w_live1', hiddenAt);
     await first.hiddenEntries.hide('w_live2');

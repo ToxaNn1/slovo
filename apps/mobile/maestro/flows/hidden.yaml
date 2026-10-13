@@ -29,6 +29,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: undo-toast-message
     text: «.+» приховано
 # The next card takes its place: hide it too, so it is the newer Hidden Entry.
+- waitForAnimationToEnd
 - copyTextFrom:
     id: word-lemma|correction-standard
 - evalScript: ${output.newerTitle = maestro.copiedText.split(',')[0]}

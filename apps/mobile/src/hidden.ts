@@ -71,10 +71,11 @@ export function useHiddenChanges(): {
   const showToast = useUndoToast();
   return {
     restoreEntry({ entryId, title }) {
-      const hiddenAt = hiddenEntries?.list.find((hidden) => hidden.entryId === entryId)?.hiddenAt;
       hiddenEntries
         ?.restore(entryId)
-        .then(() => {
+        .then((hiddenAt) => {
+          // Not Hidden any more: another restore got there first, with its own toast.
+          if (hiddenAt === undefined) return;
           showToast({
             message: fill(strings.entryRestored, { title }),
             undoLabel: strings.undo,

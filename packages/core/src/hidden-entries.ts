@@ -36,8 +36,12 @@ export interface HiddenEntries {
    * id the Language Pack doesn't have is skipped.
    */
   hide(entryId: string, hiddenAt?: Date): Promise<void>;
-  /** Makes a Hidden Entry eligible again. It is also the undo of a hide. */
-  restore(entryId: string): Promise<void>;
+  /**
+   * Makes a Hidden Entry eligible again. It is also the undo of a hide.
+   * Gives the time the Entry was hidden, for `hide` to take back as its undo,
+   * or nothing when the Entry wasn't Hidden.
+   */
+  restore(entryId: string): Promise<Date | undefined>;
   /** Calls `listener` after each change of the list. Returns the call that stops it. */
   subscribe(listener: () => void): () => void;
 }
@@ -103,10 +107,12 @@ export async function openHiddenEntries({
     await changeList([...list, { entryId, hiddenAt, row }].sort(newestFirst));
   }
 
-  async function restore(entryId: string): Promise<void> {
-    if (!has(entryId)) return;
+  async function restore(entryId: string): Promise<Date | undefined> {
+    const hidden = list.find((hiddenEntry) => hiddenEntry.entryId === entryId);
+    if (hidden === undefined) return undefined;
     await userState.write(hiddenRecords.record(entryId).change(undefined));
     await changeList(list.filter((hiddenEntry) => hiddenEntry.entryId !== entryId));
+    return hidden.hiddenAt;
   }
 
   // One change at a time, so each one starts from what the one before it left.
