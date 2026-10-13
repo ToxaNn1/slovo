@@ -1,0 +1,108 @@
+# Мій Мікс: the Settings row says «Усі»; taking a Category out changes the row
+# at once; Corrections go off with their switch; the last Category's chip can't
+# be turned off; «Усі» brings every Category back. A subflow of `smoke.yaml`;
+# run it from there. It leaves the Mix as it found it (every Category and
+# Corrections in), so the flows after it see the same Feed.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- tapOn:
+    id: tab-settings
+- scrollUntilVisible:
+    element:
+      id: settings-row-my-mix
+    # Off the tab bar, which covers the bottom of the list at the largest font size.
+    centerElement: true
+    visibilityPercentage: 50
+- assertVisible:
+    id: settings-row-my-mix
+    text: Мій Мікс, Усі
+- tapOn:
+    id: settings-row-my-mix
+- assertVisible:
+    id: mix
+- assertVisible:
+    id: mix-chip-all
+    selected: true
+- assertVisible:
+    id: mix-corrections
+    checked: true
+- takeScreenshot: mix-all
+# Taking a Category out applies at once: its chip is off and «Усі» no longer on.
+- tapOn:
+    id: mix-chip-technology
+- assertVisible:
+    id: mix-chip-technology
+    selected: false
+- assertVisible:
+    id: mix-chip-all
+    selected: false
+# Corrections off with the switch.
+- tapOn:
+    id: mix-corrections
+- assertVisible:
+    id: mix-corrections
+    checked: false
+- takeScreenshot: mix-category-out-corrections-off
+# Back in Settings the row counts the Categories left in the Mix (10 − 1).
+- tapOn:
+    id: mix-back
+- assertVisible:
+    id: settings-row-my-mix
+    text: Мій Мікс, 9 категорій
+- tapOn:
+    id: settings-row-my-mix
+# The Mix is kept: the screen opens as it was left.
+- assertVisible:
+    id: mix-chip-technology
+    selected: false
+- assertVisible:
+    id: mix-corrections
+    checked: false
+# Take the Categories out until one is left; its chip is disabled, with a hint.
+- tapOn:
+    id: mix-chip-human-body
+- tapOn:
+    id: mix-chip-emotions-character
+- tapOn:
+    id: mix-chip-nature-weather
+- tapOn:
+    id: mix-chip-household-crafts
+- tapOn:
+    id: mix-chip-military
+- tapOn:
+    id: mix-chip-arts-culture
+- tapOn:
+    id: mix-chip-history-antiquity
+- tapOn:
+    id: mix-chip-science
+- assertVisible:
+    id: mix-last-category-hint
+- assertVisible:
+    id: mix-chip-language-speech
+    selected: true
+    enabled: false
+- takeScreenshot: mix-last-category
+# A tap on it changes nothing.
+- tapOn:
+    id: mix-chip-language-speech
+- assertVisible:
+    id: mix-chip-language-speech
+    selected: true
+# «Усі» brings every Category back, and the switch turns Corrections on again.
+- tapOn:
+    id: mix-chip-all
+- assertVisible:
+    id: mix-chip-all
+    selected: true
+- assertNotVisible:
+    id: mix-last-category-hint
+- tapOn:
+    id: mix-corrections
+- assertVisible:
+    id: mix-corrections
+    checked: true
+- tapOn:
+    id: mix-back
+- assertVisible:
+    id: settings-row-my-mix
+    text: Мій Мікс, Усі
