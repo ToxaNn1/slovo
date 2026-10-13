@@ -2,6 +2,7 @@
  * The UI: Edition-neutral components that read every text, design token and
  * Decor from the Edition.
  */
+export { ActionRow, type ActionRowProps } from './ActionRow';
 export { FeedError, FeedLoading, SwipeHint } from './FeedStates';
 export { FontSizePreview } from './FontSizePreview';
 export {

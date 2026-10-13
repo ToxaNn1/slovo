@@ -16,6 +16,7 @@ import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { editionStrings } from '../edition';
+import { EntryActions } from '../entry-actions';
 import { useFeed } from '../feed';
 import { FeedLoadingScreen, TOP_ROW } from '../feed-loading';
 import { LoadFailed } from '../language-pack';
@@ -104,7 +105,7 @@ function FeedPage({
     // The content scrolls under the top row but stops at the status bar.
     <View testID={`feed-card-${String(position)}`} style={[styles.page, { paddingTop: top }]}>
       <PagerScrollView contentContainerStyle={styles.content}>
-        <EntryCard card={card} onOpenCorrection={onOpenCorrection} />
+        <EntryCard card={card} onOpenCorrection={onOpenCorrection} actions={<EntryActions />} />
       </PagerScrollView>
     </View>
   );
