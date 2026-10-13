@@ -42,6 +42,12 @@ export interface Entries {
    * Language Pack is skipped. Read afresh on every call.
    */
   linkedCorrections(word: Word): Promise<Correction[]>;
+  /**
+   * Whether a Word links its Corrections at all: the Edition turns Corrections
+   * on and the user has them in the Mix. Read afresh on every call, so a caller
+   * can tell when the links of the Word cards it holds went stale.
+   */
+  linksCorrections(): Promise<boolean>;
 }
 
 const { hiddenEntries: hiddenRecords } = userStateRecords;
@@ -69,6 +75,8 @@ export function createEntries(
     if (!('userState' in options)) return true;
     return (await readMix({ edition: options.edition, userState: options.userState })).corrections;
   }
+
+  const linksCorrections = async () => withCorrections() && (await correctionsInMix());
 
   /**
    * The live Words of the Categories in the Mix, one query per Category, or
@@ -99,8 +107,9 @@ export function createEntries(
     async get(id) {
       return (await content.getWord(id)) ?? content.getCorrection(id);
     },
+    linksCorrections,
     async linkedCorrections(word) {
-      if (!withCorrections() || !(await correctionsInMix())) return [];
+      if (!(await linksCorrections())) return [];
       const corrections = await Promise.all(
         word.correctionIds.map((id) => content.getCorrection(id)),
       );

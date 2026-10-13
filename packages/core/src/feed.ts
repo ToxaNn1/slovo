@@ -492,84 +492,85 @@ export async function openFeed({
     return next === -1 ? session.length : next;
   }
 
+  /** Whether the Word cards of the session link their Corrections, as of the last pass. */
+  let linksShown = await entries.linksCorrections();
+
   /**
-   * Builds the Word cards of the session again where the Entries now link
-   * other Corrections than the card does (Corrections went out of the Mix, or
-   * came back). Each card keeps its place, and so does the reader. Resolves to
-   * whether a card changed.
+   * Builds the Word cards of the session again once Corrections went out of
+   * the Mix or came back: a Word card links no Correction while they are out.
+   * Each card keeps its place, and so does the reader.
    */
-  async function refreshLinkedCorrections(): Promise<boolean> {
+  async function refreshLinkedCorrections(): Promise<void> {
+    const links = await entries.linksCorrections();
+    if (links === linksShown) return;
     const rebuilt = new Map<FeedCard, FeedCard>();
     for (const card of session) {
       if (card.kind !== 'word') continue;
       const entry = await entries.get(card.wordCard.wordId);
-      if (entry?.kind !== 'word') continue;
-      const links = (await entries.linkedCorrections(entry)).map(({ id }) => id);
-      const shown = card.wordCard.linkedCorrections.map(({ correctionId }) => correctionId);
-      if (links.length === shown.length && links.every((id, index) => id === shown[index]))
-        continue;
-      rebuilt.set(card, await buildEntryCard(entries, entry, card.wordOfTheDay));
+      if (entry?.kind === 'word')
+        rebuilt.set(card, await buildEntryCard(entries, entry, card.wordOfTheDay));
     }
-    if (rebuilt.size === 0) return false;
+    linksShown = links;
+    if (rebuilt.size === 0) return;
     const renewed = (card: FeedCard) => rebuilt.get(card) ?? card;
-    setSession(session.map(renewed), new Set([...dropped].map(renewed)));
     if (droppedFromScreen !== undefined) droppedFromScreen = renewed(droppedFromScreen);
-    return true;
+    changeSession(session.map(renewed), new Set([...dropped].map(renewed)));
   }
 
   /**
    * Drops every card whose Entry the Cycle no longer covers and puts back the
    * dropped ones it covers again, then keeps the next card ready. The Word
-   * cards follow the Mix too: a Word card links no Correction while
-   * Corrections are out of the Mix.
+   * cards follow the Mix too, once the drop is done.
    */
   async function followEligibility(): Promise<void> {
     await inTurn(async () => {
-      const refreshed = await refreshLinkedCorrections();
-      const out = new Set(
-        session.filter((card) => {
-          const entryId = entryIdOf(card);
-          return entryId !== undefined && !cycle.covers(entryId);
-        }),
-      );
-      const was = onScreen;
-      const place = was === undefined ? undefined : placeOnScreen(was.place, out);
-      const left = was === undefined ? undefined : session[was.place];
-      if (left !== undefined && out.has(left)) droppedFromScreen = left;
-      else if (place !== undefined && session[place] === droppedFromScreen)
-        droppedFromScreen = undefined;
-      const moved = was !== undefined && place !== undefined && place !== was.place;
-      const sameDropped = out.size === dropped.size && [...out].every((card) => dropped.has(card));
-      if (!moved && sameDropped) {
-        if (refreshed) tellSubscribers();
-        return;
-      }
-      const now = clock.now().getTime();
-      if (moved) onScreen = { place, since: now };
-      if (moved && place === session.length) {
-        // No card after the one dropped from the screen stays: the next card
-        // takes the screen in the same change, so the reader's place is kept
-        // on it below and the subscribers never find the screen past the cards.
-        setSession(session, out);
-        let added: FeedCard | undefined;
-        try {
-          added = await addNextCard();
-        } finally {
-          // A card added has told the subscribers already, with the drop.
-          if (added === undefined) tellSubscribers();
-        }
-      } else changeSession(session, out);
-      if (moved)
-        await keepScreenChange({
-          left,
-          stayed: now - was.since,
-          // Adding the next card may move the place on screen.
-          entryId: entryIdOf(session[onScreen?.place ?? place]),
-          now,
-          date: todayKey(clock),
-        });
+      await followCovered();
+      await refreshLinkedCorrections();
     });
     await keepNextCardReady();
+  }
+
+  /** Drops and puts back the cards by what the Cycle covers. */
+  async function followCovered(): Promise<void> {
+    const out = new Set(
+      session.filter((card) => {
+        const entryId = entryIdOf(card);
+        return entryId !== undefined && !cycle.covers(entryId);
+      }),
+    );
+    const was = onScreen;
+    const place = was === undefined ? undefined : placeOnScreen(was.place, out);
+    const left = was === undefined ? undefined : session[was.place];
+    if (left !== undefined && out.has(left)) droppedFromScreen = left;
+    else if (place !== undefined && session[place] === droppedFromScreen)
+      droppedFromScreen = undefined;
+    const moved = was !== undefined && place !== undefined && place !== was.place;
+    const sameDropped = out.size === dropped.size && [...out].every((card) => dropped.has(card));
+    if (!moved && sameDropped) return;
+    const now = clock.now().getTime();
+    if (moved) onScreen = { place, since: now };
+    if (moved && place === session.length) {
+      // No card after the one dropped from the screen stays: the next card
+      // takes the screen in the same change, so the reader's place is kept
+      // on it below and the subscribers never find the screen past the cards.
+      setSession(session, out);
+      let added: FeedCard | undefined;
+      try {
+        added = await addNextCard();
+      } finally {
+        // A card added has told the subscribers already, with the drop.
+        if (added === undefined) tellSubscribers();
+      }
+    } else changeSession(session, out);
+    if (moved)
+      await keepScreenChange({
+        left,
+        stayed: now - was.since,
+        // Adding the next card may move the place on screen.
+        entryId: entryIdOf(session[onScreen?.place ?? place]),
+        now,
+        date: todayKey(clock),
+      });
   }
 
   if (!(await restore())) await addWordOfTheDay();
