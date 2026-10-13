@@ -32,6 +32,15 @@ export type CollectionResult =
   | { readonly ok: true; readonly collection: Collection }
   | { readonly ok: false; readonly reason: CollectionNameRefusal };
 
+/** An Entry in a Collection, as the Collection's screen draws it. */
+export interface CollectionEntry {
+  readonly entryId: string;
+  /** When the user added it to the Collection. */
+  readonly addedAt: Date;
+  /** What its row in a list shows. */
+  readonly row: EntryRowModel;
+}
+
 /**
  * Collections: the groups of Entries the user created and named, with an Entry
  * in as many as the user likes. They keep any Entry the Language Pack has,
@@ -49,6 +58,12 @@ export interface Collections {
   readonly list: readonly Collection[];
   /** The Collections the Entry is in, newest first; the same array until a change. */
   of(entryId: string): readonly Collection[];
+  /**
+   * The Entries in the Collection, newest first, Retired ones too; nothing for
+   * a Collection that doesn't exist. The same array until that Collection
+   * changes.
+   */
+  entries(collectionId: string): readonly CollectionEntry[];
   /** Whether the Entry is in the Collection. */
   has(collectionId: string, entryId: string): boolean;
   /**
@@ -107,6 +122,7 @@ interface Stored {
 }
 
 const NONE: readonly Collection[] = [];
+const NO_ENTRIES: readonly CollectionEntry[] = [];
 
 /** Newest first; things made at the same instant in a stable order. */
 function newestFirst<T>(time: (item: T) => Date, key: (item: T) => string) {
@@ -122,13 +138,13 @@ const newestCollection = newestFirst<Collection>(
   (collection) => collection.id,
 );
 
+const newestEntry = newestFirst<Filed>(
+  (item) => item.addedAt,
+  (item) => item.row.entryId,
+);
+
 function viewOf({ id, name, createdAt, filed }: Stored): Collection {
-  const newest = [...filed.values()].sort(
-    newestFirst(
-      (item) => item.addedAt,
-      (item) => item.row.entryId,
-    ),
-  );
+  const newest = [...filed.values()].sort(newestEntry);
   return {
     id,
     name,
@@ -190,6 +206,8 @@ export async function openCollections({
   }
 
   let list: readonly Collection[] = NONE;
+  /** The Entries of each Collection, made when asked for and dropped when that Collection changes. */
+  const entriesOf = new Map<string, readonly CollectionEntry[]>();
   let byEntry = new Map<string, readonly Collection[]>();
   const listeners = new Set<() => void>();
 
@@ -210,9 +228,23 @@ export async function openCollections({
     const view = viewOf(stored);
     collections.set(stored.id, stored);
     views.set(stored.id, view);
+    entriesOf.delete(stored.id);
     remake();
     for (const listener of listeners) listener();
     return view;
+  }
+
+  function entries(collectionId: string): readonly CollectionEntry[] {
+    const collection = collections.get(collectionId);
+    if (collection === undefined) return NO_ENTRIES;
+    let made = entriesOf.get(collectionId);
+    if (made === undefined) {
+      made = [...collection.filed.values()]
+        .sort(newestEntry)
+        .map(({ addedAt, row }) => ({ entryId: row.entryId, addedAt, row }));
+      entriesOf.set(collectionId, made);
+    }
+    return made;
   }
 
   const has = (collectionId: string, entryId: string) =>
@@ -294,6 +326,7 @@ export async function openCollections({
     await userState.write(changes);
     collections.delete(collectionId);
     views.delete(collectionId);
+    entriesOf.delete(collectionId);
     remake();
     for (const listener of listeners) listener();
   }
@@ -330,6 +363,7 @@ export async function openCollections({
       return list;
     },
     of: (entryId) => byEntry.get(entryId) ?? NONE,
+    entries,
     has,
     create: (name, entryId) => inTurn(() => create(name, entryId)),
     rename: (collectionId, name) => inTurn(() => rename(collectionId, name)),

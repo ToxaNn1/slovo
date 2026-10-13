@@ -641,6 +641,102 @@ describe('Collections', () => {
     });
   });
 
+  describe("a Collection's Entries", () => {
+    it('lists the Entries newest first, each with the time it was added and its row', async () => {
+      const time = fakeClock();
+      const app = await run({ clock: time.clock });
+      const { id } = await create(app, 'List');
+      const added: { entryId: string; addedAt: Date }[] = [];
+      for (const entryId of ['w_one', 'c_one', 'w_two']) {
+        time.advance(MINUTE);
+        await app.collections.add(id, entryId);
+        added.push({ entryId, addedAt: time.clock.now() });
+      }
+
+      expect(app.collections.entries(id)).toEqual(
+        await Promise.all(
+          added.reverse().map(async ({ entryId, addedAt }) => ({
+            entryId,
+            addedAt,
+            row: await app.entryRow(entryId),
+          })),
+        ),
+      );
+    });
+
+    it('lists Entries added at the same instant in a stable order, and an empty Collection as nothing', async () => {
+      const app = await run();
+      const { id } = await create(app, 'List');
+      expect(app.collections.entries(id)).toEqual([]);
+
+      await app.collections.add(id, 'w_two');
+      await app.collections.add(id, 'w_one');
+
+      expect(app.collections.entries(id).map((entry) => entry.entryId)).toEqual(['w_one', 'w_two']);
+    });
+
+    it('has nothing for a Collection that does not exist', async () => {
+      const app = await run();
+
+      expect(app.collections.entries('k_gone')).toEqual([]);
+    });
+
+    it('keeps the Retired Entries', async () => {
+      const app = await run();
+      const { id } = await create(app, 'Kept', 'w_old');
+
+      expect(app.collections.entries(id).map((entry) => entry.entryId)).toEqual(['w_old']);
+    });
+
+    it('takes an Entry out of this Collection only, leaving it in Favorites, History and the other Collections', async () => {
+      const time = fakeClock();
+      const records = new Map<string, string>();
+      const app = await run({ records, clock: time.clock });
+      await app.feed.show(0);
+      time.advance(SEEN_DWELL_MS);
+      await app.feed.show(undefined);
+      const seen = app.history.list[0];
+      if (seen === undefined) throw new Error('The card was not Seen');
+      const first = await create(app, 'First', seen.entryId);
+      const second = await create(app, 'Second', seen.entryId);
+      await app.favorites.add(seen.entryId);
+
+      await app.collections.remove(first.id, seen.entryId);
+
+      expect(app.collections.entries(first.id)).toEqual([]);
+      expect(app.collections.entries(second.id).map((entry) => entry.entryId)).toEqual([
+        seen.entryId,
+      ]);
+      expect(app.favorites.has(seen.entryId)).toBe(true);
+      expect(app.history.list.map((entry) => entry.entryId)).toEqual([seen.entryId]);
+      const reopened = await run({ records, clock: time.clock });
+      expect(reopened.collections.entries(first.id)).toEqual([]);
+      expect(reopened.collections.entries(second.id)).toHaveLength(1);
+    });
+
+    it('is the same array until that Collection changes, and a new one after', async () => {
+      const app = await run();
+      const { id } = await create(app, 'List', 'w_one');
+      const other = await create(app, 'Other');
+
+      const before = app.collections.entries(id);
+      expect(app.collections.entries(id)).toBe(before);
+
+      await app.collections.add(other.id, 'w_two');
+      await app.collections.remove(id, 'w_two');
+      await app.collections.add(id, 'w_one');
+      expect(app.collections.entries(id)).toBe(before);
+
+      await app.collections.add(id, 'w_two');
+      const after = app.collections.entries(id);
+      expect(after).not.toBe(before);
+      expect(after).toHaveLength(2);
+
+      await app.collections.delete(id);
+      expect(app.collections.entries(id)).toEqual([]);
+    });
+  });
+
   describe('the snapshot', () => {
     it('is a new object after each change, telling the subscribers, and the same one otherwise', async () => {
       const app = await run();
