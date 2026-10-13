@@ -97,7 +97,7 @@ export function EntryRow({
       )}
     </>
   );
-  const padding = [
+  const textStyle = [
     styles.row,
     compact && styles.rowCompact,
     hasAccessory && styles.rowBesideAccessory,
@@ -127,7 +127,7 @@ export function EntryRow({
             accessible
             accessibilityLabel={accessibilityLabel}
             {...voice}
-            style={padding}
+            style={textStyle}
           >
             {text}
           </View>
@@ -140,7 +140,7 @@ export function EntryRow({
             {...voice}
             onPress={onPress}
             style={({ pressed }) => [
-              padding,
+              textStyle,
               { backgroundColor: pressed ? colors.surfaceSunken : colors.background },
             ]}
           >
