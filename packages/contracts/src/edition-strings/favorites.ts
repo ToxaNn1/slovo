@@ -19,7 +19,7 @@ export const FavoritesStringsSchema = z.strictObject({
   remove: TextSchema,
   /** The same action as VoiceOver reads it. Takes `{title}`, what the row leads with. */
   removeLabel: templateOf('title'),
-  /** When an Entry was added, on the right of its row. */
+  /** When an Entry was added, on the right of its row; a Collection's screen says it the same way. */
   added: z.strictObject({
     today: TextSchema,
     yesterday: TextSchema,

@@ -17,6 +17,7 @@ export type {
 export { openComposition, type Composition } from './composition';
 export {
   type Collection,
+  type CollectionEntry,
   type CollectionNameRefusal,
   type CollectionResult,
   type Collections,

@@ -1,0 +1,78 @@
+# A Collection's screen: file a card from the Feed in «Poets», open the
+# Collection from the Collections screen, open its Entry and come back, then
+# swipe the Entry out of the Collection and see the empty Collection with its
+# hint. A subflow of `smoke.yaml`; run it from there. It expects the Collection
+# «Poets», empty, which `collection-sheet.yaml` leaves, and leaves it empty.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- tapOn:
+    id: tab-home
+# The Collections button sits under the card, which may be taller than the screen.
+- scrollUntilVisible:
+    element:
+      id: collection-button
+    # Off the tab bar, which covers the bottom of a card that barely fits.
+    centerElement: true
+# A tap while the card still glides only stops it.
+- waitForAnimationToEnd
+- tapOn:
+    id: collection-button
+- tapOn:
+    id: collection-row-.*
+    text: Poets, 0 записів
+- assertVisible:
+    id: collection-row-.*
+    text: Poets, 1 запис
+- tapOn:
+    id: collection-done
+# The Saved tab leads to the Collections screen, whose row opens the Collection.
+- tapOn:
+    id: tab-saved
+- tapOn:
+    id: saved-collections
+- tapOn:
+    id: collection-.*-content
+    text: Poets, 1 запис.*
+- assertVisible:
+    id: collection
+- assertVisible:
+    id: collection-count
+    text: 1 запис
+- assertVisible:
+    id: entry-row-.*-open
+- takeScreenshot: collection-entries
+# The row opens the Entry screen, and the link back returns to the Collection.
+- tapOn:
+    id: entry-row-.*-open
+- assertVisible:
+    id: entry-screen
+- takeScreenshot: collection-entry-screen
+- tapOn:
+    id: entry-screen-back
+- assertVisible:
+    id: collection
+# A swipe takes the Entry out of this Collection.
+- swipe:
+    from:
+      id: entry-row-.*
+    direction: LEFT
+- takeScreenshot: collection-entry-swiped
+- tapOn:
+    id: entry-row-.*-remove
+- assertVisible:
+    id: collection-empty
+- assertVisible:
+    id: collection-count
+    text: 0 записів
+- takeScreenshot: collection-empty
+- tapOn:
+    id: collection-back
+- assertVisible:
+    id: collection-.*-content
+    text: Poets, 0 записів
+- tapOn:
+    id: collections-back
+- tapOn:
+    id: tab-home
+- assertVisible:
+    id: home

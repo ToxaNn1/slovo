@@ -1,9 +1,10 @@
-import type { Collection, Collections } from '@slovo/core';
+import type { Collection, CollectionEntry, Collections } from '@slovo/core';
 import { useCallback, useSyncExternalStore } from 'react';
 
 import { useComposition } from './composition';
 
 const noCollections: readonly Collection[] = [];
+const noEntries: readonly CollectionEntry[] = [];
 
 /** Collections of the session's Core composition, once it is open. */
 function useCollections(): Collections | undefined {
@@ -86,6 +87,29 @@ export function useCollectionChanges(): {
     remove(collectionId) {
       if (collections === undefined) return;
       void keep(collections.delete(collectionId), undefined);
+    },
+  };
+}
+
+/** One Collection and its Entries, newest first, kept up to date; no Collection and no Entries until Collections open or when it is gone. */
+export function useCollectionEntries(collectionId: string): {
+  collection: Collection | undefined;
+  entries: readonly CollectionEntry[];
+  /** Takes the Entry out of this Collection only; it stays everywhere else it is kept. */
+  remove: (entryId: string) => void;
+} {
+  const collections = useCollections();
+  const list = useCollectionList();
+  const entries = useSyncExternalStore(
+    useSubscribe(collections),
+    () => collections?.entries(collectionId) ?? noEntries,
+  );
+  return {
+    collection: list.find((collection) => collection.id === collectionId),
+    entries,
+    remove(entryId) {
+      if (collections === undefined) return;
+      void keep(collections.remove(collectionId, entryId), undefined);
     },
   };
 }
