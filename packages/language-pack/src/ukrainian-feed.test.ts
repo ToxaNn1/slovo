@@ -7,13 +7,10 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
   CORRECTION_EVERY,
-  createEntries,
   createMemoryUserStatePort,
   loadEdition,
-  openCycle,
-  openFeed,
+  openComposition,
   openUserState,
-  openWordOfTheDay,
   SEEN_DWELL_MS,
   type Clock,
   type Edition,
@@ -24,8 +21,8 @@ import {
 
 import { buildLanguagePack, openLanguagePack, type NodeLanguagePack } from './index';
 
-// The Core's Feed over the real Ukrainian Language Pack (spec #51, seam 1). It
-// lives here because only this package can build and read a pack in Node.
+// The Core's Feed over the real Ukrainian Language Pack, opened through the
+// Core composition (spec #96, seam 1). It lives here because only this package can build and read a pack in Node.
 
 const editionDir = fileURLToPath(new URL('../../../editions/uk', import.meta.url));
 
@@ -89,10 +86,14 @@ async function run(
   edition: Edition = wordsOnly,
 ): Promise<Feed> {
   const userState = await openUserState({ port: createMemoryUserStatePort(records) });
-  const entries = createEntries({ content: pack, edition });
-  const cycle = await openCycle({ entries, userState, random: seededRandom(seed) });
-  const wordOfTheDay = await openWordOfTheDay({ cycle, userState, clock });
-  return openFeed({ entries, userState, clock, cycle, wordOfTheDay });
+  const composition = await openComposition({
+    content: pack,
+    edition,
+    userState,
+    clock,
+    random: seededRandom(seed),
+  });
+  return composition.feed;
 }
 
 /** The id of the Entry a card shows, if it shows one. */

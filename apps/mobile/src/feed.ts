@@ -1,12 +1,9 @@
-import { openFeed, type Feed, type FeedCard } from '@slovo/core';
+import type { Feed, FeedCard } from '@slovo/core';
 import { useIsFocused } from 'expo-router';
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { AppState } from 'react-native';
 
-import { sharedCycle } from './cycle';
-import { deviceClock } from './device-clock';
-import { useEntries } from './language-pack';
-import { storedUserState } from './stored-user-state';
+import { useComposition } from './composition';
 
 export type FeedState =
   | { readonly status: 'loading' }
@@ -32,18 +29,16 @@ export type FeedState =
 const noCards: readonly FeedCard[] = [];
 
 /**
- * The Core's Feed over the bundled Language Pack, the stored user state and
- * the session's shared Cycle and Word of the Day.
+ * The Feed of the session's Core composition.
  * It tells the Feed which card is on screen while Home is focused and the app
  * is in the foreground, and that none is otherwise.
  */
 export function useFeed(): FeedState {
-  const entries = useEntries();
-  const [feed, setFeed] = useState<Feed>();
-  const [failed, setFailed] = useState(false);
-  /** Counts the tries to open the Feed, so a retry opens it again. */
-  const [attempt, setAttempt] = useState(0);
-  const [position, setPosition] = useState(0);
+  const composition = useComposition();
+  const feed = composition.status === 'ready' ? composition.composition.feed : undefined;
+  /** The card on screen, once the reader turned a page; until then the one the Feed opens on. */
+  const [turnedTo, setTurnedTo] = useState<number>();
+  const position = turnedTo ?? feed?.startPosition;
   const focused = useIsFocused();
   const appActive = useAppActive();
   const onScreen = focused && appActive;
@@ -54,47 +49,20 @@ export function useFeed(): FeedState {
   const cards = useSyncExternalStore(subscribe, () => feed?.cards ?? noCards);
 
   useEffect(() => {
-    let active = true;
-    Promise.all([storedUserState(), sharedCycle(entries)])
-      .then(([userState, { cycle, wordOfTheDay }]) =>
-        openFeed({ entries, userState, clock: deviceClock, cycle, wordOfTheDay }),
-      )
-      .then(
-        (opened) => {
-          if (!active) return;
-          setFeed(opened);
-          setPosition(opened.startPosition);
-        },
-        (error: unknown) => {
-          console.error('Could not open the Feed', error);
-          if (active) setFailed(true);
-        },
-      );
-    return () => {
-      active = false;
-    };
-  }, [entries, attempt]);
-
-  useEffect(() => {
-    if (feed === undefined || !onScreen) return;
+    if (feed === undefined || position === undefined || !onScreen) return;
     report(feed.show(position));
     return () => {
       report(feed.show(undefined));
     };
   }, [feed, onScreen, position]);
 
-  const retry = useCallback(() => {
-    setFailed(false);
-    setAttempt((count) => count + 1);
-  }, []);
-
-  if (failed) return { status: 'failed', retry };
+  if (composition.status === 'failed') return { status: 'failed', retry: composition.retry };
   if (feed === undefined) return { status: 'loading' };
   return {
     status: 'ready',
     cards,
     startPosition: feed.startPosition,
-    onCardChange: setPosition,
+    onCardChange: setTurnedTo,
     openLinkedCorrection: (at, correctionId) => feed.openLinkedCorrection(at, correctionId),
   };
 }
