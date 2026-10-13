@@ -37,10 +37,17 @@ export interface Entries {
   get(id: string): Promise<Entry | undefined>;
   /**
    * The live Corrections the Word is the standard form for, in the order the
-   * Word links them, or none when the Edition turns Corrections off. A
-   * Correction missing from the Language Pack is skipped.
+   * Word links them, or none when the Edition turns Corrections off or the
+   * user took Corrections out of the Mix. A Correction missing from the
+   * Language Pack is skipped. Read afresh on every call.
    */
   linkedCorrections(word: Word): Promise<Correction[]>;
+  /**
+   * Whether a Word links its Corrections at all: the Edition turns Corrections
+   * on and the user has them in the Mix. Read afresh on every call, so a caller
+   * can tell when the links of the Word cards it holds went stale.
+   */
+  linksCorrections(): Promise<boolean>;
 }
 
 const { hiddenEntries: hiddenRecords } = userStateRecords;
@@ -62,6 +69,14 @@ export function createEntries(
 ): Entries {
   const { content, edition } = options;
   const withCorrections = () => edition.isFeatureEnabled('corrections');
+
+  /** Whether Corrections, as a whole, are in the user's Mix; without a Mix they always are. */
+  async function correctionsInMix(): Promise<boolean> {
+    if (!('userState' in options)) return true;
+    return (await readMix({ edition: options.edition, userState: options.userState })).corrections;
+  }
+
+  const linksCorrections = async () => withCorrections() && (await correctionsInMix());
 
   /**
    * The live Words of the Categories in the Mix, one query per Category, or
@@ -92,8 +107,9 @@ export function createEntries(
     async get(id) {
       return (await content.getWord(id)) ?? content.getCorrection(id);
     },
+    linksCorrections,
     async linkedCorrections(word) {
-      if (!withCorrections()) return [];
+      if (!(await linksCorrections())) return [];
       const corrections = await Promise.all(
         word.correctionIds.map((id) => content.getCorrection(id)),
       );

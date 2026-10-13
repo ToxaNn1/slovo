@@ -171,7 +171,7 @@ Each component is shown in the screens listed; light and dark refer to the Ukrai
 **Word card** (`feed-word-card-*`). A surface card with `radius.card`, a 1 pt line border and four corner ornaments (Decor slot 3). Top row: the Lemma with Stress, and under it the part of speech (abbreviated, e.g. "ім., ж. р.") with an optional register chip (an outlined accent chip, e.g. "розм.", "заст."); the pronunciation button (44 pt outlined circle, speaker icon, accent) on the right. Then the ornament divider (Decor slot 2), the primary Definition, the Example in italics with its author, the synonym line ("Синонім:" or "Антонім:") and the Category chip (`surfaceSunken`, `radius.chip`). Variants:
 
 - **Word of the Day**: a filled accent badge "СЛОВО ДНЯ · 11 ЖОВТНЯ" above the Lemma.
-- **Linked to a Correction**: a footer row under a hairline, with a lightbulb icon and «Часто кажуть: _на протязі_».
+- **Linked to a Correction**: a footer row under a hairline, with a lightbulb icon and «Часто кажуть: _на протязі_». The row is left out while Corrections are out of the Mix (Settings › Мій Мікс), on the Feed and on the Entry screen, and comes back with them.
 
 **Correction card** (`feed-correction-card-*`). The same card without corner ornaments. Overline "ВИПРАВЛЕННЯ" with an outlined Correction Type chip on the right (росіянізм / калька / суржик / канцелярит). "Так часто кажуть" over the non-standard form in muted ink, struck through in a soft accent. A divider whose centre is a downward arrow instead of the rosette. "Українською краще" in accent over the standard form at Lemma size. A neutral explanation. An example pair on `surfaceSunken`: "—" before the non-standard sentence, a ✓ in `color.correct` before the standard one. No red "error" styling anywhere.
 
