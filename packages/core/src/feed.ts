@@ -524,6 +524,7 @@ export async function openFeed({
         try {
           added = await addNextCard();
         } finally {
+          // A card added has told the subscribers already, with the drop.
           if (added === undefined) tellSubscribers();
         }
       } else changeSession(session, out);
@@ -531,7 +532,8 @@ export async function openFeed({
         await keepScreenChange({
           left,
           stayed: now - was.since,
-          entryId: entryIdOf(session[place]),
+          // Adding the next card may move the place on screen.
+          entryId: entryIdOf(session[onScreen?.place ?? place]),
           now,
           date: todayKey(clock),
         });

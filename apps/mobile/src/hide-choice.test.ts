@@ -5,7 +5,6 @@ import {
   loadEdition,
   openComposition,
   openUserState,
-  systemRandom,
   type Composition,
   type EntryFeedCard,
 } from '@slovo/core';
@@ -63,7 +62,7 @@ async function open(): Promise<Composition> {
     edition: ukrainian,
     userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
     clock: { now: () => new Date('2026-10-13T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
-    random: systemRandom,
+    random: { next: () => 0.25 },
   });
 }
 

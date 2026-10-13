@@ -500,6 +500,7 @@ describe('eligibility over the Mix', () => {
       categoryOf(app.feed.cards[position]) !== categoryOf(app.feed.cards[position + 1])
     ) {
       position += 1;
+      expect(position).toBeLessThan(categories.length * 3);
       await app.feed.show(position);
     }
     const before = entryIdsOf(app.feed.cards);
