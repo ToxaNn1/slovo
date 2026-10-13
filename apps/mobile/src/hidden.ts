@@ -56,7 +56,8 @@ export function useHiddenScreenModel(): HiddenScreenModel | undefined {
 
 /**
  * The calls of the Hidden screen. Bringing an Entry back shows the undo
- * toast, whose undo hides it again; a Category goes back in the Mix with no
+ * toast, whose undo hides it again with the time it was hidden before, so it
+ * returns to its old place in the list; a Category goes back in the Mix with no
  * toast. A change that could not be kept is logged and leaves things as they
  * were. Needs an `UndoToastProvider` above it.
  */
@@ -72,12 +73,14 @@ export function useHiddenChanges(): {
     restoreEntry({ entryId, title }) {
       hiddenEntries
         ?.restore(entryId)
-        .then(() => {
+        .then((hiddenAt) => {
+          // Not Hidden any more: another restore got there first, with its own toast.
+          if (hiddenAt === undefined) return;
           showToast({
             message: fill(strings.entryRestored, { title }),
             undoLabel: strings.undo,
             onUndo() {
-              hiddenEntries.hide(entryId).catch((error: unknown) => {
+              hiddenEntries.hide(entryId, hiddenAt).catch((error: unknown) => {
                 console.error('Could not hide the Entry again', error);
               });
             },

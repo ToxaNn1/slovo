@@ -1,7 +1,8 @@
-# The Hidden screen: hide the card on screen, find it under Settings ›
-# Приховані записи, bring it back with «Повернути» and undo that from the
-# toast. A subflow of `smoke.yaml`; run it from there. It expects no Hidden
-# Entry, as it leaves none.
+# The Hidden screen: hide two cards, find them under Settings › Приховані
+# записи, bring the older one back with «Повернути» and undo that from the
+# toast, which puts it back at its old place, below the newer one. A subflow of
+# `smoke.yaml`; run it from there. It expects no Hidden Entry, as it leaves
+# none.
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
 - tapOn:
@@ -10,9 +11,28 @@ appId: ${APP_ID || 'app.slovo.uk'}
 # find the hidden Entry later.
 - copyTextFrom:
     id: word-lemma|correction-standard
-- evalScript: ${output.hiddenTitle = maestro.copiedText.split(',')[0]}
+- evalScript: ${output.olderTitle = maestro.copiedText.split(',')[0]}
 # The hide button sits under the card, which may be taller than the screen, and
 # off the tab bar (see hiding.yaml).
+- scrollUntilVisible:
+    element:
+      id: hide-button
+- swipe:
+    start: 50%, 60%
+    end: 50%, 48%
+    duration: 800
+- waitForAnimationToEnd
+- tapOn:
+    id: hide-button
+- tapOn: Не показувати цей запис
+- assertVisible:
+    id: undo-toast-message
+    text: «.+» приховано
+# The next card takes its place: hide it too, so it is the newer Hidden Entry.
+- waitForAnimationToEnd
+- copyTextFrom:
+    id: word-lemma|correction-standard
+- evalScript: ${output.newerTitle = maestro.copiedText.split(',')[0]}
 - scrollUntilVisible:
     element:
       id: hide-button
@@ -37,7 +57,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
     visibilityPercentage: 50
 - assertVisible:
     id: settings-row-hidden
-    text: Приховані записи, 1 запис
+    text: Приховані записи, 2 записи
 - tapOn:
     id: settings-row-hidden
 - assertVisible:
@@ -46,33 +66,43 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - assertVisible: ЗАПИСИ
 - assertVisible:
     id: hidden-entries
-# The row is read as its title, then its kind and labels.
+# A row is read as its title, then its kind and labels.
 - assertVisible:
-    text: \Q${output.hiddenTitle}\E, (слово|виправлення).*
+    text: \Q${output.olderTitle}\E, (слово|виправлення).*
+- assertVisible:
+    text: \Q${output.newerTitle}\E, (слово|виправлення).*
 - takeScreenshot: hidden-entries
-# «Повернути» brings the Entry back: it leaves the list under a toast.
+# The newer one is first; the second «Повернути» brings the older one back,
+# under a toast, and it leaves the list.
+- tapOn:
+    id: hidden-entry-.*-restore
+    index: 1
+- assertVisible:
+    id: undo-toast-message
+    text: «\Q${output.olderTitle}\E» знову у Стрічці
+- assertNotVisible:
+    text: \Q${output.olderTitle}\E, (слово|виправлення).*
+- takeScreenshot: hidden-restored
+# Undo hides it again with the time it had, so it is below the newer one: the
+# first «Повернути» brings the newer one back, not the older one.
+- tapOn:
+    id: undo-toast-undo
+    text: Скасувати
+- waitForAnimationToEnd
+- assertVisible:
+    text: \Q${output.olderTitle}\E, (слово|виправлення).*
 - tapOn:
     id: hidden-entry-.*-restore
 - assertVisible:
     id: undo-toast-message
-    text: «.+» знову у Стрічці
-- assertVisible:
-    id: hidden-empty
-    text: Прихованих записів немає.
-- takeScreenshot: hidden-restored
-# Undo hides it again.
-- tapOn:
-    id: undo-toast-undo
-    text: Скасувати
-- assertVisible:
-    id: hidden-entries
-- assertNotVisible:
-    id: hidden-empty
-# Bring it back for good, so the flows after this one see the Feed as it was.
+    text: «\Q${output.newerTitle}\E» знову у Стрічці
+# Bring the older one back for good, so the flows after this one see the Feed
+# as it was.
 - tapOn:
     id: hidden-entry-.*-restore
 - assertVisible:
     id: hidden-empty
+    text: Прихованих записів немає.
 - tapOn:
     id: hidden-back
 - assertVisible:
