@@ -101,11 +101,19 @@ export default function AboutScreen() {
   );
 }
 
+const WORDMARK_SIZE = 32;
+
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { paddingHorizontal: space[5], paddingTop: space[2], paddingBottom: space[8] },
   identity: { alignItems: 'center', gap: space[2], marginVertical: space[6] },
-  wordmark: { fontSize: 32, fontWeight: '500', letterSpacing: 32 * 0.3 },
+  wordmark: {
+    fontSize: WORDMARK_SIZE,
+    fontWeight: '500',
+    letterSpacing: WORDMARK_SIZE * 0.3,
+    // The last letter's spacing would push the word off centre.
+    paddingLeft: WORDMARK_SIZE * 0.3,
+  },
   editionLine: { fontSize: typeSize.body, textAlign: 'center' },
   card: {
     gap: space[3],
