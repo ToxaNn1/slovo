@@ -6,12 +6,21 @@ appId: ${APP_ID || 'app.slovo.uk'}
 ---
 - tapOn:
     id: tab-home
+# Keep what VoiceOver reads for the card's title, to tell the card apart later.
+- copyTextFrom:
+    id: word-lemma|correction-standard
+- evalScript: ${output.hiddenTitle = maestro.copiedText}
 # The hide button sits under the card, which may be taller than the screen.
 - scrollUntilVisible:
     element:
       id: hide-button
-    # Off the tab bar, which covers the bottom of a card that barely fits.
-    centerElement: true
+# Then off the tab bar, which covers the bottom of a card that barely fits: a
+# short slow drag scrolls the card further, or to its end, and is too short
+# and slow to turn the page.
+- swipe:
+    start: 50%, 60%
+    end: 50%, 48%
+    duration: 800
 # A tap while the card still glides only stops it.
 - waitForAnimationToEnd
 - assertVisible:
@@ -29,20 +38,14 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - tapOn:
     id: hide-button
 - tapOn: Не показувати цей запис
-# The toast names the hidden Entry; keep its name to find the card again. The
-# toast stays 4 s, so the checks before the undo are quick.
+# The toast stays 4 s, so only quick checks come before its undo: the toast
+# names the hidden Entry, and another card took its place.
 - assertVisible:
     id: undo-toast-message
     text: «.+» приховано
-- copyTextFrom:
-    id: undo-toast-message
-- evalScript: ${output.hidden = maestro.copiedText.slice(1, maestro.copiedText.lastIndexOf('»'))}
-# The next card took its place: a card is on screen, and it is another Entry's.
 - assertVisible:
-    id: (word|correction)-card
-- assertNotVisible:
     id: word-lemma|correction-standard
-    text: .*${output.hidden}.*
+    text: (?!\Q${output.hiddenTitle}\E$).+
 - tapOn:
     id: undo-toast-undo
     text: Скасувати
@@ -51,5 +54,5 @@ appId: ${APP_ID || 'app.slovo.uk'}
 # Undo puts the hidden card back on screen, scrolled to its top.
 - assertVisible:
     id: word-lemma|correction-standard
-    text: .*${output.hidden}.*
+    text: \Q${output.hiddenTitle}\E
 - takeScreenshot: hiding-undone
