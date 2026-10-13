@@ -7,6 +7,7 @@ import {
   Placeholder,
   space,
   SwipeHint,
+  UndoToastProvider,
   useTokens,
   VerticalPager,
   type VerticalPagerHandle,
@@ -39,46 +40,60 @@ export default function HomeScreen() {
     setTurnTo(undefined);
   }, [turnTo]);
 
+  const cards = feed.status === 'ready' ? feed.cards : undefined;
+  const onScreen = feed.status === 'ready' ? feed.onScreen : undefined;
+  // A hide or its undo drops or puts back cards, and the card on screen moves
+  // with them: the pager follows at once, so it is never left on a blank page.
+  useEffect(() => {
+    const position = onScreen?.();
+    if (cards !== undefined && position !== undefined && position < cards.length)
+      pager.current?.showPage(position);
+  }, [cards, onScreen]);
+
   if (feed.status === 'loading') return <FeedLoadingScreen />;
   if (feed.status === 'failed') return <LoadFailed onRetry={feed.retry} />;
   if (feed.cards.length === 0) return <Placeholder message={editionStrings.noWords} />;
 
   return (
-    <View testID="home" style={[styles.screen, { backgroundColor: colors.background }]}>
-      {/* The background stays put while the cards move over it. */}
-      <DecorBackground />
-      <VerticalPager
-        ref={pager}
-        testID="feed"
-        items={feed.cards}
-        initialIndex={feed.startPosition}
-        renderPage={(card, position) => (
-          <FeedPage
-            card={card}
-            position={position}
-            onOpenCorrection={(correctionId) => {
-              feed
-                .openLinkedCorrection(position, correctionId)
-                .then(setTurnTo, (error: unknown) => {
-                  console.error('Could not open the linked Correction', error);
-                });
-            }}
-          />
-        )}
-        onIndexChange={(position) => {
-          feed.onCardChange(position);
-          swipeHint.dismiss();
-        }}
-        turnActionLabels={{ next: feedStrings.nextEntry, previous: feedStrings.previousEntry }}
-      />
-      {swipeHint.visible ? (
-        <SwipeHint
-          text={feedStrings.swipeHint}
-          onShown={swipeHint.markShown}
-          onDismiss={swipeHint.dismiss}
+    <UndoToastProvider>
+      <View testID="home" style={[styles.screen, { backgroundColor: colors.background }]}>
+        {/* The background stays put while the cards move over it. */}
+        <DecorBackground />
+        <VerticalPager
+          ref={pager}
+          testID="feed"
+          items={feed.cards}
+          initialIndex={feed.startPosition}
+          renderPage={(card, position) => (
+            <FeedPage
+              // A card that takes the place of a hidden one starts afresh, scrolled to its top.
+              key={entryIdOf(card) ?? card.kind}
+              card={card}
+              position={position}
+              onOpenCorrection={(correctionId) => {
+                feed
+                  .openLinkedCorrection(position, correctionId)
+                  .then(setTurnTo, (error: unknown) => {
+                    console.error('Could not open the linked Correction', error);
+                  });
+              }}
+            />
+          )}
+          onIndexChange={(position) => {
+            feed.onCardChange(position);
+            swipeHint.dismiss();
+          }}
+          turnActionLabels={{ next: feedStrings.nextEntry, previous: feedStrings.previousEntry }}
         />
-      ) : null}
-    </View>
+        {swipeHint.visible ? (
+          <SwipeHint
+            text={feedStrings.swipeHint}
+            onShown={swipeHint.markShown}
+            onDismiss={swipeHint.dismiss}
+          />
+        ) : null}
+      </View>
+    </UndoToastProvider>
   );
 }
 

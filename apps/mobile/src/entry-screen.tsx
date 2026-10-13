@@ -1,5 +1,12 @@
 import { entryIdOf, type EntryFeedCard } from '@slovo/core';
-import { BackLink, DecorBackground, EntryCard, space, useTokens } from '@slovo/ui';
+import {
+  BackLink,
+  DecorBackground,
+  EntryCard,
+  space,
+  UndoToastProvider,
+  useTokens,
+} from '@slovo/ui';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
@@ -15,7 +22,8 @@ import { LoadFailed } from './language-pack';
  * whether or not the list still holds it, so it stays open when a tap on the
  * heart takes the Entry out, until the reader goes back. A Correction a Word
  * card links opens as the next Entry screen of the same `route`, its link
- * back named for the Word. Opening it never makes the Entry Seen.
+ * back named for the Word. Opening it never makes the Entry Seen. Hiding its
+ * Entry hides it and keeps the screen open, with the undo toast.
  */
 export function EntryScreen({
   entryId,
@@ -51,39 +59,41 @@ export function EntryScreen({
 
   if (composition.status === 'failed') return <LoadFailed onRetry={composition.retry} />;
   return (
-    <SafeAreaView
-      testID="entry-screen"
-      edges={['top']}
-      style={[styles.screen, { backgroundColor: colors.background }]}
-    >
-      <DecorBackground />
-      <View style={styles.back}>
-        <BackLink
-          testID="entry-screen-back"
-          label={back}
-          onPress={() => {
-            router.back();
-          }}
-        />
-      </View>
-      {card !== undefined && entryIdOf(card) === entryId && (
-        <ScrollView
-          // The sheet of the action row is a child in React's tree, so a tap in its
-          // name field must not be swallowed to put the keyboard away.
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={styles.content}
-        >
-          <EntryCard
-            card={card}
-            onOpenCorrection={(correctionId) => {
-              const word = card.kind === 'word' ? card.wordCard.lemma : back;
-              router.push(`${route}/${correctionId}?back=${encodeURIComponent(word)}`);
+    <UndoToastProvider>
+      <SafeAreaView
+        testID="entry-screen"
+        edges={['top']}
+        style={[styles.screen, { backgroundColor: colors.background }]}
+      >
+        <DecorBackground />
+        <View style={styles.back}>
+          <BackLink
+            testID="entry-screen-back"
+            label={back}
+            onPress={() => {
+              router.back();
             }}
-            actions={<EntryActions entryId={entryId} />}
           />
-        </ScrollView>
-      )}
-    </SafeAreaView>
+        </View>
+        {card !== undefined && entryIdOf(card) === entryId && (
+          <ScrollView
+            // The sheet of the action row is a child in React's tree, so a tap in its
+            // name field must not be swallowed to put the keyboard away.
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={styles.content}
+          >
+            <EntryCard
+              card={card}
+              onOpenCorrection={(correctionId) => {
+                const word = card.kind === 'word' ? card.wordCard.lemma : back;
+                router.push(`${route}/${correctionId}?back=${encodeURIComponent(word)}`);
+              }}
+              actions={<EntryActions entryId={entryId} />}
+            />
+          </ScrollView>
+        )}
+      </SafeAreaView>
+    </UndoToastProvider>
   );
 }
 

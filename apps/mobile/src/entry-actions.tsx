@@ -1,4 +1,10 @@
-import { ActionRow, CollectionButton, CollectionSheet, FavoriteButton } from '@slovo/ui';
+import {
+  ActionRow,
+  CollectionButton,
+  CollectionSheet,
+  FavoriteButton,
+  HideButton,
+} from '@slovo/ui';
 import { useEffect, useState } from 'react';
 
 import { refusalText } from './collection-refusal';
@@ -6,13 +12,16 @@ import { editionStrings } from './edition';
 import { useEntryCollections } from './collections';
 import { useComposition } from './composition';
 import { useFavorite } from './favorites';
+import { useHideEntry } from './hiding';
 
 /**
  * The action row of an Entry card, wherever the card appears: the Feed and
- * the Entry screen a list opens. Each 0.3 action fills its own slot.
+ * the Entry screen a list opens. Each 0.3 action fills its own slot. Its
+ * screen gives it an `UndoToastProvider` for the toast after a hide.
  */
 export function EntryActions({ entryId }: { entryId: string }) {
   const favorite = useFavorite(entryId);
+  const hide = useHideEntry(entryId);
   const [sheetOpen, setSheetOpen] = useState(false);
   return (
     <>
@@ -25,6 +34,7 @@ export function EntryActions({ entryId }: { entryId: string }) {
             }}
           />
         }
+        hide={<HideButton onPress={hide} />}
       />
       <EntryCollectionSheet
         entryId={entryId}

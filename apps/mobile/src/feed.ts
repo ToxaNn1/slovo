@@ -20,6 +20,12 @@ export type FeedState =
       /** Tells the Feed which card is on screen now. */
       readonly onCardChange: (position: number) => void;
       /**
+       * The position of the card on screen as the Feed keeps it now, or
+       * nothing while none is. It moves when a hide or its undo drops or puts
+       * back cards, so the pager turns to it after the cards change.
+       */
+      readonly onScreen: () => number | undefined;
+      /**
        * Opens a Correction the Word card at `position` links, as the card
        * right after it. Resolves to that card's position, or nothing.
        */
@@ -47,6 +53,7 @@ export function useFeed(): FeedState {
     [feed],
   );
   const cards = useSyncExternalStore(subscribe, () => feed?.cards ?? noCards);
+  const positionOnScreen = useCallback(() => feed?.position, [feed]);
 
   useEffect(() => {
     if (feed === undefined || position === undefined || !onScreen) return;
@@ -63,6 +70,7 @@ export function useFeed(): FeedState {
     cards,
     startPosition: feed.startPosition,
     onCardChange: setTurnedTo,
+    onScreen: positionOnScreen,
     openLinkedCorrection: (at, correctionId) => feed.openLinkedCorrection(at, correctionId),
   };
 }
