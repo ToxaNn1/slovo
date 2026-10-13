@@ -39,4 +39,4 @@ export const EditionStringsSchema = z.strictObject({
 
 export type EditionStrings = z.infer<typeof EditionStringsSchema>;
 
-export { PluralSchema, type Plural } from './shared';
+export { fill, PluralSchema, type Plural } from './shared';

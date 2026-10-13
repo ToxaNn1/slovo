@@ -1,4 +1,4 @@
-import type { EditionStrings, Plural } from '@slovo/contracts';
+import { fill, type EditionStrings, type Plural } from '@slovo/contracts';
 import type { Edition } from '@slovo/core';
 import { createContext, useContext, useMemo, type ComponentType, type ReactNode } from 'react';
 
@@ -58,7 +58,4 @@ export function useEdition(): EditionPresentation {
   return edition;
 }
 
-/** `{name}` placeholders filled from `values`. */
-export function fill(template: string, values: Readonly<Record<string, string>>): string {
-  return template.replace(/\{(\w+)\}/g, (match, name: string) => values[name] ?? match);
-}
+export { fill };

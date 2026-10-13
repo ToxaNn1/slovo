@@ -17,6 +17,11 @@ export const templateOf = (...names: readonly string[]) =>
     `Expected the placeholders ${names.map((name) => `{${name}}`).join(', ')}`,
   );
 
+/** `{name}` placeholders of a template filled from `values`. */
+export function fill(template: string, values: Readonly<Record<string, string>>): string {
+  return template.replace(/\{(\w+)\}/g, (match, name: string) => values[name] ?? match);
+}
+
 /** The text of a count, with the `{count}` placeholder for the number. */
 const CountTextSchema = templateOf('count');
 
