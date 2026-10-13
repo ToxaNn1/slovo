@@ -74,7 +74,8 @@ export interface Feed {
    * takes it when the card on screen is dropped, and a card put back takes
    * the screen back if it left it and the reader hasn't moved since. A shell
    * turns to it after the cards change. When no card after the dropped one
-   * stays, it is one past the last card until the next card is ready.
+   * stays, the next card comes in the same change and takes the screen; only
+   * when the Feed has no next card is it one past the last card.
    */
   readonly position: number | undefined;
   /** Calls `listener` after each change of the cards. Returns the call that stops it. */
@@ -195,11 +196,20 @@ export async function openFeed({
    */
   let droppedFromScreen: FeedCard | undefined;
 
-  function changeSession(changed: readonly FeedCard[], changedDropped = dropped): void {
+  /** Changes the session's cards without telling the subscribers yet. */
+  function setSession(changed: readonly FeedCard[], changedDropped = dropped): void {
     session = changed;
     dropped = changedDropped;
     cards = session.filter((card) => !dropped.has(card));
+  }
+
+  function tellSubscribers(): void {
     for (const listener of listeners) listener();
+  }
+
+  function changeSession(changed: readonly FeedCard[], changedDropped = dropped): void {
+    setSession(changed, changedDropped);
+    tellSubscribers();
   }
 
   /** The position of the card at `place`, or of the card that will come there. */
@@ -505,7 +515,18 @@ export async function openFeed({
       if (!moved && sameDropped) return;
       const now = clock.now().getTime();
       if (moved) onScreen = { place, since: now };
-      changeSession(session, out);
+      if (moved && place === session.length) {
+        // No card after the one dropped from the screen stays: the next card
+        // takes the screen in the same change, so the reader's place is kept
+        // on it below and the subscribers never find the screen past the cards.
+        setSession(session, out);
+        let added: FeedCard | undefined;
+        try {
+          added = await addNextCard();
+        } finally {
+          if (added === undefined) tellSubscribers();
+        }
+      } else changeSession(session, out);
       if (moved)
         await keepScreenChange({
           left,

@@ -484,6 +484,50 @@ describe('eligibility over the Mix', () => {
     expect(entryIdOf(app.feed.cards[app.feed.position ?? -1])).toBe(onScreen);
   });
 
+  it('a Category taken out with the card on screen and the next one puts a new card on screen in the same change, and keeps the reader’s place on it', async () => {
+    const records = new Map<string, string>();
+    const time = fakeClock();
+    const app = await run({ records, clock: time.clock });
+    const categoryOf = (card: FeedCard | undefined) =>
+      categories.find((category) => isWordOf(category)(entryIdOf(card) ?? ''));
+    // Reads on, past the Word of the Day, to a Word card whose ready card is a
+    // Word of the same Category.
+    await app.feed.show(app.feed.startPosition);
+    let position = app.feed.startPosition + 1;
+    await app.feed.show(position);
+    while (
+      categoryOf(app.feed.cards[position]) === undefined ||
+      categoryOf(app.feed.cards[position]) !== categoryOf(app.feed.cards[position + 1])
+    ) {
+      position += 1;
+      await app.feed.show(position);
+    }
+    const before = entryIdsOf(app.feed.cards);
+    const onScreen = before[position] ?? '';
+    const hidden = categoryOf(app.feed.cards[position]) ?? nature;
+    /** What a subscriber finds on each change: whether the card on screen is there. */
+    const told: boolean[] = [];
+    app.feed.subscribe(() => {
+      told.push(app.feed.cards[app.feed.position ?? -1] !== undefined);
+    });
+
+    await app.mix.takeOut(hidden.id);
+
+    expect(told).not.toContain(false);
+    const now = app.feed.cards[app.feed.position ?? -1];
+    expect(now?.kind).not.toBe('end-of-cycle');
+    expect(isWordOf(hidden)(entryIdOf(now) ?? '')).toBe(false);
+    expect(app.feed.cards[(app.feed.position ?? -1) + 1]).toBeDefined();
+    time.advance(MINUTE);
+    const reopened = await run({ records, clock: time.clock });
+    expect(entryIdOf(reopened.feed.cards[reopened.feed.startPosition])).toBe(entryIdOf(now));
+
+    await app.mix.putBack(hidden.id);
+
+    expect(entryIdsOf(app.feed.cards).slice(0, before.length)).toEqual(before);
+    expect(entryIdOf(app.feed.cards[app.feed.position ?? -1])).toBe(onScreen);
+  });
+
   it('a Word of the Day whose Category is taken out is chosen again', async () => {
     const records = new Map<string, string>();
     const time = fakeClock();
