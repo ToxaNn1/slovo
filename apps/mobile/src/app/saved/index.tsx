@@ -93,6 +93,9 @@ export default function SavedScreen() {
             accessibilityLabel={fill(collectionStrings.cardLabel, {
               count: count(collectionStrings.collectionCount, collections.length),
             })}
+            onPress={() => {
+              router.push('/saved/collections');
+            }}
           >
             {collections.length > 0 && (
               <SavedCardCollections>

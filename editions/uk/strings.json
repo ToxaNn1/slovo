@@ -271,6 +271,27 @@
     "cardLabel": "Колекції, {count}",
     "collectionLabel": "{name}, {count}",
     "button": "Додати до колекції",
+    "screen": {
+      "add": "Нова колекція",
+      "newOverline": "Нова колекція",
+      "renameOverline": "Перейменування",
+      "rowLabel": "{name}, {count}: {lemmas}",
+      "rename": "Назва",
+      "renameLabel": "Перейменувати «{name}»",
+      "delete": "Видалити",
+      "deleteLabel": "Видалити «{name}»",
+      "confirmDelete": {
+        "title": "Видалити колекцію «{name}»?",
+        "message": "Самі записи нікуди не зникнуть.",
+        "confirm": "Видалити",
+        "cancel": "Скасувати"
+      },
+      "empty": {
+        "title": "Колекцій ще немає",
+        "message": "Створіть першу — і складайте в неї слова кнопкою закладки під карткою.",
+        "create": "Нова колекція"
+      }
+    },
     "sheet": {
       "title": "До колекції",
       "rowLabel": "{name}, {count}",

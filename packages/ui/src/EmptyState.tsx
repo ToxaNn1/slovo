@@ -7,6 +7,8 @@ import { useTokens } from './TokensProvider';
 
 /** The width of the empty-state illustration (Decor slot 4), within the design's 90–120. */
 const ILLUSTRATION_WIDTH = 96;
+/** How far the largest text sizes of iOS may scale the title. */
+const TITLE_MAX_FONT_SCALE = 1.3;
 
 /**
  * An empty list's state: the Edition's empty-state illustration (Decor slot
@@ -31,7 +33,11 @@ export function EmptyState({
     <View testID={testID} style={styles.state}>
       <EmptyStateIllustration width={ILLUSTRATION_WIDTH} />
       <View accessible accessibilityLabel={`${title}. ${message}`} {...voice} style={styles.text}>
-        <Text style={[styles.title, { color: colors.ink, fontFamily: fontFamilies.word }]}>
+        <Text
+          // A 26 pt title at the largest accessibility sizes would break a word across lines.
+          maxFontSizeMultiplier={TITLE_MAX_FONT_SCALE}
+          style={[styles.title, { color: colors.ink, fontFamily: fontFamilies.word }]}
+        >
           {title}
         </Text>
         <Text style={[styles.message, { color: colors.muted, fontFamily: fontFamilies.ui }]}>

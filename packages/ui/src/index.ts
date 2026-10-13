@@ -26,6 +26,7 @@ export {
 } from './DecorSlots';
 export { EmptyState } from './EmptyState';
 export { EntryRow, type EntryRowAction } from './EntryRow';
+export { type RowAction } from './SwipeableRow';
 export { FavoriteButton } from './FavoriteButton';
 export { HapticsProvider, useHaptics } from './HapticsProvider';
 export { ScreenTitle, SectionLabel } from './headings';
@@ -38,6 +39,7 @@ export {
   type SavedCardRow,
 } from './SavedCard';
 export { CollectionButton } from './CollectionButton';
+export { CollectionNameField, CollectionRow, NewCollectionButton } from './CollectionRow';
 export { CollectionSheet } from './CollectionSheet';
 export { BottomSheet } from './BottomSheet';
 export { Placeholder } from './Placeholder';

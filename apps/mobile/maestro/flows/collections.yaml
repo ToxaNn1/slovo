@@ -1,0 +1,141 @@
+# The Collections screen: the Saved tab's card opens it, «+» makes a Collection
+# (a taken name is refused), a swipe renames it in place and a swipe deletes it
+# after the system action sheet. A subflow of `smoke.yaml`; run it from there.
+# Names are Latin, so the keyboard of any simulator can type them. It leaves
+# the Collections it found.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- tapOn:
+    id: tab-saved
+- tapOn:
+    id: saved-collections
+- assertVisible:
+    id: collections
+# The development client's floating tools button sits over «+»: drag it down for
+# the flow, and back at the end.
+- swipe:
+    start: 89%, 12%
+    end: 89%, 80%
+    duration: 600
+# A fresh state shows the empty list with its own button; a state that has Collections shows «+».
+- takeScreenshot: collections-start
+# A new Collection, named in the field that «+» opens.
+- tapOn:
+    id: collections-add
+- assertVisible:
+    id: collections-new-input
+- inputText: Alpha
+- pressKey: Enter
+- assertVisible:
+    id: collection-.*-content
+    text: Alpha, 0 записів
+- assertNotVisible:
+    id: collections-new
+# Newest first: a second Collection comes above the first.
+- tapOn:
+    id: collections-add
+- inputText: Bravo
+- pressKey: Enter
+- assertVisible:
+    id: collection-.*-content
+    text: Bravo, 0 записів
+- takeScreenshot: collections-created
+# A name that breaks a rule stays in the field with its reason, in any letter case.
+- tapOn:
+    id: collections-add
+- inputText: bRAVO
+- pressKey: Enter
+- assertVisible:
+    id: collections-new-refusal
+    text: Колекція з такою назвою вже є.
+- takeScreenshot: collections-refused
+# Leaving the field drops it.
+- tapOn: Колекції
+- assertNotVisible:
+    id: collections-new
+# The Saved overview counts what the screen made.
+- tapOn:
+    id: collections-back
+- assertVisible:
+    id: saved-collection-.*
+    text: Bravo, 0 записів
+- tapOn:
+    id: saved-collections
+# Swipe «Bravo» to «Назва»: its row becomes the field, with its name in it.
+- swipe:
+    from:
+      text: Bravo, 0 записів
+    direction: LEFT
+- takeScreenshot: collections-swiped
+- tapOn:
+    id: collection-.*-rename
+- assertVisible:
+    id: collections-rename-input
+    text: Bravo
+- eraseText: 5
+- inputText: Charlie
+- takeScreenshot: collections-renaming
+- pressKey: Enter
+- assertVisible:
+    id: collection-.*-content
+    text: Charlie, 0 записів
+- assertNotVisible:
+    text: Bravo, 0 записів
+# A name another Collection has is refused while renaming.
+- swipe:
+    from:
+      text: Charlie, 0 записів
+    direction: LEFT
+- tapOn:
+    id: collection-.*-rename
+- eraseText: 7
+- inputText: alpha
+- pressKey: Enter
+- assertVisible:
+    id: collections-rename-refusal
+    text: Колекція з такою назвою вже є.
+- tapOn: Колекції
+- assertVisible:
+    text: Charlie, 0 записів
+# Swipe to «Видалити»: the system action sheet asks first, and cancelling keeps it.
+- swipe:
+    from:
+      text: Charlie, 0 записів
+    direction: LEFT
+- tapOn:
+    id: collection-.*-delete
+- assertVisible: Видалити колекцію «Charlie»?
+- assertVisible: Самі записи нікуди не зникнуть.
+- takeScreenshot: collections-delete-confirm
+- tapOn: Скасувати
+- assertVisible:
+    text: Charlie, 0 записів
+- swipe:
+    from:
+      text: Charlie, 0 записів
+    direction: LEFT
+- tapOn:
+    id: collection-.*-delete
+- tapOn: Видалити
+- assertNotVisible:
+    text: Charlie, 0 записів
+# «Alpha» goes too, leaving the Collections the flow found.
+- swipe:
+    from:
+      text: Alpha, 0 записів
+    direction: LEFT
+- tapOn:
+    id: collection-.*-delete
+- tapOn: Видалити
+- assertNotVisible:
+    text: Alpha, 0 записів
+- tapOn:
+    id: collections-back
+- swipe:
+    start: 89%, 80%
+    end: 89%, 12%
+    duration: 600
+- tapOn:
+    id: tab-home
+- assertVisible:
+    id: home
