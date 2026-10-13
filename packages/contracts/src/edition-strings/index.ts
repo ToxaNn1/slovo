@@ -38,3 +38,5 @@ export const EditionStringsSchema = z.strictObject({
 });
 
 export type EditionStrings = z.infer<typeof EditionStringsSchema>;
+
+export { PluralSchema, type Plural } from './shared';

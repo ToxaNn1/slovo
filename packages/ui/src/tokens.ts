@@ -43,6 +43,8 @@ export const coreTokens: DesignTokens = {
       // The design's #8A8A8A is only 3.1:1 on the background; muted keeps AA.
       inactiveTab: '#6A6A6A',
       correct: '#2F6B45',
+      heart: '#C8372D',
+      destructive: '#A3271F',
     },
     dark: {
       background: '#111111',
@@ -57,6 +59,8 @@ export const coreTokens: DesignTokens = {
       line: 'rgba(255, 255, 255, 0.12)', // derived
       inactiveTab: '#8A8A8A', // derived
       correct: '#8FC79F',
+      heart: '#C8372D',
+      destructive: '#A3271F',
     },
   },
   fontFamilies: { word: undefined, ui: undefined },
