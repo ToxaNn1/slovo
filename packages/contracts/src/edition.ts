@@ -120,6 +120,8 @@ export type MixConfig = z.infer<typeof MixConfigSchema>;
 export const UserSettingDefaultsConfigSchema = z.strictObject({
   theme: ThemeSchema,
   fontSize: FontSizeSchema,
+  /** Whether haptics are on for a new user. */
+  vibration: z.boolean(),
   notificationTimes: z
     .array(TimeOfDaySchema)
     .max(MAX_NOTIFICATION_TIMES)

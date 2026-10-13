@@ -7,6 +7,8 @@ import { userStateRecords } from './user-state-schema';
 export interface UserSettings {
   readonly theme: Theme;
   readonly fontSize: FontSize;
+  /** Whether haptics are on. */
+  readonly vibration: boolean;
 }
 
 /** The user's settings: their own choices over the Edition's defaults. */
@@ -43,6 +45,7 @@ export function createSettings({
     return {
       theme: (await userState.read(userStateRecords.theme)) ?? defaults.theme,
       fontSize: (await userState.read(userStateRecords.fontSize)) ?? defaults.fontSize,
+      vibration: (await userState.read(userStateRecords.vibration)) ?? defaults.vibration,
     };
   }
 
@@ -53,6 +56,7 @@ export function createSettings({
         new Map([
           ...('theme' in changes ? userStateRecords.theme.change(changes.theme) : []),
           ...('fontSize' in changes ? userStateRecords.fontSize.change(changes.fontSize) : []),
+          ...('vibration' in changes ? userStateRecords.vibration.change(changes.vibration) : []),
         ]),
       );
       return read();

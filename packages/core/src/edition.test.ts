@@ -18,6 +18,7 @@ const validConfig = {
   userSettingDefaults: {
     theme: 'system',
     fontSize: 'M',
+    vibration: true,
     notificationTimes: ['09:00'],
     mix: { categories: 'all', corrections: true },
   },
@@ -79,6 +80,7 @@ describe('loadEdition', () => {
     expect(edition.userSettingDefaults).toEqual({
       theme: 'system',
       fontSize: 'M',
+      vibration: true,
       notificationTimes: ['09:00'],
       mix: { categoryIds: ['nature', 'speech'], corrections: true },
     });
@@ -97,6 +99,15 @@ describe('loadEdition', () => {
       categoryIds: ['speech'],
       corrections: false,
     });
+  });
+
+  it('reports a default of Vibration off', () => {
+    const edition = loadEdition({
+      ...validConfig,
+      userSettingDefaults: { ...validConfig.userSettingDefaults, vibration: false },
+    });
+
+    expect(edition.userSettingDefaults.vibration).toBe(false);
   });
 
   it('rejects an invalid Edition config, naming the field', () => {
@@ -145,6 +156,16 @@ describe('loadEdition', () => {
       'an unknown font size',
       { userSettingDefaults: { ...userSettingDefaults, fontSize: 'XXL' } },
       'userSettingDefaults.fontSize',
+    ],
+    [
+      'a missing Vibration default',
+      { userSettingDefaults: { ...userSettingDefaults, vibration: undefined } },
+      'userSettingDefaults.vibration',
+    ],
+    [
+      'a Vibration default that is not on or off',
+      { userSettingDefaults: { ...userSettingDefaults, vibration: 'on' } },
+      'userSettingDefaults.vibration',
     ],
     [
       'a notification time that is not HH:MM',
