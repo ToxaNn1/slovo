@@ -88,7 +88,7 @@ export function EntryScreen({
                 const word = card.kind === 'word' ? card.wordCard.lemma : back;
                 router.push(`${route}/${correctionId}?back=${encodeURIComponent(word)}`);
               }}
-              actions={<EntryActions entryId={entryId} />}
+              actions={<EntryActions card={card} />}
             />
           </ScrollView>
         )}

@@ -56,8 +56,8 @@ function FeedScreen() {
   const positionOnScreen = ready?.positionOnScreen;
   const onCardChange = ready?.onCardChange;
   // A hide or its undo drops or puts back cards, and the card on screen moves
-  // with them: the pager shows it at once. When no card comes after a hidden
-  // one yet, the pager waits on its page for the next card.
+  // with them: the pager shows it at once. When the Feed has no card to put
+  // after a hidden one, the pager stays on its page.
   useEffect(() => {
     const position = positionOnScreen?.();
     if (cards === undefined || position === undefined || position >= cards.length) return;
@@ -136,7 +136,7 @@ function FeedPage({
         <EntryCard
           card={card}
           onOpenCorrection={onOpenCorrection}
-          actions={<EntryActions entryId={entryIdOf(card)} />}
+          actions={<EntryActions card={card} />}
         />
       </PagerScrollView>
     </View>
