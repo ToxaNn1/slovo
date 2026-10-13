@@ -1,4 +1,4 @@
-import type { Entry } from '@slovo/contracts';
+import type { CorrectionType, Entry, Gender, PartOfSpeech, Register } from '@slovo/contracts';
 
 import type { Entries } from './entries';
 import { renderStress } from './stress';
@@ -17,6 +17,11 @@ export type EntryRowModel =
       readonly title: string;
       /** The primary Definition, which the row shows on one line. */
       readonly definition: string;
+      /** What labels the Word, as codes the UI turns into the Edition's words (the Hidden screen shows them). */
+      readonly partOfSpeech: PartOfSpeech;
+      /** Only a noun has one. */
+      readonly gender?: Gender;
+      readonly registers: readonly Register[];
     }
   | {
       readonly kind: 'correction';
@@ -25,6 +30,8 @@ export type EntryRowModel =
       readonly title: string;
       /** The non-standard form the row says it replaces. */
       readonly nonStandardForm: string;
+      /** Why the form is non-standard. */
+      readonly correctionType: CorrectionType;
     };
 
 /** The row model of an Entry. */
@@ -35,6 +42,9 @@ export function buildEntryRow(entry: Entry): EntryRowModel {
       entryId: entry.id,
       title: renderStress(entry),
       definition: entry.primaryDefinition,
+      partOfSpeech: entry.partOfSpeech,
+      ...(entry.gender === undefined ? {} : { gender: entry.gender }),
+      registers: entry.registers,
     };
   }
   return {
@@ -43,6 +53,7 @@ export function buildEntryRow(entry: Entry): EntryRowModel {
     // The contracts require at least one standard equivalent.
     title: entry.standardEquivalents[0] ?? entry.nonStandardForm,
     nonStandardForm: entry.nonStandardForm,
+    correctionType: entry.correctionType,
   };
 }
 

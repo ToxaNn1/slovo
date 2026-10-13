@@ -85,8 +85,15 @@ describe('the History texts', () => {
       wordOfTheDay,
       row:
         kind === 'word'
-          ? { kind, entryId: 'w_a', title: 'a', definition: 'A.' }
-          : { kind, entryId: 'c_a', title: 'a', nonStandardForm: 'b' },
+          ? {
+              kind,
+              entryId: 'w_a',
+              title: 'a',
+              definition: 'A.',
+              partOfSpeech: 'noun',
+              registers: [],
+            }
+          : { kind, entryId: 'c_a', title: 'a', nonStandardForm: 'b', correctionType: 'calque' },
     });
 
     expect(text.kind(entry('word', false))).toBe('слово');

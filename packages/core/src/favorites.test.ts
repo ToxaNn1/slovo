@@ -112,6 +112,8 @@ describe('Favorites', () => {
           entryId: 'w_two',
           title: 't\u0301wo',
           definition: 'The meaning of two.',
+          partOfSpeech: 'noun',
+          registers: [],
         },
       },
     ]);
@@ -166,6 +168,7 @@ describe('Favorites', () => {
       entryId: 'c_one',
       title: 'one',
       nonStandardForm: 'not one',
+      correctionType: 'calque',
     });
   });
 
@@ -193,6 +196,8 @@ describe('Favorites', () => {
       entryId: 'w_old',
       title: 'o\u0301ld',
       definition: 'The meaning of old.',
+      partOfSpeech: 'noun',
+      registers: [],
     });
   });
 
