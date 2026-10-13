@@ -1,9 +1,11 @@
+import { relativeTimeOf } from '@slovo/core';
 import {
   fill,
   OrnamentBand,
   SavedCard,
   SavedCardCollection,
   SavedCardCollections,
+  SavedCardRows,
   SavedCardTitles,
   ScreenTitle,
   space,
@@ -17,12 +19,18 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useComposition } from '../../composition';
 import { useCollectionList } from '../../collections';
 import { editionStrings } from '../../edition';
+import { deviceClock } from '../../device-clock';
 import { useFavoriteList } from '../../favorites';
+import { useHistoryList, useHistoryText } from '../../history';
 import { LoadFailed } from '../../language-pack';
 
-const { favorites: strings, collections: collectionStrings } = editionStrings;
+const {
+  favorites: strings,
+  collections: collectionStrings,
+  history: historyStrings,
+} = editionStrings;
 
-/** How many of the newest Lemmas the Favorites card shows. */
+/** How many of the newest Lemmas the Favorites card shows, and of the latest rows the History card. */
 const NEWEST_SHOWN = 3;
 /** How many of the newest Collections the Collections card shows. */
 const NEWEST_COLLECTIONS_SHOWN = 3;
@@ -31,17 +39,25 @@ const NEWEST_COLLECTIONS_SHOWN = 3;
  * The Saved tab's overview: a card per list with its count. Favorites comes
  * first, on the ink fill, with its newest Lemmas and the ornament band
  * (Decor slot 2). Collections follows on the surface with its count and
- * its newest Collections; History joins later in 0.3.
+ * its newest Collections. The History card shows its three latest rows with
+ * how long ago each was Seen, and VoiceOver reads the card, rows and times
+ * included, in full.
  */
 export default function SavedScreen() {
   const composition = useComposition();
   const favorites = useFavoriteList();
   const collections = useCollectionList();
+  const history = useHistoryList();
+  const historyText = useHistoryText();
   const { colors } = useTokens();
   const { count } = useEdition();
   const router = useRouter();
 
   if (composition.status === 'failed') return <LoadFailed onRetry={composition.retry} />;
+  const latest = history.slice(0, NEWEST_SHOWN).map(({ row, seenAt }) => ({
+    title: row.title,
+    ...historyText.relative(relativeTimeOf(seenAt, deviceClock)),
+  }));
   return (
     <SafeAreaView
       testID="saved"
@@ -97,6 +113,24 @@ export default function SavedScreen() {
                 })}
               </SavedCardCollections>
             )}
+          </SavedCard>
+        )}
+        {composition.status === 'ready' && (
+          <SavedCard
+            testID="saved-history"
+            title={historyStrings.title}
+            count={history.length}
+            accessibilityLabel={[
+              fill(historyStrings.cardLabel, {
+                count: count(historyStrings.count, history.length),
+              }),
+              ...latest.map(({ title, spoken }) => `${title}, ${spoken}`),
+            ].join('. ')}
+            onPress={() => {
+              router.push('/saved/history');
+            }}
+          >
+            <SavedCardRows rows={latest.map(({ title, text }) => ({ title, trailing: text }))} />
           </SavedCard>
         )}
       </ScrollView>

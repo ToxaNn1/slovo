@@ -1,0 +1,80 @@
+# History: a card that stayed on screen is listed in History, with its kind
+# and its place on the Saved tab, opens as an Entry screen, and clearing History
+# empties it. A subflow of `smoke.yaml`; run it from there.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- tapOn:
+    id: tab-home
+# Turn a few pages, staying on each card past the dwell time (1.5 s), so cards
+# the Cycle has not seen yet count as Seen as they leave. (History records an
+# Entry only when it becomes Seen, so cards from earlier flows add nothing.)
+- repeat:
+    times: 3
+    commands:
+      - assertVisible:
+          id: never-on-screen
+          optional: true
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 20%
+          duration: 300
+      - waitForAnimationToEnd
+- assertVisible:
+    id: never-on-screen
+    optional: true
+# Leaving Home takes the card off screen, and it is Seen as it leaves.
+- tapOn:
+    id: tab-saved
+- assertVisible:
+    id: saved-history
+- takeScreenshot: history-saved-overview
+- tapOn:
+    id: saved-history
+- assertVisible:
+    id: history
+# The heading is drawn in capitals by its style; VoiceOver and Maestro read it as written.
+- assertVisible: Сьогодні
+- assertVisible:
+    id: history-row-.*-open
+- takeScreenshot: history-list
+# A row opens the Entry screen, and back returns to History.
+- tapOn:
+    id: history-row-.*-open
+- assertVisible:
+    id: entry-screen
+- tapOn:
+    id: entry-screen-back
+- assertVisible:
+    id: history
+# «Очистити» asks first; cancelling leaves History alone.
+# Tapped on the left of the button: the development client's floating tools
+# button sits over the right of it.
+- tapOn:
+    id: history-clear
+    point: 15%,50%
+- assertVisible: Очистити Історію?
+- takeScreenshot: history-clear-confirm
+- tapOn: Скасувати
+- assertVisible:
+    id: history-row-.*-open
+# Confirming empties it.
+- tapOn:
+    id: history-clear
+    point: 15%,50%
+- tapOn:
+    text: Очистити
+    index: 1
+- assertVisible:
+    id: history-empty
+- assertNotVisible:
+    id: history-clear
+- takeScreenshot: history-empty
+- tapOn:
+    id: history-back
+- assertVisible:
+    id: saved-history
+    text: Історія, 0 записів
+- tapOn:
+    id: tab-home
+- assertVisible:
+    id: home
