@@ -54,3 +54,19 @@ export function localDayOf(instant: Date, clock: Clock): LocalDay {
   const date = localDateAt(instant, zone);
   return { date, daysAgo: dayNumber(localDateAt(clock.now(), zone)) - dayNumber(date) };
 }
+
+/** The wall-clock time of an instant in the clock's current time zone, on a 24-hour clock. */
+export function localTimeOf(
+  instant: Date,
+  clock: Clock,
+): { readonly hour: number; readonly minute: number } {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: clock.timeZone(),
+    hourCycle: 'h23',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).formatToParts(instant);
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    Number(parts.find((candidate) => candidate.type === type)?.value ?? 0);
+  return { hour: part('hour'), minute: part('minute') };
+}
