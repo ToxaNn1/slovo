@@ -1,4 +1,4 @@
-import { localDayOf, type Favorite } from '@slovo/core';
+import type { Favorite } from '@slovo/core';
 import {
   BackLink,
   EmptyState,
@@ -14,27 +14,13 @@ import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { addedOn } from '../../../added-on';
 import { useComposition } from '../../../composition';
-import { deviceClock } from '../../../device-clock';
 import { editionStrings } from '../../../edition';
 import { useFavorite, useFavoriteList } from '../../../favorites';
 import { LoadFailed } from '../../../language-pack';
 
 const { favorites: strings } = editionStrings;
-
-/** When the Entry was added, as its row says it: today, yesterday or the date, by the device's clock. */
-function addedOn(addedAt: Date): string {
-  const { added } = strings;
-  const { date, daysAgo } = localDayOf(addedAt, deviceClock);
-  if (daysAgo <= 0) return added.today;
-  if (daysAgo === 1) return added.yesterday;
-  const thisYear = localDayOf(deviceClock.now(), deviceClock).date.year;
-  return fill(date.year === thisYear ? added.date : added.dateInYear, {
-    day: String(date.day),
-    month: added.months[date.month - 1] ?? '',
-    year: String(date.year),
-  });
-}
 
 /** A row of Favorites: a tap opens the Entry screen, the swipe action takes the Entry out. */
 function FavoriteRow({ favorite: { entryId, row, addedAt } }: { favorite: Favorite }) {

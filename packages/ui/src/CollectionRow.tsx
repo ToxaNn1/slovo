@@ -9,8 +9,9 @@ import { useTokens } from './TokensProvider';
 
 /**
  * A Collection on the Collections screen: a card with its name over its
- * newest Lemmas, and how many Entries it holds on the right. Swipe actions
- * slide out inside the card and are VoiceOver actions too. Needs a
+ * newest Lemmas, and how many Entries it holds on the right. A tap opens the
+ * Collection; swipe actions slide out inside the card and are VoiceOver
+ * actions too. Needs a
  * `GestureHandlerRootView` above it.
  */
 export function CollectionRow({
@@ -19,6 +20,7 @@ export function CollectionRow({
   lemmas,
   accessibilityLabel,
   actions,
+  onPress,
   testID,
 }: {
   name: string;
@@ -29,6 +31,8 @@ export function CollectionRow({
   /** The Collection as VoiceOver reads it: its name, its count and its Lemmas. */
   accessibilityLabel: string;
   actions: readonly RowAction[];
+  /** Opens the Collection. */
+  onPress: () => void;
   testID: string;
 }) {
   const { colors, fontFamilies, radii } = useTokens();
@@ -42,13 +46,17 @@ export function CollectionRow({
         { borderColor: colors.line, borderRadius: radii.card, backgroundColor: colors.surface },
       ]}
     >
-      <View
+      <Pressable
         testID={`${testID}-content`}
-        accessible
+        accessibilityRole="button"
         accessibilityLabel={accessibilityLabel}
         {...rowActionProps(actions)}
         {...voice}
-        style={[styles.content, { backgroundColor: colors.surface }]}
+        onPress={onPress}
+        style={({ pressed }) => [
+          styles.content,
+          { backgroundColor: pressed ? colors.surfaceSunken : colors.surface },
+        ]}
       >
         <View style={styles.titleLine}>
           <Text style={[styles.name, { color: colors.ink, fontFamily: fontFamilies.ui }]}>
@@ -65,7 +73,7 @@ export function CollectionRow({
             {lemmas.join(' · ')}
           </Text>
         )}
-      </View>
+      </Pressable>
     </SwipeableRow>
   );
 }

@@ -31,9 +31,10 @@ type Editing = { readonly kind: 'new' } | { readonly kind: 'rename'; readonly id
 
 /**
  * Collections: the reader's lists, newest first, each with how many Entries it
- * holds and its newest Lemmas. «+» makes a new one from here; a swipe offers
- * «Назва» (rename in place) and «Видалити» (after a system action sheet that
- * says the Entries stay), and the same actions go to VoiceOver.
+ * holds and its newest Lemmas; a tap opens the Collection. «+» makes a new one
+ * from here; a swipe offers «Назва» (rename in place) and «Видалити» (after a
+ * system action sheet that says the Entries stay), and the same actions go to
+ * VoiceOver.
  */
 export default function CollectionsScreen() {
   const composition = useComposition();
@@ -106,6 +107,9 @@ export default function CollectionsScreen() {
                 lemmas: collection.newestLemmas.join(', '),
               })
         }
+        onPress={() => {
+          router.push(`/saved/collections/${collection.id}`);
+        }}
         actions={[
           {
             name: 'rename',

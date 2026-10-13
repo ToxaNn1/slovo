@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { TextSchema } from '../shared';
 import { PluralSchema, templateOf } from './shared';
 
-/** The texts of Collections: the Collections card of the Saved tab and the Add to Collection sheet. The Collections screen adds its own; a Collection's screen follows in 0.3. */
+/** The texts of Collections: the Collections card of the Saved tab and the Add to Collection sheet. The Collections screen and a Collection's screen add their own. */
 export const CollectionsStringsSchema = z.strictObject({
   /** The name of Collections: the Saved tab's card. */
   title: TextSchema,
@@ -50,6 +50,20 @@ export const CollectionsStringsSchema = z.strictObject({
       message: TextSchema,
       /** The button that opens the field for a new Collection. */
       create: TextSchema,
+    }),
+  }),
+  /** A Collection's screen: its Entries newest first, the swipe action that takes one out, and the empty Collection. */
+  entries: z.strictObject({
+    /** The line under the list, on how it is ordered and what a tap does. */
+    footer: TextSchema,
+    /** The swipe action that takes an Entry out of this Collection only. */
+    remove: TextSchema,
+    /** The same action as VoiceOver reads it. Takes `{title}`, the Entry's, and `{name}`, the Collection's. */
+    removeLabel: templateOf('title', 'name'),
+    /** The empty Collection, with a hint on how to fill it. */
+    empty: z.strictObject({
+      title: TextSchema,
+      message: TextSchema,
     }),
   }),
   /** The «До колекції» sheet. */
