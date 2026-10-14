@@ -1,10 +1,29 @@
 import type { Notifications, NotificationsState, NotificationTimeRefusal } from '@slovo/core';
 import { useEdition } from '@slovo/ui';
-import { useMemo } from 'react';
+import { useRouter } from 'expo-router';
+import { useEffect, useMemo } from 'react';
 
 import { useComposed, useModule } from './composition';
+import { onDeviceNotificationTap } from './device-notifications';
 import { editionStrings } from './edition';
+import { notificationLink } from './notification-scheduler';
 import { keepPickedTime, notificationsSummary } from './notifications-screen';
+
+/**
+ * Opens the Word of each notification the reader taps on the Entry screen,
+ * through the link that marks it as from a notification. Draws nothing.
+ */
+export function NotificationTaps() {
+  const router = useRouter();
+  useEffect(
+    () =>
+      onDeviceNotificationTap((wordId) => {
+        router.push(notificationLink(wordId));
+      }),
+    [router],
+  );
+  return null;
+}
 
 /** Notifications of the session's Core composition, once it is open. */
 function useNotifications(): Notifications | undefined {

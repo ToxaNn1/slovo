@@ -1,0 +1,67 @@
+# Settings › Сповіщення while iOS denies notifications: the screen says so
+# above the times, with a row that opens the app's iOS settings, the times stay
+# as they are, and the Settings row reads «Вимкнено». A subflow of
+# `smoke.yaml`; run it from there. It clears the app's state.
+#
+# A dev client built before the 0.4 native batch has no notifications at all,
+# so the permission stays not asked: the app starts as usual, the screen shows
+# no such line and the row counts the times. The denied branch is verifiable
+# after the native build only (#176).
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- stopApp
+- launchApp:
+    clearState: true
+    permissions:
+      notifications: deny
+- runFlow:
+    file: ../open-in-dev-client.yaml
+- tapOn:
+    id: tab-settings
+- scrollUntilVisible:
+    element:
+      id: settings-row-notifications
+    # Off the tab bar, which covers the bottom of the list at the largest font size.
+    centerElement: true
+    visibilityPercentage: 50
+- tapOn:
+    id: settings-row-notifications
+- assertVisible:
+    id: notifications
+- evalScript: ${output.denied = false}
+- runFlow:
+    when:
+      visible:
+        id: notifications-denied
+    commands:
+      - evalScript: ${output.denied = true}
+      - assertVisible: Сповіщення вимкнені в налаштуваннях iOS
+      - assertVisible:
+          id: notifications-open-settings
+          text: Відкрити налаштування
+      - assertVisible:
+          id: notifications-time-09:00-content
+      - takeScreenshot: notifications-denied
+      - tapOn:
+          id: notifications-back
+      - assertVisible:
+          id: settings-row-notifications
+          text: Сповіщення, Вимкнено
+# The branch above leaves the screen, so this one asks what it found.
+- runFlow:
+    when:
+      true: ${!output.denied}
+    commands:
+      - assertNotVisible: Сповіщення вимкнені в налаштуваннях iOS
+      - assertVisible:
+          id: notifications-time-09:00-content
+      - takeScreenshot: notifications-not-asked
+      - tapOn:
+          id: notifications-back
+      - assertVisible:
+          id: settings-row-notifications
+          text: Сповіщення, 3 на день
+- tapOn:
+    id: tab-home
+- assertVisible:
+    id: home

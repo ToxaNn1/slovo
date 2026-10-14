@@ -43,6 +43,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - runFlow: flows/stats-pill.yaml
 - runFlow: flows/stats-sheet.yaml
 - runFlow: flows/open-from-notification.yaml
+- runFlow: flows/notifications-denied.yaml
 # Also from a fresh install.
 - runFlow: flows/onboarding.yaml
 - runFlow: flows/onboarding-mix.yaml

@@ -334,6 +334,31 @@ describe('the notification plan', () => {
     expect(planOf(scheduler)).toHaveLength(42);
   });
 
+  it('reports the permission in the state, and tells the subscribers when it changes', async () => {
+    const scheduler = createFakeNotificationScheduler({ permission: 'not-asked' });
+    const { app } = await run({ scheduler });
+    expect(app.notifications.state.permission).toBe('not-asked');
+    let told = 0;
+    app.notifications.subscribe(() => {
+      told += 1;
+    });
+
+    await app.notifications.askPermission();
+    expect(app.notifications.state.permission).toBe('allowed');
+    expect(told).toBe(1);
+
+    // The reader turns notifications off in the iOS settings and comes back.
+    scheduler.setPermission('denied');
+    await app.resume();
+    expect(app.notifications.state.permission).toBe('denied');
+    expect(told).toBe(2);
+
+    const before = app.notifications.state;
+    await app.resume();
+    expect(app.notifications.state).toBe(before);
+    expect(told).toBe(2);
+  });
+
   it("plays the Edition's sound, the system sound without one, and none with the sound off", async () => {
     const records = new Map([['notifications.sound', 'false']]);
 

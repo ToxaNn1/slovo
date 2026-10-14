@@ -43,7 +43,12 @@ describe('the Notification times', () => {
     const records = new Map<string, string>();
     const { notifications } = await run({ records });
 
-    expect(notifications.state).toEqual({ times: defaultTimes, sound: true, canAddTime: true });
+    expect(notifications.state).toEqual({
+      times: defaultTimes,
+      sound: true,
+      canAddTime: true,
+      permission: 'not-asked',
+    });
     expect([...records.keys()].filter((key) => key.startsWith('notifications.'))).toEqual([]);
   });
 
@@ -190,6 +195,13 @@ describe('the Notification times', () => {
     stop();
     await notifications.addTime('09:00');
     expect(told).toBe(2);
+  });
+
+  it('stay not asked without a scheduler, and asking does nothing', async () => {
+    const { notifications } = await run();
+
+    expect(await notifications.askPermission()).toBe('not-asked');
+    expect(notifications.state.permission).toBe('not-asked');
   });
 
   it('make changes one at a time, each from where the one before left', async () => {

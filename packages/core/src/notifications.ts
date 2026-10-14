@@ -33,6 +33,11 @@ export interface NotificationsState {
   readonly sound: boolean;
   /** Whether another time can be added: fewer than `MAX_NOTIFICATION_TIMES` are set. */
   readonly canAddTime: boolean;
+  /**
+   * Whether the device lets the app notify, as it was when the plan was last
+   * made. Without a scheduler it stays not asked.
+   */
+  readonly permission: NotificationPermission;
 }
 
 /** Why a Notification time is refused, for the UI to say in the Edition's words. */
@@ -84,9 +89,13 @@ export interface Notifications {
 
 const { notificationTimes: timesRecord, notificationSound: soundRecord } = userStateRecords;
 
-function stateOf(times: readonly string[], sound: boolean): NotificationsState {
+function stateOf(
+  times: readonly string[],
+  sound: boolean,
+  permission: NotificationPermission,
+): NotificationsState {
   const sorted = [...times].sort();
-  return { times: sorted, sound, canAddTime: sorted.length < MAX_NOTIFICATION_TIMES };
+  return { times: sorted, sound, canAddTime: sorted.length < MAX_NOTIFICATION_TIMES, permission };
 }
 
 /**
@@ -127,6 +136,7 @@ export async function openNotifications({
   let state = stateOf(
     storedTimes ?? edition.userSettingDefaults.notificationTimes,
     storedSound ?? true,
+    'not-asked',
   );
   const subscribers = createSubscribers();
   const planner =
@@ -141,11 +151,21 @@ export async function openNotifications({
           wordOfTheDay,
           scheduling,
         });
-  const plan = async () => planner?.plan(state);
+
+  /** Reads the permission, telling the subscribers when it changed, and plans by it. */
+  async function plan(): Promise<void> {
+    if (scheduling === undefined || planner === undefined) return;
+    const permission = await scheduling.scheduler.permission();
+    if (permission !== state.permission) {
+      state = { ...state, permission };
+      subscribers.tell();
+    }
+    await planner.plan(state);
+  }
 
   /** Writes the times, an empty list included, then makes the change in memory and plans again. */
   async function keepTimes(times: readonly string[]): Promise<NotificationTimeResult> {
-    const next = stateOf(times, state.sound);
+    const next = stateOf(times, state.sound, state.permission);
     await userState.write(timesRecord.change([...next.times]));
     state = next;
     subscribers.tell();
@@ -176,7 +196,7 @@ export async function openNotifications({
   async function setSound(on: boolean): Promise<void> {
     if (state.sound === on) return;
     await userState.write(soundRecord.change(on));
-    state = stateOf(state.times, on);
+    state = stateOf(state.times, on, state.permission);
     subscribers.tell();
     await plan();
   }

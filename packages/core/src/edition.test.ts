@@ -118,11 +118,13 @@ describe('loadEdition', () => {
     ]);
   });
 
-  it('reports whether the Edition has a notification sound of its own', () => {
+  it('reports whether the Edition has a notification sound of its own, and its file', () => {
+    const withSound = loadEdition({ ...validConfig, notificationSound: 'notification.wav' });
+
     expect(loadEdition(validConfig).hasNotificationSound).toBe(false);
-    expect(
-      loadEdition({ ...validConfig, notificationSound: 'notification.wav' }).hasNotificationSound,
-    ).toBe(true);
+    expect(loadEdition(validConfig).notificationSound).toBeUndefined();
+    expect(withSound.hasNotificationSound).toBe(true);
+    expect(withSound.notificationSound).toBe('notification.wav');
   });
 
   it('reports a default of Vibration off', () => {
