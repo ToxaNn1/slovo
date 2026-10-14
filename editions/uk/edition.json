@@ -25,6 +25,7 @@
       "corrections": true
     }
   },
+  "notificationSound": "notification.wav",
   "categories": [
     {
       "id": "human-body",
