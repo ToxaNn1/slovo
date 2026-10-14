@@ -5,6 +5,7 @@
  * Each build checks the content against the targets the Edition declares.
  */
 export { buildLanguagePack, type BuildResult } from './build';
+export { checkNewWords } from './check-new-words';
 export { formatBuildError, type BuildError } from './build-error';
 export type { ContentTarget, ContentTargets, MissedTarget } from './content-targets';
 export type { PackMetadata } from './pack-layout';
