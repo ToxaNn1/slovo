@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { useComposed, useComposition } from './composition';
 import { useInForeground } from './lifecycle';
-import { useOnboardingOpen } from './onboarding';
 
 export type FeedState =
   | { readonly status: 'loading' }
@@ -49,10 +48,14 @@ export function useFeed(): FeedState {
   const position = turnedTo ?? feed?.startPosition;
   const focused = useIsFocused();
   const inForeground = useInForeground();
-  const onboardingOpen = useOnboardingOpen();
+  const covered = useComposed(
+    (open) => open.onboarding,
+    ({ state }) => state.step !== undefined,
+    false,
+  );
   // The Feed is in sight while Home is focused, the app is in the foreground
   // and no onboarding covers it; otherwise no card is on screen.
-  const inSight = focused && inForeground && !onboardingOpen;
+  const inSight = focused && inForeground && !covered;
   const cards = useComposed(
     (open) => open.feed,
     (open) => open.cards,

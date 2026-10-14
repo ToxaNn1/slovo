@@ -6,6 +6,7 @@ import type { Entries } from './entries';
 import { createInTurn, createSubscribers } from './in-turn';
 import {
   createNotificationPlanner,
+  type MorningNotification,
   type NotificationScheduling,
   type PlanEdition,
 } from './notification-plan';
@@ -106,8 +107,11 @@ function stateOf(
  * `takeMorningWord`, the composition's day change, so a plan made on a new
  * day before the composition turned to it keeps the day's morning Word.
  * `followSeen` plans again when the Entry just Seen is a Reserved Word, so its
- * notification gets a new Word. Without `scheduling`, as in tools and in
- * tests of other features, nothing is planned.
+ * notification gets a new Word. `nextMorning` gives the morning
+ * notification a plan made now would hold were notifications allowed, in turn
+ * after every change before it, for the onboarding's sample. Without
+ * `scheduling`, as in tools and in tests of other features, nothing is
+ * planned and there is no next morning.
  */
 export async function openNotifications({
   edition,
@@ -131,6 +135,7 @@ export async function openNotifications({
   notifications: Notifications;
   replan: () => Promise<void>;
   followSeen: (entryId: string) => Promise<void>;
+  nextMorning: () => Promise<MorningNotification | undefined>;
 }> {
   const [storedTimes, storedSound] = await Promise.all([
     userState.read(timesRecord),
@@ -231,6 +236,13 @@ export async function openNotifications({
     followSeen: (entryId) =>
       inTurn(async () => {
         if (planner !== undefined && (await reservedWords.isReserved(entryId))) await plan();
+      }),
+    nextMorning: () =>
+      inTurn(async () => {
+        if (planner === undefined) return undefined;
+        // As a plan does, so a new day the composition hasn't turned to keeps its morning Word.
+        await takeMorningWord();
+        return planner.nextMorning(state.times);
       }),
   };
 }
