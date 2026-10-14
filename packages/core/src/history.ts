@@ -1,4 +1,5 @@
 import type { EntryRowModel, EntryRows } from './entry-row';
+import { createInTurn, createSubscribers, newestFirst } from './in-turn';
 import type { UserStateChanges } from './ports';
 import type { UserState } from './user-state';
 import { userStateRecords } from './user-state-schema';
@@ -57,12 +58,10 @@ const { history: historyRecords } = userStateRecords;
 /** A History entry as kept, with its row when the Language Pack has the Entry. */
 type Kept = Seen & { readonly row: EntryRowModel | undefined };
 
-/** Newest first; Entries Seen at the same instant in a stable order. */
-function newestFirst(first: Kept, second: Kept): number {
-  const byTime = second.seenAt.getTime() - first.seenAt.getTime();
-  if (byTime !== 0) return byTime;
-  return first.entryId < second.entryId ? -1 : 1;
-}
+const newestKept = newestFirst<Kept>(
+  (entry) => entry.seenAt,
+  (entry) => entry.entryId,
+);
 
 /** Opens History over the user state, for the Core composition. */
 export async function openHistory({
@@ -83,25 +82,19 @@ export async function openHistory({
         row: await rows.row(entryId),
       })),
     )
-  ).sort(newestFirst);
+  ).sort(newestKept);
   const listOf = (from: readonly Kept[]) =>
     from.filter((entry): entry is HistoryEntry => entry.row !== undefined);
   let list = listOf(kept);
-  const listeners = new Set<() => void>();
+  const subscribers = createSubscribers();
 
   function changeKept(changed: readonly Kept[]): void {
     kept = changed;
     list = listOf(kept);
-    for (const listener of listeners) listener();
+    subscribers.tell();
   }
 
-  // One change at a time, so each one starts from what the one before it left.
-  let lastChange: Promise<unknown> = Promise.resolve();
-  function inTurn<T>(change: () => Promise<T>): Promise<T> {
-    const result = lastChange.then(change);
-    lastChange = result.catch(() => undefined);
-    return result;
-  }
+  const inTurn = createInTurn();
 
   async function record(
     { entryId, seenAt, wordOfTheDay }: Seen,
@@ -139,12 +132,7 @@ export async function openHistory({
         return list;
       },
       clear: () => inTurn(clear),
-      subscribe(listener) {
-        listeners.add(listener);
-        return () => {
-          listeners.delete(listener);
-        };
-      },
+      subscribe: subscribers.subscribe,
     },
     recorder: {
       record: (seen, changes) => inTurn(() => record(seen, changes)),

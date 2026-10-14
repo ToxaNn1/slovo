@@ -1,4 +1,5 @@
 import type { EntryRowModel, EntryRows } from './entry-row';
+import { createInTurn, createSubscribers, newestFirst } from './in-turn';
 import type { Clock } from './ports';
 import type { UserState } from './user-state';
 import { userStateRecords } from './user-state-schema';
@@ -44,12 +45,10 @@ export interface Favorites {
 
 const { favorites: favoriteRecords } = userStateRecords;
 
-/** Newest first; Entries added at the same instant in a stable order. */
-function newestFirst(first: Favorite, second: Favorite): number {
-  const byTime = second.addedAt.getTime() - first.addedAt.getTime();
-  if (byTime !== 0) return byTime;
-  return first.entryId < second.entryId ? -1 : 1;
-}
+const newestFavorite = newestFirst<Favorite>(
+  (favorite) => favorite.addedAt,
+  (favorite) => favorite.entryId,
+);
 
 /** Opens Favorites over the user state, for the Core composition. */
 export async function openFavorites({
@@ -70,12 +69,12 @@ export async function openFavorites({
   );
   let list: readonly Favorite[] = kept
     .filter((favorite): favorite is Favorite => favorite !== undefined)
-    .sort(newestFirst);
-  const listeners = new Set<() => void>();
+    .sort(newestFavorite);
+  const subscribers = createSubscribers();
 
   function changeList(changed: readonly Favorite[]): void {
     list = changed;
-    for (const listener of listeners) listener();
+    subscribers.tell();
   }
 
   const has = (entryId: string) => list.some((favorite) => favorite.entryId === entryId);
@@ -86,7 +85,7 @@ export async function openFavorites({
     if (row === undefined) return;
     const addedAt = clock.now();
     await userState.write(favoriteRecords.record(entryId).change(addedAt.toISOString()));
-    changeList([...list, { entryId, addedAt, row }].sort(newestFirst));
+    changeList([...list, { entryId, addedAt, row }].sort(newestFavorite));
   }
 
   async function remove(entryId: string): Promise<void> {
@@ -95,13 +94,7 @@ export async function openFavorites({
     changeList(list.filter((favorite) => favorite.entryId !== entryId));
   }
 
-  // One change at a time, so each one starts from what the one before it left.
-  let lastChange: Promise<unknown> = Promise.resolve();
-  function inTurn<T>(change: () => Promise<T>): Promise<T> {
-    const result = lastChange.then(change);
-    lastChange = result.catch(() => undefined);
-    return result;
-  }
+  const inTurn = createInTurn();
 
   return {
     get list() {
@@ -116,11 +109,6 @@ export async function openFavorites({
         else await add(entryId);
         return has(entryId);
       }),
-    subscribe(listener) {
-      listeners.add(listener);
-      return () => {
-        listeners.delete(listener);
-      };
-    },
+    subscribe: subscribers.subscribe,
   };
 }

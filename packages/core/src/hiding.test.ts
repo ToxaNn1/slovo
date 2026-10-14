@@ -241,6 +241,39 @@ describe('a hide', () => {
   });
 });
 
+describe('two hides at once', () => {
+  it.each([
+    ['an Entry', { kind: 'entry', entryId: 'w_speech1' }],
+    ['a Category', { kind: 'category', categoryId: 'speech' }],
+    ['Corrections', { kind: 'corrections' }],
+  ] as const)(
+    'on %s: one changes it and gives the undo, the other changes nothing',
+    async (_, target) => {
+      const app = await run();
+
+      const results = await Promise.all([app.hide(target), app.hide(target)]);
+
+      expect(results.filter((result) => result !== undefined)).toHaveLength(1);
+      expect(results.find((result) => result !== undefined)?.undo).toBeTypeOf('function');
+    },
+  );
+});
+
+describe('two unhides at once', () => {
+  it.each([
+    ['an Entry', { kind: 'entry', entryId: 'w_speech1' }],
+    ['a Category', { kind: 'category', categoryId: 'speech' }],
+    ['Corrections', { kind: 'corrections' }],
+  ] as const)('on %s: one changes it, the other changes nothing', async (_, target) => {
+    const app = await run();
+    await app.hide(target);
+
+    const results = await Promise.all([app.unhide(target), app.unhide(target)]);
+
+    expect(results.filter((result) => result !== undefined)).toHaveLength(1);
+  });
+});
+
 describe('the undo of a hide', () => {
   it('makes a hidden card come back to the Feed where it was, on screen again', async () => {
     const app = await run();

@@ -1,4 +1,5 @@
 import type { EntryRowModel, EntryRows } from './entry-row';
+import { createInTurn, createSubscribers, newestFirst } from './in-turn';
 import type { Clock } from './ports';
 import type { UserState } from './user-state';
 import { userStateRecords } from './user-state-schema';
@@ -48,12 +49,10 @@ export interface HiddenEntries {
 
 const { hiddenEntries: hiddenRecords } = userStateRecords;
 
-/** Newest first; Entries hidden at the same instant in a stable order. */
-function newestFirst(first: HiddenEntry, second: HiddenEntry): number {
-  const byTime = second.hiddenAt.getTime() - first.hiddenAt.getTime();
-  if (byTime !== 0) return byTime;
-  return first.entryId < second.entryId ? -1 : 1;
-}
+const newestHidden = newestFirst<HiddenEntry>(
+  (hiddenEntry) => hiddenEntry.hiddenAt,
+  (hiddenEntry) => hiddenEntry.entryId,
+);
 
 /**
  * Opens the Hidden Entries over the user state, for the Core composition,
@@ -79,8 +78,8 @@ export async function openHiddenEntries({
   );
   let list: readonly HiddenEntry[] = kept
     .filter((hiddenEntry): hiddenEntry is HiddenEntry => hiddenEntry !== undefined)
-    .sort(newestFirst);
-  const listeners = new Set<() => void>();
+    .sort(newestHidden);
+  const subscribers = createSubscribers();
 
   /**
    * Makes the written change in memory: eligibility first, so a subscriber
@@ -93,7 +92,7 @@ export async function openHiddenEntries({
       await eligibilityChanged();
     } finally {
       list = changed;
-      for (const listener of listeners) listener();
+      subscribers.tell();
     }
   }
 
@@ -104,7 +103,7 @@ export async function openHiddenEntries({
     const row = await rows.row(entryId);
     if (row === undefined) return;
     await userState.write(hiddenRecords.record(entryId).change(hiddenAt.toISOString()));
-    await changeList([...list, { entryId, hiddenAt, row }].sort(newestFirst));
+    await changeList([...list, { entryId, hiddenAt, row }].sort(newestHidden));
   }
 
   async function restore(entryId: string): Promise<Date | undefined> {
@@ -115,13 +114,7 @@ export async function openHiddenEntries({
     return hidden.hiddenAt;
   }
 
-  // One change at a time, so each one starts from what the one before it left.
-  let lastChange: Promise<unknown> = Promise.resolve();
-  function inTurn<T>(change: () => Promise<T>): Promise<T> {
-    const result = lastChange.then(change);
-    lastChange = result.catch(() => undefined);
-    return result;
-  }
+  const inTurn = createInTurn();
 
   return {
     get list() {
@@ -130,11 +123,6 @@ export async function openHiddenEntries({
     has,
     hide: (entryId, hiddenAt) => inTurn(() => hide(entryId, hiddenAt)),
     restore: (entryId) => inTurn(() => restore(entryId)),
-    subscribe(listener) {
-      listeners.add(listener);
-      return () => {
-        listeners.delete(listener);
-      };
-    },
+    subscribe: subscribers.subscribe,
   };
 }

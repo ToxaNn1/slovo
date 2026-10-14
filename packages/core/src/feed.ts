@@ -4,6 +4,7 @@ import { buildCorrectionCard, type CorrectionCardModel } from './correction-card
 import type { Cycle } from './cycle';
 import type { Entries } from './entries';
 import type { HistoryRecorder } from './history';
+import { createInTurn, createSubscribers } from './in-turn';
 import { todayKey, type LocalDate } from './local-date';
 import type { Clock } from './ports';
 import type { UserState } from './user-state';
@@ -185,7 +186,7 @@ export async function openFeed({
   let dropped: ReadonlySet<FeedCard> = new Set();
   /** The cards shown: the session's cards not dropped. */
   let cards: readonly FeedCard[] = [];
-  const listeners = new Set<() => void>();
+  const subscribers = createSubscribers();
   /** The place of the current Cycle's first card: the cards before it belong to an earlier Cycle. */
   let cycleStart = 0;
   /** The place of the card on screen now, and since when, if one is. */
@@ -203,13 +204,9 @@ export async function openFeed({
     cards = session.filter((card) => !dropped.has(card));
   }
 
-  function tellSubscribers(): void {
-    for (const listener of listeners) listener();
-  }
-
   function changeSession(changed: readonly FeedCard[], changedDropped = dropped): void {
     setSession(changed, changedDropped);
-    tellSubscribers();
+    subscribers.tell();
   }
 
   /** The position of the card at `place`, or of the card that will come there. */
@@ -293,12 +290,7 @@ export async function openFeed({
   }
 
   // One request at a time, so two requests never pick the same Entry.
-  let lastRequest: Promise<unknown> = Promise.resolve();
-  function inTurn<T>(task: () => Promise<T>): Promise<T> {
-    const request = lastRequest.then(task);
-    lastRequest = request.catch(() => undefined);
-    return request;
-  }
+  const inTurn = createInTurn();
 
   async function addNextCard(): Promise<FeedCard | undefined> {
     const last = cards.at(-1);
@@ -559,7 +551,7 @@ export async function openFeed({
         added = await addNextCard();
       } finally {
         // A card added has told the subscribers already, with the drop.
-        if (added === undefined) tellSubscribers();
+        if (added === undefined) subscribers.tell();
       }
     } else changeSession(session, out);
     if (moved)
@@ -583,12 +575,7 @@ export async function openFeed({
     get position() {
       return onScreen === undefined ? undefined : positionOf(onScreen.place);
     },
-    subscribe(listener) {
-      listeners.add(listener);
-      return () => {
-        listeners.delete(listener);
-      };
-    },
+    subscribe: subscribers.subscribe,
     show,
     next,
     openLinkedCorrection: (position, correctionId) =>
