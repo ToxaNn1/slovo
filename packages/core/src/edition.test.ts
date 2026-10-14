@@ -101,6 +101,23 @@ describe('loadEdition', () => {
     });
   });
 
+  it('reports the default notification times in time order', () => {
+    const edition = loadEdition({
+      ...validConfig,
+      userSettingDefaults: {
+        ...validConfig.userSettingDefaults,
+        notificationTimes: ['19:00', '09:00', '13:30', '00:05'],
+      },
+    });
+
+    expect(edition.userSettingDefaults.notificationTimes).toEqual([
+      '00:05',
+      '09:00',
+      '13:30',
+      '19:00',
+    ]);
+  });
+
   it('reports a default of Vibration off', () => {
     const edition = loadEdition({
       ...validConfig,
@@ -178,6 +195,16 @@ describe('loadEdition', () => {
         userSettingDefaults: {
           ...userSettingDefaults,
           notificationTimes: Array.from({ length: 11 }, (_, hour) => `${String(hour + 10)}:00`),
+        },
+      },
+      'userSettingDefaults.notificationTimes',
+    ],
+    [
+      'a repeated notification time',
+      {
+        userSettingDefaults: {
+          ...userSettingDefaults,
+          notificationTimes: ['19:00', '09:00', '19:00'],
         },
       },
       'userSettingDefaults.notificationTimes',

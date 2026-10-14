@@ -5,6 +5,7 @@ import {
   EditionDecorSchema,
   EditionStringsSchema,
   EditionTokensSchema,
+  PluralLabelSchema,
   PluralSchema,
   SplashDecorSchema,
   type ColorTokens,
@@ -29,6 +30,40 @@ describe('Edition UI strings', () => {
   });
 });
 
+describe('the 0.4 UI strings groups', () => {
+  const groups = ['stats', 'onboarding', 'notifications', 'notificationBody'] as const;
+  const strings = readJson('uk', 'strings.json') as Record<string, unknown>;
+
+  it.each(groups)('the Ukrainian Edition needs the %s group', (group) => {
+    const without = Object.fromEntries(Object.entries(strings).filter(([key]) => key !== group));
+
+    const result = EditionStringsSchema.safeParse(without);
+
+    expect(result.error?.issues.map((issue) => issue.path.join('.'))).toContain(group);
+  });
+
+  it('gives every count the plural forms Ukrainian has', () => {
+    const categories = new Intl.PluralRules('uk-UA').resolvedOptions().pluralCategories;
+    const counts = [
+      ...pluralsOf(strings['stats']),
+      ...pluralsOf(strings['onboarding']),
+      ...pluralsOf(strings['notifications']),
+    ];
+
+    expect(counts.length).toBeGreaterThan(0);
+    for (const forms of counts) expect(Object.keys(forms).sort()).toEqual([...categories].sort());
+  });
+});
+
+/** Every plural-forms object (one with an `other` form) in a strings group. */
+function pluralsOf(value: unknown): Record<string, string>[] {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return [];
+  const record = value as Record<string, unknown>;
+  return 'other' in record
+    ? [record as Record<string, string>]
+    : Object.values(record).flatMap(pluralsOf);
+}
+
 describe('plural forms of a count', () => {
   it('takes the forms a language has, each with the count in it', () => {
     expect(
@@ -46,6 +81,27 @@ describe('plural forms of a count', () => {
     ['a form that is not a CLDR category', { single: '{count} запис', other: '{count} записів' }],
   ])('rejects %s', (_, forms) => {
     expect(PluralSchema.safeParse(forms).success).toBe(false);
+  });
+});
+
+describe('plural forms of a label beside its number', () => {
+  it('takes the forms a language has, none with the count in it', () => {
+    expect(
+      PluralLabelSchema.safeParse({
+        one: 'день поспіль',
+        few: 'дні поспіль',
+        other: 'днів поспіль',
+      }).success,
+    ).toBe(true);
+  });
+
+  it.each([
+    ['no `other` form', { one: 'день поспіль', many: 'днів поспіль' }],
+    ['a form that is not a CLDR category', { single: 'день поспіль', other: 'днів поспіль' }],
+    ['an empty form', { one: '', other: 'днів поспіль' }],
+    ['a form with the count in it', { one: '{count} день поспіль', other: 'днів поспіль' }],
+  ])('rejects %s', (_, forms) => {
+    expect(PluralLabelSchema.safeParse(forms).success).toBe(false);
   });
 });
 
