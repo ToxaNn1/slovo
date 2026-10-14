@@ -287,7 +287,7 @@ describe('the undo of a hide', () => {
     await hidden?.undo();
 
     expect(entryIdsOf(app.feed.cards).slice(0, before.length)).toEqual(before);
-    expect(entryIdOf(app.feed.cards[app.feed.position ?? -1])).toBe(onScreen);
+    expect(entryIdOf(app.feed.cards[app.feed.position])).toBe(onScreen);
   });
 
   it('makes the cards of a hidden Category come back to the Feed where they were', async () => {
@@ -302,7 +302,7 @@ describe('the undo of a hide', () => {
     await hidden?.undo();
 
     expect(entryIdsOf(app.feed.cards).slice(0, before.length)).toEqual(before);
-    expect(entryIdOf(app.feed.cards[app.feed.position ?? -1])).toBe(onScreen);
+    expect(entryIdOf(app.feed.cards[app.feed.position])).toBe(onScreen);
   });
 
   it('makes the Correction cards come back to the Feed where they were', async () => {
