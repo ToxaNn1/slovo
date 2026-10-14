@@ -16,14 +16,10 @@ appId: ${APP_ID || 'app.slovo.uk'}
       notifications: deny
 - runFlow:
     file: ../open-in-dev-client.yaml
-- tapOn:
-    id: tab-settings
-- scrollUntilVisible:
-    element:
-      id: settings-row-notifications
-    # Off the tab bar, which covers the bottom of the list at the largest font size.
-    centerElement: true
-    visibilityPercentage: 50
+- runFlow:
+    file: ../open-settings-row.yaml
+    env:
+      ROW: settings-row-notifications
 - tapOn:
     id: settings-row-notifications
 - assertVisible:

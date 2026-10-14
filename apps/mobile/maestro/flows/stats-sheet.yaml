@@ -3,12 +3,9 @@
 # A subflow of `smoke.yaml`; run it from there. It clears the app's state.
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
-# A fresh install: the first Active Day, and nothing read or kept yet.
-- stopApp
-- launchApp:
-    clearState: true
+# A fresh install: the first Active Day, and nothing Seen or kept yet.
 - runFlow:
-    file: ../open-in-dev-client.yaml
+    file: ../fresh-install.yaml
 - tapOn:
     id: stats-pill
     text: 'Статистика: серія 1 день'
@@ -20,7 +17,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
     text: 0, в Улюбленому
 - assertVisible:
     id: stats-in-collections
-    text: 0, слів у Колекціях
+    text: 0, записів у Колекціях
 - takeScreenshot: stats-sheet-fresh
 # A tap outside, above the sheet, closes it.
 - tapOn:

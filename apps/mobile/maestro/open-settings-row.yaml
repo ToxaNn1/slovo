@@ -1,0 +1,12 @@
+# Opens Settings and scrolls to one of its rows, off the tab bar, which covers
+# the bottom of the list at the largest font size. The caller passes the row's
+# id as `ROW`, e.g. `ROW: settings-row-my-mix`.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- tapOn:
+    id: tab-settings
+- scrollUntilVisible:
+    element:
+      id: ${ROW}
+    centerElement: true
+    visibilityPercentage: 50

@@ -4,11 +4,8 @@
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
 # A fresh install, so the Word is not Seen yet and History starts empty.
-- stopApp
-- launchApp:
-    clearState: true
 - runFlow:
-    file: ../open-in-dev-client.yaml
+    file: ../fresh-install.yaml
 # The link a notification carries, for кракелюр, a Word of the Ukrainian Edition.
 - openLink: ${(SCHEME || 'slovo-uk') + '://entry/w_00g2ap?from=notification'}
 # A simulator asks once whether the link may open the app.

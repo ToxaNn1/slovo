@@ -5,14 +5,10 @@
 # into the Mix, and leaves it so, for the flows after it.
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
-- tapOn:
-    id: tab-settings
-- scrollUntilVisible:
-    element:
-      id: settings-row-my-mix
-    # Off the tab bar, which covers the bottom of the list at the largest font size.
-    centerElement: true
-    visibilityPercentage: 50
+- runFlow:
+    file: ../open-settings-row.yaml
+    env:
+      ROW: settings-row-my-mix
 # Start from the full Mix, whatever an earlier run left.
 - tapOn:
     id: settings-row-my-mix
