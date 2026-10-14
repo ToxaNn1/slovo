@@ -1,5 +1,6 @@
+import { openEntryList } from './entry-list';
 import type { EntryRowModel, EntryRows } from './entry-row';
-import { createInTurn, createSubscribers, newestFirst } from './in-turn';
+import { createInTurn } from './in-turn';
 import type { Clock } from './ports';
 import type { UserState } from './user-state';
 import { userStateRecords } from './user-state-schema';
@@ -43,13 +44,6 @@ export interface Favorites {
   subscribe(listener: () => void): () => void;
 }
 
-const { favorites: favoriteRecords } = userStateRecords;
-
-const newestFavorite = newestFirst<Favorite>(
-  (favorite) => favorite.addedAt,
-  (favorite) => favorite.entryId,
-);
-
 /** Opens Favorites over the user state, for the Core composition. */
 export async function openFavorites({
   rows,
@@ -60,55 +54,31 @@ export async function openFavorites({
   userState: UserState;
   clock: Clock;
 }): Promise<Favorites> {
-  const stored = await userState.list(favoriteRecords);
-  const kept = await Promise.all(
-    [...stored].map(async ([entryId, added]): Promise<Favorite | undefined> => {
-      const row = await rows.row(entryId);
-      return row === undefined ? undefined : { entryId, addedAt: new Date(added), row };
-    }),
-  );
-  let list: readonly Favorite[] = kept
-    .filter((favorite): favorite is Favorite => favorite !== undefined)
-    .sort(newestFavorite);
-  const subscribers = createSubscribers();
-
-  function changeList(changed: readonly Favorite[]): void {
-    list = changed;
-    subscribers.tell();
-  }
-
-  const has = (entryId: string) => list.some((favorite) => favorite.entryId === entryId);
-
-  async function add(entryId: string): Promise<void> {
-    if (has(entryId)) return;
-    const row = await rows.row(entryId);
-    if (row === undefined) return;
-    const addedAt = clock.now();
-    await userState.write(favoriteRecords.record(entryId).change(addedAt.toISOString()));
-    changeList([...list, { entryId, addedAt, row }].sort(newestFavorite));
-  }
-
-  async function remove(entryId: string): Promise<void> {
-    if (!has(entryId)) return;
-    await userState.write(favoriteRecords.record(entryId).change(undefined));
-    changeList(list.filter((favorite) => favorite.entryId !== entryId));
-  }
-
+  const favorites = await openEntryList({
+    records: userStateRecords.favorites,
+    timeKey: 'addedAt',
+    rows,
+    userState,
+    clock,
+  });
   const inTurn = createInTurn();
 
   return {
     get list() {
-      return list;
+      return favorites.list;
     },
-    has,
-    add: (entryId) => inTurn(() => add(entryId)),
-    remove: (entryId) => inTurn(() => remove(entryId)),
+    has: favorites.has,
+    add: (entryId) => inTurn(() => favorites.add(entryId)),
+    remove: (entryId) =>
+      inTurn(async () => {
+        await favorites.remove(entryId);
+      }),
     toggle: (entryId) =>
       inTurn(async () => {
-        if (has(entryId)) await remove(entryId);
-        else await add(entryId);
-        return has(entryId);
+        if (favorites.has(entryId)) await favorites.remove(entryId);
+        else await favorites.add(entryId);
+        return favorites.has(entryId);
       }),
-    subscribe: subscribers.subscribe,
+    subscribe: favorites.subscribe,
   };
 }

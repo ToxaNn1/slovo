@@ -71,8 +71,6 @@ function fakeClock(start = '2026-10-11T09:00:00+03:00') {
   };
 }
 
-const MINUTE = 60_000;
-
 /** The Core composition of one app run over the records, so the user state survives between runs. */
 async function run({
   records = new Map<string, string>(),
@@ -95,159 +93,37 @@ async function run({
 /** The ids in Favorites, newest first. */
 const idsOf = ({ favorites }: Composition) => favorites.list.map((favorite) => favorite.entryId);
 
+// What Favorites share with the Hidden Entries is tested once for both in `entry-list.test.ts`.
 describe('Favorites', () => {
-  it('adds an Entry with the time it was added, and removes it', async () => {
-    const time = fakeClock();
-    const app = await run({ clock: time.clock });
-
-    await app.favorites.add('w_two');
-
-    expect(app.favorites.has('w_two')).toBe(true);
-    expect(app.favorites.list).toEqual([
-      {
-        entryId: 'w_two',
-        addedAt: new Date('2026-10-11T09:00:00+03:00'),
-        row: {
-          kind: 'word',
-          entryId: 'w_two',
-          title: 't\u0301wo',
-          definition: 'The meaning of two.',
-          partOfSpeech: 'noun',
-          registers: [],
-        },
-      },
-    ]);
-
-    await app.favorites.remove('w_two');
-
-    expect(app.favorites.has('w_two')).toBe(false);
-    expect(app.favorites.list).toEqual([]);
-  });
-
   it('toggles an Entry in and out, telling whether it is in Favorites now', async () => {
     const app = await run();
+    let told = 0;
+    app.favorites.subscribe(() => {
+      told += 1;
+    });
 
     expect(await app.favorites.toggle('w_one')).toBe(true);
     expect(idsOf(app)).toEqual(['w_one']);
     expect(await app.favorites.toggle('w_one')).toBe(false);
     expect(idsOf(app)).toEqual([]);
+    expect(told).toBe(2);
   });
 
-  it('keeps the first time when an Entry already in Favorites is added again', async () => {
-    const time = fakeClock();
-    const app = await run({ clock: time.clock });
-    await app.favorites.add('w_one');
-    time.advance(MINUTE);
-
-    await app.favorites.add('w_one');
-
-    expect(app.favorites.list.map((favorite) => favorite.addedAt)).toEqual([
-      new Date('2026-10-11T09:00:00+03:00'),
-    ]);
-  });
-
-  it('lists the newest first', async () => {
-    const time = fakeClock();
-    const app = await run({ clock: time.clock });
-
-    for (const id of ['w_two', 'c_one', 'w_one']) {
-      await app.favorites.add(id);
-      time.advance(MINUTE);
-    }
-
-    expect(idsOf(app)).toEqual(['w_one', 'c_one', 'w_two']);
-  });
-
-  it('keeps Corrections like Words, each row with its main standard equivalent and the non-standard form', async () => {
+  it('toggles one tap after the other, each from what the one before it left', async () => {
     const app = await run();
 
-    await app.favorites.add('c_one');
-
-    expect(app.favorites.list[0]?.row).toEqual({
-      kind: 'correction',
-      entryId: 'c_one',
-      title: 'one',
-      nonStandardForm: 'not one',
-      correctionType: 'calque',
-    });
-  });
-
-  it('keeps Retired Entries, which open like any other', async () => {
-    const records = new Map<string, string>();
-    const time = fakeClock();
-    const first = await run({ records, clock: time.clock });
-    await first.favorites.add('w_old');
-    time.advance(MINUTE);
-    await first.favorites.add('c_old');
-
-    const app = await run({ records, clock: time.clock });
-
-    expect(idsOf(app)).toEqual(['c_old', 'w_old']);
-    expect(await app.entryCard('w_old')).toMatchObject({
-      kind: 'word',
-      wordCard: { wordId: 'w_old', lemma: 'o\u0301ld' },
-    });
-    expect(await app.entryCard('c_old')).toMatchObject({
-      kind: 'correction',
-      correctionCard: { correctionId: 'c_old', mainEquivalent: 'old' },
-    });
-    expect(await app.entryRow('w_old')).toEqual({
-      kind: 'word',
-      entryId: 'w_old',
-      title: 'o\u0301ld',
-      definition: 'The meaning of old.',
-      partOfSpeech: 'noun',
-      registers: [],
-    });
-  });
-
-  it('survives reopening, with the times it was added', async () => {
-    const records = new Map<string, string>();
-    const time = fakeClock();
-    const first = await run({ records, clock: time.clock });
-    await first.favorites.add('w_one');
-    time.advance(MINUTE);
-    await first.favorites.add('c_one');
-    await first.favorites.remove('w_one');
-    time.advance(MINUTE);
-    await first.favorites.add('w_three');
-
-    const app = await run({ records, clock: time.clock });
-
-    expect(app.favorites.list).toEqual(first.favorites.list);
-    expect(idsOf(app)).toEqual(['w_three', 'c_one']);
-  });
-
-  it('keeps one `favorites.` record per Entry', async () => {
-    const records = new Map<string, string>();
-    const app = await run({ records });
-
-    await app.favorites.add('w_one');
-    await app.favorites.add('c_one');
-
-    expect([...records.keys()].filter((key) => key.startsWith('favorites.')).sort()).toEqual([
-      'favorites.c_one',
-      'favorites.w_one',
+    const taps = await Promise.all([
+      app.favorites.toggle('w_one'),
+      app.favorites.toggle('w_one'),
+      app.favorites.add('w_one'),
+      app.favorites.toggle('w_one'),
     ]);
+
+    expect(taps).toEqual([true, false, undefined, false]);
+    expect(idsOf(app)).toEqual([]);
   });
 
-  it('skips an id the Language Pack does not have, in the list and in every lookup', async () => {
-    const records = new Map<string, string>();
-    const first = await run({ records });
-    await first.favorites.add('w_one');
-    records.set('favorites.w_gone', JSON.stringify('2026-10-11T07:00:00.000Z'));
-
-    const app = await run({ records });
-    await app.favorites.add('c_gone');
-
-    expect(idsOf(app)).toEqual(['w_one']);
-    expect(app.favorites.has('w_gone')).toBe(false);
-    expect(records.has('favorites.c_gone')).toBe(false);
-    expect(await app.entryCard('w_gone')).toBeUndefined();
-    expect(await app.entryRow('w_gone')).toBeUndefined();
-  });
-
-  it('changes nothing in memory when keeping the change fails', async () => {
+  it('changes nothing in memory when keeping a toggle fails', async () => {
     const records = new Map<string, string>();
     let failing = false;
     const port = createMemoryUserStatePort(records);
@@ -261,67 +137,28 @@ describe('Favorites', () => {
     await app.favorites.add('w_one');
     failing = true;
 
-    await expect(app.favorites.add('w_two')).rejects.toThrow('The disk is full');
     await expect(app.favorites.toggle('w_one')).rejects.toThrow('The disk is full');
+    await expect(app.favorites.toggle('w_two')).rejects.toThrow('The disk is full');
 
     expect(idsOf(app)).toEqual(['w_one']);
     failing = false;
     expect(await app.favorites.toggle('w_one')).toBe(false);
   });
 
-  describe('the snapshot', () => {
-    it('is a new object after each change, telling the subscribers, and the same one otherwise', async () => {
-      const app = await run();
-      let told = 0;
-      app.favorites.subscribe(() => {
-        told += 1;
-      });
-      const empty = app.favorites.list;
-
-      await app.favorites.remove('w_one');
-      expect(app.favorites.list).toBe(empty);
-
-      await app.favorites.add('w_one');
-      const added = app.favorites.list;
-      expect(added).not.toBe(empty);
-
-      await app.favorites.add('w_one');
-      expect(app.favorites.list).toBe(added);
-      expect(told).toBe(1);
-
-      await app.favorites.toggle('w_one');
-      expect(app.favorites.list).not.toBe(added);
-      expect(told).toBe(2);
+  it('changes when the heart under the Feed card on screen is tapped', async () => {
+    const app = await run();
+    let told = 0;
+    app.favorites.subscribe(() => {
+      told += 1;
     });
+    const onScreen = entryIdOf(app.feed.cards[0]);
+    if (onScreen === undefined) throw new Error('The Feed opens on no Entry');
 
-    it('stops telling a subscriber that unsubscribed', async () => {
-      const app = await run();
-      let told = 0;
-      const stop = app.favorites.subscribe(() => {
-        told += 1;
-      });
+    await app.favorites.toggle(onScreen);
 
-      stop();
-      await app.favorites.add('w_one');
-
-      expect(told).toBe(0);
-    });
-
-    it('changes when the heart under the Feed card on screen is tapped', async () => {
-      const app = await run();
-      let told = 0;
-      app.favorites.subscribe(() => {
-        told += 1;
-      });
-      const onScreen = entryIdOf(app.feed.cards[0]);
-      if (onScreen === undefined) throw new Error('The Feed opens on no Entry');
-
-      await app.favorites.toggle(onScreen);
-
-      expect(told).toBe(1);
-      expect(app.favorites.list).toHaveLength(1);
-      expect(app.favorites.has(onScreen)).toBe(true);
-    });
+    expect(told).toBe(1);
+    expect(app.favorites.list).toHaveLength(1);
+    expect(app.favorites.has(onScreen)).toBe(true);
   });
 });
 
@@ -337,5 +174,37 @@ describe('an Entry opened from a list', () => {
 
     expect(entryIdOf(card)).toBe('w_three');
     expect(records).toEqual(before);
+  });
+
+  it('opens a Retired Entry like any other', async () => {
+    const app = await run();
+    await app.favorites.add('w_old');
+    await app.favorites.add('c_old');
+
+    expect(await app.entryCard('w_old')).toMatchObject({
+      kind: 'word',
+      wordCard: { wordId: 'w_old', lemma: 'óld' },
+    });
+    expect(await app.entryCard('c_old')).toMatchObject({
+      kind: 'correction',
+      correctionCard: { correctionId: 'c_old', mainEquivalent: 'old' },
+    });
+    expect(await app.entryRow('w_old')).toEqual({
+      kind: 'word',
+      entryId: 'w_old',
+      title: 'óld',
+      definition: 'The meaning of old.',
+      partOfSpeech: 'noun',
+      registers: [],
+    });
+  });
+
+  it('opens nothing for an id the Language Pack does not have', async () => {
+    const records = new Map<string, string>();
+    records.set('favorites.w_gone', JSON.stringify('2026-10-11T07:00:00.000Z'));
+    const app = await run({ records });
+
+    expect(await app.entryCard('w_gone')).toBeUndefined();
+    expect(await app.entryRow('w_gone')).toBeUndefined();
   });
 });
