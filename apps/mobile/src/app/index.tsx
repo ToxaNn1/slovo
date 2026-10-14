@@ -6,7 +6,6 @@ import {
   PagerScrollView,
   Placeholder,
   space,
-  StatsPill,
   SwipeHint,
   UndoToastProvider,
   useTokens,
@@ -22,7 +21,7 @@ import { EntryActions } from '../entry-actions';
 import { useFeed } from '../feed';
 import { FeedLoadingScreen, TOP_ROW } from '../feed-loading';
 import { LoadFailed } from '../language-pack';
-import { useStreak } from '../progress';
+import { StatsPillAndSheet } from '../progress';
 import { useSwipeHint } from '../swipe-hint';
 
 const { feed: feedStrings } = editionStrings;
@@ -42,7 +41,6 @@ export default function HomeScreen() {
 function FeedScreen() {
   const feed = useFeed();
   const swipeHint = useSwipeHint();
-  const streak = useStreak();
   const { colors } = useTokens();
   const { top } = useSafeAreaInsets();
   const pager = useRef<VerticalPagerHandle>(null);
@@ -105,7 +103,7 @@ function FeedScreen() {
       />
       {/* The top row stays put over the cards, like the background. */}
       <View pointerEvents="box-none" style={[styles.topRow, { top }]}>
-        {streak === undefined ? null : <StatsPill streak={streak} />}
+        <StatsPillAndSheet />
       </View>
       {swipeHint.visible ? (
         <SwipeHint

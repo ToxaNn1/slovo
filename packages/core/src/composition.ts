@@ -38,7 +38,11 @@ export interface Composition extends Hiding {
   readonly hiddenEntries: HiddenEntries;
   /** The Mix, whose Categories out of it are the Hidden Categories (ADR 0019). */
   readonly mix: Mix;
-  /** Progress: the Streak and the Best Streak, derived from the Active Days. */
+  /**
+   * Progress: the Streak and the Best Streak, derived from the Active Days,
+   * and the stats sheet's counts, which a heart, a Collection change and a
+   * Seen Entry change at once.
+   */
   readonly progress: Progress;
   /**
    * Tells the composition the reader is back: the app returned to the
@@ -125,7 +129,13 @@ export async function openComposition({
       openNotifications({ edition, userState, cycle, entries, clock, scheduling }),
       openOnboarding({ userState, clock }),
     ]);
-  const { progress, recordToday, todayChange } = await openProgress({ userState, clock });
+  const { progress, recordToday, todayChange } = await openProgress({
+    userState,
+    clock,
+    history,
+    favorites,
+    collections,
+  });
   async function resume(): Promise<void> {
     await recordToday();
     await replan();

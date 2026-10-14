@@ -106,19 +106,44 @@ function wallClockAt(instant: number, timeZone: string): number {
 }
 
 /**
+ * The instant a local day starts in the time zone: the instant of its
+ * wall-clock `midnight` (counted as if it were UTC), or the daylight-saving
+ * change that skips it. `near` is an instant less than a day from it.
+ */
+function dayStartAt(midnight: number, near: number, zone: string): number {
+  // Midnight at the offset from UTC in force at `near`, then at the offset in force by then.
+  const atNearOffset = near + midnight - wallClockAt(near, zone);
+  const atItsOffset = midnight - (wallClockAt(atNearOffset, zone) - atNearOffset);
+  // When a daylight-saving change skips midnight, the day starts at the change.
+  return wallClockAt(atItsOffset, zone) >= midnight ? atItsOffset : atNearOffset;
+}
+
+/** A local day as the instants, in milliseconds, it starts and the next one starts. */
+export interface LocalDayBounds {
+  readonly start: number;
+  readonly end: number;
+}
+
+/** The local day of the instant `now` in the time zone. */
+function dayBoundsAt(now: number, zone: string): LocalDayBounds {
+  const midnight = Math.floor(wallClockAt(now, zone) / DAY_MS) * DAY_MS;
+  return { start: dayStartAt(midnight, now, zone), end: dayStartAt(midnight + DAY_MS, now, zone) };
+}
+
+/**
+ * Today's local day in the clock's time zone, across a daylight-saving change
+ * too, so many instants can be checked against it cheaply.
+ */
+export function todayBounds(clock: Clock): LocalDayBounds {
+  return dayBoundsAt(clock.now().getTime(), clock.timeZone());
+}
+
+/**
  * The milliseconds from now until the next local day starts in the clock's
  * time zone, across a daylight-saving change too, so a timer can tell the
  * composition when today ends.
  */
 export function untilNextLocalDay(clock: Clock): number {
-  const zone = clock.timeZone();
   const now = clock.now().getTime();
-  const wallClock = wallClockAt(now, zone);
-  const nextMidnight = (Math.floor(wallClock / DAY_MS) + 1) * DAY_MS;
-  // Midnight at today's offset from UTC, then at the offset in force by then.
-  const atTodaysOffset = now + nextMidnight - wallClock;
-  const atItsOffset = nextMidnight - (wallClockAt(atTodaysOffset, zone) - atTodaysOffset);
-  // When a daylight-saving change skips midnight, the day starts at the change.
-  const start = wallClockAt(atItsOffset, zone) >= nextMidnight ? atItsOffset : atTodaysOffset;
-  return start - now;
+  return dayBoundsAt(now, clock.timeZone()).end - now;
 }
