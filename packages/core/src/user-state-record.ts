@@ -5,7 +5,8 @@ import type { UserStateChanges } from './ports';
 /**
  * How a record syncs when sync arrives (ADR 0005). A record without a mark
  * syncs by last write wins, one record at a time.
- * - `device-only`: stays on this device (the notification times).
+ * - `device-only`: stays on this device (the notification times and sound,
+ *   the plan, the onboarding finished).
  * - `union`: the records of every device are all kept (Active Days, so the
  *   Streak derived from them is the same on every device).
  */

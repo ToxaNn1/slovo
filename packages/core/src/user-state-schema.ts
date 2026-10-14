@@ -97,8 +97,12 @@ export const userStateRecords = {
   notificationPlan: declareRecords('notifications.plan.', z.string().min(1), {
     sync: 'device-only',
   }),
-  /** That the onboarding was finished or skipped, and the instant it was; without the record, it opens. */
-  onboardingFinished: declareRecord('onboarding.finished', InstantSchema),
+  /**
+   * That the onboarding was finished or skipped, and the instant it was;
+   * without the record, it opens. It stays on the device: the onboarding asks
+   * this device for permission to notify.
+   */
+  onboardingFinished: declareRecord('onboarding.finished', InstantSchema, { sync: 'device-only' }),
 };
 
 /**

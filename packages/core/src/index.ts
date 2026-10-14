@@ -67,7 +67,6 @@ export {
   type Settings,
   type UserSettings,
 } from './settings';
-export { createReservedWords, type ReservedWords, type StoredPlan } from './reserved-words';
 export { renderStress } from './stress';
 export { createSwipeHint, type SwipeHint } from './swipe-hint';
 export {

@@ -59,3 +59,11 @@ An empty list of times is stored as an empty list, not as an absent record or a 
 The glossary's Seen also covers a Word the reader opened from a notification, so the Feed is no longer the only way into History. The composition's "opened from a notification" call writes the Seen mark, the History entry and today's Active Day in one write. The Feed module keeps it: it writes it in turn with its cards through the same step as a card leaving the screen, so a new Cycle never starts between the Seen mark and its commit. The History entry is the Word of the Day's card only when the Word is today's Word of the Day. A Word the Cycle no longer covers (Hidden, Retired, out of the Mix) or one Seen already gets only the Active Day, so a Hidden Entry never re-enters History, and opening the same Word again writes nothing.
 
 Progress returns the Active Day as a change with a commit step, like the Cycle, so its record goes into that one write; recording today on its own (the composition opening, the app returning to the foreground) writes the same change alone.
+
+## Amendment: the onboarding finished stays on the device (0.4)
+
+The 0.4 records listed above left `onboarding.finished` unmarked, so it would sync by last write wins. It is now `device-only`. The onboarding ends with the ask for permission to notify, and that permission belongs to each device: a reader who finished it on a phone is still asked on a tablet. The record changes only its mark, so there is still no migration.
+
+### Considered Options
+
+- **Last write wins, as unmarked**: rejected. A second device would skip the onboarding and never ask for its own permission there.
