@@ -41,6 +41,7 @@ export {
 } from './feed';
 export { createHaptics, type HapticEngine, type Haptics } from './haptics';
 export { type HiddenEntries, type HiddenEntry } from './hidden-entries';
+export { type UnhideResult, type HideResult, type HideTarget, type HidingChange } from './hiding';
 export { HISTORY_CAP, type History, type HistoryEntry } from './history';
 export { groupByLocalDay, relativeTimeOf, type DayGroup, type RelativeTime } from './history-time';
 export { localDayOf, localTimeOf, type LocalDate, type LocalDay } from './local-date';
