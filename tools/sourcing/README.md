@@ -42,7 +42,7 @@ Every run on the machine shares one cache: `--cache`, else `$SLOVO_SOURCING_CACH
 
 ## What comes out
 
-- `review/drafts/<id>.json`: drafts that pass the Word schema and the Edition's Stress rules. Each has a new opaque `w_` id that the Edition doesn't use yet.
+- `review/drafts/<id>.json`: drafts that pass the Word schema and the Language Pack build's own checks (Stress, alphabet, Category, Correction links, duplicate Lemma) against the Edition's existing content. Each has a new opaque `w_` id that the Edition doesn't use yet.
 - `review/incomplete/<id>.json`: drafts that lack required data (for example, no source marks the Stress). The report says what is missing.
 - `review/review-report.md`: everything a human must decide, per Lemma and per draft:
 
