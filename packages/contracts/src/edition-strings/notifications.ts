@@ -5,14 +5,15 @@ import { PluralSchema, templateOf } from './shared';
 
 /**
  * The texts of Settings › Сповіщення, which the onboarding's notifications
- * step shares: the times, the sound switch and the denied-permission state.
+ * step shares: the times, the sound switch, the ask for permission and the
+ * denied-permission state.
  */
 export const NotificationsStringsSchema = z.strictObject({
   /** The screen's title; the name of the Settings row. */
   title: TextSchema,
   /** The Settings row's value: how many times a day. Takes `{count}`. */
   perDay: PluralSchema,
-  /** The Settings row's value with no times, or with permission denied. */
+  /** The Settings row's value with no times, or while permission is denied or not asked yet. */
   off: TextSchema,
   /** Adds a time. */
   addTime: TextSchema,
@@ -32,6 +33,8 @@ export const NotificationsStringsSchema = z.strictObject({
   done: TextSchema,
   /** The switch for the notification sound. */
   sound: TextSchema,
+  /** The button that asks for permission while it is not asked yet. */
+  enable: TextSchema,
   /** When iOS has denied permission. */
   denied: z.strictObject({
     /** The line above the times. */

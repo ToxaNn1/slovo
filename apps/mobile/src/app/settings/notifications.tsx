@@ -1,6 +1,7 @@
 import {
   BackLink,
   NavigationRow,
+  PrimaryButton,
   ScreenTitle,
   SettingsGroup,
   SwitchRow,
@@ -30,13 +31,16 @@ const strings = editionStrings.notifications;
  * the system time picker, which a dev client built before the native batch
  * lacks: then adding and changing a time stay off, and removing still works.
  * A time that is in the list already shows a one-line hint and is not kept.
- * While iOS denies notifications, a line above the times says so, with a row
- * that opens the app's iOS settings; the times stay as they are.
+ * While the reader hasn't been asked for permission, as after «Пізніше» in the
+ * onboarding, «Увімкнути сповіщення» above the times asks, and a grant plans
+ * the notifications. While iOS denies notifications, a line above the times
+ * says so, with a row that opens the app's iOS settings; the times stay as
+ * they are.
  */
 export default function NotificationsScreen() {
   const composition = useComposition();
   const state = useNotificationsState();
-  const { setSound } = useNotificationsChanges();
+  const { setSound, askPermission } = useNotificationsChanges();
   const { colors, fontFamilies } = useTokens();
   const { voice } = useEdition();
   const router = useRouter();
@@ -63,6 +67,15 @@ export default function NotificationsScreen() {
           </View>
           {state !== undefined && (
             <>
+              {state.permission === 'not-asked' && (
+                <View style={styles.enable}>
+                  <PrimaryButton
+                    testID="notifications-enable"
+                    label={strings.enable}
+                    onPress={askPermission}
+                  />
+                </View>
+              )}
               {state.permission === 'denied' && (
                 <View testID="notifications-denied" style={styles.denied}>
                   <Text
@@ -109,5 +122,6 @@ const styles = StyleSheet.create({
   header: { paddingTop: space[2], paddingBottom: space[5] },
   hint: { fontSize: typeSize.body, lineHeight: typeSize.body * 1.5 },
   section: { marginTop: space[6] },
+  enable: { marginBottom: space[6] },
   denied: { gap: space[3], marginBottom: space[6] },
 });

@@ -5,8 +5,8 @@
 #
 # A dev client built before the 0.4 native batch has no notifications at all,
 # so the permission stays not asked: the app starts as usual, the screen shows
-# no such line and the row counts the times. The denied branch is verifiable
-# after the native build only (#176).
+# «Увімкнути сповіщення» in place of that line, and the row reads «Вимкнено»
+# too. The denied branch is verifiable after the native build only (#176).
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
 - stopApp
@@ -39,6 +39,9 @@ appId: ${APP_ID || 'app.slovo.uk'}
       - assertVisible:
           id: notifications-open-settings
           text: Відкрити налаштування
+      # Asking again would ask nothing: only the iOS settings turn them on.
+      - assertNotVisible:
+          id: notifications-enable
       - assertVisible:
           id: notifications-time-09:00-content
       - takeScreenshot: notifications-denied
@@ -54,13 +57,16 @@ appId: ${APP_ID || 'app.slovo.uk'}
     commands:
       - assertNotVisible: Сповіщення вимкнені в налаштуваннях iOS
       - assertVisible:
+          id: notifications-enable
+          text: Увімкнути сповіщення
+      - assertVisible:
           id: notifications-time-09:00-content
       - takeScreenshot: notifications-not-asked
       - tapOn:
           id: notifications-back
       - assertVisible:
           id: settings-row-notifications
-          text: Сповіщення, 3 на день
+          text: Сповіщення, Вимкнено
 - tapOn:
     id: tab-home
 - assertVisible:

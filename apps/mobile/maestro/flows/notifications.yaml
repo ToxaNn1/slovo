@@ -1,6 +1,7 @@
-# Settings › Сповіщення: the Settings row counts the Notification times, and
-# the sound switch turns off and on. The flow leaves the times as it found
-# them, and with the sound on. A subflow of `smoke.yaml`; run it from there.
+# Settings › Сповіщення: the Settings row counts the Notification times while
+# iOS allows notifications and reads «Вимкнено» otherwise, and the sound switch
+# turns off and on. The flow leaves the times as it found them, and with the
+# sound on. A subflow of `smoke.yaml`; run it from there.
 #
 # What else it does depends on whether the app's binary has the native time
 # picker. A dev client built before the 0.4 native batch lacks it, and then
@@ -23,7 +24,9 @@ appId: ${APP_ID || 'app.slovo.uk'}
     # Off the tab bar, which covers the bottom of the list at the largest font size.
     centerElement: true
     visibilityPercentage: 50
-# The row reads «Сповіщення, N на день», or «Сповіщення, Вимкнено» with no times.
+# The row reads «Сповіщення, N на день», or «Сповіщення, Вимкнено» with no times
+# or while notifications are not allowed (a dev client built before the native
+# batch never allows them), and then it stays «Вимкнено» after a removal.
 - copyTextFrom:
     id: settings-row-notifications
 - evalScript: ${output.rowBefore = maestro.copiedText}
@@ -115,7 +118,8 @@ appId: ${APP_ID || 'app.slovo.uk'}
           enabled: false
       - runFlow:
           when:
-            true: ${output.timesBefore > 0}
+            visible:
+              id: notifications-time-.*-content
           commands:
             - tapOn:
                 id: notifications-time-.*-content
@@ -143,7 +147,8 @@ appId: ${APP_ID || 'app.slovo.uk'}
                 id: settings-row-notifications
       - runFlow:
           when:
-            true: ${output.timesBefore === 0}
+            notVisible:
+              id: notifications-time-.*-content
           commands:
             - tapOn:
                 id: notifications-back

@@ -38,3 +38,11 @@ The sample is the next morning notification of a plan made now as if the device 
 ## Amendment: the plan carries the Edition's sound file (0.4)
 
 A planned notification's sound is the Edition's own file (`{ file }`), the system sound or none, so the scheduler adapter plays exactly what the plan says and no longer knows the Edition's sound file beside it. ADR 0023 records the Edition's `notificationSound` as one optional value.
+
+## Amendment: the reader may allow notifications later (0.4)
+
+The 0.4 spec let only the onboarding's «Дозволити сповіщення» ask for permission, yet its «Пізніше» promises the reader can decide later in Settings. iOS shows an app in its notification settings only once the app has asked, so after «Пізніше» or a skip nothing could ever turn notifications on. While permission is not asked yet, the Notifications screen therefore asks too, through the same call of the Notifications module as the onboarding, and a grant plans as it does there. The Settings row reads «Вимкнено» while permission is not allowed, as the plan is empty then. Once the reader has answered, asking again asks nothing: a refusal is undone in the iOS settings, which the screen opens.
+
+### Considered Options
+
+- **Ask only from the onboarding**, as the spec had it: rejected. A reader who chose «Пізніше» would never get notifications, while the row counted the times as if they came.

@@ -52,8 +52,9 @@ export function useNotificationsSummary(): string | undefined {
 }
 
 /**
- * The calls that change the Notification times and the sound. A change that
- * could not be kept is logged and leaves things as they were.
+ * The calls that change the Notification times and the sound, and ask for
+ * permission. A change that could not be kept is logged and leaves things as
+ * they were.
  */
 export function useNotificationsChanges(): {
   /**
@@ -64,6 +65,8 @@ export function useNotificationsChanges(): {
   keepTime: (time: string, replacing?: string) => Promise<NotificationTimeRefusal | undefined>;
   removeTime: (time: string) => void;
   setSound: (on: boolean) => void;
+  /** Asks the reader for permission to notify; a grant plans the notifications. */
+  askPermission: () => void;
 } {
   const notifications = useModule((composition) => composition.notifications);
   const subject = 'the notifications';
@@ -78,6 +81,9 @@ export function useNotificationsChanges(): {
     },
     setSound: (on) => {
       if (notifications !== undefined) void keep(subject, notifications.setSound(on), undefined);
+    },
+    askPermission: () => {
+      if (notifications !== undefined) void keep(subject, notifications.askPermission(), undefined);
     },
   };
 }

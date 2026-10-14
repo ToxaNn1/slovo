@@ -3,7 +3,8 @@ import type { NotificationsState } from '@slovo/core';
 
 /**
  * The value of the «Сповіщення» row of Settings: how many times a day, or
- * «Вимкнено» with none or while iOS denies notifications.
+ * «Вимкнено» with none or while iOS doesn't allow notifications, denied or not
+ * asked yet, as nothing comes then.
  */
 export function notificationsSummary({
   notifications,
@@ -15,7 +16,7 @@ export function notificationsSummary({
   count: (forms: Plural, count: number) => string;
 }): string {
   const { times, permission } = notifications;
-  return times.length === 0 || permission === 'denied'
+  return times.length === 0 || permission !== 'allowed'
     ? strings.off
     : count(strings.perDay, times.length);
 }

@@ -1,17 +1,23 @@
 # Onboarding step 3, notifications: «Почати» and «Далі» lead to «КРОК 3 З 3»
 # with a sample of the Word of the Day's notification and the Notification
 # times; a time taken out here is gone from Settings › Сповіщення; «Пізніше»
-# opens the Feed without asking, and a relaunch shows no onboarding. On the
-# dev client built before the 0.4 native batch (no notifications module, no
-# time picker) «+ Додати час» is disabled and «Дозволити сповіщення» asks
-# nothing; the permission prompt and the picker are checked after the native
-# build. A subflow of `smoke.yaml`; run it from there. It starts from a fresh
-# install, whatever the simulator holds, so it clears the app's state: put it
-# last in the smoke flow, as it takes the Favorites and the other choices with it.
+# opens the Feed without asking, after which the Settings row reads «Вимкнено»
+# and «Увімкнути сповіщення» there asks, and a grant makes the row count the
+# times; a relaunch shows no onboarding. On the dev client built before the
+# 0.4 native batch (no notifications module, no time picker) «+ Додати час» is
+# disabled, and «Дозволити сповіщення» and «Увімкнути сповіщення» ask nothing,
+# so the row stays «Вимкнено»; the permission prompt and the picker are checked
+# after the native build. A subflow of `smoke.yaml`; run it from there. It
+# starts from a fresh install, whatever the simulator holds, so it clears the
+# app's state: put it last in the smoke flow, as it takes the Favorites and the
+# other choices with it.
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
 - launchApp:
     clearState: true
+    # Not asked yet, as on a fresh install, so «Увімкнути сповіщення» shows.
+    permissions:
+      notifications: unset
 - runFlow:
     file: ../open-in-dev-client.yaml
     env:
@@ -80,20 +86,59 @@ appId: ${APP_ID || 'app.slovo.uk'}
       id: settings-row-notifications
     centerElement: true
     visibilityPercentage: 50
-# Settings › Сповіщення shows the times left on the step (3 − 1).
+# Nothing was allowed, so nothing comes: the row reads «Вимкнено».
 - assertVisible:
     id: settings-row-notifications
-    text: Сповіщення, 2 на день
+    text: Сповіщення, Вимкнено
 - tapOn:
     id: settings-row-notifications
+# Settings › Сповіщення shows the times left on the step (3 − 1), and offers to
+# turn notifications on.
 - assertVisible:
     id: notifications-time-09:00-content
 - assertVisible:
     id: notifications-time-19:00-content
 - assertNotVisible:
     id: notifications-time-13:00-content
+- assertVisible:
+    id: notifications-enable
+    text: Увімкнути сповіщення
+- takeScreenshot: notifications-enable
 - tapOn:
-    id: notifications-back
+    id: notifications-enable
+# The iOS prompt, on a binary with the notifications module; its wording is
+# checked after the native build.
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: Allow
+    commands:
+      - tapOn: Allow
+      - waitForAnimationToEnd
+- evalScript: ${output.allowed = false}
+- runFlow:
+    when:
+      notVisible:
+        id: notifications-enable
+    commands:
+      - evalScript: ${output.allowed = true}
+      - tapOn:
+          id: notifications-back
+      - assertVisible:
+          id: settings-row-notifications
+          text: Сповіщення, 2 на день
+# Without the module nothing asks, and nothing changes.
+- runFlow:
+    when:
+      true: ${!output.allowed}
+    commands:
+      - assertVisible:
+          id: notifications-enable
+      - tapOn:
+          id: notifications-back
+      - assertVisible:
+          id: settings-row-notifications
+          text: Сповіщення, Вимкнено
 # A relaunch brings the Feed, with no onboarding.
 - stopApp
 - launchApp:
