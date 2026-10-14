@@ -488,9 +488,11 @@ export async function openFeed({
     date: string;
   }): Promise<string | undefined> {
     const seenId = seenOnLeaving(left, stayed);
-    const wordOfTheDay = left?.kind === 'word' && left.wordOfTheDay !== undefined;
+    const leftWordOfTheDay = left?.kind === 'word' && left.wordOfTheDay !== undefined;
     return keepSeen(
-      seenId === undefined ? undefined : { entryId: seenId, seenAt: new Date(now), wordOfTheDay },
+      seenId === undefined
+        ? undefined
+        : { entryId: seenId, seenAt: new Date(now), wordOfTheDay: leftWordOfTheDay },
       entryId === undefined ? new Map() : feedPosition.change({ entryId, date }),
     );
   }

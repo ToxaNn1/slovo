@@ -58,7 +58,7 @@ export function createDayChange({
   openFeedDay,
 }: {
   clock: Clock;
-  wordOfTheDay: Pick<WordOfTheDay, 'takeReserved'>;
+  wordOfTheDay: Pick<WordOfTheDay, 'takeMorningWord'>;
   /** Writes today as an Active Day. */
   recordToday: () => Promise<void>;
   /** The change that makes today an Active Day, for another write. */
@@ -80,7 +80,7 @@ export function createDayChange({
   async function follow(recordActiveDay: () => Promise<void>, planAnyway: boolean): Promise<void> {
     const today = todayKey(clock);
     const newDay = today !== turnedTo;
-    if (newDay) await wordOfTheDay.takeReserved();
+    if (newDay) await wordOfTheDay.takeMorningWord();
     await recordActiveDay();
     if (newDay || planAnyway) await replan();
     if (newDay) {
@@ -104,7 +104,7 @@ export function createDayChange({
         ).catch(reject);
       }),
     async takeMorningWord() {
-      if (todayKey(clock) !== turnedTo) await wordOfTheDay.takeReserved();
+      if (todayKey(clock) !== turnedTo) await wordOfTheDay.takeMorningWord();
     },
   };
 }

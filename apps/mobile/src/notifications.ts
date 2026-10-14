@@ -7,7 +7,7 @@ import { useComposed, useModule } from './composition';
 import { onDeviceNotificationTap } from './device-notifications';
 import { editionStrings } from './edition';
 import { keep } from './keep';
-import { notificationsSummary } from './notifications-screen';
+import { notificationsSummary } from './notifications-summary';
 
 /**
  * Opens the Word of each notification the reader taps on the Entry screen,
