@@ -19,18 +19,15 @@ describe('the 0.4 user-state records', () => {
     expect(onboardingFinished.key).toBe('onboarding.finished');
   });
 
-  it('marks the notification times, the sound and the plan as staying on the device', () => {
+  it('marks the notification times, the sound, the plan and the onboarding finished as staying on the device', () => {
     expect(notificationTimes.sync).toBe('device-only');
     expect(notificationSound.sync).toBe('device-only');
     expect(notificationPlan.sync).toBe('device-only');
+    expect(onboardingFinished.sync).toBe('device-only');
   });
 
   it('marks Active Days as syncing later as a union', () => {
     expect(activeDays.sync).toBe('union');
-  });
-
-  it('leaves the other 0.4 record without a mark, so it syncs like the rest (ADR 0005)', () => {
-    expect(onboardingFinished.sync).toBeUndefined();
   });
 
   it('reads every record as absent before anything is written, with no migration', async () => {
