@@ -69,21 +69,24 @@ export interface Feed {
    */
   readonly startPosition: number;
   /**
-   * The position of the card on screen, as the Feed keeps it, or nothing
-   * while none is. It moves with the cards when a change of eligibility drops
-   * or puts back cards: the card on screen keeps its place, the next card
-   * takes it when the card on screen is dropped, and a card put back takes
-   * the screen back if it left it and the reader hasn't moved since. A shell
-   * turns to it after the cards change. When no card after the dropped one
-   * stays, the next card comes in the same change and takes the screen; only
-   * when the Feed has no next card is it one past the last card.
+   * The reader's position, as the Feed keeps it: the card on screen, or,
+   * while none is, the card the reader left, and `startPosition` until the
+   * first card is on screen. It moves with the cards when a change of
+   * eligibility drops or puts back cards, on screen or not: the reader's card
+   * keeps its place, the next card takes it when the reader's card is
+   * dropped, and a card put back takes it back if it left it and the reader
+   * hasn't moved to another card since. A shell turns to it after the cards
+   * change. When no card after the dropped one stays, the next card comes in
+   * the same change and takes the place; only when the Feed has no next card
+   * is it one past the last card.
    */
-  readonly position: number | undefined;
+  readonly position: number;
   /** Calls `listener` after each change of the cards. Returns the call that stops it. */
   subscribe(listener: () => void): () => void;
   /**
    * Tells the Feed which card is on screen now, or that none is (the screen
-   * is out of focus or the app in the background). The card that leaves the
+   * is out of focus or the app in the background); the Feed keeps the
+   * reader's place on the card that left. The card that leaves the
    * screen makes its Entry Seen if it stayed there for at least
    * `SEEN_DWELL_MS` and belongs to the current Cycle. While a card is on
    * screen, the Feed keeps the card after it ready, so the next swipe never
@@ -162,7 +165,7 @@ const { feedPosition } = userStateRecords;
  * The composition calls `followEligibility` once the Cycle has read the
  * eligible Entries again: the Feed drops every card whose Entry the Cycle no
  * longer covers and puts back the dropped ones it covers again, see
- * `Feed.position` for the card on screen. A card that leaves the screen this
+ * `Feed.position` for the reader's place. A card that leaves the screen this
  * way is Seen by the dwell rule, like any card that leaves it.
  *
  * The composition calls `markOpenedSeen` for an Entry opened outside the
@@ -212,13 +215,16 @@ export async function openFeed({
   const subscribers = createSubscribers();
   /** The place of the current Cycle's first card: the cards before it belong to an earlier Cycle. */
   let cycleStart = 0;
-  /** The place of the card on screen now, and since when, if one is. */
-  let onScreen: { readonly place: number; readonly since: number } | undefined;
+  /** The place of the reader's card: the one on screen, or the one the reader left while none is. */
+  let place = 0;
+  /** Since when the reader's card is on screen, or nothing while no card is. */
+  let onScreenSince: number | undefined;
   /**
-   * The card dropped from the screen while the reader hasn't moved since: it
-   * takes the screen back when its Entry is eligible again, as on an undo.
+   * The card dropped from the reader's place while the reader hasn't moved to
+   * another card since: it takes the place back when its Entry is eligible
+   * again, as on an undo.
    */
-  let droppedFromScreen: FeedCard | undefined;
+  let droppedFromPlace: FeedCard | undefined;
   /**
    * The local day `YYYY-MM-DD` the Feed last opened with its Word of the Day.
    * Another feature may choose a new day's Word of the Day first, such as a
@@ -256,14 +262,13 @@ export async function openFeed({
 
   /**
    * The session without the card, if given, for the change about to be made:
-   * the places after it move one back, the one on screen too.
+   * the places after it move one back, the reader's too.
    */
   function without(card: FeedCard | undefined): readonly FeedCard[] {
-    const place = card === undefined ? -1 : session.indexOf(card);
-    if (place === -1) return session;
-    if (cycleStart > place) cycleStart -= 1;
-    if (onScreen !== undefined && onScreen.place > place)
-      onScreen = { ...onScreen, place: onScreen.place - 1 };
+    const removed = card === undefined ? -1 : session.indexOf(card);
+    if (removed === -1) return session;
+    if (cycleStart > removed) cycleStart -= 1;
+    if (place > removed) place -= 1;
     return session.filter((kept) => kept !== card);
   }
 
@@ -373,12 +378,11 @@ export async function openFeed({
     const correction = await entries.get(correctionId);
     if (correction?.kind !== 'correction') return undefined;
     const opened = await buildEntryCard(entries, correction);
-    const place = session.indexOf(card);
-    // The cards after it move one place on, the one on screen too.
-    if (cycleStart > place) cycleStart += 1;
-    if (onScreen !== undefined && onScreen.place > place)
-      onScreen = { ...onScreen, place: onScreen.place + 1 };
-    changeSession([...session.slice(0, place + 1), opened, ...session.slice(place + 1)]);
+    const at = session.indexOf(card);
+    // The cards after it move one place on, the reader's too.
+    if (cycleStart > at) cycleStart += 1;
+    if (place > at) place += 1;
+    changeSession([...session.slice(0, at + 1), opened, ...session.slice(at + 1)]);
     return position + 1;
   }
 
@@ -411,14 +415,14 @@ export async function openFeed({
 
   /** Whether the card on screen is the last one, so the card after it is not ready yet. */
   const nextCardMissing = () =>
-    onScreen !== undefined && positionOf(onScreen.place) >= cards.length - 1;
+    onScreenSince !== undefined && positionOf(place) >= cards.length - 1;
 
   /**
    * Whether the ready card, the last one, which the reader hasn't reached, was
    * got ready on an earlier local day: the Feed hasn't opened today yet.
    */
   const readyCardStale = () =>
-    onScreen !== undefined && positionOf(onScreen.place) < cards.length - 1 && dayToOpen;
+    onScreenSince !== undefined && positionOf(place) < cards.length - 1 && dayToOpen;
 
   /** Puts today's Word of the Day in place of a ready card got ready on an earlier local day. */
   async function replaceStaleReadyCard(): Promise<void> {
@@ -510,14 +514,19 @@ export async function openFeed({
   }
 
   async function show(position: number | undefined): Promise<void> {
-    const place = position === undefined ? undefined : placeOf(position);
-    if (place === onScreen?.place) return keepNextCardReady();
-    droppedFromScreen = undefined;
+    const shown = position === undefined ? undefined : placeOf(position);
+    const onScreen = onScreenSince !== undefined;
+    if (shown === undefined ? !onScreen : onScreen && shown === place) return keepNextCardReady();
     const now = clock.now().getTime();
-    const left = onScreen === undefined ? undefined : session[onScreen.place];
-    const stayed = onScreen === undefined ? 0 : now - onScreen.since;
-    onScreen = place === undefined ? undefined : { place, since: now };
-    const entryId = place === undefined ? undefined : entryIdOf(session[place]);
+    const left = onScreenSince === undefined ? undefined : session[place];
+    const stayed = onScreenSince === undefined ? 0 : now - onScreenSince;
+    // Leaving the screen, or coming back to the card left, keeps the reader where they were.
+    if (shown !== undefined && shown !== place) {
+      place = shown;
+      droppedFromPlace = undefined;
+    }
+    onScreenSince = shown === undefined ? undefined : now;
+    const entryId = shown === undefined ? undefined : entryIdOf(session[shown]);
     const date = todayKey(clock);
     // In turn with the requests that change the cards, so a new Cycle never
     // starts between the card leaving the screen and its Entry becoming Seen.
@@ -526,13 +535,13 @@ export async function openFeed({
   }
 
   /**
-   * The place of the card on screen once the `out` cards are dropped: the
-   * card dropped from the screen when it is back, else the card on screen,
-   * else the next card that stays.
+   * The reader's place once the `out` cards are dropped: the card dropped
+   * from it when it is back, else the reader's card, else the next card that
+   * stays.
    */
-  function placeOnScreen(place: number, out: ReadonlySet<FeedCard>): number {
-    if (droppedFromScreen !== undefined && !out.has(droppedFromScreen)) {
-      const back = session.indexOf(droppedFromScreen);
+  function readerPlace(out: ReadonlySet<FeedCard>): number {
+    if (droppedFromPlace !== undefined && !out.has(droppedFromPlace)) {
+      const back = session.indexOf(droppedFromPlace);
       if (back !== -1) return back;
     }
     const card = session[place];
@@ -562,7 +571,7 @@ export async function openFeed({
     linksShown = links;
     if (rebuilt.size === 0) return;
     const renewed = (card: FeedCard) => rebuilt.get(card) ?? card;
-    if (droppedFromScreen !== undefined) droppedFromScreen = renewed(droppedFromScreen);
+    if (droppedFromPlace !== undefined) droppedFromPlace = renewed(droppedFromPlace);
     changeSession(session.map(renewed), new Set([...dropped].map(renewed)));
   }
 
@@ -591,21 +600,22 @@ export async function openFeed({
         return entryId !== undefined && !cycle.covers(entryId);
       }),
     );
-    const was = onScreen;
-    const place = was === undefined ? undefined : placeOnScreen(was.place, out);
-    const left = was === undefined ? undefined : session[was.place];
-    if (left !== undefined && out.has(left)) droppedFromScreen = left;
-    else if (place !== undefined && session[place] === droppedFromScreen)
-      droppedFromScreen = undefined;
-    const moved = was !== undefined && place !== undefined && place !== was.place;
+    const was = place;
+    const to = readerPlace(out);
+    const left = session[was];
+    if (left !== undefined && out.has(left)) droppedFromPlace = left;
+    else if (session[to] === droppedFromPlace) droppedFromPlace = undefined;
+    const moved = to !== was;
     const sameDropped = out.size === dropped.size && [...out].every((card) => dropped.has(card));
     if (!moved && sameDropped) return undefined;
     const now = clock.now().getTime();
-    if (moved) onScreen = { place, since: now };
-    if (moved && place === session.length) {
-      // No card after the one dropped from the screen stays: the next card
-      // takes the screen in the same change, so the reader's place is kept
-      // on it below and the subscribers never find the screen past the cards.
+    const since = onScreenSince;
+    place = to;
+    if (moved && since !== undefined) onScreenSince = now;
+    if (moved && to === session.length) {
+      // No card after the one dropped from the reader's place stays: the
+      // next card takes the place in the same change, so the reader's place
+      // is kept on it below and the subscribers never find it past the cards.
       setSession(session, out);
       let added: FeedCard | undefined;
       try {
@@ -615,12 +625,14 @@ export async function openFeed({
         if (added === undefined) subscribers.tell();
       }
     } else changeSession(session, out);
-    if (!moved) return undefined;
+    // With no card on screen, none left it and the card that takes the place
+    // isn't on it yet: the reader's coming back writes the place.
+    if (!moved || since === undefined) return undefined;
     return keepScreenChange({
       left,
-      stayed: now - was.since,
-      // Adding the next card may move the place on screen.
-      entryId: entryIdOf(session[onScreen?.place ?? place]),
+      stayed: now - since,
+      // Adding the next card may move the reader's place.
+      entryId: entryIdOf(session[place]),
       now,
       date: todayKey(clock),
     });
@@ -640,13 +652,14 @@ export async function openFeed({
 
   if (!(await restore())) await addWordOfTheDay();
   const startPosition = Math.max(cards.length - 1, 0);
+  place = placeOf(startPosition);
   const feed: Feed = {
     get cards() {
       return cards;
     },
     startPosition,
     get position() {
-      return onScreen === undefined ? undefined : positionOf(onScreen.place);
+      return positionOf(place);
     },
     subscribe: subscribers.subscribe,
     show,

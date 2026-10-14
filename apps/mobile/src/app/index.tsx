@@ -55,17 +55,17 @@ function FeedScreen() {
 
   const ready = feed.status === 'ready' ? feed : undefined;
   const cards = ready?.cards;
-  const positionOnScreen = ready?.positionOnScreen;
+  const readerPosition = ready?.readerPosition;
   const onCardChange = ready?.onCardChange;
-  // A hide or its undo drops or puts back cards, and the card on screen moves
+  // A hide or its undo drops or puts back cards, and the reader's card moves
   // with them: the pager shows it at once. When the Feed has no card to put
   // after a hidden one, the pager stays on its page.
   useEffect(() => {
-    const position = positionOnScreen?.();
+    const position = readerPosition?.();
     if (cards === undefined || position === undefined || position >= cards.length) return;
     pager.current?.showPage(position);
     onCardChange?.(position);
-  }, [cards, positionOnScreen, onCardChange]);
+  }, [cards, readerPosition, onCardChange]);
 
   if (feed.status === 'loading') return <FeedLoadingScreen />;
   if (feed.status === 'failed') return <LoadFailed onRetry={feed.retry} />;

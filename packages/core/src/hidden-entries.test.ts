@@ -413,7 +413,7 @@ describe('the Feed, when an Entry is hidden or restored', () => {
     await app.hiddenEntries.hide(hidden ?? '');
 
     expect(entryIdsOf(app.feed.cards).slice(0, 2)).toEqual([second, onScreen]);
-    expect(entryIdOf(app.feed.cards[app.feed.position ?? -1])).toBe(onScreen);
+    expect(entryIdOf(app.feed.cards[app.feed.position])).toBe(onScreen);
   });
 
   it('drops a hidden card that is ready but not on screen, and gets the next one ready', async () => {
@@ -428,17 +428,116 @@ describe('the Feed, when an Entry is hidden or restored', () => {
     expect(app.feed.position).toBe(0);
   });
 
-  it('drops the hidden cards while no card is on screen, and keeps nothing on screen', async () => {
+  it('keeps the reader’s place on the card they left while no card is on screen', async () => {
+    const app = await run();
+    await turnTo(app.feed, 1);
+
+    await app.feed.show(undefined);
+
+    expect(app.feed.position).toBe(1);
+  });
+
+  it('gives the place of the card the reader left to the next card when it is hidden while no card is on screen', async () => {
+    const app = await run();
+    await turnTo(app.feed, 1);
+    await app.feed.show(undefined);
+    const before = entryIdsOf(app.feed.cards);
+    const [, hidden, next] = before;
+
+    await app.hiddenEntries.hide(hidden ?? '');
+
+    expect(entryIdsOf(app.feed.cards)).toEqual(before.filter((id) => id !== hidden));
+    expect(app.feed.position).toBe(1);
+    expect(entryIdOf(app.feed.cards[1])).toBe(next);
+  });
+
+  it('keeps the reader on a card before the one hidden while no card is on screen', async () => {
+    const app = await run();
+    await turnTo(app.feed, 2);
+    await app.feed.show(undefined);
+    const [hidden, , onScreen] = entryIdsOf(app.feed.cards);
+
+    await app.hiddenEntries.hide(hidden ?? '');
+
+    expect(entryIdOf(app.feed.cards[app.feed.position])).toBe(onScreen);
+  });
+
+  it('gives the place back to the card the reader left on an undo while no card is on screen', async () => {
     const app = await run();
     await turnTo(app.feed, 1);
     await app.feed.show(undefined);
     const before = entryIdsOf(app.feed.cards);
     const hidden = before[1] ?? '';
+    await app.hiddenEntries.hide(hidden);
+
+    await app.hiddenEntries.restore(hidden);
+
+    expect(entryIdsOf(app.feed.cards).slice(0, 3)).toEqual(before);
+    expect(app.feed.position).toBe(1);
+  });
+
+  it('gives the place back on an undo after the reader left the screen, as they haven’t moved', async () => {
+    const app = await run();
+    await turnTo(app.feed, 1);
+    const hidden = entryIdOf(app.feed.cards[1]) ?? '';
+    await app.hiddenEntries.hide(hidden);
+    await app.feed.show(undefined);
+
+    await app.hiddenEntries.restore(hidden);
+
+    expect(app.feed.position).toBe(1);
+    expect(entryIdOf(app.feed.cards[1])).toBe(hidden);
+  });
+
+  /** Leaves card 1 before it is Seen and hides it while no card is on screen. */
+  async function hideWhileOut() {
+    const records = new Map<string, string>();
+    const time = fakeClock();
+    const app = await run({ records, clock: time.clock });
+    await turnTo(app.feed, 1);
+    time.advance(SEEN_DWELL_MS - 1);
+    await app.feed.show(undefined);
+    const hidden = entryIdOf(app.feed.cards[1]) ?? '';
+    time.advance(MINUTE);
+    await app.hiddenEntries.hide(hidden);
+    time.advance(MINUTE);
+    return { records, time, app, hidden, next: entryIdOf(app.feed.cards[1]) ?? '' };
+  }
+
+  it('leaves the card the reader left unseen when it is hidden while no card is on screen', async () => {
+    const { records, hidden } = await hideWhileOut();
+
+    expect(records.has(`feed.seen.${hidden}`)).toBe(false);
+  });
+
+  it('keeps the reader’s place on the card that took it once the reader comes back', async () => {
+    const { records, time, app, next } = await hideWhileOut();
+
+    await app.feed.show(app.feed.position);
+
+    const reopened = await run({ records, clock: time.clock });
+    expect(entryIdOf(reopened.feed.cards[reopened.feed.startPosition])).toBe(next);
+  });
+
+  it('counts the dwell time of the card that took the place from the reader’s coming back', async () => {
+    const { records, time, app, next } = await hideWhileOut();
+    await app.feed.show(app.feed.position);
+
+    time.advance(SEEN_DWELL_MS - 1);
+    await app.feed.show(2);
+
+    expect(records.has(`feed.seen.${next}`)).toBe(false);
+  });
+
+  it('gets the next card into the place of the only card, hidden before any card was on screen', async () => {
+    const app = await run();
+    const twin = await walk((await run()).feed);
+    const hidden = entryIdOf(app.feed.cards[0]) ?? '';
 
     await app.hiddenEntries.hide(hidden);
 
-    expect(entryIdsOf(app.feed.cards)).toEqual(before.filter((id) => id !== hidden));
-    expect(app.feed.position).toBeUndefined();
+    expect(entryIdsOf(app.feed.cards)).toEqual([twin[1]]);
+    expect(app.feed.position).toBe(0);
   });
 
   it('puts the card back where it was on undo, on screen again, with the card after it ready', async () => {
@@ -481,7 +580,7 @@ describe('the Feed, when an Entry is hidden or restored', () => {
     await app.hiddenEntries.restore(hidden);
 
     expect(entryIdOf(app.feed.cards[1])).toBe(hidden);
-    expect(entryIdOf(app.feed.cards[app.feed.position ?? -1])).toBe(onScreen);
+    expect(entryIdOf(app.feed.cards[app.feed.position])).toBe(onScreen);
   });
 
   it(`makes the hidden card on screen Seen, into History, once it stayed there ${String(SEEN_DWELL_MS)} ms`, async () => {
@@ -544,7 +643,7 @@ describe('the Feed, when an Entry is hidden or restored', () => {
     const hidden = entryIdOf(app.feed.cards[end + 1]) ?? '';
     /** The card on screen and the one after it. */
     const onScreenAndNext = () => {
-      const position = app.feed.position ?? -1;
+      const position = app.feed.position;
       return [app.feed.cards[position]?.kind, entryIdOf(app.feed.cards[position + 1])];
     };
 
@@ -558,7 +657,7 @@ describe('the Feed, when an Entry is hidden or restored', () => {
     await app.hiddenEntries.restore(hidden);
 
     expect(onScreenAndNext()).toEqual(['end-of-cycle', hidden]);
-    const position = app.feed.position ?? -1;
+    const position = app.feed.position;
     await app.feed.show(position + 1);
     time.advance(SEEN_DWELL_MS);
     await app.feed.show(position + 2);

@@ -1,9 +1,18 @@
-import { useEffect } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 import { AppState } from 'react-native';
 
 import { useModule } from './composition';
 import { deviceClock } from './device-clock';
+import { createForeground } from './foreground';
 import { reportForeground } from './foreground-reports';
+
+/** The shell's one source of the foreground, for this adapter and the Feed alike. */
+const foreground = createForeground(AppState);
+
+/** Whether the app is in the foreground, kept up to date. */
+export function useInForeground(): boolean {
+  return useSyncExternalStore(foreground.subscribe, foreground.active);
+}
 
 /**
  * The lifecycle adapter: it tells the composition the app is in the
@@ -22,14 +31,10 @@ export function Lifecycle() {
         });
       },
       clock: deviceClock,
-      onForeground(listener) {
-        const subscription = AppState.addEventListener('change', (state) => {
-          if (state === 'active') listener();
-        });
-        return () => {
-          subscription.remove();
-        };
-      },
+      onForeground: (listener) =>
+        foreground.subscribe(() => {
+          if (foreground.active()) listener();
+        }),
     });
   }, [composition]);
   return null;
