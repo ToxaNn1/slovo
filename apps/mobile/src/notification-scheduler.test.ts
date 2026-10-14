@@ -50,15 +50,13 @@ function mockNotifications({
   };
 }
 
-const noSound = { editionSound: undefined };
-
 const planned = (overrides: Partial<PlannedNotification> = {}): PlannedNotification => ({
   date: '2026-10-15',
   time: '09:00',
   title: 'кракелю́р',
   body: 'Сітка тріщин на фарбі.',
   wordId: 'w_00g2ap',
-  sound: 'edition',
+  sound: { file: 'notification.wav' },
   ...overrides,
 });
 
@@ -69,9 +67,7 @@ const tapOn = (data: Record<string, unknown>) =>
 describe('the notification scheduler on expo-notifications', () => {
   it('schedules a plan as calendar triggers from local date parts, with no time zone', async () => {
     const { module, notifications } = mockNotifications();
-    const scheduler = createNotificationScheduler(notifications, {
-      editionSound: 'notification.wav',
-    });
+    const scheduler = createNotificationScheduler(notifications);
 
     await scheduler.replacePlan([planned(), planned({ date: '2026-12-31', time: '19:45' })]);
 
@@ -98,7 +94,7 @@ describe('the notification scheduler on expo-notifications', () => {
 
   it('cancels the old plan before it schedules the new one', async () => {
     const { module, notifications } = mockNotifications();
-    const scheduler = createNotificationScheduler(notifications, noSound);
+    const scheduler = createNotificationScheduler(notifications);
 
     await scheduler.replacePlan([planned()]);
     await scheduler.replacePlan([]);
@@ -112,12 +108,10 @@ describe('the notification scheduler on expo-notifications', () => {
 
   it("plays the Edition's sound, the system sound, or none", async () => {
     const { module, notifications } = mockNotifications();
-    const scheduler = createNotificationScheduler(notifications, {
-      editionSound: 'notification.wav',
-    });
+    const scheduler = createNotificationScheduler(notifications);
 
     await scheduler.replacePlan([
-      planned({ time: '09:00', sound: 'edition' }),
+      planned({ time: '09:00', sound: { file: 'notification.wav' } }),
       planned({ time: '13:00', sound: 'system' }),
       planned({ time: '19:00', sound: 'silent' }),
     ]);
@@ -129,10 +123,7 @@ describe('the notification scheduler on expo-notifications', () => {
 
   it('reports the permission as allowed, denied or not asked yet', async () => {
     const report = (status: Status) =>
-      createNotificationScheduler(
-        mockNotifications({ status }).notifications,
-        noSound,
-      ).permission();
+      createNotificationScheduler(mockNotifications({ status }).notifications).permission();
 
     expect(await report('granted')).toBe('allowed');
     expect(await report('denied')).toBe('denied');
@@ -143,18 +134,16 @@ describe('the notification scheduler on expo-notifications', () => {
     const notAsked = mockNotifications({ status: 'undetermined', answer: 'denied' });
     const denied = mockNotifications({ status: 'denied' });
 
-    expect(await createNotificationScheduler(notAsked.notifications, noSound).askPermission()).toBe(
+    expect(await createNotificationScheduler(notAsked.notifications).askPermission()).toBe(
       'denied',
     );
     expect(notAsked.module.requestPermissionsAsync).toHaveBeenCalledTimes(1);
-    expect(await createNotificationScheduler(denied.notifications, noSound).askPermission()).toBe(
-      'denied',
-    );
+    expect(await createNotificationScheduler(denied.notifications).askPermission()).toBe('denied');
     expect(denied.module.requestPermissionsAsync).not.toHaveBeenCalled();
   });
 
   it('without the module reports not asked yet, asks nothing and schedules nothing', async () => {
-    const scheduler = createNotificationScheduler(undefined, { editionSound: 'notification.wav' });
+    const scheduler = createNotificationScheduler(undefined);
 
     expect(await scheduler.permission()).toBe('not-asked');
     expect(await scheduler.askPermission()).toBe('not-asked');

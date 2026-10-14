@@ -71,10 +71,11 @@ export interface Random {
 export type NotificationPermission = 'allowed' | 'denied' | 'not-asked';
 
 /**
- * The sound a notification plays: the Edition's own, the system default when
- * the Edition has none, or none at all when the reader switched it off.
+ * The sound a notification plays: the Edition's own, named by the file the
+ * shell bundles, the system default when the Edition has none, or none at all
+ * when the reader switched it off.
  */
-export type PlannedSound = 'edition' | 'system' | 'silent';
+export type PlannedSound = { readonly file: string } | 'system' | 'silent';
 
 /**
  * One notification of the plan: a Word at a local date and time, floating

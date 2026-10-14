@@ -1,5 +1,4 @@
 import { nativeModules } from './device-native-modules';
-import { edition } from './edition';
 import {
   createNotificationScheduler,
   onNotificationTap,
@@ -18,9 +17,7 @@ const notifications = nativeModules.load(
 );
 
 /** The notification scheduler the composition plans on: the device's, or one that stays not asked. */
-export const deviceNotificationScheduler = createNotificationScheduler(notifications, {
-  editionSound: edition.notificationSound,
-});
+export const deviceNotificationScheduler = createNotificationScheduler(notifications);
 
 /** Calls `open` with the link of each notification the reader taps; returns the call that stops it. */
 export const onDeviceNotificationTap = (open: (link: string) => void) =>

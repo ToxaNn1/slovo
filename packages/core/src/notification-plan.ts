@@ -31,10 +31,10 @@ export interface NotificationScheduling {
   readonly ellipsis: string;
 }
 
-/** What the plan needs to know of the Edition: whether it has a notification sound of its own. */
+/** What the plan needs to know of the Edition: its notification sound, if it has one. */
 export interface PlanEdition {
-  /** Without it, the Edition has none, and notifications play the system sound. */
-  readonly hasNotificationSound?: boolean;
+  /** The file name of the Edition's own sound; without one, notifications play the system sound. */
+  readonly notificationSound?: string | undefined;
 }
 
 /**
@@ -194,7 +194,7 @@ export function createNotificationPlanner({
 
   function soundOf(on: boolean): PlannedSound {
     if (!on) return 'silent';
-    return edition.hasNotificationSound === true ? 'edition' : 'system';
+    return edition.notificationSound === undefined ? 'system' : { file: edition.notificationSound };
   }
 
   async function nextMorning(times: readonly string[]): Promise<MorningNotification | undefined> {

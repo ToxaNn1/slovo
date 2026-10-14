@@ -34,3 +34,7 @@ The sample is the next morning notification of a plan made now as if the device 
 
 - **Plan for real before the reader is asked**, so the sample reads the stored plan: rejected. Words would be Reserved for notifications that may never be allowed, against the permission rule.
 - **Keep the sample in the shell and pass it the Word of the Day**: rejected. The shell would still repeat the plan's rule for a passed morning and a Seen Word of the Day.
+
+## Amendment: the plan carries the Edition's sound file (0.4)
+
+A planned notification's sound is the Edition's own file (`{ file }`), the system sound or none, so the scheduler adapter plays exactly what the plan says and no longer knows the Edition's sound file beside it. ADR 0023 records the Edition's `notificationSound` as one optional value.

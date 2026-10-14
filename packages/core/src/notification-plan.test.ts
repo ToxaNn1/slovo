@@ -87,7 +87,7 @@ async function run({
   records = new Map<string, string>(),
   clock = fakeClock().clock,
   scheduler = createFakeNotificationScheduler(),
-  hasNotificationSound = true,
+  notificationSound = 'notification.wav',
   mixCategoryIds = ['test'],
 }: {
   words?: readonly Word[];
@@ -95,7 +95,8 @@ async function run({
   records?: Map<string, string>;
   clock?: Clock;
   scheduler?: FakeNotificationScheduler;
-  hasNotificationSound?: boolean;
+  /** The Edition's sound file; null for an Edition without one. */
+  notificationSound?: string | null;
   mixCategoryIds?: readonly string[];
 } = {}): Promise<{
   app: Composition;
@@ -114,7 +115,7 @@ async function run({
         mix: { categoryIds: mixCategoryIds, corrections: true },
         notificationTimes: defaultTimes,
       },
-      hasNotificationSound,
+      notificationSound: notificationSound ?? undefined,
     },
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock,
@@ -366,12 +367,15 @@ describe('the notification plan', () => {
     const records = new Map([['notifications.sound', 'false']]);
 
     const { scheduler: own } = await run();
-    const { scheduler: system } = await run({ hasNotificationSound: false });
+    const { scheduler: system } = await run({ notificationSound: null });
     const { scheduler: silent } = await run({ records });
 
-    expect(new Set(planOf(own).map(({ sound }) => sound))).toEqual(new Set(['edition']));
-    expect(new Set(planOf(system).map(({ sound }) => sound))).toEqual(new Set(['system']));
-    expect(new Set(planOf(silent).map(({ sound }) => sound))).toEqual(new Set(['silent']));
+    const soundsOf = (scheduler: FakeNotificationScheduler) =>
+      planOf(scheduler).map(({ sound }) => sound);
+    const all = <T>(sound: T) => soundsOf(own).map(() => sound);
+    expect(soundsOf(own)).toEqual(all({ file: 'notification.wav' }));
+    expect(soundsOf(system)).toEqual(all('system'));
+    expect(soundsOf(silent)).toEqual(all('silent'));
   });
 
   it('titles a notification with the Lemma and its Stress, and gives the primary Definition as the body', async () => {

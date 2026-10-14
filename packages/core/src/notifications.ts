@@ -18,7 +18,7 @@ import type { WordOfTheDay } from './word-of-the-day';
 
 /**
  * What the Notifications module needs to know of the Edition: its default
- * Notification times, and whether it has a notification sound of its own.
+ * Notification times, and its notification sound, if it has one.
  */
 export interface NotificationsEdition extends PlanEdition {
   readonly userSettingDefaults: Pick<UserSettingDefaults, 'notificationTimes'>;
