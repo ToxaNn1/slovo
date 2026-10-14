@@ -197,6 +197,7 @@ function setup(overrides: Partial<SourcingOptions> = {}, network?: NetworkOption
 function editionWith(
   edit: (config: Record<string, unknown>) => Record<string, unknown>,
   words: Record<string, unknown> = {},
+  registry?: unknown,
 ): string {
   const dir = mkdtempSync(join(tmpdir(), 'slovo-edition-'));
   const config = JSON.parse(
@@ -206,6 +207,9 @@ function editionWith(
   mkdirSync(join(dir, 'content', 'words'), { recursive: true });
   for (const [id, word] of Object.entries(words)) {
     writeFileSync(join(dir, 'content', 'words', `${id}.json`), JSON.stringify(word));
+  }
+  if (registry !== undefined) {
+    writeFileSync(join(dir, 'content', 'ids.json'), JSON.stringify(registry));
   }
   return dir;
 }
@@ -734,8 +738,8 @@ describe('sourceWords', () => {
     expect(net.requests.filter((address) => address.includes('web.archive.org'))).toEqual([]);
   });
 
-  it('never reuses an id the Edition already has', async () => {
-    // The first id this source of randomness spells is w_olmlqv, here a Word of the Edition.
+  it('never issues an id the registry lists, even one without a Word file', async () => {
+    // The first id this source of randomness spells is w_olmlqv, listed in the registry of the Edition.
     const taken = 'olmlqv';
     const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789';
     const numbers = Array.from(
@@ -743,18 +747,7 @@ describe('sourceWords', () => {
       (letter) => (alphabet.indexOf(letter) + 0.5) / alphabet.length,
     );
     const next = seededRandom();
-    const editionDir = editionWith((config) => config, {
-      [`w_${taken}`]: {
-        id: `w_${taken}`,
-        lemma: 'дощ',
-        stress: [1],
-        partOfSpeech: 'noun',
-        primaryDefinition: 'Опади.',
-        categoryId: 'nature-weather',
-        rarity: 1,
-        sources: [{ title: 'Тестове джерело' }],
-      },
-    });
+    const editionDir = editionWith((config) => config, {}, [`w_${taken}`]);
     const { options } = setup({
       lemmaList: 'мжичка nature-weather 2\n',
       editionDir,
@@ -766,6 +759,16 @@ describe('sourceWords', () => {
     const word = WordSchema.parse(readDrafts(options.outDir)[0]);
     expect(word.id).not.toBe(`w_${taken}`);
     expect(word.id).toMatch(/^w_[a-z0-9]{6}$/);
+  });
+
+  it('refuses an Edition whose id registry is invalid, before fetching', async () => {
+    const editionDir = editionWith((config) => config, {}, ['w_aaaaaa', 'w_aaaaaa']);
+    const { options, net } = setup({ lemmaList: 'мжичка nature-weather 2\n', editionDir });
+
+    const result = await sourceWords(options);
+
+    expect(result.ok).toBe(false);
+    expect(net.requests).toEqual([]);
   });
 
   it('refuses an Edition in another language than its dictionaries, before fetching', async () => {

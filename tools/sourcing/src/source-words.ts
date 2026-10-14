@@ -1,9 +1,8 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import {
   EditionConfigSchema,
-  GenderSchema,
   WordSchema,
   type EditionConfig,
   type Example,
@@ -11,7 +10,7 @@ import {
   type Register,
   type Source,
 } from '@slovo/contracts';
-import { checkNewWords } from '@slovo/language-pack';
+import { checkNewWords, ID_REGISTRY_FILE, IdRegistrySchema } from '@slovo/language-pack';
 
 import {
   fetchGoroh,
@@ -34,7 +33,7 @@ import { matchKey, readStress, SOURCE_LANGUAGE, unstressed } from './text';
 export interface SourcingOptions {
   /** The Lemmas to draft, one per line: `<lemma> <category id> <rarity>`; `#` starts a comment. */
   readonly lemmaList: string;
-  /** The Edition the drafts are for: its Categories, language traits and taken ids. */
+  /** The Edition the drafts are for: its Categories, language traits and id registry. */
   readonly editionDir: string;
   /** The review folder: drafts, incomplete drafts and the review report go here. */
   readonly outDir: string;
@@ -233,18 +232,21 @@ function readEdition(
       ),
     };
   }
-  const takenIds = new Set<string>();
-  const wordsDir = join(editionDir, 'content', 'words');
-  if (existsSync(wordsDir)) {
-    for (const name of readdirSync(wordsDir).filter((file) => file.endsWith('.json'))) {
-      const word = JSON.parse(readFileSync(join(wordsDir, name), 'utf8')) as { id?: unknown };
-      if (typeof word.id === 'string') takenIds.add(word.id);
-    }
+  const registryFile = join(editionDir, ID_REGISTRY_FILE);
+  if (!existsSync(registryFile)) return { ok: true, config: parsed.data, takenIds: new Set() };
+  const registry = IdRegistrySchema.safeParse(JSON.parse(readFileSync(registryFile, 'utf8')));
+  if (!registry.success) {
+    return {
+      ok: false,
+      errors: registry.error.issues.map(
+        (issue) => `${ID_REGISTRY_FILE} › ${issue.path.join('.')}: ${issue.message}`,
+      ),
+    };
   }
-  return { ok: true, config: parsed.data, takenIds };
+  return { ok: true, config: parsed.data, takenIds: new Set(registry.data) };
 }
 
-/** New opaque Word ids that the Edition hasn't used. */
+/** New opaque Word ids that the Edition's id registry doesn't list, and no draft of this run has. */
 function idMaker(random: () => number, takenIds: Set<string>): () => string {
   const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789';
   return () => {
@@ -601,12 +603,7 @@ function draftArticle(
 
   const issues = checkDraft(word, context.editionDir);
   if (gender === 'plural-only') {
-    flag(
-      'plural-only',
-      GenderSchema.safeParse('plural-only').success
-        ? 'A plural-only noun'
-        : 'A plural-only noun; the Word schema on this branch does not know `plural-only` yet (ticket #9 adds it), so that check was skipped',
-    );
+    flag('plural-only', 'A plural-only noun');
   }
   const id = String(word['id']);
   const ready = issues.length === 0;
@@ -630,17 +627,11 @@ function draftArticle(
  */
 function checkDraft(word: Record<string, unknown>, editionDir: string): string[] {
   const result = WordSchema.safeParse(word);
-  const knowsPluralOnly = GenderSchema.safeParse('plural-only').success;
   const issues = result.success
     ? checkNewWords(editionDir, [result.data]).map(
         ({ field, message }) => `${field ?? '(word)'}: ${message}`,
       )
-    : result.error.issues
-        .filter(
-          (issue) =>
-            knowsPluralOnly || word['gender'] !== 'plural-only' || issue.path[0] !== 'gender',
-        )
-        .map((issue) => `${issue.path.join('.') || '(word)'}: ${issue.message}`);
+    : result.error.issues.map((issue) => `${issue.path.join('.') || '(word)'}: ${issue.message}`);
   return unique(issues);
 }
 
