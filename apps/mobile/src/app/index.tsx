@@ -6,6 +6,7 @@ import {
   PagerScrollView,
   Placeholder,
   space,
+  StatsPill,
   SwipeHint,
   UndoToastProvider,
   useTokens,
@@ -21,6 +22,7 @@ import { EntryActions } from '../entry-actions';
 import { useFeed } from '../feed';
 import { FeedLoadingScreen, TOP_ROW } from '../feed-loading';
 import { LoadFailed } from '../language-pack';
+import { useStreak } from '../progress';
 import { useSwipeHint } from '../swipe-hint';
 
 const { feed: feedStrings } = editionStrings;
@@ -40,7 +42,9 @@ export default function HomeScreen() {
 function FeedScreen() {
   const feed = useFeed();
   const swipeHint = useSwipeHint();
+  const streak = useStreak();
   const { colors } = useTokens();
+  const { top } = useSafeAreaInsets();
   const pager = useRef<VerticalPagerHandle>(null);
   /** The page to turn to once it is drawn, such as a Correction opened from a Word. */
   const [turnTo, setTurnTo] = useState<number>();
@@ -99,6 +103,10 @@ function FeedScreen() {
         }}
         turnActionLabels={{ next: feedStrings.nextEntry, previous: feedStrings.previousEntry }}
       />
+      {/* The top row stays put over the cards, like the background. */}
+      <View pointerEvents="box-none" style={[styles.topRow, { top }]}>
+        {streak === undefined ? null : <StatsPill streak={streak} />}
+      </View>
       {swipeHint.visible ? (
         <SwipeHint
           text={feedStrings.swipeHint}
@@ -145,6 +153,13 @@ function FeedPage({
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
+  topRow: {
+    position: 'absolute',
+    left: space[6],
+    right: space[6],
+    height: TOP_ROW,
+    justifyContent: 'center',
+  },
   page: { flex: 1 },
   content: { paddingTop: TOP_ROW, paddingHorizontal: space[6], paddingBottom: space[6] },
   endOfCycle: { paddingHorizontal: space[6], paddingBottom: space[6] },
