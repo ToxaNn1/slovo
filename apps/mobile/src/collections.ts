@@ -1,42 +1,23 @@
 import type { Collection, CollectionEntry, Collections } from '@slovo/core';
-import { useCallback, useSyncExternalStore } from 'react';
 
-import { useComposition } from './composition';
+import { useComposed, useModule } from './composition';
+import { keep } from './keep';
 
 const noCollections: readonly Collection[] = [];
 const noEntries: readonly CollectionEntry[] = [];
 
 /** Collections of the session's Core composition, once it is open. */
 function useCollections(): Collections | undefined {
-  const composition = useComposition();
-  return composition.status === 'ready' ? composition.composition.collections : undefined;
-}
-
-/** Subscribes to Collections, if they are open, for `useSyncExternalStore`. */
-function useSubscribe(collections: Collections | undefined) {
-  return useCallback(
-    (listener: () => void) => collections?.subscribe(listener) ?? (() => undefined),
-    [collections],
-  );
+  return useModule((composition) => composition.collections);
 }
 
 /** The Collections, newest first, kept up to date; none until they open. */
 export function useCollectionList(): readonly Collection[] {
-  const collections = useCollections();
-  return useSyncExternalStore(useSubscribe(collections), () => collections?.list ?? noCollections);
-}
-
-/**
- * Waits for a change of Collections. One that could not be kept is logged and
- * resolves to `unchanged`, as Collections stay as they were.
- */
-async function keep<T>(change: Promise<T>, unchanged: T): Promise<T> {
-  try {
-    return await change;
-  } catch (error) {
-    console.error('Could not keep the change of Collections', error);
-    return unchanged;
-  }
+  return useComposed(
+    (composition) => composition.collections,
+    (collections) => collections.list,
+    noCollections,
+  );
 }
 
 /** The Collections of the sheet for one Entry: the list, where the Entry is filed, and the calls that change that. */
@@ -57,6 +38,7 @@ export function useEntryCollections(entryId: string): {
     setFiled(collectionId, filed) {
       if (collections === undefined) return;
       void keep(
+        'Collections',
         filed ? collections.add(collectionId, entryId) : collections.remove(collectionId, entryId),
         undefined,
       );
@@ -86,7 +68,7 @@ export function useCollectionChanges(): {
     rename: (collectionId, name) => collections?.rename(collectionId, name) ?? rejectNotOpen(),
     remove(collectionId) {
       if (collections === undefined) return;
-      void keep(collections.delete(collectionId), undefined);
+      void keep('Collections', collections.delete(collectionId), undefined);
     },
   };
 }
@@ -100,16 +82,17 @@ export function useCollectionEntries(collectionId: string): {
 } {
   const collections = useCollections();
   const list = useCollectionList();
-  const entries = useSyncExternalStore(
-    useSubscribe(collections),
-    () => collections?.entries(collectionId) ?? noEntries,
+  const entries = useComposed(
+    (composition) => composition.collections,
+    (open) => open.entries(collectionId),
+    noEntries,
   );
   return {
     collection: list.find((collection) => collection.id === collectionId),
     entries,
     remove(entryId) {
       if (collections === undefined) return;
-      void keep(collections.remove(collectionId, entryId), undefined);
+      void keep('Collections', collections.remove(collectionId, entryId), undefined);
     },
   };
 }

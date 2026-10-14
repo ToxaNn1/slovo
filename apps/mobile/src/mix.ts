@@ -1,25 +1,23 @@
 import type { Mix, MixState } from '@slovo/core';
 import { useEdition } from '@slovo/ui';
-import { useCallback, useMemo, useSyncExternalStore } from 'react';
+import { useMemo } from 'react';
 
-import { useComposition } from './composition';
+import { useComposed, useModule } from './composition';
 import { editionStrings } from './edition';
 import { mixSummary } from './mix-screen';
 
 /** The Mix of the session's Core composition, once it is open. */
 export function useMix(): Mix | undefined {
-  const composition = useComposition();
-  return composition.status === 'ready' ? composition.composition.mix : undefined;
+  return useModule((composition) => composition.mix);
 }
 
 /** The Mix as it stands, kept up to date; nothing until the Mix opens. */
 export function useMixState(): MixState | undefined {
-  const mix = useMix();
-  const subscribe = useCallback(
-    (listener: () => void) => mix?.subscribe(listener) ?? (() => undefined),
-    [mix],
+  return useComposed(
+    (composition) => composition.mix,
+    (mix): MixState | undefined => mix.state,
+    undefined,
   );
-  return useSyncExternalStore(subscribe, () => mix?.state);
 }
 
 /** The value of the «Мій Мікс» row of Settings; nothing until the Mix opens. */

@@ -1,7 +1,7 @@
 import { openComposition, systemRandom, type Composition } from '@slovo/core';
 import { createPackReader } from '@slovo/language-pack/reader';
 import { useSQLiteContext, type SQLiteDatabase } from 'expo-sqlite';
-import { useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 
 import { deviceClock } from './device-clock';
 import { edition } from './edition';
@@ -95,4 +95,69 @@ function openingOver(db: SQLiteDatabase): Opening {
 export function useComposition(): CompositionState {
   const opening = openingOver(useSQLiteContext());
   return useSyncExternalStore(opening.subscribe, opening.state);
+}
+
+/** A Core module of the composition, which tells its listeners when it changes. */
+interface Subscribable {
+  subscribe(listener: () => void): () => void;
+}
+
+/** One module of the composition, once it is open; `select` names it. */
+export function useModule<M>(select: (composition: Composition) => M): M | undefined {
+  const composition = useComposition();
+  return composition.status === 'ready' ? select(composition.composition) : undefined;
+}
+
+const unsubscribed = () => undefined;
+
+/**
+ * Reads a snapshot of one Core module of the composition and keeps the screen
+ * subscribed to it. Until the composition is open the snapshot is `fallback`,
+ * which must be one stable value (a shared empty array, not a new one per
+ * call), or the store would read a change on every render.
+ */
+export function useComposed<M extends Subscribable, T>(
+  select: (composition: Composition) => M,
+  snapshot: (source: M) => T,
+  fallback: T,
+): T {
+  const source = useModule(select);
+  const subscribe = useCallback(
+    (listener: () => void) => source?.subscribe(listener) ?? unsubscribed,
+    [source],
+  );
+  return useSyncExternalStore(subscribe, () =>
+    source === undefined ? fallback : snapshot(source),
+  );
+}
+
+/**
+ * Reads one thing from the composition once it is open, and again when `read`
+ * changes, so keep it in a `useCallback`. Nothing is read while `enabled` is
+ * false; a read that fails is logged as `failure`. The last thing read stays
+ * until the next one arrives.
+ */
+export function useOpenedRead<T>(
+  read: (composition: Composition) => Promise<T>,
+  failure: string,
+  enabled = true,
+): T | undefined {
+  const open = useModule((composition) => composition);
+  const [value, setValue] = useState<T>();
+  useEffect(() => {
+    if (!enabled || open === undefined) return;
+    let active = true;
+    read(open).then(
+      (result) => {
+        if (active) setValue(result);
+      },
+      (error: unknown) => {
+        console.error(failure, error);
+      },
+    );
+    return () => {
+      active = false;
+    };
+  }, [open, read, failure, enabled]);
+  return value;
 }

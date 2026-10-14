@@ -1,4 +1,4 @@
-import { entryIdOf, type EntryFeedCard } from '@slovo/core';
+import { entryIdOf, type Composition, type EntryFeedCard } from '@slovo/core';
 import {
   ActionRow,
   CollectionButton,
@@ -6,12 +6,12 @@ import {
   FavoriteButton,
   HideButton,
 } from '@slovo/ui';
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { refusalText } from './collection-refusal';
 import { editionStrings } from './edition';
 import { useEntryCollections } from './collections';
-import { useComposition } from './composition';
+import { useOpenedRead } from './composition';
 import { useFavorite } from './favorites';
 import { useHide } from './hiding';
 
@@ -81,23 +81,6 @@ function EntryCollectionSheet({
 
 /** What the Entry's row leads with, once it is known; read when `enabled`. */
 function useEntryTitle(entryId: string, enabled: boolean): string {
-  const composition = useComposition();
-  const [title, setTitle] = useState('');
-  const open = composition.status === 'ready' ? composition.composition : undefined;
-  useEffect(() => {
-    if (!enabled || open === undefined) return;
-    let active = true;
-    open.entryRow(entryId).then(
-      (row) => {
-        if (active) setTitle(row?.title ?? '');
-      },
-      (error: unknown) => {
-        console.error('Could not read the Entry', error);
-      },
-    );
-    return () => {
-      active = false;
-    };
-  }, [open, entryId, enabled]);
-  return title;
+  const read = useCallback((composition: Composition) => composition.entryRow(entryId), [entryId]);
+  return useOpenedRead(read, 'Could not read the Entry', enabled)?.title ?? '';
 }
