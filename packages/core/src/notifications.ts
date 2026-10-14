@@ -10,6 +10,7 @@ import {
   type PlanEdition,
 } from './notification-plan';
 import type { Clock, NotificationPermission } from './ports';
+import { createReservedWords } from './reserved-words';
 import type { UserState } from './user-state';
 import { userStateRecords } from './user-state-schema';
 import type { WordOfTheDay } from './word-of-the-day';
@@ -144,6 +145,7 @@ export async function openNotifications({
     'not-asked',
   );
   const subscribers = createSubscribers();
+  const reservedWords = createReservedWords({ userState });
   const planner =
     scheduling === undefined
       ? undefined
@@ -231,7 +233,7 @@ export async function openNotifications({
     replan: () => inTurn(plan),
     followSeen: (entryId) =>
       inTurn(async () => {
-        if (await planner?.reserves(entryId)) await plan();
+        if (planner !== undefined && (await reservedWords.isReserved(entryId))) await plan();
       }),
   };
 }

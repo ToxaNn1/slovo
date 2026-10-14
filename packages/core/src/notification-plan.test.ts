@@ -6,6 +6,7 @@ import {
   createFakeNotificationScheduler,
   createMemoryContentPort,
   createMemoryUserStatePort,
+  createReservedWords,
   entryIdOf,
   NOTIFICATION_BODY_LENGTH,
   openComposition,
@@ -14,6 +15,7 @@ import {
   type Composition,
   type FakeNotificationScheduler,
   type PlannedNotification,
+  type StoredPlan,
 } from './index';
 
 function word(id: string, overrides: Partial<Word> = {}): Word {
@@ -138,14 +140,10 @@ const wordsBySlot = (plan: readonly PlannedNotification[]) =>
     plan.map((notification) => [`${notification.date}T${notification.time}`, notification.wordId]),
   );
 
-/** The planned-notification records, by local date and time: the Reserved Words. */
-function reservedOf(records: ReadonlyMap<string, string>): Map<string, string> {
-  const prefix = 'notifications.plan.';
-  return new Map(
-    [...records]
-      .filter(([key]) => key.startsWith(prefix))
-      .map(([key, value]) => [key.slice(prefix.length), JSON.parse(value) as string]),
-  );
+/** The Reserved Words the user state keeps, as the next app run reads them. */
+async function reservedIn(records: Map<string, string>): Promise<StoredPlan> {
+  const userState = await openUserState({ port: createMemoryUserStatePort(records) });
+  return createReservedWords({ userState }).stored();
 }
 
 /** The local dates from the first to the last, `YYYY-MM-DD`. */
@@ -255,7 +253,12 @@ describe('the notification plan', () => {
   it('keeps the plan as the records of the Reserved Words, one per notification', async () => {
     const { scheduler, records } = await run();
 
-    expect(reservedOf(records)).toEqual(wordsBySlot(planOf(scheduler)));
+    const plan = planOf(scheduler);
+    const reserved = await reservedIn(records);
+    expect(plan.map((notification) => reserved.wordAt(notification))).toEqual(
+      plan.map(({ wordId }) => wordId),
+    );
+    expect(reserved.words).toHaveLength(plan.length);
   });
 
   it('keeps the notifications still valid when it plans again, and gives a new time a new Word', async () => {
@@ -303,7 +306,7 @@ describe('the notification plan', () => {
     for (const time of defaultTimes) await app.notifications.removeTime(time);
 
     expect(planOf(scheduler)).toEqual([]);
-    expect(reservedOf(records).size).toBe(0);
+    expect((await reservedIn(records)).words).toEqual([]);
   });
 
   it('plans nothing and Reserves nothing while permission is denied or not asked yet, and keeps the times', async () => {
@@ -316,13 +319,13 @@ describe('the notification plan', () => {
     await app.resume();
 
     expect(planOf(scheduler)).toEqual([]);
-    expect(reservedOf(records).size).toBe(0);
+    expect((await reservedIn(records)).words).toEqual([]);
     expect(app.notifications.state.times).toEqual(defaultTimes);
 
     const notAsked = createFakeNotificationScheduler({ permission: 'not-asked' });
     await run({ records, scheduler: notAsked });
     expect(planOf(notAsked)).toEqual([]);
-    expect(reservedOf(records).size).toBe(0);
+    expect((await reservedIn(records)).words).toEqual([]);
   });
 
   it('plans once the reader allows notifications', async () => {
@@ -475,6 +478,23 @@ describe('the plan following the Feed', () => {
     expect(wordsOfTheDayIn(later).get('2026-10-16')).toBe(wordAt(before, '2026-10-16T09:00'));
   });
 
+  it('makes the Word of the earliest time planned on a later day its Word of the Day', async () => {
+    const time = fakeClock();
+    const records = new Map<string, string>();
+    const { app, scheduler } = await run({ records, clock: time.clock });
+    const nine = wordAt(planOf(scheduler), '2026-10-15T09:00');
+
+    // An earlier time added ahead of the 09:00 notification, which keeps its Word.
+    await app.notifications.addTime('07:15');
+    const plan = planOf(scheduler);
+    expect(wordAt(plan, '2026-10-15T09:00')).toBe(nine);
+
+    time.moveTo('2026-10-15T10:00:00+03:00');
+    const { app: later } = await run({ records, clock: time.clock });
+
+    expect(wordsOfTheDayIn(later).get('2026-10-15')).toBe(wordAt(plan, '2026-10-15T07:15'));
+  });
+
   it('takes the morning Word of the local day a new time zone has reached', async () => {
     // 20:00 in Kyiv is 02:00 the next day in Tokyo.
     const time = fakeClock('2026-10-14T20:00:00+03:00');
@@ -594,6 +614,21 @@ describe('the plan following the Feed', () => {
     expect([...after.values()].filter((wordId) => seen.includes(wordId))).toEqual([]);
   });
 
+  it('plans nothing again when the Feed makes Seen a Word no notification Reserved', async () => {
+    // Every time today has passed, so today's Word of the Day goes to no notification.
+    const time = fakeClock('2026-10-14T20:00:00+03:00');
+    const { app, scheduler } = await run({ clock: time.clock });
+    const before = planOf(scheduler);
+    const today = wordsOfTheDayIn(app).get('2026-10-14');
+    expect(before.map(({ wordId }) => wordId)).not.toContain(today);
+
+    await readTo(app, time, 1);
+
+    expect(entryIdOf(app.feed.cards[0])).toBe(today);
+    expect(app.history.list[0]?.entryId).toBe(today);
+    expect(scheduler.plan).toBe(before);
+  });
+
   it('keeps every notification still valid when it plans again, the mornings too', async () => {
     const time = fakeClock();
     const { app, scheduler } = await run({ clock: time.clock });
@@ -625,7 +660,7 @@ describe('the plan following the Feed', () => {
     await app.feed.show(undefined);
 
     expect(planOf(scheduler)).toEqual([]);
-    expect(reservedOf(records).size).toBe(0);
+    expect((await reservedIn(records)).words).toEqual([]);
     expect(records.get('feed.cycle')).toBe(cycle);
   });
 });

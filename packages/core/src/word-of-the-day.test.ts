@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   createMemoryUserStatePort,
+  createReservedWords,
   openCycle,
   openUserState,
   openWordOfTheDay,
@@ -263,28 +264,32 @@ describe('the Word of the Day', () => {
   });
 
   describe("the morning notification's Word", () => {
-    /** The records of a plan that Reserved `w_7` for this morning and `w_3` for later today. */
-    const planned = (extra: [string, string][] = []) =>
-      new Map([
-        ['notifications.plan.2026-10-11T13:00', JSON.stringify('w_3')],
-        ['notifications.plan.2026-10-11T09:00', JSON.stringify('w_7')],
-        ...extra,
+    /** The `extra` records with a plan that Reserved `w_7` for this morning and `w_3` for later today. */
+    async function planned(extra: [string, string][] = []): Promise<Map<string, string>> {
+      const records = new Map(extra);
+      const userState = await openUserState({ port: createMemoryUserStatePort(records) });
+      const stored = await createReservedWords({ userState }).stored();
+      await stored.replace([
+        { date: '2026-10-11', time: '13:00', wordId: 'w_3' },
+        { date: '2026-10-11', time: '09:00', wordId: 'w_7' },
       ]);
+      return records;
+    }
 
     it('is taken as the Word of the Day: the Word of the earliest notification planned today', async () => {
-      const { wordOfTheDay } = await open({ records: planned() });
+      const { wordOfTheDay } = await open({ records: await planned() });
 
       expect((await wordOfTheDay.today())?.wordId).toBe('w_7');
     });
 
     it("is passed over when it is Seen, out of the Cycle or the day before's Word", async () => {
-      const seen = await open({ records: planned([['feed.seen.w_7', 'true']]) });
+      const seen = await open({ records: await planned([['feed.seen.w_7', 'true']]) });
       const hidden = await open({
-        records: planned(),
+        records: await planned(),
         words: wordIds.filter((id) => id !== 'w_7'),
       });
       const dayBefore = await open({
-        records: planned([
+        records: await planned([
           ['feed.wordOfTheDay', JSON.stringify({ entryId: 'w_7', date: '2026-10-10' })],
         ]),
       });
@@ -297,7 +302,7 @@ describe('the Word of the Day', () => {
     });
 
     it('is taken without choosing any other Word or starting a Cycle', async () => {
-      const reserved = await open({ records: planned() });
+      const reserved = await open({ records: await planned() });
       await reserved.wordOfTheDay.takeReserved();
       expect(reserved.wordOfTheDay.chosen()?.wordId).toBe('w_7');
 

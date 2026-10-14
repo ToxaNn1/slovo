@@ -7,11 +7,10 @@ import type {
   NotificationSchedulerPort,
   PlannedNotification,
   PlannedSound,
-  UserStateChanges,
 } from './ports';
+import { createReservedWords, type Slot, type StoredPlan } from './reserved-words';
 import { renderStress } from './stress';
 import type { UserState } from './user-state';
-import { userStateRecords } from './user-state-schema';
 import type { WordOfTheDay } from './word-of-the-day';
 
 /** The most notifications the plan holds: the most iOS keeps pending for one app. */
@@ -47,30 +46,7 @@ interface PlanSettings {
   readonly permission: NotificationPermission;
 }
 
-const { notificationPlan: planRecords } = userStateRecords;
-
-/** When a notification comes: a local date `YYYY-MM-DD` and a local time `HH:MM`. */
-type Slot = Pick<PlannedNotification, 'date' | 'time'>;
-
-/** The id of a notification's plan record: its local date and time joined with a `T`. */
-const slotId = ({ date, time }: Slot) => `${date}T${time}`;
-
 const twoDigits = (value: number) => String(value).padStart(2, '0');
-
-/**
- * The Word the plan Reserved for the morning of the local day `date`
- * (`YYYY-MM-DD`): the Word of the earliest notification planned that day, if
- * any. The Word of the Day module takes it when the day comes (ADR 0016's
- * amendment for 0.4).
- */
-export async function morningWordOf(
-  userState: UserState,
-  date: string,
-): Promise<string | undefined> {
-  const stored = await userState.list(planRecords);
-  const [earliest] = [...stored.keys()].filter((id) => id.startsWith(`${date}T`)).sort();
-  return earliest === undefined ? undefined : stored.get(earliest);
-}
 
 /**
  * When each notification the plan covers comes, in time order: every time
@@ -112,9 +88,8 @@ export function notificationBody(text: string, ellipsis: string): string {
 /**
  * Makes the plan of the Notification times, for the Notifications module,
  * and hands it to the device's scheduler (ADR 0021). The plan is a list of
- * floating local dates and times, each with one Word. It keeps it in the user
- * state as one record per notification, and a Word with a record is
- * Reserved.
+ * floating local dates and times, each with one Word, and the user state
+ * keeps it as the Reserved Words, one Word per notification.
  *
  * While the device doesn't let the app notify, the plan is empty and nothing
  * is Reserved. Otherwise each notification gets an eligible Word unseen in
@@ -132,9 +107,6 @@ export function notificationBody(text: string, ellipsis: string): string {
  * back. When the Cycle runs out of unseen Words, the latest notifications
  * stay empty; the plan never starts a new Cycle. Every plan replaces what
  * the device held before.
- *
- * `reserves` tells whether a Word is Reserved now, so the composition plans
- * again when the Feed makes one Seen.
  */
 export function createNotificationPlanner({
   cycle,
@@ -154,8 +126,9 @@ export function createNotificationPlanner({
   scheduling: NotificationScheduling;
 }): {
   plan(settings: PlanSettings): Promise<void>;
-  reserves(wordId: string): Promise<boolean>;
 } {
+  const reservedWords = createReservedWords({ userState });
+
   /** The Words the notifications without one take, in the order they take them. */
   function freshWords(planned: Iterable<string>, taken: ReadonlySet<string>): string[] {
     const place = new Map(cycle.order().words.map((id, index) => [id, index]));
@@ -166,12 +139,12 @@ export function createNotificationPlanner({
   }
 
   /**
-   * The Word of each notification that gets one, given the Word of each
-   * stored plan record by its id and the earliest Notification time.
+   * The Word of each notification that gets one, given the stored plan and
+   * the earliest Notification time.
    */
   function chooseWords(
     slots: readonly Slot[],
-    stored: ReadonlyMap<string, string>,
+    stored: StoredPlan,
     earliest: string | undefined,
   ): { readonly slot: Slot; readonly wordId: string }[] {
     const unseen = new Set(cycle.unseen().words);
@@ -183,13 +156,13 @@ export function createNotificationPlanner({
     if (morning !== undefined && today !== undefined && unseen.has(today)) kept.set(morning, today);
     for (const slot of slots) {
       if (kept.has(slot)) continue;
-      const wordId = stored.get(slotId(slot));
+      const wordId = stored.wordAt(slot);
       if (wordId !== undefined && unseen.has(wordId) && !keptWords.has(wordId)) {
         kept.set(slot, wordId);
         keptWords.add(wordId);
       }
     }
-    const fresh = freshWords(stored.values(), keptWords);
+    const fresh = freshWords(stored.words, keptWords);
     return slots.flatMap((slot) => {
       const wordId = kept.get(slot) ?? fresh.shift();
       return wordId === undefined ? [] : [{ slot, wordId }];
@@ -203,7 +176,7 @@ export function createNotificationPlanner({
 
   async function plan({ times, sound, permission }: PlanSettings): Promise<void> {
     const slots = permission === 'allowed' ? slotsAhead(times, clock) : [];
-    const stored = await userState.list(planRecords);
+    const stored = await reservedWords.stored();
     const notifications: PlannedNotification[] = [];
     for (const { slot, wordId } of chooseWords(slots, stored, times[0])) {
       const word = await entries.get(wordId);
@@ -216,25 +189,9 @@ export function createNotificationPlanner({
         sound: soundOf(sound),
       });
     }
-    const planned = new Map(
-      notifications.map((notification) => [slotId(notification), notification.wordId]),
-    );
-    const changes: UserStateChanges = new Map([
-      ...[...stored.keys()]
-        .filter((id) => !planned.has(id))
-        .flatMap((id) => [...planRecords.record(id).change(undefined)]),
-      ...[...planned]
-        .filter(([id, wordId]) => stored.get(id) !== wordId)
-        .flatMap(([id, wordId]) => [...planRecords.record(id).change(wordId)]),
-    ]);
-    if (changes.size > 0) await userState.write(changes);
+    await stored.replace(notifications);
     await scheduler.replacePlan(notifications);
   }
 
-  return {
-    plan,
-    async reserves(wordId) {
-      return [...(await userState.list(planRecords)).values()].includes(wordId);
-    },
-  };
+  return { plan };
 }

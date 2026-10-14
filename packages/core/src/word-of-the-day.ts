@@ -1,8 +1,8 @@
 import type { Cycle } from './cycle';
 import { createInTurn } from './in-turn';
 import { todayKey, parseLocalDate, type LocalDate } from './local-date';
-import { morningWordOf } from './notification-plan';
 import type { Clock, UserStateChanges } from './ports';
+import { createReservedWords } from './reserved-words';
 import type { UserState } from './user-state';
 import { userStateRecords } from './user-state-schema';
 
@@ -60,6 +60,7 @@ export async function openWordOfTheDay({
   clock: Clock;
 }): Promise<WordOfTheDay> {
   let record = await userState.read(wordOfTheDayRecord);
+  const reservedWords = createReservedWords({ userState });
 
   /**
    * The next of the unseen Words in the Cycle order, other than the day
@@ -89,7 +90,7 @@ export async function openWordOfTheDay({
 
   /** The Word Reserved for this morning, if today takes it, kept as today's Word of the Day. */
   async function takeMorningWord(today: string): Promise<string | undefined> {
-    const reserved = await morningWordOf(userState, today);
+    const reserved = await reservedWords.morningWordOf(today);
     if (reserved === undefined || reserved === record?.entryId) return undefined;
     if (!cycle.unseen().words.includes(reserved)) return undefined;
     await choose(reserved, today);
