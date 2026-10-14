@@ -167,6 +167,9 @@ const { feedPosition } = userStateRecords;
  * only if it is today's Word of the Day. An Entry the Cycle doesn't cover
  * (Hidden, Retired, out of the Mix) or one Seen already gets only `changes`
  * written, so a Hidden Entry never re-enters History.
+ *
+ * Once an Entry becomes Seen, by either way, the Feed calls `entrySeen`, for
+ * the composition to follow it.
  */
 export async function openFeed({
   entries,
@@ -175,6 +178,7 @@ export async function openFeed({
   cycle,
   wordOfTheDay,
   history,
+  entrySeen,
 }: {
   entries: Entries;
   userState: UserState;
@@ -182,6 +186,7 @@ export async function openFeed({
   cycle: Cycle;
   wordOfTheDay: WordOfTheDay;
   history: HistoryRecorder;
+  entrySeen: (entryId: string) => Promise<void>;
 }): Promise<{
   feed: Feed;
   followEligibility: () => Promise<void>;
@@ -208,6 +213,15 @@ export async function openFeed({
    * takes the screen back when its Entry is eligible again, as on an undo.
    */
   let droppedFromScreen: FeedCard | undefined;
+  /**
+   * The local day `YYYY-MM-DD` the Feed last opened with its Word of the Day.
+   * Another feature may choose a new day's Word of the Day first, such as the
+   * notification plan, so a chosen Word of the Day alone doesn't open the day.
+   */
+  let openedDay: string | undefined;
+
+  /** Whether the Feed has opened today with its Word of the Day. */
+  const todayOpened = () => openedDay === todayKey(clock) && wordOfTheDay.chosen() !== undefined;
 
   /** Changes the session's cards without telling the subscribers yet. */
   function setSession(changed: readonly FeedCard[], changedDropped = dropped): void {
@@ -257,6 +271,7 @@ export async function openFeed({
     if (!cycle.covers(position.entryId)) return false;
     const entry = await entries.get(position.entryId);
     if (entry === undefined) return false;
+    openedDay = position.date;
     const today = wordOfTheDay.chosen();
     const opening =
       today !== undefined && cycle.covers(today.wordId) ? await wordOfTheDayCard(today) : undefined;
@@ -314,7 +329,7 @@ export async function openFeed({
     // Entry before it was Seen: the next card takes its place.
     const tooEarly = atEnd && unseenWords.length + unseenCorrections.length > 0 ? last : undefined;
     // A new local day starts with its Word of the Day, also in a Feed left open over midnight.
-    if (wordOfTheDay.chosen() === undefined) {
+    if (!todayOpened()) {
       const card = await addWordOfTheDay(tooEarly);
       if (card !== undefined) return card;
     }
@@ -378,6 +393,7 @@ export async function openFeed({
     if (today === undefined) return undefined;
     const card = await wordOfTheDayCard(today);
     if (card === undefined) return undefined;
+    openedDay = todayKey(clock);
     const kept = without(replaced);
     if (today.startedCycle) cycleStart = kept.length;
     changeSession([...kept, card]);
@@ -392,12 +408,10 @@ export async function openFeed({
 
   /**
    * Whether the ready card, the last one, which the reader hasn't reached, was
-   * got ready on an earlier local day: today has no Word of the Day yet.
+   * got ready on an earlier local day: the Feed hasn't opened today yet.
    */
   const readyCardStale = () =>
-    onScreen !== undefined &&
-    positionOf(onScreen.place) < cards.length - 1 &&
-    wordOfTheDay.chosen() === undefined;
+    onScreen !== undefined && positionOf(onScreen.place) < cards.length - 1 && !todayOpened();
 
   /** Puts today's Word of the Day in place of a ready card got ready on an earlier local day. */
   async function replaceStaleReadyCard(): Promise<void> {
@@ -434,7 +448,8 @@ export async function openFeed({
   /**
    * Keeps a change of the card on screen in one write: the Entry of the card
    * that `left` Seen if it stayed long enough, with its History entry, and
-   * the reader's place on the Entry now on screen, if any.
+   * the reader's place on the Entry now on screen, if any. Returns the Entry
+   * that became Seen, if one did.
    */
   async function keepScreenChange({
     left,
@@ -449,10 +464,10 @@ export async function openFeed({
     now: number;
     /** Today's key, as the reader's place keeps it. */
     date: string;
-  }): Promise<void> {
+  }): Promise<string | undefined> {
     const seenId = seenOnLeaving(left, stayed);
     const wordOfTheDay = left?.kind === 'word' && left.wordOfTheDay !== undefined;
-    await keepSeen(
+    return keepSeen(
       seenId === undefined ? undefined : { entryId: seenId, seenAt: new Date(now), wordOfTheDay },
       entryId === undefined ? new Map() : feedPosition.change({ entryId, date }),
     );
@@ -461,15 +476,30 @@ export async function openFeed({
   /**
    * Writes `changes` in one write with the Entry's Seen mark and History
    * entry, if given and it isn't Seen yet (ADR 0018), and then makes the Seen
-   * mark in memory.
+   * mark in memory. Returns the Entry that became Seen, if one did.
    */
-  async function keepSeen(seen: Seen | undefined, changes: UserStateChanges): Promise<void> {
+  async function keepSeen(
+    seen: Seen | undefined,
+    changes: UserStateChanges,
+  ): Promise<string | undefined> {
     const mark = seen === undefined ? undefined : cycle.markSeen(seen.entryId);
     const all = new Map([...(mark?.changes ?? []), ...changes]);
     // An Entry that becomes Seen joins History in the same write.
-    if (seen !== undefined && (mark?.changes.size ?? 0) > 0) await history.record(seen, all);
+    const becomesSeen = seen !== undefined && (mark?.changes.size ?? 0) > 0;
+    if (becomesSeen) await history.record(seen, all);
     else if (all.size > 0) await userState.write(all);
     mark?.commit();
+    return becomesSeen ? seen.entryId : undefined;
+  }
+
+  /**
+   * Makes a change in turn with the others, then tells `entrySeen` of the
+   * Entry it made Seen, if any, out of turn, so following it never holds back
+   * the cards.
+   */
+  async function inTurnTellingSeen(change: () => Promise<string | undefined>): Promise<void> {
+    const seenId = await inTurn(change);
+    if (seenId !== undefined) await entrySeen(seenId);
   }
 
   async function show(position: number | undefined): Promise<void> {
@@ -484,7 +514,7 @@ export async function openFeed({
     const date = todayKey(clock);
     // In turn with the requests that change the cards, so a new Cycle never
     // starts between the card leaving the screen and its Entry becoming Seen.
-    const kept = inTurn(() => keepScreenChange({ left, stayed, entryId, now, date }));
+    const kept = inTurnTellingSeen(() => keepScreenChange({ left, stayed, entryId, now, date }));
     await Promise.all([kept, keepNextCardReady()]);
   }
 
@@ -535,15 +565,19 @@ export async function openFeed({
    * cards follow the Mix too, once the drop is done.
    */
   async function followEligibility(): Promise<void> {
-    await inTurn(async () => {
-      await followCovered();
+    await inTurnTellingSeen(async () => {
+      const seenId = await followCovered();
       await refreshLinkedCorrections();
+      return seenId;
     });
     await keepNextCardReady();
   }
 
-  /** Drops and puts back the cards by what the Cycle covers. */
-  async function followCovered(): Promise<void> {
+  /**
+   * Drops and puts back the cards by what the Cycle covers. Returns the Entry
+   * of the card that left the screen this way, if it became Seen.
+   */
+  async function followCovered(): Promise<string | undefined> {
     const out = new Set(
       session.filter((card) => {
         const entryId = entryIdOf(card);
@@ -558,7 +592,7 @@ export async function openFeed({
       droppedFromScreen = undefined;
     const moved = was !== undefined && place !== undefined && place !== was.place;
     const sameDropped = out.size === dropped.size && [...out].every((card) => dropped.has(card));
-    if (!moved && sameDropped) return;
+    if (!moved && sameDropped) return undefined;
     const now = clock.now().getTime();
     if (moved) onScreen = { place, since: now };
     if (moved && place === session.length) {
@@ -574,24 +608,27 @@ export async function openFeed({
         if (added === undefined) subscribers.tell();
       }
     } else changeSession(session, out);
-    if (moved)
-      await keepScreenChange({
-        left,
-        stayed: now - was.since,
-        // Adding the next card may move the place on screen.
-        entryId: entryIdOf(session[onScreen?.place ?? place]),
-        now,
-        date: todayKey(clock),
-      });
+    if (!moved) return undefined;
+    return keepScreenChange({
+      left,
+      stayed: now - was.since,
+      // Adding the next card may move the place on screen.
+      entryId: entryIdOf(session[onScreen?.place ?? place]),
+      now,
+      date: todayKey(clock),
+    });
   }
 
-  async function markOpenedSeen(entryId: string, changes: UserStateChanges): Promise<void> {
+  async function markOpenedSeen(
+    entryId: string,
+    changes: UserStateChanges,
+  ): Promise<string | undefined> {
     const seen = {
       entryId,
       seenAt: clock.now(),
       wordOfTheDay: wordOfTheDay.chosen()?.wordId === entryId,
     };
-    await keepSeen(cycle.covers(entryId) ? seen : undefined, changes);
+    return keepSeen(cycle.covers(entryId) ? seen : undefined, changes);
   }
 
   if (!(await restore())) await addWordOfTheDay();
@@ -613,6 +650,6 @@ export async function openFeed({
   return {
     feed,
     followEligibility,
-    markOpenedSeen: (entryId, changes) => inTurn(() => markOpenedSeen(entryId, changes)),
+    markOpenedSeen: (entryId, changes) => inTurnTellingSeen(() => markOpenedSeen(entryId, changes)),
   };
 }

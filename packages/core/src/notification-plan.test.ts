@@ -6,6 +6,7 @@ import {
   createFakeNotificationScheduler,
   createMemoryContentPort,
   createMemoryUserStatePort,
+  entryIdOf,
   NOTIFICATION_BODY_LENGTH,
   openComposition,
   openUserState,
@@ -66,6 +67,9 @@ function fakeClock(start = '2026-10-14T08:00:00+03:00', zone = 'Europe/Kyiv') {
     moveTo(instant: string) {
       now = new Date(instant).getTime();
     },
+    advance(ms: number) {
+      now += ms;
+    },
     travelTo(zone: string) {
       timeZone = zone;
     },
@@ -82,6 +86,7 @@ async function run({
   clock = fakeClock().clock,
   scheduler = createFakeNotificationScheduler(),
   hasNotificationSound = true,
+  mixCategoryIds = ['test'],
 }: {
   words?: readonly Word[];
   corrections?: readonly Correction[];
@@ -89,6 +94,7 @@ async function run({
   clock?: Clock;
   scheduler?: FakeNotificationScheduler;
   hasNotificationSound?: boolean;
+  mixCategoryIds?: readonly string[];
 } = {}): Promise<{
   app: Composition;
   scheduler: FakeNotificationScheduler;
@@ -103,7 +109,7 @@ async function run({
         { id: 'other', displayName: 'Other' },
       ],
       userSettingDefaults: {
-        mix: { categoryIds: ['test'], corrections: true },
+        mix: { categoryIds: mixCategoryIds, corrections: true },
         notificationTimes: defaultTimes,
       },
       hasNotificationSound,
@@ -370,5 +376,231 @@ describe('the notification plan', () => {
       'Людина, яка вміє швидко зметикувати, що до чого, і знайти вихід навіть там, де…',
     );
     expect(Array.from(long?.body ?? '').length).toBeLessThanOrEqual(NOTIFICATION_BODY_LENGTH);
+  });
+});
+
+const SECOND = 1000;
+const MINUTE = 60 * SECOND;
+
+/** The Word on each Word of the Day card of the Feed, by its local date `YYYY-MM-DD`. */
+function wordsOfTheDayIn({ feed }: Composition): Map<string, string> {
+  const twoDigits = (value: number) => String(value).padStart(2, '0');
+  return new Map(
+    feed.cards.flatMap((card) => {
+      if (card.kind !== 'word' || card.wordOfTheDay === undefined) return [];
+      const { year, month, day } = card.wordOfTheDay;
+      return [[`${String(year)}-${twoDigits(month)}-${twoDigits(day)}`, card.wordCard.wordId]];
+    }),
+  );
+}
+
+/**
+ * Shows the Feed's cards up to `position`, each long enough to be Seen once
+ * it leaves the screen: every card before `position` is Seen.
+ */
+async function readTo(
+  app: Composition,
+  time: ReturnType<typeof fakeClock>,
+  position: number,
+): Promise<void> {
+  for (let page = 0; page <= position; page += 1) {
+    await app.feed.show(page);
+    time.advance(2 * SECOND);
+  }
+}
+
+/** The Word of a planned notification; it fails the test when the time has none. */
+function wordAt(plan: readonly PlannedNotification[], slot: string): string {
+  const wordId = wordsBySlot(plan).get(slot);
+  if (wordId === undefined) throw new Error(`Nothing is planned at ${slot}`);
+  return wordId;
+}
+
+describe('the plan following the Feed', () => {
+  it('gives the earliest time today the Word of the Day, and no other notification', async () => {
+    const { app, scheduler } = await run();
+
+    const today = wordsOfTheDayIn(app).get('2026-10-14');
+    const plan = planOf(scheduler);
+    expect(today).toBeDefined();
+    expect(wordAt(plan, '2026-10-14T09:00')).toBe(today);
+    expect(plan.filter(({ wordId }) => wordId === today)).toHaveLength(1);
+  });
+
+  it("makes a later day's morning notification that day's Word of the Day when the day comes", async () => {
+    const time = fakeClock();
+    const records = new Map<string, string>();
+    const { app, scheduler } = await run({ records, clock: time.clock });
+    const before = planOf(scheduler);
+    await app.feed.show(0);
+
+    // The app stays open over midnight.
+    time.moveTo('2026-10-15T00:00:05+03:00');
+    await app.resume();
+    await app.feed.show(0);
+
+    const tomorrow = wordAt(before, '2026-10-15T09:00');
+    expect(wordsOfTheDayIn(app).get('2026-10-15')).toBe(tomorrow);
+    expect(wordAt(planOf(scheduler), '2026-10-15T09:00')).toBe(tomorrow);
+
+    // The next run starts after that day's morning notification has passed.
+    time.moveTo('2026-10-16T10:00:00+03:00');
+    const { app: later } = await run({ records, clock: time.clock });
+
+    expect(wordsOfTheDayIn(later).get('2026-10-16')).toBe(wordAt(before, '2026-10-16T09:00'));
+  });
+
+  it('takes the morning Word of the local day a new time zone has reached', async () => {
+    // 20:00 in Kyiv is 02:00 the next day in Tokyo.
+    const time = fakeClock('2026-10-14T20:00:00+03:00');
+    const records = new Map<string, string>();
+    const { scheduler } = await run({ records, clock: time.clock });
+    const tomorrow = wordAt(planOf(scheduler), '2026-10-15T09:00');
+
+    time.travelTo('Asia/Tokyo');
+    const { app } = await run({ records, clock: time.clock });
+
+    expect(wordsOfTheDayIn(app).get('2026-10-15')).toBe(tomorrow);
+  });
+
+  it("makes the Word of the morning notification opened on a new day that day's Word of the Day", async () => {
+    const time = fakeClock('2026-10-14T20:00:00+03:00');
+    const { app, scheduler } = await run({ clock: time.clock });
+    const morning = wordAt(planOf(scheduler), '2026-10-15T09:00');
+    await app.feed.show(0);
+    await app.feed.show(undefined);
+
+    // The app sat in the background overnight; the morning notification opens it.
+    time.moveTo('2026-10-15T09:05:00+03:00');
+    await app.openedFromNotification(morning);
+    await app.resume();
+    await app.feed.show(0);
+
+    expect(app.history.list[0]).toMatchObject({ entryId: morning, wordOfTheDay: true });
+    expect(wordsOfTheDayIn(app).get('2026-10-15')).toBe(morning);
+  });
+
+  it('gives a new Word to the notification of a Reserved Word hidden, and keeps the others', async () => {
+    const time = fakeClock();
+    const records = new Map<string, string>();
+    const { app, scheduler } = await run({ records, clock: time.clock });
+    const before = wordsBySlot(planOf(scheduler));
+    const hidden = [
+      wordAt(planOf(scheduler), '2026-10-16T13:00'),
+      wordAt(planOf(scheduler), '2026-10-17T09:00'),
+    ];
+
+    for (const entryId of hidden) await app.hide({ kind: 'entry', entryId });
+
+    const after = wordsBySlot(planOf(scheduler));
+    expect(after.size).toBe(42);
+    for (const [slot, wordId] of before) {
+      if (hidden.includes(wordId)) expect(after.get(slot)).not.toBe(wordId);
+      else expect([slot, after.get(slot)]).toEqual([slot, wordId]);
+    }
+    expect([...after.values()].filter((wordId) => hidden.includes(wordId))).toEqual([]);
+
+    // The new morning Word is the Word of the Day when its day comes.
+    time.moveTo('2026-10-17T08:00:00+03:00');
+    const { app: later } = await run({ records, clock: time.clock });
+    expect(wordsOfTheDayIn(later).get('2026-10-17')).toBe(after.get('2026-10-17T09:00'));
+  });
+
+  it('gives new Words to the notifications of a Category taken out of the Mix', async () => {
+    const others = Array.from({ length: 30 }, (_, index) =>
+      word(`w_other_${String(index).padStart(2, '0')}`, { categoryId: 'other' }),
+    );
+    const { app, scheduler } = await run({
+      words: [...manyWords, ...others],
+      mixCategoryIds: ['test', 'other'],
+    });
+    const before = wordsBySlot(planOf(scheduler));
+    const isOther = (wordId: string) => wordId.startsWith('w_other_');
+    expect([...before.values()].some(isOther)).toBe(true);
+
+    await app.mix.takeOut('other');
+
+    const after = wordsBySlot(planOf(scheduler));
+    expect(after.size).toBe(42);
+    expect([...after.values()].filter(isOther)).toEqual([]);
+    for (const [slot, wordId] of before) {
+      if (!isOther(wordId)) expect([slot, after.get(slot)]).toEqual([slot, wordId]);
+    }
+  });
+
+  it('fills its notifications again once a Word is unhidden or its Category put back in the Mix', async () => {
+    const words = [
+      word('w_one'),
+      word('w_two'),
+      word('w_three', { categoryId: 'other' }),
+      word('w_four', { categoryId: 'other' }),
+    ];
+    const { app, scheduler } = await run({ words, mixCategoryIds: ['test', 'other'] });
+    expect(planOf(scheduler)).toHaveLength(4);
+
+    await app.hide({ kind: 'entry', entryId: 'w_one' });
+    await app.mix.takeOut('other');
+    expect(planOf(scheduler).map(({ wordId }) => wordId)).toEqual(['w_two']);
+
+    await app.unhide({ kind: 'entry', entryId: 'w_one' });
+    await app.mix.putBack('other');
+
+    const wordIds = planOf(scheduler).map(({ wordId }) => wordId);
+    expect(wordIds.sort()).toEqual(['w_four', 'w_one', 'w_three', 'w_two']);
+  });
+
+  it('gives a new Word to the notification of a Reserved Word Seen in the Feed, and keeps the others', async () => {
+    const time = fakeClock();
+    const { app, scheduler } = await run({ clock: time.clock });
+    const before = wordsBySlot(planOf(scheduler));
+
+    // The reader reads the Word of the Day and the card after it.
+    await readTo(app, time, 2);
+
+    const seen = [entryIdOf(app.feed.cards[0]), entryIdOf(app.feed.cards[1])];
+    expect(before.get('2026-10-14T09:00')).toBe(seen[0]);
+    expect([...before.values()]).toContain(seen[1]);
+    const after = wordsBySlot(planOf(scheduler));
+    expect(after.size).toBe(42);
+    for (const [slot, wordId] of before) {
+      if (seen.includes(wordId)) expect(after.get(slot)).not.toBe(wordId);
+      else expect([slot, after.get(slot)]).toEqual([slot, wordId]);
+    }
+    expect([...after.values()].filter((wordId) => seen.includes(wordId))).toEqual([]);
+  });
+
+  it('keeps every notification still valid when it plans again, the mornings too', async () => {
+    const time = fakeClock();
+    const { app, scheduler } = await run({ clock: time.clock });
+    const before = wordsBySlot(planOf(scheduler));
+
+    time.advance(30 * MINUTE);
+    await app.resume();
+    await app.notifications.setSound(false);
+
+    expect(wordsBySlot(planOf(scheduler))).toEqual(before);
+  });
+
+  it('fills what it can near the end of the Cycle, and never starts a new Cycle', async () => {
+    const time = fakeClock();
+    const records = new Map([
+      ['feed.seen.w_a', 'true'],
+      ['feed.seen.w_b', 'true'],
+    ]);
+    const words = ['w_a', 'w_b', 'w_c', 'w_d', 'w_e'].map((id) => word(id));
+    const { app, scheduler } = await run({ words, records, clock: time.clock });
+    const cycle = records.get('feed.cycle');
+
+    const plan = planOf(scheduler);
+    expect(slotsOf(plan)).toEqual(['2026-10-14T09:00', '2026-10-14T13:00', '2026-10-14T19:00']);
+    expect(wordAt(plan, '2026-10-14T09:00')).toBe(wordsOfTheDayIn(app).get('2026-10-14'));
+
+    // The reader reads the last unseen Words in the Feed.
+    await readTo(app, time, 2);
+    await app.feed.show(undefined);
+
+    expect(planOf(scheduler)).toEqual([]);
+    expect(reservedOf(records).size).toBe(0);
+    expect(records.get('feed.cycle')).toBe(cycle);
   });
 });

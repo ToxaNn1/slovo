@@ -12,6 +12,7 @@ import {
 import type { Clock, NotificationPermission } from './ports';
 import type { UserState } from './user-state';
 import { userStateRecords } from './user-state-schema';
+import type { WordOfTheDay } from './word-of-the-day';
 
 /**
  * What the Notifications module needs to know of the Edition: its default
@@ -91,10 +92,12 @@ function stateOf(times: readonly string[], sound: boolean): NotificationsState {
 /**
  * Opens Notifications over the user state, for the Core composition: the
  * stored times, or the Edition's default ones while the reader has never
- * changed them. It plans over the Cycle the composition shares, and `replan`
- * plans again, for the composition to call when the app opens or the reader
- * comes back. Without `scheduling`, as in tools and in tests of other
- * features, nothing is planned.
+ * changed them. It plans over the Cycle and the Word of the Day the
+ * composition shares, and `replan` plans again, for the composition to call
+ * when the app opens, the reader comes back or eligibility changes.
+ * `followSeen` plans again when the Entry just Seen is a Reserved Word, so its
+ * notification gets a new Word. Without `scheduling`, as in tools and in
+ * tests of other features, nothing is planned.
  */
 export async function openNotifications({
   edition,
@@ -102,6 +105,7 @@ export async function openNotifications({
   cycle,
   entries,
   clock,
+  wordOfTheDay,
   scheduling,
 }: {
   edition: NotificationsEdition;
@@ -109,8 +113,13 @@ export async function openNotifications({
   cycle: Pick<Cycle, 'order' | 'unseen'>;
   entries: Pick<Entries, 'get'>;
   clock: Clock;
+  wordOfTheDay: Pick<WordOfTheDay, 'chosen' | 'takeReserved'>;
   scheduling: NotificationScheduling | undefined;
-}): Promise<{ notifications: Notifications; replan: () => Promise<void> }> {
+}): Promise<{
+  notifications: Notifications;
+  replan: () => Promise<void>;
+  followSeen: (entryId: string) => Promise<void>;
+}> {
   const [storedTimes, storedSound] = await Promise.all([
     userState.read(timesRecord),
     userState.read(soundRecord),
@@ -123,8 +132,16 @@ export async function openNotifications({
   const planner =
     scheduling === undefined
       ? undefined
-      : createNotificationPlanner({ cycle, entries, userState, clock, edition, scheduling });
-  const plan = async () => planner?.(state);
+      : createNotificationPlanner({
+          cycle,
+          entries,
+          userState,
+          clock,
+          edition,
+          wordOfTheDay,
+          scheduling,
+        });
+  const plan = async () => planner?.plan(state);
 
   /** Writes the times, an empty list included, then makes the change in memory and plans again. */
   async function keepTimes(times: readonly string[]): Promise<NotificationTimeResult> {
@@ -186,5 +203,9 @@ export async function openNotifications({
       subscribe: subscribers.subscribe,
     },
     replan: () => inTurn(plan),
+    followSeen: (entryId) =>
+      inTurn(async () => {
+        if (await planner?.reserves(entryId)) await plan();
+      }),
   };
 }

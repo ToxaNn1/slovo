@@ -11,6 +11,7 @@ import type {
 import { renderStress } from './stress';
 import type { UserState } from './user-state';
 import { userStateRecords } from './user-state-schema';
+import type { WordOfTheDay } from './word-of-the-day';
 
 /** The most notifications the plan holds: the most iOS keeps pending for one app. */
 export const MAX_PLANNED_NOTIFICATIONS = 64;
@@ -52,6 +53,21 @@ type Slot = Pick<PlannedNotification, 'date' | 'time'>;
 const slotId = ({ date, time }: Slot) => `${date}T${time}`;
 
 const twoDigits = (value: number) => String(value).padStart(2, '0');
+
+/**
+ * The Word the plan Reserved for the morning of the local day `date`
+ * (`YYYY-MM-DD`): the Word of the earliest notification planned that day, if
+ * any. The Word of the Day module takes it when the day comes (ADR 0016's
+ * amendment for 0.4).
+ */
+export async function morningWordOf(
+  userState: UserState,
+  date: string,
+): Promise<string | undefined> {
+  const stored = await userState.list(planRecords);
+  const [earliest] = [...stored.keys()].filter((id) => id.startsWith(`${date}T`)).sort();
+  return earliest === undefined ? undefined : stored.get(earliest);
+}
 
 /**
  * When each notification the plan covers comes, in time order: every time
@@ -99,13 +115,23 @@ function cutBody(text: string, ellipsis: string): string {
  *
  * While the device doesn't let the app notify, the plan is empty and nothing
  * is Reserved. Otherwise each notification gets an eligible Word unseen in
- * the Cycle, never a Correction, and no Word twice. Planning again keeps
- * every notification still ahead whose Word is still eligible and unseen, so
- * the plan doesn't churn, and gives the others the next unseen Words in the
- * Cycle order after the furthest Word planned before, so a notification that
- * has passed unopened doesn't bring its Word straight back. When the Cycle
- * runs out of unseen Words, the latest notifications stay empty; the plan
- * never starts a new Cycle. Every plan replaces what the device held before.
+ * the Cycle, never a Correction, and no Word twice. The earliest time of each
+ * local day carries that day's Word of the Day: today's is the Word of the
+ * Day module's while it is unseen, and no other notification carries it; a
+ * later day's is the Word the plan Reserves for that morning, which the Word
+ * of the Day module takes when the day comes. Planning again first lets the
+ * Word of the Day module take today's, so a new day keeps its morning Word
+ * even once its notification has passed. Planning again keeps every
+ * notification still ahead whose Word is still eligible, unseen and not
+ * needed elsewhere, so the plan doesn't churn, and gives the others the next
+ * unseen Words in the Cycle order after the furthest Word planned before, so
+ * a notification that has passed unopened doesn't bring its Word straight
+ * back. When the Cycle runs out of unseen Words, the latest notifications
+ * stay empty; the plan never starts a new Cycle. Every plan replaces what
+ * the device held before.
+ *
+ * `reserves` tells whether a Word is Reserved now, so the composition plans
+ * again when the Feed makes one Seen.
  */
 export function createNotificationPlanner({
   cycle,
@@ -113,6 +139,7 @@ export function createNotificationPlanner({
   userState,
   clock,
   edition,
+  wordOfTheDay,
   scheduling: { scheduler, ellipsis },
 }: {
   cycle: Pick<Cycle, 'order' | 'unseen'>;
@@ -120,8 +147,12 @@ export function createNotificationPlanner({
   userState: UserState;
   clock: Clock;
   edition: PlanEdition;
+  wordOfTheDay: Pick<WordOfTheDay, 'chosen' | 'takeReserved'>;
   scheduling: NotificationScheduling;
-}): (settings: PlanSettings) => Promise<void> {
+}): {
+  plan(settings: PlanSettings): Promise<void>;
+  reserves(wordId: string): Promise<boolean>;
+} {
   /** The Words the notifications without one take, in the order they take them. */
   function freshWords(planned: Iterable<string>, taken: ReadonlySet<string>): string[] {
     const place = new Map(cycle.order().words.map((id, index) => [id, index]));
@@ -133,16 +164,22 @@ export function createNotificationPlanner({
 
   /**
    * The Word of each notification that gets one, given the Word of each
-   * stored plan record by its id.
+   * stored plan record by its id and the earliest Notification time.
    */
   function chooseWords(
     slots: readonly Slot[],
     stored: ReadonlyMap<string, string>,
+    earliest: string | undefined,
   ): { readonly slot: Slot; readonly wordId: string }[] {
     const unseen = new Set(cycle.unseen().words);
     const kept = new Map<Slot, string>();
-    const keptWords = new Set<string>();
+    // Today's Word of the Day goes to this morning's notification or to none.
+    const today = wordOfTheDay.chosen()?.wordId;
+    const keptWords = new Set<string>(today === undefined ? [] : [today]);
+    const morning = slots.find(({ date, time }) => date === todayKey(clock) && time === earliest);
+    if (morning !== undefined && today !== undefined && unseen.has(today)) kept.set(morning, today);
     for (const slot of slots) {
+      if (kept.has(slot)) continue;
       const wordId = stored.get(slotId(slot));
       if (wordId !== undefined && unseen.has(wordId) && !keptWords.has(wordId)) {
         kept.set(slot, wordId);
@@ -161,12 +198,13 @@ export function createNotificationPlanner({
     return edition.hasNotificationSound === true ? 'edition' : 'system';
   }
 
-  return async function plan({ times, sound }) {
+  async function plan({ times, sound }: PlanSettings): Promise<void> {
+    await wordOfTheDay.takeReserved();
     const allowed = (await scheduler.permission()) === 'allowed';
     const slots = allowed ? slotsAhead(times, clock) : [];
     const stored = await userState.list(planRecords);
     const notifications: PlannedNotification[] = [];
-    for (const { slot, wordId } of chooseWords(slots, stored)) {
+    for (const { slot, wordId } of chooseWords(slots, stored, times[0])) {
       const word = await entries.get(wordId);
       if (word?.kind !== 'word') continue;
       notifications.push({
@@ -190,5 +228,12 @@ export function createNotificationPlanner({
     ]);
     if (changes.size > 0) await userState.write(changes);
     await scheduler.replacePlan(notifications);
+  }
+
+  return {
+    plan,
+    async reserves(wordId) {
+      return [...(await userState.list(planRecords)).values()].includes(wordId);
+    },
   };
 }
