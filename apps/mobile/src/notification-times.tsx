@@ -13,7 +13,7 @@ import { AccessibilityInfo, Pressable, StyleSheet, Text } from 'react-native';
 
 import { editionStrings } from './edition';
 import { useNotificationsChanges, useNotificationsState } from './notifications';
-import { dateOfTime } from './notifications-screen';
+import { dateOfTime, timeOfDay } from './notification-scheduler';
 import { TimePickerSheet, timePickerAvailable } from './time-picker';
 
 const strings = editionStrings.notifications;
@@ -34,7 +34,7 @@ export function NotificationTimes() {
   const { colors, fontFamilies } = useTokens();
   const { count, voice } = useEdition();
   /** The time being picked: the one it replaces (none when adding), and where the picker starts. */
-  const [picking, setPicking] = useState<{ from?: string; value: Date }>();
+  const [picking, setPicking] = useState<{ replacing?: string; value: Date }>();
   const [duplicate, setDuplicate] = useState(false);
   // The hint is about the list as it was when the time was refused.
   useEffect(() => {
@@ -46,20 +46,20 @@ export function NotificationTimes() {
   const pickerAvailable = timePickerAvailable();
   const canAdd = state.canAddTime && pickerAvailable;
 
-  function pick(from?: string) {
+  function pick(replacing?: string) {
     if (!pickerAvailable) return;
     const now = new Date();
     setDuplicate(false);
     setPicking({
-      ...(from === undefined ? {} : { from }),
-      value: from === undefined ? now : dateOfTime(from, now),
+      ...(replacing === undefined ? {} : { replacing }),
+      value: replacing === undefined ? now : dateOfTime(replacing, now),
     });
   }
 
   function keep(picked: Date) {
-    const from = picking?.from;
+    const replacing = picking?.replacing;
     setPicking(undefined);
-    void keepTime(picked, from).then((refusal) => {
+    void keepTime(timeOfDay(picked), replacing).then((refusal) => {
       setDuplicate(refusal === 'duplicate');
       if (refusal === 'duplicate')
         AccessibilityInfo.announceForAccessibility(strings.duplicateHint);

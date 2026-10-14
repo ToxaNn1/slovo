@@ -4,8 +4,10 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   createNotificationScheduler,
-  notificationLink,
+  dateOfTime,
+  isFromNotification,
   onNotificationTap,
+  timeOfDay,
   type NotificationsModule,
 } from './notification-scheduler';
 
@@ -160,9 +162,41 @@ describe('the notification scheduler on expo-notifications', () => {
   });
 });
 
+describe('the time the picker works with', () => {
+  it('reads a picked date as the local time «HH:MM», with a leading zero', () => {
+    expect(timeOfDay(new Date(2026, 9, 14, 7, 5))).toBe('07:05');
+    expect(timeOfDay(new Date(2026, 9, 14, 21, 30))).toBe('21:30');
+    expect(timeOfDay(new Date(2026, 9, 14, 0, 0))).toBe('00:00');
+  });
+
+  it('shows a time on the given day, at the same local time', () => {
+    const day = new Date(2026, 9, 14, 15, 42, 11);
+
+    expect(timeOfDay(dateOfTime('06:15', day))).toBe('06:15');
+    expect(dateOfTime('06:15', day).getDate()).toBe(14);
+  });
+});
+
 describe('a tap on a notification', () => {
-  it("opens its Word's link, marked as from a notification", () => {
-    expect(notificationLink('w_00g2ap')).toBe('/entry/w_00g2ap?from=notification');
+  /** The search params the Entry route reads from a link. */
+  const paramsOf = (link: string) =>
+    Object.fromEntries(new URL(link, 'slovo-uk://app').searchParams);
+
+  it("opens its Word's Entry link, which reads as from a notification", () => {
+    const { notifications, tap } = mockNotifications();
+    const open = vi.fn<(link: string) => void>();
+
+    onNotificationTap(notifications, open);
+    tap(tapOn({ wordId: 'w_00g2ap' }));
+
+    const [[link]] = open.mock.calls as [[string]];
+    expect(link).toBe('/entry/w_00g2ap?from=notification');
+    expect(isFromNotification(paramsOf(link))).toBe(true);
+  });
+
+  it('reads a link without the mark as not from a notification', () => {
+    expect(isFromNotification(paramsOf('/entry/w_00g2ap'))).toBe(false);
+    expect(isFromNotification(paramsOf('/entry/w_00g2ap?from=feed'))).toBe(false);
   });
 
   it('opens the Word of each tap while the app runs, and stops when told', () => {
@@ -173,7 +207,7 @@ describe('a tap on a notification', () => {
     tap(tapOn({ wordId: 'w_00g2ap' }));
     tap(tapOn({}));
 
-    expect(open.mock.calls).toEqual([['w_00g2ap']]);
+    expect(open.mock.calls).toEqual([['/entry/w_00g2ap?from=notification']]);
     // So listening again, as after a remount, doesn't open the same Word twice.
     expect(module.clearLastNotificationResponse).toHaveBeenCalled();
     stop();
@@ -188,7 +222,7 @@ describe('a tap on a notification', () => {
 
     onNotificationTap(notifications, open);
 
-    expect(open.mock.calls).toEqual([['w_00g2ap']]);
+    expect(open.mock.calls).toEqual([['/entry/w_00g2ap?from=notification']]);
     expect(module.clearLastNotificationResponse).toHaveBeenCalled();
   });
 

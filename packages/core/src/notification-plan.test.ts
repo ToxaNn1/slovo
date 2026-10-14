@@ -279,7 +279,7 @@ describe('the notification plan', () => {
     // The new last notification gets a Word no notification had, not the one that passed.
     expect([...before.values()]).not.toContain(kept.get('2026-10-28T09:00'));
 
-    await app.notifications.addTime('11:00');
+    await app.notifications.keepTime('11:00');
 
     const withNewTime = wordsBySlot(planOf(scheduler));
     expect(withNewTime.has('2026-10-14T11:00')).toBe(true);
@@ -290,7 +290,7 @@ describe('the notification plan', () => {
   it('plans again on every time change and on the sound switch', async () => {
     const { app, scheduler } = await run();
 
-    await app.notifications.changeTime('13:00', '14:30');
+    await app.notifications.keepTime('14:30', '13:00');
     expect(planOf(scheduler)[1]).toMatchObject({ date: '2026-10-14', time: '14:30' });
 
     await app.notifications.removeTime('19:00');
@@ -485,7 +485,7 @@ describe('the plan following the Feed', () => {
     const nine = wordAt(planOf(scheduler), '2026-10-15T09:00');
 
     // An earlier time added ahead of the 09:00 notification, which keeps its Word.
-    await app.notifications.addTime('07:15');
+    await app.notifications.keepTime('07:15');
     const plan = planOf(scheduler);
     expect(wordAt(plan, '2026-10-15T09:00')).toBe(nine);
 

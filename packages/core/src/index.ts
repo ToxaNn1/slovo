@@ -92,7 +92,6 @@ export {
 } from './notification-plan';
 export {
   type NotificationTimeRefusal,
-  type NotificationTimeResult,
   type Notifications,
   type NotificationsEdition,
   type NotificationsState,

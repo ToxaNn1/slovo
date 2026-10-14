@@ -64,7 +64,7 @@ describe('the Notification times', () => {
     const records = new Map<string, string>();
     const { notifications } = await run({ records });
 
-    expect(await notifications.addTime('11:30')).toEqual({ ok: true });
+    expect(await notifications.keepTime('11:30')).toBeUndefined();
 
     expect(notifications.state.times).toEqual(['09:00', '11:30', '13:00', '19:00']);
     expect(records.get('notifications.times')).toBe(
@@ -83,7 +83,7 @@ describe('the Notification times', () => {
     const { notifications } = await run({ records });
     const before = notifications.state;
 
-    expect(await notifications.addTime('13:00')).toEqual({ ok: false, reason: 'duplicate' });
+    expect(await notifications.keepTime('13:00')).toBe('duplicate');
 
     expect(notifications.state).toBe(before);
     expect(records.has('notifications.times')).toBe(false);
@@ -93,11 +93,11 @@ describe('the Notification times', () => {
     const records = new Map([['notifications.times', JSON.stringify(tenTimes.slice(0, 9))]]);
     const { notifications } = await run({ records });
 
-    expect(await notifications.addTime('22:00')).toEqual({ ok: true });
+    expect(await notifications.keepTime('22:00')).toBeUndefined();
     expect(notifications.state.times).toHaveLength(10);
     expect(notifications.state.canAddTime).toBe(false);
 
-    expect(await notifications.addTime('23:00')).toEqual({ ok: false, reason: 'limit' });
+    expect(await notifications.keepTime('23:00')).toBe('limit');
     expect(notifications.state.times).toHaveLength(10);
   });
 
@@ -105,7 +105,7 @@ describe('the Notification times', () => {
     const records = new Map<string, string>();
     const { notifications } = await run({ records });
 
-    expect(await notifications.changeTime('09:00', '20:45')).toEqual({ ok: true });
+    expect(await notifications.keepTime('20:45', '09:00')).toBeUndefined();
 
     expect(notifications.state.times).toEqual(['13:00', '19:00', '20:45']);
     expect((await run({ records })).notifications.state.times).toEqual(['13:00', '19:00', '20:45']);
@@ -115,21 +115,28 @@ describe('the Notification times', () => {
     const records = new Map([['notifications.times', JSON.stringify(tenTimes)]]);
     const { notifications } = await run({ records });
 
-    expect(await notifications.changeTime('10:00', '11:00')).toEqual({
-      ok: false,
-      reason: 'duplicate',
-    });
-    expect(await notifications.changeTime('10:00', '10:00')).toEqual({ ok: true });
-    expect(await notifications.changeTime('10:00', '08:30')).toEqual({ ok: true });
+    expect(await notifications.keepTime('11:00', '10:00')).toBe('duplicate');
+    expect(await notifications.keepTime('08:30', '10:00')).toBeUndefined();
 
     expect(notifications.state.times).toEqual(['08:30', ...tenTimes.slice(1)]);
+  });
+
+  it('keep the list as it is when a time is changed into itself', async () => {
+    const records = new Map<string, string>();
+    const { notifications } = await run({ records });
+    const before = notifications.state;
+
+    expect(await notifications.keepTime('13:00', '13:00')).toBeUndefined();
+
+    expect(notifications.state).toBe(before);
+    expect(records.has('notifications.times')).toBe(false);
   });
 
   it('change nothing for a time not in the list', async () => {
     const { notifications } = await run();
     const before = notifications.state;
 
-    expect(await notifications.changeTime('10:00', '11:00')).toBeUndefined();
+    expect(await notifications.keepTime('11:00', '10:00')).toBeUndefined();
     await notifications.removeTime('10:00');
 
     expect(notifications.state).toBe(before);
@@ -157,8 +164,8 @@ describe('the Notification times', () => {
   it('refuse a time that is not a local time `HH:MM`', async () => {
     const { notifications } = await run();
 
-    await expect(notifications.addTime('9:00')).rejects.toThrow();
-    await expect(notifications.changeTime('09:00', '24:00')).rejects.toThrow();
+    await expect(notifications.keepTime('9:00')).rejects.toThrow();
+    await expect(notifications.keepTime('24:00', '09:00')).rejects.toThrow();
     expect(notifications.state.times).toEqual(defaultTimes);
   });
 
@@ -183,7 +190,7 @@ describe('the Notification times', () => {
     });
     const before = notifications.state;
 
-    await notifications.addTime('13:00');
+    await notifications.keepTime('13:00');
     await notifications.setSound(true);
     expect(told).toBe(0);
     expect(notifications.state).toBe(before);
@@ -193,7 +200,7 @@ describe('the Notification times', () => {
     expect(told).toBe(2);
 
     stop();
-    await notifications.addTime('09:00');
+    await notifications.keepTime('09:00');
     expect(told).toBe(2);
   });
 
@@ -207,13 +214,13 @@ describe('the Notification times', () => {
   it('make changes one at a time, each from where the one before left', async () => {
     const { notifications } = await run({ notificationTimes: [] });
 
-    const results = await Promise.all(
-      ['08:00', '08:00', ...tenTimes].map((time) => notifications.addTime(time)),
+    const refusals = await Promise.all(
+      ['08:00', '08:00', ...tenTimes].map((time) => notifications.keepTime(time)),
     );
 
-    expect(results.filter(({ ok }) => ok)).toHaveLength(10);
-    expect(results[1]).toEqual({ ok: false, reason: 'duplicate' });
-    expect(results.at(-1)).toEqual({ ok: false, reason: 'limit' });
+    expect(refusals.filter((refusal) => refusal === undefined)).toHaveLength(10);
+    expect(refusals[1]).toBe('duplicate');
+    expect(refusals.at(-1)).toBe('limit');
     expect(notifications.state.times).toEqual(['08:00', ...tenTimes.slice(0, 9)]);
   });
 });
