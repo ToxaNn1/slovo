@@ -159,7 +159,10 @@ export function BottomSheet({
             {/* A Modal is its own native root, so the gestures need a root of their own; a local one keeps the rest of the sheet out of the gesture system. */}
             <GestureHandlerRootView style={styles.handle}>
               <GestureDetector gesture={pan}>
-                <View style={styles.handleHit}>
+                <View
+                  style={styles.handleHit}
+                  testID={testID === undefined ? undefined : `${testID}-grabber`}
+                >
                   <View
                     style={[styles.grabber, { backgroundColor: colors.muted, opacity: 0.45 }]}
                   />

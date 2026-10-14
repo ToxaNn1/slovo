@@ -1,0 +1,69 @@
+# The stats sheet: the Stats pill opens it on a fresh install, a tap outside
+# and a swipe down close it, and a heart in the Feed grows its Favorites count.
+# A subflow of `smoke.yaml`; run it from there. It clears the app's state.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+# A fresh install: the first Active Day, and nothing read or kept yet.
+- stopApp
+- launchApp:
+    clearState: true
+- runFlow:
+    file: ../open-in-dev-client.yaml
+- tapOn:
+    id: stats-pill
+    text: 'Статистика: серія 1 день'
+- assertVisible:
+    id: stats-streak
+    text: 'Статистика, 1, день поспіль, найкраща серія — 1'
+- assertVisible:
+    id: stats-favorites
+    text: 0, в Улюбленому
+- assertVisible:
+    id: stats-in-collections
+    text: 0, слів у Колекціях
+- takeScreenshot: stats-sheet-fresh
+# A tap outside, above the sheet, closes it.
+- tapOn:
+    point: 50%, 12%
+- assertNotVisible:
+    id: stats-sheet
+# A fresh install shows the swipe hint over the card's actions: a tap hides it.
+- runFlow:
+    when:
+      visible:
+        id: swipe-hint
+    commands:
+      - tapOn:
+          id: swipe-hint
+# Heart the card on screen. The heart sits under the card, which may be taller
+# than the screen, then off the tab bar: a short slow drag scrolls the card
+# further, and is too short and slow to turn the page.
+- scrollUntilVisible:
+    element:
+      id: favorite-button
+- swipe:
+    start: 50%, 60%
+    end: 50%, 48%
+    duration: 800
+# A tap while the card still glides only stops it.
+- waitForAnimationToEnd
+- tapOn:
+    id: favorite-button
+    text: Додати в Улюблене
+- assertVisible:
+    id: favorite-button
+    text: Прибрати з Улюбленого
+# The sheet counts it, in the right plural form.
+- tapOn:
+    id: stats-pill
+- assertVisible:
+    id: stats-favorites
+    text: 1, в Улюбленому
+- takeScreenshot: stats-sheet-favorite
+# A swipe down on the grabber closes it.
+- swipe:
+    from:
+      id: stats-sheet-grabber
+    direction: DOWN
+- assertNotVisible:
+    id: stats-sheet
