@@ -1,5 +1,6 @@
 import type { EntryRowModel, EntryRows } from './entry-row';
 import type { HiddenEntries } from './hidden-entries';
+import { createInTurn } from './in-turn';
 import type { Mix } from './mix';
 
 /** What a hide or an unhide is for: one Entry, one Category, or Corrections as a whole. */
@@ -59,6 +60,9 @@ export function createHiding({
   hiddenEntries: HiddenEntries;
   mix: Mix;
 }): Hiding {
+  // One hide or unhide at a time, so each one checks its target after the one before it changed it.
+  const inTurn = createInTurn();
+
   async function hide(target: HideTarget): Promise<HideResult | undefined> {
     if (target.kind === 'entry') {
       const { entryId } = target;
@@ -109,5 +113,8 @@ export function createHiding({
     return { changed: { kind: 'corrections' }, undo: undefined };
   }
 
-  return { hide, unhide };
+  return {
+    hide: (target) => inTurn(() => hide(target)),
+    unhide: (target) => inTurn(() => unhide(target)),
+  };
 }
