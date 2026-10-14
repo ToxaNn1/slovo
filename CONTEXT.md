@@ -152,6 +152,10 @@ _Avoid_: Available, visible, active entry
 **Reserved**:
 A Word already promised to a scheduled notification, so no other notification picks it. Reserved is not Seen.
 
+**Notification time**:
+One of the user's local times of day at which a notification comes, such as 09:00. A new user has the Edition's default times; the user may keep up to 10, no two equal, always in time order. With none left, notifications are off. Notification times stay on the device.
+_Avoid_: Reminder, alarm, schedule
+
 **Word of the Day**:
 One unseen Word fixed for the user's local calendar day; it opens the Feed and is the morning notification.
 _Avoid_: Daily word

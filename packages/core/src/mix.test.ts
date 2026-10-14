@@ -104,7 +104,10 @@ async function run({
     edition: {
       isFeatureEnabled: (feature) => feature === 'corrections' && correctionsSwitch,
       categories,
-      userSettingDefaults: { mix: { categoryIds: defaultCategoryIds, corrections: true } },
+      userSettingDefaults: {
+        mix: { categoryIds: defaultCategoryIds, corrections: true },
+        notificationTimes: [],
+      },
     },
     userState: await openUserState({ port }),
     clock,

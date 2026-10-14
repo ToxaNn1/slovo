@@ -16,7 +16,7 @@ import {
 /** The Edition's one Category, the test Words' own, and its default Mix of every Category. */
 const testCategories = {
   categories: [{ id: 'test', displayName: 'Test' }],
-  userSettingDefaults: { mix: { categoryIds: ['test'], corrections: true } },
+  userSettingDefaults: { mix: { categoryIds: ['test'], corrections: true }, notificationTimes: [] },
 };
 
 /** A clock at a fixed instant in a time zone the test can change, and move on. */
