@@ -27,7 +27,7 @@ pnpm source:words path/to/lemmas.txt --edition uk
 
 | Option                             | Default                 | Meaning                                                                     |
 | ---------------------------------- | ----------------------- | --------------------------------------------------------------------------- |
-| `--edition <id>`                   | required                | The Edition whose Categories, Stress rules and taken ids apply.             |
+| `--edition <id>`                   | required                | The Edition whose Categories, Stress rules and id registry apply.           |
 | `--out <dir>`                      | `tools/sourcing/review` | The review folder (git-ignored).                                            |
 | `--cache <dir>`                    | see below               | Fetched pages and the shared request schedule.                              |
 | `--sum auto\|direct\|wayback\|off` | `auto`                  | The sum.in.ua fallback: the site then the archive, one of them, or neither. |

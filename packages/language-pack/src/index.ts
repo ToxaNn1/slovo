@@ -6,6 +6,7 @@
  */
 export { buildLanguagePack, type BuildResult } from './build';
 export { checkNewWords } from './check-new-words';
+export { ID_REGISTRY_FILE, IdRegistrySchema } from './id-registry';
 export { formatBuildError, type BuildError } from './build-error';
 export type { ContentTarget, ContentTargets, MissedTarget } from './content-targets';
 export type { PackMetadata } from './pack-layout';
