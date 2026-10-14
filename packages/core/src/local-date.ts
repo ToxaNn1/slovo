@@ -8,16 +8,23 @@ export interface LocalDate {
   readonly day: number;
 }
 
+/** The parts of an instant as the time zone writes it, each read by its type. */
+function partsAt(
+  instant: Date,
+  timeZone: string,
+  options: Intl.DateTimeFormatOptions,
+): (type: Intl.DateTimeFormatPartTypes) => string {
+  const parts = new Intl.DateTimeFormat('en-US', { ...options, timeZone }).formatToParts(instant);
+  return (type) => parts.find((candidate) => candidate.type === type)?.value ?? '';
+}
+
 /** The key of today's local calendar date in the clock's time zone: `YYYY-MM-DD`. */
 export function todayKey(clock: Clock): string {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: clock.timeZone(),
+  const part = partsAt(clock.now(), clock.timeZone(), {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
-  }).formatToParts(clock.now());
-  const part = (type: Intl.DateTimeFormatPartTypes) =>
-    parts.find((candidate) => candidate.type === type)?.value ?? '';
+  });
   return `${part('year')}-${part('month')}-${part('day')}`;
 }
 
@@ -42,7 +49,8 @@ function localDateAt(instant: Date, timeZone: string): LocalDate {
 }
 
 /** The days from 1970-01-01 to the date, counted on the calendar alone. */
-const dayNumber = ({ year, month, day }: LocalDate) => Date.UTC(year, month - 1, day) / DAY_MS;
+export const dayNumber = ({ year, month, day }: LocalDate) =>
+  Date.UTC(year, month - 1, day) / DAY_MS;
 
 /**
  * The local day an instant fell on, in the clock's current time zone, and how
@@ -60,13 +68,52 @@ export function localTimeOf(
   instant: Date,
   clock: Clock,
 ): { readonly hour: number; readonly minute: number } {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: clock.timeZone(),
+  const part = partsAt(instant, clock.timeZone(), {
     hourCycle: 'h23',
     hour: '2-digit',
     minute: '2-digit',
-  }).formatToParts(instant);
-  const part = (type: Intl.DateTimeFormatPartTypes) =>
-    Number(parts.find((candidate) => candidate.type === type)?.value ?? 0);
-  return { hour: part('hour'), minute: part('minute') };
+  });
+  return { hour: Number(part('hour')), minute: Number(part('minute')) };
+}
+
+/** The wall-clock time of an instant in the time zone, counted in milliseconds as if it were UTC. */
+function wallClockAt(instant: number, timeZone: string): number {
+  const text = partsAt(new Date(instant), timeZone, {
+    hourCycle: 'h23',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
+  const part = (type: Intl.DateTimeFormatPartTypes) => Number(text(type));
+  const milliseconds = ((instant % 1000) + 1000) % 1000;
+  return Date.UTC(
+    part('year'),
+    part('month') - 1,
+    part('day'),
+    part('hour'),
+    part('minute'),
+    part('second'),
+    milliseconds,
+  );
+}
+
+/**
+ * The milliseconds from now until the next local day starts in the clock's
+ * time zone, across a daylight-saving change too, so a timer can tell the
+ * composition when today ends.
+ */
+export function untilNextLocalDay(clock: Clock): number {
+  const zone = clock.timeZone();
+  const now = clock.now().getTime();
+  const wallClock = wallClockAt(now, zone);
+  const nextMidnight = (Math.floor(wallClock / DAY_MS) + 1) * DAY_MS;
+  // Midnight at today's offset from UTC, then at the offset in force by then.
+  const atTodaysOffset = now + nextMidnight - wallClock;
+  const atItsOffset = nextMidnight - (wallClockAt(atTodaysOffset, zone) - atTodaysOffset);
+  // When a daylight-saving change skips midnight, the day starts at the change.
+  const start = wallClockAt(atItsOffset, zone) >= nextMidnight ? atItsOffset : atTodaysOffset;
+  return start - now;
 }

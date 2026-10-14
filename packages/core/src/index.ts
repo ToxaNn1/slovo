@@ -44,7 +44,13 @@ export { type HiddenEntries, type HiddenEntry } from './hidden-entries';
 export { type UnhideResult, type HideResult, type HideTarget, type HidingChange } from './hiding';
 export { HISTORY_CAP, type History, type HistoryEntry } from './history';
 export { groupByLocalDay, relativeTimeOf, type DayGroup, type RelativeTime } from './history-time';
-export { localDayOf, localTimeOf, type LocalDate, type LocalDay } from './local-date';
+export {
+  localDayOf,
+  localTimeOf,
+  untilNextLocalDay,
+  type LocalDate,
+  type LocalDay,
+} from './local-date';
 export {
   InvalidEditionConfigError,
   loadEdition,
@@ -70,6 +76,7 @@ export {
 } from './word-card';
 export { openWordOfTheDay, type WordOfTheDay, type WordOfTheDayChoice } from './word-of-the-day';
 export { createMemoryContentPort } from './memory-content';
+export { type Progress, type ProgressState } from './progress';
 export { type Mix, type MixEdition, type MixState } from './mix';
 export {
   systemClock,

@@ -111,6 +111,10 @@ A local calendar day on which the user opened the app.
 The number of consecutive Active Days up to today; missing a day resets it. Always derived from Active Days, never stored on its own.
 _Avoid_: Chain, run
 
+**Best Streak**:
+The most consecutive Active Days the user has ever had, derived from them like the Streak and never stored; a reset of the Streak leaves it.
+_Avoid_: Top streak, longest chain
+
 **Account**:
 The optional identity ("SLOVO ID") that keeps a user's words and progress across devices. One Account works in every Edition, and each Edition's data stays separate. Without an Account everything lives on the device only.
 _Avoid_: Cabinet, profile, login

@@ -10,6 +10,7 @@ import { openHiddenEntries, type HiddenEntries } from './hidden-entries';
 import { createHiding, type Hiding } from './hiding';
 import { openMix, type Mix, type MixEdition } from './mix';
 import type { Clock, ContentReadPort, Random } from './ports';
+import { openProgress, type Progress } from './progress';
 import type { UserState } from './user-state';
 import { openWordOfTheDay } from './word-of-the-day';
 
@@ -34,6 +35,14 @@ export interface Composition extends Hiding {
   readonly hiddenEntries: HiddenEntries;
   /** The Mix, whose Categories out of it are the Hidden Categories (ADR 0019). */
   readonly mix: Mix;
+  /** Progress: the Streak and the Best Streak, derived from the Active Days. */
+  readonly progress: Progress;
+  /**
+   * Tells the composition the reader is back: the app returned to the
+   * foreground, or a new local day started while it was open. Today becomes
+   * an Active Day, as it does when the composition opens.
+   */
+  resume(): Promise<void>;
   /**
    * The Entry card of any Entry, Retired or not, for a screen that opens a
    * kept Entry; nothing for an id the Language Pack doesn't have. Opening it
@@ -49,7 +58,7 @@ export interface Composition extends Hiding {
  * open: one Entries module, one Cycle and one Word of the Day over the stored
  * user state, shared by every feature it opens. The Cycle and the Word of the
  * Day keep their state in memory for the session (ADR 0013), so open one
- * composition per app session.
+ * composition per app session. Opening it makes today an Active Day.
  */
 export async function openComposition({
   content,
@@ -91,6 +100,8 @@ export async function openComposition({
     openHiddenEntries({ rows, userState, clock, eligibilityChanged }),
     openMix({ edition, userState, eligibilityChanged }),
   ]);
+  const { progress, recordToday } = await openProgress({ userState, clock });
+  await recordToday();
   return {
     feed,
     favorites,
@@ -98,6 +109,8 @@ export async function openComposition({
     history,
     hiddenEntries,
     mix,
+    progress,
+    resume: recordToday,
     ...createHiding({ rows, hiddenEntries, mix }),
     async entryCard(entryId) {
       const entry = await entries.get(entryId);
