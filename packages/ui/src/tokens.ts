@@ -92,9 +92,15 @@ export const typeSize = {
   screenTitle: 34,
   emptyStateTitle: 28,
   overline: 11,
+  /** `Big number`, the Streak. */
+  streak: 64,
+  /** `Big number`, a count of the stats sheet (the Scale gives 26–30). */
+  count: 28,
   chip: 12.5,
   outlinedChip: 11.5,
   body: 15,
+  button: 16,
+  sheetTitle: 26,
   partOfSpeech: 14,
   tabLabel: 10.5,
 } as const;
@@ -119,6 +125,9 @@ export const fontSizeSteps: Readonly<
   L: { lemma: 56, definition: 21, example: 19 },
   XL: { lemma: 64, definition: 23, example: 21 },
 };
+
+/** The text size scale above which a row puts its value, button or switch under its label, so no word breaks. */
+export const STACK_AT_FONT_SCALE = 1.3;
 
 /** The smallest side of anything the user taps. */
 export const minTouchTarget = 44;

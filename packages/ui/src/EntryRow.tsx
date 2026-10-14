@@ -3,15 +3,13 @@ import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { fill, useEdition } from './EditionProvider';
-import { space } from './tokens';
+import { space, STACK_AT_FONT_SCALE } from './tokens';
 import { rowActionProps, SwipeableRow, type RowAction } from './SwipeableRow';
 import { useTokens } from './TokensProvider';
 
 /** An action of an Entry row. */
 export type EntryRowAction = RowAction;
 
-/** The text size scale above which a row puts its button under the text. */
-const STACK_AT_FONT_SCALE = 1.3;
 /** How far the largest text sizes of iOS may scale a title that shares its row with a button. */
 const ACCESSORY_TITLE_MAX_FONT_SCALE = 1.3;
 

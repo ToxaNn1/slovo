@@ -1,8 +1,9 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { EmptyStateIllustration } from './DecorSlots';
 import { useEdition } from './EditionProvider';
-import { minTouchTarget, space, typeSize } from './tokens';
+import { PrimaryButton } from './PrimaryButton';
+import { space, typeSize } from './tokens';
 import { useTokens } from './TokensProvider';
 
 /** The width of the empty-state illustration (Decor slot 4), within the design's 90–120. */
@@ -27,7 +28,7 @@ export function EmptyState({
   action?: { readonly label: string; readonly onPress: () => void; readonly testID?: string };
   testID?: string;
 }) {
-  const { colors, fontFamilies, radii } = useTokens();
+  const { colors, fontFamilies } = useTokens();
   const { voice } = useEdition();
   return (
     <View testID={testID} style={styles.state}>
@@ -45,22 +46,9 @@ export function EmptyState({
         </Text>
       </View>
       {action !== undefined && (
-        <Pressable
-          testID={action.testID}
-          accessibilityRole="button"
-          {...voice}
-          onPress={action.onPress}
-          style={({ pressed }) => [
-            styles.button,
-            { backgroundColor: colors.ink, borderRadius: radii.button, opacity: pressed ? 0.8 : 1 },
-          ]}
-        >
-          <Text
-            style={[styles.buttonText, { color: colors.background, fontFamily: fontFamilies.ui }]}
-          >
-            {action.label}
-          </Text>
-        </Pressable>
+        <View style={styles.action}>
+          <PrimaryButton testID={action.testID} label={action.label} onPress={action.onPress} />
+        </View>
       )}
     </View>
   );
@@ -82,13 +70,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   message: { fontSize: typeSize.body, lineHeight: typeSize.body * 1.5, textAlign: 'center' },
-  button: {
-    minHeight: 50,
-    minWidth: minTouchTarget,
-    marginTop: space[1] + 2,
-    paddingHorizontal: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  buttonText: { fontSize: typeSize.body, fontWeight: '700' },
+  action: { marginTop: space[1] + 2 },
 });

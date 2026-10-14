@@ -4,11 +4,9 @@ import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-n
 import { BottomSheet } from './BottomSheet';
 import { OrnamentBand } from './DecorSlots';
 import { fill, useEdition } from './EditionProvider';
-import { space } from './tokens';
+import { space, STACK_AT_FONT_SCALE, typeSize } from './tokens';
 import { useTokens } from './TokensProvider';
 
-/** The text size scale above which the counts stand in one column and the Streak over its words, so no word breaks. */
-const STACK_AT_FONT_SCALE = 1.3;
 /** How far the largest text sizes of iOS may scale the numbers, so the big Streak fits beside its words. */
 const NUMBER_MAX_FONT_SCALE = 1.5;
 
@@ -132,7 +130,7 @@ const styles = StyleSheet.create({
     gap: space[4],
     marginBottom: space[6],
   },
-  streakValue: { fontSize: 60, fontWeight: '500', lineHeight: 68 },
+  streakValue: { fontSize: typeSize.streak, fontWeight: '500', lineHeight: typeSize.streak * 1.1 },
   streakStacked: { flexDirection: 'column', alignItems: 'flex-start', gap: space[2] },
   streakWords: { flex: 1, gap: space[1] },
   streakWordsStacked: { gap: space[1] },
@@ -145,6 +143,6 @@ const styles = StyleSheet.create({
     marginTop: space[6],
   },
   count: { paddingRight: space[3], gap: space[1] },
-  countValue: { fontSize: 28, fontWeight: '600' },
+  countValue: { fontSize: typeSize.count, fontWeight: '500' },
   countLabel: { fontSize: 14 },
 });

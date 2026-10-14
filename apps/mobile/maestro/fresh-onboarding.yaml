@@ -1,0 +1,18 @@
+# A fresh install of the app on the onboarding's welcome: its state cleared,
+# the development client opened on Metro and the welcome waited for. The flows
+# of the onboarding's steps run it first.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- launchApp:
+    clearState: true
+    # Not asked yet, as on a fresh install, so «Увімкнути сповіщення» shows.
+    permissions:
+      notifications: unset
+- runFlow:
+    file: open-in-dev-client.yaml
+    env:
+      PASS_ONBOARDING: 'false'
+      READY_ID: onboarding
+# The development client's menu may open over the welcome on a fresh install.
+- runFlow:
+    file: dismiss-dev-menu.yaml

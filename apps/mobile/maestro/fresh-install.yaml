@@ -1,0 +1,11 @@
+# A fresh install of the app on the Feed: its state cleared, the development
+# client opened on Metro and the onboarding skipped. A flow that needs the
+# fresh install to start from, with nothing kept from an earlier run, runs it
+# first. `smoke.yaml` sets `output.devClientLink` for `open-in-dev-client.yaml`.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- stopApp
+- launchApp:
+    clearState: true
+- runFlow:
+    file: open-in-dev-client.yaml

@@ -1,7 +1,7 @@
 import type DateTimePicker from '@react-native-community/datetimepicker';
-import { BottomSheet, space, useEdition, useTokens } from '@slovo/ui';
+import { BottomSheet, PrimaryButton, SheetTitle, space, useEdition, useTokens } from '@slovo/ui';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { nativeModules } from './device-native-modules';
 import { editionStrings } from './edition';
@@ -51,7 +51,7 @@ export function TimePickerSheet({
 }
 
 function SheetContent({ value, onPick }: { value: Date; onPick: (picked: Date) => void }) {
-  const { colors, colorScheme, fontFamilies, radii } = useTokens();
+  const { colors, colorScheme } = useTokens();
   const { voice } = useEdition();
   const strings = editionStrings.notifications;
   const [Picker] = useState(loadTimePicker);
@@ -59,13 +59,7 @@ function SheetContent({ value, onPick }: { value: Date; onPick: (picked: Date) =
 
   return (
     <>
-      <Text
-        accessibilityRole="header"
-        {...voice}
-        style={[styles.title, { color: colors.ink, fontFamily: fontFamilies.word }]}
-      >
-        {strings.pickerLabel}
-      </Text>
+      <SheetTitle>{strings.pickerLabel}</SheetTitle>
       <View style={styles.picker}>
         {Picker !== undefined && (
           <Picker
@@ -83,26 +77,20 @@ function SheetContent({ value, onPick }: { value: Date; onPick: (picked: Date) =
           />
         )}
       </View>
-      <Pressable
-        testID="time-picker-done"
-        accessibilityRole="button"
-        {...voice}
-        onPress={() => {
-          onPick(picked);
-        }}
-        style={[styles.done, { backgroundColor: colors.ink, borderRadius: radii.button }]}
-      >
-        <Text style={[styles.doneLabel, { color: colors.background, fontFamily: fontFamilies.ui }]}>
-          {strings.done}
-        </Text>
-      </Pressable>
+      <View style={styles.done}>
+        <PrimaryButton
+          testID="time-picker-done"
+          label={strings.done}
+          onPress={() => {
+            onPick(picked);
+          }}
+        />
+      </View>
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: 26, fontWeight: '500', paddingBottom: space[2] },
   picker: { alignItems: 'center', paddingVertical: space[2] },
-  done: { minHeight: 56, alignItems: 'center', justifyContent: 'center', marginTop: space[3] },
-  doneLabel: { fontSize: 17, fontWeight: '700' },
+  done: { marginTop: space[4] },
 });

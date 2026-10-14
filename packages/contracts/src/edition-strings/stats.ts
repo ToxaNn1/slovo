@@ -11,12 +11,12 @@ export const StatsStringsSchema = z.strictObject({
   pillLabel: PluralSchema,
   /** The word beside the big current Streak, e.g. «днів поспіль». */
   streak: PluralLabelSchema,
-  /** The line under it: the best Streak, e.g. «найкраща серія — 31». Takes `{count}`. */
+  /** The line under it: the Best Streak, e.g. «найкраща серія — 31». Takes `{count}`. */
   bestStreak: templateOf('count'),
-  /** The word beside the count of Entries Seen today, e.g. «слів сьогодні». */
+  /** The word beside the count of Entries Seen today, e.g. «записів сьогодні». */
   seenToday: PluralLabelSchema,
   /** The label of the Favorites count. */
   favorites: TextSchema,
-  /** The word beside the count of unique Entries in Collections, e.g. «слово в Колекціях». */
+  /** The word beside the count of unique Entries in Collections, e.g. «запис у Колекціях». */
   inCollections: PluralLabelSchema,
 });

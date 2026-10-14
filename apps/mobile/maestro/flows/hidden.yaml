@@ -6,14 +6,10 @@
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
 # Bring every Hidden Entry back, so the counts below are the flow's own.
-- tapOn:
-    id: tab-settings
-- scrollUntilVisible:
-    element:
-      id: settings-row-hidden
-    # Off the tab bar, which covers the bottom of the list at the largest font size.
-    centerElement: true
-    visibilityPercentage: 50
+- runFlow:
+    file: ../open-settings-row.yaml
+    env:
+      ROW: settings-row-hidden
 - tapOn:
     id: settings-row-hidden
 - assertVisible:
@@ -72,14 +68,10 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - assertVisible:
     id: undo-toast-message
     text: «.+» приховано
-- tapOn:
-    id: tab-settings
-- scrollUntilVisible:
-    element:
-      id: settings-row-hidden
-    # Off the tab bar, which covers the bottom of the list at the largest font size.
-    centerElement: true
-    visibilityPercentage: 50
+- runFlow:
+    file: ../open-settings-row.yaml
+    env:
+      ROW: settings-row-hidden
 - assertVisible:
     id: settings-row-hidden
     text: Приховані записи, 2 записи

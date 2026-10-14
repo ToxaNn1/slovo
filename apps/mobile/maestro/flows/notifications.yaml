@@ -16,14 +16,10 @@
 # the swipes on the wheel against a real run.
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
-- tapOn:
-    id: tab-settings
-- scrollUntilVisible:
-    element:
-      id: settings-row-notifications
-    # Off the tab bar, which covers the bottom of the list at the largest font size.
-    centerElement: true
-    visibilityPercentage: 50
+- runFlow:
+    file: ../open-settings-row.yaml
+    env:
+      ROW: settings-row-notifications
 # The row reads «Сповіщення, N на день», or «Сповіщення, Вимкнено» with no times
 # or while notifications are not allowed (a dev client built before the native
 # batch never allows them), and then it stays «Вимкнено» after a removal.

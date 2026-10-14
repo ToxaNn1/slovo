@@ -3,11 +3,8 @@
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
 # A fresh install: nothing kept from an earlier run, so today is the first Active Day.
-- stopApp
-- launchApp:
-    clearState: true
 - runFlow:
-    file: ../open-in-dev-client.yaml
+    file: ../fresh-install.yaml
 - assertVisible:
     id: stats-pill
     text: 'Статистика: серія 1 день'

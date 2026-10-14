@@ -18,8 +18,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DecorBackground, OrnamentBand } from './DecorSlots';
 import { fill, useEdition } from './EditionProvider';
+import { PrimaryButton } from './PrimaryButton';
 import { WholeWordsText } from './WholeWordsText';
-import { minTouchTarget, space, typeSize } from './tokens';
+import { minTouchTarget, overlineType, space, typeSize } from './tokens';
 import { useTokens } from './TokensProvider';
 
 /** How long a step takes to slide in, and how far from the side it starts. */
@@ -165,44 +166,6 @@ function OnboardingStep({
         {footer}
       </View>
     </Animated.View>
-  );
-}
-
-/** The step's main button: the Theme's primary fill (design `color.primaryButton`). */
-export function PrimaryButton({
-  label,
-  onPress,
-  testID,
-}: {
-  label: string;
-  onPress: () => void;
-  testID?: string;
-}) {
-  const { colors, colorScheme, fontFamilies, radii } = useTokens();
-  const { voice } = useEdition();
-  return (
-    <Pressable
-      testID={testID}
-      accessibilityRole="button"
-      {...voice}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.primary,
-        {
-          // Dark: the gold of the accent; light: ink.
-          backgroundColor: colorScheme === 'dark' ? colors.accent : colors.ink,
-          borderRadius: radii.button,
-          opacity: pressed ? 0.8 : 1,
-        },
-      ]}
-    >
-      <Text
-        maxFontSizeMultiplier={HEADLINE_MAX_FONT_SCALE}
-        style={[styles.primaryLabel, { color: colors.background, fontFamily: fontFamilies.ui }]}
-      >
-        {label}
-      </Text>
-    </Pressable>
   );
 }
 
@@ -550,11 +513,7 @@ const styles = StyleSheet.create({
     gap: space[5],
   },
   contentFromTop: { justifyContent: 'flex-start' },
-  overline: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 12 * 0.2,
-  },
+  overline: overlineType,
   heading: { gap: space[2] },
   band: { flexDirection: 'row' },
   hero: { gap: space[2] },
@@ -563,13 +522,6 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 17, lineHeight: 17 * 1.5, paddingBottom: space[4] },
   footer: { paddingHorizontal: SIDE, paddingTop: space[3], paddingBottom: space[4], gap: space[5] },
   dots: { flexDirection: 'row', alignItems: 'center', gap: DOT.gap },
-  primary: {
-    minHeight: 56,
-    paddingHorizontal: space[5],
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  primaryLabel: { fontSize: 16, fontWeight: '700' },
   later: { minHeight: minTouchTarget, alignItems: 'center', justifyContent: 'center' },
   laterLabel: { fontSize: 16, fontWeight: '600' },
   sample: {
@@ -593,6 +545,6 @@ const styles = StyleSheet.create({
   sampleTop: { flexDirection: 'row', justifyContent: 'space-between', gap: space[3] },
   sampleApp: { flexShrink: 1, fontSize: 13, fontWeight: '600' },
   sampleTime: { fontSize: 13 },
-  sampleLemma: { fontSize: 17, lineHeight: 17 * 1.3, fontWeight: '700' },
+  sampleLemma: { fontSize: 17, lineHeight: 17 * 1.3, fontWeight: '600' },
   sampleBody: { fontSize: 14, lineHeight: 14 * 1.35 },
 });

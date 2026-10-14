@@ -13,19 +13,9 @@
 # other choices with it.
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
-- launchApp:
-    clearState: true
-    # Not asked yet, as on a fresh install, so «Увімкнути сповіщення» shows.
-    permissions:
-      notifications: unset
+# A fresh install shows the welcome.
 - runFlow:
-    file: ../open-in-dev-client.yaml
-    env:
-      PASS_ONBOARDING: 'false'
-      READY_ID: onboarding
-# The development client's menu may open over the welcome on a fresh install.
-- runFlow:
-    file: ../dismiss-dev-menu.yaml
+    file: ../fresh-onboarding.yaml
 - tapOn:
     id: onboarding-start
 - assertVisible:
@@ -79,13 +69,10 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: feed-card-.*
 - assertNotVisible:
     id: onboarding-notifications
-- tapOn:
-    id: tab-settings
-- scrollUntilVisible:
-    element:
-      id: settings-row-notifications
-    centerElement: true
-    visibilityPercentage: 50
+- runFlow:
+    file: ../open-settings-row.yaml
+    env:
+      ROW: settings-row-notifications
 # Nothing was allowed, so nothing comes: the row reads «Вимкнено».
 - assertVisible:
     id: settings-row-notifications

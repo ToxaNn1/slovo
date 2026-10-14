@@ -5,16 +5,9 @@
 # flow, as it takes the Favorites and the other choices with it.
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
-- launchApp:
-    clearState: true
+# A fresh install shows the welcome.
 - runFlow:
-    file: ../open-in-dev-client.yaml
-    env:
-      PASS_ONBOARDING: 'false'
-      READY_ID: onboarding
-# The development client's menu may open over the welcome on a fresh install.
-- runFlow:
-    file: ../dismiss-dev-menu.yaml
+    file: ../fresh-onboarding.yaml
 - assertVisible:
     id: onboarding
 - assertVisible:

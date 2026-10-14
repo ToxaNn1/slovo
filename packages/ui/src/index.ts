@@ -36,11 +36,11 @@ export {
   OnboardingMix,
   OnboardingNotifications,
   OnboardingWelcome,
-  PrimaryButton,
   type HeroWord,
   type SampleNotificationLook,
 } from './Onboarding';
 export { OutlineButton } from './OutlineButton';
+export { PrimaryButton } from './PrimaryButton';
 export {
   SavedCard,
   SavedCardCollection,
@@ -53,6 +53,7 @@ export { CollectionButton } from './CollectionButton';
 export { CollectionNameField, CollectionRow, NewCollectionButton } from './CollectionRow';
 export { CollectionSheet } from './CollectionSheet';
 export { BottomSheet } from './BottomSheet';
+export { SheetTitle } from './SheetParts';
 export { Placeholder } from './Placeholder';
 export {
   PronunciationButton,
@@ -70,6 +71,7 @@ export {
   fontSizeSteps,
   minTouchTarget,
   space,
+  STACK_AT_FONT_SCALE,
   typeSize,
   type ColorScheme,
   type DesignTokens,

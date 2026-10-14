@@ -4,11 +4,8 @@ import Svg, { Path } from 'react-native-svg';
 
 import { fill, useEdition } from './EditionProvider';
 import { rowActionProps, SwipeableRow, type RowAction } from './SwipeableRow';
-import { minTouchTarget, overlineType, space, typeSize } from './tokens';
+import { minTouchTarget, overlineType, space, STACK_AT_FONT_SCALE, typeSize } from './tokens';
 import { useTokens } from './TokensProvider';
-
-/** The text size scale above which a row puts its value or its switch under its label. */
-const STACK_AT_FONT_SCALE = 1.3;
 
 /** How much a row that a later version brings is dimmed. */
 const SOON_OPACITY = 0.5;

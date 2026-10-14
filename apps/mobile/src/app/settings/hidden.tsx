@@ -7,6 +7,7 @@ import {
   SectionLabel,
   UndoToastProvider,
   space,
+  STACK_AT_FONT_SCALE,
   typeSize,
   useEdition,
   useTokens,
@@ -22,9 +23,6 @@ import { useHiddenChanges, useHiddenScreenModel } from '../../hidden';
 import { LoadFailed } from '../../language-pack';
 
 const strings = editionStrings.hidden;
-
-/** The text size scale above which a row puts its button under the name. */
-const STACK_AT_FONT_SCALE = 1.3;
 
 /**
  * Settings › Приховане: the Hidden Entries newest first, each with its kind
