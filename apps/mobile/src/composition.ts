@@ -4,7 +4,8 @@ import { useSQLiteContext, type SQLiteDatabase } from 'expo-sqlite';
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 
 import { deviceClock } from './device-clock';
-import { edition } from './edition';
+import { deviceNotificationScheduler } from './device-notifications';
+import { edition, editionStrings } from './edition';
 import { storedUserState } from './stored-user-state';
 
 export type CompositionState =
@@ -23,6 +24,10 @@ async function openOver(db: SQLiteDatabase): Promise<Composition> {
     userState: await storedUserState(),
     clock: deviceClock,
     random: systemRandom,
+    scheduling: {
+      scheduler: deviceNotificationScheduler,
+      ellipsis: editionStrings.notificationBody.ellipsis,
+    },
   });
 }
 

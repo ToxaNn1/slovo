@@ -1,4 +1,9 @@
-import { EditionStringsSchema, EditionTokensSchema, SplashDecorSchema } from '@slovo/contracts';
+import {
+  EditionConfigSchema,
+  EditionStringsSchema,
+  EditionTokensSchema,
+  SplashDecorSchema,
+} from '@slovo/contracts';
 import { loadDecor, loadEdition } from '@slovo/core';
 import { designTokens } from '@slovo/ui';
 import config from 'slovo-edition/config';
@@ -9,6 +14,12 @@ import tokens from 'slovo-edition/tokens';
 
 /** The Edition this build runs as, validated by the Core at startup. */
 export const edition = loadEdition(config);
+
+/**
+ * The file name of the Edition's notification sound, which the
+ * expo-notifications config plugin bundles; none when the Edition has none.
+ */
+export const editionNotificationSound = EditionConfigSchema.parse(config).notificationSound;
 
 /** The UI text of the Edition, in its language. */
 export const editionStrings = EditionStringsSchema.parse(strings);

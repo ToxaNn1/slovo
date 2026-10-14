@@ -21,6 +21,7 @@ import { edition, editionDecor, editionStrings, editionTokens } from '../edition
 import { hapticEngine } from '../haptics';
 import { LanguagePackProvider } from '../language-pack';
 import { LaunchSplash } from '../launch-splash';
+import { NotificationTaps } from '../notifications';
 import { Onboarding } from '../onboarding';
 import { ActiveDays } from '../progress';
 import { LemmaPronunciation } from '../pronunciation-button';
@@ -141,6 +142,7 @@ function ThemedTabs() {
           <HapticsProvider haptics={haptics}>
             <LanguagePackProvider>
               <ActiveDays />
+              <NotificationTaps />
               <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
               <Tabs
                 screenOptions={{
