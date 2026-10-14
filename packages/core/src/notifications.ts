@@ -78,7 +78,10 @@ export interface Notifications {
   setSound(on: boolean): Promise<void>;
   /**
    * Asks the reader for permission to notify, when they haven't been asked
-   * yet, plans again and reports the permission. Without a scheduler there is
+   * yet, plans again and reports the permission: from the onboarding's
+   * notifications step, or later from the notification settings. Once the
+   * reader answered it asks nothing, so a refusal stays until they allow
+   * notifications in the device's settings. Without a scheduler there is
    * nobody to ask: it stays not asked.
    */
   askPermission(): Promise<NotificationPermission>;
@@ -214,7 +217,9 @@ export async function openNotifications({
 
   async function askPermission(): Promise<NotificationPermission> {
     if (scheduling === undefined) return 'not-asked';
-    const permission = await scheduling.scheduler.askPermission();
+    const { scheduler } = scheduling;
+    const reported = await scheduler.permission();
+    const permission = reported === 'not-asked' ? await scheduler.askPermission() : reported;
     await plan();
     return permission;
   }

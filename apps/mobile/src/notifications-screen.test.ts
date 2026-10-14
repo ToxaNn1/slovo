@@ -29,14 +29,16 @@ const pluralRules = new Intl.PluralRules(ukrainian.locale);
 const count = (forms: Plural, value: number) =>
   (forms[pluralRules.select(value)] ?? forms.other).replace('{count}', String(value));
 
-async function open(scheduler?: FakeNotificationScheduler): Promise<Composition> {
+async function open(
+  scheduler: FakeNotificationScheduler = createFakeNotificationScheduler(),
+): Promise<Composition> {
   return openComposition({
     content: createMemoryContentPort(),
     edition: ukrainian,
     userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
     clock: { now: () => new Date('2026-10-14T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     random: systemRandom,
-    ...(scheduler === undefined ? {} : { scheduling: { scheduler, ellipsis: '…' } }),
+    scheduling: { scheduler, ellipsis: '…' },
   });
 }
 
@@ -80,9 +82,12 @@ describe('the «Сповіщення» row of Settings', () => {
     expect(summaryOf(composition)).toBe('3 на день');
   });
 
-  it('counts the times while permission is not asked yet', async () => {
+  it('reads «Вимкнено» while permission is not asked yet, and the times once the reader allows them', async () => {
     const composition = await open(createFakeNotificationScheduler({ permission: 'not-asked' }));
 
+    expect(summaryOf(composition)).toBe('Вимкнено');
+
+    await composition.notifications.askPermission();
     expect(summaryOf(composition)).toBe('3 на день');
   });
 });

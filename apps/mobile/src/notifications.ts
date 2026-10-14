@@ -6,6 +6,7 @@ import { useEffect, useMemo } from 'react';
 import { useComposed, useModule } from './composition';
 import { onDeviceNotificationTap } from './device-notifications';
 import { editionStrings } from './edition';
+import { keep } from './keep';
 import { notificationsSummary } from './notifications-screen';
 
 /**
@@ -51,8 +52,9 @@ export function useNotificationsSummary(): string | undefined {
 }
 
 /**
- * The calls that change the Notification times and the sound. A change that
- * could not be kept is logged and leaves things as they were.
+ * The calls that change the Notification times and the sound, and ask for
+ * permission. A change that could not be kept is logged and leaves things as
+ * they were.
  */
 export function useNotificationsChanges(): {
   /**
@@ -63,27 +65,25 @@ export function useNotificationsChanges(): {
   keepTime: (time: string, replacing?: string) => Promise<NotificationTimeRefusal | undefined>;
   removeTime: (time: string) => void;
   setSound: (on: boolean) => void;
+  /** Asks the reader for permission to notify; a grant plans the notifications. */
+  askPermission: () => void;
 } {
   const notifications = useModule((composition) => composition.notifications);
-  const keep = (change: Promise<unknown> | undefined) => {
-    change?.catch((error: unknown) => {
-      console.error('Could not keep the change of the notifications', error);
-    });
-  };
+  const subject = 'the notifications';
   return {
-    keepTime: async (time, replacing) => {
-      try {
-        return await notifications?.keepTime(time, replacing);
-      } catch (error) {
-        console.error('Could not keep the change of the notifications', error);
-        return undefined;
-      }
-    },
+    keepTime: (time, replacing) =>
+      notifications === undefined
+        ? Promise.resolve(undefined)
+        : keep(subject, notifications.keepTime(time, replacing), undefined),
     removeTime: (time) => {
-      keep(notifications?.removeTime(time));
+      if (notifications !== undefined)
+        void keep(subject, notifications.removeTime(time), undefined);
     },
     setSound: (on) => {
-      keep(notifications?.setSound(on));
+      if (notifications !== undefined) void keep(subject, notifications.setSound(on), undefined);
+    },
+    askPermission: () => {
+      if (notifications !== undefined) void keep(subject, notifications.askPermission(), undefined);
     },
   };
 }
