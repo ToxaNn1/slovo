@@ -23,3 +23,14 @@ The plan's Word records and the times stay on the device when sync arrives (ADR 
 - **The Feed skips Reserved Words**: rejected by the owner. A reader who opens the app often would see the Feed jump over the Words waiting for their notifications.
 - **Refill new notifications from the start of the Cycle order**: rejected. A notification that passed unopened frees its Word, which is the earliest unseen one, so the newest notification would bring the same Word back two weeks later.
 - **A plan without a time limit, as far as 64 notifications reach**: rejected. With one time a day it would reserve two months of Words, which hiding, the Mix and the Feed would keep invalidating; 14 days keep notifications coming through a busy fortnight.
+
+## Amendment: the onboarding's sample comes from the plan (0.4)
+
+The onboarding's last step shows a sample of the Word of the Day's notification before the reader is asked for permission, so the plan is still empty. The shell built the sample itself from the first Word card of the Feed and the earliest Notification time, which guessed the plan's rule: once this morning's time had passed, or when today's Word of the Day was already Seen, it showed a Word the morning would not bring.
+
+The sample is the next morning notification of a plan made now as if the device let the app notify: the plan's own choice of Words over the stored plan, the Cycle and the Word of the Day, this morning's notification while its time is ahead, else the next day's. Asking for it writes no plan and Reserves nothing, so the permission rule above stands; like a plan, it first lets the day change take the morning Word of a day the composition hasn't turned to (ADR 0022). With no Notification time left there is no morning notification, and the sample is today's Word of the Day, unseen, with no time, as the step showed before. The Core onboarding owns the steps and takes the sample from Notifications; the shell only draws it.
+
+### Considered Options
+
+- **Plan for real before the reader is asked**, so the sample reads the stored plan: rejected. Words would be Reserved for notifications that may never be allowed, against the permission rule.
+- **Keep the sample in the shell and pass it the Word of the Day**: rejected. The shell would still repeat the plan's rule for a passed morning and a Seen Word of the Day.

@@ -37,6 +37,18 @@ export interface PlanEdition {
   readonly hasNotificationSound?: boolean;
 }
 
+/**
+ * The notification the plan holds for the next morning: its Word, the body
+ * of the Word's notification, and its time.
+ */
+export interface MorningNotification {
+  readonly wordId: string;
+  /** The primary Definition, cut as the notification cuts it. */
+  readonly body: string;
+  /** The earliest Notification time; nothing when no time is left. */
+  readonly time: string | undefined;
+}
+
 /** The Notification times, the sound and the permission the plan follows. */
 interface PlanSettings {
   /** Local times `HH:MM`, in time order. */
@@ -107,6 +119,9 @@ export function notificationBody(text: string, ellipsis: string): string {
  * back. When the Cycle runs out of unseen Words, the latest notifications
  * stay empty; the plan never starts a new Cycle. Every plan replaces what
  * the device held before.
+ *
+ * `nextMorning` answers which morning notification a plan made now would
+ * hold, also while the device doesn't let the app notify, and writes nothing.
  */
 export function createNotificationPlanner({
   cycle,
@@ -126,6 +141,14 @@ export function createNotificationPlanner({
   scheduling: NotificationScheduling;
 }): {
   plan(settings: PlanSettings): Promise<void>;
+  /**
+   * The next morning notification of a plan made now as if the device let
+   * the app notify: the first at the earliest of `times`, this morning's
+   * while its time is ahead, else the next day's. With no time left, today's
+   * Word of the Day while it is unseen, with no time: the morning a time
+   * added ahead today would bring. Nothing when the Cycle has no Word for it.
+   */
+  nextMorning(times: readonly string[]): Promise<MorningNotification | undefined>;
 } {
   const reservedWords = createReservedWords({ userState });
 
@@ -174,6 +197,26 @@ export function createNotificationPlanner({
     return edition.hasNotificationSound === true ? 'edition' : 'system';
   }
 
+  async function nextMorning(times: readonly string[]): Promise<MorningNotification | undefined> {
+    const [earliest] = times;
+    const today = wordOfTheDay.chosen()?.wordId;
+    const wordId =
+      earliest === undefined
+        ? today !== undefined && cycle.unseen().words.includes(today)
+          ? today
+          : undefined
+        : chooseWords(slotsAhead(times, clock), await reservedWords.stored(), earliest).find(
+            ({ slot }) => slot.time === earliest,
+          )?.wordId;
+    const word = wordId === undefined ? undefined : await entries.get(wordId);
+    if (word?.kind !== 'word') return undefined;
+    return {
+      wordId: word.id,
+      body: notificationBody(word.primaryDefinition, ellipsis),
+      time: earliest,
+    };
+  }
+
   async function plan({ times, sound, permission }: PlanSettings): Promise<void> {
     const slots = permission === 'allowed' ? slotsAhead(times, clock) : [];
     const stored = await reservedWords.stored();
@@ -193,5 +236,5 @@ export function createNotificationPlanner({
     await scheduler.replacePlan(notifications);
   }
 
-  return { plan };
+  return { plan, nextMorning };
 }

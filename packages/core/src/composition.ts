@@ -58,7 +58,11 @@ export interface Composition extends Hiding {
   resume(): Promise<void>;
   /** The Notification times, the notification sound and the plan, kept on this device. */
   readonly notifications: Notifications;
-  /** Whether the reader finished the onboarding, which opens on launch until they do. */
+  /**
+   * The onboarding, which opens on launch until the reader finishes it: its
+   * steps, the ask for permission that ends it, and its sample notification,
+   * taken from the plan.
+   */
   readonly onboarding: Onboarding;
   /**
    * The Entry card of any Entry, Retired or not, for a screen that opens a
@@ -112,7 +116,7 @@ export async function openComposition({
   const wordOfTheDay = await openWordOfTheDay({ cycle, userState, clock });
   const { history, recorder } = await openHistory({ rows, userState });
   // The plan follows the Feed: a Reserved Word Seen there gets its notification a new Word.
-  const { notifications, replan, followSeen } = await openNotifications({
+  const { notifications, replan, followSeen, nextMorning } = await openNotifications({
     edition,
     userState,
     cycle,
@@ -141,12 +145,11 @@ export async function openComposition({
     await followEligibility();
     await replan();
   }
-  const [favorites, collections, hiddenEntries, mix, onboarding] = await Promise.all([
+  const [favorites, collections, hiddenEntries, mix] = await Promise.all([
     openFavorites({ rows, userState, clock }),
     openCollections({ rows, userState, clock, random }),
     openHiddenEntries({ rows, userState, clock, eligibilityChanged }),
     openMix({ edition, userState, eligibilityChanged }),
-    openOnboarding({ userState, clock }),
   ]);
   const { progress, recordToday, todayChange } = await openProgress({
     userState,
@@ -164,6 +167,15 @@ export async function openComposition({
     openFeedDay: openDay,
   });
   await day.resume();
+  // Once the day is turned to, so the welcome shows today's Word of the Day.
+  const onboarding = await openOnboarding({
+    userState,
+    clock,
+    entries,
+    wordOfTheDay,
+    notifications,
+    nextMorning,
+  });
   async function entryCard(entryId: string): Promise<EntryFeedCard | undefined> {
     const entry = await entries.get(entryId);
     return entry === undefined ? undefined : buildEntryCard(entries, entry);
