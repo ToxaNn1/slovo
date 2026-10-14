@@ -64,6 +64,25 @@ function pluginOptions(config: ExpoConfig, name: string): unknown {
   return Array.isArray(plugin) ? plugin[1] : undefined;
 }
 
+/** A mono 16-bit PCM WAV header (and silence) of the given length. */
+function silentWav(seconds: number): Buffer {
+  const data = Math.round(seconds * 8000) * 2;
+  const bytes = Buffer.alloc(44 + data);
+  bytes.write('RIFF', 0);
+  bytes.writeUInt32LE(36 + data, 4);
+  bytes.write('WAVEfmt ', 8);
+  bytes.writeUInt32LE(16, 16);
+  bytes.writeUInt16LE(1, 20);
+  bytes.writeUInt16LE(1, 22);
+  bytes.writeUInt32LE(8000, 24);
+  bytes.writeUInt32LE(16000, 28);
+  bytes.writeUInt16LE(2, 32);
+  bytes.writeUInt16LE(16, 34);
+  bytes.write('data', 36);
+  bytes.writeUInt32LE(data, 40);
+  return bytes;
+}
+
 describe('app config', () => {
   it('fails clearly when no Edition is selected', () => {
     vi.stubEnv('SLOVO_EDITION', undefined);
@@ -210,6 +229,105 @@ describe('app config', () => {
 
     expect(() => appConfig(withoutImage)).toThrow(
       /splash image.*editions\/uk\/decor\/splash-dark\.png/s,
+    );
+  });
+
+  it('bundles the notification sound of the Edition through expo-notifications', () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+
+    expect(pluginOptions(appConfig(context), 'expo-notifications')).toEqual({
+      sounds: ['../../editions/uk/assets/notification.wav'],
+    });
+  });
+
+  it('bundles no sound when the Edition has none', () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+    const withoutSound = repoWithEdition((config) => {
+      delete config['notificationSound'];
+    });
+
+    expect(pluginOptions(appConfig(withoutSound), 'expo-notifications')).toEqual({ sounds: [] });
+  });
+
+  it('registers the native time picker', () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+
+    expect(appConfig(context).plugins).toContain('@react-native-community/datetimepicker');
+  });
+
+  it('accepts a notification sound of 30 seconds', () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+    const longest = repoWithEdition(() => undefined, {
+      change: (editionDir) => {
+        writeFileSync(join(editionDir, 'assets/notification.wav'), silentWav(30));
+      },
+    });
+
+    expect(() => appConfig(longest)).not.toThrow();
+  });
+
+  it('refuses a notification sound longer than 30 seconds', () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+    const tooLong = repoWithEdition(() => undefined, {
+      change: (editionDir) => {
+        writeFileSync(join(editionDir, 'assets/notification.wav'), silentWav(31));
+      },
+    });
+
+    expect(() => appConfig(tooLong)).toThrow(
+      /editions\/uk\/assets\/notification\.wav.*longer than 30 seconds/s,
+    );
+  });
+
+  it('refuses a notification sound in a format iOS does not play for notifications', () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+    const mp3 = repoWithEdition((config) => {
+      config['notificationSound'] = 'notification.mp3';
+    });
+
+    expect(() => appConfig(mp3)).toThrow(/notificationSound.*\.caf, \.wav, \.aiff/s);
+  });
+
+  it('refuses a sound file whose bytes are not the format its name says', () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+    const disguised = repoWithEdition(() => undefined, {
+      change: (editionDir) => {
+        writeFileSync(
+          join(editionDir, 'assets/notification.wav'),
+          'ID3 an mp3 renamed to .wav, not a sound iOS plays',
+        );
+      },
+    });
+
+    expect(() => appConfig(disguised)).toThrow(/notification\.wav.*not a WAV, AIFF or CAF/s);
+  });
+
+  it('refuses a notification sound whose container differs from its extension', () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+    const renamed = repoWithEdition(
+      (config) => {
+        config['notificationSound'] = 'notification.caf';
+      },
+      {
+        change: (editionDir) => {
+          writeFileSync(join(editionDir, 'assets/notification.caf'), silentWav(1));
+        },
+      },
+    );
+
+    expect(() => appConfig(renamed)).toThrow(/notification\.caf.*is a WAV file/s);
+  });
+
+  it('fails clearly when the named notification sound is missing', () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+    const missing = repoWithEdition(() => undefined, {
+      change: (editionDir) => {
+        rmSync(join(editionDir, 'assets/notification.wav'));
+      },
+    });
+
+    expect(() => appConfig(missing)).toThrow(
+      /no notification sound.*editions\/uk\/assets\/notification\.wav/s,
     );
   });
 });

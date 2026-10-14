@@ -29,7 +29,7 @@ interface SplashPluginOptions {
 // sources of the workspace packages (their relative imports have no file
 // extension). tsx loads them, so the config is checked by the same schema as
 // the Language Pack build and the app.
-const { EditionConfigSchema, SplashDecorSchema } = tsxRequire(
+const { EditionConfigSchema, SplashDecorSchema, readNotificationSound } = tsxRequire(
   '@slovo/contracts',
   import.meta.url,
 ) as typeof Contracts;
@@ -112,6 +112,41 @@ function editionSplash(editionDir: string, projectRoot: string): SplashPluginOpt
   };
 }
 
+/**
+ * The Edition's notification sound, which the expo-notifications plugin bundles
+ * so a local notification can name it. The file is checked here, at build time,
+ * because iOS falls back to the default sound without a word when the format is
+ * wrong or the sound is too long. Without a sound, notifications use the system
+ * default.
+ */
+function editionNotificationSounds(
+  editionDir: string,
+  projectRoot: string,
+  { notificationSound }: EditionConfig,
+): string[] {
+  if (notificationSound === undefined) return [];
+  const file = join(editionDir, 'assets', notificationSound);
+  if (!existsSync(file)) {
+    throw new Error(
+      `${join(editionDir, 'edition.json')} names no notification sound that exists: expected ${file}`,
+    );
+  }
+  let format: string;
+  try {
+    ({ format } = readNotificationSound(readFileSync(file)));
+  } catch (error) {
+    throw new Error(`${file} is not a valid notification sound: ${(error as Error).message}`, {
+      cause: error,
+    });
+  }
+  if (!notificationSound.endsWith(`.${format}`)) {
+    throw new Error(
+      `${file} is a ${format.toUpperCase()} file but its name says otherwise; rename it to .${format}`,
+    );
+  }
+  return [relative(projectRoot, file)];
+}
+
 function selectEdition(editionsDir: string): { dir: string; config: EditionConfig } {
   const known = knownEditions(editionsDir);
   const hint = `Known Editions: ${known.join(', ')}. Example: ${EDITION_VARIABLE}=${known[0] ?? '<edition>'} pnpm start`;
@@ -160,6 +195,11 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       'expo-sqlite',
       ['expo-font', { fonts: editionFonts(edition.dir, projectRoot) }],
       ['expo-splash-screen', editionSplash(edition.dir, projectRoot)],
+      [
+        'expo-notifications',
+        { sounds: editionNotificationSounds(edition.dir, projectRoot, edition.config) },
+      ],
+      '@react-native-community/datetimepicker',
       ['expo-build-properties', { ios: { deploymentTarget: '17.0' } }],
     ],
     extra: {
