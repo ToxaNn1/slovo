@@ -13,13 +13,13 @@ import Svg, { Path } from 'react-native-svg';
 
 import { BottomSheet } from './BottomSheet';
 import { fill, useEdition } from './EditionProvider';
+import { PrimaryButton } from './PrimaryButton';
+import { SHEET_ROW_HEIGHT, SheetTitle } from './SheetParts';
 import { minTouchTarget, space } from './tokens';
 import { useTokens } from './TokensProvider';
 
 /** The checkbox's side, from the design. */
 const CHECKBOX_SIZE = 26;
-/** The height of a Collection's row and of the name field, from the design. */
-const ROW_HEIGHT = 56;
 
 /** A checkbox: an outline, or filled with the accent and a tick while checked. */
 function Checkbox({ checked }: { checked: boolean }) {
@@ -138,13 +138,7 @@ function SheetContent({
   return (
     <>
       <View style={styles.header}>
-        <Text
-          accessibilityRole="header"
-          {...voice}
-          style={[styles.title, { color: colors.ink, fontFamily: fontFamilies.word }]}
-        >
-          {sheet.title}
-        </Text>
+        <SheetTitle>{sheet.title}</SheetTitle>
         <Text
           {...voice}
           style={[styles.entry, { color: colors.accent, fontFamily: fontFamilies.word }]}
@@ -270,17 +264,9 @@ function SheetContent({
           </Pressable>
         )}
       </ScrollView>
-      <Pressable
-        testID="collection-done"
-        accessibilityRole="button"
-        {...voice}
-        onPress={onClose}
-        style={[styles.done, { backgroundColor: colors.ink, borderRadius: radii.button }]}
-      >
-        <Text style={[styles.doneLabel, { color: colors.background, fontFamily: fontFamilies.ui }]}>
-          {sheet.done}
-        </Text>
-      </Pressable>
+      <View style={styles.done}>
+        <PrimaryButton testID="collection-done" label={sheet.done} onPress={onClose} />
+      </View>
     </>
   );
 }
@@ -294,11 +280,10 @@ const styles = StyleSheet.create({
     columnGap: space[3],
     paddingBottom: space[3],
   },
-  title: { fontSize: 26, fontWeight: '500' },
   entry: { flexShrink: 1, fontSize: 20, fontWeight: '600', textAlign: 'right' },
   list: { flexGrow: 0, flexShrink: 1 },
   row: {
-    minHeight: ROW_HEIGHT,
+    minHeight: SHEET_ROW_HEIGHT,
     flexDirection: 'row',
     alignItems: 'center',
     gap: space[4],
@@ -320,25 +305,18 @@ const styles = StyleSheet.create({
   creationRow: { flexDirection: 'row', gap: space[3] },
   field: {
     flex: 1,
-    minHeight: ROW_HEIGHT,
+    minHeight: SHEET_ROW_HEIGHT,
     borderWidth: 1,
     paddingHorizontal: space[4],
     fontSize: 18,
   },
   create: {
-    minHeight: ROW_HEIGHT,
+    minHeight: SHEET_ROW_HEIGHT,
     paddingHorizontal: space[5],
     alignItems: 'center',
     justifyContent: 'center',
   },
   createLabel: { fontSize: 17, fontWeight: '700' },
   refusal: { fontSize: 14, fontWeight: '600' },
-  done: {
-    minHeight: ROW_HEIGHT,
-    marginTop: space[4],
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: space[4],
-  },
-  doneLabel: { fontSize: 17, fontWeight: '700' },
+  done: { marginTop: space[4] },
 });
