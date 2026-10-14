@@ -1,10 +1,8 @@
-import { untilNextLocalDay, type ProgressState } from '@slovo/core';
+import type { ProgressState } from '@slovo/core';
 import { StatsPill, StatsSheet } from '@slovo/ui';
-import { useEffect, useState } from 'react';
-import { AppState } from 'react-native';
+import { useState } from 'react';
 
-import { useComposed, useModule } from './composition';
-import { deviceClock } from './device-clock';
+import { useComposed } from './composition';
 
 /** The progress, kept up to date; nothing until the composition is open. */
 function useProgress(): ProgressState | undefined {
@@ -40,42 +38,4 @@ export function StatsPillAndSheet() {
       />
     </>
   );
-}
-
-/**
- * Keeps today an Active Day while the app runs: it tells the composition when
- * the app returns to the foreground and when a new local day starts while the
- * app is open, so the Streak moves on without a restart. Draws nothing.
- */
-export function ActiveDays() {
-  const composition = useModule((open) => open);
-  useEffect(() => {
-    if (composition === undefined) return;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const resume = () => {
-      composition.resume().catch((error: unknown) => {
-        console.error('Could not record today as an Active Day', error);
-      });
-    };
-    // A timer that fires early finds the same day and waits again for the rest.
-    function waitForNextDay(): void {
-      clearTimeout(timer);
-      timer = setTimeout(() => {
-        resume();
-        waitForNextDay();
-      }, untilNextLocalDay(deviceClock));
-    }
-    waitForNextDay();
-    // Timers stop in the background, so the foreground starts the wait again.
-    const subscription = AppState.addEventListener('change', (state) => {
-      if (state !== 'active') return;
-      resume();
-      waitForNextDay();
-    });
-    return () => {
-      clearTimeout(timer);
-      subscription.remove();
-    };
-  }, [composition]);
-  return null;
 }
