@@ -14,10 +14,11 @@ export interface WordOfTheDayChoice {
 
 /**
  * The Word of the Day: one Word unseen in the Cycle, chosen once per local
- * day in the clock's time zone and kept in the user state with its date. It
- * is read from the user state once, when it opens, like the Cycle it chooses
- * from, so open one per app session over that Cycle and share it. A choice is
- * made in memory only once it is written.
+ * day in the clock's time zone and kept in the user state with its date. Its
+ * record is read once, when it opens, like the Cycle it chooses from, so open
+ * one per app session over that Cycle and share it; only while today has no
+ * Word kept does it read the Reserved Words for this morning's (ADR 0013). A
+ * choice is made in memory only once it is written.
  */
 export interface WordOfTheDay {
   /** Today's Word of the Day if it is chosen already. Never chooses one. */
