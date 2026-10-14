@@ -47,6 +47,7 @@ export { groupByLocalDay, relativeTimeOf, type DayGroup, type RelativeTime } fro
 export {
   localDayOf,
   localTimeOf,
+  parseLocalDate,
   untilNextLocalDay,
   type LocalDate,
   type LocalDay,

@@ -48,6 +48,8 @@ function mockNotifications({
   };
 }
 
+const noSound = { editionSound: undefined };
+
 const planned = (overrides: Partial<PlannedNotification> = {}): PlannedNotification => ({
   date: '2026-10-15',
   time: '09:00',
@@ -94,7 +96,7 @@ describe('the notification scheduler on expo-notifications', () => {
 
   it('cancels the old plan before it schedules the new one', async () => {
     const { module, notifications } = mockNotifications();
-    const scheduler = createNotificationScheduler(notifications, {});
+    const scheduler = createNotificationScheduler(notifications, noSound);
 
     await scheduler.replacePlan([planned()]);
     await scheduler.replacePlan([]);
@@ -125,7 +127,10 @@ describe('the notification scheduler on expo-notifications', () => {
 
   it('reports the permission as allowed, denied or not asked yet', async () => {
     const report = (status: Status) =>
-      createNotificationScheduler(mockNotifications({ status }).notifications, {}).permission();
+      createNotificationScheduler(
+        mockNotifications({ status }).notifications,
+        noSound,
+      ).permission();
 
     expect(await report('granted')).toBe('allowed');
     expect(await report('denied')).toBe('denied');
@@ -136,11 +141,11 @@ describe('the notification scheduler on expo-notifications', () => {
     const notAsked = mockNotifications({ status: 'undetermined', answer: 'denied' });
     const denied = mockNotifications({ status: 'denied' });
 
-    expect(await createNotificationScheduler(notAsked.notifications, {}).askPermission()).toBe(
+    expect(await createNotificationScheduler(notAsked.notifications, noSound).askPermission()).toBe(
       'denied',
     );
     expect(notAsked.module.requestPermissionsAsync).toHaveBeenCalledTimes(1);
-    expect(await createNotificationScheduler(denied.notifications, {}).askPermission()).toBe(
+    expect(await createNotificationScheduler(denied.notifications, noSound).askPermission()).toBe(
       'denied',
     );
     expect(denied.module.requestPermissionsAsync).not.toHaveBeenCalled();
@@ -161,7 +166,7 @@ describe('a tap on a notification', () => {
   });
 
   it('opens the Word of each tap while the app runs, and stops when told', () => {
-    const { notifications, stopListening, tap } = mockNotifications();
+    const { module, notifications, stopListening, tap } = mockNotifications();
     const open = vi.fn();
 
     const stop = onNotificationTap(notifications, open);
@@ -169,6 +174,8 @@ describe('a tap on a notification', () => {
     tap(tapOn({}));
 
     expect(open.mock.calls).toEqual([['w_00g2ap']]);
+    // So listening again, as after a remount, doesn't open the same Word twice.
+    expect(module.clearLastNotificationResponse).toHaveBeenCalled();
     stop();
     expect(stopListening).toHaveBeenCalled();
   });

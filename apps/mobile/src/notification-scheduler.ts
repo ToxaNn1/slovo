@@ -1,8 +1,9 @@
-import type {
-  NotificationPermission,
-  NotificationSchedulerPort,
-  PlannedNotification,
-  PlannedSound,
+import {
+  parseLocalDate,
+  type NotificationPermission,
+  type NotificationSchedulerPort,
+  type PlannedNotification,
+  type PlannedSound,
 } from '@slovo/core';
 import type * as ExpoNotifications from 'expo-notifications';
 
@@ -20,6 +21,11 @@ export type NotificationsModule = Pick<
   | 'addNotificationResponseReceivedListener'
 >;
 
+/** The Edition's notification sound, the file the expo-notifications config plugin bundles; none without one. */
+interface SchedulerSounds {
+  readonly editionSound: string | undefined;
+}
+
 /** The Expo Router link of a notification's Word: the Entry screen, opened as from a notification. */
 export function notificationLink(wordId: string): string {
   return `/entry/${encodeURIComponent(wordId)}?from=notification`;
@@ -32,12 +38,11 @@ export function notificationLink(wordId: string): string {
  *
  * Each notification comes on a calendar trigger built from its local date and
  * time parts with no time zone, so iOS fires it at that wall-clock time in
- * whatever zone the device is in (ADR 0021). The Edition's sound is the file
- * the expo-notifications config plugin bundles, `editionSound`.
+ * whatever zone the device is in (ADR 0021).
  */
 export function createNotificationScheduler(
   notifications: NotificationsModule | undefined,
-  options: { editionSound?: string },
+  sounds: SchedulerSounds,
 ): NotificationSchedulerPort {
   if (notifications === undefined) {
     return {
@@ -46,12 +51,12 @@ export function createNotificationScheduler(
       replacePlan: () => Promise.resolve(),
     };
   }
-  return schedulerOn(notifications, options);
+  return schedulerOn(notifications, sounds);
 }
 
 function schedulerOn(
   notifications: NotificationsModule,
-  { editionSound }: { editionSound?: string },
+  { editionSound }: SchedulerSounds,
 ): NotificationSchedulerPort {
   const { PermissionStatus, SchedulableTriggerInputTypes } = notifications;
 
@@ -68,7 +73,7 @@ function schedulerOn(
   }
 
   function schedule({ date, time, title, body, wordId, sound }: PlannedNotification) {
-    const [year = 0, month = 0, day = 0] = date.split('-').map(Number);
+    const { year, month, day } = parseLocalDate(date);
     const [hour = 0, minute = 0] = time.split(':').map(Number);
     return notifications.scheduleNotificationAsync({
       identifier: `${date}T${time}`,
@@ -115,15 +120,16 @@ export function onNotificationTap(
   open: (wordId: string) => void,
 ): () => void {
   if (notifications === undefined) return () => undefined;
-  const launched = wordOf(notifications.getLastNotificationResponse());
-  if (launched !== undefined) {
-    notifications.clearLastNotificationResponse();
-    open(launched);
-  }
-  const subscription = notifications.addNotificationResponseReceivedListener((response) => {
+  // iOS keeps the last tap until it is cleared, so listening again, as after
+  // a remount, doesn't open the same Word twice.
+  function opened(response: ExpoNotifications.NotificationResponse | null): void {
     const wordId = wordOf(response);
-    if (wordId !== undefined) open(wordId);
-  });
+    if (wordId === undefined) return;
+    notifications?.clearLastNotificationResponse();
+    open(wordId);
+  }
+  opened(notifications.getLastNotificationResponse());
+  const subscription = notifications.addNotificationResponseReceivedListener(opened);
   return () => {
     subscription.remove();
   };
