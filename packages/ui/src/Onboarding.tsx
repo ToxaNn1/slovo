@@ -216,16 +216,19 @@ export interface HeroWord {
 }
 
 /**
- * Step 1: what SLOVO is. A hero Word with its Definition, the ornament band,
+ * The welcome: what SLOVO is. A hero Word with its Definition, the ornament band,
  * the Edition's promise and «Почати». The hero Word is left out when the
  * Language Pack has none to show.
  */
 export function OnboardingWelcome({
+  step,
   total,
   hero,
   onStart,
   onSkip,
 }: {
+  /** This step's number, from 1: the Core's order puts the welcome first. */
+  step: number;
   total: number;
   hero: HeroWord | undefined;
   onStart: () => void;
@@ -237,7 +240,7 @@ export function OnboardingWelcome({
   return (
     <OnboardingStep
       testID="onboarding"
-      step={1}
+      step={step}
       total={total}
       onSkip={onSkip}
       footer={<PrimaryButton testID="onboarding-start" label={welcome.start} onPress={onStart} />}
@@ -294,15 +297,18 @@ export function OnboardingWelcome({
 }
 
 /**
- * Step 2: the Mix. «Оберіть свій Мікс», what it is for, the choices of the Mix
+ * The Mix step. «Оберіть свій Мікс», what it is for, the choices of the Mix
  * (`children`, the shell's: the Mix is the composition's) and «Далі».
  */
 export function OnboardingMix({
+  step,
   total,
   onNext,
   onSkip,
   children,
 }: {
+  /** This step's number, from 1, in the Core's order. */
+  step: number;
   total: number;
   onNext: () => void;
   onSkip: () => void;
@@ -314,7 +320,7 @@ export function OnboardingMix({
   return (
     <OnboardingStep
       testID="onboarding-mix"
-      step={2}
+      step={step}
       total={total}
       onSkip={onSkip}
       fromTop
@@ -356,12 +362,13 @@ export interface SampleNotificationLook {
 }
 
 /**
- * Step 3: notifications. «Слово саме прийде до вас», a sample notification of
- * today's Word of the Day (left out when the Feed has no Word), the Notification
+ * The notifications step. «Слово саме прийде до вас», a sample of the Word of
+ * the Day's notification (left out when there is none to show), the Notification
  * times (`children`, the shell's: the times are the Notifications module's),
  * «Дозволити сповіщення» and the quiet «Пізніше».
  */
 export function OnboardingNotifications({
+  step,
   total,
   sample,
   onAllow,
@@ -369,6 +376,8 @@ export function OnboardingNotifications({
   onSkip,
   children,
 }: {
+  /** This step's number, from 1, in the Core's order. */
+  step: number;
   total: number;
   sample: SampleNotificationLook | undefined;
   onAllow: () => void;
@@ -382,7 +391,7 @@ export function OnboardingNotifications({
   return (
     <OnboardingStep
       testID="onboarding-notifications"
-      step={3}
+      step={step}
       total={total}
       onSkip={onSkip}
       fromTop
