@@ -878,15 +878,52 @@ describe('the Word of the Day in the Feed', () => {
     expect(entryIdOf(feed.cards[1])).not.toBe(entryIdOf(feed.cards[0]));
   });
 
-  it('comes next, in place of the card got ready the day before, when a new local day starts with a card on screen', async () => {
+  it('comes next, in place of the card got ready the day before, when the app comes back to a new local day before the composition turns to it', async () => {
     const time = fakeClock('2026-10-11T23:58:00+03:00');
     const app = await runApp({ clock: time.clock });
     const { feed } = app;
     await feed.show(0);
+    await feed.show(undefined);
+
+    // The card comes back on screen before the composition hears of the foreground.
+    time.advance(8 * 60 * 60_000);
+    await feed.show(0);
+    await app.resume();
+
+    expect(feed.cards).toHaveLength(2);
+    expect(wordOfTheDayOf(feed.cards[1])).toEqual({ year: 2026, month: 10, day: 12 });
+  });
+
+  it('keeps the card got ready the day before when a new local day starts with a card on screen, and comes after the next swipe', async () => {
+    const time = fakeClock('2026-10-11T23:58:00+03:00');
+    const app = await runApp({ clock: time.clock });
+    const { feed } = app;
+    await feed.show(0);
+    const ready = feed.cards[1];
 
     // The shell's timer tells the composition when the next local day starts.
     time.advance(5 * 60_000);
     await app.resume();
+
+    expect(feed.cards).toHaveLength(2);
+    expect(feed.cards[1]).toBe(ready);
+
+    await feed.show(1);
+
+    expect(feed.cards).toHaveLength(3);
+    expect(feed.cards[1]).toBe(ready);
+    expect(wordOfTheDayOf(feed.cards[2])).toEqual({ year: 2026, month: 10, day: 12 });
+  });
+
+  it('comes next, in place of the card got ready the day before, when the card on screen is reported again on a new local day', async () => {
+    const time = fakeClock('2026-10-11T23:58:00+03:00');
+    const app = await runApp({ clock: time.clock });
+    const { feed } = app;
+    await feed.show(0);
+    time.advance(5 * 60_000);
+    await app.resume();
+
+    await feed.show(0);
 
     expect(feed.cards).toHaveLength(2);
     expect(wordOfTheDayOf(feed.cards[1])).toEqual({ year: 2026, month: 10, day: 12 });
