@@ -7,6 +7,7 @@ import { openFavorites, type Favorites } from './favorites';
 import { buildEntryCard, openFeed, type EntryFeedCard, type Feed } from './feed';
 import { openHistory, type History } from './history';
 import { openHiddenEntries, type HiddenEntries } from './hidden-entries';
+import { createHiding, type Hiding } from './hiding';
 import { openMix, type Mix, type MixEdition } from './mix';
 import type { Clock, ContentReadPort, Random } from './ports';
 import type { UserState } from './user-state';
@@ -16,9 +17,11 @@ import { openWordOfTheDay } from './word-of-the-day';
  * The Core features that open once the Language Pack is open, linked to each
  * other inside the composition, so a shell subscribes to what it draws and
  * holds no rule between them (ADR 0018). The settings open before the
- * Language Pack and stay apart.
+ * Language Pack and stay apart. Its `hide` and `unhide` hold the rules of
+ * the card's hide action and of the Hidden screen, each with its undo, so the
+ * shell only shows the action sheet and the toast.
  */
-export interface Composition {
+export interface Composition extends Hiding {
   /** The Feed of the app session. */
   readonly feed: Feed;
   /** Favorites, which a heart tapped anywhere changes. */
@@ -95,6 +98,7 @@ export async function openComposition({
     history,
     hiddenEntries,
     mix,
+    ...createHiding({ rows, hiddenEntries, mix }),
     async entryCard(entryId) {
       const entry = await entries.get(entryId);
       return entry === undefined ? undefined : buildEntryCard(entries, entry);
