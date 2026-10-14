@@ -8,7 +8,7 @@ import {
   useTokens,
 } from '@slovo/ui';
 import { useRouter } from 'expo-router';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -22,24 +22,40 @@ import { LoadFailed } from './language-pack';
  * whether or not the list still holds it, so it stays open when a tap on the
  * heart takes the Entry out, until the reader goes back. A Correction a Word
  * card links opens as the next Entry screen of the same `route`, its link
- * back named for the Word. Opening it never makes the Entry Seen. Hiding its
- * Entry hides it and keeps the screen open, with the undo toast.
+ * back named for the Word. Opening it never makes the Entry Seen, unless it
+ * opens from a notification. Hiding its Entry hides it and keeps the screen
+ * open, with the undo toast.
  */
 export function EntryScreen({
   entryId,
   back,
   route,
+  fromNotification = false,
 }: {
   entryId: string;
   back: string;
   /** The route of the list's Entry screen, such as `/saved/favorites`. */
   route: string;
+  /**
+   * Whether a notification opened it: the Word is Seen, in History and today
+   * is an Active Day. An id the Language Pack doesn't have opens the Feed.
+   */
+  fromNotification?: boolean;
 }) {
   const composition = useComposition();
   const { colors } = useTokens();
   const router = useRouter();
-  const read = useCallback((open: Composition) => open.entryCard(entryId), [entryId]);
+  // `null` once read for an id the Language Pack doesn't have.
+  const read = useCallback(
+    async (open: Composition) =>
+      (await (fromNotification ? open.openedFromNotification(entryId) : open.entryCard(entryId))) ??
+      null,
+    [entryId, fromNotification],
+  );
   const card = useOpenedRead(read, 'Could not open the Entry');
+  useEffect(() => {
+    if (fromNotification && card === null) router.replace('/');
+  }, [fromNotification, card, router]);
 
   if (composition.status === 'failed') return <LoadFailed onRetry={composition.retry} />;
   return (
@@ -59,7 +75,7 @@ export function EntryScreen({
             }}
           />
         </View>
-        {card !== undefined && entryIdOf(card) === entryId && (
+        {card !== undefined && card !== null && entryIdOf(card) === entryId && (
           <ScrollView
             // The sheet of the action row is a child in React's tree, so a tap in its
             // name field must not be swallowed to put the keyboard away.
