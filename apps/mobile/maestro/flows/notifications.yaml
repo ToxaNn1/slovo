@@ -1,9 +1,18 @@
-# Settings › Сповіщення: the Settings row counts the Notification times, a
-# swipe removes the earliest one and the row's value follows; the sound switch
-# turns off and on. A subflow of `smoke.yaml`; run it from there. Until times
-# can be added (the time picker's ticket, #172), it leaves one time fewer than
-# it found, and with none left it checks «Вимкнено» only; #172 makes it add
-# the time back.
+# Settings › Сповіщення: the Settings row counts the Notification times, and
+# the sound switch turns off and on. The flow leaves the times as it found
+# them, and with the sound on. A subflow of `smoke.yaml`; run it from there.
+#
+# What else it does depends on whether the app's binary has the native time
+# picker. A dev client built before the 0.4 native batch lacks it, and then
+# «+ Додати час» is disabled and a time can't be changed: the flow checks that,
+# removes the earliest time with a swipe, and at the end clears the app's
+# state, which brings back the Edition's times (nothing can add one back).
+#
+# With the picker it adds a time, changes the earliest time and changes it
+# back, meets the hint for a time that is in the list already, and removes the
+# time it added. That branch is verifiable after the native build only (#172);
+# the picker's wheels and the minute it starts from are drawn by iOS, so check
+# the swipes on the wheel against a real run.
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
 - tapOn:
@@ -17,47 +26,132 @@ appId: ${APP_ID || 'app.slovo.uk'}
 # The row reads «Сповіщення, N на день», or «Сповіщення, Вимкнено» with no times.
 - copyTextFrom:
     id: settings-row-notifications
+- evalScript: ${output.rowBefore = maestro.copiedText}
 - evalScript: ${output.timesBefore = Number((/(\d+)/.exec(maestro.copiedText) || ['', '0'])[1])}
 - evalScript: "${output.rowAfter = 'Сповіщення, ' + (output.timesBefore > 1 ? String(output.timesBefore - 1) + ' на день' : 'Вимкнено')}"
+- evalScript: ${output.freshInstall = false}
 - tapOn:
     id: settings-row-notifications
 - assertVisible:
     id: notifications
 - takeScreenshot: notifications-times
+# With the time picker: add, change, hint, remove. Nothing is left over.
 - runFlow:
     when:
-      true: ${output.timesBefore > 0}
+      visible:
+        id: notifications-add-time
+        enabled: true
     commands:
-      # The earliest time: its swipe slides out «Видалити».
+      # Add: the picker starts at the current time of day.
+      - evalScript: "${var d = new Date(); output.added = ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2)}"
+      - tapOn:
+          id: notifications-add-time
+      - assertVisible:
+          id: time-picker-sheet
+      - takeScreenshot: notifications-time-picker
+      - tapOn:
+          id: time-picker-done
+      - assertVisible:
+          id: notifications-time-${output.added}-content
+      # The same time again is refused with a hint, and the list stays as it was.
+      - tapOn:
+          id: notifications-add-time
+      - tapOn:
+          id: time-picker-done
+      - assertVisible:
+          id: notifications-duplicate-hint
+          text: Такий час уже є.
+      - takeScreenshot: notifications-duplicate-hint
+      # Remove what was added.
       - swipe:
           from:
-            id: notifications-time-.*-content
+            id: notifications-time-${output.added}-content
           direction: LEFT
           duration: 600
-      - assertVisible:
-          id: notifications-time-.*-remove
-          text: Видалити
-      - takeScreenshot: notifications-time-swiped
       - tapOn:
-          id: notifications-time-.*-remove
+          id: notifications-time-${output.added}-remove
+      - assertNotVisible:
+          id: notifications-time-${output.added}-content
+      # Change the earliest time by one step of the minute wheel, and back.
+      - copyTextFrom:
+          id: notifications-time-.*-content
+      - evalScript: ${output.earliest = (/(\d\d:\d\d)/.exec(maestro.copiedText) || ['', ''])[1]}
+      - tapOn:
+          id: notifications-time-${output.earliest}-content
+      - swipe:
+          start: 70%, 80%
+          end: 70%, 77%
+          duration: 400
+      - tapOn:
+          id: time-picker-done
+      - assertNotVisible:
+          id: notifications-time-${output.earliest}-content
+      - tapOn:
+          id: notifications-time-.*-content
+      - swipe:
+          start: 70%, 77%
+          end: 70%, 80%
+          duration: 400
+      - tapOn:
+          id: time-picker-done
+      - assertVisible:
+          id: notifications-time-${output.earliest}-content
       - tapOn:
           id: notifications-back
       - assertVisible:
           id: settings-row-notifications
-          text: ${output.rowAfter}
+          text: ${output.rowBefore}
       - tapOn:
           id: settings-row-notifications
+# Without it: adding is off, a tap on a time opens nothing, and removing works.
 - runFlow:
     when:
-      true: ${output.timesBefore === 0}
+      notVisible:
+        id: notifications-add-time
+        enabled: true
     commands:
-      - tapOn:
-          id: notifications-back
       - assertVisible:
-          id: settings-row-notifications
-          text: Сповіщення, Вимкнено
-      - tapOn:
-          id: settings-row-notifications
+          id: notifications-add-time
+          enabled: false
+      - runFlow:
+          when:
+            true: ${output.timesBefore > 0}
+          commands:
+            - tapOn:
+                id: notifications-time-.*-content
+            - assertNotVisible:
+                id: time-picker-sheet
+            # The earliest time: its swipe slides out «Видалити».
+            - swipe:
+                from:
+                  id: notifications-time-.*-content
+                direction: LEFT
+                duration: 600
+            - assertVisible:
+                id: notifications-time-.*-remove
+                text: Видалити
+            - takeScreenshot: notifications-time-swiped
+            - tapOn:
+                id: notifications-time-.*-remove
+            - evalScript: ${output.freshInstall = true}
+            - tapOn:
+                id: notifications-back
+            - assertVisible:
+                id: settings-row-notifications
+                text: ${output.rowAfter}
+            - tapOn:
+                id: settings-row-notifications
+      - runFlow:
+          when:
+            true: ${output.timesBefore === 0}
+          commands:
+            - tapOn:
+                id: notifications-back
+            - assertVisible:
+                id: settings-row-notifications
+                text: Сповіщення, Вимкнено
+            - tapOn:
+                id: settings-row-notifications
 # The sound switch turns off and on; it starts from on, whatever an earlier run left.
 - runFlow:
     when:
@@ -86,3 +180,14 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: tab-home
 - assertVisible:
     id: home
+# Without the picker the removed time can't be added back: a fresh install
+# brings back the Edition's times, and the flows after this one start fresh too.
+- runFlow:
+    when:
+      true: ${output.freshInstall}
+    commands:
+      - stopApp
+      - launchApp:
+          clearState: true
+      - runFlow:
+          file: ../open-in-dev-client.yaml
