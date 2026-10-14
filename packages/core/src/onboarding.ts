@@ -1,5 +1,6 @@
 import type { Entries } from './entries';
 import { createSubscribers } from './in-turn';
+import { formatTimeOfDay } from './local-date';
 import type { MorningNotification } from './notification-plan';
 import type { Notifications } from './notifications';
 import type { Clock } from './ports';
@@ -28,7 +29,7 @@ export interface SampleNotification {
   readonly wordCard: WordCardModel;
   /** The body the notification has: the primary Definition, cut when long. */
   readonly body: string;
-  /** When it comes, the earliest Notification time; nothing with no time left. */
+  /** When it comes, the earliest Notification time `HH:MM`; nothing with no time left. */
   readonly time: string | undefined;
 }
 
@@ -144,7 +145,11 @@ export async function openOnboarding({
     const wordCard = await wordCardOf(morning?.wordId);
     return morning === undefined || wordCard === undefined
       ? undefined
-      : { wordCard, body: morning.body, time: morning.time };
+      : {
+          wordCard,
+          body: morning.body,
+          time: morning.time === undefined ? undefined : formatTimeOfDay(morning.time),
+        };
   }
 
   /** The step at `index` in the order, with what it shows. */

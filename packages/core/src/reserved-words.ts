@@ -1,9 +1,26 @@
-import type { PlannedNotification, UserStateChanges } from './ports';
+import {
+  compareTimesOfDay,
+  dateKeyOf,
+  formatTimeOfDay,
+  parseTimeOfDay,
+  type LocalDate,
+  type TimeOfDay,
+} from './local-date';
+import type { UserStateChanges } from './ports';
 import type { UserState } from './user-state';
 import { userStateRecords } from './user-state-schema';
 
-/** When a notification comes: a local date `YYYY-MM-DD` and a local time `HH:MM`. */
-export type Slot = Pick<PlannedNotification, 'date' | 'time'>;
+/** When a notification comes: a local date and a local time of day. */
+export interface Slot {
+  readonly date: LocalDate;
+  readonly time: TimeOfDay;
+}
+
+/** A Word planned for the notification at a slot, which Reserves it. */
+export interface PlannedWord {
+  readonly slot: Slot;
+  readonly wordId: string;
+}
 
 /** The plan as it is stored: the Word Reserved for each planned notification. */
 export interface StoredPlan {
@@ -16,7 +33,7 @@ export interface StoredPlan {
    * notifications that changed, so every other Word stops being Reserved.
    * Nothing is written when nothing changed.
    */
-  replace(planned: readonly Pick<PlannedNotification, 'date' | 'time' | 'wordId'>[]): Promise<void>;
+  replace(planned: readonly PlannedWord[]): Promise<void>;
 }
 
 /**
@@ -32,11 +49,8 @@ export interface StoredPlan {
 export interface ReservedWords {
   /** The stored plan, read once, for the plan to make the next one from and replace. */
   stored(): Promise<StoredPlan>;
-  /**
-   * The morning Word of the local day `date` (`YYYY-MM-DD`): the Word of the
-   * earliest notification planned that day, if any.
-   */
-  morningWordOf(date: string): Promise<string | undefined>;
+  /** The morning Word of a local day: the Word of the earliest notification planned that day, if any. */
+  morningWordOf(date: LocalDate): Promise<string | undefined>;
   /** Whether a notification is planned with the Word. */
   isReserved(wordId: string): Promise<boolean>;
 }
@@ -44,7 +58,7 @@ export interface ReservedWords {
 const { notificationPlan: planRecords } = userStateRecords;
 
 /** The id of a notification's plan record: its local date and time joined with a `T`. */
-const slotId = ({ date, time }: Slot) => `${date}T${time}`;
+const slotId = ({ date, time }: Slot) => `${dateKeyOf(date)}T${formatTimeOfDay(time)}`;
 
 export function createReservedWords({ userState }: { userState: UserState }): ReservedWords {
   /** The Word of each plan record, by its id. */
@@ -57,7 +71,7 @@ export function createReservedWords({ userState }: { userState: UserState }): Re
         words: [...records.values()],
         wordAt: (slot) => records.get(slotId(slot)),
         async replace(planned) {
-          const next = new Map(planned.map((reserved) => [slotId(reserved), reserved.wordId]));
+          const next = new Map(planned.map(({ slot, wordId }) => [slotId(slot), wordId]));
           const changes: UserStateChanges = new Map([
             ...[...records.keys()]
               .filter((id) => !next.has(id))
@@ -72,8 +86,12 @@ export function createReservedWords({ userState }: { userState: UserState }): Re
     },
     async morningWordOf(date) {
       const records = await read();
-      const [earliest] = [...records.keys()].filter((id) => id.startsWith(`${date}T`)).sort();
-      return earliest === undefined ? undefined : records.get(earliest);
+      const prefix = `${dateKeyOf(date)}T`;
+      const timeOf = (id: string) => parseTimeOfDay(id.slice(prefix.length));
+      const [earliest] = [...records]
+        .filter(([id]) => id.startsWith(prefix))
+        .sort(([one], [other]) => compareTimesOfDay(timeOf(one), timeOf(other)));
+      return earliest?.[1];
     },
     async isReserved(wordId) {
       return [...(await read()).values()].includes(wordId);

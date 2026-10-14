@@ -4,6 +4,7 @@ import type { Cycle } from './cycle';
 import type { UserSettingDefaults } from './edition';
 import type { Entries } from './entries';
 import { createInTurn, createSubscribers } from './in-turn';
+import { compareTimesOfDay, parseTimeOfDay } from './local-date';
 import {
   createNotificationPlanner,
   type MorningNotification,
@@ -96,7 +97,9 @@ function stateOf(
   sound: boolean,
   permission: NotificationPermission,
 ): NotificationsState {
-  const sorted = [...times].sort();
+  const sorted = [...times].sort((one, other) =>
+    compareTimesOfDay(parseTimeOfDay(one), parseTimeOfDay(other)),
+  );
   return { times: sorted, sound, canAddTime: sorted.length < MAX_NOTIFICATION_TIMES, permission };
 }
 
@@ -164,6 +167,9 @@ export async function openNotifications({
           scheduling,
         });
 
+  /** The Notification times as the plan takes them. */
+  const planTimes = () => state.times.map(parseTimeOfDay);
+
   /** Reads the permission, telling the subscribers when it changed, and plans by it. */
   async function plan(): Promise<void> {
     if (scheduling === undefined || planner === undefined) return;
@@ -173,7 +179,7 @@ export async function openNotifications({
       subscribers.tell();
     }
     await takeMorningWord();
-    await planner.plan(state);
+    await planner.plan({ ...state, times: planTimes() });
   }
 
   /** Writes the times, an empty list included, then makes the change in memory and plans again. */
@@ -247,7 +253,7 @@ export async function openNotifications({
         if (planner === undefined) return undefined;
         // As a plan does, so a new day the composition hasn't turned to keeps its morning Word.
         await takeMorningWord();
-        return planner.nextMorning(state.times);
+        return planner.nextMorning(planTimes());
       }),
   };
 }

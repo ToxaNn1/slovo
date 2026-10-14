@@ -45,12 +45,15 @@ export { type UnhideResult, type HideResult, type HideTarget, type HidingChange 
 export { HISTORY_CAP, type History, type HistoryEntry } from './history';
 export { groupByLocalDay, relativeTimeOf, type DayGroup, type RelativeTime } from './history-time';
 export {
+  formatTimeOfDay,
   localDayOf,
   localTimeOf,
   parseLocalDate,
+  parseTimeOfDay,
   untilNextLocalDay,
   type LocalDate,
   type LocalDay,
+  type TimeOfDay,
 } from './local-date';
 export {
   InvalidEditionConfigError,

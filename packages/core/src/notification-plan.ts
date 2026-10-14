@@ -1,6 +1,15 @@
 import type { Cycle } from './cycle';
 import type { Entries } from './entries';
-import { dateKeyAfter, localTimeOf, todayKey } from './local-date';
+import {
+  dateKeyOf,
+  dayNumber,
+  compareTimesOfDay,
+  formatTimeOfDay,
+  localDateAfter,
+  localTimeOf,
+  todayDate,
+  type TimeOfDay,
+} from './local-date';
 import type {
   Clock,
   NotificationPermission,
@@ -8,7 +17,12 @@ import type {
   PlannedNotification,
   PlannedSound,
 } from './ports';
-import { createReservedWords, type Slot, type StoredPlan } from './reserved-words';
+import {
+  createReservedWords,
+  type PlannedWord,
+  type Slot,
+  type StoredPlan,
+} from './reserved-words';
 import { renderStress } from './stress';
 import type { UserState } from './user-state';
 import type { WordOfTheDay } from './word-of-the-day';
@@ -46,19 +60,17 @@ export interface MorningNotification {
   /** The primary Definition, cut as the notification cuts it. */
   readonly body: string;
   /** The earliest Notification time; nothing when no time is left. */
-  readonly time: string | undefined;
+  readonly time: TimeOfDay | undefined;
 }
 
 /** The Notification times, the sound and the permission the plan follows. */
 interface PlanSettings {
-  /** Local times `HH:MM`, in time order. */
-  readonly times: readonly string[];
+  /** In time order. */
+  readonly times: readonly TimeOfDay[];
   readonly sound: boolean;
   /** Whether the device lets the app notify, as the scheduler reported it. */
   readonly permission: NotificationPermission;
 }
-
-const twoDigits = (value: number) => String(value).padStart(2, '0');
 
 /**
  * When each notification the plan covers comes, in time order: every time
@@ -66,19 +78,26 @@ const twoDigits = (value: number) => String(value).padStart(2, '0');
  * for `PLAN_DAYS` days' worth of times, and never more than
  * `MAX_PLANNED_NOTIFICATIONS`.
  */
-function slotsAhead(times: readonly string[], clock: Clock): Slot[] {
-  const today = todayKey(clock);
-  const { hour, minute } = localTimeOf(clock.now(), clock);
-  const now = `${twoDigits(hour)}:${twoDigits(minute)}`;
+function slotsAhead(times: readonly TimeOfDay[], clock: Clock): Slot[] {
+  const today = todayDate(clock);
+  const now = localTimeOf(clock.now(), clock);
   const count = Math.min(times.length * PLAN_DAYS, MAX_PLANNED_NOTIFICATIONS);
   const slots: Slot[] = [];
   for (let day = 0; slots.length < count; day += 1) {
-    const date = dateKeyAfter(today, day);
+    const date = localDateAfter(today, day);
     for (const time of times) {
-      if (slots.length < count && (day > 0 || time > now)) slots.push({ date, time });
+      if (slots.length < count && (day > 0 || compareTimesOfDay(time, now) > 0)) {
+        slots.push({ date, time });
+      }
     }
   }
   return slots;
+}
+
+/** Whether a slot is this morning's: today at the earliest Notification time. */
+function isMorningOf(earliest: TimeOfDay, clock: Clock): (slot: Slot) => boolean {
+  const today = dayNumber(todayDate(clock));
+  return ({ date, time }) => dayNumber(date) === today && compareTimesOfDay(time, earliest) === 0;
 }
 
 /**
@@ -157,7 +176,7 @@ export function createNotificationPlanner({
    * Word of the Day while it is unseen, with no time: the morning a time
    * added ahead today would bring. Nothing when the Cycle has no Word for it.
    */
-  nextMorning(times: readonly string[]): Promise<MorningNotification | undefined>;
+  nextMorning(times: readonly TimeOfDay[]): Promise<MorningNotification | undefined>;
 } {
   const reservedWords = createReservedWords({ userState });
 
@@ -177,14 +196,14 @@ export function createNotificationPlanner({
   function chooseWords(
     slots: readonly Slot[],
     stored: StoredPlan,
-    earliest: string | undefined,
-  ): { readonly slot: Slot; readonly wordId: string }[] {
+    earliest: TimeOfDay | undefined,
+  ): PlannedWord[] {
     const unseen = new Set(cycle.unseen().words);
     const kept = new Map<Slot, string>();
     // Today's Word of the Day goes to this morning's notification or to none.
     const today = wordOfTheDay.chosen()?.wordId;
     const keptWords = new Set<string>(today === undefined ? [] : [today]);
-    const morning = slots.find(({ date, time }) => date === todayKey(clock) && time === earliest);
+    const morning = earliest === undefined ? undefined : slots.find(isMorningOf(earliest, clock));
     if (morning !== undefined && today !== undefined && unseen.has(today)) kept.set(morning, today);
     for (const slot of slots) {
       if (kept.has(slot)) continue;
@@ -206,7 +225,9 @@ export function createNotificationPlanner({
     return edition.notificationSound === undefined ? 'system' : { file: edition.notificationSound };
   }
 
-  async function nextMorning(times: readonly string[]): Promise<MorningNotification | undefined> {
+  async function nextMorning(
+    times: readonly TimeOfDay[],
+  ): Promise<MorningNotification | undefined> {
     const [earliest] = times;
     const today = wordOfTheDay.chosen()?.wordId;
     const wordId =
@@ -215,7 +236,7 @@ export function createNotificationPlanner({
           ? today
           : undefined
         : chooseWords(slotsAhead(times, clock), await reservedWords.stored(), earliest).find(
-            ({ slot }) => slot.time === earliest,
+            ({ slot }) => compareTimesOfDay(slot.time, earliest) === 0,
           )?.wordId;
     const word = wordId === undefined ? undefined : await entries.get(wordId);
     if (word?.kind !== 'word') return undefined;
@@ -229,19 +250,22 @@ export function createNotificationPlanner({
   async function plan({ times, sound, permission }: PlanSettings): Promise<void> {
     const slots = permission === 'allowed' ? slotsAhead(times, clock) : [];
     const stored = await reservedWords.stored();
+    const planned: PlannedWord[] = [];
     const notifications: PlannedNotification[] = [];
-    for (const { slot, wordId } of chooseWords(slots, stored, times[0])) {
-      const word = await entries.get(wordId);
+    for (const reserved of chooseWords(slots, stored, times[0])) {
+      const word = await entries.get(reserved.wordId);
       if (word?.kind !== 'word') continue;
+      planned.push(reserved);
       notifications.push({
-        ...slot,
+        date: dateKeyOf(reserved.slot.date),
+        time: formatTimeOfDay(reserved.slot.time),
         title: renderStress(word),
         body: notificationBody(word.primaryDefinition, ellipsis),
-        wordId,
+        wordId: word.id,
         sound: soundOf(sound),
       });
     }
-    await stored.replace(notifications);
+    await stored.replace(planned);
     await scheduler.replacePlan(notifications);
   }
 

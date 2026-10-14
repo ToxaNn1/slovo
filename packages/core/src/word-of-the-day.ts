@@ -90,7 +90,7 @@ export async function openWordOfTheDay({
 
   /** The Word Reserved for this morning, if today takes it, kept as today's Word of the Day. */
   async function chooseMorningWord(today: string): Promise<string | undefined> {
-    const reserved = await reservedWords.morningWordOf(today);
+    const reserved = await reservedWords.morningWordOf(parseLocalDate(today));
     if (reserved === undefined || reserved === record?.entryId) return undefined;
     if (!cycle.unseen().words.includes(reserved)) return undefined;
     await choose(reserved, today);

@@ -1,5 +1,5 @@
 import { createInTurn } from './in-turn';
-import { todayKey } from './local-date';
+import { parseLocalDate, todayKey, type LocalDate } from './local-date';
 import type { Clock, UserStateChanges } from './ports';
 import type { ActiveDayChange } from './progress';
 import type { WordOfTheDay } from './word-of-the-day';
@@ -65,8 +65,8 @@ export function createDayChange({
   todayChange: () => ActiveDayChange;
   /** Reads the permission and makes the notification plan again. */
   replan: () => Promise<void>;
-  /** Tells the Feed the local day `YYYY-MM-DD` it is. */
-  openFeedDay: (day: string) => Promise<void>;
+  /** Tells the Feed the local day it is. */
+  openFeedDay: (day: LocalDate) => Promise<void>;
 }): DayChange {
   /** The local day `YYYY-MM-DD` the composition turned to last. */
   let turnedTo: string | undefined;
@@ -84,7 +84,7 @@ export function createDayChange({
     await recordActiveDay();
     if (newDay || planAnyway) await replan();
     if (newDay) {
-      await openFeedDay(today);
+      await openFeedDay(parseLocalDate(today));
       turnedTo = today;
     }
   }

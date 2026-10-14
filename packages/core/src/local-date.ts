@@ -8,6 +8,15 @@ export interface LocalDate {
   readonly day: number;
 }
 
+/** A wall-clock time of day, on a 24-hour clock. */
+export interface TimeOfDay {
+  /** 0 to 23. */
+  readonly hour: number;
+  readonly minute: number;
+}
+
+const twoDigits = (value: number) => String(value).padStart(2, '0');
+
 /** The parts of an instant as the time zone writes it, each read by its type. */
 function partsAt(
   instant: Date,
@@ -30,7 +39,6 @@ export function todayKey(clock: Clock): string {
 
 /** The key of a local date: `YYYY-MM-DD`. */
 export function dateKeyOf({ year, month, day }: LocalDate): string {
-  const twoDigits = (value: number) => String(value).padStart(2, '0');
   return `${String(year)}-${twoDigits(month)}-${twoDigits(day)}`;
 }
 
@@ -39,6 +47,26 @@ export function parseLocalDate(date: string): LocalDate {
   const [year = 0, month = 0, day = 0] = date.split('-').map(Number);
   return { year, month, day };
 }
+
+/** Today's local calendar date in the clock's time zone. */
+export function todayDate(clock: Clock): LocalDate {
+  return parseLocalDate(todayKey(clock));
+}
+
+/** A time of day as the app writes it, a Notification time too: `HH:MM`. */
+export function formatTimeOfDay({ hour, minute }: TimeOfDay): string {
+  return `${twoDigits(hour)}:${twoDigits(minute)}`;
+}
+
+/** The time of day of a `HH:MM` time. */
+export function parseTimeOfDay(time: string): TimeOfDay {
+  const [hour = 0, minute = 0] = time.split(':').map(Number);
+  return { hour, minute };
+}
+
+/** Less than 0 when `one` comes earlier in the day than `other`, 0 at the same time, more than 0 later. */
+export const compareTimesOfDay = (one: TimeOfDay, other: TimeOfDay): number =>
+  one.hour * 60 + one.minute - (other.hour * 60 + other.minute);
 
 /** The local calendar day an instant fell on, and how many local days before today that is. */
 export interface LocalDay {
@@ -58,9 +86,10 @@ function localDateAt(instant: Date, timeZone: string): LocalDate {
 export const dayNumber = ({ year, month, day }: LocalDate) =>
   Date.UTC(year, month - 1, day) / DAY_MS;
 
-/** The key of the local date `days` after the date of the key `date`, both `YYYY-MM-DD`. */
-export function dateKeyAfter(date: string, days: number): string {
-  return new Date((dayNumber(parseLocalDate(date)) + days) * DAY_MS).toISOString().slice(0, 10);
+/** The local date `days` after the date. */
+export function localDateAfter(date: LocalDate, days: number): LocalDate {
+  const after = new Date((dayNumber(date) + days) * DAY_MS);
+  return { year: after.getUTCFullYear(), month: after.getUTCMonth() + 1, day: after.getUTCDate() };
 }
 
 /**
@@ -75,10 +104,7 @@ export function localDayOf(instant: Date, clock: Clock): LocalDay {
 }
 
 /** The wall-clock time of an instant in the clock's current time zone, on a 24-hour clock. */
-export function localTimeOf(
-  instant: Date,
-  clock: Clock,
-): { readonly hour: number; readonly minute: number } {
+export function localTimeOf(instant: Date, clock: Clock): TimeOfDay {
   const part = partsAt(instant, clock.timeZone(), {
     hourCycle: 'h23',
     hour: '2-digit',
