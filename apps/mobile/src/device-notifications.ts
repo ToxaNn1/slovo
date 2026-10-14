@@ -22,6 +22,6 @@ export const deviceNotificationScheduler = createNotificationScheduler(notificat
   editionSound: edition.notificationSound,
 });
 
-/** Calls `open` with the Word of each notification the reader taps; returns the call that stops it. */
-export const onDeviceNotificationTap = (open: (wordId: string) => void) =>
+/** Calls `open` with the link of each notification the reader taps; returns the call that stops it. */
+export const onDeviceNotificationTap = (open: (link: string) => void) =>
   onNotificationTap(notifications, open);

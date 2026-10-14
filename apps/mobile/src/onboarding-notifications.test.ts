@@ -189,7 +189,7 @@ describe('the end of the onboarding', () => {
     const first = await open(undefined, records);
 
     await first.notifications.removeTime('13:00');
-    await first.notifications.addTime('21:30');
+    await first.notifications.keepTime('21:30');
     await postponeNotifications({ onboarding: first.onboarding });
 
     const reopened = await open(undefined, records);

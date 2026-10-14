@@ -2,14 +2,15 @@ import { useLocalSearchParams } from 'expo-router';
 
 import { editionStrings } from '../../edition';
 import { EntryScreen } from '../../entry-screen';
+import { isFromNotification } from '../../notification-scheduler';
 
 /**
- * An Entry opened from a link, `slovo-<edition id>://entry/<id>`. With
- * `?from=notification` it is a notification's Word, which the Entry screen
- * opens as Seen; a Correction its Word card links opens over it without.
+ * An Entry opened from a link, `slovo-<edition id>://entry/<id>`. A
+ * notification's link opens its Word, which the Entry screen opens as Seen;
+ * a Correction its Word card links opens over it without.
  */
 export default function EntryFromLinkScreen() {
-  const { entryId, back, from } = useLocalSearchParams<{
+  const { entryId, back, ...params } = useLocalSearchParams<{
     entryId: string;
     back?: string;
     from?: string;
@@ -19,7 +20,7 @@ export default function EntryFromLinkScreen() {
       entryId={entryId}
       back={back ?? editionStrings.tabs.home}
       route="/entry"
-      fromNotification={from === 'notification'}
+      fromNotification={isFromNotification(params)}
     />
   );
 }

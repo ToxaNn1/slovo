@@ -48,9 +48,6 @@ export type NotificationTimeRefusal =
   /** `MAX_NOTIFICATION_TIMES` are set already. */
   | 'limit';
 
-export type NotificationTimeResult =
-  { readonly ok: true } | { readonly ok: false; readonly reason: NotificationTimeRefusal };
-
 /**
  * Notifications: the reader's Notification times, whether notifications play
  * their sound, and the plan of which Word comes at which time (ADR 0021). All
@@ -67,13 +64,13 @@ export interface Notifications {
    * something changes.
    */
   readonly state: NotificationsState;
-  /** Adds the time; refused when it is in the list already or the list is full. */
-  addTime(time: string): Promise<NotificationTimeResult>;
   /**
-   * Changes the time `from` into `to`; refused when `to` is another time in
-   * the list. Nothing for a `from` not in the list.
+   * Keeps the time the reader picked: it replaces the time `replacing`, or is
+   * added when there is none to replace. Resolves to why it was refused (it
+   * is another time in the list, or a time to add over the full list), or
+   * nothing when it is kept. A `replacing` not in the list changes nothing.
    */
-  changeTime(from: string, to: string): Promise<NotificationTimeResult | undefined>;
+  keepTime(time: string, replacing?: string): Promise<NotificationTimeRefusal | undefined>;
   /** Removes the time. A time not in the list is skipped. */
   removeTime(time: string): Promise<void>;
   /** Switches the notification sound on or off. */
@@ -172,33 +169,34 @@ export async function openNotifications({
   }
 
   /** Writes the times, an empty list included, then makes the change in memory and plans again. */
-  async function keepTimes(times: readonly string[]): Promise<NotificationTimeResult> {
+  async function writeTimes(times: readonly string[]): Promise<void> {
     const next = stateOf(times, state.sound, state.permission);
     await userState.write(timesRecord.change([...next.times]));
     state = next;
     subscribers.tell();
     await plan();
-    return { ok: true };
   }
 
-  async function addTime(time: string): Promise<NotificationTimeResult> {
+  async function keepTime(
+    time: string,
+    replacing: string | undefined,
+  ): Promise<NotificationTimeRefusal | undefined> {
     TimeOfDaySchema.parse(time);
-    if (state.times.includes(time)) return { ok: false, reason: 'duplicate' };
-    if (!state.canAddTime) return { ok: false, reason: 'limit' };
-    return keepTimes([...state.times, time]);
-  }
-
-  async function changeTime(from: string, to: string): Promise<NotificationTimeResult | undefined> {
-    TimeOfDaySchema.parse(to);
-    if (!state.times.includes(from)) return undefined;
-    if (from === to) return { ok: true };
-    if (state.times.includes(to)) return { ok: false, reason: 'duplicate' };
-    return keepTimes(state.times.map((time) => (time === from ? to : time)));
+    if (replacing !== undefined && !state.times.includes(replacing)) return undefined;
+    if (replacing === time) return undefined;
+    if (state.times.includes(time)) return 'duplicate';
+    if (replacing === undefined && !state.canAddTime) return 'limit';
+    await writeTimes(
+      replacing === undefined
+        ? [...state.times, time]
+        : state.times.map((kept) => (kept === replacing ? time : kept)),
+    );
+    return undefined;
   }
 
   async function removeTime(time: string): Promise<void> {
     if (!state.times.includes(time)) return;
-    await keepTimes(state.times.filter((kept) => kept !== time));
+    await writeTimes(state.times.filter((kept) => kept !== time));
   }
 
   async function setSound(on: boolean): Promise<void> {
@@ -223,8 +221,7 @@ export async function openNotifications({
       get state() {
         return state;
       },
-      addTime: (time) => inTurn(() => addTime(time)),
-      changeTime: (from, to) => inTurn(() => changeTime(from, to)),
+      keepTime: (time, replacing) => inTurn(() => keepTime(time, replacing)),
       removeTime: (time) => inTurn(() => removeTime(time)),
       setSound: (on) => inTurn(() => setSound(on)),
       askPermission: () => inTurn(askPermission),

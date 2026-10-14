@@ -1,4 +1,4 @@
-import type { Notifications, NotificationsState, NotificationTimeRefusal } from '@slovo/core';
+import type { NotificationsState, NotificationTimeRefusal } from '@slovo/core';
 import { useEdition } from '@slovo/ui';
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo } from 'react';
@@ -6,8 +6,7 @@ import { useEffect, useMemo } from 'react';
 import { useComposed, useModule } from './composition';
 import { onDeviceNotificationTap } from './device-notifications';
 import { editionStrings } from './edition';
-import { notificationLink } from './notification-scheduler';
-import { keepPickedTime, notificationsSummary } from './notifications-screen';
+import { notificationsSummary } from './notifications-screen';
 
 /**
  * Opens the Word of each notification the reader taps on the Entry screen,
@@ -17,17 +16,12 @@ export function NotificationTaps() {
   const router = useRouter();
   useEffect(
     () =>
-      onDeviceNotificationTap((wordId) => {
-        router.push(notificationLink(wordId));
+      onDeviceNotificationTap((link) => {
+        router.push(link);
       }),
     [router],
   );
   return null;
-}
-
-/** Notifications of the session's Core composition, once it is open. */
-function useNotifications(): Notifications | undefined {
-  return useModule((composition) => composition.notifications);
 }
 
 /** The Notification times and the sound as they stand, kept up to date; nothing until they open. */
@@ -62,29 +56,24 @@ export function useNotificationsSummary(): string | undefined {
  */
 export function useNotificationsChanges(): {
   /**
-   * Keeps the time the reader picked: it replaces the time `from`, or is
+   * Keeps the time the reader picked: it replaces the time `replacing`, or is
    * added without one. Resolves to why it was refused, or nothing when it is
    * kept or could not be written.
    */
-  keepTime: (picked: Date, from?: string) => Promise<NotificationTimeRefusal | undefined>;
+  keepTime: (time: string, replacing?: string) => Promise<NotificationTimeRefusal | undefined>;
   removeTime: (time: string) => void;
   setSound: (on: boolean) => void;
 } {
-  const notifications = useNotifications();
+  const notifications = useModule((composition) => composition.notifications);
   const keep = (change: Promise<unknown> | undefined) => {
     change?.catch((error: unknown) => {
       console.error('Could not keep the change of the notifications', error);
     });
   };
   return {
-    keepTime: async (picked, from) => {
-      if (notifications === undefined) return undefined;
+    keepTime: async (time, replacing) => {
       try {
-        return await keepPickedTime({
-          notifications,
-          picked,
-          ...(from === undefined ? {} : { from }),
-        });
+        return await notifications?.keepTime(time, replacing);
       } catch (error) {
         console.error('Could not keep the change of the notifications', error);
         return undefined;

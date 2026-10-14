@@ -26,9 +26,38 @@ interface SchedulerSounds {
   readonly editionSound: string | undefined;
 }
 
+const twoDigits = (value: number) => String(value).padStart(2, '0');
+
+/** The hour and the minute of a Notification time `HH:MM`. */
+function partsOf(time: string): { hour: number; minute: number } {
+  const [hour = 0, minute = 0] = time.split(':').map(Number);
+  return { hour, minute };
+}
+
+/** The local time of day a picked date stands for, as a Notification time `HH:MM`. */
+export function timeOfDay(date: Date): string {
+  return `${twoDigits(date.getHours())}:${twoDigits(date.getMinutes())}`;
+}
+
+/** The Notification time `HH:MM` on the day of `day`, for the picker to start from. */
+export function dateOfTime(time: string, day: Date): Date {
+  const { hour, minute } = partsOf(time);
+  const date = new Date(day);
+  date.setHours(hour, minute, 0, 0);
+  return date;
+}
+
+/** The value of the search param `from` that marks an Entry link as a notification's. */
+const notificationSource = 'notification';
+
 /** The Expo Router link of a notification's Word: the Entry screen, opened as from a notification. */
-export function notificationLink(wordId: string): string {
-  return `/entry/${encodeURIComponent(wordId)}?from=notification`;
+function notificationLink(wordId: string): string {
+  return `/entry/${encodeURIComponent(wordId)}?from=${notificationSource}`;
+}
+
+/** Whether the search params of an Entry link mark it as a notification's link. */
+export function isFromNotification({ from }: { readonly from?: string }): boolean {
+  return from === notificationSource;
 }
 
 /**
@@ -74,7 +103,7 @@ function schedulerOn(
 
   function schedule({ date, time, title, body, wordId, sound }: PlannedNotification) {
     const { year, month, day } = parseLocalDate(date);
-    const [hour = 0, minute = 0] = time.split(':').map(Number);
+    const { hour, minute } = partsOf(time);
     return notifications.scheduleNotificationAsync({
       identifier: `${date}T${time}`,
       content: { title, body, sound: soundOf(sound), data: { wordId } },
@@ -111,13 +140,14 @@ function wordOf(response: ExpoNotifications.NotificationResponse | null): string
 }
 
 /**
- * Calls `open` with the Word of each notification the reader taps: the one
- * that launched the app, once, and each tap while it runs. Returns the call
- * that stops listening. Without the module there is nothing to listen to.
+ * Calls `open` with the link of the Word of each notification the reader
+ * taps: the one that launched the app, once, and each tap while it runs.
+ * Returns the call that stops listening. Without the module there is nothing
+ * to listen to.
  */
 export function onNotificationTap(
   notifications: NotificationsModule | undefined,
-  open: (wordId: string) => void,
+  open: (link: string) => void,
 ): () => void {
   if (notifications === undefined) return () => undefined;
   // iOS keeps the last tap until it is cleared, so listening again, as after
@@ -126,7 +156,7 @@ export function onNotificationTap(
     const wordId = wordOf(response);
     if (wordId === undefined) return;
     notifications?.clearLastNotificationResponse();
-    open(wordId);
+    open(notificationLink(wordId));
   }
   opened(notifications.getLastNotificationResponse());
   const subscription = notifications.addNotificationResponseReceivedListener(opened);
