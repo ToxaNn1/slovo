@@ -140,15 +140,18 @@ describe('the day change', () => {
     const morning = wordAt(planOf(scheduler), '2026-10-15T09:00');
     // The reader is on the Word of the Day, with the next card ready.
     await app.feed.show(0);
-    const [today] = cardsOf(app);
+    const before = cardsOf(app);
 
     time.moveTo('2026-10-15T00:00:01+03:00');
     await app.resume();
 
     expect(activeDaysIn(records)).toEqual(['2026-10-14', '2026-10-15']);
     expect(app.progress.state.streak).toBe(2);
-    // The morning Word is the new day's Word of the Day, in place of the card got ready the day before.
-    expect(cardsOf(app)).toEqual([today, `${morning}@15`]);
+    // The card got ready the day before stays; the morning Word, the new
+    // day's Word of the Day, comes after it once the reader swipes on.
+    expect(cardsOf(app)).toEqual(before);
+    await app.feed.show(1);
+    expect(cardsOf(app)).toEqual([...before, `${morning}@15`]);
     // The plan is made again from the new day, its morning notification kept.
     expect(planOf(scheduler)[0]).toMatchObject({ date: '2026-10-15', time: '09:00' });
     expect(wordAt(planOf(scheduler), '2026-10-15T09:00')).toBe(morning);
