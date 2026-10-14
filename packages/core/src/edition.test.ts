@@ -118,6 +118,13 @@ describe('loadEdition', () => {
     ]);
   });
 
+  it('reports whether the Edition has a notification sound of its own', () => {
+    expect(loadEdition(validConfig).hasNotificationSound).toBe(false);
+    expect(
+      loadEdition({ ...validConfig, notificationSound: 'notification.wav' }).hasNotificationSound,
+    ).toBe(true);
+  });
+
   it('reports a default of Vibration off', () => {
     const edition = loadEdition({
       ...validConfig,

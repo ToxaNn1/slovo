@@ -1,12 +1,23 @@
 import { MAX_NOTIFICATION_TIMES, TimeOfDaySchema } from '@slovo/contracts';
 
+import type { Cycle } from './cycle';
 import type { UserSettingDefaults } from './edition';
+import type { Entries } from './entries';
 import { createInTurn, createSubscribers } from './in-turn';
+import {
+  createNotificationPlanner,
+  type NotificationScheduling,
+  type PlanEdition,
+} from './notification-plan';
+import type { Clock, NotificationPermission } from './ports';
 import type { UserState } from './user-state';
 import { userStateRecords } from './user-state-schema';
 
-/** What the Notifications module needs to know of the Edition: its default Notification times. */
-export interface NotificationsEdition {
+/**
+ * What the Notifications module needs to know of the Edition: its default
+ * Notification times, and whether it has a notification sound of its own.
+ */
+export interface NotificationsEdition extends PlanEdition {
   readonly userSettingDefaults: Pick<UserSettingDefaults, 'notificationTimes'>;
 }
 
@@ -34,11 +45,13 @@ export type NotificationTimeResult =
   { readonly ok: true } | { readonly ok: false; readonly reason: NotificationTimeRefusal };
 
 /**
- * Notifications: the reader's Notification times and whether notifications
- * play their sound. Both stay on this device. Read from the user state once,
- * when it opens, so open one per app session (the Core composition does). A
- * change is made in memory only once it is written. A time that is not a
- * local time `HH:MM` is a mistake of the caller and is thrown, not refused.
+ * Notifications: the reader's Notification times, whether notifications play
+ * their sound, and the plan of which Word comes at which time (ADR 0021). All
+ * of it stays on this device. Read from the user state once, when it opens,
+ * so open one per app session (the Core composition does). A change is made
+ * in memory only once it is written, and the plan follows every change. A
+ * time that is not a local time `HH:MM` is a mistake of the caller and is
+ * thrown, not refused.
  */
 export interface Notifications {
   /**
@@ -58,6 +71,12 @@ export interface Notifications {
   removeTime(time: string): Promise<void>;
   /** Switches the notification sound on or off. */
   setSound(on: boolean): Promise<void>;
+  /**
+   * Asks the reader for permission to notify, when they haven't been asked
+   * yet, plans again and reports the permission. Without a scheduler there is
+   * nobody to ask: it stays not asked.
+   */
+  askPermission(): Promise<NotificationPermission>;
   /** Calls `listener` after each change of the state. Returns the call that stops it. */
   subscribe(listener: () => void): () => void;
 }
@@ -70,16 +89,28 @@ function stateOf(times: readonly string[], sound: boolean): NotificationsState {
 }
 
 /**
- * Opens Notifications over the user state: the stored times, or the
- * Edition's default ones while the reader has never changed them.
+ * Opens Notifications over the user state, for the Core composition: the
+ * stored times, or the Edition's default ones while the reader has never
+ * changed them. It plans over the Cycle the composition shares, and `replan`
+ * plans again, for the composition to call when the app opens or the reader
+ * comes back. Without `scheduling`, as in tools and in tests of other
+ * features, nothing is planned.
  */
 export async function openNotifications({
   edition,
   userState,
+  cycle,
+  entries,
+  clock,
+  scheduling,
 }: {
   edition: NotificationsEdition;
   userState: UserState;
-}): Promise<Notifications> {
+  cycle: Pick<Cycle, 'order' | 'unseen'>;
+  entries: Pick<Entries, 'get'>;
+  clock: Clock;
+  scheduling: NotificationScheduling | undefined;
+}): Promise<{ notifications: Notifications; replan: () => Promise<void> }> {
   const [storedTimes, storedSound] = await Promise.all([
     userState.read(timesRecord),
     userState.read(soundRecord),
@@ -89,13 +120,19 @@ export async function openNotifications({
     storedSound ?? true,
   );
   const subscribers = createSubscribers();
+  const planner =
+    scheduling === undefined
+      ? undefined
+      : createNotificationPlanner({ cycle, entries, userState, clock, edition, scheduling });
+  const plan = async () => planner?.(state);
 
-  /** Writes the times, an empty list included, then makes the change in memory. */
+  /** Writes the times, an empty list included, then makes the change in memory and plans again. */
   async function keepTimes(times: readonly string[]): Promise<NotificationTimeResult> {
     const next = stateOf(times, state.sound);
     await userState.write(timesRecord.change([...next.times]));
     state = next;
     subscribers.tell();
+    await plan();
     return { ok: true };
   }
 
@@ -124,18 +161,30 @@ export async function openNotifications({
     await userState.write(soundRecord.change(on));
     state = stateOf(state.times, on);
     subscribers.tell();
+    await plan();
+  }
+
+  async function askPermission(): Promise<NotificationPermission> {
+    if (scheduling === undefined) return 'not-asked';
+    const permission = await scheduling.scheduler.askPermission();
+    await plan();
+    return permission;
   }
 
   const inTurn = createInTurn();
 
   return {
-    get state() {
-      return state;
+    notifications: {
+      get state() {
+        return state;
+      },
+      addTime: (time) => inTurn(() => addTime(time)),
+      changeTime: (from, to) => inTurn(() => changeTime(from, to)),
+      removeTime: (time) => inTurn(() => removeTime(time)),
+      setSound: (on) => inTurn(() => setSound(on)),
+      askPermission: () => inTurn(askPermission),
+      subscribe: subscribers.subscribe,
     },
-    addTime: (time) => inTurn(() => addTime(time)),
-    changeTime: (from, to) => inTurn(() => changeTime(from, to)),
-    removeTime: (time) => inTurn(() => removeTime(time)),
-    setSound: (on) => inTurn(() => setSound(on)),
-    subscribe: subscribers.subscribe,
+    replan: () => inTurn(plan),
   };
 }
