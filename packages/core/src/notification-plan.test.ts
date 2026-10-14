@@ -394,6 +394,36 @@ describe('the notification plan', () => {
     );
     expect(Array.from(long?.body ?? '').length).toBeLessThanOrEqual(NOTIFICATION_BODY_LENGTH);
   });
+
+  it.each([
+    ['an Arabic comma', '،'],
+    ['an Armenian full stop', '։'],
+    ['a Devanagari danda', '।'],
+    ['an ideographic full stop', '。'],
+    ['a Greek ano teleia', '\u0387'],
+  ])('drops %s before the ellipsis of a cut body, as any punctuation', async (_, mark) => {
+    const head = 'Слово, що його вживають лише в давніх текстах і майже ніколи в живій мові';
+    const { scheduler } = await run({
+      words: [word('w_long', { primaryDefinition: `${head}${mark} сьогоднішнього дня.` })],
+    });
+
+    expect(planOf(scheduler)[0]?.body).toBe(`${head}…`);
+  });
+
+  it.each([
+    ['a question mark', '?'],
+    ['an exclamation mark', '!'],
+    ['a percent sign', '%'],
+    ['a quotation mark', '"'],
+    ['an apostrophe', "'"],
+  ])('keeps %s before the ellipsis, since it says something', async (_, mark) => {
+    const head = 'Слово, що його вживають лише в давніх текстах і майже ніколи в живій мові';
+    const { scheduler } = await run({
+      words: [word('w_long', { primaryDefinition: `${head}${mark} сьогоднішнього дня.` })],
+    });
+
+    expect(planOf(scheduler)[0]?.body).toBe(`${head}${mark}…`);
+  });
 });
 
 const SECOND = 1000;

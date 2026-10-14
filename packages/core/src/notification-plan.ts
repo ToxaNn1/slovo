@@ -82,9 +82,18 @@ function slotsAhead(times: readonly string[], clock: Clock): Slot[] {
 }
 
 /**
+ * The spaces, dashes and punctuation at the end of a text that only end a
+ * clause, by Unicode class so they count in every script: a comma, a full
+ * stop, a colon, an Arabic comma, a danda. Marks that say something stay:
+ * question and exclamation marks, quotation marks, brackets, apostrophes and
+ * signs such as `%`.
+ */
+const CLAUSE_END = /(?:\s|\p{Pd}|(?![!?¡¿؟‽%'"*/\\&#@])\p{Po})+$/u;
+
+/**
  * The body of a notification: the text, or when it is longer than
  * `NOTIFICATION_BODY_LENGTH`, its start cut at a word boundary, without the
- * punctuation before the cut, and the ellipsis.
+ * punctuation that ends a clause before the cut, and the ellipsis.
  */
 export function notificationBody(text: string, ellipsis: string): string {
   const characters = Array.from(text);
@@ -94,7 +103,7 @@ export function notificationBody(text: string, ellipsis: string): string {
   const head = characters.slice(0, room + 1).join('');
   const boundary = head.search(/\s\S*$/u);
   const cut = boundary > 0 ? head.slice(0, boundary) : characters.slice(0, room).join('');
-  return `${cut.replace(/[\s,.;:–—-]+$/u, '')}${ellipsis}`;
+  return `${cut.replace(CLAUSE_END, '')}${ellipsis}`;
 }
 
 /**
