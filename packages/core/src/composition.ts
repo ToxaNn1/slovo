@@ -46,9 +46,19 @@ export interface Composition extends Hiding {
   /**
    * The Entry card of any Entry, Retired or not, for a screen that opens a
    * kept Entry; nothing for an id the Language Pack doesn't have. Opening it
-   * never makes the Entry Seen: Seen comes from the Feed alone.
+   * never makes the Entry Seen: Seen comes from the Feed or a notification.
    */
   entryCard(entryId: string): Promise<EntryFeedCard | undefined>;
+  /**
+   * Opens a Word from a notification: its Entry card, like `entryCard`, once
+   * it is Seen, in History and today is an Active Day, in one write. It joins
+   * History as the Word of the Day's card only if it is today's Word of the
+   * Day. A Hidden or Retired Word opens as a kept Entry and is Seen only if it
+   * is still eligible, so a Hidden Entry never re-enters History. Nothing for
+   * an id the Language Pack doesn't have: the Feed opens instead. Opening it
+   * again writes nothing new.
+   */
+  openedFromNotification(entryId: string): Promise<EntryFeedCard | undefined>;
   /** The row model of any Entry, Retired or not, for a list; nothing for an id the Language Pack doesn't have. */
   entryRow(entryId: string): Promise<EntryRowModel | undefined>;
 }
@@ -78,7 +88,7 @@ export async function openComposition({
   const cycle = await openCycle({ entries, userState, random });
   const wordOfTheDay = await openWordOfTheDay({ cycle, userState, clock });
   const { history, recorder } = await openHistory({ rows, userState });
-  const { feed, followEligibility } = await openFeed({
+  const { feed, followEligibility, markOpenedSeen } = await openFeed({
     entries,
     userState,
     clock,
@@ -100,8 +110,12 @@ export async function openComposition({
     openHiddenEntries({ rows, userState, clock, eligibilityChanged }),
     openMix({ edition, userState, eligibilityChanged }),
   ]);
-  const { progress, recordToday } = await openProgress({ userState, clock });
+  const { progress, recordToday, todayChange } = await openProgress({ userState, clock });
   await recordToday();
+  async function entryCard(entryId: string): Promise<EntryFeedCard | undefined> {
+    const entry = await entries.get(entryId);
+    return entry === undefined ? undefined : buildEntryCard(entries, entry);
+  }
   return {
     feed,
     favorites,
@@ -112,9 +126,12 @@ export async function openComposition({
     progress,
     resume: recordToday,
     ...createHiding({ rows, hiddenEntries, mix }),
-    async entryCard(entryId) {
-      const entry = await entries.get(entryId);
-      return entry === undefined ? undefined : buildEntryCard(entries, entry);
+    entryCard,
+    async openedFromNotification(entryId) {
+      const today = todayChange();
+      await markOpenedSeen(entryId, today.changes);
+      today.commit();
+      return entryCard(entryId);
     },
     entryRow: (entryId) => rows.row(entryId),
   };

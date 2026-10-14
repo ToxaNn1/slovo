@@ -3,10 +3,10 @@ import type { Entry, Word } from '@slovo/contracts';
 import { buildCorrectionCard, type CorrectionCardModel } from './correction-card';
 import type { Cycle } from './cycle';
 import type { Entries } from './entries';
-import type { HistoryRecorder } from './history';
+import type { HistoryRecorder, Seen } from './history';
 import { createInTurn, createSubscribers } from './in-turn';
 import { todayKey, type LocalDate } from './local-date';
-import type { Clock } from './ports';
+import type { Clock, UserStateChanges } from './ports';
 import type { UserState } from './user-state';
 import { userStateRecords } from './user-state-schema';
 import { buildWordCard, type WordCardModel } from './word-card';
@@ -159,6 +159,14 @@ const { feedPosition } = userStateRecords;
  * longer covers and puts back the dropped ones it covers again, see
  * `Feed.position` for the card on screen. A card that leaves the screen this
  * way is Seen by the dwell rule, like any card that leaves it.
+ *
+ * The composition calls `markOpenedSeen` for an Entry opened outside the
+ * Feed, from a notification: it becomes Seen with its History entry and the
+ * caller's `changes` in one write, in turn with the cards, so a new Cycle
+ * never starts in between. It joins History as the Word of the Day's card
+ * only if it is today's Word of the Day. An Entry the Cycle doesn't cover
+ * (Hidden, Retired, out of the Mix) or one Seen already gets only `changes`
+ * written, so a Hidden Entry never re-enters History.
  */
 export async function openFeed({
   entries,
@@ -174,7 +182,11 @@ export async function openFeed({
   cycle: Cycle;
   wordOfTheDay: WordOfTheDay;
   history: HistoryRecorder;
-}): Promise<{ feed: Feed; followEligibility: () => Promise<void> }> {
+}): Promise<{
+  feed: Feed;
+  followEligibility: () => Promise<void>;
+  markOpenedSeen: (entryId: string, changes: UserStateChanges) => Promise<void>;
+}> {
   /**
    * Every card of the session, oldest first, also the ones dropped because
    * their Entry stopped being eligible: a dropped card keeps its place here
@@ -439,17 +451,25 @@ export async function openFeed({
     date: string;
   }): Promise<void> {
     const seenId = seenOnLeaving(left, stayed);
-    const seen = seenId === undefined ? undefined : cycle.markSeen(seenId);
-    const changes = new Map([
-      ...(seen?.changes ?? []),
-      ...(entryId === undefined ? [] : feedPosition.change({ entryId, date })),
-    ]);
-    // An Entry that becomes Seen joins History in the same write (ADR 0018).
-    if (seenId !== undefined && (seen?.changes.size ?? 0) > 0) {
-      const wordOfTheDay = left?.kind === 'word' && left.wordOfTheDay !== undefined;
-      await history.record({ entryId: seenId, seenAt: new Date(now), wordOfTheDay }, changes);
-    } else if (changes.size > 0) await userState.write(changes);
-    seen?.commit();
+    const wordOfTheDay = left?.kind === 'word' && left.wordOfTheDay !== undefined;
+    await keepSeen(
+      seenId === undefined ? undefined : { entryId: seenId, seenAt: new Date(now), wordOfTheDay },
+      entryId === undefined ? new Map() : feedPosition.change({ entryId, date }),
+    );
+  }
+
+  /**
+   * Writes `changes` in one write with the Entry's Seen mark and History
+   * entry, if given and it isn't Seen yet (ADR 0018), and then makes the Seen
+   * mark in memory.
+   */
+  async function keepSeen(seen: Seen | undefined, changes: UserStateChanges): Promise<void> {
+    const mark = seen === undefined ? undefined : cycle.markSeen(seen.entryId);
+    const all = new Map([...(mark?.changes ?? []), ...changes]);
+    // An Entry that becomes Seen joins History in the same write.
+    if (seen !== undefined && (mark?.changes.size ?? 0) > 0) await history.record(seen, all);
+    else if (all.size > 0) await userState.write(all);
+    mark?.commit();
   }
 
   async function show(position: number | undefined): Promise<void> {
@@ -565,6 +585,15 @@ export async function openFeed({
       });
   }
 
+  async function markOpenedSeen(entryId: string, changes: UserStateChanges): Promise<void> {
+    const seen = {
+      entryId,
+      seenAt: clock.now(),
+      wordOfTheDay: wordOfTheDay.chosen()?.wordId === entryId,
+    };
+    await keepSeen(cycle.covers(entryId) ? seen : undefined, changes);
+  }
+
   if (!(await restore())) await addWordOfTheDay();
   const startPosition = Math.max(cards.length - 1, 0);
   const feed: Feed = {
@@ -581,5 +610,9 @@ export async function openFeed({
     openLinkedCorrection: (position, correctionId) =>
       inTurn(() => insertLinkedCorrection(position, correctionId)),
   };
-  return { feed, followEligibility };
+  return {
+    feed,
+    followEligibility,
+    markOpenedSeen: (entryId, changes) => inTurn(() => markOpenedSeen(entryId, changes)),
+  };
 }

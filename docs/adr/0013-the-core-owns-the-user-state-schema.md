@@ -53,3 +53,9 @@ Every one reads as absent or as the Edition's default (no times record means the
 The schema marks how each record syncs when sync arrives (ADR 0005), so 0.8 doesn't have to guess. `device-only` records stay on the device: the notification times, the sound and the plan, because a phone and a tablet may remind the same reader differently and the plan is built from the device's own permission and local time. `union` records of every device are all kept: the Active Days, so the Streak derived from them is the same everywhere. A record with no mark syncs by last write wins, one record at a time, as before.
 
 An empty list of times is stored as an empty list, not as an absent record or a deleted one. Absent means "the Edition's default times", so deleting the record on the last removal would bring the defaults back instead of stopping the notifications.
+
+## Amendment: a Word opened from a notification is Seen in one write with History and today's Active Day (0.4)
+
+The glossary's Seen also covers a Word the reader opened from a notification, so the Feed is no longer the only way into History. The composition's "opened from a notification" call writes the Seen mark, the History entry and today's Active Day in one write. The Feed module keeps it: it writes it in turn with its cards through the same step as a card leaving the screen, so a new Cycle never starts between the Seen mark and its commit. The History entry is the Word of the Day's card only when the Word is today's Word of the Day. A Word the Cycle no longer covers (Hidden, Retired, out of the Mix) or one Seen already gets only the Active Day, so a Hidden Entry never re-enters History, and opening the same Word again writes nothing.
+
+Progress returns the Active Day as a change with a commit step, like the Cycle, so its record goes into that one write; recording today on its own (the composition opening, the app returning to the foreground) writes the same change alone.
