@@ -125,6 +125,38 @@ export function notificationBody(text: string, ellipsis: string): string {
   return `${cut.replace(CLAUSE_END, '')}${ellipsis}`;
 }
 
+/** The plan of the Notification times on the device's scheduler, for the Notifications module. */
+export interface NotificationPlanner {
+  /** Whether the device lets the app notify. */
+  permission(): Promise<NotificationPermission>;
+  /** Asks the reader for permission to notify when they haven't been asked yet, and reports it. */
+  askPermission(): Promise<NotificationPermission>;
+  plan(settings: PlanSettings): Promise<void>;
+  /** Whether a notification is planned with the Word. */
+  isReserved(wordId: string): Promise<boolean>;
+  /**
+   * The next morning notification of a plan made now as if the device let
+   * the app notify: the first at the earliest of `times`, this morning's
+   * while its time is ahead, else the next day's. With no time left, today's
+   * Word of the Day while it is unseen, with no time: the morning a time
+   * added ahead today would bring. Nothing when the Cycle has no Word for it.
+   */
+  nextMorning(times: readonly TimeOfDay[]): Promise<MorningNotification | undefined>;
+}
+
+/**
+ * The planner without a scheduler, as in tools and in tests of other
+ * features: there is nobody to ask, so the permission stays not asked,
+ * nothing is planned or Reserved, and there is no next morning.
+ */
+export const noNotificationPlanner: NotificationPlanner = {
+  permission: () => Promise.resolve('not-asked'),
+  askPermission: () => Promise.resolve('not-asked'),
+  plan: () => Promise.resolve(),
+  isReserved: () => Promise.resolve(false),
+  nextMorning: () => Promise.resolve(undefined),
+};
+
 /**
  * Makes the plan of the Notification times, for the Notifications module,
  * and hands it to the device's scheduler (ADR 0021). The plan is a list of
@@ -167,17 +199,7 @@ export function createNotificationPlanner({
   edition: PlanEdition;
   wordOfTheDay: Pick<WordOfTheDay, 'chosen'>;
   scheduling: NotificationScheduling;
-}): {
-  plan(settings: PlanSettings): Promise<void>;
-  /**
-   * The next morning notification of a plan made now as if the device let
-   * the app notify: the first at the earliest of `times`, this morning's
-   * while its time is ahead, else the next day's. With no time left, today's
-   * Word of the Day while it is unseen, with no time: the morning a time
-   * added ahead today would bring. Nothing when the Cycle has no Word for it.
-   */
-  nextMorning(times: readonly TimeOfDay[]): Promise<MorningNotification | undefined>;
-} {
+}): NotificationPlanner {
   const reservedWords = createReservedWords({ userState });
 
   /** The Words the notifications without one take, in the order they take them. */
@@ -269,5 +291,11 @@ export function createNotificationPlanner({
     await scheduler.replacePlan(notifications);
   }
 
-  return { plan, nextMorning };
+  return {
+    permission: () => scheduler.permission(),
+    askPermission: () => scheduler.askPermission(),
+    plan,
+    isReserved: (wordId) => reservedWords.isReserved(wordId),
+    nextMorning,
+  };
 }

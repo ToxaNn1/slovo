@@ -7,12 +7,12 @@ import { createInTurn, createSubscribers } from './in-turn';
 import { compareTimesOfDay, parseTimeOfDay } from './local-date';
 import {
   createNotificationPlanner,
+  noNotificationPlanner,
   type MorningNotification,
   type NotificationScheduling,
   type PlanEdition,
 } from './notification-plan';
 import type { Clock, NotificationPermission } from './ports';
-import { createReservedWords } from './reserved-words';
 import type { UserState } from './user-state';
 import { userStateRecords } from './user-state-schema';
 import type { WordOfTheDay } from './word-of-the-day';
@@ -153,10 +153,9 @@ export async function openNotifications({
     'not-asked',
   );
   const subscribers = createSubscribers();
-  const reservedWords = createReservedWords({ userState });
   const planner =
     scheduling === undefined
-      ? undefined
+      ? noNotificationPlanner
       : createNotificationPlanner({
           cycle,
           entries,
@@ -172,8 +171,7 @@ export async function openNotifications({
 
   /** Reads the permission, telling the subscribers when it changed, and plans by it. */
   async function plan(): Promise<void> {
-    if (scheduling === undefined || planner === undefined) return;
-    const permission = await scheduling.scheduler.permission();
+    const permission = await planner.permission();
     if (permission !== state.permission) {
       state = { ...state, permission };
       subscribers.tell();
@@ -222,10 +220,8 @@ export async function openNotifications({
   }
 
   async function askPermission(): Promise<NotificationPermission> {
-    if (scheduling === undefined) return 'not-asked';
-    const { scheduler } = scheduling;
-    const reported = await scheduler.permission();
-    const permission = reported === 'not-asked' ? await scheduler.askPermission() : reported;
+    const reported = await planner.permission();
+    const permission = reported === 'not-asked' ? await planner.askPermission() : reported;
     await plan();
     return permission;
   }
@@ -246,11 +242,10 @@ export async function openNotifications({
     replan: () => inTurn(plan),
     followSeen: (entryId) =>
       inTurn(async () => {
-        if (planner !== undefined && (await reservedWords.isReserved(entryId))) await plan();
+        if (await planner.isReserved(entryId)) await plan();
       }),
     nextMorning: () =>
       inTurn(async () => {
-        if (planner === undefined) return undefined;
         // As a plan does, so a new day the composition hasn't turned to keeps its morning Word.
         await takeMorningWord();
         return planner.nextMorning(planTimes());
