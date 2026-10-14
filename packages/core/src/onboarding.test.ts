@@ -351,6 +351,56 @@ describe('Onboarding', () => {
     });
   });
 
+  describe('enabling notifications later, from the notification settings', () => {
+    it('asks after «Пізніше» and plans as allowing them on the step does', async () => {
+      const onTheStep = firstLaunch('allowed');
+      const allowedOnTheStep = await run({ scheduler: onTheStep });
+      await goTo(allowedOnTheStep, 'notifications');
+      await allowedOnTheStep.onboarding.allowNotifications();
+      const scheduler = firstLaunch('allowed');
+      const app = await run({ scheduler });
+      await goTo(app, 'notifications');
+      await app.onboarding.finish();
+      expect(app.notifications.state.permission).toBe('not-asked');
+      expect(scheduler.plan).toEqual([]);
+
+      expect(await app.notifications.askPermission()).toBe('allowed');
+
+      expect(app.notifications.state.permission).toBe('allowed');
+      // Every Word of the two Categories, one per notification.
+      expect(scheduler.plan).toHaveLength(24);
+      expect(scheduler.plan).toEqual(onTheStep.plan);
+    });
+
+    it('stays denied after a refusal, asking no more and planning nothing, until the reader allows them in the iOS settings', async () => {
+      const scheduler = firstLaunch('denied');
+      let asked = 0;
+      const app = await run({
+        scheduler: {
+          ...scheduler,
+          askPermission() {
+            asked += 1;
+            return scheduler.askPermission();
+          },
+        },
+      });
+      await app.onboarding.finish();
+
+      expect(await app.notifications.askPermission()).toBe('denied');
+      expect(await app.notifications.askPermission()).toBe('denied');
+
+      expect(asked).toBe(1);
+      expect(app.notifications.state.permission).toBe('denied');
+      expect(scheduler.plan).toEqual([]);
+      expect(app.notifications.state.times).toEqual(['09:00', '13:00', '19:00']);
+
+      scheduler.setPermission('allowed');
+      await app.resume();
+      expect(app.notifications.state.permission).toBe('allowed');
+      expect(scheduler.plan).toHaveLength(24);
+    });
+  });
+
   it('takes one tap per step: a second tap on the welcome does not skip the Mix', async () => {
     const app = await run();
 
