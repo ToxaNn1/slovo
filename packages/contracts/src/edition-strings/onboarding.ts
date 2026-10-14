@@ -28,6 +28,8 @@ export const OnboardingStringsSchema = z.strictObject({
   notifications: z.strictObject({
     title: TextSchema,
     subtitle: TextSchema,
+    /** What VoiceOver reads before the sample notification, so it is not taken for a real one. */
+    sample: TextSchema,
     /** Asks iOS for permission, then ends the onboarding. */
     allow: TextSchema,
     /** Ends the onboarding without asking. */

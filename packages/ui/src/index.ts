@@ -34,10 +34,12 @@ export { ScreenTitle, SectionLabel } from './headings';
 export { MixChip } from './MixChip';
 export {
   OnboardingMix,
+  OnboardingNotifications,
   OnboardingStep,
   OnboardingWelcome,
   PrimaryButton,
   type HeroWord,
+  type SampleNotificationLook,
 } from './Onboarding';
 export { OutlineButton } from './OutlineButton';
 export {

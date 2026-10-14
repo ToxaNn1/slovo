@@ -343,6 +343,170 @@ export function OnboardingMix({
   );
 }
 
+/** The notification the last step shows as a sample. */
+export interface SampleNotificationLook {
+  /** The Lemma with its Stress mark. */
+  readonly lemma: string;
+  /** What VoiceOver reads for the Lemma, which says where the Stress falls. */
+  readonly accessibilityLabel: string;
+  /** The notification's body: the primary Definition, cut as the real one is. */
+  readonly body: string;
+  /** When it would come, e.g. «09:00»; left out with no Notification time. */
+  readonly time: string | undefined;
+}
+
+/**
+ * Step 3: notifications. «Слово саме прийде до вас», a sample notification of
+ * today's Word of the Day (left out when the Feed has no Word), the Notification
+ * times (`children`, the shell's: the times are the Notifications module's),
+ * «Дозволити сповіщення» and the quiet «Пізніше».
+ */
+export function OnboardingNotifications({
+  total,
+  sample,
+  onAllow,
+  onLater,
+  onSkip,
+  children,
+}: {
+  total: number;
+  sample: SampleNotificationLook | undefined;
+  onAllow: () => void;
+  onLater: () => void;
+  onSkip: () => void;
+  children: ReactNode;
+}) {
+  const { colors, fontFamilies } = useTokens();
+  const { voice, strings } = useEdition();
+  const { notifications } = strings.onboarding;
+  return (
+    <OnboardingStep
+      testID="onboarding-notifications"
+      step={3}
+      total={total}
+      onSkip={onSkip}
+      fromTop
+      footer={
+        <>
+          <PrimaryButton testID="onboarding-allow" label={notifications.allow} onPress={onAllow} />
+          <Pressable
+            testID="onboarding-later"
+            accessibilityRole="button"
+            {...voice}
+            onPress={onLater}
+            style={styles.later}
+          >
+            <Text
+              maxFontSizeMultiplier={HEADLINE_MAX_FONT_SCALE}
+              style={[styles.laterLabel, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+            >
+              {notifications.later}
+            </Text>
+          </Pressable>
+        </>
+      }
+    >
+      <View style={styles.heading}>
+        <Text
+          accessibilityRole="header"
+          {...voice}
+          maxFontSizeMultiplier={HEADLINE_MAX_FONT_SCALE}
+          style={[styles.title, { color: colors.ink, fontFamily: fontFamilies.word }]}
+        >
+          {notifications.title}
+        </Text>
+        <Text
+          {...voice}
+          maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+          style={[styles.subtitle, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+        >
+          {notifications.subtitle}
+        </Text>
+      </View>
+      {sample !== undefined && <SampleNotification sample={sample} />}
+      {/* A block of its own: the times space themselves, not by the step's gap. */}
+      <View>{children}</View>
+    </OnboardingStep>
+  );
+}
+
+/** What a notification of the app looks like on the lock screen, as a sample of the real one. */
+function SampleNotification({ sample }: { sample: SampleNotificationLook }) {
+  const { colors, fontFamilies, radii } = useTokens();
+  const { voice, strings } = useEdition();
+  const { wordmark } = strings.splash;
+  const label = [
+    strings.onboarding.notifications.sample,
+    wordmark,
+    sample.time,
+    sample.accessibilityLabel,
+    sample.body,
+  ]
+    .filter((part) => part !== undefined)
+    .join('. ');
+  return (
+    <View
+      testID="onboarding-sample"
+      accessible
+      accessibilityLabel={label}
+      {...voice}
+      style={[
+        styles.sample,
+        {
+          backgroundColor: colors.surface,
+          borderRadius: radii.card,
+          shadowColor: colors.ink,
+        },
+      ]}
+    >
+      <View style={[styles.appIcon, { backgroundColor: colors.ink }]}>
+        <Text
+          style={[styles.appIconMark, { color: colors.background, fontFamily: fontFamilies.word }]}
+        >
+          {Array.from(wordmark)[0]}
+        </Text>
+      </View>
+      <View style={styles.sampleText}>
+        <View style={styles.sampleTop}>
+          <Text
+            maxFontSizeMultiplier={HEADLINE_MAX_FONT_SCALE}
+            numberOfLines={1}
+            style={[styles.sampleApp, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+          >
+            {wordmark}
+          </Text>
+          {sample.time !== undefined && (
+            <Text
+              testID="onboarding-sample-time"
+              maxFontSizeMultiplier={HEADLINE_MAX_FONT_SCALE}
+              style={[styles.sampleTime, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+            >
+              {sample.time}
+            </Text>
+          )}
+        </View>
+        <Text
+          testID="onboarding-sample-lemma"
+          maxFontSizeMultiplier={HEADLINE_MAX_FONT_SCALE}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.5}
+          style={[styles.sampleLemma, { color: colors.ink, fontFamily: fontFamilies.word }]}
+        >
+          {sample.lemma}
+        </Text>
+        <Text
+          testID="onboarding-sample-body"
+          maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+          style={[styles.sampleBody, { color: colors.inkSecondary, fontFamily: fontFamilies.ui }]}
+        >
+          {sample.body}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
 const SIDE = space[8];
 
 const styles = StyleSheet.create({
@@ -397,4 +561,29 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   primaryLabel: { fontSize: 16, fontWeight: '700' },
+  later: { minHeight: minTouchTarget, alignItems: 'center', justifyContent: 'center' },
+  laterLabel: { fontSize: 16, fontWeight: '600' },
+  sample: {
+    flexDirection: 'row',
+    gap: space[3],
+    padding: space[4],
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
+  },
+  appIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  appIconMark: { fontSize: 22, fontWeight: '600' },
+  sampleText: { flex: 1, gap: 2 },
+  sampleTop: { flexDirection: 'row', justifyContent: 'space-between', gap: space[3] },
+  sampleApp: { flexShrink: 1, fontSize: 13, fontWeight: '600' },
+  sampleTime: { fontSize: 13 },
+  sampleLemma: { fontSize: 17, lineHeight: 17 * 1.3, fontWeight: '700' },
+  sampleBody: { fontSize: 14, lineHeight: 14 * 1.35 },
 });

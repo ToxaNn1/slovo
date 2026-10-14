@@ -1,11 +1,26 @@
-import type { FeedCard } from '@slovo/core';
-import { fill, OnboardingMix, OnboardingWelcome, type HeroWord } from '@slovo/ui';
-import { useMemo, useState } from 'react';
+import type { Composition, FeedCard, WordCardModel } from '@slovo/core';
+import {
+  fill,
+  OnboardingMix,
+  OnboardingNotifications,
+  OnboardingWelcome,
+  type HeroWord,
+  type SampleNotificationLook,
+} from '@slovo/ui';
+import { useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { useComposed, useModule } from './composition';
 import { editionStrings } from './edition';
 import { MixChoices } from './mix-choices';
+import { NotificationTimes } from './notification-times';
+import { useNotificationsState } from './notifications';
+import {
+  allowNotifications,
+  postponeNotifications,
+  sampleNotificationOf,
+} from './onboarding-notifications';
 
 /** The steps the onboarding has until the SLOVO ID step joins in 0.7. */
 const STEPS = 3;
@@ -19,18 +34,22 @@ export function useOnboardingOpen(): boolean {
   );
 }
 
+/** What VoiceOver reads for a Word's Lemma, which says where the Stress falls. */
+function lemmaLabelOf({ lemma, stressedVowels }: WordCardModel): string {
+  const { stress, stressOr } = editionStrings.wordCard;
+  return stressedVowels.length === 0
+    ? lemma
+    : `${lemma}, ${fill(stress, { vowels: stressedVowels.join(` ${stressOr} `) })}`;
+}
+
 /** The Word the welcome shows: the first Word card the Feed has, which is the Word of the Day. */
 function heroOf(cards: readonly FeedCard[]): HeroWord | undefined {
   const word = cards.find((card) => card.kind === 'word');
   if (word === undefined) return undefined;
-  const { lemma, stressedVowels, primaryDefinition } = word.wordCard;
-  const { stress, stressOr } = editionStrings.wordCard;
+  const { lemma, primaryDefinition } = word.wordCard;
   return {
     lemma,
-    accessibilityLabel:
-      stressedVowels.length === 0
-        ? lemma
-        : `${lemma}, ${fill(stress, { vowels: stressedVowels.join(` ${stressOr} `) })}`,
+    accessibilityLabel: lemmaLabelOf(word.wordCard),
     definition: primaryDefinition,
   };
 }
@@ -58,7 +77,7 @@ export function Onboarding() {
  */
 function Steps() {
   const onboarding = useModule((composition) => composition.onboarding);
-  const [step, setStep] = useState<'welcome' | 'mix'>('welcome');
+  const [step, setStep] = useState<'welcome' | 'mix' | 'notifications'>('welcome');
 
   function finish(): void {
     onboarding?.finish().catch((error: unknown) => {
@@ -66,19 +85,30 @@ function Steps() {
     });
   }
 
-  // For now «Далі» finishes the onboarding; the notifications step follows it later.
-  return step === 'welcome' ? (
-    <WelcomeStep
-      onStart={() => {
-        setStep('mix');
-      }}
-      onSkip={finish}
-    />
-  ) : (
-    <OnboardingMix total={STEPS} onNext={finish} onSkip={finish}>
-      <MixChoices />
-    </OnboardingMix>
-  );
+  if (step === 'welcome') {
+    return (
+      <WelcomeStep
+        onStart={() => {
+          setStep('mix');
+        }}
+        onSkip={finish}
+      />
+    );
+  }
+  if (step === 'mix') {
+    return (
+      <OnboardingMix
+        total={STEPS}
+        onNext={() => {
+          setStep('notifications');
+        }}
+        onSkip={finish}
+      >
+        <MixChoices />
+      </OnboardingMix>
+    );
+  }
+  return <NotificationsStep onSkip={finish} />;
 }
 
 /** Step 1, with the hero Word. */
@@ -94,3 +124,65 @@ function WelcomeStep({ onStart, onSkip }: { onStart: () => void; onSkip: () => v
 }
 
 const noCards: readonly FeedCard[] = [];
+
+const styles = StyleSheet.create({ root: { flex: 1 } });
+
+/**
+ * Step 3, with a sample of the Word of the Day's notification and the same
+ * Notification times as Settings › Сповіщення. «Дозволити сповіщення» is the
+ * app's first and only ask for permission, and it ends the onboarding, as does
+ * «Пізніше», which doesn't ask.
+ */
+function NotificationsStep({ onSkip }: { onSkip: () => void }) {
+  const composition = useModule((current) => current);
+  const cards = useComposed(
+    (current) => current.feed,
+    (feed) => feed.cards,
+    noCards,
+  );
+  const times = useNotificationsState()?.times;
+  const sample = useMemo((): SampleNotificationLook | undefined => {
+    const notification = sampleNotificationOf({
+      cards,
+      times: times ?? [],
+      ellipsis: editionStrings.notificationBody.ellipsis,
+    });
+    return notification === undefined
+      ? undefined
+      : {
+          lemma: notification.wordCard.lemma,
+          accessibilityLabel: lemmaLabelOf(notification.wordCard),
+          body: notification.body,
+          time: notification.time,
+        };
+  }, [cards, times]);
+
+  // The prompt of iOS is up while «Дозволити сповіщення» waits: one tap ends the step, whichever button.
+  const ending = useRef(false);
+  function end(finishing: (opened: Composition) => Promise<void>): void {
+    if (composition === undefined || ending.current) return;
+    ending.current = true;
+    finishing(composition).catch((error: unknown) => {
+      console.error('Could not keep that the onboarding is finished', error);
+    });
+  }
+
+  return (
+    // The times' rows swipe, which needs a gesture root of its own over the overlay.
+    <GestureHandlerRootView style={styles.root}>
+      <OnboardingNotifications
+        total={STEPS}
+        sample={sample}
+        onAllow={() => {
+          end(allowNotifications);
+        }}
+        onLater={() => {
+          end(postponeNotifications);
+        }}
+        onSkip={onSkip}
+      >
+        <NotificationTimes />
+      </OnboardingNotifications>
+    </GestureHandlerRootView>
+  );
+}

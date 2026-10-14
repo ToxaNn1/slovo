@@ -84,7 +84,11 @@ export {
   createFakeNotificationScheduler,
   type FakeNotificationScheduler,
 } from './fake-notification-scheduler';
-export { NOTIFICATION_BODY_LENGTH, type NotificationScheduling } from './notification-plan';
+export {
+  NOTIFICATION_BODY_LENGTH,
+  notificationBody,
+  type NotificationScheduling,
+} from './notification-plan';
 export {
   type NotificationTimeRefusal,
   type NotificationTimeResult,

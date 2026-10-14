@@ -36,9 +36,14 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - assertVisible:
     id: mix-chip-all
     selected: false
-# «Далі» goes on, with the choice kept.
+# «Далі» goes on to the notifications step, with the choice kept; «Пізніше»
+# finishes without asking.
 - tapOn:
     id: onboarding-next
+- assertVisible:
+    id: onboarding-notifications
+- tapOn:
+    id: onboarding-later
 - assertVisible:
     id: feed-card-.*
 - assertNotVisible:
