@@ -1,5 +1,13 @@
-import { useEffect, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, type ReactNode } from 'react';
+import {
+  AccessibilityInfo,
+  findNodeHandle,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -34,7 +42,8 @@ const DOT = { height: 4, width: 16, currentWidth: 44, gap: 12 } as const;
  * «Пропустити» at the top end, the step's content, the progress dots and the
  * step's buttons. It slides in from the side; with Reduce Motion it appears
  * where it is. VoiceOver reads the step top to bottom and says its number
- * with the dots.
+ * once: with the dots on the welcome, with the overline «КРОК N З M» on the
+ * steps after it.
  */
 export function OnboardingStep({
   step,
@@ -43,6 +52,7 @@ export function OnboardingStep({
   children,
   footer,
   testID,
+  fromTop = false,
 }: {
   /** This step's number, from 1. */
   step: number;
@@ -53,17 +63,26 @@ export function OnboardingStep({
   /** The step's buttons, pinned under the content. */
   footer: ReactNode;
   testID?: string;
+  /** Whether the content starts under the top row, as the form steps do, instead of sitting on the footer. */
+  fromTop?: boolean;
 }) {
   const { colors, fontFamilies } = useTokens();
   const { voice, strings } = useEdition();
   const { top, bottom } = useSafeAreaInsets();
   const { onboarding } = strings;
+  const numbers = { step: String(step), total: String(total) };
 
   // Reanimated skips the motion when Reduce Motion is on, so the step just appears.
   const progress = useSharedValue(0);
   useEffect(() => {
     progress.value = withTiming(1, { duration: SLIDE_MS, easing: Easing.out(Easing.cubic) });
   }, [progress]);
+  // A step after the welcome replaces the one VoiceOver was on: start at its number.
+  const overline = useRef<Text>(null);
+  useEffect(() => {
+    const node = findNodeHandle(overline.current);
+    if (node !== null) AccessibilityInfo.setAccessibilityFocus(node);
+  }, []);
   const slide = useAnimatedStyle(() => ({
     opacity: progress.value,
     transform: [{ translateX: (1 - progress.value) * SLIDE_DISTANCE }],
@@ -106,19 +125,29 @@ export function OnboardingStep({
       </View>
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, fromTop && styles.contentFromTop]}
         showsVerticalScrollIndicator={false}
       >
+        {step > 1 && (
+          <Text
+            ref={overline}
+            testID="onboarding-step"
+            accessibilityLabel={fill(onboarding.stepLabel, numbers)}
+            {...voice}
+            maxFontSizeMultiplier={HEADLINE_MAX_FONT_SCALE}
+            style={[styles.overline, { color: colors.accent, fontFamily: fontFamilies.ui }]}
+          >
+            {fill(onboarding.step, numbers)}
+          </Text>
+        )}
         {children}
       </ScrollView>
       <View style={styles.footer}>
         <View
           testID="onboarding-progress"
-          accessible
-          accessibilityLabel={fill(onboarding.stepLabel, {
-            step: String(step),
-            total: String(total),
-          })}
+          // The overline says the number on the steps that have one.
+          accessible={step === 1}
+          accessibilityLabel={fill(onboarding.stepLabel, numbers)}
           {...voice}
           style={styles.dots}
         >
@@ -264,6 +293,56 @@ export function OnboardingWelcome({
   );
 }
 
+/**
+ * Step 2: the Mix. «Оберіть свій Мікс», what it is for, the choices of the Mix
+ * (`children`, the shell's: the Mix is the composition's) and «Далі».
+ */
+export function OnboardingMix({
+  total,
+  onNext,
+  onSkip,
+  children,
+}: {
+  total: number;
+  onNext: () => void;
+  onSkip: () => void;
+  children: ReactNode;
+}) {
+  const { colors, fontFamilies } = useTokens();
+  const { voice, strings } = useEdition();
+  const { mix } = strings.onboarding;
+  return (
+    <OnboardingStep
+      testID="onboarding-mix"
+      step={2}
+      total={total}
+      onSkip={onSkip}
+      fromTop
+      footer={<PrimaryButton testID="onboarding-next" label={mix.next} onPress={onNext} />}
+    >
+      <View style={styles.heading}>
+        <Text
+          accessibilityRole="header"
+          {...voice}
+          maxFontSizeMultiplier={HEADLINE_MAX_FONT_SCALE}
+          style={[styles.title, { color: colors.ink, fontFamily: fontFamilies.word }]}
+        >
+          {mix.title}
+        </Text>
+        <Text
+          {...voice}
+          maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+          style={[styles.subtitle, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+        >
+          {mix.subtitle}
+        </Text>
+      </View>
+      {/* A block of its own: the choices space themselves, not by the step's gap. */}
+      <View>{children}</View>
+    </OnboardingStep>
+  );
+}
+
 const SIDE = space[8];
 
 const styles = StyleSheet.create({
@@ -297,6 +376,13 @@ const styles = StyleSheet.create({
     paddingTop: space[5],
     gap: space[5],
   },
+  contentFromTop: { justifyContent: 'flex-start' },
+  overline: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 12 * 0.2,
+  },
+  heading: { gap: space[2] },
   band: { flexDirection: 'row' },
   hero: { gap: space[2] },
   definition: { fontSize: 22, lineHeight: 22 * 1.3, fontWeight: '500' },
