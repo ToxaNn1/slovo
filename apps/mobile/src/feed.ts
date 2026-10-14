@@ -1,9 +1,9 @@
 import type { Feed, FeedCard } from '@slovo/core';
 import { useIsFocused } from 'expo-router';
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 
-import { useComposition } from './composition';
+import { useComposed, useComposition } from './composition';
 
 export type FeedState =
   | { readonly status: 'loading' }
@@ -48,11 +48,11 @@ export function useFeed(): FeedState {
   const focused = useIsFocused();
   const appActive = useAppActive();
   const onScreen = focused && appActive;
-  const subscribe = useCallback(
-    (listener: () => void) => feed?.subscribe(listener) ?? (() => undefined),
-    [feed],
+  const cards = useComposed(
+    (open) => open.feed,
+    (open) => open.cards,
+    noCards,
   );
-  const cards = useSyncExternalStore(subscribe, () => feed?.cards ?? noCards);
   /** The card last told to the Feed as on screen, which Home keeps while out of focus. */
   const shown = useRef<FeedCard>(undefined);
   const positionOnScreen = useCallback(() => {

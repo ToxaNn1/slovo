@@ -1,9 +1,9 @@
 import type { History, HistoryEntry } from '@slovo/core';
 import { useEdition } from '@slovo/ui';
 import { useIsFocused } from 'expo-router';
-import { useCallback, useMemo, useSyncExternalStore } from 'react';
+import { useMemo } from 'react';
 
-import { useComposition } from './composition';
+import { useComposed, useModule } from './composition';
 import { deviceClock } from './device-clock';
 import { editionStrings } from './edition';
 import { historyText } from './history-text';
@@ -12,18 +12,16 @@ const noHistory: readonly HistoryEntry[] = [];
 
 /** History of the session's Core composition, once it is open. */
 function useHistory(): History | undefined {
-  const composition = useComposition();
-  return composition.status === 'ready' ? composition.composition.history : undefined;
+  return useModule((composition) => composition.history);
 }
 
 /** The Entries in History, newest first, kept up to date; none until History opens. */
 export function useHistoryList(): readonly HistoryEntry[] {
-  const history = useHistory();
-  const subscribe = useCallback(
-    (listener: () => void) => history?.subscribe(listener) ?? (() => undefined),
-    [history],
+  return useComposed(
+    (composition) => composition.history,
+    (history) => history.list,
+    noHistory,
   );
-  return useSyncExternalStore(subscribe, () => history?.list ?? noHistory);
 }
 
 /**

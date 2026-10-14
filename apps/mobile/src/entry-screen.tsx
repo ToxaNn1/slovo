@@ -1,4 +1,4 @@
-import { entryIdOf, type EntryFeedCard } from '@slovo/core';
+import { entryIdOf, type Composition } from '@slovo/core';
 import {
   BackLink,
   DecorBackground,
@@ -8,11 +8,11 @@ import {
   useTokens,
 } from '@slovo/ui';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useCallback } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useComposition } from './composition';
+import { useComposition, useOpenedRead } from './composition';
 import { EntryActions } from './entry-actions';
 import { LoadFailed } from './language-pack';
 
@@ -38,24 +38,8 @@ export function EntryScreen({
   const composition = useComposition();
   const { colors } = useTokens();
   const router = useRouter();
-  const [card, setCard] = useState<EntryFeedCard>();
-  const open = composition.status === 'ready' ? composition.composition : undefined;
-
-  useEffect(() => {
-    if (open === undefined) return;
-    let active = true;
-    open.entryCard(entryId).then(
-      (opened) => {
-        if (active) setCard(opened);
-      },
-      (error: unknown) => {
-        console.error('Could not open the Entry', error);
-      },
-    );
-    return () => {
-      active = false;
-    };
-  }, [open, entryId]);
+  const read = useCallback((open: Composition) => open.entryCard(entryId), [entryId]);
+  const card = useOpenedRead(read, 'Could not open the Entry');
 
   if (composition.status === 'failed') return <LoadFailed onRetry={composition.retry} />;
   return (

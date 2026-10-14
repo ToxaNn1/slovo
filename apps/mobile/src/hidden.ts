@@ -1,8 +1,8 @@
-import type { HiddenEntries, HiddenEntry, HideTarget } from '@slovo/core';
+import type { HiddenEntry, HideTarget } from '@slovo/core';
 import { fill, useEdition, useUndoToast } from '@slovo/ui';
-import { useCallback, useMemo, useSyncExternalStore } from 'react';
+import { useMemo } from 'react';
 
-import { useComposition } from './composition';
+import { useComposed, useComposition } from './composition';
 import { edition, editionStrings } from './edition';
 import { hiddenScreenModel, hiddenSummary, type HiddenScreenModel } from './hidden-screen';
 import { useMixState } from './mix';
@@ -11,20 +11,13 @@ const strings = editionStrings.hidden;
 
 const noHiddenEntries: readonly HiddenEntry[] = [];
 
-/** The Hidden Entries of the session's Core composition, once it is open. */
-function useHiddenEntries(): HiddenEntries | undefined {
-  const composition = useComposition();
-  return composition.status === 'ready' ? composition.composition.hiddenEntries : undefined;
-}
-
 /** The Hidden Entries, newest first, kept up to date; none until they open. */
 function useHiddenList(): readonly HiddenEntry[] {
-  const hiddenEntries = useHiddenEntries();
-  const subscribe = useCallback(
-    (listener: () => void) => hiddenEntries?.subscribe(listener) ?? (() => undefined),
-    [hiddenEntries],
+  return useComposed(
+    (composition) => composition.hiddenEntries,
+    (hiddenEntries) => hiddenEntries.list,
+    noHiddenEntries,
   );
-  return useSyncExternalStore(subscribe, () => hiddenEntries?.list ?? noHiddenEntries);
 }
 
 /** The value of the «Приховані записи» row of Settings: how many Entries are hidden. */
