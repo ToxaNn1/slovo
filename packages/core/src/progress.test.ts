@@ -10,6 +10,7 @@ import {
   SEEN_DWELL_MS,
   type Clock,
   type Composition,
+  type Random,
   type UserStateChanges,
   type UserStatePort,
 } from './index';
@@ -81,6 +82,17 @@ function recordingPort(records: Map<string, string>) {
   };
 }
 
+/** A seeded random port that steps through the unit interval, so each Collection gets its own id. */
+function steppingRandom(): Random {
+  let step = 0;
+  return {
+    next() {
+      step += 1;
+      return (step * 0.6180339887) % 1;
+    },
+  };
+}
+
 /** The Core composition of one app run over the records, so the user state survives between runs. */
 async function run({
   records = new Map<string, string>(),
@@ -96,7 +108,7 @@ async function run({
     edition: { ...testCategories, isFeatureEnabled: () => false },
     userState: await openUserState({ port }),
     clock,
-    random: { next: () => 0.25 },
+    random: steppingRandom(),
   });
 }
 
@@ -130,13 +142,13 @@ describe('Active Days and the Streak', () => {
 
     expect(activeDays(records)).toEqual(['2026-10-11']);
     expect(records.get('activeDays.2026-10-11')).toBe('true');
-    expect(app.progress.state).toEqual({ streak: 1, bestStreak: 1 });
+    expect(app.progress.state).toMatchObject({ streak: 1, bestStreak: 1 });
 
     // Opening again the same day, or coming back to it, writes nothing.
     const again = await run({ port, clock: fakeClock('2026-10-11T21:00:00+03:00').clock });
     await again.resume();
     expect(activeDayWrites(writes)).toHaveLength(1);
-    expect(again.progress.state).toEqual({ streak: 1, bestStreak: 1 });
+    expect(again.progress.state).toMatchObject({ streak: 1, bestStreak: 1 });
   });
 
   it('counts consecutive Active Days, and a missed day starts it again from 1', async () => {
@@ -147,18 +159,18 @@ describe('Active Days and the Streak', () => {
 
     // 2026-10-14 is missed.
     const afterGap = await runOn(records, '2026-10-15');
-    expect(afterGap.progress.state).toEqual({ streak: 1, bestStreak: 3 });
+    expect(afterGap.progress.state).toMatchObject({ streak: 1, bestStreak: 3 });
   });
 
   it('keeps the Best Streak after a reset until a longer Streak beats it', async () => {
     const records = new Map<string, string>();
     await runOn(records, '2026-10-01', '2026-10-02', '2026-10-03', '2026-10-05', '2026-10-06');
 
-    expect((await runOn(records, '2026-10-07')).progress.state).toEqual({
+    expect((await runOn(records, '2026-10-07')).progress.state).toMatchObject({
       streak: 3,
       bestStreak: 3,
     });
-    expect((await runOn(records, '2026-10-08')).progress.state).toEqual({
+    expect((await runOn(records, '2026-10-08')).progress.state).toMatchObject({
       streak: 4,
       bestStreak: 4,
     });
@@ -186,12 +198,12 @@ describe('Active Days and the Streak', () => {
     await expect(app.resume()).rejects.toThrow('The disk is full');
 
     expect(activeDays(records)).toEqual(['2026-10-11', '2026-10-12']);
-    expect(app.progress.state).toEqual({ streak: 2, bestStreak: 2 });
+    expect(app.progress.state).toMatchObject({ streak: 2, bestStreak: 2 });
 
     // A day later yesterday isn't an Active Day either.
     time.advance(24 * 60 * 60 * 1000);
     await expect(app.resume()).rejects.toThrow('The disk is full');
-    expect(app.progress.state).toEqual({ streak: 0, bestStreak: 2 });
+    expect(app.progress.state).toMatchObject({ streak: 0, bestStreak: 2 });
   });
 
   it('follows the local date of the time zone the device is in', async () => {
@@ -257,7 +269,7 @@ describe('Active Days and the Streak', () => {
 
     expect(activeDays(records)).toEqual(['2026-10-11', '2026-10-12']);
     expect(app.progress.state).not.toBe(before);
-    expect(app.progress.state).toEqual({ streak: 2, bestStreak: 2 });
+    expect(app.progress.state).toMatchObject({ streak: 2, bestStreak: 2 });
     expect(told).toBe(1);
 
     // The same day again writes nothing, tells nothing and keeps the snapshot.
@@ -267,14 +279,126 @@ describe('Active Days and the Streak', () => {
     expect(told).toBe(1);
     expect(app.progress.state).toBe(after);
   });
+});
+
+describe('The stats sheet’s numbers', () => {
+  /** Keeps the Feed's card at `position` on screen long enough to make its Entry Seen. */
+  async function look(app: Composition, time: ReturnType<typeof fakeClock>, position: number) {
+    await app.feed.show(position);
+    time.advance(SEEN_DWELL_MS);
+    await app.feed.show(undefined);
+  }
+
+  it('counts nothing on the first day before the reader keeps or reads anything', async () => {
+    const app = await run();
+
+    expect(app.progress.state).toEqual({
+      streak: 1,
+      bestStreak: 1,
+      seenToday: 0,
+      favorites: 0,
+      inCollections: 0,
+    });
+  });
+
+  it('counts the History entries Seen on today’s local date, in the time zone the device is in', async () => {
+    // 23:50 in Kyiv on 2026-10-11.
+    const time = fakeClock('2026-10-11T23:50:00+03:00');
+    const app = await run({ clock: time.clock });
+
+    await look(app, time, 0);
+    expect(app.progress.state.seenToday).toBe(1);
+
+    // Kyiv's 2026-10-12 starts: the Entry was Seen yesterday.
+    time.set('2026-10-12T00:05:00+03:00');
+    await app.resume();
+    expect(app.progress.state.seenToday).toBe(0);
+
+    await look(app, time, 1);
+    expect(app.progress.state.seenToday).toBe(1);
+
+    // In New York both were Seen on 2026-10-11, which is today there.
+    time.moveTo('America/New_York');
+    await app.resume();
+    expect(app.progress.state.seenToday).toBe(2);
+    expect(app.history.list).toHaveLength(2);
+  });
+
+  it('starts today with a daylight-saving change that skips midnight', async () => {
+    // In Santiago 2026-09-06 starts at 01:00: its midnight never happens.
+    const time = fakeClock('2026-09-05T23:50:00-04:00', 'America/Santiago');
+    const app = await run({ clock: time.clock });
+    await look(app, time, 0);
+
+    time.set('2026-09-06T01:05:00-03:00');
+    await app.resume();
+    expect(app.progress.state.seenToday).toBe(0);
+
+    await look(app, time, 1);
+    expect(app.progress.state.seenToday).toBe(1);
+  });
+
+  it('counts the Entries in Favorites and changes at once on a heart', async () => {
+    const app = await run();
+    const before = app.progress.state;
+    let told = 0;
+    app.progress.subscribe(() => {
+      told += 1;
+    });
+
+    await app.favorites.toggle('w_one');
+    expect(app.progress.state).not.toBe(before);
+    expect(app.progress.state.favorites).toBe(1);
+    expect(told).toBe(1);
+
+    await app.favorites.toggle('w_two');
+    await app.favorites.toggle('w_one');
+    expect(app.progress.state.favorites).toBe(1);
+    expect(told).toBe(3);
+  });
+
+  it('counts an Entry in several Collections once, and changes at once on a Collection change', async () => {
+    const records = new Map<string, string>();
+    const app = await run({ records });
+    const first = await app.collections.create('Для листів', 'w_one');
+    const second = await app.collections.create('Улюблені звуки', 'w_one');
+    if (!first.ok || !second.ok) throw new Error('The Collections were not made');
+    expect(app.progress.state.inCollections).toBe(1);
+
+    const before = app.progress.state;
+    await app.collections.add(second.collection.id, 'w_two');
+    expect(app.progress.state).not.toBe(before);
+    expect(app.progress.state.inCollections).toBe(2);
+
+    await app.collections.delete(first.collection.id);
+    expect(app.progress.state.inCollections).toBe(2);
+
+    await app.collections.remove(second.collection.id, 'w_one');
+    expect(app.progress.state.inCollections).toBe(1);
+
+    // The next app run reads the same numbers from the user state.
+    await app.favorites.add('w_one');
+    expect((await run({ records })).progress.state).toEqual(app.progress.state);
+  });
 
   it('keeps the same snapshot while nothing it shows changes', async () => {
     const app = await run();
+    const created = await app.collections.create('Для листів', 'w_one');
+    if (!created.ok) throw new Error('The Collection was not made');
     const state = app.progress.state;
+    let told = 0;
+    app.progress.subscribe(() => {
+      told += 1;
+    });
 
-    await app.favorites.toggle('w_one');
+    // An empty Collection, a new name, an Entry already in another Collection and the same day again.
+    const other = await app.collections.create('Порожня');
+    if (!other.ok) throw new Error('The Collection was not made');
+    await app.collections.rename(created.collection.id, 'Для листів і віршів');
+    await app.collections.add(other.collection.id, 'w_one');
     await app.resume();
 
     expect(app.progress.state).toBe(state);
+    expect(told).toBe(0);
   });
 });

@@ -1,10 +1,17 @@
+import type { Collections } from './collections';
+import type { Favorites } from './favorites';
+import type { History } from './history';
 import { createInTurn, createSubscribers } from './in-turn';
-import { dayNumber, parseLocalDate, todayKey } from './local-date';
+import { dayNumber, parseLocalDate, todayBounds, todayKey } from './local-date';
 import type { Clock, UserStateChanges } from './ports';
 import type { UserState } from './user-state';
 import { userStateRecords } from './user-state-schema';
 
-/** The reader's progress as it stands, derived from the Active Days. */
+/**
+ * The reader's progress as it stands, as the stats sheet shows it: the Streak
+ * and the Best Streak derived from the Active Days, and the counts of the Entries
+ * the reader has Seen today and kept.
+ */
 export interface ProgressState {
   /**
    * The consecutive Active Days up to today, or up to yesterday while today
@@ -13,12 +20,20 @@ export interface ProgressState {
   readonly streak: number;
   /** The Best Streak: the most consecutive Active Days there have ever been. */
   readonly bestStreak: number;
+  /** The Entries Seen today: the History entries whose time falls on today's local date. */
+  readonly seenToday: number;
+  /** The Entries in Favorites. */
+  readonly favorites: number;
+  /** The Entries in Collections, each counted once however many Collections it is in. */
+  readonly inCollections: number;
 }
 
 /**
  * Progress: the Active Days, and the Streak and the Best Streak derived from
- * them, never stored. Read from the user state once, when it opens, like the
- * Cycle, so open one per app session (the Core composition does).
+ * them, never stored, with the counts of History, Favorites and Collections,
+ * which it follows as they change. Read from the user state once, when it
+ * opens, like the Cycle, so open one per app session (the Core composition
+ * does).
  */
 export interface Progress {
   /**
@@ -33,7 +48,10 @@ export interface Progress {
 const { activeDays: activeDayRecords } = userStateRecords;
 
 /** The Streak and the Best Streak of the Active Days, by `YYYY-MM-DD`, on the local date `today`. */
-function progressOf(activeDays: ReadonlySet<string>, today: string): ProgressState {
+function streaksOf(
+  activeDays: ReadonlySet<string>,
+  today: string,
+): Pick<ProgressState, 'streak' | 'bestStreak'> {
   const days = new Set(
     [...activeDays].map((date) => dayNumber(parseLocalDate(date))).filter(Number.isFinite),
   );
@@ -52,6 +70,9 @@ function progressOf(activeDays: ReadonlySet<string>, today: string): ProgressSta
   return { streak, bestStreak };
 }
 
+const sameState = (one: ProgressState, other: ProgressState) =>
+  (Object.keys(one) as (keyof ProgressState)[]).every((key) => one[key] === other[key]);
+
 /**
  * A change of the Active Days not made yet, like a Cycle change: the
  * user-state changes that keep it, for the caller to write alone or in one
@@ -68,31 +89,75 @@ export interface ActiveDayChange {
  * Opens Progress over the user state, for the Core composition, with
  * `recordToday`, which records today's local date in the clock's time zone as
  * an Active Day, and `todayChange`, the change that records it for the caller
- * to write with its own. Recording a day already recorded writes nothing.
+ * to write with its own. Recording a day already recorded writes nothing. It
+ * follows History, Favorites and Collections, so a change of any of them
+ * changes the state at once.
  */
 export async function openProgress({
   userState,
   clock,
+  history,
+  favorites,
+  collections,
 }: {
   userState: UserState;
   clock: Clock;
+  history: History;
+  favorites: Favorites;
+  collections: Collections;
 }): Promise<{
   progress: Progress;
   recordToday: () => Promise<void>;
   todayChange: () => ActiveDayChange;
 }> {
   const activeDays = new Set((await userState.list(activeDayRecords)).keys());
-  let state = progressOf(activeDays, todayKey(clock));
   const subscribers = createSubscribers();
   const inTurn = createInTurn();
 
-  /** Makes the state follow the Active Days on the local date `today`, telling the subscribers if a number changed. */
-  function follow(today: string): void {
-    const next = progressOf(activeDays, today);
-    if (next.streak !== state.streak || next.bestStreak !== state.bestStreak) {
-      state = next;
-      subscribers.tell();
+  /**
+   * The History entries Seen on today's local date. History is newest first,
+   * so the count stops at the first one Seen before today.
+   */
+  function seenTodayIn(list: History['list']): number {
+    const { start, end } = todayBounds(clock);
+    let seenToday = 0;
+    for (const { seenAt } of list) {
+      const time = seenAt.getTime();
+      if (time < start) break;
+      // An entry ahead of today, after the clock moved back, is not today's.
+      if (time < end) seenToday += 1;
     }
+    return seenToday;
+  }
+
+  /** The state as of now, on the local date `today` in the clock's time zone. */
+  function stateOf(today: string): ProgressState {
+    return {
+      ...streaksOf(activeDays, today),
+      seenToday: seenTodayIn(history.list),
+      favorites: favorites.list.length,
+      inCollections: new Set(
+        collections.list.flatMap((collection) =>
+          collections.entries(collection.id).map((entry) => entry.entryId),
+        ),
+      ).size,
+    };
+  }
+
+  let state = stateOf(todayKey(clock));
+
+  /** Makes the state again on the local date `today`, and tells the subscribers when a number changed. */
+  function follow(today = todayKey(clock)): void {
+    const next = stateOf(today);
+    if (sameState(next, state)) return;
+    state = next;
+    subscribers.tell();
+  }
+
+  for (const source of [history, favorites, collections]) {
+    source.subscribe(() => {
+      follow();
+    });
   }
 
   /** The change that records `today` as an Active Day; no changes when it is recorded already. */

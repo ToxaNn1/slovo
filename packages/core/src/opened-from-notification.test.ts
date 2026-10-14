@@ -110,7 +110,13 @@ describe('opening a Word from a notification', () => {
       seenAt: new Date('2026-10-12T09:00:00+03:00'),
       wordOfTheDay: false,
     });
-    expect(app.progress.state).toEqual({ streak: 2, bestStreak: 2 });
+    expect(app.progress.state).toEqual({
+      streak: 2,
+      bestStreak: 2,
+      seenToday: 1,
+      favorites: 0,
+      inCollections: 0,
+    });
   });
 
   it("joins History as the Word of the Day's card only when it is today's Word of the Day", async () => {
