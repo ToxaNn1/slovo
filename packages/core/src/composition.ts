@@ -9,6 +9,7 @@ import { openHistory, type History } from './history';
 import { openHiddenEntries, type HiddenEntries } from './hidden-entries';
 import { createHiding, type Hiding } from './hiding';
 import { openMix, type Mix, type MixEdition } from './mix';
+import type { NotificationScheduling } from './notification-plan';
 import { openNotifications, type Notifications, type NotificationsEdition } from './notifications';
 import { openOnboarding, type Onboarding } from './onboarding';
 import type { Clock, ContentReadPort, Random } from './ports';
@@ -42,10 +43,11 @@ export interface Composition extends Hiding {
   /**
    * Tells the composition the reader is back: the app returned to the
    * foreground, or a new local day started while it was open. Today becomes
-   * an Active Day, as it does when the composition opens.
+   * an Active Day and the notification plan is made again, as when the
+   * composition opens.
    */
   resume(): Promise<void>;
-  /** The Notification times and the notification sound, kept on this device. */
+  /** The Notification times, the notification sound and the plan, kept on this device. */
   readonly notifications: Notifications;
   /** Whether the reader finished the onboarding, which opens on launch until they do. */
   readonly onboarding: Onboarding;
@@ -74,7 +76,9 @@ export interface Composition extends Hiding {
  * open: one Entries module, one Cycle and one Word of the Day over the stored
  * user state, shared by every feature it opens. The Cycle and the Word of the
  * Day keep their state in memory for the session (ADR 0013), so open one
- * composition per app session. Opening it makes today an Active Day.
+ * composition per app session. Opening it makes today an Active Day and
+ * makes the notification plan, which `scheduling` hands to the device;
+ * without it, as in tools and in tests of other features, nothing is planned.
  */
 export async function openComposition({
   content,
@@ -82,12 +86,14 @@ export async function openComposition({
   userState,
   clock,
   random,
+  scheduling,
 }: {
   content: ContentReadPort;
   edition: Pick<Edition, 'isFeatureEnabled'> & MixEdition & NotificationsEdition;
   userState: UserState;
   clock: Clock;
   random: Random;
+  scheduling?: NotificationScheduling;
 }): Promise<Composition> {
   const entries = createEntries({ content, edition, userState });
   const rows = createEntryRows(entries);
@@ -110,18 +116,21 @@ export async function openComposition({
     await cycle.readEligibleAgain();
     await followEligibility();
   }
-  const [favorites, collections, hiddenEntries, mix, notifications, onboarding] = await Promise.all(
-    [
+  const [favorites, collections, hiddenEntries, mix, { notifications, replan }, onboarding] =
+    await Promise.all([
       openFavorites({ rows, userState, clock }),
       openCollections({ rows, userState, clock, random }),
       openHiddenEntries({ rows, userState, clock, eligibilityChanged }),
       openMix({ edition, userState, eligibilityChanged }),
-      openNotifications({ edition, userState }),
+      openNotifications({ edition, userState, cycle, entries, clock, scheduling }),
       openOnboarding({ userState, clock }),
-    ],
-  );
+    ]);
   const { progress, recordToday, todayChange } = await openProgress({ userState, clock });
-  await recordToday();
+  async function resume(): Promise<void> {
+    await recordToday();
+    await replan();
+  }
+  await resume();
   async function entryCard(entryId: string): Promise<EntryFeedCard | undefined> {
     const entry = await entries.get(entryId);
     return entry === undefined ? undefined : buildEntryCard(entries, entry);
@@ -134,7 +143,7 @@ export async function openComposition({
     hiddenEntries,
     mix,
     progress,
-    resume: recordToday,
+    resume,
     notifications,
     onboarding,
     ...createHiding({ rows, hiddenEntries, mix }),

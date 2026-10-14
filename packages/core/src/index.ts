@@ -80,6 +80,11 @@ export { type Progress, type ProgressState } from './progress';
 export { type Mix, type MixEdition, type MixState } from './mix';
 export { type Onboarding, type OnboardingState } from './onboarding';
 export {
+  createFakeNotificationScheduler,
+  type FakeNotificationScheduler,
+} from './fake-notification-scheduler';
+export { NOTIFICATION_BODY_LENGTH, type NotificationScheduling } from './notification-plan';
+export {
   type NotificationTimeRefusal,
   type NotificationTimeResult,
   type Notifications,
@@ -91,6 +96,10 @@ export {
   systemRandom,
   type Clock,
   type ContentReadPort,
+  type NotificationPermission,
+  type NotificationSchedulerPort,
+  type PlannedNotification,
+  type PlannedSound,
   type Random,
   type UserStateChanges,
   type UserStatePort,

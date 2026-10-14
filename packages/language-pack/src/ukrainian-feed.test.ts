@@ -7,6 +7,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
   CORRECTION_EVERY,
+  createFakeNotificationScheduler,
   createMemoryUserStatePort,
   loadEdition,
   openComposition,
@@ -16,6 +17,7 @@ import {
   type Edition,
   type Feed,
   type FeedCard,
+  NOTIFICATION_BODY_LENGTH,
   type Random,
 } from '@slovo/core';
 
@@ -302,5 +304,29 @@ describe('Favorites over the Ukrainian Language Pack', () => {
       kind: 'correction',
       correctionCard: { correctionId, mainEquivalent: app.favorites.list[0]?.row.title },
     });
+  });
+});
+
+describe('the notification plan over the Ukrainian Language Pack', () => {
+  it('plans the default times with live Words, each once, titled with their Stress', async () => {
+    const scheduler = createFakeNotificationScheduler();
+    await openComposition({
+      content: pack,
+      edition: ukrainian,
+      userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
+      clock: fakeClock('2026-10-14T08:00:00+03:00').clock,
+      random: seededRandom(7),
+      scheduling: { scheduler, ellipsis: '…' },
+    });
+
+    const plan = scheduler.plan ?? [];
+    expect(plan).toHaveLength(14 * ukrainian.userSettingDefaults.notificationTimes.length);
+    expect(new Set(plan.map(({ wordId }) => wordId)).size).toBe(plan.length);
+    for (const notification of plan) {
+      expect(liveIds).toContain(notification.wordId);
+      expect(notification.title).toMatch(/\u0301/);
+      expect(Array.from(notification.body).length).toBeLessThanOrEqual(NOTIFICATION_BODY_LENGTH);
+      expect(notification.sound).toBe('edition');
+    }
   });
 });

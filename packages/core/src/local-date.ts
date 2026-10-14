@@ -52,6 +52,11 @@ function localDateAt(instant: Date, timeZone: string): LocalDate {
 export const dayNumber = ({ year, month, day }: LocalDate) =>
   Date.UTC(year, month - 1, day) / DAY_MS;
 
+/** The key of the local date `days` after the date of the key `date`, both `YYYY-MM-DD`. */
+export function dateKeyAfter(date: string, days: number): string {
+  return new Date((dayNumber(parseLocalDate(date)) + days) * DAY_MS).toISOString().slice(0, 10);
+}
+
 /**
  * The local day an instant fell on, in the clock's current time zone, and how
  * many local days before today it is, so a list can say "today", "yesterday"

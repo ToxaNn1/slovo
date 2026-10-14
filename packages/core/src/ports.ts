@@ -67,6 +67,50 @@ export interface Random {
   next(): number;
 }
 
+/** Whether the device lets the app notify: the reader allowed it, denied it, or hasn't been asked yet. */
+export type NotificationPermission = 'allowed' | 'denied' | 'not-asked';
+
+/**
+ * The sound a notification plays: the Edition's own, the system default when
+ * the Edition has none, or none at all when the reader switched it off.
+ */
+export type PlannedSound = 'edition' | 'system' | 'silent';
+
+/**
+ * One notification of the plan: a Word at a local date and time, floating
+ * (ADR 0021). It has no time zone: it comes at that wall-clock time in
+ * whatever time zone the device is in when it is due.
+ */
+export interface PlannedNotification {
+  /** The local date, `YYYY-MM-DD`. */
+  readonly date: string;
+  /** The local time, `HH:MM` on a 24-hour clock. */
+  readonly time: string;
+  /** The Lemma with its Stress marks. */
+  readonly title: string;
+  /** The primary Definition, cut short at a word boundary. */
+  readonly body: string;
+  /** The Word it carries, which a tap opens. */
+  readonly wordId: string;
+  readonly sound: PlannedSound;
+}
+
+/**
+ * Schedules the Core's notification plan on the device. The Core plans; the
+ * shell implements this port on the platform's notifications (ADR 0021).
+ */
+export interface NotificationSchedulerPort {
+  /** Whether the device lets the app notify. */
+  permission(): Promise<NotificationPermission>;
+  /** Asks the reader for permission, when it isn't asked yet, and reports it. */
+  askPermission(): Promise<NotificationPermission>;
+  /**
+   * Replaces every pending notification with the plan, so the device holds
+   * exactly the Core's plan. An empty plan cancels them all.
+   */
+  replacePlan(plan: readonly PlannedNotification[]): Promise<void>;
+}
+
 export const systemClock: Clock = {
   now: () => new Date(),
   timeZone: () => Intl.DateTimeFormat().resolvedOptions().timeZone,
