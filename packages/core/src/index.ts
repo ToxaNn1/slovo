@@ -78,6 +78,7 @@ export { openWordOfTheDay, type WordOfTheDay, type WordOfTheDayChoice } from './
 export { createMemoryContentPort } from './memory-content';
 export { type Progress, type ProgressState } from './progress';
 export { type Mix, type MixEdition, type MixState } from './mix';
+export { type Onboarding, type OnboardingState } from './onboarding';
 export {
   type NotificationTimeRefusal,
   type NotificationTimeResult,

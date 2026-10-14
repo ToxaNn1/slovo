@@ -1,5 +1,8 @@
 # Opens the app's JavaScript from Metro in the development client and waits
-# for the Feed, setting aside the development client's own sheets on the way.
+# for the Feed, setting aside the development client's own sheets on the way
+# and skipping the onboarding a fresh install opens over the Feed. A flow that
+# checks the onboarding itself passes `PASS_ONBOARDING: 'false'`, and for the
+# onboarding to wait for, `READY_ID: onboarding`.
 # `smoke.yaml` runs it after launching the app, with `output.devClientLink`
 # set to the development client's link to Metro.
 appId: ${APP_ID || 'app.slovo.uk'}
@@ -14,22 +17,34 @@ appId: ${APP_ID || 'app.slovo.uk'}
 # Wait for the Feed: a card of any kind, since the Feed reopens on the card the
 # reader was on, which may be a Correction or the end of the Cycle. On a new
 # simulator the development client opens its menu over the app, before or after
-# the JavaScript loads; close it on the way.
+# the JavaScript loads; close it on the way. The onboarding covers the Feed on a
+# fresh install, so «Пропустити» on it brings the Feed up.
 - repeat:
     while:
       notVisible:
-        id: feed-card-.*
+        id: ${READY_ID || 'feed-card-.*'}
     times: 24
     commands:
       - runFlow:
           file: dismiss-dev-menu.yaml
+      - runFlow:
+          when:
+            true: ${PASS_ONBOARDING != 'false'}
+            visible:
+              id: onboarding-skip
+          commands:
+            # The label's left end: the development client's floating tools button
+            # may sit over its right end.
+            - tapOn:
+                id: onboarding-skip
+                point: 15%, 50%
       - extendedWaitUntil:
           visible:
-            id: feed-card-.*
+            id: ${READY_ID || 'feed-card-.*'}
           timeout: 5000
           optional: true
 - assertVisible:
-    id: feed-card-.*
+    id: ${READY_ID || 'feed-card-.*'}
 # The app's splash covers everything for a moment, then fades out.
 - extendedWaitUntil:
     notVisible:

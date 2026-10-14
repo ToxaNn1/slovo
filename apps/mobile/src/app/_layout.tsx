@@ -21,6 +21,7 @@ import { edition, editionDecor, editionStrings, editionTokens } from '../edition
 import { hapticEngine } from '../haptics';
 import { LanguagePackProvider } from '../language-pack';
 import { LaunchSplash } from '../launch-splash';
+import { Onboarding } from '../onboarding';
 import { ActiveDays } from '../progress';
 import { LemmaPronunciation } from '../pronunciation-button';
 import { SettingsProvider, useColorSchemeInEffect, useSettings } from '../settings';
@@ -164,6 +165,8 @@ function ThemedTabs() {
                 {/* The dev-only Decor showcase; no tab leads to it. */}
                 <Tabs.Screen name="decor" options={{ href: null }} />
               </Tabs>
+              {/* Over the tabs until the reader finishes or skips it. */}
+              <Onboarding />
             </LanguagePackProvider>
           </HapticsProvider>
         </FontSizeProvider>
