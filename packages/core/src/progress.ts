@@ -1,6 +1,6 @@
 import { createInTurn, createSubscribers } from './in-turn';
 import { dayNumber, parseLocalDate, todayKey } from './local-date';
-import type { Clock } from './ports';
+import type { Clock, UserStateChanges } from './ports';
 import type { UserState } from './user-state';
 import { userStateRecords } from './user-state-schema';
 
@@ -53,9 +53,22 @@ function progressOf(activeDays: ReadonlySet<string>, today: string): ProgressSta
 }
 
 /**
+ * A change of the Active Days not made yet, like a Cycle change: the
+ * user-state changes that keep it, for the caller to write alone or in one
+ * write with its own, and the step that makes it in memory once they are
+ * written (ADR 0013).
+ */
+export interface ActiveDayChange {
+  readonly changes: UserStateChanges;
+  /** Makes the change in memory. Call it once the changes are written. */
+  commit(): void;
+}
+
+/**
  * Opens Progress over the user state, for the Core composition, with
  * `recordToday`, which records today's local date in the clock's time zone as
- * an Active Day. Recording a day already recorded writes nothing.
+ * an Active Day, and `todayChange`, the change that records it for the caller
+ * to write with its own. Recording a day already recorded writes nothing.
  */
 export async function openProgress({
   userState,
@@ -63,11 +76,35 @@ export async function openProgress({
 }: {
   userState: UserState;
   clock: Clock;
-}): Promise<{ progress: Progress; recordToday: () => Promise<void> }> {
+}): Promise<{
+  progress: Progress;
+  recordToday: () => Promise<void>;
+  todayChange: () => ActiveDayChange;
+}> {
   const activeDays = new Set((await userState.list(activeDayRecords)).keys());
   let state = progressOf(activeDays, todayKey(clock));
   const subscribers = createSubscribers();
   const inTurn = createInTurn();
+
+  /** Makes the state follow the Active Days on the local date `today`, telling the subscribers if a number changed. */
+  function follow(today: string): void {
+    const next = progressOf(activeDays, today);
+    if (next.streak !== state.streak || next.bestStreak !== state.bestStreak) {
+      state = next;
+      subscribers.tell();
+    }
+  }
+
+  /** The change that records `today` as an Active Day; no changes when it is recorded already. */
+  function todayChange(today: string): ActiveDayChange {
+    return {
+      changes: activeDays.has(today) ? new Map() : activeDayRecords.record(today).change(true),
+      commit() {
+        activeDays.add(today);
+        follow(today);
+      },
+    };
+  }
 
   /**
    * Writes today as an Active Day, then makes the change in memory. The state
@@ -76,17 +113,12 @@ export async function openProgress({
    */
   async function recordToday(): Promise<void> {
     const today = todayKey(clock);
+    const change = todayChange(today);
     try {
-      if (!activeDays.has(today)) {
-        await userState.write(activeDayRecords.record(today).change(true));
-        activeDays.add(today);
-      }
+      if (change.changes.size > 0) await userState.write(change.changes);
+      change.commit();
     } finally {
-      const next = progressOf(activeDays, today);
-      if (next.streak !== state.streak || next.bestStreak !== state.bestStreak) {
-        state = next;
-        subscribers.tell();
-      }
+      follow(today);
     }
   }
 
@@ -98,5 +130,6 @@ export async function openProgress({
       subscribe: subscribers.subscribe,
     },
     recordToday: () => inTurn(recordToday),
+    todayChange: () => todayChange(todayKey(clock)),
   };
 }

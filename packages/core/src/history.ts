@@ -19,12 +19,13 @@ export interface HistoryEntry {
 }
 
 /**
- * History: the Entries the Feed marked Seen, newest first, one entry per
- * Entry, the last `HISTORY_CAP`. It survives Cycles. Only the Feed records it,
- * in the same write as Seen, so opening an Entry from a list never does. It
- * is read from the user state once, when it opens, like the Cycle, so open
- * one per app session (the Core composition does). A change is made in
- * memory only once it is written.
+ * History: the Entries marked Seen, newest first, one entry per Entry, the
+ * last `HISTORY_CAP`. It survives Cycles. Only the Feed records it, in the
+ * same write as Seen: for a card that stayed on screen, or a Word opened from
+ * a notification. Opening an Entry from a list never does. It is read from
+ * the user state once, when it opens, like the Cycle, so open one per app
+ * session (the Core composition does). A change is made in memory only once
+ * it is written.
  */
 export interface History {
   /**

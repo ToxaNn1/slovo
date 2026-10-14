@@ -159,6 +159,8 @@ function ThemedTabs() {
                 <Tabs.Screen name="settings" options={tabOptions('settings')} />
                 <Tabs.Screen name="game" options={tabOptions('game')} />
                 <Tabs.Screen name="saved" options={tabOptions('saved')} />
+                {/* An Entry opened from a link, such as a notification's; no tab leads to it. */}
+                <Tabs.Screen name="entry" options={{ href: null }} />
                 {/* The dev-only Decor showcase; no tab leads to it. */}
                 <Tabs.Screen name="decor" options={{ href: null }} />
               </Tabs>
