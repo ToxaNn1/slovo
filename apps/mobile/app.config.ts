@@ -6,6 +6,8 @@ import type * as UiTokens from '@slovo/ui/tokens';
 import type { ConfigContext, ExpoConfig } from 'expo/config';
 import { require as tsxRequire } from 'tsx/cjs/api';
 
+import type * as NotificationSound from './notification-sound';
+
 type EditionConfig = Contracts.EditionConfig;
 
 /** What the config needs from a contract schema. */
@@ -29,10 +31,14 @@ interface SplashPluginOptions {
 // sources of the workspace packages (their relative imports have no file
 // extension). tsx loads them, so the config is checked by the same schema as
 // the Language Pack build and the app.
-const { EditionConfigSchema, SplashDecorSchema, readNotificationSound } = tsxRequire(
+const { EditionConfigSchema, SplashDecorSchema } = tsxRequire(
   '@slovo/contracts',
   import.meta.url,
 ) as typeof Contracts;
+const { readNotificationSound } = tsxRequire(
+  './notification-sound.ts',
+  import.meta.url,
+) as typeof NotificationSound;
 const { coreTokens } = tsxRequire('@slovo/ui/tokens', import.meta.url) as typeof UiTokens;
 
 /**

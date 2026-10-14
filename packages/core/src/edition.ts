@@ -32,9 +32,7 @@ export interface Edition {
   /** Every Category of the Edition, in the order the Edition declares them. */
   readonly categories: readonly Category[];
   readonly userSettingDefaults: UserSettingDefaults;
-  /** Whether the Edition has a notification sound of its own; without one, notifications play the system sound. */
-  readonly hasNotificationSound: boolean;
-  /** The file name of the Edition's notification sound, which the shell bundles; none without one. */
+  /** The file name of the Edition's notification sound, which the shell bundles; without one, notifications play the system sound. */
   readonly notificationSound: string | undefined;
   /** Whether the Edition turns the given Core feature on. */
   isFeatureEnabled(feature: FeatureSwitch): boolean;
@@ -79,7 +77,6 @@ export function loadEdition(config: unknown): Edition {
         corrections: mix.corrections,
       },
     },
-    hasNotificationSound: notificationSound !== undefined,
     notificationSound,
     isFeatureEnabled: (feature) => featureSwitches[feature],
   };

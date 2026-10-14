@@ -7,6 +7,7 @@ import type { ConfigContext, ExpoConfig } from 'expo/config';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import appConfig from './app.config';
+import { wav } from './wav-builder';
 
 const context: ConfigContext = {
   projectRoot: fileURLToPath(new URL('.', import.meta.url)),
@@ -62,25 +63,6 @@ function pluginOptions(config: ExpoConfig, name: string): unknown {
     (entry) => (Array.isArray(entry) ? entry[0] : entry) === name,
   );
   return Array.isArray(plugin) ? plugin[1] : undefined;
-}
-
-/** A mono 16-bit PCM WAV header (and silence) of the given length. */
-function silentWav(seconds: number): Buffer {
-  const data = Math.round(seconds * 8000) * 2;
-  const bytes = Buffer.alloc(44 + data);
-  bytes.write('RIFF', 0);
-  bytes.writeUInt32LE(36 + data, 4);
-  bytes.write('WAVEfmt ', 8);
-  bytes.writeUInt32LE(16, 16);
-  bytes.writeUInt16LE(1, 20);
-  bytes.writeUInt16LE(1, 22);
-  bytes.writeUInt32LE(8000, 24);
-  bytes.writeUInt32LE(16000, 28);
-  bytes.writeUInt16LE(2, 32);
-  bytes.writeUInt16LE(16, 34);
-  bytes.write('data', 36);
-  bytes.writeUInt32LE(data, 40);
-  return bytes;
 }
 
 describe('app config', () => {
@@ -259,18 +241,32 @@ describe('app config', () => {
     vi.stubEnv('SLOVO_EDITION', 'uk');
     const longest = repoWithEdition(() => undefined, {
       change: (editionDir) => {
-        writeFileSync(join(editionDir, 'assets/notification.wav'), silentWav(30));
+        writeFileSync(join(editionDir, 'assets/notification.wav'), wav(30));
       },
     });
 
     expect(() => appConfig(longest)).not.toThrow();
   });
 
+  it('accepts a notification sound written as 24-bit WAVE_FORMAT_EXTENSIBLE PCM', () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+    const extensible = repoWithEdition(() => undefined, {
+      change: (editionDir) => {
+        writeFileSync(
+          join(editionDir, 'assets/notification.wav'),
+          wav(1, { bitsPerSample: 24, extensible: 1 }),
+        );
+      },
+    });
+
+    expect(() => appConfig(extensible)).not.toThrow();
+  });
+
   it('refuses a notification sound longer than 30 seconds', () => {
     vi.stubEnv('SLOVO_EDITION', 'uk');
     const tooLong = repoWithEdition(() => undefined, {
       change: (editionDir) => {
-        writeFileSync(join(editionDir, 'assets/notification.wav'), silentWav(31));
+        writeFileSync(join(editionDir, 'assets/notification.wav'), wav(31));
       },
     });
 
@@ -310,7 +306,7 @@ describe('app config', () => {
       },
       {
         change: (editionDir) => {
-          writeFileSync(join(editionDir, 'assets/notification.caf'), silentWav(1));
+          writeFileSync(join(editionDir, 'assets/notification.caf'), wav(1));
         },
       },
     );

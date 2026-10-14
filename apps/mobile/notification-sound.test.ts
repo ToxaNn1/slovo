@@ -1,28 +1,12 @@
-import { EditionConfigSchema, readNotificationSound } from '@slovo/contracts';
+import { EditionConfigSchema } from '@slovo/contracts';
 import { describe, expect, it } from 'vitest';
 
-import ukrainianEdition from '../../../editions/uk/edition.json';
+import ukrainianEdition from '../../editions/uk/edition.json';
+
+import { readNotificationSound } from './notification-sound';
+import { wav } from './wav-builder';
 
 const SAMPLE_RATE = 8000;
-
-/** A mono 16-bit PCM WAV of the given length, silent. */
-function wav(seconds: number): Uint8Array {
-  const data = Math.round(seconds * SAMPLE_RATE) * 2;
-  const bytes = Buffer.alloc(44 + data);
-  bytes.write('RIFF', 0);
-  bytes.writeUInt32LE(36 + data, 4);
-  bytes.write('WAVEfmt ', 8);
-  bytes.writeUInt32LE(16, 16);
-  bytes.writeUInt16LE(1, 20);
-  bytes.writeUInt16LE(1, 22);
-  bytes.writeUInt32LE(SAMPLE_RATE, 24);
-  bytes.writeUInt32LE(SAMPLE_RATE * 2, 28);
-  bytes.writeUInt16LE(2, 32);
-  bytes.writeUInt16LE(16, 34);
-  bytes.write('data', 36);
-  bytes.writeUInt32LE(data, 40);
-  return bytes;
-}
 
 /** A mono 16-bit AIFF of the given length, silent. */
 function aiff(seconds: number): Uint8Array {
@@ -126,6 +110,32 @@ describe('reading a notification sound file', () => {
     expect(() => readNotificationSound(mp3InWav)).toThrow(/WAV format tag 85.*linear PCM/);
   });
 
+  it('accepts a WAVE_FORMAT_EXTENSIBLE WAV of 24-bit linear PCM, as ffmpeg writes it', () => {
+    const sound = readNotificationSound(wav(0.6, { bitsPerSample: 24, extensible: 1 }));
+
+    expect(sound.format).toBe('wav');
+    expect(sound.seconds).toBeCloseTo(0.6, 3);
+  });
+
+  it('refuses a WAVE_FORMAT_EXTENSIBLE WAV whose subformat is not one iOS plays', () => {
+    const float = wav(1, { bitsPerSample: 32, extensible: 3 });
+
+    expect(() => readNotificationSound(float)).toThrow(/WAV extensible subformat 3.*linear PCM/);
+  });
+
+  it('refuses a WAVE_FORMAT_EXTENSIBLE WAV cut short before its subformat', () => {
+    const cut = wav(1, { extensible: 1 }).subarray(0, 40);
+
+    expect(() => readNotificationSound(cut)).toThrow(/incomplete/);
+  });
+
+  it('refuses a WAV that claims WAVE_FORMAT_EXTENSIBLE in a chunk too small to hold a subformat', () => {
+    const plain = Buffer.from(wav(1));
+    plain.writeUInt16LE(0xfffe, 20);
+
+    expect(() => readNotificationSound(plain)).toThrow(/incomplete/);
+  });
+
   it('refuses a CAF in a codec iOS does not play for notifications', () => {
     const aacInCaf = Buffer.from(caf(1));
     aacInCaf.write('aac ', 28);
@@ -140,6 +150,6 @@ describe('reading a notification sound file', () => {
   });
 
   it('refuses a truncated header', () => {
-    expect(() => readNotificationSound(wav(0.6).slice(0, 20))).toThrow(/incomplete/);
+    expect(() => readNotificationSound(wav(0.6).subarray(0, 20))).toThrow(/incomplete/);
   });
 });

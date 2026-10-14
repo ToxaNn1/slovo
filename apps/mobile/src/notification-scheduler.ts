@@ -21,11 +21,6 @@ export type NotificationsModule = Pick<
   | 'addNotificationResponseReceivedListener'
 >;
 
-/** The Edition's notification sound, the file the expo-notifications config plugin bundles; none without one. */
-interface SchedulerSounds {
-  readonly editionSound: string | undefined;
-}
-
 const twoDigits = (value: number) => String(value).padStart(2, '0');
 
 /** The hour and the minute of a Notification time `HH:MM`. */
@@ -71,7 +66,6 @@ export function isFromNotification({ from }: { readonly from?: string }): boolea
  */
 export function createNotificationScheduler(
   notifications: NotificationsModule | undefined,
-  sounds: SchedulerSounds,
 ): NotificationSchedulerPort {
   if (notifications === undefined) {
     return {
@@ -80,13 +74,10 @@ export function createNotificationScheduler(
       replacePlan: () => Promise.resolve(),
     };
   }
-  return schedulerOn(notifications, sounds);
+  return schedulerOn(notifications);
 }
 
-function schedulerOn(
-  notifications: NotificationsModule,
-  { editionSound }: SchedulerSounds,
-): NotificationSchedulerPort {
+function schedulerOn(notifications: NotificationsModule): NotificationSchedulerPort {
   const { PermissionStatus, SchedulableTriggerInputTypes } = notifications;
 
   function permissionOf({
@@ -98,7 +89,7 @@ function schedulerOn(
 
   function soundOf(sound: PlannedSound): string | false {
     if (sound === 'silent') return false;
-    return sound === 'edition' && editionSound !== undefined ? editionSound : 'default';
+    return sound === 'system' ? 'default' : sound.file;
   }
 
   function schedule({ date, time, title, body, wordId, sound }: PlannedNotification) {

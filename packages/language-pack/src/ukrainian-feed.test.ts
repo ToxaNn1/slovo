@@ -326,7 +326,7 @@ describe('the notification plan over the Ukrainian Language Pack', () => {
       expect(liveIds).toContain(notification.wordId);
       expect(notification.title).toMatch(/\u0301/);
       expect(Array.from(notification.body).length).toBeLessThanOrEqual(NOTIFICATION_BODY_LENGTH);
-      expect(notification.sound).toBe('edition');
+      expect(notification.sound).toEqual({ file: 'notification.wav' });
     }
   });
 });

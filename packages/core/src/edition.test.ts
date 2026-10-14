@@ -118,12 +118,10 @@ describe('loadEdition', () => {
     ]);
   });
 
-  it('reports whether the Edition has a notification sound of its own, and its file', () => {
+  it("reports the file of the Edition's notification sound, if it has one", () => {
     const withSound = loadEdition({ ...validConfig, notificationSound: 'notification.wav' });
 
-    expect(loadEdition(validConfig).hasNotificationSound).toBe(false);
     expect(loadEdition(validConfig).notificationSound).toBeUndefined();
-    expect(withSound.hasNotificationSound).toBe(true);
     expect(withSound.notificationSound).toBe('notification.wav');
   });
 
