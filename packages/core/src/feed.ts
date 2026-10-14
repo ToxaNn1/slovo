@@ -204,13 +204,9 @@ export async function openFeed({
     cards = session.filter((card) => !dropped.has(card));
   }
 
-  function tellSubscribers(): void {
-    subscribers.tell();
-  }
-
   function changeSession(changed: readonly FeedCard[], changedDropped = dropped): void {
     setSession(changed, changedDropped);
-    tellSubscribers();
+    subscribers.tell();
   }
 
   /** The position of the card at `place`, or of the card that will come there. */
@@ -555,7 +551,7 @@ export async function openFeed({
         added = await addNextCard();
       } finally {
         // A card added has told the subscribers already, with the drop.
-        if (added === undefined) tellSubscribers();
+        if (added === undefined) subscribers.tell();
       }
     } else changeSession(session, out);
     if (moved)

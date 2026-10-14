@@ -17,12 +17,13 @@ export function createInTurn(): <T>(change: () => Promise<T>) => Promise<T> {
   };
 }
 
-/** The subscribers of a module: `subscribe` is the module's own, `tell` calls every listener. */
+/** The subscribers of a module: its `subscribe`, and `tell` to call every listener after a change. */
 export interface Subscribers {
   subscribe: (listener: () => void) => () => void;
   tell: () => void;
 }
 
+/** Makes the subscribers of a module. */
 export function createSubscribers(): Subscribers {
   const listeners = new Set<() => void>();
   return {
