@@ -12,7 +12,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
-import { hideChoice } from './hide-choice';
+import { hideChoice, hideToast } from './hide-choice';
 
 const editionFile = (name: string): unknown =>
   JSON.parse(
@@ -82,10 +82,14 @@ describe('the hide choice', () => {
     const choice = choiceOn(app, await cardOf(app, word.id));
 
     expect(choice).toEqual([
-      { kind: 'entry', label: 'Не показувати цей запис' },
+      {
+        kind: 'entry',
+        target: { kind: 'entry', entryId: word.id },
+        label: 'Не показувати цей запис',
+      },
       {
         kind: 'category',
-        categoryId: first.id,
+        target: { kind: 'category', categoryId: first.id },
         label: `Не показувати категорію «${first.displayName}»`,
         toast: `Категорію «${first.displayName}» приховано`,
       },
@@ -116,8 +120,17 @@ describe('the hide choice', () => {
     const choice = choiceOn(app, await cardOf(app, correction.id));
 
     expect(choice).toEqual([
-      { kind: 'entry', label: 'Не показувати цей запис' },
-      { kind: 'corrections', label: 'Не показувати Виправлення', toast: 'Виправлення приховано' },
+      {
+        kind: 'entry',
+        target: { kind: 'entry', entryId: correction.id },
+        label: 'Не показувати цей запис',
+      },
+      {
+        kind: 'corrections',
+        target: { kind: 'corrections' },
+        label: 'Не показувати Виправлення',
+        toast: 'Виправлення приховано',
+      },
     ]);
   });
 
@@ -128,5 +141,33 @@ describe('the hide choice', () => {
     const choice = choiceOn(app, await cardOf(app, correction.id));
 
     expect(choice.map(({ kind }) => kind)).toEqual(['entry']);
+  });
+});
+
+describe('the toast of a hide', () => {
+  const toastAfter = async (app: Composition, entryId: string, index: number) => {
+    const option = choiceOn(app, await cardOf(app, entryId))[index];
+    if (option === undefined) throw new Error(`No option ${String(index)}`);
+    const result = await app.hide(option.target);
+    if (result === undefined) throw new Error('Nothing was hidden');
+    return hideToast({ option, changed: result.changed, strings: strings.hiding });
+  };
+
+  it('names the hidden Entry by its title', async () => {
+    const app = await open();
+
+    expect(await toastAfter(app, word.id, 0)).toBe('«сло\u0301во» приховано');
+  });
+
+  it('is the Category’s toast for a hidden Category', async () => {
+    const app = await open();
+
+    expect(await toastAfter(app, word.id, 1)).toBe(`Категорію «${first.displayName}» приховано`);
+  });
+
+  it('is the Corrections toast for hidden Corrections', async () => {
+    const app = await open();
+
+    expect(await toastAfter(app, correction.id, 1)).toBe('Виправлення приховано');
   });
 });
