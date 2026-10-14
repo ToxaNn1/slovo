@@ -101,7 +101,7 @@ function HiddenList() {
                       label={strings.restore}
                       accessibilityLabel={fill(strings.restoreLabel, { title: row.title })}
                       onPress={() => {
-                        restoreEntry({ entryId, title: row.title });
+                        restoreEntry(entryId);
                       }}
                     />
                   }

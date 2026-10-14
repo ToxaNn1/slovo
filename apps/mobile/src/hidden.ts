@@ -1,11 +1,11 @@
-import type { HiddenEntries, HiddenEntry } from '@slovo/core';
+import type { HiddenEntries, HiddenEntry, HideTarget } from '@slovo/core';
 import { fill, useEdition, useUndoToast } from '@slovo/ui';
 import { useCallback, useMemo, useSyncExternalStore } from 'react';
 
 import { useComposition } from './composition';
 import { edition, editionStrings } from './edition';
 import { hiddenScreenModel, hiddenSummary, type HiddenScreenModel } from './hidden-screen';
-import { useMix, useMixState } from './mix';
+import { useMixState } from './mix';
 
 const strings = editionStrings.hidden;
 
@@ -55,50 +55,51 @@ export function useHiddenScreenModel(): HiddenScreenModel | undefined {
 }
 
 /**
- * The calls of the Hidden screen. Bringing an Entry back shows the undo
- * toast, whose undo hides it again with the time it was hidden before, so it
- * returns to its old place in the list; a Category goes back in the Mix with no
- * toast. A change that could not be kept is logged and leaves things as they
- * were. Needs an `UndoToastProvider` above it.
+ * The calls of the Hidden screen, each an unhide of the Core composition.
+ * Bringing an Entry back shows the undo toast, which calls the undo the
+ * composition returns, so the Entry goes back to its old place in the list; a Category or Corrections
+ * goes back in the Mix with no toast. A change that could not be kept is
+ * logged and leaves things as they were. Needs an `UndoToastProvider` above it.
  */
 export function useHiddenChanges(): {
-  restoreEntry: (entry: { entryId: string; title: string }) => void;
+  restoreEntry: (entryId: string) => void;
   turnCategoryOn: (categoryId: string) => void;
   turnCorrectionsOn: () => void;
 } {
-  const hiddenEntries = useHiddenEntries();
-  const mix = useMix();
+  const composition = useComposition();
   const showToast = useUndoToast();
-  return {
-    restoreEntry({ entryId, title }) {
-      hiddenEntries
-        ?.restore(entryId)
-        .then((hiddenAt) => {
-          // Not Hidden any more: another restore got there first, with its own toast.
-          if (hiddenAt === undefined) return;
-          showToast({
-            message: fill(strings.entryRestored, { title }),
-            undoLabel: strings.undo,
-            onUndo() {
-              hiddenEntries.hide(entryId, hiddenAt).catch((error: unknown) => {
-                console.error('Could not hide the Entry again', error);
-              });
-            },
-          });
-        })
-        .catch((error: unknown) => {
-          console.error('Could not restore the Hidden Entry', error);
+  const open = composition.status === 'ready' ? composition.composition : undefined;
+
+  function unhide(target: HideTarget): void {
+    open?.unhide(target).then(
+      (result) => {
+        if (result?.changed.kind !== 'entry' || result.undo === undefined) return;
+        const { undo } = result;
+        showToast({
+          message: fill(strings.entryRestored, { title: result.changed.row.title }),
+          undoLabel: strings.undo,
+          onUndo() {
+            undo().catch((error: unknown) => {
+              console.error('Could not hide the Entry again', error);
+            });
+          },
         });
+      },
+      (error: unknown) => {
+        console.error('Could not bring the hidden change back', error);
+      },
+    );
+  }
+
+  return {
+    restoreEntry: (entryId) => {
+      unhide({ kind: 'entry', entryId });
     },
-    turnCorrectionsOn() {
-      mix?.setCorrections(true).catch((error: unknown) => {
-        console.error('Could not put Corrections back in the Mix', error);
-      });
+    turnCategoryOn: (categoryId) => {
+      unhide({ kind: 'category', categoryId });
     },
-    turnCategoryOn(categoryId) {
-      mix?.putBack(categoryId).catch((error: unknown) => {
-        console.error('Could not put the Category back in the Mix', error);
-      });
+    turnCorrectionsOn: () => {
+      unhide({ kind: 'corrections' });
     },
   };
 }
