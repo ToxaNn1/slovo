@@ -1,9 +1,9 @@
 import type { Feed, FeedCard } from '@slovo/core';
 import { useIsFocused } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { AppState } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useComposed, useComposition } from './composition';
+import { useInForeground } from './lifecycle';
 import { useOnboardingOpen } from './onboarding';
 
 export type FeedState =
@@ -21,11 +21,12 @@ export type FeedState =
       /** Tells the Feed which card is on screen now. */
       readonly onCardChange: (position: number) => void;
       /**
-       * The position of the card on screen now, or nothing when it is not
-       * known. It moves when a hide or its undo drops or puts back cards, also
-       * while Home is out of focus, so the pager shows it after the cards change.
+       * The reader's position as the Feed keeps it: the card on screen, or the
+       * card the reader left while the Feed is out of sight. It moves when a
+       * hide or its undo drops or puts back cards, also out of sight, so the
+       * pager shows it after the cards change.
        */
-      readonly positionOnScreen: () => number | undefined;
+      readonly readerPosition: () => number;
       /**
        * Opens a Correction the Word card at `position` links, as the card
        * right after it. Resolves to that card's position, or nothing.
@@ -37,8 +38,8 @@ const noCards: readonly FeedCard[] = [];
 
 /**
  * The Feed of the session's Core composition.
- * It tells the Feed which card is on screen while Home is focused, the app is
- * in the foreground and no onboarding covers it, and that none is otherwise.
+ * It tells the Feed which card is on screen while the Feed is in sight, and
+ * that none is otherwise.
  */
 export function useFeed(): FeedState {
   const composition = useComposition();
@@ -47,47 +48,42 @@ export function useFeed(): FeedState {
   const [turnedTo, setTurnedTo] = useState<number>();
   const position = turnedTo ?? feed?.startPosition;
   const focused = useIsFocused();
-  const appActive = useAppActive();
-  // The onboarding covers the Feed, so no card is on screen until it ends.
+  const inForeground = useInForeground();
   const onboardingOpen = useOnboardingOpen();
-  const onScreen = focused && appActive && !onboardingOpen;
+  // The Feed is in sight while Home is focused, the app is in the foreground
+  // and no onboarding covers it; otherwise no card is on screen.
+  const inSight = focused && inForeground && !onboardingOpen;
   const cards = useComposed(
     (open) => open.feed,
     (open) => open.cards,
     noCards,
   );
-  /** The card last told to the Feed as on screen, which Home keeps while out of focus. */
-  const shown = useRef<FeedCard>(undefined);
-  const positionOnScreen = useCallback(() => {
-    if (feed === undefined) return undefined;
-    if (feed.position !== undefined) return feed.position;
-    // With no card on screen the Feed keeps no place, so follow the card the reader left.
-    const at = shown.current === undefined ? -1 : feed.cards.indexOf(shown.current);
-    return at === -1 ? undefined : at;
-  }, [feed]);
+  const readerPosition = useMemo(
+    () => (feed === undefined ? undefined : () => feed.position),
+    [feed],
+  );
 
   // A new position goes straight to the Feed, which takes the card that left
-  // off the screen itself; only leaving Home or the foreground reports none.
+  // off the screen itself; only the Feed going out of sight reports none.
   useEffect(() => {
-    if (feed === undefined || position === undefined || !onScreen) return;
-    shown.current = feed.cards[position];
+    if (feed === undefined || position === undefined || !inSight) return;
     report(feed.show(position));
-  }, [feed, onScreen, position]);
+  }, [feed, inSight, position]);
   useEffect(() => {
-    if (feed === undefined || !onScreen) return;
+    if (feed === undefined || !inSight) return;
     return () => {
       report(feed.show(undefined));
     };
-  }, [feed, onScreen]);
+  }, [feed, inSight]);
 
   if (composition.status === 'failed') return { status: 'failed', retry: composition.retry };
-  if (feed === undefined) return { status: 'loading' };
+  if (feed === undefined || readerPosition === undefined) return { status: 'loading' };
   return {
     status: 'ready',
     cards,
     startPosition: feed.startPosition,
     onCardChange: setTurnedTo,
-    positionOnScreen,
+    readerPosition,
     openLinkedCorrection: (at, correctionId) => feed.openLinkedCorrection(at, correctionId),
   };
 }
@@ -96,18 +92,4 @@ function report(done: Promise<void>): void {
   done.catch((error: unknown) => {
     console.error('Could not keep the Feed state or get the next card ready', error);
   });
-}
-
-/** Whether the app is in the foreground. */
-function useAppActive(): boolean {
-  const [active, setActive] = useState(AppState.currentState === 'active');
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', (state) => {
-      setActive(state === 'active');
-    });
-    return () => {
-      subscription.remove();
-    };
-  }, []);
-  return active;
 }
