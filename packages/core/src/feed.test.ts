@@ -11,6 +11,7 @@ import {
   openUserState,
   SEEN_DWELL_MS,
   type Clock,
+  type Composition,
   type ContentReadPort,
   type Edition,
   type MixEdition,
@@ -120,10 +121,10 @@ const correctionCardOf = (card: FeedCard | undefined) =>
 const entryIdsOf = (cards: readonly FeedCard[]) => cards.flatMap((card) => entryIdOf(card) ?? []);
 
 /**
- * The Feed of one app run over the given records, opened through the Core
- * composition: the user state survives between runs.
+ * The Core composition of one app run over the given records: the user state
+ * survives between runs.
  */
-async function run({
+async function runApp({
   records = new Map<string, string>(),
   port = createMemoryUserStatePort(records),
   clock = fakeClock('2026-10-11T09:00:00+03:00').clock,
@@ -141,15 +142,19 @@ async function run({
   corrections?: readonly Correction[];
   content?: ContentReadPort;
   correctionsSwitch?: boolean;
-} = {}): Promise<Feed> {
-  const composition = await openComposition({
+} = {}): Promise<Composition> {
+  return openComposition({
     content,
     edition: editionWith(correctionsSwitch),
     userState: await openUserState({ port }),
     clock,
     random,
   });
-  return composition.feed;
+}
+
+/** The Feed of one app run over the given records, opened through the Core composition. */
+async function run(options: Parameters<typeof runApp>[0] = {}): Promise<Feed> {
+  return (await runApp(options)).feed;
 }
 
 /** A user-state port over the records whose writes fail while `failing` says so. */
@@ -653,10 +658,12 @@ describe('the Feed', () => {
 
     it('lets a new local day start the new Cycle with its Word of the Day, without a second end-of-Cycle card', async () => {
       const time = fakeClock('2026-10-11T23:00:00+03:00');
-      const feed = await run({ words: small, clock: time.clock });
+      const app = await runApp({ words: small, clock: time.clock });
+      const { feed } = app;
       await readToTheEnd(feed, time);
 
       time.advance(2 * 60 * 60_000);
+      await app.resume();
       const newCycle = [await feed.next(), await feed.next(), await feed.next()];
 
       expect(wordOfTheDayOf(newCycle[0])).toEqual({ year: 2026, month: 10, day: 12 });
@@ -688,7 +695,7 @@ describe('the Feed', () => {
       const port = createMemoryUserStatePort();
       // Holds the next write until the test lets it through.
       let held: { came: () => void; through: Promise<void> } | undefined;
-      const feed = await run({
+      const app = await runApp({
         port: {
           ...port,
           async write(changes) {
@@ -704,16 +711,19 @@ describe('the Feed', () => {
         clock: time.clock,
         random: randomSequence(0.25, 0.75),
       });
+      const { feed } = app;
       await readToTheEnd(feed, time);
       const end = feed.cards.length - 1;
+      // A new local day starts, and the composition turns to it.
+      time.advance(2 * 60 * 60_000);
+      await app.resume();
       let letThrough: () => void = () => undefined;
       const came = new Promise<void>((resolve) => {
         held = { came: resolve, through: new Promise((resolve) => (letThrough = resolve)) };
       });
 
-      // On a new local day, the end-of-Cycle card comes on screen and the
-      // Word of the Day starts a new Cycle, whose write is held.
-      time.advance(2 * 60 * 60_000);
+      // The end-of-Cycle card comes on screen and the new day's Word of the
+      // Day starts a new Cycle, whose write is held.
       const shown = [feed.show(end)];
       await came;
       // Meanwhile the reader goes back to a Word of the last Cycle and stays.
@@ -838,10 +848,13 @@ describe('the Word of the Day in the Feed', () => {
 
   it('starts the new local day in a Feed left open over midnight', async () => {
     const time = fakeClock('2026-10-11T23:58:00+03:00');
-    const feed = await run({ clock: time.clock });
+    const app = await runApp({ clock: time.clock });
+    const { feed } = app;
     await feed.next();
 
+    // The shell's timer tells the composition when the next local day starts.
     time.advance(5 * 60_000);
+    await app.resume();
     const card = await feed.next();
 
     expect(wordOfTheDayOf(card)).toEqual({ year: 2026, month: 10, day: 12 });
@@ -851,11 +864,13 @@ describe('the Word of the Day in the Feed', () => {
 
   it('comes next, in place of the card got ready the day before, when the app comes back from the background on a new local day', async () => {
     const time = fakeClock('2026-10-11T23:58:00+03:00');
-    const feed = await run({ clock: time.clock });
+    const app = await runApp({ clock: time.clock });
+    const { feed } = app;
     await feed.show(0);
     await feed.show(undefined);
 
     time.advance(8 * 60 * 60_000);
+    await app.resume();
     await feed.show(0);
 
     expect(feed.cards).toHaveLength(2);
@@ -863,13 +878,15 @@ describe('the Word of the Day in the Feed', () => {
     expect(entryIdOf(feed.cards[1])).not.toBe(entryIdOf(feed.cards[0]));
   });
 
-  it('comes next on a new local day when the card on screen is reported again', async () => {
+  it('comes next, in place of the card got ready the day before, when a new local day starts with a card on screen', async () => {
     const time = fakeClock('2026-10-11T23:58:00+03:00');
-    const feed = await run({ clock: time.clock });
+    const app = await runApp({ clock: time.clock });
+    const { feed } = app;
     await feed.show(0);
 
+    // The shell's timer tells the composition when the next local day starts.
     time.advance(5 * 60_000);
-    await feed.show(0);
+    await app.resume();
 
     expect(feed.cards).toHaveLength(2);
     expect(wordOfTheDayOf(feed.cards[1])).toEqual({ year: 2026, month: 10, day: 12 });

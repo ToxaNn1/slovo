@@ -102,8 +102,11 @@ function stateOf(
  * Opens Notifications over the user state, for the Core composition: the
  * stored times, or the Edition's default ones while the reader has never
  * changed them. It plans over the Cycle and the Word of the Day the
- * composition shares, and `replan` plans again, for the composition to call
- * when the app opens, the reader comes back or eligibility changes.
+ * composition shares, and `replan` reads the permission and plans again, for
+ * the composition to call when the app opens, the reader comes back, a new
+ * local day starts or eligibility changes. Every plan first calls
+ * `takeMorningWord`, the composition's day change, so a plan made on a new
+ * day before the composition turned to it keeps the day's morning Word.
  * `followSeen` plans again when the Entry just Seen is a Reserved Word, so its
  * notification gets a new Word. Without `scheduling`, as in tools and in
  * tests of other features, nothing is planned.
@@ -115,6 +118,7 @@ export async function openNotifications({
   entries,
   clock,
   wordOfTheDay,
+  takeMorningWord,
   scheduling,
 }: {
   edition: NotificationsEdition;
@@ -122,7 +126,8 @@ export async function openNotifications({
   cycle: Pick<Cycle, 'order' | 'unseen'>;
   entries: Pick<Entries, 'get'>;
   clock: Clock;
-  wordOfTheDay: Pick<WordOfTheDay, 'chosen' | 'takeReserved'>;
+  wordOfTheDay: Pick<WordOfTheDay, 'chosen'>;
+  takeMorningWord: () => Promise<void>;
   scheduling: NotificationScheduling | undefined;
 }): Promise<{
   notifications: Notifications;
@@ -160,6 +165,7 @@ export async function openNotifications({
       state = { ...state, permission };
       subscribers.tell();
     }
+    await takeMorningWord();
     await planner.plan(state);
   }
 

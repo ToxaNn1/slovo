@@ -1,5 +1,6 @@
 import { openCollections, type Collections } from './collections';
 import { openCycle } from './cycle';
+import { createDayChange } from './day-change';
 import type { Edition } from './edition';
 import { createEntries } from './entries';
 import { createEntryRows, type EntryRowModel } from './entry-row';
@@ -45,10 +46,14 @@ export interface Composition extends Hiding {
    */
   readonly progress: Progress;
   /**
-   * Tells the composition the reader is back: the app returned to the
-   * foreground, or a new local day started while it was open. Today becomes
-   * an Active Day and the notification plan is made again, as when the
-   * composition opens.
+   * Tells the composition the app is in the foreground: it came back from the
+   * background, or the shell's timer fired when the next local day started
+   * while it was open (see `untilNextLocalDay`). The composition decides
+   * whether a new local day started and turns to it in one fixed order: the
+   * morning Word becomes the Word of the Day, today an Active Day, the
+   * notification plan is made again and the Feed opens the day. On the same
+   * day it only reads the permission again and plans by it. It runs in turn
+   * with `openedFromNotification`, so the two never run side by side.
    */
   resume(): Promise<void>;
   /** The Notification times, the notification sound and the plan, kept on this device. */
@@ -69,7 +74,8 @@ export interface Composition extends Hiding {
    * Hidden or Retired Word opens as a kept Entry and is Seen only if it is
    * still eligible, so a Hidden Entry never re-enters History. Nothing for
    * an id the Language Pack doesn't have: the Feed opens instead. Opening it
-   * again writes nothing new.
+   * again writes nothing new. On a new local day it turns the composition to
+   * the day, as `resume` does, with today's Active Day in the Word's write.
    */
   openedFromNotification(entryId: string): Promise<EntryFeedCard | undefined>;
   /** The row model of any Entry, Retired or not, for a list; nothing for an id the Language Pack doesn't have. */
@@ -113,9 +119,11 @@ export async function openComposition({
     entries,
     clock,
     wordOfTheDay,
+    // The day change opens last, once the plan and the Feed it turns are open.
+    takeMorningWord: () => day.takeMorningWord(),
     scheduling,
   });
-  const { feed, followEligibility, markOpenedSeen } = await openFeed({
+  const { feed, followEligibility, markOpenedSeen, openDay } = await openFeed({
     entries,
     userState,
     clock,
@@ -147,11 +155,15 @@ export async function openComposition({
     favorites,
     collections,
   });
-  async function resume(): Promise<void> {
-    await recordToday();
-    await replan();
-  }
-  await resume();
+  const day = createDayChange({
+    clock,
+    wordOfTheDay,
+    recordToday,
+    todayChange,
+    replan,
+    openFeedDay: openDay,
+  });
+  await day.resume();
   async function entryCard(entryId: string): Promise<EntryFeedCard | undefined> {
     const entry = await entries.get(entryId);
     return entry === undefined ? undefined : buildEntryCard(entries, entry);
@@ -164,17 +176,13 @@ export async function openComposition({
     hiddenEntries,
     mix,
     progress,
-    resume,
+    resume: () => day.resume(),
     notifications,
     onboarding,
     ...createHiding({ rows, hiddenEntries, mix }),
     entryCard,
     async openedFromNotification(entryId) {
-      // On a new day, the morning notification's Word is the Word of the Day before it is Seen.
-      await wordOfTheDay.takeReserved();
-      const today = todayChange();
-      await markOpenedSeen(entryId, today.changes);
-      today.commit();
+      await day.opened((activeDay) => markOpenedSeen(entryId, activeDay));
       return entryCard(entryId);
     },
     entryRow: (entryId) => rows.row(entryId),

@@ -29,6 +29,8 @@ The morning notification is the Word of the Day (glossary), so from 0.4 the noti
 
 The day can come before the Feed asks for its Word of the Day: the plan is made again on a new day, and a morning notification can open the app on its own Word. Both take the morning Word first, so the plan doesn't drop a passed morning notification before its Word is taken, and a Word opened from it joins History as the Word of the Day's card. Taking the morning Word never chooses another Word and never starts a Cycle, since only the Feed does that. Because another feature may now choose the day's Word of the Day before the Feed, the Feed opens a new day by the day it last opened with its Word of the Day, not by whether one is chosen.
 
+ADR 0022 moves the noticing of a new day into one module of the composition, which takes the morning Word before it plans and tells the Feed the day; the rules above stay.
+
 A Reserved Word may still come up in the Feed first. Once it is Seen there, also as today's Word of the Day, the plan gives its notification a new Word at once, and a hide, an unhide or a Mix change does the same for the Words no longer eligible.
 
 ### Considered Options
