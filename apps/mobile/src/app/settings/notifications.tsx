@@ -3,6 +3,7 @@ import {
   BackLink,
   fill,
   minTouchTarget,
+  NavigationRow,
   ScreenTitle,
   SettingsGroup,
   SwitchRow,
@@ -14,7 +15,15 @@ import {
 } from '@slovo/ui';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { AccessibilityInfo, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  AccessibilityInfo,
+  Linking,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -35,6 +44,8 @@ const strings = editionStrings.notifications;
  * the system time picker, which a dev client built before the native batch
  * lacks: then adding and changing a time stay off, and removing still works.
  * A time that is in the list already shows a one-line hint and is not kept.
+ * While iOS denies notifications, a line above the times says so, with a row
+ * that opens the app's iOS settings; the times stay as they are.
  */
 export default function NotificationsScreen() {
   const composition = useComposition();
@@ -96,6 +107,27 @@ export default function NotificationsScreen() {
           </View>
           {state !== undefined && (
             <>
+              {state.permission === 'denied' && (
+                <View testID="notifications-denied" style={styles.denied}>
+                  <Text
+                    {...voice}
+                    style={[styles.hint, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+                  >
+                    {strings.denied.message}
+                  </Text>
+                  <SettingsGroup>
+                    <NavigationRow
+                      testID="notifications-open-settings"
+                      label={strings.denied.openSettings}
+                      onPress={() => {
+                        Linking.openSettings().catch((error: unknown) => {
+                          console.error("Could not open the app's iOS settings", error);
+                        });
+                      }}
+                    />
+                  </SettingsGroup>
+                </View>
+              )}
               {state.times.length > 0 && (
                 <SettingsGroup>
                   {state.times.map((time) => (
@@ -205,4 +237,5 @@ const styles = StyleSheet.create({
   addTimeLabel: { fontSize: typeSize.body, fontWeight: '700' },
   hint: { fontSize: typeSize.body, lineHeight: typeSize.body * 1.5 },
   section: { marginTop: space[6] },
+  denied: { gap: space[3], marginBottom: space[6] },
 });
