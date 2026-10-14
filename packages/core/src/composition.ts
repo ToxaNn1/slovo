@@ -9,6 +9,7 @@ import { openHistory, type History } from './history';
 import { openHiddenEntries, type HiddenEntries } from './hidden-entries';
 import { createHiding, type Hiding } from './hiding';
 import { openMix, type Mix, type MixEdition } from './mix';
+import { openNotifications, type Notifications, type NotificationsEdition } from './notifications';
 import type { Clock, ContentReadPort, Random } from './ports';
 import { openProgress, type Progress } from './progress';
 import type { UserState } from './user-state';
@@ -43,6 +44,8 @@ export interface Composition extends Hiding {
    * an Active Day, as it does when the composition opens.
    */
   resume(): Promise<void>;
+  /** The Notification times and the notification sound, kept on this device. */
+  readonly notifications: Notifications;
   /**
    * The Entry card of any Entry, Retired or not, for a screen that opens a
    * kept Entry; nothing for an id the Language Pack doesn't have. Opening it
@@ -78,7 +81,7 @@ export async function openComposition({
   random,
 }: {
   content: ContentReadPort;
-  edition: Pick<Edition, 'isFeatureEnabled'> & MixEdition;
+  edition: Pick<Edition, 'isFeatureEnabled'> & MixEdition & NotificationsEdition;
   userState: UserState;
   clock: Clock;
   random: Random;
@@ -104,11 +107,12 @@ export async function openComposition({
     await cycle.readEligibleAgain();
     await followEligibility();
   }
-  const [favorites, collections, hiddenEntries, mix] = await Promise.all([
+  const [favorites, collections, hiddenEntries, mix, notifications] = await Promise.all([
     openFavorites({ rows, userState, clock }),
     openCollections({ rows, userState, clock, random }),
     openHiddenEntries({ rows, userState, clock, eligibilityChanged }),
     openMix({ edition, userState, eligibilityChanged }),
+    openNotifications({ edition, userState }),
   ]);
   const { progress, recordToday, todayChange } = await openProgress({ userState, clock });
   await recordToday();
@@ -125,6 +129,7 @@ export async function openComposition({
     mix,
     progress,
     resume: recordToday,
+    notifications,
     ...createHiding({ rows, hiddenEntries, mix }),
     entryCard,
     async openedFromNotification(entryId) {

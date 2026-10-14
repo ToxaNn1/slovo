@@ -93,6 +93,7 @@ async function run({
       categories,
       userSettingDefaults: {
         mix: { categoryIds: categories.map(({ id }) => id), corrections: true },
+        notificationTimes: [],
       },
     },
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),

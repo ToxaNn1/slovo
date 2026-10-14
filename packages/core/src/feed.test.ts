@@ -14,6 +14,7 @@ import {
   type ContentReadPort,
   type Edition,
   type MixEdition,
+  type NotificationsEdition,
   type Feed,
   type FeedCard,
   type Random,
@@ -64,10 +65,12 @@ const pack = [...liveIds.map((id) => word(id)), ...retiredIds.map((id) => word(i
  * An Edition with the Corrections Feature Switch on or off, whose one
  * Category, the test Words' own, is in its default Mix.
  */
-const editionWith = (corrections: boolean): Pick<Edition, 'isFeatureEnabled'> & MixEdition => ({
+const editionWith = (
+  corrections: boolean,
+): Pick<Edition, 'isFeatureEnabled'> & MixEdition & NotificationsEdition => ({
   isFeatureEnabled: (feature) => feature === 'corrections' && corrections,
   categories: [{ id: 'test', displayName: 'Test' }],
-  userSettingDefaults: { mix: { categoryIds: ['test'], corrections: true } },
+  userSettingDefaults: { mix: { categoryIds: ['test'], corrections: true }, notificationTimes: [] },
 });
 
 /** A clock the test moves by hand, in a time zone it can change. */

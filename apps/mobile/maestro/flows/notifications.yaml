@@ -1,0 +1,88 @@
+# Settings › Сповіщення: the Settings row counts the Notification times, a
+# swipe removes the earliest one and the row's value follows; the sound switch
+# turns off and on. A subflow of `smoke.yaml`; run it from there. Until times
+# can be added (the time picker's ticket, #172), it leaves one time fewer than
+# it found, and with none left it checks «Вимкнено» only; #172 makes it add
+# the time back.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- tapOn:
+    id: tab-settings
+- scrollUntilVisible:
+    element:
+      id: settings-row-notifications
+    # Off the tab bar, which covers the bottom of the list at the largest font size.
+    centerElement: true
+    visibilityPercentage: 50
+# The row reads «Сповіщення, N на день», or «Сповіщення, Вимкнено» with no times.
+- copyTextFrom:
+    id: settings-row-notifications
+- evalScript: ${output.timesBefore = Number((/(\d+)/.exec(maestro.copiedText) || ['', '0'])[1])}
+- evalScript: "${output.rowAfter = 'Сповіщення, ' + (output.timesBefore > 1 ? String(output.timesBefore - 1) + ' на день' : 'Вимкнено')}"
+- tapOn:
+    id: settings-row-notifications
+- assertVisible:
+    id: notifications
+- takeScreenshot: notifications-times
+- runFlow:
+    when:
+      true: ${output.timesBefore > 0}
+    commands:
+      # The earliest time: its swipe slides out «Видалити».
+      - swipe:
+          from:
+            id: notifications-time-.*-content
+          direction: LEFT
+          duration: 600
+      - assertVisible:
+          id: notifications-time-.*-remove
+          text: Видалити
+      - takeScreenshot: notifications-time-swiped
+      - tapOn:
+          id: notifications-time-.*-remove
+      - tapOn:
+          id: notifications-back
+      - assertVisible:
+          id: settings-row-notifications
+          text: ${output.rowAfter}
+      - tapOn:
+          id: settings-row-notifications
+- runFlow:
+    when:
+      true: ${output.timesBefore === 0}
+    commands:
+      - tapOn:
+          id: notifications-back
+      - assertVisible:
+          id: settings-row-notifications
+          text: Сповіщення, Вимкнено
+      - tapOn:
+          id: settings-row-notifications
+# The sound switch turns off and on; it starts from on, whatever an earlier run left.
+- runFlow:
+    when:
+      visible:
+        id: notifications-sound
+        checked: false
+    commands:
+      - tapOn:
+          id: notifications-sound
+- assertVisible:
+    id: notifications-sound
+    checked: true
+- tapOn:
+    id: notifications-sound
+- assertVisible:
+    id: notifications-sound
+    checked: false
+- tapOn:
+    id: notifications-sound
+- assertVisible:
+    id: notifications-sound
+    checked: true
+- tapOn:
+    id: notifications-back
+- tapOn:
+    id: tab-home
+- assertVisible:
+    id: home

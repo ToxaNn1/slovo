@@ -17,7 +17,10 @@ import {
 /** The Edition's one Category, the test Words' own, and its default Mix of every Category. */
 const testCategories = {
   categories: [{ id: 'test', displayName: 'Test' }],
-  userSettingDefaults: { mix: { categoryIds: ['test'], corrections: false } },
+  userSettingDefaults: {
+    mix: { categoryIds: ['test'], corrections: false },
+    notificationTimes: [],
+  },
 };
 
 function word(id: string, retired = false): Word {

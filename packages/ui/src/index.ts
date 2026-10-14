@@ -52,7 +52,7 @@ export {
   type PronunciationButtonState,
 } from './PronunciationButton';
 export { SegmentedControl, type Segment } from './SegmentedControl';
-export { NavigationRow, SettingsGroup, SoonRow, SwitchRow } from './SettingsRows';
+export { NavigationRow, SettingsGroup, SoonRow, SwitchRow, TimeRow } from './SettingsRows';
 export { SplashOverlay, type SplashOverlayProps } from './SplashOverlay';
 export { StatsPill } from './StatsPill';
 export {

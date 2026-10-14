@@ -79,6 +79,13 @@ export { createMemoryContentPort } from './memory-content';
 export { type Progress, type ProgressState } from './progress';
 export { type Mix, type MixEdition, type MixState } from './mix';
 export {
+  type NotificationTimeRefusal,
+  type NotificationTimeResult,
+  type Notifications,
+  type NotificationsEdition,
+  type NotificationsState,
+} from './notifications';
+export {
   systemClock,
   systemRandom,
   type Clock,

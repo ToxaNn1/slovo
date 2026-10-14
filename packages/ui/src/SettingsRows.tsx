@@ -1,10 +1,14 @@
 import { Children, Fragment, type ReactNode } from 'react';
-import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Switch, Text, useWindowDimensions, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { fill, useEdition } from './EditionProvider';
+import { rowActionProps, SwipeableRow, type RowAction } from './SwipeableRow';
 import { minTouchTarget, overlineType, space, typeSize } from './tokens';
 import { useTokens } from './TokensProvider';
+
+/** The text size scale above which a row puts its value or its switch under its label. */
+const STACK_AT_FONT_SCALE = 1.3;
 
 /** How much a row that a later version brings is dimmed. */
 const SOON_OPACITY = 0.5;
@@ -71,6 +75,8 @@ export function NavigationRow({
   testID,
 }: RowProps & { value?: string | undefined; onPress: () => void }) {
   const look = useRowLook();
+  // At the largest text sizes the value drops under the label instead of squeezing it.
+  const stacked = useWindowDimensions().fontScale > STACK_AT_FONT_SCALE;
   return (
     <Pressable
       testID={testID}
@@ -80,8 +86,17 @@ export function NavigationRow({
       onPress={onPress}
       style={styles.row}
     >
-      <Text style={[look.label, styles.grow]}>{label}</Text>
-      {value !== undefined && <Text style={[look.value, styles.trailing]}>{value}</Text>}
+      {stacked ? (
+        <View style={styles.grow}>
+          <Text style={look.label}>{label}</Text>
+          {value !== undefined && <Text style={look.value}>{value}</Text>}
+        </View>
+      ) : (
+        <>
+          <Text style={[look.label, styles.grow]}>{label}</Text>
+          {value !== undefined && <Text style={[look.value, styles.trailing]}>{value}</Text>}
+        </>
+      )}
       <Chevron />
     </Pressable>
   );
@@ -96,9 +111,11 @@ export function SwitchRow({
   testID,
 }: RowProps & { subtitle?: string; value: boolean; onChange: (value: boolean) => void }) {
   const look = useRowLook();
+  // At the largest text sizes the switch drops under the label instead of squeezing it.
+  const stacked = useWindowDimensions().fontScale > STACK_AT_FONT_SCALE;
   return (
-    <View style={styles.row}>
-      <View style={styles.grow}>
+    <View style={[styles.row, stacked && styles.stackedRow]}>
+      <View style={!stacked && styles.grow}>
         <Text style={look.label}>{label}</Text>
         {subtitle !== undefined && <Text style={look.value}>{subtitle}</Text>}
       </View>
@@ -112,6 +129,61 @@ export function SwitchRow({
         ios_backgroundColor={look.colors.track}
       />
     </View>
+  );
+}
+
+/**
+ * A time of day in a group of rows, drawn in the word family, with a chevron.
+ * Its actions slide out on a swipe to the left and are VoiceOver actions too.
+ * Needs a `GestureHandlerRootView` above it.
+ */
+export function TimeRow({
+  time,
+  accessibilityLabel,
+  actions,
+  onPress,
+  testID,
+}: {
+  /** The time as the row shows it, e.g. «09:00». */
+  time: string;
+  /** The row as VoiceOver reads it, e.g. «Сповіщення о 09:00». */
+  accessibilityLabel: string;
+  actions: readonly RowAction[];
+  /** What a tap does; without it, a tap does nothing. */
+  onPress?: () => void;
+  testID: string;
+}) {
+  const look = useRowLook();
+  return (
+    <SwipeableRow testID={testID} actions={actions}>
+      <Pressable
+        testID={`${testID}-content`}
+        accessible
+        accessibilityRole={onPress === undefined ? undefined : 'button'}
+        accessibilityLabel={accessibilityLabel}
+        {...rowActionProps(actions)}
+        {...look.voice}
+        onPress={onPress}
+        style={({ pressed }) => [
+          styles.row,
+          {
+            backgroundColor:
+              pressed && onPress !== undefined ? look.colors.surfaceSunken : look.colors.surface,
+          },
+        ]}
+      >
+        <Text
+          style={[
+            styles.time,
+            styles.grow,
+            { color: look.colors.ink, fontFamily: look.fontFamilies.word },
+          ]}
+        >
+          {time}
+        </Text>
+        <Chevron />
+      </Pressable>
+    </SwipeableRow>
   );
 }
 
@@ -186,8 +258,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: space[4],
     paddingVertical: space[2],
   },
+  stackedRow: { flexDirection: 'column', alignItems: 'flex-start' },
   label: { fontSize: typeSize.body, fontWeight: '500' },
   value: { fontSize: typeSize.body },
+  time: { fontSize: 22, fontWeight: '500' },
   soonRow: {
     opacity: SOON_OPACITY,
     flexDirection: 'column',
