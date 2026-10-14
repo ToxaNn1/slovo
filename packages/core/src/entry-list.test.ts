@@ -97,8 +97,10 @@ interface KeptList {
   readonly name: string;
   /** The prefix of its user-state records. */
   readonly prefix: string;
+  /** The name of an Entry's time in the list. */
+  readonly timeKey: string;
   /** The list as the composition offers it. */
-  readonly of: (app: Composition) => {
+  readonly listOf: (app: Composition) => {
     readonly list: readonly object[];
     has(entryId: string): boolean;
     subscribe(listener: () => void): () => void;
@@ -115,7 +117,8 @@ const keptLists: readonly KeptList[] = [
   {
     name: 'Favorites',
     prefix: 'favorites.',
-    of: ({ favorites }) => favorites,
+    timeKey: 'addedAt',
+    listOf: ({ favorites }) => favorites,
     timesOf: ({ favorites }) => favorites.list.map(({ entryId, addedAt }) => [entryId, addedAt]),
     put: ({ favorites }, entryId) => favorites.add(entryId),
     takeOut: ({ favorites }, entryId) => favorites.remove(entryId),
@@ -123,7 +126,8 @@ const keptLists: readonly KeptList[] = [
   {
     name: 'Hidden Entries',
     prefix: 'hidden.',
-    of: ({ hiddenEntries }) => hiddenEntries,
+    timeKey: 'hiddenAt',
+    listOf: ({ hiddenEntries }) => hiddenEntries,
     timesOf: ({ hiddenEntries }) =>
       hiddenEntries.list.map(({ entryId, hiddenAt }) => [entryId, hiddenAt]),
     put: ({ hiddenEntries }, entryId) => hiddenEntries.hide(entryId),
@@ -131,7 +135,7 @@ const keptLists: readonly KeptList[] = [
   },
 ];
 
-describe.each(keptLists)('$name', ({ prefix, of, timesOf, put, takeOut }) => {
+describe.each(keptLists)('$name', ({ prefix, timeKey, listOf, timesOf, put, takeOut }) => {
   const idsOf = (app: Composition) => timesOf(app).map(([entryId]) => entryId);
 
   it('keeps an Entry with the time it went in and its row, and takes it out', async () => {
@@ -139,11 +143,11 @@ describe.each(keptLists)('$name', ({ prefix, of, timesOf, put, takeOut }) => {
 
     await put(app, 'w_two');
 
-    expect(of(app).has('w_two')).toBe(true);
-    expect(timesOf(app)).toEqual([['w_two', new Date('2026-10-11T09:00:00+03:00')]]);
-    expect(of(app).list).toMatchObject([
+    expect(listOf(app).has('w_two')).toBe(true);
+    expect(listOf(app).list).toEqual([
       {
         entryId: 'w_two',
+        [timeKey]: new Date('2026-10-11T09:00:00+03:00'),
         row: {
           kind: 'word',
           entryId: 'w_two',
@@ -157,8 +161,8 @@ describe.each(keptLists)('$name', ({ prefix, of, timesOf, put, takeOut }) => {
 
     await takeOut(app, 'w_two');
 
-    expect(of(app).has('w_two')).toBe(false);
-    expect(of(app).list).toEqual([]);
+    expect(listOf(app).has('w_two')).toBe(false);
+    expect(listOf(app).list).toEqual([]);
   });
 
   it('keeps the first time when an Entry already in goes in again', async () => {
@@ -182,7 +186,7 @@ describe.each(keptLists)('$name', ({ prefix, of, timesOf, put, takeOut }) => {
     }
 
     expect(idsOf(app)).toEqual(['w_one', 'c_one', 'w_two']);
-    expect(of(app).list[1]).toMatchObject({
+    expect(listOf(app).list[1]).toMatchObject({
       row: {
         kind: 'correction',
         entryId: 'c_one',
@@ -231,7 +235,7 @@ describe.each(keptLists)('$name', ({ prefix, of, timesOf, put, takeOut }) => {
 
     const app = await run({ records, clock: time.clock });
 
-    expect(of(app).list).toEqual(of(first).list);
+    expect(listOf(app).list).toEqual(listOf(first).list);
     expect(timesOf(app)).toEqual([
       ['w_three', new Date('2026-10-11T09:02:00+03:00')],
       ['c_one', new Date('2026-10-11T09:01:00+03:00')],
@@ -252,8 +256,8 @@ describe.each(keptLists)('$name', ({ prefix, of, timesOf, put, takeOut }) => {
     await put(app, 'c_gone');
 
     expect(idsOf(app)).toEqual(['w_one']);
-    expect(of(app).has('w_gone')).toBe(false);
-    expect(of(app).has('c_gone')).toBe(false);
+    expect(listOf(app).has('w_gone')).toBe(false);
+    expect(listOf(app).has('c_gone')).toBe(false);
     expect(records.has(`${prefix}c_gone`)).toBe(false);
   });
 
@@ -269,13 +273,13 @@ describe.each(keptLists)('$name', ({ prefix, of, timesOf, put, takeOut }) => {
       },
     });
     await put(app, 'w_one');
-    const before = of(app).list;
+    const before = listOf(app).list;
     failing = true;
 
     await expect(put(app, 'w_two')).rejects.toThrow('The disk is full');
     await expect(takeOut(app, 'w_one')).rejects.toThrow('The disk is full');
 
-    expect(of(app).list).toBe(before);
+    expect(listOf(app).list).toBe(before);
     expect(idsOf(app)).toEqual(['w_one']);
     failing = false;
     await takeOut(app, 'w_one');
@@ -286,31 +290,31 @@ describe.each(keptLists)('$name', ({ prefix, of, timesOf, put, takeOut }) => {
     it('is a new object after each change, telling the subscribers, and the same one otherwise', async () => {
       const app = await run();
       let told = 0;
-      of(app).subscribe(() => {
+      listOf(app).subscribe(() => {
         told += 1;
       });
-      const empty = of(app).list;
+      const empty = listOf(app).list;
 
       await takeOut(app, 'w_one');
-      expect(of(app).list).toBe(empty);
+      expect(listOf(app).list).toBe(empty);
 
       await put(app, 'w_one');
-      const added = of(app).list;
+      const added = listOf(app).list;
       expect(added).not.toBe(empty);
 
       await put(app, 'w_one');
-      expect(of(app).list).toBe(added);
+      expect(listOf(app).list).toBe(added);
       expect(told).toBe(1);
 
       await takeOut(app, 'w_one');
-      expect(of(app).list).not.toBe(added);
+      expect(listOf(app).list).not.toBe(added);
       expect(told).toBe(2);
     });
 
     it('stops telling a subscriber that unsubscribed', async () => {
       const app = await run();
       let told = 0;
-      const stop = of(app).subscribe(() => {
+      const stop = listOf(app).subscribe(() => {
         told += 1;
       });
 
