@@ -1,17 +1,52 @@
 # Favorites: heart a card in the Feed, see it counted on the Saved tab and
 # listed in Favorites, open it, and take it out from its Entry screen.
-# A subflow of `smoke.yaml`; run it from there. It expects Favorites empty, as
-# it leaves them.
+# A subflow of `smoke.yaml`; run it from there. It starts by taking out the
+# Favorites it finds, and leaves none.
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
+# Take every Entry out of Favorites, so the counts below are the flow's own.
+- tapOn:
+    id: tab-saved
+- tapOn:
+    id: saved-favorites
+- assertVisible:
+    id: favorites
+- repeat:
+    while:
+      visible:
+        id: entry-row-.*-open
+    times: 50
+    commands:
+      - tapOn:
+          id: entry-row-.*-open
+      - scrollUntilVisible:
+          element:
+            id: favorite-button
+      - swipe:
+          start: 50%, 60%
+          end: 50%, 48%
+          duration: 800
+      - waitForAnimationToEnd
+      - tapOn:
+          id: favorite-button
+          text: Прибрати з Улюбленого
+      - tapOn:
+          id: entry-screen-back
+- tapOn:
+    id: favorites-back
 - tapOn:
     id: tab-home
 # The heart sits under the card, which may be taller than the screen.
 - scrollUntilVisible:
     element:
       id: favorite-button
-    # Off the tab bar, which covers the bottom of a card that barely fits.
-    centerElement: true
+# Then off the tab bar, which covers the bottom of a card that barely fits: a
+# short slow drag scrolls the card further, or to its end, and is too short
+# and slow to turn the page.
+- swipe:
+    start: 50%, 60%
+    end: 50%, 48%
+    duration: 800
 # A tap while the card still glides only stops it.
 - waitForAnimationToEnd
 - assertVisible:
@@ -47,8 +82,13 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - scrollUntilVisible:
     element:
       id: favorite-button
-    # Off the tab bar, which covers the bottom of a card that barely fits.
-    centerElement: true
+# Then off the tab bar, which covers the bottom of a card that barely fits: a
+# short slow drag scrolls the card further, or to its end, and is too short
+# and slow to turn the page.
+- swipe:
+    start: 50%, 60%
+    end: 50%, 48%
+    duration: 800
 # A tap while the card still glides only stops it.
 - waitForAnimationToEnd
 - tapOn:

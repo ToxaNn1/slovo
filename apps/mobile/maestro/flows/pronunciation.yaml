@@ -4,9 +4,11 @@ appId: ${APP_ID || 'app.slovo.uk'}
 ---
 # The Pronunciation button reads the Lemma aloud; on a device without a voice
 # for the Edition's language it explains why instead. A tap on the message
-# closes it.
+# closes it. Tapped on the left of the button: the development client's floating
+# tools button sits over the right of it.
 - tapOn:
     id: word-pronunciation
+    point: 10%,50%
 - runFlow:
     when:
       visible:

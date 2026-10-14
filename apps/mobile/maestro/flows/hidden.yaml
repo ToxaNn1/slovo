@@ -1,17 +1,42 @@
 # The Hidden screen: hide two cards, find them under Settings › Приховані
 # записи, bring the older one back with «Повернути» and undo that from the
 # toast, which puts it back at its old place, below the newer one. A subflow of
-# `smoke.yaml`; run it from there. It expects no Hidden Entry, as it leaves
-# none.
+# `smoke.yaml`; run it from there. It starts by bringing back the Hidden
+# Entries it finds, and leaves none.
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
+# Bring every Hidden Entry back, so the counts below are the flow's own.
+- tapOn:
+    id: tab-settings
+- scrollUntilVisible:
+    element:
+      id: settings-row-hidden
+    # Off the tab bar, which covers the bottom of the list at the largest font size.
+    centerElement: true
+    visibilityPercentage: 50
+- tapOn:
+    id: settings-row-hidden
+- assertVisible:
+    id: hidden
+- repeat:
+    while:
+      visible:
+        id: hidden-entry-.*-restore
+    times: 50
+    commands:
+      - tapOn:
+          id: hidden-entry-.*-restore
+      - waitForAnimationToEnd
+- tapOn:
+    id: hidden-back
 - tapOn:
     id: tab-home
-# Keep the card's title (VoiceOver reads the Lemma first, then its Stress), to
-# find the hidden Entry later.
+# Keep the card's title, to find the hidden Entry later: VoiceOver reads a Word
+# card's Lemma first, then its Stress; a Correction card's standard form comes
+# after its label, which is cut off here.
 - copyTextFrom:
     id: word-lemma|correction-standard
-- evalScript: ${output.olderTitle = maestro.copiedText.split(',')[0]}
+- evalScript: ${output.olderTitle = maestro.copiedText.split(',')[0].split(':').pop().trim()}
 # The hide button sits under the card, which may be taller than the screen, and
 # off the tab bar (see hiding.yaml).
 - scrollUntilVisible:
@@ -32,7 +57,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - waitForAnimationToEnd
 - copyTextFrom:
     id: word-lemma|correction-standard
-- evalScript: ${output.newerTitle = maestro.copiedText.split(',')[0]}
+- evalScript: ${output.newerTitle = maestro.copiedText.split(',')[0].split(':').pop().trim()}
 - scrollUntilVisible:
     element:
       id: hide-button

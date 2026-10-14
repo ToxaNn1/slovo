@@ -14,9 +14,12 @@ appId: ${APP_ID || 'app.slovo.uk'}
 # The development client's floating tools button sits over «+»: drag it down for
 # the flow, and back at the end.
 - swipe:
-    start: 89%, 12%
-    end: 89%, 80%
+    from:
+      id: gearshape.fill
+    direction: DOWN
     duration: 600
+- runFlow:
+    file: ../dismiss-dev-menu.yaml
 # A fresh state shows the empty list with its own button; a state that has Collections shows «+».
 - takeScreenshot: collections-start
 # A new Collection, named in the field that «+» opens.
@@ -132,9 +135,12 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - tapOn:
     id: collections-back
 - swipe:
-    start: 89%, 80%
-    end: 89%, 12%
+    from:
+      id: gearshape.fill
+    direction: UP
     duration: 600
+- runFlow:
+    file: ../dismiss-dev-menu.yaml
 - tapOn:
     id: tab-home
 - assertVisible:

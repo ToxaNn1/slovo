@@ -2,10 +2,22 @@
 # A subflow of `smoke.yaml`; run it from there.
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
-# The day opens on its Word of the Day: a Word from the bundled Language Pack
-# with the badge over its Lemma and a Stress mark (U+0301, the combining
-# acute accent) in it. Its Lemma is kept to check that it stays the same
-# after a relaunch.
+# The first run of a day opens on its Word of the Day. On a simulator that ran
+# before the same day, the Feed reopens on the card the reader was on, with the
+# Word of the Day one swipe back: go back to it.
+- repeat:
+    while:
+      notVisible:
+        id: feed-card-0
+    times: 6
+    commands:
+      - swipe:
+          start: 50%, 30%
+          end: 50%, 80%
+          duration: 300
+      - waitForAnimationToEnd
+# The Word of the Day: a Word from the bundled Language Pack with the badge
+# over its Lemma and a Stress mark (U+0301, the combining acute accent) in it.
 - assertVisible:
     id: feed-card-0
 - assertVisible:
@@ -21,5 +33,3 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: word-definition
 - assertVisible:
     id: word-category
-- copyTextFrom:
-    id: word-lemma

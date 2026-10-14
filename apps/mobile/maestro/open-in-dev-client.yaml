@@ -11,23 +11,25 @@ appId: ${APP_ID || 'app.slovo.uk'}
       visible: Open
     commands:
       - tapOn: Open
-# Wait for the Feed. On a new simulator the development client opens its
-# menu over the app, before or after the JavaScript loads; close it on the way.
+# Wait for the Feed: a card of any kind, since the Feed reopens on the card the
+# reader was on, which may be a Correction or the end of the Cycle. On a new
+# simulator the development client opens its menu over the app, before or after
+# the JavaScript loads; close it on the way.
 - repeat:
     while:
       notVisible:
-        id: word-lemma
+        id: feed-card-.*
     times: 24
     commands:
       - runFlow:
           file: dismiss-dev-menu.yaml
       - extendedWaitUntil:
           visible:
-            id: word-lemma
+            id: feed-card-.*
           timeout: 5000
           optional: true
 - assertVisible:
-    id: word-lemma
+    id: feed-card-.*
 # The app's splash covers everything for a moment, then fades out.
 - extendedWaitUntil:
     notVisible:
@@ -35,3 +37,18 @@ appId: ${APP_ID || 'app.slovo.uk'}
     timeout: 10000
 - runFlow:
     file: dismiss-dev-menu.yaml
+# The development client's floating tools button stays where an earlier run left
+# it, perhaps over a button of the app: put it at the top of the screen, where
+# the flows know to tap around it. A drag that counts as a tap opens the menu.
+- runFlow:
+    when:
+      visible:
+        id: gearshape.fill
+    commands:
+      - swipe:
+          from:
+            id: gearshape.fill
+          direction: UP
+          duration: 600
+      - runFlow:
+          file: dismiss-dev-menu.yaml

@@ -3,6 +3,20 @@
 # A subflow of `smoke.yaml`; run it from there.
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
+# Back to the first card, the Word of the Day, to keep its Lemma.
+- repeat:
+    while:
+      notVisible:
+        id: feed-card-0
+    times: 6
+    commands:
+      - swipe:
+          start: 50%, 30%
+          end: 50%, 80%
+          duration: 300
+      - waitForAnimationToEnd
+- copyTextFrom:
+    id: word-lemma
 - repeat:
     while:
       notVisible:

@@ -3,10 +3,19 @@
 # A subflow of `smoke.yaml`; run it from there.
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
+# Keep the Lemma of the Word on screen (the Word of the Day, on the first card),
+# to find the same card in the Feed after the new Theme and size.
+- copyTextFrom:
+    id: word-lemma
 # Settings: Theme Dark and font size L. The preview card shows the Lemma at
 # the chosen size.
 - tapOn:
     id: tab-settings
+# Start from the defaults (Theme System, size M), whatever an earlier run left.
+- tapOn:
+    id: settings-theme-system
+- tapOn:
+    id: settings-font-size-M
 - tapOn:
     id: settings-theme-dark
 - assertVisible:
