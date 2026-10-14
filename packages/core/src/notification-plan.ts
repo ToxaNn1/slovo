@@ -98,7 +98,7 @@ function slotsAhead(times: readonly string[], clock: Clock): Slot[] {
  * `NOTIFICATION_BODY_LENGTH`, its start cut at a word boundary, without the
  * punctuation before the cut, and the ellipsis.
  */
-function cutBody(text: string, ellipsis: string): string {
+export function notificationBody(text: string, ellipsis: string): string {
   const characters = Array.from(text);
   if (characters.length <= NOTIFICATION_BODY_LENGTH) return text;
   const room = NOTIFICATION_BODY_LENGTH - Array.from(ellipsis).length;
@@ -212,7 +212,7 @@ export function createNotificationPlanner({
       notifications.push({
         ...slot,
         title: renderStress(word),
-        body: cutBody(word.primaryDefinition, ellipsis),
+        body: notificationBody(word.primaryDefinition, ellipsis),
         wordId,
         sound: soundOf(sound),
       });

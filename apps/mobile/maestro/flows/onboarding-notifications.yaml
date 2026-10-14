@@ -1,0 +1,110 @@
+# Onboarding step 3, notifications: «Почати» and «Далі» lead to «КРОК 3 З 3»
+# with a sample of the Word of the Day's notification and the Notification
+# times; a time taken out here is gone from Settings › Сповіщення; «Пізніше»
+# opens the Feed without asking, and a relaunch shows no onboarding. On the
+# dev client built before the 0.4 native batch (no notifications module, no
+# time picker) «+ Додати час» is disabled and «Дозволити сповіщення» asks
+# nothing; the permission prompt and the picker are checked after the native
+# build. A subflow of `smoke.yaml`; run it from there. It starts from a fresh
+# install, whatever the simulator holds, so it clears the app's state: put it
+# last in the smoke flow, as it takes the Favorites and the other choices with it.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- launchApp:
+    clearState: true
+- runFlow:
+    file: ../open-in-dev-client.yaml
+    env:
+      PASS_ONBOARDING: 'false'
+      READY_ID: onboarding
+# The development client's menu may open over the welcome on a fresh install.
+- runFlow:
+    file: ../dismiss-dev-menu.yaml
+- tapOn:
+    id: onboarding-start
+- assertVisible:
+    id: onboarding-mix
+# Keep a Category chosen: the Edition's default Mix, taken as it is.
+- tapOn:
+    id: onboarding-next
+- assertVisible:
+    id: onboarding-notifications
+- assertVisible:
+    id: onboarding-step
+- assertVisible: КРОК 3 З 3
+# The sample: today's Word of the Day, at the earliest default time.
+- assertVisible:
+    id: onboarding-sample
+- assertVisible:
+    id: onboarding-sample-lemma
+- assertVisible:
+    id: onboarding-sample-body
+- assertVisible:
+    id: onboarding-sample-time
+    text: '09:00'
+# The Edition's default times, the same list as Settings › Сповіщення.
+- assertVisible:
+    id: notifications-time-09:00-content
+- assertVisible:
+    id: notifications-time-13:00-content
+- assertVisible:
+    id: notifications-time-19:00-content
+- assertVisible:
+    id: notifications-add-time
+- assertVisible:
+    id: onboarding-allow
+- assertVisible:
+    id: onboarding-later
+- takeScreenshot: onboarding-notifications
+# Taking a time out here applies at once.
+- swipe:
+    from:
+      id: notifications-time-13:00-content
+    direction: LEFT
+    duration: 600
+- tapOn:
+    id: notifications-time-13:00-remove
+- assertNotVisible:
+    id: notifications-time-13:00-content
+# «Пізніше» finishes without asking and brings the Feed.
+- tapOn:
+    id: onboarding-later
+- assertVisible:
+    id: feed-card-.*
+- assertNotVisible:
+    id: onboarding-notifications
+- tapOn:
+    id: tab-settings
+- scrollUntilVisible:
+    element:
+      id: settings-row-notifications
+    centerElement: true
+    visibilityPercentage: 50
+# Settings › Сповіщення shows the times left on the step (3 − 1).
+- assertVisible:
+    id: settings-row-notifications
+    text: Сповіщення, 2 на день
+- tapOn:
+    id: settings-row-notifications
+- assertVisible:
+    id: notifications-time-09:00-content
+- assertVisible:
+    id: notifications-time-19:00-content
+- assertNotVisible:
+    id: notifications-time-13:00-content
+- tapOn:
+    id: notifications-back
+# A relaunch brings the Feed, with no onboarding.
+- stopApp
+- launchApp:
+    clearState: false
+- runFlow:
+    file: ../open-in-dev-client.yaml
+    env:
+      PASS_ONBOARDING: 'false'
+- assertVisible:
+    id: feed-card-.*
+- assertNotVisible:
+    id: onboarding
+- assertNotVisible:
+    id: onboarding-notifications
