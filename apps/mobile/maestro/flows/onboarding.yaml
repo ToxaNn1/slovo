@@ -1,0 +1,50 @@
+# Onboarding: a fresh install shows the welcome over the Feed; «Пропустити»
+# finishes it at once, and a relaunch shows no onboarding. A subflow of
+# `smoke.yaml`; run it from there. It starts from a fresh install, whatever
+# the simulator holds, so it clears the app's state: put it last in the smoke
+# flow, as it takes the Favorites and the other choices with it.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- launchApp:
+    clearState: true
+- runFlow:
+    file: ../open-in-dev-client.yaml
+    env:
+      PASS_ONBOARDING: 'false'
+      READY_ID: onboarding
+# The development client's menu may open over the welcome on a fresh install.
+- runFlow:
+    file: ../dismiss-dev-menu.yaml
+- assertVisible:
+    id: onboarding
+- assertVisible:
+    id: onboarding-hero-lemma
+- assertVisible:
+    id: onboarding-start
+- assertVisible:
+    id: onboarding-skip
+- takeScreenshot: onboarding-welcome
+# The onboarding covers the Feed: no Feed card is reachable behind it.
+- assertNotVisible:
+    id: feed-card-.*
+# The label's left end: the development client's floating tools button may
+# sit over its right end.
+- tapOn:
+    id: onboarding-skip
+    point: 15%, 50%
+- assertVisible:
+    id: feed-card-.*
+- assertNotVisible:
+    id: onboarding
+# A relaunch brings the Feed, with no onboarding.
+- stopApp
+- launchApp:
+    clearState: false
+- runFlow:
+    file: ../open-in-dev-client.yaml
+    env:
+      PASS_ONBOARDING: 'false'
+- assertVisible:
+    id: feed-card-.*
+- assertNotVisible:
+    id: onboarding

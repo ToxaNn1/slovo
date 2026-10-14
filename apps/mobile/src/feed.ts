@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 
 import { useComposed, useComposition } from './composition';
+import { useOnboardingOpen } from './onboarding';
 
 export type FeedState =
   | { readonly status: 'loading' }
@@ -36,8 +37,8 @@ const noCards: readonly FeedCard[] = [];
 
 /**
  * The Feed of the session's Core composition.
- * It tells the Feed which card is on screen while Home is focused and the app
- * is in the foreground, and that none is otherwise.
+ * It tells the Feed which card is on screen while Home is focused, the app is
+ * in the foreground and no onboarding covers it, and that none is otherwise.
  */
 export function useFeed(): FeedState {
   const composition = useComposition();
@@ -47,7 +48,9 @@ export function useFeed(): FeedState {
   const position = turnedTo ?? feed?.startPosition;
   const focused = useIsFocused();
   const appActive = useAppActive();
-  const onScreen = focused && appActive;
+  // The onboarding covers the Feed, so no card is on screen until it ends.
+  const onboardingOpen = useOnboardingOpen();
+  const onScreen = focused && appActive && !onboardingOpen;
   const cards = useComposed(
     (open) => open.feed,
     (open) => open.cards,
