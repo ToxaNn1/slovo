@@ -1,16 +1,32 @@
 import { fill, type EditionStrings } from '@slovo/contracts';
-import type { Edition, EntryFeedCard, MixState } from '@slovo/core';
+import {
+  entryIdOf,
+  type Edition,
+  type EntryFeedCard,
+  type HideTarget,
+  type HidingChange,
+  type MixState,
+} from '@slovo/core';
 
-/** One option of the hide choice, with the undo toast it shows when it hides something of the Mix. */
+/** One option of the hide choice, with what it hides and the undo toast it shows when it hides something of the Mix. */
 export type HideOption =
-  | { readonly kind: 'entry'; readonly label: string }
+  | {
+      readonly kind: 'entry';
+      readonly target: Extract<HideTarget, { readonly kind: 'entry' }>;
+      readonly label: string;
+    }
   | {
       readonly kind: 'category';
-      readonly categoryId: string;
+      readonly target: Extract<HideTarget, { readonly kind: 'category' }>;
       readonly label: string;
       readonly toast: string;
     }
-  | { readonly kind: 'corrections'; readonly label: string; readonly toast: string };
+  | {
+      readonly kind: 'corrections';
+      readonly target: Extract<HideTarget, { readonly kind: 'corrections' }>;
+      readonly label: string;
+      readonly toast: string;
+    };
 
 /**
  * The options of the hide choice a card's hide button opens: always its
@@ -30,13 +46,18 @@ export function hideChoice({
   edition: Pick<Edition, 'categories'>;
   strings: EditionStrings['hiding'];
 }): readonly HideOption[] {
-  const entry: HideOption = { kind: 'entry', label: strings.choice.entry };
+  const entry: HideOption = {
+    kind: 'entry',
+    target: { kind: 'entry', entryId: entryIdOf(card) },
+    label: strings.choice.entry,
+  };
   if (card.kind === 'correction') {
     return mix.corrections
       ? [
           entry,
           {
             kind: 'corrections',
+            target: { kind: 'corrections' },
             label: strings.choice.corrections,
             toast: strings.correctionsHidden,
           },
@@ -56,9 +77,27 @@ export function hideChoice({
     entry,
     {
       kind: 'category',
-      categoryId,
+      target: { kind: 'category', categoryId },
       label: fill(strings.choice.category, name),
       toast: fill(strings.categoryHidden, name),
     },
   ];
+}
+
+/**
+ * The undo toast's text for a hide that changed something: the Entry's title,
+ * or the option's own toast for a Category or Corrections. Nothing for a
+ * change the option didn't ask for.
+ */
+export function hideToast({
+  option,
+  changed,
+  strings,
+}: {
+  option: HideOption;
+  changed: HidingChange;
+  strings: EditionStrings['hiding'];
+}): string | undefined {
+  if (changed.kind === 'entry') return fill(strings.entryHidden, { title: changed.row.title });
+  return option.kind === 'entry' ? undefined : option.toast;
 }
