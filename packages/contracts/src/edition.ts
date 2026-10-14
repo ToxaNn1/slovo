@@ -107,6 +107,17 @@ export const TimeOfDaySchema = z
 /** The most notification times a user may have. */
 export const MAX_NOTIFICATION_TIMES = 10;
 
+/**
+ * A user's notification times: valid, no two equal and at most
+ * `MAX_NOTIFICATION_TIMES`. The order is not checked here: the Edition's
+ * defaults are sorted when the config is read, and the user's list is kept in
+ * time order by whoever writes it.
+ */
+export const NotificationTimesSchema = z
+  .array(TimeOfDaySchema)
+  .max(MAX_NOTIFICATION_TIMES)
+  .refine((times) => new Set(times).size === times.length, 'Expected unique times');
+
 export const MixConfigSchema = z.strictObject({
   /** Either every Category of the Edition, or the listed Category ids. */
   categories: z.union([
@@ -126,10 +137,8 @@ export const UserSettingDefaultsConfigSchema = z.strictObject({
   fontSize: FontSizeSchema,
   /** Whether haptics are on for a new user. */
   vibration: z.boolean(),
-  notificationTimes: z
-    .array(TimeOfDaySchema)
-    .max(MAX_NOTIFICATION_TIMES)
-    .refine((times) => new Set(times).size === times.length, 'Expected unique times'),
+  /** The default notification times, kept in time order. */
+  notificationTimes: NotificationTimesSchema.transform((times) => [...times].sort()),
   mix: MixConfigSchema,
 });
 

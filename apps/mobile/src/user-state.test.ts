@@ -1,6 +1,7 @@
 import {
   createMemoryUserStatePort,
   openUserState,
+  userStateRecords,
   UserStateTooNewError,
   type UserStateMigration,
   type UserStatePort,
@@ -180,6 +181,63 @@ describe.each(adapters)('the user state %s', (_, createStore) => {
     await Promise.all(['1', '2', '3'].map((value) => port.write(new Map([['n', value]]))));
 
     expect(await port.get('n')).toBe('3');
+  });
+
+  it('keeps every 0.4 record, whole lists included, and finds each kind by its prefix', async () => {
+    const { activeDays, notificationTimes, notificationSound, notificationPlan } = userStateRecords;
+    const { onboardingFinished } = userStateRecords;
+    const store = createStore();
+    await (
+      await store.open()
+    ).write(
+      new Map([
+        ...activeDays.record('2026-10-13').change(true),
+        ...activeDays.record('2026-10-14').change(true),
+        ...notificationTimes.change(['09:00', '13:00', '19:00']),
+        ...notificationSound.change(false),
+        ...notificationPlan.record('2026-10-14T09:00').change('w_1'),
+        ...notificationPlan.record('2026-10-14T13:00').change('w_2'),
+        ...onboardingFinished.change('2026-10-14T06:30:00.000Z'),
+      ]),
+    );
+
+    const port = await store.open();
+    expect(notificationTimes.decode(await port.get('notifications.times'))).toEqual([
+      '09:00',
+      '13:00',
+      '19:00',
+    ]);
+    expect(notificationSound.decode(await port.get('notifications.sound'))).toBe(false);
+    expect(onboardingFinished.decode(await port.get('onboarding.finished'))).toBe(
+      '2026-10-14T06:30:00.000Z',
+    );
+    expect([...(await port.list(activeDays.prefix)).keys()].sort()).toEqual([
+      'activeDays.2026-10-13',
+      'activeDays.2026-10-14',
+    ]);
+    const plan = await port.list(notificationPlan.prefix);
+    expect([...plan.keys()].sort()).toEqual([
+      'notifications.plan.2026-10-14T09:00',
+      'notifications.plan.2026-10-14T13:00',
+    ]);
+    expect(
+      notificationPlan
+        .record('2026-10-14T13:00')
+        .decode(plan.get(notificationPlan.prefix + '2026-10-14T13:00')),
+    ).toBe('w_2');
+    // A prefix that several kinds share still finds them all.
+    expect(await port.list('notifications.')).toHaveProperty('size', 4);
+    expect(await port.list('onboarding.')).toHaveProperty('size', 1);
+  });
+
+  it('stores an empty list of notification times as a record, so it never reads as absent', async () => {
+    const { notificationTimes } = userStateRecords;
+    const store = createStore();
+    await (await store.open()).write(notificationTimes.change([]));
+
+    expect(notificationTimes.decode(await (await store.open()).get('notifications.times'))).toEqual(
+      [],
+    );
   });
 
   it('brings an older schema forward, running each pending migration once and keeping the data', async () => {

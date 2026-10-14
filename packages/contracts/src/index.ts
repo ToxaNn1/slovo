@@ -11,6 +11,7 @@ export {
   LanguageTraitsSchema,
   MAX_NOTIFICATION_TIMES,
   MixConfigSchema,
+  NotificationTimesSchema,
   ThemeSchema,
   TimeOfDaySchema,
   UserSettingDefaultsConfigSchema,
@@ -28,9 +29,11 @@ export {
 export {
   EditionStringsSchema,
   fill,
+  PluralLabelSchema,
   PluralSchema,
   type EditionStrings,
   type Plural,
+  type PluralLabel,
 } from './edition-strings';
 export {
   DecorLayerSchema,

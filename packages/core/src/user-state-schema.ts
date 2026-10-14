@@ -1,4 +1,4 @@
-import { FontSizeSchema, ThemeSchema } from '@slovo/contracts';
+import { FontSizeSchema, NotificationTimesSchema, ThemeSchema } from '@slovo/contracts';
 import { z } from 'zod';
 
 import { declareRecord, declareRecords } from './user-state-record';
@@ -74,6 +74,31 @@ export const userStateRecords = {
   mixCategories: declareRecords('mix.categories.', z.boolean()),
   /** Whether the user has Corrections, as a whole, in the Mix; without it, the Edition's default Mix. */
   mixCorrections: declareRecord('mix.corrections', z.boolean()),
+  /**
+   * The Active Days, one record per day, by local date `YYYY-MM-DD`: that the
+   * app was opened that day. They sync as a union (0.8).
+   */
+  activeDays: declareRecords('activeDays.', z.literal(true), { sync: 'union' }),
+  /**
+   * The user's notification times, local times `HH:MM`. Without the record,
+   * the Edition's default times; an empty list is a record of its own, so no
+   * times never falls back to the defaults.
+   */
+  notificationTimes: declareRecord('notifications.times', NotificationTimesSchema, {
+    sync: 'device-only',
+  }),
+  /** Whether notifications play their sound; without the record, they do. */
+  notificationSound: declareRecord('notifications.sound', z.boolean(), { sync: 'device-only' }),
+  /**
+   * The planned notifications, one record per notification, by its local date
+   * and local time joined with a `T` (`2026-10-14T09:00`): the id of its Word.
+   * A Word with such a record is Reserved; Reserved is never stored on its own.
+   */
+  notificationPlan: declareRecords('notifications.plan.', z.string().min(1), {
+    sync: 'device-only',
+  }),
+  /** That the onboarding was finished or skipped, and the instant it was; without the record, it opens. */
+  onboardingFinished: declareRecord('onboarding.finished', InstantSchema),
 };
 
 /**

@@ -9,8 +9,12 @@ import { HiddenStringsSchema } from './hidden';
 import { HidingStringsSchema } from './hiding';
 import { HistoryStringsSchema } from './history';
 import { MixStringsSchema } from './mix';
+import { NotificationBodyStringsSchema } from './notification-body';
+import { NotificationsStringsSchema } from './notifications';
+import { OnboardingStringsSchema } from './onboarding';
 import { SettingsStringsSchema } from './settings';
 import { SplashStringsSchema } from './splash';
+import { StatsStringsSchema } from './stats';
 import { TabsStringsSchema } from './tabs';
 import { WordCardStringsSchema } from './word-card';
 
@@ -35,8 +39,12 @@ export const EditionStringsSchema = z.strictObject({
   hiding: HidingStringsSchema,
   mix: MixStringsSchema,
   hidden: HiddenStringsSchema,
+  stats: StatsStringsSchema,
+  onboarding: OnboardingStringsSchema,
+  notifications: NotificationsStringsSchema,
+  notificationBody: NotificationBodyStringsSchema,
 });
 
 export type EditionStrings = z.infer<typeof EditionStringsSchema>;
 
-export { fill, PluralSchema, type Plural } from './shared';
+export { fill, PluralLabelSchema, PluralSchema, type Plural, type PluralLabel } from './shared';
