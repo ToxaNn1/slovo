@@ -81,6 +81,13 @@ export {
   type UserStatePort,
 } from './ports';
 export {
+  type RecordOptions,
+  type SyncMark,
+  type UserStateRecord,
+  type UserStateRecords,
+} from './user-state-record';
+export { userStateRecords } from './user-state-schema';
+export {
   createMemoryUserStatePort,
   openUserState,
   UserStateTooNewError,

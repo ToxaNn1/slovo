@@ -37,3 +37,19 @@ The Cycle and the Word of the Day read the user state once, when they open, and 
 History is one record per Entry, `history.` + Entry id, holding the instant it was Seen and whether it was the Word of the Day's card. An Entry joins History only when it becomes Seen in the Feed, in the same write as its Seen mark (ADR 0018): going back to a card already Seen in the Cycle records nothing, and an Entry Seen again in a later Cycle moves to the top with the new time. The write that adds the 501st entry also deletes the oldest. History starts empty in 0.3: 0.2 kept no times for what was Seen, so there is nothing to bring forward.
 
 Here the Feed hands its changes (the Seen mark and its position) to History, which writes them with its own record in one write and then updates its list; the Feed commits the Cycle change after that write, as before. History does not return a change for the Feed to write, unlike the Cycle, because clearing History runs outside the Feed. History takes its record and a clear one at a time, so a clear never lands between a record's choice of the entry to evict and its write.
+
+## Amendment: the 0.4 records, and which of them sync (0.4)
+
+0.4 declares its records once, up front, in `packages/core/src/user-state-schema.ts`, so the features that fill them in don't collide:
+
+- an Active Day: `activeDays.` + the local date (`YYYY-MM-DD`), holding `true`;
+- the notification times: `notifications.times`, a list of local times (`HH:MM`);
+- the notification sound: `notifications.sound`, on or off;
+- a planned notification: `notifications.plan.` + the local date + `T` + the local time, holding the id of its Word. A Word with such a record is Reserved, so Reserved is never stored on its own;
+- the onboarding finished: `onboarding.finished`, the instant it finished.
+
+Every one reads as absent or as the Edition's default (no times record means the Edition's times, no sound record means sound on, no finished record means the onboarding opens), so 0.4 adds no migration and the `records` table and the adapters stay as they are. The dates and times hold no `.`, so no prefix overlaps another.
+
+The schema marks how each record syncs when sync arrives (ADR 0005), so 0.8 doesn't have to guess. `device-only` records stay on the device: the notification times, the sound and the plan, because a phone and a tablet may remind the same reader differently and the plan is built from the device's own permission and local time. `union` records of every device are all kept: the Active Days, so the Streak derived from them is the same everywhere. A record with no mark syncs by last write wins, one record at a time, as before.
+
+An empty list of times is stored as an empty list, not as an absent record or a deleted one. Absent means "the Edition's default times", so deleting the record on the last removal would bring the defaults back instead of stopping the notifications.
