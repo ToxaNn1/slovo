@@ -38,6 +38,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - runFlow: flows/hiding.yaml
 - runFlow: flows/hiding-mix.yaml
 - runFlow: flows/hidden.yaml
+- runFlow: flows/notifications.yaml
 # Last, as they clear the app's state for a fresh install.
 - runFlow: flows/stats-pill.yaml
 - runFlow: flows/open-from-notification.yaml

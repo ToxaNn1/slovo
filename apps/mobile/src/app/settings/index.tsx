@@ -18,6 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { editionStrings } from '../../edition';
 import { useHiddenSummary } from '../../hidden';
 import { useMixSummary } from '../../mix';
+import { useNotificationsSummary } from '../../notifications';
 import { useSettings } from '../../settings';
 
 const strings = editionStrings.settings;
@@ -44,6 +45,7 @@ export default function SettingsScreen() {
   const router = useRouter();
   const mixSummary = useMixSummary();
   const hiddenSummary = useHiddenSummary();
+  const notificationsSummary = useNotificationsSummary();
   return (
     <SafeAreaView
       testID="settings"
@@ -81,7 +83,14 @@ export default function SettingsScreen() {
         </View>
         <View style={styles.section}>
           <SettingsGroup>
-            <SoonRow testID="settings-row-notifications" label={strings.rows.notifications} />
+            <NavigationRow
+              testID="settings-row-notifications"
+              label={strings.rows.notifications}
+              value={notificationsSummary}
+              onPress={() => {
+                router.push('/settings/notifications');
+              }}
+            />
             <NavigationRow
               testID="settings-row-my-mix"
               label={strings.rows.myMix}
