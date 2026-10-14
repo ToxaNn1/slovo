@@ -22,12 +22,14 @@ export const NotificationsStringsSchema = z.strictObject({
   duplicateHint: TextSchema,
   /** What VoiceOver reads for a time in the list, e.g. «Сповіщення о 09:00». Takes `{time}`. */
   timeLabel: templateOf('time'),
-  /** The VoiceOver action that changes a time. */
+  /** What VoiceOver says a tap on a time does: it changes the time. */
   change: TextSchema,
   /** The action that removes a time (a swipe, and the same for VoiceOver). */
   remove: TextSchema,
   /** The label of the time picker. */
   pickerLabel: TextSchema,
+  /** The button that keeps the picked time and closes the picker. */
+  done: TextSchema,
   /** The switch for the notification sound. */
   sound: TextSchema,
   /** When iOS has denied permission. */

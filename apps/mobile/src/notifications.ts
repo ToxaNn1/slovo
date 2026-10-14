@@ -1,10 +1,10 @@
-import type { Notifications, NotificationsState } from '@slovo/core';
+import type { Notifications, NotificationsState, NotificationTimeRefusal } from '@slovo/core';
 import { useEdition } from '@slovo/ui';
 import { useMemo } from 'react';
 
 import { useComposed, useModule } from './composition';
 import { editionStrings } from './edition';
-import { notificationsSummary } from './notifications-screen';
+import { keepPickedTime, notificationsSummary } from './notifications-screen';
 
 /** Notifications of the session's Core composition, once it is open. */
 function useNotifications(): Notifications | undefined {
@@ -42,6 +42,12 @@ export function useNotificationsSummary(): string | undefined {
  * could not be kept is logged and leaves things as they were.
  */
 export function useNotificationsChanges(): {
+  /**
+   * Keeps the time the reader picked: it replaces the time `from`, or is
+   * added without one. Resolves to why it was refused, or nothing when it is
+   * kept or could not be written.
+   */
+  keepTime: (picked: Date, from?: string) => Promise<NotificationTimeRefusal | undefined>;
   removeTime: (time: string) => void;
   setSound: (on: boolean) => void;
 } {
@@ -52,6 +58,19 @@ export function useNotificationsChanges(): {
     });
   };
   return {
+    keepTime: async (picked, from) => {
+      if (notifications === undefined) return undefined;
+      try {
+        return await keepPickedTime({
+          notifications,
+          picked,
+          ...(from === undefined ? {} : { from }),
+        });
+      } catch (error) {
+        console.error('Could not keep the change of the notifications', error);
+        return undefined;
+      }
+    },
     removeTime: (time) => {
       keep(notifications?.removeTime(time));
     },

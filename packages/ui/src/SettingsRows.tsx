@@ -140,6 +140,7 @@ export function SwitchRow({
 export function TimeRow({
   time,
   accessibilityLabel,
+  accessibilityHint,
   actions,
   onPress,
   testID,
@@ -148,6 +149,8 @@ export function TimeRow({
   time: string;
   /** The row as VoiceOver reads it, e.g. «Сповіщення о 09:00». */
   accessibilityLabel: string;
+  /** What VoiceOver adds for a row that a tap acts on, e.g. «Змінити час». */
+  accessibilityHint?: string;
   actions: readonly RowAction[];
   /** What a tap does; without it, a tap does nothing. */
   onPress?: () => void;
@@ -161,6 +164,7 @@ export function TimeRow({
         accessible
         accessibilityRole={onPress === undefined ? undefined : 'button'}
         accessibilityLabel={accessibilityLabel}
+        accessibilityHint={onPress === undefined ? undefined : accessibilityHint}
         {...rowActionProps(actions)}
         {...look.voice}
         onPress={onPress}

@@ -13,7 +13,8 @@ import {
   useTokens,
 } from '@slovo/ui';
 import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { AccessibilityInfo, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -21,6 +22,8 @@ import { useComposition } from '../../composition';
 import { editionStrings } from '../../edition';
 import { LoadFailed } from '../../language-pack';
 import { useNotificationsChanges, useNotificationsState } from '../../notifications';
+import { dateOfTime } from '../../notifications-screen';
+import { TimePickerSheet, timePickerAvailable } from '../../time-picker';
 
 const strings = editionStrings.notifications;
 
@@ -28,19 +31,50 @@ const strings = editionStrings.notifications;
  * Settings › Сповіщення: the Notification times in time order, each with a
  * swipe (and a VoiceOver action) that removes it, «+ Додати час», disabled
  * at the limit with a line saying why, and the switch for the notification
- * sound. A change applies at once. Tapping a time or «+ Додати час» does
- * nothing yet: the time picker comes with its own ticket.
+ * sound. A change applies at once. Tapping a time, or «+ Додати час», opens
+ * the system time picker, which a dev client built before the native batch
+ * lacks: then adding and changing a time stay off, and removing still works.
+ * A time that is in the list already shows a one-line hint and is not kept.
  */
 export default function NotificationsScreen() {
   const composition = useComposition();
   const state = useNotificationsState();
-  const { removeTime, setSound } = useNotificationsChanges();
+  const { keepTime, removeTime, setSound } = useNotificationsChanges();
   const { colors, fontFamilies } = useTokens();
   const { count, voice } = useEdition();
   const router = useRouter();
+  /** The time being picked: the one it replaces (none when adding), and where the picker starts. */
+  const [picking, setPicking] = useState<{ from?: string; value: Date }>();
+  const [duplicate, setDuplicate] = useState(false);
+  // The hint is about the list as it was when the time was refused.
+  useEffect(() => {
+    setDuplicate(false);
+  }, [state?.times]);
 
   if (composition.status === 'failed') return <LoadFailed onRetry={composition.retry} />;
   const limitHint = count(strings.limitHint, MAX_NOTIFICATION_TIMES);
+  const pickerAvailable = timePickerAvailable();
+  const canAdd = state?.canAddTime === true && pickerAvailable;
+
+  function pick(from?: string) {
+    if (!pickerAvailable) return;
+    const now = new Date();
+    setDuplicate(false);
+    setPicking({
+      ...(from === undefined ? {} : { from }),
+      value: from === undefined ? now : dateOfTime(from, now),
+    });
+  }
+
+  function keep(picked: Date) {
+    const from = picking?.from;
+    setPicking(undefined);
+    void keepTime(picked, from).then((refusal) => {
+      setDuplicate(refusal === 'duplicate');
+      if (refusal === 'duplicate')
+        AccessibilityInfo.announceForAccessibility(strings.duplicateHint);
+    });
+  }
 
   return (
     <SafeAreaView
@@ -70,6 +104,12 @@ export default function NotificationsScreen() {
                       testID={`notifications-time-${time}`}
                       time={time}
                       accessibilityLabel={fill(strings.timeLabel, { time })}
+                      accessibilityHint={strings.change}
+                      {...(pickerAvailable && {
+                        onPress: () => {
+                          pick(time);
+                        },
+                      })}
                       actions={[
                         {
                           name: 'remove',
@@ -89,9 +129,12 @@ export default function NotificationsScreen() {
                 testID="notifications-add-time"
                 accessibilityRole="button"
                 accessibilityLabel={strings.addTime}
-                accessibilityState={{ disabled: !state.canAddTime }}
+                accessibilityState={{ disabled: !canAdd }}
                 accessibilityHint={state.canAddTime ? undefined : limitHint}
-                disabled={!state.canAddTime}
+                disabled={!canAdd}
+                onPress={() => {
+                  pick();
+                }}
                 {...voice}
                 style={styles.addTime}
               >
@@ -99,7 +142,7 @@ export default function NotificationsScreen() {
                   style={[
                     styles.addTimeLabel,
                     {
-                      color: state.canAddTime ? colors.accent : colors.muted,
+                      color: canAdd ? colors.accent : colors.muted,
                       fontFamily: fontFamilies.ui,
                     },
                   ]}
@@ -119,6 +162,15 @@ export default function NotificationsScreen() {
                   {limitHint}
                 </Text>
               )}
+              {duplicate && (
+                <Text
+                  testID="notifications-duplicate-hint"
+                  {...voice}
+                  style={[styles.hint, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+                >
+                  {strings.duplicateHint}
+                </Text>
+              )}
               <View style={styles.section}>
                 <SettingsGroup>
                   <SwitchRow
@@ -132,6 +184,14 @@ export default function NotificationsScreen() {
             </>
           )}
         </ScrollView>
+        <TimePickerSheet
+          visible={picking !== undefined}
+          value={picking?.value ?? new Date()}
+          onPick={keep}
+          onClose={() => {
+            setPicking(undefined);
+          }}
+        />
       </GestureHandlerRootView>
     </SafeAreaView>
   );
