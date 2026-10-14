@@ -28,11 +28,13 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: settings-row-notifications
 - assertVisible:
     id: notifications
+- evalScript: ${output.denied = false}
 - runFlow:
     when:
       visible:
         id: notifications-denied
     commands:
+      - evalScript: ${output.denied = true}
       - assertVisible: Сповіщення вимкнені в налаштуваннях iOS
       - assertVisible:
           id: notifications-open-settings
@@ -45,10 +47,10 @@ appId: ${APP_ID || 'app.slovo.uk'}
       - assertVisible:
           id: settings-row-notifications
           text: Сповіщення, Вимкнено
+# The branch above leaves the screen, so this one asks what it found.
 - runFlow:
     when:
-      notVisible:
-        id: notifications-denied
+      true: ${!output.denied}
     commands:
       - assertNotVisible: Сповіщення вимкнені в налаштуваннях iOS
       - assertVisible:
