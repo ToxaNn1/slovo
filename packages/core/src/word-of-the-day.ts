@@ -27,7 +27,7 @@ export interface WordOfTheDay {
    * today's Word of the Day, when today has none yet or it is no longer
    * eligible, and that Word is eligible, unseen and not the day before's.
    * Nothing changes otherwise: it never chooses another Word and never starts
-   * a Cycle, so the plan can call it when a new day comes.
+   * a Cycle, so the composition can call it when a new day comes.
    */
   takeReserved(): Promise<void>;
   /**

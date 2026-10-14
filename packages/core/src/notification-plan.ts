@@ -122,9 +122,9 @@ export function notificationBody(text: string, ellipsis: string): string {
  * local day carries that day's Word of the Day: today's is the Word of the
  * Day module's while it is unseen, and no other notification carries it; a
  * later day's is the Word the plan Reserves for that morning, which the Word
- * of the Day module takes when the day comes. Planning again first lets the
- * Word of the Day module take today's, so a new day keeps its morning Word
- * even once its notification has passed. Planning again keeps every
+ * of the Day module takes when the day comes, before a plan is made on it
+ * (ADR 0022), so a new day keeps its morning Word even once its notification
+ * has passed. Planning again keeps every
  * notification still ahead whose Word is still eligible, unseen and not
  * needed elsewhere, so the plan doesn't churn, and gives the others the next
  * unseen Words in the Cycle order after the furthest Word planned before, so
@@ -150,7 +150,7 @@ export function createNotificationPlanner({
   userState: UserState;
   clock: Clock;
   edition: PlanEdition;
-  wordOfTheDay: Pick<WordOfTheDay, 'chosen' | 'takeReserved'>;
+  wordOfTheDay: Pick<WordOfTheDay, 'chosen'>;
   scheduling: NotificationScheduling;
 }): {
   plan(settings: PlanSettings): Promise<void>;
@@ -202,7 +202,6 @@ export function createNotificationPlanner({
   }
 
   async function plan({ times, sound, permission }: PlanSettings): Promise<void> {
-    await wordOfTheDay.takeReserved();
     const slots = permission === 'allowed' ? slotsAhead(times, clock) : [];
     const stored = await userState.list(planRecords);
     const notifications: PlannedNotification[] = [];

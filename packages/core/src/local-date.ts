@@ -28,6 +28,12 @@ export function todayKey(clock: Clock): string {
   return `${part('year')}-${part('month')}-${part('day')}`;
 }
 
+/** The key of a local date: `YYYY-MM-DD`. */
+export function dateKeyOf({ year, month, day }: LocalDate): string {
+  const twoDigits = (value: number) => String(value).padStart(2, '0');
+  return `${String(year)}-${twoDigits(month)}-${twoDigits(day)}`;
+}
+
 /** The day of a `YYYY-MM-DD` date. */
 export function parseLocalDate(date: string): LocalDate {
   const [year = 0, month = 0, day = 0] = date.split('-').map(Number);

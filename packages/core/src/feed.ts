@@ -5,7 +5,7 @@ import type { Cycle } from './cycle';
 import type { Entries } from './entries';
 import type { HistoryRecorder, Seen } from './history';
 import { createInTurn, createSubscribers } from './in-turn';
-import { todayKey, type LocalDate } from './local-date';
+import { dateKeyOf, todayKey, type LocalDate } from './local-date';
 import type { Clock, UserStateChanges } from './ports';
 import type { UserState } from './user-state';
 import { userStateRecords } from './user-state-schema';
@@ -87,9 +87,10 @@ export interface Feed {
    * screen makes its Entry Seen if it stayed there for at least
    * `SEEN_DWELL_MS` and belongs to the current Cycle. While a card is on
    * screen, the Feed keeps the card after it ready, so the next swipe never
-   * waits; on a new local day, today's Word of the Day takes the place of a
-   * card got ready the day before. Reporting the card already on screen again keeps its dwell time
-   * and only gets the next card ready if that failed before. Resolves once
+   * waits; once the composition turns to a new local day, today's Word of the
+   * Day takes the place of a card got ready the day before. Reporting the
+   * card already on screen again keeps its dwell time and only gets the next
+   * card ready if that failed before. Resolves once
    * the report is kept and the next card is ready.
    */
   show(position: number | undefined): Promise<void>;
@@ -138,8 +139,12 @@ const { feedPosition } = userStateRecords;
  * Opens the Feed for a new app session, over the Entries, the Cycle and the
  * Word of the Day the Core composition opened and shares with every other
  * feature. It opens on the card the reader was on when they come back the
- * same local day, and otherwise on the Word of the Day, which also opens a
- * new local day in a Feed left open over midnight.
+ * same local day, and otherwise on the Word of the Day.
+ *
+ * The composition calls `openDay` with the local day it is whenever it turns
+ * to a new one. A day the Feed hasn't opened with its Word of the Day yet
+ * opens with it: the Word of the Day comes next, in place of a card got
+ * ready the day before, also in a Feed left open over midnight.
  *
  * After the Cycle's last unseen Entry comes the end-of-Cycle card, and the
  * card after that starts a new Cycle: nothing Seen, a new shuffle from a new
@@ -191,6 +196,7 @@ export async function openFeed({
   feed: Feed;
   followEligibility: () => Promise<void>;
   markOpenedSeen: (entryId: string, changes: UserStateChanges) => Promise<void>;
+  openDay: (day: string) => Promise<void>;
 }> {
   /**
    * Every card of the session, oldest first, also the ones dropped because
@@ -215,13 +221,13 @@ export async function openFeed({
   let droppedFromScreen: FeedCard | undefined;
   /**
    * The local day `YYYY-MM-DD` the Feed last opened with its Word of the Day.
-   * Another feature may choose a new day's Word of the Day first, such as the
-   * notification plan, so a chosen Word of the Day alone doesn't open the day.
+   * Another feature may choose a new day's Word of the Day first, such as a
+   * notification that opens its morning Word, so a chosen Word of the Day
+   * alone doesn't open the day.
    */
   let openedDay: string | undefined;
-
-  /** Whether the Feed has opened today with its Word of the Day. */
-  const todayOpened = () => openedDay === todayKey(clock) && wordOfTheDay.chosen() !== undefined;
+  /** Whether the composition turned to a local day the Feed hasn't opened yet. */
+  let dayToOpen = false;
 
   /** Changes the session's cards without telling the subscribers yet. */
   function setSession(changed: readonly FeedCard[], changedDropped = dropped): void {
@@ -271,8 +277,8 @@ export async function openFeed({
     if (!cycle.covers(position.entryId)) return false;
     const entry = await entries.get(position.entryId);
     if (entry === undefined) return false;
-    openedDay = position.date;
     const today = wordOfTheDay.chosen();
+    if (today !== undefined) openedDay = position.date;
     const opening =
       today !== undefined && cycle.covers(today.wordId) ? await wordOfTheDayCard(today) : undefined;
     if (opening?.wordCard.wordId === entry.id) changeSession([opening]);
@@ -329,7 +335,7 @@ export async function openFeed({
     // Entry before it was Seen: the next card takes its place.
     const tooEarly = atEnd && unseenWords.length + unseenCorrections.length > 0 ? last : undefined;
     // A new local day starts with its Word of the Day, also in a Feed left open over midnight.
-    if (!todayOpened()) {
+    if (dayToOpen) {
       const card = await addWordOfTheDay(tooEarly);
       if (card !== undefined) return card;
     }
@@ -393,7 +399,8 @@ export async function openFeed({
     if (today === undefined) return undefined;
     const card = await wordOfTheDayCard(today);
     if (card === undefined) return undefined;
-    openedDay = todayKey(clock);
+    openedDay = dateKeyOf(today.date);
+    dayToOpen = false;
     const kept = without(replaced);
     if (today.startedCycle) cycleStart = kept.length;
     changeSession([...kept, card]);
@@ -411,7 +418,7 @@ export async function openFeed({
    * got ready on an earlier local day: the Feed hasn't opened today yet.
    */
   const readyCardStale = () =>
-    onScreen !== undefined && positionOf(onScreen.place) < cards.length - 1 && !todayOpened();
+    onScreen !== undefined && positionOf(onScreen.place) < cards.length - 1 && dayToOpen;
 
   /** Puts today's Word of the Day in place of a ready card got ready on an earlier local day. */
   async function replaceStaleReadyCard(): Promise<void> {
@@ -651,5 +658,15 @@ export async function openFeed({
     feed,
     followEligibility,
     markOpenedSeen: (entryId, changes) => inTurnTellingSeen(() => markOpenedSeen(entryId, changes)),
+    async openDay(day) {
+      // In turn with the cards, so a card added after it opens the day.
+      await inTurn(() => {
+        dayToOpen = day !== openedDay;
+        return Promise.resolve();
+      });
+      await keepNextCardReady();
+      // A card got ready meanwhile may have checked for a stale ready card before the day turned.
+      if (readyCardStale()) await keepNextCardReady();
+    },
   };
 }
