@@ -262,6 +262,53 @@ describe('the Word of the Day', () => {
     expect(evening.wordOfTheDay.chosen()?.wordId).toBe(today?.wordId);
   });
 
+  describe("the morning notification's Word", () => {
+    /** The records of a plan that Reserved `w_7` for this morning and `w_3` for later today. */
+    const planned = (extra: [string, string][] = []) =>
+      new Map([
+        ['notifications.plan.2026-10-11T13:00', JSON.stringify('w_3')],
+        ['notifications.plan.2026-10-11T09:00', JSON.stringify('w_7')],
+        ...extra,
+      ]);
+
+    it('is taken as the Word of the Day: the Word of the earliest notification planned today', async () => {
+      const { wordOfTheDay } = await open({ records: planned() });
+
+      expect((await wordOfTheDay.today())?.wordId).toBe('w_7');
+    });
+
+    it("is passed over when it is Seen, out of the Cycle or the day before's Word", async () => {
+      const seen = await open({ records: planned([['feed.seen.w_7', 'true']]) });
+      const hidden = await open({
+        records: planned(),
+        words: wordIds.filter((id) => id !== 'w_7'),
+      });
+      const dayBefore = await open({
+        records: planned([
+          ['feed.wordOfTheDay', JSON.stringify({ entryId: 'w_7', date: '2026-10-10' })],
+        ]),
+      });
+
+      for (const run of [seen, hidden, dayBefore]) {
+        const today = await run.wordOfTheDay.today();
+        expect(today?.wordId).not.toBe('w_7');
+        expect(today?.wordId).toBe(run.cycle.unseen().words.find((id) => id !== 'w_7'));
+      }
+    });
+
+    it('is taken without choosing any other Word or starting a Cycle', async () => {
+      const reserved = await open({ records: planned() });
+      await reserved.wordOfTheDay.takeReserved();
+      expect(reserved.wordOfTheDay.chosen()?.wordId).toBe('w_7');
+
+      const records = new Map(wordIds.map((id) => [`feed.seen.${id}`, 'true']));
+      const allSeen = await open({ records });
+      await allSeen.wordOfTheDay.takeReserved();
+      expect(allSeen.wordOfTheDay.chosen()).toBeUndefined();
+      expect(records.get('feed.cycle')).toContain('"id":1');
+    });
+  });
+
   it('is never a Correction, and nothing when the Cycle covers no Word', async () => {
     const records = new Map<string, string>();
     const withCorrections = await open({ records, corrections: correctionIds });

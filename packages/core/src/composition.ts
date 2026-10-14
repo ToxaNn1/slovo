@@ -65,8 +65,9 @@ export interface Composition extends Hiding {
    * Opens a Word from a notification: its Entry card, like `entryCard`, once
    * it is Seen, in History and today is an Active Day, in one write. It joins
    * History as the Word of the Day's card only if it is today's Word of the
-   * Day. A Hidden or Retired Word opens as a kept Entry and is Seen only if it
-   * is still eligible, so a Hidden Entry never re-enters History. Nothing for
+   * Day, which on a new day is the Word of its morning notification. A
+   * Hidden or Retired Word opens as a kept Entry and is Seen only if it is
+   * still eligible, so a Hidden Entry never re-enters History. Nothing for
    * an id the Language Pack doesn't have: the Feed opens instead. Opening it
    * again writes nothing new.
    */
@@ -104,6 +105,16 @@ export async function openComposition({
   const cycle = await openCycle({ entries, userState, random });
   const wordOfTheDay = await openWordOfTheDay({ cycle, userState, clock });
   const { history, recorder } = await openHistory({ rows, userState });
+  // The plan follows the Feed: a Reserved Word Seen there gets its notification a new Word.
+  const { notifications, replan, followSeen } = await openNotifications({
+    edition,
+    userState,
+    cycle,
+    entries,
+    clock,
+    wordOfTheDay,
+    scheduling,
+  });
   const { feed, followEligibility, markOpenedSeen } = await openFeed({
     entries,
     userState,
@@ -111,24 +122,24 @@ export async function openComposition({
     cycle,
     wordOfTheDay,
     history: recorder,
+    entrySeen: followSeen,
   });
   /**
    * After a hide, a restore or a Mix change, the Cycle reads the eligible
-   * Entries again and the Feed follows.
+   * Entries again, and the Feed and the plan follow.
    */
   async function eligibilityChanged(): Promise<void> {
     await cycle.readEligibleAgain();
     await followEligibility();
+    await replan();
   }
-  const [favorites, collections, hiddenEntries, mix, { notifications, replan }, onboarding] =
-    await Promise.all([
-      openFavorites({ rows, userState, clock }),
-      openCollections({ rows, userState, clock, random }),
-      openHiddenEntries({ rows, userState, clock, eligibilityChanged }),
-      openMix({ edition, userState, eligibilityChanged }),
-      openNotifications({ edition, userState, cycle, entries, clock, scheduling }),
-      openOnboarding({ userState, clock }),
-    ]);
+  const [favorites, collections, hiddenEntries, mix, onboarding] = await Promise.all([
+    openFavorites({ rows, userState, clock }),
+    openCollections({ rows, userState, clock, random }),
+    openHiddenEntries({ rows, userState, clock, eligibilityChanged }),
+    openMix({ edition, userState, eligibilityChanged }),
+    openOnboarding({ userState, clock }),
+  ]);
   const { progress, recordToday, todayChange } = await openProgress({
     userState,
     clock,
@@ -159,6 +170,8 @@ export async function openComposition({
     ...createHiding({ rows, hiddenEntries, mix }),
     entryCard,
     async openedFromNotification(entryId) {
+      // On a new day, the morning notification's Word is the Word of the Day before it is Seen.
+      await wordOfTheDay.takeReserved();
       const today = todayChange();
       await markOpenedSeen(entryId, today.changes);
       today.commit();
