@@ -14,10 +14,11 @@ export interface WordOfTheDayChoice {
 
 /**
  * The Word of the Day: one Word unseen in the Cycle, chosen once per local
- * day in the clock's time zone and kept in the user state with its date. It
- * is read from the user state once, when it opens, like the Cycle it chooses
- * from, so open one per app session over that Cycle and share it. A choice is
- * made in memory only once it is written.
+ * day in the clock's time zone and kept in the user state with its date. Its
+ * record is read once, when it opens, like the Cycle it chooses from, so open
+ * one per app session over that Cycle and share it; only while today has no
+ * Word kept does it read the Reserved Words for this morning's (ADR 0013). A
+ * choice is made in memory only once it is written.
  */
 export interface WordOfTheDay {
   /** Today's Word of the Day if it is chosen already. Never chooses one. */
@@ -29,12 +30,12 @@ export interface WordOfTheDay {
    * Nothing changes otherwise: it never chooses another Word and never starts
    * a Cycle, so the composition can call it when a new day comes.
    */
-  takeReserved(): Promise<void>;
+  takeMorningWord(): Promise<void>;
   /**
    * Today's Word of the Day, chosen first when today has none yet or it is
    * no longer eligible: the Word the notification plan Reserved for this
    * morning while it is eligible, unseen and not the day before's (see
-   * `takeReserved`), else the next unseen Word in the Cycle order, other than
+   * `takeMorningWord`), else the next unseen Word in the Cycle order, other than
    * the day before's, so every day starts with a new Word. Words in `avoid` are passed
    * over while the Cycle has other unseen Words.
    *
@@ -89,8 +90,8 @@ export async function openWordOfTheDay({
   }
 
   /** The Word Reserved for this morning, if today takes it, kept as today's Word of the Day. */
-  async function takeMorningWord(today: string): Promise<string | undefined> {
-    const reserved = await reservedWords.morningWordOf(today);
+  async function chooseMorningWord(today: string): Promise<string | undefined> {
+    const reserved = await reservedWords.morningWordOf(parseLocalDate(today));
     if (reserved === undefined || reserved === record?.entryId) return undefined;
     if (!cycle.unseen().words.includes(reserved)) return undefined;
     await choose(reserved, today);
@@ -106,16 +107,16 @@ export async function openWordOfTheDay({
         ? { wordId: record.entryId, date: parseLocalDate(record.date) }
         : undefined;
     },
-    takeReserved: () =>
+    takeMorningWord: () =>
       inTurn(async () => {
         const today = todayKey(clock);
-        if (kept(today) === undefined) await takeMorningWord(today);
+        if (kept(today) === undefined) await chooseMorningWord(today);
       }),
     today: ({ avoid = new Set<string>() } = {}) =>
       inTurn(async () => {
         const today = todayKey(clock);
         const date = parseLocalDate(today);
-        const id = kept(today) ?? (await takeMorningWord(today));
+        const id = kept(today) ?? (await chooseMorningWord(today));
         if (id !== undefined) return { wordId: id, date, startedCycle: false };
         const dayBefore = record?.entryId;
         let next = nextWordId(cycle.unseen().words, dayBefore, avoid);

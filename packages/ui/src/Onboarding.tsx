@@ -45,7 +45,7 @@ const DOT = { height: 4, width: 16, currentWidth: 44, gap: 12 } as const;
  * once: with the dots on the welcome, with the overline «КРОК N З M» on the
  * steps after it.
  */
-export function OnboardingStep({
+function OnboardingStep({
   step,
   total,
   onSkip,

@@ -11,6 +11,7 @@ import {
 import { useEffect, useState } from 'react';
 import { AccessibilityInfo, Pressable, StyleSheet, Text } from 'react-native';
 
+import { deviceClock } from './device-clock';
 import { editionStrings } from './edition';
 import { useNotificationsChanges, useNotificationsState } from './notifications';
 import { dateOfTime, timeOfDay } from './notification-scheduler';
@@ -48,7 +49,7 @@ export function NotificationTimes() {
 
   function pick(replacing?: string) {
     if (!pickerAvailable) return;
-    const now = new Date();
+    const now = deviceClock.now();
     setDuplicate(false);
     setPicking({
       ...(replacing === undefined ? {} : { replacing }),
@@ -142,7 +143,7 @@ export function NotificationTimes() {
       )}
       <TimePickerSheet
         visible={picking !== undefined}
-        value={picking?.value ?? new Date()}
+        value={picking?.value ?? deviceClock.now()}
         onPick={keep}
         onClose={() => {
           setPicking(undefined);

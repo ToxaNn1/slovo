@@ -1,5 +1,7 @@
 import {
+  formatTimeOfDay,
   parseLocalDate,
+  parseTimeOfDay,
   type NotificationPermission,
   type NotificationSchedulerPort,
   type PlannedNotification,
@@ -21,22 +23,14 @@ export type NotificationsModule = Pick<
   | 'addNotificationResponseReceivedListener'
 >;
 
-const twoDigits = (value: number) => String(value).padStart(2, '0');
-
-/** The hour and the minute of a Notification time `HH:MM`. */
-function partsOf(time: string): { hour: number; minute: number } {
-  const [hour = 0, minute = 0] = time.split(':').map(Number);
-  return { hour, minute };
-}
-
 /** The local time of day a picked date stands for, as a Notification time `HH:MM`. */
 export function timeOfDay(date: Date): string {
-  return `${twoDigits(date.getHours())}:${twoDigits(date.getMinutes())}`;
+  return formatTimeOfDay({ hour: date.getHours(), minute: date.getMinutes() });
 }
 
 /** The Notification time `HH:MM` on the day of `day`, for the picker to start from. */
 export function dateOfTime(time: string, day: Date): Date {
-  const { hour, minute } = partsOf(time);
+  const { hour, minute } = parseTimeOfDay(time);
   const date = new Date(day);
   date.setHours(hour, minute, 0, 0);
   return date;
@@ -94,7 +88,7 @@ function schedulerOn(notifications: NotificationsModule): NotificationSchedulerP
 
   function schedule({ date, time, title, body, wordId, sound }: PlannedNotification) {
     const { year, month, day } = parseLocalDate(date);
-    const { hour, minute } = partsOf(time);
+    const { hour, minute } = parseTimeOfDay(time);
     return notifications.scheduleNotificationAsync({
       identifier: `${date}T${time}`,
       content: { title, body, sound: soundOf(sound), data: { wordId } },

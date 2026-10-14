@@ -10,10 +10,10 @@ import type { UserStateChanges } from './ports';
  * - `union`: the records of every device are all kept (Active Days, so the
  *   Streak derived from them is the same on every device).
  */
-export type SyncMark = 'device-only' | 'union';
+type SyncMark = 'device-only' | 'union';
 
 /** The options of a declared record. */
-export interface RecordOptions {
+interface RecordOptions {
   readonly sync?: SyncMark | undefined;
 }
 

@@ -67,3 +67,14 @@ The 0.4 records listed above left `onboarding.finished` unmarked, so it would sy
 ### Considered Options
 
 - **Last write wins, as unmarked**: rejected. A second device would skip the onboarding and never ask for its own permission there.
+
+## Amendment: the Word of the Day reads the Reserved Words while a day has no Word yet (0.4)
+
+The Word of the Day still reads its own record once, when it opens. From 0.4 it also reads the Reserved Words (ADR 0021) while today has no Word of the Day kept, or the kept one is no longer eligible: the day change asks it to take the Word of the day's morning notification (ADR 0022), and `today` does the same before it chooses. Once the day's Word is kept, nothing is read until the next local day, so the Feed still never waits on a read for a card after the day's first one.
+
+The read stays because the plan writes its records during the session: last evening's plan Reserves this morning's Word, and only the plan records say which Word that is.
+
+### Considered Options
+
+- **Keep the Reserved Words in memory in the Word of the Day**: rejected. Every plan would have to hand its records over, and the copy would repeat the plan records, which ADR 0016's amendment for 0.4 already rejects.
+- **Read the plan records once, when the Word of the Day opens**: rejected. An app left open over midnight would miss the morning Word the evening's plan Reserved.

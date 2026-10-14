@@ -203,7 +203,7 @@ export async function openFeed({
   feed: Feed;
   followEligibility: () => Promise<void>;
   markOpenedSeen: (entryId: string, changes: UserStateChanges) => Promise<void>;
-  openDay: (day: string) => Promise<void>;
+  openDay: (day: LocalDate) => Promise<void>;
 }> {
   /**
    * Every card of the session, oldest first, also the ones dropped because
@@ -488,9 +488,11 @@ export async function openFeed({
     date: string;
   }): Promise<string | undefined> {
     const seenId = seenOnLeaving(left, stayed);
-    const wordOfTheDay = left?.kind === 'word' && left.wordOfTheDay !== undefined;
+    const leftWordOfTheDay = left?.kind === 'word' && left.wordOfTheDay !== undefined;
     return keepSeen(
-      seenId === undefined ? undefined : { entryId: seenId, seenAt: new Date(now), wordOfTheDay },
+      seenId === undefined
+        ? undefined
+        : { entryId: seenId, seenAt: new Date(now), wordOfTheDay: leftWordOfTheDay },
       entryId === undefined ? new Map() : feedPosition.change({ entryId, date }),
     );
   }
@@ -686,7 +688,8 @@ export async function openFeed({
     async openDay(day) {
       // In turn with the cards, so a card added after it opens the day.
       await inTurn(() => {
-        dayToOpen = day === openedDay ? undefined : day;
+        const key = dateKeyOf(day);
+        dayToOpen = key === openedDay ? undefined : key;
         return Promise.resolve();
       });
       await keepNextCardReady();

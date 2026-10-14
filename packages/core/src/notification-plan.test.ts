@@ -394,6 +394,36 @@ describe('the notification plan', () => {
     );
     expect(Array.from(long?.body ?? '').length).toBeLessThanOrEqual(NOTIFICATION_BODY_LENGTH);
   });
+
+  it.each([
+    ['an Arabic comma', '،'],
+    ['an Armenian full stop', '։'],
+    ['a Devanagari danda', '।'],
+    ['an ideographic full stop', '。'],
+    ['a Greek ano teleia', '\u0387'],
+  ])('drops %s before the ellipsis of a cut body, as any punctuation', async (_, mark) => {
+    const head = 'Слово, що його вживають лише в давніх текстах і майже ніколи в живій мові';
+    const { scheduler } = await run({
+      words: [word('w_long', { primaryDefinition: `${head}${mark} сьогоднішнього дня.` })],
+    });
+
+    expect(planOf(scheduler)[0]?.body).toBe(`${head}…`);
+  });
+
+  it.each([
+    ['a question mark', '?'],
+    ['an exclamation mark', '!'],
+    ['a percent sign', '%'],
+    ['a quotation mark', '"'],
+    ['an apostrophe', "'"],
+  ])('keeps %s before the ellipsis, since it says something', async (_, mark) => {
+    const head = 'Слово, що його вживають лише в давніх текстах і майже ніколи в живій мові';
+    const { scheduler } = await run({
+      words: [word('w_long', { primaryDefinition: `${head}${mark} сьогоднішнього дня.` })],
+    });
+
+    expect(planOf(scheduler)[0]?.body).toBe(`${head}${mark}…`);
+  });
 });
 
 const SECOND = 1000;
@@ -401,12 +431,12 @@ const MINUTE = 60 * SECOND;
 
 /** The Word on each Word of the Day card of the Feed, by its local date `YYYY-MM-DD`. */
 function wordsOfTheDayIn({ feed }: Composition): Map<string, string> {
-  const twoDigits = (value: number) => String(value).padStart(2, '0');
   return new Map(
     feed.cards.flatMap((card) => {
       if (card.kind !== 'word' || card.wordOfTheDay === undefined) return [];
       const { year, month, day } = card.wordOfTheDay;
-      return [[`${String(year)}-${twoDigits(month)}-${twoDigits(day)}`, card.wordCard.wordId]];
+      const date = new Date(Date.UTC(year, month - 1, day)).toISOString().slice(0, 10);
+      return [[date, card.wordCard.wordId]];
     }),
   );
 }

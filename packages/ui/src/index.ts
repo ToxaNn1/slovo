@@ -35,7 +35,6 @@ export { MixChip } from './MixChip';
 export {
   OnboardingMix,
   OnboardingNotifications,
-  OnboardingStep,
   OnboardingWelcome,
   PrimaryButton,
   type HeroWord,

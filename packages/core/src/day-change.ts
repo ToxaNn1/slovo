@@ -1,5 +1,5 @@
 import { createInTurn } from './in-turn';
-import { todayKey } from './local-date';
+import { parseLocalDate, todayKey, type LocalDate } from './local-date';
 import type { Clock, UserStateChanges } from './ports';
 import type { ActiveDayChange } from './progress';
 import type { WordOfTheDay } from './word-of-the-day';
@@ -58,15 +58,15 @@ export function createDayChange({
   openFeedDay,
 }: {
   clock: Clock;
-  wordOfTheDay: Pick<WordOfTheDay, 'takeReserved'>;
+  wordOfTheDay: Pick<WordOfTheDay, 'takeMorningWord'>;
   /** Writes today as an Active Day. */
   recordToday: () => Promise<void>;
   /** The change that makes today an Active Day, for another write. */
   todayChange: () => ActiveDayChange;
   /** Reads the permission and makes the notification plan again. */
   replan: () => Promise<void>;
-  /** Tells the Feed the local day `YYYY-MM-DD` it is. */
-  openFeedDay: (day: string) => Promise<void>;
+  /** Tells the Feed the local day it is. */
+  openFeedDay: (day: LocalDate) => Promise<void>;
 }): DayChange {
   /** The local day `YYYY-MM-DD` the composition turned to last. */
   let turnedTo: string | undefined;
@@ -80,11 +80,11 @@ export function createDayChange({
   async function follow(recordActiveDay: () => Promise<void>, planAnyway: boolean): Promise<void> {
     const today = todayKey(clock);
     const newDay = today !== turnedTo;
-    if (newDay) await wordOfTheDay.takeReserved();
+    if (newDay) await wordOfTheDay.takeMorningWord();
     await recordActiveDay();
     if (newDay || planAnyway) await replan();
     if (newDay) {
-      await openFeedDay(today);
+      await openFeedDay(parseLocalDate(today));
       turnedTo = today;
     }
   }
@@ -104,7 +104,7 @@ export function createDayChange({
         ).catch(reject);
       }),
     async takeMorningWord() {
-      if (todayKey(clock) !== turnedTo) await wordOfTheDay.takeReserved();
+      if (todayKey(clock) !== turnedTo) await wordOfTheDay.takeMorningWord();
     },
   };
 }

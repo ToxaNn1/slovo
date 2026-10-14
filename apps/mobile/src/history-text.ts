@@ -1,5 +1,6 @@
 import { fill, type EditionStrings, type Plural } from '@slovo/contracts';
 import {
+  formatTimeOfDay,
   localDayOf,
   type Clock,
   type HistoryEntry,
@@ -13,8 +14,6 @@ export interface RelativeText {
   readonly text: string;
   readonly spoken: string;
 }
-
-const twoDigits = (value: number) => String(value).padStart(2, '0');
 
 /**
  * The words of History, from the Edition's strings: the kind of an Entry, the
@@ -81,7 +80,7 @@ export function historyText({
           spoken: count(relative.minutesAgoSpoken, time.minutes),
         };
       }
-      const clockTime = `${twoDigits(time.hour)}:${twoDigits(time.minute)}`;
+      const clockTime = formatTimeOfDay(time);
       if (time.kind === 'today' || time.kind === 'yesterday') {
         const said = fill(relative[time.kind], { time: clockTime });
         return { text: said, spoken: said };

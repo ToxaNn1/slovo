@@ -14,7 +14,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
-import { notificationsSummary } from './notifications-screen';
+import { notificationsSummary } from './notifications-summary';
 
 const editionFile = (name: string): unknown =>
   JSON.parse(
