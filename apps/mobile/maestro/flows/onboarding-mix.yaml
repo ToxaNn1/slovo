@@ -1,0 +1,63 @@
+# Onboarding step 2, the Mix: «Почати» leads to «КРОК 2 З 3» with the chips of
+# Мій Мікс; taking a Category out and going on shows in Settings › Мій Мікс.
+# A subflow of `smoke.yaml`; run it from there. It starts from a fresh install,
+# whatever the simulator holds, so it clears the app's state: put it last in
+# the smoke flow, as it takes the Favorites and the other choices with it.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- launchApp:
+    clearState: true
+- runFlow:
+    file: ../open-in-dev-client.yaml
+    env:
+      PASS_ONBOARDING: 'false'
+      READY_ID: onboarding
+# The development client's menu may open over the welcome on a fresh install.
+- runFlow:
+    file: ../dismiss-dev-menu.yaml
+- tapOn:
+    id: onboarding-start
+- assertVisible:
+    id: onboarding-mix
+- assertVisible:
+    id: onboarding-step
+- assertVisible: КРОК 2 З 3
+# The Edition's default Mix: «Усі» is on.
+- assertVisible:
+    id: mix-chip-all
+    selected: true
+- takeScreenshot: onboarding-mix
+# Taking a Category out applies at once.
+- tapOn:
+    id: mix-chip-technology
+- assertVisible:
+    id: mix-chip-technology
+    selected: false
+- assertVisible:
+    id: mix-chip-all
+    selected: false
+# «Далі» goes on, with the choice kept.
+- tapOn:
+    id: onboarding-next
+- assertVisible:
+    id: feed-card-.*
+- assertNotVisible:
+    id: onboarding-mix
+- tapOn:
+    id: tab-settings
+- scrollUntilVisible:
+    element:
+      id: settings-row-my-mix
+    centerElement: true
+    visibilityPercentage: 50
+# Settings › Мій Мікс counts the Categories left in the Mix (10 − 1).
+- assertVisible:
+    id: settings-row-my-mix
+    text: Мій Мікс, 9 категорій
+- tapOn:
+    id: settings-row-my-mix
+- assertVisible:
+    id: mix-chip-technology
+    selected: false
+- tapOn:
+    id: mix-back
