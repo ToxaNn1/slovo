@@ -10,6 +10,7 @@ import { openHiddenEntries, type HiddenEntries } from './hidden-entries';
 import { createHiding, type Hiding } from './hiding';
 import { openMix, type Mix, type MixEdition } from './mix';
 import { openNotifications, type Notifications, type NotificationsEdition } from './notifications';
+import { openOnboarding, type Onboarding } from './onboarding';
 import type { Clock, ContentReadPort, Random } from './ports';
 import { openProgress, type Progress } from './progress';
 import type { UserState } from './user-state';
@@ -46,6 +47,8 @@ export interface Composition extends Hiding {
   resume(): Promise<void>;
   /** The Notification times and the notification sound, kept on this device. */
   readonly notifications: Notifications;
+  /** Whether the reader finished the onboarding, which opens on launch until they do. */
+  readonly onboarding: Onboarding;
   /**
    * The Entry card of any Entry, Retired or not, for a screen that opens a
    * kept Entry; nothing for an id the Language Pack doesn't have. Opening it
@@ -107,13 +110,16 @@ export async function openComposition({
     await cycle.readEligibleAgain();
     await followEligibility();
   }
-  const [favorites, collections, hiddenEntries, mix, notifications] = await Promise.all([
-    openFavorites({ rows, userState, clock }),
-    openCollections({ rows, userState, clock, random }),
-    openHiddenEntries({ rows, userState, clock, eligibilityChanged }),
-    openMix({ edition, userState, eligibilityChanged }),
-    openNotifications({ edition, userState }),
-  ]);
+  const [favorites, collections, hiddenEntries, mix, notifications, onboarding] = await Promise.all(
+    [
+      openFavorites({ rows, userState, clock }),
+      openCollections({ rows, userState, clock, random }),
+      openHiddenEntries({ rows, userState, clock, eligibilityChanged }),
+      openMix({ edition, userState, eligibilityChanged }),
+      openNotifications({ edition, userState }),
+      openOnboarding({ userState, clock }),
+    ],
+  );
   const { progress, recordToday, todayChange } = await openProgress({ userState, clock });
   await recordToday();
   async function entryCard(entryId: string): Promise<EntryFeedCard | undefined> {
@@ -130,6 +136,7 @@ export async function openComposition({
     progress,
     resume: recordToday,
     notifications,
+    onboarding,
     ...createHiding({ rows, hiddenEntries, mix }),
     entryCard,
     async openedFromNotification(entryId) {
