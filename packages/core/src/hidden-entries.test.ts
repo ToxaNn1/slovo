@@ -136,34 +136,8 @@ async function readToTheNextCycle(feed: Feed, time: ReturnType<typeof fakeClock>
   }
 }
 
+// What the Hidden Entries share with Favorites is tested once for both in `entry-list.test.ts`.
 describe('Hidden Entries', () => {
-  it('hides an Entry with the time it was hidden, and restores it', async () => {
-    const app = await run();
-
-    await app.hiddenEntries.hide('w_live2');
-
-    expect(app.hiddenEntries.has('w_live2')).toBe(true);
-    expect(app.hiddenEntries.list).toEqual([
-      {
-        entryId: 'w_live2',
-        hiddenAt: new Date('2026-10-11T09:00:00+03:00'),
-        row: {
-          kind: 'word',
-          entryId: 'w_live2',
-          title: 'ĺive2',
-          definition: 'The meaning of live2.',
-          partOfSpeech: 'noun',
-          registers: [],
-        },
-      },
-    ]);
-
-    await app.hiddenEntries.restore('w_live2');
-
-    expect(app.hiddenEntries.has('w_live2')).toBe(false);
-    expect(app.hiddenEntries.list).toEqual([]);
-  });
-
   it('hides an Entry with the time it had before, so undoing a restore leaves the list exactly as it was', async () => {
     const time = fakeClock();
     const app = await run({ clock: time.clock });
@@ -253,55 +227,26 @@ describe('Hidden Entries', () => {
     });
   });
 
-  it('keeps the first time when a Hidden Entry is hidden again', async () => {
-    const time = fakeClock();
-    const app = await run({ clock: time.clock });
-    await app.hiddenEntries.hide('w_live1');
-    time.advance(MINUTE);
+  it('reads eligibility again before it tells the subscribers', async () => {
+    const app = await run();
+    await turnTo(app.feed, 1);
+    const hidden = entryIdOf(app.feed.cards[1]) ?? '';
+    const told: { hidden: boolean; feed: readonly string[] }[] = [];
+    app.hiddenEntries.subscribe(() =>
+      told.push({ hidden: app.hiddenEntries.has(hidden), feed: entryIdsOf(app.feed.cards) }),
+    );
 
-    await app.hiddenEntries.hide('w_live1');
+    await app.hiddenEntries.hide(hidden);
+    await app.hiddenEntries.restore(hidden);
 
-    expect(app.hiddenEntries.list.map(({ hiddenAt }) => hiddenAt)).toEqual([
-      new Date('2026-10-11T09:00:00+03:00'),
-    ]);
+    expect(told).toHaveLength(2);
+    expect(told[0]?.hidden).toBe(true);
+    expect(told[0]?.feed).not.toContain(hidden);
+    expect(told[1]?.hidden).toBe(false);
+    expect(told[1]?.feed).toContain(hidden);
   });
 
-  it('survives reopening, with the times they were hidden, one `hidden.` record per Entry', async () => {
-    const records = new Map<string, string>();
-    const time = fakeClock();
-    const first = await run({ records, clock: time.clock });
-    await first.hiddenEntries.hide('w_live1');
-    time.advance(MINUTE);
-    await first.hiddenEntries.hide('c_one');
-    await first.hiddenEntries.restore('w_live1');
-    time.advance(MINUTE);
-    await first.hiddenEntries.hide('w_old');
-
-    const app = await run({ records, clock: time.clock });
-
-    expect(app.hiddenEntries.list).toEqual(first.hiddenEntries.list);
-    expect(idsOf(app)).toEqual(['w_old', 'c_one']);
-    expect([...records.keys()].filter((key) => key.startsWith('hidden.')).sort()).toEqual([
-      'hidden.c_one',
-      'hidden.w_old',
-    ]);
-  });
-
-  it('skips an id the Language Pack does not have, in the list and in every lookup', async () => {
-    const records = new Map<string, string>();
-    const first = await run({ records });
-    await first.hiddenEntries.hide('w_live1');
-    records.set('hidden.w_gone', JSON.stringify('2026-10-11T07:00:00.000Z'));
-
-    const app = await run({ records });
-    await app.hiddenEntries.hide('c_gone');
-
-    expect(idsOf(app)).toEqual(['w_live1']);
-    expect(app.hiddenEntries.has('w_gone')).toBe(false);
-    expect(records.has('hidden.c_gone')).toBe(false);
-  });
-
-  it('changes nothing in memory when keeping the change fails', async () => {
+  it('keeps an Entry eligible when keeping its hide fails, and not eligible when keeping its restore fails', async () => {
     const records = new Map<string, string>();
     let failing = false;
     const port = createMemoryUserStatePort(records);
@@ -322,49 +267,9 @@ describe('Hidden Entries', () => {
     await expect(app.hiddenEntries.hide(failed)).rejects.toThrow('The disk is full');
     await expect(app.hiddenEntries.restore(hidden)).rejects.toThrow('The disk is full');
 
-    expect(idsOf(app)).toEqual([hidden]);
     const offered = await walk(app.feed);
     expect(offered).toContain(failed);
     expect(offered).not.toContain(hidden);
-  });
-
-  describe('the snapshot', () => {
-    it('is a new object after each change, telling the subscribers, and the same one otherwise', async () => {
-      const app = await run();
-      let told = 0;
-      app.hiddenEntries.subscribe(() => {
-        told += 1;
-      });
-      const empty = app.hiddenEntries.list;
-
-      await app.hiddenEntries.restore('w_live1');
-      expect(app.hiddenEntries.list).toBe(empty);
-
-      await app.hiddenEntries.hide('w_live1');
-      const hidden = app.hiddenEntries.list;
-      expect(hidden).not.toBe(empty);
-
-      await app.hiddenEntries.hide('w_live1');
-      expect(app.hiddenEntries.list).toBe(hidden);
-      expect(told).toBe(1);
-
-      await app.hiddenEntries.restore('w_live1');
-      expect(app.hiddenEntries.list).not.toBe(hidden);
-      expect(told).toBe(2);
-    });
-
-    it('stops telling a subscriber that unsubscribed', async () => {
-      const app = await run();
-      let told = 0;
-      const stop = app.hiddenEntries.subscribe(() => {
-        told += 1;
-      });
-
-      stop();
-      await app.hiddenEntries.hide('w_live1');
-
-      expect(told).toBe(0);
-    });
   });
 });
 
