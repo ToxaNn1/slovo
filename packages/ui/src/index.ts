@@ -54,6 +54,7 @@ export {
 export { SegmentedControl, type Segment } from './SegmentedControl';
 export { NavigationRow, SettingsGroup, SoonRow, SwitchRow } from './SettingsRows';
 export { SplashOverlay, type SplashOverlayProps } from './SplashOverlay';
+export { StatsPill } from './StatsPill';
 export {
   coreTokens,
   designTokens,

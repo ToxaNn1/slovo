@@ -21,6 +21,7 @@ import { edition, editionDecor, editionStrings, editionTokens } from '../edition
 import { hapticEngine } from '../haptics';
 import { LanguagePackProvider } from '../language-pack';
 import { LaunchSplash } from '../launch-splash';
+import { ActiveDays } from '../progress';
 import { LemmaPronunciation } from '../pronunciation-button';
 import { SettingsProvider, useColorSchemeInEffect, useSettings } from '../settings';
 
@@ -138,6 +139,7 @@ function ThemedTabs() {
         <FontSizeProvider fontSize={fontSize}>
           <HapticsProvider haptics={haptics}>
             <LanguagePackProvider>
+              <ActiveDays />
               <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
               <Tabs
                 screenOptions={{
