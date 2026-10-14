@@ -3,6 +3,7 @@ import type { Entries } from './entries';
 import { dateKeyAfter, localTimeOf, todayKey } from './local-date';
 import type {
   Clock,
+  NotificationPermission,
   NotificationSchedulerPort,
   PlannedNotification,
   PlannedSound,
@@ -37,11 +38,13 @@ export interface PlanEdition {
   readonly hasNotificationSound?: boolean;
 }
 
-/** The Notification times and the sound the plan follows. */
+/** The Notification times, the sound and the permission the plan follows. */
 interface PlanSettings {
   /** Local times `HH:MM`, in time order. */
   readonly times: readonly string[];
   readonly sound: boolean;
+  /** Whether the device lets the app notify, as the scheduler reported it. */
+  readonly permission: NotificationPermission;
 }
 
 const { notificationPlan: planRecords } = userStateRecords;
@@ -198,10 +201,9 @@ export function createNotificationPlanner({
     return edition.hasNotificationSound === true ? 'edition' : 'system';
   }
 
-  async function plan({ times, sound }: PlanSettings): Promise<void> {
+  async function plan({ times, sound, permission }: PlanSettings): Promise<void> {
     await wordOfTheDay.takeReserved();
-    const allowed = (await scheduler.permission()) === 'allowed';
-    const slots = allowed ? slotsAhead(times, clock) : [];
+    const slots = permission === 'allowed' ? slotsAhead(times, clock) : [];
     const stored = await userState.list(planRecords);
     const notifications: PlannedNotification[] = [];
     for (const { slot, wordId } of chooseWords(slots, stored, times[0])) {
