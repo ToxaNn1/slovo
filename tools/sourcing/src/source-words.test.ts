@@ -1,4 +1,4 @@
-import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -181,7 +181,8 @@ function setup(overrides: Partial<SourcingOptions> = {}, network?: NetworkOption
   const workDir = mkdtempSync(join(tmpdir(), 'slovo-sourcing-'));
   const options: SourcingOptions = {
     lemmaList: '',
-    editionDir: ukrainianEditionDir,
+    // The Ukrainian Edition's config with no Words, so its authored Words don't duplicate the drafts.
+    editionDir: editionWith((config) => config),
     outDir: join(workDir, 'review'),
     cacheDir: join(workDir, 'cache'),
     fetch: net.fetch,
@@ -190,6 +191,23 @@ function setup(overrides: Partial<SourcingOptions> = {}, network?: NetworkOption
     ...overrides,
   };
   return { options, net, workDir, clock };
+}
+
+/** A copy of the Ukrainian Edition's config with the given edit, and the given Words as its content. */
+function editionWith(
+  edit: (config: Record<string, unknown>) => Record<string, unknown>,
+  words: Record<string, unknown> = {},
+): string {
+  const dir = mkdtempSync(join(tmpdir(), 'slovo-edition-'));
+  const config = JSON.parse(
+    readFileSync(join(ukrainianEditionDir, 'edition.json'), 'utf8'),
+  ) as Record<string, unknown>;
+  writeFileSync(join(dir, 'edition.json'), JSON.stringify(edit(config)));
+  mkdirSync(join(dir, 'content', 'words'), { recursive: true });
+  for (const [id, word] of Object.entries(words)) {
+    writeFileSync(join(dir, 'content', 'words', `${id}.json`), JSON.stringify(word));
+  }
+  return dir;
 }
 
 function readDrafts(outDir: string, folder = 'drafts'): unknown[] {
@@ -292,6 +310,69 @@ describe('sourceWords', () => {
     expect(outcome?.ready).toBe(false);
     expect(outcome?.issues).toEqual(['stress: Required: the Edition marks Stress']);
     expect(flagsOf(result, 'завжди').map((flag) => flag.kind)).toContain('stress-unresolved');
+  });
+
+  describe('checks a draft with the build checks, against the Edition content', () => {
+    const lemmaList = 'завжди language-speech 1\n';
+
+    it('puts a draft with a Lemma letter outside the alphabet in incomplete/ with the build message', async () => {
+      const editionDir = editionWith((config) => ({
+        ...config,
+        languageTraits: {
+          ...(config['languageTraits'] as Record<string, string>),
+          alphabet: 'а б в г ґ д е є з и і ї й к л м н о п р с т у ф х ц ч ш щ ь ю я',
+        },
+      }));
+      const { options } = setup({ lemmaList, editionDir });
+
+      const result = await sourceWords(options);
+
+      expect(readDrafts(options.outDir)).toEqual([]);
+      expect(lemmaOutcome(result, 'завжди').drafts[0]?.issues).toEqual([
+        'lemma: "ж" (U+0436) is not a letter of the alphabet or punctuation the Edition allows',
+      ]);
+    });
+
+    it('puts a draft with Stress in an Edition that does not mark Stress in incomplete/', async () => {
+      const editionDir = editionWith((config) => ({
+        ...config,
+        languageTraits: {
+          ...(config['languageTraits'] as Record<string, string>),
+          marksStress: false,
+        },
+      }));
+      const { options } = setup({ lemmaList, editionDir });
+
+      const result = await sourceWords(options);
+
+      expect(readDrafts(options.outDir)).toEqual([]);
+      expect(lemmaOutcome(result, 'завжди').drafts[0]?.issues).toEqual([
+        'stress: Not allowed: the Edition does not mark Stress',
+      ]);
+    });
+
+    it('puts a draft with the Lemma and primary Definition of an existing Word in incomplete/', async () => {
+      const editionDir = editionWith((config) => config, {
+        w_exist1: {
+          id: 'w_exist1',
+          lemma: 'завжди',
+          stress: [4],
+          partOfSpeech: 'adverb',
+          primaryDefinition: 'У будь-який час, повсякчас, постійно.',
+          categoryId: 'language-speech',
+          rarity: 1,
+          sources: [{ title: 'Тестове джерело' }],
+        },
+      });
+      const { options } = setup({ lemmaList, editionDir });
+
+      const result = await sourceWords(options);
+
+      expect(readDrafts(options.outDir)).toEqual([]);
+      expect(lemmaOutcome(result, 'завжди').drafts[0]?.issues).toEqual([
+        'primaryDefinition: Same Lemma and primary Definition as w_exist1 in content/words/w_exist1.json: author it once, or retire one of them',
+      ]);
+    });
   });
 
   it('drafts every homonym from sum.in.ua separately and flags each one', async () => {
@@ -654,7 +735,7 @@ describe('sourceWords', () => {
   });
 
   it('never reuses an id the Edition already has', async () => {
-    // The first id this source of randomness spells is w_olmlqv, a Word of the Ukrainian Edition.
+    // The first id this source of randomness spells is w_olmlqv, here a Word of the Edition.
     const taken = 'olmlqv';
     const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789';
     const numbers = Array.from(
@@ -662,8 +743,21 @@ describe('sourceWords', () => {
       (letter) => (alphabet.indexOf(letter) + 0.5) / alphabet.length,
     );
     const next = seededRandom();
+    const editionDir = editionWith((config) => config, {
+      [`w_${taken}`]: {
+        id: `w_${taken}`,
+        lemma: 'дощ',
+        stress: [1],
+        partOfSpeech: 'noun',
+        primaryDefinition: 'Опади.',
+        categoryId: 'nature-weather',
+        rarity: 1,
+        sources: [{ title: 'Тестове джерело' }],
+      },
+    });
     const { options } = setup({
       lemmaList: 'мжичка nature-weather 2\n',
+      editionDir,
       random: () => numbers.shift() ?? next(),
     });
 

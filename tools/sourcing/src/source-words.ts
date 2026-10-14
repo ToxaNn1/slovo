@@ -11,6 +11,7 @@ import {
   type Register,
   type Source,
 } from '@slovo/contracts';
+import { checkNewWords } from '@slovo/language-pack';
 
 import {
   fetchGoroh,
@@ -147,7 +148,13 @@ export async function sourceWords(options: SourcingOptions): Promise<SourcingRes
 
   const lemmas: LemmaOutcome[] = [];
   for (const request of list.requests) {
-    const outcome = await draftLemma(request, { client, sum, newId, config: edition.config });
+    const outcome = await draftLemma(request, {
+      client,
+      sum,
+      newId,
+      config: edition.config,
+      editionDir: options.editionDir,
+    });
     for (const draft of outcome.drafts) {
       writeFileSync(
         join(options.outDir, draft.outcome.file),
@@ -257,6 +264,7 @@ interface Context {
   readonly sum: SumDictionary;
   readonly newId: () => string;
   readonly config: EditionConfig;
+  readonly editionDir: string;
 }
 
 interface Draft {
@@ -591,7 +599,7 @@ function draftArticle(
     sources,
   });
 
-  const issues = checkDraft(word, context.config);
+  const issues = checkDraft(word, context.editionDir);
   if (gender === 'plural-only') {
     flag(
       'plural-only',
@@ -615,34 +623,24 @@ function draftArticle(
   };
 }
 
-/** The schema's verdict plus the Edition's Stress rules, as `field: message`. */
-function checkDraft(word: Record<string, unknown>, config: EditionConfig): string[] {
+/**
+ * The schema's verdict, then the build's own checks against the Edition's
+ * content, as `field: message`. The build checks need a Word that passed the
+ * schema, so they run once it does.
+ */
+function checkDraft(word: Record<string, unknown>, editionDir: string): string[] {
   const result = WordSchema.safeParse(word);
   const knowsPluralOnly = GenderSchema.safeParse('plural-only').success;
   const issues = result.success
-    ? []
+    ? checkNewWords(editionDir, [result.data]).map(
+        ({ field, message }) => `${field ?? '(word)'}: ${message}`,
+      )
     : result.error.issues
         .filter(
           (issue) =>
             knowsPluralOnly || word['gender'] !== 'plural-only' || issue.path[0] !== 'gender',
         )
         .map((issue) => `${issue.path.join('.') || '(word)'}: ${issue.message}`);
-
-  const { marksStress, vowels } = config.languageTraits;
-  const stress = Array.isArray(word['stress']) ? (word['stress'] as number[]) : [];
-  if (marksStress && stress.length === 0) issues.push('stress: Required: the Edition marks Stress');
-  const letters = Array.from(String(word['lemma']));
-  for (const position of stress) {
-    const letter = letters[position];
-    if (
-      letter === undefined ||
-      (vowels !== undefined && !vowels.includes(letter.toLocaleLowerCase(config.locale)))
-    ) {
-      issues.push(
-        `stress: Position ${String(position)} is not a vowel of "${String(word['lemma'])}"`,
-      );
-    }
-  }
   return unique(issues);
 }
 

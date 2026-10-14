@@ -430,6 +430,9 @@ importers:
       '@slovo/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@slovo/language-pack':
+        specifier: workspace:*
+        version: link:../../packages/language-pack
       node-html-parser:
         specifier: ^9.0.4
         version: 9.0.4

@@ -6,6 +6,7 @@ import {
   EditionConfigSchema,
   WordSchema,
   type Correction,
+  type EditionConfig,
   type Entry,
   type Word,
 } from '@slovo/contracts';
@@ -26,6 +27,8 @@ const TARGETS_FILE = 'content/targets.json';
 /** An Edition's folder as read and checked, ready to compile when nothing is wrong. */
 export interface EditionSource {
   readonly errors: readonly BuildError[];
+  /** The Edition config, when it could be read. */
+  readonly config?: EditionConfig;
   /** The Edition id, when the config could be read. */
   readonly editionId?: string;
   readonly words: readonly Authored<Word>[];
@@ -135,7 +138,7 @@ export function readEdition(
     errors,
     words,
     corrections,
-    ...(config === undefined ? {} : { editionId: config.id }),
+    ...(config === undefined ? {} : { config, editionId: config.id }),
     ...(registry === undefined ? {} : { registry }),
   };
   if (
