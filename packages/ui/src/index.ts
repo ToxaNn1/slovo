@@ -32,7 +32,13 @@ export { HapticsProvider, useHaptics } from './HapticsProvider';
 export { HideButton } from './HideButton';
 export { ScreenTitle, SectionLabel } from './headings';
 export { MixChip } from './MixChip';
-export { OnboardingStep, OnboardingWelcome, PrimaryButton, type HeroWord } from './Onboarding';
+export {
+  OnboardingMix,
+  OnboardingStep,
+  OnboardingWelcome,
+  PrimaryButton,
+  type HeroWord,
+} from './Onboarding';
 export { OutlineButton } from './OutlineButton';
 export {
   SavedCard,

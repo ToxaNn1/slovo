@@ -51,9 +51,12 @@ async function run({
   return openComposition({
     content,
     edition: {
-      categories: [{ id: 'test', displayName: 'Test' }],
+      categories: [
+        { id: 'test', displayName: 'Test' },
+        { id: 'other', displayName: 'Other' },
+      ],
       userSettingDefaults: {
-        mix: { categoryIds: ['test'], corrections: false },
+        mix: { categoryIds: ['test', 'other'], corrections: false },
         notificationTimes: [],
       },
       isFeatureEnabled: () => false,
@@ -127,5 +130,50 @@ describe('Onboarding', () => {
     const app = await run({ records: new Map([['onboarding.finished', '"yesterday"']]) });
 
     expect(app.onboarding.state.finishedAt).toBeUndefined();
+  });
+
+  describe('the Mix step', () => {
+    it('starts from the Edition default Mix, which finishing without a change keeps', async () => {
+      const records = new Map<string, string>();
+      const app = await run({ records });
+      expect(app.mix.state.categoryIds).toEqual(['test', 'other']);
+
+      await app.onboarding.finish();
+
+      expect((await run({ records })).mix.state.categoryIds).toEqual(['test', 'other']);
+    });
+
+    it('keeps a choice made on the way, when the reader skips', async () => {
+      const records = new Map<string, string>();
+      const app = await run({ records });
+
+      await app.mix.takeOut('other');
+      await app.onboarding.finish();
+
+      const reopened = await run({ records });
+      expect(reopened.mix.state.categoryIds).toEqual(['test']);
+      expect(reopened.onboarding.state.finishedAt).toBeDefined();
+    });
+
+    it('keeps a choice made before the app is closed halfway, and the onboarding opens again', async () => {
+      const records = new Map<string, string>();
+      await (await run({ records })).mix.takeOut('other');
+
+      const reopened = await run({ records });
+
+      expect(reopened.mix.state.categoryIds).toEqual(['test']);
+      expect(reopened.onboarding.state.finishedAt).toBeUndefined();
+    });
+
+    it('always leaves one Category in the Mix', async () => {
+      const app = await run();
+      await app.mix.takeOut('other');
+
+      const refused = await app.mix.takeOut('test');
+
+      expect(refused).toBe(false);
+      expect(app.mix.state.categoryIds).toEqual(['test']);
+      expect(app.mix.state.lastCategoryId).toBe('test');
+    });
   });
 });

@@ -1,10 +1,11 @@
 import type { FeedCard } from '@slovo/core';
-import { fill, OnboardingWelcome, type HeroWord } from '@slovo/ui';
-import { useMemo } from 'react';
+import { fill, OnboardingMix, OnboardingWelcome, type HeroWord } from '@slovo/ui';
+import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { useComposed, useModule } from './composition';
 import { editionStrings } from './edition';
+import { MixChoices } from './mix-choices';
 
 /** The steps the onboarding has until the SLOVO ID step joins in 0.7. */
 const STEPS = 3;
@@ -45,20 +46,19 @@ export function Onboarding() {
   // Modal, so VoiceOver stays out of the Feed and the tabs behind it.
   return open ? (
     <View style={StyleSheet.absoluteFill} accessibilityViewIsModal>
-      <WelcomeStep />
+      <Steps />
     </View>
   ) : null;
 }
 
-/** Step 1, with the hero Word. Mounted only while the onboarding is open, so the Feed's changes don't redraw the closed onboarding. */
-function WelcomeStep() {
+/**
+ * The steps in order. Mounted only while the onboarding is open, so the Feed's
+ * changes don't redraw the closed onboarding. The step the reader is on isn't
+ * kept: closing the app halfway starts over at the welcome.
+ */
+function Steps() {
   const onboarding = useModule((composition) => composition.onboarding);
-  const cards = useComposed(
-    (composition) => composition.feed,
-    (feed) => feed.cards,
-    noCards,
-  );
-  const hero = useMemo(() => heroOf(cards), [cards]);
+  const [step, setStep] = useState<'welcome' | 'mix'>('welcome');
 
   function finish(): void {
     onboarding?.finish().catch((error: unknown) => {
@@ -66,8 +66,31 @@ function WelcomeStep() {
     });
   }
 
-  // For now «Почати» finishes the onboarding; the Mix and notifications steps follow it later.
-  return <OnboardingWelcome total={STEPS} hero={hero} onStart={finish} onSkip={finish} />;
+  // For now «Далі» finishes the onboarding; the notifications step follows it later.
+  return step === 'welcome' ? (
+    <WelcomeStep
+      onStart={() => {
+        setStep('mix');
+      }}
+      onSkip={finish}
+    />
+  ) : (
+    <OnboardingMix total={STEPS} onNext={finish} onSkip={finish}>
+      <MixChoices />
+    </OnboardingMix>
+  );
+}
+
+/** Step 1, with the hero Word. */
+function WelcomeStep({ onStart, onSkip }: { onStart: () => void; onSkip: () => void }) {
+  const cards = useComposed(
+    (composition) => composition.feed,
+    (feed) => feed.cards,
+    noCards,
+  );
+  const hero = useMemo(() => heroOf(cards), [cards]);
+
+  return <OnboardingWelcome total={STEPS} hero={hero} onStart={onStart} onSkip={onSkip} />;
 }
 
 const noCards: readonly FeedCard[] = [];

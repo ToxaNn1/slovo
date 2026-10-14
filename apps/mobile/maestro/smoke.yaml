@@ -45,3 +45,4 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - runFlow: flows/open-from-notification.yaml
 # Also from a fresh install.
 - runFlow: flows/onboarding.yaml
+- runFlow: flows/onboarding-mix.yaml
