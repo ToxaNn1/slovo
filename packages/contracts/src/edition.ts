@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { NotificationSoundFileSchema } from './notification-sound';
+
 const KebabCaseIdSchema = z
   .string()
   .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'Expected a lowercase kebab-case id');
@@ -156,6 +158,12 @@ export const EditionConfigSchema = z
     languageTraits: LanguageTraitsSchema,
     featureSwitches: FeatureSwitchesSchema,
     userSettingDefaults: UserSettingDefaultsConfigSchema,
+    /**
+     * The file in the Edition's `assets/` folder that notifications play. The
+     * app config checks the file itself; an Edition without one gets the
+     * system default sound.
+     */
+    notificationSound: NotificationSoundFileSchema.optional(),
     categories: z.array(CategorySchema).min(1),
   })
   .superRefine(({ categories, userSettingDefaults }, context) => {

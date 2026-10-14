@@ -27,6 +27,14 @@ export {
   type UserSettingDefaultsConfig,
 } from './edition';
 export {
+  MAX_NOTIFICATION_SOUND_SECONDS,
+  NOTIFICATION_SOUND_EXTENSIONS,
+  NotificationSoundFileSchema,
+  readNotificationSound,
+  type NotificationSound,
+  type NotificationSoundFormat,
+} from './notification-sound';
+export {
   EditionStringsSchema,
   fill,
   PluralLabelSchema,
