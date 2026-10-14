@@ -1,6 +1,7 @@
 import type { Category } from '@slovo/contracts';
 
 import type { Edition, UserSettingDefaults } from './edition';
+import { createInTurn, createSubscribers } from './in-turn';
 import type { UserState } from './user-state';
 import { userStateRecords } from './user-state-schema';
 
@@ -123,7 +124,7 @@ export async function openMix({
 }): Promise<Mix> {
   let choices = await readChoices(userState);
   let state = mixStateOf(edition, choices);
-  const listeners = new Set<() => void>();
+  const subscribers = createSubscribers();
 
   const isCategory = (categoryId: string) => edition.categories.some(({ id }) => id === categoryId);
 
@@ -164,7 +165,7 @@ export async function openMix({
     } finally {
       choices = next;
       state = mixStateOf(edition, next);
-      for (const listener of listeners) listener();
+      subscribers.tell();
     }
   }
 
@@ -189,13 +190,7 @@ export async function openMix({
     await change(new Map(), inMix);
   }
 
-  // One change at a time, so each one starts from what the one before it left.
-  let lastChange: Promise<unknown> = Promise.resolve();
-  function inTurn<T>(change: () => Promise<T>): Promise<T> {
-    const result = lastChange.then(change);
-    lastChange = result.catch(() => undefined);
-    return result;
-  }
+  const inTurn = createInTurn();
 
   return {
     get state() {
@@ -205,11 +200,6 @@ export async function openMix({
     putBack: (categoryId) => inTurn(() => putBack(categoryId)),
     turnAllOn: () => inTurn(turnAllOn),
     setCorrections: (inMix) => inTurn(() => setCorrections(inMix)),
-    subscribe(listener) {
-      listeners.add(listener);
-      return () => {
-        listeners.delete(listener);
-      };
-    },
+    subscribe: subscribers.subscribe,
   };
 }

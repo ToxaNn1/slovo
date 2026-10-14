@@ -1,4 +1,5 @@
 import type { EntryRowModel, EntryRows } from './entry-row';
+import { createInTurn, createSubscribers, newestFirst } from './in-turn';
 import type { Clock, Random, UserStateChanges } from './ports';
 import type { UserState } from './user-state';
 import { userStateRecords } from './user-state-schema';
@@ -124,15 +125,6 @@ interface Stored {
 const NONE: readonly Collection[] = [];
 const NO_ENTRIES: readonly CollectionEntry[] = [];
 
-/** Newest first; things made at the same instant in a stable order. */
-function newestFirst<T>(time: (item: T) => Date, key: (item: T) => string) {
-  return (first: T, second: T): number => {
-    const byTime = time(second).getTime() - time(first).getTime();
-    if (byTime !== 0) return byTime;
-    return key(first) < key(second) ? -1 : 1;
-  };
-}
-
 const newestCollection = newestFirst<Collection>(
   (collection) => collection.createdAt,
   (collection) => collection.id,
@@ -209,7 +201,7 @@ export async function openCollections({
   /** The Entries of each Collection, made when asked for and dropped when that Collection changes. */
   const entriesOf = new Map<string, readonly CollectionEntry[]>();
   let byEntry = new Map<string, readonly Collection[]>();
-  const listeners = new Set<() => void>();
+  const subscribers = createSubscribers();
 
   /** Makes the list and the Collections of each Entry again from the views, newest first. */
   function remake(): void {
@@ -230,7 +222,7 @@ export async function openCollections({
     views.set(stored.id, view);
     entriesOf.delete(stored.id);
     remake();
-    for (const listener of listeners) listener();
+    subscribers.tell();
     return view;
   }
 
@@ -328,7 +320,7 @@ export async function openCollections({
     views.delete(collectionId);
     entriesOf.delete(collectionId);
     remake();
-    for (const listener of listeners) listener();
+    subscribers.tell();
   }
 
   async function add(collectionId: string, entryId: string): Promise<void> {
@@ -350,13 +342,7 @@ export async function openCollections({
     change({ ...collection, filed });
   }
 
-  // One change at a time, so each one starts from what the one before it left.
-  let lastChange: Promise<unknown> = Promise.resolve();
-  function inTurn<T>(work: () => Promise<T>): Promise<T> {
-    const result = lastChange.then(work);
-    lastChange = result.catch(() => undefined);
-    return result;
-  }
+  const inTurn = createInTurn();
 
   return {
     get list() {
@@ -370,12 +356,7 @@ export async function openCollections({
     delete: (collectionId) => inTurn(() => deleteCollection(collectionId)),
     add: (collectionId, entryId) => inTurn(() => add(collectionId, entryId)),
     remove: (collectionId, entryId) => inTurn(() => remove(collectionId, entryId)),
-    subscribe(listener) {
-      listeners.add(listener);
-      return () => {
-        listeners.delete(listener);
-      };
-    },
+    subscribe: subscribers.subscribe,
   };
 }
 
