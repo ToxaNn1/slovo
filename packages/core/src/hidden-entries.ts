@@ -1,5 +1,6 @@
+import { openEntryList } from './entry-list';
 import type { EntryRowModel, EntryRows } from './entry-row';
-import { createInTurn, createSubscribers, newestFirst } from './in-turn';
+import { createInTurn } from './in-turn';
 import type { Clock } from './ports';
 import type { UserState } from './user-state';
 import { userStateRecords } from './user-state-schema';
@@ -47,16 +48,12 @@ export interface HiddenEntries {
   subscribe(listener: () => void): () => void;
 }
 
-const { hiddenEntries: hiddenRecords } = userStateRecords;
-
-const newestHidden = newestFirst<HiddenEntry>(
-  (hiddenEntry) => hiddenEntry.hiddenAt,
-  (hiddenEntry) => hiddenEntry.entryId,
-);
-
 /**
  * Opens the Hidden Entries over the user state, for the Core composition,
- * which reads eligibility again in `eligibilityChanged` after each change.
+ * which reads eligibility again in `eligibilityChanged` after each change,
+ * before the subscribers hear of it. The list follows the written change even
+ * when reading eligibility again fails; the next change or the next app
+ * session reads it again.
  */
 export async function openHiddenEntries({
   rows,
@@ -69,60 +66,23 @@ export async function openHiddenEntries({
   clock: Clock;
   eligibilityChanged: () => Promise<void>;
 }): Promise<HiddenEntries> {
-  const stored = await userState.list(hiddenRecords);
-  const kept = await Promise.all(
-    [...stored].map(async ([entryId, hidden]): Promise<HiddenEntry | undefined> => {
-      const row = await rows.row(entryId);
-      return row === undefined ? undefined : { entryId, hiddenAt: new Date(hidden), row };
-    }),
-  );
-  let list: readonly HiddenEntry[] = kept
-    .filter((hiddenEntry): hiddenEntry is HiddenEntry => hiddenEntry !== undefined)
-    .sort(newestHidden);
-  const subscribers = createSubscribers();
-
-  /**
-   * Makes the written change in memory: eligibility first, so a subscriber
-   * told of the new list finds it read again. The list follows the written
-   * change even when reading eligibility again fails; the next change or the
-   * next app session reads it again.
-   */
-  async function changeList(changed: readonly HiddenEntry[]): Promise<void> {
-    try {
-      await eligibilityChanged();
-    } finally {
-      list = changed;
-      subscribers.tell();
-    }
-  }
-
-  const has = (entryId: string) => list.some((hiddenEntry) => hiddenEntry.entryId === entryId);
-
-  async function hide(entryId: string, hiddenAt: Date = clock.now()): Promise<void> {
-    if (has(entryId)) return;
-    const row = await rows.row(entryId);
-    if (row === undefined) return;
-    await userState.write(hiddenRecords.record(entryId).change(hiddenAt.toISOString()));
-    await changeList([...list, { entryId, hiddenAt, row }].sort(newestHidden));
-  }
-
-  async function restore(entryId: string): Promise<Date | undefined> {
-    const hidden = list.find((hiddenEntry) => hiddenEntry.entryId === entryId);
-    if (hidden === undefined) return undefined;
-    await userState.write(hiddenRecords.record(entryId).change(undefined));
-    await changeList(list.filter((hiddenEntry) => hiddenEntry.entryId !== entryId));
-    return hidden.hiddenAt;
-  }
-
+  const hiddenEntries = await openEntryList({
+    records: userStateRecords.hiddenEntries,
+    timeKey: 'hiddenAt',
+    rows,
+    userState,
+    clock,
+    afterWrite: eligibilityChanged,
+  });
   const inTurn = createInTurn();
 
   return {
     get list() {
-      return list;
+      return hiddenEntries.list;
     },
-    has,
-    hide: (entryId, hiddenAt) => inTurn(() => hide(entryId, hiddenAt)),
-    restore: (entryId) => inTurn(() => restore(entryId)),
-    subscribe: subscribers.subscribe,
+    has: hiddenEntries.has,
+    hide: (entryId, hiddenAt) => inTurn(() => hiddenEntries.add(entryId, hiddenAt)),
+    restore: (entryId) => inTurn(() => hiddenEntries.remove(entryId)),
+    subscribe: hiddenEntries.subscribe,
   };
 }
