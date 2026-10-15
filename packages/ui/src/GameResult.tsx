@@ -4,11 +4,11 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { VictoryIllustration } from './DecorSlots';
 import { fill, useEdition } from './EditionProvider';
-import { useHaptics } from './HapticsProvider';
 import { PrimaryButton } from './PrimaryButton';
 import { SecondaryButton } from './SecondaryButton';
 import { space } from './tokens';
 import { useTokens } from './TokensProvider';
+import { useGameHaptics } from './useGameHaptics';
 import { WholeWordsText } from './WholeWordsText';
 
 /** How far the largest text sizes of iOS may scale the numbers, so they keep beside each other. */
@@ -20,8 +20,6 @@ const WIN_ILLUSTRATION_WIDTH = 120;
 const LOSS_ILLUSTRATION_WIDTH = 64;
 /** The title's size, from the design. */
 const TITLE_SIZE = { fontSize: 38, lineHeight: 38 * 1.1 };
-/** How long after the win's first success haptic its second one comes. */
-const WIN_SECOND_SUCCESS = 300;
 
 /** One number of the result: the value over the word that names it, read as one. */
 function ResultNumber({
@@ -83,17 +81,11 @@ export function GameResult({
   const { roundsPassed, lives } = game;
   const won = game.status === 'won';
   const progress = { passed: String(roundsPassed), total: String(GAME_ROUNDS) };
-  const haptics = useHaptics();
+  const gameHaptics = useGameHaptics();
 
   useEffect(() => {
     if (!won) return;
-    haptics.success();
-    const timer = setTimeout(() => {
-      haptics.success();
-    }, WIN_SECOND_SUCCESS);
-    return () => {
-      clearTimeout(timer);
-    };
+    gameHaptics.win();
     // The result screen comes anew with every result; only its arrival plays.
   }, []);
 
