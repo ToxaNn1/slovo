@@ -1,13 +1,16 @@
 import { describe, expect, it } from 'vitest';
 
-import { createHaptics } from './index';
+import { createHaptics, type HapticEngine } from './index';
 
-function engine() {
+function engine(): HapticEngine & { played: string[] } {
   const played: string[] = [];
   return {
     played,
     selection: () => played.push('selection'),
     impactLight: () => played.push('impactLight'),
+    impactMedium: () => played.push('impactMedium'),
+    success: () => played.push('success'),
+    warning: () => played.push('warning'),
   };
 }
 
@@ -18,8 +21,17 @@ describe('haptics', () => {
 
     haptics.selection();
     haptics.impactLight();
+    haptics.impactMedium();
+    haptics.success();
+    haptics.warning();
 
-    expect(device.played).toEqual(['selection', 'impactLight']);
+    expect(device.played).toEqual([
+      'selection',
+      'impactLight',
+      'impactMedium',
+      'success',
+      'warning',
+    ]);
   });
 
   it('plays no haptic while Vibration is off', () => {
@@ -28,6 +40,9 @@ describe('haptics', () => {
 
     haptics.selection();
     haptics.impactLight();
+    haptics.impactMedium();
+    haptics.success();
+    haptics.warning();
 
     expect(device.played).toEqual([]);
   });
@@ -41,9 +56,11 @@ describe('haptics', () => {
     vibration = false;
     haptics.selection();
     haptics.impactLight();
+    haptics.success();
     vibration = true;
     haptics.impactLight();
+    haptics.warning();
 
-    expect(device.played).toEqual(['selection', 'impactLight']);
+    expect(device.played).toEqual(['selection', 'impactLight', 'warning']);
   });
 });
