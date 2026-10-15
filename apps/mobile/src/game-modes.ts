@@ -25,16 +25,19 @@ export function gameModeStrings(modes: GameModesStrings, modeId: string): GameMo
 }
 
 /**
- * The card of a Game Mode on offer, in the Edition's texts. It throws for a
- * mode without texts, or without a text for the reason it can't start.
+ * The card of a Game Mode on offer, in the Edition's texts; a mode still
+ * planned can't start yet and says no reason. It throws for a mode without
+ * texts, or without a text for the reason it can't start.
  */
 export function gameModeCard(offer: GameModeOffer, modes: GameModesStrings): GameModeCardContent {
   const { overline, title, description, sample, refusals } = gameModeStrings(modes, offer.modeId);
-  const refusal = offer.canStart ? undefined : refusals[offer.refusal];
-  if (!offer.canStart && refusal === undefined) {
+  const reason = 'refusal' in offer ? offer.refusal : undefined;
+  const refusal = reason === undefined ? undefined : refusals[reason];
+  if (reason !== undefined && refusal === undefined) {
     throw new Error(
-      `The Edition has no text for why the Game Mode «${offer.modeId}» can't start: «${offer.refusal}»`,
+      `The Edition has no text for why the Game Mode «${offer.modeId}» can't start: «${reason}»`,
     );
   }
-  return { entryKind: offer.entryKind, overline, title, description, sample, refusal };
+  const { canStart, entryKind } = offer;
+  return { entryKind, overline, title, description, sample, canStart, refusal };
 }

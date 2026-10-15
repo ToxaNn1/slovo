@@ -142,6 +142,21 @@ function recordingPort(records: Map<string, string>) {
   };
 }
 
+/** Waits until the Game has planned its offers, which it does once the composition is open. */
+async function offersPlanned(app: Composition): Promise<Composition> {
+  const planning = () => app.game.state.modes.some((offer) => 'planning' in offer);
+  if (planning()) {
+    await new Promise<void>((resolve) => {
+      const stop = app.game.subscribe(() => {
+        if (planning()) return;
+        stop();
+        resolve();
+      });
+    });
+  }
+  return app;
+}
+
 /** The Core composition of one app run over the records. */
 async function run({
   records = new Map<string, string>(),
@@ -151,6 +166,7 @@ async function run({
   gameModes,
   time = clock,
   pack = content,
+  planned = true,
 }: {
   records?: Map<string, string>;
   port?: UserStatePort;
@@ -159,8 +175,10 @@ async function run({
   gameModes?: readonly GameMode[];
   time?: Clock;
   pack?: ContentReadPort;
+  /** Whether to wait for the Game to plan its offers. */
+  planned?: boolean;
 } = {}): Promise<Composition> {
-  return openComposition({
+  const app = await openComposition({
     content: pack,
     edition: {
       isFeatureEnabled: (feature) => feature === 'game' && game,
@@ -176,6 +194,7 @@ async function run({
     random: seededRandom(seed),
     ...(gameModes === undefined ? {} : { gameModes }),
   });
+  return planned ? offersPlanned(app) : app;
 }
 
 /** History records of the Words, as the Feed would have kept them. */
@@ -977,6 +996,40 @@ describe('whether a Game Mode can start', () => {
     app.game.leave();
     return { offer, started };
   }
+
+  it('says the offers are still planned just after the Game opens, and a start waits for them', async () => {
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    // The Game alone reads the Words in full, so only its planning waits.
+    const pack: ContentReadPort = {
+      ...content,
+      async listWords() {
+        await gate;
+        return content.listWords();
+      },
+    };
+    const app = await run({
+      pack,
+      planned: false,
+      gameModes: [{ ...lemmaMode, buildRound: () => undefined }],
+    });
+
+    expect(app.game.state.modes).toEqual([
+      { modeId: 'guess-word', entryKind: 'word', canStart: false, planning: true },
+      { modeId: 'test-lemma', entryKind: 'word', canStart: false, planning: true },
+    ]);
+    const start = app.game.start('guess-word');
+    release();
+    await start;
+
+    expect(app.game.state.modes).toEqual([
+      { modeId: 'guess-word', entryKind: 'word', canStart: true },
+      { modeId: 'test-lemma', entryKind: 'word', canStart: false, refusal: 'too-few-entries' },
+    ]);
+    expect(current(app)).toMatchObject({ modeId: 'guess-word', status: 'playing' });
+  });
 
   it("refuses a mode on its offer, before any start, when it can't make 15 fair Rounds", async () => {
     const app = await run({ gameModes: [nounMode] });

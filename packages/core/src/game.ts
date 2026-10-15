@@ -99,12 +99,16 @@ export type GameModeRefusal = 'too-few-entries' | KindRefusal;
 /**
  * A Game Mode on offer, with what its card needs from the Core: the mode's
  * id, the kind of Entry it asks about, and whether a Game in it can start
- * now, or why not.
+ * now, or why not; or, just after the Game opens, that it is still planned.
  */
 export type GameModeOffer = {
   readonly modeId: string;
   readonly entryKind: EntryKind;
-} & ({ readonly canStart: true } | { readonly canStart: false; readonly refusal: GameModeRefusal });
+} & (
+  | { readonly canStart: true }
+  | { readonly canStart: false; readonly refusal: GameModeRefusal }
+  | { readonly canStart: false; readonly planning: true }
+);
 
 /** The answer given to a Round. */
 export interface RoundAnswer {
@@ -245,18 +249,14 @@ const offerOf = ({ id, entryKind }: GameMode, plan: RoundPlan): GameModeOffer =>
     ? { modeId: id, entryKind, canStart: true }
     : { modeId: id, entryKind, canStart: false, refusal: plan.refusal };
 
-/** A mode on offer with the eligible Entries of its kind. */
-interface ModeEligible {
-  readonly mode: GameMode;
-  readonly eligible: EligibleOfKind;
-}
-
 /**
  * Opens the Game over the eligible Entries and History, for the Core
  * composition, with `followEligibility`, which reads the modes on offer again
  * after a hide, a restore or a Mix change. The Game Modes come in the order
- * they register. The best result is read from the user state once, when it
- * opens, so open one per app session (the Core composition does).
+ * they register. Their offers say they are still planned until the first
+ * `followEligibility`, which the Core composition calls once it is open. The
+ * best result is read from the user state once, when it opens, so open one
+ * per app session (the Core composition does).
  */
 export async function openGame({
   edition,
@@ -283,20 +283,13 @@ export async function openGame({
   const subscribers = createSubscribers();
   const inTurn = createInTurn();
 
-  /** Each mode on offer with the eligible Entries of its kind, read afresh, all at once. */
-  function readEligible(): Promise<ModeEligible[]> {
-    return Promise.all(
-      modes.map(async (mode) => ({ mode, eligible: await entries.eligibleOfKind(mode.entryKind) })),
-    );
-  }
-
-  /** The modes on offer, planned one after another, so they draw from the random source in turn. */
-  function offersOf(read: readonly ModeEligible[]): GameModeOffer[] {
-    return read.map(({ mode, eligible }) => offerOf(mode, planRounds(mode, eligible)));
-  }
-
   let state: GameState = {
-    modes: offersOf(await readEligible()),
+    modes: modes.map(({ id, entryKind }) => ({
+      modeId: id,
+      entryKind,
+      canStart: false,
+      planning: true,
+    })),
     current: undefined,
     bestResult: gameOn ? await userState.read(gameBest) : undefined,
   };
@@ -352,14 +345,19 @@ export async function openGame({
   }
 
   /**
-   * Reads the modes on offer again, and builds the Rounds still to come of the
-   * Game in play anew, so an Entry hidden or taken out of the Mix meanwhile
-   * never comes up. The Rounds shown so far stay; when the mode can't make
-   * the rest, they stay as they were.
+   * Plans the modes on offer, once the composition is open and again after
+   * each hide, restore or Mix change, and builds the Rounds still to come of the Game in
+   * play anew, so an Entry hidden or taken out of the Mix meanwhile never
+   * comes up. The Rounds shown so far stay; when the mode can't make the
+   * rest, they stay as they were.
    */
   async function followEligibility(): Promise<void> {
-    const read = await readEligible();
-    const offers = offersOf(read);
+    // Each mode with the eligible Entries of its kind, read afresh, all at once.
+    const read = await Promise.all(
+      modes.map(async (mode) => ({ mode, eligible: await entries.eligibleOfKind(mode.entryKind) })),
+    );
+    // Planned one after another, so the modes draw from the random source in turn.
+    const offers = read.map(({ mode, eligible }) => offerOf(mode, planRounds(mode, eligible)));
     if (!sameOffers(offers, state.modes)) change({ ...state, modes: offers });
     const game = state.current;
     const eligible = read.find(({ mode }) => mode === played?.mode)?.eligible;

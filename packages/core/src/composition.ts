@@ -201,6 +201,11 @@ export async function openComposition({
     notifications,
     nextMorning,
   });
+  // The Game Modes are planned last: planning reads the whole pack, so the
+  // launch never waits for it. A start or a change of eligibility waits its turn
+  // behind it. Should it fail, the offers keep saying they are still planned
+  // until the next hide, restore or Mix change plans them again.
+  followGameEligibility().catch(() => undefined);
   async function entryCard(entryId: string): Promise<EntryFeedCard | undefined> {
     const entry = await entries.get(entryId);
     return entry === undefined ? undefined : buildEntryCard(entries, entry);

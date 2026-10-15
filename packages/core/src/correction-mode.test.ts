@@ -131,6 +131,21 @@ function seededRandom(seed: number): Random {
   };
 }
 
+/** Waits until the Game has planned its offers, which it does once the composition is open. */
+async function offersPlanned(app: Composition): Promise<Composition> {
+  const planning = () => app.game.state.modes.some((offer) => 'planning' in offer);
+  if (planning()) {
+    await new Promise<void>((resolve) => {
+      const stop = app.game.subscribe(() => {
+        if (planning()) return;
+        stop();
+        resolve();
+      });
+    });
+  }
+  return app;
+}
+
 /** The Core composition of one app run over the records. */
 async function run({
   records = new Map<string, string>(),
@@ -145,7 +160,7 @@ async function run({
   correctionsInMix?: boolean;
   pack?: ContentReadPort;
 } = {}): Promise<Composition> {
-  return openComposition({
+  const app = await openComposition({
     content: pack,
     edition: {
       isFeatureEnabled: (feature) => feature === 'game' || withCorrections,
@@ -163,6 +178,7 @@ async function run({
     },
     random: seededRandom(seed),
   });
+  return offersPlanned(app);
 }
 
 /** History records of the Entries, as the Feed would have kept them. */
