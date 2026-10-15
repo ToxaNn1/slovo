@@ -13,7 +13,6 @@ import {
 import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { Alert, Pressable, SectionList, StyleSheet, Text, View } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useComposition } from '../../../composition';
@@ -67,78 +66,76 @@ export default function HistoryScreen() {
       edges={['top']}
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
-      <GestureHandlerRootView style={styles.screen}>
-        <SectionList<HistoryEntry, { key: string; title: string; data: readonly HistoryEntry[] }>
-          sections={ready ? sections : []}
-          keyExtractor={(entry) => entry.entryId}
-          stickySectionHeadersEnabled={false}
-          renderSectionHeader={({ section }) => (
-            <SectionLabel style={[styles.day, { color: colors.accent }]}>
-              {section.title}
-            </SectionLabel>
-          )}
-          renderItem={({ item }) => (
-            <EntryRow
-              compact
-              row={item.row}
-              trailing={text.kind(item)}
-              onPress={() => {
-                openScreen(`/saved/history/${item.entryId}`);
-              }}
-              testID={`history-row-${item.entryId}`}
-            />
-          )}
-          ListHeaderComponent={
-            <>
-              <View style={styles.bar}>
-                <BackLink
-                  testID="history-back"
-                  label={editionStrings.tabs.saved}
-                  onPress={() => {
-                    router.back();
-                  }}
-                />
-                {list.length > 0 && (
-                  <Pressable
-                    testID="history-clear"
-                    accessibilityRole="button"
-                    accessibilityLabel={strings.clear.actionLabel}
-                    {...voice}
-                    onPress={confirmClear}
-                    style={styles.clear}
-                  >
-                    <Text
-                      style={[styles.clearText, { color: colors.ink, fontFamily: fontFamilies.ui }]}
-                    >
-                      {strings.clear.action}
-                    </Text>
-                  </Pressable>
-                )}
-              </View>
-              <View style={styles.header}>
-                <ScreenTitle>{strings.title}</ScreenTitle>
-                <Text
-                  testID="history-limit"
-                  {...voice}
-                  style={[styles.limit, { color: colors.muted, fontFamily: fontFamilies.ui }]}
-                >
-                  {fill(strings.limit, { count: String(HISTORY_CAP) })}
-                </Text>
-              </View>
-            </>
-          }
-          ListEmptyComponent={
-            ready ? (
-              <EmptyState
-                testID="history-empty"
-                title={strings.empty.title}
-                message={strings.empty.message}
+      <SectionList<HistoryEntry, { key: string; title: string; data: readonly HistoryEntry[] }>
+        sections={ready ? sections : []}
+        keyExtractor={(entry) => entry.entryId}
+        stickySectionHeadersEnabled={false}
+        renderSectionHeader={({ section }) => (
+          <SectionLabel style={[styles.day, { color: colors.accent }]}>
+            {section.title}
+          </SectionLabel>
+        )}
+        renderItem={({ item }) => (
+          <EntryRow
+            compact
+            row={item.row}
+            trailing={text.kind(item)}
+            onPress={() => {
+              openScreen(`/saved/history/${item.entryId}`);
+            }}
+            testID={`history-row-${item.entryId}`}
+          />
+        )}
+        ListHeaderComponent={
+          <>
+            <View style={styles.bar}>
+              <BackLink
+                testID="history-back"
+                label={editionStrings.tabs.saved}
+                onPress={() => {
+                  router.back();
+                }}
               />
-            ) : null
-          }
-          contentContainerStyle={styles.content}
-        />
-      </GestureHandlerRootView>
+              {list.length > 0 && (
+                <Pressable
+                  testID="history-clear"
+                  accessibilityRole="button"
+                  accessibilityLabel={strings.clear.actionLabel}
+                  {...voice}
+                  onPress={confirmClear}
+                  style={styles.clear}
+                >
+                  <Text
+                    style={[styles.clearText, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+                  >
+                    {strings.clear.action}
+                  </Text>
+                </Pressable>
+              )}
+            </View>
+            <View style={styles.header}>
+              <ScreenTitle>{strings.title}</ScreenTitle>
+              <Text
+                testID="history-limit"
+                {...voice}
+                style={[styles.limit, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+              >
+                {fill(strings.limit, { count: String(HISTORY_CAP) })}
+              </Text>
+            </View>
+          </>
+        }
+        ListEmptyComponent={
+          ready ? (
+            <EmptyState
+              testID="history-empty"
+              title={strings.empty.title}
+              message={strings.empty.message}
+            />
+          ) : null
+        }
+        contentContainerStyle={styles.content}
+      />
     </SafeAreaView>
   );
 }

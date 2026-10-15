@@ -8,7 +8,6 @@ import {
   type SampleNotificationLook,
 } from '@slovo/ui';
 import { StyleSheet, View } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { useComposed, useModule } from './composition';
 import { editionStrings } from './edition';
@@ -111,21 +110,16 @@ function Step({
     );
   }
   return (
-    // The times' rows swipe, which needs a gesture root of its own over the overlay.
-    <GestureHandlerRootView style={styles.root}>
-      <OnboardingNotifications
-        step={number}
-        total={total}
-        sample={sampleLookOf(step.sample)}
-        onAllow={onAllow}
-        // «Пізніше» finishes without asking, as «Пропустити» does.
-        onLater={onSkip}
-        onSkip={onSkip}
-      >
-        <NotificationTimes />
-      </OnboardingNotifications>
-    </GestureHandlerRootView>
+    <OnboardingNotifications
+      step={number}
+      total={total}
+      sample={sampleLookOf(step.sample)}
+      onAllow={onAllow}
+      // «Пізніше» finishes without asking, as «Пропустити» does.
+      onLater={onSkip}
+      onSkip={onSkip}
+    >
+      <NotificationTimes />
+    </OnboardingNotifications>
   );
 }
-
-const styles = StyleSheet.create({ root: { flex: 1 } });

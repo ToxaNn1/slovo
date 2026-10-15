@@ -12,7 +12,6 @@ import {
 } from '@slovo/ui';
 import { useRouter } from 'expo-router';
 import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useComposition } from '../../composition';
@@ -53,65 +52,63 @@ export default function NotificationsScreen() {
       edges={['top']}
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
-      <GestureHandlerRootView style={styles.screen}>
-        <ScrollView contentContainerStyle={styles.content}>
-          <BackLink
-            testID="notifications-back"
-            label={editionStrings.settings.title}
-            onPress={() => {
-              router.back();
-            }}
-          />
-          <View style={styles.header}>
-            <ScreenTitle>{strings.title}</ScreenTitle>
-          </View>
-          {state !== undefined && (
-            <>
-              {state.permission === 'not-asked' && (
-                <View style={styles.enable}>
-                  <PrimaryButton
-                    testID="notifications-enable"
-                    label={strings.enable}
-                    onPress={askPermission}
-                  />
-                </View>
-              )}
-              {state.permission === 'denied' && (
-                <View testID="notifications-denied" style={styles.denied}>
-                  <Text
-                    {...voice}
-                    style={[styles.hint, { color: colors.ink, fontFamily: fontFamilies.ui }]}
-                  >
-                    {strings.denied.message}
-                  </Text>
-                  <SettingsGroup>
-                    <NavigationRow
-                      testID="notifications-open-settings"
-                      label={strings.denied.openSettings}
-                      onPress={() => {
-                        Linking.openSettings().catch((error: unknown) => {
-                          console.error("Could not open the app's iOS settings", error);
-                        });
-                      }}
-                    />
-                  </SettingsGroup>
-                </View>
-              )}
-              <NotificationTimes />
-              <View style={styles.section}>
+      <ScrollView contentContainerStyle={styles.content}>
+        <BackLink
+          testID="notifications-back"
+          label={editionStrings.settings.title}
+          onPress={() => {
+            router.back();
+          }}
+        />
+        <View style={styles.header}>
+          <ScreenTitle>{strings.title}</ScreenTitle>
+        </View>
+        {state !== undefined && (
+          <>
+            {state.permission === 'not-asked' && (
+              <View style={styles.enable}>
+                <PrimaryButton
+                  testID="notifications-enable"
+                  label={strings.enable}
+                  onPress={askPermission}
+                />
+              </View>
+            )}
+            {state.permission === 'denied' && (
+              <View testID="notifications-denied" style={styles.denied}>
+                <Text
+                  {...voice}
+                  style={[styles.hint, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+                >
+                  {strings.denied.message}
+                </Text>
                 <SettingsGroup>
-                  <SwitchRow
-                    testID="notifications-sound"
-                    label={strings.sound}
-                    value={state.sound}
-                    onChange={setSound}
+                  <NavigationRow
+                    testID="notifications-open-settings"
+                    label={strings.denied.openSettings}
+                    onPress={() => {
+                      Linking.openSettings().catch((error: unknown) => {
+                        console.error("Could not open the app's iOS settings", error);
+                      });
+                    }}
                   />
                 </SettingsGroup>
               </View>
-            </>
-          )}
-        </ScrollView>
-      </GestureHandlerRootView>
+            )}
+            <NotificationTimes />
+            <View style={styles.section}>
+              <SettingsGroup>
+                <SwitchRow
+                  testID="notifications-sound"
+                  label={strings.sound}
+                  value={state.sound}
+                  onChange={setSound}
+                />
+              </SettingsGroup>
+            </View>
+          </>
+        )}
+      </ScrollView>
     </SafeAreaView>
   );
 }

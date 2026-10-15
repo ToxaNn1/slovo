@@ -23,7 +23,7 @@ How to write screens and components in `apps/mobile` and `packages/ui`. `CONTEXT
 
 ## Gestures and animation
 
-- Target: one `GestureHandlerRootView` wraps the app in `apps/mobile/src/app/_layout.tsx`, and screens and components rely on it. Today `_layout.tsx` has none; four screens wrap themselves (`saved/history`, `saved/favorites`, `saved/collections` and `saved/collections/[collectionId]`, each `index.tsx`). That is debt to remove in a dedicated change. A new screen does not copy it and does not add its own wrapper.
+- One `GestureHandlerRootView` wraps the app in `apps/mobile/src/app/_layout.tsx`, and screens and components rely on it. A screen does not add its own wrapper. The exceptions are in `packages/ui`: `BottomSheet` keeps one inside its Modal, which is its own native root, and `VerticalPager` keeps its own.
 - Animate with Reanimated shared values and `useAnimatedStyle` so motion runs on the UI thread. Respect `useReduceMotion()` for every animation.
 
 ## Safe area and platform

@@ -11,7 +11,6 @@ import {
 } from '@slovo/ui';
 import { useRouter } from 'expo-router';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { addedOn } from '../../../added-on';
@@ -68,69 +67,67 @@ export default function FavoritesScreen() {
       edges={['top']}
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
-      <GestureHandlerRootView style={styles.screen}>
-        <FlatList
-          data={ready ? list : []}
-          keyExtractor={(favorite) => favorite.entryId}
-          renderItem={({ item }) => <FavoriteRow favorite={item} />}
-          ListHeaderComponent={
-            <>
-              <View style={styles.back}>
-                <BackLink
-                  testID="favorites-back"
-                  label={editionStrings.tabs.saved}
-                  onPress={() => {
-                    router.back();
-                  }}
-                />
-              </View>
-              <View
-                style={[
-                  styles.header,
-                  list.length > 0 && { borderBottomWidth: 1, borderColor: colors.line },
-                ]}
-              >
-                <ScreenTitle>{strings.title}</ScreenTitle>
-                <Text
-                  testID="favorites-count"
-                  accessibilityLabel={count(strings.count, list.length)}
-                  {...voice}
-                  style={[styles.count, { color: colors.accent, fontFamily: fontFamilies.word }]}
-                >
-                  {String(list.length)}
-                </Text>
-              </View>
-            </>
-          }
-          ListFooterComponent={
-            list.length > 0 ? (
-              <Text
-                {...voice}
-                style={[styles.footer, { color: colors.muted, fontFamily: fontFamilies.ui }]}
-              >
-                {strings.footer}
-              </Text>
-            ) : null
-          }
-          ListEmptyComponent={
-            ready ? (
-              <EmptyState
-                testID="favorites-empty"
-                title={strings.empty.title}
-                message={strings.empty.message}
-                action={{
-                  label: strings.empty.toFeed,
-                  testID: 'favorites-to-feed',
-                  onPress: () => {
-                    router.navigate('/');
-                  },
+      <FlatList
+        data={ready ? list : []}
+        keyExtractor={(favorite) => favorite.entryId}
+        renderItem={({ item }) => <FavoriteRow favorite={item} />}
+        ListHeaderComponent={
+          <>
+            <View style={styles.back}>
+              <BackLink
+                testID="favorites-back"
+                label={editionStrings.tabs.saved}
+                onPress={() => {
+                  router.back();
                 }}
               />
-            ) : null
-          }
-          contentContainerStyle={styles.content}
-        />
-      </GestureHandlerRootView>
+            </View>
+            <View
+              style={[
+                styles.header,
+                list.length > 0 && { borderBottomWidth: 1, borderColor: colors.line },
+              ]}
+            >
+              <ScreenTitle>{strings.title}</ScreenTitle>
+              <Text
+                testID="favorites-count"
+                accessibilityLabel={count(strings.count, list.length)}
+                {...voice}
+                style={[styles.count, { color: colors.accent, fontFamily: fontFamilies.word }]}
+              >
+                {String(list.length)}
+              </Text>
+            </View>
+          </>
+        }
+        ListFooterComponent={
+          list.length > 0 ? (
+            <Text
+              {...voice}
+              style={[styles.footer, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+            >
+              {strings.footer}
+            </Text>
+          ) : null
+        }
+        ListEmptyComponent={
+          ready ? (
+            <EmptyState
+              testID="favorites-empty"
+              title={strings.empty.title}
+              message={strings.empty.message}
+              action={{
+                label: strings.empty.toFeed,
+                testID: 'favorites-to-feed',
+                onPress: () => {
+                  router.navigate('/');
+                },
+              }}
+            />
+          ) : null
+        }
+        contentContainerStyle={styles.content}
+      />
     </SafeAreaView>
   );
 }

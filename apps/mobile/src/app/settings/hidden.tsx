@@ -14,7 +14,6 @@ import {
 } from '@slovo/ui';
 import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useComposition } from '../../composition';
@@ -54,86 +53,84 @@ function HiddenList() {
       edges={['top']}
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
-      <GestureHandlerRootView style={styles.screen}>
-        <ScrollView contentContainerStyle={styles.content}>
-          <View style={styles.padded}>
-            <BackLink
-              testID="hidden-back"
-              label={editionStrings.settings.title}
-              onPress={() => {
-                router.back();
-              }}
-            />
-            <View style={styles.header}>
-              <ScreenTitle>{strings.title}</ScreenTitle>
-              <Text
-                {...voice}
-                style={[styles.subtitle, { color: colors.muted, fontFamily: fontFamilies.ui }]}
-              >
-                {strings.subtitle}
-              </Text>
-            </View>
-          </View>
-          {model?.empty === true && (
+      <ScrollView contentContainerStyle={styles.content}>
+        <View style={styles.padded}>
+          <BackLink
+            testID="hidden-back"
+            label={editionStrings.settings.title}
+            onPress={() => {
+              router.back();
+            }}
+          />
+          <View style={styles.header}>
+            <ScreenTitle>{strings.title}</ScreenTitle>
             <Text
-              testID="hidden-empty"
               {...voice}
-              style={[styles.empty, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+              style={[styles.subtitle, { color: colors.muted, fontFamily: fontFamilies.ui }]}
             >
-              {strings.empty}
+              {strings.subtitle}
             </Text>
-          )}
-          {model !== undefined && model.entries.length > 0 && (
-            <View testID="hidden-entries" style={styles.section}>
-              <SectionLabel style={styles.sectionLabel}>{strings.entries}</SectionLabel>
-              {model.entries.map(({ entryId, row, labels }) => (
-                <EntryRow
-                  key={entryId}
-                  testID={`hidden-entry-${entryId}`}
-                  row={row}
-                  subtitle={labels.text}
-                  accessibilityLabel={`${row.title}, ${labels.spoken}`}
-                  accessory={
-                    <OutlineButton
-                      testID={`hidden-entry-${entryId}-restore`}
-                      label={strings.restore}
-                      accessibilityLabel={fill(strings.restoreLabel, { title: row.title })}
-                      onPress={() => {
-                        restoreEntry(entryId);
-                      }}
-                    />
-                  }
-                />
-              ))}
-            </View>
-          )}
-          {model !== undefined &&
-            (model.categories.length > 0 || model.corrections !== undefined) && (
-              <View testID="hidden-categories" style={styles.section}>
-                <SectionLabel style={styles.sectionLabel}>{strings.categories}</SectionLabel>
-                {model.categories.map(({ id, name }) => (
-                  <TurnOnRow
-                    key={id}
-                    testID={`hidden-category-${id}`}
-                    name={name}
-                    accessibilityLabel={fill(strings.turnOnLabel, { name })}
-                    onTurnOn={() => {
-                      turnCategoryOn(id);
+          </View>
+        </View>
+        {model?.empty === true && (
+          <Text
+            testID="hidden-empty"
+            {...voice}
+            style={[styles.empty, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+          >
+            {strings.empty}
+          </Text>
+        )}
+        {model !== undefined && model.entries.length > 0 && (
+          <View testID="hidden-entries" style={styles.section}>
+            <SectionLabel style={styles.sectionLabel}>{strings.entries}</SectionLabel>
+            {model.entries.map(({ entryId, row, labels }) => (
+              <EntryRow
+                key={entryId}
+                testID={`hidden-entry-${entryId}`}
+                row={row}
+                subtitle={labels.text}
+                accessibilityLabel={`${row.title}, ${labels.spoken}`}
+                accessory={
+                  <OutlineButton
+                    testID={`hidden-entry-${entryId}-restore`}
+                    label={strings.restore}
+                    accessibilityLabel={fill(strings.restoreLabel, { title: row.title })}
+                    onPress={() => {
+                      restoreEntry(entryId);
                     }}
                   />
-                ))}
-                {model.corrections !== undefined && (
-                  <TurnOnRow
-                    testID="hidden-corrections"
-                    name={model.corrections.name}
-                    accessibilityLabel={strings.turnOnCorrectionsLabel}
-                    onTurnOn={turnCorrectionsOn}
-                  />
-                )}
-              </View>
-            )}
-        </ScrollView>
-      </GestureHandlerRootView>
+                }
+              />
+            ))}
+          </View>
+        )}
+        {model !== undefined &&
+          (model.categories.length > 0 || model.corrections !== undefined) && (
+            <View testID="hidden-categories" style={styles.section}>
+              <SectionLabel style={styles.sectionLabel}>{strings.categories}</SectionLabel>
+              {model.categories.map(({ id, name }) => (
+                <TurnOnRow
+                  key={id}
+                  testID={`hidden-category-${id}`}
+                  name={name}
+                  accessibilityLabel={fill(strings.turnOnLabel, { name })}
+                  onTurnOn={() => {
+                    turnCategoryOn(id);
+                  }}
+                />
+              ))}
+              {model.corrections !== undefined && (
+                <TurnOnRow
+                  testID="hidden-corrections"
+                  name={model.corrections.name}
+                  accessibilityLabel={strings.turnOnCorrectionsLabel}
+                  onTurnOn={turnCorrectionsOn}
+                />
+              )}
+            </View>
+          )}
+      </ScrollView>
     </SafeAreaView>
   );
 }
