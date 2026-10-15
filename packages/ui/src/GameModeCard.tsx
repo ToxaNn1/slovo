@@ -1,10 +1,11 @@
+import type { EntryKind } from '@slovo/contracts';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { CardCorners } from './DecorSlots';
 import { useEdition } from './EditionProvider';
-import { overlineType, space } from './tokens';
-import { useTokens } from './TokensProvider';
+import { overlineType, space, withAlpha } from './tokens';
+import { InvertedTokens, useTokens } from './TokensProvider';
 
 /** The arrow's size, from the design. */
 const ARROW_SIZE = 22;
@@ -14,15 +15,20 @@ const TITLE_MAX_FONT_SCALE = 1.3;
 const TEXT_MAX_FONT_SCALE = 1.5;
 /** How much a mode that can't start fades, like an answered Round's other options. */
 const UNAVAILABLE_OPACITY = 0.45;
+/** How much a pressed card on the ink fill fades. */
+const PRESSED_INVERTED_OPACITY = 0.85;
 
 /**
  * A Game Mode's card on the mode screen (`game-mode-select-dark`): the
  * overline, the mode's name, a line on how it plays and a sample with an
- * arrow, in a surface card with the Edition's corner. A tap starts a Game.
- * A mode that can't start fades, says why in place of the sample and takes
- * no tap. VoiceOver reads the card as one button.
+ * arrow, in a surface card with the Edition's corner. The card of a mode
+ * that asks about Corrections is drawn on the ink fill in the other colour
+ * scheme, without the corner, and its sample's non-standard form is struck
+ * through. A tap starts a Game. A mode that can't start fades, says why in
+ * place of the sample and takes no tap. VoiceOver reads the card as one button.
  */
 export function GameModeCard({
+  entryKind,
   overline,
   title,
   description,
@@ -31,19 +37,32 @@ export function GameModeCard({
   onPress,
   testID,
 }: {
+  /** The kind of Entry the mode asks about. */
+  entryKind: EntryKind;
   overline: string;
   title: string;
   description: string;
-  /** A prompt and the answer it asks for, such as a Definition and a Lemma. */
+  /** A prompt and the answer it asks for, such as a Definition and a Lemma, or a non-standard form and its standard one. */
   sample: { readonly prompt: string; readonly answer: string };
   /** Why the mode can't start now; nothing when it can. */
   refusal: string | undefined;
   onPress: () => void;
   testID?: string;
 }) {
-  const { colors, fontFamilies, radii } = useTokens();
+  const { colors, radii } = useTokens();
   const { voice } = useEdition();
   const unavailable = refusal !== undefined;
+  const inverted = entryKind === 'correction';
+  const content = (
+    <CardContent
+      inverted={inverted}
+      overline={overline}
+      title={title}
+      description={description}
+      sample={sample}
+      refusal={refusal}
+    />
+  );
   return (
     <Pressable
       testID={testID}
@@ -55,15 +74,46 @@ export function GameModeCard({
       onPress={onPress}
       style={({ pressed }) => [
         styles.card,
-        {
-          backgroundColor: pressed ? colors.surfaceSunken : colors.surface,
-          borderColor: colors.line,
-          borderRadius: radii.card,
-          opacity: unavailable ? UNAVAILABLE_OPACITY : 1,
-        },
+        inverted
+          ? {
+              backgroundColor: colors.ink,
+              borderColor: colors.ink,
+              opacity: unavailable ? UNAVAILABLE_OPACITY : pressed ? PRESSED_INVERTED_OPACITY : 1,
+            }
+          : {
+              backgroundColor: pressed ? colors.surfaceSunken : colors.surface,
+              borderColor: colors.line,
+              opacity: unavailable ? UNAVAILABLE_OPACITY : 1,
+            },
+        { borderRadius: radii.card },
       ]}
     >
-      <CardCorners corners={['topLeft']} />
+      {inverted ? <InvertedTokens>{content}</InvertedTokens> : content}
+    </Pressable>
+  );
+}
+
+/** What a mode card holds, in the colours in effect. */
+function CardContent({
+  inverted,
+  overline,
+  title,
+  description,
+  sample,
+  refusal,
+}: {
+  /** Whether it is a Correction mode's card, on the ink fill, its sample's prompt struck through. */
+  inverted: boolean;
+  overline: string;
+  title: string;
+  description: string;
+  sample: { readonly prompt: string; readonly answer: string };
+  refusal: string | undefined;
+}) {
+  const { colors, fontFamilies } = useTokens();
+  return (
+    <>
+      {inverted ? null : <CardCorners corners={['topLeft']} />}
       <Text
         maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
         style={[overlineType, { color: colors.accent, fontFamily: fontFamilies.ui }]}
@@ -82,7 +132,7 @@ export function GameModeCard({
       >
         {description}
       </Text>
-      {unavailable ? (
+      {refusal !== undefined ? (
         <Text
           maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
           style={[styles.description, { color: colors.ink, fontFamily: fontFamilies.ui }]}
@@ -93,16 +143,29 @@ export function GameModeCard({
         <View style={styles.sampleRow}>
           <Text
             maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
-            style={[styles.sample, { color: colors.inkSecondary, fontFamily: fontFamilies.word }]}
+            style={[
+              styles.sample,
+              inverted ? styles.correctionSample : styles.italic,
+              { color: inverted ? colors.ink : colors.inkSecondary, fontFamily: fontFamilies.word },
+            ]}
           >
-            {`${sample.prompt} → ${sample.answer}`}
+            {inverted ? (
+              <Text
+                style={[styles.struck, { textDecorationColor: withAlpha(colors.accent, 0.55) }]}
+              >
+                {sample.prompt}
+              </Text>
+            ) : (
+              sample.prompt
+            )}
+            {` → ${sample.answer}`}
           </Text>
           <Svg width={ARROW_SIZE} height={ARROW_SIZE} viewBox="0 0 24 24">
             <Path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke={colors.accent} strokeWidth={2} />
           </Svg>
         </View>
       )}
-    </Pressable>
+    </>
   );
 }
 
@@ -122,5 +185,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: space[3],
   },
-  sample: { flex: 1, fontSize: 16, fontStyle: 'italic' },
+  sample: { flex: 1, fontSize: 16 },
+  italic: { fontStyle: 'italic' },
+  correctionSample: { fontSize: 18 },
+  struck: { textDecorationLine: 'line-through' },
 });

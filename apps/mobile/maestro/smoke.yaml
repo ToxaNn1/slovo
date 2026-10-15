@@ -29,6 +29,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - runFlow: flows/quick-swipes.yaml
 - runFlow: flows/relaunch.yaml
 - runFlow: flows/placeholders.yaml
+- runFlow: flows/game-correction.yaml
 - runFlow: flows/game.yaml
 - runFlow: flows/favorites.yaml
 - runFlow: flows/collection-sheet.yaml

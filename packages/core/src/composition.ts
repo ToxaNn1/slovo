@@ -1,4 +1,5 @@
 import { openCollections, type Collections } from './collections';
+import { correctionMode } from './correction-mode';
 import { openCycle } from './cycle';
 import { createDayChange } from './day-change';
 import type { Edition } from './edition';
@@ -94,7 +95,7 @@ export interface Composition extends Hiding {
 }
 
 /** The Core's own Game Modes, registered through the same Extension Point as an Edition's. */
-const coreGameModes: readonly GameMode[] = [guessWord];
+const coreGameModes: readonly GameMode[] = [guessWord, correctionMode];
 
 /**
  * Opens the composition for a new app session, once the Language Pack is

@@ -1,0 +1,107 @@
+# The Correction mode «Обери правильне»: with Corrections out of the Mix its
+# card says so and takes no tap; back in the Mix, it plays from its card, the
+# first option and «Далі» in every Round, to the result screen, and «На
+# головну» goes to the Feed. A subflow of `smoke.yaml`; run it from there. It
+# takes Corrections out of the Mix whatever an earlier run left, puts them back,
+# and leaves them there and no Game in play.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- runFlow:
+    file: ../open-settings-row.yaml
+    env:
+      ROW: settings-row-my-mix
+- tapOn:
+    id: settings-row-my-mix
+- runFlow:
+    when:
+      visible:
+        id: mix-corrections
+        checked: true
+    commands:
+      - tapOn:
+          id: mix-corrections
+- tapOn:
+    id: mix-back
+- tapOn:
+    id: tab-game
+- scrollUntilVisible:
+    element:
+      id: game-mode-correction
+    direction: DOWN
+- assertVisible:
+    id: game-mode-correction
+    text: .*Виправлень немає у вашому Міксі.*
+    enabled: false
+- tapOn:
+    id: game-mode-correction
+- assertVisible:
+    id: game-modes
+- assertNotVisible:
+    id: game-round
+# Corrections back in the Mix: the card can start.
+- runFlow:
+    file: ../open-settings-row.yaml
+    env:
+      ROW: settings-row-my-mix
+- tapOn:
+    id: settings-row-my-mix
+- tapOn:
+    id: mix-corrections
+- assertVisible:
+    id: mix-corrections
+    checked: true
+- tapOn:
+    id: mix-back
+- tapOn:
+    id: tab-game
+- scrollUntilVisible:
+    element:
+      id: game-mode-correction
+    direction: DOWN
+- assertVisible:
+    id: game-mode-correction
+    enabled: true
+- tapOn:
+    id: game-mode-correction
+- assertVisible:
+    id: game-round
+- assertVisible:
+    id: game-prompt
+    text: Як сказати краще.*
+# At most 15 Rounds; five wrong answers end the Game sooner. Each scroll brings
+# its target up at the largest text sizes and does nothing otherwise.
+- repeat:
+    while:
+      notVisible:
+        id: game-result
+    times: 15
+    commands:
+      - scrollUntilVisible:
+          element:
+            id: game-option-0
+          direction: DOWN
+      - tapOn:
+          id: game-option-0
+      - assertVisible:
+          id: game-sheet-title
+      - assertVisible:
+          id: game-sheet-explanation
+      - scrollUntilVisible:
+          element:
+            id: game-next
+          direction: DOWN
+      # One tap: a second one, while the sheet slides away, would land on the tab bar.
+      - tapOn:
+          id: game-next
+          retryTapIfNoChange: false
+      - waitForAnimationToEnd
+- assertVisible:
+    id: game-result
+- scrollUntilVisible:
+    element:
+      id: game-home
+    direction: DOWN
+- tapOn:
+    id: game-home
+- assertVisible:
+    id: home

@@ -1,3 +1,4 @@
+import type { TextRange } from '@slovo/core';
 import { useState } from 'react';
 import {
   StyleSheet,
@@ -17,12 +18,14 @@ import type { TextSize } from './FontSizeProvider';
  * keeps its size and the word splits. Here the widest word is measured at
  * `size` first, and the text is drawn small enough for that word to fit on a
  * line; `numberOfLines` and `adjustsFontSizeToFit` still apply on top.
+ * A `highlight` draws one stretch of the text in a style of its own.
  */
 export function WholeWordsText({
   text,
   size,
   tracking,
   style,
+  highlight,
   ...props
 }: Omit<TextProps, 'children' | 'style'> & {
   text: string;
@@ -32,6 +35,8 @@ export function WholeWordsText({
   tracking: number;
   /** Everything but the size and letter spacing: colour, font and weight. */
   style: StyleProp<TextStyle>;
+  /** A stretch of the text to mark, and how it looks on top of `style`. */
+  highlight?: { readonly range: TextRange; readonly style: StyleProp<TextStyle> } | undefined;
 }) {
   const [lineWidth, setLineWidth] = useState<number>();
   const [widestWord, setWidestWord] = useState<number>();
@@ -57,7 +62,17 @@ export function WholeWordsText({
         // Hidden until measured, so a word never shows split for a frame.
         style={[style, sized(scale ?? 1), scale === undefined && styles.hidden]}
       >
-        {text}
+        {highlight === undefined ? (
+          text
+        ) : (
+          <>
+            {text.slice(0, highlight.range.start)}
+            <Text style={highlight.style}>
+              {text.slice(highlight.range.start, highlight.range.end)}
+            </Text>
+            {text.slice(highlight.range.end)}
+          </>
+        )}
       </Text>
       {/* Every word on its own line, wide enough that none of them wraps. */}
       <View

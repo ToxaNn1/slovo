@@ -28,16 +28,29 @@ export interface RoundOption {
   readonly stressedVowels: readonly string[];
 }
 
-/** What the sheet after an answer shows: the right answer, and an Example of it if any. */
+/**
+ * What the sheet after an answer shows: the right answer, and an Example of
+ * it or an explanation of why it is right, if any.
+ */
 export interface AnswerSheet {
   readonly answer: RoundOption;
   readonly example: Example | undefined;
+  /** Why the answer is right, such as a Correction's explanation. */
+  readonly explanation?: string;
+}
+
+/** A stretch of a text, from the character at `start` up to the one at `end`, which it leaves out. */
+export interface TextRange {
+  readonly start: number;
+  readonly end: number;
 }
 
 /** A Round as a Game Mode builds it: one prompt with four options, exactly one correct. */
 export interface RoundContent {
   /** What the Round asks, such as a Definition. */
   readonly prompt: string;
+  /** The part of the prompt to mark, such as a non-standard form in a sentence; nothing to mark when left out. */
+  readonly highlight?: TextRange;
   /** The four options, in the order shown. */
   readonly options: readonly RoundOption[];
   /** The place of the right option among them. */
@@ -74,8 +87,11 @@ export interface GameMode {
   buildRound(input: RoundInput): RoundContent | undefined;
 }
 
-/** Why a Game Mode can't start: too few eligible Entries of its kind to make 15 Rounds of. */
-export type GameModeRefusal = 'too-few-entries';
+/**
+ * Why a Game Mode can't start: too few eligible Entries of its kind to make 15
+ * Rounds of, or, for a mode that asks about Corrections, Corrections out of the Mix.
+ */
+export type GameModeRefusal = 'too-few-entries' | 'corrections-out-of-mix';
 
 /** A Game Mode on offer, and whether a Game in it can start now. */
 export type GameModeOffer =
@@ -96,6 +112,8 @@ export interface Round {
   /** Which Round of the Game it is, from 1 to `GAME_ROUNDS`. */
   readonly number: number;
   readonly prompt: string;
+  /** The part of the prompt to mark, which the shell draws and VoiceOver names; none to mark. */
+  readonly highlight: TextRange | undefined;
   readonly options: readonly RoundOption[];
   /** The answer, once given; a Round is answered once. */
   readonly answer: RoundAnswer | undefined;
@@ -213,7 +231,7 @@ export async function openGame({
   modes: registered,
 }: {
   edition: GameEdition;
-  entries: Pick<Entries, 'eligible' | 'eligibleOfKind'>;
+  entries: Pick<Entries, 'eligible' | 'eligibleOfKind' | 'correctionsInMix'>;
   history: Pick<History, 'list'>;
   random: Random;
   modes: readonly GameMode[];
@@ -229,15 +247,24 @@ export async function openGame({
   const subscribers = createSubscribers();
   const inTurn = createInTurn();
 
-  /** The modes on offer, by the count of eligible Entries of each one's kind. */
+  /**
+   * The modes on offer: a mode that asks about Corrections can't start while
+   * they are out of the Mix; any mode, with too few eligible Entries of its kind.
+   */
   async function offersNow(): Promise<GameModeOffer[]> {
     if (modes.length === 0) return [];
-    const eligible = await entries.eligible();
-    return modes.map(({ id, entryKind }) =>
-      (entryKind === 'word' ? eligible.words : eligible.corrections).length >= GAME_ROUNDS
+    const [eligible, correctionsInMix] = await Promise.all([
+      entries.eligible(),
+      entries.correctionsInMix(),
+    ]);
+    return modes.map(({ id, entryKind }): GameModeOffer => {
+      if (entryKind === 'correction' && !correctionsInMix) {
+        return { modeId: id, canStart: false, refusal: 'corrections-out-of-mix' };
+      }
+      return (entryKind === 'word' ? eligible.words : eligible.corrections).length >= GAME_ROUNDS
         ? { modeId: id, canStart: true }
-        : { modeId: id, canStart: false, refusal: 'too-few-entries' },
-    );
+        : { modeId: id, canStart: false, refusal: 'too-few-entries' };
+    });
   }
 
   let state: GameState = { modes: await offersNow(), current: undefined };
@@ -311,9 +338,10 @@ export async function openGame({
     if (rest !== undefined) played = { mode: played.mode, rounds: [...shown, ...rest] };
   }
 
-  const roundOf = ({ prompt, options }: RoundContent, number: number): Round => ({
+  const roundOf = ({ prompt, highlight, options }: RoundContent, number: number): Round => ({
     number,
     prompt,
+    highlight,
     options,
     answer: undefined,
   });
@@ -325,9 +353,13 @@ export async function openGame({
     const first = built?.[0];
     if (built === undefined || first === undefined) {
       played = undefined;
+      // The offer's own reason, else too few Entries to make fair Rounds of.
+      const offers = await offersNow();
       change({
-        modes: state.modes.map((offer) =>
-          offer.modeId === modeId ? { modeId, canStart: false, refusal: 'too-few-entries' } : offer,
+        modes: offers.map((offer) =>
+          offer.modeId === modeId && offer.canStart
+            ? { modeId, canStart: false, refusal: 'too-few-entries' }
+            : offer,
         ),
         current: undefined,
       });

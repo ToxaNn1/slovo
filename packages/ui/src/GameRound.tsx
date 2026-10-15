@@ -1,4 +1,10 @@
-import { GAME_LIVES, GAME_ROUNDS, type RoundAnswer, type RoundOption } from '@slovo/core';
+import {
+  GAME_LIVES,
+  GAME_ROUNDS,
+  type RoundAnswer,
+  type RoundOption,
+  type TextRange,
+} from '@slovo/core';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, {
@@ -40,6 +46,8 @@ const TEXT_MAX_FONT_SCALE = 1.5;
 const PROMPT_SIZE = { fontSize: 25, lineHeight: 25 * 1.35 };
 const OPTION_SIZE = { fontSize: 21, lineHeight: 21 * 1.3 };
 const SHEET_ANSWER_SIZE = { fontSize: 30, lineHeight: 30 * 1.3 };
+/** Whether a label ends in punctuation of its own, such as «?», so VoiceOver needs no full stop after it. */
+const ENDS_IN_PUNCTUATION = /\p{P}$/u;
 /** The text on a filled option. */
 const ON_FILL = '#FFFFFF';
 
@@ -202,18 +210,39 @@ function Life({ full }: { full: boolean }) {
 }
 
 /**
- * The Round's prompt (`game-round-dark`): its label over the prompt on a
- * surface card with the Edition's corners. VoiceOver reads it before the
- * options.
+ * The Round's prompt (`game-round-dark`, `game-round-correction-answered-light`):
+ * its label over the prompt on a surface card with the Edition's corners, the
+ * highlight, such as a non-standard form, on the sunken fill and underlined in
+ * the accent. VoiceOver reads it before the options, then names the highlight.
  */
-export function RoundCard({ label, prompt }: { label: string; prompt: string }) {
+export function RoundCard({
+  label,
+  prompt,
+  highlight,
+}: {
+  label: string;
+  prompt: string;
+  /** The part of the prompt to mark; nothing to mark. */
+  highlight: TextRange | undefined;
+}) {
   const { colors, fontFamilies, radii } = useTokens();
-  const { voice } = useEdition();
+  const { strings, voice } = useEdition();
+  const marked =
+    highlight === undefined
+      ? undefined
+      : fill(strings.game.round.highlight, {
+          text: prompt.slice(highlight.start, highlight.end),
+        });
   return (
     <View
       testID="game-prompt"
       accessible
-      accessibilityLabel={`${label}. ${prompt}`}
+      accessibilityLabel={[
+        `${label}${ENDS_IN_PUNCTUATION.test(label) ? '' : '.'} ${prompt}`,
+        marked,
+      ]
+        .filter(Boolean)
+        .join(' ')}
       {...voice}
       style={[
         styles.card,
@@ -232,6 +261,18 @@ export function RoundCard({ label, prompt }: { label: string; prompt: string }) 
         size={PROMPT_SIZE}
         tracking={0}
         style={{ color: colors.ink, fontFamily: fontFamilies.word }}
+        highlight={
+          highlight === undefined
+            ? undefined
+            : {
+                range: highlight,
+                style: {
+                  backgroundColor: colors.surfaceSunken,
+                  textDecorationLine: 'underline',
+                  textDecorationColor: colors.accent,
+                },
+              }
+        }
       />
     </View>
   );
@@ -363,8 +404,9 @@ export function AnswerOption({
 
 /**
  * The sheet after an answer (`game-round-correct-dark`,
- * `game-round-wrong-dark`): «Правильно!» or «Не цього разу», the right answer
- * with its Stress and its Example with the author, or the answer alone, and
+ * `game-round-wrong-dark`, `game-round-correction-answered-light`):
+ * «Правильно!» or «Не цього разу», the right answer with its Stress and its
+ * Example with the author, or its explanation, or the answer alone, and
  * «Далі», the only way to close it. It is drawn in the other colour scheme
  * and keeps what it showed while it slides away.
  */
@@ -389,7 +431,7 @@ function AnswerSheetContent({ answer, onNext }: { answer: RoundAnswer; onNext: (
   const { colors, fontFamilies } = useTokens();
   const { strings, voice } = useEdition();
   const right = answer.chosen === answer.correct;
-  const { example } = answer.sheet;
+  const { example, explanation } = answer.sheet;
   return (
     <ScrollView style={styles.sheetScroll} contentContainerStyle={styles.sheetContent}>
       <Text
@@ -433,6 +475,16 @@ function AnswerSheetContent({ answer, onNext }: { answer: RoundAnswer; onNext: (
             </Text>
           )}
         </View>
+      )}
+      {explanation === undefined ? null : (
+        <Text
+          testID="game-sheet-explanation"
+          maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+          {...voice}
+          style={[styles.explanation, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+        >
+          {explanation}
+        </Text>
       )}
       <View style={styles.next}>
         <PrimaryButton testID="game-next" label={strings.game.sheet.next} onPress={onNext} />
@@ -485,5 +537,6 @@ const styles = StyleSheet.create({
   sheetAnswer: { fontWeight: '500' },
   example: { fontSize: 17, lineHeight: 17 * 1.5, fontStyle: 'italic' },
   author: { marginTop: space[1], fontSize: 13, fontWeight: '500' },
+  explanation: { fontSize: 16, lineHeight: 16 * 1.55 },
   next: { marginTop: 6 },
 });
