@@ -162,7 +162,7 @@ const TRANSLITERATION: Readonly<Record<string, readonly string[]>> = {
 };
 
 /** The addresses sum.in.ua may use for a Lemma, most likely first. */
-export function sumSlugs(lemma: string): string[] {
+function sumSlugs(lemma: string): string[] {
   let slugs = [''];
   for (const letter of matchKey(lemma)) {
     const options = TRANSLITERATION[letter] ?? [letter];
@@ -172,7 +172,7 @@ export function sumSlugs(lemma: string): string[] {
 }
 
 /** Reads every article on a sum.in.ua page. */
-export function parseSumPage(
+function parseSumPage(
   html: string,
   address: { url: string; archivedUrl?: string },
 ): DictionaryArticle[] {

@@ -13,11 +13,13 @@
     "typecheck": "turbo run typecheck",
     "deps": "depcruise apps packages tools editions --config .dependency-cruiser.mjs",
     "test": "turbo run test",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "knip": "SLOVO_EDITION=uk knip"
   },
   "devDependencies": {
     "@slovo/config": "workspace:*",
     "dependency-cruiser": "^18.6.0",
+    "knip": "^6.41.0",
     "oxlint": "~1.87.0",
     "prettier": "^3.9.9",
     "turbo": "^2.11.7",

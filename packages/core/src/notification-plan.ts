@@ -28,10 +28,10 @@ import type { UserState } from './user-state';
 import type { WordOfTheDay } from './word-of-the-day';
 
 /** The most notifications the plan holds: the most iOS keeps pending for one app. */
-export const MAX_PLANNED_NOTIFICATIONS = 64;
+const MAX_PLANNED_NOTIFICATIONS = 64;
 
 /** How many local days of Notification times the plan reaches, from the next time ahead. */
-export const PLAN_DAYS = 14;
+const PLAN_DAYS = 14;
 
 /** The most characters a notification body holds, its ellipsis included. */
 export const NOTIFICATION_BODY_LENGTH = 80;
@@ -114,7 +114,7 @@ const CLAUSE_END = /(?:\s|\p{Pd}|(?![!?¡¿؟‽%'"*/\\&#@])\p{Po})+$/u;
  * `NOTIFICATION_BODY_LENGTH`, its start cut at a word boundary, without the
  * punctuation that ends a clause before the cut, and the ellipsis.
  */
-export function notificationBody(text: string, ellipsis: string): string {
+function notificationBody(text: string, ellipsis: string): string {
   const characters = Array.from(text);
   if (characters.length <= NOTIFICATION_BODY_LENGTH) return text;
   const room = NOTIFICATION_BODY_LENGTH - Array.from(ellipsis).length;

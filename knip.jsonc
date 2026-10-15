@@ -1,0 +1,44 @@
+{
+  // Knip reports unused files, exports, types and dependencies, and
+  // dependencies a workspace uses without listing. Run with `pnpm knip`; CI
+  // runs it as a report that does not fail the build. The Expo, Metro, Vitest
+  // and ESLint plugins find the rest of the entry points.
+  "$schema": "https://unpkg.com/knip@6/schema-jsonc.json",
+  // A type or an interface that a file uses in its own signatures is part of
+  // that file's contract, even when no other file names it. A function or a
+  // constant used only in its own file is not: take the `export` off.
+  "ignoreExportsUsedInFile": { "interface": true, "type": true },
+  "workspaces": {
+    ".": {
+      // Kept files outside any package: the script that generates the
+      // Ukrainian notification sound (editions/uk/assets/README.md).
+      "entry": ["editions/*/assets/*.mjs"],
+      // The Claude Design export is kept byte for byte, never run by the repo.
+      "ignore": ["docs/design/claude-design/**"],
+    },
+    "apps/mobile": {
+      // The Expo plugin finds the routes in src/app, app.config.ts and
+      // metro.config.cjs. app.config.ts reads SLOVO_EDITION when it loads: run
+      // Knip with it set (see `pnpm knip`).
+      "entry": ["**/*.d.ts"],
+      "ignoreDependencies": [
+        // Native module the Expo SDK pins; autolinking only finds it while the
+        // app lists it, though no source file imports it.
+        "expo-asset",
+        // A false positive: Knip's Expo plugin expects it from Expo's default
+        // config, but no file of the app imports it and it is not installed.
+        "expo-updates",
+        // Not a package: Metro resolves `slovo-edition/*` into the Edition's
+        // folder (metro.config.cjs).
+        "slovo-edition",
+      ],
+      // Maestro is installed on the machine, not through pnpm.
+      "ignoreBinaries": ["maestro"],
+    },
+    // Not listed, found by Knip itself: the `src/cli.ts` of language-pack and
+    // sourcing (their `build-pack` and `source-words` scripts; the app's
+    // `eas-build-post-install` runs build-pack). `index.ts` of contracts and
+    // core is a deliberate public API for future Editions: Knip treats the
+    // exports of a package entry as used, so none is listed as ignored.
+  },
+}

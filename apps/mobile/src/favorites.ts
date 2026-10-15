@@ -6,7 +6,7 @@ import { keep } from './keep';
 const noFavorites: readonly Favorite[] = [];
 
 /** Favorites of the session's Core composition, once it is open. */
-export function useFavorites(): Favorites | undefined {
+function useFavorites(): Favorites | undefined {
   return useModule((composition) => composition.favorites);
 }
 
