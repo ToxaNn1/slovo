@@ -1,4 +1,4 @@
-import type { DecorMotif } from '@slovo/contracts';
+import type { DecorLayer, DecorMotif } from '@slovo/contracts';
 import { useId } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Defs, Path, Pattern, Rect } from 'react-native-svg';
@@ -42,6 +42,28 @@ export function MotifImage({ motif, width }: { motif: DecorMotif; width: number 
       viewBox={`0 0 ${String(motif.width)} ${String(motif.height)}`}
     >
       <Layers motif={motif} />
+    </Svg>
+  );
+}
+
+/** One layer of a motif drawn alone, on the grid and at the size of the whole motif. */
+export function MotifLayerImage({
+  motif,
+  layer,
+  width,
+}: {
+  motif: DecorMotif;
+  layer: DecorLayer;
+  width: number;
+}) {
+  const { colorScheme } = useTokens();
+  return (
+    <Svg
+      width={width}
+      height={(width * motif.height) / motif.width}
+      viewBox={`0 0 ${String(motif.width)} ${String(motif.height)}`}
+    >
+      <Path d={layer.path} fill={layer[colorScheme]} />
     </Svg>
   );
 }
