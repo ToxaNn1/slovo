@@ -52,6 +52,21 @@ const unnamedMode: GameMode = {
   buildRound: () => undefined,
 };
 
+/** Waits until the Game has planned its offers, which it does once the composition is open. */
+async function offersPlanned(app: Composition): Promise<Composition> {
+  const planning = () => app.game.state.modes.some((offer) => 'planning' in offer);
+  if (planning()) {
+    await new Promise<void>((resolve) => {
+      const stop = app.game.subscribe(() => {
+        if (planning()) return;
+        stop();
+        resolve();
+      });
+    });
+  }
+  return app;
+}
+
 /** The composition with every Feature Switch on, the Game and Corrections among them, over as many Words. */
 async function open({
   words,
@@ -62,7 +77,7 @@ async function open({
   correctionsInMix?: boolean;
   gameModes?: readonly GameMode[];
 }): Promise<Composition> {
-  return openComposition({
+  const app = await openComposition({
     content: createMemoryContentPort({ words: Array.from({ length: words }, (_, i) => word(i)) }),
     edition: {
       languageTraits: { distractorRule: 'same-part-of-speech' },
@@ -78,6 +93,7 @@ async function open({
     random: systemRandom,
     ...(gameModes === undefined ? {} : { gameModes }),
   });
+  return offersPlanned(app);
 }
 
 /** The cards of the modes on offer, in the Edition's texts. */
@@ -103,7 +119,16 @@ describe('the card of each Game Mode on offer', () => {
   it('draws a mode that can start with its texts and no refusal', async () => {
     const [guessWord] = cardsOf(await open({ words: 15 }));
 
-    expect(guessWord).toEqual({ ...guessWordCard, refusal: undefined });
+    expect(guessWord).toEqual({ ...guessWordCard, canStart: true, refusal: undefined });
+  });
+
+  it("draws a mode still planned as one that can't start yet, with no refusal", () => {
+    const card = gameModeCard(
+      { modeId: 'guess-word', entryKind: 'word', canStart: false, planning: true },
+      strings.modes,
+    );
+
+    expect(card).toEqual({ ...guessWordCard, canStart: false, refusal: undefined });
   });
 
   it("says why a mode can't start, in its own text for each refusal", async () => {
@@ -113,15 +138,18 @@ describe('the card of each Game Mode on offer', () => {
     expect(tooFew).toEqual([
       {
         ...guessWordCard,
+        canStart: false,
         refusal: 'Замало слів у вашому Міксі. Поверніть кілька категорій у Налаштуваннях.',
       },
       {
         ...correctionCard,
+        canStart: false,
         refusal: 'Замало виправлень у вашому Міксі. Поверніть приховані в Налаштуваннях.',
       },
     ]);
     expect(outOfMix[1]).toEqual({
       ...correctionCard,
+      canStart: false,
       refusal: 'Виправлень немає у вашому Міксі. Увімкніть їх у Налаштуваннях.',
     });
   });

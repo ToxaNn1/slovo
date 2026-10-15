@@ -15,6 +15,7 @@ import {
   type Category,
   type Clock,
   type Composition,
+  type ContentReadPort,
   type CurrentGame,
   type GameMode,
   type Random,
@@ -141,6 +142,21 @@ function recordingPort(records: Map<string, string>) {
   };
 }
 
+/** Waits until the Game has planned its offers, which it does once the composition is open. */
+async function offersPlanned(app: Composition): Promise<Composition> {
+  const planning = () => app.game.state.modes.some((offer) => 'planning' in offer);
+  if (planning()) {
+    await new Promise<void>((resolve) => {
+      const stop = app.game.subscribe(() => {
+        if (planning()) return;
+        stop();
+        resolve();
+      });
+    });
+  }
+  return app;
+}
+
 /** The Core composition of one app run over the records. */
 async function run({
   records = new Map<string, string>(),
@@ -149,6 +165,8 @@ async function run({
   game = true,
   gameModes,
   time = clock,
+  pack = content,
+  planned = true,
 }: {
   records?: Map<string, string>;
   port?: UserStatePort;
@@ -156,9 +174,12 @@ async function run({
   game?: boolean;
   gameModes?: readonly GameMode[];
   time?: Clock;
+  pack?: ContentReadPort;
+  /** Whether to wait for the Game to plan its offers. */
+  planned?: boolean;
 } = {}): Promise<Composition> {
-  return openComposition({
-    content,
+  const app = await openComposition({
+    content: pack,
     edition: {
       isFeatureEnabled: (feature) => feature === 'game' && game,
       categories,
@@ -173,6 +194,7 @@ async function run({
     random: seededRandom(seed),
     ...(gameModes === undefined ? {} : { gameModes }),
   });
+  return planned ? offersPlanned(app) : app;
 }
 
 /** History records of the Words, as the Feed would have kept them. */
@@ -856,24 +878,24 @@ describe('the best result', () => {
   });
 });
 
-describe('the Game Mode Extension Point', () => {
-  /** A Game Mode that asks for a Word's Lemma among three made-up ones, the answer always first. */
-  const lemmaMode: GameMode = {
-    id: 'test-lemma',
-    entryKind: 'word',
-    isOn: () => true,
-    buildRound: ({ answer }) => {
-      if (answer.kind !== 'word') return undefined;
-      const option = (text: string) => ({ text, stressedVowels: [] });
-      return {
-        prompt: answer.id,
-        options: [option(answer.lemma), option('one'), option('two'), option('three')],
-        correct: 0,
-        sheet: { answer: option(answer.lemma), example: undefined },
-      };
-    },
-  };
+/** A Game Mode that asks for a Word's Lemma among three made-up ones, the answer always first. */
+const lemmaMode: GameMode = {
+  id: 'test-lemma',
+  entryKind: 'word',
+  isOn: () => true,
+  buildRound: ({ answer }) => {
+    if (answer.kind !== 'word') return undefined;
+    const option = (text: string) => ({ text, stressedVowels: [] });
+    return {
+      prompt: answer.id,
+      options: [option(answer.lemma), option('one'), option('two'), option('three')],
+      correct: 0,
+      sheet: { answer: option(answer.lemma), example: undefined },
+    };
+  },
+};
 
+describe('the Game Mode Extension Point', () => {
   it('plays a full Game in a Game Mode registered through it, after the Core modes', async () => {
     const app = await run({ gameModes: [lemmaMode] });
     expect(app.game.state.modes).toEqual([
@@ -905,16 +927,18 @@ describe('the Game Mode Extension Point', () => {
     ]);
   });
 
-  it("says a Game Mode that can't make its Rounds can't start", async () => {
+  it("says a Game Mode that can't make its Rounds can't start, before a start and after it", async () => {
     const app = await run({ gameModes: [{ ...lemmaMode, buildRound: () => undefined }] });
+    const offers = [
+      { modeId: 'guess-word', entryKind: 'word', canStart: true },
+      { modeId: 'test-lemma', entryKind: 'word', canStart: false, refusal: 'too-few-entries' },
+    ];
+    expect(app.game.state.modes).toEqual(offers);
 
     await app.game.start('test-lemma');
 
     expect(app.game.state.current).toBeUndefined();
-    expect(app.game.state.modes).toEqual([
-      { modeId: 'guess-word', entryKind: 'word', canStart: true },
-      { modeId: 'test-lemma', entryKind: 'word', canStart: false, refusal: 'too-few-entries' },
-    ]);
+    expect(app.game.state.modes).toEqual(offers);
   });
 
   it('carries the Entry kind of a registered mode in its offer, with the refusal of that kind', async () => {
@@ -947,5 +971,151 @@ describe('the Game Mode Extension Point', () => {
     await expect(run({ gameModes: [{ ...lemmaMode, id: 'guess-word' }] })).rejects.toThrow(
       'guess-word',
     );
+  });
+});
+
+describe('whether a Game Mode can start', () => {
+  /**
+   * A Game Mode that can make a fair Round only of a noun, so it may have 15
+   * eligible Words and still too few Rounds.
+   */
+  const nounMode: GameMode = {
+    ...lemmaMode,
+    id: 'test-noun',
+    buildRound: (input) =>
+      input.answer.kind === 'word' && input.answer.partOfSpeech === 'noun'
+        ? lemmaMode.buildRound(input)
+        : undefined,
+  };
+
+  /** The mode's offer, and whether a start in it begins a Game; the Game is left after. */
+  async function offerAndStart(app: Composition) {
+    const offer = app.game.state.modes.find(({ modeId }) => modeId === 'test-noun');
+    await app.game.start('test-noun');
+    const started = app.game.state.current !== undefined;
+    app.game.leave();
+    return { offer, started };
+  }
+
+  it('says the offers are still planned just after the Game opens, and a start waits for them', async () => {
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    // The Game alone reads the Words in full, so only its planning waits.
+    const pack: ContentReadPort = {
+      ...content,
+      async listWords() {
+        await gate;
+        return content.listWords();
+      },
+    };
+    const app = await run({
+      pack,
+      planned: false,
+      gameModes: [{ ...lemmaMode, buildRound: () => undefined }],
+    });
+
+    expect(app.game.state.modes).toEqual([
+      { modeId: 'guess-word', entryKind: 'word', canStart: false, planning: true },
+      { modeId: 'test-lemma', entryKind: 'word', canStart: false, planning: true },
+    ]);
+    const start = app.game.start('guess-word');
+    release();
+    await start;
+
+    expect(app.game.state.modes).toEqual([
+      { modeId: 'guess-word', entryKind: 'word', canStart: true },
+      { modeId: 'test-lemma', entryKind: 'word', canStart: false, refusal: 'too-few-entries' },
+    ]);
+    expect(current(app)).toMatchObject({ modeId: 'guess-word', status: 'playing' });
+  });
+
+  it("refuses a mode on its offer, before any start, when it can't make 15 fair Rounds", async () => {
+    const app = await run({ gameModes: [nounMode] });
+    // Nature alone: 17 eligible Words, of them 14 nouns.
+    await app.hide({ kind: 'category', categoryId: 'speech' });
+    await app.hide({ kind: 'category', categoryId: 'crafts' });
+
+    expect(await offerAndStart(app)).toEqual({
+      offer: {
+        modeId: 'test-noun',
+        entryKind: 'word',
+        canStart: false,
+        refusal: 'too-few-entries',
+      },
+      started: false,
+    });
+  });
+
+  it('offers what a start then does, after a hide, a restore and a Mix change', async () => {
+    const app = await run({ gameModes: [nounMode] });
+    const canStart = { modeId: 'test-noun', entryKind: 'word', canStart: true };
+    const refused = { ...canStart, canStart: false, refusal: 'too-few-entries' };
+    // Without Speech, the Mix holds 17 nouns among 20 Words.
+    await app.mix.takeOut('speech');
+    expect(await offerAndStart(app)).toEqual({ offer: canStart, started: true });
+
+    // 14 nouns among 17 Words.
+    for (const entryId of ['w_nnoun01', 'w_nnoun02', 'w_nnoun03']) {
+      await app.hide({ kind: 'entry', entryId });
+    }
+    expect(await offerAndStart(app)).toEqual({ offer: refused, started: false });
+    // A refused start changes nothing a later change reads differently.
+    await app.hide({ kind: 'entry', entryId: 'w_nadj01' });
+    expect(await offerAndStart(app)).toEqual({ offer: refused, started: false });
+
+    // 15 nouns among 16 Words.
+    await app.unhide({ kind: 'entry', entryId: 'w_nnoun01' });
+    expect(await offerAndStart(app)).toEqual({ offer: canStart, started: true });
+
+    await app.mix.takeOut('crafts');
+    expect(await offerAndStart(app)).toEqual({ offer: refused, started: false });
+
+    await app.mix.putBack('speech');
+    expect(await offerAndStart(app)).toEqual({ offer: canStart, started: true });
+  });
+
+  /** The pack, keeping the name of each read in `reads`. */
+  function countingPack(reads: string[]): ContentReadPort {
+    return Object.fromEntries(
+      Object.entries(content).map(([name, read]) => [
+        name,
+        (...args: never[]) => {
+          reads.push(name);
+          return (read as (...args: never[]) => unknown)(...args);
+        },
+      ]),
+    ) as unknown as ContentReadPort;
+  }
+
+  it('reads the eligible Entries once for a start, whether it starts or not', async () => {
+    const reads: string[] = [];
+    const app = await run({
+      pack: countingPack(reads),
+      gameModes: [{ ...lemmaMode, buildRound: () => undefined }],
+    });
+
+    reads.length = 0;
+    await app.game.start('guess-word');
+    const started = [...reads];
+    reads.length = 0;
+    await app.game.start('test-lemma');
+
+    // One read of the eligible ids, a query per Category in the Mix; the Words were read once already.
+    expect(started).toEqual(['listWordIds', 'listWordIds', 'listWordIds']);
+    expect(reads).toEqual(started);
+  });
+
+  it('reads the Words of the pack once a session, however often the offers are planned', async () => {
+    const reads: string[] = [];
+    const app = await run({ pack: countingPack(reads), gameModes: [lemmaMode] });
+
+    await app.hide({ kind: 'entry', entryId: 'w_nnoun01' });
+    await app.unhide({ kind: 'entry', entryId: 'w_nnoun01' });
+    await app.mix.takeOut('speech');
+    await app.game.start('guess-word');
+
+    expect(reads.filter((name) => name === 'listWords')).toEqual(['listWords']);
   });
 });

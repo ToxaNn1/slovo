@@ -25,7 +25,13 @@ export {
 export { buildCorrectionCard, type CorrectionCardModel } from './correction-card';
 export { openCycle, type Cycle, type CycleChange } from './cycle';
 export { coreDecor, InvalidDecorError, loadDecor, type Decor } from './decor';
-export { createEntries, type Entries, type EntryIds } from './entries';
+export {
+  createEntries,
+  type EligibleOfKind,
+  type Entries,
+  type EntryIds,
+  type KindRefusal,
+} from './entries';
 export { type EntryRowModel } from './entry-row';
 export { type Favorite, type Favorites } from './favorites';
 export {

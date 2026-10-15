@@ -86,14 +86,30 @@ function recordingPort(records: Map<string, string>) {
   };
 }
 
+/** Waits until the Game has planned its offers, which it does once the composition is open. */
+async function offersPlanned(app: Composition): Promise<Composition> {
+  const planning = () => app.game.state.modes.some((offer) => 'planning' in offer);
+  if (planning()) {
+    await new Promise<void>((resolve) => {
+      const stop = app.game.subscribe(() => {
+        if (planning()) return;
+        stop();
+        resolve();
+      });
+    });
+  }
+  return app;
+}
+
 async function run(seed: number, port = createMemoryUserStatePort(new Map())) {
-  return openComposition({
+  const app = await openComposition({
     content: pack,
     edition: ukrainian,
     userState: await openUserState({ port }),
     clock: { now: () => new Date('2026-10-15T09:00:00+03:00'), timeZone: () => 'Europe/Kyiv' },
     random: seededRandom(seed),
   });
+  return offersPlanned(app);
 }
 
 function current(app: Composition): CurrentGame {

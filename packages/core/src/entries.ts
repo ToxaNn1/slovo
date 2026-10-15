@@ -13,6 +13,16 @@ export interface EntryIds {
 }
 
 /**
+ * Why no Entry of a kind is eligible, whatever the Language Pack holds: the
+ * user took Corrections, as a whole, out of the Mix.
+ */
+export type KindRefusal = 'corrections-out-of-mix';
+
+/** The eligible Entries of one kind, or why the kind, as a whole, is not eligible. */
+export type EligibleOfKind =
+  { readonly entries: readonly Entry[] } | { readonly refusal: KindRefusal };
+
+/**
  * The Entries of the Language Pack as this Edition and this user may see
  * them. It is the only module that decides which Entries are eligible, so
  * the Feed, the Cycle, the Word of the Day and the card builders never check
@@ -31,10 +41,13 @@ export interface Entries {
   eligible(): Promise<EntryIds>;
   /**
    * The eligible Entries of one kind themselves, in the order `eligible` gives
-   * their ids, for a feature that weighs them all at once, such as the Game.
-   * Read afresh on every call.
+   * their ids, for a feature that weighs them all at once, such as the Game;
+   * or, for Corrections out of the Mix, whether or not the Edition turns them
+   * on, why none are. Read afresh on every call, but for the live Entries
+   * themselves, which are read from the Language Pack once: it never changes
+   * while it is open.
    */
-  eligibleOfKind(kind: EntryKind): Promise<Entry[]>;
+  eligibleOfKind(kind: EntryKind): Promise<EligibleOfKind>;
   /**
    * Any Entry by id, eligible or not: a Retired one, or a Correction when the
    * Edition turns Corrections off. So the Entries the user keeps stay
@@ -54,12 +67,6 @@ export interface Entries {
    * can tell when the links of the Word cards it holds went stale.
    */
   linksCorrections(): Promise<boolean>;
-  /**
-   * Whether the user has Corrections, as a whole, in the Mix, whether or not
-   * the Edition turns them on; without a Mix they always are. Read afresh on
-   * every call.
-   */
-  correctionsInMix(): Promise<boolean>;
 }
 
 const { hiddenEntries: hiddenRecords } = userStateRecords;
@@ -116,15 +123,45 @@ export function createEntries(
     return { words: words.filter(shown), corrections: corrections.filter(shown) };
   }
 
-  /** The eligible Words, read at once; the eligible Corrections, one by one. */
-  async function eligibleOfKind(kind: EntryKind): Promise<Entry[]> {
-    const ids = await eligible();
-    if (kind === 'word') {
-      const live = new Map((await content.listWords()).map((word) => [word.id, word]));
-      return ids.words.flatMap((id) => live.get(id) ?? []);
+  /** How to read every live Entry of a kind from the Language Pack. */
+  const readLive: Record<EntryKind, () => Promise<readonly Entry[]>> = {
+    word: () => content.listWords(),
+    async correction() {
+      const ids = await content.listCorrectionIds();
+      const corrections = await Promise.all(ids.map((id) => content.getCorrection(id)));
+      return corrections.filter((correction) => correction !== undefined);
+    },
+  };
+
+  /**
+   * The live Entries of each kind by id, read once: the Language Pack never
+   * changes while it is open. A read that fails is tried again on the next call.
+   */
+  const live = new Map<EntryKind, Promise<ReadonlyMap<string, Entry>>>();
+  function liveOfKind(kind: EntryKind): Promise<ReadonlyMap<string, Entry>> {
+    const known = live.get(kind);
+    if (known !== undefined) return known;
+    const read = readLive[kind]().then(
+      (entries) => new Map(entries.map((entry) => [entry.id, entry])),
+      (error: unknown) => {
+        live.delete(kind);
+        throw error;
+      },
+    );
+    live.set(kind, read);
+    return read;
+  }
+
+  async function eligibleOfKind(kind: EntryKind): Promise<EligibleOfKind> {
+    if (kind === 'correction' && !(await correctionsInMix())) {
+      return { refusal: 'corrections-out-of-mix' };
     }
-    const corrections = await Promise.all(ids.corrections.map((id) => content.getCorrection(id)));
-    return corrections.filter((correction) => correction !== undefined);
+    const [ids, entries] = await Promise.all([eligible(), liveOfKind(kind)]);
+    return {
+      entries: (kind === 'word' ? ids.words : ids.corrections).flatMap(
+        (id) => entries.get(id) ?? [],
+      ),
+    };
   }
 
   return {
@@ -134,7 +171,6 @@ export function createEntries(
       return (await content.getWord(id)) ?? content.getCorrection(id);
     },
     linksCorrections,
-    correctionsInMix,
     async linkedCorrections(word) {
       if (!(await linksCorrections())) return [];
       const corrections = await Promise.all(
