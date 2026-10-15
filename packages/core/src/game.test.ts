@@ -1102,6 +1102,8 @@ describe('whether a Game Mode can start', () => {
     reads.length = 0;
     await app.game.start('test-lemma');
 
+    // One read of the eligible ids, a query per Category in the Mix; the Words were read once already.
+    expect(started).toEqual(['listWordIds', 'listWordIds', 'listWordIds']);
     expect(reads).toEqual(started);
   });
 

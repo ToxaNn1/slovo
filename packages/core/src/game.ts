@@ -315,12 +315,12 @@ export async function openGame({
    */
   function planRounds(
     mode: GameMode,
-    eligibleOfKind: EligibleOfKind,
+    ofKind: EligibleOfKind,
     count = GAME_ROUNDS,
     asked: ReadonlySet<string> = new Set(),
   ): RoundPlan {
-    if ('refusal' in eligibleOfKind) return eligibleOfKind;
-    const eligible = eligibleOfKind.entries;
+    if ('refusal' in ofKind) return ofKind;
+    const eligible = ofKind.entries;
     const met = new Set(history.list.map(({ entryId }) => entryId));
     const inHistory = eligible.filter((entry) => met.has(entry.id));
     const pool = new Set(inHistory.length >= GAME_ROUNDS ? inHistory : eligible);
