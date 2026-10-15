@@ -95,8 +95,8 @@ export function BottomSheet({
         if (finished) scheduleOnRN(setMounted, false);
       });
     }
-    // The shared values are stable; only `visible` starts a slide.
-  }, [visible]);
+    // The shared values are stable, so only `visible` starts a slide.
+  }, [visible, drag, progress]);
 
   // Only a sheet with `onClose` has the grabber that takes the drag.
   const pan = Gesture.Pan()

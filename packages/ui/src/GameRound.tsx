@@ -114,12 +114,12 @@ export function GameRound({
 }) {
   const { strings } = useEdition();
   const { round } = game;
+  const { answer } = round;
   const gameHaptics = useGameHaptics();
   // Whether the Round showed an answer before, so only the answer given now plays.
-  const shownAnswered = useRef(round.answer !== undefined);
+  const shownAnswered = useRef(answer !== undefined);
 
   useEffect(() => {
-    const { answer } = round;
     if (answer === undefined) {
       shownAnswered.current = false;
       return;
@@ -128,8 +128,8 @@ export function GameRound({
     shownAnswered.current = true;
     if (answer.chosen === answer.correct) gameHaptics.rightAnswer();
     else gameHaptics.wrongAnswer();
-    // The haptics are stable; only the answer given plays.
-  }, [round.answer]);
+    // New haptics, after a change of Vibration, find the answer already played.
+  }, [answer, gameHaptics]);
 
   function confirmLeave() {
     const words = strings.game.exit;
@@ -184,8 +184,8 @@ function GameHeader({
   const passed = useSharedValue(roundsPassed);
   useEffect(() => {
     passed.value = withTiming(roundsPassed, BAR_GROWTH);
-    // The shared value is stable; only a Round passing grows the bar.
-  }, [roundsPassed]);
+    // The shared value is stable, so only a Round passing grows the bar.
+  }, [roundsPassed, passed]);
   // The share of the Rounds passed, as flex weights, so the bar needs no width.
   const filled = useAnimatedStyle(() => ({ flex: passed.value }));
   const unfilled = useAnimatedStyle(() => ({ flex: GAME_ROUNDS - passed.value }));
@@ -265,13 +265,17 @@ function Life({ full }: { full: boolean }) {
   /** 1 while full, 0 once lost. */
   const fullness = useSharedValue(full ? 1 : 0);
   const pop = useSharedValue(0);
+  // Whether the Life showed full before, so only losing it now pops it.
+  const shownFull = useRef(full);
 
   useEffect(() => {
     if (full) {
+      shownFull.current = true;
       fullness.value = 1;
       return;
     }
-    if (fullness.value === 0) return;
+    if (!shownFull.current) return;
+    shownFull.current = false;
     // The fill fades as the pop comes back, or at once with Reduce Motion.
     fullness.value = withDelay(
       reduceMotion ? LIFE_LOST_DELAY : LIFE_LOST_DELAY + LIFE_STEP.duration,
@@ -283,8 +287,9 @@ function Life({ full }: { full: boolean }) {
         withSequence(withTiming(1, LIFE_STEP), withTiming(0, LIFE_STEP)),
       );
     }
-    // The shared values are stable; only losing the Life pops it.
-  }, [full]);
+    // The shared values are stable, and a change of Reduce Motion finds the
+    // Life already lost.
+  }, [full, reduceMotion, fullness, pop]);
 
   const popStyle = useAnimatedStyle(() => ({
     transform: [
@@ -431,8 +436,9 @@ function AnswerOption({
     if (reduceMotion) return;
     if (right) grown.value = withTiming(1, RIGHT_FILL);
     else shift.value = withSequence(...SHAKE.map((offset) => withTiming(offset, SHAKE_STEP)));
-    // The shared values are stable; only the answer moves the option.
-  }, [answer]);
+    // The shared values are stable, and a change of Reduce Motion finds the
+    // answer already shown, so only the answer given moves the option.
+  }, [answer, right, chosen, reduceMotion, answered, grown, shift]);
 
   const motion = useAnimatedStyle(() => ({
     opacity: dimmed ? 1 - (1 - DIMMED_OPACITY) * answered.value : 1,
