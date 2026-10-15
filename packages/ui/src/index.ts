@@ -30,7 +30,7 @@ export { type RowAction } from './SwipeableRow';
 export { FavoriteButton } from './FavoriteButton';
 export { GameModeCard } from './GameModeCard';
 export { GameResult } from './GameResult';
-export { AnswerOption, AnswerSheet, GameHeader, RoundCard } from './GameRound';
+export { AnswerOption, AnswerSheet, ExitButton, GameHeader, RoundCard } from './GameRound';
 export { HapticsProvider, useHaptics } from './HapticsProvider';
 export { HideButton } from './HideButton';
 export { ScreenTitle, SectionLabel } from './headings';

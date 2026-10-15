@@ -1,5 +1,6 @@
 # The Game: «Вгадай слово» from the Game tab, the first option and «Далі» in
-# every Round until the result screen, then «Ще раз» for a new Game.
+# every Round until the result screen, then «Ще раз» for a new Game, and the ✕
+# that asks «Вийти з гри?» before it drops it.
 # A subflow of `smoke.yaml`; run it from there. It starts on the mode screen,
 # as the app keeps a Game in memory only and the smoke flow launches it anew.
 appId: ${APP_ID || 'app.slovo.uk'}
@@ -56,3 +57,24 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: game-round
 - assertVisible:
     id: game-option-0
+# The ✕ asks first; «Грати далі» returns to the same Round.
+- tapOn:
+    id: game-exit
+- assertVisible: Вийти з гри?
+- takeScreenshot: game-exit-confirm
+- tapOn: Грати далі
+- assertVisible:
+    id: game-round
+- assertVisible:
+    id: game-option-0
+# «Вийти» drops the Game: the mode screen shows again.
+- tapOn:
+    id: game-exit
+- assertVisible: Вийти з гри?
+# A tap while the alert still opens is lost.
+- waitForAnimationToEnd
+- tapOn: Вийти
+- assertVisible:
+    id: game-modes
+- assertNotVisible:
+    id: game-round

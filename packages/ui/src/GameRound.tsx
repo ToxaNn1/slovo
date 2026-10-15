@@ -34,6 +34,8 @@ import { WholeWordsText } from './WholeWordsText';
 /** A Life's size and the gap between Lives, from the design. */
 const LIFE_SIZE = 20;
 const LIFE_GAP = 3;
+/** The ✕'s glyph size; its touch target is `minTouchTarget`. */
+const EXIT_SIZE = 20;
 /** The height of the Round's progress bar. */
 const BAR_HEIGHT = 4;
 /** An answer option's least height, from the design (above the 44 pt touch target). */
@@ -144,6 +146,35 @@ export function GameHeader({
         ))}
       </View>
     </View>
+  );
+}
+
+/**
+ * The ✕ at the start of the Round's header (`game-round-dark`), 44 pt, which
+ * VoiceOver reads as the Edition's «Вийти з гри».
+ */
+export function ExitButton({ onPress }: { onPress: () => void }) {
+  const { colors } = useTokens();
+  const { strings, voice } = useEdition();
+  return (
+    <Pressable
+      testID="game-exit"
+      accessibilityRole="button"
+      accessibilityLabel={strings.game.exit.label}
+      {...voice}
+      onPress={onPress}
+      style={styles.exit}
+    >
+      <Svg width={EXIT_SIZE} height={EXIT_SIZE} viewBox="0 0 24 24">
+        <Path
+          d="M5 5l14 14M19 5L5 19"
+          fill="none"
+          stroke={colors.ink}
+          strokeWidth={2}
+          strokeLinecap="round"
+        />
+      </Svg>
+    </Pressable>
   );
 }
 
@@ -510,6 +541,12 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   lives: { flexDirection: 'row', gap: LIFE_GAP },
+  exit: {
+    width: minTouchTarget,
+    height: minTouchTarget,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   card: {
     minHeight: 220,
     justifyContent: 'center',

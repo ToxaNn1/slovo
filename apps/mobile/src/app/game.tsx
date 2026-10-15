@@ -4,6 +4,7 @@ import {
   AnswerOption,
   AnswerSheet,
   DecorBackground,
+  ExitButton,
   fill,
   GameHeader,
   GameModeCard,
@@ -15,7 +16,7 @@ import {
   useTokens,
 } from '@slovo/ui';
 import { useRouter } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useComposition } from '../composition';
@@ -91,7 +92,12 @@ export default function GameScreen() {
           }}
         />
       ) : (
-        <RoundScreen game={current} onAnswer={actions.answer} onNext={actions.next} />
+        <RoundScreen
+          game={current}
+          onAnswer={actions.answer}
+          onNext={actions.next}
+          onLeave={actions.leave}
+        />
       )}
     </SafeAreaView>
   );
@@ -148,20 +154,38 @@ function ModeScreen({
   );
 }
 
-/** A Round (`game-round-dark`): the header, the prompt, the four options and, once answered, the sheet. */
+/**
+ * A Round (`game-round-dark`): the header with the ✕, the prompt, the four
+ * options and, once answered, the sheet. The ✕ asks first, with a system
+ * alert, as «Очистити Історію?» does; «Грати далі» leaves the Round as it was.
+ */
 function RoundScreen({
   game,
   onAnswer,
   onNext,
+  onLeave,
 }: {
   game: CurrentGame;
   onAnswer: (option: number) => void;
   onNext: () => void;
+  onLeave: () => void;
 }) {
   const { round } = game;
+
+  function confirmLeave() {
+    Alert.alert(strings.exit.title, strings.exit.message, [
+      { text: strings.exit.cancel, style: 'cancel' },
+      { text: strings.exit.confirm, style: 'destructive', onPress: onLeave },
+    ]);
+  }
+
   return (
     <View testID="game-round" style={styles.screen}>
-      <GameHeader roundsPassed={game.roundsPassed} lives={game.lives} />
+      <GameHeader
+        roundsPassed={game.roundsPassed}
+        lives={game.lives}
+        leading={<ExitButton onPress={confirmLeave} />}
+      />
       <ScrollView contentContainerStyle={styles.round}>
         <RoundCard
           label={modeWords[game.modeId]?.prompt ?? ''}
