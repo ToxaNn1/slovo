@@ -57,6 +57,14 @@ export function InvertedTokens({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * The colours of one colour scheme, whichever is in effect, for what the
+ * design draws alike in both Themes, such as the Game's answer fills.
+ */
+export function useSchemeColors(colorScheme: ColorScheme): ColorTokens {
+  return useContext(DesignTokensContext).colors[colorScheme];
+}
+
 /** The design tokens in effect; the Core's light tokens outside a provider. */
 export function useTokens(): Tokens {
   return useContext(TokensContext);

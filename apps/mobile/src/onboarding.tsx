@@ -1,9 +1,9 @@
 import type { OnboardingStep, SampleNotification, WordCardModel } from '@slovo/core';
 import {
-  fill,
   OnboardingMix,
   OnboardingNotifications,
   OnboardingWelcome,
+  stressLabel,
   type HeroWord,
   type SampleNotificationLook,
 } from '@slovo/ui';
@@ -15,17 +15,16 @@ import { editionStrings } from './edition';
 import { MixChoices } from './mix-choices';
 import { NotificationTimes } from './notification-times';
 
-/** What VoiceOver reads for a Word's Lemma, which says where the Stress falls. */
-function lemmaLabelOf({ lemma, stressedVowels }: WordCardModel): string {
-  const { stress, stressOr } = editionStrings.wordCard;
-  return stressedVowels.length === 0
-    ? lemma
-    : `${lemma}, ${fill(stress, { vowels: stressedVowels.join(` ${stressOr} `) })}`;
-}
-
 /** A Word's Lemma as the steps draw it: with its Stress, and what VoiceOver reads for it. */
 function lemmaOf(wordCard: WordCardModel): { lemma: string; accessibilityLabel: string } {
-  return { lemma: wordCard.lemma, accessibilityLabel: lemmaLabelOf(wordCard) };
+  return {
+    lemma: wordCard.lemma,
+    accessibilityLabel: stressLabel(
+      editionStrings.wordCard,
+      wordCard.lemma,
+      wordCard.stressedVowels,
+    ),
+  };
 }
 
 function heroOf(wordCard: WordCardModel | undefined): HeroWord | undefined {

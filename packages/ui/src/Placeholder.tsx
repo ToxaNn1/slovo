@@ -4,7 +4,7 @@ import { useEdition } from './EditionProvider';
 import { space, typeSize } from './tokens';
 import { useTokens } from './TokensProvider';
 
-/** Stands in for a screen that a later version builds. */
+/** One muted line centred on a screen with nothing else to show, such as a Feed without Words. */
 export function Placeholder({ message, testID }: { message: string; testID?: string }) {
   const { colors, fontFamilies } = useTokens();
   const { voice } = useEdition();

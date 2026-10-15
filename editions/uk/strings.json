@@ -6,7 +6,6 @@
     "saved": "Збережене",
     "accessibilityLabel": "{tab}, вкладка {position} з {count}"
   },
-  "placeholder": "Цей розділ з'явиться згодом.",
   "loadFailed": {
     "title": "Нитка урвалася",
     "message": "Не вдалося відкрити словник.",

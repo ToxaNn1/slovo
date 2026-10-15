@@ -1,0 +1,58 @@
+# The Game: «Вгадай слово» from the Game tab, the first option and «Далі» in
+# every Round until the result screen, then «Ще раз» for a new Game.
+# A subflow of `smoke.yaml`; run it from there. It starts on the mode screen,
+# as the app keeps a Game in memory only and the smoke flow launches it anew.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- tapOn:
+    id: tab-game
+- assertVisible:
+    id: game-modes
+- tapOn:
+    id: game-mode-guess-word
+- assertVisible:
+    id: game-round
+- assertVisible:
+    id: game-prompt
+- assertVisible:
+    id: game-lives
+# At most 15 Rounds; five wrong answers end the Game sooner. Each scroll brings
+# its target up at the largest text sizes and does nothing otherwise.
+- repeat:
+    while:
+      notVisible:
+        id: game-result
+    times: 15
+    commands:
+      - scrollUntilVisible:
+          element:
+            id: game-option-0
+          direction: DOWN
+      - tapOn:
+          id: game-option-0
+      - assertVisible:
+          id: game-sheet-title
+      - scrollUntilVisible:
+          element:
+            id: game-next
+          direction: DOWN
+      # One tap: a second one, while the sheet slides away, would land on the tab bar.
+      - tapOn:
+          id: game-next
+          retryTapIfNoChange: false
+      - waitForAnimationToEnd
+- assertVisible:
+    id: game-result
+- assertVisible:
+    id: game-result-rounds
+- scrollUntilVisible:
+    element:
+      id: game-again
+    direction: DOWN
+- tapOn:
+    id: game-again
+# A new Game: a Round to answer, no result.
+- assertVisible:
+    id: game-round
+- assertVisible:
+    id: game-option-0

@@ -4,8 +4,6 @@ import { TextSchema } from '../shared';
 
 /** The texts the whole app shares, outside any one feature. */
 export const appStringsShape = {
-  /** Shown on a screen that a later version builds. */
-  placeholder: TextSchema,
   /**
    * The app's local error state, shown when the Language Pack can't be
    * opened. The app never needs the network for it, so there is no network error.
