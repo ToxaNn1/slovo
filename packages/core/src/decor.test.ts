@@ -17,6 +17,7 @@ const editionDecor = {
     error: stitch('#A3221B', '#D4AE5C'),
   },
   splash: { mark: stitch('#A3221B', '#D4AE5C'), band: stitch('#A3221B', '#D4AE5C') },
+  victory: { illustration: stitch('#A3221B', '#D4AE5C') },
 };
 
 describe('loadDecor', () => {
@@ -33,14 +34,23 @@ describe('loadDecor', () => {
   });
 
   it('leaves the slots the Core shows nothing in empty', () => {
-    const { background, corners, emptyState, splash } = coreDecor;
+    const { background, corners, emptyState, splash, victory } = coreDecor;
 
-    expect({ background, corners, emptyState, splash }).toEqual({
+    expect({ background, corners, emptyState, splash, victory }).toEqual({
       background: undefined,
       corners: undefined,
       emptyState: undefined,
       splash: undefined,
+      victory: undefined,
     });
+  });
+
+  it('shows no victory illustration for an Edition that supplies none', () => {
+    expect(loadDecor({ corners: editionDecor.corners }).victory).toBeUndefined();
+  });
+
+  it('takes the victory illustration an Edition supplies', () => {
+    expect(loadDecor({ victory: editionDecor.victory }).victory).toEqual(editionDecor.victory);
   });
 
   it('takes every slot the Edition supplies', () => {
@@ -87,6 +97,12 @@ describe('loadDecor', () => {
     ],
     ['a motif of no width', { background: { tile: motif({ width: 0 }) } }, 'background.tile.width'],
     ['a divider without its centre', { divider: { band: motif({}) } }, 'divider.centre'],
+    ['a victory slot without its illustration', { victory: {} }, 'victory.illustration'],
+    [
+      'a victory illustration that is not a motif',
+      { victory: { illustration: motif({ layers: [] }) } },
+      'victory.illustration.layers',
+    ],
     ['an unknown slot', { shareCard: {} }, '(root)'],
   ])('rejects %s, naming the field', (_, decor, field) => {
     const load = () => loadDecor(decor);

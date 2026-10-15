@@ -1,7 +1,8 @@
 import { GAME_ROUNDS } from '@slovo/core';
-import { useEffect, type ReactNode } from 'react';
+import { useEffect } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { VictoryIllustration } from './DecorSlots';
 import { fill, useEdition } from './EditionProvider';
 import { useHaptics } from './HapticsProvider';
 import { PrimaryButton } from './PrimaryButton';
@@ -14,6 +15,9 @@ import { WholeWordsText } from './WholeWordsText';
 const NUMBER_MAX_FONT_SCALE = 1.3;
 /** How far they may scale the smaller text, so it never breaks a word. */
 const TEXT_MAX_FONT_SCALE = 1.5;
+/** The victory illustration's width on a win and on a loss, from the design. */
+const WIN_ILLUSTRATION_WIDTH = 120;
+const LOSS_ILLUSTRATION_WIDTH = 64;
 /** The title's size, from the design. */
 const TITLE_SIZE = { fontSize: 38, lineHeight: 38 * 1.1 };
 /** How long after the win's first success haptic its second one comes. */
@@ -56,8 +60,9 @@ function ResultNumber({
  * The result screen (`game-result-win-dark`, `game-result-loss-dark`): the
  * title and the line of a win or a loss, the Rounds passed and the Lives
  * left, «Ще раз» for a new Game in the same mode and «На головну» for the
- * Feed. A win arrives with the success haptic twice. `illustration` sits over
- * the title.
+ * Feed. A win arrives with the success haptic twice. The Edition's victory
+ * illustration (Decor slot 6) sits over the title, large and stitched in on a
+ * win, small and still on a loss.
  */
 export function GameResult({
   won,
@@ -65,14 +70,12 @@ export function GameResult({
   lives,
   onAgain,
   onHome,
-  illustration,
 }: {
   won: boolean;
   roundsPassed: number;
   lives: number;
   onAgain: () => void;
   onHome: () => void;
-  illustration?: ReactNode;
 }) {
   const { colors, fontFamilies } = useTokens();
   const { strings, voice, count } = useEdition();
@@ -98,7 +101,10 @@ export function GameResult({
       style={{ backgroundColor: colors.background }}
       contentContainerStyle={styles.screen}
     >
-      {illustration}
+      <VictoryIllustration
+        width={won ? WIN_ILLUSTRATION_WIDTH : LOSS_ILLUSTRATION_WIDTH}
+        stitched={won}
+      />
       <View accessible {...voice} style={styles.text}>
         <WholeWordsText
           text={won ? words.result.won.title : words.result.lost.title}
