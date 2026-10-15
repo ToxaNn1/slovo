@@ -59,6 +59,13 @@ export {
   type RoundOption,
   type TextRange,
 } from './game';
+export {
+  createGameHaptics,
+  LIFE_LOST_DELAY,
+  WIN_SECOND_SUCCESS,
+  type GameHaptics,
+  type Schedule,
+} from './game-haptics';
 export { createHaptics, type HapticEngine, type Haptics } from './haptics';
 export { type HiddenEntries, type HiddenEntry } from './hidden-entries';
 export { type UnhideResult, type HideResult, type HideTarget, type HidingChange } from './hiding';
