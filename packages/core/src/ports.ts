@@ -11,6 +11,11 @@ export interface ContentReadPort {
    * new picks it.
    */
   listWordIds(categoryId?: string): Promise<readonly string[]>;
+  /**
+   * Every Word that is not retired, in the order of `listWordIds`, read at
+   * once, for a feature that needs them all, such as the Game's Distractors.
+   */
+  listWords(): Promise<readonly Word[]>;
   /** Any Word by id, a Retired Word included, so kept Words stay reachable. */
   getWord(id: string): Promise<Word | undefined>;
   /**

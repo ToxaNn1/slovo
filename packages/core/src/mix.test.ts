@@ -103,6 +103,7 @@ async function run({
     content: pack,
     edition: {
       isFeatureEnabled: (feature) => feature === 'corrections' && correctionsSwitch,
+      languageTraits: { distractorRule: 'same-part-of-speech' },
       categories,
       userSettingDefaults: {
         mix: { categoryIds: defaultCategoryIds, corrections: true },

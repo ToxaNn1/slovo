@@ -5,6 +5,7 @@ import { CollectionsStringsSchema } from './collections';
 import { CorrectionCardStringsSchema } from './correction-card';
 import { FavoritesStringsSchema } from './favorites';
 import { feedStringsShape } from './feed';
+import { GameStringsSchema } from './game';
 import { HiddenStringsSchema } from './hidden';
 import { HidingStringsSchema } from './hiding';
 import { HistoryStringsSchema } from './history';
@@ -43,6 +44,7 @@ export const EditionStringsSchema = z.strictObject({
   onboarding: OnboardingStringsSchema,
   notifications: NotificationsStringsSchema,
   notificationBody: NotificationBodyStringsSchema,
+  game: GameStringsSchema,
 });
 
 export type EditionStrings = z.infer<typeof EditionStringsSchema>;

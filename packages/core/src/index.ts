@@ -39,6 +39,25 @@ export {
   type FeedCard,
   type WordFeedCard,
 } from './feed';
+export {
+  GAME_LIVES,
+  GAME_ROUNDS,
+  ROUND_OPTIONS,
+  type AnswerSheet,
+  type CurrentGame,
+  type Game,
+  type GameEdition,
+  type GameMode,
+  type GameModeOffer,
+  type GameModeRefusal,
+  type GameState,
+  type GameStatus,
+  type Round,
+  type RoundAnswer,
+  type RoundContent,
+  type RoundInput,
+  type RoundOption,
+} from './game';
 export { createHaptics, type HapticEngine, type Haptics } from './haptics';
 export { type HiddenEntries, type HiddenEntry } from './hidden-entries';
 export { type UnhideResult, type HideResult, type HideTarget, type HidingChange } from './hiding';
@@ -62,7 +81,14 @@ export {
   type DefaultMix,
   type UserSettingDefaults,
 } from './edition';
-export type { Category, FeatureSwitch, FontSize, LanguageTraits, Theme } from '@slovo/contracts';
+export type {
+  Category,
+  DistractorRule,
+  FeatureSwitch,
+  FontSize,
+  LanguageTraits,
+  Theme,
+} from '@slovo/contracts';
 export {
   colorSchemeFor,
   createSettings,

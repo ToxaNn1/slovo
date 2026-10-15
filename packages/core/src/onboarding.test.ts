@@ -94,6 +94,7 @@ async function run({
         notificationTimes: ['09:00', '13:00', '19:00'],
       },
       isFeatureEnabled: () => false,
+      languageTraits: { distractorRule: 'same-part-of-speech' },
     },
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock,

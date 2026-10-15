@@ -15,6 +15,7 @@ import {
   type ContentReadPort,
   type Edition,
   type MixEdition,
+  type GameEdition,
   type NotificationsEdition,
   type Feed,
   type FeedCard,
@@ -68,8 +69,9 @@ const pack = [...liveIds.map((id) => word(id)), ...retiredIds.map((id) => word(i
  */
 const editionWith = (
   corrections: boolean,
-): Pick<Edition, 'isFeatureEnabled'> & MixEdition & NotificationsEdition => ({
+): Pick<Edition, 'isFeatureEnabled'> & MixEdition & NotificationsEdition & GameEdition => ({
   isFeatureEnabled: (feature) => feature === 'corrections' && corrections,
+  languageTraits: { distractorRule: 'same-part-of-speech' },
   categories: [{ id: 'test', displayName: 'Test' }],
   userSettingDefaults: { mix: { categoryIds: ['test'], corrections: true }, notificationTimes: [] },
 });

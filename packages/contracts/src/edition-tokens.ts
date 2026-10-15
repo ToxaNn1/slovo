@@ -29,8 +29,18 @@ export const ColorTokensSchema = z.strictObject({
   line: ColorSchema,
   /** Tab bar items that are not selected. */
   inactiveTab: ColorSchema,
-  /** A correct answer and the ✓ of a Correction's example pair; never Decor. */
+  /**
+   * A correct answer, as text in this scheme («Правильно!») and the ✓ of a
+   * Correction's example pair; the light scheme's also fills the right option
+   * under white text in both Themes. Never Decor.
+   */
   correct: ColorSchema,
+  /**
+   * A wrong answer, as text in this scheme («Не цього разу»); the light
+   * scheme's also fills the reader's wrong choice under white text in both
+   * Themes. Never Decor.
+   */
+  wrong: ColorSchema,
   /** The filled heart of an Entry in Favorites; never Decor. */
   heart: ColorSchema,
   /** Delete and Clear actions, with white text on them; never Decor. */

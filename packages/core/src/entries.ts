@@ -1,4 +1,4 @@
-import type { Correction, Entry, Word } from '@slovo/contracts';
+import type { Correction, Entry, EntryKind, Word } from '@slovo/contracts';
 
 import type { Edition } from './edition';
 import { readMix, type MixEdition } from './mix';
@@ -29,6 +29,12 @@ export interface Entries {
    * Entry. Read afresh on every call.
    */
   eligible(): Promise<EntryIds>;
+  /**
+   * The eligible Entries of one kind themselves, in the order `eligible` gives
+   * their ids, for a feature that weighs them all at once, such as the Game.
+   * Read afresh on every call.
+   */
+  eligibleOfKind(kind: EntryKind): Promise<Entry[]>;
   /**
    * Any Entry by id, eligible or not: a Retired one, or a Correction when the
    * Edition turns Corrections off. So the Entries the user keeps stay
@@ -88,22 +94,36 @@ export function createEntries(
     return words.flat();
   }
 
+  async function eligible(): Promise<EntryIds> {
+    const [mix, hidden] =
+      'userState' in options
+        ? await Promise.all([
+            readMix({ edition: options.edition, userState: options.userState }),
+            options.userState.list(hiddenRecords),
+          ])
+        : [undefined, new Map<string, string>()];
+    const [words, corrections] = await Promise.all([
+      wordIds(mix?.categoryIds),
+      withCorrections() && (mix?.corrections ?? true) ? content.listCorrectionIds() : [],
+    ]);
+    const shown = (id: string) => !hidden.has(id);
+    return { words: words.filter(shown), corrections: corrections.filter(shown) };
+  }
+
+  /** The eligible Words, read at once; the eligible Corrections, one by one. */
+  async function eligibleOfKind(kind: EntryKind): Promise<Entry[]> {
+    const ids = await eligible();
+    if (kind === 'word') {
+      const live = new Map((await content.listWords()).map((word) => [word.id, word]));
+      return ids.words.flatMap((id) => live.get(id) ?? []);
+    }
+    const corrections = await Promise.all(ids.corrections.map((id) => content.getCorrection(id)));
+    return corrections.filter((correction) => correction !== undefined);
+  }
+
   return {
-    async eligible() {
-      const [mix, hidden] =
-        'userState' in options
-          ? await Promise.all([
-              readMix({ edition: options.edition, userState: options.userState }),
-              options.userState.list(hiddenRecords),
-            ])
-          : [undefined, new Map<string, string>()];
-      const [words, corrections] = await Promise.all([
-        wordIds(mix?.categoryIds),
-        withCorrections() && (mix?.corrections ?? true) ? content.listCorrectionIds() : [],
-      ]);
-      const shown = (id: string) => !hidden.has(id);
-      return { words: words.filter(shown), corrections: corrections.filter(shown) };
-    },
+    eligible,
+    eligibleOfKind,
     async get(id) {
       return (await content.getWord(id)) ?? content.getCorrection(id);
     },

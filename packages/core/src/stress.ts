@@ -13,3 +13,12 @@ export function renderStress({ lemma, stress }: Pick<Word, 'lemma' | 'stress'>):
     stressed.has(position) ? `${character}${STRESS_MARK}` : character,
   ).join('');
 }
+
+/**
+ * The stressed vowels of the Lemma, in order: one per valid Stress, as
+ * VoiceOver names them. Empty in an Edition that doesn't mark Stress.
+ */
+export function stressedVowelsOf({ lemma, stress }: Pick<Word, 'lemma' | 'stress'>): string[] {
+  const characters = Array.from(lemma);
+  return stress.flatMap((position) => characters[position] ?? []);
+}
