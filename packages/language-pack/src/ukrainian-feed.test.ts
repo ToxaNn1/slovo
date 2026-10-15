@@ -14,6 +14,7 @@ import {
   openUserState,
   SEEN_DWELL_MS,
   type Clock,
+  type ContentReadPort,
   type Edition,
   type Feed,
   type FeedCard,
@@ -31,8 +32,34 @@ const editionDir = fileURLToPath(new URL('../../../editions/uk', import.meta.url
 
 let workDir: string;
 let pack: NodeLanguagePack;
+/** The pack as the Feed reads it: each Word and Correction is read from it once per file. */
+let content: ContentReadPort;
 let liveIds: readonly string[];
 let liveCorrectionIds: readonly string[];
+
+/**
+ * Remembers every Word and Correction by id. The pack never changes while it
+ * is open, but every `run` opens a new composition, and the pack reads a Word
+ * with eight queries and a schema check: left alone, a walk through all the
+ * Words costs seconds on a loaded machine, and a test walks several times.
+ */
+function remembering(port: ContentReadPort): ContentReadPort {
+  const words = new Map<string, ReturnType<ContentReadPort['getWord']>>();
+  const corrections = new Map<string, ReturnType<ContentReadPort['getCorrection']>>();
+  function remember<T>(known: Map<string, T>, id: string, read: () => T): T {
+    let value = known.get(id);
+    if (value === undefined) {
+      value = read();
+      known.set(id, value);
+    }
+    return value;
+  }
+  return {
+    ...port,
+    getWord: (id) => remember(words, id, () => port.getWord(id)),
+    getCorrection: (id) => remember(corrections, id, () => port.getCorrection(id)),
+  };
+}
 
 /** The Ukrainian Edition as it ships, with the Corrections Feature Switch on. */
 const ukrainian = loadEdition(
@@ -51,6 +78,7 @@ beforeAll(async () => {
   const result = buildLanguagePack({ editionDir, outFile });
   if (!result.ok) throw new Error('The Ukrainian Language Pack does not build');
   pack = openLanguagePack(outFile);
+  content = remembering(pack);
   liveIds = await pack.listWordIds();
   liveCorrectionIds = await pack.listCorrectionIds();
 });
@@ -90,7 +118,7 @@ async function run(
 ): Promise<Feed> {
   const userState = await openUserState({ port: createMemoryUserStatePort(records) });
   const composition = await openComposition({
-    content: pack,
+    content,
     edition,
     userState,
     clock,
@@ -142,32 +170,49 @@ async function unseenNextDay(records: Map<string, string>): Promise<string[]> {
 
 const today = '2026-10-11T09:00:00+03:00';
 
+/**
+ * These tests walk the Feed through every live Word, building each card from
+ * the pack once. That took about 0.3 s alone and 2.5 s on a 12-core machine
+ * busy with four times as many processes as cores (measured for #257), where
+ * Vitest's 5 s default is too close. The cost is the walk itself, so only the
+ * tests that make it get more.
+ */
+const WALK_TIMEOUT_MS = 20_000;
+
 describe('the Feed over the Ukrainian Language Pack', () => {
-  it('offers each live Word once and never a Retired Word', async () => {
-    const offered = await walk(await run(new Map(), fakeClock(today).clock));
+  it(
+    'offers each live Word once and never a Retired Word',
+    { timeout: WALK_TIMEOUT_MS },
+    async () => {
+      const offered = await walk(await run(new Map(), fakeClock(today).clock));
 
-    const words = await Promise.all(offered.map((id) => pack.getWord(id)));
-    expect(offered).toHaveLength(liveIds.length);
-    expect(new Set(offered)).toEqual(new Set(liveIds));
-    expect(words.filter((word) => word?.retired !== false)).toEqual([]);
-    // The content has Retired Words, so leaving them out is tested for real.
-    expect(await pack.getWord('w_z21mlp')).toMatchObject({ retired: true });
-  });
+      const words = await Promise.all(offered.map((id) => content.getWord(id)));
+      expect(offered).toHaveLength(liveIds.length);
+      expect(new Set(offered)).toEqual(new Set(liveIds));
+      expect(words.filter((word) => word?.retired !== false)).toEqual([]);
+      // The content has Retired Words, so leaving them out is tested for real.
+      expect(await pack.getWord('w_z21mlp')).toMatchObject({ retired: true });
+    },
+  );
 
-  it('shuffles the same way for the same seed, also after a restart', async () => {
-    const records = new Map<string, string>();
-    const first = await walk(await run(records, fakeClock(today).clock, 7));
-    const sameSeed = await walk(await run(new Map(), fakeClock(today).clock, 7));
-    const otherSeed = await walk(await run(new Map(), fakeClock(today).clock, 8));
+  it(
+    'shuffles the same way for the same seed, also after a restart',
+    { timeout: WALK_TIMEOUT_MS },
+    async () => {
+      const records = new Map<string, string>();
+      const first = await walk(await run(records, fakeClock(today).clock, 7));
+      const sameSeed = await walk(await run(new Map(), fakeClock(today).clock, 7));
+      const otherSeed = await walk(await run(new Map(), fakeClock(today).clock, 8));
 
-    // The Cycle keeps the seed it started with, whatever the random port draws now.
-    const restarted = await walk(await run(records, fakeClock(today).clock, 99));
+      // The Cycle keeps the seed it started with, whatever the random port draws now.
+      const restarted = await walk(await run(records, fakeClock(today).clock, 99));
 
-    expect(sameSeed).toEqual(first);
-    expect(restarted).toEqual(first);
-    expect(otherSeed).not.toEqual(first);
-    expect(first).not.toEqual(liveIds);
-  });
+      expect(sameSeed).toEqual(first);
+      expect(restarted).toEqual(first);
+      expect(otherSeed).not.toEqual(first);
+      expect(first).not.toEqual(liveIds);
+    },
+  );
 
   it(`makes a Word Seen only after ${String(SEEN_DWELL_MS)} ms on screen, never on a quick swipe, and never by going back`, async () => {
     const records = new Map<string, string>();
@@ -251,7 +296,7 @@ describe('Corrections in the Feed over the Ukrainian Language Pack', () => {
     while (feed.cards.length < CORRECTION_EVERY) await feed.next();
 
     const card = feed.cards[CORRECTION_EVERY - 1];
-    const correction = await pack.getCorrection(entryIdOf(card) ?? '');
+    const correction = await content.getCorrection(entryIdOf(card) ?? '');
 
     expect(correctionCardOf(card)).toEqual({
       kind: 'correction',
@@ -269,7 +314,7 @@ describe('Corrections in the Feed over the Ukrainian Language Pack', () => {
 describe('Favorites over the Ukrainian Language Pack', () => {
   async function open(records: Map<string, string>, clock: Clock) {
     return openComposition({
-      content: pack,
+      content,
       edition: ukrainian,
       userState: await openUserState({ port: createMemoryUserStatePort(records) }),
       clock,
@@ -311,7 +356,7 @@ describe('the notification plan over the Ukrainian Language Pack', () => {
   it('plans the default times with live Words, each once, titled with their Stress', async () => {
     const scheduler = createFakeNotificationScheduler();
     await openComposition({
-      content: pack,
+      content,
       edition: ukrainian,
       userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
       clock: fakeClock('2026-10-14T08:00:00+03:00').clock,
