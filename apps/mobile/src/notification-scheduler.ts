@@ -49,10 +49,23 @@ export function isFromNotification({ from }: { readonly from?: string }): boolea
   return from === notificationSource;
 }
 
+/** Where the app runs, as far as scheduling cares. */
+export interface NotificationEnvironment {
+  /**
+   * Whether it is Expo Go. Expo Go never runs the `expo-notifications` config
+   * plugin that bundles the Edition's sound file (ADR 0023), so there the file
+   * can't be asked for by name.
+   */
+  readonly inExpoGo: boolean;
+}
+
 /**
  * The notification scheduler port on `expo-notifications`, or, when the
  * installed binary lacks the module (`notifications` is undefined), a port
  * that reports not asked yet, asks nothing and schedules nothing.
+ *
+ * Where the Edition's sound file is not in the app, a notification that wants
+ * it plays the system sound instead.
  *
  * Each notification comes on a calendar trigger built from its local date and
  * time parts with no time zone, so iOS fires it at that wall-clock time in
@@ -60,6 +73,7 @@ export function isFromNotification({ from }: { readonly from?: string }): boolea
  */
 export function createNotificationScheduler(
   notifications: NotificationsModule | undefined,
+  environment: NotificationEnvironment,
 ): NotificationSchedulerPort {
   if (notifications === undefined) {
     return {
@@ -68,10 +82,13 @@ export function createNotificationScheduler(
       replacePlan: () => Promise.resolve(),
     };
   }
-  return schedulerOn(notifications);
+  return schedulerOn(notifications, environment);
 }
 
-function schedulerOn(notifications: NotificationsModule): NotificationSchedulerPort {
+function schedulerOn(
+  notifications: NotificationsModule,
+  { inExpoGo }: NotificationEnvironment,
+): NotificationSchedulerPort {
   const { PermissionStatus, SchedulableTriggerInputTypes } = notifications;
 
   function permissionOf({
@@ -83,7 +100,7 @@ function schedulerOn(notifications: NotificationsModule): NotificationSchedulerP
 
   function soundOf(sound: PlannedSound): string | false {
     if (sound === 'silent') return false;
-    return sound === 'system' ? 'default' : sound.file;
+    return sound === 'system' || inExpoGo ? 'default' : sound.file;
   }
 
   function schedule({ date, time, title, body, wordId, sound }: PlannedNotification) {

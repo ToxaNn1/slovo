@@ -1,3 +1,5 @@
+import { isRunningInExpoGo } from 'expo';
+
 import { nativeModules } from './device-native-modules';
 import {
   createNotificationScheduler,
@@ -17,7 +19,9 @@ const notifications = nativeModules.load(
 );
 
 /** The notification scheduler the composition plans on: the device's, or one that stays not asked. */
-export const deviceNotificationScheduler = createNotificationScheduler(notifications);
+export const deviceNotificationScheduler = createNotificationScheduler(notifications, {
+  inExpoGo: isRunningInExpoGo(),
+});
 
 /** Calls `open` with the link of each notification the reader taps; returns the call that stops it. */
 export const onDeviceNotificationTap = (open: (link: string) => void) =>
