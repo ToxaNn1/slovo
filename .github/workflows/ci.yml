@@ -31,6 +31,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
+      # The package boundaries the ADRs set, import cycles and orphan modules.
+      - run: pnpm deps
       - run: pnpm typecheck
       - run: pnpm test
       # Fails on invalid content and on any missed content target of the Edition.

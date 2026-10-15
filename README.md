@@ -132,16 +132,17 @@ A development build still needs Metro, so this does not prove that a release bui
 
 ## Commands
 
-All commands run from the repo root. CI runs the first four on every pull request, and `main` takes changes only when they are green.
+All commands run from the repo root. CI runs the first five on every pull request, and `main` takes changes only when they are green.
 
-| Command              | What it does                                                                                                                                                           |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm lint`          | ESLint in every package, then Prettier.                                                                                                                                |
-| `pnpm typecheck`     | TypeScript in every package.                                                                                                                                           |
-| `pnpm test`          | Vitest in every package. Turborepo caches results and tracks `editions/` as an input.                                                                                  |
-| `pnpm build:pack uk` | Validates the Edition's content, prints the content report and builds the Language Pack. Fails when the content misses a target in `editions/uk/content/targets.json`. |
-| `pnpm source:words`  | Drafts Words for review; see [`tools/sourcing/README.md`](tools/sourcing/README.md).                                                                                   |
-| `pnpm format`        | Rewrites files with Prettier.                                                                                                                                          |
+| Command              | What it does                                                                                                                                                                 |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm lint`          | ESLint in every package, then Prettier.                                                                                                                                      |
+| `pnpm typecheck`     | TypeScript in every package.                                                                                                                                                 |
+| `pnpm deps`          | dependency-cruiser: the package boundaries the ADRs set, import cycles and orphan modules. Rules and their ADRs are in [`.dependency-cruiser.mjs`](.dependency-cruiser.mjs). |
+| `pnpm test`          | Vitest in every package. Turborepo caches results and tracks `editions/` as an input.                                                                                        |
+| `pnpm build:pack uk` | Validates the Edition's content, prints the content report and builds the Language Pack. Fails when the content misses a target in `editions/uk/content/targets.json`.       |
+| `pnpm source:words`  | Drafts Words for review; see [`tools/sourcing/README.md`](tools/sourcing/README.md).                                                                                         |
+| `pnpm format`        | Rewrites files with Prettier.                                                                                                                                                |
 
 Dependency advisories that have no fix yet are ignored in [`pnpm-workspace.yaml`](pnpm-workspace.yaml) with a review date. Look at that list when you touch dependencies, and drop an entry as soon as a patched release exists.
 
