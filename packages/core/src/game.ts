@@ -1,7 +1,7 @@
 import type { Entry, EntryKind, Example, LanguageTraits } from '@slovo/contracts';
 
 import type { Edition } from './edition';
-import type { Entries } from './entries';
+import type { EligibleOfKind, Entries, KindRefusal } from './entries';
 import type { History } from './history';
 import { createInTurn, createSubscribers } from './in-turn';
 import type { Random } from './ports';
@@ -91,19 +91,24 @@ export interface GameMode {
 
 /**
  * Why a Game Mode can't start: too few eligible Entries of its kind to make 15
- * Rounds of, or, for a mode that asks about Corrections, Corrections out of the Mix.
+ * fair Rounds of, or why no Entry of its kind is eligible, such as Corrections
+ * out of the Mix.
  */
-export type GameModeRefusal = 'too-few-entries' | 'corrections-out-of-mix';
+export type GameModeRefusal = 'too-few-entries' | KindRefusal;
 
 /**
  * A Game Mode on offer, with what its card needs from the Core: the mode's
  * id, the kind of Entry it asks about, and whether a Game in it can start
- * now, or why not.
+ * now, or why not; or, just after the Game opens, that it is still planned.
  */
 export type GameModeOffer = {
   readonly modeId: string;
   readonly entryKind: EntryKind;
-} & ({ readonly canStart: true } | { readonly canStart: false; readonly refusal: GameModeRefusal });
+} & (
+  | { readonly canStart: true }
+  | { readonly canStart: false; readonly refusal: GameModeRefusal }
+  | { readonly canStart: false; readonly planning: true }
+);
 
 /** The answer given to a Round. */
 export interface RoundAnswer {
@@ -178,8 +183,8 @@ export interface Game {
   subscribe(listener: () => void): () => void;
   /**
    * Starts a new Game in the mode, in place of any Game there is. When the
-   * mode can't start after all, no Game starts, the mode screen shows and the
-   * mode's offer says why.
+   * mode can't start, no Game starts, the mode screen shows and the mode's
+   * offer says why, as it did before.
    */
   start(modeId: string): Promise<void>;
   /**
@@ -234,12 +239,24 @@ interface PlannedRound {
   readonly content: RoundContent;
 }
 
+/** The Rounds a Game Mode makes, or why it can't make them. */
+type RoundPlan =
+  { readonly rounds: readonly PlannedRound[] } | { readonly refusal: GameModeRefusal };
+
+/** The offer of a Game Mode: it can start when it can make its Rounds. */
+const offerOf = ({ id, entryKind }: GameMode, plan: RoundPlan): GameModeOffer =>
+  'rounds' in plan
+    ? { modeId: id, entryKind, canStart: true }
+    : { modeId: id, entryKind, canStart: false, refusal: plan.refusal };
+
 /**
  * Opens the Game over the eligible Entries and History, for the Core
  * composition, with `followEligibility`, which reads the modes on offer again
  * after a hide, a restore or a Mix change. The Game Modes come in the order
- * they register. The best result is read from the user state once, when it
- * opens, so open one per app session (the Core composition does).
+ * they register. Their offers say they are still planned until the first
+ * `followEligibility`, which the Core composition calls once it is open. The
+ * best result is read from the user state once, when it opens, so open one
+ * per app session (the Core composition does).
  */
 export async function openGame({
   edition,
@@ -250,7 +267,7 @@ export async function openGame({
   modes: registered,
 }: {
   edition: GameEdition;
-  entries: Pick<Entries, 'eligible' | 'eligibleOfKind' | 'correctionsInMix'>;
+  entries: Pick<Entries, 'eligibleOfKind'>;
   history: Pick<History, 'list'>;
   userState: Pick<UserState, 'read' | 'write'>;
   random: Random;
@@ -266,29 +283,13 @@ export async function openGame({
   const subscribers = createSubscribers();
   const inTurn = createInTurn();
 
-  /**
-   * The modes on offer: a mode that asks about Corrections can't start while
-   * they are out of the Mix; any mode, with too few eligible Entries of its kind.
-   */
-  async function offersNow(): Promise<GameModeOffer[]> {
-    if (modes.length === 0) return [];
-    const [eligible, correctionsInMix] = await Promise.all([
-      entries.eligible(),
-      entries.correctionsInMix(),
-    ]);
-    return modes.map(({ id, entryKind }): GameModeOffer => {
-      const offer = { modeId: id, entryKind };
-      if (entryKind === 'correction' && !correctionsInMix) {
-        return { ...offer, canStart: false, refusal: 'corrections-out-of-mix' };
-      }
-      return (entryKind === 'word' ? eligible.words : eligible.corrections).length >= GAME_ROUNDS
-        ? { ...offer, canStart: true }
-        : { ...offer, canStart: false, refusal: 'too-few-entries' };
-    });
-  }
-
   let state: GameState = {
-    modes: await offersNow(),
+    modes: modes.map(({ id, entryKind }) => ({
+      modeId: id,
+      entryKind,
+      canStart: false,
+      planning: true,
+    })),
     current: undefined,
     bestResult: gameOn ? await userState.read(gameBest) : undefined,
   };
@@ -308,15 +309,18 @@ export async function openGame({
    * `count` Rounds, each asking about another eligible Entry than the ones
    * `asked`: from the pool, the eligible Entries in History when there are at
    * least 15, else every eligible one; and should the pool make too few fair
-   * Rounds, from the other eligible Entries. Nothing when the mode can't make
-   * that many.
+   * Rounds, from the other eligible Entries. Else why the mode can't make
+   * them. The one place that decides whether a mode can start: its offer and
+   * a start both come from it, so they always agree.
    */
-  async function roundsOf(
+  function planRounds(
     mode: GameMode,
-    count: number,
+    ofKind: EligibleOfKind,
+    count = GAME_ROUNDS,
     asked: ReadonlySet<string> = new Set(),
-  ): Promise<PlannedRound[] | undefined> {
-    const eligible = await entries.eligibleOfKind(mode.entryKind);
+  ): RoundPlan {
+    if ('refusal' in ofKind) return ofKind;
+    const eligible = ofKind.entries;
     const met = new Set(history.list.map(({ entryId }) => entryId));
     const inHistory = eligible.filter((entry) => met.has(entry.id));
     const pool = new Set(inHistory.length >= GAME_ROUNDS ? inHistory : eligible);
@@ -337,29 +341,41 @@ export async function openGame({
       if (round !== undefined)
         built.push({ answerId: answer.id, content: checkedRound(mode, round) });
     }
-    return built.length === count ? built : undefined;
+    return built.length === count ? { rounds: built } : { refusal: 'too-few-entries' };
   }
 
   /**
-   * Reads the modes on offer again, and builds the Rounds still to come of the
-   * Game in play anew, so an Entry hidden or taken out of the Mix meanwhile
-   * never comes up. The Rounds shown so far stay; when the mode can't make
-   * the rest, they stay as they were.
+   * Plans the modes on offer, once the composition is open and again after
+   * each hide, restore or Mix change, and builds the Rounds still to come of the Game in
+   * play anew, so an Entry hidden or taken out of the Mix meanwhile never
+   * comes up. The Rounds shown so far stay; when the mode can't make the
+   * rest, they stay as they were.
    */
   async function followEligibility(): Promise<void> {
-    const offers = await offersNow();
+    // Each mode with the eligible Entries of its kind, read afresh, all at once.
+    const read = await Promise.all(
+      modes.map(async (mode) => ({ mode, eligible: await entries.eligibleOfKind(mode.entryKind) })),
+    );
+    // Planned one after another, so the modes draw from the random source in turn.
+    const offers = read.map(({ mode, eligible }) => offerOf(mode, planRounds(mode, eligible)));
     if (!sameOffers(offers, state.modes)) change({ ...state, modes: offers });
     const game = state.current;
-    if (played === undefined || (game?.status !== 'playing' && game?.status !== 'answered')) {
+    const eligible = read.find(({ mode }) => mode === played?.mode)?.eligible;
+    if (
+      played === undefined ||
+      eligible === undefined ||
+      (game?.status !== 'playing' && game?.status !== 'answered')
+    ) {
       return;
     }
     const shown = played.rounds.slice(0, game.roundsPassed + 1);
-    const rest = await roundsOf(
+    const rest = planRounds(
       played.mode,
+      eligible,
       GAME_ROUNDS - shown.length,
       new Set(shown.map(({ answerId }) => answerId)),
     );
-    if (rest !== undefined) played = { mode: played.mode, rounds: [...shown, ...rest] };
+    if ('rounds' in rest) played = { mode: played.mode, rounds: [...shown, ...rest.rounds] };
   }
 
   const roundOf = ({ prompt, highlight, options }: RoundContent, number: number): Round => ({
@@ -373,30 +389,29 @@ export async function openGame({
   async function start(modeId: string): Promise<void> {
     const mode = modes.find(({ id }) => id === modeId);
     if (mode === undefined) throw new Error(`No Game Mode «${modeId}» is on offer`);
-    const built = await roundsOf(mode, GAME_ROUNDS);
-    const first = built?.[0];
-    if (built === undefined || first === undefined) {
+    const plan = planRounds(mode, await entries.eligibleOfKind(mode.entryKind));
+    // The offer says what the plan does already, unless the mode's fair Rounds hang on the draw.
+    const offers = state.modes.map((offer) =>
+      offer.modeId === modeId ? offerOf(mode, plan) : offer,
+    );
+    const modesNow = sameOffers(offers, state.modes) ? state.modes : offers;
+    const first = 'rounds' in plan ? plan.rounds[0] : undefined;
+    if (!('rounds' in plan) || first === undefined) {
       played = undefined;
-      // The offer's own reason, else too few Entries to make fair Rounds of.
-      const offers = await offersNow();
-      change({
-        ...state,
-        modes: offers.map((offer) =>
-          offer.modeId === modeId && offer.canStart
-            ? { ...offer, canStart: false, refusal: 'too-few-entries' }
-            : offer,
-        ),
-        current: undefined,
-      });
+      change({ ...state, modes: modesNow, current: undefined });
       return;
     }
-    played = { mode, rounds: built };
-    changeCurrent({
-      modeId,
-      round: roundOf(first.content, 1),
-      roundsPassed: 0,
-      lives: GAME_LIVES,
-      status: 'playing',
+    played = { mode, rounds: plan.rounds };
+    change({
+      ...state,
+      modes: modesNow,
+      current: {
+        modeId,
+        round: roundOf(first.content, 1),
+        roundsPassed: 0,
+        lives: GAME_LIVES,
+        status: 'playing',
+      },
     });
   }
 

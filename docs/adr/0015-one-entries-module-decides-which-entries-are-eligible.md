@@ -20,3 +20,9 @@ Reading the eligible Entries again must leave the order of the Entries that stay
 
 - **Keep the shuffled order in memory and only remove or insert the Entries that change**: rejected. A restart shuffles the Entries eligible then, so the order would change anyway, and an Entry eligible again would have no place to go back to.
 - **Keep the whole order in the user state**: rejected. One record for the Cycle order is the one-blob shape ADR 0013 rejects, and the order follows from the seed.
+
+## Amendment: the Entries say why a kind is not eligible, and read the pack's Entries once (after 0.5)
+
+A feature that weighs every eligible Entry of a kind at once, such as the Game planning its Rounds, asks the Entries for them and gets either the Entries or why the kind as a whole is not eligible: Corrections out of the user's Mix, whether or not the Edition turns them on. The Game passes that reason on and never reads the Mix itself (ADR 0024).
+
+The live Entries themselves are read from the Language Pack once per Entries module, so once per app session: a pack never changes while it is open, and reading every Word in full costs about 0.4 s. Each call still reads the eligible ids afresh and filters the live Entries by them, so a change of eligibility applies at once. A read that fails is tried again on the next call.

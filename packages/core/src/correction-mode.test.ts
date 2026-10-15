@@ -10,6 +10,7 @@ import {
   openUserState,
   userStateRecords,
   type Composition,
+  type ContentReadPort,
   type CurrentGame,
   type Random,
   type Round,
@@ -130,20 +131,37 @@ function seededRandom(seed: number): Random {
   };
 }
 
+/** Waits until the Game has planned its offers, which it does once the composition is open. */
+async function offersPlanned(app: Composition): Promise<Composition> {
+  const planning = () => app.game.state.modes.some((offer) => 'planning' in offer);
+  if (planning()) {
+    await new Promise<void>((resolve) => {
+      const stop = app.game.subscribe(() => {
+        if (planning()) return;
+        stop();
+        resolve();
+      });
+    });
+  }
+  return app;
+}
+
 /** The Core composition of one app run over the records. */
 async function run({
   records = new Map<string, string>(),
   seed = 7,
   withCorrections = true,
   correctionsInMix = true,
+  pack = content,
 }: {
   records?: Map<string, string>;
   seed?: number;
   withCorrections?: boolean;
   correctionsInMix?: boolean;
+  pack?: ContentReadPort;
 } = {}): Promise<Composition> {
-  return openComposition({
-    content,
+  const app = await openComposition({
+    content: pack,
     edition: {
       isFeatureEnabled: (feature) => feature === 'game' || withCorrections,
       categories: [{ id: 'nature', displayName: 'Nature' }],
@@ -160,6 +178,7 @@ async function run({
     },
     random: seededRandom(seed),
   });
+  return offersPlanned(app);
 }
 
 /** History records of the Entries, as the Feed would have kept them. */
@@ -236,6 +255,26 @@ describe('«Обери правильне» on offer', () => {
       entryKind: 'correction',
       canStart: true,
     });
+  });
+
+  it('reads each Correction of the pack once a session, however often the offers are planned', async () => {
+    const read: string[] = [];
+    const pack: ContentReadPort = {
+      ...content,
+      getCorrection(id) {
+        read.push(id);
+        return content.getCorrection(id);
+      },
+    };
+    const app = await run({ pack });
+
+    await app.mix.setCorrections(false);
+    await app.mix.setCorrections(true);
+    await app.game.start('correction');
+
+    expect(current(app).status).toBe('playing');
+    expect(read.length).toBeGreaterThan(GAME_ROUNDS);
+    expect(new Set(read).size).toBe(read.length);
   });
 
   it("says it can't start with fewer than 15 eligible Corrections", async () => {

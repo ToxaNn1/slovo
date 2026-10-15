@@ -24,8 +24,9 @@ const PRESSED_INVERTED_OPACITY = 0.85;
  * arrow, in a surface card with the Edition's corner. The card of a mode
  * that asks about Corrections is drawn on the ink fill in the other colour
  * scheme, without the corner, and its sample's non-standard form is struck
- * through. A tap starts a Game. A mode that can't start fades, says why in
- * place of the sample and takes no tap. VoiceOver reads the card as one button.
+ * through. A tap starts a Game. A mode that can't start fades and takes no
+ * tap; once it knows why, it says so in place of the sample. VoiceOver reads
+ * the card as one button.
  */
 export function GameModeCard({
   entryKind,
@@ -33,6 +34,7 @@ export function GameModeCard({
   title,
   description,
   sample,
+  canStart,
   refusal,
   onPress,
   testID,
@@ -44,14 +46,16 @@ export function GameModeCard({
   description: string;
   /** A prompt and the answer it asks for, such as a Definition and a Lemma, or a non-standard form and its standard one. */
   sample: { readonly prompt: string; readonly answer: string };
-  /** Why the mode can't start now; nothing when it can. */
+  /** Whether a Game in the mode can start now. */
+  canStart: boolean;
+  /** Why the mode can't start now; nothing when it can, or while that is not known yet. */
   refusal: string | undefined;
   onPress: () => void;
   testID?: string;
 }) {
   const { colors, radii } = useTokens();
   const { voice } = useEdition();
-  const unavailable = refusal !== undefined;
+  const unavailable = !canStart;
   const inverted = entryKind === 'correction';
   const content = (
     <CardContent

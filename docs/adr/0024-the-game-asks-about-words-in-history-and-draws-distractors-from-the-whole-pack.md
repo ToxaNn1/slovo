@@ -31,3 +31,19 @@ This settles where an Edition's own mode would bring its strings: under its id i
 - **Keep the shell's table of modes**: rejected. The shell decided which modes exist, so every new mode, the Core's or an Edition's, paid in the shell again, and a mode it didn't know vanished.
 - **Each mode value carries its own strings**: rejected. The Core holds no texts in any language; an Edition's texts live in its strings file, where the schema checks them with the rest.
 - **A text for every refusal in every mode**: rejected. «Вгадай слово» would need a text for Corrections out of the Mix, which it can never show.
+
+## Amendment: a mode can start when it can make 15 fair Rounds (after 0.5)
+
+0.5 had two rules for whether a Game Mode can start. Its offer counted the eligible Entries of its kind, while a start asked the mode for 15 fair Rounds, and a mode may make no fair Round of some Entries, such as a Word without three other Lemmas to stand beside it. A mode with 15 eligible Entries and fewer fair Rounds read "can start" on its card, refused the tap, and read "can start" again after the next hide, restore or Mix change. The Game also decided itself that a mode asking about Corrections can't start while they are out of the Mix.
+
+One Round planning now decides it: the pool, History, the fair Rounds and, when they fall short, the refusal. The offer and the start come from it, so a mode that can't make 15 fair Rounds says why on its card before any tap, and a start reads the eligible Entries once. The planning runs for each mode on offer once the composition is open and again after every hide, restore and Mix change. Why an Entry kind, as a whole, is not eligible, such as Corrections out of the Mix, is the Entries module's to say (ADR 0015): it answers the eligible Entries of a kind or that reason, and the Game passes the reason on as the refusal.
+
+Planning needs the eligible Entries themselves, not their ids. The Entries module reads the live Entries of the Language Pack once per app session, since a pack never changes while it is open, and filters them by the eligible ids on each call; each start of «Вгадай слово» used to read every Word anew. That one read takes about 0.4 s on a simulator, so the launch does not wait for it: the composition opens, and then the Game plans its offers in the background, in turn with its other changes. Until then each offer says it is still planned, and its card can't start yet and gives no reason. A start or a change of eligibility meanwhile waits its turn behind the planning; should the planning fail, the offers keep saying so until the next hide, restore or Mix change plans them again. A hide, a restore or a Mix change then pays only the eligible ids and building 15 Rounds per mode.
+
+### Considered Options
+
+- **Keep counting eligible Entries, and keep the refusal a start finds**: rejected. The next eligibility change overwrites it, and a refusal kept apart from the offer is a second rule again.
+- **Plan only on a tap**: rejected. That is the defect: the card promises a Game the start refuses.
+- **Read the eligible Entries in full on every eligibility change**: rejected. Reading every Word of a 561-Word pack is most of the cost, and the pack does not change within a session.
+- **Plan the offers before the composition opens**: rejected. The launch would wait about 0.4 s longer for a screen it doesn't show.
+- **A lighter read of the Words for the Game**: rejected for now. The content port would need a second shape of a Word for one feature.
