@@ -383,8 +383,9 @@ function RoundCard({
  * option fills in the correct colour with «Правильно», a wrong choice in the
  * wrong colour with «Ваш вибір», and the others fade; the fills are the light
  * scheme's in both Themes, under white text. The chosen option, if right,
- * grows a little and, if wrong, shakes, both left out with Reduce Motion. VoiceOver reads the option
- * with its Stress, then its tag, and the faded ones as dimmed.
+ * grows a little and, if wrong, shakes, both left out with Reduce Motion.
+ * VoiceOver reads the option with its Stress, then its tag, and the faded ones
+ * as dimmed.
  */
 function AnswerOption({
   option,

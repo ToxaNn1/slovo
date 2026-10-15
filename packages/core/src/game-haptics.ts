@@ -47,7 +47,11 @@ export function createGameHaptics({
   let cancels: (() => void)[] = [];
 
   function later(run: () => void, delay: number) {
-    cancels.push(schedule(run, delay));
+    const cancel = schedule(() => {
+      cancels = cancels.filter((pending) => pending !== cancel);
+      run();
+    }, delay);
+    cancels.push(cancel);
   }
 
   return {
