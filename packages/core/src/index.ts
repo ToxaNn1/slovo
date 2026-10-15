@@ -158,5 +158,5 @@ export {
   openUserState,
   UserStateTooNewError,
   type UserState,
-  type UserStateMigration,
 } from './user-state';
+export type { UserStateMigration } from './user-state-migration';

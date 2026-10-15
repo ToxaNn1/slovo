@@ -1,4 +1,4 @@
-import type { DraftOutcome, Flag, ReviewReport } from './source-words';
+import type { DraftOutcome, Flag, ReviewReport } from './review-report';
 
 /** The review report as Markdown: what was drafted, and what a human must decide. */
 export function formatReviewReport(report: ReviewReport): string {

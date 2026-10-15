@@ -2,7 +2,7 @@ import { FontSizeSchema, NotificationTimesSchema, ThemeSchema } from '@slovo/con
 import { z } from 'zod';
 
 import { declareRecord, declareRecords } from './user-state-record';
-import type { UserStateMigration } from './user-state';
+import type { UserStateMigration } from './user-state-migration';
 
 /**
  * The user-state schema (ADR 0013): every record the Core keeps, and the

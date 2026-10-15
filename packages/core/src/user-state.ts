@@ -1,4 +1,5 @@
 import type { UserStateChanges, UserStatePort } from './ports';
+import type { UserStateMigration } from './user-state-migration';
 import type { UserStateRecord, UserStateRecords } from './user-state-record';
 import { SCHEMA_VERSION_KEY, userStateMigrations } from './user-state-schema';
 
@@ -17,15 +18,6 @@ export interface UserState {
   list<T>(records: UserStateRecords<T>): Promise<ReadonlyMap<string, T>>;
   /** Applies every change at once, or none of them. */
   write(changes: UserStateChanges): Promise<void>;
-}
-
-/**
- * One forward-only step of the user-state schema: the changes that bring the
- * records of the version before up to `version`.
- */
-export interface UserStateMigration {
-  readonly version: number;
-  migrate(state: Pick<UserStatePort, 'get' | 'list'>): Promise<UserStateChanges>;
 }
 
 /** Thrown when the user state was written by a newer Core than this one. */
