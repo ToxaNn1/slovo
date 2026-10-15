@@ -11,7 +11,6 @@ import {
 } from '@slovo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { addedOn } from '../../../../added-on';
@@ -70,66 +69,64 @@ export default function CollectionScreen() {
       edges={['top']}
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
-      <GestureHandlerRootView style={styles.screen}>
-        <FlatList
-          data={collection === undefined ? [] : entries}
-          keyExtractor={(entry) => entry.entryId}
-          renderItem={({ item }) => renderEntry(item)}
-          ListHeaderComponent={
-            <>
-              <View style={styles.back}>
-                <BackLink
-                  testID="collection-back"
-                  label={collectionStrings.title}
-                  onPress={() => {
-                    router.back();
-                  }}
-                />
-              </View>
-              {collection !== undefined && (
-                <View
-                  style={[
-                    styles.header,
-                    entries.length > 0 && { borderBottomWidth: 1, borderColor: colors.line },
-                  ]}
-                >
-                  <View style={styles.title}>
-                    <ScreenTitle>{name}</ScreenTitle>
-                  </View>
-                  <Text
-                    testID="collection-count"
-                    accessibilityLabel={count(collectionStrings.count, entries.length)}
-                    {...voice}
-                    style={[styles.count, { color: colors.accent, fontFamily: fontFamilies.word }]}
-                  >
-                    {String(entries.length)}
-                  </Text>
-                </View>
-              )}
-            </>
-          }
-          ListFooterComponent={
-            entries.length > 0 ? (
-              <Text
-                {...voice}
-                style={[styles.footer, { color: colors.muted, fontFamily: fontFamilies.ui }]}
-              >
-                {strings.footer}
-              </Text>
-            ) : null
-          }
-          ListEmptyComponent={
-            collection === undefined ? null : (
-              <EmptyState
-                testID="collection-empty"
-                title={strings.empty.title}
-                message={strings.empty.message}
+      <FlatList
+        data={collection === undefined ? [] : entries}
+        keyExtractor={(entry) => entry.entryId}
+        renderItem={({ item }) => renderEntry(item)}
+        ListHeaderComponent={
+          <>
+            <View style={styles.back}>
+              <BackLink
+                testID="collection-back"
+                label={collectionStrings.title}
+                onPress={() => {
+                  router.back();
+                }}
               />
-            )
-          }
-          contentContainerStyle={styles.content}
-        />
-      </GestureHandlerRootView>
+            </View>
+            {collection !== undefined && (
+              <View
+                style={[
+                  styles.header,
+                  entries.length > 0 && { borderBottomWidth: 1, borderColor: colors.line },
+                ]}
+              >
+                <View style={styles.title}>
+                  <ScreenTitle>{name}</ScreenTitle>
+                </View>
+                <Text
+                  testID="collection-count"
+                  accessibilityLabel={count(collectionStrings.count, entries.length)}
+                  {...voice}
+                  style={[styles.count, { color: colors.accent, fontFamily: fontFamilies.word }]}
+                >
+                  {String(entries.length)}
+                </Text>
+              </View>
+            )}
+          </>
+        }
+        ListFooterComponent={
+          entries.length > 0 ? (
+            <Text
+              {...voice}
+              style={[styles.footer, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+            >
+              {strings.footer}
+            </Text>
+          ) : null
+        }
+        ListEmptyComponent={
+          collection === undefined ? null : (
+            <EmptyState
+              testID="collection-empty"
+              title={strings.empty.title}
+              message={strings.empty.message}
+            />
+          )
+        }
+        contentContainerStyle={styles.content}
+      />
     </SafeAreaView>
   );
 }

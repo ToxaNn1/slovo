@@ -14,7 +14,6 @@ import {
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActionSheetIOS, FlatList, StyleSheet, View } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { refusalText } from '../../../collection-refusal';
@@ -142,71 +141,69 @@ export default function CollectionsScreen() {
       edges={['top']}
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
-      <GestureHandlerRootView style={styles.screen}>
-        <FlatList
-          data={ready ? list : []}
-          keyExtractor={(collection) => collection.id}
-          renderItem={({ item }) => <View style={styles.item}>{renderCollection(item)}</View>}
-          ItemSeparatorComponent={Separator}
-          keyboardShouldPersistTaps="handled"
-          automaticallyAdjustKeyboardInsets
-          ListHeaderComponent={
-            <>
-              <View style={styles.bar}>
-                <BackLink
-                  testID="collections-back"
-                  label={editionStrings.tabs.saved}
-                  onPress={() => {
-                    router.back();
-                  }}
-                />
-                {ready && (
-                  <NewCollectionButton
-                    testID="collections-add"
-                    accessibilityLabel={strings.add}
-                    onPress={() => {
-                      setEditing({ kind: 'new' });
-                    }}
-                  />
-                )}
-              </View>
-              <View style={styles.header}>
-                <ScreenTitle>{collectionStrings.title}</ScreenTitle>
-              </View>
-              {editing?.kind === 'new' && (
-                <View style={[styles.item, styles.newField]}>
-                  <CollectionNameField
-                    testID="collections-new"
-                    overline={strings.newOverline}
-                    placeholder={collectionStrings.sheet.namePlaceholder}
-                    onSubmit={(name) => keepName(() => create(name))}
-                    onCancel={() => {
-                      setEditing(undefined);
-                    }}
-                  />
-                </View>
-              )}
-            </>
-          }
-          ListEmptyComponent={
-            ready && editing?.kind !== 'new' ? (
-              <EmptyState
-                testID="collections-empty"
-                title={strings.empty.title}
-                message={strings.empty.message}
-                action={{
-                  label: strings.empty.create,
-                  testID: 'collections-empty-create',
-                  onPress: () => {
-                    setEditing({ kind: 'new' });
-                  },
+      <FlatList
+        data={ready ? list : []}
+        keyExtractor={(collection) => collection.id}
+        renderItem={({ item }) => <View style={styles.item}>{renderCollection(item)}</View>}
+        ItemSeparatorComponent={Separator}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
+        ListHeaderComponent={
+          <>
+            <View style={styles.bar}>
+              <BackLink
+                testID="collections-back"
+                label={editionStrings.tabs.saved}
+                onPress={() => {
+                  router.back();
                 }}
               />
-            ) : null
-          }
-          contentContainerStyle={styles.content}
-        />
-      </GestureHandlerRootView>
+              {ready && (
+                <NewCollectionButton
+                  testID="collections-add"
+                  accessibilityLabel={strings.add}
+                  onPress={() => {
+                    setEditing({ kind: 'new' });
+                  }}
+                />
+              )}
+            </View>
+            <View style={styles.header}>
+              <ScreenTitle>{collectionStrings.title}</ScreenTitle>
+            </View>
+            {editing?.kind === 'new' && (
+              <View style={[styles.item, styles.newField]}>
+                <CollectionNameField
+                  testID="collections-new"
+                  overline={strings.newOverline}
+                  placeholder={collectionStrings.sheet.namePlaceholder}
+                  onSubmit={(name) => keepName(() => create(name))}
+                  onCancel={() => {
+                    setEditing(undefined);
+                  }}
+                />
+              </View>
+            )}
+          </>
+        }
+        ListEmptyComponent={
+          ready && editing?.kind !== 'new' ? (
+            <EmptyState
+              testID="collections-empty"
+              title={strings.empty.title}
+              message={strings.empty.message}
+              action={{
+                label: strings.empty.create,
+                testID: 'collections-empty-create',
+                onPress: () => {
+                  setEditing({ kind: 'new' });
+                },
+              }}
+            />
+          ) : null
+        }
+        contentContainerStyle={styles.content}
+      />
     </SafeAreaView>
   );
 }

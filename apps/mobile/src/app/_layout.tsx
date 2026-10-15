@@ -16,6 +16,7 @@ import { DarkTheme, DefaultTheme, Tabs, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useMemo, type ComponentProps } from 'react';
 import { Pressable } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { edition, editionDecor, editionStrings, editionTokens } from '../edition';
 import { hapticEngine } from '../haptics';
@@ -96,17 +97,20 @@ function TabButton({
 
 export default function RootLayout() {
   return (
-    <SettingsProvider>
-      <EditionProvider
-        edition={edition}
-        strings={editionStrings}
-        pronunciation={LemmaPronunciation}
-      >
-        <DecorProvider decor={editionDecor}>
-          <ThemedTabs />
-        </DecorProvider>
-      </EditionProvider>
-    </SettingsProvider>
+    // The one gesture root of the app: swipe rows, sheets and the pager rely on it.
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SettingsProvider>
+        <EditionProvider
+          edition={edition}
+          strings={editionStrings}
+          pronunciation={LemmaPronunciation}
+        >
+          <DecorProvider decor={editionDecor}>
+            <ThemedTabs />
+          </DecorProvider>
+        </EditionProvider>
+      </SettingsProvider>
+    </GestureHandlerRootView>
   );
 }
 
