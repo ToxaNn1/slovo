@@ -155,14 +155,16 @@ From artboard 3e and the canvas keyframes. Every animation has a Reduce Motion v
 | ---------------- | -------------------------------------------------------------------------- | -------------------------------- | ------------------------ | ----------------------------- |
 | Feed swipe       | 420 ms, `cubic-bezier(.2,.8,.2,1)`, snaps one card per screen              | selection, on every card         | none                     | 200 ms cross-fade             |
 | Heart (Favorite) | 450 ms spring: scale 1 → 1.35 → 0.92 → 1, `cubic-bezier(.3,1.6,.5,1)`      | impact light                     | a soft "tuk"             | fill only                     |
-| Correct answer   | 250 ms fill to `color.correct` and scale 1.03                              | notification success             | a plucked string, rising | n/a                           |
-| Wrong answer     | 200 ms fill to `color.wrong`, then a ±4 pt shake twice (400 ms)            | notification warning (not error) | a muted string           | n/a                           |
-| Life lost        | 500 ms: scale 1.4 and rotate −12°, then the heart turns to an outline      | impact medium                    | none                     | no animation                  |
+| Correct answer   | 250 ms fill to `color.correct` and scale 1.03                              | notification success             | a plucked string, rising | fill only                     |
+| Wrong answer     | 200 ms fill to `color.wrong`, then a ±4 pt shake twice (400 ms)            | notification warning (not error) | a muted string           | fill only                     |
+| Life lost        | 500 ms: scale 1.4 and rotate −12°, then the heart turns to an outline      | impact medium                    | none                     | the fill fades to the outline |
 | Win              | rosettes "stitch" in one after another, 120 ms apart, spring 500 ms        | success ×2                       | a bandura chord          | n/a                           |
 | Sheet            | slides up 320 ms, `cubic-bezier(.2,.8,.2,1)`                               | none                             | none                     | n/a                           |
 | Loading          | skeleton pulse 1.4 s; the divider is stitched in square by square (140 ms) | none                             | none                     | static skeleton, full divider |
 
 The notification has its own sound: a quiet bandura pluck of 0.6 s.
+
+**Built in 0.5:** the shake and the fill start together, as on the canvas, and the other options fade in 200 ms. The right option fills in 250 ms on a wrong answer too, but grows only on a right one. A lost Life pops 200 ms after the answer, once the wrong choice has filled, so its medium haptic follows the warning instead of blurring into it; its fill fades to the outline as the pop comes back. The win's second success comes 300 ms after the first. Each motion runs whatever the system setting, and with Reduce Motion the Game leaves out the scale, the shake and the pop itself.
 
 ## Components
 
