@@ -1,16 +1,28 @@
 import { GAME_LIVES, GAME_ROUNDS, type RoundAnswer, type RoundOption } from '@slovo/core';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Animated, {
+  Easing,
+  interpolateColor,
+  ReduceMotion,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 
 import { BottomSheet } from './BottomSheet';
 import { CardCorners } from './DecorSlots';
 import { fill, useEdition } from './EditionProvider';
 import { HEART_PATH } from './FavoriteButton';
+import { useHaptics } from './HapticsProvider';
 import { PrimaryButton } from './PrimaryButton';
 import { stressLabel } from './stress-label';
 import { minTouchTarget, overlineType, space, withAlpha } from './tokens';
 import { useSchemeColors, useTokens } from './TokensProvider';
+import { useReduceMotion } from './useReduceMotion';
 import { WholeWordsText } from './WholeWordsText';
 
 /** A Life's size and the gap between Lives, from the design. */
@@ -32,8 +44,42 @@ const SHEET_ANSWER_SIZE = { fontSize: 30, lineHeight: 30 * 1.3 };
 const ON_FILL = '#FFFFFF';
 
 /**
+ * The canvas's CSS `ease`, for the Game's motion below, from the design's
+ * motion table and canvas keyframes. Each motion runs whatever the system
+ * setting, which would otherwise skip the fills and fades too; with Reduce
+ * Motion the components leave out the shake, the scale and the pop themselves.
+ */
+const ease = Easing.bezier(0.25, 0.1, 0.25, 1);
+/** The right option fills in 250 ms; with a right answer it also grows to 1.03. */
+const RIGHT_FILL = { duration: 250, easing: ease, reduceMotion: ReduceMotion.Never };
+const RIGHT_SCALE = 1.03;
+/** A wrong choice fills in 200 ms, and the other options fade as quickly. */
+const WRONG_FILL = { duration: 200, easing: ease, reduceMotion: ReduceMotion.Never };
+/** A wrong choice shakes ±4 pt twice in 400 ms: five steps between the keyframes. */
+const SHAKE = [-4, 4, -4, 4, 0] as const;
+const SHAKE_STEP = {
+  duration: 80,
+  easing: Easing.inOut(Easing.ease),
+  reduceMotion: ReduceMotion.Never,
+};
+/**
+ * A lost Life pops in 500 ms, up to 1.4 and −12° and back, and its fill fades
+ * to the outline on the way back. It comes once the wrong choice has filled,
+ * so its haptic follows the wrong answer's instead of blurring into it.
+ */
+const LIFE_DELAY = WRONG_FILL.duration;
+const LIFE_POP = { scale: 1.4, rotate: -12 };
+const LIFE_STEP = {
+  duration: 250,
+  easing: Easing.out(Easing.ease),
+  reduceMotion: ReduceMotion.Never,
+};
+/** The progress bar grows in 400 ms. */
+const BAR_GROWTH = { duration: 400, easing: ease, reduceMotion: ReduceMotion.Never };
+
+/**
  * The Round's header (`game-round-dark`): the Rounds passed over a bar that
- * fills as they pass, and the Lives on the right, full in the heart colour,
+ * grows as they pass, and the Lives on the right, full in the heart colour,
  * lost as an outline. `leading` sits at its start, where the exit goes.
  */
 export function GameHeader({
@@ -49,6 +95,14 @@ export function GameHeader({
   const { strings, voice } = useEdition();
   const words = strings.game.round;
   const progress = { passed: String(roundsPassed), total: String(GAME_ROUNDS) };
+  const passed = useSharedValue(roundsPassed);
+  useEffect(() => {
+    passed.value = withTiming(roundsPassed, BAR_GROWTH);
+    // The shared value is stable; only a Round passing grows the bar.
+  }, [roundsPassed]);
+  // The share of the Rounds passed, as flex weights, so the bar needs no width.
+  const filled = useAnimatedStyle(() => ({ flex: passed.value }));
+  const unfilled = useAnimatedStyle(() => ({ flex: GAME_ROUNDS - passed.value }));
   return (
     <View style={[styles.header, { paddingLeft: leading === undefined ? space[6] : space[3] }]}>
       {leading}
@@ -66,9 +120,8 @@ export function GameHeader({
           {fill(words.progress, progress)}
         </Text>
         <View style={[styles.bar, { backgroundColor: colors.track }]}>
-          {/* The share of the Rounds passed, as flex weights, so the bar needs no width. */}
-          <View style={{ flex: roundsPassed, backgroundColor: colors.accent }} />
-          <View style={{ flex: GAME_ROUNDS - roundsPassed }} />
+          <Animated.View style={[filled, { backgroundColor: colors.accent }]} />
+          <Animated.View style={unfilled} />
         </View>
       </View>
       <View
@@ -79,17 +132,72 @@ export function GameHeader({
         style={styles.lives}
       >
         {Array.from({ length: GAME_LIVES }, (_, life) => (
-          <Svg key={life} width={LIFE_SIZE} height={LIFE_SIZE} viewBox="0 0 24 24">
-            <Path
-              d={HEART_PATH}
-              fill={life < lives ? colors.heart : 'none'}
-              stroke={life < lives ? colors.heart : withAlpha(colors.ink, 0.32)}
-              strokeWidth={1.8}
-            />
-          </Svg>
+          <Life key={life} full={life < lives} />
         ))}
       </View>
     </View>
+  );
+}
+
+/**
+ * One Life: full in the heart colour, or an outline once lost. A Life lost
+ * meanwhile pops to the outline with a medium haptic; with Reduce Motion its
+ * fill only fades.
+ */
+function Life({ full }: { full: boolean }) {
+  const { colors } = useTokens();
+  const haptics = useHaptics();
+  const reduceMotion = useReduceMotion();
+  /** 1 while full, 0 once lost. */
+  const fullness = useSharedValue(full ? 1 : 0);
+  const pop = useSharedValue(0);
+
+  useEffect(() => {
+    if (full) {
+      fullness.value = 1;
+      return;
+    }
+    if (fullness.value === 0) return;
+    // The fill fades as the pop comes back, or at once with Reduce Motion.
+    fullness.value = withDelay(
+      reduceMotion ? LIFE_DELAY : LIFE_DELAY + LIFE_STEP.duration,
+      withTiming(0, LIFE_STEP),
+    );
+    if (!reduceMotion) {
+      pop.value = withDelay(
+        LIFE_DELAY,
+        withSequence(withTiming(1, LIFE_STEP), withTiming(0, LIFE_STEP)),
+      );
+    }
+    const timer = setTimeout(() => {
+      haptics.impactMedium();
+    }, LIFE_DELAY);
+    return () => {
+      clearTimeout(timer);
+    };
+    // The shared values are stable; only losing the Life pops it.
+  }, [full]);
+
+  const popStyle = useAnimatedStyle(() => ({
+    transform: [
+      { scale: 1 + (LIFE_POP.scale - 1) * pop.value },
+      { rotate: `${String(LIFE_POP.rotate * pop.value)}deg` },
+    ],
+  }));
+  const fillStyle = useAnimatedStyle(() => ({ opacity: fullness.value }));
+
+  const heart = (paint: string, stroke: string) => (
+    <Svg width={LIFE_SIZE} height={LIFE_SIZE} viewBox="0 0 24 24">
+      <Path d={HEART_PATH} fill={paint} stroke={stroke} strokeWidth={1.8} />
+    </Svg>
+  );
+  return (
+    <Animated.View style={popStyle}>
+      {heart('none', withAlpha(colors.ink, 0.32))}
+      <Animated.View style={[StyleSheet.absoluteFill, fillStyle]}>
+        {heart(colors.heart, colors.heart)}
+      </Animated.View>
+    </Animated.View>
   );
 }
 
@@ -133,8 +241,10 @@ export function RoundCard({ label, prompt }: { label: string; prompt: string }) 
  * One option of a Round, 58 pt tall. Once the Round is answered, the right
  * option fills in the correct colour with «Правильно», a wrong choice in the
  * wrong colour with «Ваш вибір», and the others fade; the fills are the light
- * scheme's in both Themes, under white text. VoiceOver reads the option with
- * its Stress, then its tag, and the faded ones as dimmed.
+ * scheme's in both Themes, under white text. The chosen option plays the
+ * answer's haptic, success or warning; a right one grows a little and a wrong
+ * one shakes, both left out with Reduce Motion. VoiceOver reads the option
+ * with its Stress, then its tag, and the faded ones as dimmed.
  */
 export function AnswerOption({
   option,
@@ -161,6 +271,43 @@ export function AnswerOption({
           ? { text: strings.game.round.chosen, fill: light.wrong }
           : undefined;
   const dimmed = answer !== undefined && tag === undefined;
+  const right = place === answer?.correct;
+  const chosen = place === answer?.chosen;
+  const haptics = useHaptics();
+  const reduceMotion = useReduceMotion();
+  /** 0 before the answer, 1 once the option has filled or faded. */
+  const answered = useSharedValue(answer === undefined ? 0 : 1);
+  /** 0 at rest, 1 grown: a right answer's option. */
+  const grown = useSharedValue(0);
+  const shift = useSharedValue(0);
+  // Whether the option showed an answer before, so only the answer given now moves and plays.
+  const shownAnswered = useRef(answer !== undefined);
+
+  useEffect(() => {
+    if (answer === undefined || shownAnswered.current) return;
+    shownAnswered.current = true;
+    answered.value = withTiming(1, right ? RIGHT_FILL : WRONG_FILL);
+    if (!chosen) return;
+    if (right) haptics.success();
+    else haptics.warning();
+    if (reduceMotion) return;
+    if (right) grown.value = withTiming(1, RIGHT_FILL);
+    else shift.value = withSequence(...SHAKE.map((offset) => withTiming(offset, SHAKE_STEP)));
+    // The shared values are stable; only the answer moves the option.
+  }, [answer]);
+
+  const motion = useAnimatedStyle(() => ({
+    opacity: dimmed ? 1 - (1 - DIMMED_OPACITY) * answered.value : 1,
+    transform: [{ translateX: shift.value }, { scale: 1 + (RIGHT_SCALE - 1) * grown.value }],
+  }));
+  const fillStyle = useAnimatedStyle(() =>
+    tag === undefined
+      ? {}
+      : {
+          backgroundColor: interpolateColor(answered.value, [0, 1], [colors.surface, tag.fill]),
+          borderColor: interpolateColor(answered.value, [0, 1], [colors.line, tag.fill]),
+        },
+  );
   return (
     <Pressable
       testID={`game-option-${String(place)}`}
@@ -175,34 +322,40 @@ export function AnswerOption({
       {...voice}
       disabled={answer !== undefined}
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.option,
-        {
-          backgroundColor: tag?.fill ?? (pressed ? colors.surfaceSunken : colors.surface),
-          borderColor: tag?.fill ?? colors.line,
-          borderRadius: radii.button,
-          opacity: dimmed ? DIMMED_OPACITY : 1,
-        },
-      ]}
     >
-      <View style={styles.optionText}>
-        <WholeWordsText
-          text={option.text}
-          size={OPTION_SIZE}
-          tracking={0}
+      {({ pressed }) => (
+        <Animated.View
           style={[
-            styles.optionWord,
-            { color: tag === undefined ? colors.ink : ON_FILL, fontFamily: fontFamilies.word },
+            styles.option,
+            {
+              backgroundColor: pressed ? colors.surfaceSunken : colors.surface,
+              borderColor: colors.line,
+              borderRadius: radii.button,
+            },
+            fillStyle,
+            motion,
           ]}
-        />
-      </View>
-      {tag === undefined ? null : (
-        <Text
-          maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
-          style={[styles.tag, { color: ON_FILL, fontFamily: fontFamilies.ui }]}
         >
-          {tag.text}
-        </Text>
+          <View style={styles.optionText}>
+            <WholeWordsText
+              text={option.text}
+              size={OPTION_SIZE}
+              tracking={0}
+              style={[
+                styles.optionWord,
+                { color: tag === undefined ? colors.ink : ON_FILL, fontFamily: fontFamilies.word },
+              ]}
+            />
+          </View>
+          {tag === undefined ? null : (
+            <Text
+              maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+              style={[styles.tag, { color: ON_FILL, fontFamily: fontFamilies.ui }]}
+            >
+              {tag.text}
+            </Text>
+          )}
+        </Animated.View>
       )}
     </Pressable>
   );

@@ -14,4 +14,13 @@ export const hapticEngine: HapticEngine = {
   impactLight: () => {
     skipFailure(ExpoHaptics.impactAsync(ExpoHaptics.ImpactFeedbackStyle.Light));
   },
+  impactMedium: () => {
+    skipFailure(ExpoHaptics.impactAsync(ExpoHaptics.ImpactFeedbackStyle.Medium));
+  },
+  success: () => {
+    skipFailure(ExpoHaptics.notificationAsync(ExpoHaptics.NotificationFeedbackType.Success));
+  },
+  warning: () => {
+    skipFailure(ExpoHaptics.notificationAsync(ExpoHaptics.NotificationFeedbackType.Warning));
+  },
 };

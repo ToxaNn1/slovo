@@ -1,8 +1,9 @@
 import { GAME_ROUNDS } from '@slovo/core';
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { fill, useEdition } from './EditionProvider';
+import { useHaptics } from './HapticsProvider';
 import { PrimaryButton } from './PrimaryButton';
 import { SecondaryButton } from './SecondaryButton';
 import { space } from './tokens';
@@ -15,6 +16,8 @@ const NUMBER_MAX_FONT_SCALE = 1.3;
 const TEXT_MAX_FONT_SCALE = 1.5;
 /** The title's size, from the design. */
 const TITLE_SIZE = { fontSize: 38, lineHeight: 38 * 1.1 };
+/** How long after the win's first success haptic its second one comes. */
+const WIN_SECOND_SUCCESS = 300;
 
 /** One number of the result: the value over the word that names it, read as one. */
 function ResultNumber({
@@ -53,7 +56,8 @@ function ResultNumber({
  * The result screen (`game-result-win-dark`, `game-result-loss-dark`): the
  * title and the line of a win or a loss, the Rounds passed and the Lives
  * left, «Ще раз» for a new Game in the same mode and «На головну» for the
- * Feed. `illustration` sits over the title.
+ * Feed. A win arrives with the success haptic twice. `illustration` sits over
+ * the title.
  */
 export function GameResult({
   won,
@@ -74,6 +78,20 @@ export function GameResult({
   const { strings, voice, count } = useEdition();
   const words = strings.game;
   const progress = { passed: String(roundsPassed), total: String(GAME_ROUNDS) };
+  const haptics = useHaptics();
+
+  useEffect(() => {
+    if (!won) return;
+    haptics.success();
+    const timer = setTimeout(() => {
+      haptics.success();
+    }, WIN_SECOND_SUCCESS);
+    return () => {
+      clearTimeout(timer);
+    };
+    // The result screen comes anew with every result; only its arrival plays.
+  }, []);
+
   return (
     <ScrollView
       testID="game-result"

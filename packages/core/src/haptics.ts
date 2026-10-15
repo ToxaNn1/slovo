@@ -4,6 +4,12 @@ export interface HapticEngine {
   selection(): void;
   /** A light tap, such as the heart. */
   impactLight(): void;
+  /** A firmer tap, such as a lost Life. */
+  impactMedium(): void;
+  /** The notification of a success, such as a right answer or a win. */
+  success(): void;
+  /** The notification of a warning, such as a wrong answer. */
+  warning(): void;
 }
 
 /** The haptics the app plays, every one of them behind Vibration. */
@@ -28,6 +34,15 @@ export function createHaptics({
     },
     impactLight() {
       if (vibration()) engine.impactLight();
+    },
+    impactMedium() {
+      if (vibration()) engine.impactMedium();
+    },
+    success() {
+      if (vibration()) engine.success();
+    },
+    warning() {
+      if (vibration()) engine.warning();
     },
   };
 }
