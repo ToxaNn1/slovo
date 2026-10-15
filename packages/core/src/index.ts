@@ -57,6 +57,7 @@ export {
   type RoundContent,
   type RoundInput,
   type RoundOption,
+  type TextRange,
 } from './game';
 export { createHaptics, type HapticEngine, type Haptics } from './haptics';
 export { type HiddenEntries, type HiddenEntry } from './hidden-entries';

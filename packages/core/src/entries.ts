@@ -54,6 +54,12 @@ export interface Entries {
    * can tell when the links of the Word cards it holds went stale.
    */
   linksCorrections(): Promise<boolean>;
+  /**
+   * Whether the user has Corrections, as a whole, in the Mix, whether or not
+   * the Edition turns them on; without a Mix they always are. Read afresh on
+   * every call.
+   */
+  correctionsInMix(): Promise<boolean>;
 }
 
 const { hiddenEntries: hiddenRecords } = userStateRecords;
@@ -128,6 +134,7 @@ export function createEntries(
       return (await content.getWord(id)) ?? content.getCorrection(id);
     },
     linksCorrections,
+    correctionsInMix,
     async linkedCorrections(word) {
       if (!(await linksCorrections())) return [];
       const corrections = await Promise.all(

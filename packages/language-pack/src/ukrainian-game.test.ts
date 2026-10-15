@@ -13,6 +13,7 @@ import {
   openUserState,
   renderStress,
   type Composition,
+  type Correction,
   type CurrentGame,
   type Random,
   type Round,
@@ -36,6 +37,7 @@ const ukrainian = loadEdition(
 let workDir: string;
 let pack: NodeLanguagePack;
 let words: readonly Word[];
+let corrections: readonly Correction[];
 
 beforeAll(async () => {
   workDir = mkdtempSync(join(tmpdir(), 'slovo-game-'));
@@ -45,6 +47,10 @@ beforeAll(async () => {
   }
   pack = openLanguagePack(outFile);
   words = await pack.listWords();
+  const ids = await pack.listCorrectionIds();
+  corrections = (await Promise.all(ids.map((id) => pack.getCorrection(id)))).filter(
+    (correction) => correction !== undefined,
+  );
 });
 
 afterAll(() => {
@@ -136,7 +142,10 @@ async function playGame(app: Composition): Promise<Asked[]> {
 describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
   it('offers the mode to a new reader and plays a full Game of 15 different Words', async () => {
     const app = await run(7);
-    expect(app.game.state.modes).toEqual([{ modeId: 'guess-word', canStart: true }]);
+    expect(app.game.state.modes).toEqual([
+      { modeId: 'guess-word', canStart: true },
+      { modeId: 'correction', canStart: true },
+    ]);
 
     const asked = await playGame(app);
 
@@ -192,5 +201,94 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
     await playGame(app);
 
     expect(writes).toEqual([]);
+  });
+});
+
+/** The Correction whose «people often say» sentence the Round asks. */
+function askedOf(round: Round): Correction {
+  const asked = corrections.find(({ examplePair }) => examplePair.nonStandard === round.prompt);
+  if (asked === undefined) throw new Error(`No Correction says «${round.prompt}»`);
+  return asked;
+}
+
+/** Plays a Game of «Обери правильне» to its end, always right, and keeps each answered Round. */
+async function playCorrections(app: Composition): Promise<Round[]> {
+  await app.game.start('correction');
+  const rounds: Round[] = [];
+  while (current(app).status === 'playing') {
+    const { round } = current(app);
+    app.game.answer(
+      round.options.findIndex(({ text }) => text === askedOf(round).standardEquivalents[0]),
+    );
+    rounds.push(current(app).round);
+    await app.game.next();
+  }
+  return rounds;
+}
+
+describe('«Обери правильне» over the Ukrainian Language Pack', () => {
+  it('plays a full Game of 15 different Corrections', async () => {
+    const app = await run(7);
+
+    const rounds = await playCorrections(app);
+
+    expect(new Set(rounds.map((round) => askedOf(round).id)).size).toBe(GAME_ROUNDS);
+    expect(current(app)).toMatchObject({ roundsPassed: 15, lives: 5, status: 'won' });
+  });
+
+  it('highlights the non-standard form where the sentence holds it as written, and nothing where it is inflected', async () => {
+    const rounds: Round[] = [];
+    for (const seed of [1, 2, 3, 4]) rounds.push(...(await playCorrections(await run(seed))));
+    const highlighted = rounds.filter((round) => round.highlight !== undefined);
+    const plain = rounds.filter((round) => round.highlight === undefined);
+
+    // «на протязі року» holds its form; «Слідуюча зупинка» holds «слідуючий» inflected.
+    expect(highlighted.length).toBeGreaterThan(0);
+    expect(plain.length).toBeGreaterThan(0);
+    for (const round of highlighted) {
+      const { start = 0, end = 0 } = round.highlight ?? {};
+      expect(round.prompt.slice(start, end).toLowerCase()).toBe(
+        askedOf(round).nonStandardForm.toLowerCase(),
+      );
+    }
+    for (const round of plain) {
+      expect(round.prompt.toLowerCase()).not.toContain(
+        askedOf(round).nonStandardForm.toLowerCase(),
+      );
+    }
+  });
+
+  it("offers other Corrections' main equivalents, of the same Correction Type, never the asked one's own", async () => {
+    for (const seed of [1, 2, 3]) {
+      for (const round of await playCorrections(await run(seed))) {
+        const asked = askedOf(round);
+        const texts = round.options.map(({ text }) => text);
+        expect(new Set(texts).size).toBe(4);
+        expect(texts.filter((text) => asked.standardEquivalents.includes(text))).toEqual([
+          asked.standardEquivalents[0],
+        ]);
+        for (const text of texts.filter((text) => text !== asked.standardEquivalents[0])) {
+          expect(
+            corrections.some(
+              (other) =>
+                other.id !== asked.id &&
+                other.correctionType === asked.correctionType &&
+                other.standardEquivalents[0] === text,
+            ),
+          ).toBe(true);
+        }
+      }
+    }
+  });
+
+  it("shows the Correction's explanation on the sheet", async () => {
+    for (const round of await playCorrections(await run(11))) {
+      const asked = askedOf(round);
+      expect(round.answer?.sheet).toEqual({
+        answer: { text: asked.standardEquivalents[0], stressedVowels: [] },
+        example: undefined,
+        explanation: asked.explanation,
+      });
+    }
   });
 });
