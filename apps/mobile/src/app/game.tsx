@@ -1,22 +1,18 @@
 import type { EntryKind } from '@slovo/contracts';
-import { GAME_LIVES, GAME_ROUNDS, type CurrentGame, type GameModeOffer } from '@slovo/core';
+import { GAME_LIVES, GAME_ROUNDS, type GameModeOffer } from '@slovo/core';
 import {
-  AnswerOption,
-  AnswerSheet,
   DecorBackground,
-  ExitButton,
   fill,
-  GameHeader,
   GameModeCard,
   GameResult,
-  RoundCard,
+  GameRound,
   ScreenTitle,
   space,
   useEdition,
   useTokens,
 } from '@slovo/ui';
 import { useRouter } from 'expo-router';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useComposition } from '../composition';
@@ -84,9 +80,7 @@ export default function GameScreen() {
         />
       ) : current.status === 'won' || current.status === 'lost' ? (
         <GameResult
-          won={current.status === 'won'}
-          roundsPassed={current.roundsPassed}
-          lives={current.lives}
+          game={current}
           bestResult={state?.bestResult}
           onAgain={() => {
             actions.start(current.modeId);
@@ -97,8 +91,9 @@ export default function GameScreen() {
           }}
         />
       ) : (
-        <RoundScreen
+        <GameRound
           game={current}
+          label={modeWords[current.modeId]?.prompt ?? ''}
           onAnswer={actions.answer}
           onNext={actions.next}
           onLeave={actions.leave}
@@ -168,68 +163,9 @@ function ModeScreen({
   );
 }
 
-/**
- * A Round (`game-round-dark`): the header with the ✕, the prompt, the four
- * options and, once answered, the sheet. The ✕ asks first, with a system
- * alert, as «Очистити Історію?» does; «Грати далі» leaves the Round as it was.
- */
-function RoundScreen({
-  game,
-  onAnswer,
-  onNext,
-  onLeave,
-}: {
-  game: CurrentGame;
-  onAnswer: (option: number) => void;
-  onNext: () => void;
-  onLeave: () => void;
-}) {
-  const { round } = game;
-
-  function confirmLeave() {
-    Alert.alert(strings.exit.title, strings.exit.message, [
-      { text: strings.exit.cancel, style: 'cancel' },
-      { text: strings.exit.confirm, style: 'destructive', onPress: onLeave },
-    ]);
-  }
-
-  return (
-    <View testID="game-round" style={styles.screen}>
-      <GameHeader
-        roundsPassed={game.roundsPassed}
-        lives={game.lives}
-        leading={<ExitButton onPress={confirmLeave} />}
-      />
-      <ScrollView contentContainerStyle={styles.round}>
-        <RoundCard
-          label={modeWords[game.modeId]?.prompt ?? ''}
-          prompt={round.prompt}
-          highlight={round.highlight}
-        />
-        <View style={styles.options}>
-          {round.options.map((option, place) => (
-            <AnswerOption
-              key={`${String(round.number)}-${String(place)}`}
-              option={option}
-              place={place}
-              answer={round.answer}
-              onPress={() => {
-                onAnswer(place);
-              }}
-            />
-          ))}
-        </View>
-      </ScrollView>
-      <AnswerSheet answer={round.answer} onNext={onNext} />
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   modes: { gap: space[4], paddingTop: 14, paddingHorizontal: space[5], paddingBottom: space[8] },
   heading: { gap: space[4], marginHorizontal: space[1], marginBottom: space[2] },
   rules: { fontSize: 15, lineHeight: 15 * 1.5 },
-  round: { gap: space[5], padding: space[6] },
-  options: { gap: 10 },
 });

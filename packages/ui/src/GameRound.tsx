@@ -1,12 +1,13 @@
 import {
   GAME_LIVES,
   GAME_ROUNDS,
+  type CurrentGame,
   type RoundAnswer,
   type RoundOption,
   type TextRange,
 } from '@slovo/core';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
   interpolateColor,
@@ -88,18 +89,74 @@ const LIFE_STEP = {
 const BAR_GROWTH = { duration: 400, easing: ease, reduceMotion: ReduceMotion.Never };
 
 /**
- * The Round's header (`game-round-dark`): the Rounds passed over a bar that
- * grows as they pass, and the Lives on the right, full in the heart colour,
- * lost as an outline. `leading` sits at its start, where the exit goes.
+ * A Round of the Game in play (`game-round-dark`): the header with the ✕, the
+ * prompt under its label, the four options and, once answered, the sheet.
+ * The ✕ asks first, with a system alert, as «Очистити Історію?» does; «Грати
+ * далі» leaves the Round as it was.
  */
-export function GameHeader({
+export function GameRound({
+  game,
+  label,
+  onAnswer,
+  onNext,
+  onLeave,
+}: {
+  game: CurrentGame;
+  /** The label over the prompt, the Game Mode's. */
+  label: string;
+  onAnswer: (option: number) => void;
+  onNext: () => void;
+  /** Leaves the Game, once the reader has confirmed it. */
+  onLeave: () => void;
+}) {
+  const { strings } = useEdition();
+  const { round } = game;
+
+  function confirmLeave() {
+    const words = strings.game.exit;
+    Alert.alert(words.title, words.message, [
+      { text: words.cancel, style: 'cancel' },
+      { text: words.confirm, style: 'destructive', onPress: onLeave },
+    ]);
+  }
+
+  return (
+    <View testID="game-round" style={styles.screen}>
+      <GameHeader roundsPassed={game.roundsPassed} lives={game.lives} onExit={confirmLeave} />
+      <ScrollView contentContainerStyle={styles.round}>
+        <RoundCard label={label} prompt={round.prompt} highlight={round.highlight} />
+        <View style={styles.options}>
+          {round.options.map((option, place) => (
+            <AnswerOption
+              key={`${String(round.number)}-${String(place)}`}
+              option={option}
+              place={place}
+              answer={round.answer}
+              onPress={() => {
+                onAnswer(place);
+              }}
+            />
+          ))}
+        </View>
+      </ScrollView>
+      <AnswerSheet answer={round.answer} onNext={onNext} />
+    </View>
+  );
+}
+
+/**
+ * The Round's header (`game-round-dark`): the ✕ at its start, the Rounds
+ * passed over a bar that grows as they pass, and the Lives on the right, full
+ * in the heart colour, lost as an outline.
+ */
+function GameHeader({
   roundsPassed,
   lives,
-  leading,
+  onExit,
 }: {
   roundsPassed: number;
   lives: number;
-  leading?: ReactNode;
+  onExit: () => void;
 }) {
   const { colors, fontFamilies } = useTokens();
   const { strings, voice } = useEdition();
@@ -114,8 +171,8 @@ export function GameHeader({
   const filled = useAnimatedStyle(() => ({ flex: passed.value }));
   const unfilled = useAnimatedStyle(() => ({ flex: GAME_ROUNDS - passed.value }));
   return (
-    <View style={[styles.header, { paddingLeft: leading === undefined ? space[6] : space[3] }]}>
-      {leading}
+    <View style={styles.header}>
+      <ExitButton onPress={onExit} />
       <View
         testID="game-progress"
         accessible
@@ -153,7 +210,7 @@ export function GameHeader({
  * The ✕ at the start of the Round's header (`game-round-dark`), 44 pt, which
  * VoiceOver reads as the Edition's «Вийти з гри».
  */
-export function ExitButton({ onPress }: { onPress: () => void }) {
+function ExitButton({ onPress }: { onPress: () => void }) {
   const { colors } = useTokens();
   const { strings, voice } = useEdition();
   return (
@@ -246,7 +303,7 @@ function Life({ full }: { full: boolean }) {
  * highlight, such as a non-standard form, on the sunken fill and underlined in
  * the accent. VoiceOver reads it before the options, then names the highlight.
  */
-export function RoundCard({
+function RoundCard({
   label,
   prompt,
   highlight,
@@ -318,7 +375,7 @@ export function RoundCard({
  * one shakes, both left out with Reduce Motion. VoiceOver reads the option
  * with its Stress, then its tag, and the faded ones as dimmed.
  */
-export function AnswerOption({
+function AnswerOption({
   option,
   place,
   answer,
@@ -441,13 +498,7 @@ export function AnswerOption({
  * «Далі», the only way to close it. It is drawn in the other colour scheme
  * and keeps what it showed while it slides away.
  */
-export function AnswerSheet({
-  answer,
-  onNext,
-}: {
-  answer: RoundAnswer | undefined;
-  onNext: () => void;
-}) {
+function AnswerSheet({ answer, onNext }: { answer: RoundAnswer | undefined; onNext: () => void }) {
   // The answer it shows, kept while the sheet leaves after «Далі» took the Round's away.
   const [shown, setShown] = useState(answer);
   if (answer !== undefined && answer !== shown) setShown(answer);
@@ -525,11 +576,15 @@ function AnswerSheetContent({ answer, onNext }: { answer: RoundAnswer; onNext: (
 }
 
 const styles = StyleSheet.create({
+  screen: { flex: 1 },
+  round: { gap: space[5], padding: space[6] },
+  options: { gap: 10 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     minHeight: minTouchTarget,
+    paddingLeft: space[3],
     paddingRight: space[4],
   },
   progress: { flex: 1, gap: 6 },
