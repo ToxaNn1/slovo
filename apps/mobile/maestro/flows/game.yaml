@@ -57,6 +57,17 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: game-round
 - assertVisible:
     id: game-option-0
+# Another tab and back finds the Game where it was.
+- tapOn:
+    id: tab-saved
+- assertVisible:
+    id: saved
+- tapOn:
+    id: tab-game
+- assertVisible:
+    id: game-round
+- assertVisible:
+    id: game-option-0
 # The ✕ asks first; «Грати далі» returns to the same Round.
 - tapOn:
     id: game-exit
@@ -71,7 +82,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - tapOn:
     id: game-exit
 - assertVisible: Вийти з гри?
-# A tap while the alert still opens is lost.
+# A tap while the alert is still opening is lost.
 - waitForAnimationToEnd
 - tapOn: Вийти
 - assertVisible:

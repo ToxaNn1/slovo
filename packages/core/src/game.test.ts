@@ -565,7 +565,7 @@ describe('the rules of a Game', () => {
     });
   });
 
-  it('tells its subscribers once when a Game is left, and not when there is none', async () => {
+  it('tells its subscribers when a Game is left, and not when there is none', async () => {
     const app = await run();
     let changes = 0;
     app.game.subscribe(() => {
