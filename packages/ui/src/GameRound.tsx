@@ -1,6 +1,7 @@
 import {
   GAME_LIVES,
   GAME_ROUNDS,
+  LIFE_LOST_DELAY,
   type CurrentGame,
   type RoundAnswer,
   type RoundOption,
@@ -24,11 +25,11 @@ import { BottomSheet } from './BottomSheet';
 import { CardCorners } from './DecorSlots';
 import { fill, useEdition } from './EditionProvider';
 import { HEART_PATH } from './FavoriteButton';
-import { useHaptics } from './HapticsProvider';
 import { PrimaryButton } from './PrimaryButton';
 import { stressLabel } from './stress-label';
 import { minTouchTarget, overlineType, space, withAlpha } from './tokens';
 import { useSchemeColors, useTokens } from './TokensProvider';
+import { useGameHaptics } from './useGameHaptics';
 import { useReduceMotion } from './useReduceMotion';
 import { WholeWordsText } from './WholeWordsText';
 
@@ -64,8 +65,11 @@ const ease = Easing.bezier(0.25, 0.1, 0.25, 1);
 /** The right option fills in 250 ms; with a right answer it also grows to 1.03. */
 const RIGHT_FILL = { duration: 250, easing: ease, reduceMotion: ReduceMotion.Never };
 const RIGHT_SCALE = 1.03;
-/** A wrong choice fills in 200 ms, and the other options fade as quickly. */
-const WRONG_FILL = { duration: 200, easing: ease, reduceMotion: ReduceMotion.Never };
+/**
+ * A wrong choice fills in 200 ms (`LIFE_LOST_DELAY`, which the Life's haptic
+ * waits for too), and the other options fade as quickly.
+ */
+const WRONG_FILL = { duration: LIFE_LOST_DELAY, easing: ease, reduceMotion: ReduceMotion.Never };
 /** A wrong choice shakes ±4 pt twice in 400 ms: five steps between the keyframes. */
 const SHAKE = [-4, 4, -4, 4, 0] as const;
 const SHAKE_STEP = {
@@ -76,9 +80,8 @@ const SHAKE_STEP = {
 /**
  * A lost Life pops in 500 ms, up to 1.4 and −12° and back, and its fill fades
  * to the outline on the way back. It comes once the wrong choice has filled,
- * so its haptic follows the wrong answer's instead of blurring into it.
+ * `LIFE_LOST_DELAY` after the answer, as its haptic does.
  */
-const LIFE_DELAY = WRONG_FILL.duration;
 const LIFE_POP = { scale: 1.4, rotate: -12 };
 const LIFE_STEP = {
   duration: 250,
@@ -111,6 +114,22 @@ export function GameRound({
 }) {
   const { strings } = useEdition();
   const { round } = game;
+  const gameHaptics = useGameHaptics();
+  // Whether the Round showed an answer before, so only the answer given now plays.
+  const shownAnswered = useRef(round.answer !== undefined);
+
+  useEffect(() => {
+    const { answer } = round;
+    if (answer === undefined) {
+      shownAnswered.current = false;
+      return;
+    }
+    if (shownAnswered.current) return;
+    shownAnswered.current = true;
+    if (answer.chosen === answer.correct) gameHaptics.rightAnswer();
+    else gameHaptics.wrongAnswer();
+    // The haptics are stable; only the answer given plays.
+  }, [round.answer]);
 
   function confirmLeave() {
     const words = strings.game.exit;
@@ -237,12 +256,11 @@ function ExitButton({ onPress }: { onPress: () => void }) {
 
 /**
  * One Life: full in the heart colour, or an outline once lost. A Life lost
- * meanwhile pops to the outline with a medium haptic; with Reduce Motion its
- * fill only fades.
+ * meanwhile pops to the outline; with Reduce Motion its fill only fades. Its
+ * haptic comes with the wrong answer that cost it.
  */
 function Life({ full }: { full: boolean }) {
   const { colors } = useTokens();
-  const haptics = useHaptics();
   const reduceMotion = useReduceMotion();
   /** 1 while full, 0 once lost. */
   const fullness = useSharedValue(full ? 1 : 0);
@@ -256,21 +274,15 @@ function Life({ full }: { full: boolean }) {
     if (fullness.value === 0) return;
     // The fill fades as the pop comes back, or at once with Reduce Motion.
     fullness.value = withDelay(
-      reduceMotion ? LIFE_DELAY : LIFE_DELAY + LIFE_STEP.duration,
+      reduceMotion ? LIFE_LOST_DELAY : LIFE_LOST_DELAY + LIFE_STEP.duration,
       withTiming(0, LIFE_STEP),
     );
     if (!reduceMotion) {
       pop.value = withDelay(
-        LIFE_DELAY,
+        LIFE_LOST_DELAY,
         withSequence(withTiming(1, LIFE_STEP), withTiming(0, LIFE_STEP)),
       );
     }
-    const timer = setTimeout(() => {
-      haptics.impactMedium();
-    }, LIFE_DELAY);
-    return () => {
-      clearTimeout(timer);
-    };
     // The shared values are stable; only losing the Life pops it.
   }, [full]);
 
@@ -370,10 +382,10 @@ function RoundCard({
  * One option of a Round, 58 pt tall. Once the Round is answered, the right
  * option fills in the correct colour with «Правильно», a wrong choice in the
  * wrong colour with «Ваш вибір», and the others fade; the fills are the light
- * scheme's in both Themes, under white text. The chosen option plays the
- * answer's haptic, success or warning; a right one grows a little and a wrong
- * one shakes, both left out with Reduce Motion. VoiceOver reads the option
- * with its Stress, then its tag, and the faded ones as dimmed.
+ * scheme's in both Themes, under white text. The chosen option, if right,
+ * grows a little and, if wrong, shakes, both left out with Reduce Motion.
+ * VoiceOver reads the option with its Stress, then its tag, and the faded ones
+ * as dimmed.
  */
 function AnswerOption({
   option,
@@ -402,14 +414,13 @@ function AnswerOption({
   const dimmed = answer !== undefined && tag === undefined;
   const right = place === answer?.correct;
   const chosen = place === answer?.chosen;
-  const haptics = useHaptics();
   const reduceMotion = useReduceMotion();
   /** 0 before the answer, 1 once the option has filled or faded. */
   const answered = useSharedValue(answer === undefined ? 0 : 1);
   /** 0 at rest, 1 grown: a right answer's option. */
   const grown = useSharedValue(0);
   const shift = useSharedValue(0);
-  // Whether the option showed an answer before, so only the answer given now moves and plays.
+  // Whether the option showed an answer before, so only the answer given now moves.
   const shownAnswered = useRef(answer !== undefined);
 
   useEffect(() => {
@@ -417,8 +428,6 @@ function AnswerOption({
     shownAnswered.current = true;
     answered.value = withTiming(1, right ? RIGHT_FILL : WRONG_FILL);
     if (!chosen) return;
-    if (right) haptics.success();
-    else haptics.warning();
     if (reduceMotion) return;
     if (right) grown.value = withTiming(1, RIGHT_FILL);
     else shift.value = withSequence(...SHAKE.map((offset) => withTiming(offset, SHAKE_STEP)));
