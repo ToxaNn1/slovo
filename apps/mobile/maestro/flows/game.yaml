@@ -1,6 +1,7 @@
 # The Game: «Вгадай слово» from the Game tab, the first option and «Далі» in
-# every Round until the result screen, then «Ще раз» for a new Game, and the ✕
-# that asks «Вийти з гри?» before it drops it.
+# every Round until the result screen with the best result, which the stats
+# sheet shows too, then «Ще раз» for a new Game, and the ✕ that asks «Вийти з
+# гри?» before it drops it, back to the mode screen with the best result.
 # A subflow of `smoke.yaml`; run it from there. It starts on the mode screen,
 # as the app keeps a Game in memory only and the smoke flow launches it anew.
 appId: ${APP_ID || 'app.slovo.uk'}
@@ -46,6 +47,23 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: game-result
 - assertVisible:
     id: game-result-rounds
+- assertVisible:
+    id: game-result-record
+# The stats sheet shows the best result; the Game tab keeps the result screen meanwhile.
+- tapOn:
+    id: tab-home
+- tapOn:
+    id: stats-pill
+- assertVisible:
+    id: stats-game-best
+- tapOn:
+    point: 50%, 12%
+- assertNotVisible:
+    id: stats-sheet
+- tapOn:
+    id: tab-game
+- assertVisible:
+    id: game-result
 - scrollUntilVisible:
     element:
       id: game-again
@@ -87,5 +105,9 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - tapOn: Вийти
 - assertVisible:
     id: game-modes
+# The finished Game above counts: the mode screen shows the best result.
+- assertVisible:
+    id: game-rules
+    text: '.*Найкраще — \d+ / 15\.'
 - assertNotVisible:
     id: game-round

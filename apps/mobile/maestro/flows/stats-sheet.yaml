@@ -1,5 +1,6 @@
-# The stats sheet: the Stats pill opens it on a fresh install, a tap outside
-# and a swipe down close it, and a heart in the Feed grows its Favorites count.
+# The stats sheet: the Stats pill opens it on a fresh install, with no Game
+# cell before a finished Game, a tap outside and a swipe down close it, and a
+# heart in the Feed grows its Favorites count.
 # A subflow of `smoke.yaml`; run it from there. It clears the app's state.
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
@@ -18,6 +19,8 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - assertVisible:
     id: stats-in-collections
     text: 0, записів у Колекціях
+- assertNotVisible:
+    id: stats-game-best
 - takeScreenshot: stats-sheet-fresh
 # A tap outside, above the sheet, closes it.
 - tapOn:

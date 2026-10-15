@@ -58,22 +58,25 @@ function ResultNumber({
 
 /**
  * The result screen (`game-result-win-dark`, `game-result-loss-dark`): the
- * title and the line of a win or a loss, the Rounds passed and the Lives
- * left, «Ще раз» for a new Game in the same mode and «На головну» for the
- * Feed. A win arrives with the success haptic twice. The Edition's victory
- * illustration (Decor slot 6) sits over the title, large and stitched in on a
- * win, small and still on a loss.
+ * title and the line of a win or a loss, the Rounds passed, the Lives left
+ * and the best result when there is one, «Ще раз» for a new Game in the same
+ * mode and «На головну» for the Feed. A win arrives with the success haptic
+ * twice. The Edition's victory illustration (Decor slot 6) sits over the
+ * title, large and stitched in on a win, small and still on a loss.
  */
 export function GameResult({
   won,
   roundsPassed,
   lives,
+  bestResult,
   onAgain,
   onHome,
 }: {
   won: boolean;
   roundsPassed: number;
   lives: number;
+  /** The best result, the Game just over included. */
+  bestResult: number | undefined;
   onAgain: () => void;
   onHome: () => void;
 }) {
@@ -133,6 +136,14 @@ export function GameResult({
           label={count(words.result.lives, lives)}
           spoken={`${String(lives)} ${count(words.result.lives, lives)}`}
         />
+        {bestResult === undefined ? null : (
+          <ResultNumber
+            testID="game-result-record"
+            value={String(bestResult)}
+            label={count(words.result.record, bestResult)}
+            spoken={`${String(bestResult)} ${count(words.result.record, bestResult)}`}
+          />
+        )}
       </View>
       <View style={styles.buttons}>
         <PrimaryButton testID="game-again" label={words.result.again} onPress={onAgain} />

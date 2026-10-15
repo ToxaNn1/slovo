@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { TextSchema } from '../shared';
-import { PluralLabelSchema, PluralSchema, templateOf } from './shared';
+import { pluralOf, PluralLabelSchema, PluralSchema, templateOf } from './shared';
 
 /** The texts of the Game: the mode screen, a Round, its answer sheet and the result screen. */
 export const GameStringsSchema = z.strictObject({
@@ -13,6 +13,11 @@ export const GameStringsSchema = z.strictObject({
   rounds: PluralSchema,
   /** A count of Lives, e.g. «5 життів». */
   lives: PluralSchema,
+  /**
+   * The best result after the line above, e.g. «Найкраще — 13 / 15.». Takes
+   * `{count}`, the best result, which picks the form, and `{total}`, the Rounds of a Game.
+   */
+  best: pluralOf('total'),
   /** What a mode card says when there are too few eligible Words to play its mode. */
   tooFewEntries: TextSchema,
   /** «Вгадай слово», the Definition → Word mode: its card and the label of its Round. */
@@ -91,6 +96,8 @@ export const GameStringsSchema = z.strictObject({
     rounds: PluralLabelSchema,
     /** The word under the Lives left, e.g. «життів». */
     lives: PluralLabelSchema,
+    /** The word under the best result, the Game just over included, e.g. «рекорд». */
+    record: PluralLabelSchema,
     /** The button that starts a new Game in the same mode. */
     again: TextSchema,
     /** The button that goes to the Feed. */

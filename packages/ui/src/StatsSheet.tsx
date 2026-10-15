@@ -1,4 +1,4 @@
-import type { ProgressState } from '@slovo/core';
+import { GAME_ROUNDS, type ProgressState } from '@slovo/core';
 import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { BottomSheet } from './BottomSheet';
@@ -16,11 +16,14 @@ function Count({
   label,
   stacked,
   testID,
+  spoken,
 }: {
-  value: number;
+  value: number | string;
   label: string;
   stacked: boolean;
   testID: string;
+  /** What VoiceOver reads for it, when the number and its words don't say it well. */
+  spoken?: string;
 }) {
   const { colors, fontFamilies } = useTokens();
   const { voice } = useEdition();
@@ -29,6 +32,7 @@ function Count({
     <View
       testID={testID}
       accessible
+      accessibilityLabel={spoken}
       {...voice}
       style={[styles.count, { width: stacked ? '100%' : '50%' }]}
     >
@@ -48,8 +52,8 @@ function Count({
 /**
  * The stats sheet the Stats pill opens (design `stats-sheet-dark`): the big
  * Streak with its Best Streak, Decor slot 2's band, then the Entries Seen
- * today, the Favorites count and the Entries in Collections, each in the
- * Edition's plural form. It closes with a swipe down, a tap outside or
+ * today, the Favorites count, the Entries in Collections and the best Game
+ * result once a Game has finished, each in the Edition's plural form. It closes with a swipe down, a tap outside or
  * VoiceOver's escape gesture, and with Reduce Motion it appears without
  * sliding. Needs a `SafeAreaProvider` above it.
  */
@@ -68,6 +72,7 @@ export function StatsSheet({
   const words = strings.stats;
   const streak = count(words.streak, stats.streak);
   const bestStreak = fill(words.bestStreak, { count: String(stats.bestStreak) });
+  const { bestResult } = stats;
   return (
     <BottomSheet visible={visible} onClose={onClose} testID="stats-sheet">
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
@@ -115,6 +120,24 @@ export function StatsSheet({
             value={stats.inCollections}
             label={count(words.inCollections, stats.inCollections)}
           />
+          {bestResult === undefined ? null : (
+            <Count
+              testID="stats-game-best"
+              stacked={stacked}
+              value={fill(strings.game.round.progress, {
+                passed: String(bestResult),
+                total: String(GAME_ROUNDS),
+              })}
+              label={count(words.gameBest, bestResult)}
+              spoken={[
+                fill(strings.game.round.progressLabel, {
+                  passed: String(bestResult),
+                  total: String(GAME_ROUNDS),
+                }),
+                count(words.gameBest, bestResult),
+              ].join(', ')}
+            />
+          )}
         </View>
       </ScrollView>
     </BottomSheet>

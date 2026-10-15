@@ -19,4 +19,6 @@ export const StatsStringsSchema = z.strictObject({
   favorites: TextSchema,
   /** The word beside the count of unique Entries in Collections, e.g. «запис у Колекціях». */
   inCollections: PluralLabelSchema,
+  /** The words beside the best Game result, «13 / 15», picked by the best result, e.g. «найкраще у Грі». */
+  gameBest: PluralLabelSchema,
 });
