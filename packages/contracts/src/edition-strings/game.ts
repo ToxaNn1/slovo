@@ -8,7 +8,7 @@ import { pluralOf, PluralLabelSchema, PluralSchema, templateOf } from './shared'
  * screen, the label of its Rounds and what its card says for each reason it
  * can't start.
  */
-export const GameModeStringsSchema = z.strictObject({
+const GameModeStringsSchema = z.strictObject({
   /** The card's overline, e.g. «ВИЗНАЧЕННЯ → СЛОВО». */
   overline: TextSchema,
   title: TextSchema,

@@ -7,7 +7,7 @@ import { editionStrings } from './edition';
 import { mixSummary } from './mix-screen';
 
 /** The Mix of the session's Core composition, once it is open. */
-export function useMix(): Mix | undefined {
+function useMix(): Mix | undefined {
   return useModule((composition) => composition.mix);
 }
 

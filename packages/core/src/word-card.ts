@@ -50,7 +50,7 @@ export interface WordCardModel {
 }
 
 /** The most Synonyms a Word card shows. */
-export const MAX_SYNONYMS = 3;
+const MAX_SYNONYMS = 3;
 
 /** The Word card of a Word, linking the Corrections the Entries give for it. */
 export async function buildWordCard({

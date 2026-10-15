@@ -17,7 +17,7 @@ export const IdRegistrySchema = z
   .refine((ids) => new Set(ids).size === ids.length, 'Ids must not repeat');
 
 /** The folder that holds the Entry with the given id. */
-export function entryFolderOf(id: string): string {
+function entryFolderOf(id: string): string {
   return id.startsWith('w_') ? 'content/words' : 'content/corrections';
 }
 
