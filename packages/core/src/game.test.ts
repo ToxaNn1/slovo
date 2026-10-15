@@ -516,6 +516,70 @@ describe('the rules of a Game', () => {
     expect(app.game.state.modes).toEqual([{ modeId: 'guess-word', canStart: true }]);
   });
 
+  it('drops a Game left midway, in a Round or after an answer, and shows the mode screen', async () => {
+    const app = await run();
+    await app.game.start('guess-word');
+    await play(app, false);
+
+    app.game.leave();
+    expect(app.game.state.current).toBeUndefined();
+    expect(app.game.state.modes).toEqual([{ modeId: 'guess-word', canStart: true }]);
+
+    await app.game.start('guess-word');
+    app.game.answer(0);
+    expect(current(app).status).toBe('answered');
+
+    app.game.leave();
+    expect(app.game.state.current).toBeUndefined();
+  });
+
+  it('takes no answer and no «Далі» for a Game that was left', async () => {
+    const app = await run();
+    await app.game.start('guess-word');
+    app.game.leave();
+    const modeScreen = app.game.state;
+
+    app.game.answer(0);
+    await app.game.next();
+
+    expect(app.game.state).toBe(modeScreen);
+  });
+
+  it('writes nothing to the user state when a Game is left, and allows a new Game from the start', async () => {
+    const { port, writes } = recordingPort(new Map());
+    const app = await run({ port });
+    await app.game.start('guess-word');
+    await play(app, false);
+    await play(app, false);
+    writes.length = 0;
+
+    app.game.leave();
+    await app.game.start('guess-word');
+
+    expect(writes).toEqual([]);
+    expect(current(app)).toMatchObject({
+      roundsPassed: 0,
+      lives: GAME_LIVES,
+      status: 'playing',
+      round: { number: 1, answer: undefined },
+    });
+  });
+
+  it('tells its subscribers when a Game is left, and not when there is none', async () => {
+    const app = await run();
+    let changes = 0;
+    app.game.subscribe(() => {
+      changes += 1;
+    });
+
+    app.game.leave();
+    expect(changes).toBe(0);
+
+    await app.game.start('guess-word');
+    app.game.leave();
+    expect(changes).toBe(2);
+  });
+
   it('tells its subscribers of every change', async () => {
     const app = await run();
     let changes = 0;

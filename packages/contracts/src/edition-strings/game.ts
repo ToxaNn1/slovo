@@ -59,6 +59,17 @@ export const GameStringsSchema = z.strictObject({
     /** The tag of the reader's wrong choice. */
     chosen: TextSchema,
   }),
+  /** The ✕ that leaves a Game and its confirmation, a system alert. */
+  exit: z.strictObject({
+    /** The ✕ as VoiceOver reads it, e.g. «Вийти з гри». */
+    label: TextSchema,
+    title: TextSchema,
+    message: TextSchema,
+    /** The destructive button that drops the Game. */
+    confirm: TextSchema,
+    /** The button that goes back to the same Round. */
+    cancel: TextSchema,
+  }),
   /** The sheet after an answer, which only its button closes. */
   sheet: z.strictObject({
     /** Its title after a right answer, e.g. «Правильно!». */
