@@ -17,13 +17,26 @@ export interface TimeOfDay {
 
 const twoDigits = (value: number) => String(value).padStart(2, '0');
 
+/** Formatters kept by time zone and options: building one costs far more than using it. */
+const formatters = new Map<string, Intl.DateTimeFormat>();
+
+function formatterFor(timeZone: string, options: Intl.DateTimeFormatOptions): Intl.DateTimeFormat {
+  const key = `${timeZone}|${JSON.stringify(options)}`;
+  let formatter = formatters.get(key);
+  if (formatter === undefined) {
+    formatter = new Intl.DateTimeFormat('en-US', { ...options, timeZone });
+    formatters.set(key, formatter);
+  }
+  return formatter;
+}
+
 /** The parts of an instant as the time zone writes it, each read by its type. */
 function partsAt(
   instant: Date,
   timeZone: string,
   options: Intl.DateTimeFormatOptions,
 ): (type: Intl.DateTimeFormatPartTypes) => string {
-  const parts = new Intl.DateTimeFormat('en-US', { ...options, timeZone }).formatToParts(instant);
+  const parts = formatterFor(timeZone, options).formatToParts(instant);
   return (type) => parts.find((candidate) => candidate.type === type)?.value ?? '';
 }
 
