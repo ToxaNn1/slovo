@@ -26,6 +26,21 @@ export const GameStringsSchema = z.strictObject({
     /** The label over a Round's Definition, e.g. «ВИЗНАЧЕННЯ». */
     prompt: TextSchema,
   }),
+  /** «Обери правильне», the Correction mode: its card, the label of its Round and why it can't start. */
+  correction: z.strictObject({
+    /** The card's overline, e.g. «ВИПРАВЛЕННЯ». */
+    overline: TextSchema,
+    title: TextSchema,
+    description: TextSchema,
+    /** The card's sample: a non-standard form, drawn struck through, and its standard equivalent. */
+    sample: z.strictObject({ prompt: TextSchema, answer: TextSchema }),
+    /** The label over a Round's sentence, e.g. «ЯК СКАЗАТИ КРАЩЕ?». */
+    prompt: TextSchema,
+    /** What its card says while Corrections are out of the reader's Mix. */
+    outOfMix: TextSchema,
+    /** What its card says when there are too few eligible Corrections to play it. */
+    tooFewEntries: TextSchema,
+  }),
   /** A Round. */
   round: z.strictObject({
     /** The Rounds passed over the bar, e.g. «7 / 15». Takes `{passed}` and `{total}`. */
@@ -34,6 +49,11 @@ export const GameStringsSchema = z.strictObject({
     progressLabel: templateOf('passed', 'total'),
     /** What VoiceOver reads for the Lives, e.g. «Життів: 4 з 5». Takes `{count}` and `{total}`. */
     lives: templateOf('count', 'total'),
+    /**
+     * What VoiceOver reads after the prompt for the part of it that is marked,
+     * such as a non-standard form, e.g. «Виділено: на протязі». Takes `{text}`.
+     */
+    highlight: templateOf('text'),
     /** The tag of the right option once the Round is answered. */
     correct: TextSchema,
     /** The tag of the reader's wrong choice. */

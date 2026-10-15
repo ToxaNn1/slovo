@@ -1,3 +1,4 @@
+import type { EntryKind } from '@slovo/contracts';
 import { GAME_LIVES, GAME_ROUNDS, type CurrentGame, type GameModeOffer } from '@slovo/core';
 import {
   AnswerOption,
@@ -27,10 +28,32 @@ const { game: strings } = editionStrings;
 /** How far the largest text sizes of iOS may scale the line under the title, so it never breaks a word. */
 const RULES_MAX_FONT_SCALE = 1.5;
 
-/** The words of each Game Mode the app knows, by mode id; a mode without them has no card. */
-const modeWords: Readonly<Record<string, typeof strings.guessWord | undefined>> = {
-  'guess-word': strings.guessWord,
+/** What the app knows of a Game Mode: the kind of Entry it asks about and its words. */
+interface ModeWords {
+  readonly entryKind: EntryKind;
+  readonly overline: string;
+  readonly title: string;
+  readonly description: string;
+  readonly sample: { readonly prompt: string; readonly answer: string };
+  /** The label over a Round's prompt. */
+  readonly prompt: string;
+  /** What its card says when there are too few eligible Entries to play it. */
+  readonly tooFewEntries: string;
+}
+
+/** The Game Modes the app knows, by mode id; a mode without them has no card. */
+const modeWords: Readonly<Record<string, ModeWords | undefined>> = {
+  'guess-word': { entryKind: 'word', ...strings.guessWord, tooFewEntries: strings.tooFewEntries },
+  correction: { entryKind: 'correction', ...strings.correction },
 };
+
+/** Why a mode can't start, in the words of its card; nothing when it can. */
+function refusalOf(offer: GameModeOffer, words: ModeWords): string | undefined {
+  if (offer.canStart) return undefined;
+  return offer.refusal === 'corrections-out-of-mix'
+    ? strings.correction.outOfMix
+    : words.tooFewEntries;
+}
 
 /**
  * The Game tab: the mode screen, a Round with its answer sheet, or the result
@@ -108,11 +131,12 @@ function ModeScreen({
             <GameModeCard
               key={offer.modeId}
               testID={`game-mode-${offer.modeId}`}
+              entryKind={words.entryKind}
               overline={words.overline}
               title={words.title}
               description={words.description}
               sample={words.sample}
-              refusal={offer.canStart ? undefined : strings.tooFewEntries}
+              refusal={refusalOf(offer, words)}
               onPress={() => {
                 onStart(offer.modeId);
               }}
@@ -139,7 +163,11 @@ function RoundScreen({
     <View testID="game-round" style={styles.screen}>
       <GameHeader roundsPassed={game.roundsPassed} lives={game.lives} />
       <ScrollView contentContainerStyle={styles.round}>
-        <RoundCard label={modeWords[game.modeId]?.prompt ?? ''} prompt={round.prompt} />
+        <RoundCard
+          label={modeWords[game.modeId]?.prompt ?? ''}
+          prompt={round.prompt}
+          highlight={round.highlight}
+        />
         <View style={styles.options}>
           {round.options.map((option, place) => (
             <AnswerOption
