@@ -219,6 +219,14 @@ describe.each(adapters)('the user state %s', (_, createStore) => {
     expect(await port.list('onboarding.')).toHaveProperty('size', 1);
   });
 
+  it('keeps the best Game result when it is opened again', async () => {
+    const { gameBest } = userStateRecords;
+    const store = createStore();
+    await (await store.open()).write(gameBest.change(13));
+
+    expect(gameBest.decode(await (await store.open()).get('game.best'))).toBe(13);
+  });
+
   it('stores an empty list of notification times as a record, so it never reads as absent', async () => {
     const { notificationTimes } = userStateRecords;
     const store = createStore();

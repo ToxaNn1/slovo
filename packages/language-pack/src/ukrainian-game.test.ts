@@ -19,6 +19,7 @@ import {
   type Round,
   type UserStateChanges,
   type UserStatePort,
+  userStateRecords,
   type Word,
 } from '@slovo/core';
 
@@ -193,14 +194,14 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
     }
   });
 
-  it('writes no Seen, no History and no Active Day while it is played', async () => {
+  it('writes no Seen, no History and no Active Day while it is played, only its best result', async () => {
     const { port, writes } = recordingPort(new Map());
     const app = await run(5, port);
     writes.length = 0;
 
     await playGame(app);
 
-    expect(writes).toEqual([]);
+    expect(writes).toEqual([userStateRecords.gameBest.change(current(app).roundsPassed)]);
   });
 });
 

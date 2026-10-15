@@ -10,6 +10,7 @@ import {
   openComposition,
   openUserState,
   renderStress,
+  SEEN_DWELL_MS,
   userStateRecords,
   type Category,
   type Clock,
@@ -147,12 +148,14 @@ async function run({
   seed = 7,
   game = true,
   gameModes,
+  time = clock,
 }: {
   records?: Map<string, string>;
   port?: UserStatePort;
   seed?: number;
   game?: boolean;
   gameModes?: readonly GameMode[];
+  time?: Clock;
 } = {}): Promise<Composition> {
   return openComposition({
     content,
@@ -166,7 +169,7 @@ async function run({
       languageTraits: { distractorRule: 'same-part-of-speech' },
     },
     userState: await openUserState({ port }),
-    clock,
+    clock: time,
     random: seededRandom(seed),
     ...(gameModes === undefined ? {} : { gameModes }),
   });
@@ -503,6 +506,7 @@ describe('the rules of a Game', () => {
     expect(app.game.state).toEqual({
       modes: [{ modeId: 'guess-word', canStart: false, refusal: 'too-few-entries' }],
       current: undefined,
+      bestResult: 15,
     });
   });
 
@@ -670,7 +674,7 @@ describe('the Words a Game asks about', () => {
     }
   });
 
-  it('writes no Seen, no History and no Active Day while it is played', async () => {
+  it('writes no Seen, no History and no Active Day while it is played, only its best result', async () => {
     const records = new Map<string, string>();
     const { port, writes } = recordingPort(records);
     const app = await run({ port });
@@ -679,8 +683,166 @@ describe('the Words a Game asks about', () => {
     await playGame(app, [3, 4]);
     await playGame(app, [1, 2, 3, 4, 5]);
 
-    expect(writes).toEqual([]);
+    expect(writes).toEqual([userStateRecords.gameBest.change(15)]);
     expect(app.history.list).toEqual([]);
+  });
+});
+
+// Spec #215, "Best result": the most Rounds passed in one finished Game, in any Game Mode.
+describe('the best result', () => {
+  const { gameBest } = userStateRecords;
+
+  it('is absent at first, on the Game and in the progress snapshot', async () => {
+    const records = new Map<string, string>();
+    const app = await run({ records });
+
+    expect(app.game.state.bestResult).toBeUndefined();
+    expect(app.progress.state.bestResult).toBeUndefined();
+    expect(records.has(gameBest.key)).toBe(false);
+  });
+
+  it('is written by the first finished Game, even the shortest loss', async () => {
+    const records = new Map<string, string>();
+    const app = await run({ records });
+
+    await playGame(app, [1, 2, 3, 4, 5]);
+
+    expect(current(app)).toMatchObject({ roundsPassed: 4, status: 'lost' });
+    expect(app.game.state.bestResult).toBe(4);
+    expect(gameBest.decode(records.get(gameBest.key))).toBe(4);
+  });
+
+  it('is written by a finished Game that beats it, won or lost, and unchanged by one that does not', async () => {
+    const records = new Map<string, string>();
+    const { port, writes } = recordingPort(records);
+    const app = await run({ port });
+    writes.length = 0;
+
+    // Lost in Round 8: 7 Rounds passed.
+    await playGame(app, [3, 5, 6, 7, 8]);
+    expect(app.game.state.bestResult).toBe(7);
+    // Lost in Round 5: 4 Rounds passed, fewer than 7.
+    await playGame(app, [1, 2, 3, 4, 5]);
+    expect(app.game.state.bestResult).toBe(7);
+    // Lost in Round 8 again: as many as 7, which doesn't beat it.
+    await playGame(app, [1, 2, 3, 4, 8]);
+    expect(app.game.state.bestResult).toBe(7);
+    await playGame(app, [2]);
+    expect(app.game.state.bestResult).toBe(15);
+
+    expect(writes).toEqual([gameBest.change(7), gameBest.change(15)]);
+    expect(gameBest.decode(records.get(gameBest.key))).toBe(15);
+  });
+
+  it('shows the Game just finished in the best result of the same snapshot', async () => {
+    const app = await run({ records: gameBest.change(3) as Map<string, string> });
+    const finished: { roundsPassed: number; bestResult: number | undefined }[] = [];
+    app.game.subscribe(() => {
+      const { current: game, bestResult } = app.game.state;
+      if (game?.status === 'won' || game?.status === 'lost') {
+        finished.push({ roundsPassed: game.roundsPassed, bestResult });
+      }
+    });
+
+    await playGame(app, [9, 10, 11, 12, 13]);
+    await playGame(app, [1, 2, 3, 4, 5]);
+
+    expect(finished).toEqual([
+      { roundsPassed: 12, bestResult: 12 },
+      { roundsPassed: 4, bestResult: 12 },
+    ]);
+  });
+
+  it('is never written by a Game left before its end', async () => {
+    const records = new Map<string, string>();
+    const { port, writes } = recordingPort(records);
+    const app = await run({ port });
+    writes.length = 0;
+    await app.game.start('guess-word');
+    for (let round = 1; round <= 10; round += 1) await play(app, true);
+    // The fifth Life lost, but «Далі» not tapped: the Game isn't over yet.
+    await app.game.start('guess-word');
+    for (let round = 1; round <= 4; round += 1) await play(app, false);
+    app.game.answer((rightOf(current(app).round) + 1) % 4);
+
+    app.game.leave();
+
+    expect(writes).toEqual([]);
+    expect(app.game.state.bestResult).toBeUndefined();
+  });
+
+  it('keeps the Game as it was when the record fails to write, and finishes it on the next «Далі»', async () => {
+    const records = new Map<string, string>();
+    const memory = createMemoryUserStatePort(records);
+    let failing = false;
+    const app = await run({
+      port: {
+        ...memory,
+        write: (changes) =>
+          failing ? Promise.reject(new Error('The disk is full')) : memory.write(changes),
+      },
+    });
+    await app.game.start('guess-word');
+    for (let round = 1; round <= 4; round += 1) await play(app, false);
+    app.game.answer((rightOf(current(app).round) + 1) % 4);
+    const answered = app.game.state;
+
+    failing = true;
+    await expect(app.game.next()).rejects.toThrow('The disk is full');
+    expect(app.game.state).toBe(answered);
+
+    failing = false;
+    await app.game.next();
+    expect(current(app)).toMatchObject({ roundsPassed: 4, status: 'lost' });
+    expect(app.game.state.bestResult).toBe(4);
+    expect(gameBest.decode(records.get(gameBest.key))).toBe(4);
+  });
+
+  it('survives reopening, a new Cycle and a cleared History', async () => {
+    const records = new Map<string, string>();
+    await playGame(await run({ records }), [3, 5, 6, 7, 8]);
+    let now = new Date('2026-10-12T09:00:00+03:00').getTime();
+    const time: Clock = { now: () => new Date(now), timeZone: () => 'Europe/Kyiv' };
+    const app = await run({ records, time });
+    expect(app.game.state.bestResult).toBe(7);
+
+    // Read every card, then the card after the end-of-Cycle card starts a new Cycle.
+    while (app.feed.cards.at(-1)?.kind !== 'end-of-cycle') {
+      await app.feed.show(app.feed.cards.length - 1);
+      now += SEEN_DWELL_MS;
+      await app.feed.show(undefined);
+    }
+    await app.feed.show(app.feed.cards.length - 1);
+    await app.feed.show(undefined);
+    await app.history.clear();
+
+    expect(app.history.list).toEqual([]);
+    expect(app.game.state.bestResult).toBe(7);
+    expect(app.progress.state.bestResult).toBe(7);
+    const reopened = await run({ records, time });
+    expect(reopened.game.state.bestResult).toBe(7);
+    expect(reopened.progress.state.bestResult).toBe(7);
+  });
+
+  it('shows in the progress snapshot, which tells its subscribers when it changes', async () => {
+    const app = await run();
+    const before = app.progress.state;
+    let told = 0;
+    app.progress.subscribe(() => {
+      told += 1;
+    });
+
+    await playGame(app, [3, 5, 6, 7, 8]);
+
+    expect(app.progress.state).toEqual({ ...before, bestResult: 7 });
+    expect(told).toBe(1);
+  });
+
+  it('is absent on the Game and in the progress snapshot when the Edition turns the Game off', async () => {
+    const app = await run({ records: gameBest.change(13) as Map<string, string>, game: false });
+
+    expect(app.game.state.bestResult).toBeUndefined();
+    expect(app.progress.state.bestResult).toBeUndefined();
   });
 });
 

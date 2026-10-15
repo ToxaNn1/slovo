@@ -44,8 +44,8 @@ export interface Composition extends Hiding {
   readonly mix: Mix;
   /**
    * Progress: the Streak and the Best Streak, derived from the Active Days,
-   * and the stats sheet's counts, which a heart, a Collection change and a
-   * Seen Entry change at once.
+   * the stats sheet's counts, which a heart, a Collection change and a Seen
+   * Entry change at once, and the Game's best result.
    */
   readonly progress: Progress;
   /**
@@ -155,6 +155,7 @@ export async function openComposition({
     edition,
     entries,
     history,
+    userState,
     random,
     modes: [...coreGameModes, ...gameModes],
   });
@@ -180,6 +181,7 @@ export async function openComposition({
     history,
     favorites,
     collections,
+    game,
   });
   const day = createDayChange({
     clock,
