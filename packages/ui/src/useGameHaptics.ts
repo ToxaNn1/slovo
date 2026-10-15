@@ -1,15 +1,8 @@
-import { createGameHaptics, type GameHaptics, type Schedule } from '@slovo/core';
+import { createGameHaptics, type GameHaptics } from '@slovo/core';
 import { useEffect, useMemo } from 'react';
 
 import { useHaptics } from './HapticsProvider';
-
-/** The real clock. */
-const schedule: Schedule = (run, delay) => {
-  const timer = setTimeout(run, delay);
-  return () => {
-    clearTimeout(timer);
-  };
-};
+import { systemSchedule } from './system-schedule';
 
 /**
  * The haptics of the Game's changes (`createGameHaptics`) over the app's
@@ -18,7 +11,10 @@ const schedule: Schedule = (run, delay) => {
  */
 export function useGameHaptics(): GameHaptics {
   const haptics = useHaptics();
-  const gameHaptics = useMemo(() => createGameHaptics({ haptics, schedule }), [haptics]);
+  const gameHaptics = useMemo(
+    () => createGameHaptics({ haptics, schedule: systemSchedule }),
+    [haptics],
+  );
   useEffect(
     () => () => {
       gameHaptics.stop();

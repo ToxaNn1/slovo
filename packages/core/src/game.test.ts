@@ -20,6 +20,7 @@ import {
   type GameMode,
   type Random,
   type Round,
+  type Schedule,
   type UserStateChanges,
   type UserStatePort,
 } from './index';
@@ -167,6 +168,7 @@ async function run({
   time = clock,
   pack = content,
   planned = true,
+  schedule,
 }: {
   records?: Map<string, string>;
   port?: UserStatePort;
@@ -177,6 +179,7 @@ async function run({
   pack?: ContentReadPort;
   /** Whether to wait for the Game to plan its offers. */
   planned?: boolean;
+  schedule?: Schedule;
 } = {}): Promise<Composition> {
   const app = await openComposition({
     content: pack,
@@ -193,6 +196,7 @@ async function run({
     clock: time,
     random: seededRandom(seed),
     ...(gameModes === undefined ? {} : { gameModes }),
+    ...(schedule === undefined ? {} : { schedule }),
   });
   return planned ? offersPlanned(app) : app;
 }
@@ -1117,5 +1121,180 @@ describe('whether a Game Mode can start', () => {
     await app.game.start('guess-word');
 
     expect(reads.filter((name) => name === 'listWords')).toEqual(['listWords']);
+  });
+});
+
+describe('a failed planning of the offers', () => {
+  /**
+   * A schedule the test turns by hand: it keeps what is scheduled, each with
+   * its delay, and runs it only when the test says so.
+   */
+  function handSchedule() {
+    const delays: number[] = [];
+    const waiting: (() => void)[] = [];
+    let scheduled: (run: () => void) => void = (run) => waiting.push(run);
+    const schedule: Schedule = (run, delay) => {
+      delays.push(delay);
+      scheduled(run);
+      return () => undefined;
+    };
+    return {
+      schedule,
+      delays,
+      /** Waits until something is scheduled, then runs it. */
+      async runNext(): Promise<void> {
+        const run =
+          waiting.shift() ??
+          (await new Promise<() => void>((resolve) => {
+            scheduled = (next) => {
+              scheduled = (later) => waiting.push(later);
+              resolve(next);
+            };
+          }));
+        run();
+      },
+    };
+  }
+
+  /** The pack, whose Words fail to read as long as `failing` says so. */
+  function failingPack(failing: () => boolean): ContentReadPort {
+    return {
+      ...content,
+      listWords: () =>
+        failing() ? Promise.reject(new Error('The pack failed to read')) : content.listWords(),
+    };
+  }
+
+  const planning = [{ modeId: 'guess-word', entryKind: 'word', canStart: false, planning: true }];
+  const ready = [{ modeId: 'guess-word', entryKind: 'word', canStart: true }];
+
+  it('plans the offers again a second after a failed read, without a hide, a restore or a Mix change', async () => {
+    let reads = 0;
+    const later = handSchedule();
+    const app = await run({
+      pack: failingPack(() => (reads += 1) === 1),
+      planned: false,
+      schedule: later.schedule,
+    });
+
+    await later.runNext();
+    await offersPlanned(app);
+
+    expect(later.delays).toEqual([1_000]);
+    expect(app.game.state.modes).toEqual(ready);
+  });
+
+  it('tries three times more, 1, 2 and 4 seconds apart, then says the offers are still planned', async () => {
+    const later = handSchedule();
+    const app = await run({
+      pack: failingPack(() => true),
+      planned: false,
+      schedule: later.schedule,
+    });
+
+    await later.runNext();
+    await later.runNext();
+    await later.runNext();
+    // «Далі» does nothing without a Game, but waits its turn behind the last try.
+    await app.game.next();
+
+    expect(later.delays).toEqual([1_000, 2_000, 4_000]);
+    expect(app.game.state.modes).toEqual(planning);
+  });
+
+  it('plans the offers again when the app returns to the foreground after every try failed', async () => {
+    let failing = true;
+    const later = handSchedule();
+    const app = await run({
+      pack: failingPack(() => failing),
+      planned: false,
+      schedule: later.schedule,
+    });
+    await later.runNext();
+    await later.runNext();
+    await later.runNext();
+    await app.game.next();
+
+    failing = false;
+    await app.resume();
+    await offersPlanned(app);
+
+    expect(app.game.state.modes).toEqual(ready);
+    expect(later.delays).toEqual([1_000, 2_000, 4_000]);
+  });
+
+  it('plans the offers again on a return to the foreground even without a schedule to try again by', async () => {
+    let failing = true;
+    const app = await run({ pack: failingPack(() => failing), planned: false });
+    await app.game.next();
+    expect(app.game.state.modes).toEqual(planning);
+
+    failing = false;
+    await app.resume();
+    await offersPlanned(app);
+
+    expect(app.game.state.modes).toEqual(ready);
+  });
+
+  it('lets a start during a try wait its turn behind it', async () => {
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let failed = false;
+    let starting = false;
+    /** For each read of the eligible ids while the start waits, whether the offers were planned by then. */
+    const plannedAtRead: boolean[] = [];
+    const later = handSchedule();
+    const app = await run({
+      pack: {
+        ...content,
+        listWordIds(categoryId) {
+          if (starting)
+            plannedAtRead.push(
+              app.game.state.modes.every((offer) => 'canStart' in offer && !('planning' in offer)),
+            );
+          return content.listWordIds(categoryId);
+        },
+        async listWords() {
+          if (!failed) {
+            failed = true;
+            throw new Error('The pack failed to read');
+          }
+          await gate;
+          return content.listWords();
+        },
+      },
+      planned: false,
+      schedule: later.schedule,
+    });
+
+    await later.runNext();
+    starting = true;
+    const start = app.game.start('guess-word');
+    release();
+    await start;
+
+    // The try reads the eligible ids, a query per Category, while the offers are still planned; the start, only after.
+    expect(plannedAtRead).toEqual([false, false, false, true, true, true]);
+    expect(app.game.state.modes).toEqual(ready);
+    expect(current(app)).toMatchObject({ modeId: 'guess-word', status: 'playing' });
+  });
+
+  it('tries nothing again when the first planning succeeds, nor on a return to the foreground', async () => {
+    const reads: string[] = [];
+    const later = handSchedule();
+    const app = await run({
+      pack: { ...content, listWords: () => (reads.push('listWords'), content.listWords()) },
+      schedule: later.schedule,
+    });
+    const offers = app.game.state.modes;
+
+    await app.resume();
+    await app.game.next();
+
+    expect(later.delays).toEqual([]);
+    expect(reads).toEqual(['listWords']);
+    expect(app.game.state.modes).toBe(offers);
   });
 });

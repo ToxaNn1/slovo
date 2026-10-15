@@ -70,6 +70,7 @@ export { SplashOverlay, type SplashOverlayProps } from './SplashOverlay';
 export { StatsPill } from './StatsPill';
 export { StatsSheet } from './StatsSheet';
 export { stressLabel } from './stress-label';
+export { systemSchedule } from './system-schedule';
 export {
   coreTokens,
   designTokens,

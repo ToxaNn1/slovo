@@ -4,7 +4,7 @@ import type { Edition } from './edition';
 import type { EligibleOfKind, Entries, KindRefusal } from './entries';
 import type { History } from './history';
 import { createInTurn, createSubscribers } from './in-turn';
-import type { Random } from './ports';
+import type { Random, Schedule } from './ports';
 import type { UserState } from './user-state';
 import { userStateRecords } from './user-state-schema';
 
@@ -16,6 +16,9 @@ export const GAME_LIVES = 5;
 
 /** How many options a Round offers, exactly one of them correct. */
 export const ROUND_OPTIONS = 4;
+
+/** How long the Game waits before each new try of a failed planning of its offers, in milliseconds. */
+const OFFER_PLANNING_RETRY_DELAYS: readonly number[] = [1_000, 2_000, 4_000];
 
 /** What the Game needs to know of the Edition: its Feature Switches and its Distractor rule. */
 export type GameEdition = Pick<Edition, 'isFeatureEnabled'> & {
@@ -252,11 +255,12 @@ const offerOf = ({ id, entryKind }: GameMode, plan: RoundPlan): GameModeOffer =>
 /**
  * Opens the Game over the eligible Entries and History, for the Core
  * composition, with `followEligibility`, which reads the modes on offer again
- * after a hide, a restore or a Mix change. The Game Modes come in the order
- * they register. Their offers say they are still planned until the first
- * `followEligibility`, which the Core composition calls once it is open. The
- * best result is read from the user state once, when it opens, so open one
- * per app session (the Core composition does).
+ * after a hide, a restore or a Mix change, and `planOffers`. The Game Modes
+ * come in the order they register. Their offers say they are still planned
+ * until a planning succeeds: the first is the one `planOffers` starts, which
+ * the Core composition calls once it is open. The best result is read from
+ * the user state once, when it opens, so open one per app session (the Core
+ * composition does).
  */
 export async function openGame({
   edition,
@@ -264,6 +268,7 @@ export async function openGame({
   history,
   userState,
   random,
+  schedule,
   modes: registered,
 }: {
   edition: GameEdition;
@@ -271,8 +276,23 @@ export async function openGame({
   history: Pick<History, 'list'>;
   userState: Pick<UserState, 'read' | 'write'>;
   random: Random;
+  /** What a failed planning of the offers is tried again by; without it, only the next `planOffers` tries. */
+  schedule?: Schedule;
   modes: readonly GameMode[];
-}): Promise<{ game: Game; followEligibility: () => Promise<void> }> {
+}): Promise<{
+  game: Game;
+  followEligibility: () => Promise<void>;
+  /**
+   * Plans the offers in the background, in turn with the Game's other
+   * changes, unless they are planned already or a planning is under way. A
+   * planning that fails is tried again after each delay of
+   * `OFFER_PLANNING_RETRY_DELAYS` (1, 2 and 4 s), then no more: the offers
+   * keep saying they are still planned until the next call, hide, restore or
+   * Mix change. The Core composition calls it once it is open and on each
+   * `resume`.
+   */
+  planOffers: () => void;
+}> {
   const ids = new Set<string>();
   for (const { id } of registered) {
     if (ids.has(id)) throw new Error(`Two Game Modes have the id «${id}»`);
@@ -378,6 +398,36 @@ export async function openGame({
     if ('rounds' in rest) played = { mode: played.mode, rounds: [...shown, ...rest.rounds] };
   }
 
+  /** Whether a planning of the offers is under way, or waits to try again. */
+  let planningOffers = false;
+  const unplanned = () => state.modes.some((offer) => 'planning' in offer);
+
+  function planOffers(): void {
+    if (planningOffers || !unplanned()) return;
+    planningOffers = true;
+    const tryPlanning = (delays: readonly number[]) => {
+      inTurn(async () => {
+        // A hide, a restore or a Mix change may have planned them meanwhile.
+        if (unplanned()) await followEligibility();
+      }).then(
+        () => {
+          planningOffers = false;
+        },
+        () => {
+          const [delay, ...rest] = delays;
+          if (schedule === undefined || delay === undefined) {
+            planningOffers = false;
+            return;
+          }
+          schedule(() => {
+            tryPlanning(rest);
+          }, delay);
+        },
+      );
+    };
+    tryPlanning(OFFER_PLANNING_RETRY_DELAYS);
+  }
+
   const roundOf = ({ prompt, highlight, options }: RoundContent, number: number): Round => ({
     number,
     prompt,
@@ -480,5 +530,6 @@ export async function openGame({
       },
     },
     followEligibility: () => inTurn(followEligibility),
+    planOffers,
   };
 }
