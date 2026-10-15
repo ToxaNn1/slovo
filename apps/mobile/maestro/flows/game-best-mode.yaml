@@ -1,0 +1,11 @@
+# The best result on the mode screen: the finished Game counts there once the
+# Game in play is dropped.
+# A subflow of `smoke.yaml`; run it from there. It starts on the mode screen
+# that `game-leave.yaml` leaves and changes nothing.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- assertVisible:
+    id: game-rules
+    text: '.*Найкраще — \d+ / 15\.'
+- assertNotVisible:
+    id: game-round
