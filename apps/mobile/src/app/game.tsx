@@ -1,4 +1,3 @@
-import type { EntryKind } from '@slovo/contracts';
 import { GAME_LIVES, GAME_ROUNDS, type GameModeOffer } from '@slovo/core';
 import {
   DecorBackground,
@@ -18,39 +17,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useComposition } from '../composition';
 import { editionStrings } from '../edition';
 import { useGameActions, useGameState } from '../game';
+import { gameModeCard, gameModeStrings } from '../game-modes';
 import { LoadFailed } from '../language-pack';
 
 const { game: strings } = editionStrings;
 
 /** How far the largest text sizes of iOS may scale the line under the title, so it never breaks a word. */
 const RULES_MAX_FONT_SCALE = 1.5;
-
-/** What the app knows of a Game Mode: the kind of Entry it asks about and its words. */
-interface ModeWords {
-  readonly entryKind: EntryKind;
-  readonly overline: string;
-  readonly title: string;
-  readonly description: string;
-  readonly sample: { readonly prompt: string; readonly answer: string };
-  /** The label over a Round's prompt. */
-  readonly prompt: string;
-  /** What its card says when there are too few eligible Entries to play it. */
-  readonly tooFewEntries: string;
-}
-
-/** The Game Modes the app knows, by mode id; a mode without them has no card. */
-const modeWords: Readonly<Record<string, ModeWords | undefined>> = {
-  'guess-word': { entryKind: 'word', ...strings.guessWord, tooFewEntries: strings.tooFewEntries },
-  correction: { entryKind: 'correction', ...strings.correction },
-};
-
-/** Why a mode can't start, in the words of its card; nothing when it can. */
-function refusalOf(offer: GameModeOffer, words: ModeWords): string | undefined {
-  if (offer.canStart) return undefined;
-  return offer.refusal === 'corrections-out-of-mix'
-    ? strings.correction.outOfMix
-    : words.tooFewEntries;
-}
 
 /**
  * The Game tab: the mode screen, a Round with its answer sheet, or the result
@@ -93,7 +66,7 @@ export default function GameScreen() {
       ) : (
         <GameRound
           game={current}
-          label={modeWords[current.modeId]?.prompt ?? ''}
+          label={gameModeStrings(strings.modes, current.modeId).roundLabel}
           onAnswer={actions.answer}
           onNext={actions.next}
           onLeave={actions.leave}
@@ -139,25 +112,16 @@ function ModeScreen({
               : ` ${fill(count(strings.best, bestResult), { total: String(GAME_ROUNDS) })}`}
           </Text>
         </View>
-        {modes.map((offer) => {
-          const words = modeWords[offer.modeId];
-          if (words === undefined) return null;
-          return (
-            <GameModeCard
-              key={offer.modeId}
-              testID={`game-mode-${offer.modeId}`}
-              entryKind={words.entryKind}
-              overline={words.overline}
-              title={words.title}
-              description={words.description}
-              sample={words.sample}
-              refusal={refusalOf(offer, words)}
-              onPress={() => {
-                onStart(offer.modeId);
-              }}
-            />
-          );
-        })}
+        {modes.map((offer) => (
+          <GameModeCard
+            key={offer.modeId}
+            testID={`game-mode-${offer.modeId}`}
+            {...gameModeCard(offer, strings.modes)}
+            onPress={() => {
+              onStart(offer.modeId);
+            }}
+          />
+        ))}
       </ScrollView>
     </View>
   );

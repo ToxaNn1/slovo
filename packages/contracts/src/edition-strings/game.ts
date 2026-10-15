@@ -3,6 +3,29 @@ import { z } from 'zod';
 import { TextSchema } from '../shared';
 import { pluralOf, PluralLabelSchema, PluralSchema, templateOf } from './shared';
 
+/**
+ * The texts of one Game Mode, alike for every mode: its card on the mode
+ * screen, the label of its Rounds and what its card says for each reason it
+ * can't start.
+ */
+export const GameModeStringsSchema = z.strictObject({
+  /** The card's overline, e.g. «ВИЗНАЧЕННЯ → СЛОВО». */
+  overline: TextSchema,
+  title: TextSchema,
+  description: TextSchema,
+  /** The card's sample: a prompt and the answer it asks for, e.g. a Definition and a Lemma with Stress. */
+  sample: z.strictObject({ prompt: TextSchema, answer: TextSchema }),
+  /** The label over a Round's prompt, e.g. «ВИЗНАЧЕННЯ». */
+  roundLabel: TextSchema,
+  /** What the card says for each reason the Core gives that the mode can't start. */
+  refusals: z.strictObject({
+    /** Too few eligible Entries of the mode's kind to play it; any mode may meet it. */
+    'too-few-entries': TextSchema,
+    /** Corrections out of the reader's Mix; only a mode that asks about Corrections meets it. */
+    'corrections-out-of-mix': TextSchema.optional(),
+  }),
+});
+
 /** The texts of the Game: the mode screen, a Round, its answer sheet and the result screen. */
 export const GameStringsSchema = z.strictObject({
   /** The mode screen's title. */
@@ -18,34 +41,11 @@ export const GameStringsSchema = z.strictObject({
    * `{count}`, the best result, which picks the form, and `{total}`, the Rounds of a Game.
    */
   best: pluralOf('total'),
-  /** What a mode card says when there are too few eligible Words to play its mode. */
-  tooFewEntries: TextSchema,
-  /** «Вгадай слово», the Definition → Word mode: its card and the label of its Round. */
-  guessWord: z.strictObject({
-    /** The card's overline, e.g. «ВИЗНАЧЕННЯ → СЛОВО». */
-    overline: TextSchema,
-    title: TextSchema,
-    description: TextSchema,
-    /** The card's sample: a Definition, and the Lemma with Stress it asks for. */
-    sample: z.strictObject({ prompt: TextSchema, answer: TextSchema }),
-    /** The label over a Round's Definition, e.g. «ВИЗНАЧЕННЯ». */
-    prompt: TextSchema,
-  }),
-  /** «Обери правильне», the Correction mode: its card, the label of its Round and why it can't start. */
-  correction: z.strictObject({
-    /** The card's overline, e.g. «ВИПРАВЛЕННЯ». */
-    overline: TextSchema,
-    title: TextSchema,
-    description: TextSchema,
-    /** The card's sample: a non-standard form, drawn struck through, and its standard equivalent. */
-    sample: z.strictObject({ prompt: TextSchema, answer: TextSchema }),
-    /** The label over a Round's sentence, e.g. «ЯК СКАЗАТИ КРАЩЕ?». */
-    prompt: TextSchema,
-    /** What its card says while Corrections are out of the reader's Mix. */
-    outOfMix: TextSchema,
-    /** What its card says when there are too few eligible Corrections to play it. */
-    tooFewEntries: TextSchema,
-  }),
+  /**
+   * The texts of each Game Mode on offer, by its id: the Core's own and any
+   * an Edition registers (ADR 0024).
+   */
+  modes: z.record(z.string(), GameModeStringsSchema),
   /** A Round. */
   round: z.strictObject({
     /** The Rounds passed over the bar, e.g. «7 / 15». Takes `{passed}` and `{total}`. */

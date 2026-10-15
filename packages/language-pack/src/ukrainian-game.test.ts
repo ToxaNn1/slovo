@@ -144,8 +144,8 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
   it('offers the mode to a new reader and plays a full Game of 15 different Words', async () => {
     const app = await run(7);
     expect(app.game.state.modes).toEqual([
-      { modeId: 'guess-word', canStart: true },
-      { modeId: 'correction', canStart: true },
+      { modeId: 'guess-word', entryKind: 'word', canStart: true },
+      { modeId: 'correction', entryKind: 'correction', canStart: true },
     ]);
 
     const asked = await playGame(app);

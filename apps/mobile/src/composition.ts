@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { deviceClock } from './device-clock';
 import { deviceNotificationScheduler } from './device-notifications';
 import { edition, editionStrings } from './edition';
+import { gameModeStrings } from './game-modes';
 import { storedUserState } from './stored-user-state';
 
 export type CompositionState =
@@ -18,7 +19,7 @@ export type CompositionState =
   | { readonly status: 'ready'; readonly composition: Composition };
 
 async function openOver(db: SQLiteDatabase): Promise<Composition> {
-  return openComposition({
+  const composition = await openComposition({
     content: createPackReader(db),
     edition,
     userState: await storedUserState(),
@@ -29,6 +30,11 @@ async function openOver(db: SQLiteDatabase): Promise<Composition> {
       ellipsis: editionStrings.notificationBody.ellipsis,
     },
   });
+  // The modes on offer stay the same for the session: one without its strings fails here, at launch.
+  for (const { modeId } of composition.game.state.modes) {
+    gameModeStrings(editionStrings.game.modes, modeId);
+  }
+  return composition;
 }
 
 /** The opening of the composition over one Language Pack, which every screen shares. */
