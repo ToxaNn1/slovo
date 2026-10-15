@@ -21,6 +21,7 @@ export function createMemoryContentPort({
           .filter((word) => categoryId === undefined || word.categoryId === categoryId)
           .map((word) => word.id),
       ),
+    listWords: () => Promise.resolve(liveWords),
     getWord: (id) => Promise.resolve(words.find((word) => word.id === id)),
     listCorrectionIds: () =>
       Promise.resolve(

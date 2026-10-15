@@ -6,7 +6,6 @@
     "saved": "Збережене",
     "accessibilityLabel": "{tab}, вкладка {position} з {count}"
   },
-  "placeholder": "Цей розділ з'явиться згодом.",
   "loadFailed": {
     "title": "Нитка урвалася",
     "message": "Не вдалося відкрити словник.",
@@ -530,5 +529,73 @@
   },
   "notificationBody": {
     "ellipsis": "…"
+  },
+  "game": {
+    "title": "Гра",
+    "rules": "{rounds}, {lives}.",
+    "rounds": {
+      "one": "{count} раунд",
+      "few": "{count} раунди",
+      "many": "{count} раундів",
+      "other": "{count} раунду"
+    },
+    "lives": {
+      "one": "{count} життя",
+      "few": "{count} життя",
+      "many": "{count} життів",
+      "other": "{count} життя"
+    },
+    "tooFewEntries": "Замало слів у вашому Міксі. Поверніть кілька категорій у Налаштуваннях.",
+    "guessWord": {
+      "overline": "Визначення → слово",
+      "title": "Вгадай слово",
+      "description": "Читаєте визначення — обираєте одне слово з чотирьох.",
+      "sample": {
+        "prompt": "«метушня, безлад»",
+        "answer": "веремі\u0301я"
+      },
+      "prompt": "Визначення"
+    },
+    "round": {
+      "progress": "{passed} / {total}",
+      "progressLabel": "Пройдено раундів: {passed} з {total}",
+      "lives": "Життів: {count} з {total}",
+      "correct": "Правильно",
+      "chosen": "Ваш вибір"
+    },
+    "sheet": {
+      "correct": "Правильно!",
+      "wrong": "Не цього разу",
+      "next": "Далі"
+    },
+    "result": {
+      "won": {
+        "title": "Перемога!",
+        "line": {
+          "one": "Усі {count} раунд пройдено.",
+          "few": "Усі {count} раунди пройдено.",
+          "many": "Усі {count} раундів пройдено.",
+          "other": "Усі {count} раунду пройдено."
+        }
+      },
+      "lost": {
+        "title": "Життя закінчилися",
+        "line": "Нічого — слова нікуди не дінуться."
+      },
+      "rounds": {
+        "one": "раунд",
+        "few": "раунди",
+        "many": "раундів",
+        "other": "раунду"
+      },
+      "lives": {
+        "one": "життя",
+        "few": "життя",
+        "many": "життів",
+        "other": "життя"
+      },
+      "again": "Ще раз",
+      "home": "На головну"
+    }
   }
 }

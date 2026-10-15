@@ -108,6 +108,13 @@ describe.each(adapters)('the content read port %s', (_, open) => {
     expect(await content.listWordIds('unknown')).toEqual([]);
   });
 
+  it('gives the live Words themselves in the order it lists them, each as by id', async () => {
+    const words = await content.listWords();
+
+    expect(words.map((word) => word.id)).toEqual(await content.listWordIds());
+    for (const word of words) expect(word).toEqual(await content.getWord(word.id));
+  });
+
   it('gives any Word by id, a Retired Word included', async () => {
     expect(await content.getWord('w_fx0002')).toMatchObject({ lemma: 'балакучий' });
     expect(await content.getWord('w_fx0001')).toMatchObject({ retired: true });
@@ -148,6 +155,18 @@ describe('the Ukrainian Language Pack', () => {
       }
       const listed = byCategory.flatMap(({ wordIds }) => wordIds);
       expect(listed.toSorted()).toEqual([...(await pack.listWordIds())].toSorted());
+    } finally {
+      pack.close();
+    }
+  });
+
+  it('gives every live Word at once as it gives each by id', async () => {
+    const pack = openPack(ukrainianDir);
+    try {
+      const words = await pack.listWords();
+
+      expect(words.map((word) => word.id)).toEqual(await pack.listWordIds());
+      for (const word of words) expect(word).toEqual(await pack.getWord(word.id));
     } finally {
       pack.close();
     }

@@ -55,6 +55,26 @@ describe('the 0.4 UI strings groups', () => {
   });
 });
 
+describe('the 0.5 UI strings group', () => {
+  const strings = readJson('uk', 'strings.json') as Record<string, unknown>;
+
+  it('the Ukrainian Edition needs the game group', () => {
+    const without = Object.fromEntries(Object.entries(strings).filter(([key]) => key !== 'game'));
+
+    const result = EditionStringsSchema.safeParse(without);
+
+    expect(result.error?.issues.map((issue) => issue.path.join('.'))).toContain('game');
+  });
+
+  it('gives every count and label of the Game the plural forms Ukrainian has', () => {
+    const categories = new Intl.PluralRules('uk-UA').resolvedOptions().pluralCategories;
+    const counts = pluralsOf(strings['game']);
+
+    expect(counts.length).toBeGreaterThan(0);
+    for (const forms of counts) expect(Object.keys(forms).sort()).toEqual([...categories].sort());
+  });
+});
+
 /** Every plural-forms object (one with an `other` form) in a strings group. */
 function pluralsOf(value: unknown): Record<string, string>[] {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return [];
@@ -110,6 +130,25 @@ describe('Edition design tokens', () => {
     'the %s Edition supplies valid design tokens',
     (edition) => {
       expect(EditionTokensSchema.safeParse(readJson(edition, 'tokens.json')).error).toBeUndefined();
+    },
+  );
+
+  it.each(['light', 'dark'] as const)(
+    'needs the colour of a wrong answer in %s, from 0.5',
+    (scheme) => {
+      const tokens = EditionTokensSchema.parse(readJson('uk', 'tokens.json'));
+      const withoutWrong = Object.fromEntries(
+        Object.entries(tokens.colors?.[scheme] ?? {}).filter(([role]) => role !== 'wrong'),
+      );
+
+      const result = EditionTokensSchema.safeParse({
+        ...tokens,
+        colors: { ...tokens.colors, [scheme]: withoutWrong },
+      });
+
+      expect(result.error?.issues.map((issue) => issue.path.join('.'))).toEqual([
+        `colors.${scheme}.wrong`,
+      ]);
     },
   );
 
@@ -277,6 +316,28 @@ describe('WCAG AA contrast of the 0.3 Favorites screens', () => {
         // The heart is a graphic, which needs 3:1 against what it sits on (WCAG 1.4.11).
         for (const behind of [background, surface]) {
           expect(contrast(parseColor(heart), parseColor(behind))).toBeGreaterThanOrEqual(3);
+        }
+      },
+    );
+  });
+});
+
+describe('WCAG AA contrast of the 0.5 Game screens', () => {
+  describe.each(tokenSets)('%s', (_, colors) => {
+    it('keeps white on the right and the wrong option, filled in the light colours, at 4.5:1 or more', () => {
+      for (const fill of [colors.light.correct, colors.light.wrong]) {
+        expect(contrast([255, 255, 255], parseColor(fill)), fill).toBeGreaterThanOrEqual(4.5);
+      }
+    });
+
+    it.each(['light', 'dark'] as const)(
+      "keeps the answer sheet's title, drawn in the other scheme on its surface, at 4.5:1 or more in %s",
+      (scheme) => {
+        const { surface, correct, wrong } = colors[otherScheme[scheme]];
+        for (const title of [correct, wrong]) {
+          expect(contrast(parseColor(title), parseColor(surface)), title).toBeGreaterThanOrEqual(
+            4.5,
+          );
         }
       },
     );

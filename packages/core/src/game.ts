@@ -1,0 +1,396 @@
+import type { Entry, EntryKind, Example, LanguageTraits } from '@slovo/contracts';
+
+import type { Edition } from './edition';
+import type { Entries } from './entries';
+import type { History } from './history';
+import { createInTurn, createSubscribers } from './in-turn';
+import type { Random } from './ports';
+
+/** How many Rounds a Game has, in every Game Mode. */
+export const GAME_ROUNDS = 15;
+
+/** How many Lives a Game starts with, in every Game Mode. */
+export const GAME_LIVES = 5;
+
+/** How many options a Round offers, exactly one of them correct. */
+export const ROUND_OPTIONS = 4;
+
+/** What the Game needs to know of the Edition: its Feature Switches and its Distractor rule. */
+export type GameEdition = Pick<Edition, 'isFeatureEnabled'> & {
+  readonly languageTraits: Pick<LanguageTraits, 'distractorRule'>;
+};
+
+/** One option of a Round, or the answer its sheet names. */
+export interface RoundOption {
+  /** The text as shown, such as a Lemma with its Stress marks. */
+  readonly text: string;
+  /** The stressed vowels of the text, in order, which VoiceOver names; empty without Stress. */
+  readonly stressedVowels: readonly string[];
+}
+
+/** What the sheet after an answer shows: the right answer, and an Example of it if any. */
+export interface AnswerSheet {
+  readonly answer: RoundOption;
+  readonly example: Example | undefined;
+}
+
+/** A Round as a Game Mode builds it: one prompt with four options, exactly one correct. */
+export interface RoundContent {
+  /** What the Round asks, such as a Definition. */
+  readonly prompt: string;
+  /** The four options, in the order shown. */
+  readonly options: readonly RoundOption[];
+  /** The place of the right option among them. */
+  readonly correct: number;
+  readonly sheet: AnswerSheet;
+}
+
+/** What a Game Mode builds a Round from. */
+export interface RoundInput {
+  /** The Entry the Round asks about, of the mode's kind. */
+  readonly answer: Entry;
+  /** Every eligible Entry of the mode's kind, the answer among them: where Distractors come from. */
+  readonly eligible: readonly Entry[];
+  /** The source of every shuffle. */
+  readonly random: Random;
+  readonly edition: GameEdition;
+}
+
+/**
+ * A Game Mode, registered through the Core's Extension Point (ADR 0006): the
+ * Core's own modes and those an Edition adds are values of this one shape.
+ */
+export interface GameMode {
+  /** Unique among the modes, such as `guess-word`. */
+  readonly id: string;
+  /** The kind of Entry its Rounds ask about. */
+  readonly entryKind: EntryKind;
+  /** Whether the Edition turns the mode on; a mode that is off is never on offer. */
+  isOn(edition: GameEdition): boolean;
+  /**
+   * The Round that asks about the answer, its options shuffled by the random
+   * source; nothing when no fair Round can be made of the eligible Entries.
+   */
+  buildRound(input: RoundInput): RoundContent | undefined;
+}
+
+/** Why a Game Mode can't start: too few eligible Entries of its kind to make 15 Rounds of. */
+export type GameModeRefusal = 'too-few-entries';
+
+/** A Game Mode on offer, and whether a Game in it can start now. */
+export type GameModeOffer =
+  | { readonly modeId: string; readonly canStart: true }
+  | { readonly modeId: string; readonly canStart: false; readonly refusal: GameModeRefusal };
+
+/** The answer given to a Round. */
+export interface RoundAnswer {
+  /** The place of the option the reader chose. */
+  readonly chosen: number;
+  /** The place of the right option. */
+  readonly correct: number;
+  readonly sheet: AnswerSheet;
+}
+
+/** A Round as the reader plays it. */
+export interface Round {
+  /** Which Round of the Game it is, from 1 to `GAME_ROUNDS`. */
+  readonly number: number;
+  readonly prompt: string;
+  readonly options: readonly RoundOption[];
+  /** The answer, once given; a Round is answered once. */
+  readonly answer: RoundAnswer | undefined;
+}
+
+/**
+ * Where a Game stands: a Round to answer, a Round answered and waiting for
+ * «Далі», or over, won or lost.
+ */
+export type GameStatus = 'playing' | 'answered' | 'won' | 'lost';
+
+/** The Game in play, or just over. */
+export interface CurrentGame {
+  readonly modeId: string;
+  /** The current Round; the last one played once the Game is over. */
+  readonly round: Round;
+  /**
+   * The Rounds answered, right or wrong, but for the one that cost the last
+   * Life; it moves up on «Далі». A won Game passed all `GAME_ROUNDS`.
+   */
+  readonly roundsPassed: number;
+  /** The Lives left, from `GAME_LIVES` to 0. */
+  readonly lives: number;
+  readonly status: GameStatus;
+}
+
+/** The Game as it stands: the modes on offer and the Game in play. */
+export interface GameState {
+  /** The Game Modes the Edition turns on, in the order they register; none with the Game off. */
+  readonly modes: readonly GameModeOffer[];
+  /** The Game in play or just over; none on the mode screen. */
+  readonly current: CurrentGame | undefined;
+}
+
+/**
+ * The Game: the Game Modes on offer and the Game in play, kept in memory for
+ * the app session and never in the user state. A Game asks 15 different
+ * eligible Entries of its mode's kind: those in History when there are at
+ * least 15, else any (ADR 0024). Playing never writes Seen, History or Active
+ * Days.
+ */
+export interface Game {
+  /**
+   * The Game as it stands. A change never edits it: it makes a new one and
+   * tells the subscribers, so it stays the same object until something changes.
+   */
+  readonly state: GameState;
+  /** Calls `listener` after each change of the state. Returns the call that stops it. */
+  subscribe(listener: () => void): () => void;
+  /**
+   * Starts a new Game in the mode, in place of any Game there is. When the
+   * mode can't start after all, no Game starts, the mode screen shows and the
+   * mode's offer says why.
+   */
+  start(modeId: string): Promise<void>;
+  /**
+   * Answers the current Round with the option at that place. A wrong answer
+   * costs a Life at once. Nothing changes once the Round is answered.
+   */
+  answer(option: number): void;
+  /**
+   * «Далі» after an answer: at 0 Lives the Game is lost; after the last Round
+   * it is won; otherwise the next Round comes. Nothing changes before an answer.
+   */
+  next(): Promise<void>;
+  /** Drops the Game in play or just over, so the mode screen shows again. */
+  leave(): void;
+}
+
+/** The items in an order drawn from the random source. */
+export function shuffled<T>(items: readonly T[], random: Random): T[] {
+  const order = [...items];
+  for (let last = order.length - 1; last > 0; last -= 1) {
+    const other = Math.floor(random.next() * (last + 1));
+    [order[last], order[other]] = [order[other] as T, order[last] as T];
+  }
+  return order;
+}
+
+/** A Round as a Game Mode built it, checked to hold four options with one of them right. */
+function checkedRound(mode: GameMode, round: RoundContent): RoundContent {
+  const { options, correct } = round;
+  if (options.length !== ROUND_OPTIONS || options[correct] === undefined) {
+    throw new Error(`The Game Mode «${mode.id}» built a Round without four options and one right`);
+  }
+  return round;
+}
+
+/** Whether two offers say the same, field by field. */
+const sameOffer = (one: GameModeOffer, other: GameModeOffer | undefined) =>
+  other !== undefined &&
+  Object.keys(one).length === Object.keys(other).length &&
+  Object.entries(one).every(([key, value]) => (other as Record<string, unknown>)[key] === value);
+
+const sameOffers = (one: readonly GameModeOffer[], other: readonly GameModeOffer[]) =>
+  one.length === other.length && one.every((offer, index) => sameOffer(offer, other[index]));
+
+/** A Round of the Game in play, with the Entry it asks about. */
+interface PlannedRound {
+  readonly answerId: string;
+  readonly content: RoundContent;
+}
+
+/**
+ * Opens the Game over the eligible Entries and History, for the Core
+ * composition, with `followEligibility`, which reads the modes on offer again
+ * after a hide, a restore or a Mix change. The Game Modes come in the order
+ * they register.
+ */
+export async function openGame({
+  edition,
+  entries,
+  history,
+  random,
+  modes: registered,
+}: {
+  edition: GameEdition;
+  entries: Pick<Entries, 'eligible' | 'eligibleOfKind'>;
+  history: Pick<History, 'list'>;
+  random: Random;
+  modes: readonly GameMode[];
+}): Promise<{ game: Game; followEligibility: () => Promise<void> }> {
+  const ids = new Set<string>();
+  for (const { id } of registered) {
+    if (ids.has(id)) throw new Error(`Two Game Modes have the id «${id}»`);
+    ids.add(id);
+  }
+  const modes = edition.isFeatureEnabled('game')
+    ? registered.filter((mode) => mode.isOn(edition))
+    : [];
+  const subscribers = createSubscribers();
+  const inTurn = createInTurn();
+
+  /** The modes on offer, by the count of eligible Entries of each one's kind. */
+  async function offersNow(): Promise<GameModeOffer[]> {
+    if (modes.length === 0) return [];
+    const eligible = await entries.eligible();
+    return modes.map(({ id, entryKind }) =>
+      (entryKind === 'word' ? eligible.words : eligible.corrections).length >= GAME_ROUNDS
+        ? { modeId: id, canStart: true }
+        : { modeId: id, canStart: false, refusal: 'too-few-entries' },
+    );
+  }
+
+  let state: GameState = { modes: await offersNow(), current: undefined };
+  /** The mode of the Game in play and its Rounds, built when it starts. */
+  let played: { readonly mode: GameMode; readonly rounds: readonly PlannedRound[] } | undefined;
+
+  function change(next: GameState): void {
+    state = next;
+    subscribers.tell();
+  }
+
+  const changeCurrent = (current: CurrentGame | undefined) => {
+    change({ ...state, current });
+  };
+
+  /**
+   * `count` Rounds, each asking about another eligible Entry than the ones
+   * `asked`: from the pool, the eligible Entries in History when there are at
+   * least 15, else every eligible one; and should the pool make too few fair
+   * Rounds, from the other eligible Entries. Nothing when the mode can't make
+   * that many.
+   */
+  async function roundsOf(
+    mode: GameMode,
+    count: number,
+    asked: ReadonlySet<string> = new Set(),
+  ): Promise<PlannedRound[] | undefined> {
+    const eligible = await entries.eligibleOfKind(mode.entryKind);
+    const met = new Set(history.list.map(({ entryId }) => entryId));
+    const inHistory = eligible.filter((entry) => met.has(entry.id));
+    const pool = new Set(inHistory.length >= GAME_ROUNDS ? inHistory : eligible);
+    const unasked = eligible.filter((entry) => !asked.has(entry.id));
+    const built: PlannedRound[] = [];
+    for (const answer of [
+      ...shuffled(
+        unasked.filter((entry) => pool.has(entry)),
+        random,
+      ),
+      ...shuffled(
+        unasked.filter((entry) => !pool.has(entry)),
+        random,
+      ),
+    ]) {
+      if (built.length === count) break;
+      const round = mode.buildRound({ answer, eligible, random, edition });
+      if (round !== undefined)
+        built.push({ answerId: answer.id, content: checkedRound(mode, round) });
+    }
+    return built.length === count ? built : undefined;
+  }
+
+  /**
+   * Reads the modes on offer again, and builds the Rounds still to come of the
+   * Game in play anew, so an Entry hidden or taken out of the Mix meanwhile
+   * never comes up. The Rounds shown so far stay; when the mode can't make
+   * the rest, they stay as they were.
+   */
+  async function followEligibility(): Promise<void> {
+    const offers = await offersNow();
+    if (!sameOffers(offers, state.modes)) change({ ...state, modes: offers });
+    const game = state.current;
+    if (played === undefined || (game?.status !== 'playing' && game?.status !== 'answered')) {
+      return;
+    }
+    const shown = played.rounds.slice(0, game.roundsPassed + 1);
+    const rest = await roundsOf(
+      played.mode,
+      GAME_ROUNDS - shown.length,
+      new Set(shown.map(({ answerId }) => answerId)),
+    );
+    if (rest !== undefined) played = { mode: played.mode, rounds: [...shown, ...rest] };
+  }
+
+  const roundOf = ({ prompt, options }: RoundContent, number: number): Round => ({
+    number,
+    prompt,
+    options,
+    answer: undefined,
+  });
+
+  async function start(modeId: string): Promise<void> {
+    const mode = modes.find(({ id }) => id === modeId);
+    if (mode === undefined) throw new Error(`No Game Mode «${modeId}» is on offer`);
+    const built = await roundsOf(mode, GAME_ROUNDS);
+    const first = built?.[0];
+    if (built === undefined || first === undefined) {
+      played = undefined;
+      change({
+        modes: state.modes.map((offer) =>
+          offer.modeId === modeId ? { modeId, canStart: false, refusal: 'too-few-entries' } : offer,
+        ),
+        current: undefined,
+      });
+      return;
+    }
+    played = { mode, rounds: built };
+    changeCurrent({
+      modeId,
+      round: roundOf(first.content, 1),
+      roundsPassed: 0,
+      lives: GAME_LIVES,
+      status: 'playing',
+    });
+  }
+
+  function answer(option: number): void {
+    const game = state.current;
+    if (game?.status !== 'playing') return;
+    const content = played?.rounds[game.round.number - 1]?.content;
+    if (content?.options[option] === undefined) return;
+    const { correct, sheet } = content;
+    changeCurrent({
+      ...game,
+      round: { ...game.round, answer: { chosen: option, correct, sheet } },
+      lives: option === correct ? game.lives : game.lives - 1,
+      status: 'answered',
+    });
+  }
+
+  function next(): void {
+    const game = state.current;
+    if (game?.status !== 'answered') return;
+    if (game.lives === 0) {
+      changeCurrent({ ...game, status: 'lost' });
+      return;
+    }
+    const roundsPassed = game.roundsPassed + 1;
+    const upcoming = roundsPassed < GAME_ROUNDS ? played?.rounds[roundsPassed]?.content : undefined;
+    changeCurrent(
+      upcoming === undefined
+        ? { ...game, roundsPassed, status: 'won' }
+        : { ...game, roundsPassed, round: roundOf(upcoming, roundsPassed + 1), status: 'playing' },
+    );
+  }
+
+  return {
+    game: {
+      get state() {
+        return state;
+      },
+      subscribe: subscribers.subscribe,
+      start: (modeId) => inTurn(() => start(modeId)),
+      answer,
+      next: () =>
+        inTurn(() => {
+          next();
+          return Promise.resolve();
+        }),
+      leave() {
+        played = undefined;
+        if (state.current !== undefined) changeCurrent(undefined);
+      },
+    },
+    followEligibility: () => inTurn(followEligibility),
+  };
+}

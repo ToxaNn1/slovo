@@ -57,16 +57,7 @@ interface SourceRow {
 const SQL = {
   wordIds: 'SELECT id FROM words WHERE retired = 0 ORDER BY id',
   wordIdsInCategory: 'SELECT id FROM words WHERE retired = 0 AND category_id = ? ORDER BY id',
-  word: 'SELECT * FROM words WHERE id = ?',
-  stress: 'SELECT position FROM word_stress WHERE word_id = ? ORDER BY position',
-  definitions: 'SELECT text FROM definitions WHERE word_id = ? ORDER BY position',
-  examples: 'SELECT text, author FROM examples WHERE word_id = ? ORDER BY position',
-  relatedWords:
-    'SELECT text FROM related_words WHERE word_id = ? AND relation = ? ORDER BY position',
-  registers: 'SELECT register FROM word_registers WHERE word_id = ? ORDER BY position',
   sources: 'SELECT title, url, archived_url FROM sources WHERE entry_id = ? ORDER BY position',
-  linkedCorrectionIds:
-    'SELECT correction_id FROM word_corrections WHERE word_id = ? ORDER BY position',
   correctionIds: 'SELECT id FROM corrections WHERE retired = 0 ORDER BY id',
   correction: 'SELECT * FROM corrections WHERE id = ?',
   equivalents: 'SELECT text FROM correction_equivalents WHERE correction_id = ? ORDER BY position',
@@ -77,6 +68,50 @@ const SQL = {
   `,
   metadata: 'SELECT key, value FROM metadata',
 };
+
+/** Which Words a read takes: a condition on the `words` table and the values it binds. */
+interface WordFilter {
+  readonly where: string;
+  readonly params: BindValue[];
+}
+
+const oneWord = (id: string): WordFilter => ({ where: 'id = ?', params: [id] });
+const liveWords: WordFilter = { where: 'retired = 0', params: [] };
+
+/**
+ * The tables that hold the parts of a Word, each row with the id of its Word,
+ * read for every Word the filter takes in one query per table.
+ */
+const wordParts = (where: string) => {
+  const ofTheWords = `IN (SELECT id FROM words WHERE ${where})`;
+  return {
+    words: `SELECT * FROM words WHERE ${where} ORDER BY id`,
+    stress: `SELECT word_id, position FROM word_stress WHERE word_id ${ofTheWords} ORDER BY word_id, position`,
+    definitions: `SELECT word_id, text FROM definitions WHERE word_id ${ofTheWords} ORDER BY word_id, position`,
+    examples: `SELECT word_id, text, author FROM examples WHERE word_id ${ofTheWords} ORDER BY word_id, position`,
+    relatedWords: `SELECT word_id, relation, text FROM related_words WHERE word_id ${ofTheWords} ORDER BY word_id, relation, position`,
+    registers: `SELECT word_id, register FROM word_registers WHERE word_id ${ofTheWords} ORDER BY word_id, position`,
+    sources: `SELECT entry_id AS word_id, title, url, archived_url FROM sources WHERE entry_id ${ofTheWords} ORDER BY entry_id, position`,
+    links: `SELECT word_id, correction_id FROM word_corrections WHERE word_id ${ofTheWords} ORDER BY word_id, position`,
+  };
+};
+
+/** Rows by the id of their Word, each Word's in the order they came. */
+function byWord<T extends { word_id: string }>(rows: readonly T[]): ReadonlyMap<string, T[]> {
+  const grouped = new Map<string, T[]>();
+  for (const row of rows) {
+    const group = grouped.get(row.word_id);
+    if (group === undefined) grouped.set(row.word_id, [row]);
+    else group.push(row);
+  }
+  return grouped;
+}
+
+const sourceOf = ({ title, url, archived_url }: SourceRow): Source => ({
+  title,
+  ...(url === null ? {} : { url }),
+  ...(archived_url === null ? {} : { archivedUrl: archived_url }),
+});
 
 /**
  * Reads a compiled Language Pack through any SQLite driver. This is the only
@@ -92,47 +127,56 @@ export function createPackReader(db: PackDatabase): PackReader {
 
   async function sources(entryId: string): Promise<Source[]> {
     const rows = await db.getAllAsync<SourceRow>(SQL.sources, [entryId]);
-    return rows.map(({ title, url, archived_url }) => ({
-      title,
-      ...(url === null ? {} : { url }),
-      ...(archived_url === null ? {} : { archivedUrl: archived_url }),
-    }));
+    return rows.map(sourceOf);
   }
 
-  async function getWord(id: string): Promise<Word | undefined> {
-    const row = await db.getFirstAsync<WordRow>(SQL.word, [id]);
-    if (row === null) return undefined;
-    const [stress, definitions, examples, synonyms, antonyms, registers, wordSources, links] =
+  /** The Words the filter takes, in id order, each with all its parts. */
+  async function readWords({ where, params }: WordFilter): Promise<Word[]> {
+    const sql = wordParts(where);
+    type WithWordId<T> = T & { word_id: string };
+    const [rows, stress, definitions, examples, related, registers, wordSources, links] =
       await Promise.all([
-        db.getAllAsync<{ position: number }>(SQL.stress, [id]),
-        column(SQL.definitions, [id], 'text'),
-        db.getAllAsync<{ text: string; author: string | null }>(SQL.examples, [id]),
-        column(SQL.relatedWords, [id, 'synonym'], 'text'),
-        column(SQL.relatedWords, [id, 'antonym'], 'text'),
-        column(SQL.registers, [id], 'register'),
-        sources(id),
-        column(SQL.linkedCorrectionIds, [id], 'correction_id'),
+        db.getAllAsync<WordRow>(sql.words, params),
+        db.getAllAsync<WithWordId<{ position: number }>>(sql.stress, params).then(byWord),
+        db.getAllAsync<WithWordId<{ text: string }>>(sql.definitions, params).then(byWord),
+        db
+          .getAllAsync<WithWordId<{ text: string; author: string | null }>>(sql.examples, params)
+          .then(byWord),
+        db
+          .getAllAsync<WithWordId<{ relation: string; text: string }>>(sql.relatedWords, params)
+          .then(byWord),
+        db.getAllAsync<WithWordId<{ register: string }>>(sql.registers, params).then(byWord),
+        db.getAllAsync<WithWordId<SourceRow>>(sql.sources, params).then(byWord),
+        db.getAllAsync<WithWordId<{ correction_id: string }>>(sql.links, params).then(byWord),
       ]);
-    const [primaryDefinition, ...extraDefinitions] = definitions;
-    // Parsing checks the pack against the contracts and types the Word.
-    return WordSchema.parse({
-      id: row.id,
-      lemma: row.lemma,
-      stress: stress.map((r) => r.position),
-      partOfSpeech: row.part_of_speech,
-      ...(row.gender === null ? {} : { gender: row.gender }),
-      primaryDefinition,
-      extraDefinitions,
-      examples: examples.map(({ text, author }) => (author === null ? { text } : { text, author })),
-      synonyms,
-      antonyms,
-      ...(row.etymology === null ? {} : { etymology: row.etymology }),
-      registers,
-      categoryId: row.category_id,
-      rarity: row.rarity,
-      sources: wordSources,
-      correctionIds: links,
-      retired: row.retired === 1,
+    return rows.map((row) => {
+      const relatedOf = (relation: string) =>
+        (related.get(row.id) ?? []).filter((r) => r.relation === relation).map((r) => r.text);
+      const [primaryDefinition, ...extraDefinitions] = (definitions.get(row.id) ?? []).map(
+        (r) => r.text,
+      );
+      // Parsing checks the pack against the contracts and types the Word.
+      return WordSchema.parse({
+        id: row.id,
+        lemma: row.lemma,
+        stress: (stress.get(row.id) ?? []).map((r) => r.position),
+        partOfSpeech: row.part_of_speech,
+        ...(row.gender === null ? {} : { gender: row.gender }),
+        primaryDefinition,
+        extraDefinitions,
+        examples: (examples.get(row.id) ?? []).map(({ text, author }) =>
+          author === null ? { text } : { text, author },
+        ),
+        synonyms: relatedOf('synonym'),
+        antonyms: relatedOf('antonym'),
+        ...(row.etymology === null ? {} : { etymology: row.etymology }),
+        registers: (registers.get(row.id) ?? []).map((r) => r.register),
+        categoryId: row.category_id,
+        rarity: row.rarity,
+        sources: (wordSources.get(row.id) ?? []).map(sourceOf),
+        correctionIds: (links.get(row.id) ?? []).map((r) => r.correction_id),
+        retired: row.retired === 1,
+      });
     });
   }
 
@@ -161,7 +205,8 @@ export function createPackReader(db: PackDatabase): PackReader {
       categoryId === undefined
         ? column(SQL.wordIds, [], 'id')
         : column(SQL.wordIdsInCategory, [categoryId], 'id'),
-    getWord,
+    listWords: () => readWords(liveWords),
+    getWord: async (id) => (await readWords(oneWord(id)))[0],
     listCorrectionIds: () => column(SQL.correctionIds, [], 'id'),
     getCorrection,
     listLinkedWordIds: (correctionId) => column(SQL.linkedWordIds, [correctionId], 'id'),

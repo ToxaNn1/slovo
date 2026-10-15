@@ -79,16 +79,22 @@ const cornerPlacements = {
   },
 } as const;
 
+/** A corner of a card. */
+type Corner = keyof typeof cornerPlacements;
+
+const allCorners: readonly Corner[] = ['topLeft', 'topRight', 'bottomLeft', 'bottomRight'];
+
 /**
- * Decor slot 3, the card frame: the Edition's corner in all four corners of
- * a Word card. Place it inside the card. Nothing when the Decor has no corners.
+ * Decor slot 3, the card frame: the Edition's corner in the corners of a
+ * card, all four on a Word card, and fewer on other cards as their design has
+ * it. Place it inside the card. Nothing when the Decor has no corners.
  */
-export function CardCorners() {
+export function CardCorners({ corners: at = allCorners }: { corners?: readonly Corner[] }) {
   const { corners } = useDecor();
   if (corners === undefined) return null;
   return (
     <DecorView style={StyleSheet.absoluteFill}>
-      {(['topLeft', 'topRight', 'bottomLeft', 'bottomRight'] as const).map((corner) => (
+      {at.map((corner) => (
         <View key={corner} style={[styles.corner, cornerPlacements[corner]]}>
           <MotifImage motif={corners.corner} width={corners.corner.width} />
         </View>

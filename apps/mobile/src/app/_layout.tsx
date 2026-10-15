@@ -26,17 +26,20 @@ import { NotificationTaps } from '../notifications';
 import { Onboarding } from '../onboarding';
 import { LemmaPronunciation } from '../pronunciation-button';
 import { SettingsProvider, useColorSchemeInEffect, useSettings } from '../settings';
+import { tabsOf, type Tab } from '../tabs';
 
 const { tabs } = editionStrings;
 
-/** The tabs in their final order: Home, Settings, Game, Saved. */
-const tabOrder = ['home', 'settings', 'game', 'saved'] as const;
+/** The tabs the Edition shows, in their final order. */
+const tabOrder = tabsOf(edition);
 
 /**
- * A tab's name, test id and VoiceOver label. The label counts the four tabs
- * only, not the hidden routes beside them, in the Edition's language.
+ * A tab's name, test id and VoiceOver label. The label counts the tabs shown
+ * only, not the hidden routes beside them, in the Edition's language. A tab
+ * the Edition doesn't show has no button.
  */
-function tabOptions(tab: (typeof tabOrder)[number]) {
+function tabOptions(tab: Tab) {
+  if (!tabOrder.includes(tab)) return { href: null };
   return {
     title: tabs[tab],
     tabBarButtonTestID: `tab-${tab}`,
@@ -107,7 +110,7 @@ export default function RootLayout() {
   );
 }
 
-/** The four tabs in their final order: Home, Settings, Game, Saved. */
+/** The tabs in their final order: Home, Settings, Game (when the Edition has it), Saved. */
 function ThemedTabs() {
   const colorScheme = useColorSchemeInEffect();
   const { fontSize, vibration } = useSettings().current;

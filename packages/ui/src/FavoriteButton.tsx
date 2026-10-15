@@ -7,6 +7,10 @@ import { useHaptics } from './HapticsProvider';
 import { useTokens } from './TokensProvider';
 import { useReduceMotion } from './useReduceMotion';
 
+/** The design's heart on a 24-point grid, shared by Favorites and the Game's Lives. */
+export const HEART_PATH =
+  'M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z';
+
 /** The heart's size in the action row, from the design. */
 const ICON_SIZE = 26;
 
@@ -77,7 +81,7 @@ export function FavoriteButton({
       <Animated.View style={{ transform: [{ scale }] }}>
         <Svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 24 24">
           <Path
-            d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.4 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"
+            d={HEART_PATH}
             fill={inFavorites ? color : 'none'}
             stroke={color}
             strokeWidth={1.7}

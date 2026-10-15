@@ -28,6 +28,9 @@ export { EmptyState } from './EmptyState';
 export { EntryRow, type EntryRowAction } from './EntryRow';
 export { type RowAction } from './SwipeableRow';
 export { FavoriteButton } from './FavoriteButton';
+export { GameModeCard } from './GameModeCard';
+export { GameResult } from './GameResult';
+export { AnswerOption, AnswerSheet, GameHeader, RoundCard } from './GameRound';
 export { HapticsProvider, useHaptics } from './HapticsProvider';
 export { HideButton } from './HideButton';
 export { ScreenTitle, SectionLabel } from './headings';
@@ -41,6 +44,7 @@ export {
 } from './Onboarding';
 export { OutlineButton } from './OutlineButton';
 export { PrimaryButton } from './PrimaryButton';
+export { SecondaryButton } from './SecondaryButton';
 export {
   SavedCard,
   SavedCardCollection,
@@ -65,6 +69,7 @@ export { NavigationRow, SettingsGroup, SoonRow, SwitchRow, TimeRow } from './Set
 export { SplashOverlay, type SplashOverlayProps } from './SplashOverlay';
 export { StatsPill } from './StatsPill';
 export { StatsSheet } from './StatsSheet';
+export { stressLabel } from './stress-label';
 export {
   coreTokens,
   designTokens,
@@ -76,7 +81,13 @@ export {
   type ColorScheme,
   type DesignTokens,
 } from './tokens';
-export { InvertedTokens, TokensProvider, useTokens, type Tokens } from './TokensProvider';
+export {
+  InvertedTokens,
+  TokensProvider,
+  useSchemeColors,
+  useTokens,
+  type Tokens,
+} from './TokensProvider';
 export { UndoToastProvider, useUndoToast, type UndoToastContent } from './UndoToast';
 export {
   PagerScrollView,

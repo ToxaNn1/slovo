@@ -8,6 +8,7 @@ import { fill, useEdition } from './EditionProvider';
 import { useWordTextSizes, type TextSize } from './FontSizeProvider';
 import { SectionLabel } from './headings';
 import { OutlinedChip } from './OutlinedChip';
+import { stressLabel } from './stress-label';
 import { minTouchTarget, space, typeSize } from './tokens';
 import { useTokens } from './TokensProvider';
 import { usePageTurnActions } from './VerticalPager';
@@ -55,10 +56,6 @@ export function WordCardBody({
           partOfSpeech: partOfSpeech[form],
           gender: gender[form],
         });
-  const stressHint =
-    card.stressedVowels.length === 0
-      ? undefined
-      : fill(strings.stress, { vowels: card.stressedVowels.join(` ${strings.stressOr} `) });
 
   const categoryChip =
     categoryName === undefined ? null : (
@@ -94,9 +91,7 @@ export function WordCardBody({
             testID="word-lemma"
             accessibilityRole="header"
             // The voices skip the Stress mark, so VoiceOver also says where it falls.
-            accessibilityLabel={
-              stressHint === undefined ? card.lemma : `${card.lemma}, ${stressHint}`
-            }
+            accessibilityLabel={stressLabel(strings, card.lemma, card.stressedVowels)}
             {...voice}
             {...turnActions}
             // A long Lemma shrinks to fit rather than break inside a word.

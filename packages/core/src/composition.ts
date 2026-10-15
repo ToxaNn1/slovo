@@ -6,6 +6,8 @@ import { createEntries } from './entries';
 import { createEntryRows, type EntryRowModel } from './entry-row';
 import { openFavorites, type Favorites } from './favorites';
 import { buildEntryCard, openFeed, type EntryFeedCard, type Feed } from './feed';
+import { openGame, type Game, type GameEdition, type GameMode } from './game';
+import { guessWord } from './guess-word';
 import { openHistory, type History } from './history';
 import { openHiddenEntries, type HiddenEntries } from './hidden-entries';
 import { createHiding, type Hiding } from './hiding';
@@ -59,6 +61,11 @@ export interface Composition extends Hiding {
   /** The Notification times, the notification sound and the plan, kept on this device. */
   readonly notifications: Notifications;
   /**
+   * The Game: the Game Modes on offer, which a hide, a restore or a Mix change
+   * may stop or let start, and the Game in play, kept in memory for the session.
+   */
+  readonly game: Game;
+  /**
    * The onboarding, which opens on launch until the reader finishes it: its
    * steps, the ask for permission that ends it, and its sample notification,
    * taken from the plan.
@@ -86,6 +93,9 @@ export interface Composition extends Hiding {
   entryRow(entryId: string): Promise<EntryRowModel | undefined>;
 }
 
+/** The Core's own Game Modes, registered through the same Extension Point as an Edition's. */
+const coreGameModes: readonly GameMode[] = [guessWord];
+
 /**
  * Opens the composition for a new app session, once the Language Pack is
  * open: one Entries module, one Cycle and one Word of the Day over the stored
@@ -94,6 +104,8 @@ export interface Composition extends Hiding {
  * composition per app session. Opening it makes today an Active Day and
  * makes the notification plan, which `scheduling` hands to the device;
  * without it, as in tools and in tests of other features, nothing is planned.
+ * The Game offers the Core's Game Modes, then `gameModes`, the ones an Edition
+ * adds through the Extension Point.
  */
 export async function openComposition({
   content,
@@ -102,13 +114,15 @@ export async function openComposition({
   clock,
   random,
   scheduling,
+  gameModes = [],
 }: {
   content: ContentReadPort;
-  edition: Pick<Edition, 'isFeatureEnabled'> & MixEdition & NotificationsEdition;
+  edition: Pick<Edition, 'isFeatureEnabled'> & MixEdition & NotificationsEdition & GameEdition;
   userState: UserState;
   clock: Clock;
   random: Random;
   scheduling?: NotificationScheduling;
+  gameModes?: readonly GameMode[];
 }): Promise<Composition> {
   const entries = createEntries({ content, edition, userState });
   const rows = createEntryRows(entries);
@@ -136,14 +150,22 @@ export async function openComposition({
     history: recorder,
     entrySeen: followSeen,
   });
+  const { game, followEligibility: followGameEligibility } = await openGame({
+    edition,
+    entries,
+    history,
+    random,
+    modes: [...coreGameModes, ...gameModes],
+  });
   /**
    * After a hide, a restore or a Mix change, the Cycle reads the eligible
-   * Entries again, and the Feed and the plan follow.
+   * Entries again, and the Feed, the plan and the Game Modes on offer follow.
    */
   async function eligibilityChanged(): Promise<void> {
     await cycle.readEligibleAgain();
     await followEligibility();
     await replan();
+    await followGameEligibility();
   }
   const [favorites, collections, hiddenEntries, mix] = await Promise.all([
     openFavorites({ rows, userState, clock }),
@@ -190,6 +212,7 @@ export async function openComposition({
     progress,
     resume: () => day.resume(),
     notifications,
+    game,
     onboarding,
     ...createHiding({ rows, hiddenEntries, mix }),
     entryCard,

@@ -1,11 +1,8 @@
-# The Game placeholder screen, and the Saved tab that replaced its placeholder.
+# The Saved tab that replaced its placeholder, and back to the Feed. The Game
+# tab has its own flow, `game.yaml`.
 # A subflow of `smoke.yaml`; run it from there.
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
-- tapOn:
-    id: tab-game
-- assertVisible:
-    id: game-placeholder
 - tapOn:
     id: tab-saved
 - assertVisible:

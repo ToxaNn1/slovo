@@ -1,0 +1,68 @@
+import { z } from 'zod';
+
+import { TextSchema } from '../shared';
+import { PluralLabelSchema, PluralSchema, templateOf } from './shared';
+
+/** The texts of the Game: the mode screen, a Round, its answer sheet and the result screen. */
+export const GameStringsSchema = z.strictObject({
+  /** The mode screen's title. */
+  title: TextSchema,
+  /** The line under it, e.g. «15 раундів, 5 життів.». Takes `{rounds}` and `{lives}`, the two counts in words. */
+  rules: templateOf('rounds', 'lives'),
+  /** A count of Rounds, e.g. «15 раундів». */
+  rounds: PluralSchema,
+  /** A count of Lives, e.g. «5 життів». */
+  lives: PluralSchema,
+  /** What a mode card says when there are too few eligible Words to play its mode. */
+  tooFewEntries: TextSchema,
+  /** «Вгадай слово», the Definition → Word mode: its card and the label of its Round. */
+  guessWord: z.strictObject({
+    /** The card's overline, e.g. «ВИЗНАЧЕННЯ → СЛОВО». */
+    overline: TextSchema,
+    title: TextSchema,
+    description: TextSchema,
+    /** The card's sample: a Definition, and the Lemma with Stress it asks for. */
+    sample: z.strictObject({ prompt: TextSchema, answer: TextSchema }),
+    /** The label over a Round's Definition, e.g. «ВИЗНАЧЕННЯ». */
+    prompt: TextSchema,
+  }),
+  /** A Round. */
+  round: z.strictObject({
+    /** The Rounds passed over the bar, e.g. «7 / 15». Takes `{passed}` and `{total}`. */
+    progress: templateOf('passed', 'total'),
+    /** What VoiceOver reads for it, e.g. «Пройдено раундів: 7 з 15». Takes `{passed}` and `{total}`. */
+    progressLabel: templateOf('passed', 'total'),
+    /** What VoiceOver reads for the Lives, e.g. «Життів: 4 з 5». Takes `{count}` and `{total}`. */
+    lives: templateOf('count', 'total'),
+    /** The tag of the right option once the Round is answered. */
+    correct: TextSchema,
+    /** The tag of the reader's wrong choice. */
+    chosen: TextSchema,
+  }),
+  /** The sheet after an answer, which only its button closes. */
+  sheet: z.strictObject({
+    /** Its title after a right answer, e.g. «Правильно!». */
+    correct: TextSchema,
+    /** Its title after a wrong one, e.g. «Не цього разу». */
+    wrong: TextSchema,
+    /** The button that goes on, e.g. «Далі». */
+    next: TextSchema,
+  }),
+  /** The result screen. */
+  result: z.strictObject({
+    won: z.strictObject({
+      title: TextSchema,
+      /** The line under the title, e.g. «Усі 15 раундів пройдено.». Takes `{count}`, the Rounds of a Game. */
+      line: PluralSchema,
+    }),
+    lost: z.strictObject({ title: TextSchema, line: TextSchema }),
+    /** The word under the Rounds passed, «11 / 15», agreeing with the Rounds of a Game, e.g. «раундів». */
+    rounds: PluralLabelSchema,
+    /** The word under the Lives left, e.g. «життів». */
+    lives: PluralLabelSchema,
+    /** The button that starts a new Game in the same mode. */
+    again: TextSchema,
+    /** The button that goes to the Feed. */
+    home: TextSchema,
+  }),
+});

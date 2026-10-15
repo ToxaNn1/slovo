@@ -105,6 +105,7 @@ async function run({
     content: createMemoryContentPort({ words, corrections }),
     edition: {
       isFeatureEnabled: () => true,
+      languageTraits: { distractorRule: 'same-part-of-speech' },
       categories: [
         { id: 'test', displayName: 'Test' },
         { id: 'other', displayName: 'Other' },

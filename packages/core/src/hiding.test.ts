@@ -90,6 +90,7 @@ async function run({
     content,
     edition: {
       isFeatureEnabled: (feature) => feature === 'corrections',
+      languageTraits: { distractorRule: 'same-part-of-speech' },
       categories,
       userSettingDefaults: {
         mix: { categoryIds: categories.map(({ id }) => id), corrections: true },

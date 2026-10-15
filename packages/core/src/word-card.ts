@@ -1,7 +1,7 @@
 import type { Example, Gender, PartOfSpeech, Register, Word } from '@slovo/contracts';
 
 import type { Entries } from './entries';
-import { renderStress } from './stress';
+import { renderStress, stressedVowelsOf } from './stress';
 
 /** A Correction the Word is the standard form for, as its card links it. */
 export interface LinkedCorrection {
@@ -64,7 +64,7 @@ export async function buildWordCard({
     kind: 'word',
     wordId: word.id,
     lemma: renderStress(word),
-    stressedVowels: word.stress.flatMap((position) => Array.from(word.lemma)[position] ?? []),
+    stressedVowels: stressedVowelsOf(word),
     partOfSpeech: word.partOfSpeech,
     gender: word.gender,
     primaryDefinition: word.primaryDefinition,
