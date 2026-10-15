@@ -1,0 +1,25 @@
+# Leaving a Game: the ✕ asks «Вийти з гри?» first, «Грати далі» returns to the
+# same Round, and «Вийти» drops the Game back to the mode screen.
+# A subflow of `smoke.yaml`; run it from there. It starts on a Round to answer
+# on the Game tab and leaves the mode screen.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+# The ✕ asks first; «Грати далі» returns to the same Round.
+- tapOn:
+    id: game-exit
+- assertVisible: Вийти з гри?
+- takeScreenshot: game-exit-confirm
+- tapOn: Грати далі
+- assertVisible:
+    id: game-round
+- assertVisible:
+    id: game-option-0
+# «Вийти» drops the Game: the mode screen shows again.
+- tapOn:
+    id: game-exit
+- assertVisible: Вийти з гри?
+# A tap while the alert is still opening is lost.
+- waitForAnimationToEnd
+- tapOn: Вийти
+- assertVisible:
+    id: game-modes

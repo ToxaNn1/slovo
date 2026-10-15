@@ -1,0 +1,20 @@
+# The best result on the stats sheet: the finished Game's best result shows
+# there, and the Game tab keeps the result screen meanwhile.
+# A subflow of `smoke.yaml`; run it from there. It starts on the result screen
+# that `game-play.yaml` leaves and leaves it again on the Game tab.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- tapOn:
+    id: tab-home
+- tapOn:
+    id: stats-pill
+- assertVisible:
+    id: stats-game-best
+- tapOn:
+    point: 50%, 12%
+- assertNotVisible:
+    id: stats-sheet
+- tapOn:
+    id: tab-game
+- assertVisible:
+    id: game-result

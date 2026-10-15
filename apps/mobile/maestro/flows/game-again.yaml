@@ -1,0 +1,28 @@
+# «Ще раз» starts a new Game, and another tab and back finds that Game where it
+# was.
+# A subflow of `smoke.yaml`; run it from there. It starts on the result screen
+# on the Game tab and leaves a Round to answer on the Game tab.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- scrollUntilVisible:
+    element:
+      id: game-again
+    direction: DOWN
+- tapOn:
+    id: game-again
+# A new Game: a Round to answer, no result.
+- assertVisible:
+    id: game-round
+- assertVisible:
+    id: game-option-0
+# Another tab and back finds the Game where it was.
+- tapOn:
+    id: tab-saved
+- assertVisible:
+    id: saved
+- tapOn:
+    id: tab-game
+- assertVisible:
+    id: game-round
+- assertVisible:
+    id: game-option-0
