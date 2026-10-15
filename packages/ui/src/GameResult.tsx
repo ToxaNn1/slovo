@@ -1,4 +1,4 @@
-import { GAME_ROUNDS } from '@slovo/core';
+import { GAME_ROUNDS, type CurrentGame } from '@slovo/core';
 import { useEffect } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -65,16 +65,13 @@ function ResultNumber({
  * title, large and stitched in on a win, small and still on a loss.
  */
 export function GameResult({
-  won,
-  roundsPassed,
-  lives,
+  game,
   bestResult,
   onAgain,
   onHome,
 }: {
-  won: boolean;
-  roundsPassed: number;
-  lives: number;
+  /** The Game just over, won or lost. */
+  game: CurrentGame;
   /** The best result, the Game just over included. */
   bestResult: number | undefined;
   onAgain: () => void;
@@ -83,6 +80,8 @@ export function GameResult({
   const { colors, fontFamilies } = useTokens();
   const { strings, voice, count } = useEdition();
   const words = strings.game;
+  const { roundsPassed, lives } = game;
+  const won = game.status === 'won';
   const progress = { passed: String(roundsPassed), total: String(GAME_ROUNDS) };
   const haptics = useHaptics();
 
