@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { TextSchema } from '../shared';
-import { PluralLabelSchema, PluralSchema, templateOf } from './shared';
+import { pluralOf, PluralLabelSchema, PluralSchema, templateOf } from './shared';
 
 /** The texts of the Stats pill and the stats sheet it opens. */
 export const StatsStringsSchema = z.strictObject({
@@ -21,4 +21,9 @@ export const StatsStringsSchema = z.strictObject({
   inCollections: PluralLabelSchema,
   /** The words beside the best Game result, «13 / 15», picked by the best result, e.g. «найкраще у Грі». */
   gameBest: PluralLabelSchema,
+  /**
+   * What VoiceOver reads for the best Game result, e.g. «Найкраще у Грі: 13 з 15».
+   * Takes `{count}`, the best result, which picks the form, and `{total}`, the Rounds of a Game.
+   */
+  gameBestLabel: pluralOf('total'),
 });

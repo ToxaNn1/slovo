@@ -53,9 +53,10 @@ function Count({
  * The stats sheet the Stats pill opens (design `stats-sheet-dark`): the big
  * Streak with its Best Streak, Decor slot 2's band, then the Entries Seen
  * today, the Favorites count, the Entries in Collections and the best Game
- * result once a Game has finished, each in the Edition's plural form. It closes with a swipe down, a tap outside or
- * VoiceOver's escape gesture, and with Reduce Motion it appears without
- * sliding. Needs a `SafeAreaProvider` above it.
+ * result once a Game has finished, each in the Edition's plural form. It
+ * closes with a swipe down, a tap outside or VoiceOver's escape gesture, and
+ * with Reduce Motion it appears without sliding. Needs a `SafeAreaProvider`
+ * above it.
  */
 export function StatsSheet({
   visible,
@@ -129,13 +130,9 @@ export function StatsSheet({
                 total: String(GAME_ROUNDS),
               })}
               label={count(words.gameBest, bestResult)}
-              spoken={[
-                fill(strings.game.round.progressLabel, {
-                  passed: String(bestResult),
-                  total: String(GAME_ROUNDS),
-                }),
-                count(words.gameBest, bestResult),
-              ].join(', ')}
+              spoken={fill(count(words.gameBestLabel, bestResult), {
+                total: String(GAME_ROUNDS),
+              })}
             />
           )}
         </View>

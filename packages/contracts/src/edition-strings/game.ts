@@ -97,7 +97,7 @@ export const GameStringsSchema = z.strictObject({
     /** The word under the Lives left, e.g. «життів». */
     lives: PluralLabelSchema,
     /** The word under the best result, the Game just over included, e.g. «рекорд». */
-    record: PluralLabelSchema,
+    best: PluralLabelSchema,
     /** The button that starts a new Game in the same mode. */
     again: TextSchema,
     /** The button that goes to the Feed. */

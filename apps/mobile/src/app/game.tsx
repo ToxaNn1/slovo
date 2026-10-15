@@ -130,6 +130,7 @@ function ModeScreen({
         <View style={styles.heading}>
           <ScreenTitle>{strings.title}</ScreenTitle>
           <Text
+            testID="game-rules"
             {...voice}
             maxFontSizeMultiplier={RULES_MAX_FONT_SCALE}
             style={[styles.rules, { color: colors.muted, fontFamily: fontFamilies.ui }]}

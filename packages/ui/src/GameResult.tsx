@@ -138,10 +138,10 @@ export function GameResult({
         />
         {bestResult === undefined ? null : (
           <ResultNumber
-            testID="game-result-record"
+            testID="game-result-best"
             value={String(bestResult)}
-            label={count(words.result.record, bestResult)}
-            spoken={`${String(bestResult)} ${count(words.result.record, bestResult)}`}
+            label={count(words.result.best, bestResult)}
+            spoken={`${String(bestResult)} ${count(words.result.best, bestResult)}`}
           />
         )}
       </View>

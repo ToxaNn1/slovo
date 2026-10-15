@@ -480,6 +480,12 @@
       "few": "найкраще у Грі",
       "many": "найкраще у Грі",
       "other": "найкраще у Грі"
+    },
+    "gameBestLabel": {
+      "one": "Найкраще у Грі: {count} з {total}",
+      "few": "Найкраще у Грі: {count} з {total}",
+      "many": "Найкраще у Грі: {count} з {total}",
+      "other": "Найкраще у Грі: {count} з {total}"
     }
   },
   "onboarding": {
@@ -623,7 +629,7 @@
         "many": "життів",
         "other": "життя"
       },
-      "record": {
+      "best": {
         "one": "рекорд",
         "few": "рекорд",
         "many": "рекорд",

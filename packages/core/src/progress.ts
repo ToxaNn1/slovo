@@ -34,9 +34,9 @@ export interface ProgressState {
 /**
  * Progress: the Active Days, and the Streak and the Best Streak derived from
  * them, never stored, with the counts of History, Favorites and Collections
- * and the Game's best result, which it follows as they change. Read from the user state once, when it
- * opens, like the Cycle, so open one per app session (the Core composition
- * does).
+ * and the Game's best result, which it follows as they change. Read from the
+ * user state once, when it opens, like the Cycle, so open one per app session
+ * (the Core composition does).
  */
 export interface Progress {
   /**

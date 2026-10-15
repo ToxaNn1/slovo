@@ -48,7 +48,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - assertVisible:
     id: game-result-rounds
 - assertVisible:
-    id: game-result-record
+    id: game-result-best
 # The stats sheet shows the best result; the Game tab keeps the result screen meanwhile.
 - tapOn:
     id: tab-home

@@ -76,10 +76,11 @@ describe('the 0.5 UI strings group', () => {
   it.each([
     ['game.best', { ...strings, game: without(game, 'best') }],
     [
-      'game.result.record',
-      { ...strings, game: { ...game, result: without(game['result'], 'record') } },
+      'game.result.best',
+      { ...strings, game: { ...game, result: without(game['result'], 'best') } },
     ],
     ['stats.gameBest', { ...strings, stats: without(strings['stats'], 'gameBest') }],
+    ['stats.gameBestLabel', { ...strings, stats: without(strings['stats'], 'gameBestLabel') }],
   ])('the Ukrainian Edition needs %s, the best result', (path, stringsWithout) => {
     const result = EditionStringsSchema.safeParse(stringsWithout);
 
