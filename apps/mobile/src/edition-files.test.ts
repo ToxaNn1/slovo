@@ -104,6 +104,73 @@ describe('the 0.5 UI strings group', () => {
   });
 });
 
+describe('the strings of each Game Mode', () => {
+  const strings = readJson('uk', 'strings.json') as Record<string, unknown>;
+  const game = strings['game'] as Record<string, unknown>;
+  const modes = game['modes'] as Record<string, Record<string, unknown>>;
+  /** The strings with the Game's mode texts changed. */
+  const withModes = (changed: Record<string, unknown>) => ({
+    ...strings,
+    game: { ...game, modes: { ...modes, ...changed } },
+  });
+  /** The issues the strings schema finds, as paths. */
+  const issuesOf = (changed: unknown) =>
+    EditionStringsSchema.safeParse(changed).error?.issues.map((issue) => issue.path.join('.'));
+
+  it('the Ukrainian Edition holds one entry per Core Game Mode, under its id', () => {
+    expect(Object.keys(modes)).toEqual(['guess-word', 'correction']);
+  });
+
+  it.each(['guess-word', 'correction'])(
+    'needs the %s mode to say what its card says with too few eligible Entries',
+    (modeId) => {
+      const mode = modes[modeId] ?? {};
+      const refusals = Object.fromEntries(
+        Object.entries(mode['refusals'] as object).filter(([key]) => key !== 'too-few-entries'),
+      );
+
+      expect(issuesOf(withModes({ [modeId]: { ...mode, refusals } }))).toEqual([
+        `game.modes.${modeId}.refusals.too-few-entries`,
+      ]);
+    },
+  );
+
+  it.each(['overline', 'title', 'description', 'sample', 'roundLabel', 'refusals'])(
+    'needs every mode alike to have its %s',
+    (key) => {
+      const changed = Object.fromEntries(
+        Object.entries(modes).map(([modeId, mode]) => [
+          modeId,
+          Object.fromEntries(Object.entries(mode).filter(([name]) => name !== key)),
+        ]),
+      );
+
+      expect(issuesOf(withModes(changed))).toEqual(
+        Object.keys(modes).map((modeId) => `game.modes.${modeId}.${key}`),
+      );
+    },
+  );
+
+  it('takes a mode an Edition adds under its own id, in the same shape', () => {
+    expect(issuesOf(withModes({ 'test-lemma': modes['guess-word'] }))).toBeUndefined();
+  });
+
+  it('rejects a text for a refusal the Core never gives', () => {
+    const mode = modes['guess-word'] ?? {};
+    const refusals = { ...(mode['refusals'] as object), 'too-hard': 'Заважко.' };
+
+    expect(issuesOf(withModes({ 'guess-word': { ...mode, refusals } }))).toEqual([
+      'game.modes.guess-word.refusals',
+    ]);
+  });
+
+  it('rejects a mode text outside the modes', () => {
+    expect(issuesOf({ ...strings, game: { ...game, tooFewEntries: 'Замало слів.' } })).toEqual([
+      'game',
+    ]);
+  });
+});
+
 /** Every plural-forms object (one with an `other` form) in a strings group. */
 function pluralsOf(value: unknown): Record<string, string>[] {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return [];
