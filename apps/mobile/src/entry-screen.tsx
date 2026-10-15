@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useComposition, useOpenedRead } from './composition';
 import { EntryActions } from './entry-actions';
 import { LoadFailed } from './language-pack';
+import { useOpenScreen } from './use-open-screen';
 
 /**
  * The Entry screen a list opens: one Entry card with its action row, under a
@@ -45,6 +46,7 @@ export function EntryScreen({
   const composition = useComposition();
   const { colors } = useTokens();
   const router = useRouter();
+  const openScreen = useOpenScreen();
   // `null` once read for an id the Language Pack doesn't have.
   const read = useCallback(
     async (open: Composition) =>
@@ -86,7 +88,7 @@ export function EntryScreen({
               card={card}
               onOpenCorrection={(correctionId) => {
                 const word = card.kind === 'word' ? card.wordCard.lemma : back;
-                router.push(`${route}/${correctionId}?back=${encodeURIComponent(word)}`);
+                openScreen(`${route}/${correctionId}?back=${encodeURIComponent(word)}`);
               }}
               actions={<EntryActions card={card} />}
             />

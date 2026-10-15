@@ -74,7 +74,18 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: entry-row-.*-open
 - takeScreenshot: favorites-list
 # The row opens the Entry screen: the card of the one Entry the heart kept,
-# a Word or a Correction, with its heart filled.
+# a Word or a Correction, with its heart filled. A double tap opens it once:
+# one back returns to the list.
+- doubleTapOn:
+    id: entry-row-.*-open
+- assertVisible:
+    id: entry-screen
+- tapOn:
+    id: entry-screen-back
+- assertVisible:
+    id: favorites-count
+- assertNotVisible:
+    id: entry-screen
 - tapOn:
     id: entry-row-.*-open
 - assertVisible:

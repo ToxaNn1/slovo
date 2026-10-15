@@ -19,19 +19,20 @@ import { useComposition } from '../../../composition';
 import { editionStrings } from '../../../edition';
 import { useFavorite, useFavoriteList } from '../../../favorites';
 import { LoadFailed } from '../../../language-pack';
+import { useOpenScreen } from '../../../use-open-screen';
 
 const { favorites: strings } = editionStrings;
 
 /** A row of Favorites: a tap opens the Entry screen, the swipe action takes the Entry out. */
 function FavoriteRow({ favorite: { entryId, row, addedAt } }: { favorite: Favorite }) {
   const { remove } = useFavorite(entryId);
-  const router = useRouter();
+  const openScreen = useOpenScreen();
   return (
     <EntryRow
       row={row}
       trailing={addedOn(addedAt)}
       onPress={() => {
-        router.push(`/saved/favorites/${entryId}`);
+        openScreen(`/saved/favorites/${entryId}`);
       }}
       actions={[
         {

@@ -60,7 +60,8 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - scrollUntilVisible:
     element:
       id: settings-row-about
-- tapOn:
+# A double tap opens About once: one back returns to the list.
+- doubleTapOn:
     id: settings-row-about
 - assertVisible:
     id: about
@@ -77,6 +78,8 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: about-back
 - assertVisible:
     id: settings-row-about
+- assertNotVisible:
+    id: about
 # The Feed redraws in the dark Theme at the new size, on the same card. Maestro
 # cannot assert a colour or a size, so the screenshot is the record of it.
 - tapOn:

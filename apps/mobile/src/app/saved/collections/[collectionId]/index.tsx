@@ -19,6 +19,7 @@ import { useCollectionEntries } from '../../../../collections';
 import { useComposition } from '../../../../composition';
 import { editionStrings } from '../../../../edition';
 import { LoadFailed } from '../../../../language-pack';
+import { useOpenScreen } from '../../../../use-open-screen';
 
 const { collections: collectionStrings } = editionStrings;
 const strings = collectionStrings.entries;
@@ -35,6 +36,7 @@ export default function CollectionScreen() {
   const { colors, fontFamilies } = useTokens();
   const { count, voice } = useEdition();
   const router = useRouter();
+  const openScreen = useOpenScreen();
 
   if (composition.status === 'failed') return <LoadFailed onRetry={composition.retry} />;
   const name = collection?.name ?? '';
@@ -45,7 +47,7 @@ export default function CollectionScreen() {
         row={row}
         trailing={addedOn(addedAt)}
         onPress={() => {
-          router.push(`/saved/collections/${collectionId}/${entryId}`);
+          openScreen(`/saved/collections/${collectionId}/${entryId}`);
         }}
         actions={[
           {

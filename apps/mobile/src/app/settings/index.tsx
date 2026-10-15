@@ -11,7 +11,6 @@ import {
   space,
   useTokens,
 } from '@slovo/ui';
-import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -20,6 +19,7 @@ import { useHiddenSummary } from '../../hidden';
 import { useMixSummary } from '../../mix';
 import { useNotificationsSummary } from '../../notifications';
 import { useSettings } from '../../settings';
+import { useOpenScreen } from '../../use-open-screen';
 
 const strings = editionStrings.settings;
 
@@ -42,7 +42,7 @@ const fontSizeSegments = FontSizeSchema.options.map((fontSize) => ({
 export default function SettingsScreen() {
   const { current, update } = useSettings();
   const { colors } = useTokens();
-  const router = useRouter();
+  const openScreen = useOpenScreen();
   const mixSummary = useMixSummary();
   const hiddenSummary = useHiddenSummary();
   const notificationsSummary = useNotificationsSummary();
@@ -88,7 +88,7 @@ export default function SettingsScreen() {
               label={strings.rows.notifications}
               value={notificationsSummary}
               onPress={() => {
-                router.push('/settings/notifications');
+                openScreen('/settings/notifications');
               }}
             />
             <NavigationRow
@@ -96,7 +96,7 @@ export default function SettingsScreen() {
               label={strings.rows.myMix}
               value={mixSummary}
               onPress={() => {
-                router.push('/settings/mix');
+                openScreen('/settings/mix');
               }}
             />
             <NavigationRow
@@ -104,7 +104,7 @@ export default function SettingsScreen() {
               label={strings.rows.hidden}
               value={hiddenSummary}
               onPress={() => {
-                router.push('/settings/hidden');
+                openScreen('/settings/hidden');
               }}
             />
           </SettingsGroup>
@@ -131,7 +131,7 @@ export default function SettingsScreen() {
               testID="settings-row-about"
               label={strings.rows.about}
               onPress={() => {
-                router.push('/settings/about');
+                openScreen('/settings/about');
               }}
             />
           </SettingsGroup>
