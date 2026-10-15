@@ -204,8 +204,8 @@ describe('«Обери правильне» on offer', () => {
     const app = await run({ withCorrections: true });
 
     expect(app.game.state.modes).toEqual([
-      { modeId: 'guess-word', canStart: false, refusal: 'too-few-entries' },
-      { modeId: 'correction', canStart: true },
+      { modeId: 'guess-word', entryKind: 'word', canStart: false, refusal: 'too-few-entries' },
+      { modeId: 'correction', entryKind: 'correction', canStart: true },
     ]);
   });
 
@@ -219,6 +219,7 @@ describe('«Обери правильне» on offer', () => {
     const app = await run({ correctionsInMix: false });
     expect(app.game.state.modes[1]).toEqual({
       modeId: 'correction',
+      entryKind: 'correction',
       canStart: false,
       refusal: 'corrections-out-of-mix',
     });
@@ -230,7 +231,11 @@ describe('«Обери правильне» on offer', () => {
 
     await app.mix.setCorrections(true);
 
-    expect(app.game.state.modes[1]).toEqual({ modeId: 'correction', canStart: true });
+    expect(app.game.state.modes[1]).toEqual({
+      modeId: 'correction',
+      entryKind: 'correction',
+      canStart: true,
+    });
   });
 
   it("says it can't start with fewer than 15 eligible Corrections", async () => {
@@ -239,6 +244,7 @@ describe('«Обери правильне» on offer', () => {
 
     expect(app.game.state.modes[1]).toEqual({
       modeId: 'correction',
+      entryKind: 'correction',
       canStart: false,
       refusal: 'too-few-entries',
     });

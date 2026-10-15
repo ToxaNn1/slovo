@@ -95,10 +95,15 @@ export interface GameMode {
  */
 export type GameModeRefusal = 'too-few-entries' | 'corrections-out-of-mix';
 
-/** A Game Mode on offer, and whether a Game in it can start now. */
-export type GameModeOffer =
-  | { readonly modeId: string; readonly canStart: true }
-  | { readonly modeId: string; readonly canStart: false; readonly refusal: GameModeRefusal };
+/**
+ * A Game Mode on offer, with what its card needs from the Core: the mode's
+ * id, the kind of Entry it asks about, and whether a Game in it can start
+ * now, or why not.
+ */
+export type GameModeOffer = {
+  readonly modeId: string;
+  readonly entryKind: EntryKind;
+} & ({ readonly canStart: true } | { readonly canStart: false; readonly refusal: GameModeRefusal });
 
 /** The answer given to a Round. */
 export interface RoundAnswer {
@@ -272,12 +277,13 @@ export async function openGame({
       entries.correctionsInMix(),
     ]);
     return modes.map(({ id, entryKind }): GameModeOffer => {
+      const offer = { modeId: id, entryKind };
       if (entryKind === 'correction' && !correctionsInMix) {
-        return { modeId: id, canStart: false, refusal: 'corrections-out-of-mix' };
+        return { ...offer, canStart: false, refusal: 'corrections-out-of-mix' };
       }
       return (entryKind === 'word' ? eligible.words : eligible.corrections).length >= GAME_ROUNDS
-        ? { modeId: id, canStart: true }
-        : { modeId: id, canStart: false, refusal: 'too-few-entries' };
+        ? { ...offer, canStart: true }
+        : { ...offer, canStart: false, refusal: 'too-few-entries' };
     });
   }
 
@@ -377,7 +383,7 @@ export async function openGame({
         ...state,
         modes: offers.map((offer) =>
           offer.modeId === modeId && offer.canStart
-            ? { modeId, canStart: false, refusal: 'too-few-entries' }
+            ? { ...offer, canStart: false, refusal: 'too-few-entries' }
             : offer,
         ),
         current: undefined,
