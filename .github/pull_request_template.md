@@ -8,6 +8,7 @@ Closes #
 
 - [ ] `pnpm lint` passes
 - [ ] `pnpm typecheck` passes
+- [ ] `pnpm deps` passes
 - [ ] `pnpm test` passes
 - [ ] New behaviour has tests through a public seam
 - [ ] Every item in the ticket's **Result** checklist is met
