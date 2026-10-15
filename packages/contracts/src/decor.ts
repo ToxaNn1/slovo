@@ -80,6 +80,11 @@ export const EditionDecorSchema = z.strictObject({
    * splash image's width, so the two line up, and an optional band near the bottom.
    */
   splash: z.strictObject({ mark: DecorMotifSchema, band: DecorMotifSchema.optional() }).optional(),
+  /**
+   * Slot 6: the victory illustration on the Game's result screen, scaled to the
+   * size the screen asks for. Its layers are stitched in one after another.
+   */
+  victory: z.strictObject({ illustration: DecorMotifSchema }).optional(),
 });
 
 export type EditionDecor = z.infer<typeof EditionDecorSchema>;

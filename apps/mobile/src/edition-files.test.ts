@@ -179,7 +179,7 @@ describe('Edition Decor', () => {
     ).toBeUndefined();
   });
 
-  it('the Ukrainian Edition fills every Decor slot the Feed and the splash use', () => {
+  it('the Ukrainian Edition fills every Decor slot the Feed, the Game result and the splash use', () => {
     const decor = EditionDecorSchema.parse(readJson('uk', 'decor/decor.json'));
 
     expect(Object.keys(decor).sort()).toEqual([
@@ -188,6 +188,7 @@ describe('Edition Decor', () => {
       'divider',
       'emptyState',
       'splash',
+      'victory',
     ]);
     expect(decor.emptyState?.error).toBeDefined();
     expect(decor.splash?.band).toBeDefined();

@@ -17,6 +17,8 @@ export interface Decor {
     { readonly illustration: DecorMotif; readonly error: DecorMotif | undefined } | undefined;
   /** Slot 7 as the app draws it over the native splash. */
   readonly splash: { readonly mark: DecorMotif; readonly band: DecorMotif | undefined } | undefined;
+  /** Slot 6: the illustration of a won Game on the result screen. */
+  readonly victory: { readonly illustration: DecorMotif } | undefined;
 }
 
 /**
@@ -45,6 +47,7 @@ export const coreDecor: Decor = {
   corners: undefined,
   emptyState: undefined,
   splash: undefined,
+  victory: undefined,
 };
 
 /** Thrown when an Edition's Decor doesn't match the contracts. */
@@ -64,7 +67,7 @@ export function loadDecor(decor: unknown): Decor {
     );
     throw new InvalidDecorError(`Invalid Decor:\n${problems.join('\n')}`);
   }
-  const { background, divider, corners, emptyState, splash } = result.data;
+  const { background, divider, corners, emptyState, splash, victory } = result.data;
   return {
     background: background ?? coreDecor.background,
     divider: divider ?? coreDecor.divider,
@@ -74,5 +77,6 @@ export function loadDecor(decor: unknown): Decor {
         ? coreDecor.emptyState
         : { illustration: emptyState.illustration, error: emptyState.error },
     splash: splash === undefined ? coreDecor.splash : { mark: splash.mark, band: splash.band },
+    victory: victory ?? coreDecor.victory,
   };
 }
