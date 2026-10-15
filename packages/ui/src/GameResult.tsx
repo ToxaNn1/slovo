@@ -1,5 +1,5 @@
 import { GAME_ROUNDS, type CurrentGame } from '@slovo/core';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { VictoryIllustration } from './DecorSlots';
@@ -82,12 +82,15 @@ export function GameResult({
   const won = game.status === 'won';
   const progress = { passed: String(roundsPassed), total: String(GAME_ROUNDS) };
   const gameHaptics = useGameHaptics();
+  // Whether the win has played, so only the screen's arrival plays it.
+  const played = useRef(false);
 
   useEffect(() => {
-    if (!won) return;
+    if (!won || played.current) return;
+    played.current = true;
     gameHaptics.win();
-    // The result screen comes anew with every result; only its arrival plays.
-  }, []);
+    // New haptics, after a change of Vibration, find the win already played.
+  }, [won, gameHaptics]);
 
   return (
     <ScrollView
