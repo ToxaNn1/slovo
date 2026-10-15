@@ -103,6 +103,12 @@ export const userStateRecords = {
    * this device for permission to notify.
    */
   onboardingFinished: declareRecord('onboarding.finished', InstantSchema, { sync: 'device-only' }),
+  /**
+   * The best Game result: the most Rounds passed in one finished Game, from 0
+   * to the 15 Rounds of a Game; without the record, no Game has finished yet.
+   * Sync keeps the higher of two devices' results (0.8).
+   */
+  gameBest: declareRecord('game.best', z.number().int().min(0).max(15), { sync: 'highest' }),
 };
 
 /**

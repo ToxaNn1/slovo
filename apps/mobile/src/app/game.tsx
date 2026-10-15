@@ -77,12 +77,17 @@ export default function GameScreen() {
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
       {current === undefined ? (
-        <ModeScreen modes={state?.modes ?? []} onStart={actions.start} />
+        <ModeScreen
+          modes={state?.modes ?? []}
+          bestResult={state?.bestResult}
+          onStart={actions.start}
+        />
       ) : current.status === 'won' || current.status === 'lost' ? (
         <GameResult
           won={current.status === 'won'}
           roundsPassed={current.roundsPassed}
           lives={current.lives}
+          bestResult={state?.bestResult}
           onAgain={() => {
             actions.start(current.modeId);
           }}
@@ -103,12 +108,17 @@ export default function GameScreen() {
   );
 }
 
-/** The mode screen (`game-mode-select-dark`): the title, what a Game is and a card per mode. */
+/**
+ * The mode screen (`game-mode-select-dark`): the title, what a Game is with
+ * the best result once a Game has finished, and a card per mode.
+ */
 function ModeScreen({
   modes,
+  bestResult,
   onStart,
 }: {
   modes: readonly GameModeOffer[];
+  bestResult: number | undefined;
   onStart: (modeId: string) => void;
 }) {
   const { colors, fontFamilies } = useTokens();
@@ -120,6 +130,7 @@ function ModeScreen({
         <View style={styles.heading}>
           <ScreenTitle>{strings.title}</ScreenTitle>
           <Text
+            testID="game-rules"
             {...voice}
             maxFontSizeMultiplier={RULES_MAX_FONT_SCALE}
             style={[styles.rules, { color: colors.muted, fontFamily: fontFamilies.ui }]}
@@ -128,6 +139,9 @@ function ModeScreen({
               rounds: count(strings.rounds, GAME_ROUNDS),
               lives: count(strings.lives, GAME_LIVES),
             })}
+            {bestResult === undefined
+              ? null
+              : ` ${fill(count(strings.best, bestResult), { total: String(GAME_ROUNDS) })}`}
           </Text>
         </View>
         {modes.map((offer) => {

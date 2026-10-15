@@ -66,9 +66,38 @@ describe('the 0.5 UI strings group', () => {
     expect(result.error?.issues.map((issue) => issue.path.join('.'))).toContain('game');
   });
 
+  /** The strings group without the key. */
+  const without = (group: unknown, key: string) =>
+    Object.fromEntries(
+      Object.entries(group as Record<string, unknown>).filter(([name]) => name !== key),
+    );
+  const game = strings['game'] as Record<string, unknown>;
+
+  it.each([
+    ['game.best', { ...strings, game: without(game, 'best') }],
+    [
+      'game.result.best',
+      { ...strings, game: { ...game, result: without(game['result'], 'best') } },
+    ],
+    ['stats.gameBest', { ...strings, stats: without(strings['stats'], 'gameBest') }],
+    ['stats.gameBestLabel', { ...strings, stats: without(strings['stats'], 'gameBestLabel') }],
+  ])('the Ukrainian Edition needs %s, the best result', (path, stringsWithout) => {
+    const result = EditionStringsSchema.safeParse(stringsWithout);
+
+    expect(result.error?.issues.map((issue) => issue.path.join('.'))).toContain(path);
+  });
+
+  it('needs the Rounds of a Game in every form of the best result on the mode screen', () => {
+    const best = { ...(game['best'] as object), few: 'Найкраще — {count}.' };
+
+    const result = EditionStringsSchema.safeParse({ ...strings, game: { ...game, best } });
+
+    expect(result.error?.issues.map((issue) => issue.path.join('.'))).toEqual(['game.best.few']);
+  });
+
   it('gives every count and label of the Game the plural forms Ukrainian has', () => {
     const categories = new Intl.PluralRules('uk-UA').resolvedOptions().pluralCategories;
-    const counts = pluralsOf(strings['game']);
+    const counts = [...pluralsOf(strings['game']), ...pluralsOf(strings['stats'])];
 
     expect(counts.length).toBeGreaterThan(0);
     for (const forms of counts) expect(Object.keys(forms).sort()).toEqual([...categories].sort());

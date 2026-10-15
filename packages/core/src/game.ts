@@ -5,6 +5,8 @@ import type { Entries } from './entries';
 import type { History } from './history';
 import { createInTurn, createSubscribers } from './in-turn';
 import type { Random } from './ports';
+import type { UserState } from './user-state';
+import { userStateRecords } from './user-state-schema';
 
 /** How many Rounds a Game has, in every Game Mode. */
 export const GAME_ROUNDS = 15;
@@ -140,12 +142,18 @@ export interface CurrentGame {
   readonly status: GameStatus;
 }
 
-/** The Game as it stands: the modes on offer and the Game in play. */
+/** The Game as it stands: the modes on offer, the Game in play and the best result. */
 export interface GameState {
   /** The Game Modes the Edition turns on, in the order they register; none with the Game off. */
   readonly modes: readonly GameModeOffer[];
   /** The Game in play or just over; none on the mode screen. */
   readonly current: CurrentGame | undefined;
+  /**
+   * The best result: the most Rounds passed in one finished Game, in any
+   * Game Mode, the Game just over included. None before the first finished
+   * Game, or with the Game off.
+   */
+  readonly bestResult: number | undefined;
 }
 
 /**
@@ -153,7 +161,7 @@ export interface GameState {
  * the app session and never in the user state. A Game asks 15 different
  * eligible Entries of its mode's kind: those in History when there are at
  * least 15, else any (ADR 0024). Playing never writes Seen, History or Active
- * Days.
+ * Days; a finished Game writes only the best result, when it beats it.
  */
 export interface Game {
   /**
@@ -176,10 +184,12 @@ export interface Game {
   answer(option: number): void;
   /**
    * «Далі» after an answer: at 0 Lives the Game is lost; after the last Round
-   * it is won; otherwise the next Round comes. Nothing changes before an answer.
+   * it is won; otherwise the next Round comes. A Game that ends with more
+   * Rounds passed than the best result becomes it, kept before it shows; when
+   * that write fails, nothing changes. Nothing changes before an answer.
    */
   next(): Promise<void>;
-  /** Drops the Game in play or just over, so the mode screen shows again. */
+  /** Drops the Game in play or just over, so the mode screen shows again. It never writes the best result. */
   leave(): void;
 }
 
@@ -211,6 +221,8 @@ const sameOffer = (one: GameModeOffer, other: GameModeOffer | undefined) =>
 const sameOffers = (one: readonly GameModeOffer[], other: readonly GameModeOffer[]) =>
   one.length === other.length && one.every((offer, index) => sameOffer(offer, other[index]));
 
+const { gameBest } = userStateRecords;
+
 /** A Round of the Game in play, with the Entry it asks about. */
 interface PlannedRound {
   readonly answerId: string;
@@ -221,18 +233,21 @@ interface PlannedRound {
  * Opens the Game over the eligible Entries and History, for the Core
  * composition, with `followEligibility`, which reads the modes on offer again
  * after a hide, a restore or a Mix change. The Game Modes come in the order
- * they register.
+ * they register. The best result is read from the user state once, when it
+ * opens, so open one per app session (the Core composition does).
  */
 export async function openGame({
   edition,
   entries,
   history,
+  userState,
   random,
   modes: registered,
 }: {
   edition: GameEdition;
   entries: Pick<Entries, 'eligible' | 'eligibleOfKind' | 'correctionsInMix'>;
   history: Pick<History, 'list'>;
+  userState: Pick<UserState, 'read' | 'write'>;
   random: Random;
   modes: readonly GameMode[];
 }): Promise<{ game: Game; followEligibility: () => Promise<void> }> {
@@ -241,9 +256,8 @@ export async function openGame({
     if (ids.has(id)) throw new Error(`Two Game Modes have the id «${id}»`);
     ids.add(id);
   }
-  const modes = edition.isFeatureEnabled('game')
-    ? registered.filter((mode) => mode.isOn(edition))
-    : [];
+  const gameOn = edition.isFeatureEnabled('game');
+  const modes = gameOn ? registered.filter((mode) => mode.isOn(edition)) : [];
   const subscribers = createSubscribers();
   const inTurn = createInTurn();
 
@@ -267,7 +281,11 @@ export async function openGame({
     });
   }
 
-  let state: GameState = { modes: await offersNow(), current: undefined };
+  let state: GameState = {
+    modes: await offersNow(),
+    current: undefined,
+    bestResult: gameOn ? await userState.read(gameBest) : undefined,
+  };
   /** The mode of the Game in play and its Rounds, built when it starts. */
   let played: { readonly mode: GameMode; readonly rounds: readonly PlannedRound[] } | undefined;
 
@@ -356,6 +374,7 @@ export async function openGame({
       // The offer's own reason, else too few Entries to make fair Rounds of.
       const offers = await offersNow();
       change({
+        ...state,
         modes: offers.map((offer) =>
           offer.modeId === modeId && offer.canStart
             ? { modeId, canStart: false, refusal: 'too-few-entries' }
@@ -389,20 +408,40 @@ export async function openGame({
     });
   }
 
-  function next(): void {
+  async function next(): Promise<void> {
     const game = state.current;
     if (game?.status !== 'answered') return;
     if (game.lives === 0) {
-      changeCurrent({ ...game, status: 'lost' });
+      await finish(game, { ...game, status: 'lost' });
       return;
     }
     const roundsPassed = game.roundsPassed + 1;
     const upcoming = roundsPassed < GAME_ROUNDS ? played?.rounds[roundsPassed]?.content : undefined;
-    changeCurrent(
-      upcoming === undefined
-        ? { ...game, roundsPassed, status: 'won' }
-        : { ...game, roundsPassed, round: roundOf(upcoming, roundsPassed + 1), status: 'playing' },
-    );
+    if (upcoming === undefined) {
+      await finish(game, { ...game, roundsPassed, status: 'won' });
+      return;
+    }
+    changeCurrent({
+      ...game,
+      roundsPassed,
+      round: roundOf(upcoming, roundsPassed + 1),
+      status: 'playing',
+    });
+  }
+
+  /**
+   * Ends the Game, its Rounds passed the best result when they beat it: kept
+   * in the user state first, so a failed write changes nothing. A Game left
+   * during the write stays left.
+   */
+  async function finish(game: CurrentGame, over: CurrentGame): Promise<void> {
+    const beaten = state.bestResult === undefined || over.roundsPassed > state.bestResult;
+    if (beaten) await userState.write(gameBest.change(over.roundsPassed));
+    change({
+      ...state,
+      current: state.current === game ? over : state.current,
+      bestResult: beaten ? over.roundsPassed : state.bestResult,
+    });
   }
 
   return {
@@ -413,11 +452,7 @@ export async function openGame({
       subscribe: subscribers.subscribe,
       start: (modeId) => inTurn(() => start(modeId)),
       answer,
-      next: () =>
-        inTurn(() => {
-          next();
-          return Promise.resolve();
-        }),
+      next: () => inTurn(next),
       leave() {
         played = undefined;
         if (state.current !== undefined) changeCurrent(undefined);

@@ -187,3 +187,7 @@ _Avoid_: Heart, attempt
 
 **Distractor**:
 A wrong option in a Round.
+
+**Best result**:
+The most Rounds passed in one finished Game, in any Game Mode; one per Edition. Stored, since finished Games are not kept, and written only when a finished Game beats it; a Game left before its end never counts.
+_Avoid_: High score, top score

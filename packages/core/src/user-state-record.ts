@@ -9,8 +9,10 @@ import type { UserStateChanges } from './ports';
  *   the plan, the onboarding finished).
  * - `union`: the records of every device are all kept (Active Days, so the
  *   Streak derived from them is the same on every device).
+ * - `highest`: the higher of two devices' values is kept (the best Game
+ *   result, so a lower result on one device never replaces a higher one).
  */
-type SyncMark = 'device-only' | 'union';
+type SyncMark = 'device-only' | 'union' | 'highest';
 
 /** The options of a declared record. */
 interface RecordOptions {

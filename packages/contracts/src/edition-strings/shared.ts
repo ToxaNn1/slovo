@@ -22,22 +22,28 @@ export function fill(template: string, values: Readonly<Record<string, string>>)
   return template.replace(/\{(\w+)\}/g, (match, name: string) => values[name] ?? match);
 }
 
-/** The text of a count, with the `{count}` placeholder for the number. */
-const CountTextSchema = templateOf('count');
+/**
+ * A count in every plural form, like `PluralSchema`, each form also holding
+ * the placeholders `names`, e.g. «Найкраще — {count} / {total}.».
+ */
+export function pluralOf(...names: readonly string[]) {
+  const form = templateOf('count', ...names);
+  return z.strictObject({
+    zero: form.optional(),
+    one: form.optional(),
+    two: form.optional(),
+    few: form.optional(),
+    many: form.optional(),
+    other: form,
+  });
+}
 
 /**
  * A count in every plural form the Edition's language has, by CLDR plural
  * category, which the app picks with `Intl.PluralRules` (e.g. «1 запис»,
  * «2 записи», «17 записів»). `other` is required, as every language has it.
  */
-export const PluralSchema = z.strictObject({
-  zero: CountTextSchema.optional(),
-  one: CountTextSchema.optional(),
-  two: CountTextSchema.optional(),
-  few: CountTextSchema.optional(),
-  many: CountTextSchema.optional(),
-  other: CountTextSchema,
-});
+export const PluralSchema = pluralOf();
 
 export type Plural = z.infer<typeof PluralSchema>;
 

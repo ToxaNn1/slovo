@@ -64,3 +64,27 @@ describe('the 0.4 user-state records', () => {
     expect(notificationPlan.record('2026-10-14T09:00').decode('7')).toBeUndefined();
   });
 });
+
+// Spec #215, "User-state records": the best Game result.
+describe('the 0.5 user-state record', () => {
+  const { gameBest } = userStateRecords;
+
+  it('keeps the best result under `game.best`, marked to keep the higher of two values in sync', () => {
+    expect(gameBest.key).toBe('game.best');
+    expect(gameBest.sync).toBe('highest');
+  });
+
+  it('reads as absent before anything is written, with no migration', async () => {
+    const userState = await openUserState({ port: createMemoryUserStatePort() });
+
+    expect(await userState.read(gameBest)).toBeUndefined();
+  });
+
+  it('holds the Rounds passed, from 0 to 15, and reads anything else as absent', () => {
+    expect(gameBest.decode('0')).toBe(0);
+    expect(gameBest.decode('15')).toBe(15);
+    for (const text of ['-1', '16', '7.5', '"7"', 'null']) {
+      expect(gameBest.decode(text)).toBeUndefined();
+    }
+  });
+});

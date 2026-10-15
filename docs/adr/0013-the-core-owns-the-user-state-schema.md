@@ -78,3 +78,9 @@ The read stays because the plan writes its records during the session: last even
 
 - **Keep the Reserved Words in memory in the Word of the Day**: rejected. Every plan would have to hand its records over, and the copy would repeat the plan records, which ADR 0016's amendment for 0.4 already rejects.
 - **Read the plan records once, when the Word of the Day opens**: rejected. An app left open over midnight would miss the morning Word the evening's plan Reserved.
+
+## Amendment: the best Game result keeps the higher value (0.5)
+
+0.5 adds one record: `game.best`, the best result, a whole number of Rounds passed from 0 to 15 (ADR 0024). It reads as absent until the first finished Game, so there is still no migration and the `records` table stays as it is.
+
+It takes a new sync mark, `highest`: sync keeps the higher of two devices' values. Last write wins would let a phone's lower result replace a tablet's higher one, and a best result never goes down. The Game reads the record once, when it opens, and writes it before it shows the finished Game, as a Cycle change is written before it is made in memory, so a failed write leaves the Game answered and «Далі» tries again.
