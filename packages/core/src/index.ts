@@ -70,7 +70,6 @@ export {
   LIFE_LOST_DELAY,
   WIN_SECOND_SUCCESS,
   type GameHaptics,
-  type Schedule,
 } from './game-haptics';
 export { createHaptics, type HapticEngine, type Haptics } from './haptics';
 export { type HiddenEntries, type HiddenEntry } from './hidden-entries';
@@ -149,6 +148,7 @@ export {
   type PlannedNotification,
   type PlannedSound,
   type Random,
+  type Schedule,
   type UserStateChanges,
   type UserStatePort,
 } from './ports';

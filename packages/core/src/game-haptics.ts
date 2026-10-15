@@ -1,10 +1,5 @@
 import type { Haptics } from './haptics';
-
-/**
- * Runs something after a delay, in milliseconds, and returns the way to
- * cancel it. The shell gives the real clock; a test gives its own.
- */
-export type Schedule = (run: () => void, delay: number) => () => void;
+import type { Schedule } from './ports';
 
 /**
  * How long after a wrong answer its Life is lost: the time the wrong choice

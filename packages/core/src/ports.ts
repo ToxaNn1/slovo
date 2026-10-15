@@ -72,6 +72,12 @@ export interface Random {
   next(): number;
 }
 
+/**
+ * Runs something after a delay, in milliseconds, and returns the way to
+ * cancel it. The shell gives the real clock; a test gives its own.
+ */
+export type Schedule = (run: () => void, delay: number) => () => void;
+
 /** Whether the device lets the app notify: the reader allowed it, denied it, or hasn't been asked yet. */
 export type NotificationPermission = 'allowed' | 'denied' | 'not-asked';
 
