@@ -6,7 +6,7 @@ import { useDecor } from './DecorProvider';
 import { DecorView, MotifImage, MotifLayerImage, MotifPattern } from './Motif';
 import { space } from './tokens';
 import { useTokens } from './TokensProvider';
-import { useReduceMotion } from './useReduceMotion';
+import { useReduceMotionKnown } from './useReduceMotion';
 
 /**
  * Decor slot 1, the screen background: the Edition's tile repeated behind a
@@ -145,7 +145,8 @@ const STITCH_FROM_SCALE = 0.6;
  */
 export function VictoryIllustration({ width, stitched }: { width: number; stitched: boolean }) {
   const { victory } = useDecor();
-  const reduceMotion = useReduceMotion();
+  const motion = useReduceMotionKnown();
+  const reduceMotion = motion === true;
   const layers = victory?.illustration.layers;
   const progress = useMemo(
     () => (layers ?? []).map(() => new Animated.Value(stitched ? 0 : 1)),
@@ -153,7 +154,8 @@ export function VictoryIllustration({ width, stitched }: { width: number; stitch
   );
 
   useEffect(() => {
-    if (!stitched) return;
+    // Waits for the system's answer, so Reduce Motion never starts the full motion.
+    if (!stitched || motion === undefined) return;
     const animation = Animated.parallel(
       progress.map((value, index) => {
         value.setValue(0);
@@ -172,7 +174,7 @@ export function VictoryIllustration({ width, stitched }: { width: number; stitch
     return () => {
       animation.stop();
     };
-  }, [progress, reduceMotion, stitched]);
+  }, [progress, motion, reduceMotion, stitched]);
 
   if (victory === undefined) return null;
   const { illustration } = victory;
