@@ -16,7 +16,7 @@ import { openMix, type Mix, type MixEdition } from './mix';
 import type { NotificationScheduling } from './notification-plan';
 import { openNotifications, type Notifications, type NotificationsEdition } from './notifications';
 import { openOnboarding, type Onboarding } from './onboarding';
-import type { Clock, ContentReadPort, Random } from './ports';
+import type { Clock, ContentReadPort, Random, Schedule } from './ports';
 import { openProgress, type Progress } from './progress';
 import type { UserState } from './user-state';
 import { openWordOfTheDay } from './word-of-the-day';
@@ -56,7 +56,8 @@ export interface Composition extends Hiding {
    * morning Word becomes the Word of the Day, today an Active Day, the
    * notification plan is made again and the Feed opens the day. On the same
    * day it only reads the permission again and plans by it. It runs in turn
-   * with `openedFromNotification`, so the two never run side by side.
+   * with `openedFromNotification`, so the two never run side by side. Should
+   * every try to plan the Game's offers have failed, the Game tries again.
    */
   resume(): Promise<void>;
   /** The Notification times, the notification sound and the plan, kept on this device. */
@@ -106,7 +107,9 @@ const coreGameModes: readonly GameMode[] = [guessWord, correctionMode];
  * makes the notification plan, which `scheduling` hands to the device;
  * without it, as in tools and in tests of other features, nothing is planned.
  * The Game offers the Core's Game Modes, then `gameModes`, the ones an Edition
- * adds through the Extension Point.
+ * adds through the Extension Point. It tries a failed planning of their
+ * offers again by `schedule`, and on each `resume`; without `schedule`, as in
+ * tests of other features, only on `resume`.
  */
 export async function openComposition({
   content,
@@ -115,6 +118,7 @@ export async function openComposition({
   clock,
   random,
   scheduling,
+  schedule,
   gameModes = [],
 }: {
   content: ContentReadPort;
@@ -123,6 +127,7 @@ export async function openComposition({
   clock: Clock;
   random: Random;
   scheduling?: NotificationScheduling;
+  schedule?: Schedule;
   gameModes?: readonly GameMode[];
 }): Promise<Composition> {
   const entries = createEntries({ content, edition, userState });
@@ -151,12 +156,17 @@ export async function openComposition({
     history: recorder,
     entrySeen: followSeen,
   });
-  const { game, followEligibility: followGameEligibility } = await openGame({
+  const {
+    game,
+    followEligibility: followGameEligibility,
+    planOffers,
+  } = await openGame({
     edition,
     entries,
     history,
     userState,
     random,
+    ...(schedule === undefined ? {} : { schedule }),
     modes: [...coreGameModes, ...gameModes],
   });
   /**
@@ -203,9 +213,8 @@ export async function openComposition({
   });
   // The Game Modes are planned last: planning reads the whole pack, so the
   // launch never waits for it. A start or a change of eligibility waits its turn
-  // behind it. Should it fail, the offers keep saying they are still planned
-  // until the next hide, restore or Mix change plans them again.
-  followGameEligibility().catch(() => undefined);
+  // behind it, and a planning that fails is tried again (see `planOffers`).
+  planOffers();
   async function entryCard(entryId: string): Promise<EntryFeedCard | undefined> {
     const entry = await entries.get(entryId);
     return entry === undefined ? undefined : buildEntryCard(entries, entry);
@@ -218,7 +227,10 @@ export async function openComposition({
     hiddenEntries,
     mix,
     progress,
-    resume: () => day.resume(),
+    resume() {
+      planOffers();
+      return day.resume();
+    },
     notifications,
     game,
     onboarding,

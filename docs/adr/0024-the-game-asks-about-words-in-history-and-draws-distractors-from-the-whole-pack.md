@@ -38,7 +38,7 @@ This settles where an Edition's own mode would bring its strings: under its id i
 
 One Round planning now decides it: the pool, History, the fair Rounds and, when they fall short, the refusal. The offer and the start come from it, so a mode that can't make 15 fair Rounds says why on its card before any tap, and a start reads the eligible Entries once. The planning runs for each mode on offer once the composition is open and again after every hide, restore and Mix change. Why an Entry kind, as a whole, is not eligible, such as Corrections out of the Mix, is the Entries module's to say (ADR 0015): it answers the eligible Entries of a kind or that reason, and the Game passes the reason on as the refusal.
 
-Planning needs the eligible Entries themselves, not their ids. The Entries module reads the live Entries of the Language Pack once per app session, since a pack never changes while it is open, and filters them by the eligible ids on each call; each start of «Вгадай слово» used to read every Word anew. That one read takes about 0.4 s on a simulator, so the launch does not wait for it: the composition opens, and then the Game plans its offers in the background, in turn with its other changes. Until then each offer says it is still planned, and its card can't start yet and gives no reason. A start or a change of eligibility meanwhile waits its turn behind the planning; should the planning fail, the offers keep saying so until the next hide, restore or Mix change plans them again. A hide, a restore or a Mix change then pays only the eligible ids and building 15 Rounds per mode.
+Planning needs the eligible Entries themselves, not their ids. The Entries module reads the live Entries of the Language Pack once per app session, since a pack never changes while it is open, and filters them by the eligible ids on each call; each start of «Вгадай слово» used to read every Word anew. That one read takes about 0.4 s on a simulator, so the launch does not wait for it: the composition opens, and then the Game plans its offers in the background, in turn with its other changes. Until then each offer says it is still planned, and its card can't start yet and gives no reason. A start or a change of eligibility meanwhile waits its turn behind the planning; should the planning fail, the Game tries it again (see the next amendment). A hide, a restore or a Mix change then pays only the eligible ids and building 15 Rounds per mode.
 
 ### Considered Options
 
@@ -47,3 +47,15 @@ Planning needs the eligible Entries themselves, not their ids. The Entries modul
 - **Read the eligible Entries in full on every eligibility change**: rejected. Reading every Word of a 561-Word pack is most of the cost, and the pack does not change within a session.
 - **Plan the offers before the composition opens**: rejected. The launch would wait about 0.4 s longer for a screen it doesn't show.
 - **A lighter read of the Words for the Game**: rejected for now. The content port would need a second shape of a Word for one feature.
+
+## Amendment: a failed planning of the offers is tried again (after 0.5)
+
+The amendment above left the offers saying they are still planned when the background planning failed, until a hide, a restore or a Mix change planned them again. A failed read of the Language Pack left every Game card faded for the rest of the session, with no reason and no second try.
+
+The Game decides the retry, not the shell. A planning that fails is tried again after 1 s, then 2 s, then 4 s, each try in turn with the Game's other changes, so a start or a change of eligibility during a try still waits its turn. When all four fail, the offers keep saying they are still planned, and the card stays faded with no reason, until the composition's next `resume`, which tries again in the same way, or a hide, a restore or a Mix change plans them. A try that finds the offers planned already does nothing, and a planning that succeeds the first time is never tried again. A `resume` comes on each return to the foreground and when a new local day starts while the app is open (ADR 0022). The delays come through an injected `Schedule` port, as the Game's haptics have theirs, so tests turn the clock by hand.
+
+### Considered Options
+
+- **Try again only on a return to the foreground**: rejected alone. The reader who opens the Game tab just after launch would see faded cards until leaving the app; a transient failure clears within a second or two.
+- **Try again forever, or on a timer for the whole session**: rejected. A pack that keeps failing to read is a broken install; the Feed fails with it, and a timer that never stops costs battery for nothing.
+- **Show a reason on the card once every try failed**: rejected for now. It needs a new refusal, its text in every Edition and a design for an error the reader can't fix; the next return to the foreground tries again anyway.
