@@ -37,7 +37,8 @@ export function createForeground(source: AppStateSource): Foreground {
         subscription = source.addEventListener('change', (state) => {
           if ((state === 'active') === active) return;
           active = state === 'active';
-          for (const tell of [...listeners]) tell();
+          // A snapshot: a listener may unsubscribe or subscribe while they are told.
+          for (const tell of Array.from(listeners)) tell();
         });
       }
       listeners.add(listener);

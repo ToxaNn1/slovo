@@ -1,0 +1,63 @@
+{
+  // Oxlint takes the syntactic rules; ESLint keeps the type-aware rules, the
+  // Core/UI boundary rules and the Cyrillic tripwire. eslint-plugin-oxlint
+  // (packages/config) reads this file and switches off in ESLint every rule
+  // that is on here. Type-aware linting (tsgolint) stays off: it is alpha and
+  // ESLint's strictTypeChecked already covers it.
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  // jsx-a11y is left out on purpose: its rules read DOM elements, and the app
+  // is React Native, where `autoFocus` on a TextInput is the wanted behaviour.
+  "plugins": ["typescript", "unicorn", "import", "react", "oxc"],
+  "categories": { "correctness": "error" },
+  "env": { "builtin": true, "es2024": true },
+  "ignorePatterns": [
+    "**/dist/**",
+    "**/coverage/**",
+    "**/.turbo/**",
+    "**/.expo/**",
+    "apps/mobile/ios/**",
+    "apps/mobile/android/**",
+    "apps/mobile/expo-env.d.ts",
+    "tools/sourcing/fixtures/**",
+    "docs/design/claude-design/**"
+  ],
+  "rules": {
+    // A few rules beyond `correctness`, picked because the repo has no hits.
+    "eqeqeq": ["error", "always", { "null": "ignore" }],
+    "import/first": "error",
+    "import/no-duplicates": "error",
+    "import/no-empty-named-blocks": "error",
+    "import/no-self-import": "error",
+    "unicorn/no-instanceof-builtins": "error",
+    "unicorn/no-thenable": "error",
+
+    // The rules of hooks stay with eslint-plugin-react-hooks (#244).
+    "react/rules-of-hooks": "off",
+    "react/exhaustive-deps": "off",
+    "react/exhaustive-effect-dependencies": "off",
+    "react/hooks": "off",
+    // Import cycles stay with dependency-cruiser (`pnpm deps`, #245).
+    "import/no-cycle": "off",
+    // The React Compiler rules are not adopted (see #244); only the classic
+    // React rules of the `correctness` category stay on.
+    "react/error-boundaries": "off",
+    "react/globals": "off",
+    "react/immutability": "off",
+    "react/incompatible-library": "off",
+    "react/invariant": "off",
+    "react/memo-dependencies": "off",
+    "react/no-deriving-state-in-effects": "off",
+    "react/preserve-manual-memoization": "off",
+    "react/purity": "off",
+    "react/refs": "off",
+    "react/rule-suppression": "off",
+    "react/set-state-in-effect": "off",
+    "react/set-state-in-render": "off",
+    "react/static-components": "off",
+    "react/syntax": "off",
+    "react/todo": "off",
+    "react/unsupported-syntax": "off",
+    "react/use-memo": "off",
+    "react/void-use-memo": "off"
+  }
+}

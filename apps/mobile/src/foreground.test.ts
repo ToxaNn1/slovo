@@ -22,7 +22,8 @@ function fakeAppState(start: AppStateStatus = 'active') {
     listeners,
     change(state: AppStateStatus) {
       source.currentState = state;
-      for (const listener of [...listeners]) listener(state);
+      // A snapshot, like the real source: a listener may unsubscribe while it runs.
+      for (const listener of Array.from(listeners)) listener(state);
     },
   };
 }
