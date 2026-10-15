@@ -10,6 +10,7 @@ import {
   openUserState,
   userStateRecords,
   type Composition,
+  type ContentReadPort,
   type CurrentGame,
   type Random,
   type Round,
@@ -136,14 +137,16 @@ async function run({
   seed = 7,
   withCorrections = true,
   correctionsInMix = true,
+  pack = content,
 }: {
   records?: Map<string, string>;
   seed?: number;
   withCorrections?: boolean;
   correctionsInMix?: boolean;
+  pack?: ContentReadPort;
 } = {}): Promise<Composition> {
   return openComposition({
-    content,
+    content: pack,
     edition: {
       isFeatureEnabled: (feature) => feature === 'game' || withCorrections,
       categories: [{ id: 'nature', displayName: 'Nature' }],
@@ -236,6 +239,26 @@ describe('«Обери правильне» on offer', () => {
       entryKind: 'correction',
       canStart: true,
     });
+  });
+
+  it('reads each Correction of the pack once a session, however often the offers are planned', async () => {
+    const read: string[] = [];
+    const pack: ContentReadPort = {
+      ...content,
+      getCorrection(id) {
+        read.push(id);
+        return content.getCorrection(id);
+      },
+    };
+    const app = await run({ pack });
+
+    await app.mix.setCorrections(false);
+    await app.mix.setCorrections(true);
+    await app.game.start('correction');
+
+    expect(current(app).status).toBe('playing');
+    expect(read.length).toBeGreaterThan(GAME_ROUNDS);
+    expect(new Set(read).size).toBe(read.length);
   });
 
   it("says it can't start with fewer than 15 eligible Corrections", async () => {
