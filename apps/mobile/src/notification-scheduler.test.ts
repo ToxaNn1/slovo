@@ -50,6 +50,8 @@ function mockNotifications({
   };
 }
 
+const native = { inExpoGo: false };
+
 const planned = (overrides: Partial<PlannedNotification> = {}): PlannedNotification => ({
   date: '2026-10-15',
   time: '09:00',
@@ -67,7 +69,7 @@ const tapOn = (data: Record<string, unknown>) =>
 describe('the notification scheduler on expo-notifications', () => {
   it('schedules a plan as calendar triggers from local date parts, with no time zone', async () => {
     const { module, notifications } = mockNotifications();
-    const scheduler = createNotificationScheduler(notifications);
+    const scheduler = createNotificationScheduler(notifications, native);
 
     await scheduler.replacePlan([planned(), planned({ date: '2026-12-31', time: '19:45' })]);
 
@@ -94,7 +96,7 @@ describe('the notification scheduler on expo-notifications', () => {
 
   it('cancels the old plan before it schedules the new one', async () => {
     const { module, notifications } = mockNotifications();
-    const scheduler = createNotificationScheduler(notifications);
+    const scheduler = createNotificationScheduler(notifications, native);
 
     await scheduler.replacePlan([planned()]);
     await scheduler.replacePlan([]);
@@ -106,9 +108,9 @@ describe('the notification scheduler on expo-notifications', () => {
     );
   });
 
-  it("plays the Edition's sound, the system sound, or none", async () => {
+  it("plays the Edition's sound, the system sound, or none in a native build", async () => {
     const { module, notifications } = mockNotifications();
-    const scheduler = createNotificationScheduler(notifications);
+    const scheduler = createNotificationScheduler(notifications, native);
 
     await scheduler.replacePlan([
       planned({ time: '09:00', sound: { file: 'notification.wav' } }),
@@ -121,9 +123,24 @@ describe('the notification scheduler on expo-notifications', () => {
     ).toEqual(['notification.wav', 'default', false]);
   });
 
+  it("asks for the system sound where the Edition's file is not in the app, Expo Go", async () => {
+    const { module, notifications } = mockNotifications();
+    const scheduler = createNotificationScheduler(notifications, { inExpoGo: true });
+
+    await scheduler.replacePlan([
+      planned({ time: '09:00', sound: { file: 'notification.wav' } }),
+      planned({ time: '13:00', sound: 'system' }),
+      planned({ time: '19:00', sound: 'silent' }),
+    ]);
+
+    expect(
+      module.scheduleNotificationAsync.mock.calls.map(([{ content }]) => content.sound),
+    ).toEqual(['default', 'default', false]);
+  });
+
   it('reports the permission as allowed, denied or not asked yet', async () => {
     const report = (status: Status) =>
-      createNotificationScheduler(mockNotifications({ status }).notifications).permission();
+      createNotificationScheduler(mockNotifications({ status }).notifications, native).permission();
 
     expect(await report('granted')).toBe('allowed');
     expect(await report('denied')).toBe('denied');
@@ -134,16 +151,18 @@ describe('the notification scheduler on expo-notifications', () => {
     const notAsked = mockNotifications({ status: 'undetermined', answer: 'denied' });
     const denied = mockNotifications({ status: 'denied' });
 
-    expect(await createNotificationScheduler(notAsked.notifications).askPermission()).toBe(
+    expect(await createNotificationScheduler(notAsked.notifications, native).askPermission()).toBe(
       'denied',
     );
     expect(notAsked.module.requestPermissionsAsync).toHaveBeenCalledTimes(1);
-    expect(await createNotificationScheduler(denied.notifications).askPermission()).toBe('denied');
+    expect(await createNotificationScheduler(denied.notifications, native).askPermission()).toBe(
+      'denied',
+    );
     expect(denied.module.requestPermissionsAsync).not.toHaveBeenCalled();
   });
 
   it('without the module reports not asked yet, asks nothing and schedules nothing', async () => {
-    const scheduler = createNotificationScheduler(undefined);
+    const scheduler = createNotificationScheduler(undefined, native);
 
     expect(await scheduler.permission()).toBe('not-asked');
     expect(await scheduler.askPermission()).toBe('not-asked');
