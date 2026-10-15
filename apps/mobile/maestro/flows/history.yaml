@@ -37,8 +37,9 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - assertVisible:
     id: history-row-.*-open
 - takeScreenshot: history-list
-# A row opens the Entry screen, and back returns to History.
-- tapOn:
+# A row opens the Entry screen once, even when it is tapped twice in a row, so
+# one back returns to History.
+- doubleTapOn:
     id: history-row-.*-open
 - assertVisible:
     id: entry-screen
@@ -46,6 +47,8 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: entry-screen-back
 - assertVisible:
     id: history
+- assertNotVisible:
+    id: entry-screen
 # «Очистити» asks first; cancelling leaves History alone.
 # Tapped on the left of the button: the development client's floating tools
 # button sits over the right of it.

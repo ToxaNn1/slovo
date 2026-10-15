@@ -21,6 +21,7 @@ import { deviceClock } from '../../../device-clock';
 import { editionStrings } from '../../../edition';
 import { useClearHistory, useHistoryList, useHistoryText } from '../../../history';
 import { LoadFailed } from '../../../language-pack';
+import { useOpenScreen } from '../../../use-open-screen';
 
 const { history: strings } = editionStrings;
 
@@ -39,6 +40,7 @@ export default function HistoryScreen() {
   const { colors, fontFamilies } = useTokens();
   const { voice } = useEdition();
   const router = useRouter();
+  const openScreen = useOpenScreen();
   const sections = useMemo(
     () =>
       groupByLocalDay(list, ({ seenAt }) => seenAt, deviceClock).map(({ day, entries }) => ({
@@ -81,7 +83,7 @@ export default function HistoryScreen() {
               row={item.row}
               trailing={text.kind(item)}
               onPress={() => {
-                router.push(`/saved/history/${item.entryId}`);
+                openScreen(`/saved/history/${item.entryId}`);
               }}
               testID={`history-row-${item.entryId}`}
             />

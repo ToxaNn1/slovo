@@ -12,7 +12,6 @@ import {
   useEdition,
   useTokens,
 } from '@slovo/ui';
-import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -23,6 +22,7 @@ import { deviceClock } from '../../device-clock';
 import { useFavoriteList } from '../../favorites';
 import { useHistoryList, useHistoryText } from '../../history';
 import { LoadFailed } from '../../language-pack';
+import { useOpenScreen } from '../../use-open-screen';
 
 const {
   favorites: strings,
@@ -51,7 +51,7 @@ export default function SavedScreen() {
   const historyText = useHistoryText();
   const { colors } = useTokens();
   const { count } = useEdition();
-  const router = useRouter();
+  const openScreen = useOpenScreen();
 
   if (composition.status === 'failed') return <LoadFailed onRetry={composition.retry} />;
   const latest = history.slice(0, NEWEST_SHOWN).map(({ row, seenAt }) => ({
@@ -76,7 +76,7 @@ export default function SavedScreen() {
               count: count(strings.count, favorites.length),
             })}
             onPress={() => {
-              router.push('/saved/favorites');
+              openScreen('/saved/favorites');
             }}
           >
             <SavedCardTitles
@@ -94,7 +94,7 @@ export default function SavedScreen() {
               count: count(collectionStrings.collectionCount, collections.length),
             })}
             onPress={() => {
-              router.push('/saved/collections');
+              openScreen('/saved/collections');
             }}
           >
             {collections.length > 0 && (
@@ -125,7 +125,7 @@ export default function SavedScreen() {
             count={history.length}
             accessibilityLabel={historyText.cardLabel(history.length, latest)}
             onPress={() => {
-              router.push('/saved/history');
+              openScreen('/saved/history');
             }}
           >
             <SavedCardRows rows={latest.map(({ title, text }) => ({ title, trailing: text }))} />
