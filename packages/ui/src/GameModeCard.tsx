@@ -55,7 +55,7 @@ export function GameModeCard({
   const inverted = entryKind === 'correction';
   const content = (
     <CardContent
-      entryKind={entryKind}
+      inverted={inverted}
       overline={overline}
       title={title}
       description={description}
@@ -95,14 +95,15 @@ export function GameModeCard({
 
 /** What a mode card holds, in the colours in effect. */
 function CardContent({
-  entryKind,
+  inverted,
   overline,
   title,
   description,
   sample,
   refusal,
 }: {
-  entryKind: EntryKind;
+  /** Whether it is a Correction mode's card, on the ink fill, its sample's prompt struck through. */
+  inverted: boolean;
   overline: string;
   title: string;
   description: string;
@@ -110,10 +111,9 @@ function CardContent({
   refusal: string | undefined;
 }) {
   const { colors, fontFamilies } = useTokens();
-  const struck = entryKind === 'correction';
   return (
     <>
-      {struck ? null : <CardCorners corners={['topLeft']} />}
+      {inverted ? null : <CardCorners corners={['topLeft']} />}
       <Text
         maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
         style={[overlineType, { color: colors.accent, fontFamily: fontFamilies.ui }]}
@@ -145,12 +145,14 @@ function CardContent({
             maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
             style={[
               styles.sample,
-              struck ? styles.upright : styles.italic,
-              { color: struck ? colors.ink : colors.inkSecondary, fontFamily: fontFamilies.word },
+              inverted ? styles.correctionSample : styles.italic,
+              { color: inverted ? colors.ink : colors.inkSecondary, fontFamily: fontFamilies.word },
             ]}
           >
-            {struck ? (
-              <Text style={[styles.struck, { textDecorationColor: withAlpha(colors.accent, 0.6) }]}>
+            {inverted ? (
+              <Text
+                style={[styles.struck, { textDecorationColor: withAlpha(colors.accent, 0.55) }]}
+              >
                 {sample.prompt}
               </Text>
             ) : (
@@ -185,6 +187,6 @@ const styles = StyleSheet.create({
   },
   sample: { flex: 1, fontSize: 16 },
   italic: { fontStyle: 'italic' },
-  upright: { fontSize: 18 },
+  correctionSample: { fontSize: 18 },
   struck: { textDecorationLine: 'line-through' },
 });

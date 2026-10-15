@@ -46,6 +46,8 @@ const TEXT_MAX_FONT_SCALE = 1.5;
 const PROMPT_SIZE = { fontSize: 25, lineHeight: 25 * 1.35 };
 const OPTION_SIZE = { fontSize: 21, lineHeight: 21 * 1.3 };
 const SHEET_ANSWER_SIZE = { fontSize: 30, lineHeight: 30 * 1.3 };
+/** Whether a label ends in punctuation of its own, such as «?», so VoiceOver needs no full stop after it. */
+const ENDS_IN_PUNCTUATION = /\p{P}$/u;
 /** The text on a filled option. */
 const ON_FILL = '#FFFFFF';
 
@@ -235,7 +237,12 @@ export function RoundCard({
     <View
       testID="game-prompt"
       accessible
-      accessibilityLabel={[`${label}. ${prompt}`, marked].filter(Boolean).join(' ')}
+      accessibilityLabel={[
+        `${label}${ENDS_IN_PUNCTUATION.test(label) ? '' : '.'} ${prompt}`,
+        marked,
+      ]
+        .filter(Boolean)
+        .join(' ')}
       {...voice}
       style={[
         styles.card,
@@ -530,6 +537,6 @@ const styles = StyleSheet.create({
   sheetAnswer: { fontWeight: '500' },
   example: { fontSize: 17, lineHeight: 17 * 1.5, fontStyle: 'italic' },
   author: { marginTop: space[1], fontSize: 13, fontWeight: '500' },
-  explanation: { fontSize: 17, lineHeight: 17 * 1.5 },
+  explanation: { fontSize: 16, lineHeight: 16 * 1.55 },
   next: { marginTop: 6 },
 });
