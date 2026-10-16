@@ -96,16 +96,16 @@ type Corner = keyof ReturnType<typeof cornerPlacements>;
 
 const allCorners: readonly Corner[] = ['topLeft', 'topRight', 'bottomLeft', 'bottomRight'];
 
-/** The top-left `corner` mirrored into the corners `at`, `width` wide and `inset` points in. */
+/** The top-left `corner` mirrored into the corners `at`, `scale` times its size, `inset` in. */
 function MirroredCorners({
   corner,
   at,
-  width,
+  scale,
   inset,
 }: {
   corner: DecorMotif;
   at: readonly Corner[];
-  width: number;
+  scale: number;
   inset: number;
 }) {
   const placements = cornerPlacements(inset);
@@ -113,7 +113,7 @@ function MirroredCorners({
     <DecorView style={StyleSheet.absoluteFill}>
       {at.map((place) => (
         <View key={place} style={[styles.corner, placements[place]]}>
-          <MotifImage motif={corner} width={width} />
+          <MotifImage motif={corner} width={corner.width * scale} />
         </View>
       ))}
     </DecorView>
@@ -128,49 +128,40 @@ function MirroredCorners({
 export function CardCorners({ corners: at = allCorners }: { corners?: readonly Corner[] }) {
   const { corners } = useDecor();
   if (corners === undefined) return null;
-  return (
-    <MirroredCorners
-      corner={corners.corner}
-      at={at}
-      width={corners.corner.width}
-      inset={CORNER_INSET}
-    />
-  );
+  return <MirroredCorners corner={corners.corner} at={at} scale={1} inset={CORNER_INSET} />;
 }
-
-/** How far the Story card's bands sit inside its top and bottom edges, from the design. */
-const SHARE_CARD_BAND_INSET = 28;
-/** How far the Square card's corners sit inside its edges, from the design. */
-const SHARE_CARD_CORNER_INSET = 10;
 
 /**
  * Decor slot 5, the Share Card frame, `scale` times its size for a card drawn
- * larger or smaller than the design: the band across the Story card near its
- * top and, mirrored, near its bottom, or the corner mirrored into the four
- * corners of the Square card. Place it inside the card. Nothing when the
- * Decor has no Share Card frame, so the card stays plain.
+ * larger or smaller than the design: the band across the Story card `inset`
+ * points inside its top edge and, mirrored, its bottom edge, or the corner
+ * mirrored into the four corners of the Square card, `inset` points in. Place
+ * it inside the card. Nothing when the Decor has no Share Card frame, so the
+ * card stays plain.
  */
-export function ShareCardFrame({ format, scale }: { format: ShareCardFormat; scale: number }) {
+export function ShareCardFrame({
+  format,
+  scale,
+  inset,
+}: {
+  format: ShareCardFormat;
+  scale: number;
+  inset: number;
+}) {
   const { shareCard } = useDecor();
   if (shareCard === undefined) return null;
   if (format === 'square') {
     return (
-      <MirroredCorners
-        corner={shareCard.corner}
-        at={allCorners}
-        width={shareCard.corner.width * scale}
-        inset={SHARE_CARD_CORNER_INSET * scale}
-      />
+      <MirroredCorners corner={shareCard.corner} at={allCorners} scale={scale} inset={inset} />
     );
   }
-  const band = { height: shareCard.band.height * scale };
-  const inset = SHARE_CARD_BAND_INSET * scale;
+  const bandHeight = { height: shareCard.band.height * scale };
   return (
     <DecorView style={StyleSheet.absoluteFill}>
-      <View style={[styles.frameBand, band, { top: inset }]}>
+      <View style={[styles.frameBand, bandHeight, { top: inset }]}>
         <MotifPattern motif={shareCard.band} scale={scale} />
       </View>
-      <View style={[styles.frameBand, band, styles.mirrored, { bottom: inset }]}>
+      <View style={[styles.frameBand, bandHeight, styles.mirrored, { bottom: inset }]}>
         <MotifPattern motif={shareCard.band} scale={scale} />
       </View>
     </DecorView>

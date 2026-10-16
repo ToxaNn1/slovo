@@ -28,6 +28,8 @@ export const SHARE_CARD = {
 const LAYOUT = {
   story: {
     padding: { horizontal: 34, vertical: 76 },
+    /** How far Decor slot 5's bands sit inside the top and bottom edges. */
+    frameInset: 28,
     /** The space between the blocks, and between a label and its form. */
     gap: 22,
     labelGap: 8,
@@ -43,6 +45,8 @@ const LAYOUT = {
   },
   square: {
     padding: { horizontal: 28, vertical: 30 },
+    /** How far Decor slot 5's corners sit inside the edges. */
+    frameInset: 10,
     gap: 10,
     labelGap: 10,
     type: {
@@ -215,7 +219,7 @@ function FittedCard({
       ]}
     >
       <DecorBackground scale={unit} />
-      <ShareCardFrame format={format} scale={unit} />
+      <ShareCardFrame format={format} scale={unit} inset={layout.frameInset * unit} />
       <View
         onLayout={({ nativeEvent }) => {
           setRoom(nativeEvent.layout.height);
