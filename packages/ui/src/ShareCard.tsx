@@ -3,7 +3,7 @@ import type { CorrectionCardModel, WordCardModel } from '@slovo/core';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { DecorBackground, OrnamentDivider } from './DecorSlots';
+import { DecorBackground, OrnamentDivider, ShareCardFrame } from './DecorSlots';
 import { useEdition } from './EditionProvider';
 import { wordGrammarText } from './part-of-speech';
 import { stressLabel } from './stress-label';
@@ -111,8 +111,8 @@ export interface ShareCardContent {
 
 /**
  * The Share Card of an Entry in a format, `width` points wide, in the app's
- * current Theme, with no app chrome, over Decor slot 1 (designs
- * `share-card-word-story-dark` and `share-card-correction-square-light`). A
+ * current Theme, with no app chrome, over Decor slot 1 in the frame of slot 5
+ * (designs `share-card-word-story-dark` and `share-card-correction-square-light`). A
  * Word's shows the Lemma with Stress in the word family, the part of speech
  * with gender and registers, and the primary Definition; a Correction's shows
  * «Так часто кажуть» over the non-standard form struck through, the divider
@@ -215,6 +215,7 @@ function FittedCard({
       ]}
     >
       <DecorBackground scale={unit} />
+      <ShareCardFrame format={format} scale={unit} />
       <View
         onLayout={({ nativeEvent }) => {
           setRoom(nativeEvent.layout.height);
