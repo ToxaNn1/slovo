@@ -273,6 +273,8 @@ export function VerticalPager<Item>({
     .onFinalize(() => {
       turning.value = false;
     });
+  // How a component test finds the swipe; Gesture Handler reads it in Jest only.
+  if (testID !== undefined) pan.withTestId(`${testID}-swipe`);
 
   function onLayout(event: LayoutChangeEvent) {
     const measured = event.nativeEvent.layout.height;
