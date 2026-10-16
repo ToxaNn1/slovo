@@ -207,24 +207,33 @@ const STITCH_MS = 500;
 const stitchEasing = Easing.bezier(0.3, 1.6, 0.5, 1);
 /** What Reduce Motion does in place of the stitching: a fade. */
 const FADE_MS = 250;
+const fadeEasing = Easing.inOut(Easing.ease);
 /** The share of its size a stitch grows from. */
 const STITCH_FROM_SCALE = 0.6;
 /** The share of a stitch's motion in which it fades in. */
 const STITCH_FADE_SHARE = 0.3;
 
 /**
- * One layer of the victory illustration. `motion` is `undefined` until the
- * system has said whether Reduce Motion is on, `'stitch'` for the spring that
- * starts `index` stitches late, `'fade'` for Reduce Motion's fade, and `'none'`
- * for a layer drawn whole.
+ * How a layer of the victory illustration arrives: `'stitch'` for the spring,
+ * `'fade'` for Reduce Motion's fade, `'none'` for a layer drawn whole, and
+ * `undefined` until the system has said whether Reduce Motion is on.
  */
+type StitchMotion = 'stitch' | 'fade' | 'none' | undefined;
+
+function stitchMotion(stitched: boolean, reduceMotion: boolean | undefined): StitchMotion {
+  if (!stitched) return 'none';
+  if (reduceMotion === undefined) return undefined;
+  return reduceMotion ? 'fade' : 'stitch';
+}
+
+/** One layer of the victory illustration, starting `index` stitches late. */
 function StitchedLayer({
   index,
   motion,
   children,
 }: {
   index: number;
-  motion: 'stitch' | 'fade' | 'none' | undefined;
+  motion: StitchMotion;
   children: ReactNode;
 }) {
   const progress = useSharedValue(motion === 'none' ? 1 : 0);
@@ -240,7 +249,7 @@ function StitchedLayer({
     progress.value = 0;
     progress.value =
       motion === 'fade'
-        ? withTiming(1, { duration: FADE_MS, reduceMotion: ReduceMotion.Never })
+        ? withTiming(1, { duration: FADE_MS, easing: fadeEasing, reduceMotion: ReduceMotion.Never })
         : withDelay(
             index * STITCH_GAP_MS,
             withTiming(1, {
@@ -278,13 +287,7 @@ export function VictoryIllustration({ width, stitched }: { width: number; stitch
   const reduceMotion = useReduceMotionKnown();
   if (victory === undefined) return null;
   const { illustration } = victory;
-  const motion = !stitched
-    ? 'none'
-    : reduceMotion === undefined
-      ? undefined
-      : reduceMotion
-        ? 'fade'
-        : 'stitch';
+  const motion = stitchMotion(stitched, reduceMotion);
   return (
     <DecorView style={{ width, height: (width * illustration.height) / illustration.width }}>
       {illustration.layers.map((layer, index) => (
