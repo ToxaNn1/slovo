@@ -49,9 +49,10 @@ export default {
       comment:
         "ADR 0027: the UI's providers/, decor/ and primitives/ sit below its domain " +
         'folders, so a button or a sheet never depends on the Entries, the Game or ' +
-        'any other domain it is used in. index.ts counts too, as it re-exports them all.',
+        'any other domain it is used in. index.ts counts too, as it re-exports them all. ' +
+        'A test is not part of the layer: it renders through index.ts, the public seam.',
       severity: 'error',
-      from: { path: '^packages/ui/src/(providers|decor|primitives)/' },
+      from: { path: '^packages/ui/src/(providers|decor|primitives)/', pathNot: '\\.test\\.tsx?$' },
       to: {
         path: ['^packages/ui/src/[^/]+/', '^packages/ui/src/index\\.ts$'],
         pathNot: '^packages/ui/src/(providers|decor|primitives)/',
@@ -125,12 +126,17 @@ export default {
       name: 'no-orphans',
       comment:
         'A module that imports nothing and is imported by nothing is dead. Tool ' +
-        'configuration files and the Expo Router routes (found by their place, not by an ' +
-        'import) are entry points.',
+        "configuration files, Jest's setup and resolver files and the Expo Router routes " +
+        '(found by their place, not by an import) are entry points.',
       severity: 'error',
       from: {
         orphan: true,
-        pathNot: ['\\.d\\.ts$', '(^|/)[^/]+\\.config\\.(js|cjs|mjs|ts)$', '^apps/mobile/src/app/'],
+        pathNot: [
+          '\\.d\\.ts$',
+          '(^|/)[^/]+\\.config\\.(js|cjs|mjs|ts)$',
+          '(^|/)jest\\.(setup|resolver)\\.(js|cjs)$',
+          '^apps/mobile/src/app/',
+        ],
       },
       to: {},
     },
