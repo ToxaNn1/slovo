@@ -5,8 +5,10 @@ import {
   GameModeCard,
   GameResult,
   GameRound,
+  rowPadding,
   ScreenTitle,
   space,
+  typeSize,
   useEdition,
   useTokens,
 } from '@slovo/ui';
@@ -129,7 +131,12 @@ function ModeScreen({
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  modes: { gap: space[4], paddingTop: 14, paddingHorizontal: space[5], paddingBottom: space[8] },
+  modes: {
+    gap: space[4],
+    paddingTop: rowPadding,
+    paddingHorizontal: space[5],
+    paddingBottom: space[8],
+  },
   heading: { gap: space[4], marginHorizontal: space[1], marginBottom: space[2] },
-  rules: { fontSize: 15, lineHeight: 15 * 1.5 },
+  rules: { fontSize: typeSize.body, lineHeight: typeSize.body * 1.5 },
 });

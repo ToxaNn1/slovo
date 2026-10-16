@@ -154,8 +154,8 @@ const styles = StyleSheet.create({
   streakStacked: { flexDirection: 'column', alignItems: 'flex-start', gap: space[2] },
   streakWords: { flex: 1, gap: space[1] },
   streakWordsStacked: { gap: space[1] },
-  streakLabel: { fontSize: 16, fontWeight: '600' },
-  bestStreak: { fontSize: 14 },
+  streakLabel: { fontSize: typeSize.explanation, fontWeight: '600' },
+  bestStreak: { fontSize: typeSize.caption },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -164,5 +164,5 @@ const styles = StyleSheet.create({
   },
   count: { paddingRight: space[3], gap: space[1] },
   countValue: { fontSize: typeSize.count, fontWeight: '500' },
-  countLabel: { fontSize: 14 },
+  countLabel: { fontSize: typeSize.caption },
 });

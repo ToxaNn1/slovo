@@ -14,7 +14,7 @@ import Svg, { Path } from 'react-native-svg';
 import { useDecor } from '../decor/DecorProvider';
 import { EmptyStateIllustration, OrnamentDivider } from '../decor/DecorSlots';
 import { useEdition } from '../providers/EditionProvider';
-import { minTouchTarget, space, typeSize } from '../tokens';
+import { minTouchTarget, space, typeSize, wordCardSide } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
 
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
   skeleton: {
     borderWidth: 1,
     paddingTop: space[8],
-    paddingHorizontal: 26,
+    paddingHorizontal: wordCardSide,
     paddingBottom: space[8],
     gap: space[6],
   },
@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  buttonText: { fontSize: 16, fontWeight: '700' },
+  buttonText: { fontSize: typeSize.button, fontWeight: '700' },
   hintRow: { position: 'absolute', left: 0, right: 0, bottom: space[4], alignItems: 'center' },
   hint: {
     minHeight: minTouchTarget,

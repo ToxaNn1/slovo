@@ -6,7 +6,7 @@ import { VictoryIllustration } from '../decor/DecorSlots';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { PrimaryButton } from '../primitives/PrimaryButton';
 import { SecondaryButton } from '../primitives/SecondaryButton';
-import { space } from '../tokens';
+import { blockGap, resultLayout, space, typeSize } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { useGameHaptics } from './useGameHaptics';
 import { WholeWordsText } from '../primitives/WholeWordsText';
@@ -19,7 +19,7 @@ const TEXT_MAX_FONT_SCALE = 1.5;
 const WIN_ILLUSTRATION_WIDTH = 120;
 const LOSS_ILLUSTRATION_WIDTH = 64;
 /** The title's size, from the design. */
-const TITLE_SIZE = { fontSize: 38, lineHeight: 38 * 1.1 };
+const TITLE_SIZE = { fontSize: typeSize.resultTitle, lineHeight: typeSize.resultTitle * 1.1 };
 
 /** One number of the result: the value over the word that names it, read as one. */
 function ResultNumber({
@@ -152,25 +152,29 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 18,
+    gap: blockGap,
     paddingVertical: space[8] + space[2],
     paddingHorizontal: space[8],
   },
   // Stretched, so the title measures its words against the whole width.
-  text: { alignSelf: 'stretch', gap: 18 },
+  text: { alignSelf: 'stretch', gap: blockGap },
   title: { fontWeight: '500', textAlign: 'center' },
-  line: { fontSize: 16, lineHeight: 16 * 1.5, textAlign: 'center' },
+  line: {
+    fontSize: typeSize.explanation,
+    lineHeight: typeSize.explanation * 1.5,
+    textAlign: 'center',
+  },
   numbers: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    columnGap: 28,
+    columnGap: resultLayout.numbersGap,
     rowGap: space[3],
     marginTop: space[2],
     marginBottom: space[4],
   },
-  number: { alignItems: 'center', gap: 2 },
-  value: { fontSize: 26, fontWeight: '500' },
-  label: { fontSize: 12, fontWeight: '500' },
+  number: { alignItems: 'center', gap: resultLayout.numberGap },
+  value: { fontSize: typeSize.sheetTitle, fontWeight: '500' },
+  label: { fontSize: typeSize.smallLabel, fontWeight: '500' },
   buttons: { alignSelf: 'stretch', gap: space[3] },
 });

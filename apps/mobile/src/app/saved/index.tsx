@@ -1,5 +1,6 @@
 import { relativeTimeOf } from '@slovo/core';
 import {
+  cardSpace,
   fill,
   OrnamentBand,
   SavedCard,
@@ -139,7 +140,7 @@ export default function SavedScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: {
-    gap: 14,
+    gap: cardSpace.gap,
     paddingHorizontal: space[5],
     paddingTop: space[6],
     paddingBottom: space[8],

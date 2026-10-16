@@ -4,7 +4,7 @@ import Svg, { Path } from 'react-native-svg';
 
 import { CardCorners } from '../decor/DecorSlots';
 import { useEdition } from '../providers/EditionProvider';
-import { overlineType, space, withAlpha } from '../tokens';
+import { modeCardPaddingHorizontal, overlineType, space, typeSize, withAlpha } from '../tokens';
 import { InvertedTokens, useTokens } from '../providers/TokensProvider';
 
 /** The arrow's size, from the design. */
@@ -176,12 +176,16 @@ function CardContent({
 const styles = StyleSheet.create({
   card: {
     paddingVertical: space[6],
-    paddingHorizontal: 22,
+    paddingHorizontal: modeCardPaddingHorizontal,
     gap: space[3],
     borderWidth: 1,
   },
-  title: { fontSize: 28, lineHeight: 28 * 1.15, fontWeight: '500' },
-  description: { fontSize: 14.5, lineHeight: 14.5 * 1.5 },
+  title: {
+    fontSize: typeSize.emptyStateTitle,
+    lineHeight: typeSize.emptyStateTitle * 1.15,
+    fontWeight: '500',
+  },
+  description: { fontSize: typeSize.modeDescription, lineHeight: typeSize.modeDescription * 1.5 },
   sampleRow: {
     marginTop: space[1],
     flexDirection: 'row',
@@ -189,8 +193,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: space[3],
   },
-  sample: { flex: 1, fontSize: 16 },
+  sample: { flex: 1, fontSize: typeSize.explanation },
   italic: { fontStyle: 'italic' },
-  correctionSample: { fontSize: 18 },
+  correctionSample: { fontSize: typeSize.listItem },
   struck: { textDecorationLine: 'line-through' },
 });

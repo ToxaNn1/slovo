@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
-import { minTouchTarget, typeSize } from '../tokens';
+import { minTouchTarget, segmentedPadding, shadowColor, typeSize } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /** A segment's label stops growing here, so it never breaks a word at the largest text sizes. */
@@ -77,7 +77,7 @@ export function SegmentedControl<Value extends string>({
 }
 
 const styles = StyleSheet.create({
-  track: { flexDirection: 'row', padding: 3 },
+  track: { flexDirection: 'row', padding: segmentedPadding },
   segment: {
     flex: 1,
     minHeight: minTouchTarget,
@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   selected: {
-    shadowColor: '#000000',
+    shadowColor,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.12,
     shadowRadius: 3,

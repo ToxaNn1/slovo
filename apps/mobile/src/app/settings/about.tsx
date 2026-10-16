@@ -2,6 +2,7 @@ import {
   BackLink,
   CardCorners,
   fill,
+  lineHeight,
   SectionLabel,
   SettingsGroup,
   SoonRow,
@@ -120,7 +121,11 @@ const styles = StyleSheet.create({
     padding: space[6],
     borderWidth: StyleSheet.hairlineWidth,
   },
-  description: { fontSize: 22, lineHeight: 30, fontWeight: '500' },
+  description: {
+    fontSize: typeSize.subhead,
+    lineHeight: lineHeight.aboutDescription,
+    fontWeight: '500',
+  },
   sources: { fontSize: typeSize.body },
   section: { gap: space[3], marginTop: space[6] },
 });

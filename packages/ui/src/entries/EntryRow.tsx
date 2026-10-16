@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { fill, useEdition } from '../providers/EditionProvider';
-import { space, STACK_AT_FONT_SCALE } from '../tokens';
+import { entryRow, rowPadding, space, STACK_AT_FONT_SCALE, typeSize } from '../tokens';
 import { rowActionProps, SwipeableRow, type RowAction } from '../primitives/SwipeableRow';
 import { useTokens } from '../providers/TokensProvider';
 
@@ -154,8 +154,17 @@ export function EntryRow({
 const styles = StyleSheet.create({
   container: { borderBottomWidth: 1 },
   containerCompact: { marginHorizontal: space[6] },
-  row: { minHeight: 60, paddingVertical: 14, paddingHorizontal: space[6], gap: 3 },
-  rowCompact: { minHeight: 52, paddingVertical: 12, paddingHorizontal: 0 },
+  row: {
+    minHeight: entryRow.minHeight,
+    paddingVertical: rowPadding,
+    paddingHorizontal: space[6],
+    gap: entryRow.lineGap,
+  },
+  rowCompact: {
+    minHeight: entryRow.compactMinHeight,
+    paddingVertical: space[3],
+    paddingHorizontal: 0,
+  },
   // The button takes the right edge, so the text stops short of it and the row's padding moves out.
   withAccessory: {
     flexDirection: 'row',
@@ -169,7 +178,7 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     alignItems: 'flex-start',
     paddingLeft: space[6],
-    paddingBottom: 14,
+    paddingBottom: rowPadding,
   },
   rowAboveAccessory: { flex: 0, alignSelf: 'stretch', paddingLeft: 0, paddingBottom: space[2] },
   // At the largest text sizes the trailing text drops under the title instead of squeezing it.
@@ -178,9 +187,9 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     alignItems: 'baseline',
     justifyContent: 'space-between',
-    columnGap: 10,
+    columnGap: entryRow.titleGap,
   },
-  title: { flexShrink: 1, fontSize: 22, fontWeight: '500' },
-  trailing: { flexShrink: 0, fontSize: 12, fontWeight: '500' },
-  subtitle: { fontSize: 14, lineHeight: 14 * 1.4 },
+  title: { flexShrink: 1, fontSize: typeSize.subhead, fontWeight: '500' },
+  trailing: { flexShrink: 0, fontSize: typeSize.smallLabel, fontWeight: '500' },
+  subtitle: { fontSize: typeSize.caption, lineHeight: typeSize.caption * 1.4 },
 });

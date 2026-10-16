@@ -10,7 +10,15 @@ import {
 import Svg, { Path } from 'react-native-svg';
 
 import { useEdition } from '../providers/EditionProvider';
-import { minTouchTarget, space, toastElevation, toastRadius, withAlpha } from '../tokens';
+import {
+  lineHeight,
+  minTouchTarget,
+  space,
+  toastElevation,
+  toastRadius,
+  typeSize,
+  withAlpha,
+} from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /**
@@ -146,5 +154,9 @@ const styles = StyleSheet.create({
     paddingVertical: space[3],
     ...toastElevation,
   },
-  messageText: { fontSize: 14, lineHeight: 20, fontWeight: '500' },
+  messageText: {
+    fontSize: typeSize.caption,
+    lineHeight: lineHeight.pronunciationNote,
+    fontWeight: '500',
+  },
 });

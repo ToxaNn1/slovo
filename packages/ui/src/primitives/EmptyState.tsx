@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { EmptyStateIllustration } from '../decor/DecorSlots';
 import { useEdition } from '../providers/EditionProvider';
 import { PrimaryButton } from './PrimaryButton';
-import { space, typeSize } from '../tokens';
+import { blockGap, emptyStatePaddingTop, space, typeSize } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /** The width of the empty-state illustration (Decor slot 4), within the design's 90–120. */
@@ -57,15 +57,15 @@ export function EmptyState({
 const styles = StyleSheet.create({
   state: {
     alignItems: 'center',
-    gap: 18,
-    paddingTop: 80,
+    gap: blockGap,
+    paddingTop: emptyStatePaddingTop,
     paddingHorizontal: space[8] + space[2],
     paddingBottom: space[8],
   },
-  text: { alignItems: 'center', gap: 18 },
+  text: { alignItems: 'center', gap: blockGap },
   title: {
-    fontSize: 26,
-    lineHeight: 26 * 1.2,
+    fontSize: typeSize.sheetTitle,
+    lineHeight: typeSize.sheetTitle * 1.2,
     fontWeight: '500',
     textAlign: 'center',
   },

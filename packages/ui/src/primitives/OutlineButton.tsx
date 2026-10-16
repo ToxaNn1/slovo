@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
-import { minTouchTarget, typeSize, withAlpha } from '../tokens';
+import { minTouchTarget, outlineButtonRadius, space, typeSize, withAlpha } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /** How far the largest text sizes of iOS may scale the label. */
@@ -54,11 +54,11 @@ const styles = StyleSheet.create({
   button: {
     minHeight: minTouchTarget,
     minWidth: minTouchTarget,
-    paddingHorizontal: 16,
+    paddingHorizontal: space[4],
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderRadius: 6,
+    borderRadius: outlineButtonRadius,
   },
   label: { fontSize: typeSize.body, fontWeight: '700' },
 });

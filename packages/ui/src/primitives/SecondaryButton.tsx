@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
-import { space, withAlpha } from '../tokens';
+import { space, typeSize, withAlpha } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /** How far the largest text sizes of iOS may scale the label, so the button never outgrows its screen. */
@@ -55,5 +55,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
   },
-  label: { fontSize: 15, fontWeight: '600' },
+  label: { fontSize: typeSize.body, fontWeight: '600' },
 });

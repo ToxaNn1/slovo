@@ -2,7 +2,7 @@ import type { LocalDate } from '@slovo/core';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { fill, useEdition } from '../providers/EditionProvider';
-import { overlineType, space } from '../tokens';
+import { badgePadding, overlineType, space } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /**
@@ -33,8 +33,8 @@ export function WordOfTheDayBadge({ day: { month, day } }: { day: LocalDate }) {
 const styles = StyleSheet.create({
   badge: {
     alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: badgePadding.horizontal,
+    paddingVertical: badgePadding.vertical,
     marginBottom: space[3],
   },
   label: overlineType,

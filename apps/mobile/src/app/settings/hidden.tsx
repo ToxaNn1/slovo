@@ -1,14 +1,15 @@
 import {
   BackLink,
   EntryRow,
-  OutlineButton,
   fill,
+  OutlineButton,
+  rowPadding,
   ScreenTitle,
   SectionLabel,
-  UndoToastProvider,
   space,
   STACK_AT_FONT_SCALE,
   typeSize,
+  UndoToastProvider,
   useEdition,
   useTokens,
 } from '@slovo/ui';
@@ -241,10 +242,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: space[3],
     marginHorizontal: space[6],
-    paddingVertical: 14,
+    paddingVertical: rowPadding,
     borderBottomWidth: 1,
   },
   // At the largest text sizes the button drops under the name instead of squeezing it.
   categoryRowStacked: { flexDirection: 'column', alignItems: 'flex-start' },
-  categoryName: { flexShrink: 1, fontSize: 20, fontWeight: '600' },
+  categoryName: { flexShrink: 1, fontSize: typeSize.rowLemma, fontWeight: '600' },
 });

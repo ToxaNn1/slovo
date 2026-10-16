@@ -7,6 +7,7 @@ import {
   ScreenTitle,
   SectionLabel,
   space,
+  typeSize,
   useEdition,
   useTokens,
 } from '@slovo/ui';
@@ -141,7 +142,7 @@ const styles = StyleSheet.create({
     paddingTop: space[2],
   },
   clear: { minHeight: 44, minWidth: 44, alignItems: 'flex-end', justifyContent: 'center' },
-  clearText: { fontSize: 17, fontWeight: '600' },
+  clearText: { fontSize: typeSize.blockHeading, fontWeight: '600' },
   header: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -152,6 +153,6 @@ const styles = StyleSheet.create({
     paddingTop: space[2],
     paddingBottom: space[2],
   },
-  limit: { fontSize: 14, fontWeight: '500' },
+  limit: { fontSize: typeSize.caption, fontWeight: '500' },
   day: { paddingHorizontal: space[6], paddingTop: space[5], paddingBottom: space[1] },
 });
