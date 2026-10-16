@@ -8,14 +8,20 @@ struct WidgetSnapshot: Decodable {
   static let readableFormat = 1
 
   let format: Int
+  /// Whether the reader finished the onboarding; until then the widget invites them to open the app.
+  let onboardingFinished: Bool
   let entries: [WidgetEntry]
   /// Усі слова: the ids of every Eligible Entry.
   let allEntries: [String]
+  /// Улюблене: the ids of the Favorites that are Eligible Entries, newest first.
+  let favorites: [String]
+  /// The Collections, newest first, empty ones included.
+  let collections: [WidgetCollection]
 
-  /// The Entries of Усі слова, in the snapshot's order.
-  var allEntriesInOrder: [WidgetEntry] {
+  /// The Entries of `ids`, in that order.
+  func entries(_ ids: [String]) -> [WidgetEntry] {
     let byId = Dictionary(entries.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
-    return allEntries.compactMap { byId[$0] }
+    return ids.compactMap { byId[$0] }
   }
 }
 
@@ -26,6 +32,62 @@ struct WidgetEntry: Decodable, Hashable {
   let headline: String
   /// A Word's primary Definition, or the non-standard form a Correction replaces.
   let secondLine: String
+}
+
+/// A Collection as its Widget Mode shows it.
+struct WidgetCollection: Decodable {
+  let id: String
+  /// The name the reader gave it.
+  let name: String
+  /// Its Eligible Entries, newest first; may be empty.
+  let entryIds: [String]
+}
+
+/// What one widget shows in its Widget Mode: the mode's overline over its
+/// Entries or, with none to show, the line of its empty or broken state.
+/// The text is the Edition's, from the extension's string table.
+struct ModeContent {
+  let overline: String
+  /// The Entries the mode shows, in the snapshot's order.
+  let entries: [WidgetEntry]
+  /// The empty or broken state, when the mode has no Entry to show.
+  let state: String?
+
+  init(of snapshot: WidgetSnapshot?, mode: ModeChoice, collectionId: String?) {
+    let collection = collectionId.flatMap { id in snapshot?.collections.first { $0.id == id } }
+    switch mode {
+    case .allEntries: overline = Self.text("allEntries")
+    case .favorites: overline = Self.text("favorites")
+    case .collection:
+      overline =
+        collection.map { Self.text("collection").replacingOccurrences(of: "{name}", with: $0.name) }
+        ?? Self.text("modeCollection")
+    }
+
+    guard let snapshot, snapshot.onboardingFinished else {
+      entries = []
+      state = Self.text("openApp")
+      return
+    }
+    let ids: [String]
+    let empty: String
+    switch mode {
+    case .allEntries: (ids, empty) = (snapshot.allEntries, "openApp")
+    case .favorites: (ids, empty) = (snapshot.favorites, "noFavorites")
+    case .collection:
+      if let collection {
+        (ids, empty) = (collection.entryIds, "emptyCollection")
+      } else {
+        (ids, empty) = ([], collectionId == nil ? "noCollection" : "deletedCollection")
+      }
+    }
+    entries = snapshot.entries(ids)
+    state = entries.isEmpty ? Self.text(empty) : nil
+  }
+
+  private static func text(_ key: String) -> String {
+    NSLocalizedString(key, comment: "")
+  }
 }
 
 /// Where the widget finds the Widget Snapshot. It only reads.

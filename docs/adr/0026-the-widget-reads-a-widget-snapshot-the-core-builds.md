@@ -28,3 +28,11 @@ The app writes the snapshot as `widget-snapshot.json` in the App Group's contain
 
 - **A native module of SLOVO's own that renames with one `rename(2)`**: rejected. It is more native code for every Edition to build, for a moment that the staged file already covers.
 - **The snapshot in the App Group's `UserDefaults`, through the Apple targets' storage module**: rejected. The snapshot is one file the contract test checks byte for byte against its schema, and `UserDefaults` is meant for small values, not a document of hundreds of Entries.
+
+## Amendment: each widget chooses its Widget Mode (0.6)
+
+The Widget Mode lives in iOS's widget configuration (the iOS 17 App Intents configuration), not in the user state, so each widget on the home screen keeps its own and the app stores nothing. The mode parameter offers Улюблене, Колекція and Усі слова, Усі слова by default. The Collection parameter lists the snapshot's Collections and is keyed by Collection id. The widget never trusts a name it stored: each timeline looks the id up in the latest snapshot, so a renamed Collection shows its new name, and an id the snapshot no longer holds stays chosen, so the widget can say its Collection was deleted instead of quietly falling back to another mode.
+
+The widget picks the mode's ids and the empty or broken state from the snapshot; which Entries a mode may show is still the Core's. No snapshot yet, or the onboarding unfinished, shows «Відкрийте SLOVO»; Улюблене with no Entry, an empty Collection, a deleted Collection and Колекція with no Collection chosen each say so. These states wait for the app's next reload rather than asking WidgetKit for another timeline. A tap on a state opens the app's root link, which is the Feed.
+
+All the text is the Edition's `widget` strings, written into the extension's string table: the mode names and both parameters' titles, the overline of each mode («КОЛЕКЦІЯ · {name}» takes the Collection's name, which the widget fills in) and the states. The overline is drawn in capitals, so a Collection's name follows the design.
