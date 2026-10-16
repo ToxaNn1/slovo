@@ -79,3 +79,10 @@ export {
   type Word,
   type WordInput,
 } from './word';
+export {
+  serializeWidgetSnapshot,
+  WIDGET_SNAPSHOT_FORMAT,
+  WidgetSnapshotSchema,
+  type WidgetEntry,
+  type WidgetSnapshot,
+} from './widget-snapshot';
