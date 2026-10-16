@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
     paddingTop: space[2],
     paddingBottom: 14,
   },
-  title: { flexShrink: 1 },
+  title: { flexGrow: 1, flexShrink: 1 },
   count: { fontSize: 22, fontWeight: '500' },
   footer: {
     marginHorizontal: space[6],
