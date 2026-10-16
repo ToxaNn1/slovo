@@ -5,14 +5,14 @@ import {
   type WidgetSnapshot,
 } from '@slovo/contracts';
 
-import type { Collections } from './collections';
-import type { EligibleOfKind, Entries } from './entries';
-import { buildEntryRow } from './entry-row';
-import type { Favorites } from './favorites';
-import type { EntryFeedCard } from './feed';
+import type { Collections } from './saved/collections';
+import type { EligibleOfKind, Entries } from './entries/entries';
+import { buildEntryRow } from './entries/entry-row';
+import type { Favorites } from './saved/favorites';
+import type { EntryFeedCard } from './feed/feed';
 import type { Onboarding } from './onboarding';
 import type { Clock } from './ports';
-import { withoutStress } from './stress';
+import { withoutStress } from './entries/stress';
 
 /**
  * What the home-screen widget shows, decided by the Core, so the widget holds

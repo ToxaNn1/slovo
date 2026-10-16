@@ -1,13 +1,13 @@
-import type { Entries } from './entries';
+import type { Entries } from './entries/entries';
 import { createSubscribers } from './in-turn';
 import { formatTimeOfDay } from './local-date';
-import type { MorningNotification } from './notification-plan';
-import type { Notifications } from './notifications';
+import type { MorningNotification } from './notifications/notification-plan';
+import type { Notifications } from './notifications/notifications';
 import type { Clock } from './ports';
-import type { UserState } from './user-state';
-import { userStateRecords } from './user-state-schema';
-import { buildWordCard, type WordCardModel } from './word-card';
-import type { WordOfTheDay } from './word-of-the-day';
+import type { UserState } from './user-state/user-state';
+import { userStateRecords } from './user-state/user-state-schema';
+import { buildWordCard, type WordCardModel } from './entries/word-card';
+import type { WordOfTheDay } from './feed/word-of-the-day';
 
 /**
  * The steps of the onboarding, in order: the one place that has them, so a

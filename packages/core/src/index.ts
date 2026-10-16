@@ -21,19 +21,19 @@ export {
   type CollectionNameRefusal,
   type CollectionResult,
   type Collections,
-} from './collections';
-export { buildCorrectionCard, type CorrectionCardModel } from './correction-card';
-export { openCycle, type Cycle, type CycleChange } from './cycle';
-export { coreDecor, InvalidDecorError, loadDecor, type Decor } from './decor';
+} from './saved/collections';
+export { buildCorrectionCard, type CorrectionCardModel } from './entries/correction-card';
+export { openCycle, type Cycle, type CycleChange } from './feed/cycle';
+export { coreDecor, InvalidDecorError, loadDecor, type Decor } from './edition/decor';
 export {
   createEntries,
   type EligibleOfKind,
   type Entries,
   type EntryIds,
   type KindRefusal,
-} from './entries';
-export { type EntryRowModel } from './entry-row';
-export { type Favorite, type Favorites } from './favorites';
+} from './entries/entries';
+export { type EntryRowModel } from './entries/entry-row';
+export { type Favorite, type Favorites } from './saved/favorites';
 export {
   buildEntryCard,
   CORRECTION_EVERY,
@@ -45,7 +45,7 @@ export {
   type Feed,
   type FeedCard,
   type WordFeedCard,
-} from './feed';
+} from './feed/feed';
 export {
   GAME_LIVES,
   GAME_ROUNDS,
@@ -65,18 +65,28 @@ export {
   type RoundInput,
   type RoundOption,
   type TextRange,
-} from './game';
+} from './game/game';
 export {
   createGameHaptics,
   LIFE_LOST_DELAY,
   WIN_SECOND_SUCCESS,
   type GameHaptics,
-} from './game-haptics';
-export { createHaptics, type HapticEngine, type Haptics } from './haptics';
-export { type HiddenEntries, type HiddenEntry } from './hidden-entries';
-export { type UnhideResult, type HideResult, type HideTarget, type HidingChange } from './hiding';
-export { HISTORY_CAP, type History, type HistoryEntry } from './history';
-export { groupByLocalDay, relativeTimeOf, type DayGroup, type RelativeTime } from './history-time';
+} from './game/game-haptics';
+export { createHaptics, type HapticEngine, type Haptics } from './game/haptics';
+export { type HiddenEntries, type HiddenEntry } from './hidden/hidden-entries';
+export {
+  type UnhideResult,
+  type HideResult,
+  type HideTarget,
+  type HidingChange,
+} from './hidden/hiding';
+export { HISTORY_CAP, type History, type HistoryEntry } from './saved/history';
+export {
+  groupByLocalDay,
+  relativeTimeOf,
+  type DayGroup,
+  type RelativeTime,
+} from './saved/history-time';
 export {
   formatTimeOfDay,
   localDayOf,
@@ -94,7 +104,7 @@ export {
   type Edition,
   type DefaultMix,
   type UserSettingDefaults,
-} from './edition';
+} from './edition/edition';
 export type {
   Category,
   DistractorRule,
@@ -110,19 +120,23 @@ export {
   type Settings,
   type UserSettings,
 } from './settings';
-export { renderStress } from './stress';
-export { createSwipeHint, type SwipeHint } from './swipe-hint';
+export { renderStress } from './entries/stress';
+export { createSwipeHint, type SwipeHint } from './feed/swipe-hint';
 export { type Widget } from './widget';
 export {
   buildWordCard,
   type LinkedCorrection,
   type WordCardDetails,
   type WordCardModel,
-} from './word-card';
-export { openWordOfTheDay, type WordOfTheDay, type WordOfTheDayChoice } from './word-of-the-day';
-export { createMemoryContentPort } from './memory-content';
+} from './entries/word-card';
+export {
+  openWordOfTheDay,
+  type WordOfTheDay,
+  type WordOfTheDayChoice,
+} from './feed/word-of-the-day';
+export { createMemoryContentPort } from './fakes/memory-content';
 export { type Progress, type ProgressState } from './progress';
-export { type Mix, type MixEdition, type MixState } from './mix';
+export { type Mix, type MixEdition, type MixState } from './entries/mix';
 export {
   type Onboarding,
   type OnboardingState,
@@ -132,14 +146,17 @@ export {
 export {
   createFakeNotificationScheduler,
   type FakeNotificationScheduler,
-} from './fake-notification-scheduler';
-export { NOTIFICATION_BODY_LENGTH, type NotificationScheduling } from './notification-plan';
+} from './fakes/fake-notification-scheduler';
+export {
+  NOTIFICATION_BODY_LENGTH,
+  type NotificationScheduling,
+} from './notifications/notification-plan';
 export {
   type NotificationTimeRefusal,
   type Notifications,
   type NotificationsEdition,
   type NotificationsState,
-} from './notifications';
+} from './notifications/notifications';
 export {
   systemClock,
   systemRandom,
@@ -154,11 +171,11 @@ export {
   type UserStateChanges,
   type UserStatePort,
 } from './ports';
-export { userStateRecords } from './user-state-schema';
+export { userStateRecords } from './user-state/user-state-schema';
 export {
   createMemoryUserStatePort,
   openUserState,
   UserStateTooNewError,
   type UserState,
-} from './user-state';
-export type { UserStateMigration } from './user-state-migration';
+} from './user-state/user-state';
+export type { UserStateMigration } from './user-state/user-state-migration';
