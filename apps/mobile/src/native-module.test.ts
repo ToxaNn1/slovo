@@ -5,6 +5,7 @@ import { createNativeModules, type NativeModuleProbes } from './native-module';
 const installed: NativeModuleProbes = {
   notifications: () => true,
   timePicker: () => true,
+  widget: () => true,
 };
 
 describe('the native modules of the installed dev client', () => {

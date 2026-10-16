@@ -15,6 +15,7 @@ export {
   ThemeSchema,
   TimeOfDaySchema,
   UserSettingDefaultsConfigSchema,
+  editionAppGroup,
   type Category,
   type DistractorRule,
   type EditionConfig,

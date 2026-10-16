@@ -3,8 +3,10 @@ import { AppState } from 'react-native';
 
 import { useModule } from './composition';
 import { deviceClock } from './device-clock';
+import { deviceWidget } from './device-widget';
 import { createForeground } from './foreground';
 import { reportForeground } from './foreground-reports';
+import { writeWidgetSnapshots } from './widget-snapshot';
 
 /** The shell's one source of the foreground, for this adapter and the Feed alike. */
 const foreground = createForeground(AppState);
@@ -18,7 +20,9 @@ export function useInForeground(): boolean {
  * The lifecycle adapter: it tells the composition the app is in the
  * foreground when the app comes back from the background, and on a timer
  * when the next local day starts while the app is open. The composition
- * decides what changed (a new local day, the permission). Draws nothing.
+ * decides what changed (a new local day, the permission). It also writes the
+ * Widget Snapshot once the composition is open and each time the app leaves
+ * the foreground. Draws nothing.
  */
 export function Lifecycle() {
   const composition = useModule((open) => open);
@@ -34,6 +38,17 @@ export function Lifecycle() {
       onForeground: (listener) =>
         foreground.subscribe(() => {
           if (foreground.active()) listener();
+        }),
+    });
+  }, [composition]);
+  useEffect(() => {
+    if (composition === undefined) return;
+    return writeWidgetSnapshots({
+      device: deviceWidget,
+      snapshot: () => composition.widget.snapshot(),
+      onBackground: (listener) =>
+        foreground.subscribe(() => {
+          if (!foreground.active()) listener();
         }),
     });
   }, [composition]);
