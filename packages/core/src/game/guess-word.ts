@@ -1,6 +1,6 @@
 import type { DistractorRule, Word } from '@slovo/contracts';
 
-import { ROUND_OPTIONS, shuffled, type GameMode, type RoundOption } from './game';
+import { ROUND_OPTIONS, shuffled, type GameMode, type RoundOption } from './game-mode';
 import type { Random } from '../ports';
 import { renderStress, stressedVowelsOf } from '../entries/stress';
 

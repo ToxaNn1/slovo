@@ -1,103 +1,27 @@
-import type { Entry, EntryKind, Example, LanguageTraits } from '@slovo/contracts';
+import type { EntryKind } from '@slovo/contracts';
 
-import type { Edition } from '../edition/edition';
-import type { EligibleOfKind, Entries, KindRefusal } from '../entries/entries';
+import type { Entries } from '../entries/entries';
 import type { History } from '../saved/history';
 import { createInTurn, createSubscribers } from '../in-turn';
 import type { Random, Schedule } from '../ports';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
-
-/** How many Rounds a Game has, in every Game Mode. */
-export const GAME_ROUNDS = 15;
+import type {
+  AnswerSheet,
+  GameEdition,
+  GameMode,
+  GameModeRefusal,
+  RoundContent,
+  RoundOption,
+  TextRange,
+} from './game-mode';
+import { createRoundPlanner, GAME_ROUNDS, type PlannedRound, type RoundPlan } from './round-plan';
 
 /** How many Lives a Game starts with, in every Game Mode. */
 export const GAME_LIVES = 5;
 
-/** How many options a Round offers, exactly one of them correct. */
-export const ROUND_OPTIONS = 4;
-
 /** How long the Game waits before each new try of a failed planning of its offers, in milliseconds. */
 const OFFER_PLANNING_RETRY_DELAYS: readonly number[] = [1_000, 2_000, 4_000];
-
-/** What the Game needs to know of the Edition: its Feature Switches and its Distractor rule. */
-export type GameEdition = Pick<Edition, 'isFeatureEnabled'> & {
-  readonly languageTraits: Pick<LanguageTraits, 'distractorRule'>;
-};
-
-/** One option of a Round, or the answer its sheet names. */
-export interface RoundOption {
-  /** The text as shown, such as a Lemma with its Stress marks. */
-  readonly text: string;
-  /** The stressed vowels of the text, in order, which VoiceOver names; empty without Stress. */
-  readonly stressedVowels: readonly string[];
-}
-
-/**
- * What the sheet after an answer shows: the right answer, and an Example of
- * it or an explanation of why it is right, if any.
- */
-export interface AnswerSheet {
-  readonly answer: RoundOption;
-  readonly example: Example | undefined;
-  /** Why the answer is right, such as a Correction's explanation. */
-  readonly explanation?: string;
-}
-
-/** A stretch of a text, from the character at `start` up to the one at `end`, which it leaves out. */
-export interface TextRange {
-  readonly start: number;
-  readonly end: number;
-}
-
-/** A Round as a Game Mode builds it: one prompt with four options, exactly one correct. */
-export interface RoundContent {
-  /** What the Round asks, such as a Definition. */
-  readonly prompt: string;
-  /** The part of the prompt to mark, such as a non-standard form in a sentence; nothing to mark when left out. */
-  readonly highlight?: TextRange;
-  /** The four options, in the order shown. */
-  readonly options: readonly RoundOption[];
-  /** The place of the right option among them. */
-  readonly correct: number;
-  readonly sheet: AnswerSheet;
-}
-
-/** What a Game Mode builds a Round from. */
-export interface RoundInput {
-  /** The Entry the Round asks about, of the mode's kind. */
-  readonly answer: Entry;
-  /** Every eligible Entry of the mode's kind, the answer among them: where Distractors come from. */
-  readonly eligible: readonly Entry[];
-  /** The source of every shuffle. */
-  readonly random: Random;
-  readonly edition: GameEdition;
-}
-
-/**
- * A Game Mode, registered through the Core's Extension Point (ADR 0006): the
- * Core's own modes and those an Edition adds are values of this one shape.
- */
-export interface GameMode {
-  /** Unique among the modes, such as `guess-word`. */
-  readonly id: string;
-  /** The kind of Entry its Rounds ask about. */
-  readonly entryKind: EntryKind;
-  /** Whether the Edition turns the mode on; a mode that is off is never on offer. */
-  isOn(edition: GameEdition): boolean;
-  /**
-   * The Round that asks about the answer, its options shuffled by the random
-   * source; nothing when no fair Round can be made of the eligible Entries.
-   */
-  buildRound(input: RoundInput): RoundContent | undefined;
-}
-
-/**
- * Why a Game Mode can't start: too few eligible Entries of its kind to make 15
- * fair Rounds of, or why no Entry of its kind is eligible, such as Corrections
- * out of the Mix.
- */
-export type GameModeRefusal = 'too-few-entries' | KindRefusal;
 
 /**
  * A Game Mode on offer, with what its card needs from the Core: the mode's
@@ -206,25 +130,6 @@ export interface Game {
   leave(): void;
 }
 
-/** The items in an order drawn from the random source. */
-export function shuffled<T>(items: readonly T[], random: Random): T[] {
-  const order = [...items];
-  for (let last = order.length - 1; last > 0; last -= 1) {
-    const other = Math.floor(random.next() * (last + 1));
-    [order[last], order[other]] = [order[other] as T, order[last] as T];
-  }
-  return order;
-}
-
-/** A Round as a Game Mode built it, checked to hold four options with one of them right. */
-function checkedRound(mode: GameMode, round: RoundContent): RoundContent {
-  const { options, correct } = round;
-  if (options.length !== ROUND_OPTIONS || options[correct] === undefined) {
-    throw new Error(`The Game Mode «${mode.id}» built a Round without four options and one right`);
-  }
-  return round;
-}
-
 /** Whether two offers say the same, field by field. */
 const sameOffer = (one: GameModeOffer, other: GameModeOffer | undefined) =>
   other !== undefined &&
@@ -235,16 +140,6 @@ const sameOffers = (one: readonly GameModeOffer[], other: readonly GameModeOffer
   one.length === other.length && one.every((offer, index) => sameOffer(offer, other[index]));
 
 const { gameBest } = userStateRecords;
-
-/** A Round of the Game in play, with the Entry it asks about. */
-interface PlannedRound {
-  readonly answerId: string;
-  readonly content: RoundContent;
-}
-
-/** The Rounds a Game Mode makes, or why it can't make them. */
-type RoundPlan =
-  { readonly rounds: readonly PlannedRound[] } | { readonly refusal: GameModeRefusal };
 
 /** The offer of a Game Mode: it can start when it can make its Rounds. */
 const offerOf = ({ id, entryKind }: GameMode, plan: RoundPlan): GameModeOffer =>
@@ -325,44 +220,8 @@ export async function openGame({
     change({ ...state, current });
   };
 
-  /**
-   * `count` Rounds, each asking about another eligible Entry than the ones
-   * `asked`: from the pool, the eligible Entries in History when there are at
-   * least 15, else every eligible one; and should the pool make too few fair
-   * Rounds, from the other eligible Entries. Else why the mode can't make
-   * them. The one place that decides whether a mode can start: its offer and
-   * a start both come from it, so they always agree.
-   */
-  function planRounds(
-    mode: GameMode,
-    ofKind: EligibleOfKind,
-    count = GAME_ROUNDS,
-    asked: ReadonlySet<string> = new Set(),
-  ): RoundPlan {
-    if ('refusal' in ofKind) return ofKind;
-    const eligible = ofKind.entries;
-    const met = new Set(history.list.map(({ entryId }) => entryId));
-    const inHistory = eligible.filter((entry) => met.has(entry.id));
-    const pool = new Set(inHistory.length >= GAME_ROUNDS ? inHistory : eligible);
-    const unasked = eligible.filter((entry) => !asked.has(entry.id));
-    const built: PlannedRound[] = [];
-    for (const answer of [
-      ...shuffled(
-        unasked.filter((entry) => pool.has(entry)),
-        random,
-      ),
-      ...shuffled(
-        unasked.filter((entry) => !pool.has(entry)),
-        random,
-      ),
-    ]) {
-      if (built.length === count) break;
-      const round = mode.buildRound({ answer, eligible, random, edition });
-      if (round !== undefined)
-        built.push({ answerId: answer.id, content: checkedRound(mode, round) });
-    }
-    return built.length === count ? { rounds: built } : { refusal: 'too-few-entries' };
-  }
+  /** The one place that decides whether a mode can start, see `createRoundPlanner`. */
+  const planRounds = createRoundPlanner({ history, random, edition });
 
   /**
    * Plans the modes on offer, once the composition is open and again after
