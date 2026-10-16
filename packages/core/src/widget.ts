@@ -9,7 +9,7 @@ import type { Collections } from './saved/collections';
 import type { EligibleOfKind, Entries } from './entries/entries';
 import { buildEntryRow } from './entries/entry-row';
 import type { Favorites } from './saved/favorites';
-import type { EntryFeedCard } from './feed/feed';
+import type { EntryFeedCard } from './feed/feed-card';
 import type { Onboarding } from './onboarding';
 import type { Clock } from './ports';
 import { withoutStress } from './entries/stress';
