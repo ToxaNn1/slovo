@@ -24,10 +24,10 @@ import { createShareFormatMemory } from './share-card';
 const shareFormat = createShareFormatMemory();
 
 /**
- * The action row of an Entry card, wherever the card appears: the Feed and
- * the Entry screen a list opens. Each action fills its own slot. Share is there
- * only when the binary can capture the Share Card. Its
- * screen gives it an `UndoToastProvider` for the toast after a hide.
+ * The action row of an Entry card, wherever the card appears: the Feed and the
+ * Entry screen a list opens. Each action fills its own slot. Share is there
+ * only when the binary can capture the Share Card. Its screen gives it an
+ * `UndoToastProvider` for the toast after a hide.
  */
 export function EntryActions({ card }: { card: EntryFeedCard }) {
   const entryId = entryIdOf(card);

@@ -42,13 +42,13 @@ export type ShareSheetOutcome = 'closed' | 'failed';
 /**
  * The share sheet: the title, a live preview of the Share Card, the format
  * control (Story / Square), which switches the preview at once, and
- * «Поділитися», which hands the shell the card laid out off screen at the
- * size of its format's image (`shareImage`, in points at the screen's scale)
- * to capture and share. It opens in `initialFormat` and reports each format
- * the reader picks, so the shell can open it in the last one. Once the system share sheet closes, shared
- * or cancelled, the sheet closes too; when sharing fails, a short toast says
- * so and the sheet stays open to try again. A tap on the scrim, a drag down
- * or VoiceOver's escape closes it without sharing. Needs a
+ * «Поділитися», which hands the shell the card laid out off screen at the size
+ * of its format's image (`shareImage`, in points at the screen's scale) to
+ * capture and share. It opens in `initialFormat` and reports each format the
+ * reader picks, so the shell can open it in the last one. Once the system share
+ * sheet closes, shared or cancelled, the sheet closes too; when sharing fails,
+ * a short toast says so and the sheet stays open to try again. A tap on the
+ * scrim, a drag down or VoiceOver's escape closes it without sharing. Needs a
  * `SafeAreaProvider` above it.
  */
 export function ShareSheet({
@@ -216,7 +216,11 @@ const styles = StyleSheet.create({
   content: { gap: space[4], paddingBottom: space[4] },
   preview: { alignSelf: 'center', overflow: 'hidden' },
   // Left of the screen: the card is never wider than its image in pixels.
-  offScreen: { position: 'absolute', top: 0, left: -shareImage.story.width },
+  offScreen: {
+    position: 'absolute',
+    top: 0,
+    left: -Math.max(shareImage.story.width, shareImage.square.width),
+  },
   toast: {
     position: 'absolute',
     left: space[3],

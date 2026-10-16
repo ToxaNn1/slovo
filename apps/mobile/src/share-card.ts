@@ -16,11 +16,12 @@ export interface ShareImagePorts {
 
 /**
  * Shares the Share Card of an Entry as an image: captures it as a PNG of its
- * format (1080×1920 for a Story, 1080×1080 for a Square), keeps the file in the cache directory under the Entry's name, so a
- * new share of the same Entry replaces it, and opens the system share sheet
- * with the file. Resolves to `closed` once the system share sheet closes,
- * shared or cancelled alike, or to `failed` when a step fails, so the reader
- * can try again. Writes no user state.
+ * format (1080×1920 for a Story, 1080×1080 for a Square), keeps the file in the
+ * cache directory under the Entry's name, so a new share of the same Entry
+ * replaces it, and opens the system share sheet with the file. Resolves to
+ * `closed` once the system share sheet closes, shared or cancelled alike, or to
+ * `failed` when a step fails, so the reader can try again. Writes no user
+ * state.
  */
 export async function shareCardImage(
   ports: ShareImagePorts,

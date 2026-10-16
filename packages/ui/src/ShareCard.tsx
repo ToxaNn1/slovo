@@ -68,7 +68,7 @@ const HEADLINE_LINE_HEIGHT = 1.15;
 const NON_STANDARD_LINE_HEIGHT = 1.2;
 const DEFINITION_LINE_HEIGHT = 1.45;
 const FOOTER_LINE_HEIGHT = 1.4;
-/** The strike through the non-standard form, in the accent colour, as on the Correction card. */
+/** The strike through the non-standard form, in the accent colour at the design's 50%. */
 const STRIKE_ALPHA = 0.5;
 
 /** Text that doesn't fit shrinks by this share of its size at a time. */
@@ -112,17 +112,17 @@ export interface ShareCardContent {
 /**
  * The Share Card of an Entry in a format, `width` points wide, in the app's
  * current Theme, with no app chrome, over Decor slot 1 (designs
- * `share-card-word-story-dark` and `share-card-correction-square-light`).
- * A Word's shows the Lemma with Stress in the word family, the part of
- * speech with gender and registers, and the primary Definition; a
- * Correction's shows «Так часто кажуть» over the non-standard form struck
- * through, the divider with the Correction's arrow and «Українською краще»
- * over the main standard equivalent. The overline (today's Word of the Day, the Category or the
- * Correction Type) tops the Story and starts the Square's footer; the
- * watermark ends both. The card is laid out at its own size, so it is sharp
- * at any size, and its type keeps the design's proportions whatever the
- * reader's text size. A headline too wide for its line shrinks to a floor and
- * then wraps; text too tall for the card shrinks until it fits; nothing is cut.
+ * `share-card-word-story-dark` and `share-card-correction-square-light`). A
+ * Word's shows the Lemma with Stress in the word family, the part of speech
+ * with gender and registers, and the primary Definition; a Correction's shows
+ * «Так часто кажуть» over the non-standard form struck through, the divider
+ * with the Correction's arrow and «Українською краще» over the main standard
+ * equivalent. The overline (today's Word of the Day, the Category or the
+ * Correction Type) tops the Story and starts the Square's footer; the watermark
+ * ends both. The card is laid out at its own size, so it is sharp at any size,
+ * and its type keeps the design's proportions whatever the reader's text size.
+ * A headline too wide for its line shrinks to a floor and then wraps; text too
+ * tall for the card shrinks until it fits; nothing is cut.
  */
 export function ShareCard(props: ShareCardContent & { format: ShareCardFormat; width: number }) {
   const id = props.card.kind === 'word' ? props.card.wordId : props.card.correctionId;
@@ -246,44 +246,69 @@ function FittedCard({
           {blocks}
         </View>
       </View>
-      {format === 'story' ? (
+      <CardEnd format={format} unit={unit} overline={overline} watermark={watermark} />
+    </View>
+  );
+}
+
+/**
+ * The end of the card: the Story's watermark centred over its bottom edge, or
+ * the Square's footer with the overline on the left and the watermark on the
+ * right. Its type keeps the design's size whatever the text above shrinks to.
+ */
+function CardEnd({
+  format,
+  unit,
+  overline,
+  watermark,
+}: {
+  format: ShareCardFormat;
+  /** The design's points in the card's points. */
+  unit: number;
+  overline: string | undefined;
+  watermark: string;
+}) {
+  const { colors, fontFamilies } = useTokens();
+  const { gap, type } = LAYOUT[format];
+  const size = type.watermark * unit;
+  const ink = { color: colors.muted, fontFamily: fontFamilies.ui };
+  if (format === 'story') {
+    return (
+      <Text
+        allowFontScaling={false}
+        style={[
+          styles.storyWatermark,
+          ink,
+          {
+            bottom: STORY_WATERMARK_BOTTOM * unit,
+            fontSize: size,
+            letterSpacing: size * STORY_WATERMARK_TRACKING,
+          },
+        ]}
+      >
+        {watermark}
+      </Text>
+    );
+  }
+  return (
+    <View style={[styles.footer, { marginTop: gap * unit, gap: gap * unit }]}>
+      {[overline ?? '', watermark].map((part, index) => (
         <Text
+          key={index}
           allowFontScaling={false}
           style={[
-            styles.storyWatermark,
+            styles.footerText,
+            ink,
             {
-              bottom: STORY_WATERMARK_BOTTOM * unit,
-              fontSize: layout.type.watermark * unit,
-              letterSpacing: layout.type.watermark * unit * STORY_WATERMARK_TRACKING,
-              color: colors.muted,
-              fontFamily: fontFamilies.ui,
+              fontSize: size,
+              lineHeight: size * FOOTER_LINE_HEIGHT,
+              letterSpacing: size * FOOTER_TRACKING,
             },
           ]}
         >
-          {watermark}
+          {part}
         </Text>
-      ) : (
-        <View style={[styles.footer, { marginTop: layout.gap * unit, gap: layout.gap * unit }]}>
-          {[overline ?? '', watermark].map((part, index) => (
-            <Text
-              key={index}
-              allowFontScaling={false}
-              style={[
-                styles.footerText,
-                {
-                  fontSize: layout.type.watermark * unit,
-                  lineHeight: layout.type.watermark * unit * FOOTER_LINE_HEIGHT,
-                  letterSpacing: layout.type.watermark * unit * FOOTER_TRACKING,
-                  color: colors.muted,
-                  fontFamily: fontFamilies.ui,
-                },
-              ]}
-            >
-              {part}
-            </Text>
-          ))}
-        </View>
-      )}
+      ))}
     </View>
   );
 }
