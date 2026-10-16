@@ -7,12 +7,20 @@ appId: ${APP_ID || 'app.slovo.uk'}
 ---
 - runFlow:
     file: ../open-widget-guide.yaml
-- assertVisible:
-    id: widget-guide-step-1
-- assertVisible:
-    id: widget-guide-step-2
-- assertVisible:
-    id: widget-guide-step-3
+# The steps may be under the fold of a small screen or at a large text size.
+- scrollUntilVisible:
+    element:
+      id: widget-guide-step-1
+- scrollUntilVisible:
+    element:
+      id: widget-guide-step-2
+- scrollUntilVisible:
+    element:
+      id: widget-guide-step-3
+- scrollUntilVisible:
+    element:
+      id: widget-guide-back
+    direction: UP
 - takeScreenshot: widget-guide
 - tapOn:
     id: widget-guide-back
