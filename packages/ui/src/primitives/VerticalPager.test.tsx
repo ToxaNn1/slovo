@@ -1,5 +1,5 @@
 import type { Haptics } from '@slovo/core';
-import { HapticsProvider, VerticalPager } from '@slovo/ui';
+import { HapticsProvider, usePageTurnActions, VerticalPager } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { Text } from 'react-native';
@@ -9,6 +9,13 @@ import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-han
 const PAGES = ['First', 'Second', 'Third'];
 /** The pager's height, in points. */
 const HEIGHT = 800;
+/** The names of the VoiceOver actions that turn the page. */
+const TURN_LABELS = { next: 'Next page', previous: 'Previous page' };
+
+/** A page whose text offers the page-turn actions to VoiceOver. */
+function TurnablePage({ page }: { page: string }) {
+  return <Text {...usePageTurnActions()}>{page}</Text>;
+}
 
 async function renderPager({
   initialIndex = 0,
@@ -34,7 +41,8 @@ async function renderPager({
         items={PAGES}
         initialIndex={initialIndex}
         onIndexChange={onIndexChange}
-        renderPage={(page) => <Text>{page}</Text>}
+        renderPage={(page) => <TurnablePage page={page} />}
+        turnActionLabels={TURN_LABELS}
       />
     </HapticsProvider>,
   );
@@ -153,5 +161,30 @@ describe('VerticalPager', () => {
 
     expect(onIndexChange).not.toHaveBeenCalled();
     expect(screen.getByText('Third')).toBeTruthy();
+  });
+
+  it('turns the page with the VoiceOver actions of the current page', async () => {
+    const onIndexChange = jest.fn();
+    await renderPager({ onIndexChange });
+    expect(screen.getByText('First').props['accessibilityActions']).toEqual([
+      { name: 'next', label: TURN_LABELS.next },
+    ]);
+
+    await fireEvent(screen.getByText('First'), 'accessibilityAction', {
+      nativeEvent: { actionName: 'next' },
+    });
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(SWIPE_MS);
+    });
+
+    expect(onIndexChange).toHaveBeenCalledWith(1);
+    expect(screen.getByText('Second').props['accessibilityActions']).toEqual([
+      { name: 'next', label: TURN_LABELS.next },
+      { name: 'previous', label: TURN_LABELS.previous },
+    ]);
+    // The page left behind offers none.
+    expect(
+      screen.getByText('First', { includeHiddenElements: true }).props['accessibilityActions'],
+    ).toBeUndefined();
   });
 });

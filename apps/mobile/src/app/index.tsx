@@ -12,7 +12,7 @@ import {
   VerticalPager,
   type VerticalPagerHandle,
 } from '@slovo/ui';
-import { useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -25,6 +25,7 @@ import { StatsPillAndSheet } from '../progress';
 import { useSwipeHint } from '../feed/swipe-hint';
 
 const { feed: feedStrings } = editionStrings;
+const turnActionLabels = { next: feedStrings.nextEntry, previous: feedStrings.previousEntry };
 
 /**
  * Home is the Feed: a vertical stream of Entry cards, one per screen. Its undo
@@ -57,6 +58,8 @@ function FeedScreen() {
   const cards = ready?.cards;
   const readerPosition = ready?.readerPosition;
   const onCardChange = ready?.onCardChange;
+  const openLinkedCorrection = ready?.openLinkedCorrection;
+  const { dismiss: dismissSwipeHint } = swipeHint;
   // A hide or its undo drops or puts back cards, and the reader's card moves
   // with them: the pager shows it at once. When the Feed has no card to put
   // after a hidden one, the pager stays on its page.
@@ -66,6 +69,36 @@ function FeedScreen() {
     pager.current?.showPage(position);
     onCardChange?.(position);
   }, [cards, readerPosition, onCardChange]);
+
+  // Kept from render to render: a swipe re-renders the pager, and its pages
+  // re-render only when their card changes.
+  const openCorrection = useCallback(
+    (position: number, correctionId: string) => {
+      openLinkedCorrection?.(position, correctionId).then(setTurnTo, (error: unknown) => {
+        console.error('Could not open the linked Correction', error);
+      });
+    },
+    [openLinkedCorrection],
+  );
+  const renderPage = useCallback(
+    (card: FeedCard, position: number) => (
+      <FeedPage
+        // A card that takes the place of a hidden one starts afresh, scrolled to its top.
+        key={entryIdOf(card) ?? card.kind}
+        card={card}
+        position={position}
+        onOpenCorrection={openCorrection}
+      />
+    ),
+    [openCorrection],
+  );
+  const onIndexChange = useCallback(
+    (position: number) => {
+      onCardChange?.(position);
+      dismissSwipeHint();
+    },
+    [onCardChange, dismissSwipeHint],
+  );
 
   if (feed.status === 'loading') return <FeedLoadingScreen />;
   if (feed.status === 'failed') return <LoadFailed onRetry={feed.retry} />;
@@ -80,26 +113,9 @@ function FeedScreen() {
         testID="feed"
         items={feed.cards}
         initialIndex={feed.startPosition}
-        renderPage={(card, position) => (
-          <FeedPage
-            // A card that takes the place of a hidden one starts afresh, scrolled to its top.
-            key={entryIdOf(card) ?? card.kind}
-            card={card}
-            position={position}
-            onOpenCorrection={(correctionId) => {
-              feed
-                .openLinkedCorrection(position, correctionId)
-                .then(setTurnTo, (error: unknown) => {
-                  console.error('Could not open the linked Correction', error);
-                });
-            }}
-          />
-        )}
-        onIndexChange={(position) => {
-          feed.onCardChange(position);
-          swipeHint.dismiss();
-        }}
-        turnActionLabels={{ next: feedStrings.nextEntry, previous: feedStrings.previousEntry }}
+        renderPage={renderPage}
+        onIndexChange={onIndexChange}
+        turnActionLabels={turnActionLabels}
       />
       {/* The top row stays put over the cards, like the background. */}
       <View pointerEvents="box-none" style={[styles.topRow, { top }]}>
@@ -116,14 +132,15 @@ function FeedScreen() {
   );
 }
 
-function FeedPage({
+const FeedPage = memo(function FeedPage({
   card,
   position,
   onOpenCorrection,
 }: {
   card: FeedCard;
   position: number;
-  onOpenCorrection: (correctionId: string) => void;
+  /** Opens the Correction that the Word card at `position` links. */
+  onOpenCorrection: (position: number, correctionId: string) => void;
 }) {
   const { top } = useSafeAreaInsets();
   if (card.kind === 'end-of-cycle')
@@ -141,13 +158,15 @@ function FeedPage({
       <PagerScrollView contentContainerStyle={styles.content}>
         <EntryCard
           card={card}
-          onOpenCorrection={onOpenCorrection}
+          onOpenCorrection={(correctionId) => {
+            onOpenCorrection(position, correctionId);
+          }}
           actions={<EntryActions card={card} />}
         />
       </PagerScrollView>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },

@@ -11,7 +11,7 @@ import {
   useTokens,
 } from '@slovo/ui';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 import { Alert, FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -45,83 +45,54 @@ export default function CollectionsScreen() {
   const openScreen = useOpenScreen();
   const [editing, setEditing] = useState<Editing>();
 
+  // Kept from render to render, so the rows re-render only when the list or the row being renamed changes.
+  const openCollection = useCallback(
+    (id: string) => {
+      openScreen(`/saved/collections/${id}`);
+    },
+    [openScreen],
+  );
+  const startRename = useCallback((id: string) => {
+    setEditing({ kind: 'rename', id });
+  }, []);
+  const stopEditing = useCallback(() => {
+    setEditing(undefined);
+  }, []);
+  const confirmDelete = useCallback(
+    ({ id, name }: CollectionRowModel) => {
+      const { confirmDelete: texts } = strings;
+      Alert.alert(fill(texts.title, { name }), texts.message, [
+        { text: texts.cancel, style: 'cancel' },
+        {
+          text: texts.confirm,
+          style: 'destructive',
+          onPress: () => {
+            remove(id);
+          },
+        },
+      ]);
+    },
+    [remove],
+  );
+  /** Keeps the name the field gives; closes the field, or says why the name is refused. */
+  const keepName = useCallback(
+    async (keep: () => Promise<CollectionResult | undefined>): Promise<string | undefined> => {
+      const result = await keep();
+      if (result === undefined || result.ok) {
+        setEditing(undefined);
+        return undefined;
+      }
+      return refusalText(collectionStrings.sheet.refusal, result.reason);
+    },
+    [],
+  );
+  const keepRename = useCallback(
+    (id: string, name: string) => keepName(() => rename(id, name)),
+    [keepName, rename],
+  );
+
   if (composition.status === 'failed') return <LoadFailed onRetry={composition.retry} />;
   const ready = composition.status === 'ready';
-
-  function confirmDelete({ id, name }: CollectionRowModel) {
-    const { confirmDelete: texts } = strings;
-    Alert.alert(fill(texts.title, { name }), texts.message, [
-      { text: texts.cancel, style: 'cancel' },
-      {
-        text: texts.confirm,
-        style: 'destructive',
-        onPress: () => {
-          remove(id);
-        },
-      },
-    ]);
-  }
-
-  /** Keeps the name the field gives; closes the field, or says why the name is refused. */
-  async function keepName(
-    keep: () => Promise<CollectionResult | undefined>,
-  ): Promise<string | undefined> {
-    const result = await keep();
-    if (result === undefined || result.ok) {
-      setEditing(undefined);
-      return undefined;
-    }
-    return refusalText(collectionStrings.sheet.refusal, result.reason);
-  }
-
-  function renderCollection(collection: CollectionRowModel) {
-    if (editing?.kind === 'rename' && editing.id === collection.id) {
-      return (
-        <CollectionNameField
-          testID="collections-rename"
-          overline={strings.renameOverline}
-          placeholder={collectionStrings.sheet.namePlaceholder}
-          initialName={collection.name}
-          onSubmit={(name) => keepName(() => rename(collection.id, name))}
-          onCancel={() => {
-            setEditing(undefined);
-          }}
-        />
-      );
-    }
-    return (
-      <CollectionRow
-        testID={`collection-${collection.id}`}
-        name={collection.name}
-        count={collection.count}
-        lemmas={collection.lemmas}
-        accessibilityLabel={collection.accessibilityLabel}
-        onPress={() => {
-          openScreen(`/saved/collections/${collection.id}`);
-        }}
-        actions={[
-          {
-            name: 'rename',
-            label: strings.rename,
-            accessibilityLabel: collection.renameLabel,
-            tone: 'muted',
-            onPress: () => {
-              setEditing({ kind: 'rename', id: collection.id });
-            },
-          },
-          {
-            name: 'delete',
-            label: strings.delete,
-            accessibilityLabel: collection.deleteLabel,
-            tone: 'destructive',
-            onPress: () => {
-              confirmDelete(collection);
-            },
-          },
-        ]}
-      />
-    );
-  }
 
   return (
     <SafeAreaView
@@ -132,7 +103,19 @@ export default function CollectionsScreen() {
       <FlatList
         data={ready ? rows : []}
         keyExtractor={(collection) => collection.id}
-        renderItem={({ item }) => <View style={styles.item}>{renderCollection(item)}</View>}
+        renderItem={({ item }) => (
+          <View style={styles.item}>
+            <EditableCollectionRow
+              collection={item}
+              renaming={editing?.kind === 'rename' && editing.id === item.id}
+              onOpen={openCollection}
+              onRename={startRename}
+              onDelete={confirmDelete}
+              onKeepRename={keepRename}
+              onCancelRename={stopEditing}
+            />
+          </View>
+        )}
         ItemSeparatorComponent={Separator}
         keyboardShouldPersistTaps="handled"
         automaticallyAdjustKeyboardInsets
@@ -166,9 +149,7 @@ export default function CollectionsScreen() {
                   overline={strings.newOverline}
                   placeholder={collectionStrings.sheet.namePlaceholder}
                   onSubmit={(name) => keepName(() => create(name))}
-                  onCancel={() => {
-                    setEditing(undefined);
-                  }}
+                  onCancel={stopEditing}
                 />
               </View>
             )}
@@ -195,6 +176,71 @@ export default function CollectionsScreen() {
     </SafeAreaView>
   );
 }
+
+/** A Collection's row, or the field that renames it in place. */
+const EditableCollectionRow = memo(function EditableCollectionRow({
+  collection,
+  renaming,
+  onOpen,
+  onRename,
+  onDelete,
+  onKeepRename,
+  onCancelRename,
+}: {
+  collection: CollectionRowModel;
+  renaming: boolean;
+  onOpen: (id: string) => void;
+  onRename: (id: string) => void;
+  onDelete: (collection: CollectionRowModel) => void;
+  /** Resolves to the reason the name is refused, or to nothing once it is kept. */
+  onKeepRename: (id: string, name: string) => Promise<string | undefined>;
+  onCancelRename: () => void;
+}) {
+  if (renaming) {
+    return (
+      <CollectionNameField
+        testID="collections-rename"
+        overline={strings.renameOverline}
+        placeholder={collectionStrings.sheet.namePlaceholder}
+        initialName={collection.name}
+        onSubmit={(name) => onKeepRename(collection.id, name)}
+        onCancel={onCancelRename}
+      />
+    );
+  }
+  return (
+    <CollectionRow
+      testID={`collection-${collection.id}`}
+      name={collection.name}
+      count={collection.count}
+      lemmas={collection.lemmas}
+      accessibilityLabel={collection.accessibilityLabel}
+      onPress={() => {
+        onOpen(collection.id);
+      }}
+      actions={[
+        {
+          name: 'rename',
+          label: strings.rename,
+          accessibilityLabel: collection.renameLabel,
+          tone: 'muted',
+          onPress: () => {
+            onRename(collection.id);
+          },
+        },
+        {
+          name: 'delete',
+          label: strings.delete,
+          accessibilityLabel: collection.deleteLabel,
+          tone: 'destructive',
+          onPress: () => {
+            onDelete(collection);
+          },
+        },
+      ]}
+    />
+  );
+});
 
 function Separator() {
   return <View style={styles.separator} />;

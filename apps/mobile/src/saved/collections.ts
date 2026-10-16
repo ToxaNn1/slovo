@@ -75,16 +75,19 @@ export function useCollectionChanges(): {
   remove: (collectionId: string) => void;
 } {
   const collections = useCollections();
-  const rejectNotOpen = () => Promise.reject(new Error('Collections are not open yet.'));
-  // A name that could not be kept rejects: the field stays open with the name as typed.
-  return {
-    create: (name) => collections?.create(name) ?? rejectNotOpen(),
-    rename: (collectionId, name) => collections?.rename(collectionId, name) ?? rejectNotOpen(),
-    remove(collectionId) {
-      if (collections === undefined) return;
-      void keep('Collections', collections.delete(collectionId), undefined);
-    },
-  };
+  // Kept from render to render, so the rows of the Collections screen re-render only when the list changes.
+  return useMemo(() => {
+    const rejectNotOpen = () => Promise.reject(new Error('Collections are not open yet.'));
+    // A name that could not be kept rejects: the field stays open with the name as typed.
+    return {
+      create: (name) => collections?.create(name) ?? rejectNotOpen(),
+      rename: (collectionId, name) => collections?.rename(collectionId, name) ?? rejectNotOpen(),
+      remove(collectionId) {
+        if (collections === undefined) return;
+        void keep('Collections', collections.delete(collectionId), undefined);
+      },
+    };
+  }, [collections]);
 }
 
 /** One Collection and its Entries, newest first, kept up to date; no Collection and no Entries until Collections open or when it is gone. */
