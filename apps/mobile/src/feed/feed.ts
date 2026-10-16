@@ -65,6 +65,14 @@ export function useFeed(): FeedState {
     () => (feed === undefined ? undefined : () => feed.position),
     [feed],
   );
+  // Kept from render to render, so the Feed's pages re-render only when their card changes.
+  const openLinkedCorrection = useMemo(
+    (): Feed['openLinkedCorrection'] | undefined =>
+      feed === undefined
+        ? undefined
+        : (at, correctionId) => feed.openLinkedCorrection(at, correctionId),
+    [feed],
+  );
 
   // A new position goes straight to the Feed, which takes the card that left
   // off the screen itself; only the Feed going out of sight reports none.
@@ -80,14 +88,15 @@ export function useFeed(): FeedState {
   }, [feed, inSight]);
 
   if (composition.status === 'failed') return { status: 'failed', retry: composition.retry };
-  if (feed === undefined || readerPosition === undefined) return { status: 'loading' };
+  if (feed === undefined || readerPosition === undefined || openLinkedCorrection === undefined)
+    return { status: 'loading' };
   return {
     status: 'ready',
     cards,
     startPosition: feed.startPosition,
     onCardChange: setTurnedTo,
     readerPosition,
-    openLinkedCorrection: (at, correctionId) => feed.openLinkedCorrection(at, correctionId),
+    openLinkedCorrection,
   };
 }
 
