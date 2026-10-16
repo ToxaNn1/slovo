@@ -8,6 +8,7 @@ import { fill, useEdition } from './EditionProvider';
 import { useWordTextSizes, type TextSize } from './FontSizeProvider';
 import { SectionLabel } from './headings';
 import { OutlinedChip } from './OutlinedChip';
+import { partOfSpeechText } from './part-of-speech';
 import { stressLabel } from './stress-label';
 import { minTouchTarget, space, typeSize } from './tokens';
 import { useTokens } from './TokensProvider';
@@ -47,15 +48,7 @@ export function WordCardBody({
   // In the Feed, VoiceOver turns to the next or previous card from the Lemma and the Definition.
   const turnActions = usePageTurnActions();
 
-  const partOfSpeech = strings.partsOfSpeech[card.partOfSpeech];
-  const gender = card.gender === undefined ? undefined : strings.genders[card.gender];
-  const grammar = (form: 'short' | 'full') =>
-    gender === undefined
-      ? partOfSpeech[form]
-      : fill(strings.partOfSpeechWithGender, {
-          partOfSpeech: partOfSpeech[form],
-          gender: gender[form],
-        });
+  const grammar = (form: 'short' | 'full') => partOfSpeechText(strings, card, form);
 
   const categoryChip =
     categoryName === undefined ? null : (
