@@ -7,7 +7,7 @@
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
 # Delete every Collection, so the sheet opens on the empty state. A swipe
-# deletes after the system action sheet; the Entries stay where they are.
+# deletes after the system alert; the Entries stay where they are.
 - tapOn:
     id: tab-saved
 - tapOn:
@@ -26,7 +26,13 @@ appId: ${APP_ID || 'app.slovo.uk'}
           direction: LEFT
       - tapOn:
           id: collection-.*-delete
-      - tapOn: Видалити
+      # A tap while the alert still opens is lost.
+      - waitForAnimationToEnd
+      # The alert's button, below the row's own «Видалити».
+      - tapOn:
+          text: Видалити
+          below:
+            id: collection-.*-delete
       - waitForAnimationToEnd
 - tapOn:
     id: collections-back

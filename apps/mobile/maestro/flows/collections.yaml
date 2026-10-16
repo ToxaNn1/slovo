@@ -1,6 +1,6 @@
 # The Collections screen: the Saved tab's card opens it, «+» makes a Collection
 # (a taken name is refused), a swipe renames it in place and a swipe deletes it
-# after the system action sheet. A subflow of `smoke.yaml`; run it from there.
+# after the system alert. A subflow of `smoke.yaml`; run it from there.
 # Names are Latin, so the keyboard of any simulator can type them. It leaves
 # the Collections it found.
 appId: ${APP_ID || 'app.slovo.uk'}
@@ -100,7 +100,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - tapOn: Колекції
 - assertVisible:
     text: Charlie, 0 записів
-# Swipe to «Видалити»: the system action sheet asks first, and cancelling keeps it.
+# Swipe to «Видалити»: the system alert asks first, and cancelling keeps it.
 - swipe:
     from:
       text: Charlie, 0 записів
@@ -119,7 +119,13 @@ appId: ${APP_ID || 'app.slovo.uk'}
     direction: LEFT
 - tapOn:
     id: collection-.*-delete
-- tapOn: Видалити
+# A tap while the alert still opens is lost.
+- waitForAnimationToEnd
+# The alert's button, below the row's own «Видалити».
+- tapOn:
+    text: Видалити
+    below:
+      id: collection-.*-delete
 - assertNotVisible:
     text: Charlie, 0 записів
 # «Alpha» goes too, leaving the Collections the flow found.
@@ -129,7 +135,13 @@ appId: ${APP_ID || 'app.slovo.uk'}
     direction: LEFT
 - tapOn:
     id: collection-.*-delete
-- tapOn: Видалити
+# A tap while the alert still opens is lost.
+- waitForAnimationToEnd
+# The alert's button, below the row's own «Видалити».
+- tapOn:
+    text: Видалити
+    below:
+      id: collection-.*-delete
 - assertNotVisible:
     text: Alpha, 0 записів
 - tapOn:
