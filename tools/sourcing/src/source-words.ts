@@ -575,7 +575,7 @@ function draftGrammar(
   return { partOfSpeech, gender, usedInflections, flags };
 }
 
-/** The Definitions, and the Registers among the labels of the article and its first meaning. */
+/** The Definitions, and the Registers among the labels of the article and its primary Definition. */
 function draftDefinitions(article: DictionaryArticle): Step<{
   primaryDefinition: string | undefined;
   extraDefinitions: string[];
@@ -729,8 +729,8 @@ function checkDraft(word: WordDraft, editionDir: string): string[] {
   return unique(issues);
 }
 
-/** A draft's fields as they are gathered: any of them may still be missing. */
-type Gathered<T> = { [K in keyof T]: T[K] | undefined };
+/** A draft's fields as they are gathered: an optional one may still be missing. */
+type Gathered<T> = { [K in keyof T]: object extends Pick<T, K> ? T[K] | undefined : T[K] };
 
 /**
  * Drops empty lists and missing values, so drafts read like authored content.
