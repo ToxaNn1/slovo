@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { useCallback } from 'react';
 
 import { deviceClock } from '../device/device-clock';
 import { createScreenOpener } from './open-screen';
@@ -11,7 +12,11 @@ const openScreen = createScreenOpener(deviceClock);
  */
 export function useOpenScreen(): (href: string) => void {
   const router = useRouter();
-  return (href) => {
-    openScreen(router, href);
-  };
+  // Kept from render to render, so a row that takes it re-renders only when its own data changes.
+  return useCallback(
+    (href: string) => {
+      openScreen(router, href);
+    },
+    [router],
+  );
 }
