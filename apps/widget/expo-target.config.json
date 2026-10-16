@@ -1,0 +1,6 @@
+{
+  "type": "widget",
+  "bundleIdentifier": ".widget",
+  "deploymentTarget": "17.0",
+  "entitlements": {}
+}

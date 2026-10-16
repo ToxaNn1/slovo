@@ -20,6 +20,8 @@ const ukrainianEditionDir = fileURLToPath(new URL('../../editions/uk/', import.m
 
 const temporaryRepos: string[] = [];
 
+const WIDGET_EXAMPLE = 'widget-snapshot.example.json';
+
 afterEach(() => {
   vi.unstubAllEnvs();
   for (const repo of temporaryRepos.splice(0)) rmSync(repo, { recursive: true, force: true });
@@ -27,9 +29,9 @@ afterEach(() => {
 
 /**
  * A throwaway repo layout (`apps/mobile` next to `editions/uk`) holding a copy
- * of the Ukrainian Edition's config, changed by `edit`, with its assets and
- * Decor. The icon is copied unless `withIcon` is false; `change` may then edit
- * the copied Edition folder.
+ * of the Ukrainian Edition's config, changed by `edit`, with its assets,
+ * Decor, strings, tokens and example Widget Snapshot. The icon is copied
+ * unless `withIcon` is false; `change` may then edit the copied Edition folder.
  */
 function repoWithEdition(
   edit: (config: Record<string, unknown>) => void,
@@ -49,8 +51,8 @@ function repoWithEdition(
   ) as Record<string, unknown>;
   edit(config);
   writeFileSync(join(editionDir, 'edition.json'), JSON.stringify(config));
-  for (const folder of ['assets', 'decor']) {
-    cpSync(join(ukrainianEditionDir, folder), join(editionDir, folder), { recursive: true });
+  for (const kept of ['assets', 'decor', 'strings.json', 'tokens.json', WIDGET_EXAMPLE]) {
+    cpSync(join(ukrainianEditionDir, kept), join(editionDir, kept), { recursive: true });
   }
   if (!withIcon) rmSync(join(editionDir, 'assets/icon.png'));
   change(editionDir);
@@ -229,6 +231,66 @@ describe('app config', () => {
     });
 
     expect(pluginOptions(appConfig(withoutSound), 'expo-notifications')).toEqual({ sounds: [] });
+  });
+
+  it('shares the App Group derived from the bundle id between the app and the widget', () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+
+    expect(appConfig(context).ios?.entitlements).toEqual({
+      'com.apple.security.application-groups': ['group.app.slovo.uk'],
+    });
+  });
+
+  it('adds the widget extension from apps/widget', () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+
+    expect(pluginOptions(appConfig(context), '@bacons/apple-targets')).toEqual({
+      root: '..',
+      match: 'widget',
+    });
+  });
+
+  it('fails clearly when the Edition has no example Widget Snapshot for the gallery', () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+    const withoutExample = repoWithEdition(() => undefined, {
+      change: (editionDir) => {
+        rmSync(join(editionDir, WIDGET_EXAMPLE));
+      },
+    });
+
+    expect(() => appConfig(withoutExample)).toThrow(
+      /no example Widget Snapshot.*editions\/uk\/widget-snapshot\.example\.json/s,
+    );
+  });
+
+  it('names the field when the example Widget Snapshot is invalid', () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+    const broken = repoWithEdition(() => undefined, {
+      change: (editionDir) => {
+        const file = join(editionDir, WIDGET_EXAMPLE);
+        const example = JSON.parse(readFileSync(file, 'utf8')) as Record<string, unknown>;
+        writeFileSync(file, JSON.stringify({ ...example, format: 0 }));
+      },
+    });
+
+    expect(() => appConfig(broken)).toThrow(
+      /widget-snapshot\.example\.json is not a valid Widget Snapshot.*format/s,
+    );
+  });
+
+  it("names the field when the widget's strings are missing", () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+    const broken = repoWithEdition(() => undefined, {
+      change: (editionDir) => {
+        const file = join(editionDir, 'strings.json');
+        const strings = JSON.parse(readFileSync(file, 'utf8')) as Record<string, unknown>;
+        writeFileSync(file, JSON.stringify({ ...strings, widget: {} }));
+      },
+    });
+
+    expect(() => appConfig(broken)).toThrow(
+      /strings\.json is not a valid Edition strings.*widget\.galleryName/s,
+    );
   });
 
   it('registers the native time picker', () => {

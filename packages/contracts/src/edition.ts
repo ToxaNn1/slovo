@@ -193,3 +193,9 @@ export const EditionConfigSchema = z
   });
 
 export type EditionConfig = z.infer<typeof EditionConfigSchema>;
+
+/**
+ * The App Group an Edition's app shares with its widget (ADR 0026), derived
+ * from the bundle id, so each Edition's widget reads only its own app's data.
+ */
+export const editionAppGroup = (bundleId: string) => `group.${bundleId}`;

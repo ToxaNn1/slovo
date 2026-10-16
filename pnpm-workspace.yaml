@@ -14,6 +14,10 @@ allowBuilds:
 overrides:
   '@react-native/metro-config': 0.86.3
   react-dom: 19.2.3
+  # The Apple targets plugin's Xcode library pins an old plist reader whose
+  # @xmldom/xmldom has high advisories; Expo's own reader has the same API
+  # and a patched xmldom.
+  '@bacons/xcode>@expo/plist': ^0.8.1
 
 # High advisories with no patched release yet, reachable only through
 # build-time tooling (Expo CLI code signing, Metro's file watcher) and never

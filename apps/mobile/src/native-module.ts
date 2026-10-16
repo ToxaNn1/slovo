@@ -1,5 +1,8 @@
-/** The native modules 0.4 adds, which a dev client built before the batch lacks. */
-export type NativeModuleName = 'notifications' | 'timePicker';
+/**
+ * The native modules a batch adds (0.4: notifications and the time picker;
+ * 0.6: the widget's), which a dev client built before that batch lacks.
+ */
+export type NativeModuleName = 'notifications' | 'timePicker' | 'widget';
 
 /** How to tell whether the installed binary has each native module. A probe may throw. */
 export type NativeModuleProbes = Record<NativeModuleName, () => boolean>;
