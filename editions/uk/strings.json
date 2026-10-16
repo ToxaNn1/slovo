@@ -649,6 +649,18 @@
     "galleryName": "Рідкісне слово",
     "galleryDescription": "Нове рідкісне слово на головному екрані кожні п’ять хвилин.",
     "allEntries": "УСІ СЛОВА",
+    "favorites": "УЛЮБЛЕНЕ",
+    "collection": "КОЛЕКЦІЯ · {name}",
+    "modeTitle": "Режим",
+    "modeFavorites": "Улюблене",
+    "modeCollection": "Колекція",
+    "modeAllEntries": "Усі слова",
+    "collectionTitle": "Колекція",
+    "openApp": "Відкрийте SLOVO",
+    "noFavorites": "Додайте слова в Улюблене",
+    "emptyCollection": "Колекція порожня",
+    "deletedCollection": "Колекцію видалено — оберіть інший режим",
+    "noCollection": "Оберіть колекцію для віджета",
     "guide": {
       "title": "Слово на головному екрані",
       "steps": [
