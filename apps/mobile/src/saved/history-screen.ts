@@ -1,13 +1,9 @@
-import {
-  groupByLocalDay,
-  type Clock,
-  type EntryRowModel,
-  type HistoryEntry,
-  type LocalDay,
-} from '@slovo/core';
+import { groupByLocalDay, type Clock, type EntryRowModel, type HistoryEntry } from '@slovo/core';
+
+import type { historyText } from './history-text';
 
 /** An Entry's row on the History screen. */
-export interface HistoryRowModel {
+export interface HistoryEntryModel {
   readonly entryId: string;
   readonly row: EntryRowModel;
   /** «слово», «виправлення» or «слово дня». */
@@ -20,7 +16,7 @@ export interface HistorySection {
   readonly key: string;
   /** «Сьогодні», «Учора» or the date. */
   readonly title: string;
-  readonly data: readonly HistoryRowModel[];
+  readonly data: readonly HistoryEntryModel[];
 }
 
 /**
@@ -33,10 +29,7 @@ export function historySections({
   clock,
 }: {
   history: readonly HistoryEntry[];
-  text: {
-    dayHeading: (day: LocalDay) => string;
-    kind: (entry: Pick<HistoryEntry, 'row' | 'wordOfTheDay'>) => string;
-  };
+  text: Pick<ReturnType<typeof historyText>, 'dayHeading' | 'kind'>;
   clock: Clock;
 }): readonly HistorySection[] {
   return groupByLocalDay(history, ({ seenAt }) => seenAt, clock).map(({ day, entries }) => ({

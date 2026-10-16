@@ -19,7 +19,7 @@ import { editionStrings } from '../../../edition/edition';
 import { LoadFailed } from '../../../edition/language-pack';
 import { useOpenScreen } from '../../../entries/use-open-screen';
 import { useClearHistory, useHistorySections } from '../../../saved/history';
-import type { HistoryRowModel, HistorySection } from '../../../saved/history-screen';
+import type { HistoryEntryModel, HistorySection } from '../../../saved/history-screen';
 
 const { history: strings } = editionStrings;
 
@@ -55,7 +55,7 @@ export default function HistoryScreen() {
       edges={['top']}
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
-      <SectionList<HistoryRowModel, HistorySection>
+      <SectionList<HistoryEntryModel, HistorySection>
         sections={ready ? sections : []}
         keyExtractor={(entry) => entry.entryId}
         stickySectionHeadersEnabled={false}
