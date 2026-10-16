@@ -105,7 +105,7 @@ export const typeSize = {
   sheetTitle: 26,
   partOfSpeech: 14,
   tabLabel: 10.5,
-  /** `Block heading` (Manrope 700): the name of a card or a Collection, a sheet's text button. */
+  /** `Block heading` (Manrope 700): the name of a card or a Collection, a sheet's text button; also an Example, an onboarding step's subtitle, a Round's sheet title. */
   blockHeading: 17,
   /** What an Entry's row leads with in a list, and over a sheet (the design's 20–22). */
   rowLemma: 20,
@@ -113,12 +113,26 @@ export const typeSize = {
   collectionLemmas: 22,
   /** A line of a card's list, a Collection's name in a sheet, a name field. */
   listItem: 18,
-  /** A count or a refusal beside a name. */
+  /** A count or a refusal beside a name; also the onboarding sample notification's body. */
   caption: 14,
-  /** What goes on the right of a card's row, such as a relative time. */
+  /** What goes on the right of a card's row, such as a relative time; also the Round's progress and tags, an Example's author, a notification's app name and time. */
   meta: 13,
   /** `Big number`, the count on a card of the Saved overview (the Scale gives 26–30). */
   cardCount: 30,
+  /** The Correction's explanation (Manrope 16 / 1.55). */
+  explanation: 16,
+  /** A step's wordmark, the hero Definition and the app icon's mark. */
+  subhead: 22,
+  /** A Round's option (Literata 500). */
+  roundOption: 21,
+  /** A Round's prompt. */
+  roundPrompt: 25,
+  /** The answer on a Round's sheet. */
+  roundAnswer: 30,
+  /** The title of an onboarding step (Literata 500). */
+  onboardingTitle: 32,
+  /** `Lemma, hero`: the onboarding welcome's Lemma (Literata 500, 76 / 1). */
+  heroLemma: 76,
 } as const;
 
 /** The overline label's type: bold capitals spaced 0.14em apart. */
@@ -175,6 +189,9 @@ export const shareImage = {
 
 /** The smallest side of anything the user taps. */
 export const minTouchTarget = 44;
+
+/** The text on a filled option of the Game, white in both Themes. */
+export const onFill = '#FFFFFF';
 
 /** A toast's corner radius, from the design; layout, not an Edition token. */
 export const toastRadius = 6;

@@ -33,10 +33,14 @@ const SLIDE_DISTANCE = 40;
 const HEADLINE_MAX_FONT_SCALE = 1.3;
 const TEXT_MAX_FONT_SCALE = 1.5;
 /** The design's hero Lemma, `Lemma, hero`: Literata 500, 76 / 1. */
-const HERO_LEMMA = { fontSize: 76, lineHeight: 76 } as const;
-const TITLE_SIZE = 32;
+const HERO_LEMMA = { fontSize: typeSize.heroLemma, lineHeight: typeSize.heroLemma } as const;
+const TITLE_SIZE = typeSize.onboardingTitle;
 /** A page dot of the progress: the current one is the longer. */
-const DOT = { height: 4, width: 16, currentWidth: 44, gap: 12 } as const;
+const DOT = { height: 4, width: 16, currentWidth: 44, gap: space[3] } as const;
+/** The sample notification's app icon, from the design. */
+const APP_ICON = { size: 38, radius: 9 } as const;
+/** The gap between the sample notification's lines. */
+const SAMPLE_LINE_GAP = 2;
 
 /**
  * One step of the onboarding, over the whole screen: the wordmark and
@@ -493,9 +497,9 @@ const styles = StyleSheet.create({
   },
   wordmark: {
     flexShrink: 1,
-    fontSize: 22,
+    fontSize: typeSize.subhead,
     fontWeight: '500',
-    letterSpacing: 22 * 0.32,
+    letterSpacing: typeSize.subhead * 0.32,
   },
   skip: {
     flexShrink: 0,
@@ -517,13 +521,13 @@ const styles = StyleSheet.create({
   heading: { gap: space[2] },
   band: { flexDirection: 'row' },
   hero: { gap: space[2] },
-  definition: { fontSize: 22, lineHeight: 22 * 1.3, fontWeight: '500' },
+  definition: { fontSize: typeSize.subhead, lineHeight: typeSize.subhead * 1.3, fontWeight: '500' },
   title: { fontSize: TITLE_SIZE, lineHeight: TITLE_SIZE * 1.15, fontWeight: '500' },
-  subtitle: { fontSize: 17, lineHeight: 17 * 1.5, paddingBottom: space[4] },
+  subtitle: { fontSize: typeSize.blockHeading, lineHeight: typeSize.blockHeading * 1.5, paddingBottom: space[4] },
   footer: { paddingHorizontal: SIDE, paddingTop: space[3], paddingBottom: space[4], gap: space[5] },
   dots: { flexDirection: 'row', alignItems: 'center', gap: DOT.gap },
   later: { minHeight: minTouchTarget, alignItems: 'center', justifyContent: 'center' },
-  laterLabel: { fontSize: 16, fontWeight: '600' },
+  laterLabel: { fontSize: typeSize.button, fontWeight: '600' },
   sample: {
     flexDirection: 'row',
     gap: space[3],
@@ -534,17 +538,17 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   appIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 9,
+    width: APP_ICON.size,
+    height: APP_ICON.size,
+    borderRadius: APP_ICON.radius,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  appIconMark: { fontSize: 22, fontWeight: '600' },
-  sampleText: { flex: 1, gap: 2 },
+  appIconMark: { fontSize: typeSize.subhead, fontWeight: '600' },
+  sampleText: { flex: 1, gap: SAMPLE_LINE_GAP },
   sampleTop: { flexDirection: 'row', justifyContent: 'space-between', gap: space[3] },
-  sampleApp: { flexShrink: 1, fontSize: 13, fontWeight: '600' },
-  sampleTime: { fontSize: 13 },
-  sampleLemma: { fontSize: 17, lineHeight: 17 * 1.3, fontWeight: '600' },
-  sampleBody: { fontSize: 14, lineHeight: 14 * 1.35 },
+  sampleApp: { flexShrink: 1, fontSize: typeSize.meta, fontWeight: '600' },
+  sampleTime: { fontSize: typeSize.meta },
+  sampleLemma: { fontSize: typeSize.blockHeading, lineHeight: typeSize.blockHeading * 1.3, fontWeight: '600' },
+  sampleBody: { fontSize: typeSize.caption, lineHeight: typeSize.caption * 1.35 },
 });
