@@ -247,16 +247,22 @@ describe('the 0.6 share strings group', () => {
     expect(issuesOf(without)).toContain('share');
   });
 
-  it.each(['button', 'title', 'share', 'wordOfTheDay', 'captureFailed'])(
-    'the Ukrainian Edition needs share.%s',
-    (key) => {
-      const shareWithout = Object.fromEntries(
-        Object.entries(share).filter(([name]) => name !== key),
-      );
+  it.each([
+    'button',
+    'title',
+    'format',
+    'story',
+    'square',
+    'share',
+    'wordOfTheDay',
+    'nonStandard',
+    'standard',
+    'captureFailed',
+  ])('the Ukrainian Edition needs share.%s', (key) => {
+    const shareWithout = Object.fromEntries(Object.entries(share).filter(([name]) => name !== key));
 
-      expect(issuesOf({ ...strings, share: shareWithout })).toEqual([`share.${key}`]);
-    },
-  );
+    expect(issuesOf({ ...strings, share: shareWithout })).toEqual([`share.${key}`]);
+  });
 });
 
 /** Every plural-forms object (one with an `other` form) in a strings group. */
