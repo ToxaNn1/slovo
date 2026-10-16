@@ -33,7 +33,7 @@ export default function WidgetGuideScreen() {
         </View>
         <WidgetDrawing
           testID="widget-guide-drawing"
-          sizes={guide.sizes}
+          caption={guide.sizes}
           mode={allEntries}
           {...guide.sample}
         />

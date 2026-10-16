@@ -2,27 +2,11 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { OrnamentBand } from './DecorSlots';
 import { useEdition } from './EditionProvider';
-import {
-  guideStepBadge,
-  overlineType,
-  space,
-  typeSize,
-  widgetDrawingType,
-  withAlpha,
-} from './tokens';
+import { guideStep, overlineType, space, typeSize, widgetDrawing, withAlpha } from './tokens';
 import { InvertedTokens, useTokens } from './TokensProvider';
 
 /** How far the largest text sizes of iOS may scale a step's title and hint, so no word breaks and the hint stays under its title. */
 const STEP_MAX_FONT_SCALE = 1.3;
-
-/** The home screen's wallpaper in the drawing: a picture of the phone, not an Edition token. */
-const WALLPAPER = '#3F3128';
-/** The drawing's app icons: white over the wallpaper. */
-const APP_ICON_FILL = withAlpha('#FFFFFF', 0.16);
-const APP_ICON_RADIUS = 12;
-const WIDGET_RADIUS = 22;
-/** The medium widget's width over its height, from the design's 364 × 170. */
-const MEDIUM_ASPECT_RATIO = 364 / 170;
 
 /** One numbered step of the widget guide: its number in a square, what to do and a hint under it. */
 export function GuideStep({
@@ -136,33 +120,35 @@ function SampleWidget({
  * drawing is a picture: VoiceOver skips it, the steps carry the guide.
  */
 export function WidgetDrawing({
-  sizes,
+  caption,
   mode,
   lemma,
   definition,
   testID,
 }: {
   /** The caption under the widgets, e.g. «Малий · Середній». */
-  sizes: string;
+  caption: string;
   mode: string;
   lemma: string;
   definition: string;
   testID?: string;
 }) {
   const { fontFamilies, radii } = useTokens();
-  const { voice } = useEdition();
   return (
     <View
       testID={testID}
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
-      style={[styles.stage, { backgroundColor: WALLPAPER, borderRadius: radii.sheet }]}
+      style={[
+        styles.stage,
+        { backgroundColor: widgetDrawing.wallpaper, borderRadius: radii.sheet },
+      ]}
     >
       <InvertedTokens>
         <View style={styles.topRow}>
           <SampleWidget size="small" mode={mode} lemma={lemma} definition={definition} />
           <View style={styles.icons}>
-            {[0, 1].map((row) => (
+            {Array.from({ length: widgetDrawing.iconRows }, (_, row) => (
               <View key={row} style={styles.iconRow}>
                 <View style={styles.icon} />
                 <View style={styles.icon} />
@@ -173,11 +159,16 @@ export function WidgetDrawing({
         <SampleWidget size="medium" mode={mode} lemma={lemma} definition={definition} />
       </InvertedTokens>
       <Text
-        {...voice}
         allowFontScaling={false}
-        style={[styles.caption, { color: withAlpha('#FFFFFF', 0.7), fontFamily: fontFamilies.ui }]}
+        style={[
+          styles.caption,
+          {
+            color: withAlpha(widgetDrawing.white, widgetDrawing.captionOpacity),
+            fontFamily: fontFamilies.ui,
+          },
+        ]}
       >
-        {sizes}
+        {caption}
       </Text>
     </View>
   );
@@ -186,16 +177,16 @@ export function WidgetDrawing({
 const styles = StyleSheet.create({
   step: { flexDirection: 'row', gap: space[4], paddingVertical: space[4] },
   badge: {
-    width: guideStepBadge.size,
-    height: guideStepBadge.size,
-    borderRadius: guideStepBadge.radius,
+    width: guideStep.badge,
+    height: guideStep.badge,
+    borderRadius: guideStep.badgeRadius,
     alignItems: 'center',
     justifyContent: 'center',
   },
   badgeNumber: { fontSize: typeSize.body, fontWeight: '700' },
   stepText: { flex: 1, gap: space[1] },
-  stepTitle: { fontSize: typeSize.button + 1, fontWeight: '700' },
-  stepHint: { fontSize: typeSize.body, lineHeight: typeSize.body * 1.4 },
+  stepTitle: { fontSize: guideStep.titleSize, fontWeight: '700' },
+  stepHint: { fontSize: typeSize.body, lineHeight: typeSize.body * guideStep.hintLeading },
   stage: { padding: space[4], gap: space[3] },
   topRow: { flexDirection: 'row', gap: space[3] },
   icons: { flex: 1, justifyContent: 'space-between' },
@@ -203,20 +194,20 @@ const styles = StyleSheet.create({
   icon: {
     flex: 1,
     aspectRatio: 1,
-    borderRadius: APP_ICON_RADIUS,
-    backgroundColor: APP_ICON_FILL,
+    borderRadius: widgetDrawing.iconRadius,
+    backgroundColor: withAlpha(widgetDrawing.white, widgetDrawing.iconOpacity),
   },
   widget: {
     justifyContent: 'space-between',
     padding: space[4],
-    borderRadius: WIDGET_RADIUS,
+    borderRadius: widgetDrawing.widgetRadius,
     overflow: 'hidden',
   },
   smallWidget: { flex: 1, aspectRatio: 1 },
-  mediumWidget: { aspectRatio: MEDIUM_ASPECT_RATIO },
+  mediumWidget: { aspectRatio: widgetDrawing.mediumAspectRatio },
   bandRow: { flexDirection: 'row' },
   widgetWord: { gap: space[1] },
-  lemma: { fontSize: widgetDrawingType.lemma, fontWeight: '500' },
-  line: { fontSize: widgetDrawingType.line, fontWeight: '500' },
+  lemma: { fontSize: widgetDrawing.lemmaSize, fontWeight: '500' },
+  line: { fontSize: widgetDrawing.lineSize, fontWeight: '500' },
   caption: { fontSize: typeSize.body, textAlign: 'center' },
 });
