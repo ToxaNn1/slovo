@@ -69,6 +69,18 @@ describe('UndoToast', () => {
     expect(screen.queryByTestId('undo-toast')).toBeNull();
   });
 
+  it('leaves no timer behind when its screen goes away', async () => {
+    await renderOpeners({ message: 'Hidden', onUndo: jest.fn() });
+
+    await fireEvent.press(screen.getByTestId('open-Hidden'));
+    await passTime(1000);
+    await screen.unmount();
+    // React Native's own short timers of the unmount run out; the toast's 3 s left must not stay.
+    await passTime(1000);
+
+    expect(jest.getTimerCount()).toBe(0);
+  });
+
   it('takes the place of the toast before it', async () => {
     await renderOpeners(
       { message: 'Hidden', onUndo: jest.fn() },
