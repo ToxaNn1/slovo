@@ -61,6 +61,7 @@ export function FavoriteButton({
   function pop() {
     haptics.impactLight();
     if (reduceMotion) return;
+    // Assigning 1 first stops a pop still running, so a new one starts from rest.
     scale.value = 1;
     scale.value = withSequence(
       ...POP.map(({ toValue, duration }) => withTiming(toValue, { ...popTiming, duration })),
