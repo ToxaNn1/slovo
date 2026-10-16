@@ -131,8 +131,17 @@ export const fontSizeSteps: Readonly<
 /** The text size scale above which a row puts its value, button or switch under its label, so no word breaks. */
 export const STACK_AT_FONT_SCALE = 1.3;
 
-/** The Story Share Card's image in pixels: a true 9:16 (design-system gap 17). */
-export const storyImage = { width: 1080, height: 1920 } as const;
+/** The format of a Share Card's image: Story (9:16) or Square (1:1). */
+export type ShareCardFormat = 'story' | 'square';
+
+/**
+ * A Share Card's image in pixels, by format: the Story a true 9:16
+ * (design-system gap 17), the Square 1:1.
+ */
+export const shareImage = {
+  story: { width: 1080, height: 1920 },
+  square: { width: 1080, height: 1080 },
+} as const satisfies Record<ShareCardFormat, { width: number; height: number }>;
 
 /** The smallest side of anything the user taps. */
 export const minTouchTarget = 44;

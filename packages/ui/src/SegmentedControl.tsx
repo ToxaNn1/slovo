@@ -4,6 +4,9 @@ import { useEdition } from './EditionProvider';
 import { minTouchTarget, typeSize } from './tokens';
 import { useTokens } from './TokensProvider';
 
+/** A segment's label stops growing here, so it never breaks a word at the largest text sizes. */
+const LABEL_MAX_FONT_SCALE = 1.3;
+
 export interface Segment<Value extends string> {
   value: Value;
   label: string;
@@ -57,6 +60,7 @@ export function SegmentedControl<Value extends string>({
             ]}
           >
             <Text
+              maxFontSizeMultiplier={LABEL_MAX_FONT_SCALE}
               style={[
                 styles.label,
                 { color: colors.ink, fontFamily: fontFamilies.ui },

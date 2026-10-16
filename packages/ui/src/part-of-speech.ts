@@ -18,3 +18,26 @@ export function partOfSpeechText(
         gender: strings.genders[gender][form],
       });
 }
+
+/** What sits between the part of speech and each register on the short line. */
+const REGISTER_SEPARATOR = ' · ';
+
+/**
+ * A Word's part of speech with its gender and then its registers, in the
+ * Word's order, on one line: the short form a Share Card shows («ім., ж. р. ·
+ * розм.»), where the Entry card draws the registers as chips, or the full
+ * words VoiceOver reads. Without a register it is the part of speech alone.
+ */
+export function wordGrammarText(
+  strings: Pick<
+    EditionStrings['wordCard'],
+    'partsOfSpeech' | 'genders' | 'partOfSpeechWithGender' | 'registers'
+  >,
+  word: Pick<WordCardModel, 'partOfSpeech' | 'gender' | 'registers'>,
+  form: 'short' | 'full',
+): string {
+  return [
+    partOfSpeechText(strings, word, form),
+    ...word.registers.map((register) => strings.registers[register][form]),
+  ].join(form === 'short' ? REGISTER_SEPARATOR : ', ');
+}

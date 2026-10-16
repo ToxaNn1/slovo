@@ -6,6 +6,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./part-of-speech": "./src/part-of-speech.ts",
     "./tokens": "./src/tokens.ts"
   },
   "scripts": {

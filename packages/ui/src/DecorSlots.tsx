@@ -28,27 +28,34 @@ export function DecorBackground({ scale = 1 }: { scale?: number }) {
 const ARROW_SIZE = 18;
 
 /**
- * Decor slot 2, the ornament divider: the band on both sides of the centre.
+ * Decor slot 2, the ornament divider: the band on both sides of the centre,
+ * `scale` times its size for a view drawn larger or smaller than the screen.
  * A Correction card asks for an arrow in the centre instead ("this becomes
  * that"), drawn in the accent colour.
  */
-export function OrnamentDivider({ centre = 'ornament' }: { centre?: 'ornament' | 'arrow' }) {
+export function OrnamentDivider({
+  centre = 'ornament',
+  scale = 1,
+}: {
+  centre?: 'ornament' | 'arrow';
+  scale?: number;
+}) {
   const { divider } = useDecor();
   const { colors } = useTokens();
   const band = (
-    <View style={[styles.band, { height: divider.band.height }]}>
-      <MotifPattern motif={divider.band} />
+    <View style={[styles.band, { height: divider.band.height * scale }]}>
+      <MotifPattern motif={divider.band} scale={scale} />
     </View>
   );
   return (
-    <DecorView style={styles.divider}>
+    <DecorView style={[styles.divider, { gap: space[2] * scale }]}>
       {band}
       {centre === 'arrow' ? (
-        <Svg width={ARROW_SIZE} height={ARROW_SIZE} viewBox="0 0 24 24">
+        <Svg width={ARROW_SIZE * scale} height={ARROW_SIZE * scale} viewBox="0 0 24 24">
           <Path d="M12 5v14M6 13l6 6 6-6" fill="none" stroke={colors.accent} strokeWidth={2} />
         </Svg>
       ) : (
-        <MotifImage motif={divider.centre} width={divider.centre.width} />
+        <MotifImage motif={divider.centre} width={divider.centre.width * scale} />
       )}
       {band}
     </DecorView>
@@ -216,7 +223,7 @@ export function VictoryIllustration({ width, stitched }: { width: number; stitch
 }
 
 const styles = StyleSheet.create({
-  divider: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  divider: { flexDirection: 'row', alignItems: 'center' },
   band: { flex: 1, minWidth: 0, overflow: 'hidden' },
   corner: { position: 'absolute' },
 });
