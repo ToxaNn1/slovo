@@ -37,6 +37,10 @@ describe('loadEdition', () => {
     expect(edition.languageTraits.marksStress).toBe(true);
   });
 
+  it('reports the display name, the watermark of its Share Cards', () => {
+    expect(loadEdition(validConfig).displayName).toBe('SLOVO Test');
+  });
+
   it('reports an Edition that does not mark Stress', () => {
     const edition = loadEdition({
       ...validConfig,
