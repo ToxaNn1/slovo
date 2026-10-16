@@ -1,35 +1,17 @@
-import { EditionStringsSchema, type Plural, type Word } from '@slovo/contracts';
+import { type Word } from '@slovo/contracts';
 import {
   createMemoryContentPort,
   createMemoryUserStatePort,
-  loadEdition,
   openComposition,
   openUserState,
   type Clock,
   type Composition,
 } from '@slovo/core';
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 import { historySections } from './history-screen';
 import { historyText } from './history-text';
-
-const editionFile = (name: string): unknown =>
-  JSON.parse(
-    readFileSync(
-      fileURLToPath(new URL(`../../../../editions/uk/${name}`, import.meta.url)),
-      'utf8',
-    ),
-  );
-
-const strings = EditionStringsSchema.parse(editionFile('strings.json'));
-const ukrainian = loadEdition(editionFile('edition.json'));
-
-/** The Edition's own plural rules, as the shell's `count` applies them. */
-const pluralRules = new Intl.PluralRules(ukrainian.locale);
-const count = (forms: Plural, value: number) =>
-  (forms[pluralRules.select(value)] ?? forms.other).replace('{count}', String(value));
+import { count, strings, ukrainian } from '../test-support';
 
 const [category] = ukrainian.categories;
 if (category === undefined) throw new Error('The Edition needs a Category');
