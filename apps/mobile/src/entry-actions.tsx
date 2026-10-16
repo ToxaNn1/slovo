@@ -1,15 +1,25 @@
-import { entryIdOf, type Composition, type EntryFeedCard } from '@slovo/core';
+import {
+  entryIdOf,
+  isTodaysWordOfTheDay,
+  type Composition,
+  type EntryFeedCard,
+  type WordFeedCard,
+} from '@slovo/core';
 import {
   ActionRow,
   CollectionButton,
   CollectionSheet,
   FavoriteButton,
   HideButton,
+  ShareButton,
+  ShareSheet,
 } from '@slovo/ui';
 import { useCallback, useState } from 'react';
 
 import { refusalText } from './collection-refusal';
-import { editionStrings } from './edition';
+import { deviceClock } from './device-clock';
+import { shareCardOnDevice } from './device-share';
+import { edition, editionStrings } from './edition';
 import { useEntryCollections } from './collections';
 import { useOpenedRead } from './composition';
 import { useFavorite } from './favorites';
@@ -17,7 +27,8 @@ import { useHide } from './hiding';
 
 /**
  * The action row of an Entry card, wherever the card appears: the Feed and
- * the Entry screen a list opens. Each 0.3 action fills its own slot. Its
+ * the Entry screen a list opens. Each action fills its own slot. Share is on a
+ * Word's card only, and only when the binary can capture the Share Card. Its
  * screen gives it an `UndoToastProvider` for the toast after a hide.
  */
 export function EntryActions({ card }: { card: EntryFeedCard }) {
@@ -25,10 +36,21 @@ export function EntryActions({ card }: { card: EntryFeedCard }) {
   const favorite = useFavorite(entryId);
   const hide = useHide(card);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const share = card.kind === 'word' ? shareCardOnDevice : undefined;
   return (
     <>
       <ActionRow
         favorite={<FavoriteButton inFavorites={favorite.inFavorites} onToggle={favorite.toggle} />}
+        share={
+          share !== undefined ? (
+            <ShareButton
+              onPress={() => {
+                setShareOpen(true);
+              }}
+            />
+          ) : undefined
+        }
         collection={
           <CollectionButton
             onPress={() => {
@@ -45,7 +67,41 @@ export function EntryActions({ card }: { card: EntryFeedCard }) {
           setSheetOpen(false);
         }}
       />
+      {card.kind === 'word' && share !== undefined && (
+        <EntryShareSheet
+          card={card}
+          share={share}
+          visible={shareOpen}
+          onClose={() => {
+            setShareOpen(false);
+          }}
+        />
+      )}
     </>
+  );
+}
+
+/** The share sheet of a Word's card, over the Story Share Card. Sharing writes no user state. */
+function EntryShareSheet({
+  card,
+  share,
+  visible,
+  onClose,
+}: {
+  card: WordFeedCard;
+  share: NonNullable<typeof shareCardOnDevice>;
+  visible: boolean;
+  onClose: () => void;
+}) {
+  return (
+    <ShareSheet
+      visible={visible}
+      card={card.wordCard}
+      wordOfTheDay={isTodaysWordOfTheDay(card, deviceClock)}
+      watermark={edition.displayName}
+      onShare={(view) => share(view, card.wordCard.wordId)}
+      onClose={onClose}
+    />
   );
 }
 

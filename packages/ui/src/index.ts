@@ -65,6 +65,8 @@ export {
   type PronunciationButtonState,
 } from './PronunciationButton';
 export { SegmentedControl, type Segment } from './SegmentedControl';
+export { ShareButton } from './ShareButton';
+export { ShareSheet, type ShareSheetOutcome } from './ShareSheet';
 export { NavigationRow, SettingsGroup, SoonRow, SwitchRow, TimeRow } from './SettingsRows';
 export { SplashOverlay, type SplashOverlayProps } from './SplashOverlay';
 export { StatsPill } from './StatsPill';

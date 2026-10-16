@@ -195,6 +195,31 @@ describe('the strings of each Game Mode', () => {
   });
 });
 
+describe('the 0.6 share strings group', () => {
+  const strings = readJson('uk', 'strings.json') as Record<string, unknown>;
+  const share = strings['share'] as Record<string, unknown>;
+  /** The issues the strings schema finds, as paths. */
+  const issuesOf = (changed: unknown) =>
+    EditionStringsSchema.safeParse(changed).error?.issues.map((issue) => issue.path.join('.'));
+
+  it('the Ukrainian Edition needs the share group', () => {
+    const without = Object.fromEntries(Object.entries(strings).filter(([key]) => key !== 'share'));
+
+    expect(issuesOf(without)).toContain('share');
+  });
+
+  it.each(['button', 'title', 'share', 'wordOfTheDay', 'captureFailed'])(
+    'the Ukrainian Edition needs share.%s',
+    (key) => {
+      const shareWithout = Object.fromEntries(
+        Object.entries(share).filter(([name]) => name !== key),
+      );
+
+      expect(issuesOf({ ...strings, share: shareWithout })).toEqual([`share.${key}`]);
+    },
+  );
+});
+
 /** Every plural-forms object (one with an `other` form) in a strings group. */
 function pluralsOf(value: unknown): Record<string, string>[] {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return [];

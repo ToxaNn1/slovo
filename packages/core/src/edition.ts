@@ -28,6 +28,8 @@ export interface UserSettingDefaults {
 export interface Edition {
   readonly id: string;
   readonly locale: string;
+  /** The app's name, such as «SLOVO»; its Share Cards carry it as their watermark. */
+  readonly displayName: string;
   readonly languageTraits: LanguageTraits;
   /** Every Category of the Edition, in the order the Edition declares them. */
   readonly categories: readonly Category[];
@@ -58,6 +60,7 @@ export function loadEdition(config: unknown): Edition {
   const {
     id,
     locale,
+    displayName,
     languageTraits,
     featureSwitches,
     userSettingDefaults,
@@ -68,6 +71,7 @@ export function loadEdition(config: unknown): Edition {
   return {
     id,
     locale,
+    displayName,
     languageTraits,
     categories,
     userSettingDefaults: {

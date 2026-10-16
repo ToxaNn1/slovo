@@ -7,6 +7,7 @@ import {
   createEntries,
   createMemoryContentPort,
   createMemoryUserStatePort,
+  isTodaysWordOfTheDay,
   openComposition,
   openUserState,
   SEEN_DWELL_MS,
@@ -21,6 +22,7 @@ import {
   type FeedCard,
   type Random,
   type UserStatePort,
+  type WordFeedCard,
 } from './index';
 
 function word(id: string, retired = false): Word {
@@ -1192,5 +1194,31 @@ describe('buildEntryCard', () => {
     const day = { year: 2026, month: 10, day: 11 };
 
     expect(wordOfTheDayOf(await buildEntryCard(entries, word('w_live0'), day))).toEqual(day);
+  });
+});
+
+describe("today's Word of the Day", () => {
+  /** 16 October 2026, 00:30 in Kyiv: still the 15th in UTC. */
+  const clock: Clock = {
+    now: () => new Date('2026-10-15T21:30:00Z'),
+    timeZone: () => 'Europe/Kyiv',
+  };
+  const card = (wordOfTheDay?: WordFeedCard['wordOfTheDay']) =>
+    ({
+      kind: 'word',
+      wordCard: {} as WordFeedCard['wordCard'],
+      ...(wordOfTheDay === undefined ? {} : { wordOfTheDay }),
+    }) satisfies WordFeedCard;
+
+  it("is the card of the Word of the Day of the reader's local day", () => {
+    expect(isTodaysWordOfTheDay(card({ year: 2026, month: 10, day: 16 }), clock)).toBe(true);
+  });
+
+  it("is not the card of an earlier day's Word of the Day, still in the Feed after midnight", () => {
+    expect(isTodaysWordOfTheDay(card({ year: 2026, month: 10, day: 15 }), clock)).toBe(false);
+  });
+
+  it('is not the card of any other Word', () => {
+    expect(isTodaysWordOfTheDay(card(), clock)).toBe(false);
   });
 });

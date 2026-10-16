@@ -14,6 +14,7 @@ import { NotificationBodyStringsSchema } from './notification-body';
 import { NotificationsStringsSchema } from './notifications';
 import { OnboardingStringsSchema } from './onboarding';
 import { SettingsStringsSchema } from './settings';
+import { ShareStringsSchema } from './share';
 import { SplashStringsSchema } from './splash';
 import { StatsStringsSchema } from './stats';
 import { TabsStringsSchema } from './tabs';
@@ -47,6 +48,7 @@ export const EditionStringsSchema = z.strictObject({
   notificationBody: NotificationBodyStringsSchema,
   game: GameStringsSchema,
   widget: WidgetStringsSchema,
+  share: ShareStringsSchema,
 });
 
 export type EditionStrings = z.infer<typeof EditionStringsSchema>;

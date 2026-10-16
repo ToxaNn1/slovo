@@ -38,6 +38,7 @@ export {
   buildEntryCard,
   CORRECTION_EVERY,
   entryIdOf,
+  isTodaysWordOfTheDay,
   SEEN_DWELL_MS,
   type CorrectionFeedCard,
   type EntryFeedCard,

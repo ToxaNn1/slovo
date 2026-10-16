@@ -10,15 +10,16 @@ import { useReduceMotionKnown } from './useReduceMotion';
 
 /**
  * Decor slot 1, the screen background: the Edition's tile repeated behind a
- * screen's content. Place it first inside the screen; it fills the screen.
- * Plain when the Decor has no background.
+ * screen's content, `scale` times its size for a view drawn larger than the
+ * screen. Place it first inside the screen; it fills the screen. Plain when
+ * the Decor has no background.
  */
-export function DecorBackground() {
+export function DecorBackground({ scale = 1 }: { scale?: number }) {
   const { background } = useDecor();
   if (background === undefined) return null;
   return (
     <DecorView style={StyleSheet.absoluteFill}>
-      <MotifPattern motif={background.tile} />
+      <MotifPattern motif={background.tile} scale={scale} />
     </DecorView>
   );
 }

@@ -36,6 +36,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - runFlow: flows/game-leave.yaml
 - runFlow: flows/game-best-mode.yaml
 - runFlow: flows/favorites.yaml
+- runFlow: flows/share.yaml
 - runFlow: flows/collection-sheet.yaml
 - runFlow: flows/collection-entries.yaml
 - runFlow: flows/collections.yaml

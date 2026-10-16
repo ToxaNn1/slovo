@@ -77,9 +77,10 @@ export interface Composition extends Hiding {
   readonly onboarding: Onboarding;
   /**
    * The Entry card of any Entry, Retired or not, for a screen that opens a
-   * kept Entry; nothing for an id the Language Pack doesn't have. Opening it
-   * never makes the Entry Seen: Seen comes from the Feed, a notification or
-   * the widget.
+   * kept Entry; nothing for an id the Language Pack doesn't have. The card of
+   * today's Word of the Day carries its day, as in the Feed. Opening it never
+   * makes the Entry Seen: Seen comes from the Feed, a notification or the
+   * widget.
    */
   entryCard(entryId: string): Promise<EntryFeedCard | undefined>;
   /**
@@ -228,7 +229,12 @@ export async function openComposition({
   planOffers();
   async function entryCard(entryId: string): Promise<EntryFeedCard | undefined> {
     const entry = await entries.get(entryId);
-    return entry === undefined ? undefined : buildEntryCard(entries, entry);
+    if (entry === undefined) return undefined;
+    // Today's Word of the Day carries its day, as on its Feed card.
+    const today = wordOfTheDay.chosen();
+    return entry.kind === 'word' && today?.wordId === entry.id
+      ? buildEntryCard(entries, entry, today.date)
+      : buildEntryCard(entries, entry);
   }
   /** An Entry opened from outside the app, from a notification or the widget: one rule for both. */
   async function openedFromOutside(entryId: string): Promise<EntryFeedCard | undefined> {

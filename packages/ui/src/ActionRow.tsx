@@ -9,6 +9,8 @@ const ACTION_SIZE = 52;
 export interface ActionRowProps {
   /** The heart: keeps the Entry in Favorites, or takes it out. */
   favorite?: ReactNode;
+  /** Opens the sheet with the Share Card; the row leaves its slot out without it. */
+  share?: ReactNode;
   /** Adds the Entry to Collections. */
   collection?: ReactNode;
   /** Hides the Entry, or its Category. */
@@ -18,13 +20,14 @@ export interface ActionRowProps {
 /**
  * The action row under the Entry card (ADR 0017): one 52 pt slot per action,
  * spread evenly across the card's width, the same on a Word and a Correction
- * card. Share joins in 0.6, between the heart and Collections, as the design
- * has it.
+ * card: the heart, share, Collections and hide, as the design has it. Without
+ * a share action the other three spread over the row.
  */
-export function ActionRow({ favorite, collection, hide }: ActionRowProps) {
+export function ActionRow({ favorite, share, collection, hide }: ActionRowProps) {
   return (
     <View testID="action-row" style={styles.row}>
       <View style={styles.slot}>{favorite}</View>
+      {share !== undefined && <View style={styles.slot}>{share}</View>}
       <View style={styles.slot}>{collection}</View>
       <View style={styles.slot}>{hide}</View>
     </View>
