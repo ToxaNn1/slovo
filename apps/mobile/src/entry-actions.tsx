@@ -1,10 +1,4 @@
-import {
-  entryIdOf,
-  isTodaysWordOfTheDay,
-  type Composition,
-  type EntryFeedCard,
-  type WordFeedCard,
-} from '@slovo/core';
+import { entryIdOf, isTodaysWordOfTheDay, type Composition, type EntryFeedCard } from '@slovo/core';
 import {
   ActionRow,
   CollectionButton,
@@ -24,11 +18,15 @@ import { useEntryCollections } from './collections';
 import { useOpenedRead } from './composition';
 import { useFavorite } from './favorites';
 import { useHide } from './hiding';
+import { createShareFormatMemory } from './share-card';
+
+/** The Share Card format of this session: every share sheet opens in the one chosen last. */
+const shareFormat = createShareFormatMemory();
 
 /**
  * The action row of an Entry card, wherever the card appears: the Feed and
- * the Entry screen a list opens. Each action fills its own slot. Share is on a
- * Word's card only, and only when the binary can capture the Share Card. Its
+ * the Entry screen a list opens. Each action fills its own slot. Share is there
+ * only when the binary can capture the Share Card. Its
  * screen gives it an `UndoToastProvider` for the toast after a hide.
  */
 export function EntryActions({ card }: { card: EntryFeedCard }) {
@@ -37,7 +35,7 @@ export function EntryActions({ card }: { card: EntryFeedCard }) {
   const hide = useHide(card);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
-  const share = card.kind === 'word' ? shareCardOnDevice : undefined;
+  const share = shareCardOnDevice;
   return (
     <>
       <ActionRow
@@ -67,7 +65,7 @@ export function EntryActions({ card }: { card: EntryFeedCard }) {
           setSheetOpen(false);
         }}
       />
-      {card.kind === 'word' && share !== undefined && (
+      {share !== undefined && (
         <EntryShareSheet
           card={card}
           share={share}
@@ -81,14 +79,17 @@ export function EntryActions({ card }: { card: EntryFeedCard }) {
   );
 }
 
-/** The share sheet of a Word's card, over the Story Share Card. Sharing writes no user state. */
+/**
+ * The share sheet of an Entry's card, over its Share Card, in the format
+ * chosen last this session. Sharing writes no user state.
+ */
 function EntryShareSheet({
   card,
   share,
   visible,
   onClose,
 }: {
-  card: WordFeedCard;
+  card: EntryFeedCard;
   share: NonNullable<typeof shareCardOnDevice>;
   visible: boolean;
   onClose: () => void;
@@ -96,10 +97,14 @@ function EntryShareSheet({
   return (
     <ShareSheet
       visible={visible}
-      card={card.wordCard}
-      wordOfTheDay={isTodaysWordOfTheDay(card, deviceClock)}
+      card={card.kind === 'word' ? card.wordCard : card.correctionCard}
+      wordOfTheDay={card.kind === 'word' && isTodaysWordOfTheDay(card, deviceClock)}
       watermark={edition.displayName}
-      onShare={(view) => share(view, card.wordCard.wordId)}
+      initialFormat={shareFormat.format}
+      onFormatChange={(format) => {
+        shareFormat.choose(format);
+      }}
+      onShare={(view, format) => share(view, entryIdOf(card), format)}
       onClose={onClose}
     />
   );

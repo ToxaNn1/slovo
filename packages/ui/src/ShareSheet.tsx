@@ -13,9 +13,17 @@ import {
 import { BottomSheet } from './BottomSheet';
 import { useEdition } from './EditionProvider';
 import { PrimaryButton } from './PrimaryButton';
-import { ShareCard, STORY_CARD, type ShareCardContent } from './ShareCard';
+import { SegmentedControl } from './SegmentedControl';
+import { SHARE_CARD, ShareCard, type ShareCardContent } from './ShareCard';
 import { SheetTitle } from './SheetParts';
-import { space, storyImage, toastElevation, toastRadius, typeSize } from './tokens';
+import {
+  shareImage,
+  space,
+  toastElevation,
+  toastRadius,
+  typeSize,
+  type ShareCardFormat,
+} from './tokens';
 import { useTokens } from './TokensProvider';
 
 /** The share of the screen's height the preview may take, so the sheet fits the SE. */
@@ -30,10 +38,12 @@ const FADE_MS = 200;
 export type ShareSheetOutcome = 'closed' | 'failed';
 
 /**
- * The share sheet: the title, a live preview of the Story Share Card, and
+ * The share sheet: the title, a live preview of the Share Card, the format
+ * control (Story / Square), which switches the preview at once, and
  * «Поділитися», which hands the shell the card laid out off screen at the
- * size of its image (`storyImage`, in points at the screen's scale) to
- * capture and share. Once the system share sheet closes, shared
+ * size of its format's image (`shareImage`, in points at the screen's scale)
+ * to capture and share. It opens in `initialFormat` and reports each format
+ * the reader picks, so the shell can open it in the last one. Once the system share sheet closes, shared
  * or cancelled, the sheet closes too; when sharing fails, a short toast says
  * so and the sheet stays open to try again. A tap on the scrim, a drag down
  * or VoiceOver's escape closes it without sharing. Needs a
@@ -41,18 +51,29 @@ export type ShareSheetOutcome = 'closed' | 'failed';
  */
 export function ShareSheet({
   visible,
+  initialFormat,
+  onFormatChange,
   onShare,
   onClose,
   ...card
 }: ShareCardContent & {
   visible: boolean;
-  /** Captures the card in the view and shares it; resolves once sharing is over. */
-  onShare: (cardView: View) => Promise<ShareSheetOutcome>;
+  /** The format the sheet opens in. */
+  initialFormat: ShareCardFormat;
+  onFormatChange: (format: ShareCardFormat) => void;
+  /** Captures the card in the view, drawn in the format, and shares it; resolves once sharing is over. */
+  onShare: (cardView: View, format: ShareCardFormat) => Promise<ShareSheetOutcome>;
   onClose: () => void;
 }) {
   return (
     <BottomSheet visible={visible} onClose={onClose} testID="share-sheet">
-      <ShareSheetContent card={card} onShare={onShare} onClose={onClose} />
+      <ShareSheetContent
+        card={card}
+        initialFormat={initialFormat}
+        onFormatChange={onFormatChange}
+        onShare={onShare}
+        onClose={onClose}
+      />
     </BottomSheet>
   );
 }
@@ -60,11 +81,15 @@ export function ShareSheet({
 /** The sheet's content, mounted while it is open, so a toast never outlives it. */
 function ShareSheetContent({
   card,
+  initialFormat,
+  onFormatChange,
   onShare,
   onClose,
 }: {
   card: ShareCardContent;
-  onShare: (cardView: View) => Promise<ShareSheetOutcome>;
+  initialFormat: ShareCardFormat;
+  onFormatChange: (format: ShareCardFormat) => void;
+  onShare: (cardView: View, format: ShareCardFormat) => Promise<ShareSheetOutcome>;
   onClose: () => void;
 }) {
   const { radii } = useTokens();
@@ -74,16 +99,18 @@ function ShareSheetContent({
   const sharing = useRef(false);
   // Each failure shows a toast of its own.
   const [failures, setFailures] = useState(0);
+  const [format, setFormat] = useState(initialFormat);
+  const size = SHARE_CARD[format];
   const scale = Math.min(
     1,
-    (width - 2 * space[5]) / STORY_CARD.width,
-    (height * PREVIEW_HEIGHT_SHARE) / STORY_CARD.height,
+    (width - 2 * space[5]) / size.width,
+    (height * PREVIEW_HEIGHT_SHARE) / size.height,
   );
 
   async function share() {
     if (sharing.current || captured.current === null) return;
     sharing.current = true;
-    const outcome = await onShare(captured.current);
+    const outcome = await onShare(captured.current, format);
     sharing.current = false;
     if (outcome === 'failed') setFailures((count) => count + 1);
     else onClose();
@@ -98,16 +125,29 @@ function ShareSheetContent({
           style={[
             styles.preview,
             {
-              width: STORY_CARD.width * scale,
-              height: STORY_CARD.height * scale,
+              width: size.width * scale,
+              height: size.height * scale,
               borderRadius: radii.chip,
             },
           ]}
         >
-          <ShareCard {...card} width={STORY_CARD.width * scale} />
+          <ShareCard {...card} format={format} width={size.width * scale} />
           {failures > 0 && <Toast key={failures} message={strings.share.captureFailed} />}
         </View>
       </ScrollView>
+      {/* Under the preview, so it stays put under the thumb when the preview changes its height. */}
+      <SegmentedControl
+        accessibilityLabel={strings.share.format}
+        segments={[
+          { value: 'story', label: strings.share.story, testID: 'share-format-story' },
+          { value: 'square', label: strings.share.square, testID: 'share-format-square' },
+        ]}
+        selected={format}
+        onSelect={(chosen) => {
+          setFormat(chosen);
+          onFormatChange(chosen);
+        }}
+      />
       <PrimaryButton
         testID="share-sheet-share"
         label={strings.share.share}
@@ -124,7 +164,7 @@ function ShareSheetContent({
         importantForAccessibility="no-hide-descendants"
         style={styles.offScreen}
       >
-        <ShareCard {...card} width={storyImage.width / PixelRatio.get()} />
+        <ShareCard {...card} format={format} width={shareImage[format].width / PixelRatio.get()} />
       </View>
     </>
   );
@@ -173,7 +213,7 @@ const styles = StyleSheet.create({
   content: { gap: space[4], paddingBottom: space[4] },
   preview: { alignSelf: 'center', overflow: 'hidden' },
   // Left of the screen: the card is never wider than its image in pixels.
-  offScreen: { position: 'absolute', top: 0, left: -storyImage.width },
+  offScreen: { position: 'absolute', top: 0, left: -shareImage.story.width },
   toast: {
     position: 'absolute',
     left: space[3],

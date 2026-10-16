@@ -1,4 +1,4 @@
-import type { ShareSheetOutcome } from '@slovo/ui';
+import type { ShareCardFormat, ShareSheetOutcome } from '@slovo/ui';
 import { PixelRatio, Share, type View } from 'react-native';
 
 import { nativeModules } from './device-native-modules';
@@ -21,15 +21,16 @@ const modules = nativeModules.load('shareCapture', () => ({
 const fileUrl = (path: string) => (path.startsWith('file://') ? path : `file://${path}`);
 
 /**
- * Shares the Share Card of an Entry drawn in `view` through the iOS share
- * sheet, or undefined when the binary can't capture a view, so the share
- * button stays out of the action row.
+ * Shares the Share Card of an Entry, drawn in `view` in a format, through the
+ * iOS share sheet, or undefined when the binary can't capture a view, so the
+ * share button stays out of the action row.
  */
 export const shareCardOnDevice:
-  ((view: View, entryId: string) => Promise<ShareSheetOutcome>) | undefined =
+  | ((view: View, entryId: string, format: ShareCardFormat) => Promise<ShareSheetOutcome>)
+  | undefined =
   modules === undefined
     ? undefined
-    : (view, entryId) => {
+    : (view, entryId, format) => {
         const { viewShot, fileSystem } = modules;
         return shareCardImage(
           {
@@ -53,5 +54,6 @@ export const shareCardOnDevice:
             },
           },
           entryId,
+          format,
         );
       };
