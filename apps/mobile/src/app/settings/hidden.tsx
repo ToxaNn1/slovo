@@ -19,6 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useComposition } from '../../composition';
 import { editionStrings } from '../../edition/edition';
 import { useHiddenChanges, useHiddenScreenModel } from '../../mix/hidden';
+import type { HiddenScreenModel } from '../../mix/hidden-screen';
 import { LoadFailed } from '../../edition/language-pack';
 
 const strings = editionStrings.hidden;
@@ -41,8 +42,7 @@ function HiddenList() {
   const composition = useComposition();
   const model = useHiddenScreenModel();
   const { restoreEntry, turnCategoryOn, turnCorrectionsOn } = useHiddenChanges();
-  const { colors, fontFamilies } = useTokens();
-  const { voice } = useEdition();
+  const { colors } = useTokens();
   const router = useRouter();
 
   if (composition.status === 'failed') return <LoadFailed onRetry={composition.retry} />;
@@ -76,70 +76,106 @@ function HiddenList() {
           />
         )}
         ListHeaderComponent={
-          <>
-            <View style={styles.padded}>
-              <BackLink
-                testID="hidden-back"
-                label={editionStrings.settings.title}
-                onPress={() => {
-                  router.back();
-                }}
-              />
-              <View style={styles.header}>
-                <ScreenTitle>{strings.title}</ScreenTitle>
-                <Text
-                  {...voice}
-                  style={[styles.subtitle, { color: colors.muted, fontFamily: fontFamilies.ui }]}
-                >
-                  {strings.subtitle}
-                </Text>
-              </View>
-            </View>
-            {model?.empty === true && (
-              <Text
-                testID="hidden-empty"
-                {...voice}
-                style={[styles.empty, { color: colors.muted, fontFamily: fontFamilies.ui }]}
-              >
-                {strings.empty}
-              </Text>
-            )}
-            {model !== undefined && model.entries.length > 0 && (
-              <View testID="hidden-entries" style={styles.section}>
-                <SectionLabel style={styles.sectionLabel}>{strings.entries}</SectionLabel>
-              </View>
-            )}
-          </>
+          <HiddenHeader
+            empty={model?.empty === true}
+            hasEntries={model !== undefined && model.entries.length > 0}
+            onBack={() => {
+              router.back();
+            }}
+          />
         }
         ListFooterComponent={
           model !== undefined &&
           (model.categories.length > 0 || model.corrections !== undefined) ? (
-            <View testID="hidden-categories" style={styles.section}>
-              <SectionLabel style={styles.sectionLabel}>{strings.categories}</SectionLabel>
-              {model.categories.map(({ id, name }) => (
-                <TurnOnRow
-                  key={id}
-                  testID={`hidden-category-${id}`}
-                  name={name}
-                  accessibilityLabel={fill(strings.turnOnLabel, { name })}
-                  onTurnOn={() => {
-                    turnCategoryOn(id);
-                  }}
-                />
-              ))}
-              {model.corrections !== undefined && (
-                <TurnOnRow
-                  testID="hidden-corrections"
-                  name={model.corrections.name}
-                  accessibilityLabel={strings.turnOnCorrectionsLabel}
-                  onTurnOn={turnCorrectionsOn}
-                />
-              )}
-            </View>
+            <CategoriesSection
+              model={model}
+              onTurnCategoryOn={turnCategoryOn}
+              onTurnCorrectionsOn={turnCorrectionsOn}
+            />
           ) : null
         }
       />
     </SafeAreaView>
+  );
+}
+
+/** Above the list: back link, title, the empty line, and the Entries label when there are Entries. */
+function HiddenHeader({
+  empty,
+  hasEntries,
+  onBack,
+}: {
+  empty: boolean;
+  hasEntries: boolean;
+  onBack: () => void;
+}) {
+  const { colors, fontFamilies } = useTokens();
+  const { voice } = useEdition();
+  return (
+    <>
+      <View style={styles.padded}>
+        <BackLink testID="hidden-back" label={editionStrings.settings.title} onPress={onBack} />
+        <View style={styles.header}>
+          <ScreenTitle>{strings.title}</ScreenTitle>
+          <Text
+            {...voice}
+            style={[styles.subtitle, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+          >
+            {strings.subtitle}
+          </Text>
+        </View>
+      </View>
+      {empty && (
+        <Text
+          testID="hidden-empty"
+          {...voice}
+          style={[styles.empty, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+        >
+          {strings.empty}
+        </Text>
+      )}
+      {hasEntries && (
+        <View testID="hidden-entries" style={styles.section}>
+          <SectionLabel style={styles.sectionLabel}>{strings.entries}</SectionLabel>
+        </View>
+      )}
+    </>
+  );
+}
+
+/** Below the list: the Hidden Categories and the Corrections, each with the button that turns it on. */
+function CategoriesSection({
+  model,
+  onTurnCategoryOn,
+  onTurnCorrectionsOn,
+}: {
+  model: HiddenScreenModel;
+  onTurnCategoryOn: (id: string) => void;
+  onTurnCorrectionsOn: () => void;
+}) {
+  return (
+    <View testID="hidden-categories" style={styles.section}>
+      <SectionLabel style={styles.sectionLabel}>{strings.categories}</SectionLabel>
+      {model.categories.map(({ id, name }) => (
+        <TurnOnRow
+          key={id}
+          testID={`hidden-category-${id}`}
+          name={name}
+          accessibilityLabel={fill(strings.turnOnLabel, { name })}
+          onTurnOn={() => {
+            onTurnCategoryOn(id);
+          }}
+        />
+      ))}
+      {model.corrections !== undefined && (
+        <TurnOnRow
+          testID="hidden-corrections"
+          name={model.corrections.name}
+          accessibilityLabel={strings.turnOnCorrectionsLabel}
+          onTurnOn={onTurnCorrectionsOn}
+        />
+      )}
+    </View>
   );
 }
 
