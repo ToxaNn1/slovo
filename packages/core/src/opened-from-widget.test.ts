@@ -188,6 +188,20 @@ describe('opening an Entry from the widget', () => {
     expect(historyIdsOf(app)).toEqual([]);
   });
 
+  it('writes only today as an Active Day for a Retired Word, and gives its card', async () => {
+    const time = fakeClock();
+    const { app, records, writes } = await run({ clock: time.clock });
+    time.advance(DAY);
+    const before = writes.length;
+
+    const card = await app.widget.opened('w_old');
+
+    expect(card === undefined ? undefined : entryIdOf(card)).toBe('w_old');
+    expect(keysSince(writes, before)).toEqual([['activeDays.2026-10-12']]);
+    expect(records.has('feed.seen.w_old')).toBe(false);
+    expect(historyIdsOf(app)).toEqual([]);
+  });
+
   it('writes only today as an Active Day for a Correction out of the Mix', async () => {
     const time = fakeClock();
     const { app, records, writes } = await run({ clock: time.clock, corrections: false });
