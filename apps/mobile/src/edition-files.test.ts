@@ -106,7 +106,7 @@ describe('the 0.5 UI strings group', () => {
 
 describe('the 0.6 widget strings group', () => {
   const strings = readJson('uk', 'strings.json') as Record<string, unknown>;
-  const widget = strings['widget'] as Record<string, unknown>;
+  const widget = strings['widget'] as { guide: Record<string, unknown> };
 
   it('the Ukrainian Edition needs the widget group', () => {
     const without = Object.fromEntries(Object.entries(strings).filter(([key]) => key !== 'widget'));
@@ -116,7 +116,7 @@ describe('the 0.6 widget strings group', () => {
     expect(result.error?.issues.map((issue) => issue.path.join('.'))).toContain('widget');
   });
 
-  it.each(['galleryName', 'galleryDescription', 'allEntries'])(
+  it.each(['galleryName', 'galleryDescription', 'allEntries', 'guide'])(
     'the Ukrainian Edition needs widget.%s',
     (key) => {
       const changed = Object.fromEntries(Object.entries(widget).filter(([name]) => name !== key));
@@ -126,6 +126,20 @@ describe('the 0.6 widget strings group', () => {
       expect(result.error?.issues.map((issue) => issue.path.join('.'))).toEqual([`widget.${key}`]);
     },
   );
+
+  it('needs the three steps of the widget guide, each with its hint', () => {
+    const steps = widget.guide['steps'] as { title: string; hint: string }[];
+    const withTwoSteps = {
+      ...strings,
+      widget: { guide: { ...widget.guide, steps: steps.slice(0, 2) } },
+    };
+
+    const result = EditionStringsSchema.safeParse(withTwoSteps);
+
+    expect(result.error?.issues.map((issue) => issue.path.join('.'))).toContain(
+      'widget.guide.steps',
+    );
+  });
 });
 
 describe('the strings of each Game Mode', () => {

@@ -1,0 +1,22 @@
+# Opens Settings › «Віджети: як додати», the widget guide. The row is near the
+# bottom of Settings, so the list cannot centre it, and the flow only scrolls
+# until it shows (`open-settings-row.yaml` centres the row). A double tap opens
+# the guide once: one back returns to the list.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- tapOn:
+    id: tab-settings
+- scrollUntilVisible:
+    element:
+      id: settings-row-widgets
+    visibilityPercentage: 50
+    timeout: 90000
+    speed: 70
+# At the largest text size the row shows under the tab bar: scroll the list to its end.
+- scroll
+- scroll
+- doubleTapOn:
+    id: settings-row-widgets
+- assertVisible:
+    id: widget-guide
+- assertVisible: Слово на головному екрані

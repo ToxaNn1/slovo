@@ -126,7 +126,13 @@ export default function SettingsScreen() {
         </View>
         <View style={styles.section}>
           <SettingsGroup>
-            <SoonRow testID="settings-row-widgets" label={strings.rows.widgets} />
+            <NavigationRow
+              testID="settings-row-widgets"
+              label={strings.rows.widgets}
+              onPress={() => {
+                openScreen('/settings/widgets');
+              }}
+            />
             <NavigationRow
               testID="settings-row-about"
               label={strings.rows.about}

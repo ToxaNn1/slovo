@@ -147,3 +147,13 @@ export const toastElevation = {
   shadowOpacity: 0.4,
   shadowRadius: 15,
 } as const;
+
+/** The widget guide's numbered steps: the square that holds the number, in points. */
+export const guideStepBadge = { size: 28, radius: 4 } as const;
+
+/**
+ * The type sizes inside the widget guide's drawing of the widgets. The drawing
+ * is a picture, so it does not follow the text size of iOS; the design's real
+ * widgets use 28–34 for the Lemma at 170×170 and 364×170.
+ */
+export const widgetDrawingType = { lemma: 24, line: 12 } as const;
