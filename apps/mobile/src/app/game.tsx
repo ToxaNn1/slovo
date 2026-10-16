@@ -15,10 +15,10 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useComposition } from '../composition';
-import { editionStrings } from '../edition';
-import { useGameActions, useGameState } from '../game';
-import { gameModeCard, gameModeStrings } from '../game-modes';
-import { LoadFailed } from '../language-pack';
+import { editionStrings } from '../edition/edition';
+import { useGameActions, useGameState } from '../game/game';
+import { gameModeCard, gameModeStrings } from '../game/game-modes';
+import { LoadFailed } from '../edition/language-pack';
 
 const { game: strings } = editionStrings;
 

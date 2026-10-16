@@ -11,8 +11,8 @@ import {
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { Appearance, useColorScheme } from 'react-native';
 
-import { edition } from './edition';
-import { storedUserState } from './stored-user-state';
+import { edition } from './edition/edition';
+import { storedUserState } from './user-state/stored-user-state';
 
 // Opened once per app run, however often the provider mounts.
 let opening: Promise<{ settings: Settings; current: UserSettings }> | undefined;

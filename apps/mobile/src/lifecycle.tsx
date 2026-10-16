@@ -2,11 +2,11 @@ import { useEffect, useSyncExternalStore } from 'react';
 import { AppState } from 'react-native';
 
 import { useModule } from './composition';
-import { deviceClock } from './device-clock';
-import { deviceWidget } from './device-widget';
-import { createForeground } from './foreground';
-import { reportForeground } from './foreground-reports';
-import { writeWidgetSnapshots } from './widget-snapshot';
+import { deviceClock } from './device/device-clock';
+import { deviceWidget } from './widget/device-widget';
+import { createForeground } from './foreground/foreground';
+import { reportForeground } from './foreground/foreground-reports';
+import { writeWidgetSnapshots } from './widget/widget-snapshot';
 
 /** The shell's one source of the foreground, for this adapter and the Feed alike. */
 const foreground = createForeground(AppState);

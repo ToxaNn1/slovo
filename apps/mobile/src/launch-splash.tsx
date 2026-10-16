@@ -2,7 +2,7 @@ import { SplashOverlay } from '@slovo/ui';
 import * as SplashScreen from 'expo-splash-screen';
 import { useState } from 'react';
 
-import { editionStrings, splashImageWidth } from './edition';
+import { editionStrings, splashImageWidth } from './edition/edition';
 
 // The native splash stays until the app's own splash is drawn over it.
 void SplashScreen.preventAutoHideAsync();

@@ -18,14 +18,14 @@ import { useMemo, type ComponentProps } from 'react';
 import { Pressable } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
-import { edition, editionDecor, editionStrings, editionTokens } from '../edition';
+import { edition, editionDecor, editionStrings, editionTokens } from '../edition/edition';
 import { hapticEngine } from '../haptics';
-import { LanguagePackProvider } from '../language-pack';
+import { LanguagePackProvider } from '../edition/language-pack';
 import { LaunchSplash } from '../launch-splash';
 import { Lifecycle } from '../lifecycle';
-import { NotificationTaps } from '../notifications';
+import { NotificationTaps } from '../notifications/notifications';
 import { Onboarding } from '../onboarding';
-import { LemmaPronunciation } from '../pronunciation-button';
+import { LemmaPronunciation } from '../entries/pronunciation-button';
 import { SettingsProvider, useColorSchemeInEffect, useSettings } from '../settings';
 import { tabsOf, type Tab } from '../tabs';
 

@@ -17,9 +17,9 @@ import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-n
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useComposition } from '../../composition';
-import { editionStrings } from '../../edition';
-import { useHiddenChanges, useHiddenScreenModel } from '../../hidden';
-import { LoadFailed } from '../../language-pack';
+import { editionStrings } from '../../edition/edition';
+import { useHiddenChanges, useHiddenScreenModel } from '../../mix/hidden';
+import { LoadFailed } from '../../edition/language-pack';
 
 const strings = editionStrings.hidden;
 
