@@ -1,4 +1,4 @@
-import type { Collection, CollectionResult } from '@slovo/core';
+import type { CollectionResult } from '@slovo/core';
 import {
   BackLink,
   CollectionNameField,
@@ -8,7 +8,6 @@ import {
   NewCollectionButton,
   ScreenTitle,
   space,
-  useEdition,
   useTokens,
 } from '@slovo/ui';
 import { useRouter } from 'expo-router';
@@ -16,12 +15,13 @@ import { useState } from 'react';
 import { Alert, FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { refusalText } from '../../../saved/collection-refusal';
-import { useCollectionChanges, useCollectionList } from '../../../saved/collections';
 import { useComposition } from '../../../composition';
 import { editionStrings } from '../../../edition/edition';
 import { LoadFailed } from '../../../edition/language-pack';
 import { useOpenScreen } from '../../../entries/use-open-screen';
+import { refusalText } from '../../../saved/collection-refusal';
+import { useCollectionChanges, useCollectionRows } from '../../../saved/collections';
+import type { CollectionRowModel } from '../../../saved/collections-screen';
 
 const { collections: collectionStrings } = editionStrings;
 const strings = collectionStrings.screen;
@@ -38,10 +38,9 @@ type Editing = { readonly kind: 'new' } | { readonly kind: 'rename'; readonly id
  */
 export default function CollectionsScreen() {
   const composition = useComposition();
-  const list = useCollectionList();
+  const rows = useCollectionRows();
   const { create, rename, remove } = useCollectionChanges();
   const { colors } = useTokens();
-  const { count } = useEdition();
   const router = useRouter();
   const openScreen = useOpenScreen();
   const [editing, setEditing] = useState<Editing>();
@@ -49,7 +48,7 @@ export default function CollectionsScreen() {
   if (composition.status === 'failed') return <LoadFailed onRetry={composition.retry} />;
   const ready = composition.status === 'ready';
 
-  function confirmDelete({ id, name }: Collection) {
+  function confirmDelete({ id, name }: CollectionRowModel) {
     const { confirmDelete: texts } = strings;
     Alert.alert(fill(texts.title, { name }), texts.message, [
       { text: texts.cancel, style: 'cancel' },
@@ -75,7 +74,7 @@ export default function CollectionsScreen() {
     return refusalText(collectionStrings.sheet.refusal, result.reason);
   }
 
-  function renderCollection(collection: Collection) {
+  function renderCollection(collection: CollectionRowModel) {
     if (editing?.kind === 'rename' && editing.id === collection.id) {
       return (
         <CollectionNameField
@@ -90,22 +89,13 @@ export default function CollectionsScreen() {
         />
       );
     }
-    const entries = count(collectionStrings.count, collection.count);
     return (
       <CollectionRow
         testID={`collection-${collection.id}`}
         name={collection.name}
-        count={entries}
-        lemmas={collection.newestLemmas}
-        accessibilityLabel={
-          collection.newestLemmas.length === 0
-            ? fill(collectionStrings.collectionLabel, { name: collection.name, count: entries })
-            : fill(strings.rowLabel, {
-                name: collection.name,
-                count: entries,
-                lemmas: collection.newestLemmas.join(', '),
-              })
-        }
+        count={collection.count}
+        lemmas={collection.lemmas}
+        accessibilityLabel={collection.accessibilityLabel}
         onPress={() => {
           openScreen(`/saved/collections/${collection.id}`);
         }}
@@ -113,7 +103,7 @@ export default function CollectionsScreen() {
           {
             name: 'rename',
             label: strings.rename,
-            accessibilityLabel: fill(strings.renameLabel, { name: collection.name }),
+            accessibilityLabel: collection.renameLabel,
             tone: 'muted',
             onPress: () => {
               setEditing({ kind: 'rename', id: collection.id });
@@ -122,7 +112,7 @@ export default function CollectionsScreen() {
           {
             name: 'delete',
             label: strings.delete,
-            accessibilityLabel: fill(strings.deleteLabel, { name: collection.name }),
+            accessibilityLabel: collection.deleteLabel,
             tone: 'destructive',
             onPress: () => {
               confirmDelete(collection);
@@ -140,7 +130,7 @@ export default function CollectionsScreen() {
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
       <FlatList
-        data={ready ? list : []}
+        data={ready ? rows : []}
         keyExtractor={(collection) => collection.id}
         renderItem={({ item }) => <View style={styles.item}>{renderCollection(item)}</View>}
         ItemSeparatorComponent={Separator}
