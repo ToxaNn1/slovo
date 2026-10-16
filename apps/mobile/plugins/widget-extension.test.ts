@@ -16,7 +16,7 @@ import { describe, expect, it } from 'vitest';
 
 import { widgetExtensionFiles, writeWidgetExtension, type WidgetEdition } from './widget-extension';
 
-const ukrainianEditionDir = fileURLToPath(new URL('../../editions/uk/', import.meta.url));
+const ukrainianEditionDir = fileURLToPath(new URL('../../../editions/uk/', import.meta.url));
 const read = (file: string) => readFileSync(`${ukrainianEditionDir}${file}`, 'utf8');
 
 /** The Ukrainian Edition as the prebuild hands it to the widget extension. */

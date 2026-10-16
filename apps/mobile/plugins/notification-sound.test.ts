@@ -1,7 +1,7 @@
 import { EditionConfigSchema } from '@slovo/contracts';
 import { describe, expect, it } from 'vitest';
 
-import ukrainianEdition from '../../editions/uk/edition.json';
+import ukrainianEdition from '../../../editions/uk/edition.json';
 
 import { readNotificationSound } from './notification-sound';
 import { wav } from './wav-builder';

@@ -14,6 +14,6 @@ coverage/
 tools/sourcing/.cache/
 tools/sourcing/review/
 
-# The widget extension's Edition files, written by the prebuild (apps/mobile/widget-extension.ts)
+# The widget extension's Edition files, written by the prebuild (apps/mobile/plugins/widget-extension.ts)
 apps/widget/Info.plist
 apps/widget/Generated/
