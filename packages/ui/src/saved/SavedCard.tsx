@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
-import { space } from '../tokens';
+import { cardSpace, space, typeSize } from '../tokens';
 import { InvertedTokens, useTokens } from '../providers/TokensProvider';
 
 /** The header of a card: its name and its count. */
@@ -58,7 +58,11 @@ export function SavedCard({
   const cardStyle = [
     styles.card,
     primary
-      ? { backgroundColor: colors.ink, paddingVertical: 22, gap: space[4] }
+      ? {
+          backgroundColor: colors.ink,
+          paddingVertical: cardSpace.primaryPaddingVertical,
+          gap: space[4],
+        }
       : { backgroundColor: colors.surface, borderColor: colors.line, borderWidth: 1 },
     { borderRadius: radii.card },
   ];
@@ -190,20 +194,20 @@ export function SavedCardCollections({ children }: { children: ReactNode }) {
 const styles = StyleSheet.create({
   collections: { flexDirection: 'row', gap: space[3] },
   collection: { flex: 1, paddingHorizontal: space[3], paddingVertical: space[3], gap: space[1] },
-  collectionName: { fontSize: 15, fontWeight: '700' },
-  collectionCount: { fontSize: 14 },
-  card: { padding: space[5], gap: 14, overflow: 'hidden' },
+  collectionName: { fontSize: typeSize.body, fontWeight: '700' },
+  collectionCount: { fontSize: typeSize.caption },
+  card: { padding: space[5], gap: cardSpace.gap, overflow: 'hidden' },
   header: {
     flexDirection: 'row',
     alignItems: 'baseline',
     justifyContent: 'space-between',
     gap: space[3],
   },
-  title: { flexShrink: 1, fontSize: 17, fontWeight: '700' },
-  count: { fontSize: 30, fontWeight: '500' },
+  title: { flexShrink: 1, fontSize: typeSize.blockHeading, fontWeight: '700' },
+  count: { fontSize: typeSize.cardCount, fontWeight: '500' },
   titles: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: space[2] },
   titleItem: { flexDirection: 'row', alignItems: 'baseline', gap: space[2] },
-  titleText: { fontSize: 18 },
+  titleText: { fontSize: typeSize.listItem },
   row: {
     flexDirection: 'row',
     alignItems: 'baseline',
@@ -212,6 +216,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     paddingVertical: space[3],
   },
-  rowTitle: { flexShrink: 1, fontSize: 20 },
-  rowTrailing: { flexShrink: 0, fontSize: 13, fontWeight: '500' },
+  rowTitle: { flexShrink: 1, fontSize: typeSize.rowLemma },
+  rowTrailing: { flexShrink: 0, fontSize: typeSize.meta, fontWeight: '500' },
 });

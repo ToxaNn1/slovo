@@ -15,7 +15,7 @@ import { BottomSheet } from '../primitives/BottomSheet';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { PrimaryButton } from '../primitives/PrimaryButton';
 import { SHEET_ROW_HEIGHT, SheetTitle } from '../primitives/SheetParts';
-import { minTouchTarget, space } from '../tokens';
+import { checkboxRadius, minTouchTarget, space, typeSize } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /** The checkbox's side, from the design. */
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
     columnGap: space[3],
     paddingBottom: space[3],
   },
-  entry: { flexShrink: 1, fontSize: 20, fontWeight: '600', textAlign: 'right' },
+  entry: { flexShrink: 1, fontSize: typeSize.rowLemma, fontWeight: '600', textAlign: 'right' },
   list: { flexGrow: 0, flexShrink: 1 },
   row: {
     minHeight: SHEET_ROW_HEIGHT,
@@ -293,14 +293,14 @@ const styles = StyleSheet.create({
     width: CHECKBOX_SIZE,
     height: CHECKBOX_SIZE,
     borderWidth: 1.5,
-    borderRadius: 4,
+    borderRadius: checkboxRadius,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  name: { flex: 1, fontSize: 18, fontWeight: '600' },
-  count: { fontSize: 15 },
+  name: { flex: 1, fontSize: typeSize.listItem, fontWeight: '600' },
+  count: { fontSize: typeSize.body },
   newCollection: { minHeight: minTouchTarget, justifyContent: 'center', marginTop: space[3] },
-  newLabel: { fontSize: 17, fontWeight: '700' },
+  newLabel: { fontSize: typeSize.blockHeading, fontWeight: '700' },
   creation: { marginTop: space[3], gap: space[2] },
   creationRow: { flexDirection: 'row', gap: space[3] },
   field: {
@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
     minHeight: SHEET_ROW_HEIGHT,
     borderWidth: 1,
     paddingHorizontal: space[4],
-    fontSize: 18,
+    fontSize: typeSize.listItem,
   },
   create: {
     minHeight: SHEET_ROW_HEIGHT,
@@ -316,7 +316,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  createLabel: { fontSize: 17, fontWeight: '700' },
-  refusal: { fontSize: 14, fontWeight: '600' },
+  createLabel: { fontSize: typeSize.blockHeading, fontWeight: '700' },
+  refusal: { fontSize: typeSize.caption, fontWeight: '600' },
   done: { marginTop: space[4] },
 });

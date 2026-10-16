@@ -4,7 +4,7 @@ import Svg, { Path } from 'react-native-svg';
 
 import { useEdition } from '../providers/EditionProvider';
 import { rowActionProps, SwipeableRow, type RowAction } from '../primitives/SwipeableRow';
-import { minTouchTarget, overlineType, space } from '../tokens';
+import { cardSpace, minTouchTarget, overlineType, space, typeSize } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /**
@@ -222,7 +222,11 @@ export function NewCollectionButton({
 
 const styles = StyleSheet.create({
   card: { borderWidth: 1, overflow: 'hidden' },
-  content: { paddingHorizontal: 18, paddingVertical: 18, gap: space[2] },
+  content: {
+    paddingHorizontal: cardSpace.collectionPadding,
+    paddingVertical: cardSpace.collectionPadding,
+    gap: space[2],
+  },
   // At the largest text sizes the count drops under the name instead of squeezing it.
   titleLine: {
     flexDirection: 'row',
@@ -231,13 +235,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     columnGap: space[3],
   },
-  name: { flexShrink: 1, fontSize: 17, fontWeight: '700' },
-  count: { flexShrink: 0, fontSize: 14, fontWeight: '500' },
-  lemmas: { fontSize: 22, lineHeight: 22 * 1.3 },
-  editing: { paddingHorizontal: 18, paddingVertical: 16, gap: space[3] },
+  name: { flexShrink: 1, fontSize: typeSize.blockHeading, fontWeight: '700' },
+  count: { flexShrink: 0, fontSize: typeSize.caption, fontWeight: '500' },
+  lemmas: { fontSize: typeSize.collectionLemmas, lineHeight: typeSize.collectionLemmas * 1.3 },
+  editing: {
+    paddingHorizontal: cardSpace.collectionPadding,
+    paddingVertical: space[4],
+    gap: space[3],
+  },
   overline: overlineType,
-  field: { minHeight: 52, paddingHorizontal: space[4], fontSize: 18 },
-  refusal: { fontSize: 14, fontWeight: '500' },
+  field: { minHeight: 52, paddingHorizontal: space[4], fontSize: typeSize.listItem },
+  refusal: { fontSize: typeSize.caption, fontWeight: '500' },
   add: {
     minHeight: minTouchTarget,
     minWidth: minTouchTarget,
