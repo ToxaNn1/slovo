@@ -1,8 +1,9 @@
 /**
  * The native modules a batch adds (0.4: notifications and the time picker;
- * 0.6: the widget's), which a dev client built before that batch lacks.
+ * 0.6: the widget's and the Share Card's view capture), which a dev client
+ * built before that batch lacks.
  */
-export type NativeModuleName = 'notifications' | 'timePicker' | 'widget';
+export type NativeModuleName = 'notifications' | 'timePicker' | 'widget' | 'shareCapture';
 
 /** How to tell whether the installed binary has each native module. A probe may throw. */
 export type NativeModuleProbes = Record<NativeModuleName, () => boolean>;

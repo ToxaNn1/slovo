@@ -6,6 +6,7 @@ const installed: NativeModuleProbes = {
   notifications: () => true,
   timePicker: () => true,
   widget: () => true,
+  shareCapture: () => true,
 };
 
 describe('the native modules of the installed dev client', () => {

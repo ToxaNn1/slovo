@@ -1,0 +1,76 @@
+# Sharing a Word as a Story Share Card: a Feed card's «Поділитися» opens the
+# share sheet with the card's preview, its «Поділитися» opens the iOS share
+# sheet with the image, and cancelling that sheet brings the reader back to the
+# card with no error. A subflow of `smoke.yaml`; run it from there.
+#
+# It needs the view capture module (`react-native-view-shot`), which a dev
+# client built before the 0.6 native batch lacks: there the share button stays
+# out of the action row, and the flow only checks that. Its sharing branch
+# runs once the 0.6 EAS build exists. The iOS share sheet is drawn by iOS, so
+# check its close button's label against a real run.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- tapOn:
+    id: tab-home
+# A Correction's card has no share button yet: swipe to a Word's card.
+- repeat:
+    while:
+      notVisible:
+        id: word-card
+    times: 10
+    commands:
+      - swipe:
+          direction: UP
+      - waitForAnimationToEnd
+# The action row sits under the card, which may be taller than the screen.
+- scrollUntilVisible:
+    element:
+      id: action-row
+- swipe:
+    start: 50%, 60%
+    end: 50%, 48%
+    duration: 800
+- waitForAnimationToEnd
+# Without the capture module the row keeps its three buttons.
+- runFlow:
+    when:
+      notVisible:
+        id: share-button
+    commands:
+      - assertVisible:
+          id: collection-button
+      - assertVisible:
+          id: hide-button
+# With it: the sheet, the iOS share sheet, cancel, back on the card.
+- runFlow:
+    when:
+      visible:
+        id: share-button
+    commands:
+      - assertVisible:
+          id: share-button
+          text: Поділитися
+      - tapOn:
+          id: share-button
+      - assertVisible:
+          id: share-sheet
+      - assertVisible:
+          id: share-preview
+      - waitForAnimationToEnd
+      - takeScreenshot: share-sheet
+      - tapOn:
+          id: share-sheet-share
+      # The iOS share sheet, with the image.
+      - extendedWaitUntil:
+          visible: Close
+          timeout: 10000
+      - takeScreenshot: share-ios-sheet
+      - tapOn: Close
+      - waitForAnimationToEnd
+      # No error: the sheet has closed and the card is back.
+      - assertNotVisible:
+          id: share-toast
+      - assertNotVisible:
+          id: share-sheet-share
+      - assertVisible:
+          id: share-button

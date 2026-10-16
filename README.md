@@ -72,6 +72,8 @@ You need the Node version in [`.nvmrc`](.nvmrc), pnpm, Xcode with an iOS Simulat
 
    Version 0.6 adds the home-screen widget, so its build is the next native batch. It brings a widget extension target, written in SwiftUI in `apps/widget`, which `@bacons/apple-targets` links into the Xcode project at prebuild; the App Group `group.<bundle id>` on the app and on the extension; and two native modules, `expo-file-system` for the App Group's container and the Apple targets' storage module, which asks WidgetKit to reload ([ADR 0026](docs/adr/0026-the-widget-reads-a-widget-snapshot-the-core-builds.md)). The prebuild writes the widget's Edition files into `apps/widget`: the colour sets, the divider band, the fonts, the widget's strings, the example Widget Snapshot and the extension's `Info.plist`, none of them kept in git. The Swift code can't be built on this laptop (ADR 0004), so the widget is checked on the simulator after that build. The build is made once for the whole version, after the 0.6 native tickets merge, and only when the owner says so. Until then a 0.5 development client keeps working: the shell asks `nativeModules` before it touches the new modules, so the app starts without them and writes no Widget Snapshot.
 
+   Share Cards add the view-capture module `react-native-view-shot` to the same build. Until then the share button stays out of the action row while `nativeModules` reports the capture module missing.
+
    ```sh
    cd apps/mobile
    SLOVO_EDITION=uk npx eas-cli build -p ios --profile development-simulator-uk

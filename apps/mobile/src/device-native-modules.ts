@@ -1,14 +1,16 @@
 import { requireOptionalNativeModule } from 'expo';
-import { UIManager } from 'react-native';
+import { TurboModuleRegistry, UIManager } from 'react-native';
 
 import { createNativeModules } from './native-module';
 
 /**
  * The native modules the installed binary has, looked up in its registries:
- * the Expo modules by name, and the time picker, a native view, in the view
- * manager registry. The widget needs two: `expo-file-system` for the App
- * Group's container and the Apple targets' storage module, which asks
- * WidgetKit to reload.
+ * the Expo modules by name, the time picker, a native view, in the view
+ * manager registry, and the view capture of the Share Card in the module
+ * registry. The widget needs two: `expo-file-system` for the App Group's
+ * container and the Apple targets' storage module, which asks WidgetKit to
+ * reload. Sharing needs the view capture, with `expo-file-system` to move
+ * its image into the cache.
  */
 export const nativeModules = createNativeModules({
   notifications: () =>
@@ -18,4 +20,7 @@ export const nativeModules = createNativeModules({
   widget: () =>
     requireOptionalNativeModule('FileSystem') !== null &&
     requireOptionalNativeModule('ExtensionStorage') !== null,
+  shareCapture: () =>
+    TurboModuleRegistry.get('RNViewShot') !== null &&
+    requireOptionalNativeModule('FileSystem') !== null,
 });
