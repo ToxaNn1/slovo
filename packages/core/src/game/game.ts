@@ -6,19 +6,9 @@ import { createInTurn, createSubscribers } from '../in-turn';
 import type { Random, Schedule } from '../ports';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
-import type {
-  AnswerSheet,
-  GameEdition,
-  GameMode,
-  GameModeRefusal,
-  RoundContent,
-  RoundOption,
-  TextRange,
-} from './game-mode';
-import { createRoundPlanner, GAME_ROUNDS, type PlannedRound, type RoundPlan } from './round-plan';
-
-/** How many Lives a Game starts with, in every Game Mode. */
-export const GAME_LIVES = 5;
+import type { GameEdition, GameMode, GameModeRefusal } from './game-mode';
+import { createGameInPlay, type CurrentGame, type GameInPlay } from './game-in-play';
+import { createRoundPlanner, type RoundPlan } from './round-plan';
 
 /** How long the Game waits before each new try of a failed planning of its offers, in milliseconds. */
 const OFFER_PLANNING_RETRY_DELAYS: readonly number[] = [1_000, 2_000, 4_000];
@@ -36,48 +26,6 @@ export type GameModeOffer = {
   | { readonly canStart: false; readonly refusal: GameModeRefusal }
   | { readonly canStart: false; readonly planning: true }
 );
-
-/** The answer given to a Round. */
-export interface RoundAnswer {
-  /** The place of the option the reader chose. */
-  readonly chosen: number;
-  /** The place of the right option. */
-  readonly correct: number;
-  readonly sheet: AnswerSheet;
-}
-
-/** A Round as the reader plays it. */
-export interface Round {
-  /** Which Round of the Game it is, from 1 to `GAME_ROUNDS`. */
-  readonly number: number;
-  readonly prompt: string;
-  /** The part of the prompt to mark, which the shell draws and VoiceOver names; none to mark. */
-  readonly highlight: TextRange | undefined;
-  readonly options: readonly RoundOption[];
-  /** The answer, once given; a Round is answered once. */
-  readonly answer: RoundAnswer | undefined;
-}
-
-/**
- * Where a Game stands: a Round to answer, a Round answered and waiting for
- * «Далі», or over, won or lost.
- */
-export type GameStatus = 'playing' | 'answered' | 'won' | 'lost';
-
-/** The Game in play, or just over. */
-export interface CurrentGame {
-  readonly modeId: string;
-  /** The current Round; the last one played once the Game is over. */
-  readonly round: Round;
-  /**
-   * The Rounds answered, right or wrong, but for the one that cost the last
-   * Life; it moves up on «Далі». A won Game passed all `GAME_ROUNDS`.
-   */
-  readonly roundsPassed: number;
-  /** The Lives left, from `GAME_LIVES` to 0. */
-  readonly lives: number;
-  readonly status: GameStatus;
-}
 
 /** The Game as it stands: the modes on offer, the Game in play and the best result. */
 export interface GameState {
@@ -208,8 +156,8 @@ export async function openGame({
     current: undefined,
     bestResult: gameOn ? await userState.read(gameBest) : undefined,
   };
-  /** The mode of the Game in play and its Rounds, built when it starts. */
-  let played: { readonly mode: GameMode; readonly rounds: readonly PlannedRound[] } | undefined;
+  /** The Game in play, or just over; none on the mode screen. */
+  let played: GameInPlay | undefined;
 
   function change(next: GameState): void {
     state = next;
@@ -240,21 +188,7 @@ export async function openGame({
     if (!sameOffers(offers, state.modes)) change({ ...state, modes: offers });
     const game = state.current;
     const eligible = read.find(({ mode }) => mode === played?.mode)?.eligible;
-    if (
-      played === undefined ||
-      eligible === undefined ||
-      (game?.status !== 'playing' && game?.status !== 'answered')
-    ) {
-      return;
-    }
-    const shown = played.rounds.slice(0, game.roundsPassed + 1);
-    const rest = planRounds(
-      played.mode,
-      eligible,
-      GAME_ROUNDS - shown.length,
-      new Set(shown.map(({ answerId }) => answerId)),
-    );
-    if ('rounds' in rest) played = { mode: played.mode, rounds: [...shown, ...rest.rounds] };
+    if (game !== undefined && eligible !== undefined) played?.replan(game, eligible);
   }
 
   /** Whether a planning of the offers is under way, or waits to try again. */
@@ -287,14 +221,6 @@ export async function openGame({
     tryPlanning(OFFER_PLANNING_RETRY_DELAYS);
   }
 
-  const roundOf = ({ prompt, highlight, options }: RoundContent, number: number): Round => ({
-    number,
-    prompt,
-    highlight,
-    options,
-    answer: undefined,
-  });
-
   async function start(modeId: string): Promise<void> {
     const mode = modes.find(({ id }) => id === modeId);
     if (mode === undefined) throw new Error(`No Game Mode «${modeId}» is on offer`);
@@ -304,59 +230,22 @@ export async function openGame({
       offer.modeId === modeId ? offerOf(mode, plan) : offer,
     );
     const modesNow = sameOffers(offers, state.modes) ? state.modes : offers;
-    const first = 'rounds' in plan ? plan.rounds[0] : undefined;
-    if (!('rounds' in plan) || first === undefined) {
-      played = undefined;
-      change({ ...state, modes: modesNow, current: undefined });
-      return;
-    }
-    played = { mode, rounds: plan.rounds };
-    change({
-      ...state,
-      modes: modesNow,
-      current: {
-        modeId,
-        round: roundOf(first.content, 1),
-        roundsPassed: 0,
-        lives: GAME_LIVES,
-        status: 'playing',
-      },
-    });
+    played = 'rounds' in plan ? createGameInPlay(mode, plan.rounds, planRounds) : undefined;
+    change({ ...state, modes: modesNow, current: played?.first });
   }
 
   function answer(option: number): void {
     const game = state.current;
-    if (game?.status !== 'playing') return;
-    const content = played?.rounds[game.round.number - 1]?.content;
-    if (content?.options[option] === undefined) return;
-    const { correct, sheet } = content;
-    changeCurrent({
-      ...game,
-      round: { ...game.round, answer: { chosen: option, correct, sheet } },
-      lives: option === correct ? game.lives : game.lives - 1,
-      status: 'answered',
-    });
+    const answered = game && played?.answer(game, option);
+    if (answered !== undefined) changeCurrent(answered);
   }
 
   async function next(): Promise<void> {
     const game = state.current;
-    if (game?.status !== 'answered') return;
-    if (game.lives === 0) {
-      await finish(game, { ...game, status: 'lost' });
-      return;
-    }
-    const roundsPassed = game.roundsPassed + 1;
-    const upcoming = roundsPassed < GAME_ROUNDS ? played?.rounds[roundsPassed]?.content : undefined;
-    if (upcoming === undefined) {
-      await finish(game, { ...game, roundsPassed, status: 'won' });
-      return;
-    }
-    changeCurrent({
-      ...game,
-      roundsPassed,
-      round: roundOf(upcoming, roundsPassed + 1),
-      status: 'playing',
-    });
+    const after = game && played?.next(game);
+    if (game === undefined || after === undefined) return;
+    if (after.status === 'playing') changeCurrent(after);
+    else await finish(game, after);
   }
 
   /**

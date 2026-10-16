@@ -48,16 +48,14 @@ export {
   type FeedCard,
   type WordFeedCard,
 } from './feed/feed-card';
+export { type Game, type GameModeOffer, type GameState } from './game/game';
 export {
   GAME_LIVES,
   type CurrentGame,
-  type Game,
-  type GameModeOffer,
-  type GameState,
   type GameStatus,
   type Round,
   type RoundAnswer,
-} from './game/game';
+} from './game/game-in-play';
 export {
   ROUND_OPTIONS,
   type AnswerSheet,

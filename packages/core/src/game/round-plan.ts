@@ -23,6 +23,18 @@ export interface PlannedRound {
 export type RoundPlan =
   { readonly rounds: readonly PlannedRound[] } | { readonly refusal: GameModeRefusal };
 
+/**
+ * Plans `count` Rounds of the mode, by default a Game's, each asking about
+ * another eligible Entry than the ones `asked`; or says why the mode can't
+ * make them.
+ */
+export type RoundPlanner = (
+  mode: GameMode,
+  ofKind: EligibleOfKind,
+  count?: number,
+  asked?: ReadonlySet<string>,
+) => RoundPlan;
+
 /** A Round as a Game Mode built it, checked to hold four options with one of them right. */
 function checkedRound(mode: GameMode, round: RoundContent): RoundContent {
   const { options, correct } = round;
@@ -33,13 +45,12 @@ function checkedRound(mode: GameMode, round: RoundContent): RoundContent {
 }
 
 /**
- * Makes the planning of the Game's Rounds over History, for `openGame`. It
- * plans `count` Rounds, each asking about another eligible Entry than the ones
- * `asked`: from the pool, the eligible Entries in History when there are at
- * least 15, else every eligible one; and should the pool make too few fair
- * Rounds, from the other eligible Entries. Else it says why the mode can't
- * make them. The one place that decides whether a mode can start: its offer
- * and a start both come from it, so they always agree.
+ * Makes the `RoundPlanner` of the Game over History, for `openGame`. The
+ * Rounds ask first about the pool, the eligible Entries in History when there
+ * are at least `GAME_ROUNDS`, else every eligible one; should the pool make
+ * too few fair Rounds, the other eligible Entries fill in. The one place that
+ * decides whether a mode can start: its offer and a start both come from it,
+ * so they always agree.
  */
 export function createRoundPlanner({
   history,
@@ -49,13 +60,8 @@ export function createRoundPlanner({
   history: Pick<History, 'list'>;
   random: Random;
   edition: GameEdition;
-}) {
-  return function planRounds(
-    mode: GameMode,
-    ofKind: EligibleOfKind,
-    count = GAME_ROUNDS,
-    asked: ReadonlySet<string> = new Set(),
-  ): RoundPlan {
+}): RoundPlanner {
+  return (mode, ofKind, count = GAME_ROUNDS, asked = new Set()) => {
     if ('refusal' in ofKind) return ofKind;
     const eligible = ofKind.entries;
     const met = new Set(history.list.map(({ entryId }) => entryId));
