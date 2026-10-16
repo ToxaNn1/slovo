@@ -128,7 +128,9 @@ export function widgetExtensionFiles(edition: WidgetEdition): Map<string, string
 
   files.set(
     `${GENERATED}/${language}.lproj/Localizable.strings`,
+    // The widget's own lines are plain text; the guide the app shows in Settings is a group and stays out.
     Object.entries(edition.strings)
+      .filter((entry): entry is [string, string] => typeof entry[1] === 'string')
       .map(([key, value]) => `${quoted(key)} = ${quoted(value)};\n`)
       .join(''),
   );
