@@ -1,12 +1,12 @@
-import type { Collections } from './collections';
-import type { Favorites } from './favorites';
-import type { Game } from './game';
-import type { History } from './history';
+import type { Collections } from './saved/collections';
+import type { Favorites } from './saved/favorites';
+import type { Game } from './game/game';
+import type { History } from './saved/history';
 import { createInTurn, createSubscribers } from './in-turn';
 import { dayNumber, parseLocalDate, todayBounds, todayKey } from './local-date';
 import type { Clock, UserStateChanges } from './ports';
-import type { UserState } from './user-state';
-import { userStateRecords } from './user-state-schema';
+import type { UserState } from './user-state/user-state';
+import { userStateRecords } from './user-state/user-state-schema';
 
 /**
  * The reader's progress as it stands, as the stats sheet shows it: the Streak

@@ -1,26 +1,30 @@
-import { openCollections, type Collections } from './collections';
-import { correctionMode } from './correction-mode';
-import { openCycle } from './cycle';
-import { createDayChange } from './day-change';
-import type { Edition } from './edition';
-import { createEntries } from './entries';
-import { createEntryRows, type EntryRowModel } from './entry-row';
-import { openFavorites, type Favorites } from './favorites';
-import { buildEntryCard, openFeed, type EntryFeedCard, type Feed } from './feed';
-import { openGame, type Game, type GameEdition, type GameMode } from './game';
-import { guessWord } from './guess-word';
-import { openHistory, type History } from './history';
-import { openHiddenEntries, type HiddenEntries } from './hidden-entries';
-import { createHiding, type Hiding } from './hiding';
-import { openMix, type Mix, type MixEdition } from './mix';
-import type { NotificationScheduling } from './notification-plan';
-import { openNotifications, type Notifications, type NotificationsEdition } from './notifications';
+import { openCollections, type Collections } from './saved/collections';
+import { correctionMode } from './game/correction-mode';
+import { openCycle } from './feed/cycle';
+import { createDayChange } from './feed/day-change';
+import type { Edition } from './edition/edition';
+import { createEntries } from './entries/entries';
+import { createEntryRows, type EntryRowModel } from './entries/entry-row';
+import { openFavorites, type Favorites } from './saved/favorites';
+import { buildEntryCard, openFeed, type EntryFeedCard, type Feed } from './feed/feed';
+import { openGame, type Game, type GameEdition, type GameMode } from './game/game';
+import { guessWord } from './game/guess-word';
+import { openHistory, type History } from './saved/history';
+import { openHiddenEntries, type HiddenEntries } from './hidden/hidden-entries';
+import { createHiding, type Hiding } from './hidden/hiding';
+import { openMix, type Mix, type MixEdition } from './entries/mix';
+import type { NotificationScheduling } from './notifications/notification-plan';
+import {
+  openNotifications,
+  type Notifications,
+  type NotificationsEdition,
+} from './notifications/notifications';
 import { openOnboarding, type Onboarding } from './onboarding';
 import type { Clock, ContentReadPort, Random, Schedule } from './ports';
 import { openProgress, type Progress } from './progress';
-import type { UserState } from './user-state';
+import type { UserState } from './user-state/user-state';
 import { createWidget, type Widget } from './widget';
-import { openWordOfTheDay } from './word-of-the-day';
+import { openWordOfTheDay } from './feed/word-of-the-day';
 
 /**
  * The Core features that open once the Language Pack is open, linked to each
