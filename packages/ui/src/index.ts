@@ -2,49 +2,49 @@
  * The UI: Edition-neutral components that read every text, design token and
  * Decor from the Edition.
  */
-export { ActionRow, type ActionRowProps } from './ActionRow';
-export { BackLink } from './BackLink';
-export { FeedError, FeedLoading, SwipeHint } from './FeedStates';
-export { FontSizePreview } from './FontSizePreview';
+export { ActionRow, type ActionRowProps } from './primitives/ActionRow';
+export { BackLink } from './primitives/BackLink';
+export { FeedError, FeedLoading, SwipeHint } from './feed/FeedStates';
+export { FontSizePreview } from './settings/FontSizePreview';
 export {
   FontSizeProvider,
   useWordTextSizes,
   wordTextSizes,
   type TextSize,
   type WordTextSizes,
-} from './FontSizeProvider';
-export { DecorProvider, useDecor } from './DecorProvider';
-export { EditionProvider, fill, useEdition } from './EditionProvider';
-export { EndOfCycleCard } from './EndOfCycleCard';
-export { EntryCard, type EntryCardProps } from './EntryCard';
+} from './providers/FontSizeProvider';
+export { DecorProvider, useDecor } from './decor/DecorProvider';
+export { EditionProvider, fill, useEdition } from './providers/EditionProvider';
+export { EndOfCycleCard } from './feed/EndOfCycleCard';
+export { EntryCard, type EntryCardProps } from './entries/EntryCard';
 export {
   CardCorners,
   DecorBackground,
   EmptyStateIllustration,
   OrnamentBand,
   OrnamentDivider,
-} from './DecorSlots';
-export { EmptyState } from './EmptyState';
-export { EntryRow, type EntryRowAction } from './EntryRow';
-export { type RowAction } from './SwipeableRow';
-export { FavoriteButton } from './FavoriteButton';
-export { GameModeCard } from './GameModeCard';
-export { GameResult } from './GameResult';
-export { GameRound } from './GameRound';
-export { HapticsProvider, useHaptics } from './HapticsProvider';
-export { HideButton } from './HideButton';
-export { ScreenTitle, SectionLabel } from './headings';
-export { MixChip } from './MixChip';
+} from './decor/DecorSlots';
+export { EmptyState } from './primitives/EmptyState';
+export { EntryRow, type EntryRowAction } from './entries/EntryRow';
+export { type RowAction } from './primitives/SwipeableRow';
+export { FavoriteButton } from './saved/FavoriteButton';
+export { GameModeCard } from './game/GameModeCard';
+export { GameResult } from './game/GameResult';
+export { GameRound } from './game/GameRound';
+export { HapticsProvider, useHaptics } from './providers/HapticsProvider';
+export { HideButton } from './mix/HideButton';
+export { ScreenTitle, SectionLabel } from './primitives/headings';
+export { MixChip } from './mix/MixChip';
 export {
   OnboardingMix,
   OnboardingNotifications,
   OnboardingWelcome,
   type HeroWord,
   type SampleNotificationLook,
-} from './Onboarding';
-export { OutlineButton } from './OutlineButton';
-export { PrimaryButton } from './PrimaryButton';
-export { SecondaryButton } from './SecondaryButton';
+} from './onboarding/Onboarding';
+export { OutlineButton } from './primitives/OutlineButton';
+export { PrimaryButton } from './primitives/PrimaryButton';
+export { SecondaryButton } from './primitives/SecondaryButton';
 export {
   SavedCard,
   SavedCardCollection,
@@ -52,27 +52,27 @@ export {
   SavedCardRows,
   SavedCardTitles,
   type SavedCardRow,
-} from './SavedCard';
-export { CollectionButton } from './CollectionButton';
-export { CollectionNameField, CollectionRow, NewCollectionButton } from './CollectionRow';
-export { CollectionSheet } from './CollectionSheet';
-export { BottomSheet } from './BottomSheet';
-export { SheetTitle } from './SheetParts';
-export { Placeholder } from './Placeholder';
+} from './saved/SavedCard';
+export { CollectionButton } from './saved/CollectionButton';
+export { CollectionNameField, CollectionRow, NewCollectionButton } from './saved/CollectionRow';
+export { CollectionSheet } from './saved/CollectionSheet';
+export { BottomSheet } from './primitives/BottomSheet';
+export { SheetTitle } from './primitives/SheetParts';
+export { Placeholder } from './primitives/Placeholder';
 export {
   PronunciationButton,
   type PronunciationButtonProps,
   type PronunciationButtonState,
-} from './PronunciationButton';
-export { SegmentedControl, type Segment } from './SegmentedControl';
-export { ShareButton } from './ShareButton';
-export { ShareSheet, type ShareSheetOutcome } from './ShareSheet';
-export { NavigationRow, SettingsGroup, SoonRow, SwitchRow, TimeRow } from './SettingsRows';
-export { SplashOverlay, type SplashOverlayProps } from './SplashOverlay';
-export { StatsPill } from './StatsPill';
-export { StatsSheet } from './StatsSheet';
-export { stressLabel } from './stress-label';
-export { systemSchedule } from './system-schedule';
+} from './entries/PronunciationButton';
+export { SegmentedControl, type Segment } from './primitives/SegmentedControl';
+export { ShareButton } from './share/ShareButton';
+export { ShareSheet, type ShareSheetOutcome } from './share/ShareSheet';
+export { NavigationRow, SettingsGroup, SoonRow, SwitchRow, TimeRow } from './settings/SettingsRows';
+export { SplashOverlay, type SplashOverlayProps } from './onboarding/SplashOverlay';
+export { StatsPill } from './progress/StatsPill';
+export { StatsSheet } from './progress/StatsSheet';
+export { stressLabel } from './entries/stress-label';
+export { systemSchedule } from './providers/system-schedule';
 export {
   coreTokens,
   designTokens,
@@ -91,14 +91,14 @@ export {
   useSchemeColors,
   useTokens,
   type Tokens,
-} from './TokensProvider';
-export { UndoToastProvider, useUndoToast, type UndoToastContent } from './UndoToast';
+} from './providers/TokensProvider';
+export { UndoToastProvider, useUndoToast, type UndoToastContent } from './primitives/UndoToast';
 export {
   PagerScrollView,
   usePageTurnActions,
   VerticalPager,
   type VerticalPagerHandle,
   type VerticalPagerProps,
-} from './VerticalPager';
-export { GuideStep, WidgetDrawing } from './WidgetGuide';
-export { useReduceMotion } from './useReduceMotion';
+} from './primitives/VerticalPager';
+export { GuideStep, WidgetDrawing } from './settings/WidgetGuide';
+export { useReduceMotion } from './providers/useReduceMotion';

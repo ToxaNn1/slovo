@@ -94,7 +94,7 @@ export default {
           '^packages/$2/',
           SHARED_CONFIG,
           '^packages/[^/]+/package\\.json$',
-          '^packages/[^/]+/src/(index|tokens|part-of-speech|pack-reader)\\.ts$',
+          '^packages/[^/]+/src/(index|tokens|entries/part-of-speech|pack-reader)\\.ts$',
         ],
       },
     },
