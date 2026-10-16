@@ -54,7 +54,8 @@ export function WholeWordsText({
   return (
     <View
       onLayout={(event) => {
-        setLineWidth(event.nativeEvent.layout.width);
+        // A view not laid out yet reports no width, which would scale the text away.
+        if (event.nativeEvent.layout.width > 0) setLineWidth(event.nativeEvent.layout.width);
       }}
     >
       <Text
@@ -82,6 +83,9 @@ export function WholeWordsText({
         style={styles.measure}
       >
         <Text
+          // Scaled like the text itself, or a growth cap would leave the word measured too wide.
+          allowFontScaling={props.allowFontScaling}
+          maxFontSizeMultiplier={props.maxFontSizeMultiplier}
           onTextLayout={(event) => {
             setWidestWord(Math.max(...event.nativeEvent.lines.map((line) => line.width)));
           }}
