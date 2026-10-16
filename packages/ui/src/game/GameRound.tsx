@@ -27,7 +27,15 @@ import { fill, useEdition } from '../providers/EditionProvider';
 import { HEART_PATH } from '../saved/FavoriteButton';
 import { PrimaryButton } from '../primitives/PrimaryButton';
 import { stressLabel } from '../entries/stress-label';
-import { minTouchTarget, overlineType, space, withAlpha } from '../tokens';
+import {
+  minTouchTarget,
+  onFill,
+  overlineType,
+  roundLayout,
+  space,
+  typeSize,
+  withAlpha,
+} from '../tokens';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { useGameHaptics } from './useGameHaptics';
 import { useReduceMotion } from '../providers/useReduceMotion';
@@ -47,13 +55,14 @@ const DIMMED_OPACITY = 0.45;
 /** How far the largest text sizes of iOS may scale the smaller text, so it never breaks a word. */
 const TEXT_MAX_FONT_SCALE = 1.5;
 /** The prompt's, an option's and the sheet's answer's sizes, from the design. */
-const PROMPT_SIZE = { fontSize: 25, lineHeight: 25 * 1.35 };
-const OPTION_SIZE = { fontSize: 21, lineHeight: 21 * 1.3 };
-const SHEET_ANSWER_SIZE = { fontSize: 30, lineHeight: 30 * 1.3 };
+const PROMPT_SIZE = { fontSize: typeSize.roundPrompt, lineHeight: typeSize.roundPrompt * 1.35 };
+const OPTION_SIZE = { fontSize: typeSize.roundOption, lineHeight: typeSize.roundOption * 1.3 };
+const SHEET_ANSWER_SIZE = {
+  fontSize: typeSize.roundAnswer,
+  lineHeight: typeSize.roundAnswer * 1.3,
+};
 /** Whether a label ends in punctuation of its own, such as «?», so VoiceOver needs no full stop after it. */
 const ENDS_IN_PUNCTUATION = /\p{P}$/u;
-/** The text on a filled option. */
-const ON_FILL = '#FFFFFF';
 
 /**
  * The canvas's CSS `ease`, for the Game's motion below, from the design's
@@ -487,14 +496,14 @@ function AnswerOption({
               tracking={0}
               style={[
                 styles.optionWord,
-                { color: tag === undefined ? colors.ink : ON_FILL, fontFamily: fontFamilies.word },
+                { color: tag === undefined ? colors.ink : onFill, fontFamily: fontFamilies.word },
               ]}
             />
           </View>
           {tag === undefined ? null : (
             <Text
               maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
-              style={[styles.tag, { color: ON_FILL, fontFamily: fontFamilies.ui }]}
+              style={[styles.tag, { color: onFill, fontFamily: fontFamilies.ui }]}
             >
               {tag.text}
             </Text>
@@ -593,17 +602,17 @@ function AnswerSheetContent({ answer, onNext }: { answer: RoundAnswer; onNext: (
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   round: { gap: space[5], padding: space[6] },
-  options: { gap: 10 },
+  options: { gap: roundLayout.gap },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: roundLayout.gap,
     minHeight: minTouchTarget,
     paddingLeft: space[3],
     paddingRight: space[4],
   },
-  progress: { flex: 1, gap: 6 },
-  progressText: { fontSize: 13, fontWeight: '700' },
+  progress: { flex: 1, gap: roundLayout.tightGap },
+  progressText: { fontSize: typeSize.meta, fontWeight: '700' },
   bar: {
     flexDirection: 'row',
     height: BAR_HEIGHT,
@@ -621,7 +630,7 @@ const styles = StyleSheet.create({
     minHeight: 220,
     justifyContent: 'center',
     gap: space[4],
-    paddingVertical: 30,
+    paddingVertical: roundLayout.cardPaddingVertical,
     paddingHorizontal: space[6],
     borderWidth: 1,
   },
@@ -637,13 +646,17 @@ const styles = StyleSheet.create({
   },
   optionText: { flex: 1 },
   optionWord: { fontWeight: '500' },
-  tag: { fontSize: 13, fontWeight: '700' },
+  tag: { fontSize: typeSize.meta, fontWeight: '700' },
   sheetScroll: { flexGrow: 0, flexShrink: 1 },
-  sheetContent: { gap: 14, paddingHorizontal: space[1], paddingBottom: space[2] },
-  sheetTitle: { fontSize: 17, fontWeight: '700' },
+  sheetContent: { gap: roundLayout.sheetGap, paddingHorizontal: space[1], paddingBottom: space[2] },
+  sheetTitle: { fontSize: typeSize.blockHeading, fontWeight: '700' },
   sheetAnswer: { fontWeight: '500' },
-  example: { fontSize: 17, lineHeight: 17 * 1.5, fontStyle: 'italic' },
-  author: { marginTop: space[1], fontSize: 13, fontWeight: '500' },
-  explanation: { fontSize: 16, lineHeight: 16 * 1.55 },
-  next: { marginTop: 6 },
+  example: {
+    fontSize: typeSize.blockHeading,
+    lineHeight: typeSize.blockHeading * 1.5,
+    fontStyle: 'italic',
+  },
+  author: { marginTop: space[1], fontSize: typeSize.meta, fontWeight: '500' },
+  explanation: { fontSize: typeSize.explanation, lineHeight: typeSize.explanation * 1.55 },
+  next: { marginTop: roundLayout.tightGap },
 });
