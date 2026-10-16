@@ -45,6 +45,19 @@ export default {
       to: { path: WORKSPACE_PART, pathNot: ['^packages/(ui|core|contracts)/', SHARED_CONFIG] },
     },
     {
+      name: 'ui-layers-import-no-domain-folder',
+      comment:
+        "ADR 0027: the UI's providers/, decor/ and primitives/ sit below its domain " +
+        'folders, so a button or a sheet never depends on the Entries, the Game or ' +
+        'any other domain it is used in. index.ts counts too, as it re-exports them all.',
+      severity: 'error',
+      from: { path: '^packages/ui/src/(providers|decor|primitives)/' },
+      to: {
+        path: ['^packages/ui/src/[^/]+/', '^packages/ui/src/index\\.ts$'],
+        pathNot: '^packages/ui/src/(providers|decor|primitives)/',
+      },
+    },
+    {
       name: 'packages-do-not-import-apps-tools-or-editions',
       comment:
         'ADR 0002, 0006: an Edition is configuration plus content, and an app is one ' +
@@ -94,7 +107,7 @@ export default {
           '^packages/$2/',
           SHARED_CONFIG,
           '^packages/[^/]+/package\\.json$',
-          '^packages/[^/]+/src/(index|tokens|part-of-speech|pack-reader)\\.ts$',
+          '^packages/[^/]+/src/(index|tokens|entries/part-of-speech|pack-reader)\\.ts$',
         ],
       },
     },
