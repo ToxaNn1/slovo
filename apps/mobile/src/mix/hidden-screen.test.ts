@@ -1,35 +1,16 @@
-import { EditionStringsSchema, type Plural, type Word } from '@slovo/contracts';
+import { type Word } from '@slovo/contracts';
 import {
   createMemoryContentPort,
   createMemoryUserStatePort,
-  loadEdition,
   openComposition,
   openUserState,
-  type Clock,
   type Composition,
   type Edition,
 } from '@slovo/core';
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 import { hiddenScreenModel, hiddenSummary } from './hidden-screen';
-
-const editionFile = (name: string): unknown =>
-  JSON.parse(
-    readFileSync(
-      fileURLToPath(new URL(`../../../../editions/uk/${name}`, import.meta.url)),
-      'utf8',
-    ),
-  );
-
-const strings = EditionStringsSchema.parse(editionFile('strings.json'));
-const ukrainian = loadEdition(editionFile('edition.json'));
-
-/** The Edition's own plural rules, as the shell's `count` applies them. */
-const pluralRules = new Intl.PluralRules(ukrainian.locale);
-const count = (forms: Plural, value: number) =>
-  (forms[pluralRules.select(value)] ?? forms.other).replace('{count}', String(value));
+import { count, fakeClock, strings, ukrainian } from '../test-support';
 
 const [first, second] = ukrainian.categories;
 if (first === undefined || second === undefined) throw new Error('The Edition needs Categories');
@@ -77,18 +58,6 @@ const content = createMemoryContentPort({
   ],
 });
 
-/** A clock the test moves by hand. */
-function fakeClock() {
-  let now = new Date('2026-10-13T09:00:00Z').getTime();
-  const clock: Clock = { now: () => new Date(now), timeZone: () => 'Europe/Kyiv' };
-  return {
-    clock,
-    advance() {
-      now += 60_000;
-    },
-  };
-}
-
 async function open(): Promise<{ app: Composition; advance: () => void }> {
   const time = fakeClock();
   const app = await openComposition({
@@ -101,7 +70,7 @@ async function open(): Promise<{ app: Composition; advance: () => void }> {
   return {
     app,
     advance: () => {
-      time.advance();
+      time.advance(60_000);
     },
   };
 }

@@ -1,35 +1,10 @@
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-
-import { EditionStringsSchema, type Plural } from '@slovo/contracts';
-import { localDayOf, relativeTimeOf, type Clock, type HistoryEntry } from '@slovo/core';
+import { localDayOf, relativeTimeOf, type HistoryEntry } from '@slovo/core';
 import { describe, expect, it } from 'vitest';
 
 import { historyText } from './history-text';
+import { count, fakeClock, strings as allStrings } from '../test-support';
 
-const strings = EditionStringsSchema.parse(
-  JSON.parse(
-    readFileSync(
-      fileURLToPath(new URL('../../../../editions/uk/strings.json', import.meta.url)),
-      'utf8',
-    ),
-  ),
-).history;
-
-const pluralRules = new Intl.PluralRules('uk');
-const count = (forms: Plural, n: number) =>
-  (forms[pluralRules.select(n)] ?? forms.other).replace('{count}', String(n));
-
-function fakeClock(start: string, timeZone = 'Europe/Kyiv') {
-  let zone = timeZone;
-  const clock: Clock = { now: () => new Date(start), timeZone: () => zone };
-  return {
-    clock,
-    moveTo(timeZoneName: string) {
-      zone = timeZoneName;
-    },
-  };
-}
+const { history: strings } = allStrings;
 
 describe('the History texts', () => {
   const time = fakeClock('2026-10-11T10:00:00+03:00');
