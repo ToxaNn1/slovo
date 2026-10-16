@@ -5,9 +5,10 @@ How to write screens and components in `apps/mobile` and `packages/ui`. `CONTEXT
 ## Where code lives
 
 - **Route file** (`apps/mobile/src/app/**`): composition only. It reads hooks, branches on states (failed → ready → empty → content), assembles `@slovo/ui` components and wires navigation and confirmations. Aim for a screen you can read top to bottom in one pass.
-- **Hook module** (`apps/mobile/src/<feature>.ts`): data shaping for a screen — grouping, sorting, building section keys, formatting through the Edition's strings. Expose one hook per screen need (a hook such as `useHistorySections()`, an illustration, not an existing name) and export the type of its output, so the route file imports the type instead of writing it inline.
+- **Hook module** (`apps/mobile/src/<domain>/<feature>.ts`): data shaping for a screen — grouping, sorting, building section keys, formatting through the Edition's strings. Expose one hook per screen need (a hook such as `useHistorySections()`, an illustration, not an existing name) and export the type of its output, so the route file imports the type instead of writing it inline.
 - **Core** (`@slovo/core`): rules and pure functions, language-agnostic and free of React (ADR 0002, 0006). Time and randomness come in as arguments (`CLAUDE.md`: "Inject time and randomness").
-- **UI** (`@slovo/ui`): every visual primitive — buttons, text roles, rows, headings. It takes data and callbacks through props and strings through `EditionProvider`.
+- **UI** (`@slovo/ui`): every visual primitive — buttons, text roles, rows, headings. It takes data and callbacks through props and strings through `EditionProvider`. Its domain folders build on `primitives/`, which build on `providers/` and `decor/`; none of these three imports a domain folder.
+- **Folders** (ADR 0027): each package groups its modules into `<domain>/<feature>` folders named after the `CONTEXT.md` domains (`entries/`, `saved/`, `feed/`, `game/`, …), the same set in `packages/core`, `packages/ui` and `apps/mobile`. A domain with a single module keeps it at the root of `src/`; a test sits beside its module; a folder has no `index.ts` barrel. `apps/mobile/src/app/` holds routes only. The Core is grouped; the UI and the app follow, one package per change, so until then a flat file of theirs is where it was.
 - Extract a named subcomponent when a JSX block has its own meaning (a header bar, a day heading, an empty state) or grows past about 20 lines. Pass it data and callbacks; keep hooks that fetch data in the route file or hook module.
 
 ## Styling
