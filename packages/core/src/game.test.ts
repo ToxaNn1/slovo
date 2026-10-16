@@ -184,6 +184,7 @@ async function run({
   const app = await openComposition({
     content: pack,
     edition: {
+      id: 'test',
       isFeatureEnabled: (feature) => feature === 'game' && game,
       categories,
       userSettingDefaults: {

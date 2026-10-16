@@ -22,6 +22,7 @@ async function run({
   return openComposition({
     content: createMemoryContentPort(),
     edition: {
+      id: 'test',
       isFeatureEnabled: () => true,
       languageTraits: { distractorRule: 'same-part-of-speech' },
       categories: [{ id: 'test', displayName: 'Test' }],

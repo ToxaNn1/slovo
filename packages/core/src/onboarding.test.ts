@@ -85,6 +85,7 @@ async function run({
   return openComposition({
     content,
     edition: {
+      id: 'test',
       categories: [
         { id: 'test', displayName: 'Test' },
         { id: 'other', displayName: 'Other' },

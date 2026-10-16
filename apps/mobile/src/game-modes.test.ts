@@ -80,6 +80,7 @@ async function open({
   const app = await openComposition({
     content: createMemoryContentPort({ words: Array.from({ length: words }, (_, i) => word(i)) }),
     edition: {
+      id: 'test',
       languageTraits: { distractorRule: 'same-part-of-speech' },
       categories: [{ id: 'test', displayName: 'Test' }],
       userSettingDefaults: {

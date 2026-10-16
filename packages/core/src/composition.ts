@@ -19,6 +19,7 @@ import { openOnboarding, type Onboarding } from './onboarding';
 import type { Clock, ContentReadPort, Random, Schedule } from './ports';
 import { openProgress, type Progress } from './progress';
 import type { UserState } from './user-state';
+import { createWidget, type Widget } from './widget';
 import { openWordOfTheDay } from './word-of-the-day';
 
 /**
@@ -93,6 +94,8 @@ export interface Composition extends Hiding {
   openedFromNotification(entryId: string): Promise<EntryFeedCard | undefined>;
   /** The row model of any Entry, Retired or not, for a list; nothing for an id the Language Pack doesn't have. */
   entryRow(entryId: string): Promise<EntryRowModel | undefined>;
+  /** The home-screen widget: the Widget Snapshot the app writes for it (ADR 0026). */
+  readonly widget: Widget;
 }
 
 /** The Core's own Game Modes, registered through the same Extension Point as an Edition's. */
@@ -122,7 +125,10 @@ export async function openComposition({
   gameModes = [],
 }: {
   content: ContentReadPort;
-  edition: Pick<Edition, 'isFeatureEnabled'> & MixEdition & NotificationsEdition & GameEdition;
+  edition: Pick<Edition, 'id' | 'isFeatureEnabled'> &
+    MixEdition &
+    NotificationsEdition &
+    GameEdition;
   userState: UserState;
   clock: Clock;
   random: Random;
@@ -241,5 +247,13 @@ export async function openComposition({
       return entryCard(entryId);
     },
     entryRow: (entryId) => rows.row(entryId),
+    widget: createWidget({
+      editionId: edition.id,
+      entries,
+      favorites,
+      collections,
+      onboarding,
+      clock,
+    }),
   };
 }

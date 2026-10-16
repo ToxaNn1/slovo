@@ -69,7 +69,8 @@ const pack = [...liveIds.map((id) => word(id)), ...retiredIds.map((id) => word(i
  */
 const editionWith = (
   corrections: boolean,
-): Pick<Edition, 'isFeatureEnabled'> & MixEdition & NotificationsEdition & GameEdition => ({
+): Pick<Edition, 'id' | 'isFeatureEnabled'> & MixEdition & NotificationsEdition & GameEdition => ({
+  id: 'test',
   isFeatureEnabled: (feature) => feature === 'corrections' && corrections,
   languageTraits: { distractorRule: 'same-part-of-speech' },
   categories: [{ id: 'test', displayName: 'Test' }],

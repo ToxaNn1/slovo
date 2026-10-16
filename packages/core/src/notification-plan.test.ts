@@ -104,6 +104,7 @@ async function run({
   const app = await openComposition({
     content: createMemoryContentPort({ words, corrections }),
     edition: {
+      id: 'test',
       isFeatureEnabled: () => true,
       languageTraits: { distractorRule: 'same-part-of-speech' },
       categories: [

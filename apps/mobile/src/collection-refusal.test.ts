@@ -15,6 +15,7 @@ import { refusalText } from './collection-refusal';
 
 /** The Edition's one Category, the test Words' own, and its default Mix of every Category. */
 const testCategories = {
+  id: 'test',
   languageTraits: { distractorRule: 'same-part-of-speech' as const },
   categories: [{ id: 'test', displayName: 'Test' }],
   userSettingDefaults: { mix: { categoryIds: ['test'], corrections: true }, notificationTimes: [] },

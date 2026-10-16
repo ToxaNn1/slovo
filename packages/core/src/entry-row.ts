@@ -35,7 +35,7 @@ export type EntryRowModel =
     };
 
 /** The row model of an Entry. */
-function buildEntryRow(entry: Entry): EntryRowModel {
+export function buildEntryRow(entry: Entry): EntryRowModel {
   if (entry.kind === 'word') {
     return {
       kind: 'word',

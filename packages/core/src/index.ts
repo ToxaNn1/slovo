@@ -111,6 +111,7 @@ export {
 } from './settings';
 export { renderStress } from './stress';
 export { createSwipeHint, type SwipeHint } from './swipe-hint';
+export { type Widget } from './widget';
 export {
   buildWordCard,
   type LinkedCorrection,

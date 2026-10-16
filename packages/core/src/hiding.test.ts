@@ -89,6 +89,7 @@ async function run({
   return openComposition({
     content,
     edition: {
+      id: 'test',
       isFeatureEnabled: (feature) => feature === 'corrections',
       languageTraits: { distractorRule: 'same-part-of-speech' },
       categories,

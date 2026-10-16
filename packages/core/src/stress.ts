@@ -22,3 +22,11 @@ export function stressedVowelsOf({ lemma, stress }: Pick<Word, 'lemma' | 'stress
   const characters = Array.from(lemma);
   return stress.flatMap((position) => characters[position] ?? []);
 }
+
+/**
+ * The text with every Stress mark taken out, such as a Lemma with Stress or a
+ * Definition that marks one, for VoiceOver: the voices break a word at the mark.
+ */
+export function withoutStress(text: string): string {
+  return text.replaceAll(STRESS_MARK, '');
+}
