@@ -1,8 +1,10 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useImperativeHandle,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -117,10 +119,6 @@ interface PagerContextValue {
   readonly scrolls: SharedValue<Record<number, PageScroll>>;
   /** Whether a drag is turning the page now, so the page's content holds still. */
   readonly turning: SharedValue<boolean>;
-  /** The page on screen, once a swipe settles. */
-  readonly current: number;
-  /** The VoiceOver actions of the current page, which turn it as a swipe would. */
-  readonly turnActions: TurnActions | undefined;
 }
 
 /** The props that give an accessible element the page-turn actions. */
@@ -131,6 +129,12 @@ interface TurnActions {
 
 const PagerContext = createContext<PagerContextValue | undefined>(undefined);
 const PageIndexContext = createContext(0);
+/**
+ * The VoiceOver actions of the page, which turn it as a swipe would; none
+ * on a page that isn't current. Each page has its own, so a turn re-renders
+ * the cards of the pages it makes current or not current, and no others.
+ */
+const PageTurnActionsContext = createContext<TurnActions | undefined>(undefined);
 
 /**
  * Full-screen pages stacked vertically: swipe up for the next page, down for
@@ -181,24 +185,24 @@ export function VerticalPager<Item>({
     },
   );
 
-  function turn(target: number) {
-    setIndex(target);
-    onIndexChange(target);
-  }
+  const turn = useCallback(
+    (target: number) => {
+      setIndex(target);
+      onIndexChange(target);
+    },
+    [onIndexChange],
+  );
 
-  /** A swipe turned the page: the page turns, with the light tick of a selection. */
-  function swipeTo(target: number) {
-    haptics.selection();
-    turn(target);
-  }
-
-  function turnTo(target: number) {
-    const clamped = Math.min(Math.max(target, 0), items.length - 1);
-    if (clamped === index) return;
-    turnedTo.value = clamped;
-    turn(clamped);
-    position.value = withTiming(clamped, motion);
-  }
+  const turnTo = useCallback(
+    (target: number) => {
+      const clamped = Math.min(Math.max(target, 0), items.length - 1);
+      if (clamped === index) return;
+      turnedTo.value = clamped;
+      turn(clamped);
+      position.value = withTiming(clamped, motion);
+    },
+    [index, items.length, motion, position, turn, turnedTo],
+  );
 
   function showPage(target: number) {
     const clamped = Math.min(Math.max(target, 0), items.length - 1);
@@ -211,70 +215,98 @@ export function VerticalPager<Item>({
 
   useImperativeHandle(ref, () => ({ turnTo, showPage }));
 
-  const actions = [
-    ...(turnActionLabels !== undefined && index < items.length - 1
-      ? [{ name: 'next', label: turnActionLabels.next }]
-      : []),
-    ...(turnActionLabels !== undefined && index > 0
-      ? [{ name: 'previous', label: turnActionLabels.previous }]
-      : []),
-  ];
-  const turnActions: TurnActions | undefined =
-    actions.length === 0
-      ? undefined
-      : {
-          accessibilityActions: actions,
-          onAccessibilityAction({ nativeEvent }) {
-            if (nativeEvent.actionName === 'next') turnTo(index + 1);
-            else if (nativeEvent.actionName === 'previous') turnTo(index - 1);
-          },
-        };
+  // The current page's cards read them, so they change only with the current
+  // page, not each time a swipe passes a page or the pager's owner re-renders.
+  const turnActions = useMemo((): TurnActions | undefined => {
+    const actions = [
+      ...(turnActionLabels !== undefined && index < items.length - 1
+        ? [{ name: 'next', label: turnActionLabels.next }]
+        : []),
+      ...(turnActionLabels !== undefined && index > 0
+        ? [{ name: 'previous', label: turnActionLabels.previous }]
+        : []),
+    ];
+    if (actions.length === 0) return undefined;
+    return {
+      accessibilityActions: actions,
+      onAccessibilityAction({ nativeEvent }) {
+        if (nativeEvent.actionName === 'next') turnTo(index + 1);
+        else if (nativeEvent.actionName === 'previous') turnTo(index - 1);
+      },
+    };
+  }, [index, items.length, turnActionLabels, turnTo]);
+  const pager = useMemo(() => ({ panRef, scrolls, turning }), [scrolls, turning]);
 
-  const pan = Gesture.Pan()
-    .withRef(panRef)
-    .activeOffsetY([-12, 12])
-    .failOffsetX([-24, 24])
-    .onStart(() => {
-      dragStart.value = position.value;
-      drag.value = DRAG.undecided;
-    })
-    .onUpdate(({ translationY }) => {
-      if (pageHeight.value === 0) return;
-      if (drag.value === DRAG.undecided) {
-        // The page turns only from the end of its scroll in the swipe's direction.
-        const scroll = scrolls.value[turnedTo.value] ?? { y: 0, max: 0 };
-        const atEnd =
-          translationY < 0 ? scroll.y >= scroll.max - SCROLL_EDGE : scroll.y <= SCROLL_EDGE;
-        drag.value = atEnd ? DRAG.page : DRAG.scroll;
-        turnFrom.value = translationY;
-        turning.value = atEnd;
-      }
-      if (drag.value !== DRAG.page) return;
-      const dragged = dragStart.value - (translationY - turnFrom.value) / pageHeight.value;
-      const clamped = Math.min(Math.max(dragged, 0), lastIndex.value);
-      position.value = clamped + (dragged - clamped) * EDGE_RESISTANCE;
-    })
-    .onEnd(({ translationY, velocityY }) => {
-      if (drag.value !== DRAG.page) return;
-      // A swipe during the last one's motion turns on from the page that one went to.
-      const start = turnedTo.value;
-      const turned = translationY - turnFrom.value;
-      const share = pageHeight.value === 0 ? 0 : turned / pageHeight.value;
-      let target = start;
-      if (velocityY < -TURN_VELOCITY || share < -TURN_DISTANCE) target = start + 1;
-      else if (velocityY > TURN_VELOCITY || share > TURN_DISTANCE) target = start - 1;
-      target = Math.min(Math.max(target, 0), lastIndex.value);
-      if (target !== start) {
-        turnedTo.value = target;
-        scheduleOnRN(swipeTo, target);
-      }
-      position.value = withTiming(target, motion);
-    })
-    .onFinalize(() => {
-      turning.value = false;
-    });
-  // How a component test finds the swipe; Gesture Handler reads it in Jest only.
-  if (testID !== undefined) pan.withTestId(`${testID}-swipe`);
+  // Gesture Handler asks for a memoised gesture: a new one on each render
+  // sends its worklets to the UI thread again.
+  const pan = useMemo(() => {
+    /** A swipe turned the page: the page turns, with the light tick of a selection. */
+    function swipeTo(target: number) {
+      haptics.selection();
+      turn(target);
+    }
+
+    const gesture = Gesture.Pan()
+      .withRef(panRef)
+      .activeOffsetY([-12, 12])
+      .failOffsetX([-24, 24])
+      .onStart(() => {
+        dragStart.value = position.value;
+        drag.value = DRAG.undecided;
+      })
+      .onUpdate(({ translationY }) => {
+        if (pageHeight.value === 0) return;
+        if (drag.value === DRAG.undecided) {
+          // The page turns only from the end of its scroll in the swipe's direction.
+          const scroll = scrolls.value[turnedTo.value] ?? { y: 0, max: 0 };
+          const atEnd =
+            translationY < 0 ? scroll.y >= scroll.max - SCROLL_EDGE : scroll.y <= SCROLL_EDGE;
+          drag.value = atEnd ? DRAG.page : DRAG.scroll;
+          turnFrom.value = translationY;
+          turning.value = atEnd;
+        }
+        if (drag.value !== DRAG.page) return;
+        const dragged = dragStart.value - (translationY - turnFrom.value) / pageHeight.value;
+        const clamped = Math.min(Math.max(dragged, 0), lastIndex.value);
+        position.value = clamped + (dragged - clamped) * EDGE_RESISTANCE;
+      })
+      .onEnd(({ translationY, velocityY }) => {
+        if (drag.value !== DRAG.page) return;
+        // A swipe during the last one's motion turns on from the page that one went to.
+        const start = turnedTo.value;
+        const turned = translationY - turnFrom.value;
+        const share = pageHeight.value === 0 ? 0 : turned / pageHeight.value;
+        let target = start;
+        if (velocityY < -TURN_VELOCITY || share < -TURN_DISTANCE) target = start + 1;
+        else if (velocityY > TURN_VELOCITY || share > TURN_DISTANCE) target = start - 1;
+        target = Math.min(Math.max(target, 0), lastIndex.value);
+        if (target !== start) {
+          turnedTo.value = target;
+          scheduleOnRN(swipeTo, target);
+        }
+        position.value = withTiming(target, motion);
+      })
+      .onFinalize(() => {
+        turning.value = false;
+      });
+    // How a component test finds the swipe; Gesture Handler reads it in Jest only.
+    if (testID !== undefined) gesture.withTestId(`${testID}-swipe`);
+    return gesture;
+  }, [
+    drag,
+    dragStart,
+    haptics,
+    lastIndex,
+    motion,
+    pageHeight,
+    position,
+    scrolls,
+    testID,
+    turn,
+    turnFrom,
+    turnedTo,
+    turning,
+  ]);
 
   function onLayout(event: LayoutChangeEvent) {
     const measured = event.nativeEvent.layout.height;
@@ -288,7 +320,7 @@ export function VerticalPager<Item>({
   const visible = items.slice(first, Math.max(index, nearest) + 2);
 
   return (
-    <PagerContext value={{ panRef, scrolls, turning, current: index, turnActions }}>
+    <PagerContext value={pager}>
       <GestureHandlerRootView style={styles.fill}>
         <GestureDetector gesture={pan}>
           <View testID={testID} style={styles.fill} onLayout={onLayout}>
@@ -298,6 +330,7 @@ export function VerticalPager<Item>({
                   key={first + offset}
                   index={first + offset}
                   current={first + offset === index}
+                  turnActions={first + offset === index ? turnActions : undefined}
                   position={position}
                   height={height}
                   crossFade={reduceMotion}
@@ -315,6 +348,7 @@ export function VerticalPager<Item>({
 function Page({
   index,
   current,
+  turnActions,
   position,
   height,
   crossFade,
@@ -322,6 +356,7 @@ function Page({
 }: {
   index: number;
   current: boolean;
+  turnActions: TurnActions | undefined;
   position: SharedValue<number>;
   height: number;
   /** Reduce Motion: the page stays in place and fades in and out instead of moving. */
@@ -342,7 +377,9 @@ function Page({
       pointerEvents={current ? 'auto' : 'none'}
       style={[StyleSheet.absoluteFill, { height }, style]}
     >
-      <PageIndexContext value={index}>{children}</PageIndexContext>
+      <PageIndexContext value={index}>
+        <PageTurnActionsContext value={turnActions}>{children}</PageTurnActionsContext>
+      </PageIndexContext>
     </Animated.View>
   );
 }
@@ -353,10 +390,7 @@ function Page({
  * `VerticalPager`. Nothing outside a pager or on a page that isn't current.
  */
 export function usePageTurnActions(): Partial<TurnActions> {
-  const pager = useContext(PagerContext);
-  const page = useContext(PageIndexContext);
-  if (pager?.current !== page) return {};
-  return pager.turnActions ?? {};
+  return useContext(PageTurnActionsContext) ?? {};
 }
 
 const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView);
