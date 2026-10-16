@@ -17,6 +17,7 @@ import { SettingsStringsSchema } from './settings';
 import { SplashStringsSchema } from './splash';
 import { StatsStringsSchema } from './stats';
 import { TabsStringsSchema } from './tabs';
+import { WidgetStringsSchema } from './widget';
 import { WordCardStringsSchema } from './word-card';
 
 /**
@@ -45,6 +46,7 @@ export const EditionStringsSchema = z.strictObject({
   notifications: NotificationsStringsSchema,
   notificationBody: NotificationBodyStringsSchema,
   game: GameStringsSchema,
+  widget: WidgetStringsSchema,
 });
 
 export type EditionStrings = z.infer<typeof EditionStringsSchema>;

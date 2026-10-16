@@ -104,6 +104,30 @@ describe('the 0.5 UI strings group', () => {
   });
 });
 
+describe('the 0.6 widget strings group', () => {
+  const strings = readJson('uk', 'strings.json') as Record<string, unknown>;
+  const widget = strings['widget'] as Record<string, unknown>;
+
+  it('the Ukrainian Edition needs the widget group', () => {
+    const without = Object.fromEntries(Object.entries(strings).filter(([key]) => key !== 'widget'));
+
+    const result = EditionStringsSchema.safeParse(without);
+
+    expect(result.error?.issues.map((issue) => issue.path.join('.'))).toContain('widget');
+  });
+
+  it.each(['galleryName', 'galleryDescription', 'allEntries'])(
+    'the Ukrainian Edition needs widget.%s',
+    (key) => {
+      const changed = Object.fromEntries(Object.entries(widget).filter(([name]) => name !== key));
+
+      const result = EditionStringsSchema.safeParse({ ...strings, widget: changed });
+
+      expect(result.error?.issues.map((issue) => issue.path.join('.'))).toEqual([`widget.${key}`]);
+    },
+  );
+});
+
 describe('the strings of each Game Mode', () => {
   const strings = readJson('uk', 'strings.json') as Record<string, unknown>;
   const game = strings['game'] as Record<string, unknown>;
