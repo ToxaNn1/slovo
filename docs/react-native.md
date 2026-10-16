@@ -48,3 +48,4 @@ How to write screens and components in `apps/mobile` and `packages/ui`. `CONTEXT
 
 - Give each screen root, row and action a `testID` (`history`, `history-row-${entryId}`, `history-clear`) for Maestro flows in `apps/mobile/maestro/`.
 - Test hook modules and Core functions with Vitest through their public seams; screens are covered by Maestro.
+- Maestro runs locally only, never in CI (ADR 0028). Before a change to a screen, component or hook merges, run the flows that pass through it (the smoke flow, `pnpm test:smoke`, for a wide change) and list them in the PR's Checks.
