@@ -33,6 +33,8 @@ const PREVIEW_HEIGHT_SHARE = 0.58;
 const TOAST_MS = 4000;
 /** The toast's fade in, as the undo toast's. */
 const FADE_MS = 200;
+/** The toast's message stops growing here, so it stays whole over the preview. */
+const TOAST_MAX_FONT_SCALE = 1.3;
 
 /** What sharing came to, as the shell reports it. */
 export type ShareSheetOutcome = 'closed' | 'failed';
@@ -199,6 +201,7 @@ function Toast({ message }: { message: string }) {
     >
       <Text
         {...voice}
+        maxFontSizeMultiplier={TOAST_MAX_FONT_SCALE}
         style={[styles.toastMessage, { color: colors.background, fontFamily: fontFamilies.ui }]}
       >
         {message}
