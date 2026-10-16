@@ -2,14 +2,16 @@ import SwiftUI
 import UIKit
 import WidgetKit
 
-/// SLOVO's home-screen widget: an Entry of Усі слова every five minutes, in
-/// the Edition's colours, fonts and band (ADR 0001, 0026).
+/// SLOVO's home-screen widget: an Entry of its Widget Mode every five
+/// minutes, in the Edition's colours, fonts and band (ADR 0001, 0026). Each
+/// widget chooses its mode: Улюблене, a Collection or Усі слова.
 @main
 struct SlovoWidget: Widget {
   let kind = "SlovoWidget"
 
   var body: some WidgetConfiguration {
-    StaticConfiguration(kind: kind, provider: EntryTimeline()) { moment in
+    AppIntentConfiguration(kind: kind, intent: ChooseMode.self, provider: EntryTimeline()) {
+      moment in
       EntryView(moment: moment)
         .containerBackground(Color("background"), for: .widget)
         .widgetURL(EditionInfo.url(opening: moment.entry))
@@ -21,7 +23,8 @@ struct SlovoWidget: Widget {
 }
 
 /// One moment of the widget: the Widget Mode's name over the headline (and,
-/// in medium, the second line), with the band at the bottom.
+/// in medium, the second line) or the mode's empty or broken state, with the
+/// band at the bottom.
 struct EntryView: View {
   @Environment(\.widgetFamily) private var family
   let moment: EntryMoment
@@ -30,11 +33,13 @@ struct EntryView: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 0) {
-      Text("allEntries")
+      Text(moment.overline)
         // The overline type of the app (`overlineType` in the UI tokens).
         .font(EditionInfo.uiFont(size: 11, weight: .bold))
         .tracking(11 * 0.14)
         .foregroundStyle(Color("accent"))
+        // In capitals, as the app's overline type draws it, a Collection's name too.
+        .textCase(.uppercase)
         .lineLimit(1)
         .minimumScaleFactor(0.7)
       Spacer(minLength: 8)
@@ -48,6 +53,12 @@ struct EntryView: View {
             .minimumScaleFactor(0.75)
             .padding(.top, 2)
         }
+      } else if let emptyState = moment.emptyState {
+        Text(emptyState)
+          .font(EditionInfo.wordFont(size: isSmall ? 19 : 21, weight: .medium))
+          .foregroundStyle(Color("ink"))
+          .lineLimit(4)
+          .minimumScaleFactor(0.7)
       }
       // Tiled across the width at the band's own height, which the Edition's Decor sets.
       Image("band")

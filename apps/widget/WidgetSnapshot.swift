@@ -8,14 +8,25 @@ struct WidgetSnapshot: Decodable {
   static let readableFormat = 1
 
   let format: Int
+  /// Whether the reader finished the onboarding; until then the widget invites them to open the app.
+  let onboardingFinished: Bool
   let entries: [WidgetEntry]
   /// Усі слова: the ids of every Eligible Entry.
   let allEntries: [String]
+  /// Улюблене: the ids of the Favorites that are Eligible Entries, newest first.
+  let favorites: [String]
+  /// The Collections, newest first, empty ones included.
+  let collections: [WidgetCollection]
 
-  /// The Entries of Усі слова, in the snapshot's order.
-  var allEntriesInOrder: [WidgetEntry] {
+  /// The Entries of `ids`, in that order.
+  func entries(_ ids: [String]) -> [WidgetEntry] {
     let byId = Dictionary(entries.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
-    return allEntries.compactMap { byId[$0] }
+    return ids.compactMap { byId[$0] }
+  }
+
+  /// The Collection with `id`, or nil once it was deleted.
+  func collection(_ id: String) -> WidgetCollection? {
+    collections.first { $0.id == id }
   }
 }
 
@@ -26,6 +37,15 @@ struct WidgetEntry: Decodable, Hashable {
   let headline: String
   /// A Word's primary Definition, or the non-standard form a Correction replaces.
   let secondLine: String
+}
+
+/// A Collection as its Widget Mode shows it.
+struct WidgetCollection: Decodable {
+  let id: String
+  /// The name the reader gave it.
+  let name: String
+  /// Its Eligible Entries, newest first; may be empty.
+  let entryIds: [String]
 }
 
 /// Where the widget finds the Widget Snapshot. It only reads.

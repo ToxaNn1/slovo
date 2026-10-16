@@ -116,16 +116,41 @@ describe('the 0.6 widget strings group', () => {
     expect(result.error?.issues.map((issue) => issue.path.join('.'))).toContain('widget');
   });
 
-  it.each(['galleryName', 'galleryDescription', 'allEntries', 'guide'])(
-    'the Ukrainian Edition needs widget.%s',
-    (key) => {
-      const changed = Object.fromEntries(Object.entries(widget).filter(([name]) => name !== key));
+  it.each([
+    'galleryName',
+    'galleryDescription',
+    'allEntries',
+    'favorites',
+    'collection',
+    'modeTitle',
+    'modeFavorites',
+    'modeCollection',
+    'modeAllEntries',
+    'collectionTitle',
+    'openApp',
+    'noFavorites',
+    'emptyCollection',
+    'deletedCollection',
+    'noCollection',
+    'guide',
+  ])('the Ukrainian Edition needs widget.%s', (key) => {
+    const changed = Object.fromEntries(Object.entries(widget).filter(([name]) => name !== key));
 
-      const result = EditionStringsSchema.safeParse({ ...strings, widget: changed });
+    const result = EditionStringsSchema.safeParse({ ...strings, widget: changed });
 
-      expect(result.error?.issues.map((issue) => issue.path.join('.'))).toEqual([`widget.${key}`]);
-    },
-  );
+    expect(result.error?.issues.map((issue) => issue.path.join('.'))).toEqual([`widget.${key}`]);
+  });
+
+  it("needs the Collection's name in the overline of a Collection", () => {
+    const result = EditionStringsSchema.safeParse({
+      ...strings,
+      widget: { ...widget, collection: 'КОЛЕКЦІЯ' },
+    });
+
+    expect(result.error?.issues.map((issue) => issue.path.join('.'))).toEqual([
+      'widget.collection',
+    ]);
+  });
 
   it('needs the three steps of the widget guide, each with its hint', () => {
     const steps = widget.guide['steps'] as { title: string; hint: string }[];

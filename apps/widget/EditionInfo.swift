@@ -14,7 +14,8 @@ enum EditionInfo {
   /// The font family of labels, or nil for the system font.
   static let uiFontFamily = value("SLOVOUIFont")
 
-  /// The link that opens an Entry in the app, or the app itself without one.
+  /// The link that opens an Entry in the app or, without one (an empty or
+  /// broken state), the app's root, which is the Feed.
   static func url(opening entry: WidgetEntry?) -> URL? {
     guard let scheme = urlScheme else { return nil }
     guard let entry else { return URL(string: "\(scheme)://") }

@@ -124,11 +124,23 @@ describe("the widget extension's Edition files", () => {
     );
   });
 
-  it("writes the widget's strings into the string table of the Edition's language", () => {
+  it("writes the widget's strings, its Widget Modes and its states into the string table of the Edition's language", () => {
     expect(text(files, 'Generated/uk.lproj/Localizable.strings')).toBe(
       '"galleryName" = "Рідкісне слово";\n' +
         '"galleryDescription" = "Нове рідкісне слово на головному екрані кожні п’ять хвилин.";\n' +
-        '"allEntries" = "УСІ СЛОВА";\n',
+        '"allEntries" = "УСІ СЛОВА";\n' +
+        '"favorites" = "УЛЮБЛЕНЕ";\n' +
+        '"collection" = "КОЛЕКЦІЯ · {name}";\n' +
+        '"modeTitle" = "Режим";\n' +
+        '"modeFavorites" = "Улюблене";\n' +
+        '"modeCollection" = "Колекція";\n' +
+        '"modeAllEntries" = "Усі слова";\n' +
+        '"collectionTitle" = "Колекція";\n' +
+        '"openApp" = "Відкрийте SLOVO";\n' +
+        '"noFavorites" = "Додайте слова в Улюблене";\n' +
+        '"emptyCollection" = "Колекція порожня";\n' +
+        '"deletedCollection" = "Колекцію видалено — оберіть інший режим";\n' +
+        '"noCollection" = "Оберіть колекцію для віджета";\n',
     );
   });
 
