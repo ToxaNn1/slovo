@@ -168,7 +168,10 @@ function readJson(
   try {
     return { ok: true, value: JSON.parse(readFileSync(path, 'utf8')) };
   } catch (error) {
-    return { ok: false, message: `Invalid JSON: ${(error as Error).message}` };
+    return {
+      ok: false,
+      message: `Invalid JSON: ${error instanceof Error ? error.message : String(error)}`,
+    };
   }
 }
 

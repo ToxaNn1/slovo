@@ -26,6 +26,7 @@ import {
   type GorohInflection,
   type GorohSynonymGroup,
 } from './goroh';
+import { errorMessage } from './error-message';
 import { PoliteClient, type Clock, type Fetch } from './polite-client';
 import { formatReviewReport } from './report';
 import type { DraftOutcome, Flag, FlagKind, LemmaOutcome, ReviewReport } from './review-report';
@@ -314,7 +315,7 @@ async function draftLemma(
       });
     }
   } catch (error) {
-    flags.push({ kind: 'fetch-failed', message: (error as Error).message });
+    flags.push({ kind: 'fetch-failed', message: errorMessage(error) });
     return { lemma, line, drafts: [], flags };
   }
 

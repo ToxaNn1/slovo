@@ -160,9 +160,12 @@ function editionNotificationSounds(
   try {
     ({ format } = readNotificationSound(readFileSync(file)));
   } catch (error) {
-    throw new Error(`${file} is not a valid notification sound: ${(error as Error).message}`, {
-      cause: error,
-    });
+    throw new Error(
+      `${file} is not a valid notification sound: ${error instanceof Error ? error.message : String(error)}`,
+      {
+        cause: error,
+      },
+    );
   }
   if (!notificationSound.endsWith(`.${format}`)) {
     throw new Error(
