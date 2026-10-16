@@ -1,5 +1,12 @@
-import { useRef } from 'react';
-import { Animated, Easing, Pressable, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
+import Animated, {
+  Easing,
+  ReduceMotion,
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 
 import { useEdition } from '../providers/EditionProvider';
@@ -26,6 +33,9 @@ const POP = [
 
 const popEasing = Easing.bezier(0.3, 1.6, 0.5, 1);
 
+// The hook gates the motion, so the animation never second-guesses it.
+const popTiming = { easing: popEasing, reduceMotion: ReduceMotion.Never };
+
 /**
  * The heart of the action row: an outline, or filled with the heart colour
  * while the Entry is in Favorites. A tap that fills it pops it with a light
@@ -45,19 +55,19 @@ export function FavoriteButton({
   const { strings, voice } = useEdition();
   const haptics = useHaptics();
   const reduceMotion = useReduceMotion();
-  const scale = useRef(new Animated.Value(1)).current;
+  const scale = useSharedValue(1);
 
   /** Pops the heart that just filled, with its haptic. */
   function pop() {
     haptics.impactLight();
     if (reduceMotion) return;
-    scale.setValue(1);
-    Animated.sequence(
-      POP.map((step) =>
-        Animated.timing(scale, { ...step, easing: popEasing, useNativeDriver: true }),
-      ),
-    ).start();
+    scale.value = 1;
+    scale.value = withSequence(
+      ...POP.map(({ toValue, duration }) => withTiming(toValue, { ...popTiming, duration })),
+    );
   }
+
+  const popStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
   function onPress() {
     // Pops on what the tap did, so a quick second tap that empties it again doesn't.
@@ -78,7 +88,7 @@ export function FavoriteButton({
       onPress={onPress}
       style={styles.button}
     >
-      <Animated.View style={{ transform: [{ scale }] }}>
+      <Animated.View style={popStyle}>
         <Svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 24 24">
           <Path
             d={HEART_PATH}
