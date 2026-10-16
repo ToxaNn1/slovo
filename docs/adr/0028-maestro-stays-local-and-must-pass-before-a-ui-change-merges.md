@@ -18,3 +18,13 @@ The rule that replaces a CI gate:
 ## Consequences
 
 The gate is the author's discipline and the PR's Checks list, not a machine. The coordinator reads the list before merging. If the laptop is ever upgraded so that local native builds work (ADR 0004), or EAS builds stop being rationed, a CI run of the flows becomes worth reopening, and this ADR can be superseded. Component tests in `packages/ui` and `apps/mobile` that run in Vitest are a separate decision and would not replace this rule for screens.
+
+## Amendment (2026-10-16)
+
+Maestro still runs only on the owner's machine, and a flow that fails still blocks the change that broke it. What changes is when the flows run:
+
+- **A PR that does not change screen behaviour runs no Maestro flow.** That covers refactors, moves, design tokens, Core, docs, tests and tooling. Lint, typecheck, the unit tests and the Jest component tests (ADR 0029) guard them, and the PR's Checks say that no flow was run.
+- **A PR that adds a screen, or changes navigation or what a screen does, runs one Maestro flow of its own before it is pushed**: the flow for that screen, new or updated in the same PR. It no longer runs the smoke flow for a wide change.
+- **The full smoke flow (`apps/mobile/maestro/smoke.yaml`, `pnpm test:smoke`) runs once on `main` at the end of each spec**, and optionally after a large wave of merges, by one thread dedicated to it, before the spec is closed. If a flow fails, `git bisect` with that flow alone finds the PR, and a small bug ticket follows.
+
+Why: Maestro runs share one simulator host and one machine-wide lock, so with a Maestro run in every PR the runs queued for hours. In a spec of refactor tickets, almost every one of those runs checked a change that cannot alter screen behaviour in a way the unit and component tests miss. One full run per spec still catches what slips through, at the cost of one bisect when it does.
