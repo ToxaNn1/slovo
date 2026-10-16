@@ -37,7 +37,13 @@ How to write screens and components in `apps/mobile` and `packages/ui`. `CONTEXT
 - Every `Pressable` carries `accessibilityRole` and an `accessibilityLabel` from the Edition's strings, and a tap area of at least `minTouchTarget` (use `hitSlop` for small icons).
 - Section and screen titles carry `accessibilityRole="header"` (the heading components in `@slovo/ui` already do).
 - Text in the Edition's language spreads `voice` from `useEdition()` so VoiceOver reads it in that language.
-- Destructive actions confirm with `Alert.alert` and a `style: 'destructive'` button.
+
+## Confirmations and choices
+
+- A single destructive confirmation uses `Alert.alert`: a title, a message, a `style: 'cancel'` button and a `style: 'destructive'` button. Example: clearing History in `apps/mobile/src/app/saved/history/index.tsx` (`confirmClear`).
+- A choice between different actions uses `ActionSheetIOS.showActionSheetWithOptions`, with the options in order and the cancel button last (`cancelButtonIndex`). It stays an action sheet when the state leaves one option on offer. Example: hiding an Entry from its card (`useHide` in `apps/mobile/src/mix/hiding.ts`), whose options are this Entry, its Category or Corrections.
+- Do not open an action sheet for a single action and its cancel; that is a confirmation, so it uses `Alert.alert`. Example: deleting a Collection.
+- Build both from the Edition's strings, and give the flows in `apps/mobile/maestro/` the button texts to tap.
 
 ## Strings and conditionals
 
