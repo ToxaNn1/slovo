@@ -13,7 +13,7 @@ import {
   useTokens,
 } from '@slovo/ui';
 import { useRouter } from 'expo-router';
-import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { FlatList, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useComposition } from '../../composition';
@@ -53,60 +53,67 @@ function HiddenList() {
       edges={['top']}
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
-      <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.padded}>
-          <BackLink
-            testID="hidden-back"
-            label={editionStrings.settings.title}
-            onPress={() => {
-              router.back();
-            }}
-          />
-          <View style={styles.header}>
-            <ScreenTitle>{strings.title}</ScreenTitle>
-            <Text
-              {...voice}
-              style={[styles.subtitle, { color: colors.muted, fontFamily: fontFamilies.ui }]}
-            >
-              {strings.subtitle}
-            </Text>
-          </View>
-        </View>
-        {model?.empty === true && (
-          <Text
-            testID="hidden-empty"
-            {...voice}
-            style={[styles.empty, { color: colors.muted, fontFamily: fontFamilies.ui }]}
-          >
-            {strings.empty}
-          </Text>
-        )}
-        {model !== undefined && model.entries.length > 0 && (
-          <View testID="hidden-entries" style={styles.section}>
-            <SectionLabel style={styles.sectionLabel}>{strings.entries}</SectionLabel>
-            {model.entries.map(({ entryId, row, labels }) => (
-              <EntryRow
-                key={entryId}
-                testID={`hidden-entry-${entryId}`}
-                row={row}
-                subtitle={labels.text}
-                accessibilityLabel={`${row.title}, ${labels.spoken}`}
-                accessory={
-                  <OutlineButton
-                    testID={`hidden-entry-${entryId}-restore`}
-                    label={strings.restore}
-                    accessibilityLabel={fill(strings.restoreLabel, { title: row.title })}
-                    onPress={() => {
-                      restoreEntry(entryId);
-                    }}
-                  />
-                }
+      <FlatList
+        contentContainerStyle={styles.content}
+        data={model?.entries ?? []}
+        keyExtractor={({ entryId }) => entryId}
+        renderItem={({ item: { entryId, row, labels } }) => (
+          <EntryRow
+            testID={`hidden-entry-${entryId}`}
+            row={row}
+            subtitle={labels.text}
+            accessibilityLabel={`${row.title}, ${labels.spoken}`}
+            accessory={
+              <OutlineButton
+                testID={`hidden-entry-${entryId}-restore`}
+                label={strings.restore}
+                accessibilityLabel={fill(strings.restoreLabel, { title: row.title })}
+                onPress={() => {
+                  restoreEntry(entryId);
+                }}
               />
-            ))}
-          </View>
+            }
+          />
         )}
-        {model !== undefined &&
-          (model.categories.length > 0 || model.corrections !== undefined) && (
+        ListHeaderComponent={
+          <>
+            <View style={styles.padded}>
+              <BackLink
+                testID="hidden-back"
+                label={editionStrings.settings.title}
+                onPress={() => {
+                  router.back();
+                }}
+              />
+              <View style={styles.header}>
+                <ScreenTitle>{strings.title}</ScreenTitle>
+                <Text
+                  {...voice}
+                  style={[styles.subtitle, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+                >
+                  {strings.subtitle}
+                </Text>
+              </View>
+            </View>
+            {model?.empty === true && (
+              <Text
+                testID="hidden-empty"
+                {...voice}
+                style={[styles.empty, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+              >
+                {strings.empty}
+              </Text>
+            )}
+            {model !== undefined && model.entries.length > 0 && (
+              <View testID="hidden-entries" style={styles.section}>
+                <SectionLabel style={styles.sectionLabel}>{strings.entries}</SectionLabel>
+              </View>
+            )}
+          </>
+        }
+        ListFooterComponent={
+          model !== undefined &&
+          (model.categories.length > 0 || model.corrections !== undefined) ? (
             <View testID="hidden-categories" style={styles.section}>
               <SectionLabel style={styles.sectionLabel}>{strings.categories}</SectionLabel>
               {model.categories.map(({ id, name }) => (
@@ -129,8 +136,9 @@ function HiddenList() {
                 />
               )}
             </View>
-          )}
-      </ScrollView>
+          ) : null
+        }
+      />
     </SafeAreaView>
   );
 }
