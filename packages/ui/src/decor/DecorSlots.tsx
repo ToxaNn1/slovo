@@ -1,6 +1,16 @@
 import type { DecorMotif } from '@slovo/contracts';
-import { useEffect, useMemo } from 'react';
-import { Animated, Easing, StyleSheet, View } from 'react-native';
+import { useEffect, type ReactNode } from 'react';
+import { StyleSheet, View } from 'react-native';
+import Animated, {
+  Easing,
+  Extrapolation,
+  interpolate,
+  ReduceMotion,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withTiming,
+} from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 
 import { useDecor } from './DecorProvider';
@@ -199,6 +209,63 @@ const stitchEasing = Easing.bezier(0.3, 1.6, 0.5, 1);
 const FADE_MS = 250;
 /** The share of its size a stitch grows from. */
 const STITCH_FROM_SCALE = 0.6;
+/** The share of a stitch's motion in which it fades in. */
+const STITCH_FADE_SHARE = 0.3;
+
+/**
+ * One layer of the victory illustration. `motion` is `undefined` until the
+ * system has said whether Reduce Motion is on, `'stitch'` for the spring that
+ * starts `index` stitches late, `'fade'` for Reduce Motion's fade, and `'none'`
+ * for a layer drawn whole.
+ */
+function StitchedLayer({
+  index,
+  motion,
+  children,
+}: {
+  index: number;
+  motion: 'stitch' | 'fade' | 'none' | undefined;
+  children: ReactNode;
+}) {
+  const progress = useSharedValue(motion === 'none' ? 1 : 0);
+
+  useEffect(() => {
+    // Waits for the system's answer, so Reduce Motion never starts the full motion.
+    if (motion === undefined) return;
+    if (motion === 'none') {
+      progress.value = 1;
+      return;
+    }
+    // Assigning 0 first stops a stitch still running, so a new one starts from rest.
+    progress.value = 0;
+    progress.value =
+      motion === 'fade'
+        ? withTiming(1, { duration: FADE_MS, reduceMotion: ReduceMotion.Never })
+        : withDelay(
+            index * STITCH_GAP_MS,
+            withTiming(1, {
+              duration: STITCH_MS,
+              easing: stitchEasing,
+              reduceMotion: ReduceMotion.Never,
+            }),
+          );
+  }, [progress, motion, index]);
+
+  const reduced = motion === 'fade';
+  const stitchStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(
+      progress.value,
+      [0, reduced ? 1 : STITCH_FADE_SHARE],
+      [0, 1],
+      Extrapolation.CLAMP,
+    ),
+    transform: reduced
+      ? []
+      : [{ scale: interpolate(progress.value, [0, 1], [STITCH_FROM_SCALE, 1]) }],
+  }));
+
+  return <Animated.View style={[StyleSheet.absoluteFill, stitchStyle]}>{children}</Animated.View>;
+}
 
 /**
  * Decor slot 6, the victory illustration of the result screen, `width` points
@@ -208,71 +275,23 @@ const STITCH_FROM_SCALE = 0.6;
  */
 export function VictoryIllustration({ width, stitched }: { width: number; stitched: boolean }) {
   const { victory } = useDecor();
-  const motion = useReduceMotionKnown();
-  const reduceMotion = motion === true;
-  const layers = victory?.illustration.layers;
-  const progress = useMemo(
-    () => (layers ?? []).map(() => new Animated.Value(stitched ? 0 : 1)),
-    [layers, stitched],
-  );
-
-  useEffect(() => {
-    // Waits for the system's answer, so Reduce Motion never starts the full motion.
-    if (!stitched || motion === undefined) return;
-    const animation = Animated.parallel(
-      progress.map((value, index) => {
-        value.setValue(0);
-        return reduceMotion
-          ? Animated.timing(value, { toValue: 1, duration: FADE_MS, useNativeDriver: true })
-          : Animated.timing(value, {
-              toValue: 1,
-              duration: STITCH_MS,
-              delay: index * STITCH_GAP_MS,
-              easing: stitchEasing,
-              useNativeDriver: true,
-            });
-      }),
-    );
-    animation.start();
-    return () => {
-      animation.stop();
-    };
-  }, [progress, motion, reduceMotion, stitched]);
-
+  const reduceMotion = useReduceMotionKnown();
   if (victory === undefined) return null;
   const { illustration } = victory;
+  const motion = !stitched
+    ? 'none'
+    : reduceMotion === undefined
+      ? undefined
+      : reduceMotion
+        ? 'fade'
+        : 'stitch';
   return (
     <DecorView style={{ width, height: (width * illustration.height) / illustration.width }}>
-      {illustration.layers.map((layer, index) => {
-        const value = progress[index];
-        return (
-          <Animated.View
-            key={index}
-            style={[
-              StyleSheet.absoluteFill,
-              value !== undefined && {
-                opacity: value.interpolate({
-                  inputRange: [0, reduceMotion ? 1 : 0.3],
-                  outputRange: [0, 1],
-                  extrapolate: 'clamp',
-                }),
-                transform: reduceMotion
-                  ? []
-                  : [
-                      {
-                        scale: value.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [STITCH_FROM_SCALE, 1],
-                        }),
-                      },
-                    ],
-              },
-            ]}
-          >
-            <MotifLayerImage motif={illustration} layer={layer} width={width} />
-          </Animated.View>
-        );
-      })}
+      {illustration.layers.map((layer, index) => (
+        <StitchedLayer key={index} index={index} motion={motion}>
+          <MotifLayerImage motif={illustration} layer={layer} width={width} />
+        </StitchedLayer>
+      ))}
     </DecorView>
   );
 }
