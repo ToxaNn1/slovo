@@ -24,7 +24,7 @@ export const WidgetStringsSchema = z.strictObject({
   favorites: TextSchema,
   /** The overline of a Collection's Widget Mode. Takes `{name}`, the Collection's, e.g. «КОЛЕКЦІЯ · {name}». */
   collection: templateOf('name'),
-  /** The widget's setting that chooses its Widget Mode, as «Редагувати віджет» names it. */
+  /** The widget's setting that chooses its Widget Mode, where the reader edits the widget. */
   modeTitle: TextSchema,
   /** Улюблене among the Widget Modes of that setting. */
   modeFavorites: TextSchema,
@@ -34,7 +34,10 @@ export const WidgetStringsSchema = z.strictObject({
   modeAllEntries: TextSchema,
   /** The widget's setting that chooses the Collection, which lists the Collections by name. */
   collectionTitle: TextSchema,
-  /** What the widget says before the app wrote a snapshot or while the onboarding is unfinished. */
+  /**
+   * What the widget says before the app wrote a snapshot, while the onboarding
+   * is unfinished, or when Усі слова has no Entry: the app is where to fix it.
+   */
   openApp: TextSchema,
   /** What Улюблене says with no eligible Favorite. */
   noFavorites: TextSchema,

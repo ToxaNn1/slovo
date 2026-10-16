@@ -1,8 +1,8 @@
 import AppIntents
 import WidgetKit
 
-/// The Widget Mode a widget shows, chosen in «Редагувати віджет». Each
-/// widget keeps its own; a new one starts in Усі слова.
+/// The Widget Mode a widget shows, chosen when the reader edits the widget.
+/// Each widget keeps its own; a new one starts in Усі слова.
 enum ModeChoice: String, AppEnum {
   case favorites
   case collection
@@ -36,12 +36,10 @@ struct CollectionChoice: AppEntity {
 /// The Collections of the latest snapshot, in their own order, newest first.
 struct CollectionQuery: EntityQuery {
   func entities(for identifiers: [CollectionChoice.ID]) async throws -> [CollectionChoice] {
-    let names = Dictionary(
-      (SnapshotStore.latest()?.collections ?? []).map { ($0.id, $0.name) },
-      uniquingKeysWith: { first, _ in first })
+    let snapshot = SnapshotStore.latest()
     // An id the snapshot no longer holds stays chosen, so the widget can say
     // its Collection was deleted instead of quietly forgetting the choice.
-    return identifiers.map { CollectionChoice(id: $0, name: names[$0]) }
+    return identifiers.map { CollectionChoice(id: $0, name: snapshot?.collection($0)?.name) }
   }
 
   func suggestedEntities() async throws -> [CollectionChoice] {

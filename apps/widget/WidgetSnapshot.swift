@@ -23,6 +23,11 @@ struct WidgetSnapshot: Decodable {
     let byId = Dictionary(entries.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
     return ids.compactMap { byId[$0] }
   }
+
+  /// The Collection with `id`, or nil once it was deleted.
+  func collection(_ id: String) -> WidgetCollection? {
+    collections.first { $0.id == id }
+  }
 }
 
 /// An Entry as the widget shows it, its text ready to draw.
@@ -41,53 +46,6 @@ struct WidgetCollection: Decodable {
   let name: String
   /// Its Eligible Entries, newest first; may be empty.
   let entryIds: [String]
-}
-
-/// What one widget shows in its Widget Mode: the mode's overline over its
-/// Entries or, with none to show, the line of its empty or broken state.
-/// The text is the Edition's, from the extension's string table.
-struct ModeContent {
-  let overline: String
-  /// The Entries the mode shows, in the snapshot's order.
-  let entries: [WidgetEntry]
-  /// The empty or broken state, when the mode has no Entry to show.
-  let state: String?
-
-  init(of snapshot: WidgetSnapshot?, mode: ModeChoice, collectionId: String?) {
-    let collection = collectionId.flatMap { id in snapshot?.collections.first { $0.id == id } }
-    switch mode {
-    case .allEntries: overline = Self.text("allEntries")
-    case .favorites: overline = Self.text("favorites")
-    case .collection:
-      overline =
-        collection.map { Self.text("collection").replacingOccurrences(of: "{name}", with: $0.name) }
-        ?? Self.text("modeCollection")
-    }
-
-    guard let snapshot, snapshot.onboardingFinished else {
-      entries = []
-      state = Self.text("openApp")
-      return
-    }
-    let ids: [String]
-    let empty: String
-    switch mode {
-    case .allEntries: (ids, empty) = (snapshot.allEntries, "openApp")
-    case .favorites: (ids, empty) = (snapshot.favorites, "noFavorites")
-    case .collection:
-      if let collection {
-        (ids, empty) = (collection.entryIds, "emptyCollection")
-      } else {
-        (ids, empty) = ([], collectionId == nil ? "noCollection" : "deletedCollection")
-      }
-    }
-    entries = snapshot.entries(ids)
-    state = entries.isEmpty ? Self.text(empty) : nil
-  }
-
-  private static func text(_ key: String) -> String {
-    NSLocalizedString(key, comment: "")
-  }
 }
 
 /// Where the widget finds the Widget Snapshot. It only reads.

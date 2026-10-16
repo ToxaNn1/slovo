@@ -38,6 +38,7 @@ struct EntryView: View {
         .font(EditionInfo.uiFont(size: 11, weight: .bold))
         .tracking(11 * 0.14)
         .foregroundStyle(Color("accent"))
+        // In capitals, as the app's overline type draws it, a Collection's name too.
         .textCase(.uppercase)
         .lineLimit(1)
         .minimumScaleFactor(0.7)
@@ -52,8 +53,8 @@ struct EntryView: View {
             .minimumScaleFactor(0.75)
             .padding(.top, 2)
         }
-      } else if let state = moment.state {
-        Text(state)
+      } else if let emptyState = moment.emptyState {
+        Text(emptyState)
           .font(EditionInfo.wordFont(size: isSmall ? 19 : 21, weight: .medium))
           .foregroundStyle(Color("ink"))
           .lineLimit(4)

@@ -6,7 +6,8 @@ struct EntryMoment: TimelineEntry {
   let date: Date
   let overline: String
   let entry: WidgetEntry?
-  let state: String?
+  /// The line of the mode's empty or broken state, when it has no Entry.
+  let emptyState: String?
 }
 
 /// The widget's timeline over the Entries of its Widget Mode.
@@ -41,7 +42,7 @@ struct EntryTimeline: AppIntentTimelineProvider {
   private static func moment(of content: ModeContent, at date: Date, showing entry: WidgetEntry?)
     -> EntryMoment
   {
-    EntryMoment(date: date, overline: content.overline, entry: entry, state: content.state)
+    EntryMoment(date: date, overline: content.overline, entry: entry, emptyState: content.emptyState)
   }
 
   func placeholder(in context: Context) -> EntryMoment {
@@ -63,11 +64,5 @@ struct EntryTimeline: AppIntentTimelineProvider {
     let moments = Self.moments(of: content, from: Date(), using: &random)
     // An empty or broken state waits for the app's reload after its next write.
     return Timeline(entries: moments, policy: content.entries.isEmpty ? .never : .atEnd)
-  }
-}
-
-extension ModeContent {
-  init(of snapshot: WidgetSnapshot?, _ configuration: ChooseMode) {
-    self.init(of: snapshot, mode: configuration.mode, collectionId: configuration.collection?.id)
   }
 }
