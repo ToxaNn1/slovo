@@ -47,5 +47,6 @@ How to write screens and components in `apps/mobile` and `packages/ui`. `CONTEXT
 ## Testing hooks
 
 - Give each screen root, row and action a `testID` (`history`, `history-row-${entryId}`, `history-clear`) for Maestro flows in `apps/mobile/maestro/`.
-- Test hook modules, Core functions and the pure functions of `@slovo/ui` (through its published subpaths such as `@slovo/ui/tokens`) with Vitest through their public seams; screens are covered by Maestro.
+- Test hook modules, Core functions and the pure functions of `@slovo/ui` (through its published subpaths such as `@slovo/ui/tokens`) with Vitest through their public seams, in `*.test.ts` files.
+- Test a component of `@slovo/ui` in a `*.test.tsx` file beside it, which Jest runs with jest-expo and React Native Testing Library (ADR 0029). Render it from `@slovo/ui` inside the providers it needs, find what you check by role and label, text or `testID`, and pass time with `jest.useFakeTimers()`. Check behaviour, not snapshots. Screens are covered by Maestro.
 - Maestro runs locally only, never in CI (ADR 0028). Before a change to a screen, component or hook merges, run the flows that pass through it (the smoke flow, `pnpm test:smoke`, for a wide change) and list them in the PR's Checks.
