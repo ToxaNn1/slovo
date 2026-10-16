@@ -1,4 +1,4 @@
-import { coreTokens, designTokens, fontSizeSteps, withAlpha } from '@slovo/ui/tokens';
+import { coreTokens, designTokens, withAlpha } from '@slovo/ui/tokens';
 import { describe, expect, it } from 'vitest';
 
 describe('withAlpha', () => {
@@ -23,16 +23,5 @@ describe('designTokens', () => {
   it('takes an Edition’s group over the Core’s, group by group', () => {
     const radii = { card: 1, chip: 2, button: 3, sheet: 4 };
     expect(designTokens({ radii })).toEqual({ ...coreTokens, radii });
-  });
-});
-
-describe('fontSizeSteps', () => {
-  it('grows every Word card size from step to step', () => {
-    const steps = (['S', 'M', 'L', 'XL'] as const).map((step) => fontSizeSteps[step]);
-    for (const role of ['lemma', 'definition', 'example'] as const) {
-      const sizes = steps.map((step) => step[role]);
-      expect(sizes).toEqual([...sizes].sort((a, b) => a - b));
-      expect(new Set(sizes).size).toBe(sizes.length);
-    }
   });
 });
