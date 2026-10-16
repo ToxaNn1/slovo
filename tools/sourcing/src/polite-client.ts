@@ -21,7 +21,7 @@ export interface FetchResponse {
 }
 
 /** What a cache file holds; the address it came from rides along but is not read back. */
-const CachedResponseSchema = z.object({ status: z.number(), body: z.string() });
+const CachedResponseSchema = z.object({ status: z.number().int(), body: z.string() });
 
 /** The network port. Rejects when the host can't be reached or doesn't answer in time. */
 export type Fetch = (url: string, options: { timeoutMs: number }) => Promise<FetchResponse>;
@@ -91,7 +91,7 @@ export class PoliteClient {
 
   /** Whether the answer for `url` is already on disk. */
   isCached(url: string): boolean {
-    return existsSync(this.cacheFile(url));
+    return this.readCache(this.cacheFile(url)) !== undefined;
   }
 
   async get(
@@ -100,7 +100,10 @@ export class PoliteClient {
   ): Promise<FetchResponse> {
     const cacheFile = this.cacheFile(url);
     const cachedBefore = this.readCache(cacheFile);
-    if (cachedBefore !== undefined) return cachedBefore;
+    if (cachedBefore !== undefined) {
+      this.stats.cached += 1;
+      return cachedBefore;
+    }
 
     const host = new URL(url).hostname;
     for (let attempt = 0; ; attempt += 1) {
@@ -111,7 +114,10 @@ export class PoliteClient {
       await this.waitTurn(host);
       // A parallel run may have fetched the page while this one waited its turn.
       const cachedMeanwhile = this.readCache(cacheFile);
-      if (cachedMeanwhile !== undefined) return cachedMeanwhile;
+      if (cachedMeanwhile !== undefined) {
+        this.stats.cached += 1;
+        return cachedMeanwhile;
+      }
       this.stats.network += 1;
       let trouble: string;
       try {
@@ -159,8 +165,7 @@ export class PoliteClient {
     }
     const cached = CachedResponseSchema.safeParse(json);
     if (!cached.success) return undefined;
-    this.stats.cached += 1;
-    return { status: cached.data.status, body: cached.data.body };
+    return cached.data;
   }
 
   private cacheFile(url: string): string {
