@@ -1,5 +1,12 @@
 import { useEffect, useRef } from 'react';
-import { Animated, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import Animated, {
+  ReduceMotion,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 
 import { DecorBackground } from '../decor/DecorSlots';
 import { useDecor } from '../decor/DecorProvider';
@@ -7,6 +14,7 @@ import { useEdition } from '../providers/EditionProvider';
 import { DecorView, MotifImage, MotifPattern } from '../decor/Motif';
 import { space } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
+import { useReduceMotion } from '../providers/useReduceMotion';
 
 export interface SplashOverlayProps {
   /** The app's name as a wordmark. */
@@ -15,7 +23,7 @@ export interface SplashOverlayProps {
   tagline: string;
   /** The width of the native splash image, so the mark lands right on top of it. */
   markWidth: number;
-  /** False fades the overlay out. */
+  /** False fades the overlay out, or hides it at once with Reduce Motion. */
   visible: boolean;
   /** Called once the overlay is on screen, when the native splash can go. */
   onShown?: () => void;
@@ -50,8 +58,10 @@ export function SplashOverlay({
   const { colors, fontFamilies } = useTokens();
   const { voice } = useEdition();
   const { splash } = useDecor();
-  const opacity = useRef(new Animated.Value(1)).current;
+  const reduceMotion = useReduceMotion();
+  const opacity = useSharedValue(1);
   const shown = useRef(false);
+  const hidden = useRef(false);
 
   useEffect(() => {
     if (splash !== undefined || shown.current) return;
@@ -61,13 +71,23 @@ export function SplashOverlay({
   }, [splash, onShown, onHidden]);
 
   useEffect(() => {
-    if (visible || splash === undefined) return;
-    Animated.timing(opacity, { toValue: 0, duration: FADE_MS, useNativeDriver: true }).start(
-      ({ finished }) => {
-        if (finished) onHidden?.();
+    if (visible || splash === undefined || hidden.current) return;
+    hidden.current = true;
+    if (reduceMotion) {
+      opacity.value = 0;
+      onHidden?.();
+      return;
+    }
+    opacity.value = withTiming(
+      0,
+      { duration: FADE_MS, reduceMotion: ReduceMotion.Never },
+      (finished) => {
+        if (finished && onHidden !== undefined) scheduleOnRN(onHidden);
       },
     );
-  }, [visible, splash, opacity, onHidden]);
+  }, [visible, splash, reduceMotion, opacity, onHidden]);
+
+  const fadeStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
 
   if (splash === undefined) return null;
 
@@ -99,7 +119,7 @@ export function SplashOverlay({
         shown.current = true;
         onShown?.();
       }}
-      style={[StyleSheet.absoluteFill, { backgroundColor: colors.background, opacity }]}
+      style={[StyleSheet.absoluteFill, { backgroundColor: colors.background }, fadeStyle]}
     >
       <DecorBackground />
       <DecorView style={styles.centre}>

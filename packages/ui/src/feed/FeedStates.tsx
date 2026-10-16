@@ -1,5 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
-import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated, {
+  cancelAnimation,
+  ReduceMotion,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 
 import { useDecor } from '../decor/DecorProvider';
@@ -87,25 +96,21 @@ export function FeedLoading({
   const { colors, fontFamilies, radii } = useTokens();
   const { voice } = useEdition();
   const reduceMotion = useReduceMotion();
-  const pulse = useRef(new Animated.Value(1)).current;
+  const pulse = useSharedValue(1);
 
   useEffect(() => {
     if (reduceMotion) {
-      pulse.setValue(1);
+      pulse.value = 1;
       return;
     }
-    const half = { duration: PULSE_MS / 2, useNativeDriver: true };
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulse, { ...half, toValue: PULSE_FAINT }),
-        Animated.timing(pulse, { ...half, toValue: 1 }),
-      ]),
-    );
-    loop.start();
+    const half = { duration: PULSE_MS / 2, reduceMotion: ReduceMotion.Never };
+    pulse.value = withRepeat(withSequence(withTiming(PULSE_FAINT, half), withTiming(1, half)), -1);
     return () => {
-      loop.stop();
+      cancelAnimation(pulse);
     };
   }, [reduceMotion, pulse]);
+
+  const pulseStyle = useAnimatedStyle(() => ({ opacity: pulse.value }));
 
   return (
     <View
@@ -123,12 +128,12 @@ export function FeedLoading({
           { backgroundColor: colors.surface, borderColor: colors.line, borderRadius: radii.card },
         ]}
       >
-        <Animated.View style={[styles.skeletonHeader, { opacity: pulse }]}>
+        <Animated.View style={[styles.skeletonHeader, pulseStyle]}>
           <Block width={180} height={50} />
           <Block width={88} height={14} />
         </Animated.View>
         <StitchedDivider />
-        <Animated.View style={[styles.skeletonLines, { opacity: pulse }]}>
+        <Animated.View style={[styles.skeletonLines, pulseStyle]}>
           <Block width="100%" height={16} />
           <Block width="84%" height={16} />
           <Block width="70%" height={16} />
@@ -226,22 +231,22 @@ export function SwipeHint({
   const { colors, fontFamilies } = useTokens();
   const { voice } = useEdition();
   const reduceMotion = useReduceMotion();
-  const opacity = useRef(new Animated.Value(0)).current;
+  const opacity = useSharedValue(0);
 
   useEffect(() => {
     onShown();
   }, [onShown]);
 
   useEffect(() => {
-    if (reduceMotion) {
-      opacity.setValue(1);
-      return;
-    }
-    Animated.timing(opacity, { toValue: 1, duration: HINT_FADE_MS, useNativeDriver: true }).start();
+    opacity.value = reduceMotion
+      ? 1
+      : withTiming(1, { duration: HINT_FADE_MS, reduceMotion: ReduceMotion.Never });
   }, [reduceMotion, opacity]);
 
+  const fadeStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
+
   return (
-    <Animated.View pointerEvents="box-none" style={[styles.hintRow, { opacity }]}>
+    <Animated.View pointerEvents="box-none" style={[styles.hintRow, fadeStyle]}>
       <Pressable
         testID="swipe-hint"
         accessibilityRole="button"
