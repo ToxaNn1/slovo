@@ -3,10 +3,13 @@ import { join, relative } from 'node:path';
 
 import type * as Contracts from '@slovo/contracts';
 import type * as UiTokens from '@slovo/ui/tokens';
+import type * as Core from '@slovo/core';
 import type { ConfigContext, ExpoConfig } from 'expo/config';
+import type * as ConfigPlugins from 'expo/config-plugins';
 import { require as tsxRequire } from 'tsx/cjs/api';
 
 import type * as NotificationSound from './notification-sound';
+import type * as WidgetExtension from './widget-extension';
 
 type EditionConfig = Contracts.EditionConfig;
 
@@ -31,15 +34,31 @@ interface SplashPluginOptions {
 // sources of the workspace packages (their relative imports have no file
 // extension). tsx loads them, so the config is checked by the same schema as
 // the Language Pack build and the app.
-const { EditionConfigSchema, SplashDecorSchema } = tsxRequire(
-  '@slovo/contracts',
+const {
+  EditionConfigSchema,
+  editionAppGroup,
+  EditionStringsSchema,
+  EditionTokensSchema,
+  SplashDecorSchema,
+  WidgetSnapshotSchema,
+} = tsxRequire('@slovo/contracts', import.meta.url) as typeof Contracts;
+const { loadDecor } = tsxRequire('@slovo/core', import.meta.url) as typeof Core;
+const { withDangerousMod } = tsxRequire(
+  'expo/config-plugins',
   import.meta.url,
-) as typeof Contracts;
+) as typeof ConfigPlugins;
 const { readNotificationSound } = tsxRequire(
   './notification-sound.ts',
   import.meta.url,
 ) as typeof NotificationSound;
-const { coreTokens } = tsxRequire('@slovo/ui/tokens', import.meta.url) as typeof UiTokens;
+const { coreTokens, designTokens } = tsxRequire(
+  '@slovo/ui/tokens',
+  import.meta.url,
+) as typeof UiTokens;
+const { writeWidgetExtension } = tsxRequire(
+  './widget-extension.ts',
+  import.meta.url,
+) as typeof WidgetExtension;
 
 /**
  * The one mobile shell builds whichever Edition the SLOVO_EDITION environment
@@ -153,6 +172,60 @@ function editionNotificationSounds(
   return [relative(projectRoot, file)];
 }
 
+/** An optional Edition file as JSON, or `{}` when the Edition leaves it out. */
+const readOptionalJson = (file: string): unknown =>
+  existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : {};
+
+/**
+ * What the widget extension takes from the Edition, checked here so a broken
+ * Edition stops the config rather than the native build. The files
+ * themselves are made at prebuild (`widget-extension.ts`).
+ */
+function widgetEdition(
+  editionDir: string,
+  projectRoot: string,
+  config: EditionConfig,
+  scheme: string,
+): WidgetExtension.WidgetEdition {
+  const exampleSnapshot = join(editionDir, 'widget-snapshot.example.json');
+  if (!existsSync(exampleSnapshot)) {
+    throw new Error(
+      `Edition "${config.id}" has no example Widget Snapshot for the widget gallery: expected ${exampleSnapshot}`,
+    );
+  }
+  readJson(exampleSnapshot, WidgetSnapshotSchema, 'Widget Snapshot');
+  const tokens = EditionTokensSchema.parse(readOptionalJson(join(editionDir, 'tokens.json')));
+  return {
+    config,
+    scheme,
+    strings: readJson(join(editionDir, 'strings.json'), EditionStringsSchema, 'Edition strings')
+      .widget,
+    tokens: designTokens(tokens),
+    band: loadDecor(readOptionalJson(join(editionDir, 'decor/decor.json'))).divider.band,
+    fontFiles: editionFonts(editionDir, projectRoot).map((font) => join(projectRoot, font)),
+    exampleSnapshot,
+  };
+}
+
+/**
+ * Writes the widget extension's Edition files into `apps/widget` at
+ * prebuild, before the Apple targets plugin links the folder into the Xcode
+ * project as the extension's target.
+ */
+function withWidgetExtension(
+  config: ExpoConfig,
+  widgetDir: string,
+  edition: WidgetExtension.WidgetEdition,
+): ExpoConfig {
+  return withDangerousMod(config, [
+    'ios',
+    (modConfig) => {
+      writeWidgetExtension(widgetDir, edition);
+      return Promise.resolve(modConfig);
+    },
+  ]);
+}
+
 function selectEdition(editionsDir: string): { dir: string; config: EditionConfig } {
   const known = knownEditions(editionsDir);
   const hint = `Known Editions: ${known.join(', ')}. Example: ${EDITION_VARIABLE}=${known[0] ?? '<edition>'} pnpm start`;
@@ -177,13 +250,16 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
     throw new Error(`Edition "${edition.config.id}" has no icon: expected ${icon}`);
   }
 
-  return {
+  const scheme = `slovo-${edition.config.id}`;
+  const widget = widgetEdition(edition.dir, projectRoot, edition.config, scheme);
+
+  const expoConfig: ExpoConfig = {
     ...config,
     name: edition.config.displayName,
     slug: 'slovo',
     owner: 'anton_de',
     version: '0.1.0',
-    scheme: `slovo-${edition.config.id}`,
+    scheme,
     orientation: 'portrait',
     userInterfaceStyle: 'automatic',
     icon: relative(projectRoot, icon),
@@ -194,6 +270,10 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
         CFBundleDevelopmentRegion: language,
         CFBundleLocalizations: [language],
         ITSAppUsesNonExemptEncryption: false,
+      },
+      // The widget extension gets the same App Group from the Apple targets plugin.
+      entitlements: {
+        'com.apple.security.application-groups': [editionAppGroup(edition.config.bundleId)],
       },
     },
     plugins: [
@@ -207,6 +287,8 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       ],
       '@react-native-community/datetimepicker',
       ['expo-build-properties', { ios: { deploymentTarget: '17.0' } }],
+      // The widget extension, from apps/widget/expo-target.config.json (ADR 0026).
+      ['@bacons/apple-targets', { root: '..', match: 'widget' }],
     ],
     extra: {
       edition: { id: edition.config.id },
@@ -214,4 +296,5 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       eas: { projectId: 'e2401ef2-2a47-407e-b0ff-03706421b71c' },
     },
   };
+  return withWidgetExtension(expoConfig, join(projectRoot, '../widget'), widget);
 };

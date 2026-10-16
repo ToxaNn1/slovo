@@ -13,3 +13,7 @@ coverage/
 # Sourcing tool: the HTTP cache and the drafts awaiting review
 tools/sourcing/.cache/
 tools/sourcing/review/
+
+# The widget extension's Edition files, written by the prebuild (apps/mobile/widget-extension.ts)
+apps/widget/Info.plist
+apps/widget/Generated/
