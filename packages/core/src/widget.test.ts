@@ -128,15 +128,37 @@ async function run({
 }
 
 describe('The Widget Snapshot', () => {
-  it('shows every Eligible Entry in All words, leaving out Hidden Entries, Hidden Categories and Retired Words', async () => {
+  it('shows every Eligible Entry in the mode of all Entries', async () => {
     const app = await run();
+
+    expect((await app.widget.snapshot()).allEntries).toEqual([
+      'w_nature0',
+      'w_nature1',
+      'w_speech0',
+      'w_speech1',
+      'c_one',
+      'c_two',
+    ]);
+  });
+
+  it('leaves Hidden Entries, Hidden Categories and Retired Words out of every mode', async () => {
+    const app = await run();
+    const kept = ['w_nature0', 'w_nature1', 'w_speech0', 'w_old'];
+    const letters = await app.collections.create('Letters');
+    if (!letters.ok) throw new Error('The Collection was not created');
+    for (const id of kept) {
+      await app.favorites.add(id);
+      await app.collections.add(letters.collection.id, id);
+    }
     await app.hide({ kind: 'entry', entryId: 'w_nature1' });
     await app.hide({ kind: 'category', categoryId: 'speech' });
 
     const snapshot = await app.widget.snapshot();
 
-    expect(snapshot.allWords).toEqual(['w_nature0', 'c_one', 'c_two']);
+    expect(snapshot.allEntries).toEqual(['w_nature0', 'c_one', 'c_two']);
     expect(snapshot.entries.map(({ id }) => id)).toEqual(['w_nature0', 'c_one', 'c_two']);
+    expect(snapshot.favorites).toEqual(['w_nature0']);
+    expect(snapshot.collections.map(({ entryIds }) => entryIds)).toEqual([['w_nature0']]);
   });
 
   it('leaves out Corrections when the Edition turns them off, even ones the user keeps', async () => {
@@ -147,7 +169,7 @@ describe('The Widget Snapshot', () => {
 
     const snapshot = await app.widget.snapshot();
 
-    expect(snapshot.allWords).toEqual(['w_nature0', 'w_nature1', 'w_speech0', 'w_speech1']);
+    expect(snapshot.allEntries).toEqual(['w_nature0', 'w_nature1', 'w_speech0', 'w_speech1']);
     expect(snapshot.favorites).toEqual([]);
     expect(snapshot.collections).toEqual([
       { id: created.collection.id, name: 'Phrases', entryIds: [] },
@@ -161,12 +183,12 @@ describe('The Widget Snapshot', () => {
     await app.hide({ kind: 'corrections' });
 
     const out = await app.widget.snapshot();
-    expect(out.allWords).toEqual(['w_nature0', 'w_nature1', 'w_speech0', 'w_speech1']);
+    expect(out.allEntries).toEqual(['w_nature0', 'w_nature1', 'w_speech0', 'w_speech1']);
     expect(out.favorites).toEqual([]);
 
     await app.unhide({ kind: 'corrections' });
     const back = await app.widget.snapshot();
-    expect(back.allWords).toEqual([
+    expect(back.allEntries).toEqual([
       'w_nature0',
       'w_nature1',
       'w_speech0',
@@ -213,7 +235,7 @@ describe('The Widget Snapshot', () => {
     const snapshot = await (await run({ records, content: retired })).widget.snapshot();
 
     expect(snapshot.favorites).toEqual([]);
-    expect(snapshot.allWords).not.toContain('w_nature0');
+    expect(snapshot.allEntries).not.toContain('w_nature0');
   });
 
   it('shows each Collection with its eligible Entries, newest first, empty ones too', async () => {

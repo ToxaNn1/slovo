@@ -51,14 +51,14 @@ export const WidgetSnapshotSchema = z
   .strictObject({
     format: z.literal(WIDGET_SNAPSHOT_FORMAT),
     editionId: z.string().min(1),
-    /** When the app built it, as an ISO 8601 instant. */
+    /** The instant it was written, from the Core's clock, in ISO 8601. */
     writtenAt: z.iso.datetime(),
     /** Whether the reader finished the onboarding; until then the widget invites them to open the app. */
     onboardingFinished: z.boolean(),
     /** Each Entry any mode shows, once. */
     entries: z.array(WidgetEntrySchema),
     /** Усі слова: every Eligible Entry. */
-    allWords: EntryIdsSchema,
+    allEntries: EntryIdsSchema,
     /** Улюблене: the Favorites that are Eligible Entries, newest first. */
     favorites: EntryIdsSchema,
     /** The Collections, newest first, empty ones included. */
@@ -71,7 +71,7 @@ export const WidgetSnapshotSchema = z
     }
     const known = new Set(ids);
     const modes: [path: (string | number)[], ids: readonly string[]][] = [
-      [['allWords'], snapshot.allWords],
+      [['allEntries'], snapshot.allEntries],
       [['favorites'], snapshot.favorites],
       ...snapshot.collections.map(
         ({ entryIds }, index): [(string | number)[], readonly string[]] => [

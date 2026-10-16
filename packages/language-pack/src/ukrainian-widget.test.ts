@@ -74,7 +74,7 @@ function fakeClock(start: string) {
 
 /** Every id each Widget Mode shows. */
 const modeIdsOf = (snapshot: WidgetSnapshot) => [
-  ...snapshot.allWords,
+  ...snapshot.allEntries,
   ...snapshot.favorites,
   ...snapshot.collections.flatMap(({ entryIds }) => entryIds),
 ];

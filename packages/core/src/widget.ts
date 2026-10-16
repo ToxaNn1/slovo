@@ -70,15 +70,15 @@ export function createWidget({
       ]);
       const eligible = [...entriesOf(words), ...entriesOf(corrections)];
       const eligibleIds = new Set(eligible.map(({ id }) => id));
-      const onlyEligible = (ids: readonly { entryId: string }[]) =>
-        ids.map(({ entryId }) => entryId).filter((id) => eligibleIds.has(id));
+      const onlyEligible = (kept: readonly { entryId: string }[]) =>
+        kept.map(({ entryId }) => entryId).filter((id) => eligibleIds.has(id));
       return {
         format: WIDGET_SNAPSHOT_FORMAT,
         editionId,
         writtenAt: clock.now().toISOString(),
         onboardingFinished: onboarding.state.finishedAt !== undefined,
         entries: eligible.map(widgetEntry),
-        allWords: eligible.map(({ id }) => id),
+        allEntries: eligible.map(({ id }) => id),
         favorites: onlyEligible(favorites.list),
         collections: collections.list.map(({ id, name }) => ({
           id,
