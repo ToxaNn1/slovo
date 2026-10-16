@@ -25,8 +25,8 @@ import { useOpenScreen } from './use-open-screen';
  * heart takes the Entry out, until the reader goes back. A Correction a Word
  * card links opens as the next Entry screen of the same `route`, its link
  * back named for the Word. Opening it never makes the Entry Seen, unless it
- * opens from a notification or the widget. Hiding its Entry hides it and keeps the screen
- * open, with the undo toast.
+ * opens from a notification or the widget. Hiding its Entry hides it and
+ * keeps the screen open, with the undo toast.
  */
 export function EntryScreen({
   entryId,

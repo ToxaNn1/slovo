@@ -58,8 +58,8 @@ export interface Composition extends Hiding {
    * notification plan is made again and the Feed opens the day. On the same
    * day it only reads the permission again and plans by it. It runs in turn
    * with an Entry opened from a notification or the widget, so the two never
-   * run side by side. Should
-   * every try to plan the Game's offers have failed, the Game tries again.
+   * run side by side. Should every try to plan the Game's offers have failed,
+   * the Game tries again.
    */
   resume(): Promise<void>;
   /** The Notification times, the notification sound and the plan, kept on this device. */
