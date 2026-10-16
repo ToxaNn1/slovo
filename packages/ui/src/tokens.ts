@@ -131,6 +131,9 @@ export const fontSizeSteps: Readonly<
 /** The text size scale above which a row puts its value, button or switch under its label, so no word breaks. */
 export const STACK_AT_FONT_SCALE = 1.3;
 
+/** The Story Share Card's image in pixels: a true 9:16 (design-system gap 17). */
+export const storyImage = { width: 1080, height: 1920 } as const;
+
 /** The smallest side of anything the user taps. */
 export const minTouchTarget = 44;
 

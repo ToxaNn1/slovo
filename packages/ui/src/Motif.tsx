@@ -1,7 +1,7 @@
 import type { DecorLayer, DecorMotif } from '@slovo/contracts';
 import { useId } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import Svg, { Defs, Path, Pattern, Rect } from 'react-native-svg';
+import Svg, { Defs, G, Path, Pattern, Rect } from 'react-native-svg';
 
 import { useTokens } from './TokensProvider';
 
@@ -68,15 +68,25 @@ export function MotifLayerImage({
   );
 }
 
-/** A motif repeated at its own size in points across the whole of its box. */
-export function MotifPattern({ motif }: { motif: DecorMotif }) {
+/**
+ * A motif repeated across the whole of its box, at its own size in points or
+ * `scale` times it, drawn as vectors at either size.
+ */
+export function MotifPattern({ motif, scale = 1 }: { motif: DecorMotif; scale?: number }) {
   // Pattern ids are looked up by URL, which takes letters and digits only.
   const id = `motif${useId().replace(/[^A-Za-z0-9]/g, '')}`;
   return (
     <Svg style={StyleSheet.absoluteFill}>
       <Defs>
-        <Pattern id={id} patternUnits="userSpaceOnUse" width={motif.width} height={motif.height}>
-          <Layers motif={motif} />
+        <Pattern
+          id={id}
+          patternUnits="userSpaceOnUse"
+          width={motif.width * scale}
+          height={motif.height * scale}
+        >
+          <G transform={`scale(${String(scale)})`}>
+            <Layers motif={motif} />
+          </G>
         </Pattern>
       </Defs>
       <Rect width="100%" height="100%" fill={`url(#${id})`} />

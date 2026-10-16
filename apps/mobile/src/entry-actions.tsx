@@ -1,4 +1,10 @@
-import { entryIdOf, type Composition, type EntryFeedCard, type WordFeedCard } from '@slovo/core';
+import {
+  entryIdOf,
+  isTodaysWordOfTheDay,
+  type Composition,
+  type EntryFeedCard,
+  type WordFeedCard,
+} from '@slovo/core';
 import {
   ActionRow,
   CollectionButton,
@@ -18,7 +24,6 @@ import { useEntryCollections } from './collections';
 import { useOpenedRead } from './composition';
 import { useFavorite } from './favorites';
 import { useHide } from './hiding';
-import { isTodaysWordOfTheDay } from './share-card';
 
 /**
  * The action row of an Entry card, wherever the card appears: the Feed and
@@ -32,13 +37,13 @@ export function EntryActions({ card }: { card: EntryFeedCard }) {
   const hide = useHide(card);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
-  const shareable = card.kind === 'word' && shareCardOnDevice !== undefined;
+  const share = card.kind === 'word' ? shareCardOnDevice : undefined;
   return (
     <>
       <ActionRow
         favorite={<FavoriteButton inFavorites={favorite.inFavorites} onToggle={favorite.toggle} />}
         share={
-          shareable ? (
+          share !== undefined ? (
             <ShareButton
               onPress={() => {
                 setShareOpen(true);
@@ -62,9 +67,10 @@ export function EntryActions({ card }: { card: EntryFeedCard }) {
           setSheetOpen(false);
         }}
       />
-      {shareable && (
+      {card.kind === 'word' && share !== undefined && (
         <EntryShareSheet
           card={card}
+          share={share}
           visible={shareOpen}
           onClose={() => {
             setShareOpen(false);
@@ -78,15 +84,15 @@ export function EntryActions({ card }: { card: EntryFeedCard }) {
 /** The share sheet of a Word's card, over the Story Share Card. Sharing writes no user state. */
 function EntryShareSheet({
   card,
+  share,
   visible,
   onClose,
 }: {
   card: WordFeedCard;
+  share: NonNullable<typeof shareCardOnDevice>;
   visible: boolean;
   onClose: () => void;
 }) {
-  const share = shareCardOnDevice;
-  if (share === undefined) return null;
   return (
     <ShareSheet
       visible={visible}

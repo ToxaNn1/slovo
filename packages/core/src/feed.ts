@@ -114,6 +114,14 @@ export interface Feed {
 }
 
 /**
+ * Whether a Word's card is the card of today's Word of the Day, such as for
+ * its Share Card. A Feed left open over midnight still holds the day before's.
+ */
+export function isTodaysWordOfTheDay(card: WordFeedCard, clock: Clock): boolean {
+  return card.wordOfTheDay !== undefined && dateKeyOf(card.wordOfTheDay) === todayKey(clock);
+}
+
+/**
  * The card of an Entry, built from the Language Pack's Entries. The card of a
  * Word on the day it is the Word of the Day carries that day.
  */

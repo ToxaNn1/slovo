@@ -1,7 +1,8 @@
+import type { ShareSheetOutcome } from '@slovo/ui';
 import { PixelRatio, Share, type View } from 'react-native';
 
 import { nativeModules } from './device-native-modules';
-import { shareCardImage, type ShareOutcome } from './share-card';
+import { shareCardImage } from './share-card';
 
 /**
  * `react-native-view-shot` and `expo-file-system`, or undefined when the
@@ -25,14 +26,15 @@ const fileUrl = (path: string) => (path.startsWith('file://') ? path : `file://$
  * button stays out of the action row.
  */
 export const shareCardOnDevice:
-  ((view: View, entryId: string) => Promise<ShareOutcome>) | undefined =
+  ((view: View, entryId: string) => Promise<ShareSheetOutcome>) | undefined =
   modules === undefined
     ? undefined
     : (view, entryId) => {
         const { viewShot, fileSystem } = modules;
         return shareCardImage(
           {
-            // The capture takes its size in points and draws at the screen's scale.
+            // The capture takes its size in points and draws at the screen's scale; the
+            // share sheet lays the card out at exactly this size, so nothing is stretched.
             capture: ({ width, height }) =>
               viewShot.captureRef(view, {
                 format: 'png',

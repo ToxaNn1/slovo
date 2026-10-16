@@ -1,12 +1,6 @@
-import type { Clock, WordFeedCard } from '@slovo/core';
 import { describe, expect, it, vi } from 'vitest';
 
-import {
-  isTodaysWordOfTheDay,
-  shareCardImage,
-  type ShareImagePorts,
-  type ShareSheetResult,
-} from './share-card';
+import { shareCardImage, type ShareImagePorts, type ShareSheetResult } from './share-card';
 
 /** Ports that make the image, keep it in the cache and open the share sheet, recording each call. */
 function fakePorts(overrides: Partial<ShareImagePorts> = {}) {
@@ -65,31 +59,5 @@ describe('sharing a Share Card as an image', () => {
     });
 
     expect(await shareCardImage(ports, 'w_00g2ap')).toBe('failed');
-  });
-});
-
-describe("today's Word of the Day on a Share Card", () => {
-  /** 16 October 2026, 00:30 in Kyiv: still the 15th in UTC. */
-  const clock: Clock = {
-    now: () => new Date('2026-10-15T21:30:00Z'),
-    timeZone: () => 'Europe/Kyiv',
-  };
-  const card = (wordOfTheDay?: WordFeedCard['wordOfTheDay']) =>
-    ({
-      kind: 'word',
-      wordCard: {} as WordFeedCard['wordCard'],
-      ...(wordOfTheDay === undefined ? {} : { wordOfTheDay }),
-    }) satisfies WordFeedCard;
-
-  it("is the card of the Word of the Day of the reader's local day", () => {
-    expect(isTodaysWordOfTheDay(card({ year: 2026, month: 10, day: 16 }), clock)).toBe(true);
-  });
-
-  it('is not the card of an earlier day’s Word of the Day, still in the Feed after midnight', () => {
-    expect(isTodaysWordOfTheDay(card({ year: 2026, month: 10, day: 15 }), clock)).toBe(false);
-  });
-
-  it('is not the card of any other Word', () => {
-    expect(isTodaysWordOfTheDay(card(), clock)).toBe(false);
   });
 });

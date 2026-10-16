@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
   Animated,
+  PixelRatio,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,9 +13,9 @@ import {
 import { BottomSheet } from './BottomSheet';
 import { useEdition } from './EditionProvider';
 import { PrimaryButton } from './PrimaryButton';
-import { ShareCard, STORY_CARD, type ShareCardProps } from './ShareCard';
+import { ShareCard, STORY_CARD, type ShareCardContent } from './ShareCard';
 import { SheetTitle } from './SheetParts';
-import { space, toastElevation, toastRadius } from './tokens';
+import { space, storyImage, toastElevation, toastRadius, typeSize } from './tokens';
 import { useTokens } from './TokensProvider';
 
 /** The share of the screen's height the preview may take, so the sheet fits the SE. */
@@ -30,8 +31,9 @@ export type ShareSheetOutcome = 'closed' | 'failed';
 
 /**
  * The share sheet: the title, a live preview of the Story Share Card, and
- * «Поділитися», which hands the shell the card laid out off screen at its
- * full size to capture and share. Once the system share sheet closes, shared
+ * «Поділитися», which hands the shell the card laid out off screen at the
+ * size of its image (`storyImage`, in points at the screen's scale) to
+ * capture and share. Once the system share sheet closes, shared
  * or cancelled, the sheet closes too; when sharing fails, a short toast says
  * so and the sheet stays open to try again. A tap on the scrim, a drag down
  * or VoiceOver's escape closes it without sharing. Needs a
@@ -42,7 +44,7 @@ export function ShareSheet({
   onShare,
   onClose,
   ...card
-}: ShareCardProps & {
+}: ShareCardContent & {
   visible: boolean;
   /** Captures the card in the view and shares it; resolves once sharing is over. */
   onShare: (cardView: View) => Promise<ShareSheetOutcome>;
@@ -61,7 +63,7 @@ function ShareSheetContent({
   onShare,
   onClose,
 }: {
-  card: ShareCardProps;
+  card: ShareCardContent;
   onShare: (cardView: View) => Promise<ShareSheetOutcome>;
   onClose: () => void;
 }) {
@@ -102,9 +104,7 @@ function ShareSheetContent({
             },
           ]}
         >
-          <View style={[styles.scaled, { transform: [{ scale }] }]}>
-            <ShareCard {...card} />
-          </View>
+          <ShareCard {...card} width={STORY_CARD.width * scale} />
           {failures > 0 && <Toast key={failures} message={strings.share.captureFailed} />}
         </View>
       </ScrollView>
@@ -115,7 +115,7 @@ function ShareSheetContent({
           void share();
         }}
       />
-      {/* The card the image is drawn from: at its full size, off screen, out of VoiceOver's way. */}
+      {/* The card the image is drawn from: at the image's size, off screen, out of VoiceOver's way. */}
       <View
         ref={captured}
         collapsable={false}
@@ -124,7 +124,7 @@ function ShareSheetContent({
         importantForAccessibility="no-hide-descendants"
         style={styles.offScreen}
       >
-        <ShareCard {...card} />
+        <ShareCard {...card} width={storyImage.width / PixelRatio.get()} />
       </View>
     </>
   );
@@ -172,8 +172,8 @@ const styles = StyleSheet.create({
   scroll: { flexGrow: 0, flexShrink: 1 },
   content: { gap: space[4], paddingBottom: space[4] },
   preview: { alignSelf: 'center', overflow: 'hidden' },
-  scaled: { ...STORY_CARD, transformOrigin: 'top left' },
-  offScreen: { position: 'absolute', top: 0, left: -2 * STORY_CARD.width },
+  // Left of the screen: the card is never wider than its image in pixels.
+  offScreen: { position: 'absolute', top: 0, left: -storyImage.width },
   toast: {
     position: 'absolute',
     left: space[3],
@@ -184,5 +184,5 @@ const styles = StyleSheet.create({
     paddingVertical: space[3],
     ...toastElevation,
   },
-  toastMessage: { fontSize: 15, lineHeight: 21, fontWeight: '500' },
+  toastMessage: { fontSize: typeSize.body, lineHeight: 21, fontWeight: '500' },
 });
