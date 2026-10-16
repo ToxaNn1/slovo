@@ -1,0 +1,55 @@
+import SwiftUI
+import UIKit
+
+/// What the widget takes from the Edition. The prebuild writes it into the
+/// extension's Info.plist, beside the colour sets, the band, the fonts and the
+/// strings it generates, so this code holds no Edition data.
+enum EditionInfo {
+  /// The App Group the app writes the Widget Snapshot into.
+  static let appGroup = value("SLOVOAppGroup")
+  /// The app's URL scheme, which the widget's links open.
+  static let urlScheme = value("SLOVOURLScheme")
+  /// The font family of the Lemma, or nil for the system font.
+  static let wordFontFamily = value("SLOVOWordFont")
+  /// The font family of labels, or nil for the system font.
+  static let uiFontFamily = value("SLOVOUIFont")
+
+  /// The link that opens an Entry in the app, or the app itself without one.
+  static func url(opening entry: WidgetEntry?) -> URL? {
+    guard let scheme = urlScheme else { return nil }
+    guard let entry else { return URL(string: "\(scheme)://") }
+    return URL(string: "\(scheme)://entry/\(entry.id)?from=widget")
+  }
+
+  /// The Edition's word font at `size`, in the upright face nearest `weight`.
+  static func wordFont(size: CGFloat, weight: UIFont.Weight) -> Font {
+    font(family: wordFontFamily, size: size, weight: weight)
+  }
+
+  /// The Edition's label font at `size`, in the upright face nearest `weight`.
+  static func uiFont(size: CGFloat, weight: UIFont.Weight) -> Font {
+    font(family: uiFontFamily, size: size, weight: weight)
+  }
+
+  private static func value(_ key: String) -> String? {
+    Bundle.main.object(forInfoDictionaryKey: key) as? String
+  }
+
+  /// A face of a bundled family, picked by weight as React Native picks it in
+  /// the app, so the widget's type matches the app's.
+  private static func font(family: String?, size: CGFloat, weight: UIFont.Weight) -> Font {
+    let upright =
+      family.map { UIFont.fontNames(forFamilyName: $0) }?
+      .compactMap { UIFont(name: $0, size: size) }
+      .filter { !$0.fontDescriptor.symbolicTraits.contains(.traitItalic) } ?? []
+    let nearest = upright.min {
+      abs(weightOf($0) - weight.rawValue) < abs(weightOf($1) - weight.rawValue)
+    }
+    return Font(nearest ?? UIFont.systemFont(ofSize: size, weight: weight))
+  }
+
+  private static func weightOf(_ font: UIFont) -> CGFloat {
+    let traits = font.fontDescriptor.object(forKey: .traits) as? [UIFontDescriptor.TraitKey: Any]
+    return traits?[.weight] as? CGFloat ?? UIFont.Weight.regular.rawValue
+  }
+}
