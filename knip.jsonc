@@ -1,8 +1,8 @@
 {
   // Knip reports unused files, exports, types and dependencies, and
   // dependencies a workspace uses without listing. Run with `pnpm knip`; CI
-  // runs it as a report that does not fail the build. The Expo, Metro, Vitest
-  // and ESLint plugins find the rest of the entry points.
+  // runs it as a report that does not fail the build. The Expo, Metro, Vitest,
+  // Jest and ESLint plugins find the rest of the entry points.
   "$schema": "https://unpkg.com/knip@6/schema-jsonc.json",
   // A type or an interface that a file uses in its own signatures is part of
   // that file's contract, even when no other file names it. A function or a
