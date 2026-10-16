@@ -1,7 +1,8 @@
-# Sharing a Word as a Story Share Card: a Feed card's «Поділитися» opens the
-# share sheet with the card's preview, its «Поділитися» opens the iOS share
-# sheet with the image, and cancelling that sheet brings the reader back to the
-# card with no error. A subflow of `smoke.yaml`; run it from there.
+# Sharing an Entry as a Share Card: a Feed card's «Поділитися» opens the share
+# sheet with the card's preview in Story, the format control switches it to
+# Square and back, its «Поділитися» opens the iOS share sheet with the image,
+# and cancelling that sheet brings the reader back to the card with no error.
+# A subflow of `smoke.yaml`; run it from there.
 #
 # It needs the view capture module (`react-native-view-shot`), which a dev
 # client built before the 0.6 native batch lacks: there the share button stays
@@ -12,7 +13,8 @@ appId: ${APP_ID || 'app.slovo.uk'}
 ---
 - tapOn:
     id: tab-home
-# A Correction's card has no share button yet: swipe to a Word's card.
+# Every card shares, but a Correction's card is tall enough to leave its action
+# row under the tab bar after the scroll below: swipe to a Word's card.
 - repeat:
     while:
       notVisible:
@@ -41,7 +43,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
           id: collection-button
       - assertVisible:
           id: hide-button
-# With it: the sheet, the iOS share sheet, cancel, back on the card.
+# With it: the sheet, Story and Square, the iOS share sheet, cancel, back on the card.
 - runFlow:
     when:
       visible:
@@ -52,12 +54,29 @@ appId: ${APP_ID || 'app.slovo.uk'}
           text: Поділитися
       - tapOn:
           id: share-button
-      - assertVisible:
-          id: share-sheet
+      # The sheet itself is no element Maestro sees: its preview stands for it.
       - assertVisible:
           id: share-preview
       - waitForAnimationToEnd
-      - takeScreenshot: share-sheet
+      # A new session opens the sheet in Story.
+      - assertVisible:
+          id: share-format-story
+          selected: true
+      - takeScreenshot: share-sheet-story
+      - tapOn:
+          id: share-format-square
+      - assertVisible:
+          id: share-format-square
+          selected: true
+      - takeScreenshot: share-sheet-square
+      - tapOn:
+          id: share-format-story
+      - assertVisible:
+          id: share-format-story
+          selected: true
+      # Share the Square, which the sheet now keeps for the session.
+      - tapOn:
+          id: share-format-square
       - tapOn:
           id: share-sheet-share
       # The iOS share sheet, with the image.
