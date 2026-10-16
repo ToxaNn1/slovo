@@ -18,6 +18,7 @@ const editionDecor = {
   },
   splash: { mark: stitch('#A3221B', '#D4AE5C'), band: stitch('#A3221B', '#D4AE5C') },
   victory: { illustration: stitch('#A3221B', '#D4AE5C') },
+  shareCard: { band: stitch('#A3221B', '#D4AE5C'), corner: stitch('#9C7A2E', '#D4AE5C') },
 };
 
 describe('loadDecor', () => {
@@ -34,15 +35,26 @@ describe('loadDecor', () => {
   });
 
   it('leaves the slots the Core shows nothing in empty', () => {
-    const { background, corners, emptyState, splash, victory } = coreDecor;
+    const { background, corners, emptyState, splash, victory, shareCard } = coreDecor;
 
-    expect({ background, corners, emptyState, splash, victory }).toEqual({
+    expect({ background, corners, emptyState, splash, victory, shareCard }).toEqual({
       background: undefined,
       corners: undefined,
       emptyState: undefined,
       splash: undefined,
       victory: undefined,
+      shareCard: undefined,
     });
+  });
+
+  it('gives an Edition without a Share Card frame a plain Share Card', () => {
+    expect(loadDecor({ corners: editionDecor.corners }).shareCard).toBeUndefined();
+  });
+
+  it('takes the Share Card frame an Edition supplies', () => {
+    expect(loadDecor({ shareCard: editionDecor.shareCard }).shareCard).toEqual(
+      editionDecor.shareCard,
+    );
   });
 
   it('shows no victory illustration for an Edition that supplies none', () => {
@@ -103,7 +115,17 @@ describe('loadDecor', () => {
       { victory: { illustration: motif({ layers: [] }) } },
       'victory.illustration.layers',
     ],
-    ['an unknown slot', { shareCard: {} }, '(root)'],
+    [
+      'a Share Card frame without its corner',
+      { shareCard: { band: motif({}) } },
+      'shareCard.corner',
+    ],
+    [
+      'a Share Card band that is not a motif',
+      { shareCard: { band: motif({ height: -1 }), corner: motif({}) } },
+      'shareCard.band.height',
+    ],
+    ['an unknown slot', { frame: {} }, '(root)'],
   ])('rejects %s, naming the field', (_, decor, field) => {
     const load = () => loadDecor(decor);
 

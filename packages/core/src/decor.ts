@@ -19,12 +19,14 @@ export interface Decor {
   readonly splash: { readonly mark: DecorMotif; readonly band: DecorMotif | undefined } | undefined;
   /** Slot 6: the illustration of a won Game on the result screen. */
   readonly victory: { readonly illustration: DecorMotif } | undefined;
+  /** Slot 5: the Share Card frame, a band for the Story card and a corner for the Square card. */
+  readonly shareCard: { readonly band: DecorMotif; readonly corner: DecorMotif } | undefined;
 }
 
 /**
  * The Core's neutral Decor: a thin line with a small dot in the middle for the
  * divider, and nothing in the other slots, so the screen background stays
- * plain and cards keep just their rounded corners.
+ * plain, cards keep just their rounded corners and Share Cards stay plain.
  */
 export const coreDecor: Decor = {
   background: undefined,
@@ -48,6 +50,7 @@ export const coreDecor: Decor = {
   emptyState: undefined,
   splash: undefined,
   victory: undefined,
+  shareCard: undefined,
 };
 
 /** Thrown when an Edition's Decor doesn't match the contracts. */
@@ -67,7 +70,7 @@ export function loadDecor(decor: unknown): Decor {
     );
     throw new InvalidDecorError(`Invalid Decor:\n${problems.join('\n')}`);
   }
-  const { background, divider, corners, emptyState, splash, victory } = result.data;
+  const { background, divider, corners, emptyState, splash, victory, shareCard } = result.data;
   return {
     background: background ?? coreDecor.background,
     divider: divider ?? coreDecor.divider,
@@ -78,5 +81,6 @@ export function loadDecor(decor: unknown): Decor {
         : { illustration: emptyState.illustration, error: emptyState.error },
     splash: splash === undefined ? coreDecor.splash : { mark: splash.mark, band: splash.band },
     victory: victory ?? coreDecor.victory,
+    shareCard: shareCard ?? coreDecor.shareCard,
   };
 }
