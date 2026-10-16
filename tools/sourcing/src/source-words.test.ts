@@ -1,4 +1,11 @@
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import {
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  utimesSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -494,6 +501,50 @@ describe('sourceWords', () => {
     });
   });
 
+  it('treats a corrupt cache file as a miss and fetches the page again', async () => {
+    const lemmaList = 'мжичка nature-weather 2\n';
+    const first = setup({ lemmaList });
+    await sourceWords(first.options);
+    const firstDrafts = readDrafts(first.options.outDir);
+    const pagesDir = join(first.options.cacheDir, 'pages');
+    const pages = readdirSync(pagesDir);
+    expect(pages.length).toBeGreaterThan(1);
+    pages.forEach((name, index) => {
+      // Half a file, or JSON that is not a response.
+      writeFileSync(join(pagesDir, name), index % 2 === 0 ? '{"status": 20' : '{"status":"200"}');
+    });
+
+    const second = setup({ lemmaList, cacheDir: first.options.cacheDir, random: seededRandom() });
+    const result = await sourceWords(second.options);
+
+    expect(second.net.requests.length).toBeGreaterThan(0);
+    expect(readDrafts(second.options.outDir)).toEqual(firstDrafts);
+    expect(result.ok && result.report.requests.cached).toBe(0);
+  });
+
+  it('releases a host lock left by a crashed process, judged by the injected clock', async () => {
+    const { options, net, clock } = setup({ lemmaList: 'мжичка nature-weather 2\n' });
+    const start = clock.now();
+    leaveLocks(options.cacheDir, start - 20_000);
+
+    const result = await sourceWords(options);
+
+    expect(result.ok).toBe(true);
+    // Released at once, so the run is only a lock retry late.
+    expect(net.requestTimes[0]).toBeLessThan(start + 1000);
+  });
+
+  it('waits for a fresh host lock until the injected clock says it is stale', async () => {
+    const { options, net, clock } = setup({ lemmaList: 'мжичка nature-weather 2\n' });
+    const start = clock.now();
+    leaveLocks(options.cacheDir, start);
+
+    const result = await sourceWords(options);
+
+    expect(result.ok).toBe(true);
+    expect(net.requestTimes[0]).toBeGreaterThanOrEqual(start + 10_000);
+  });
+
   it('waits at least two seconds between requests to one host', async () => {
     const { options, net } = setup({
       lemmaList: 'мжичка nature-weather 2\nножиці household-crafts 1\nдратва household-crafts 2\n',
@@ -806,6 +857,15 @@ describe('sourceWords', () => {
     expect(net.requests).toEqual([]);
   });
 });
+
+/** A lock folder for each host, as a process that crashed would leave it, modified at `modifiedMs`. */
+function leaveLocks(cacheDir: string, modifiedMs: number): void {
+  for (const host of ['web.archive.org', 'goroh.pp.ua', 'sum.in.ua']) {
+    const lock = join(cacheDir, 'hosts', `${host}.lock`);
+    mkdirSync(lock, { recursive: true });
+    utimesSync(lock, modifiedMs / 1000, modifiedMs / 1000);
+  }
+}
 
 /** The time between consecutive requests to the same host. */
 function gapsPerHost(net: FakeNetwork): number[] {

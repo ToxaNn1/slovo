@@ -16,7 +16,8 @@
   "dependencies": {
     "@slovo/contracts": "workspace:*",
     "@slovo/language-pack": "workspace:*",
-    "node-html-parser": "^9.0.4"
+    "node-html-parser": "^9.0.4",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@slovo/config": "workspace:*",

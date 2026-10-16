@@ -10,11 +10,18 @@ import {
 } from 'node:fs';
 import { join } from 'node:path';
 
+import { z } from 'zod';
+
+import { errorMessage } from './error-message';
+
 /** A plain HTTP response: what the sourcing tool needs from the network. */
 export interface FetchResponse {
   readonly status: number;
   readonly body: string;
 }
+
+/** What a cache file holds; the address it came from rides along but is not read back. */
+const CachedResponseSchema = z.object({ status: z.number(), body: z.string() });
 
 /** The network port. Rejects when the host can't be reached or doesn't answer in time. */
 export type Fetch = (url: string, options: { timeoutMs: number }) => Promise<FetchResponse>;
@@ -92,10 +99,8 @@ export class PoliteClient {
     { accept = () => true, fallback = false }: GetOptions = {},
   ): Promise<FetchResponse> {
     const cacheFile = this.cacheFile(url);
-    if (existsSync(cacheFile)) {
-      this.stats.cached += 1;
-      return JSON.parse(readFileSync(cacheFile, 'utf8')) as FetchResponse;
-    }
+    const cachedBefore = this.readCache(cacheFile);
+    if (cachedBefore !== undefined) return cachedBefore;
 
     const host = new URL(url).hostname;
     for (let attempt = 0; ; attempt += 1) {
@@ -105,10 +110,8 @@ export class PoliteClient {
 
       await this.waitTurn(host);
       // A parallel run may have fetched the page while this one waited its turn.
-      if (existsSync(cacheFile)) {
-        this.stats.cached += 1;
-        return JSON.parse(readFileSync(cacheFile, 'utf8')) as FetchResponse;
-      }
+      const cachedMeanwhile = this.readCache(cacheFile);
+      if (cachedMeanwhile !== undefined) return cachedMeanwhile;
       this.stats.network += 1;
       let trouble: string;
       try {
@@ -128,7 +131,7 @@ export class PoliteClient {
             ? 'an error page instead of the content'
             : `HTTP ${String(response.status)}`;
       } catch (error) {
-        trouble = `no connection (${(error as Error).message})`;
+        trouble = `no connection (${errorMessage(error)})`;
       }
 
       if (fallback || attempt >= MAX_BACKOFFS) {
@@ -143,6 +146,21 @@ export class PoliteClient {
       );
       await this.withHostLock(host, (next) => Math.max(next, this.clock.now() + rest));
     }
+  }
+
+  /** The cached answer, or `undefined` when there is none or the file is corrupt (a miss). */
+  private readCache(cacheFile: string): FetchResponse | undefined {
+    if (!existsSync(cacheFile)) return undefined;
+    let json: unknown;
+    try {
+      json = JSON.parse(readFileSync(cacheFile, 'utf8'));
+    } catch {
+      return undefined;
+    }
+    const cached = CachedResponseSchema.safeParse(json);
+    if (!cached.success) return undefined;
+    this.stats.cached += 1;
+    return { status: cached.data.status, body: cached.data.body };
   }
 
   private cacheFile(url: string): string {
@@ -186,7 +204,7 @@ export class PoliteClient {
       return true;
     } catch {
       try {
-        if (Date.now() - statSync(lock).mtimeMs > STALE_LOCK_MS)
+        if (this.clock.now() - statSync(lock).mtimeMs > STALE_LOCK_MS)
           rmSync(lock, { recursive: true, force: true });
       } catch {
         // The lock went away in the meantime.
