@@ -160,7 +160,11 @@ export async function openComposition({
     entries,
     clock,
     wordOfTheDay,
-    // The day change opens last, once the plan and the Feed it turns are open.
+    // The plan and the day change need each other (`replan`, `takeMorningWord`),
+    // so `day` is declared below, once the plan and the Feed it turns are open.
+    // That is safe: only a plan and `nextMorning` call it, a plan comes only
+    // from `replan`, `followSeen` or a change of the Notification times, sound
+    // or permission, and the composition calls none of them before `day.resume()`.
     takeMorningWord: () => day.takeMorningWord(),
     scheduling,
   });
