@@ -9,13 +9,14 @@ import type { Collections } from './collections';
 import type { EligibleOfKind, Entries } from './entries';
 import { buildEntryRow } from './entry-row';
 import type { Favorites } from './favorites';
+import type { EntryFeedCard } from './feed';
 import type { Onboarding } from './onboarding';
 import type { Clock } from './ports';
 import { withoutStress } from './stress';
 
 /**
  * What the home-screen widget shows, decided by the Core, so the widget holds
- * no rule of its own (ADR 0026).
+ * no rule of its own, and what opening an Entry from it does (ADR 0026).
  */
 export interface Widget {
   /**
@@ -25,6 +26,15 @@ export interface Widget {
    * Pure data; the contracts serialize it.
    */
   snapshot(): Promise<WidgetSnapshot>;
+  /**
+   * Opens an Entry the widget showed, a Word or a Correction, by the rule and
+   * the one write of an Entry opened from a notification (see
+   * `Composition.openedFromNotification`): its Entry card once it is Seen, in
+   * History and today is an Active Day. An Entry that isn't eligible or is
+   * Seen already in the Cycle only makes today an Active Day. Nothing for an
+   * id the Language Pack doesn't have: the Feed opens instead.
+   */
+  opened(entryId: string): Promise<EntryFeedCard | undefined>;
 }
 
 /** The eligible Entries of a kind, or none when the kind as a whole is out. */
@@ -46,7 +56,11 @@ function widgetEntry(entry: Entry): WidgetEntry {
   };
 }
 
-/** The widget over the composition's Entries, Favorites, Collections and onboarding. */
+/**
+ * The widget over the composition's Entries, Favorites, Collections and
+ * onboarding. `opened` is the composition's step for an Entry opened from
+ * outside the app, which a notification shares.
+ */
 export function createWidget({
   editionId,
   entries,
@@ -54,6 +68,7 @@ export function createWidget({
   collections,
   onboarding,
   clock,
+  opened,
 }: {
   editionId: string;
   entries: Entries;
@@ -61,6 +76,7 @@ export function createWidget({
   collections: Collections;
   onboarding: Onboarding;
   clock: Clock;
+  opened: Widget['opened'];
 }): Widget {
   return {
     async snapshot() {
@@ -87,5 +103,6 @@ export function createWidget({
         })),
       };
     },
+    opened,
   };
 }

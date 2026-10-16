@@ -8,8 +8,9 @@ import type { WordOfTheDay } from './word-of-the-day';
  * The day change of the composition: the one module that decides a new
  * local day started, in the clock's time zone, and turns the composition to
  * it (ADR 0022). The shell only reports that the app is in the foreground, on
- * its return and on a timer set to the next local day; a notification that
- * opens a Word reports it too. Internal: `index.ts` does not export it.
+ * its return and on a timer set to the next local day; a notification or the
+ * widget that opens an Entry reports it too. Internal: `index.ts` does not
+ * export it.
  *
  * Each report runs in turn with the others, so a notification tapped from the
  * background and the app's return, which come at once, never run side by
@@ -19,8 +20,8 @@ import type { WordOfTheDay } from './word-of-the-day';
  * 1. the Word of the Day module takes the Word of the day's morning
  *    notification (ADR 0016's amendment for 0.4), before anything else can
  *    read the day or drop a passed morning record;
- * 2. today becomes an Active Day, in the write of the Word a notification
- *    opened, if one did;
+ * 2. today becomes an Active Day, in the write of the Entry a notification
+ *    or the widget opened, if one did;
  * 3. the notification plan is made again, with the permission read again;
  * 4. the Feed opens the day with its Word of the Day.
  *
@@ -33,9 +34,9 @@ export interface DayChange {
   /** The app is in the foreground: it opened, came back or stayed open into the next local day. */
   resume(): Promise<void>;
   /**
-   * A notification opened a Word: `open` keeps it with `activeDay`, the
-   * changes that make today an Active Day, in one write, after the morning
-   * Word is taken. Resolves with what `open` gives once it is kept: the rest
+   * A notification or the widget opened an Entry: `open` keeps it with
+   * `activeDay`, the changes that make today an Active Day, in one write,
+   * after the morning Word is taken. Resolves with what `open` gives once it is kept: the rest
    * of the turn goes on in turn without holding the Word back, and a step of
    * it that fails is left to the next report.
    */

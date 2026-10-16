@@ -1,4 +1,4 @@
-import { entryIdOf, type Composition } from '@slovo/core';
+import { entryIdOf, type Composition, type EntryFeedCard } from '@slovo/core';
 import {
   BackLink,
   DecorBackground,
@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useComposition, useOpenedRead } from './composition';
 import { EntryActions } from './entry-actions';
+import type { OpenedFrom } from './entry-link';
 import { LoadFailed } from './language-pack';
 import { useOpenScreen } from './use-open-screen';
 
@@ -24,24 +25,25 @@ import { useOpenScreen } from './use-open-screen';
  * heart takes the Entry out, until the reader goes back. A Correction a Word
  * card links opens as the next Entry screen of the same `route`, its link
  * back named for the Word. Opening it never makes the Entry Seen, unless it
- * opens from a notification. Hiding its Entry hides it and keeps the screen
- * open, with the undo toast.
+ * opens from a notification or the widget. Hiding its Entry hides it and
+ * keeps the screen open, with the undo toast.
  */
 export function EntryScreen({
   entryId,
   back,
   route,
-  fromNotification = false,
+  openedFrom,
 }: {
   entryId: string;
   back: string;
   /** The route of the list's Entry screen, such as `/saved/favorites`. */
   route: string;
   /**
-   * Whether a notification opened it: the Word is Seen, in History and today
-   * is an Active Day. An id the Language Pack doesn't have opens the Feed.
+   * Where outside the app it opened from, if it did: the Entry is Seen, in
+   * History and today is an Active Day. An id the Language Pack doesn't have
+   * opens the Feed.
    */
-  fromNotification?: boolean;
+  openedFrom?: OpenedFrom | undefined;
 }) {
   const composition = useComposition();
   const { colors } = useTokens();
@@ -49,15 +51,13 @@ export function EntryScreen({
   const openScreen = useOpenScreen();
   // `null` once read for an id the Language Pack doesn't have.
   const read = useCallback(
-    async (open: Composition) =>
-      (await (fromNotification ? open.openedFromNotification(entryId) : open.entryCard(entryId))) ??
-      null,
-    [entryId, fromNotification],
+    async (open: Composition) => (await openEntry(open, entryId, openedFrom)) ?? null,
+    [entryId, openedFrom],
   );
   const card = useOpenedRead(read, 'Could not open the Entry');
   useEffect(() => {
-    if (fromNotification && card === null) router.replace('/');
-  }, [fromNotification, card, router]);
+    if (openedFrom !== undefined && card === null) router.replace('/');
+  }, [openedFrom, card, router]);
 
   if (composition.status === 'failed') return <LoadFailed onRetry={composition.retry} />;
   return (
@@ -97,6 +97,22 @@ export function EntryScreen({
       </SafeAreaView>
     </UndoToastProvider>
   );
+}
+
+/** The Entry card, opened through the composition's path for where it opened from. */
+function openEntry(
+  composition: Composition,
+  entryId: string,
+  openedFrom: OpenedFrom | undefined,
+): Promise<EntryFeedCard | undefined> {
+  switch (openedFrom) {
+    case 'notification':
+      return composition.openedFromNotification(entryId);
+    case 'widget':
+      return composition.widget.opened(entryId);
+    case undefined:
+      return composition.entryCard(entryId);
+  }
 }
 
 const styles = StyleSheet.create({

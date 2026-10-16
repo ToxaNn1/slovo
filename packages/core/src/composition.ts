@@ -57,8 +57,9 @@ export interface Composition extends Hiding {
    * morning Word becomes the Word of the Day, today an Active Day, the
    * notification plan is made again and the Feed opens the day. On the same
    * day it only reads the permission again and plans by it. It runs in turn
-   * with `openedFromNotification`, so the two never run side by side. Should
-   * every try to plan the Game's offers have failed, the Game tries again.
+   * with an Entry opened from a notification or the widget, so the two never
+   * run side by side. Should every try to plan the Game's offers have failed,
+   * the Game tries again.
    */
   resume(): Promise<void>;
   /** The Notification times, the notification sound and the plan, kept on this device. */
@@ -77,7 +78,8 @@ export interface Composition extends Hiding {
   /**
    * The Entry card of any Entry, Retired or not, for a screen that opens a
    * kept Entry; nothing for an id the Language Pack doesn't have. Opening it
-   * never makes the Entry Seen: Seen comes from the Feed or a notification.
+   * never makes the Entry Seen: Seen comes from the Feed, a notification or
+   * the widget.
    */
   entryCard(entryId: string): Promise<EntryFeedCard | undefined>;
   /**
@@ -94,7 +96,10 @@ export interface Composition extends Hiding {
   openedFromNotification(entryId: string): Promise<EntryFeedCard | undefined>;
   /** The row model of any Entry, Retired or not, for a list; nothing for an id the Language Pack doesn't have. */
   entryRow(entryId: string): Promise<EntryRowModel | undefined>;
-  /** The home-screen widget: the Widget Snapshot the app writes for it (ADR 0026). */
+  /**
+   * The home-screen widget: the Widget Snapshot the app writes for it, and an
+   * Entry opened from it (ADR 0026).
+   */
   readonly widget: Widget;
 }
 
@@ -225,6 +230,11 @@ export async function openComposition({
     const entry = await entries.get(entryId);
     return entry === undefined ? undefined : buildEntryCard(entries, entry);
   }
+  /** An Entry opened from outside the app, from a notification or the widget: one rule for both. */
+  async function openedFromOutside(entryId: string): Promise<EntryFeedCard | undefined> {
+    await day.opened((activeDay) => markOpenedSeen(entryId, activeDay));
+    return entryCard(entryId);
+  }
   return {
     feed,
     favorites,
@@ -242,10 +252,7 @@ export async function openComposition({
     onboarding,
     ...createHiding({ rows, hiddenEntries, mix }),
     entryCard,
-    async openedFromNotification(entryId) {
-      await day.opened((activeDay) => markOpenedSeen(entryId, activeDay));
-      return entryCard(entryId);
-    },
+    openedFromNotification: openedFromOutside,
     entryRow: (entryId) => rows.row(entryId),
     widget: createWidget({
       editionId: edition.id,
@@ -254,6 +261,7 @@ export async function openComposition({
       collections,
       onboarding,
       clock,
+      opened: openedFromOutside,
     }),
   };
 }
