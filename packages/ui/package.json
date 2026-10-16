@@ -7,17 +7,20 @@
   "exports": {
     ".": "./src/index.ts",
     "./part-of-speech": "./src/entries/part-of-speech.ts",
+    "./stress-label": "./src/entries/stress-label.ts",
     "./tokens": "./src/tokens.ts"
   },
   "scripts": {
     "lint": "eslint .",
-    "typecheck": "tsc --build"
+    "typecheck": "tsc --build",
+    "test": "vitest run"
   },
   "devDependencies": {
     "@slovo/config": "workspace:*",
     "eslint": "^10.12.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "typescript": "~6.0.3",
+    "vitest": "^5.0.3",
     "@types/react": "~19.2.18",
     "react": "19.2.3",
     "react-native": "0.86.3",
