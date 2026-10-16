@@ -8,7 +8,13 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { AccessibilityInfo, Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated, {
+  ReduceMotion,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { useEdition } from '../providers/EditionProvider';
 import { minTouchTarget, space, toastElevation, toastRadius } from '../tokens';
@@ -85,7 +91,7 @@ function UndoToast({
   const { colors, fontFamilies, radii } = useTokens();
   const { voice } = useEdition();
   const messageRef = useRef<Text>(null);
-  const opacity = useRef(new Animated.Value(0)).current;
+  const opacity = useSharedValue(0);
   function close() {
     onDismiss(id);
   }
@@ -97,14 +103,14 @@ function UndoToast({
     void AccessibilityInfo.isScreenReaderEnabled().then((screenReader) => {
       if (!active) return;
       if (!screenReader) {
-        Animated.timing(opacity, { toValue: 1, duration: FADE_MS, useNativeDriver: true }).start();
+        opacity.value = withTiming(1, { duration: FADE_MS, reduceMotion: ReduceMotion.Never });
         timer = setTimeout(() => {
           timeOut();
         }, TOAST_MS);
         return;
       }
       // VoiceOver skips a view that is still fading in, so the toast shows at once.
-      opacity.setValue(1);
+      opacity.value = 1;
       if (messageRef.current !== null)
         AccessibilityInfo.sendAccessibilityEvent(messageRef.current, 'focus');
     });
@@ -114,11 +120,13 @@ function UndoToast({
     };
   }, [opacity]);
 
+  const fadeStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
+
   return (
     <Animated.View
       testID="undo-toast"
       onAccessibilityEscape={close}
-      style={[styles.toast, { opacity, backgroundColor: colors.ink }]}
+      style={[styles.toast, { backgroundColor: colors.ink }, fadeStyle]}
     >
       <Text
         ref={messageRef}
