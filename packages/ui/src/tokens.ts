@@ -105,6 +105,20 @@ export const typeSize = {
   sheetTitle: 26,
   partOfSpeech: 14,
   tabLabel: 10.5,
+  /** `Block heading` (Manrope 700): the name of a card or a Collection, a sheet's text button. */
+  blockHeading: 17,
+  /** What an Entry's row leads with in a list, and over a sheet (the design's 20–22). */
+  rowLemma: 20,
+  /** A Collection row's newest Lemmas (the design's Literata 22). */
+  collectionLemmas: 22,
+  /** A line of a card's list, a Collection's name in a sheet, a name field. */
+  listItem: 18,
+  /** A count or a refusal beside a name. */
+  caption: 14,
+  /** What goes on the right of a card's row, such as a relative time. */
+  meta: 13,
+  /** `Big number`, the count on a card of the Saved overview (the Scale gives 26–30). */
+  cardCount: 30,
 } as const;
 
 /** The overline label's type: bold capitals spaced 0.14em apart. */
@@ -127,6 +141,22 @@ export const fontSizeSteps: Readonly<
   L: { lemma: 56, definition: 21, example: 19 },
   XL: { lemma: 64, definition: 23, example: 21 },
 };
+
+/**
+ * Spacing the design draws between the steps of the 4-pt grid on the cards of
+ * the Saved overview and of the Collections screen.
+ */
+export const cardSpace = {
+  /** Between the blocks of a card of the Saved overview. */
+  gap: 14,
+  /** Over and under the content of the Favorites card (the design's 22, between the 4-pt steps). */
+  primaryPaddingVertical: 22,
+  /** Around the content of a Collection's row and of the field that names one. */
+  collectionPadding: 18,
+} as const;
+
+/** A checkbox's corner radius, one of the design's small radii (the segmented control's 4); fixed like the toast's, not an Edition token. */
+export const checkboxRadius = 4;
 
 /** The text size scale above which a row puts its value, button or switch under its label, so no word breaks. */
 export const STACK_AT_FONT_SCALE = 1.3;
