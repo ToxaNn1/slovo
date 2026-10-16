@@ -16,13 +16,13 @@ import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { editionStrings } from '../edition';
-import { EntryActions } from '../entry-actions';
-import { useFeed } from '../feed';
-import { FeedLoadingScreen, TOP_ROW } from '../feed-loading';
-import { LoadFailed } from '../language-pack';
+import { editionStrings } from '../edition/edition';
+import { EntryActions } from '../entries/entry-actions';
+import { useFeed } from '../feed/feed';
+import { FeedLoadingScreen, TOP_ROW } from '../edition/feed-loading';
+import { LoadFailed } from '../edition/language-pack';
 import { StatsPillAndSheet } from '../progress';
-import { useSwipeHint } from '../swipe-hint';
+import { useSwipeHint } from '../feed/swipe-hint';
 
 const { feed: feedStrings } = editionStrings;
 

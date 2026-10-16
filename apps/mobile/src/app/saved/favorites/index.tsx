@@ -13,12 +13,12 @@ import { useRouter } from 'expo-router';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { addedOn } from '../../../added-on';
+import { addedOn } from '../../../saved/added-on';
 import { useComposition } from '../../../composition';
-import { editionStrings } from '../../../edition';
-import { useFavorite, useFavoriteList } from '../../../favorites';
-import { LoadFailed } from '../../../language-pack';
-import { useOpenScreen } from '../../../use-open-screen';
+import { editionStrings } from '../../../edition/edition';
+import { useFavorite, useFavoriteList } from '../../../saved/favorites';
+import { LoadFailed } from '../../../edition/language-pack';
+import { useOpenScreen } from '../../../entries/use-open-screen';
 
 const { favorites: strings } = editionStrings;
 

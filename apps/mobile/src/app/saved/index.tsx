@@ -16,13 +16,13 @@ import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useComposition } from '../../composition';
-import { useCollectionList } from '../../collections';
-import { editionStrings } from '../../edition';
-import { deviceClock } from '../../device-clock';
-import { useFavoriteList } from '../../favorites';
-import { useHistoryList, useHistoryText } from '../../history';
-import { LoadFailed } from '../../language-pack';
-import { useOpenScreen } from '../../use-open-screen';
+import { useCollectionList } from '../../saved/collections';
+import { editionStrings } from '../../edition/edition';
+import { deviceClock } from '../../device/device-clock';
+import { useFavoriteList } from '../../saved/favorites';
+import { useHistoryList, useHistoryText } from '../../saved/history';
+import { LoadFailed } from '../../edition/language-pack';
+import { useOpenScreen } from '../../entries/use-open-screen';
 
 const {
   favorites: strings,

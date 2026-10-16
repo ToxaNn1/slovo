@@ -7,7 +7,7 @@ import type { ConfigContext, ExpoConfig } from 'expo/config';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import appConfig from './app.config';
-import { wav } from './wav-builder';
+import { wav } from './plugins/wav-builder';
 
 const context: ConfigContext = {
   projectRoot: fileURLToPath(new URL('.', import.meta.url)),

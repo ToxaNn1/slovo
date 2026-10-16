@@ -14,12 +14,12 @@ import {
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { editionStrings } from '../../edition';
-import { useHiddenSummary } from '../../hidden';
-import { useMixSummary } from '../../mix';
-import { useNotificationsSummary } from '../../notifications';
+import { editionStrings } from '../../edition/edition';
+import { useHiddenSummary } from '../../mix/hidden';
+import { useMixSummary } from '../../mix/mix';
+import { useNotificationsSummary } from '../../notifications/notifications';
 import { useSettings } from '../../settings';
-import { useOpenScreen } from '../../use-open-screen';
+import { useOpenScreen } from '../../entries/use-open-screen';
 
 const strings = editionStrings.settings;
 

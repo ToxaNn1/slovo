@@ -8,8 +8,8 @@ import type { ConfigContext, ExpoConfig } from 'expo/config';
 import type * as ConfigPlugins from 'expo/config-plugins';
 import { require as tsxRequire } from 'tsx/cjs/api';
 
-import type * as NotificationSound from './notification-sound';
-import type * as WidgetExtension from './widget-extension';
+import type * as NotificationSound from './plugins/notification-sound';
+import type * as WidgetExtension from './plugins/widget-extension';
 
 type EditionConfig = Contracts.EditionConfig;
 
@@ -48,7 +48,7 @@ const { withDangerousMod } = tsxRequire(
   import.meta.url,
 ) as typeof ConfigPlugins;
 const { readNotificationSound } = tsxRequire(
-  './notification-sound.ts',
+  './plugins/notification-sound.ts',
   import.meta.url,
 ) as typeof NotificationSound;
 const { coreTokens, designTokens } = tsxRequire(
@@ -56,7 +56,7 @@ const { coreTokens, designTokens } = tsxRequire(
   import.meta.url,
 ) as typeof UiTokens;
 const { writeWidgetExtension } = tsxRequire(
-  './widget-extension.ts',
+  './plugins/widget-extension.ts',
   import.meta.url,
 ) as typeof WidgetExtension;
 

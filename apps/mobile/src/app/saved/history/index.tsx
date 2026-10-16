@@ -16,11 +16,11 @@ import { Alert, Pressable, SectionList, StyleSheet, Text, View } from 'react-nat
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useComposition } from '../../../composition';
-import { deviceClock } from '../../../device-clock';
-import { editionStrings } from '../../../edition';
-import { useClearHistory, useHistoryList, useHistoryText } from '../../../history';
-import { LoadFailed } from '../../../language-pack';
-import { useOpenScreen } from '../../../use-open-screen';
+import { deviceClock } from '../../../device/device-clock';
+import { editionStrings } from '../../../edition/edition';
+import { useClearHistory, useHistoryList, useHistoryText } from '../../../saved/history';
+import { LoadFailed } from '../../../edition/language-pack';
+import { useOpenScreen } from '../../../entries/use-open-screen';
 
 const { history: strings } = editionStrings;
 

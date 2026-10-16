@@ -10,9 +10,9 @@ import {
 import { StyleSheet, View } from 'react-native';
 
 import { useComposed, useModule } from './composition';
-import { editionStrings } from './edition';
-import { MixChoices } from './mix-choices';
-import { NotificationTimes } from './notification-times';
+import { editionStrings } from './edition/edition';
+import { MixChoices } from './mix/mix-choices';
+import { NotificationTimes } from './notifications/notification-times';
 
 /** A Word's Lemma as the steps draw it: with its Stress, and what VoiceOver reads for it. */
 function lemmaOf(wordCard: WordCardModel): { lemma: string; accessibilityLabel: string } {

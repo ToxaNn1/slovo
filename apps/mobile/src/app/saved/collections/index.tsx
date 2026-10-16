@@ -16,12 +16,12 @@ import { useState } from 'react';
 import { ActionSheetIOS, FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { refusalText } from '../../../collection-refusal';
-import { useCollectionChanges, useCollectionList } from '../../../collections';
+import { refusalText } from '../../../saved/collection-refusal';
+import { useCollectionChanges, useCollectionList } from '../../../saved/collections';
 import { useComposition } from '../../../composition';
-import { editionStrings } from '../../../edition';
-import { LoadFailed } from '../../../language-pack';
-import { useOpenScreen } from '../../../use-open-screen';
+import { editionStrings } from '../../../edition/edition';
+import { LoadFailed } from '../../../edition/language-pack';
+import { useOpenScreen } from '../../../entries/use-open-screen';
 
 const { collections: collectionStrings } = editionStrings;
 const strings = collectionStrings.screen;

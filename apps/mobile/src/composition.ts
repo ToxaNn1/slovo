@@ -4,11 +4,11 @@ import { systemSchedule } from '@slovo/ui';
 import { useSQLiteContext, type SQLiteDatabase } from 'expo-sqlite';
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 
-import { deviceClock } from './device-clock';
-import { deviceNotificationScheduler } from './device-notifications';
-import { edition, editionStrings } from './edition';
-import { gameModeStrings } from './game-modes';
-import { storedUserState } from './stored-user-state';
+import { deviceClock } from './device/device-clock';
+import { deviceNotificationScheduler } from './notifications/device-notifications';
+import { edition, editionStrings } from './edition/edition';
+import { gameModeStrings } from './game/game-modes';
+import { storedUserState } from './user-state/stored-user-state';
 
 export type CompositionState =
   | { readonly status: 'loading' }

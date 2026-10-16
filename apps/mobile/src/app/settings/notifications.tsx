@@ -15,10 +15,10 @@ import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useComposition } from '../../composition';
-import { editionStrings } from '../../edition';
-import { LoadFailed } from '../../language-pack';
-import { useNotificationsChanges, useNotificationsState } from '../../notifications';
-import { NotificationTimes } from '../../notification-times';
+import { editionStrings } from '../../edition/edition';
+import { LoadFailed } from '../../edition/language-pack';
+import { useNotificationsChanges, useNotificationsState } from '../../notifications/notifications';
+import { NotificationTimes } from '../../notifications/notification-times';
 
 const strings = editionStrings.notifications;
 
