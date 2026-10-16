@@ -173,7 +173,7 @@ const { feedPosition } = userStateRecords;
  * way is Seen by the dwell rule, like any card that leaves it.
  *
  * The composition calls `markOpenedSeen` for an Entry opened outside the
- * Feed, from a notification: it becomes Seen with its History entry and the
+ * Feed, from a notification or the widget: it becomes Seen with its History entry and the
  * caller's `changes` in one write, in turn with the cards, so a new Cycle
  * never starts in between. It joins History as the Word of the Day's card
  * only if it is today's Word of the Day. An Entry the Cycle doesn't cover
