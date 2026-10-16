@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
-import { typeSize, withAlpha } from '../tokens';
+import { outlinedChipPadding, typeSize, withAlpha } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /**
@@ -43,7 +43,13 @@ export function OutlinedChip({
 
 const styles = StyleSheet.create({
   chip: { borderWidth: 1 },
-  tight: { paddingHorizontal: 7, paddingVertical: 2 },
-  roomy: { paddingHorizontal: 9, paddingVertical: 4 },
+  tight: {
+    paddingHorizontal: outlinedChipPadding.tight.horizontal,
+    paddingVertical: outlinedChipPadding.tight.vertical,
+  },
+  roomy: {
+    paddingHorizontal: outlinedChipPadding.roomy.horizontal,
+    paddingVertical: outlinedChipPadding.roomy.vertical,
+  },
   text: { fontSize: typeSize.outlinedChip, fontWeight: '600' },
 });

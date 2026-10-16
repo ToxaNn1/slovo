@@ -17,12 +17,13 @@ import { SegmentedControl } from '../primitives/SegmentedControl';
 import { SHARE_CARD, ShareCard, type ShareCardContent } from './ShareCard';
 import { SheetTitle } from '../primitives/SheetParts';
 import {
+  lineHeight,
+  type ShareCardFormat,
   shareImage,
   space,
   toastElevation,
   toastRadius,
   typeSize,
-  type ShareCardFormat,
 } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
@@ -231,5 +232,5 @@ const styles = StyleSheet.create({
     paddingVertical: space[3],
     ...toastElevation,
   },
-  toastMessage: { fontSize: typeSize.body, lineHeight: 21, fontWeight: '500' },
+  toastMessage: { fontSize: typeSize.body, lineHeight: lineHeight.toast, fontWeight: '500' },
 });

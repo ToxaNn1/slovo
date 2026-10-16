@@ -17,7 +17,14 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { useEdition } from '../providers/EditionProvider';
-import { minTouchTarget, space, toastElevation, toastRadius } from '../tokens';
+import {
+  lineHeight,
+  minTouchTarget,
+  space,
+  toastElevation,
+  toastRadius,
+  typeSize,
+} from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /** How long the toast stays, from the design. */
@@ -181,12 +188,12 @@ const styles = StyleSheet.create({
     paddingVertical: space[3],
     ...toastElevation,
   },
-  message: { flex: 1, fontSize: 15, lineHeight: 21, fontWeight: '500' },
+  message: { flex: 1, fontSize: typeSize.body, lineHeight: lineHeight.toast, fontWeight: '500' },
   undo: {
     minHeight: minTouchTarget,
     paddingHorizontal: space[4],
     alignItems: 'center',
     justifyContent: 'center',
   },
-  undoLabel: { fontSize: 15, fontWeight: '700' },
+  undoLabel: { fontSize: typeSize.body, fontWeight: '700' },
 });

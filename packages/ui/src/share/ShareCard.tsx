@@ -7,7 +7,7 @@ import { DecorBackground, OrnamentDivider, ShareCardFrame } from '../decor/Decor
 import { useEdition } from '../providers/EditionProvider';
 import { wordGrammarText } from '../entries/part-of-speech';
 import { stressLabel } from '../entries/stress-label';
-import { withAlpha, type ShareCardFormat } from '../tokens';
+import { shareCardLayout, withAlpha, type ShareCardFormat } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /**
@@ -19,47 +19,6 @@ export const SHARE_CARD = {
   story: { width: 324, height: 576 },
   square: { width: 300, height: 300 },
 } as const satisfies Record<ShareCardFormat, { width: number; height: number }>;
-
-/**
- * Each format's layout, from the design. The Story centres its content between
- * its insets with the overline on top and the watermark under it; the Square
- * starts at the top and keeps the overline and the watermark for its footer.
- */
-const LAYOUT = {
-  story: {
-    padding: { horizontal: 34, vertical: 76 },
-    /** How far Decor slot 5's bands sit inside the top and bottom edges. */
-    frameInset: 28,
-    /** The space between the blocks, and between a label and its form. */
-    gap: 22,
-    labelGap: 8,
-    type: {
-      overline: 10,
-      headline: 54,
-      partOfSpeech: 13,
-      definition: 19,
-      label: 13,
-      nonStandard: 32,
-      watermark: 11,
-    },
-  },
-  square: {
-    padding: { horizontal: 28, vertical: 30 },
-    /** How far Decor slot 5's corners sit inside the edges. */
-    frameInset: 10,
-    gap: 10,
-    labelGap: 10,
-    type: {
-      overline: 10,
-      headline: 34,
-      partOfSpeech: 12,
-      definition: 15,
-      label: 12,
-      nonStandard: 20,
-      watermark: 10,
-    },
-  },
-} as const;
 
 /** The Story's watermark sits this far above the bottom edge, from the design. */
 const STORY_WATERMARK_BOTTOM = 52;
@@ -144,7 +103,7 @@ function FittedCard({
   const { colors, fontFamilies } = useTokens();
   const edition = useEdition();
   const { voice } = edition;
-  const layout = LAYOUT[format];
+  const layout = shareCardLayout[format];
   /** The design's points in this card's points. */
   const unit = width / SHARE_CARD[format].width;
   const [headlineScale, reportHeadline] = useShrinkToFit(HEADLINE_FLOOR);
@@ -274,7 +233,7 @@ function CardEnd({
   watermark: string;
 }) {
   const { colors, fontFamilies } = useTokens();
-  const { gap, type } = LAYOUT[format];
+  const { gap, type } = shareCardLayout[format];
   const size = type.watermark * unit;
   const ink = { color: colors.muted, fontFamily: fontFamilies.ui };
   if (format === 'story') {
@@ -334,7 +293,7 @@ interface BlockProps {
 function WordBlocks({ card, headline, text, format }: BlockProps & { card: WordCardModel }) {
   const { colors, fontFamilies } = useTokens();
   const { strings } = useEdition();
-  const { type } = LAYOUT[format];
+  const { type } = shareCardLayout[format];
   return (
     <>
       {headline(card.lemma)}
@@ -376,7 +335,7 @@ function CorrectionBlocks({
 }: BlockProps & { card: CorrectionCardModel; dividerScale: number }) {
   const { colors, fontFamilies } = useTokens();
   const { strings } = useEdition();
-  const { type, labelGap } = LAYOUT[format];
+  const { type, labelGap } = shareCardLayout[format];
   const label = (value: string, color: string) => (
     <Text
       allowFontScaling={false}

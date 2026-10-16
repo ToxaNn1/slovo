@@ -10,7 +10,7 @@ import { SectionLabel } from '../primitives/headings';
 import { OutlinedChip } from '../primitives/OutlinedChip';
 import { partOfSpeechText } from './part-of-speech';
 import { stressLabel } from './stress-label';
-import { minTouchTarget, space, typeSize } from '../tokens';
+import { minTouchTarget, space, typeSize, wordCardControls } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { usePageTurnActions } from '../primitives/VerticalPager';
 import { WholeWordsText } from '../primitives/WholeWordsText';
@@ -332,7 +332,7 @@ const styles = StyleSheet.create({
   grammar: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2] },
   partOfSpeech: { fontSize: typeSize.partOfSpeech, fontWeight: '500' },
   example: { fontStyle: 'italic' },
-  author: { marginTop: space[1], fontSize: 13, fontWeight: '500' },
+  author: { marginTop: space[1], fontSize: typeSize.meta, fontWeight: '500' },
   relations: { gap: space[1] },
   relation: { fontSize: typeSize.body, lineHeight: typeSize.body * 1.4 },
   compactRow: {
@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     flexShrink: 0,
     paddingHorizontal: space[3],
-    paddingVertical: 7,
+    paddingVertical: wordCardControls.chipPaddingVertical,
   },
   categoryText: { fontSize: typeSize.chip, fontWeight: '600' },
   // A full touch target that looks no taller than its label.
@@ -357,7 +357,7 @@ const styles = StyleSheet.create({
     marginVertical: -space[3],
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: wordCardControls.moreGap,
   },
   moreText: { fontSize: typeSize.body, fontWeight: '700' },
   chevronOpen: { transform: [{ rotate: '180deg' }] },

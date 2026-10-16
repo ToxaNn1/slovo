@@ -4,7 +4,14 @@ import Svg, { Path } from 'react-native-svg';
 
 import { fill, useEdition } from '../providers/EditionProvider';
 import { rowActionProps, SwipeableRow, type RowAction } from '../primitives/SwipeableRow';
-import { minTouchTarget, overlineType, space, STACK_AT_FONT_SCALE, typeSize } from '../tokens';
+import {
+  minTouchTarget,
+  overlineType,
+  sliderDrawing,
+  space,
+  STACK_AT_FONT_SCALE,
+  typeSize,
+} from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /** How much a row that a later version brings is dimmed. */
@@ -262,7 +269,7 @@ const styles = StyleSheet.create({
   stackedRow: { flexDirection: 'column', alignItems: 'flex-start' },
   label: { fontSize: typeSize.body, fontWeight: '500' },
   value: { fontSize: typeSize.body },
-  time: { fontSize: 22, fontWeight: '500' },
+  time: { fontSize: typeSize.subhead, fontWeight: '500' },
   soonRow: {
     opacity: SOON_OPACITY,
     flexDirection: 'column',
@@ -275,14 +282,22 @@ const styles = StyleSheet.create({
   trailing: { flexShrink: 1, textAlign: 'right' },
   soonText: { flex: 1 },
   soon: { ...overlineType, flexShrink: 0 },
-  sliderTrack: { height: 4, borderRadius: 2, justifyContent: 'center' },
-  sliderFill: { width: '35%', height: 4, borderRadius: 2 },
+  sliderTrack: {
+    height: sliderDrawing.trackHeight,
+    borderRadius: sliderDrawing.trackRadius,
+    justifyContent: 'center',
+  },
+  sliderFill: {
+    width: '35%',
+    height: sliderDrawing.trackHeight,
+    borderRadius: sliderDrawing.trackRadius,
+  },
   sliderThumb: {
     position: 'absolute',
     left: '35%',
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: sliderDrawing.thumbSize,
+    height: sliderDrawing.thumbSize,
+    borderRadius: sliderDrawing.thumbRadius,
     borderWidth: StyleSheet.hairlineWidth,
   },
 });

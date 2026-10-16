@@ -74,10 +74,13 @@ export { StatsSheet } from './progress/StatsSheet';
 export { stressLabel } from './entries/stress-label';
 export { systemSchedule } from './providers/system-schedule';
 export {
+  cardSpace,
   coreTokens,
   designTokens,
   fontSizeSteps,
+  lineHeight,
   minTouchTarget,
+  rowPadding,
   space,
   STACK_AT_FONT_SCALE,
   typeSize,

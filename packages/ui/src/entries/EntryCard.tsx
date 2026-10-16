@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { CorrectionCardBody } from './CorrectionCard';
 import { CardCorners } from '../decor/DecorSlots';
 import { useCompactLayout, useLemmaSize } from '../providers/FontSizeProvider';
-import { space } from '../tokens';
+import { blockGap, space, wordCardSide } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { WordCardBody } from './WordCard';
 
@@ -23,8 +23,8 @@ const COMPACT_PADDING = 0.75;
 
 /** The padding and the space between blocks from the design, for each kind of card. */
 const SPACING = {
-  word: { top: space[8], side: 26, bottom: 26, gap: 18 },
-  correction: { top: 28, side: 26, bottom: 24, gap: 16 },
+  word: { top: space[8], side: wordCardSide, bottom: wordCardSide, gap: blockGap },
+  correction: { top: 28, side: wordCardSide, bottom: 24, gap: space[4] },
 } as const;
 
 /**

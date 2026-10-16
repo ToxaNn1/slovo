@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, Text } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { useEdition } from '../providers/EditionProvider';
-import { minTouchTarget, space, withAlpha } from '../tokens';
+import { minTouchTarget, space, statsPillPadding, typeSize, withAlpha } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /** The pill's height, from the design. */
@@ -58,12 +58,12 @@ const styles = StyleSheet.create({
     height: PILL_HEIGHT,
     borderRadius: PILL_HEIGHT / 2,
     borderWidth: 1,
-    paddingLeft: 10,
-    paddingRight: 14,
+    paddingLeft: statsPillPadding.left,
+    paddingRight: statsPillPadding.right,
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
     gap: space[1] + 2,
   },
-  streak: { fontSize: 15, fontWeight: '700' },
+  streak: { fontSize: typeSize.body, fontWeight: '700' },
 });
