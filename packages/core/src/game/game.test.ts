@@ -18,12 +18,12 @@ import {
   type ContentReadPort,
   type CurrentGame,
   type GameMode,
-  type Random,
   type Round,
   type Schedule,
   type UserStateChanges,
   type UserStatePort,
 } from '../index';
+import { seededRandom } from '../test-support';
 
 function word(
   id: string,
@@ -110,17 +110,6 @@ const optionWordsOf = (round: Round) =>
 /** The option that names the answer. */
 const rightOf = (round: Round) =>
   round.options.findIndex(({ text }) => text === renderStress(answerOf(round)));
-
-/** A seeded random port (a linear congruential generator), so every run draws the same. */
-function seededRandom(seed: number): Random {
-  let state = seed;
-  return {
-    next() {
-      state = (state * 1_664_525 + 1_013_904_223) % 2 ** 32;
-      return state / 2 ** 32;
-    },
-  };
-}
 
 const clock: Clock = {
   now: () => new Date('2026-10-11T09:00:00+03:00'),

@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Correction, Word } from '@slovo/contracts';
-
 import {
   createMemoryContentPort,
   createMemoryUserStatePort,
@@ -13,58 +11,12 @@ import {
   type UserStateChanges,
   type UserStatePort,
 } from './index';
-
-function word(id: string, retired = false): Word {
-  return {
-    kind: 'word',
-    id,
-    lemma: id.slice(2),
-    stress: [0],
-    partOfSpeech: 'noun',
-    primaryDefinition: `The meaning of ${id.slice(2)}.`,
-    extraDefinitions: [],
-    examples: [],
-    synonyms: [],
-    antonyms: [],
-    registers: [],
-    categoryId: 'test',
-    rarity: 3,
-    sources: [{ title: 'Test source' }],
-    correctionIds: [],
-    retired,
-  };
-}
-
-function correction(id: string): Correction {
-  return {
-    kind: 'correction',
-    id,
-    nonStandardForm: `not ${id.slice(2)}`,
-    correctionType: 'calque',
-    standardEquivalents: [id.slice(2)],
-    explanation: 'An explanation.',
-    examplePair: { nonStandard: 'People say this.', standard: 'Better say this.' },
-    sources: [{ title: 'Test source' }],
-    retired: false,
-  };
-}
+import { correction, fakeClock, word } from './test-support';
 
 const content = createMemoryContentPort({
-  words: [word('w_one'), word('w_two'), word('w_three'), word('w_old', true)],
+  words: [word('w_one'), word('w_two'), word('w_three'), word('w_old', { retired: true })],
   corrections: [correction('c_one')],
 });
-
-/** A clock the test moves in time. */
-function fakeClock(start = '2026-10-11T09:00:00+03:00') {
-  let now = new Date(start).getTime();
-  const clock: Clock = { now: () => new Date(now), timeZone: () => 'Europe/Kyiv' };
-  return {
-    clock,
-    advance(ms: number) {
-      now += ms;
-    },
-  };
-}
 
 const DAY = 24 * 60 * 60 * 1000;
 

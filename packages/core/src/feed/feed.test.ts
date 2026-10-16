@@ -24,46 +24,15 @@ import {
   type UserStatePort,
   type WordFeedCard,
 } from '../index';
-
-function word(id: string, retired = false): Word {
-  return {
-    kind: 'word',
-    id,
-    lemma: id.slice(2),
-    stress: [0],
-    partOfSpeech: 'noun',
-    primaryDefinition: 'A meaning.',
-    extraDefinitions: [],
-    examples: [],
-    synonyms: [],
-    antonyms: [],
-    registers: [],
-    categoryId: 'test',
-    rarity: 3,
-    sources: [{ title: 'Test source' }],
-    correctionIds: [],
-    retired,
-  };
-}
-
-function correction(id: string, retired = false): Correction {
-  return {
-    kind: 'correction',
-    id,
-    nonStandardForm: `not ${id.slice(2)}`,
-    correctionType: 'calque',
-    standardEquivalents: [id.slice(2), `also ${id.slice(2)}`],
-    explanation: 'An explanation.',
-    examplePair: { nonStandard: 'People say this.', standard: 'Better say this.' },
-    sources: [{ title: 'Test source' }],
-    retired,
-  };
-}
+import { correction, fakeClock, randomOf, randomSequence, word } from '../test-support';
 
 /** A small pack: ten live Words and two Retired ones. */
 const liveIds = Array.from({ length: 10 }, (_, index) => `w_live${String(index)}`);
 const retiredIds = ['w_retired0', 'w_retired1'];
-const pack = [...liveIds.map((id) => word(id)), ...retiredIds.map((id) => word(id, true))];
+const pack = [
+  ...liveIds.map((id) => word(id)),
+  ...retiredIds.map((id) => word(id, { retired: true })),
+];
 
 /**
  * An Edition with the Corrections Feature Switch on or off, whose one
@@ -78,31 +47,6 @@ const editionWith = (
   categories: [{ id: 'test', displayName: 'Test' }],
   userSettingDefaults: { mix: { categoryIds: ['test'], corrections: true }, notificationTimes: [] },
 });
-
-/** A clock the test moves by hand, in a time zone it can change. */
-function fakeClock(start: string, timeZone = 'Europe/Kyiv') {
-  let now = new Date(start).getTime();
-  let zone = timeZone;
-  const clock: Clock = { now: () => new Date(now), timeZone: () => zone };
-  return {
-    clock,
-    advance(ms: number) {
-      now += ms;
-    },
-    moveTo(timeZoneName: string) {
-      zone = timeZoneName;
-    },
-  };
-}
-
-/** A random port that always draws the same number, so the Cycle seed is fixed. */
-const randomOf = (value: number): Random => ({ next: () => value });
-
-/** A random port that draws the given numbers in turn, so each new Cycle gets the next seed. */
-function randomSequence(...values: number[]): Random {
-  let drawn = 0;
-  return { next: () => values[drawn++ % values.length] ?? 0 };
-}
 
 /** The id of the Entry a card shows, if it shows one. */
 const entryIdOf = (card: FeedCard | undefined) => {
@@ -212,7 +156,7 @@ describe('the Feed', () => {
       expect(card?.kind === 'word' ? card.wordCard : undefined).toMatchObject({
         kind: 'word',
         wordId: entryIdOf(card),
-        primaryDefinition: 'A meaning.',
+        primaryDefinition: `The meaning of ${entryIdOf(card)?.slice(2) ?? ''}.`,
       });
     }
   });
@@ -490,7 +434,7 @@ describe('the Feed', () => {
   });
 
   describe('the end of the unseen Words', () => {
-    const small = [word('w_one'), word('w_two'), word('w_three'), word('w_old', true)];
+    const small = [word('w_one'), word('w_two'), word('w_three'), word('w_old', { retired: true })];
 
     it('offers the Words swiped past quickly again, in the Cycle order, once every unseen Word was shown', async () => {
       const feed = await run({ words: small });
@@ -505,7 +449,7 @@ describe('the Feed', () => {
   });
 
   describe('the end of the Cycle', () => {
-    const small = [word('w_one'), word('w_two'), word('w_three'), word('w_old', true)];
+    const small = [word('w_one'), word('w_two'), word('w_three'), word('w_old', { retired: true })];
 
     /**
      * Reads the last card: it comes on screen, the Feed gets the next card
@@ -743,7 +687,7 @@ describe('the Feed', () => {
     });
 
     it('never comes when the Language Pack has no live Word', async () => {
-      const feed = await run({ words: [word('w_old', true)] });
+      const feed = await run({ words: [word('w_old', { retired: true })] });
 
       expect(feed.cards).toEqual([]);
       expect(await feed.next()).toBeUndefined();
@@ -937,7 +881,7 @@ describe('the Word of the Day in the Feed', () => {
 
 describe('Corrections in the Feed', () => {
   const liveCorrections = ['c_live0', 'c_live1', 'c_live2', 'c_live3'].map((id) => correction(id));
-  const corrections = [...liveCorrections, correction('c_retired', true)];
+  const corrections = [...liveCorrections, correction('c_retired', { retired: true })];
   const liveCorrectionIds = liveCorrections.map(({ id }) => id);
 
   /** 'W' for a Word card, 'C' for a Correction card. */
@@ -1030,7 +974,7 @@ describe('Corrections in the Feed', () => {
 
   it('ends the Cycle only once every live Word and Correction is Seen, and starts the next one with the Corrections unseen again', async () => {
     const small = [word('w_one'), word('w_two')];
-    const smallCorrections = [correction('c_one'), correction('c_old', true)];
+    const smallCorrections = [correction('c_one'), correction('c_old', { retired: true })];
     const time = fakeClock('2026-10-11T09:00:00+03:00');
     const feed = await run({ words: small, corrections: smallCorrections, clock: time.clock });
 
@@ -1091,7 +1035,7 @@ describe('Corrections in the Feed', () => {
     const words = [linked, ...liveIds.map((id) => word(id))];
     const linkedCorrections = [
       correction('c_protiazi'),
-      correction('c_retired', true),
+      correction('c_retired', { retired: true }),
       ...liveCorrections,
     ];
 

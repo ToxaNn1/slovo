@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Word } from '@slovo/contracts';
-
 import {
   createMemoryContentPort,
   createMemoryUserStatePort,
@@ -12,6 +10,7 @@ import {
   SEEN_DWELL_MS,
   type Clock,
 } from '../index';
+import { fakeClock, word } from '../test-support';
 
 /** The Edition's one Category, the test Words' own, and its default Mix of every Category. */
 const testCategories = {
@@ -20,22 +19,6 @@ const testCategories = {
   categories: [{ id: 'test', displayName: 'Test' }],
   userSettingDefaults: { mix: { categoryIds: ['test'], corrections: true }, notificationTimes: [] },
 };
-
-/** A clock at a fixed instant in a time zone the test can change, and move on. */
-function fakeClock(start: string, timeZone = 'Europe/Kyiv') {
-  let now = new Date(start).getTime();
-  let zone = timeZone;
-  const clock: Clock = { now: () => new Date(now), timeZone: () => zone };
-  return {
-    clock,
-    advance(ms: number) {
-      now += ms;
-    },
-    moveTo(timeZoneName: string) {
-      zone = timeZoneName;
-    },
-  };
-}
 
 const MINUTE = 60 * 1000;
 
@@ -140,25 +123,6 @@ describe('groupByLocalDay', () => {
 });
 
 describe('History read through the Core composition', () => {
-  const word = (id: string): Word => ({
-    kind: 'word',
-    id,
-    lemma: id.slice(2),
-    stress: [0],
-    partOfSpeech: 'noun',
-    primaryDefinition: `The meaning of ${id.slice(2)}.`,
-    extraDefinitions: [],
-    examples: [],
-    synonyms: [],
-    antonyms: [],
-    registers: [],
-    categoryId: 'test',
-    rarity: 3,
-    sources: [{ title: 'Test source' }],
-    correctionIds: [],
-    retired: false,
-  });
-
   it('groups what the Feed marked Seen by the day the clock says, and words its age', async () => {
     const time = fakeClock('2026-10-10T23:00:00+03:00');
     const app = await openComposition({

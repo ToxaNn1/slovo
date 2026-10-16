@@ -12,9 +12,9 @@ import {
   type Composition,
   type ContentReadPort,
   type CurrentGame,
-  type Random,
   type Round,
 } from '../index';
+import { seededRandom } from '../test-support';
 
 function correction(
   id: string,
@@ -119,17 +119,6 @@ const rightOf = (round: Round) =>
 /** The live Corrections whose main standard equivalent an option is. */
 const offeringOf = (text: string) =>
   corrections.filter((c) => !c.retired && c.standardEquivalents[0] === text);
-
-/** A seeded random port (a linear congruential generator), so every run draws the same. */
-function seededRandom(seed: number): Random {
-  let state = seed;
-  return {
-    next() {
-      state = (state * 1_664_525 + 1_013_904_223) % 2 ** 32;
-      return state / 2 ** 32;
-    },
-  };
-}
 
 /** Waits until the Game has planned its offers, which it does once the composition is open. */
 async function offersPlanned(app: Composition): Promise<Composition> {

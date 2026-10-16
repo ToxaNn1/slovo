@@ -1,7 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { Word } from '@slovo/contracts';
-
 import {
   createFakeNotificationScheduler,
   createMemoryContentPort,
@@ -15,42 +13,10 @@ import {
   type PlannedNotification,
   type UserStateChanges,
 } from '../index';
-
-function word(id: string): Word {
-  return {
-    kind: 'word',
-    id,
-    lemma: id.slice(2),
-    stress: [0],
-    partOfSpeech: 'noun',
-    primaryDefinition: `The meaning of ${id.slice(2)}.`,
-    extraDefinitions: [],
-    examples: [],
-    synonyms: [],
-    antonyms: [],
-    registers: [],
-    categoryId: 'test',
-    rarity: 3,
-    sources: [{ title: 'Test source' }],
-    correctionIds: [],
-    retired: false,
-  };
-}
+import { fakeClock, word } from '../test-support';
 
 /** More Words than the plan holds, so every notification gets one. */
 const words = Array.from({ length: 60 }, (_, index) => word(`w_${String(index).padStart(2, '0')}`));
-
-/** A clock the test moves in time. */
-function fakeClock(start: string) {
-  let now = new Date(start).getTime();
-  const clock: Clock = { now: () => new Date(now), timeZone: () => 'Europe/Kyiv' };
-  return {
-    clock,
-    moveTo(instant: string) {
-      now = new Date(instant).getTime();
-    },
-  };
-}
 
 /**
  * The Core composition of one app run over the records, with the fake
@@ -144,7 +110,7 @@ describe('the day change', () => {
     await app.feed.show(0);
     const before = cardsOf(app);
 
-    time.moveTo('2026-10-15T00:00:01+03:00');
+    time.set('2026-10-15T00:00:01+03:00');
     await app.resume();
 
     expect(activeDaysIn(records)).toEqual(['2026-10-14', '2026-10-15']);
@@ -163,7 +129,7 @@ describe('the day change', () => {
     const time = fakeClock('2026-10-14T23:50:00+03:00');
     const { app, writes, scheduler } = await run({ clock: time.clock });
     await app.feed.show(0);
-    time.moveTo('2026-10-15T00:00:01+03:00');
+    time.set('2026-10-15T00:00:01+03:00');
     await app.resume();
     const before = {
       writes: writes.length,
@@ -173,7 +139,7 @@ describe('the day change', () => {
       plan: planOf(scheduler),
     };
 
-    time.moveTo('2026-10-15T08:00:00+03:00');
+    time.set('2026-10-15T08:00:00+03:00');
     await app.resume();
 
     expect(writes).toHaveLength(before.writes);
@@ -189,7 +155,7 @@ describe('the day change', () => {
 
     // The reader turns notifications off in the iOS settings and comes back the same day.
     scheduler.setPermission('denied');
-    time.moveTo('2026-10-14T08:05:00+03:00');
+    time.set('2026-10-14T08:05:00+03:00');
     await app.resume();
 
     expect(app.notifications.state.permission).toBe('denied');
@@ -203,7 +169,7 @@ describe('the day change', () => {
 
     // The app stays in the foreground into the next morning, with no report
     // yet, such as across a time-zone change; then a time change plans again.
-    time.moveTo('2026-10-15T10:00:00+03:00');
+    time.set('2026-10-15T10:00:00+03:00');
     await app.notifications.keepTime('21:00');
     await app.resume();
     await app.feed.show(0);
@@ -230,11 +196,11 @@ describe('the day change', () => {
     const { app } = await run({ clock: time.clock, scheduler });
     const evening = wordAt(planOf(scheduler), '2026-10-14T19:00');
     // The evening notification has passed when the app comes back, so its Word is no longer Reserved.
-    time.moveTo('2026-10-14T20:00:00+03:00');
+    time.set('2026-10-14T20:00:00+03:00');
     await app.resume();
 
     // The next morning the reader taps it, and the device's scheduler hangs on the new day's plan.
-    time.moveTo('2026-10-15T09:05:00+03:00');
+    time.set('2026-10-15T09:05:00+03:00');
     hold = true;
     const card = await app.openedFromNotification(evening);
 
@@ -261,7 +227,7 @@ describe('the day change', () => {
       await app.feed.show(0);
       await app.feed.show(undefined);
 
-      time.moveTo('2026-10-15T09:05:00+03:00');
+      time.set('2026-10-15T09:05:00+03:00');
       const before = writes.length;
       await bringBack(app, morning);
       // The keys of each write the two calls made, in order.

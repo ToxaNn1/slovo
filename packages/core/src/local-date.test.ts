@@ -1,19 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { localDayOf, untilNextLocalDay, type Clock } from './index';
-
-/** A clock at a fixed instant, in a time zone the test can change. */
-function fakeClock(start: string, timeZone = 'Europe/Kyiv') {
-  const now = new Date(start).getTime();
-  let zone = timeZone;
-  const clock: Clock = { now: () => new Date(now), timeZone: () => zone };
-  return {
-    clock,
-    moveTo(timeZoneName: string) {
-      zone = timeZoneName;
-    },
-  };
-}
+import { localDayOf, untilNextLocalDay } from './index';
+import { fakeClock } from './test-support';
 
 describe('localDayOf', () => {
   it('counts the local days before today in the clock time zone', () => {

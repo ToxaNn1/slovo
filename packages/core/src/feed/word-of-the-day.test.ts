@@ -11,31 +11,10 @@ import {
   type UserStatePort,
   type WordOfTheDay,
 } from '../index';
+import { fakeClock, randomOf, randomSequence } from '../test-support';
 
 const wordIds = Array.from({ length: 10 }, (_, index) => `w_${String(index)}`);
 const correctionIds = ['c_0', 'c_1', 'c_2'];
-
-/** A clock stopped at one moment, in a time zone the test can change. */
-function fakeClock(start: string, timeZone = 'Europe/Kyiv') {
-  const now = new Date(start).getTime();
-  let zone = timeZone;
-  const clock: Clock = { now: () => new Date(now), timeZone: () => zone };
-  return {
-    clock,
-    moveTo(timeZoneName: string) {
-      zone = timeZoneName;
-    },
-  };
-}
-
-/** A random port that always draws the same number, so the Cycle seed is fixed. */
-const randomOf = (value: number): Random => ({ next: () => value });
-
-/** A random port that draws the given numbers in turn, so each new Cycle gets the next seed. */
-function randomSequence(...values: number[]): Random {
-  let drawn = 0;
-  return { next: () => values[drawn++ % values.length] ?? 0 };
-}
 
 /** One app run over the given records: the user state survives between runs. */
 async function open({

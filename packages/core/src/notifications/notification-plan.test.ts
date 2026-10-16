@@ -15,66 +15,15 @@ import {
   type FakeNotificationScheduler,
   type PlannedNotification,
 } from '../index';
+import { correction, fakeClock, word } from '../test-support';
 
-function word(id: string, overrides: Partial<Word> = {}): Word {
-  return {
-    kind: 'word',
-    id,
-    lemma: id.slice(2),
-    stress: [0],
-    partOfSpeech: 'noun',
-    primaryDefinition: `The meaning of ${id.slice(2)}.`,
-    extraDefinitions: [],
-    examples: [],
-    synonyms: [],
-    antonyms: [],
-    registers: [],
-    categoryId: 'test',
-    rarity: 3,
-    sources: [{ title: 'Test source' }],
-    correctionIds: [],
-    retired: false,
-    ...overrides,
-  };
-}
-
-function correction(id: string): Correction {
-  return {
-    kind: 'correction',
-    id,
-    nonStandardForm: `not ${id.slice(2)}`,
-    correctionType: 'calque',
-    standardEquivalents: [id.slice(2)],
-    explanation: 'An explanation.',
-    examplePair: { nonStandard: 'People say this.', standard: 'Better say this.' },
-    sources: [{ title: 'Test source' }],
-    retired: false,
-  };
-}
+/** The instant these tests start at. */
+const start = '2026-10-14T08:00:00+03:00';
 
 /** A hundred Words of the Category in the Mix, more than the plan can hold. */
 const manyWords = Array.from({ length: 100 }, (_, index) =>
   word(`w_${String(index).padStart(3, '0')}`),
 );
-
-/** A clock the test moves in time and to another time zone, as a reader who travels. */
-function fakeClock(start = '2026-10-14T08:00:00+03:00', zone = 'Europe/Kyiv') {
-  let now = new Date(start).getTime();
-  let timeZone = zone;
-  const clock: Clock = { now: () => new Date(now), timeZone: () => timeZone };
-  return {
-    clock,
-    moveTo(instant: string) {
-      now = new Date(instant).getTime();
-    },
-    advance(ms: number) {
-      now += ms;
-    },
-    travelTo(zone: string) {
-      timeZone = zone;
-    },
-  };
-}
 
 const defaultTimes = ['09:00', '13:00', '19:00'];
 
@@ -83,7 +32,7 @@ async function run({
   words = manyWords,
   corrections = [],
   records = new Map<string, string>(),
-  clock = fakeClock().clock,
+  clock = fakeClock(start).clock,
   scheduler = createFakeNotificationScheduler(),
   notificationSound = 'notification.wav',
   mixCategoryIds = ['test'],
@@ -205,13 +154,13 @@ describe('the notification plan', () => {
   });
 
   it('keeps every local time and its Word after a time-zone change', async () => {
-    const time = fakeClock();
+    const time = fakeClock(start);
     const { app, scheduler } = await run({ clock: time.clock });
     const before = wordsBySlot(planOf(scheduler));
 
     // A flight to New York: 08:00 there is 15:00 in Kyiv, when 09:00 and 13:00 have passed.
-    time.travelTo('America/New_York');
-    time.moveTo('2026-10-14T08:00:00-04:00');
+    time.moveTo('America/New_York');
+    time.set('2026-10-14T08:00:00-04:00');
     await app.resume();
 
     const plan = planOf(scheduler);
@@ -246,13 +195,13 @@ describe('the notification plan', () => {
   });
 
   it('keeps the notifications still valid when it plans again, and gives a new time a new Word', async () => {
-    const time = fakeClock();
+    const time = fakeClock(start);
     const records = new Map<string, string>();
     const { scheduler: first } = await run({ records, clock: time.clock });
     const before = wordsBySlot(planOf(first));
 
     // 09:00 passes; the next app run plans again over the same records.
-    time.moveTo('2026-10-14T10:00:00+03:00');
+    time.set('2026-10-14T10:00:00+03:00');
     const { app, scheduler } = await run({ records, clock: time.clock });
 
     const kept = wordsBySlot(planOf(scheduler));
@@ -285,7 +234,7 @@ describe('the notification plan', () => {
   });
 
   it('empties the plan and Reserves nothing once every time is removed', async () => {
-    const time = fakeClock();
+    const time = fakeClock(start);
     const { app, scheduler } = await run({ clock: time.clock });
 
     for (const kept of defaultTimes) await app.notifications.removeTime(kept);
@@ -295,7 +244,7 @@ describe('the notification plan', () => {
   });
 
   it('plans nothing and Reserves nothing while permission is denied or not asked yet, and keeps the times', async () => {
-    const time = fakeClock();
+    const time = fakeClock(start);
     const scheduler = createFakeNotificationScheduler();
     const { app } = await run({ clock: time.clock, scheduler });
     expect(planOf(scheduler)).toHaveLength(42);
@@ -492,14 +441,14 @@ describe('the plan following the Feed', () => {
   });
 
   it("makes a later day's morning notification that day's Word of the Day when the day comes", async () => {
-    const time = fakeClock();
+    const time = fakeClock(start);
     const records = new Map<string, string>();
     const { app, scheduler } = await run({ records, clock: time.clock });
     const before = planOf(scheduler);
     await app.feed.show(0);
 
     // The app stays open over midnight.
-    time.moveTo('2026-10-15T00:00:05+03:00');
+    time.set('2026-10-15T00:00:05+03:00');
     await app.resume();
     await app.feed.show(0);
 
@@ -508,14 +457,14 @@ describe('the plan following the Feed', () => {
     expect(wordAt(planOf(scheduler), '2026-10-15T09:00')).toBe(tomorrow);
 
     // The next run starts after that day's morning notification has passed.
-    time.moveTo('2026-10-16T10:00:00+03:00');
+    time.set('2026-10-16T10:00:00+03:00');
     const { app: later } = await run({ records, clock: time.clock });
 
     expect(wordsOfTheDayIn(later).get('2026-10-16')).toBe(wordAt(before, '2026-10-16T09:00'));
   });
 
   it('makes the Word of the earliest time planned on a later day its Word of the Day', async () => {
-    const time = fakeClock();
+    const time = fakeClock(start);
     const records = new Map<string, string>();
     const { app, scheduler } = await run({ records, clock: time.clock });
     const nine = wordAt(planOf(scheduler), '2026-10-15T09:00');
@@ -525,7 +474,7 @@ describe('the plan following the Feed', () => {
     const plan = planOf(scheduler);
     expect(wordAt(plan, '2026-10-15T09:00')).toBe(nine);
 
-    time.moveTo('2026-10-15T10:00:00+03:00');
+    time.set('2026-10-15T10:00:00+03:00');
     const { app: later } = await run({ records, clock: time.clock });
 
     expect(wordsOfTheDayIn(later).get('2026-10-15')).toBe(wordAt(plan, '2026-10-15T07:15'));
@@ -538,7 +487,7 @@ describe('the plan following the Feed', () => {
     const { scheduler } = await run({ records, clock: time.clock });
     const tomorrow = wordAt(planOf(scheduler), '2026-10-15T09:00');
 
-    time.travelTo('Asia/Tokyo');
+    time.moveTo('Asia/Tokyo');
     const { app } = await run({ records, clock: time.clock });
 
     expect(wordsOfTheDayIn(app).get('2026-10-15')).toBe(tomorrow);
@@ -552,7 +501,7 @@ describe('the plan following the Feed', () => {
     await app.feed.show(undefined);
 
     // The app sat in the background overnight; the morning notification opens it.
-    time.moveTo('2026-10-15T09:05:00+03:00');
+    time.set('2026-10-15T09:05:00+03:00');
     await app.openedFromNotification(morning);
     await app.resume();
     await app.feed.show(0);
@@ -562,7 +511,7 @@ describe('the plan following the Feed', () => {
   });
 
   it('gives a new Word to the notification of a Reserved Word hidden, and keeps the others', async () => {
-    const time = fakeClock();
+    const time = fakeClock(start);
     const records = new Map<string, string>();
     const { app, scheduler } = await run({ records, clock: time.clock });
     const before = wordsBySlot(planOf(scheduler));
@@ -582,7 +531,7 @@ describe('the plan following the Feed', () => {
     expect([...after.values()].filter((wordId) => hidden.includes(wordId))).toEqual([]);
 
     // The new morning Word is the Word of the Day when its day comes.
-    time.moveTo('2026-10-17T08:00:00+03:00');
+    time.set('2026-10-17T08:00:00+03:00');
     const { app: later } = await run({ records, clock: time.clock });
     expect(wordsOfTheDayIn(later).get('2026-10-17')).toBe(after.get('2026-10-17T09:00'));
   });
@@ -631,7 +580,7 @@ describe('the plan following the Feed', () => {
   });
 
   it('gives a new Word to the notification of a Reserved Word Seen in the Feed, and keeps the others', async () => {
-    const time = fakeClock();
+    const time = fakeClock(start);
     const { app, scheduler } = await run({ clock: time.clock });
     const before = wordsBySlot(planOf(scheduler));
 
@@ -666,7 +615,7 @@ describe('the plan following the Feed', () => {
   });
 
   it('keeps every notification still valid when it plans again, the mornings too', async () => {
-    const time = fakeClock();
+    const time = fakeClock(start);
     const { app, scheduler } = await run({ clock: time.clock });
     const before = wordsBySlot(planOf(scheduler));
 
@@ -678,7 +627,7 @@ describe('the plan following the Feed', () => {
   });
 
   it('fills what it can near the end of the Cycle, and never starts a new Cycle', async () => {
-    const time = fakeClock();
+    const time = fakeClock(start);
     const records = new Map([
       ['feed.seen.w_a', 'true'],
       ['feed.seen.w_b', 'true'],
@@ -716,7 +665,7 @@ describe('the Reserved Words', () => {
   });
 
   it("are replaced whole: a removed time's Word is no longer its day's morning Word", async () => {
-    const time = fakeClock();
+    const time = fakeClock(start);
     const records = new Map<string, string>();
     const { app, scheduler } = await run({ records, clock: time.clock });
     const nine = wordAt(planOf(scheduler), '2026-10-15T09:00');
@@ -725,7 +674,7 @@ describe('the Reserved Words', () => {
     await app.notifications.removeTime('09:00');
     expect(wordAt(planOf(scheduler), '2026-10-15T13:00')).toBe(one);
 
-    time.moveTo('2026-10-15T14:00:00+03:00');
+    time.set('2026-10-15T14:00:00+03:00');
     const { app: later } = await run({ records, clock: time.clock });
 
     expect(nine).not.toBe(one);
@@ -738,7 +687,7 @@ describe('the Reserved Words', () => {
     const { scheduler } = await run({ records, clock: time.clock });
     const morning = wordAt(planOf(scheduler), '2026-10-15T09:00');
 
-    time.moveTo('2026-10-15T10:00:00+03:00');
+    time.set('2026-10-15T10:00:00+03:00');
     const seen = await run({
       records: new Map([...records, [`feed.seen.${morning}`, 'true']]),
       clock: time.clock,

@@ -8,18 +8,10 @@ import {
   type CycleChange,
   type Random,
 } from '../index';
+import { randomOf, randomSequence } from '../test-support';
 
 const wordIds = Array.from({ length: 10 }, (_, index) => `w_${String(index)}`);
 const correctionIds = Array.from({ length: 4 }, (_, index) => `c_${String(index)}`);
-
-/** A random port that always draws the same number, so the Cycle seed is fixed. */
-const randomOf = (value: number): Random => ({ next: () => value });
-
-/** A random port that draws the given numbers in turn, so each new Cycle gets the next seed. */
-function randomSequence(...values: number[]): Random {
-  let drawn = 0;
-  return { next: () => values[drawn++ % values.length] ?? 0 };
-}
 
 /** One app run over the given records: the user state survives between runs. */
 async function open({

@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Correction, Word } from '@slovo/contracts';
-
 import {
   createMemoryContentPort,
   createMemoryUserStatePort,
@@ -11,47 +9,11 @@ import {
   type Clock,
   type Composition,
   type ContentReadPort,
-  type Random,
 } from './index';
+import { correction, fakeClock, steppingRandom, word } from './test-support';
 
-function word(
-  id: string,
-  categoryId: string,
-  { lemma = id.slice(2), stress = [0], retired = false }: Partial<Word> = {},
-): Word {
-  return {
-    kind: 'word',
-    id,
-    lemma,
-    stress,
-    partOfSpeech: 'noun',
-    primaryDefinition: `The meaning of ${lemma}.`,
-    extraDefinitions: [],
-    examples: [],
-    synonyms: [],
-    antonyms: [],
-    registers: [],
-    categoryId,
-    rarity: 3,
-    sources: [{ title: 'Test source' }],
-    correctionIds: [],
-    retired,
-  };
-}
-
-function correction(id: string): Correction {
-  return {
-    kind: 'correction',
-    id,
-    nonStandardForm: `not ${id.slice(2)}`,
-    correctionType: 'calque',
-    standardEquivalents: [id.slice(2), `also ${id.slice(2)}`],
-    explanation: 'An explanation.',
-    examplePair: { nonStandard: 'People say this.', standard: 'Better say this.' },
-    sources: [{ title: 'Test source' }],
-    retired: false,
-  };
-}
+/** The instant these tests start at. */
+const start = '2026-10-16T09:00:00+03:00';
 
 /** The Edition's Categories, in its order. */
 const nature: Category = { id: 'nature', displayName: 'Nature' };
@@ -60,48 +22,25 @@ const categories = [nature, speech];
 
 /** A small pack: two live Words in each Category, a Retired Word and two live Corrections. */
 const words = [
-  word('w_nature0', 'nature'),
-  word('w_nature1', 'nature'),
-  word('w_speech0', 'speech'),
-  word('w_speech1', 'speech'),
-  word('w_old', 'nature', { retired: true }),
+  word('w_nature0', { categoryId: 'nature' }),
+  word('w_nature1', { categoryId: 'nature' }),
+  word('w_speech0', { categoryId: 'speech' }),
+  word('w_speech1', { categoryId: 'speech' }),
+  word('w_old', { categoryId: 'nature', retired: true }),
 ];
 const corrections = [correction('c_one'), correction('c_two')];
 const pack = createMemoryContentPort({ words, corrections });
-
-/** A clock the test moves by hand. */
-function fakeClock(start = '2026-10-16T09:00:00+03:00') {
-  let now = new Date(start).getTime();
-  const clock: Clock = { now: () => new Date(now), timeZone: () => 'Europe/Kyiv' };
-  return {
-    clock,
-    advance: (ms: number) => {
-      now += ms;
-    },
-  };
-}
 
 const MINUTE = 60_000;
 
 /** Any VoiceOver text, for a test about what the widget shows. */
 const anyVoiceOver = { voiceOver: expect.any(String) as unknown };
 
-/** A random port that steps through [0, 1), so each new Collection gets its own id. */
-function steppingRandom(): Random {
-  let step = 0;
-  return {
-    next() {
-      step += 1;
-      return (step * 0.6180339887) % 1;
-    },
-  };
-}
-
 /** The Core composition of one app run over the records, so the user state survives between runs. */
 async function run({
   records = new Map<string, string>(),
   content = pack,
-  clock = fakeClock().clock,
+  clock = fakeClock(start).clock,
   withCorrections = true,
 }: {
   records?: Map<string, string>;
@@ -200,7 +139,7 @@ describe('The Widget Snapshot', () => {
   });
 
   it('shows the eligible Favorites, newest first', async () => {
-    const { clock, advance } = fakeClock();
+    const { clock, advance } = fakeClock(start);
     const app = await run({ clock });
     for (const id of ['w_nature0', 'c_one', 'w_speech0', 'w_old']) {
       await app.favorites.add(id);
@@ -211,7 +150,7 @@ describe('The Widget Snapshot', () => {
   });
 
   it('drops a Favorite once it is hidden or out of the Mix', async () => {
-    const { clock, advance } = fakeClock();
+    const { clock, advance } = fakeClock(start);
     const app = await run({ clock });
     for (const id of ['w_nature0', 'w_nature1', 'w_speech0']) {
       await app.favorites.add(id);
@@ -239,7 +178,7 @@ describe('The Widget Snapshot', () => {
   });
 
   it('shows each Collection with its eligible Entries, newest first, empty ones too', async () => {
-    const { clock, advance } = fakeClock();
+    const { clock, advance } = fakeClock(start);
     const app = await run({ clock });
     const letters = await app.collections.create('Letters');
     advance(MINUTE);
@@ -258,7 +197,7 @@ describe('The Widget Snapshot', () => {
   });
 
   it("carries a Collection's new name and leaves out a deleted Collection", async () => {
-    const { clock, advance } = fakeClock();
+    const { clock, advance } = fakeClock(start);
     const app = await run({ clock });
     const renamed = await app.collections.create('Letters', 'w_nature0');
     advance(MINUTE);
@@ -277,8 +216,8 @@ describe('The Widget Snapshot', () => {
     const app = await run({
       content: createMemoryContentPort({
         words: [
-          word('w_veremiia', 'nature', { lemma: 'веремія', stress: [5] }),
-          word('w_zavzhdy', 'nature', { lemma: 'завжди', stress: [1, 5] }),
+          word('w_veremiia', { categoryId: 'nature', lemma: 'веремія', stress: [5] }),
+          word('w_zavzhdy', { categoryId: 'nature', lemma: 'завжди', stress: [1, 5] }),
         ],
       }),
     });
@@ -304,7 +243,7 @@ describe('The Widget Snapshot', () => {
       content: createMemoryContentPort({
         words: [
           {
-            ...word('w_khymernyk', 'nature', { lemma: 'химерник', stress: [3] }),
+            ...word('w_khymernyk', { categoryId: 'nature', lemma: 'химерник', stress: [3] }),
             primaryDefinition: 'Людина, схильна до витіво\u0301к.',
           },
         ],
@@ -327,7 +266,7 @@ describe('The Widget Snapshot', () => {
   it('heads a Correction with its main standard equivalent over the form it replaces', async () => {
     const app = await run({
       content: createMemoryContentPort({
-        words: [word('w_nature0', 'nature')],
+        words: [word('w_nature0', { categoryId: 'nature' })],
         corrections: [
           {
             ...correction('c_protiahom'),

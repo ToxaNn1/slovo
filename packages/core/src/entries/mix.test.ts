@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Correction, Word } from '@slovo/contracts';
-
 import {
   createMemoryContentPort,
   createMemoryUserStatePort,
@@ -17,41 +15,7 @@ import {
   type FeedCard,
   type UserStatePort,
 } from '../index';
-
-function word(id: string, categoryId: string): Word {
-  return {
-    kind: 'word',
-    id,
-    lemma: id.slice(2),
-    stress: [0],
-    partOfSpeech: 'noun',
-    primaryDefinition: `The meaning of ${id.slice(2)}.`,
-    extraDefinitions: [],
-    examples: [],
-    synonyms: [],
-    antonyms: [],
-    registers: [],
-    categoryId,
-    rarity: 3,
-    sources: [{ title: 'Test source' }],
-    correctionIds: [],
-    retired: false,
-  };
-}
-
-function correction(id: string): Correction {
-  return {
-    kind: 'correction',
-    id,
-    nonStandardForm: `not ${id.slice(2)}`,
-    correctionType: 'calque',
-    standardEquivalents: [id.slice(2)],
-    explanation: 'An explanation.',
-    examplePair: { nonStandard: 'People say this.', standard: 'Better say this.' },
-    sources: [{ title: 'Test source' }],
-    retired: false,
-  };
-}
+import { correction, fakeClock, word } from '../test-support';
 
 /** The Edition's Categories, in its order. */
 const nature: Category = { id: 'nature', displayName: 'Nature' };
@@ -64,21 +28,11 @@ const wordIdsOf = (category: Category) =>
   [0, 1, 2].map((index) => `w_${category.id}${String(index)}`);
 const correctionIds = ['c_one', 'c_two'];
 const content = createMemoryContentPort({
-  words: categories.flatMap((category) => wordIdsOf(category).map((id) => word(id, category.id))),
+  words: categories.flatMap((category) =>
+    wordIdsOf(category).map((id) => word(id, { categoryId: category.id })),
+  ),
   corrections: correctionIds.map((id) => correction(id)),
 });
-
-/** A clock the test moves by hand. */
-function fakeClock(start = '2026-10-11T09:00:00+03:00') {
-  let now = new Date(start).getTime();
-  const clock: Clock = { now: () => new Date(now), timeZone: () => 'Europe/Kyiv' };
-  return {
-    clock,
-    advance(ms: number) {
-      now += ms;
-    },
-  };
-}
 
 const MINUTE = 60_000;
 
@@ -558,11 +512,16 @@ describe('eligibility over the Mix', () => {
 });
 
 describe('linked Corrections («Часто кажуть») over the Mix', () => {
-  const linked = { ...word('w_linked', 'nature'), correctionIds: ['c_one', 'c_two'] };
+  const linked = {
+    ...word('w_linked', { categoryId: 'nature' }),
+    correctionIds: ['c_one', 'c_two'],
+  };
   const pack = createMemoryContentPort({
     words: [
       linked,
-      ...categories.flatMap((category) => wordIdsOf(category).map((id) => word(id, category.id))),
+      ...categories.flatMap((category) =>
+        wordIdsOf(category).map((id) => word(id, { categoryId: category.id })),
+      ),
     ],
     corrections: correctionIds.map((id) => correction(id)),
   });
