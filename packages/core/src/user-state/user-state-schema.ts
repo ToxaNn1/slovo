@@ -1,7 +1,7 @@
 import { FontSizeSchema, NotificationTimesSchema, ThemeSchema } from '@slovo/contracts';
 import { z } from 'zod';
 
-import { declareRecord, declareRecords } from './user-state-record';
+import { declareRecord, declareRecords, parseJson } from './user-state-record';
 import type { UserStateMigration } from './user-state-migration';
 
 /**
@@ -146,12 +146,3 @@ export const userStateMigrations: readonly UserStateMigration[] = [
     },
   },
 ];
-
-/** The value the text holds as JSON, or nothing when it is not JSON. */
-function parseJson(text: string): unknown {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return undefined;
-  }
-}

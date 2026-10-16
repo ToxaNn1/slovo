@@ -45,6 +45,15 @@ export interface UserStateRecords<T> {
   record(id: string): UserStateRecord<T>;
 }
 
+/** The value the text holds as JSON, or nothing when it is not JSON. */
+export function parseJson(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return undefined;
+  }
+}
+
 /** Declares the record under the key, holding values of the schema. */
 export function declareRecord<T>(
   key: string,
@@ -56,12 +65,8 @@ export function declareRecord<T>(
     sync,
     decode(text) {
       if (text === undefined) return undefined;
-      try {
-        const parsed = schema.safeParse(JSON.parse(text));
-        return parsed.success ? parsed.data : undefined;
-      } catch {
-        return undefined;
-      }
+      const parsed = schema.safeParse(parseJson(text));
+      return parsed.success ? parsed.data : undefined;
     },
     change: (value) => new Map([[key, value === undefined ? undefined : JSON.stringify(value)]]),
   };
