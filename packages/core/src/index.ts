@@ -37,15 +37,17 @@ export { type Favorite, type Favorites } from './saved/favorites';
 export {
   buildEntryCard,
   CORRECTION_EVERY,
-  entryIdOf,
   isTodaysWordOfTheDay,
   SEEN_DWELL_MS,
+  type Feed,
+} from './feed/feed';
+export {
+  entryIdOf,
   type CorrectionFeedCard,
   type EntryFeedCard,
-  type Feed,
   type FeedCard,
   type WordFeedCard,
-} from './feed/feed';
+} from './feed/feed-card';
 export {
   GAME_LIVES,
   GAME_ROUNDS,
