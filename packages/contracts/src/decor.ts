@@ -85,6 +85,12 @@ export const EditionDecorSchema = z.strictObject({
    * size the screen asks for. Its layers are stitched in one after another.
    */
   victory: z.strictObject({ illustration: DecorMotifSchema }).optional(),
+  /**
+   * Slot 5, the Share Card frame: the band repeated across the Story card at
+   * the top and, mirrored, at the bottom, and the top-left corner mirrored into
+   * the four corners of the Square card, both scaled with the card.
+   */
+  shareCard: z.strictObject({ band: DecorMotifSchema, corner: DecorMotifSchema }).optional(),
 });
 
 export type EditionDecor = z.infer<typeof EditionDecorSchema>;

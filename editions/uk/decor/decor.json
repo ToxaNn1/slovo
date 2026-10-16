@@ -139,5 +139,34 @@
         }
       ]
     }
+  },
+  "shareCard": {
+    "band": {
+      "width": 16,
+      "height": 10,
+      "layers": [
+        {
+          "path": "M0 8h2v2H0zM2 6h2v2H2zM4 4h2v2H4zM6 2h2v2H6zM8 0h2v2H8zM10 2h2v2h-2zM12 4h2v2h-2zM14 6h2v2h-2z",
+          "light": "#A3221B",
+          "dark": "#D4AE5C"
+        }
+      ]
+    },
+    "corner": {
+      "width": 16,
+      "height": 16,
+      "layers": [
+        {
+          "path": "M0 0h16v2H0zM0 2h2v14H0z",
+          "light": "#9C7A2E",
+          "dark": "#D4AE5C"
+        },
+        {
+          "path": "M4 4h6v2H4zM4 6h2v4H4z",
+          "light": "#A3221B",
+          "dark": "#C8372D"
+        }
+      ]
+    }
   }
 }
