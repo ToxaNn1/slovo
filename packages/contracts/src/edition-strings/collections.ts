@@ -35,7 +35,7 @@ export const CollectionsStringsSchema = z.strictObject({
     delete: TextSchema,
     /** The same action as VoiceOver reads it. Takes `{name}`. */
     deleteLabel: templateOf('name'),
-    /** The system action sheet that confirms deleting a Collection. */
+    /** The system alert that confirms deleting a Collection. */
     confirmDelete: z.strictObject({
       /** Takes `{name}`. */
       title: templateOf('name'),

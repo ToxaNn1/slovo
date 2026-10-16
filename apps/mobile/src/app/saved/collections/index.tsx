@@ -13,7 +13,7 @@ import {
 } from '@slovo/ui';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ActionSheetIOS, FlatList, StyleSheet, View } from 'react-native';
+import { Alert, FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { refusalText } from '../../../saved/collection-refusal';
@@ -33,7 +33,7 @@ type Editing = { readonly kind: 'new' } | { readonly kind: 'rename'; readonly id
  * Collections: the reader's lists, newest first, each with how many Entries it
  * holds and its newest Lemmas; a tap opens the Collection. «+» makes a new one
  * from here; a swipe offers «Назва» (rename in place) and «Видалити» (after a
- * system action sheet that says the Entries stay), and the same actions go to
+ * system alert that says the Entries stay), and the same actions go to
  * VoiceOver.
  */
 export default function CollectionsScreen() {
@@ -51,18 +51,16 @@ export default function CollectionsScreen() {
 
   function confirmDelete({ id, name }: Collection) {
     const { confirmDelete: texts } = strings;
-    ActionSheetIOS.showActionSheetWithOptions(
+    Alert.alert(fill(texts.title, { name }), texts.message, [
+      { text: texts.cancel, style: 'cancel' },
       {
-        title: fill(texts.title, { name }),
-        message: texts.message,
-        options: [texts.confirm, texts.cancel],
-        destructiveButtonIndex: 0,
-        cancelButtonIndex: 1,
+        text: texts.confirm,
+        style: 'destructive',
+        onPress: () => {
+          remove(id);
+        },
       },
-      (index) => {
-        if (index === 0) remove(id);
-      },
-    );
+    ]);
   }
 
   /** Keeps the name the field gives; closes the field, or says why the name is refused. */
