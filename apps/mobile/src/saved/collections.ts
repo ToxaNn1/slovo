@@ -1,7 +1,11 @@
 import type { Collection, CollectionEntry, Collections } from '@slovo/core';
+import { useEdition } from '@slovo/ui';
+import { useMemo } from 'react';
 
 import { useComposed, useModule } from '../composition';
+import { editionStrings } from '../edition/edition';
 import { keep } from '../keep';
+import { collectionRows, type CollectionRowModel } from './collections-screen';
 
 const noCollections: readonly Collection[] = [];
 const noEntries: readonly CollectionEntry[] = [];
@@ -17,6 +21,16 @@ export function useCollectionList(): readonly Collection[] {
     (composition) => composition.collections,
     (collections) => collections.list,
     noCollections,
+  );
+}
+
+/** The rows of the Collections screen, newest first, kept up to date; none until Collections open. */
+export function useCollectionRows(): readonly CollectionRowModel[] {
+  const list = useCollectionList();
+  const { count } = useEdition();
+  return useMemo(
+    () => collectionRows({ collections: list, strings: editionStrings.collections, count }),
+    [list, count],
   );
 }
 

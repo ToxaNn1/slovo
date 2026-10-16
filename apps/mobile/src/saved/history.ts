@@ -6,6 +6,7 @@ import { useMemo } from 'react';
 import { useComposed, useModule } from '../composition';
 import { deviceClock } from '../device/device-clock';
 import { editionStrings } from '../edition/edition';
+import { historySections, type HistorySection } from './history-screen';
 import { historyText } from './history-text';
 
 const noHistory: readonly HistoryEntry[] = [];
@@ -50,4 +51,15 @@ export function useHistoryText() {
     () => historyText({ strings: editionStrings.history, count, clock: deviceClock }),
     [count],
   );
+}
+
+/**
+ * The sections of the History screen: the Entries in History under the day
+ * they were Seen on the device's clock, kept up to date; none until History
+ * opens.
+ */
+export function useHistorySections(): readonly HistorySection[] {
+  const list = useHistoryList();
+  const text = useHistoryText();
+  return useMemo(() => historySections({ history: list, text, clock: deviceClock }), [list, text]);
 }

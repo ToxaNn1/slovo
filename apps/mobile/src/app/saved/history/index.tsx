@@ -1,4 +1,4 @@
-import { groupByLocalDay, HISTORY_CAP, type HistoryEntry } from '@slovo/core';
+import { HISTORY_CAP } from '@slovo/core';
 import {
   BackLink,
   EmptyState,
@@ -11,16 +11,15 @@ import {
   useTokens,
 } from '@slovo/ui';
 import { useRouter } from 'expo-router';
-import { useMemo } from 'react';
 import { Alert, Pressable, SectionList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useComposition } from '../../../composition';
-import { deviceClock } from '../../../device/device-clock';
 import { editionStrings } from '../../../edition/edition';
-import { useClearHistory, useHistoryList, useHistoryText } from '../../../saved/history';
 import { LoadFailed } from '../../../edition/language-pack';
 import { useOpenScreen } from '../../../entries/use-open-screen';
+import { useClearHistory, useHistorySections } from '../../../saved/history';
+import type { HistoryEntryModel, HistorySection } from '../../../saved/history-screen';
 
 const { history: strings } = editionStrings;
 
@@ -33,22 +32,12 @@ const { history: strings } = editionStrings;
  */
 export default function HistoryScreen() {
   const composition = useComposition();
-  const list = useHistoryList();
+  const sections = useHistorySections();
   const clear = useClearHistory();
-  const text = useHistoryText();
   const { colors, fontFamilies } = useTokens();
   const { voice } = useEdition();
   const router = useRouter();
   const openScreen = useOpenScreen();
-  const sections = useMemo(
-    () =>
-      groupByLocalDay(list, ({ seenAt }) => seenAt, deviceClock).map(({ day, entries }) => ({
-        key: `${String(day.date.year)}-${String(day.date.month)}-${String(day.date.day)}`,
-        title: text.dayHeading(day),
-        data: entries,
-      })),
-    [list, text],
-  );
 
   if (composition.status === 'failed') return <LoadFailed onRetry={composition.retry} />;
   const ready = composition.status === 'ready';
@@ -66,7 +55,7 @@ export default function HistoryScreen() {
       edges={['top']}
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
-      <SectionList<HistoryEntry, { key: string; title: string; data: readonly HistoryEntry[] }>
+      <SectionList<HistoryEntryModel, HistorySection>
         sections={ready ? sections : []}
         keyExtractor={(entry) => entry.entryId}
         stickySectionHeadersEnabled={false}
@@ -79,7 +68,7 @@ export default function HistoryScreen() {
           <EntryRow
             compact
             row={item.row}
-            trailing={text.kind(item)}
+            trailing={item.kind}
             onPress={() => {
               openScreen(`/saved/history/${item.entryId}`);
             }}
@@ -96,7 +85,7 @@ export default function HistoryScreen() {
                   router.back();
                 }}
               />
-              {list.length > 0 && (
+              {sections.length > 0 && (
                 <Pressable
                   testID="history-clear"
                   accessibilityRole="button"
