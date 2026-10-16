@@ -27,7 +27,15 @@ import { fill, useEdition } from '../providers/EditionProvider';
 import { HEART_PATH } from '../saved/FavoriteButton';
 import { PrimaryButton } from '../primitives/PrimaryButton';
 import { stressLabel } from '../entries/stress-label';
-import { minTouchTarget, onFill, overlineType, space, typeSize, withAlpha } from '../tokens';
+import {
+  minTouchTarget,
+  onFill,
+  overlineType,
+  roundLayout,
+  space,
+  typeSize,
+  withAlpha,
+} from '../tokens';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { useGameHaptics } from './useGameHaptics';
 import { useReduceMotion } from '../providers/useReduceMotion';
@@ -55,15 +63,6 @@ const SHEET_ANSWER_SIZE = {
 };
 /** Whether a label ends in punctuation of its own, such as «?», so VoiceOver needs no full stop after it. */
 const ENDS_IN_PUNCTUATION = /\p{P}$/u;
-/**
- * Gaps off the 4-pt grid, from the design: between the options and the header's
- * parts, in the progress and above «Далі», and in the sheet. The Round card's
- * vertical padding is off it too.
- */
-const OPTIONS_GAP = 10;
-const TIGHT_GAP = 6;
-const SHEET_GAP = 14;
-const CARD_PADDING_VERTICAL = 30;
 
 /**
  * The canvas's CSS `ease`, for the Game's motion below, from the design's
@@ -603,16 +602,16 @@ function AnswerSheetContent({ answer, onNext }: { answer: RoundAnswer; onNext: (
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   round: { gap: space[5], padding: space[6] },
-  options: { gap: OPTIONS_GAP },
+  options: { gap: roundLayout.gap },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: OPTIONS_GAP,
+    gap: roundLayout.gap,
     minHeight: minTouchTarget,
     paddingLeft: space[3],
     paddingRight: space[4],
   },
-  progress: { flex: 1, gap: TIGHT_GAP },
+  progress: { flex: 1, gap: roundLayout.tightGap },
   progressText: { fontSize: typeSize.meta, fontWeight: '700' },
   bar: {
     flexDirection: 'row',
@@ -631,7 +630,7 @@ const styles = StyleSheet.create({
     minHeight: 220,
     justifyContent: 'center',
     gap: space[4],
-    paddingVertical: CARD_PADDING_VERTICAL,
+    paddingVertical: roundLayout.cardPaddingVertical,
     paddingHorizontal: space[6],
     borderWidth: 1,
   },
@@ -649,11 +648,15 @@ const styles = StyleSheet.create({
   optionWord: { fontWeight: '500' },
   tag: { fontSize: typeSize.meta, fontWeight: '700' },
   sheetScroll: { flexGrow: 0, flexShrink: 1 },
-  sheetContent: { gap: SHEET_GAP, paddingHorizontal: space[1], paddingBottom: space[2] },
+  sheetContent: { gap: roundLayout.sheetGap, paddingHorizontal: space[1], paddingBottom: space[2] },
   sheetTitle: { fontSize: typeSize.blockHeading, fontWeight: '700' },
   sheetAnswer: { fontWeight: '500' },
-  example: { fontSize: typeSize.blockHeading, lineHeight: typeSize.blockHeading * 1.5, fontStyle: 'italic' },
+  example: {
+    fontSize: typeSize.blockHeading,
+    lineHeight: typeSize.blockHeading * 1.5,
+    fontStyle: 'italic',
+  },
   author: { marginTop: space[1], fontSize: typeSize.meta, fontWeight: '500' },
   explanation: { fontSize: typeSize.explanation, lineHeight: typeSize.explanation * 1.55 },
-  next: { marginTop: TIGHT_GAP },
+  next: { marginTop: roundLayout.tightGap },
 });

@@ -190,6 +190,17 @@ export const shareImage = {
 /** The smallest side of anything the user taps. */
 export const minTouchTarget = 44;
 
+/**
+ * Gaps and paddings of the Game's Round off the 4-pt grid, from the design:
+ * between the options and between the header's parts, a tight one (the
+ * progress label over its bar, «Далі» under the sheet), the sheet's own and
+ * the vertical padding of the Round's card.
+ */
+export const roundLayout = { gap: 10, tightGap: 6, sheetGap: 14, cardPaddingVertical: 30 } as const;
+
+/** The sample notification of the onboarding: its app icon (side and corner radius) and the gap between its lines. */
+export const sampleNotification = { iconSize: 38, iconRadius: 9, lineGap: 2 } as const;
+
 /** The text on a filled option of the Game, white in both Themes. */
 export const onFill = '#FFFFFF';
 

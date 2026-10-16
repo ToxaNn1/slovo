@@ -20,7 +20,7 @@ import { DecorBackground, OrnamentBand } from '../decor/DecorSlots';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { PrimaryButton } from '../primitives/PrimaryButton';
 import { WholeWordsText } from '../primitives/WholeWordsText';
-import { minTouchTarget, overlineType, space, typeSize } from '../tokens';
+import { minTouchTarget, overlineType, sampleNotification, space, typeSize } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /** How long a step takes to slide in, and how far from the side it starts. */
@@ -34,13 +34,8 @@ const HEADLINE_MAX_FONT_SCALE = 1.3;
 const TEXT_MAX_FONT_SCALE = 1.5;
 /** The design's hero Lemma, `Lemma, hero`: Literata 500, 76 / 1. */
 const HERO_LEMMA = { fontSize: typeSize.heroLemma, lineHeight: typeSize.heroLemma } as const;
-const TITLE_SIZE = typeSize.onboardingTitle;
 /** A page dot of the progress: the current one is the longer. */
 const DOT = { height: 4, width: 16, currentWidth: 44, gap: space[3] } as const;
-/** The sample notification's app icon, from the design. */
-const APP_ICON = { size: 38, radius: 9 } as const;
-/** The gap between the sample notification's lines. */
-const SAMPLE_LINE_GAP = 2;
 
 /**
  * One step of the onboarding, over the whole screen: the wordmark and
@@ -522,8 +517,16 @@ const styles = StyleSheet.create({
   band: { flexDirection: 'row' },
   hero: { gap: space[2] },
   definition: { fontSize: typeSize.subhead, lineHeight: typeSize.subhead * 1.3, fontWeight: '500' },
-  title: { fontSize: TITLE_SIZE, lineHeight: TITLE_SIZE * 1.15, fontWeight: '500' },
-  subtitle: { fontSize: typeSize.blockHeading, lineHeight: typeSize.blockHeading * 1.5, paddingBottom: space[4] },
+  title: {
+    fontSize: typeSize.onboardingTitle,
+    lineHeight: typeSize.onboardingTitle * 1.15,
+    fontWeight: '500',
+  },
+  subtitle: {
+    fontSize: typeSize.blockHeading,
+    lineHeight: typeSize.blockHeading * 1.5,
+    paddingBottom: space[4],
+  },
   footer: { paddingHorizontal: SIDE, paddingTop: space[3], paddingBottom: space[4], gap: space[5] },
   dots: { flexDirection: 'row', alignItems: 'center', gap: DOT.gap },
   later: { minHeight: minTouchTarget, alignItems: 'center', justifyContent: 'center' },
@@ -538,17 +541,21 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   appIcon: {
-    width: APP_ICON.size,
-    height: APP_ICON.size,
-    borderRadius: APP_ICON.radius,
+    width: sampleNotification.iconSize,
+    height: sampleNotification.iconSize,
+    borderRadius: sampleNotification.iconRadius,
     alignItems: 'center',
     justifyContent: 'center',
   },
   appIconMark: { fontSize: typeSize.subhead, fontWeight: '600' },
-  sampleText: { flex: 1, gap: SAMPLE_LINE_GAP },
+  sampleText: { flex: 1, gap: sampleNotification.lineGap },
   sampleTop: { flexDirection: 'row', justifyContent: 'space-between', gap: space[3] },
   sampleApp: { flexShrink: 1, fontSize: typeSize.meta, fontWeight: '600' },
   sampleTime: { fontSize: typeSize.meta },
-  sampleLemma: { fontSize: typeSize.blockHeading, lineHeight: typeSize.blockHeading * 1.3, fontWeight: '600' },
+  sampleLemma: {
+    fontSize: typeSize.blockHeading,
+    lineHeight: typeSize.blockHeading * 1.3,
+    fontWeight: '600',
+  },
   sampleBody: { fontSize: typeSize.caption, lineHeight: typeSize.caption * 1.35 },
 });
