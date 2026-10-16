@@ -21,8 +21,8 @@ export function useInForeground(): boolean {
  * foreground when the app comes back from the background, and on a timer
  * when the next local day starts while the app is open. The composition
  * decides what changed (a new local day, the permission). It also writes the
- * Widget Snapshot once the composition is open and each time the app leaves
- * the foreground. Draws nothing.
+ * Widget Snapshot once the composition is open and each time the app goes to
+ * the background. Draws nothing.
  */
 export function Lifecycle() {
   const composition = useModule((open) => open);
@@ -46,10 +46,14 @@ export function Lifecycle() {
     return writeWidgetSnapshots({
       device: deviceWidget,
       snapshot: () => composition.widget.snapshot(),
-      onBackground: (listener) =>
-        foreground.subscribe(() => {
-          if (!foreground.active()) listener();
-        }),
+      onBackground: (listener) => {
+        const subscription = AppState.addEventListener('change', (state) => {
+          if (state === 'background') listener();
+        });
+        return () => {
+          subscription.remove();
+        };
+      },
     });
   }, [composition]);
   return null;

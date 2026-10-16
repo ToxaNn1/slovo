@@ -47,16 +47,16 @@ export function writeWidgetSnapshots({
   onBackground: (listener: () => void) => () => void;
 }): () => void {
   if (device === undefined) return () => undefined;
-  const { container } = device;
+  const widget: WidgetDevice = device;
   let stopped = false;
   let writing = Promise.resolve();
 
   async function writeOnce(): Promise<void> {
     try {
       const text = serializeWidgetSnapshot(await snapshot());
-      await container.write(STAGED_WIDGET_SNAPSHOT_FILE, text);
-      await container.replace(STAGED_WIDGET_SNAPSHOT_FILE, WIDGET_SNAPSHOT_FILE);
-      device?.reloadTimelines();
+      await widget.container.write(STAGED_WIDGET_SNAPSHOT_FILE, text);
+      await widget.container.replace(STAGED_WIDGET_SNAPSHOT_FILE, WIDGET_SNAPSHOT_FILE);
+      widget.reloadTimelines();
     } catch (error) {
       console.warn('Could not write the Widget Snapshot; the next background tries again', error);
     }
