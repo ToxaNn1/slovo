@@ -201,6 +201,24 @@ describe('an Entry opened from a list', () => {
     });
   });
 
+  it("opens today's Word of the Day with its day, as the Feed shows it", async () => {
+    const app = await run();
+    const today = entryIdOf(app.feed.cards[app.feed.startPosition]);
+
+    expect(await app.entryCard(today ?? '')).toMatchObject({
+      kind: 'word',
+      wordOfTheDay: { year: 2026, month: 10, day: 11 },
+    });
+  });
+
+  it('opens any other Word without a day', async () => {
+    const app = await run();
+    const today = entryIdOf(app.feed.cards[app.feed.startPosition]);
+    const other = ['w_one', 'w_two'].find((id) => id !== today) ?? '';
+
+    expect(await app.entryCard(other)).not.toHaveProperty('wordOfTheDay');
+  });
+
   it('opens nothing for an id the Language Pack does not have', async () => {
     const records = new Map<string, string>();
     records.set('favorites.w_gone', JSON.stringify('2026-10-11T07:00:00.000Z'));
