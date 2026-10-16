@@ -127,7 +127,7 @@ describe("the widget extension's Edition files", () => {
   it("writes the widget's strings into the string table of the Edition's language", () => {
     expect(text(files, 'Generated/uk.lproj/Localizable.strings')).toBe(
       '"galleryName" = "Рідкісне слово";\n' +
-        '"galleryDescription" = "Нове слово на головному екрані щоп’ять хвилин.";\n' +
+        '"galleryDescription" = "Нове рідкісне слово на головному екрані кожні п’ять хвилин.";\n' +
         '"allEntries" = "УСІ СЛОВА";\n',
     );
   });

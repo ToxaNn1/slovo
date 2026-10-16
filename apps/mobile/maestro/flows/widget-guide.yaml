@@ -1,0 +1,30 @@
+# Settings › «Віджети: як додати»: the row opens the widget guide (it is no
+# longer a dimmed «СКОРО» row), the guide shows its title and the three steps,
+# and back leads to the list. The drawing of the widgets is a picture that
+# VoiceOver skips, so the flow does not look for it. A subflow of `smoke.yaml`;
+# run it from there.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- runFlow:
+    file: ../open-widget-guide.yaml
+# The steps may be under the fold of a small screen or at a large text size.
+- scrollUntilVisible:
+    element:
+      id: widget-guide-step-1
+- scrollUntilVisible:
+    element:
+      id: widget-guide-step-2
+- scrollUntilVisible:
+    element:
+      id: widget-guide-step-3
+- scrollUntilVisible:
+    element:
+      id: widget-guide-back
+    direction: UP
+- takeScreenshot: widget-guide
+- tapOn:
+    id: widget-guide-back
+- assertVisible:
+    id: settings-row-widgets
+- assertNotVisible:
+    id: widget-guide

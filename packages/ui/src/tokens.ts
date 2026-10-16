@@ -147,3 +147,34 @@ export const toastElevation = {
   shadowOpacity: 0.4,
   shadowRadius: 15,
 } as const;
+
+/**
+ * The widget guide's numbered steps: the square that holds the number, the
+ * title's size (Manrope 700, 17 in the design) and the hint's line height as a
+ * multiple of its size.
+ */
+export const guideStep = { badge: 28, badgeRadius: 4, titleSize: 17, hintLeading: 1.4 } as const;
+
+/**
+ * The drawing of the widgets in the widget guide. It is a picture of the
+ * phone, so it does not follow the text size of iOS and its wallpaper is no
+ * Edition token. The type sizes are smaller than the design's real widgets
+ * (28–30 for the Lemma at 170×170, 34 at 364×170), which the drawing scales
+ * down with its own width.
+ */
+export const widgetDrawing = {
+  wallpaper: '#3F3128',
+  /** The white of the drawing's app icons and caption, with the opacity of each. */
+  white: '#FFFFFF',
+  iconOpacity: 0.16,
+  captionOpacity: 0.7,
+  /** The app icons are drawn in two rows of two. */
+  iconRows: 2,
+  iconRadius: 12,
+  /** The widgets' corner radius, the design's 22–24. */
+  widgetRadius: 22,
+  /** The medium widget's width over its height, from the design's 364 × 170. */
+  mediumAspectRatio: 364 / 170,
+  lemmaSize: 24,
+  lineSize: 12,
+} as const;

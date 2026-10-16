@@ -99,4 +99,5 @@ export {
   type VerticalPagerHandle,
   type VerticalPagerProps,
 } from './VerticalPager';
+export { GuideStep, WidgetDrawing } from './WidgetGuide';
 export { useReduceMotion } from './useReduceMotion';
