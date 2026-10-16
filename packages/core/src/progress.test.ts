@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Word } from '@slovo/contracts';
-
 import {
   createMemoryContentPort,
   createMemoryUserStatePort,
@@ -10,10 +8,10 @@ import {
   SEEN_DWELL_MS,
   type Clock,
   type Composition,
-  type Random,
   type UserStateChanges,
   type UserStatePort,
 } from './index';
+import { fakeClock, steppingRandom, word } from './test-support';
 
 /** The Edition's one Category, the test Words' own, and its default Mix of every Category. */
 const testCategories = {
@@ -26,47 +24,7 @@ const testCategories = {
   },
 };
 
-function word(id: string): Word {
-  return {
-    kind: 'word',
-    id,
-    lemma: id.slice(2),
-    stress: [0],
-    partOfSpeech: 'noun',
-    primaryDefinition: `The meaning of ${id.slice(2)}.`,
-    extraDefinitions: [],
-    examples: [],
-    synonyms: [],
-    antonyms: [],
-    registers: [],
-    categoryId: 'test',
-    rarity: 3,
-    sources: [{ title: 'Test source' }],
-    correctionIds: [],
-    retired: false,
-  };
-}
-
 const content = createMemoryContentPort({ words: [word('w_one'), word('w_two')] });
-
-/** A clock the test moves in time and between time zones. */
-function fakeClock(start = '2026-10-11T09:00:00+03:00', timeZone = 'Europe/Kyiv') {
-  let now = new Date(start).getTime();
-  let zone = timeZone;
-  const clock: Clock = { now: () => new Date(now), timeZone: () => zone };
-  return {
-    clock,
-    advance(ms: number) {
-      now += ms;
-    },
-    set(instant: string) {
-      now = new Date(instant).getTime();
-    },
-    moveTo(timeZoneName: string) {
-      zone = timeZoneName;
-    },
-  };
-}
 
 /** A user-state port over the records that keeps every write it is given. */
 function recordingPort(records: Map<string, string>) {
@@ -81,17 +39,6 @@ function recordingPort(records: Map<string, string>) {
         return port.write(changes);
       },
     } satisfies UserStatePort,
-  };
-}
-
-/** A seeded random port that steps through the unit interval, so each Collection gets its own id. */
-function steppingRandom(): Random {
-  let step = 0;
-  return {
-    next() {
-      step += 1;
-      return (step * 0.6180339887) % 1;
-    },
   };
 }
 

@@ -1,35 +1,16 @@
-import { EditionStringsSchema, type Plural } from '@slovo/contracts';
 import {
   createMemoryContentPort,
   createMemoryUserStatePort,
-  loadEdition,
   openComposition,
   openUserState,
   systemRandom,
   type Composition,
   type Edition,
 } from '@slovo/core';
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 import { mixScreenModel, mixSummary } from './mix-screen';
-
-const editionFile = (name: string): unknown =>
-  JSON.parse(
-    readFileSync(
-      fileURLToPath(new URL(`../../../../editions/uk/${name}`, import.meta.url)),
-      'utf8',
-    ),
-  );
-
-const strings = EditionStringsSchema.parse(editionFile('strings.json'));
-const ukrainian = loadEdition(editionFile('edition.json'));
-
-/** The Edition's own plural rules, as the shell's `count` applies them. */
-const pluralRules = new Intl.PluralRules(ukrainian.locale);
-const count = (forms: Plural, value: number) =>
-  (forms[pluralRules.select(value)] ?? forms.other).replace('{count}', String(value));
+import { count, strings, ukrainian } from '../test-support';
 
 async function open(edition: Edition): Promise<Composition> {
   return openComposition({

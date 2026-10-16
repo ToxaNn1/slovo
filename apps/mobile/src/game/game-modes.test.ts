@@ -1,7 +1,4 @@
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-
-import { EditionStringsSchema, type Word } from '@slovo/contracts';
+import type { Word } from '@slovo/contracts';
 import {
   createMemoryContentPort,
   createMemoryUserStatePort,
@@ -14,15 +11,9 @@ import {
 import { describe, expect, it } from 'vitest';
 
 import { gameModeCard, gameModeStrings } from './game-modes';
+import { strings as allStrings } from '../test-support';
 
-const { game: strings } = EditionStringsSchema.parse(
-  JSON.parse(
-    readFileSync(
-      fileURLToPath(new URL('../../../../editions/uk/strings.json', import.meta.url)),
-      'utf8',
-    ),
-  ),
-);
+const { game: strings } = allStrings;
 
 /** A Word of the test Category, with nothing but what the Game reads. */
 const word = (index: number): Word => ({

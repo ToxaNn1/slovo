@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Word } from '@slovo/contracts';
-
 import {
   createFakeNotificationScheduler,
   createMemoryContentPort,
@@ -16,64 +14,34 @@ import {
   type OnboardingStep,
   type PlannedNotification,
 } from './index';
+import { fakeClock, word } from './test-support';
 
-function word(id: string, categoryId: string, overrides: Partial<Word> = {}): Word {
-  return {
-    kind: 'word',
-    id,
-    lemma: id.slice(2),
-    stress: [0],
-    partOfSpeech: 'noun',
-    primaryDefinition: `The meaning of ${id.slice(2)}.`,
-    extraDefinitions: [],
-    examples: [],
-    synonyms: [],
-    antonyms: [],
-    registers: [],
-    categoryId,
-    rarity: 3,
-    sources: [{ title: 'Test source' }],
-    correctionIds: [],
-    retired: false,
-    ...overrides,
-  };
-}
+/** The instant these tests start at. */
+const start = '2026-10-14T08:00:00+03:00';
 
 /** Words of two Categories, so the Mix step can take one out. */
 const twoCategories = createMemoryContentPort({
   words: [
-    ...Array.from({ length: 12 }, (_, index) => word(`w_test${String(index)}`, 'test')),
-    ...Array.from({ length: 12 }, (_, index) => word(`w_other${String(index)}`, 'other')),
+    ...Array.from({ length: 12 }, (_, index) =>
+      word(`w_test${String(index)}`, { categoryId: 'test' }),
+    ),
+    ...Array.from({ length: 12 }, (_, index) =>
+      word(`w_other${String(index)}`, { categoryId: 'other' }),
+    ),
   ],
   corrections: [],
 });
 
 /** One Word, whose Definition is longer than a notification body holds. */
 const longDefinitionOnly = createMemoryContentPort({
-  words: [word('w_long', 'test', { primaryDefinition: 'very '.repeat(30).trim() })],
+  words: [word('w_long', { categoryId: 'test', primaryDefinition: 'very '.repeat(30).trim() })],
   corrections: [],
 });
-
-/** A clock the test moves in time and to another time zone, as a reader who travels. */
-function fakeClock(start = '2026-10-14T08:00:00+03:00', zone = 'Europe/Kyiv') {
-  let now = new Date(start).getTime();
-  let timeZone = zone;
-  const clock: Clock = { now: () => new Date(now), timeZone: () => timeZone };
-  return {
-    clock,
-    advance(ms: number) {
-      now += ms;
-    },
-    travelTo(zone: string) {
-      timeZone = zone;
-    },
-  };
-}
 
 /** The Core composition of one app run over the records, so the user state survives between runs. */
 async function run({
   records = new Map<string, string>(),
-  clock = fakeClock().clock,
+  clock = fakeClock(start).clock,
   scheduler,
   content = twoCategories,
 }: {
@@ -241,7 +209,7 @@ describe('Onboarding', () => {
   });
 
   it('keeps the first moment when it ends again, and tells nobody', async () => {
-    const time = fakeClock();
+    const time = fakeClock(start);
     const app = await run({ clock: time.clock });
     await app.onboarding.finish();
     const finished = app.onboarding.state;
@@ -453,7 +421,7 @@ describe('Onboarding', () => {
       const scheduler = firstLaunch();
       const time = fakeClock('2026-10-14T08:00:00+03:00');
       const app = await run({ scheduler, clock: time.clock });
-      time.travelTo('Asia/Tokyo');
+      time.moveTo('Asia/Tokyo');
       await goTo(app, 'notifications');
       const sample = sampleOf(app);
 
@@ -466,7 +434,7 @@ describe('Onboarding', () => {
 
     it("is not today's Word of the Day once it is Seen, as in a session restored from before", async () => {
       const records = new Map<string, string>();
-      const time = fakeClock();
+      const time = fakeClock(start);
       // A session before, closed on the onboarding, after the Word of the Day was read in the Feed.
       const before = await run({ records, clock: time.clock });
       const wordOfTheDay = wordOfTheDayOf(before);

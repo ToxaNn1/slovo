@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Correction, Word } from '@slovo/contracts';
-
 import {
   createMemoryContentPort,
   createMemoryUserStatePort,
@@ -11,6 +9,7 @@ import {
   type Composition,
   type UserStatePort,
 } from '../index';
+import { correction, fakeClock, word } from '../test-support';
 
 /** The Edition's one Category, the test Words' own, and its default Mix of every Category. */
 const testCategories = {
@@ -20,58 +19,11 @@ const testCategories = {
   userSettingDefaults: { mix: { categoryIds: ['test'], corrections: true }, notificationTimes: [] },
 };
 
-function word(id: string, retired = false): Word {
-  return {
-    kind: 'word',
-    id,
-    lemma: id.slice(2),
-    stress: [0],
-    partOfSpeech: 'noun',
-    primaryDefinition: `The meaning of ${id.slice(2)}.`,
-    extraDefinitions: [],
-    examples: [],
-    synonyms: [],
-    antonyms: [],
-    registers: [],
-    categoryId: 'test',
-    rarity: 3,
-    sources: [{ title: 'Test source' }],
-    correctionIds: [],
-    retired,
-  };
-}
-
-function correction(id: string, retired = false): Correction {
-  return {
-    kind: 'correction',
-    id,
-    nonStandardForm: `not ${id.slice(2)}`,
-    correctionType: 'calque',
-    standardEquivalents: [id.slice(2), `also ${id.slice(2)}`],
-    explanation: 'An explanation.',
-    examplePair: { nonStandard: 'People say this.', standard: 'Better say this.' },
-    sources: [{ title: 'Test source' }],
-    retired,
-  };
-}
-
 /** A small pack: live Words, a Retired Word, a live and a Retired Correction. */
 const content = createMemoryContentPort({
-  words: [word('w_one'), word('w_two'), word('w_three'), word('w_old', true)],
-  corrections: [correction('c_one'), correction('c_old', true)],
+  words: [word('w_one'), word('w_two'), word('w_three'), word('w_old', { retired: true })],
+  corrections: [correction('c_one'), correction('c_old', { retired: true })],
 });
-
-/** A clock the test moves by hand. */
-function fakeClock(start = '2026-10-11T09:00:00+03:00') {
-  let now = new Date(start).getTime();
-  const clock: Clock = { now: () => new Date(now), timeZone: () => 'Europe/Kyiv' };
-  return {
-    clock,
-    advance(ms: number) {
-      now += ms;
-    },
-  };
-}
 
 const MINUTE = 60_000;
 

@@ -1,29 +1,16 @@
-import { EditionStringsSchema, type Correction, type Word } from '@slovo/contracts';
+import { type Correction, type Word } from '@slovo/contracts';
 import {
   createMemoryContentPort,
   createMemoryUserStatePort,
-  loadEdition,
   openComposition,
   openUserState,
   type Composition,
   type EntryFeedCard,
 } from '@slovo/core';
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 import { hideChoice, hideToast } from './hide-choice';
-
-const editionFile = (name: string): unknown =>
-  JSON.parse(
-    readFileSync(
-      fileURLToPath(new URL(`../../../../editions/uk/${name}`, import.meta.url)),
-      'utf8',
-    ),
-  );
-
-const strings = EditionStringsSchema.parse(editionFile('strings.json'));
-const ukrainian = loadEdition(editionFile('edition.json'));
+import { strings, ukrainian } from '../test-support';
 
 const [first] = ukrainian.categories;
 if (first === undefined) throw new Error('The Edition needs Categories');
