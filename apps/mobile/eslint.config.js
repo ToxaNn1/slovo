@@ -1,8 +1,10 @@
 import shared from '@slovo/config/eslint';
+import tokenLint from '@slovo/config/token-lint';
 import reactHooks from 'eslint-plugin-react-hooks';
 
 export default [
   ...shared,
+  ...tokenLint,
   { ignores: ['.expo/**', 'ios/**', 'android/**', 'expo-env.d.ts'] },
   {
     // The rules of hooks and effect dependencies. The React Compiler rules of

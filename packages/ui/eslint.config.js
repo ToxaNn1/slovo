@@ -1,8 +1,10 @@
 import shared from '@slovo/config/eslint';
+import tokenLint from '@slovo/config/token-lint';
 import reactHooks from 'eslint-plugin-react-hooks';
 
 export default [
   ...shared,
+  ...tokenLint,
   {
     // Text and token values come from the Edition, never from the UI code.
     // Cyrillic text is the tripwire for the Ukrainian Edition leaking in.
