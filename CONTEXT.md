@@ -165,8 +165,16 @@ The Word read aloud by the device's voice for the Edition's language.
 _Avoid_: Audio, TTS
 
 **Share Card**:
-A branded image of a Word made for sharing outside the app.
+A branded image of an Entry made for sharing outside the app.
 _Avoid_: Screenshot
+
+**Widget Mode**:
+What a home-screen widget shows, chosen per widget: Улюблене (the Favorites), one Collection, or Усі слова (every Eligible Entry). Every mode shows only Eligible Entries.
+_Avoid_: Game Mode, filter
+
+**Widget Snapshot**:
+Everything each Widget Mode may show, decided by the Core and ready to draw, which the app writes into the App Group for the widget to read. The widget reads nothing else.
+_Avoid_: Widget cache, widget database
 
 ### Game
 

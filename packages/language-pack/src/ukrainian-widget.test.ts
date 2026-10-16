@@ -1,0 +1,128 @@
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+
+import {
+  serializeWidgetSnapshot,
+  WidgetSnapshotSchema,
+  type WidgetSnapshot,
+} from '@slovo/contracts';
+import {
+  createMemoryUserStatePort,
+  loadEdition,
+  openComposition,
+  openUserState,
+  type Clock,
+  type Random,
+} from '@slovo/core';
+
+import { buildLanguagePack, openLanguagePack, type NodeLanguagePack } from './index';
+
+// The Widget Snapshot contract (spec #259, seam 2): the snapshot the Core
+// builds over the real Ukrainian Language Pack, and the example the widget's
+// gallery shows. It lives here because only this package can build and read
+// a pack in Node.
+
+const editionDir = fileURLToPath(new URL('../../../editions/uk', import.meta.url));
+
+const ukrainian = loadEdition(
+  JSON.parse(readFileSync(join(editionDir, 'edition.json'), 'utf8')) as unknown,
+);
+
+let workDir: string;
+let pack: NodeLanguagePack;
+
+beforeAll(() => {
+  workDir = mkdtempSync(join(tmpdir(), 'slovo-widget-'));
+  const outFile = join(workDir, 'language-pack.db');
+  if (!buildLanguagePack({ editionDir, outFile }).ok) {
+    throw new Error('The Ukrainian Language Pack does not build');
+  }
+  pack = openLanguagePack(outFile);
+});
+
+afterAll(() => {
+  pack.close();
+  rmSync(workDir, { recursive: true, force: true });
+});
+
+/** A seeded random port (a linear congruential generator), so every run draws the same. */
+function seededRandom(seed: number): Random {
+  let state = seed;
+  return {
+    next() {
+      state = (state * 1_664_525 + 1_013_904_223) % 2 ** 32;
+      return state / 2 ** 32;
+    },
+  };
+}
+
+/** A clock the test moves by hand. */
+function fakeClock(start: string) {
+  let now = new Date(start).getTime();
+  const clock: Clock = { now: () => new Date(now), timeZone: () => 'Europe/Kyiv' };
+  return {
+    clock,
+    advance: (ms: number) => {
+      now += ms;
+    },
+  };
+}
+
+/** Every id each Widget Mode shows. */
+const modeIdsOf = (snapshot: WidgetSnapshot) => [
+  ...snapshot.allEntries,
+  ...snapshot.favorites,
+  ...snapshot.collections.flatMap(({ entryIds }) => entryIds),
+];
+
+describe('The Widget Snapshot of the Ukrainian Edition', () => {
+  it('serializes and parses, with every id in every mode among its Entries', async () => {
+    const { clock, advance } = fakeClock('2026-10-16T09:00:00+03:00');
+    const app = await openComposition({
+      content: pack,
+      edition: ukrainian,
+      userState: await openUserState({ port: createMemoryUserStatePort() }),
+      clock,
+      random: seededRandom(7),
+    });
+    const [first, second, third] = await pack.listWordIds();
+    const [correctionId] = await pack.listCorrectionIds();
+    if (first === undefined || second === undefined || third === undefined) {
+      throw new Error('The pack has fewer than three Words');
+    }
+    if (correctionId === undefined) throw new Error('The pack has no Correction');
+    for (const id of [first, second, correctionId]) {
+      await app.favorites.add(id);
+      advance(60_000);
+    }
+    const letters = await app.collections.create('Для листів', third);
+    if (!letters.ok) throw new Error('The Collection was not created');
+    await app.collections.add(letters.collection.id, second);
+    await app.hide({ kind: 'entry', entryId: second });
+
+    const snapshot = await app.widget.snapshot();
+    const parsed = WidgetSnapshotSchema.parse(JSON.parse(serializeWidgetSnapshot(snapshot)));
+
+    expect(parsed).toEqual(snapshot);
+    expect(parsed.editionId).toBe('uk');
+    expect(parsed.favorites).toEqual([correctionId, first]);
+    expect(parsed.collections).toEqual([
+      { id: letters.collection.id, name: 'Для листів', entryIds: [third] },
+    ]);
+    const entryIds = new Set(parsed.entries.map(({ id }) => id));
+    expect(modeIdsOf(parsed).filter((id) => !entryIds.has(id))).toEqual([]);
+    expect([...entryIds, ...modeIdsOf(parsed)]).not.toContain(second);
+  });
+
+  it('has a checked-in example that parses, for the widget gallery', () => {
+    const example: unknown = JSON.parse(
+      readFileSync(join(editionDir, 'widget-snapshot.example.json'), 'utf8'),
+    );
+
+    expect(WidgetSnapshotSchema.safeParse(example).error).toBeUndefined();
+  });
+});
