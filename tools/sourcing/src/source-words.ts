@@ -6,9 +6,11 @@ import {
   WordSchema,
   type EditionConfig,
   type Example,
+  type Gender,
   type PartOfSpeech,
   type Register,
   type Source,
+  type WordInput,
 } from '@slovo/contracts';
 import { checkNewWords, ID_REGISTRY_FILE, IdRegistrySchema } from '@slovo/language-pack';
 
@@ -223,8 +225,16 @@ interface Context {
   readonly editionDir: string;
 }
 
+/**
+ * A Word as drafted: the authored shape, except that the sources may leave the
+ * part of speech and the primary Definition open. A draft without them fails
+ * the schema and goes to the incomplete folder.
+ */
+type WordDraft = Omit<WordInput, 'partOfSpeech' | 'primaryDefinition'> &
+  Partial<Pick<WordInput, 'partOfSpeech' | 'primaryDefinition'>>;
+
 interface Draft {
-  readonly word: Record<string, unknown>;
+  readonly word: WordDraft;
   readonly outcome: DraftOutcome;
 }
 
@@ -352,58 +362,166 @@ function draftArticle(
   },
 ): Draft {
   const { lemma } = request;
-  const flags: Flag[] = [];
-  const flag = (kind: FlagKind, message: string) => flags.push({ kind, message });
   const headword = [article.headword, article.homonymNumber]
     .filter((part) => part !== undefined)
     .join(' ');
-  let usedInflections = false;
+  const stress = draftStress(article, goroh, lemma);
+  const grammar = draftGrammar(article, goroh, isHomonym);
+  const definitions = draftDefinitions(article);
+  const examples = draftExamples(article);
+  const synonyms = draftSynonyms(goroh, lemma, isHomonym);
+  const etymology = draftEtymology(goroh, lemma, isHomonym);
 
-  if (isHomonym)
-    flag(
-      'homonym',
-      `One of the homonyms: ${headword} — ${article.definitions[0]?.text ?? '(no Definition)'}`,
-    );
-  if (matchKey(article.headword) !== matchKey(lemma)) {
-    flag('spelling-differs', `The dictionary spells the headword ${unstressed(article.headword)}`);
+  const sources: Source[] = [article.source];
+  if (stress.usedInflections || grammar.usedInflections)
+    sources.push({ title: 'Горох: словозміна', url: gorohUrl('Словозміна', lemma) });
+  sources.push(...synonyms.sources, ...etymology.sources);
+
+  const word = compact<WordDraft>({
+    id: context.newId(),
+    lemma,
+    stress: stress.stress,
+    partOfSpeech: grammar.partOfSpeech,
+    gender: grammar.gender,
+    primaryDefinition: definitions.primaryDefinition,
+    extraDefinitions: definitions.extraDefinitions,
+    examples: examples.examples,
+    synonyms: synonyms.synonyms,
+    etymology: etymology.etymology,
+    registers: definitions.registers,
+    categoryId: request.categoryId,
+    rarity: request.rarity,
+    sources,
+  });
+
+  const flags: Flag[] = [
+    ...headwordFlags(article, headword, lemma, isHomonym),
+    ...stress.flags,
+    ...grammar.flags,
+    ...definitions.flags,
+    ...examples.flags,
+    ...synonyms.flags,
+    ...etymology.flags,
+  ];
+  if (grammar.gender === 'plural-only') {
+    flags.push({ kind: 'plural-only', message: 'A plural-only noun' });
   }
+  const issues = checkDraft(word, context.editionDir);
+  const ready = issues.length === 0;
+  return {
+    word,
+    outcome: {
+      id: word.id,
+      file: `${ready ? DRAFTS_DIR : INCOMPLETE_DIR}/${word.id}.json`,
+      ready,
+      headword,
+      issues,
+      flags,
+    },
+  };
+}
 
-  // Stress: the article's own mark, checked against the inflection dictionary.
+/** What a drafting step found, with what a human must look at. */
+type Step<T> = T & { readonly flags: readonly Flag[] };
+
+/** A step's result with the sources it drew on, which the draft cites. */
+type Cited<T> = Step<T> & { readonly sources: readonly Source[] };
+
+function flagOf(kind: FlagKind, message: string): Flag {
+  return { kind, message };
+}
+
+function headwordFlags(
+  article: DictionaryArticle,
+  headword: string,
+  lemma: string,
+  isHomonym: boolean,
+): Flag[] {
+  const flags: Flag[] = [];
+  if (isHomonym) {
+    flags.push(
+      flagOf(
+        'homonym',
+        `One of the homonyms: ${headword} — ${article.definitions[0]?.text ?? '(no Definition)'}`,
+      ),
+    );
+  }
+  if (matchKey(article.headword) !== matchKey(lemma)) {
+    flags.push(
+      flagOf(
+        'spelling-differs',
+        `The dictionary spells the headword ${unstressed(article.headword)}`,
+      ),
+    );
+  }
+  return flags;
+}
+
+/** Stress: the article's own mark, checked against the inflection dictionary. */
+function draftStress(
+  article: DictionaryArticle,
+  goroh: GorohEntry,
+  lemma: string,
+): Step<{ stress: number[] | undefined; usedInflections: boolean }> {
+  const flags: Flag[] = [];
   const articleStress = readStress(article.headword);
   const candidates = uniqueStresses(goroh.inflections);
   let stress: number[] | undefined;
+  let usedInflections = false;
   if (articleStress.length > 0) {
     stress = articleStress;
     if (candidates.some((candidate) => sameNumbers(candidate.stress, articleStress))) {
       usedInflections = true;
     } else if (candidates.length > 0) {
-      flag(
-        'sources-disagree',
-        `Stress: the explanatory dictionary has ${article.headword}, goroh's inflection dictionary has ${candidates.map((candidate) => candidate.headword).join(', ')}; the draft keeps ${article.headword}`,
+      flags.push(
+        flagOf(
+          'sources-disagree',
+          `Stress: the explanatory dictionary has ${article.headword}, goroh's inflection dictionary has ${candidates.map((candidate) => candidate.headword).join(', ')}; the draft keeps ${article.headword}`,
+        ),
       );
     }
   } else if (candidates.length === 1) {
     stress = candidates[0]?.stress;
     usedInflections = true;
   } else if (candidates.length === 0) {
-    flag('stress-unresolved', 'No source marks the Stress');
+    flags.push(flagOf('stress-unresolved', 'No source marks the Stress'));
   } else {
-    flag(
-      'stress-unresolved',
-      `goroh lists different Stresses for "${lemma}": ${candidates
-        .map((candidate) => [candidate.headword, candidate.gloss].filter(Boolean).join(' '))
-        .join(', ')}`,
+    flags.push(
+      flagOf(
+        'stress-unresolved',
+        `goroh lists different Stresses for "${lemma}": ${candidates
+          .map((candidate) => [candidate.headword, candidate.gloss].filter(Boolean).join(' '))
+          .join(', ')}`,
+      ),
     );
   }
   if (stress !== undefined && stress.length > 1) {
-    flag(
-      'several-stresses',
-      `Several valid Stresses: ${articleStress.length > 0 ? article.headword : (goroh.inflections[0]?.headword ?? lemma)}`,
+    flags.push(
+      flagOf(
+        'several-stresses',
+        `Several valid Stresses: ${articleStress.length > 0 ? article.headword : (goroh.inflections[0]?.headword ?? lemma)}`,
+      ),
     );
   }
+  return { stress, usedInflections, flags };
+}
 
-  // Part of speech and gender: the article's own labels first, then goroh's
-  // entries for the same word (same Stress, when the article marks it).
+/**
+ * Part of speech and gender: the article's own labels first, then goroh's
+ * entries for the same word (same Stress, when the article marks it).
+ */
+function draftGrammar(
+  article: DictionaryArticle,
+  goroh: GorohEntry,
+  isHomonym: boolean,
+): Step<{
+  partOfSpeech: PartOfSpeech | undefined;
+  gender: Gender | undefined;
+  usedInflections: boolean;
+}> {
+  const flags: Flag[] = [];
+  let usedInflections = false;
+  const articleStress = readStress(article.headword);
   const sumGrammar = grammarOf(article.labels);
   const sameWord =
     articleStress.length > 0
@@ -415,20 +533,24 @@ function draftArticle(
     partOfSpeech = gorohParts[0];
     usedInflections = true;
   } else if (partOfSpeech === undefined) {
-    flag(
-      'missing-data',
-      gorohParts.length === 0
-        ? 'No source names the part of speech'
-        : `goroh names several parts of speech: ${gorohParts.join(', ')}`,
+    flags.push(
+      flagOf(
+        'missing-data',
+        gorohParts.length === 0
+          ? 'No source names the part of speech'
+          : `goroh names several parts of speech: ${gorohParts.join(', ')}`,
+      ),
     );
   } else if (!isHomonym && gorohParts.length === 1 && gorohParts[0] !== partOfSpeech) {
-    flag(
-      'sources-disagree',
-      `Part of speech: the explanatory dictionary has ${partOfSpeech}, goroh ${String(gorohParts[0])}`,
+    flags.push(
+      flagOf(
+        'sources-disagree',
+        `Part of speech: the explanatory dictionary has ${partOfSpeech}, goroh ${String(gorohParts[0])}`,
+      ),
     );
   }
 
-  let gender: string | undefined;
+  let gender: Gender | undefined;
   if (partOfSpeech === 'noun') {
     const gorohGenders = unique(
       sameWord
@@ -440,137 +562,155 @@ function draftArticle(
       gender = gorohGenders[0];
       usedInflections = true;
     } else if (gender === undefined) {
-      flag('missing-data', 'No source names the gender');
+      flags.push(flagOf('missing-data', 'No source names the gender'));
     } else if (!isHomonym && gorohGenders.length === 1 && gorohGenders[0] !== gender) {
-      flag(
-        'sources-disagree',
-        `Gender: the explanatory dictionary has ${gender}, goroh ${String(gorohGenders[0])}`,
+      flags.push(
+        flagOf(
+          'sources-disagree',
+          `Gender: the explanatory dictionary has ${gender}, goroh ${String(gorohGenders[0])}`,
+        ),
       );
     }
   }
+  return { partOfSpeech, gender, usedInflections, flags };
+}
 
+/** The Definitions, and the Registers among the labels of the article and its primary Definition. */
+function draftDefinitions(article: DictionaryArticle): Step<{
+  primaryDefinition: string | undefined;
+  extraDefinitions: string[];
+  registers: Register[];
+}> {
+  const flags: Flag[] = [];
   const [primary, ...extra] = article.definitions;
+  const labels = [...article.labels, ...(primary?.labels ?? [])];
   const registers = unique(
-    [...article.labels, ...(primary?.labels ?? [])].flatMap((label) => {
+    labels.flatMap((label) => {
       const register = REGISTERS[label];
       return register === undefined ? [] : [register];
     }),
   );
-  const otherLabels = unique(
-    [...article.labels, ...(primary?.labels ?? [])].filter((label) => !KNOWN_LABELS.has(label)),
-  );
-  if (otherLabels.length > 0)
-    flag('other-labels', `Dictionary labels not carried over: ${otherLabels.join(', ')}`);
+  const otherLabels = unique(labels.filter((label) => !KNOWN_LABELS.has(label)));
+  if (otherLabels.length > 0) {
+    flags.push(
+      flagOf('other-labels', `Dictionary labels not carried over: ${otherLabels.join(', ')}`),
+    );
+  }
   const labelledMeanings = extra.filter((definition) => definition.labels.length > 0);
   if (labelledMeanings.length > 0) {
-    flag(
-      'other-labels',
-      `Labels of other meanings, not carried over: ${labelledMeanings
-        .map((definition) => `«${definition.text}» ${unique(definition.labels).join(', ')}`)
-        .join('; ')}`,
+    flags.push(
+      flagOf(
+        'other-labels',
+        `Labels of other meanings, not carried over: ${labelledMeanings
+          .map((definition) => `«${definition.text}» ${unique(definition.labels).join(', ')}`)
+          .join('; ')}`,
+      ),
     );
   }
+  return {
+    primaryDefinition: primary?.text,
+    extraDefinitions: extra.map((definition) => definition.text),
+    registers,
+    flags,
+  };
+}
+
+function draftExamples(article: DictionaryArticle): Step<{ examples: Example[] }> {
+  const flags: Flag[] = [];
   if (article.unmarkedExamples) {
-    flag(
-      'unmarked-examples',
-      'sum.in.ua prints some Examples without italics; they are left out, and the Definition is cut at its first sentence',
+    flags.push(
+      flagOf(
+        'unmarked-examples',
+        'sum.in.ua prints some Examples without italics; they are left out, and the Definition is cut at its first sentence',
+      ),
     );
   }
+  const examples = article.examples.map((example): Example => {
+    const author = authorOf(example.citation);
+    return { text: asSentence(example.text), ...(author === undefined ? {} : { author }) };
+  });
+  return { examples, flags };
+}
 
-  const sources: Source[] = [article.source];
-  if (usedInflections)
-    sources.push({ title: 'Горох: словозміна', url: gorohUrl('Словозміна', lemma) });
-
-  let synonyms: string[] = [];
-  if (!isHomonym && goroh.synonymGroups.length > 0) {
-    const taken = goroh.synonymGroups.filter((group) => isSynonymDictionary(group.dictionary));
-    const leftOut = goroh.synonymGroups.filter((group) => !isSynonymDictionary(group.dictionary));
-    synonyms = unique(taken.flatMap((group) => group.synonyms)).filter(
-      (synonym) => synonym !== lemma,
+/** goroh's Synonyms from its synonym dictionaries; a homonym's are assigned by hand. */
+function draftSynonyms(
+  goroh: GorohEntry,
+  lemma: string,
+  isHomonym: boolean,
+): Cited<{ synonyms: string[] }> {
+  if (isHomonym || goroh.synonymGroups.length === 0)
+    return { synonyms: [], sources: [], flags: [] };
+  const flags: Flag[] = [];
+  const sources: Source[] = [];
+  const taken = goroh.synonymGroups.filter((group) => isSynonymDictionary(group.dictionary));
+  const leftOut = goroh.synonymGroups.filter((group) => !isSynonymDictionary(group.dictionary));
+  const synonyms = unique(taken.flatMap((group) => group.synonyms)).filter(
+    (synonym) => synonym !== lemma,
+  );
+  if (synonyms.length > 0) {
+    const dictionaries = unique(
+      taken.flatMap((group) => (group.dictionary === undefined ? [] : [group.dictionary])),
     );
-    if (synonyms.length > 0) {
-      const dictionaries = unique(
-        taken.flatMap((group) => (group.dictionary === undefined ? [] : [group.dictionary])),
-      );
-      sources.push({
-        title: `Горох: синонімія (${dictionaries.join('; ')})`,
-        url: gorohUrl('Синонімія', lemma),
-      });
-    }
-    if (leftOut.length > 0) {
-      flag(
+    sources.push({
+      title: `Горох: синонімія (${dictionaries.join('; ')})`,
+      url: gorohUrl('Синонімія', lemma),
+    });
+  }
+  if (leftOut.length > 0) {
+    flags.push(
+      flagOf(
         'check',
         `goroh words left out because they don't come from a synonym dictionary: ${leftOut
           .map((group) => `${group.dictionary ?? '(no dictionary)'}: ${group.synonyms.join(', ')}`)
           .join('; ')}`,
-      );
-    }
+      ),
+    );
   }
+  return { synonyms, sources, flags };
+}
 
-  let etymology: string | undefined;
-  if (!isHomonym) {
-    const { entries, underOtherHeadword } = matchingEtymologies(goroh.etymologies, lemma);
-    const [chosen] = entries;
-    if (entries.length === 1 && chosen !== undefined && chosen.text !== '') {
-      etymology = chosen.text.replace(/;$/, '.');
-      sources.push({
-        title: underOtherHeadword
-          ? `Горох: етимологія (Етимологічний словник української мови, стаття «${chosen.headword}»)`
-          : 'Горох: етимологія (Етимологічний словник української мови)',
-        url: gorohUrl('Етимологія', lemma),
-      });
-      if (underOtherHeadword) {
-        flag(
-          'check',
-          `The etymology is that of the ЕСУМ article ${describeEtymology(chosen)}, which lists "${lemma}"`,
-        );
-      }
-    } else if (entries.length > 1) {
-      flag(
-        'needs-assignment',
-        `Several ЕСУМ articles fit: ${entries.map(describeEtymology).join('; ')}`,
-      );
-    }
+/** The etymology of the one ЕСУМ article about the Lemma; a homonym's is assigned by hand. */
+function draftEtymology(
+  goroh: GorohEntry,
+  lemma: string,
+  isHomonym: boolean,
+): Cited<{ etymology: string | undefined }> {
+  if (isHomonym) return { etymology: undefined, sources: [], flags: [] };
+  const { entries, underOtherHeadword } = matchingEtymologies(goroh.etymologies, lemma);
+  const [chosen] = entries;
+  if (entries.length === 1 && chosen !== undefined && chosen.text !== '') {
+    return {
+      etymology: chosen.text.replace(/;$/, '.'),
+      sources: [
+        {
+          title: underOtherHeadword
+            ? `Горох: етимологія (Етимологічний словник української мови, стаття «${chosen.headword}»)`
+            : 'Горох: етимологія (Етимологічний словник української мови)',
+          url: gorohUrl('Етимологія', lemma),
+        },
+      ],
+      flags: underOtherHeadword
+        ? [
+            flagOf(
+              'check',
+              `The etymology is that of the ЕСУМ article ${describeEtymology(chosen)}, which lists "${lemma}"`,
+            ),
+          ]
+        : [],
+    };
   }
-
-  const examples: Example[] = article.examples.map((example) => {
-    const author = authorOf(example.citation);
-    return { text: asSentence(example.text), ...(author === undefined ? {} : { author }) };
-  });
-
-  const word = compact({
-    id: context.newId(),
-    lemma,
-    stress,
-    partOfSpeech,
-    gender,
-    primaryDefinition: primary?.text,
-    extraDefinitions: extra.map((definition) => definition.text),
-    examples,
-    synonyms,
-    etymology,
-    registers,
-    categoryId: request.categoryId,
-    rarity: request.rarity,
-    sources,
-  });
-
-  const issues = checkDraft(word, context.editionDir);
-  if (gender === 'plural-only') {
-    flag('plural-only', 'A plural-only noun');
-  }
-  const id = String(word['id']);
-  const ready = issues.length === 0;
   return {
-    word,
-    outcome: {
-      id,
-      file: `${ready ? DRAFTS_DIR : INCOMPLETE_DIR}/${id}.json`,
-      ready,
-      headword,
-      issues,
-      flags,
-    },
+    etymology: undefined,
+    sources: [],
+    flags:
+      entries.length > 1
+        ? [
+            flagOf(
+              'needs-assignment',
+              `Several ЕСУМ articles fit: ${entries.map(describeEtymology).join('; ')}`,
+            ),
+          ]
+        : [],
   };
 }
 
@@ -579,7 +719,7 @@ function draftArticle(
  * content, as `field: message`. The build checks need a Word that passed the
  * schema, so they run once it does.
  */
-function checkDraft(word: Record<string, unknown>, editionDir: string): string[] {
+function checkDraft(word: WordDraft, editionDir: string): string[] {
   const result = WordSchema.safeParse(word);
   const issues = result.success
     ? checkNewWords(editionDir, [result.data]).map(
@@ -589,13 +729,19 @@ function checkDraft(word: Record<string, unknown>, editionDir: string): string[]
   return unique(issues);
 }
 
-/** Drops empty lists and missing values, so drafts read like authored content. */
-function compact(fields: Record<string, unknown>): Record<string, unknown> {
+/** A draft's fields as they are gathered: an optional one may still be missing. */
+type Gathered<T> = { [K in keyof T]: object extends Pick<T, K> ? T[K] | undefined : T[K] };
+
+/**
+ * Drops empty lists and missing values, so drafts read like authored content.
+ * The draft keeps a required field only when its source gave one.
+ */
+function compact<T extends object>(fields: Gathered<T>): T {
   return Object.fromEntries(
     Object.entries(fields).filter(
       ([, value]) => value !== undefined && !(Array.isArray(value) && value.length === 0),
     ),
-  );
+  ) as T;
 }
 
 /** СУМ-11 spells ґ as г, so its headwords are matched with the two letters merged. */
@@ -670,7 +816,7 @@ const PARTS_OF_SPEECH: Readonly<Record<string, PartOfSpeech>> = {
   вигук: 'interjection',
 };
 
-const GENDERS: Readonly<Record<string, string>> = {
+const GENDERS: Readonly<Record<string, Gender>> = {
   'чоловічий рід': 'masculine',
   'жіночий рід': 'feminine',
   'середній рід': 'neuter',
@@ -679,7 +825,7 @@ const GENDERS: Readonly<Record<string, string>> = {
 };
 
 /** СУМ labels by their full names. A gender label marks a noun; `множина` after the headword marks a plural-only noun. */
-const SUM_GENDERS: Readonly<Record<string, string>> = {
+const SUM_GENDERS: Readonly<Record<string, Gender>> = {
   'чоловічий рід': 'masculine',
   'жіночий рід': 'feminine',
   'середній рід': 'neuter',
@@ -714,7 +860,7 @@ const KNOWN_LABELS = new Set([
   ...Object.keys(REGISTERS),
 ]);
 
-function grammarOf(labels: readonly string[]): { partOfSpeech?: PartOfSpeech; gender?: string } {
+function grammarOf(labels: readonly string[]): { partOfSpeech?: PartOfSpeech; gender?: Gender } {
   const genders = labels.flatMap((label) => {
     const gender = SUM_GENDERS[label];
     return gender === undefined ? [] : [gender];
