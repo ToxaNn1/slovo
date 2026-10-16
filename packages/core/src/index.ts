@@ -48,26 +48,26 @@ export {
   type FeedCard,
   type WordFeedCard,
 } from './feed/feed-card';
+export { type Game, type GameModeOffer, type GameState } from './game/game';
 export {
   GAME_LIVES,
-  GAME_ROUNDS,
-  ROUND_OPTIONS,
-  type AnswerSheet,
   type CurrentGame,
-  type Game,
-  type GameEdition,
-  type GameMode,
-  type GameModeOffer,
-  type GameModeRefusal,
-  type GameState,
   type GameStatus,
   type Round,
   type RoundAnswer,
+} from './game/game-in-play';
+export {
+  ROUND_OPTIONS,
+  type AnswerSheet,
+  type GameEdition,
+  type GameMode,
+  type GameModeRefusal,
   type RoundContent,
   type RoundInput,
   type RoundOption,
   type TextRange,
-} from './game/game';
+} from './game/game-mode';
+export { GAME_ROUNDS } from './game/round-plan';
 export {
   createGameHaptics,
   LIFE_LOST_DELAY,
