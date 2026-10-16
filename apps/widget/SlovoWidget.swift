@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import WidgetKit
 
 /// SLOVO's home-screen widget: an Entry of Усі слова every five minutes, in
@@ -8,8 +9,8 @@ struct SlovoWidget: Widget {
   let kind = "SlovoWidget"
 
   var body: some WidgetConfiguration {
-    StaticConfiguration(kind: kind, provider: WordTimeline()) { moment in
-      WordView(moment: moment)
+    StaticConfiguration(kind: kind, provider: EntryTimeline()) { moment in
+      EntryView(moment: moment)
         .containerBackground(Color("background"), for: .widget)
         .widgetURL(EditionInfo.url(opening: moment.entry))
     }
@@ -19,19 +20,20 @@ struct SlovoWidget: Widget {
   }
 }
 
-/// One moment of the widget: the Widget Mode's name over the Lemma (and, in
-/// medium, the second line), with the band at the bottom.
-struct WordView: View {
+/// One moment of the widget: the Widget Mode's name over the headline (and,
+/// in medium, the second line), with the band at the bottom.
+struct EntryView: View {
   @Environment(\.widgetFamily) private var family
-  let moment: WordMoment
+  let moment: EntryMoment
 
   private var isSmall: Bool { family == .systemSmall }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 0) {
       Text("allEntries")
+        // The overline type of the app (`overlineType` in the UI tokens).
         .font(EditionInfo.uiFont(size: 11, weight: .bold))
-        .tracking(1.6)
+        .tracking(11 * 0.14)
         .foregroundStyle(Color("accent"))
         .lineLimit(1)
         .minimumScaleFactor(0.7)
@@ -47,21 +49,22 @@ struct WordView: View {
             .padding(.top, 2)
         }
       }
+      // Tiled across the width at the band's own height, which the Edition's Decor sets.
       Image("band")
         .resizable(resizingMode: .tile)
-        .frame(height: 10)
+        .frame(height: UIImage(named: "band")?.size.height ?? 0)
         .padding(.top, 10)
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
   }
 
   /// The headline scales down before it wraps, and wraps only between words,
-  /// so a word is never cut mid-letter.
+  /// so a word is never cut mid-letter: a single word stays on one line.
   private func headline(_ text: String) -> some View {
     Text(text)
       .font(EditionInfo.wordFont(size: isSmall ? 30 : 34, weight: .medium))
       .foregroundStyle(Color("ink"))
-      .lineLimit(text.contains(" ") ? 2 : 1)
+      .lineLimit(text.contains(" ") ? 3 : 1)
       .minimumScaleFactor(0.4)
   }
 }

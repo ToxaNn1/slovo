@@ -30,8 +30,8 @@ afterEach(() => {
 /**
  * A throwaway repo layout (`apps/mobile` next to `editions/uk`) holding a copy
  * of the Ukrainian Edition's config, changed by `edit`, with its assets,
- * Decor, strings, tokens and example Widget Snapshot. The icon is copied unless `withIcon` is false; `change` may then edit
- * the copied Edition folder.
+ * Decor, strings, tokens and example Widget Snapshot. The icon is copied
+ * unless `withIcon` is false; `change` may then edit the copied Edition folder.
  */
 function repoWithEdition(
   edit: (config: Record<string, unknown>) => void,

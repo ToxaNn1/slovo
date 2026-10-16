@@ -9,7 +9,7 @@ enum EditionInfo {
   static let appGroup = value("SLOVOAppGroup")
   /// The app's URL scheme, which the widget's links open.
   static let urlScheme = value("SLOVOURLScheme")
-  /// The font family of the Lemma, or nil for the system font.
+  /// The font family of the headline, or nil for the system font.
   static let wordFontFamily = value("SLOVOWordFont")
   /// The font family of labels, or nil for the system font.
   static let uiFontFamily = value("SLOVOUIFont")

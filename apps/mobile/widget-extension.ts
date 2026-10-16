@@ -20,7 +20,7 @@ export interface WidgetEdition {
   readonly scheme: string;
   readonly strings: EditionStrings['widget'];
   readonly tokens: DesignTokens;
-  /** The divider's band (Decor slot 2), drawn under the Lemma. */
+  /** The divider's band (Decor slot 2), drawn under the headline. */
   readonly band: DecorMotif;
   /** The font files the extension bundles, as absolute paths. */
   readonly fontFiles: readonly string[];
@@ -72,10 +72,10 @@ function svgFill(color: string): string {
   return alpha === 1 ? `fill="#${hex}"` : `fill="#${hex}" fill-opacity="${String(alpha)}"`;
 }
 
-/** A Decor motif in one colour scheme, as an SVG document. */
-function motifSvg({ width, height, layers }: DecorMotif, scheme: 'light' | 'dark'): string {
+/** A Decor motif in one colour scheme, light or dark, as an SVG document. */
+function motifSvg({ width, height, layers }: DecorMotif, colorScheme: 'light' | 'dark'): string {
   const size = `width="${String(width)}" height="${String(height)}" viewBox="0 0 ${String(width)} ${String(height)}"`;
-  const paths = layers.map((layer) => `<path d="${layer.path}" ${svgFill(layer[scheme])}/>`);
+  const paths = layers.map((layer) => `<path d="${layer.path}" ${svgFill(layer[colorScheme])}/>`);
   return `<svg xmlns="http://www.w3.org/2000/svg" ${size}>${paths.join('')}</svg>\n`;
 }
 

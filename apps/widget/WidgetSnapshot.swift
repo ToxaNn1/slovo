@@ -8,13 +8,12 @@ struct WidgetSnapshot: Decodable {
   static let readableFormat = 1
 
   let format: Int
-  let onboardingFinished: Bool
   let entries: [WidgetEntry]
   /// Усі слова: the ids of every Eligible Entry.
   let allEntries: [String]
 
   /// The Entries of Усі слова, in the snapshot's order.
-  var allEntriesShown: [WidgetEntry] {
+  var allEntriesInOrder: [WidgetEntry] {
     let byId = Dictionary(entries.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
     return allEntries.compactMap { byId[$0] }
   }
@@ -23,7 +22,6 @@ struct WidgetSnapshot: Decodable {
 /// An Entry as the widget shows it, its text ready to draw.
 struct WidgetEntry: Decodable, Hashable {
   let id: String
-  let kind: String
   /// A Word's Lemma with its Stress marks, or a Correction's main standard equivalent.
   let headline: String
   /// A Word's primary Definition, or the non-standard form a Correction replaces.
@@ -40,13 +38,15 @@ enum SnapshotStore {
   static let stagedFileName = "widget-snapshot.staged.json"
 
   /// The snapshot the app wrote last, or nil before the app has written one.
+  /// The file is read again after the staged one, as the rename may finish
+  /// between the first two reads.
   static func latest() -> WidgetSnapshot? {
     guard
       let group = EditionInfo.appGroup,
       let container = FileManager.default.containerURL(
         forSecurityApplicationGroupIdentifier: group)
     else { return nil }
-    for name in [fileName, stagedFileName] {
+    for name in [fileName, stagedFileName, fileName] {
       if let snapshot = decode(container.appendingPathComponent(name)) { return snapshot }
     }
     return nil
