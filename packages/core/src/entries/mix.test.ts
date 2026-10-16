@@ -512,10 +512,7 @@ describe('eligibility over the Mix', () => {
 });
 
 describe('linked Corrections («Часто кажуть») over the Mix', () => {
-  const linked = {
-    ...word('w_linked', { categoryId: 'nature' }),
-    correctionIds: ['c_one', 'c_two'],
-  };
+  const linked = word('w_linked', { categoryId: 'nature', correctionIds: ['c_one', 'c_two'] });
   const pack = createMemoryContentPort({
     words: [
       linked,

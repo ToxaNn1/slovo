@@ -7,7 +7,7 @@ The modules of these three packages are grouped into folders named after the dom
 The rules:
 
 - A folder appears when a domain has at least two modules. A single module, such as the Core's `onboarding.ts` or `widget.ts`, stays at the root of `src/`.
-- The top and the shared base stay at the root: the Core's `composition.ts` (ADR 0018), which opens every module, and `ports.ts`, `in-turn.ts` and `local-date.ts`, which nearly every module imports; each package's `index.ts`; and the UI's `tokens.ts`. A test of the whole composition, such as `opened-from-widget.test.ts`, stays beside `composition.ts`.
+- The top and the shared base stay at the root: the Core's `composition.ts` (ADR 0018), which opens every module, and `ports.ts`, `in-turn.ts` and `local-date.ts`, which nearly every module imports; each package's `index.ts`; each package's `test-support.ts` of shared test helpers, which `index.ts` does not export; and the UI's `tokens.ts`. A test of the whole composition, such as `opened-from-widget.test.ts`, stays beside `composition.ts`.
 - A module goes where its domain's rule lives, not where its name points: `mix` sits in `entries/`, since the Entries module decides which Entries are Eligible (ADR 0015) and imports it, `correction-mode` sits in `game/`, since it is a Game Mode built on the Game, and `haptics` too, since only the Game's haptic sequence uses it (ADR 0025).
 - Files move with `git mv` and keep their names, so the history follows them and a move changes only import paths. A test stays beside its module.
 - A folder has no `index.ts` barrel. Each package keeps one public `index.ts`, and the other parts of the workspace import through the package entry points only (dependency-cruiser's `workspace-parts-import-through-the-entry-point`).

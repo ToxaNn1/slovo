@@ -24,7 +24,17 @@ import {
   type UserStatePort,
   type WordFeedCard,
 } from '../index';
-import { correction, fakeClock, randomOf, randomSequence, word } from '../test-support';
+import {
+  correction,
+  fakeClock,
+  randomOf,
+  randomSequence,
+  word as sharedWord,
+} from '../test-support';
+
+/** A Word whose Definition is the same for every id, so a card can be matched to it. */
+const word = (id: string, overrides: Partial<Word> = {}) =>
+  sharedWord(id, { primaryDefinition: 'A meaning.', ...overrides });
 
 /** A small pack: ten live Words and two Retired ones. */
 const liveIds = Array.from({ length: 10 }, (_, index) => `w_live${String(index)}`);
@@ -156,7 +166,7 @@ describe('the Feed', () => {
       expect(card?.kind === 'word' ? card.wordCard : undefined).toMatchObject({
         kind: 'word',
         wordId: entryIdOf(card),
-        primaryDefinition: `The meaning of ${entryIdOf(card)?.slice(2) ?? ''}.`,
+        primaryDefinition: 'A meaning.',
       });
     }
   });
