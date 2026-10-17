@@ -17,7 +17,7 @@ import {
 } from '../index';
 import { correction, fakeClock, word } from '../test-support';
 
-/** The Edition's Categories, in its order. */
+/** The Language Pack's Categories, in its order. */
 const nature: Category = { id: 'nature', displayName: 'Nature' };
 const speech: Category = { id: 'speech', displayName: 'Speech' };
 const crafts: Category = { id: 'crafts', displayName: 'Crafts' };
@@ -28,6 +28,7 @@ const wordIdsOf = (category: Category) =>
   [0, 1, 2].map((index) => `w_${category.id}${String(index)}`);
 const correctionIds = ['c_one', 'c_two'];
 const content = createMemoryContentPort({
+  categories,
   words: categories.flatMap((category) =>
     wordIdsOf(category).map((id) => word(id, { categoryId: category.id })),
   ),
@@ -49,8 +50,8 @@ async function run({
   port?: UserStatePort;
   pack?: ContentReadPort;
   clock?: Clock;
-  /** The Categories of the Edition's default Mix. */
-  defaultCategoryIds?: readonly string[];
+  /** The Categories of the Edition's default Mix: every one of the pack, or these. */
+  defaultCategoryIds?: 'all' | readonly string[];
   correctionsSwitch?: boolean;
 } = {}): Promise<Composition> {
   return openComposition({
@@ -59,7 +60,6 @@ async function run({
       id: 'test',
       isFeatureEnabled: (feature) => feature === 'corrections' && correctionsSwitch,
       languageTraits: { distractorRule: 'same-part-of-speech' },
-      categories,
       userSettingDefaults: {
         mix: { categoryIds: defaultCategoryIds, corrections: true },
         notificationTimes: [],
@@ -124,6 +124,7 @@ describe('the Mix', () => {
     const app = await run();
 
     expect(app.mix.state).toEqual({
+      allCategories: categories,
       categoryIds: ['nature', 'speech', 'crafts'],
       corrections: true,
       hiddenCategories: [],
@@ -148,7 +149,7 @@ describe('the Mix', () => {
     expect(mixRecordsOf(records)).toEqual({ 'mix.categories.speech': 'true' });
   });
 
-  it('lists the Hidden Categories in the Edition order, whatever the order they were taken out in', async () => {
+  it('lists the Hidden Categories in the Language Pack order, whatever the order they were taken out in', async () => {
     const app = await run();
 
     await app.mix.takeOut('crafts');
@@ -218,6 +219,57 @@ describe('the Mix', () => {
     expect(reopened.mix.state).toEqual(app.mix.state);
   });
 
+  describe('over a Language Pack with a new Category', () => {
+    const military: Category = { id: 'military', displayName: 'Military' };
+    const updated = createMemoryContentPort({
+      categories: [...categories, military],
+      words: [...categories, military].flatMap((category) =>
+        wordIdsOf(category).map((id) => word(id, { categoryId: category.id })),
+      ),
+      corrections: correctionIds.map((id) => correction(id)),
+    });
+
+    it('takes it into a Mix that follows an «all» default, with its name and its Words eligible', async () => {
+      const records = new Map<string, string>();
+      await (await run({ records, defaultCategoryIds: 'all' })).mix.takeOut('speech');
+
+      const app = await run({ records, pack: updated, defaultCategoryIds: 'all' });
+
+      expect(app.mix.state.allCategories).toEqual([...categories, military]);
+      // A Category the user never touched follows the Edition's default (ADR 0019).
+      expect(app.mix.state.categoryIds).toEqual(['nature', 'crafts', 'military']);
+      expect(app.mix.state.hiddenCategories).toEqual([speech]);
+      const offered = await walk(app.feed);
+      expect(offered.filter(isWordOf(military))).not.toEqual([]);
+      expect(offered.filter(isWordOf(speech))).toEqual([]);
+      const card = await app.entryCard(wordIdsOf(military)[0] ?? '');
+      expect(card?.kind === 'word' ? card.wordCard.categoryName : undefined).toBe('Military');
+    });
+
+    it('keeps it out of a Mix whose default lists the Categories, as a Hidden Category', async () => {
+      const records = new Map<string, string>();
+      const listed = categories.map(({ id }) => id);
+      await (await run({ records, defaultCategoryIds: listed })).mix.takeOut('speech');
+
+      const app = await run({ records, pack: updated, defaultCategoryIds: listed });
+
+      expect(app.mix.state.categoryIds).toEqual(['nature', 'crafts']);
+      expect(app.mix.state.hiddenCategories).toEqual([speech, military]);
+      expect((await walk(app.feed)).filter(isWordOf(military))).toEqual([]);
+
+      await app.mix.putBack('military');
+
+      expect((await walk(app.feed)).filter(isWordOf(military))).not.toEqual([]);
+    });
+  });
+
+  it('keeps every Category in when the Language Pack has none of the default ones', async () => {
+    const app = await run({ defaultCategoryIds: ['gone'] });
+
+    expect(app.mix.state.categoryIds).toEqual(['nature', 'speech', 'crafts']);
+    expect(app.mix.state.hiddenCategories).toEqual([]);
+  });
+
   it('turns every Category on at once, leaving Corrections as they are', async () => {
     const records = new Map<string, string>();
     const app = await run({ records, defaultCategoryIds: ['speech'] });
@@ -249,7 +301,7 @@ describe('the Mix', () => {
     expect(records.get('mix.corrections')).toBe('true');
   });
 
-  it('skips a Category the Edition does not have', async () => {
+  it('skips a Category the Language Pack does not have', async () => {
     const records = new Map<string, string>();
     records.set('mix.categories.military', JSON.stringify(true));
     const app = await run({ records });
@@ -514,6 +566,7 @@ describe('eligibility over the Mix', () => {
 describe('linked Corrections («Часто кажуть») over the Mix', () => {
   const linked = word('w_linked', { categoryId: 'nature', correctionIds: ['c_one', 'c_two'] });
   const pack = createMemoryContentPort({
+    categories,
     words: [
       linked,
       ...categories.flatMap((category) =>

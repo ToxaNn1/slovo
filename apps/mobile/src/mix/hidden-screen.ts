@@ -19,7 +19,7 @@ export interface HiddenCategoryModel {
 export interface HiddenScreenModel {
   /** The Hidden Entries, newest first. */
   readonly entries: readonly HiddenEntryModel[];
-  /** The Hidden Categories, in the Edition's order: the Categories out of the Mix (ADR 0019). */
+  /** The Hidden Categories, in the Language Pack's order: the Categories out of the Mix (ADR 0019). */
   readonly categories: readonly HiddenCategoryModel[];
   /**
    * Corrections as a whole, when they are out of the Mix (ADR 0019) and the

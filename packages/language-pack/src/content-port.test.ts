@@ -5,8 +5,8 @@ import { fileURLToPath } from 'node:url';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { CorrectionSchema, WordSchema } from '@slovo/contracts';
-import { createMemoryContentPort, loadEdition, type ContentReadPort } from '@slovo/core';
+import { CorrectionSchema, EditionConfigSchema, WordSchema } from '@slovo/contracts';
+import { createMemoryContentPort, type ContentReadPort } from '@slovo/core';
 
 import { buildLanguagePack, openLanguagePack, recordContent } from './index';
 
@@ -47,6 +47,12 @@ function editionWithRetiredCorrection(): string {
   return editionDir;
 }
 
+/** The Categories of an Edition as authored, in its order. */
+function authoredCategories(editionDir: string) {
+  const config = JSON.parse(readFileSync(join(editionDir, 'edition.json'), 'utf8')) as unknown;
+  return EditionConfigSchema.parse(config).categories;
+}
+
 /** The Entries of an Edition as authored, each kind in id order. */
 function authored(editionDir: string, kind: 'words' | 'corrections'): unknown[] {
   const dir = join(editionDir, 'content', kind);
@@ -63,6 +69,7 @@ const adapters: [
     'in memory',
     (editionDir) => ({
       content: createMemoryContentPort({
+        categories: authoredCategories(editionDir),
         words: authored(editionDir, 'words').map((word) => WordSchema.parse(word)),
         corrections: authored(editionDir, 'corrections').map((correction) =>
           CorrectionSchema.parse(correction),
@@ -95,6 +102,13 @@ describe.each(adapters)('the content read port %s', (_, open) => {
 
   afterAll(() => {
     close();
+  });
+
+  it('lists every Category in the Edition order with its display name, one of Retired Words only included', async () => {
+    expect(await content.listCategories()).toEqual([
+      { id: 'nature', displayName: 'Природа' },
+      { id: 'speech', displayName: 'Мовлення' },
+    ]);
   });
 
   it('lists the live Words in a stable order, leaving a Retired Word out', async () => {
@@ -140,14 +154,39 @@ describe.each(adapters)('the content read port %s', (_, open) => {
 });
 
 describe('the Ukrainian Language Pack', () => {
+  it('lists the 10 Categories in their order, keeping the ids its Words already use', async () => {
+    const pack = openPack(ukrainianDir);
+    try {
+      const categories = await pack.listCategories();
+
+      expect(categories.map(({ displayName }) => displayName)).toEqual([
+        'Людина і тіло',
+        'Емоції та характер',
+        'Природа і погода',
+        'Побут і ремесла',
+        'Техніка',
+        'Військова справа',
+        'Мистецтво і культура',
+        'Історія та старовина',
+        'Наука',
+        'Мова і мовлення',
+      ]);
+      expect(categories.map(({ id }) => id)).toEqual(
+        expect.arrayContaining(['nature-weather', 'household-crafts', 'language-speech']),
+      );
+    } finally {
+      pack.close();
+    }
+  });
+
   it('lists every live Word under its own Category', async () => {
-    const edition = loadEdition(
-      JSON.parse(readFileSync(join(ukrainianDir, 'edition.json'), 'utf8')) as unknown,
-    );
     const pack = openPack(ukrainianDir);
     try {
       const byCategory = await Promise.all(
-        edition.categories.map(async ({ id }) => ({ id, wordIds: await pack.listWordIds(id) })),
+        (await pack.listCategories()).map(async ({ id }) => ({
+          id,
+          wordIds: await pack.listWordIds(id),
+        })),
       );
       for (const { id, wordIds } of byCategory) {
         const words = await Promise.all(wordIds.map((wordId) => pack.getWord(wordId)));

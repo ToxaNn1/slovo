@@ -44,7 +44,7 @@ export function WordCardBody({
   const edition = useEdition();
   const { voice, Pronunciation } = edition;
   const strings = edition.strings.wordCard;
-  const categoryName = edition.categoryName(card.categoryId);
+  const { categoryName } = card;
   // In the Feed, VoiceOver turns to the next or previous card from the Lemma and the Definition.
   const turnActions = usePageTurnActions();
 

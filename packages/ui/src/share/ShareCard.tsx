@@ -123,7 +123,7 @@ function FittedCard({
       ? edition.strings.correctionCard.correctionTypes[card.correctionType]
       : wordOfTheDay
         ? edition.strings.share.wordOfTheDay
-        : edition.categoryName(card.categoryId);
+        : card.categoryName;
   /** A size of the design's text, shrunk with the rest of the text. */
   const text = (size: number) => size * unit * textScale;
   const headline = (value: string) => (

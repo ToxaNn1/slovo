@@ -15,7 +15,6 @@ import { correction, fakeClock, word } from '../test-support';
 const testCategories = {
   id: 'test',
   languageTraits: { distractorRule: 'same-part-of-speech' as const },
-  categories: [{ id: 'test', displayName: 'Test' }],
   userSettingDefaults: { mix: { categoryIds: ['test'], corrections: true }, notificationTimes: [] },
 };
 

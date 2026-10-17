@@ -12,9 +12,8 @@ import { describe, expect, it } from 'vitest';
 import { collectionRows } from './collections-screen';
 import { count, fakeClock, strings, ukrainian } from '../test-support';
 
-const [category] = ukrainian.categories;
-if (category === undefined) throw new Error('The Edition needs a Category');
-const categoryId = category.id;
+/** The Language Pack's one Category, the test Words' own. */
+const categoryId = 'nature-weather';
 
 function word(id: string, lemma: string): Word {
   return {

@@ -121,7 +121,7 @@ export const NotificationTimesSchema = z
   .refine((times) => new Set(times).size === times.length, 'Expected unique times');
 
 export const MixConfigSchema = z.strictObject({
-  /** Either every Category of the Edition, or the listed Category ids. */
+  /** Either every Category of the Language Pack, also one a content update adds, or the listed Category ids. */
   categories: z.union([
     z.literal('all'),
     // At least one Category always stays in the Mix (ADR 0019).
@@ -164,6 +164,10 @@ export const EditionConfigSchema = z
      * system default sound.
      */
     notificationSound: NotificationSoundFileSchema.optional(),
+    /**
+     * The Categories, in their order, as the Language Pack build writes them
+     * into the pack. The app reads them from the pack only (ADR 0033).
+     */
     categories: z.array(CategorySchema).min(1),
   })
   .superRefine(({ categories, userSettingDefaults }, context) => {

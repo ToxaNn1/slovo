@@ -1,4 +1,5 @@
 import {
+  CategorySchema,
   CorrectionSchema,
   WordSchema,
   type Correction,
@@ -55,6 +56,7 @@ interface SourceRow {
 }
 
 const SQL = {
+  categories: 'SELECT id, display_name FROM categories ORDER BY position',
   wordIds: 'SELECT id FROM words WHERE retired = 0 ORDER BY id',
   wordIdsInCategory: 'SELECT id FROM words WHERE retired = 0 AND category_id = ? ORDER BY id',
   sources: 'SELECT title, url, archived_url FROM sources WHERE entry_id = ? ORDER BY position',
@@ -201,6 +203,13 @@ export function createPackReader(db: PackDatabase): PackReader {
   }
 
   return {
+    async listCategories() {
+      const rows = await db.getAllAsync<{ id: string; display_name: string }>(SQL.categories, []);
+      // Parsing checks the pack against the contracts and types the Category.
+      return rows.map(({ id, display_name }) =>
+        CategorySchema.parse({ id, displayName: display_name }),
+      );
+    },
     listWordIds: (categoryId) =>
       categoryId === undefined
         ? column(SQL.wordIds, [], 'id')

@@ -12,9 +12,15 @@ import { describe, expect, it } from 'vitest';
 import { mixScreenModel, mixSummary } from './mix-screen';
 import { count, strings, ukrainian } from '../test-support';
 
+/** The Language Pack's ten Categories, in its order. */
+const categories = Array.from({ length: 10 }, (_, index) => ({
+  id: `category-${String(index)}`,
+  displayName: `Категорія ${String(index)}`,
+}));
+
 async function open(edition: Edition): Promise<Composition> {
   return openComposition({
-    content: createMemoryContentPort(),
+    content: createMemoryContentPort({ categories }),
     edition,
     userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
     clock: { now: () => new Date('2026-10-13T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
@@ -22,18 +28,18 @@ async function open(edition: Edition): Promise<Composition> {
   });
 }
 
-const [first] = ukrainian.categories;
-if (first === undefined) throw new Error('The Edition needs Categories');
+const [first] = categories;
+if (first === undefined) throw new Error('The pack needs Categories');
 
 describe('the Мій Мікс screen', () => {
-  it('offers every Category of the Edition in its order, all on in the default Mix', async () => {
+  it('offers every Category of the Language Pack in its order, all on in the default Mix', async () => {
     const { mix } = await open(ukrainian);
 
     const model = mixScreenModel({ edition: ukrainian, mix: mix.state });
 
-    expect(model.chips.map(({ id }) => id)).toEqual(ukrainian.categories.map(({ id }) => id));
+    expect(model.chips.map(({ id }) => id)).toEqual(categories.map(({ id }) => id));
     expect(model.chips.map(({ name }) => name)).toEqual(
-      ukrainian.categories.map(({ displayName }) => displayName),
+      categories.map(({ displayName }) => displayName),
     );
     expect(model.chips.every(({ on }) => on)).toBe(true);
     expect(model.allOn).toBe(true);
@@ -47,7 +53,7 @@ describe('the Мій Мікс screen', () => {
     await mix.takeOut(first.id);
     const taken = mixScreenModel({ edition: ukrainian, mix: mix.state });
     expect(taken.chips.find(({ id }) => id === first.id)?.on).toBe(false);
-    expect(taken.chips.filter(({ on }) => on)).toHaveLength(ukrainian.categories.length - 1);
+    expect(taken.chips.filter(({ on }) => on)).toHaveLength(categories.length - 1);
     expect(taken.allOn).toBe(false);
 
     await mix.turnAllOn();
@@ -58,7 +64,7 @@ describe('the Мій Мікс screen', () => {
 
   it('disables the chip of the last Category in the Mix and says why', async () => {
     const { mix } = await open(ukrainian);
-    for (const { id } of ukrainian.categories) {
+    for (const { id } of categories) {
       if (id !== first.id) await mix.takeOut(id);
     }
 
@@ -104,7 +110,7 @@ describe('the «Мій Мікс» row of Settings', () => {
     const { mix } = await open(ukrainian);
     const said: string[] = [];
 
-    for (const { id } of ukrainian.categories.slice(1)) {
+    for (const { id } of categories.slice(1)) {
       await mix.takeOut(id);
       said.push(mixSummary({ mix: mix.state, strings: strings.mix, count }));
     }

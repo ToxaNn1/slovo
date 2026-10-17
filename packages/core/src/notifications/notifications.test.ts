@@ -25,7 +25,6 @@ async function run({
       id: 'test',
       isFeatureEnabled: () => true,
       languageTraits: { distractorRule: 'same-part-of-speech' },
-      categories: [{ id: 'test', displayName: 'Test' }],
       userSettingDefaults: {
         mix: { categoryIds: ['test'], corrections: true },
         notificationTimes,

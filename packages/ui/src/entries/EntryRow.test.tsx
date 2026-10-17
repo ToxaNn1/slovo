@@ -28,7 +28,7 @@ function deleteAction(onPress: () => void): EntryRowAction {
 async function renderRow(props: Pick<ComponentProps<typeof EntryRow>, 'onPress' | 'actions'>) {
   await render(
     <GestureHandlerRootView>
-      <EditionProvider edition={{ locale: 'en', categories: [] }} strings={{} as EditionStrings}>
+      <EditionProvider edition={{ locale: 'en' }} strings={{} as EditionStrings}>
         <EntryRow row={row} trailing="12:30" {...props} />
       </EditionProvider>
     </GestureHandlerRootView>,

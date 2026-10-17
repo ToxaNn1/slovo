@@ -61,22 +61,24 @@ const words = [
   word('w_plain', { categoryId: 'nature' }),
 ];
 
+/** The Language Pack's Categories, in its order. */
+const categories = [
+  { id: 'speech', displayName: 'Speech' },
+  { id: 'nature', displayName: 'Nature' },
+];
+
 /**
- * An Edition with the Corrections Feature Switch on or off, and its
- * Categories, every one of them in its default Mix.
+ * An Edition with the Corrections Feature Switch on or off, and `speech` and
+ * `nature` in its default Mix.
  */
 const editionWith = (corrections: boolean): Pick<Edition, 'isFeatureEnabled'> & MixEdition => ({
   isFeatureEnabled: (feature) => feature === 'corrections' && corrections,
-  categories: [
-    { id: 'speech', displayName: 'Speech' },
-    { id: 'nature', displayName: 'Nature' },
-  ],
   userSettingDefaults: { mix: { categoryIds: ['speech', 'nature'], corrections: true } },
 });
 
 const open = ({ correctionsSwitch = true } = {}) =>
   createEntries({
-    content: createMemoryContentPort({ words, corrections }),
+    content: createMemoryContentPort({ categories, words, corrections }),
     edition: editionWith(correctionsSwitch),
   });
 
@@ -101,7 +103,7 @@ describe('the Entries', () => {
     it('leave out every Hidden Entry, read afresh on every call', async () => {
       const port = createMemoryUserStatePort();
       const entries = createEntries({
-        content: createMemoryContentPort({ words, corrections }),
+        content: createMemoryContentPort({ categories, words, corrections }),
         edition: editionWith(true),
         userState: await openUserState({ port }),
       });
@@ -125,10 +127,18 @@ describe('the Entries', () => {
       });
     });
 
-    it('are only the Words of the Categories in the Mix, Category by Category in the Edition order, and Corrections only while in the Mix', async () => {
+    it('are only the Words of the Categories in the Mix, Category by Category in the Language Pack order, and Corrections only while in the Mix', async () => {
       const port = createMemoryUserStatePort();
       const asked: (string | undefined)[] = [];
-      const content = createMemoryContentPort({ words, corrections });
+      const content = createMemoryContentPort({
+        categories: [
+          { id: 'nature', displayName: 'Nature' },
+          { id: 'speech', displayName: 'Speech' },
+          { id: 'crafts', displayName: 'Crafts' },
+        ],
+        words,
+        corrections,
+      });
       const entries = createEntries({
         content: {
           ...content,
@@ -137,14 +147,7 @@ describe('the Entries', () => {
             return content.listWordIds(categoryId);
           },
         },
-        edition: {
-          ...editionWith(true),
-          categories: [
-            { id: 'nature', displayName: 'Nature' },
-            { id: 'speech', displayName: 'Speech' },
-            { id: 'crafts', displayName: 'Crafts' },
-          ],
-        },
+        edition: editionWith(true),
         userState: await openUserState({ port }),
       });
 

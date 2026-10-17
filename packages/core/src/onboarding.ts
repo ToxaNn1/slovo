@@ -128,7 +128,7 @@ export async function openOnboarding({
 }: {
   userState: UserState;
   clock: Clock;
-  entries: Pick<Entries, 'get' | 'linkedCorrections'>;
+  entries: Pick<Entries, 'get' | 'linkedCorrections' | 'categories'>;
   wordOfTheDay: Pick<WordOfTheDay, 'chosen'>;
   notifications: Pick<Notifications, 'askPermission' | 'subscribe'>;
   nextMorning: () => Promise<MorningNotification | undefined>;

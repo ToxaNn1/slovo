@@ -12,8 +12,9 @@ import { describe, expect, it } from 'vitest';
 import { hideChoice, hideToast } from './hide-choice';
 import { strings, ukrainian } from '../test-support';
 
-const [first] = ukrainian.categories;
-if (first === undefined) throw new Error('The Edition needs Categories');
+/** The Language Pack's Categories, in its order. */
+const first = { id: 'nature-weather', displayName: 'Природа і погода' };
+const categories = [first, { id: 'household-crafts', displayName: 'Побут і ремесла' }];
 
 const word: Word = {
   kind: 'word',
@@ -48,7 +49,7 @@ const correction: Correction = {
 
 async function open(): Promise<Composition> {
   return openComposition({
-    content: createMemoryContentPort({ words: [word], corrections: [correction] }),
+    content: createMemoryContentPort({ categories, words: [word], corrections: [correction] }),
     edition: ukrainian,
     userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
     clock: { now: () => new Date('2026-10-13T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
@@ -63,7 +64,7 @@ async function cardOf(app: Composition, entryId: string): Promise<EntryFeedCard>
 }
 
 const choiceOn = (app: Composition, card: EntryFeedCard) =>
-  hideChoice({ card, mix: app.mix.state, edition: ukrainian, strings: strings.hiding });
+  hideChoice({ card, mix: app.mix.state, strings: strings.hiding });
 
 describe('the hide choice', () => {
   it('offers a Word card’s Entry and its Category, named, with the Category’s toast', async () => {
@@ -88,7 +89,7 @@ describe('the hide choice', () => {
 
   it('leaves the Category out when it is the last Category in the Mix', async () => {
     const app = await open();
-    for (const { id } of ukrainian.categories) {
+    for (const { id } of categories) {
       if (id !== first.id) await app.mix.takeOut(id);
     }
 

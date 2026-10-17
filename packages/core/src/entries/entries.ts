@@ -1,4 +1,4 @@
-import type { Correction, Entry, EntryKind, Word } from '@slovo/contracts';
+import type { Category, Correction, Entry, EntryKind, Word } from '@slovo/contracts';
 
 import type { Edition } from '../edition/edition';
 import { readMix, type MixEdition } from './mix';
@@ -33,7 +33,7 @@ export type EligibleOfKind =
 export interface Entries {
   /**
    * The ids of the eligible Entries: the live Words of the Categories in the
-   * Mix, Category by Category in the Edition's order, and the live
+   * Mix, Category by Category in the Language Pack's order, and the live
    * Corrections when the Edition turns Corrections on and they are in the
    * Mix, each in the Language Pack's stable order, leaving out every Hidden
    * Entry. Read afresh on every call.
@@ -55,6 +55,11 @@ export interface Entries {
    */
   get(id: string): Promise<Entry | undefined>;
   /**
+   * Every Category of the Language Pack, with its display name, in its order,
+   * read once: the pack never changes while it is open (ADR 0033).
+   */
+  categories(): Promise<readonly Category[]>;
+  /**
    * The live Corrections the Word is the standard form for, in the order the
    * Word links them, or none when the Edition turns Corrections off or the
    * user took Corrections out of the Mix. A Correction missing from the
@@ -70,6 +75,19 @@ export interface Entries {
 }
 
 const { hiddenEntries: hiddenRecords } = userStateRecords;
+
+/**
+ * Reads once and keeps the result, as the Language Pack never changes while
+ * it is open; a read that fails is tried again on the next call.
+ */
+function readOnce<T>(read: () => Promise<T>): () => Promise<T> {
+  let kept: Promise<T> | undefined;
+  return () =>
+    (kept ??= read().catch((error: unknown) => {
+      kept = undefined;
+      throw error;
+    }));
+}
 
 /**
  * The Entries over the Language Pack, and over the user's choices in the user
@@ -89,10 +107,18 @@ export function createEntries(
   const { content, edition } = options;
   const withCorrections = () => edition.isFeatureEnabled('corrections');
 
+  const categories = readOnce(() => content.listCategories());
+
+  /** The user's Mix over the Language Pack's Categories; nothing without the user state. */
+  async function readUserMix() {
+    if (!('userState' in options)) return undefined;
+    const { edition: mixEdition, userState } = options;
+    return readMix({ categories: await categories(), edition: mixEdition, userState });
+  }
+
   /** Whether Corrections, as a whole, are in the user's Mix; without a Mix they always are. */
   async function correctionsInMix(): Promise<boolean> {
-    if (!('userState' in options)) return true;
-    return (await readMix({ edition: options.edition, userState: options.userState })).corrections;
+    return (await readUserMix())?.corrections ?? true;
   }
 
   const linksCorrections = async () => withCorrections() && (await correctionsInMix());
@@ -108,13 +134,10 @@ export function createEntries(
   }
 
   async function eligible(): Promise<EntryIds> {
-    const [mix, hidden] =
-      'userState' in options
-        ? await Promise.all([
-            readMix({ edition: options.edition, userState: options.userState }),
-            options.userState.list(hiddenRecords),
-          ])
-        : [undefined, new Map<string, string>()];
+    const [mix, hidden] = await Promise.all([
+      readUserMix(),
+      'userState' in options ? options.userState.list(hiddenRecords) : new Map<string, string>(),
+    ]);
     const [words, corrections] = await Promise.all([
       wordIds(mix?.categoryIds),
       withCorrections() && (mix?.corrections ?? true) ? content.listCorrectionIds() : [],
@@ -137,26 +160,18 @@ export function createEntries(
    * The live Entries of each kind by id, read once: the Language Pack never
    * changes while it is open. A read that fails is tried again on the next call.
    */
-  const live = new Map<EntryKind, Promise<ReadonlyMap<string, Entry>>>();
-  function liveOfKind(kind: EntryKind): Promise<ReadonlyMap<string, Entry>> {
-    const known = live.get(kind);
-    if (known !== undefined) return known;
-    const read = readLive[kind]().then(
-      (entries) => new Map(entries.map((entry) => [entry.id, entry])),
-      (error: unknown) => {
-        live.delete(kind);
-        throw error;
-      },
-    );
-    live.set(kind, read);
-    return read;
-  }
+  const byId = (kind: EntryKind) =>
+    readOnce(async () => new Map((await readLive[kind]()).map((entry) => [entry.id, entry])));
+  const live: Record<EntryKind, () => Promise<ReadonlyMap<string, Entry>>> = {
+    word: byId('word'),
+    correction: byId('correction'),
+  };
 
   async function eligibleOfKind(kind: EntryKind): Promise<EligibleOfKind> {
     if (kind === 'correction' && !(await correctionsInMix())) {
       return { refusal: 'corrections-out-of-mix' };
     }
-    const [ids, entries] = await Promise.all([eligible(), liveOfKind(kind)]);
+    const [ids, entries] = await Promise.all([eligible(), live[kind]()]);
     return {
       entries: (kind === 'word' ? ids.words : ids.corrections).flatMap(
         (id) => entries.get(id) ?? [],
@@ -170,6 +185,7 @@ export function createEntries(
     async get(id) {
       return (await content.getWord(id)) ?? content.getCorrection(id);
     },
+    categories,
     linksCorrections,
     async linkedCorrections(word) {
       if (!(await linksCorrections())) return [];

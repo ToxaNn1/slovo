@@ -19,8 +19,15 @@ import { fakeClock, word } from './test-support';
 /** The instant these tests start at. */
 const start = '2026-10-14T08:00:00+03:00';
 
+/** The Language Pack's two Categories. */
+const categories = [
+  { id: 'test', displayName: 'Test' },
+  { id: 'other', displayName: 'Other' },
+];
+
 /** Words of two Categories, so the Mix step can take one out. */
 const twoCategories = createMemoryContentPort({
+  categories,
   words: [
     ...Array.from({ length: 12 }, (_, index) =>
       word(`w_test${String(index)}`, { categoryId: 'test' }),
@@ -34,6 +41,7 @@ const twoCategories = createMemoryContentPort({
 
 /** One Word, whose Definition is longer than a notification body holds. */
 const longDefinitionOnly = createMemoryContentPort({
+  categories,
   words: [word('w_long', { categoryId: 'test', primaryDefinition: 'very '.repeat(30).trim() })],
   corrections: [],
 });
@@ -54,10 +62,6 @@ async function run({
     content,
     edition: {
       id: 'test',
-      categories: [
-        { id: 'test', displayName: 'Test' },
-        { id: 'other', displayName: 'Other' },
-      ],
       userSettingDefaults: {
         mix: { categoryIds: ['test', 'other'], corrections: false },
         notificationTimes: ['09:00', '13:00', '19:00'],

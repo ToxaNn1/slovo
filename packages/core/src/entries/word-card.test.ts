@@ -46,13 +46,16 @@ const build = (from: Word, corrections: readonly Correction[] = []) =>
   buildWordCard({
     word: from,
     entries: createEntries({
-      content: createMemoryContentPort({ corrections }),
+      content: createMemoryContentPort({
+        categories: [{ id: 'household-crafts', displayName: 'Побут і ремесла' }],
+        corrections,
+      }),
       edition: { isFeatureEnabled: () => true },
     }),
   });
 
 describe('the Word card', () => {
-  it('shows the Lemma with Stress, the part of speech, gender, primary Definition and Category of a bare Word, and no other section', async () => {
+  it('shows the Lemma with Stress, the part of speech, gender, primary Definition and Category, named by the Language Pack, of a bare Word, and no other section', async () => {
     expect(await build(word())).toEqual({
       kind: 'word',
       wordId: 'w_veremija',
@@ -66,9 +69,14 @@ describe('the Word card', () => {
       antonyms: [],
       registers: [],
       categoryId: 'household-crafts',
+      categoryName: 'Побут і ремесла',
       details: undefined,
       linkedCorrections: [],
     });
+  });
+
+  it('names no Category the Language Pack does not have', async () => {
+    expect((await build(word({ categoryId: 'gone' }))).categoryName).toBeUndefined();
   });
 
   it('shows the first Example with its author when the source names one', async () => {

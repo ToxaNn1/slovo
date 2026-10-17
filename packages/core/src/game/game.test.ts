@@ -62,7 +62,7 @@ function word(
   };
 }
 
-/** The Edition's Categories, in its order. */
+/** The Language Pack's Categories, in its order. */
 const nature: Category = { id: 'nature', displayName: 'Nature' };
 const speech: Category = { id: 'speech', displayName: 'Speech' };
 const crafts: Category = { id: 'crafts', displayName: 'Crafts' };
@@ -88,7 +88,7 @@ const words = [
   ...numbered('w_cnoun', 3).map((id) => word(id, 'crafts')),
   word('w_retired', 'nature', { retired: true }),
 ];
-const content = createMemoryContentPort({ words });
+const content = createMemoryContentPort({ categories, words });
 
 const byDefinition = new Map(words.map((w) => [w.primaryDefinition, w]));
 
@@ -175,7 +175,6 @@ async function run({
     edition: {
       id: 'test',
       isFeatureEnabled: (feature) => feature === 'game' && game,
-      categories,
       userSettingDefaults: {
         mix: { categoryIds: categories.map(({ id }) => id), corrections: false },
         notificationTimes: [],

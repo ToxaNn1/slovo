@@ -154,7 +154,6 @@ async function run({
     edition: {
       id: 'test',
       isFeatureEnabled: (feature) => feature === 'game' || withCorrections,
-      categories: [{ id: 'nature', displayName: 'Nature' }],
       userSettingDefaults: {
         mix: { categoryIds: ['nature'], corrections: correctionsInMix },
         notificationTimes: [],

@@ -8,3 +8,7 @@ The numbers belong to the Edition, not to the Core or the build tool. The Core s
 
 - **Hard-coded Ukrainian numbers in the build tool or the CI workflow**: rejected. They would put one language's content plan into shared tooling.
 - **Targets in `edition.json`**: rejected. That file is the runtime Edition config the Core loads; the targets only matter when the pack is built.
+
+## Amendment: the Categories in `edition.json` are read at build time only (ADR 0033)
+
+`edition.json` is still the Edition config the Core loads, but its Categories are now only the content source the pack build writes into the pack. The app reads Categories from the Language Pack, so a content update can add one (ADR 0033).

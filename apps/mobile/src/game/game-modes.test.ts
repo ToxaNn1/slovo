@@ -73,7 +73,6 @@ async function open({
     edition: {
       id: 'test',
       languageTraits: { distractorRule: 'same-part-of-speech' },
-      categories: [{ id: 'test', displayName: 'Test' }],
       userSettingDefaults: {
         mix: { categoryIds: ['test'], corrections: correctionsInMix },
         notificationTimes: [],
