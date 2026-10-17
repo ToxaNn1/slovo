@@ -1,0 +1,34 @@
+# The backend's local services: Postgres and Mailpit, started once per machine
+# and shared by every worktree (`docker compose up --detach --wait` from the
+# repo root). The project name is fixed, so a second worktree finds the same
+# containers instead of starting its own. The host ports avoid the defaults,
+# which other projects on the machine may hold; each one can be moved with the
+# variable beside it.
+name: slovo
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: slovo
+      POSTGRES_PASSWORD: slovo
+      POSTGRES_DB: slovo
+    ports:
+      - '${SLOVO_POSTGRES_PORT:-55432}:5432'
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready --username=slovo --dbname=slovo']
+      interval: 2s
+      timeout: 5s
+      retries: 15
+
+  # Catches every email the backend sends; read them at http://localhost:8025.
+  mailpit:
+    image: axllent/mailpit:v1.31
+    ports:
+      - '${SLOVO_SMTP_PORT:-1025}:1025'
+      - '${SLOVO_MAILPIT_PORT:-8025}:8025'
+
+volumes:
+  postgres:

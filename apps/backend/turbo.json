@@ -1,0 +1,14 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "typecheck": {
+      "outputs": []
+    },
+    "test": {
+      // The tests make their own database on the Postgres server this names
+      // (src/test-support.ts); the server is not an input of the results.
+      "passThroughEnv": ["DATABASE_URL"]
+    }
+  }
+}
