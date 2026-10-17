@@ -92,7 +92,7 @@ function main(): number {
   console.log(`Built the Language Pack for "${metadata.editionId}"`);
   console.log(`  file:            ${displayPath(outFile)}`);
   console.log(`  content version: ${String(metadata.contentVersion)}`);
-  console.log(`  checksum:        ${metadata.checksum}`);
+  console.log(`  checksum:        ${metadata.contentChecksum}`);
   console.log(`  Words:           ${String(wordCount)}`);
   console.log(`  Corrections:     ${String(correctionCount)}`);
   console.log('');

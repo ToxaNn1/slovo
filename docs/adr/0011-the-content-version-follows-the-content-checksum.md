@@ -8,3 +8,11 @@ The checksum covers the version, so copying a new checksum without raising the v
 
 - **Derive the version from the checksum or the commit**: rejected. Over-the-air updates need a number that grows, which neither gives.
 - **Raise the version on release only**: rejected. Nothing would tie the version to the content between releases, which is the gap this closes.
+
+## Amendment: the content checksum is named for the content (before 0.7)
+
+Content updates (0.7) bring a second checksum, the SHA-256 of the pack file, which changes with the pack's layout as well as its content. So the checksum this decision records is the content checksum: `contentChecksum` in `content/manifest.json`, in the pack metadata of `@slovo/contracts` and in the code that reads either. The pack's `metadata` table keeps its key `checksum`, so the layout of a pack, and the file built from unchanged content, stay as they were; only the Language Pack package names that key.
+
+### Considered Options
+
+- **Rename the table key to `content_checksum` too**: rejected. It changes the layout for a name only the package that reads the layout ever sees.

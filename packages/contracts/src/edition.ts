@@ -146,10 +146,13 @@ export const UserSettingDefaultsConfigSchema = z.strictObject({
 
 export type UserSettingDefaultsConfig = z.infer<typeof UserSettingDefaultsConfigSchema>;
 
+/** The id of an Edition, e.g. `uk`. */
+export const EditionIdSchema = z.string().regex(/^[a-z][a-z0-9-]*$/, 'Expected a lowercase id');
+
 /** Everything Edition-specific that the app and the Language Pack build need. */
 export const EditionConfigSchema = z
   .strictObject({
-    id: z.string().regex(/^[a-z][a-z0-9-]*$/, 'Expected a lowercase id'),
+    id: EditionIdSchema,
     locale: LanguageTagSchema,
     displayName: z.string().min(1),
     bundleId: z

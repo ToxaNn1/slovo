@@ -1,5 +1,4 @@
 import { openComposition, systemRandom, type Composition } from '@slovo/core';
-import { createPackReader } from '@slovo/language-pack/reader';
 import { systemSchedule } from '@slovo/ui';
 import { useSQLiteContext, type SQLiteDatabase } from 'expo-sqlite';
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
@@ -7,6 +6,7 @@ import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { deviceClock } from './device/device-clock';
 import { deviceNotificationScheduler } from './notifications/device-notifications';
 import { edition, editionStrings } from './edition/edition';
+import { openedPack } from './edition/opened-pack';
 import { gameModeStrings } from './game/game-modes';
 import { storedUserState } from './user-state/stored-user-state';
 
@@ -21,7 +21,7 @@ export type CompositionState =
 
 async function openOver(db: SQLiteDatabase): Promise<Composition> {
   const composition = await openComposition({
-    content: createPackReader(db),
+    content: openedPack(db),
     edition,
     userState: await storedUserState(),
     clock: deviceClock,

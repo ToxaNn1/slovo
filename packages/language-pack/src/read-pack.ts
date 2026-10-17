@@ -8,7 +8,7 @@ export interface NodeLanguagePack extends PackReader {
 }
 
 /** Puts `node:sqlite` behind the driver interface the pack reader expects. */
-function nodeDriver(db: DatabaseSync): PackDatabase {
+export function nodePackDatabase(db: DatabaseSync): PackDatabase {
   const statements = new Map<string, StatementSync>();
   function prepare(sql: string): StatementSync {
     let statement = statements.get(sql);
@@ -29,7 +29,7 @@ function nodeDriver(db: DatabaseSync): PackDatabase {
 export function openLanguagePack(file: string): NodeLanguagePack {
   const db = new DatabaseSync(file, { readOnly: true });
   return {
-    ...createPackReader(nodeDriver(db)),
+    ...createPackReader(nodePackDatabase(db)),
     close: () => {
       db.close();
     },

@@ -1,5 +1,4 @@
 import { createEntries, type Entries } from '@slovo/core';
-import { createPackReader } from '@slovo/language-pack/reader';
 import { DecorBackground, FeedError, useTokens } from '@slovo/ui';
 import Constants from 'expo-constants';
 import { SQLiteProvider, useSQLiteContext, type SQLiteDatabase } from 'expo-sqlite';
@@ -8,8 +7,8 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 import { StyleSheet, View } from 'react-native';
 
 import { edition, editionStrings } from './edition';
-import { checkEditionsMatch } from './edition-match';
 import { FeedLoadingScreen } from './feed-loading';
+import { openedPack, openPackOver } from './opened-pack';
 
 const DATABASE_NAME = 'language-pack.db';
 
@@ -23,8 +22,7 @@ function nativeEditionId(): string | undefined {
 async function prepare(db: SQLiteDatabase): Promise<void> {
   // expo-sqlite has no read-only open mode; this refuses every write instead.
   await db.execAsync('PRAGMA query_only = ON');
-  const { editionId } = await createPackReader(db).metadata();
-  checkEditionsMatch({ native: nativeEditionId(), bundle: edition.id, languagePack: editionId });
+  await openPackOver(db, { bundle: edition.id, native: nativeEditionId() });
 }
 
 /** Calls `onMount` once drawn: inside the provider, that is when the pack is open. */
@@ -107,5 +105,5 @@ const styles = StyleSheet.create({ screen: { flex: 1 } });
 /** The Core's Entries of this Edition, read from the bundled Language Pack. */
 export function useEntries(): Entries {
   const db = useSQLiteContext();
-  return useMemo(() => createEntries({ content: createPackReader(db), edition }), [db]);
+  return useMemo(() => createEntries({ content: openedPack(db), edition }), [db]);
 }
