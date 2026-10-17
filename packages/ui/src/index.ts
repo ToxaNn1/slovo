@@ -3,6 +3,7 @@
  * Decor from the Edition.
  */
 export { ActionRow, type ActionRowProps } from './primitives/ActionRow';
+export { ResendButton } from './account/ResendButton';
 export { BackLink } from './primitives/BackLink';
 export { FeedError, FeedLoading, SwipeHint } from './feed/FeedStates';
 export { FontSizePreview } from './settings/FontSizePreview';
@@ -65,6 +66,7 @@ export {
   type PronunciationButtonState,
 } from './entries/PronunciationButton';
 export { SegmentedControl, type Segment } from './primitives/SegmentedControl';
+export { ProblemLine, TextField } from './primitives/TextField';
 export { ShareButton } from './share/ShareButton';
 export { ShareSheet, type ShareSheetOutcome } from './share/ShareSheet';
 export { NavigationRow, SettingsGroup, SoonRow, SwitchRow, TimeRow } from './settings/SettingsRows';

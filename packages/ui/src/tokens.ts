@@ -292,6 +292,9 @@ export const shareCardLayout = {
 /** The smallest side of anything the user taps. */
 export const minTouchTarget = 44;
 
+/** How much a button that takes no press is dimmed. */
+export const disabledOpacity = 0.5;
+
 /**
  * Gaps and paddings of the Game's Round off the 4-pt grid, from the design:
  * between the options and between the header's parts, a tight one (the
