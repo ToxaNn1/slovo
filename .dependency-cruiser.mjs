@@ -78,6 +78,15 @@ export default {
       to: { path: ['^(packages/server-core|apps/backend)/', '^@slovo/(server-core|backend)(/|$)'] },
     },
     {
+      name: 'only-tests-serve-the-api-in-process',
+      comment:
+        'ADR 0039: the API contract served in process is a test backend, so only a test ' +
+        'or a test-support module imports it, and no app or backend module ships oRPC server code.',
+      severity: 'error',
+      from: { pathNot: ['\\.test\\.tsx?$', '(^|/)test-support\\.ts$'] },
+      to: { path: '^packages/contracts/src/api/test-support\\.ts$' },
+    },
+    {
       name: 'ui-does-not-reach-up-or-sideways',
       comment:
         'ADR 0002, 0017: the UI draws what the Core models (ADR 0017), so it may import ' +
@@ -151,7 +160,7 @@ export default {
           '^packages/$2/',
           SHARED_CONFIG,
           '^packages/[^/]+/package\\.json$',
-          '^packages/[^/]+/src/(index|tokens|entries/part-of-speech|pack-reader|edition-folder|api|api-description)\\.ts$',
+          '^packages/[^/]+/src/(index|tokens|entries/part-of-speech|pack-reader|edition-folder|api|api-description|api/test-support)\\.ts$',
         ],
       },
     },
