@@ -14,6 +14,10 @@ _Avoid_: Flavor, variant, localization
 Everything that makes an Edition specific to its language: words, categories, UI strings and language traits (e.g. whether the language marks stress).
 _Avoid_: Locale bundle, dictionary
 
+**Content update**:
+A newer Language Pack of the Edition that the app downloads by itself, without an Account, and opens from the next launch.
+_Avoid_: OTA (that is an update of the app's JavaScript), patch
+
 **Core**:
 The language-agnostic behaviour and screens shared by every Edition. Editions never replace Core code.
 _Avoid_: Engine, base app
