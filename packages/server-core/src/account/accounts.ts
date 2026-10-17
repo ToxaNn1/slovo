@@ -41,7 +41,7 @@ export interface Accounts {
   /** Signs in with the code last sent to the email; the first right code creates the Account. */
   verifyCode(email: string, code: string): Promise<CodeCheck | InvalidEmail>;
   /** The Account of the Session the token carries, if the Session is on. */
-  session(token: string): Promise<AccountRecord | undefined>;
+  accountOf(token: string): Promise<AccountRecord | undefined>;
 }
 
 /**
@@ -67,11 +67,11 @@ export function createAccounts({
 }): Accounts {
   return {
     async requestCode(typedEmail, editionId) {
+      const email = normalised(typedEmail);
+      if (email === undefined) return invalidEmail;
       const edition = editions.find(editionId);
       if (edition === undefined) return { ok: false, reason: 'unknown-edition' };
       if (!edition.config.featureSwitches.account) return { ok: false, reason: 'account-off' };
-      const email = normalised(typedEmail);
-      if (email === undefined) return invalidEmail;
 
       const code = await authenticator.createCode(email);
       const values = { code, name: ACCOUNT_NAME };
@@ -90,8 +90,6 @@ export function createAccounts({
       return authenticator.checkCode(email, code);
     },
 
-    async session(token) {
-      return (await authenticator.session(token))?.account;
-    },
+    accountOf: (token) => authenticator.accountOf(token),
   };
 }

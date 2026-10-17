@@ -21,17 +21,22 @@ export function accountProcedures(accounts: Accounts) {
   // request as UNAUTHORIZED.
   const signedIn = account.middleware(async ({ context, next }) => {
     const token = bearerToken(context.headers);
-    const session = token === undefined ? undefined : await accounts.session(token);
-    if (session === undefined) throw new ORPCError('UNAUTHORIZED');
-    return next({ context: { account: session } });
+    const signedInAccount = token === undefined ? undefined : await accounts.accountOf(token);
+    if (signedInAccount === undefined) throw new ORPCError('UNAUTHORIZED');
+    return next({ context: { account: signedInAccount } });
   });
 
   return account.router({
     requestCode: account.requestCode.handler(async ({ input, errors }) => {
       const sent = await accounts.requestCode(input.email, input.editionId);
       if (sent.ok) return {};
-      if (sent.reason === 'invalid-email') throw errors.BAD_REQUEST();
-      throw errors.NOT_FOUND();
+      switch (sent.reason) {
+        case 'invalid-email':
+          throw errors.BAD_REQUEST();
+        case 'unknown-edition':
+        case 'account-off':
+          throw errors.NOT_FOUND();
+      }
     }),
 
     verifyCode: account.verifyCode.handler(async ({ input, errors }) => {

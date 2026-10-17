@@ -1,6 +1,7 @@
 import {
   SESSION_SECONDS,
   SIGN_IN_CODE,
+  type AccountRecord,
   type Authenticator,
   type CodeCheck,
 } from '@slovo/server-core';
@@ -22,13 +23,28 @@ const SESSION_UPDATE_SECONDS = 24 * 60 * 60;
 const codeExpired: CodeCheck = { ok: false, reason: 'code-expired' };
 const tooManyTries: CodeCheck = { ok: false, reason: 'too-many-tries' };
 
+/** An Account as the server Core sees it, from better-auth's user. */
+const accountRecord = ({ id, email, createdAt }: AccountRecord): AccountRecord => ({
+  id,
+  email,
+  createdAt,
+});
+
 /**
  * better-auth configured for SLOVO: Sign-in codes by email (its email OTP
  * plugin, codes kept hashed) and Sessions carried as bearer tokens. Its tables
  * are renamed to the glossary (ADR 0030). Nothing reaches its own HTTP
  * endpoints: the backend calls its server API only.
  */
-function createAuth({ db }: Database, secret: string, logger: Logger) {
+function createAuth({
+  database: { db },
+  secret,
+  logger,
+}: {
+  database: Database;
+  secret: string;
+  logger: Logger;
+}) {
   return betterAuth({
     secret,
     // Nothing reaches better-auth's endpoints or redirects, so its own
@@ -85,7 +101,7 @@ export function createAuthenticator(
   database: Database,
   { secret, logger }: { secret: string; logger: Logger },
 ): Authenticator {
-  const auth = createAuth(database, secret, logger);
+  const auth = createAuth({ database, secret, logger });
   // How better-auth names the Sign-in code of an email in `sign_in_codes`.
   const identifier = (email: string) => `${SIGN_IN}-otp-${email}`;
 
@@ -93,6 +109,7 @@ export function createAuthenticator(
   async function triesSpent(email: string): Promise<number | undefined> {
     const { internalAdapter } = await auth.$context;
     const code = await internalAdapter.findVerificationValue(identifier(email));
+    // better-auth reads the system clock, not the server Core's, so this does too.
     if (code === null || code.expiresAt.getTime() <= Date.now()) return undefined;
     // better-auth keeps `<hash>:<tries spent>`.
     return Number(code.value.slice(code.value.lastIndexOf(':') + 1));
@@ -118,8 +135,7 @@ export function createAuthenticator(
         // The bearer plugin gives the signed token here.
         const token = headers.get('set-auth-token');
         if (token === null) throw new Error('better-auth gave no Session token');
-        const { id, createdAt } = response.user;
-        return { ok: true, token, account: { id, email: response.user.email, createdAt } };
+        return { ok: true, token, account: accountRecord(response.user) };
       } catch (error) {
         if (!(error instanceof APIError)) throw error;
         switch (error.body?.code) {
@@ -139,13 +155,11 @@ export function createAuthenticator(
       }
     },
 
-    async session(token) {
+    async accountOf(token) {
       const session = await auth.api.getSession({
         headers: new Headers({ authorization: `Bearer ${token}` }),
       });
-      if (session === null) return undefined;
-      const { id, email, createdAt } = session.user;
-      return { account: { id, email, createdAt } };
+      return session === null ? undefined : accountRecord(session.user);
     },
   };
 }

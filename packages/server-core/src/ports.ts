@@ -75,7 +75,7 @@ export interface Authenticator {
    */
   checkCode(email: string, code: string): Promise<CodeCheck>;
   /** The Account of the Session the token carries, if the Session is on. Using a Session extends it. */
-  session(token: string): Promise<{ readonly account: AccountRecord } | undefined>;
+  accountOf(token: string): Promise<AccountRecord | undefined>;
 }
 
 /** An email to one reader, in plain text. */
