@@ -6,21 +6,29 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./api": "./src/api.ts"
+    "./api": "./src/api.ts",
+    "./api-description": "./src/api-description.ts"
   },
   "scripts": {
+    "describe-api": "tsx src/api/describe-command.ts",
     "lint": "eslint .",
-    "typecheck": "tsc --build"
+    "typecheck": "tsc --build",
+    "test": "vitest run"
   },
   "devDependencies": {
     "@slovo/config": "workspace:*",
+    "@types/node": "^22.20.5",
     "eslint": "^10.12.0",
-    "typescript": "~6.0.3"
+    "tsx": "^4.23.15",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.3"
   },
   "dependencies": {
     "@orpc/client": "^1.15.7",
     "@orpc/contract": "^1.15.7",
+    "@orpc/openapi": "^1.15.7",
     "@orpc/openapi-client": "^1.15.7",
+    "@orpc/zod": "^1.15.7",
     "zod": "^4.6.5"
   }
 }

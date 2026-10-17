@@ -2,8 +2,8 @@ import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import { OpenAPIReferencePlugin } from '@orpc/openapi/plugins';
 import { implement, ORPCError } from '@orpc/server';
 import { ResponseHeadersPlugin, type ResponseHeadersPluginContext } from '@orpc/server/plugins';
-import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4';
 import { apiContract } from '@slovo/contracts/api';
+import { apiDescriptionOptions } from '@slovo/contracts/api-description';
 import type { Accounts, ContentPacks } from '@slovo/server-core';
 import type { Logger } from 'pino';
 
@@ -18,9 +18,6 @@ export function logUnexpectedFailure(logger: Logger, error: unknown): void {
   logger.error({ err: error }, 'unexpected failure');
 }
 
-/** The API's name in its OpenAPI description. */
-const TITLE = 'SLOVO API';
-
 /** What a request brings to the API. */
 interface ApiContext extends ResponseHeadersPluginContext {
   /** The request's logger, which carries its request id. */
@@ -34,8 +31,9 @@ interface ApiContext extends ResponseHeadersPluginContext {
 /**
  * The API contract served over HTTP: each procedure at its REST address
  * under `/v1`, and the OpenAPI description at `/docs` (`/docs/openapi.json`
- * for the document itself). A procedure answers the error codes the contract
- * lists; anything else is a bare `500 { code: "INTERNAL" }`.
+ * for the document itself, the one `describeApi` gives and the repo
+ * commits). A procedure answers the error codes the contract lists; anything
+ * else is a bare `500 { code: "INTERNAL" }`.
  */
 export function createApiHandler({
   accounts,
@@ -71,9 +69,8 @@ export function createApiHandler({
       new OpenAPIReferencePlugin({
         docsPath: '/docs',
         specPath: '/docs/openapi.json',
-        docsTitle: TITLE,
-        schemaConverters: [new ZodToJsonSchemaConverter()],
-        specGenerateOptions: { info: { title: TITLE, version: '1' } },
+        docsTitle: apiDescriptionOptions.specGenerateOptions.info.title,
+        ...apiDescriptionOptions,
       }),
     ],
   });

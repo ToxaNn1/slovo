@@ -48,6 +48,19 @@ jobs:
       - run: pnpm typecheck
       # The backend's tests need Postgres; the job "Backend" runs them.
       - run: pnpm test --filter='!@slovo/backend'
+      # The contracts' tests hold the contract to the committed description of
+      # /v1. This holds it to the one on the base branch too, so a description
+      # edited by hand can't hide a breaking change (ADR 0031).
+      - name: Check that the contract only adds to the base branch's /v1
+        if: ${{ github.event_name == 'pull_request' }}
+        shell: bash
+        run: |
+          git fetch --depth=1 origin "$GITHUB_BASE_REF"
+          promised=packages/contracts/src/api/v1.openapi.json
+          if git cat-file -e "FETCH_HEAD:$promised" 2>/dev/null; then
+            git show "FETCH_HEAD:$promised" > "$RUNNER_TEMP/promised.json"
+            pnpm describe:api "$RUNNER_TEMP/promised.json"
+          fi
       # Fails on invalid content and on any missed content target of the Edition.
       - name: Build the Ukrainian Language Pack and check its content targets
         id: pack

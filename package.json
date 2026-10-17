@@ -9,6 +9,7 @@
   "scripts": {
     "build:pack": "pnpm --filter @slovo/language-pack build-pack",
     "publish:pack": "pnpm --filter @slovo/backend publish-pack",
+    "describe:api": "pnpm --filter @slovo/contracts describe-api",
     "source:words": "pnpm --filter @slovo/sourcing source-words",
     "lint": "oxlint && turbo run lint && prettier --check .",
     "typecheck": "turbo run typecheck",

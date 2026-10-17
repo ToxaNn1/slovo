@@ -18,3 +18,17 @@ Within a version the contract only grows:
 - **oRPC's own RPC protocol** instead of its OpenAPI handler: rejected. The addresses would not be readable, and the API could not be tried with curl or read at `/docs`.
 - **Version by header or by negotiating fields**: rejected. A version in the address is visible in every log line and every request, and `/v1` and `/v2` can be served side by side.
 - **Strict output schemas**: rejected. An app would reject an answer the moment the backend added a field, which is exactly the change this ADR allows.
+
+## Amendment: the rule is held by a committed description of `/v1` (architecture review 2)
+
+Until now nothing checked the rule: a field or an error code could leave `/v1` and CI stayed green. The description of `/v1` is now committed beside the contract, as `packages/contracts/src/api/v1.openapi.json`, and it is the record of what `/v1` has promised. `describeApi` (`@slovo/contracts/api-description`) builds the OpenAPI description from `apiContract` alone, with no backend and no database, and the backend serves the same one at `/docs`, with the same options. A comparison of a description with the promised one lists every change an app in the field would not understand: a procedure gone or moved; an output field gone, one that may now be missing, or one of a new kind, `null` included; an input field, parameter or body no longer accepted, or one that becomes required; an error code a procedure no longer answers, or whose status or data changes; a successful answer gone or new; and a type or constraint that changes, save a bound or an enum of an input that only widens and of an output that only narrows. Notes for the reader, such as summaries, descriptions and a default in an answer, change nothing. It knows what oRPC's generator writes: inline schemas, no `$ref`.
+
+- **The contracts' tests** fail when the contract breaks the committed description, and when the committed description isn't the contract's, so an addition is recorded in the change that makes it.
+- **`pnpm describe:api`** records an addition: it writes the contract's description over the committed one, and writes nothing and fails, listing the changes, when the contract breaks it.
+- **CI** also runs it against the description on the pull request's base branch, so a description edited by hand to match a breaking change still fails.
+- **The backend's tests** check that `/docs/openapi.json` is the contract's description, with the server it is read from.
+
+### Considered Options
+
+- **A general OpenAPI diff tool, such as oasdiff, in CI**: rejected. It is a binary outside the workspace that would run only in CI, while the check runs in the contracts' tests on every machine, is tested through oRPC's own generator, and lists its changes in the words of this ADR.
+- **A snapshot test of the description**: rejected. It fails on an addition as on a removal, so updating it would hide a breaking change as easily as it records an addition.
