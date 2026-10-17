@@ -75,7 +75,7 @@ You need the Node version in [`.nvmrc`](.nvmrc), pnpm, Xcode with an iOS Simulat
 
    Share Cards add the view-capture module `react-native-view-shot` to the same build. Until then the share button stays out of the action row while `nativeModules` reports the capture module missing.
 
-   Version 0.7 brings Content updates, which keep a downloaded Language Pack in the app's documents directory with `expo-file-system`, and keeps the SLOVO ID Session in the Keychain. Both need the next build, after 0.8, made when the owner says so. Until then content updates stay off while `nativeModules` reports `expo-file-system` missing, and the app opens the Language Pack it was built with. Check both after that build ([Check a new native build](#check-a-new-native-build)).
+   Version 0.7 brings Content updates, which keep a downloaded Language Pack in the app's documents directory with `expo-file-system`, and adds `expo-secure-store`, which keeps the SLOVO ID Session in the Keychain, on this device only. Both need the next build, after 0.8, made when the owner says so. Until then content updates stay off while `nativeModules` reports `expo-file-system` missing, and the app opens the Language Pack it was built with; while it reports `expo-secure-store` missing, the shell keeps the Session in memory, so signing in works on the simulator now and the Session lasts until the app restarts. Check both after that build ([Check a new native build](#check-a-new-native-build)).
 
    ```sh
    cd apps/mobile
@@ -187,6 +187,8 @@ The backend serves every Edition from one deployment ([ADR 0008](docs/adr/0008-o
    ```sh
    curl -i 'http://localhost:8787/v1/editions/uk/content/latest?packFormat=1'
    ```
+
+   The app reaches the backend at the address in `EXPO_PUBLIC_SLOVO_API_URL`, or at `http://localhost:8787` when it is unset; the iOS Simulator reaches the Mac's localhost. Expo writes the value into the bundle, so set it when you start Metro, e.g. `EXPO_PUBLIC_SLOVO_API_URL=http://localhost:8788 SLOVO_EDITION=uk pnpm start --clear`.
 
    To sign in by hand, ask for a Sign-in code, read it in Mailpit at <http://localhost:8025>, then send it back for a Session's token, which `/v1/account/me` takes as `Authorization: Bearer <token>`:
 
