@@ -5,18 +5,6 @@ import type { EditionRegistry } from '../edition/edition-registry';
 import type { AccountRecord, Authenticator, Clock, CodeCheck, Mailer, RateLimits } from '../ports';
 import { createSignInLimits, type TooManyRequests } from './sign-in-limits';
 
-/** The rules of a Sign-in code (spec #333), which the Authenticator keeps. */
-export const SIGN_IN_CODE = {
-  digits: 6,
-  /** How long a code signs in after it is sent. */
-  validSeconds: 10 * 60,
-  /** How many codes may be tried, wrong ones included, before the code is spent. */
-  tries: 5,
-} as const;
-
-/** How long a Session lasts after its last use: one used now and then never ends. */
-export const SESSION_SECONDS = 90 * 24 * 60 * 60;
-
 /** What an email that is not an email gets. */
 interface InvalidEmail {
   readonly ok: false;

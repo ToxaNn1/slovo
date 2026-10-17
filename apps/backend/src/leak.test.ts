@@ -6,7 +6,7 @@ import { PgTable } from 'drizzle-orm/pg-core';
 import { expect, it } from 'vitest';
 
 import * as schema from './database/schema';
-import { accounts, sessions, signInCodes } from './database/schema';
+import { accounts, sessions } from './database/schema';
 import { testApp, testEditions } from './test-support';
 
 /** The Edition of this test, with a published pack. */
@@ -72,7 +72,7 @@ async function recordedBackend() {
 }
 
 it('answers no stored token, Sign-in code or its hash, password field or internal column in any procedure', async () => {
-  const { client, clientOf, answers, mailer, db, pack } = await recordedBackend();
+  const { client, clientOf, answers, mailer, keptSignInCode, db, pack } = await recordedBackend();
   /** What the database keeps that no answer may show. */
   const secrets = new Set<string>();
   const refused = () => undefined;
@@ -81,12 +81,10 @@ it('answers no stored token, Sign-in code or its hash, password field or interna
     await client.account.requestCode({ email, editionId: EDITION });
     const code = mailer.codeSentTo(email);
     secrets.add(code);
-    for (const row of await db.select().from(signInCodes)) {
-      if (!row.identifier.endsWith(email)) continue;
-      secrets.add(row.id);
-      // `<hash>:<tries spent>`
-      secrets.add(row.value.slice(0, row.value.lastIndexOf(':')));
-    }
+    const kept = await keptSignInCode(email);
+    if (kept === undefined) throw new Error(`no Sign-in code is kept for ${email}`);
+    secrets.add(kept.id);
+    secrets.add(kept.hash);
     return code;
   }
 

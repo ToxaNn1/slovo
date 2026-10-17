@@ -51,3 +51,11 @@ Every request has the IP address of its connection. The app takes it once, where
 
 - **better-auth reading the server Core's `Clock`**: not possible. It reads the system time itself, so the one clock both can read is that time.
 - **One database for the run, files one after another**: rejected. It made every file wait for the others, and a test moving the clock made better-auth delete the codes of another file's tests.
+
+## Amendment: the rules of Sign-in codes and Sessions are the Authenticator's (architecture review 2)
+
+The rules of a Sign-in code (six digits, signs in for 10 minutes, 5 tries, a spent code stays spent until a new one is sent) and how long a Session lasts (90 days after its last use) live behind the `Authenticator` port, in its better-auth adapter, and the server Core no longer exports them. better-auth enforces them from its configuration, the tries left come from the row it keeps, and the server Core only passes on what checking a code gives, so a rule on the Core's side would only be handed back to the adapter. The adapter alone knows how better-auth keeps a code in `sign_in_codes`: the email as `sign-in-otp-<email>`, the hash and the tries spent as `<hash>:<tries>`. It reads the tries spent through better-auth, which finds the row and clears the expired ones, and splits that value in one function. The tests check the rules through the API's contract. Where one must see what the database keeps of a code, as the leak test and "kept only as its hash" do, the harness gives the row's id and the code's hash through a function of the adapter, so no test knows the format.
+
+### Considered Options
+
+- **The rules in the server Core, given to the adapter**: rejected. The Core never reads them, so the port would carry configuration through it, and the tries left and the spent-code rule would still need better-auth's row.

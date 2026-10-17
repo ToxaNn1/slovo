@@ -5,7 +5,7 @@ import { EDITIONS_DIR, openEdition } from '@slovo/language-pack/edition';
 import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
-import { accounts, sessions, signInCodes, signInMethods } from '../database/schema';
+import { accounts, sessions, signInMethods } from '../database/schema';
 import { passTime, testApp, testEditions } from '../test-support';
 
 const MINUTE = 60 * 1000;
@@ -233,16 +233,16 @@ describe('a Sign-in code', () => {
   });
 
   it('is kept only as its hash', async () => {
-    const { client, mailer, database } = testApp();
+    const { client, mailer, keptSignInCode } = testApp();
     const email = newEmail();
     await client.account.requestCode({ email, editionId: 'uk' });
-    const { db } = database;
 
-    const kept = (await db.select().from(signInCodes)).filter((row) =>
-      row.identifier.endsWith(email),
-    );
+    const kept = await keptSignInCode(email);
 
-    expect(kept).toHaveLength(1);
+    expect(kept).toEqual({
+      id: expect.any(String) as unknown,
+      hash: expect.any(String) as unknown,
+    });
     expect(JSON.stringify(kept)).not.toContain(mailer.codeSentTo(email));
   });
 
@@ -356,7 +356,7 @@ function signingIn() {
   }
   /** The Account procedures of a device signed in to the email's Account. */
   const signIn = async (email: string) => backend.clientOf(await signInToken(email)).account;
-  /** The rows the database keeps of the email's Account. */
+  /** What the database keeps of the email's Account and of the Sign-in code waiting for it. */
   async function rowsOf(email: string) {
     const { db } = backend.database;
     const [account] = await db.select().from(accounts).where(eq(accounts.email, email));
@@ -366,9 +366,7 @@ function signingIn() {
       account,
       sessions: await ofAccount(sessions),
       signInMethods: await ofAccount(signInMethods),
-      signInCodes: (await db.select().from(signInCodes)).filter((row) =>
-        row.identifier.endsWith(email),
-      ),
+      signInCode: await backend.keptSignInCode(email),
     };
   }
   return { ...backend, signIn, signInToken, rowsOf };
@@ -449,12 +447,12 @@ describe('deleting the Account', () => {
     expect(await rowsOf(email)).toMatchObject({
       sessions: [{}, {}],
       signInMethods: [{}],
-      signInCodes: [{}],
+      signInCode: {},
     });
 
     await expect(phone.delete()).resolves.toEqual({});
 
-    expect(await rowsOf(email)).toMatchObject({ account: undefined, signInCodes: [] });
+    expect(await rowsOf(email)).toMatchObject({ account: undefined, signInCode: undefined });
     expect(await db.select().from(sessions).where(eq(sessions.accountId, id))).toEqual([]);
     expect(await db.select().from(signInMethods).where(eq(signInMethods.accountId, id))).toEqual(
       [],

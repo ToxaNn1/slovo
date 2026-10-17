@@ -66,7 +66,9 @@ export type CodeCheck =
 
 /**
  * Signs readers in: keeps the Sign-in codes and the Sessions of the Accounts
- * (better-auth in the backend). Emails reach it trimmed and lower-cased.
+ * (better-auth in the backend). Emails reach it trimmed and lower-cased. The
+ * rules of both are its own (spec #333): how long a code signs in, how many
+ * tries it has and that a spent code stays spent, and how long a Session lasts.
  */
 export interface Authenticator {
   /**

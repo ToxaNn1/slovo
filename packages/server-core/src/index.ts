@@ -2,7 +2,7 @@
  * The server Core's public interface. The backend reaches the server's rules
  * through this module only (ADR 0030).
  */
-export { createAccounts, SESSION_SECONDS, SIGN_IN_CODE, type Accounts } from './account/accounts';
+export { createAccounts, type Accounts } from './account/accounts';
 export {
   createContentPacks,
   type ContentPacks,
