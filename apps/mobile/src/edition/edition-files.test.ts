@@ -318,16 +318,20 @@ describe('the 0.7 account and email strings groups', () => {
     },
   );
 
-  it.each(['offline', 'invalid-email', 'wrong-code', 'code-expired', 'too-many-requests'])(
-    'needs a line for the problem %s',
-    (problem) => {
-      const problems = without(account['problems'], problem);
+  it.each([
+    'offline',
+    'invalid-email',
+    'wrong-code',
+    'code-expired',
+    'too-many-requests',
+    'unexpected',
+  ])('needs a line for the problem %s', (problem) => {
+    const problems = without(account['problems'], problem);
 
-      expect(issuesOf({ ...strings, account: { ...account, problems } })).toEqual([
-        `account.problems.${problem}`,
-      ]);
-    },
-  );
+    expect(issuesOf({ ...strings, account: { ...account, problems } })).toEqual([
+      `account.problems.${problem}`,
+    ]);
+  });
 
   it('rejects a line for a problem the Core never gives', () => {
     const problems = { ...(account['problems'] as object), 'too-hard': 'Заважко.' };

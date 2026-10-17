@@ -20,7 +20,7 @@ const CHECK_HOLDS = 60 * 60_000;
 
 /** Why the last request of the Account did not do what the reader asked. */
 export type AccountProblem =
-  'offline' | 'invalid-email' | 'wrong-code' | 'code-expired' | 'too-many-requests';
+  'offline' | 'invalid-email' | 'wrong-code' | 'code-expired' | 'too-many-requests' | 'unexpected';
 
 /**
  * The Account on this device as it stands: signed out, a Sign-in code sent,
@@ -47,9 +47,9 @@ export type AccountState = (
 /**
  * The reader's Account («SLOVO ID») on this device, with every rule of
  * signing in, out and deleting it. While a request is in flight no other
- * starts, signing out aside. A request that fails with no answer, a server
- * error or too many requests is tried again, at most 3 times, with backoff and
- * jitter. Whenever the server says the Session has ended, the device forgets
+ * starts, signing out aside. A request that fails with no answer or a server
+ * error is tried again, at most 3 times, with backoff and jitter (ADR 0037).
+ * Whenever the server says the Session has ended, the device forgets
  * it and shows signed out, with no problem. Nothing here touches the user
  * state: the reader's words stay whatever happens to the Account.
  */
@@ -218,8 +218,10 @@ export async function openAccount({
       while (next !== undefined) {
         const signedOutToken = next;
         const answer = await retried(() => api.signOut(signedOutToken));
-        // A Session the server has ended already needs no telling.
-        if (!answer.ok && answer.reason !== 'unauthorized') return;
+        // A Session the server has ended already needs no telling, and one it
+        // answers unexpectedly no telling changes.
+        if (!answer.ok && answer.reason !== 'unauthorized' && answer.reason !== 'unexpected')
+          return;
         untold.shift();
         next = untold[0];
       }

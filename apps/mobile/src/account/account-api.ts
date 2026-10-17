@@ -1,21 +1,9 @@
-import { ORPCError, type ApiClient } from '@slovo/contracts/api';
+import type { ApiClient } from '@slovo/contracts/api';
 import type { AccountApi, AccountApiFailure } from '@slovo/core';
 
-import { requestFailure } from '../api';
+import { answerOf } from '../api';
 
-/** A failure of an Account procedure: the Session ended (401), or one any call may end in. */
-function accountFailure(error: unknown): AccountApiFailure {
-  if (error instanceof ORPCError && error.status === 401) {
-    return { ok: false, reason: 'unauthorized' };
-  }
-  return requestFailure(error);
-}
-
-/** The tries a wrong code has left, as the backend's `WRONG_CODE` carries them. */
-function triesLeftOf(data: unknown): number | undefined {
-  if (typeof data !== 'object' || data === null || !('triesLeft' in data)) return undefined;
-  return typeof data.triesLeft === 'number' ? data.triesLeft : undefined;
-}
+const unauthorized = { ok: false, reason: 'unauthorized' } as const;
 
 /**
  * The Core's `AccountApi` on the API contract's client. The Sign-in code
@@ -36,47 +24,35 @@ export function createAccountApi({
   /** Calls a procedure of the Session's Account that answers nothing but success, such as a sign-out. */
   async function actWithSession(
     token: string,
-    call: (account: ApiClient['account']) => Promise<unknown>,
+    call: (account: ApiClient['account']) => ReturnType<ApiClient['account']['signOut']>,
   ): Promise<{ readonly ok: true } | AccountApiFailure> {
-    try {
-      await call(clientOf(token).account);
-      return { ok: true };
-    } catch (error) {
-      return accountFailure(error);
-    }
+    const answer = await answerOf(call(clientOf(token).account), ({ code }) =>
+      code === 'UNAUTHORIZED' ? unauthorized : undefined,
+    );
+    return answer.ok ? { ok: true } : answer;
   }
 
   return {
     async requestCode(email) {
-      try {
-        await client.account.requestCode({ email, editionId });
-        return { ok: true };
-      } catch (error) {
-        return requestFailure(error);
-      }
+      const answer = await answerOf(client.account.requestCode({ email, editionId }));
+      return answer.ok ? { ok: true } : answer;
     },
     async verifyCode(email, code) {
-      try {
-        const session = await client.account.verifyCode({ email, code });
-        return { ok: true, token: session.token, email: session.email };
-      } catch (error) {
-        if (error instanceof ORPCError && error.code === 'CODE_EXPIRED') {
-          return { ok: false, reason: 'code-expired' };
+      const answer = await answerOf(client.account.verifyCode({ email, code }), (error) => {
+        if (error.code === 'WRONG_CODE') {
+          return { ok: false, reason: 'wrong-code', triesLeft: error.data.triesLeft } as const;
         }
-        if (error instanceof ORPCError && error.code === 'WRONG_CODE') {
-          const triesLeft = triesLeftOf(error.data);
-          if (triesLeft !== undefined) return { ok: false, reason: 'wrong-code', triesLeft };
-        }
-        return requestFailure(error);
-      }
+        if (error.code === 'CODE_EXPIRED') return { ok: false, reason: 'code-expired' } as const;
+        return undefined;
+      });
+      if (!answer.ok) return answer;
+      return { ok: true, token: answer.output.token, email: answer.output.email };
     },
     async me(token) {
-      try {
-        const { email } = await clientOf(token).account.me();
-        return { ok: true, email };
-      } catch (error) {
-        return accountFailure(error);
-      }
+      const answer = await answerOf(clientOf(token).account.me(), ({ code }) =>
+        code === 'UNAUTHORIZED' ? unauthorized : undefined,
+      );
+      return answer.ok ? { ok: true, email: answer.output.email } : answer;
     },
     signOut: (token) => actWithSession(token, (account) => account.signOut()),
     signOutEverywhere: (token) => actWithSession(token, (account) => account.signOutEverywhere()),

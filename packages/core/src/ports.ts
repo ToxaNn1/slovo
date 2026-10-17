@@ -86,12 +86,14 @@ export type Schedule = (run: () => void, delay: number) => () => void;
 
 /**
  * A request to the backend that failed as any request may: no answer
- * (`offline`), a server error (5xx) or too many requests (429). The first two
- * may pass by themselves, and they alone are tried again (ADR 0037).
+ * (`offline`), a server error (5xx), too many requests (429), or an answer the
+ * request never expects (`unexpected`), such as a request the backend refuses
+ * (400) or an Edition it doesn't serve (404). The first two may pass by
+ * themselves, and they alone are tried again (ADR 0037).
  */
 export interface RequestFailure {
   readonly ok: false;
-  readonly reason: 'offline' | 'server-error' | 'too-many-requests';
+  readonly reason: 'offline' | 'server-error' | 'too-many-requests' | 'unexpected';
 }
 
 /** Whether the device lets the app notify: the reader allowed it, denied it, or hasn't been asked yet. */
@@ -150,7 +152,8 @@ export type AccountApiFailure =
  * The backend's Account procedures, as the Core sees them. The shell
  * implements this port on the API contract's client, which also names the
  * Edition whose language the Sign-in code email is in. The calls that act on
- * an Account carry the token of its Session.
+ * an Account carry the token of its Session. A call never rejects: every
+ * answer of the backend comes back as success or a failure.
  */
 export interface AccountApi {
   /**
@@ -229,7 +232,8 @@ export type ContentApiFailure =
 /**
  * The backend's content procedures for the running Edition, as the Core sees
  * them. They need no Account. The shell implements this port on the API
- * contract's client.
+ * contract's client. A call never rejects: every answer of the backend comes
+ * back as success or a failure.
  */
 export interface ContentApi {
   /** The newest published pack of the pack format; none when nothing of it is published. */

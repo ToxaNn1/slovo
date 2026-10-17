@@ -1,13 +1,10 @@
-import { ORPCError, type ApiClient } from '@slovo/contracts/api';
-import type { ContentApi, ContentApiFailure } from '@slovo/core';
+import type { ApiClient } from '@slovo/contracts/api';
+import type { ContentApi } from '@slovo/core';
 
-import { requestFailure } from '../api';
+import { answerOf } from '../api';
 
-/** A failure of a content procedure: the Edition or the pack not found (404), or one any call may end in. */
-function contentFailure(error: unknown): ContentApiFailure {
-  if (error instanceof ORPCError && error.status === 404) return { ok: false, reason: 'not-found' };
-  return requestFailure(error);
-}
+/** An Edition the backend doesn't serve, one with content updates off, or a pack not published. */
+const notFound = { ok: false, reason: 'not-found' } as const;
 
 /**
  * The Core's `ContentApi` for the running Edition, on the API contract's
@@ -25,25 +22,20 @@ export function createContentApi({
 }): ContentApi {
   return {
     async latest(packFormat) {
-      try {
-        const { pack } = await client.content.latest({ editionId, packFormat });
-        return { ok: true, pack: pack ?? undefined };
-      } catch (error) {
-        return contentFailure(error);
-      }
+      const answer = await answerOf(client.content.latest({ editionId, packFormat }), ({ code }) =>
+        code === 'NOT_FOUND' ? notFound : undefined,
+      );
+      return answer.ok ? { ok: true, pack: answer.output.pack ?? undefined } : answer;
     },
     async download(contentVersion) {
-      let answer;
-      try {
-        answer = await client.content.download({ params: { editionId, contentVersion } });
-      } catch (error) {
-        return contentFailure(error);
-      }
+      const answer = await answerOf(
+        client.content.download({ params: { editionId, contentVersion } }),
+        ({ code }) => (code === 'NOT_FOUND' ? notFound : undefined),
+      );
+      if (!answer.ok) return answer;
       // 304 answers only a download that names an ETag, which this one never does.
-      if (answer.status !== 200) {
-        throw new Error(`The download of a pack got ${String(answer.status)}`);
-      }
-      return { ok: true, bytes: await readBytes(answer.body) };
+      if (answer.output.status !== 200) return { ok: false, reason: 'unexpected' };
+      return { ok: true, bytes: await readBytes(answer.output.body) };
     },
   };
 }

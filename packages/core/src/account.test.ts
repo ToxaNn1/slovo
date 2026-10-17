@@ -177,6 +177,19 @@ describe('the Account', () => {
     });
   });
 
+  it('says something went wrong when the backend answers what the request never expects', async () => {
+    const { account, api } = await setup();
+    api.failNext('unexpected');
+
+    await account.requestCode('anna@mail.com');
+    expect(account.state).toEqual({ status: 'signed-out', inFlight: false, problem: 'unexpected' });
+
+    await account.requestCode('anna@mail.com');
+    api.failNext('unexpected');
+    await account.verifyCode('100001');
+    expect(account.state).toMatchObject({ status: 'code-sent', problem: 'unexpected' });
+  });
+
   it('says it is offline when no try reaches the server, and sends once it does', async () => {
     const { account, api } = await setup();
     api.failNext('offline', 'offline', 'offline', 'offline');
@@ -363,6 +376,28 @@ describe('the Account signed in', () => {
     expect(api.accounts).toEqual(['anna@mail.com']);
   });
 
+  it('stays signed in when the backend answers signing out everywhere or deleting unexpectedly, and says so', async () => {
+    const { account, api } = await signedIn();
+    api.failNext('unexpected', 'unexpected');
+
+    await account.signOutEverywhere();
+    expect(account.state).toMatchObject({ status: 'signed-in', problem: 'unexpected' });
+    await account.delete();
+    expect(account.state).toMatchObject({ status: 'signed-in', problem: 'unexpected' });
+    expect(api.accounts).toEqual(['anna@mail.com']);
+  });
+
+  it('tells the server of a sign-out no more once it answers it unexpectedly', async () => {
+    const { account, api } = await signedIn();
+    api.failNext('unexpected');
+
+    await account.signOut();
+    await account.refresh();
+
+    expect(account.state).toEqual({ status: 'signed-out', inFlight: false, problem: undefined });
+    expect(api.calls.filter((call) => call === 'signOut')).toHaveLength(1);
+  });
+
   it('signs out quietly when deleting finds the Session ended', async () => {
     const { account, api } = await signedIn();
     api.endSessions();
@@ -418,6 +453,16 @@ describe('the Account tries a request again', () => {
     expect(api.calls).toEqual(['requestCode']);
     expect(delays).toEqual([]);
     expect(account.state).toMatchObject({ status: 'signed-out', problem: 'too-many-requests' });
+  });
+
+  it('never on an answer the request never expects: no try changes it', async () => {
+    const { account, api, delays } = await setup();
+    api.failNext('unexpected');
+
+    await account.requestCode('anna@mail.com');
+
+    expect(api.calls).toEqual(['requestCode']);
+    expect(delays).toEqual([]);
   });
 
   it('never on a wrong code or a Session the server has ended', async () => {

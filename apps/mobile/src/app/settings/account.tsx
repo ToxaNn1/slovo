@@ -31,7 +31,11 @@ const strings = editionStrings.account;
 /** The time the resend countdown counts by, one function for every render. */
 const now = () => deviceClock.now();
 
-/** Runs a request of the Account; one that fails outside its rules is logged. */
+/**
+ * Runs a request of the Account, which answers every failure of the backend
+ * by its own rules; one that fails outside them, such as a Session the device
+ * can't keep, is logged.
+ */
 function run(request: Promise<void>): void {
   request.catch((error: unknown) => {
     console.error('The Account could not do what the reader asked', error);

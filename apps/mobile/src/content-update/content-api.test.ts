@@ -85,9 +85,23 @@ describe('the content API over the contract’s client', () => {
     await expect(contentApi.download(5)).resolves.toEqual({ ok: false, reason: 'offline' });
   });
 
-  it('rejects an answer no retry can change, such as a request the backend refuses', async () => {
+  it('answers unexpected when the backend refuses the request', async () => {
     const { contentApi } = contentApiAnswering(() => failure('BAD_REQUEST', 400));
 
-    await expect(contentApi.latest(1)).rejects.toMatchObject({ status: 400 });
+    await expect(contentApi.latest(1)).resolves.toEqual({ ok: false, reason: 'unexpected' });
+    await expect(contentApi.download(5)).resolves.toEqual({ ok: false, reason: 'unexpected' });
+  });
+
+  it('answers unexpected when a download answers with no file', async () => {
+    const { contentApi } = contentApiAnswering(() =>
+      Promise.resolve(
+        new Response(null, {
+          status: 304,
+          headers: { etag: `"${fileSha256}"`, 'cache-control': 'public, max-age=31536000' },
+        }),
+      ),
+    );
+
+    await expect(contentApi.download(5)).resolves.toEqual({ ok: false, reason: 'unexpected' });
   });
 });
