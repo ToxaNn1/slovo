@@ -2,12 +2,12 @@ import { spawn } from 'node:child_process';
 import { Writable } from 'node:stream';
 
 import { describeApi } from '@slovo/contracts/api-description';
-import { describe, expect, inject, it, onTestFinished } from 'vitest';
+import { describe, expect, it, onTestFinished } from 'vitest';
 
 import { createDatabase } from './database/database';
 import { createLogger } from './logger';
 import { startServer } from './server';
-import { createTestDatabase, silentLogger, testApp } from './test-support';
+import { createTestDatabase, silentLogger, testApp, testDatabaseUrl } from './test-support';
 
 /** A database URL on which nothing listens, as when Postgres is down. */
 const DOWN_DATABASE_URL = 'postgres://slovo:slovo@127.0.0.1:1/slovo';
@@ -74,19 +74,19 @@ function runServer(env: Record<string, string>) {
 
 describe('/health', () => {
   it('answers 200 when the database answers', async () => {
-    const { app, close } = testApp();
-    onTestFinished(close);
+    const { request } = testApp();
 
-    const response = await app.request('/health');
+    const response = await request('/health');
 
     expect(response.status).toBe(200);
   });
 
   it('answers 503 when the database is down', async () => {
-    const { app, close } = testApp({ database: createDatabase(DOWN_DATABASE_URL, silentLogger) });
-    onTestFinished(close);
+    const database = createDatabase(DOWN_DATABASE_URL, silentLogger);
+    onTestFinished(() => database.close());
+    const { request } = testApp({ database });
 
-    const response = await app.request('/health');
+    const response = await request('/health');
 
     expect(response.status).toBe(503);
   });
@@ -95,10 +95,9 @@ describe('/health', () => {
 describe('a request', () => {
   it('keeps the x-request-id it brings, in the answer and in its log line', async () => {
     const { lines, logger } = logLines();
-    const { app, close } = testApp({ logger });
-    onTestFinished(close);
+    const { request } = testApp({ logger });
 
-    const response = await app.request('/health', { headers: { 'x-request-id': 'abc-123' } });
+    const response = await request('/health', { headers: { 'x-request-id': 'abc-123' } });
 
     expect(response.headers.get('x-request-id')).toBe('abc-123');
     expect(lines).toContainEqual(
@@ -107,11 +106,10 @@ describe('a request', () => {
   });
 
   it('gets a new x-request-id when it brings none', async () => {
-    const { app, close } = testApp();
-    onTestFinished(close);
+    const { request } = testApp();
 
-    const first = await app.request('/health');
-    const second = await app.request('/health');
+    const first = await request('/health');
+    const second = await request('/health');
 
     expect(first.headers.get('x-request-id')).toMatch(/\S/);
     expect(second.headers.get('x-request-id')).not.toBe(first.headers.get('x-request-id'));
@@ -121,11 +119,9 @@ describe('a request', () => {
 describe('an unexpected failure', () => {
   it('answers a bare 500 INTERNAL and logs its stack with the request id', async () => {
     const { lines, logger } = logLines();
-    const { client, close } = testApp({
-      database: createDatabase(DOWN_DATABASE_URL, silentLogger),
-      logger,
-    });
-    onTestFinished(close);
+    const database = createDatabase(DOWN_DATABASE_URL, silentLogger);
+    onTestFinished(() => database.close());
+    const { client } = testApp({ database, logger });
 
     const failure = client.content.latest({ editionId: 'uk', packFormat: 1 });
 
@@ -141,12 +137,29 @@ describe('an unexpected failure', () => {
   });
 });
 
+describe('a request that came on no connection', () => {
+  it('answers a bare 500 INTERNAL before any route runs, and logs why', async () => {
+    const { lines, logger } = logLines();
+    const { app } = testApp({ logger });
+
+    // Node gives every request its connection, so only a request made in
+    // process comes without one.
+    const response = await app.request('/health');
+
+    expect(response.status).toBe(500);
+    expect(await response.json()).toEqual({ code: 'INTERNAL' });
+    const logged = lines.find((line) => line['msg'] === 'unexpected failure');
+    expect((logged?.['err'] as { message?: string } | undefined)?.message).toBe(
+      'the request came on no connection',
+    );
+  });
+});
+
 describe('an unknown address', () => {
   it('answers 404 NOT_FOUND, also under /v1', async () => {
-    const { app, close } = testApp();
-    onTestFinished(close);
+    const { request } = testApp();
 
-    const response = await app.request('/v1/editions/uk/words');
+    const response = await request('/v1/editions/uk/words');
 
     expect(response.status).toBe(404);
     expect(await response.json()).toEqual({ code: 'NOT_FOUND' });
@@ -155,25 +168,23 @@ describe('an unknown address', () => {
 
 describe('/docs', () => {
   it('shows the API in a browser', async () => {
-    const { app, close } = testApp();
-    onTestFinished(close);
+    const { request } = testApp();
 
-    const response = await app.request('/docs');
+    const response = await request('/docs');
 
     expect(response.status).toBe(200);
     expect(response.headers.get('content-type')).toContain('text/html');
   });
 
   it("serves the contract's description, which the repo commits, with the server it is read from", async () => {
-    const { app, close } = testApp();
-    onTestFinished(close);
+    const { request } = testApp();
 
-    const response = await app.request('/docs/openapi.json');
+    const response = await request('/docs/openapi.json');
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
       ...(await describeApi()),
-      servers: [{ url: 'http://localhost/' }],
+      servers: [{ url: 'http://backend.test/' }],
     });
   });
 });
@@ -224,7 +235,7 @@ describe('the server', { timeout: 30_000 }, () => {
   });
 
   it('stops on SIGTERM', async () => {
-    const server = runServer({ ...VALID_ENV, DATABASE_URL: inject('databaseUrl'), PORT: '0' });
+    const server = runServer({ ...VALID_ENV, DATABASE_URL: testDatabaseUrl(), PORT: '0' });
     await server.listening;
 
     server.child.kill('SIGTERM');
@@ -234,7 +245,7 @@ describe('the server', { timeout: 30_000 }, () => {
   });
 
   it('finishes the requests in flight when it stops, then closes the pool', async () => {
-    const database = createDatabase(inject('databaseUrl'), silentLogger);
+    const database = createDatabase(testDatabaseUrl(), silentLogger);
     const started = signal();
     const answered = signal();
     const { app } = testApp({

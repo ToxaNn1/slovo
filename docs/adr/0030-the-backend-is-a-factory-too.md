@@ -40,3 +40,14 @@ The IP address is the one of the request's connection. A forwarding header such 
 
 - **better-auth's own limiter**: rejected. It counts requests to better-auth's HTTP endpoints, keyed by IP and path, and nothing reaches them: the backend calls its server API. It has no key for the email.
 - **Sliding windows**: rejected for now. A fixed window lets up to twice a limit through around its end, which these limits can bear, and it needs one row per key instead of one per request.
+
+## Amendment: the test harness gives each file its database and each test one clock; a request's IP is settled where it arrives (architecture review 2)
+
+The backend's tests reach it through one harness, `apps/backend/src/test-support.ts`, which Vitest runs before every test file. It replaces "one fresh database per run": each test file gets a fresh, migrated database of its own and drops it after, so the files run side by side and no file's clock or clean-up reaches another's data. Each test runs on one clock, the system time, frozen when the test starts. The harness gives the composition root the system `Clock`, so better-auth and the server Core read the same time, and a test moves both with one call (`passTime`). The harness also builds the test Editions, copies of the Ukrainian Edition under ids of their own whose content is copied and recorded when a test first builds a pack, and sends every request, through the API's client or one of the test's own, to the app in process on a connection from an IP address. The server Core has no tests of its own: its rules lean on the adapters behind its ports, and with no in-memory repositories the tests through the backend are their natural seam.
+
+Every request has the IP address of its connection. The app takes it once, where a request arrives and before any route runs, and a request without one is a broken invariant answered `500 { code: "INTERNAL" }`; the procedures read the address and never check for it.
+
+### Considered Options
+
+- **better-auth reading the server Core's `Clock`**: not possible. It reads the system time itself, so the one clock both can read is that time.
+- **One database for the run, files one after another**: rejected. It made every file wait for the others, and a test moving the clock made better-auth delete the codes of another file's tests.

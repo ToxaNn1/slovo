@@ -1,29 +1,11 @@
-import { createHash } from 'node:crypto';
-import {
-  copyFileSync,
-  cpSync,
-  mkdtempSync,
-  readdirSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import type { Edition } from '@slovo/server-core';
+import { describe, expect, it } from 'vitest';
 
-import { buildLanguagePack, recordContent } from '@slovo/language-pack';
-import { EDITIONS_DIR, editionFiles, openEdition } from '@slovo/language-pack/edition';
-import type { Clock, Edition } from '@slovo/server-core';
-import { describe, expect, it, onTestFinished } from 'vitest';
-
-import { readEditions } from '../edition/edition-folders';
-import { testApp } from '../test-support';
-import { publishPack } from './publish-pack';
+import { sha256, testApp, testEditions } from '../test-support';
 
 describe('content.latest', () => {
   it('answers none for the Ukrainian Edition while no pack is published', async () => {
-    const { client, close } = testApp();
-    onTestFinished(close);
+    const { client } = testApp();
 
     const latest = await client.content.latest({ editionId: 'uk', packFormat: 1 });
 
@@ -31,8 +13,7 @@ describe('content.latest', () => {
   });
 
   it('refuses a request with an unknown field as BAD_REQUEST', async () => {
-    const { client, close } = testApp();
-    onTestFinished(close);
+    const { client } = testApp();
     // The contract's types allow no unknown field, so the test slips one past them.
     const input = { editionId: 'uk', packFormat: 1, since: 3 };
 
@@ -44,8 +25,7 @@ describe('content.latest', () => {
   });
 
   it('refuses a pack format that is not a positive whole number as BAD_REQUEST', async () => {
-    const { client, close } = testApp();
-    onTestFinished(close);
+    const { client } = testApp();
 
     await expect(client.content.latest({ editionId: 'uk', packFormat: 0 })).rejects.toMatchObject({
       code: 'BAD_REQUEST',
@@ -54,101 +34,16 @@ describe('content.latest', () => {
   });
 });
 
-/** The SHA-256 of a file's bytes, as 64 lowercase hex digits. */
-function sha256(bytes: Uint8Array): string {
-  return createHash('sha256').update(bytes).digest('hex');
-}
-
 /** The SHA-256 of a downloaded file. */
 async function sha256Of(file: Blob): Promise<string> {
   return sha256(new Uint8Array(await file.arrayBuffer()));
 }
 
-/**
- * An Edition of a test's own, in a new editions folder: the Ukrainian
- * Edition's config, strings and content under the id, its content recorded.
- * The test run shares one database, so each test that publishes takes an id
- * of its own.
- */
-function testEdition(editionId: string) {
-  const dir = mkdtempSync(join(tmpdir(), 'slovo-content-'));
-  onTestFinished(() => {
-    rmSync(dir, { recursive: true, force: true });
-  });
-  const ukrainian = openEdition(EDITIONS_DIR, 'uk');
-  const edition = editionFiles(join(dir, editionId));
-  cpSync(join(ukrainian.dir, 'content'), join(edition.dir, 'content'), { recursive: true });
-  copyFileSync(ukrainian.path('strings'), edition.path('strings'));
-  const config = JSON.parse(readFileSync(ukrainian.path('config'), 'utf8')) as object;
-  writeFileSync(edition.path('config'), JSON.stringify({ ...config, id: editionId }));
-  const record = () => {
-    if (!recordContent({ editionDir: edition.dir }).ok) throw new Error('Content not recorded');
-  };
-  record();
-
-  let builds = 0;
-  return {
-    /** The Edition as the backend reads it now. */
-    editions: (): Edition[] => readEditions(dir),
-    /** Builds the pack of the content as it is now, and what `content.latest` announces for it. */
-    buildPack() {
-      builds += 1;
-      const file = join(dir, `language-pack-${String(builds)}.db`);
-      const built = buildLanguagePack({ editionDir: edition.dir, outFile: file });
-      if (!built.ok) throw new Error('Pack not built');
-      const bytes = readFileSync(file);
-      return {
-        editionId,
-        file,
-        announced: {
-          contentVersion: built.metadata.contentVersion,
-          packFormat: 1,
-          size: bytes.byteLength,
-          fileSha256: sha256(bytes),
-        },
-      };
-    },
-    /** Corrects a Word's Definition and records the content, which raises its version. */
-    correctWord() {
-      const wordsDir = join(edition.dir, 'content/words');
-      const name = readdirSync(wordsDir).find((file) => file.endsWith('.json'));
-      if (name === undefined) throw new Error('No Word to correct');
-      const file = join(wordsDir, name);
-      const word = JSON.parse(readFileSync(file, 'utf8')) as { primaryDefinition: string };
-      const primaryDefinition = `${word.primaryDefinition} (corrected)`;
-      writeFileSync(file, JSON.stringify({ ...word, primaryDefinition }));
-      record();
-    },
-  };
-}
-
-/** The time publishing reads. */
-const clock: Clock = { now: () => new Date('2026-10-17T09:00:00Z') };
-
-/** The backend serving the Editions, and its publish command on the same database. */
-function testBackend(editions: readonly Edition[]) {
-  const { client, database, close } = testApp({ editions });
-  onTestFinished(close);
-  return {
-    client,
-    /** Closes the backend's database, as when Postgres goes away. */
-    closeDatabase: close,
-    /**
-     * Publishes the pack file of the Edition as the Editions read when the
-     * command runs: those the backend serves unless given.
-     */
-    publish: (
-      { editionId, file }: { editionId: string; file: string },
-      editionsNow: readonly Edition[] = editions,
-    ) => publishPack({ database, clock, editions: editionsNow, editionId, file }),
-  };
-}
-
 describe('publishing a Language Pack', () => {
   it('makes it the latest of its pack format, and another format still answers none', async () => {
-    const edition = testEdition('published');
-    const pack = edition.buildPack();
-    const { client, publish } = testBackend(edition.editions());
+    const folder = testEditions(['published']);
+    const pack = folder.buildPack('published');
+    const { client, publish } = testApp({ editions: folder.read() });
 
     await expect(publish(pack)).resolves.toEqual({ ok: true, pack: pack.announced });
 
@@ -161,14 +56,14 @@ describe('publishing a Language Pack', () => {
   });
 
   it('makes a pack of a higher content version the latest', async () => {
-    const edition = testEdition('grown');
-    const first = edition.buildPack();
-    const { client, publish } = testBackend(edition.editions());
+    const folder = testEditions(['grown']);
+    const first = folder.buildPack('grown');
+    const { client, publish } = testApp({ editions: folder.read() });
     await publish(first);
-    edition.correctWord();
-    const second = edition.buildPack();
+    folder.correctWord('grown');
+    const second = folder.buildPack('grown');
 
-    await expect(publish(second, edition.editions())).resolves.toMatchObject({ ok: true });
+    await expect(publish(second, folder.read())).resolves.toMatchObject({ ok: true });
 
     expect(second.announced.contentVersion).toBeGreaterThan(first.announced.contentVersion);
     await expect(client.content.latest({ editionId: 'grown', packFormat: 1 })).resolves.toEqual({
@@ -177,10 +72,10 @@ describe('publishing a Language Pack', () => {
   });
 
   it('refuses a pack whose content checksum the Edition does not record, and keeps nothing', async () => {
-    const edition = testEdition('unrecorded');
-    const stale = edition.buildPack();
-    edition.correctWord();
-    const { client, publish } = testBackend(edition.editions());
+    const folder = testEditions(['unrecorded']);
+    const stale = folder.buildPack('unrecorded');
+    folder.correctWord('unrecorded');
+    const { client, publish } = testApp({ editions: folder.read() });
 
     await expect(publish(stale)).resolves.toEqual({ ok: false, reason: 'not-recorded' });
 
@@ -190,10 +85,9 @@ describe('publishing a Language Pack', () => {
   });
 
   it('refuses a pack of another Edition as one the Edition does not record', async () => {
-    const edition = testEdition('mine');
-    const other = testEdition('theirs');
-    const pack = other.buildPack();
-    const { client, publish } = testBackend([...edition.editions(), ...other.editions()]);
+    const folder = testEditions(['mine', 'theirs']);
+    const pack = folder.buildPack('theirs');
+    const { client, publish } = testApp({ editions: folder.read() });
 
     await expect(publish({ ...pack, editionId: 'mine' })).resolves.toEqual({
       ok: false,
@@ -208,12 +102,12 @@ describe('publishing a Language Pack', () => {
   });
 
   it('refuses a content version not higher than the latest published one, and keeps nothing', async () => {
-    const edition = testEdition('shrunk');
-    const older = edition.buildPack();
-    const olderEditions = edition.editions();
-    edition.correctWord();
-    const newer = edition.buildPack();
-    const { client, publish } = testBackend(edition.editions());
+    const folder = testEditions(['shrunk']);
+    const older = folder.buildPack('shrunk');
+    const olderEditions = folder.read();
+    folder.correctWord('shrunk');
+    const newer = folder.buildPack('shrunk');
+    const { client, publish } = testApp({ editions: folder.read() });
     await publish(newer);
 
     await expect(publish(older, olderEditions)).resolves.toEqual({
@@ -232,9 +126,9 @@ describe('publishing a Language Pack', () => {
   });
 
   it('refuses a content version already published, and keeps nothing', async () => {
-    const edition = testEdition('twice');
-    const pack = edition.buildPack();
-    const { client, publish } = testBackend(edition.editions());
+    const folder = testEditions(['twice']);
+    const pack = folder.buildPack('twice');
+    const { client, publish } = testApp({ editions: folder.read() });
     await publish(pack);
 
     await expect(publish(pack)).resolves.toEqual({ ok: false, reason: 'already-published' });
@@ -245,9 +139,9 @@ describe('publishing a Language Pack', () => {
   });
 
   it('refuses a pack of an Edition the backend did not find', async () => {
-    const edition = testEdition('unknown');
-    const pack = edition.buildPack();
-    const { publish } = testBackend(edition.editions());
+    const folder = testEditions(['unknown']);
+    const pack = folder.buildPack('unknown');
+    const { publish } = testApp({ editions: folder.read() });
 
     await expect(publish(pack, [])).resolves.toEqual({ ok: false, reason: 'unknown-edition' });
   });
@@ -266,9 +160,9 @@ function withContentUpdatesOff(editions: readonly Edition[]): Edition[] {
 
 /** An Edition with one published pack, and the backend serving it. */
 async function publishedPack(editionId: string) {
-  const edition = testEdition(editionId);
-  const pack = edition.buildPack();
-  const backend = testBackend(edition.editions());
+  const folder = testEditions([editionId]);
+  const pack = folder.buildPack(editionId);
+  const backend = testApp({ editions: folder.read() });
   await backend.publish(pack);
   return { ...backend, pack };
 }
@@ -320,11 +214,11 @@ describe('content.download', () => {
   });
 
   it('answers a second download without reading the database again', async () => {
-    const { client, pack, closeDatabase } = await publishedPack('released');
+    const { client, pack, close } = await publishedPack('released');
     const params = { editionId: 'released', contentVersion: pack.announced.contentVersion };
     await client.content.download({ params });
 
-    await closeDatabase();
+    await close();
     const again = await client.content.download({ params });
 
     expect(again.status).toBe(200);
@@ -343,8 +237,7 @@ describe('content.download', () => {
   });
 
   it('answers NOT_FOUND for an Edition the backend did not find', async () => {
-    const { client, close } = testApp();
-    onTestFinished(close);
+    const { client } = testApp();
 
     await expect(
       client.content.download({ params: { editionId: 'xx', contentVersion: 1 } }),
@@ -352,8 +245,7 @@ describe('content.download', () => {
   });
 
   it('refuses a request with an unknown query field as BAD_REQUEST', async () => {
-    const { client, close } = testApp();
-    onTestFinished(close);
+    const { client } = testApp();
     // The contract's types allow no query field, so the test slips one past them.
     const query = { packFormat: 1 } as unknown as Record<string, never>;
     const input = { params: { editionId: 'uk', contentVersion: 1 }, query };
@@ -365,8 +257,7 @@ describe('content.download', () => {
   });
 
   it('refuses a content version that is not a positive whole number as BAD_REQUEST', async () => {
-    const { client, close } = testApp();
-    onTestFinished(close);
+    const { client } = testApp();
 
     for (const contentVersion of [0, 1.5, 2 ** 31]) {
       await expect(
@@ -378,13 +269,12 @@ describe('content.download', () => {
 
 describe('an Edition with content updates switched off', () => {
   it('answers NOT_FOUND to content.latest and content.download, with a pack published', async () => {
-    const edition = testEdition('switched-off');
-    const pack = edition.buildPack();
-    const { publish } = testBackend(edition.editions());
+    const folder = testEditions(['switched-off']);
+    const pack = folder.buildPack('switched-off');
+    const { publish } = testApp({ editions: folder.read() });
     await publish(pack);
 
-    const { client, close } = testApp({ editions: withContentUpdatesOff(edition.editions()) });
-    onTestFinished(close);
+    const { client } = testApp({ editions: withContentUpdatesOff(folder.read()) });
 
     await expect(
       client.content.latest({ editionId: 'switched-off', packFormat: 1 }),

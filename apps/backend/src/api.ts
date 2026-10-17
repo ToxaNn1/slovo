@@ -24,8 +24,8 @@ interface ApiContext extends ResponseHeadersPluginContext {
   logger: Logger;
   /** The request's headers, where a Session travels. */
   headers: Headers;
-  /** The IP address the request came from; none when it came on no connection. */
-  ip: string | undefined;
+  /** The IP address of the request's connection. */
+  ip: string;
 }
 
 /**

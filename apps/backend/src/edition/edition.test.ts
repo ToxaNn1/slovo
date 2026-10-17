@@ -1,12 +1,10 @@
-import { describe, expect, it, onTestFinished } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
-import { editionsFolder, testApp } from '../test-support';
-import { readEditions } from './edition-folders';
+import { testApp, testEditions } from '../test-support';
 
 describe('the Editions', () => {
   it('are every Edition folder the backend finds at start', async () => {
-    const { client, close } = testApp({ editions: readEditions(editionsFolder(['uk', 'pl'])) });
-    onTestFinished(close);
+    const { client } = testApp({ editions: testEditions(['uk', 'pl']).read() });
 
     for (const editionId of ['uk', 'pl']) {
       await expect(client.content.latest({ editionId, packFormat: 1 })).resolves.toEqual({
@@ -16,8 +14,7 @@ describe('the Editions', () => {
   });
 
   it('refuse an Edition the backend did not find as NOT_FOUND', async () => {
-    const { client, close } = testApp({ editions: readEditions(editionsFolder(['uk'])) });
-    onTestFinished(close);
+    const { client } = testApp({ editions: testEditions(['uk']).read() });
 
     await expect(client.content.latest({ editionId: 'pl', packFormat: 1 })).rejects.toMatchObject({
       code: 'NOT_FOUND',

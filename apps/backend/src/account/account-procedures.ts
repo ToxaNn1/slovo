@@ -5,16 +5,10 @@ import type { Accounts } from '@slovo/server-core';
 /** What a request brings to the Account procedures. */
 interface AccountContext {
   readonly headers: Headers;
-  /** The IP address the request came from; none when it came on no connection. */
-  readonly ip: string | undefined;
+  /** The IP address of the request's connection, which the sign-in limits count. */
+  readonly ip: string;
   /** The headers the answer gets (oRPC's `ResponseHeadersPlugin`). */
   readonly resHeaders?: Headers;
-}
-
-/** The IP address the sign-in limits count the request under. */
-function ipOf({ ip }: AccountContext): string {
-  if (ip === undefined) throw new Error('the request came on no connection');
-  return ip;
 }
 
 /** Tells the answer when, in seconds, a request over a limit may come again. */
@@ -57,7 +51,7 @@ export function accountProcedures(accounts: Accounts) {
 
   return account.router({
     requestCode: account.requestCode.handler(async ({ input, context, errors }) => {
-      const sent = await accounts.requestCode(input.email, input.editionId, ipOf(context));
+      const sent = await accounts.requestCode(input.email, input.editionId, context.ip);
       if (sent.ok) return {};
       switch (sent.reason) {
         case 'invalid-email':
@@ -72,7 +66,7 @@ export function accountProcedures(accounts: Accounts) {
     }),
 
     verifyCode: account.verifyCode.handler(async ({ input, context, errors }) => {
-      const check = await accounts.verifyCode(input.email, input.code, ipOf(context));
+      const check = await accounts.verifyCode(input.email, input.code, context.ip);
       if (check.ok) return { token: check.token, email: check.account.email };
       switch (check.reason) {
         case 'invalid-email':

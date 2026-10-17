@@ -1,71 +1,32 @@
 import { randomUUID } from 'node:crypto';
 
-import type { Clock } from '@slovo/server-core';
-import { afterAll, beforeAll, describe, expect, it, onTestFinished } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
-import { createDatabase } from '../database/database';
-import {
-  connectionFrom,
-  createFakeMailer,
-  createTestDatabase,
-  newIp,
-  silentLogger,
-  testApp,
-  testDatabaseServer,
-  type TestDatabase,
-} from '../test-support';
+import { newIp, passTime, testApp } from '../test-support';
 
 const MINUTE = 60 * 1000;
 
 /** An email no other test uses. */
 const newEmail = () => `reader-${randomUUID()}@example.com`;
 
-/** A clock the test moves on; it starts at the real time. */
-function movingClock() {
-  let now = Date.now();
-  const clock: Clock = { now: () => new Date(now) };
-  return {
-    clock,
-    moveOn: (ms: number) => {
-      now += ms;
-    },
-  };
-}
-
-// The limits count on a database of their own. The backend forgets the
-// windows that have ended by its clock, so another test that moves the clock
-// on by days would end these windows on the shared one.
-let limitsDatabase: TestDatabase;
-beforeAll(async () => {
-  limitsDatabase = await createTestDatabase(testDatabaseServer());
-});
-afterAll(() => limitsDatabase.drop());
-
-/** The backend on a clock the test moves, with a fake Mailer. */
+/** The backend, and the sign-in requests whose answers' status and headers a test reads. */
 function limitedApp() {
-  const { clock, moveOn } = movingClock();
-  const mailer = createFakeMailer();
-  const database = createDatabase(limitsDatabase.url, silentLogger);
-  const backend = testApp({ clock, mailer, database });
-  onTestFinished(backend.close);
-  // A request the client doesn't make, to read the answer's status and headers.
-  const post = (path: string, body: object, ip: string) =>
-    backend.app.request(
+  const backend = testApp();
+  const post = (path: string, body: object, ip?: string) =>
+    backend.request(
       `/v1/account/${path}`,
       {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(body),
       },
-      connectionFrom(ip),
+      ip,
     );
   return {
     ...backend,
-    mailer,
-    moveOn,
-    requestCode: (email: string, ip = backend.ip) =>
+    requestCode: (email: string, ip?: string) =>
       post('sign-in-codes', { email, editionId: 'uk' }, ip),
-    verifyCode: (email: string, ip = backend.ip) => post('sessions', { email, code: '000000' }, ip),
+    verifyCode: (email: string, ip?: string) => post('sessions', { email, code: '000000' }, ip),
   };
 }
 
@@ -80,12 +41,12 @@ async function refusal(response: Response) {
 
 describe('the codes sent to one email', () => {
   it('are at most 5 an hour: the 6th is TOO_MANY_REQUESTS with Retry-After, and sends nothing', async () => {
-    const { client, clientFrom, requestCode, mailer, moveOn } = limitedApp();
+    const { client, clientFrom, requestCode, mailer } = limitedApp();
     const email = newEmail();
     // From several IP addresses, so only the limit of the email holds.
     for (let sent = 0; sent < 5; sent++) {
       await clientFrom(newIp()).account.requestCode({ email, editionId: 'uk' });
-      moveOn(10 * MINUTE);
+      passTime(10 * MINUTE);
     }
 
     const sixth = await requestCode(email, newIp());
@@ -103,15 +64,15 @@ describe('the codes sent to one email', () => {
   });
 
   it('open again when the hour has passed', async () => {
-    const { clientFrom, requestCode, mailer, moveOn } = limitedApp();
+    const { clientFrom, requestCode, mailer } = limitedApp();
     const email = newEmail();
     for (let sent = 0; sent < 5; sent++) {
       await clientFrom(newIp()).account.requestCode({ email, editionId: 'uk' });
     }
-    moveOn(60 * MINUTE - 1000);
+    passTime(60 * MINUTE - 1000);
     expect((await requestCode(email, newIp())).status).toBe(429);
 
-    moveOn(1000);
+    passTime(1000);
 
     await expect(
       clientFrom(newIp()).account.requestCode({ email, editionId: 'uk' }),
@@ -122,11 +83,11 @@ describe('the codes sent to one email', () => {
 
 describe('the code requests from one IP address', () => {
   it('are at most 20 in 10 minutes: the 21st is TOO_MANY_REQUESTS with Retry-After, and sends nothing', async () => {
-    const { client, clientFrom, requestCode, mailer, moveOn } = limitedApp();
+    const { client, clientFrom, requestCode, mailer } = limitedApp();
     for (let sent = 0; sent < 20; sent++) {
       await client.account.requestCode({ email: newEmail(), editionId: 'uk' });
     }
-    moveOn(4 * MINUTE);
+    passTime(4 * MINUTE);
     const email = newEmail();
 
     const twentyFirst = await requestCode(email);
@@ -145,13 +106,13 @@ describe('the code requests from one IP address', () => {
   });
 
   it('open again when the 10 minutes have passed', async () => {
-    const { client, requestCode, moveOn } = limitedApp();
+    const { client, requestCode } = limitedApp();
     for (let sent = 0; sent < 20; sent++) {
       await client.account.requestCode({ email: newEmail(), editionId: 'uk' });
     }
     expect((await requestCode(newEmail())).status).toBe(429);
 
-    moveOn(10 * MINUTE);
+    passTime(10 * MINUTE);
 
     await expect(
       client.account.requestCode({ email: newEmail(), editionId: 'uk' }),
@@ -161,11 +122,11 @@ describe('the code requests from one IP address', () => {
 
 describe('the code checks from one IP address', () => {
   it('are at most 30 in 10 minutes: the 31st is TOO_MANY_REQUESTS with Retry-After', async () => {
-    const { client, clientFrom, verifyCode, mailer, moveOn } = limitedApp();
+    const { client, clientFrom, verifyCode, mailer } = limitedApp();
     for (let checked = 0; checked < 30; checked++) {
       await expect(verifyCode(newEmail())).resolves.toMatchObject({ status: 400 });
     }
-    moveOn(9 * MINUTE + 59_500);
+    passTime(9 * MINUTE + 59_500);
     // The right code, so only the limit refuses it.
     const email = newEmail();
     await clientFrom(newIp()).account.requestCode({ email, editionId: 'uk' });
@@ -185,16 +146,17 @@ describe('the code checks from one IP address', () => {
   });
 
   it('open again when the 10 minutes have passed', async () => {
-    const { client, verifyCode, mailer, moveOn } = limitedApp();
+    const { client, verifyCode, mailer } = limitedApp();
     for (let checked = 0; checked < 30; checked++) {
       await verifyCode(newEmail());
     }
     const email = newEmail();
-    await client.account.requestCode({ email, editionId: 'uk' });
     expect((await verifyCode(email)).status).toBe(429);
 
-    moveOn(10 * MINUTE);
+    passTime(10 * MINUTE);
 
+    // A code lasts as long as the window, so the right one is sent now.
+    await client.account.requestCode({ email, editionId: 'uk' });
     await expect(
       client.account.verifyCode({ email, code: mailer.codeSentTo(email) }),
     ).resolves.toMatchObject({ email });

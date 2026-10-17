@@ -1,19 +1,13 @@
 import { randomUUID } from 'node:crypto';
-import { cpSync } from 'node:fs';
-import { join } from 'node:path';
 
-import { createApiClient, type ApiClient } from '@slovo/contracts/api';
-import { buildLanguagePack, recordContent } from '@slovo/language-pack';
-import { EDITIONS_DIR, editionFiles, openEdition } from '@slovo/language-pack/edition';
+import type { ApiClient } from '@slovo/contracts/api';
 import { eq, getTableColumns, is, type Column } from 'drizzle-orm';
 import { PgTable } from 'drizzle-orm/pg-core';
-import { expect, it, onTestFinished } from 'vitest';
+import { expect, it } from 'vitest';
 
-import { publishPack } from './content/publish-pack';
 import * as schema from './database/schema';
 import { accounts, sessions, signInCodes } from './database/schema';
-import { readEditions } from './edition/edition-folders';
-import { connectionFrom, createFakeMailer, editionsFolder, testApp } from './test-support';
+import { testApp, testEditions } from './test-support';
 
 /** The Edition of this test, with a published pack. */
 const EDITION = 'probe';
@@ -56,57 +50,25 @@ function keysOf(value: unknown): string[] {
 
 /** The backend serving an Edition with a published pack, whose answers the test keeps. */
 async function recordedBackend() {
-  const folder = editionsFolder([EDITION]);
-  const edition = editionFiles(join(folder, EDITION));
-  cpSync(join(openEdition(EDITIONS_DIR, 'uk').dir, 'content'), join(edition.dir, 'content'), {
-    recursive: true,
-  });
-  if (!recordContent({ editionDir: edition.dir }).ok) throw new Error('Content not recorded');
-  const editions = readEditions(folder);
-  const mailer = createFakeMailer();
-  const { app, ip, database, close } = testApp({ mailer, editions });
-  onTestFinished(close);
-
-  const file = join(folder, 'language-pack.db');
-  if (!buildLanguagePack({ editionDir: edition.dir, outFile: file }).ok) {
-    throw new Error('Pack not built');
-  }
-  const published = await publishPack({
-    database,
-    clock: { now: () => new Date() },
-    editions,
-    editionId: EDITION,
-    file,
-  });
-  if (!published.ok) throw new Error(`Pack not published: ${published.reason}`);
-
+  const folder = testEditions([EDITION]);
+  const pack = folder.buildPack(EDITION);
   const answers: Answer[] = [];
-  const clientWith = (headers: Record<string, string>) =>
-    createApiClient({
-      url: 'http://backend.test',
-      headers,
-      // As the client of `testApp`: in process, but on a connection, as every request comes.
-      fetch: async (request) => {
-        const response = await app.fetch(request, connectionFrom(ip));
-        answers.push({
-          request: `${request.method} ${new URL(request.url).pathname}`,
-          status: response.status,
-          headers: JSON.stringify([...response.headers]),
-          body: response.headers.get('content-type')?.includes('json')
-            ? await response.clone().json()
-            : undefined,
-        });
-        return response;
-      },
-    });
-  return {
-    client: clientWith({}),
-    clientOf: (token: string) => clientWith({ authorization: `Bearer ${token}` }),
-    answers,
-    mailer,
-    db: database.db,
-    pack: published.pack,
-  };
+  const backend = testApp({
+    editions: folder.read(),
+    onAnswer: async (request, response) => {
+      answers.push({
+        request: `${request.method} ${new URL(request.url).pathname}`,
+        status: response.status,
+        headers: JSON.stringify([...response.headers]),
+        body: response.headers.get('content-type')?.includes('json')
+          ? await response.clone().json()
+          : undefined,
+      });
+    },
+  });
+  const published = await backend.publish(pack);
+  if (!published.ok) throw new Error(`Pack not published: ${published.reason}`);
+  return { ...backend, answers, db: backend.database.db, pack: published.pack };
 }
 
 it('answers no stored token, Sign-in code or its hash, password field or internal column in any procedure', async () => {
