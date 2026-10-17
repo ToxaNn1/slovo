@@ -8,6 +8,7 @@ const installed: NativeModuleProbes = {
   widget: () => true,
   shareCapture: () => true,
   contentUpdates: () => true,
+  keychain: () => true,
 };
 
 describe('the native modules of the installed dev client', () => {
