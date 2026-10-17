@@ -1,5 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
+import { createApiClient } from '@slovo/contracts/api';
+import { EDITIONS_DIR } from '@slovo/language-pack/edition';
 import { systemClock } from '@slovo/server-core';
 import pg from 'pg';
 import { pino } from 'pino';
@@ -8,6 +10,7 @@ import { inject } from 'vitest';
 import { createApp, type AppDependencies } from './app';
 import { createDatabase } from './database/database';
 import { migrateDatabase } from './database/migrate';
+import { readEditions } from './edition/edition-folders';
 
 /** The Postgres of the repo's `compose.yaml`, which the tests use unless `DATABASE_URL` names another. */
 const LOCAL_DATABASE_URL = 'postgres://slovo:slovo@localhost:55432/slovo';
@@ -65,11 +68,24 @@ async function onServer(serverUrl: string, statement: string): Promise<void> {
 
 /**
  * The backend built by its composition root on this run's database, with a
- * silent logger and the system clock unless the test gives its own. Requests
- * go to the app in process (`app.request`), so no port is opened.
+ * silent logger, the system clock and the repo's Editions unless the test
+ * gives its own, and the API's client. Requests go to the app in process
+ * (`app.request`, or the client), so no port is opened.
  */
 export function testApp(dependencies: Partial<AppDependencies> = {}) {
   const database = dependencies.database ?? createDatabase(inject('databaseUrl'), silentLogger);
-  const app = createApp({ database, clock: systemClock, logger: silentLogger, ...dependencies });
-  return { app, close: () => database.close() };
+  const app = createApp({
+    database,
+    clock: systemClock,
+    logger: silentLogger,
+    editions: readEditions(EDITIONS_DIR),
+    ...dependencies,
+  });
+  // The client the app uses, built from the contract, with its fetch pointed
+  // at the app in process.
+  const client = createApiClient({
+    url: 'http://backend.test',
+    fetch: (request) => Promise.resolve(app.fetch(request)),
+  });
+  return { app, client, close: () => database.close() };
 }

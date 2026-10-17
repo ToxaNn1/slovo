@@ -117,6 +117,65 @@ describe('a request', () => {
   });
 });
 
+describe('an unexpected failure', () => {
+  it('answers a bare 500 INTERNAL and logs its stack with the request id', async () => {
+    const { lines, logger } = logLines();
+    const { client, close } = testApp({
+      database: createDatabase(DOWN_DATABASE_URL, silentLogger),
+      logger,
+    });
+    onTestFinished(close);
+
+    const failure = client.content.latest({ editionId: 'uk', packFormat: 1 });
+
+    await expect(failure).rejects.toMatchObject({ status: 500 });
+    // The contract lists no such answer, so the client keeps its body as it came.
+    const { data } = (await failure.catch((error: unknown) => error)) as {
+      data: { body: unknown };
+    };
+    expect(data.body).toEqual({ code: 'INTERNAL' });
+    const logged = lines.find((line) => line['msg'] === 'unexpected failure');
+    expect(logged?.['requestId']).toMatch(/\S/);
+    expect((logged?.['err'] as { stack?: string } | undefined)?.stack).toContain('\n    at ');
+  });
+});
+
+describe('an unknown address', () => {
+  it('answers 404 NOT_FOUND, also under /v1', async () => {
+    const { app, close } = testApp();
+    onTestFinished(close);
+
+    const response = await app.request('/v1/editions/uk/words');
+
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({ code: 'NOT_FOUND' });
+  });
+});
+
+describe('/docs', () => {
+  it('shows the API in a browser', async () => {
+    const { app, close } = testApp();
+    onTestFinished(close);
+
+    const response = await app.request('/docs');
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toContain('text/html');
+  });
+
+  it('serves the OpenAPI description of the contract', async () => {
+    const { app, close } = testApp();
+    onTestFinished(close);
+
+    const response = await app.request('/docs/openapi.json');
+    const description = (await response.json()) as { openapi: string; paths: object };
+
+    expect(response.status).toBe(200);
+    expect(description.openapi).toMatch(/^3\./);
+    expect(description.paths).toHaveProperty(['/v1/editions/{editionId}/content/latest', 'get']);
+  });
+});
+
 describe('the logs', () => {
   it('carry no email, code or token, at the top of a line or one level down', () => {
     const { lines, logger } = logLines();

@@ -2,4 +2,10 @@
  * The server Core's public interface. The backend reaches the server's rules
  * through this module only (ADR 0030).
  */
-export { systemClock, type Clock } from './ports';
+export { createContentPacks, type ContentPacks } from './content/content-packs';
+export {
+  createEditionRegistry,
+  type Edition,
+  type EditionRegistry,
+} from './edition/edition-registry';
+export { systemClock, type Clock, type ContentPackStore } from './ports';

@@ -5,7 +5,8 @@
   "description": "Schemas shared by the mobile shell, the Language Pack build and the backend.",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./api": "./src/api.ts"
   },
   "scripts": {
     "lint": "eslint .",
@@ -17,6 +18,9 @@
     "typescript": "~6.0.3"
   },
   "dependencies": {
+    "@orpc/client": "^1.15.7",
+    "@orpc/contract": "^1.15.7",
+    "@orpc/openapi-client": "^1.15.7",
     "zod": "^4.6.5"
   }
 }
