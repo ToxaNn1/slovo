@@ -75,6 +75,8 @@ You need the Node version in [`.nvmrc`](.nvmrc), pnpm, Xcode with an iOS Simulat
 
    Share Cards add the view-capture module `react-native-view-shot` to the same build. Until then the share button stays out of the action row while `nativeModules` reports the capture module missing.
 
+   Version 0.7 brings Content updates, which keep a downloaded Language Pack in the app's documents directory with `expo-file-system`, and keeps the SLOVO ID Session in the Keychain. Both need the next build, after 0.8, made when the owner says so. Until then content updates stay off while `nativeModules` reports `expo-file-system` missing, and the app opens the Language Pack it was built with. Check both after that build ([Check a new native build](#check-a-new-native-build)).
+
    ```sh
    cd apps/mobile
    SLOVO_EDITION=uk npx eas-cli build -p ios --profile development-simulator-uk
@@ -134,6 +136,13 @@ The Ukrainian Edition must work offline (ticket #6). No automated check covers t
 5. Look for network errors in the Metro log. There must be none.
 
 A development build still needs Metro, so this does not prove that a release build starts with no connection. Repeat the check on a preview or release build once such a build exists.
+
+## Check a new native build
+
+What the tests can't reach runs on the simulator after the native build that brings it, by hand. Version 0.7:
+
+1. **A Content update downloads, is kept and opens at the next launch.** Start the backend ([Run the backend](#run-the-backend)). In a second worktree with the same `apps/backend/.env`, correct a Definition, record and build the content with `pnpm build:pack uk --record`, and publish it with `pnpm publish:pack uk`. The checkout Metro runs from keeps the older content, so the app bundles an older pack than the published one. Delete the app from the simulator, install the build again and open it: the first check is due at once. The app's data folder (`xcrun simctl get_app_container booted app.slovo.uk data`) then holds `Documents/content-update/kept.json`, naming the new content version, beside `language-pack-<version>.db`. The open app still shows the old Definition. Add a Word to Favorites, force-quit the app and open it again: the corrected Definition shows, and the Word is still in Favorites. Opening it again the same day asks the backend nothing (no `content.latest` request in its log).
+2. **The SLOVO ID Session survives a restart.** Sign in on the SLOVO ID screen with a code from Mailpit, force-quit the app and open it again: the screen still shows the email, signed in.
 
 ## Run the backend
 
