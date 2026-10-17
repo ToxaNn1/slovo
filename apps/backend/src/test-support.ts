@@ -20,6 +20,7 @@ import pg from 'pg';
 import { pino, type Logger } from 'pino';
 import { afterAll, afterEach, beforeAll, beforeEach, onTestFinished, vi } from 'vitest';
 
+import { keptSignInCode } from './account/authenticator';
 import { createApp } from './app';
 import { publishPack } from './content/publish-pack';
 import { createDatabase, type Database } from './database/database';
@@ -301,6 +302,8 @@ export function testApp({
     /** Every email the backend sent. */
     mailer,
     database,
+    /** What the database keeps of the Sign-in code waiting for the email (see the Authenticator). */
+    keptSignInCode: (email: string) => keptSignInCode(database, email),
     /** Sends a request of the test's own, to read what the client doesn't, such as headers. */
     request: (path: string, init?: RequestInit, from?: string) =>
       send(new Request(new URL(path, 'http://backend.test'), init), from),

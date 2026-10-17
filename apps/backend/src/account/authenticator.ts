@@ -1,22 +1,59 @@
-import {
-  SESSION_SECONDS,
-  SIGN_IN_CODE,
-  type AccountRecord,
-  type Authenticator,
-  type CodeCheck,
-} from '@slovo/server-core';
+import type { AccountRecord, Authenticator, CodeCheck } from '@slovo/server-core';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { APIError } from 'better-auth/api';
 import { bearer, emailOTP } from 'better-auth/plugins';
-import { eq } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 import type { Logger } from 'pino';
 
 import type { Database } from '../database/database';
 import { accounts, sessions, signInCodes, signInMethods } from '../database/schema';
 
+/**
+ * The rules of a Sign-in code (spec #333). better-auth enforces them, so they
+ * are the adapter's: the server Core only passes on what checking a code gives.
+ */
+const SIGN_IN_CODE = {
+  digits: 6,
+  /** How long a code signs in after it is sent. */
+  validSeconds: 10 * 60,
+  /** How many codes may be tried, wrong ones included, before the code is spent. */
+  tries: 5,
+} as const;
+
+/** How long a Session lasts after its last use: one used now and then never ends. */
+const SESSION_SECONDS = 90 * 24 * 60 * 60;
+
 /** The kind of Sign-in code: better-auth's email OTP also has others SLOVO never uses. */
 const SIGN_IN = 'sign-in';
+
+/** How better-auth names the Sign-in code of an email in `sign_in_codes`. */
+const codeIdentifier = (email: string) => `${SIGN_IN}-otp-${email}`;
+
+/** A code's hash and the tries spent on it, from the value better-auth keeps: `<hash>:<tries>`. */
+function readValue(value: string): { readonly hash: string; readonly triesSpent: number } {
+  const colon = value.lastIndexOf(':');
+  if (colon === -1) return { hash: value, triesSpent: 0 };
+  return { hash: value.slice(0, colon), triesSpent: Number(value.slice(colon + 1)) };
+}
+
+/**
+ * What the database keeps of the Sign-in code waiting for the email, expired
+ * or not: its row's id and the code's hash; none when none is kept. For the
+ * tests, which see what is kept without knowing how better-auth keeps it.
+ */
+export async function keptSignInCode(
+  { db }: Database,
+  email: string,
+): Promise<{ readonly id: string; readonly hash: string } | undefined> {
+  const [row] = await db
+    .select()
+    .from(signInCodes)
+    .where(eq(signInCodes.identifier, codeIdentifier(email)))
+    .orderBy(desc(signInCodes.createdAt))
+    .limit(1);
+  return row === undefined ? undefined : { id: row.id, hash: readValue(row.value).hash };
+}
 
 /** How long a Session's expiry stays put before a use moves it on (better-auth's default). */
 const SESSION_UPDATE_SECONDS = 24 * 60 * 60;
@@ -107,23 +144,20 @@ export function createAuthenticator(
   { secret, logger }: { secret: string; logger: Logger },
 ): Authenticator {
   const auth = createAuth({ database, secret, logger });
-  // How better-auth names the Sign-in code of an email in `sign_in_codes`.
-  const identifier = (email: string) => `${SIGN_IN}-otp-${email}`;
 
   /** The tries spent on the code waiting for the email; none when no code waits. */
   async function triesSpent(email: string): Promise<number | undefined> {
     const { internalAdapter } = await auth.$context;
-    const code = await internalAdapter.findVerificationValue(identifier(email));
+    const code = await internalAdapter.findVerificationValue(codeIdentifier(email));
     // better-auth reads the system clock, not the server Core's, so this does too.
     if (code === null || code.expiresAt.getTime() <= Date.now()) return undefined;
-    // better-auth keeps `<hash>:<tries spent>`.
-    return Number(code.value.slice(code.value.lastIndexOf(':') + 1));
+    return readValue(code.value).triesSpent;
   }
 
   return {
     async createCode(email) {
       const { internalAdapter } = await auth.$context;
-      await internalAdapter.deleteVerificationByIdentifier(identifier(email));
+      await internalAdapter.deleteVerificationByIdentifier(codeIdentifier(email));
       return auth.api.createVerificationOTP({ body: { email, type: SIGN_IN } });
     },
 
@@ -187,7 +221,7 @@ export function createAuthenticator(
     // the Sessions and sign-in methods with the Account (ADR 0030).
     async delete({ id, email }) {
       await database.db.transaction(async (tx) => {
-        await tx.delete(signInCodes).where(eq(signInCodes.identifier, identifier(email)));
+        await tx.delete(signInCodes).where(eq(signInCodes.identifier, codeIdentifier(email)));
         await tx.delete(accounts).where(eq(accounts.id, id));
       });
     },

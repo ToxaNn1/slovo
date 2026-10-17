@@ -127,15 +127,16 @@ export const sessions = pgTable(
 
 /**
  * The Sign-in codes waiting for their email, hashed. They hang off the email,
- * not the Account, which may not exist yet.
+ * not the Account, which may not exist yet. Only the Authenticator
+ * (src/account/authenticator.ts) knows the forms better-auth keeps them in.
  */
 export const signInCodes = pgTable(
   'sign_in_codes',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    /** The email the code was sent to, as better-auth names it: `sign-in-otp-<email>`. */
+    /** The email the code was sent to, in better-auth's form. */
     identifier: text('identifier').notNull(),
-    /** The code's SHA-256 and the tries spent, as better-auth keeps them: `<hash>:<tries>`. */
+    /** The code's SHA-256 and the tries spent, in better-auth's form. */
     value: text('value').notNull(),
     expiresAt: time('expires_at'),
     createdAt: time('created_at'),
