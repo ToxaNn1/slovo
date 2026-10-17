@@ -175,7 +175,7 @@ describe('checking for a content update', () => {
 describe('a failed check', () => {
   it('tries a request again at most 3 times, backing off with jitter', async () => {
     const app = device();
-    app.contentApi.fail('latest', 'offline', 'server-error', 'too-many-requests', 'offline');
+    app.contentApi.fail('latest', 'offline', 'server-error', 'offline', 'offline');
 
     await expect((await app.launch()).checkForUpdate()).resolves.toBeUndefined();
 
@@ -195,9 +195,12 @@ describe('a failed check', () => {
     expect(app.packFiles.kept?.contentVersion).toBe(5);
   });
 
-  it('is not tried again when the backend finds no such Edition', async () => {
+  it.each([
+    ['finds no such Edition', 'not-found'],
+    ['holds the request back', 'too-many-requests'],
+  ] as const)('is not tried again when the backend %s', async (_, reason) => {
     const app = device();
-    app.contentApi.fail('latest', 'not-found');
+    app.contentApi.fail('latest', reason);
 
     await (await app.launch()).checkForUpdate();
 

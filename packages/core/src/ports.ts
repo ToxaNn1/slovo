@@ -85,9 +85,9 @@ export interface Random {
 export type Schedule = (run: () => void, delay: number) => () => void;
 
 /**
- * A request to the backend that failed in a way that may pass by itself: no
- * answer (`offline`), a server error (5xx) or too many requests (429). These
- * failures, and only these, are tried again.
+ * A request to the backend that failed as any request may: no answer
+ * (`offline`), a server error (5xx) or too many requests (429). The first two
+ * may pass by themselves, and they alone are tried again (ADR 0037).
  */
 export interface RequestFailure {
   readonly ok: false;
