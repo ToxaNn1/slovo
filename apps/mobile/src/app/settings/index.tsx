@@ -14,6 +14,8 @@ import {
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AccountRow } from '../../account/account-row';
+import { accountOpening } from '../../account/device-account';
 import { editionStrings } from '../../edition/edition';
 import { useHiddenSummary } from '../../mix/hidden';
 import { useMixSummary } from '../../mix/mix';
@@ -36,8 +38,8 @@ const fontSizeSegments = FontSizeSchema.options.map((fontSize) => ({
 }));
 
 /**
- * Settings: the Theme, the font size and the rows of the design. The rows of
- * later versions show as soon.
+ * Settings: SLOVO ID when the Edition has the Account, the Theme, the font
+ * size and the rows of the design. The rows of later versions show as soon.
  */
 export default function SettingsScreen() {
   const { current, update } = useSettings();
@@ -54,6 +56,13 @@ export default function SettingsScreen() {
     >
       <ScrollView contentContainerStyle={styles.content}>
         <ScreenTitle>{strings.title}</ScreenTitle>
+        {accountOpening !== undefined && (
+          <View style={styles.section}>
+            <SettingsGroup>
+              <AccountRow opening={accountOpening} />
+            </SettingsGroup>
+          </View>
+        )}
         <View style={styles.section}>
           <SectionLabel>{strings.theme}</SectionLabel>
           <SegmentedControl

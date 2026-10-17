@@ -23,3 +23,12 @@ The Language Pack is copied into place and opened with expo-sqlite's `importData
 ## Amendment: the Language Pack's opening chooses the pack and carries the Content update module (0.7, #347)
 
 The Language Pack's opening is now ready with the reader of the pack the app run opened, the bundled one or a newer one a Content update kept, and with the Content update module when content updates are on. The composition and the Decor showcase read its reader, and the lifecycle adapter asks its module to check. A kept pack that fails to open is forgotten and the bundled one opens; only a failure of the bundled pack fails the opening. ADR 0032's amendment records how the pack is chosen.
+
+## Amendment: the SLOVO ID screen draws under the Account's own gate (0.7, #346)
+
+The Account opens apart from the Language Pack and the composition (ADR 0037), and the app must never wait for it: it is optional, and everything else works without it. So its gate is not in the root layout. The SLOVO ID screen's route puts its content under `Opened` with the Account's opening, the one route that names an opening, and everything under it reads the open Account with `useOpened`. The «SLOVO ID» row of Settings needs no gate: it reads the opening and the Account's state with `useSubscribed` and shows no value until the Account is open. An Edition without the Account has neither the row nor the screen; its route leads back to Settings.
+
+### Considered Options
+
+- **The Account's gate in the root layout, around the tabs**: rejected. A slow or failed Keychain read would hold up the Feed for an Account the reader may never use.
+- **Show the row only once the Account is open**: rejected. A failed opening would hide the row, and with it the retry the gate's error state offers.

@@ -1,5 +1,5 @@
-# Settings: Theme, font size, the rows under them, Vibration and About, and how
-# the Feed redraws.
+# Settings: the SLOVO ID row, Theme, font size, the rows under them, Vibration
+# and About, and how the Feed redraws.
 # A subflow of `smoke.yaml`; run it from there.
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
@@ -16,6 +16,10 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: settings-theme-system
 - tapOn:
     id: settings-font-size-M
+# SLOVO ID heads the list, read «Увійти» or the email (its own flow).
+- assertVisible:
+    id: settings-row-account
+    text: 'SLOVO ID, .+'
 - tapOn:
     id: settings-theme-dark
 - assertVisible:
