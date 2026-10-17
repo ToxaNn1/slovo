@@ -55,10 +55,9 @@ async function openBundled(): Promise<OpenedPack<PackReader>> {
 /** Content updates on a device that keeps downloaded packs; a kept pack opens as the bundled one does. */
 function contentUpdatesOn(packFiles: DevicePackFiles): ContentUpdates<PackReader> {
   return {
-    packFiles,
     open: (bundled) => openDeviceContentUpdate(packFiles, bundled),
-    async openKept(version) {
-      const { directory, name } = packFiles.prepareToOpen(version);
+    async openKeptPack(version) {
+      const { directory, name } = packFiles.throwAwayAllBut(version);
       return (await prepare(await openDatabaseAsync(name, undefined, directory))).reader;
     },
   };

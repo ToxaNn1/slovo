@@ -50,8 +50,7 @@ function device({
   const refused = new Set<number>();
 
   const contentUpdates: ContentUpdates<string> = {
-    packFiles,
-    openKept: ({ contentVersion }) =>
+    openKeptPack: ({ contentVersion }) =>
       refused.has(contentVersion)
         ? Promise.reject(new Error('The app mixes Editions'))
         : Promise.resolve(`kept ${String(contentVersion)}`),

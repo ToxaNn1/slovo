@@ -33,3 +33,13 @@ The `PackFiles` adapter keeps each downloaded pack as its own file, named by its
 
 - **Copy the kept pack over the bundled one's file at launch**: rejected. The bundled pack is copied into place on every launch, so the app always has the pack it shipped with, and a copy of 2 MB on every launch costs time the splash would show.
 - **Turn content updates on without the file-system module, keeping the pack in memory**: rejected. A pack that opens from the next launch must outlive the app run.
+
+## Amendment: the Content update module opens the kept pack and forgets one that fails (after 0.7, architecture review 2)
+
+The decision stands; what moved is who carries it out. The shell held the `PackFiles` port beside the Core: it read the kept pack's version again after `choosePack` answered `'kept'`, and it forgot a kept pack that failed to open. Now the Content update module's `openKept(open)` does both. At launch, once the bundled pack is open, it calls the shell's `open` with the version of the kept pack when that pack wins over the bundled one, and answers the reader, or nothing when the bundled pack stays, after forgetting any other kept pack. When `open` rejects, such as for a pack of another Edition, or the kept pack's version fails to be read, it forgets the kept pack and rejects with that failure, which the shell reports while the bundled pack stays open. A failure to forget it then is not reported: the next launch fails to open the pack again and forgets it then. The rule is tested in the Core; `openLaunchPack` only opens what the module says, closes the bundled pack when the kept one opens, and never touches `PackFiles`.
+
+The device's `PackFiles` adapter names what it does at launch: `throwAwayAllBut(version)` throws away every pack file but the one about to open and answers where that one is, and it runs only at launch, before a kept pack opens, so the file of an open pack is never thrown away (ADR 0015); the bundled pack's file lies elsewhere.
+
+### Considered Options
+
+- **The choice answers the version, and a second method forgets a pack that failed to open**: rejected. The shell would have to call the two in order, so half of the rule would live in the shell again, and a shell that skipped the second call would keep a pack that fails at every launch.

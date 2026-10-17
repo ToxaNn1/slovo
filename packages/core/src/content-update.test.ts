@@ -21,10 +21,15 @@ const bytesOf = (text: string) => Uint8Array.from(text, (character) => character
 const hello = bytesOf('hello');
 const helloSha256 = '2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824';
 
+/** Opens a kept pack as the shell would, naming the reader by what it reads. */
+const openPack = ({ contentVersion }: PackVersion) =>
+  Promise.resolve(`kept ${String(contentVersion)}`);
+
 /**
  * The app at a launch: the bundled pack, the backend and the device's pack
  * files and user state, shared by the launches of one test, so a new launch
- * finds what the one before kept. The disk may be full.
+ * finds what the one before kept. The disk may be full, and the kept pack's
+ * record unreadable.
  */
 function device({
   bundled = { contentVersion: 4, packFormat: 1 },
@@ -39,6 +44,8 @@ function device({
   const packFiles = createMemoryPackFiles(kept);
   /** Whether keeping a pack fails, as on a full disk. */
   let full = false;
+  /** Whether reading the kept pack's version fails. */
+  let unreadable = false;
   const records = new Map<string, string>();
   const time = fakeClock();
   /** The delay of each retry, in order; the schedule runs it at once. */
@@ -56,13 +63,17 @@ function device({
     diskFull(on: boolean) {
       full = on;
     },
+    recordUnreadable(on: boolean) {
+      unreadable = on;
+    },
     async launch() {
       return createContentUpdate({
         contentApi,
         packFiles: {
           keep: (version, bytes) =>
             full ? Promise.reject(new Error('The disk is full')) : packFiles.keep(version, bytes),
-          read: () => packFiles.read(),
+          read: () =>
+            unreadable ? Promise.reject(new Error('The record is unreadable')) : packFiles.read(),
           forget: () => packFiles.forget(),
         },
         userState: await openUserState({ port: createMemoryUserStatePort(records) }),
@@ -89,7 +100,7 @@ describe('checking for a content update', () => {
     await (await app.launch()).checkForUpdate();
 
     expect(app.packFiles.kept).toEqual({ contentVersion: 5, packFormat: 1, bytes: hello });
-    expect(await (await app.launch()).choosePack()).toBe('kept');
+    expect(await (await app.launch()).openKept(openPack)).toBe('kept 5');
   });
 
   it('asks for the newest pack of the highest pack format the app reads', async () => {
@@ -241,34 +252,43 @@ describe('a failed check', () => {
   });
 });
 
-describe('choosing the pack at launch', () => {
+describe('opening the kept pack at launch', () => {
   it('refuses to open over a bundled pack of a pack format the app does not read', async () => {
     const app = device({ bundled: { contentVersion: 4, packFormat: 2 }, readableFormats: [1] });
 
     await expect(app.launch()).rejects.toThrow(/pack format 2/);
   });
 
-  it('opens the bundled pack when none is kept', async () => {
+  it('opens nothing when none is kept, so the bundled pack stays', async () => {
     const app = device();
+    const asked: PackVersion[] = [];
 
-    expect(await (await app.launch()).choosePack()).toBe('bundled');
+    const opened = await (
+      await app.launch()
+    ).openKept((version) => {
+      asked.push(version);
+      return openPack(version);
+    });
+
+    expect(opened).toBeUndefined();
+    expect(asked).toEqual([]);
   });
 
-  it('opens the kept pack when it is newer than the bundled one', async () => {
+  it('opens the kept pack of its version when it is newer than the bundled one', async () => {
     const kept = { contentVersion: 5, packFormat: 1, bytes: hello };
     const app = device({ kept });
 
-    expect(await (await app.launch()).choosePack()).toBe('kept');
+    expect(await (await app.launch()).openKept(openPack)).toBe('kept 5');
     expect(app.packFiles.kept).toEqual(kept);
   });
 
   it.each([
     ['older than', 3],
     ['as old as', 4],
-  ])('forgets a kept pack %s the bundled one and opens the bundled one', async (_, version) => {
+  ])('forgets a kept pack %s the bundled one and opens nothing', async (_, version) => {
     const app = device({ kept: { contentVersion: version, packFormat: 1, bytes: hello } });
 
-    expect(await (await app.launch()).choosePack()).toBe('bundled');
+    expect(await (await app.launch()).openKept(openPack)).toBeUndefined();
     expect(app.packFiles.kept).toBeUndefined();
   });
 
@@ -278,7 +298,38 @@ describe('choosing the pack at launch', () => {
       kept: { contentVersion: 9, packFormat: 1, bytes: hello },
     });
 
-    expect(await (await app.launch()).choosePack()).toBe('bundled');
+    expect(await (await app.launch()).openKept(openPack)).toBeUndefined();
     expect(app.packFiles.kept).toBeUndefined();
+  });
+
+  it('forgets a kept pack that fails to open, such as one of another Edition, and rejects', async () => {
+    const app = device({ kept: { contentVersion: 5, packFormat: 1, bytes: hello } });
+
+    await expect(
+      (await app.launch()).openKept(() => Promise.reject(new Error('The app mixes Editions'))),
+    ).rejects.toThrow('The app mixes Editions');
+    expect(app.packFiles.kept).toBeUndefined();
+  });
+
+  it('forgets a kept pack whose version it fails to read, and rejects', async () => {
+    const app = device({ kept: { contentVersion: 5, packFormat: 1, bytes: hello } });
+    app.recordUnreadable(true);
+
+    await expect((await app.launch()).openKept(openPack)).rejects.toThrow('unreadable');
+    expect(app.packFiles.kept).toBeUndefined();
+  });
+
+  it('downloads the pack again at the next due check after forgetting one that failed to open', async () => {
+    const app = device({ kept: { contentVersion: 5, packFormat: 1, bytes: hello } });
+    app.contentApi.publish({ contentVersion: 5, packFormat: 1, bytes: hello });
+    const launched = await app.launch();
+    await launched
+      .openKept(() => Promise.reject(new Error('The app mixes Editions')))
+      .catch(() => undefined);
+
+    await launched.checkForUpdate();
+
+    expect(app.contentApi.downloaded).toEqual([5]);
+    expect(await (await app.launch()).openKept(openPack)).toBe('kept 5');
   });
 });
