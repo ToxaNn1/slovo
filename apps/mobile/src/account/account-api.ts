@@ -33,8 +33,8 @@ export function createAccountApi({
   clientOf: (token: string) => Pick<ApiClient, 'account'>;
   editionId: string;
 }): AccountApi {
-  /** Calls a procedure that acts on the Session's Account and ends nothing but a Session or an Account. */
-  async function withSession(
+  /** Calls a procedure of the Session's Account that answers nothing but success, such as a sign-out. */
+  async function actWithSession(
     token: string,
     call: (account: ApiClient['account']) => Promise<unknown>,
   ): Promise<{ readonly ok: true } | AccountApiFailure> {
@@ -63,11 +63,10 @@ export function createAccountApi({
         if (error instanceof ORPCError && error.code === 'CODE_EXPIRED') {
           return { ok: false, reason: 'code-expired' };
         }
-        const triesLeft =
-          error instanceof ORPCError && error.code === 'WRONG_CODE'
-            ? triesLeftOf(error.data)
-            : undefined;
-        if (triesLeft !== undefined) return { ok: false, reason: 'wrong-code', triesLeft };
+        if (error instanceof ORPCError && error.code === 'WRONG_CODE') {
+          const triesLeft = triesLeftOf(error.data);
+          if (triesLeft !== undefined) return { ok: false, reason: 'wrong-code', triesLeft };
+        }
         return requestFailure(error);
       }
     },
@@ -79,8 +78,8 @@ export function createAccountApi({
         return accountFailure(error);
       }
     },
-    signOut: (token) => withSession(token, (account) => account.signOut()),
-    signOutEverywhere: (token) => withSession(token, (account) => account.signOutEverywhere()),
-    delete: (token) => withSession(token, (account) => account.delete()),
+    signOut: (token) => actWithSession(token, (account) => account.signOut()),
+    signOutEverywhere: (token) => actWithSession(token, (account) => account.signOutEverywhere()),
+    delete: (token) => actWithSession(token, (account) => account.delete()),
   };
 }

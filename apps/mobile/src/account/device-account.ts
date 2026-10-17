@@ -1,4 +1,4 @@
-import { openAccount, systemRandom, type Account, type SessionStore } from '@slovo/core';
+import { openAccount, systemRandom, type Account } from '@slovo/core';
 import { systemSchedule } from '@slovo/ui';
 
 import { apiClient, apiClientOf } from '../api';
@@ -20,28 +20,31 @@ const keychain = nativeModules.load(
   () => require('expo-secure-store') as typeof import('expo-secure-store'),
 );
 
-const api = createAccountApi({ client: apiClient, clientOf: apiClientOf, editionId: edition.id });
-
-const openOver = (sessions: SessionStore) =>
-  openAccount({
-    api,
-    sessions,
-    clock: deviceClock,
-    schedule: systemSchedule,
-    random: systemRandom,
-  });
-
 /**
  * The reader's Account («SLOVO ID»), opened once per app run apart from the
  * composition (ADR 0036, 0037), or undefined when the Edition's `account`
- * switch is off. Its Session is in the Keychain, or in memory without it.
- * When the Keychain can't be read, it opens signed out, in memory.
+ * switch is off. Its Session is in the Keychain, or in memory while the
+ * binary lacks it. When the Keychain can't be read, the opening fails with a
+ * retry, so a Session kept there is never shadowed by one in memory.
  */
 export const accountOpening: Opening<Account> | undefined = edition.isFeatureEnabled('account')
-  ? openOnce(() => openOver(createSessionStore(keychain)), {
-      onError(error) {
-        console.error('Could not read the Session; signed out until the app restarts', error);
+  ? openOnce(
+      () =>
+        openAccount({
+          api: createAccountApi({
+            client: apiClient,
+            clientOf: apiClientOf,
+            editionId: edition.id,
+          }),
+          sessions: createSessionStore(keychain),
+          clock: deviceClock,
+          schedule: systemSchedule,
+          random: systemRandom,
+        }),
+      {
+        onError(error) {
+          console.error('Could not read the Session', error);
+        },
       },
-      fallback: () => openOver(createSessionStore(undefined)),
-    })
+    )
   : undefined;
