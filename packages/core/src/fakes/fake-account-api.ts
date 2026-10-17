@@ -22,7 +22,7 @@ export interface FakeAccountApi extends AccountApi {
   /** The emails of the Accounts there are. */
   readonly accounts: readonly string[];
   /** The tokens of the Sessions there are. */
-  readonly sessions: readonly string[];
+  readonly sessionTokens: readonly string[];
   /** Makes the next calls fail, one each, in the order given, before they reach the Accounts. */
   failNext(...reasons: AccountApiFailure['reason'][]): void;
   /** Lets every Sign-in code sent so far expire. */
@@ -87,7 +87,7 @@ export function createFakeAccountApi(): FakeAccountApi {
     get accounts() {
       return [...accounts];
     },
-    get sessions() {
+    get sessionTokens() {
       return [...sessions.keys()];
     },
     failNext(...reasons) {

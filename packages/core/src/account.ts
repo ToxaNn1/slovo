@@ -10,7 +10,7 @@ import type {
   Schedule,
   SessionStore,
 } from './ports';
-import { withRetries } from './retry';
+import { withRetries, type Answer } from './retry';
 
 /** How long after a Sign-in code was sent another can be sent, in milliseconds. */
 const RESEND_AFTER = 60_000;
@@ -94,8 +94,6 @@ export interface Account {
   refresh(): Promise<void>;
 }
 
-type Answer = { readonly ok: true } | { readonly ok: false; readonly reason: string };
-
 type Unauthorized = Extract<AccountApiFailure, { readonly reason: 'unauthorized' }>;
 
 const unauthorized = (answer: Answer) => !answer.ok && answer.reason === 'unauthorized';
@@ -122,7 +120,7 @@ const signedIn = (email: string): AccountState => ({
 
 /**
  * Opens the Account from the Session the device keeps, apart from the Core
- * composition, since it needs no Language Pack (ADR 0018).
+ * composition, since it needs no Language Pack (ADR 0037).
  */
 export async function openAccount({
   api,
@@ -151,6 +149,9 @@ export async function openAccount({
   /** The tokens of the Sessions signed out on this device that the server has not heard of yet. */
   const untold: string[] = [];
   let telling: Promise<void> | undefined;
+
+  const retried = <A extends Answer>(call: () => Promise<A>) =>
+    withRetries(call, { schedule, random });
 
   function change(next: AccountState): void {
     state = next;
@@ -181,7 +182,7 @@ export async function openAccount({
     change({ ...state, inFlight: true, problem: undefined });
     let next: AccountState;
     try {
-      const answer = await withRetries(call, { schedule, random });
+      const answer = await retried(call);
       if (ended !== endedSessions) return;
       next = unauthorized(answer)
         ? await endSession()
@@ -216,7 +217,7 @@ export async function openAccount({
       let next = untold[0];
       while (next !== undefined) {
         const signedOutToken = next;
-        const answer = await withRetries(() => api.signOut(signedOutToken), { schedule, random });
+        const answer = await retried(() => api.signOut(signedOutToken));
         // A Session the server has ended already needs no telling.
         if (!answer.ok && answer.reason !== 'unauthorized') return;
         untold.shift();

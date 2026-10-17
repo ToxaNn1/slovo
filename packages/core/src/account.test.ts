@@ -297,7 +297,7 @@ describe('the Account signed in', () => {
 
     expect(account.state).toEqual({ status: 'signed-out', inFlight: false, problem: undefined });
     expect(await sessions.read()).toBeUndefined();
-    expect(api.sessions).toEqual([]);
+    expect(api.sessionTokens).toEqual([]);
     expect(api.accounts).toEqual(['anna@mail.com']);
   });
 
@@ -308,10 +308,10 @@ describe('the Account signed in', () => {
     await account.signOut();
     expect(account.state).toEqual({ status: 'signed-out', inFlight: false, problem: undefined });
     expect(await sessions.read()).toBeUndefined();
-    expect(api.sessions).toEqual(['session-1']);
+    expect(api.sessionTokens).toEqual(['session-1']);
 
     await account.refresh();
-    expect(api.sessions).toEqual([]);
+    expect(api.sessionTokens).toEqual([]);
     await account.refresh();
     expect(api.calls.filter((call) => call === 'signOut')).toHaveLength(5);
   });
@@ -335,13 +335,13 @@ describe('the Account signed in', () => {
     const { account, api, sessions } = await signedIn();
     await api.requestCode(anna.email);
     await api.verifyCode(anna.email, '100002');
-    expect(api.sessions).toEqual(['session-1', 'session-2']);
+    expect(api.sessionTokens).toEqual(['session-1', 'session-2']);
 
     await account.signOutEverywhere();
 
     expect(account.state).toEqual({ status: 'signed-out', inFlight: false, problem: undefined });
     expect(await sessions.read()).toBeUndefined();
-    expect(api.sessions).toEqual([]);
+    expect(api.sessionTokens).toEqual([]);
   });
 
   it('deletes the Account and ends signed out', async () => {
@@ -352,7 +352,7 @@ describe('the Account signed in', () => {
     expect(account.state).toEqual({ status: 'signed-out', inFlight: false, problem: undefined });
     expect(await sessions.read()).toBeUndefined();
     expect(api.accounts).toEqual([]);
-    expect(api.sessions).toEqual([]);
+    expect(api.sessionTokens).toEqual([]);
   });
 
   it('stays signed in when signing out everywhere or deleting finds no server, and says so', async () => {
