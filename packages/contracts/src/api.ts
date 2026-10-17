@@ -9,6 +9,13 @@ import { contentContract } from './api/content';
 export { PACK_MEDIA_TYPE } from './api/content';
 
 /**
+ * What a call throws when the backend answers with an error: its `code`, as
+ * the contract names it, and its HTTP `status`. A call that gets no answer
+ * throws the error of its `fetch` instead.
+ */
+export { ORPCError } from '@orpc/client';
+
+/**
  * The API contract: the only description of the backend's API (spec #333).
  * The backend implements it and the app calls it through `createApiClient`,
  * so a mismatch fails typecheck. One router per domain. Within `/v1` it only
