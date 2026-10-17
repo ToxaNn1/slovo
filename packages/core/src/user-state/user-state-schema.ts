@@ -104,6 +104,14 @@ export const userStateRecords = {
    */
   onboardingFinished: declareRecord('onboarding.finished', InstantSchema, { sync: 'device-only' }),
   /**
+   * The instant the last check for a content update started; without the
+   * record, none has, so one is due. It stays on the device, like the pack it
+   * downloads.
+   */
+  contentUpdateCheckedAt: declareRecord('contentUpdate.checkedAt', InstantSchema, {
+    sync: 'device-only',
+  }),
+  /**
    * The best Game result: the most Rounds passed in one finished Game, from 0
    * to the 15 Rounds of a Game; without the record, no Game has finished yet.
    * Sync keeps the higher of two devices' results (0.8).

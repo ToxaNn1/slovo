@@ -1,4 +1,4 @@
-import type { Category, Correction, Word } from '@slovo/contracts';
+import type { Category, Correction, PackMetadata, Word } from '@slovo/contracts';
 
 /**
  * Reads a compiled Language Pack. Each platform supplies an adapter (Node for
@@ -207,3 +207,50 @@ export const systemClock: Clock = {
 };
 
 export const systemRandom: Random = { next: () => Math.random() };
+
+/**
+ * Which Language Pack it is: its content version (ADR 0011) and its pack
+ * format, as the pack's metadata records them.
+ */
+export type PackVersion = Readonly<Pick<PackMetadata, 'contentVersion' | 'packFormat'>>;
+
+/** The newest published Language Pack of a pack format, as the backend announces it. */
+export interface PublishedPack extends PackVersion {
+  /** The size of the pack file, in bytes. */
+  readonly size: number;
+  /** The SHA-256 of the pack file, as 64 lowercase hex digits; not the content checksum. */
+  readonly fileSha256: string;
+}
+
+/** A call of the content API that failed as any request does, or found no such Edition or pack (404). */
+export type ContentApiFailure =
+  RequestFailure | { readonly ok: false; readonly reason: 'not-found' };
+
+/**
+ * The backend's content procedures for the running Edition, as the Core sees
+ * them. They need no Account. The shell implements this port on the API
+ * contract's client.
+ */
+export interface ContentApi {
+  /** The newest published pack of the pack format; none when nothing of it is published. */
+  latest(
+    packFormat: number,
+  ): Promise<{ readonly ok: true; readonly pack: PublishedPack | undefined } | ContentApiFailure>;
+  /** The bytes of the pack file of the content version. */
+  download(
+    contentVersion: number,
+  ): Promise<{ readonly ok: true; readonly bytes: Uint8Array } | ContentApiFailure>;
+}
+
+/**
+ * Keeps one downloaded Language Pack on the device, apart from the pack
+ * bundled with the app, for the shell to open at the next launch.
+ */
+export interface PackFiles {
+  /** Keeps the pack file with its version, in place of any pack kept before. */
+  keep(version: PackVersion, bytes: Uint8Array): Promise<void>;
+  /** The version of the pack kept, if one is. */
+  read(): Promise<PackVersion | undefined>;
+  /** Throws the kept pack away, if one is kept. */
+  forget(): Promise<void>;
+}

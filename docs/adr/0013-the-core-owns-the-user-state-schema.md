@@ -84,3 +84,7 @@ The read stays because the plan writes its records during the session: last even
 0.5 adds one record: `game.best`, the best result, a whole number of Rounds passed from 0 to 15 (ADR 0024). It reads as absent until the first finished Game, so there is still no migration and the `records` table stays as it is.
 
 It takes a new sync mark, `highest`: sync keeps the higher of two devices' values. Last write wins would let a phone's lower result replace a tablet's higher one, and a best result never goes down. The Game reads the record once, when it opens, and writes it before it shows the finished Game, as a Cycle change is written before it is made in memory, so a failed write leaves the Game answered and «Далі» tries again.
+
+## Amendment: the last content update check stays on the device (0.7)
+
+0.7 adds one record: `contentUpdate.checkedAt`, the instant the last check for a content update started (spec #333). It reads as absent until the first check, so a check is due and there is still no migration. It is `device-only`: the pack the check downloads is kept on this device only, so another device's check says nothing about it. A check writes the record before it asks the backend, so a check that fails, or an app closed in the middle of one, still waits a day for the next, and the app asks at most once a day.
