@@ -7,7 +7,7 @@ import { describe, expect, it, onTestFinished, vi } from 'vitest';
 
 import { accounts, sessions, signInCodes } from '../database/schema';
 import { readEditions } from '../edition/edition-folders';
-import { createFakeMailer, editionsFolder, testApp } from '../test-support';
+import { connectionFrom, createFakeMailer, editionsFolder, testApp } from '../test-support';
 
 const MINUTE = 60 * 1000;
 const DAY = 24 * 60 * MINUTE;
@@ -87,16 +87,20 @@ describe('signing in with a Sign-in code', () => {
   });
 
   it('answers the same whether or not the email has an Account', async () => {
-    const { app, client, mailer } = accountApp();
+    const { app, client, mailer, ip } = accountApp();
     const known = newEmail();
     await client.account.requestCode({ email: known, editionId: 'uk' });
     await client.account.verifyCode({ email: known, code: mailer.codeSentTo(known) });
     const request = (email: string) =>
-      app.request('/v1/account/sign-in-codes', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ email, editionId: 'uk' }),
-      });
+      app.request(
+        '/v1/account/sign-in-codes',
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ email, editionId: 'uk' }),
+        },
+        connectionFrom(ip),
+      );
 
     const forKnown = await request(known);
     const forUnknown = await request(newEmail());

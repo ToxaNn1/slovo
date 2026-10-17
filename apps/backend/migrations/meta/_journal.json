@@ -22,6 +22,13 @@
       "when": 1792242404609,
       "tag": "0002_sign_in",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792243914076,
+      "tag": "0003_rate_limits",
+      "breakpoints": true
     }
   ]
 }

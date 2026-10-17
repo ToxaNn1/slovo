@@ -32,8 +32,12 @@ export const accountContract = {
       description: 'The answer is the same whether or not the email has an Account.',
       tags: ['account'],
     })
-    // An Edition the backend doesn't serve, or one with the Account switched off.
-    .errors({ NOT_FOUND: { message: 'Not found' } })
+    .errors({
+      /** An Edition the backend doesn't serve, or one with the Account switched off. */
+      NOT_FOUND: { message: 'Not found' },
+      /** Over a limit of codes per email or of requests per IP; `Retry-After` says, in seconds, when to try again. */
+      TOO_MANY_REQUESTS: { message: 'Too many requests' },
+    })
     .input(z.strictObject({ email: TypedEmailSchema, editionId: EditionIdSchema }))
     .output(z.object({})),
 
@@ -55,7 +59,10 @@ export const accountContract = {
       },
       /** No code is waiting for the email: it ran out of time, or none was sent. */
       CODE_EXPIRED: { status: 400, message: 'The code has expired' },
-      /** Every try of the code is spent; only a new code signs in. */
+      /**
+       * Over the limit of checks per IP, with `Retry-After` in seconds; or every
+       * try of the code is spent, without it, and only a new code signs in.
+       */
       TOO_MANY_REQUESTS: { message: 'Too many requests' },
     })
     .input(z.strictObject({ email: TypedEmailSchema, code: SignInCodeSchema }))

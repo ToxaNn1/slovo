@@ -1,6 +1,7 @@
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import { OpenAPIReferencePlugin } from '@orpc/openapi/plugins';
 import { implement, ORPCError } from '@orpc/server';
+import { ResponseHeadersPlugin, type ResponseHeadersPluginContext } from '@orpc/server/plugins';
 import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4';
 import { apiContract } from '@slovo/contracts/api';
 import type { Accounts, ContentPacks } from '@slovo/server-core';
@@ -21,11 +22,13 @@ export function logUnexpectedFailure(logger: Logger, error: unknown): void {
 const TITLE = 'SLOVO API';
 
 /** What a request brings to the API. */
-interface ApiContext {
+interface ApiContext extends ResponseHeadersPluginContext {
   /** The request's logger, which carries its request id. */
   logger: Logger;
   /** The request's headers, where a Session travels. */
   headers: Headers;
+  /** The IP address the request came from; none when it came on no connection. */
+  ip: string | undefined;
 }
 
 /**
@@ -64,6 +67,7 @@ export function createApiHandler({
       },
     ],
     plugins: [
+      new ResponseHeadersPlugin(),
       new OpenAPIReferencePlugin({
         docsPath: '/docs',
         specPath: '/docs/openapi.json',

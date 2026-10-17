@@ -2,7 +2,8 @@ import { ACCOUNT_NAME, fill } from '@slovo/contracts';
 import { z } from 'zod';
 
 import type { EditionRegistry } from '../edition/edition-registry';
-import type { AccountRecord, Authenticator, CodeCheck, Mailer } from '../ports';
+import type { AccountRecord, Authenticator, Clock, CodeCheck, Mailer, RateLimits } from '../ports';
+import { createSignInLimits, type TooManyRequests } from './sign-in-limits';
 
 /** The rules of a Sign-in code (spec #333), which the Authenticator keeps. */
 export const SIGN_IN_CODE = {
@@ -28,18 +29,29 @@ export interface Accounts {
    * Sends a new Sign-in code to the email in the language of the Edition. The
    * answer is the same whether or not the email has an Account. An Edition the
    * backend didn't find, or one with the Account switched off, is refused, and
-   * so is an email that is not an email; nothing is sent then.
+   * so is an email that is not an email, or a request from the IP address `ip`
+   * or for the email over its limit; nothing is sent then.
    */
   requestCode(
     email: string,
     editionId: string,
+    ip: string,
   ): Promise<
     | { readonly ok: true }
     | InvalidEmail
     | { readonly ok: false; readonly reason: 'unknown-edition' | 'account-off' }
+    | TooManyRequests
   >;
-  /** Signs in with the code last sent to the email; the first right code creates the Account. */
-  verifyCode(email: string, code: string): Promise<CodeCheck | InvalidEmail>;
+  /**
+   * Signs in with the code last sent to the email; the first right code
+   * creates the Account. A check from the IP address `ip` over its limit is
+   * refused.
+   */
+  verifyCode(
+    email: string,
+    code: string,
+    ip: string,
+  ): Promise<CodeCheck | InvalidEmail | TooManyRequests>;
   /** The Account of the Session the token carries, if the Session is on. */
   accountOf(token: string): Promise<AccountRecord | undefined>;
 }
@@ -60,18 +72,25 @@ export function createAccounts({
   editions,
   authenticator,
   mailer,
+  rateLimits,
+  clock,
 }: {
   editions: EditionRegistry;
   authenticator: Authenticator;
   mailer: Mailer;
+  rateLimits: RateLimits;
+  clock: Clock;
 }): Accounts {
+  const limits = createSignInLimits({ rateLimits, clock });
   return {
-    async requestCode(typedEmail, editionId) {
+    async requestCode(typedEmail, editionId, ip) {
       const email = normalised(typedEmail);
       if (email === undefined) return invalidEmail;
       const edition = editions.find(editionId);
       if (edition === undefined) return { ok: false, reason: 'unknown-edition' };
       if (!edition.config.featureSwitches.account) return { ok: false, reason: 'account-off' };
+      const overLimit = await limits.codeRequest(email, ip);
+      if (overLimit !== undefined) return overLimit;
 
       const code = await authenticator.createCode(email);
       const values = { code, name: ACCOUNT_NAME };
@@ -84,10 +103,10 @@ export function createAccounts({
       return { ok: true };
     },
 
-    async verifyCode(typedEmail, code) {
+    async verifyCode(typedEmail, code, ip) {
       const email = normalised(typedEmail);
       if (email === undefined) return invalidEmail;
-      return authenticator.checkCode(email, code);
+      return (await limits.codeCheck(ip)) ?? authenticator.checkCode(email, code);
     },
 
     accountOf: (token) => authenticator.accountOf(token),
