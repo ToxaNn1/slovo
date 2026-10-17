@@ -1,19 +1,28 @@
-import { randomInt, randomUUID } from 'node:crypto';
-import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+/**
+ * The harness of the backend's tests (spec #333, seam 2), which Vitest runs before
+ * every test file (`setupFiles`). It gives each test file a fresh database of
+ * its own, so the files run side by side, and each test one clock: the system
+ * time, frozen when the test starts, which both better-auth and the backend's
+ * `Clock` read and only `passTime` moves.
+ */
+import { createHash, randomInt, randomUUID } from 'node:crypto';
+import { cpSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { join } from 'node:path';
 
 import type { HttpBindings } from '@hono/node-server';
 import { createApiClient } from '@slovo/contracts/api';
 import type { EditionConfig } from '@slovo/contracts';
+import { buildLanguagePack, recordContent } from '@slovo/language-pack';
 import { EDITIONS_DIR, editionFiles, openEdition } from '@slovo/language-pack/edition';
-import { systemClock, type Mail, type Mailer } from '@slovo/server-core';
+import { systemClock, type Edition, type Mail, type Mailer } from '@slovo/server-core';
 import pg from 'pg';
-import { pino } from 'pino';
-import { inject, onTestFinished } from 'vitest';
+import { pino, type Logger } from 'pino';
+import { afterAll, afterEach, beforeAll, beforeEach, onTestFinished, vi } from 'vitest';
 
-import { createApp, type AppDependencies } from './app';
-import { createDatabase } from './database/database';
+import { createApp } from './app';
+import { publishPack } from './content/publish-pack';
+import { createDatabase, type Database } from './database/database';
 import { migrateDatabase } from './database/migrate';
 import { readEditions } from './edition/edition-folders';
 
@@ -23,12 +32,7 @@ const LOCAL_DATABASE_URL = 'postgres://slovo:slovo@localhost:55432/slovo';
 /** A logger that writes nothing, for tests that don't read the logs. */
 export const silentLogger = pino({ enabled: false });
 
-/** The Postgres server the tests make their databases on. */
-export function testDatabaseServer(): string {
-  return process.env['DATABASE_URL'] ?? LOCAL_DATABASE_URL;
-}
-
-export interface TestDatabase {
+interface TestDatabase {
   /** The URL of the new database. */
   readonly url: string;
   drop(): Promise<void>;
@@ -36,7 +40,7 @@ export interface TestDatabase {
 
 /**
  * Makes a database with a random name on the server `serverUrl` names and
- * runs the migrations on it, so a test run never meets another run's data.
+ * runs the migrations on it, so a test file never meets another's data.
  */
 export async function createTestDatabase(serverUrl: string): Promise<TestDatabase> {
   const name = `slovo_test_${randomUUID().replaceAll('-', '')}`;
@@ -71,41 +75,41 @@ async function onServer(serverUrl: string, statement: string): Promise<void> {
   }
 }
 
-/**
- * An editions folder made for one test, with an Edition for each id, each a
- * copy of the Ukrainian Edition's config, strings and content manifest under
- * its own id.
- * `change` changes each config.
- */
-export function editionsFolder(
-  ids: readonly string[],
-  change: (config: EditionConfig) => EditionConfig = (config) => config,
-): string {
-  const dir = mkdtempSync(join(tmpdir(), 'slovo-editions-'));
-  onTestFinished(() => {
-    rmSync(dir, { recursive: true, force: true });
-  });
-  const ukrainian = openEdition(EDITIONS_DIR, 'uk');
-  for (const id of ids) {
-    const edition = editionFiles(join(dir, id));
-    mkdirSync(dirname(edition.path('manifest')), { recursive: true });
-    copyFileSync(ukrainian.path('strings'), edition.path('strings'));
-    copyFileSync(ukrainian.path('manifest'), edition.path('manifest'));
-    const config = JSON.parse(readFileSync(ukrainian.path('config'), 'utf8')) as EditionConfig;
-    writeFileSync(edition.path('config'), JSON.stringify(change({ ...config, id })));
-  }
-  return dir;
+// The database of this test file, which its tests share and no other file sees.
+let fileDatabase: TestDatabase | undefined;
+beforeAll(async () => {
+  fileDatabase = await createTestDatabase(process.env['DATABASE_URL'] ?? LOCAL_DATABASE_URL);
+});
+afterAll(() => fileDatabase?.drop());
+
+/** The URL of this test file's database, migrated. */
+export function testDatabaseUrl(): string {
+  if (fileDatabase === undefined) throw new Error('the test file has no database yet');
+  return fileDatabase.url;
+}
+
+// Timers stay real: only the time a test reads stands still.
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
+
+/** Moves the test's clock on, for better-auth and the backend alike. */
+export function passTime(ms: number): void {
+  vi.setSystemTime(Date.now() + ms);
 }
 
 /** A Mailer that keeps every email it is given, so a test reads the Sign-in code. */
-export interface FakeMailer extends Mailer {
+interface FakeMailer extends Mailer {
   /** Every email sent, oldest first. */
   readonly sent: readonly Mail[];
   /** The six digits of the newest email to the address. Throws when none was sent. */
   codeSentTo(email: string): string;
 }
 
-export function createFakeMailer(): FakeMailer {
+function createFakeMailer(): FakeMailer {
   const sent: Mail[] = [];
   return {
     sent,
@@ -121,6 +125,106 @@ export function createFakeMailer(): FakeMailer {
   };
 }
 
+/** The SHA-256 of a file's bytes, as 64 lowercase hex digits. */
+export function sha256(bytes: Uint8Array): string {
+  return createHash('sha256').update(bytes).digest('hex');
+}
+
+/** A Language Pack a test built, and what `content.latest` announces for it once published. */
+interface BuiltPack {
+  readonly editionId: string;
+  readonly file: string;
+  readonly announced: {
+    readonly contentVersion: number;
+    readonly packFormat: number;
+    readonly size: number;
+    readonly fileSha256: string;
+  };
+}
+
+/**
+ * An editions folder made for one test, with an Edition for each id: a copy of
+ * the Ukrainian Edition's config, strings and content under its own id.
+ * `change` changes each config. Copying and recording the content takes a
+ * while, so an Edition gets it when a test first builds or corrects it, which
+ * comes before the test reads the Editions.
+ */
+export function testEditions(
+  ids: readonly string[],
+  change: (config: EditionConfig) => EditionConfig = (config) => config,
+) {
+  const dir = mkdtempSync(join(tmpdir(), 'slovo-editions-'));
+  onTestFinished(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+  const ukrainian = openEdition(EDITIONS_DIR, 'uk');
+  const config = JSON.parse(readFileSync(ukrainian.path('config'), 'utf8')) as EditionConfig;
+  for (const id of ids) {
+    const edition = editionFiles(join(dir, id));
+    // The backend reads the manifest, not the content it records.
+    cpSync(ukrainian.path('manifest'), edition.path('manifest'));
+    cpSync(ukrainian.path('strings'), edition.path('strings'));
+    writeFileSync(edition.path('config'), JSON.stringify(change({ ...config, id })));
+  }
+  const record = (editionDir: string) => {
+    if (!recordContent({ editionDir }).ok) throw new Error('Content not recorded');
+  };
+  const withContent = new Set<string>();
+  let read = false;
+  /** The Edition's folder, with its content. */
+  const contentOf = (id: string) => {
+    const { dir: editionDir } = editionFiles(join(dir, id));
+    if (!withContent.has(id)) {
+      // The Editions read before would carry a manifest that doesn't record it.
+      if (read) throw new Error(`build or correct ${id} before reading the Editions`);
+      cpSync(join(ukrainian.dir, 'content'), join(editionDir, 'content'), { recursive: true });
+      // The content checksum takes in the Edition, so the copy is recorded under its own id.
+      record(editionDir);
+      withContent.add(id);
+    }
+    return editionDir;
+  };
+
+  let builds = 0;
+  return {
+    /** Every Edition of the folder, as the backend reads them now. */
+    read(): Edition[] {
+      read = true;
+      return readEditions(dir);
+    },
+    /** Builds the Edition's pack of its content as it is now. */
+    buildPack(editionId: string): BuiltPack {
+      builds += 1;
+      const file = join(dir, `language-pack-${String(builds)}.db`);
+      const built = buildLanguagePack({ editionDir: contentOf(editionId), outFile: file });
+      if (!built.ok) throw new Error('Pack not built');
+      const bytes = readFileSync(file);
+      return {
+        editionId,
+        file,
+        announced: {
+          contentVersion: built.metadata.contentVersion,
+          packFormat: 1,
+          size: bytes.byteLength,
+          fileSha256: sha256(bytes),
+        },
+      };
+    },
+    /** Corrects a Word's Definition and records the content, which raises its version. */
+    correctWord(editionId: string): void {
+      const editionDir = contentOf(editionId);
+      const wordsDir = join(editionDir, 'content/words');
+      const name = readdirSync(wordsDir).find((file) => file.endsWith('.json'));
+      if (name === undefined) throw new Error('No Word to correct');
+      const file = join(wordsDir, name);
+      const word = JSON.parse(readFileSync(file, 'utf8')) as { primaryDefinition: string };
+      const primaryDefinition = `${word.primaryDefinition} (corrected)`;
+      writeFileSync(file, JSON.stringify({ ...word, primaryDefinition }));
+      record(editionDir);
+    },
+  };
+}
+
 /** The secret the test backends sign their Sessions with. */
 const TEST_AUTH_SECRET = 'a-test-secret-that-is-at-least-32-characters';
 
@@ -132,49 +236,86 @@ export const newIp = () =>
  * What Node's HTTP server gives the app with a request that came on a
  * connection from the IP address: the part the app reads.
  */
-export const connectionFrom = (ip: string) =>
+const connectionFrom = (ip: string) =>
   ({ incoming: { socket: { remoteAddress: ip } } }) as unknown as HttpBindings;
 
+interface TestAppOptions {
+  /** A database of the test's own, which the test closes; the file's database unless given. */
+  readonly database?: Database;
+  /** A silent logger unless given. */
+  readonly logger?: Logger;
+  /** The Editions the backend serves; the repo's own unless given. */
+  readonly editions?: readonly Edition[];
+  /** Sees every answer before the test gets it, with the request it answers. */
+  readonly onAnswer?: (request: Request, response: Response) => Promise<void>;
+}
+
 /**
- * The backend built by its composition root on this run's database, with a
- * silent logger, the system clock, the repo's Editions and a fake Mailer
- * unless the test gives its own, and the API's client. Requests go to the app
- * in process (`app.request`, or the client), so no port is opened. The
- * client's requests come from an IP address of their own, so the limits per
- * IP of one test never reach another.
+ * The backend built by its composition root, with the test's clock and a
+ * fake Mailer, and the ways a test sends it requests: the API's client, or a
+ * request of its own. Every request goes to the app in process, so no port is
+ * opened, and comes on a connection: from the backend's own IP address unless
+ * the test names another, so the limits per IP of one test never reach
+ * another. The database it opens closes when the test finishes.
  */
-export function testApp(dependencies: Partial<AppDependencies> = {}) {
-  const database = dependencies.database ?? createDatabase(inject('databaseUrl'), silentLogger);
+export function testApp({
+  database: given,
+  logger = silentLogger,
+  editions = readEditions(EDITIONS_DIR),
+  onAnswer,
+}: TestAppOptions = {}) {
+  const database = given ?? createDatabase(testDatabaseUrl(), silentLogger);
+  const mailer = createFakeMailer();
   const app = createApp({
     database,
     clock: systemClock,
-    logger: silentLogger,
-    editions: readEditions(EDITIONS_DIR),
-    mailer: createFakeMailer(),
+    logger,
+    editions,
+    mailer,
     authSecret: TEST_AUTH_SECRET,
-    ...dependencies,
   });
   const ip = newIp();
+  // The one way a request reaches the app.
+  const send = async (request: Request, from = ip) => {
+    const response = await app.fetch(request, connectionFrom(from));
+    await onAnswer?.(request, response);
+    return response;
+  };
   // The client the app uses, built from the contract, with its fetch pointed
   // at the app in process.
   const clientWith = (headers: Record<string, string>, from = ip) =>
     createApiClient({
       url: 'http://backend.test',
-      fetch: (request) => Promise.resolve(app.fetch(request, connectionFrom(from))),
+      fetch: (request) => send(request, from),
       headers,
     });
   // A test may close the database before the end, which closes it once.
   let closed: Promise<void> | undefined;
+  const close = () => (closed ??= database.close());
+  if (given === undefined) onTestFinished(close);
   return {
+    /** The app itself, for a test that serves it over HTTP. */
     app,
-    /** The IP address the client's requests come from. */
+    /** The IP address the requests come from unless the test names another. */
     ip,
+    /** Every email the backend sent. */
+    mailer,
+    database,
+    /** Sends a request of the test's own, to read what the client doesn't, such as headers. */
+    request: (path: string, init?: RequestInit, from?: string) =>
+      send(new Request(new URL(path, 'http://backend.test'), init), from),
     client: clientWith({}),
     /** The client of a device signed in with the Session's token. */
     clientOf: (token: string) => clientWith({ authorization: `Bearer ${token}` }),
     /** The client of a device whose requests come from the IP address. */
     clientFrom: (from: string) => clientWith({}, from),
-    database,
-    close: () => (closed ??= database.close()),
+    /**
+     * Publishes the pack file as the publish command does, on the backend's
+     * database: for the Editions it serves unless given those of the moment.
+     */
+    publish: (pack: Pick<BuiltPack, 'editionId' | 'file'>, editionsNow = editions) =>
+      publishPack({ database, clock: systemClock, editions: editionsNow, ...pack }),
+    /** Closes the database the backend opened, as when Postgres goes away. */
+    close,
   };
 }

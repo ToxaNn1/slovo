@@ -30,7 +30,11 @@ export interface AppDependencies {
   readonly authSecret: string;
 }
 
-type Variables = RequestIdVariables & { logger: Logger };
+type Variables = RequestIdVariables & {
+  logger: Logger;
+  /** The IP address of the request's connection. */
+  ip: string;
+};
 
 /** What the backend's Hono app knows of a request: Node's HTTP bindings and its own variables. */
 interface Env {
@@ -42,7 +46,8 @@ interface Env {
  * The IP address the request came from: the address of its connection. A
  * forwarding header such as `X-Forwarded-For` is not trusted, since anyone
  * can send one; trusting the one the deployed proxy sets waits for it (0.9).
- * A request made in process, as a test may, comes on no connection.
+ * Node gives every request its connection; a request made in process without
+ * one has none.
  */
 function connectionIp(bindings: Partial<HttpBindings> | undefined): string | undefined {
   return bindings?.incoming?.socket.remoteAddress;
@@ -96,6 +101,15 @@ export function createApp({
     );
   });
 
+  // Every request has the IP address of its connection, which the sign-in
+  // limits count (ADR 0030); one without is a broken invariant.
+  app.use(async (c, next) => {
+    const ip = connectionIp(c.env);
+    if (ip === undefined) throw new Error('the request came on no connection');
+    c.set('ip', ip);
+    await next();
+  });
+
   // For a host to tell a sick server: 503 while the database doesn't answer.
   app.get('/health', async (c) => {
     try {
@@ -111,7 +125,7 @@ export function createApp({
   for (const path of ['/v1/*', '/docs', '/docs/*']) {
     app.use(path, async (c, next) => {
       const { matched, response } = await api.handle(c.req.raw, {
-        context: { logger: c.var.logger, headers: c.req.raw.headers, ip: connectionIp(c.env) },
+        context: { logger: c.var.logger, headers: c.req.raw.headers, ip: c.var.ip },
       });
       if (matched) return c.newResponse(response.body, response);
       return next();

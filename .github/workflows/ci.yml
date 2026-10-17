@@ -108,7 +108,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       # Every migration, from an empty database.
       - run: pnpm --filter @slovo/backend db:migrate
-      # Each test run makes its own database on the same server and drops it after.
+      # Each test file makes its own database on the same server and drops it after.
       - run: pnpm test --filter=@slovo/backend --filter=@slovo/server-core
 
   audit:

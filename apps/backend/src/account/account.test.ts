@@ -3,11 +3,10 @@ import { randomUUID } from 'node:crypto';
 import { ACCOUNT_NAME, fill } from '@slovo/contracts';
 import { EDITIONS_DIR, openEdition } from '@slovo/language-pack/edition';
 import { eq } from 'drizzle-orm';
-import { describe, expect, it, onTestFinished, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { accounts, sessions, signInCodes, signInMethods } from '../database/schema';
-import { readEditions } from '../edition/edition-folders';
-import { connectionFrom, createFakeMailer, editionsFolder, testApp } from '../test-support';
+import { passTime, testApp, testEditions } from '../test-support';
 
 const MINUTE = 60 * 1000;
 const DAY = 24 * 60 * MINUTE;
@@ -18,27 +17,9 @@ const newEmail = () => `reader-${randomUUID()}@example.com`;
 /** Six digits that are not the code. */
 const otherThan = (code: string) => (code === '000000' ? '111111' : '000000');
 
-/** The backend with a fake Mailer the test reads the Sign-in codes from. */
-function accountApp() {
-  const mailer = createFakeMailer();
-  const backend = testApp({ mailer });
-  onTestFinished(backend.close);
-  return { ...backend, mailer };
-}
-
-/** Lets the test move the clock that better-auth reads; timers stay real. */
-function movableClock() {
-  vi.useFakeTimers({ toFake: ['Date'] });
-  onTestFinished(() => {
-    vi.useRealTimers();
-  });
-  const start = Date.now();
-  return { at: (ms: number) => vi.setSystemTime(start + ms) };
-}
-
 describe('signing in with a Sign-in code', () => {
   it('creates the Account and a Session with the first right code, and me answers its email', async () => {
-    const { client, clientOf, mailer } = accountApp();
+    const { client, clientOf, mailer } = testApp();
     const email = newEmail();
     const before = Date.now();
 
@@ -52,7 +33,7 @@ describe('signing in with a Sign-in code', () => {
   });
 
   it('signs the same Account in again with a later code', async () => {
-    const { client, clientOf, mailer } = accountApp();
+    const { client, clientOf, mailer } = testApp();
     const email = newEmail();
     const signIn = async () => {
       await client.account.requestCode({ email, editionId: 'uk' });
@@ -67,7 +48,7 @@ describe('signing in with a Sign-in code', () => {
   });
 
   it('mails the code in the language of the Edition that asked, from a sender named after it', async () => {
-    const { client, mailer } = accountApp();
+    const { client, mailer } = testApp();
     const email = newEmail();
     const uk = openEdition(EDITIONS_DIR, 'uk');
     const strings = uk.read('strings').email;
@@ -87,23 +68,19 @@ describe('signing in with a Sign-in code', () => {
   });
 
   it('answers the same whether or not the email has an Account', async () => {
-    const { app, client, mailer, ip } = accountApp();
+    const { client, mailer, request } = testApp();
     const known = newEmail();
     await client.account.requestCode({ email: known, editionId: 'uk' });
     await client.account.verifyCode({ email: known, code: mailer.codeSentTo(known) });
-    const request = (email: string) =>
-      app.request(
-        '/v1/account/sign-in-codes',
-        {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ email, editionId: 'uk' }),
-        },
-        connectionFrom(ip),
-      );
+    const requestCode = (email: string) =>
+      request('/v1/account/sign-in-codes', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email, editionId: 'uk' }),
+      });
 
-    const forKnown = await request(known);
-    const forUnknown = await request(newEmail());
+    const forKnown = await requestCode(known);
+    const forUnknown = await requestCode(newEmail());
 
     expect(forUnknown.status).toBe(forKnown.status);
     expect(await forUnknown.text()).toBe(await forKnown.text());
@@ -111,7 +88,7 @@ describe('signing in with a Sign-in code', () => {
   });
 
   it('treats an email the same whatever its capitals and the spaces around it', async () => {
-    const { client, mailer } = accountApp();
+    const { client, mailer } = testApp();
     const email = newEmail();
     const typed = `  ${email.toUpperCase()} `;
 
@@ -125,7 +102,7 @@ describe('signing in with a Sign-in code', () => {
   });
 
   it('refuses an email that is not an email as BAD_REQUEST and sends nothing', async () => {
-    const { client, mailer } = accountApp();
+    const { client, mailer } = testApp();
 
     await expect(
       client.account.requestCode({ email: 'not an email', editionId: 'uk' }),
@@ -136,7 +113,7 @@ describe('signing in with a Sign-in code', () => {
 
 describe('a wrong Sign-in code', () => {
   it('signs nothing in and says how many tries are left', async () => {
-    const { client, mailer } = accountApp();
+    const { client, mailer } = testApp();
     const email = newEmail();
     await client.account.requestCode({ email, editionId: 'uk' });
     const wrong = otherThan(mailer.codeSentTo(email));
@@ -154,7 +131,7 @@ describe('a wrong Sign-in code', () => {
   });
 
   it('spends the code after 5 tries, so even the right code is then TOO_MANY_REQUESTS', async () => {
-    const { client, mailer } = accountApp();
+    const { client, mailer } = testApp();
     const email = newEmail();
     await client.account.requestCode({ email, editionId: 'uk' });
     const code = mailer.codeSentTo(email);
@@ -175,7 +152,7 @@ describe('a wrong Sign-in code', () => {
   });
 
   it('is the old code once a new one is sent, and only the new one signs in', async () => {
-    const { client, mailer } = accountApp();
+    const { client, mailer } = testApp();
     const email = newEmail();
     await client.account.requestCode({ email, editionId: 'uk' });
     const old = mailer.codeSentTo(email);
@@ -193,7 +170,7 @@ describe('a wrong Sign-in code', () => {
   });
 
   it('opens 5 new tries with a new code', async () => {
-    const { client, mailer } = accountApp();
+    const { client, mailer } = testApp();
     const email = newEmail();
     await client.account.requestCode({ email, editionId: 'uk' });
     for (let tries = 0; tries < 5; tries++) {
@@ -212,12 +189,11 @@ describe('a wrong Sign-in code', () => {
 
 describe('a Sign-in code', () => {
   it('signs in until 10 minutes have passed', async () => {
-    const clock = movableClock();
-    const { client, mailer } = accountApp();
+    const { client, mailer } = testApp();
     const email = newEmail();
     await client.account.requestCode({ email, editionId: 'uk' });
 
-    clock.at(10 * MINUTE - 1000);
+    passTime(10 * MINUTE - 1000);
 
     await expect(
       client.account.verifyCode({ email, code: mailer.codeSentTo(email) }),
@@ -225,12 +201,11 @@ describe('a Sign-in code', () => {
   });
 
   it('expires after 10 minutes as CODE_EXPIRED', async () => {
-    const clock = movableClock();
-    const { client, mailer } = accountApp();
+    const { client, mailer } = testApp();
     const email = newEmail();
     await client.account.requestCode({ email, editionId: 'uk' });
 
-    clock.at(10 * MINUTE + 1000);
+    passTime(10 * MINUTE + 1000);
 
     await expect(
       client.account.verifyCode({ email, code: mailer.codeSentTo(email) }),
@@ -238,7 +213,7 @@ describe('a Sign-in code', () => {
   });
 
   it('is CODE_EXPIRED when none was sent to the email', async () => {
-    const { client } = accountApp();
+    const { client } = testApp();
 
     await expect(
       client.account.verifyCode({ email: newEmail(), code: '123456' }),
@@ -246,7 +221,7 @@ describe('a Sign-in code', () => {
   });
 
   it('works once: the code that signed in signs nothing in again', async () => {
-    const { client, mailer } = accountApp();
+    const { client, mailer } = testApp();
     const email = newEmail();
     await client.account.requestCode({ email, editionId: 'uk' });
     const code = mailer.codeSentTo(email);
@@ -258,7 +233,7 @@ describe('a Sign-in code', () => {
   });
 
   it('is kept only as its hash', async () => {
-    const { client, mailer, database } = accountApp();
+    const { client, mailer, database } = testApp();
     const email = newEmail();
     await client.account.requestCode({ email, editionId: 'uk' });
     const { db } = database;
@@ -272,7 +247,7 @@ describe('a Sign-in code', () => {
   });
 
   it('refuses a code that is not six digits as BAD_REQUEST', async () => {
-    const { client } = accountApp();
+    const { client } = testApp();
 
     await expect(
       client.account.verifyCode({ email: newEmail(), code: '12345' }),
@@ -282,7 +257,7 @@ describe('a Sign-in code', () => {
 
 describe('a Session', () => {
   async function signedIn() {
-    const backend = accountApp();
+    const backend = testApp();
     const email = newEmail();
     await backend.client.account.requestCode({ email, editionId: 'uk' });
     const { token } = await backend.client.account.verifyCode({
@@ -293,7 +268,7 @@ describe('a Session', () => {
   }
 
   it('is needed for me: without one it is UNAUTHORIZED', async () => {
-    const { client } = accountApp();
+    const { client } = testApp();
 
     await expect(client.account.me()).rejects.toMatchObject({
       code: 'UNAUTHORIZED',
@@ -303,7 +278,7 @@ describe('a Session', () => {
   });
 
   it('is UNAUTHORIZED with a token the backend never gave', async () => {
-    const { clientOf } = accountApp();
+    const { clientOf } = testApp();
 
     await expect(clientOf('made-up.token').account.me()).rejects.toMatchObject({
       code: 'UNAUTHORIZED',
@@ -312,7 +287,7 @@ describe('a Session', () => {
   });
 
   it('is not signed in by the token as the database keeps it', async () => {
-    const { client, clientOf, mailer, database } = accountApp();
+    const { client, clientOf, mailer, database } = testApp();
     const email = newEmail();
     await client.account.requestCode({ email, editionId: 'uk' });
     await client.account.verifyCode({ email, code: mailer.codeSentTo(email) });
@@ -331,22 +306,21 @@ describe('a Session', () => {
   });
 
   it('lasts 90 days after its last use', async () => {
-    const clock = movableClock();
     const { me, email } = await signedIn();
 
-    clock.at(89 * DAY);
+    passTime(89 * DAY);
     await expect(me()).resolves.toMatchObject({ email });
-    // More than 90 days after signing in, but fewer after its last use.
-    clock.at(170 * DAY);
+    // 170 days after signing in: more than 90, but fewer since its last use.
+    passTime(81 * DAY);
     await expect(me()).resolves.toMatchObject({ email });
-    clock.at(170 * DAY + 91 * DAY);
+    passTime(91 * DAY);
     await expect(me()).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
   });
 });
 
 describe('an Edition', () => {
   it('the backend did not find is NOT_FOUND, and nothing is sent', async () => {
-    const { client, mailer } = accountApp();
+    const { client, mailer } = testApp();
 
     await expect(
       client.account.requestCode({ email: newEmail(), editionId: 'pl' }),
@@ -355,13 +329,11 @@ describe('an Edition', () => {
   });
 
   it('with the Account switched off is NOT_FOUND, and nothing is sent', async () => {
-    const mailer = createFakeMailer();
-    const folder = editionsFolder(['uk'], (config) => ({
+    const folder = testEditions(['uk'], (config) => ({
       ...config,
       featureSwitches: { ...config.featureSwitches, account: false },
     }));
-    const { client, close } = testApp({ mailer, editions: readEditions(folder) });
-    onTestFinished(close);
+    const { client, mailer } = testApp({ editions: folder.read() });
 
     await expect(
       client.account.requestCode({ email: newEmail(), editionId: 'uk' }),
@@ -372,7 +344,7 @@ describe('an Edition', () => {
 
 /** The backend, and a way to sign readers in on it, a new device each time. */
 function signingIn() {
-  const backend = accountApp();
+  const backend = testApp();
   /** The token of a new Session of the email's Account. */
   async function signInToken(email: string) {
     await backend.client.account.requestCode({ email, editionId: 'uk' });
@@ -506,14 +478,13 @@ describe('deleting the Account', () => {
   });
 
   it('lets the same email sign in to a new, empty Account', async () => {
-    const clock = movableClock();
     const { signIn, rowsOf } = signingIn();
     const email = newEmail();
     const first = await signIn(email);
     const deleted = await rowsOf(email);
     await first.delete();
 
-    clock.at(MINUTE);
+    passTime(MINUTE);
     const again = await signIn(email);
 
     const me = await again.me();
@@ -561,14 +532,14 @@ describe('one Account', () => {
   });
 
   it('refuses a request that names another Account as BAD_REQUEST', async () => {
-    const { app, signIn, signInToken, rowsOf } = signingIn();
+    const { request, signIn, signInToken, rowsOf } = signingIn();
     const email = newEmail();
     const other = newEmail();
     const token = await signInToken(email);
     const otherReader = await signIn(other);
     const before = await rowsOf(other);
     const send = (method: string, path: string) =>
-      app.request(path, {
+      request(path, {
         method,
         headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
         body: JSON.stringify({ accountId: before.account?.id, email: other }),
@@ -581,7 +552,7 @@ describe('one Account', () => {
     await expect(otherReader.me()).resolves.toMatchObject({ email: other });
     expect(await rowsOf(other)).toEqual(before);
     await expect(
-      app.request('/v1/account/me', { headers: { authorization: `Bearer ${token}` } }),
+      request('/v1/account/me', { headers: { authorization: `Bearer ${token}` } }),
     ).resolves.toMatchObject({ status: 200 });
   });
 });

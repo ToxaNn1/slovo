@@ -3,11 +3,11 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     include: ['src/**/*.test.ts'],
-    // Makes one fresh database for the run and drops it after (src/test-support.ts).
-    globalSetup: ['./src/global-setup.ts'],
-    // The files share that database, and a test that moves the system clock
-    // makes better-auth clean up every code it then finds expired, those of
-    // another file's tests included. So the files run one after another.
-    fileParallelism: false,
+    // Gives each test file a fresh database of its own and each test a clock
+    // of its own (src/test-support.ts), so the files run side by side.
+    setupFiles: ['./src/test-support.ts'],
+    // Side by side the files share the machine, so a test that builds a
+    // Language Pack and sends dozens of requests may take a few seconds.
+    testTimeout: 15_000,
   },
 });
