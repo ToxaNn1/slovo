@@ -46,7 +46,8 @@ jobs:
             echo '```'
           } | tee -a "$GITHUB_STEP_SUMMARY"
       - run: pnpm typecheck
-      - run: pnpm test
+      # The backend's tests need Postgres; the job "Backend" runs them.
+      - run: pnpm test --filter='!@slovo/backend'
       # Fails on invalid content and on any missed content target of the Edition.
       - name: Build the Ukrainian Language Pack and check its content targets
         id: pack
@@ -62,6 +63,40 @@ jobs:
             cat "$RUNNER_TEMP/content-report.txt"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        # The same image as the local services in compose.yaml.
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: slovo
+          POSTGRES_PASSWORD: slovo
+          POSTGRES_DB: slovo
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready --username=slovo --dbname=slovo"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      DATABASE_URL: postgres://slovo:slovo@localhost:5432/slovo
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Every migration, from an empty database.
+      - run: pnpm --filter @slovo/backend db:migrate
+      # Each test run makes its own database on the same server and drops it after.
+      - run: pnpm test --filter=@slovo/backend --filter=@slovo/server-core
 
   audit:
     name: Dependency audit
