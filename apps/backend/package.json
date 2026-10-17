@@ -15,6 +15,11 @@
   },
   "dependencies": {
     "@hono/node-server": "^2.1.5",
+    "@orpc/contract": "^1.15.7",
+    "@orpc/openapi": "^1.15.7",
+    "@orpc/server": "^1.15.7",
+    "@orpc/zod": "^1.15.7",
+    "@slovo/contracts": "workspace:*",
     "@slovo/language-pack": "workspace:*",
     "@slovo/server-core": "workspace:*",
     "drizzle-orm": "^0.45.4",

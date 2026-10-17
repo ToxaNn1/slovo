@@ -1,6 +1,8 @@
 /**
  * The contracts: the single definition of every shape shared across the
- * factory (Entries, the Edition config, the Language Pack, the API).
+ * factory (Entries, the Edition config, the Language Pack). The API contract
+ * has its own entry point, `@slovo/contracts/api`, so only its callers load
+ * oRPC.
  */
 export {
   CategorySchema,
