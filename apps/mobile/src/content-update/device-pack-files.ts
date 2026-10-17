@@ -9,11 +9,13 @@ const KeptVersionSchema = PackMetadataSchema.pick({ contentVersion: true, packFo
 /** The `PackFiles` of the device, which also tell expo-sqlite where the kept pack is. */
 export interface DevicePackFiles extends PackFiles {
   /**
-   * Where the kept pack of the version is, for expo-sqlite to open: the
-   * directory as a path and the file's name. Call it at launch, before any
-   * pack opens: it throws away every other pack file.
+   * Throws away every pack file but the one of the version, and answers where
+   * that one is, for expo-sqlite to open: the directory as a path and the
+   * file's name. Call it only at launch, before a kept pack opens, so it
+   * never throws away the file of a pack open in this run (ADR 0015); the
+   * bundled pack's file lies elsewhere.
    */
-  prepareToOpen(version: PackVersion): { readonly directory: string; readonly name: string };
+  throwAwayAllBut(version: PackVersion): { readonly directory: string; readonly name: string };
 }
 
 /**
@@ -66,7 +68,7 @@ export const devicePackFiles = nativeModules.load('contentUpdates', (): DevicePa
       removePacks();
       return Promise.resolve();
     },
-    prepareToOpen(version) {
+    throwAwayAllBut(version) {
       const { name } = packFile(version);
       removePacks(name);
       return { directory: decodeURI(folder.uri.replace(/^file:\/\//, '')), name };
