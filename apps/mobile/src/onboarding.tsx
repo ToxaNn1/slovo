@@ -9,10 +9,11 @@ import {
 } from '@slovo/ui';
 import { StyleSheet, View } from 'react-native';
 
-import { useComposed, useModule } from './composition';
+import { useComposition } from './composition';
 import { editionStrings } from './edition/edition';
 import { MixChoices } from './mix/mix-choices';
 import { NotificationTimes } from './notifications/notification-times';
+import { useSubscribed } from './opening';
 
 /** A Word's Lemma as the steps draw it: with its Stress, and what VoiceOver reads for it. */
 function lemmaOf(wordCard: WordCardModel): { lemma: string; accessibilityLabel: string } {
@@ -51,13 +52,9 @@ function report(done: Promise<void>): void {
  * and the rule that ends them.
  */
 export function Onboarding() {
-  const onboarding = useModule((composition) => composition.onboarding);
-  const step = useComposed(
-    (composition) => composition.onboarding,
-    ({ state }) => state.step,
-    undefined,
-  );
-  if (onboarding === undefined || step === undefined) return null;
+  const { onboarding } = useComposition();
+  const step = useSubscribed(onboarding, ({ state }) => state.step);
+  if (step === undefined) return null;
   const skip = () => {
     report(onboarding.finish());
   };

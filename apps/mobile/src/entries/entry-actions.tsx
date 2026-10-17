@@ -15,7 +15,7 @@ import { deviceClock } from '../device/device-clock';
 import { shareCardOnDevice } from '../share/device-share';
 import { edition, editionStrings } from '../edition/edition';
 import { useEntryCollections } from '../saved/collections';
-import { useOpenedRead } from '../composition';
+import { useCompositionRead } from '../composition';
 import { useFavorite } from '../saved/favorites';
 import { useHide } from '../mix/hiding';
 import { createShareFormatMemory } from '../share/share-card';
@@ -143,5 +143,5 @@ function EntryCollectionSheet({
 /** What the Entry's row leads with, once it is known; read when `enabled`. */
 function useEntryTitle(entryId: string, enabled: boolean): string {
   const read = useCallback((composition: Composition) => composition.entryRow(entryId), [entryId]);
-  return useOpenedRead(read, 'Could not read the Entry', enabled)?.title ?? '';
+  return useCompositionRead(read, 'Could not read the Entry', enabled)?.title ?? '';
 }

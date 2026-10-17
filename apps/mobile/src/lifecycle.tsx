@@ -1,7 +1,7 @@
 import { useEffect, useSyncExternalStore } from 'react';
 import { AppState } from 'react-native';
 
-import { useModule } from './composition';
+import { useComposition } from './composition';
 import { deviceClock } from './device/device-clock';
 import { deviceWidget } from './widget/device-widget';
 import { createForeground } from './foreground/foreground';
@@ -25,9 +25,8 @@ export function useInForeground(): boolean {
  * the background. Draws nothing.
  */
 export function Lifecycle() {
-  const composition = useModule((open) => open);
+  const composition = useComposition();
   useEffect(() => {
-    if (composition === undefined) return;
     return reportForeground({
       resume() {
         composition.resume().catch((error: unknown) => {
@@ -42,7 +41,6 @@ export function Lifecycle() {
     });
   }, [composition]);
   useEffect(() => {
-    if (composition === undefined) return;
     return writeWidgetSnapshots({
       device: deviceWidget,
       snapshot: () => composition.widget.snapshot(),

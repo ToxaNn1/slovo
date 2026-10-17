@@ -3,10 +3,11 @@ import { useEdition } from '@slovo/ui';
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo } from 'react';
 
-import { useComposed, useModule } from '../composition';
+import { useComposition } from '../composition';
 import { onDeviceNotificationTap } from './device-notifications';
 import { editionStrings } from '../edition/edition';
 import { keep } from '../keep';
+import { useSubscribed } from '../opening';
 import { notificationsSummary } from './notifications-summary';
 
 /**
@@ -25,28 +26,18 @@ export function NotificationTaps() {
   return null;
 }
 
-/** The Notification times and the sound as they stand, kept up to date; nothing until they open. */
-export function useNotificationsState(): NotificationsState | undefined {
-  return useComposed(
-    (composition) => composition.notifications,
-    (notifications): NotificationsState | undefined => notifications.state,
-    undefined,
-  );
+/** The Notification times and the sound as they stand, kept up to date. */
+export function useNotificationsState(): NotificationsState {
+  return useSubscribed(useComposition().notifications, ({ state }) => state);
 }
 
-/** The value of the «Сповіщення» row of Settings; nothing until Notifications open. */
-export function useNotificationsSummary(): string | undefined {
+/** The value of the «Сповіщення» row of Settings. */
+export function useNotificationsSummary(): string {
   const state = useNotificationsState();
   const { count } = useEdition();
   return useMemo(
     () =>
-      state === undefined
-        ? undefined
-        : notificationsSummary({
-            notifications: state,
-            strings: editionStrings.notifications,
-            count,
-          }),
+      notificationsSummary({ notifications: state, strings: editionStrings.notifications, count }),
     [state, count],
   );
 }
@@ -68,22 +59,19 @@ export function useNotificationsChanges(): {
   /** Asks the reader for permission to notify; a grant plans the notifications. */
   askPermission: () => void;
 } {
-  const notifications = useModule((composition) => composition.notifications);
+  const { notifications } = useComposition();
   const subject = 'the notifications';
   return {
     keepTime: (time, replacing) =>
-      notifications === undefined
-        ? Promise.resolve(undefined)
-        : keep(subject, notifications.keepTime(time, replacing), undefined),
+      keep(subject, notifications.keepTime(time, replacing), undefined),
     removeTime: (time) => {
-      if (notifications !== undefined)
-        void keep(subject, notifications.removeTime(time), undefined);
+      void keep(subject, notifications.removeTime(time), undefined);
     },
     setSound: (on) => {
-      if (notifications !== undefined) void keep(subject, notifications.setSound(on), undefined);
+      void keep(subject, notifications.setSound(on), undefined);
     },
     askPermission: () => {
-      if (notifications !== undefined) void keep(subject, notifications.askPermission(), undefined);
+      void keep(subject, notifications.askPermission(), undefined);
     },
   };
 }

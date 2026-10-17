@@ -15,9 +15,7 @@ import { useRouter } from 'expo-router';
 import { Alert, Pressable, SectionList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useComposition } from '../../../composition';
 import { editionStrings } from '../../../edition/edition';
-import { LoadFailed } from '../../../edition/language-pack';
 import { useOpenScreen } from '../../../entries/use-open-screen';
 import { useClearHistory, useHistorySections } from '../../../saved/history';
 import type { HistoryEntryModel, HistorySection } from '../../../saved/history-screen';
@@ -32,16 +30,12 @@ const { history: strings } = editionStrings;
  * system alert, and clears History only.
  */
 export default function HistoryScreen() {
-  const composition = useComposition();
   const sections = useHistorySections();
   const clear = useClearHistory();
   const { colors, fontFamilies } = useTokens();
   const { voice } = useEdition();
   const router = useRouter();
   const openScreen = useOpenScreen();
-
-  if (composition.status === 'failed') return <LoadFailed onRetry={composition.retry} />;
-  const ready = composition.status === 'ready';
 
   function confirmClear() {
     Alert.alert(strings.clear.title, strings.clear.message, [
@@ -57,7 +51,7 @@ export default function HistoryScreen() {
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
       <SectionList<HistoryEntryModel, HistorySection>
-        sections={ready ? sections : []}
+        sections={sections}
         keyExtractor={(entry) => entry.entryId}
         stickySectionHeadersEnabled={false}
         renderSectionHeader={({ section }) => (
@@ -116,13 +110,11 @@ export default function HistoryScreen() {
           </>
         }
         ListEmptyComponent={
-          ready ? (
-            <EmptyState
-              testID="history-empty"
-              title={strings.empty.title}
-              message={strings.empty.message}
-            />
-          ) : null
+          <EmptyState
+            testID="history-empty"
+            title={strings.empty.title}
+            message={strings.empty.message}
+          />
         }
         contentContainerStyle={styles.content}
       />

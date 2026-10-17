@@ -1,14 +1,11 @@
 import type { GameState } from '@slovo/core';
 
-import { useComposed, useModule } from '../composition';
+import { useComposition } from '../composition';
+import { useSubscribed } from '../opening';
 
-/** The Game as it stands, kept up to date; nothing until the composition is open. */
-export function useGameState(): GameState | undefined {
-  return useComposed(
-    (composition) => composition.game,
-    (game) => game.state,
-    undefined,
-  );
+/** The Game as it stands, kept up to date. */
+export function useGameState(): GameState {
+  return useSubscribed(useComposition().game, ({ state }) => state);
 }
 
 /**
@@ -16,23 +13,23 @@ export function useGameState(): GameState | undefined {
  * or a «Далі» that fails is logged and leaves the Game as it was.
  */
 export function useGameActions() {
-  const game = useModule((composition) => composition.game);
+  const { game } = useComposition();
   return {
     start: (modeId: string) => {
-      game?.start(modeId).catch((error: unknown) => {
+      game.start(modeId).catch((error: unknown) => {
         console.error('Could not start a Game', error);
       });
     },
     answer: (option: number) => {
-      game?.answer(option);
+      game.answer(option);
     },
     next: () => {
-      game?.next().catch((error: unknown) => {
+      game.next().catch((error: unknown) => {
         console.error('Could not go on to the next Round', error);
       });
     },
     leave: () => {
-      game?.leave();
+      game.leave();
     },
   };
 }

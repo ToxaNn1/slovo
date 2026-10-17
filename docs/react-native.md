@@ -4,7 +4,8 @@ How to write screens and components in `apps/mobile` and `packages/ui`. `CONTEXT
 
 ## Where code lives
 
-- **Route file** (`apps/mobile/src/app/**`): composition only. It reads hooks, branches on states (failed → ready → empty → content), assembles `@slovo/ui` components and wires navigation and confirmations. Aim for a screen you can read top to bottom in one pass.
+- **Route file** (`apps/mobile/src/app/**`): composition only. It reads hooks, branches on states (empty → content), assembles `@slovo/ui` components and wires navigation and confirmations. Aim for a screen you can read top to bottom in one pass.
+- **Opening and readiness**: every screen draws over the open Language Pack and composition, behind their gates in `apps/mobile/src/app/_layout.tsx` (`Opened`, ADR 0036), so a route never checks for loading or a failure. A hook reads a module with `useSubscribed(useComposition().favorites, ({ list }) => list)`; a source that opens apart from the composition binds the same way.
 - **Hook module** (`apps/mobile/src/<domain>/<feature>.ts`): data shaping for a screen — grouping, sorting, building section keys, formatting through the Edition's strings. Expose one hook per screen need (a hook such as `useHistorySections()`, an illustration, not an existing name) and export the type of its output, so the route file imports the type instead of writing it inline.
 - **Core** (`@slovo/core`): rules and pure functions, language-agnostic and free of React (ADR 0002, 0006). Time and randomness come in as arguments (`CLAUDE.md`: "Inject time and randomness").
 - **UI** (`@slovo/ui`): every visual primitive — buttons, text roles, rows, headings. It takes data and callbacks through props and strings through `EditionProvider`. Its domain folders build on `primitives/`, which build on `providers/` and `decor/`; none of these three imports a domain folder (dependency-cruiser's `ui-layers-import-no-domain-folder`).

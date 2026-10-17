@@ -3,9 +3,7 @@ import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useComposition } from '../../composition';
 import { editionStrings } from '../../edition/edition';
-import { LoadFailed } from '../../edition/language-pack';
 import { MixChoices } from '../../mix/mix-choices';
 
 const strings = editionStrings.mix;
@@ -17,12 +15,9 @@ const strings = editionStrings.mix;
  * disabled, with a hint why.
  */
 export default function MixScreen() {
-  const composition = useComposition();
   const { colors, fontFamilies } = useTokens();
   const { voice } = useEdition();
   const router = useRouter();
-
-  if (composition.status === 'failed') return <LoadFailed onRetry={composition.retry} />;
 
   return (
     <SafeAreaView

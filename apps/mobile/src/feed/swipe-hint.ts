@@ -17,7 +17,8 @@ export function useSwipeHint(): { visible: boolean; markShown: () => void; dismi
 
   useEffect(() => {
     let active = true;
-    storedUserState()
+    storedUserState
+      .opened()
       .then(async (userState) => {
         const hint = createSwipeHint({ userState });
         if ((await hint.isDue()) && active) setDue(hint);

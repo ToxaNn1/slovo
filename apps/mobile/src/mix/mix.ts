@@ -1,34 +1,23 @@
-import type { Mix, MixState } from '@slovo/core';
+import type { MixState } from '@slovo/core';
 import { useEdition } from '@slovo/ui';
 import { useMemo } from 'react';
 
-import { useComposed, useModule } from '../composition';
+import { useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
+import { useSubscribed } from '../opening';
 import { mixSummary } from './mix-screen';
 
-/** The Mix of the session's Core composition, once it is open. */
-function useMix(): Mix | undefined {
-  return useModule((composition) => composition.mix);
+/** The Mix as it stands, kept up to date. */
+export function useMixState(): MixState {
+  return useSubscribed(useComposition().mix, ({ state }) => state);
 }
 
-/** The Mix as it stands, kept up to date; nothing until the Mix opens. */
-export function useMixState(): MixState | undefined {
-  return useComposed(
-    (composition) => composition.mix,
-    (mix): MixState | undefined => mix.state,
-    undefined,
-  );
-}
-
-/** The value of the «Мій Мікс» row of Settings; nothing until the Mix opens. */
-export function useMixSummary(): string | undefined {
+/** The value of the «Мій Мікс» row of Settings. */
+export function useMixSummary(): string {
   const state = useMixState();
   const { count } = useEdition();
   return useMemo(
-    () =>
-      state === undefined
-        ? undefined
-        : mixSummary({ mix: state, strings: editionStrings.mix, count }),
+    () => mixSummary({ mix: state, strings: editionStrings.mix, count }),
     [state, count],
   );
 }
@@ -43,21 +32,21 @@ export function useMixChanges(): {
   turnAllOn: () => void;
   setCorrections: (inMix: boolean) => void;
 } {
-  const mix = useMix();
-  const keep = (change: Promise<unknown> | undefined) => {
-    change?.catch((error: unknown) => {
+  const { mix } = useComposition();
+  const keep = (change: Promise<unknown>) => {
+    change.catch((error: unknown) => {
       console.error('Could not keep the change of the Mix', error);
     });
   };
   return {
     toggleCategory: (categoryId, inMix) => {
-      keep(inMix ? mix?.putBack(categoryId) : mix?.takeOut(categoryId));
+      keep(inMix ? mix.putBack(categoryId) : mix.takeOut(categoryId));
     },
     turnAllOn: () => {
-      keep(mix?.turnAllOn());
+      keep(mix.turnAllOn());
     },
     setCorrections: (inMix) => {
-      keep(mix?.setCorrections(inMix));
+      keep(mix.setCorrections(inMix));
     },
   };
 }

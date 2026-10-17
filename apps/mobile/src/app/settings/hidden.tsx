@@ -17,11 +17,9 @@ import { useRouter } from 'expo-router';
 import { FlatList, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useComposition } from '../../composition';
 import { editionStrings } from '../../edition/edition';
 import { useHiddenChanges, useHiddenScreenModel } from '../../mix/hidden';
 import type { HiddenScreenModel } from '../../mix/hidden-screen';
-import { LoadFailed } from '../../edition/language-pack';
 
 const strings = editionStrings.hidden;
 
@@ -40,13 +38,10 @@ export default function HiddenScreen() {
 }
 
 function HiddenList() {
-  const composition = useComposition();
   const model = useHiddenScreenModel();
   const { restoreEntry, turnCategoryOn, turnCorrectionsOn } = useHiddenChanges();
   const { colors } = useTokens();
   const router = useRouter();
-
-  if (composition.status === 'failed') return <LoadFailed onRetry={composition.retry} />;
 
   return (
     <SafeAreaView
@@ -56,7 +51,7 @@ function HiddenList() {
     >
       <FlatList
         contentContainerStyle={styles.content}
-        data={model?.entries ?? []}
+        data={model.entries}
         keyExtractor={({ entryId }) => entryId}
         renderItem={({ item: { entryId, row, labels } }) => (
           <EntryRow
@@ -78,16 +73,15 @@ function HiddenList() {
         )}
         ListHeaderComponent={
           <HiddenHeader
-            empty={model?.empty === true}
-            hasEntries={model !== undefined && model.entries.length > 0}
+            empty={model.empty}
+            hasEntries={model.entries.length > 0}
             onBack={() => {
               router.back();
             }}
           />
         }
         ListFooterComponent={
-          model !== undefined &&
-          (model.categories.length > 0 || model.corrections !== undefined) ? (
+          model.categories.length > 0 || model.corrections !== undefined ? (
             <CategoriesSection
               model={model}
               onTurnCategoryOn={turnCategoryOn}

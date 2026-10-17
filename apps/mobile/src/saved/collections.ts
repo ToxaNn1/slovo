@@ -2,29 +2,18 @@ import type { Collection, CollectionEntry, Collections } from '@slovo/core';
 import { useEdition } from '@slovo/ui';
 import { useMemo } from 'react';
 
-import { useComposed, useModule } from '../composition';
+import { useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
 import { keep } from '../keep';
+import { useSubscribed } from '../opening';
 import { collectionRows, type CollectionRowModel } from './collections-screen';
 
-const noCollections: readonly Collection[] = [];
-const noEntries: readonly CollectionEntry[] = [];
-
-/** Collections of the session's Core composition, once it is open. */
-function useCollections(): Collections | undefined {
-  return useModule((composition) => composition.collections);
-}
-
-/** The Collections, newest first, kept up to date; none until they open. */
+/** The Collections, newest first, kept up to date. */
 export function useCollectionList(): readonly Collection[] {
-  return useComposed(
-    (composition) => composition.collections,
-    (collections) => collections.list,
-    noCollections,
-  );
+  return useSubscribed(useComposition().collections, ({ list }) => list);
 }
 
-/** The rows of the Collections screen, newest first, kept up to date; none until Collections open. */
+/** The rows of the Collections screen, newest first, kept up to date. */
 export function useCollectionRows(): readonly CollectionRowModel[] {
   const list = useCollectionList();
   const { count } = useEdition();
@@ -43,14 +32,13 @@ export function useEntryCollections(entryId: string): {
   /** Makes a Collection with the Entry in it; resolves to the Collection, or why its name is refused. */
   create: (name: string) => ReturnType<Collections['create']>;
 } {
-  const collections = useCollections();
+  const { collections } = useComposition();
   // Every filing changes the list, so the screen reads `isFiled` again on each.
   const list = useCollectionList();
   return {
     collections: list,
-    isFiled: (collectionId) => collections?.has(collectionId, entryId) ?? false,
+    isFiled: (collectionId) => collections.has(collectionId, entryId),
     setFiled(collectionId, filed) {
-      if (collections === undefined) return;
       void keep(
         'Collections',
         filed ? collections.add(collectionId, entryId) : collections.remove(collectionId, entryId),
@@ -58,10 +46,7 @@ export function useEntryCollections(entryId: string): {
       );
     },
     // A Collection that could not be kept rejects: the sheet keeps its name field open.
-    create: (name) =>
-      collections === undefined
-        ? Promise.reject(new Error('Collections are not open yet.'))
-        : collections.create(name, entryId),
+    create: (name) => collections.create(name, entryId),
   };
 }
 
@@ -74,41 +59,35 @@ export function useCollectionChanges(): {
   /** Deletes a Collection with its Entry records; the Entries stay wherever else they are kept. */
   remove: (collectionId: string) => void;
 } {
-  const collections = useCollections();
+  const { collections } = useComposition();
   // Kept from render to render, so the rows of the Collections screen re-render only when the list changes.
-  return useMemo(() => {
-    const rejectNotOpen = () => Promise.reject(new Error('Collections are not open yet.'));
-    // A name that could not be kept rejects: the field stays open with the name as typed.
-    return {
-      create: (name) => collections?.create(name) ?? rejectNotOpen(),
-      rename: (collectionId, name) => collections?.rename(collectionId, name) ?? rejectNotOpen(),
+  return useMemo(
+    () => ({
+      // A name that could not be kept rejects: the field stays open with the name as typed.
+      create: (name) => collections.create(name),
+      rename: (collectionId, name) => collections.rename(collectionId, name),
       remove(collectionId) {
-        if (collections === undefined) return;
         void keep('Collections', collections.delete(collectionId), undefined);
       },
-    };
-  }, [collections]);
+    }),
+    [collections],
+  );
 }
 
-/** One Collection and its Entries, newest first, kept up to date; no Collection and no Entries until Collections open or when it is gone. */
+/** One Collection and its Entries, newest first, kept up to date; no Collection and no Entries when it is gone. */
 export function useCollectionEntries(collectionId: string): {
   collection: Collection | undefined;
   entries: readonly CollectionEntry[];
   /** Takes the Entry out of this Collection only; it stays everywhere else it is kept. */
   remove: (entryId: string) => void;
 } {
-  const collections = useCollections();
+  const { collections } = useComposition();
   const list = useCollectionList();
-  const entries = useComposed(
-    (composition) => composition.collections,
-    (open) => open.entries(collectionId),
-    noEntries,
-  );
+  const entries = useSubscribed(collections, (open) => open.entries(collectionId));
   return {
     collection: list.find((collection) => collection.id === collectionId),
     entries,
     remove(entryId) {
-      if (collections === undefined) return;
       void keep('Collections', collections.remove(collectionId, entryId), undefined);
     },
   };

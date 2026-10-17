@@ -27,7 +27,7 @@ const strings = editionStrings.notifications;
  * at once. Tapping a time, or «+ Додати час», opens the system time picker,
  * which a dev client built before the native batch lacks: then adding and
  * changing a time stay off, and removing still works. Needs a
- * `GestureHandlerRootView` above it. Nothing until Notifications open.
+ * `GestureHandlerRootView` above it.
  */
 export function NotificationTimes() {
   const state = useNotificationsState();
@@ -40,9 +40,8 @@ export function NotificationTimes() {
   // The hint is about the list as it was when the time was refused.
   useEffect(() => {
     setDuplicate(false);
-  }, [state?.times]);
+  }, [state.times]);
 
-  if (state === undefined) return null;
   const limitHint = count(strings.limitHint, MAX_NOTIFICATION_TIMES);
   const pickerAvailable = timePickerAvailable();
   const canAdd = state.canAddTime && pickerAvailable;

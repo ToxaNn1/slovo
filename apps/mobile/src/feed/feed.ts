@@ -1,39 +1,30 @@
 import type { Feed, FeedCard } from '@slovo/core';
 import { useIsFocused } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
-import { useComposed, useComposition } from '../composition';
+import { useComposition } from '../composition';
 import { useInForeground } from '../lifecycle';
+import { useSubscribed } from '../opening';
 
-export type FeedState =
-  | { readonly status: 'loading' }
-  | {
-      readonly status: 'failed';
-      /** Tries to open the Feed again. */
-      readonly retry: () => void;
-    }
-  | {
-      readonly status: 'ready';
-      readonly cards: readonly FeedCard[];
-      /** The position of the card the Feed opens on. */
-      readonly startPosition: number;
-      /** Tells the Feed which card is on screen now. */
-      readonly onCardChange: (position: number) => void;
-      /**
-       * The reader's position as the Feed keeps it: the card on screen, or the
-       * card the reader left while the Feed is out of sight. It moves when a
-       * hide or its undo drops or puts back cards, also out of sight, so the
-       * pager shows it after the cards change.
-       */
-      readonly readerPosition: () => number;
-      /**
-       * Opens a Correction the Word card at `position` links, as the card
-       * right after it. Resolves to that card's position, or nothing.
-       */
-      readonly openLinkedCorrection: Feed['openLinkedCorrection'];
-    };
-
-const noCards: readonly FeedCard[] = [];
+export interface FeedState {
+  readonly cards: readonly FeedCard[];
+  /** The position of the card the Feed opens on. */
+  readonly startPosition: number;
+  /** Tells the Feed which card is on screen now. */
+  readonly onCardChange: (position: number) => void;
+  /**
+   * The reader's position as the Feed keeps it: the card on screen, or the
+   * card the reader left while the Feed is out of sight. It moves when a
+   * hide or its undo drops or puts back cards, also out of sight, so the
+   * pager shows it after the cards change.
+   */
+  readonly readerPosition: () => number;
+  /**
+   * Opens a Correction the Word card at `position` links, as the card
+   * right after it. Resolves to that card's position, or nothing.
+   */
+  readonly openLinkedCorrection: Feed['openLinkedCorrection'];
+}
 
 /**
  * The Feed of the session's Core composition.
@@ -41,57 +32,38 @@ const noCards: readonly FeedCard[] = [];
  * that none is otherwise.
  */
 export function useFeed(): FeedState {
-  const composition = useComposition();
-  const feed = composition.status === 'ready' ? composition.composition.feed : undefined;
+  const { feed, onboarding } = useComposition();
   /** The card on screen, once the reader turned a page; until then the one the Feed opens on. */
   const [turnedTo, setTurnedTo] = useState<number>();
-  const position = turnedTo ?? feed?.startPosition;
+  const position = turnedTo ?? feed.startPosition;
   const focused = useIsFocused();
   const inForeground = useInForeground();
-  const covered = useComposed(
-    (open) => open.onboarding,
-    ({ state }) => state.step !== undefined,
-    false,
-  );
+  const covered = useSubscribed(onboarding, ({ state }) => state.step !== undefined);
   // The Feed is in sight while Home is focused, the app is in the foreground
   // and no onboarding covers it; otherwise no card is on screen.
   const inSight = focused && inForeground && !covered;
-  const cards = useComposed(
-    (open) => open.feed,
-    (open) => open.cards,
-    noCards,
-  );
-  const readerPosition = useMemo(
-    () => (feed === undefined ? undefined : () => feed.position),
-    [feed],
-  );
+  const cards = useSubscribed(feed, (open) => open.cards);
+  const readerPosition = useCallback(() => feed.position, [feed]);
   // Kept from render to render, so the Feed's pages re-render only when their card changes.
-  const openLinkedCorrection = useMemo(
-    (): Feed['openLinkedCorrection'] | undefined =>
-      feed === undefined
-        ? undefined
-        : (at, correctionId) => feed.openLinkedCorrection(at, correctionId),
+  const openLinkedCorrection = useCallback<Feed['openLinkedCorrection']>(
+    (at, correctionId) => feed.openLinkedCorrection(at, correctionId),
     [feed],
   );
 
   // A new position goes straight to the Feed, which takes the card that left
   // off the screen itself; only the Feed going out of sight reports none.
   useEffect(() => {
-    if (feed === undefined || position === undefined || !inSight) return;
+    if (!inSight) return;
     report(feed.show(position));
   }, [feed, inSight, position]);
   useEffect(() => {
-    if (feed === undefined || !inSight) return;
+    if (!inSight) return;
     return () => {
       report(feed.show(undefined));
     };
   }, [feed, inSight]);
 
-  if (composition.status === 'failed') return { status: 'failed', retry: composition.retry };
-  if (feed === undefined || readerPosition === undefined || openLinkedCorrection === undefined)
-    return { status: 'loading' };
   return {
-    status: 'ready',
     cards,
     startPosition: feed.startPosition,
     onCardChange: setTurnedTo,

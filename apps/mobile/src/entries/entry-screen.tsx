@@ -12,10 +12,9 @@ import { useCallback, useEffect } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useComposition, useOpenedRead } from '../composition';
+import { useCompositionRead } from '../composition';
 import { EntryActions } from './entry-actions';
 import type { OpenedFrom } from './entry-link';
-import { LoadFailed } from '../edition/language-pack';
 import { useOpenScreen } from './use-open-screen';
 
 /**
@@ -45,7 +44,6 @@ export function EntryScreen({
    */
   openedFrom?: OpenedFrom | undefined;
 }) {
-  const composition = useComposition();
   const { colors } = useTokens();
   const router = useRouter();
   const openScreen = useOpenScreen();
@@ -54,12 +52,11 @@ export function EntryScreen({
     async (open: Composition) => (await openEntry(open, entryId, openedFrom)) ?? null,
     [entryId, openedFrom],
   );
-  const card = useOpenedRead(read, 'Could not open the Entry');
+  const card = useCompositionRead(read, 'Could not open the Entry');
   useEffect(() => {
     if (openedFrom !== undefined && card === null) router.replace('/');
   }, [openedFrom, card, router]);
 
-  if (composition.status === 'failed') return <LoadFailed onRetry={composition.retry} />;
   return (
     <UndoToastProvider>
       <SafeAreaView

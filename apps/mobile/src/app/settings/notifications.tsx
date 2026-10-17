@@ -14,9 +14,7 @@ import { useRouter } from 'expo-router';
 import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useComposition } from '../../composition';
 import { editionStrings } from '../../edition/edition';
-import { LoadFailed } from '../../edition/language-pack';
 import { useNotificationsChanges, useNotificationsState } from '../../notifications/notifications';
 import { NotificationTimes } from '../../notifications/notification-times';
 
@@ -37,14 +35,11 @@ const strings = editionStrings.notifications;
  * they are.
  */
 export default function NotificationsScreen() {
-  const composition = useComposition();
   const state = useNotificationsState();
   const { setSound, askPermission } = useNotificationsChanges();
   const { colors, fontFamilies } = useTokens();
   const { voice } = useEdition();
   const router = useRouter();
-
-  if (composition.status === 'failed') return <LoadFailed onRetry={composition.retry} />;
 
   return (
     <SafeAreaView
@@ -63,51 +58,47 @@ export default function NotificationsScreen() {
         <View style={styles.header}>
           <ScreenTitle>{strings.title}</ScreenTitle>
         </View>
-        {state !== undefined && (
-          <>
-            {state.permission === 'not-asked' && (
-              <View style={styles.enable}>
-                <PrimaryButton
-                  testID="notifications-enable"
-                  label={strings.enable}
-                  onPress={askPermission}
-                />
-              </View>
-            )}
-            {state.permission === 'denied' && (
-              <View testID="notifications-denied" style={styles.denied}>
-                <Text
-                  {...voice}
-                  style={[styles.hint, { color: colors.ink, fontFamily: fontFamilies.ui }]}
-                >
-                  {strings.denied.message}
-                </Text>
-                <SettingsGroup>
-                  <NavigationRow
-                    testID="notifications-open-settings"
-                    label={strings.denied.openSettings}
-                    onPress={() => {
-                      Linking.openSettings().catch((error: unknown) => {
-                        console.error("Could not open the app's iOS settings", error);
-                      });
-                    }}
-                  />
-                </SettingsGroup>
-              </View>
-            )}
-            <NotificationTimes />
-            <View style={styles.section}>
-              <SettingsGroup>
-                <SwitchRow
-                  testID="notifications-sound"
-                  label={strings.sound}
-                  value={state.sound}
-                  onChange={setSound}
-                />
-              </SettingsGroup>
-            </View>
-          </>
+        {state.permission === 'not-asked' && (
+          <View style={styles.enable}>
+            <PrimaryButton
+              testID="notifications-enable"
+              label={strings.enable}
+              onPress={askPermission}
+            />
+          </View>
         )}
+        {state.permission === 'denied' && (
+          <View testID="notifications-denied" style={styles.denied}>
+            <Text
+              {...voice}
+              style={[styles.hint, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+            >
+              {strings.denied.message}
+            </Text>
+            <SettingsGroup>
+              <NavigationRow
+                testID="notifications-open-settings"
+                label={strings.denied.openSettings}
+                onPress={() => {
+                  Linking.openSettings().catch((error: unknown) => {
+                    console.error("Could not open the app's iOS settings", error);
+                  });
+                }}
+              />
+            </SettingsGroup>
+          </View>
+        )}
+        <NotificationTimes />
+        <View style={styles.section}>
+          <SettingsGroup>
+            <SwitchRow
+              testID="notifications-sound"
+              label={strings.sound}
+              value={state.sound}
+              onChange={setSound}
+            />
+          </SettingsGroup>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );

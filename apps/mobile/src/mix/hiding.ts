@@ -20,12 +20,10 @@ const { hiding: strings } = editionStrings;
 export function useHide(card: EntryFeedCard): () => void {
   const composition = useComposition();
   const showToast = useUndoToast();
-  const open = composition.status === 'ready' ? composition.composition : undefined;
 
   return () => {
-    if (open === undefined) return;
     // Read when the sheet opens, so it follows every change of the Mix.
-    const options = hideChoice({ card, mix: open.mix.state, strings });
+    const options = hideChoice({ card, mix: composition.mix.state, strings });
     ActionSheetIOS.showActionSheetWithOptions(
       {
         options: [...options.map(({ label }) => label), strings.choice.cancel],
@@ -34,7 +32,7 @@ export function useHide(card: EntryFeedCard): () => void {
       (index) => {
         const option = options[index];
         if (option === undefined) return;
-        hide(open, option, showToast).catch((error: unknown) => {
+        hide(composition, option, showToast).catch((error: unknown) => {
           console.error('Could not hide from the card', error);
         });
       },
@@ -44,11 +42,11 @@ export function useHide(card: EntryFeedCard): () => void {
 
 /** Hides what the option names and shows its undo toast, unless nothing changed. */
 async function hide(
-  open: Composition,
+  composition: Composition,
   option: HideOption,
   showToast: (toast: UndoToastContent) => void,
 ): Promise<void> {
-  const result = await open.hide(option.target);
+  const result = await composition.hide(option.target);
   if (result === undefined) return;
   const message = hideToast({ option, changed: result.changed, strings });
   if (message === undefined) return;

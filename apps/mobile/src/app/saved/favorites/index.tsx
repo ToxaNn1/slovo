@@ -16,10 +16,8 @@ import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { addedOn } from '../../../saved/added-on';
-import { useComposition } from '../../../composition';
 import { editionStrings } from '../../../edition/edition';
 import { useFavorite, useFavoriteList } from '../../../saved/favorites';
-import { LoadFailed } from '../../../edition/language-pack';
 import { useOpenScreen } from '../../../entries/use-open-screen';
 
 const { favorites: strings } = editionStrings;
@@ -54,14 +52,10 @@ function FavoriteRow({ favorite: { entryId, row, addedAt } }: { favorite: Favori
  * action) takes the Entry out. An empty list leads back to the Feed.
  */
 export default function FavoritesScreen() {
-  const composition = useComposition();
   const list = useFavoriteList();
   const { colors, fontFamilies } = useTokens();
   const { count, voice } = useEdition();
   const router = useRouter();
-
-  if (composition.status === 'failed') return <LoadFailed onRetry={composition.retry} />;
-  const ready = composition.status === 'ready';
 
   return (
     <SafeAreaView
@@ -70,7 +64,7 @@ export default function FavoritesScreen() {
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
       <FlatList
-        data={ready ? list : []}
+        data={list}
         keyExtractor={(favorite) => favorite.entryId}
         renderItem={({ item }) => <FavoriteRow favorite={item} />}
         ListHeaderComponent={
@@ -113,20 +107,18 @@ export default function FavoritesScreen() {
           ) : null
         }
         ListEmptyComponent={
-          ready ? (
-            <EmptyState
-              testID="favorites-empty"
-              title={strings.empty.title}
-              message={strings.empty.message}
-              action={{
-                label: strings.empty.toFeed,
-                testID: 'favorites-to-feed',
-                onPress: () => {
-                  router.navigate('/');
-                },
-              }}
-            />
-          ) : null
+          <EmptyState
+            testID="favorites-empty"
+            title={strings.empty.title}
+            message={strings.empty.message}
+            action={{
+              label: strings.empty.toFeed,
+              testID: 'favorites-to-feed',
+              onPress: () => {
+                router.navigate('/');
+              },
+            }}
+          />
         }
         contentContainerStyle={styles.content}
       />
