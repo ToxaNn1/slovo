@@ -1,6 +1,7 @@
 import { spawn } from 'node:child_process';
 import { Writable } from 'node:stream';
 
+import { describeApi } from '@slovo/contracts/api-description';
 import { describe, expect, inject, it, onTestFinished } from 'vitest';
 
 import { createDatabase } from './database/database';
@@ -163,16 +164,17 @@ describe('/docs', () => {
     expect(response.headers.get('content-type')).toContain('text/html');
   });
 
-  it('serves the OpenAPI description of the contract', async () => {
+  it("serves the contract's description, which the repo commits, with the server it is read from", async () => {
     const { app, close } = testApp();
     onTestFinished(close);
 
     const response = await app.request('/docs/openapi.json');
-    const description = (await response.json()) as { openapi: string; paths: object };
 
     expect(response.status).toBe(200);
-    expect(description.openapi).toMatch(/^3\./);
-    expect(description.paths).toHaveProperty(['/v1/editions/{editionId}/content/latest', 'get']);
+    expect(await response.json()).toEqual({
+      ...(await describeApi()),
+      servers: [{ url: 'http://localhost/' }],
+    });
   });
 });
 

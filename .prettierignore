@@ -11,3 +11,6 @@ docs/design/claude-design/
 
 # The backend's migration journal and snapshots, rewritten by `pnpm db:generate`
 apps/backend/migrations/meta/
+
+# The committed description of the API's /v1, rewritten by `pnpm describe:api`
+packages/contracts/src/api/v1.openapi.json
