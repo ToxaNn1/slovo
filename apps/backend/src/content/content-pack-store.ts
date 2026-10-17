@@ -22,6 +22,19 @@ export function createContentPackStore({ db }: Database): ContentPackStore {
       return pack;
     },
 
+    async file(editionId, contentVersion) {
+      const [file] = await db
+        .select({ fileSha256: contentPacks.fileSha256, bytes: contentPacks.bytes })
+        .from(contentPacks)
+        .where(
+          and(
+            eq(contentPacks.editionId, editionId),
+            eq(contentPacks.contentVersion, contentVersion),
+          ),
+        );
+      return file;
+    },
+
     publish(pack, refuse) {
       const { metadata } = pack;
       return db.transaction(async (tx) => {

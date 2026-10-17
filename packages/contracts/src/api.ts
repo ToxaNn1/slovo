@@ -6,6 +6,8 @@ import { OpenAPILink, type OpenAPILinkOptions } from '@orpc/openapi-client/fetch
 import { accountContract } from './api/account';
 import { contentContract } from './api/content';
 
+export { PACK_MEDIA_TYPE } from './api/content';
+
 /**
  * The API contract: the only description of the backend's API (spec #333).
  * The backend implements it and the app calls it through `createApiClient`,

@@ -16,6 +16,8 @@ export const systemClock: Clock = { now: () => new Date() };
 export interface ContentPackStore {
   /** The newest published pack of the Edition in the pack format, if any. */
   latest(editionId: string, packFormat: number): Promise<PublishedPack | undefined>;
+  /** The file of the Edition's pack published at the content version, if one is. */
+  file(editionId: string, contentVersion: number): Promise<PublishedFile | undefined>;
   /**
    * Keeps the pack unless `refuse`, given every content version published
    * for its Edition, names why not, and answers that reason. The check and
@@ -35,6 +37,9 @@ export interface PackFile {
   readonly fileSha256: string;
   readonly bytes: Uint8Array;
 }
+
+/** The bytes of a published pack file and their SHA-256, as a download serves them. */
+export type PublishedFile = Pick<PackFile, 'fileSha256' | 'bytes'>;
 
 /** A Language Pack file as it is published. */
 export interface ContentPack extends PackFile {

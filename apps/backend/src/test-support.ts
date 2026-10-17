@@ -148,12 +148,14 @@ export function testApp(dependencies: Partial<AppDependencies> = {}) {
       fetch: (request) => Promise.resolve(app.fetch(request)),
       headers,
     });
+  // A test may close the database before the end, which closes it once.
+  let closed: Promise<void> | undefined;
   return {
     app,
     client: clientWith({}),
     /** The client of a device signed in with the Session's token. */
     clientOf: (token: string) => clientWith({ authorization: `Bearer ${token}` }),
     database,
-    close: () => database.close(),
+    close: () => (closed ??= database.close()),
   };
 }

@@ -7,6 +7,7 @@ export {
   createContentPacks,
   type ContentPacks,
   type PublishRefusal,
+  type ServeRefusal,
 } from './content/content-packs';
 export {
   createEditionRegistry,
@@ -22,4 +23,5 @@ export {
   type ContentPackStore,
   type Mail,
   type Mailer,
+  type PublishedFile,
 } from './ports';
