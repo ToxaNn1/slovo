@@ -9,6 +9,7 @@ import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { APIError } from 'better-auth/api';
 import { bearer, emailOTP } from 'better-auth/plugins';
+import { eq } from 'drizzle-orm';
 import type { Logger } from 'pino';
 
 import type { Database } from '../database/database';
@@ -22,6 +23,9 @@ const SESSION_UPDATE_SECONDS = 24 * 60 * 60;
 
 const codeExpired: CodeCheck = { ok: false, reason: 'code-expired' };
 const tooManyTries: CodeCheck = { ok: false, reason: 'too-many-tries' };
+
+/** The headers that carry a Session's token to better-auth. */
+const bearerHeaders = (token: string) => new Headers({ authorization: `Bearer ${token}` });
 
 /** An Account as the server Core sees it, from better-auth's user. */
 const accountRecord = ({ id, email, createdAt }: AccountRecord): AccountRecord => ({
@@ -157,10 +161,35 @@ export function createAuthenticator(
     },
 
     async accountOf(token) {
-      const session = await auth.api.getSession({
-        headers: new Headers({ authorization: `Bearer ${token}` }),
-      });
+      const session = await auth.api.getSession({ headers: bearerHeaders(token) });
       return session === null ? undefined : accountRecord(session.user);
+    },
+
+    async revoke(token) {
+      // The signature checked, better-auth names the Session by the token it keeps.
+      const session = await auth.api.getSession({
+        headers: bearerHeaders(token),
+        query: { disableRefresh: true },
+      });
+      if (session === null) return false;
+      const { internalAdapter } = await auth.$context;
+      await internalAdapter.deleteSession(session.session.token);
+      return true;
+    },
+
+    async revokeAll(accountId) {
+      const { internalAdapter } = await auth.$context;
+      await internalAdapter.deleteUserSessions(accountId);
+    },
+
+    // better-auth's own deleteUser runs its deletes one by one, outside a
+    // transaction, so the adapter deletes in one: the database's cascade takes
+    // the Sessions and sign-in methods with the Account (ADR 0030).
+    async delete({ id, email }) {
+      await database.db.transaction(async (tx) => {
+        await tx.delete(signInCodes).where(eq(signInCodes.identifier, identifier(email)));
+        await tx.delete(accounts).where(eq(accounts.id, id));
+      });
     },
   };
 }

@@ -41,6 +41,20 @@ export function accountProcedures(accounts: Accounts) {
     return next({ context: { account: signedInAccount } });
   });
 
+  // Puts the request's token in the context for the server Core, which finds
+  // its Session, or refuses a request without one as UNAUTHORIZED.
+  const withToken = account.middleware(async ({ context, next }) => {
+    const token = bearerToken(context.headers);
+    if (token === undefined) throw new ORPCError('UNAUTHORIZED');
+    return next({ context: { token } });
+  });
+
+  /** The empty answer of a done action, or UNAUTHORIZED when the token carried no Session. */
+  const answered = (done: { readonly ok: boolean }) => {
+    if (!done.ok) throw new ORPCError('UNAUTHORIZED');
+    return {};
+  };
+
   return account.router({
     requestCode: account.requestCode.handler(async ({ input, context, errors }) => {
       const sent = await accounts.requestCode(input.email, input.editionId, ipOf(context));
@@ -80,5 +94,17 @@ export function accountProcedures(accounts: Accounts) {
       email: context.account.email,
       createdAt: context.account.createdAt.toISOString(),
     })),
+
+    signOut: account.signOut
+      .use(withToken)
+      .handler(async ({ context }) => answered(await accounts.signOut(context.token))),
+
+    signOutEverywhere: account.signOutEverywhere
+      .use(withToken)
+      .handler(async ({ context }) => answered(await accounts.signOutEverywhere(context.token))),
+
+    delete: account.delete
+      .use(withToken)
+      .handler(async ({ context }) => answered(await accounts.delete(context.token))),
   });
 }

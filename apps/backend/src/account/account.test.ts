@@ -5,7 +5,7 @@ import { EDITIONS_DIR, openEdition } from '@slovo/language-pack/edition';
 import { eq } from 'drizzle-orm';
 import { describe, expect, it, onTestFinished, vi } from 'vitest';
 
-import { accounts, sessions, signInCodes } from '../database/schema';
+import { accounts, sessions, signInCodes, signInMethods } from '../database/schema';
 import { readEditions } from '../edition/edition-folders';
 import { connectionFrom, createFakeMailer, editionsFolder, testApp } from '../test-support';
 
@@ -367,5 +367,221 @@ describe('an Edition', () => {
       client.account.requestCode({ email: newEmail(), editionId: 'uk' }),
     ).rejects.toMatchObject({ code: 'NOT_FOUND', status: 404 });
     expect(mailer.sent).toEqual([]);
+  });
+});
+
+/** The backend, and a way to sign readers in on it, a new device each time. */
+function signingIn() {
+  const backend = accountApp();
+  /** The token of a new Session of the email's Account. */
+  async function signInToken(email: string) {
+    await backend.client.account.requestCode({ email, editionId: 'uk' });
+    const { token } = await backend.client.account.verifyCode({
+      email,
+      code: backend.mailer.codeSentTo(email),
+    });
+    return token;
+  }
+  /** The Account procedures of a device signed in to the email's Account. */
+  const signIn = async (email: string) => backend.clientOf(await signInToken(email)).account;
+  /** The rows the database keeps of the email's Account. */
+  async function rowsOf(email: string) {
+    const { db } = backend.database;
+    const [account] = await db.select().from(accounts).where(eq(accounts.email, email));
+    const ofAccount = async (table: typeof sessions | typeof signInMethods) =>
+      account === undefined ? [] : db.select().from(table).where(eq(table.accountId, account.id));
+    return {
+      account,
+      sessions: await ofAccount(sessions),
+      signInMethods: await ofAccount(signInMethods),
+      signInCodes: (await db.select().from(signInCodes)).filter((row) =>
+        row.identifier.endsWith(email),
+      ),
+    };
+  }
+  return { ...backend, signIn, signInToken, rowsOf };
+}
+
+const unauthorized = { code: 'UNAUTHORIZED', status: 401, defined: true };
+
+describe('signing out', () => {
+  it('ends this Session, and another Session of the same Account still works', async () => {
+    const { signIn } = signingIn();
+    const email = newEmail();
+    const phone = await signIn(email);
+    const tablet = await signIn(email);
+
+    await expect(phone.signOut()).resolves.toEqual({});
+
+    await expect(phone.me()).rejects.toMatchObject(unauthorized);
+    await expect(tablet.me()).resolves.toMatchObject({ email });
+  });
+
+  it('is UNAUTHORIZED without a Session, or with one that has ended', async () => {
+    const { client, signIn } = signingIn();
+    const phone = await signIn(newEmail());
+    await phone.signOut();
+
+    await expect(client.account.signOut()).rejects.toMatchObject(unauthorized);
+    await expect(phone.signOut()).rejects.toMatchObject(unauthorized);
+  });
+});
+
+describe('signing out everywhere', () => {
+  it('ends every Session of the Account', async () => {
+    const { signIn } = signingIn();
+    const email = newEmail();
+    const phone = await signIn(email);
+    const tablet = await signIn(email);
+
+    await expect(phone.signOutEverywhere()).resolves.toEqual({});
+
+    await expect(phone.me()).rejects.toMatchObject(unauthorized);
+    await expect(tablet.me()).rejects.toMatchObject(unauthorized);
+  });
+
+  it('is UNAUTHORIZED without a Session', async () => {
+    const { client } = signingIn();
+
+    await expect(client.account.signOutEverywhere()).rejects.toMatchObject(unauthorized);
+  });
+
+  it('lets the same email sign in again', async () => {
+    const { signIn } = signingIn();
+    const email = newEmail();
+    await (await signIn(email)).signOutEverywhere();
+
+    await expect((await signIn(email)).me()).resolves.toMatchObject({ email });
+  });
+});
+
+describe('deleting the Account', () => {
+  it('deletes the Account, its Sessions, its sign-in methods and the codes for its email', async () => {
+    const { client, database, signIn, rowsOf } = signingIn();
+    const { db } = database;
+    const email = newEmail();
+    const phone = await signIn(email);
+    const tablet = await signIn(email);
+    const id = (await rowsOf(email)).account?.id ?? '';
+    // Sign in with Apple and Google arrive in 0.9; this row stands for one.
+    const now = new Date();
+    await db.insert(signInMethods).values({
+      accountId: id,
+      providerId: 'apple',
+      providerAccountId: 'apple-id',
+      createdAt: now,
+      updatedAt: now,
+    });
+    // A code waiting for the email when the Account goes.
+    await client.account.requestCode({ email, editionId: 'uk' });
+    expect(await rowsOf(email)).toMatchObject({
+      sessions: [{}, {}],
+      signInMethods: [{}],
+      signInCodes: [{}],
+    });
+
+    await expect(phone.delete()).resolves.toEqual({});
+
+    expect(await rowsOf(email)).toMatchObject({ account: undefined, signInCodes: [] });
+    expect(await db.select().from(sessions).where(eq(sessions.accountId, id))).toEqual([]);
+    expect(await db.select().from(signInMethods).where(eq(signInMethods.accountId, id))).toEqual(
+      [],
+    );
+    await expect(phone.me()).rejects.toMatchObject(unauthorized);
+    await expect(tablet.me()).rejects.toMatchObject(unauthorized);
+  });
+
+  it('spends the code that waited for its email', async () => {
+    const { client, mailer, signIn } = signingIn();
+    const email = newEmail();
+    const phone = await signIn(email);
+    await client.account.requestCode({ email, editionId: 'uk' });
+    const waiting = mailer.codeSentTo(email);
+
+    await phone.delete();
+
+    await expect(client.account.verifyCode({ email, code: waiting })).rejects.toMatchObject({
+      code: 'CODE_EXPIRED',
+    });
+  });
+
+  it('lets the same email sign in to a new, empty Account', async () => {
+    const clock = movableClock();
+    const { signIn, rowsOf } = signingIn();
+    const email = newEmail();
+    const first = await signIn(email);
+    const deleted = await rowsOf(email);
+    await first.delete();
+
+    clock.at(MINUTE);
+    const again = await signIn(email);
+
+    const me = await again.me();
+    expect(me.email).toBe(email);
+    expect(Date.parse(me.createdAt)).toBeGreaterThan(deleted.account?.createdAt.getTime() ?? 0);
+    const created = await rowsOf(email);
+    expect(created.account?.id).not.toBe(deleted.account?.id);
+    expect(created.sessions).toHaveLength(1);
+    expect(created.signInMethods).toEqual([]);
+  });
+
+  it('is UNAUTHORIZED without a Session', async () => {
+    const { client } = signingIn();
+
+    await expect(client.account.delete()).rejects.toMatchObject(unauthorized);
+  });
+});
+
+describe('one Account', () => {
+  it('signs out only its own Sessions, everywhere included', async () => {
+    const { signIn } = signingIn();
+    const other = newEmail();
+    const email = newEmail();
+    const phone = await signIn(email);
+    const tablet = await signIn(email);
+    const otherReader = await signIn(other);
+
+    await phone.signOut();
+    await tablet.signOutEverywhere();
+
+    await expect(otherReader.me()).resolves.toMatchObject({ email: other });
+  });
+
+  it('deletes only itself', async () => {
+    const { signIn, rowsOf } = signingIn();
+    const other = newEmail();
+    const reader = await signIn(newEmail());
+    const otherReader = await signIn(other);
+    const before = await rowsOf(other);
+
+    await reader.delete();
+
+    await expect(otherReader.me()).resolves.toMatchObject({ email: other });
+    expect(await rowsOf(other)).toEqual(before);
+  });
+
+  it('refuses a request that names another Account as BAD_REQUEST', async () => {
+    const { app, signIn, signInToken, rowsOf } = signingIn();
+    const email = newEmail();
+    const other = newEmail();
+    const token = await signInToken(email);
+    const otherReader = await signIn(other);
+    const before = await rowsOf(other);
+    const send = (method: string, path: string) =>
+      app.request(path, {
+        method,
+        headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+        body: JSON.stringify({ accountId: before.account?.id, email: other }),
+      });
+
+    for (const path of ['/v1/account/sessions/current', '/v1/account/sessions', '/v1/account/me']) {
+      expect((await send('DELETE', path)).status).toBe(400);
+    }
+
+    await expect(otherReader.me()).resolves.toMatchObject({ email: other });
+    expect(await rowsOf(other)).toEqual(before);
+    await expect(
+      app.request('/v1/account/me', { headers: { authorization: `Bearer ${token}` } }),
+    ).resolves.toMatchObject({ status: 200 });
   });
 });
