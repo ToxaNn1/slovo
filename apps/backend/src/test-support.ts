@@ -87,5 +87,5 @@ export function testApp(dependencies: Partial<AppDependencies> = {}) {
     url: 'http://backend.test',
     fetch: (request) => Promise.resolve(app.fetch(request)),
   });
-  return { app, client, close: () => database.close() };
+  return { app, client, database, close: () => database.close() };
 }

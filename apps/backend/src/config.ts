@@ -15,6 +15,12 @@ export const ServerConfigSchema = z.object({
 /** The environment the migrate command reads. */
 export const MigrateConfigSchema = ServerConfigSchema.pick({ DATABASE_URL: true });
 
+/** The environment the publish command reads. */
+export const PublishConfigSchema = ServerConfigSchema.pick({
+  DATABASE_URL: true,
+  EDITIONS_DIR: true,
+});
+
 /**
  * Reads a configuration from the environment, or stops the process with a
  * message that names every missing or wrong variable.

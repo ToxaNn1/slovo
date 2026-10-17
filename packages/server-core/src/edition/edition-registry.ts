@@ -1,9 +1,18 @@
 import type { EditionConfig, EditionStrings } from '@slovo/contracts';
 
-/** An Edition as the backend serves it: its config and strings, read from its folder. */
+/** An Edition as the backend serves it: its config, strings and content manifest, read from its folder. */
 export interface Edition {
   readonly config: EditionConfig;
   readonly strings: EditionStrings;
+  /**
+   * The content version the Edition records, with the content checksum of
+   * the pack built at it (ADR 0011); no checksum until the content is first
+   * recorded.
+   */
+  readonly manifest: {
+    readonly contentVersion: number;
+    readonly contentChecksum?: string | undefined;
+  };
 }
 
 /**

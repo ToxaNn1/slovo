@@ -31,6 +31,7 @@ export function createApp({ database, clock, logger, editions }: AppDependencies
   const contentPacks = createContentPacks({
     editions: createEditionRegistry(editions),
     store: createContentPackStore(database),
+    clock,
   });
   const api = createApiHandler({ contentPacks });
 
