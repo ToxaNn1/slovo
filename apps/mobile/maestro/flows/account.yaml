@@ -1,0 +1,93 @@
+# Settings › SLOVO ID: a reader signs in with the Sign-in code from the email
+# and signs out. It needs the backend (with Docker's Postgres and Mailpit) on
+# the address Metro was started with, `EXPO_PUBLIC_SLOVO_API_URL`, and reads
+# the code from Mailpit's HTTP API, `MAILPIT_URL` (http://localhost:8025 by
+# default). Until the next native build the Session is kept in memory, so the
+# reader is signed out after a restart. It leaves the reader signed out.
+# A subflow of `smoke.yaml`; run it from there.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- runFlow:
+    file: ../open-settings-row.yaml
+    env:
+      ROW: settings-row-account
+# Signed in from an earlier run of the same app: sign out first.
+- runFlow:
+    when:
+      visible:
+        id: settings-row-account
+        text: 'SLOVO ID, .*@.*'
+    commands:
+      - tapOn:
+          id: settings-row-account
+      - tapOn:
+          id: account-sign-out
+      - tapOn:
+          id: account-back
+- assertVisible:
+    id: settings-row-account
+    text: 'SLOVO ID, Увійти'
+- tapOn:
+    id: settings-row-account
+- assertVisible:
+    id: account
+# A new email each run, so the code read is this run's.
+- evalScript: ${output.email = 'reader-' + Date.now() + '@example.com'}
+- tapOn:
+    id: account-email
+- inputText: ${output.email}
+- tapOn:
+    id: account-send-code
+- extendedWaitUntil:
+    visible:
+      id: account-code
+    timeout: 15000
+- assertVisible:
+    id: account-resend
+    enabled: false
+- runScript:
+    file: ../sign-in-code.js
+    env:
+      EMAIL: ${output.email}
+- repeat:
+    while:
+      true: ${!output.signInCode}
+    times: 10
+    commands:
+      - waitForAnimationToEnd
+      - runScript:
+          file: ../sign-in-code.js
+          env:
+            EMAIL: ${output.email}
+# The field signs in as soon as it holds the six digits.
+- tapOn:
+    id: account-code
+- inputText: ${output.signInCode}
+- extendedWaitUntil:
+    visible:
+      id: account-signed-in-email
+      text: ${output.email}
+    timeout: 15000
+- assertVisible:
+    id: account-sign-out-everywhere
+- assertVisible:
+    id: account-delete
+- tapOn:
+    id: account-back
+- assertVisible:
+    id: settings-row-account
+    text: ${'SLOVO ID, ' + output.email}
+# «Вийти» signs this device out at once.
+- tapOn:
+    id: settings-row-account
+- tapOn:
+    id: account-sign-out
+- assertVisible:
+    id: account-email
+- assertVisible:
+    id: account-send-code
+- tapOn:
+    id: account-back
+- assertVisible:
+    id: settings-row-account
+    text: 'SLOVO ID, Увійти'
