@@ -1,5 +1,4 @@
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { existsSync, readFileSync } from 'node:fs';
 
 import {
   EditionDecorSchema,
@@ -10,29 +9,38 @@ import {
   SplashDecorSchema,
   type ColorTokens,
 } from '@slovo/contracts';
+import {
+  EDITIONS_DIR,
+  listEditions,
+  openEdition,
+  type EditionJsonFile,
+} from '@slovo/language-pack/edition';
 import { coreTokens } from '@slovo/ui/tokens';
 import { describe, expect, it } from 'vitest';
 
-const editionsDir = fileURLToPath(new URL('../../../../editions/', import.meta.url));
-const editions = readdirSync(editionsDir, { withFileTypes: true })
-  .filter((entry) => entry.isDirectory())
-  .map((entry) => entry.name);
+const editions = listEditions(EDITIONS_DIR);
+const pathOf = (edition: string, file: EditionJsonFile) =>
+  openEdition(EDITIONS_DIR, edition).path(file);
 
-function readJson(edition: string, file: string): unknown {
-  return JSON.parse(readFileSync(`${editionsDir}${edition}/${file}`, 'utf8'));
+/** A JSON file of an Edition, parsed and not yet checked. */
+function readJson(edition: string, file: EditionJsonFile): unknown {
+  return JSON.parse(readFileSync(pathOf(edition, file), 'utf8'));
 }
+
+/** Whether an Edition brings a file it may leave out. */
+const has = (edition: string, file: EditionJsonFile) => existsSync(pathOf(edition, file));
 
 // The Language Pack build reads neither the UI strings nor the design tokens,
 // so the shell checks them here.
 describe('Edition UI strings', () => {
   it.each(editions)('the %s Edition has every UI string the shell needs', (edition) => {
-    expect(EditionStringsSchema.safeParse(readJson(edition, 'strings.json')).error).toBeUndefined();
+    expect(EditionStringsSchema.safeParse(readJson(edition, 'strings')).error).toBeUndefined();
   });
 });
 
 describe('the 0.4 UI strings groups', () => {
   const groups = ['stats', 'onboarding', 'notifications', 'notificationBody'] as const;
-  const strings = readJson('uk', 'strings.json') as Record<string, unknown>;
+  const strings = readJson('uk', 'strings') as Record<string, unknown>;
 
   it.each(groups)('the Ukrainian Edition needs the %s group', (group) => {
     const without = Object.fromEntries(Object.entries(strings).filter(([key]) => key !== group));
@@ -56,7 +64,7 @@ describe('the 0.4 UI strings groups', () => {
 });
 
 describe('the 0.5 UI strings group', () => {
-  const strings = readJson('uk', 'strings.json') as Record<string, unknown>;
+  const strings = readJson('uk', 'strings') as Record<string, unknown>;
 
   it('the Ukrainian Edition needs the game group', () => {
     const without = Object.fromEntries(Object.entries(strings).filter(([key]) => key !== 'game'));
@@ -105,7 +113,7 @@ describe('the 0.5 UI strings group', () => {
 });
 
 describe('the 0.6 widget strings group', () => {
-  const strings = readJson('uk', 'strings.json') as Record<string, unknown>;
+  const strings = readJson('uk', 'strings') as Record<string, unknown>;
   const widget = strings['widget'] as { guide: Record<string, unknown> };
 
   it('the Ukrainian Edition needs the widget group', () => {
@@ -168,7 +176,7 @@ describe('the 0.6 widget strings group', () => {
 });
 
 describe('the strings of each Game Mode', () => {
-  const strings = readJson('uk', 'strings.json') as Record<string, unknown>;
+  const strings = readJson('uk', 'strings') as Record<string, unknown>;
   const game = strings['game'] as Record<string, unknown>;
   const modes = game['modes'] as Record<string, Record<string, unknown>>;
   /** The strings with the Game's mode texts changed. */
@@ -235,7 +243,7 @@ describe('the strings of each Game Mode', () => {
 });
 
 describe('the 0.6 share strings group', () => {
-  const strings = readJson('uk', 'strings.json') as Record<string, unknown>;
+  const strings = readJson('uk', 'strings') as Record<string, unknown>;
   const share = strings['share'] as Record<string, unknown>;
   /** The issues the strings schema finds, as paths. */
   const issuesOf = (changed: unknown) =>
@@ -316,17 +324,17 @@ describe('plural forms of a label beside its number', () => {
 });
 
 describe('Edition design tokens', () => {
-  it.each(editions.filter((edition) => existsSync(`${editionsDir}${edition}/tokens.json`)))(
+  it.each(editions.filter((edition) => has(edition, 'tokens')))(
     'the %s Edition supplies valid design tokens',
     (edition) => {
-      expect(EditionTokensSchema.safeParse(readJson(edition, 'tokens.json')).error).toBeUndefined();
+      expect(EditionTokensSchema.safeParse(readJson(edition, 'tokens')).error).toBeUndefined();
     },
   );
 
   it.each(['light', 'dark'] as const)(
     'needs the colour of a wrong answer in %s, from 0.5',
     (scheme) => {
-      const tokens = EditionTokensSchema.parse(readJson('uk', 'tokens.json'));
+      const tokens = EditionTokensSchema.parse(readJson('uk', 'tokens'));
       const withoutWrong = Object.fromEntries(
         Object.entries(tokens.colors?.[scheme] ?? {}).filter(([role]) => role !== 'wrong'),
       );
@@ -343,7 +351,7 @@ describe('Edition design tokens', () => {
   );
 
   it('the Ukrainian Edition supplies its own colours, type families and radii', () => {
-    const tokens = EditionTokensSchema.parse(readJson('uk', 'tokens.json'));
+    const tokens = EditionTokensSchema.parse(readJson('uk', 'tokens'));
 
     expect(Object.keys(tokens).sort()).toEqual(['colors', 'fontFamilies', 'radii']);
   });
@@ -359,18 +367,14 @@ describe('Edition design tokens', () => {
 });
 
 describe('Edition Decor', () => {
-  const withDecor = editions.filter((edition) =>
-    existsSync(`${editionsDir}${edition}/decor/decor.json`),
-  );
+  const withDecor = editions.filter((edition) => has(edition, 'decor'));
 
   it.each(withDecor)('the %s Edition supplies valid Decor', (edition) => {
-    expect(
-      EditionDecorSchema.safeParse(readJson(edition, 'decor/decor.json')).error,
-    ).toBeUndefined();
+    expect(EditionDecorSchema.safeParse(readJson(edition, 'decor')).error).toBeUndefined();
   });
 
   it('the Ukrainian Edition fills every Decor slot the Feed, the Game result, the splash and the Share Cards use', () => {
-    const decor = EditionDecorSchema.parse(readJson('uk', 'decor/decor.json'));
+    const decor = EditionDecorSchema.parse(readJson('uk', 'decor'));
 
     expect(Object.keys(decor).sort()).toEqual([
       'background',
@@ -385,28 +389,25 @@ describe('Edition Decor', () => {
     expect(decor.splash?.band).toBeDefined();
   });
 
-  it.each(
-    editions.filter(
-      (edition) =>
-        existsSync(`${editionsDir}${edition}/tokens.json`) &&
-        existsSync(`${editionsDir}${edition}/decor/splash.json`),
-    ),
-  )('the %s Edition has a native splash on its own background colour in both Themes', (edition) => {
-    const { colors } = EditionTokensSchema.parse(readJson(edition, 'tokens.json'));
-    const splash = SplashDecorSchema.parse(readJson(edition, 'decor/splash.json'));
+  it.each(editions.filter((edition) => has(edition, 'tokens') && has(edition, 'splash')))(
+    'the %s Edition has a native splash on its own background colour in both Themes',
+    (edition) => {
+      const { colors } = EditionTokensSchema.parse(readJson(edition, 'tokens'));
+      const splash = SplashDecorSchema.parse(readJson(edition, 'splash'));
 
-    expect(splash.light.backgroundColor).toBe(colors?.light.background);
-    expect(splash.dark.backgroundColor).toBe(colors?.dark.background);
-  });
+      expect(splash.light.backgroundColor).toBe(colors?.light.background);
+      expect(splash.dark.backgroundColor).toBe(colors?.dark.background);
+    },
+  );
 
   /** The text colour roles drawn straight on the screen background. */
   const textRoles = ['ink', 'muted', 'inkSecondary', 'accent'] as const;
 
-  describe.each(withDecor.filter((edition) => existsSync(`${editionsDir}${edition}/tokens.json`)))(
+  describe.each(withDecor.filter((edition) => has(edition, 'tokens')))(
     'the %s Edition',
     (edition) => {
-      const { colors } = EditionTokensSchema.parse(readJson(edition, 'tokens.json'));
-      const { background } = EditionDecorSchema.parse(readJson(edition, 'decor/decor.json'));
+      const { colors } = EditionTokensSchema.parse(readJson(edition, 'tokens'));
+      const { background } = EditionDecorSchema.parse(readJson(edition, 'decor'));
 
       it.each(['light', 'dark'] as const)(
         'keeps text at WCAG AA contrast over its background Decor in %s',
@@ -462,9 +463,9 @@ const textPairs: readonly (readonly [text: keyof ColorTokens, behind: keyof Colo
 const tokenSets = [
   ['the Core', coreTokens.colors] as const,
   ...editions
-    .filter((edition) => existsSync(`${editionsDir}${edition}/tokens.json`))
+    .filter((edition) => has(edition, 'tokens'))
     .flatMap((edition) => {
-      const { colors } = EditionTokensSchema.parse(readJson(edition, 'tokens.json'));
+      const { colors } = EditionTokensSchema.parse(readJson(edition, 'tokens'));
       return colors === undefined ? [] : [[`the ${edition} Edition`, colors] as const];
     }),
 ];

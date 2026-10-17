@@ -30,6 +30,8 @@ export interface Edition {
   readonly locale: string;
   /** The app's name, such as «SLOVO»; its Share Cards carry it as their watermark. */
   readonly displayName: string;
+  /** The app's bundle id, such as `app.slovo.uk`. */
+  readonly bundleId: string;
   readonly languageTraits: LanguageTraits;
   /** Every Category of the Edition, in the order the Edition declares them. */
   readonly categories: readonly Category[];
@@ -61,6 +63,7 @@ export function loadEdition(config: unknown): Edition {
     id,
     locale,
     displayName,
+    bundleId,
     languageTraits,
     featureSwitches,
     userSettingDefaults,
@@ -72,6 +75,7 @@ export function loadEdition(config: unknown): Edition {
     id,
     locale,
     displayName,
+    bundleId,
     languageTraits,
     categories,
     userSettingDefaults: {

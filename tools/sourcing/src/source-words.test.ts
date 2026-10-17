@@ -7,10 +7,16 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { WordSchema } from '@slovo/contracts';
+import {
+  EDITIONS_DIR,
+  editionFiles,
+  openEdition,
+  type EditionFolder,
+} from '@slovo/language-pack/edition';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -23,7 +29,7 @@ import {
 } from './index';
 
 const fixturesDir = fileURLToPath(new URL('../fixtures/', import.meta.url));
-const ukrainianEditionDir = fileURLToPath(new URL('../../../editions/uk/', import.meta.url));
+const ukrainianConfigFile = openEdition(EDITIONS_DIR, 'uk').path('config');
 
 const CDX = 'https://web.archive.org/cdx/search/cdx?url=sum.in.ua/s/';
 const CDX_FIELDS = '&filter=statuscode:200&fl=timestamp,original';
@@ -189,7 +195,7 @@ function setup(overrides: Partial<SourcingOptions> = {}, network?: NetworkOption
   const options: SourcingOptions = {
     lemmaList: '',
     // The Ukrainian Edition's config with no Words, so its authored Words don't duplicate the drafts.
-    editionDir: editionWith((config) => config),
+    edition: editionWith((config) => config),
     outDir: join(workDir, 'review'),
     cacheDir: join(workDir, 'cache'),
     fetch: net.fetch,
@@ -205,20 +211,23 @@ function editionWith(
   edit: (config: Record<string, unknown>) => Record<string, unknown>,
   words: Record<string, unknown> = {},
   registry?: unknown,
-): string {
-  const dir = mkdtempSync(join(tmpdir(), 'slovo-edition-'));
-  const config = JSON.parse(
-    readFileSync(join(ukrainianEditionDir, 'edition.json'), 'utf8'),
-  ) as Record<string, unknown>;
-  writeFileSync(join(dir, 'edition.json'), JSON.stringify(edit(config)));
-  mkdirSync(join(dir, 'content', 'words'), { recursive: true });
+): EditionFolder {
+  const editionsDir = mkdtempSync(join(tmpdir(), 'slovo-editions-'));
+  const config = JSON.parse(readFileSync(ukrainianConfigFile, 'utf8')) as Record<string, unknown>;
+  mkdirSync(join(editionsDir, 'uk'));
+  writeFileSync(editionFiles(join(editionsDir, 'uk')).path('config'), JSON.stringify(edit(config)));
+  const edition = openEdition(editionsDir, 'uk');
   for (const [id, word] of Object.entries(words)) {
-    writeFileSync(join(dir, 'content', 'words', `${id}.json`), JSON.stringify(word));
+    const file = join(edition.dir, edition.entryFile(id));
+    mkdirSync(dirname(file), { recursive: true });
+    writeFileSync(file, JSON.stringify(word));
   }
   if (registry !== undefined) {
-    writeFileSync(join(dir, 'content', 'ids.json'), JSON.stringify(registry));
+    const file = edition.path('idRegistry');
+    mkdirSync(dirname(file), { recursive: true });
+    writeFileSync(file, JSON.stringify(registry));
   }
-  return dir;
+  return edition;
 }
 
 function readDrafts(outDir: string, folder = 'drafts'): unknown[] {
@@ -327,14 +336,14 @@ describe('sourceWords', () => {
     const lemmaList = 'завжди language-speech 1\n';
 
     it('puts a draft with a Lemma letter outside the alphabet in incomplete/ with the build message', async () => {
-      const editionDir = editionWith((config) => ({
+      const edition = editionWith((config) => ({
         ...config,
         languageTraits: {
           ...(config['languageTraits'] as Record<string, string>),
           alphabet: 'а б в г ґ д е є з и і ї й к л м н о п р с т у ф х ц ч ш щ ь ю я',
         },
       }));
-      const { options } = setup({ lemmaList, editionDir });
+      const { options } = setup({ lemmaList, edition });
 
       const result = await sourceWords(options);
 
@@ -345,14 +354,14 @@ describe('sourceWords', () => {
     });
 
     it('puts a draft with Stress in an Edition that does not mark Stress in incomplete/', async () => {
-      const editionDir = editionWith((config) => ({
+      const edition = editionWith((config) => ({
         ...config,
         languageTraits: {
           ...(config['languageTraits'] as Record<string, string>),
           marksStress: false,
         },
       }));
-      const { options } = setup({ lemmaList, editionDir });
+      const { options } = setup({ lemmaList, edition });
 
       const result = await sourceWords(options);
 
@@ -363,7 +372,7 @@ describe('sourceWords', () => {
     });
 
     it('puts a draft with the Lemma and primary Definition of an existing Word in incomplete/', async () => {
-      const editionDir = editionWith((config) => config, {
+      const edition = editionWith((config) => config, {
         w_exist1: {
           id: 'w_exist1',
           lemma: 'завжди',
@@ -375,7 +384,7 @@ describe('sourceWords', () => {
           sources: [{ title: 'Тестове джерело' }],
         },
       });
-      const { options } = setup({ lemmaList, editionDir });
+      const { options } = setup({ lemmaList, edition });
 
       const result = await sourceWords(options);
 
@@ -798,10 +807,10 @@ describe('sourceWords', () => {
       (letter) => (alphabet.indexOf(letter) + 0.5) / alphabet.length,
     );
     const next = seededRandom();
-    const editionDir = editionWith((config) => config, {}, [`w_${taken}`]);
+    const edition = editionWith((config) => config, {}, [`w_${taken}`]);
     const { options } = setup({
       lemmaList: 'мжичка nature-weather 2\n',
-      editionDir,
+      edition,
       random: () => numbers.shift() ?? next(),
     });
 
@@ -813,8 +822,8 @@ describe('sourceWords', () => {
   });
 
   it('refuses an Edition whose id registry is invalid, before fetching', async () => {
-    const editionDir = editionWith((config) => config, {}, ['w_aaaaaa', 'w_aaaaaa']);
-    const { options, net } = setup({ lemmaList: 'мжичка nature-weather 2\n', editionDir });
+    const edition = editionWith((config) => config, {}, ['w_aaaaaa', 'w_aaaaaa']);
+    const { options, net } = setup({ lemmaList: 'мжичка nature-weather 2\n', edition });
 
     const result = await sourceWords(options);
 
@@ -823,12 +832,8 @@ describe('sourceWords', () => {
   });
 
   it('refuses an Edition in another language than its dictionaries, before fetching', async () => {
-    const editionDir = mkdtempSync(join(tmpdir(), 'slovo-edition-'));
-    const config = JSON.parse(readFileSync(join(ukrainianEditionDir, 'edition.json'), 'utf8')) as {
-      locale: string;
-    };
-    writeFileSync(join(editionDir, 'edition.json'), JSON.stringify({ ...config, locale: 'pl-PL' }));
-    const { options, net } = setup({ lemmaList: 'мжичка nature-weather 2\n', editionDir });
+    const edition = editionWith((config) => ({ ...config, locale: 'pl-PL' }));
+    const { options, net } = setup({ lemmaList: 'мжичка nature-weather 2\n', edition });
 
     const result = await sourceWords(options);
 

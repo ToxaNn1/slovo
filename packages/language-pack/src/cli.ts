@@ -14,18 +14,22 @@
  * content version in `content/manifest.json`. Without it, a build of
  * unrecorded content fails, so CI catches it.
  */
-import { existsSync } from 'node:fs';
-import { join, relative, resolve } from 'node:path';
+import { relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 
 import { buildLanguagePack } from './build';
 import { formatBuildError } from './build-error';
+import {
+  EDITIONS_DIR,
+  EditionFolderError,
+  openEdition,
+  type EditionFolder,
+} from './edition-folder';
 import { recordContent } from './record';
 import { formatContentReport } from './report';
 
 const repoRoot = fileURLToPath(new URL('../../../', import.meta.url));
-const editionsDir = join(repoRoot, 'editions');
 
 function main(): number {
   const { positionals, values } = parseArgs({
@@ -38,14 +42,23 @@ function main(): number {
     return 2;
   }
 
-  const editionDir = join(editionsDir, editionId);
-  if (!/^[a-z][a-z0-9-]*$/.test(editionId) || !existsSync(join(editionDir, 'edition.json'))) {
-    console.error(`Unknown Edition "${editionId}": expected editions/${editionId}/edition.json`);
-    return 2;
+  let edition: EditionFolder;
+  try {
+    edition = openEdition(EDITIONS_DIR, editionId);
+  } catch (error) {
+    if (!(error instanceof EditionFolderError)) throw error;
+    if (error.reason === 'unknown') {
+      console.error(error.message);
+      return 2;
+    }
+    console.error(`Edition "${editionId}" is not valid: ${String(error.errors.length)} error(s)`);
+    for (const problem of error.errors) console.error(`  ${formatBuildError(problem)}`);
+    return 1;
   }
+  const editionDir = edition.dir;
   const outFile =
     values.out === undefined
-      ? join(editionDir, 'dist', 'language-pack.db')
+      ? edition.path('languagePack')
       : resolve(process.env['INIT_CWD'] ?? process.cwd(), values.out);
 
   if (values.record === true) {

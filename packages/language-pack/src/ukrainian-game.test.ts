@@ -1,14 +1,12 @@
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
   createMemoryUserStatePort,
   GAME_ROUNDS,
-  loadEdition,
   openComposition,
   openUserState,
   renderStress,
@@ -24,16 +22,11 @@ import {
 } from '@slovo/core';
 
 import { buildLanguagePack, openLanguagePack, type NodeLanguagePack } from './index';
+import { ukrainian, ukrainianFolder } from './test-support';
 
 // The Core's Game over the real Ukrainian Language Pack, opened through the
 // Core composition (spec #215, seam 1). It lives here because only this
 // package can build and read a pack in Node.
-
-const editionDir = fileURLToPath(new URL('../../../editions/uk', import.meta.url));
-
-const ukrainian = loadEdition(
-  JSON.parse(readFileSync(join(editionDir, 'edition.json'), 'utf8')) as unknown,
-);
 
 let workDir: string;
 let pack: NodeLanguagePack;
@@ -43,7 +36,7 @@ let corrections: readonly Correction[];
 beforeAll(async () => {
   workDir = mkdtempSync(join(tmpdir(), 'slovo-game-'));
   const outFile = join(workDir, 'language-pack.db');
-  if (!buildLanguagePack({ editionDir, outFile }).ok) {
+  if (!buildLanguagePack({ editionDir: ukrainianFolder.dir, outFile }).ok) {
     throw new Error('The Ukrainian Language Pack does not build');
   }
   pack = openLanguagePack(outFile);

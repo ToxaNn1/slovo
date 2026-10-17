@@ -1,7 +1,9 @@
+import { readFileSync } from 'node:fs';
+
 import { EditionConfigSchema } from '@slovo/contracts';
 import { describe, expect, it } from 'vitest';
 
-import ukrainianEdition from '../../../editions/uk/edition.json';
+import { ukrainianFolder } from '../src/test-support';
 
 import { readNotificationSound } from './notification-sound';
 import { wav } from './wav-builder';
@@ -49,6 +51,9 @@ function caf(seconds: number): Uint8Array {
 }
 
 describe('the Edition config notification sound', () => {
+  const ukrainianEdition = JSON.parse(
+    readFileSync(ukrainianFolder.path('config'), 'utf8'),
+  ) as Record<string, unknown>;
   const edition = (notificationSound?: string) =>
     EditionConfigSchema.safeParse({
       ...ukrainianEdition,

@@ -16,18 +16,14 @@ export const IdRegistrySchema = z
   .array(z.union([WordIdSchema, CorrectionIdSchema]))
   .refine((ids) => new Set(ids).size === ids.length, 'Ids must not repeat');
 
-/** The folder that holds the Entry with the given id. */
-function entryFolderOf(id: string): string {
-  return id.startsWith('w_') ? 'content/words' : 'content/corrections';
-}
-
 /** A known id whose Entry file is gone, so its id could be issued again. */
 export function missingEntryErrors(
   registry: readonly string[],
+  entryFile: (id: string) => string,
   hasFile: (file: string) => boolean,
 ): BuildError[] {
   return registry.flatMap((id) => {
-    const file = `${entryFolderOf(id)}/${id}.json`;
+    const file = entryFile(id);
     if (hasFile(file)) return [];
     return [
       {

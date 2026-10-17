@@ -1,22 +1,21 @@
 import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 
-import { EditionStringsSchema, type Plural } from '@slovo/contracts';
+import type { Plural } from '@slovo/contracts';
 import { loadEdition, type Clock } from '@slovo/core';
+import { EDITIONS_DIR, openEdition } from '@slovo/language-pack/edition';
 
 // Helpers the mobile tests share. No screen or module of the app imports them.
 
-/** A file of the Ukrainian Edition, parsed and not yet checked. */
-const editionFile = (name: string): unknown =>
-  JSON.parse(
-    readFileSync(fileURLToPath(new URL(`../../../editions/uk/${name}`, import.meta.url)), 'utf8'),
-  );
+/** The Ukrainian Edition's folder. */
+export const ukrainianFolder = openEdition(EDITIONS_DIR, 'uk');
 
 /** The Ukrainian Edition's UI strings. */
-export const strings = EditionStringsSchema.parse(editionFile('strings.json'));
+export const strings = ukrainianFolder.read('strings');
 
-/** The Ukrainian Edition, loaded as the shell loads it. */
-export const ukrainian = loadEdition(editionFile('edition.json'));
+/** The Ukrainian Edition, loaded as the shell loads it: by the Core, from its config file. */
+export const ukrainian = loadEdition(
+  JSON.parse(readFileSync(ukrainianFolder.path('config'), 'utf8')) as unknown,
+);
 
 const pluralRules = new Intl.PluralRules(ukrainian.locale);
 

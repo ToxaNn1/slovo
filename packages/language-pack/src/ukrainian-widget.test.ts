@@ -1,7 +1,6 @@
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
@@ -12,7 +11,6 @@ import {
 } from '@slovo/contracts';
 import {
   createMemoryUserStatePort,
-  loadEdition,
   openComposition,
   openUserState,
   type Clock,
@@ -20,17 +18,12 @@ import {
 } from '@slovo/core';
 
 import { buildLanguagePack, openLanguagePack, type NodeLanguagePack } from './index';
+import { ukrainian, ukrainianFolder } from './test-support';
 
 // The Widget Snapshot contract (spec #259, seam 2): the snapshot the Core
 // builds over the real Ukrainian Language Pack, and the example the widget's
 // gallery shows. It lives here because only this package can build and read
 // a pack in Node.
-
-const editionDir = fileURLToPath(new URL('../../../editions/uk', import.meta.url));
-
-const ukrainian = loadEdition(
-  JSON.parse(readFileSync(join(editionDir, 'edition.json'), 'utf8')) as unknown,
-);
 
 let workDir: string;
 let pack: NodeLanguagePack;
@@ -38,7 +31,7 @@ let pack: NodeLanguagePack;
 beforeAll(() => {
   workDir = mkdtempSync(join(tmpdir(), 'slovo-widget-'));
   const outFile = join(workDir, 'language-pack.db');
-  if (!buildLanguagePack({ editionDir, outFile }).ok) {
+  if (!buildLanguagePack({ editionDir: ukrainianFolder.dir, outFile }).ok) {
     throw new Error('The Ukrainian Language Pack does not build');
   }
   pack = openLanguagePack(outFile);
@@ -119,10 +112,6 @@ describe('The Widget Snapshot of the Ukrainian Edition', () => {
   });
 
   it('has a checked-in example that parses, for the widget gallery', () => {
-    const example: unknown = JSON.parse(
-      readFileSync(join(editionDir, 'widget-snapshot.example.json'), 'utf8'),
-    );
-
-    expect(WidgetSnapshotSchema.safeParse(example).error).toBeUndefined();
+    expect(() => ukrainianFolder.read('widgetSnapshotExample')).not.toThrow();
   });
 });

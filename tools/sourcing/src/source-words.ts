@@ -1,8 +1,7 @@
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import {
-  EditionConfigSchema,
   WordSchema,
   type EditionConfig,
   type Example,
@@ -12,7 +11,8 @@ import {
   type Source,
   type WordInput,
 } from '@slovo/contracts';
-import { checkNewWords, ID_REGISTRY_FILE, IdRegistrySchema } from '@slovo/language-pack';
+import { formatBuildError } from '@slovo/language-pack';
+import { EditionFolderError, type EditionFolder } from '@slovo/language-pack/edition';
 
 import {
   fetchGoroh,
@@ -37,8 +37,8 @@ import { matchKey, readStress, SOURCE_LANGUAGE, unstressed } from './text';
 export interface SourcingOptions {
   /** The Lemmas to draft, one per line: `<lemma> <category id> <rarity>`; `#` starts a comment. */
   readonly lemmaList: string;
-  /** The Edition the drafts are for: its Categories, language traits and id registry. */
-  readonly editionDir: string;
+  /** The Edition the drafts are for: its Categories, language traits, id registry and content. */
+  readonly edition: EditionFolder;
   /** The review folder: drafts, incomplete drafts and the review report go here. */
   readonly outDir: string;
   /**
@@ -75,8 +75,9 @@ const DEFAULT_MIN_INTERVAL_MS = 2000;
  * open stays empty and is flagged for a human.
  */
 export async function sourceWords(options: SourcingOptions): Promise<SourcingResult> {
-  const edition = readEdition(options.editionDir);
-  if (!edition.ok) return { ok: false, errors: edition.errors };
+  const { edition } = options;
+  const takenIds = readTakenIds(edition);
+  if (!takenIds.ok) return { ok: false, errors: takenIds.errors };
   const { locale } = edition.config;
   if (new Intl.Locale(locale).language !== SOURCE_LANGUAGE) {
     return {
@@ -95,7 +96,7 @@ export async function sourceWords(options: SourcingOptions): Promise<SourcingRes
     options.log,
   );
   const sum = new SumDictionary(client, options.sumAccess ?? 'auto');
-  const newId = idMaker(options.random, edition.takenIds);
+  const newId = idMaker(options.random, takenIds.ids);
 
   for (const dir of [DRAFTS_DIR, INCOMPLETE_DIR]) {
     rmSync(join(options.outDir, dir), { recursive: true, force: true });
@@ -108,8 +109,7 @@ export async function sourceWords(options: SourcingOptions): Promise<SourcingRes
       client,
       sum,
       newId,
-      config: edition.config,
-      editionDir: options.editionDir,
+      edition,
     });
     for (const draft of outcome.drafts) {
       writeFileSync(
@@ -175,32 +175,16 @@ function parseLemmaList(
   return errors.length > 0 ? { ok: false, errors } : { ok: true, requests };
 }
 
-function readEdition(
-  editionDir: string,
-): { ok: true; config: EditionConfig; takenIds: Set<string> } | { ok: false; errors: string[] } {
-  const configFile = join(editionDir, 'edition.json');
-  if (!existsSync(configFile)) return { ok: false, errors: [`No Edition config at ${configFile}`] };
-  const parsed = EditionConfigSchema.safeParse(JSON.parse(readFileSync(configFile, 'utf8')));
-  if (!parsed.success) {
-    return {
-      ok: false,
-      errors: parsed.error.issues.map(
-        (issue) => `edition.json › ${issue.path.join('.')}: ${issue.message}`,
-      ),
-    };
+/** The ids the Edition's id registry lists; none when it has no registry yet. */
+function readTakenIds(
+  edition: EditionFolder,
+): { ok: true; ids: Set<string> } | { ok: false; errors: string[] } {
+  try {
+    return { ok: true, ids: new Set(edition.readIfPresent('idRegistry')) };
+  } catch (error) {
+    if (!(error instanceof EditionFolderError)) throw error;
+    return { ok: false, errors: error.errors.map(formatBuildError) };
   }
-  const registryFile = join(editionDir, ID_REGISTRY_FILE);
-  if (!existsSync(registryFile)) return { ok: true, config: parsed.data, takenIds: new Set() };
-  const registry = IdRegistrySchema.safeParse(JSON.parse(readFileSync(registryFile, 'utf8')));
-  if (!registry.success) {
-    return {
-      ok: false,
-      errors: registry.error.issues.map(
-        (issue) => `${ID_REGISTRY_FILE} › ${issue.path.join('.')}: ${issue.message}`,
-      ),
-    };
-  }
-  return { ok: true, config: parsed.data, takenIds: new Set(registry.data) };
 }
 
 /** New opaque Word ids that the Edition's id registry doesn't list, and no draft of this run has. */
@@ -222,8 +206,7 @@ interface Context {
   readonly client: PoliteClient;
   readonly sum: SumDictionary;
   readonly newId: () => string;
-  readonly config: EditionConfig;
-  readonly editionDir: string;
+  readonly edition: EditionFolder;
 }
 
 /**
@@ -407,7 +390,7 @@ function draftArticle(
   if (grammar.gender === 'plural-only') {
     flags.push({ kind: 'plural-only', message: 'A plural-only noun' });
   }
-  const issues = checkDraft(word, context.editionDir);
+  const issues = checkDraft(word, context.edition);
   const ready = issues.length === 0;
   return {
     word,
@@ -720,12 +703,12 @@ function draftEtymology(
  * content, as `field: message`. The build checks need a Word that passed the
  * schema, so they run once it does.
  */
-function checkDraft(word: WordDraft, editionDir: string): string[] {
+function checkDraft(word: WordDraft, edition: EditionFolder): string[] {
   const result = WordSchema.safeParse(word);
   const issues = result.success
-    ? checkNewWords(editionDir, [result.data]).map(
-        ({ field, message }) => `${field ?? '(word)'}: ${message}`,
-      )
+    ? edition
+        .checkNewWords([result.data])
+        .map(({ field, message }) => `${field ?? '(word)'}: ${message}`)
     : result.error.issues.map((issue) => `${issue.path.join('.') || '(word)'}: ${issue.message}`);
   return unique(issues);
 }

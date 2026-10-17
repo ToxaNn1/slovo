@@ -1,10 +1,10 @@
 import { writeFileSync } from 'node:fs';
-import { join } from 'node:path';
 
 import type { BuildError } from './build-error';
 import { contentChecksum } from './checksum';
-import { MANIFEST_FILE, type ContentManifest } from './content-manifest';
-import { ID_REGISTRY_FILE, unregisteredEntries } from './id-registry';
+import type { ContentManifest } from './content-manifest';
+import { editionFiles } from './edition-folder';
+import { unregisteredEntries } from './id-registry';
 import { compare, readEdition } from './read-edition';
 
 export type RecordResult =
@@ -36,6 +36,7 @@ export function recordContent({ editionDir }: { editionDir: string }): RecordRes
   const newIds = unregisteredEntries([...source.words, ...source.corrections], registry)
     .map(({ entry }) => entry.id)
     .toSorted(compare);
+  const folder = editionFiles(editionDir);
   let recorded: ContentManifest & { checksum: string } = {
     contentVersion: content.contentVersion,
     checksum: contentChecksum(content),
@@ -43,10 +44,10 @@ export function recordContent({ editionDir }: { editionDir: string }): RecordRes
   if (recorded.checksum !== manifest.checksum) {
     const contentVersion = manifest.contentVersion + 1;
     recorded = { contentVersion, checksum: contentChecksum({ ...content, contentVersion }) };
-    writeJson(join(editionDir, MANIFEST_FILE), recorded);
+    writeJson(folder.path('manifest'), recorded);
   }
   if (newIds.length > 0) {
-    writeJson(join(editionDir, ID_REGISTRY_FILE), [...registry, ...newIds]);
+    writeJson(folder.path('idRegistry'), [...registry, ...newIds]);
   }
   return {
     ok: true,

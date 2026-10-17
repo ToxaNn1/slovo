@@ -18,6 +18,13 @@ import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 
+import {
+  EDITIONS_DIR,
+  EditionFolderError,
+  openEdition,
+  type EditionFolder,
+} from '@slovo/language-pack/edition';
+
 import { REPORT_FILE, sourceWords, type Fetch, type SumAccess } from './index';
 
 const repoRoot = fileURLToPath(new URL('../../../', import.meta.url));
@@ -64,10 +71,18 @@ async function main(): Promise<number> {
     return 2;
   }
   const outDir = values.out === undefined ? join(toolDir, 'review') : resolve(cwd, values.out);
+  let editionFolder: EditionFolder;
+  try {
+    editionFolder = openEdition(EDITIONS_DIR, edition);
+  } catch (error) {
+    if (!(error instanceof EditionFolderError)) throw error;
+    console.error(error.message);
+    return 2;
+  }
 
   const result = await sourceWords({
     lemmaList: readFileSync(listPath, 'utf8'),
-    editionDir: join(repoRoot, 'editions', edition),
+    edition: editionFolder,
     outDir,
     cacheDir: values.cache === undefined ? defaultCacheDir() : resolve(cwd, values.cache),
     fetch: fetchPage,

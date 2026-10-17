@@ -1,7 +1,8 @@
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
 import type * as Contracts from '@slovo/contracts';
+import type * as EditionFolders from '@slovo/language-pack/edition';
 import type * as UiTokens from '@slovo/ui/tokens';
 import type * as Core from '@slovo/core';
 import type { ConfigContext, ExpoConfig } from 'expo/config';
@@ -11,16 +12,7 @@ import { require as tsxRequire } from 'tsx/cjs/api';
 import type * as NotificationSound from './plugins/notification-sound';
 import type * as WidgetExtension from './plugins/widget-extension';
 
-type EditionConfig = Contracts.EditionConfig;
-
-/** What the config needs from a contract schema. */
-interface Schema<T> {
-  safeParse(
-    data: unknown,
-  ):
-    | { success: true; data: T }
-    | { success: false; error: { issues: { path: PropertyKey[]; message: string }[] } };
-}
+type EditionFolder = EditionFolders.EditionFolder;
 
 /** The options of the `expo-splash-screen` config plugin that the config sets. */
 interface SplashPluginOptions {
@@ -32,16 +24,13 @@ interface SplashPluginOptions {
 
 // Expo evaluates this file with plain Node, which cannot load the TypeScript
 // sources of the workspace packages (their relative imports have no file
-// extension). tsx loads them, so the config is checked by the same schema as
-// the Language Pack build and the app.
-const {
-  EditionConfigSchema,
-  editionAppGroup,
-  EditionStringsSchema,
-  EditionTokensSchema,
-  SplashDecorSchema,
-  WidgetSnapshotSchema,
-} = tsxRequire('@slovo/contracts', import.meta.url) as typeof Contracts;
+// extension). tsx loads them, so the Edition is read by the same module, and
+// checked by the same schemas, as the Language Pack build and the app.
+const { editionAppGroup } = tsxRequire('@slovo/contracts', import.meta.url) as typeof Contracts;
+const { EditionFolderError, listEditions, openEdition } = tsxRequire(
+  '@slovo/language-pack/edition',
+  import.meta.url,
+) as typeof EditionFolders;
 const { loadDecor } = tsxRequire('@slovo/core', import.meta.url) as typeof Core;
 const { withDangerousMod } = tsxRequire(
   'expo/config-plugins',
@@ -67,47 +56,6 @@ const { writeWidgetExtension } = tsxRequire(
  */
 const EDITION_VARIABLE = 'SLOVO_EDITION';
 
-function knownEditions(editionsDir: string): string[] {
-  return readdirSync(editionsDir, { withFileTypes: true })
-    .filter(
-      (entry) => entry.isDirectory() && existsSync(join(editionsDir, entry.name, 'edition.json')),
-    )
-    .map((entry) => entry.name)
-    .sort();
-}
-
-/** A JSON file checked against a contract, with every problem named by its field. */
-function readJson<T>(file: string, schema: Schema<T>, what: string): T {
-  const result = schema.safeParse(JSON.parse(readFileSync(file, 'utf8')));
-  if (!result.success) {
-    const problems = result.error.issues.map(
-      ({ path, message }) => `  ${path.length === 0 ? '(file)' : path.join('.')}: ${message}`,
-    );
-    throw new Error(`${file} is not a valid ${what}:\n${problems.join('\n')}`);
-  }
-  return result.data;
-}
-
-function readEditionConfig(editionDir: string, id: string): EditionConfig {
-  const file = join(editionDir, 'edition.json');
-  const config = readJson(file, EditionConfigSchema, 'Edition config');
-  // Metro and the Language Pack look the Edition up by this id.
-  if (config.id !== id) {
-    throw new Error(`${file} has id "${config.id}" but lives in the folder "${id}"`);
-  }
-  return config;
-}
-
-/** Every font file the Edition brings in `assets/fonts/`, embedded in the native app. */
-function editionFonts(editionDir: string, projectRoot: string): string[] {
-  const fontsDir = join(editionDir, 'assets/fonts');
-  if (!existsSync(fontsDir)) return [];
-  return readdirSync(fontsDir)
-    .filter((file) => /\.(otf|ttf)$/.test(file))
-    .sort()
-    .map((file) => relative(projectRoot, join(fontsDir, file)));
-}
-
 /**
  * The Core shows nothing in Decor slot 7: its splash is a plain screen in the
  * Core's neutral background colours (docs/design/design-system.md).
@@ -118,15 +66,14 @@ const CORE_SPLASH: SplashPluginOptions = {
 };
 
 /** The splash from the Edition's Decor (`decor/splash.json`), or the Core's plain one. */
-function editionSplash(editionDir: string, projectRoot: string): SplashPluginOptions {
-  const decorDir = join(editionDir, 'decor');
-  const file = join(decorDir, 'splash.json');
-  if (!existsSync(file)) return CORE_SPLASH;
-  const { imageWidth, light, dark } = readJson(file, SplashDecorSchema, 'splash Decor');
+function editionSplash(edition: EditionFolder, projectRoot: string): SplashPluginOptions {
+  const splash = edition.readIfPresent('splash');
+  if (splash === undefined) return CORE_SPLASH;
+  const { imageWidth, light, dark } = splash;
   const image = (name: string) => {
-    const path = join(decorDir, name);
+    const path = edition.decorFile(name);
     if (!existsSync(path))
-      throw new Error(`${file} names a missing splash image: expected ${path}`);
+      throw new Error(`${edition.path('splash')} names a missing splash image: expected ${path}`);
     return relative(projectRoot, path);
   };
   return {
@@ -144,16 +91,13 @@ function editionSplash(editionDir: string, projectRoot: string): SplashPluginOpt
  * wrong or the sound is too long. Without a sound, notifications use the system
  * default.
  */
-function editionNotificationSounds(
-  editionDir: string,
-  projectRoot: string,
-  { notificationSound }: EditionConfig,
-): string[] {
+function editionNotificationSounds(edition: EditionFolder, projectRoot: string): string[] {
+  const { notificationSound } = edition.config;
   if (notificationSound === undefined) return [];
-  const file = join(editionDir, 'assets', notificationSound);
+  const file = edition.asset(notificationSound);
   if (!existsSync(file)) {
     throw new Error(
-      `${join(editionDir, 'edition.json')} names no notification sound that exists: expected ${file}`,
+      `${edition.path('config')} names no notification sound that exists: expected ${file}`,
     );
   }
   let format: string;
@@ -175,38 +119,22 @@ function editionNotificationSounds(
   return [relative(projectRoot, file)];
 }
 
-/** An optional Edition file as JSON, or `{}` when the Edition leaves it out. */
-const readOptionalJson = (file: string): unknown =>
-  existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : {};
-
 /**
  * What the widget extension takes from the Edition, checked here so a broken
  * Edition stops the config rather than the native build. The files
  * themselves are made at prebuild (`widget-extension.ts`).
  */
-function widgetEdition(
-  editionDir: string,
-  projectRoot: string,
-  config: EditionConfig,
-  scheme: string,
-): WidgetExtension.WidgetEdition {
-  const exampleSnapshot = join(editionDir, 'widget-snapshot.example.json');
-  if (!existsSync(exampleSnapshot)) {
-    throw new Error(
-      `Edition "${config.id}" has no example Widget Snapshot for the widget gallery: expected ${exampleSnapshot}`,
-    );
-  }
-  readJson(exampleSnapshot, WidgetSnapshotSchema, 'Widget Snapshot');
-  const tokens = EditionTokensSchema.parse(readOptionalJson(join(editionDir, 'tokens.json')));
+function widgetEdition(edition: EditionFolder, scheme: string): WidgetExtension.WidgetEdition {
+  // The example the widget gallery shows must be there and be a valid Widget Snapshot.
+  edition.read('widgetSnapshotExample');
   return {
-    config,
+    config: edition.config,
     scheme,
-    strings: readJson(join(editionDir, 'strings.json'), EditionStringsSchema, 'Edition strings')
-      .widget,
-    tokens: designTokens(tokens),
-    band: loadDecor(readOptionalJson(join(editionDir, 'decor/decor.json'))).divider.band,
-    fontFiles: editionFonts(editionDir, projectRoot).map((font) => join(projectRoot, font)),
-    exampleSnapshot,
+    strings: edition.read('strings').widget,
+    tokens: designTokens(edition.readIfPresent('tokens') ?? {}),
+    band: loadDecor(edition.readIfPresent('decor')).divider.band,
+    fontFiles: edition.fonts(),
+    exampleSnapshot: edition.path('widgetSnapshotExample'),
   };
 }
 
@@ -229,8 +157,8 @@ function withWidgetExtension(
   ]);
 }
 
-function selectEdition(editionsDir: string): { dir: string; config: EditionConfig } {
-  const known = knownEditions(editionsDir);
+function selectEdition(editionsDir: string): EditionFolder {
+  const known = listEditions(editionsDir);
   const hint = `Known Editions: ${known.join(', ')}. Example: ${EDITION_VARIABLE}=${known[0] ?? '<edition>'} pnpm start`;
   // Expo types every environment variable as `any`; narrow it here.
   const value: unknown = process.env[EDITION_VARIABLE];
@@ -238,23 +166,26 @@ function selectEdition(editionsDir: string): { dir: string; config: EditionConfi
   if (id === undefined || id === '') {
     throw new Error(`${EDITION_VARIABLE} is not set, so there is no Edition to build.\n${hint}`);
   }
-  if (!known.includes(id)) {
-    throw new Error(`Unknown Edition "${id}" in ${EDITION_VARIABLE}.\n${hint}`);
+  try {
+    return openEdition(editionsDir, id);
+  } catch (error) {
+    if (error instanceof EditionFolderError && error.reason === 'unknown') {
+      throw new Error(`Unknown Edition "${id}" in ${EDITION_VARIABLE}.\n${hint}`, { cause: error });
+    }
+    throw error;
   }
-  const dir = join(editionsDir, id);
-  return { dir, config: readEditionConfig(dir, id) };
 }
 
 export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
   const edition = selectEdition(join(projectRoot, '../../editions'));
   const [language] = edition.config.locale.split('-');
-  const icon = join(edition.dir, 'assets/icon.png');
+  const icon = edition.path('icon');
   if (!existsSync(icon)) {
     throw new Error(`Edition "${edition.config.id}" has no icon: expected ${icon}`);
   }
 
   const scheme = `slovo-${edition.config.id}`;
-  const widget = widgetEdition(edition.dir, projectRoot, edition.config, scheme);
+  const widget = widgetEdition(edition, scheme);
 
   const expoConfig: ExpoConfig = {
     ...config,
@@ -282,12 +213,10 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
     plugins: [
       'expo-router',
       'expo-sqlite',
-      ['expo-font', { fonts: editionFonts(edition.dir, projectRoot) }],
-      ['expo-splash-screen', editionSplash(edition.dir, projectRoot)],
-      [
-        'expo-notifications',
-        { sounds: editionNotificationSounds(edition.dir, projectRoot, edition.config) },
-      ],
+      // Every font file the Edition brings, embedded in the native app.
+      ['expo-font', { fonts: edition.fonts().map((font) => relative(projectRoot, font)) }],
+      ['expo-splash-screen', editionSplash(edition, projectRoot)],
+      ['expo-notifications', { sounds: editionNotificationSounds(edition, projectRoot) }],
       '@react-native-community/datetimepicker',
       ['expo-build-properties', { ios: { deploymentTarget: '17.0' } }],
       // The widget extension, from apps/widget/expo-target.config.json (ADR 0026).
