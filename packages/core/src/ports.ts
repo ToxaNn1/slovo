@@ -1,4 +1,4 @@
-import type { Category, Correction, Word } from '@slovo/contracts';
+import type { Category, Correction, PackMetadata, Word } from '@slovo/contracts';
 
 /**
  * Reads a compiled Language Pack. Each platform supplies an adapter (Node for
@@ -208,12 +208,11 @@ export const systemClock: Clock = {
 
 export const systemRandom: Random = { next: () => Math.random() };
 
-/** Which Language Pack it is: its content version (ADR 0011) and the pack format of its layout. */
-export interface PackVersion {
-  readonly contentVersion: number;
-  /** The layout of the pack; it rises only when an older app can't read the pack. */
-  readonly packFormat: number;
-}
+/**
+ * Which Language Pack it is: its content version (ADR 0011) and its pack
+ * format, as the pack's metadata records them.
+ */
+export type PackVersion = Readonly<Pick<PackMetadata, 'contentVersion' | 'packFormat'>>;
 
 /** The newest published Language Pack of a pack format, as the backend announces it. */
 export interface PublishedPack extends PackVersion {
