@@ -29,3 +29,14 @@ dependency-cruiser holds the boundaries in CI (`pnpm deps`): the server Core imp
 - **Everything in the backend app, layered by folders**: rejected. Nothing would stop a rule from reaching into Hono or SQL, and the rules would be tested only through HTTP.
 - **The server rules in the app's Core**: rejected. The app's Core is the reader's device (its user state, its Feed); the server's rules (Sessions, limits, publishing packs) never run there, and the app would ship code it never calls.
 - **A registry of Editions in the database**: rejected. Editions live in git and change with a build; a second copy in the database would drift from the folders the app is built from.
+
+## Amendment: the sign-in limits count in fixed windows, by the connection's IP (0.7, #343)
+
+The limits of signing in (5 Sign-in codes an hour per email; 20 code requests and 30 code checks per 10 minutes per IP) are rules of the server Core's `account` domain. They count through a `RateLimits` port with the server Core's `Clock`, and the backend keeps the counts in Postgres, since there is one instance. Each key, a limit with the email or IP address it counts, has a fixed window that opens with its first request and lasts the limit's time; one statement counts a request, so requests that come together each count. A request over a limit answers `TOO_MANY_REQUESTS` (429) with `Retry-After`, the rest of its window in whole seconds, and sends nothing. A window that has ended is deleted, so the `rate_limits` table keeps an email or an IP address no longer than its limit needs. That IP address is the only one the backend keeps.
+
+The IP address is the one of the request's connection. A forwarding header such as `X-Forwarded-For` is not trusted, since any client can send one. Behind the deployed proxy (0.9) every request comes from the proxy's address, so the limits per IP would hold back every reader together; trusting the header the proxy sets comes with it.
+
+### Considered Options
+
+- **better-auth's own limiter**: rejected. It counts requests to better-auth's HTTP endpoints, keyed by IP and path, and nothing reaches them: the backend calls its server API. It has no key for the email.
+- **Sliding windows**: rejected for now. A fixed window lets up to twice a limit through around its end, which these limits can bear, and it needs one row per key instead of one per request.

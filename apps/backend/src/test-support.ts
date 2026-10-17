@@ -1,8 +1,9 @@
-import { randomUUID } from 'node:crypto';
+import { randomInt, randomUUID } from 'node:crypto';
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
+import type { HttpBindings } from '@hono/node-server';
 import { createApiClient } from '@slovo/contracts/api';
 import type { EditionConfig } from '@slovo/contracts';
 import { EDITIONS_DIR, editionFiles, openEdition } from '@slovo/language-pack/edition';
@@ -123,11 +124,24 @@ export function createFakeMailer(): FakeMailer {
 /** The secret the test backends sign their Sessions with. */
 const TEST_AUTH_SECRET = 'a-test-secret-that-is-at-least-32-characters';
 
+/** An IP address no other test uses, from the range kept for documentation (RFC 3849). */
+export const newIp = () =>
+  `2001:db8::${[0, 0, 0].map(() => randomInt(0x10000).toString(16)).join(':')}`;
+
+/**
+ * What Node's HTTP server gives the app with a request that came on a
+ * connection from the IP address: the part the app reads.
+ */
+export const connectionFrom = (ip: string) =>
+  ({ incoming: { socket: { remoteAddress: ip } } }) as unknown as HttpBindings;
+
 /**
  * The backend built by its composition root on this run's database, with a
  * silent logger, the system clock, the repo's Editions and a fake Mailer
  * unless the test gives its own, and the API's client. Requests go to the app
- * in process (`app.request`, or the client), so no port is opened.
+ * in process (`app.request`, or the client), so no port is opened. The
+ * client's requests come from an IP address of their own, so the limits per
+ * IP of one test never reach another.
  */
 export function testApp(dependencies: Partial<AppDependencies> = {}) {
   const database = dependencies.database ?? createDatabase(inject('databaseUrl'), silentLogger);
@@ -140,21 +154,26 @@ export function testApp(dependencies: Partial<AppDependencies> = {}) {
     authSecret: TEST_AUTH_SECRET,
     ...dependencies,
   });
+  const ip = newIp();
   // The client the app uses, built from the contract, with its fetch pointed
   // at the app in process.
-  const clientWith = (headers: Record<string, string>) =>
+  const clientWith = (headers: Record<string, string>, from = ip) =>
     createApiClient({
       url: 'http://backend.test',
-      fetch: (request) => Promise.resolve(app.fetch(request)),
+      fetch: (request) => Promise.resolve(app.fetch(request, connectionFrom(from))),
       headers,
     });
   // A test may close the database before the end, which closes it once.
   let closed: Promise<void> | undefined;
   return {
     app,
+    /** The IP address the client's requests come from. */
+    ip,
     client: clientWith({}),
     /** The client of a device signed in with the Session's token. */
     clientOf: (token: string) => clientWith({ authorization: `Bearer ${token}` }),
+    /** The client of a device whose requests come from the IP address. */
+    clientFrom: (from: string) => clientWith({}, from),
     database,
     close: () => (closed ??= database.close()),
   };

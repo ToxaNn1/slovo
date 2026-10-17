@@ -9,15 +9,15 @@ const FIRST_RETRY_DELAY = 1_000;
 /** What a request to the backend answers: success, or a failure with its reason. */
 export type Answer = { readonly ok: true } | { readonly ok: false; readonly reason: string };
 
-/** The reasons of the failures that may pass by themselves. */
-const mayPass: ReadonlySet<string> = new Set<RequestFailure['reason']>([
-  'offline',
-  'server-error',
-  'too-many-requests',
-]);
+/**
+ * The reasons of the failures that may pass while the tries wait. Too many
+ * requests is not one: a limit of the backend holds for minutes, and a spent
+ * Sign-in code until a new one is sent (ADR 0037).
+ */
+const mayPass: ReadonlySet<string> = new Set<RequestFailure['reason']>(['offline', 'server-error']);
 
 /**
- * Makes a request and, while it fails in a way that may pass (a `RequestFailure`),
+ * Makes a request and, while it fails in a way that may pass (no answer or a 5xx),
  * tries it again, at most `REQUEST_RETRIES` times, and answers the last
  * answer. The waits back off exponentially with jitter: before the nth try
  * again it waits between half and all of 1 s times 2ⁿ⁻¹, drawn from `random`,

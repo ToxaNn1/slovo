@@ -71,7 +71,8 @@ function createAuth({
       // The backend keeps only the email (spec #333).
       ipAddress: { disableIpTracking: true },
     },
-    // The limits are the server Core's (#343), not better-auth's.
+    // The sign-in limits are the server Core's, per email and per IP. better-auth's
+    // own counts only requests to its HTTP endpoints, which nothing reaches.
     rateLimit: { enabled: false },
     telemetry: { enabled: false },
     // Only better-auth's message reaches the log: what it adds may hold an email.

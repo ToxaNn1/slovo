@@ -163,14 +163,9 @@ describe('the Account', () => {
     expect(account.state).toMatchObject({ status: 'signed-in' });
   });
 
-  it('says there were too many requests when the limit holds through every try', async () => {
+  it('says there were too many requests when the backend holds the request back', async () => {
     const { account, api } = await setup();
-    api.failNext(
-      'too-many-requests',
-      'too-many-requests',
-      'too-many-requests',
-      'too-many-requests',
-    );
+    api.failNext('too-many-requests');
 
     await account.requestCode('anna@mail.com');
 
@@ -379,9 +374,9 @@ describe('the Account signed in', () => {
 });
 
 describe('the Account tries a request again', () => {
-  it('on no answer, a server error and too many requests, waiting twice as long each time', async () => {
+  it('on no answer and a server error, waiting twice as long each time', async () => {
     const { account, api, delays } = await setup();
-    api.failNext('offline', 'server-error', 'too-many-requests');
+    api.failNext('offline', 'server-error', 'offline');
 
     await account.requestCode('anna@mail.com');
 
@@ -412,6 +407,17 @@ describe('the Account tries a request again', () => {
 
     expect(early.delays).toEqual([500, 1_000, 2_000]);
     expect(late.delays).toEqual([875, 1_750, 3_500]);
+  });
+
+  it('never on too many requests: a limit holds longer than the tries wait, and a spent code for good', async () => {
+    const { account, api, delays } = await setup();
+    api.failNext('too-many-requests');
+
+    await account.requestCode('anna@mail.com');
+
+    expect(api.calls).toEqual(['requestCode']);
+    expect(delays).toEqual([]);
+    expect(account.state).toMatchObject({ status: 'signed-out', problem: 'too-many-requests' });
   });
 
   it('never on a wrong code or a Session the server has ended', async () => {

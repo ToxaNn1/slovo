@@ -97,3 +97,20 @@ export interface Mail {
 export interface Mailer {
   send(mail: Mail): Promise<void>;
 }
+
+/**
+ * Counts requests under a key in windows of time, one key at a time (Postgres
+ * in the backend). A key's window opens with its first request after the
+ * last window ended, and lasts as long as the request asks.
+ */
+export interface RateLimits {
+  /**
+   * Counts one request under the key at `now`, and answers how many requests
+   * its window holds, this one included, and when the window ends.
+   */
+  count(
+    key: string,
+    windowSeconds: number,
+    now: Date,
+  ): Promise<{ readonly count: number; readonly windowEnds: Date }>;
+}

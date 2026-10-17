@@ -143,3 +143,21 @@ export const signInCodes = pgTable(
   },
   (table) => [index().on(table.identifier)],
 );
+
+/**
+ * The windows the sign-in limits count requests in (src/account/rate-limits.ts),
+ * one row per key: the limit with the email or IP address it counts. A row
+ * whose window has ended is deleted, so no email or address is kept longer
+ * than its limit needs.
+ */
+export const rateLimits = pgTable(
+  'rate_limits',
+  {
+    /** The limit and what it counts, such as `codesPerEmail:anna@mail.com`. */
+    key: text('key').primaryKey(),
+    /** The requests the window holds. */
+    count: integer('count').notNull(),
+    windowEnds: time('window_ends'),
+  },
+  (table) => [index().on(table.windowEnds)],
+);

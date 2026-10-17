@@ -24,4 +24,5 @@ export {
   type Mail,
   type Mailer,
   type PublishedFile,
+  type RateLimits,
 } from './ports';

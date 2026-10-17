@@ -6,11 +6,13 @@ import {
   type Edition,
   type Mailer,
 } from '@slovo/server-core';
+import type { HttpBindings } from '@hono/node-server';
 import { Hono } from 'hono';
 import { requestId, type RequestIdVariables } from 'hono/request-id';
 import type { Logger } from 'pino';
 
 import { createAuthenticator } from './account/authenticator';
+import { createRateLimits } from './account/rate-limits';
 import { createApiHandler, INTERNAL_FAILURE, logUnexpectedFailure } from './api';
 import { createContentPackStore } from './content/content-pack-store';
 import type { Database } from './database/database';
@@ -30,6 +32,22 @@ export interface AppDependencies {
 
 type Variables = RequestIdVariables & { logger: Logger };
 
+/** What the backend's Hono app knows of a request: Node's HTTP bindings and its own variables. */
+interface Env {
+  Bindings: HttpBindings;
+  Variables: Variables;
+}
+
+/**
+ * The IP address the request came from: the address of its connection. A
+ * forwarding header such as `X-Forwarded-For` is not trusted, since anyone
+ * can send one; trusting the one the deployed proxy sets waits for it (0.9).
+ * A request made in process, as a test may, comes on no connection.
+ */
+function connectionIp(bindings: Partial<HttpBindings> | undefined): string | undefined {
+  return bindings?.incoming?.socket.remoteAddress;
+}
+
 /**
  * The composition root: builds the whole backend from the dependencies it is
  * given. `main.ts` gives the real ones; a test gives its own.
@@ -47,6 +65,8 @@ export function createApp({
     editions: editionRegistry,
     authenticator: createAuthenticator(database, { secret: authSecret, logger }),
     mailer,
+    rateLimits: createRateLimits(database),
+    clock,
   });
   const contentPacks = createContentPacks({
     editions: editionRegistry,
@@ -55,7 +75,7 @@ export function createApp({
   });
   const api = createApiHandler({ accounts, contentPacks });
 
-  const app = new Hono<{ Variables: Variables }>();
+  const app = new Hono<Env>();
 
   // Takes the request's x-request-id, or makes one, and sends it back.
   app.use(requestId({ headerName: 'x-request-id' }));
@@ -91,7 +111,7 @@ export function createApp({
   for (const path of ['/v1/*', '/docs', '/docs/*']) {
     app.use(path, async (c, next) => {
       const { matched, response } = await api.handle(c.req.raw, {
-        context: { logger: c.var.logger, headers: c.req.raw.headers },
+        context: { logger: c.var.logger, headers: c.req.raw.headers, ip: connectionIp(c.env) },
       });
       if (matched) return c.newResponse(response.body, response);
       return next();
