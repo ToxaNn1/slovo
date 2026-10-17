@@ -69,16 +69,7 @@ describe('loadEdition', () => {
     expect(languageTraits.vowels).toEqual(['a']);
   });
 
-  it('reports the Categories in the order the Edition declares them', () => {
-    const edition = loadEdition(validConfig);
-
-    expect(edition.categories).toEqual([
-      { id: 'nature', displayName: 'Nature' },
-      { id: 'speech', displayName: 'Speech' },
-    ]);
-  });
-
-  it('reports the user-setting defaults, with every Category in a Mix of all', () => {
+  it('reports the user-setting defaults, with a Mix of all left to the Language Pack', () => {
     const edition = loadEdition(validConfig);
 
     expect(edition.userSettingDefaults).toEqual({
@@ -86,7 +77,7 @@ describe('loadEdition', () => {
       fontSize: 'M',
       vibration: true,
       notificationTimes: ['09:00'],
-      mix: { categoryIds: ['nature', 'speech'], corrections: true },
+      mix: { categoryIds: 'all', corrections: true },
     });
   });
 

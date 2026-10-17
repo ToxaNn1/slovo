@@ -3,7 +3,7 @@ import { useUndoToast, type UndoToastContent } from '@slovo/ui';
 import { ActionSheetIOS } from 'react-native';
 
 import { useComposition } from '../composition';
-import { edition, editionStrings } from '../edition/edition';
+import { editionStrings } from '../edition/edition';
 import { hideChoice, hideToast, type HideOption } from './hide-choice';
 
 const { hiding: strings } = editionStrings;
@@ -25,7 +25,7 @@ export function useHide(card: EntryFeedCard): () => void {
   return () => {
     if (open === undefined) return;
     // Read when the sheet opens, so it follows every change of the Mix.
-    const options = hideChoice({ card, mix: open.mix.state, edition, strings });
+    const options = hideChoice({ card, mix: open.mix.state, strings });
     ActionSheetIOS.showActionSheetWithOptions(
       {
         options: [...options.map(({ label }) => label), strings.choice.cancel],

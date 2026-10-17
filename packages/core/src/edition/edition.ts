@@ -1,15 +1,18 @@
 import {
   EditionConfigSchema,
-  type Category,
   type FeatureSwitch,
   type FontSize,
   type LanguageTraits,
   type Theme,
 } from '@slovo/contracts';
 
-/** The Edition's default Mix: the Categories, plus Corrections as a whole, a new user sees. */
+/**
+ * The Edition's default Mix: the Categories, plus Corrections as a whole, a
+ * new user sees. `'all'` is every Category of the Language Pack, also one a
+ * content update adds (ADR 0019, 0033).
+ */
 export interface DefaultMix {
-  readonly categoryIds: readonly string[];
+  readonly categoryIds: 'all' | readonly string[];
   readonly corrections: boolean;
 }
 
@@ -24,15 +27,16 @@ export interface UserSettingDefaults {
   readonly mix: DefaultMix;
 }
 
-/** What the Core knows about the Edition it runs as. */
+/**
+ * What the Core knows about the Edition it runs as: only what can't change
+ * without a store build. Its Categories come from the Language Pack (ADR 0033).
+ */
 export interface Edition {
   readonly id: string;
   readonly locale: string;
   /** The app's name, such as «SLOVO»; its Share Cards carry it as their watermark. */
   readonly displayName: string;
   readonly languageTraits: LanguageTraits;
-  /** Every Category of the Edition, in the order the Edition declares them. */
-  readonly categories: readonly Category[];
   readonly userSettingDefaults: UserSettingDefaults;
   /** The file name of the Edition's notification sound, which the shell bundles; without one, notifications play the system sound. */
   readonly notificationSound: string | undefined;
@@ -65,7 +69,6 @@ export function loadEdition(config: unknown): Edition {
     featureSwitches,
     userSettingDefaults,
     notificationSound,
-    categories,
   } = result.data;
   const { mix, ...settings } = userSettingDefaults;
   return {
@@ -73,13 +76,9 @@ export function loadEdition(config: unknown): Edition {
     locale,
     displayName,
     languageTraits,
-    categories,
     userSettingDefaults: {
       ...settings,
-      mix: {
-        categoryIds: mix.categories === 'all' ? categories.map(({ id }) => id) : mix.categories,
-        corrections: mix.corrections,
-      },
+      mix: { categoryIds: mix.categories, corrections: mix.corrections },
     },
     notificationSound,
     isFeatureEnabled: (feature) => featureSwitches[feature],

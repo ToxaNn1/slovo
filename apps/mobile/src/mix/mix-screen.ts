@@ -12,7 +12,7 @@ export interface MixChipModel {
 
 /** What the Mix screen draws, from the Mix and the Edition. */
 export interface MixScreenModel {
-  /** The chip of every Category of the Edition, in its order. */
+  /** The chip of every Category of the Language Pack, in its order. */
   readonly chips: readonly MixChipModel[];
   /** Whether every Category is in the Mix, which is when «Усі» is on. */
   readonly allOn: boolean;
@@ -26,11 +26,11 @@ export function mixScreenModel({
   edition,
   mix,
 }: {
-  edition: Pick<Edition, 'categories' | 'isFeatureEnabled'>;
+  edition: Pick<Edition, 'isFeatureEnabled'>;
   mix: MixState;
 }): MixScreenModel {
   return {
-    chips: edition.categories.map(({ id, displayName }) => ({
+    chips: mix.allCategories.map(({ id, displayName }) => ({
       id,
       name: displayName,
       on: mix.categoryIds.includes(id),

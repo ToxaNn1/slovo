@@ -12,8 +12,11 @@ import { describe, expect, it } from 'vitest';
 import { hiddenScreenModel, hiddenSummary } from './hidden-screen';
 import { count, fakeClock, strings, ukrainian } from '../test-support';
 
-const [first, second] = ukrainian.categories;
-if (first === undefined || second === undefined) throw new Error('The Edition needs Categories');
+/** The Language Pack's Categories, in its order. */
+const first = { id: 'nature-weather', displayName: 'Природа і погода' };
+const second = { id: 'household-crafts', displayName: 'Побут і ремесла' };
+/** A Category that stays in the Mix while the other two are taken out. */
+const third = { id: 'language-speech', displayName: 'Мова і мовлення' };
 
 function word(id: string, categoryId: string, extra: Partial<Word> = {}): Word {
   return {
@@ -38,6 +41,7 @@ function word(id: string, categoryId: string, extra: Partial<Word> = {}): Word {
 }
 
 const content = createMemoryContentPort({
+  categories: [first, second, third],
   words: [
     word('w_one', first.id, { registers: ['archaic'] }),
     word('w_two', second.id, { partOfSpeech: 'noun', gender: 'feminine' }),
@@ -118,7 +122,7 @@ describe('the «Приховане» screen', () => {
     ]);
   });
 
-  it('lists the Hidden Categories by name, in the Edition’s order', async () => {
+  it('lists the Hidden Categories by name, in the Language Pack’s order', async () => {
     const { app } = await open();
     await app.mix.takeOut(second.id);
     await app.mix.takeOut(first.id);

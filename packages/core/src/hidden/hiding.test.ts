@@ -14,7 +14,7 @@ import {
 } from '../index';
 import { correction, fakeClock, word } from '../test-support';
 
-/** The Edition's Categories, in its order. */
+/** The Language Pack's Categories, in its order. */
 const nature: Category = { id: 'nature', displayName: 'Nature' };
 const speech: Category = { id: 'speech', displayName: 'Speech' };
 const crafts: Category = { id: 'crafts', displayName: 'Crafts' };
@@ -24,6 +24,7 @@ const categories = [nature, speech, crafts];
 const wordIdsOf = (category: Category) =>
   [0, 1, 2].map((index) => `w_${category.id}${String(index)}`);
 const content = createMemoryContentPort({
+  categories,
   words: categories.flatMap((category) =>
     wordIdsOf(category).map((id) => word(id, { categoryId: category.id })),
   ),
@@ -46,7 +47,6 @@ async function run({
       id: 'test',
       isFeatureEnabled: (feature) => feature === 'corrections',
       languageTraits: { distractorRule: 'same-part-of-speech' },
-      categories,
       userSettingDefaults: {
         mix: { categoryIds: categories.map(({ id }) => id), corrections: true },
         notificationTimes: [],

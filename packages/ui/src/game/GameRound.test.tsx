@@ -101,7 +101,7 @@ function Game({ onAnswer }: { onAnswer: (option: number) => void }) {
 async function renderRound(onAnswer: (option: number) => void = jest.fn()) {
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
-      <EditionProvider edition={{ locale: 'en', categories: [] }} strings={strings}>
+      <EditionProvider edition={{ locale: 'en' }} strings={strings}>
         <HapticsProvider haptics={haptics}>
           <Game onAnswer={onAnswer} />
         </HapticsProvider>

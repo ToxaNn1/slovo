@@ -1,10 +1,16 @@
-import type { Correction, Word } from '@slovo/contracts';
+import type { Category, Correction, Word } from '@slovo/contracts';
 
 /**
  * Reads a compiled Language Pack. Each platform supplies an adapter (Node for
  * tests and tooling, expo-sqlite in the mobile shell); the Core only sees this.
  */
 export interface ContentReadPort {
+  /**
+   * Every Category of the pack, with its display name, in the pack's order
+   * (the order the Edition declares them in), also one whose Words are all Retired. The pack is the runtime source of
+   * Categories, so a content update may add one (ADR 0033).
+   */
+  listCategories(): Promise<readonly Category[]>;
   /**
    * The ids of the Words that are not retired, in a stable order; only those
    * of the Category when one is given. A Retired Word is left out, so nothing

@@ -1,7 +1,6 @@
 import { fill, type EditionStrings } from '@slovo/contracts';
 import {
   entryIdOf,
-  type Edition,
   type EntryFeedCard,
   type HideTarget,
   type HidingChange,
@@ -38,12 +37,10 @@ export type HideOption =
 export function hideChoice({
   card,
   mix,
-  edition,
   strings,
 }: {
   card: EntryFeedCard;
   mix: MixState;
-  edition: Pick<Edition, 'categories'>;
   strings: EditionStrings['hiding'];
 }): readonly HideOption[] {
   const entry: HideOption = {
@@ -64,15 +61,14 @@ export function hideChoice({
         ]
       : [entry];
   }
-  const { categoryId } = card.wordCard;
-  const category = edition.categories.find(({ id }) => id === categoryId);
+  const { categoryId, categoryName } = card.wordCard;
   if (
-    category === undefined ||
+    categoryName === undefined ||
     !mix.categoryIds.includes(categoryId) ||
     mix.lastCategoryId === categoryId
   )
     return [entry];
-  const name = { category: category.displayName };
+  const name = { category: categoryName };
   return [
     entry,
     {

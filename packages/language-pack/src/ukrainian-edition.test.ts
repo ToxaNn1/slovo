@@ -25,34 +25,13 @@ describe('the Ukrainian Edition', () => {
     expect(edition.isFeatureEnabled('corrections')).toBe(true);
   });
 
-  it('declares the 10 Categories', () => {
-    expect(edition.categories.map(({ displayName }) => displayName)).toEqual([
-      'Людина і тіло',
-      'Емоції та характер',
-      'Природа і погода',
-      'Побут і ремесла',
-      'Техніка',
-      'Військова справа',
-      'Мистецтво і культура',
-      'Історія та старовина',
-      'Наука',
-      'Мова і мовлення',
-    ]);
-  });
-
-  it('keeps the Category ids its Words already use', () => {
-    expect(edition.categories.map(({ id }) => id)).toEqual(
-      expect.arrayContaining(['nature-weather', 'household-crafts', 'language-speech']),
-    );
-  });
-
   it('starts new users on the agreed defaults', () => {
     expect(edition.userSettingDefaults).toEqual({
       theme: 'system',
       fontSize: 'M',
       vibration: true,
       notificationTimes: ['09:00', '13:00', '19:00'],
-      mix: { categoryIds: edition.categories.map(({ id }) => id), corrections: true },
+      mix: { categoryIds: 'all', corrections: true },
     });
   });
 });

@@ -22,7 +22,7 @@ export interface WordCardDetails {
 /**
  * What a Word card shows, decided by the Core: the UI draws it and never
  * picks sections itself. It carries data and keys only; the UI turns the keys
- * (part of speech, gender, registers, Category) into the Edition's strings.
+ * (part of speech, gender, registers) into the Edition's strings.
  * A section without data is left out: `undefined` or an empty list.
  */
 export interface WordCardModel {
@@ -44,6 +44,8 @@ export interface WordCardModel {
   readonly antonyms: readonly string[];
   readonly registers: readonly Register[];
   readonly categoryId: string;
+  /** The display name of the Word's Category, from the Language Pack; nothing for one the pack doesn't have. */
+  readonly categoryName: string | undefined;
   /** Present only when the Word has an etymology, extra Definitions or more Examples. */
   readonly details: WordCardDetails | undefined;
   readonly linkedCorrections: readonly LinkedCorrection[];
@@ -52,14 +54,18 @@ export interface WordCardModel {
 /** The most Synonyms a Word card shows. */
 const MAX_SYNONYMS = 3;
 
-/** The Word card of a Word, linking the Corrections the Entries give for it. */
+/** The Word card of a Word, linking the Corrections and naming the Category the Entries give for it. */
 export async function buildWordCard({
   word,
   entries,
 }: {
   word: Word;
-  entries: Pick<Entries, 'linkedCorrections'>;
+  entries: Pick<Entries, 'linkedCorrections' | 'categories'>;
 }): Promise<WordCardModel> {
+  const [linked, categories] = await Promise.all([
+    entries.linkedCorrections(word),
+    entries.categories(),
+  ]);
   return {
     kind: 'word',
     wordId: word.id,
@@ -73,8 +79,9 @@ export async function buildWordCard({
     antonyms: word.antonyms,
     registers: word.registers,
     categoryId: word.categoryId,
+    categoryName: categories.find(({ id }) => id === word.categoryId)?.displayName,
     details: detailsOf(word),
-    linkedCorrections: (await entries.linkedCorrections(word)).map(({ id, nonStandardForm }) => ({
+    linkedCorrections: linked.map(({ id, nonStandardForm }) => ({
       correctionId: id,
       nonStandardForm,
     })),

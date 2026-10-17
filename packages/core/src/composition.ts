@@ -205,7 +205,9 @@ export async function openComposition({
     openFavorites({ rows, userState, clock }),
     openCollections({ rows, userState, clock, random }),
     openHiddenEntries({ rows, userState, clock, eligibilityChanged }),
-    openMix({ edition, userState, eligibilityChanged }),
+    entries
+      .categories()
+      .then((categories) => openMix({ edition, categories, userState, eligibilityChanged })),
   ]);
   const { progress, recordToday, todayChange } = await openProgress({
     userState,

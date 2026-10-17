@@ -195,7 +195,7 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
     const verbRounds: Asked[] = [];
     for (let seed = 1; verbRounds.length === 0 && seed <= 40; seed += 1) {
       const app = await run(seed);
-      for (const { id } of ukrainian.categories.filter(({ id }) => id !== 'human-body')) {
+      for (const { id } of (await pack.listCategories()).filter(({ id }) => id !== 'human-body')) {
         await app.hide({ kind: 'category', categoryId: id });
       }
       const asked = await playGame(app);

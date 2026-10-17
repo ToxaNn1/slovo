@@ -54,7 +54,6 @@ const editionWith = (
   id: 'test',
   isFeatureEnabled: (feature) => feature === 'corrections' && corrections,
   languageTraits: { distractorRule: 'same-part-of-speech' },
-  categories: [{ id: 'test', displayName: 'Test' }],
   userSettingDefaults: { mix: { categoryIds: ['test'], corrections: true }, notificationTimes: [] },
 });
 

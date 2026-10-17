@@ -51,15 +51,18 @@ async function run({
   records: Map<string, string>;
 }> {
   const app = await openComposition({
-    content: createMemoryContentPort({ words, corrections }),
-    edition: {
-      id: 'test',
-      isFeatureEnabled: () => true,
-      languageTraits: { distractorRule: 'same-part-of-speech' },
+    content: createMemoryContentPort({
       categories: [
         { id: 'test', displayName: 'Test' },
         { id: 'other', displayName: 'Other' },
       ],
+      words,
+      corrections,
+    }),
+    edition: {
+      id: 'test',
+      isFeatureEnabled: () => true,
+      languageTraits: { distractorRule: 'same-part-of-speech' },
       userSettingDefaults: {
         mix: { categoryIds: mixCategoryIds, corrections: true },
         notificationTimes: defaultTimes,

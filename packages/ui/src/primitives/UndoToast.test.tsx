@@ -20,7 +20,7 @@ function Opener({ message, onUndo }: { message: string; onUndo: () => void }) {
 
 async function renderOpeners(...openers: readonly { message: string; onUndo: () => void }[]) {
   await render(
-    <EditionProvider edition={{ locale: 'en', categories: [] }} strings={{} as EditionStrings}>
+    <EditionProvider edition={{ locale: 'en' }} strings={{} as EditionStrings}>
       <UndoToastProvider>
         {openers.map((opener) => (
           <Opener key={opener.message} {...opener} />

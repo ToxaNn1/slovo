@@ -15,7 +15,7 @@ import { correction, fakeClock, steppingRandom, word } from './test-support';
 /** The instant these tests start at. */
 const start = '2026-10-16T09:00:00+03:00';
 
-/** The Edition's Categories, in its order. */
+/** The Language Pack's Categories, in its order. */
 const nature: Category = { id: 'nature', displayName: 'Nature' };
 const speech: Category = { id: 'speech', displayName: 'Speech' };
 const categories = [nature, speech];
@@ -29,7 +29,7 @@ const words = [
   word('w_old', { categoryId: 'nature', retired: true }),
 ];
 const corrections = [correction('c_one'), correction('c_two')];
-const pack = createMemoryContentPort({ words, corrections });
+const pack = createMemoryContentPort({ categories, words, corrections });
 
 const MINUTE = 60_000;
 
@@ -54,7 +54,6 @@ async function run({
       id: 'test',
       isFeatureEnabled: (feature) => withCorrections && feature === 'corrections',
       languageTraits: { distractorRule: 'same-part-of-speech' },
-      categories,
       userSettingDefaults: {
         mix: { categoryIds: categories.map(({ id }) => id), corrections: true },
         notificationTimes: [],
