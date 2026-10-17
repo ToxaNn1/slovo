@@ -140,6 +140,18 @@ describe('an unexpected failure', () => {
   });
 });
 
+describe('an unknown address', () => {
+  it('answers 404 NOT_FOUND, also under /v1', async () => {
+    const { app, close } = testApp();
+    onTestFinished(close);
+
+    const response = await app.request('/v1/editions/uk/words');
+
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({ code: 'NOT_FOUND' });
+  });
+});
+
 describe('/docs', () => {
   it('shows the API in a browser', async () => {
     const { app, close } = testApp();

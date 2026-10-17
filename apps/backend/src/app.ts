@@ -77,6 +77,9 @@ export function createApp({ database, clock, logger, editions }: AppDependencies
     });
   }
 
+  // An address the backend doesn't serve, under `/v1` too.
+  app.notFound((c) => c.json({ code: 'NOT_FOUND' }, 404));
+
   // The one global handler of what the API's own handler doesn't catch.
   app.onError((error, c) => {
     logUnexpectedFailure(c.var.logger, error);

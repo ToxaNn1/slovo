@@ -29,7 +29,12 @@ export {
   type Theme,
   type UserSettingDefaultsConfig,
 } from './edition';
-export { PackMetadataSchema, type PackMetadata } from './language-pack';
+export {
+  PackMetadataSchema,
+  PublishedPackSchema,
+  type PackMetadata,
+  type PublishedPack,
+} from './language-pack';
 export { NotificationSoundFileSchema, type NotificationSoundFormat } from './notification-sound';
 export {
   ACCOUNT_NAME,

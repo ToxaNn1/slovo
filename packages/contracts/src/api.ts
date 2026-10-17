@@ -3,7 +3,7 @@ import { oc, type ContractRouterClient } from '@orpc/contract';
 import type { JsonifiedClient } from '@orpc/openapi-client';
 import { OpenAPILink, type OpenAPILinkOptions } from '@orpc/openapi-client/fetch';
 
-import { contentContract } from './content';
+import { contentContract } from './api/content';
 
 /**
  * The API contract: the only description of the backend's API (spec #333).
@@ -26,5 +26,3 @@ export type ApiClient = JsonifiedClient<ContractRouterClient<typeof apiContract>
 export function createApiClient(options: OpenAPILinkOptions<ClientContext>): ApiClient {
   return createORPCClient(new OpenAPILink(apiContract, options));
 }
-
-export { PublishedPackSchema, type PublishedPack } from './content';

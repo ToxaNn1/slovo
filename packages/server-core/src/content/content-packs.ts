@@ -1,4 +1,4 @@
-import type { PublishedPack } from '@slovo/contracts/api';
+import type { PublishedPack } from '@slovo/contracts';
 
 import type { EditionRegistry } from '../edition/edition-registry';
 import type { ContentPackStore } from '../ports';

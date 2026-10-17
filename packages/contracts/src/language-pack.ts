@@ -24,3 +24,15 @@ export const PackMetadataSchema = z.strictObject({
 });
 
 export type PackMetadata = z.infer<typeof PackMetadataSchema>;
+
+/** The newest published Language Pack of a pack format, as the backend announces it. */
+export const PublishedPackSchema = z.object({
+  contentVersion: PackMetadataSchema.shape.contentVersion,
+  packFormat: PackMetadataSchema.shape.packFormat,
+  /** The size of the pack file, in bytes. */
+  size: z.int().positive(),
+  /** The SHA-256 of the pack file, as 64 lowercase hex digits; not the content checksum. */
+  fileSha256: z.string().regex(/^[0-9a-f]{64}$/, 'Expected 64 lowercase hex digits'),
+});
+
+export type PublishedPack = z.infer<typeof PublishedPackSchema>;

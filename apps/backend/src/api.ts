@@ -16,6 +16,9 @@ export function logUnexpectedFailure(logger: Logger, error: unknown): void {
   logger.error({ err: error }, 'unexpected failure');
 }
 
+/** The API's name in its OpenAPI description. */
+const TITLE = 'SLOVO API';
+
 /** What a request brings to the API. */
 interface ApiContext {
   /** The request's logger, which carries its request id. */
@@ -54,9 +57,9 @@ export function createApiHandler({ contentPacks }: { contentPacks: ContentPacks 
       new OpenAPIReferencePlugin({
         docsPath: '/docs',
         specPath: '/docs/openapi.json',
-        docsTitle: 'SLOVO API',
+        docsTitle: TITLE,
         schemaConverters: [new ZodToJsonSchemaConverter()],
-        specGenerateOptions: { info: { title: 'SLOVO API', version: '1' } },
+        specGenerateOptions: { info: { title: TITLE, version: '1' } },
       }),
     ],
   });

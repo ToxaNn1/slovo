@@ -3,7 +3,7 @@
  * the backend's adapters give. Modules take them in an object of dependencies,
  * so a test gives its own.
  */
-import type { PublishedPack } from '@slovo/contracts/api';
+import type { PublishedPack } from '@slovo/contracts';
 
 /** The current time, injected so the rules that read it stay testable. */
 export interface Clock {

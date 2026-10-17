@@ -1,8 +1,8 @@
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { EDITIONS_DIR } from '@slovo/language-pack/edition';
+import { EDITIONS_DIR, editionFiles, openEdition } from '@slovo/language-pack/edition';
 import { describe, expect, it, onTestFinished } from 'vitest';
 
 import { testApp } from '../test-support';
@@ -17,13 +17,13 @@ function editionsFolder(ids: readonly string[]): string {
   onTestFinished(() => {
     rmSync(dir, { recursive: true, force: true });
   });
+  const ukrainian = openEdition(EDITIONS_DIR, 'uk');
   for (const id of ids) {
-    mkdirSync(join(dir, id));
-    cpSync(join(EDITIONS_DIR, 'uk', 'strings.json'), join(dir, id, 'strings.json'));
-    const config = JSON.parse(
-      readFileSync(join(EDITIONS_DIR, 'uk', 'edition.json'), 'utf8'),
-    ) as object;
-    writeFileSync(join(dir, id, 'edition.json'), JSON.stringify({ ...config, id }));
+    const edition = editionFiles(join(dir, id));
+    mkdirSync(edition.dir);
+    copyFileSync(ukrainian.path('strings'), edition.path('strings'));
+    const config = JSON.parse(readFileSync(ukrainian.path('config'), 'utf8')) as object;
+    writeFileSync(edition.path('config'), JSON.stringify({ ...config, id }));
   }
   return dir;
 }
