@@ -1,7 +1,7 @@
 import type { AppStateStatus, NativeEventSubscription } from 'react-native';
 
 /** The device's app state, as React Native's `AppState` gives it. */
-interface AppStateSource {
+export interface AppStateSource {
   readonly currentState: AppStateStatus;
   addEventListener(
     type: 'change',
@@ -9,7 +9,10 @@ interface AppStateSource {
   ): NativeEventSubscription;
 }
 
-/** Whether the app is in the foreground, read from one source for every reader in the shell. */
+/**
+ * Whether the app is in the foreground, read from one subscription for every
+ * reader of it, such as the Feed. The app's moments come from `reportForeground`.
+ */
 export interface Foreground {
   /** Whether the app is in the foreground now. */
   readonly active: () => boolean;

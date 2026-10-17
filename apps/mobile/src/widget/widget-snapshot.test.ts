@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   STAGED_WIDGET_SNAPSHOT_FILE,
   WIDGET_SNAPSHOT_FILE,
-  writeWidgetSnapshots,
+  createWidgetSnapshotWriter,
   type WidgetDevice,
 } from './widget-snapshot';
 
@@ -64,22 +64,6 @@ function fakeDevice() {
   return { device, files, steps, failure };
 }
 
-/** The app's moves to the background, which the test makes one at a time. */
-function backgrounds() {
-  const listeners = new Set<() => void>();
-  return {
-    onBackground: (listener: () => void) => {
-      listeners.add(listener);
-      return () => {
-        listeners.delete(listener);
-      };
-    },
-    leave: () => {
-      for (const listener of listeners) listener();
-    },
-  };
-}
-
 /** Lets every pending write finish. */
 const settled = () => new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -88,14 +72,12 @@ afterEach(() => {
 });
 
 describe('writing the Widget Snapshot into the App Group', () => {
-  it('writes the snapshot when the composition opens, staged first and renamed over the file the widget reads', async () => {
+  it('writes the snapshot staged first and renamed over the file the widget reads', async () => {
     const { device, files, steps } = fakeDevice();
 
-    writeWidgetSnapshots({
-      device,
-      snapshot: () => Promise.resolve(snapshotAt('2026-10-16T06:00:00.000Z')),
-      onBackground: backgrounds().onBackground,
-    });
+    createWidgetSnapshotWriter(device)(() =>
+      Promise.resolve(snapshotAt('2026-10-16T06:00:00.000Z')),
+    );
     await settled();
 
     expect(steps.slice(0, 2)).toEqual([
@@ -111,11 +93,9 @@ describe('writing the Widget Snapshot into the App Group', () => {
   it('asks WidgetKit to reload the timelines after the rename', async () => {
     const { device, steps } = fakeDevice();
 
-    writeWidgetSnapshots({
-      device,
-      snapshot: () => Promise.resolve(snapshotAt('2026-10-16T06:00:00.000Z')),
-      onBackground: backgrounds().onBackground,
-    });
+    createWidgetSnapshotWriter(device)(() =>
+      Promise.resolve(snapshotAt('2026-10-16T06:00:00.000Z')),
+    );
     await settled();
 
     expect(steps).toEqual([
@@ -125,19 +105,16 @@ describe('writing the Widget Snapshot into the App Group', () => {
     ]);
   });
 
-  it('writes the snapshot of that moment every time the app goes to the background', async () => {
+  it('writes the snapshot of that moment each time it is asked', async () => {
     const { device, files } = fakeDevice();
-    const app = backgrounds();
+    const write = createWidgetSnapshotWriter(device);
     let now = '2026-10-16T06:00:00.000Z';
-    writeWidgetSnapshots({
-      device,
-      snapshot: () => Promise.resolve(snapshotAt(now)),
-      onBackground: app.onBackground,
-    });
+    const snapshot = () => Promise.resolve(snapshotAt(now));
+    write(snapshot);
     await settled();
 
     now = '2026-10-16T07:30:00.000Z';
-    app.leave();
+    write(snapshot);
     await settled();
 
     expect(JSON.parse(files.get(WIDGET_SNAPSHOT_FILE) ?? '')).toMatchObject({ writtenAt: now });
@@ -145,21 +122,17 @@ describe('writing the Widget Snapshot into the App Group', () => {
 
   it('writes one snapshot after the other, so an older one never lands last', async () => {
     const { device, files } = fakeDevice();
-    const app = backgrounds();
+    const write = createWidgetSnapshotWriter(device);
     let finishFirst: (snapshot: WidgetSnapshot) => void = () => undefined;
-    const snapshots = [
-      new Promise<WidgetSnapshot>((resolve) => {
-        finishFirst = resolve;
-      }),
-      Promise.resolve(snapshotAt('2026-10-16T07:30:00.000Z')),
-    ];
-    writeWidgetSnapshots({
-      device,
-      snapshot: () => snapshots.shift() ?? Promise.reject(new Error('no more')),
-      onBackground: app.onBackground,
-    });
 
-    app.leave();
+    write(
+      () =>
+        new Promise<WidgetSnapshot>((resolve) => {
+          finishFirst = resolve;
+        }),
+    );
+    write(() => Promise.resolve(snapshotAt('2026-10-16T07:30:00.000Z')));
+    await settled();
     finishFirst(snapshotAt('2026-10-16T06:00:00.000Z'));
     await settled();
 
@@ -169,31 +142,28 @@ describe('writing the Widget Snapshot into the App Group', () => {
   });
 
   it.each(['write', 'replace'] as const)(
-    'ignores a failed %s, keeps the last good file and tries again at the next background',
+    'ignores a failed %s, keeps the last good file and tries again at the next write',
     async (failing) => {
       vi.spyOn(console, 'warn').mockImplementation(() => undefined);
       const { device, files, steps, failure } = fakeDevice();
-      const app = backgrounds();
+      const write = createWidgetSnapshotWriter(device);
       let now = '2026-10-16T06:00:00.000Z';
-      writeWidgetSnapshots({
-        device,
-        snapshot: () => Promise.resolve(snapshotAt(now)),
-        onBackground: app.onBackground,
-      });
+      const snapshot = () => Promise.resolve(snapshotAt(now));
+      write(snapshot);
       await settled();
       const lastGood = files.get(WIDGET_SNAPSHOT_FILE);
       steps.length = 0;
 
       failure.failing = failing;
       now = '2026-10-16T07:30:00.000Z';
-      app.leave();
+      write(snapshot);
       await settled();
 
       expect(files.get(WIDGET_SNAPSHOT_FILE)).toBe(lastGood);
       expect(steps).not.toContain('reload');
 
       failure.failing = undefined;
-      app.leave();
+      write(snapshot);
       await settled();
 
       expect(JSON.parse(files.get(WIDGET_SNAPSHOT_FILE) ?? '')).toMatchObject({ writtenAt: now });
@@ -205,11 +175,9 @@ describe('writing the Widget Snapshot into the App Group', () => {
     vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     const { device, steps } = fakeDevice();
 
-    writeWidgetSnapshots({
-      device,
-      snapshot: () => Promise.reject(new Error('the Language Pack is closed')),
-      onBackground: backgrounds().onBackground,
-    });
+    createWidgetSnapshotWriter(device)(() =>
+      Promise.reject(new Error('the Language Pack is closed')),
+    );
     await settled();
 
     expect(steps).toEqual([]);
@@ -217,30 +185,10 @@ describe('writing the Widget Snapshot into the App Group', () => {
 
   it('builds and writes nothing without the native modules, on a dev client from before the 0.6 build', async () => {
     const snapshot = vi.fn(() => Promise.resolve(snapshotAt('2026-10-16T06:00:00.000Z')));
-    const app = backgrounds();
 
-    writeWidgetSnapshots({ device: undefined, snapshot, onBackground: app.onBackground });
-    app.leave();
+    createWidgetSnapshotWriter(undefined)(snapshot);
     await settled();
 
     expect(snapshot).not.toHaveBeenCalled();
-  });
-
-  it('writes nothing more once stopped', async () => {
-    const { device, steps } = fakeDevice();
-    const app = backgrounds();
-    const stop = writeWidgetSnapshots({
-      device,
-      snapshot: () => Promise.resolve(snapshotAt('2026-10-16T06:00:00.000Z')),
-      onBackground: app.onBackground,
-    });
-    await settled();
-    steps.length = 0;
-
-    stop();
-    app.leave();
-    await settled();
-
-    expect(steps).toEqual([]);
   });
 });

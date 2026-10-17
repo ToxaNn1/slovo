@@ -7,7 +7,6 @@ import { useCallback } from 'react';
 import { useOpenScreen } from '../entries/use-open-screen';
 import type { Opening } from '../opening';
 import { useAccountSummary } from './account';
-import { refreshAccount } from './account-lifecycle';
 
 /**
  * The «SLOVO ID» row of Settings, with «Увійти» or the email, which opens the
@@ -18,7 +17,13 @@ export function AccountRow({ opening }: { opening: Opening<Account> }) {
   const summary = useAccountSummary(opening);
   useFocusEffect(
     useCallback(() => {
-      refreshAccount(opening);
+      // The Account checks its Session with the server at most once an hour.
+      opening
+        .opened()
+        .then((account) => account.refresh())
+        .catch((error: unknown) => {
+          console.error('Could not refresh the Account', error);
+        });
     }, [opening]),
   );
   return (
