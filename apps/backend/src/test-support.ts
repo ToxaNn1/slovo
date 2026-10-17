@@ -1,11 +1,15 @@
 import { randomUUID } from 'node:crypto';
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
 
 import { createApiClient } from '@slovo/contracts/api';
-import { EDITIONS_DIR } from '@slovo/language-pack/edition';
-import { systemClock } from '@slovo/server-core';
+import type { EditionConfig } from '@slovo/contracts';
+import { EDITIONS_DIR, editionFiles, openEdition } from '@slovo/language-pack/edition';
+import { systemClock, type Mail, type Mailer } from '@slovo/server-core';
 import pg from 'pg';
 import { pino } from 'pino';
-import { inject } from 'vitest';
+import { inject, onTestFinished } from 'vitest';
 
 import { createApp, type AppDependencies } from './app';
 import { createDatabase } from './database/database';
@@ -67,10 +71,63 @@ async function onServer(serverUrl: string, statement: string): Promise<void> {
 }
 
 /**
+ * An editions folder made for one test, with an Edition for each id, each a
+ * copy of the Ukrainian Edition's config, strings and content manifest under
+ * its own id.
+ * `change` changes each config.
+ */
+export function editionsFolder(
+  ids: readonly string[],
+  change: (config: EditionConfig) => EditionConfig = (config) => config,
+): string {
+  const dir = mkdtempSync(join(tmpdir(), 'slovo-editions-'));
+  onTestFinished(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+  const ukrainian = openEdition(EDITIONS_DIR, 'uk');
+  for (const id of ids) {
+    const edition = editionFiles(join(dir, id));
+    mkdirSync(dirname(edition.path('manifest')), { recursive: true });
+    copyFileSync(ukrainian.path('strings'), edition.path('strings'));
+    copyFileSync(ukrainian.path('manifest'), edition.path('manifest'));
+    const config = JSON.parse(readFileSync(ukrainian.path('config'), 'utf8')) as EditionConfig;
+    writeFileSync(edition.path('config'), JSON.stringify(change({ ...config, id })));
+  }
+  return dir;
+}
+
+/** A Mailer that keeps every email it is given, so a test reads the Sign-in code. */
+export interface FakeMailer extends Mailer {
+  /** Every email sent, oldest first. */
+  readonly sent: readonly Mail[];
+  /** The six digits of the newest email to the address. Throws when none was sent. */
+  codeSentTo(email: string): string;
+}
+
+export function createFakeMailer(): FakeMailer {
+  const sent: Mail[] = [];
+  return {
+    sent,
+    send: (mail) => {
+      sent.push(mail);
+      return Promise.resolve();
+    },
+    codeSentTo(email) {
+      const code = sent.findLast((mail) => mail.to === email)?.text.match(/\b[0-9]{6}\b/)?.[0];
+      if (code === undefined) throw new Error(`no Sign-in code was sent to ${email}`);
+      return code;
+    },
+  };
+}
+
+/** The secret the test backends sign their Sessions with. */
+const TEST_AUTH_SECRET = 'a-test-secret-that-is-at-least-32-characters';
+
+/**
  * The backend built by its composition root on this run's database, with a
- * silent logger, the system clock and the repo's Editions unless the test
- * gives its own, and the API's client. Requests go to the app in process
- * (`app.request`, or the client), so no port is opened.
+ * silent logger, the system clock, the repo's Editions and a fake Mailer
+ * unless the test gives its own, and the API's client. Requests go to the app
+ * in process (`app.request`, or the client), so no port is opened.
  */
 export function testApp(dependencies: Partial<AppDependencies> = {}) {
   const database = dependencies.database ?? createDatabase(inject('databaseUrl'), silentLogger);
@@ -79,13 +136,24 @@ export function testApp(dependencies: Partial<AppDependencies> = {}) {
     clock: systemClock,
     logger: silentLogger,
     editions: readEditions(EDITIONS_DIR),
+    mailer: createFakeMailer(),
+    authSecret: TEST_AUTH_SECRET,
     ...dependencies,
   });
   // The client the app uses, built from the contract, with its fetch pointed
   // at the app in process.
-  const client = createApiClient({
-    url: 'http://backend.test',
-    fetch: (request) => Promise.resolve(app.fetch(request)),
-  });
-  return { app, client, database, close: () => database.close() };
+  const clientWith = (headers: Record<string, string>) =>
+    createApiClient({
+      url: 'http://backend.test',
+      fetch: (request) => Promise.resolve(app.fetch(request)),
+      headers,
+    });
+  return {
+    app,
+    client: clientWith({}),
+    /** The client of a device signed in with the Session's token. */
+    clientOf: (token: string) => clientWith({ authorization: `Bearer ${token}` }),
+    database,
+    close: () => database.close(),
+  };
 }

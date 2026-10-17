@@ -1,6 +1,7 @@
 // The backend's entry point (`pnpm dev`, `pnpm start`).
 import { systemClock } from '@slovo/server-core';
 
+import { createSmtpMailer } from './account/smtp-mailer';
 import { createApp } from './app';
 import { readConfig, ServerConfigSchema } from './config';
 import { createDatabase } from './database/database';
@@ -12,7 +13,15 @@ const config = readConfig(ServerConfigSchema, process.env);
 const logger = createLogger();
 const database = createDatabase(config.DATABASE_URL, logger);
 const editions = readEditions(config.EDITIONS_DIR);
-const app = createApp({ database, clock: systemClock, logger, editions });
+const mailer = createSmtpMailer({ url: config.SMTP_URL, from: config.MAIL_FROM });
+const app = createApp({
+  database,
+  clock: systemClock,
+  logger,
+  editions,
+  mailer,
+  authSecret: config.AUTH_SECRET,
+});
 const server = await startServer({ app, database, port: config.PORT });
 logger.info({ port: server.port }, 'listening');
 

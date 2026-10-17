@@ -6,6 +6,8 @@ export const ServerConfigSchema = z.object({
   DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/, error: 'must be a postgres:// URL' }),
   SMTP_URL: z.url({ protocol: /^smtps?$/, error: 'must be an smtp:// or smtps:// URL' }),
   AUTH_SECRET: z.string().min(32, 'must be at least 32 characters'),
+  // The address the sign-in emails come from; the Edition names the sender.
+  MAIL_FROM: z.email({ error: 'must be an email address' }).default('no-reply@slovo.app'),
   // 0 takes any free port.
   PORT: z.coerce.number().int().min(0).max(65535).default(8787),
   // The folder that holds one folder per Edition (ADR 0035).

@@ -1,13 +1,16 @@
 import {
+  createAccounts,
   createContentPacks,
   createEditionRegistry,
   type Clock,
   type Edition,
+  type Mailer,
 } from '@slovo/server-core';
 import { Hono } from 'hono';
 import { requestId, type RequestIdVariables } from 'hono/request-id';
 import type { Logger } from 'pino';
 
+import { createAuthenticator } from './account/authenticator';
 import { createApiHandler, INTERNAL_FAILURE, logUnexpectedFailure } from './api';
 import { createContentPackStore } from './content/content-pack-store';
 import type { Database } from './database/database';
@@ -19,6 +22,10 @@ export interface AppDependencies {
   readonly logger: Logger;
   /** Every Edition the backend serves, read from the Edition folders at start. */
   readonly editions: readonly Edition[];
+  /** Sends the sign-in emails. */
+  readonly mailer: Mailer;
+  /** Signs the Sessions' tokens. */
+  readonly authSecret: string;
 }
 
 type Variables = RequestIdVariables & { logger: Logger };
@@ -27,13 +34,26 @@ type Variables = RequestIdVariables & { logger: Logger };
  * The composition root: builds the whole backend from the dependencies it is
  * given. `main.ts` gives the real ones; a test gives its own.
  */
-export function createApp({ database, clock, logger, editions }: AppDependencies) {
+export function createApp({
+  database,
+  clock,
+  logger,
+  editions,
+  mailer,
+  authSecret,
+}: AppDependencies) {
+  const editionRegistry = createEditionRegistry(editions);
+  const accounts = createAccounts({
+    editions: editionRegistry,
+    authenticator: createAuthenticator(database, { secret: authSecret, logger }),
+    mailer,
+  });
   const contentPacks = createContentPacks({
-    editions: createEditionRegistry(editions),
+    editions: editionRegistry,
     store: createContentPackStore(database),
     clock,
   });
-  const api = createApiHandler({ contentPacks });
+  const api = createApiHandler({ accounts, contentPacks });
 
   const app = new Hono<{ Variables: Variables }>();
 
@@ -71,7 +91,7 @@ export function createApp({ database, clock, logger, editions }: AppDependencies
   for (const path of ['/v1/*', '/docs', '/docs/*']) {
     app.use(path, async (c, next) => {
       const { matched, response } = await api.handle(c.req.raw, {
-        context: { logger: c.var.logger },
+        context: { logger: c.var.logger, headers: c.req.raw.headers },
       });
       if (matched) return c.newResponse(response.body, response);
       return next();

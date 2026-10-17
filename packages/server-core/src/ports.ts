@@ -40,3 +40,55 @@ export interface PackFile {
 export interface ContentPack extends PackFile {
   readonly publishedAt: Date;
 }
+
+/** An Account as the server Core sees it. */
+export interface AccountRecord {
+  readonly id: string;
+  /** Trimmed and lower-cased. */
+  readonly email: string;
+  readonly createdAt: Date;
+}
+
+/** What checking a Sign-in code gives the Authenticator. */
+export type CodeCheck =
+  | { readonly ok: true; readonly token: string; readonly account: AccountRecord }
+  /** The code is not the one last sent to the email; `triesLeft` more may be tried. */
+  | { readonly ok: false; readonly reason: 'wrong-code'; readonly triesLeft: number }
+  /** No code is waiting for the email: it ran out of time, or none was sent. */
+  | { readonly ok: false; readonly reason: 'code-expired' }
+  /** Every try of the code is spent. */
+  | { readonly ok: false; readonly reason: 'too-many-tries' };
+
+/**
+ * Signs readers in: keeps the Sign-in codes and the Sessions of the Accounts
+ * (better-auth in the backend). Emails reach it trimmed and lower-cased.
+ */
+export interface Authenticator {
+  /**
+   * Makes a new Sign-in code for the email, in place of any code made for it
+   * before, and gives it back to be sent. It keeps only the code's hash.
+   */
+  createCode(email: string): Promise<string>;
+  /**
+   * Checks the code against the one last made for the email. The first right
+   * code for an email creates its Account; a right code starts a Session.
+   */
+  checkCode(email: string, code: string): Promise<CodeCheck>;
+  /** The Account of the Session the token carries, if the Session is on. Using a Session extends it. */
+  accountOf(token: string): Promise<AccountRecord | undefined>;
+}
+
+/** An email to one reader, in plain text. */
+export interface Mail {
+  readonly to: string;
+  /** The sender's name, which the reader sees beside the sender's address. */
+  readonly senderName: string;
+  /** One line. */
+  readonly subject: string;
+  readonly text: string;
+}
+
+/** Sends emails (SMTP in the backend). */
+export interface Mailer {
+  send(mail: Mail): Promise<void>;
+}

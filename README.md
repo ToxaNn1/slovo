@@ -179,6 +179,13 @@ The backend serves every Edition from one deployment ([ADR 0008](docs/adr/0008-o
    curl -i 'http://localhost:8787/v1/editions/uk/content/latest?packFormat=1'
    ```
 
+   To sign in by hand, ask for a Sign-in code, read it in Mailpit at <http://localhost:8025>, then send it back for a Session's token, which `/v1/account/me` takes as `Authorization: Bearer <token>`:
+
+   ```sh
+   curl -i -H 'content-type: application/json' -d '{"email":"anna@example.com","editionId":"uk"}' http://localhost:8787/v1/account/sign-in-codes
+   curl -i -H 'content-type: application/json' -d '{"email":"anna@example.com","code":"123456"}' http://localhost:8787/v1/account/sessions
+   ```
+
 5. Run the backend's tests. Each run makes a database with a random name on the local Postgres, runs the migrations on it and drops it at the end, so runs in parallel worktrees never meet. The tests call the backend through the API's client built from the contract, the one the app uses, with its fetch pointed at the backend in process, so no port is opened. When Postgres is not reachable, the run stops and asks you to start Docker. `pnpm test` from the root runs them with every other package's; CI runs them in the job "Backend" on a Postgres 17 service, after running every migration on an empty database. `DATABASE_URL` names another Postgres server for the tests.
 
    ```sh

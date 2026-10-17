@@ -3,9 +3,10 @@ import { OpenAPIReferencePlugin } from '@orpc/openapi/plugins';
 import { implement, ORPCError } from '@orpc/server';
 import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4';
 import { apiContract } from '@slovo/contracts/api';
-import type { ContentPacks } from '@slovo/server-core';
+import type { Accounts, ContentPacks } from '@slovo/server-core';
 import type { Logger } from 'pino';
 
+import { accountProcedures } from './account/account-procedures';
 import { contentProcedures } from './content/content-procedures';
 
 /** What every unexpected failure answers, with status 500: nothing internal (spec #333). */
@@ -23,6 +24,8 @@ const TITLE = 'SLOVO API';
 interface ApiContext {
   /** The request's logger, which carries its request id. */
   logger: Logger;
+  /** The request's headers, where a Session travels. */
+  headers: Headers;
 }
 
 /**
@@ -31,10 +34,17 @@ interface ApiContext {
  * for the document itself). A procedure answers the error codes the contract
  * lists; anything else is a bare `500 { code: "INTERNAL" }`.
  */
-export function createApiHandler({ contentPacks }: { contentPacks: ContentPacks }) {
+export function createApiHandler({
+  accounts,
+  contentPacks,
+}: {
+  accounts: Accounts;
+  contentPacks: ContentPacks;
+}) {
   const router = implement(apiContract)
     .$context<ApiContext>()
     .router({
+      account: accountProcedures(accounts),
       content: contentProcedures(contentPacks),
     });
   return new OpenAPIHandler(router, {

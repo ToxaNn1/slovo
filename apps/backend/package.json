@@ -23,8 +23,10 @@
     "@slovo/contracts": "workspace:*",
     "@slovo/language-pack": "workspace:*",
     "@slovo/server-core": "workspace:*",
+    "better-auth": "^1.7.9",
     "drizzle-orm": "^0.45.4",
     "hono": "^4.13.13",
+    "nodemailer": "^10.1.1",
     "pg": "^8.23.1",
     "pino": "^10.4.0",
     "tsx": "^4.23.15",
@@ -33,6 +35,7 @@
   "devDependencies": {
     "@slovo/config": "workspace:*",
     "@types/node": "^22.20.5",
+    "@types/nodemailer": "^8.0.2",
     "@types/pg": "^8.23.1",
     "drizzle-kit": "^0.31.11",
     "eslint": "^10.12.0",
