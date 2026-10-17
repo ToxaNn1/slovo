@@ -67,11 +67,12 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - assertVisible: Очистити Історію?
 # A tap while the alert still opens is lost.
 - waitForAnimationToEnd
-# The alert's button, below the screen's own button of the same label.
+# The alert's button, below its message: the screen's own button is hidden
+# from Maestro while the alert shows and cannot anchor it.
 - tapOn:
     text: Очистити
     below:
-      id: history-clear
+      text: Улюблене й Колекції залишаться.
 - assertVisible:
     id: history-empty
 - assertNotVisible:
