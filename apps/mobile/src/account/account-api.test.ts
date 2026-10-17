@@ -177,11 +177,23 @@ describe('the Account API over the contract’s client', () => {
     await expect(calls[call](accountApi)).resolves.toEqual({ ok: false, reason: 'offline' });
   });
 
-  it('rejects an answer no retry can change, such as an Edition the backend doesn’t serve', async () => {
-    const { accountApi } = accountApiAnswering(() => failure('NOT_FOUND', 404));
+  it.each(
+    everyCall.flatMap((call) => [
+      [call, 'BAD_REQUEST', 400] as const,
+      [call, 'NOT_FOUND', 404] as const,
+    ]),
+  )('%s answers unexpected when the backend answers %s', async (call, code, status) => {
+    const { accountApi } = accountApiAnswering(() => failure(code, status));
 
-    await expect(accountApi.requestCode('anna@example.com')).rejects.toMatchObject({
-      status: 404,
+    await expect(calls[call](accountApi)).resolves.toEqual({ ok: false, reason: 'unexpected' });
+  });
+
+  it('answers unexpected for a Session ended on a call that carries none', async () => {
+    const { accountApi } = accountApiAnswering(() => failure('UNAUTHORIZED', 401));
+
+    await expect(accountApi.requestCode('anna@example.com')).resolves.toEqual({
+      ok: false,
+      reason: 'unexpected',
     });
   });
 });

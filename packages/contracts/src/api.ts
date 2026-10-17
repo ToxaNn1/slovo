@@ -16,6 +16,12 @@ export { PACK_MEDIA_TYPE } from './api/content';
 export { ORPCError } from '@orpc/client';
 
 /**
+ * Settles a call into its output or the error it threw, with the errors the
+ * contract defines for its procedure typed by their codes and data.
+ */
+export { safe, type ClientPromiseResult } from '@orpc/client';
+
+/**
  * The API contract: the only description of the backend's API (spec #333).
  * The backend implements it and the app calls it through `createApiClient`,
  * so a mismatch fails typecheck. One router per domain. Within `/v1` it only

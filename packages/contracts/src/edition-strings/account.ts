@@ -26,6 +26,8 @@ const AccountProblemsSchema = z.strictObject({
   'code-expired': TextSchema,
   /** Too many requests, for this email or from this network. */
   'too-many-requests': TextSchema,
+  /** The backend answered what the request never expects, such as an Edition it doesn't serve. */
+  unexpected: TextSchema,
 });
 
 /**

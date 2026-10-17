@@ -198,6 +198,7 @@ describe('a failed check', () => {
   it.each([
     ['finds no such Edition', 'not-found'],
     ['holds the request back', 'too-many-requests'],
+    ['answers what the request never expects', 'unexpected'],
   ] as const)('is not tried again when the backend %s', async (_, reason) => {
     const app = device();
     app.contentApi.fail('latest', reason);
