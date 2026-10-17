@@ -10,6 +10,7 @@ const installed: NativeModuleProbes = {
   timePicker: () => true,
   widget: () => true,
   shareCapture: () => true,
+  contentUpdates: () => true,
   keychain: () => true,
 };
 
