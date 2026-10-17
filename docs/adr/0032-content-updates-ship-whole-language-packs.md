@@ -20,3 +20,16 @@ Entry ids never change meaning (ADR 0010), so Favorites, Collections, History, H
 - **Packs in object storage**: rejected for now. One backend instance and packs of a few megabytes need none; it returns when packs grow too large for a row or there are several instances.
 - **Overwrite a published version**: rejected. Two devices could hold different packs under one content version, which ADR 0011 rules out.
 - **The rules of publishing in the adapter**: rejected. The server Core holds the backend's rules (ADR 0030); the adapter only keeps them atomic.
+
+## Amendment: the shell opens the chosen pack, and a client without the file system keeps content updates off (0.7, #347)
+
+The Language Pack's opening (ADR 0036) now opens the pack of the app run with `openLaunchPack` (`apps/mobile/src/content-update/launch-pack.ts`). It opens the bundled pack first, since the Content update module needs its version, and then, when content updates are on, asks the module's `choosePack`. When the kept pack wins, it opens it through `openPack` like the bundled one, so a pack of another Edition is refused, and closes the bundled one. A kept pack that fails to open is forgotten and the bundled one opens; the next due check downloads a pack again. The opening is ready with the reader and the Content update module, which the lifecycle adapter asks to check at launch and on each return to the foreground; the module limits the checks to one a day.
+
+Content updates are on only when the Edition's `contentUpdates` Feature Switch is on and the native-modules check reports `expo-file-system`, which keeps the downloaded pack. Otherwise, or when the module fails to open, the bundled pack opens as before content updates, so a development client built before the 0.6 native batch starts as it did.
+
+The `PackFiles` adapter keeps each downloaded pack as its own file, named by its content version, in `content-update/` in the app's documents directory, with a record of the kept one's version beside it. Keeping a newer pack writes a new file and never touches the file of the pack open in this run; the files of older packs are thrown away at the next launch, before a pack opens. The file comes from the contract's client as a `Blob`, read with `FileReader`, since React Native's `Blob` has no `arrayBuffer()`.
+
+### Considered Options
+
+- **Copy the kept pack over the bundled one's file at launch**: rejected. The bundled pack is copied into place on every launch, so the app always has the pack it shipped with, and a copy of 2 MB on every launch costs time the splash would show.
+- **Turn content updates on without the file-system module, keeping the pack in memory**: rejected. A pack that opens from the next launch must outlive the app run.

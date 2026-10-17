@@ -10,7 +10,8 @@ import { createNativeModules } from './native-module';
  * registry. The widget needs two: `expo-file-system` for the App Group's
  * container and the Apple targets' storage module, which asks WidgetKit to
  * reload. Sharing needs the view capture, with `expo-file-system` to move
- * its image into the cache.
+ * its image into the cache. Content updates need `expo-file-system` to keep
+ * a downloaded Language Pack.
  */
 export const nativeModules = createNativeModules({
   notifications: () =>
@@ -23,4 +24,5 @@ export const nativeModules = createNativeModules({
   shareCapture: () =>
     TurboModuleRegistry.get('RNViewShot') !== null &&
     requireOptionalNativeModule('FileSystem') !== null,
+  contentUpdates: () => requireOptionalNativeModule('FileSystem') !== null,
 });

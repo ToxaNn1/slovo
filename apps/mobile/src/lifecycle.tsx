@@ -3,9 +3,11 @@ import { AppState } from 'react-native';
 
 import { useComposition } from './composition';
 import { deviceClock } from './device/device-clock';
+import { languagePackOpening } from './edition/language-pack';
 import { deviceWidget } from './widget/device-widget';
 import { createForeground } from './foreground/foreground';
 import { reportForeground } from './foreground/foreground-reports';
+import { useOpened } from './opening';
 import { writeWidgetSnapshots } from './widget/widget-snapshot';
 
 /** The shell's one source of the foreground, for this adapter and the Feed alike. */
@@ -22,10 +24,13 @@ export function useInForeground(): boolean {
  * when the next local day starts while the app is open. The composition
  * decides what changed (a new local day, the permission). It also writes the
  * Widget Snapshot once the composition is open and each time the app goes to
- * the background. Draws nothing.
+ * the background, and checks for a Content update at launch and each time the
+ * app comes back, when content updates are on; the Content update module
+ * checks at most once a day. Draws nothing.
  */
 export function Lifecycle() {
   const composition = useComposition();
+  const { contentUpdate } = useOpened(languagePackOpening);
   useEffect(() => {
     return reportForeground({
       resume() {
@@ -54,5 +59,13 @@ export function Lifecycle() {
       },
     });
   }, [composition]);
+  useEffect(() => {
+    if (contentUpdate === undefined) return;
+    // It never rejects.
+    void contentUpdate.checkForUpdate();
+    return foreground.subscribe(() => {
+      if (foreground.active()) void contentUpdate.checkForUpdate();
+    });
+  }, [contentUpdate]);
   return null;
 }
