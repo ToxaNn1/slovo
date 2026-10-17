@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { AccountStringsSchema, EmailStringsSchema } from './account';
 import { appStringsShape } from './app';
 import { CollectionsStringsSchema } from './collections';
 import { CorrectionCardStringsSchema } from './correction-card';
@@ -49,8 +50,11 @@ export const EditionStringsSchema = z.strictObject({
   game: GameStringsSchema,
   widget: WidgetStringsSchema,
   share: ShareStringsSchema,
+  account: AccountStringsSchema,
+  email: EmailStringsSchema,
 });
 
 export type EditionStrings = z.infer<typeof EditionStringsSchema>;
 
+export { ACCOUNT_NAME } from './account';
 export { fill, PluralLabelSchema, PluralSchema, type Plural, type PluralLabel } from './shared';

@@ -273,6 +273,115 @@ describe('the 0.6 share strings group', () => {
   });
 });
 
+describe('the 0.7 account and email strings groups', () => {
+  const strings = readJson('uk', 'strings') as Record<string, unknown>;
+  const account = strings['account'] as Record<string, unknown>;
+  const email = strings['email'] as Record<string, unknown>;
+  /** The issues the strings schema finds, as paths. */
+  const issuesOf = (changed: unknown) =>
+    EditionStringsSchema.safeParse(changed).error?.issues.map((issue) => issue.path.join('.'));
+  /** The group without the key. */
+  const without = (group: unknown, key: string) =>
+    Object.fromEntries(
+      Object.entries(group as Record<string, unknown>).filter(([name]) => name !== key),
+    );
+
+  it.each(['account', 'email'])('the Ukrainian Edition needs the %s group', (group) => {
+    expect(issuesOf(without(strings, group))).toEqual([group]);
+  });
+
+  it.each([
+    'signedOut',
+    'emailLabel',
+    'sendCode',
+    'codeLabel',
+    'resend',
+    'resendIn',
+    'changeEmail',
+    'signedInAs',
+    'signOut',
+    'signOutEverywhere',
+    'delete',
+    'problems',
+  ])('the Ukrainian Edition needs account.%s', (key) => {
+    expect(issuesOf({ ...strings, account: without(account, key) })).toEqual([`account.${key}`]);
+  });
+
+  it.each(['button', 'title', 'message', 'confirm', 'cancel'])(
+    'needs account.delete.%s, the confirmation of deleting the Account',
+    (key) => {
+      const deletion = account['delete'];
+
+      expect(
+        issuesOf({ ...strings, account: { ...account, delete: without(deletion, key) } }),
+      ).toEqual([`account.delete.${key}`]);
+    },
+  );
+
+  it.each(['offline', 'invalid-email', 'wrong-code', 'code-expired', 'too-many-requests'])(
+    'needs a line for the problem %s',
+    (problem) => {
+      const problems = without(account['problems'], problem);
+
+      expect(issuesOf({ ...strings, account: { ...account, problems } })).toEqual([
+        `account.problems.${problem}`,
+      ]);
+    },
+  );
+
+  it('rejects a line for a problem the Core never gives', () => {
+    const problems = { ...(account['problems'] as object), 'too-hard': 'Заважко.' };
+
+    expect(issuesOf({ ...strings, account: { ...account, problems } })).toEqual([
+      'account.problems',
+    ]);
+  });
+
+  it('needs the tries left in every form of the wrong-code line', () => {
+    const problems = {
+      ...(account['problems'] as object),
+      'wrong-code': { one: 'Невірний код.', other: 'Невірний код. Спроб: {count}.' },
+    };
+
+    expect(issuesOf({ ...strings, account: { ...account, problems } })).toEqual([
+      'account.problems.wrong-code.one',
+    ]);
+  });
+
+  it('needs the name SLOVO ID, which every Edition shares, in the words to delete it', () => {
+    const deletion = { ...(account['delete'] as object), button: 'Видалити акаунт' };
+
+    expect(issuesOf({ ...strings, account: { ...account, delete: deletion } })).toEqual([
+      'account.delete.button',
+    ]);
+  });
+
+  it.each(['subject', 'body'])('needs email.%s, with the {code} placeholder', (key) => {
+    expect(issuesOf({ ...strings, email: without(email, key) })).toEqual([`email.${key}`]);
+    expect(issuesOf({ ...strings, email: { ...email, [key]: 'Ваш код' } })).toEqual([
+      `email.${key}`,
+    ]);
+  });
+
+  it('needs the subject of the email to be one line, since it becomes a mail header', () => {
+    expect(issuesOf({ ...strings, email: { ...email, subject: 'Код {code}\nBcc: x@y' } })).toEqual([
+      'email.subject',
+    ]);
+  });
+
+  it('rejects a text that neither group has', () => {
+    expect(issuesOf({ ...strings, email: { ...email, footer: 'Дякуємо.' } })).toEqual(['email']);
+  });
+
+  it('gives every count of the Account the plural forms Ukrainian has', () => {
+    const categories = new Intl.PluralRules('uk-UA').resolvedOptions().pluralCategories;
+    const counts = pluralsOf(account);
+
+    expect(counts.length).toBeGreaterThan(0);
+    for (const forms of counts) expect(Object.keys(forms).sort()).toEqual([...categories].sort());
+  });
+});
+
 /** Every plural-forms object (one with an `other` form) in a strings group. */
 function pluralsOf(value: unknown): Record<string, string>[] {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return [];

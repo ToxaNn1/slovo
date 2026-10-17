@@ -14,9 +14,11 @@ describe('the Ukrainian Edition', () => {
     });
   });
 
-  it('turns the Game and Corrections on', () => {
+  it('turns the Game, Corrections, the Account and content updates on', () => {
     expect(edition.isFeatureEnabled('game')).toBe(true);
     expect(edition.isFeatureEnabled('corrections')).toBe(true);
+    expect(edition.isFeatureEnabled('account')).toBe(true);
+    expect(edition.isFeatureEnabled('contentUpdates')).toBe(true);
   });
 
   it('starts new users on the agreed defaults', () => {
