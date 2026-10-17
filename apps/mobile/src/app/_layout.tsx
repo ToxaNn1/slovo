@@ -18,6 +18,8 @@ import { useMemo, type ComponentProps } from 'react';
 import { Pressable } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+import { AccountLifecycle } from '../account/account-lifecycle';
+import { accountOpening } from '../account/device-account';
 import { edition, editionDecor, editionStrings, editionTokens } from '../edition/edition';
 import { hapticEngine } from '../haptics';
 import { languagePackOpening } from '../edition/language-pack';
@@ -150,6 +152,8 @@ function ThemedTabs() {
         <FontSizeProvider fontSize={fontSize}>
           <HapticsProvider haptics={haptics}>
             <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+            {/* The Account opens apart from the Language Pack and the composition (ADR 0037). */}
+            {accountOpening !== undefined && <AccountLifecycle opening={accountOpening} />}
             {/* Every screen draws over the open Language Pack and composition. */}
             <Opened opening={languagePackOpening} failedTestID="language-pack-failed">
               <Opened opening={compositionOpening} failedTestID="feed-error">

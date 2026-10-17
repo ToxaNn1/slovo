@@ -1,0 +1,47 @@
+import { openAccount, systemRandom, type Account, type SessionStore } from '@slovo/core';
+import { systemSchedule } from '@slovo/ui';
+
+import { apiClient, apiClientOf } from '../api';
+import { deviceClock } from '../device/device-clock';
+import { nativeModules } from '../device/device-native-modules';
+import { edition } from '../edition/edition';
+import { openOnce, type Opening } from '../opening';
+import { createAccountApi } from './account-api';
+import { createSessionStore } from './session-store';
+
+/**
+ * `expo-secure-store`, or undefined while the installed binary lacks it (a dev
+ * client built before the 0.7 batch). It is required here and nowhere else:
+ * a static import would stop the app at start.
+ */
+const keychain = nativeModules.load(
+  'keychain',
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  () => require('expo-secure-store') as typeof import('expo-secure-store'),
+);
+
+const api = createAccountApi({ client: apiClient, clientOf: apiClientOf, editionId: edition.id });
+
+const openOver = (sessions: SessionStore) =>
+  openAccount({
+    api,
+    sessions,
+    clock: deviceClock,
+    schedule: systemSchedule,
+    random: systemRandom,
+  });
+
+/**
+ * The reader's Account («SLOVO ID»), opened once per app run apart from the
+ * composition (ADR 0036, 0037), or undefined when the Edition's `account`
+ * switch is off. Its Session is in the Keychain, or in memory without it.
+ * When the Keychain can't be read, it opens signed out, in memory.
+ */
+export const accountOpening: Opening<Account> | undefined = edition.isFeatureEnabled('account')
+  ? openOnce(() => openOver(createSessionStore(keychain)), {
+      onError(error) {
+        console.error('Could not read the Session; signed out until the app restarts', error);
+      },
+      fallback: () => openOver(createSessionStore(undefined)),
+    })
+  : undefined;
