@@ -1,42 +1,52 @@
 import {
   colorSchemeFor,
-  createMemoryUserStatePort,
   createSettings,
-  openUserState,
   type ColorScheme,
   type Settings,
-  type UserState,
   type UserSettings,
 } from '@slovo/core';
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 import { Appearance, useColorScheme } from 'react-native';
 
 import { edition } from './edition/edition';
+import { openOnce, useSubscribed } from './opening';
 import { storedUserState } from './user-state/stored-user-state';
-
-// Opened once per app run, however often the provider mounts.
-let opening: Promise<{ settings: Settings; current: UserSettings }> | undefined;
-
-async function openSettingsOver(userState: UserState) {
-  const settings = createSettings({ userState, defaults: edition.userSettingDefaults });
-  return { settings, current: await settings.read() };
-}
-
-function openSettings() {
-  opening ??= storedUserState()
-    .then(openSettingsOver)
-    .catch(async (error: unknown) => {
-      // The app still starts on the Edition's defaults; choices last until it quits.
-      console.error('Could not read the settings; using the Edition defaults', error);
-      return openSettingsOver(await openUserState({ port: createMemoryUserStatePort() }));
-    });
-  return opening;
-}
 
 /** Makes native views (alerts, keyboards) follow the Theme too. */
 function applyToNativeViews({ theme }: UserSettings): void {
   Appearance.setColorScheme(theme === 'system' ? 'unspecified' : theme);
 }
+
+const { theme, fontSize, vibration } = edition.userSettingDefaults;
+const defaults: UserSettings = { theme, fontSize, vibration };
+
+async function settingsOverUserState(): Promise<Settings> {
+  return createSettings({ userState: await storedUserState.opened(), defaults });
+}
+
+/** The settings with those in effect, which native views follow from the start. */
+function opened(settings: Settings, current: UserSettings) {
+  applyToNativeViews(current);
+  return { settings, current };
+}
+
+/**
+ * The settings, opened once per app run over the user state, before the
+ * Language Pack. The app still starts when they can't be read, on the
+ * Edition's defaults.
+ */
+const settingsOpening = openOnce(
+  async () => {
+    const settings = await settingsOverUserState();
+    return opened(settings, await settings.read());
+  },
+  {
+    onError(error) {
+      console.error('Could not read the settings; using the Edition defaults', error);
+    },
+    fallback: async () => opened(await settingsOverUserState(), defaults),
+  },
+);
 
 interface SettingsContextValue {
   readonly current: UserSettings;
@@ -50,26 +60,19 @@ const SettingsContext = createContext<SettingsContextValue | undefined>(undefine
  * flashes in the wrong Theme, and keeps every change in the user state.
  */
 export function SettingsProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<{ settings: Settings; current: UserSettings }>();
+  const opening = useSubscribed(settingsOpening, ({ state }) => state);
+  /** The settings in effect once the reader changed one; until then those opened. */
+  const [changed, setChanged] = useState<UserSettings>();
 
-  useEffect(() => {
-    let active = true;
-    void openSettings().then((opened) => {
-      applyToNativeViews(opened.current);
-      if (active) setState(opened);
-    });
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  if (state === undefined) return null;
-  const { settings, current } = state;
+  // Nothing is drawn until the Theme is known.
+  if (opening.status !== 'ready') return null;
+  const { settings } = opening.value;
+  const current = changed ?? opening.value.current;
 
   function update(changes: Partial<UserSettings>) {
     const next = { ...current, ...changes };
     applyToNativeViews(next);
-    setState({ settings, current: next });
+    setChanged(next);
     settings.update(changes).catch((error: unknown) => {
       console.error('Could not keep the settings', error);
     });

@@ -19,8 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { editionStrings } from '../edition/edition';
 import { EntryActions } from '../entries/entry-actions';
 import { useFeed } from '../feed/feed';
-import { FeedLoadingScreen, TOP_ROW } from '../edition/feed-loading';
-import { LoadFailed } from '../edition/language-pack';
+import { TOP_ROW } from '../edition/feed-loading';
 import { StatsPillAndSheet } from '../progress';
 import { useSwipeHint } from '../feed/swipe-hint';
 
@@ -54,27 +53,23 @@ function FeedScreen() {
     setTurnTo(undefined);
   }, [turnTo]);
 
-  const ready = feed.status === 'ready' ? feed : undefined;
-  const cards = ready?.cards;
-  const readerPosition = ready?.readerPosition;
-  const onCardChange = ready?.onCardChange;
-  const openLinkedCorrection = ready?.openLinkedCorrection;
+  const { cards, readerPosition, onCardChange, openLinkedCorrection } = feed;
   const { dismiss: dismissSwipeHint } = swipeHint;
   // A hide or its undo drops or puts back cards, and the reader's card moves
   // with them: the pager shows it at once. When the Feed has no card to put
   // after a hidden one, the pager stays on its page.
   useEffect(() => {
-    const position = readerPosition?.();
-    if (cards === undefined || position === undefined || position >= cards.length) return;
+    const position = readerPosition();
+    if (position >= cards.length) return;
     pager.current?.showPage(position);
-    onCardChange?.(position);
+    onCardChange(position);
   }, [cards, readerPosition, onCardChange]);
 
   // Kept from render to render: a swipe re-renders the pager, and its pages
   // re-render only when their card changes.
   const openCorrection = useCallback(
     (position: number, correctionId: string) => {
-      openLinkedCorrection?.(position, correctionId).then(setTurnTo, (error: unknown) => {
+      openLinkedCorrection(position, correctionId).then(setTurnTo, (error: unknown) => {
         console.error('Could not open the linked Correction', error);
       });
     },
@@ -94,15 +89,13 @@ function FeedScreen() {
   );
   const onIndexChange = useCallback(
     (position: number) => {
-      onCardChange?.(position);
+      onCardChange(position);
       dismissSwipeHint();
     },
     [onCardChange, dismissSwipeHint],
   );
 
-  if (feed.status === 'loading') return <FeedLoadingScreen />;
-  if (feed.status === 'failed') return <LoadFailed onRetry={feed.retry} />;
-  if (feed.cards.length === 0) return <Placeholder message={editionStrings.noWords} />;
+  if (cards.length === 0) return <Placeholder message={editionStrings.noWords} />;
 
   return (
     <View testID="home" style={[styles.screen, { backgroundColor: colors.background }]}>
@@ -111,7 +104,7 @@ function FeedScreen() {
       <VerticalPager
         ref={pager}
         testID="feed"
-        items={feed.cards}
+        items={cards}
         initialIndex={feed.startPosition}
         renderPage={renderPage}
         onIndexChange={onIndexChange}

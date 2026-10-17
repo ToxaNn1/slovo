@@ -2,47 +2,32 @@ import type { HiddenEntry, HideTarget } from '@slovo/core';
 import { fill, useEdition, useUndoToast } from '@slovo/ui';
 import { useMemo } from 'react';
 
-import { useComposed, useComposition } from '../composition';
+import { useComposition } from '../composition';
 import { edition, editionStrings } from '../edition/edition';
+import { useSubscribed } from '../opening';
 import { hiddenScreenModel, hiddenSummary, type HiddenScreenModel } from './hidden-screen';
 import { useMixState } from './mix';
 
 const strings = editionStrings.hidden;
 
-const noHiddenEntries: readonly HiddenEntry[] = [];
-
-/** The Hidden Entries, newest first, kept up to date; none until they open. */
+/** The Hidden Entries, newest first, kept up to date. */
 function useHiddenList(): readonly HiddenEntry[] {
-  return useComposed(
-    (composition) => composition.hiddenEntries,
-    (hiddenEntries) => hiddenEntries.list,
-    noHiddenEntries,
-  );
+  return useSubscribed(useComposition().hiddenEntries, ({ list }) => list);
 }
 
 /** The value of the «Приховані записи» row of Settings: how many Entries are hidden. */
-export function useHiddenSummary(): string | undefined {
-  const composition = useComposition();
+export function useHiddenSummary(): string {
   const list = useHiddenList();
   const { count } = useEdition();
-  return useMemo(
-    () =>
-      composition.status === 'ready'
-        ? hiddenSummary({ hiddenEntries: list, strings, count })
-        : undefined,
-    [composition.status, list, count],
-  );
+  return useMemo(() => hiddenSummary({ hiddenEntries: list, strings, count }), [list, count]);
 }
 
-/** What the Hidden screen draws, kept up to date; nothing until the Core composition opens. */
-export function useHiddenScreenModel(): HiddenScreenModel | undefined {
+/** What the Hidden screen draws, kept up to date. */
+export function useHiddenScreenModel(): HiddenScreenModel {
   const list = useHiddenList();
   const mix = useMixState();
   return useMemo(
-    () =>
-      mix === undefined
-        ? undefined
-        : hiddenScreenModel({ edition, hiddenEntries: list, mix, strings: editionStrings }),
+    () => hiddenScreenModel({ edition, hiddenEntries: list, mix, strings: editionStrings }),
     [list, mix],
   );
 }
@@ -61,10 +46,9 @@ export function useHiddenChanges(): {
 } {
   const composition = useComposition();
   const showToast = useUndoToast();
-  const open = composition.status === 'ready' ? composition.composition : undefined;
 
   function unhide(target: HideTarget): void {
-    open?.unhide(target).then(
+    composition.unhide(target).then(
       (result) => {
         if (result?.changed.kind !== 'entry' || result.undo === undefined) return;
         const { undo } = result;

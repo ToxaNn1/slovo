@@ -17,9 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { addedOn } from '../../../../saved/added-on';
 import { useCollectionEntries } from '../../../../saved/collections';
-import { useComposition } from '../../../../composition';
 import { editionStrings } from '../../../../edition/edition';
-import { LoadFailed } from '../../../../edition/language-pack';
 import { useOpenScreen } from '../../../../entries/use-open-screen';
 
 const { collections: collectionStrings } = editionStrings;
@@ -32,14 +30,12 @@ const strings = collectionStrings.entries;
  */
 export default function CollectionScreen() {
   const { collectionId } = useLocalSearchParams<{ collectionId: string }>();
-  const composition = useComposition();
   const { collection, entries, remove } = useCollectionEntries(collectionId);
   const { colors, fontFamilies } = useTokens();
   const { count, voice } = useEdition();
   const router = useRouter();
   const openScreen = useOpenScreen();
 
-  if (composition.status === 'failed') return <LoadFailed onRetry={composition.retry} />;
   const name = collection?.name ?? '';
 
   function renderEntry({ entryId, row, addedAt }: CollectionEntry) {

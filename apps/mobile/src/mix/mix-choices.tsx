@@ -20,7 +20,7 @@ const strings = editionStrings.mix;
  * step: a chip for «Усі» and every Category of the Edition, the line saying
  * why the last Category's chip is disabled, and the Corrections switch when
  * the Edition turns Corrections on. A change applies at once (the Core's Mix,
- * ADR 0019). Nothing until the Mix opens.
+ * ADR 0019).
  */
 export function MixChoices() {
   const state = useMixState();
@@ -28,7 +28,6 @@ export function MixChoices() {
   const { colors, fontFamilies } = useTokens();
   const { voice } = useEdition();
 
-  if (state === undefined) return null;
   const model = mixScreenModel({ edition, mix: state });
 
   return (

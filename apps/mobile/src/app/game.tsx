@@ -16,11 +16,9 @@ import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
 import { useGameActions, useGameState } from '../game/game';
 import { gameModeCard, gameModeStrings } from '../game/game-modes';
-import { LoadFailed } from '../edition/language-pack';
 
 const { game: strings } = editionStrings;
 
@@ -33,14 +31,12 @@ const RULES_MAX_FONT_SCALE = 1.5;
  * so another tab and back finds it where it was.
  */
 export default function GameScreen() {
-  const composition = useComposition();
   const state = useGameState();
   const actions = useGameActions();
   const router = useRouter();
   const { colors } = useTokens();
 
-  if (composition.status === 'failed') return <LoadFailed onRetry={composition.retry} />;
-  const current = state?.current;
+  const { current } = state;
   return (
     <SafeAreaView
       testID="game"
@@ -48,15 +44,11 @@ export default function GameScreen() {
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
       {current === undefined ? (
-        <ModeScreen
-          modes={state?.modes ?? []}
-          bestResult={state?.bestResult}
-          onStart={actions.start}
-        />
+        <ModeScreen modes={state.modes} bestResult={state.bestResult} onStart={actions.start} />
       ) : current.status === 'won' || current.status === 'lost' ? (
         <GameResult
           game={current}
-          bestResult={state?.bestResult}
+          bestResult={state.bestResult}
           onAgain={() => {
             actions.start(current.modeId);
           }}

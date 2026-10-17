@@ -1,28 +1,18 @@
-import type { History, HistoryEntry } from '@slovo/core';
+import type { HistoryEntry } from '@slovo/core';
 import { useEdition } from '@slovo/ui';
 import { useIsFocused } from 'expo-router';
 import { useMemo } from 'react';
 
-import { useComposed, useModule } from '../composition';
+import { useComposition } from '../composition';
 import { deviceClock } from '../device/device-clock';
 import { editionStrings } from '../edition/edition';
+import { useSubscribed } from '../opening';
 import { historySections, type HistorySection } from './history-screen';
 import { historyText } from './history-text';
 
-const noHistory: readonly HistoryEntry[] = [];
-
-/** History of the session's Core composition, once it is open. */
-function useHistory(): History | undefined {
-  return useModule((composition) => composition.history);
-}
-
-/** The Entries in History, newest first, kept up to date; none until History opens. */
+/** The Entries in History, newest first, kept up to date. */
 export function useHistoryList(): readonly HistoryEntry[] {
-  return useComposed(
-    (composition) => composition.history,
-    (history) => history.list,
-    noHistory,
-  );
+  return useSubscribed(useComposition().history, ({ list }) => list);
 }
 
 /**
@@ -30,9 +20,9 @@ export function useHistoryList(): readonly HistoryEntry[] {
  * as it was.
  */
 export function useClearHistory(): () => void {
-  const history = useHistory();
+  const { history } = useComposition();
   return () => {
-    history?.clear().catch((error: unknown) => {
+    history.clear().catch((error: unknown) => {
       console.error('Could not clear History', error);
     });
   };
@@ -55,8 +45,7 @@ export function useHistoryText() {
 
 /**
  * The sections of the History screen: the Entries in History under the day
- * they were Seen on the device's clock, kept up to date; none until History
- * opens.
+ * they were Seen on the device's clock, kept up to date.
  */
 export function useHistorySections(): readonly HistorySection[] {
   const list = useHistoryList();

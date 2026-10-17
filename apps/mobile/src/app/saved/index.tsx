@@ -16,13 +16,11 @@ import {
 import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useComposition } from '../../composition';
 import { useCollectionList } from '../../saved/collections';
 import { editionStrings } from '../../edition/edition';
 import { deviceClock } from '../../device/device-clock';
 import { useFavoriteList } from '../../saved/favorites';
 import { useHistoryList, useHistoryText } from '../../saved/history';
-import { LoadFailed } from '../../edition/language-pack';
 import { useOpenScreen } from '../../entries/use-open-screen';
 
 const {
@@ -45,7 +43,6 @@ const NEWEST_COLLECTIONS_SHOWN = 3;
  * included, in full.
  */
 export default function SavedScreen() {
-  const composition = useComposition();
   const favorites = useFavoriteList();
   const collections = useCollectionList();
   const history = useHistoryList();
@@ -54,7 +51,6 @@ export default function SavedScreen() {
   const { count } = useEdition();
   const openScreen = useOpenScreen();
 
-  if (composition.status === 'failed') return <LoadFailed onRetry={composition.retry} />;
   const latest = history.slice(0, NEWEST_SHOWN).map(({ row, seenAt }) => ({
     title: row.title,
     ...historyText.relative(relativeTimeOf(seenAt, deviceClock)),
@@ -67,71 +63,65 @@ export default function SavedScreen() {
     >
       <ScrollView contentContainerStyle={styles.content}>
         <ScreenTitle>{editionStrings.tabs.saved}</ScreenTitle>
-        {composition.status === 'ready' && (
-          <SavedCard
-            testID="saved-favorites"
-            primary
-            title={strings.title}
-            count={favorites.length}
-            accessibilityLabel={fill(strings.cardLabel, {
-              count: count(strings.count, favorites.length),
-            })}
-            onPress={() => {
-              openScreen('/saved/favorites');
-            }}
-          >
-            <SavedCardTitles
-              titles={favorites.slice(0, NEWEST_SHOWN).map((favorite) => favorite.row.title)}
-            />
-            <OrnamentBand />
-          </SavedCard>
-        )}
-        {composition.status === 'ready' && (
-          <SavedCard
-            testID="saved-collections"
-            title={collectionStrings.title}
-            count={collections.length}
-            accessibilityLabel={fill(collectionStrings.cardLabel, {
-              count: count(collectionStrings.collectionCount, collections.length),
-            })}
-            onPress={() => {
-              openScreen('/saved/collections');
-            }}
-          >
-            {collections.length > 0 && (
-              <SavedCardCollections>
-                {collections.slice(0, NEWEST_COLLECTIONS_SHOWN).map((collection) => {
-                  const entries = count(collectionStrings.count, collection.count);
-                  return (
-                    <SavedCardCollection
-                      key={collection.id}
-                      testID={`saved-collection-${collection.id}`}
-                      name={collection.name}
-                      count={entries}
-                      accessibilityLabel={fill(collectionStrings.collectionLabel, {
-                        name: collection.name,
-                        count: entries,
-                      })}
-                    />
-                  );
-                })}
-              </SavedCardCollections>
-            )}
-          </SavedCard>
-        )}
-        {composition.status === 'ready' && (
-          <SavedCard
-            testID="saved-history"
-            title={historyStrings.title}
-            count={history.length}
-            accessibilityLabel={historyText.cardLabel(history.length, latest)}
-            onPress={() => {
-              openScreen('/saved/history');
-            }}
-          >
-            <SavedCardRows rows={latest.map(({ title, text }) => ({ title, trailing: text }))} />
-          </SavedCard>
-        )}
+        <SavedCard
+          testID="saved-favorites"
+          primary
+          title={strings.title}
+          count={favorites.length}
+          accessibilityLabel={fill(strings.cardLabel, {
+            count: count(strings.count, favorites.length),
+          })}
+          onPress={() => {
+            openScreen('/saved/favorites');
+          }}
+        >
+          <SavedCardTitles
+            titles={favorites.slice(0, NEWEST_SHOWN).map((favorite) => favorite.row.title)}
+          />
+          <OrnamentBand />
+        </SavedCard>
+        <SavedCard
+          testID="saved-collections"
+          title={collectionStrings.title}
+          count={collections.length}
+          accessibilityLabel={fill(collectionStrings.cardLabel, {
+            count: count(collectionStrings.collectionCount, collections.length),
+          })}
+          onPress={() => {
+            openScreen('/saved/collections');
+          }}
+        >
+          {collections.length > 0 && (
+            <SavedCardCollections>
+              {collections.slice(0, NEWEST_COLLECTIONS_SHOWN).map((collection) => {
+                const entries = count(collectionStrings.count, collection.count);
+                return (
+                  <SavedCardCollection
+                    key={collection.id}
+                    testID={`saved-collection-${collection.id}`}
+                    name={collection.name}
+                    count={entries}
+                    accessibilityLabel={fill(collectionStrings.collectionLabel, {
+                      name: collection.name,
+                      count: entries,
+                    })}
+                  />
+                );
+              })}
+            </SavedCardCollections>
+          )}
+        </SavedCard>
+        <SavedCard
+          testID="saved-history"
+          title={historyStrings.title}
+          count={history.length}
+          accessibilityLabel={historyText.cardLabel(history.length, latest)}
+          onPress={() => {
+            openScreen('/saved/history');
+          }}
+        >
+          <SavedCardRows rows={latest.map(({ title, text }) => ({ title, trailing: text }))} />
+        </SavedCard>
       </ScrollView>
     </SafeAreaView>
   );

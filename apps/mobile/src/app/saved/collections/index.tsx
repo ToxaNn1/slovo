@@ -15,9 +15,7 @@ import { memo, useCallback, useState } from 'react';
 import { Alert, FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useComposition } from '../../../composition';
 import { editionStrings } from '../../../edition/edition';
-import { LoadFailed } from '../../../edition/language-pack';
 import { useOpenScreen } from '../../../entries/use-open-screen';
 import { refusalText } from '../../../saved/collection-refusal';
 import { useCollectionChanges, useCollectionRows } from '../../../saved/collections';
@@ -37,7 +35,6 @@ type Editing = { readonly kind: 'new' } | { readonly kind: 'rename'; readonly id
  * VoiceOver.
  */
 export default function CollectionsScreen() {
-  const composition = useComposition();
   const rows = useCollectionRows();
   const { create, rename, remove } = useCollectionChanges();
   const { colors } = useTokens();
@@ -91,9 +88,6 @@ export default function CollectionsScreen() {
     [keepName, rename],
   );
 
-  if (composition.status === 'failed') return <LoadFailed onRetry={composition.retry} />;
-  const ready = composition.status === 'ready';
-
   return (
     <SafeAreaView
       testID="collections"
@@ -101,7 +95,7 @@ export default function CollectionsScreen() {
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
       <FlatList
-        data={ready ? rows : []}
+        data={rows}
         keyExtractor={(collection) => collection.id}
         renderItem={({ item }) => (
           <View style={styles.item}>
@@ -129,15 +123,13 @@ export default function CollectionsScreen() {
                   router.back();
                 }}
               />
-              {ready && (
-                <NewCollectionButton
-                  testID="collections-add"
-                  accessibilityLabel={strings.add}
-                  onPress={() => {
-                    setEditing({ kind: 'new' });
-                  }}
-                />
-              )}
+              <NewCollectionButton
+                testID="collections-add"
+                accessibilityLabel={strings.add}
+                onPress={() => {
+                  setEditing({ kind: 'new' });
+                }}
+              />
             </View>
             <View style={styles.header}>
               <ScreenTitle>{collectionStrings.title}</ScreenTitle>
@@ -156,7 +148,7 @@ export default function CollectionsScreen() {
           </>
         }
         ListEmptyComponent={
-          ready && editing?.kind !== 'new' ? (
+          editing?.kind !== 'new' ? (
             <EmptyState
               testID="collections-empty"
               title={strings.empty.title}

@@ -20,11 +20,13 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { edition, editionDecor, editionStrings, editionTokens } from '../edition/edition';
 import { hapticEngine } from '../haptics';
-import { LanguagePackProvider } from '../edition/language-pack';
+import { languagePackOpening } from '../edition/language-pack';
+import { compositionOpening } from '../composition';
 import { LaunchSplash } from '../launch-splash';
 import { Lifecycle } from '../lifecycle';
 import { NotificationTaps } from '../notifications/notifications';
 import { Onboarding } from '../onboarding';
+import { Opened } from '../opened';
 import { LemmaPronunciation } from '../entries/pronunciation-button';
 import { SettingsProvider, useColorSchemeInEffect, useSettings } from '../settings';
 import { tabsOf, type Tab } from '../tabs';
@@ -147,36 +149,39 @@ function ThemedTabs() {
       <ThemeProvider value={navigationTheme}>
         <FontSizeProvider fontSize={fontSize}>
           <HapticsProvider haptics={haptics}>
-            <LanguagePackProvider>
-              <Lifecycle />
-              <NotificationTaps />
-              <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-              <Tabs
-                screenOptions={{
-                  headerShown: false,
-                  tabBarIcon: () => null,
-                  tabBarButton: TabButton,
-                  tabBarActiveTintColor: colors.accent,
-                  tabBarInactiveTintColor: colors.inactiveTab,
-                  tabBarLabelStyle: {
-                    fontFamily: ui,
-                    fontSize: typeSize.tabLabel,
-                    fontWeight: '600',
-                  },
-                }}
-              >
-                <Tabs.Screen name="index" options={tabOptions('home')} />
-                <Tabs.Screen name="settings" options={tabOptions('settings')} />
-                <Tabs.Screen name="game" options={tabOptions('game')} />
-                <Tabs.Screen name="saved" options={tabOptions('saved')} />
-                {/* An Entry opened from a link, such as a notification's; no tab leads to it. */}
-                <Tabs.Screen name="entry" options={{ href: null }} />
-                {/* The dev-only Decor showcase; no tab leads to it. */}
-                <Tabs.Screen name="decor" options={{ href: null }} />
-              </Tabs>
-              {/* Over the tabs until the reader finishes or skips it. */}
-              <Onboarding />
-            </LanguagePackProvider>
+            <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+            {/* Every screen draws over the open Language Pack and composition. */}
+            <Opened opening={languagePackOpening} failedTestID="language-pack-failed">
+              <Opened opening={compositionOpening} failedTestID="feed-error">
+                <Lifecycle />
+                <NotificationTaps />
+                <Tabs
+                  screenOptions={{
+                    headerShown: false,
+                    tabBarIcon: () => null,
+                    tabBarButton: TabButton,
+                    tabBarActiveTintColor: colors.accent,
+                    tabBarInactiveTintColor: colors.inactiveTab,
+                    tabBarLabelStyle: {
+                      fontFamily: ui,
+                      fontSize: typeSize.tabLabel,
+                      fontWeight: '600',
+                    },
+                  }}
+                >
+                  <Tabs.Screen name="index" options={tabOptions('home')} />
+                  <Tabs.Screen name="settings" options={tabOptions('settings')} />
+                  <Tabs.Screen name="game" options={tabOptions('game')} />
+                  <Tabs.Screen name="saved" options={tabOptions('saved')} />
+                  {/* An Entry opened from a link, such as a notification's; no tab leads to it. */}
+                  <Tabs.Screen name="entry" options={{ href: null }} />
+                  {/* The dev-only Decor showcase; no tab leads to it. */}
+                  <Tabs.Screen name="decor" options={{ href: null }} />
+                </Tabs>
+                {/* Over the tabs until the reader finishes or skips it. */}
+                <Onboarding />
+              </Opened>
+            </Opened>
           </HapticsProvider>
         </FontSizeProvider>
         <LaunchSplash />
