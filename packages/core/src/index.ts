@@ -138,6 +138,14 @@ export {
   type WordOfTheDayChoice,
 } from './feed/word-of-the-day';
 export { createMemoryContentPort } from './fakes/memory-content';
+export { CONTENT_UPDATE_EVERY, createContentUpdate, type ContentUpdate } from './content-update';
+export type { ContentApi, ContentApiFailure, PackFiles, PackVersion, PublishedPack } from './ports';
+export {
+  createFakeContentApi,
+  type FakeContentApi,
+  type FakePublishedPack,
+} from './fakes/fake-content-api';
+export { createMemoryPackFiles, type MemoryPackFiles } from './fakes/memory-pack-files';
 export { type Progress, type ProgressState } from './progress';
 export { type Mix, type MixEdition, type MixState } from './entries/mix';
 export {
