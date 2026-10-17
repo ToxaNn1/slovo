@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process';
 import { Writable } from 'node:stream';
 
-import { afterAll, describe, expect, inject, it } from 'vitest';
+import { describe, expect, inject, it, onTestFinished } from 'vitest';
 
 import { createDatabase } from './database/database';
 import { createLogger } from './logger';
@@ -50,6 +50,9 @@ function runServer(env: Record<string, string>) {
   child.stdout.on('data', (chunk: Buffer) => (stdout += chunk.toString()));
   child.stderr.on('data', (chunk: Buffer) => (stderr += chunk.toString()));
   const exited = new Promise<number | null>((resolve) => child.on('exit', resolve));
+  onTestFinished(() => {
+    child.kill();
+  });
   const listening = new Promise<void>((resolve, reject) => {
     child.stdout.on('data', () => {
       if (stdout.includes('"msg":"listening"')) resolve();
@@ -71,7 +74,7 @@ function runServer(env: Record<string, string>) {
 describe('/health', () => {
   it('answers 200 when the database answers', async () => {
     const { app, close } = testApp();
-    afterAll(close);
+    onTestFinished(close);
 
     const response = await app.request('/health');
 
@@ -80,7 +83,7 @@ describe('/health', () => {
 
   it('answers 503 when the database is down', async () => {
     const { app, close } = testApp({ database: createDatabase(DOWN_DATABASE_URL, silentLogger) });
-    afterAll(close);
+    onTestFinished(close);
 
     const response = await app.request('/health');
 
@@ -92,7 +95,7 @@ describe('a request', () => {
   it('keeps the x-request-id it brings, in the answer and in its log line', async () => {
     const { lines, logger } = logLines();
     const { app, close } = testApp({ logger });
-    afterAll(close);
+    onTestFinished(close);
 
     const response = await app.request('/health', { headers: { 'x-request-id': 'abc-123' } });
 
@@ -104,7 +107,7 @@ describe('a request', () => {
 
   it('gets a new x-request-id when it brings none', async () => {
     const { app, close } = testApp();
-    afterAll(close);
+    onTestFinished(close);
 
     const first = await app.request('/health');
     const second = await app.request('/health');
@@ -115,7 +118,7 @@ describe('a request', () => {
 });
 
 describe('the logs', () => {
-  it('carry no email, code or token, however deep', () => {
+  it('carry no email, code or token, at the top of a line or one level down', () => {
     const { lines, logger } = logLines();
 
     logger.info({
@@ -130,6 +133,14 @@ describe('the logs', () => {
     expect(written).not.toContain('anna@mail.com');
     expect(written).not.toContain('123456');
     expect(written).not.toContain('secret-token');
+  });
+
+  it("keep a logged error's code, which names its kind", () => {
+    const { lines, logger } = logLines();
+
+    logger.warn({ err: Object.assign(new Error('refused'), { code: 'ECONNREFUSED' }) });
+
+    expect(lines[0]?.['err']).toMatchObject({ errorCode: 'ECONNREFUSED' });
   });
 });
 

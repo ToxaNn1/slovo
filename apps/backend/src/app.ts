@@ -15,8 +15,8 @@ export interface AppDependencies {
 type Variables = RequestIdVariables & { logger: Logger };
 
 /**
- * The composition root: builds the whole backend from its dependencies. It is
- * the only place that knows which adapter fills which port.
+ * The composition root: builds the whole backend from the dependencies it is
+ * given. `main.ts` gives the real ones; a test gives its own.
  */
 export function createApp({ database, clock, logger }: AppDependencies) {
   const app = new Hono<{ Variables: Variables }>();

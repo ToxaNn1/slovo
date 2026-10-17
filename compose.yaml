@@ -1,9 +1,9 @@
 # The backend's local services: Postgres and Mailpit, started once per machine
 # and shared by every worktree (`docker compose up --detach --wait` from the
 # repo root). The project name is fixed, so a second worktree finds the same
-# containers instead of starting its own. The host ports avoid the defaults,
-# which other projects on the machine may hold; each one can be moved with the
-# variable beside it.
+# containers instead of starting its own. Postgres is published on 55432, not
+# on its default 5432, which other projects on the machine may hold; Mailpit
+# keeps its own ports. Each port can be moved with the variable beside it.
 name: slovo
 
 services:

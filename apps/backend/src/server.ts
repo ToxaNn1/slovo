@@ -10,7 +10,7 @@ export interface RunningServer {
   readonly port: number;
   /**
    * Stops taking requests, finishes the ones in flight, then closes the
-   * database pool.
+   * database pool. Calling it again waits for the same stop.
    */
   stop(): Promise<void>;
 }
@@ -37,7 +37,8 @@ export function startServer({
     void listener(request, response);
   });
 
-  const stop = async () => {
+  let stopped: Promise<void> | undefined;
+  const close = async () => {
     stopping = true;
     await new Promise<void>((closed, failed) => {
       server.close((error) => {
@@ -47,15 +48,18 @@ export function startServer({
     });
     await database.close();
   };
+  // A second signal while stopping waits for the same stop.
+  const stop = () => (stopped ??= close());
 
   return new Promise((resolve, reject) => {
     server.once('error', reject);
     server.listen(port, () => {
       const address = server.address();
       if (address === null || typeof address === 'string') {
-        throw new Error(`the server listens on ${String(address)}, not on a TCP port`);
+        reject(new Error(`the server listens on ${String(address)}, not on a TCP port`));
+      } else {
+        resolve({ port: address.port, stop });
       }
-      resolve({ port: address.port, stop });
     });
   });
 }
