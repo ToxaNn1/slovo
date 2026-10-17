@@ -192,12 +192,13 @@ The backend serves every Edition from one deployment ([ADR 0008](docs/adr/0008-o
    pnpm --filter @slovo/backend test
    ```
 
-6. Publish a Language Pack, so `content.latest` announces it as a Content update ([ADR 0032](docs/adr/0032-content-updates-ship-whole-language-packs.md)). Build the pack first; the command publishes `editions/<edition>/dist/language-pack.db` to the database `DATABASE_URL` names, with the file's SHA-256 and size. It refuses a pack whose content checksum isn't the one `content/manifest.json` records (rebuild it), a content version not higher than one already published (record the content with `pnpm build:pack uk --record` and rebuild), and a version already published, and leaves the database as it was. A published version never changes.
+6. Publish a Language Pack, so `content.latest` announces it as a Content update and `content.download` serves its file ([ADR 0032](docs/adr/0032-content-updates-ship-whole-language-packs.md)). Build the pack first; the command publishes `editions/<edition>/dist/language-pack.db` to the database `DATABASE_URL` names, with the file's SHA-256 and size. It refuses a pack whose content checksum isn't the one `content/manifest.json` records (rebuild it), a content version not higher than one already published (record the content with `pnpm build:pack uk --record` and rebuild), and a version already published, and leaves the database as it was. A published version never changes, so the backend reads its file once, keeps it in memory and answers it with its SHA-256 as the ETag and `Cache-Control: immutable`. An Edition with the `contentUpdates` Feature Switch off gets 404 from both procedures.
 
    ```sh
    pnpm build:pack uk
    pnpm publish:pack uk
    curl -i 'http://localhost:8787/v1/editions/uk/content/latest?packFormat=1'
+   curl -o language-pack.db 'http://localhost:8787/v1/editions/uk/content/packs/<content version>'
    ```
 
 ## Commands
