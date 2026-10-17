@@ -1,8 +1,11 @@
-const { existsSync, readFileSync } = require('node:fs');
-const { join } = require('node:path');
+const { existsSync } = require('node:fs');
 
 const { getConfig } = require('expo/config');
 const { getDefaultConfig } = require('expo/metro-config');
+const { require: tsxRequire } = require('tsx/cjs/api');
+
+// The Edition folder module is TypeScript, which tsx loads, as for app.config.ts.
+const { EDITIONS_DIR, openEdition } = tsxRequire('@slovo/language-pack/edition', __filename);
 
 /**
  * Bundles the Edition selected by SLOVO_EDITION. The app imports it through
@@ -11,7 +14,7 @@ const { getDefaultConfig } = require('expo/metro-config');
  */
 const { exp } = getConfig(__dirname, { skipSDKVersionRequirement: true });
 const editionId = exp.extra.edition.id;
-const editionDir = join(__dirname, '../../editions', editionId);
+const edition = openEdition(EDITIONS_DIR, editionId);
 
 // SLOVO_CORE_TOKENS=1 draws the app with the Core's neutral tokens and Decor
 // instead of the Edition's, to check the Core look. Restart Metro with --clear
@@ -19,16 +22,16 @@ const editionDir = join(__dirname, '../../editions', editionId);
 const useCoreTokens = process.env.SLOVO_CORE_TOKENS === '1';
 
 const editionModules = {
-  'slovo-edition/config': { type: 'sourceFile', file: 'edition.json' },
-  'slovo-edition/strings': { type: 'sourceFile', file: 'strings.json' },
-  // Optional: an Edition without tokens.json gets the Core's neutral tokens.
-  'slovo-edition/tokens': { type: 'sourceFile', file: 'tokens.json', optional: true },
+  'slovo-edition/config': { type: 'sourceFile', editionFile: 'config' },
+  'slovo-edition/strings': { type: 'sourceFile', editionFile: 'strings' },
+  // Optional: an Edition without tokens gets the Core's neutral tokens.
+  'slovo-edition/tokens': { type: 'sourceFile', editionFile: 'tokens', optional: true },
   // Optional: an Edition without Decor gets the Core's neutral Decor.
-  'slovo-edition/decor': { type: 'sourceFile', file: 'decor/decor.json', optional: true },
-  'slovo-edition/splash': { type: 'sourceFile', file: 'decor/splash.json', optional: true },
+  'slovo-edition/decor': { type: 'sourceFile', editionFile: 'decor', optional: true },
+  'slovo-edition/splash': { type: 'sourceFile', editionFile: 'splash', optional: true },
   'slovo-edition/language-pack': {
     type: 'assetFiles',
-    file: 'dist/language-pack.db',
+    editionFile: 'languagePack',
     missing: `Run \`pnpm build:pack ${editionId}\` to build the Language Pack first.`,
   },
 };
@@ -40,7 +43,7 @@ const editionModules = {
  * locale itself.
  */
 function pluralRulesData() {
-  const { locale } = JSON.parse(readFileSync(join(editionDir, 'edition.json'), 'utf8'));
+  const { locale } = edition.config;
   for (const tag of [locale, locale.split('-')[0]]) {
     try {
       return require.resolve(`@formatjs/intl-pluralrules/locale-data/${tag}.js`, {
@@ -65,14 +68,12 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   if (editionModule === undefined) {
     return (resolveRequest ?? context.resolveRequest)(context, moduleName, platform);
   }
-  const filePath = join(editionDir, editionModule.file);
+  const filePath = edition.path(editionModule.editionFile);
   if (editionModule.optional && (useCoreTokens || !existsSync(filePath))) {
     return { type: 'empty' };
   }
   if (!existsSync(filePath)) {
-    throw new Error(
-      `Edition "${editionId}" has no ${editionModule.file}. ${editionModule.missing ?? ''}`,
-    );
+    throw new Error(`Edition "${editionId}" has no ${filePath}. ${editionModule.missing ?? ''}`);
   }
   return editionModule.type === 'assetFiles'
     ? { type: 'assetFiles', filePaths: [filePath] }

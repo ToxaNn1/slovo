@@ -1,5 +1,4 @@
 import {
-  EditionConfigSchema,
   editionAppGroup,
   EditionStringsSchema,
   EditionTokensSchema,
@@ -17,7 +16,7 @@ import tokens from 'slovo-edition/tokens';
 export const edition = loadEdition(config);
 
 /** The App Group the app shares with the Edition's widget. */
-export const appGroup = editionAppGroup(EditionConfigSchema.parse(config).bundleId);
+export const appGroup = editionAppGroup(edition.bundleId);
 
 /** The UI text of the Edition, in its language. */
 export const editionStrings = EditionStringsSchema.parse(strings);

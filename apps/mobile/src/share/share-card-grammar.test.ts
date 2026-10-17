@@ -1,18 +1,9 @@
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-
-import { EditionStringsSchema } from '@slovo/contracts';
 import { wordGrammarText } from '@slovo/ui/part-of-speech';
 import { describe, expect, it } from 'vitest';
 
-const strings = EditionStringsSchema.parse(
-  JSON.parse(
-    readFileSync(
-      fileURLToPath(new URL('../../../../editions/uk/strings.json', import.meta.url)),
-      'utf8',
-    ),
-  ),
-).wordCard;
+import { strings as editionStrings } from '../test-support';
+
+const strings = editionStrings.wordCard;
 
 describe('the grammar line of a Word on its Share Card, in the Ukrainian Edition', () => {
   it('is the part of speech with gender when the Word has no register', () => {

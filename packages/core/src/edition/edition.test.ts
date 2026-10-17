@@ -41,6 +41,10 @@ describe('loadEdition', () => {
     expect(loadEdition(validConfig).displayName).toBe('SLOVO Test');
   });
 
+  it('reports the bundle id, which names the App Group the app shares with its widget', () => {
+    expect(loadEdition(validConfig).bundleId).toBe('app.slovo.test');
+  });
+
   it('reports an Edition that does not mark Stress', () => {
     const edition = loadEdition({
       ...validConfig,

@@ -1,8 +1,9 @@
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { EDITIONS_DIR, openEdition, type EditionFolder } from '@slovo/language-pack/edition';
 import type { ConfigContext, ExpoConfig } from 'expo/config';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -16,11 +17,9 @@ const context: ConfigContext = {
   config: {},
 };
 
-const ukrainianEditionDir = fileURLToPath(new URL('../../editions/uk/', import.meta.url));
+const ukrainian = openEdition(EDITIONS_DIR, 'uk');
 
 const temporaryRepos: string[] = [];
-
-const WIDGET_EXAMPLE = 'widget-snapshot.example.json';
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -29,34 +28,41 @@ afterEach(() => {
 
 /**
  * A throwaway repo layout (`apps/mobile` next to `editions/uk`) holding a copy
- * of the Ukrainian Edition's config, changed by `edit`, with its assets,
- * Decor, strings, tokens and example Widget Snapshot. The icon is copied
- * unless `withIcon` is false; `change` may then edit the copied Edition folder.
+ * of the Ukrainian Edition with its config changed by `edit`. The icon is
+ * copied unless `withIcon` is false; `change` may then edit the copy.
  */
 function repoWithEdition(
   edit: (config: Record<string, unknown>) => void,
   {
     withIcon = true,
     change = () => undefined,
-  }: { withIcon?: boolean; change?: (editionDir: string) => void } = {},
+  }: { withIcon?: boolean; change?: (edition: EditionFolder) => void } = {},
 ): ConfigContext {
   const repo = mkdtempSync(join(tmpdir(), 'slovo-app-config-'));
   temporaryRepos.push(repo);
   const projectRoot = join(repo, 'apps/mobile');
-  const editionDir = join(repo, 'editions/uk');
   mkdirSync(projectRoot, { recursive: true });
-  mkdirSync(editionDir, { recursive: true });
-  const config = JSON.parse(
-    readFileSync(join(ukrainianEditionDir, 'edition.json'), 'utf8'),
-  ) as Record<string, unknown>;
+  // The app config reads no Entries, so the content folder stays behind.
+  const contentDir = dirname(ukrainian.path('manifest'));
+  cpSync(ukrainian.dir, join(repo, 'editions/uk'), {
+    recursive: true,
+    filter: (source) => !source.startsWith(contentDir),
+  });
+  const copy = openEdition(join(repo, 'editions'), 'uk');
+  const config = JSON.parse(readFileSync(copy.path('config'), 'utf8')) as Record<string, unknown>;
   edit(config);
-  writeFileSync(join(editionDir, 'edition.json'), JSON.stringify(config));
-  for (const kept of ['assets', 'decor', 'strings.json', 'tokens.json', WIDGET_EXAMPLE]) {
-    cpSync(join(ukrainianEditionDir, kept), join(editionDir, kept), { recursive: true });
-  }
-  if (!withIcon) rmSync(join(editionDir, 'assets/icon.png'));
-  change(editionDir);
+  writeFileSync(copy.path('config'), JSON.stringify(config));
+  if (!withIcon) rmSync(copy.path('icon'));
+  change(copy);
   return { ...context, projectRoot };
+}
+
+/** A JSON file of the copied Edition, changed by `edit`. */
+function editJson(file: string, edit: (json: Record<string, unknown>) => unknown): void {
+  writeFileSync(
+    file,
+    JSON.stringify(edit(JSON.parse(readFileSync(file, 'utf8')) as Record<string, unknown>)),
+  );
 }
 
 /** The options the config passes to the named config plugin. */
@@ -106,7 +112,7 @@ describe('app config', () => {
     });
 
     expect(() => appConfig(broken)).toThrow(
-      /editions\/uk\/edition\.json is not a valid Edition config.*locale.*bundleId/s,
+      /editions\/uk is not valid.*edition\.json › locale.*edition\.json › bundleId/s,
     );
   });
 
@@ -154,8 +160,8 @@ describe('app config', () => {
   it('embeds no fonts when the Edition brings none', () => {
     vi.stubEnv('SLOVO_EDITION', 'uk');
     const withoutFonts = repoWithEdition(() => undefined, {
-      change: (editionDir) => {
-        rmSync(join(editionDir, 'assets/fonts'), { recursive: true });
+      change: (edition) => {
+        for (const font of edition.fonts()) rmSync(font);
       },
     });
 
@@ -176,8 +182,8 @@ describe('app config', () => {
   it('falls back to the plain Core splash when the Edition has no splash Decor', () => {
     vi.stubEnv('SLOVO_EDITION', 'uk');
     const withoutSplash = repoWithEdition(() => undefined, {
-      change: (editionDir) => {
-        rmSync(join(editionDir, 'decor/splash.json'));
+      change: (edition) => {
+        rmSync(edition.path('splash'));
       },
     });
 
@@ -190,24 +196,24 @@ describe('app config', () => {
   it('names the field when the splash Decor is invalid', () => {
     vi.stubEnv('SLOVO_EDITION', 'uk');
     const broken = repoWithEdition(() => undefined, {
-      change: (editionDir) => {
-        const file = join(editionDir, 'decor/splash.json');
-        const splash = JSON.parse(readFileSync(file, 'utf8')) as Record<string, unknown>;
-        splash['dark'] = { image: 'splash-dark.png', backgroundColor: 'black' };
-        writeFileSync(file, JSON.stringify(splash));
+      change: (edition) => {
+        editJson(edition.path('splash'), (splash) => ({
+          ...splash,
+          dark: { image: 'splash-dark.png', backgroundColor: 'black' },
+        }));
       },
     });
 
     expect(() => appConfig(broken)).toThrow(
-      /editions\/uk\/decor\/splash\.json is not a valid splash Decor.*dark\.backgroundColor/s,
+      /editions\/uk is not valid.*decor\/splash\.json › dark\.backgroundColor/s,
     );
   });
 
   it('fails clearly when a splash image is missing', () => {
     vi.stubEnv('SLOVO_EDITION', 'uk');
     const withoutImage = repoWithEdition(() => undefined, {
-      change: (editionDir) => {
-        rmSync(join(editionDir, 'decor/splash-dark.png'));
+      change: (edition) => {
+        rmSync(edition.decorFile('splash-dark.png'));
       },
     });
 
@@ -253,44 +259,36 @@ describe('app config', () => {
   it('fails clearly when the Edition has no example Widget Snapshot for the gallery', () => {
     vi.stubEnv('SLOVO_EDITION', 'uk');
     const withoutExample = repoWithEdition(() => undefined, {
-      change: (editionDir) => {
-        rmSync(join(editionDir, WIDGET_EXAMPLE));
+      change: (edition) => {
+        rmSync(edition.path('widgetSnapshotExample'));
       },
     });
 
     expect(() => appConfig(withoutExample)).toThrow(
-      /no example Widget Snapshot.*editions\/uk\/widget-snapshot\.example\.json/s,
+      /editions\/uk is not valid.*widget-snapshot\.example\.json: File not found/s,
     );
   });
 
   it('names the field when the example Widget Snapshot is invalid', () => {
     vi.stubEnv('SLOVO_EDITION', 'uk');
     const broken = repoWithEdition(() => undefined, {
-      change: (editionDir) => {
-        const file = join(editionDir, WIDGET_EXAMPLE);
-        const example = JSON.parse(readFileSync(file, 'utf8')) as Record<string, unknown>;
-        writeFileSync(file, JSON.stringify({ ...example, format: 0 }));
+      change: (edition) => {
+        editJson(edition.path('widgetSnapshotExample'), (example) => ({ ...example, format: 0 }));
       },
     });
 
-    expect(() => appConfig(broken)).toThrow(
-      /widget-snapshot\.example\.json is not a valid Widget Snapshot.*format/s,
-    );
+    expect(() => appConfig(broken)).toThrow(/widget-snapshot\.example\.json › format/);
   });
 
   it("names the field when the widget's strings are missing", () => {
     vi.stubEnv('SLOVO_EDITION', 'uk');
     const broken = repoWithEdition(() => undefined, {
-      change: (editionDir) => {
-        const file = join(editionDir, 'strings.json');
-        const strings = JSON.parse(readFileSync(file, 'utf8')) as Record<string, unknown>;
-        writeFileSync(file, JSON.stringify({ ...strings, widget: {} }));
+      change: (edition) => {
+        editJson(edition.path('strings'), (strings) => ({ ...strings, widget: {} }));
       },
     });
 
-    expect(() => appConfig(broken)).toThrow(
-      /strings\.json is not a valid Edition strings.*widget\.galleryName/s,
-    );
+    expect(() => appConfig(broken)).toThrow(/strings\.json › widget\.galleryName/);
   });
 
   it('registers the native time picker', () => {
@@ -302,8 +300,8 @@ describe('app config', () => {
   it('accepts a notification sound of 30 seconds', () => {
     vi.stubEnv('SLOVO_EDITION', 'uk');
     const longest = repoWithEdition(() => undefined, {
-      change: (editionDir) => {
-        writeFileSync(join(editionDir, 'assets/notification.wav'), wav(30));
+      change: (edition) => {
+        writeFileSync(edition.asset('notification.wav'), wav(30));
       },
     });
 
@@ -313,9 +311,9 @@ describe('app config', () => {
   it('accepts a notification sound written as 24-bit WAVE_FORMAT_EXTENSIBLE PCM', () => {
     vi.stubEnv('SLOVO_EDITION', 'uk');
     const extensible = repoWithEdition(() => undefined, {
-      change: (editionDir) => {
+      change: (edition) => {
         writeFileSync(
-          join(editionDir, 'assets/notification.wav'),
+          edition.asset('notification.wav'),
           wav(1, { bitsPerSample: 24, extensible: 1 }),
         );
       },
@@ -327,8 +325,8 @@ describe('app config', () => {
   it('refuses a notification sound longer than 30 seconds', () => {
     vi.stubEnv('SLOVO_EDITION', 'uk');
     const tooLong = repoWithEdition(() => undefined, {
-      change: (editionDir) => {
-        writeFileSync(join(editionDir, 'assets/notification.wav'), wav(31));
+      change: (edition) => {
+        writeFileSync(edition.asset('notification.wav'), wav(31));
       },
     });
 
@@ -349,9 +347,9 @@ describe('app config', () => {
   it('refuses a sound file whose bytes are not the format its name says', () => {
     vi.stubEnv('SLOVO_EDITION', 'uk');
     const disguised = repoWithEdition(() => undefined, {
-      change: (editionDir) => {
+      change: (edition) => {
         writeFileSync(
-          join(editionDir, 'assets/notification.wav'),
+          edition.asset('notification.wav'),
           'ID3 an mp3 renamed to .wav, not a sound iOS plays',
         );
       },
@@ -367,8 +365,8 @@ describe('app config', () => {
         config['notificationSound'] = 'notification.caf';
       },
       {
-        change: (editionDir) => {
-          writeFileSync(join(editionDir, 'assets/notification.caf'), wav(1));
+        change: (edition) => {
+          writeFileSync(edition.asset('notification.caf'), wav(1));
         },
       },
     );
@@ -379,8 +377,8 @@ describe('app config', () => {
   it('fails clearly when the named notification sound is missing', () => {
     vi.stubEnv('SLOVO_EDITION', 'uk');
     const missing = repoWithEdition(() => undefined, {
-      change: (editionDir) => {
-        rmSync(join(editionDir, 'assets/notification.wav'));
+      change: (edition) => {
+        rmSync(edition.asset('notification.wav'));
       },
     });
 

@@ -1,18 +1,16 @@
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { buildWordCard, createEntries, type WordCardModel } from '@slovo/core';
 
 import { buildLanguagePack, openLanguagePack, type NodeLanguagePack } from './index';
+import { ukrainianFolder } from './test-support';
 
 // The Core's Word card over the real Ukrainian Language Pack (spec #51, seam 1).
 // It lives here because only this package can build and read a pack in Node.
-
-const editionDir = fileURLToPath(new URL('../../../editions/uk', import.meta.url));
 
 let workDir: string;
 let pack: NodeLanguagePack;
@@ -21,7 +19,7 @@ let cards: WordCardModel[];
 beforeAll(async () => {
   workDir = mkdtempSync(join(tmpdir(), 'slovo-word-card-'));
   const outFile = join(workDir, 'language-pack.db');
-  const result = buildLanguagePack({ editionDir, outFile });
+  const result = buildLanguagePack({ editionDir: ukrainianFolder.dir, outFile });
   if (!result.ok) throw new Error('The Ukrainian Language Pack does not build');
   pack = openLanguagePack(outFile);
   const words = await Promise.all((await pack.listWordIds()).map((id) => pack.getWord(id)));

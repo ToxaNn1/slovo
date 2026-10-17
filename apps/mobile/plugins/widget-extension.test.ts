@@ -1,35 +1,31 @@
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { basename, join } from 'node:path';
 
 import plist from '@expo/plist';
-import {
-  EditionConfigSchema,
-  EditionStringsSchema,
-  EditionTokensSchema,
-  WidgetSnapshotSchema,
-} from '@slovo/contracts';
+import { WidgetSnapshotSchema } from '@slovo/contracts';
 import { coreDecor, loadDecor } from '@slovo/core';
 import { coreTokens, designTokens } from '@slovo/ui/tokens';
 import { describe, expect, it } from 'vitest';
 
+import { strings, ukrainianFolder } from '../src/test-support';
+
 import { widgetExtensionFiles, writeWidgetExtension, type WidgetEdition } from './widget-extension';
 
-const ukrainianEditionDir = fileURLToPath(new URL('../../../editions/uk/', import.meta.url));
-const read = (file: string) => readFileSync(`${ukrainianEditionDir}${file}`, 'utf8');
+/** The two fonts the widget draws with, of the Ukrainian Edition's fonts. */
+const fontFiles = ukrainianFolder
+  .fonts()
+  .filter((font) => ['Literata-Medium.ttf', 'Manrope-Bold.ttf'].includes(basename(font)));
 
 /** The Ukrainian Edition as the prebuild hands it to the widget extension. */
 const ukrainian: WidgetEdition = {
-  config: EditionConfigSchema.parse(JSON.parse(read('edition.json'))),
+  config: ukrainianFolder.config,
   scheme: 'slovo-uk',
-  strings: EditionStringsSchema.parse(JSON.parse(read('strings.json'))).widget,
-  tokens: designTokens(EditionTokensSchema.parse(JSON.parse(read('tokens.json')))),
-  band: loadDecor(JSON.parse(read('decor/decor.json'))).divider.band,
-  fontFiles: ['Literata-Medium.ttf', 'Manrope-Bold.ttf'].map(
-    (font) => `${ukrainianEditionDir}assets/fonts/${font}`,
-  ),
-  exampleSnapshot: `${ukrainianEditionDir}widget-snapshot.example.json`,
+  strings: strings.widget,
+  tokens: designTokens(ukrainianFolder.read('tokens')),
+  band: loadDecor(ukrainianFolder.read('decor')).divider.band,
+  fontFiles,
+  exampleSnapshot: ukrainianFolder.path('widgetSnapshotExample'),
 };
 
 const text = (files: Map<string, string | Buffer>, path: string) => {
@@ -156,7 +152,7 @@ describe("the widget extension's Edition files", () => {
   });
 
   it('bundles the fonts it is given', () => {
-    const font = readFileSync(`${ukrainianEditionDir}assets/fonts/Literata-Medium.ttf`);
+    const font = readFileSync(fontFiles[0] ?? '');
 
     // Buffer.equals, as an element-wise comparison of a whole font is slow.
     expect(font.equals(Buffer.from(files.get('Generated/Literata-Medium.ttf') ?? ''))).toBe(true);

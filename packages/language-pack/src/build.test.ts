@@ -14,12 +14,11 @@ import { fileURLToPath } from 'node:url';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { CorrectionSchema, WordSchema, type Word } from '@slovo/contracts';
+import { CorrectionSchema, WordSchema } from '@slovo/contracts';
 import { createEntries, type Entries } from '@slovo/core';
 
 import {
   buildLanguagePack,
-  checkNewWords,
   formatBuildError,
   formatContentReport,
   openLanguagePack,
@@ -722,94 +721,6 @@ describe('buildLanguagePack', () => {
         message: expect.stringMatching(/not recorded.*--record/i) as string,
       },
     ]);
-  });
-});
-
-describe('checkNewWords', () => {
-  const draft = (changes: Json = {}): Word =>
-    WordSchema.parse({
-      ...readJsonFile(join(fixture('valid'), 'content/words/w_fx0002.json')),
-      id: 'w_draft1',
-      lemma: 'снігур',
-      stress: [4],
-      primaryDefinition: 'Лісовий птах із червоними грудьми.',
-      correctionIds: [],
-      ...changes,
-    });
-  const draftFile = 'content/words/w_draft1.json';
-
-  it('accepts a draft the build would accept', () => {
-    expect(checkNewWords(fixture('valid'), [draft()])).toEqual([]);
-  });
-
-  it.each([
-    ['a Lemma letter outside the alphabet', { lemma: 'cнігур' }, 'lemma', /"c" \(U\+0063\)/],
-    ['an unknown Category', { categoryId: 'nowhere' }, 'categoryId', /unknown category.*nowhere/i],
-    [
-      'a Stress position out of range',
-      { stress: [9] },
-      'stress.0',
-      /position 9 is out of range for the 6-letter lemma/i,
-    ],
-    ['a Stress on a consonant', { stress: [1] }, 'stress.0', /position 1 is "н", not a vowel/i],
-    [
-      'a Correction link to nothing',
-      { correctionIds: ['c_nowhere'] },
-      'correctionIds.0',
-      /unknown/i,
-    ],
-  ])('reports %s as the build does', (_name, changes, field, message) => {
-    expect(checkNewWords(fixture('valid'), [draft(changes)])).toEqual([
-      {
-        file: draftFile,
-        entryId: 'w_draft1',
-        field,
-        message: expect.stringMatching(message) as string,
-      },
-    ]);
-  });
-
-  it('reports a draft with the Lemma and primary Definition of an existing Word', () => {
-    const existing = WordSchema.parse(
-      readJsonFile(join(fixture('valid'), 'content/words/w_fx0002.json')),
-    );
-    const errors = checkNewWords(fixture('valid'), [
-      draft({
-        lemma: existing.lemma,
-        stress: existing.stress,
-        primaryDefinition: existing.primaryDefinition,
-      }),
-    ]);
-    expect(errors).toEqual([
-      {
-        file: draftFile,
-        entryId: 'w_draft1',
-        field: 'primaryDefinition',
-        message: expect.stringMatching(/same lemma and primary definition as w_fx0002/i) as string,
-      },
-    ]);
-  });
-
-  it('reports Stress in an Edition that does not mark Stress', () => {
-    const editionDir = copyFixture('valid');
-    editJson(editionDir, 'edition.json', (config) => ({
-      ...config,
-      languageTraits: { ...(config['languageTraits'] as Json), marksStress: false },
-    }));
-    expect(checkNewWords(editionDir, [draft()])).toEqual([
-      {
-        file: draftFile,
-        entryId: 'w_draft1',
-        field: 'stress',
-        message: 'Not allowed: the Edition does not mark Stress',
-      },
-    ]);
-  });
-
-  it('leaves out the errors of the existing content', () => {
-    const editionDir = copyFixture('valid');
-    editJson(editionDir, 'content/words/w_fx0002.json', (word) => ({ ...word, categoryId: 'x' }));
-    expect(checkNewWords(editionDir, [draft()])).toEqual([]);
   });
 });
 

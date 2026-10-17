@@ -1,14 +1,8 @@
-import { readFileSync } from 'node:fs';
-
 import { describe, expect, it } from 'vitest';
 
-import { loadEdition } from '@slovo/core';
-
-const configFile = new URL('../../../editions/uk/edition.json', import.meta.url);
+import { ukrainian as edition } from './test-support';
 
 describe('the Ukrainian Edition', () => {
-  const edition = loadEdition(JSON.parse(readFileSync(configFile, 'utf8')));
-
   it('marks Stress, sorts with the Ukrainian alphabet and allows the apostrophe and hyphen in a Lemma', () => {
     expect(edition.languageTraits).toEqual({
       marksStress: true,
