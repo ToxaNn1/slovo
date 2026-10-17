@@ -86,6 +86,10 @@ export type LanguageTraits = z.infer<typeof LanguageTraitsSchema>;
 export const FeatureSwitchesSchema = z.strictObject({
   game: z.boolean(),
   corrections: z.boolean(),
+  /** The Account (SLOVO ID): its Settings row, its screen and the backend's answers to it. */
+  account: z.boolean(),
+  /** Content updates: the app's daily check for a newer Language Pack. */
+  contentUpdates: z.boolean(),
 });
 
 export type FeatureSwitches = z.infer<typeof FeatureSwitchesSchema>;

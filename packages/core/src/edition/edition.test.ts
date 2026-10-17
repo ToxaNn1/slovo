@@ -14,7 +14,7 @@ const validConfig = {
     distractorRule: 'same-part-of-speech',
     vowels: 'a',
   },
-  featureSwitches: { game: true, corrections: true },
+  featureSwitches: { game: true, corrections: true, account: true, contentUpdates: true },
   userSettingDefaults: {
     theme: 'system',
     fontSize: 'M',
@@ -57,12 +57,26 @@ describe('loadEdition', () => {
   it('reports the Game as disabled when its Feature Switch is off', () => {
     const edition = loadEdition({
       ...validConfig,
-      featureSwitches: { game: false, corrections: true },
+      featureSwitches: { ...validConfig.featureSwitches, game: false },
     });
 
     expect(edition.isFeatureEnabled('game')).toBe(false);
     expect(edition.isFeatureEnabled('corrections')).toBe(true);
   });
+
+  it.each(['account', 'contentUpdates'] as const)(
+    'reports the %s Feature Switch, which an Edition may turn off',
+    (feature) => {
+      const on = loadEdition(validConfig);
+      const off = loadEdition({
+        ...validConfig,
+        featureSwitches: { ...validConfig.featureSwitches, [feature]: false },
+      });
+
+      expect(on.isFeatureEnabled(feature)).toBe(true);
+      expect(off.isFeatureEnabled(feature)).toBe(false);
+    },
+  );
 
   it('reports the language traits', () => {
     const { languageTraits } = loadEdition(validConfig);
@@ -142,12 +156,22 @@ describe('loadEdition', () => {
   it.each([
     [
       'a missing Feature Switch',
-      { featureSwitches: { corrections: true } },
+      { featureSwitches: { corrections: true, account: true, contentUpdates: true } },
       'featureSwitches.game',
     ],
     [
+      'a missing Account Feature Switch',
+      { featureSwitches: { game: true, corrections: true, contentUpdates: true } },
+      'featureSwitches.account',
+    ],
+    [
+      'a missing content updates Feature Switch',
+      { featureSwitches: { game: true, corrections: true, account: true } },
+      'featureSwitches.contentUpdates',
+    ],
+    [
       'an unknown Feature Switch',
-      { featureSwitches: { game: true, corrections: true, share: true } },
+      { featureSwitches: { ...validConfig.featureSwitches, share: true } },
       'featureSwitches',
     ],
     [

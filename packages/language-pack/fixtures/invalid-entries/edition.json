@@ -13,7 +13,9 @@
   },
   "featureSwitches": {
     "game": true,
-    "corrections": true
+    "corrections": true,
+    "account": true,
+    "contentUpdates": true
   },
   "userSettingDefaults": {
     "theme": "system",
