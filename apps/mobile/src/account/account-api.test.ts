@@ -1,52 +1,25 @@
 import { createApiClient } from '@slovo/contracts/api';
+import { failingWith, serveApi, type ApiProcedures } from '@slovo/contracts/api/test-support';
 import type { AccountApi } from '@slovo/core';
 import { describe, expect, it } from 'vitest';
 
 import { createAccountApi } from './account-api';
 
-interface SentRequest {
-  readonly method: string;
-  readonly path: string;
-  readonly authorization: string | null;
-  readonly body: unknown;
-}
+/** The Account API of the Ukrainian Edition over a backend that serves the contract's `procedures`. */
+const accountApiServedBy = (procedures: ApiProcedures) => accountApiOver(serveApi(procedures));
 
-/** The Account API of the Ukrainian Edition over a backend that answers each request with `answer`. */
-function accountApiAnswering(answer: (request: Request) => Promise<Response>) {
-  const requests: SentRequest[] = [];
+/** The Account API of the Ukrainian Edition over whatever `fetch` reaches. */
+function accountApiOver(fetch: (request: Request) => Promise<Response>) {
   const clientWith = (headers: Record<string, string>) =>
-    createApiClient({
-      url: 'http://backend.test',
-      headers,
-      fetch: async (request) => {
-        const text = await request.clone().text();
-        requests.push({
-          method: request.method,
-          path: new URL(request.url).pathname,
-          authorization: request.headers.get('authorization'),
-          body: text === '' ? undefined : (JSON.parse(text) as unknown),
-        });
-        return answer(request);
-      },
-    });
-  const accountApi = createAccountApi({
+    createApiClient({ url: 'http://backend.test', headers, fetch });
+  return createAccountApi({
     client: clientWith({}),
     clientOf: (token) => clientWith({ authorization: `Bearer ${token}` }),
     editionId: 'uk',
   });
-  return { accountApi, requests };
 }
 
-const json = (body: unknown, status = 200) =>
-  Promise.resolve(
-    new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } }),
-  );
-
-/** The answer of the backend to a failure it reports with its code and status. */
-const failure = (code: string, status: number, data?: unknown) =>
-  json({ defined: true, code, status, message: code, data }, status);
-
-/** Every call of the Account API, each with what it needs. */
+/** Every call of the Account API, each with what it needs; each calls the procedure of its name. */
 const calls: Record<keyof AccountApi, (api: AccountApi) => Promise<unknown>> = {
   requestCode: (api) => api.requestCode('anna@example.com'),
   verifyCode: (api) => api.verifyCode('anna@example.com', '123456'),
@@ -63,66 +36,84 @@ const signedInCalls = ['me', 'signOut', 'signOutEverywhere', 'delete'] as const;
 
 describe('the Account API over the contract’s client', () => {
   it('asks for a Sign-in code in the Edition’s language, with no Session', async () => {
-    const { accountApi, requests } = accountApiAnswering(() => json({}));
+    const asked: unknown[] = [];
+    const accountApi = accountApiServedBy({
+      account: {
+        requestCode: ({ input, context }) => {
+          asked.push({ input, session: context.headers.get('authorization') });
+          return {};
+        },
+      },
+    });
 
     await expect(accountApi.requestCode('anna@example.com')).resolves.toEqual({ ok: true });
-    expect(requests).toEqual([
-      {
-        method: 'POST',
-        path: '/v1/account/sign-in-codes',
-        authorization: null,
-        body: { email: 'anna@example.com', editionId: 'uk' },
-      },
+    expect(asked).toEqual([
+      { input: { email: 'anna@example.com', editionId: 'uk' }, session: null },
     ]);
   });
 
   it('signs in with the code and answers the new Session’s token and the Account’s email', async () => {
-    const { accountApi, requests } = accountApiAnswering(() =>
-      json({ token: 'the-token', email: 'anna@example.com' }),
-    );
+    const asked: unknown[] = [];
+    const accountApi = accountApiServedBy({
+      account: {
+        verifyCode: ({ input, context }) => {
+          asked.push({ input, session: context.headers.get('authorization') });
+          return { token: 'the-token', email: 'anna@example.com' };
+        },
+      },
+    });
 
     await expect(accountApi.verifyCode('anna@example.com', '123456')).resolves.toEqual({
       ok: true,
       token: 'the-token',
       email: 'anna@example.com',
     });
-    expect(requests).toEqual([
-      {
-        method: 'POST',
-        path: '/v1/account/sessions',
-        authorization: null,
-        body: { email: 'anna@example.com', code: '123456' },
-      },
+    expect(asked).toEqual([
+      { input: { email: 'anna@example.com', code: '123456' }, session: null },
     ]);
   });
 
   it('answers the email of the Session’s Account, sending the Session as a bearer token', async () => {
-    const { accountApi, requests } = accountApiAnswering(() =>
-      json({ email: 'anna@example.com', createdAt: '2026-10-17T09:00:00.000Z' }),
-    );
+    const sessions: (string | null)[] = [];
+    const accountApi = accountApiServedBy({
+      account: {
+        me: ({ context }) => {
+          sessions.push(context.headers.get('authorization'));
+          return { email: 'anna@example.com', createdAt: '2026-10-17T09:00:00.000Z' };
+        },
+      },
+    });
 
     await expect(accountApi.me('the-token')).resolves.toEqual({
       ok: true,
       email: 'anna@example.com',
     });
-    expect(requests).toEqual([
-      { method: 'GET', path: '/v1/account/me', authorization: 'Bearer the-token', body: undefined },
-    ]);
+    expect(sessions).toEqual(['Bearer the-token']);
   });
 
-  it.each([
-    ['signOut', '/v1/account/sessions/current'],
-    ['signOutEverywhere', '/v1/account/sessions'],
-    ['delete', '/v1/account/me'],
-  ] as const)('%s ends Sessions with the Session as a bearer token', async (call, path) => {
-    const { accountApi, requests } = accountApiAnswering(() => json({}));
+  it.each(['signOut', 'signOutEverywhere', 'delete'] as const)(
+    '%s ends Sessions with the Session as a bearer token',
+    async (call) => {
+      const sessions: (string | null)[] = [];
+      const ending: NonNullable<ApiProcedures['account']>[typeof call] = ({ context }) => {
+        sessions.push(context.headers.get('authorization'));
+        return {};
+      };
+      const accountApi = accountApiServedBy({ account: { [call]: ending } });
 
-    await expect(calls[call](accountApi)).resolves.toEqual({ ok: true });
-    expect(requests).toMatchObject([{ method: 'DELETE', path, authorization: 'Bearer the-token' }]);
-  });
+      await expect(calls[call](accountApi)).resolves.toEqual({ ok: true });
+      expect(sessions).toEqual(['Bearer the-token']);
+    },
+  );
 
   it('answers a wrong code with the tries it has left', async () => {
-    const { accountApi } = accountApiAnswering(() => failure('WRONG_CODE', 400, { triesLeft: 3 }));
+    const accountApi = accountApiServedBy({
+      account: {
+        verifyCode: ({ errors }) => {
+          throw errors.WRONG_CODE({ data: { triesLeft: 3 } });
+        },
+      },
+    });
 
     await expect(accountApi.verifyCode('anna@example.com', '123456')).resolves.toEqual({
       ok: false,
@@ -132,7 +123,13 @@ describe('the Account API over the contract’s client', () => {
   });
 
   it('answers an expired code', async () => {
-    const { accountApi } = accountApiAnswering(() => failure('CODE_EXPIRED', 400));
+    const accountApi = accountApiServedBy({
+      account: {
+        verifyCode: ({ errors }) => {
+          throw errors.CODE_EXPIRED();
+        },
+      },
+    });
 
     await expect(accountApi.verifyCode('anna@example.com', '123456')).resolves.toEqual({
       ok: false,
@@ -143,7 +140,7 @@ describe('the Account API over the contract’s client', () => {
   it.each(['requestCode', 'verifyCode'] as const)(
     '%s answers too many requests over a limit',
     async (call) => {
-      const { accountApi } = accountApiAnswering(() => failure('TOO_MANY_REQUESTS', 429));
+      const accountApi = accountApiServedBy(failingWith('TOO_MANY_REQUESTS'));
 
       await expect(calls[call](accountApi)).resolves.toEqual({
         ok: false,
@@ -153,24 +150,27 @@ describe('the Account API over the contract’s client', () => {
   );
 
   it.each(signedInCalls)('%s answers unauthorized when the Session has ended', async (call) => {
-    const { accountApi } = accountApiAnswering(() => failure('UNAUTHORIZED', 401));
+    const accountApi = accountApiServedBy(failingWith('UNAUTHORIZED'));
 
     await expect(calls[call](accountApi)).resolves.toEqual({ ok: false, reason: 'unauthorized' });
   });
 
-  it.each(
-    everyCall.flatMap((call) => [
-      [call, 'INTERNAL', 500] as const,
-      [call, 'BAD_GATEWAY', 502] as const,
-    ]),
-  )('%s answers a server error when the backend answers %s', async (call, code, status) => {
-    const { accountApi } = accountApiAnswering(() => failure(code, status));
+  it.each(everyCall)('%s answers a server error when the backend fails', async (call) => {
+    const accountApi = accountApiServedBy({});
+
+    await expect(calls[call](accountApi)).resolves.toEqual({ ok: false, reason: 'server-error' });
+  });
+
+  it.each(everyCall)('%s answers a server error when a proxy answers 502', async (call) => {
+    const accountApi = accountApiOver(() =>
+      Promise.resolve(new Response('<h1>502 Bad Gateway</h1>', { status: 502 })),
+    );
 
     await expect(calls[call](accountApi)).resolves.toEqual({ ok: false, reason: 'server-error' });
   });
 
   it.each(everyCall)('%s answers offline when no answer comes', async (call) => {
-    const { accountApi } = accountApiAnswering(() =>
+    const accountApi = accountApiOver(() =>
       Promise.reject(new TypeError('Network request failed')),
     );
 
@@ -178,18 +178,15 @@ describe('the Account API over the contract’s client', () => {
   });
 
   it.each(
-    everyCall.flatMap((call) => [
-      [call, 'BAD_REQUEST', 400] as const,
-      [call, 'NOT_FOUND', 404] as const,
-    ]),
-  )('%s answers unexpected when the backend answers %s', async (call, code, status) => {
-    const { accountApi } = accountApiAnswering(() => failure(code, status));
+    everyCall.flatMap((call) => [[call, 'BAD_REQUEST'] as const, [call, 'NOT_FOUND'] as const]),
+  )('%s answers unexpected when the backend answers %s', async (call, code) => {
+    const accountApi = accountApiServedBy(failingWith(code));
 
     await expect(calls[call](accountApi)).resolves.toEqual({ ok: false, reason: 'unexpected' });
   });
 
   it('answers unexpected for a Session ended on a call that carries none', async () => {
-    const { accountApi } = accountApiAnswering(() => failure('UNAUTHORIZED', 401));
+    const accountApi = accountApiServedBy(failingWith('UNAUTHORIZED'));
 
     await expect(accountApi.requestCode('anna@example.com')).resolves.toEqual({
       ok: false,

@@ -1,0 +1,16 @@
+# The app's API adapters are tested against the contract served in process
+
+Until now the tests of the app's `AccountApi` and `ContentApi` adapters gave the contract's client a fake `fetch` that answered with hand-written bodies in oRPC's error encoding (`{ defined, code, status, data }`) and checked the `/v1/...` paths the client sent. They described the API a second time, by hand: a change of oRPC's encoding or of an address would leave them green while the app broke. The backend's tests already cross the contract through the same client the app uses, into the backend built by its composition root.
+
+`@slovo/contracts/api/test-support` exports `serveApi(procedures)`. It implements `apiContract` with oRPC's `implement`, serves it through oRPC's OpenAPI handler in process, as the backend serves it, and returns the `fetch` a test gives `createApiClient`. A test writes only the procedures it needs, each a handler typed by the contract: it gets the procedure's `input`, the request's `context.headers`, where a Session travels, and the procedure's `errors`, and returns the output or throws. Any failure but a refusal (4xx), such as a procedure the test leaves out, answers the backend's bare `500 { code: "INTERNAL" }` (ADR 0031). `failingWith(code)` makes every procedure refuse with one error code of the contract, typed by it, so renaming a code fails typecheck.
+
+- **The adapters' tests cross the contract.** They assert what a procedure got, its input and the Session it carried, and answer with the contract's outputs and error codes. Addresses and encoding come from the contract on both sides, so a test fails on a mismatch with the contract, not on a renamed path. Only what never reaches the backend is still a `fetch` of the test's own: a proxy's 502 page, or a request that gets no answer.
+- **A test-only entry point.** The helper has its own entry point beside `@slovo/contracts/api`, so the package's main entry and the API client load no oRPC server code (ADR 0031). `@orpc/server` is a dev dependency of `contracts`, and only a test or a test-support module may import the helper (dependency-cruiser's `only-tests-serve-the-api-in-process`). Unlike a package's own `test-support.ts` (ADR 0027), it is shared, since it belongs to the contract, which both sides import.
+- **The backend's tests stay.** They go on serving the real composition root over Postgres. The helper is for a test that needs a backend of its own, such as the app's.
+
+## Considered Options
+
+- **A fake `fetch` with hand-written answers**, as before: rejected. It is the second description of the API that ADR 0031 rejects for the app's code.
+- **The app's tests against the real backend**: rejected. The app imports neither the backend nor the server Core (ADR 0030), and its tests would need Postgres.
+- **oRPC's in-memory router client**, which calls the procedures without HTTP: rejected. It skips the OpenAPI encoding of input, output and errors, which is what the app's client crosses.
+- **The helper in the app's `test-support.ts`**: rejected. It describes the contract, not the app, and a test of the backend could not use it.
