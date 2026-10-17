@@ -13,7 +13,7 @@ import { publishPack } from './content/publish-pack';
 import * as schema from './database/schema';
 import { accounts, sessions, signInCodes } from './database/schema';
 import { readEditions } from './edition/edition-folders';
-import { createFakeMailer, editionsFolder, testApp } from './test-support';
+import { connectionFrom, createFakeMailer, editionsFolder, testApp } from './test-support';
 
 /** The Edition of this test, with a published pack. */
 const EDITION = 'probe';
@@ -64,7 +64,7 @@ async function recordedBackend() {
   if (!recordContent({ editionDir: edition.dir }).ok) throw new Error('Content not recorded');
   const editions = readEditions(folder);
   const mailer = createFakeMailer();
-  const { app, database, close } = testApp({ mailer, editions });
+  const { app, ip, database, close } = testApp({ mailer, editions });
   onTestFinished(close);
 
   const file = join(folder, 'language-pack.db');
@@ -85,8 +85,9 @@ async function recordedBackend() {
     createApiClient({
       url: 'http://backend.test',
       headers,
+      // As the client of `testApp`: in process, but on a connection, as every request comes.
       fetch: async (request) => {
-        const response = await app.fetch(request);
+        const response = await app.fetch(request, connectionFrom(ip));
         answers.push({
           request: `${request.method} ${new URL(request.url).pathname}`,
           status: response.status,
