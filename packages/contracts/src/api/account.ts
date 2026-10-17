@@ -12,6 +12,12 @@ const SignInCodeSchema = z.string().regex(/^[0-9]{6}$/, 'Expected six digits');
  */
 const TypedEmailSchema = z.string().max(320);
 
+/**
+ * The input of an action that needs nothing but its Session: no body, or an
+ * empty one, so a field naming another Account is refused (ADR 0031).
+ */
+const NoInputSchema = z.strictObject({}).optional();
+
 /** A procedure that acts on an Account: it carries a Session as `Authorization: Bearer <token>`. */
 const signedIn = procedure.errors({
   /** The request carries no Session, or one that has ended. */
@@ -82,4 +88,37 @@ export const accountContract = {
         createdAt: z.iso.datetime(),
       }),
     ),
+
+  signOut: signedIn
+    .route({
+      method: 'DELETE',
+      path: '/account/sessions/current',
+      summary: 'End this Session',
+      description: "The Account's other Sessions go on.",
+      tags: ['account'],
+    })
+    .input(NoInputSchema)
+    .output(z.object({})),
+
+  signOutEverywhere: signedIn
+    .route({
+      method: 'DELETE',
+      path: '/account/sessions',
+      summary: 'End every Session of the Account, this one included',
+      tags: ['account'],
+    })
+    .input(NoInputSchema)
+    .output(z.object({})),
+
+  delete: signedIn
+    .route({
+      method: 'DELETE',
+      path: '/account/me',
+      summary: "Delete the Session's Account at once and for good",
+      description:
+        'Its Sessions and sign-in methods go with it, and so does any Sign-in code waiting for its email. There is no grace period; the same email can sign in again to a new, empty Account.',
+      tags: ['account'],
+    })
+    .input(NoInputSchema)
+    .output(z.object({})),
 };

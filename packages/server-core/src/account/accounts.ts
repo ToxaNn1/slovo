@@ -22,7 +22,20 @@ interface InvalidEmail {
   readonly reason: 'invalid-email';
 }
 
-/** The Account rules of the backend: Sign-in codes and Sessions. */
+/** What a token that carries no Session that is on gets. */
+interface Unauthorized {
+  readonly ok: false;
+  readonly reason: 'unauthorized';
+}
+
+/** What an action of a Session gets: done, or no Session to act. */
+type Ended = { readonly ok: true } | Unauthorized;
+
+/**
+ * The Account rules of the backend: Sign-in codes and Sessions. A Session
+ * acts only on its own Account: the rules take a token and find the Account
+ * from it, never from what a request names.
+ */
 export interface Accounts {
   /**
    * Sends a new Sign-in code to the email in the language of the Edition. The
@@ -42,6 +55,16 @@ export interface Accounts {
   verifyCode(email: string, code: string): Promise<CodeCheck | InvalidEmail>;
   /** The Account of the Session the token carries, if the Session is on. */
   accountOf(token: string): Promise<AccountRecord | undefined>;
+  /** Ends the Session the token carries; the Account's other Sessions go on. */
+  signOut(token: string): Promise<Ended>;
+  /** Ends every Session of the token's Account, its own included. */
+  signOutEverywhere(token: string): Promise<Ended>;
+  /**
+   * Deletes the token's Account at once and for good, with its Sessions,
+   * sign-in methods and the Sign-in codes waiting for its email. The email
+   * may then sign in to a new, empty Account.
+   */
+  delete(token: string): Promise<Ended>;
 }
 
 /**
@@ -55,6 +78,8 @@ function normalised(email: string): string | undefined {
 }
 
 const invalidEmail: InvalidEmail = { ok: false, reason: 'invalid-email' };
+const unauthorized: Unauthorized = { ok: false, reason: 'unauthorized' };
+const done = { ok: true } as const;
 
 export function createAccounts({
   editions,
@@ -91,5 +116,24 @@ export function createAccounts({
     },
 
     accountOf: (token) => authenticator.accountOf(token),
+
+    async signOut(token) {
+      return (await authenticator.revoke(token)) ? done : unauthorized;
+    },
+
+    async signOutEverywhere(token) {
+      const account = await authenticator.accountOf(token);
+      if (account === undefined) return unauthorized;
+      await authenticator.revokeAll(account.id);
+      return done;
+    },
+
+    // From 0.8 the Account's synced data in every Edition goes here too (spec #333).
+    async delete(token) {
+      const account = await authenticator.accountOf(token);
+      if (account === undefined) return unauthorized;
+      await authenticator.delete(account);
+      return done;
+    },
   };
 }
