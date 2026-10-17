@@ -185,20 +185,29 @@ The backend serves every Edition from one deployment ([ADR 0008](docs/adr/0008-o
    pnpm --filter @slovo/backend test
    ```
 
+6. Publish a Language Pack, so `content.latest` announces it as a Content update ([ADR 0032](docs/adr/0032-content-updates-ship-whole-language-packs.md)). Build the pack first; the command publishes `editions/<edition>/dist/language-pack.db` to the database `DATABASE_URL` names, with the file's SHA-256 and size. It refuses a pack whose content checksum isn't the one `content/manifest.json` records (rebuild it), a content version not higher than one already published (record the content with `pnpm build:pack uk --record` and rebuild), and a version already published, and leaves the database as it was. A published version never changes.
+
+   ```sh
+   pnpm build:pack uk
+   pnpm publish:pack uk
+   curl -i 'http://localhost:8787/v1/editions/uk/content/latest?packFormat=1'
+   ```
+
 ## Commands
 
 All commands run from the repo root. CI runs these on every pull request, and `main` takes changes only when they are green. Knip only reports.
 
-| Command              | What it does                                                                                                                                                                                                     |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm lint`          | ESLint in every package, then Prettier.                                                                                                                                                                          |
-| `pnpm typecheck`     | TypeScript in every package.                                                                                                                                                                                     |
-| `pnpm deps`          | dependency-cruiser: the package boundaries the ADRs set, import cycles and orphan modules. Rules and their ADRs are in [`.dependency-cruiser.mjs`](.dependency-cruiser.mjs).                                     |
-| `pnpm knip`          | Knip: unused files, exports and dependencies, and dependencies used without being listed. A report in CI, which does not fail the build. Deliberate exceptions, with reasons, are in [`knip.jsonc`](knip.jsonc). |
-| `pnpm test`          | Vitest in every package, and Jest for the component tests of `packages/ui` (ADR 0029). Turborepo caches results and tracks `editions/` as an input.                                                              |
-| `pnpm build:pack uk` | Validates the Edition's content, prints the content report and builds the Language Pack. Fails when the content misses a target in `editions/uk/content/targets.json`.                                           |
-| `pnpm source:words`  | Drafts Words for review; see [`tools/sourcing/README.md`](tools/sourcing/README.md).                                                                                                                             |
-| `pnpm format`        | Rewrites files with Prettier.                                                                                                                                                                                    |
+| Command                | What it does                                                                                                                                                                                                     |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm lint`            | ESLint in every package, then Prettier.                                                                                                                                                                          |
+| `pnpm typecheck`       | TypeScript in every package.                                                                                                                                                                                     |
+| `pnpm deps`            | dependency-cruiser: the package boundaries the ADRs set, import cycles and orphan modules. Rules and their ADRs are in [`.dependency-cruiser.mjs`](.dependency-cruiser.mjs).                                     |
+| `pnpm knip`            | Knip: unused files, exports and dependencies, and dependencies used without being listed. A report in CI, which does not fail the build. Deliberate exceptions, with reasons, are in [`knip.jsonc`](knip.jsonc). |
+| `pnpm test`            | Vitest in every package, and Jest for the component tests of `packages/ui` (ADR 0029). Turborepo caches results and tracks `editions/` as an input.                                                              |
+| `pnpm build:pack uk`   | Validates the Edition's content, prints the content report and builds the Language Pack. Fails when the content misses a target in `editions/uk/content/targets.json`.                                           |
+| `pnpm publish:pack uk` | Publishes the Edition's built Language Pack to the backend's database as a Content update. Refuses a pack the manifest doesn't record and a content version that doesn't grow.                                   |
+| `pnpm source:words`    | Drafts Words for review; see [`tools/sourcing/README.md`](tools/sourcing/README.md).                                                                                                                             |
+| `pnpm format`          | Rewrites files with Prettier.                                                                                                                                                                                    |
 
 Dependency advisories that have no fix yet are ignored in [`pnpm-workspace.yaml`](pnpm-workspace.yaml) with a review date. Look at that list when you touch dependencies, and drop an entry as soon as a patched release exists.
 
