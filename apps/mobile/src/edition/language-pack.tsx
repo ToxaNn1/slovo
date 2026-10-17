@@ -58,7 +58,7 @@ function contentUpdatesOn(packFiles: DevicePackFiles): ContentUpdates<PackReader
     packFiles,
     open: (bundled) => openDeviceContentUpdate(packFiles, bundled),
     async openKept(version) {
-      const { directory, name } = packFiles.open(version);
+      const { directory, name } = packFiles.prepareToOpen(version);
       return (await prepare(await openDatabaseAsync(name, undefined, directory))).reader;
     },
   };

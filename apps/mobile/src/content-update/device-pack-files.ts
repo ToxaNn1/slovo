@@ -13,7 +13,7 @@ export interface DevicePackFiles extends PackFiles {
    * directory as a path and the file's name. Call it at launch, before any
    * pack opens: it throws away every other pack file.
    */
-  open(version: PackVersion): { readonly directory: string; readonly name: string };
+  prepareToOpen(version: PackVersion): { readonly directory: string; readonly name: string };
 }
 
 /**
@@ -66,7 +66,7 @@ export const devicePackFiles = nativeModules.load('contentUpdates', (): DevicePa
       removePacks();
       return Promise.resolve();
     },
-    open(version) {
+    prepareToOpen(version) {
       const { name } = packFile(version);
       removePacks(name);
       return { directory: decodeURI(folder.uri.replace(/^file:\/\//, '')), name };

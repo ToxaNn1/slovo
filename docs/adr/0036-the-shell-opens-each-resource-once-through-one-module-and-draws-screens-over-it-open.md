@@ -19,3 +19,7 @@ The Language Pack is copied into place and opened with expo-sqlite's `importData
 - **A gate in every route**: rejected. Each route would still name its opening and its error state, and the onboarding and the lifecycle adapter would need gates of their own. It would keep the tab bar during a composition failure, a state that only a broken build reaches.
 - **Keep the stand-in value until open, and type the hook for any source**: rejected. It fits the Account, but every route still tells loading from empty and every change still guards against a module not open.
 - **Keep expo-sqlite's provider for the Language Pack**: rejected. Its opening lives in React state, so the composition could not wait for the pack outside React, and a retry needs a remount by key.
+
+## Amendment: the Language Pack's opening chooses the pack and carries the Content update module (0.7, #347)
+
+The Language Pack's opening is now ready with the reader of the pack the app run opened, the bundled one or a newer one a Content update kept, and with the Content update module when content updates are on. The composition and the Decor showcase read its reader, and the lifecycle adapter asks its module to check. A kept pack that fails to open is forgotten and the bundled one opens; only a failure of the bundled pack fails the opening. ADR 0032's amendment records how the pack is chosen.
