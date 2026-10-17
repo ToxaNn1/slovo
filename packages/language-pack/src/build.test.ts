@@ -684,9 +684,19 @@ describe('buildLanguagePack', () => {
       editionId: 'fixture',
       contentVersion: 3,
       contentChecksum: expect.stringMatching(/^sha256:[0-9a-f]{64}$/) as string,
+      packFormat: 1,
     });
     expect(b.metadata).toEqual(a.metadata);
     expect(readFileSync(second).equals(readFileSync(first))).toBe(true);
+  });
+
+  it('records the pack format in the pack and reports it from the build', async () => {
+    const outFile = packPath();
+
+    const result = buildLanguagePack({ editionDir: fixture('valid'), outFile });
+
+    expect(result).toMatchObject({ ok: true, metadata: { packFormat: 1 } });
+    expect((await readBack(outFile)).metadata.packFormat).toBe(1);
   });
 
   it.each([

@@ -59,7 +59,12 @@ describe('openPack', () => {
     const opening = await open(builtPack(), { bundle: 'fixture', native: 'fixture' });
 
     if (!opening.ok) throw new Error(opening.reason);
-    const metadata = { editionId: 'fixture', contentVersion: 3, contentChecksum: recordedChecksum };
+    const metadata = {
+      editionId: 'fixture',
+      contentVersion: 3,
+      contentChecksum: recordedChecksum,
+      packFormat: 1,
+    };
     expect(opening.metadata).toEqual(metadata);
     expect(await opening.reader.metadata()).toEqual(metadata);
     expect(await opening.reader.listWordIds()).toEqual(['w_fx0002', 'w_fx0003']);
@@ -101,7 +106,7 @@ describe('openPack', () => {
     });
   });
 
-  it.each(['edition_id', 'content_version', 'checksum'])(
+  it.each(['edition_id', 'content_version', 'checksum', 'pack_format'])(
     'fails on a pack whose metadata has no %s',
     async (key) => {
       const file = builtPack();
@@ -120,6 +125,8 @@ describe('openPack', () => {
   it.each([
     ['content_version', 'three'],
     ['content_version', '0'],
+    ['pack_format', 'one'],
+    ['pack_format', '0'],
     ['checksum', 'sha256:abc'],
     ['edition_id', ''],
   ])('fails on a pack whose metadata has %s "%s"', async (key, value) => {

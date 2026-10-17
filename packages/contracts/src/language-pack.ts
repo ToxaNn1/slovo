@@ -11,11 +11,16 @@ const ContentChecksumSchema = z
   .string()
   .regex(/^sha256:[0-9a-f]{64}$/, 'Expected sha256: followed by 64 hex digits');
 
-/** What identifies a compiled Language Pack, recorded in the pack itself. */
+/**
+ * What identifies a compiled Language Pack, recorded in the pack itself. The
+ * pack format says which layout the pack has; content updates send a pack
+ * only to an app that reads its format (0.7).
+ */
 export const PackMetadataSchema = z.strictObject({
   editionId: EditionIdSchema,
   contentVersion: z.int().positive(),
   contentChecksum: ContentChecksumSchema,
+  packFormat: z.int().positive(),
 });
 
 export type PackMetadata = z.infer<typeof PackMetadataSchema>;

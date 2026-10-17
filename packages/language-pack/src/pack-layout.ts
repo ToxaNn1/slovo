@@ -117,6 +117,15 @@ CREATE TABLE sources (
 `;
 
 /**
+ * The pack format this package builds: the number of the SQLite layout above.
+ * It rises only when the layout changes in a way an older app can't read (a
+ * table or column it reads removed, renamed or given another meaning);
+ * content changes and additions it ignores never raise it. Today's layout is
+ * format 1.
+ */
+export const PACK_FORMAT = 1;
+
+/**
  * Where each field of the pack metadata lies in the `metadata` table, and how
  * its text reads back. The field `contentChecksum` keeps the key `checksum`
  * of packs built before it was renamed, so the layout stays as it was.
@@ -125,6 +134,7 @@ const METADATA_FIELDS = {
   editionId: { key: 'edition_id', read: String },
   contentVersion: { key: 'content_version', read: Number },
   contentChecksum: { key: 'checksum', read: String },
+  packFormat: { key: 'pack_format', read: Number },
 } as const satisfies Record<keyof PackMetadata, { key: string; read: (text: string) => unknown }>;
 
 /** One row of the `metadata` table. */
