@@ -54,6 +54,16 @@ describe('content.latest', () => {
   });
 });
 
+/** The SHA-256 of a file's bytes, as 64 lowercase hex digits. */
+function sha256(bytes: Uint8Array): string {
+  return createHash('sha256').update(bytes).digest('hex');
+}
+
+/** The SHA-256 of a downloaded file. */
+async function sha256Of(file: Blob): Promise<string> {
+  return sha256(new Uint8Array(await file.arrayBuffer()));
+}
+
 /**
  * An Edition of a test's own, in a new editions folder: the Ukrainian
  * Edition's config, strings and content under the id, its content recorded.
@@ -94,7 +104,7 @@ function testEdition(editionId: string) {
           contentVersion: built.metadata.contentVersion,
           packFormat: 1,
           size: bytes.byteLength,
-          fileSha256: createHash('sha256').update(bytes).digest('hex'),
+          fileSha256: sha256(bytes),
         },
       };
     },
@@ -121,6 +131,8 @@ function testBackend(editions: readonly Edition[]) {
   onTestFinished(close);
   return {
     client,
+    /** Closes the backend's database, as when Postgres goes away. */
+    closeDatabase: close,
     /**
      * Publishes the pack file of the Edition as the Editions read when the
      * command runs: those the backend serves unless given.
@@ -238,5 +250,149 @@ describe('publishing a Language Pack', () => {
     const { publish } = testBackend(edition.editions());
 
     await expect(publish(pack, [])).resolves.toEqual({ ok: false, reason: 'unknown-edition' });
+  });
+});
+
+/** The Editions with the `contentUpdates` Feature Switch off. */
+function withContentUpdatesOff(editions: readonly Edition[]): Edition[] {
+  return editions.map((edition) => ({
+    ...edition,
+    config: {
+      ...edition.config,
+      featureSwitches: { ...edition.config.featureSwitches, contentUpdates: false },
+    },
+  }));
+}
+
+/** An Edition with one published pack, and the backend serving it. */
+async function publishedPack(editionId: string) {
+  const edition = testEdition(editionId);
+  const pack = edition.buildPack();
+  const backend = testBackend(edition.editions());
+  await backend.publish(pack);
+  return { ...backend, pack };
+}
+
+describe('content.download', () => {
+  it('answers the bytes of a published pack, whose SHA-256 content.latest announces', async () => {
+    const { client, pack } = await publishedPack('downloaded');
+
+    const download = await client.content.download({
+      params: { editionId: 'downloaded', contentVersion: pack.announced.contentVersion },
+    });
+
+    expect(download.status).toBe(200);
+    if (download.status !== 200) return;
+    expect(download.body.size).toBe(pack.announced.size);
+    expect(await sha256Of(download.body)).toBe(pack.announced.fileSha256);
+  });
+
+  it('lets a client keep the file for good, named by its SHA-256 as the ETag', async () => {
+    const { client, pack } = await publishedPack('kept');
+
+    const download = await client.content.download({
+      params: { editionId: 'kept', contentVersion: pack.announced.contentVersion },
+    });
+
+    expect(download.headers.etag).toBe(`"${pack.announced.fileSha256}"`);
+    expect(download.headers['cache-control']).toMatch(/\bimmutable\b/);
+  });
+
+  it('answers 304 without the bytes when If-None-Match names the ETag', async () => {
+    const { client, pack } = await publishedPack('unchanged');
+    const etag = `"${pack.announced.fileSha256}"`;
+    const params = { editionId: 'unchanged', contentVersion: pack.announced.contentVersion };
+
+    const same = await client.content.download({ params, headers: { 'if-none-match': etag } });
+    const listed = await client.content.download({
+      params,
+      headers: { 'if-none-match': `"${'0'.repeat(64)}", W/${etag}` },
+    });
+    const other = await client.content.download({
+      params,
+      headers: { 'if-none-match': `"${'0'.repeat(64)}"` },
+    });
+
+    expect(same).toMatchObject({ status: 304, headers: { etag } });
+    expect(same).not.toHaveProperty('body', expect.anything());
+    expect(listed.status).toBe(304);
+    expect(other.status).toBe(200);
+  });
+
+  it('answers a second download without reading the database again', async () => {
+    const { client, pack, closeDatabase } = await publishedPack('released');
+    const params = { editionId: 'released', contentVersion: pack.announced.contentVersion };
+    await client.content.download({ params });
+
+    await closeDatabase();
+    const again = await client.content.download({ params });
+
+    expect(again.status).toBe(200);
+    if (again.status !== 200) return;
+    expect(await sha256Of(again.body)).toBe(pack.announced.fileSha256);
+  });
+
+  it('answers NOT_FOUND for a content version not published', async () => {
+    const { client, pack } = await publishedPack('one-version');
+
+    await expect(
+      client.content.download({
+        params: { editionId: 'one-version', contentVersion: pack.announced.contentVersion + 1 },
+      }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND', status: 404 });
+  });
+
+  it('answers NOT_FOUND for an Edition the backend did not find', async () => {
+    const { client, close } = testApp();
+    onTestFinished(close);
+
+    await expect(
+      client.content.download({ params: { editionId: 'xx', contentVersion: 1 } }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND', status: 404 });
+  });
+
+  it('refuses a request with an unknown query field as BAD_REQUEST', async () => {
+    const { client, close } = testApp();
+    onTestFinished(close);
+    // The contract's types allow no query field, so the test slips one past them.
+    const query = { packFormat: 1 } as unknown as Record<string, never>;
+    const input = { params: { editionId: 'uk', contentVersion: 1 }, query };
+
+    await expect(client.content.download(input)).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+      status: 400,
+    });
+  });
+
+  it('refuses a content version that is not a positive whole number as BAD_REQUEST', async () => {
+    const { client, close } = testApp();
+    onTestFinished(close);
+
+    for (const contentVersion of [0, 1.5, 2 ** 31]) {
+      await expect(
+        client.content.download({ params: { editionId: 'uk', contentVersion } }),
+      ).rejects.toMatchObject({ code: 'BAD_REQUEST', status: 400 });
+    }
+  });
+});
+
+describe('an Edition with content updates switched off', () => {
+  it('answers NOT_FOUND to content.latest and content.download, with a pack published', async () => {
+    const edition = testEdition('switched-off');
+    const pack = edition.buildPack();
+    const { publish } = testBackend(edition.editions());
+    await publish(pack);
+
+    const { client, close } = testApp({ editions: withContentUpdatesOff(edition.editions()) });
+    onTestFinished(close);
+
+    await expect(
+      client.content.latest({ editionId: 'switched-off', packFormat: 1 }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND', status: 404 });
+    await expect(
+      client.content.download({
+        params: { editionId: 'switched-off', contentVersion: pack.announced.contentVersion },
+      }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND', status: 404 });
   });
 });
