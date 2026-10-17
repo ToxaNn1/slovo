@@ -13,7 +13,7 @@ import { join } from 'node:path';
 
 import { buildLanguagePack, recordContent } from '@slovo/language-pack';
 import { EDITIONS_DIR, editionFiles, openEdition } from '@slovo/language-pack/edition';
-import { systemClock, type Edition } from '@slovo/server-core';
+import type { Clock, Edition } from '@slovo/server-core';
 import { describe, expect, it, onTestFinished } from 'vitest';
 
 import { readEditions } from '../edition/edition-folders';
@@ -88,6 +88,7 @@ function testEdition(editionId: string) {
       if (!built.ok) throw new Error('Pack not built');
       const bytes = readFileSync(file);
       return {
+        editionId,
         file,
         announced: {
           contentVersion: built.metadata.contentVersion,
@@ -104,12 +105,15 @@ function testEdition(editionId: string) {
       if (name === undefined) throw new Error('No Word to correct');
       const file = join(wordsDir, name);
       const word = JSON.parse(readFileSync(file, 'utf8')) as { primaryDefinition: string };
-      const primaryDefinition = `${word.primaryDefinition} (виправлено)`;
+      const primaryDefinition = `${word.primaryDefinition} (corrected)`;
       writeFileSync(file, JSON.stringify({ ...word, primaryDefinition }));
       record();
     },
   };
 }
+
+/** The time publishing reads. */
+const clock: Clock = { now: () => new Date('2026-10-17T09:00:00Z') };
 
 /** The backend serving the Editions, and its publish command on the same database. */
 function testBackend(editions: readonly Edition[]) {
@@ -117,9 +121,14 @@ function testBackend(editions: readonly Edition[]) {
   onTestFinished(close);
   return {
     client,
-    /** Publishes the pack file as the Editions read when it runs: those the backend serves unless given. */
-    publish: (file: string, editionsNow: readonly Edition[] = editions) =>
-      publishPack({ database, clock: systemClock, editions: editionsNow, file }),
+    /**
+     * Publishes the pack file of the Edition as the Editions read when the
+     * command runs: those the backend serves unless given.
+     */
+    publish: (
+      { editionId, file }: { editionId: string; file: string },
+      editionsNow: readonly Edition[] = editions,
+    ) => publishPack({ database, clock, editions: editionsNow, editionId, file }),
   };
 }
 
@@ -129,7 +138,7 @@ describe('publishing a Language Pack', () => {
     const pack = edition.buildPack();
     const { client, publish } = testBackend(edition.editions());
 
-    await expect(publish(pack.file)).resolves.toEqual({ ok: true, pack: pack.announced });
+    await expect(publish(pack)).resolves.toEqual({ ok: true, pack: pack.announced });
 
     await expect(client.content.latest({ editionId: 'published', packFormat: 1 })).resolves.toEqual(
       { pack: pack.announced },
@@ -143,11 +152,11 @@ describe('publishing a Language Pack', () => {
     const edition = testEdition('grown');
     const first = edition.buildPack();
     const { client, publish } = testBackend(edition.editions());
-    await publish(first.file);
+    await publish(first);
     edition.correctWord();
     const second = edition.buildPack();
 
-    await expect(publish(second.file, edition.editions())).resolves.toMatchObject({ ok: true });
+    await expect(publish(second, edition.editions())).resolves.toMatchObject({ ok: true });
 
     expect(second.announced.contentVersion).toBeGreaterThan(first.announced.contentVersion);
     await expect(client.content.latest({ editionId: 'grown', packFormat: 1 })).resolves.toEqual({
@@ -161,11 +170,29 @@ describe('publishing a Language Pack', () => {
     edition.correctWord();
     const { client, publish } = testBackend(edition.editions());
 
-    await expect(publish(stale.file)).resolves.toEqual({ ok: false, reason: 'not-recorded' });
+    await expect(publish(stale)).resolves.toEqual({ ok: false, reason: 'not-recorded' });
 
     await expect(
       client.content.latest({ editionId: 'unrecorded', packFormat: 1 }),
     ).resolves.toEqual({ pack: null });
+  });
+
+  it('refuses a pack of another Edition as one the Edition does not record', async () => {
+    const edition = testEdition('mine');
+    const other = testEdition('theirs');
+    const pack = other.buildPack();
+    const { client, publish } = testBackend([...edition.editions(), ...other.editions()]);
+
+    await expect(publish({ ...pack, editionId: 'mine' })).resolves.toEqual({
+      ok: false,
+      reason: 'not-recorded',
+    });
+
+    for (const editionId of ['mine', 'theirs']) {
+      await expect(client.content.latest({ editionId, packFormat: 1 })).resolves.toEqual({
+        pack: null,
+      });
+    }
   });
 
   it('refuses a content version not higher than the latest published one, and keeps nothing', async () => {
@@ -175,9 +202,9 @@ describe('publishing a Language Pack', () => {
     edition.correctWord();
     const newer = edition.buildPack();
     const { client, publish } = testBackend(edition.editions());
-    await publish(newer.file);
+    await publish(newer);
 
-    await expect(publish(older.file, olderEditions)).resolves.toEqual({
+    await expect(publish(older, olderEditions)).resolves.toEqual({
       ok: false,
       reason: 'version-not-higher',
     });
@@ -185,15 +212,20 @@ describe('publishing a Language Pack', () => {
     await expect(client.content.latest({ editionId: 'shrunk', packFormat: 1 })).resolves.toEqual({
       pack: newer.announced,
     });
+    // Had it been kept, its version would be published now.
+    await expect(publish(older, olderEditions)).resolves.toEqual({
+      ok: false,
+      reason: 'version-not-higher',
+    });
   });
 
   it('refuses a content version already published, and keeps nothing', async () => {
     const edition = testEdition('twice');
     const pack = edition.buildPack();
     const { client, publish } = testBackend(edition.editions());
-    await publish(pack.file);
+    await publish(pack);
 
-    await expect(publish(pack.file)).resolves.toEqual({ ok: false, reason: 'already-published' });
+    await expect(publish(pack)).resolves.toEqual({ ok: false, reason: 'already-published' });
 
     await expect(client.content.latest({ editionId: 'twice', packFormat: 1 })).resolves.toEqual({
       pack: pack.announced,
@@ -205,9 +237,6 @@ describe('publishing a Language Pack', () => {
     const pack = edition.buildPack();
     const { publish } = testBackend(edition.editions());
 
-    await expect(publish(pack.file, [])).resolves.toEqual({
-      ok: false,
-      reason: 'unknown-edition',
-    });
+    await expect(publish(pack, [])).resolves.toEqual({ ok: false, reason: 'unknown-edition' });
   });
 });

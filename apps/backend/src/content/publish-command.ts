@@ -53,6 +53,7 @@ async function main(): Promise<number> {
       database,
       clock: systemClock,
       editions: readEditions(EDITIONS_DIR),
+      editionId,
       file,
     });
     if (!published.ok) {

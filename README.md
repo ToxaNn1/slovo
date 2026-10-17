@@ -205,7 +205,7 @@ All commands run from the repo root. CI runs these on every pull request, and `m
 | `pnpm knip`            | Knip: unused files, exports and dependencies, and dependencies used without being listed. A report in CI, which does not fail the build. Deliberate exceptions, with reasons, are in [`knip.jsonc`](knip.jsonc). |
 | `pnpm test`            | Vitest in every package, and Jest for the component tests of `packages/ui` (ADR 0029). Turborepo caches results and tracks `editions/` as an input.                                                              |
 | `pnpm build:pack uk`   | Validates the Edition's content, prints the content report and builds the Language Pack. Fails when the content misses a target in `editions/uk/content/targets.json`.                                           |
-| `pnpm publish:pack uk` | Publishes the Edition's built Language Pack to the backend's database as a Content update. Refuses a pack the manifest doesn't record and a content version that doesn't grow.                                   |
+| `pnpm publish:pack uk` | Publishes the Edition's built Language Pack to the backend's database as a Content update. Refuses a pack the manifest doesn't record, a content version that doesn't grow and one already published.            |
 | `pnpm source:words`    | Drafts Words for review; see [`tools/sourcing/README.md`](tools/sourcing/README.md).                                                                                                                             |
 | `pnpm format`          | Rewrites files with Prettier.                                                                                                                                                                                    |
 

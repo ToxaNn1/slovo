@@ -5,7 +5,8 @@ import type { Clock, ContentPackStore, PackFile } from '../ports';
 
 /**
  * Why a pack is not published: its Edition is not one the backend found;
- * its content checksum is not the one its Edition's manifest records;
+ * its content checksum is not the one the Edition's manifest records, which
+ * is also the case for a pack of another Edition;
  * its content version is not higher than one already published for the
  * Edition; or that version is already published (ADR 0011, 0032).
  */
@@ -27,11 +28,12 @@ export interface ContentPacks {
     | { readonly ok: false; readonly reason: 'unknown-edition' }
   >;
   /**
-   * Publishes a built pack for the Edition its metadata names, as
+   * Publishes a built pack of the Edition, and answers it as
    * `content.latest` will announce it. Two different packs never share a
    * content version, and a published pack never changes.
    */
   publish(
+    editionId: string,
     file: PackFile,
   ): Promise<
     | { readonly ok: true; readonly pack: PublishedPack }
@@ -54,11 +56,12 @@ export function createContentPacks({
       return { ok: true, pack: await store.latest(editionId, packFormat) };
     },
 
-    async publish(file) {
+    async publish(editionId, file) {
       const { metadata } = file;
-      const edition = editions.find(metadata.editionId);
+      const edition = editions.find(editionId);
       if (edition === undefined) return { ok: false, reason: 'unknown-edition' };
-      // The checksum covers the version, so a recorded checksum is the recorded version too.
+      // The checksum covers the Edition and the version, so a recorded
+      // checksum is the Edition's pack at the recorded version.
       if (metadata.contentChecksum !== edition.manifest.contentChecksum) {
         return { ok: false, reason: 'not-recorded' };
       }

@@ -14,20 +14,22 @@ import type { Database } from '../database/database';
 import { createContentPackStore } from './content-pack-store';
 
 /**
- * Publishes a built Language Pack file (`pnpm build:pack`) for the Edition
- * its metadata names, by the server Core's rules (ADR 0032): the bytes, the
- * metadata read from them, their size and SHA-256 go into one row.
+ * Publishes a built Language Pack file (`pnpm build:pack`) of the Edition by
+ * the server Core's rules (ADR 0032): the bytes, the metadata read from them,
+ * their size and SHA-256 go into one row.
  */
 export async function publishPack({
   database,
   clock,
   editions,
+  editionId,
   file,
 }: {
   database: Database;
   clock: Clock;
   /** The Editions as their folders hold them now. */
   editions: readonly Edition[];
+  editionId: string;
   file: string;
 }): ReturnType<ContentPacks['publish']> {
   const bytes = readFileSync(file);
@@ -43,7 +45,7 @@ export async function publishPack({
     store: createContentPackStore(database),
     clock,
   });
-  return contentPacks.publish({
+  return contentPacks.publish(editionId, {
     metadata,
     fileSha256: createHash('sha256').update(bytes).digest('hex'),
     bytes,
