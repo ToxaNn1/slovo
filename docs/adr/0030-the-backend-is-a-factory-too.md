@@ -6,7 +6,7 @@ The backend has two parts, like the app's Core and mobile shell (ADR 0006, 0018)
 
 - **The server Core**, `packages/server-core`, holds the backend's rules and declares the ports they need, such as the `Clock`. It imports only `@slovo/contracts` and Zod: no Hono, no SQL, no better-auth, no Node and no language. Its modules follow the app's Core: factory functions that take an object of dependencies, expected outcomes returned as discriminated unions (`{ ok: true, … } | { ok: false, reason }`), exceptions only for broken invariants, and time from the `Clock`, never from the system clock.
 - **The backend**, `apps/backend`, is the shell: the HTTP routes and the oRPC procedures, the adapters of the server Core's ports (Drizzle over Postgres, better-auth, SMTP) and one composition root, `createApp`, which builds the whole backend from its dependencies (the database, the clock, the logger, later the mailer and the Editions). A test builds it with its own and sends requests to it in process. There are no in-memory repositories: the tests run against a real Postgres, one fresh database per run.
-- **The same domain folders on both sides** (ADR 0027): `account`, `content` and `edition`, each appearing in the server Core and in the backend when it gets its first modules.
+- **The same domain folders on both sides** (ADR 0027): `account`, `content` and `edition`, each appearing in the server Core and in the backend when it gets its first modules. The backend's own layer is `database/`: the pool, the schema and the migrate command, which the adapters of every domain share, as the app's adapters share `device/`.
 
 How the factory reaches the server:
 
