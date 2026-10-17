@@ -14,6 +14,7 @@ export type {
   Register,
   Word,
 } from '@slovo/contracts';
+export { openAccount, type Account, type AccountProblem, type AccountState } from './account';
 export { openComposition, type Composition } from './composition';
 export {
   type Collection,
@@ -145,6 +146,8 @@ export {
   type OnboardingStep,
   type SampleNotification,
 } from './onboarding';
+export { createFakeAccountApi, type FakeAccountApi, type SentCode } from './fakes/fake-account-api';
+export { createMemorySessionStore } from './fakes/memory-session-store';
 export {
   createFakeNotificationScheduler,
   type FakeNotificationScheduler,
@@ -162,14 +165,19 @@ export {
 export {
   systemClock,
   systemRandom,
+  type AccountApi,
+  type AccountApiFailure,
   type Clock,
   type ContentReadPort,
+  type KeptSession,
   type NotificationPermission,
   type NotificationSchedulerPort,
   type PlannedNotification,
   type PlannedSound,
   type Random,
+  type RequestFailure,
   type Schedule,
+  type SessionStore,
   type UserStateChanges,
   type UserStatePort,
 } from './ports';

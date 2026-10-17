@@ -84,6 +84,16 @@ export interface Random {
  */
 export type Schedule = (run: () => void, delay: number) => () => void;
 
+/**
+ * A request to the backend that failed in a way that may pass by itself: no
+ * answer (`offline`), a server error (5xx) or too many requests (429). These
+ * failures, and only these, are tried again.
+ */
+export interface RequestFailure {
+  readonly ok: false;
+  readonly reason: 'offline' | 'server-error' | 'too-many-requests';
+}
+
 /** Whether the device lets the app notify: the reader allowed it, denied it, or hasn't been asked yet. */
 export type NotificationPermission = 'allowed' | 'denied' | 'not-asked';
 
@@ -127,6 +137,68 @@ export interface NotificationSchedulerPort {
    * exactly the Core's plan. An empty plan cancels them all.
    */
   replacePlan(plan: readonly PlannedNotification[]): Promise<void>;
+}
+
+/**
+ * A call of the Account API that failed as any request does, or because the
+ * Session it carried has ended (401).
+ */
+export type AccountApiFailure =
+  RequestFailure | { readonly ok: false; readonly reason: 'unauthorized' };
+
+/**
+ * The backend's Account procedures, as the Core sees them. The shell
+ * implements this port on the API contract's client, which also names the
+ * Edition whose language the Sign-in code email is in. The calls that act on
+ * an Account carry the token of its Session.
+ */
+export interface AccountApi {
+  /**
+   * Sends a Sign-in code to the email. The answer is the same whether or not
+   * the email has an Account.
+   */
+  requestCode(email: string): Promise<{ readonly ok: true } | AccountApiFailure>;
+  /**
+   * Checks the code last sent to the email. The first right code creates the
+   * Account; the answer is the new Session's token and the Account's email.
+   */
+  verifyCode(
+    email: string,
+    code: string,
+  ): Promise<
+    | { readonly ok: true; readonly token: string; readonly email: string }
+    | { readonly ok: false; readonly reason: 'wrong-code'; readonly triesLeft: number }
+    | { readonly ok: false; readonly reason: 'code-expired' }
+    | AccountApiFailure
+  >;
+  /** The email of the Session's Account. */
+  me(token: string): Promise<{ readonly ok: true; readonly email: string } | AccountApiFailure>;
+  /** Ends the Session. */
+  signOut(token: string): Promise<{ readonly ok: true } | AccountApiFailure>;
+  /** Ends every Session of the Session's Account. */
+  signOutEverywhere(token: string): Promise<{ readonly ok: true } | AccountApiFailure>;
+  /** Deletes the Session's Account with every Session of it, for good. */
+  delete(token: string): Promise<{ readonly ok: true } | AccountApiFailure>;
+}
+
+/** This device's Session as the device keeps it: its token and the email of its Account. */
+export interface KeptSession {
+  readonly token: string;
+  readonly email: string;
+}
+
+/**
+ * Keeps this device's Session: in the Keychain in the mobile shell, in memory
+ * in tests and on a development client without the Keychain module. Never in
+ * the user state or in a file.
+ */
+export interface SessionStore {
+  /** Keeps the Session, in place of any kept before. */
+  keep(session: KeptSession): Promise<void>;
+  /** The Session kept, if any. */
+  read(): Promise<KeptSession | undefined>;
+  /** Forgets the Session kept, if any. */
+  forget(): Promise<void>;
 }
 
 export const systemClock: Clock = {
