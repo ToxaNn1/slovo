@@ -1,4 +1,10 @@
-import type { Category, Correction, Word } from '@slovo/contracts';
+import {
+  PackMetadataSchema,
+  type Category,
+  type Correction,
+  type PackMetadata,
+  type Word,
+} from '@slovo/contracts';
 
 /**
  * The SQLite layout of a Language Pack. It is internal to this package: the
@@ -110,12 +116,39 @@ CREATE TABLE sources (
 ) WITHOUT ROWID;
 `;
 
-/** Identifies a compiled Language Pack. */
-export interface PackMetadata {
-  readonly editionId: string;
-  readonly contentVersion: number;
-  /** `sha256:` followed by the hex digest of the canonical content. */
-  readonly checksum: string;
+/**
+ * Where each field of the pack metadata lies in the `metadata` table, and how
+ * its text reads back. The field `contentChecksum` keeps the key `checksum`
+ * of packs built before it was renamed, so the layout stays as it was.
+ */
+const METADATA_FIELDS = {
+  editionId: { key: 'edition_id', read: String },
+  contentVersion: { key: 'content_version', read: Number },
+  contentChecksum: { key: 'checksum', read: String },
+} as const satisfies Record<keyof PackMetadata, { key: string; read: (text: string) => unknown }>;
+
+/** One row of the `metadata` table. */
+export interface MetadataRow {
+  readonly key: string;
+  readonly value: string;
+}
+
+/** The rows of the `metadata` table that record the metadata. */
+export function metadataRows(metadata: PackMetadata): MetadataRow[] {
+  return Object.entries(METADATA_FIELDS).map(([field, { key }]) => ({
+    key,
+    value: String(metadata[field as keyof PackMetadata]),
+  }));
+}
+
+/** The metadata the rows record. Throws when a key is missing or a value is invalid. */
+export function metadataOf(rows: readonly MetadataRow[]): PackMetadata {
+  const values = new Map(rows.map(({ key, value }) => [key, value]));
+  const fields = Object.entries(METADATA_FIELDS).map(([field, { key, read }]) => {
+    const text = values.get(key);
+    return [field, text === undefined ? undefined : read(text)];
+  });
+  return PackMetadataSchema.parse(Object.fromEntries(fields));
 }
 
 /** Everything that goes into a pack, already validated and sorted. */

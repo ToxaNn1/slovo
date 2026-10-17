@@ -1,8 +1,7 @@
 import { writeFileSync } from 'node:fs';
 
 import type { BuildError } from './build-error';
-import { contentChecksum } from './checksum';
-import type { ContentManifest } from './content-manifest';
+import { checkContentVersion } from './content-manifest';
 import { editionFiles } from './edition-folder';
 import { unregisteredEntries } from './id-registry';
 import { compare, readEdition } from './read-edition';
@@ -12,7 +11,7 @@ export type RecordResult =
       readonly ok: true;
       readonly previousContentVersion: number;
       readonly contentVersion: number;
-      readonly checksum: string;
+      readonly contentChecksum: string;
       /** The ids added to the end of the registry, in code-unit order. */
       readonly newIds: readonly string[];
     }
@@ -37,15 +36,9 @@ export function recordContent({ editionDir }: { editionDir: string }): RecordRes
     .map(({ entry }) => entry.id)
     .toSorted(compare);
   const folder = editionFiles(editionDir);
-  let recorded: ContentManifest & { checksum: string } = {
-    contentVersion: content.contentVersion,
-    checksum: contentChecksum(content),
-  };
-  if (recorded.checksum !== manifest.checksum) {
-    const contentVersion = manifest.contentVersion + 1;
-    recorded = { contentVersion, checksum: contentChecksum({ ...content, contentVersion }) };
-    writeJson(folder.path('manifest'), recorded);
-  }
+  const check = checkContentVersion(content, manifest);
+  if (!check.recorded) writeJson(folder.path('manifest'), check.next);
+  const recorded = check.recorded ? check.manifest : check.next;
   if (newIds.length > 0) {
     writeJson(folder.path('idRegistry'), [...registry, ...newIds]);
   }
@@ -53,7 +46,7 @@ export function recordContent({ editionDir }: { editionDir: string }): RecordRes
     ok: true,
     previousContentVersion: manifest.contentVersion,
     contentVersion: recorded.contentVersion,
-    checksum: recorded.checksum,
+    contentChecksum: recorded.contentChecksum,
     newIds,
   };
 }

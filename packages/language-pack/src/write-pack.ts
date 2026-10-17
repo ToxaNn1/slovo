@@ -2,9 +2,9 @@ import { mkdirSync, renameSync, rmSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 
-import type { Entry } from '@slovo/contracts';
+import type { Entry, PackMetadata } from '@slovo/contracts';
 
-import { PACK_SCHEMA, type PackContent, type PackMetadata } from './pack-layout';
+import { metadataRows, PACK_SCHEMA, type PackContent } from './pack-layout';
 
 /**
  * Writes the pack to a temporary file and moves it into place, so a failed
@@ -22,9 +22,7 @@ export function writePack(outFile: string, content: PackContent, metadata: PackM
     db.exec('BEGIN');
 
     const insertMetadata = db.prepare('INSERT INTO metadata (key, value) VALUES (?, ?)');
-    insertMetadata.run('edition_id', metadata.editionId);
-    insertMetadata.run('content_version', String(metadata.contentVersion));
-    insertMetadata.run('checksum', metadata.checksum);
+    for (const { key, value } of metadataRows(metadata)) insertMetadata.run(key, value);
 
     const insertCategory = db.prepare(
       'INSERT INTO categories (id, display_name, position) VALUES (?, ?, ?)',

@@ -683,7 +683,7 @@ describe('buildLanguagePack', () => {
     expect(a.metadata).toEqual({
       editionId: 'fixture',
       contentVersion: 3,
-      checksum: expect.stringMatching(/^sha256:[0-9a-f]{64}$/) as string,
+      contentChecksum: expect.stringMatching(/^sha256:[0-9a-f]{64}$/) as string,
     });
     expect(b.metadata).toEqual(a.metadata);
     expect(readFileSync(second).equals(readFileSync(first))).toBe(true);
@@ -701,7 +701,7 @@ describe('buildLanguagePack', () => {
       expect(buildErrors(editionDir)).toEqual([
         {
           file: 'content/manifest.json',
-          field: 'checksum',
+          field: 'contentChecksum',
           message: expect.stringMatching(
             /content changed since content version 3.*pnpm build:pack fixture --record/i,
           ) as string,
@@ -710,6 +710,20 @@ describe('buildLanguagePack', () => {
     },
   );
 
+  it('fails when a recorded checksum was copied without raising the content version', () => {
+    const editionDir = copyFixture('valid');
+    editJson(editionDir, 'content/words/w_fx0002.json', (word) => ({ ...word, rarity: 4 }));
+    record(editionDir);
+    editJson(editionDir, 'content/manifest.json', (manifest) => ({
+      ...manifest,
+      contentVersion: 3,
+    }));
+
+    expect(buildErrors(editionDir)).toEqual([
+      expect.objectContaining({ file: 'content/manifest.json', field: 'contentChecksum' }),
+    ]);
+  });
+
   it('fails when the manifest records no checksum', () => {
     const editionDir = copyFixture('valid');
     editJson(editionDir, 'content/manifest.json', () => ({ contentVersion: 3 }));
@@ -717,7 +731,7 @@ describe('buildLanguagePack', () => {
     expect(buildErrors(editionDir)).toEqual([
       {
         file: 'content/manifest.json',
-        field: 'checksum',
+        field: 'contentChecksum',
         message: expect.stringMatching(/not recorded.*--record/i) as string,
       },
     ]);
@@ -794,7 +808,7 @@ describe('recordContent', () => {
       ok: true,
       previousContentVersion: 3,
       contentVersion: 3,
-      checksum: manifestOf(editionDir)['checksum'],
+      contentChecksum: manifestOf(editionDir)['contentChecksum'],
       newIds: [],
     });
     expect(readFileSync(join(editionDir, 'content/manifest.json'), 'utf8')).toBe(manifest);
@@ -815,8 +829,11 @@ describe('recordContent', () => {
     expect(result.ok).toBe(true);
     const { metadata } = await readBack(edited);
     expect(metadata).toMatchObject({ contentVersion: 4 });
-    expect(manifestOf(editionDir)).toEqual({ contentVersion: 4, checksum: metadata.checksum });
-    expect(metadata.checksum).not.toBe((await readBack(original)).metadata.checksum);
+    expect(manifestOf(editionDir)).toEqual({
+      contentVersion: 4,
+      contentChecksum: metadata.contentChecksum,
+    });
+    expect(metadata.contentChecksum).not.toBe((await readBack(original)).metadata.contentChecksum);
   });
 
   it('adds new ids to the end of the registry and keeps every known one', () => {

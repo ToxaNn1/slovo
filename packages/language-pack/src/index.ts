@@ -9,7 +9,6 @@
 export { buildLanguagePack, type BuildResult } from './build';
 export { formatBuildError, type BuildError } from './build-error';
 export type { ContentTarget, ContentTargets, MissedTarget } from './content-targets';
-export type { PackMetadata } from './pack-layout';
 export { openLanguagePack, type NodeLanguagePack } from './read-pack';
 export { recordContent, type RecordResult } from './record';
 export { formatContentReport, type ContentReport } from './report';

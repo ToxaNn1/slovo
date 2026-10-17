@@ -3,12 +3,13 @@ import {
   CorrectionSchema,
   WordSchema,
   type Correction,
+  type PackMetadata,
   type Source,
   type Word,
 } from '@slovo/contracts';
 import type { ContentReadPort } from '@slovo/core';
 
-import type { PackMetadata } from './pack-layout';
+import { metadataOf, type MetadataRow } from './pack-layout';
 
 /** A value bound to a `?` placeholder. */
 type BindValue = string | number;
@@ -25,6 +26,7 @@ export interface PackDatabase {
 
 /** The Core's read port over a compiled Language Pack, plus the pack's metadata. */
 export interface PackReader extends ContentReadPort {
+  /** Throws when the pack's metadata misses a field or holds an invalid one. */
   metadata(): Promise<PackMetadata>;
 }
 
@@ -219,14 +221,42 @@ export function createPackReader(db: PackDatabase): PackReader {
     listCorrectionIds: () => column(SQL.correctionIds, [], 'id'),
     getCorrection,
     listLinkedWordIds: (correctionId) => column(SQL.linkedWordIds, [correctionId], 'id'),
-    async metadata() {
-      const rows = await db.getAllAsync<{ key: string; value: string }>(SQL.metadata, []);
-      const values = new Map(rows.map((r) => [r.key, r.value]));
-      return {
-        editionId: values.get('edition_id') ?? '',
-        contentVersion: Number(values.get('content_version')),
-        checksum: values.get('checksum') ?? '',
-      };
-    },
+    metadata: async () => metadataOf(await db.getAllAsync<MetadataRow>(SQL.metadata, [])),
+  };
+}
+
+/** The Edition each part of the running app says it belongs to. */
+export interface AppEditions {
+  /** The Edition whose config and strings the JavaScript bundle was built with. */
+  readonly bundle: string;
+  /**
+   * The Edition in the native app's config. Absent when the build does not
+   * report one; the other two are still compared.
+   */
+  readonly native: string | undefined;
+}
+
+export type PackOpening =
+  | { readonly ok: true; readonly reader: PackReader; readonly metadata: PackMetadata }
+  | { readonly ok: false; readonly reason: string };
+
+/**
+ * Opens a compiled Language Pack for the running app, with the metadata it
+ * read. It refuses when the native app, the JavaScript bundle and the pack
+ * are not all of one Edition, e.g. a development client built for one Edition
+ * that Metro serves another to, and throws when the pack's metadata is broken.
+ */
+export async function openPack(db: PackDatabase, app: AppEditions): Promise<PackOpening> {
+  const reader = createPackReader(db);
+  const metadata = await reader.metadata();
+  const { editionId } = metadata;
+  const { bundle, native } = app;
+  if ([native, editionId].every((id) => id === undefined || id === bundle)) {
+    return { ok: true, reader, metadata };
+  }
+  const nativeDescription = native === undefined ? 'not reported' : `"${native}"`;
+  return {
+    ok: false,
+    reason: `The app mixes Editions (native app: ${nativeDescription}, JavaScript bundle: "${bundle}", Language Pack: "${editionId}"). Rebuild the Language Pack and the native app for one Edition.`,
   };
 }

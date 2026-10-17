@@ -1,9 +1,9 @@
+import type { PackMetadata } from '@slovo/contracts';
+
 import type { BuildError } from './build-error';
-import { contentChecksum } from './checksum';
-import { unrecordedContentErrors } from './content-manifest';
+import { checkContentVersion } from './content-manifest';
 import { missedTargets, type MissedTarget } from './content-targets';
 import { unregisteredEntries } from './id-registry';
-import type { PackMetadata } from './pack-layout';
 import { readEdition } from './read-edition';
 import { contentReport, type ContentReport } from './report';
 import { writePack } from './write-pack';
@@ -52,13 +52,9 @@ export function buildLanguagePack({
   if (errors.length > 0 || source.valid === undefined) return { ok: false, errors };
 
   const { content, manifest, targets } = source.valid;
-  const metadata: PackMetadata = {
-    editionId: content.editionId,
-    contentVersion: content.contentVersion,
-    checksum: contentChecksum(content),
-  };
-  const unrecorded = unrecordedContentErrors(manifest, metadata.checksum, content.editionId);
-  if (unrecorded.length > 0) return { ok: false, errors: unrecorded };
+  const check = checkContentVersion(content, manifest);
+  if (!check.recorded) return { ok: false, errors: [check.error] };
+  const metadata: PackMetadata = { editionId: content.editionId, ...check.manifest };
 
   writePack(outFile, content, metadata);
   const report = contentReport(content);
