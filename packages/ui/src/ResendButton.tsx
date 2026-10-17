@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
-import { useEdition } from '../providers/EditionProvider';
-import { SecondaryButton } from '../primitives/SecondaryButton';
+import { useEdition } from './providers/EditionProvider';
+import { SecondaryButton } from './primitives/SecondaryButton';
 
 /** The seconds left until `at`, counted up, so the button never reads 0. */
 const secondsUntil = (at: Date, now: Date) =>
@@ -20,6 +20,7 @@ export function ResendButton({
 }: {
   /** When another code may be sent, as the Account says. */
   resendAt: Date;
+  /** The time it counts by, the same function from render to render, as each new one starts the count again. */
   now: () => Date;
   onPress: () => void;
   /** Whether the new code's request is on the way. */
@@ -32,8 +33,9 @@ export function ResendButton({
 
   useEffect(() => {
     const tick = () => {
-      const left = resendAt.getTime() - now().getTime();
-      setSecondsLeft(secondsUntil(resendAt, now()));
+      const current = now();
+      const left = resendAt.getTime() - current.getTime();
+      setSecondsLeft(secondsUntil(resendAt, current));
       // The next tick falls where the count changes.
       if (left > 0) timer = setTimeout(tick, left % 1000 || 1000);
     };

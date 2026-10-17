@@ -1,6 +1,5 @@
 import type { Account, AccountState } from '@slovo/core';
 import { useEdition } from '@slovo/ui';
-import { useMemo } from 'react';
 
 import { editionStrings } from '../edition/edition';
 import { useSubscribed, type Opening, type Source } from '../opening';
@@ -27,8 +26,5 @@ export function useAccountState(account: Account): AccountState {
 /** The line under the field of the SLOVO ID screen for the last request's problem, if any. */
 export function useAccountProblemLine(state: AccountState): string | undefined {
   const { count } = useEdition();
-  return useMemo(
-    () => accountProblemLine({ state, strings: editionStrings.account, count }),
-    [state, count],
-  );
+  return accountProblemLine({ state, strings: editionStrings.account, count });
 }

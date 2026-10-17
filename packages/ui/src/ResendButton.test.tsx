@@ -12,13 +12,16 @@ const strings = {
 
 const SENT = new Date('2026-10-17T09:00:00Z');
 
+/** The fake timers' time, the same function from render to render. */
+const now = () => new Date();
+
 async function renderButton(onPress: () => void = jest.fn()) {
   await render(
     <EditionProvider edition={{ locale: 'en' }} strings={strings}>
       <ResendButton
         testID="resend"
         resendAt={new Date(SENT.getTime() + 60_000)}
-        now={() => new Date()}
+        now={now}
         onPress={onPress}
       />
     </EditionProvider>,

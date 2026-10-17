@@ -23,6 +23,7 @@ export function TextField({
   value,
   onChangeText,
   problem,
+  problemCause,
   busy = false,
   editable = true,
   testID,
@@ -34,6 +35,8 @@ export function TextField({
   onChangeText: (text: string) => void;
   /** Why what was typed didn't do what the reader asked, in the Edition's words. */
   problem?: string | undefined;
+  /** What the problem came with, such as the state it is part of: a new one announces the same problem again. */
+  problemCause?: unknown;
   /** Whether the request of what was typed is on the way. */
   busy?: boolean | undefined;
   editable?: boolean;
@@ -83,7 +86,7 @@ export function TextField({
         />
         {busy && <ActivityIndicator color={colors.muted} />}
       </View>
-      <ProblemLine testID={`${testID}-problem`} problem={problem} />
+      <ProblemLine testID={`${testID}-problem`} problem={problem} cause={problemCause} />
     </View>
   );
 }
@@ -95,9 +98,15 @@ export function TextField({
  */
 export function ProblemLine({
   problem,
+  cause,
   testID,
 }: {
   problem: string | undefined;
+  /**
+   * What the problem came with, such as the state it is part of: a new one
+   * announces the same problem again, as when a second try meets it at once.
+   */
+  cause?: unknown;
   testID: string;
 }) {
   const { colors, fontFamilies } = useTokens();
@@ -105,7 +114,7 @@ export function ProblemLine({
 
   useEffect(() => {
     if (problem !== undefined) AccessibilityInfo.announceForAccessibility(problem);
-  }, [problem]);
+  }, [problem, cause]);
 
   if (problem === undefined) return null;
   return (

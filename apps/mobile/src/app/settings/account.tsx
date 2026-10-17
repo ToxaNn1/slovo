@@ -124,6 +124,7 @@ function SignIn({
           value={email}
           onChangeText={setEmail}
           problem={problem}
+          problemCause={state}
           keyboardType="email-address"
           textContentType="emailAddress"
           autoComplete="email"
@@ -159,6 +160,7 @@ function SignIn({
           run(account.verifyCode(typed));
         }}
         problem={problem}
+        problemCause={state}
         busy={state.inFlight && !resending}
         keyboardType="number-pad"
         textContentType="oneTimeCode"
@@ -216,7 +218,11 @@ function SignedIn({
 
   function end(how: 'everywhere' | 'delete') {
     setEnding(how);
-    run(how === 'everywhere' ? account.signOutEverywhere() : account.delete());
+    run(
+      (how === 'everywhere' ? account.signOutEverywhere() : account.delete()).finally(() => {
+        setEnding(undefined);
+      }),
+    );
   }
 
   function confirmDelete() {
@@ -272,7 +278,7 @@ function SignedIn({
         disabled={state.inFlight}
         onPress={confirmDelete}
       />
-      <ProblemLine testID="account-problem" problem={problem} />
+      <ProblemLine testID="account-problem" problem={problem} cause={state} />
     </View>
   );
 }

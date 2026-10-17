@@ -6,10 +6,12 @@ import { AccessibilityInfo } from 'react-native';
 
 function Field({
   problem,
+  cause,
   busy,
   onChangeText = jest.fn(),
 }: {
   problem?: string;
+  cause?: object;
   busy?: boolean;
   onChangeText?: (text: string) => void;
 }) {
@@ -21,6 +23,7 @@ function Field({
         value=""
         onChangeText={onChangeText}
         problem={problem}
+        problemCause={cause}
         busy={busy}
       />
     </EditionProvider>
@@ -61,6 +64,16 @@ describe('TextField', () => {
     await screen.rerender(<Field problem="No connection." />);
 
     expect(announce).toHaveBeenCalledWith('No connection.');
+  });
+
+  it('announces the same problem again for a new try that met it at once', async () => {
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility');
+    await render(<Field problem="Check the email." cause={{ try: 1 }} />);
+    announce.mockClear();
+
+    await screen.rerender(<Field problem="Check the email." cause={{ try: 2 }} />);
+
+    expect(announce).toHaveBeenCalledWith('Check the email.');
   });
 
   it('takes no typing while its request is on the way, and says it is busy', async () => {

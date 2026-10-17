@@ -3,7 +3,7 @@
  * Decor from the Edition.
  */
 export { ActionRow, type ActionRowProps } from './primitives/ActionRow';
-export { ResendButton } from './account/ResendButton';
+export { ResendButton } from './ResendButton';
 export { BackLink } from './primitives/BackLink';
 export { FeedError, FeedLoading, SwipeHint } from './feed/FeedStates';
 export { FontSizePreview } from './settings/FontSizePreview';
