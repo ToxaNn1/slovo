@@ -4,13 +4,15 @@ import { systemClock } from '@slovo/server-core';
 import { createApp } from './app';
 import { readConfig, ServerConfigSchema } from './config';
 import { createDatabase } from './database/database';
+import { readEditions } from './edition/edition-folders';
 import { createLogger } from './logger';
 import { startServer } from './server';
 
 const config = readConfig(ServerConfigSchema, process.env);
 const logger = createLogger();
 const database = createDatabase(config.DATABASE_URL, logger);
-const app = createApp({ database, clock: systemClock, logger });
+const editions = readEditions(config.EDITIONS_DIR);
+const app = createApp({ database, clock: systemClock, logger, editions });
 const server = await startServer({ app, database, port: config.PORT });
 logger.info({ port: server.port }, 'listening');
 

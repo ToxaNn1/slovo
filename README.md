@@ -173,7 +173,13 @@ The backend serves every Edition from one deployment ([ADR 0008](docs/adr/0008-o
    curl -i http://localhost:8787/health
    ```
 
-5. Run the backend's tests. Each run makes a database with a random name on the local Postgres, runs the migrations on it and drops it at the end, so runs in parallel worktrees never meet. The tests send their requests to the backend in process, without opening a port. When Postgres is not reachable, the run stops and asks you to start Docker. `pnpm test` from the root runs them with every other package's; CI runs them in the job "Backend" on a Postgres 17 service, after running every migration on an empty database. `DATABASE_URL` names another Postgres server for the tests.
+   The API lives under `/v1`, described once by the contract in `packages/contracts` ([ADR 0031](docs/adr/0031-the-api-only-grows-within-a-version.md)). Read it at <http://localhost:8787/docs> (the OpenAPI document is `/docs/openapi.json`) or call it with curl. The backend serves every Edition it finds in the Edition folders at start (`EDITIONS_DIR`).
+
+   ```sh
+   curl -i 'http://localhost:8787/v1/editions/uk/content/latest?packFormat=1'
+   ```
+
+5. Run the backend's tests. Each run makes a database with a random name on the local Postgres, runs the migrations on it and drops it at the end, so runs in parallel worktrees never meet. The tests call the backend through the API's client built from the contract, the one the app uses, with its fetch pointed at the backend in process, so no port is opened. When Postgres is not reachable, the run stops and asks you to start Docker. `pnpm test` from the root runs them with every other package's; CI runs them in the job "Backend" on a Postgres 17 service, after running every migration on an empty database. `DATABASE_URL` names another Postgres server for the tests.
 
    ```sh
    pnpm --filter @slovo/backend test
