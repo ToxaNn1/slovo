@@ -145,7 +145,11 @@ export {
   type FakeContentApi,
   type FakePublishedPack,
 } from './fakes/fake-content-api';
-export { createMemoryPackFiles, type MemoryPackFiles } from './fakes/memory-pack-files';
+export {
+  createMemoryPackFiles,
+  type MemoryPackFile,
+  type MemoryPackFiles,
+} from './fakes/memory-pack-files';
 export { type Progress, type ProgressState } from './progress';
 export { type Mix, type MixEdition, type MixState } from './entries/mix';
 export {

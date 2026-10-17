@@ -104,7 +104,7 @@ export const userStateRecords = {
    */
   onboardingFinished: declareRecord('onboarding.finished', InstantSchema, { sync: 'device-only' }),
   /**
-   * The instant the last check for a content update finished; without the
+   * The instant the last check for a content update started; without the
    * record, none has, so one is due. It stays on the device, like the pack it
    * downloads.
    */

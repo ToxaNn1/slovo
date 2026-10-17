@@ -6,7 +6,7 @@ import { withRetries } from './retry';
 import type { UserState } from './user-state/user-state';
 import { userStateRecords } from './user-state/user-state-schema';
 
-/** How long after a finished check the next one is due: 24 hours. */
+/** How long after a check the next one is due: 24 hours. */
 export const CONTENT_UPDATE_EVERY = 24 * 60 * 60 * 1000;
 
 /**
@@ -26,9 +26,10 @@ export interface ContentUpdate {
    * of the highest pack format the app reads and downloads it when its
    * content version is higher than the newest the app has. A download whose
    * SHA-256 is right is kept for the next launch; any other is thrown away.
-   * It never rejects: a failure, after the retries of `withRetries`, leaves
-   * the check due, so the next call checks again. A call while a check is
-   * under way joins it.
+   * It never rejects: a check that fails, after the retries of
+   * `withRetries`, keeps the pack the app has and waits for the next due
+   * check, as a check that finds nothing does. A call while a check is under
+   * way joins it.
    */
   checkForUpdate(): Promise<void>;
 }
@@ -38,7 +39,7 @@ export interface ContentUpdate {
  * formats this app reads. The shell calls `choosePack` once at launch, and
  * `checkForUpdate` at launch and on each return to the foreground; a check is
  * due at most once every `CONTENT_UPDATE_EVERY` by the clock, also across
- * launches.
+ * launches. It throws when the app does not read the bundled pack's format.
  */
 export function createContentUpdate({
   contentApi,
@@ -61,7 +62,12 @@ export function createContentUpdate({
   /** The pack formats this app reads; the bundled pack's is one of them. */
   readableFormats: readonly number[];
 }): ContentUpdate {
-  const checkedAt = userStateRecords.contentUpdateCheckedAt;
+  if (!readableFormats.includes(bundled.packFormat)) {
+    throw new Error(
+      `The app does not read the pack format ${String(bundled.packFormat)} of its bundled Language Pack`,
+    );
+  }
+  const lastCheck = userStateRecords.contentUpdateCheckedAt;
   const retrying = { schedule, random };
 
   /** The kept pack, when the app reads its format and it is newer than the bundled one. */
@@ -81,38 +87,37 @@ export function createContentUpdate({
   }
 
   async function due(): Promise<boolean> {
-    const last = await userState.read(checkedAt);
+    const last = await userState.read(lastCheck);
     if (last === undefined) return true;
     const since = clock.now().getTime() - new Date(last).getTime();
     // A clock put back before the last check makes it due too.
     return since < 0 || since >= CONTENT_UPDATE_EVERY;
   }
 
-  /** Checks, and tells whether the check finished; a failure leaves it unfinished. */
-  async function check(): Promise<boolean> {
+  /** Downloads a pack newer than the newest the app has, if one is published, and keeps it. */
+  async function check(): Promise<void> {
     const latest = await withRetries(
       () => contentApi.latest(Math.max(...readableFormats)),
       retrying,
     );
-    if (!latest.ok) return false;
-    const { pack } = latest;
+    if (!latest.ok || latest.pack === undefined) return;
+    const { contentVersion, packFormat, fileSha256 } = latest.pack;
     const newest = (await newerKept()) ?? bundled;
-    if (pack === undefined || pack.contentVersion <= newest.contentVersion) return true;
-    const download = await withRetries(() => contentApi.download(pack.contentVersion), retrying);
-    if (!download.ok) return false;
-    // A damaged or tampered download is thrown away: the same bytes would come again.
-    if (bytesToHex(sha256(download.bytes)) !== pack.fileSha256) return true;
-    const { contentVersion, packFormat } = pack;
+    if (contentVersion <= newest.contentVersion) return;
+    const download = await withRetries(() => contentApi.download(contentVersion), retrying);
+    // A damaged or tampered download is thrown away.
+    if (!download.ok || bytesToHex(sha256(download.bytes)) !== fileSha256) return;
     await packFiles.keep({ contentVersion, packFormat }, download.bytes);
-    return true;
   }
 
   async function checkIfDue(): Promise<void> {
     try {
-      if (!(await due()) || !(await check())) return;
-      await userState.write(checkedAt.change(clock.now().toISOString()));
+      if (!(await due())) return;
+      // Written first, so a check that fails or is cut short waits for the next due one too.
+      await userState.write(lastCheck.change(clock.now().toISOString()));
+      await check();
     } catch {
-      // Silent: the app keeps the pack it has, and the check stays due.
+      // Silent: the app keeps the pack it has.
     }
   }
 

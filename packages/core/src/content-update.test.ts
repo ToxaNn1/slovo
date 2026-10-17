@@ -1,18 +1,23 @@
 import { describe, expect, it } from 'vitest';
 
-import { createContentUpdate } from './content-update';
-import { createFakeContentApi } from './fakes/fake-content-api';
-import { createMemoryPackFiles, type MemoryPackFiles } from './fakes/memory-pack-files';
-import type { PackVersion, Schedule } from './ports';
+import {
+  createContentUpdate,
+  createFakeContentApi,
+  createMemoryPackFiles,
+  createMemoryUserStatePort,
+  openUserState,
+  type MemoryPackFile,
+  type PackVersion,
+  type Schedule,
+} from './index';
 import { fakeClock, randomOf } from './test-support';
-import { createMemoryUserStatePort, openUserState } from './user-state/user-state';
 
 const HOUR = 60 * 60 * 1000;
 
-/** A pack file's bytes, and their SHA-256 worked out apart from the Core (`shasum -a 256`). */
 /** The bytes of ASCII text. */
 const bytesOf = (text: string) => Uint8Array.from(text, (character) => character.charCodeAt(0));
 
+/** A pack file's bytes, and their SHA-256 worked out apart from the Core (`shasum -a 256`). */
 const hello = bytesOf('hello');
 const helloSha256 = '2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824';
 
@@ -27,11 +32,11 @@ function device({
   readableFormats = [bundled.packFormat],
 }: {
   bundled?: PackVersion;
-  kept?: PackVersion & { bytes: Uint8Array };
+  kept?: MemoryPackFile;
   readableFormats?: readonly number[];
 } = {}) {
   const contentApi = createFakeContentApi();
-  const packFiles: MemoryPackFiles = createMemoryPackFiles(kept);
+  const packFiles = createMemoryPackFiles(kept);
   /** Whether keeping a pack fails, as on a full disk. */
   let full = false;
   const records = new Map<string, string>();
@@ -200,13 +205,16 @@ describe('a failed check', () => {
     expect(app.delays).toEqual([]);
   });
 
-  it('waits for the next due check, which comes at once', async () => {
+  it('waits for the next due check, a day later, also across launches', async () => {
     const app = device();
     app.contentApi.publish({ contentVersion: 5, packFormat: 1, bytes: hello });
     app.contentApi.fail('latest', 'offline', 'offline', 'offline', 'offline');
     await (await app.launch()).checkForUpdate();
+    await (await app.launch()).checkForUpdate();
+    expect(app.contentApi.asked).toHaveLength(4);
     expect(app.packFiles.kept).toBeUndefined();
 
+    app.time.advance(24 * HOUR);
     await (await app.launch()).checkForUpdate();
 
     expect(app.contentApi.asked).toHaveLength(5);
@@ -222,12 +230,21 @@ describe('a failed check', () => {
     await expect(launched.checkForUpdate()).resolves.toBeUndefined();
     app.diskFull(false);
     await launched.checkForUpdate();
+    expect(app.packFiles.kept).toBeUndefined();
 
+    app.time.advance(24 * HOUR);
+    await launched.checkForUpdate();
     expect(app.packFiles.kept?.contentVersion).toBe(5);
   });
 });
 
 describe('choosing the pack at launch', () => {
+  it('refuses to open over a bundled pack of a pack format the app does not read', async () => {
+    const app = device({ bundled: { contentVersion: 4, packFormat: 2 }, readableFormats: [1] });
+
+    await expect(app.launch()).rejects.toThrow(/pack format 2/);
+  });
+
   it('opens the bundled pack when none is kept', async () => {
     const app = device();
 

@@ -1,15 +1,16 @@
 import type { PackFiles, PackVersion } from '../ports';
 
+/** A kept pack file: its version and its bytes. */
+export type MemoryPackFile = PackVersion & { readonly bytes: Uint8Array };
+
 /** Pack files for tests: what is kept is in view. */
 export interface MemoryPackFiles extends PackFiles {
-  /** The pack kept, with its bytes, if one is. */
-  readonly kept: (PackVersion & { readonly bytes: Uint8Array }) | undefined;
+  /** The pack kept, if one is. */
+  readonly kept: MemoryPackFile | undefined;
 }
 
 /** Pack files held in memory, for tests; a pack may be kept already, as from an earlier launch. */
-export function createMemoryPackFiles(
-  kept?: PackVersion & { readonly bytes: Uint8Array },
-): MemoryPackFiles {
+export function createMemoryPackFiles(kept?: MemoryPackFile): MemoryPackFiles {
   let current = kept;
   return {
     get kept() {
