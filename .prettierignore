@@ -8,3 +8,6 @@ tools/sourcing/fixtures/
 
 # The Claude Design export, kept byte for byte as exported
 docs/design/claude-design/
+
+# The backend's migration journal and snapshots, rewritten by `pnpm db:generate`
+apps/backend/migrations/meta/

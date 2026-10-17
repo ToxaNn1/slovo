@@ -5,3 +5,7 @@ All Editions share one backend deployment and one Postgres database, with data p
 ## Considered Options
 
 - **A separate backend and database per Edition**: rejected. It multiplies operations and cost, and it breaks a shared SLOVO ID unless a central auth service is added on top.
+
+## Amendment: the backend reads Feature Switches from the Edition config (ADR 0030)
+
+Until remote Feature Switches arrive with sync (0.8), the backend reads an Edition's switches from its `edition.json`, as the app does, not from the database. ADR 0030 says how the server Core, the shell and the Edition folders make the factory.

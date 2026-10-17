@@ -31,10 +31,11 @@ Parts marked as placeholders are reserved and filled by later versions.
 | ------------------------ | --------------------------------------------------------------------------------------- |
 | `apps/mobile`            | One Expo app that builds whichever Edition the environment variable selects.            |
 | `apps/widget`            | The native SwiftUI home-screen widget, linked into the iOS project at prebuild.         |
-| `apps/backend`           | The API (placeholder until 0.7).                                                        |
+| `apps/backend`           | The API: the HTTP shell, the adapters and the composition root of the backend.          |
 | `packages/core`          | Pure TypeScript domain logic (no React, no React Native).                               |
 | `packages/ui`            | Screens, components, design tokens and Decor slots.                                     |
 | `packages/contracts`     | Zod schemas for Entries, the Edition config and the Language Pack.                      |
+| `packages/server-core`   | The backend's rules and ports (no HTTP, no SQL, no language).                           |
 | `packages/language-pack` | Builds an Edition's content into a read-only SQLite Language Pack and reads packs back. |
 | `packages/config`        | Shared TypeScript, ESLint and Prettier configuration.                                   |
 | `editions/<edition>`     | One folder per Edition: configuration, strings, design tokens, Decor, content, assets.  |
@@ -133,6 +134,50 @@ The Ukrainian Edition must work offline (ticket #6). No automated check covers t
 5. Look for network errors in the Metro log. There must be none.
 
 A development build still needs Metro, so this does not prove that a release build starts with no connection. Repeat the check on a preview or release build once such a build exists.
+
+## Run the backend
+
+The backend serves every Edition from one deployment ([ADR 0008](docs/adr/0008-one-backend-deployment-built-as-a-factory.md), [ADR 0030](docs/adr/0030-the-backend-is-a-factory-too.md)). It runs on the Mac with Node; Postgres 17 and Mailpit run in Docker. You need Docker Desktop running.
+
+1. Start the local services from the repo root. They are started once per machine and shared by every worktree: the Compose project is always `slovo`, so a second worktree finds the running containers. The data stays in the `slovo_postgres` volume.
+
+   ```sh
+   docker compose up --detach --wait
+   ```
+
+   | Service              | Address                                        | Move it with          |
+   | -------------------- | ---------------------------------------------- | --------------------- |
+   | Postgres             | `postgres://slovo:slovo@localhost:55432/slovo` | `SLOVO_POSTGRES_PORT` |
+   | Mailpit, SMTP        | `smtp://localhost:1025`                        | `SLOVO_SMTP_PORT`     |
+   | Mailpit, web page    | <http://localhost:8025>, every email sent      | `SLOVO_MAILPIT_PORT`  |
+   | The backend (step 4) | <http://localhost:8787>                        | `PORT` in `.env`      |
+
+   Postgres is published on 55432, not on its default 5432, which other projects on the machine may hold; Mailpit keeps its own ports, and the backend takes 8787, the address the app expects in development. To move one, set its variable when you start the services, e.g. `SLOVO_POSTGRES_PORT=55433 docker compose up --detach --wait`, and change the URL in `.env` to match. `docker compose stop` stops the services and keeps the data.
+
+2. Copy the example environment and fill it in. The server reads it at start and refuses to start, naming the variable, when one is missing or wrong. `.env` stays out of git.
+
+   ```sh
+   cp apps/backend/.env.example apps/backend/.env
+   ```
+
+3. Run the migrations. The server never runs them itself. A change of the schema in `apps/backend/src/database/schema.ts` becomes a new migration with `pnpm --filter @slovo/backend db:generate`, which is reviewed as SQL in the pull request. Migrations only go forward: a shipped one is never edited, and a fix is a new one.
+
+   ```sh
+   pnpm --filter @slovo/backend db:migrate
+   ```
+
+4. Start the backend in watch mode and check it. `/health` answers 200 while the database answers and 503 when it doesn't. The logs are JSON lines on stdout, each with the request's `x-request-id`; emails, codes and tokens are redacted. On SIGTERM (and Ctrl-C) the server stops taking requests, finishes those in flight and closes its database pool.
+
+   ```sh
+   pnpm --filter @slovo/backend dev
+   curl -i http://localhost:8787/health
+   ```
+
+5. Run the backend's tests. Each run makes a database with a random name on the local Postgres, runs the migrations on it and drops it at the end, so runs in parallel worktrees never meet. The tests send their requests to the backend in process, without opening a port. When Postgres is not reachable, the run stops and asks you to start Docker. `pnpm test` from the root runs them with every other package's; CI runs them in the job "Backend" on a Postgres 17 service, after running every migration on an empty database. `DATABASE_URL` names another Postgres server for the tests.
+
+   ```sh
+   pnpm --filter @slovo/backend test
+   ```
 
 ## Commands
 

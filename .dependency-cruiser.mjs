@@ -35,6 +35,49 @@ export default {
       to: { path: WORKSPACE_PART, pathNot: ['^packages/(core|contracts)/', SHARED_CONFIG] },
     },
     {
+      name: 'server-core-imports-only-contracts-and-zod',
+      comment:
+        'ADR 0030: the server Core holds the rules of the backend and reaches HTTP, SQL, ' +
+        'better-auth and the Editions through ports it defines, so it imports no workspace ' +
+        'part but contracts and no package but Zod (and Vitest in its tests).',
+      severity: 'error',
+      from: { path: '^packages/server-core/' },
+      to: {
+        pathNot: [
+          '^packages/(server-core|contracts)/',
+          SHARED_CONFIG,
+          '(^|/)node_modules/(zod|vitest)/',
+        ],
+      },
+    },
+    {
+      name: 'backend-imports-no-app-core-ui-or-react',
+      comment:
+        "ADR 0030: the backend is the server Core's shell. The app's Core, the UI and React " +
+        'belong to the mobile app; what both sides share lives in contracts.',
+      severity: 'error',
+      from: { path: '^apps/backend/' },
+      // The bare names catch an import of a package the backend doesn't list, which
+      // stays unresolved.
+      to: {
+        path: [
+          '^packages/(core|ui)/',
+          '^@slovo/(core|ui)(/|$)',
+          '(^|/)node_modules/(react|react-dom|react-native)/',
+          '^(react|react-dom|react-native)(/|$)',
+        ],
+      },
+    },
+    {
+      name: 'mobile-imports-no-server-code',
+      comment:
+        'ADR 0030: the app talks to the backend over HTTP only, through the contract in ' +
+        'contracts, so it imports neither the server Core nor the backend.',
+      severity: 'error',
+      from: { path: '^apps/mobile/' },
+      to: { path: ['^(packages/server-core|apps/backend)/', '^@slovo/(server-core|backend)(/|$)'] },
+    },
+    {
       name: 'ui-does-not-reach-up-or-sideways',
       comment:
         'ADR 0002, 0017: the UI draws what the Core models (ADR 0017), so it may import ' +
