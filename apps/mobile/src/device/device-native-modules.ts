@@ -11,7 +11,8 @@ import { createNativeModules } from './native-module';
  * container and the Apple targets' storage module, which asks WidgetKit to
  * reload. Sharing needs the view capture, with `expo-file-system` to move
  * its image into the cache. Content updates need `expo-file-system` to keep
- * a downloaded Language Pack.
+ * a downloaded Language Pack, and the Session needs `expo-secure-store`, the
+ * Keychain.
  */
 export const nativeModules = createNativeModules({
   notifications: () =>
@@ -25,4 +26,5 @@ export const nativeModules = createNativeModules({
     TurboModuleRegistry.get('RNViewShot') !== null &&
     requireOptionalNativeModule('FileSystem') !== null,
   contentUpdates: () => requireOptionalNativeModule('FileSystem') !== null,
+  keychain: () => requireOptionalNativeModule('ExpoSecureStore') !== null,
 });

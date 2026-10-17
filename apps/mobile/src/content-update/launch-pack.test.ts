@@ -118,6 +118,7 @@ describe('the Language Pack the app opens at launch', () => {
       widget: () => false,
       shareCapture: () => false,
       contentUpdates: () => false,
+      keychain: () => false,
     });
 
     const launched = await app.launch({

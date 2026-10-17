@@ -22,3 +22,7 @@ export function requestFailure(error: unknown): RequestFailure {
   if (error.status >= 500) return { ok: false, reason: 'server-error' };
   throw error;
 }
+
+/** The client of a device signed in with the Session's token, which it sends as `Authorization: Bearer`. */
+export const apiClientOf = (token: string) =>
+  createApiClient({ url: API_URL, headers: { authorization: `Bearer ${token}` } });
