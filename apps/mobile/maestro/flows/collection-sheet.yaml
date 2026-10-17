@@ -28,11 +28,12 @@ appId: ${APP_ID || 'app.slovo.uk'}
           id: collection-.*-delete
       # A tap while the alert still opens is lost.
       - waitForAnimationToEnd
-      # The alert's button, below the row's own «Видалити».
+      # The alert's button, below its message: the row has closed its swipe
+      # and its own «Видалити» with it.
       - tapOn:
           text: Видалити
           below:
-            id: collection-.*-delete
+            text: Самі записи нікуди не зникнуть.
       - waitForAnimationToEnd
 - tapOn:
     id: collections-back
