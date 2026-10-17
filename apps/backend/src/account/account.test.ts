@@ -3,12 +3,11 @@ import { randomUUID } from 'node:crypto';
 import { ACCOUNT_NAME, fill } from '@slovo/contracts';
 import { EDITIONS_DIR, openEdition } from '@slovo/language-pack/edition';
 import { eq } from 'drizzle-orm';
-import { describe, expect, inject, it, onTestFinished, vi } from 'vitest';
+import { describe, expect, it, onTestFinished, vi } from 'vitest';
 
-import { createDatabase } from '../database/database';
 import { accounts, sessions, signInCodes } from '../database/schema';
 import { readEditions } from '../edition/edition-folders';
-import { createFakeMailer, editionsFolder, silentLogger, testApp } from '../test-support';
+import { createFakeMailer, editionsFolder, testApp } from '../test-support';
 
 const MINUTE = 60 * 1000;
 const DAY = 24 * 60 * MINUTE;
@@ -25,13 +24,6 @@ function accountApp() {
   const backend = testApp({ mailer });
   onTestFinished(backend.close);
   return { ...backend, mailer };
-}
-
-/** The run's database, which the test reads as the backend keeps it. */
-function runDatabase() {
-  const database = createDatabase(inject('databaseUrl'), silentLogger);
-  onTestFinished(() => database.close());
-  return database;
 }
 
 /** Lets the test move the clock that better-auth reads; timers stay real. */
@@ -262,10 +254,10 @@ describe('a Sign-in code', () => {
   });
 
   it('is kept only as its hash', async () => {
-    const { client, mailer } = accountApp();
+    const { client, mailer, database } = accountApp();
     const email = newEmail();
     await client.account.requestCode({ email, editionId: 'uk' });
-    const { db } = runDatabase();
+    const { db } = database;
 
     const kept = (await db.select().from(signInCodes)).filter((row) =>
       row.identifier.endsWith(email),
@@ -316,11 +308,11 @@ describe('a Session', () => {
   });
 
   it('is not signed in by the token as the database keeps it', async () => {
-    const { client, clientOf, mailer } = accountApp();
+    const { client, clientOf, mailer, database } = accountApp();
     const email = newEmail();
     await client.account.requestCode({ email, editionId: 'uk' });
     await client.account.verifyCode({ email, code: mailer.codeSentTo(email) });
-    const { db } = runDatabase();
+    const { db } = database;
 
     const [kept] = await db
       .select({ token: sessions.token })
