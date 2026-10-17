@@ -116,8 +116,16 @@ The most consecutive Active Days the user has ever had, derived from them like t
 _Avoid_: Top streak, longest chain
 
 **Account**:
-The optional identity ("SLOVO ID") that keeps a user's words and progress across devices. One Account works in every Edition, and each Edition's data stays separate. Without an Account everything lives on the device only.
+The optional identity ("SLOVO ID") that keeps a user's words and progress across devices. One Account works in every Edition, and the user sees it as «SLOVO ID» in each of them; each Edition's data stays separate. Without an Account everything lives on the device only.
 _Avoid_: Cabinet, profile, login
+
+**Session**:
+One device's sign-in to an Account, ended on that device or on all at once.
+_Avoid_: Token, login
+
+**Sign-in code**:
+The one-time six-digit code from the email that signs the reader in. The first right code for an email creates its Account.
+_Avoid_: OTP, PIN, password
 
 ### Discovery
 
