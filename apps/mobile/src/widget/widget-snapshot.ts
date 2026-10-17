@@ -26,50 +26,36 @@ export interface WidgetDevice {
 }
 
 /**
- * Writes the Widget Snapshot into the App Group (ADR 0026): once now, when
- * the composition is open, and every time the app goes to the background,
- * where every change a reader can make has already happened. Each write is
- * whole: the snapshot is staged in a file of its own and then renamed over
- * the one the widget reads, and only then is WidgetKit asked to reload. A
- * failed write is ignored, so the widget keeps the last good file and the
- * next background tries again. Writes run one after the other, so an older
- * snapshot never lands last. Without `device` (a dev client built before the
- * 0.6 batch) nothing is built or written. Returns the call that stops it.
+ * Writes the Widget Snapshot into the App Group (ADR 0026), each time it is
+ * asked: the lifecycle adapter asks when the composition opens and every time
+ * the app goes to the background, where every change a reader can make has
+ * already happened. Each write is whole: the snapshot is staged in a file of
+ * its own and then renamed over the one the widget reads, and only then is
+ * WidgetKit asked to reload. A failed write is ignored, so the widget keeps
+ * the last good file and the next write tries again. Writes run one after the
+ * other, each building its snapshot in its turn, so an older snapshot never
+ * lands last. Without `device` (a dev client built before the 0.6 batch)
+ * nothing is built or written.
  */
-export function writeWidgetSnapshots({
-  device,
-  snapshot,
-  onBackground,
-}: {
-  device: WidgetDevice | undefined;
-  snapshot: () => Promise<WidgetSnapshot>;
-  /** Calls the listener each time the app goes to the background; returns the call that stops it. */
-  onBackground: (listener: () => void) => () => void;
-}): () => void {
+export function createWidgetSnapshotWriter(
+  device: WidgetDevice | undefined,
+): (snapshot: () => Promise<WidgetSnapshot>) => void {
   if (device === undefined) return () => undefined;
   const widget: WidgetDevice = device;
-  let stopped = false;
   let writing = Promise.resolve();
 
-  async function writeOnce(): Promise<void> {
+  async function writeOnce(snapshot: () => Promise<WidgetSnapshot>): Promise<void> {
     try {
       const text = serializeWidgetSnapshot(await snapshot());
       await widget.container.write(STAGED_WIDGET_SNAPSHOT_FILE, text);
       await widget.container.replace(STAGED_WIDGET_SNAPSHOT_FILE, WIDGET_SNAPSHOT_FILE);
       widget.reloadTimelines();
     } catch (error) {
-      console.warn('Could not write the Widget Snapshot; the next background tries again', error);
+      console.warn('Could not write the Widget Snapshot; the next write tries again', error);
     }
   }
 
-  function write(): void {
-    writing = writing.then(() => (stopped ? undefined : writeOnce()));
-  }
-
-  write();
-  const stop = onBackground(write);
-  return () => {
-    stopped = true;
-    stop();
+  return (snapshot) => {
+    writing = writing.then(() => writeOnce(snapshot));
   };
 }

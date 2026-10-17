@@ -1,16 +1,16 @@
 import { useEffect, useSyncExternalStore } from 'react';
 import { AppState } from 'react-native';
 
-import { useComposition } from './composition';
+import { accountOpening } from './account/device-account';
+import { compositionOpening } from './composition';
 import { deviceClock } from './device/device-clock';
 import { languagePackOpening } from './edition/language-pack';
-import { deviceWidget } from './widget/device-widget';
 import { createForeground } from './foreground/foreground';
 import { reportForeground } from './foreground/foreground-reports';
-import { useOpened } from './opening';
-import { writeWidgetSnapshots } from './widget/widget-snapshot';
+import { deviceWidget } from './widget/device-widget';
+import { createWidgetSnapshotWriter } from './widget/widget-snapshot';
 
-/** The shell's one source of the foreground, for this adapter and the Feed alike. */
+/** The shell's one source of whether the app is in the foreground, for the Feed. */
 const foreground = createForeground(AppState);
 
 /** Whether the app is in the foreground, kept up to date. */
@@ -19,53 +19,44 @@ export function useInForeground(): boolean {
 }
 
 /**
- * The lifecycle adapter: it tells the composition the app is in the
- * foreground when the app comes back from the background, and on a timer
- * when the next local day starts while the app is open. The composition
- * decides what changed (a new local day, the permission). It also writes the
- * Widget Snapshot once the composition is open and each time the app goes to
- * the background, and checks for a Content update at launch and each time the
- * app comes back, when content updates are on; the Content update module
- * checks at most once a day. Draws nothing.
+ * The lifecycle adapter: it tells everything that follows the app's moments
+ * (`reportForeground`), each once its own opening is open, so none waits for
+ * another: the Account opens apart (ADR 0037). The composition hears each
+ * return to the foreground and each next local day, and decides what changed
+ * (a new local day, the permission). The Widget Snapshot is written when the
+ * composition opens and each time the app goes to the background. The Content
+ * update module checks at launch and each time the app comes back, when
+ * content updates are on, at most once a day; the Account checks its Session
+ * then too, at most once an hour. Draws nothing.
  */
 export function Lifecycle() {
-  const composition = useComposition();
-  const { contentUpdate } = useOpened(languagePackOpening);
   useEffect(() => {
-    return reportForeground({
-      resume() {
-        composition.resume().catch((error: unknown) => {
-          console.error('Could not follow the app into the foreground', error);
+    const reports = reportForeground({ clock: deviceClock, appState: AppState });
+    reports.listen(compositionOpening, (composition, moment) => {
+      if (moment !== 'return' && moment !== 'new-day') return;
+      composition.resume().catch((error: unknown) => {
+        console.error('Could not follow the app into the foreground', error);
+      });
+    });
+    const writeWidgetSnapshot = createWidgetSnapshotWriter(deviceWidget);
+    reports.listen(compositionOpening, (composition, moment) => {
+      if (moment === 'launch' || moment === 'background') {
+        writeWidgetSnapshot(() => composition.widget.snapshot());
+      }
+    });
+    reports.listen(languagePackOpening, ({ contentUpdate }, moment) => {
+      // It never rejects.
+      if (moment === 'launch' || moment === 'return') void contentUpdate?.checkForUpdate();
+    });
+    if (accountOpening !== undefined) {
+      reports.listen(accountOpening, (account, moment) => {
+        if (moment !== 'launch' && moment !== 'return') return;
+        account.refresh().catch((error: unknown) => {
+          console.error('Could not refresh the Account', error);
         });
-      },
-      clock: deviceClock,
-      onForeground: (listener) =>
-        foreground.subscribe(() => {
-          if (foreground.active()) listener();
-        }),
-    });
-  }, [composition]);
-  useEffect(() => {
-    return writeWidgetSnapshots({
-      device: deviceWidget,
-      snapshot: () => composition.widget.snapshot(),
-      onBackground: (listener) => {
-        const subscription = AppState.addEventListener('change', (state) => {
-          if (state === 'background') listener();
-        });
-        return () => {
-          subscription.remove();
-        };
-      },
-    });
-  }, [composition]);
-  useEffect(() => {
-    if (contentUpdate === undefined) return;
-    // It never rejects.
-    void contentUpdate.checkForUpdate();
-    return foreground.subscribe(() => {
-      if (foreground.active()) void contentUpdate.checkForUpdate();
-    });
-  }, [contentUpdate]);
+      });
+    }
+    return reports.stop;
+  }, []);
   return null;
 }

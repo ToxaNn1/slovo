@@ -32,3 +32,15 @@ The Account opens apart from the Language Pack and the composition (ADR 0037), a
 
 - **The Account's gate in the root layout, around the tabs**: rejected. A slow or failed Keychain read would hold up the Feed for an Account the reader may never use.
 - **Show the row only once the Account is open**: rejected. A failed opening would hide the row, and with it the retry the gate's error state offers.
+
+## Amendment: one foreground report tells every listener, each over its own opening (architecture review 2)
+
+Until now four things followed the app's moments in three ways. The composition heard each return to the foreground and each next local day through `reportForeground`, the one with tests. The lifecycle adapter checked for a Content update at its mount and on each return through its own subscription, and wrote the Widget Snapshot at its mount and on each move to the background straight from `AppState`. `AccountLifecycle`, a pass-through outside the gates, refreshed the Account whenever `useInForeground` turned true. The lifecycle adapter sat under the composition's gate, so the Content update check waited for a composition it doesn't need.
+
+Now `reportForeground` (`apps/mobile/src/foreground/foreground-reports.ts`) is the one report of the app's moments: `launch`, `return`, `new-day` and `background`. A listener names its opening and hears each moment with what the opening opened: `launch` once it is open, after any retries, and every moment after, never one before. Each listener picks the moments it acts on in the lifecycle adapter: the composition `return` and `new-day`, the Widget Snapshot's write `launch` and `background`, the Content update check and the Account's refresh `launch` and `return`. The Core keeps its limits: one Content update check a day, one Session check an hour. The lifecycle adapter draws outside the gates, beside where `AccountLifecycle` was, which is gone, so no listener waits for another's opening. The Feed still reads whether the app is in the foreground through `useInForeground`, a state rather than a moment. The «SLOVO ID» row of Settings still asks the Account to refresh each time Settings opens, as #333 asks.
+
+### Considered Options
+
+- **Every listener acts on every moment**: rejected. The composition just turned to the day as it opened, and a `resume` at launch would plan the notifications and the Game again; a write of the Widget Snapshot on every return writes what the last background already wrote.
+- **Queue the moments of an opening still opening and tell them once open**: rejected. The launch already covers them: the composition opens on today, and the first Content update check and Session check are due at launch anyway.
+- **Report the background as any move out of the foreground**: rejected. The control centre or the app switcher would write the Widget Snapshot each time it is pulled down, with nothing changed.
