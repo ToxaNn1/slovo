@@ -4,6 +4,7 @@ import type { BuildError } from './build-error';
 import { checkContentVersion } from './content-manifest';
 import { missedTargets, type MissedTarget } from './content-targets';
 import { unregisteredEntries } from './id-registry';
+import { PACK_FORMAT } from './pack-layout';
 import { readEdition } from './read-edition';
 import { contentReport, type ContentReport } from './report';
 import { writePack } from './write-pack';
@@ -54,7 +55,11 @@ export function buildLanguagePack({
   const { content, manifest, targets } = source.valid;
   const check = checkContentVersion(content, manifest);
   if (!check.recorded) return { ok: false, errors: [check.error] };
-  const metadata: PackMetadata = { editionId: content.editionId, ...check.manifest };
+  const metadata: PackMetadata = {
+    editionId: content.editionId,
+    ...check.manifest,
+    packFormat: PACK_FORMAT,
+  };
 
   writePack(outFile, content, metadata);
   const report = contentReport(content);
