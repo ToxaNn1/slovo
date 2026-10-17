@@ -38,7 +38,7 @@ async function openOver(content: PackReader): Promise<Composition> {
  * from its gate opens it again for all.
  */
 export const compositionOpening = openOnce(
-  async () => openOver(await languagePackOpening.opened()),
+  async () => openOver((await languagePackOpening.opened()).reader),
   {
     onError(error) {
       console.error('Could not open the Core composition', error);
