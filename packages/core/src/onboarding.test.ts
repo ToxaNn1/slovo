@@ -53,6 +53,7 @@ async function run({
   scheduler,
   content = twoCategories,
   account = false,
+  notifications = true,
 }: {
   content?: ContentReadPort;
   records?: Map<string, string>;
@@ -60,6 +61,8 @@ async function run({
   scheduler?: NotificationSchedulerPort;
   /** Whether the Edition turns the Account on. */
   account?: boolean;
+  /** Whether the Edition in effect has the Feature Switch of notifications on. */
+  notifications?: boolean;
 } = {}): Promise<Composition> {
   return openComposition({
     content,
@@ -69,7 +72,10 @@ async function run({
         mix: { categoryIds: ['test', 'other'], corrections: false },
         notificationTimes: ['09:00', '13:00', '19:00'],
       },
-      isFeatureEnabled: (feature) => feature === 'account' && account,
+      isFeatureEnabled: (feature) =>
+        (feature === 'account' && account) ||
+        (feature === 'notifications' && notifications) ||
+        feature === 'wordOfTheDay',
       languageTraits: { distractorRule: 'same-part-of-speech' },
     },
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
@@ -391,6 +397,13 @@ describe('Onboarding', () => {
   });
 
   describe('the sample notification', () => {
+    it('is none while the notifications are switched off', async () => {
+      const app = await run({ scheduler: firstLaunch(), notifications: false });
+      await goTo(app, 'notifications');
+
+      expect(sampleOf(app)).toBeUndefined();
+    });
+
     it("is this morning's notification of the plan, the Word of the Day's", async () => {
       const scheduler = firstLaunch();
       const app = await run({ scheduler });
