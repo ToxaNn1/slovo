@@ -1,6 +1,8 @@
-import { implement, ORPCError } from '@orpc/server';
+import { implement } from '@orpc/server';
 import { apiContract } from '@slovo/contracts/api';
 import type { Accounts } from '@slovo/server-core';
+
+import { sessionGate } from './session-gate';
 
 /** What a request brings to the Account procedures. */
 interface AccountContext {
@@ -19,23 +21,11 @@ function retryAfter(
   resHeaders?.set('retry-after', String(retryAfterSeconds));
 }
 
-/** The token of the request's `Authorization: Bearer <token>`, if any. */
-function bearerToken(headers: Headers): string | undefined {
-  const [scheme, token] = headers.get('authorization')?.split(' ') ?? [];
-  return scheme?.toLowerCase() === 'bearer' && token ? token : undefined;
-}
-
 /** The Account procedures of the contract, over the server Core's Accounts. */
 export function accountProcedures(accounts: Accounts) {
   const account = implement(apiContract.account).$context<AccountContext>();
 
-  // Every procedure of a Session goes through here: it puts the request's
-  // Session in the context, or refuses the request as UNAUTHORIZED.
-  const signedIn = account.middleware(async ({ context, next }) => {
-    const opened = await accounts.session(bearerToken(context.headers));
-    if (!opened.ok) throw new ORPCError('UNAUTHORIZED');
-    return next({ context: { session: opened.session } });
-  });
+  const signedIn = sessionGate(accounts);
 
   return account.router({
     requestCode: account.requestCode.handler(async ({ input, context, errors }) => {
