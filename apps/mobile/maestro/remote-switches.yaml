@@ -1,0 +1,68 @@
+# The app obeys the remote Feature Switches (ADR 0040): the Game tab goes once
+# `game` is turned off remotely and the app comes back to the foreground, and
+# comes back once the switch is cleared, without a restart. Maestro can't run
+# the switch commands, so the flow runs in three steps around them, on the
+# backend Metro was started with (`EXPO_PUBLIC_SLOVO_API_URL`) and its database:
+#
+#   maestro test maestro/remote-switches.yaml -e STEP=launch -e METRO_URL=http://localhost:8081
+#   pnpm switch:off uk game
+#   maestro test maestro/remote-switches.yaml -e STEP=off
+#   pnpm switch:clear uk game
+#   maestro test maestro/remote-switches.yaml -e STEP=on
+#
+# `launch` opens the app with every switch cleared. `off` and `on` find the
+# tab as it was, since the app asks only when it comes back, then send the app
+# to the background and back. Not part of `smoke.yaml`: it needs the commands.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- runFlow:
+    when:
+      true: ${STEP == 'launch'}
+    commands:
+      - evalScript: ${output.devClientLink = (SCHEME || 'slovo-uk') + '://expo-development-client/?url=' + encodeURIComponent(METRO_URL || 'http://localhost:8081')}
+      - launchApp:
+          clearState: false
+      - runFlow:
+          file: open-in-dev-client.yaml
+      - assertVisible:
+          id: tab-game
+- runFlow:
+    when:
+      true: ${STEP == 'off'}
+    commands:
+      # Still there: the app hasn't asked since the switch was turned off.
+      - assertVisible:
+          id: tab-game
+      - pressKey: home
+      - launchApp:
+          stopApp: false
+      - extendedWaitUntil:
+          notVisible:
+            id: tab-game
+          timeout: 15000
+      # The rest of the app stays as it was.
+      - assertVisible:
+          id: tab-saved
+      - assertVisible:
+          id: feed-card-.*
+- runFlow:
+    when:
+      true: ${STEP == 'on'}
+    commands:
+      - assertNotVisible:
+          id: tab-game
+      - pressKey: home
+      - launchApp:
+          stopApp: false
+      - extendedWaitUntil:
+          visible:
+            id: tab-game
+          timeout: 15000
+      - tapOn:
+          id: tab-game
+      - assertVisible:
+          id: game
+      - tapOn:
+          id: tab-home
+      - assertVisible:
+          id: feed-card-.*
