@@ -25,9 +25,9 @@
     "@slovo/config": "workspace:*",
     "dependency-cruiser": "^18.6.0",
     "knip": "^6.41.0",
-    "oxlint": "~1.87.0",
-    "prettier": "^3.9.9",
-    "turbo": "^2.11.7",
+    "oxlint": "~1.88.0",
+    "prettier": "^3.9.10",
+    "turbo": "^2.11.8",
     "typescript": "~6.0.3"
   }
 }
