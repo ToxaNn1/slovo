@@ -2,8 +2,19 @@ import type { Account, AccountState } from '@slovo/core';
 import { useEdition } from '@slovo/ui';
 
 import { editionStrings } from '../edition/edition';
+import { useEditionInEffect } from '../edition/remote-switches';
 import { useSubscribed, type Opening, type Source } from '../opening';
+import { accountOpening } from './device-account';
 import { accountProblemLine, accountSummary } from './account-texts';
+
+/**
+ * The opening of the Account while its switch is on in effect, so its row and
+ * its screen go when it is turned off remotely; undefined then, and when the
+ * Edition has no Account. The Session stays kept either way (ADR 0040).
+ */
+export function useAccountInEffect(): Opening<Account> | undefined {
+  return useEditionInEffect().isFeatureEnabled('account') ? accountOpening : undefined;
+}
 
 /** The Account as it stands, or undefined while it opens or when it failed to. */
 function useAccountStateOf(opening: Opening<Account>): AccountState | undefined {

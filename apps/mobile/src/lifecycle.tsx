@@ -33,8 +33,8 @@ export function useInForeground(): boolean {
  * (a new local day, the permission). The Widget Snapshot is written when the
  * composition opens and each time the app goes to the background. The remote
  * Feature Switches are asked for at launch and each time the app comes back,
- * and a changed answer reopens the composition over the Edition in effect
- * (ADR 0040). The Content update module checks then too, when content updates
+ * and a changed answer reopens the composition over the Edition in effect and
+ * writes the Widget Snapshot again (ADR 0040). The Content update module checks then too, when content updates
  * are on in effect, at most once a day; the Account checks its Session then,
  * when it is on in effect, at most once an hour. Draws nothing.
  */
@@ -57,7 +57,11 @@ export function Lifecycle() {
       if (moment !== 'launch' && moment !== 'return') return;
       // Neither the ask nor a reopen rejects.
       void switches.ask().then(async (changed) => {
-        if (changed) await compositionOpening.reopen();
+        if (!changed) return;
+        await compositionOpening.reopen();
+        // A reopen does what the launch did: the composition makes the plan as it opens.
+        const { state } = compositionOpening;
+        if (state.status === 'ready') writeWidgetSnapshot(() => state.value.widget.snapshot());
       });
     });
     reports.listen(languagePackOpening, ({ contentUpdate }, moment) => {

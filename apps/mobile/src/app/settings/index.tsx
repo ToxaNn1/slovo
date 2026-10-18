@@ -15,9 +15,8 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AccountRow } from '../../account/account-row';
-import { accountOpening } from '../../account/device-account';
+import { useAccountInEffect } from '../../account/account';
 import { editionStrings } from '../../edition/edition';
-import { useEditionInEffect } from '../../edition/remote-switches';
 import { useHiddenSummary } from '../../mix/hidden';
 import { useMixSummary } from '../../mix/mix';
 import { useNotificationsSummary } from '../../notifications/notifications';
@@ -49,7 +48,7 @@ export default function SettingsScreen() {
   const mixSummary = useMixSummary();
   const hiddenSummary = useHiddenSummary();
   const notificationsSummary = useNotificationsSummary();
-  const withAccount = useEditionInEffect().isFeatureEnabled('account');
+  const accountOpening = useAccountInEffect();
   return (
     <SafeAreaView
       testID="settings"
@@ -58,7 +57,7 @@ export default function SettingsScreen() {
     >
       <ScrollView contentContainerStyle={styles.content}>
         <ScreenTitle>{strings.title}</ScreenTitle>
-        {withAccount && accountOpening !== undefined && (
+        {accountOpening !== undefined && (
           <View style={styles.section}>
             <SettingsGroup>
               <AccountRow opening={accountOpening} />

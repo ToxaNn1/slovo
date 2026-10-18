@@ -68,8 +68,8 @@ function contentUpdatesOn(packFiles: DevicePackFiles): ContentUpdates<PackReader
  * The Language Pack of the app run: the bundled one, or the newer one a
  * Content update kept, opened read-only, with the Content update module when
  * content updates are on in effect at launch (`openLaunchPack`), so after the
- * remote Feature Switches. Either pack is refused when it
- * is of another Edition than the app.
+ * remote Feature Switches. Either pack is refused when it is of another
+ * Edition than the app.
  */
 export const languagePackOpening = openOnce(
   async (): Promise<LaunchPack<PackReader>> =>

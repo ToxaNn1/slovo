@@ -34,11 +34,10 @@ async function openOver(content: PackReader): Promise<Composition> {
 
 /**
  * The Core composition over the Language Pack and the Edition as the app runs
- * it, opened once per app run and
- * shared by every screen, since its Cycle and Word of the Day keep their state
- * in memory (ADR 0013, 0018). Every screen sees the same state, so a retry
- * from its gate opens it again for all. It reopens when an effective value of
- * a Feature Switch changes (ADR 0040).
+ * it, opened once per app run and shared by every screen, since its Cycle and
+ * Word of the Day keep their state in memory (ADR 0013, 0018). Every screen
+ * sees the same state, so a retry from its gate opens it again for all. It
+ * reopens when an effective value of a Feature Switch changes (ADR 0040).
  */
 export const compositionOpening = openOnce(
   async () => openOver((await languagePackOpening.opened()).reader),
