@@ -98,6 +98,7 @@ describe('The Widget Snapshot of the Ukrainian Edition', () => {
     await app.hide({ kind: 'entry', entryId: second });
 
     const snapshot = await app.widget.snapshot();
+    if (snapshot === undefined) throw new Error('No Widget Snapshot was built');
     const parsed = WidgetSnapshotSchema.parse(JSON.parse(serializeWidgetSnapshot(snapshot)));
 
     expect(parsed).toEqual(snapshot);

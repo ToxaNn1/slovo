@@ -1,4 +1,5 @@
 import type { Cycle } from '../feed/cycle';
+import type { Edition } from '../edition/edition';
 import type { Entries } from '../entries/entries';
 import {
   dateKeyOf,
@@ -45,8 +46,12 @@ export interface NotificationScheduling {
   readonly ellipsis: string;
 }
 
-/** What the plan needs to know of the Edition: its notification sound, if it has one. */
-export interface PlanEdition {
+/**
+ * What the plan needs to know of the Edition: its notification sound, if it
+ * has one, and the effective values of the Feature Switches it follows,
+ * notifications and the Word of the Day, which it reads each time it plans.
+ */
+export interface PlanEdition extends Pick<Edition, 'isFeatureEnabled'> {
   /** The file name of the Edition's own sound; without one, notifications play the system sound. */
   readonly notificationSound?: string | undefined;
 }
@@ -180,6 +185,11 @@ export const noNotificationPlanner: NotificationPlanner = {
  * stay empty; the plan never starts a new Cycle. Every plan replaces what
  * the device held before.
  *
+ * With the Feature Switch of notifications off the plan is empty and nothing
+ * is Reserved, like while the device doesn't allow notifications, and there
+ * is no next morning. With the Word of the Day's off no notification carries
+ * it: the earliest time of a day is a notification like the others.
+ *
  * `nextMorning` answers which morning notification a plan made now would
  * hold, also while the device doesn't let the app notify, and writes nothing.
  */
@@ -223,7 +233,7 @@ export function createNotificationPlanner({
     const unseen = new Set(cycle.unseen().words);
     const kept = new Map<Slot, string>();
     // Today's Word of the Day goes to this morning's notification or to none.
-    const today = wordOfTheDay.chosen()?.wordId;
+    const today = todaysWordOfTheDay();
     const keptWords = new Set<string>(today === undefined ? [] : [today]);
     const morning = earliest === undefined ? undefined : slots.find(isMorningOf(earliest, clock));
     if (morning !== undefined && today !== undefined && unseen.has(today)) kept.set(morning, today);
@@ -242,6 +252,13 @@ export function createNotificationPlanner({
     });
   }
 
+  /** Today's Word of the Day, unless its Feature Switch is off and no notification carries it. */
+  function todaysWordOfTheDay(): string | undefined {
+    return edition.isFeatureEnabled('wordOfTheDay') ? wordOfTheDay.chosen()?.wordId : undefined;
+  }
+
+  const notificationsOn = () => edition.isFeatureEnabled('notifications');
+
   function soundOf(on: boolean): PlannedSound {
     if (!on) return 'silent';
     return edition.notificationSound === undefined ? 'system' : { file: edition.notificationSound };
@@ -251,7 +268,8 @@ export function createNotificationPlanner({
     times: readonly TimeOfDay[],
   ): Promise<MorningNotification | undefined> {
     const [earliest] = times;
-    const today = wordOfTheDay.chosen()?.wordId;
+    if (!notificationsOn()) return undefined;
+    const today = todaysWordOfTheDay();
     const wordId =
       earliest === undefined
         ? today !== undefined && cycle.unseen().words.includes(today)
@@ -270,7 +288,7 @@ export function createNotificationPlanner({
   }
 
   async function plan({ times, sound, permission }: PlanSettings): Promise<void> {
-    const slots = permission === 'allowed' ? slotsAhead(times, clock) : [];
+    const slots = permission === 'allowed' && notificationsOn() ? slotsAhead(times, clock) : [];
     const stored = await reservedWords.stored();
     const planned: PlannedWord[] = [];
     const notifications: PlannedNotification[] = [];

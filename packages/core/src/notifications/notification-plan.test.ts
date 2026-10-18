@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Correction, Word } from '@slovo/contracts';
+import type { Correction, FeatureSwitch, Word } from '@slovo/contracts';
 
 import {
   createFakeNotificationScheduler,
@@ -36,6 +36,7 @@ async function run({
   scheduler = createFakeNotificationScheduler(),
   notificationSound = 'notification.wav',
   mixCategoryIds = ['test'],
+  switchedOff = [],
 }: {
   words?: readonly Word[];
   corrections?: readonly Correction[];
@@ -45,6 +46,8 @@ async function run({
   /** The Edition's sound file; null for an Edition without one. */
   notificationSound?: string | null;
   mixCategoryIds?: readonly string[];
+  /** The Feature Switches whose effective value is off. */
+  switchedOff?: readonly FeatureSwitch[];
 } = {}): Promise<{
   app: Composition;
   scheduler: FakeNotificationScheduler;
@@ -61,7 +64,7 @@ async function run({
     }),
     edition: {
       id: 'test',
-      isFeatureEnabled: () => true,
+      isFeatureEnabled: (feature) => !switchedOff.includes(feature),
       languageTraits: { distractorRule: 'same-part-of-speech' },
       userSettingDefaults: {
         mix: { categoryIds: mixCategoryIds, corrections: true },
@@ -431,6 +434,52 @@ function wordAt(plan: readonly PlannedNotification[], slot: string): string {
   if (wordId === undefined) throw new Error(`Nothing is planned at ${slot}`);
   return wordId;
 }
+
+describe('the Feature Switches of notifications and the Word of the Day', () => {
+  it('plans nothing and Reserves nothing with notifications switched off, and keeps the times', async () => {
+    const time = fakeClock(start);
+    const { app, scheduler } = await run({ clock: time.clock, switchedOff: ['notifications'] });
+
+    expect(planOf(scheduler)).toEqual([]);
+    expect(app.notifications.state.times).toEqual(defaultTimes);
+    await expectNothingReserved(app, scheduler, time);
+  });
+
+  it('plans nothing on a change of the times or the sound with notifications switched off', async () => {
+    const { app, scheduler } = await run({ switchedOff: ['notifications'] });
+
+    await app.notifications.keepTime('21:00');
+    await app.notifications.setSound(false);
+
+    expect(planOf(scheduler)).toEqual([]);
+  });
+
+  it('plans again, from the times kept, once notifications are switched on', async () => {
+    const records = new Map<string, string>();
+    await run({ records, switchedOff: ['notifications'] });
+
+    const { scheduler } = await run({ records });
+
+    expect(planOf(scheduler)).toHaveLength(42);
+  });
+
+  it('plans as before with both switches on', async () => {
+    const { scheduler } = await run({ switchedOff: [] });
+
+    expect(planOf(scheduler)).toHaveLength(42);
+  });
+
+  it("keeps today's Word of the Day for no notification with it switched on, and plans it like any Word with it off", async () => {
+    // Three Words and a morning already passed: the Word of the Day has no notification left to take it.
+    const clock = fakeClock('2026-10-14T10:00:00+03:00').clock;
+    const words = manyWords.slice(0, 3);
+    const on = await run({ words, clock });
+    const off = await run({ words, clock, switchedOff: ['wordOfTheDay'] });
+
+    expect(planOf(on.scheduler)).toHaveLength(2);
+    expect(planOf(off.scheduler)).toHaveLength(3);
+  });
+});
 
 describe('the plan following the Feed', () => {
   it('gives the earliest time today the Word of the Day, and no other notification', async () => {

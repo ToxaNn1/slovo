@@ -10,6 +10,7 @@ import type { EligibleOfKind, Entries } from './entries/entries';
 import { buildEntryRow } from './entries/entry-row';
 import type { Favorites } from './saved/favorites';
 import type { EntryFeedCard } from './feed/feed-card';
+import type { Edition } from './edition/edition';
 import type { Onboarding } from './onboarding';
 import type { Clock } from './ports';
 import { withoutStress } from './entries/stress';
@@ -23,9 +24,12 @@ export interface Widget {
    * The Widget Snapshot of the user state as it is now, for the app to write
    * into the App Group: every Widget Mode with only Eligible Entries in it
    * (ADR 0015), and each of those Entries once, with its text ready to show.
-   * Pure data; the contracts serialize it.
+   * Pure data; the contracts serialize it. Nothing while the widget's
+   * Feature Switch is off, by its effective value at the time of the call: the
+   * app writes no new snapshot and the widget just stops updating, with no
+   * placeholder (ADR 0026).
    */
-  snapshot(): Promise<WidgetSnapshot>;
+  snapshot(): Promise<WidgetSnapshot | undefined>;
   /**
    * Opens an Entry the widget showed, a Word or a Correction, by the rule and
    * the one write of an Entry opened from a notification (see
@@ -62,7 +66,7 @@ function widgetEntry(entry: Entry): WidgetEntry {
  * outside the app, which a notification shares.
  */
 export function createWidget({
-  editionId,
+  edition,
   entries,
   favorites,
   collections,
@@ -70,7 +74,7 @@ export function createWidget({
   clock,
   opened,
 }: {
-  editionId: string;
+  edition: Pick<Edition, 'id' | 'isFeatureEnabled'>;
   entries: Entries;
   favorites: Favorites;
   collections: Collections;
@@ -80,6 +84,7 @@ export function createWidget({
 }): Widget {
   return {
     async snapshot() {
+      if (!edition.isFeatureEnabled('widget')) return undefined;
       const [words, corrections] = await Promise.all([
         entries.eligibleOfKind('word'),
         entries.eligibleOfKind('correction'),
@@ -90,7 +95,7 @@ export function createWidget({
         kept.map(({ entryId }) => entryId).filter((id) => eligibleIds.has(id));
       return {
         format: WIDGET_SNAPSHOT_FORMAT,
-        editionId,
+        editionId: edition.id,
         writtenAt: clock.now().toISOString(),
         onboardingFinished: onboarding.state.finishedAt !== undefined,
         entries: eligible.map(widgetEntry),

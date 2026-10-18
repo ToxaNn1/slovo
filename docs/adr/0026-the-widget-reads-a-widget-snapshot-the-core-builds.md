@@ -36,3 +36,7 @@ The Widget Mode lives in iOS's widget configuration (the iOS 17 App Intents conf
 The widget picks the mode's ids and the empty or broken state from the snapshot; which Entries a mode may show is still the Core's. No snapshot yet, the onboarding unfinished, or Усі слова with no Entry (every one hidden or out of the Mix) shows «Відкрийте SLOVO»; Улюблене with no Entry, an empty Collection, a deleted Collection and Колекція with no Collection chosen each say so. These states wait for the app's next reload rather than asking WidgetKit for another timeline. A tap on a state opens the app's root link, which is the Feed.
 
 All the text is the Edition's `widget` strings, written into the extension's string table: the mode names and both parameters' titles, the overline of each mode («КОЛЕКЦІЯ · {name}» takes the Collection's name, which the widget fills in) and the states. The overline is drawn in capitals, so a Collection's name follows the design.
+
+## Amendment: a switched-off widget stops updating (0.8.5)
+
+With the `widget` Feature Switch off (ADR 0040), by its effective value at the time of the call, `widget.snapshot()` builds nothing, so the app writes no new Widget Snapshot and asks WidgetKit for no reload. The widget keeps the last file and just stops updating; there is no placeholder, and no native change, since the extension already shows what it last read. With the switch on again the next write is as before.

@@ -141,6 +141,17 @@ describe('writing the Widget Snapshot into the App Group', () => {
     });
   });
 
+  it('writes nothing and asks for no reload when the Core builds no snapshot', async () => {
+    const { device, files, steps } = fakeDevice();
+    const write = createWidgetSnapshotWriter(device);
+
+    write(() => Promise.resolve(undefined));
+    await settled();
+
+    expect(steps).toEqual([]);
+    expect(files.size).toBe(0);
+  });
+
   it.each(['write', 'replace'] as const)(
     'ignores a failed %s, keeps the last good file and tries again at the next write',
     async (failing) => {

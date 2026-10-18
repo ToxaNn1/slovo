@@ -34,19 +34,22 @@ export interface WidgetDevice {
  * WidgetKit asked to reload. A failed write is ignored, so the widget keeps
  * the last good file and the next write tries again. Writes run one after the
  * other, each building its snapshot in its turn, so an older snapshot never
- * lands last. Without `device` (a dev client built before the 0.6 batch)
- * nothing is built or written.
+ * lands last. A snapshot the Core doesn't build, as the widget's Feature
+ * Switch is off, writes nothing and asks for no reload. Without `device` (a
+ * dev client built before the 0.6 batch) nothing is built or written.
  */
 export function createWidgetSnapshotWriter(
   device: WidgetDevice | undefined,
-): (snapshot: () => Promise<WidgetSnapshot>) => void {
+): (snapshot: () => Promise<WidgetSnapshot | undefined>) => void {
   if (device === undefined) return () => undefined;
   const widget: WidgetDevice = device;
   let writing = Promise.resolve();
 
-  async function writeOnce(snapshot: () => Promise<WidgetSnapshot>): Promise<void> {
+  async function writeOnce(snapshot: () => Promise<WidgetSnapshot | undefined>): Promise<void> {
     try {
-      const text = serializeWidgetSnapshot(await snapshot());
+      const built = await snapshot();
+      if (built === undefined) return;
+      const text = serializeWidgetSnapshot(built);
       await widget.container.write(STAGED_WIDGET_SNAPSHOT_FILE, text);
       await widget.container.replace(STAGED_WIDGET_SNAPSHOT_FILE, WIDGET_SNAPSHOT_FILE);
       widget.reloadTimelines();

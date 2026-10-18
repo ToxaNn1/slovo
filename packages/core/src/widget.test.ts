@@ -1,3 +1,4 @@
+import type { WidgetSnapshot } from '@slovo/contracts';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -42,17 +43,21 @@ async function run({
   content = pack,
   clock = fakeClock(start).clock,
   withCorrections = true,
+  withWidget = true,
 }: {
   records?: Map<string, string>;
   content?: ContentReadPort;
   clock?: Clock;
   withCorrections?: boolean;
+  /** Whether the Feature Switch of the widget is on, as the Edition in effect has it. */
+  withWidget?: boolean;
 } = {}): Promise<Composition> {
   return openComposition({
     content,
     edition: {
       id: 'test',
-      isFeatureEnabled: (feature) => withCorrections && feature === 'corrections',
+      isFeatureEnabled: (feature) =>
+        feature === 'widget' ? withWidget : withCorrections && feature === 'corrections',
       languageTraits: { distractorRule: 'same-part-of-speech' },
       userSettingDefaults: {
         mix: { categoryIds: categories.map(({ id }) => id), corrections: true },
@@ -65,11 +70,26 @@ async function run({
   });
 }
 
+/** The Widget Snapshot of an app whose widget is on; it fails the test when there is none. */
+async function snapshotOf(app: Composition): Promise<WidgetSnapshot> {
+  const snapshot = await app.widget.snapshot();
+  if (snapshot === undefined) throw new Error('No Widget Snapshot was built');
+  return snapshot;
+}
+
 describe('The Widget Snapshot', () => {
+  it('builds none while the widget is switched off, and builds one again once it is on', async () => {
+    const off = await run({ withWidget: false });
+    const on = await run();
+
+    expect(await off.widget.snapshot()).toBeUndefined();
+    expect((await snapshotOf(on)).allEntries).toHaveLength(6);
+  });
+
   it('shows every Eligible Entry in the mode of all Entries', async () => {
     const app = await run();
 
-    expect((await app.widget.snapshot()).allEntries).toEqual([
+    expect((await snapshotOf(app)).allEntries).toEqual([
       'w_nature0',
       'w_nature1',
       'w_speech0',
@@ -91,7 +111,7 @@ describe('The Widget Snapshot', () => {
     await app.hide({ kind: 'entry', entryId: 'w_nature1' });
     await app.hide({ kind: 'category', categoryId: 'speech' });
 
-    const snapshot = await app.widget.snapshot();
+    const snapshot = await snapshotOf(app);
 
     expect(snapshot.allEntries).toEqual(['w_nature0', 'c_one', 'c_two']);
     expect(snapshot.entries.map(({ id }) => id)).toEqual(['w_nature0', 'c_one', 'c_two']);
@@ -105,7 +125,7 @@ describe('The Widget Snapshot', () => {
     const created = await app.collections.create('Phrases', 'c_one');
     if (!created.ok) throw new Error('The Collection was not created');
 
-    const snapshot = await app.widget.snapshot();
+    const snapshot = await snapshotOf(app);
 
     expect(snapshot.allEntries).toEqual(['w_nature0', 'w_nature1', 'w_speech0', 'w_speech1']);
     expect(snapshot.favorites).toEqual([]);
@@ -120,12 +140,12 @@ describe('The Widget Snapshot', () => {
     await app.favorites.add('c_one');
     await app.hide({ kind: 'corrections' });
 
-    const out = await app.widget.snapshot();
+    const out = await snapshotOf(app);
     expect(out.allEntries).toEqual(['w_nature0', 'w_nature1', 'w_speech0', 'w_speech1']);
     expect(out.favorites).toEqual([]);
 
     await app.unhide({ kind: 'corrections' });
-    const back = await app.widget.snapshot();
+    const back = await snapshotOf(app);
     expect(back.allEntries).toEqual([
       'w_nature0',
       'w_nature1',
@@ -145,7 +165,7 @@ describe('The Widget Snapshot', () => {
       advance(MINUTE);
     }
 
-    expect((await app.widget.snapshot()).favorites).toEqual(['w_speech0', 'c_one', 'w_nature0']);
+    expect((await snapshotOf(app)).favorites).toEqual(['w_speech0', 'c_one', 'w_nature0']);
   });
 
   it('drops a Favorite once it is hidden or out of the Mix', async () => {
@@ -158,7 +178,7 @@ describe('The Widget Snapshot', () => {
     await app.hide({ kind: 'entry', entryId: 'w_nature1' });
     await app.hide({ kind: 'category', categoryId: 'speech' });
 
-    expect((await app.widget.snapshot()).favorites).toEqual(['w_nature0']);
+    expect((await snapshotOf(app)).favorites).toEqual(['w_nature0']);
   });
 
   it('drops a Favorite once a new Language Pack retires it', async () => {
@@ -170,7 +190,7 @@ describe('The Widget Snapshot', () => {
       words: words.map((kept) => (kept.id === 'w_nature0' ? { ...kept, retired: true } : kept)),
       corrections,
     });
-    const snapshot = await (await run({ records, content: retired })).widget.snapshot();
+    const snapshot = await snapshotOf(await run({ records, content: retired }));
 
     expect(snapshot.favorites).toEqual([]);
     expect(snapshot.allEntries).not.toContain('w_nature0');
@@ -189,7 +209,7 @@ describe('The Widget Snapshot', () => {
     }
     await app.hide({ kind: 'entry', entryId: 'w_speech1' });
 
-    expect((await app.widget.snapshot()).collections).toEqual([
+    expect((await snapshotOf(app)).collections).toEqual([
       { id: empty.collection.id, name: 'Empty', entryIds: [] },
       { id: letters.collection.id, name: 'Letters', entryIds: ['c_two', 'w_nature0'] },
     ]);
@@ -206,7 +226,7 @@ describe('The Widget Snapshot', () => {
     await app.collections.rename(renamed.collection.id, 'For letters');
     await app.collections.delete(deleted.collection.id);
 
-    expect((await app.widget.snapshot()).collections).toEqual([
+    expect((await snapshotOf(app)).collections).toEqual([
       { id: renamed.collection.id, name: 'For letters', entryIds: ['w_nature0'] },
     ]);
   });
@@ -221,7 +241,7 @@ describe('The Widget Snapshot', () => {
       }),
     });
 
-    expect((await app.widget.snapshot()).entries).toMatchObject([
+    expect((await snapshotOf(app)).entries).toMatchObject([
       {
         kind: 'word',
         id: 'w_veremiia',
@@ -256,7 +276,7 @@ describe('The Widget Snapshot', () => {
       }),
     });
 
-    expect((await app.widget.snapshot()).entries.map(({ voiceOver }) => voiceOver)).toEqual([
+    expect((await snapshotOf(app)).entries.map(({ voiceOver }) => voiceOver)).toEqual([
       'химерник, Людина, схильна до витівок.',
       'протягом року, на протязі року',
     ]);
@@ -276,7 +296,7 @@ describe('The Widget Snapshot', () => {
       }),
     });
 
-    expect((await app.widget.snapshot()).entries).toContainEqual({
+    expect((await snapshotOf(app)).entries).toContainEqual({
       ...anyVoiceOver,
       kind: 'correction',
       id: 'c_protiahom',
@@ -289,7 +309,7 @@ describe('The Widget Snapshot', () => {
     const { clock, advance } = fakeClock('2026-10-16T09:00:00+03:00');
     const app = await run({ clock });
 
-    expect(await app.widget.snapshot()).toMatchObject({
+    expect(await snapshotOf(app)).toMatchObject({
       format: 1,
       editionId: 'test',
       writtenAt: '2026-10-16T06:00:00.000Z',
@@ -298,7 +318,7 @@ describe('The Widget Snapshot', () => {
 
     await app.onboarding.finish();
     advance(MINUTE);
-    expect(await app.widget.snapshot()).toMatchObject({
+    expect(await snapshotOf(app)).toMatchObject({
       writtenAt: '2026-10-16T06:01:00.000Z',
       onboardingFinished: true,
     });

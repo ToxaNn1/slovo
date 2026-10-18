@@ -274,7 +274,7 @@ export async function openComposition({
     openedFromNotification: openedFromOutside,
     entryRow: (entryId) => rows.row(entryId),
     widget: createWidget({
-      editionId: edition.id,
+      edition,
       entries,
       favorites,
       collections,

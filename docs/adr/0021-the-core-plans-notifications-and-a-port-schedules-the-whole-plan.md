@@ -46,3 +46,7 @@ The 0.4 spec let only the onboarding's «Дозволити сповіщення
 ### Considered Options
 
 - **Ask only from the onboarding**, as the spec had it: rejected. A reader who chose «Пізніше» would never get notifications, while the row counted the times as if they came.
+
+## Amendment: the plan follows the Feature Switches (0.8.5)
+
+The plan reads the effective values of two Feature Switches (ADR 0040) each time it plans, so a remote switch holds from the next plan, with no reopen of the plan's own. With **notifications** off the plan is empty and nothing is Reserved, as while the device doesn't allow notifications; the Notification times and the sound stay stored, and the plan comes back once the switch is on. The onboarding's sample then has no next morning. With the **Word of the Day** off no notification carries it: the earliest time of a day is a notification like the others, and today's Word of the Day is an ordinary Word to the plan. The plan's other rules are unchanged, and with both switches on the plan is the same.
