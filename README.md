@@ -148,6 +148,8 @@ What the tests can't reach runs on the simulator after the native build that bri
 
 The backend serves every Edition from one deployment ([ADR 0008](docs/adr/0008-one-backend-deployment-built-as-a-factory.md), [ADR 0030](docs/adr/0030-the-backend-is-a-factory-too.md)). It runs on the Mac with Node; Postgres 17 and Mailpit run in Docker. You need Docker Desktop running.
 
+`pnpm dev` does steps 1–4 below and starts Metro pointed at the backend, in one terminal (see [Commands](#commands)). The steps are here for doing them one by one.
+
 1. Start the local services from the repo root. They are started once per machine and shared by every worktree: the Compose project is always `slovo`, so a second worktree finds the running containers. The data stays in the `slovo_postgres` volume.
 
    ```sh
@@ -214,19 +216,20 @@ The backend serves every Edition from one deployment ([ADR 0008](docs/adr/0008-o
 
 ## Commands
 
-All commands run from the repo root. CI runs these on every pull request, and `main` takes changes only when they are green. Knip only reports.
+All commands run from the repo root. CI runs `lint`, `typecheck`, `deps`, `knip` and `test` on every pull request, and `main` takes changes only when they are green. Knip only reports.
 
-| Command                | What it does                                                                                                                                                                                                     |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm lint`            | ESLint in every package, then Prettier.                                                                                                                                                                          |
-| `pnpm typecheck`       | TypeScript in every package.                                                                                                                                                                                     |
-| `pnpm deps`            | dependency-cruiser: the package boundaries the ADRs set, import cycles and orphan modules. Rules and their ADRs are in [`.dependency-cruiser.mjs`](.dependency-cruiser.mjs).                                     |
-| `pnpm knip`            | Knip: unused files, exports and dependencies, and dependencies used without being listed. A report in CI, which does not fail the build. Deliberate exceptions, with reasons, are in [`knip.jsonc`](knip.jsonc). |
-| `pnpm test`            | Vitest in every package, and Jest for the component tests of `packages/ui` (ADR 0029). Turborepo caches results and tracks `editions/` as an input.                                                              |
-| `pnpm build:pack uk`   | Validates the Edition's content, prints the content report and builds the Language Pack. Fails when the content misses a target in `editions/uk/content/targets.json`.                                           |
-| `pnpm publish:pack uk` | Publishes the Edition's built Language Pack to the backend's database as a Content update. Refuses a pack the manifest doesn't record, a content version that doesn't grow and one already published.            |
-| `pnpm source:words`    | Drafts Words for review; see [`tools/sourcing/README.md`](tools/sourcing/README.md).                                                                                                                             |
-| `pnpm format`          | Rewrites files with Prettier.                                                                                                                                                                                    |
+| Command                | What it does                                                                                                                                                                                                                                                                                                                  |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm dev`             | Starts the whole project for local work: Docker and the local services, `apps/backend/.env` when missing, the migrations, the Language Pack, then the backend and Metro on the first free ports, with the app pointed at that backend. `SLOVO_EDITION`, `PORT` and `SLOVO_METRO_PORT` change the defaults (`uk`, 8787, 8081). |
+| `pnpm lint`            | ESLint in every package, then Prettier.                                                                                                                                                                                                                                                                                       |
+| `pnpm typecheck`       | TypeScript in every package.                                                                                                                                                                                                                                                                                                  |
+| `pnpm deps`            | dependency-cruiser: the package boundaries the ADRs set, import cycles and orphan modules. Rules and their ADRs are in [`.dependency-cruiser.mjs`](.dependency-cruiser.mjs).                                                                                                                                                  |
+| `pnpm knip`            | Knip: unused files, exports and dependencies, and dependencies used without being listed. A report in CI, which does not fail the build. Deliberate exceptions, with reasons, are in [`knip.jsonc`](knip.jsonc).                                                                                                              |
+| `pnpm test`            | Vitest in every package, and Jest for the component tests of `packages/ui` (ADR 0029). Turborepo caches results and tracks `editions/` as an input.                                                                                                                                                                           |
+| `pnpm build:pack uk`   | Validates the Edition's content, prints the content report and builds the Language Pack. Fails when the content misses a target in `editions/uk/content/targets.json`.                                                                                                                                                        |
+| `pnpm publish:pack uk` | Publishes the Edition's built Language Pack to the backend's database as a Content update. Refuses a pack the manifest doesn't record, a content version that doesn't grow and one already published.                                                                                                                         |
+| `pnpm source:words`    | Drafts Words for review; see [`tools/sourcing/README.md`](tools/sourcing/README.md).                                                                                                                                                                                                                                          |
+| `pnpm format`          | Rewrites files with Prettier.                                                                                                                                                                                                                                                                                                 |
 
 Dependency advisories that have no fix yet are ignored in [`pnpm-workspace.yaml`](pnpm-workspace.yaml) with a review date. Look at that list when you touch dependencies, and drop an entry as soon as a patched release exists.
 
