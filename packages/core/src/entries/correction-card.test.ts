@@ -37,7 +37,21 @@ describe('the Correction card', () => {
         nonStandard: 'Ремонт тривав на протязі року.',
         standard: 'Ремонт тривав протягом року.',
       },
+      sourceTitles: ['Test source'],
     });
+  });
+
+  it('names its sources by their titles, in their order', () => {
+    const card = buildCorrectionCard(
+      correction({
+        sources: [
+          { title: 'За СУМ-20', url: 'https://example.com' },
+          { title: 'Антоненко-Давидович' },
+        ],
+      }),
+    );
+
+    expect(card.sourceTitles).toEqual(['За СУМ-20', 'Антоненко-Давидович']);
   });
 
   it('puts the first standard equivalent first and the others after it, in their order', () => {

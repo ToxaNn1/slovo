@@ -18,6 +18,8 @@ export interface CorrectionCardModel {
   readonly correctionType: CorrectionType;
   readonly explanation: string;
   readonly examplePair: ExamplePair;
+  /** The titles of the Correction's sources, in their order; the card names them in a line. */
+  readonly sourceTitles: readonly string[];
 }
 
 /** The Correction card of a Correction. */
@@ -36,5 +38,6 @@ export function buildCorrectionCard(correction: Correction): CorrectionCardModel
     correctionType: correction.correctionType,
     explanation: correction.explanation,
     examplePair: correction.examplePair,
+    sourceTitles: correction.sources.map((source) => source.title),
   };
 }

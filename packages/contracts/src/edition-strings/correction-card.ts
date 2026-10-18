@@ -20,6 +20,8 @@ export const CorrectionCardStringsSchema = z.strictObject({
   /** What VoiceOver says for each sentence of the example pair. */
   exampleNonStandard: templateOf('text'),
   exampleStandard: templateOf('text'),
+  /** The line naming the Correction's sources under the example pair, e.g. "Джерело: {source}". */
+  source: templateOf('source'),
   /** A Correction's row in any list, under its standard equivalent, e.g. "замість «{form}»". */
   insteadOf: templateOf('form'),
 });

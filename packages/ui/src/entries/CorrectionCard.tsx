@@ -16,8 +16,8 @@ import { WholeWordsText } from '../primitives/WholeWordsText';
 /**
  * The Correction card's blocks inside the Entry card's frame: the Correction
  * Type, the non-standard form muted and struck through, the main standard
- * equivalent at the Lemma's size with the others under it, the explanation and
- * the example pair. A Correction carries no Stress, and nothing on the card
+ * equivalent at the Lemma's size with the others under it, the explanation,
+ * the example pair and, when the Correction has sources, a line naming them. A Correction carries no Stress, and nothing on the card
  * reads as an error.
  */
 export function CorrectionCardBody({
@@ -158,6 +158,15 @@ export function CorrectionCardBody({
           </Text>
         </View>
       </View>
+      {card.sourceTitles.length === 0 ? null : (
+        <Text
+          testID="correction-source"
+          {...voice}
+          style={[styles.source, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+        >
+          {fill(strings.source, { source: card.sourceTitles.join(SOURCE_SEPARATOR) })}
+        </Text>
+      )}
     </>
   );
 }
@@ -174,6 +183,9 @@ function Mark({ lineHeight, children }: { lineHeight: number; children: ReactNod
 }
 
 const MARK_SIZE = 18;
+
+/** What sits between the titles of a Correction's sources on the source line. */
+const SOURCE_SEPARATOR = '; ';
 
 const styles = StyleSheet.create({
   header: {
@@ -196,6 +208,7 @@ const styles = StyleSheet.create({
   explanation: { fontSize: typeSize.explanation, lineHeight: typeSize.explanation * 1.55 },
   examplePair: { gap: space[3], paddingVertical: space[4], paddingHorizontal: space[4] },
   exampleRow: { flexDirection: 'row', gap: space[3] },
+  source: { fontSize: typeSize.meta, lineHeight: typeSize.meta * 1.4 },
   mark: { width: MARK_SIZE, justifyContent: 'center' },
   sentence: { flex: 1 },
 });

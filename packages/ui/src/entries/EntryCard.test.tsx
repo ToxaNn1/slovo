@@ -9,7 +9,7 @@ import {
 } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen, within } from '@testing-library/react-native';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text, type StyleProp, type ViewStyle } from 'react-native';
 
 const strings = {
   wordCard: {
@@ -32,6 +32,7 @@ const strings = {
     otherEquivalents: 'Also: {equivalents}',
     exampleNonStandard: 'Not: {text}',
     exampleStandard: 'Right: {text}',
+    source: 'Source: {source}',
   },
 } as unknown as EditionStrings;
 
@@ -46,8 +47,14 @@ const card: EntryFeedCard = {
     correctionType: 'calque',
     explanation: 'A long explanation.',
     examplePair: { nonStandard: 'I take part.', standard: 'I join in.' },
+    sourceTitles: [],
   },
 };
+
+function cardWithSources(sourceTitles: readonly string[]): EntryFeedCard {
+  if (card.kind !== 'correction') throw new Error('The fixture is a Correction card');
+  return { ...card, correctionCard: { ...card.correctionCard, sourceTitles } };
+}
 
 const wordCard: EntryFeedCard = {
   kind: 'word',
@@ -95,6 +102,13 @@ function inEdition(children: React.ReactNode) {
   );
 }
 
+/** The style of the element with this test ID, flattened. */
+function styleOf(testID: string) {
+  return StyleSheet.flatten(
+    (screen.getByTestId(testID).props as { style?: StyleProp<ViewStyle> }).style,
+  );
+}
+
 describe('EntryCard', () => {
   it.each([
     ['Word', wordCard, 'word-card'],
@@ -112,6 +126,20 @@ describe('EntryCard', () => {
     for (const corner of ['topLeft', 'topRight', 'bottomLeft', 'bottomRight']) {
       expect(frame.getByTestId(`card-corner-${corner}`, { hidden: true })).toBeTruthy();
     }
+  });
+
+  it('names the sources of a Correction in a line under the example pair', async () => {
+    await render(inEdition(<EntryCard card={cardWithSources(['Sources A', 'Sources B'])} />));
+
+    expect(screen.getByTestId('correction-source')).toHaveTextContent(
+      'Source: Sources A; Sources B',
+    );
+  });
+
+  it('draws no source line on a Correction without sources', async () => {
+    await render(inEdition(<EntryCard card={card} />));
+
+    expect(screen.queryByTestId('correction-source')).toBeNull();
   });
 
   it('draws no frame on a card when the Edition has no corners', async () => {
@@ -165,11 +193,11 @@ describe('EntryCard', () => {
     // The card and its actions take the height they need and sit in the middle
     // of the page; when that is more than the page has, the card shrinks to
     // the space left, so it fills the page from the top and scrolls.
-    const page = StyleSheet.flatten(screen.getByTestId('entry-card-page').props.style);
+    const page = styleOf('entry-card-page');
     expect(page).toMatchObject({ flexGrow: 1, justifyContent: 'center' });
-    const frame = StyleSheet.flatten(screen.getByTestId('correction-card').props.style);
+    const frame = styleOf('correction-card');
     expect(frame).toMatchObject({ flexGrow: 0, flexShrink: 1 });
-    const scroll = StyleSheet.flatten(screen.getByTestId('entry-card-scroll').props.style);
+    const scroll = styleOf('entry-card-scroll');
     expect(scroll).toMatchObject({ flexGrow: 0, flexShrink: 1 });
   });
 
