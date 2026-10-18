@@ -55,7 +55,7 @@ An opening now has `reopen()`. It opens the value again while the opening stays 
 
 Most screens follow without anything of their own. `useComposition()` reads the composition's opening, so a reopen draws every screen under its gate again with the new composition; `useSubscribed` then binds each module of the new composition, and `bind` gives a new module a subscription of its own, so `useSyncExternalStore` leaves the old module and follows the new one. The gates stay drawn, so the navigation stack and an open Entry stay. What a screen keeps in React state over a module of the old value must not outlive it: the settings provider keeps the reader's last change only over the settings it was made in, and the Feed of a reopened composition opens on the card it kept for the reader, not on the page turned to in the old Feed, whose cards it doesn't have. The foreground reports tell each moment with what the opening holds at that moment, so the composition's listeners act on the reopened one.
 
-A reopen is not a launch, and the reports do not tell it: whoever reopens does what the launch did, such as the notification plan and the Widget Snapshot after a sync (#388). Nothing reopens yet; sync (#388) and remote switches (#389) will.
+A reopen is not a launch, and the reports do not tell it: whoever reopens does what the launch did, such as the notification plan and the Widget Snapshot after a sync (#388). The remote Feature Switches reopen the composition when an effective value changes (ADR 0040 amendment); sync (#388) will reopen it too.
 
 ### Considered Options
 
