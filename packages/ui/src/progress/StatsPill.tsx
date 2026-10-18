@@ -14,11 +14,22 @@ const NUMBER_MAX_FONT_SCALE = 1.3;
 /**
  * The Stats pill in the Feed's top row: a flame and the Streak, on the
  * surface fill with an accent border. A tap opens the stats sheet. VoiceOver
- * reads it whole as a button, such as «Статистика: серія 12 днів».
+ * reads it whole as a button, such as «Статистика: серія 12 днів». It is
+ * the Streak's only place in the Feed, so it is not drawn while the reader
+ * hides the Streak.
  */
-export function StatsPill({ streak, onPress }: { streak: number; onPress: () => void }) {
+export function StatsPill({
+  streak,
+  hideStreak = false,
+  onPress,
+}: {
+  streak: number;
+  hideStreak?: boolean;
+  onPress: () => void;
+}) {
   const { colors, fontFamilies } = useTokens();
   const { strings, voice, count } = useEdition();
+  if (hideStreak) return null;
   return (
     <Pressable
       testID="stats-pill"
