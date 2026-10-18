@@ -72,9 +72,9 @@ export interface OnboardingState {
 
 /**
  * The onboarding: its steps in order (the welcome, the Mix, the
- * notifications and, with the Account on, SLOVO ID), and whether the reader finished it, which is also when
- * they skipped it. It opens on launch until then, at the welcome, and never
- * again after. The step on screen is not kept: closing the app halfway
+ * notifications and, with the Account on, SLOVO ID), and whether the reader
+ * finished it, which is also when they skipped it. It opens on launch until
+ * then, at the welcome, and never again after. The step on screen is not kept: closing the app halfway
  * starts over at the welcome. Read from the user state once, when it opens,
  * like the Cycle, so open one per app session (the Core composition does).
  * A change is made in memory only once it is written.

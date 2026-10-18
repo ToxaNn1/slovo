@@ -1,4 +1,4 @@
-import type { OnboardingStep, SampleNotification, WordCardModel } from '@slovo/core';
+import type { Account, OnboardingStep, SampleNotification, WordCardModel } from '@slovo/core';
 import {
   OnboardingAccount,
   OnboardingMix,
@@ -8,7 +8,7 @@ import {
   type HeroWord,
   type SampleNotificationLook,
 } from '@slovo/ui';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { AccountScreen } from './account/account-screen';
@@ -17,7 +17,7 @@ import { useComposition } from './composition';
 import { editionStrings } from './edition/edition';
 import { MixChoices } from './mix/mix-choices';
 import { NotificationTimes } from './notifications/notification-times';
-import { useSubscribed } from './opening';
+import { useSubscribed, type Opening } from './opening';
 
 /** A Word's Lemma as the steps draw it: with its Stress, and what VoiceOver reads for it. */
 function lemmaOf(wordCard: WordCardModel): { lemma: string; accessibilityLabel: string } {
@@ -54,7 +54,8 @@ function report(done: Promise<void>): void {
  * The onboarding adapter: it draws the step the Core onboarding is on, over
  * the Feed, and passes the taps to it. The Core holds the steps, their order
  * and the rule that ends them. The SLOVO ID step opens the SLOVO ID screen
- * over itself, and its back link comes back to the step.
+ * over itself once the Account is open, and its back link comes back to the
+ * step.
  */
 export function Onboarding() {
   const { onboarding } = useComposition();
@@ -68,35 +69,63 @@ export function Onboarding() {
   const next = () => {
     report(onboarding.next());
   };
+  const onStep = (
+    <Step
+      step={step}
+      onNext={next}
+      onSkip={skip}
+      onAllow={() => {
+        report(onboarding.allowNotifications());
+      }}
+      onSignIn={() => {
+        // Reading the opening starts it; a failed one opens again.
+        const opened = accountOpening?.state;
+        if (opened?.status === 'failed') opened.retry();
+        setSigningIn(true);
+      }}
+    />
+  );
   return (
     // Modal, so VoiceOver stays out of the Feed and the tabs behind it.
     <View style={StyleSheet.absoluteFill} accessibilityViewIsModal>
       {signingIn && accountOpening !== undefined ? (
-        <AccountScreen
+        <AccountOverStep
           opening={accountOpening}
-          back={{
-            // The step it came from, by its title.
-            label: editionStrings.onboarding.account.title,
-            onPress: (account) => {
-              setSigningIn(false);
-              report(onboarding.backFromAccount(account.state));
-            },
+          step={onStep}
+          onBack={(account) => {
+            setSigningIn(false);
+            report(onboarding.backFromAccount(account.state));
           }}
         />
       ) : (
-        <Step
-          step={step}
-          onNext={next}
-          onSkip={skip}
-          onAllow={() => {
-            report(onboarding.allowNotifications());
-          }}
-          onSignIn={() => {
-            setSigningIn(true);
-          }}
-        />
+        onStep
       )}
     </View>
+  );
+}
+
+/**
+ * The SLOVO ID screen over the step, once the Account is open; until then the
+ * step stays, since the onboarding has no way back from the gate's loading or
+ * error state.
+ */
+function AccountOverStep({
+  opening,
+  step,
+  onBack,
+}: {
+  opening: Opening<Account>;
+  step: ReactNode;
+  onBack: (account: Account) => void;
+}) {
+  const opened = useSubscribed(opening, ({ state }) => state);
+  if (opened.status !== 'ready') return step;
+  return (
+    <AccountScreen
+      opening={opening}
+      // The step it came from, by its title.
+      back={{ label: editionStrings.onboarding.account.title, onPress: onBack }}
+    />
   );
 }
 

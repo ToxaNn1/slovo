@@ -285,14 +285,14 @@ All PNGs are in [`screens/`](screens/), rendered at 2× from the canvas, includi
 
 ### 0.4 Habit and onboarding
 
-| PNG                                    | Screen and state                                                                                                                                                                                                    | Artboard |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| `stats-sheet-dark.png`                 | Stats sheet from the Streak pill, dark                                                                                                                                                                              | 1b       |
-| `onboarding-1-welcome-dark.png`        | Onboarding 1, welcome with a hero Word, dark                                                                                                                                                                        | 2a       |
-| `onboarding-2-mix-light.png`           | Onboarding 2, choose the Mix: Category chips, "Усі", Corrections switch, light                                                                                                                                      | 2a       |
-| `onboarding-3-notifications-light.png` | Onboarding 3, notifications with a sample and three default times, light                                                                                                                                            | 2a       |
-| `onboarding-4-slovo-id-dark.png`       | Onboarding 4, SLOVO ID, marked "later version" (the Account itself is 0.7), dark. Built in 0.8 without the mark: the SLOVO ID screen opens over the step, and its back link «Збережіть свої слова» comes back to it | 2a       |
-| `widgets-and-notification.png`         | The notification (0.4), plus the widgets (0.6)                                                                                                                                                                      | 2d       |
+| PNG                                    | Screen and state                                                                                                                                                                                                            | Artboard |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `stats-sheet-dark.png`                 | Stats sheet from the Streak pill, dark                                                                                                                                                                                      | 1b       |
+| `onboarding-1-welcome-dark.png`        | Onboarding 1, welcome with a hero Word, dark                                                                                                                                                                                | 2a       |
+| `onboarding-2-mix-light.png`           | Onboarding 2, choose the Mix: Category chips, "Усі", Corrections switch, light                                                                                                                                              | 2a       |
+| `onboarding-3-notifications-light.png` | Onboarding 3, notifications with a sample and three default times, light                                                                                                                                                    | 2a       |
+| `onboarding-4-slovo-id-dark.png`       | Onboarding 4, SLOVO ID, marked "later version" (the Account itself is 0.7), dark. Built in 0.8 without «ПІЗНІША ВЕРСІЯ»: the SLOVO ID screen opens over the step, and its back link «Збережіть свої слова» comes back to it | 2a       |
+| `widgets-and-notification.png`         | The notification (0.4), plus the widgets (0.6)                                                                                                                                                                              | 2d       |
 
 ### 0.5 Game
 
