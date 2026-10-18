@@ -55,6 +55,14 @@ export function trackChanges({
 }): TrackedUserState {
   const inTurn = createInTurn();
 
+  async function pendingChanges(): Promise<ReadonlyMap<string, PendingChange>> {
+    const pending = new Map<string, PendingChange>();
+    for (const [key, { changedAt, value }] of await userState.list(syncPending)) {
+      pending.set(key, { changedAt: new Date(changedAt), value: value ?? undefined });
+    }
+    return pending;
+  }
+
   return {
     read: (record) => userState.read(record),
     list: (records) => userState.list(records),
@@ -68,25 +76,18 @@ export function trackChanges({
           ]);
         return userState.write(new Map([...changes, ...pending]));
       }),
-    async pendingChanges() {
-      const pending = new Map<string, PendingChange>();
-      for (const [key, { changedAt, value }] of await userState.list(syncPending)) {
-        pending.set(key, { changedAt: new Date(changedAt), value: value ?? undefined });
-      }
-      return pending;
-    },
+    pendingChanges,
     cursor: () => userState.read(syncCursor),
     deleteSent: (sent) =>
       inTurn(async () => {
-        const stored = await userState.list(syncPending);
+        const current = await pendingChanges();
         const changes: UserStateChanges = new Map(
           [...sent]
             .filter(([key, change]) => {
-              const now = stored.get(key);
+              const stored = current.get(key);
               return (
-                now !== undefined &&
-                new Date(now.changedAt).getTime() === change.changedAt.getTime() &&
-                (now.value ?? undefined) === change.value
+                stored?.changedAt.getTime() === change.changedAt.getTime() &&
+                stored.value === change.value
               );
             })
             .map(([key]) => [syncPending.record(key).key, undefined]),
