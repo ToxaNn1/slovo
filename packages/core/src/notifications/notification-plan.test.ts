@@ -174,7 +174,7 @@ describe('the notification plan', () => {
   it('plans each eligible unseen Word once, and no Correction, Hidden, Retired, Seen or out-of-Mix Word', async () => {
     const records = new Map([
       ['hidden.w_hidden', JSON.stringify('2026-10-13T10:00:00.000Z')],
-      ['feed.seen.w_seen', 'true'],
+      ['feed.seen.w_seen', '1'],
     ]);
 
     const { scheduler } = await run({
@@ -632,8 +632,8 @@ describe('the plan following the Feed', () => {
   it('fills what it can near the end of the Cycle, and never starts a new Cycle', async () => {
     const time = fakeClock(start);
     const records = new Map([
-      ['feed.seen.w_a', 'true'],
-      ['feed.seen.w_b', 'true'],
+      ['feed.seen.w_a', '1'],
+      ['feed.seen.w_b', '1'],
     ]);
     const words = ['w_a', 'w_b', 'w_c', 'w_d', 'w_e'].map((id) => word(id));
     const { app, scheduler } = await run({ words, records, clock: time.clock });
@@ -692,7 +692,7 @@ describe('the Reserved Words', () => {
 
     time.set('2026-10-15T10:00:00+03:00');
     const seen = await run({
-      records: new Map([...records, [`feed.seen.${morning}`, 'true']]),
+      records: new Map([...records, [`feed.seen.${morning}`, '1']]),
       clock: time.clock,
     });
     const outOfCycle = await run({

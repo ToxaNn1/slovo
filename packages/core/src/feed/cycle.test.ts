@@ -132,12 +132,13 @@ describe('the Cycle', () => {
       expect(cycle.markSeen(first).changes.size).toBe(0);
     });
 
-    it('reads only the Seen records that hold true, under the Seen prefix', async () => {
+    it('reads only the Seen records that hold the id of the current Cycle, under the Seen prefix', async () => {
       const [first = '', second = '', third = ''] = wordIds;
       const records = new Map([
-        [`feed.seen.${first}`, 'true'],
+        ['feed.cycle', JSON.stringify({ id: 3, seed: 7 })],
+        [`feed.seen.${first}`, '3'],
         [`feed.seen.${second}`, 'not JSON'],
-        [`feed.seen${third}`, 'true'],
+        [`feed.seen${third}`, '3'],
       ]);
 
       const cycle = await open({ records });
@@ -145,6 +146,25 @@ describe('the Cycle', () => {
       expect(cycle.unseen().words).not.toContain(first);
       expect(cycle.unseen().words).toContain(second);
       expect(cycle.unseen().words).toContain(third);
+    });
+
+    it('reads a Seen record of another Cycle as not Seen, and marks it Seen in this one', async () => {
+      const [older = '', newer = ''] = wordIds;
+      // A device offline since Cycle 2 brought its Seen mark into Cycle 3, and one from Cycle 4.
+      const records = new Map([
+        ['feed.cycle', JSON.stringify({ id: 3, seed: 7 })],
+        [`feed.seen.${older}`, '2'],
+        [`feed.seen.${newer}`, '4'],
+      ]);
+      const cycle = await open({ records });
+
+      expect(cycle.unseen().words).toContain(older);
+      expect(cycle.unseen().words).toContain(newer);
+
+      await keep(records, cycle.markSeen(older));
+
+      expect(records.get(`feed.seen.${older}`)).toBe('3');
+      expect((await open({ records })).unseen().words).not.toContain(older);
     });
 
     it("keeps one record per Seen Entry, so two Cycles over one user state keep each other's marks", async () => {
@@ -287,8 +307,12 @@ describe('the Cycle', () => {
       await keep(records, one.markSeen(first ?? ''));
       await keep(records, other.markSeen(second ?? ''));
 
+      // And one a device kept in another Cycle.
+      records.set('feed.seen.w_9', '7');
+
       await keep(records, await one.start());
 
+      expect([...records.keys()].filter((key) => key.startsWith('feed.seen.'))).toEqual([]);
       const restarted = await open({ records });
       expect(restarted.unseen()).toEqual(restarted.order());
     });

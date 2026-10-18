@@ -202,6 +202,24 @@ describe('the Feed', () => {
       expect(unseen).not.toContain(first);
     });
 
+    it('offers an Entry whose Seen mark is of another Cycle, as a device offline since then brings it', async () => {
+      const records = new Map<string, string>();
+      const time = fakeClock('2026-10-11T09:00:00+03:00');
+      const feed = await run({ records, clock: time.clock });
+      const [first = '', second = ''] = await walk(feed);
+      // This device is in Cycle 2 now; the other one Seen `first` in Cycle 1, and `second` in this one.
+      const { seed } = JSON.parse(records.get('feed.cycle') ?? '{}') as { seed: number };
+      records.set('feed.cycle', JSON.stringify({ id: 2, seed }));
+      records.set(`feed.seen.${first}`, '1');
+      records.set(`feed.seen.${second}`, '2');
+
+      const unseen = await unseenNextDay(records);
+
+      expect(unseen).toContain(first);
+      expect(unseen).not.toContain(second);
+      expect(unseen).toHaveLength(liveIds.length - 1);
+    });
+
     it('opens on the Word of the Day the composition keeps, and a Seen mark made through the Feed survives reopening the composition', async () => {
       const records = new Map<string, string>();
       const time = fakeClock('2026-10-11T09:00:00+03:00');

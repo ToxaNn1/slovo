@@ -50,8 +50,12 @@ export const userStateRecords = {
     'feed.cycle',
     z.object({ id: z.number().int().positive(), seed: z.number().int().nonnegative() }),
   ),
-  /** The Entries Seen in the current Cycle, one record per Entry, by Entry id. */
-  seen: declareRecords('feed.seen.', z.literal(true)),
+  /**
+   * The Entries Seen, one record per Entry, by Entry id: the id of the Cycle
+   * it was Seen in. Only the current Cycle's count, so a mark another device
+   * kept in an older Cycle never carries into this one.
+   */
+  seen: declareRecords('feed.seen.', z.number().int().positive()),
   /**
    * The Word of the Day and the local date it belongs to. It stays on the
    * device: it is the Word of the morning notification this device's own plan
@@ -184,6 +188,25 @@ export const userStateMigrations: readonly UserStateMigration[] = [
       const changes = new Map<string, string | undefined>([['feed.seen', undefined]]);
       const ids = z.array(z.string()).safeParse(parseJson(text));
       for (const id of ids.data ?? []) changes.set(`feed.seen.${id}`, JSON.stringify(true));
+      return changes;
+    },
+  },
+  // 0.8: a Seen record holds the id of the Cycle it was Seen in, not `true`, so a
+  // device offline since an older Cycle can't carry its marks into a new one. Each
+  // takes the current Cycle, or the first, which opens when none reads. The last
+  // migration that may re-encode a record that syncs (ADR 0013): from 0.8 a new
+  // encoding takes a new key.
+  {
+    version: 4,
+    async migrate({ get, list }) {
+      const text = await get('feed.cycle');
+      const cycle = z
+        .object({ id: z.number().int().positive() })
+        .safeParse(text === undefined ? undefined : parseJson(text));
+      const changes = new Map<string, string>();
+      for (const [key, value] of await list('feed.seen.')) {
+        if (parseJson(value) === true) changes.set(key, JSON.stringify(cycle.data?.id ?? 1));
+      }
       return changes;
     },
   },

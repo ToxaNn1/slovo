@@ -263,6 +263,31 @@ describe.each(adapters)('the user state %s', (_, createStore) => {
     expect(await port.get('message')).toBe('hello, world');
   });
 
+  it('brings a 0.7 user state forward: each Seen record holds the id of the current Cycle', async () => {
+    const store = createStore();
+    await (
+      await store.open()
+    ).write(
+      new Map([
+        ['schema.version', '3'],
+        ['feed.cycle', '{"id":4,"seed":7}'],
+        ['feed.seen.w_1', 'true'],
+        ['feed.seen.c_1', 'true'],
+      ]),
+    );
+
+    await openUserState({ port: await store.open() });
+
+    const port = await store.open();
+    expect(await port.list(userStateRecords.seen.prefix)).toEqual(
+      new Map([
+        ['feed.seen.w_1', '4'],
+        ['feed.seen.c_1', '4'],
+      ]),
+    );
+    expect(userStateRecords.schemaVersion.decode(await port.get('schema.version'))).toBe(4);
+  });
+
   it("opens a new store at the Core's current schema", async () => {
     const store = createStore();
     const state = await openUserState({ port: await store.open() });

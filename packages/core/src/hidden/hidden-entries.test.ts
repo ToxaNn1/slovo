@@ -282,7 +282,7 @@ describe('a Hidden Entry', () => {
     await app.hiddenEntries.hide(hidden);
 
     expect(records.get('feed.cycle')).toBe(cycle);
-    expect(records.get(`feed.seen.${seen}`)).toBe('true');
+    expect(records.get(`feed.seen.${seen}`)).toBe('1');
     const words = (ids: readonly string[]) => ids.filter((id) => id.startsWith('w_'));
     expect(words(await walk(app.feed))).toEqual(words(twin).filter((id) => id !== hidden));
   });
@@ -551,7 +551,7 @@ describe('the Feed, when an Entry is hidden or restored', () => {
 
     await app.hiddenEntries.hide(hidden);
 
-    expect(records.get(`feed.seen.${hidden}`)).toBe('true');
+    expect(records.get(`feed.seen.${hidden}`)).toBe('1');
     expect(app.history.list.map(({ entryId }) => entryId)).toEqual([hidden]);
   });
 
@@ -585,7 +585,7 @@ describe('the Feed, when an Entry is hidden or restored', () => {
     await app.feed.show(1);
     time.advance(SEEN_DWELL_MS);
     await app.feed.show(2);
-    expect(records.get(`feed.seen.${next}`)).toBe('true');
+    expect(records.get(`feed.seen.${next}`)).toBe('1');
   });
 
   it('keeps the reader on the end-of-Cycle card when the first card of the next Cycle is hidden, and puts that card back into the next Cycle on undo', async () => {
@@ -619,7 +619,8 @@ describe('the Feed, when an Entry is hidden or restored', () => {
     await app.feed.show(position + 1);
     time.advance(SEEN_DWELL_MS);
     await app.feed.show(position + 2);
-    expect(records.get(`feed.seen.${hidden}`)).toBe('true');
+    // Seen in the next Cycle.
+    expect(records.get(`feed.seen.${hidden}`)).toBe('2');
   });
 
   it('reopens the same day on the card that took the hidden one’s place', async () => {

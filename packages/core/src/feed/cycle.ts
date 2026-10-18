@@ -107,7 +107,12 @@ export async function openCycle({
   let cycle = stored ?? { id: 1, seed: drawSeed(random) };
   if (stored === undefined) await userState.write(cycleRecord.change(cycle));
   let order = orderOf(await entries.eligible(), cycle.seed);
-  const seen = new Set((await userState.list(seenRecords)).keys());
+  // Only the marks of this Cycle; one of another Cycle reads as not Seen.
+  const seen = new Set(
+    [...(await userState.list(seenRecords))].flatMap(([id, seenIn]) =>
+      seenIn === cycle.id ? [id] : [],
+    ),
+  );
 
   // Each read of the eligible Entries is numbered as it is asked for, and the
   // Cycle keeps what the last one asked for read, whichever ends last.
@@ -137,7 +142,7 @@ export async function openCycle({
     markSeen(entryId) {
       if (seen.has(entryId)) return { changes: new Map(), commit: () => undefined };
       return {
-        changes: seenRecords.record(entryId).change(true),
+        changes: seenRecords.record(entryId).change(cycle.id),
         commit() {
           seen.add(entryId);
         },
@@ -147,7 +152,8 @@ export async function openCycle({
       const started = { id: cycle.id + 1, seed: drawSeed(random) };
       const read = await readEligible();
       const startedOrder = orderOf(read.eligible, started.seed);
-      // Every Seen record, also any kept by another Cycle over the user state.
+      // Every Seen record, also any kept by another Cycle over the user state
+      // or brought from another Cycle by a device.
       const seenIds = (await userState.list(seenRecords)).keys();
       return {
         order: startedOrder,

@@ -71,7 +71,7 @@ describe('opening a Word from a notification', () => {
     expect(writes.slice(before).map((changes) => [...changes.keys()].sort())).toEqual([
       ['activeDays.2026-10-12', 'feed.seen.w_three', 'history.w_three'],
     ]);
-    expect(records.get('feed.seen.w_three')).toBe('true');
+    expect(records.get('feed.seen.w_three')).toBe('1');
     expect(historyIdsOf(app)).toEqual(['w_three']);
     expect(app.history.list[0]).toMatchObject({
       seenAt: new Date('2026-10-12T09:00:00+03:00'),

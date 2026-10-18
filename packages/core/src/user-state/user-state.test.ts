@@ -7,6 +7,7 @@ import {
   openCycle,
   openUserState,
   openWordOfTheDay,
+  type UserStateChanges,
 } from '../index';
 
 // The contract suite in apps/mobile covers migrations on every adapter; these
@@ -68,7 +69,7 @@ describe('openUserState', () => {
     expect(wordOfTheDay.chosen()?.wordId).toBe('w_3');
   });
 
-  it('splits the Seen array 0.2 kept into one record per Entry', async () => {
+  it('splits the Seen array 0.2 kept into one record per Entry, Seen in the Cycle that opens', async () => {
     const records = new Map([
       ['schema.version', '1'],
       ['feed.seen', '["w_1","w_2"]'],
@@ -79,8 +80,8 @@ describe('openUserState', () => {
     expect(records.has('feed.seen')).toBe(false);
     expect(await createMemoryUserStatePort(records).list('feed.seen.')).toEqual(
       new Map([
-        ['feed.seen.w_1', 'true'],
-        ['feed.seen.w_2', 'true'],
+        ['feed.seen.w_1', '1'],
+        ['feed.seen.w_2', '1'],
       ]),
     );
   });
@@ -94,5 +95,51 @@ describe('openUserState', () => {
     await openUserState({ port: createMemoryUserStatePort(records) });
 
     expect([...records.keys()].filter((key) => key.startsWith('feed.seen'))).toEqual([]);
+  });
+
+  it('reads the user state a 0.7 app kept: Seen in the current Cycle stays Seen, in one write with the version', async () => {
+    // The Seen records exactly as 0.7 wrote them, at schema version 3.
+    const records = new Map([
+      ['schema.version', '3'],
+      ['feed.cycle', '{"id":4,"seed":7}'],
+      ['feed.seen.w_1', 'true'],
+      ['feed.seen.c_1', 'true'],
+      ['favorites.w_2', '"2026-10-17T08:00:00.000Z"'],
+    ]);
+    const port = createMemoryUserStatePort(records);
+    const writes: UserStateChanges[] = [];
+
+    const userState = await openUserState({
+      port: { ...port, write: (changes) => (writes.push(changes), port.write(changes)) },
+    });
+    const cycle = await openCycle({
+      entries: {
+        eligible: () => Promise.resolve({ words: ['w_1', 'w_2'], corrections: ['c_1', 'c_2'] }),
+      },
+      userState,
+      random: { next: () => 0.5 },
+    });
+
+    expect(writes).toEqual([
+      new Map([
+        ['feed.seen.w_1', '4'],
+        ['feed.seen.c_1', '4'],
+        ['schema.version', '4'],
+      ]),
+    ]);
+    expect(cycle.unseen()).toEqual({ words: ['w_2'], corrections: ['c_2'] });
+    expect(records.get('favorites.w_2')).toBe('"2026-10-17T08:00:00.000Z"');
+  });
+
+  it('gives Seen records the first Cycle when 0.7 kept no Cycle that reads, as the Cycle that opens is the first', async () => {
+    const records = new Map([
+      ['schema.version', '3'],
+      ['feed.cycle', 'not JSON'],
+      ['feed.seen.w_1', 'true'],
+    ]);
+
+    await openUserState({ port: createMemoryUserStatePort(records) });
+
+    expect(records.get('feed.seen.w_1')).toBe('1');
   });
 });

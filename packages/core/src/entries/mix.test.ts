@@ -457,7 +457,7 @@ describe('eligibility over the Mix', () => {
     await app.mix.setCorrections(false);
 
     expect(records.get('feed.cycle')).toBe(cycle);
-    expect(records.get(`feed.seen.${seen}`)).toBe('true');
+    expect(records.get(`feed.seen.${seen}`)).toBe('1');
     const words = (ids: readonly string[]) => ids.filter((id) => id.startsWith('w_'));
     expect(words(await walk(app.feed))).toEqual(words(twin).filter((id) => !isWordOf(hidden)(id)));
   });
