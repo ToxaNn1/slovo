@@ -6,13 +6,18 @@ import type {
 } from '@orpc/contract';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import { implement, ORPCError, type ProcedureHandler } from '@orpc/server';
+import { ResponseHeadersPlugin, type ResponseHeadersPluginContext } from '@orpc/server/plugins';
 
 import { apiContract } from '../api';
 
 // A helper for tests of either side of the API. No app and no backend code imports it.
 
-/** What a request brings to a procedure served in process: its headers, where a Session travels. */
-interface InProcessContext {
+/**
+ * What a request brings to a procedure served in process: its headers, where
+ * a Session travels, and the headers the answer gets (`resHeaders`, as on the
+ * backend), such as a 429's `Retry-After`.
+ */
+interface InProcessContext extends ResponseHeadersPluginContext {
   readonly headers: Headers;
 }
 
@@ -87,6 +92,7 @@ export function serveApi(procedures: ApiProcedures): (request: Request) => Promi
     ]),
   );
   const handler = new OpenAPIHandler<InProcessContext>(router, {
+    plugins: [new ResponseHeadersPlugin()],
     interceptors: [
       async (options) => {
         try {
