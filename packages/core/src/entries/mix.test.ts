@@ -219,6 +219,23 @@ describe('the Mix', () => {
     expect(reopened.mix.state).toEqual(app.mix.state);
   });
 
+  it('reads a Mix with no Category in it, as a merge of two devices can leave, as the Edition default of every Category, and writes nothing for it', async () => {
+    // Each device took out a different last Category.
+    const records = new Map(
+      categories.map(({ id }) => [`mix.categories.${id}`, JSON.stringify(false)]),
+    );
+    const mixRecords = mixRecordsOf(records);
+
+    const app = await run({ records, defaultCategoryIds: 'all' });
+
+    expect(app.mix.state.categoryIds).toEqual(['nature', 'speech', 'crafts']);
+    expect(app.mix.state.hiddenCategories).toEqual([]);
+    expect(new Set(await walk(app.feed))).toEqual(
+      new Set([...categories.flatMap(wordIdsOf), ...correctionIds]),
+    );
+    expect(mixRecordsOf(records)).toEqual(mixRecords);
+  });
+
   describe('over a Language Pack with a new Category', () => {
     const military: Category = { id: 'military', displayName: 'Military' };
     const updated = createMemoryContentPort({
