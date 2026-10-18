@@ -20,6 +20,12 @@ const validConfig = {
     account: true,
     sync: true,
     contentUpdates: true,
+    notifications: true,
+    widget: true,
+    shareCards: true,
+    pronunciation: true,
+    wordOfTheDay: true,
+    statistics: true,
   },
   userSettingDefaults: {
     theme: 'system',
@@ -70,19 +76,26 @@ describe('loadEdition', () => {
     expect(edition.isFeatureEnabled('corrections')).toBe(true);
   });
 
-  it.each(['account', 'sync', 'contentUpdates'] as const)(
-    'reports the %s Feature Switch, which an Edition may turn off',
-    (feature) => {
-      const on = loadEdition(validConfig);
-      const off = loadEdition({
-        ...validConfig,
-        featureSwitches: { ...validConfig.featureSwitches, [feature]: false },
-      });
+  it.each([
+    'account',
+    'sync',
+    'contentUpdates',
+    'notifications',
+    'widget',
+    'shareCards',
+    'pronunciation',
+    'wordOfTheDay',
+    'statistics',
+  ] as const)('reports the %s Feature Switch, which an Edition may turn off', (feature) => {
+    const on = loadEdition(validConfig);
+    const off = loadEdition({
+      ...validConfig,
+      featureSwitches: { ...validConfig.featureSwitches, [feature]: false },
+    });
 
-      expect(on.isFeatureEnabled(feature)).toBe(true);
-      expect(off.isFeatureEnabled(feature)).toBe(false);
-    },
-  );
+    expect(on.isFeatureEnabled(feature)).toBe(true);
+    expect(off.isFeatureEnabled(feature)).toBe(false);
+  });
 
   it('reports the language traits', () => {
     const { languageTraits } = loadEdition(validConfig);
@@ -159,26 +172,45 @@ describe('loadEdition', () => {
 
   const { languageTraits, userSettingDefaults } = validConfig;
 
+  const withoutSwitch = (name: keyof typeof validConfig.featureSwitches) => {
+    const { [name]: _removed, ...featureSwitches } = validConfig.featureSwitches;
+    return { featureSwitches };
+  };
+
   it.each([
-    [
-      'a missing Feature Switch',
-      { featureSwitches: { corrections: true, account: true, sync: true, contentUpdates: true } },
-      'featureSwitches.game',
-    ],
-    [
-      'a missing Account Feature Switch',
-      { featureSwitches: { game: true, corrections: true, sync: true, contentUpdates: true } },
-      'featureSwitches.account',
-    ],
-    [
-      'a missing sync Feature Switch',
-      { featureSwitches: { game: true, corrections: true, account: true, contentUpdates: true } },
-      'featureSwitches.sync',
-    ],
+    ['a missing Feature Switch', withoutSwitch('game'), 'featureSwitches.game'],
+    ['a missing Account Feature Switch', withoutSwitch('account'), 'featureSwitches.account'],
+    ['a missing sync Feature Switch', withoutSwitch('sync'), 'featureSwitches.sync'],
     [
       'a missing content updates Feature Switch',
-      { featureSwitches: { game: true, corrections: true, account: true, sync: true } },
+      withoutSwitch('contentUpdates'),
       'featureSwitches.contentUpdates',
+    ],
+    [
+      'a missing notifications Feature Switch',
+      withoutSwitch('notifications'),
+      'featureSwitches.notifications',
+    ],
+    ['a missing widget Feature Switch', withoutSwitch('widget'), 'featureSwitches.widget'],
+    [
+      'a missing Share Cards Feature Switch',
+      withoutSwitch('shareCards'),
+      'featureSwitches.shareCards',
+    ],
+    [
+      'a missing Pronunciation Feature Switch',
+      withoutSwitch('pronunciation'),
+      'featureSwitches.pronunciation',
+    ],
+    [
+      'a missing Word of the Day Feature Switch',
+      withoutSwitch('wordOfTheDay'),
+      'featureSwitches.wordOfTheDay',
+    ],
+    [
+      'a missing statistics Feature Switch',
+      withoutSwitch('statistics'),
+      'featureSwitches.statistics',
     ],
     [
       'an unknown Feature Switch',

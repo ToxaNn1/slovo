@@ -14,12 +14,18 @@ describe('the Ukrainian Edition', () => {
     });
   });
 
-  it('turns the Game, Corrections, the Account, Sync and content updates on', () => {
+  it('turns every Feature Switch on', () => {
     expect(edition.isFeatureEnabled('game')).toBe(true);
     expect(edition.isFeatureEnabled('corrections')).toBe(true);
     expect(edition.isFeatureEnabled('account')).toBe(true);
     expect(edition.isFeatureEnabled('sync')).toBe(true);
     expect(edition.isFeatureEnabled('contentUpdates')).toBe(true);
+    expect(edition.isFeatureEnabled('notifications')).toBe(true);
+    expect(edition.isFeatureEnabled('widget')).toBe(true);
+    expect(edition.isFeatureEnabled('shareCards')).toBe(true);
+    expect(edition.isFeatureEnabled('pronunciation')).toBe(true);
+    expect(edition.isFeatureEnabled('wordOfTheDay')).toBe(true);
+    expect(edition.isFeatureEnabled('statistics')).toBe(true);
   });
 
   it('starts new users on the agreed defaults', () => {
