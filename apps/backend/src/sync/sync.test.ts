@@ -316,6 +316,24 @@ describe('the change time', () => {
       { key: 'settings.fontSize', value: 'S', changedAt: now },
     ]);
   });
+
+  it("picks the later of two changes of one key by the device's times, before the cut", async () => {
+    const { signIn } = syncing();
+    const phone = await signIn();
+    const now = Date.now();
+
+    await phone.sync.push({
+      editionId: 'uk',
+      changes: [
+        { key: 'settings.theme', value: 'light', changedAt: now + DAY },
+        { key: 'settings.theme', value: 'dark', changedAt: now + 2 * DAY },
+      ],
+    });
+
+    await expect(pullAll(phone)).resolves.toEqual([
+      { key: 'settings.theme', value: 'dark', changedAt: now },
+    ]);
+  });
 });
 
 describe('a tombstone', () => {

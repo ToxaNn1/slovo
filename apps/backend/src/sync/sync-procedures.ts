@@ -21,7 +21,8 @@ export function syncProcedures(sync: Sync, accounts: Accounts) {
     }),
 
     pull: records.pull.use(signedIn).handler(async ({ input, context, errors }) => {
-      const page = await sync.pull(context.session, input.editionId, input.after, input.limit);
+      const { editionId, after, limit } = input;
+      const page = await sync.pull(context.session, editionId, { after, limit });
       if (!page.ok) throw errors.NOT_FOUND();
       return { records: [...page.records], cursor: page.cursor, more: page.more };
     }),

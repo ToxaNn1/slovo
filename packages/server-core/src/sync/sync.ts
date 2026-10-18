@@ -50,8 +50,7 @@ export interface Sync {
   pull(
     session: Session,
     editionId: string,
-    after?: number,
-    limit?: number,
+    page: { readonly after?: number | undefined; readonly limit?: number | undefined },
   ): Promise<({ readonly ok: true } & SyncPage) | NotServing>;
 }
 
@@ -63,8 +62,8 @@ async function servingSync(editions: EditionRegistry, editionId: string) {
 }
 
 /** The change of each key that wins, in the order the keys first came: the later, the first on a tie. */
-function latestOfEachKey(changes: readonly RecordChange[]): RecordChange[] {
-  const byKey = new Map<string, RecordChange>();
+function latestOfEachKey(changes: readonly SyncChange[]): SyncChange[] {
+  const byKey = new Map<string, SyncChange>();
   for (const change of changes) {
     const kept = byKey.get(change.key);
     if (kept === undefined || change.changedAt > kept.changedAt) byKey.set(change.key, change);
@@ -86,16 +85,17 @@ export function createSync({
       const serving = await servingSync(editions, editionId);
       if (!serving.ok) return serving;
       const now = clock.now().getTime();
-      const cut = changes.map(({ key, value, changedAt }) => ({
+      // The device's own times pick the change of each key, before the cut.
+      const kept: RecordChange[] = latestOfEachKey(changes).map(({ key, value, changedAt }) => ({
         key,
         value,
         changedAt: new Date(Math.min(changedAt, now)),
       }));
-      await records.push(account.id, editionId, latestOfEachKey(cut));
+      await records.push(account.id, editionId, kept);
       return { ok: true };
     },
 
-    async pull({ account }, editionId, after = 0, limit = SYNC_BATCH_SIZE) {
+    async pull({ account }, editionId, { after = 0, limit = SYNC_BATCH_SIZE }) {
       const serving = await servingSync(editions, editionId);
       if (!serving.ok) return serving;
       const pageSize = Math.min(limit, SYNC_BATCH_SIZE);
