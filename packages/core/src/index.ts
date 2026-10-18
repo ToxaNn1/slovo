@@ -167,7 +167,7 @@ export {
 } from './onboarding';
 export { createFakeAccountApi, type FakeAccountApi, type SentCode } from './fakes/fake-account-api';
 export { createMemorySessionStore } from './fakes/memory-session-store';
-export { createSync, type Sync, type SyncResult } from './sync/sync';
+export { createSyncExchange, type SyncExchange, type SyncResult } from './sync/exchange';
 export { createFakeSyncApi, type FakeSyncApi, type KeptRecord } from './fakes/fake-sync-api';
 export {
   createFakeNotificationScheduler,

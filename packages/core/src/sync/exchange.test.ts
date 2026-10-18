@@ -5,7 +5,7 @@ import {
   createMemoryContentPort,
   createMemoryUserStatePort,
   createSettings,
-  createSync,
+  createSyncExchange,
   openComposition,
   openUserState,
   trackChanges,
@@ -42,7 +42,7 @@ function account(start = '2026-10-18T09:00:00.000Z') {
       userState: await openUserState({ port: createMemoryUserStatePort(records) }),
       clock: time.clock,
     });
-    const sync = createSync({ userState, api: server });
+    const sync = createSyncExchange({ userState, api: server });
     return {
       records,
       userState,

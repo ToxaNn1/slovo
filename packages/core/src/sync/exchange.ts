@@ -16,13 +16,11 @@ import { syncMarkOf, syncs, userStateRecords } from '../user-state/user-state-sc
 export type SyncResult = ({ readonly ok: true } | SyncApiFailure) & { readonly changed: boolean };
 
 /**
- * Sync (spec #378): the exchange of the reader's words and progress between
- * this device and the Account, record by record by the marks of the
- * user-state schema (ADR 0013, 0041). It opens apart from the composition,
- * and what reads the user state in memory opens again over a pull that
- * wrote something.
+ * One sync (spec #378): the exchange of the reader's words and progress
+ * between this device and the Account, record by record by the marks of the
+ * user-state schema (ADR 0013, 0041). The Sync module decides when it runs.
  */
-export interface Sync {
+export interface SyncExchange {
   /**
    * Syncs once with the Account of the Session, a pull, then a push. Without
    * a cursor it first follows the first-sign-in rule: every synced record
@@ -92,14 +90,14 @@ function changeOf(key: string, { changedAt, value }: PendingChange): RecordChang
   };
 }
 
-/** Opens Sync over the tracked user state and the backend's Sync procedures. */
-export function createSync({
+/** Makes one sync over the tracked user state and the backend's Sync procedures. */
+export function createSyncExchange({
   userState,
   api,
 }: {
   userState: TrackedUserState;
   api: SyncApi;
-}): Sync {
+}): SyncExchange {
   /** The first-sign-in rule: a change with change time 0 for every synced record with none. */
   function joinAccount(): Promise<void> {
     return userState.merge(async () => {
