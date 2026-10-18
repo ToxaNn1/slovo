@@ -201,13 +201,15 @@ export interface RecordChange {
 
 /**
  * A call of the Sync API that failed as any request does, because the
- * Session it carried has ended (401), or because the backend serves no Sync
- * for the Edition (404).
+ * Session it carried has ended (401), because the backend serves no Sync
+ * for the Edition (404), or because a push would take the Account's records
+ * in the Edition over their limit (409, `TOO_MANY_RECORDS`).
  */
 export type SyncApiFailure =
   | RequestFailure
   | { readonly ok: false; readonly reason: 'unauthorized' }
-  | { readonly ok: false; readonly reason: 'not-found' };
+  | { readonly ok: false; readonly reason: 'not-found' }
+  | { readonly ok: false; readonly reason: 'too-many-records' };
 
 /**
  * The backend's Sync procedures for the running Edition, as the Core sees
