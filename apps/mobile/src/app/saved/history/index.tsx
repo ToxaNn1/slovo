@@ -1,6 +1,7 @@
 import { HISTORY_CAP } from '@slovo/core';
 import {
   BackLink,
+  ClearHistoryButton,
   EmptyState,
   EntryRow,
   fill,
@@ -12,7 +13,7 @@ import {
   useTokens,
 } from '@slovo/ui';
 import { useRouter } from 'expo-router';
-import { Alert, Pressable, SectionList, StyleSheet, Text, View } from 'react-native';
+import { SectionList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { editionStrings } from '../../../edition/edition';
@@ -26,8 +27,8 @@ const { history: strings } = editionStrings;
  * History: the Entries the reader has Seen, newest first, grouped under the
  * day they were Seen («СЬОГОДНІ», «УЧОРА», then dates), each row saying
  * whether it was a Word, a Correction or the Word of the Day. A tap opens the
- * Entry screen without making it Seen again. «Очистити» asks first, with a
- * system alert, and clears History only.
+ * Entry screen without making it Seen again. «Очистити» asks first, with the
+ * SLOVO confirmation dialog, and clears History only.
  */
 export default function HistoryScreen() {
   const sections = useHistorySections();
@@ -36,13 +37,6 @@ export default function HistoryScreen() {
   const { voice } = useEdition();
   const router = useRouter();
   const openScreen = useOpenScreen();
-
-  function confirmClear() {
-    Alert.alert(strings.clear.title, strings.clear.message, [
-      { text: strings.clear.cancel, style: 'cancel' },
-      { text: strings.clear.confirm, style: 'destructive', onPress: clear },
-    ]);
-  }
 
   return (
     <SafeAreaView
@@ -81,20 +75,7 @@ export default function HistoryScreen() {
                 }}
               />
               {sections.length > 0 && (
-                <Pressable
-                  testID="history-clear"
-                  accessibilityRole="button"
-                  accessibilityLabel={strings.clear.actionLabel}
-                  {...voice}
-                  onPress={confirmClear}
-                  style={styles.clear}
-                >
-                  <Text
-                    style={[styles.clearText, { color: colors.ink, fontFamily: fontFamilies.ui }]}
-                  >
-                    {strings.clear.action}
-                  </Text>
-                </Pressable>
+                <ClearHistoryButton testID="history-clear" copy={strings.clear} onClear={clear} />
               )}
             </View>
             <View style={styles.header}>
@@ -133,8 +114,6 @@ const styles = StyleSheet.create({
     paddingRight: space[6],
     paddingTop: space[2],
   },
-  clear: { minHeight: 44, minWidth: 44, alignItems: 'flex-end', justifyContent: 'center' },
-  clearText: { fontSize: typeSize.blockHeading, fontWeight: '600' },
   header: {
     flexDirection: 'row',
     flexWrap: 'wrap',
