@@ -235,4 +235,23 @@ describe('the shell syncs in the background', () => {
     expect(widgetWrites).toEqual([]);
     reports.stop();
   });
+
+  it('writes no Widget Snapshot when the composition fails to reopen, and keeps the old one', async () => {
+    let opens = 0;
+    const composition = openOnce(
+      () => (++opens === 1 ? Promise.resolve({ opens }) : Promise.reject(new Error('refused'))),
+      { onError: () => undefined },
+    );
+    const first = await held(composition);
+    const written: unknown[] = [];
+
+    await reopenAfterSync({
+      settings: { reopen: () => Promise.resolve() },
+      composition: composition as unknown as Opening<Composition>,
+      writeWidgetSnapshot: (snapshot) => written.push(snapshot),
+    })();
+
+    expect(written).toEqual([]);
+    expect(await held(composition)).toBe(first);
+  });
 });

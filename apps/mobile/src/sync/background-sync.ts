@@ -59,8 +59,12 @@ export function reopenAfterSync({
   writeWidgetSnapshot: (snapshot: () => Promise<WidgetSnapshot>) => void;
 }): () => Promise<void> {
   return async () => {
+    const before = composition.state;
     await Promise.all([settings.reopen(), composition.reopen()]);
     const { state } = composition;
-    if (state.status === 'ready') writeWidgetSnapshot(() => state.value.widget.snapshot());
+    // A reopen that failed kept the composition the Widget Snapshot was written from.
+    if (state.status === 'ready' && state !== before) {
+      writeWidgetSnapshot(() => state.value.widget.snapshot());
+    }
   };
 }
