@@ -25,11 +25,14 @@ const ANSWERED_COLUMNS = new Set([
   'size',
   'fileSha256',
   'off',
-  // A record of Sync answers its key, its value and its change time.
-  'key',
-  'value',
-  'changedAt',
 ]);
+
+/**
+ * The fields of a record in a Sync answer. They name the device's own data,
+ * and the value holds it, so they are never read as columns; any other field
+ * of a record is.
+ */
+const RECORD_FIELDS = new Set(['key', 'value', 'changedAt']);
 
 /** The names of every internal column, as the schema and as the database name them. */
 const INTERNAL_COLUMNS = Object.values(schema)
@@ -46,11 +49,17 @@ interface Answer {
   readonly body: unknown;
 }
 
-/** Every key of a JSON value, however deep. */
+/** Every key of a JSON value, however deep, but the fields of a Sync record (`RECORD_FIELDS`). */
 function keysOf(value: unknown): string[] {
   if (Array.isArray(value)) return value.flatMap(keysOf);
   if (typeof value !== 'object' || value === null) return [];
-  return Object.entries(value).flatMap(([key, inner]) => [key, ...keysOf(inner)]);
+  return Object.entries(value).flatMap(([key, inner]) =>
+    key === 'records' && Array.isArray(inner)
+      ? [key, ...inner.flatMap((record) => Object.keys(record as object))].filter(
+          (name) => !RECORD_FIELDS.has(name),
+        )
+      : [key, ...keysOf(inner)],
+  );
 }
 
 /** The backend serving an Edition with a published pack, whose answers the test keeps. */

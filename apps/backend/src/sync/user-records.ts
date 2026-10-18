@@ -1,8 +1,11 @@
 import type { UserRecords } from '@slovo/server-core';
-import { and, asc, eq, gt, sql } from 'drizzle-orm';
+import { and, asc, eq, gt, sql, type Column } from 'drizzle-orm';
 
 import type { Database } from '../database/database';
 import { accounts, userRecords } from '../database/schema';
+
+/** The column's value in the row an insert proposed, in its `ON CONFLICT DO UPDATE`. */
+const excluded = (column: Column) => sql`excluded.${sql.identifier(column.name)}`;
 
 /** The records Sync keeps, in the `user_records` table. */
 export function createUserRecords({ db }: Database): UserRecords {
@@ -34,12 +37,12 @@ export function createUserRecords({ db }: Database): UserRecords {
           .onConflictDoUpdate({
             target: [userRecords.accountId, userRecords.editionId, userRecords.key],
             set: {
-              value: sql`excluded.${sql.identifier(userRecords.value.name)}`,
-              changedAt: sql`excluded.${sql.identifier(userRecords.changedAt.name)}`,
+              value: excluded(userRecords.value),
+              changedAt: excluded(userRecords.changedAt),
               sequence: sql`default`,
             },
             // Only a later change replaces the record kept; a tie keeps it.
-            setWhere: sql`${userRecords.changedAt} < excluded.${sql.identifier(userRecords.changedAt.name)}`,
+            setWhere: sql`${userRecords.changedAt} < ${excluded(userRecords.changedAt)}`,
           });
       });
     },

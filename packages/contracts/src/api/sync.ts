@@ -37,7 +37,8 @@ const ofSync = signedIn.errors({
 
 /**
  * The Sync procedures: a device pushes the changes of its user state and
- * pulls everyone else's, for its Session's Account in its Edition only. The
+ * pulls those of the Account's other devices, for its Session's Account in
+ * its Edition only. The
  * backend keeps each record as it is, and the later change time wins
  * (ADR 0041).
  */
