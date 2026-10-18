@@ -2,6 +2,7 @@ import { implement } from '@orpc/server';
 import { apiContract } from '@slovo/contracts/api';
 import type { Accounts } from '@slovo/server-core';
 
+import { retryAfter } from '../retry-after';
 import { sessionGate } from './session-gate';
 
 /** What a request brings to the Account procedures. */
@@ -11,14 +12,6 @@ interface AccountContext {
   readonly ip: string;
   /** The headers the answer gets (oRPC's `ResponseHeadersPlugin`). */
   readonly resHeaders?: Headers;
-}
-
-/** Tells the answer when, in seconds, a request over a limit may come again. */
-function retryAfter(
-  { resHeaders }: AccountContext,
-  { retryAfterSeconds }: { readonly retryAfterSeconds: number },
-): void {
-  resHeaders?.set('retry-after', String(retryAfterSeconds));
 }
 
 /** The Account procedures of the contract, over the server Core's Accounts. */

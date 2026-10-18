@@ -196,9 +196,10 @@ export function createAuthenticator(
       }
     },
 
-    async accountOf(token) {
+    async sessionOf(token) {
       const session = await auth.api.getSession({ headers: bearerHeaders(token) });
-      return session === null ? undefined : accountRecord(session.user);
+      if (session === null) return undefined;
+      return { id: session.session.id, account: accountRecord(session.user) };
     },
 
     async revoke(token) {

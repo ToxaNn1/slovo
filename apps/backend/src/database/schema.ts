@@ -150,10 +150,10 @@ export const signInCodes = pgTable(
 );
 
 /**
- * The windows the sign-in limits count requests in (src/account/rate-limits.ts),
- * one row per key: the limit with the email or IP address it counts. A row
- * whose window has ended is deleted, so no email or address is kept longer
- * than its limit needs.
+ * The windows the sign-in limits and Sync's limit of requests count requests
+ * in (src/rate-limits.ts), one row per key: the limit with the email, IP
+ * address or Session id it counts. A row whose window has ended is deleted,
+ * so none of them is kept longer than its limit needs.
  */
 export const rateLimits = pgTable(
   'rate_limits',

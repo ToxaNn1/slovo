@@ -81,8 +81,13 @@ export interface Authenticator {
    * code for an email creates its Account; a right code starts a Session.
    */
   checkCode(email: string, code: string): Promise<CodeCheck>;
-  /** The Account of the Session the token carries, if the Session is on. Using a Session extends it. */
-  accountOf(token: string): Promise<AccountRecord | undefined>;
+  /**
+   * The Session the token carries, by its id, with its Account, if the
+   * Session is on. Using a Session extends it.
+   */
+  sessionOf(
+    token: string,
+  ): Promise<{ readonly id: string; readonly account: AccountRecord } | undefined>;
   /** Ends the Session the token carries, if it is on. */
   revoke(token: string): Promise<void>;
   /** Ends every Session of the Account. */
@@ -169,8 +174,18 @@ export interface UserRecords {
    * every record already kept, and a pull that read up to a sequence number
    * never misses a record kept below it. Each key comes once. An Account
    * deleted meanwhile keeps nothing.
+   *
+   * It keeps nothing and answers the refusal when `refuse`, given how many
+   * records the Account would keep in the Edition with the changes, tombstones
+   * included, names one. The count and the changes kept come in the same
+   * transaction, and no other push of the Account comes between them.
    */
-  push(accountId: string, editionId: string, changes: readonly RecordChange[]): Promise<void>;
+  push<Refusal>(
+    accountId: string,
+    editionId: string,
+    changes: readonly RecordChange[],
+    refuse: (records: number) => Refusal | undefined,
+  ): Promise<Refusal | undefined>;
   /** At most `limit` records of the Account in the Edition kept after the sequence number, in sequence order. */
   after(
     accountId: string,
