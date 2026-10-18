@@ -14,7 +14,13 @@ const validConfig = {
     distractorRule: 'same-part-of-speech',
     vowels: 'a',
   },
-  featureSwitches: { game: true, corrections: true, account: true, contentUpdates: true },
+  featureSwitches: {
+    game: true,
+    corrections: true,
+    account: true,
+    sync: true,
+    contentUpdates: true,
+  },
   userSettingDefaults: {
     theme: 'system',
     fontSize: 'M',
@@ -64,7 +70,7 @@ describe('loadEdition', () => {
     expect(edition.isFeatureEnabled('corrections')).toBe(true);
   });
 
-  it.each(['account', 'contentUpdates'] as const)(
+  it.each(['account', 'sync', 'contentUpdates'] as const)(
     'reports the %s Feature Switch, which an Edition may turn off',
     (feature) => {
       const on = loadEdition(validConfig);
@@ -156,17 +162,22 @@ describe('loadEdition', () => {
   it.each([
     [
       'a missing Feature Switch',
-      { featureSwitches: { corrections: true, account: true, contentUpdates: true } },
+      { featureSwitches: { corrections: true, account: true, sync: true, contentUpdates: true } },
       'featureSwitches.game',
     ],
     [
       'a missing Account Feature Switch',
-      { featureSwitches: { game: true, corrections: true, contentUpdates: true } },
+      { featureSwitches: { game: true, corrections: true, sync: true, contentUpdates: true } },
       'featureSwitches.account',
     ],
     [
+      'a missing sync Feature Switch',
+      { featureSwitches: { game: true, corrections: true, account: true, contentUpdates: true } },
+      'featureSwitches.sync',
+    ],
+    [
       'a missing content updates Feature Switch',
-      { featureSwitches: { game: true, corrections: true, account: true } },
+      { featureSwitches: { game: true, corrections: true, account: true, sync: true } },
       'featureSwitches.contentUpdates',
     ],
     [

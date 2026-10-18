@@ -175,6 +175,80 @@ describe('the 0.6 widget strings group', () => {
   });
 });
 
+describe('the 0.8 Sync strings', () => {
+  const strings = readJson('uk', 'strings') as Record<string, unknown>;
+  const account = strings['account'] as Record<string, unknown>;
+  const sync = account['sync'] as Record<string, unknown>;
+  const onboarding = strings['onboarding'] as Record<string, unknown>;
+  const onboardingAccount = onboarding['account'] as Record<string, unknown>;
+  /** The strings schema's issues as paths. */
+  const issuesOf = (changed: unknown) =>
+    EditionStringsSchema.safeParse(changed).error?.issues.map((issue) => issue.path.join('.'));
+  /** The group without the key. */
+  const without = (group: Record<string, unknown>, key: string) =>
+    Object.fromEntries(Object.entries(group).filter(([name]) => name !== key));
+
+  it('the Ukrainian Edition needs the sync group of the SLOVO ID screen', () => {
+    expect(issuesOf({ ...strings, account: without(account, 'sync') })).toEqual(['account.sync']);
+  });
+
+  it.each(['syncing', 'waitingForNetwork', 'syncedToday', 'syncedOn', 'syncedOnInYear', 'months'])(
+    'the Ukrainian Edition needs account.sync.%s',
+    (key) => {
+      const changed = { ...strings, account: { ...account, sync: without(sync, key) } };
+
+      expect(issuesOf(changed)).toEqual([`account.sync.${key}`]);
+    },
+  );
+
+  it.each([
+    ['syncedToday', '{time}'],
+    ['syncedOn', '{day}'],
+    ['syncedOn', '{month}'],
+    ['syncedOnInYear', '{year}'],
+  ])('needs %s to say where %s goes', (key, placeholder) => {
+    const text = (sync[key] as string).replace(placeholder, '');
+    const changed = { ...strings, account: { ...account, sync: { ...sync, [key]: text } } };
+
+    expect(issuesOf(changed)).toEqual([`account.sync.${key}`]);
+  });
+
+  it('needs the twelve month names of the status line', () => {
+    const months = (sync['months'] as string[]).slice(0, 11);
+    const changed = { ...strings, account: { ...account, sync: { ...sync, months } } };
+
+    expect(issuesOf(changed)).toEqual(['account.sync.months']);
+  });
+
+  it("the Ukrainian Edition needs the onboarding's SLOVO ID step", () => {
+    const changed = { ...strings, onboarding: without(onboarding, 'account') };
+
+    expect(issuesOf(changed)).toEqual(['onboarding.account']);
+  });
+
+  it.each(['title', 'subtitle', 'signIn', 'continueWithout'])(
+    'the Ukrainian Edition needs onboarding.account.%s',
+    (key) => {
+      const changed = {
+        ...strings,
+        onboarding: { ...onboarding, account: without(onboardingAccount, key) },
+      };
+
+      expect(issuesOf(changed)).toEqual([`onboarding.account.${key}`]);
+    },
+  );
+
+  it.each(['subtitle', 'signIn'])('needs onboarding.account.%s to name the Account', (key) => {
+    const text = (onboardingAccount[key] as string).replace('{name}', 'SLOVO ID');
+    const changed = {
+      ...strings,
+      onboarding: { ...onboarding, account: { ...onboardingAccount, [key]: text } },
+    };
+
+    expect(issuesOf(changed)).toEqual([`onboarding.account.${key}`]);
+  });
+});
+
 describe('the strings of each Game Mode', () => {
   const strings = readJson('uk', 'strings') as Record<string, unknown>;
   const game = strings['game'] as Record<string, unknown>;

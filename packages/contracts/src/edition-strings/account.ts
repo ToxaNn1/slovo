@@ -31,6 +31,25 @@ const AccountProblemsSchema = z.strictObject({
 });
 
 /**
+ * The status line under the email of the SLOVO ID screen: when the words were
+ * last synced, that a sync is running, or that it waits for the network.
+ */
+const SyncStatusStringsSchema = z.strictObject({
+  /** While a sync runs. */
+  syncing: TextSchema,
+  /** When the last attempt found no network. */
+  waitingForNetwork: TextSchema,
+  /** The last sync was today. Takes `{time}`, e.g. «14:05». */
+  syncedToday: templateOf('time'),
+  /** The last sync was another day of this year. Takes `{day}` and `{month}`. */
+  syncedOn: templateOf('day', 'month'),
+  /** The last sync was in another year. Takes `{day}`, `{month}` and `{year}`. */
+  syncedOnInYear: templateOf('day', 'month', 'year'),
+  /** The short month names, January first. */
+  months: z.array(TextSchema).length(12),
+});
+
+/**
  * The texts of the SLOVO ID screen, reached from a row in Settings. The row
  * and the screen carry the Account's name, `ACCOUNT_NAME`, so the strings hold
  * only the words around it.
@@ -54,6 +73,8 @@ export const AccountStringsSchema = z.strictObject({
   signedInAs: TextSchema,
   signOut: TextSchema,
   signOutEverywhere: TextSchema,
+  /** The status line of Sync, shown while signed in. */
+  sync: SyncStatusStringsSchema,
   /** Deleting the Account: its button and the system alert behind it. */
   delete: z.strictObject({
     /** The destructive button. Takes `{name}`. */

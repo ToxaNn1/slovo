@@ -3,11 +3,11 @@ import { z } from 'zod';
 import { TextSchema } from '../shared';
 import { templateOf } from './shared';
 
-/** The texts of the onboarding: the welcome, the Mix step and the notifications step. */
+/** The texts of the onboarding: the welcome, the Mix step, the notifications step and, with the Account on, the SLOVO ID step. */
 export const OnboardingStringsSchema = z.strictObject({
   /** Ends the onboarding from any step, keeping what was already chosen. */
   skip: TextSchema,
-  /** The overline of a step, e.g. «КРОК 2 З 3». Takes `{step}` and `{total}`. */
+  /** The overline of a step, e.g. «КРОК 2 З 4», or «З 3» with the Account off. Takes `{step}` and `{total}`. */
   step: templateOf('step', 'total'),
   /** The same as VoiceOver reads it. Takes `{step}` and `{total}`. */
   stepLabel: templateOf('step', 'total'),
@@ -34,5 +34,15 @@ export const OnboardingStringsSchema = z.strictObject({
     allow: TextSchema,
     /** Ends the onboarding without asking. */
     later: TextSchema,
+  }),
+  /** Step 4, only with the Account on: offers SLOVO ID. The Account's name comes as `{name}`. */
+  account: z.strictObject({
+    title: TextSchema,
+    /** Says what the Account keeps. Takes `{name}`. */
+    subtitle: templateOf('name'),
+    /** Opens the SLOVO ID screen. Takes `{name}`. */
+    signIn: templateOf('name'),
+    /** Ends the onboarding without an Account. */
+    continueWithout: TextSchema,
   }),
 });

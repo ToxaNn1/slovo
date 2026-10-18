@@ -88,6 +88,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   corrections: z.boolean(),
   /** The Account (SLOVO ID): its Settings row, its screen and the backend's answers to it. */
   account: z.boolean(),
+  /** Sync: the background exchange of the reader's words with their Account. Apart from `account`, so Sync can stop while sign-in keeps working. */
+  sync: z.boolean(),
   /** Content updates: the app's daily check for a newer Language Pack. */
   contentUpdates: z.boolean(),
 });
