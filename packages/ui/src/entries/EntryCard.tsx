@@ -18,9 +18,10 @@ export interface EntryCardProps {
   /** The action row under the card: in 0.3 the heart, Collections, share and hide. */
   actions?: ReactNode;
   /**
-   * In the Feed: the card fits the space it is given, its text scrolls inside
-   * the frame (swiping on to the next card at the end of the text), and the
-   * action row stays under the frame. Only inside a `VerticalPager`.
+   * In the Feed: the card fits the space it is given and sits in the middle of
+   * it, or fills it from the top when it is taller; its text scrolls inside the
+   * frame (swiping on to the next card at the end of the text), and the action
+   * row stays under the frame. Only inside a `VerticalPager`.
    */
   scrollable?: boolean;
 }
@@ -97,7 +98,7 @@ export function EntryCard({ card, onOpenCorrection, actions, scrollable }: Entry
   );
 
   return scrollable ? (
-    <View style={styles.fitting}>
+    <View testID="entry-card-page" style={styles.page}>
       {frame}
       {actions}
     </View>
@@ -112,6 +113,9 @@ export function EntryCard({ card, onOpenCorrection, actions, scrollable }: Entry
 const styles = StyleSheet.create({
   // The border is the card's only elevation.
   card: { borderWidth: 1, overflow: 'hidden' },
+  // The card and its actions take the height they need and sit in the middle of
+  // the space they are given.
+  page: { flexGrow: 1, flexShrink: 1, justifyContent: 'center' },
   // Takes the height its content needs, and no more than the space left.
   fitting: { flexGrow: 0, flexShrink: 1 },
 });

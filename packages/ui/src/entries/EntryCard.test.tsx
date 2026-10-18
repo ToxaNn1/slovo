@@ -3,7 +3,7 @@ import type { EntryFeedCard, Haptics } from '@slovo/core';
 import { EditionProvider, EntryCard, HapticsProvider, VerticalPager } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen, within } from '@testing-library/react-native';
-import { Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 
 const strings = {
   correctionCard: {
@@ -74,6 +74,34 @@ describe('EntryCard', () => {
     const frame = within(screen.getByTestId('correction-card'));
     expect(frame.getByTestId('entry-card-scroll')).toBeTruthy();
     expect(screen.getByTestId('card-actions')).toBeTruthy();
+  });
+
+  it('centres a card that fits and lets a card that does not fit fill the space and scroll', async () => {
+    await render(
+      inEdition(
+        <HapticsProvider haptics={haptics}>
+          <VerticalPager
+            testID="pager"
+            items={[card]}
+            onIndexChange={() => undefined}
+            renderPage={(item) => <EntryCard card={item} actions={actions} scrollable />}
+          />
+        </HapticsProvider>,
+      ),
+    );
+    await fireEvent(screen.getByTestId('pager'), 'layout', {
+      nativeEvent: { layout: { x: 0, y: 0, width: 400, height: 800 } },
+    });
+
+    // The card and its actions take the height they need and sit in the middle
+    // of the page; when that is more than the page has, the card shrinks to
+    // the space left, so it fills the page from the top and scrolls.
+    const page = StyleSheet.flatten(screen.getByTestId('entry-card-page').props.style);
+    expect(page).toMatchObject({ flexGrow: 1, justifyContent: 'center' });
+    const frame = StyleSheet.flatten(screen.getByTestId('correction-card').props.style);
+    expect(frame).toMatchObject({ flexGrow: 0, flexShrink: 1 });
+    const scroll = StyleSheet.flatten(screen.getByTestId('entry-card-scroll').props.style);
+    expect(scroll).toMatchObject({ flexGrow: 0, flexShrink: 1 });
   });
 
   it('draws the card without a scroll of its own outside the Feed', async () => {
