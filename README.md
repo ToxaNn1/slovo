@@ -214,7 +214,7 @@ The backend serves every Edition from one deployment ([ADR 0008](docs/adr/0008-o
    curl -o language-pack.db 'http://localhost:8787/v1/editions/uk/content/packs/<content version>'
    ```
 
-7. Turn a feature off in an Edition remotely, in an emergency, without a build ([ADR 0040](docs/adr/0040-remote-feature-switches-only-turn-features-off.md)). The command keeps the switch in the database `DATABASE_URL` names; `edition.switches` serves the features off with an ETag, and the backend refuses a feature off remotely as 404, like one the Edition turns off. Clearing the switch gives the feature back. A remote switch never turns on a feature the Edition turns off. The commands refuse an Edition the backend doesn't find and a feature name the Feature Switches schema doesn't know.
+7. Turn a feature off in an Edition remotely, in an emergency, without a build ([ADR 0040](docs/adr/0040-remote-feature-switches-only-turn-features-off.md)). The command keeps the switch in the database `DATABASE_URL` names; `edition.switches` serves the features off with an ETag, and the backend refuses a feature off remotely as 404, like one the Edition turns off. Clearing the switch gives the feature back. The app asks for the switches at launch and each time it returns to the foreground, so the feature leaves every screen without a restart, and offline it keeps the last switches it knew. A remote switch never turns on a feature the Edition turns off. The commands refuse an Edition the backend doesn't find and a feature name the Feature Switches schema doesn't know.
 
    ```sh
    pnpm switch:off uk game
