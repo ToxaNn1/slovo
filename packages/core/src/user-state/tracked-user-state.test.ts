@@ -273,3 +273,69 @@ describe('deleting the sent pending changes', () => {
     expect(writes).toEqual([]);
   });
 });
+
+describe('merging what Sync makes', () => {
+  it('writes the untracked changes as they are and the tracked ones with their pending changes, in one batch', async () => {
+    const { userState, writes } = await tracked();
+
+    await userState.merge(() =>
+      Promise.resolve({
+        untracked: new Map([...theme.change('dark'), ...syncCursor.change(7)]),
+        tracked: gameBest.change(9),
+      }),
+    );
+
+    expect(writes).toEqual([
+      new Map([
+        ['settings.theme', '"dark"'],
+        ['sync.cursor', '7'],
+        ['game.best', '9'],
+        ['sync.pending.game.best', '{"changedAt":"2026-10-18T09:00:00.000Z","value":"9"}'],
+      ]),
+    ]);
+  });
+
+  it('lets a tracked change win over an untracked one of the same key', async () => {
+    const { userState } = await tracked();
+
+    await userState.merge(() =>
+      Promise.resolve({
+        untracked: new Map([['sync.pending.settings.theme', undefined], ...theme.change('dark')]),
+        tracked: theme.change(undefined),
+      }),
+    );
+
+    expect(await userState.read(theme)).toBeUndefined();
+    expect(await userState.pendingChanges()).toEqual(
+      new Map([
+        ['settings.theme', { changedAt: new Date('2026-10-18T09:00:00.000Z'), value: undefined }],
+      ]),
+    );
+  });
+
+  it('runs in turn with the writes, so none lands between what it reads and what it writes', async () => {
+    const { userState } = await tracked();
+    let release: () => void = () => undefined;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+
+    const merging = userState.merge(async () => {
+      await held;
+      return { untracked: theme.change('dark'), tracked: new Map() };
+    });
+    const writing = userState.write(theme.change('light'));
+    release();
+    await Promise.all([merging, writing]);
+
+    expect(await userState.read(theme)).toBe('light');
+  });
+
+  it('writes nothing when there is nothing to write', async () => {
+    const { userState, writes } = await tracked();
+
+    await userState.merge(() => Promise.resolve({ untracked: new Map(), tracked: new Map() }));
+
+    expect(writes).toEqual([]);
+  });
+});

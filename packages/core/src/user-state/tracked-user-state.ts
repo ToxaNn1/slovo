@@ -1,7 +1,7 @@
 import { createInTurn } from '../in-turn';
 import type { Clock, UserStateChanges } from '../ports';
 import type { UserState } from './user-state';
-import { syncMarkOf, userStateRecords } from './user-state-schema';
+import { syncs, userStateRecords } from './user-state-schema';
 
 /**
  * A change of a synced record not yet sent to the Account: the instant it was
@@ -29,22 +29,30 @@ export interface TrackedUserState extends UserState {
    * stays for the next push.
    */
   deleteSent(sent: ReadonlyMap<string, PendingChange>): Promise<void>;
+  /**
+   * Writes what Sync makes of the user state in one batch, in turn with every
+   * write, so none lands between what `make` reads and the batch it answers:
+   * `untracked` as it is, such as the records of the Account a pull brings,
+   * and `tracked` as `write` writes it, with the pending change of each
+   * synced record. `tracked` wins over `untracked` for a key in both. `make`
+   * reads and never writes.
+   */
+  merge(
+    make: () => Promise<{
+      readonly untracked: UserStateChanges;
+      readonly tracked: UserStateChanges;
+    }>,
+  ): Promise<void>;
 }
 
 const { syncPending, syncCursor } = userStateRecords;
-
-/** Whether a write of the record under the key leaves a pending change. */
-function syncs(key: string): boolean {
-  const mark = syncMarkOf(key);
-  return mark !== undefined && mark !== 'device-only';
-}
 
 /**
  * Wraps the user state so that every write of a synced record leaves its
  * pending change with the clock's time, in the same atomic batch: a write that
  * fails leaves none. `device-only` records, the schema version, the pending
  * changes and the cursor are never tracked, and nothing written before is
- * back-filled. Writes and `deleteSent` run one at a time.
+ * back-filled. Writes, `deleteSent` and `merge` run one at a time.
  */
 export function trackChanges({
   userState,
@@ -63,19 +71,21 @@ export function trackChanges({
     return pending;
   }
 
+  /** The changes with the pending change of each synced record, at the clock's time. */
+  function withPending(changes: UserStateChanges): UserStateChanges {
+    const changedAt = clock.now().toISOString();
+    const pending = [...changes]
+      .filter(([key]) => syncs(key))
+      .flatMap(([key, value]) => [
+        ...syncPending.record(key).change({ changedAt, value: value ?? null }),
+      ]);
+    return new Map([...changes, ...pending]);
+  }
+
   return {
     read: (record) => userState.read(record),
     list: (records) => userState.list(records),
-    write: (changes) =>
-      inTurn(() => {
-        const changedAt = clock.now().toISOString();
-        const pending = [...changes]
-          .filter(([key]) => syncs(key))
-          .flatMap(([key, value]) => [
-            ...syncPending.record(key).change({ changedAt, value: value ?? null }),
-          ]);
-        return userState.write(new Map([...changes, ...pending]));
-      }),
+    write: (changes) => inTurn(() => userState.write(withPending(changes))),
     pendingChanges,
     cursor: () => userState.read(syncCursor),
     deleteSent: (sent) =>
@@ -92,6 +102,12 @@ export function trackChanges({
             })
             .map(([key]) => [syncPending.record(key).key, undefined]),
         );
+        if (changes.size > 0) await userState.write(changes);
+      }),
+    merge: (make) =>
+      inTurn(async () => {
+        const { untracked, tracked } = await make();
+        const changes = new Map([...untracked, ...withPending(tracked)]);
         if (changes.size > 0) await userState.write(changes);
       }),
   };

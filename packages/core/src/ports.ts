@@ -184,6 +184,67 @@ export interface AccountApi {
   delete(token: string): Promise<{ readonly ok: true } | AccountApiFailure>;
 }
 
+/** A JSON value, as the value of a record travels to the backend and back. */
+export type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
+
+/**
+ * One change of a record of the user state, as Sync pushes it and a pull
+ * answers it (ADR 0041): the record's key, its value, or `null` for a
+ * deletion (a tombstone), and when the Core wrote it, in milliseconds since
+ * 1970-01-01 UTC by the device's clock; 0 is older than any change.
+ */
+export interface RecordChange {
+  readonly key: string;
+  readonly value: Json;
+  readonly changedAt: number;
+}
+
+/**
+ * A call of the Sync API that failed as any request does, because the
+ * Session it carried has ended (401), because the backend serves no Sync
+ * for the Edition (404), or because a push would take the Account's records
+ * in the Edition over their limit (409, `TOO_MANY_RECORDS`).
+ */
+export type SyncApiFailure =
+  | RequestFailure
+  | { readonly ok: false; readonly reason: 'unauthorized' }
+  | { readonly ok: false; readonly reason: 'not-found' }
+  | { readonly ok: false; readonly reason: 'too-many-records' };
+
+/**
+ * The backend's Sync procedures for the running Edition, as the Core sees
+ * them, on the Account of the Session whose token each call carries. The
+ * shell implements this port on the API contract's client. A call never
+ * rejects: every answer of the backend comes back as success or a failure.
+ */
+export interface SyncApi {
+  /**
+   * Keeps the changes, at most `SYNC_BATCH_SIZE`: each replaces the record
+   * kept under its key only when it is later (ADR 0041).
+   */
+  push(
+    token: string,
+    changes: readonly RecordChange[],
+  ): Promise<{ readonly ok: true } | SyncApiFailure>;
+  /**
+   * One page of the records kept after the cursor, from the first without
+   * one, in the order the backend kept them: at most `SYNC_BATCH_SIZE`, the
+   * cursor to ask after next, and whether more follow.
+   */
+  pull(
+    token: string,
+    after: number | undefined,
+  ): Promise<
+    | {
+        readonly ok: true;
+        readonly records: readonly RecordChange[];
+        readonly cursor: number;
+        readonly more: boolean;
+      }
+    | SyncApiFailure
+  >;
+}
+
 /** This device's Session as the device keeps it: its token and the email of its Account. */
 export interface KeptSession {
   readonly token: string;

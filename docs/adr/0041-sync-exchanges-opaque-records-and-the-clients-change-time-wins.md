@@ -46,3 +46,34 @@ So that one Account can't fill the database and a broken or hostile device can't
 - **Counting the records in the server Core before the push**: rejected. Two pushes of one Account could both pass the count and together go over.
 - **`TOO_MANY_RECORDS` as 413 or 422**: rejected. 413 says the request is too large, and this one may hold a single change; 422 says it is malformed. 409 says it conflicts with what is kept.
 - **The Session's token as the window's key**: rejected. Anyone who read the `rate_limits` table could sign in with it while its window lasted.
+
+## Amendment: the Core merges two devices' words (0.8)
+
+The Core's Sync module (spec #378) is the device's side of the protocol. It opens apart from the composition, like the Account (ADR 0037), over the tracked user state (ADR 0013) and a `SyncApi` port shaped by the contract: `push(token, changes)` and `pull(token, after)`, each answering success or a typed failure and never rejecting. A record's text in the user state travels as the JSON it holds; a pending change that doesn't read as JSON goes as a tombstone, as it reads as absent.
+
+**One sync is a pull, then a push.** The pull asks for every page after the cursor and applies each page in one write together with its cursor, so a page is applied once or not at all. The push then sends the pending changes in batches of at most 500 and, after the backend accepts a batch, deletes the pending changes it sent, each only while it still holds what was sent. A failed call stops the sync where it is: what was written stays, and the next sync resumes from the cursor and the pending changes left, so an interrupted sync loses nothing and doubles nothing (a change sent again ties with itself and is ignored).
+
+**Applying a page by the record's mark:**
+
+- **last write wins** (no mark): the Account's value replaces the device's, unless the key has a pending change with a later change time, which stays and goes in the push. A tie goes to the Account's value, as on the backend;
+- **`union`** (Active Days): the Account's days are written, and a tombstone of a day is ignored, so no day is ever deleted;
+- **`highest`** (the Best result): the higher value is kept; when the device's is higher, the Core writes it again through the tracked write, so it gets a new change time and wins with the push;
+- **`device-only`**: a record of the Account under such a key, the schema version and the Sync records included, is ignored;
+- **a key the schema doesn't declare** (from a newer app) is written as it is, without a pending change, so the app keeps it and never pushes it back.
+
+When the Account's value wins, a pending change of the key is deleted in the same write: it has nothing left to send. A value equal to the device's writes nothing; values are compared as JSON, whatever the order of an object's keys, since the backend's `jsonb` keeps no order.
+
+**History is trimmed after the pull, in the write of its last page.** When the pull leaves more than 500 History entries, the oldest by Seen time are deleted through the tracked write, so those deletions sync and every device keeps the same 500. Not page by page: a later page may bring a newer entry of one an earlier trim would delete, and the trim's tombstone, written with the device's time, would win over it.
+
+**The first-sign-in rule.** A sync without a cursor first writes, in one write in turn with every other, a pending change with change time 0 for every synced record that has none. The pull then lets the Account's value win wherever it has one, and the push adds what the Account lacks; a change made while signed out keeps its own time. The rule lives in the queue, not in the sync's memory, so a first sync interrupted after its pull still pushes the device's records next time.
+
+**The changed signal.** A sync answers whether its pull wrote a record, so the shell reopens what keeps the user state in memory only when something came from the Account; a pull that brings back what the device pushed writes nothing. A sync that fails answers it too, since the pages it applied stay written and the next pull won't bring them again.
+
+Writing a page, the first-sign-in changes and the rewrites runs in turn with the modules' writes (`merge` of the tracked user state), so no write of the reader lands between what Sync read and what it writes. When Sync runs, how it fails and retries, and what the reader sees are the Sync triggers' ticket.
+
+### Considered Options
+
+- **Remembering the first sign-in in the sync's memory, pushing the device's records after the pull**: rejected. A sync interrupted between the pull and the push would leave a cursor, and the next sync would never push the records the Account lacks.
+- **Trimming History on every page**: rejected (above).
+- **Applying a pull through the tracked write**: rejected. Every record the Account sent would become a pending change with the device's time and go back to the Account as a newer change.
+- **Comparing the text of the records**: rejected. The backend answers an object with its keys in another order, and every pull would report a change.
