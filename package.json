@@ -7,6 +7,7 @@
     "node": ">=22.13.0 <23"
   },
   "scripts": {
+    "dev": "node scripts/dev.mjs",
     "build:pack": "pnpm --filter @slovo/language-pack build-pack",
     "publish:pack": "pnpm --filter @slovo/backend publish-pack",
     "describe:api": "pnpm --filter @slovo/contracts describe-api",
