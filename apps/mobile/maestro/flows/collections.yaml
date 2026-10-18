@@ -1,6 +1,6 @@
 # The Collections screen: the Saved tab's card opens it, «+» makes a Collection
-# (a taken name is refused), a swipe renames it in place and a swipe deletes it
-# after the SLOVO dialog. A subflow of `smoke.yaml`; run it from there.
+# (a taken name is refused), a swipe or the «…» menu renames it in place and
+# deletes it after the SLOVO dialog. A subflow of `smoke.yaml`; run it from there.
 # Names are Latin, so the keyboard of any simulator can type them. It leaves
 # the Collections it found.
 appId: ${APP_ID || 'app.slovo.uk'}
@@ -128,19 +128,47 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: collections-delete-destructive
 - assertNotVisible:
     text: Charlie, 0 записів
-# «Alpha» goes too, leaving the Collections the flow found.
-- swipe:
-    from:
-      text: Alpha, 0 записів
-    direction: LEFT
+# The «…» button offers the same two actions: rename first.
 - tapOn:
-    id: collection-.*-delete
-# A tap while the dialog still fades in is lost.
+    id: collection-.*-more
+- assertVisible:
+    id: collections-menu-rename
+- takeScreenshot: collections-menu
+# A tap while the sheet still slides in is lost.
 - waitForAnimationToEnd
+- tapOn:
+    id: collections-menu-rename
+- assertVisible:
+    id: collections-rename-input
+    text: Alpha
+- eraseText: 5
+- inputText: Delta
+- pressKey: Enter
+- assertVisible:
+    id: collection-.*-content
+    text: Delta, 0 записів
+- assertNotVisible:
+    text: Alpha, 0 записів
+# «Cancel» in the menu keeps everything as it is.
+- tapOn:
+    id: collection-.*-more
+- waitForAnimationToEnd
+- tapOn:
+    id: collections-menu-cancel
+- assertVisible:
+    text: Delta, 0 записів
+# «Delta» goes through the menu and the SLOVO dialog, leaving the Collections the flow found.
+- tapOn:
+    id: collection-.*-more
+- waitForAnimationToEnd
+- tapOn:
+    id: collections-menu-delete
+- waitForAnimationToEnd
+- assertVisible: Видалити колекцію «Delta»?
 - tapOn:
     id: collections-delete-destructive
 - assertNotVisible:
-    text: Alpha, 0 записів
+    text: Delta, 0 записів
 - tapOn:
     id: collections-back
 - swipe:
