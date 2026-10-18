@@ -1,535 +1,603 @@
+import type { FeatureSwitch } from '@slovo/contracts';
 import { describe, expect, it } from 'vitest';
 
 import {
+  createFakeAccountApi,
   createFakeSyncApi,
-  createMemoryContentPort,
+  createMemorySessionStore,
   createMemoryUserStatePort,
-  createSettings,
-  createSync,
-  openComposition,
+  openAccount,
+  openSync,
   openUserState,
   trackChanges,
   userStateRecords,
+  SYNC_AFTER_WRITE,
+  type Schedule,
   type UserStateChanges,
 } from '../index';
-import { fakeClock, randomOf, word } from '../test-support';
+import { fakeClock, randomOf } from '../test-support';
 
-const { activeDays, favorites, gameBest, history } = userStateRecords;
-
-const content = createMemoryContentPort({
-  words: [word('w_one'), word('w_two'), word('w_three'), word('w_sea', { categoryId: 'sea' })],
-  corrections: [],
-});
-
-const edition = {
-  id: 'test',
-  isFeatureEnabled: () => false,
-  languageTraits: { distractorRule: 'same-part-of-speech' as const },
-  userSettingDefaults: {
-    mix: { categoryIds: ['test', 'sea'], corrections: false },
-    notificationTimes: [],
-  },
-};
-
-/** One Account on a fake backend, and the devices signed into it, on one clock. */
-function account(start = '2026-10-18T09:00:00.000Z') {
-  const time = fakeClock(start);
-  const server = createFakeSyncApi({ clock: time.clock });
-
-  /** A device over its own user state: the records it keeps, as an older app may have left them. */
-  async function device(records = new Map<string, string>()) {
-    const userState = trackChanges({
-      userState: await openUserState({ port: createMemoryUserStatePort(records) }),
-      clock: time.clock,
-    });
-    const sync = createSync({ userState, api: server });
-    return {
-      records,
-      userState,
-      sync: () => sync.sync('a-session'),
-      /** Opens the composition as a launch does, over the user state as it stands. */
-      open: () =>
-        openComposition({ content, edition, userState, clock: time.clock, random: randomOf(0.25) }),
-      settings: createSettings({
-        userState,
-        defaults: { theme: 'system', fontSize: 'M', vibration: true },
-      }),
-      write: (changes: UserStateChanges) => userState.write(changes),
-    };
-  }
-
-  /** Pushes the changes as another device of the Account would, with the clock's time. */
-  async function pushFromElsewhere(...changes: { key: string; value: unknown }[]) {
-    await server.push(
-      'another-session',
-      changes.map(({ key, value }) => ({
-        key,
-        value: value as never,
-        changedAt: time.clock.now().getTime(),
-      })),
-    );
-  }
-
-  return { time, server, device, pushFromElsewhere };
-}
+const { favorites, syncCursor, syncSyncedAt, theme } = userStateRecords;
 
 const HOUR = 60 * 60_000;
 
-// Spec #378, "Applying a pull" and "Pushing": two Cores over one Account.
-describe('two devices of one Account', () => {
-  it('see a Favorite, a Collection, a Hidden Entry, a Mix change and the Theme made on either', async () => {
-    const { device } = account();
-    const phone = await device();
-    const tablet = await device();
-    const app = await phone.open();
-    await app.favorites.add('w_one');
-    const created = await app.collections.create('Море', 'w_two');
-    await app.hide({ kind: 'entry', entryId: 'w_three' });
-    await app.mix.takeOut('sea');
-    await phone.settings.update({ theme: 'dark' });
+/**
+ * Lets every promise the Core has started settle: with the user state in
+ * memory and the fakes, nothing it waits for takes more than a microtask.
+ */
+async function settle(): Promise<void> {
+  for (let tick = 0; tick < 1_000; tick += 1) await Promise.resolve();
+}
 
-    expect(await phone.sync()).toEqual({ ok: true, changed: false });
-    expect(await tablet.sync()).toEqual({ ok: true, changed: true });
+/**
+ * A test `Schedule` on the fake clock: what is scheduled runs only when the
+ * test moves time past it, in the order it is due.
+ */
+function testSchedule(time: ReturnType<typeof fakeClock>) {
+  const waiting = new Set<{ at: number; run: () => void }>();
+  const schedule: Schedule = (run, delay) => {
+    const timer = { at: time.clock.now().getTime() + delay, run };
+    waiting.add(timer);
+    return () => {
+      waiting.delete(timer);
+    };
+  };
+  /** Moves the clock on by `ms`, running each timer when it is due. */
+  async function advance(ms: number): Promise<void> {
+    const end = time.clock.now().getTime() + ms;
+    for (;;) {
+      await settle();
+      const [next] = [...waiting].filter(({ at }) => at <= end).sort((a, b) => a.at - b.at);
+      if (next === undefined) break;
+      waiting.delete(next);
+      time.advance(next.at - time.clock.now().getTime());
+      next.run();
+    }
+    time.advance(end - time.clock.now().getTime());
+    await settle();
+  }
+  return { schedule, advance };
+}
 
-    const other = await tablet.open();
-    expect(other.favorites.has('w_one')).toBe(true);
-    expect(other.collections.list.map(({ name }) => name)).toEqual(['Море']);
-    if (!created.ok) throw new Error('The Collection was refused');
-    expect(other.collections.has(created.collection.id, 'w_two')).toBe(true);
-    expect(other.hiddenEntries.has('w_three')).toBe(true);
-    expect(other.mix.state.categoryIds).toEqual(['test']);
-    expect((await tablet.settings.read()).theme).toBe('dark');
-    expect(await tablet.userState.pendingChanges()).toEqual(new Map());
+/**
+ * One device signed into an Account on a fake backend, with the Edition's
+ * `account` and `sync` switches on, unless the test says otherwise.
+ */
+async function device({
+  signedIn = true,
+  off = [],
+}: { signedIn?: boolean; off?: FeatureSwitch[] } = {}) {
+  const time = fakeClock('2026-10-18T09:00:00.000Z');
+  const timers = testSchedule(time);
+  const server = createFakeSyncApi({ clock: time.clock });
+  /** Whether the backend can be reached; without it every call answers `offline`, and counts. */
+  const network = { up: true, unanswered: 0 };
+  const unanswered = () => {
+    network.unanswered += 1;
+    return Promise.resolve({ ok: false, reason: 'offline' } as const);
+  };
+  const accountApi = createFakeAccountApi();
+  const records = new Map<string, string>();
+  /** Which writes the device's store refuses: none, unless the test says. */
+  const disk = { refuses: (_changes: UserStateChanges) => false };
+  const memory = createMemoryUserStatePort(records);
+  const userState = trackChanges({
+    userState: await openUserState({
+      port: {
+        ...memory,
+        write: (changes) =>
+          disk.refuses(changes) ? Promise.reject(new Error('disk full')) : memory.write(changes),
+      },
+    }),
+    clock: time.clock,
+  });
+  const account = await openAccount({
+    api: accountApi,
+    sessions: createMemorySessionStore(
+      signedIn ? { token: 'a-session', email: 'anna@mail.com' } : undefined,
+    ),
+    clock: time.clock,
+    schedule: timers.schedule,
+    random: randomOf(0.5),
+  });
+  const switchedOff = new Set<FeatureSwitch>(off);
+  const sync = await openSync({
+    userState,
+    api: {
+      push: (token, changes) => (network.up ? server.push(token, changes) : unanswered()),
+      pull: (token, after) => (network.up ? server.pull(token, after) : unanswered()),
+    },
+    account,
+    edition: { isFeatureEnabled: (feature) => !switchedOff.has(feature) },
+    clock: time.clock,
+    schedule: timers.schedule,
+    random: randomOf(0.5),
+  });
+  let changes = 0;
+  sync.onUserStateChange(() => {
+    changes += 1;
+  });
+  return {
+    sync,
+    server,
+    account,
+    accountApi,
+    userState,
+    records,
+    time,
+    advance: timers.advance,
+    switchedOff,
+    network,
+    disk,
+    /** How many times Sync said a pull wrote something. */
+    changes: () => changes,
+    /** How many syncs reached the backend: each starts with a pull. */
+    syncs: () => server.calls.filter((call) => call === 'pull').length,
+    /** Writes a Favorite, as the reader adding one does. */
+    addFavorite: (id: string) =>
+      userState.write(favorites.record(id).change(time.clock.now().toISOString())),
+  };
+}
+
+// Spec #378, "The Sync module (Core)": when it syncs.
+describe('Sync syncs', () => {
+  it('at launch', async () => {
+    const { sync, server, addFavorite, advance } = await device();
+    await addFavorite('w_one');
+
+    sync.foreground();
+    await advance(0);
+
+    expect(server.calls).toEqual(['pull', 'push']);
+    expect(server.records.has('favorites.w_one')).toBe(true);
   });
 
-  it('keep a deletion deleted', async () => {
-    const { device, server, time } = account();
-    const phone = await device();
-    const tablet = await device();
-    await (await phone.open()).favorites.add('w_one');
-    await phone.sync();
-    await tablet.sync();
-    time.advance(HOUR);
+  it('on each return to the foreground', async () => {
+    const { sync, server, addFavorite, advance, syncs } = await device();
+    sync.foreground();
+    await advance(0);
+    sync.background();
+    await addFavorite('w_one');
+    await advance(HOUR);
+    expect(syncs()).toBe(1);
 
-    await (await tablet.open()).favorites.remove('w_one');
-    await tablet.sync();
-    await phone.sync();
-    await phone.sync();
+    sync.foreground();
+    await advance(0);
 
-    expect((await phone.open()).favorites.has('w_one')).toBe(false);
-    expect(server.records.get('favorites.w_one')?.value).toBeNull();
+    expect(syncs()).toBe(2);
+    expect(server.records.has('favorites.w_one')).toBe(true);
   });
 
-  it('let an older offline change lose to a newer one', async () => {
-    const { device, server, time } = account();
-    const phone = await device();
-    const tablet = await device();
-    await phone.settings.update({ theme: 'dark' });
-    time.advance(HOUR);
-    await tablet.settings.update({ theme: 'light' });
-    await tablet.sync();
-    time.advance(HOUR);
+  it('5 s after the last write while in the foreground, once for a burst of writes', async () => {
+    const { sync, server, addFavorite, advance, syncs } = await device();
+    sync.foreground();
+    await advance(0);
 
-    await phone.sync();
-    await tablet.sync();
+    await addFavorite('w_one');
+    await advance(4_000);
+    await addFavorite('w_two');
+    await advance(4_999);
+    expect(syncs()).toBe(1);
+    await advance(1);
 
-    expect((await phone.settings.read()).theme).toBe('light');
-    expect((await tablet.settings.read()).theme).toBe('light');
-    expect(server.records.get('settings.theme')?.value).toBe('light');
+    expect(syncs()).toBe(2);
+    expect([...server.records.keys()]).toEqual(['favorites.w_one', 'favorites.w_two']);
+    await advance(HOUR);
+    expect(syncs()).toBe(2);
   });
 
-  it('keep a pending change newer than the Account’s through a pull, and it wins after the push', async () => {
-    const { device, server, time } = account();
-    const phone = await device();
-    const tablet = await device();
-    await tablet.settings.update({ theme: 'light' });
-    await tablet.sync();
-    time.advance(HOUR);
-    await phone.settings.update({ theme: 'dark' });
+  it('not after a write in the background, nor after one that left no pending change', async () => {
+    const { sync, userState, addFavorite, advance, syncs } = await device();
+    sync.foreground();
+    await advance(0);
+    await userState.write(userStateRecords.vibration.change(false));
+    await addFavorite('w_one');
+    sync.background();
+    await advance(HOUR);
 
-    await phone.sync();
-    await tablet.sync();
+    expect(syncs()).toBe(1);
+  });
 
-    expect((await phone.settings.read()).theme).toBe('dark');
-    expect((await tablet.settings.read()).theme).toBe('dark');
-    expect(server.records.get('settings.theme')).toMatchObject({
-      value: 'dark',
-      changedAt: new Date('2026-10-18T10:00:00.000Z').getTime(),
+  it('when a Session starts in the foreground', async () => {
+    const { sync, account, server, addFavorite, advance, syncs } = await device({
+      signedIn: false,
     });
-  });
+    await addFavorite('w_one');
+    sync.foreground();
+    await advance(0);
+    expect(syncs()).toBe(0);
 
-  it('keep the Active Days of both, even one deleted elsewhere, so the Streak is the same', async () => {
-    const { device, time, pushFromElsewhere } = account('2026-10-16T09:00:00.000Z');
-    const phone = await device();
-    const tablet = await device();
-    await phone.open();
-    time.advance(24 * HOUR);
-    await tablet.open();
-    time.advance(24 * HOUR);
-    await phone.sync();
-    await tablet.sync();
-    await pushFromElsewhere({ key: 'activeDays.2026-10-16', value: null });
+    await account.requestCode('anna@mail.com');
+    await account.verifyCode('100001');
+    await advance(0);
 
-    await phone.sync();
-    await tablet.sync();
-
-    expect((await phone.open()).progress.state.streak).toBe(3);
-    expect((await tablet.open()).progress.state.streak).toBe(3);
-    expect([...(await tablet.userState.list(activeDays)).keys()].sort()).toEqual([
-      '2026-10-16',
-      '2026-10-17',
-      '2026-10-18',
-    ]);
-  });
-
-  it('keep the higher best Game result on both, even when the higher one is older', async () => {
-    const { device, server, time } = account();
-    const phone = await device();
-    const tablet = await device();
-    await phone.write(gameBest.change(9));
-    time.advance(HOUR);
-    await tablet.write(gameBest.change(5));
-    await tablet.sync();
-    time.advance(HOUR);
-
-    expect(await phone.sync()).toEqual({ ok: true, changed: false });
-    await tablet.sync();
-
-    expect(await phone.userState.read(gameBest)).toBe(9);
-    expect(await tablet.userState.read(gameBest)).toBe(9);
-    // The phone wrote its result again, so it won on the server with a new change time.
-    expect(server.records.get('game.best')).toMatchObject({
-      value: 9,
-      changedAt: new Date('2026-10-18T11:00:00.000Z').getTime(),
-    });
-  });
-
-  it('keep the higher best Game result when the Account’s is higher', async () => {
-    const { device, time } = account();
-    const phone = await device();
-    const tablet = await device();
-    await phone.write(gameBest.change(12));
-    await phone.sync();
-    time.advance(HOUR);
-    await tablet.write(gameBest.change(4));
-
-    await tablet.sync();
-    await phone.sync();
-
-    expect(await tablet.userState.read(gameBest)).toBe(12);
-    expect(await phone.userState.read(gameBest)).toBe(12);
-  });
-
-  it('leave `device-only` records on each device, also those the Account holds', async () => {
-    const { device, server, pushFromElsewhere } = account();
-    const phone = await device();
-    const tablet = await device();
-    await phone.settings.update({ vibration: false });
-    await (await phone.open()).notifications.setSound(false);
-    await phone.sync();
-    await pushFromElsewhere(
-      { key: 'settings.vibration', value: false },
-      { key: 'sync.cursor', value: 999 },
-      { key: 'sync.pending.favorites.w_one', value: { changedAt: 0, value: null } },
-      { key: 'schema.version', value: 99 },
-    );
-
-    await tablet.sync();
-
-    expect(server.records.has('notifications.sound')).toBe(false);
-    expect((await tablet.settings.read()).vibration).toBe(true);
-    expect(tablet.records.get('schema.version')).toBe('4');
-    expect(await tablet.userState.pendingChanges()).toEqual(new Map());
-    expect(await tablet.userState.cursor()).not.toBe(999);
-  });
-
-  it('keep a record of a key it doesn’t know as it is, and never push it back', async () => {
-    const { device, server, pushFromElsewhere } = account();
-    const tablet = await device();
-    await pushFromElsewhere({ key: 'badges.firstWeek', value: { level: 2, at: [1, 2] } });
-
-    await tablet.sync();
-    await tablet.sync();
-
-    expect(JSON.parse(tablet.records.get('badges.firstWeek') ?? 'null')).toEqual({
-      level: 2,
-      at: [1, 2],
-    });
-    expect(await tablet.userState.pendingChanges()).toEqual(new Map());
-    expect(server.records.get('badges.firstWeek')?.sequence).toBe(1);
-  });
-
-  it('report a change only when a pull wrote something', async () => {
-    const { device } = account();
-    const phone = await device();
-    const tablet = await device();
-    await (await phone.open()).favorites.add('w_one');
-
-    expect(await phone.sync()).toEqual({ ok: true, changed: false });
-    // The pull brings back what the phone pushed, which changes nothing.
-    expect(await phone.sync()).toEqual({ ok: true, changed: false });
-    expect(await tablet.sync()).toEqual({ ok: true, changed: true });
-    expect(await tablet.sync()).toEqual({ ok: true, changed: false });
-  });
-
-  it('read a value whose object keys come back in another order as the same', async () => {
-    const { device, time, pushFromElsewhere } = account();
-    const phone = await device();
-    await phone.write(
-      history.record('w_one').change({ seenAt: '2026-10-18T08:00:00.000Z', wordOfTheDay: false }),
-    );
-    await phone.sync();
-    time.advance(HOUR);
-    await pushFromElsewhere({
-      key: 'history.w_one',
-      value: { wordOfTheDay: false, seenAt: '2026-10-18T08:00:00.000Z' },
-    });
-
-    expect(await phone.sync()).toEqual({ ok: true, changed: false });
+    expect(syncs()).toBe(1);
+    expect(server.records.has('favorites.w_one')).toBe(true);
   });
 });
 
-// Spec #378, "The first sign-in rule": a sync without a cursor.
-describe('the first sign-in', () => {
-  /** The user state an 0.7 app left: schema version 3, nothing tracked. */
-  const from07 = (records: Record<string, unknown>) =>
-    new Map([
-      ['schema.version', '3'],
-      ...Object.entries(records).map(([key, value]): [string, string] => [
-        key,
-        JSON.stringify(value),
-      ]),
-    ]);
+describe('Sync syncs nothing', () => {
+  it('without a Session', async () => {
+    const { sync, addFavorite, advance, syncs } = await device({ signedIn: false });
+    sync.foreground();
+    await addFavorite('w_one');
+    await advance(HOUR);
 
-  it('lets the Account’s values win over a device’s and adds what the Account lacks', async () => {
-    const { device, server } = account();
-    const phone = await device();
-    await phone.settings.update({ theme: 'dark' });
-    await (await phone.open()).favorites.add('w_one');
-    await phone.sync();
-    const tablet = await device(
-      from07({
-        'settings.theme': 'light',
-        'settings.fontSize': 'L',
-        'favorites.w_two': '2026-10-01T08:00:00.000Z',
+    expect(syncs()).toBe(0);
+    expect(sync.state).toEqual({ syncedAt: undefined, running: false, offline: false });
+  });
+
+  it.each(['sync', 'account'] as const)('with `%s` off, read each time', async (feature) => {
+    const { sync, switchedOff, addFavorite, advance, syncs } = await device({ off: [feature] });
+    sync.foreground();
+    await advance(0);
+    expect(syncs()).toBe(0);
+
+    switchedOff.delete(feature);
+    sync.background();
+    sync.foreground();
+    await advance(0);
+    expect(syncs()).toBe(1);
+
+    switchedOff.add(feature);
+    await addFavorite('w_one');
+    await advance(HOUR);
+    expect(syncs()).toBe(1);
+  });
+});
+
+describe('Sync runs one sync at a time', () => {
+  it('and one more after it for every moment during it', async () => {
+    const { sync, server, addFavorite, advance, syncs } = await device();
+    const release = server.hold();
+    sync.foreground();
+    await advance(0);
+    expect(sync.state.running).toBe(true);
+
+    await addFavorite('w_one');
+    sync.background();
+    sync.foreground();
+    sync.background();
+    sync.foreground();
+    await advance(0);
+    expect(syncs()).toBe(1);
+    release();
+    await advance(HOUR);
+
+    expect(syncs()).toBe(2);
+    expect(server.records.has('favorites.w_one')).toBe(true);
+    expect(sync.state.running).toBe(false);
+  });
+});
+
+// Spec #378: failures follow ADR 0037's one rule.
+describe('Sync tries a sync again', () => {
+  it.each(['offline', 'server-error'] as const)(
+    'when it fails with `%s`, with backoff and jitter',
+    async (reason) => {
+      const { sync, server, addFavorite, advance, syncs } = await device();
+      await addFavorite('w_one');
+      server.failNext('push', reason);
+      sync.foreground();
+      await advance(0);
+      expect(server.calls).toEqual(['pull', 'push']);
+
+      // The first wait is between half and all of 1 s: 750 ms with a draw of 0.5.
+      await advance(749);
+      expect(syncs()).toBe(1);
+      await advance(1);
+
+      expect(server.calls).toEqual(['pull', 'push', 'pull', 'push']);
+      expect(server.records.has('favorites.w_one')).toBe(true);
+      expect(sync.state).toMatchObject({ running: false, offline: false });
+    },
+  );
+
+  it('at most 3 times, and then says it waits for the network', async () => {
+    const { sync, network, advance, syncs } = await device();
+    network.up = false;
+    sync.foreground();
+    await advance(HOUR);
+
+    expect(network.unanswered).toBe(4);
+    expect(syncs()).toBe(0);
+    expect(sync.state).toEqual({ syncedAt: undefined, running: false, offline: true });
+
+    network.up = true;
+    sync.background();
+    sync.foreground();
+    await advance(0);
+    expect(sync.state).toMatchObject({ running: false, offline: false });
+  });
+
+  it.each(['unexpected', 'not-found', 'too-many-records'] as const)(
+    'never when it fails with `%s`',
+    async (reason) => {
+      const { sync, server, addFavorite, advance } = await device();
+      await addFavorite('w_one');
+      server.failNext('push', reason);
+      sync.foreground();
+      await advance(HOUR);
+
+      expect(server.calls).toEqual(['pull', 'push']);
+      expect(sync.state).toEqual({ syncedAt: undefined, running: false, offline: false });
+    },
+  );
+});
+
+describe('Sync, when too many requests', () => {
+  it('waits for the Retry-After and syncs then', async () => {
+    const { sync, server, advance, syncs } = await device();
+    server.failNext('pull', 'too-many-requests', { retryAfter: 60 });
+    sync.foreground();
+    await advance(59_999);
+    expect(syncs()).toBe(1);
+    await advance(1);
+
+    expect(syncs()).toBe(2);
+    expect(sync.state.syncedAt).toBeDefined();
+  });
+
+  it('syncs at no moment sooner', async () => {
+    const { sync, server, addFavorite, advance, syncs } = await device();
+    server.failNext('pull', 'too-many-requests', { retryAfter: 60 });
+    sync.foreground();
+    await advance(0);
+    expect(syncs()).toBe(1);
+
+    await addFavorite('w_one');
+    await advance(30_000);
+    sync.background();
+    sync.foreground();
+    await advance(29_999);
+    expect(syncs()).toBe(1);
+    await advance(1);
+
+    expect(syncs()).toBe(2);
+    expect(server.records.has('favorites.w_one')).toBe(true);
+  });
+
+  it('syncs at the next moment when the answer says nothing of when', async () => {
+    const { sync, server, advance, syncs } = await device();
+    server.failNext('pull', 'too-many-requests');
+    sync.foreground();
+    await advance(HOUR);
+    expect(syncs()).toBe(1);
+
+    sync.background();
+    sync.foreground();
+    await advance(0);
+    expect(syncs()).toBe(2);
+  });
+});
+
+describe('Sync, when the device fails to write a sync', () => {
+  it('stops it quietly and syncs at the next moment', async () => {
+    const { sync, server, disk, advance, syncs } = await device();
+    await server.push('another-session', [{ key: 'settings.theme', value: 'dark', changedAt: 1 }]);
+    disk.refuses = () => true;
+    sync.foreground();
+    await advance(HOUR);
+    expect(syncs()).toBe(1);
+    expect(sync.state).toEqual({ syncedAt: undefined, running: false, offline: false });
+
+    disk.refuses = () => false;
+    sync.background();
+    sync.foreground();
+    await advance(0);
+    expect(syncs()).toBe(2);
+    expect(sync.state.syncedAt).toBeDefined();
+  });
+
+  it('says the user state may have changed when it fails after a pull wrote', async () => {
+    const { sync, server, disk, userState, addFavorite, advance, changes } = await device();
+    await server.push('another-session', [{ key: 'settings.theme', value: 'dark', changedAt: 1 }]);
+    await addFavorite('w_one');
+    // The store refuses only the deletion of the pending changes the push sent.
+    disk.refuses = (changes) => [...changes.values()].every((value) => value === undefined);
+    sync.foreground();
+    await advance(0);
+
+    expect(await userState.read(theme)).toBe('dark');
+    expect(changes()).toBe(1);
+  });
+});
+
+// Spec #378: a 401 goes to the Account; signing out keeps the words.
+describe('Sync and the end of a Session', () => {
+  it('signs out quietly when the backend says the Session has ended, and syncs no more', async () => {
+    const { sync, server, account, userState, addFavorite, advance, syncs } = await device();
+    sync.foreground();
+    await advance(0);
+    await addFavorite('w_one');
+    server.failNext('pull', 'unauthorized');
+    await advance(SYNC_AFTER_WRITE);
+
+    expect(account.state).toEqual({
+      status: 'signed-out',
+      inFlight: undefined,
+      problem: undefined,
+    });
+    expect(syncs()).toBe(2);
+    expect(await userState.cursor()).toBeUndefined();
+    expect([...(await userState.pendingChanges()).keys()]).toEqual(['favorites.w_one']);
+
+    await addFavorite('w_two');
+    await advance(HOUR);
+    expect(syncs()).toBe(2);
+  });
+
+  it('forgets the cursor at a sign-out and keeps the pending changes and the words', async () => {
+    const { sync, account, userState, records, addFavorite, advance } = await device();
+    sync.foreground();
+    await advance(0);
+    expect(sync.state.syncedAt).toBeDefined();
+    expect(await userState.cursor()).toBeDefined();
+    await addFavorite('w_one');
+
+    await account.signOut();
+    await advance(0);
+
+    expect(await userState.cursor()).toBeUndefined();
+    expect([...(await userState.pendingChanges()).keys()]).toEqual(['favorites.w_one']);
+    expect(records.has('favorites.w_one')).toBe(true);
+    expect(sync.state).toEqual({ syncedAt: undefined, running: false, offline: false });
+  });
+
+  it('forgets the cursor and the time of the last sync when the Account is deleted', async () => {
+    const { sync, account, userState, addFavorite, advance } = await device();
+    sync.foreground();
+    await advance(0);
+    await addFavorite('w_one');
+
+    await account.delete();
+    await advance(0);
+
+    expect(account.state).toMatchObject({ status: 'signed-out' });
+    expect(await userState.cursor()).toBeUndefined();
+    expect(await userState.read(syncSyncedAt)).toBeUndefined();
+    expect([...(await userState.pendingChanges()).keys()]).toEqual(['favorites.w_one']);
+  });
+
+  it('tries no more once the Session ends while it waits to try again', async () => {
+    const { sync, account, network, advance } = await device();
+    network.up = false;
+    sync.foreground();
+    await advance(0);
+    expect(network.unanswered).toBe(1);
+
+    await account.signOut();
+    await advance(HOUR);
+
+    expect(network.unanswered).toBe(1);
+    expect(sync.state).toEqual({ syncedAt: undefined, running: false, offline: false });
+  });
+
+  it('forgets the cursor once a sync running at the sign-out ends', async () => {
+    const { sync, server, account, userState, advance } = await device();
+    await server.push('another-session', [{ key: 'settings.theme', value: 'dark', changedAt: 1 }]);
+    const release = server.hold();
+    sync.foreground();
+    await advance(0);
+
+    await account.signOut();
+    release();
+    await advance(0);
+
+    expect(await userState.read(theme)).toBe('dark');
+    expect(await userState.cursor()).toBeUndefined();
+    expect(sync.state).toEqual({ syncedAt: undefined, running: false, offline: false });
+  });
+
+  it('forgets a cursor left from a Session that ended before the launch', async () => {
+    const records = new Map([[syncCursor.key, '7']]);
+    const userState = trackChanges({
+      userState: await openUserState({ port: createMemoryUserStatePort(records) }),
+      clock: fakeClock().clock,
+    });
+    const time = fakeClock();
+    await openSync({
+      userState,
+      api: createFakeSyncApi({ clock: time.clock }),
+      account: await openAccount({
+        api: createFakeAccountApi(),
+        sessions: createMemorySessionStore(),
+        clock: time.clock,
+        schedule: testSchedule(time).schedule,
+        random: randomOf(0.5),
       }),
-    );
-
-    await tablet.sync();
-    await phone.sync();
-
-    for (const each of [phone, tablet]) {
-      expect(await each.settings.read()).toMatchObject({ theme: 'dark', fontSize: 'L' });
-      expect([...(await each.userState.list(favorites)).keys()].sort()).toEqual(['w_one', 'w_two']);
-    }
-    expect(server.records.get('favorites.w_two')).toMatchObject({ changedAt: 0 });
-    expect(server.records.get('settings.theme')?.value).toBe('dark');
-  });
-
-  it('keeps the time of the changes made while signed out', async () => {
-    const { device, server, time } = account('2026-10-18T08:00:00.000Z');
-    const tablet = await device();
-    await tablet.settings.update({ fontSize: 'L' });
-    time.advance(HOUR);
-    const phone = await device();
-    await phone.settings.update({ theme: 'dark', fontSize: 'S' });
-    await phone.sync();
-    time.advance(HOUR);
-    await tablet.settings.update({ theme: 'light' });
-
-    await tablet.sync();
-    await phone.sync();
-
-    for (const each of [phone, tablet]) {
-      expect(await each.settings.read()).toMatchObject({ theme: 'light', fontSize: 'S' });
-    }
-    expect(server.records.get('settings.theme')?.changedAt).toBe(
-      new Date('2026-10-18T10:00:00.000Z').getTime(),
-    );
-  });
-
-  it('starts again with the rule when a device forgets its cursor', async () => {
-    const { device, server } = account();
-    const records = new Map<string, string>();
-    const phone = await device(records);
-    await phone.settings.update({ theme: 'dark' });
-    await phone.sync();
-    // Signed out and in again: the cursor is forgotten, the words kept.
-    records.delete('sync.cursor');
-    const kept = server.records.get('settings.theme');
-
-    await phone.sync();
-
-    expect(await phone.userState.pendingChanges()).toEqual(new Map());
-    expect(server.records.get('settings.theme')).toEqual(kept);
-  });
-});
-
-/** An Entry id and the Seen time of a History entry, `minute` minutes after 08:00. */
-const seenAt = (minute: number) => new Date(Date.UTC(2026, 9, 18, 8, minute)).toISOString();
-
-describe('History and paging', () => {
-  it('trims merged History to the newest 500 on both devices', async () => {
-    const { device } = account();
-    const phone = await device();
-    const tablet = await device();
-    const ids = (from: number, to: number, prefix: string) =>
-      Array.from({ length: to - from }, (_, index) => `${prefix}${String(from + index)}`);
-    // The phone's entries at even minutes, the tablet's at odd ones.
-    await phone.write(
-      new Map(
-        ids(0, 300, 'p_').flatMap((id, index) => [
-          ...history.record(id).change({ seenAt: seenAt(2 * index), wordOfTheDay: false }),
-        ]),
-      ),
-    );
-    await tablet.write(
-      new Map(
-        ids(0, 300, 't_').flatMap((id, index) => [
-          ...history.record(id).change({ seenAt: seenAt(2 * index + 1), wordOfTheDay: false }),
-        ]),
-      ),
-    );
-
-    await tablet.sync();
-    await phone.sync();
-    await tablet.sync();
-
-    const newest500 = [...ids(50, 300, 'p_'), ...ids(50, 300, 't_')].sort();
-    expect([...(await phone.userState.list(history)).keys()].sort()).toEqual(newest500);
-    expect([...(await tablet.userState.list(history)).keys()].sort()).toEqual(newest500);
-  });
-
-  it('trims once the whole pull is in, so a newer entry on a later page is kept', async () => {
-    const { device, server, time, pushFromElsewhere } = account();
-    const phone = await device();
-    // The phone's 500 entries; `w_0` is the oldest.
-    await phone.write(
-      new Map(
-        Array.from({ length: 500 }, (_, index) => [
-          ...history
-            .record(`w_${String(index)}`)
-            .change({ seenAt: seenAt(index), wordOfTheDay: false }),
-        ]).flat(),
-      ),
-    );
-    await phone.sync();
-    time.advance(HOUR);
-    // The first page brings 100 newer entries; the second, `w_0` Seen again, newest of all.
-    await pushFromElsewhere(
-      ...Array.from({ length: 100 }, (_, index) => ({
-        key: `history.n_${String(index)}`,
-        value: { seenAt: seenAt(600 + index), wordOfTheDay: false },
-      })),
-      ...Array.from({ length: 400 }, (_, index) => ({
-        key: `favorites.f_${String(index)}`,
-        value: '2026-10-18T08:00:00.000Z',
-      })),
-    );
-    await pushFromElsewhere({
-      key: 'history.w_0',
-      value: { seenAt: seenAt(900), wordOfTheDay: false },
+      edition: { isFeatureEnabled: () => true },
+      clock: time.clock,
+      schedule: testSchedule(time).schedule,
+      random: randomOf(0.5),
     });
-    time.advance(HOUR);
 
-    await phone.sync();
-
-    const kept = await phone.userState.list(history);
-    expect(kept.size).toBe(500);
-    expect(kept.get('w_0')?.seenAt).toBe(seenAt(900));
-    expect(server.records.get('history.w_0')?.value).not.toBeNull();
-    expect(kept.has('w_100')).toBe(false);
-    expect(kept.has('w_101')).toBe(true);
-  });
-
-  it('pushes more than 500 changes in batches of 500 and pulls them page by page', async () => {
-    const { device, server } = account();
-    const phone = await device();
-    const tablet = await device();
-    await phone.write(
-      new Map(
-        Array.from({ length: 1_200 }, (_, index) => [
-          ...favorites.record(`w_${String(index)}`).change('2026-10-18T08:00:00.000Z'),
-        ]).flat(),
-      ),
-    );
-
-    await phone.sync();
-    const phoneCalls = [...server.calls];
-    await tablet.sync();
-
-    expect(phoneCalls).toEqual(['pull', 'push', 'push', 'push']);
-    expect(server.calls.slice(phoneCalls.length)).toEqual(['pull', 'pull', 'pull']);
-    expect((await tablet.userState.list(favorites)).size).toBe(1_200);
-    expect(await phone.userState.pendingChanges()).toEqual(new Map());
+    expect(await userState.cursor()).toBeUndefined();
   });
 });
 
-describe('an interrupted sync', () => {
-  it('resumes between the pull and the push without loss or duplicates', async () => {
-    const { device, server } = account();
-    const phone = await device();
-    await (await phone.open()).favorites.add('w_one');
-    await phone.sync();
-    const tablet = await device(
-      new Map([
-        ['schema.version', '3'],
-        ['favorites.w_two', '"2026-10-01T08:00:00.000Z"'],
-      ]),
-    );
-    server.failNext('push', 'offline');
+// Spec #378: the snapshot for the status line, and the changed signal.
+describe('Sync says how it went', () => {
+  it('while a sync runs, and when the last one went through', async () => {
+    const { sync, server, time, advance } = await device();
+    const told: unknown[] = [];
+    sync.subscribe(() => told.push(sync.state));
+    const release = server.hold();
 
-    // The pull wrote the phone's Favorite before the push failed.
-    expect(await tablet.sync()).toEqual({ ok: false, reason: 'offline', changed: true });
-    expect([...(await tablet.userState.list(favorites)).keys()].sort()).toEqual(['w_one', 'w_two']);
-    const kept = server.records.size;
+    sync.foreground();
+    await advance(0);
+    expect(sync.state).toEqual({ syncedAt: undefined, running: true, offline: false });
+    time.advance(2_000);
+    release();
+    await advance(0);
 
-    expect(await tablet.sync()).toEqual({ ok: true, changed: false });
-    await phone.sync();
-
-    expect([...(await phone.userState.list(favorites)).keys()].sort()).toEqual(['w_one', 'w_two']);
-    // Only the tablet's record joined the Account, once.
-    expect(server.records.size).toBe(kept + 1);
-    expect(await tablet.userState.pendingChanges()).toEqual(new Map());
+    expect(sync.state).toEqual({
+      syncedAt: new Date('2026-10-18T09:00:02.000Z'),
+      running: false,
+      offline: false,
+    });
+    expect(told).toEqual([
+      { syncedAt: undefined, running: true, offline: false },
+      { syncedAt: new Date('2026-10-18T09:00:02.000Z'), running: false, offline: false },
+    ]);
   });
 
-  it('writes nothing of a pull that fails, and pushes nothing', async () => {
-    const { device, server, pushFromElsewhere } = account();
-    const tablet = await device();
-    await tablet.settings.update({ theme: 'dark' });
-    await pushFromElsewhere({ key: 'favorites.w_one', value: '2026-10-18T08:00:00.000Z' });
-    server.failNext('pull', 'server-error');
+  it('when the last sync went through, at the next launch too', async () => {
+    const { sync, server, account, userState, time, advance } = await device();
+    sync.foreground();
+    await advance(0);
+    const syncedAt = sync.state.syncedAt;
+    expect(syncedAt).toEqual(new Date('2026-10-18T09:00:00.000Z'));
 
-    expect(await tablet.sync()).toEqual({ ok: false, reason: 'server-error', changed: false });
+    const relaunched = await openSync({
+      userState,
+      api: server,
+      account,
+      edition: { isFeatureEnabled: () => true },
+      clock: time.clock,
+      schedule: testSchedule(time).schedule,
+      random: randomOf(0.5),
+    });
 
-    expect(server.calls).toEqual(['push', 'pull']);
-    expect(await tablet.userState.read(favorites.record('w_one'))).toBeUndefined();
-    expect(await tablet.userState.cursor()).toBeUndefined();
-    expect([...(await tablet.userState.pendingChanges()).keys()]).toEqual(['settings.theme']);
+    expect(relaunched.state).toEqual({ syncedAt, running: false, offline: false });
   });
-});
 
-describe('the device’s own rewrites', () => {
-  it('track a History entry the trim deletes, so the deletion syncs', async () => {
-    const { device, server, time } = account();
-    const phone = await device();
-    await phone.write(
-      new Map(
-        Array.from({ length: 500 }, (_, index) => [
-          ...history
-            .record(`w_${String(index)}`)
-            .change({ seenAt: seenAt(index + 1), wordOfTheDay: false }),
-        ]).flat(),
-      ),
-    );
-    const tablet = await device();
-    await tablet.write(history.record('w_old').change({ seenAt: seenAt(0), wordOfTheDay: false }));
-    await tablet.sync();
+  it('that the user state changed, once per sync whose pull wrote something', async () => {
+    const { sync, server, time, addFavorite, advance, changes } = await device();
+    sync.foreground();
+    await advance(0);
+    expect(changes()).toBe(0);
+
     time.advance(HOUR);
+    await server.push('another-session', [
+      {
+        key: 'favorites.w_one',
+        value: '2026-10-18T10:00:00.000Z',
+        changedAt: time.clock.now().getTime(),
+      },
+      { key: 'settings.theme', value: 'dark', changedAt: time.clock.now().getTime() },
+    ]);
+    sync.background();
+    sync.foreground();
+    await advance(0);
+    expect(changes()).toBe(1);
 
-    await phone.sync();
+    await addFavorite('w_two');
+    await advance(SYNC_AFTER_WRITE);
+    sync.background();
+    sync.foreground();
+    await advance(0);
+    expect(changes()).toBe(1);
+  });
 
-    expect(await phone.userState.read(history.record('w_old'))).toBeUndefined();
-    expect(server.records.get('history.w_old')?.value).toBeNull();
+  it('that the user state changed when a sync that wrote something fails after', async () => {
+    const { sync, server, addFavorite, advance, changes } = await device();
+    await server.push('another-session', [{ key: 'settings.theme', value: 'dark', changedAt: 1 }]);
+    await addFavorite('w_one');
+    server.failNext('push', 'not-found');
+    sync.foreground();
+    await advance(HOUR);
+
+    expect(changes()).toBe(1);
   });
 });

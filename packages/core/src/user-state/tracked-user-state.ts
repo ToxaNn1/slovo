@@ -1,4 +1,4 @@
-import { createInTurn } from '../in-turn';
+import { createInTurn, createSubscribers } from '../in-turn';
 import type { Clock, UserStateChanges } from '../ports';
 import type { UserState } from './user-state';
 import { syncs, userStateRecords } from './user-state-schema';
@@ -43,6 +43,12 @@ export interface TrackedUserState extends UserState {
       readonly tracked: UserStateChanges;
     }>,
   ): Promise<void>;
+  /**
+   * Calls `listener` after each `write` that left a pending change, so Sync
+   * knows when the reader changed something. What `merge` and `deleteSent`
+   * write tells nothing: Sync writes it. Returns the call that stops it.
+   */
+  subscribe(listener: () => void): () => void;
 }
 
 const { syncPending, syncCursor } = userStateRecords;
@@ -62,6 +68,7 @@ export function trackChanges({
   clock: Clock;
 }): TrackedUserState {
   const inTurn = createInTurn();
+  const subscribers = createSubscribers();
 
   async function pendingChanges(): Promise<ReadonlyMap<string, PendingChange>> {
     const pending = new Map<string, PendingChange>();
@@ -85,7 +92,12 @@ export function trackChanges({
   return {
     read: (record) => userState.read(record),
     list: (records) => userState.list(records),
-    write: (changes) => inTurn(() => userState.write(withPending(changes))),
+    write: (changes) =>
+      inTurn(async () => {
+        const tracked = withPending(changes);
+        await userState.write(tracked);
+        if (tracked.size > changes.size) subscribers.tell();
+      }),
     pendingChanges,
     cursor: () => userState.read(syncCursor),
     deleteSent: (sent) =>
@@ -110,5 +122,6 @@ export function trackChanges({
         const changes = new Map([...untracked, ...withPending(tracked)]);
         if (changes.size > 0) await userState.write(changes);
       }),
+    subscribe: subscribers.subscribe,
   };
 }

@@ -22,37 +22,60 @@ export interface FakeSyncApi extends SyncApi {
   readonly records: ReadonlyMap<string, KeptRecord>;
   /** The procedures called, by name, in order, the failed ones included. */
   readonly calls: readonly (keyof SyncApi)[];
-  /** Makes the next call of the procedure fail with the reason, before it reaches the records. */
-  failNext(procedure: keyof SyncApi, reason: SyncApiFailure['reason']): void;
+  /**
+   * Makes the next call of the procedure fail with the reason, before it
+   * reaches the records; too many requests says to retry after `retryAfter`
+   * seconds, if given.
+   */
+  failNext(
+    procedure: keyof SyncApi,
+    reason: SyncApiFailure['reason'],
+    options?: { retryAfter?: number },
+  ): void;
+  /** Holds the next call until the call it returns lets it go on. */
+  hold(): () => void;
 }
 
 /** Makes a fake Sync API whose server time is the clock's. */
 export function createFakeSyncApi({ clock }: { clock: Clock }): FakeSyncApi {
   const records = new Map<string, KeptRecord>();
   const calls: (keyof SyncApi)[] = [];
-  const failures = new Map<keyof SyncApi, SyncApiFailure['reason']>();
+  const failures = new Map<keyof SyncApi, SyncApiFailure>();
+  let held: Promise<void> | undefined;
   let sequence = 0;
 
-  /** Logs the call and answers its failure, if one was asked for. */
-  function arrive(procedure: keyof SyncApi): SyncApiFailure | undefined {
+  /** Logs the call, waits while it is held, and answers its failure, if one was asked for. */
+  async function arrive(procedure: keyof SyncApi): Promise<SyncApiFailure | undefined> {
     calls.push(procedure);
-    const reason = failures.get(procedure);
+    const holding = held;
+    held = undefined;
+    await holding;
+    const failure = failures.get(procedure);
     failures.delete(procedure);
-    return reason === undefined ? undefined : { ok: false, reason };
+    return failure;
   }
 
   return {
     records,
     calls,
-    failNext(procedure, reason) {
-      failures.set(procedure, reason);
+    failNext(procedure, reason, { retryAfter } = {}) {
+      failures.set(
+        procedure,
+        reason === 'too-many-requests' ? { ok: false, reason, retryAfter } : { ok: false, reason },
+      );
     },
-    push(_token, changes) {
-      const failure = arrive('push');
-      if (failure !== undefined) return Promise.resolve(failure);
+    hold() {
+      let release: () => void = () => undefined;
+      held = new Promise((resolve) => {
+        release = resolve;
+      });
+      return release;
+    },
+    async push(_token, changes) {
+      const failure = await arrive('push');
+      if (failure !== undefined) return failure;
       // The backend refuses a push over the batch size (400).
-      if (changes.length > SYNC_BATCH_SIZE)
-        return Promise.resolve({ ok: false, reason: 'unexpected' });
+      if (changes.length > SYNC_BATCH_SIZE) return { ok: false, reason: 'unexpected' };
       // Of two changes of one key, the later is kept, the first on a tie, and only then cut.
       const latest = new Map<string, RecordChange>();
       for (const change of changes) {
@@ -70,21 +93,21 @@ export function createFakeSyncApi({ clock }: { clock: Clock }): FakeSyncApi {
           records.set(key, { value, changedAt: cut, sequence });
         }
       }
-      return Promise.resolve({ ok: true });
+      return { ok: true };
     },
-    pull(_token, after) {
-      const failure = arrive('pull');
-      if (failure !== undefined) return Promise.resolve(failure);
+    async pull(_token, after) {
+      const failure = await arrive('pull');
+      if (failure !== undefined) return failure;
       const following = [...records]
         .filter(([, record]) => record.sequence > (after ?? 0))
         .sort(([, first], [, second]) => first.sequence - second.sequence);
       const page = following.slice(0, SYNC_BATCH_SIZE);
-      return Promise.resolve({
+      return {
         ok: true,
         records: page.map(([key, { value, changedAt }]) => ({ key, value, changedAt })),
         cursor: page.at(-1)?.[1].sequence ?? after ?? 0,
         more: following.length > page.length,
-      });
+      };
     },
   };
 }

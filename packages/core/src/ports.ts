@@ -203,10 +203,17 @@ export interface RecordChange {
  * A call of the Sync API that failed as any request does, because the
  * Session it carried has ended (401), because the backend serves no Sync
  * for the Edition (404), or because a push would take the Account's records
- * in the Edition over their limit (409, `TOO_MANY_RECORDS`).
+ * in the Edition over their limit (409, `TOO_MANY_RECORDS`). Too many
+ * requests (429) carries the answer's `Retry-After`.
  */
 export type SyncApiFailure =
-  | RequestFailure
+  | { readonly ok: false; readonly reason: Exclude<RequestFailure['reason'], 'too-many-requests'> }
+  | {
+      readonly ok: false;
+      readonly reason: 'too-many-requests';
+      /** How long to wait before the next Sync request, in seconds; none when the answer didn't say. */
+      readonly retryAfter: number | undefined;
+    }
   | { readonly ok: false; readonly reason: 'unauthorized' }
   | { readonly ok: false; readonly reason: 'not-found' }
   | { readonly ok: false; readonly reason: 'too-many-records' };
