@@ -1,4 +1,4 @@
-# Onboarding step 2, the Mix: «Почати» leads to «КРОК 2 З 3» with the chips of
+# Onboarding step 2, the Mix: «Почати» leads to «КРОК 2 З 4» with the chips of
 # Мій Мікс; taking a Category out and going on shows in Settings › Мій Мікс.
 # A subflow of `smoke.yaml`; run it from there. It starts from a fresh install,
 # whatever the simulator holds, so it clears the app's state: put it last in
@@ -14,7 +14,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: onboarding-mix
 - assertVisible:
     id: onboarding-step
-- assertVisible: КРОК 2 З 3
+- assertVisible: КРОК 2 З 4
 # The Edition's default Mix: «Усі» is on.
 - assertVisible:
     id: mix-chip-all
@@ -30,13 +30,15 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: mix-chip-all
     selected: false
 # «Далі» goes on to the notifications step, with the choice kept; «Пізніше»
-# finishes without asking.
+# goes on without asking, and «Продовжити без акаунта» finishes.
 - tapOn:
     id: onboarding-next
 - assertVisible:
     id: onboarding-notifications
 - tapOn:
     id: onboarding-later
+- tapOn:
+    id: onboarding-continue
 - assertVisible:
     id: feed-card-.*
 - assertNotVisible:

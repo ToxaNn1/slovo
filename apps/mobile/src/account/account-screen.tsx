@@ -14,17 +14,15 @@ import {
   useEdition,
   useTokens,
 } from '@slovo/ui';
-import { Redirect, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useAccountProblemLine, useAccountState } from '../../account/account';
-import { accountOpening } from '../../account/device-account';
-import { deviceClock } from '../../device/device-clock';
-import { editionStrings } from '../../edition/edition';
-import { Opened } from '../../opened';
-import { useOpened, type Opening } from '../../opening';
+import { deviceClock } from '../device/device-clock';
+import { editionStrings } from '../edition/edition';
+import { Opened } from '../opened';
+import { useOpened, type Opening } from '../opening';
+import { useAccountProblemLine, useAccountState } from './account';
 
 const strings = editionStrings.account;
 
@@ -42,28 +40,39 @@ function run(request: Promise<void>): void {
   });
 }
 
+/** Where the SLOVO ID screen's back link leads: the screen under it, by name. */
+export interface AccountScreenBack {
+  readonly label: string;
+  /** Leaves the screen, with the Account as it stands. */
+  readonly onPress: (account: Account) => void;
+}
+
 /**
- * Settings › SLOVO ID: signing in with a Sign-in code sent to the email, or,
- * signed in, the email with signing out, signing out everywhere and deleting
- * the Account behind a system alert. It draws the Account's state and calls
- * its actions; the rules are the Account's own. Without the Edition's Account
- * it leads back to Settings.
+ * The SLOVO ID screen, of Settings and of the onboarding's SLOVO ID step:
+ * signing in with a Sign-in code sent to the email, or, signed in, the email
+ * with signing out, signing out everywhere and deleting the Account behind a
+ * system alert. It draws the Account's state and calls its actions; the rules
+ * are the Account's own.
  */
-export default function AccountScreen() {
-  if (accountOpening === undefined) return <Redirect href="/settings" />;
+export function AccountScreen({
+  opening,
+  back,
+}: {
+  opening: Opening<Account>;
+  back: AccountScreenBack;
+}) {
   return (
-    <Opened opening={accountOpening} failedTestID="account-failed">
-      <AccountContent opening={accountOpening} />
+    <Opened opening={opening} failedTestID="account-failed">
+      <AccountContent opening={opening} back={back} />
     </Opened>
   );
 }
 
-function AccountContent({ opening }: { opening: Opening<Account> }) {
+function AccountContent({ opening, back }: { opening: Opening<Account>; back: AccountScreenBack }) {
   const account = useOpened(opening);
   const state = useAccountState(account);
   const problem = useAccountProblemLine(state);
   const { colors } = useTokens();
-  const router = useRouter();
   return (
     <SafeAreaView
       testID="account"
@@ -77,9 +86,9 @@ function AccountContent({ opening }: { opening: Opening<Account> }) {
       >
         <BackLink
           testID="account-back"
-          label={editionStrings.settings.title}
+          label={back.label}
           onPress={() => {
-            router.back();
+            back.onPress(account);
           }}
         />
         <View style={styles.header}>
