@@ -25,6 +25,7 @@ export {
   OrnamentBand,
   OrnamentDivider,
 } from './decor/DecorSlots';
+export { ConfirmationDialog } from './primitives/ConfirmationDialog';
 export { EmptyState } from './primitives/EmptyState';
 export { EntryRow, type EntryRowAction } from './entries/EntryRow';
 export { type RowAction } from './primitives/SwipeableRow';
