@@ -6,6 +6,7 @@ import { OpenAPILink, type OpenAPILinkOptions } from '@orpc/openapi-client/fetch
 import { accountContract } from './api/account';
 import { contentContract } from './api/content';
 import { editionContract } from './api/edition';
+import { syncContract } from './api/sync';
 
 export { PACK_MEDIA_TYPE } from './api/content';
 
@@ -32,6 +33,7 @@ export const apiContract = oc.prefix('/v1').router({
   account: accountContract,
   content: contentContract,
   edition: editionContract,
+  sync: syncContract,
 });
 
 /** The API as the app calls it: one function per procedure. */

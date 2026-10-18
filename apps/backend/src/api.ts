@@ -4,12 +4,13 @@ import { implement, ORPCError } from '@orpc/server';
 import { ResponseHeadersPlugin, type ResponseHeadersPluginContext } from '@orpc/server/plugins';
 import { apiContract } from '@slovo/contracts/api';
 import { apiDescriptionOptions } from '@slovo/contracts/api-description';
-import type { Accounts, ContentPacks, EditionRegistry } from '@slovo/server-core';
+import type { Accounts, ContentPacks, EditionRegistry, Sync } from '@slovo/server-core';
 import type { Logger } from 'pino';
 
 import { accountProcedures } from './account/account-procedures';
 import { contentProcedures } from './content/content-procedures';
 import { editionProcedures } from './edition/edition-procedures';
+import { syncProcedures } from './sync/sync-procedures';
 
 /** What every unexpected failure answers, with status 500: nothing internal (spec #333). */
 export const INTERNAL_FAILURE = { code: 'INTERNAL' } as const;
@@ -40,10 +41,12 @@ export function createApiHandler({
   accounts,
   contentPacks,
   editions,
+  sync,
 }: {
   accounts: Accounts;
   contentPacks: ContentPacks;
   editions: EditionRegistry;
+  sync: Sync;
 }) {
   const router = implement(apiContract)
     .$context<ApiContext>()
@@ -51,6 +54,7 @@ export function createApiHandler({
       account: accountProcedures(accounts),
       content: contentProcedures(contentPacks),
       edition: editionProcedures(editions),
+      sync: syncProcedures(sync, accounts),
     });
   return new OpenAPIHandler(router, {
     interceptors: [

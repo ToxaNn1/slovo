@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { SignInCodeSchema } from '../account';
 import { EditionIdSchema } from '../edition';
-import { procedure } from './procedure';
+import { procedure, signedIn } from './procedure';
 
 /**
  * An email as the reader typed it. The backend makes the Account's email of
@@ -15,12 +15,6 @@ const TypedEmailSchema = z.string().max(320);
  * empty one, so a field naming another Account is refused (ADR 0031).
  */
 const NoInputSchema = z.strictObject({}).optional();
-
-/** A procedure that acts on an Account: it carries a Session as `Authorization: Bearer <token>`. */
-const signedIn = procedure.errors({
-  /** The request carries no Session, or one that has ended. */
-  UNAUTHORIZED: { message: 'Not signed in' },
-});
 
 /**
  * The Account procedures. They carry no Edition: one Account works in every

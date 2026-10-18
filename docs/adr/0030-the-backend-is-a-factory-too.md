@@ -73,3 +73,7 @@ Whether an Edition serves a feature is the Edition registry's answer, `serving(e
 ## Amendment: the Edition registry reads the remote Feature Switches (0.8, ADR 0040)
 
 Feature Switches still come from the Edition config, and the owner can now turn a feature off remotely in an emergency. `serving(editionId, feature)` reads those remote switches after the Edition's own, so it is asynchronous, and a feature off remotely is `switched-off`, answered `NOT_FOUND` like a feature the Edition turns off. The backend builds the registry in one place, over the Editions read from their folders and the `remote_switches` table, for the app and for the publish and switch commands. ADR 0040 says how remote switches are stored, set and served.
+
+## Amendment: the `sync` domain keeps the records of Sync (0.8, ADR 0041)
+
+The backend gains a fourth domain folder on both sides, `sync`: the server Core's Sync, with its `UserRecords` port, and the backend's `sync.push` and `sync.pull` procedures with the port's adapter over the `user_records` table, whose rows carry `edition_id` and go with their Account through the cascade. Its procedures reach the Account through the session gate, whose middleware now lives in the backend's `account` folder for every procedure of a Session to use, and they ask the Edition registry for both the `account` and the `sync` Feature Switches.

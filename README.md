@@ -199,6 +199,13 @@ The backend serves every Edition from one deployment ([ADR 0008](docs/adr/0008-o
    curl -i -H 'content-type: application/json' -d '{"email":"anna@example.com","code":"123456"}' http://localhost:8787/v1/account/sessions
    ```
 
+   With the token, a device's Sync pushes changes of its records and pulls the Account's records in the Edition after its cursor ([ADR 0041](docs/adr/0041-sync-exchanges-opaque-records-and-the-clients-change-time-wins.md)). A change time is in milliseconds since 1970, a `null` value is a tombstone, and a change replaces the record kept only when its change time is later:
+
+   ```sh
+   curl -i -H 'authorization: Bearer <token>' -H 'content-type: application/json' -d '{"changes":[{"key":"favorites.<entry id>","value":"2026-10-18T09:00:00.000Z","changedAt":0}]}' http://localhost:8787/v1/editions/uk/records
+   curl -i -H 'authorization: Bearer <token>' 'http://localhost:8787/v1/editions/uk/records?after=0'
+   ```
+
 5. Run the backend's tests. Each run makes a database with a random name on the local Postgres, runs the migrations on it and drops it at the end, so runs in parallel worktrees never meet. The tests call the backend through the API's client built from the contract, the one the app uses, with its fetch pointed at the backend in process, so no port is opened. When Postgres is not reachable, the run stops and asks you to start Docker. `pnpm test` from the root runs them with every other package's; CI runs them in the job "Backend" on a Postgres 17 service, after running every migration on an empty database. `DATABASE_URL` names another Postgres server for the tests.
 
    ```sh

@@ -15,6 +15,7 @@ export {
   type NotServing,
   type SwitchRefusal,
 } from './edition/edition-registry';
+export { createSync, type Sync, type SyncChange, type SyncPage } from './sync/sync';
 export {
   systemClock,
   type AccountRecord,
@@ -22,9 +23,13 @@ export {
   type Clock,
   type CodeCheck,
   type ContentPackStore,
+  type Json,
+  type KeptRecord,
   type Mail,
   type Mailer,
   type PublishedFile,
   type RateLimits,
+  type RecordChange,
   type RemoteSwitchStore,
+  type UserRecords,
 } from './ports';

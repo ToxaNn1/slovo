@@ -219,7 +219,8 @@ export function createAuthenticator(
 
     // better-auth's own deleteUser runs its deletes one by one, outside a
     // transaction, so the adapter deletes in one: the database's cascade takes
-    // the Sessions and sign-in methods with the Account (ADR 0030).
+    // the Sessions, sign-in methods and Sync's records with the Account
+    // (ADR 0030, 0041).
     async delete({ id, email }) {
       await database.db.transaction(async (tx) => {
         await tx.delete(signInCodes).where(eq(signInCodes.identifier, codeIdentifier(email)));

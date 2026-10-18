@@ -67,8 +67,9 @@ export interface Accounts {
   signOutEverywhere(session: Session): Promise<void>;
   /**
    * Deletes the Session's Account at once and for good, with its Sessions,
-   * sign-in methods and the Sign-in codes waiting for its email. The email
-   * may then sign in to a new, empty Account.
+   * sign-in methods, the records Sync keeps of it in every Edition and the
+   * Sign-in codes waiting for its email. The email may then sign in to a
+   * new, empty Account.
    */
   delete(session: Session): Promise<void>;
 }
@@ -133,7 +134,6 @@ export function createAccounts({
 
     signOutEverywhere: ({ account }) => authenticator.revokeAll(account.id),
 
-    // From 0.8 the Account's synced data in every Edition goes here too (spec #333).
     delete: ({ account }) => authenticator.delete(account),
   };
 }

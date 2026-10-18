@@ -4,11 +4,14 @@
  * `timestamptz` and every id a UUID (spec #333, Data model). The tables come
  * with the tickets that need them.
  */
+import type { Json } from '@slovo/server-core';
 import {
+  bigserial,
   boolean,
   customType,
   index,
   integer,
+  jsonb,
   pgTable,
   primaryKey,
   text,
@@ -179,4 +182,35 @@ export const remoteSwitches = pgTable(
     setAt: time('set_at'),
   },
   (table) => [primaryKey({ columns: [table.editionId, table.feature] })],
+);
+
+/**
+ * The records of every Account's user state, per Edition, that Sync keeps
+ * (ADR 0041): one row per Account, Edition and key, kept as the device sent
+ * it and never read. A deleted record stays as a tombstone, its `value` null,
+ * so the deletion reaches every device; the Account's rows go with it.
+ */
+export const userRecords = pgTable(
+  'user_records',
+  {
+    accountId: uuid('account_id')
+      .notNull()
+      .references(() => accounts.id, { onDelete: 'cascade' }),
+    editionId: text('edition_id').notNull(),
+    /** The record's key in the user state, such as `favorites.<id>`. */
+    key: text('key').notNull(),
+    /** The record's value as JSON; null for a tombstone. */
+    value: jsonb('value').$type<Json>(),
+    /** When the device wrote the change, cut down to the server's time when later. */
+    changedAt: time('changed_at'),
+    /**
+     * The next value of one sequence for every kept change, so a device pulls
+     * what was kept after the last sequence it saw (its cursor).
+     */
+    sequence: bigserial('sequence', { mode: 'number' }).notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.accountId, table.editionId, table.key] }),
+    index().on(table.accountId, table.editionId, table.sequence),
+  ],
 );
