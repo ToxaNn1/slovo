@@ -275,7 +275,6 @@ export async function openComposition({
     entryRow: (entryId) => rows.row(entryId),
     widget: createWidget({
       edition,
-      editionId: edition.id,
       entries,
       favorites,
       collections,

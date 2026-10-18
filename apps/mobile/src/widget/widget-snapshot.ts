@@ -35,8 +35,8 @@ export interface WidgetDevice {
  * the last good file and the next write tries again. Writes run one after the
  * other, each building its snapshot in its turn, so an older snapshot never
  * lands last. A snapshot the Core doesn't build, as the widget's Feature
- * Switch is off, writes nothing and asks for no reload. Without `device` (a dev client built before the 0.6 batch)
- * nothing is built or written.
+ * Switch is off, writes nothing and asks for no reload. Without `device` (a
+ * dev client built before the 0.6 batch) nothing is built or written.
  */
 export function createWidgetSnapshotWriter(
   device: WidgetDevice | undefined,
@@ -48,7 +48,6 @@ export function createWidgetSnapshotWriter(
   async function writeOnce(snapshot: () => Promise<WidgetSnapshot | undefined>): Promise<void> {
     try {
       const built = await snapshot();
-      // The widget's Feature Switch is off: no new snapshot, and the widget keeps the last file.
       if (built === undefined) return;
       const text = serializeWidgetSnapshot(built);
       await widget.container.write(STAGED_WIDGET_SNAPSHOT_FILE, text);

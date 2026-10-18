@@ -67,7 +67,6 @@ function widgetEntry(entry: Entry): WidgetEntry {
  */
 export function createWidget({
   edition,
-  editionId,
   entries,
   favorites,
   collections,
@@ -75,8 +74,7 @@ export function createWidget({
   clock,
   opened,
 }: {
-  edition: Pick<Edition, 'isFeatureEnabled'>;
-  editionId: string;
+  edition: Pick<Edition, 'id' | 'isFeatureEnabled'>;
   entries: Entries;
   favorites: Favorites;
   collections: Collections;
@@ -97,7 +95,7 @@ export function createWidget({
         kept.map(({ entryId }) => entryId).filter((id) => eligibleIds.has(id));
       return {
         format: WIDGET_SNAPSHOT_FORMAT,
-        editionId,
+        editionId: edition.id,
         writtenAt: clock.now().toISOString(),
         onboardingFinished: onboarding.state.finishedAt !== undefined,
         entries: eligible.map(widgetEntry),

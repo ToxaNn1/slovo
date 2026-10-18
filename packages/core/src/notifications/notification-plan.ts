@@ -253,8 +253,11 @@ export function createNotificationPlanner({
   }
 
   /** Today's Word of the Day, unless its Feature Switch is off and no notification carries it. */
-  const todaysWordOfTheDay = () =>
-    edition.isFeatureEnabled('wordOfTheDay') ? wordOfTheDay.chosen()?.wordId : undefined;
+  function todaysWordOfTheDay(): string | undefined {
+    return edition.isFeatureEnabled('wordOfTheDay') ? wordOfTheDay.chosen()?.wordId : undefined;
+  }
+
+  const notificationsOn = () => edition.isFeatureEnabled('notifications');
 
   function soundOf(on: boolean): PlannedSound {
     if (!on) return 'silent';
@@ -265,7 +268,7 @@ export function createNotificationPlanner({
     times: readonly TimeOfDay[],
   ): Promise<MorningNotification | undefined> {
     const [earliest] = times;
-    if (!edition.isFeatureEnabled('notifications')) return undefined;
+    if (!notificationsOn()) return undefined;
     const today = todaysWordOfTheDay();
     const wordId =
       earliest === undefined
@@ -285,10 +288,7 @@ export function createNotificationPlanner({
   }
 
   async function plan({ times, sound, permission }: PlanSettings): Promise<void> {
-    const slots =
-      permission === 'allowed' && edition.isFeatureEnabled('notifications')
-        ? slotsAhead(times, clock)
-        : [];
+    const slots = permission === 'allowed' && notificationsOn() ? slotsAhead(times, clock) : [];
     const stored = await reservedWords.stored();
     const planned: PlannedWord[] = [];
     const notifications: PlannedNotification[] = [];
