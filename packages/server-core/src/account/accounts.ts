@@ -25,6 +25,8 @@ declare const opened: unique symbol;
  * own Account, never on one a request names.
  */
 export interface Session {
+  /** Names the Session, as its token does, but signs nothing in. */
+  readonly id: string;
   readonly token: string;
   readonly account: AccountRecord;
   readonly [opened]: true;
@@ -126,9 +128,9 @@ export function createAccounts({
 
     async session(token) {
       if (token === undefined) return unauthorized;
-      const account = await authenticator.accountOf(token);
-      if (account === undefined) return unauthorized;
-      return { ok: true, session: { token, account } as Session };
+      const opened = await authenticator.sessionOf(token);
+      if (opened === undefined) return unauthorized;
+      return { ok: true, session: { ...opened, token } as Session };
     },
 
     signOut: ({ token }) => authenticator.revoke(token),

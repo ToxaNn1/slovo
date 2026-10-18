@@ -81,8 +81,13 @@ export interface Authenticator {
    * code for an email creates its Account; a right code starts a Session.
    */
   checkCode(email: string, code: string): Promise<CodeCheck>;
-  /** The Account of the Session the token carries, if the Session is on. Using a Session extends it. */
-  accountOf(token: string): Promise<AccountRecord | undefined>;
+  /**
+   * The Session the token carries, by its id, with its Account, if the
+   * Session is on. Using a Session extends it.
+   */
+  sessionOf(
+    token: string,
+  ): Promise<{ readonly id: string; readonly account: AccountRecord } | undefined>;
   /** Ends the Session the token carries, if it is on. */
   revoke(token: string): Promise<void>;
   /** Ends every Session of the Account. */
