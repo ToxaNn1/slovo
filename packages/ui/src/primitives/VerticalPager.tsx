@@ -113,12 +113,17 @@ const DRAG = { undecided: 0, page: 1, scroll: 2 } as const;
 /** How close to an end of its scroll, in points, a page counts as at that end. */
 const SCROLL_EDGE = 1;
 
+/** No page, as the page whose content a drag began on. */
+const NO_PAGE = -1;
+
 interface PagerContextValue {
   readonly panRef: RefObject<GestureType | undefined>;
   /** Each drawn page's scroll, by page index; a page without a scroll view has none. */
   readonly scrolls: SharedValue<Record<number, PageScroll>>;
   /** Whether a drag is turning the page now, so the page's content holds still. */
   readonly turning: SharedValue<boolean>;
+  /** The page whose scrolling content the drag began on, the only drag that scrolls it; `NO_PAGE` if none. */
+  readonly touchedContent: SharedValue<number>;
 }
 
 /** The props that give an accessible element the page-turn actions. */
@@ -140,8 +145,9 @@ const PageTurnActionsContext = createContext<TurnActions | undefined>(undefined)
  * Full-screen pages stacked vertically: swipe up for the next page, down for
  * the one before. It snaps one page per swipe and draws only the pages next
  * to the current one and those a swipe passes. A page taller than the screen puts its content in a
- * `PagerScrollView`: a swipe then scrolls it, and turns the page only once the
- * content is scrolled to its end in that direction.
+ * `PagerScrollView`: a swipe that begins on that content scrolls it, and turns
+ * the page only once the content is scrolled to its end in that direction; a
+ * swipe that begins elsewhere on the page turns it at once.
  */
 export function VerticalPager<Item>({
   items,
@@ -172,6 +178,7 @@ export function VerticalPager<Item>({
   const turnFrom = useSharedValue(0);
   const scrolls = useSharedValue<Record<number, PageScroll>>({});
   const turning = useSharedValue(false);
+  const touchedContent = useSharedValue(NO_PAGE);
   const panRef = useRef<GestureType | undefined>(undefined);
 
   useEffect(() => {
@@ -235,7 +242,10 @@ export function VerticalPager<Item>({
       },
     };
   }, [index, items.length, turnActionLabels, turnTo]);
-  const pager = useMemo(() => ({ panRef, scrolls, turning }), [scrolls, turning]);
+  const pager = useMemo(
+    () => ({ panRef, scrolls, turning, touchedContent }),
+    [scrolls, turning, touchedContent],
+  );
 
   // Gesture Handler asks for a memoised gesture: a new one on each render
   // sends its worklets to the UI thread again.
@@ -257,13 +267,16 @@ export function VerticalPager<Item>({
       .onUpdate(({ translationY }) => {
         if (pageHeight.value === 0) return;
         if (drag.value === DRAG.undecided) {
-          // The page turns only from the end of its scroll in the swipe's direction.
+          // A drag on the page's content turns the page only from the end of its
+          // scroll in the swipe's direction. The content scrolls under no other
+          // drag, so any other drag turns the page.
           const scroll = scrolls.value[turnedTo.value] ?? { y: 0, max: 0 };
           const atEnd =
             translationY < 0 ? scroll.y >= scroll.max - SCROLL_EDGE : scroll.y <= SCROLL_EDGE;
-          drag.value = atEnd ? DRAG.page : DRAG.scroll;
+          const turns = atEnd || touchedContent.value !== turnedTo.value;
+          drag.value = turns ? DRAG.page : DRAG.scroll;
           turnFrom.value = translationY;
-          turning.value = atEnd;
+          turning.value = turns;
         }
         if (drag.value !== DRAG.page) return;
         const dragged = dragStart.value - (translationY - turnFrom.value) / pageHeight.value;
@@ -288,6 +301,7 @@ export function VerticalPager<Item>({
       })
       .onFinalize(() => {
         turning.value = false;
+        touchedContent.value = NO_PAGE;
       });
     // How a component test finds the swipe; Gesture Handler reads it in Jest only.
     if (testID !== undefined) gesture.withTestId(`${testID}-swipe`);
@@ -302,6 +316,7 @@ export function VerticalPager<Item>({
     position,
     scrolls,
     testID,
+    touchedContent,
     turn,
     turnFrom,
     turnedTo,
@@ -436,7 +451,7 @@ export function PagerScrollView({
 }) {
   const pager = useContext(PagerContext);
   if (pager === undefined) throw new Error('PagerScrollView must be inside a VerticalPager');
-  const { panRef, scrolls, turning } = pager;
+  const { panRef, scrolls, turning, touchedContent } = pager;
   const index = useContext(PageIndexContext);
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
   const viewport = useRef(0);
@@ -455,6 +470,17 @@ export function PagerScrollView({
     [index, scrolls],
   );
 
+  // Tells the pager, as the finger touches down, that the drag began on this
+  // page's content. It never takes the drag, so the scroll and the swipe carry on.
+  const touchDown = useMemo(() => {
+    const gesture = Gesture.Manual().onBegin(() => {
+      touchedContent.value = index;
+    });
+    // How a component test touches the content; Gesture Handler reads it in Jest only.
+    if (testID !== undefined) gesture.withTestId(`${testID}-touch`);
+    return gesture;
+  }, [index, testID, touchedContent]);
+
   const onScroll = useAnimatedScrollHandler((event) => {
     const y = event.contentOffset.y;
     if (turning.value) {
@@ -467,31 +493,33 @@ export function PagerScrollView({
   });
 
   return (
-    <AnimatedScrollView
-      ref={scrollRef}
-      testID={testID}
-      simultaneousHandlers={panRef}
-      // A sheet opened from the card is a child in React's tree (it is a Modal), and a
-      // scroll view that persists no taps would swallow the first tap in the sheet's
-      // name field to put the keyboard away.
-      keyboardShouldPersistTaps="handled"
-      // The page turns at the ends, so the content never bounces past them.
-      bounces={false}
-      scrollEventThrottle={16}
-      onScroll={onScroll}
-      onLayout={(event: LayoutChangeEvent) => {
-        viewport.current = event.nativeEvent.layout.height;
-        measure();
-      }}
-      onContentSizeChange={(_width: number, height: number) => {
-        content.current = height;
-        measure();
-      }}
-      style={style}
-      contentContainerStyle={contentContainerStyle}
-    >
-      {children}
-    </AnimatedScrollView>
+    <GestureDetector gesture={touchDown}>
+      <AnimatedScrollView
+        ref={scrollRef}
+        testID={testID}
+        simultaneousHandlers={panRef}
+        // A sheet opened from the card is a child in React's tree (it is a Modal), and a
+        // scroll view that persists no taps would swallow the first tap in the sheet's
+        // name field to put the keyboard away.
+        keyboardShouldPersistTaps="handled"
+        // The page turns at the ends, so the content never bounces past them.
+        bounces={false}
+        scrollEventThrottle={16}
+        onScroll={onScroll}
+        onLayout={(event: LayoutChangeEvent) => {
+          viewport.current = event.nativeEvent.layout.height;
+          measure();
+        }}
+        onContentSizeChange={(_width: number, height: number) => {
+          content.current = height;
+          measure();
+        }}
+        style={style}
+        contentContainerStyle={contentContainerStyle}
+      >
+        {children}
+      </AnimatedScrollView>
+    </GestureDetector>
   );
 }
 

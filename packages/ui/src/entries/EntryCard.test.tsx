@@ -7,9 +7,11 @@ import {
   HapticsProvider,
   VerticalPager,
 } from '@slovo/ui';
-import { describe, expect, it, jest } from '@jest/globals';
-import { fireEvent, render, screen, within } from '@testing-library/react-native';
+import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { act, fireEvent, render, screen, within } from '@testing-library/react-native';
 import { StyleSheet, Text, type StyleProp, type ViewStyle } from 'react-native';
+import { State } from 'react-native-gesture-handler';
+import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 
 const strings = {
   wordCard: {
@@ -107,6 +109,98 @@ function styleOf(testID: string) {
   return StyleSheet.flatten(
     (screen.getByTestId(testID).props as { style?: StyleProp<ViewStyle> }).style,
   );
+}
+
+/** The Feed's height, and the heights of a long card's text and of its frame, which shows part of it. */
+const FEED_HEIGHT = 800;
+const TEXT_HEIGHT = 1200;
+const FRAME_HEIGHT = 500;
+/** How far, in points, a drag goes before the swipe takes it, as on the device. */
+const ACTIVATION = 12;
+/** A frame, and the swipe's motion from the design, in milliseconds. */
+const FRAME_MS = 16;
+const SWIPE_MS = 420;
+
+/**
+ * The Feed with a long card and a short page next to it, on the long card. The
+ * card's text is taller than its frame, which shows it from the top.
+ */
+async function renderLongCard({
+  shortPage,
+  onIndexChange,
+}: {
+  /** Where the short page is: after the long card or before it. */
+  shortPage: 'after' | 'before';
+  onIndexChange: (index: number) => void;
+}) {
+  const pages = shortPage === 'after' ? ['long', 'short'] : ['short', 'long'];
+  await render(
+    inEdition(
+      <HapticsProvider haptics={haptics}>
+        <VerticalPager
+          testID="feed"
+          items={pages}
+          initialIndex={pages.indexOf('long')}
+          onIndexChange={onIndexChange}
+          renderPage={(page) =>
+            page === 'long' ? (
+              <EntryCard card={wordCard} actions={actions} scrollable />
+            ) : (
+              <Text>short</Text>
+            )
+          }
+        />
+      </HapticsProvider>,
+    ),
+  );
+  await fireEvent(screen.getByTestId('feed'), 'layout', {
+    nativeEvent: { layout: { x: 0, y: 0, width: 400, height: FEED_HEIGHT } },
+  });
+  const text = screen.getByTestId('entry-card-scroll');
+  await fireEvent(text, 'layout', {
+    nativeEvent: { layout: { x: 0, y: 0, width: 360, height: FRAME_HEIGHT } },
+  });
+  await fireEvent(text, 'contentSizeChange', 360, TEXT_HEIGHT);
+  // The pager learns how far the text scrolls on the next frame.
+  await act(async () => {
+    await jest.advanceTimersByTimeAsync(FRAME_MS);
+  });
+}
+
+/** The reader scrolls the long card's text to `y`. */
+async function scrollTextTo(y: number) {
+  await fireEvent.scroll(screen.getByTestId('entry-card-scroll'), {
+    nativeEvent: {
+      contentOffset: { x: 0, y },
+      contentSize: { width: 360, height: TEXT_HEIGHT },
+      layoutMeasurement: { width: 360, height: FRAME_HEIGHT },
+    },
+  });
+}
+
+/** A swipe across half the Feed, begun on the long card's text or beside it. */
+async function swipe(direction: 'up' | 'down', { onText }: { onText: boolean }) {
+  const sign = direction === 'up' ? -1 : 1;
+  const velocityY = sign * 100;
+  await act(() => {
+    if (onText) {
+      fireGestureHandler(getByGestureTestId('entry-card-scroll-touch'), [
+        { state: State.BEGAN },
+        { state: State.FAILED },
+      ]);
+    }
+    fireGestureHandler(getByGestureTestId('feed-swipe'), [
+      { state: State.BEGAN, translationY: 0, velocityY: 0 },
+      { state: State.ACTIVE, translationY: sign * ACTIVATION, velocityY },
+      { state: State.ACTIVE, translationY: sign * ACTIVATION, velocityY },
+      { state: State.ACTIVE, translationY: (sign * FEED_HEIGHT) / 2, velocityY },
+      { state: State.END, translationY: (sign * FEED_HEIGHT) / 2, velocityY },
+    ]);
+  });
+  // The page settles.
+  await act(async () => {
+    await jest.advanceTimersByTimeAsync(SWIPE_MS);
+  });
 }
 
 describe('EntryCard', () => {
@@ -207,5 +301,63 @@ describe('EntryCard', () => {
     expect(screen.queryByTestId('entry-card-scroll')).toBeNull();
     expect(screen.getByTestId('correction-explanation')).toBeTruthy();
     expect(screen.getByTestId('card-actions')).toBeTruthy();
+  });
+
+  describe('in the Feed, with its text taller than the frame', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('leaves the page to the text under a swipe that begins on the text before its end', async () => {
+      const onIndexChange = jest.fn();
+      await renderLongCard({ shortPage: 'after', onIndexChange });
+
+      await swipe('up', { onText: true });
+
+      expect(onIndexChange).not.toHaveBeenCalled();
+    });
+
+    it('turns to the next page on a swipe up that begins on the text at its bottom', async () => {
+      const onIndexChange = jest.fn();
+      await renderLongCard({ shortPage: 'after', onIndexChange });
+
+      await scrollTextTo(TEXT_HEIGHT - FRAME_HEIGHT);
+      await swipe('up', { onText: true });
+
+      expect(onIndexChange).toHaveBeenCalledWith(1);
+    });
+
+    it('turns to the page before on a swipe down that begins on the text at its top', async () => {
+      const onIndexChange = jest.fn();
+      await renderLongCard({ shortPage: 'before', onIndexChange });
+
+      await swipe('down', { onText: true });
+
+      expect(onIndexChange).toHaveBeenCalledWith(0);
+    });
+
+    it('turns the page on a swipe that begins beside the text', async () => {
+      const onIndexChange = jest.fn();
+      await renderLongCard({ shortPage: 'after', onIndexChange });
+
+      await swipe('up', { onText: false });
+
+      expect(onIndexChange).toHaveBeenCalledWith(1);
+    });
+
+    it('turns the page on a swipe beside the text after one on it', async () => {
+      const onIndexChange = jest.fn();
+      await renderLongCard({ shortPage: 'after', onIndexChange });
+
+      await swipe('up', { onText: true });
+      await swipe('up', { onText: false });
+
+      expect(onIndexChange).toHaveBeenCalledTimes(1);
+      expect(onIndexChange).toHaveBeenCalledWith(1);
+    });
   });
 });
