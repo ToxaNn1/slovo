@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { AccessibilityInfo, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Circle, Path } from 'react-native-svg';
 
 import { useEdition } from '../providers/EditionProvider';
 import { rowActionProps, SwipeableRow, type RowAction } from '../primitives/SwipeableRow';
@@ -11,7 +11,8 @@ import { useTokens } from '../providers/TokensProvider';
  * A Collection on the Collections screen: a card with its name over its
  * newest Lemmas, and how many Entries it holds on the right. A tap opens the
  * Collection; swipe actions slide out inside the card and are VoiceOver
- * actions too. Needs a `GestureHandlerRootView` above it.
+ * actions too, and the «…» button at the right offers the same actions in a
+ * menu. Needs a `GestureHandlerRootView` above it.
  */
 export function CollectionRow({
   name,
@@ -19,6 +20,7 @@ export function CollectionRow({
   lemmas,
   accessibilityLabel,
   actions,
+  more,
   onPress,
   testID,
 }: {
@@ -30,6 +32,8 @@ export function CollectionRow({
   /** The Collection as VoiceOver reads it: its name, its count and its Lemmas. */
   accessibilityLabel: string;
   actions: readonly RowAction[];
+  /** The «…» button: what VoiceOver reads for it, and what a tap does (opens the menu). */
+  more: { label: string; onPress: () => void };
   /** Opens the Collection. */
   onPress: () => void;
   testID: string;
@@ -45,34 +49,51 @@ export function CollectionRow({
         { borderColor: colors.line, borderRadius: radii.card, backgroundColor: colors.surface },
       ]}
     >
-      <Pressable
-        testID={`${testID}-content`}
-        accessibilityRole="button"
-        accessibilityLabel={accessibilityLabel}
-        {...rowActionProps(actions)}
-        {...voice}
-        onPress={onPress}
-        style={({ pressed }) => [
-          styles.content,
-          { backgroundColor: pressed ? colors.surfaceSunken : colors.surface },
-        ]}
-      >
-        <View style={styles.titleLine}>
-          <Text style={[styles.name, { color: colors.ink, fontFamily: fontFamilies.ui }]}>
-            {name}
-          </Text>
-          <Text style={[styles.count, { color: colors.muted, fontFamily: fontFamilies.ui }]}>
-            {count}
-          </Text>
-        </View>
-        {lemmas.length > 0 && (
-          <Text
-            style={[styles.lemmas, { color: colors.inkSecondary, fontFamily: fontFamilies.word }]}
-          >
-            {lemmas.join(' · ')}
-          </Text>
-        )}
-      </Pressable>
+      <View style={styles.line}>
+        <Pressable
+          testID={`${testID}-content`}
+          accessibilityRole="button"
+          accessibilityLabel={accessibilityLabel}
+          {...rowActionProps(actions)}
+          {...voice}
+          onPress={onPress}
+          style={({ pressed }) => [
+            styles.content,
+            { backgroundColor: pressed ? colors.surfaceSunken : colors.surface },
+          ]}
+        >
+          <View style={styles.titleLine}>
+            <Text style={[styles.name, { color: colors.ink, fontFamily: fontFamilies.ui }]}>
+              {name}
+            </Text>
+            <Text style={[styles.count, { color: colors.muted, fontFamily: fontFamilies.ui }]}>
+              {count}
+            </Text>
+          </View>
+          {lemmas.length > 0 && (
+            <Text
+              style={[styles.lemmas, { color: colors.inkSecondary, fontFamily: fontFamilies.word }]}
+            >
+              {lemmas.join(' · ')}
+            </Text>
+          )}
+        </Pressable>
+        <Pressable
+          testID={`${testID}-more`}
+          accessibilityRole="button"
+          accessibilityLabel={more.label}
+          {...voice}
+          hitSlop={space[2]}
+          onPress={more.onPress}
+          style={styles.more}
+        >
+          <Svg width={20} height={20} viewBox="0 0 20 20">
+            {[4, 10, 16].map((cx) => (
+              <Circle key={cx} cx={cx} cy={10} r={1.75} fill={colors.muted} />
+            ))}
+          </Svg>
+        </Pressable>
+      </View>
     </SwipeableRow>
   );
 }
@@ -222,7 +243,9 @@ export function NewCollectionButton({
 
 const styles = StyleSheet.create({
   card: { borderWidth: 1, overflow: 'hidden' },
+  line: { flexDirection: 'row', alignItems: 'stretch' },
   content: {
+    flex: 1,
     paddingHorizontal: cardSpace.collectionPadding,
     paddingVertical: cardSpace.collectionPadding,
     gap: space[2],
@@ -238,6 +261,12 @@ const styles = StyleSheet.create({
   name: { flexShrink: 1, fontSize: typeSize.blockHeading, fontWeight: '700' },
   count: { flexShrink: 0, fontSize: typeSize.caption, fontWeight: '500' },
   lemmas: { fontSize: typeSize.collectionLemmas, lineHeight: typeSize.collectionLemmas * 1.3 },
+  more: {
+    minWidth: minTouchTarget,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    paddingTop: cardSpace.collectionPadding,
+  },
   editing: {
     paddingHorizontal: cardSpace.collectionPadding,
     paddingVertical: space[4],
