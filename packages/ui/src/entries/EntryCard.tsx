@@ -20,8 +20,9 @@ export interface EntryCardProps {
   /**
    * In the Feed: the card fits the space it is given and sits in the middle of
    * it, or fills it from the top when it is taller; its text scrolls inside the
-   * frame (swiping on to the next card at the end of the text), and the action
-   * row stays under the frame. Only inside a `VerticalPager`.
+   * frame (a swipe on the text swipes on to the next card at the end of the
+   * text, a swipe beside it at once), and the action row stays under the frame.
+   * Only inside a `VerticalPager`.
    */
   scrollable?: boolean;
 }
