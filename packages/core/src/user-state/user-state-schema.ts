@@ -136,6 +136,21 @@ export const userStateRecords = {
    * Sync keeps the higher of two devices' results (0.8).
    */
   gameBest: declareRecord('game.best', z.number().int().min(0).max(15), { sync: 'highest' }),
+  /**
+   * The changes of synced records not yet sent to the Account, one record per
+   * changed record, by its key: the instant it changed and its new text, or
+   * `null` for a deletion (a tombstone). The tracked user state writes one with
+   * each write of a synced record (0.8); it never syncs itself.
+   */
+  syncPending: declareRecords(
+    'sync.pending.',
+    z.object({ changedAt: InstantSchema, value: z.string().nullable() }),
+    { sync: 'device-only' },
+  ),
+  /** The Sync cursor: the server's sequence number of the last record pulled; without it, no sync has pulled yet. */
+  syncCursor: declareRecord('sync.cursor', z.number().int().nonnegative(), {
+    sync: 'device-only',
+  }),
 };
 
 /** Every declared record and kind of record, for finding the one a key belongs to. */
