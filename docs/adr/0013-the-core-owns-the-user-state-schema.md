@@ -108,3 +108,22 @@ Sync (spec #378) merges the user state record by record by the marks this ADR de
 - **Keep Seen as `true` and clear Seen on a Cycle change from another device**: rejected. The device would have to tell which Seen marks came with the other Cycle, and a mark that arrives after the Cycle record would still count.
 - **Re-encode a synced record in a later migration and make every app understand both**: rejected. An app that shipped can't learn the new encoding, and it would read the record as absent or overwrite it.
 - **Write the Category back in when a merge empties the Mix**: rejected. Both devices would write at once and race each other; reading the empty Mix as the default needs no write.
+
+## Amendment: the Sync queue lives in the user state, and every write is tracked (0.8)
+
+Sync (spec #378) has to know which records changed since the last push, and when. The queue and the cursor are records of the user state, so the `records` table and its adapters stay exactly as this ADR defines them:
+
+- a pending change: `sync.pending.` + the key of the changed record, holding the instant it changed and the record's new text, or `null` for a deletion (a tombstone). One per changed key: the next write of the key replaces it;
+- the cursor: `sync.cursor`, the server's sequence number of the last record pulled.
+
+Both are `device-only`, so they never sync themselves.
+
+**Every write is tracked.** The Core wraps the user state it hands to its modules (`trackChanges`): each write of a record that syncs (last write wins, `union` or `highest`) also writes the pending change of each such key, with the time from the injected clock, in the same atomic batch. A write that fails leaves no pending change, and no module changes. `device-only` records, the schema version, the pending changes and the cursor are never tracked, nor is a key the schema doesn't declare. Changes are tracked whether or not the reader is signed in, so a change made while signed out keeps its real time. Records written before 0.8 have no pending change, and nothing is back-filled: the first sync of a device pushes them by the first-sign-in rule.
+
+The app opens the tracked user state first, before the settings and the composition, and every feature shares it, so no write goes around it. Sync reads the pending changes and the cursor through it, and deletes the pending changes the Account accepted, each only while it still holds what was sent, so a newer change of the same key written meanwhile stays for the next push. Writes and that deletion run one at a time, so a write can't land between the deletion's read and its write.
+
+### Considered Options
+
+- **A queue table beside `records`, or a change column on it**: rejected. Both adapters would need a migration of their own and the contract suite would grow, and the queue would no longer share the records' atomic batch.
+- **Each module writes its own pending changes**: rejected. A module could forget one, and every module would have to know about Sync.
+- **Track writes only while signed in**: rejected. A change made while signed out would lose its time and lose to an older change at the next sign-in.
