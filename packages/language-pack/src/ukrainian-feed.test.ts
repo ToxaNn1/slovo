@@ -299,6 +299,7 @@ describe('Corrections in the Feed over the Ukrainian Language Pack', () => {
       correctionType: correction?.correctionType,
       explanation: correction?.explanation,
       examplePair: correction?.examplePair,
+      sourceTitles: correction?.sources.map((source) => source.title),
     });
   });
 });

@@ -122,7 +122,11 @@ function MirroredCorners({
   return (
     <DecorView style={StyleSheet.absoluteFill}>
       {at.map((place) => (
-        <View key={place} style={[styles.corner, placements[place]]}>
+        <View
+          key={place}
+          testID={`card-corner-${place}`}
+          style={[styles.corner, placements[place]]}
+        >
           <MotifImage motif={corner} width={corner.width * scale} />
         </View>
       ))}
@@ -132,8 +136,8 @@ function MirroredCorners({
 
 /**
  * Decor slot 3, the card frame: the Edition's corner in the corners of a
- * card, all four on a Word card, and fewer on other cards as their design has
- * it. Place it inside the card. Nothing when the Decor has no corners.
+ * card, all four on a Word card and a Correction card, and fewer on other
+ * cards as their design has it. Place it inside the card. Nothing when the Decor has no corners.
  */
 export function CardCorners({ corners: at = allCorners }: { corners?: readonly Corner[] }) {
   const { corners } = useDecor();
