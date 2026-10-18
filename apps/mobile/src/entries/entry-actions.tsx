@@ -14,6 +14,8 @@ import { refusalText } from '../saved/collection-refusal';
 import { deviceClock } from '../device/device-clock';
 import { shareCardOnDevice } from '../share/device-share';
 import { edition, editionStrings } from '../edition/edition';
+import { useEditionInEffect } from '../edition/remote-switches';
+import { entryButtonsOf } from './entry-buttons';
 import { useEntryCollections } from '../saved/collections';
 import { useCompositionRead } from '../composition';
 import { useFavorite } from '../saved/favorites';
@@ -26,7 +28,8 @@ const shareFormat = createShareFormatMemory();
 /**
  * The action row of an Entry card, wherever the card appears: the Feed and the
  * Entry screen a list opens. Each action fills its own slot. Share is there
- * only when the binary can capture the Share Card. Its screen gives it an
+ * only when the binary can capture the Share Card and the Share Cards switch
+ * is on in effect. Its screen gives it an
  * `UndoToastProvider` for the toast after a hide.
  */
 export function EntryActions({ card }: { card: EntryFeedCard }) {
@@ -35,7 +38,7 @@ export function EntryActions({ card }: { card: EntryFeedCard }) {
   const hide = useHide(card);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
-  const share = shareCardOnDevice;
+  const share = entryButtonsOf(useEditionInEffect()).shareCard ? shareCardOnDevice : undefined;
   return (
     <>
       <ActionRow
