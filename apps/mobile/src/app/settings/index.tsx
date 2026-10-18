@@ -17,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AccountRow } from '../../account/account-row';
 import { accountOpening } from '../../account/device-account';
 import { editionStrings } from '../../edition/edition';
+import { useEditionInEffect } from '../../edition/remote-switches';
 import { useHiddenSummary } from '../../mix/hidden';
 import { useMixSummary } from '../../mix/mix';
 import { useNotificationsSummary } from '../../notifications/notifications';
@@ -38,7 +39,7 @@ const fontSizeSegments = FontSizeSchema.options.map((fontSize) => ({
 }));
 
 /**
- * Settings: SLOVO ID when the Edition has the Account, the Theme, the font
+ * Settings: SLOVO ID when the Account is on in effect, the Theme, the font
  * size and the rows of the design. The rows of later versions show as soon.
  */
 export default function SettingsScreen() {
@@ -48,6 +49,7 @@ export default function SettingsScreen() {
   const mixSummary = useMixSummary();
   const hiddenSummary = useHiddenSummary();
   const notificationsSummary = useNotificationsSummary();
+  const withAccount = useEditionInEffect().isFeatureEnabled('account');
   return (
     <SafeAreaView
       testID="settings"
@@ -56,7 +58,7 @@ export default function SettingsScreen() {
     >
       <ScrollView contentContainerStyle={styles.content}>
         <ScreenTitle>{strings.title}</ScreenTitle>
-        {accountOpening !== undefined && (
+        {withAccount && accountOpening !== undefined && (
           <View style={styles.section}>
             <SettingsGroup>
               <AccountRow opening={accountOpening} />

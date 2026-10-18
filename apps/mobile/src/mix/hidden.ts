@@ -3,7 +3,8 @@ import { fill, useEdition, useUndoToast } from '@slovo/ui';
 import { useMemo } from 'react';
 
 import { useComposition } from '../composition';
-import { edition, editionStrings } from '../edition/edition';
+import { editionStrings } from '../edition/edition';
+import { useEditionInEffect } from '../edition/remote-switches';
 import { useSubscribed } from '../opening';
 import { hiddenScreenModel, hiddenSummary, type HiddenScreenModel } from './hidden-screen';
 import { useMixState } from './mix';
@@ -26,9 +27,10 @@ export function useHiddenSummary(): string {
 export function useHiddenScreenModel(): HiddenScreenModel {
   const list = useHiddenList();
   const mix = useMixState();
+  const edition = useEditionInEffect();
   return useMemo(
     () => hiddenScreenModel({ edition, hiddenEntries: list, mix, strings: editionStrings }),
-    [list, mix],
+    [edition, list, mix],
   );
 }
 

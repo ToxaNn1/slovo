@@ -15,6 +15,7 @@ import {
   type OpenedPack,
 } from '../content-update/launch-pack';
 import { openOnce, useOpened } from '../opening';
+import { remoteSwitchesOpening, useEditionInEffect } from './remote-switches';
 
 const DATABASE_NAME = 'language-pack.db';
 
@@ -66,13 +67,14 @@ function contentUpdatesOn(packFiles: DevicePackFiles): ContentUpdates<PackReader
 /**
  * The Language Pack of the app run: the bundled one, or the newer one a
  * Content update kept, opened read-only, with the Content update module when
- * content updates are on (`openLaunchPack`). Either pack is refused when it
+ * content updates are on in effect at launch (`openLaunchPack`), so after the
+ * remote Feature Switches. Either pack is refused when it
  * is of another Edition than the app.
  */
 export const languagePackOpening = openOnce(
-  (): Promise<LaunchPack<PackReader>> =>
+  async (): Promise<LaunchPack<PackReader>> =>
     openLaunchPack({
-      edition,
+      edition: (await remoteSwitchesOpening.opened()).edition,
       // Off on a binary without the file-system module.
       contentUpdates: devicePackFiles === undefined ? undefined : contentUpdatesOn(devicePackFiles),
       openBundled,
@@ -90,5 +92,6 @@ export const languagePackOpening = openOnce(
 /** The Core's Entries of this Edition, read from the Language Pack of the app run. */
 export function useEntries(): Entries {
   const content = useOpened(languagePackOpening).reader;
-  return useMemo(() => createEntries({ content, edition }), [content]);
+  const inEffect = useEditionInEffect();
+  return useMemo(() => createEntries({ content, edition: inEffect }), [content, inEffect]);
 }

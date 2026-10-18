@@ -1,3 +1,4 @@
+import type { FeatureSwitch } from '@slovo/core';
 import { useEffect, useSyncExternalStore } from 'react';
 import { AppState } from 'react-native';
 
@@ -5,10 +6,16 @@ import { accountOpening } from './account/device-account';
 import { compositionOpening } from './composition';
 import { deviceClock } from './device/device-clock';
 import { languagePackOpening } from './edition/language-pack';
+import { remoteSwitchesOpening } from './edition/remote-switches';
 import { createForeground } from './foreground/foreground';
 import { reportForeground } from './foreground/foreground-reports';
 import { deviceWidget } from './widget/device-widget';
 import { createWidgetSnapshotWriter } from './widget/widget-snapshot';
+
+/** Whether the feature is on in effect, by the remote Feature Switches the app knows (ADR 0040). */
+async function isOnInEffect(feature: FeatureSwitch): Promise<boolean> {
+  return (await remoteSwitchesOpening.opened()).edition.isFeatureEnabled(feature);
+}
 
 /** The shell's one source of whether the app is in the foreground, for the Feed. */
 const foreground = createForeground(AppState);
@@ -24,10 +31,12 @@ export function useInForeground(): boolean {
  * another: the Account opens apart (ADR 0037). The composition hears each
  * return to the foreground and each next local day, and decides what changed
  * (a new local day, the permission). The Widget Snapshot is written when the
- * composition opens and each time the app goes to the background. The Content
- * update module checks at launch and each time the app comes back, when
- * content updates are on, at most once a day; the Account checks its Session
- * then too, at most once an hour. Draws nothing.
+ * composition opens and each time the app goes to the background. The remote
+ * Feature Switches are asked for at launch and each time the app comes back,
+ * and a changed answer reopens the composition over the Edition in effect
+ * (ADR 0040). The Content update module checks then too, when content updates
+ * are on in effect, at most once a day; the Account checks its Session then,
+ * when it is on in effect, at most once an hour. Draws nothing.
  */
 export function Lifecycle() {
   useEffect(() => {
@@ -44,16 +53,30 @@ export function Lifecycle() {
         writeWidgetSnapshot(() => composition.widget.snapshot());
       }
     });
+    reports.listen(remoteSwitchesOpening, (switches, moment) => {
+      if (moment !== 'launch' && moment !== 'return') return;
+      // Neither the ask nor a reopen rejects.
+      void switches.ask().then(async (changed) => {
+        if (changed) await compositionOpening.reopen();
+      });
+    });
     reports.listen(languagePackOpening, ({ contentUpdate }, moment) => {
-      // It never rejects.
-      if (moment === 'launch' || moment === 'return') void contentUpdate?.checkForUpdate();
+      if (moment !== 'launch' && moment !== 'return') return;
+      // Neither rejects.
+      void isOnInEffect('contentUpdates').then(async (on) => {
+        if (on) await contentUpdate?.checkForUpdate();
+      });
     });
     if (accountOpening !== undefined) {
       reports.listen(accountOpening, (account, moment) => {
         if (moment !== 'launch' && moment !== 'return') return;
-        account.refresh().catch((error: unknown) => {
-          console.error('Could not refresh the Account', error);
-        });
+        isOnInEffect('account')
+          .then(async (on) => {
+            if (on) await account.refresh();
+          })
+          .catch((error: unknown) => {
+            console.error('Could not refresh the Account', error);
+          });
       });
     }
     return reports.stop;

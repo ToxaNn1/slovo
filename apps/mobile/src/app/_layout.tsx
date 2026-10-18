@@ -28,20 +28,18 @@ import { NotificationTaps } from '../notifications/notifications';
 import { Onboarding } from '../onboarding';
 import { Opened } from '../opened';
 import { LemmaPronunciation } from '../entries/pronunciation-button';
+import { useEditionInEffect } from '../edition/remote-switches';
 import { SettingsProvider, useColorSchemeInEffect, useSettings } from '../settings';
 import { tabsOf, type Tab } from '../tabs';
 
 const { tabs } = editionStrings;
 
-/** The tabs the Edition shows, in their final order. */
-const tabOrder = tabsOf(edition);
-
 /**
- * A tab's name, test id and VoiceOver label. The label counts the tabs shown
- * only, not the hidden routes beside them, in the Edition's language. A tab
- * the Edition doesn't show has no button.
+ * A tab's name, test id and VoiceOver label, among the tabs shown in their
+ * order. The label counts the tabs shown only, not the hidden routes beside
+ * them, in the Edition's language. A tab not shown has no button.
  */
-function tabOptions(tab: Tab) {
+function tabOptions(tab: Tab, tabOrder: readonly Tab[]) {
   if (!tabOrder.includes(tab)) return { href: null };
   return {
     title: tabs[tab],
@@ -116,7 +114,7 @@ export default function RootLayout() {
   );
 }
 
-/** The tabs in their final order: Home, Settings, Game (when the Edition has it), Saved. */
+/** The tabs in their final order: Home, Settings, Game (when it is on in effect), Saved. */
 function ThemedTabs() {
   const colorScheme = useColorSchemeInEffect();
   const { fontSize, vibration } = useSettings().current;
@@ -156,7 +154,7 @@ function ThemedTabs() {
             <Opened opening={languagePackOpening} failedTestID="language-pack-failed">
               <Opened opening={compositionOpening} failedTestID="feed-error">
                 <NotificationTaps />
-                <Tabs
+                <EditionTabs
                   screenOptions={{
                     headerShown: false,
                     tabBarIcon: () => null,
@@ -169,16 +167,7 @@ function ThemedTabs() {
                       fontWeight: '600',
                     },
                   }}
-                >
-                  <Tabs.Screen name="index" options={tabOptions('home')} />
-                  <Tabs.Screen name="settings" options={tabOptions('settings')} />
-                  <Tabs.Screen name="game" options={tabOptions('game')} />
-                  <Tabs.Screen name="saved" options={tabOptions('saved')} />
-                  {/* An Entry opened from a link, such as a notification's; no tab leads to it. */}
-                  <Tabs.Screen name="entry" options={{ href: null }} />
-                  {/* The dev-only Decor showcase; no tab leads to it. */}
-                  <Tabs.Screen name="decor" options={{ href: null }} />
-                </Tabs>
+                />
                 {/* Over the tabs until the reader finishes or skips it. */}
                 <Onboarding />
               </Opened>
@@ -188,5 +177,26 @@ function ThemedTabs() {
         <LaunchSplash />
       </ThemeProvider>
     </TokensProvider>
+  );
+}
+
+/**
+ * The tabs the Edition shows in effect, in their final order: the Game's goes
+ * and comes back with its Feature Switch, also one turned off remotely while
+ * the app runs (ADR 0040).
+ */
+function EditionTabs({ screenOptions }: { screenOptions: TabOptions }) {
+  const tabOrder = tabsOf(useEditionInEffect());
+  return (
+    <Tabs screenOptions={screenOptions}>
+      <Tabs.Screen name="index" options={tabOptions('home', tabOrder)} />
+      <Tabs.Screen name="settings" options={tabOptions('settings', tabOrder)} />
+      <Tabs.Screen name="game" options={tabOptions('game', tabOrder)} />
+      <Tabs.Screen name="saved" options={tabOptions('saved', tabOrder)} />
+      {/* An Entry opened from a link, such as a notification's; no tab leads to it. */}
+      <Tabs.Screen name="entry" options={{ href: null }} />
+      {/* The dev-only Decor showcase; no tab leads to it. */}
+      <Tabs.Screen name="decor" options={{ href: null }} />
+    </Tabs>
   );
 }

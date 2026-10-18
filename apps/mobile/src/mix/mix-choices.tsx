@@ -9,7 +9,8 @@ import {
 } from '@slovo/ui';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { edition, editionStrings } from '../edition/edition';
+import { editionStrings } from '../edition/edition';
+import { useEditionInEffect } from '../edition/remote-switches';
 import { useMixChanges, useMixState } from './mix';
 import { mixScreenModel } from './mix-screen';
 
@@ -27,6 +28,7 @@ export function MixChoices() {
   const { toggleCategory, turnAllOn, setCorrections } = useMixChanges();
   const { colors, fontFamilies } = useTokens();
   const { voice } = useEdition();
+  const edition = useEditionInEffect();
 
   const model = mixScreenModel({ edition, mix: state });
 
