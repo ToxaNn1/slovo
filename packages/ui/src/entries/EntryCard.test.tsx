@@ -111,39 +111,56 @@ function styleOf(testID: string) {
   );
 }
 
-/** The Feed's height, and the height of a long card's text and of the part of it the frame shows. */
-const FEED = 800;
-const TEXT = 1200;
-const SHOWN = 500;
+/** The Feed's height, and the heights of a long card's text and of its frame, which shows part of it. */
+const FEED_HEIGHT = 800;
+const TEXT_HEIGHT = 1200;
+const FRAME_HEIGHT = 500;
+/** How far, in points, a drag goes before the swipe takes it, as on the device. */
+const ACTIVATION = 12;
 /** A frame, and the swipe's motion from the design, in milliseconds. */
 const FRAME_MS = 16;
 const SWIPE_MS = 420;
 
 /**
- * Two long cards in the Feed: the text of the first one is taller than its
- * frame, which shows it from the top.
+ * The Feed with a long card and a short page next to it, on the long card. The
+ * card's text is taller than its frame, which shows it from the top.
  */
-async function renderLongCards(onIndexChange: (index: number) => void) {
+async function renderLongCard({
+  shortPage,
+  onIndexChange,
+}: {
+  /** Where the short page is: after the long card or before it. */
+  shortPage: 'after' | 'before';
+  onIndexChange: (index: number) => void;
+}) {
+  const pages = shortPage === 'after' ? ['long', 'short'] : ['short', 'long'];
   await render(
     inEdition(
       <HapticsProvider haptics={haptics}>
         <VerticalPager
           testID="feed"
-          items={[wordCard, card]}
+          items={pages}
+          initialIndex={pages.indexOf('long')}
           onIndexChange={onIndexChange}
-          renderPage={(item) => <EntryCard card={item} actions={actions} scrollable />}
+          renderPage={(page) =>
+            page === 'long' ? (
+              <EntryCard card={wordCard} actions={actions} scrollable />
+            ) : (
+              <Text>short</Text>
+            )
+          }
         />
       </HapticsProvider>,
     ),
   );
   await fireEvent(screen.getByTestId('feed'), 'layout', {
-    nativeEvent: { layout: { x: 0, y: 0, width: 400, height: FEED } },
+    nativeEvent: { layout: { x: 0, y: 0, width: 400, height: FEED_HEIGHT } },
   });
   const text = screen.getByTestId('entry-card-scroll');
   await fireEvent(text, 'layout', {
-    nativeEvent: { layout: { x: 0, y: 0, width: 360, height: SHOWN } },
+    nativeEvent: { layout: { x: 0, y: 0, width: 360, height: FRAME_HEIGHT } },
   });
-  await fireEvent(text, 'contentSizeChange', 360, TEXT);
+  await fireEvent(text, 'contentSizeChange', 360, TEXT_HEIGHT);
   // The pager learns how far the text scrolls on the next frame.
   await act(async () => {
     await jest.advanceTimersByTimeAsync(FRAME_MS);
@@ -155,14 +172,16 @@ async function scrollTextTo(y: number) {
   await fireEvent.scroll(screen.getByTestId('entry-card-scroll'), {
     nativeEvent: {
       contentOffset: { x: 0, y },
-      contentSize: { width: 360, height: TEXT },
-      layoutMeasurement: { width: 360, height: SHOWN },
+      contentSize: { width: 360, height: TEXT_HEIGHT },
+      layoutMeasurement: { width: 360, height: FRAME_HEIGHT },
     },
   });
 }
 
-/** A swipe up across half the Feed, begun on the card's text or elsewhere on the page. */
-async function swipeUp({ onText }: { onText: boolean }) {
+/** A swipe across half the Feed, begun on the long card's text or beside it. */
+async function swipe(direction: 'up' | 'down', { onText }: { onText: boolean }) {
+  const sign = direction === 'up' ? -1 : 1;
+  const velocityY = sign * 100;
   await act(() => {
     if (onText) {
       fireGestureHandler(getByGestureTestId('entry-card-scroll-touch'), [
@@ -172,10 +191,10 @@ async function swipeUp({ onText }: { onText: boolean }) {
     }
     fireGestureHandler(getByGestureTestId('feed-swipe'), [
       { state: State.BEGAN, translationY: 0, velocityY: 0 },
-      { state: State.ACTIVE, translationY: -12, velocityY: -100 },
-      { state: State.ACTIVE, translationY: -12, velocityY: -100 },
-      { state: State.ACTIVE, translationY: -FEED / 2, velocityY: -100 },
-      { state: State.END, translationY: -FEED / 2, velocityY: -100 },
+      { state: State.ACTIVE, translationY: sign * ACTIVATION, velocityY },
+      { state: State.ACTIVE, translationY: sign * ACTIVATION, velocityY },
+      { state: State.ACTIVE, translationY: (sign * FEED_HEIGHT) / 2, velocityY },
+      { state: State.END, translationY: (sign * FEED_HEIGHT) / 2, velocityY },
     ]);
   });
   // The page settles.
@@ -293,31 +312,51 @@ describe('EntryCard', () => {
       jest.useRealTimers();
     });
 
-    it("scrolls a long card's text under a swipe that begins on it", async () => {
+    it('leaves the page to the text under a swipe that begins on the text before its end', async () => {
       const onIndexChange = jest.fn();
-      await renderLongCards(onIndexChange);
+      await renderLongCard({ shortPage: 'after', onIndexChange });
 
-      await swipeUp({ onText: true });
+      await swipe('up', { onText: true });
 
       expect(onIndexChange).not.toHaveBeenCalled();
     });
 
-    it("turns the page on a swipe that begins on a long card's text at its end", async () => {
+    it('turns to the next page on a swipe up that begins on the text at its bottom', async () => {
       const onIndexChange = jest.fn();
-      await renderLongCards(onIndexChange);
+      await renderLongCard({ shortPage: 'after', onIndexChange });
 
-      await scrollTextTo(TEXT - SHOWN);
-      await swipeUp({ onText: true });
+      await scrollTextTo(TEXT_HEIGHT - FRAME_HEIGHT);
+      await swipe('up', { onText: true });
 
       expect(onIndexChange).toHaveBeenCalledWith(1);
     });
 
-    it("turns the page on a swipe that begins beside a long card's text", async () => {
+    it('turns to the page before on a swipe down that begins on the text at its top', async () => {
       const onIndexChange = jest.fn();
-      await renderLongCards(onIndexChange);
+      await renderLongCard({ shortPage: 'before', onIndexChange });
 
-      await swipeUp({ onText: false });
+      await swipe('down', { onText: true });
 
+      expect(onIndexChange).toHaveBeenCalledWith(0);
+    });
+
+    it('turns the page on a swipe that begins beside the text', async () => {
+      const onIndexChange = jest.fn();
+      await renderLongCard({ shortPage: 'after', onIndexChange });
+
+      await swipe('up', { onText: false });
+
+      expect(onIndexChange).toHaveBeenCalledWith(1);
+    });
+
+    it('turns the page on a swipe beside the text after one on it', async () => {
+      const onIndexChange = jest.fn();
+      await renderLongCard({ shortPage: 'after', onIndexChange });
+
+      await swipe('up', { onText: true });
+      await swipe('up', { onText: false });
+
+      expect(onIndexChange).toHaveBeenCalledTimes(1);
       expect(onIndexChange).toHaveBeenCalledWith(1);
     });
   });
