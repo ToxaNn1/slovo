@@ -1,7 +1,7 @@
 import { ACCOUNT_NAME, fill } from '@slovo/contracts';
 import { z } from 'zod';
 
-import type { EditionRegistry } from '../edition/edition-registry';
+import type { EditionRegistry, NotServing } from '../edition/edition-registry';
 import type { AccountRecord, Authenticator, Clock, CodeCheck, Mailer, RateLimits } from '../ports';
 import { createSignInLimits, type TooManyRequests } from './sign-in-limits';
 
@@ -17,32 +17,33 @@ interface Unauthorized {
   readonly reason: 'unauthorized';
 }
 
-/** What an action of a Session gets: done, or no Session to act. */
-type Ended = { readonly ok: true } | Unauthorized;
+declare const opened: unique symbol;
 
 /**
- * The Account rules of the backend: Sign-in codes and Sessions. A Session
- * acts only on its own Account: the rules take a token and find the Account
- * from it, never from what a request names.
+ * A Session that is on, with its Account. Only `Accounts.session` opens one,
+ * from the token the request carries, so an action on a Session acts on its
+ * own Account, never on one a request names.
  */
+export interface Session {
+  readonly token: string;
+  readonly account: AccountRecord;
+  readonly [opened]: true;
+}
+
+/** The Account rules of the backend: Sign-in codes and Sessions. */
 export interface Accounts {
   /**
    * Sends a new Sign-in code to the email in the language of the Edition. The
-   * answer is the same whether or not the email has an Account. An Edition the
-   * backend didn't find, or one with the Account switched off, is refused, and
-   * so is an email that is not an email, or a request from the IP address `ip`
-   * or for the email over its limit; nothing is sent then.
+   * answer is the same whether or not the email has an Account. An Edition
+   * that doesn't serve the Account is refused, and so is an email that is not
+   * an email, or a request from the IP address `ip` or for the email over its
+   * limit; nothing is sent then.
    */
   requestCode(
     email: string,
     editionId: string,
     ip: string,
-  ): Promise<
-    | { readonly ok: true }
-    | InvalidEmail
-    | { readonly ok: false; readonly reason: 'unknown-edition' | 'account-off' }
-    | TooManyRequests
-  >;
+  ): Promise<{ readonly ok: true } | InvalidEmail | NotServing | TooManyRequests>;
   /**
    * Signs in with the code last sent to the email; the first right code
    * creates the Account. A check from the IP address `ip` over its limit is
@@ -53,18 +54,24 @@ export interface Accounts {
     code: string,
     ip: string,
   ): Promise<CodeCheck | InvalidEmail | TooManyRequests>;
-  /** The Account of the Session the token carries, if the Session is on. */
-  accountOf(token: string): Promise<AccountRecord | undefined>;
-  /** Ends the Session the token carries; the Account's other Sessions go on. */
-  signOut(token: string): Promise<Ended>;
-  /** Ends every Session of the token's Account, its own included. */
-  signOutEverywhere(token: string): Promise<Ended>;
   /**
-   * Deletes the token's Account at once and for good, with its Sessions,
+   * The Session the token carries, the one way to act on an Account; using a
+   * Session extends it. Without a token, or with one that carries no Session
+   * that is on, it is unauthorized.
+   */
+  session(
+    token: string | undefined,
+  ): Promise<{ readonly ok: true; readonly session: Session } | Unauthorized>;
+  /** Ends the Session; the Account's other Sessions go on. */
+  signOut(session: Session): Promise<void>;
+  /** Ends every Session of the Session's Account, its own included. */
+  signOutEverywhere(session: Session): Promise<void>;
+  /**
+   * Deletes the Session's Account at once and for good, with its Sessions,
    * sign-in methods and the Sign-in codes waiting for its email. The email
    * may then sign in to a new, empty Account.
    */
-  delete(token: string): Promise<Ended>;
+  delete(session: Session): Promise<void>;
 }
 
 /**
@@ -79,7 +86,6 @@ function normalised(email: string): string | undefined {
 
 const invalidEmail: InvalidEmail = { ok: false, reason: 'invalid-email' };
 const unauthorized: Unauthorized = { ok: false, reason: 'unauthorized' };
-const done = { ok: true } as const;
 
 export function createAccounts({
   editions,
@@ -99,9 +105,9 @@ export function createAccounts({
     async requestCode(typedEmail, editionId, ip) {
       const email = normalised(typedEmail);
       if (email === undefined) return invalidEmail;
-      const edition = editions.find(editionId);
-      if (edition === undefined) return { ok: false, reason: 'unknown-edition' };
-      if (!edition.config.featureSwitches.account) return { ok: false, reason: 'account-off' };
+      const serving = editions.serving(editionId, 'account');
+      if (!serving.ok) return serving;
+      const { edition } = serving;
       const overLimit = await limits.codeRequest(email, ip);
       if (overLimit !== undefined) return overLimit;
 
@@ -122,25 +128,18 @@ export function createAccounts({
       return (await limits.codeCheck(ip)) ?? authenticator.checkCode(email, code);
     },
 
-    accountOf: (token) => authenticator.accountOf(token),
-
-    async signOut(token) {
-      return (await authenticator.revoke(token)) ? done : unauthorized;
-    },
-
-    async signOutEverywhere(token) {
+    async session(token) {
+      if (token === undefined) return unauthorized;
       const account = await authenticator.accountOf(token);
       if (account === undefined) return unauthorized;
-      await authenticator.revokeAll(account.id);
-      return done;
+      return { ok: true, session: { token, account } as Session };
     },
+
+    signOut: ({ token }) => authenticator.revoke(token),
+
+    signOutEverywhere: ({ account }) => authenticator.revokeAll(account.id),
 
     // From 0.8 the Account's synced data in every Edition goes here too (spec #333).
-    async delete(token) {
-      const account = await authenticator.accountOf(token);
-      if (account === undefined) return unauthorized;
-      await authenticator.delete(account);
-      return done;
-    },
+    delete: ({ account }) => authenticator.delete(account),
   };
 }

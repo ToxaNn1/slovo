@@ -12,8 +12,11 @@ interface AccountContext {
 }
 
 /** Tells the answer when, in seconds, a request over a limit may come again. */
-function retryAfter({ resHeaders }: AccountContext, seconds: number): void {
-  resHeaders?.set('retry-after', String(seconds));
+function retryAfter(
+  { resHeaders }: AccountContext,
+  { retryAfterSeconds }: { readonly retryAfterSeconds: number },
+): void {
+  resHeaders?.set('retry-after', String(retryAfterSeconds));
 }
 
 /** The token of the request's `Authorization: Bearer <token>`, if any. */
@@ -26,28 +29,13 @@ function bearerToken(headers: Headers): string | undefined {
 export function accountProcedures(accounts: Accounts) {
   const account = implement(apiContract.account).$context<AccountContext>();
 
-  // Puts the Account of the request's Session in the context, or refuses the
-  // request as UNAUTHORIZED.
+  // Every procedure of a Session goes through here: it puts the request's
+  // Session in the context, or refuses the request as UNAUTHORIZED.
   const signedIn = account.middleware(async ({ context, next }) => {
-    const token = bearerToken(context.headers);
-    const signedInAccount = token === undefined ? undefined : await accounts.accountOf(token);
-    if (signedInAccount === undefined) throw new ORPCError('UNAUTHORIZED');
-    return next({ context: { account: signedInAccount } });
+    const opened = await accounts.session(bearerToken(context.headers));
+    if (!opened.ok) throw new ORPCError('UNAUTHORIZED');
+    return next({ context: { session: opened.session } });
   });
-
-  // Puts the request's token in the context for the server Core, which finds
-  // its Session, or refuses a request without one as UNAUTHORIZED.
-  const withToken = account.middleware(async ({ context, next }) => {
-    const token = bearerToken(context.headers);
-    if (token === undefined) throw new ORPCError('UNAUTHORIZED');
-    return next({ context: { token } });
-  });
-
-  /** The empty answer of a done action, or UNAUTHORIZED when the token carried no Session. */
-  const answered = (done: { readonly ok: boolean }) => {
-    if (!done.ok) throw new ORPCError('UNAUTHORIZED');
-    return {};
-  };
 
   return account.router({
     requestCode: account.requestCode.handler(async ({ input, context, errors }) => {
@@ -57,10 +45,10 @@ export function accountProcedures(accounts: Accounts) {
         case 'invalid-email':
           throw errors.BAD_REQUEST();
         case 'unknown-edition':
-        case 'account-off':
+        case 'switched-off':
           throw errors.NOT_FOUND();
         case 'too-many-requests':
-          retryAfter(context, sent.retryAfterSeconds);
+          retryAfter(context, sent);
           throw errors.TOO_MANY_REQUESTS();
       }
     }),
@@ -76,7 +64,7 @@ export function accountProcedures(accounts: Accounts) {
         case 'code-expired':
           throw errors.CODE_EXPIRED();
         case 'too-many-requests':
-          retryAfter(context, check.retryAfterSeconds);
+          retryAfter(context, check);
           throw errors.TOO_MANY_REQUESTS();
         // A spent code passes with no time, so the answer has no Retry-After.
         case 'too-many-tries':
@@ -84,21 +72,24 @@ export function accountProcedures(accounts: Accounts) {
       }
     }),
 
-    me: account.me.use(signedIn).handler(({ context }) => ({
-      email: context.account.email,
-      createdAt: context.account.createdAt.toISOString(),
+    me: account.me.use(signedIn).handler(({ context: { session } }) => ({
+      email: session.account.email,
+      createdAt: session.account.createdAt.toISOString(),
     })),
 
-    signOut: account.signOut
-      .use(withToken)
-      .handler(async ({ context }) => answered(await accounts.signOut(context.token))),
+    signOut: account.signOut.use(signedIn).handler(async ({ context }) => {
+      await accounts.signOut(context.session);
+      return {};
+    }),
 
-    signOutEverywhere: account.signOutEverywhere
-      .use(withToken)
-      .handler(async ({ context }) => answered(await accounts.signOutEverywhere(context.token))),
+    signOutEverywhere: account.signOutEverywhere.use(signedIn).handler(async ({ context }) => {
+      await accounts.signOutEverywhere(context.session);
+      return {};
+    }),
 
-    delete: account.delete
-      .use(withToken)
-      .handler(async ({ context }) => answered(await accounts.delete(context.token))),
+    delete: account.delete.use(signedIn).handler(async ({ context }) => {
+      await accounts.delete(context.session);
+      return {};
+    }),
   });
 }

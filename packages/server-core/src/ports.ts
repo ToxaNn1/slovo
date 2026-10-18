@@ -83,8 +83,8 @@ export interface Authenticator {
   checkCode(email: string, code: string): Promise<CodeCheck>;
   /** The Account of the Session the token carries, if the Session is on. Using a Session extends it. */
   accountOf(token: string): Promise<AccountRecord | undefined>;
-  /** Ends the Session the token carries; answers whether it was on. */
-  revoke(token: string): Promise<boolean>;
+  /** Ends the Session the token carries, if it is on. */
+  revoke(token: string): Promise<void>;
   /** Ends every Session of the Account. */
   revokeAll(accountId: string): Promise<void>;
   /**

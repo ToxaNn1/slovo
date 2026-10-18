@@ -59,3 +59,13 @@ The rules of a Sign-in code (six digits, signs in for 10 minutes, 5 tries, a spe
 ### Considered Options
 
 - **The rules in the server Core, given to the adapter**: rejected. The Core never reads them, so the port would carry configuration through it, and the tries left and the spent-code rule would still need better-auth's row.
+
+## Amendment: one gate opens a Session, and the Edition registry says whether an Edition serves a feature (architecture review 2)
+
+Every procedure of a Session reaches its Account through one gate, `Accounts.session`: it takes the token the request carries, or none, and answers the Session that is on with its Account, or unauthorized. The backend's procedures pass it through one middleware, the one place that answers `UNAUTHORIZED`, and the actions on an Account (`signOut`, `signOutEverywhere`, `delete`, and the ones sync brings in 0.8) take the Session it opened. Only the gate makes a `Session`: its type carries a symbol nothing outside the server Core can name, so an action can't be handed an Account a request names. A Session that ends between the gate and its action has ended either way, so the action answers done.
+
+Whether an Edition serves a feature is the Edition registry's answer, `serving(editionId, feature)`: the Edition when the backend found it and its Feature Switch for the feature is on, or why not (`unknown-edition`, `switched-off`). The Account and the content procedures ask it with their feature and answer both refusals as `NOT_FOUND`, so a new feature behind a switch gets the rule by naming its switch. Publishing a pack asks only that the backend found the Edition, since a pack may wait for the switch to come on.
+
+### Considered Options
+
+- **Each action of a Session taking the token and finding the Account itself**: rejected. It was so for three of the four procedures, and `me` went the other way; each new procedure of sync would add one more place to answer `UNAUTHORIZED`.
