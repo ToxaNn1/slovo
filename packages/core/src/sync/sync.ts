@@ -12,7 +12,7 @@ export const SYNC_AFTER_WRITE = 5_000;
 
 /** How Sync stands, for the status line of the SLOVO ID screen. */
 export interface SyncState {
-  /** When the last sync of this Session went through, in this app run; none before one has. */
+  /** When the last sync of this Session went through, kept across launches; none before one has. */
   readonly syncedAt: Date | undefined;
   /** Whether a sync runs, its waits between tries included. */
   readonly running: boolean;
@@ -32,10 +32,11 @@ export interface SyncState {
  * A sync that fails with no answer or a server error is tried again by the
  * one rule (ADR 0037); one that finds too many requests waits for the
  * answer's `Retry-After`, and nothing syncs sooner; one that finds the
- * Session ended goes to the Account, which signs out quietly. When the
- * Session ends, Sync forgets its cursor, once no sync of that Session runs,
- * and keeps the pending changes and the words, so the next Session starts by
- * the first-sign-in rule. Nothing it does rejects.
+ * Session ended goes to the Account, which signs out quietly; no try follows
+ * the end of a Session. When the Session ends, Sync forgets its cursor and
+ * the time of its last sync, once no sync of that Session runs, and keeps the
+ * pending changes and the words, so the next Session starts by the
+ * first-sign-in rule. Nothing it does rejects.
  */
 export interface Sync {
   /**
@@ -47,8 +48,9 @@ export interface Sync {
   subscribe(listener: () => void): () => void;
   /**
    * Calls `listener` once after each sync whose pull wrote a record, failed
-   * ones too, so the shell reopens what keeps the user state in memory.
-   * Returns the call that stops it.
+   * ones too, and after each that failed to write the user state, since a
+   * page may have been written before; so the shell reopens what keeps the
+   * user state in memory. Returns the call that stops it.
    */
   onUserStateChange(listener: () => void): () => void;
   /** The app is in the foreground, at launch or on a return: syncs. */
@@ -57,12 +59,13 @@ export interface Sync {
   background(): void;
 }
 
-const { syncCursor } = userStateRecords;
+const { syncCursor, syncSyncedAt } = userStateRecords;
 
 /**
  * Opens Sync apart from the composition, like the Account (ADR 0037), over
- * the tracked user state every module writes through. Signed out, it forgets
- * a cursor left from before.
+ * the tracked user state every module writes through, with the time of the
+ * last sync the device kept. Signed out, it forgets what a Session that ended
+ * before the launch left.
  */
 export async function openSync({
   userState,
@@ -87,19 +90,33 @@ export async function openSync({
   const exchange = createSyncExchange({ userState, api });
   const subscribers = createSubscribers();
   const changeListeners = createSubscribers();
-  async function forgetCursor(): Promise<void> {
-    if ((await userState.cursor()) !== undefined)
-      await userState.write(syncCursor.change(undefined));
-  }
   const signedIn = () => account.state.status === 'signed-in';
 
-  let state: SyncState = { syncedAt: undefined, running: false, offline: false };
+  /** Forgets the cursor and the time of the last sync of a Session that ended. */
+  async function forgetSession(): Promise<void> {
+    const kept =
+      (await userState.cursor()) !== undefined ||
+      (await userState.read(syncSyncedAt)) !== undefined;
+    if (kept) {
+      await userState.write(
+        new Map([...syncCursor.change(undefined), ...syncSyncedAt.change(undefined)]),
+      );
+    }
+  }
+
+  if (!signedIn()) await forgetSession();
+  const kept = await userState.read(syncSyncedAt).catch(() => undefined);
+  let state: SyncState = {
+    syncedAt: kept === undefined ? undefined : new Date(kept),
+    running: false,
+    offline: false,
+  };
   let inForeground = false;
-  /** The sync running with any queued after it, if one runs. */
-  let running: Promise<void> | undefined;
+  /** The syncs running and asked for after them, if one runs. */
+  let draining: Promise<void> | undefined;
   let again = false;
-  /** Whether the cursor belongs to a Session that ended. */
-  let cursorOutdated = false;
+  /** Whether the cursor and the time of the last sync belong to a Session that ended. */
+  let sessionOutdated = false;
   /** How many Sessions have ended: a sync of an earlier one says nothing of this one. */
   let endedSessions = 0;
   /** Until when, in milliseconds, nothing syncs, by a 429's `Retry-After`. */
@@ -107,28 +124,29 @@ export async function openSync({
   let cancelAfterWrite: (() => void) | undefined;
   let cancelHeld: (() => void) | undefined;
 
-  if (!signedIn()) await forgetCursor();
-
   function change(next: Partial<SyncState>): void {
     state = { ...state, ...next };
     subscribers.tell();
   }
 
-  /** One sync with the Session, tried again by the one rule; what it came to, or nothing without one. */
+  /** One sync with the Session, tried again by the one rule while the Session lasts. */
   async function syncOnce(): Promise<void> {
     if (!edition.isFeatureEnabled('account') || !edition.isFeatureEnabled('sync')) return;
     if (!signedIn()) return;
     const session = endedSessions;
+    const ended: SyncResult = { ok: false, reason: 'unauthorized', changed: false };
     change({ running: true });
-    /** Every try's result: a pull may write before its try fails. */
-    const tries: SyncResult[] = [];
+    /** Whether a pull wrote a record, or may have, in any try. */
+    let changed = false;
     let result: SyncResult | undefined;
     try {
       result = await account.withSession((token) =>
         withRetries(
           async () => {
+            // A Session that ended on the way is no more tried; the Account knows it ended.
+            if (session !== endedSessions) return ended;
             const tried = await exchange.sync(token);
-            tries.push(tried);
+            changed ||= tried.changed;
             return tried;
           },
           { schedule, random },
@@ -136,8 +154,9 @@ export async function openSync({
       );
     } catch {
       // Silent: the user state failed to be read or written, and the next moment tries again.
+      changed = true;
     }
-    if (tries.some(({ changed }) => changed)) changeListeners.tell();
+    if (changed) changeListeners.tell();
     if (session !== endedSessions || result === undefined) {
       change({ running: false });
       return;
@@ -146,28 +165,40 @@ export async function openSync({
       heldUntil = clock.now().getTime() + result.retryAfter * 1000;
       holdOn();
     }
-    change({
-      running: false,
-      offline: !result.ok && result.reason === 'offline',
-      ...(result.ok && { syncedAt: clock.now() }),
-    });
+    if (!result.ok) {
+      change({ running: false, offline: result.reason === 'offline' });
+      return;
+    }
+    const syncedAt = clock.now();
+    // Kept for the next launch; one that fails to be kept shows the one before then.
+    await userState.write(syncSyncedAt.change(syncedAt.toISOString())).catch(() => undefined);
+    // A Session that ended meanwhile cleared the snapshot, and its time is forgotten next.
+    change(
+      session === endedSessions ? { running: false, offline: false, syncedAt } : { running: false },
+    );
   }
 
   /** Whether a moment or the end of a Session waits for the sync that runs. */
-  const waiting = () => again || cursorOutdated;
+  const waiting = () => again || sessionOutdated;
 
-  /** Runs syncs while moments ask for them, forgetting an outdated cursor before each and after the last. */
+  /** Runs syncs while moments ask for them, forgetting an ended Session's before each and after the last. */
   async function drain(): Promise<void> {
     do {
       again = false;
-      if (cursorOutdated) {
-        cursorOutdated = false;
-        // One that fails to be forgotten is forgotten at the next launch signed out.
-        await forgetCursor().catch(() => undefined);
+      if (sessionOutdated) {
+        sessionOutdated = false;
+        // What fails to be forgotten is forgotten at the next launch signed out.
+        await forgetSession().catch(() => undefined);
       }
       if (!held()) await syncOnce();
     } while (waiting());
-    running = undefined;
+  }
+
+  /** Starts the syncs asked for, unless they run. */
+  function startDraining(): void {
+    draining ??= drain().finally(() => {
+      draining = undefined;
+    });
   }
 
   /** Whether a 429 holds syncs back now. */
@@ -189,7 +220,7 @@ export async function openSync({
   function want(): void {
     cancelAfterWrite?.();
     cancelAfterWrite = undefined;
-    if (running !== undefined) {
+    if (draining !== undefined) {
       again = true;
       return;
     }
@@ -197,7 +228,7 @@ export async function openSync({
       holdOn();
       return;
     }
-    running = drain();
+    startDraining();
   }
 
   userState.subscribe(() => {
@@ -222,8 +253,8 @@ export async function openSync({
     cancelHeld?.();
     cancelHeld = undefined;
     change({ syncedAt: undefined, offline: false });
-    cursorOutdated = true;
-    running ??= drain();
+    sessionOutdated = true;
+    startDraining();
   });
 
   return {

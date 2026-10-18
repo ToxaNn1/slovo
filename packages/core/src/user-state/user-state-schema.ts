@@ -162,6 +162,12 @@ export const userStateRecords = {
   syncCursor: declareRecord('sync.cursor', z.number().int().nonnegative(), {
     sync: 'device-only',
   }),
+  /**
+   * The instant the last sync of this device's Session went through, for the
+   * status line; without it, none has. Forgotten with the cursor when the
+   * Session ends.
+   */
+  syncSyncedAt: declareRecord('sync.syncedAt', InstantSchema, { sync: 'device-only' }),
 };
 
 /** Every declared record and kind of record, for finding the one a key belongs to. */

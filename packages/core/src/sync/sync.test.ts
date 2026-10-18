@@ -13,10 +13,11 @@ import {
   userStateRecords,
   SYNC_AFTER_WRITE,
   type Schedule,
+  type UserStateChanges,
 } from '../index';
 import { fakeClock, randomOf } from '../test-support';
 
-const { favorites, syncCursor, theme } = userStateRecords;
+const { favorites, syncCursor, syncSyncedAt, theme } = userStateRecords;
 
 const HOUR = 60 * 60_000;
 
@@ -69,19 +70,23 @@ async function device({
   const time = fakeClock('2026-10-18T09:00:00.000Z');
   const timers = testSchedule(time);
   const server = createFakeSyncApi({ clock: time.clock });
-  /** Whether the backend can be reached; without it every call answers `offline`. */
-  const network = { up: true };
+  /** Whether the backend can be reached; without it every call answers `offline`, and counts. */
+  const network = { up: true, unanswered: 0 };
+  const unanswered = () => {
+    network.unanswered += 1;
+    return Promise.resolve({ ok: false, reason: 'offline' } as const);
+  };
   const accountApi = createFakeAccountApi();
   const records = new Map<string, string>();
-  /** Whether the device's store refuses every write. */
-  const disk = { full: false };
+  /** Which writes the device's store refuses: none, unless the test says. */
+  const disk = { refuses: (_changes: UserStateChanges) => false };
   const memory = createMemoryUserStatePort(records);
   const userState = trackChanges({
     userState: await openUserState({
       port: {
         ...memory,
         write: (changes) =>
-          disk.full ? Promise.reject(new Error('disk full')) : memory.write(changes),
+          disk.refuses(changes) ? Promise.reject(new Error('disk full')) : memory.write(changes),
       },
     }),
     clock: time.clock,
@@ -99,12 +104,8 @@ async function device({
   const sync = await openSync({
     userState,
     api: {
-      push: (token, changes) =>
-        network.up
-          ? server.push(token, changes)
-          : Promise.resolve({ ok: false, reason: 'offline' }),
-      pull: (token, after) =>
-        network.up ? server.pull(token, after) : Promise.resolve({ ok: false, reason: 'offline' }),
+      push: (token, changes) => (network.up ? server.push(token, changes) : unanswered()),
+      pull: (token, after) => (network.up ? server.pull(token, after) : unanswered()),
     },
     account,
     edition: { isFeatureEnabled: (feature) => !switchedOff.has(feature) },
@@ -298,6 +299,7 @@ describe('Sync tries a sync again', () => {
     sync.foreground();
     await advance(HOUR);
 
+    expect(network.unanswered).toBe(4);
     expect(syncs()).toBe(0);
     expect(sync.state).toEqual({ syncedAt: undefined, running: false, offline: true });
 
@@ -373,18 +375,31 @@ describe('Sync, when the device fails to write a sync', () => {
   it('stops it quietly and syncs at the next moment', async () => {
     const { sync, server, disk, advance, syncs } = await device();
     await server.push('another-session', [{ key: 'settings.theme', value: 'dark', changedAt: 1 }]);
-    disk.full = true;
+    disk.refuses = () => true;
     sync.foreground();
     await advance(HOUR);
     expect(syncs()).toBe(1);
     expect(sync.state).toEqual({ syncedAt: undefined, running: false, offline: false });
 
-    disk.full = false;
+    disk.refuses = () => false;
     sync.background();
     sync.foreground();
     await advance(0);
     expect(syncs()).toBe(2);
     expect(sync.state.syncedAt).toBeDefined();
+  });
+
+  it('says the user state may have changed when it fails after a pull wrote', async () => {
+    const { sync, server, disk, userState, addFavorite, advance, changes } = await device();
+    await server.push('another-session', [{ key: 'settings.theme', value: 'dark', changedAt: 1 }]);
+    await addFavorite('w_one');
+    // The store refuses only the deletion of the pending changes the push sent.
+    disk.refuses = (changes) => [...changes.values()].every((value) => value === undefined);
+    sync.foreground();
+    await advance(0);
+
+    expect(await userState.read(theme)).toBe('dark');
+    expect(changes()).toBe(1);
   });
 });
 
@@ -426,6 +441,35 @@ describe('Sync and the end of a Session', () => {
     expect(await userState.cursor()).toBeUndefined();
     expect([...(await userState.pendingChanges()).keys()]).toEqual(['favorites.w_one']);
     expect(records.has('favorites.w_one')).toBe(true);
+    expect(sync.state).toEqual({ syncedAt: undefined, running: false, offline: false });
+  });
+
+  it('forgets the cursor and the time of the last sync when the Account is deleted', async () => {
+    const { sync, account, userState, addFavorite, advance } = await device();
+    sync.foreground();
+    await advance(0);
+    await addFavorite('w_one');
+
+    await account.delete();
+    await advance(0);
+
+    expect(account.state).toMatchObject({ status: 'signed-out' });
+    expect(await userState.cursor()).toBeUndefined();
+    expect(await userState.read(syncSyncedAt)).toBeUndefined();
+    expect([...(await userState.pendingChanges()).keys()]).toEqual(['favorites.w_one']);
+  });
+
+  it('tries no more once the Session ends while it waits to try again', async () => {
+    const { sync, account, network, advance } = await device();
+    network.up = false;
+    sync.foreground();
+    await advance(0);
+    expect(network.unanswered).toBe(1);
+
+    await account.signOut();
+    await advance(HOUR);
+
+    expect(network.unanswered).toBe(1);
     expect(sync.state).toEqual({ syncedAt: undefined, running: false, offline: false });
   });
 
@@ -496,6 +540,26 @@ describe('Sync says how it went', () => {
       { syncedAt: undefined, running: true, offline: false },
       { syncedAt: new Date('2026-10-18T09:00:02.000Z'), running: false, offline: false },
     ]);
+  });
+
+  it('when the last sync went through, at the next launch too', async () => {
+    const { sync, server, account, userState, time, advance } = await device();
+    sync.foreground();
+    await advance(0);
+    const syncedAt = sync.state.syncedAt;
+    expect(syncedAt).toEqual(new Date('2026-10-18T09:00:00.000Z'));
+
+    const relaunched = await openSync({
+      userState,
+      api: server,
+      account,
+      edition: { isFeatureEnabled: () => true },
+      clock: time.clock,
+      schedule: testSchedule(time).schedule,
+      random: randomOf(0.5),
+    });
+
+    expect(relaunched.state).toEqual({ syncedAt, running: false, offline: false });
   });
 
   it('that the user state changed, once per sync whose pull wrote something', async () => {
