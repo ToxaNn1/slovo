@@ -104,7 +104,7 @@ You need the Node version in [`.nvmrc`](.nvmrc), pnpm, Xcode with an iOS Simulat
    - Each local day opens on its Word of the Day, badged «Слово дня · 12 жовтня». Swipe up for the next card and down to go back; a hint says so on the first launch only.
    - A Word card shows the Lemma with its Stress marks, the part of speech, the Definition, an Example, Synonyms, register and Category chips, and «Детальніше» for the rest. The speaker button reads the Lemma aloud with the device's Ukrainian voice, or explains how to get one.
    - About every fifth card is a Correction («Так часто кажуть → Українською краще»).
-   - A card that stays on screen for 1.5 s is Seen and doesn't come back in the same Cycle. Once everything is Seen, the end-of-Cycle card says so, and the next swipe starts a new Cycle. The Feed reopens on the last card the same day.
+   - A card that stays on screen for 0.5 s is Seen and doesn't come back in the same Cycle. Once everything is Seen, the end-of-Cycle card says so, and the next swipe starts a new Cycle. The Feed reopens on the last card the same day.
    - While the Language Pack opens, the Feed shows a skeleton card with the divider being stitched; if the pack can't be opened, a local error state («Нитка урвалася») offers to try again.
 
    Settings offers the Theme (System, Light or Dark) and the font size (S, M, L, XL) with a live preview. The choices are kept on the device in a user-state database apart from the Language Pack, and System follows the iOS appearance. The Game tab opens the mode screen of the Game: «Вгадай слово» plays 15 Rounds with 5 Lives to a win or a loss.

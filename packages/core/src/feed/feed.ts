@@ -15,7 +15,7 @@ import { buildWordCard } from '../entries/word-card';
 import type { WordOfTheDay, WordOfTheDayChoice } from './word-of-the-day';
 
 /** How long a card must stay on screen before its Entry counts as Seen. */
-export const SEEN_DWELL_MS = 1500;
+export const SEEN_DWELL_MS = 500;
 
 /** One card in this many is a Correction's, while the Cycle has unseen Corrections. */
 export const CORRECTION_EVERY = 5;
