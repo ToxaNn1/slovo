@@ -209,7 +209,7 @@ Each component is shown in the screens listed; light and dark refer to the Ukrai
 
 **Tab bar.** 84 pt, four equal tabs in the brief's order: Головна · Налаштування · Гра · Збережене, 24 pt line icons (house, sliders, a diamond in a rounded square, bookmark). Selected tab in accent with a 700-weight label (and the Saved icon filled); others in `inactiveTab`. A 1 pt top line in `color.line`.
 
-**Other pieces.** The Stats pill (Feed top left: flame icon and the Streak number, 40 pt tall, surface fill with an accent border); the Feed position counter "1 / 6" top right; the first-launch swipe hint (an inverted pill "Гортайте вгору — наступне слово" above the tab bar); the skeleton card for loading; widgets (small 170×170: overline mode name, Lemma and zig-zag; medium 364×170: plus a short Definition); the notification (app icon, "SLOVO", time, Lemma with Stress in Literata 600, short Definition).
+**Other pieces.** The Stats pill (Feed top left: flame icon and the Streak number, 40 pt tall, surface fill with an accent border; while the reader hides the Streak, the flame alone in a 40 pt circle, which still opens the stats sheet); the Feed position counter "1 / 6" top right; the first-launch swipe hint (an inverted pill "Гортайте вгору — наступне слово" above the tab bar); the skeleton card for loading; widgets (small 170×170: overline mode name, Lemma and zig-zag; medium 364×170: plus a short Definition); the notification (app icon, "SLOVO", time, Lemma with Stress in Literata 600, short Definition).
 
 ## Decor slots
 

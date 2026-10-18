@@ -9,6 +9,8 @@ export const StatsStringsSchema = z.strictObject({
   title: TextSchema,
   /** What VoiceOver reads for the Stats pill, e.g. «Статистика: серія 12 днів». Takes `{count}`, the Streak. */
   pillLabel: PluralSchema,
+  /** What VoiceOver reads for the Stats pill while the reader hides the Streak, e.g. «Статистика». */
+  pillLabelWithoutStreak: TextSchema,
   /** The word beside the big current Streak, e.g. «днів поспіль». */
   streak: PluralLabelSchema,
   /** The line under it: the Best Streak, e.g. «найкраща серія — 31». Takes `{count}`. */

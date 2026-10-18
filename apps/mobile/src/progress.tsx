@@ -8,7 +8,7 @@ import { progressShownOf } from './progress-shown';
 import { useSettings } from './settings';
 
 /**
- * The Stats pill with the Streak, and the stats sheet it opens, both kept up
+ * The Stats pill (the flame alone while the Streak is hidden), and the stats sheet it opens, both kept up
  * to date while they show. What is drawn is decided here, from the statistics
  * switch in effect and the reader's hide-Streak setting.
  */
