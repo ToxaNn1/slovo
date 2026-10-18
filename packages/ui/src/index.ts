@@ -31,11 +31,13 @@ export { EntryRow, type EntryRowAction } from './entries/EntryRow';
 export { type RowAction } from './primitives/SwipeableRow';
 export { FavoriteButton } from './saved/FavoriteButton';
 export { ClearHistoryButton } from './saved/ClearHistoryButton';
+export { DeleteCollectionDialog } from './saved/DeleteCollectionDialog';
 export { GameModeCard } from './game/GameModeCard';
 export { GameResult } from './game/GameResult';
 export { GameRound } from './game/GameRound';
 export { HapticsProvider, useHaptics } from './providers/HapticsProvider';
 export { HideButton } from './mix/HideButton';
+export { HideChoiceSheet } from './mix/HideChoiceSheet';
 export { ScreenTitle, SectionLabel } from './primitives/headings';
 export { MixChip } from './mix/MixChip';
 export {
