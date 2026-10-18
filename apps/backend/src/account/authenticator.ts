@@ -1,3 +1,4 @@
+import { SIGN_IN_CODE_DIGITS } from '@slovo/contracts';
 import type { AccountRecord, Authenticator, CodeCheck } from '@slovo/server-core';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
@@ -12,9 +13,10 @@ import { accounts, sessions, signInCodes, signInMethods } from '../database/sche
 /**
  * The rules of a Sign-in code (spec #333). better-auth enforces them, so they
  * are the adapter's: the server Core only passes on what checking a code gives.
+ * Its digits are the contract's, which the app checks a typed code by too.
  */
 const SIGN_IN_CODE = {
-  digits: 6,
+  digits: SIGN_IN_CODE_DIGITS,
   /** How long a code signs in after it is sent. */
   validSeconds: 10 * 60,
   /** How many codes may be tried, wrong ones included, before the code is spent. */

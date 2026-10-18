@@ -1,5 +1,4 @@
-import { ACCOUNT_NAME, fill } from '@slovo/contracts';
-import { z } from 'zod';
+import { AccountEmailSchema, ACCOUNT_NAME, fill } from '@slovo/contracts';
 
 import type { EditionRegistry, NotServing } from '../edition/edition-registry';
 import type { AccountRecord, Authenticator, Clock, CodeCheck, Mailer, RateLimits } from '../ports';
@@ -74,14 +73,9 @@ export interface Accounts {
   delete(session: Session): Promise<void>;
 }
 
-/**
- * The email as the backend keeps it: trimmed and lower-cased, so that
- * «Anna@Mail.com » and «anna@mail.com» are one Account. None when it is not an
- * email.
- */
+/** The email as the backend keeps it, by `AccountEmailSchema`; none when it is not an email. */
 function normalised(email: string): string | undefined {
-  const trimmed = email.trim().toLowerCase();
-  return z.email().safeParse(trimmed).success ? trimmed : undefined;
+  return AccountEmailSchema.safeParse(email).data;
 }
 
 const invalidEmail: InvalidEmail = { ok: false, reason: 'invalid-email' };

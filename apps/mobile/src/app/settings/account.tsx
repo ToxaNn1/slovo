@@ -1,4 +1,4 @@
-import { ACCOUNT_NAME } from '@slovo/contracts';
+import { ACCOUNT_NAME, SIGN_IN_CODE_DIGITS } from '@slovo/contracts';
 import type { Account, AccountState } from '@slovo/core';
 import {
   BackLink,
@@ -113,8 +113,6 @@ function SignIn({
 }) {
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
-  /** Whether the request on the way is for a new code, rather than a sign-in. */
-  const [resending, setResending] = useState(false);
 
   if (state.status === 'signed-out') {
     const send = () => {
@@ -138,7 +136,7 @@ function SignIn({
         <PrimaryButton
           testID="account-send-code"
           label={strings.sendCode}
-          busy={state.inFlight}
+          busy={state.inFlight === 'requestCode'}
           onPress={send}
         />
       </View>
@@ -165,32 +163,27 @@ function SignIn({
         }}
         problem={problem}
         problemCause={state}
-        busy={state.inFlight && !resending}
+        busy={state.inFlight === 'verifyCode'}
         keyboardType="number-pad"
         textContentType="oneTimeCode"
         autoComplete="one-time-code"
-        maxLength={6}
+        maxLength={SIGN_IN_CODE_DIGITS}
         autoFocus
       />
       <ResendButton
         testID="account-resend"
         resendAt={state.resendAt}
         now={now}
-        busy={state.inFlight && resending}
+        busy={state.inFlight === 'resendCode'}
         onPress={() => {
-          setResending(true);
           setCode('');
-          run(
-            account.resendCode().finally(() => {
-              setResending(false);
-            }),
-          );
+          run(account.resendCode());
         }}
       />
       <SecondaryButton
         testID="account-change-email"
         label={strings.changeEmail}
-        disabled={state.inFlight}
+        disabled={state.inFlight !== undefined}
         onPress={() => {
           setCode('');
           account.changeEmail();
@@ -216,18 +209,7 @@ function SignedIn({
 }) {
   const { colors, fontFamilies } = useTokens();
   const { voice } = useEdition();
-  /** Which of the two requests that end the Session through the server is on the way. */
-  const [ending, setEnding] = useState<'everywhere' | 'delete'>();
   const deletion = strings.delete;
-
-  function end(how: 'everywhere' | 'delete') {
-    setEnding(how);
-    run(
-      (how === 'everywhere' ? account.signOutEverywhere() : account.delete()).finally(() => {
-        setEnding(undefined);
-      }),
-    );
-  }
 
   function confirmDelete() {
     Alert.alert(fill(deletion.title, { name: ACCOUNT_NAME }), deletion.message, [
@@ -236,7 +218,7 @@ function SignedIn({
         text: deletion.confirm,
         style: 'destructive',
         onPress: () => {
-          end('delete');
+          run(account.delete());
         },
       },
     ]);
@@ -268,18 +250,18 @@ function SignedIn({
       <SecondaryButton
         testID="account-sign-out-everywhere"
         label={strings.signOutEverywhere}
-        busy={state.inFlight && ending === 'everywhere'}
-        disabled={state.inFlight}
+        busy={state.inFlight === 'signOutEverywhere'}
+        disabled={state.inFlight !== undefined}
         onPress={() => {
-          end('everywhere');
+          run(account.signOutEverywhere());
         }}
       />
       <SecondaryButton
         testID="account-delete"
         label={fill(deletion.button, { name: ACCOUNT_NAME })}
         destructive
-        busy={state.inFlight && ending === 'delete'}
-        disabled={state.inFlight}
+        busy={state.inFlight === 'delete'}
+        disabled={state.inFlight !== undefined}
         onPress={confirmDelete}
       />
       <ProblemLine testID="account-problem" problem={problem} cause={state} />

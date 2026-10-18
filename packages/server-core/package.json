@@ -17,7 +17,6 @@
     "typescript": "~6.0.3"
   },
   "dependencies": {
-    "@slovo/contracts": "workspace:*",
-    "zod": "^4.6.5"
+    "@slovo/contracts": "workspace:*"
   }
 }

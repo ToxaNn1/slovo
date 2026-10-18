@@ -45,7 +45,11 @@ async function setup({
 describe('the Account', () => {
   it('signs in from signed out through a Sign-in code sent to the email, and stays signed in', async () => {
     const { account, api, sessions, time, open } = await setup();
-    expect(account.state).toEqual({ status: 'signed-out', inFlight: false, problem: undefined });
+    expect(account.state).toEqual({
+      status: 'signed-out',
+      inFlight: undefined,
+      problem: undefined,
+    });
 
     await account.requestCode(' Anna@Mail.com ');
     expect(api.sentCodes).toEqual([{ email: 'anna@mail.com', code: '100001' }]);
@@ -54,7 +58,7 @@ describe('the Account', () => {
       email: 'anna@mail.com',
       resendAt: new Date(time.clock.now().getTime() + 60_000),
       triesLeft: undefined,
-      inFlight: false,
+      inFlight: undefined,
       problem: undefined,
     });
 
@@ -62,7 +66,7 @@ describe('the Account', () => {
     expect(account.state).toEqual({
       status: 'signed-in',
       email: 'anna@mail.com',
-      inFlight: false,
+      inFlight: undefined,
       problem: undefined,
     });
     expect(api.accounts).toEqual(['anna@mail.com']);
@@ -80,7 +84,7 @@ describe('the Account', () => {
     expect(api.calls).toEqual([]);
     expect(account.state).toEqual({
       status: 'signed-out',
-      inFlight: false,
+      inFlight: undefined,
       problem: 'invalid-email',
     });
 
@@ -113,7 +117,11 @@ describe('the Account', () => {
     await account.requestCode('ana@mail.com');
 
     account.changeEmail();
-    expect(account.state).toEqual({ status: 'signed-out', inFlight: false, problem: undefined });
+    expect(account.state).toEqual({
+      status: 'signed-out',
+      inFlight: undefined,
+      problem: undefined,
+    });
 
     await account.requestCode('anna@mail.com');
     expect(api.sentCodes.map(({ email }) => email)).toEqual(['ana@mail.com', 'anna@mail.com']);
@@ -172,7 +180,7 @@ describe('the Account', () => {
     expect(api.sentCodes).toEqual([]);
     expect(account.state).toEqual({
       status: 'signed-out',
-      inFlight: false,
+      inFlight: undefined,
       problem: 'too-many-requests',
     });
   });
@@ -182,7 +190,11 @@ describe('the Account', () => {
     api.failNext('unexpected');
 
     await account.requestCode('anna@mail.com');
-    expect(account.state).toEqual({ status: 'signed-out', inFlight: false, problem: 'unexpected' });
+    expect(account.state).toEqual({
+      status: 'signed-out',
+      inFlight: undefined,
+      problem: 'unexpected',
+    });
 
     await account.requestCode('anna@mail.com');
     api.failNext('unexpected');
@@ -195,7 +207,11 @@ describe('the Account', () => {
     api.failNext('offline', 'offline', 'offline', 'offline');
 
     await account.requestCode('anna@mail.com');
-    expect(account.state).toEqual({ status: 'signed-out', inFlight: false, problem: 'offline' });
+    expect(account.state).toEqual({
+      status: 'signed-out',
+      inFlight: undefined,
+      problem: 'offline',
+    });
 
     await account.requestCode('anna@mail.com');
     expect(account.state).toMatchObject({ status: 'code-sent', problem: undefined });
@@ -216,13 +232,32 @@ describe('the Account', () => {
     const release = api.hold();
 
     const sending = account.requestCode('anna@mail.com');
-    expect(account.state).toMatchObject({ status: 'signed-out', inFlight: true });
+    expect(account.state).toMatchObject({ status: 'signed-out', inFlight: 'requestCode' });
     await account.requestCode('anna@mail.com');
     release();
     await sending;
 
     expect(api.calls).toEqual(['requestCode']);
-    expect(account.state).toMatchObject({ status: 'code-sent', inFlight: false });
+    expect(account.state).toMatchObject({ status: 'code-sent', inFlight: undefined });
+  });
+
+  it('names the request in flight: a new code or a sign-in', async () => {
+    const { account, api, time } = await setup();
+    await account.requestCode('anna@mail.com');
+    time.advance(60_000);
+
+    let release = api.hold();
+    const resending = account.resendCode();
+    expect(account.state).toMatchObject({ status: 'code-sent', inFlight: 'resendCode' });
+    release();
+    await resending;
+
+    release = api.hold();
+    const verifying = account.verifyCode('100002');
+    expect(account.state).toMatchObject({ status: 'code-sent', inFlight: 'verifyCode' });
+    release();
+    await verifying;
+    expect(account.state).toMatchObject({ status: 'signed-in', inFlight: undefined });
   });
 });
 
@@ -254,7 +289,7 @@ describe('the Account signed in', () => {
     expect(account.state).toEqual({
       status: 'signed-in',
       email: 'anna@mail.com',
-      inFlight: false,
+      inFlight: undefined,
       problem: undefined,
     });
   });
@@ -276,7 +311,11 @@ describe('the Account signed in', () => {
 
     await account.refresh();
 
-    expect(account.state).toEqual({ status: 'signed-out', inFlight: false, problem: undefined });
+    expect(account.state).toEqual({
+      status: 'signed-out',
+      inFlight: undefined,
+      problem: undefined,
+    });
     expect(await sessions.read()).toBeUndefined();
   });
 
@@ -289,7 +328,7 @@ describe('the Account signed in', () => {
     expect(account.state).toEqual({
       status: 'signed-in',
       email: 'anna@mail.com',
-      inFlight: false,
+      inFlight: undefined,
       problem: undefined,
     });
     expect(await sessions.read()).toEqual(anna);
@@ -303,7 +342,11 @@ describe('the Account signed in', () => {
 
     await account.signOut();
 
-    expect(account.state).toEqual({ status: 'signed-out', inFlight: false, problem: undefined });
+    expect(account.state).toEqual({
+      status: 'signed-out',
+      inFlight: undefined,
+      problem: undefined,
+    });
     expect(await sessions.read()).toBeUndefined();
     expect(api.sessionTokens).toEqual([]);
     expect(api.accounts).toEqual(['anna@mail.com']);
@@ -314,7 +357,11 @@ describe('the Account signed in', () => {
     api.failNext('offline', 'offline', 'offline', 'offline');
 
     await account.signOut();
-    expect(account.state).toEqual({ status: 'signed-out', inFlight: false, problem: undefined });
+    expect(account.state).toEqual({
+      status: 'signed-out',
+      inFlight: undefined,
+      problem: undefined,
+    });
     expect(await sessions.read()).toBeUndefined();
     expect(api.sessionTokens).toEqual(['session-1']);
 
@@ -330,12 +377,16 @@ describe('the Account signed in', () => {
     const release = api.hold();
 
     const checking = account.refresh();
-    expect(account.state).toMatchObject({ status: 'signed-in', inFlight: true });
+    expect(account.state).toMatchObject({ status: 'signed-in', inFlight: 'refresh' });
     await account.signOut();
     release();
     await checking;
 
-    expect(account.state).toEqual({ status: 'signed-out', inFlight: false, problem: undefined });
+    expect(account.state).toEqual({
+      status: 'signed-out',
+      inFlight: undefined,
+      problem: undefined,
+    });
     expect(await sessions.read()).toBeUndefined();
   });
 
@@ -347,9 +398,32 @@ describe('the Account signed in', () => {
 
     await account.signOutEverywhere();
 
-    expect(account.state).toEqual({ status: 'signed-out', inFlight: false, problem: undefined });
+    expect(account.state).toEqual({
+      status: 'signed-out',
+      inFlight: undefined,
+      problem: undefined,
+    });
     expect(await sessions.read()).toBeUndefined();
     expect(api.sessionTokens).toEqual([]);
+  });
+
+  it('names which of the requests that end the Session is in flight', async () => {
+    const { account, api } = await signedIn();
+    // Signing out everywhere fails, so the Session is still on for deleting.
+    api.failNext('unexpected');
+
+    let release = api.hold();
+    const endingEverywhere = account.signOutEverywhere();
+    expect(account.state).toMatchObject({ status: 'signed-in', inFlight: 'signOutEverywhere' });
+    release();
+    await endingEverywhere;
+
+    release = api.hold();
+    const deleting = account.delete();
+    expect(account.state).toMatchObject({ status: 'signed-in', inFlight: 'delete' });
+    release();
+    await deleting;
+    expect(account.state).toMatchObject({ status: 'signed-out', inFlight: undefined });
   });
 
   it('deletes the Account and ends signed out', async () => {
@@ -357,7 +431,11 @@ describe('the Account signed in', () => {
 
     await account.delete();
 
-    expect(account.state).toEqual({ status: 'signed-out', inFlight: false, problem: undefined });
+    expect(account.state).toEqual({
+      status: 'signed-out',
+      inFlight: undefined,
+      problem: undefined,
+    });
     expect(await sessions.read()).toBeUndefined();
     expect(api.accounts).toEqual([]);
     expect(api.sessionTokens).toEqual([]);
@@ -394,7 +472,11 @@ describe('the Account signed in', () => {
     await account.signOut();
     await account.refresh();
 
-    expect(account.state).toEqual({ status: 'signed-out', inFlight: false, problem: undefined });
+    expect(account.state).toEqual({
+      status: 'signed-out',
+      inFlight: undefined,
+      problem: undefined,
+    });
     expect(api.calls.filter((call) => call === 'signOut')).toHaveLength(1);
   });
 
@@ -404,7 +486,11 @@ describe('the Account signed in', () => {
 
     await account.delete();
 
-    expect(account.state).toEqual({ status: 'signed-out', inFlight: false, problem: undefined });
+    expect(account.state).toEqual({
+      status: 'signed-out',
+      inFlight: undefined,
+      problem: undefined,
+    });
   });
 });
 

@@ -36,3 +36,14 @@ Now one module of the shell, `answerOf` in `apps/mobile/src/api.ts`, turns every
 
 - **Show an `unexpected` answer with an existing line**: rejected. `offline` would send the reader to check a network that works, `too-many-requests` would ask them to wait out a limit there isn't, and `invalid-email` fits only one of the cases.
 - **Map each code to a failure by status in each adapter, as before**: rejected. A code compared as a bare string survives its renaming in the contract, and a status no adapter names still reached the screen as a rejection.
+
+## Amendment: the snapshot names the request in flight, and the value rules come from the contracts (architecture review 2)
+
+The snapshot said only whether a request was in flight. The SLOVO ID screen kept two states of its own to know which button's spinner to turn, which request it had started and when it ended, and only Maestro checked them. Now `inFlight` names the action of the Account whose request is in flight (`requestCode`, `resendCode`, `verifyCode`, `signOutEverywhere`, `delete` or `refresh`), or is `undefined`, and the screen only reads it. The Core's tests check which request each action shows.
+
+The rules of the values both sides check were written in several places: six digits in the contract, in the better-auth adapter and as a pattern in the Core; trimming, lower-casing and checking an email in the Core and in the server Core; and the Core kept its own copy of the published pack's shape. Had one copy drifted, the app would have sent what the backend refuses as `BAD_REQUEST`. Now `@slovo/contracts` holds them once: `SIGN_IN_CODE_DIGITS` and `SignInCodeSchema` for the Sign-in code, `AccountEmailSchema` for the email of an Account, and `PublishedPack` for the pack the backend announces. The Core, the server Core, the adapter and the screen's code field derive from them. The `/v1` description stays the same: the API still takes the email as typed, and the backend makes the Account's email of it.
+
+### Considered Options
+
+- **A second field beside `inFlight: boolean`, naming the request**: rejected. Two fields can disagree, and every reader of the snapshot would have to check both.
+- **Check the email in the API input with `AccountEmailSchema`**: rejected. It changes the committed `/v1` description (ADR 0031 amendment), and the server Core, which its tests reach without HTTP, would lose the rule.

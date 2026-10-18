@@ -1,4 +1,4 @@
-import type { Category, Correction, PackMetadata, Word } from '@slovo/contracts';
+import type { Category, Correction, PackMetadata, PublishedPack, Word } from '@slovo/contracts';
 
 /**
  * Reads a compiled Language Pack. Each platform supplies an adapter (Node for
@@ -216,14 +216,6 @@ export const systemRandom: Random = { next: () => Math.random() };
  * format, as the pack's metadata records them.
  */
 export type PackVersion = Readonly<Pick<PackMetadata, 'contentVersion' | 'packFormat'>>;
-
-/** The newest published Language Pack of a pack format, as the backend announces it. */
-export interface PublishedPack extends PackVersion {
-  /** The size of the pack file, in bytes. */
-  readonly size: number;
-  /** The SHA-256 of the pack file, as 64 lowercase hex digits; not the content checksum. */
-  readonly fileSha256: string;
-}
 
 /** A call of the content API that failed as any request does, or found no such Edition or pack (404). */
 export type ContentApiFailure =

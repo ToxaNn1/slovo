@@ -527,9 +527,6 @@ importers:
       '@slovo/contracts':
         specifier: workspace:*
         version: link:../contracts
-      zod:
-        specifier: ^4.6.5
-        version: 4.6.5
     devDependencies:
       '@slovo/config':
         specifier: workspace:*

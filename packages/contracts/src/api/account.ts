@@ -1,14 +1,12 @@
 import { z } from 'zod';
 
+import { SignInCodeSchema } from '../account';
 import { EditionIdSchema } from '../edition';
 import { procedure } from './procedure';
 
-/** A Sign-in code as the reader types it: six digits. */
-const SignInCodeSchema = z.string().regex(/^[0-9]{6}$/, 'Expected six digits');
-
 /**
- * An email as the reader typed it. The backend trims it, lower-cases it and
- * then checks that it is an email.
+ * An email as the reader typed it. The backend makes the Account's email of
+ * it by `AccountEmailSchema`.
  */
 const TypedEmailSchema = z.string().max(320);
 
