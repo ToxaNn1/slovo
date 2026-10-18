@@ -30,9 +30,9 @@ describe('the swipe hint', () => {
   });
 
   it('leaves the other user state untouched', async () => {
-    const records = new Map([['feed.seen.w_1', 'true']]);
+    const records = new Map([['feed.seen.w_1', '1']]);
     await (await swipeHintOver(records)).markShown();
 
-    expect(records.get('feed.seen.w_1')).toBe('true');
+    expect(records.get('feed.seen.w_1')).toBe('1');
   });
 });

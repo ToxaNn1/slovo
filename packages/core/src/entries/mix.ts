@@ -87,9 +87,10 @@ function mixStateOf(
     inMixByChoice(edition, choices, id),
   );
   // At least one Category always stays in the Mix (ADR 0019). Taking out the last
-  // one is refused, but a later default or a Category gone from the Language Pack
-  // could still leave none in; then the default's Categories are in, or every
-  // Category when the pack has none of them.
+  // one is refused, but a later default, a Category gone from the Language Pack or
+  // a merge of two devices that each took out a different last one could still
+  // leave none in; then the default's Categories are in, or every Category when
+  // the pack has none of them. Nothing is written for it (ADR 0013).
   if (inMix.length === 0) inMix = categories.filter(({ id }) => inByDefault(mix, id));
   if (inMix.length === 0) inMix = categories;
   const categoryIds = inMix.map(({ id }) => id);

@@ -242,7 +242,7 @@ describe('the Word of the Day', () => {
   });
 
   it('takes no Word without a morning notification, and starts no Cycle though every Word is Seen', async () => {
-    const records = new Map(wordIds.map((id) => [`feed.seen.${id}`, 'true']));
+    const records = new Map(wordIds.map((id) => [`feed.seen.${id}`, '1']));
     const allSeen = await open({ records });
     await allSeen.wordOfTheDay.takeMorningWord();
     expect(allSeen.wordOfTheDay.chosen()).toBeUndefined();

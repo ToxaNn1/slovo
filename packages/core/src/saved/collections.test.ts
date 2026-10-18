@@ -310,6 +310,61 @@ describe('Collections', () => {
     expect(app.collections.of('w_one').map((collection) => collection.id)).toEqual([id]);
   });
 
+  it('reads an Entry of a Collection whose record is absent as absent, and deletes it in the next write of the Collections', async () => {
+    const records = new Map<string, string>();
+    const port = createMemoryUserStatePort(records);
+    const writes: Map<string, string | undefined>[] = [];
+    // A merge kept another device's Entries of a Collection this device deleted.
+    records.set('collectionEntries.k_deleted.w_one', JSON.stringify('2026-10-11T07:00:00.000Z'));
+    records.set('collectionEntries.k_deleted.c_one', JSON.stringify('2026-10-11T07:30:00.000Z'));
+    const app = await openComposition({
+      content,
+      edition: { ...testCategories, isFeatureEnabled: () => true },
+      userState: await openUserState({
+        port: {
+          ...port,
+          write(changes) {
+            writes.push(new Map(changes));
+            return port.write(changes);
+          },
+        },
+      }),
+      clock: fakeClock().clock,
+      random: steppingRandom(),
+    });
+
+    expect(app.collections.list).toEqual([]);
+    expect(app.collections.of('w_one')).toEqual([]);
+    expect(app.collections.has('k_deleted', 'w_one')).toBe(false);
+    expect(app.collections.entries('k_deleted')).toEqual([]);
+    expect(app.progress.state.inCollections).toBe(0);
+    expect(records.has('collectionEntries.k_deleted.w_one')).toBe(true);
+
+    writes.length = 0;
+    const { id } = await create(app, 'New', 'w_two');
+
+    expect(writes).toHaveLength(1);
+    expect([...(writes[0]?.keys() ?? [])].sort()).toEqual(
+      [
+        'collectionEntries.k_deleted.c_one',
+        'collectionEntries.k_deleted.w_one',
+        `collectionEntries.${id}.w_two`,
+        `collections.${id}`,
+      ].sort(),
+    );
+    expect([...records.keys()].filter((key) => key.startsWith('collection')).sort()).toEqual([
+      `collectionEntries.${id}.w_two`,
+      `collections.${id}`,
+    ]);
+
+    writes.length = 0;
+    await app.collections.add(id, 'w_three');
+
+    expect(writes.map((changes) => [...changes.keys()])).toEqual([
+      [`collectionEntries.${id}.w_three`],
+    ]);
+  });
+
   it('changes nothing in memory when keeping the change fails', async () => {
     const records = new Map<string, string>();
     const port = createMemoryUserStatePort(records);

@@ -81,7 +81,7 @@ describe('opening an Entry from the widget', () => {
     expect(keysSince(writes, before)).toEqual([
       ['activeDays.2026-10-12', 'feed.seen.w_three', 'history.w_three'],
     ]);
-    expect(records.get('feed.seen.w_three')).toBe('true');
+    expect(records.get('feed.seen.w_three')).toBe('1');
     expect(historyIdsOf(app)).toEqual(['w_three']);
     expect(app.history.list[0]).toMatchObject({
       seenAt: new Date('2026-10-12T09:00:00+03:00'),

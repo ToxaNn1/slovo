@@ -3,16 +3,16 @@ import type { z } from 'zod';
 import type { UserStateChanges } from '../ports';
 
 /**
- * How a record syncs when sync arrives (ADR 0005). A record without a mark
- * syncs by last write wins, one record at a time.
- * - `device-only`: stays on this device (the notification times and sound,
- *   the plan, the onboarding finished).
+ * How a record syncs (ADR 0005, 0013); `user-state-schema.ts` marks each
+ * record. A record without a mark syncs by last write wins, one record at a
+ * time.
+ * - `device-only`: stays on this device (the notification times, say).
  * - `union`: the records of every device are all kept (Active Days, so the
  *   Streak derived from them is the same on every device).
  * - `highest`: the higher of two devices' values is kept (the best Game
  *   result, so a lower result on one device never replaces a higher one).
  */
-type SyncMark = 'device-only' | 'union' | 'highest';
+export type SyncMark = 'device-only' | 'union' | 'highest';
 
 /** The options of a declared record. */
 interface RecordOptions {

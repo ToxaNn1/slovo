@@ -89,7 +89,7 @@ describe('History', () => {
   it('starts empty, also over Seen marks kept before it existed', async () => {
     const records = new Map<string, string>();
     const first = await run({ records });
-    records.set('feed.seen.w_two', JSON.stringify(true));
+    records.set('feed.seen.w_two', JSON.stringify(1));
 
     const app = await run({ records });
 

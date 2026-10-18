@@ -1,7 +1,14 @@
 import { FontSizeSchema, NotificationTimesSchema, ThemeSchema } from '@slovo/contracts';
 import { z } from 'zod';
 
-import { declareRecord, declareRecords, parseJson } from './user-state-record';
+import {
+  declareRecord,
+  declareRecords,
+  parseJson,
+  type SyncMark,
+  type UserStateRecord,
+  type UserStateRecords,
+} from './user-state-record';
 import type { UserStateMigration } from './user-state-migration';
 
 /**
@@ -24,25 +31,37 @@ const EntryOnDateSchema = z.object({ entryId: z.string(), date: z.string() });
  * `feed.` keys from 0.2, when the Feed held them.
  */
 export const userStateRecords = {
+  /** The schema version, written by `openUserState` with each migration; it never syncs. */
+  schemaVersion: declareRecord(SCHEMA_VERSION_KEY, z.number().int().nonnegative(), {
+    sync: 'device-only',
+  }),
   /** The user's Theme. */
   theme: declareRecord('settings.theme', ThemeSchema),
   /** The user's font size. */
   fontSize: declareRecord('settings.fontSize', FontSizeSchema),
-  /** Whether the user has haptics on. */
-  vibration: declareRecord('settings.vibration', z.boolean()),
-  /** That the Feed's swipe hint was shown. */
-  swipeHintShown: declareRecord('feed.swipeHintShown', z.literal(true)),
-  /** The card the reader was on last, and the local date they were on it. */
-  feedPosition: declareRecord('feed.position', EntryOnDateSchema),
+  /** Whether the user has haptics on. It stays on the device, which may have no haptics. */
+  vibration: declareRecord('settings.vibration', z.boolean(), { sync: 'device-only' }),
+  /** That the Feed's swipe hint was shown on this device. */
+  swipeHintShown: declareRecord('feed.swipeHintShown', z.literal(true), { sync: 'device-only' }),
+  /** The card the reader was on last on this device, and the local date they were on it. */
+  feedPosition: declareRecord('feed.position', EntryOnDateSchema, { sync: 'device-only' }),
   /** The current Cycle: its number and the seed of its shuffle. */
   cycle: declareRecord(
     'feed.cycle',
     z.object({ id: z.number().int().positive(), seed: z.number().int().nonnegative() }),
   ),
-  /** The Entries Seen in the current Cycle, one record per Entry, by Entry id. */
-  seen: declareRecords('feed.seen.', z.literal(true)),
-  /** The Word of the Day and the local date it belongs to. */
-  wordOfTheDay: declareRecord('feed.wordOfTheDay', EntryOnDateSchema),
+  /**
+   * The Entries Seen, one record per Entry, by Entry id: the id of the Cycle
+   * it was Seen in. Only the current Cycle's count, so a mark another device
+   * kept in an older Cycle never carries into this one.
+   */
+  seen: declareRecords('feed.seen.', z.number().int().positive()),
+  /**
+   * The Word of the Day and the local date it belongs to. It stays on the
+   * device: it is the Word of the morning notification this device's own plan
+   * Reserves (ADR 0021, 0022).
+   */
+  wordOfTheDay: declareRecord('feed.wordOfTheDay', EntryOnDateSchema, { sync: 'device-only' }),
   /** The Entries in Favorites, one record per Entry, by Entry id: the instant it was added. */
   favorites: declareRecords('favorites.', InstantSchema),
   /** The Collections, one record per Collection, by Collection id: its name and the instant it was created. */
@@ -119,6 +138,25 @@ export const userStateRecords = {
   gameBest: declareRecord('game.best', z.number().int().min(0).max(15), { sync: 'highest' }),
 };
 
+/** Every declared record and kind of record, for finding the one a key belongs to. */
+const declared: readonly (UserStateRecord<unknown> | UserStateRecords<unknown>)[] =
+  Object.values(userStateRecords);
+
+/**
+ * How the record under the key syncs, by the schema: its mark,
+ * `last-write-wins` for an unmarked record, and nothing for a key the schema
+ * doesn't declare, such as a record of a newer app.
+ */
+export function syncMarkOf(key: string): SyncMark | 'last-write-wins' | undefined {
+  const declaration = declared.find((record) =>
+    'key' in record
+      ? record.key === key
+      : key.startsWith(record.prefix) && key.length > record.prefix.length,
+  );
+  if (declaration === undefined) return undefined;
+  return declaration.sync ?? 'last-write-wins';
+}
+
 /**
  * The user-state schema, one step per version. Append a step to change it;
  * never edit or remove one that has shipped. A step names its keys as they
@@ -150,6 +188,26 @@ export const userStateMigrations: readonly UserStateMigration[] = [
       const changes = new Map<string, string | undefined>([['feed.seen', undefined]]);
       const ids = z.array(z.string()).safeParse(parseJson(text));
       for (const id of ids.data ?? []) changes.set(`feed.seen.${id}`, JSON.stringify(true));
+      return changes;
+    },
+  },
+  // 0.8: a Seen record holds the id of the Cycle it was Seen in, not `true`, so a
+  // device offline since an older Cycle can't carry its marks into a new one. Each
+  // takes the current Cycle, or the first, which opens when none reads. The last
+  // migration that may re-encode a record that syncs (ADR 0013): from 0.8 a new
+  // encoding takes a new key.
+  {
+    version: 4,
+    async migrate({ get, list }) {
+      const text = await get('feed.cycle');
+      // The Cycle as 0.7 kept it; one that doesn't read opens as the first.
+      const cycle = z
+        .object({ id: z.number().int().positive(), seed: z.number().int().nonnegative() })
+        .safeParse(text === undefined ? undefined : parseJson(text));
+      const changes = new Map<string, string>();
+      for (const [key, value] of await list('feed.seen.')) {
+        if (parseJson(value) === true) changes.set(key, JSON.stringify(cycle.data?.id ?? 1));
+      }
       return changes;
     },
   },

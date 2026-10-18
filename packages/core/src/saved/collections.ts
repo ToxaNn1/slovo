@@ -170,13 +170,22 @@ export async function openCollections({
     userState.list(collectionEntryRecords),
   ]);
   const filedByCollection = new Map<string, Map<string, Filed>>();
+  /**
+   * The deletions of the records of Entries in no Collection that exists, such
+   * as another device's Entry of a Collection deleted here: they read as
+   * absent, and the next write of the Collections deletes them (ADR 0013).
+   */
+  let orphans = new Map<string, string | undefined>();
   await Promise.all(
     [...storedEntries].map(async ([id, added]) => {
       // Neither id holds a `.`, so the first one splits them.
       const dot = id.indexOf('.');
       const collectionId = id.slice(0, dot);
       const entryId = id.slice(dot + 1);
-      if (dot < 0 || !storedCollections.has(collectionId)) return;
+      if (dot < 0 || !storedCollections.has(collectionId)) {
+        mergeInto(orphans, collectionEntryRecords.record(id).change(undefined));
+        return;
+      }
       const row = await rows.row(entryId);
       if (row === undefined) return;
       const filed = filedByCollection.get(collectionId) ?? new Map<string, Filed>();
@@ -195,6 +204,12 @@ export async function openCollections({
     };
     collections.set(id, stored);
     views.set(id, viewOf(stored));
+  }
+
+  /** Writes the changes, and in the same write deletes the records of Entries in no Collection. */
+  async function write(changes: UserStateChanges): Promise<void> {
+    await userState.write(new Map([...orphans, ...changes]));
+    orphans = new Map();
   }
 
   let list: readonly Collection[] = NONE;
@@ -279,7 +294,7 @@ export async function openCollections({
       filed.set(row.entryId, { addedAt: createdAt, row });
       mergeInto(changes, entryRecord(id, row.entryId).change(createdAt.toISOString()));
     }
-    await userState.write(changes);
+    await write(changes);
     return { ok: true, collection: change({ id, name, createdAt, filed }) };
   }
 
@@ -295,7 +310,7 @@ export async function openCollections({
     // Keeping the name as it is changes nothing.
     const view = views.get(collectionId);
     if (name === collection.name && view !== undefined) return { ok: true, collection: view };
-    await userState.write(
+    await write(
       collectionRecords
         .record(collectionId)
         .change({ name, createdAt: collection.createdAt.toISOString() }),
@@ -315,7 +330,7 @@ export async function openCollections({
         mergeInto(changes, collectionEntryRecords.record(key).change(undefined));
       }
     }
-    await userState.write(changes);
+    await write(changes);
     collections.delete(collectionId);
     views.delete(collectionId);
     entriesOf.delete(collectionId);
@@ -329,14 +344,14 @@ export async function openCollections({
     const row = await rows.row(entryId);
     if (row === undefined) return;
     const addedAt = clock.now();
-    await userState.write(entryRecord(collectionId, entryId).change(addedAt.toISOString()));
+    await write(entryRecord(collectionId, entryId).change(addedAt.toISOString()));
     change({ ...collection, filed: new Map([...collection.filed, [entryId, { addedAt, row }]]) });
   }
 
   async function remove(collectionId: string, entryId: string): Promise<void> {
     const collection = collections.get(collectionId);
     if (collection?.filed.has(entryId) !== true) return;
-    await userState.write(entryRecord(collectionId, entryId).change(undefined));
+    await write(entryRecord(collectionId, entryId).change(undefined));
     const filed = new Map(collection.filed);
     filed.delete(entryId);
     change({ ...collection, filed });
