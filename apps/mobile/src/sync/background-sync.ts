@@ -56,7 +56,7 @@ export function reopenAfterSync({
 }: {
   settings: Pick<Opening<unknown>, 'reopen'>;
   composition: Opening<Composition>;
-  writeWidgetSnapshot: (snapshot: () => Promise<WidgetSnapshot>) => void;
+  writeWidgetSnapshot: (snapshot: () => Promise<WidgetSnapshot | undefined>) => void;
 }): () => Promise<void> {
   return async () => {
     const before = composition.state;

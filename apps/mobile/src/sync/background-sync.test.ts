@@ -131,7 +131,7 @@ async function app() {
     },
     { onError: () => undefined },
   );
-  const widgetWrites: (() => Promise<WidgetSnapshot>)[] = [];
+  const widgetWrites: (() => Promise<WidgetSnapshot | undefined>)[] = [];
   const appState = fakeAppState();
   const reports = reportForeground({ clock: time.clock, appState: appState.source });
   syncInBackground({
