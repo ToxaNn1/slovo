@@ -131,6 +131,17 @@ export const userStateRecords = {
     sync: 'device-only',
   }),
   /**
+   * The last answer of the backend's remote Feature Switches: the features
+   * the owner turned off remotely, by name, and the ETag that names them
+   * (ADR 0040). Without the record, none is known, and the Edition's own
+   * values hold. It stays on the device: each device asks for itself.
+   */
+  remoteSwitches: declareRecord(
+    'edition.switches',
+    z.object({ off: z.array(z.string()), etag: z.string() }),
+    { sync: 'device-only' },
+  ),
+  /**
    * The best Game result: the most Rounds passed in one finished Game, from 0
    * to the 15 Rounds of a Game; without the record, no Game has finished yet.
    * Sync keeps the higher of two devices' results (0.8).

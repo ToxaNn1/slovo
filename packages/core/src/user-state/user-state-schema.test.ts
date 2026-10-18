@@ -103,6 +103,7 @@ describe('the 0.8 sync marks', () => {
       'notifications.plan.2026-10-18T09:00',
       'onboarding.finished',
       'contentUpdate.checkedAt',
+      'edition.switches',
     ]) {
       expect(syncMarkOf(key), key).toBe('device-only');
     }
