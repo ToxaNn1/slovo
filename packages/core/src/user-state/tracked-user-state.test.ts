@@ -153,6 +153,37 @@ describe('the tracked user state', () => {
     expect([...(await userState.pendingChanges()).keys()]).toEqual(['settings.theme']);
   });
 
+  it('tells its subscribers after each write that left a pending change, and only then', async () => {
+    const records = new Map<string, string>();
+    const memory = createMemoryUserStatePort(records);
+    let failing = false;
+    const { userState } = await tracked(records, {
+      ...memory,
+      write: (changes) =>
+        failing ? Promise.reject(new Error('disk full')) : memory.write(changes),
+    });
+    let told = 0;
+    const stop = userState.subscribe(() => {
+      told += 1;
+    });
+
+    await userState.write(theme.change('dark'));
+    expect(told).toBe(1);
+    await userState.write(vibration.change(false));
+    await userState.merge(() =>
+      Promise.resolve({ untracked: new Map(), tracked: gameBest.change(3) }),
+    );
+    await userState.deleteSent(await userState.pendingChanges());
+    failing = true;
+    await expect(userState.write(theme.change('light'))).rejects.toThrow('disk full');
+    failing = false;
+    expect(told).toBe(1);
+
+    stop();
+    await userState.write(theme.change('light'));
+    expect(told).toBe(1);
+  });
+
   it('back-fills nothing for the records written before 0.8, and has no cursor before a sync', async () => {
     const { userState } = await tracked(
       new Map([
