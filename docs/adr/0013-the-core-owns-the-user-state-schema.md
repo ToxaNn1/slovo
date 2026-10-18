@@ -88,3 +88,23 @@ It takes a new sync mark, `highest`: sync keeps the higher of two devices' value
 ## Amendment: the last content update check stays on the device (0.7)
 
 0.7 adds one record: `contentUpdate.checkedAt`, the instant the last check for a content update started (spec #333). It reads as absent until the first check, so a check is due and there is still no migration. It is `device-only`: the pack the check downloads is kept on this device only, so another device's check says nothing about it. A check writes the record before it asks the backend, so a check that fails, or an app closed in the middle of one, still waits a day for the next, and the app asks at most once a day.
+
+## Amendment: the user state is ready to merge (0.8)
+
+Sync (spec #378) merges the user state record by record by the marks this ADR declares, so 0.8 settles every mark and the merge outcomes that would break an invariant before sync starts.
+
+**The 0.8 marks.** `device-only` now also covers the schema version, the Feed's place (`feed.position`), the swipe hint (`feed.swipeHintShown`), the Word of the Day (`feed.wordOfTheDay`) and vibration (`settings.vibration`), beside the notification times, sound and plan, the onboarding finished and the last content update check. The Word of the Day stays because it is the Word of the morning notification each device's own plan Reserves (ADR 0021, 0022); vibration stays because a tablet may have no haptics. Last write wins (no mark) stays for the Theme, the font size, Favorites, Collections and their Entries, History, Hidden Entries, the Mix (each Category and Corrections), `feed.cycle` and Seen. `union` (Active Days) and `highest` (the best Game result) stay. The schema version is declared as a record too, so every key the Core writes has a declaration, and the schema answers the mark of a key: its mark, last write wins for an unmarked one, or nothing for a key it doesn't declare, such as a record of a newer app, which sync keeps as it is.
+
+**Seen remembers its Cycle (migration 4).** A Seen record holds the id of the Cycle it was Seen in instead of `true`, and only a record of the current Cycle counts as Seen. A device offline since an older Cycle can't carry that Cycle's marks into a new one: they read as not Seen, so the Feed offers those Entries again. Migration 4 rewrites every record that holds `true` with the current Cycle's id in one write with the version; when no Cycle record reads, it takes 1, the id of the Cycle that then opens. Starting a new Cycle still deletes every Seen record it lists, of any Cycle, and those deletions sync. When two devices start Cycles apart, `feed.cycle` follows last write wins and the other device's marks of its own Cycle stop counting.
+
+**A synced record's encoding never changes.** Migration 4 is the last migration that may re-encode a record that syncs, since nothing synced before 0.8. From 0.8 an older app on another device reads what this one writes, so a new encoding takes a new key, and the older app reads the unknown key as absent through its schema. Migrations may still change `device-only` records.
+
+**An orphaned Collection entry is dropped.** An Entry of a Collection whose Collection record is absent reads as absent: it is in no Collection and counts nowhere. The next write of the Collections deletes it in the same write, so a Collection deleted on one device stays deleted even if another device added to it meanwhile, and the deletion syncs.
+
+**A Mix with no Category reads as every Category.** Two devices can each take out a different last Category, and the merge keeps both. A Mix with no Category in it reads as the Edition's default (every Category in the Ukrainian Edition), by the fallback ADR 0019's rule already has, so a merge can never leave the Feed empty. Nothing is written for it; the next change of the Mix writes the Categories the reader sees as in, as before.
+
+### Considered Options
+
+- **Keep Seen as `true` and clear Seen on a Cycle change from another device**: rejected. The device would have to tell which Seen marks came with the other Cycle, and a mark that arrives after the Cycle record would still count.
+- **Re-encode a synced record in a later migration and make every app understand both**: rejected. An app that shipped can't learn the new encoding, and it would read the record as absent or overwrite it.
+- **Write the Category back in when a merge empties the Mix**: rejected. Both devices would write at once and race each other; reading the empty Mix as the default needs no write.
