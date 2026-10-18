@@ -10,6 +10,9 @@ const API_URL = process.env.EXPO_PUBLIC_SLOVO_API_URL ?? 'http://localhost:8787'
 /** The app's client of the API, built from the contract (spec #333). */
 export const apiClient = createApiClient({ url: API_URL });
 
+/** The `fetch` the contract's client sends its requests with. */
+export type ClientFetch = NonNullable<Parameters<typeof createApiClient>[0]['fetch']>;
+
 /** The errors the contract defines for a procedure that throws `E`, each with its code and data. */
 type DefinedError<E> = Extract<E, ORPCError<string, unknown>>;
 
@@ -37,6 +40,13 @@ export async function answerOf<O, E, F extends { readonly ok: false } = never>(
   return { ok: false, reason: 'unexpected' };
 }
 
-/** The client of a device signed in with the Session's token, which it sends as `Authorization: Bearer`. */
-export const apiClientOf = (token: string) =>
-  createApiClient({ url: API_URL, headers: { authorization: `Bearer ${token}` } });
+/**
+ * The client of a device signed in with the Session's token, which it sends as
+ * `Authorization: Bearer`; `fetch` replaces the global one.
+ */
+export const apiClientOf = (token: string, fetch?: ClientFetch) =>
+  createApiClient({
+    url: API_URL,
+    headers: { authorization: `Bearer ${token}` },
+    ...(fetch === undefined ? {} : { fetch }),
+  });
