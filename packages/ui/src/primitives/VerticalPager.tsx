@@ -424,10 +424,12 @@ function forget(scrolls: SharedValue<Record<number, PageScroll>>, index: number)
  * and holds still while the swipe turns the page.
  */
 export function PagerScrollView({
+  style,
   contentContainerStyle,
   children,
   testID,
 }: {
+  style?: StyleProp<ViewStyle>;
   contentContainerStyle?: StyleProp<ViewStyle>;
   children: ReactNode;
   testID?: string;
@@ -485,6 +487,7 @@ export function PagerScrollView({
         content.current = height;
         measure();
       }}
+      style={style}
       contentContainerStyle={contentContainerStyle}
     >
       {children}
