@@ -92,6 +92,18 @@ export const FeatureSwitchesSchema = z.strictObject({
   sync: z.boolean(),
   /** Content updates: the app's daily check for a newer Language Pack. */
   contentUpdates: z.boolean(),
+  /** Notifications: the daily reminders the Core plans (ADR 0021). */
+  notifications: z.boolean(),
+  /** The home-screen widget: the Widget Snapshot and the widget it feeds. */
+  widget: z.boolean(),
+  /** Share Cards: the buttons that make and share an image of an Entry. */
+  shareCards: z.boolean(),
+  /** Pronunciation: the buttons that play a Word's audio. */
+  pronunciation: z.boolean(),
+  /** The Word of the Day: its pick, its notification and its widget. */
+  wordOfTheDay: z.boolean(),
+  /** The statistics screens and the Streak. */
+  statistics: z.boolean(),
 });
 
 export type FeatureSwitches = z.infer<typeof FeatureSwitchesSchema>;

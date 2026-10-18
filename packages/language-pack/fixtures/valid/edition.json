@@ -16,7 +16,13 @@
     "corrections": true,
     "account": true,
     "sync": true,
-    "contentUpdates": true
+    "contentUpdates": true,
+    "notifications": true,
+    "widget": true,
+    "shareCards": true,
+    "pronunciation": true,
+    "wordOfTheDay": true,
+    "statistics": true
   },
   "userSettingDefaults": {
     "theme": "system",
