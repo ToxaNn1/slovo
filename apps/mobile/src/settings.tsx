@@ -3,6 +3,7 @@ import {
   createSettings,
   type ColorScheme,
   type Settings,
+  type SettingsDefaults,
   type UserSettings,
 } from '@slovo/core';
 import { createContext, useContext, useState, type ReactNode } from 'react';
@@ -18,7 +19,7 @@ function applyToNativeViews({ theme }: UserSettings): void {
 }
 
 const { theme, fontSize, vibration } = edition.userSettingDefaults;
-const defaults: UserSettings = { theme, fontSize, vibration };
+const defaults: SettingsDefaults = { theme, fontSize, vibration };
 
 async function settingsOverUserState(): Promise<Settings> {
   return createSettings({ userState: await storedUserState.opened(), defaults });
@@ -44,7 +45,7 @@ export const settingsOpening = openOnce(
     onError(error) {
       console.error('Could not read the settings; using the Edition defaults', error);
     },
-    fallback: async () => opened(await settingsOverUserState(), defaults),
+    fallback: async () => opened(await settingsOverUserState(), { ...defaults, hideStreak: false }),
   },
 );
 

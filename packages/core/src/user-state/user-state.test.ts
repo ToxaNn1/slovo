@@ -63,7 +63,12 @@ describe('openUserState', () => {
     });
     const wordOfTheDay = await openWordOfTheDay({ cycle, userState, clock });
 
-    expect(await settings.read()).toEqual({ theme: 'dark', fontSize: 'L', vibration: true });
+    expect(await settings.read()).toEqual({
+      theme: 'dark',
+      fontSize: 'L',
+      vibration: true,
+      hideStreak: false,
+    });
     expect(await createSwipeHint({ userState }).isDue()).toBe(false);
     expect(new Set(cycle.unseen().words)).toEqual(new Set(['w_0', 'w_3', 'w_4']));
     expect(wordOfTheDay.chosen()?.wordId).toBe('w_3');

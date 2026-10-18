@@ -138,6 +138,36 @@ describe('two devices of one Account', () => {
     expect(server.records.get('settings.theme')?.value).toBe('light');
   });
 
+  it('let the newer choice to hide the Streak win, on either device', async () => {
+    const { device, server, time } = account();
+    const phone = await device();
+    const tablet = await device();
+    await phone.settings.update({ hideStreak: true });
+    time.advance(HOUR);
+    await tablet.settings.update({ hideStreak: false });
+    await tablet.sync();
+    time.advance(HOUR);
+
+    await phone.sync();
+    await tablet.sync();
+
+    expect((await phone.settings.read()).hideStreak).toBe(false);
+    expect((await tablet.settings.read()).hideStreak).toBe(false);
+    expect(server.records.get('settings.hideStreak')?.value).toBe(false);
+  });
+
+  it('carry a choice to hide the Streak to the other device', async () => {
+    const { device } = account();
+    const phone = await device();
+    const tablet = await device();
+    await phone.settings.update({ hideStreak: true });
+    await phone.sync();
+
+    await tablet.sync();
+
+    expect((await tablet.settings.read()).hideStreak).toBe(true);
+  });
+
   it('keep a pending change newer than the Account’s through a pull, and it wins after the push', async () => {
     const { device, server, time } = account();
     const phone = await device();
