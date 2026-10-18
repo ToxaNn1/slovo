@@ -43,6 +43,8 @@ export function useHide(card: EntryFeedCard): { open: () => void; choice: HideCh
       options: options.map(({ kind, label }) => ({ key: kind, label })),
       cancelLabel: strings.choice.cancel,
       onChoose(key) {
+        // The sheet is still on screen while it slides out: a second tap hides nothing more.
+        if (!visible) return;
         setVisible(false);
         const option = options.find(({ kind }) => kind === key);
         if (option === undefined) return;
