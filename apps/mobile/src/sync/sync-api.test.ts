@@ -180,7 +180,11 @@ describe('the Sync API over the contract’s client', () => {
       },
     });
 
-    await syncApi.pull('the-token', undefined);
+    await expect(syncApi.pull('the-token', undefined)).resolves.toEqual({
+      ok: false,
+      reason: 'too-many-requests',
+      retryAfter: 60,
+    });
     await expect(syncApi.pull('the-token', undefined)).resolves.toEqual({
       ok: false,
       reason: 'too-many-requests',
