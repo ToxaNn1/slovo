@@ -206,4 +206,9 @@ export {
   UserStateTooNewError,
   type UserState,
 } from './user-state/user-state';
+export {
+  trackChanges,
+  type PendingChange,
+  type TrackedUserState,
+} from './user-state/tracked-user-state';
 export type { UserStateMigration } from './user-state/user-state-migration';

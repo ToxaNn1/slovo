@@ -1,6 +1,13 @@
-import { createMemoryUserStatePort, openUserState, type UserState } from '@slovo/core';
+import {
+  createMemoryUserStatePort,
+  openUserState,
+  trackChanges,
+  type TrackedUserState,
+  type UserStatePort,
+} from '@slovo/core';
 import { openDatabaseAsync } from 'expo-sqlite';
 
+import { deviceClock } from '../device/device-clock';
 import { openOnce } from '../opening';
 import { openSqliteUserState } from './user-state-sqlite';
 
@@ -10,19 +17,26 @@ import { openSqliteUserState } from './user-state-sqlite';
  */
 const DATABASE_NAME = 'user-state.db';
 
-async function openStoredUserState(): Promise<UserState> {
+/** The user state over the port, tracked so each write of a synced record leaves its pending change (spec #378). */
+async function openTracked(port: UserStatePort): Promise<TrackedUserState> {
+  return trackChanges({ userState: await openUserState({ port }), clock: deviceClock });
+}
+
+async function openStoredUserState(): Promise<TrackedUserState> {
   const db = await openDatabaseAsync(DATABASE_NAME);
   await db.execAsync('PRAGMA journal_mode = WAL');
-  return openUserState({ port: await openSqliteUserState(db) });
+  return openTracked(await openSqliteUserState(db));
 }
 
 /**
- * The user state, opened once per app run and shared by every feature. The app
- * still works without it, on the Edition's defaults: choices last until it quits.
+ * The user state, opened once per app run, before the settings and the
+ * composition, and shared by every feature, so each of their writes is
+ * tracked. The app still works without it, on the Edition's defaults: choices
+ * last until it quits.
  */
 export const storedUserState = openOnce(openStoredUserState, {
   onError(error) {
     console.error('Could not open the user state; nothing will be kept', error);
   },
-  fallback: () => openUserState({ port: createMemoryUserStatePort() }),
+  fallback: () => openTracked(createMemoryUserStatePort()),
 });
