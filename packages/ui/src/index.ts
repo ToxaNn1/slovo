@@ -3,6 +3,7 @@
  * Decor from the Edition.
  */
 export { ActionRow, type ActionRowProps } from './primitives/ActionRow';
+export { DeleteAccountButton } from './DeleteAccountButton';
 export { ResendButton } from './ResendButton';
 export { BackLink } from './primitives/BackLink';
 export { FeedError, FeedLoading, SwipeHint } from './feed/FeedStates';

@@ -2,6 +2,7 @@ import { ACCOUNT_NAME, SIGN_IN_CODE_DIGITS } from '@slovo/contracts';
 import type { Account, AccountState } from '@slovo/core';
 import {
   BackLink,
+  DeleteAccountButton,
   fill,
   PrimaryButton,
   ProblemLine,
@@ -15,7 +16,7 @@ import {
   useTokens,
 } from '@slovo/ui';
 import { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { deviceClock } from '../device/device-clock';
@@ -51,8 +52,8 @@ export interface AccountScreenBack {
 /**
  * The SLOVO ID screen, of Settings and of the onboarding's SLOVO ID step:
  * signing in with a Sign-in code sent to the email, or, signed in, the email
- * with signing out, signing out everywhere and deleting the Account behind a
- * system alert. It draws the Account's state and calls its actions; the rules
+ * with signing out, signing out everywhere and deleting the Account behind the
+ * SLOVO confirmation dialog. It draws the Account's state and calls its actions; the rules
  * are the Account's own.
  */
 export function AccountScreen({
@@ -205,7 +206,7 @@ function SignIn({
 
 /**
  * Signed in: the email, «Вийти», «Вийти на всіх пристроях» and the destructive
- * «Видалити SLOVO ID», which a system alert confirms. Signing out works at
+ * «Видалити SLOVO ID», which the SLOVO confirmation dialog confirms. Signing out works at
  * once, even offline.
  */
 function SignedIn({
@@ -220,19 +221,6 @@ function SignedIn({
   const { colors, fontFamilies } = useTokens();
   const { voice } = useEdition();
   const deletion = strings.delete;
-
-  function confirmDelete() {
-    Alert.alert(fill(deletion.title, { name: ACCOUNT_NAME }), deletion.message, [
-      { text: deletion.cancel, style: 'cancel' },
-      {
-        text: deletion.confirm,
-        style: 'destructive',
-        onPress: () => {
-          run(account.delete());
-        },
-      },
-    ]);
-  }
 
   return (
     <View style={styles.form}>
@@ -267,13 +255,20 @@ function SignedIn({
           run(account.signOutEverywhere());
         }}
       />
-      <SecondaryButton
+      <DeleteAccountButton
         testID="account-delete"
-        label={fill(deletion.button, { name: ACCOUNT_NAME })}
-        destructive
+        copy={{
+          button: fill(deletion.button, { name: ACCOUNT_NAME }),
+          title: fill(deletion.title, { name: ACCOUNT_NAME }),
+          message: deletion.message,
+          confirm: deletion.confirm,
+          cancel: deletion.cancel,
+        }}
         busy={state.inFlight === 'delete'}
         disabled={state.inFlight !== undefined}
-        onPress={confirmDelete}
+        onDelete={() => {
+          run(account.delete());
+        }}
       />
       <ProblemLine testID="account-problem" problem={problem} cause={state} />
     </View>
