@@ -9,7 +9,15 @@ export interface UserSettings {
   readonly fontSize: FontSize;
   /** Whether haptics are on. */
   readonly vibration: boolean;
+  /** Whether the Streak is hidden everywhere it is drawn. */
+  readonly hideStreak: boolean;
 }
+
+/**
+ * The settings an Edition sets the defaults of. The Streak is shown until the
+ * user hides it, in every Edition, so it has no Edition default.
+ */
+export type SettingsDefaults = Omit<UserSettings, 'hideStreak'>;
 
 /** The user's settings: their own choices over the Edition's defaults. */
 export interface Settings {
@@ -39,13 +47,14 @@ export function createSettings({
   defaults,
 }: {
   userState: UserState;
-  defaults: UserSettings;
+  defaults: SettingsDefaults;
 }): Settings {
   async function read(): Promise<UserSettings> {
     return {
       theme: (await userState.read(userStateRecords.theme)) ?? defaults.theme,
       fontSize: (await userState.read(userStateRecords.fontSize)) ?? defaults.fontSize,
       vibration: (await userState.read(userStateRecords.vibration)) ?? defaults.vibration,
+      hideStreak: (await userState.read(userStateRecords.hideStreak)) ?? false,
     };
   }
 
@@ -57,6 +66,9 @@ export function createSettings({
           ...('theme' in changes ? userStateRecords.theme.change(changes.theme) : []),
           ...('fontSize' in changes ? userStateRecords.fontSize.change(changes.fontSize) : []),
           ...('vibration' in changes ? userStateRecords.vibration.change(changes.vibration) : []),
+          ...('hideStreak' in changes
+            ? userStateRecords.hideStreak.change(changes.hideStreak)
+            : []),
         ]),
       );
       return read();

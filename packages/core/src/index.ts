@@ -128,6 +128,7 @@ export {
   createSettings,
   type ColorScheme,
   type Settings,
+  type SettingsDefaults,
   type UserSettings,
 } from './settings';
 export { renderStress } from './entries/stress';

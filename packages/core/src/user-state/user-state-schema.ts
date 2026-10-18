@@ -41,6 +41,11 @@ export const userStateRecords = {
   fontSize: declareRecord('settings.fontSize', FontSizeSchema),
   /** Whether the user has haptics on. It stays on the device, which may have no haptics. */
   vibration: declareRecord('settings.vibration', z.boolean(), { sync: 'device-only' }),
+  /**
+   * Whether the user hides the Streak. It syncs last write wins like the Theme
+   * (ADR 0041); a new key needs no migration, since without it the Streak shows.
+   */
+  hideStreak: declareRecord('settings.hideStreak', z.boolean()),
   /** That the Feed's swipe hint was shown on this device. */
   swipeHintShown: declareRecord('feed.swipeHintShown', z.literal(true), { sync: 'device-only' }),
   /** The card the reader was on last on this device, and the local date they were on it. */
