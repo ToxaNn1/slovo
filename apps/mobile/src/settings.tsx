@@ -35,7 +35,7 @@ function opened(settings: Settings, current: UserSettings) {
  * Language Pack, and reopened over it when it changes. The app still starts
  * when they can't be read, on the Edition's defaults.
  */
-const settingsOpening = openOnce(
+export const settingsOpening = openOnce(
   async () => {
     const settings = await settingsOverUserState();
     return opened(settings, await settings.read());

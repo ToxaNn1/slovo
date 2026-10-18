@@ -9,6 +9,9 @@ import { languagePackOpening } from './edition/language-pack';
 import { remoteSwitchesOpening } from './edition/remote-switches';
 import { createForeground } from './foreground/foreground';
 import { reportForeground } from './foreground/foreground-reports';
+import { settingsOpening } from './settings';
+import { syncInBackground, reopenAfterSync } from './sync/background-sync';
+import { syncOpening } from './sync/device-sync';
 import { deviceWidget } from './widget/device-widget';
 import { createWidgetSnapshotWriter } from './widget/widget-snapshot';
 
@@ -34,7 +37,9 @@ export function useInForeground(): boolean {
  * composition opens and each time the app goes to the background. The remote
  * Feature Switches are asked for at launch and each time the app comes back,
  * and a changed answer reopens the composition over the Edition in effect and
- * writes the Widget Snapshot again (ADR 0040). The Content update module checks then too, when content updates
+ * writes the Widget Snapshot again (ADR 0040). Sync follows the foreground and
+ * the background, and a sync that changed the user state reopens the settings
+ * and the composition and writes the Widget Snapshot (spec #378). The Content update module checks then too, when content updates
  * are on in effect, at most once a day; the Account checks its Session then,
  * when it is on in effect, at most once an hour. Draws nothing.
  */
@@ -64,6 +69,17 @@ export function Lifecycle() {
         if (state.status === 'ready') writeWidgetSnapshot(() => state.value.widget.snapshot());
       });
     });
+    if (syncOpening !== undefined) {
+      syncInBackground({
+        reports,
+        sync: syncOpening,
+        reopen: reopenAfterSync({
+          settings: settingsOpening,
+          composition: compositionOpening,
+          writeWidgetSnapshot,
+        }),
+      });
+    }
     reports.listen(languagePackOpening, ({ contentUpdate }, moment) => {
       if (moment !== 'launch' && moment !== 'return') return;
       // Neither rejects.
