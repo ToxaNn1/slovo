@@ -5,7 +5,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
 ---
 - tapOn:
     id: tab-home
-# Turn a few pages, staying on each card past the dwell time (1.5 s), so cards
+# Turn a few pages, staying on each card past the dwell time (0.5 s), so cards
 # the Cycle has not seen yet count as Seen as they leave. (History records an
 # Entry only when it becomes Seen, so cards from earlier flows add nothing.)
 - repeat:

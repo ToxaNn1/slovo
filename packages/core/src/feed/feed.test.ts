@@ -263,6 +263,22 @@ describe('the Feed', () => {
       expect(await walk(await run({ records, words, clock: nextDay }))).toEqual([first]);
     });
 
+    it('marks an Entry Seen at 500 ms on screen, not at 499 ms', async () => {
+      for (const [stayed, seen] of [
+        [499, false],
+        [500, true],
+      ] as const) {
+        const records = new Map<string, string>();
+        const time = fakeClock('2026-10-11T09:00:00+03:00');
+        const feed = await run({ records, clock: time.clock });
+        await feed.next();
+
+        await look(feed, time, 0, stayed);
+
+        expect((await unseenNextDay(records)).length < liveIds.length).toBe(seen);
+      }
+    });
+
     it('leaves an Entry unseen when its card is swiped past quickly', async () => {
       const records = new Map<string, string>();
       const time = fakeClock('2026-10-11T09:00:00+03:00');
@@ -418,9 +434,9 @@ describe('the Feed', () => {
       const feed = await run({ records, clock: time.clock });
 
       await feed.show(0);
-      time.advance(SEEN_DWELL_MS - 500);
+      time.advance(SEEN_DWELL_MS / 2);
       await feed.show(0);
-      time.advance(500);
+      time.advance(SEEN_DWELL_MS / 2);
       await feed.show(undefined);
 
       expect(await firstSeen(feed, records)).toBe(true);
@@ -432,11 +448,11 @@ describe('the Feed', () => {
       const feed = await run({ records, clock: time.clock });
 
       await feed.show(0);
-      time.advance(SEEN_DWELL_MS - 500);
+      time.advance(SEEN_DWELL_MS / 2);
       await feed.show(undefined);
       time.advance(60_000);
       await feed.show(0);
-      time.advance(SEEN_DWELL_MS - 500);
+      time.advance(SEEN_DWELL_MS / 2);
       await feed.show(1);
 
       expect(await firstSeen(feed, records)).toBe(false);
