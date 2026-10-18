@@ -1,6 +1,6 @@
 import type { Composition, EntryFeedCard } from '@slovo/core';
 import { useUndoToast, type UndoToastContent } from '@slovo/ui';
-import { ActionSheetIOS } from 'react-native';
+import { useState } from 'react';
 
 import { useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
@@ -8,35 +8,54 @@ import { hideChoice, hideToast, type HideOption } from './hide-choice';
 
 const { hiding: strings } = editionStrings;
 
+/** What the hide choice sheet of `HideChoiceSheet` is given. */
+export interface HideChoiceProps {
+  readonly visible: boolean;
+  readonly options: readonly { readonly key: string; readonly label: string }[];
+  readonly cancelLabel: string;
+  readonly onChoose: (key: string) => void;
+  readonly onCancel: () => void;
+}
+
 /**
- * The hide button's tap for one card: the hide choice, the system action
- * sheet with «hide this Entry», on a Word card «hide its Category», on a
+ * The hide button's tap for one card, and the props of the hide choice sheet
+ * it opens: «hide this Entry», on a Word card «hide its Category», on a
  * Correction card «hide Corrections», and cancel. Hiding shows the undo
  * toast, whose undo restores the Entry or puts the Category or Corrections
  * back in the Mix. The Feed follows the Core at once: it drops the cards and
  * puts them back on undo. An Entry hidden already stays as it is, with
  * nothing to undo.
  */
-export function useHide(card: EntryFeedCard): () => void {
+export function useHide(card: EntryFeedCard): { open: () => void; choice: HideChoiceProps } {
   const composition = useComposition();
   const showToast = useUndoToast();
+  const [visible, setVisible] = useState(false);
+  const [options, setOptions] = useState<readonly HideOption[]>([]);
 
-  return () => {
-    // Read when the sheet opens, so it follows every change of the Mix.
-    const options = hideChoice({ card, mix: composition.mix.state, strings });
-    ActionSheetIOS.showActionSheetWithOptions(
-      {
-        options: [...options.map(({ label }) => label), strings.choice.cancel],
-        cancelButtonIndex: options.length,
-      },
-      (index) => {
-        const option = options[index];
+  return {
+    open() {
+      // Read when the sheet opens, so it follows every change of the Mix.
+      setOptions(hideChoice({ card, mix: composition.mix.state, strings }));
+      setVisible(true);
+    },
+    choice: {
+      visible,
+      options: options.map(({ kind, label }) => ({ key: kind, label })),
+      cancelLabel: strings.choice.cancel,
+      onChoose(key) {
+        // The sheet is still on screen while it slides out: a second tap hides nothing more.
+        if (!visible) return;
+        setVisible(false);
+        const option = options.find(({ kind }) => kind === key);
         if (option === undefined) return;
         hide(composition, option, showToast).catch((error: unknown) => {
           console.error('Could not hide from the card', error);
         });
       },
-    );
+      onCancel() {
+        setVisible(false);
+      },
+    },
   };
 }
 
