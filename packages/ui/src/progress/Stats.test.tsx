@@ -1,8 +1,8 @@
 import type { EditionStrings } from '@slovo/contracts';
 import type { ProgressState } from '@slovo/core';
 import { EditionProvider, StatsPill, StatsSheet } from '@slovo/ui';
-import { describe, expect, it } from '@jest/globals';
-import { render, screen } from '@testing-library/react-native';
+import { describe, expect, it, jest } from '@jest/globals';
+import { fireEvent, render, screen } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -13,6 +13,7 @@ const strings = {
   stats: {
     title: 'Stats',
     pillLabel: plural('Stats: streak {count}'),
+    pillLabelWithoutStreak: 'Stats',
     streak: plural('days in a row'),
     bestStreak: 'best streak {count}',
     seenToday: plural('seen today'),
@@ -54,11 +55,14 @@ describe('StatsPill', () => {
     expect(screen.getByText('12')).toBeOnTheScreen();
   });
 
-  it('draws nothing while the Streak is hidden', async () => {
-    await renderInEdition(<StatsPill streak={12} hideStreak onPress={() => undefined} />);
+  it('stays as the flame alone while the Streak is hidden, and opens the sheet', async () => {
+    const onPress = jest.fn();
+    await renderInEdition(<StatsPill streak={12} hideStreak onPress={onPress} />);
 
-    expect(screen.queryByTestId('stats-pill')).not.toBeOnTheScreen();
     expect(screen.queryByText('12')).not.toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: 'Stats: streak 12' })).not.toBeOnTheScreen();
+    await fireEvent.press(screen.getByRole('button', { name: 'Stats' }));
+    expect(onPress).toHaveBeenCalledTimes(1);
   });
 });
 

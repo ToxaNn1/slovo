@@ -14,9 +14,9 @@ const NUMBER_MAX_FONT_SCALE = 1.3;
 /**
  * The Stats pill in the Feed's top row: a flame and the Streak, on the
  * surface fill with an accent border. A tap opens the stats sheet. VoiceOver
- * reads it whole as a button, such as «Статистика: серія 12 днів». It is
- * the Streak's only place in the Feed, so it is not drawn while the reader
- * hides the Streak.
+ * reads it whole as a button, such as «Статистика: серія 12 днів». While the
+ * reader hides the Streak, the pill keeps the flame alone, so the stats sheet
+ * stays reachable, and VoiceOver reads «Статистика».
  */
 export function StatsPill({
   streak,
@@ -29,18 +29,21 @@ export function StatsPill({
 }) {
   const { colors, fontFamilies } = useTokens();
   const { strings, voice, count } = useEdition();
-  if (hideStreak) return null;
   return (
     <Pressable
       testID="stats-pill"
       accessibilityRole="button"
-      accessibilityLabel={count(strings.stats.pillLabel, streak)}
+      accessibilityLabel={
+        hideStreak ? strings.stats.pillLabelWithoutStreak : count(strings.stats.pillLabel, streak)
+      }
       {...voice}
       onPress={onPress}
       // The 40 pt pill takes taps a little beyond its edge, to the 44 pt touch target.
       hitSlop={(minTouchTarget - PILL_HEIGHT) / 2}
       style={({ pressed }) => [
         styles.pill,
+        // The flame alone is padded evenly: with the 1 pt borders it makes a 40 pt circle.
+        hideStreak && { paddingRight: statsPillPadding.left },
         // The design draws the accent border at 35%.
         { backgroundColor: colors.surface, borderColor: withAlpha(colors.accent, 0.35) },
         { opacity: pressed ? 0.85 : 1 },
@@ -54,12 +57,14 @@ export function StatsPill({
           strokeWidth={1.8}
         />
       </Svg>
-      <Text
-        maxFontSizeMultiplier={NUMBER_MAX_FONT_SCALE}
-        style={[styles.streak, { color: colors.ink, fontFamily: fontFamilies.ui }]}
-      >
-        {streak}
-      </Text>
+      {!hideStreak && (
+        <Text
+          maxFontSizeMultiplier={NUMBER_MAX_FONT_SCALE}
+          style={[styles.streak, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+        >
+          {streak}
+        </Text>
+      )}
     </Pressable>
   );
 }
