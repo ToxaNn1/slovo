@@ -36,6 +36,15 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: account-sign-out-everywhere
 - assertVisible:
     id: account-delete
+# «Видалити SLOVO ID» asks first; cancelling keeps the Account.
+- tapOn:
+    id: account-delete
+- assertVisible: Видалити SLOVO ID?
+- takeScreenshot: account-delete-confirm
+- tapOn:
+    id: account-delete-dialog-cancel
+- assertVisible:
+    id: account-delete
 - tapOn:
     id: account-back
 - assertVisible:

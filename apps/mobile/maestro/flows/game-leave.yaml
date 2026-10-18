@@ -9,7 +9,8 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: game-exit
 - assertVisible: Вийти з гри?
 - takeScreenshot: game-exit-confirm
-- tapOn: Грати далі
+- tapOn:
+    id: game-exit-dialog-cancel
 - assertVisible:
     id: game-round
 - assertVisible:
@@ -18,8 +19,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - tapOn:
     id: game-exit
 - assertVisible: Вийти з гри?
-# A tap while the alert is still opening is lost.
-- waitForAnimationToEnd
-- tapOn: Вийти
+- tapOn:
+    id: game-exit-dialog-destructive
 - assertVisible:
     id: game-modes
