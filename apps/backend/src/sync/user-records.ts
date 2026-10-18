@@ -1,5 +1,5 @@
 import type { UserRecords } from '@slovo/server-core';
-import { and, asc, eq, gt, sql, type Column } from 'drizzle-orm';
+import { and, asc, count, eq, gt, inArray, sql, type Column } from 'drizzle-orm';
 
 import type { Database } from '../database/database';
 import { accounts, userRecords } from '../database/schema';
@@ -10,9 +10,9 @@ const excluded = (column: Column) => sql`excluded.${sql.identifier(column.name)}
 /** The records Sync keeps, in the `user_records` table. */
 export function createUserRecords({ db }: Database): UserRecords {
   return {
-    async push(accountId, editionId, changes) {
-      if (changes.length === 0) return;
-      await db.transaction(async (tx) => {
+    async push(accountId, editionId, changes, refuse) {
+      if (changes.length === 0) return undefined;
+      return db.transaction(async (tx) => {
         // The Account's row holds back its other pushes until this one
         // commits, so its kept changes take their sequence numbers in the
         // order they become visible, and a pull never passes one still
@@ -22,7 +22,21 @@ export function createUserRecords({ db }: Database): UserRecords {
           .from(accounts)
           .where(eq(accounts.id, accountId))
           .for('no key update');
-        if (account === undefined) return;
+        if (account === undefined) return undefined;
+        // A change of a key kept replaces its record; any other adds one.
+        const replacing = inArray(
+          userRecords.key,
+          changes.map(({ key }) => key),
+        );
+        const [kept] = await tx
+          .select({
+            records: count(),
+            replaced: sql<number>`count(*) filter (where ${replacing})`.mapWith(Number),
+          })
+          .from(userRecords)
+          .where(and(eq(userRecords.accountId, accountId), eq(userRecords.editionId, editionId)));
+        const refusal = refuse((kept?.records ?? 0) + changes.length - (kept?.replaced ?? 0));
+        if (refusal !== undefined) return refusal;
         await tx
           .insert(userRecords)
           .values(
@@ -44,6 +58,7 @@ export function createUserRecords({ db }: Database): UserRecords {
             // Only a later change replaces the record kept; a tie keeps it.
             setWhere: sql`${userRecords.changedAt} < ${excluded(userRecords.changedAt)}`,
           });
+        return undefined;
       });
     },
 

@@ -199,7 +199,7 @@ The backend serves every Edition from one deployment ([ADR 0008](docs/adr/0008-o
    curl -i -H 'content-type: application/json' -d '{"email":"anna@example.com","code":"123456"}' http://localhost:8787/v1/account/sessions
    ```
 
-   With the token, a device's Sync pushes changes of its records and pulls the Account's records in the Edition after its cursor ([ADR 0041](docs/adr/0041-sync-exchanges-opaque-records-and-the-clients-change-time-wins.md)). A change time is in milliseconds since 1970, a `null` value is a tombstone, and a change replaces the record kept only when its change time is later:
+   With the token, a device's Sync pushes changes of its records and pulls the Account's records in the Edition after its cursor ([ADR 0041](docs/adr/0041-sync-exchanges-opaque-records-and-the-clients-change-time-wins.md)). A change time is in milliseconds since 1970, a `null` value is a tombstone, and a change replaces the record kept only when its change time is later. A key has at most 200 characters, a value at most 8 KB of JSON, an Account at most 20 000 records in an Edition (`TOO_MANY_RECORDS` past it), and a Session at most 120 Sync requests in 10 minutes:
 
    ```sh
    curl -i -H 'authorization: Bearer <token>' -H 'content-type: application/json' -d '{"changes":[{"key":"favorites.<entry id>","value":"2026-10-18T09:00:00.000Z","changedAt":0}]}' http://localhost:8787/v1/editions/uk/records

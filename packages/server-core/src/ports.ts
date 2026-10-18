@@ -174,8 +174,18 @@ export interface UserRecords {
    * every record already kept, and a pull that read up to a sequence number
    * never misses a record kept below it. Each key comes once. An Account
    * deleted meanwhile keeps nothing.
+   *
+   * It keeps nothing and answers the refusal when `refuse`, given how many
+   * records the Account would keep in the Edition with the changes, tombstones
+   * included, names one. The count and the changes kept come in the same
+   * transaction, and no other push of the Account comes between them.
    */
-  push(accountId: string, editionId: string, changes: readonly RecordChange[]): Promise<void>;
+  push<Refusal>(
+    accountId: string,
+    editionId: string,
+    changes: readonly RecordChange[],
+    refuse: (records: number) => Refusal | undefined,
+  ): Promise<Refusal | undefined>;
   /** At most `limit` records of the Account in the Edition kept after the sequence number, in sequence order. */
   after(
     accountId: string,

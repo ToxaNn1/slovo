@@ -68,11 +68,12 @@ export function createApp({
   authSecret,
 }: AppDependencies) {
   const editionRegistry = createEditions({ database, clock, editions });
+  const rateLimits = createRateLimits(database);
   const accounts = createAccounts({
     editions: editionRegistry,
     authenticator: createAuthenticator(database, { secret: authSecret, logger }),
     mailer,
-    rateLimits: createRateLimits(database),
+    rateLimits,
     clock,
   });
   const contentPacks = createContentPacks({
@@ -83,6 +84,7 @@ export function createApp({
   const sync = createSync({
     editions: editionRegistry,
     records: createUserRecords(database),
+    rateLimits,
     clock,
   });
   const api = createApiHandler({ accounts, contentPacks, editions: editionRegistry, sync });
