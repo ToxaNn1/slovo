@@ -14,7 +14,8 @@ export interface KeptRecord {
  * memory, by the backend's rules (ADR 0041): a change replaces the record
  * kept under its key only when it is later, a change time later than the
  * clock's counts as the clock's, and every kept change takes the next
- * sequence number, which a pull pages by. Every token is the Account's.
+ * sequence number, which a pull pages by; a push of more than
+ * `SYNC_BATCH_SIZE` changes is refused. Every token is the Account's.
  */
 export interface FakeSyncApi extends SyncApi {
   /** The records kept, by key. */
@@ -49,6 +50,9 @@ export function createFakeSyncApi({ clock }: { clock: Clock }): FakeSyncApi {
     push(_token, changes) {
       const failure = arrive('push');
       if (failure !== undefined) return Promise.resolve(failure);
+      // The backend refuses a push over the batch size (400).
+      if (changes.length > SYNC_BATCH_SIZE)
+        return Promise.resolve({ ok: false, reason: 'unexpected' });
       // Of two changes of one key, the later is kept, the first on a tie, and only then cut.
       const latest = new Map<string, RecordChange>();
       for (const change of changes) {

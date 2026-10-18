@@ -6,10 +6,14 @@ import type { Json, RecordChange, SyncApi, SyncApiFailure, UserStateChanges } fr
 import { HISTORY_CAP } from '../saved/history';
 import type { PendingChange, TrackedUserState } from '../user-state/tracked-user-state';
 import { declareRecords } from '../user-state/user-state-record';
-import { syncMarkOf, userStateRecords } from '../user-state/user-state-schema';
+import { syncMarkOf, syncs, userStateRecords } from '../user-state/user-state-schema';
 
-/** What one sync came to: done, and whether its pull wrote anything; or the failure that stopped it. */
-export type SyncResult = { readonly ok: true; readonly changed: boolean } | SyncApiFailure;
+/**
+ * What one sync came to: done, or the failure that stopped it; and either way
+ * whether its pull wrote a record, since the pages applied before a failure
+ * stay written.
+ */
+export type SyncResult = ({ readonly ok: true } | SyncApiFailure) & { readonly changed: boolean };
 
 /**
  * Sync (spec #378): the exchange of the reader's words and progress between
@@ -34,7 +38,7 @@ export interface Sync {
    * - `device-only`: the Account's record is ignored;
    * - a key the schema doesn't know is kept as it is.
    * History over `HISTORY_CAP` loses its oldest entries by Seen time in the
-   * same write, and those deletions sync. The push then sends the pending
+   * write of the last page, and those deletions sync. The push then sends the pending
    * changes in batches of `SYNC_BATCH_SIZE` and deletes each batch the
    * Account accepted. A failed call stops the sync where it is; nothing done
    * is lost, and the next sync resumes. Call it once at a time.
@@ -102,8 +106,7 @@ export function createSync({
       const pending = await userState.pendingChanges();
       const untracked = new Map<string, string | undefined>();
       for (const [key, value] of await userState.list(everyRecord)) {
-        const mark = syncMarkOf(key);
-        if (mark === undefined || mark === 'device-only' || pending.has(key)) continue;
+        if (!syncs(key) || pending.has(key)) continue;
         for (const change of syncPending
           .record(key)
           .change({ changedAt: FIRST_SIGN_IN.toISOString(), value: JSON.stringify(value) })) {
@@ -114,8 +117,19 @@ export function createSync({
     });
   }
 
-  /** Applies one page of the pull, with its cursor, in one write; whether it changed a record. */
-  async function apply(records: readonly RecordChange[], cursor: number): Promise<boolean> {
+  /**
+   * Applies one page of the pull, with its cursor, in one write, trimming
+   * History on the last; whether it changed a record.
+   */
+  async function apply({
+    records,
+    cursor,
+    more,
+  }: {
+    records: readonly RecordChange[];
+    cursor: number;
+    more: boolean;
+  }): Promise<boolean> {
     let changed = false;
     await userState.merge(async () => {
       const local = await userState.list(everyRecord);
@@ -147,21 +161,25 @@ export function createSync({
           changed = true;
         }
       }
-      for (const key of trimmedHistory(await userState.list(history), untracked)) {
-        tracked.set(key, undefined);
+      // Only once the whole pull is in: a later page may bring a newer entry
+      // of one an earlier trim would delete.
+      if (!more) {
+        for (const key of trimmedHistory(await userState.list(history), untracked)) {
+          tracked.set(key, undefined);
+        }
       }
       return { untracked, tracked };
     });
     return changed;
   }
 
-  /** The keys of the oldest History entries beyond the cap once the page is written. */
+  /** The keys of the oldest History entries beyond the cap once the changes are written. */
   function trimmedHistory(
     kept: ReadonlyMap<string, { seenAt: string }>,
-    page: UserStateChanges,
+    changes: UserStateChanges,
   ): string[] {
     const merged = new Map(kept);
-    for (const [key, text] of page) {
+    for (const [key, text] of changes) {
       if (!key.startsWith(history.prefix)) continue;
       const id = key.slice(history.prefix.length);
       const entry = history.record(id).decode(text);
@@ -180,8 +198,8 @@ export function createSync({
       let changed = false;
       for (let more = true; more;) {
         const page = await api.pull(token, await userState.cursor());
-        if (!page.ok) return page;
-        if (await apply(page.records, page.cursor)) changed = true;
+        if (!page.ok) return { ...page, changed };
+        if (await apply(page)) changed = true;
         more = page.more;
       }
       const pending = [...(await userState.pendingChanges())];
@@ -191,7 +209,7 @@ export function createSync({
           token,
           [...batch].map(([key, change]) => changeOf(key, change)),
         );
-        if (!answer.ok) return answer;
+        if (!answer.ok) return { ...answer, changed };
         await userState.deleteSent(batch);
       }
       return { ok: true, changed };

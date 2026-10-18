@@ -184,6 +184,16 @@ export function syncMarkOf(key: string): SyncMark | 'last-write-wins' | undefine
 }
 
 /**
+ * Whether the record under the key syncs: last write wins, `union` or
+ * `highest`. A `device-only` record and a key the schema doesn't declare
+ * don't.
+ */
+export function syncs(key: string): boolean {
+  const mark = syncMarkOf(key);
+  return mark !== undefined && mark !== 'device-only';
+}
+
+/**
  * The user-state schema, one step per version. Append a step to change it;
  * never edit or remove one that has shipped. A step names its keys as they
  * were in its version, since the records above may change after it.

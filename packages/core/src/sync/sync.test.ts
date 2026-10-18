@@ -400,6 +400,48 @@ describe('History and paging', () => {
     expect([...(await tablet.userState.list(history)).keys()].sort()).toEqual(newest500);
   });
 
+  it('trims once the whole pull is in, so a newer entry on a later page is kept', async () => {
+    const { device, server, time, pushFromElsewhere } = account();
+    const phone = await device();
+    // The phone's 500 entries; `w_0` is the oldest.
+    await phone.write(
+      new Map(
+        Array.from({ length: 500 }, (_, index) => [
+          ...history
+            .record(`w_${String(index)}`)
+            .change({ seenAt: seenAt(index), wordOfTheDay: false }),
+        ]).flat(),
+      ),
+    );
+    await phone.sync();
+    time.advance(HOUR);
+    // The first page brings 100 newer entries; the second, `w_0` Seen again, newest of all.
+    await pushFromElsewhere(
+      ...Array.from({ length: 100 }, (_, index) => ({
+        key: `history.n_${String(index)}`,
+        value: { seenAt: seenAt(600 + index), wordOfTheDay: false },
+      })),
+      ...Array.from({ length: 400 }, (_, index) => ({
+        key: `favorites.f_${String(index)}`,
+        value: '2026-10-18T08:00:00.000Z',
+      })),
+    );
+    await pushFromElsewhere({
+      key: 'history.w_0',
+      value: { seenAt: seenAt(900), wordOfTheDay: false },
+    });
+    time.advance(HOUR);
+
+    await phone.sync();
+
+    const kept = await phone.userState.list(history);
+    expect(kept.size).toBe(500);
+    expect(kept.get('w_0')?.seenAt).toBe(seenAt(900));
+    expect(server.records.get('history.w_0')?.value).not.toBeNull();
+    expect(kept.has('w_100')).toBe(false);
+    expect(kept.has('w_101')).toBe(true);
+  });
+
   it('pushes more than 500 changes in batches of 500 and pulls them page by page', async () => {
     const { device, server } = account();
     const phone = await device();
@@ -437,7 +479,8 @@ describe('an interrupted sync', () => {
     );
     server.failNext('push', 'offline');
 
-    expect(await tablet.sync()).toEqual({ ok: false, reason: 'offline' });
+    // The pull wrote the phone's Favorite before the push failed.
+    expect(await tablet.sync()).toEqual({ ok: false, reason: 'offline', changed: true });
     expect([...(await tablet.userState.list(favorites)).keys()].sort()).toEqual(['w_one', 'w_two']);
     const kept = server.records.size;
 
@@ -457,7 +500,7 @@ describe('an interrupted sync', () => {
     await pushFromElsewhere({ key: 'favorites.w_one', value: '2026-10-18T08:00:00.000Z' });
     server.failNext('pull', 'server-error');
 
-    expect(await tablet.sync()).toEqual({ ok: false, reason: 'server-error' });
+    expect(await tablet.sync()).toEqual({ ok: false, reason: 'server-error', changed: false });
 
     expect(server.calls).toEqual(['push', 'pull']);
     expect(await tablet.userState.read(favorites.record('w_one'))).toBeUndefined();

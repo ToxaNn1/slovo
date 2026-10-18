@@ -1,7 +1,7 @@
 import { createInTurn } from '../in-turn';
 import type { Clock, UserStateChanges } from '../ports';
 import type { UserState } from './user-state';
-import { syncMarkOf, userStateRecords } from './user-state-schema';
+import { syncs, userStateRecords } from './user-state-schema';
 
 /**
  * A change of a synced record not yet sent to the Account: the instant it was
@@ -46,12 +46,6 @@ export interface TrackedUserState extends UserState {
 }
 
 const { syncPending, syncCursor } = userStateRecords;
-
-/** Whether a write of the record under the key leaves a pending change. */
-function syncs(key: string): boolean {
-  const mark = syncMarkOf(key);
-  return mark !== undefined && mark !== 'device-only';
-}
 
 /**
  * Wraps the user state so that every write of a synced record leaves its

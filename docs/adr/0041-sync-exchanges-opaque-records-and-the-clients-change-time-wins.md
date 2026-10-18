@@ -57,22 +57,23 @@ The Core's Sync module (spec #378) is the device's side of the protocol. It open
 
 - **last write wins** (no mark): the Account's value replaces the device's, unless the key has a pending change with a later change time, which stays and goes in the push. A tie goes to the Account's value, as on the backend;
 - **`union`** (Active Days): the Account's days are written, and a tombstone of a day is ignored, so no day is ever deleted;
-- **`highest`** (the best Game result): the higher value is kept; when the device's is higher, the Core writes it again through the tracked write, so it gets a new change time and wins with the push;
+- **`highest`** (the Best result): the higher value is kept; when the device's is higher, the Core writes it again through the tracked write, so it gets a new change time and wins with the push;
 - **`device-only`**: a record of the Account under such a key, the schema version and the Sync records included, is ignored;
 - **a key the schema doesn't declare** (from a newer app) is written as it is, without a pending change, so the app keeps it and never pushes it back.
 
 When the Account's value wins, a pending change of the key is deleted in the same write: it has nothing left to send. A value equal to the device's writes nothing; values are compared as JSON, whatever the order of an object's keys, since the backend's `jsonb` keeps no order.
 
-**History is trimmed in the same write.** When the page leaves more than 500 History entries, the oldest by Seen time are deleted through the tracked write, so those deletions sync and every device keeps the same 500.
+**History is trimmed after the pull, in the write of its last page.** When the pull leaves more than 500 History entries, the oldest by Seen time are deleted through the tracked write, so those deletions sync and every device keeps the same 500. Not page by page: a later page may bring a newer entry of one an earlier trim would delete, and the trim's tombstone, written with the device's time, would win over it.
 
 **The first-sign-in rule.** A sync without a cursor first writes, in one write in turn with every other, a pending change with change time 0 for every synced record that has none. The pull then lets the Account's value win wherever it has one, and the push adds what the Account lacks; a change made while signed out keeps its own time. The rule lives in the queue, not in the sync's memory, so a first sync interrupted after its pull still pushes the device's records next time.
 
-**The changed signal.** A sync answers whether its pull wrote a record, so the shell reopens what keeps the user state in memory only when something came from the Account; a pull that brings back what the device pushed writes nothing.
+**The changed signal.** A sync answers whether its pull wrote a record, so the shell reopens what keeps the user state in memory only when something came from the Account; a pull that brings back what the device pushed writes nothing. A sync that fails answers it too, since the pages it applied stay written and the next pull won't bring them again.
 
 Writing a page, the first-sign-in changes and the rewrites runs in turn with the modules' writes (`merge` of the tracked user state), so no write of the reader lands between what Sync read and what it writes. When Sync runs, how it fails and retries, and what the reader sees are the Sync triggers' ticket.
 
 ### Considered Options
 
 - **Remembering the first sign-in in the sync's memory, pushing the device's records after the pull**: rejected. A sync interrupted between the pull and the push would leave a cursor, and the next sync would never push the records the Account lacks.
+- **Trimming History on every page**: rejected (above).
 - **Applying a pull through the tracked write**: rejected. Every record the Account sent would become a pending change with the device's time and go back to the Account as a newer change.
 - **Comparing the text of the records**: rejected. The backend answers an object with its keys in another order, and every pull would report a change.
