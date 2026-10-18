@@ -31,43 +31,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: settings-row-account
 - assertVisible:
     id: account
-# A new email each run, so the code read is this run's.
-- evalScript: ${output.email = 'reader-' + Date.now() + '@example.com'}
-- tapOn:
-    id: account-email
-- inputText: ${output.email}
-- tapOn:
-    id: account-send-code
-- extendedWaitUntil:
-    visible:
-      id: account-code
-    timeout: 15000
-- assertVisible:
-    id: account-resend
-    enabled: false
-- runScript:
-    file: ../sign-in-code.js
-    env:
-      EMAIL: ${output.email}
-- repeat:
-    while:
-      true: ${!output.signInCode}
-    times: 10
-    commands:
-      - waitForAnimationToEnd
-      - runScript:
-          file: ../sign-in-code.js
-          env:
-            EMAIL: ${output.email}
-# The field signs in as soon as it holds the six digits.
-- tapOn:
-    id: account-code
-- inputText: ${output.signInCode}
-- extendedWaitUntil:
-    visible:
-      id: account-signed-in-email
-      text: ${output.email}
-    timeout: 15000
+- runFlow: ../sign-in.yaml
 - assertVisible:
     id: account-sign-out-everywhere
 - assertVisible:

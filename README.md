@@ -229,6 +229,8 @@ The backend serves every Edition from one deployment ([ADR 0008](docs/adr/0008-o
    pnpm switch:clear uk game
    ```
 
+8. Run the sync flow, which shows a change from a second device reaching the app ([spec #378](https://github.com/ToxaNn1/slovo/issues/378)). `flows/sync.yaml` signs in through Mailpit, hearts an Entry, waits on the Favorites list while a script (`maestro/second-device.js`) signs in to the same Account through the API as a "second device" and hearts another Entry, sends the app to the background and back, and expects the Entry on the list without a restart. It then expects the status line under the email of the SLOVO ID screen, «Синхронізовано сьогодні о …». It needs steps 1 to 4, a Metro started against that backend (`EXPO_PUBLIC_SLOVO_API_URL`) and the app installed on a simulator. It is a subflow of `smoke.yaml`, after `flows/account.yaml`, so `pnpm test:smoke` runs it. The script reaches the backend at `API_URL` (default `http://localhost:8787`) and Mailpit at `MAILPIT_URL` (default `http://localhost:8025`); pass them like `METRO_URL`, e.g. `pnpm test:smoke -e METRO_URL=http://localhost:8174 -e API_URL=http://localhost:8794`. To run the flow alone, launch the app as `smoke.yaml` does and call `flows/sync.yaml` from a file of your own.
+
 ## Commands
 
 All commands run from the repo root. CI runs `lint`, `typecheck`, `deps`, `knip` and `test` on every pull request, and `main` takes changes only when they are green. Knip only reports.

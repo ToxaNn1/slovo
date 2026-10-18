@@ -1,0 +1,44 @@
+# Signs in on the open SLOVO ID screen, signed out, with a new email and the
+# Sign-in code read from Mailpit (see `account.yaml`). Leaves the screen signed
+# in, and the email in `output.email`.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+# A new email each run, so the code read is this run's.
+# No code from an earlier flow is left to be typed.
+- evalScript: ${output.email = 'reader-' + Date.now() + '@example.com'; output.signInCode = null}
+- tapOn:
+    id: account-email
+- inputText: ${output.email}
+- tapOn:
+    id: account-send-code
+- extendedWaitUntil:
+    visible:
+      id: account-code
+    timeout: 15000
+- assertVisible:
+    id: account-resend
+    enabled: false
+- runScript:
+    file: sign-in-code.js
+    env:
+      EMAIL: ${output.email}
+- repeat:
+    while:
+      true: ${!output.signInCode}
+    times: 10
+    commands:
+      - waitForAnimationToEnd
+      - runScript:
+          file: sign-in-code.js
+          env:
+            EMAIL: ${output.email}
+# The field signs in as soon as it holds the six digits.
+- tapOn:
+    id: account-code
+- inputText: ${output.signInCode}
+- extendedWaitUntil:
+    visible:
+      id: account-signed-in-email
+      # The email, and under it the status line of Sync.
+      text: ${output.email}[\s\S]*
+    timeout: 15000

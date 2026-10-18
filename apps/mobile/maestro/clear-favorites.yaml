@@ -1,0 +1,34 @@
+# Takes every Entry out of Favorites, from the Saved tab, and leaves the
+# Saved tab open on its overview.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+# Take every Entry out of Favorites, so the counts below are the flow's own.
+- tapOn:
+    id: tab-saved
+- tapOn:
+    id: saved-favorites
+- assertVisible:
+    id: favorites
+- repeat:
+    while:
+      visible:
+        id: entry-row-.*-open
+    times: 50
+    commands:
+      - tapOn:
+          id: entry-row-.*-open
+      - scrollUntilVisible:
+          element:
+            id: favorite-button
+      - swipe:
+          start: 50%, 60%
+          end: 50%, 48%
+          duration: 800
+      - waitForAnimationToEnd
+      - tapOn:
+          id: favorite-button
+          text: Прибрати з Улюбленого
+      - tapOn:
+          id: entry-screen-back
+- tapOn:
+    id: favorites-back
