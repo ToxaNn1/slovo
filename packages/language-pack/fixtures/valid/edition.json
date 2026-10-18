@@ -15,6 +15,7 @@
     "game": true,
     "corrections": true,
     "account": true,
+    "sync": true,
     "contentUpdates": true
   },
   "userSettingDefaults": {
