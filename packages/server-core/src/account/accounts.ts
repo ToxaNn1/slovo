@@ -2,7 +2,8 @@ import { AccountEmailSchema, ACCOUNT_NAME, fill } from '@slovo/contracts';
 
 import type { EditionRegistry, NotServing } from '../edition/edition-registry';
 import type { AccountRecord, Authenticator, Clock, CodeCheck, Mailer, RateLimits } from '../ports';
-import { createSignInLimits, type TooManyRequests } from './sign-in-limits';
+import type { TooManyRequests } from '../rate-limit';
+import { createSignInLimits } from './sign-in-limits';
 
 /** What an email that is not an email gets. */
 interface InvalidEmail {

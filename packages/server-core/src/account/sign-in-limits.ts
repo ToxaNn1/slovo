@@ -1,4 +1,5 @@
 import type { Clock, RateLimits } from '../ports';
+import { countRequest, type TooManyRequests } from '../rate-limit';
 
 /**
  * The limits of signing in (spec #333): how many requests a window of time
@@ -12,13 +13,6 @@ const SIGN_IN_LIMITS = {
   /** Sign-in code checks from one IP address. */
   codeChecksPerIp: { requests: 30, windowSeconds: 10 * 60 },
 } as const;
-
-/** What a request over a limit gets: when, in whole seconds, it may come again. */
-export interface TooManyRequests {
-  readonly ok: false;
-  readonly reason: 'too-many-requests';
-  readonly retryAfterSeconds: number;
-}
 
 /** Counts the sign-in requests against their limits. */
 export interface SignInLimits {
@@ -35,17 +29,8 @@ export function createSignInLimits({
   rateLimits: RateLimits;
   clock: Clock;
 }): SignInLimits {
-  async function count(
-    limit: keyof typeof SIGN_IN_LIMITS,
-    subject: string,
-  ): Promise<TooManyRequests | undefined> {
-    const { requests, windowSeconds } = SIGN_IN_LIMITS[limit];
-    const now = clock.now();
-    const { count, windowEnds } = await rateLimits.count(`${limit}:${subject}`, windowSeconds, now);
-    if (count <= requests) return undefined;
-    const left = Math.ceil((windowEnds.getTime() - now.getTime()) / 1000);
-    return { ok: false, reason: 'too-many-requests', retryAfterSeconds: Math.max(1, left) };
-  }
+  const count = (limit: keyof typeof SIGN_IN_LIMITS, subject: string) =>
+    countRequest(rateLimits, `${limit}:${subject}`, SIGN_IN_LIMITS[limit], clock.now());
 
   return {
     // A request the IP address may not make leaves the email's codes uncounted.
