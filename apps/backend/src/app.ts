@@ -16,6 +16,7 @@ import { createRateLimits } from './account/rate-limits';
 import { createApiHandler, INTERNAL_FAILURE, logUnexpectedFailure } from './api';
 import { createContentPackStore } from './content/content-pack-store';
 import type { Database } from './database/database';
+import { createRemoteSwitchStore } from './edition/remote-switch-store';
 
 /** What the backend is built from. A test gives its own. */
 export interface AppDependencies {
@@ -65,7 +66,11 @@ export function createApp({
   mailer,
   authSecret,
 }: AppDependencies) {
-  const editionRegistry = createEditionRegistry(editions);
+  const editionRegistry = createEditionRegistry({
+    editions,
+    remoteSwitches: createRemoteSwitchStore(database),
+    clock,
+  });
   const accounts = createAccounts({
     editions: editionRegistry,
     authenticator: createAuthenticator(database, { secret: authSecret, logger }),
@@ -78,7 +83,7 @@ export function createApp({
     store: createContentPackStore(database),
     clock,
   });
-  const api = createApiHandler({ accounts, contentPacks });
+  const api = createApiHandler({ accounts, contentPacks, editions: editionRegistry });
 
   const app = new Hono<Env>();
 

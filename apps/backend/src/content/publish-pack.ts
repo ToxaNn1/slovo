@@ -11,6 +11,7 @@ import {
 } from '@slovo/server-core';
 
 import type { Database } from '../database/database';
+import { createRemoteSwitchStore } from '../edition/remote-switch-store';
 import { createContentPackStore } from './content-pack-store';
 
 /**
@@ -41,7 +42,11 @@ export async function publishPack({
     pack.close();
   }
   const contentPacks = createContentPacks({
-    editions: createEditionRegistry(editions),
+    editions: createEditionRegistry({
+      editions,
+      remoteSwitches: createRemoteSwitchStore(database),
+      clock,
+    }),
     store: createContentPackStore(database),
     clock,
   });

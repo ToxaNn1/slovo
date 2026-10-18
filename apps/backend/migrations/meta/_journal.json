@@ -29,6 +29,13 @@
       "when": 1792243914076,
       "tag": "0003_rate_limits",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792315201221,
+      "tag": "0004_remote_switches",
+      "breakpoints": true
     }
   ]
 }

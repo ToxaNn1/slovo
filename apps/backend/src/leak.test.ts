@@ -24,6 +24,7 @@ const ANSWERED_COLUMNS = new Set([
   'packFormat',
   'size',
   'fileSha256',
+  'off',
 ]);
 
 /** The names of every internal column, as the schema and as the database name them. */
@@ -72,7 +73,8 @@ async function recordedBackend() {
 }
 
 it('answers no stored token, Sign-in code or its hash, password field or internal column in any procedure', async () => {
-  const { client, clientOf, answers, mailer, keptSignInCode, db, pack } = await recordedBackend();
+  const { client, clientOf, answers, mailer, keptSignInCode, db, pack, switchOff } =
+    await recordedBackend();
   /** What the database keeps that no answer may show. */
   const secrets = new Set<string>();
   const refused = () => undefined;
@@ -163,6 +165,15 @@ it('answers no stored token, Sign-in code or its hash, password field or interna
           await client.content
             .download({ params: { ...params, contentVersion: pack.contentVersion + 1 } })
             .catch(refused);
+        },
+      },
+      edition: {
+        switches: async () => {
+          const params = { editionId: EDITION };
+          const { headers } = await client.edition.switches({ params });
+          await switchOff(EDITION, 'game');
+          await client.edition.switches({ params, headers: { 'if-none-match': headers.etag } });
+          await client.edition.switches({ params: { editionId: 'pl' } }).catch(refused);
         },
       },
     };

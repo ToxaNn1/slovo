@@ -13,6 +13,7 @@ export {
   type Edition,
   type EditionRegistry,
   type NotServing,
+  type SwitchRefusal,
 } from './edition/edition-registry';
 export {
   systemClock,
@@ -25,4 +26,5 @@ export {
   type Mailer,
   type PublishedFile,
   type RateLimits,
+  type RemoteSwitchStore,
 } from './ports';

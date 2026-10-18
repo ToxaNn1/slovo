@@ -125,3 +125,15 @@ export interface RateLimits {
     now: Date,
   ): Promise<{ readonly count: number; readonly windowEnds: Date }>;
 }
+
+/**
+ * The Feature Switches the owner turned off remotely, per Edition and feature
+ * (Postgres in the backend). It keeps a feature by its name and never reads
+ * it: the server Core checks the names.
+ */
+export interface RemoteSwitchStore {
+  /** The features turned off in the Edition, in no order. */
+  off(editionId: string): Promise<readonly string[]>;
+  /** Sets whether the feature is off in the Edition, as of `at`. */
+  set(editionId: string, feature: string, off: boolean, at: Date): Promise<void>;
+}

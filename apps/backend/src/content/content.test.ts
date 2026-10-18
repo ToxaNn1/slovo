@@ -1,6 +1,8 @@
 import type { Edition } from '@slovo/server-core';
+import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
+import { contentPacks } from '../database/schema';
 import { sha256, testApp, testEditions } from '../test-support';
 
 describe('content.latest', () => {
@@ -213,12 +215,13 @@ describe('content.download', () => {
     expect(other.status).toBe(200);
   });
 
-  it('answers a second download without reading the database again', async () => {
-    const { client, pack, close } = await publishedPack('released');
+  it('answers a second download without reading the file from the database again', async () => {
+    const { client, pack, database } = await publishedPack('released');
     const params = { editionId: 'released', contentVersion: pack.announced.contentVersion };
     await client.content.download({ params });
 
-    await close();
+    // The database still answers whether the feature is on, but has no file to give.
+    await database.db.delete(contentPacks).where(eq(contentPacks.editionId, 'released'));
     const again = await client.content.download({ params });
 
     expect(again.status).toBe(200);

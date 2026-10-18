@@ -84,13 +84,13 @@ export function createContentPacks({
 
   return {
     async latest(editionId, packFormat) {
-      const serving = editions.serving(editionId, 'contentUpdates');
+      const serving = await editions.serving(editionId, 'contentUpdates');
       if (!serving.ok) return serving;
       return { ok: true, pack: await store.latest(editionId, packFormat) };
     },
 
     async download(editionId, contentVersion) {
-      const serving = editions.serving(editionId, 'contentUpdates');
+      const serving = await editions.serving(editionId, 'contentUpdates');
       if (!serving.ok) return serving;
       const file = await publishedFile(editionId, contentVersion);
       if (file === undefined) return { ok: false, reason: 'not-published' };

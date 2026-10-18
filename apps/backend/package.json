@@ -10,6 +10,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx --env-file-if-exists=.env src/database/migrate-command.ts",
     "publish-pack": "tsx --env-file-if-exists=.env --disable-warning=ExperimentalWarning src/content/publish-command.ts",
+    "switch-off": "tsx --env-file-if-exists=.env src/edition/switch-command.ts off",
+    "switch-clear": "tsx --env-file-if-exists=.env src/edition/switch-command.ts clear",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"

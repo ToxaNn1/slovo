@@ -2,6 +2,8 @@ import { implement } from '@orpc/server';
 import { apiContract, PACK_MEDIA_TYPE } from '@slovo/contracts/api';
 import type { ContentPacks, PublishedFile } from '@slovo/server-core';
 
+import { namesEtag } from '../etag';
+
 /** A published content version never changes, so the file may be kept for good. */
 const IMMUTABLE_CACHE_CONTROL = 'public, max-age=31536000, immutable';
 
@@ -37,15 +39,4 @@ export function contentProcedures(contentPacks: ContentPacks) {
       return { status: 200 as const, headers, body };
     }),
   });
-}
-
-/**
- * Whether an If-None-Match header names the ETag, by the weak comparison
- * RFC 9110 sets for it: `*`, or a list of ETags one of which, `W/` aside,
- * is this one.
- */
-function namesEtag(ifNoneMatch: string | undefined, etag: string): boolean {
-  if (ifNoneMatch === undefined) return false;
-  if (ifNoneMatch.trim() === '*') return true;
-  return ifNoneMatch.split(',').some((tag) => tag.trim().replace(/^W\//, '') === etag);
 }

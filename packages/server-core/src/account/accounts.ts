@@ -99,7 +99,7 @@ export function createAccounts({
     async requestCode(typedEmail, editionId, ip) {
       const email = normalised(typedEmail);
       if (email === undefined) return invalidEmail;
-      const serving = editions.serving(editionId, 'account');
+      const serving = await editions.serving(editionId, 'account');
       if (!serving.ok) return serving;
       const { edition } = serving;
       const overLimit = await limits.codeRequest(email, ip);
