@@ -86,6 +86,14 @@ export function withAlpha(color: string, alpha: number): string {
   return `rgba(${String(r)}, ${String(g)}, ${String(b)}, ${String(alpha)})`;
 }
 
+/**
+ * The scrim behind a bottom sheet or a dialog, from the design: the light
+ * Theme's ink at 45%, black at 60% in the dark one.
+ */
+export function scrimColor(ink: string, colorScheme: ColorScheme): string {
+  return colorScheme === 'dark' ? 'rgba(0, 0, 0, 0.6)' : withAlpha(ink, 0.45);
+}
+
 /** The 4-pt spacing grid. */
 export const space = { 1: 4, 2: 8, 3: 12, 4: 16, 5: 20, 6: 24, 8: 32 } as const;
 

@@ -20,7 +20,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { space, withAlpha } from '../tokens';
+import { scrimColor, space } from '../tokens';
 import { InvertedTokens, useTokens } from '../providers/TokensProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
 
@@ -120,13 +120,7 @@ export function BottomSheet({
   const scrimStyle = useAnimatedStyle(() => ({ opacity: progress.value }));
 
   if (!mounted) return null;
-  // The design's scrim: the light Theme's ink at 45%, black at 60% in the dark one.
-  const scrim =
-    onClose === undefined
-      ? 'transparent'
-      : colorScheme === 'dark'
-        ? 'rgba(0, 0, 0, 0.6)'
-        : withAlpha(colors.ink, 0.45);
+  const scrim = onClose === undefined ? 'transparent' : scrimColor(colors.ink, colorScheme);
   const panel = (
     <SheetPanel
       onClose={onClose}
