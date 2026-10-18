@@ -36,6 +36,13 @@
       "when": 1792315201221,
       "tag": "0004_remote_switches",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792316777349,
+      "tag": "0005_user_records",
+      "breakpoints": true
     }
   ]
 }

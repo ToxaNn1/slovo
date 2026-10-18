@@ -25,6 +25,10 @@ const ANSWERED_COLUMNS = new Set([
   'size',
   'fileSha256',
   'off',
+  // A record of Sync answers its key, its value and its change time.
+  'key',
+  'value',
+  'changedAt',
 ]);
 
 /** The names of every internal column, as the schema and as the database name them. */
@@ -72,7 +76,7 @@ async function recordedBackend() {
   return { ...backend, answers, db: backend.database.db, pack: published.pack };
 }
 
-it('answers no stored token, Sign-in code or its hash, password field or internal column in any procedure', async () => {
+it("answers no stored token, Sign-in code or its hash, password field, internal column or another Account's record in any procedure", async () => {
   const { client, clientOf, answers, mailer, keptSignInCode, db, pack, switchOff } =
     await recordedBackend();
   /** What the database keeps that no answer may show. */
@@ -99,7 +103,7 @@ it('answers no stored token, Sign-in code or its hash, password field or interna
       .innerJoin(accounts, eq(accounts.id, sessions.accountId))
       .where(eq(accounts.email, email));
     for (const row of rows) for (const secret of Object.values(row)) secrets.add(secret);
-    return clientOf(token).account;
+    return clientOf(token);
   }
 
   // One run of each procedure, answering and refusing; the types ask for every one.
@@ -125,21 +129,21 @@ it('answers no stored token, Sign-in code or its hash, password field or interna
           await signIn();
         },
         me: async () => {
-          await (await signIn()).me();
+          await (await signIn()).account.me();
           await client.account.me().catch(refused);
         },
         signOut: async () => {
-          const device = await signIn();
+          const device = (await signIn()).account;
           await device.signOut();
           await device.signOut().catch(refused);
         },
         signOutEverywhere: async () => {
-          const device = await signIn();
+          const device = (await signIn()).account;
           await device.signOutEverywhere();
           await device.signOutEverywhere().catch(refused);
         },
         delete: async () => {
-          const device = await signIn();
+          const device = (await signIn()).account;
           await device.delete();
           await device.delete().catch(refused);
         },
@@ -174,6 +178,37 @@ it('answers no stored token, Sign-in code or its hash, password field or interna
           await switchOff(EDITION, 'game');
           await client.edition.switches({ params, headers: { 'if-none-match': headers.etag } });
           await client.edition.switches({ params: { editionId: 'pl' } }).catch(refused);
+        },
+      },
+      sync: {
+        push: async () => {
+          const device = await signIn();
+          const changes = [{ key: 'favorites.aa', value: true, changedAt: Date.now() }];
+          await device.sync.push({ editionId: EDITION, changes });
+          await device.sync.push({ editionId: 'pl', changes }).catch(refused);
+          await client.sync.push({ editionId: EDITION, changes }).catch(refused);
+        },
+        pull: async () => {
+          // Another Account's record, which no answer to the reader may carry.
+          const other = await signIn();
+          const theirs = `theirs-${randomUUID()}`;
+          secrets.add(theirs);
+          await other.sync.push({
+            editionId: EDITION,
+            changes: [{ key: `favorites.${theirs}`, value: theirs, changedAt: Date.now() }],
+          });
+          const reader = await signIn();
+          await reader.sync.push({
+            editionId: EDITION,
+            changes: [
+              { key: 'favorites.aa', value: { savedAt: new Date().toISOString() }, changedAt: 0 },
+              { key: 'favorites.bb', value: null, changedAt: 0 },
+            ],
+          });
+          const { cursor } = await reader.sync.pull({ editionId: EDITION });
+          await reader.sync.pull({ editionId: EDITION, after: cursor });
+          await reader.sync.pull({ editionId: 'pl' }).catch(refused);
+          await client.sync.pull({ editionId: EDITION }).catch(refused);
         },
       },
     };

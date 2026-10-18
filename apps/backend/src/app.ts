@@ -1,6 +1,7 @@
 import {
   createAccounts,
   createContentPacks,
+  createSync,
   type Clock,
   type Edition,
   type Mailer,
@@ -16,6 +17,7 @@ import { createApiHandler, INTERNAL_FAILURE, logUnexpectedFailure } from './api'
 import { createContentPackStore } from './content/content-pack-store';
 import type { Database } from './database/database';
 import { createEditions } from './edition/editions';
+import { createUserRecords } from './sync/user-records';
 
 /** What the backend is built from. A test gives its own. */
 export interface AppDependencies {
@@ -78,7 +80,12 @@ export function createApp({
     store: createContentPackStore(database),
     clock,
   });
-  const api = createApiHandler({ accounts, contentPacks, editions: editionRegistry });
+  const sync = createSync({
+    editions: editionRegistry,
+    records: createUserRecords(database),
+    clock,
+  });
+  const api = createApiHandler({ accounts, contentPacks, editions: editionRegistry, sync });
 
   const app = new Hono<Env>();
 

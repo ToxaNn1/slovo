@@ -88,8 +88,9 @@ export interface Authenticator {
   /** Ends every Session of the Account. */
   revokeAll(accountId: string): Promise<void>;
   /**
-   * Deletes the Account with its Sessions and sign-in methods, and the
-   * Sign-in codes waiting for its email, all at once.
+   * Deletes the Account with its Sessions, sign-in methods and the records
+   * Sync keeps of it in every Edition, and the Sign-in codes waiting for its
+   * email, all at once.
    */
   delete(account: AccountRecord): Promise<void>;
 }
@@ -136,4 +137,45 @@ export interface RemoteSwitchStore {
   off(editionId: string): Promise<readonly string[]>;
   /** Sets whether the feature is off in the Edition, as of `at`. */
   set(editionId: string, feature: string, off: boolean, at: Date): Promise<void>;
+}
+
+/** A JSON value, as a record of the user state holds it. */
+export type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
+
+/** One change of a record of an Account's user state in an Edition, as Sync keeps it. */
+export interface RecordChange {
+  /** The record's key in the user state; the backend never reads it. */
+  readonly key: string;
+  /** The record's value, which the backend never reads; null for a tombstone. */
+  readonly value: Json;
+  /** When the device wrote the change. */
+  readonly changedAt: Date;
+}
+
+/** A record as Sync keeps it: its last change and the sequence number it took. */
+export interface KeptRecord extends RecordChange {
+  readonly sequence: number;
+}
+
+/**
+ * The records of every Account's user state, per Edition (Postgres in the
+ * backend). It keeps them without reading their keys or values (ADR 0041).
+ */
+export interface UserRecords {
+  /**
+   * Keeps each change whose change time is later than the one of the record
+   * kept under its key, or that has no record yet, all in one transaction.
+   * A kept change takes the next value of one sequence, so it comes after
+   * every record already kept, and a pull that read up to a sequence number
+   * never misses a record kept below it. Each key comes once. An Account
+   * deleted meanwhile keeps nothing.
+   */
+  push(accountId: string, editionId: string, changes: readonly RecordChange[]): Promise<void>;
+  /** At most `limit` records of the Account in the Edition kept after the sequence number, in sequence order. */
+  after(
+    accountId: string,
+    editionId: string,
+    sequence: number,
+    limit: number,
+  ): Promise<readonly KeptRecord[]>;
 }

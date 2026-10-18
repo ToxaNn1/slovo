@@ -74,6 +74,7 @@ export {
   type ExamplePair,
 } from './correction';
 export { EntrySchema, type Entry, type EntryKind } from './entry';
+export { SYNC_BATCH_SIZE } from './sync';
 export { SourceSchema, type Source } from './shared';
 export {
   ExampleSchema,
