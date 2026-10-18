@@ -26,7 +26,7 @@ import { publishPack } from './content/publish-pack';
 import { createDatabase, type Database } from './database/database';
 import { migrateDatabase } from './database/migrate';
 import { readEditions } from './edition/edition-folders';
-import { setRemoteSwitch } from './edition/set-remote-switch';
+import { createEditions } from './edition/editions';
 
 /** The Postgres of the repo's `compose.yaml`, which the tests use unless `DATABASE_URL` names another. */
 const LOCAL_DATABASE_URL = 'postgres://slovo:slovo@localhost:55432/slovo';
@@ -321,10 +321,10 @@ export function testApp({
       publishPack({ database, clock: systemClock, editions: editionsNow, ...pack }),
     /** Turns the feature off in the Edition remotely, as the off command does, on the backend's database. */
     switchOff: (editionId: string, feature: string) =>
-      setRemoteSwitch({ database, clock: systemClock, editions, editionId, feature, off: true }),
+      createEditions({ database, clock: systemClock, editions }).switchOff(editionId, feature),
     /** Clears the Edition's remote switch of the feature, as the clear command does. */
     clearSwitch: (editionId: string, feature: string) =>
-      setRemoteSwitch({ database, clock: systemClock, editions, editionId, feature, off: false }),
+      createEditions({ database, clock: systemClock, editions }).clearSwitch(editionId, feature),
     /** Closes the database the backend opened, as when Postgres goes away. */
     close,
   };

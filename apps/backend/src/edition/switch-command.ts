@@ -11,7 +11,7 @@ import { PublishConfigSchema, readConfig } from '../config';
 import { createDatabase } from '../database/database';
 import { createLogger } from '../logger';
 import { readEditions } from './edition-folders';
-import { setRemoteSwitch } from './set-remote-switch';
+import { createEditions } from './editions';
 
 /** What the owner reads when a switch is refused. */
 const REFUSALS: Record<SwitchRefusal, string> = {
@@ -35,14 +35,15 @@ async function main(): Promise<number> {
   const { DATABASE_URL, EDITIONS_DIR } = readConfig(PublishConfigSchema, process.env);
   const database = createDatabase(DATABASE_URL, createLogger());
   try {
-    const set = await setRemoteSwitch({
+    const editions = createEditions({
       database,
       clock: systemClock,
       editions: readEditions(EDITIONS_DIR),
-      editionId,
-      feature,
-      off: command === 'off',
     });
+    const set =
+      command === 'off'
+        ? await editions.switchOff(editionId, feature)
+        : await editions.clearSwitch(editionId, feature);
     if (!set.ok) {
       console.error(
         `Feature Switch "${feature}" of "${editionId}" not set: ${REFUSALS[set.reason]}`,

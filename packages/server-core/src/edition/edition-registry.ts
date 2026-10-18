@@ -43,6 +43,12 @@ export interface NotServing {
  */
 export type SwitchRefusal = 'unknown-edition' | 'unknown-feature';
 
+/** Why a remote switch is not set, as `SwitchRefusal` names it. */
+interface SwitchRefused {
+  readonly ok: false;
+  readonly reason: SwitchRefusal;
+}
+
 /** The features turned off remotely in an Edition, in name order. */
 interface RemoteSwitches {
   readonly ok: true;
@@ -72,18 +78,12 @@ export interface EditionRegistry {
    * Turns the feature off in the Edition remotely, and answers the features
    * off now. A feature already off stays off.
    */
-  switchOff(
-    editionId: string,
-    feature: string,
-  ): Promise<RemoteSwitches | { readonly ok: false; readonly reason: SwitchRefusal }>;
+  switchOff(editionId: string, feature: string): Promise<RemoteSwitches | SwitchRefused>;
   /**
    * Clears the remote switch of the feature in the Edition, so the Edition's
    * own switch decides again, and answers the features off now.
    */
-  clearSwitch(
-    editionId: string,
-    feature: string,
-  ): Promise<RemoteSwitches | { readonly ok: false; readonly reason: SwitchRefusal }>;
+  clearSwitch(editionId: string, feature: string): Promise<RemoteSwitches | SwitchRefused>;
 }
 
 const FeatureSwitchSchema = FeatureSwitchesSchema.keyof();
@@ -93,18 +93,18 @@ function isFeatureSwitch(name: string): name is FeatureSwitch {
   return FeatureSwitchSchema.safeParse(name).success;
 }
 
-/** The features the store keeps off that the schema knows, in name order. */
-function known(features: readonly string[]): FeatureSwitch[] {
+/** The features of the names the schema knows, in name order. */
+function knownInNameOrder(features: readonly string[]): FeatureSwitch[] {
   return features.filter(isFeatureSwitch).sort();
 }
 
 export function createEditionRegistry({
   editions,
-  remoteSwitches: store,
+  switchStore,
   clock,
 }: {
   editions: readonly Edition[];
-  remoteSwitches: RemoteSwitchStore;
+  switchStore: RemoteSwitchStore;
   clock: Clock;
 }): EditionRegistry {
   const byId = new Map(editions.map((edition) => [edition.config.id, edition]));
@@ -112,11 +112,9 @@ export function createEditionRegistry({
 
   async function setSwitch(editionId: string, feature: string, off: boolean) {
     if (!byId.has(editionId)) return unknownEdition;
-    if (!isFeatureSwitch(feature)) {
-      return { ok: false, reason: 'unknown-feature' } as const;
-    }
-    await store.set(editionId, feature, off, clock.now());
-    return { ok: true, off: known(await store.off(editionId)) } as const;
+    if (!isFeatureSwitch(feature)) return { ok: false, reason: 'unknown-feature' } as const;
+    await switchStore.set(editionId, feature, off, clock.now());
+    return { ok: true, off: knownInNameOrder(await switchStore.off(editionId)) } as const;
   }
 
   return {
@@ -125,9 +123,9 @@ export function createEditionRegistry({
     async serving(editionId, feature) {
       const edition = byId.get(editionId);
       if (edition === undefined) return unknownEdition;
-      // The Edition's own switch needs no database.
+      // The Edition's own switch needs no store.
       if (!edition.config.featureSwitches[feature]) return { ok: false, reason: 'switched-off' };
-      if ((await store.off(editionId)).includes(feature)) {
+      if ((await switchStore.off(editionId)).includes(feature)) {
         return { ok: false, reason: 'switched-off' };
       }
       return { ok: true, edition };
@@ -135,7 +133,7 @@ export function createEditionRegistry({
 
     async remoteSwitches(editionId) {
       if (!byId.has(editionId)) return unknownEdition;
-      return { ok: true, off: known(await store.off(editionId)) };
+      return { ok: true, off: knownInNameOrder(await switchStore.off(editionId)) };
     },
 
     switchOff: (editionId, feature) => setSwitch(editionId, feature, true),

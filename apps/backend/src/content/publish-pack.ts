@@ -4,14 +4,13 @@ import { readFileSync } from 'node:fs';
 import { openLanguagePack } from '@slovo/language-pack';
 import {
   createContentPacks,
-  createEditionRegistry,
   type Clock,
   type ContentPacks,
   type Edition,
 } from '@slovo/server-core';
 
 import type { Database } from '../database/database';
-import { createRemoteSwitchStore } from '../edition/remote-switch-store';
+import { createEditions } from '../edition/editions';
 import { createContentPackStore } from './content-pack-store';
 
 /**
@@ -42,11 +41,7 @@ export async function publishPack({
     pack.close();
   }
   const contentPacks = createContentPacks({
-    editions: createEditionRegistry({
-      editions,
-      remoteSwitches: createRemoteSwitchStore(database),
-      clock,
-    }),
+    editions: createEditions({ database, clock, editions }),
     store: createContentPackStore(database),
     clock,
   });
