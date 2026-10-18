@@ -214,6 +214,14 @@ The backend serves every Edition from one deployment ([ADR 0008](docs/adr/0008-o
    curl -o language-pack.db 'http://localhost:8787/v1/editions/uk/content/packs/<content version>'
    ```
 
+7. Turn a feature off in an Edition remotely, in an emergency, without a build ([ADR 0040](docs/adr/0040-remote-feature-switches-only-turn-features-off.md)). The command keeps the switch in the database `DATABASE_URL` names; `edition.switches` serves the features off with an ETag, and the backend refuses a feature off remotely as 404, like one the Edition turns off. Clearing the switch gives the feature back. A remote switch never turns on a feature the Edition turns off. The commands refuse an Edition the backend doesn't find and a feature name the Feature Switches schema doesn't know.
+
+   ```sh
+   pnpm switch:off uk game
+   curl -i 'http://localhost:8787/v1/editions/uk/switches'
+   pnpm switch:clear uk game
+   ```
+
 ## Commands
 
 All commands run from the repo root. CI runs `lint`, `typecheck`, `deps`, `knip` and `test` on every pull request, and `main` takes changes only when they are green. Knip only reports.
@@ -228,6 +236,8 @@ All commands run from the repo root. CI runs `lint`, `typecheck`, `deps`, `knip`
 | `pnpm test`            | Vitest in every package, and Jest for the component tests of `packages/ui` (ADR 0029). Turborepo caches results and tracks `editions/` as an input.                                                                                                                                                                           |
 | `pnpm build:pack uk`   | Validates the Edition's content, prints the content report and builds the Language Pack. Fails when the content misses a target in `editions/uk/content/targets.json`.                                                                                                                                                        |
 | `pnpm publish:pack uk` | Publishes the Edition's built Language Pack to the backend's database as a Content update. Refuses a pack the manifest doesn't record, a content version that doesn't grow and one already published.                                                                                                                         |
+| `pnpm switch:off`      | `pnpm switch:off uk game` turns a feature off in an Edition remotely (ADR 0040). Refuses an Edition the backend doesn't find and an unknown feature.                                                                                                                                                                          |
+| `pnpm switch:clear`    | `pnpm switch:clear uk game` clears the remote switch of a feature, so its config decides again.                                                                                                                                                                                                                               |
 | `pnpm source:words`    | Drafts Words for review; see [`tools/sourcing/README.md`](tools/sourcing/README.md).                                                                                                                                                                                                                                          |
 | `pnpm format`          | Rewrites files with Prettier.                                                                                                                                                                                                                                                                                                 |
 

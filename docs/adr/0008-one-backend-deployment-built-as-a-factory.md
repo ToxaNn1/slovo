@@ -9,3 +9,7 @@ All Editions share one backend deployment and one Postgres database, with data p
 ## Amendment: the backend reads Feature Switches from the Edition config (ADR 0030)
 
 Until remote Feature Switches arrive with sync (0.8), the backend reads an Edition's switches from its `edition.json`, as the app does, not from the database. ADR 0030 says how the server Core, the shell and the Edition folders make the factory.
+
+## Amendment: remote Feature Switches only turn features off (0.8, ADR 0040)
+
+From 0.8 the database also holds remote Feature Switches. They can only turn a feature off: the Edition config still decides what an Edition offers, and a remote switch takes a feature away in an emergency, without a build. ADR 0040 says how they are stored, set and served.
