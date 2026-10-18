@@ -10,7 +10,7 @@ import { countRequest, type TooManyRequests } from '../rate-limit';
  * fill the database or flood the backend.
  */
 const SYNC_LIMITS = {
-  /** The most characters of a record's key. */
+  /** The most characters of a record's key, each code point one. */
   keyLength: 200,
   /** The most bytes of a record's value as compact JSON in UTF-8: 8 KB. */
   valueBytes: 8 * 1024,
@@ -108,7 +108,8 @@ function utf8Bytes(text: string): number {
 
 /** Whether the change's key and value are within their limits. */
 const fits = ({ key, value }: SyncChange) =>
-  key.length <= SYNC_LIMITS.keyLength && utf8Bytes(JSON.stringify(value)) <= SYNC_LIMITS.valueBytes;
+  Array.from(key).length <= SYNC_LIMITS.keyLength &&
+  utf8Bytes(JSON.stringify(value)) <= SYNC_LIMITS.valueBytes;
 
 /** The change of each key that wins, in the order the keys first came: the later, the first on a tie. */
 function latestOfEachKey(changes: readonly SyncChange[]): SyncChange[] {

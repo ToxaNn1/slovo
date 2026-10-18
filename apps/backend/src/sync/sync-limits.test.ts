@@ -41,16 +41,20 @@ describe('a record of a push', () => {
     const { signIn } = syncing();
     const { device } = await signIn();
     const now = Date.now();
-    const fits = { key: 'k'.repeat(200), value: true, changedAt: now };
+    // A character is a code point, so an emoji counts once.
+    const fits = [
+      { key: 'k'.repeat(200), value: true, changedAt: now },
+      { key: '😀'.repeat(200), value: true, changedAt: now },
+    ];
 
     await expect(
       device.sync.push({
         editionId: 'uk',
-        changes: [fits, { key: 'k'.repeat(201), value: true, changedAt: now }],
+        changes: [...fits, { key: 'k'.repeat(201), value: true, changedAt: now }],
       }),
     ).rejects.toMatchObject(badRequest);
     await expect(pullAll(device)).resolves.toMatchObject({ records: [] });
-    await expect(device.sync.push({ editionId: 'uk', changes: [fits] })).resolves.toEqual({});
+    await expect(device.sync.push({ editionId: 'uk', changes: fits })).resolves.toEqual({});
   });
 
   it('with a value of more than 8 KB of JSON is BAD_REQUEST, and nothing of the push is kept', async () => {

@@ -12,11 +12,11 @@ import { requestId, type RequestIdVariables } from 'hono/request-id';
 import type { Logger } from 'pino';
 
 import { createAuthenticator } from './account/authenticator';
-import { createRateLimits } from './account/rate-limits';
 import { createApiHandler, INTERNAL_FAILURE, logUnexpectedFailure } from './api';
 import { createContentPackStore } from './content/content-pack-store';
 import type { Database } from './database/database';
 import { createEditions } from './edition/editions';
+import { createRateLimits } from './rate-limits';
 import { createUserRecords } from './sync/user-records';
 
 /** What the backend is built from. A test gives its own. */

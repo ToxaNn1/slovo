@@ -128,9 +128,9 @@ export function createAccounts({
 
     async session(token) {
       if (token === undefined) return unauthorized;
-      const opened = await authenticator.sessionOf(token);
-      if (opened === undefined) return unauthorized;
-      return { ok: true, session: { ...opened, token } as Session };
+      const found = await authenticator.sessionOf(token);
+      if (found === undefined) return unauthorized;
+      return { ok: true, session: { ...found, token } as Session };
     },
 
     signOut: ({ token }) => authenticator.revoke(token),
