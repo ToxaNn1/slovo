@@ -1,13 +1,7 @@
 import type { PublishedPack } from '@slovo/contracts';
 
-import type { EditionRegistry } from '../edition/edition-registry';
+import type { EditionRegistry, NotServing } from '../edition/edition-registry';
 import type { Clock, ContentPackStore, PackFile, PublishedFile } from '../ports';
-
-/**
- * Why the content of an Edition is not served: the backend didn't find the
- * Edition, or the Edition has its `contentUpdates` Feature Switch off.
- */
-export type ServeRefusal = 'unknown-edition' | 'content-updates-off';
 
 /**
  * Why a pack is not published: its Edition is not one the backend found;
@@ -23,15 +17,13 @@ export type PublishRefusal =
 export interface ContentPacks {
   /**
    * The newest published pack of the Edition in the pack format, or none
-   * when nothing of that format is published.
+   * when nothing of that format is published. An Edition that doesn't serve
+   * content updates is refused, here and in `download`.
    */
   latest(
     editionId: string,
     packFormat: number,
-  ): Promise<
-    | { readonly ok: true; readonly pack: PublishedPack | undefined }
-    | { readonly ok: false; readonly reason: ServeRefusal }
-  >;
+  ): Promise<{ readonly ok: true; readonly pack: PublishedPack | undefined } | NotServing>;
   /**
    * The file of the Edition's pack published at the content version. A
    * published version never changes, so its file is read from the store
@@ -43,7 +35,8 @@ export interface ContentPacks {
     contentVersion: number,
   ): Promise<
     | { readonly ok: true; readonly file: PublishedFile }
-    | { readonly ok: false; readonly reason: ServeRefusal | 'not-published' }
+    | NotServing
+    | { readonly ok: false; readonly reason: 'not-published' }
   >;
   /**
    * Publishes a built pack of the Edition, and answers it as
@@ -68,13 +61,6 @@ export function createContentPacks({
   store: ContentPackStore;
   clock: Clock;
 }): ContentPacks {
-  function refusalToServe(editionId: string): ServeRefusal | undefined {
-    const edition = editions.find(editionId);
-    if (edition === undefined) return 'unknown-edition';
-    if (!edition.config.featureSwitches.contentUpdates) return 'content-updates-off';
-    return undefined;
-  }
-
   // The published files read so far, by Edition and content version. A
   // download that comes while its file is being read waits for that read.
   const files = new Map<string, Promise<PublishedFile | undefined>>();
@@ -98,14 +84,14 @@ export function createContentPacks({
 
   return {
     async latest(editionId, packFormat) {
-      const refusal = refusalToServe(editionId);
-      if (refusal !== undefined) return { ok: false, reason: refusal };
+      const serving = editions.serving(editionId, 'contentUpdates');
+      if (!serving.ok) return serving;
       return { ok: true, pack: await store.latest(editionId, packFormat) };
     },
 
     async download(editionId, contentVersion) {
-      const refusal = refusalToServe(editionId);
-      if (refusal !== undefined) return { ok: false, reason: refusal };
+      const serving = editions.serving(editionId, 'contentUpdates');
+      if (!serving.ok) return serving;
       const file = await publishedFile(editionId, contentVersion);
       if (file === undefined) return { ok: false, reason: 'not-published' };
       return { ok: true, file };

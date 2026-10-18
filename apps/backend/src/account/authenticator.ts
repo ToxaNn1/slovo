@@ -205,10 +205,9 @@ export function createAuthenticator(
         headers: bearerHeaders(token),
         query: { disableRefresh: true },
       });
-      if (session === null) return false;
+      if (session === null) return;
       const { internalAdapter } = await auth.$context;
       await internalAdapter.deleteSession(session.session.token);
-      return true;
     },
 
     async revokeAll(accountId) {

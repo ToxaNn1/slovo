@@ -30,11 +30,16 @@ function limitedApp() {
   };
 }
 
-/** What a refused request answers: 429 `TOO_MANY_REQUESTS` with `Retry-After` in seconds. */
+/**
+ * What a refused request answers: 429 `TOO_MANY_REQUESTS` with the contract's
+ * message and `Retry-After` in seconds.
+ */
 async function refusal(response: Response) {
+  const { code, message } = (await response.json()) as { code: string; message: string };
   return {
     status: response.status,
-    code: ((await response.json()) as { code: string }).code,
+    code,
+    message,
     retryAfter: response.headers.get('retry-after'),
   };
 }
@@ -54,6 +59,7 @@ describe('the codes sent to one email', () => {
     expect(await refusal(sixth)).toEqual({
       status: 429,
       code: 'TOO_MANY_REQUESTS',
+      message: 'Too many requests',
       // The hour began with the first code, 50 minutes ago.
       retryAfter: '600',
     });
@@ -95,6 +101,7 @@ describe('the code requests from one IP address', () => {
     expect(await refusal(twentyFirst)).toEqual({
       status: 429,
       code: 'TOO_MANY_REQUESTS',
+      message: 'Too many requests',
       retryAfter: '360',
     });
     expect(mailer.sent.filter((mail) => mail.to === email)).toEqual([]);
@@ -136,6 +143,7 @@ describe('the code checks from one IP address', () => {
     expect(await refusal(await verifyCode(email))).toEqual({
       status: 429,
       code: 'TOO_MANY_REQUESTS',
+      message: 'Too many requests',
       // Half a second is left, which counts as a whole one.
       retryAfter: '1',
     });
@@ -177,6 +185,7 @@ describe('a spent Sign-in code', () => {
     expect(await refusal(await verifyCode(email))).toEqual({
       status: 429,
       code: 'TOO_MANY_REQUESTS',
+      message: 'Too many requests',
       retryAfter: null,
     });
   });

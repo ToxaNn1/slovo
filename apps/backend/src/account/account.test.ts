@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
 import { ACCOUNT_NAME, fill } from '@slovo/contracts';
+import type { ApiClient } from '@slovo/contracts/api';
 import { EDITIONS_DIR, openEdition } from '@slovo/language-pack/edition';
 import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
@@ -267,44 +268,6 @@ describe('a Session', () => {
     return { me: () => backend.clientOf(token).account.me(), email };
   }
 
-  it('is needed for me: without one it is UNAUTHORIZED', async () => {
-    const { client } = testApp();
-
-    await expect(client.account.me()).rejects.toMatchObject({
-      code: 'UNAUTHORIZED',
-      status: 401,
-      defined: true,
-    });
-  });
-
-  it('is UNAUTHORIZED with a token the backend never gave', async () => {
-    const { clientOf } = testApp();
-
-    await expect(clientOf('made-up.token').account.me()).rejects.toMatchObject({
-      code: 'UNAUTHORIZED',
-      status: 401,
-    });
-  });
-
-  it('is not signed in by the token as the database keeps it', async () => {
-    const { client, clientOf, mailer, database } = testApp();
-    const email = newEmail();
-    await client.account.requestCode({ email, editionId: 'uk' });
-    await client.account.verifyCode({ email, code: mailer.codeSentTo(email) });
-    const { db } = database;
-
-    const [kept] = await db
-      .select({ token: sessions.token })
-      .from(sessions)
-      .innerJoin(accounts, eq(accounts.id, sessions.accountId))
-      .where(eq(accounts.email, email));
-
-    expect(kept).toBeDefined();
-    await expect(clientOf(kept?.token ?? '').account.me()).rejects.toMatchObject({
-      code: 'UNAUTHORIZED',
-    });
-  });
-
   it('lasts 90 days after its last use', async () => {
     const { me, email } = await signedIn();
 
@@ -374,6 +337,50 @@ function signingIn() {
 
 const unauthorized = { code: 'UNAUTHORIZED', status: 401, defined: true };
 
+/**
+ * Each Account procedure that acts on the Account of the request's Session:
+ * every one but the two that sign in. The types ask for a new one.
+ */
+const sessionProcedures: Record<
+  Exclude<keyof ApiClient['account'], 'requestCode' | 'verifyCode'>,
+  (account: ApiClient['account']) => Promise<unknown>
+> = {
+  me: (account) => account.me(),
+  signOut: (account) => account.signOut(),
+  signOutEverywhere: (account) => account.signOutEverywhere(),
+  delete: (account) => account.delete(),
+};
+
+describe('a procedure of a Session', () => {
+  it('is UNAUTHORIZED without a Session, with a token the backend never gave or as the database keeps it, and after the Session ended', async () => {
+    const { client, clientOf, signInToken, database } = signingIn();
+    const email = newEmail();
+    await signInToken(email);
+    const [kept] = await database.db
+      .select({ token: sessions.token })
+      .from(sessions)
+      .innerJoin(accounts, eq(accounts.id, sessions.accountId))
+      .where(eq(accounts.email, email));
+    const ended = clientOf(await signInToken(newEmail())).account;
+    await ended.signOut();
+    const devices = {
+      'no Session': client.account,
+      'a made-up token': clientOf('made-up.token').account,
+      'the kept token': clientOf(kept?.token ?? '').account,
+      'an ended Session': ended,
+    };
+
+    expect(kept).toBeDefined();
+    for (const [procedure, run] of Object.entries(sessionProcedures)) {
+      for (const [device, account] of Object.entries(devices)) {
+        await expect(run(account), `${procedure} with ${device}`).rejects.toMatchObject(
+          unauthorized,
+        );
+      }
+    }
+  });
+});
+
 describe('signing out', () => {
   it('ends this Session, and another Session of the same Account still works', async () => {
     const { signIn } = signingIn();
@@ -385,15 +392,6 @@ describe('signing out', () => {
 
     await expect(phone.me()).rejects.toMatchObject(unauthorized);
     await expect(tablet.me()).resolves.toMatchObject({ email });
-  });
-
-  it('is UNAUTHORIZED without a Session, or with one that has ended', async () => {
-    const { client, signIn } = signingIn();
-    const phone = await signIn(newEmail());
-    await phone.signOut();
-
-    await expect(client.account.signOut()).rejects.toMatchObject(unauthorized);
-    await expect(phone.signOut()).rejects.toMatchObject(unauthorized);
   });
 });
 
@@ -408,12 +406,6 @@ describe('signing out everywhere', () => {
 
     await expect(phone.me()).rejects.toMatchObject(unauthorized);
     await expect(tablet.me()).rejects.toMatchObject(unauthorized);
-  });
-
-  it('is UNAUTHORIZED without a Session', async () => {
-    const { client } = signingIn();
-
-    await expect(client.account.signOutEverywhere()).rejects.toMatchObject(unauthorized);
   });
 
   it('lets the same email sign in again', async () => {
@@ -492,12 +484,6 @@ describe('deleting the Account', () => {
     expect(created.account?.id).not.toBe(deleted.account?.id);
     expect(created.sessions).toHaveLength(1);
     expect(created.signInMethods).toEqual([]);
-  });
-
-  it('is UNAUTHORIZED without a Session', async () => {
-    const { client } = signingIn();
-
-    await expect(client.account.delete()).rejects.toMatchObject(unauthorized);
   });
 });
 
