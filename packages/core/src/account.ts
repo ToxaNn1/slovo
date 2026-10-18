@@ -98,6 +98,15 @@ export interface Account {
    * the foreground and when Settings opens.
    */
   refresh(): Promise<void>;
+  /**
+   * Makes the request of another module, such as Sync, with this device's
+   * Session, and answers its answer; without a Session it makes none and
+   * answers `undefined`. The Account's 401 rule holds for it: when it says
+   * the Session has ended, the device forgets it and shows signed out, with
+   * no problem, unless the Session ended on the way. It tries nothing again
+   * and shows nothing in flight: the request is not the reader's.
+   */
+  withSession<A extends Answer>(request: (token: string) => Promise<A>): Promise<A | undefined>;
 }
 
 type Unauthorized = Extract<AccountApiFailure, { readonly reason: 'unauthorized' }>;
@@ -317,6 +326,14 @@ export async function openAccount({
           return state;
         },
       );
+    },
+    async withSession(lent) {
+      const current = token;
+      if (current === undefined) return undefined;
+      const ended = endedSessions;
+      const answer = await lent(current);
+      if (unauthorized(answer) && ended === endedSessions) change(await endSession());
+      return answer;
     },
   };
 }

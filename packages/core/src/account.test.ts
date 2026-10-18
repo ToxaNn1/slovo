@@ -319,6 +319,56 @@ describe('the Account signed in', () => {
     expect(await sessions.read()).toBeUndefined();
   });
 
+  it('lends its Session to the request of another module, and signs out quietly when it has ended', async () => {
+    const { account, sessions } = await signedIn();
+    const tokens: string[] = [];
+
+    expect(
+      await account.withSession((token) => {
+        tokens.push(token);
+        return Promise.resolve({ ok: true });
+      }),
+    ).toEqual({ ok: true });
+    expect(account.state).toMatchObject({ status: 'signed-in', inFlight: undefined });
+
+    expect(
+      await account.withSession(() => Promise.resolve({ ok: false, reason: 'unauthorized' })),
+    ).toEqual({ ok: false, reason: 'unauthorized' });
+    expect(account.state).toEqual({
+      status: 'signed-out',
+      inFlight: undefined,
+      problem: undefined,
+    });
+    expect(await sessions.read()).toBeUndefined();
+    expect(
+      await account.withSession((token) => {
+        tokens.push(token);
+        return Promise.resolve({ ok: true });
+      }),
+    ).toBeUndefined();
+    expect(tokens).toEqual(['session-1']);
+  });
+
+  it('keeps a new Session when a request with an old one finds it ended', async () => {
+    const { account } = await signedIn();
+    let release: () => void = () => undefined;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+
+    const lent = account.withSession(async () => {
+      await held;
+      return { ok: false, reason: 'unauthorized' } as const;
+    });
+    await account.signOut();
+    await account.requestCode(anna.email);
+    await account.verifyCode('100002');
+    release();
+    await lent;
+
+    expect(account.state).toMatchObject({ status: 'signed-in', email: 'anna@mail.com' });
+  });
+
   it('keeps the Session when the check finds no server, and shows no problem', async () => {
     const { account, api, sessions, time } = await signedIn();
     time.advance(60 * 60_000);
