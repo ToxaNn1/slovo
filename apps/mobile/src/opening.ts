@@ -16,23 +16,36 @@ export type OpeningState<T> =
 
 /**
  * Something the shell opens once per app run and every screen shares, such as
- * the Language Pack or the Core composition. It is a source like a Core
- * module: its snapshot is `state`, and it tells its subscribers of each change.
+ * the Language Pack or the Core composition, and may reopen while the app
+ * runs. It is a source like a Core module: its snapshot is `state`, and it
+ * tells its subscribers of each change.
  */
 export interface Opening<T> extends Source {
   /** Where the opening stands; the first read starts it. */
   readonly state: OpeningState<T>;
   /** What it opened, once it is ready, after any retries; the first call starts it. */
   opened(): Promise<T>;
+  /**
+   * Opens it again, such as the composition over a user state a sync
+   * changed. It stays ready with what it opened until the new value is open,
+   * then is ready with that and tells its subscribers once. A reopen that
+   * fails is reported and keeps the old value; the fallback is not used.
+   * Reopens run in turn, each after the one before ends. One asked while the
+   * opening still opens waits for it; an opening not read yet or failed has
+   * nothing to reopen, since its first read or its retry opens it afresh.
+   * Settles once it ends, and never rejects.
+   */
+  reopen(): Promise<void>;
 }
 
 const loading = { status: 'loading' } as const;
 
 /**
- * Opens `open` once per app run, on the first read, and shares it. A failure
+ * Opens `open` on the first read and shares it for the app run, until a
+ * reopen opens it again. A failure
  * is reported to `onError`; then the opening is ready with `fallback` when it
  * has one, or it fails with a retry that opens it again. Once ready it stays
- * ready, so the fallback is used at most once.
+ * ready, also through a reopen, so the fallback is used at most once.
  */
 export function openOnce<T>(
   open: () => Promise<T>,
@@ -40,6 +53,8 @@ export function openOnce<T>(
 ): Opening<T> {
   let state: OpeningState<T> | undefined;
   const listeners = new Set<() => void>();
+  /** The last reopen asked, which the next one waits for. */
+  let reopening = Promise.resolve();
 
   function change(changed: OpeningState<T>): void {
     state = changed;
@@ -77,6 +92,34 @@ export function openOnce<T>(
     );
   }
 
+  /** Resolves once the opening is not loading: ready, failed, or never read. */
+  function settled(): Promise<void> {
+    return new Promise((resolve) => {
+      if (state?.status !== 'loading') {
+        resolve();
+        return;
+      }
+      const unsubscribe = opening.subscribe(() => {
+        if (state?.status === 'loading') return;
+        unsubscribe();
+        resolve();
+      });
+    });
+  }
+
+  async function reopenWhenSettled(): Promise<void> {
+    await settled();
+    if (state?.status !== 'ready') return;
+    let value: T;
+    try {
+      value = await open();
+    } catch (error) {
+      onError(error);
+      return;
+    }
+    change({ status: 'ready', value });
+  }
+
   function current(): OpeningState<T> {
     if (state === undefined) {
       state = loading;
@@ -99,6 +142,10 @@ export function openOnce<T>(
           resolve(state.value);
         });
       });
+    },
+    reopen() {
+      reopening = reopening.then(reopenWhenSettled);
+      return reopening;
     },
     subscribe(listener) {
       current();

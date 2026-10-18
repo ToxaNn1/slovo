@@ -129,6 +129,118 @@ describe('an opening', () => {
   });
 });
 
+/** An opening whose every open the test settles in turn, counting them. */
+function heldOpens<T = string>(onError: (error: unknown) => void = vi.fn()) {
+  const opens: ReturnType<typeof deferred<T>>[] = [];
+  const opening = openOnce(
+    () => {
+      const open = deferred<T>();
+      opens.push(open);
+      return open.promise;
+    },
+    { onError },
+  );
+  return { opening, opens };
+}
+
+describe('a reopen', () => {
+  it('keeps the old value until the new one is open, then tells its subscribers once', async () => {
+    const { opening, opens } = heldOpens();
+    opening.subscribe(vi.fn());
+    opens[0]?.resolve('old');
+    await settle();
+    const seen: OpeningState<string>[] = [];
+    opening.subscribe(() => seen.push(opening.state));
+
+    const reopened = opening.reopen();
+    await settle();
+    expect(opens).toHaveLength(2);
+    expect(opening.state).toEqual({ status: 'ready', value: 'old' });
+    expect(await opening.opened()).toBe('old');
+    expect(seen).toEqual([]);
+
+    opens[1]?.resolve('new');
+    await reopened;
+
+    expect(seen).toEqual([{ status: 'ready', value: 'new' }]);
+    expect(await opening.opened()).toBe('new');
+  });
+
+  it('keeps the old value and reports why when it fails', async () => {
+    const onError = vi.fn();
+    const { opening, opens } = heldOpens(onError);
+    opening.subscribe(vi.fn());
+    opens[0]?.resolve('old');
+    await settle();
+    const listener = vi.fn();
+    opening.subscribe(listener);
+    const failure = new Error('no user state');
+
+    const reopened = opening.reopen();
+    await settle();
+    opens[1]?.reject(failure);
+    await reopened;
+
+    expect(opening.state).toEqual({ status: 'ready', value: 'old' });
+    expect(listener).not.toHaveBeenCalled();
+    expect(onError).toHaveBeenCalledWith(failure);
+  });
+
+  it('runs after the reopen before it, so the last one asked is the value', async () => {
+    const { opening, opens } = heldOpens();
+    opening.subscribe(vi.fn());
+    opens[0]?.resolve('first');
+    await settle();
+
+    const second = opening.reopen();
+    const third = opening.reopen();
+    await settle();
+    expect(opens).toHaveLength(2);
+
+    opens[1]?.resolve('second');
+    await second;
+    await settle();
+    expect(opening.state).toEqual({ status: 'ready', value: 'second' });
+    expect(opens).toHaveLength(3);
+
+    opens[2]?.resolve('third');
+    await third;
+    expect(opening.state).toEqual({ status: 'ready', value: 'third' });
+  });
+
+  it('waits for an opening still opening, then opens it again', async () => {
+    const { opening, opens } = heldOpens();
+    opening.subscribe(vi.fn());
+
+    const reopened = opening.reopen();
+    await settle();
+    expect(opens).toHaveLength(1);
+
+    opens[0]?.resolve('opened before the change');
+    await settle();
+    expect(opens).toHaveLength(2);
+    opens[1]?.resolve('opened over the change');
+    await reopened;
+
+    expect(opening.state).toEqual({ status: 'ready', value: 'opened over the change' });
+  });
+
+  it('opens nothing for an opening never read or failed: its first read or its retry opens it afresh', async () => {
+    const { opening, opens } = heldOpens();
+
+    await opening.reopen();
+    expect(opens).toHaveLength(0);
+
+    opening.subscribe(vi.fn());
+    opens[0]?.reject(new Error('busy'));
+    await settle();
+    await opening.reopen();
+
+    expect(opens).toHaveLength(1);
+    expect(opening.state.status).toBe('failed');
+  });
+});
+
 /** A Core module as the shell sees it: a snapshot and the subscribers it tells of each change. */
 function createCounter() {
   const listeners = new Set<() => void>();
@@ -202,5 +314,35 @@ describe('a binding', () => {
     expect(binding.snapshot()).toEqual({ status: 'ready', value: 'pack' });
     // The snapshot stays one value until the next change, as `useSyncExternalStore` needs.
     expect(binding.snapshot()).toBe(binding.snapshot());
+  });
+
+  it('moves a screen bound to a module of what an opening opened to the reopened module', async () => {
+    const { opening, opens } = heldOpens<{ counter: ReturnType<typeof createCounter> }>();
+    // A screen binds the opening, as its gate does, and the module it reads, as `useComposition` gives it.
+    const moduleOf = () => {
+      const { state } = opening;
+      if (state.status !== 'ready') throw new Error('expected the opening to be ready');
+      return state.value.counter;
+    };
+    const screen = vi.fn();
+    bind(opening, ({ state }) => state).subscribe(screen);
+    opens[0]?.resolve({ counter: createCounter() });
+    await settle();
+    const before = bind(moduleOf(), ({ count }) => count);
+
+    const reopened = opening.reopen();
+    await settle();
+    const reopenedCounter = createCounter();
+    opens[1]?.resolve({ counter: reopenedCounter });
+    await reopened;
+    const after = bind(moduleOf(), ({ count }) => count);
+    const listener = vi.fn();
+    after.subscribe(listener);
+    reopenedCounter.increment();
+
+    expect(screen).toHaveBeenCalledTimes(2);
+    expect(after.subscribe).not.toBe(before.subscribe);
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(after.snapshot()).toBe(1);
   });
 });

@@ -44,3 +44,20 @@ Now `reportForeground` (`apps/mobile/src/foreground/foreground-reports.ts`) is t
 - **Every listener acts on every moment**: rejected. The composition just turned to the day as it opened, and a `resume` at launch would plan the notifications and the Game again; a write of the Widget Snapshot on every return writes what the last background already wrote.
 - **Queue the moments of an opening still opening and tell them once open**: rejected. The launch already covers them: the composition opens on today, and the first Content update check and Session check are due at launch anyway.
 - **Report the background as any move out of the foreground**: rejected. The control centre or the app switcher would write the Widget Snapshot each time it is pulled down, with nothing changed.
+
+## Amendment: an opening can be reopened while the app runs (0.8, #381)
+
+Until now an opening, once ready, never changed. In 0.8 a sync can change the user state under a running app, and a remote Feature Switch can turn a feature off (spec #378), so the settings and the composition, which keep the user state in memory for the app run (ADR 0013), must open again over it, without a loading screen and without losing the screen the reader is on.
+
+An opening now has `reopen()`. It opens the value again while the opening stays ready with the old one, so every gate keeps drawing what it drew; once the new value is open, the opening is ready with it and tells its subscribers once, and `opened()` gives it from then on. A reopen that fails is reported to `onError` and keeps the old value; the fallback is not used, since the old value is better than the defaults. Reopens run in turn, each after the one before ends. A reopen asked while the opening still opens waits for it and then opens again, so a value opened over a user state that changed meanwhile is replaced. An opening not read yet, or failed, has nothing to reopen: its first read or its retry opens it over what is current. `reopen()` settles once it ends and never rejects.
+
+Most screens follow without anything of their own. `useComposition()` reads the composition's opening, so a reopen draws every screen under its gate again with the new composition; `useSubscribed` then binds each module of the new composition, and `bind` gives a new module a subscription of its own, so `useSyncExternalStore` leaves the old module and follows the new one. The gates stay drawn, so the navigation stack and an open Entry stay. What a screen keeps in React state over a module of the old value must not outlive it: the settings provider keeps the reader's last change only over the settings it was made in, and the Feed of a reopened composition opens on the card it kept for the reader, not on the page turned to in the old Feed, whose cards it doesn't have. The foreground reports tell each moment with what the opening holds at that moment, so the composition's listeners act on the reopened one.
+
+A reopen is not a launch, and the reports do not tell it: whoever reopens does what the launch did, such as the notification plan and the Widget Snapshot after a sync (#388). Nothing reopens yet; sync (#388) and remote switches (#389) will.
+
+### Considered Options
+
+- **Show the loading state while reopening**: rejected. The gate would unmount everything under it, and with it the navigation stack and the Entry the reader has open.
+- **A new opening for each reopen, swapped in by the shell**: rejected. Every reader of the opening, the gates, `useComposition`, the foreground reports and `opened()`, would need to learn which opening is current.
+- **Fall back on a failed reopen**: rejected. The old value was open over the same user state a moment ago; the defaults or an empty in-memory state would show the reader less.
+- **Merge reopens asked while one runs into one**: rejected for now. A reopen is asked after a change of the user state or of the remote switches, which are rare, and running each in turn is the simplest rule that ends on the latest value.

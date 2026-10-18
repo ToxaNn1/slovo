@@ -162,6 +162,22 @@ describe('the foreground reports', () => {
     expect(heard).toEqual(['background: first', 'background: 3']);
   });
 
+  it('tells each moment after a reopen with what the opening reopened', async () => {
+    const appState = fakeAppState();
+    const reports = reportForeground({ clock, appState: appState.source });
+    const values = ['the composition', 'the reopened composition'];
+    const opening = openOnce(() => Promise.resolve(values.shift()), { onError: () => undefined });
+    const heard: string[] = [];
+    reports.listen(opening, (value, moment) => heard.push(`${moment}: ${String(value)}`));
+    await settled();
+
+    await opening.reopen();
+    appState.change('background');
+
+    // A reopen is no launch: the caller that reopens does what the launch did.
+    expect(heard).toEqual(['launch: the composition', 'background: the reopened composition']);
+  });
+
   it('tells when the next local day starts while the app is open, and each day after', async () => {
     const { heard } = await start();
     heard.length = 0;

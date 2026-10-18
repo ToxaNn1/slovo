@@ -32,8 +32,8 @@ function opened(settings: Settings, current: UserSettings) {
 
 /**
  * The settings, opened once per app run over the user state, before the
- * Language Pack. The app still starts when they can't be read, on the
- * Edition's defaults.
+ * Language Pack, and reopened over it when it changes. The app still starts
+ * when they can't be read, on the Edition's defaults.
  */
 const settingsOpening = openOnce(
   async () => {
@@ -61,18 +61,21 @@ const SettingsContext = createContext<SettingsContextValue | undefined>(undefine
  */
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const opening = useSubscribed(settingsOpening, ({ state }) => state);
-  /** The settings in effect once the reader changed one; until then those opened. */
-  const [changed, setChanged] = useState<UserSettings>();
+  /**
+   * The settings in effect once the reader changed one, over the settings
+   * they changed; until then, and once the settings reopen, those opened.
+   */
+  const [changed, setChanged] = useState<{ over: Settings; current: UserSettings }>();
 
   // Nothing is drawn until the Theme is known.
   if (opening.status !== 'ready') return null;
   const { settings } = opening.value;
-  const current = changed ?? opening.value.current;
+  const current = changed?.over === settings ? changed.current : opening.value.current;
 
   function update(changes: Partial<UserSettings>) {
     const next = { ...current, ...changes };
     applyToNativeViews(next);
-    setChanged(next);
+    setChanged({ over: settings, current: next });
     settings.update(changes).catch((error: unknown) => {
       console.error('Could not keep the settings', error);
     });

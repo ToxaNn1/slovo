@@ -33,9 +33,18 @@ export interface FeedState {
  */
 export function useFeed(): FeedState {
   const { feed, onboarding } = useComposition();
-  /** The card on screen, once the reader turned a page; until then the one the Feed opens on. */
-  const [turnedTo, setTurnedTo] = useState<number>();
-  const position = turnedTo ?? feed.startPosition;
+  /**
+   * The card on screen, once the reader turned a page in this Feed; until
+   * then, and in the Feed of a reopened composition, the one it opens on.
+   */
+  const [turnedTo, setTurnedTo] = useState<{ in: Feed; position: number }>();
+  const position = turnedTo?.in === feed ? turnedTo.position : feed.startPosition;
+  const onCardChange = useCallback(
+    (to: number) => {
+      setTurnedTo({ in: feed, position: to });
+    },
+    [feed],
+  );
   const focused = useIsFocused();
   const inForeground = useInForeground();
   const covered = useSubscribed(onboarding, ({ state }) => state.step !== undefined);
@@ -66,7 +75,7 @@ export function useFeed(): FeedState {
   return {
     cards,
     startPosition: feed.startPosition,
-    onCardChange: setTurnedTo,
+    onCardChange,
     readerPosition,
     openLinkedCorrection,
   };
