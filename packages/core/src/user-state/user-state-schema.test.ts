@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createMemoryUserStatePort, openUserState, userStateRecords } from '../index';
+import { createMemoryUserStatePort, openUserState, syncMarkOf, userStateRecords } from '../index';
 
 const { activeDays, notificationTimes, notificationSound, notificationPlan, onboardingFinished } =
   userStateRecords;
@@ -85,6 +85,55 @@ describe('the 0.5 user-state record', () => {
     expect(gameBest.decode('15')).toBe(15);
     for (const text of ['-1', '16', '7.5', '"7"', 'null']) {
       expect(gameBest.decode(text)).toBeUndefined();
+    }
+  });
+});
+
+// Spec #378, "Which records sync": each record's mark, read from the schema by key.
+describe('the 0.8 sync marks', () => {
+  it('keeps on the device the schema version, the Feed place, the swipe hint, the Word of the Day, vibration, and the 0.4 and 0.7 records that stayed', () => {
+    for (const key of [
+      'schema.version',
+      'feed.position',
+      'feed.swipeHintShown',
+      'feed.wordOfTheDay',
+      'settings.vibration',
+      'notifications.times',
+      'notifications.sound',
+      'notifications.plan.2026-10-18T09:00',
+      'onboarding.finished',
+      'contentUpdate.checkedAt',
+    ]) {
+      expect(syncMarkOf(key), key).toBe('device-only');
+    }
+  });
+
+  it('syncs the reader’s settings, words and Feed Cycle by last write wins', () => {
+    for (const key of [
+      'settings.theme',
+      'settings.fontSize',
+      'favorites.w_1',
+      'collections.k_1',
+      'collectionEntries.k_1.w_1',
+      'history.w_1',
+      'hidden.w_1',
+      'mix.categories.nature',
+      'mix.corrections',
+      'feed.cycle',
+      'feed.seen.w_1',
+    ]) {
+      expect(syncMarkOf(key), key).toBe('last-write-wins');
+    }
+  });
+
+  it('keeps every device’s Active Days and the higher best Game result', () => {
+    expect(syncMarkOf('activeDays.2026-10-18')).toBe('union');
+    expect(syncMarkOf('game.best')).toBe('highest');
+  });
+
+  it('knows no mark for a key the schema does not declare, such as a newer app’s record', () => {
+    for (const key of ['streak.frozen', 'feed.seen', 'favorites.', 'settings.theme.dark', '']) {
+      expect(syncMarkOf(key), key).toBeUndefined();
     }
   });
 });

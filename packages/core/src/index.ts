@@ -199,7 +199,7 @@ export {
   type UserStateChanges,
   type UserStatePort,
 } from './ports';
-export { userStateRecords } from './user-state/user-state-schema';
+export { syncMarkOf, userStateRecords } from './user-state/user-state-schema';
 export {
   createMemoryUserStatePort,
   openUserState,
