@@ -306,6 +306,12 @@ export const roundLayout = { gap: 10, tightGap: 6, sheetGap: 14, cardPaddingVert
 /** The sample notification of the onboarding: its app icon (side and corner radius) and the gap between its lines. */
 export const sampleNotification = { iconSize: 38, iconRadius: 9, lineGap: 2 } as const;
 
+/** SLOVO ID's mark on the onboarding's sign-in button: its side, corner radius and letter size. */
+export const accountMark = { size: 26, radius: 6, letterSize: 17 } as const;
+
+/** The width of the rosette (Decor slot 4) between the SLOVO ID step's text and its buttons. */
+export const onboardingRosetteWidth = 120;
+
 /** The text on a filled option of the Game and on a destructive swipe action, white in both Themes. */
 export const onFill = '#FFFFFF';
 
