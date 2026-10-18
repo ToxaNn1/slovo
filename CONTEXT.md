@@ -23,7 +23,7 @@ The language-agnostic behaviour and screens shared by every Edition. Editions ne
 _Avoid_: Engine, base app
 
 **Feature Switch**:
-A per-Edition on/off setting for a Core feature (e.g. the Game), set in the Edition or remotely. A remote switch can only turn a feature off; only the Edition turns one on.
+A per-Edition on/off setting for a Core feature (e.g. the Game), set in the Edition or remotely. A remote switch can only turn a feature off; only the Edition turns one on. Its effective value, which everything reads, is the Edition's value and not off remotely.
 _Avoid_: Toggle, flag (in conversation)
 
 **Extension Point**:

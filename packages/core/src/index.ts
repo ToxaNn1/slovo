@@ -114,6 +114,7 @@ export {
   type DefaultMix,
   type UserSettingDefaults,
 } from './edition/edition';
+export { openRemoteSwitches, type RemoteSwitches } from './edition/remote-switches';
 export type {
   Category,
   DistractorRule,
@@ -193,9 +194,11 @@ export {
   type PlannedNotification,
   type PlannedSound,
   type Random,
+  type RemoteSwitchesAnswer,
   type RequestFailure,
   type Schedule,
   type SessionStore,
+  type SwitchesApi,
   type UserStateChanges,
   type UserStatePort,
 } from './ports';

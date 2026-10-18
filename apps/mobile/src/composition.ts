@@ -5,8 +5,9 @@ import { useEffect, useState } from 'react';
 
 import { deviceClock } from './device/device-clock';
 import { deviceNotificationScheduler } from './notifications/device-notifications';
-import { edition, editionStrings } from './edition/edition';
+import { editionStrings } from './edition/edition';
 import { languagePackOpening } from './edition/language-pack';
+import { remoteSwitchesOpening } from './edition/remote-switches';
 import { gameModeStrings } from './game/game-modes';
 import { openOnce, useOpened } from './opening';
 import { storedUserState } from './user-state/stored-user-state';
@@ -14,7 +15,7 @@ import { storedUserState } from './user-state/stored-user-state';
 async function openOver(content: PackReader): Promise<Composition> {
   const composition = await openComposition({
     content,
-    edition,
+    edition: (await remoteSwitchesOpening.opened()).edition,
     userState: await storedUserState.opened(),
     clock: deviceClock,
     random: systemRandom,
@@ -32,10 +33,11 @@ async function openOver(content: PackReader): Promise<Composition> {
 }
 
 /**
- * The Core composition over the Language Pack, opened once per app run and
- * shared by every screen, since its Cycle and Word of the Day keep their state
- * in memory (ADR 0013, 0018). Every screen sees the same state, so a retry
- * from its gate opens it again for all.
+ * The Core composition over the Language Pack and the Edition as the app runs
+ * it, opened once per app run and shared by every screen, since its Cycle and
+ * Word of the Day keep their state in memory (ADR 0013, 0018). Every screen
+ * sees the same state, so a retry from its gate opens it again for all. It
+ * reopens when an effective value of a Feature Switch changes (ADR 0040).
  */
 export const compositionOpening = openOnce(
   async () => openOver((await languagePackOpening.opened()).reader),

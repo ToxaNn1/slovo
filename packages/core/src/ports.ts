@@ -250,3 +250,31 @@ export interface PackFiles {
   /** Throws the kept pack away, if one is kept. */
   forget(): Promise<void>;
 }
+
+/**
+ * What the backend answers for the running Edition's remote Feature Switches:
+ * the features the owner turned off remotely, by their Feature Switch's name,
+ * and the ETag that names them (ADR 0040).
+ */
+export interface RemoteSwitchesAnswer {
+  readonly off: readonly string[];
+  readonly etag: string;
+}
+
+/**
+ * The backend's `edition.switches` procedure for the running Edition, as the
+ * Core sees it. It needs no Account. The shell implements this port on the
+ * API contract's client. A call never rejects: every answer of the backend
+ * comes back as success or a failure.
+ */
+export interface SwitchesApi {
+  /**
+   * The remote Feature Switches, or `unchanged` when `etag`, the ETag of the
+   * answer the app keeps, still names them.
+   */
+  switches(
+    etag: string | undefined,
+  ): Promise<
+    { readonly ok: true; readonly answer: RemoteSwitchesAnswer | 'unchanged' } | RequestFailure
+  >;
+}
