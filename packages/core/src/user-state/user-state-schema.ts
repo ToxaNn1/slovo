@@ -200,8 +200,9 @@ export const userStateMigrations: readonly UserStateMigration[] = [
     version: 4,
     async migrate({ get, list }) {
       const text = await get('feed.cycle');
+      // The Cycle as 0.7 kept it; one that doesn't read opens as the first.
       const cycle = z
-        .object({ id: z.number().int().positive() })
+        .object({ id: z.number().int().positive(), seed: z.number().int().nonnegative() })
         .safeParse(text === undefined ? undefined : parseJson(text));
       const changes = new Map<string, string>();
       for (const [key, value] of await list('feed.seen.')) {

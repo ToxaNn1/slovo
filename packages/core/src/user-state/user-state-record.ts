@@ -3,11 +3,10 @@ import type { z } from 'zod';
 import type { UserStateChanges } from '../ports';
 
 /**
- * How a record syncs (ADR 0005, 0013). A record without a mark syncs by last
- * write wins, one record at a time.
- * - `device-only`: stays on this device (the schema version, the Feed's place,
- *   the Word of the Day, vibration, the notification times, sound and plan,
- *   the onboarding finished, the last content update check).
+ * How a record syncs (ADR 0005, 0013); `user-state-schema.ts` marks each
+ * record. A record without a mark syncs by last write wins, one record at a
+ * time.
+ * - `device-only`: stays on this device (the notification times, say).
  * - `union`: the records of every device are all kept (Active Days, so the
  *   Streak derived from them is the same on every device).
  * - `highest`: the higher of two devices' values is kept (the best Game

@@ -132,14 +132,16 @@ describe('openUserState', () => {
   });
 
   it('gives Seen records the first Cycle when 0.7 kept no Cycle that reads, as the Cycle that opens is the first', async () => {
-    const records = new Map([
-      ['schema.version', '3'],
-      ['feed.cycle', 'not JSON'],
-      ['feed.seen.w_1', 'true'],
-    ]);
+    for (const cycle of [undefined, 'not JSON', '{"id":4}']) {
+      const records = new Map([
+        ['schema.version', '3'],
+        ['feed.seen.w_1', 'true'],
+      ]);
+      if (cycle !== undefined) records.set('feed.cycle', cycle);
 
-    await openUserState({ port: createMemoryUserStatePort(records) });
+      await openUserState({ port: createMemoryUserStatePort(records) });
 
-    expect(records.get('feed.seen.w_1')).toBe('1');
+      expect(records.get('feed.seen.w_1'), cycle).toBe('1');
+    }
   });
 });
