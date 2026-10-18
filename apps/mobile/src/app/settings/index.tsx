@@ -93,6 +93,14 @@ export default function SettingsScreen() {
         </View>
         <View style={styles.section}>
           <SettingsGroup>
+            <SwitchRow
+              testID="settings-hide-streak"
+              label={strings.hideStreak}
+              value={current.hideStreak}
+              onChange={(hideStreak) => {
+                update({ hideStreak });
+              }}
+            />
             <NavigationRow
               testID="settings-row-notifications"
               label={strings.rows.notifications}

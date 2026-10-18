@@ -55,16 +55,19 @@ function Count({
  * today, the Favorites count, the Entries in Collections and the best Game
  * result once a Game has finished, each in the Edition's plural form. It
  * closes with a swipe down, a tap outside or VoiceOver's escape gesture, and
- * with Reduce Motion it appears without sliding. Needs a `SafeAreaProvider`
- * above it.
+ * with Reduce Motion it appears without sliding. While the reader hides the
+ * Streak, the Streak with its Best Streak is left out. Needs a
+ * `SafeAreaProvider` above it.
  */
 export function StatsSheet({
   visible,
   stats,
+  hideStreak = false,
   onClose,
 }: {
   visible: boolean;
   stats: ProgressState;
+  hideStreak?: boolean;
   onClose: () => void;
 }) {
   const { colors, fontFamilies } = useTokens();
@@ -78,29 +81,35 @@ export function StatsSheet({
     <BottomSheet visible={visible} onClose={onClose} testID="stats-sheet">
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         {/* VoiceOver reads the sheet's name first, then the texts in the order they show, as it reads a group. */}
-        <View
-          testID="stats-streak"
-          accessible
-          accessibilityRole="header"
-          accessibilityLabel={[words.title, String(stats.streak), streak, bestStreak].join(', ')}
-          {...voice}
-          style={[styles.streakRow, stacked && styles.streakStacked]}
-        >
-          <Text
-            maxFontSizeMultiplier={NUMBER_MAX_FONT_SCALE}
-            style={[styles.streakValue, { color: colors.ink, fontFamily: fontFamilies.word }]}
+        {!hideStreak && (
+          <View
+            testID="stats-streak"
+            accessible
+            accessibilityRole="header"
+            accessibilityLabel={[words.title, String(stats.streak), streak, bestStreak].join(', ')}
+            {...voice}
+            style={[styles.streakRow, stacked && styles.streakStacked]}
           >
-            {stats.streak}
-          </Text>
-          <View style={stacked ? styles.streakWordsStacked : styles.streakWords}>
-            <Text style={[styles.streakLabel, { color: colors.ink, fontFamily: fontFamilies.ui }]}>
-              {streak}
+            <Text
+              maxFontSizeMultiplier={NUMBER_MAX_FONT_SCALE}
+              style={[styles.streakValue, { color: colors.ink, fontFamily: fontFamilies.word }]}
+            >
+              {stats.streak}
             </Text>
-            <Text style={[styles.bestStreak, { color: colors.muted, fontFamily: fontFamilies.ui }]}>
-              {bestStreak}
-            </Text>
+            <View style={stacked ? styles.streakWordsStacked : styles.streakWords}>
+              <Text
+                style={[styles.streakLabel, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+              >
+                {streak}
+              </Text>
+              <Text
+                style={[styles.bestStreak, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+              >
+                {bestStreak}
+              </Text>
+            </View>
           </View>
-        </View>
+        )}
         <OrnamentBand />
         <View style={styles.grid}>
           <Count

@@ -24,6 +24,8 @@ export const SettingsStringsSchema = z.strictObject({
   soon: TextSchema,
   /** What VoiceOver reads for a row that a later version brings. Takes `{label}`. */
   soonAccessibilityLabel: TextSchema,
+  /** The switch that hides the Streak everywhere it is drawn. */
+  hideStreak: TextSchema,
   /** The names of the rows under the Theme and the font size. */
   rows: z.strictObject({
     notifications: TextSchema,
