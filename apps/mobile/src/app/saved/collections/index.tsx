@@ -3,8 +3,8 @@ import {
   BackLink,
   CollectionNameField,
   CollectionRow,
+  DeleteCollectionDialog,
   EmptyState,
-  fill,
   NewCollectionButton,
   ScreenTitle,
   space,
@@ -12,7 +12,7 @@ import {
 } from '@slovo/ui';
 import { useRouter } from 'expo-router';
 import { memo, useCallback, useState } from 'react';
-import { Alert, FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { editionStrings } from '../../../edition/edition';
@@ -31,7 +31,7 @@ type Editing = { readonly kind: 'new' } | { readonly kind: 'rename'; readonly id
  * Collections: the reader's lists, newest first, each with how many Entries it
  * holds and its newest Lemmas; a tap opens the Collection. «+» makes a new one
  * from here; a swipe offers «Назва» (rename in place) and «Видалити» (after a
- * system alert that says the Entries stay), and the same actions go to
+ * SLOVO confirmation dialog that says the Entries stay), and the same actions go to
  * VoiceOver.
  */
 export default function CollectionsScreen() {
@@ -41,6 +41,7 @@ export default function CollectionsScreen() {
   const router = useRouter();
   const openScreen = useOpenScreen();
   const [editing, setEditing] = useState<Editing>();
+  const [deleting, setDeleting] = useState<CollectionRowModel>();
 
   // Kept from render to render, so the rows re-render only when the list or the row being renamed changes.
   const openCollection = useCallback(
@@ -55,22 +56,9 @@ export default function CollectionsScreen() {
   const stopEditing = useCallback(() => {
     setEditing(undefined);
   }, []);
-  const confirmDelete = useCallback(
-    ({ id, name }: CollectionRowModel) => {
-      const { confirmDelete: texts } = strings;
-      Alert.alert(fill(texts.title, { name }), texts.message, [
-        { text: texts.cancel, style: 'cancel' },
-        {
-          text: texts.confirm,
-          style: 'destructive',
-          onPress: () => {
-            remove(id);
-          },
-        },
-      ]);
-    },
-    [remove],
-  );
+  const confirmDelete = useCallback((collection: CollectionRowModel) => {
+    setDeleting(collection);
+  }, []);
   /** Keeps the name the field gives; closes the field, or says why the name is refused. */
   const keepName = useCallback(
     async (keep: () => Promise<CollectionResult | undefined>): Promise<string | undefined> => {
@@ -164,6 +152,18 @@ export default function CollectionsScreen() {
           ) : null
         }
         contentContainerStyle={styles.content}
+      />
+      <DeleteCollectionDialog
+        testID="collections-delete"
+        name={deleting?.name}
+        copy={strings.confirmDelete}
+        onDelete={() => {
+          if (deleting !== undefined) remove(deleting.id);
+          setDeleting(undefined);
+        }}
+        onCancel={() => {
+          setDeleting(undefined);
+        }}
       />
     </SafeAreaView>
   );

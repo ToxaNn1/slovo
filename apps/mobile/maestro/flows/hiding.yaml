@@ -28,10 +28,11 @@ appId: ${APP_ID || 'app.slovo.uk'}
     text: Не показувати
 - tapOn:
     id: hide-button
-# The hide choice is the system action sheet; cancel leaves the card.
+# The hide choice is a SLOVO bottom sheet; cancel leaves the card.
 - assertVisible: Не показувати цей запис
 - takeScreenshot: hiding-choice
-- tapOn: Скасувати
+- tapOn:
+    id: hide-choice-cancel
 - assertNotVisible: Не показувати цей запис
 - assertNotVisible:
     id: undo-toast

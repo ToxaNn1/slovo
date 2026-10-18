@@ -5,6 +5,7 @@ import {
   CollectionSheet,
   FavoriteButton,
   HideButton,
+  HideChoiceSheet,
   ShareButton,
   ShareSheet,
 } from '@slovo/ui';
@@ -59,8 +60,9 @@ export function EntryActions({ card }: { card: EntryFeedCard }) {
             }}
           />
         }
-        hide={<HideButton onPress={hide} />}
+        hide={<HideButton onPress={hide.open} />}
       />
+      <HideChoiceSheet {...hide.choice} />
       <EntryCollectionSheet
         entryId={entryId}
         visible={sheetOpen}

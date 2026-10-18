@@ -7,7 +7,7 @@
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
 # Delete every Collection, so the sheet opens on the empty state. A swipe
-# deletes after the system alert; the Entries stay where they are.
+# deletes after the SLOVO dialog; the Entries stay where they are.
 - tapOn:
     id: tab-saved
 - tapOn:
@@ -26,14 +26,10 @@ appId: ${APP_ID || 'app.slovo.uk'}
           direction: LEFT
       - tapOn:
           id: collection-.*-delete
-      # A tap while the alert still opens is lost.
+      # A tap while the dialog still fades in is lost.
       - waitForAnimationToEnd
-      # The alert's button, below its message: the row has closed its swipe
-      # and its own «Видалити» with it.
       - tapOn:
-          text: Видалити
-          below:
-            text: Самі записи нікуди не зникнуть.
+          id: collections-delete-destructive
       - waitForAnimationToEnd
 - tapOn:
     id: collections-back
