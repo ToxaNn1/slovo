@@ -77,3 +77,20 @@ Writing a page, the first-sign-in changes and the rewrites runs in turn with the
 - **Trimming History on every page**: rejected (above).
 - **Applying a pull through the tracked write**: rejected. Every record the Account sent would become a pending change with the device's time and go back to the Account as a newer change.
 - **Comparing the text of the records**: rejected. The backend answers an object with its keys in another order, and every pull would report a change.
+
+## Amendment: when Sync runs and what it says (0.8, #387)
+
+The Core's Sync module, `openSync`, decides when one sync (`createSyncExchange`, above) runs, and says how it went. It opens apart from the composition over the tracked user state, the Account, the `SyncApi` port, the Edition as the app runs it, the clock and the `Schedule`; the app never waits for it.
+
+- **Moments.** It syncs when the shell says the app is in the foreground (at launch and on each return), when a Session starts while in the foreground, so the first merge runs right after the code is accepted, and 5 s after the last tracked write while in the foreground: the tracked user state tells its subscribers after each write that left a pending change, and each one starts the 5 s again, so a burst of writes makes one sync. Going to the background drops the wait.
+- **Conditions.** Only with a Session, and with the `account` and `sync` Feature Switches on in effect (ADR 0040), read at each moment.
+- **One at a time.** A moment during a sync asks for one more after it, however many moments came.
+- **The snapshot** (ADR 0016's pattern) is what the status line reads: when the last sync of this Session went through in this app run, whether a sync runs (its waits between tries included), and whether the last one failed for want of network through every try. A sign-out clears it. The time is kept in memory only: at launch the first sync comes at once, and offline the line says that it waits for the network.
+- **The changed signal.** `onUserStateChange` tells its listeners once after each sync whose pull wrote a record, a failed one too, so the shell reopens what keeps the user state in memory.
+
+How it fails, tries again and treats the Session's end is ADR 0037's amendment for 0.8.
+
+### Considered Options
+
+- **Keeping the last sync's time as a record**: rejected for 0.8. It would add a `device-only` record for a line that the first sync of a launch updates within seconds.
+- **The changed signal in the snapshot, as a count**: rejected. Every subscriber of the status line would be told of it, and the shell would have to keep the last count to tell a new change from an old one.

@@ -47,3 +47,18 @@ The rules of the values both sides check were written in several places: six dig
 
 - **A second field beside `inFlight: boolean`, naming the request**: rejected. Two fields can disagree, and every reader of the snapshot would have to check both.
 - **Check the email in the API input with `AccountEmailSchema`**: rejected. It changes the committed `/v1` description (ADR 0031 amendment), and the server Core, which its tests reach without HTTP, would lose the rule.
+
+## Amendment: the Sync module follows the one retry rule and the Account's 401 rule (0.8, #387)
+
+Sync (spec #378, ADR 0041) is the first module besides the Account that makes requests with the Session, and the first whose requests no reader waits for. It follows the same rules, with one difference for a 429.
+
+- **The one retry rule.** A sync that fails with no answer or a 5xx is tried again whole through `withRetries`, at most 3 times, with the same backoff and jitter through the `Schedule`. A sync resumes where it stopped (the cursor and the pending changes left), so a try again doubles nothing. Every other failure (`unexpected`, `NOT_FOUND`, `TOO_MANY_RECORDS`) is not tried again; the next moment of Sync syncs again. Only a sync that failed with no answer through every try shows that it waits for the network; a server that fails shows the last sync's time, since the status line has nothing the reader can do about it.
+- **A 429 waits for its `Retry-After`.** Unlike the Account's, a sync is in the background with no spinner in front of it, so waiting minutes costs the reader nothing, and trying sooner would only meet the limit again. The `SyncApi` port's `too-many-requests` failure carries the answer's `Retry-After` in seconds, which the app's adapter reads from the header; Sync syncs again when it ends, while in the foreground, and no moment syncs sooner. Without one, the next moment syncs.
+- **A 401 goes to the Account.** The Account lends its Session to another module's request through `withSession(request)`: none without a Session, and when the answer is a 401 the device forgets the Session and shows signed out with no problem, as for the Account's own requests, unless the Session ended on the way. Sync never sees the Session's ending as an error of its own.
+- **The end of a Session forgets the cursor.** When the Account goes from signed in to signed out, by a sign-out, a deletion or a 401, Sync forgets its cursor once no sync of that Session runs (a pull answered on the way would write it again), and keeps the pending changes and the words. The next Session, of the same Account or another, starts by the first-sign-in rule. Sync opens signed out by forgetting a cursor a closed app left.
+
+### Considered Options
+
+- **The Account's rule for a 429, shown at once and not waited for**: rejected. There is nothing to show, and the next write or return would ask again within the limit's window.
+- **Giving Sync the Session's token and its own 401 rule**: rejected. Two modules would end the Session, and the rule that an answer outdated by a sign-out changes nothing would live twice.
+- **Forgetting the cursor at once at the sign-out**: rejected. A sync running at that moment could write a cursor of the ended Session after it, and the next sign-in would skip the first-sign-in rule.
