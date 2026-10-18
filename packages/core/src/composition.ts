@@ -77,8 +77,8 @@ export interface Composition extends Hiding {
   readonly game: Game;
   /**
    * The onboarding, which opens on launch until the reader finishes it: its
-   * steps, the ask for permission that ends it, and its sample notification,
-   * taken from the plan.
+   * steps, with SLOVO ID last when the Edition has the Account, the ask for
+   * permission, and its sample notification, taken from the plan.
    */
   readonly onboarding: Onboarding;
   /**
@@ -234,6 +234,7 @@ export async function openComposition({
     wordOfTheDay,
     notifications,
     nextMorning,
+    account: edition.isFeatureEnabled('account'),
   });
   // The Game Modes are planned last: planning reads the whole pack, so the
   // launch never waits for it. A start or a change of eligibility waits its turn

@@ -1,3 +1,4 @@
+import type { AccountState } from './account';
 import type { Entries } from './entries/entries';
 import { createSubscribers } from './in-turn';
 import { formatTimeOfDay } from './local-date';
@@ -11,9 +12,12 @@ import type { WordOfTheDay } from './feed/word-of-the-day';
 
 /**
  * The steps of the onboarding, in order: the one place that has them, so a
- * step that joins (SLOVO ID in 0.7) changes the count everywhere.
+ * step that joins changes the count everywhere. The SLOVO ID step comes last,
+ * only with the Account on.
  */
-const STEPS = ['welcome', 'mix', 'notifications'] as const;
+const STEPS = ['welcome', 'mix', 'notifications', 'account'] as const;
+
+type StepKind = (typeof STEPS)[number];
 
 /** Where a step stands among the steps, for the progress the UI draws. */
 interface StepPlace {
@@ -54,7 +58,9 @@ export type OnboardingStep =
        * the Notification times the step changes. Nothing without a Word for it.
        */
       readonly sample: SampleNotification | undefined;
-    });
+    })
+  /** SLOVO ID, which the step offers to sign in to, through the SLOVO ID screen. */
+  | (StepPlace & { readonly kind: 'account' });
 
 /** Where the onboarding stands. */
 export interface OnboardingState {
@@ -66,7 +72,7 @@ export interface OnboardingState {
 
 /**
  * The onboarding: its steps in order (the welcome, the Mix, the
- * notifications), and whether the reader finished it, which is also when
+ * notifications and, with the Account on, SLOVO ID), and whether the reader finished it, which is also when
  * they skipped it. It opens on launch until then, at the welcome, and never
  * again after. The step on screen is not kept: closing the app halfway
  * starts over at the welcome. Read from the user state once, when it opens,
@@ -87,24 +93,32 @@ export interface Onboarding {
    */
   readonly state: OnboardingState;
   /**
-   * Goes on to the next step, for the welcome's and the Mix step's button.
-   * Past the last step it finishes.
+   * Goes on to the next step, for the welcome's and the Mix step's button,
+   * the notifications step's quiet "later" and the SLOVO ID step's «continue
+   * without an Account». Past the last step it finishes.
    */
   next(): Promise<void>;
   /**
    * Finishes the onboarding as of now without asking for anything, for the
-   * skip on every step and the notifications step's quiet "later". Closing
-   * the app before this leaves the onboarding unfinished.
+   * skip on every step. Closing the app before this leaves the onboarding
+   * unfinished.
    */
   finish(): Promise<void>;
   /**
    * The notifications step's main button: asks the reader for permission to
-   * notify, which plans by the answer, then finishes whatever the answer,
-   * also when nothing can ask or asking fails: the reader chose to go on, and
-   * the times stay for the notification settings. When asking fails, it
-   * rejects with the failure once the onboarding is finished.
+   * notify, which plans by the answer, then goes on as `next` does whatever
+   * the answer, also when nothing can ask or asking fails: the reader chose
+   * to go on, and the times stay for the notification settings. When asking
+   * fails, it rejects with the failure once the onboarding has gone on.
    */
   allowNotifications(): Promise<void>;
+  /**
+   * The reader came back from the SLOVO ID screen, which the SLOVO ID step
+   * opens, with the Account as it stands: signed in, the onboarding finishes;
+   * signed out, the step stays. Signing in never waits for the onboarding,
+   * and the merge of the reader's words is the Sync's.
+   */
+  backFromAccount(account: Pick<AccountState, 'status'>): Promise<void>;
   /** Calls `listener` after each change of the state. Returns the call that stops it. */
   subscribe(listener: () => void): () => void;
 }
@@ -116,7 +130,8 @@ const noSample = (): undefined => undefined;
 /**
  * Opens the onboarding over the user state, for the Core composition, once
  * today's Word of the Day is chosen. `nextMorning` is the plan's next morning
- * notification, which the sample shows.
+ * notification, which the sample shows. `account` says whether the Edition
+ * has the Account, which brings the SLOVO ID step.
  */
 export async function openOnboarding({
   userState,
@@ -125,6 +140,7 @@ export async function openOnboarding({
   wordOfTheDay,
   notifications,
   nextMorning,
+  account,
 }: {
   userState: UserState;
   clock: Clock;
@@ -132,8 +148,10 @@ export async function openOnboarding({
   wordOfTheDay: Pick<WordOfTheDay, 'chosen'>;
   notifications: Pick<Notifications, 'askPermission' | 'subscribe'>;
   nextMorning: () => Promise<MorningNotification | undefined>;
+  account: boolean;
 }): Promise<Onboarding> {
   const subscribers = createSubscribers();
+  const steps: readonly StepKind[] = account ? STEPS : STEPS.filter((kind) => kind !== 'account');
 
   async function wordCardOf(wordId: string | undefined): Promise<WordCardModel | undefined> {
     const word = wordId === undefined ? undefined : await entries.get(wordId);
@@ -154,12 +172,12 @@ export async function openOnboarding({
 
   /** The step at `index` in the order, with what it shows. */
   async function stepAt(index: number): Promise<OnboardingStep> {
-    const place = { number: index + 1, total: STEPS.length };
-    const kind = STEPS[index];
+    const place = { number: index + 1, total: steps.length };
+    const kind = steps[index];
     if (kind === 'welcome') {
       return { kind, ...place, hero: await wordCardOf(wordOfTheDay.chosen()?.wordId) };
     }
-    if (kind === 'mix') return { kind, ...place };
+    if (kind === 'mix' || kind === 'account') return { kind, ...place };
     // The step comes without a sample rather than not at all when it can't be read.
     return { kind: 'notifications', ...place, sample: await sampleNotification().catch(noSample) };
   }
@@ -194,6 +212,16 @@ export async function openOnboarding({
     change({ finishedAt, step: undefined });
   }
 
+  /** Goes on from the step of `kind` to the next one, or finishes past the last. */
+  async function goOn(kind: StepKind): Promise<void> {
+    const index = steps.indexOf(kind) + 1;
+    if (index === steps.length) {
+      await keepFinished();
+      return;
+    }
+    change({ ...state, step: await stepAt(index) });
+  }
+
   /** Counts the samples asked for, so only the latest one reaches the step. */
   let samplesAsked = 0;
   notifications.subscribe(() => {
@@ -211,26 +239,22 @@ export async function openOnboarding({
     get state() {
       return state;
     },
-    next: () =>
-      endStep(async ({ kind }) => {
-        const index = STEPS.indexOf(kind) + 1;
-        if (index === STEPS.length) {
-          await keepFinished();
-          return;
-        }
-        change({ ...state, step: await stepAt(index) });
-      }),
+    next: () => endStep(({ kind }) => goOn(kind)),
     finish: () => endStep(keepFinished),
     allowNotifications: () =>
-      endStep(async () => {
+      endStep(async ({ kind }) => {
         let failed: { readonly error: unknown } | undefined;
         try {
           await notifications.askPermission();
         } catch (error) {
           failed = { error };
         }
-        await keepFinished();
+        await goOn(kind);
         if (failed !== undefined) throw failed.error;
+      }),
+    backFromAccount: ({ status }) =>
+      endStep(async () => {
+        if (status === 'signed-in') await keepFinished();
       }),
     subscribe: subscribers.subscribe,
   };

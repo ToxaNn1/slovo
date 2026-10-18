@@ -52,11 +52,14 @@ async function run({
   clock = fakeClock(start).clock,
   scheduler,
   content = twoCategories,
+  account = false,
 }: {
   content?: ContentReadPort;
   records?: Map<string, string>;
   clock?: Clock;
   scheduler?: NotificationSchedulerPort;
+  /** Whether the Edition turns the Account on. */
+  account?: boolean;
 } = {}): Promise<Composition> {
   return openComposition({
     content,
@@ -66,7 +69,7 @@ async function run({
         mix: { categoryIds: ['test', 'other'], corrections: false },
         notificationTimes: ['09:00', '13:00', '19:00'],
       },
-      isFeatureEnabled: () => false,
+      isFeatureEnabled: (feature) => feature === 'account' && account,
       languageTraits: { distractorRule: 'same-part-of-speech' },
     },
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
@@ -75,6 +78,10 @@ async function run({
     ...(scheduler === undefined ? {} : { scheduling: { scheduler, ellipsis: '…' } }),
   });
 }
+
+/** The Account as the reader comes back with it from the SLOVO ID screen. */
+const signedIn = { status: 'signed-in' } as const;
+const signedOut = { status: 'signed-out' } as const;
 
 /** A scheduler that asks the reader for the first time, who answers `answer`. */
 const firstLaunch = (answer: 'allowed' | 'denied' = 'allowed') =>
@@ -521,6 +528,109 @@ describe('Onboarding', () => {
       await goTo(app, 'notifications');
 
       expect(sampleOf(app)).toBeUndefined();
+    });
+  });
+
+  describe('the SLOVO ID step', () => {
+    it('comes fourth of four with the Account on, after the notifications', async () => {
+      const app = await run({ account: true, scheduler: firstLaunch() });
+      expect(stepOf(app)).toMatchObject({ kind: 'welcome', number: 1, total: 4 });
+      await goTo(app, 'notifications');
+      expect(stepOf(app)).toMatchObject({ number: 3, total: 4 });
+
+      await app.onboarding.next();
+
+      expect(stepOf(app)).toEqual({ kind: 'account', number: 4, total: 4 });
+    });
+
+    it('is left out with the Account off: the notifications step is the last of three', async () => {
+      const app = await run({ scheduler: firstLaunch() });
+      await goTo(app, 'notifications');
+      expect(stepOf(app)).toMatchObject({ number: 3, total: 3 });
+
+      await app.onboarding.allowNotifications();
+
+      expect(app.onboarding.state.finishedAt).toBeDefined();
+    });
+
+    it('follows allowing notifications, which asks first', async () => {
+      const scheduler = firstLaunch('allowed');
+      const app = await run({ account: true, scheduler });
+      await goTo(app, 'notifications');
+
+      await app.onboarding.allowNotifications();
+
+      expect(app.notifications.state.permission).toBe('allowed');
+      expect(scheduler.plan?.length).toBeGreaterThan(0);
+      expect(stepOf(app).kind).toBe('account');
+      expect(app.onboarding.state.finishedAt).toBeUndefined();
+    });
+
+    it('follows the notifications step when asking fails, and then reports the failure', async () => {
+      const failure = new Error('The prompt could not open');
+      const app = await run({
+        account: true,
+        scheduler: { ...firstLaunch(), askPermission: () => Promise.reject(failure) },
+      });
+      await goTo(app, 'notifications');
+
+      await expect(app.onboarding.allowNotifications()).rejects.toBe(failure);
+
+      expect(stepOf(app).kind).toBe('account');
+    });
+
+    it('finishes on «Продовжити без акаунта», and the onboarding never opens again', async () => {
+      const records = new Map<string, string>();
+      const app = await run({ records, account: true });
+      await goTo(app, 'account');
+
+      await app.onboarding.next();
+
+      expect(app.onboarding.state).toEqual({
+        finishedAt: new Date('2026-10-14T08:00:00+03:00'),
+        step: undefined,
+      });
+      expect((await run({ records, account: true })).onboarding.state).toEqual(
+        app.onboarding.state,
+      );
+    });
+
+    it('finishes when the reader comes back from the SLOVO ID screen signed in', async () => {
+      const records = new Map<string, string>();
+      const app = await run({ records, account: true });
+      await goTo(app, 'account');
+
+      await app.onboarding.backFromAccount(signedIn);
+
+      expect(app.onboarding.state).toEqual({
+        finishedAt: new Date('2026-10-14T08:00:00+03:00'),
+        step: undefined,
+      });
+      expect((await run({ records, account: true })).onboarding.state.finishedAt).toBeDefined();
+    });
+
+    it('stays when the reader comes back signed out, and tells nobody', async () => {
+      const app = await run({ account: true });
+      await goTo(app, 'account');
+      const onStep = app.onboarding.state;
+      let told = 0;
+      app.onboarding.subscribe(() => {
+        told += 1;
+      });
+
+      await app.onboarding.backFromAccount(signedOut);
+
+      expect(app.onboarding.state).toBe(onStep);
+      expect(told).toBe(0);
+    });
+
+    it('finishes on skip too', async () => {
+      const app = await run({ account: true });
+      await goTo(app, 'account');
+
+      await app.onboarding.finish();
+
+      expect(app.onboarding.state.finishedAt).toBeDefined();
     });
   });
 
