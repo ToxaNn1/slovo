@@ -20,6 +20,8 @@ import { editionStrings } from '../../edition/edition';
 import { useHiddenSummary } from '../../mix/hidden';
 import { useMixSummary } from '../../mix/mix';
 import { useNotificationsSummary } from '../../notifications/notifications';
+import { useEditionInEffect } from '../../edition/remote-switches';
+import { progressShownOf } from '../../progress-shown';
 import { useSettings } from '../../settings';
 import { useOpenScreen } from '../../entries/use-open-screen';
 
@@ -49,6 +51,7 @@ export default function SettingsScreen() {
   const hiddenSummary = useHiddenSummary();
   const notificationsSummary = useNotificationsSummary();
   const accountOpening = useAccountInEffect();
+  const { statistics } = progressShownOf(useEditionInEffect(), current);
   return (
     <SafeAreaView
       testID="settings"
@@ -93,14 +96,16 @@ export default function SettingsScreen() {
         </View>
         <View style={styles.section}>
           <SettingsGroup>
-            <SwitchRow
-              testID="settings-hide-streak"
-              label={strings.hideStreak}
-              value={current.hideStreak}
-              onChange={(hideStreak) => {
-                update({ hideStreak });
-              }}
-            />
+            {statistics && (
+              <SwitchRow
+                testID="settings-hide-streak"
+                label={strings.hideStreak}
+                value={current.hideStreak}
+                onChange={(hideStreak) => {
+                  update({ hideStreak });
+                }}
+              />
+            )}
             <NavigationRow
               testID="settings-row-notifications"
               label={strings.rows.notifications}
