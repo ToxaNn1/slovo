@@ -3,6 +3,7 @@ import {
   DecorBackground,
   EndOfCycleCard,
   EntryCard,
+  PagerScrollView,
   Placeholder,
   space,
   SwipeHint,
@@ -145,19 +146,17 @@ const FeedPage = memo(function FeedPage({
       </View>
     );
   return (
-    // The page itself never scrolls: a long card's text scrolls inside the card.
-    <View
-      testID={`feed-card-${String(position)}`}
-      style={[styles.page, styles.content, { paddingTop: top + TOP_ROW }]}
-    >
-      <EntryCard
-        scrollable
-        card={card}
-        onOpenCorrection={(correctionId) => {
-          onOpenCorrection(position, correctionId);
-        }}
-        actions={<EntryActions card={card} />}
-      />
+    // The content scrolls under the top row but stops at the status bar.
+    <View testID={`feed-card-${String(position)}`} style={[styles.page, { paddingTop: top }]}>
+      <PagerScrollView contentContainerStyle={styles.content}>
+        <EntryCard
+          card={card}
+          onOpenCorrection={(correctionId) => {
+            onOpenCorrection(position, correctionId);
+          }}
+          actions={<EntryActions card={card} />}
+        />
+      </PagerScrollView>
     </View>
   );
 });
@@ -172,6 +171,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   page: { flex: 1 },
-  content: { paddingHorizontal: space[6], paddingBottom: space[6] },
+  // A card that fits sits in the middle of the page; a taller one starts at the top.
+  content: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingTop: TOP_ROW,
+    paddingHorizontal: space[6],
+    paddingBottom: space[6],
+  },
   endOfCycle: { paddingHorizontal: space[6], paddingBottom: space[6] },
 });
