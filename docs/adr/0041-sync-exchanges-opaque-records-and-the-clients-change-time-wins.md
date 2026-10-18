@@ -85,12 +85,12 @@ The Core's Sync module, `openSync`, decides when one sync (`createSyncExchange`,
 - **Moments.** It syncs when the shell says the app is in the foreground (at launch and on each return), when a Session starts while in the foreground, so the first merge runs right after the code is accepted, and 5 s after the last tracked write while in the foreground: the tracked user state tells its subscribers after each write that left a pending change, and each one starts the 5 s again, so a burst of writes makes one sync. Going to the background drops the wait.
 - **Conditions.** Only with a Session, and with the `account` and `sync` Feature Switches on in effect (ADR 0040), read at each moment.
 - **One at a time.** A moment during a sync asks for one more after it, however many moments came.
-- **The snapshot** (ADR 0016's pattern) is what the status line reads: when the last sync of this Session went through in this app run, whether a sync runs (its waits between tries included), and whether the last one failed for want of network through every try. A sign-out clears it. The time is kept in memory only: at launch the first sync comes at once, and offline the line says that it waits for the network.
-- **The changed signal.** `onUserStateChange` tells its listeners once after each sync whose pull wrote a record, a failed one too, so the shell reopens what keeps the user state in memory.
+- **The snapshot** (ADR 0016's pattern) is what the status line reads: when the last sync of this Session went through, whether a sync runs (its waits between tries included), and whether the last one failed for want of network through every try. The time is kept across launches in a `device-only` record, `sync.syncedAt`, since the status line names a date, or a year, as well as today's time. The end of a Session clears the snapshot and forgets the record with the cursor.
+- **The changed signal.** `onUserStateChange` tells its listeners once after each sync whose pull wrote a record, a failed one too, and after one that failed to write the user state, since a page may have been written first; so the shell reopens what keeps the user state in memory.
 
 How it fails, tries again and treats the Session's end is ADR 0037's amendment for 0.8.
 
 ### Considered Options
 
-- **Keeping the last sync's time as a record**: rejected for 0.8. It would add a `device-only` record for a line that the first sync of a launch updates within seconds.
+- **Keeping the last sync's time in memory only**: rejected. A launch whose first sync can't go through, held back by a limit or refused, would show no time at all, and the line's date and year would never show.
 - **The changed signal in the snapshot, as a count**: rejected. Every subscriber of the status line would be told of it, and the shell would have to keep the last count to tell a new change from an old one.
