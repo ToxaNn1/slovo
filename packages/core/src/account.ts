@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { AccountEmailSchema, SignInCodeSchema } from '@slovo/contracts';
 
 import { createSubscribers } from './in-turn';
 import type {
@@ -22,10 +22,16 @@ const CHECK_HOLDS = 60 * 60_000;
 export type AccountProblem =
   'offline' | 'invalid-email' | 'wrong-code' | 'code-expired' | 'too-many-requests' | 'unexpected';
 
+/** The actions of the Account that make a request of the server, by name. */
+export type AccountRequest = keyof Pick<
+  Account,
+  'requestCode' | 'resendCode' | 'verifyCode' | 'signOutEverywhere' | 'delete' | 'refresh'
+>;
+
 /**
  * The Account on this device as it stands: signed out, a Sign-in code sent,
- * or signed in; beside it, whether a request is in flight and the problem of
- * the last one, if any.
+ * or signed in; beside it, the action whose request is in flight, if any, and
+ * the problem of the last one, if any.
  */
 export type AccountState = (
   | { readonly status: 'signed-out' }
@@ -40,7 +46,7 @@ export type AccountState = (
     }
   | { readonly status: 'signed-in'; readonly email: string }
 ) & {
-  readonly inFlight: boolean;
+  readonly inFlight: AccountRequest | undefined;
   readonly problem: AccountProblem | undefined;
 };
 
@@ -106,15 +112,12 @@ function problemOf(reason: RequestFailure['reason'] | 'code-expired'): AccountPr
   return reason === 'server-error' ? 'offline' : reason;
 }
 
-/** Whether the text is an email, by Zod's rule. */
-const isEmail = (text: string) => z.email().safeParse(text).success;
-
-const signedOut: AccountState = { status: 'signed-out', inFlight: false, problem: undefined };
+const signedOut: AccountState = { status: 'signed-out', inFlight: undefined, problem: undefined };
 
 const signedIn = (email: string): AccountState => ({
   status: 'signed-in',
   email,
-  inFlight: false,
+  inFlight: undefined,
   problem: undefined,
 });
 
@@ -168,18 +171,20 @@ export async function openAccount({
   }
 
   /**
-   * Makes a request, none while another is in flight: it clears the last
-   * problem, shows the request in flight, tries it again by the rule, and
-   * changes to the state `settle` makes of its answer, or to signed out on a
-   * 401. An answer outdated by a sign-out on the way changes nothing.
+   * Makes the request of the action `name`, none while another is in flight:
+   * it clears the last problem, shows the action in flight, tries the request
+   * again by the rule, and changes to the state `settle` makes of its answer,
+   * or to signed out on a 401. An answer outdated by a sign-out on the way
+   * changes nothing.
    */
   async function request<A extends Answer>(
+    name: AccountRequest,
     call: () => Promise<A>,
     settle: (answer: Exclude<A, Unauthorized>) => AccountState | Promise<AccountState>,
   ): Promise<void> {
-    if (state.inFlight) return;
+    if (state.inFlight !== undefined) return;
     const ended = endedSessions;
-    change({ ...state, inFlight: true, problem: undefined });
+    change({ ...state, inFlight: name, problem: undefined });
     let next: AccountState;
     try {
       const answer = await retried(call);
@@ -188,14 +193,18 @@ export async function openAccount({
         ? await endSession()
         : await settle(answer as Exclude<A, Unauthorized>);
     } catch (error) {
-      if (ended === endedSessions) change({ ...state, inFlight: false });
+      if (ended === endedSessions) change({ ...state, inFlight: undefined });
       throw error;
     }
-    change({ ...next, inFlight: false });
+    change({ ...next, inFlight: undefined });
   }
 
-  function sendCode(email: string): Promise<void> {
+  function sendCode(
+    name: Extract<AccountRequest, 'requestCode' | 'resendCode'>,
+    email: string,
+  ): Promise<void> {
     return request(
+      name,
       () => api.requestCode(email),
       (answer): AccountState =>
         answer.ok
@@ -204,7 +213,7 @@ export async function openAccount({
               email,
               resendAt: new Date(clock.now().getTime() + RESEND_AFTER),
               triesLeft: undefined,
-              inFlight: false,
+              inFlight: undefined,
               problem: undefined,
             }
           : { ...state, problem: problemOf(answer.reason) },
@@ -231,14 +240,15 @@ export async function openAccount({
     return telling;
   }
 
-  /** Ends this device's Session through the server, by `call`, when the server answers. */
+  /** Ends this device's Session through the server by the action `name`, when the server answers. */
   async function endThroughServer(
-    call: (token: string) => Promise<{ readonly ok: true } | AccountApiFailure>,
+    name: Extract<AccountRequest, 'signOutEverywhere' | 'delete'>,
   ): Promise<void> {
     const current = token;
     if (current === undefined) return;
     await request(
-      () => call(current),
+      name,
+      () => api[name](current),
       (answer) => (answer.ok ? endSession() : { ...state, problem: problemOf(answer.reason) }),
     );
   }
@@ -249,27 +259,28 @@ export async function openAccount({
     },
     subscribe: subscribers.subscribe,
     async requestCode(typed) {
-      if (state.status !== 'signed-out' || state.inFlight) return;
-      const email = typed.trim().toLowerCase();
-      if (!isEmail(email)) {
+      if (state.status !== 'signed-out' || state.inFlight !== undefined) return;
+      const email = AccountEmailSchema.safeParse(typed);
+      if (!email.success) {
         change({ ...state, problem: 'invalid-email' });
         return;
       }
-      await sendCode(email);
+      await sendCode('requestCode', email.data);
     },
     async resendCode() {
       if (state.status !== 'code-sent' || clock.now() < state.resendAt) return;
-      await sendCode(state.email);
+      await sendCode('resendCode', state.email);
     },
     changeEmail() {
-      if (state.status === 'code-sent' && !state.inFlight) change(signedOut);
+      if (state.status === 'code-sent' && state.inFlight === undefined) change(signedOut);
     },
     async verifyCode(typed) {
       const sent = state;
-      if (sent.status !== 'code-sent' || sent.inFlight) return;
+      if (sent.status !== 'code-sent' || sent.inFlight !== undefined) return;
       const code = typed.trim();
-      if (!/^\d{6}$/.test(code)) return;
+      if (!SignInCodeSchema.safeParse(code).success) return;
       await request(
+        'verifyCode',
         () => api.verifyCode(sent.email, code),
         async (answer) => {
           if (answer.ok) {
@@ -291,14 +302,15 @@ export async function openAccount({
       change(await endSession());
       await tellSignOuts();
     },
-    signOutEverywhere: () => endThroughServer((current) => api.signOutEverywhere(current)),
-    delete: () => endThroughServer((current) => api.delete(current)),
+    signOutEverywhere: () => endThroughServer('signOutEverywhere'),
+    delete: () => endThroughServer('delete'),
     async refresh() {
       if (untold.length > 0) await tellSignOuts();
       const current = token;
       if (current === undefined) return;
       if (checkedAt !== undefined && clock.now().getTime() - checkedAt < CHECK_HOLDS) return;
       await request(
+        'refresh',
         () => api.me(current),
         (answer) => {
           if (answer.ok) checkedAt = clock.now().getTime();

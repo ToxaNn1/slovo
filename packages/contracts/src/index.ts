@@ -29,6 +29,7 @@ export {
   type Theme,
   type UserSettingDefaultsConfig,
 } from './edition';
+export { AccountEmailSchema, SIGN_IN_CODE_DIGITS, SignInCodeSchema } from './account';
 export {
   PackMetadataSchema,
   PublishedPackSchema,

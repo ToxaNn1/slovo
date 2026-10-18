@@ -14,7 +14,13 @@ export type {
   Register,
   Word,
 } from '@slovo/contracts';
-export { openAccount, type Account, type AccountProblem, type AccountState } from './account';
+export {
+  openAccount,
+  type Account,
+  type AccountProblem,
+  type AccountRequest,
+  type AccountState,
+} from './account';
 export { openComposition, type Composition } from './composition';
 export {
   type Collection,
@@ -139,7 +145,7 @@ export {
 } from './feed/word-of-the-day';
 export { createMemoryContentPort } from './fakes/memory-content';
 export { CONTENT_UPDATE_EVERY, createContentUpdate, type ContentUpdate } from './content-update';
-export type { ContentApi, ContentApiFailure, PackFiles, PackVersion, PublishedPack } from './ports';
+export type { ContentApi, ContentApiFailure, PackFiles, PackVersion } from './ports';
 export {
   createFakeContentApi,
   type FakeContentApi,
