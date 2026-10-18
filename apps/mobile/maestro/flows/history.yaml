@@ -57,7 +57,8 @@ appId: ${APP_ID || 'app.slovo.uk'}
     point: 15%,50%
 - assertVisible: Очистити Історію?
 - takeScreenshot: history-clear-confirm
-- tapOn: Скасувати
+- tapOn:
+    id: history-clear-dialog-cancel
 - assertVisible:
     id: history-row-.*-open
 # Confirming empties it.
@@ -65,14 +66,10 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: history-clear
     point: 15%,50%
 - assertVisible: Очистити Історію?
-# A tap while the alert still opens is lost.
+# A tap while the dialog still fades in is lost.
 - waitForAnimationToEnd
-# The alert's button, below its message: the screen's own button is hidden
-# from Maestro while the alert shows and cannot anchor it.
 - tapOn:
-    text: Очистити
-    below:
-      text: Улюблене й Колекції залишаться.
+    id: history-clear-dialog-destructive
 - assertVisible:
     id: history-empty
 - assertNotVisible:
