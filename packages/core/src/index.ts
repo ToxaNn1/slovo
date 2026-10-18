@@ -167,6 +167,8 @@ export {
 } from './onboarding';
 export { createFakeAccountApi, type FakeAccountApi, type SentCode } from './fakes/fake-account-api';
 export { createMemorySessionStore } from './fakes/memory-session-store';
+export { createSync, type Sync, type SyncResult } from './sync/sync';
+export { createFakeSyncApi, type FakeSyncApi, type KeptRecord } from './fakes/fake-sync-api';
 export {
   createFakeNotificationScheduler,
   type FakeNotificationScheduler,
@@ -188,17 +190,21 @@ export {
   type AccountApiFailure,
   type Clock,
   type ContentReadPort,
+  type Json,
   type KeptSession,
   type NotificationPermission,
   type NotificationSchedulerPort,
   type PlannedNotification,
   type PlannedSound,
   type Random,
+  type RecordChange,
   type RemoteSwitchesAnswer,
   type RequestFailure,
   type Schedule,
   type SessionStore,
   type SwitchesApi,
+  type SyncApi,
+  type SyncApiFailure,
   type UserStateChanges,
   type UserStatePort,
 } from './ports';
