@@ -82,7 +82,7 @@ function answered(game: CurrentGame, chosen: number): CurrentGame {
   };
 }
 
-function Game({ onAnswer }: { onAnswer: (option: number) => void }) {
+function Game({ onAnswer, onLeave }: { onAnswer: (option: number) => void; onLeave: () => void }) {
   const [game, setGame] = useState(first);
   return (
     <GameRound
@@ -93,17 +93,20 @@ function Game({ onAnswer }: { onAnswer: (option: number) => void }) {
         setGame((shown) => answered(shown, option));
       }}
       onNext={jest.fn()}
-      onLeave={jest.fn()}
+      onLeave={onLeave}
     />
   );
 }
 
-async function renderRound(onAnswer: (option: number) => void = jest.fn()) {
+async function renderRound(
+  onAnswer: (option: number) => void = jest.fn(),
+  onLeave: () => void = jest.fn(),
+) {
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
       <EditionProvider edition={{ locale: 'en' }} strings={strings}>
         <HapticsProvider haptics={haptics}>
-          <Game onAnswer={onAnswer} />
+          <Game onAnswer={onAnswer} onLeave={onLeave} />
         </HapticsProvider>
       </EditionProvider>
     </SafeAreaProvider>,
@@ -142,5 +145,43 @@ describe('GameRound', () => {
     expect(onAnswer).toHaveBeenCalledTimes(1);
     expect(onAnswer).toHaveBeenCalledWith(1);
     expect(screen.getByRole('button', { name: 'brittle, Your choice' })).toBeTruthy();
+  });
+
+  describe('leaving', () => {
+    it('asks before it leaves, and shows no dialog until the ✕ is pressed', async () => {
+      const onLeave = jest.fn();
+      await renderRound(jest.fn(), onLeave);
+
+      expect(screen.queryByText('Leave?')).not.toBeOnTheScreen();
+
+      await fireEvent.press(screen.getByRole('button', { name: 'Leave the Game' }));
+
+      expect(screen.getByText('Leave?')).toBeOnTheScreen();
+      expect(screen.getByText('The Game ends.')).toBeOnTheScreen();
+      expect(onLeave).not.toHaveBeenCalled();
+    });
+
+    it('leaves when the reader confirms, and closes the dialog', async () => {
+      const onLeave = jest.fn();
+      await renderRound(jest.fn(), onLeave);
+      await fireEvent.press(screen.getByRole('button', { name: 'Leave the Game' }));
+
+      await fireEvent.press(screen.getByTestId('game-exit-dialog-destructive'));
+
+      expect(onLeave).toHaveBeenCalledTimes(1);
+      expect(screen.queryByText('Leave?')).not.toBeOnTheScreen();
+    });
+
+    it('plays on when the reader cancels, and closes the dialog', async () => {
+      const onLeave = jest.fn();
+      await renderRound(jest.fn(), onLeave);
+      await fireEvent.press(screen.getByRole('button', { name: 'Leave the Game' }));
+
+      await fireEvent.press(screen.getByTestId('game-exit-dialog-cancel'));
+
+      expect(onLeave).not.toHaveBeenCalled();
+      expect(screen.queryByText('Leave?')).not.toBeOnTheScreen();
+      expect(screen.getByRole('button', { name: 'candid' })).toBeOnTheScreen();
+    });
   });
 });

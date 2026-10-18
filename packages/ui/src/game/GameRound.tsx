@@ -8,7 +8,7 @@ import {
   type TextRange,
 } from '@slovo/core';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
   interpolateColor,
@@ -22,6 +22,7 @@ import Animated, {
 import Svg, { Path } from 'react-native-svg';
 
 import { BottomSheet } from '../primitives/BottomSheet';
+import { ConfirmationDialog } from '../primitives/ConfirmationDialog';
 import { CardCorners } from '../decor/DecorSlots';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { HEART_PATH } from '../saved/FavoriteButton';
@@ -103,8 +104,8 @@ const BAR_GROWTH = { duration: 400, easing: ease, reduceMotion: ReduceMotion.Nev
 /**
  * A Round of the Game in play (`game-round-dark`): the header with the ✕, the
  * prompt under its label, the four options and, once answered, the sheet.
- * The ✕ asks first, with a system alert, as «Очистити Історію?» does; «Грати
- * далі» leaves the Round as it was.
+ * The ✕ asks first, with the SLOVO confirmation dialog, as «Очистити Історію?»
+ * does; «Грати далі» leaves the Round as it was.
  */
 export function GameRound({
   game,
@@ -140,17 +141,18 @@ export function GameRound({
     // New haptics, after a change of Vibration, find the answer already played.
   }, [answer, gameHaptics]);
 
-  function confirmLeave() {
-    const words = strings.game.exit;
-    Alert.alert(words.title, words.message, [
-      { text: words.cancel, style: 'cancel' },
-      { text: words.confirm, style: 'destructive', onPress: onLeave },
-    ]);
-  }
+  const [asking, setAsking] = useState(false);
+  const exit = strings.game.exit;
 
   return (
     <View testID="game-round" style={styles.screen}>
-      <GameHeader roundsPassed={game.roundsPassed} lives={game.lives} onExit={confirmLeave} />
+      <GameHeader
+        roundsPassed={game.roundsPassed}
+        lives={game.lives}
+        onExit={() => {
+          setAsking(true);
+        }}
+      />
       <ScrollView contentContainerStyle={styles.round}>
         <RoundCard label={label} prompt={round.prompt} highlight={round.highlight} />
         <View style={styles.options}>
@@ -168,6 +170,21 @@ export function GameRound({
         </View>
       </ScrollView>
       <AnswerSheet answer={round.answer} onNext={onNext} />
+      <ConfirmationDialog
+        visible={asking}
+        title={exit.title}
+        message={exit.message}
+        destructiveLabel={exit.confirm}
+        cancelLabel={exit.cancel}
+        onDestructive={() => {
+          setAsking(false);
+          onLeave();
+        }}
+        onCancel={() => {
+          setAsking(false);
+        }}
+        testID="game-exit-dialog"
+      />
     </View>
   );
 }
