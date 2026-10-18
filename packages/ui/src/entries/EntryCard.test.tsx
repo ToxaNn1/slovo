@@ -1,11 +1,28 @@
 import type { EditionStrings } from '@slovo/contracts';
-import type { EntryFeedCard, Haptics } from '@slovo/core';
-import { EditionProvider, EntryCard, HapticsProvider, VerticalPager } from '@slovo/ui';
+import { coreDecor, type Decor, type EntryFeedCard, type Haptics } from '@slovo/core';
+import {
+  DecorProvider,
+  EditionProvider,
+  EntryCard,
+  HapticsProvider,
+  VerticalPager,
+} from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen, within } from '@testing-library/react-native';
 import { StyleSheet, Text } from 'react-native';
 
 const strings = {
+  wordCard: {
+    partsOfSpeech: { noun: { short: 'n.', full: 'noun' } },
+    genders: {},
+    partOfSpeechWithGender: '{partOfSpeech}, {gender}',
+    registers: {},
+    category: '{category}',
+    synonym: 'Synonym',
+    synonyms: 'Synonyms',
+    antonym: 'Antonym',
+    antonyms: 'Antonyms',
+  },
   correctionCard: {
     title: 'Correction',
     correctionType: 'Type: {type}',
@@ -32,6 +49,34 @@ const card: EntryFeedCard = {
   },
 };
 
+const wordCard: EntryFeedCard = {
+  kind: 'word',
+  wordCard: {
+    kind: 'word',
+    wordId: 'w1',
+    lemma: 'lemma',
+    stressedVowels: [],
+    partOfSpeech: 'noun',
+    gender: undefined,
+    primaryDefinition: 'What it means.',
+    example: undefined,
+    synonyms: [],
+    antonyms: [],
+    registers: [],
+    categoryId: 'k1',
+    categoryName: undefined,
+    details: undefined,
+    linkedCorrections: [],
+  },
+};
+
+const motif = {
+  width: 4,
+  height: 4,
+  layers: [{ path: 'M0 0h4v4H0z', light: '#000', dark: '#fff' }],
+};
+const framedDecor: Decor = { ...coreDecor, corners: { corner: motif } };
+
 const haptics: Haptics = {
   selection: jest.fn(),
   impactLight: jest.fn(),
@@ -51,6 +96,30 @@ function inEdition(children: React.ReactNode) {
 }
 
 describe('EntryCard', () => {
+  it.each([
+    ['Word', wordCard, 'word-card'],
+    ['Correction', card, 'correction-card'],
+  ])('draws the Decor frame on a %s card in all four corners', async (_kind, entry, testID) => {
+    await render(
+      inEdition(
+        <DecorProvider decor={framedDecor}>
+          <EntryCard card={entry} />
+        </DecorProvider>,
+      ),
+    );
+
+    const frame = within(screen.getByTestId(testID));
+    for (const corner of ['topLeft', 'topRight', 'bottomLeft', 'bottomRight']) {
+      expect(frame.getByTestId(`card-corner-${corner}`, { hidden: true })).toBeTruthy();
+    }
+  });
+
+  it('draws no frame on a card when the Edition has no corners', async () => {
+    await render(inEdition(<EntryCard card={card} />));
+
+    expect(screen.queryByTestId('card-corner-topLeft', { hidden: true })).toBeNull();
+  });
+
   it('scrolls its text inside the frame in the Feed and keeps the actions below it', async () => {
     await render(
       inEdition(

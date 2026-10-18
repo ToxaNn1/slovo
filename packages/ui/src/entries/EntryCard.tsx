@@ -38,8 +38,8 @@ const SPACING = {
 /**
  * The Entry card: a Word's or a Correction's card in the one card frame, at
  * the user's font size, with the compact layout on narrow screens, the Decor
- * slots of its kind and the action row under it. The Edition's strings and
- * language come from the `EditionProvider`.
+ * slots and the action row under it. The Edition's strings and language come
+ * from the `EditionProvider`.
  */
 export function EntryCard({ card, onOpenCorrection, actions, scrollable }: EntryCardProps) {
   const { colors, radii } = useTokens();
@@ -88,12 +88,10 @@ export function EntryCard({ card, onOpenCorrection, actions, scrollable }: Entry
       ) : (
         <View style={inset}>{blocks}</View>
       )}
-      {/* Corner ornaments over the edges (Decor slot 3); the Correction card has none. */}
-      {card.kind === 'word' && (
-        <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-          <CardCorners />
-        </View>
-      )}
+      {/* Corner ornaments over the edges (Decor slot 3), on both kinds of card. */}
+      <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+        <CardCorners />
+      </View>
     </View>
   );
 
