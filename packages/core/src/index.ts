@@ -168,6 +168,7 @@ export {
 export { createFakeAccountApi, type FakeAccountApi, type SentCode } from './fakes/fake-account-api';
 export { createMemorySessionStore } from './fakes/memory-session-store';
 export { createSyncExchange, type SyncExchange, type SyncResult } from './sync/exchange';
+export { openSync, SYNC_AFTER_WRITE, type Sync, type SyncState } from './sync/sync';
 export { createFakeSyncApi, type FakeSyncApi, type KeptRecord } from './fakes/fake-sync-api';
 export {
   createFakeNotificationScheduler,
