@@ -15,9 +15,10 @@ export type ForegroundMoment = 'launch' | 'return' | 'new-day' | 'background';
 export interface ForegroundReports {
   /**
    * Tells `hear` each moment with what `opening` opened: `launch` once it is
-   * open, after any retries, and every moment after. Nothing is told before:
-   * the launch covers it. Each listener picks the moments it acts on; `hear`
-   * must not throw.
+   * open, after any retries, and every moment after, with what it reopened
+   * once a reopen ends. Nothing is told before: the launch covers it. A
+   * reopen is no moment: whoever reopens does what the launch did. Each
+   * listener picks the moments it acts on; `hear` must not throw.
    */
   readonly listen: <T>(
     opening: Opening<T>,
@@ -78,7 +79,9 @@ export function reportForeground({
       void opening.opened().then((value) => {
         if (stopped) return;
         listeners.push((moment) => {
-          hear(value, moment);
+          // Once open it stays open; a reopen only swaps what it opened.
+          const { state } = opening;
+          if (state.status === 'ready') hear(state.value, moment);
         });
         hear(value, 'launch');
       });
