@@ -37,6 +37,7 @@ export { HideButton } from './mix/HideButton';
 export { ScreenTitle, SectionLabel } from './primitives/headings';
 export { MixChip } from './mix/MixChip';
 export {
+  OnboardingAccount,
   OnboardingMix,
   OnboardingNotifications,
   OnboardingWelcome,

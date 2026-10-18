@@ -1,7 +1,8 @@
-# Onboarding step 3, notifications: «Почати» and «Далі» lead to «КРОК 3 З 3»
+# Onboarding step 3, notifications: «Почати» and «Далі» lead to «КРОК 3 З 4»
 # with a sample of the Word of the Day's notification and the Notification
 # times; a time taken out here is gone from Settings › Сповіщення; «Пізніше»
-# opens the Feed without asking, after which the Settings row reads «Вимкнено»
+# goes on to the SLOVO ID step without asking, and «Продовжити без акаунта»
+# there opens the Feed, after which the Settings row reads «Вимкнено»
 # and «Увімкнути сповіщення» there asks, and a grant makes the row count the
 # times; a relaunch shows no onboarding. On the dev client built before the
 # 0.4 native batch (no notifications module, no time picker) «+ Додати час» is
@@ -27,7 +28,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: onboarding-notifications
 - assertVisible:
     id: onboarding-step
-- assertVisible: КРОК 3 З 3
+- assertVisible: КРОК 3 З 4
 # The sample: today's Word of the Day, at the earliest default time.
 - assertVisible:
     id: onboarding-sample
@@ -62,9 +63,11 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: notifications-time-13:00-remove
 - assertNotVisible:
     id: notifications-time-13:00-content
-# «Пізніше» finishes without asking and brings the Feed.
+# «Пізніше» goes on without asking; «Продовжити без акаунта» brings the Feed.
 - tapOn:
     id: onboarding-later
+- tapOn:
+    id: onboarding-continue
 - assertVisible:
     id: feed-card-.*
 - assertNotVisible:

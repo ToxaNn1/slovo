@@ -1,8 +1,12 @@
-# Onboarding: a fresh install shows the welcome over the Feed; «Пропустити»
-# finishes it at once, and a relaunch shows no onboarding. A subflow of
-# `smoke.yaml`; run it from there. It starts from a fresh install, whatever
-# the simulator holds, so it clears the app's state: put it last in the smoke
-# flow, as it takes the Favorites and the other choices with it.
+# Onboarding: a fresh install shows the welcome over the Feed; «Почати»,
+# «Далі» and «Пізніше» lead to the fourth step, «КРОК 4 З 4», SLOVO ID, whose
+# «Увійти через SLOVO ID» opens the SLOVO ID screen and whose back link,
+# signed out, comes back to the step; «Продовжити без акаунта» finishes the
+# onboarding, and a relaunch shows no onboarding. («Пропустити» finishes it on
+# every fresh install, see `open-in-dev-client.yaml`.) A subflow of
+# `smoke.yaml`; run it from there. It starts from a fresh install, whatever the
+# simulator holds, so it clears the app's state: put it last in the smoke flow,
+# as it takes the Favorites and the other choices with it.
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
 # A fresh install shows the welcome.
@@ -20,15 +24,42 @@ appId: ${APP_ID || 'app.slovo.uk'}
 # The onboarding covers the Feed: no Feed card is reachable behind it.
 - assertNotVisible:
     id: feed-card-.*
-# The label's left end: the development client's floating tools button may
-# sit over its right end.
 - tapOn:
-    id: onboarding-skip
-    point: 15%, 50%
+    id: onboarding-start
+- tapOn:
+    id: onboarding-next
+- tapOn:
+    id: onboarding-later
+# The fourth step, with the Edition's Account on.
+- assertVisible:
+    id: onboarding-account
+- assertVisible: КРОК 4 З 4
+- assertVisible:
+    id: onboarding-sign-in
+    text: Увійти через SLOVO ID
+- assertVisible:
+    id: onboarding-continue
+    text: Продовжити без акаунта
+- takeScreenshot: onboarding-account
+# «Увійти через SLOVO ID» opens the SLOVO ID screen over the step; coming back
+# signed out stays on the step.
+- tapOn:
+    id: onboarding-sign-in
+- assertVisible:
+    id: account-email
+- assertNotVisible:
+    id: onboarding-account
+- tapOn:
+    id: account-back
+- assertVisible:
+    id: onboarding-account
+# «Продовжити без акаунта» finishes the onboarding and brings the Feed.
+- tapOn:
+    id: onboarding-continue
 - assertVisible:
     id: feed-card-.*
 - assertNotVisible:
-    id: onboarding
+    id: onboarding-account
 # A relaunch brings the Feed, with no onboarding.
 - stopApp
 - launchApp:

@@ -28,6 +28,8 @@ The Language Pack's opening is now ready with the reader of the pack the app run
 
 The Account opens apart from the Language Pack and the composition (ADR 0037), and the app must never wait for it: it is optional, and everything else works without it. So its gate is not in the root layout. The SLOVO ID screen's route puts its content under `Opened` with the Account's opening, the one route that names an opening, and everything under it reads the open Account with `useOpened`. The «SLOVO ID» row of Settings needs no gate: it reads the opening and the Account's state with `useSubscribed` and shows no value until the Account is open. An Edition without the Account has neither the row nor the screen; its route leads back to Settings.
 
+From 0.8 (#390) the onboarding's SLOVO ID step opens the same screen too, drawn over the step inside the onboarding rather than pushed on the Settings stack, so its back link comes back to the step and the onboarding hears how the reader came back. The step reads the Account's opening with `useSubscribed` and keeps itself on screen until the Account is open: a tap on «Увійти через SLOVO ID» starts the opening, or retries a failed one, and the screen shows once it is open. The gate's loading and error states never cover the onboarding, which has no way back from them.
+
 ### Considered Options
 
 - **The Account's gate in the root layout, around the tabs**: rejected. A slow or failed Keychain read would hold up the Feed for an Account the reader may never use.

@@ -285,14 +285,14 @@ All PNGs are in [`screens/`](screens/), rendered at 2× from the canvas, includi
 
 ### 0.4 Habit and onboarding
 
-| PNG                                    | Screen and state                                                                 | Artboard |
-| -------------------------------------- | -------------------------------------------------------------------------------- | -------- |
-| `stats-sheet-dark.png`                 | Stats sheet from the Streak pill, dark                                           | 1b       |
-| `onboarding-1-welcome-dark.png`        | Onboarding 1, welcome with a hero Word, dark                                     | 2a       |
-| `onboarding-2-mix-light.png`           | Onboarding 2, choose the Mix: Category chips, "Усі", Corrections switch, light   | 2a       |
-| `onboarding-3-notifications-light.png` | Onboarding 3, notifications with a sample and three default times, light         | 2a       |
-| `onboarding-4-slovo-id-dark.png`       | Onboarding 4, SLOVO ID, marked "later version" (the Account itself is 0.7), dark | 2a       |
-| `widgets-and-notification.png`         | The notification (0.4), plus the widgets (0.6)                                   | 2d       |
+| PNG                                    | Screen and state                                                                                                                                                                                                            | Artboard |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `stats-sheet-dark.png`                 | Stats sheet from the Streak pill, dark                                                                                                                                                                                      | 1b       |
+| `onboarding-1-welcome-dark.png`        | Onboarding 1, welcome with a hero Word, dark                                                                                                                                                                                | 2a       |
+| `onboarding-2-mix-light.png`           | Onboarding 2, choose the Mix: Category chips, "Усі", Corrections switch, light                                                                                                                                              | 2a       |
+| `onboarding-3-notifications-light.png` | Onboarding 3, notifications with a sample and three default times, light                                                                                                                                                    | 2a       |
+| `onboarding-4-slovo-id-dark.png`       | Onboarding 4, SLOVO ID, marked "later version" (the Account itself is 0.7), dark. Built in 0.8 without «ПІЗНІША ВЕРСІЯ»: the SLOVO ID screen opens over the step, and its back link «Збережіть свої слова» comes back to it | 2a       |
+| `widgets-and-notification.png`         | The notification (0.4), plus the widgets (0.6)                                                                                                                                                                              | 2d       |
 
 ### 0.5 Game
 
@@ -419,7 +419,7 @@ Ukrainian copy from the canvas, quoted as is, for implementers to reuse. Sample 
 - 1: «SLOVO», «Рідкісні слова рідної мови — щодня по одному.», «Гортайте, зберігайте, діліться й тренуйтеся.», «Почати»
 - 2: «КРОК 2 З 4», «Оберіть свій Мікс», «Які слова показувати у Стрічці. Змінити можна будь-коли в Налаштуваннях.», chip «Усі», «Виправлення» / «"Так часто кажуть → Українською краще"», «Далі», «Обрано 5 з 8 + Виправлення»
 - 3: «КРОК 3 З 4», «Слово саме прийде до вас», «Коротке сповіщення: слово з наголосом і визначення. Без реклами й нагадувань «повернись».», «Сповіщення о 09:00» (VoiceOver), «+ Додати час», «Дозволити сповіщення», «Пізніше»
-- 4: «КРОК 4 З 4», «ПІЗНІША ВЕРСІЯ», «Збережіть свої слова», «SLOVO ID переносить Улюблене, Колекції та серію між пристроями.», «Увійти через SLOVO ID», «Продовжити без акаунта»
+- 4, with the Account on: «КРОК 4 З 4», «Збережіть свої слова», «SLOVO ID переносить Улюблене, Колекції та серію між пристроями.», «Увійти через SLOVO ID», «Продовжити без акаунта» (the design's «ПІЗНІША ВЕРСІЯ» does not ship; without the Account the onboarding has three steps, «КРОК 2 З 3»)
 
 ### Game
 

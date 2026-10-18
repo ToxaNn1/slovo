@@ -1,3 +1,4 @@
+import { ACCOUNT_NAME } from '@slovo/contracts';
 import { useEffect, useRef, type ReactNode } from 'react';
 import {
   AccessibilityInfo,
@@ -16,11 +17,20 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { DecorBackground, OrnamentBand } from '../decor/DecorSlots';
+import { DecorBackground, EmptyStateIllustration, OrnamentBand } from '../decor/DecorSlots';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { PrimaryButton } from '../primitives/PrimaryButton';
+import { SecondaryButton } from '../primitives/SecondaryButton';
 import { WholeWordsText } from '../primitives/WholeWordsText';
-import { minTouchTarget, overlineType, sampleNotification, space, typeSize } from '../tokens';
+import {
+  accountMark,
+  minTouchTarget,
+  onboardingRosetteWidth,
+  overlineType,
+  sampleNotification,
+  space,
+  typeSize,
+} from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /** How long a step takes to slide in, and how far from the side it starts. */
@@ -401,6 +411,92 @@ export function OnboardingNotifications({
   );
 }
 
+/**
+ * The SLOVO ID step, with the Account on: «Збережіть свої слова», what SLOVO
+ * ID keeps, the rosette of the empty states (Decor slot 4), «Увійти через
+ * SLOVO ID» with SLOVO ID's mark, which opens the SLOVO ID screen, and
+ * «Продовжити без акаунта».
+ */
+export function OnboardingAccount({
+  step,
+  total,
+  onSignIn,
+  onContinue,
+  onSkip,
+}: {
+  /** This step's number, from 1, in the Core's order. */
+  step: number;
+  total: number;
+  onSignIn: () => void;
+  onContinue: () => void;
+  onSkip: () => void;
+}) {
+  const { colors, fontFamilies } = useTokens();
+  const { voice, strings } = useEdition();
+  const { account } = strings.onboarding;
+  const name = { name: ACCOUNT_NAME };
+  return (
+    <OnboardingStep
+      testID="onboarding-account"
+      step={step}
+      total={total}
+      onSkip={onSkip}
+      fromTop
+      footer={
+        <>
+          <PrimaryButton
+            testID="onboarding-sign-in"
+            label={fill(account.signIn, name)}
+            mark={<AccountMark />}
+            onPress={onSignIn}
+          />
+          <SecondaryButton
+            testID="onboarding-continue"
+            label={account.continueWithout}
+            onPress={onContinue}
+          />
+        </>
+      }
+    >
+      <View style={styles.heading}>
+        <Text
+          accessibilityRole="header"
+          {...voice}
+          maxFontSizeMultiplier={HEADLINE_MAX_FONT_SCALE}
+          style={[styles.title, { color: colors.ink, fontFamily: fontFamilies.word }]}
+        >
+          {account.title}
+        </Text>
+        <Text
+          {...voice}
+          maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+          style={[styles.subtitle, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+        >
+          {fill(account.subtitle, name)}
+        </Text>
+      </View>
+      <View style={styles.rosette}>
+        <EmptyStateIllustration width={onboardingRosetteWidth} />
+      </View>
+    </OnboardingStep>
+  );
+}
+
+/** SLOVO ID's mark: its first letter on the background colour, inside the primary button's ink fill. */
+function AccountMark() {
+  const { colors, fontFamilies } = useTokens();
+  return (
+    <View style={[styles.accountMark, { backgroundColor: colors.background }]}>
+      <Text
+        allowFontScaling={false}
+        style={[styles.accountMarkLetter, { color: colors.ink, fontFamily: fontFamilies.word }]}
+      >
+        {Array.from(ACCOUNT_NAME)[0]}
+      </Text>
+    </View>
+  );
+}
+
 /** What a notification of the app looks like on the lock screen, as a sample of the real one. */
 function SampleNotification({ sample }: { sample: SampleNotificationLook }) {
   const { colors, fontFamilies, radii } = useTokens();
@@ -548,6 +644,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   appIconMark: { fontSize: typeSize.subhead, fontWeight: '600' },
+  rosette: { flexGrow: 1, alignItems: 'center', justifyContent: 'center' },
+  accountMark: {
+    width: accountMark.size,
+    height: accountMark.size,
+    borderRadius: accountMark.radius,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  accountMarkLetter: { fontSize: accountMark.letterSize, fontWeight: '600' },
   sampleText: { flex: 1, gap: sampleNotification.lineGap },
   sampleTop: { flexDirection: 'row', justifyContent: 'space-between', gap: space[3] },
   sampleApp: { flexShrink: 1, fontSize: typeSize.meta, fontWeight: '600' },

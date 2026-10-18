@@ -1,5 +1,6 @@
-import type { OnboardingStep, SampleNotification, WordCardModel } from '@slovo/core';
+import type { Account, OnboardingStep, SampleNotification, WordCardModel } from '@slovo/core';
 import {
+  OnboardingAccount,
   OnboardingMix,
   OnboardingNotifications,
   OnboardingWelcome,
@@ -7,13 +8,16 @@ import {
   type HeroWord,
   type SampleNotificationLook,
 } from '@slovo/ui';
+import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { AccountScreen } from './account/account-screen';
+import { accountOpening } from './account/device-account';
 import { useComposition } from './composition';
 import { editionStrings } from './edition/edition';
 import { MixChoices } from './mix/mix-choices';
 import { NotificationTimes } from './notifications/notification-times';
-import { useSubscribed } from './opening';
+import { useSubscribed, type Opening } from './opening';
 
 /** A Word's Lemma as the steps draw it: with its Stress, and what VoiceOver reads for it. */
 function lemmaOf(wordCard: WordCardModel): { lemma: string; accessibilityLabel: string } {
@@ -49,11 +53,15 @@ function report(done: Promise<void>): void {
 /**
  * The onboarding adapter: it draws the step the Core onboarding is on, over
  * the Feed, and passes the taps to it. The Core holds the steps, their order
- * and the rule that ends them.
+ * and the rule that ends them. The SLOVO ID step opens the SLOVO ID screen
+ * over itself once the Account is open, and its back link comes back to the
+ * step.
  */
 export function Onboarding() {
   const { onboarding } = useComposition();
   const step = useSubscribed(onboarding, ({ state }) => state.step);
+  /** Whether the SLOVO ID screen is open over the step. */
+  const [signingIn, setSigningIn] = useState(false);
   if (step === undefined) return null;
   const skip = () => {
     report(onboarding.finish());
@@ -61,18 +69,63 @@ export function Onboarding() {
   const next = () => {
     report(onboarding.next());
   };
+  const onStep = (
+    <Step
+      step={step}
+      onNext={next}
+      onSkip={skip}
+      onAllow={() => {
+        report(onboarding.allowNotifications());
+      }}
+      onSignIn={() => {
+        // Reading the opening starts it; a failed one opens again.
+        const opened = accountOpening?.state;
+        if (opened?.status === 'failed') opened.retry();
+        setSigningIn(true);
+      }}
+    />
+  );
   return (
     // Modal, so VoiceOver stays out of the Feed and the tabs behind it.
     <View style={StyleSheet.absoluteFill} accessibilityViewIsModal>
-      <Step
-        step={step}
-        onNext={next}
-        onSkip={skip}
-        onAllow={() => {
-          report(onboarding.allowNotifications());
-        }}
-      />
+      {signingIn && accountOpening !== undefined ? (
+        <AccountOverStep
+          opening={accountOpening}
+          step={onStep}
+          onBack={(account) => {
+            setSigningIn(false);
+            report(onboarding.backFromAccount(account.state));
+          }}
+        />
+      ) : (
+        onStep
+      )}
     </View>
+  );
+}
+
+/**
+ * The SLOVO ID screen over the step, once the Account is open; until then the
+ * step stays, since the onboarding has no way back from the gate's loading or
+ * error state.
+ */
+function AccountOverStep({
+  opening,
+  step,
+  onBack,
+}: {
+  opening: Opening<Account>;
+  step: ReactNode;
+  onBack: (account: Account) => void;
+}) {
+  const opened = useSubscribed(opening, ({ state }) => state);
+  if (opened.status !== 'ready') return step;
+  return (
+    <AccountScreen
+      opening={opening}
+      // The step it came from, by its title.
+      back={{ label: editionStrings.onboarding.account.title, onPress: onBack }}
+    />
   );
 }
 
@@ -81,11 +134,13 @@ function Step({
   onNext,
   onSkip,
   onAllow,
+  onSignIn,
 }: {
   step: OnboardingStep;
   onNext: () => void;
   onSkip: () => void;
   onAllow: () => void;
+  onSignIn: () => void;
 }) {
   const { number, total } = step;
   if (step.kind === 'welcome') {
@@ -106,17 +161,29 @@ function Step({
       </OnboardingMix>
     );
   }
+  if (step.kind === 'notifications') {
+    return (
+      <OnboardingNotifications
+        step={number}
+        total={total}
+        sample={sampleLookOf(step.sample)}
+        onAllow={onAllow}
+        // «Пізніше» goes on without asking.
+        onLater={onNext}
+        onSkip={onSkip}
+      >
+        <NotificationTimes />
+      </OnboardingNotifications>
+    );
+  }
   return (
-    <OnboardingNotifications
+    <OnboardingAccount
       step={number}
       total={total}
-      sample={sampleLookOf(step.sample)}
-      onAllow={onAllow}
-      // «Пізніше» finishes without asking, as «Пропустити» does.
-      onLater={onSkip}
+      onSignIn={onSignIn}
+      // «Продовжити без акаунта» goes on past the last step, which finishes.
+      onContinue={onNext}
       onSkip={onSkip}
-    >
-      <NotificationTimes />
-    </OnboardingNotifications>
+    />
   );
 }
