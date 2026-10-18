@@ -69,3 +69,7 @@ Whether an Edition serves a feature is the Edition registry's answer, `serving(e
 ### Considered Options
 
 - **Each action of a Session taking the token and finding the Account itself**: rejected. It was so for three of the four procedures, and `me` went the other way; each new procedure of sync would add one more place to answer `UNAUTHORIZED`.
+
+## Amendment: the Edition registry reads the remote Feature Switches (0.8, ADR 0040)
+
+Feature Switches still come from the Edition config, and the owner can now turn a feature off remotely in an emergency. `serving(editionId, feature)` reads those remote switches after the Edition's own, so it is asynchronous, and a feature off remotely is `switched-off`, answered `NOT_FOUND` like a feature the Edition turns off. The backend builds the registry in one place, over the Editions read from their folders and the `remote_switches` table, for the app and for the publish and switch commands. ADR 0040 says how remote switches are stored, set and served.

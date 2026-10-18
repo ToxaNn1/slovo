@@ -1,7 +1,6 @@
 import {
   createAccounts,
   createContentPacks,
-  createEditionRegistry,
   type Clock,
   type Edition,
   type Mailer,
@@ -16,6 +15,7 @@ import { createRateLimits } from './account/rate-limits';
 import { createApiHandler, INTERNAL_FAILURE, logUnexpectedFailure } from './api';
 import { createContentPackStore } from './content/content-pack-store';
 import type { Database } from './database/database';
+import { createEditions } from './edition/editions';
 
 /** What the backend is built from. A test gives its own. */
 export interface AppDependencies {
@@ -65,7 +65,7 @@ export function createApp({
   mailer,
   authSecret,
 }: AppDependencies) {
-  const editionRegistry = createEditionRegistry(editions);
+  const editionRegistry = createEditions({ database, clock, editions });
   const accounts = createAccounts({
     editions: editionRegistry,
     authenticator: createAuthenticator(database, { secret: authSecret, logger }),
@@ -78,7 +78,7 @@ export function createApp({
     store: createContentPackStore(database),
     clock,
   });
-  const api = createApiHandler({ accounts, contentPacks });
+  const api = createApiHandler({ accounts, contentPacks, editions: editionRegistry });
 
   const app = new Hono<Env>();
 

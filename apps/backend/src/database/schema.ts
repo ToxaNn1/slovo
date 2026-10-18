@@ -10,6 +10,7 @@ import {
   index,
   integer,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   unique,
@@ -161,4 +162,21 @@ export const rateLimits = pgTable(
     windowEnds: time('window_ends'),
   },
   (table) => [index().on(table.windowEnds)],
+);
+
+/**
+ * The Feature Switches the owner turned off remotely (ADR 0040), one row per
+ * Edition and feature. Clearing a switch keeps its row with `off` false, so a
+ * row tells when its switch last changed.
+ */
+export const remoteSwitches = pgTable(
+  'remote_switches',
+  {
+    editionId: text('edition_id').notNull(),
+    /** The name of the Feature Switch, such as `game`. */
+    feature: text('feature').notNull(),
+    off: boolean('off').notNull(),
+    setAt: time('set_at'),
+  },
+  (table) => [primaryKey({ columns: [table.editionId, table.feature] })],
 );

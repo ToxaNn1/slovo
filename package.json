@@ -10,6 +10,8 @@
     "dev": "node scripts/dev.mjs",
     "build:pack": "pnpm --filter @slovo/language-pack build-pack",
     "publish:pack": "pnpm --filter @slovo/backend publish-pack",
+    "switch:off": "pnpm --filter @slovo/backend switch-off",
+    "switch:clear": "pnpm --filter @slovo/backend switch-clear",
     "describe:api": "pnpm --filter @slovo/contracts describe-api",
     "source:words": "pnpm --filter @slovo/sourcing source-words",
     "lint": "oxlint && turbo run lint && prettier --check .",
