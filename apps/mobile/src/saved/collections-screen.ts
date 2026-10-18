@@ -15,6 +15,8 @@ export interface CollectionRowModel {
   readonly renameLabel: string;
   /** What VoiceOver reads for the row's delete action. */
   readonly deleteLabel: string;
+  /** What VoiceOver reads for the row's «…» button. */
+  readonly moreLabel: string;
 }
 
 /** The Collections screen's rows, in the order of the Collections (newest first). */
@@ -41,6 +43,7 @@ export function collectionRows({
           : fill(screen.rowLabel, { name, count: entries, lemmas: newestLemmas.join(', ') }),
       renameLabel: fill(screen.renameLabel, { name }),
       deleteLabel: fill(screen.deleteLabel, { name }),
+      moreLabel: fill(screen.moreLabel, { name }),
     };
   });
 }

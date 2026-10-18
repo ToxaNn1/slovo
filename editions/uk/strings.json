@@ -281,6 +281,12 @@
       "renameLabel": "Перейменувати «{name}»",
       "delete": "Видалити",
       "deleteLabel": "Видалити «{name}»",
+      "moreLabel": "Дії з колекцією «{name}»",
+      "menu": {
+        "rename": "Перейменувати",
+        "delete": "Видалити",
+        "cancel": "Скасувати"
+      },
       "confirmDelete": {
         "title": "Видалити колекцію «{name}»?",
         "message": "Самі записи нікуди не зникнуть.",

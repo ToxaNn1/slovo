@@ -35,6 +35,14 @@ export const CollectionsStringsSchema = z.strictObject({
     delete: TextSchema,
     /** The same action as VoiceOver reads it. Takes `{name}`. */
     deleteLabel: templateOf('name'),
+    /** The «…» button of a row, as VoiceOver reads it. Takes `{name}`. */
+    moreLabel: templateOf('name'),
+    /** The menu the «…» button opens: the same two actions as the swipe, and the cancel row. */
+    menu: z.strictObject({
+      rename: TextSchema,
+      delete: TextSchema,
+      cancel: TextSchema,
+    }),
     /** The SLOVO confirmation dialog that confirms deleting a Collection. */
     confirmDelete: z.strictObject({
       /** Takes `{name}`. */

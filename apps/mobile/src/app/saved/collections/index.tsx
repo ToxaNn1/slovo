@@ -1,6 +1,7 @@
 import type { CollectionResult } from '@slovo/core';
 import {
   BackLink,
+  CollectionMenuSheet,
   CollectionNameField,
   CollectionRow,
   DeleteCollectionDialog,
@@ -11,7 +12,7 @@ import {
   useTokens,
 } from '@slovo/ui';
 import { useRouter } from 'expo-router';
-import { memo, useCallback, useState } from 'react';
+import { memo, useCallback, useRef, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -30,7 +31,7 @@ type Editing = { readonly kind: 'new' } | { readonly kind: 'rename'; readonly id
 /**
  * Collections: the reader's lists, newest first, each with how many Entries it
  * holds and its newest Lemmas; a tap opens the Collection. «+» makes a new one
- * from here; a swipe offers «Назва» (rename in place) and «Видалити» (after a
+ * from here; a swipe or the row's «…» offers rename (in place) and delete (after a
  * SLOVO confirmation dialog that says the Entries stay), and the same actions go to
  * VoiceOver.
  */
@@ -41,7 +42,10 @@ export default function CollectionsScreen() {
   const router = useRouter();
   const openScreen = useOpenScreen();
   const [editing, setEditing] = useState<Editing>();
+  const [menu, setMenu] = useState<CollectionRowModel>();
   const [deleting, setDeleting] = useState<CollectionRowModel>();
+  /** The Collection the menu chose to delete: its dialog opens once the menu has slid away, as two modals do not show together. */
+  const deleteAfterMenu = useRef<CollectionRowModel>(undefined);
 
   // Kept from render to render, so the rows re-render only when the list or the row being renamed changes.
   const openCollection = useCallback(
@@ -55,6 +59,10 @@ export default function CollectionsScreen() {
   }, []);
   const stopEditing = useCallback(() => {
     setEditing(undefined);
+  }, []);
+  const openMenu = useCallback((collection: CollectionRowModel) => {
+    deleteAfterMenu.current = undefined;
+    setMenu(collection);
   }, []);
   const confirmDelete = useCallback((collection: CollectionRowModel) => {
     setDeleting(collection);
@@ -93,6 +101,7 @@ export default function CollectionsScreen() {
               onOpen={openCollection}
               onRename={startRename}
               onDelete={confirmDelete}
+              onMore={openMenu}
               onKeepRename={keepRename}
               onCancelRename={stopEditing}
             />
@@ -153,6 +162,26 @@ export default function CollectionsScreen() {
         }
         contentContainerStyle={styles.content}
       />
+      <CollectionMenuSheet
+        testID="collections-menu"
+        visible={menu !== undefined}
+        copy={strings.menu}
+        onRename={() => {
+          if (menu !== undefined) startRename(menu.id);
+          setMenu(undefined);
+        }}
+        onDelete={() => {
+          deleteAfterMenu.current = menu;
+          setMenu(undefined);
+        }}
+        onCancel={() => {
+          setMenu(undefined);
+        }}
+        onDismissed={() => {
+          if (deleteAfterMenu.current !== undefined) confirmDelete(deleteAfterMenu.current);
+          deleteAfterMenu.current = undefined;
+        }}
+      />
       <DeleteCollectionDialog
         testID="collections-delete"
         name={deleting?.name}
@@ -176,6 +205,7 @@ const EditableCollectionRow = memo(function EditableCollectionRow({
   onOpen,
   onRename,
   onDelete,
+  onMore,
   onKeepRename,
   onCancelRename,
 }: {
@@ -184,6 +214,7 @@ const EditableCollectionRow = memo(function EditableCollectionRow({
   onOpen: (id: string) => void;
   onRename: (id: string) => void;
   onDelete: (collection: CollectionRowModel) => void;
+  onMore: (collection: CollectionRowModel) => void;
   /** Resolves to the reason the name is refused, or to nothing once it is kept. */
   onKeepRename: (id: string, name: string) => Promise<string | undefined>;
   onCancelRename: () => void;
@@ -209,6 +240,12 @@ const EditableCollectionRow = memo(function EditableCollectionRow({
       accessibilityLabel={collection.accessibilityLabel}
       onPress={() => {
         onOpen(collection.id);
+      }}
+      more={{
+        label: collection.moreLabel,
+        onPress: () => {
+          onMore(collection);
+        },
       }}
       actions={[
         {

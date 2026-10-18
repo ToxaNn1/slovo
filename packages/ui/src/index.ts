@@ -32,6 +32,7 @@ export { EntryRow, type EntryRowAction } from './entries/EntryRow';
 export { type RowAction } from './primitives/SwipeableRow';
 export { FavoriteButton } from './saved/FavoriteButton';
 export { ClearHistoryButton } from './saved/ClearHistoryButton';
+export { CollectionMenuSheet } from './saved/CollectionMenuSheet';
 export { DeleteCollectionDialog } from './saved/DeleteCollectionDialog';
 export { GameModeCard } from './game/GameModeCard';
 export { GameResult } from './game/GameResult';

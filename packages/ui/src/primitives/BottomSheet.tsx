@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   KeyboardAvoidingView,
   Modal,
@@ -58,6 +58,8 @@ const HANDLE_HEIGHT = 32;
  * leaves when `visible` turns false. Without `onClose` only its content closes
  * it: it has no grabber, and no scrim dims the screen, which takes no taps
  * meanwhile. `inverted` draws the sheet in the other colour scheme. The
+ * `onDismissed` runs once the sheet has slid away, for what must wait until no
+ * modal is on screen (another modal asked for earlier is not presented). The
  * content is mounted only while the sheet is open, so its state starts fresh
  * each time. It rises above the keyboard and grows no taller than the screen
  * allows, so a long content should scroll.
@@ -65,12 +67,14 @@ const HANDLE_HEIGHT = 32;
 export function BottomSheet({
   visible,
   onClose,
+  onDismissed,
   inverted = false,
   children,
   testID,
 }: {
   visible: boolean;
   onClose?: () => void;
+  onDismissed?: (() => void) | undefined;
   inverted?: boolean;
   children: ReactNode;
   testID?: string;
@@ -84,15 +88,27 @@ export function BottomSheet({
   const progress = useSharedValue(0);
   const drag = useSharedValue(0);
   const height = useSharedValue(windowHeight);
+  const wasVisible = useRef(false);
+  // Read through a ref, so a new callback each render does not restart the slide.
+  const onDismissedRef = useRef(onDismissed);
+  onDismissedRef.current = onDismissed;
+  const dismissed = () => {
+    onDismissedRef.current?.();
+  };
 
   useEffect(() => {
     if (visible) {
       setMounted(true);
       drag.value = 0;
       progress.value = withTiming(1, SLIDE_IN);
+      wasVisible.current = true;
     } else {
+      const wasOpen = wasVisible.current;
+      wasVisible.current = false;
       progress.value = withTiming(0, SLIDE_OUT, (finished) => {
-        if (finished) scheduleOnRN(setMounted, false);
+        if (!finished) return;
+        scheduleOnRN(setMounted, false);
+        if (wasOpen) scheduleOnRN(dismissed);
       });
     }
     // The shared values are stable, so only `visible` starts a slide.

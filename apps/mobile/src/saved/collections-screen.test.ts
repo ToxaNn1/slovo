@@ -103,6 +103,7 @@ describe('the «Колекції» screen', () => {
         accessibilityLabel: 'Порожня, 0 записів',
         renameLabel: 'Перейменувати «Порожня»',
         deleteLabel: 'Видалити «Порожня»',
+        moreLabel: 'Дії з колекцією «Порожня»',
       },
       {
         id: reading,
@@ -112,6 +113,7 @@ describe('the «Колекції» screen', () => {
         accessibilityLabel: 'Читання, 2 записи: гармидер, веремія',
         renameLabel: 'Перейменувати «Читання»',
         deleteLabel: 'Видалити «Читання»',
+        moreLabel: 'Дії з колекцією «Читання»',
       },
     ]);
   });
