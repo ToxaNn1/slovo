@@ -1,0 +1,132 @@
+# Sync: a reader signs in and hearts an Entry, a "second device" of the same
+# Account hearts another through the API, and the app, sent to the background
+# and back, lists both in Favorites without a restart, on the screen the reader
+# was on. The SLOVO ID screen then says when the words were synced. It needs
+# the backend (with Docker's Postgres and Mailpit) like `account.yaml`, and
+# reads the Sign-in codes from Mailpit, `MAILPIT_URL`, and the second device
+# signs in at the backend Metro was started with, `API_URL` (default
+# http://localhost:8787). It leaves the reader signed out.
+# A subflow of `smoke.yaml`; run it from there.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+# The Entry the second device hearts, and where it reaches the backend.
+- evalScript: ${output.entryId = ENTRY_ID || 'w_00g2ap'; output.apiUrl = API_URL || 'http://localhost:8787'}
+- runFlow:
+    file: ../open-settings-row.yaml
+    env:
+      ROW: settings-row-account
+# Signed in from an earlier run of the same app: sign out first.
+- runFlow:
+    when:
+      visible:
+        id: settings-row-account
+        text: 'SLOVO ID, .*@.*'
+    commands:
+      - tapOn:
+          id: settings-row-account
+      - tapOn:
+          id: account-sign-out
+      - tapOn:
+          id: account-back
+# Signed out, take the Favorites of an earlier run out of the app.
+- runFlow: ../clear-favorites.yaml
+- tapOn:
+    id: tab-settings
+- runFlow:
+    file: ../open-settings-row.yaml
+    env:
+      ROW: settings-row-account
+- tapOn:
+    id: settings-row-account
+- runFlow: ../sign-in.yaml
+- tapOn:
+    id: account-back
+# Heart the Entry of the Feed's card.
+- tapOn:
+    id: tab-home
+- scrollUntilVisible:
+    element:
+      id: favorite-button
+- swipe:
+    start: 50%, 60%
+    end: 50%, 48%
+    duration: 800
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: favorite-button
+        text: Додати в Улюблене
+    commands:
+      - tapOn:
+          id: favorite-button
+- assertVisible:
+    id: favorite-button
+    text: Прибрати з Улюбленого
+# The reader waits on the Favorites list.
+- tapOn:
+    id: tab-saved
+- tapOn:
+    id: saved-favorites
+- assertVisible:
+    id: favorites
+- assertNotVisible:
+    id: entry-row-${output.entryId}-open
+# The second device: signs in with a code of its own and hearts another Entry.
+- evalScript: ${output.firstCode = output.signInCode; output.signInCode = null}
+- runScript:
+    file: ../second-device.js
+    env:
+      STEP: request
+      EMAIL: ${output.email}
+      API_URL: ${output.apiUrl}
+- assertTrue: ${output.secondDevice == 'requested'}
+- repeat:
+    while:
+      true: ${!output.signInCode}
+    times: 10
+    commands:
+      - waitForAnimationToEnd
+      - runScript:
+          file: ../sign-in-code.js
+          env:
+            EMAIL: ${output.email}
+            STALE: ${output.firstCode}
+- runScript:
+    file: ../second-device.js
+    env:
+      EMAIL: ${output.email}
+      CODE: ${output.signInCode}
+      ENTRY_ID: ${output.entryId}
+      API_URL: ${output.apiUrl}
+- assertTrue: ${output.secondDevice == 'pushed'}
+# Back from the background, the app pulls and lists it.
+- pressKey: home
+- launchApp:
+    stopApp: false
+- extendedWaitUntil:
+    visible:
+      id: entry-row-${output.entryId}-open
+    timeout: 20000
+- assertVisible:
+    id: favorites
+# The SLOVO ID screen says when.
+- tapOn:
+    id: favorites-back
+- tapOn:
+    id: tab-settings
+- runFlow:
+    file: ../open-settings-row.yaml
+    env:
+      ROW: settings-row-account
+- tapOn:
+    id: settings-row-account
+- extendedWaitUntil:
+    visible:
+      id: account-signed-in-email
+      text: ${output.email}[\s\S]*Синхронізовано сьогодні о [0-9][0-9]:[0-9][0-9]
+    timeout: 15000
+- tapOn:
+    id: account-sign-out
+- tapOn:
+    id: account-back

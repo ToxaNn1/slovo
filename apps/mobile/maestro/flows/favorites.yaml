@@ -4,36 +4,7 @@
 # Favorites it finds, and leaves none.
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
-# Take every Entry out of Favorites, so the counts below are the flow's own.
-- tapOn:
-    id: tab-saved
-- tapOn:
-    id: saved-favorites
-- assertVisible:
-    id: favorites
-- repeat:
-    while:
-      visible:
-        id: entry-row-.*-open
-    times: 50
-    commands:
-      - tapOn:
-          id: entry-row-.*-open
-      - scrollUntilVisible:
-          element:
-            id: favorite-button
-      - swipe:
-          start: 50%, 60%
-          end: 50%, 48%
-          duration: 800
-      - waitForAnimationToEnd
-      - tapOn:
-          id: favorite-button
-          text: Прибрати з Улюбленого
-      - tapOn:
-          id: entry-screen-back
-- tapOn:
-    id: favorites-back
+- runFlow: ../clear-favorites.yaml
 - tapOn:
     id: tab-home
 # The heart sits under the card, which may be taller than the screen.

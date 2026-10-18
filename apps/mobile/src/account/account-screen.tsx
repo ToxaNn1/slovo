@@ -22,6 +22,7 @@ import { deviceClock } from '../device/device-clock';
 import { editionStrings } from '../edition/edition';
 import { Opened } from '../opened';
 import { useOpened, type Opening } from '../opening';
+import { SyncStatusLine } from '../sync/sync-status-line';
 import { useAccountProblemLine, useAccountState } from './account';
 
 const strings = editionStrings.account;
@@ -247,6 +248,7 @@ function SignedIn({
           style={[styles.email, { color: colors.ink, fontFamily: fontFamilies.ui }]}
         >
           {state.email}
+          <SyncStatusLine />
         </Text>
       </View>
       <SecondaryButton
