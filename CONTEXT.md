@@ -23,7 +23,7 @@ The language-agnostic behaviour and screens shared by every Edition. Editions ne
 _Avoid_: Engine, base app
 
 **Feature Switch**:
-A per-Edition on/off setting for a Core feature (e.g. the Game), set in the Edition or remotely.
+A per-Edition on/off setting for a Core feature (e.g. the Game), set in the Edition or remotely. A remote switch can only turn a feature off; only the Edition turns one on.
 _Avoid_: Toggle, flag (in conversation)
 
 **Extension Point**:
@@ -126,6 +126,10 @@ _Avoid_: Cabinet, profile, login
 **Session**:
 One device's sign-in to an Account, ended on that device or on all at once.
 _Avoid_: Token, login
+
+**Sync**:
+The background exchange of the reader's words and progress between a device and their Account. It needs an Account and waits for the network when offline.
+_Avoid_: Backup, replication, cloud save
 
 **Sign-in code**:
 The one-time six-digit code from the email that signs the reader in. The first right code for an email creates its Account.
