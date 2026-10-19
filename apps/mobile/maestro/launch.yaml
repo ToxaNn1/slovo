@@ -1,0 +1,15 @@
+# Launch flow: opens the app from Metro in the development client and checks
+# the four tabs (`flows/launch.yaml`). The one flow CI runs, on a simulator of
+# a macOS runner (.github/workflows/maestro.yml, ADR 0042); it runs locally too:
+#
+#   maestro test maestro/launch.yaml -e METRO_URL=http://localhost:8162
+#
+# The defaults are the same as `smoke.yaml`'s and are overridden the same way.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- evalScript: ${output.devClientLink = (SCHEME || 'slovo-uk') + '://expo-development-client/?url=' + encodeURIComponent(METRO_URL || 'http://localhost:8081')}
+- launchApp:
+    clearState: false
+- runFlow:
+    file: open-in-dev-client.yaml
+- runFlow: flows/launch.yaml
