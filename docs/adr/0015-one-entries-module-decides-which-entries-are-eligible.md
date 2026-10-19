@@ -26,3 +26,7 @@ Reading the eligible Entries again must leave the order of the Entries that stay
 A feature that weighs every eligible Entry of a kind at once, such as the Game planning its Rounds, asks the Entries for them and gets either the Entries or why the kind as a whole is not eligible: Corrections out of the user's Mix, whether or not the Edition turns them on. The Game passes that reason on and never reads the Mix itself (ADR 0024).
 
 The live Entries themselves are read from the Language Pack once per Entries module, so once per app session: a pack never changes while it is open, and reading every Word in full costs about 0.4 s. Each call still reads the eligible ids afresh and filters the live Entries by them, so a change of eligibility applies at once. A read that fails is tried again on the next call.
+
+## Amendment: due Entries come back on top of the Cycle order (0.8.6)
+
+ADR 0043 puts Review slots in the Feed: a due Word in every 3rd Word slot and a due Correction in the next Correction slot. A due Entry that is Hidden or not eligible is skipped until it is eligible again, so the Entries module still decides eligibility alone, now also under a Rarity Floor. The Cycle order itself doesn't change.
