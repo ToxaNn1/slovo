@@ -172,7 +172,7 @@ export async function openComposition({
     takeMorningWord: () => day.takeMorningWord(),
     scheduling,
   });
-  const knowledge = await openKnowledge({ edition, userState, clock });
+  const knowledge = await openKnowledge({ edition, rows, userState, clock });
   const { feed, followEligibility, markOpenedSeen, openDay } = await openFeed({
     entries,
     userState,

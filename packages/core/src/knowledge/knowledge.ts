@@ -1,4 +1,5 @@
 import type { Edition } from '../edition/edition';
+import type { EntryRowModel, EntryRows } from '../entries/entry-row';
 import { createInTurn, createSubscribers } from '../in-turn';
 import { todayDate } from '../local-date';
 import type { Clock } from '../ports';
@@ -11,6 +12,15 @@ import {
   type KnowledgeMark,
   type KnowledgeRecord,
 } from './knowledge-record';
+
+/** An Entry the reader is learning, in the «Вчу» list. */
+export interface LearningEntry {
+  readonly entryId: string;
+  /** The local day the Entry is due for Review, `YYYY-MM-DD`; today or earlier while it is due. */
+  readonly reviewDay: string;
+  /** What its row in a list shows. */
+  readonly row: EntryRowModel;
+}
 
 /**
  * The Knowledge Marks of every Entry (ADR 0043), read from the user state
@@ -32,6 +42,13 @@ export interface Knowledge {
    */
   due(): readonly string[];
   /**
+   * The Entries the reader is learning: every Entry marked Unknown that is not
+   * yet Learned, Known on a Review since or not, sorted by the next Review
+   * day. An id the Language Pack doesn't have is left out. None with the
+   * `knowledge` Feature Switch off.
+   */
+  learning(): Promise<readonly LearningEntry[]>;
+  /**
    * The reader taps a mark on the Entry's card: the mark the card shows
    * removes it, deleting the record; any other tap answers the Entry today,
    * as `answer` does.
@@ -46,10 +63,12 @@ export interface Knowledge {
 /** Opens the Knowledge Marks over the user state, for the Core composition. */
 export async function openKnowledge({
   edition,
+  rows,
   userState,
   clock,
 }: {
   edition: Pick<Edition, 'isFeatureEnabled'>;
+  rows: EntryRows;
   userState: UserState;
   clock: Clock;
 }): Promise<Knowledge> {
@@ -86,6 +105,19 @@ export async function openKnowledge({
       if (!edition.isFeatureEnabled('knowledge')) return [];
       const today = todayDate(clock);
       return [...records].flatMap(([entryId, record]) => (isDue(record, today) ? [entryId] : []));
+    },
+    async learning() {
+      if (!edition.isFeatureEnabled('knowledge')) return [];
+      const reviews = [...records]
+        .flatMap(([entryId, { reviewDay }]) => (reviewDay === null ? [] : [{ entryId, reviewDay }]))
+        .sort((a, b) => a.reviewDay.localeCompare(b.reviewDay));
+      const listed = await Promise.all(
+        reviews.map(async (review) => {
+          const row = await rows.row(review.entryId);
+          return row === undefined ? [] : [{ ...review, row }];
+        }),
+      );
+      return listed.flat();
     },
     tap: (entryId, mark) =>
       change(entryId, (record) => {

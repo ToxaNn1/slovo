@@ -57,3 +57,11 @@ A Correction due for Review takes the Correction slot, every 5th card of the Cyc
 
 - **A due Correction takes the next Review slot of any kind**: rejected. A Correction every 5th card is what the reader expects, and the Word slots stay the Words'.
 - **A due Correction waits for an unseen Correction's turn**: rejected. Once every Correction of the Cycle is Seen, a due one would wait weeks for the next Cycle.
+
+## Amendment: which Entries the «Вчу» list holds (0.8.6, #475)
+
+The knowledge module's `learning` lists every Entry with a Review day, that is every Entry marked Unknown and not yet Learned, with its next Review day and its row, sorted by that day. An Entry answered Known on a Review since stays in it until it is Learned, so the list shows «через 3 дні» too. An Entry already due keeps its past Review day and leads the list. A removed mark is gone with its record, an id the Language Pack no longer has is left out as in Favorites, and with the `knowledge` Feature Switch off the list is empty.
+
+### Considered Options
+
+- **Only Entries whose current mark is Unknown**: rejected. An Entry Known on its 1-day Review is still being learned until its 7-day Review, and the spec's list shows a 3-day Review day.
