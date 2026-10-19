@@ -13,6 +13,7 @@ describe('what the statistics show', () => {
     expect(progressShownOf(editionWithout(), { hideStreak: false })).toEqual({
       statistics: true,
       streak: true,
+      knowledge: true,
     });
   });
 
@@ -20,6 +21,7 @@ describe('what the statistics show', () => {
     expect(progressShownOf(editionWithout(), { hideStreak: true })).toEqual({
       statistics: true,
       streak: false,
+      knowledge: true,
     });
   });
 
@@ -27,6 +29,15 @@ describe('what the statistics show', () => {
     expect(progressShownOf(editionWithout('statistics'), { hideStreak: false })).toEqual({
       statistics: false,
       streak: false,
+      knowledge: false,
+    });
+  });
+
+  it('hides only the knowledge counts with the knowledge switch off', () => {
+    expect(progressShownOf(editionWithout('knowledge'), { hideStreak: false })).toEqual({
+      statistics: true,
+      streak: true,
+      knowledge: false,
     });
   });
 });

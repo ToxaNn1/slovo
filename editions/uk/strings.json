@@ -533,7 +533,21 @@
       "few": "Найкраще у Грі: {count} з {total}",
       "many": "Найкраще у Грі: {count} з {total}",
       "other": "Найкраще у Грі: {count} з {total}"
-    }
+    },
+    "known": "Знаю {words} · {corrections}",
+    "knownWords": {
+      "one": "{count} слово",
+      "few": "{count} слова",
+      "many": "{count} слів",
+      "other": "{count} слова"
+    },
+    "knownCorrections": {
+      "one": "{count} Виправлення",
+      "few": "{count} Виправлення",
+      "many": "{count} Виправлень",
+      "other": "{count} Виправлення"
+    },
+    "dueToday": "На повторення сьогодні: {count}"
   },
   "onboarding": {
     "skip": "Пропустити",

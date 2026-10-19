@@ -10,7 +10,7 @@ import { useSettings } from './settings';
 /**
  * The Stats pill (the flame alone while the Streak is hidden), and the stats sheet it opens, both kept up
  * to date while they show. What is drawn is decided here, from the statistics
- * switch in effect and the reader's hide-Streak setting.
+ * and knowledge switches in effect and the reader's hide-Streak setting.
  */
 export function StatsPillAndSheet() {
   const shown = progressShownOf(useEditionInEffect(), useSettings().current);
@@ -30,6 +30,7 @@ export function StatsPillAndSheet() {
         visible={open}
         stats={progress}
         hideStreak={!shown.streak}
+        hideKnowledge={!shown.knowledge}
         onClose={() => {
           setOpen(false);
         }}

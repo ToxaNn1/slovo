@@ -7,6 +7,13 @@ import type { ReactNode } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 const plural = (text: string) => ({ one: text, few: text, many: text, other: text });
+/** A count whose every form names itself, so a test reads which form the language picked. */
+const forms = (noun: string) => ({
+  one: `{count} ${noun} (one)`,
+  few: `{count} ${noun} (few)`,
+  many: `{count} ${noun} (many)`,
+  other: `{count} ${noun} (other)`,
+});
 
 const strings = {
   game: { round: { progress: '{passed} of {total}' } },
@@ -21,6 +28,10 @@ const strings = {
     inCollections: plural('in collections'),
     gameBest: plural('best game'),
     gameBestLabel: plural('best game'),
+    known: 'know {words} · {corrections}',
+    knownWords: forms('word'),
+    knownCorrections: forms('correction'),
+    dueToday: 'due today: {count}',
   },
 } as unknown as EditionStrings;
 
@@ -36,12 +47,12 @@ const progress: ProgressState = {
   dueToday: 0,
 };
 
-async function renderInEdition(children: ReactNode) {
+async function renderInEdition(children: ReactNode, locale = 'en') {
   await render(
     <SafeAreaProvider
       initialMetrics={{ frame: { x: 0, y: 0, width: 390, height: 844 }, insets: zeroInsets }}
     >
-      <EditionProvider edition={{ locale: 'en' }} strings={strings}>
+      <EditionProvider edition={{ locale }} strings={strings}>
         {children}
       </EditionProvider>
     </SafeAreaProvider>,
@@ -85,6 +96,59 @@ describe('StatsSheet', () => {
 
     expect(screen.queryByTestId('stats-streak')).not.toBeOnTheScreen();
     expect(screen.queryByText('best streak 30')).not.toBeOnTheScreen();
+    expect(screen.getByTestId('stats-favorites')).toBeOnTheScreen();
+  });
+
+  // Spec #461, ADR 0043: the knowledge rows, in the plural forms of Ukrainian.
+  it.each([
+    [1, 'one'],
+    [2, 'few'],
+    [5, 'many'],
+    [11, 'many'],
+    [21, 'one'],
+  ])('draws the Known Words and Corrections and today’s Review for %i', async (n, form) => {
+    await renderInEdition(
+      <StatsSheet
+        visible
+        stats={{ ...progress, knownWords: n, knownCorrections: n, dueToday: n }}
+        onClose={() => undefined}
+      />,
+      'uk',
+    );
+
+    expect(
+      screen.getByText(`know ${String(n)} word (${form}) · ${String(n)} correction (${form})`),
+    ).toBeOnTheScreen();
+    expect(screen.getByText(`due today: ${String(n)}`)).toBeOnTheScreen();
+  });
+
+  it('draws different Word and Correction counts in their own forms, and 0 due', async () => {
+    await renderInEdition(
+      <StatsSheet
+        visible
+        stats={{ ...progress, knownWords: 12, knownCorrections: 3, dueToday: 0 }}
+        onClose={() => undefined}
+      />,
+      'uk',
+    );
+
+    expect(screen.getByText('know 12 word (many) · 3 correction (few)')).toBeOnTheScreen();
+    expect(screen.getByText('due today: 0')).toBeOnTheScreen();
+  });
+
+  it('draws neither knowledge row while the knowledge counts are hidden', async () => {
+    await renderInEdition(
+      <StatsSheet
+        visible
+        hideKnowledge
+        stats={{ ...progress, knownWords: 4, knownCorrections: 2, dueToday: 1 }}
+        onClose={() => undefined}
+      />,
+      'uk',
+    );
+
+    expect(screen.queryByTestId('stats-known')).not.toBeOnTheScreen();
+    expect(screen.queryByTestId('stats-due-today')).not.toBeOnTheScreen();
     expect(screen.getByTestId('stats-favorites')).toBeOnTheScreen();
   });
 });

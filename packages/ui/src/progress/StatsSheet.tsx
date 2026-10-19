@@ -53,7 +53,9 @@ function Count({
  * The stats sheet the Stats pill opens (design `stats-sheet-dark`): the big
  * Streak with its Best Streak, Decor slot 2's band, then the Entries Seen
  * today, the Favorites count, the Entries in Collections and the best Game
- * result once a Game has finished, each in the Edition's plural form. It
+ * result once a Game has finished, each in the Edition's plural form, and
+ * under them the Known Words and Corrections and the Entries due for Review
+ * today, unless the knowledge counts are hidden. It
  * closes with a swipe down, a tap outside or VoiceOver's escape gesture, and
  * with Reduce Motion it appears without sliding. While the reader hides the
  * Streak, the Streak with its Best Streak is left out. Needs a
@@ -63,11 +65,14 @@ export function StatsSheet({
   visible,
   stats,
   hideStreak = false,
+  hideKnowledge = false,
   onClose,
 }: {
   visible: boolean;
   stats: ProgressState;
   hideStreak?: boolean;
+  /** Leaves out the counts of the Knowledge Marks, as with the `knowledge` Feature Switch off. */
+  hideKnowledge?: boolean;
   onClose: () => void;
 }) {
   const { colors, fontFamilies } = useTokens();
@@ -145,6 +150,27 @@ export function StatsSheet({
             />
           )}
         </View>
+        {!hideKnowledge && (
+          <View style={styles.knowledge}>
+            <Text
+              testID="stats-known"
+              {...voice}
+              style={[styles.knowledgeRow, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+            >
+              {fill(words.known, {
+                words: count(words.knownWords, stats.knownWords),
+                corrections: count(words.knownCorrections, stats.knownCorrections),
+              })}
+            </Text>
+            <Text
+              testID="stats-due-today"
+              {...voice}
+              style={[styles.knowledgeRow, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+            >
+              {fill(words.dueToday, { count: String(stats.dueToday) })}
+            </Text>
+          </View>
+        )}
       </ScrollView>
     </BottomSheet>
   );
@@ -171,6 +197,8 @@ const styles = StyleSheet.create({
     rowGap: space[6],
     marginTop: space[6],
   },
+  knowledge: { marginTop: space[6], gap: space[2] },
+  knowledgeRow: { fontSize: typeSize.explanation },
   count: { paddingRight: space[3], gap: space[1] },
   countValue: { fontSize: typeSize.count, fontWeight: '500' },
   countLabel: { fontSize: typeSize.caption },
