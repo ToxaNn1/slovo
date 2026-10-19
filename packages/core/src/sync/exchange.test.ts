@@ -23,7 +23,7 @@ const content = createMemoryContentPort({
 
 const edition = {
   id: 'test',
-  isFeatureEnabled: () => false,
+  isFeatureEnabled: (feature: string) => feature === 'knowledge',
   languageTraits: { distractorRule: 'same-part-of-speech' as const },
   userSettingDefaults: {
     mix: { categoryIds: ['test', 'sea'], corrections: false },
@@ -214,6 +214,43 @@ describe('two devices of one Account', () => {
     await tablet.sync();
 
     expect((await tablet.settings.read()).selfCheck).toBe(true);
+  });
+
+  it('let the newer Knowledge Mark of an Entry win, on either device', async () => {
+    const { device, server, time } = account();
+    const phone = await device();
+    const tablet = await device();
+    await (await phone.open()).knowledge.tap('w_one', 'unknown');
+    time.advance(HOUR);
+    await (await tablet.open()).knowledge.tap('w_one', 'known');
+    await tablet.sync();
+    time.advance(HOUR);
+
+    await phone.sync();
+    await tablet.sync();
+
+    const learned = { mark: 'known', step: null, reviewDay: null, learned: true };
+    expect((await phone.open()).knowledge.recordOf('w_one')).toEqual(learned);
+    expect((await tablet.open()).knowledge.recordOf('w_one')).toEqual(learned);
+    expect(server.records.get('knowledge.w_one')?.value).toEqual(learned);
+  });
+
+  it('carry a removed Knowledge Mark to the other device as a tombstone', async () => {
+    const { device, server, time } = account();
+    const phone = await device();
+    const tablet = await device();
+    await (await phone.open()).knowledge.tap('w_one', 'unknown');
+    await phone.sync();
+    await tablet.sync();
+    expect((await tablet.open()).knowledge.markOf('w_one')).toBe('unknown');
+    time.advance(HOUR);
+
+    await (await tablet.open()).knowledge.tap('w_one', 'unknown');
+    await tablet.sync();
+    await phone.sync();
+
+    expect((await phone.open()).knowledge.recordOf('w_one')).toBeUndefined();
+    expect(server.records.get('knowledge.w_one')?.value).toBeNull();
   });
 
   it('keep a pending change newer than the Account’s through a pull, and it wins after the push', async () => {

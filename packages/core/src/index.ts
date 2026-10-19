@@ -98,6 +98,16 @@ export {
   type RelativeTime,
 } from './saved/history-time';
 export {
+  answerKnowledge,
+  isDue,
+  isLearned,
+  shownMark,
+  type KnowledgeMark,
+  type KnowledgeRecord,
+  type ReviewStep,
+} from './knowledge/knowledge-record';
+export { type Knowledge } from './knowledge/knowledge';
+export {
   formatTimeOfDay,
   localDayOf,
   localTimeOf,

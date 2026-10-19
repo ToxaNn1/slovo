@@ -101,6 +101,20 @@ export const userStateRecords = {
   /** The Hidden Entries, one record per Entry, by Entry id: the instant it was hidden. */
   hiddenEntries: declareRecords('hidden.', InstantSchema),
   /**
+   * The Knowledge Marks, one record per Entry, by Entry id: the mark, the
+   * Review step, the next Review local day and whether the Entry is Learned
+   * (ADR 0043). Removing a mark deletes the record. A new key, so no migration.
+   */
+  knowledge: declareRecords(
+    'knowledge.',
+    z.object({
+      mark: z.enum(['known', 'unknown']),
+      step: z.union([z.literal(1), z.literal(3), z.literal(7)]).nullable(),
+      reviewDay: z.iso.date().nullable(),
+      learned: z.boolean(),
+    }),
+  ),
+  /**
    * The Categories the user put in the Mix or took out of it, one record per
    * Category, by Category id (which holds no `.`): whether it is in. A
    * Category without one follows the Edition's default Mix (ADR 0019).
