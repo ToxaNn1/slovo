@@ -67,10 +67,11 @@ export interface Game {
   /**
    * Answers the current Round with the option at that place. A wrong answer
    * costs a Life at once and marks the Round's Entry «Не знаю» in the
-   * background, before the next «Далі» goes on; a mark that fails to write is
-   * lost and the Game goes on. Nothing changes once the Round is answered.
+   * background, before the next «Далі» goes on. Resolves once the mark is
+   * written; a mark that fails to write rejects, for the shell to log, and
+   * the Game goes on. Nothing changes once the Round is answered.
    */
-  answer(option: number): void;
+  answer(option: number): Promise<void>;
   /**
    * «Далі» after an answer: at 0 Lives the Game is lost; after the last Round
    * it is won; otherwise the next Round comes. A Game that ends with more
@@ -240,14 +241,14 @@ export async function openGame({
     change({ ...state, modes: modesNow, current: played?.first });
   }
 
-  function answer(option: number): void {
+  async function answer(option: number): Promise<void> {
     const game = state.current;
     const answered = game && played?.answer(game, option);
     if (answered === undefined) return;
     changeCurrent(answered);
     const round = answered.played.at(-1);
     if (round !== undefined && !round.right) {
-      inTurn(() => knowledge.answer(round.entry.id, 'unknown')).catch(() => undefined);
+      await inTurn(() => knowledge.answer(round.entry.id, 'unknown'));
     }
   }
 

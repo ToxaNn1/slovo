@@ -193,7 +193,7 @@ async function playGame(app: Composition): Promise<Round[]> {
   await app.game.start('correction');
   const rounds: Round[] = [];
   while (current(app).status === 'playing') {
-    app.game.answer(rightOf(current(app).round));
+    void app.game.answer(rightOf(current(app).round));
     rounds.push(current(app).round);
     await app.game.next();
   }
@@ -365,7 +365,7 @@ describe('a Round of «Обери правильне»', () => {
     const { round } = current(app);
     const wrong = (rightOf(round) + 1) % 4;
 
-    app.game.answer(wrong);
+    void app.game.answer(wrong);
 
     const asked = askedOf(round);
     expect(current(app).round.answer).toEqual({
@@ -409,7 +409,7 @@ describe('the Knowledge Marks «Обери правильне» leaves', () => {
     await app.game.start('correction');
     const { round } = current(app);
 
-    app.game.answer((rightOf(round) + 1) % round.options.length);
+    void app.game.answer((rightOf(round) + 1) % round.options.length);
     await app.game.next();
 
     expect(app.knowledge.recordOf(askedOf(round).id)).toEqual({
