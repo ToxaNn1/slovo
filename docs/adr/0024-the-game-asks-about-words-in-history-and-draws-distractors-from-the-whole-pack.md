@@ -59,3 +59,7 @@ The Game decides the retry, not the shell. A planning that fails is tried again 
 - **Try again only on a return to the foreground**: rejected alone. The reader who opens the Game tab just after launch would see faded cards until leaving the app; a transient failure clears within a second or two.
 - **Try again forever, or on a timer for the whole session**: rejected. A pack that keeps failing to read is a broken install; the Feed fails with it, and a timer that never stops costs battery for nothing.
 - **Show a reason on the card once every try failed**: rejected for now. It needs a new refusal, its text in every Edition and a design for an error the reader can't fix; the next return to the foreground tries again anyway.
+
+## Amendment: up to 5 Rounds come from Unknown or due Entries (0.8.6)
+
+ADR 0043 draws up to 5 of a Game's 15 Rounds from eligible Entries that are Unknown or due for Review, the rest from the pool above. The fallback stays: with fewer than 15 eligible Entries in History the pool is every eligible Entry of the kind. A wrong answer marks the Entry Unknown; answers never move an interval, and the Game keeps its Round answers until the result screen without storing them.

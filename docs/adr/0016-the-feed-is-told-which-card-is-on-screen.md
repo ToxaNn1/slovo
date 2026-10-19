@@ -51,3 +51,7 @@ The shell still tells the Feed only which card is on screen, or that none is. It
 
 - **The shell keeps the card it last reported and finds it again**, as before: rejected. The place rule lived in an untested hook beside the Feed's own, and it grew an input with each feature that covers the Feed.
 - **Leaving the screen counts as a move, so an undo after it keeps the reader on the card that took the place**: rejected. The reader stayed on the card they left, and the shell turned back to it before this change too.
+
+## Amendment: the Feed's next card can be a due Entry (0.8.6)
+
+The Feed's rule for the next card gains the Review slots of ADR 0043: a due Word in every 3rd Word slot, a due Correction in the Correction slot before a new one, and a due Entry stays due until the reader marks it. A Review overrides Seen. The shell still tells the Feed only which card is on screen, or that none is.
