@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { CorrectionCardBody } from './CorrectionCard';
 import { CardCorners } from '../decor/DecorSlots';
+import { ReviewLabel } from './ReviewLabel';
 import { useCompactLayout, useLemmaSize } from '../providers/FontSizeProvider';
 import { blockGap, space, wordCardSide } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
@@ -30,7 +31,8 @@ const SPACING = {
 /**
  * The Entry card: a Word's or a Correction's card in the one card frame, at
  * the user's font size, with the compact layout on narrow screens, the Decor
- * slots and the action row under it. The Edition's strings and language come
+ * slots and the action row under it. A card brought back for Review carries
+ * the Review label on top. The Edition's strings and language come
  * from the `EditionProvider`.
  */
 export function EntryCard({ card, onOpenCorrection, actions }: EntryCardProps) {
@@ -57,6 +59,7 @@ export function EntryCard({ card, onOpenCorrection, actions }: EntryCardProps) {
           },
         ]}
       >
+        {card.review === true && <ReviewLabel />}
         {card.kind === 'word' ? (
           <WordCardBody
             card={card.wordCard}

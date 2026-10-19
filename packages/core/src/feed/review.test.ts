@@ -212,6 +212,31 @@ describe('Review in the Feed', () => {
     expect([ids[2], ids[5], ids[8], ids[11]]).toEqual([due[0], due[0], due[0], due[0]]);
   });
 
+  // Spec #461, ADR 0043: a card brought back for Review is labelled «Повторення».
+  it('tells the card of a due Word or Correction it is a Review, and no other card', async () => {
+    const records = new Map<string, string>();
+    const [dueWord] = await markSeenWordsUnknown(records, {
+      count: 3,
+      unknown: 1,
+      withCorrections: true,
+    });
+    await markUnknown(records, ['c_0'], true);
+    const app = await run({ records, at: dayTwo, withCorrections: true });
+
+    await firstCards(app.feed, 10);
+    const reviews = app.feed.cards.flatMap((card, index) =>
+      card.kind !== 'end-of-cycle' && card.review === true ? [[index, entryIdOf(card)]] : [],
+    );
+
+    expect(reviews).toEqual([
+      [2, dueWord],
+      [4, 'c_0'],
+      [5, dueWord],
+      [8, dueWord],
+      [9, 'c_0'],
+    ]);
+  });
+
   // Spec #461, ADR 0043: a Correction due for Review takes the next Correction slot.
   describe('a due Correction', () => {
     it('takes the Correction slots, every 5th card, until the reader answers it', async () => {

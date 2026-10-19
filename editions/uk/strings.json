@@ -407,7 +407,8 @@
   "knowledge": {
     "known": "Знаю",
     "correctionKnownHint": "Я й так кажу правильно",
-    "unknown": "Не знаю"
+    "unknown": "Не знаю",
+    "review": "Повторення"
   },
   "hiding": {
     "button": "Не показувати",
