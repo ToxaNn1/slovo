@@ -90,18 +90,18 @@ appId: ${APP_ID || 'app.slovo.uk'}
     text: \Q${output.newerTitle}\E, (слово|виправлення).*
 - takeScreenshot: hidden-entries
 # The newer one is first; the second «Повернути» brings the older one back,
-# under a toast, and it leaves the list.
+# under a toast. The toast stays 4 s, so only a quick check comes before its
+# undo.
 - tapOn:
     id: hidden-entry-.*-restore
     index: 1
 - assertVisible:
     id: undo-toast-message
     text: «\Q${output.olderTitle}\E» знову у Стрічці
-- assertNotVisible:
-    text: \Q${output.olderTitle}\E, (слово|виправлення).*
 - takeScreenshot: hidden-restored
 # Undo hides it again with the time it had, so it is below the newer one: the
-# first «Повернути» brings the newer one back, not the older one.
+# first «Повернути» brings the newer one back, not the older one, and the
+# newer one leaves the list.
 - tapOn:
     id: undo-toast-undo
     text: Скасувати
@@ -113,6 +113,8 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - assertVisible:
     id: undo-toast-message
     text: «\Q${output.newerTitle}\E» знову у Стрічці
+- assertNotVisible:
+    text: \Q${output.newerTitle}\E, (слово|виправлення).*
 # Bring the older one back for good, so the flows after this one see the Feed
 # as it was.
 - tapOn:

@@ -44,6 +44,15 @@ appId: ${APP_ID || 'app.slovo.uk'}
 # Heart the Entry of the Feed's card.
 - tapOn:
     id: tab-home
+# A fresh install, as an earlier flow of the smoke leaves, shows the swipe hint
+# over the card's actions: a tap hides it, so it doesn't take the heart's tap.
+- runFlow:
+    when:
+      visible:
+        id: swipe-hint
+    commands:
+      - tapOn:
+          id: swipe-hint
 - scrollUntilVisible:
     element:
       id: favorite-button
