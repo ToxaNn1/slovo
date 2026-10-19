@@ -1,0 +1,34 @@
+# Second half of the smoke flow (ticket #452): History, the Mix, hiding,
+# notifications, the backend flows and the flows from a fresh install. See
+# `smoke-1.yaml`. `-e API_URL=…` names the backend the flows `account.yaml` and
+# `sync.yaml` use; both are in this half.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- evalScript: ${output.devClientLink = (SCHEME || 'slovo-uk') + '://expo-development-client/?url=' + encodeURIComponent(METRO_URL || 'http://localhost:8081')}
+# Keep the app state: clearing it brings back the development client's
+# first-launch menu sheet, which covers Home.
+- launchApp:
+    clearState: false
+- runFlow:
+    file: open-in-dev-client.yaml
+
+# The feature flows, in order. Each one starts where the last one left off.
+- runFlow: flows/history.yaml
+- runFlow: flows/mix.yaml
+- runFlow: flows/hiding.yaml
+- runFlow: flows/hiding-mix.yaml
+- runFlow: flows/hidden.yaml
+- runFlow: flows/notifications.yaml
+# Need the backend; see the flows.
+- runFlow: flows/account.yaml
+- runFlow: flows/sync.yaml
+# Last, as they clear the app's state for a fresh install.
+- runFlow: flows/stats-pill.yaml
+- runFlow: flows/stats-sheet.yaml
+- runFlow: flows/open-from-notification.yaml
+- runFlow: flows/open-from-widget.yaml
+- runFlow: flows/notifications-denied.yaml
+# Also from a fresh install.
+- runFlow: flows/onboarding.yaml
+- runFlow: flows/onboarding-mix.yaml
+- runFlow: flows/onboarding-notifications.yaml

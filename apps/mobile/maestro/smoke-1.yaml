@@ -1,0 +1,36 @@
+# First half of the smoke flow (ticket #452): the feature flows from launch to
+# the Collections. `smoke.yaml` runs it and `smoke-2.yaml` in a row;
+# `pnpm smoke:halves` runs them at once on two simulators. The halves share no
+# app state, and no flow of this half needs the backend. Settings are the same
+# as in `smoke.yaml`: `-e METRO_URL=…`, `APP_ID`, `SCHEME`.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- evalScript: ${output.devClientLink = (SCHEME || 'slovo-uk') + '://expo-development-client/?url=' + encodeURIComponent(METRO_URL || 'http://localhost:8081')}
+# Keep the app state: clearing it brings back the development client's
+# first-launch menu sheet, which covers Home.
+- launchApp:
+    clearState: false
+- runFlow:
+    file: open-in-dev-client.yaml
+
+# The feature flows, in order. Each one starts where the last one left off.
+- runFlow: flows/launch.yaml
+- runFlow: flows/word-of-the-day.yaml
+- runFlow: flows/swipes.yaml
+- runFlow: flows/pronunciation.yaml
+- runFlow: flows/settings.yaml
+- runFlow: flows/widget-guide.yaml
+- runFlow: flows/quick-swipes.yaml
+- runFlow: flows/relaunch.yaml
+- runFlow: flows/placeholders.yaml
+- runFlow: flows/game-correction.yaml
+- runFlow: flows/game-play.yaml
+- runFlow: flows/game-best-stats.yaml
+- runFlow: flows/game-again.yaml
+- runFlow: flows/game-leave.yaml
+- runFlow: flows/game-best-mode.yaml
+- runFlow: flows/favorites.yaml
+- runFlow: flows/share.yaml
+- runFlow: flows/collection-sheet.yaml
+- runFlow: flows/collection-entries.yaml
+- runFlow: flows/collections.yaml

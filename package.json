@@ -14,6 +14,7 @@
     "switch:clear": "pnpm --filter @slovo/backend switch-clear",
     "describe:api": "pnpm --filter @slovo/contracts describe-api",
     "source:words": "pnpm --filter @slovo/sourcing source-words",
+    "smoke:halves": "node scripts/smoke-halves.mjs",
     "lint": "oxlint && turbo run lint && prettier --check .",
     "typecheck": "turbo run typecheck",
     "deps": "depcruise apps packages tools editions --config .dependency-cruiser.mjs",
