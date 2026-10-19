@@ -29,6 +29,8 @@ const strings = {
     exampleNonStandard: 'Not: {text}',
     exampleStandard: 'Right: {text}',
     source: 'Source: {source}',
+    howToSay: 'How to say it?',
+    reveal: 'Show',
   },
   wordOfTheDay: { badge: 'Word of the day · {day} {month}', months: [] },
   knowledge: {
@@ -283,5 +285,59 @@ describe('Self-check on a Word card', () => {
 
     expect(screen.getByTestId('word-of-the-day-badge')).toBeTruthy();
     expect(screen.queryByTestId('word-definition')).toBeNull();
+  });
+});
+
+function correctionWithEverything(): EntryFeedCard {
+  const withSources = cardWithSources(['A dictionary']);
+  if (withSources.kind !== 'correction') throw new Error('The fixture is a Correction card');
+  return {
+    ...withSources,
+    correctionCard: { ...withSources.correctionCard, otherEquivalents: ['take a hand'] },
+  };
+}
+
+describe('Self-check on a Correction card', () => {
+  it('shows only the non-standard form and asks how to say it until revealed', async () => {
+    await render(
+      inEdition(<EntryCard card={correctionWithEverything()} hidden onReveal={jest.fn()} />),
+    );
+
+    expect(screen.getByTestId('correction-non-standard')).toBeTruthy();
+    expect(screen.getByText('take part')).toBeTruthy();
+    expect(screen.getByText('How to say it?')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Show' })).toBeTruthy();
+    for (const hiddenPart of [
+      'correction-type',
+      'correction-standard',
+      'correction-other-equivalents',
+      'correction-explanation',
+      'correction-example-pair',
+      'correction-source',
+    ]) {
+      expect(screen.queryByTestId(hiddenPart)).toBeNull();
+    }
+    expect(screen.queryByText('join in')).toBeNull();
+  });
+
+  it('asks for the reveal when the reader taps «Show»', async () => {
+    const onReveal = jest.fn();
+    await render(
+      inEdition(<EntryCard card={correctionWithEverything()} hidden onReveal={onReveal} />),
+    );
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Show' }));
+
+    expect(onReveal).toHaveBeenCalled();
+  });
+
+  it('shows the right form and the explanation once revealed', async () => {
+    await render(inEdition(<EntryCard card={correctionWithEverything()} />));
+
+    expect(screen.getByTestId('correction-standard')).toBeTruthy();
+    expect(screen.getByTestId('correction-explanation')).toHaveTextContent('A long explanation.');
+    expect(screen.getByTestId('correction-example-pair')).toBeTruthy();
+    expect(screen.queryByText('How to say it?')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Show' })).toBeNull();
   });
 });

@@ -213,7 +213,9 @@
     "exampleNonStandard": "Так кажуть: {text}",
     "exampleStandard": "Краще: {text}",
     "source": "Джерело: {source}",
-    "insteadOf": "замість «{form}»"
+    "insteadOf": "замість «{form}»",
+    "howToSay": "Як правильно?",
+    "reveal": "Показати"
   },
   "favorites": {
     "title": "Улюблене",

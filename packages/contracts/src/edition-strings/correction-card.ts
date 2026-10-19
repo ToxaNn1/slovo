@@ -24,4 +24,8 @@ export const CorrectionCardStringsSchema = z.strictObject({
   source: templateOf('source'),
   /** A Correction's row in any list, under its standard equivalent, e.g. "замість «{form}»". */
   insteadOf: templateOf('form'),
+  /** Self-check: the question under a hidden card's non-standard form, e.g. "Як правильно?". */
+  howToSay: TextSchema,
+  /** Self-check: the button that reveals a hidden Correction card's right form, e.g. "Показати". */
+  reveal: TextSchema,
 });
