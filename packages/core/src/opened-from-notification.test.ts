@@ -83,6 +83,9 @@ describe('opening a Word from a notification', () => {
       seenToday: 1,
       favorites: 0,
       inCollections: 0,
+      knownWords: 0,
+      knownCorrections: 0,
+      dueToday: 0,
     });
   });
 

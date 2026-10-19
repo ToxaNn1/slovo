@@ -73,3 +73,7 @@ The Feed tells a card it is a Review (`review` on the card) when the card's Entr
 ### Considered Options
 
 - **Only the cards of the Review slots**: rejected. A due Entry at its own turn shows no mark and takes a Review answer all the same, and without the label the reader can't tell why.
+
+## Amendment: what the knowledge counts count (0.8.6, #477)
+
+The knowledge module's `counts` gives Progress three numbers: the Words and the Corrections whose mark is Known, a Learned Entry among them and an Entry Known on a Review that is not Learned yet, and the Entries due today, the same ones `due` gives the Feed. A removed mark is gone with its record and counts no more; an id the Language Pack no longer has is no Word and no Correction. The module reads each marked Entry's kind once, when it opens or when the Entry is first marked, so Progress follows the counts at once, as it follows Favorites, and a new local day changes the due count with the Streak. With the `knowledge` Feature Switch off all three are 0.
