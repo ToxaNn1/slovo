@@ -28,7 +28,12 @@ const strings = {
     exampleStandard: 'Right: {text}',
     source: 'Source: {source}',
   },
-  knowledge: { known: 'Known', unknown: 'Unknown', correctionKnownHint: 'I already say it right' },
+  knowledge: {
+    known: 'Known',
+    unknown: 'Unknown',
+    correctionKnownHint: 'I already say it right',
+    review: 'Review',
+  },
 } as unknown as EditionStrings;
 
 const card: EntryFeedCard = {
@@ -118,6 +123,24 @@ describe('EntryCard', () => {
     await render(inEdition(<EntryCard card={card} />));
 
     expect(screen.queryByTestId('correction-source')).toBeNull();
+  });
+
+  it.each([
+    ['Word', wordCard],
+    ['Correction', card],
+  ])('labels a %s card brought back for Review', async (_kind, entry) => {
+    await render(inEdition(<EntryCard card={{ ...entry, review: true }} />));
+
+    expect(screen.getByText('Review')).toBeTruthy();
+  });
+
+  it.each([
+    ['Word', wordCard],
+    ['Correction', card],
+  ])('draws no Review label on any other %s card', async (_kind, entry) => {
+    await render(inEdition(<EntryCard card={entry} />));
+
+    expect(screen.queryByText('Review')).toBeNull();
   });
 
   it('draws no frame on a card when the Edition has no corners', async () => {
