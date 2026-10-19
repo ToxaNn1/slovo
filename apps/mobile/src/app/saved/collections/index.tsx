@@ -12,7 +12,7 @@ import {
   useTokens,
 } from '@slovo/ui';
 import { useRouter } from 'expo-router';
-import { memo, useCallback, useRef, useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -21,6 +21,7 @@ import { useOpenScreen } from '../../../entries/use-open-screen';
 import { refusalText } from '../../../saved/collection-refusal';
 import { useCollectionChanges, useCollectionRows } from '../../../saved/collections';
 import type { CollectionRowModel } from '../../../saved/collections-screen';
+import { createMenuFollowUp } from '../../../saved/menu-follow-up';
 
 const { collections: collectionStrings } = editionStrings;
 const strings = collectionStrings.screen;
@@ -44,8 +45,6 @@ export default function CollectionsScreen() {
   const [editing, setEditing] = useState<Editing>();
   const [menu, setMenu] = useState<CollectionRowModel>();
   const [deleting, setDeleting] = useState<CollectionRowModel>();
-  /** The Collection the menu chose to delete: its dialog opens once the menu has slid away, as two modals do not show together. */
-  const deleteAfterMenu = useRef<CollectionRowModel>(undefined);
 
   // Kept from render to render, so the rows re-render only when the list or the row being renamed changes.
   const openCollection = useCallback(
@@ -60,13 +59,25 @@ export default function CollectionsScreen() {
   const stopEditing = useCallback(() => {
     setEditing(undefined);
   }, []);
-  const openMenu = useCallback((collection: CollectionRowModel) => {
-    deleteAfterMenu.current = undefined;
-    setMenu(collection);
-  }, []);
   const confirmDelete = useCallback((collection: CollectionRowModel) => {
     setDeleting(collection);
   }, []);
+  /** What the menu chose runs once the menu has slid away: two modals do not show together, and the name field would lose the focus to the leaving one. */
+  const [afterMenu] = useState(() =>
+    createMenuFollowUp<CollectionRowModel>({
+      rename: (collection) => {
+        startRename(collection.id);
+      },
+      remove: confirmDelete,
+    }),
+  );
+  const openMenu = useCallback(
+    (collection: CollectionRowModel) => {
+      afterMenu.opened();
+      setMenu(collection);
+    },
+    [afterMenu],
+  );
   /** Keeps the name the field gives; closes the field, or says why the name is refused. */
   const keepName = useCallback(
     async (keep: () => Promise<CollectionResult | undefined>): Promise<string | undefined> => {
@@ -167,20 +178,17 @@ export default function CollectionsScreen() {
         visible={menu !== undefined}
         copy={strings.menu}
         onRename={() => {
-          if (menu !== undefined) startRename(menu.id);
+          if (menu !== undefined) afterMenu.chooseRename(menu);
           setMenu(undefined);
         }}
         onDelete={() => {
-          deleteAfterMenu.current = menu;
+          if (menu !== undefined) afterMenu.chooseDelete(menu);
           setMenu(undefined);
         }}
         onCancel={() => {
           setMenu(undefined);
         }}
-        onDismissed={() => {
-          if (deleteAfterMenu.current !== undefined) confirmDelete(deleteAfterMenu.current);
-          deleteAfterMenu.current = undefined;
-        }}
+        onDismissed={afterMenu.dismissed}
       />
       <DeleteCollectionDialog
         testID="collections-delete"
