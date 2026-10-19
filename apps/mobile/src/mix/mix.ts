@@ -31,6 +31,7 @@ export function useMixChanges(): {
   toggleCategory: (categoryId: string, inMix: boolean) => void;
   turnAllOn: () => void;
   setCorrections: (inMix: boolean) => void;
+  setRarityFloor: (floor: number) => void;
 } {
   const { mix } = useComposition();
   const keep = (change: Promise<unknown>) => {
@@ -47,6 +48,9 @@ export function useMixChanges(): {
     },
     setCorrections: (inMix) => {
       keep(mix.setCorrections(inMix));
+    },
+    setRarityFloor: (floor) => {
+      keep(mix.setRarityFloor(floor));
     },
   };
 }

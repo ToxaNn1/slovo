@@ -97,6 +97,39 @@ describe('the Мій Мікс screen', () => {
   });
 });
 
+describe('the Rarity Floor choice of the Мій Мікс screen', () => {
+  const withoutRarityFilter: Edition = {
+    ...ukrainian,
+    isFeatureEnabled: (feature) =>
+      feature !== 'rarityFilter' && ukrainian.isFeatureEnabled(feature),
+  };
+
+  it('offers floors from 1 to 5, on the lowest until the reader chooses one', async () => {
+    const { mix } = await open(ukrainian);
+
+    expect(mixScreenModel({ edition: ukrainian, mix: mix.state }).rarity).toEqual({
+      floor: 1,
+      floors: [1, 2, 3, 4, 5],
+    });
+  });
+
+  it('shows the floor the reader chose', async () => {
+    const { mix } = await open(ukrainian);
+
+    await mix.setRarityFloor(4);
+
+    expect(mixScreenModel({ edition: ukrainian, mix: mix.state }).rarity?.floor).toBe(4);
+  });
+
+  it('leaves the choice out while the rarityFilter switch is off', async () => {
+    const { mix } = await open(ukrainian);
+
+    await mix.setRarityFloor(4);
+
+    expect(mixScreenModel({ edition: withoutRarityFilter, mix: mix.state }).rarity).toBe(undefined);
+  });
+});
+
 describe('the «Мій Мікс» row of Settings', () => {
   it('says «Усі» while every Category is in the Mix, and Corrections do not change it', async () => {
     const { mix } = await open(ukrainian);
