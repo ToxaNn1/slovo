@@ -9,6 +9,8 @@ export interface WordFeedCard {
   readonly wordCard: WordCardModel;
   /** On the card of the Word of the Day: the local day it is the Word of. */
   readonly wordOfTheDay?: LocalDate;
+  /** On a card the Feed brought back for Review, labelled «Повторення». */
+  readonly review?: true;
 }
 
 /** The card of a Correction. */
@@ -16,6 +18,8 @@ export interface CorrectionFeedCard {
   readonly kind: 'correction';
   /** What the card shows, built by the Core. */
   readonly correctionCard: CorrectionCardModel;
+  /** On a card the Feed brought back for Review, labelled «Повторення». */
+  readonly review?: true;
 }
 
 /** The card of an Entry: a Word or a Correction. */

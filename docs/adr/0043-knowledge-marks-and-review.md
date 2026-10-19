@@ -65,3 +65,11 @@ The knowledge module's `learning` lists every Entry with a Review day, that is e
 ### Considered Options
 
 - **Only Entries whose current mark is Unknown**: rejected. An Entry Known on its 1-day Review is still being learned until its 7-day Review, and the spec's list shows a 3-day Review day.
+
+## Amendment: which card is labelled «Повторення» (0.8.6, #469)
+
+The Feed tells a card it is a Review (`review` on the card) when the card's Entry is due for Review as the Feed adds it: at a Review slot or a Correction slot, and also when a due Entry comes at its own turn in the Cycle, as the Word of the Day, as a linked Correction or as the card the Feed opens on. Such a card shows no mark (amendment of #465), so the label says why. The card keeps its label once answered; the next card of the Entry, no longer due, has none. With the `knowledge` Feature Switch off nothing is due, so no card is labelled.
+
+### Considered Options
+
+- **Only the cards of the Review slots**: rejected. A due Entry at its own turn shows no mark and takes a Review answer all the same, and without the label the reader can't tell why.

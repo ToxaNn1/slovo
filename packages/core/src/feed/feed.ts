@@ -220,7 +220,8 @@ function eligibleDue(cycle: Cycle, knowledge: Pick<Knowledge, 'due'>): EntryIds 
  * Correction's turn shows one before a new Correction, in the same way. A
  * due Entry the Cycle doesn't cover (Hidden, out of the Mix, under the
  * Rarity Floor) waits until it does. Its card is Seen and joins History as
- * any card does.
+ * any card does. Every card whose Entry is due as the Feed adds it, in a
+ * Review slot or not, is a Review, labelled «Повторення» (`review`).
  *
  * The composition calls `followEligibility` once the Cycle has read the
  * eligible Entries again: the Feed drops every card whose Entry the Cycle no
@@ -295,7 +296,9 @@ export async function openFeed({
     const opening =
       today !== undefined && cycle.covers(today.wordId) ? await wordOfTheDayCard(today) : undefined;
     const restored =
-      opening?.wordCard.wordId === entry.id ? undefined : await buildEntryCard(entries, entry);
+      opening?.wordCard.wordId === entry.id
+        ? undefined
+        : asReviewIfDue(await buildEntryCard(entries, entry));
     if (opening !== undefined) session.add(opening);
     if (restored !== undefined) session.add(restored);
     subscribers.tell();
@@ -332,7 +335,7 @@ export async function openFeed({
     if (id !== undefined) {
       const entry = await entries.get(id);
       if (entry === undefined) return undefined;
-      card = await buildEntryCard(entries, entry);
+      card = asReviewIfDue(await buildEntryCard(entries, entry));
     }
     session.add(card, tooEarly);
     subscribers.tell();
@@ -351,7 +354,7 @@ export async function openFeed({
     if (entryIdOf(session.cards[position + 1]) === correctionId) return position + 1;
     const correction = await entries.get(correctionId);
     if (correction?.kind !== 'correction') return undefined;
-    session.insertAfter(card, await buildEntryCard(entries, correction));
+    session.insertAfter(card, asReviewIfDue(await buildEntryCard(entries, correction)));
     subscribers.tell();
     return position + 1;
   }
@@ -359,7 +362,14 @@ export async function openFeed({
   /** The card of a day's Word of the Day. */
   async function wordOfTheDayCard(choice: WordOfTheDayChoice): Promise<WordFeedCard | undefined> {
     const entry = await entries.get(choice.wordId);
-    return entry?.kind === 'word' ? buildEntryCard(entries, entry, choice.date) : undefined;
+    return entry?.kind === 'word'
+      ? asReviewIfDue(await buildEntryCard(entries, entry, choice.date))
+      : undefined;
+  }
+
+  /** The card as a Review while its Entry is due for Review (ADR 0043). */
+  function asReviewIfDue<Card extends EntryFeedCard>(card: Card): Card {
+    return knowledge.due().includes(entryIdOf(card)) ? { ...card, review: true } : card;
   }
 
   /**
