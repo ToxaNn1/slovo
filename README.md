@@ -125,6 +125,8 @@ You need the Node version in [`.nvmrc`](.nvmrc), pnpm, Xcode with an iOS Simulat
 
    The defaults live in JavaScript in the flow rather than in its `env:` block, because Maestro lets a flow's `env:` win over `-e`.
 
+   The sync flow also reaches the backend (the one Metro was started against, step 8) at `API_URL`, default `http://localhost:8787`. With the backend on another port, add it: `pnpm test:smoke -e METRO_URL=http://localhost:8162 -e API_URL=http://localhost:8788`.
+
 ## Verify the app with networking off
 
 The Ukrainian Edition must work offline (ticket #6). No automated check covers this yet, so run it by hand on the simulator. The iOS Simulator shares the Mac's network, and Metro on `localhost` keeps working without it.

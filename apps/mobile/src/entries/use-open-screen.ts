@@ -4,7 +4,10 @@ import { useCallback } from 'react';
 import { deviceClock } from '../device/device-clock';
 import { createScreenOpener } from './open-screen';
 
-const openScreen = createScreenOpener(deviceClock);
+const screenOpener = createScreenOpener(deviceClock);
+
+/** The stacks call it when a transition ends, which lets the next tap open a screen. */
+export const screenSettled = screenOpener.settled;
 
 /**
  * Opens a screen from a tap, once however fast it is tapped. Every row, card
@@ -15,7 +18,7 @@ export function useOpenScreen(): (href: string) => void {
   // Kept from render to render, so a row that takes it re-renders only when its own data changes.
   return useCallback(
     (href: string) => {
-      openScreen(router, href);
+      screenOpener.open(router, href);
     },
     [router],
   );
