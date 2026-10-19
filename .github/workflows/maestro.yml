@@ -70,13 +70,15 @@ jobs:
           path: ${{ runner.temp }}/app
           key: >-
             simulator-app-${{ runner.os }}-${{ runner.arch }}-${{ steps.xcode.outputs.version }}-${{
-            hashFiles('pnpm-lock.yaml', 'apps/mobile/app.config.ts', 'apps/mobile/plugins/**',
+            hashFiles('.github/workflows/maestro.yml', 'pnpm-lock.yaml', 'apps/mobile/app.config.ts', 'apps/mobile/plugins/**',
             'apps/mobile/ios/**', '!apps/mobile/ios/**/project.pbxproj', 'apps/widget/**',
             'editions/uk/edition.json', 'editions/uk/assets/**', 'editions/uk/decor/**') }}
       - name: Install the pods
         if: ${{ steps.app-cache.outputs.cache-hit != 'true' }}
         working-directory: apps/mobile/ios
         run: pod install
+      # Signed to run locally, with no team or profile: the simulator then
+      # grants the app its entitlements, the Keychain and the App Group.
       - name: Build the development client for the iOS Simulator
         if: ${{ steps.app-cache.outputs.cache-hit != 'true' }}
         working-directory: apps/mobile/ios
@@ -88,7 +90,7 @@ jobs:
             -sdk iphonesimulator \
             -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath "$RUNNER_TEMP/DerivedData" \
-            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM= PROVISIONING_PROFILE_SPECIFIER= \
             > "$ARTIFACTS/xcodebuild.log" 2>&1; then
             grep -E 'error:' "$ARTIFACTS/xcodebuild.log" | head -50
             tail -40 "$ARTIFACTS/xcodebuild.log"
