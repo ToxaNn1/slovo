@@ -106,6 +106,14 @@ export function localDateAfter(date: LocalDate, days: number): LocalDate {
 }
 
 /**
+ * How many local days from today in the clock's current time zone to the
+ * date, `YYYY-MM-DD`: 0 for today, 1 for tomorrow, negative for a day past.
+ */
+export function daysUntil(date: string, clock: Clock): number {
+  return dayNumber(parseLocalDate(date)) - dayNumber(todayDate(clock));
+}
+
+/**
  * The local day an instant fell on, in the clock's current time zone, and how
  * many local days before today it is, so a list can say "today", "yesterday"
  * or the date.
