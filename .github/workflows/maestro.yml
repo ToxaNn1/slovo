@@ -6,9 +6,6 @@ name: Maestro
 # values; the backend's AUTH_SECRET is made fresh on each run.
 on:
   workflow_dispatch:
-  # TEMPORARY, while the workflow is not on main yet; removed before merge.
-  push:
-    branches: [chore/454-maestro-in-ci]
 
 permissions:
   contents: read
