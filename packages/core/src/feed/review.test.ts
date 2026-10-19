@@ -100,9 +100,13 @@ async function markSeenWordsUnknown(
   return marked;
 }
 
-/** Marks the Words «Не знаю» on day one, without showing them. */
-async function markUnknown(records: Map<string, string>, ids: readonly string[]): Promise<void> {
-  const app = await run({ records, at: dayOne });
+/** Marks the Entries «Не знаю» on day one, without showing them. */
+async function markUnknown(
+  records: Map<string, string>,
+  ids: readonly string[],
+  withCorrections = false,
+): Promise<void> {
+  const app = await run({ records, at: dayOne, withCorrections });
   for (const id of ids) await app.knowledge.tap(id, 'unknown');
 }
 
@@ -206,5 +210,57 @@ describe('Review in the Feed', () => {
 
     expect([ids[4], ids[9], ids[14]].every((id) => id?.startsWith('c_'))).toBe(true);
     expect([ids[2], ids[5], ids[8], ids[11]]).toEqual([due[0], due[0], due[0], due[0]]);
+  });
+
+  // Spec #461, ADR 0043: a Correction due for Review takes the next Correction slot.
+  describe('a due Correction', () => {
+    it('takes the Correction slots, every 5th card, until the reader answers it', async () => {
+      const records = new Map<string, string>();
+      await markUnknown(records, ['c_0'], true);
+      const app = await run({ records, at: dayTwo, withCorrections: true });
+
+      const before = await firstCards(app.feed, 10);
+      expect([before[4], before[9]]).toEqual(['c_0', 'c_0']);
+      expect(before.filter((id) => id === 'c_0')).toHaveLength(2);
+
+      await app.knowledge.tap('c_0', 'known');
+      const after = await firstCards(app.feed, 20);
+      expect(after.slice(10)).not.toContain('c_0');
+      expect([after[14], after[19]].every((id) => id?.startsWith('c_'))).toBe(true);
+    });
+
+    it('shares the slots with the other due Corrections, the one shown longest ago first', async () => {
+      const records = new Map<string, string>();
+      await markUnknown(records, ['c_0', 'c_1'], true);
+
+      const ids = await firstCards(
+        (await run({ records, at: dayTwo, withCorrections: true })).feed,
+        15,
+      );
+
+      expect([ids[4], ids[9]].sort()).toEqual(['c_0', 'c_1']);
+      expect(ids[14]).toBe(ids[4]);
+      expect(ids.filter((id) => id?.startsWith('c_'))).toHaveLength(3);
+    });
+
+    it('leaves the Feed as before while no Correction is due', async () => {
+      const records = new Map<string, string>();
+      await markSeenWordsUnknown(records, { count: 3, unknown: 0, withCorrections: true });
+      const unmarked = new Map(records);
+      // Marked today, due only tomorrow.
+      await markUnknown(records, ['c_0', 'c_1'], true);
+
+      const ids = await firstCards(
+        (await run({ records, at: dayOne, withCorrections: true })).feed,
+        15,
+      );
+
+      expect(ids).toEqual(
+        await firstCards(
+          (await run({ records: unmarked, at: dayOne, withCorrections: true })).feed,
+          15,
+        ),
+      );
+    });
   });
 });
