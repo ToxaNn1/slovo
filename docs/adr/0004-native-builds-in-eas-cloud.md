@@ -5,3 +5,7 @@ The development machine is a work laptop pinned to macOS Sonoma 14.5 and Xcode 1
 ## Consequences
 
 Native changes are slow to iterate on, so they should be batched. If the laptop is ever upgraded to macOS Tahoe with Xcode 26.4+, local builds become possible and this ADR can be superseded.
+
+## Amendment (2026-10-19)
+
+A simulator build for tests may run on a CI macOS runner; release and device builds stay in EAS ([ADR 0042](0042-a-ci-macos-runner-builds-the-simulator-app-and-runs-maestro.md)).

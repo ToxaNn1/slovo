@@ -34,3 +34,7 @@ Why: Maestro runs share one simulator host and one machine-wide lock, so with a 
 The full smoke flow now runs as two halves at once on two simulators. `smoke.yaml` still runs the whole smoke by calling `smoke-1.yaml` and `smoke-2.yaml` in a row, so `pnpm test:smoke` and every rule above hold unchanged. `pnpm smoke:halves` runs the halves in parallel, each on its own simulator and Metro and both against one backend, and prints the flows that passed and failed in each half. The halves share no app state, and the two flows that need the backend, `account.yaml` and `sync.yaml`, are in the same half. The machine-wide lock is taken once for both halves.
 
 Why: the full run took 30 to 50 minutes on the shared machine, and a failure late in the chain cost a full rerun. Two halves cost about half the time of one run of the whole smoke, and a failure stays in its half. The end-of-spec smoke run uses `pnpm smoke:halves` by default.
+
+## Amendment (2026-10-19): Maestro in CI
+
+Maestro may run in CI as well as on the owner's machine: a manual workflow runs `launch.yaml` on a macOS runner ([ADR 0042](0042-a-ci-macos-runner-builds-the-simulator-app-and-runs-maestro.md)). The rules above for which flows a PR runs stay.
