@@ -7,27 +7,30 @@ import {
   openUserState,
   type Clock,
   type Composition,
+  type ContentReadPort,
   type FeatureSwitch,
 } from '../index';
 import { correction, fakeClock, word } from '../test-support';
 
 const content = createMemoryContentPort({
-  words: [word('w_one'), word('w_two')],
+  words: [word('w_one'), word('w_two'), word('w_three')],
   corrections: [correction('c_one')],
 });
 
 /** The Core composition of one app run over the records, so the user state survives between runs. */
 async function run({
   records = new Map<string, string>(),
+  pack = content,
   clock = fakeClock('2026-10-19T09:00:00.000Z').clock,
   on = ['knowledge', 'corrections'],
 }: {
   records?: Map<string, string>;
+  pack?: ContentReadPort;
   clock?: Clock;
   on?: readonly FeatureSwitch[];
 } = {}): Promise<Composition> {
   return openComposition({
-    content,
+    content: pack,
     edition: {
       id: 'test',
       isFeatureEnabled: (feature) => on.includes(feature),
@@ -150,6 +153,49 @@ describe('Knowledge Marks', () => {
     expect((await run({ records })).knowledge.recordOf('w_one')).toMatchObject({
       mark: 'unknown',
     });
+  });
+
+  it('lists the Entries the reader is learning by their next Review day, Learned and Known left out', async () => {
+    const time = fakeClock('2026-10-19T09:00:00.000Z');
+    const app = await run({ clock: time.clock });
+    await app.knowledge.tap('c_one', 'unknown');
+    await app.knowledge.tap('w_three', 'unknown');
+    await app.knowledge.tap('w_two', 'known');
+    time.advance(DAY);
+
+    await app.knowledge.answer('c_one', 'known');
+    await app.knowledge.tap('w_one', 'unknown');
+
+    const learning = await app.knowledge.learning();
+    expect(learning.map(({ entryId, reviewDay, row }) => [entryId, reviewDay, row.kind])).toEqual([
+      ['w_three', '2026-10-20', 'word'],
+      ['w_one', '2026-10-21', 'word'],
+      ['c_one', '2026-10-23', 'correction'],
+    ]);
+    expect(learning.map(({ row }) => row.entryId)).toEqual(['w_three', 'w_one', 'c_one']);
+  });
+
+  it('leaves out a removed mark and an Entry no longer in the Language Pack', async () => {
+    const records = new Map<string, string>();
+    const app = await run({ records });
+    await app.knowledge.tap('w_one', 'unknown');
+    await app.knowledge.tap('w_two', 'unknown');
+    await app.knowledge.tap('w_three', 'unknown');
+    await app.knowledge.tap('w_one', 'unknown');
+
+    const next = await run({
+      records,
+      pack: createMemoryContentPort({ words: [word('w_one'), word('w_three')], corrections: [] }),
+    });
+
+    expect((await next.knowledge.learning()).map(({ entryId }) => entryId)).toEqual(['w_three']);
+  });
+
+  it('lists nothing with the knowledge switch off', async () => {
+    const records = new Map<string, string>();
+    await (await run({ records })).knowledge.tap('w_one', 'unknown');
+
+    expect(await (await run({ records, on: ['corrections'] })).knowledge.learning()).toEqual([]);
   });
 
   it('changes nothing in memory when keeping a mark fails', async () => {
