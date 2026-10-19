@@ -1,3 +1,5 @@
+import type { EntryKind } from '@slovo/contracts';
+
 import type { Edition } from '../edition/edition';
 import type { EntryRowModel, EntryRows } from '../entries/entry-row';
 import { createInTurn, createSubscribers } from '../in-turn';
@@ -20,6 +22,16 @@ export interface LearningEntry {
   readonly reviewDay: string;
   /** What its row in a list shows. */
   readonly row: EntryRowModel;
+}
+
+/** The counts of the Knowledge Marks the statistics show. */
+export interface KnowledgeCounts {
+  /** The Words marked Known, Learned or not. */
+  readonly knownWords: number;
+  /** The Corrections marked Known, Learned or not. */
+  readonly knownCorrections: number;
+  /** The Entries due for Review today. */
+  readonly dueToday: number;
 }
 
 /**
@@ -55,6 +67,12 @@ export interface Knowledge {
    */
   learning(): Promise<readonly LearningEntry[]>;
   /**
+   * The Known Words and Corrections, a Learned Entry among them, and the
+   * Entries due for Review today. An id the Language Pack doesn't have counts
+   * as neither kind. All 0 with the `knowledge` Feature Switch off.
+   */
+  counts(): KnowledgeCounts;
+  /**
    * The reader taps a mark on the Entry's card: the mark the card shows
    * removes it, deleting the record; any other tap answers the Entry today,
    * as `answer` does.
@@ -82,6 +100,16 @@ export async function openKnowledge({
   let records: ReadonlyMap<string, KnowledgeRecord> = await userState.list(knowledge);
   const inTurn = createInTurn();
   const subscribers = createSubscribers();
+  /** The kind of each marked Entry the Language Pack has, so the counts need no read. */
+  const kinds = new Map<string, EntryKind>();
+
+  /** Reads the Entry's kind, once. */
+  async function readKind(entryId: string): Promise<void> {
+    if (kinds.has(entryId)) return;
+    const row = await rows.row(entryId);
+    if (row !== undefined) kinds.set(entryId, row.kind);
+  }
+  await Promise.all([...records.keys()].map(readKind));
 
   /** Keeps the Entry's next record, or deletes it for nothing, then tells the subscribers. */
   async function keep(entryId: string, record: KnowledgeRecord | undefined): Promise<void> {
@@ -100,6 +128,7 @@ export async function openKnowledge({
   ) =>
     inTurn(async () => {
       if (!edition.isFeatureEnabled('knowledge')) return;
+      await readKind(entryId);
       await keep(entryId, next(records.get(entryId)));
     });
 
@@ -131,6 +160,19 @@ export async function openKnowledge({
         }),
       );
       return listed.flat();
+    },
+    counts() {
+      const counts = { knownWords: 0, knownCorrections: 0, dueToday: 0 };
+      if (!edition.isFeatureEnabled('knowledge')) return counts;
+      const today = todayDate(clock);
+      for (const [entryId, record] of records) {
+        if (isDue(record, today)) counts.dueToday += 1;
+        if (record.mark !== 'known') continue;
+        const kind = kinds.get(entryId);
+        if (kind === 'word') counts.knownWords += 1;
+        if (kind === 'correction') counts.knownCorrections += 1;
+      }
+      return counts;
     },
     tap: (entryId, mark) =>
       change(entryId, (record) => {

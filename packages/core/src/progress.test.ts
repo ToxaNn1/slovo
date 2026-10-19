@@ -8,10 +8,11 @@ import {
   SEEN_DWELL_MS,
   type Clock,
   type Composition,
+  type FeatureSwitch,
   type UserStateChanges,
   type UserStatePort,
 } from './index';
-import { fakeClock, steppingRandom, word } from './test-support';
+import { correction, fakeClock, steppingRandom, word } from './test-support';
 
 /** The Edition's one Category, the test Words' own, and its default Mix of every Category. */
 const testCategories = {
@@ -246,6 +247,9 @@ describe('The stats sheet’s numbers', () => {
       seenToday: 0,
       favorites: 0,
       inCollections: 0,
+      knownWords: 0,
+      knownCorrections: 0,
+      dueToday: 0,
     });
   });
 
@@ -348,5 +352,104 @@ describe('The stats sheet’s numbers', () => {
 
     expect(app.progress.state).toBe(state);
     expect(told).toBe(0);
+  });
+});
+
+// Spec #461, ADR 0043: the counts the statistics show from the Knowledge Marks.
+describe('The knowledge counts', () => {
+  const DAY = 24 * 60 * 60_000;
+
+  /** The Core composition over a pack with Words and a Correction, with `on` the Feature Switches turned on. */
+  async function runKnowing(
+    clock: Clock,
+    { on = ['knowledge', 'corrections'] }: { on?: readonly FeatureSwitch[] } = {},
+  ): Promise<Composition> {
+    return openComposition({
+      content: createMemoryContentPort({
+        words: [word('w_one'), word('w_two'), word('w_three')],
+        corrections: [correction('c_one'), correction('c_two')],
+      }),
+      edition: {
+        ...testCategories,
+        userSettingDefaults: {
+          ...testCategories.userSettingDefaults,
+          mix: { categoryIds: ['test'], corrections: true },
+        },
+        isFeatureEnabled: (feature) => on.includes(feature),
+      },
+      userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
+      clock,
+      random: steppingRandom(),
+    });
+  }
+
+  const countsOf = ({ knownWords, knownCorrections, dueToday }: Composition['progress']['state']) => ({
+    knownWords,
+    knownCorrections,
+    dueToday,
+  });
+
+  it('counts Known and Learned Words and Corrections apart, and changes at once on a mark', async () => {
+    const app = await runKnowing(fakeClock('2026-10-19T09:00:00+03:00').clock);
+    let told = 0;
+    app.progress.subscribe(() => {
+      told += 1;
+    });
+
+    await app.knowledge.tap('w_one', 'known');
+    await app.knowledge.tap('w_two', 'unknown');
+    await app.knowledge.tap('c_one', 'known');
+    await app.knowledge.tap('c_two', 'unknown');
+
+    expect(countsOf(app.progress.state)).toEqual({ knownWords: 1, knownCorrections: 1, dueToday: 0 });
+    // An Unknown mark is due tomorrow, so it changes no number today.
+    expect(told).toBe(2);
+  });
+
+  it('counts an Entry due for Review today, and a Known answer on the Review as Known', async () => {
+    const time = fakeClock('2026-10-19T09:00:00+03:00');
+    const app = await runKnowing(time.clock);
+    await app.knowledge.tap('w_two', 'unknown');
+    await app.knowledge.tap('c_two', 'unknown');
+
+    time.advance(DAY);
+    await app.resume();
+    expect(countsOf(app.progress.state)).toEqual({ knownWords: 0, knownCorrections: 0, dueToday: 2 });
+
+    await app.knowledge.tap('w_two', 'known');
+    expect(countsOf(app.progress.state)).toEqual({ knownWords: 1, knownCorrections: 0, dueToday: 1 });
+  });
+
+  it('stops counting an Entry whose mark is removed', async () => {
+    const app = await runKnowing(fakeClock('2026-10-19T09:00:00+03:00').clock);
+    await app.knowledge.tap('w_one', 'known');
+    await app.knowledge.tap('c_one', 'known');
+
+    await app.knowledge.tap('w_one', 'known');
+
+    expect(countsOf(app.progress.state)).toEqual({ knownWords: 0, knownCorrections: 1, dueToday: 0 });
+  });
+
+  it('counts an Entry marked late at night as due on the next local day', async () => {
+    // 23:30 in Kyiv is still the same day in UTC an hour later, at 00:30 local.
+    const time = fakeClock('2026-10-19T23:30:00+03:00');
+    const app = await runKnowing(time.clock);
+    await app.knowledge.tap('w_one', 'unknown');
+
+    time.advance(20 * 60_000);
+    await app.resume();
+    expect(app.progress.state.dueToday).toBe(0);
+
+    time.advance(40 * 60_000);
+    await app.resume();
+    expect(app.progress.state.dueToday).toBe(1);
+  });
+
+  it('counts nothing with the knowledge Feature Switch off', async () => {
+    const app = await runKnowing(fakeClock('2026-10-19T09:00:00+03:00').clock, { on: ['corrections'] });
+
+    await app.knowledge.tap('w_one', 'known');
+
+    expect(countsOf(app.progress.state)).toEqual({ knownWords: 0, knownCorrections: 0, dueToday: 0 });
   });
 });

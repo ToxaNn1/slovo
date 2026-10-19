@@ -31,6 +31,9 @@ const progress: ProgressState = {
   favorites: 7,
   inCollections: 3,
   bestResult: undefined,
+  knownWords: 0,
+  knownCorrections: 0,
+  dueToday: 0,
 };
 
 async function renderInEdition(children: ReactNode) {

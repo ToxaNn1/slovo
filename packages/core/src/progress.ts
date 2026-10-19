@@ -2,6 +2,7 @@ import type { Collections } from './saved/collections';
 import type { Favorites } from './saved/favorites';
 import type { Game } from './game/game';
 import type { History } from './saved/history';
+import type { Knowledge, KnowledgeCounts } from './knowledge/knowledge';
 import { createInTurn, createSubscribers } from './in-turn';
 import { dayNumber, parseLocalDate, todayBounds, todayKey } from './local-date';
 import type { Clock, UserStateChanges } from './ports';
@@ -11,9 +12,10 @@ import { userStateRecords } from './user-state/user-state-schema';
 /**
  * The reader's progress as it stands, as the stats sheet shows it: the Streak
  * and the Best Streak derived from the Active Days, the counts of the Entries
- * the reader has Seen today and kept, and the best Game result.
+ * the reader has Seen today and kept, the best Game result, and the counts of
+ * the Knowledge Marks.
  */
-export interface ProgressState {
+export interface ProgressState extends KnowledgeCounts {
   /**
    * The consecutive Active Days up to today, or up to yesterday while today
    * isn't an Active Day yet; 0 once a day is missed.
@@ -33,8 +35,8 @@ export interface ProgressState {
 
 /**
  * Progress: the Active Days, and the Streak and the Best Streak derived from
- * them, never stored, with the counts of History, Favorites and Collections
- * and the Game's best result, which it follows as they change. Read from the
+ * them, never stored, with the counts of History, Favorites, Collections and
+ * the Knowledge Marks and the Game's best result, which it follows as they change. Read from the
  * user state once, when it opens, like the Cycle, so open one per app session
  * (the Core composition does).
  */
@@ -93,7 +95,7 @@ export interface ActiveDayChange {
  * `recordToday`, which records today's local date in the clock's time zone as
  * an Active Day, and `todayChange`, the change that records it for the caller
  * to write with its own. Recording a day already recorded writes nothing. It
- * follows History, Favorites, Collections and the Game, so a change of any of
+ * follows History, Favorites, Collections, the Knowledge Marks and the Game, so a change of any of
  * them changes the state at once.
  */
 export async function openProgress({
@@ -103,6 +105,7 @@ export async function openProgress({
   favorites,
   collections,
   game,
+  knowledge,
 }: {
   userState: UserState;
   clock: Clock;
@@ -110,6 +113,7 @@ export async function openProgress({
   favorites: Favorites;
   collections: Collections;
   game: Pick<Game, 'state' | 'subscribe'>;
+  knowledge: Pick<Knowledge, 'counts' | 'subscribe'>;
 }): Promise<{
   progress: Progress;
   recordToday: () => Promise<void>;
@@ -147,6 +151,7 @@ export async function openProgress({
         ),
       ).size,
       bestResult: game.state.bestResult,
+      ...knowledge.counts(),
     };
   }
 
@@ -160,7 +165,7 @@ export async function openProgress({
     subscribers.tell();
   }
 
-  for (const source of [history, favorites, collections, game]) {
+  for (const source of [history, favorites, collections, game, knowledge]) {
     source.subscribe(() => {
       follow();
     });
