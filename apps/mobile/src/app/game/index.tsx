@@ -16,10 +16,11 @@ import { Redirect, useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { editionStrings } from '../edition/edition';
-import { useEditionInEffect } from '../edition/remote-switches';
-import { useGameActions, useGameState } from '../game/game';
-import { gameModeCard, gameModeStrings } from '../game/game-modes';
+import { editionStrings } from '../../edition/edition';
+import { useEditionInEffect } from '../../edition/remote-switches';
+import { useOpenScreen } from '../../entries/use-open-screen';
+import { useGameActions, useGameState } from '../../game/game';
+import { gameModeCard, gameModeStrings } from '../../game/game-modes';
 
 const { game: strings } = editionStrings;
 
@@ -28,8 +29,9 @@ const RULES_MAX_FONT_SCALE = 1.5;
 
 /**
  * The Game tab: the mode screen, a Round with its answer sheet, or the result
- * screen, as the Core's Game stands, while the Game is on in effect. The Game
- * stays in the Core composition, so another tab and back finds it where it was.
+ * screen with its Game Review, as the Core's Game stands, while the Game is on
+ * in effect. The Game stays in the Core composition, so another tab and back,
+ * or an Entry the Game Review opens and back, finds it where it was.
  */
 export default function GameScreen() {
   // Turned off remotely while the reader is on it: its tab goes, and so does the screen.
@@ -41,6 +43,8 @@ function Game() {
   const state = useGameState();
   const actions = useGameActions();
   const router = useRouter();
+  const openScreen = useOpenScreen();
+  const gameReview = useEditionInEffect().isFeatureEnabled('gameReview');
   const { colors } = useTokens();
 
   const { current } = state;
@@ -56,12 +60,16 @@ function Game() {
         <GameResult
           game={current}
           bestResult={state.bestResult}
+          reviewShown={gameReview}
           onAgain={() => {
             actions.start(current.modeId);
           }}
           onHome={() => {
             actions.leave();
             router.navigate('/');
+          }}
+          onOpenEntry={(entryId) => {
+            openScreen(`/game/${entryId}`);
           }}
         />
       ) : (
