@@ -3,9 +3,10 @@ import { describe, expect, it } from '@jest/globals';
 import { render, screen } from '@testing-library/react-native';
 import { Text } from 'react-native';
 
-function row(share: boolean) {
+function row(share: boolean, marks?: boolean) {
   return (
     <ActionRow
+      marks={marks === true ? <Text testID="marks">marks</Text> : undefined}
       favorite={<Text testID="favorite">♡</Text>}
       share={share ? <Text testID="share">share</Text> : undefined}
       collection={<Text testID="collection">+</Text>}
@@ -29,5 +30,17 @@ describe('ActionRow', () => {
     for (const id of ['favorite', 'collection', 'hide']) {
       expect(screen.getByTestId(id)).toBeTruthy();
     }
+  });
+
+  it('has the mark buttons when it is given them', async () => {
+    await render(row(true, true));
+
+    expect(screen.getByTestId('marks')).toBeTruthy();
+  });
+
+  it('has no mark buttons without them', async () => {
+    await render(row(true));
+
+    expect(screen.queryByTestId('marks')).toBeNull();
   });
 });

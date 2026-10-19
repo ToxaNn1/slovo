@@ -10,6 +10,7 @@ import { GameStringsSchema } from './game';
 import { HiddenStringsSchema } from './hidden';
 import { HidingStringsSchema } from './hiding';
 import { HistoryStringsSchema } from './history';
+import { KnowledgeStringsSchema } from './knowledge';
 import { MixStringsSchema } from './mix';
 import { NotificationBodyStringsSchema } from './notification-body';
 import { NotificationsStringsSchema } from './notifications';
@@ -41,6 +42,7 @@ export const EditionStringsSchema = z.strictObject({
   collections: CollectionsStringsSchema,
   history: HistoryStringsSchema,
   hiding: HidingStringsSchema,
+  knowledge: KnowledgeStringsSchema,
   mix: MixStringsSchema,
   hidden: HiddenStringsSchema,
   stats: StatsStringsSchema,

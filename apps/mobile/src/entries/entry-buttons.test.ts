@@ -10,13 +10,18 @@ function editionWithout(...off: FeatureSwitch[]) {
 
 describe('the buttons of an Entry card', () => {
   it('has the Share Card and Pronunciation buttons when both switches are on', () => {
-    expect(entryButtonsOf(editionWithout())).toEqual({ shareCard: true, pronunciation: true });
+    expect(entryButtonsOf(editionWithout())).toEqual({
+      shareCard: true,
+      pronunciation: true,
+      knowledge: true,
+    });
   });
 
   it('has no Share Card button when Share Cards are off', () => {
     expect(entryButtonsOf(editionWithout('shareCards'))).toEqual({
       shareCard: false,
       pronunciation: true,
+      knowledge: true,
     });
   });
 
@@ -24,6 +29,15 @@ describe('the buttons of an Entry card', () => {
     expect(entryButtonsOf(editionWithout('pronunciation'))).toEqual({
       shareCard: true,
       pronunciation: false,
+      knowledge: true,
+    });
+  });
+
+  it('has no mark buttons when Knowledge is off', () => {
+    expect(entryButtonsOf(editionWithout('knowledge'))).toEqual({
+      shareCard: true,
+      pronunciation: true,
+      knowledge: false,
     });
   });
 });

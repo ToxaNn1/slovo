@@ -404,6 +404,10 @@
       ]
     }
   },
+  "knowledge": {
+    "known": "Знаю",
+    "unknown": "Не знаю"
+  },
   "hiding": {
     "button": "Не показувати",
     "choice": {
