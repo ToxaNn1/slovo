@@ -7,6 +7,7 @@ import { entryIdOf, type EntryFeedCard, type FeedCard, type WordFeedCard } from 
 import { createFeedSession, type FeedSession } from './feed-session';
 import type { HistoryRecorder, Seen } from '../saved/history';
 import { createInTurn, createSubscribers } from '../in-turn';
+import type { Knowledge } from '../knowledge/knowledge';
 import { dateKeyOf, todayKey, type LocalDate } from '../local-date';
 import type { Clock, UserStateChanges } from '../ports';
 import type { UserState } from '../user-state/user-state';
@@ -19,6 +20,9 @@ export const SEEN_DWELL_MS = 500;
 
 /** One card in this many is a Correction's, while the Cycle has unseen Corrections. */
 export const CORRECTION_EVERY = 5;
+
+/** One card in this many is a Word's due for Review, while any is due and it isn't a Correction's turn. */
+export const REVIEW_EVERY = 3;
 
 /**
  * The Feed of one app session. Its cards are the ones shown so far, oldest
@@ -123,10 +127,13 @@ const { feedPosition } = userStateRecords;
  * when it is the only unseen Entry left, the Cycle ends after it. A
  * Correction takes its turn every `CORRECTION_EVERY`th card of the Cycle,
  * and either kind of Entry fills in for the other when it has none left.
+ * Every `REVIEW_EVERY`th card of the session that isn't a Correction's goes
+ * to a Word due for Review, if any (ADR 0043).
  */
 function nextEntryId(
   { words: unseenWords, corrections: unseenCorrections }: EntryIds,
   session: FeedSession,
+  dueWords: readonly string[],
 ): string | undefined {
   const shown = session.shownIds();
   const last = entryIdOf(session.cards.at(-1));
@@ -139,7 +146,32 @@ function nextEntryId(
     const correction = unseenCorrections.find(fits);
     return correctionTurn ? (correction ?? word) : (word ?? correction);
   }
-  return pick((id) => !shown.has(id)) ?? pick((id) => id !== last);
+  const id = pick((id) => !shown.has(id)) ?? pick((id) => id !== last);
+  if (correctionTurn && id !== undefined && unseenCorrections.includes(id)) return id;
+  return reviewWordId(dueWords, session) ?? id;
+}
+
+/**
+ * The Word due for Review the next card goes to, if it is a Review slot,
+ * every `REVIEW_EVERY`th card of the session: of the due Words, in the Cycle
+ * order, the one not shown in this session or shown longest ago. Never the
+ * Entry of the last card. A due Word so comes back slot after slot until the
+ * reader answers it, Seen or not.
+ */
+function reviewWordId(dueWords: readonly string[], session: FeedSession): string | undefined {
+  if ((session.cards.length + 1) % REVIEW_EVERY !== 0) return undefined;
+  const last = entryIdOf(session.cards.at(-1));
+  // Each Entry's last place in the session.
+  const shownAt = new Map(session.cards.map((card, place) => [entryIdOf(card), place]));
+  return dueWords
+    .filter((id) => id !== last)
+    .sort((a, b) => (shownAt.get(a) ?? -1) - (shownAt.get(b) ?? -1))[0];
+}
+
+/** The Words due for Review that the Cycle covers, so neither Hidden nor out of the Mix, in its order. */
+function eligibleDueWords(cycle: Cycle, knowledge: Pick<Knowledge, 'due'>): readonly string[] {
+  const due = new Set(knowledge.due());
+  return due.size === 0 ? [] : cycle.order().words.filter((id) => due.has(id));
 }
 
 /**
@@ -169,6 +201,12 @@ function nextEntryId(
  * ends only once every eligible Word and Correction is Seen. The Word of the
  * Day is always a Word.
  *
+ * While Words are due for Review, every `REVIEW_EVERY`th card of the session
+ * that isn't a Correction's turn shows one, Seen in this Cycle or not, until
+ * the reader answers it (ADR 0043). A due Word the Cycle doesn't cover
+ * (Hidden, out of the Mix, under the Rarity Floor) waits until it does. Its
+ * card is Seen and joins History as any card does.
+ *
  * The composition calls `followEligibility` once the Cycle has read the
  * eligible Entries again: the Feed drops every card whose Entry the Cycle no
  * longer covers and puts back the dropped ones it covers again, see
@@ -191,6 +229,7 @@ export async function openFeed({
   userState,
   clock,
   cycle,
+  knowledge,
   wordOfTheDay,
   history,
   entrySeen,
@@ -199,6 +238,7 @@ export async function openFeed({
   userState: UserState;
   clock: Clock;
   cycle: Cycle;
+  knowledge: Pick<Knowledge, 'due'>;
   wordOfTheDay: WordOfTheDay;
   history: HistoryRecorder;
   entrySeen: (entryId: string) => Promise<void>;
@@ -272,7 +312,7 @@ export async function openFeed({
       started.commit();
       session.startCycle();
     }
-    const id = nextEntryId(cycle.unseen(), session);
+    const id = nextEntryId(cycle.unseen(), session, eligibleDueWords(cycle, knowledge));
     let card: FeedCard = { kind: 'end-of-cycle' };
     if (id !== undefined) {
       const entry = await entries.get(id);
