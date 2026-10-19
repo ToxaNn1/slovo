@@ -1,4 +1,4 @@
-import type { Category } from '@slovo/contracts';
+import { RaritySchema, type Category } from '@slovo/contracts';
 
 import type { DefaultMix, UserSettingDefaults } from '../edition/edition';
 import { createInTurn, createSubscribers } from '../in-turn';
@@ -22,11 +22,16 @@ export interface MixState {
   readonly hiddenCategories: readonly Category[];
   /** The one Category left in the Mix, which can't be taken out; nothing while more are in. */
   readonly lastCategoryId: string | undefined;
+  /**
+   * The Rarity Floor, 1 to 5: only Words of that rarity or rarer are eligible
+   * while the Edition turns the rarity filter on. Corrections have no rarity.
+   */
+  readonly rarityFloor: number;
 }
 
 /**
  * The Mix: the Categories, plus Corrections as a whole, the user chose to see
- * in everything new. A Category out of the Mix is a Hidden Category, so the
+ * in everything new, and the Rarity Floor. A Category out of the Mix is a Hidden Category, so the
  * Mix screen, the hide action and the Hidden screen all change it here (ADR
  * 0019). Read from the user state once, when it opens, like the Cycle, so
  * open one per app session (the Core composition does). A change is made in
@@ -50,16 +55,26 @@ export interface Mix {
   turnAllOn(): Promise<void>;
   /** Puts Corrections, as a whole, in the Mix or takes them out. */
   setCorrections(inMix: boolean): Promise<void>;
+  /** Sets the Rarity Floor. A floor that is not a rarity, a whole number from 1 to 5, is skipped. */
+  setRarityFloor(floor: number): Promise<void>;
   /** Calls `listener` after each change of the state. Returns the call that stops it. */
   subscribe(listener: () => void): () => void;
 }
 
-const { mixCategories: categoryRecords, mixCorrections: correctionsRecord } = userStateRecords;
+const {
+  mixCategories: categoryRecords,
+  mixCorrections: correctionsRecord,
+  mixRarityFloor: rarityFloorRecord,
+} = userStateRecords;
 
-/** The places in the Mix the user chose: by Category id, and for Corrections. */
+/** The Rarity Floor while the user chose none: every Word is in. */
+const DEFAULT_RARITY_FLOOR = 1;
+
+/** The places in the Mix the user chose: by Category id, and for Corrections; and the Rarity Floor. */
 interface MixChoices {
   readonly categories: ReadonlyMap<string, boolean>;
   readonly corrections: boolean | undefined;
+  readonly rarityFloor: number | undefined;
 }
 
 /** Whether the Category is in the Edition's default Mix: always when the default is all. */
@@ -100,15 +115,17 @@ function mixStateOf(
     corrections: choices.corrections ?? mix.corrections,
     hiddenCategories: categories.filter(({ id }) => !categoryIds.includes(id)),
     lastCategoryId: categoryIds.length === 1 ? categoryIds[0] : undefined,
+    rarityFloor: choices.rarityFloor ?? DEFAULT_RARITY_FLOOR,
   };
 }
 
 async function readChoices(userState: Pick<UserState, 'list' | 'read'>): Promise<MixChoices> {
-  const [categories, corrections] = await Promise.all([
+  const [categories, corrections, rarityFloor] = await Promise.all([
     userState.list(categoryRecords),
     userState.read(correctionsRecord),
+    userState.read(rarityFloorRecord),
   ]);
-  return { categories, corrections };
+  return { categories, corrections, rarityFloor };
 }
 
 /**
@@ -159,7 +176,7 @@ export async function openMix({
    */
   async function change(
     places: ReadonlyMap<string, boolean>,
-    corrections = state.corrections,
+    { corrections = state.corrections, rarityFloor = state.rarityFloor } = {},
   ): Promise<void> {
     const wanted = new Map<string, boolean>();
     // A Category in only because none would be otherwise is written in, so the
@@ -176,11 +193,15 @@ export async function openMix({
     if (corrections !== state.corrections) {
       for (const [key, value] of correctionsRecord.change(corrections)) writes.set(key, value);
     }
+    if (rarityFloor !== state.rarityFloor) {
+      for (const [key, value] of rarityFloorRecord.change(rarityFloor)) writes.set(key, value);
+    }
     if (writes.size === 0) return;
     await userState.write(writes);
     const next: MixChoices = {
       categories: changed,
       corrections: corrections === state.corrections ? choices.corrections : corrections,
+      rarityFloor: rarityFloor === state.rarityFloor ? choices.rarityFloor : rarityFloor,
     };
     try {
       await eligibilityChanged();
@@ -209,7 +230,12 @@ export async function openMix({
   }
 
   async function setCorrections(inMix: boolean): Promise<void> {
-    await change(new Map(), inMix);
+    await change(new Map(), { corrections: inMix });
+  }
+
+  async function setRarityFloor(floor: number): Promise<void> {
+    if (!RaritySchema.safeParse(floor).success) return;
+    await change(new Map(), { rarityFloor: floor });
   }
 
   const inTurn = createInTurn();
@@ -222,6 +248,7 @@ export async function openMix({
     putBack: (categoryId) => inTurn(() => putBack(categoryId)),
     turnAllOn: () => inTurn(turnAllOn),
     setCorrections: (inMix) => inTurn(() => setCorrections(inMix)),
+    setRarityFloor: (floor) => inTurn(() => setRarityFloor(floor)),
     subscribe: subscribers.subscribe,
   };
 }

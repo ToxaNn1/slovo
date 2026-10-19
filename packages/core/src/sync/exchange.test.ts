@@ -156,6 +156,24 @@ describe('two devices of one Account', () => {
     expect(server.records.get('settings.hideStreak')?.value).toBe(false);
   });
 
+  it('let the newer Rarity Floor win, on either device', async () => {
+    const { device, server, time } = account();
+    const phone = await device();
+    const tablet = await device();
+    await (await phone.open()).mix.setRarityFloor(4);
+    time.advance(HOUR);
+    await (await tablet.open()).mix.setRarityFloor(2);
+    await tablet.sync();
+    time.advance(HOUR);
+
+    await phone.sync();
+    await tablet.sync();
+
+    expect((await phone.open()).mix.state.rarityFloor).toBe(2);
+    expect((await tablet.open()).mix.state.rarityFloor).toBe(2);
+    expect(server.records.get('mix.rarityFloor')?.value).toBe(2);
+  });
+
   it('carry a choice to hide the Streak to the other device', async () => {
     const { device } = account();
     const phone = await device();
