@@ -1,3 +1,5 @@
+import type { Entry } from '@slovo/contracts';
+
 import type { EligibleOfKind } from '../entries/entries';
 import type { Random } from '../ports';
 import type { History } from '../saved/history';
@@ -15,7 +17,7 @@ export const GAME_ROUNDS = 15;
 
 /** A Round of the Game in play, with the Entry it asks about. */
 export interface PlannedRound {
-  readonly answerId: string;
+  readonly entry: Entry;
   readonly content: RoundContent;
 }
 
@@ -81,8 +83,7 @@ export function createRoundPlanner({
     ]) {
       if (built.length === count) break;
       const round = mode.buildRound({ answer, eligible, random, edition });
-      if (round !== undefined)
-        built.push({ answerId: answer.id, content: checkedRound(mode, round) });
+      if (round !== undefined) built.push({ entry: answer, content: checkedRound(mode, round) });
     }
     return built.length === count ? { rounds: built } : { refusal: 'too-few-entries' };
   };

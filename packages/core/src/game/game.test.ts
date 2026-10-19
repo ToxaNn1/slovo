@@ -487,6 +487,66 @@ describe('the rules of a Game', () => {
     expect(current(app)).toMatchObject({ lives: 0, roundsPassed: 4, status: 'lost' });
   });
 
+  it("lists every played Round in order with its Entry, the reader's pick and whether it was right", async () => {
+    const app = await run();
+
+    const rounds = await playGame(app, [2, 5]);
+
+    const { played } = current(app);
+    expect(played).toHaveLength(GAME_ROUNDS);
+    expect(played.map(({ number }) => number)).toEqual(rounds.map(({ number }) => number));
+    played.forEach((entry, index) => {
+      const round = rounds[index];
+      if (round === undefined) throw new Error(`No Round was shown at place ${String(index)}`);
+      const wrong = [2, 5].includes(round.number);
+      expect(entry.entry).toEqual(answerOf(round));
+      expect(entry.right).toBe(!wrong);
+      expect(entry.answer.correct).toBe(rightOf(round));
+      expect(entry.answer.chosen).toBe(wrong ? (rightOf(round) + 1) % 4 : rightOf(round));
+      expect(entry.options).toEqual(round.options);
+    });
+  });
+
+  it('lists the Round that cost the last Life as the last played Round of a lost Game', async () => {
+    const app = await run();
+    await app.game.start('guess-word');
+    for (let round = 1; round <= 5; round += 1) await play(app, false);
+
+    const { played, status } = current(app);
+
+    expect(status).toBe('lost');
+    expect(played.map(({ number, right }) => [number, right])).toEqual([
+      [1, false],
+      [2, false],
+      [3, false],
+      [4, false],
+      [5, false],
+    ]);
+  });
+
+  it('lists the Rounds answered so far while the Game is in play, and none before the first answer', async () => {
+    const app = await run();
+    await app.game.start('guess-word');
+    expect(current(app).played).toEqual([]);
+
+    await play(app, true);
+    app.game.answer((rightOf(current(app).round) + 1) % 4);
+
+    expect(current(app).played.map(({ number, right }) => [number, right])).toEqual([
+      [1, true],
+      [2, false],
+    ]);
+  });
+
+  it('starts a new Game with no played Rounds', async () => {
+    const app = await run();
+    await playGame(app);
+
+    await app.game.start('guess-word');
+
+    expect(current(app).played).toEqual([]);
+  });
+
   it('asks 15 different Words in one Game', async () => {
     for (const seed of [1, 2, 3]) {
       const app = await run({ seed });

@@ -60,6 +60,7 @@ export {
   GAME_LIVES,
   type CurrentGame,
   type GameStatus,
+  type PlayedRound,
   type Round,
   type RoundAnswer,
 } from './game/game-in-play';
