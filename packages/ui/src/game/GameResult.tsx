@@ -8,6 +8,7 @@ import { PrimaryButton } from '../primitives/PrimaryButton';
 import { SecondaryButton } from '../primitives/SecondaryButton';
 import { blockGap, resultLayout, space, typeSize } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
+import { GameReview } from './GameReview';
 import { useGameHaptics } from './useGameHaptics';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 
@@ -60,20 +61,27 @@ function ResultNumber({
  * and the best result when there is one, «Ще раз» for a new Game in the same
  * mode and «На головну» for the Feed. A win arrives with the success haptic
  * twice. The Edition's victory illustration (Decor slot 6) sits over the
- * title, large and stitched in on a win, small and still on a loss.
+ * title, large and stitched in on a win, small and still on a loss. The Game
+ * Review of every Round follows the buttons, unless its switch is off.
  */
 export function GameResult({
   game,
   bestResult,
+  reviewShown,
   onAgain,
   onHome,
+  onOpenEntry,
 }: {
   /** The Game just over, won or lost. */
   game: CurrentGame;
   /** The best result, the Game just over included. */
   bestResult: number | undefined;
+  /** Whether the Game Review shows, which it does while the gameReview Feature Switch is on in effect. */
+  reviewShown: boolean;
   onAgain: () => void;
   onHome: () => void;
+  /** Opens the Entry a Round of the Game Review asked about. */
+  onOpenEntry: (entryId: string) => void;
 }) {
   const { colors, fontFamilies } = useTokens();
   const { strings, voice, count } = useEdition();
@@ -143,6 +151,7 @@ export function GameResult({
         <PrimaryButton testID="game-again" label={words.result.again} onPress={onAgain} />
         <SecondaryButton testID="game-home" label={words.result.home} onPress={onHome} />
       </View>
+      <GameReview shown={reviewShown} rounds={game.played} onOpen={onOpenEntry} />
     </ScrollView>
   );
 }
