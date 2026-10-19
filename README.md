@@ -127,6 +127,14 @@ You need the Node version in [`.nvmrc`](.nvmrc), pnpm, Xcode with an iOS Simulat
 
    The sync flow also reaches the backend (the one Metro was started against, step 8) at `API_URL`, default `http://localhost:8787`. With the backend on another port, add it: `pnpm test:smoke -e METRO_URL=http://localhost:8162 -e API_URL=http://localhost:8788`.
 
+   `smoke.yaml` runs two halves in a row: `smoke-1.yaml` (from the launch to the Collections, no backend) and `smoke-2.yaml` (History, the Mix, hiding, notifications, `account.yaml` and `sync.yaml` with the backend, then the flows from a fresh install). Together they call each flow of `flows/` once. To run them at once, on two booted simulators with the development client, each with its own Metro and both against one backend, use `pnpm smoke:halves`:
+
+   ```sh
+   pnpm smoke:halves --device <udid> --device <udid> --metro 8175 --metro 8176 --api 8795
+   ```
+
+   The first `--device` and `--metro` are half 1, the second half 2; Metro must already run on each port, started with `EXPO_PUBLIC_SLOVO_API_URL` pointing at the backend (`pnpm dev` does that for one Metro). The script passes `-e METRO_URL=…` and `-e API_URL=…` to Maestro, takes the machine-wide lock `/tmp/slovo-maestro.lock` once for both halves, waits while another run holds it, and ends with a list per half of the flows that passed, the one that failed and the ones not run after it. Its raw Maestro output stays in a temporary folder whose path it prints. It boots and shuts down nothing. `JAVA_HOME` defaults to `/usr/local/opt/openjdk@17` when it is unset and that folder exists.
+
 ## Verify the app with networking off
 
 The Ukrainian Edition must work offline (ticket #6). No automated check covers this yet, so run it by hand on the simulator. The iOS Simulator shares the Mac's network, and Metro on `localhost` keeps working without it.
@@ -249,6 +257,7 @@ All commands run from the repo root. CI runs `lint`, `typecheck`, `deps`, `knip`
 | `pnpm publish:pack uk` | Publishes the Edition's built Language Pack to the backend's database as a Content update. Refuses a pack the manifest doesn't record, a content version that doesn't grow and one already published.                                                                                                                         |
 | `pnpm switch:off`      | `pnpm switch:off uk game` turns a feature off in an Edition remotely (ADR 0040). Refuses an Edition the backend doesn't find and an unknown feature.                                                                                                                                                                          |
 | `pnpm switch:clear`    | `pnpm switch:clear uk game` clears the remote switch of a feature, so its config decides again.                                                                                                                                                                                                                               |
+| `pnpm smoke:halves`    | The full Maestro smoke as two halves at once on two simulators, with a pass/fail list per half; see [Run the Ukrainian Edition on the simulator](#run-the-ukrainian-edition-on-the-simulator).                                                                                                                                |
 | `pnpm source:words`    | Drafts Words for review; see [`tools/sourcing/README.md`](tools/sourcing/README.md).                                                                                                                                                                                                                                          |
 | `pnpm format`          | Rewrites files with Prettier.                                                                                                                                                                                                                                                                                                 |
 
