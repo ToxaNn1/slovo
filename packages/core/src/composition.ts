@@ -12,6 +12,7 @@ import { openGame, type Game } from './game/game';
 import type { GameEdition, GameMode } from './game/game-mode';
 import { guessWord } from './game/guess-word';
 import { openHistory, type History } from './saved/history';
+import { openKnowledge, type Knowledge } from './knowledge/knowledge';
 import { openHiddenEntries, type HiddenEntries } from './hidden/hidden-entries';
 import { createHiding, type Hiding } from './hidden/hiding';
 import { openMix, type Mix, type MixEdition } from './entries/mix';
@@ -49,6 +50,8 @@ export interface Composition extends Hiding {
   readonly hiddenEntries: HiddenEntries;
   /** The Mix, whose Categories out of it are the Hidden Categories (ADR 0019). */
   readonly mix: Mix;
+  /** The Knowledge Marks, which an Entry card's «Знаю» and «Не знаю» change (ADR 0043). */
+  readonly knowledge: Knowledge;
   /**
    * Progress: the Streak and the Best Streak, derived from the Active Days,
    * the stats sheet's counts, which a heart, a Collection change and a Seen
@@ -201,13 +204,14 @@ export async function openComposition({
     await replan();
     await followGameEligibility();
   }
-  const [favorites, collections, hiddenEntries, mix] = await Promise.all([
+  const [favorites, collections, hiddenEntries, mix, knowledge] = await Promise.all([
     openFavorites({ rows, userState, clock }),
     openCollections({ rows, userState, clock, random }),
     openHiddenEntries({ rows, userState, clock, eligibilityChanged }),
     entries
       .categories()
       .then((categories) => openMix({ edition, categories, userState, eligibilityChanged })),
+    openKnowledge({ edition, userState, clock }),
   ]);
   const { progress, recordToday, todayChange } = await openProgress({
     userState,
@@ -261,6 +265,7 @@ export async function openComposition({
     history,
     hiddenEntries,
     mix,
+    knowledge,
     progress,
     resume() {
       planOffers();
