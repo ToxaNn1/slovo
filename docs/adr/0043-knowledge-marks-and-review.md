@@ -25,3 +25,17 @@ Until 0.8.6 SLOVO could not tell whether the reader already knew an Entry or met
 - The Feed's choice of the next Entry depends on the marks and on today's local day, which comes from the existing day-change logic with injected time, so tests turn the clock by hand.
 - The Game's plan reads the marks, so a Game depends on the knowledge module as it does on the Entries module.
 - Full spaced repetition beyond 1, 3 and 7 days, and a global reset of marks, are not part of this decision.
+
+## Amendment: a tap on a due Entry is its answer (0.8.6, #465)
+
+The Core's knowledge module, `openKnowledge` in the composition, keeps one record per Entry under `knowledge.<entry id>`: `{ mark, step, reviewDay, learned }`, the step 1, 3, 7 or `null` and the Review day a local date `YYYY-MM-DD` or `null` once the Entry is Learned. Today is the clock's local day at each call. Two rules complete "tapping the same one again removes it":
+
+- **A card shows no mark while its Entry is due.** A Review asks for a new answer, so on a due Entry either mark is an answer by the interval rule: Unknown on a due Unknown Entry starts it again at 1 day, it doesn't remove the mark. Once answered, the Entry is no longer due and the card shows the new mark, which a second tap removes.
+- **Known moves any Review one step, due or not.** Changing a mark the same day applies the rule to the record as it stands: Unknown then Known moves the 1-day Review to 3 days, and Known corrected to Unknown starts it again at 1 day.
+
+The Game's mistake answers Unknown by the rule alone (`answer`), never removing a mark. With the `knowledge` Feature Switch off, `tap` and `answer` write nothing and the records stay.
+
+### Considered Options
+
+- **The same mark always removes, due or not**: rejected. Tapping «Не знаю» on a Review of an Unknown Entry would delete its record, and the Entry the reader still doesn't know would never come back.
+- **A changed mark undoes the earlier one**: rejected. The record would have to keep the one before it, and the spec's record holds the mark, the step, the day and Learned only.
