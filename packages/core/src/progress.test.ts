@@ -450,6 +450,21 @@ describe('The knowledge counts', () => {
     });
   });
 
+  it('leaves a Hidden Entry out of the Entries due today, and counts it again once restored', async () => {
+    const time = fakeClock('2026-10-19T09:00:00+03:00');
+    const app = await runKnowing(time.clock);
+    await app.knowledge.tap('w_one', 'unknown');
+    await app.knowledge.tap('c_one', 'unknown');
+    time.advance(DAY);
+    await app.resume();
+
+    await app.hiddenEntries.hide('w_one');
+    expect(app.progress.state.dueToday).toBe(1);
+
+    await app.hiddenEntries.restore('w_one');
+    expect(app.progress.state.dueToday).toBe(2);
+  });
+
   it('counts an Entry marked late at night as due on the next local day', async () => {
     // 23:30 in Kyiv is still the same day in UTC an hour later, at 00:30 local.
     const time = fakeClock('2026-10-19T23:30:00+03:00');
