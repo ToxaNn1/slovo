@@ -22,7 +22,11 @@
     "shareCards": true,
     "pronunciation": true,
     "wordOfTheDay": true,
-    "statistics": true
+    "statistics": true,
+    "knowledge": true,
+    "selfCheck": true,
+    "rarityFilter": true,
+    "gameReview": true
   },
   "userSettingDefaults": {
     "theme": "system",

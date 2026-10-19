@@ -104,6 +104,14 @@ export const FeatureSwitchesSchema = z.strictObject({
   wordOfTheDay: z.boolean(),
   /** The statistics screens and the Streak. */
   statistics: z.boolean(),
+  /** Knowledge Marks: the Known / Unknown marks on Words and Corrections, and the Review they feed. */
+  knowledge: z.boolean(),
+  /** Self-check: the setting that hides a card's meaning until the reader reveals it. */
+  selfCheck: z.boolean(),
+  /** The rarity filter: the Mix's Rarity Floor, the lowest rarity of the Words shown. */
+  rarityFilter: z.boolean(),
+  /** Game Review: the list of every Round on the Game's result. */
+  gameReview: z.boolean(),
 });
 
 export type FeatureSwitches = z.infer<typeof FeatureSwitchesSchema>;
