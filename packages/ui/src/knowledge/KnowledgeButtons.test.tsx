@@ -11,7 +11,7 @@ function buttons(
 ) {
   return (
     <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-      <KnowledgeButtons mark={mark} onTap={onTap} />
+      <KnowledgeButtons entryKind="word" mark={mark} onTap={onTap} />
     </EditionProvider>
   );
 }
@@ -48,6 +48,12 @@ describe('KnowledgeButtons', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Unknown' }));
 
     expect(onTap).toHaveBeenCalledWith('unknown');
+  });
+
+  it('gives Known no hint on a Word', async () => {
+    await render(buttons(undefined, jest.fn()));
+
+    expect(screen.getByRole('button', { name: 'Known' })).not.toHaveProp('accessibilityHint');
   });
 
   it('taps the chosen button again to remove its mark', async () => {

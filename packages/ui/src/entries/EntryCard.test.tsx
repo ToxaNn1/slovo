@@ -1,8 +1,9 @@
 import type { EditionStrings } from '@slovo/contracts';
 import { coreDecor, type Decor, type EntryFeedCard } from '@slovo/core';
-import { DecorProvider, EditionProvider, EntryCard } from '@slovo/ui';
-import { describe, expect, it } from '@jest/globals';
-import { render, screen, within } from '@testing-library/react-native';
+import { ActionRow, DecorProvider, EditionProvider, EntryCard, KnowledgeButtons } from '@slovo/ui';
+import { describe, expect, it, jest } from '@jest/globals';
+import { fireEvent, render, screen, within } from '@testing-library/react-native';
+import { Text } from 'react-native';
 
 const strings = {
   wordCard: {
@@ -27,6 +28,7 @@ const strings = {
     exampleStandard: 'Right: {text}',
     source: 'Source: {source}',
   },
+  knowledge: { known: 'Known', unknown: 'Unknown', correctionKnownHint: 'I already say it right' },
 } as unknown as EditionStrings;
 
 const card: EntryFeedCard = {
@@ -122,5 +124,82 @@ describe('EntryCard', () => {
     await render(inEdition(<EntryCard card={card} />));
 
     expect(screen.queryByTestId('card-corner-topLeft', { hidden: true })).toBeNull();
+  });
+});
+
+/** The Correction card with its action row, the mark buttons there only when `marks` is on. */
+function correctionWithMarks({
+  marks,
+  mark,
+  onTap = jest.fn(),
+}: {
+  marks: boolean;
+  mark?: 'known' | 'unknown';
+  onTap?: (mark: 'known' | 'unknown') => void;
+}) {
+  return inEdition(
+    <EntryCard
+      card={card}
+      actions={
+        <ActionRow
+          marks={
+            marks ? (
+              <KnowledgeButtons entryKind="correction" mark={mark} onTap={onTap} />
+            ) : undefined
+          }
+          favorite={<Text>♡</Text>}
+          collection={<Text>+</Text>}
+          hide={<Text>×</Text>}
+        />
+      }
+    />,
+  );
+}
+
+describe('the mark buttons on a Correction card', () => {
+  it('marks a Correction with no mark Known', async () => {
+    const onTap = jest.fn();
+    await render(correctionWithMarks({ marks: true, onTap }));
+
+    expect(screen.getByRole('button', { name: 'Unknown', selected: false })).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Known', selected: false }));
+
+    expect(onTap).toHaveBeenCalledWith('known');
+  });
+
+  it('says on Known that the reader already says it right', async () => {
+    await render(correctionWithMarks({ marks: true }));
+
+    expect(screen.getByRole('button', { name: 'Known' })).toHaveProp(
+      'accessibilityHint',
+      'I already say it right',
+    );
+  });
+
+  it('changes a Known Correction to Unknown', async () => {
+    const onTap = jest.fn();
+    await render(correctionWithMarks({ marks: true, mark: 'known', onTap }));
+
+    expect(screen.getByRole('button', { name: 'Known', selected: true })).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Unknown', selected: false }));
+
+    expect(onTap).toHaveBeenCalledWith('unknown');
+  });
+
+  it('removes the mark when its button is tapped again', async () => {
+    const onTap = jest.fn();
+    await render(correctionWithMarks({ marks: true, mark: 'unknown', onTap }));
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Unknown', selected: true }));
+
+    expect(onTap).toHaveBeenCalledWith('unknown');
+  });
+
+  it('has no mark buttons with the Knowledge switch off', async () => {
+    await render(correctionWithMarks({ marks: false }));
+
+    expect(screen.getByTestId('action-row')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Known' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Unknown' })).toBeNull();
   });
 });

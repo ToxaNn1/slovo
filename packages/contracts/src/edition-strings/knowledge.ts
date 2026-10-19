@@ -6,6 +6,8 @@ import { TextSchema } from '../shared';
 export const KnowledgeStringsSchema = z.strictObject({
   /** The button that marks the Entry Known. */
   known: TextSchema,
+  /** What the Known button means on a Correction, for a screen reader. */
+  correctionKnownHint: TextSchema,
   /** The button that marks the Entry Unknown. */
   unknown: TextSchema,
 });
