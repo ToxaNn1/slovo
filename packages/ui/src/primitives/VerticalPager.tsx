@@ -129,6 +129,8 @@ interface TurnActions {
 
 const PagerContext = createContext<PagerContextValue | undefined>(undefined);
 const PageIndexContext = createContext(0);
+/** Whether the page is the one before the reader; true outside a pager. */
+const PageCurrentContext = createContext(true);
 /**
  * The VoiceOver actions of the page, which turn it as a swipe would; none
  * on a page that isn't current. Each page has its own, so a turn re-renders
@@ -378,7 +380,9 @@ function Page({
       style={[StyleSheet.absoluteFill, { height }, style]}
     >
       <PageIndexContext value={index}>
-        <PageTurnActionsContext value={turnActions}>{children}</PageTurnActionsContext>
+        <PageCurrentContext value={current}>
+          <PageTurnActionsContext value={turnActions}>{children}</PageTurnActionsContext>
+        </PageCurrentContext>
       </PageIndexContext>
     </Animated.View>
   );
@@ -391,6 +395,14 @@ function Page({
  */
 export function usePageTurnActions(): Partial<TurnActions> {
   return useContext(PageTurnActionsContext) ?? {};
+}
+
+/**
+ * Whether the page is the one before the reader, rather than a neighbour
+ * waiting off screen. Always true outside a `VerticalPager`.
+ */
+export function useIsCurrentPage(): boolean {
+  return useContext(PageCurrentContext);
 }
 
 const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView);

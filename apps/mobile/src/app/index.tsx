@@ -8,6 +8,7 @@ import {
   space,
   SwipeHint,
   UndoToastProvider,
+  useSelfCheck,
   useTokens,
   VerticalPager,
   type VerticalPagerHandle,
@@ -18,7 +19,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { editionStrings } from '../edition/edition';
 import { EntryActions } from '../entries/entry-actions';
+import { useEditionInEffect } from '../edition/remote-switches';
 import { useFeed } from '../feed/feed';
+import { useSettings } from '../settings';
 import { TOP_ROW } from '../edition/feed-loading';
 import { StatsPillAndSheet } from '../progress';
 import { useSwipeHint } from '../feed/swipe-hint';
@@ -136,6 +139,12 @@ const FeedPage = memo(function FeedPage({
   onOpenCorrection: (position: number, correctionId: string) => void;
 }) {
   const { top } = useSafeAreaInsets();
+  const settings = useSettings().current;
+  const editionInEffect = useEditionInEffect();
+  // Self-check, when the reader turned it on and its Feature Switch is on in effect.
+  const selfCheck = useSelfCheck(
+    settings.selfCheck && editionInEffect.isFeatureEnabled('selfCheck'),
+  );
   if (card.kind === 'end-of-cycle')
     return (
       <View
@@ -154,7 +163,9 @@ const FeedPage = memo(function FeedPage({
           onOpenCorrection={(correctionId) => {
             onOpenCorrection(position, correctionId);
           }}
-          actions={<EntryActions card={card} />}
+          hidden={selfCheck.hidden}
+          onReveal={selfCheck.reveal}
+          actions={<EntryActions card={card} hidden={selfCheck.hidden} />}
         />
       </PagerScrollView>
     </View>
