@@ -42,6 +42,7 @@ export { HideButton } from './mix/HideButton';
 export { HideChoiceSheet } from './mix/HideChoiceSheet';
 export { ScreenTitle, SectionLabel } from './primitives/headings';
 export { MixChip } from './mix/MixChip';
+export { RarityFloorChoice } from './mix/RarityFloorChoice';
 export {
   OnboardingAccount,
   OnboardingMix,
