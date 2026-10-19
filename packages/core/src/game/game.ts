@@ -66,7 +66,9 @@ export interface Game {
   start(modeId: string): Promise<void>;
   /**
    * Answers the current Round with the option at that place. A wrong answer
-   * costs a Life at once. Nothing changes once the Round is answered.
+   * costs a Life at once and marks the Round's Entry «Не знаю» in the
+   * background, before the next «Далі» goes on; a mark that fails to write is
+   * lost and the Game goes on. Nothing changes once the Round is answered.
    */
   answer(option: number): void;
   /**
@@ -120,7 +122,7 @@ export async function openGame({
   edition: GameEdition;
   entries: Pick<Entries, 'eligibleOfKind'>;
   history: Pick<History, 'list'>;
-  knowledge: Pick<Knowledge, 'weak'>;
+  knowledge: Pick<Knowledge, 'weak' | 'answer'>;
   userState: Pick<UserState, 'read' | 'write'>;
   random: Random;
   /** What a failed planning of the offers is tried again by; without it, only the next `planOffers` tries. */
@@ -241,7 +243,12 @@ export async function openGame({
   function answer(option: number): void {
     const game = state.current;
     const answered = game && played?.answer(game, option);
-    if (answered !== undefined) changeCurrent(answered);
+    if (answered === undefined) return;
+    changeCurrent(answered);
+    const round = answered.played.at(-1);
+    if (round !== undefined && !round.right) {
+      inTurn(() => knowledge.answer(round.entry.id, 'unknown')).catch(() => undefined);
+    }
   }
 
   async function next(): Promise<void> {

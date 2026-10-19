@@ -793,7 +793,8 @@ describe('the Words a Game asks about', () => {
   it('writes no Seen, no History and no Active Day while it is played, only its best result', async () => {
     const records = new Map<string, string>();
     const { port, writes } = recordingPort(records);
-    const app = await run({ port });
+    // The knowledge Feature Switch off, so no mistake writes a «Не знаю» mark.
+    const app = await run({ port, on: ['rarityFilter'] });
     writes.length = 0;
 
     await playGame(app, [3, 4]);
@@ -878,6 +879,111 @@ describe('the Rounds about Entries marked «Не знаю» or due', () => {
   });
 });
 
+// Spec #461, ADR 0043: a wrong answer marks the Entry «Не знаю»; a right one changes nothing.
+describe('the Knowledge Marks a Game leaves', () => {
+  const tomorrow: Clock = { ...clock, now: () => new Date('2026-10-12T09:00:00+03:00') };
+
+  /** A record of `w_cnoun01` on its 3-day Review, due today, so a Game asks about it, with History enough. */
+  function dueOnThreeDays(): Map<string, string> {
+    const record = userStateRecords.knowledge
+      .record('w_cnoun01')
+      .change({ mark: 'known', step: 3, reviewDay: '2026-10-11', learned: false }) as Map<
+      string,
+      string
+    >;
+    return new Map([...historyOf(numbered('w_nnoun', 14).concat('w_snoun03')), ...record]);
+  }
+
+  /** Plays «Вгадай слово» to its end, wrong only in the Round that asks about the Word. */
+  async function playWrongOn(app: Composition, wordId: string): Promise<void> {
+    await app.game.start('guess-word');
+    while (current(app).status === 'playing') {
+      await play(app, answerOf(current(app).round).id !== wordId);
+    }
+  }
+
+  it('marks the Word of a wrong answer «Не знаю», due for Review tomorrow', async () => {
+    const records = new Map<string, string>();
+    const app = await run({ records });
+    await app.game.start('guess-word');
+    const asked = answerOf(current(app).round).id;
+
+    await play(app, false);
+
+    expect(app.knowledge.recordOf(asked)).toEqual({
+      mark: 'unknown',
+      step: 1,
+      reviewDay: '2026-10-12',
+      learned: false,
+    });
+    expect(app.knowledge.isDue(asked)).toBe(false);
+    expect((await run({ records, time: tomorrow })).knowledge.isDue(asked)).toBe(true);
+  });
+
+  it('starts the Review of a Word answered wrong again at 1 day', async () => {
+    const app = await run({ records: dueOnThreeDays() });
+
+    await playWrongOn(app, 'w_cnoun01');
+
+    expect(app.knowledge.recordOf('w_cnoun01')).toEqual({
+      mark: 'unknown',
+      step: 1,
+      reviewDay: '2026-10-12',
+      learned: false,
+    });
+  });
+
+  it('leaves every record as it was after right answers', async () => {
+    const app = await run({ records: dueOnThreeDays() });
+
+    const rounds = await playGame(app);
+
+    expect(rounds.map((round) => answerOf(round).id)).toContain('w_cnoun01');
+    expect(app.knowledge.recordOf('w_cnoun01')).toEqual({
+      mark: 'known',
+      step: 3,
+      reviewDay: '2026-10-11',
+      learned: false,
+    });
+    expect(words.filter(({ id }) => app.knowledge.recordOf(id) !== undefined)).toHaveLength(1);
+  });
+
+  it('goes on to the next Round when the «Не знаю» mark fails to write', async () => {
+    const memory = createMemoryUserStatePort(new Map());
+    let failing = false;
+    const app = await run({
+      port: {
+        ...memory,
+        write: (changes) =>
+          failing ? Promise.reject(new Error('The disk is full')) : memory.write(changes),
+      },
+    });
+    await app.game.start('guess-word');
+    const asked = answerOf(current(app).round).id;
+
+    failing = true;
+    await play(app, false);
+
+    expect(current(app)).toMatchObject({ lives: 4, roundsPassed: 1, status: 'playing' });
+    expect(app.knowledge.recordOf(asked)).toBeUndefined();
+  });
+
+  it('marks nothing with the knowledge Feature Switch off, and keeps the records there are', async () => {
+    const app = await run({ records: dueOnThreeDays(), on: ['rarityFilter'] });
+
+    await playGame(app, [1, 2, 3, 4, 5]);
+    await playWrongOn(app, 'w_cnoun01');
+
+    expect(app.knowledge.recordOf('w_cnoun01')).toEqual({
+      mark: 'known',
+      step: 3,
+      reviewDay: '2026-10-11',
+      learned: false,
+    });
+    expect(words.filter(({ id }) => app.knowledge.recordOf(id) !== undefined)).toHaveLength(1);
+  });
+});
+
 // Spec #215, "Best result": the most Rounds passed in one finished Game, in any Game Mode.
 describe('the best result', () => {
   const { gameBest } = userStateRecords;
@@ -905,7 +1011,8 @@ describe('the best result', () => {
   it('is written by a finished Game that beats it, won or lost, and unchanged by one that does not', async () => {
     const records = new Map<string, string>();
     const { port, writes } = recordingPort(records);
-    const app = await run({ port });
+    // The knowledge Feature Switch off, so no mistake writes a «Не знаю» mark.
+    const app = await run({ port, on: ['rarityFilter'] });
     writes.length = 0;
 
     // Lost in Round 8: 7 Rounds passed.
@@ -946,7 +1053,8 @@ describe('the best result', () => {
   it('is never written by a Game left before its end', async () => {
     const records = new Map<string, string>();
     const { port, writes } = recordingPort(records);
-    const app = await run({ port });
+    // The knowledge Feature Switch off, so no mistake writes a «Не знаю» mark.
+    const app = await run({ port, on: ['rarityFilter'] });
     writes.length = 0;
     await app.game.start('guess-word');
     for (let round = 1; round <= 10; round += 1) await play(app, true);

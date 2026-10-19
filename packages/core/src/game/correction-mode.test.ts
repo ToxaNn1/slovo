@@ -401,3 +401,22 @@ describe('the Corrections a Game asks about', () => {
     expect(rounds.some((round) => askedOf(round).id === 'c_calque08')).toBe(false);
   });
 });
+
+// Spec #461, ADR 0043: a wrong answer marks the Entry «Не знаю», in every Game Mode.
+describe('the Knowledge Marks «Обери правильне» leaves', () => {
+  it('marks the Correction of a wrong answer «Не знаю», due for Review tomorrow', async () => {
+    const app = await run();
+    await app.game.start('correction');
+    const { round } = current(app);
+
+    app.game.answer((rightOf(round) + 1) % round.options.length);
+    await app.game.next();
+
+    expect(app.knowledge.recordOf(askedOf(round).id)).toEqual({
+      mark: 'unknown',
+      step: 1,
+      reviewDay: '2026-10-16',
+      learned: false,
+    });
+  });
+});
