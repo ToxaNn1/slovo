@@ -17,3 +17,6 @@ tools/sourcing/review/
 # The widget extension's Edition files, written by the prebuild (apps/mobile/plugins/widget-extension.ts)
 apps/widget/Info.plist
 apps/widget/Generated/
+
+# The native iOS project, made by `expo prebuild` in the Maestro workflow (ADR 0042)
+apps/mobile/ios/
