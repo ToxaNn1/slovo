@@ -48,3 +48,12 @@ A Review slot is every 3rd card of the Feed's session, counting every card shown
 
 - **Count Word cards only, so a Correction moves the Reviews by one**: rejected. "Every 3rd card" reads as card numbers, and counting cards keeps the slots where the reader expects them.
 - **A due Word comes back only once per session**: rejected. A due Word stays due until answered, so the reader who swipes past it meets it again.
+
+## Amendment: a due Correction takes the Correction slot (0.8.6, #470)
+
+A Correction due for Review takes the Correction slot, every 5th card of the Cycle, before a new Correction, Seen in this Cycle or not, and also once the Cycle has no unseen Correction left. Of the due Corrections the Cycle covers, the slot takes the one not shown in this session yet, else the one shown longest ago, in the Cycle order, never the Entry of the card before it: a due Correction the reader swipes past comes back at a later slot, and two or more due Corrections take the slots in turn. A due Word never takes a Correction slot, and the Word Review slots stay where #468 put them. With Corrections out of the Mix no Correction is due for the Feed.
+
+### Considered Options
+
+- **A due Correction takes the next Review slot of any kind**: rejected. A Correction every 5th card is what the reader expects, and the Word slots stay the Words'.
+- **A due Correction waits for an unseen Correction's turn**: rejected. Once every Correction of the Cycle is Seen, a due one would wait weeks for the next Cycle.
