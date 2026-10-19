@@ -2,6 +2,7 @@ import { relativeTimeOf } from '@slovo/core';
 import {
   cardSpace,
   fill,
+  LearningCard,
   OrnamentBand,
   SavedCard,
   SavedCardCollection,
@@ -19,8 +20,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCollectionList } from '../../saved/collections';
 import { editionStrings } from '../../edition/edition';
 import { deviceClock } from '../../device/device-clock';
+import { useEditionInEffect } from '../../edition/remote-switches';
 import { useFavoriteList } from '../../saved/favorites';
 import { useHistoryList, useHistoryText } from '../../saved/history';
+import { useLearningList } from '../../saved/learning';
 import { useOpenScreen } from '../../entries/use-open-screen';
 
 const {
@@ -38,13 +41,17 @@ const NEWEST_COLLECTIONS_SHOWN = 3;
  * The Saved tab's overview: a card per list with its count. Favorites comes
  * first, on the ink fill, with its newest Lemmas and the ornament band
  * (Decor slot 2). Collections follows on the surface with its count and
- * its newest Collections. The History card shows its three latest rows with
+ * its newest Collections. The «Вчу» card, while Knowledge Marks are on in
+ * effect, shows its count and the next Entries due for Review with their
+ * days. The History card shows its three latest rows with
  * how long ago each was Seen, and VoiceOver reads the card, rows and times
  * included, in full.
  */
 export default function SavedScreen() {
   const favorites = useFavoriteList();
   const collections = useCollectionList();
+  const learning = useLearningList();
+  const knowledgeOn = useEditionInEffect().isFeatureEnabled('knowledge');
   const history = useHistoryList();
   const historyText = useHistoryText();
   const { colors } = useTokens();
@@ -111,6 +118,13 @@ export default function SavedScreen() {
             </SavedCardCollections>
           )}
         </SavedCard>
+        <LearningCard
+          shown={knowledgeOn}
+          items={learning}
+          onPress={() => {
+            openScreen('/saved/learning');
+          }}
+        />
         <SavedCard
           testID="saved-history"
           title={historyStrings.title}

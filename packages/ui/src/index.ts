@@ -63,6 +63,7 @@ export {
   SavedCardTitles,
   type SavedCardRow,
 } from './saved/SavedCard';
+export { LearningCard, LearningRow, type LearningItem } from './saved/Learning';
 export { CollectionButton } from './saved/CollectionButton';
 export { CollectionNameField, CollectionRow, NewCollectionButton } from './saved/CollectionRow';
 export { CollectionSheet } from './saved/CollectionSheet';
