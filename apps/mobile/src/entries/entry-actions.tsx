@@ -51,7 +51,7 @@ export function EntryActions({ card }: { card: EntryFeedCard }) {
       <ActionRow
         marks={
           buttons.knowledge ? (
-            <KnowledgeButtons mark={knowledge.mark} onTap={knowledge.tap} />
+            <KnowledgeButtons entryKind={card.kind} mark={knowledge.mark} onTap={knowledge.tap} />
           ) : undefined
         }
         favorite={<FavoriteButton inFavorites={favorite.inFavorites} onToggle={favorite.toggle} />}

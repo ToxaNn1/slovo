@@ -406,6 +406,7 @@
   },
   "knowledge": {
     "known": "Знаю",
+    "correctionKnownHint": "Я й так кажу правильно",
     "unknown": "Не знаю"
   },
   "hiding": {

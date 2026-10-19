@@ -12,12 +12,16 @@ const LABEL_MAX_FONT_SCALE = 1.2;
  * The «Знаю» and «Не знаю» buttons of an Entry card (ADR 0043): the chosen
  * mark is filled with the accent colour, the other is an outline. A tap calls
  * `onTap` with its mark either way; the Core decides whether that changes the
- * mark or removes it.
+ * mark or removes it. On a Correction, Known means "I already say it right",
+ * and its button says so to a screen reader.
  */
 export function KnowledgeButtons({
+  entryKind,
   mark,
   onTap,
 }: {
+  /** The kind of Entry the card shows. */
+  entryKind: 'word' | 'correction';
   /** The mark the card shows: none without one, and none while the Entry is due. */
   mark: KnowledgeMark | undefined;
   onTap: (mark: KnowledgeMark) => void;
@@ -28,6 +32,7 @@ export function KnowledgeButtons({
       <MarkButton
         testID="knowledge-known"
         label={strings.knowledge.known}
+        hint={entryKind === 'correction' ? strings.knowledge.correctionKnownHint : undefined}
         selected={mark === 'known'}
         onPress={() => {
           onTap('known');
@@ -47,11 +52,13 @@ export function KnowledgeButtons({
 
 function MarkButton({
   label,
+  hint,
   selected,
   onPress,
   testID,
 }: {
   label: string;
+  hint?: string | undefined;
   selected: boolean;
   onPress: () => void;
   testID: string;
@@ -63,6 +70,7 @@ function MarkButton({
       testID={testID}
       accessibilityRole="button"
       accessibilityLabel={label}
+      accessibilityHint={hint}
       accessibilityState={{ selected }}
       {...voice}
       onPress={onPress}
