@@ -39,3 +39,12 @@ The Game's mistake answers Unknown by the rule alone (`answer`), never removing 
 
 - **The same mark always removes, due or not**: rejected. Tapping «Не знаю» on a Review of an Unknown Entry would delete its record, and the Entry the reader still doesn't know would never come back.
 - **A changed mark undoes the earlier one**: rejected. The record would have to keep the one before it, and the spec's record holds the mark, the step, the day and Learned only.
+
+## Amendment: which card is a Review slot (0.8.6, #468)
+
+A Review slot is every 3rd card of the Feed's session, counting every card shown so far, the Word of the Day included, unless that card is a Correction's turn: the Correction slot (every 5th card of the Cycle) keeps its card, so with Corrections the Reviews fall on cards 3, 6, 9, 12, 18 and so on. Of the due Words the Cycle covers, the slot takes the one not shown in this session yet, else the one shown longest ago, in the Cycle order, never the Entry of the card before it. A due Word the reader swipes past without answering so comes back at a later slot, and two or more due Words take the slots in turn. The knowledge module gives the Feed the Entries due today, none with the `knowledge` Feature Switch off; the Cycle's order decides which of them are eligible.
+
+### Considered Options
+
+- **Count Word cards only, so a Correction moves the Reviews by one**: rejected. "Every 3rd card" reads as card numbers, and counting cards keeps the slots where the reader expects them.
+- **A due Word comes back only once per session**: rejected. A due Word stays due until answered, so the reader who swipes past it meets it again.

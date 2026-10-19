@@ -27,6 +27,11 @@ export interface Knowledge {
   /** Whether the Entry is due for Review today. */
   isDue(entryId: string): boolean;
   /**
+   * The Entries due for Review today, in no set order, for the Feed to bring
+   * back. None with the `knowledge` Feature Switch off.
+   */
+  due(): readonly string[];
+  /**
    * The reader taps a mark on the Entry's card: the mark the card shows
    * removes it, deleting the record; any other tap answers the Entry today,
    * as `answer` does.
@@ -77,6 +82,11 @@ export async function openKnowledge({
     recordOf: (entryId) => records.get(entryId),
     markOf: (entryId) => shownMark(records.get(entryId), todayDate(clock)),
     isDue: (entryId) => isDue(records.get(entryId), todayDate(clock)),
+    due() {
+      if (!edition.isFeatureEnabled('knowledge')) return [];
+      const today = todayDate(clock);
+      return [...records].flatMap(([entryId, record]) => (isDue(record, today) ? [entryId] : []));
+    },
     tap: (entryId, mark) =>
       change(entryId, (record) => {
         const today = todayDate(clock);

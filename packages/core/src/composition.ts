@@ -172,11 +172,13 @@ export async function openComposition({
     takeMorningWord: () => day.takeMorningWord(),
     scheduling,
   });
+  const knowledge = await openKnowledge({ edition, userState, clock });
   const { feed, followEligibility, markOpenedSeen, openDay } = await openFeed({
     entries,
     userState,
     clock,
     cycle,
+    knowledge,
     wordOfTheDay,
     history: recorder,
     entrySeen: followSeen,
@@ -204,14 +206,13 @@ export async function openComposition({
     await replan();
     await followGameEligibility();
   }
-  const [favorites, collections, hiddenEntries, mix, knowledge] = await Promise.all([
+  const [favorites, collections, hiddenEntries, mix] = await Promise.all([
     openFavorites({ rows, userState, clock }),
     openCollections({ rows, userState, clock, random }),
     openHiddenEntries({ rows, userState, clock, eligibilityChanged }),
     entries
       .categories()
       .then((categories) => openMix({ edition, categories, userState, eligibilityChanged })),
-    openKnowledge({ edition, userState, clock }),
   ]);
   const { progress, recordToday, todayChange } = await openProgress({
     userState,
