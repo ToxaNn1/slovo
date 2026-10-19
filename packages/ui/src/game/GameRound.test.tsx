@@ -62,6 +62,7 @@ const first: CurrentGame = {
   },
   roundsPassed: 0,
   lives: 5,
+  played: [],
   status: 'playing',
 };
 

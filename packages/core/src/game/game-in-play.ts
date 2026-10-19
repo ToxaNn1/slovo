@@ -1,3 +1,5 @@
+import type { Entry } from '@slovo/contracts';
+
 import type { EligibleOfKind } from '../entries/entries';
 import type { AnswerSheet, GameMode, RoundContent, RoundOption, TextRange } from './game-mode';
 import { GAME_ROUNDS, type PlannedRound, type RoundPlanner } from './round-plan';
@@ -26,6 +28,15 @@ export interface Round {
   readonly answer: RoundAnswer | undefined;
 }
 
+/** A Round the reader answered: what the Game Review lists. */
+export interface PlayedRound extends Round {
+  /** The Entry the Round asked about. */
+  readonly entry: Entry;
+  readonly answer: RoundAnswer;
+  /** Whether the reader chose the right option. */
+  readonly right: boolean;
+}
+
 /**
  * Where a Game stands: a Round to answer, a Round answered and waiting for
  * «Далі», or over, won or lost.
@@ -44,6 +55,11 @@ export interface CurrentGame {
   readonly roundsPassed: number;
   /** The Lives left, from `GAME_LIVES` to 0. */
   readonly lives: number;
+  /**
+   * Every Round answered so far, in order, the one that cost the last Life
+   * included; kept in memory only, until the Game is left.
+   */
+  readonly played: readonly PlayedRound[];
   readonly status: GameStatus;
 }
 
@@ -103,16 +119,22 @@ export function createGameInPlay(
       round: roundOf(first.content, 1),
       roundsPassed: 0,
       lives: GAME_LIVES,
+      played: [],
       status: 'playing',
     },
     answer(game, option) {
       if (game.status !== 'playing') return undefined;
-      const content = rounds[game.round.number - 1]?.content;
-      if (content?.options[option] === undefined) return undefined;
-      const { correct, sheet } = content;
+      const planned = rounds[game.round.number - 1];
+      if (planned?.content.options[option] === undefined) return undefined;
+      const { correct, sheet } = planned.content;
+      const answer = { chosen: option, correct, sheet };
       return {
         ...game,
-        round: { ...game.round, answer: { chosen: option, correct, sheet } },
+        round: { ...game.round, answer },
+        played: [
+          ...game.played,
+          { ...game.round, answer, entry: planned.entry, right: option === correct },
+        ],
         lives: option === correct ? game.lives : game.lives - 1,
         status: 'answered',
       };
@@ -137,7 +159,7 @@ export function createGameInPlay(
         mode,
         eligible,
         GAME_ROUNDS - shown.length,
-        new Set(shown.map(({ answerId }) => answerId)),
+        new Set(shown.map(({ entry }) => entry.id)),
       );
       if ('rounds' in rest) rounds = [...shown, ...rest.rounds];
     },
