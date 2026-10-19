@@ -142,7 +142,7 @@ async function playGame(app: Composition): Promise<Asked[]> {
     const right = options.findIndex((word) => word.primaryDefinition === round.prompt);
     const answer = options[right];
     if (answer === undefined) throw new Error(`No option has the Definition «${round.prompt}»`);
-    app.game.answer(right);
+    void app.game.answer(right);
     asked.push({ answer, options, round: current(app).round });
     await app.game.next();
   }
@@ -227,7 +227,7 @@ async function playCorrections(app: Composition): Promise<Round[]> {
   const rounds: Round[] = [];
   while (current(app).status === 'playing') {
     const { round } = current(app);
-    app.game.answer(
+    void app.game.answer(
       round.options.findIndex(({ text }) => text === askedOf(round).standardEquivalents[0]),
     );
     rounds.push(current(app).round);

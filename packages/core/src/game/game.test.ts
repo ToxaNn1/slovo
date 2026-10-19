@@ -219,7 +219,7 @@ function current(app: Composition): CurrentGame {
 async function play(app: Composition, right: boolean, rightOption = rightOf): Promise<void> {
   const { round } = current(app);
   const option = rightOption(round);
-  app.game.answer(right ? option : (option + 1) % round.options.length);
+  void app.game.answer(right ? option : (option + 1) % round.options.length);
   await app.game.next();
 }
 
@@ -305,7 +305,7 @@ describe('a Round of «Вгадай слово»', () => {
     await app.game.start('guess-word');
     const { round } = current(app);
 
-    app.game.answer(rightOf(round));
+    void app.game.answer(rightOf(round));
 
     const answer = answerOf(round);
     expect(current(app).round.answer).toEqual({
@@ -325,7 +325,7 @@ describe('a Round of «Вгадай слово»', () => {
       await app.game.start('guess-word');
       while (current(app).status === 'playing') {
         const { round } = current(app);
-        app.game.answer(rightOf(round));
+        void app.game.answer(rightOf(round));
         sheets.push({ answer: answerOf(round), sheet: current(app).round.answer?.sheet });
         await app.game.next();
       }
@@ -402,10 +402,10 @@ describe('the rules of a Game', () => {
     const app = await run();
     await app.game.start('guess-word');
     const right = rightOf(current(app).round);
-    app.game.answer(right);
+    void app.game.answer(right);
     const answered = app.game.state;
 
-    app.game.answer((right + 1) % 4);
+    void app.game.answer((right + 1) % 4);
 
     expect(app.game.state).toBe(answered);
     expect(current(app)).toMatchObject({ lives: 5, status: 'answered' });
@@ -416,7 +416,7 @@ describe('the rules of a Game', () => {
     await app.game.start('guess-word');
     const right = rightOf(current(app).round);
 
-    app.game.answer((right + 1) % 4);
+    void app.game.answer((right + 1) % 4);
 
     expect(current(app)).toMatchObject({ lives: 4, roundsPassed: 0, status: 'answered' });
     expect(current(app).round.answer).toMatchObject({ chosen: (right + 1) % 4, correct: right });
@@ -484,7 +484,7 @@ describe('the rules of a Game', () => {
     await app.game.start('guess-word');
     for (let round = 1; round <= 4; round += 1) await play(app, false);
     const { round } = current(app);
-    app.game.answer((rightOf(round) + 1) % 4);
+    void app.game.answer((rightOf(round) + 1) % 4);
 
     expect(current(app)).toMatchObject({ lives: 0, roundsPassed: 4, status: 'answered' });
     await app.game.next();
@@ -534,7 +534,7 @@ describe('the rules of a Game', () => {
     expect(current(app).played).toEqual([]);
 
     await play(app, true);
-    app.game.answer((rightOf(current(app).round) + 1) % 4);
+    void app.game.answer((rightOf(current(app).round) + 1) % 4);
 
     expect(current(app).played.map(({ number, right }) => [number, right])).toEqual([
       [1, true],
@@ -566,7 +566,7 @@ describe('the rules of a Game', () => {
     await playGame(app);
     const over = app.game.state;
 
-    app.game.answer(0);
+    void app.game.answer(0);
     await app.game.next();
     expect(app.game.state).toBe(over);
 
@@ -621,7 +621,7 @@ describe('the rules of a Game', () => {
     ]);
 
     await app.game.start('guess-word');
-    app.game.answer(0);
+    void app.game.answer(0);
     expect(current(app).status).toBe('answered');
 
     app.game.leave();
@@ -634,7 +634,7 @@ describe('the rules of a Game', () => {
     app.game.leave();
     const modeScreen = app.game.state;
 
-    app.game.answer(0);
+    void app.game.answer(0);
     await app.game.next();
 
     expect(app.game.state).toBe(modeScreen);
@@ -683,7 +683,7 @@ describe('the rules of a Game', () => {
     });
 
     await app.game.start('guess-word');
-    app.game.answer(0);
+    void app.game.answer(0);
     await app.game.next();
 
     expect(changes).toBe(3);
@@ -761,7 +761,7 @@ describe('the Words a Game asks about', () => {
           ({ text }) => rareReading(text)?.primaryDefinition === round.prompt,
         );
         expect(right).not.toBe(-1);
-        app.game.answer(right);
+        void app.game.answer(right);
         await app.game.next();
       }
     }
@@ -948,7 +948,7 @@ describe('the Knowledge Marks a Game leaves', () => {
     expect(words.filter(({ id }) => app.knowledge.recordOf(id) !== undefined)).toHaveLength(1);
   });
 
-  it('goes on to the next Round when the «Не знаю» mark fails to write', async () => {
+  it('goes on to the next Round when the «Не знаю» mark fails to write, and reports the failure', async () => {
     const memory = createMemoryUserStatePort(new Map());
     let failing = false;
     const app = await run({
@@ -962,7 +962,9 @@ describe('the Knowledge Marks a Game leaves', () => {
     const asked = answerOf(current(app).round).id;
 
     failing = true;
-    await play(app, false);
+    const { round } = current(app);
+    await expect(app.game.answer((rightOf(round) + 1) % 4)).rejects.toThrow('The disk is full');
+    await app.game.next();
 
     expect(current(app)).toMatchObject({ lives: 4, roundsPassed: 1, status: 'playing' });
     expect(app.knowledge.recordOf(asked)).toBeUndefined();
@@ -1061,7 +1063,7 @@ describe('the best result', () => {
     // The fifth Life lost, but «Далі» not tapped: the Game isn't over yet.
     await app.game.start('guess-word');
     for (let round = 1; round <= 4; round += 1) await play(app, false);
-    app.game.answer((rightOf(current(app).round) + 1) % 4);
+    void app.game.answer((rightOf(current(app).round) + 1) % 4);
 
     app.game.leave();
 
@@ -1082,7 +1084,7 @@ describe('the best result', () => {
     });
     await app.game.start('guess-word');
     for (let round = 1; round <= 4; round += 1) await play(app, false);
-    app.game.answer((rightOf(current(app).round) + 1) % 4);
+    await app.game.answer((rightOf(current(app).round) + 1) % 4);
     const answered = app.game.state;
 
     failing = true;

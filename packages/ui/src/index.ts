@@ -37,6 +37,7 @@ export { CollectionMenuSheet } from './saved/CollectionMenuSheet';
 export { DeleteCollectionDialog } from './saved/DeleteCollectionDialog';
 export { GameModeCard } from './game/GameModeCard';
 export { GameResult } from './game/GameResult';
+export { GameReview } from './game/GameReview';
 export { GameRound } from './game/GameRound';
 export { HapticsProvider, useHaptics } from './providers/HapticsProvider';
 export { HideButton } from './mix/HideButton';

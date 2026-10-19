@@ -84,6 +84,21 @@ export const GameStringsSchema = z.strictObject({
     /** The button that goes on, e.g. «Далі». */
     next: TextSchema,
   }),
+  /** The Game Review under the result: a row per Round played. */
+  review: z.strictObject({
+    /** The heading over the rows, e.g. «Ваші раунди». */
+    title: TextSchema,
+    /** What VoiceOver reads for ✓, e.g. «правильно». */
+    right: TextSchema,
+    /** What VoiceOver reads for ✗, e.g. «помилка». */
+    wrong: TextSchema,
+    /** The reader's wrong pick under the row, e.g. «Ваш вибір: шпаркий». Takes `{text}`. */
+    picked: templateOf('text'),
+    /** What VoiceOver says a tap on a row does: expand it. */
+    expandHint: TextSchema,
+    /** What VoiceOver says a tap on an expanded row does: open the Entry. */
+    openHint: TextSchema,
+  }),
   /** The result screen. */
   result: z.strictObject({
     won: z.strictObject({
