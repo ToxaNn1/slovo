@@ -20,7 +20,12 @@ export interface MixScreenModel {
   readonly lastCategoryHint: boolean;
   /** The Corrections switch, left out when the Edition doesn't turn Corrections on. */
   readonly corrections: { readonly on: boolean } | undefined;
+  /** The Rarity Floor choice, left out while the Edition turns the rarity filter off. */
+  readonly rarity: { readonly floor: number; readonly floors: readonly number[] } | undefined;
 }
+
+/** The floors on offer: every rarity of a Word, 1 to 5. */
+const RARITY_FLOORS = [1, 2, 3, 4, 5] as const;
 
 export function mixScreenModel({
   edition,
@@ -39,6 +44,9 @@ export function mixScreenModel({
     allOn: mix.hiddenCategories.length === 0,
     lastCategoryHint: mix.lastCategoryId !== undefined,
     corrections: edition.isFeatureEnabled('corrections') ? { on: mix.corrections } : undefined,
+    rarity: edition.isFeatureEnabled('rarityFilter')
+      ? { floor: mix.rarityFloor, floors: RARITY_FLOORS }
+      : undefined,
   };
 }
 

@@ -1,5 +1,7 @@
+import { fill } from '@slovo/contracts';
 import {
   MixChip,
+  RarityFloorChoice,
   SettingsGroup,
   SwitchRow,
   space,
@@ -19,13 +21,14 @@ const strings = editionStrings.mix;
 /**
  * The choices of the Mix, for Settings › Мій Мікс and the onboarding's Mix
  * step: a chip for «Усі» and every Category of the Edition, the line saying
- * why the last Category's chip is disabled, and the Corrections switch when
- * the Edition turns Corrections on. A change applies at once (the Core's Mix,
+ * why the last Category's chip is disabled, the Rarity Floor choice while the
+ * rarity filter is on, and the Corrections switch when the Edition turns
+ * Corrections on. A change applies at once (the Core's Mix,
  * ADR 0019).
  */
 export function MixChoices() {
   const state = useMixState();
-  const { toggleCategory, turnAllOn, setCorrections } = useMixChanges();
+  const { toggleCategory, turnAllOn, setCorrections, setRarityFloor } = useMixChanges();
   const { colors, fontFamilies } = useTokens();
   const { voice } = useEdition();
   const edition = useEditionInEffect();
@@ -68,6 +71,21 @@ export function MixChoices() {
           {strings.lastCategoryHint}
         </Text>
       )}
+      {model.rarity !== undefined && (
+        <View style={styles.rarity}>
+          <RarityFloorChoice
+            shown
+            title={strings.rarity.title}
+            subtitle={strings.rarity.subtitle}
+            options={model.rarity.floors.map((floor) => ({
+              floor,
+              label: fill(strings.rarity.floor, { rarity: String(floor) }),
+            }))}
+            floor={model.rarity.floor}
+            onChange={setRarityFloor}
+          />
+        </View>
+      )}
       {model.corrections !== undefined && (
         <View style={styles.corrections}>
           <SettingsGroup>
@@ -88,5 +106,6 @@ export function MixChoices() {
 const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
   hint: { fontSize: typeSize.body, marginTop: space[3] },
+  rarity: { marginTop: space[6] },
   corrections: { marginTop: space[6] },
 });
