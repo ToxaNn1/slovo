@@ -138,7 +138,7 @@ _Avoid_: OTP, PIN, password
 ### Discovery
 
 **Feed**:
-The vertical stream of Entries the user swipes through on the home screen; Corrections are mixed in among Words.
+The vertical stream of Entries the user swipes through on the home screen; Corrections are mixed in among Words. While Entries are due for Review, every 3rd card is a Word due for Review, labelled «Повторення», and a Correction due for Review takes the next Correction slot before a new Correction.
 _Avoid_: Timeline, home list
 
 **Seen**:
@@ -149,9 +149,31 @@ _Avoid_: Viewed, read
 One pass through all eligible Entries. When every Entry is Seen, the user is told to wait for new Words, and the next swipe starts a new Cycle in which nothing is Seen yet.
 _Avoid_: Round (that is a Game term), loop
 
+**Knowledge Mark**:
+What the reader says about an Entry on its card: Known («Знаю») or Unknown («Не знаю»). Tapping the other mark changes it, tapping the same one again removes it. On a Correction, Known means "I already say it right". A mistake in the Game is an Unknown mark; there is no separate list of hard words.
+_Avoid_: Rating, grade
+
+**Review**:
+An Entry coming back to the Feed after 1, 3 or 7 local days. Unknown starts it at 1 day; Known on a Review moves it from 1 to 3 days, then to 7 days; Unknown at any step starts again at 1 day. A Review overrides Seen: a due Entry comes back even if it is Seen in the current Cycle. Answers in the Game never move a Review.
+_Avoid_: Repeat, flashcard, spaced repetition
+
+**Due**:
+An Entry is due for Review on or after its Review day, and stays due until the reader marks it. A Hidden Entry or an Entry that is not eligible is skipped until it is eligible again.
+
+**Learned**:
+An Entry that is Known on its 7-day Review, or Known with no earlier mark. It stops coming back for Review, stays in the Cycle and is counted as known in the statistics.
+
+**Self-check**:
+A setting («Перевір себе», off by default) that hides the answer on an Entry card until the reader taps: a Word card shows only the Lemma with Stress, part of speech and Category, a Correction card only the non-standard form. The Knowledge Mark buttons work only after the reveal. It applies to the Feed, the Word of the Day included, and not to the widget or Share Cards.
+_Avoid_: Quiz mode, test mode
+
 **Mix**:
-The set of Categories, plus Corrections as a whole, that the user chose to see in the Feed, notifications, widgets and the Game. At least one Category always stays in the Mix.
+The set of Categories, plus Corrections as a whole, that the user chose to see in the Feed, notifications, widgets and the Game. At least one Category always stays in the Mix. The Mix also holds the Rarity Floor.
 _Avoid_: Filter, preferences
+
+**Rarity Floor**:
+The lowest rarity of Words the reader wants, «від 1» to «від 5», default «від 1». Only Words of that rarity or rarer are eligible, in the Feed and the Game, so a high floor leaves only the rarest Words. Corrections have no rarity and are not affected. Part of the Mix.
+_Avoid_: Difficulty, level
 
 **Hidden Entry**:
 An Entry the user disliked; it never appears in the Feed, notifications, widgets or the Game again unless unhidden.
@@ -195,7 +217,7 @@ _Avoid_: Widget cache, widget database
 ### Game
 
 **Game**:
-A run of up to 15 Rounds in one Game Mode, with 5 Lives.
+A run of up to 15 Rounds in one Game Mode, with 5 Lives. Up to 5 of the 15 Rounds are drawn from eligible Entries that are Unknown or due for Review, the rest as before; a wrong answer marks the Entry Unknown. At its end the Game shows its Game Review.
 _Avoid_: Quiz, practice, test
 
 **Game Mode**:
@@ -215,3 +237,7 @@ A wrong option in a Round.
 **Best result**:
 The most Rounds passed in one finished Game, in any Game Mode; one per Edition. Stored, since finished Games are not kept, and written only when a finished Game beats it; a Game left before its end never counts.
 _Avoid_: High score, top score
+
+**Game Review**:
+The result screen's list of every played Round in order, ✓ or ✗, with the reader's pick on a wrong answer. A tap expands the Definition, Example and etymology (a Correction: the right form and the explanation); a second tap opens the Entry. Its answers are kept only until the result screen and are not stored.
+_Avoid_: Mistakes list, answer log
