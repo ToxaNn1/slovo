@@ -48,4 +48,6 @@ export const WordCardStringsSchema = z.strictObject({
   oftenSaid: TextSchema,
   /** What VoiceOver says a linked Correction's form does when tapped, e.g. "Відкриває виправлення". */
   oftenSaidHint: TextSchema,
+  /** Self-check: the button that reveals a hidden Word card's meaning, e.g. "Показати значення". */
+  reveal: TextSchema,
 });

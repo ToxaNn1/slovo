@@ -195,7 +195,8 @@
     "extraDefinitions": "Інші значення",
     "moreExamples": "Ще приклади",
     "oftenSaid": "Часто кажуть:",
-    "oftenSaidHint": "Відкриває виправлення"
+    "oftenSaidHint": "Відкриває виправлення",
+    "reveal": "Показати значення"
   },
   "correctionCard": {
     "title": "Виправлення",

@@ -16,6 +16,8 @@ const strings = {
     synonyms: 'Synonyms',
     antonym: 'Antonym',
     antonyms: 'Antonyms',
+    example: '{text}',
+    reveal: 'Show the meaning',
   },
   correctionCard: {
     title: 'Correction',
@@ -28,6 +30,7 @@ const strings = {
     exampleStandard: 'Right: {text}',
     source: 'Source: {source}',
   },
+  wordOfTheDay: { badge: 'Word of the day · {day} {month}', months: [] },
   knowledge: {
     known: 'Known',
     unknown: 'Unknown',
@@ -224,5 +227,61 @@ describe('the mark buttons on a Correction card', () => {
     expect(screen.getByTestId('action-row')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Known' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Unknown' })).toBeNull();
+  });
+});
+
+const wordWithEverything: EntryFeedCard = {
+  kind: 'word',
+  wordCard: {
+    ...wordCard.wordCard,
+    example: { text: 'An example.' },
+    synonyms: ['alike'],
+    categoryName: 'Rare',
+  },
+};
+
+describe('Self-check on a Word card', () => {
+  it('shows only the Lemma, part of speech and Category until revealed', async () => {
+    await render(inEdition(<EntryCard card={wordWithEverything} hidden onReveal={jest.fn()} />));
+
+    expect(screen.getByTestId('word-lemma')).toHaveTextContent('lemma');
+    expect(screen.getByTestId('word-part-of-speech')).toHaveTextContent('n.');
+    expect(screen.getByTestId('word-category')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Show the meaning' })).toBeTruthy();
+    for (const hiddenPart of ['word-definition', 'word-example', 'word-synonyms']) {
+      expect(screen.queryByTestId(hiddenPart)).toBeNull();
+    }
+  });
+
+  it('asks for the reveal when the reader taps «Show the meaning»', async () => {
+    const onReveal = jest.fn();
+    await render(inEdition(<EntryCard card={wordWithEverything} hidden onReveal={onReveal} />));
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Show the meaning' }));
+
+    expect(onReveal).toHaveBeenCalled();
+  });
+
+  it('shows the whole card once revealed', async () => {
+    await render(inEdition(<EntryCard card={wordWithEverything} />));
+
+    expect(screen.getByTestId('word-definition')).toHaveTextContent('What it means.');
+    expect(screen.getByTestId('word-example')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Show the meaning' })).toBeNull();
+  });
+
+  it('keeps the Word of the Day badge on a hidden card', async () => {
+    await render(
+      inEdition(
+        <EntryCard
+          card={{ ...wordWithEverything, wordOfTheDay: { year: 2026, month: 10, day: 19 } }}
+          hidden
+          onReveal={jest.fn()}
+        />,
+      ),
+    );
+
+    expect(screen.getByTestId('word-of-the-day-badge')).toBeTruthy();
+    expect(screen.queryByTestId('word-definition')).toBeNull();
   });
 });

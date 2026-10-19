@@ -7,6 +7,7 @@ import { OrnamentDivider } from '../decor/DecorSlots';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useWordTextSizes, type TextSize } from '../providers/FontSizeProvider';
 import { SectionLabel } from '../primitives/headings';
+import { OutlineButton } from '../primitives/OutlineButton';
 import { OutlinedChip } from '../primitives/OutlinedChip';
 import { partOfSpeechText } from './part-of-speech';
 import { stressLabel } from './stress-label';
@@ -21,7 +22,8 @@ import { WordOfTheDayBadge } from './WordOfTheDayBadge';
  * part of speech and register chips, the primary Definition, the first
  * Example, Synonyms and antonyms, the Category chip, the details behind
  * "more" and the linked Corrections. It draws only the sections the Core put
- * in the card, at the user's font size.
+ * in the card, at the user's font size. Under Self-check it keeps the Lemma,
+ * part of speech and Category, and a button that reveals the rest.
  */
 export function WordCardBody({
   card,
@@ -29,6 +31,8 @@ export function WordCardBody({
   compact,
   lemmaSize,
   onOpenCorrection,
+  hidden,
+  onReveal,
 }: {
   card: WordCardModel;
   /** On the card of the Word of the Day: the local day it is the Word of. */
@@ -38,6 +42,9 @@ export function WordCardBody({
   /** The Lemma's size at the user's font size, smaller in the compact layout. */
   lemmaSize: TextSize;
   onOpenCorrection: ((correctionId: string) => void) | undefined;
+  /** Self-check: only the Lemma, part of speech and Category, and the button that reveals the rest. */
+  hidden: boolean;
+  onReveal: (() => void) | undefined;
 }) {
   const { colors, fontFamilies, radii } = useTokens();
   const sizes = useWordTextSizes();
@@ -102,15 +109,16 @@ export function WordCardBody({
             >
               {grammar('short')}
             </Text>
-            {card.registers.map((register) => (
-              <OutlinedChip
-                key={register}
-                testID={`word-register-${register}`}
-                text={strings.registers[register].short}
-                accessibilityLabel={strings.registers[register].full}
-                size="tight"
-              />
-            ))}
+            {!hidden &&
+              card.registers.map((register) => (
+                <OutlinedChip
+                  key={register}
+                  testID={`word-register-${register}`}
+                  text={strings.registers[register].short}
+                  accessibilityLabel={strings.registers[register].full}
+                  size="tight"
+                />
+              ))}
           </View>
         </View>
         {Pronunciation === undefined ? null : <Pronunciation lemma={card.lemma} />}
@@ -119,91 +127,109 @@ export function WordCardBody({
         {/* Decor slot 2, between the header and the Definition. */}
         <OrnamentDivider />
       </View>
-      <Text
-        testID="word-definition"
-        {...voice}
-        {...turnActions}
-        style={[sizes.definition, { color: colors.ink, fontFamily: fontFamilies.word }]}
-      >
-        {card.primaryDefinition}
-      </Text>
-      {card.example === undefined ? null : (
-        <ExampleText testID="word-example" example={card.example} size={sizes.example} />
-      )}
-      {relations.length === 0 && !compact ? null : (
-        <View style={compact ? styles.compactRow : styles.relations}>
-          {relations.length === 0 ? null : (
-            <View style={[styles.relations, compact && styles.compactRelations]}>
-              {relations.map(({ key, words, one, many }) => (
-                <Text
-                  key={key}
-                  testID={`word-${key}`}
-                  {...voice}
-                  style={[
-                    styles.relation,
-                    { color: colors.inkSecondary, fontFamily: fontFamilies.ui },
-                  ]}
-                >
-                  <Text style={{ color: colors.muted }}>{words.length === 1 ? one : many}</Text>{' '}
-                  {words.join(', ')}
-                </Text>
-              ))}
+      {hidden ? (
+        <>
+          {categoryChip}
+          <OutlineButton
+            testID="word-reveal"
+            label={strings.reveal}
+            onPress={() => {
+              onReveal?.();
+            }}
+          />
+        </>
+      ) : (
+        <>
+          <Text
+            testID="word-definition"
+            {...voice}
+            {...turnActions}
+            style={[sizes.definition, { color: colors.ink, fontFamily: fontFamilies.word }]}
+          >
+            {card.primaryDefinition}
+          </Text>
+          {card.example === undefined ? null : (
+            <ExampleText testID="word-example" example={card.example} size={sizes.example} />
+          )}
+          {relations.length === 0 && !compact ? null : (
+            <View style={compact ? styles.compactRow : styles.relations}>
+              {relations.length === 0 ? null : (
+                <View style={[styles.relations, compact && styles.compactRelations]}>
+                  {relations.map(({ key, words, one, many }) => (
+                    <Text
+                      key={key}
+                      testID={`word-${key}`}
+                      {...voice}
+                      style={[
+                        styles.relation,
+                        { color: colors.inkSecondary, fontFamily: fontFamilies.ui },
+                      ]}
+                    >
+                      <Text style={{ color: colors.muted }}>{words.length === 1 ? one : many}</Text>{' '}
+                      {words.join(', ')}
+                    </Text>
+                  ))}
+                </View>
+              )}
+              {compact ? categoryChip : null}
             </View>
           )}
-          {compact ? categoryChip : null}
-        </View>
-      )}
-      {compact ? null : categoryChip}
-      {card.details === undefined ? null : <Details details={card.details} />}
-      {card.linkedCorrections.length === 0 ? null : (
-        <View
-          testID="word-often-said"
-          {...voice}
-          style={[styles.oftenSaid, { borderTopColor: colors.line }]}
-        >
-          <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-            <Path
-              d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"
-              stroke={colors.accent}
-              strokeWidth={1.8}
-            />
-          </Svg>
-          <View style={styles.oftenSaidLine}>
-            {/* Each form below says the label for VoiceOver. */}
-            <Text
-              accessibilityElementsHidden
-              importantForAccessibility="no"
-              style={[styles.oftenSaidText, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+          {compact ? null : categoryChip}
+          {card.details === undefined ? null : <Details details={card.details} />}
+          {card.linkedCorrections.length === 0 ? null : (
+            <View
+              testID="word-often-said"
+              {...voice}
+              style={[styles.oftenSaid, { borderTopColor: colors.line }]}
             >
-              {strings.oftenSaid}
-            </Text>
-            {card.linkedCorrections.map(({ correctionId, nonStandardForm }, index) => (
-              <Pressable
-                key={correctionId}
-                testID={`word-often-said-${correctionId}`}
-                accessibilityRole="button"
-                accessibilityLabel={`${strings.oftenSaid} ${nonStandardForm}`}
-                accessibilityHint={strings.oftenSaidHint}
-                {...voice}
-                disabled={onOpenCorrection === undefined}
-                // The 14 pt line grows to a full touch target.
-                hitSlop={{ top: space[4], bottom: space[4], left: space[1], right: space[1] }}
-                onPress={() => onOpenCorrection?.(correctionId)}
-              >
+              <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+                <Path
+                  d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"
+                  stroke={colors.accent}
+                  strokeWidth={1.8}
+                />
+              </Svg>
+              <View style={styles.oftenSaidLine}>
+                {/* Each form below says the label for VoiceOver. */}
                 <Text
+                  accessibilityElementsHidden
+                  importantForAccessibility="no"
                   style={[
-                    styles.oftenSaidForms,
-                    { color: colors.inkSecondary, fontFamily: fontFamilies.word },
+                    styles.oftenSaidText,
+                    { color: colors.muted, fontFamily: fontFamilies.ui },
                   ]}
                 >
-                  {index < card.linkedCorrections.length - 1
-                    ? `${nonStandardForm},`
-                    : nonStandardForm}
+                  {strings.oftenSaid}
                 </Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
+                {card.linkedCorrections.map(({ correctionId, nonStandardForm }, index) => (
+                  <Pressable
+                    key={correctionId}
+                    testID={`word-often-said-${correctionId}`}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${strings.oftenSaid} ${nonStandardForm}`}
+                    accessibilityHint={strings.oftenSaidHint}
+                    {...voice}
+                    disabled={onOpenCorrection === undefined}
+                    // The 14 pt line grows to a full touch target.
+                    hitSlop={{ top: space[4], bottom: space[4], left: space[1], right: space[1] }}
+                    onPress={() => onOpenCorrection?.(correctionId)}
+                  >
+                    <Text
+                      style={[
+                        styles.oftenSaidForms,
+                        { color: colors.inkSecondary, fontFamily: fontFamilies.word },
+                      ]}
+                    >
+                      {index < card.linkedCorrections.length - 1
+                        ? `${nonStandardForm},`
+                        : nonStandardForm}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+          )}
+        </>
       )}
     </>
   );

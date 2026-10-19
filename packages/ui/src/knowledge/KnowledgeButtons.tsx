@@ -3,7 +3,14 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { minTouchTarget, outlineButtonRadius, space, typeSize, withAlpha } from '../tokens';
+import {
+  disabledOpacity,
+  minTouchTarget,
+  outlineButtonRadius,
+  space,
+  typeSize,
+  withAlpha,
+} from '../tokens';
 
 /** How far the largest text sizes of iOS may scale a label, so both buttons stay on one line. */
 const LABEL_MAX_FONT_SCALE = 1.2;
@@ -13,18 +20,22 @@ const LABEL_MAX_FONT_SCALE = 1.2;
  * mark is filled with the accent colour, the other is an outline. A tap calls
  * `onTap` with its mark either way; the Core decides whether that changes the
  * mark or removes it. On a Correction, Known means "I already say it right",
- * and its button says so to a screen reader.
+ * and its button says so to a screen reader. While Self-check hides the
+ * card's meaning, both buttons are inactive.
  */
 export function KnowledgeButtons({
   entryKind,
   mark,
   onTap,
+  inactive = false,
 }: {
   /** The kind of Entry the card shows. */
   entryKind: 'word' | 'correction';
   /** The mark the card shows: none without one, and none while the Entry is due. */
   mark: KnowledgeMark | undefined;
   onTap: (mark: KnowledgeMark) => void;
+  /** Self-check: the card hides its meaning, so nothing can be marked until it is revealed. */
+  inactive?: boolean | undefined;
 }) {
   const { strings } = useEdition();
   return (
@@ -34,6 +45,7 @@ export function KnowledgeButtons({
         label={strings.knowledge.known}
         hint={entryKind === 'correction' ? strings.knowledge.correctionKnownHint : undefined}
         selected={mark === 'known'}
+        disabled={inactive}
         onPress={() => {
           onTap('known');
         }}
@@ -42,6 +54,7 @@ export function KnowledgeButtons({
         testID="knowledge-unknown"
         label={strings.knowledge.unknown}
         selected={mark === 'unknown'}
+        disabled={inactive}
         onPress={() => {
           onTap('unknown');
         }}
@@ -54,12 +67,14 @@ function MarkButton({
   label,
   hint,
   selected,
+  disabled,
   onPress,
   testID,
 }: {
   label: string;
   hint?: string | undefined;
   selected: boolean;
+  disabled: boolean;
   onPress: () => void;
   testID: string;
 }) {
@@ -71,12 +86,14 @@ function MarkButton({
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityHint={hint}
-      accessibilityState={{ selected }}
+      accessibilityState={{ selected, disabled }}
       {...voice}
+      disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
         {
+          opacity: disabled ? disabledOpacity : 1,
           borderColor: selected ? colors.accent : withAlpha(colors.accent, 0.45),
           backgroundColor: selected
             ? colors.accent
