@@ -21,7 +21,11 @@ export const SEEN_DWELL_MS = 500;
 /** One card in this many is a Correction's, while the Cycle has unseen Corrections. */
 export const CORRECTION_EVERY = 5;
 
-/** One card in this many is a Word's due for Review, while any is due and it isn't a Correction's turn. */
+/**
+ * One card in this many is a Word's due for Review, while any is due and it
+ * isn't a Correction's turn. A Correction due for Review takes the
+ * Correction's turn itself.
+ */
 export const REVIEW_EVERY = 3;
 
 /**
@@ -127,13 +131,14 @@ const { feedPosition } = userStateRecords;
  * when it is the only unseen Entry left, the Cycle ends after it. A
  * Correction takes its turn every `CORRECTION_EVERY`th card of the Cycle,
  * and either kind of Entry fills in for the other when it has none left.
- * Every `REVIEW_EVERY`th card of the session that isn't a Correction's goes
- * to a Word due for Review, if any (ADR 0043).
+ * A Correction's turn goes to a Correction due for Review before a new one,
+ * and every `REVIEW_EVERY`th card of the session that isn't a Correction's
+ * goes to a Word due for Review, if any (ADR 0043).
  */
 function nextEntryId(
   { words: unseenWords, corrections: unseenCorrections }: EntryIds,
   session: FeedSession,
-  dueWords: readonly string[],
+  due: EntryIds,
 ): string | undefined {
   const shown = session.shownIds();
   const last = entryIdOf(session.cards.at(-1));
@@ -147,31 +152,39 @@ function nextEntryId(
     return correctionTurn ? (correction ?? word) : (word ?? correction);
   }
   const id = pick((id) => !shown.has(id)) ?? pick((id) => id !== last);
-  if (correctionTurn && id !== undefined && unseenCorrections.includes(id)) return id;
-  return reviewWordId(dueWords, session) ?? id;
+  if (correctionTurn) {
+    const dueCorrection = reviewEntryId(due.corrections, session);
+    if (dueCorrection !== undefined) return dueCorrection;
+    if (id !== undefined && unseenCorrections.includes(id)) return id;
+  }
+  const reviewSlot = (session.cards.length + 1) % REVIEW_EVERY === 0;
+  return (reviewSlot ? reviewEntryId(due.words, session) : undefined) ?? id;
 }
 
 /**
- * The Word due for Review the next card goes to, if it is a Review slot,
- * every `REVIEW_EVERY`th card of the session: of the due Words, in the Cycle
+ * The due Entry a Review slot goes to: of the Entries `due`, in the Cycle
  * order, the one not shown in this session or shown longest ago. Never the
- * Entry of the last card. A due Word so comes back slot after slot until the
- * reader answers it, Seen or not.
+ * Entry of the last card. A due Entry so comes back slot after slot until
+ * the reader answers it, Seen or not.
  */
-function reviewWordId(dueWords: readonly string[], session: FeedSession): string | undefined {
-  if ((session.cards.length + 1) % REVIEW_EVERY !== 0) return undefined;
+function reviewEntryId(due: readonly string[], session: FeedSession): string | undefined {
   const last = entryIdOf(session.cards.at(-1));
   // Each Entry's last place in the session.
   const shownAt = new Map(session.cards.map((card, place) => [entryIdOf(card), place]));
-  return dueWords
+  return due
     .filter((id) => id !== last)
     .sort((a, b) => (shownAt.get(a) ?? -1) - (shownAt.get(b) ?? -1))[0];
 }
 
-/** The Words due for Review that the Cycle covers, so neither Hidden nor out of the Mix, in its order. */
-function eligibleDueWords(cycle: Cycle, knowledge: Pick<Knowledge, 'due'>): readonly string[] {
+/** The Entries due for Review that the Cycle covers, so neither Hidden nor out of the Mix, in its order. */
+function eligibleDue(cycle: Cycle, knowledge: Pick<Knowledge, 'due'>): EntryIds {
   const due = new Set(knowledge.due());
-  return due.size === 0 ? [] : cycle.order().words.filter((id) => due.has(id));
+  if (due.size === 0) return { words: [], corrections: [] };
+  const { words, corrections } = cycle.order();
+  return {
+    words: words.filter((id) => due.has(id)),
+    corrections: corrections.filter((id) => due.has(id)),
+  };
 }
 
 /**
@@ -203,9 +216,11 @@ function eligibleDueWords(cycle: Cycle, knowledge: Pick<Knowledge, 'due'>): read
  *
  * While Words are due for Review, every `REVIEW_EVERY`th card of the session
  * that isn't a Correction's turn shows one, Seen in this Cycle or not, until
- * the reader answers it (ADR 0043). A due Word the Cycle doesn't cover
- * (Hidden, out of the Mix, under the Rarity Floor) waits until it does. Its
- * card is Seen and joins History as any card does.
+ * the reader answers it (ADR 0043). While Corrections are due, the
+ * Correction's turn shows one before a new Correction, in the same way. A
+ * due Entry the Cycle doesn't cover (Hidden, out of the Mix, under the
+ * Rarity Floor) waits until it does. Its card is Seen and joins History as
+ * any card does.
  *
  * The composition calls `followEligibility` once the Cycle has read the
  * eligible Entries again: the Feed drops every card whose Entry the Cycle no
@@ -312,7 +327,7 @@ export async function openFeed({
       started.commit();
       session.startCycle();
     }
-    const id = nextEntryId(cycle.unseen(), session, eligibleDueWords(cycle, knowledge));
+    const id = nextEntryId(cycle.unseen(), session, eligibleDue(cycle, knowledge));
     let card: FeedCard = { kind: 'end-of-cycle' };
     if (id !== undefined) {
       const entry = await entries.get(id);
