@@ -33,12 +33,14 @@ function word(
     lemma = id.slice(2),
     stress = [0],
     examples = [{ text: `An example of ${id.slice(2)}.`, author: 'An author' }],
+    rarity = 3,
     retired = false,
   }: {
     partOfSpeech?: PartOfSpeech;
     lemma?: string;
     stress?: number[];
     examples?: Example[];
+    rarity?: number;
     retired?: boolean;
   } = {},
 ): Word {
@@ -55,7 +57,7 @@ function word(
     antonyms: [],
     registers: [],
     categoryId,
-    rarity: 3,
+    rarity,
     sources: [{ title: 'Test source' }],
     correctionIds: [],
     retired,
@@ -174,7 +176,7 @@ async function run({
     content: pack,
     edition: {
       id: 'test',
-      isFeatureEnabled: (feature) => feature === 'game' && game,
+      isFeatureEnabled: (feature) => (feature === 'game' && game) || feature === 'rarityFilter',
       userSettingDefaults: {
         mix: { categoryIds: categories.map(({ id }) => id), corrections: false },
         notificationTimes: [],
@@ -672,6 +674,31 @@ describe('the Words a Game asks about', () => {
       for (const round of await playGame(app)) {
         const shown = optionWordsOf(round).map((option) => option.id);
         expect(shown.filter((id) => left.includes(id))).toEqual([]);
+      }
+    }
+  });
+
+  it('never asks about or offers a Word below the Rarity Floor', async () => {
+    // 16 Words of rarity 4 and 5 over the pack's Words, all of rarity 3.
+    const rare = numbered('w_rare', 16).map((id) =>
+      word(id, 'crafts', { rarity: id.endsWith('1') ? 5 : 4 }),
+    );
+    const pack = createMemoryContentPort({ categories, words: [...words, ...rare] });
+    const rareReading = (text: string) => rare.find((w) => renderStress(w) === text);
+    for (const seed of [1, 2, 3]) {
+      const app = await run({ seed, pack });
+      await app.mix.setRarityFloor(4);
+
+      await app.game.start('guess-word');
+      while (current(app).status === 'playing') {
+        const { round } = current(app);
+        expect(round.options.every(({ text }) => rareReading(text) !== undefined)).toBe(true);
+        const right = round.options.findIndex(
+          ({ text }) => rareReading(text)?.primaryDefinition === round.prompt,
+        );
+        expect(right).not.toBe(-1);
+        app.game.answer(right);
+        await app.game.next();
       }
     }
   });

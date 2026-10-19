@@ -120,6 +120,7 @@ describe('the 0.8 sync marks', () => {
       'hidden.w_1',
       'mix.categories.nature',
       'mix.corrections',
+      'mix.rarityFloor',
       'feed.cycle',
       'feed.seen.w_1',
     ]) {

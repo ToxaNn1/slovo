@@ -27,13 +27,14 @@ export type EligibleOfKind =
  * them. It is the only module that decides which Entries are eligible, so
  * the Feed, the Cycle, the Word of the Day and the card builders never check
  * Retired, a Feature Switch or the Mix themselves. An eligible Entry is live
- * (not Retired), of a kind the Edition turns on, in the user's Mix and not
- * Hidden (ADR 0015, 0019).
+ * (not Retired), of a kind the Edition turns on, in the user's Mix (a Word at
+ * its Rarity Floor or rarer) and not Hidden (ADR 0015, 0019).
  */
 export interface Entries {
   /**
    * The ids of the eligible Entries: the live Words of the Categories in the
-   * Mix, Category by Category in the Language Pack's order, and the live
+   * Mix at the Rarity Floor or rarer, Category by Category in the Language
+   * Pack's order, and the live
    * Corrections when the Edition turns Corrections on and they are in the
    * Mix, each in the Language Pack's stable order, leaving out every Hidden
    * Entry. Read afresh on every call.
@@ -123,29 +124,6 @@ export function createEntries(
 
   const linksCorrections = async () => withCorrections() && (await correctionsInMix());
 
-  /**
-   * The live Words of the Categories in the Mix, one query per Category, or
-   * every live Word without a Mix.
-   */
-  async function wordIds(categoryIds: readonly string[] | undefined): Promise<readonly string[]> {
-    if (categoryIds === undefined) return content.listWordIds();
-    const words = await Promise.all(categoryIds.map((id) => content.listWordIds(id)));
-    return words.flat();
-  }
-
-  async function eligible(): Promise<EntryIds> {
-    const [mix, hidden] = await Promise.all([
-      readUserMix(),
-      'userState' in options ? options.userState.list(hiddenRecords) : new Map<string, string>(),
-    ]);
-    const [words, corrections] = await Promise.all([
-      wordIds(mix?.categoryIds),
-      withCorrections() && (mix?.corrections ?? true) ? content.listCorrectionIds() : [],
-    ]);
-    const shown = (id: string) => !hidden.has(id);
-    return { words: words.filter(shown), corrections: corrections.filter(shown) };
-  }
-
   /** How to read every live Entry of a kind from the Language Pack. */
   const readLive: Record<EntryKind, () => Promise<readonly Entry[]>> = {
     word: () => content.listWords(),
@@ -166,6 +144,46 @@ export function createEntries(
     word: byId('word'),
     correction: byId('correction'),
   };
+
+  /**
+   * The live Words of the Categories in the Mix, one query per Category, or
+   * every live Word without a Mix.
+   */
+  async function wordIds(categoryIds: readonly string[] | undefined): Promise<readonly string[]> {
+    if (categoryIds === undefined) return content.listWordIds();
+    const words = await Promise.all(categoryIds.map((id) => content.listWordIds(id)));
+    return words.flat();
+  }
+
+  /**
+   * The Words of the ids at the Rarity Floor or above it, while the Edition
+   * turns the rarity filter on; every one of them otherwise, or at the lowest
+   * floor, without reading the Words.
+   */
+  async function atRarityFloor(
+    ids: readonly string[],
+    floor: number | undefined,
+  ): Promise<readonly string[]> {
+    if (floor === undefined || floor <= 1 || !edition.isFeatureEnabled('rarityFilter')) return ids;
+    const words = await live.word();
+    return ids.filter((id) => {
+      const word = words.get(id);
+      return word?.kind === 'word' && word.rarity >= floor;
+    });
+  }
+
+  async function eligible(): Promise<EntryIds> {
+    const [mix, hidden] = await Promise.all([
+      readUserMix(),
+      'userState' in options ? options.userState.list(hiddenRecords) : new Map<string, string>(),
+    ]);
+    const [words, corrections] = await Promise.all([
+      wordIds(mix?.categoryIds).then((ids) => atRarityFloor(ids, mix?.rarityFloor)),
+      withCorrections() && (mix?.corrections ?? true) ? content.listCorrectionIds() : [],
+    ]);
+    const shown = (id: string) => !hidden.has(id);
+    return { words: words.filter(shown), corrections: corrections.filter(shown) };
+  }
 
   async function eligibleOfKind(kind: EntryKind): Promise<EligibleOfKind> {
     if (kind === 'correction' && !(await correctionsInMix())) {

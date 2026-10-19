@@ -1,4 +1,9 @@
-import { FontSizeSchema, NotificationTimesSchema, ThemeSchema } from '@slovo/contracts';
+import {
+  FontSizeSchema,
+  NotificationTimesSchema,
+  RaritySchema,
+  ThemeSchema,
+} from '@slovo/contracts';
 import { z } from 'zod';
 
 import {
@@ -98,6 +103,11 @@ export const userStateRecords = {
   mixCategories: declareRecords('mix.categories.', z.boolean()),
   /** Whether the user has Corrections, as a whole, in the Mix; without it, the Edition's default Mix. */
   mixCorrections: declareRecord('mix.corrections', z.boolean()),
+  /**
+   * The Rarity Floor the user chose, 1 to 5; without it, 1, so every Word is
+   * in. It syncs last write wins like the rest of the Mix (ADR 0041).
+   */
+  mixRarityFloor: declareRecord('mix.rarityFloor', RaritySchema),
   /**
    * The Active Days, one record per day, by local date `YYYY-MM-DD`: that the
    * app was opened that day. They sync as a union (0.8).
