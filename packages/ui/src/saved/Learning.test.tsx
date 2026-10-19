@@ -41,7 +41,9 @@ async function renderInEdition(element: ReactElement) {
     <GestureHandlerRootView>
       <EditionProvider
         edition={{ locale: 'en' }}
-        strings={{ ...strings, correctionCard: { insteadOf: 'instead of {form}' } } as EditionStrings}
+        strings={
+          { ...strings, correctionCard: { insteadOf: 'instead of {form}' } } as EditionStrings
+        }
       >
         {element}
       </EditionProvider>
@@ -58,7 +60,10 @@ describe('LearningRow', () => {
     [7, 'in 7 days'],
   ])('shows the Entry and its next Review day %i days away as «%s»', async (days, label) => {
     await renderInEdition(
-      <LearningRow item={{ row: word('w1', 'river'), daysUntilReview: days }} onPress={jest.fn()} />,
+      <LearningRow
+        item={{ row: word('w1', 'river'), daysUntilReview: days }}
+        onPress={jest.fn()}
+      />,
     );
 
     expect(screen.getByText('river')).toBeTruthy();
