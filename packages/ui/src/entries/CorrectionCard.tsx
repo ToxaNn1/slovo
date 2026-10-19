@@ -7,6 +7,7 @@ import { OrnamentDivider } from '../decor/DecorSlots';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useWordTextSizes, type TextSize } from '../providers/FontSizeProvider';
 import { SectionLabel } from '../primitives/headings';
+import { OutlineButton } from '../primitives/OutlineButton';
 import { OutlinedChip } from '../primitives/OutlinedChip';
 import { space, typeSize, withAlpha } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
@@ -18,15 +19,21 @@ import { WholeWordsText } from '../primitives/WholeWordsText';
  * Type, the non-standard form muted and struck through, the main standard
  * equivalent at the Lemma's size with the others under it, the explanation,
  * the example pair and, when the Correction has sources, a line naming them. A Correction carries no Stress, and nothing on the card
- * reads as an error.
+ * reads as an error. Under Self-check it keeps only the non-standard form,
+ * asks how to say it right and offers a button that reveals the rest.
  */
 export function CorrectionCardBody({
   card,
   lemmaSize: mainSize,
+  hidden,
+  onReveal,
 }: {
   card: CorrectionCardModel;
   /** The Lemma's size at the user's font size, which the main standard equivalent takes. */
   lemmaSize: TextSize;
+  /** Self-check: only the non-standard form, the question and the button that reveals the rest. */
+  hidden: boolean;
+  onReveal: (() => void) | undefined;
 }) {
   const { colors, fontFamilies, radii } = useTokens();
   const sizes = useWordTextSizes();
@@ -42,12 +49,14 @@ export function CorrectionCardBody({
     <>
       <View style={styles.header}>
         <SectionLabel style={styles.title}>{strings.title}</SectionLabel>
-        <OutlinedChip
-          testID="correction-type"
-          text={correctionType}
-          accessibilityLabel={fill(strings.correctionType, { type: correctionType })}
-          size="roomy"
-        />
+        {hidden ? null : (
+          <OutlinedChip
+            testID="correction-type"
+            text={correctionType}
+            accessibilityLabel={fill(strings.correctionType, { type: correctionType })}
+            size="roomy"
+          />
+        )}
       </View>
       <View
         testID="correction-non-standard"
@@ -77,95 +86,121 @@ export function CorrectionCardBody({
         {/* Decor slot 2 with an arrow from the non-standard form to the standard one. */}
         <OrnamentDivider centre="arrow" />
       </View>
-      <View style={styles.form}>
-        <View
-          testID="correction-standard"
-          accessible
-          accessibilityLabel={`${strings.standard}: ${card.mainEquivalent}`}
-          {...voice}
-          {...turnActions}
-          style={styles.form}
-        >
-          <Text style={[styles.label, { color: colors.accent, fontFamily: fontFamilies.ui }]}>
-            {strings.standard}
-          </Text>
-          <WholeWordsText
-            text={card.mainEquivalent}
-            size={mainSize}
-            tracking={-0.01}
-            // A phrase wraps; a single word shrinks to fit rather than break.
-            numberOfLines={card.mainEquivalent.includes(' ') ? 3 : 1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.5}
-            style={[styles.mainEquivalent, { color: colors.ink, fontFamily: fontFamilies.word }]}
-          />
-        </View>
-        {card.otherEquivalents.length === 0 ? null : (
+      {hidden ? (
+        <>
           <Text
-            testID="correction-other-equivalents"
+            testID="correction-how-to-say"
             {...voice}
-            style={[styles.body, { color: colors.inkSecondary, fontFamily: fontFamilies.ui }]}
+            style={[styles.label, { color: colors.accent, fontFamily: fontFamilies.ui }]}
           >
-            {fill(strings.otherEquivalents, { equivalents: card.otherEquivalents.join(', ') })}
+            {strings.howToSay}
           </Text>
-        )}
-      </View>
-      <Text
-        testID="correction-explanation"
-        {...voice}
-        style={[styles.explanation, { color: colors.ink, fontFamily: fontFamilies.ui }]}
-      >
-        {card.explanation}
-      </Text>
-      <View
-        testID="correction-example-pair"
-        style={[
-          styles.examplePair,
-          { backgroundColor: colors.surfaceSunken, borderRadius: radii.chip },
-        ]}
-      >
-        <View
-          accessible
-          accessibilityLabel={fill(strings.exampleNonStandard, {
-            text: card.examplePair.nonStandard,
-          })}
-          {...voice}
-          style={styles.exampleRow}
-        >
-          <Mark lineHeight={sizes.example.lineHeight}>
-            <Path d="M7 12h10" stroke={colors.muted} strokeWidth={1.8} />
-          </Mark>
-          <Text style={[styles.sentence, sentence, { color: colors.muted }]}>
-            {card.examplePair.nonStandard}
+          <OutlineButton
+            testID="correction-reveal"
+            label={strings.reveal}
+            onPress={() => {
+              onReveal?.();
+            }}
+          />
+        </>
+      ) : (
+        <>
+          <View style={styles.form}>
+            <View
+              testID="correction-standard"
+              accessible
+              accessibilityLabel={`${strings.standard}: ${card.mainEquivalent}`}
+              {...voice}
+              {...turnActions}
+              style={styles.form}
+            >
+              <Text style={[styles.label, { color: colors.accent, fontFamily: fontFamilies.ui }]}>
+                {strings.standard}
+              </Text>
+              <WholeWordsText
+                text={card.mainEquivalent}
+                size={mainSize}
+                tracking={-0.01}
+                // A phrase wraps; a single word shrinks to fit rather than break.
+                numberOfLines={card.mainEquivalent.includes(' ') ? 3 : 1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.5}
+                style={[
+                  styles.mainEquivalent,
+                  { color: colors.ink, fontFamily: fontFamilies.word },
+                ]}
+              />
+            </View>
+            {card.otherEquivalents.length === 0 ? null : (
+              <Text
+                testID="correction-other-equivalents"
+                {...voice}
+                style={[styles.body, { color: colors.inkSecondary, fontFamily: fontFamilies.ui }]}
+              >
+                {fill(strings.otherEquivalents, { equivalents: card.otherEquivalents.join(', ') })}
+              </Text>
+            )}
+          </View>
+          <Text
+            testID="correction-explanation"
+            {...voice}
+            style={[styles.explanation, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+          >
+            {card.explanation}
           </Text>
-        </View>
-        <View
-          accessible
-          accessibilityLabel={fill(strings.exampleStandard, { text: card.examplePair.standard })}
-          {...voice}
-          style={styles.exampleRow}
-        >
-          <Mark lineHeight={sizes.example.lineHeight}>
-            <Path
-              d="M5 12.5l4.5 4.5L19 7.5"
-              fill="none"
-              stroke={colors.correct}
-              strokeWidth={2.2}
-            />
-          </Mark>
-          <Text style={[styles.sentence, sentence, { color: colors.ink }]}>
-            {card.examplePair.standard}
-          </Text>
-        </View>
-      </View>
-      {card.sourceTitles.length === 0 ? null : (
-        <Text
-          testID="correction-source"
-          {...voice}
-          style={[styles.source, { color: colors.muted, fontFamily: fontFamilies.ui }]}
-        >
-          {fill(strings.source, { source: card.sourceTitles.join(SOURCE_SEPARATOR) })}
-        </Text>
+          <View
+            testID="correction-example-pair"
+            style={[
+              styles.examplePair,
+              { backgroundColor: colors.surfaceSunken, borderRadius: radii.chip },
+            ]}
+          >
+            <View
+              accessible
+              accessibilityLabel={fill(strings.exampleNonStandard, {
+                text: card.examplePair.nonStandard,
+              })}
+              {...voice}
+              style={styles.exampleRow}
+            >
+              <Mark lineHeight={sizes.example.lineHeight}>
+                <Path d="M7 12h10" stroke={colors.muted} strokeWidth={1.8} />
+              </Mark>
+              <Text style={[styles.sentence, sentence, { color: colors.muted }]}>
+                {card.examplePair.nonStandard}
+              </Text>
+            </View>
+            <View
+              accessible
+              accessibilityLabel={fill(strings.exampleStandard, {
+                text: card.examplePair.standard,
+              })}
+              {...voice}
+              style={styles.exampleRow}
+            >
+              <Mark lineHeight={sizes.example.lineHeight}>
+                <Path
+                  d="M5 12.5l4.5 4.5L19 7.5"
+                  fill="none"
+                  stroke={colors.correct}
+                  strokeWidth={2.2}
+                />
+              </Mark>
+              <Text style={[styles.sentence, sentence, { color: colors.ink }]}>
+                {card.examplePair.standard}
+              </Text>
+            </View>
+          </View>
+          {card.sourceTitles.length === 0 ? null : (
+            <Text
+              testID="correction-source"
+              {...voice}
+              style={[styles.source, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+            >
+              {fill(strings.source, { source: card.sourceTitles.join(SOURCE_SEPARATOR) })}
+            </Text>
+          )}
+        </>
       )}
     </>
   );

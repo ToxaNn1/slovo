@@ -17,7 +17,10 @@ export interface EntryCardProps {
   onOpenCorrection?: (correctionId: string) => void;
   /** The action row under the card: in 0.3 the heart, Collections, share and hide. */
   actions?: ReactNode;
-  /** Self-check: a Word card shows only its Lemma, part of speech and Category until revealed. */
+  /**
+   * Self-check: until revealed, a Word card shows only its Lemma, part of speech
+   * and Category, a Correction card only its non-standard form.
+   */
   hidden?: boolean;
   /** Reveals the card that Self-check hides, when the reader taps to see its meaning. */
   onReveal?: () => void;
@@ -82,7 +85,12 @@ export function EntryCard({
             onReveal={onReveal}
           />
         ) : (
-          <CorrectionCardBody card={card.correctionCard} lemmaSize={lemmaSize} />
+          <CorrectionCardBody
+            card={card.correctionCard}
+            lemmaSize={lemmaSize}
+            hidden={hidden}
+            onReveal={onReveal}
+          />
         )}
         {/* Corner ornaments over the edges (Decor slot 3), on both kinds of card. */}
         <View pointerEvents="none" style={StyleSheet.absoluteFill}>

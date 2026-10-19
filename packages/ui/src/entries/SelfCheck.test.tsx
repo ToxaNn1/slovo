@@ -4,6 +4,7 @@ import {
   EditionProvider,
   EntryCard,
   HapticsProvider,
+  KnowledgeButtons,
   useSelfCheck,
   VerticalPager,
 } from '@slovo/ui';
@@ -19,6 +20,20 @@ const strings = {
     category: '{category}',
     reveal: 'Show the meaning',
   },
+  correctionCard: {
+    title: 'Correction',
+    correctionTypes: { calque: 'calque' },
+    correctionType: 'Type: {type}',
+    nonStandard: 'Non-standard',
+    standard: 'Standard',
+    otherEquivalents: 'Also: {equivalents}',
+    exampleNonStandard: 'Not: {text}',
+    exampleStandard: 'Right: {text}',
+    source: 'Source: {source}',
+    howToSay: 'How to say it?',
+    reveal: 'Show',
+  },
+  knowledge: { known: 'Known', unknown: 'Unknown', correctionKnownHint: 'I say it right' },
 } as unknown as EditionStrings;
 
 function wordCard(lemma: string): EntryFeedCard {
@@ -44,15 +59,55 @@ function wordCard(lemma: string): EntryFeedCard {
   };
 }
 
+const correctionCard: EntryFeedCard = {
+  kind: 'correction',
+  correctionCard: {
+    kind: 'correction',
+    correctionId: 'c1',
+    nonStandardForm: 'take part',
+    mainEquivalent: 'join in',
+    otherEquivalents: [],
+    correctionType: 'calque',
+    explanation: 'Why join in is better.',
+    examplePair: { nonStandard: 'I take part.', standard: 'I join in.' },
+    sourceTitles: [],
+  },
+};
+
 const CARDS = [wordCard('first'), wordCard('second')];
 const TURN_LABELS = { next: 'Next page', previous: 'Previous page' };
 /** How long a page turn's motion takes, from the design. */
 const SWIPE_MS = 420;
 
-/** A Feed page: the Entry card, its meaning hidden while Self-check is `on`. */
-function Page({ card, on }: { card: EntryFeedCard; on: boolean }) {
+/**
+ * A Feed page: the Entry card with its mark buttons, its meaning hidden while
+ * Self-check is `on` and the buttons inactive until the reveal.
+ */
+function Page({
+  card,
+  on,
+  onMark = jest.fn(),
+}: {
+  card: EntryFeedCard;
+  on: boolean;
+  onMark?: ((mark: 'known' | 'unknown') => void) | undefined;
+}) {
   const selfCheck = useSelfCheck(on);
-  return <EntryCard card={card} hidden={selfCheck.hidden} onReveal={selfCheck.reveal} />;
+  return (
+    <EntryCard
+      card={card}
+      hidden={selfCheck.hidden}
+      onReveal={selfCheck.reveal}
+      actions={
+        <KnowledgeButtons
+          entryKind={card.kind}
+          mark={undefined}
+          onTap={onMark}
+          inactive={selfCheck.hidden}
+        />
+      }
+    />
+  );
 }
 
 const haptics: Haptics = {
@@ -63,16 +118,20 @@ const haptics: Haptics = {
   warning: jest.fn(),
 };
 
-async function renderFeed(on: boolean) {
+async function renderFeed(
+  on: boolean,
+  cards: readonly EntryFeedCard[] = CARDS,
+  onMark?: (mark: 'known' | 'unknown') => void,
+) {
   await render(
     <EditionProvider edition={{ locale: 'en' }} strings={strings}>
       <HapticsProvider haptics={haptics}>
         <VerticalPager
           testID="pager"
-          items={CARDS}
+          items={cards}
           initialIndex={0}
           onIndexChange={jest.fn()}
-          renderPage={(card) => <Page card={card} on={on} />}
+          renderPage={(card) => <Page card={card} on={on} onMark={onMark} />}
           turnActionLabels={TURN_LABELS}
         />
       </HapticsProvider>
@@ -83,9 +142,11 @@ async function renderFeed(on: boolean) {
   });
 }
 
-/** Turns the page with the VoiceOver action on the current card's Lemma. */
+/** Turns the page with the VoiceOver action on the current card's Lemma or non-standard form. */
 async function turn(from: string, actionName: 'next' | 'previous') {
-  await fireEvent(screen.getByText(from), 'accessibilityAction', { nativeEvent: { actionName } });
+  const target =
+    from === 'take part' ? screen.getByTestId('correction-non-standard') : screen.getByText(from);
+  await fireEvent(target, 'accessibilityAction', { nativeEvent: { actionName } });
   await act(async () => {
     await jest.advanceTimersByTimeAsync(SWIPE_MS);
   });
@@ -125,5 +186,30 @@ describe('useSelfCheck', () => {
 
     expect(screen.getByText('What first means.')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Show the meaning' })).toBeNull();
+  });
+
+  it('hides the right form of a Correction and its marks until the reader reveals it', async () => {
+    const onMark = jest.fn();
+    await renderFeed(true, [correctionCard, wordCard('second')], onMark);
+    expect(screen.queryByText('Why join in is better.')).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: 'Known', disabled: true }));
+    expect(onMark).not.toHaveBeenCalled();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Show' }));
+
+    expect(screen.getByText('Why join in is better.')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Unknown', disabled: false }));
+    expect(onMark).toHaveBeenCalledWith('unknown');
+  });
+
+  it('hides the Correction again once its card has left the screen', async () => {
+    await renderFeed(true, [correctionCard, wordCard('second')]);
+    await fireEvent.press(screen.getByRole('button', { name: 'Show' }));
+
+    await turn('take part', 'next');
+    await turn('second', 'previous');
+
+    expect(screen.queryByText('Why join in is better.')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Show' })).toBeTruthy();
   });
 });
