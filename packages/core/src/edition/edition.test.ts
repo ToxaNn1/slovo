@@ -26,6 +26,10 @@ const validConfig = {
     pronunciation: true,
     wordOfTheDay: true,
     statistics: true,
+    knowledge: true,
+    selfCheck: true,
+    rarityFilter: true,
+    gameReview: true,
   },
   userSettingDefaults: {
     theme: 'system',
@@ -86,6 +90,10 @@ describe('loadEdition', () => {
     'pronunciation',
     'wordOfTheDay',
     'statistics',
+    'knowledge',
+    'selfCheck',
+    'rarityFilter',
+    'gameReview',
   ] as const)('reports the %s Feature Switch, which an Edition may turn off', (feature) => {
     const on = loadEdition(validConfig);
     const off = loadEdition({
@@ -211,6 +219,22 @@ describe('loadEdition', () => {
       'a missing statistics Feature Switch',
       withoutSwitch('statistics'),
       'featureSwitches.statistics',
+    ],
+    ['a missing knowledge Feature Switch', withoutSwitch('knowledge'), 'featureSwitches.knowledge'],
+    [
+      'a missing self-check Feature Switch',
+      withoutSwitch('selfCheck'),
+      'featureSwitches.selfCheck',
+    ],
+    [
+      'a missing rarity filter Feature Switch',
+      withoutSwitch('rarityFilter'),
+      'featureSwitches.rarityFilter',
+    ],
+    [
+      'a missing Game Review Feature Switch',
+      withoutSwitch('gameReview'),
+      'featureSwitches.gameReview',
     ],
     [
       'an unknown Feature Switch',

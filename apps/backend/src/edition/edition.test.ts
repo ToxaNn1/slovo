@@ -66,21 +66,29 @@ describe('edition.switches', () => {
     expect(switches).toMatchObject({ body: { off: ['account', 'contentUpdates', 'game'] } });
   });
 
-  it.each(['notifications', 'widget', 'shareCards', 'pronunciation', 'wordOfTheDay', 'statistics'])(
-    'turns the %s switch off remotely and back on',
-    async (feature) => {
-      const { client, switchOff, clearSwitch } = servingEditions('polish');
-      const params = { editionId: 'polish' };
+  it.each([
+    'notifications',
+    'widget',
+    'shareCards',
+    'pronunciation',
+    'wordOfTheDay',
+    'statistics',
+    'knowledge',
+    'selfCheck',
+    'rarityFilter',
+    'gameReview',
+  ])('turns the %s switch off remotely and back on', async (feature) => {
+    const { client, switchOff, clearSwitch } = servingEditions('polish');
+    const params = { editionId: 'polish' };
 
-      await expect(switchOff('polish', feature)).resolves.toEqual({ ok: true, off: [feature] });
-      const off = await client.edition.switches({ params });
-      await expect(clearSwitch('polish', feature)).resolves.toEqual({ ok: true, off: [] });
-      const cleared = await client.edition.switches({ params });
+    await expect(switchOff('polish', feature)).resolves.toEqual({ ok: true, off: [feature] });
+    const off = await client.edition.switches({ params });
+    await expect(clearSwitch('polish', feature)).resolves.toEqual({ ok: true, off: [] });
+    const cleared = await client.edition.switches({ params });
 
-      expect(off).toMatchObject({ status: 200, body: { off: [feature] } });
-      expect(cleared).toMatchObject({ status: 200, body: { off: [] } });
-    },
-  );
+    expect(off).toMatchObject({ status: 200, body: { off: [feature] } });
+    expect(cleared).toMatchObject({ status: 200, body: { off: [] } });
+  });
 
   it("keeps each Edition's switches apart", async () => {
     const { client, switchOff } = servingEditions('switched', 'neighbour');
