@@ -383,7 +383,11 @@ describe('The knowledge counts', () => {
     });
   }
 
-  const countsOf = ({ knownWords, knownCorrections, dueToday }: Composition['progress']['state']) => ({
+  const countsOf = ({
+    knownWords,
+    knownCorrections,
+    dueToday,
+  }: Composition['progress']['state']) => ({
     knownWords,
     knownCorrections,
     dueToday,
@@ -401,7 +405,11 @@ describe('The knowledge counts', () => {
     await app.knowledge.tap('c_one', 'known');
     await app.knowledge.tap('c_two', 'unknown');
 
-    expect(countsOf(app.progress.state)).toEqual({ knownWords: 1, knownCorrections: 1, dueToday: 0 });
+    expect(countsOf(app.progress.state)).toEqual({
+      knownWords: 1,
+      knownCorrections: 1,
+      dueToday: 0,
+    });
     // An Unknown mark is due tomorrow, so it changes no number today.
     expect(told).toBe(2);
   });
@@ -414,10 +422,18 @@ describe('The knowledge counts', () => {
 
     time.advance(DAY);
     await app.resume();
-    expect(countsOf(app.progress.state)).toEqual({ knownWords: 0, knownCorrections: 0, dueToday: 2 });
+    expect(countsOf(app.progress.state)).toEqual({
+      knownWords: 0,
+      knownCorrections: 0,
+      dueToday: 2,
+    });
 
     await app.knowledge.tap('w_two', 'known');
-    expect(countsOf(app.progress.state)).toEqual({ knownWords: 1, knownCorrections: 0, dueToday: 1 });
+    expect(countsOf(app.progress.state)).toEqual({
+      knownWords: 1,
+      knownCorrections: 0,
+      dueToday: 1,
+    });
   });
 
   it('stops counting an Entry whose mark is removed', async () => {
@@ -427,7 +443,11 @@ describe('The knowledge counts', () => {
 
     await app.knowledge.tap('w_one', 'known');
 
-    expect(countsOf(app.progress.state)).toEqual({ knownWords: 0, knownCorrections: 1, dueToday: 0 });
+    expect(countsOf(app.progress.state)).toEqual({
+      knownWords: 0,
+      knownCorrections: 1,
+      dueToday: 0,
+    });
   });
 
   it('counts an Entry marked late at night as due on the next local day', async () => {
@@ -446,10 +466,16 @@ describe('The knowledge counts', () => {
   });
 
   it('counts nothing with the knowledge Feature Switch off', async () => {
-    const app = await runKnowing(fakeClock('2026-10-19T09:00:00+03:00').clock, { on: ['corrections'] });
+    const app = await runKnowing(fakeClock('2026-10-19T09:00:00+03:00').clock, {
+      on: ['corrections'],
+    });
 
     await app.knowledge.tap('w_one', 'known');
 
-    expect(countsOf(app.progress.state)).toEqual({ knownWords: 0, knownCorrections: 0, dueToday: 0 });
+    expect(countsOf(app.progress.state)).toEqual({
+      knownWords: 0,
+      knownCorrections: 0,
+      dueToday: 0,
+    });
   });
 });
