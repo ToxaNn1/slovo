@@ -11,13 +11,16 @@ export interface UserSettings {
   readonly vibration: boolean;
   /** Whether the Streak is hidden everywhere it is drawn. */
   readonly hideStreak: boolean;
+  /** Whether Self-check hides the answer on an Entry card until the reader taps. */
+  readonly selfCheck: boolean;
 }
 
 /**
  * The settings an Edition sets the defaults of. The Streak is shown until the
- * user hides it, in every Edition, so it has no Edition default.
+ * user hides it, and Self-check is off until the user turns it on, in every
+ * Edition, so neither has an Edition default.
  */
-export type SettingsDefaults = Omit<UserSettings, 'hideStreak'>;
+export type SettingsDefaults = Omit<UserSettings, 'hideStreak' | 'selfCheck'>;
 
 /** The user's settings: their own choices over the Edition's defaults. */
 export interface Settings {
@@ -55,6 +58,7 @@ export function createSettings({
       fontSize: (await userState.read(userStateRecords.fontSize)) ?? defaults.fontSize,
       vibration: (await userState.read(userStateRecords.vibration)) ?? defaults.vibration,
       hideStreak: (await userState.read(userStateRecords.hideStreak)) ?? false,
+      selfCheck: (await userState.read(userStateRecords.selfCheck)) ?? false,
     };
   }
 
@@ -69,6 +73,7 @@ export function createSettings({
           ...('hideStreak' in changes
             ? userStateRecords.hideStreak.change(changes.hideStreak)
             : []),
+          ...('selfCheck' in changes ? userStateRecords.selfCheck.change(changes.selfCheck) : []),
         ]),
       );
       return read();

@@ -26,6 +26,8 @@ export const SettingsStringsSchema = z.strictObject({
   soonAccessibilityLabel: TextSchema,
   /** The switch that hides the Streak everywhere it is drawn. */
   hideStreak: TextSchema,
+  /** The switch that turns Self-check on. */
+  selfCheck: TextSchema,
   /** The names of the rows under the Theme and the font size. */
   rows: z.strictObject({
     notifications: TextSchema,

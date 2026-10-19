@@ -76,6 +76,7 @@ export { SegmentedControl, type Segment } from './primitives/SegmentedControl';
 export { ProblemLine, TextField } from './primitives/TextField';
 export { ShareButton } from './share/ShareButton';
 export { ShareSheet, type ShareSheetOutcome } from './share/ShareSheet';
+export { SelfCheckRow } from './settings/SelfCheckRow';
 export { NavigationRow, SettingsGroup, SoonRow, SwitchRow, TimeRow } from './settings/SettingsRows';
 export { SplashOverlay, type SplashOverlayProps } from './onboarding/SplashOverlay';
 export { StatsPill } from './progress/StatsPill';

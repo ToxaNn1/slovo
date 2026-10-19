@@ -51,6 +51,11 @@ export const userStateRecords = {
    * (ADR 0041); a new key needs no migration, since without it the Streak shows.
    */
   hideStreak: declareRecord('settings.hideStreak', z.boolean()),
+  /**
+   * Whether the user has Self-check on. It syncs last write wins like the
+   * Theme (ADR 0041); a new key needs no migration, since without it Self-check is off.
+   */
+  selfCheck: declareRecord('settings.selfCheck', z.boolean()),
   /** That the Feed's swipe hint was shown on this device. */
   swipeHintShown: declareRecord('feed.swipeHintShown', z.literal(true), { sync: 'device-only' }),
   /** The card the reader was on last on this device, and the local date they were on it. */

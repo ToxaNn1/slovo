@@ -4,6 +4,7 @@ import {
   NavigationRow,
   ScreenTitle,
   SectionLabel,
+  SelfCheckRow,
   SegmentedControl,
   SettingsGroup,
   SoonRow,
@@ -51,7 +52,8 @@ export default function SettingsScreen() {
   const hiddenSummary = useHiddenSummary();
   const notificationsSummary = useNotificationsSummary();
   const accountOpening = useAccountInEffect();
-  const { statistics } = progressShownOf(useEditionInEffect(), current);
+  const editionInEffect = useEditionInEffect();
+  const { statistics } = progressShownOf(editionInEffect, current);
   return (
     <SafeAreaView
       testID="settings"
@@ -106,6 +108,14 @@ export default function SettingsScreen() {
                 }}
               />
             )}
+            <SelfCheckRow
+              label={strings.selfCheck}
+              shown={editionInEffect.isFeatureEnabled('selfCheck')}
+              value={current.selfCheck}
+              onChange={(selfCheck) => {
+                update({ selfCheck });
+              }}
+            />
             <NavigationRow
               testID="settings-row-notifications"
               label={strings.rows.notifications}
