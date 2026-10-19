@@ -6,6 +6,7 @@ import {
   FavoriteButton,
   HideButton,
   HideChoiceSheet,
+  KnowledgeButtons,
   ShareButton,
   ShareSheet,
 } from '@slovo/ui';
@@ -20,6 +21,7 @@ import { entryButtonsOf } from './entry-buttons';
 import { useEntryCollections } from '../saved/collections';
 import { useCompositionRead } from '../composition';
 import { useFavorite } from '../saved/favorites';
+import { useKnowledgeMark } from '../knowledge/marks';
 import { useHide } from '../mix/hiding';
 import { createShareFormatMemory } from '../share/share-card';
 
@@ -27,8 +29,10 @@ import { createShareFormatMemory } from '../share/share-card';
 const shareFormat = createShareFormatMemory();
 
 /**
- * The action row of an Entry card, wherever the card appears: the Feed and the
- * Entry screen a list opens. Each action fills its own slot. Share is there
+ * The action row of an Entry card, wherever the card appears: the Feed (its
+ * Word of the Day too) and the Entry screen a list opens. Each action fills
+ * its own slot. The «Знаю» and «Не знаю» buttons are there only when the
+ * Knowledge switch is on in effect. Share is there
  * only when the binary can capture the Share Card and the Share Cards switch
  * is on in effect. Its screen gives it an
  * `UndoToastProvider` for the toast after a hide.
@@ -39,10 +43,17 @@ export function EntryActions({ card }: { card: EntryFeedCard }) {
   const hide = useHide(card);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
-  const share = entryButtonsOf(useEditionInEffect()).shareCard ? shareCardOnDevice : undefined;
+  const buttons = entryButtonsOf(useEditionInEffect());
+  const share = buttons.shareCard ? shareCardOnDevice : undefined;
+  const knowledge = useKnowledgeMark(entryId);
   return (
     <>
       <ActionRow
+        marks={
+          buttons.knowledge ? (
+            <KnowledgeButtons mark={knowledge.mark} onTap={knowledge.tap} />
+          ) : undefined
+        }
         favorite={<FavoriteButton inFavorites={favorite.inFavorites} onToggle={favorite.toggle} />}
         share={
           share !== undefined ? (

@@ -39,6 +39,7 @@ export { GameResult } from './game/GameResult';
 export { GameRound } from './game/GameRound';
 export { HapticsProvider, useHaptics } from './providers/HapticsProvider';
 export { HideButton } from './mix/HideButton';
+export { KnowledgeButtons } from './knowledge/KnowledgeButtons';
 export { HideChoiceSheet } from './mix/HideChoiceSheet';
 export { ScreenTitle, SectionLabel } from './primitives/headings';
 export { MixChip } from './mix/MixChip';
