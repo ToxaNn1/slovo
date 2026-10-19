@@ -42,6 +42,12 @@ export interface Knowledge {
    */
   due(): readonly string[];
   /**
+   * The Entries the reader is weak on: marked Unknown or due for Review
+   * today, in no set order, which the Game asks about in up to 5 of its
+   * Rounds. None with the `knowledge` Feature Switch off.
+   */
+  weak(): readonly string[];
+  /**
    * The Entries the reader is learning: every Entry marked Unknown that is not
    * yet Learned, Known on a Review since or not, sorted by the next Review
    * day. An id the Language Pack doesn't have is left out. None with the
@@ -105,6 +111,13 @@ export async function openKnowledge({
       if (!edition.isFeatureEnabled('knowledge')) return [];
       const today = todayDate(clock);
       return [...records].flatMap(([entryId, record]) => (isDue(record, today) ? [entryId] : []));
+    },
+    weak() {
+      if (!edition.isFeatureEnabled('knowledge')) return [];
+      const today = todayDate(clock);
+      return [...records].flatMap(([entryId, record]) =>
+        record.mark === 'unknown' || isDue(record, today) ? [entryId] : [],
+      );
     },
     async learning() {
       if (!edition.isFeatureEnabled('knowledge')) return [];

@@ -191,6 +191,7 @@ export async function openComposition({
     edition,
     entries,
     history,
+    knowledge,
     userState,
     random,
     ...(schedule === undefined ? {} : { schedule }),

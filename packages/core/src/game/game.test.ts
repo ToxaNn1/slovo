@@ -17,6 +17,7 @@ import {
   type Composition,
   type ContentReadPort,
   type CurrentGame,
+  type FeatureSwitch,
   type GameMode,
   type Round,
   type Schedule,
@@ -160,11 +161,14 @@ async function run({
   pack = content,
   planned = true,
   schedule,
+  on = ['rarityFilter', 'knowledge'],
 }: {
   records?: Map<string, string>;
   port?: UserStatePort;
   seed?: number;
   game?: boolean;
+  /** The Feature Switches on besides the Game's. */
+  on?: readonly FeatureSwitch[];
   gameModes?: readonly GameMode[];
   time?: Clock;
   pack?: ContentReadPort;
@@ -176,7 +180,7 @@ async function run({
     content: pack,
     edition: {
       id: 'test',
-      isFeatureEnabled: (feature) => (feature === 'game' && game) || feature === 'rarityFilter',
+      isFeatureEnabled: (feature) => (feature === 'game' && game) || on.includes(feature),
       userSettingDefaults: {
         mix: { categoryIds: categories.map(({ id }) => id), corrections: false },
         notificationTimes: [],
@@ -797,6 +801,80 @@ describe('the Words a Game asks about', () => {
 
     expect(writes).toEqual([userStateRecords.gameBest.change(15)]);
     expect(app.history.list).toEqual([]);
+  });
+});
+
+// Spec #461, ADR 0043: up to 5 of the 15 Rounds ask about Entries the reader is weak on.
+describe('the Rounds about Entries marked «Не знаю» or due', () => {
+  const unknown = numbered('w_nnoun', 8);
+
+  /** The Words the Rounds ask about, in order. */
+  const asked = (rounds: readonly Round[]) => rounds.map((round) => answerOf(round).id);
+
+  it('asks 5 of 8 Words marked «Не знаю», and no more of them', async () => {
+    const app = await run();
+    for (const id of unknown) await app.knowledge.tap(id, 'unknown');
+
+    const ids = asked(await playGame(app));
+
+    expect(ids.filter((id) => unknown.includes(id))).toHaveLength(5);
+    expect(new Set(ids).size).toBe(GAME_ROUNDS);
+  });
+
+  it('asks both of 2 Words marked «Не знаю», the rest from History as before', async () => {
+    const met = numbered('w_nnoun', 14).concat('w_snoun03');
+    const app = await run({ records: historyOf(met) });
+    await app.knowledge.tap('w_cnoun01', 'unknown');
+    await app.knowledge.tap('w_cnoun02', 'unknown');
+
+    const ids = asked(await playGame(app));
+
+    expect(ids.filter((id) => !met.includes(id)).toSorted()).toEqual(['w_cnoun01', 'w_cnoun02']);
+  });
+
+  it('asks a Word due for Review today, Known on its 1-day Review before', async () => {
+    const records = new Map(
+      userStateRecords.knowledge
+        .record('w_cnoun01')
+        .change({ mark: 'known', step: 3, reviewDay: '2026-10-11', learned: false }) as Map<
+        string,
+        string
+      >,
+    );
+    const app = await run({
+      records: new Map([...historyOf(numbered('w_nnoun', 14).concat('w_snoun03')), ...records]),
+    });
+
+    expect(asked(await playGame(app))).toContain('w_cnoun01');
+  });
+
+  /** The records of one app run, in which the reader marks what `mark` says; a later run finds its Cycle and draws alike. */
+  async function marked(mark?: (app: Composition) => Promise<void>) {
+    const records = new Map<string, string>();
+    const app = await run({ records });
+    if (mark !== undefined) await mark(app);
+    return records;
+  }
+
+  it('plans the Rounds as before without a mark, with Learned Words only, and with the knowledge Feature Switch off', async () => {
+    const before = asked(
+      await playGame(await run({ records: await marked(), on: ['rarityFilter'] })),
+    );
+
+    expect(asked(await playGame(await run({ records: await marked() })))).toEqual(before);
+
+    const learned = await marked(async (app) => {
+      await app.knowledge.tap('w_nnoun01', 'known');
+      await app.knowledge.tap('w_nnoun02', 'known');
+    });
+    expect(asked(await playGame(await run({ records: learned })))).toEqual(before);
+
+    const unknownOff = await marked(async (app) => {
+      for (const id of unknown) await app.knowledge.tap(id, 'unknown');
+    });
+    expect(asked(await playGame(await run({ records: unknownOff, on: ['rarityFilter'] })))).toEqual(
+      before,
+    );
   });
 });
 
