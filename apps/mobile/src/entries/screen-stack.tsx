@@ -10,7 +10,12 @@ export function ScreenStack() {
   return (
     <Stack
       screenOptions={{ headerShown: false }}
-      screenListeners={{ transitionEnd: screenSettled }}
+      screenListeners={{
+        transitionEnd: ({ data }) => {
+          // A screen closing is not the push the opener waits on.
+          if (!data.closing) screenSettled();
+        },
+      }}
     />
   );
 }
