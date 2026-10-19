@@ -1,6 +1,7 @@
 import type { EntryKind } from '@slovo/contracts';
 
 import type { Entries } from '../entries/entries';
+import type { Knowledge } from '../knowledge/knowledge';
 import type { History } from '../saved/history';
 import { createInTurn, createSubscribers } from '../in-turn';
 import type { Random, Schedule } from '../ports';
@@ -44,9 +45,10 @@ export interface GameState {
 /**
  * The Game: the Game Modes on offer and the Game in play, kept in memory for
  * the app session and never in the user state. A Game asks 15 different
- * eligible Entries of its mode's kind: those in History when there are at
- * least 15, else any (ADR 0024). Playing never writes Seen, History or Active
- * Days; a finished Game writes only the best result, when it beats it.
+ * eligible Entries of its mode's kind: up to 5 the reader is weak on (ADR
+ * 0043), the rest those in History when there are at least 15, else any (ADR
+ * 0024). Playing never writes Seen, History or Active Days; a finished Game
+ * writes only the best result, when it beats it.
  */
 export interface Game {
   /**
@@ -96,9 +98,9 @@ const offerOf = ({ id, entryKind }: GameMode, plan: RoundPlan): GameModeOffer =>
     : { modeId: id, entryKind, canStart: false, refusal: plan.refusal };
 
 /**
- * Opens the Game over the eligible Entries and History, for the Core
- * composition, with `followEligibility`, which reads the modes on offer again
- * after a hide, a restore or a Mix change, and `planOffers`. The Game Modes
+ * Opens the Game over the eligible Entries, History and the Knowledge Marks,
+ * for the Core composition, with `followEligibility`, which reads the modes
+ * on offer again after a hide, a restore or a Mix change, and `planOffers`. The Game Modes
  * come in the order they register. Their offers say they are still planned
  * until a planning succeeds: the first is the one `planOffers` starts, which
  * the Core composition calls once it is open. The best result is read from
@@ -109,6 +111,7 @@ export async function openGame({
   edition,
   entries,
   history,
+  knowledge,
   userState,
   random,
   schedule,
@@ -117,6 +120,7 @@ export async function openGame({
   edition: GameEdition;
   entries: Pick<Entries, 'eligibleOfKind'>;
   history: Pick<History, 'list'>;
+  knowledge: Pick<Knowledge, 'weak'>;
   userState: Pick<UserState, 'read' | 'write'>;
   random: Random;
   /** What a failed planning of the offers is tried again by; without it, only the next `planOffers` tries. */
@@ -169,7 +173,7 @@ export async function openGame({
   };
 
   /** The one place that decides whether a mode can start, see `createRoundPlanner`. */
-  const planRounds = createRoundPlanner({ history, random, edition });
+  const planRounds = createRoundPlanner({ history, knowledge, random, edition });
 
   /**
    * Plans the modes on offer, once the composition is open and again after

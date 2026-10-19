@@ -1,6 +1,7 @@
 import type { Entry } from '@slovo/contracts';
 
 import type { EligibleOfKind } from '../entries/entries';
+import type { Knowledge } from '../knowledge/knowledge';
 import type { Random } from '../ports';
 import type { History } from '../saved/history';
 import {
@@ -14,6 +15,9 @@ import {
 
 /** How many Rounds a Game has, in every Game Mode. */
 export const GAME_ROUNDS = 15;
+
+/** How many Rounds of a Game, at most, ask about Entries the reader is weak on (ADR 0043). */
+const WEAK_ROUNDS = 5;
 
 /** A Round of the Game in play, with the Entry it asks about. */
 export interface PlannedRound {
@@ -47,19 +51,24 @@ function checkedRound(mode: GameMode, round: RoundContent): RoundContent {
 }
 
 /**
- * Makes the `RoundPlanner` of the Game over History, for `openGame`. The
- * Rounds ask first about the pool, the eligible Entries in History when there
- * are at least `GAME_ROUNDS`, else every eligible one; should the pool make
- * too few fair Rounds, the other eligible Entries fill in. The one place that
- * decides whether a mode can start: its offer and a start both come from it,
- * so they always agree.
+ * Makes the `RoundPlanner` of the Game over History and the Knowledge Marks,
+ * for `openGame`. Up to `WEAK_ROUNDS` Rounds of a Game ask about eligible
+ * Entries the reader is weak on, marked Unknown or due for Review (ADR
+ * 0043); the Rounds already `asked` about such Entries count. The others ask
+ * first about the pool, the eligible Entries in History when there are at
+ * least `GAME_ROUNDS`, else every eligible one; should the pool make too few
+ * fair Rounds, the other eligible Entries fill in, the weak ones left over
+ * last. The one place that decides whether a mode can start: its offer and a
+ * start both come from it, so they always agree.
  */
 export function createRoundPlanner({
   history,
+  knowledge,
   random,
   edition,
 }: {
   history: Pick<History, 'list'>;
+  knowledge: Pick<Knowledge, 'weak'>;
   random: Random;
   edition: GameEdition;
 }): RoundPlanner {
@@ -69,22 +78,41 @@ export function createRoundPlanner({
     const met = new Set(history.list.map(({ entryId }) => entryId));
     const inHistory = eligible.filter((entry) => met.has(entry.id));
     const pool = new Set(inHistory.length >= GAME_ROUNDS ? inHistory : eligible);
+    const weak = new Set(knowledge.weak());
+    const weakAsked = [...asked].filter((id) => weak.has(id)).length;
     const unasked = eligible.filter((entry) => !asked.has(entry.id));
+    const weakDrawn = shuffled(
+      unasked.filter((entry) => weak.has(entry.id)),
+      random,
+    );
+    const others = unasked.filter((entry) => !weak.has(entry.id));
     const built: PlannedRound[] = [];
-    for (const answer of [
-      ...shuffled(
-        unasked.filter((entry) => pool.has(entry)),
-        random,
-      ),
-      ...shuffled(
-        unasked.filter((entry) => !pool.has(entry)),
-        random,
-      ),
-    ]) {
-      if (built.length === count) break;
-      const round = mode.buildRound({ answer, eligible, random, edition });
-      if (round !== undefined) built.push({ entry: answer, content: checkedRound(mode, round) });
+    /** Builds a Round about each answer in turn, until there are `upTo`. */
+    function build(answers: readonly Entry[], upTo: number): Entry[] {
+      const tried: Entry[] = [];
+      for (const answer of answers) {
+        if (built.length >= upTo) break;
+        tried.push(answer);
+        const round = mode.buildRound({ answer, eligible, random, edition });
+        if (round !== undefined) built.push({ entry: answer, content: checkedRound(mode, round) });
+      }
+      return tried;
     }
+    const weakTried = new Set(build(weakDrawn, Math.min(count, WEAK_ROUNDS - weakAsked)));
+    build(
+      [
+        ...shuffled(
+          others.filter((entry) => pool.has(entry)),
+          random,
+        ),
+        ...shuffled(
+          others.filter((entry) => !pool.has(entry)),
+          random,
+        ),
+        ...weakDrawn.filter((entry) => !weakTried.has(entry)),
+      ],
+      count,
+    );
     return built.length === count ? { rounds: built } : { refusal: 'too-few-entries' };
   };
 }
