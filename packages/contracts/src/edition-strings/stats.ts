@@ -28,4 +28,15 @@ export const StatsStringsSchema = z.strictObject({
    * Takes `{count}`, the best result, which picks the form, and `{total}`, the Rounds of a Game.
    */
   gameBestLabel: pluralOf('total'),
+  /**
+   * The row of the Known Entries, e.g. «Знаю 12 слів · 3 Виправлення».
+   * Takes `{words}`, `knownWords` filled, and `{corrections}`, `knownCorrections` filled.
+   */
+  known: templateOf('words', 'corrections'),
+  /** The Words marked Known, in the row of the Known Entries, e.g. «12 слів». Takes `{count}`. */
+  knownWords: PluralSchema,
+  /** The Corrections marked Known, in the row of the Known Entries, e.g. «3 Виправлення». Takes `{count}`. */
+  knownCorrections: PluralSchema,
+  /** The row of the Entries due for Review today, e.g. «На повторення сьогодні: 4». Takes `{count}`. */
+  dueToday: templateOf('count'),
 });

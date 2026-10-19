@@ -77,3 +77,7 @@ The Feed tells a card it is a Review (`review` on the card) when the card's Entr
 ## Amendment: what the knowledge counts count (0.8.6, #477)
 
 The knowledge module's `counts` gives Progress three numbers: the Words and the Corrections whose mark is Known, a Learned Entry among them and an Entry Known on a Review that is not Learned yet, and the Entries due today, the same ones `due` gives the Feed. A removed mark is gone with its record and counts no more; an id the Language Pack no longer has is no Word and no Correction. The module reads each marked Entry's kind once, when it opens or when the Entry is first marked, so Progress follows the counts at once, as it follows Favorites, and a new local day changes the due count with the Streak. With the `knowledge` Feature Switch off all three are 0.
+
+## Amendment: the statistics leave Hidden Entries out of today's Review (0.8.6, #478)
+
+The count of Entries due today leaves out a Hidden Entry, which the reader removed and the Feed never brings back, and counts it again once restored. The Mix and the Rarity Floor don't apply to it, since the Game and the «Вчу» list still reach those Entries. The Known counts stay as #477 put them.

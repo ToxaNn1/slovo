@@ -223,6 +223,7 @@ export async function openComposition({
     collections,
     game,
     knowledge,
+    hiddenEntries,
   });
   const day = createDayChange({
     clock,
