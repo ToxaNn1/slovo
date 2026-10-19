@@ -28,3 +28,9 @@ Maestro still runs only on the owner's machine, and a flow that fails still bloc
 - **The full smoke flow (`apps/mobile/maestro/smoke.yaml`, `pnpm test:smoke`) runs once on `main` at the end of each spec**, and optionally after a large wave of merges, by one thread dedicated to it, before the spec is closed. If a flow fails, `git bisect` with that flow alone finds the PR, and a small bug ticket follows.
 
 Why: Maestro runs share one simulator host and one machine-wide lock, so with a Maestro run in every PR the runs queued for hours. In a spec of refactor tickets, almost every one of those runs checked a change that cannot alter screen behaviour in a way the unit and component tests miss. One full run per spec still catches what slips through, at the cost of one bisect when it does.
+
+## Amendment (2026-10-19)
+
+The full smoke flow now runs as two halves at once on two simulators. `smoke.yaml` still runs the whole smoke by calling `smoke-1.yaml` and `smoke-2.yaml` in a row, so `pnpm test:smoke` and every rule above hold unchanged. `pnpm smoke:halves` runs the halves in parallel, each on its own simulator and Metro and both against one backend, and prints the flows that passed and failed in each half. The halves share no app state, and the two flows that need the backend, `account.yaml` and `sync.yaml`, are in the same half. The machine-wide lock is taken once for both halves.
+
+Why: the full run took 30 to 50 minutes on the shared machine, and a failure late in the chain cost a full rerun. Two halves cost about half the time of one run of the whole smoke, and a failure stays in its half. The end-of-spec smoke run uses `pnpm smoke:halves` by default.
