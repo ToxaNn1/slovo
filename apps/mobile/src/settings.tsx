@@ -45,7 +45,8 @@ export const settingsOpening = openOnce(
     onError(error) {
       console.error('Could not read the settings; using the Edition defaults', error);
     },
-    fallback: async () => opened(await settingsOverUserState(), { ...defaults, hideStreak: false }),
+    fallback: async () =>
+      opened(await settingsOverUserState(), { ...defaults, hideStreak: false, selfCheck: false }),
   },
 );
 

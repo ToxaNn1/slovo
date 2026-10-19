@@ -18,6 +18,7 @@ describe('settings', () => {
       fontSize: 'M',
       vibration: true,
       hideStreak: false,
+      selfCheck: false,
     });
   });
 
@@ -29,12 +30,14 @@ describe('settings', () => {
       fontSize: 'M',
       vibration: true,
       hideStreak: false,
+      selfCheck: false,
     });
     expect(await settings.read()).toEqual({
       theme: 'dark',
       fontSize: 'M',
       vibration: true,
       hideStreak: false,
+      selfCheck: false,
     });
   });
 
@@ -46,12 +49,14 @@ describe('settings', () => {
       fontSize: 'XL',
       vibration: true,
       hideStreak: false,
+      selfCheck: false,
     });
     expect(await settings.read()).toEqual({
       theme: 'system',
       fontSize: 'XL',
       vibration: true,
       hideStreak: false,
+      selfCheck: false,
     });
   });
 
@@ -64,6 +69,7 @@ describe('settings', () => {
       fontSize: 'S',
       vibration: true,
       hideStreak: false,
+      selfCheck: false,
     });
   });
 
@@ -76,6 +82,7 @@ describe('settings', () => {
       fontSize: 'L',
       vibration: true,
       hideStreak: false,
+      selfCheck: false,
     });
   });
 
@@ -87,6 +94,7 @@ describe('settings', () => {
       fontSize: 'M',
       vibration: true,
       hideStreak: false,
+      selfCheck: false,
     });
   });
 
@@ -103,6 +111,7 @@ describe('settings', () => {
       fontSize: 'M',
       vibration: true,
       hideStreak: false,
+      selfCheck: false,
     });
   });
 
@@ -118,6 +127,7 @@ describe('settings', () => {
       fontSize: 'L',
       vibration: false,
       hideStreak: false,
+      selfCheck: false,
     });
   });
 });
@@ -138,6 +148,7 @@ describe('settings: Vibration', () => {
       fontSize: 'M',
       vibration: false,
       hideStreak: false,
+      selfCheck: false,
     });
     expect((await settings.read()).vibration).toBe(false);
   });
@@ -165,6 +176,7 @@ describe('settings: Vibration', () => {
       fontSize: 'XL',
       vibration: false,
       hideStreak: false,
+      selfCheck: false,
     });
   });
 
@@ -190,6 +202,7 @@ describe('settings: hide the Streak', () => {
       fontSize: 'M',
       vibration: true,
       hideStreak: true,
+      selfCheck: false,
     });
     expect((await settings.read()).hideStreak).toBe(true);
   });
@@ -217,6 +230,7 @@ describe('settings: hide the Streak', () => {
       fontSize: 'XL',
       vibration: false,
       hideStreak: true,
+      selfCheck: false,
     });
   });
 
@@ -240,7 +254,55 @@ describe('settings: hide the Streak', () => {
       fontSize: 'L',
       vibration: true,
       hideStreak: false,
+      selfCheck: false,
     });
+  });
+});
+
+describe('settings: Self-check', () => {
+  it('is off until the user turns it on', async () => {
+    const settings = await settingsOver();
+
+    expect((await settings.read()).selfCheck).toBe(false);
+  });
+
+  it('turns on once the user chooses to, and returns the settings in effect', async () => {
+    const settings = await settingsOver();
+
+    expect(await settings.update({ selfCheck: true })).toEqual({
+      theme: 'system',
+      fontSize: 'M',
+      vibration: true,
+      hideStreak: false,
+      selfCheck: true,
+    });
+    expect((await settings.read()).selfCheck).toBe(true);
+  });
+
+  it('keeps the choice when the user state is opened again', async () => {
+    const records = new Map<string, string>();
+    await (await settingsOver(records)).update({ selfCheck: true });
+
+    expect((await (await settingsOver(records)).read()).selfCheck).toBe(true);
+  });
+
+  it('changes the choice without touching the other settings', async () => {
+    const settings = await settingsOver();
+    await settings.update({ theme: 'dark', hideStreak: true });
+
+    expect(await settings.update({ selfCheck: true })).toEqual({
+      theme: 'dark',
+      fontSize: 'M',
+      vibration: true,
+      hideStreak: true,
+      selfCheck: true,
+    });
+  });
+
+  it('stays off when the stored choice is not on or off', async () => {
+    const settings = await settingsOver(new Map([['settings.selfCheck', '"yes"']]));
+
+    expect((await settings.read()).selfCheck).toBe(false);
   });
 });
 

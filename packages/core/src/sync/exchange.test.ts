@@ -168,6 +168,36 @@ describe('two devices of one Account', () => {
     expect((await tablet.settings.read()).hideStreak).toBe(true);
   });
 
+  it('let the newer choice of Self-check win, on either device', async () => {
+    const { device, server, time } = account();
+    const phone = await device();
+    const tablet = await device();
+    await phone.settings.update({ selfCheck: false });
+    time.advance(HOUR);
+    await tablet.settings.update({ selfCheck: true });
+    await tablet.sync();
+    time.advance(HOUR);
+
+    await phone.sync();
+    await tablet.sync();
+
+    expect((await phone.settings.read()).selfCheck).toBe(true);
+    expect((await tablet.settings.read()).selfCheck).toBe(true);
+    expect(server.records.get('settings.selfCheck')?.value).toBe(true);
+  });
+
+  it('carry a choice of Self-check to the other device', async () => {
+    const { device } = account();
+    const phone = await device();
+    const tablet = await device();
+    await phone.settings.update({ selfCheck: true });
+    await phone.sync();
+
+    await tablet.sync();
+
+    expect((await tablet.settings.read()).selfCheck).toBe(true);
+  });
+
   it('keep a pending change newer than the Account’s through a pull, and it wins after the push', async () => {
     const { device, server, time } = account();
     const phone = await device();
