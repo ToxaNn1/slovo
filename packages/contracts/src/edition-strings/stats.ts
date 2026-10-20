@@ -33,6 +33,8 @@ export const StatsStringsSchema = z.strictObject({
    * Takes `{words}`, `knownWords` filled, and `{corrections}`, `knownCorrections` filled.
    */
   known: templateOf('words', 'corrections'),
+  /** The row of the Known Entries while Corrections are off or out of the Mix, e.g. «Знаю 12 слів». Takes `{words}`. */
+  knownWithoutCorrections: templateOf('words'),
   /** The Words marked Known, in the row of the Known Entries, e.g. «12 слів». Takes `{count}`. */
   knownWords: PluralSchema,
   /** The Corrections marked Known, in the row of the Known Entries, e.g. «3 Виправлення». Takes `{count}`. */

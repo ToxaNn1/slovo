@@ -20,11 +20,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCollectionList } from '../../saved/collections';
 import { editionStrings } from '../../edition/edition';
 import { deviceClock } from '../../device/device-clock';
-import { useEditionInEffect } from '../../edition/remote-switches';
 import { useFavoriteList } from '../../saved/favorites';
 import { useHistoryList, useHistoryText } from '../../saved/history';
 import { useLearningList } from '../../saved/learning';
 import { useOpenScreen } from '../../entries/use-open-screen';
+import { useShown } from '../../shown-in-effect';
 
 const {
   favorites: strings,
@@ -51,7 +51,7 @@ export default function SavedScreen() {
   const favorites = useFavoriteList();
   const collections = useCollectionList();
   const learning = useLearningList();
-  const knowledgeOn = useEditionInEffect().isFeatureEnabled('knowledge');
+  const { learning: learningShown } = useShown();
   const history = useHistoryList();
   const historyText = useHistoryText();
   const { colors } = useTokens();
@@ -118,13 +118,14 @@ export default function SavedScreen() {
             </SavedCardCollections>
           )}
         </SavedCard>
-        <LearningCard
-          shown={knowledgeOn}
-          items={learning}
-          onPress={() => {
-            openScreen('/saved/learning');
-          }}
-        />
+        {learningShown && (
+          <LearningCard
+            items={learning}
+            onPress={() => {
+              openScreen('/saved/learning');
+            }}
+          />
+        )}
         <SavedCard
           testID="saved-history"
           title={historyStrings.title}

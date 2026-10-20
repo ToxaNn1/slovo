@@ -22,15 +22,11 @@ function titleOf({ entry, answer }: PlayedRound) {
  * order, with ✓ or ✗ and the reader's wrong pick. A tap expands a Round: a
  * Word's Definition, Example and etymology, or a Correction's right form and
  * explanation; a second tap opens the Entry. One Round is expanded at a time.
- * Nothing is drawn while `shown` is false, which is while the gameReview
- * Feature Switch is off in effect (ADR 0040).
  */
 export function GameReview({
-  shown,
   rounds,
   onOpen,
 }: {
-  shown: boolean;
   /** The Rounds played, in order. */
   rounds: readonly PlayedRound[];
   /** Opens the Entry a Round asked about. */
@@ -39,7 +35,6 @@ export function GameReview({
   const { colors, fontFamilies } = useTokens();
   const { strings, voice } = useEdition();
   const [expanded, setExpanded] = useState<number>();
-  if (!shown) return null;
   return (
     <View testID="game-review" style={styles.review}>
       <Text

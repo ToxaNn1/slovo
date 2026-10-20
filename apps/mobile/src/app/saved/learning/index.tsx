@@ -14,9 +14,9 @@ import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { editionStrings } from '../../../edition/edition';
-import { useEditionInEffect } from '../../../edition/remote-switches';
 import { useOpenScreen } from '../../../entries/use-open-screen';
 import { useLearningList } from '../../../saved/learning';
+import { useShown } from '../../../shown-in-effect';
 
 const { learning: strings } = editionStrings;
 
@@ -29,7 +29,7 @@ const { learning: strings } = editionStrings;
  */
 export default function LearningScreen() {
   // Turned off remotely while the reader is on it: its card goes, and so does the screen.
-  if (!useEditionInEffect().isFeatureEnabled('knowledge')) return <Redirect href="/saved" />;
+  if (!useShown().learning) return <Redirect href="/saved" />;
   return <Learning />;
 }
 

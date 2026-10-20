@@ -54,8 +54,9 @@ function Count({
  * Streak with its Best Streak, Decor slot 2's band, then the Entries Seen
  * today, the Favorites count, the Entries in Collections and the best Game
  * result once a Game has finished, each in the Edition's plural form, and
- * under them the Known Words and Corrections and the Entries due for Review
- * today, unless the knowledge counts are hidden. It
+ * under them the Known Words, with the Known Corrections unless they are
+ * left out, and the Entries due for Review today, unless the knowledge rows
+ * are hidden. It
  * closes with a swipe down, a tap outside or VoiceOver's escape gesture, and
  * with Reduce Motion it appears without sliding. While the reader hides the
  * Streak, the Streak with its Best Streak is left out. Needs a
@@ -65,14 +66,14 @@ export function StatsSheet({
   visible,
   stats,
   hideStreak = false,
-  hideKnowledge = false,
+  knowledge = 'words-and-corrections',
   onClose,
 }: {
   visible: boolean;
   stats: ProgressState;
   hideStreak?: boolean;
-  /** Leaves out the counts of the Knowledge Marks, as with the `knowledge` Feature Switch off. */
-  hideKnowledge?: boolean;
+  /** The knowledge rows: the Known Words with or without the Known Corrections, or none. */
+  knowledge?: 'words-and-corrections' | 'words' | 'none';
   onClose: () => void;
 }) {
   const { colors, fontFamilies } = useTokens();
@@ -150,17 +151,21 @@ export function StatsSheet({
             />
           )}
         </View>
-        {!hideKnowledge && (
+        {knowledge !== 'none' && (
           <View style={styles.knowledge}>
             <Text
               testID="stats-known"
               {...voice}
               style={[styles.knowledgeRow, { color: colors.ink, fontFamily: fontFamilies.ui }]}
             >
-              {fill(words.known, {
-                words: count(words.knownWords, stats.knownWords),
-                corrections: count(words.knownCorrections, stats.knownCorrections),
-              })}
+              {knowledge === 'words'
+                ? fill(words.knownWithoutCorrections, {
+                    words: count(words.knownWords, stats.knownWords),
+                  })
+                : fill(words.known, {
+                    words: count(words.knownWords, stats.knownWords),
+                    corrections: count(words.knownCorrections, stats.knownCorrections),
+                  })}
             </Text>
             <Text
               testID="stats-due-today"

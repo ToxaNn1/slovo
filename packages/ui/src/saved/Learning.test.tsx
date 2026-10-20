@@ -110,7 +110,7 @@ describe('LearningCard', () => {
   ];
 
   it('shows the count and the next three Entries with their Review days', async () => {
-    await renderInEdition(<LearningCard shown items={items} onPress={jest.fn()} />);
+    await renderInEdition(<LearningCard items={items} onPress={jest.fn()} />);
 
     expect(screen.getByText('Learning')).toBeTruthy();
     expect(screen.getByText('4')).toBeTruthy();
@@ -122,17 +122,10 @@ describe('LearningCard', () => {
 
   it('opens the list on a tap', async () => {
     const onPress = jest.fn();
-    await renderInEdition(<LearningCard shown items={items} onPress={onPress} />);
+    await renderInEdition(<LearningCard items={items} onPress={onPress} />);
 
     await fireEvent.press(screen.getByRole('button', { name: 'Learning, 4 entries' }));
 
     expect(onPress).toHaveBeenCalledTimes(1);
-  });
-
-  it('is not drawn while the knowledge switch is off', async () => {
-    await renderInEdition(<LearningCard shown={false} items={items} onPress={jest.fn()} />);
-
-    expect(screen.queryByTestId('saved-learning')).toBeNull();
-    expect(screen.queryByText('Learning')).toBeNull();
   });
 });

@@ -537,6 +537,7 @@
       "other": "Найкраще у Грі: {count} з {total}"
     },
     "known": "Знаю {words} · {corrections}",
+    "knownWithoutCorrections": "Знаю {words}",
     "knownWords": {
       "one": "{count} слово",
       "few": "{count} слова",

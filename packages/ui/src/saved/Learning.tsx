@@ -44,23 +44,18 @@ export function LearningRow({ item, onPress }: { item: LearningItem; onPress: ()
 
 /**
  * The «Вчу» card of the Saved tab: the count over the next Entries due for
- * Review with their days. A tap opens the list. Nothing is drawn while `shown`
- * is false, which is while the knowledge Feature Switch is off in effect
- * (ADR 0040).
+ * Review with their days. A tap opens the list.
  */
 export function LearningCard({
-  shown,
   items,
   onPress,
 }: {
-  shown: boolean;
   /** Every Entry of the list, the next Review first. */
   items: readonly LearningItem[];
   onPress: () => void;
 }) {
   const { strings, count } = useEdition();
   const reviewDayText = useReviewDayText();
-  if (!shown) return null;
   const { learning } = strings;
   return (
     <SavedCard

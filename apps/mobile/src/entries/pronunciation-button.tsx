@@ -3,8 +3,7 @@ import * as Speech from 'expo-speech';
 import { useCallback, useEffect, useSyncExternalStore } from 'react';
 
 import { edition } from '../edition/edition';
-import { useEditionInEffect } from '../edition/remote-switches';
-import { entryButtonsOf } from './entry-buttons';
+import { useShown } from '../shown-in-effect';
 import { createPronunciation } from './pronunciation';
 
 /** One for the whole app: the device speaks one Lemma at a time. */
@@ -21,7 +20,7 @@ const dismiss = () => {
  * when it goes off stops.
  */
 export function LemmaPronunciation({ lemma }: { lemma: string }) {
-  return entryButtonsOf(useEditionInEffect()).pronunciation ? <PlayingLemma lemma={lemma} /> : null;
+  return useShown().entryButtons.pronunciation ? <PlayingLemma lemma={lemma} /> : null;
 }
 
 function PlayingLemma({ lemma }: { lemma: string }) {

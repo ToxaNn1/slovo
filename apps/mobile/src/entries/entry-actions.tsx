@@ -16,14 +16,13 @@ import { refusalText } from '../saved/collection-refusal';
 import { deviceClock } from '../device/device-clock';
 import { shareCardOnDevice } from '../share/device-share';
 import { edition, editionStrings } from '../edition/edition';
-import { useEditionInEffect } from '../edition/remote-switches';
-import { entryButtonsOf } from './entry-buttons';
 import { useEntryCollections } from '../saved/collections';
 import { useCompositionRead } from '../composition';
 import { useFavorite } from '../saved/favorites';
 import { useKnowledgeMark } from '../knowledge/marks';
 import { useHide } from '../mix/hiding';
 import { createShareFormatMemory } from '../share/share-card';
+import { useShown } from '../shown-in-effect';
 
 /** The Share Card format of this session: every share sheet opens in the one chosen last. */
 const shareFormat = createShareFormatMemory();
@@ -43,7 +42,7 @@ export function EntryActions({ card }: { card: EntryFeedCard }) {
   const hide = useHide(card);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
-  const buttons = entryButtonsOf(useEditionInEffect());
+  const buttons = useShown().entryButtons;
   const share = buttons.shareCard ? shareCardOnDevice : undefined;
   const knowledge = useKnowledgeMark(entryId);
   return (
