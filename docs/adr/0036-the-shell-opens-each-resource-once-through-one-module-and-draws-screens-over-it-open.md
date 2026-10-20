@@ -63,3 +63,7 @@ A reopen is not a launch, and the reports do not tell it: whoever reopens does w
 - **A new opening for each reopen, swapped in by the shell**: rejected. Every reader of the opening, the gates, `useComposition`, the foreground reports and `opened()`, would need to learn which opening is current.
 - **Fall back on a failed reopen**: rejected. The old value was open over the same user state a moment ago; the defaults or an empty in-memory state would show the reader less.
 - **Merge reopens asked while one runs into one**: rejected for now. A reopen is asked after a change of the user state or of the remote switches, which are rare, and running each in turn is the simplest rule that ends on the latest value.
+
+## Amendment: the settings fall back to the defaults the Core settings module gives (architecture review 3)
+
+The settings' fallback no longer spells the defaults out. `Settings.defaults` gives the settings in effect until the user chooses: the Edition's defaults for the Theme, the font size and vibration, and the Core's own for the settings no Edition sets, the hidden Streak and Self-check. The fallback opens the settings over the user state and is ready with those, so a setting with no Edition default has its default in the Core alone.

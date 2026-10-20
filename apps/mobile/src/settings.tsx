@@ -34,7 +34,7 @@ function opened(settings: Settings, current: UserSettings) {
 /**
  * The settings, opened once per app run over the user state, before the
  * Language Pack, and reopened over it when it changes. The app still starts
- * when they can't be read, on the Edition's defaults.
+ * when they can't be read, on their defaults.
  */
 export const settingsOpening = openOnce(
   async () => {
@@ -43,10 +43,12 @@ export const settingsOpening = openOnce(
   },
   {
     onError(error) {
-      console.error('Could not read the settings; using the Edition defaults', error);
+      console.error('Could not read the settings; using their defaults', error);
     },
-    fallback: async () =>
-      opened(await settingsOverUserState(), { ...defaults, hideStreak: false, selfCheck: false }),
+    fallback: async () => {
+      const settings = await settingsOverUserState();
+      return opened(settings, settings.defaults);
+    },
   },
 );
 
