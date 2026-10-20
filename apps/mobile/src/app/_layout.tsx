@@ -28,9 +28,9 @@ import { NotificationTaps } from '../notifications/notifications';
 import { Onboarding } from '../onboarding';
 import { Opened } from '../opened';
 import { LemmaPronunciation } from '../entries/pronunciation-button';
-import { useEditionInEffect } from '../edition/remote-switches';
 import { SettingsProvider, useColorSchemeInEffect, useSettings } from '../settings';
-import { tabsOf, type Tab } from '../tabs';
+import type { Tab } from '../shown';
+import { useShown } from '../shown-in-effect';
 
 const { tabs } = editionStrings;
 
@@ -186,7 +186,7 @@ function ThemedTabs() {
  * the app runs (ADR 0040).
  */
 function EditionTabs({ screenOptions }: { screenOptions: TabOptions }) {
-  const tabOrder = tabsOf(useEditionInEffect());
+  const tabOrder = useShown().tabs;
   return (
     <Tabs screenOptions={screenOptions}>
       <Tabs.Screen name="index" options={tabOptions('home', tabOrder)} />

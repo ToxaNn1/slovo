@@ -18,11 +18,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { editionStrings } from '../edition/edition';
 import { EntryActions } from '../entries/entry-actions';
-import { useEditionInEffect } from '../edition/remote-switches';
 import { useFeed } from '../feed/feed';
-import { useSettings } from '../settings';
 import { TOP_ROW } from '../edition/feed-loading';
 import { StatsPillAndSheet } from '../progress';
+import { useShown } from '../shown-in-effect';
 import { useSwipeHint } from '../feed/swipe-hint';
 
 const { feed: feedStrings } = editionStrings;
@@ -138,8 +137,7 @@ const FeedPage = memo(function FeedPage({
   onOpenCorrection: (position: number, correctionId: string) => void;
 }) {
   const { top } = useSafeAreaInsets();
-  const settings = useSettings().current;
-  const editionInEffect = useEditionInEffect();
+  const { selfCheck } = useShown();
   if (card.kind === 'end-of-cycle')
     return (
       <View
@@ -158,8 +156,7 @@ const FeedPage = memo(function FeedPage({
           onOpenCorrection={(correctionId) => {
             onOpenCorrection(position, correctionId);
           }}
-          // Self-check, when the reader turned it on and its Feature Switch is on in effect.
-          selfCheck={settings.selfCheck && editionInEffect.isFeatureEnabled('selfCheck')}
+          selfCheck={selfCheck}
           actions={<EntryActions card={card} />}
         />
       </PagerScrollView>

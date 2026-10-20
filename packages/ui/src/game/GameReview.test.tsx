@@ -97,13 +97,10 @@ const rounds = [
   played(3, correction, 'in the meantime', 'in the meanwhiles'),
 ];
 
-async function renderReview({
-  shown = true,
-  onOpen = jest.fn(),
-}: { shown?: boolean; onOpen?: (entryId: string) => void } = {}) {
+async function renderReview({ onOpen = jest.fn() }: { onOpen?: (entryId: string) => void } = {}) {
   await render(
     <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-      <GameReview shown={shown} rounds={rounds} onOpen={onOpen} />
+      <GameReview rounds={rounds} onOpen={onOpen} />
     </EditionProvider>,
   );
 }
@@ -172,12 +169,5 @@ describe('GameReview', () => {
     await fireEvent.press(screen.getByTestId('game-review-row-2'));
 
     expect(onOpen.mock.calls).toEqual([['w_dour']]);
-  });
-
-  it('draws nothing with the gameReview Feature Switch off', async () => {
-    await renderReview({ shown: false });
-
-    expect(screen.queryByTestId('game-review')).toBeNull();
-    expect(screen.queryByText('candid')).toBeNull();
   });
 });

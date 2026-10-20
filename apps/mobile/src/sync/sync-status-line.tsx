@@ -4,8 +4,8 @@ import { Text } from 'react-native';
 
 import { deviceClock } from '../device/device-clock';
 import { editionStrings } from '../edition/edition';
-import { useEditionInEffect } from '../edition/remote-switches';
 import { useSubscribed, type Opening } from '../opening';
+import { useShown } from '../shown-in-effect';
 import { syncOpening } from './device-sync';
 import { syncStatusLine } from './sync-status';
 
@@ -16,8 +16,7 @@ import { syncStatusLine } from './sync-status';
  * before a first sync has gone through.
  */
 export function SyncStatusLine() {
-  const on = useEditionInEffect().isFeatureEnabled('sync');
-  if (!on || syncOpening === undefined) return null;
+  if (!useShown().sync || syncOpening === undefined) return null;
   return <Opened opening={syncOpening} />;
 }
 

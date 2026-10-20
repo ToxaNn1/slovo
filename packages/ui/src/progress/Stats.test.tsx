@@ -29,6 +29,7 @@ const strings = {
     gameBest: plural('best game'),
     gameBestLabel: plural('best game'),
     known: 'know {words} · {corrections}',
+    knownWithoutCorrections: 'know {words}',
     knownWords: forms('word'),
     knownCorrections: forms('correction'),
     dueToday: 'due today: {count}',
@@ -136,11 +137,28 @@ describe('StatsSheet', () => {
     expect(screen.getByText('due today: 0')).toBeOnTheScreen();
   });
 
+  // Owner decision 19.10, #478: no count of Known Corrections while the reader sees none.
+  it('draws the Known Words without the Known Corrections while Corrections are left out', async () => {
+    await renderInEdition(
+      <StatsSheet
+        visible
+        knowledge="words"
+        stats={{ ...progress, knownWords: 12, knownCorrections: 3, dueToday: 2 }}
+        onClose={() => undefined}
+      />,
+      'uk',
+    );
+
+    expect(screen.getByTestId('stats-known')).toHaveTextContent('know 12 word (many)');
+    expect(screen.queryByText(/correction/)).not.toBeOnTheScreen();
+    expect(screen.getByText('due today: 2')).toBeOnTheScreen();
+  });
+
   it('draws neither knowledge row while the knowledge counts are hidden', async () => {
     await renderInEdition(
       <StatsSheet
         visible
-        hideKnowledge
+        knowledge="none"
         stats={{ ...progress, knownWords: 4, knownCorrections: 2, dueToday: 1 }}
         onClose={() => undefined}
       />,

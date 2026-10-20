@@ -4,7 +4,6 @@ import {
   NavigationRow,
   ScreenTitle,
   SectionLabel,
-  SelfCheckRow,
   SegmentedControl,
   SettingsGroup,
   SoonRow,
@@ -21,8 +20,7 @@ import { editionStrings } from '../../edition/edition';
 import { useHiddenSummary } from '../../mix/hidden';
 import { useMixSummary } from '../../mix/mix';
 import { useNotificationsSummary } from '../../notifications/notifications';
-import { useEditionInEffect } from '../../edition/remote-switches';
-import { progressShownOf } from '../../progress-shown';
+import { useShown } from '../../shown-in-effect';
 import { useSettings } from '../../settings';
 import { useOpenScreen } from '../../entries/use-open-screen';
 
@@ -52,8 +50,7 @@ export default function SettingsScreen() {
   const hiddenSummary = useHiddenSummary();
   const notificationsSummary = useNotificationsSummary();
   const accountOpening = useAccountInEffect();
-  const editionInEffect = useEditionInEffect();
-  const { statistics } = progressShownOf(editionInEffect, current);
+  const shown = useShown();
   return (
     <SafeAreaView
       testID="settings"
@@ -98,7 +95,7 @@ export default function SettingsScreen() {
         </View>
         <View style={styles.section}>
           <SettingsGroup>
-            {statistics && (
+            {shown.stats !== undefined && (
               <SwitchRow
                 testID="settings-hide-streak"
                 label={strings.hideStreak}
@@ -108,14 +105,16 @@ export default function SettingsScreen() {
                 }}
               />
             )}
-            <SelfCheckRow
-              label={strings.selfCheck}
-              shown={editionInEffect.isFeatureEnabled('selfCheck')}
-              value={current.selfCheck}
-              onChange={(selfCheck) => {
-                update({ selfCheck });
-              }}
-            />
+            {shown.selfCheckSetting && (
+              <SwitchRow
+                testID="settings-self-check"
+                label={strings.selfCheck}
+                value={current.selfCheck}
+                onChange={(selfCheck) => {
+                  update({ selfCheck });
+                }}
+              />
+            )}
             <NavigationRow
               testID="settings-row-notifications"
               label={strings.rows.notifications}
