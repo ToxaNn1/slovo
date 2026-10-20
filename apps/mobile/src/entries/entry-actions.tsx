@@ -32,20 +32,12 @@ const shareFormat = createShareFormatMemory();
  * The action row of an Entry card, wherever the card appears: the Feed (its
  * Word of the Day too) and the Entry screen a list opens. Each action fills
  * its own slot. The «Знаю» and «Не знаю» buttons are there only when the
- * Knowledge switch is on in effect, and inactive while Self-check hides the
- * card's meaning. Share is there
- * only when the binary can capture the Share Card and the Share Cards switch
+ * Knowledge switch is on in effect, and inactive while Self-check conceals
+ * the card's meaning (the card tells them). Share is there only when the binary can capture the Share Card and the Share Cards switch
  * is on in effect. Its screen gives it an
  * `UndoToastProvider` for the toast after a hide.
  */
-export function EntryActions({
-  card,
-  hidden = false,
-}: {
-  card: EntryFeedCard;
-  /** Self-check hides the card's meaning: nothing can be marked until it is revealed. */
-  hidden?: boolean;
-}) {
+export function EntryActions({ card }: { card: EntryFeedCard }) {
   const entryId = entryIdOf(card);
   const favorite = useFavorite(entryId);
   const hide = useHide(card);
@@ -59,12 +51,7 @@ export function EntryActions({
       <ActionRow
         marks={
           buttons.knowledge ? (
-            <KnowledgeButtons
-              entryKind={card.kind}
-              mark={knowledge.mark}
-              onTap={knowledge.tap}
-              inactive={hidden}
-            />
+            <KnowledgeButtons entryKind={card.kind} mark={knowledge.mark} onTap={knowledge.tap} />
           ) : undefined
         }
         favorite={<FavoriteButton inFavorites={favorite.inFavorites} onToggle={favorite.toggle} />}

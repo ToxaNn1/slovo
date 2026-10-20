@@ -244,41 +244,33 @@ const wordWithEverything: EntryFeedCard = {
 
 describe('Self-check on a Word card', () => {
   it('shows only the Lemma, part of speech and Category until revealed', async () => {
-    await render(inEdition(<EntryCard card={wordWithEverything} hidden onReveal={jest.fn()} />));
+    await render(inEdition(<EntryCard card={wordWithEverything} selfCheck />));
 
     expect(screen.getByTestId('word-lemma')).toHaveTextContent('lemma');
     expect(screen.getByTestId('word-part-of-speech')).toHaveTextContent('n.');
     expect(screen.getByTestId('word-category')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Show the meaning' })).toBeTruthy();
-    for (const hiddenPart of ['word-definition', 'word-example', 'word-synonyms']) {
-      expect(screen.queryByTestId(hiddenPart)).toBeNull();
+    for (const concealedPart of ['word-definition', 'word-example', 'word-synonyms']) {
+      expect(screen.queryByTestId(concealedPart)).toBeNull();
     }
   });
 
-  it('asks for the reveal when the reader taps «Show the meaning»', async () => {
-    const onReveal = jest.fn();
-    await render(inEdition(<EntryCard card={wordWithEverything} hidden onReveal={onReveal} />));
+  it('shows the whole card once the reader taps «Show the meaning»', async () => {
+    await render(inEdition(<EntryCard card={wordWithEverything} selfCheck />));
 
     await fireEvent.press(screen.getByRole('button', { name: 'Show the meaning' }));
-
-    expect(onReveal).toHaveBeenCalled();
-  });
-
-  it('shows the whole card once revealed', async () => {
-    await render(inEdition(<EntryCard card={wordWithEverything} />));
 
     expect(screen.getByTestId('word-definition')).toHaveTextContent('What it means.');
     expect(screen.getByTestId('word-example')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Show the meaning' })).toBeNull();
   });
 
-  it('keeps the Word of the Day badge on a hidden card', async () => {
+  it('keeps the Word of the Day badge on a concealed card', async () => {
     await render(
       inEdition(
         <EntryCard
           card={{ ...wordWithEverything, wordOfTheDay: { year: 2026, month: 10, day: 19 } }}
-          hidden
-          onReveal={jest.fn()}
+          selfCheck
         />,
       ),
     );
@@ -299,15 +291,13 @@ function correctionWithEverything(): EntryFeedCard {
 
 describe('Self-check on a Correction card', () => {
   it('shows only the non-standard form and asks how to say it until revealed', async () => {
-    await render(
-      inEdition(<EntryCard card={correctionWithEverything()} hidden onReveal={jest.fn()} />),
-    );
+    await render(inEdition(<EntryCard card={correctionWithEverything()} selfCheck />));
 
     expect(screen.getByTestId('correction-non-standard')).toBeTruthy();
     expect(screen.getByText('take part')).toBeTruthy();
     expect(screen.getByText('How to say it?')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Show' })).toBeTruthy();
-    for (const hiddenPart of [
+    for (const concealedPart of [
       'correction-type',
       'correction-standard',
       'correction-other-equivalents',
@@ -315,24 +305,15 @@ describe('Self-check on a Correction card', () => {
       'correction-example-pair',
       'correction-source',
     ]) {
-      expect(screen.queryByTestId(hiddenPart)).toBeNull();
+      expect(screen.queryByTestId(concealedPart)).toBeNull();
     }
     expect(screen.queryByText('join in')).toBeNull();
   });
 
-  it('asks for the reveal when the reader taps «Show»', async () => {
-    const onReveal = jest.fn();
-    await render(
-      inEdition(<EntryCard card={correctionWithEverything()} hidden onReveal={onReveal} />),
-    );
+  it('shows the right form and the explanation once the reader taps «Show»', async () => {
+    await render(inEdition(<EntryCard card={correctionWithEverything()} selfCheck />));
 
     await fireEvent.press(screen.getByRole('button', { name: 'Show' }));
-
-    expect(onReveal).toHaveBeenCalled();
-  });
-
-  it('shows the right form and the explanation once revealed', async () => {
-    await render(inEdition(<EntryCard card={correctionWithEverything()} />));
 
     expect(screen.getByTestId('correction-standard')).toBeTruthy();
     expect(screen.getByTestId('correction-explanation')).toHaveTextContent('A long explanation.');

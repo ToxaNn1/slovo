@@ -5,7 +5,6 @@ import {
   EntryCard,
   HapticsProvider,
   KnowledgeButtons,
-  useSelfCheck,
   VerticalPager,
 } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
@@ -79,37 +78,6 @@ const TURN_LABELS = { next: 'Next page', previous: 'Previous page' };
 /** How long a page turn's motion takes, from the design. */
 const SWIPE_MS = 420;
 
-/**
- * A Feed page: the Entry card with its mark buttons, its meaning hidden while
- * Self-check is `on` and the buttons inactive until the reveal.
- */
-function Page({
-  card,
-  on,
-  onMark = jest.fn(),
-}: {
-  card: EntryFeedCard;
-  on: boolean;
-  onMark?: ((mark: 'known' | 'unknown') => void) | undefined;
-}) {
-  const selfCheck = useSelfCheck(on);
-  return (
-    <EntryCard
-      card={card}
-      hidden={selfCheck.hidden}
-      onReveal={selfCheck.reveal}
-      actions={
-        <KnowledgeButtons
-          entryKind={card.kind}
-          mark={undefined}
-          onTap={onMark}
-          inactive={selfCheck.hidden}
-        />
-      }
-    />
-  );
-}
-
 const haptics: Haptics = {
   selection: jest.fn(),
   impactLight: jest.fn(),
@@ -121,7 +89,7 @@ const haptics: Haptics = {
 async function renderFeed(
   on: boolean,
   cards: readonly EntryFeedCard[] = CARDS,
-  onMark?: (mark: 'known' | 'unknown') => void,
+  onMark: (mark: 'known' | 'unknown') => void = jest.fn(),
 ) {
   await render(
     <EditionProvider edition={{ locale: 'en' }} strings={strings}>
@@ -131,7 +99,13 @@ async function renderFeed(
           items={cards}
           initialIndex={0}
           onIndexChange={jest.fn()}
-          renderPage={(card) => <Page card={card} on={on} onMark={onMark} />}
+          renderPage={(card) => (
+            <EntryCard
+              card={card}
+              selfCheck={on}
+              actions={<KnowledgeButtons entryKind={card.kind} mark={undefined} onTap={onMark} />}
+            />
+          )}
           turnActionLabels={TURN_LABELS}
         />
       </HapticsProvider>
@@ -152,7 +126,7 @@ async function turn(from: string, actionName: 'next' | 'previous') {
   });
 }
 
-describe('useSelfCheck', () => {
+describe('Self-check', () => {
   beforeEach(() => {
     jest.useFakeTimers();
   });

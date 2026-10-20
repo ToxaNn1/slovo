@@ -19,7 +19,6 @@ export { DecorProvider, useDecor } from './decor/DecorProvider';
 export { EditionProvider, fill, useEdition } from './providers/EditionProvider';
 export { EndOfCycleCard } from './feed/EndOfCycleCard';
 export { EntryCard, type EntryCardProps } from './entries/EntryCard';
-export { useSelfCheck, type SelfCheck } from './entries/self-check';
 export {
   CardCorners,
   DecorBackground,
