@@ -22,6 +22,19 @@ describe('settings', () => {
     });
   });
 
+  it("gives its defaults, the Edition's and its own, whatever the user chose", async () => {
+    const settings = await settingsOver();
+    await settings.update({ theme: 'dark', hideStreak: true, selfCheck: true });
+
+    expect(settings.defaults).toEqual({
+      theme: 'system',
+      fontSize: 'M',
+      vibration: true,
+      hideStreak: false,
+      selfCheck: false,
+    });
+  });
+
   it("uses the user's Theme over the Edition's default, and returns the settings in effect", async () => {
     const settings = await settingsOver();
 

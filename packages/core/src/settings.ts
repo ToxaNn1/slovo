@@ -24,6 +24,8 @@ export type SettingsDefaults = Omit<UserSettings, 'hideStreak' | 'selfCheck'>;
 
 /** The user's settings: their own choices over the Edition's defaults. */
 export interface Settings {
+  /** The settings in effect until the user chooses: the Edition's defaults and the Core's own. */
+  readonly defaults: UserSettings;
   /** The settings in effect: what the user chose, else the Edition's default. */
   read(): Promise<UserSettings>;
   /** Keeps the user's choices and returns the settings now in effect. */
@@ -52,17 +54,20 @@ export function createSettings({
   userState: UserState;
   defaults: SettingsDefaults;
 }): Settings {
+  const all: UserSettings = { ...defaults, hideStreak: false, selfCheck: false };
+
   async function read(): Promise<UserSettings> {
     return {
-      theme: (await userState.read(userStateRecords.theme)) ?? defaults.theme,
-      fontSize: (await userState.read(userStateRecords.fontSize)) ?? defaults.fontSize,
-      vibration: (await userState.read(userStateRecords.vibration)) ?? defaults.vibration,
-      hideStreak: (await userState.read(userStateRecords.hideStreak)) ?? false,
-      selfCheck: (await userState.read(userStateRecords.selfCheck)) ?? false,
+      theme: (await userState.read(userStateRecords.theme)) ?? all.theme,
+      fontSize: (await userState.read(userStateRecords.fontSize)) ?? all.fontSize,
+      vibration: (await userState.read(userStateRecords.vibration)) ?? all.vibration,
+      hideStreak: (await userState.read(userStateRecords.hideStreak)) ?? all.hideStreak,
+      selfCheck: (await userState.read(userStateRecords.selfCheck)) ?? all.selfCheck,
     };
   }
 
   return {
+    defaults: all,
     read,
     async update(changes) {
       await userState.write(
