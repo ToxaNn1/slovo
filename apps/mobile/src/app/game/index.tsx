@@ -17,10 +17,10 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { editionStrings } from '../../edition/edition';
-import { useEditionInEffect } from '../../edition/remote-switches';
 import { useOpenScreen } from '../../entries/use-open-screen';
 import { useGameActions, useGameState } from '../../game/game';
 import { gameModeCard, gameModeStrings } from '../../game/game-modes';
+import { useShown } from '../../shown-in-effect';
 
 const { game: strings } = editionStrings;
 
@@ -35,7 +35,7 @@ const RULES_MAX_FONT_SCALE = 1.5;
  */
 export default function GameScreen() {
   // Turned off remotely while the reader is on it: its tab goes, and so does the screen.
-  if (!useEditionInEffect().isFeatureEnabled('game')) return <Redirect href="/" />;
+  if (!useShown().tabs.includes('game')) return <Redirect href="/" />;
   return <Game />;
 }
 
@@ -44,7 +44,7 @@ function Game() {
   const actions = useGameActions();
   const router = useRouter();
   const openScreen = useOpenScreen();
-  const gameReview = useEditionInEffect().isFeatureEnabled('gameReview');
+  const { gameReview } = useShown();
   const { colors } = useTokens();
 
   const { current } = state;
@@ -60,7 +60,6 @@ function Game() {
         <GameResult
           game={current}
           bestResult={state.bestResult}
-          reviewShown={gameReview}
           onAgain={() => {
             actions.start(current.modeId);
           }}
@@ -68,9 +67,13 @@ function Game() {
             actions.leave();
             router.navigate('/');
           }}
-          onOpenEntry={(entryId) => {
-            openScreen(`/game/${entryId}`);
-          }}
+          onOpenEntry={
+            gameReview
+              ? (entryId) => {
+                  openScreen(`/game/${entryId}`);
+                }
+              : undefined
+          }
         />
       ) : (
         <GameRound

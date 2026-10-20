@@ -1,0 +1,83 @@
+import type { Edition, FeatureSwitch, MixState, UserSettings } from '@slovo/core';
+
+/** Every tab in its final order: Home, Settings, Game, Saved. */
+const allTabs = ['home', 'settings', 'game', 'saved'] as const;
+
+export type Tab = (typeof allTabs)[number];
+
+/** What the reader is shown of the features an Edition can switch off or the reader can hide. */
+export interface Shown {
+  /** The tabs, in order: the Game's only when the Game is on. */
+  readonly tabs: readonly Tab[];
+  /** The Game Review under the Game's result. */
+  readonly gameReview: boolean;
+  /** The switchable buttons of an Entry card, wherever the card appears. */
+  readonly entryButtons: {
+    /** The Share Card button of the action row. */
+    readonly shareCard: boolean;
+    /** The Pronunciation button of the Word card. */
+    readonly pronunciation: boolean;
+    /** The «Знаю» and «Не знаю» buttons of the action row. */
+    readonly knowledge: boolean;
+  };
+  /** Whether an Entry card is in Self-check. */
+  readonly selfCheck: boolean;
+  /** The Settings switch for Self-check. */
+  readonly selfCheckSetting: boolean;
+  /** The «Вчу» card of the Saved tab and the list it opens. */
+  readonly learning: boolean;
+  /**
+   * The Stats pill and the stats sheet, with the setting that hides the Streak;
+   * left out while the statistics are off.
+   */
+  readonly stats:
+    | {
+        /** The Streak and the Best Streak. */
+        readonly streak: boolean;
+        /** The knowledge rows: the Known Words with or without the Known Corrections, or none. */
+        readonly knowledge: 'words-and-corrections' | 'words' | 'none';
+      }
+    | undefined;
+  /** The Sync status line of the SLOVO ID screen. */
+  readonly sync: boolean;
+}
+
+/**
+ * What the reader is shown, from the Edition in effect (ADR 0040), the
+ * reader's settings and their Mix. A feature shows only while its Feature
+ * Switch is on in effect; the reader may hide the Streak and turns
+ * Self-check on, and the Known Corrections count only while Corrections are
+ * in the Mix as well.
+ */
+export function shownOf({
+  edition,
+  settings,
+  mix,
+}: {
+  edition: Pick<Edition, 'isFeatureEnabled'>;
+  settings: Pick<UserSettings, 'hideStreak' | 'selfCheck'>;
+  mix: Pick<MixState, 'corrections'>;
+}): Shown {
+  const on = (feature: FeatureSwitch) => edition.isFeatureEnabled(feature);
+  const knowledge = on('knowledge');
+  const corrections = on('corrections') && mix.corrections;
+  return {
+    tabs: allTabs.filter((tab) => tab !== 'game' || on('game')),
+    gameReview: on('gameReview'),
+    entryButtons: {
+      shareCard: on('shareCards'),
+      pronunciation: on('pronunciation'),
+      knowledge,
+    },
+    selfCheck: on('selfCheck') && settings.selfCheck,
+    selfCheckSetting: on('selfCheck'),
+    learning: knowledge,
+    stats: on('statistics')
+      ? {
+          streak: !settings.hideStreak,
+          knowledge: !knowledge ? 'none' : corrections ? 'words-and-corrections' : 'words',
+        }
+      : undefined,
+    sync: on('sync'),
+  };
+}

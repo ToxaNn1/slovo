@@ -62,12 +62,11 @@ function ResultNumber({
  * mode and «На головну» for the Feed. A win arrives with the success haptic
  * twice. The Edition's victory illustration (Decor slot 6) sits over the
  * title, large and stitched in on a win, small and still on a loss. The Game
- * Review of every Round follows the buttons, unless its switch is off.
+ * Review of every Round follows the buttons, while it opens Entries.
  */
 export function GameResult({
   game,
   bestResult,
-  reviewShown,
   onAgain,
   onHome,
   onOpenEntry,
@@ -76,12 +75,10 @@ export function GameResult({
   game: CurrentGame;
   /** The best result, the Game just over included. */
   bestResult: number | undefined;
-  /** Whether the Game Review shows, which it does while the gameReview Feature Switch is on in effect. */
-  reviewShown: boolean;
   onAgain: () => void;
   onHome: () => void;
-  /** Opens the Entry a Round of the Game Review asked about. */
-  onOpenEntry: (entryId: string) => void;
+  /** Opens the Entry a Round of the Game Review asked about; without it, there is no Game Review. */
+  onOpenEntry: ((entryId: string) => void) | undefined;
 }) {
   const { colors, fontFamilies } = useTokens();
   const { strings, voice, count } = useEdition();
@@ -151,7 +148,7 @@ export function GameResult({
         <PrimaryButton testID="game-again" label={words.result.again} onPress={onAgain} />
         <SecondaryButton testID="game-home" label={words.result.home} onPress={onHome} />
       </View>
-      <GameReview shown={reviewShown} rounds={game.played} onOpen={onOpenEntry} />
+      {onOpenEntry === undefined ? null : <GameReview rounds={game.played} onOpen={onOpenEntry} />}
     </ScrollView>
   );
 }

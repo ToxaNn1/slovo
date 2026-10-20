@@ -2,21 +2,19 @@ import { StatsPill, StatsSheet } from '@slovo/ui';
 import { useState } from 'react';
 
 import { useComposition } from './composition';
-import { useEditionInEffect } from './edition/remote-switches';
 import { useSubscribed } from './opening';
-import { progressShownOf } from './progress-shown';
-import { useSettings } from './settings';
+import { useShown } from './shown-in-effect';
 
 /**
- * The Stats pill (the flame alone while the Streak is hidden), and the stats sheet it opens, both kept up
- * to date while they show. What is drawn is decided here, from the statistics
- * and knowledge switches in effect and the reader's hide-Streak setting.
+ * The Stats pill (the flame alone while the Streak is hidden), and the stats
+ * sheet it opens, both kept up to date while they show, as the reader is shown
+ * the statistics.
  */
 export function StatsPillAndSheet() {
-  const shown = progressShownOf(useEditionInEffect(), useSettings().current);
+  const shown = useShown().stats;
   const progress = useSubscribed(useComposition().progress, ({ state }) => state);
   const [open, setOpen] = useState(false);
-  if (!shown.statistics) return null;
+  if (shown === undefined) return null;
   return (
     <>
       <StatsPill
@@ -30,7 +28,7 @@ export function StatsPillAndSheet() {
         visible={open}
         stats={progress}
         hideStreak={!shown.streak}
-        hideKnowledge={!shown.knowledge}
+        knowledge={shown.knowledge}
         onClose={() => {
           setOpen(false);
         }}
