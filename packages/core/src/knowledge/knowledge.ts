@@ -1,10 +1,7 @@
-import type { EntryKind } from '@slovo/contracts';
-
 import type { Edition } from '../edition/edition';
-import type { HiddenEntries } from '../hidden/hidden-entries';
 import type { EntryRowModel, EntryRows } from '../entries/entry-row';
 import { createInTurn, createSubscribers } from '../in-turn';
-import { todayDate } from '../local-date';
+import { dayNumber, parseLocalDate, todayDate } from '../local-date';
 import type { Clock } from '../ports';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
@@ -19,61 +16,54 @@ import {
 /** An Entry the reader is learning, in the «Вчу» list. */
 export interface LearningEntry {
   readonly entryId: string;
-  /** The local day the Entry is due for Review, `YYYY-MM-DD`; today or earlier while it is due. */
-  readonly reviewDay: string;
+  /** The local days from today to its next Review: 0 for today, negative for a day past; due at 0 or less. */
+  readonly daysUntilReview: number;
   /** What its row in a list shows. */
   readonly row: EntryRowModel;
 }
 
-/** The counts of the Knowledge Marks the statistics show. */
-export interface KnowledgeCounts {
-  /** The Words marked Known, Learned or not. */
+/**
+ * The Knowledge Marks as they stand on today's local day. All empty and 0
+ * with the `knowledge` Feature Switch off.
+ */
+export interface KnowledgeState {
+  /**
+   * The Entries the reader is learning: every Entry marked Unknown that is not
+   * yet Learned, Known on a Review since or not, sorted by the next Review
+   * day. An id the Language Pack doesn't have is left out.
+   */
+  readonly learning: readonly LearningEntry[];
+  /** The Words marked Known, Learned or not. An id the Language Pack doesn't have is no Word. */
   readonly knownWords: number;
   /** The Corrections marked Known, Learned or not. */
   readonly knownCorrections: number;
-  /** The Entries due for Review today, a Hidden Entry left out. */
-  readonly dueToday: number;
+  /** The Entries due for Review today, in no set order, for the Feed to bring back and Progress to count. */
+  readonly due: readonly string[];
 }
 
 /**
  * The Knowledge Marks of every Entry (ADR 0043), read from the user state
  * once, when they open, so open them once per app session (the Core
- * composition does). Today is the clock's local day at each call. A change is
- * made in memory only once it is written. With the `knowledge` Feature Switch
- * off nothing is marked, and the marks there are stay.
+ * composition does). A change is made in memory only once it is written.
+ * With the `knowledge` Feature Switch off nothing is marked, and the marks
+ * there are stay.
  */
 export interface Knowledge {
-  /** The Entry's record, or nothing when it has no mark. */
-  recordOf(entryId: string): KnowledgeRecord | undefined;
+  /**
+   * The marks as they stand, made again when a mark changes and when the
+   * composition turns to a new local day. A change never edits it: it makes
+   * a new one and tells the subscribers, so it stays the same object until
+   * something changes.
+   */
+  readonly state: KnowledgeState;
   /** The mark the Entry's card shows today: none without a mark, and none while it is due. */
   markOf(entryId: string): KnowledgeMark | undefined;
-  /** Whether the Entry is due for Review today. */
-  isDue(entryId: string): boolean;
-  /**
-   * The Entries due for Review today, in no set order, for the Feed to bring
-   * back. None with the `knowledge` Feature Switch off.
-   */
-  due(): readonly string[];
   /**
    * The Entries the reader is weak on: marked Unknown or due for Review
    * today, in no set order, which the Game asks about in up to 5 of its
    * Rounds. None with the `knowledge` Feature Switch off.
    */
   weak(): readonly string[];
-  /**
-   * The Entries the reader is learning: every Entry marked Unknown that is not
-   * yet Learned, Known on a Review since or not, sorted by the next Review
-   * day. An id the Language Pack doesn't have is left out. None with the
-   * `knowledge` Feature Switch off.
-   */
-  learning(): Promise<readonly LearningEntry[]>;
-  /**
-   * The Known Words and Corrections, a Learned Entry among them, and the
-   * Entries due for Review today but not Hidden. An id the Language Pack
-   * doesn't have counts as neither kind. All 0 with the `knowledge` Feature
-   * Switch off.
-   */
-  counts(hidden: Pick<HiddenEntries, 'has'>): KnowledgeCounts;
   /**
    * The reader taps a mark on the Entry's card: the mark the card shows
    * removes it, deleting the record; any other tap answers the Entry today,
@@ -82,11 +72,30 @@ export interface Knowledge {
   tap(entryId: string, mark: KnowledgeMark): Promise<void>;
   /** Answers the Entry today by the interval rule alone, as a mistake in the Game does with Unknown. */
   answer(entryId: string, mark: KnowledgeMark): Promise<void>;
-  /** Calls `listener` after each change of a record. Returns the call that stops it. */
+  /** Calls `listener` after each change of the state. Returns the call that stops it. */
   subscribe(listener: () => void): () => void;
 }
 
-/** Opens the Knowledge Marks over the user state, for the Core composition. */
+/** The state with the `knowledge` Feature Switch off. */
+const off: KnowledgeState = { learning: [], knownWords: 0, knownCorrections: 0, due: [] };
+
+const sameState = (one: KnowledgeState, other: KnowledgeState) =>
+  one.knownWords === other.knownWords &&
+  one.knownCorrections === other.knownCorrections &&
+  one.due.length === other.due.length &&
+  one.due.every((entryId, place) => other.due[place] === entryId) &&
+  one.learning.length === other.learning.length &&
+  one.learning.every(
+    (entry, place) =>
+      other.learning[place]?.entryId === entry.entryId &&
+      other.learning[place].daysUntilReview === entry.daysUntilReview,
+  );
+
+/**
+ * Opens the Knowledge Marks over the user state, for the Core composition,
+ * with `followDay`, which the day change calls when it turns to a new local
+ * day so the state follows it.
+ */
 export async function openKnowledge({
   edition,
   rows,
@@ -97,30 +106,65 @@ export async function openKnowledge({
   rows: EntryRows;
   userState: UserState;
   clock: Clock;
-}): Promise<Knowledge> {
+}): Promise<{ knowledge: Knowledge; followDay: () => void }> {
   const { knowledge } = userStateRecords;
   let records: ReadonlyMap<string, KnowledgeRecord> = await userState.list(knowledge);
   const inTurn = createInTurn();
   const subscribers = createSubscribers();
-  /** The kind of each marked Entry the Language Pack has, so the counts need no read. */
-  const kinds = new Map<string, EntryKind>();
+  /** The row of each marked Entry the Language Pack has, so the state needs no read. */
+  const rowOf = new Map<string, EntryRowModel>();
 
-  /** Reads the Entry's kind, once. */
-  async function readKind(entryId: string): Promise<void> {
-    if (kinds.has(entryId)) return;
+  /** Reads the Entry's row, once. */
+  async function readRow(entryId: string): Promise<void> {
+    if (rowOf.has(entryId)) return;
     const row = await rows.row(entryId);
-    if (row !== undefined) kinds.set(entryId, row.kind);
+    if (row !== undefined) rowOf.set(entryId, row);
   }
-  await Promise.all([...records.keys()].map(readKind));
+  await Promise.all([...records.keys()].map(readRow));
 
-  /** Keeps the Entry's next record, or deletes it for nothing, then tells the subscribers. */
+  /** The state of the records on today's local day, the `knowledge` Feature Switch aside. */
+  function stateOf(): KnowledgeState {
+    const today = todayDate(clock);
+    const reviews: { entryId: string; reviewDay: string }[] = [];
+    const due: string[] = [];
+    let knownWords = 0;
+    let knownCorrections = 0;
+    for (const [entryId, record] of records) {
+      if (record.reviewDay !== null) reviews.push({ entryId, reviewDay: record.reviewDay });
+      if (isDue(record, today)) due.push(entryId);
+      if (record.mark !== 'known') continue;
+      const kind = rowOf.get(entryId)?.kind;
+      if (kind === 'word') knownWords += 1;
+      if (kind === 'correction') knownCorrections += 1;
+    }
+    const learning = reviews
+      .sort((a, b) => a.reviewDay.localeCompare(b.reviewDay))
+      .flatMap(({ entryId, reviewDay }) => {
+        const row = rowOf.get(entryId);
+        const daysUntilReview = dayNumber(parseLocalDate(reviewDay)) - dayNumber(today);
+        return row === undefined ? [] : [{ entryId, daysUntilReview, row }];
+      });
+    return { learning, knownWords, knownCorrections, due };
+  }
+
+  let state = stateOf();
+
+  /** Makes the state again, and tells the subscribers when it changed. */
+  function follow(): void {
+    const next = stateOf();
+    if (sameState(next, state)) return;
+    state = next;
+    subscribers.tell();
+  }
+
+  /** Keeps the Entry's next record, or deletes it for nothing, then follows it. */
   async function keep(entryId: string, record: KnowledgeRecord | undefined): Promise<void> {
     await userState.write(knowledge.record(entryId).change(record));
     const changed = new Map(records);
     if (record === undefined) changed.delete(entryId);
     else changed.set(entryId, record);
     records = changed;
-    subscribers.tell();
+    follow();
   }
 
   /** Marks the Entry by the change the record and today give, unless the switch is off. */
@@ -130,59 +174,35 @@ export async function openKnowledge({
   ) =>
     inTurn(async () => {
       if (!edition.isFeatureEnabled('knowledge')) return;
-      await readKind(entryId);
+      await readRow(entryId);
       await keep(entryId, next(records.get(entryId)));
     });
 
   return {
-    recordOf: (entryId) => records.get(entryId),
-    markOf: (entryId) => shownMark(records.get(entryId), todayDate(clock)),
-    isDue: (entryId) => isDue(records.get(entryId), todayDate(clock)),
-    due() {
-      if (!edition.isFeatureEnabled('knowledge')) return [];
-      const today = todayDate(clock);
-      return [...records].flatMap(([entryId, record]) => (isDue(record, today) ? [entryId] : []));
-    },
-    weak() {
-      if (!edition.isFeatureEnabled('knowledge')) return [];
-      const today = todayDate(clock);
-      return [...records].flatMap(([entryId, record]) =>
-        record.mark === 'unknown' || isDue(record, today) ? [entryId] : [],
-      );
-    },
-    async learning() {
-      if (!edition.isFeatureEnabled('knowledge')) return [];
-      const reviews = [...records]
-        .flatMap(([entryId, { reviewDay }]) => (reviewDay === null ? [] : [{ entryId, reviewDay }]))
-        .sort((a, b) => a.reviewDay.localeCompare(b.reviewDay));
-      const listed = await Promise.all(
-        reviews.map(async (review) => {
-          const row = await rows.row(review.entryId);
-          return row === undefined ? [] : [{ ...review, row }];
-        }),
-      );
-      return listed.flat();
-    },
-    counts(hidden) {
-      const counts = { knownWords: 0, knownCorrections: 0, dueToday: 0 };
-      if (!edition.isFeatureEnabled('knowledge')) return counts;
-      const today = todayDate(clock);
-      for (const [entryId, record] of records) {
-        if (isDue(record, today) && !hidden.has(entryId)) counts.dueToday += 1;
-        if (record.mark !== 'known') continue;
-        const kind = kinds.get(entryId);
-        if (kind === 'word') counts.knownWords += 1;
-        if (kind === 'correction') counts.knownCorrections += 1;
-      }
-      return counts;
-    },
-    tap: (entryId, mark) =>
-      change(entryId, (record) => {
+    knowledge: {
+      get state() {
+        // The switch is read at each call, as the remote switches can turn it off while the app runs.
+        return edition.isFeatureEnabled('knowledge') ? state : off;
+      },
+      markOf: (entryId) => shownMark(records.get(entryId), todayDate(clock)),
+      weak() {
+        if (!edition.isFeatureEnabled('knowledge')) return [];
         const today = todayDate(clock);
-        return shownMark(record, today) === mark ? undefined : answerKnowledge(record, mark, today);
-      }),
-    answer: (entryId, mark) =>
-      change(entryId, (record) => answerKnowledge(record, mark, todayDate(clock))),
-    subscribe: subscribers.subscribe,
+        return [...records].flatMap(([entryId, record]) =>
+          record.mark === 'unknown' || isDue(record, today) ? [entryId] : [],
+        );
+      },
+      tap: (entryId, mark) =>
+        change(entryId, (record) => {
+          const today = todayDate(clock);
+          return shownMark(record, today) === mark
+            ? undefined
+            : answerKnowledge(record, mark, today);
+        }),
+      answer: (entryId, mark) =>
+        change(entryId, (record) => answerKnowledge(record, mark, todayDate(clock))),
+      subscribe: subscribers.subscribe,
+    },
+    followDay: follow,
   };
 }

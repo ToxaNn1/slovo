@@ -106,7 +106,7 @@ export {
   type KnowledgeRecord,
   type ReviewStep,
 } from './knowledge/knowledge-record';
-export { type Knowledge, type LearningEntry } from './knowledge/knowledge';
+export { type Knowledge, type KnowledgeState, type LearningEntry } from './knowledge/knowledge';
 export {
   daysUntil,
   formatTimeOfDay,

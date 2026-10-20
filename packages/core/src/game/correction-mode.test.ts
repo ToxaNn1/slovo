@@ -412,11 +412,12 @@ describe('the Knowledge Marks «Обери правильне» leaves', () => {
     void app.game.answer((rightOf(round) + 1) % round.options.length);
     await app.game.next();
 
-    expect(app.knowledge.recordOf(askedOf(round).id)).toEqual({
-      mark: 'unknown',
-      step: 1,
-      reviewDay: '2026-10-16',
-      learned: false,
-    });
+    expect(app.knowledge.markOf(askedOf(round).id)).toBe('unknown');
+    expect(
+      app.knowledge.state.learning.map(({ entryId, daysUntilReview }) => [
+        entryId,
+        daysUntilReview,
+      ]),
+    ).toEqual([[askedOf(round).id, 1]]);
   });
 });

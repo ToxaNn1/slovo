@@ -229,10 +229,16 @@ describe('two devices of one Account', () => {
     await phone.sync();
     await tablet.sync();
 
-    const learned = { mark: 'known', step: null, reviewDay: null, learned: true };
-    expect((await phone.open()).knowledge.recordOf('w_one')).toEqual(learned);
-    expect((await tablet.open()).knowledge.recordOf('w_one')).toEqual(learned);
-    expect(server.records.get('knowledge.w_one')?.value).toEqual(learned);
+    for (const open of [await phone.open(), await tablet.open()]) {
+      expect(open.knowledge.markOf('w_one')).toBe('known');
+      expect(open.knowledge.state).toMatchObject({ learning: [], knownWords: 1 });
+    }
+    expect(server.records.get('knowledge.w_one')?.value).toEqual({
+      mark: 'known',
+      step: null,
+      reviewDay: null,
+      learned: true,
+    });
   });
 
   it('carry a removed Knowledge Mark to the other device as a tombstone', async () => {
@@ -249,7 +255,9 @@ describe('two devices of one Account', () => {
     await tablet.sync();
     await phone.sync();
 
-    expect((await phone.open()).knowledge.recordOf('w_one')).toBeUndefined();
+    const opened = await phone.open();
+    expect(opened.knowledge.markOf('w_one')).toBeUndefined();
+    expect(opened.knowledge.state.learning).toEqual([]);
     expect(server.records.get('knowledge.w_one')?.value).toBeNull();
   });
 

@@ -49,6 +49,10 @@ async function run({
 const HOUR = 60 * 60_000;
 const DAY = 24 * HOUR;
 
+/** The «Вчу» list as the Entries and the local days until their Review. */
+const learningOf = (app: Composition) =>
+  app.knowledge.state.learning.map(({ entryId, daysUntilReview }) => [entryId, daysUntilReview]);
+
 // Spec #461, ADR 0043: the knowledge module the cards and the Game mark through.
 describe('Knowledge Marks', () => {
   it('marks a Word and a Correction, and keeps the marks for the next launch', async () => {
@@ -59,15 +63,11 @@ describe('Knowledge Marks', () => {
     await app.knowledge.tap('c_one', 'known');
 
     const next = await run({ records });
-    expect(next.knowledge.recordOf('w_one')).toEqual({
-      mark: 'unknown',
-      step: 1,
-      reviewDay: '2026-10-20',
-      learned: false,
-    });
-    expect(next.knowledge.recordOf('c_one')).toMatchObject({ mark: 'known', learned: true });
+    expect(learningOf(next)).toEqual([['w_one', 1]]);
     expect(next.knowledge.markOf('w_one')).toBe('unknown');
-    expect(next.knowledge.recordOf('w_two')).toBeUndefined();
+    expect(next.knowledge.markOf('c_one')).toBe('known');
+    expect(next.knowledge.state).toMatchObject({ knownWords: 0, knownCorrections: 1 });
+    expect(next.knowledge.markOf('w_two')).toBeUndefined();
   });
 
   it('changes the mark on a tap of the other one and removes it on a tap of the same one', async () => {
@@ -83,8 +83,8 @@ describe('Knowledge Marks', () => {
     expect(app.knowledge.markOf('w_one')).toBe('known');
 
     await app.knowledge.tap('w_one', 'known');
-    expect(app.knowledge.recordOf('w_one')).toBeUndefined();
     expect(app.knowledge.markOf('w_one')).toBeUndefined();
+    expect(learningOf(app)).toEqual([]);
     expect([...records.keys()].filter((key) => key.startsWith('knowledge.'))).toEqual([]);
     expect(told).toBe(3);
   });
@@ -98,7 +98,7 @@ describe('Knowledge Marks', () => {
     expect(app.knowledge.markOf('w_one')).toBeUndefined();
     await app.knowledge.tap('w_one', 'unknown');
 
-    expect(app.knowledge.recordOf('w_one')).toMatchObject({ step: 1, reviewDay: '2026-10-21' });
+    expect(learningOf(app)).toEqual([['w_one', 1]]);
     expect(app.knowledge.markOf('w_one')).toBe('unknown');
   });
 
@@ -109,9 +109,10 @@ describe('Knowledge Marks', () => {
 
     await app.knowledge.tap('w_one', 'unknown');
     time.advance(20 * 60_000);
+    await app.resume();
 
-    expect(app.knowledge.recordOf('w_one')?.reviewDay).toBe('2026-10-20');
-    expect(app.knowledge.isDue('w_one')).toBe(true);
+    expect(learningOf(app)).toEqual([['w_one', 0]]);
+    expect(app.knowledge.state.due).toEqual(['w_one']);
   });
 
   it('keeps an Entry due until it is answered, however many days pass', async () => {
@@ -119,13 +120,15 @@ describe('Knowledge Marks', () => {
     const app = await run({ clock: time.clock });
     await app.knowledge.tap('w_one', 'unknown');
 
-    expect(app.knowledge.isDue('w_one')).toBe(false);
+    expect(app.knowledge.state.due).toEqual([]);
     time.advance(5 * DAY);
-    expect(app.knowledge.isDue('w_one')).toBe(true);
+    await app.resume();
+    expect(app.knowledge.state.due).toEqual(['w_one']);
+    expect(learningOf(app)).toEqual([['w_one', -4]]);
 
     await app.knowledge.answer('w_one', 'known');
-    expect(app.knowledge.isDue('w_one')).toBe(false);
-    expect(app.knowledge.recordOf('w_one')).toMatchObject({ step: 3, reviewDay: '2026-10-27' });
+    expect(app.knowledge.state.due).toEqual([]);
+    expect(learningOf(app)).toEqual([['w_one', 3]]);
   });
 
   it('answers by the interval rule alone, so Unknown on an Entry marked Unknown starts it again', async () => {
@@ -136,7 +139,8 @@ describe('Knowledge Marks', () => {
     await app.knowledge.answer('w_one', 'unknown');
     await app.knowledge.answer('w_one', 'unknown');
 
-    expect(app.knowledge.recordOf('w_one')).toMatchObject({ mark: 'unknown', step: 1 });
+    expect(app.knowledge.markOf('w_one')).toBe('unknown');
+    expect(learningOf(app)).toEqual([['w_one', 1]]);
   });
 
   it('marks nothing with the knowledge switch off, and keeps the marks there are', async () => {
@@ -148,11 +152,12 @@ describe('Knowledge Marks', () => {
     await off.knowledge.tap('w_two', 'known');
     await off.knowledge.answer('c_one', 'unknown');
 
-    expect(off.knowledge.recordOf('w_two')).toBeUndefined();
-    expect(off.knowledge.recordOf('c_one')).toBeUndefined();
-    expect((await run({ records })).knowledge.recordOf('w_one')).toMatchObject({
-      mark: 'unknown',
-    });
+    expect(off.knowledge.markOf('w_two')).toBeUndefined();
+    expect(off.knowledge.markOf('c_one')).toBeUndefined();
+    const on = await run({ records });
+    expect(on.knowledge.markOf('w_one')).toBe('unknown');
+    expect(learningOf(on)).toEqual([['w_one', 1]]);
+    expect(on.knowledge.markOf('w_two')).toBeUndefined();
   });
 
   it('lists the Entries the reader is learning by their next Review day, Learned and Known left out', async () => {
@@ -166,13 +171,46 @@ describe('Knowledge Marks', () => {
     await app.knowledge.answer('c_one', 'known');
     await app.knowledge.tap('w_one', 'unknown');
 
-    const learning = await app.knowledge.learning();
-    expect(learning.map(({ entryId, reviewDay, row }) => [entryId, reviewDay, row.kind])).toEqual([
-      ['w_three', '2026-10-20', 'word'],
-      ['w_one', '2026-10-21', 'word'],
-      ['c_one', '2026-10-23', 'correction'],
+    const { learning } = app.knowledge.state;
+    expect(
+      learning.map(({ entryId, daysUntilReview, row }) => [entryId, daysUntilReview, row.kind]),
+    ).toEqual([
+      ['w_three', 0, 'word'],
+      ['w_one', 1, 'word'],
+      ['c_one', 3, 'correction'],
     ]);
     expect(learning.map(({ row }) => row.entryId)).toEqual(['w_three', 'w_one', 'c_one']);
+  });
+
+  it("turns the «Вчу» list and today's Review to a new local day, and tells the subscribers", async () => {
+    // 23:00 in Kyiv.
+    const time = fakeClock('2026-10-19T20:00:00.000Z', 'Europe/Kyiv');
+    const app = await run({ clock: time.clock });
+    await app.knowledge.tap('w_one', 'unknown');
+    const before = app.knowledge.state;
+    expect(
+      before.learning.map(({ entryId, daysUntilReview }) => [entryId, daysUntilReview]),
+    ).toEqual([['w_one', 1]]);
+    expect(before.due).toEqual([]);
+    let told = 0;
+    app.knowledge.subscribe(() => {
+      told += 1;
+    });
+
+    time.advance(HOUR + 60_000);
+    expect(app.knowledge.state).toBe(before);
+    await app.resume();
+
+    const after = app.knowledge.state;
+    expect(
+      after.learning.map(({ entryId, daysUntilReview }) => [entryId, daysUntilReview]),
+    ).toEqual([['w_one', 0]]);
+    expect(after.due).toEqual(['w_one']);
+    expect(app.progress.state.dueToday).toBe(1);
+    expect(told).toBe(1);
+    await app.resume();
+    expect(app.knowledge.state).toBe(after);
+    expect(told).toBe(1);
   });
 
   it('leaves out a removed mark and an Entry no longer in the Language Pack', async () => {
@@ -188,14 +226,19 @@ describe('Knowledge Marks', () => {
       pack: createMemoryContentPort({ words: [word('w_one'), word('w_three')], corrections: [] }),
     });
 
-    expect((await next.knowledge.learning()).map(({ entryId }) => entryId)).toEqual(['w_three']);
+    expect(learningOf(next)).toEqual([['w_three', 1]]);
   });
 
   it('lists nothing with the knowledge switch off', async () => {
     const records = new Map<string, string>();
     await (await run({ records })).knowledge.tap('w_one', 'unknown');
 
-    expect(await (await run({ records, on: ['corrections'] })).knowledge.learning()).toEqual([]);
+    expect((await run({ records, on: ['corrections'] })).knowledge.state).toEqual({
+      learning: [],
+      knownWords: 0,
+      knownCorrections: 0,
+      due: [],
+    });
   });
 
   it('changes nothing in memory when keeping a mark fails', async () => {
@@ -218,8 +261,10 @@ describe('Knowledge Marks', () => {
     });
     port.write = () => Promise.reject(new Error('The disk is full'));
 
+    const before = app.knowledge.state;
     await expect(app.knowledge.tap('w_one', 'unknown')).rejects.toThrow('The disk is full');
 
-    expect(app.knowledge.recordOf('w_one')).toBeUndefined();
+    expect(app.knowledge.markOf('w_one')).toBeUndefined();
+    expect(app.knowledge.state).toBe(before);
   });
 });
