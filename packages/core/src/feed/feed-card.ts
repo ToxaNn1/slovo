@@ -1,3 +1,4 @@
+import type { Knowledge } from '../knowledge/knowledge';
 import type { CorrectionCardModel } from '../entries/correction-card';
 import type { LocalDate } from '../local-date';
 import type { WordCardModel } from '../entries/word-card';
@@ -9,7 +10,7 @@ export interface WordFeedCard {
   readonly wordCard: WordCardModel;
   /** On the card of the Word of the Day: the local day it is the Word of. */
   readonly wordOfTheDay?: LocalDate;
-  /** On a card the Feed brought back for Review, labelled «Повторення». */
+  /** On the card of an Entry due for Review as the card was made, labelled «Повторення». */
   readonly review?: true;
 }
 
@@ -18,7 +19,7 @@ export interface CorrectionFeedCard {
   readonly kind: 'correction';
   /** What the card shows, built by the Core. */
   readonly correctionCard: CorrectionCardModel;
-  /** On a card the Feed brought back for Review, labelled «Повторення». */
+  /** On the card of an Entry due for Review as the card was made, labelled «Повторення». */
   readonly review?: true;
 }
 
@@ -37,4 +38,15 @@ export function entryIdOf(card: FeedCard | undefined): string | undefined;
 export function entryIdOf(card: FeedCard | undefined): string | undefined {
   if (card?.kind === 'word') return card.wordCard.wordId;
   return card?.kind === 'correction' ? card.correctionCard.correctionId : undefined;
+}
+
+/**
+ * The card as a Review, labelled «Повторення», while the Entry's card shows
+ * one: wherever it is shown, the Feed and every Entry screen (ADR 0043).
+ */
+export function asReviewIfDue<Card extends EntryFeedCard>(
+  card: Card,
+  knowledge: Pick<Knowledge, 'state'>,
+): Card {
+  return knowledge.state.shown.get(entryIdOf(card)) === 'review' ? { ...card, review: true } : card;
 }

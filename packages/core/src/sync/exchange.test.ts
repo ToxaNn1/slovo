@@ -230,7 +230,7 @@ describe('two devices of one Account', () => {
     await tablet.sync();
 
     for (const open of [await phone.open(), await tablet.open()]) {
-      expect(open.knowledge.markOf('w_one')).toBe('known');
+      expect(open.knowledge.state.shown.get('w_one')).toBe('known');
       expect(open.knowledge.state).toMatchObject({ learning: [], knownWords: 1 });
     }
     expect(server.records.get('knowledge.w_one')?.value).toEqual({
@@ -248,7 +248,7 @@ describe('two devices of one Account', () => {
     await (await phone.open()).knowledge.tap('w_one', 'unknown');
     await phone.sync();
     await tablet.sync();
-    expect((await tablet.open()).knowledge.markOf('w_one')).toBe('unknown');
+    expect((await tablet.open()).knowledge.state.shown.get('w_one')).toBe('unknown');
     time.advance(HOUR);
 
     await (await tablet.open()).knowledge.tap('w_one', 'unknown');
@@ -256,7 +256,7 @@ describe('two devices of one Account', () => {
     await phone.sync();
 
     const opened = await phone.open();
-    expect(opened.knowledge.markOf('w_one')).toBeUndefined();
+    expect(opened.knowledge.state.shown.get('w_one')).toBeUndefined();
     expect(opened.knowledge.state.learning).toEqual([]);
     expect(server.records.get('knowledge.w_one')?.value).toBeNull();
   });

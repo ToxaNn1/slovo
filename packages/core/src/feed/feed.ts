@@ -3,7 +3,13 @@ import type { Entry, Word } from '@slovo/contracts';
 import { buildCorrectionCard } from '../entries/correction-card';
 import type { Cycle } from './cycle';
 import type { Entries, EntryIds } from '../entries/entries';
-import { entryIdOf, type EntryFeedCard, type FeedCard, type WordFeedCard } from './feed-card';
+import {
+  asReviewIfDue,
+  entryIdOf,
+  type EntryFeedCard,
+  type FeedCard,
+  type WordFeedCard,
+} from './feed-card';
 import { createFeedSession, type FeedSession } from './feed-session';
 import type { HistoryRecorder, Seen } from '../saved/history';
 import { createInTurn, createSubscribers } from '../in-turn';
@@ -298,7 +304,7 @@ export async function openFeed({
     const restored =
       opening?.wordCard.wordId === entry.id
         ? undefined
-        : asReviewIfDue(await buildEntryCard(entries, entry));
+        : asReviewIfDue(await buildEntryCard(entries, entry), knowledge);
     if (opening !== undefined) session.add(opening);
     if (restored !== undefined) session.add(restored);
     subscribers.tell();
@@ -335,7 +341,7 @@ export async function openFeed({
     if (id !== undefined) {
       const entry = await entries.get(id);
       if (entry === undefined) return undefined;
-      card = asReviewIfDue(await buildEntryCard(entries, entry));
+      card = asReviewIfDue(await buildEntryCard(entries, entry), knowledge);
     }
     session.add(card, tooEarly);
     subscribers.tell();
@@ -354,7 +360,7 @@ export async function openFeed({
     if (entryIdOf(session.cards[position + 1]) === correctionId) return position + 1;
     const correction = await entries.get(correctionId);
     if (correction?.kind !== 'correction') return undefined;
-    session.insertAfter(card, asReviewIfDue(await buildEntryCard(entries, correction)));
+    session.insertAfter(card, asReviewIfDue(await buildEntryCard(entries, correction), knowledge));
     subscribers.tell();
     return position + 1;
   }
@@ -363,13 +369,8 @@ export async function openFeed({
   async function wordOfTheDayCard(choice: WordOfTheDayChoice): Promise<WordFeedCard | undefined> {
     const entry = await entries.get(choice.wordId);
     return entry?.kind === 'word'
-      ? asReviewIfDue(await buildEntryCard(entries, entry, choice.date))
+      ? asReviewIfDue(await buildEntryCard(entries, entry, choice.date), knowledge)
       : undefined;
-  }
-
-  /** The card as a Review while its Entry is due for Review (ADR 0043). */
-  function asReviewIfDue<Card extends EntryFeedCard>(card: Card): Card {
-    return knowledge.state.due.includes(entryIdOf(card)) ? { ...card, review: true } : card;
   }
 
   /**
