@@ -1,7 +1,6 @@
 import type { Collections } from './saved/collections';
 import type { Favorites } from './saved/favorites';
 import type { Game } from './game/game';
-import type { HiddenEntries } from './hidden/hidden-entries';
 import type { History } from './saved/history';
 import type { Knowledge } from './knowledge/knowledge';
 import { createInTurn, createSubscribers } from './in-turn';
@@ -36,7 +35,7 @@ export interface ProgressState {
   readonly knownWords: number;
   /** The Corrections marked Known, Learned or not. */
   readonly knownCorrections: number;
-  /** The Entries due for Review today, a Hidden Entry left out. */
+  /** The Entries due for Review today, which the Knowledge Marks give with a Hidden Entry left out. */
   readonly dueToday: number;
 }
 
@@ -102,8 +101,8 @@ export interface ActiveDayChange {
  * `recordToday`, which records today's local date in the clock's time zone as
  * an Active Day, and `todayChange`, the change that records it for the caller
  * to write with its own. Recording a day already recorded writes nothing. It
- * follows History, Favorites, Collections, the Knowledge Marks, the Hidden
- * Entries and the Game, so a change of any of them changes the state at once.
+ * follows History, Favorites, Collections, the Knowledge Marks and the
+ * Game, so a change of any of them changes the state at once.
  */
 export async function openProgress({
   userState,
@@ -113,7 +112,6 @@ export async function openProgress({
   collections,
   game,
   knowledge,
-  hiddenEntries,
 }: {
   userState: UserState;
   clock: Clock;
@@ -122,7 +120,6 @@ export async function openProgress({
   collections: Collections;
   game: Pick<Game, 'state' | 'subscribe'>;
   knowledge: Pick<Knowledge, 'state' | 'subscribe'>;
-  hiddenEntries: Pick<HiddenEntries, 'has' | 'subscribe'>;
 }): Promise<{
   progress: Progress;
   recordToday: () => Promise<void>;
@@ -162,7 +159,7 @@ export async function openProgress({
       bestResult: game.state.bestResult,
       knownWords: knowledge.state.knownWords,
       knownCorrections: knowledge.state.knownCorrections,
-      dueToday: knowledge.state.due.filter((entryId) => !hiddenEntries.has(entryId)).length,
+      dueToday: knowledge.state.due.length,
     };
   }
 
@@ -176,7 +173,7 @@ export async function openProgress({
     subscribers.tell();
   }
 
-  for (const source of [history, favorites, collections, game, knowledge, hiddenEntries]) {
+  for (const source of [history, favorites, collections, game, knowledge]) {
     source.subscribe(() => {
       follow();
     });

@@ -1,5 +1,6 @@
 import type { Edition } from '../edition/edition';
 import type { EntryRowModel, EntryRows } from '../entries/entry-row';
+import type { HiddenEntries } from '../hidden/hidden-entries';
 import { createInTurn, createSubscribers } from '../in-turn';
 import { dayNumber, parseLocalDate, todayDate } from '../local-date';
 import type { Clock } from '../ports';
@@ -26,8 +27,11 @@ export interface LearningEntry {
 export type ShownKnowledge = KnowledgeMark | 'review';
 
 /**
- * The Knowledge Marks as they stand on today's local day. All empty and 0
- * with the `knowledge` Feature Switch off.
+ * The Knowledge Marks as they stand on today's local day. A Hidden Entry is
+ * left out of `learning` and `due` until it is restored; the Mix and the
+ * Rarity Floor leave them as they are, and the Feed and the Game skip what
+ * is not eligible themselves. All empty and 0 with the `knowledge` Feature
+ * Switch off.
  */
 export interface KnowledgeState {
   /**
@@ -40,7 +44,10 @@ export interface KnowledgeState {
   readonly knownWords: number;
   /** The Corrections marked Known, Learned or not. */
   readonly knownCorrections: number;
-  /** The Entries due for Review today, in no set order, for the Feed to bring back and Progress to count. */
+  /**
+   * The Entries due for Review today, in no set order, for the Feed to bring
+   * back, the Game to ask and Progress to count.
+   */
   readonly due: readonly string[];
   /**
    * What the card of each marked Entry shows, on every surface (the Feed and
@@ -60,16 +67,17 @@ export interface KnowledgeState {
  */
 export interface Knowledge {
   /**
-   * The marks as they stand, made again when a mark changes and when the
-   * composition turns to a new local day. A change never edits it: it makes
-   * a new one and tells the subscribers, so it stays the same object until
-   * something changes.
+   * The marks as they stand, made again when a mark changes, when an Entry
+   * is hidden or restored and when the composition turns to a new local day.
+   * A change never edits it: it makes a new one and tells the subscribers, so
+   * it stays the same object until something changes.
    */
   readonly state: KnowledgeState;
   /**
    * The Entries the reader is weak on: marked Unknown or due for Review
-   * today, in no set order, which the Game asks about in up to 5 of its
-   * Rounds. None with the `knowledge` Feature Switch off.
+   * today, a Hidden Entry left out, in no set order, which the Game asks
+   * about in up to 5 of its Rounds. None with the `knowledge` Feature Switch
+   * off.
    */
   weak(): readonly string[];
   /**
@@ -115,11 +123,13 @@ const sameState = (one: KnowledgeState, other: KnowledgeState) =>
 export async function openKnowledge({
   edition,
   rows,
+  hiddenEntries,
   userState,
   clock,
 }: {
   edition: Pick<Edition, 'isFeatureEnabled'>;
   rows: EntryRows;
+  hiddenEntries: Pick<HiddenEntries, 'has' | 'subscribe'>;
   userState: UserState;
   clock: Clock;
 }): Promise<{ knowledge: Knowledge; followDay: () => void }> {
@@ -147,13 +157,16 @@ export async function openKnowledge({
     let knownWords = 0;
     let knownCorrections = 0;
     for (const [entryId, record] of records) {
+      if (record.mark === 'known') {
+        const kind = rowOf.get(entryId)?.kind;
+        if (kind === 'word') knownWords += 1;
+        if (kind === 'correction') knownCorrections += 1;
+      }
+      // A Hidden Entry's card, opened where the reader keeps it, still shows its mark.
+      shown.set(entryId, shownMark(record, today) ?? 'review');
+      if (hiddenEntries.has(entryId)) continue;
       if (record.reviewDay !== null) reviews.push({ entryId, reviewDay: record.reviewDay });
       if (isDue(record, today)) due.push(entryId);
-      shown.set(entryId, shownMark(record, today) ?? 'review');
-      if (record.mark !== 'known') continue;
-      const kind = rowOf.get(entryId)?.kind;
-      if (kind === 'word') knownWords += 1;
-      if (kind === 'correction') knownCorrections += 1;
     }
     const learning = reviews
       .sort((a, b) => a.reviewDay.localeCompare(b.reviewDay))
@@ -166,6 +179,7 @@ export async function openKnowledge({
   }
 
   let state = stateOf();
+  hiddenEntries.subscribe(follow);
 
   /** Makes the state again, and tells the subscribers when it changed. */
   function follow(): void {
@@ -204,10 +218,10 @@ export async function openKnowledge({
       },
       weak() {
         if (!edition.isFeatureEnabled('knowledge')) return [];
-        const today = todayDate(clock);
-        return [...records].flatMap(([entryId, record]) =>
-          record.mark === 'unknown' || isDue(record, today) ? [entryId] : [],
+        const unknown = [...records].flatMap(([entryId, record]) =>
+          record.mark === 'unknown' && !hiddenEntries.has(entryId) ? [entryId] : [],
         );
+        return [...new Set([...unknown, ...state.due])];
       },
       tap: (entryId, mark) =>
         change(entryId, (record) => {
