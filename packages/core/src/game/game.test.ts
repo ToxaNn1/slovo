@@ -914,7 +914,7 @@ describe('the Knowledge Marks a Game leaves', () => {
 
     await play(app, false);
 
-    expect(app.knowledge.markOf(asked)).toBe('unknown');
+    expect(app.knowledge.state.shown.get(asked)).toBe('unknown');
     expect(learningOf(app)).toEqual([[asked, 1]]);
     expect(app.knowledge.state.due).toEqual([]);
     expect((await run({ records, time: tomorrow })).knowledge.state.due).toEqual([asked]);
@@ -925,7 +925,7 @@ describe('the Knowledge Marks a Game leaves', () => {
 
     await playWrongOn(app, 'w_cnoun01');
 
-    expect(app.knowledge.markOf('w_cnoun01')).toBe('unknown');
+    expect(app.knowledge.state.shown.get('w_cnoun01')).toBe('unknown');
     expect(learningOf(app)).toEqual([['w_cnoun01', 1]]);
     expect(app.knowledge.state.knownWords).toBe(0);
   });
@@ -959,7 +959,7 @@ describe('the Knowledge Marks a Game leaves', () => {
     await app.game.next();
 
     expect(current(app)).toMatchObject({ lives: 4, roundsPassed: 1, status: 'playing' });
-    expect(app.knowledge.markOf(asked)).toBeUndefined();
+    expect(app.knowledge.state.shown.get(asked)).toBeUndefined();
     expect(learningOf(app)).toEqual([]);
   });
 

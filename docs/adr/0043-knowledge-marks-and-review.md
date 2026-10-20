@@ -68,7 +68,7 @@ The knowledge module's `learning` lists every Entry with a Review day, that is e
 
 ## Amendment: which card is labelled «Повторення» (0.8.6, #469)
 
-The Feed tells a card it is a Review (`review` on the card) when the card's Entry is due for Review as the Feed adds it: at a Review slot or a Correction slot, and also when a due Entry comes at its own turn in the Cycle, as the Word of the Day, as a linked Correction or as the card the Feed opens on. Such a card shows no mark (amendment of #465), so the label says why. The card keeps its label once answered; the next card of the Entry, no longer due, has none. With the `knowledge` Feature Switch off nothing is due, so no card is labelled.
+The Feed tells a card it is a Review (`review` on the card) when the card's Entry is due for Review as the Feed adds it: at a Review slot or a Correction slot, and also when a due Entry comes at its own turn in the Cycle, as the Word of the Day, as a linked Correction or as the card the Feed opens on. Such a card shows no mark (amendment of #465), so the label says why. The card keeps its label once answered; the next card of the Entry, no longer due, has none. With the `knowledge` Feature Switch off nothing is due, so no card is labelled. Since architecture review 3 the rule holds wherever an Entry's card is shown: an Entry screen opened from «Вчу», the Game Review, Favorites, a notification or the widget labels a due Entry's card «Повторення» as the Feed does, since its card shows no mark there either. The knowledge module's `state` gives the one answer both use, what each Entry's card shows: its mark, or a Review while it is due.
 
 ### Considered Options
 

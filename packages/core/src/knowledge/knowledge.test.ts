@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   createMemoryContentPort,
   createMemoryUserStatePort,
+  entryIdOf,
   openComposition,
   openUserState,
   type Clock,
@@ -64,10 +65,10 @@ describe('Knowledge Marks', () => {
 
     const next = await run({ records });
     expect(learningOf(next)).toEqual([['w_one', 1]]);
-    expect(next.knowledge.markOf('w_one')).toBe('unknown');
-    expect(next.knowledge.markOf('c_one')).toBe('known');
+    expect(next.knowledge.state.shown.get('w_one')).toBe('unknown');
+    expect(next.knowledge.state.shown.get('c_one')).toBe('known');
     expect(next.knowledge.state).toMatchObject({ knownWords: 0, knownCorrections: 1 });
-    expect(next.knowledge.markOf('w_two')).toBeUndefined();
+    expect(next.knowledge.state.shown.get('w_two')).toBeUndefined();
   });
 
   it('changes the mark on a tap of the other one and removes it on a tap of the same one', async () => {
@@ -80,10 +81,10 @@ describe('Knowledge Marks', () => {
 
     await app.knowledge.tap('w_one', 'unknown');
     await app.knowledge.tap('w_one', 'known');
-    expect(app.knowledge.markOf('w_one')).toBe('known');
+    expect(app.knowledge.state.shown.get('w_one')).toBe('known');
 
     await app.knowledge.tap('w_one', 'known');
-    expect(app.knowledge.markOf('w_one')).toBeUndefined();
+    expect(app.knowledge.state.shown.get('w_one')).toBeUndefined();
     expect(learningOf(app)).toEqual([]);
     expect([...records.keys()].filter((key) => key.startsWith('knowledge.'))).toEqual([]);
     expect(told).toBe(3);
@@ -94,12 +95,33 @@ describe('Knowledge Marks', () => {
     const app = await run({ clock: time.clock });
     await app.knowledge.tap('w_one', 'unknown');
     time.advance(DAY);
+    await app.resume();
 
-    expect(app.knowledge.markOf('w_one')).toBeUndefined();
+    expect(app.knowledge.state.shown.get('w_one')).toBe('review');
     await app.knowledge.tap('w_one', 'unknown');
 
     expect(learningOf(app)).toEqual([['w_one', 1]]);
-    expect(app.knowledge.markOf('w_one')).toBe('unknown');
+    expect(app.knowledge.state.shown.get('w_one')).toBe('unknown');
+  });
+
+  it("shows a due Entry's card as a Review with no mark, in the Feed and on its Entry screen alike", async () => {
+    const time = fakeClock('2026-10-19T09:00:00.000Z');
+    const app = await run({ clock: time.clock });
+    await app.knowledge.tap('w_one', 'unknown');
+    expect(await app.entryCard('w_one')).not.toHaveProperty('review');
+    time.advance(DAY);
+    await app.resume();
+
+    expect(app.knowledge.state.shown.get('w_one')).toBe('review');
+    expect(await app.entryCard('w_one')).toMatchObject({ review: true });
+    while ((await app.feed.next())?.kind === 'word');
+    const feedCard = app.feed.cards.find((card) => entryIdOf(card) === 'w_one');
+    expect(feedCard).toMatchObject({ review: true });
+    expect(await app.entryCard('w_two')).not.toHaveProperty('review');
+
+    await app.knowledge.tap('w_one', 'known');
+    expect(app.knowledge.state.shown.get('w_one')).toBe('known');
+    expect(await app.entryCard('w_one')).not.toHaveProperty('review');
   });
 
   it('answers by the local day: Unknown at 23:50 is due the morning after', async () => {
@@ -139,7 +161,7 @@ describe('Knowledge Marks', () => {
     await app.knowledge.answer('w_one', 'unknown');
     await app.knowledge.answer('w_one', 'unknown');
 
-    expect(app.knowledge.markOf('w_one')).toBe('unknown');
+    expect(app.knowledge.state.shown.get('w_one')).toBe('unknown');
     expect(learningOf(app)).toEqual([['w_one', 1]]);
   });
 
@@ -152,12 +174,12 @@ describe('Knowledge Marks', () => {
     await off.knowledge.tap('w_two', 'known');
     await off.knowledge.answer('c_one', 'unknown');
 
-    expect(off.knowledge.markOf('w_two')).toBeUndefined();
-    expect(off.knowledge.markOf('c_one')).toBeUndefined();
+    expect(off.knowledge.state.shown.get('w_two')).toBeUndefined();
+    expect(off.knowledge.state.shown.get('c_one')).toBeUndefined();
     const on = await run({ records });
-    expect(on.knowledge.markOf('w_one')).toBe('unknown');
+    expect(on.knowledge.state.shown.get('w_one')).toBe('unknown');
     expect(learningOf(on)).toEqual([['w_one', 1]]);
-    expect(on.knowledge.markOf('w_two')).toBeUndefined();
+    expect(on.knowledge.state.shown.get('w_two')).toBeUndefined();
   });
 
   it('lists the Entries the reader is learning by their next Review day, Learned and Known left out', async () => {
@@ -238,6 +260,7 @@ describe('Knowledge Marks', () => {
       knownWords: 0,
       knownCorrections: 0,
       due: [],
+      shown: new Map(),
     });
   });
 
@@ -264,7 +287,7 @@ describe('Knowledge Marks', () => {
     const before = app.knowledge.state;
     await expect(app.knowledge.tap('w_one', 'unknown')).rejects.toThrow('The disk is full');
 
-    expect(app.knowledge.markOf('w_one')).toBeUndefined();
+    expect(app.knowledge.state.shown.get('w_one')).toBeUndefined();
     expect(app.knowledge.state).toBe(before);
   });
 });
