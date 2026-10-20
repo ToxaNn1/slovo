@@ -31,7 +31,7 @@ export function WordCardBody({
   compact,
   lemmaSize,
   onOpenCorrection,
-  hidden,
+  concealed,
   onReveal,
 }: {
   card: WordCardModel;
@@ -43,8 +43,8 @@ export function WordCardBody({
   lemmaSize: TextSize;
   onOpenCorrection: ((correctionId: string) => void) | undefined;
   /** Self-check: only the Lemma, part of speech and Category, and the button that reveals the rest. */
-  hidden: boolean;
-  onReveal: (() => void) | undefined;
+  concealed: boolean;
+  onReveal: () => void;
 }) {
   const { colors, fontFamilies, radii } = useTokens();
   const sizes = useWordTextSizes();
@@ -109,7 +109,7 @@ export function WordCardBody({
             >
               {grammar('short')}
             </Text>
-            {!hidden &&
+            {!concealed &&
               card.registers.map((register) => (
                 <OutlinedChip
                   key={register}
@@ -127,16 +127,10 @@ export function WordCardBody({
         {/* Decor slot 2, between the header and the Definition. */}
         <OrnamentDivider />
       </View>
-      {hidden ? (
+      {concealed ? (
         <>
           {categoryChip}
-          <OutlineButton
-            testID="word-reveal"
-            label={strings.reveal}
-            onPress={() => {
-              onReveal?.();
-            }}
-          />
+          <OutlineButton testID="word-reveal" label={strings.reveal} onPress={onReveal} />
         </>
       ) : (
         <>

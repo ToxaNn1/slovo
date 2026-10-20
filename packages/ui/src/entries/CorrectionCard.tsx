@@ -25,15 +25,15 @@ import { WholeWordsText } from '../primitives/WholeWordsText';
 export function CorrectionCardBody({
   card,
   lemmaSize: mainSize,
-  hidden,
+  concealed,
   onReveal,
 }: {
   card: CorrectionCardModel;
   /** The Lemma's size at the user's font size, which the main standard equivalent takes. */
   lemmaSize: TextSize;
   /** Self-check: only the non-standard form, the question and the button that reveals the rest. */
-  hidden: boolean;
-  onReveal: (() => void) | undefined;
+  concealed: boolean;
+  onReveal: () => void;
 }) {
   const { colors, fontFamilies, radii } = useTokens();
   const sizes = useWordTextSizes();
@@ -49,7 +49,7 @@ export function CorrectionCardBody({
     <>
       <View style={styles.header}>
         <SectionLabel style={styles.title}>{strings.title}</SectionLabel>
-        {hidden ? null : (
+        {concealed ? null : (
           <OutlinedChip
             testID="correction-type"
             text={correctionType}
@@ -86,7 +86,7 @@ export function CorrectionCardBody({
         {/* Decor slot 2 with an arrow from the non-standard form to the standard one. */}
         <OrnamentDivider centre="arrow" />
       </View>
-      {hidden ? (
+      {concealed ? (
         <>
           <Text
             testID="correction-how-to-say"
@@ -95,13 +95,7 @@ export function CorrectionCardBody({
           >
             {strings.howToSay}
           </Text>
-          <OutlineButton
-            testID="correction-reveal"
-            label={strings.reveal}
-            onPress={() => {
-              onReveal?.();
-            }}
-          />
+          <OutlineButton testID="correction-reveal" label={strings.reveal} onPress={onReveal} />
         </>
       ) : (
         <>

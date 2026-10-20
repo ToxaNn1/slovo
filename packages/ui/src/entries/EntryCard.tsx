@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { CorrectionCardBody } from './CorrectionCard';
+import { ConcealedProvider, useSelfCheck } from './self-check';
 import { CardCorners } from '../decor/DecorSlots';
 import { ReviewLabel } from './ReviewLabel';
 import { useCompactLayout, useLemmaSize } from '../providers/FontSizeProvider';
@@ -18,12 +19,12 @@ export interface EntryCardProps {
   /** The action row under the card: in 0.3 the heart, Collections, share and hide. */
   actions?: ReactNode;
   /**
-   * Self-check: until revealed, a Word card shows only its Lemma, part of speech
-   * and Category, a Correction card only its non-standard form.
+   * Self-check applies to the card: until the reader reveals it, a Word card
+   * shows only its Lemma, part of speech and Category, a Correction card only
+   * its non-standard form, and the Knowledge Mark buttons in `actions` are
+   * inactive. The reveal resets once the card leaves the screen.
    */
-  hidden?: boolean;
-  /** Reveals the card that Self-check hides, when the reader taps to see its meaning. */
-  onReveal?: () => void;
+  selfCheck?: boolean;
 }
 
 /** On the SE the padding shrinks by 25% (the Lemma's size is in `useLemmaSize`). */
@@ -39,17 +40,12 @@ const SPACING = {
  * The Entry card: a Word's or a Correction's card in the one card frame, at
  * the user's font size, with the compact layout on narrow screens, the Decor
  * slots and the action row under it. A card brought back for Review carries
- * the Review label on top. Under Self-check the card hides its meaning until
- * the reader reveals it. The Edition's strings and language come
+ * the Review label on top. Under Self-check the card conceals its meaning
+ * until the reader reveals it. The Edition's strings and language come
  * from the `EditionProvider`.
  */
-export function EntryCard({
-  card,
-  onOpenCorrection,
-  actions,
-  hidden = false,
-  onReveal,
-}: EntryCardProps) {
+export function EntryCard({ card, onOpenCorrection, actions, selfCheck = false }: EntryCardProps) {
+  const { concealed, reveal } = useSelfCheck(selfCheck);
   const { colors, radii } = useTokens();
   const lemmaSize = useLemmaSize();
   const compact = useCompactLayout();
@@ -81,15 +77,15 @@ export function EntryCard({
             compact={compact}
             lemmaSize={lemmaSize}
             onOpenCorrection={onOpenCorrection}
-            hidden={hidden}
-            onReveal={onReveal}
+            concealed={concealed}
+            onReveal={reveal}
           />
         ) : (
           <CorrectionCardBody
             card={card.correctionCard}
             lemmaSize={lemmaSize}
-            hidden={hidden}
-            onReveal={onReveal}
+            concealed={concealed}
+            onReveal={reveal}
           />
         )}
         {/* Corner ornaments over the edges (Decor slot 3), on both kinds of card. */}
@@ -97,7 +93,7 @@ export function EntryCard({
           <CardCorners />
         </View>
       </View>
-      {actions}
+      <ConcealedProvider value={concealed}>{actions}</ConcealedProvider>
     </>
   );
 }

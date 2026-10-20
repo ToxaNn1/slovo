@@ -8,7 +8,6 @@ import {
   space,
   SwipeHint,
   UndoToastProvider,
-  useSelfCheck,
   useTokens,
   VerticalPager,
   type VerticalPagerHandle,
@@ -141,10 +140,6 @@ const FeedPage = memo(function FeedPage({
   const { top } = useSafeAreaInsets();
   const settings = useSettings().current;
   const editionInEffect = useEditionInEffect();
-  // Self-check, when the reader turned it on and its Feature Switch is on in effect.
-  const selfCheck = useSelfCheck(
-    settings.selfCheck && editionInEffect.isFeatureEnabled('selfCheck'),
-  );
   if (card.kind === 'end-of-cycle')
     return (
       <View
@@ -163,9 +158,9 @@ const FeedPage = memo(function FeedPage({
           onOpenCorrection={(correctionId) => {
             onOpenCorrection(position, correctionId);
           }}
-          hidden={selfCheck.hidden}
-          onReveal={selfCheck.reveal}
-          actions={<EntryActions card={card} hidden={selfCheck.hidden} />}
+          // Self-check, when the reader turned it on and its Feature Switch is on in effect.
+          selfCheck={settings.selfCheck && editionInEffect.isFeatureEnabled('selfCheck')}
+          actions={<EntryActions card={card} />}
         />
       </PagerScrollView>
     </View>

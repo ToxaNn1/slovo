@@ -8,11 +8,10 @@ const strings = { knowledge: { known: 'Known', unknown: 'Unknown' } } as Edition
 function buttons(
   mark: 'known' | 'unknown' | undefined,
   onTap: (mark: 'known' | 'unknown') => void,
-  inactive?: boolean,
 ) {
   return (
     <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-      <KnowledgeButtons entryKind="word" mark={mark} onTap={onTap} inactive={inactive} />
+      <KnowledgeButtons entryKind="word" mark={mark} onTap={onTap} />
     </EditionProvider>
   );
 }
@@ -64,17 +63,5 @@ describe('KnowledgeButtons', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Known' }));
 
     expect(onTap).toHaveBeenCalledWith('known');
-  });
-
-  it('marks nothing while the card hides its meaning', async () => {
-    const onTap = jest.fn();
-    await render(buttons(undefined, onTap, true));
-
-    for (const name of ['Known', 'Unknown']) {
-      const button = screen.getByRole('button', { name, disabled: true });
-      await fireEvent.press(button);
-    }
-
-    expect(onTap).not.toHaveBeenCalled();
   });
 });

@@ -1,6 +1,7 @@
 import type { KnowledgeMark } from '@slovo/core';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { useConcealed } from '../entries/self-check';
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
 import {
@@ -20,24 +21,23 @@ const LABEL_MAX_FONT_SCALE = 1.2;
  * mark is filled with the accent colour, the other is an outline. A tap calls
  * `onTap` with its mark either way; the Core decides whether that changes the
  * mark or removes it. On a Correction, Known means "I already say it right",
- * and its button says so to a screen reader. While Self-check hides the
- * card's meaning, both buttons are inactive.
+ * and its button says so to a screen reader. While Self-check conceals the
+ * meaning of the Entry card they are under, both buttons are inactive.
  */
 export function KnowledgeButtons({
   entryKind,
   mark,
   onTap,
-  inactive = false,
 }: {
   /** The kind of Entry the card shows. */
   entryKind: 'word' | 'correction';
   /** The mark the card shows: none without one, and none while the Entry is due. */
   mark: KnowledgeMark | undefined;
   onTap: (mark: KnowledgeMark) => void;
-  /** Self-check: the card hides its meaning, so nothing can be marked until it is revealed. */
-  inactive?: boolean | undefined;
 }) {
   const { strings } = useEdition();
+  // Nothing can be marked until the reader reveals what Self-check conceals.
+  const inactive = useConcealed();
   return (
     <View style={styles.row}>
       <MarkButton
