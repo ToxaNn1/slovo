@@ -3,7 +3,7 @@ import type { Favorites } from './saved/favorites';
 import type { Game } from './game/game';
 import type { HiddenEntries } from './hidden/hidden-entries';
 import type { History } from './saved/history';
-import type { Knowledge, KnowledgeCounts } from './knowledge/knowledge';
+import type { Knowledge } from './knowledge/knowledge';
 import { createInTurn, createSubscribers } from './in-turn';
 import { dayNumber, parseLocalDate, todayBounds, todayKey } from './local-date';
 import type { Clock, UserStateChanges } from './ports';
@@ -16,7 +16,7 @@ import { userStateRecords } from './user-state/user-state-schema';
  * the reader has Seen today and kept, the best Game result, and the counts of
  * the Knowledge Marks.
  */
-export interface ProgressState extends KnowledgeCounts {
+export interface ProgressState {
   /**
    * The consecutive Active Days up to today, or up to yesterday while today
    * isn't an Active Day yet; 0 once a day is missed.
@@ -32,6 +32,12 @@ export interface ProgressState extends KnowledgeCounts {
   readonly inCollections: number;
   /** The Game's best result; none before the first finished Game, or with the Game off. */
   readonly bestResult: number | undefined;
+  /** The Words marked Known, Learned or not. */
+  readonly knownWords: number;
+  /** The Corrections marked Known, Learned or not. */
+  readonly knownCorrections: number;
+  /** The Entries due for Review today, a Hidden Entry left out. */
+  readonly dueToday: number;
 }
 
 /**
@@ -115,7 +121,7 @@ export async function openProgress({
   favorites: Favorites;
   collections: Collections;
   game: Pick<Game, 'state' | 'subscribe'>;
-  knowledge: Pick<Knowledge, 'counts' | 'subscribe'>;
+  knowledge: Pick<Knowledge, 'state' | 'subscribe'>;
   hiddenEntries: Pick<HiddenEntries, 'has' | 'subscribe'>;
 }): Promise<{
   progress: Progress;
@@ -154,7 +160,9 @@ export async function openProgress({
         ),
       ).size,
       bestResult: game.state.bestResult,
-      ...knowledge.counts(hiddenEntries),
+      knownWords: knowledge.state.knownWords,
+      knownCorrections: knowledge.state.knownCorrections,
+      dueToday: knowledge.state.due.filter((entryId) => !hiddenEntries.has(entryId)).length,
     };
   }
 

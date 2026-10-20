@@ -177,8 +177,8 @@ function reviewEntryId(due: readonly string[], session: FeedSession): string | u
 }
 
 /** The Entries due for Review that the Cycle covers, so neither Hidden nor out of the Mix, in its order. */
-function eligibleDue(cycle: Cycle, knowledge: Pick<Knowledge, 'due'>): EntryIds {
-  const due = new Set(knowledge.due());
+function eligibleDue(cycle: Cycle, knowledge: Pick<Knowledge, 'state'>): EntryIds {
+  const due = new Set(knowledge.state.due);
   if (due.size === 0) return { words: [], corrections: [] };
   const { words, corrections } = cycle.order();
   return {
@@ -254,7 +254,7 @@ export async function openFeed({
   userState: UserState;
   clock: Clock;
   cycle: Cycle;
-  knowledge: Pick<Knowledge, 'due'>;
+  knowledge: Pick<Knowledge, 'state'>;
   wordOfTheDay: WordOfTheDay;
   history: HistoryRecorder;
   entrySeen: (entryId: string) => Promise<void>;
@@ -369,7 +369,7 @@ export async function openFeed({
 
   /** The card as a Review while its Entry is due for Review (ADR 0043). */
   function asReviewIfDue<Card extends EntryFeedCard>(card: Card): Card {
-    return knowledge.due().includes(entryIdOf(card)) ? { ...card, review: true } : card;
+    return knowledge.state.due.includes(entryIdOf(card)) ? { ...card, review: true } : card;
   }
 
   /**

@@ -894,6 +894,10 @@ describe('the Knowledge Marks a Game leaves', () => {
     return new Map([...historyOf(numbered('w_nnoun', 14).concat('w_snoun03')), ...record]);
   }
 
+  /** The «Вчу» list as the Entries and the local days until their Review. */
+  const learningOf = (app: Composition) =>
+    app.knowledge.state.learning.map(({ entryId, daysUntilReview }) => [entryId, daysUntilReview]);
+
   /** Plays «Вгадай слово» to its end, wrong only in the Round that asks about the Word. */
   async function playWrongOn(app: Composition, wordId: string): Promise<void> {
     await app.game.start('guess-word');
@@ -910,14 +914,10 @@ describe('the Knowledge Marks a Game leaves', () => {
 
     await play(app, false);
 
-    expect(app.knowledge.recordOf(asked)).toEqual({
-      mark: 'unknown',
-      step: 1,
-      reviewDay: '2026-10-12',
-      learned: false,
-    });
-    expect(app.knowledge.isDue(asked)).toBe(false);
-    expect((await run({ records, time: tomorrow })).knowledge.isDue(asked)).toBe(true);
+    expect(app.knowledge.markOf(asked)).toBe('unknown');
+    expect(learningOf(app)).toEqual([[asked, 1]]);
+    expect(app.knowledge.state.due).toEqual([]);
+    expect((await run({ records, time: tomorrow })).knowledge.state.due).toEqual([asked]);
   });
 
   it('starts the Review of a Word answered wrong again at 1 day', async () => {
@@ -925,12 +925,9 @@ describe('the Knowledge Marks a Game leaves', () => {
 
     await playWrongOn(app, 'w_cnoun01');
 
-    expect(app.knowledge.recordOf('w_cnoun01')).toEqual({
-      mark: 'unknown',
-      step: 1,
-      reviewDay: '2026-10-12',
-      learned: false,
-    });
+    expect(app.knowledge.markOf('w_cnoun01')).toBe('unknown');
+    expect(learningOf(app)).toEqual([['w_cnoun01', 1]]);
+    expect(app.knowledge.state.knownWords).toBe(0);
   });
 
   it('leaves every record as it was after right answers', async () => {
@@ -939,13 +936,8 @@ describe('the Knowledge Marks a Game leaves', () => {
     const rounds = await playGame(app);
 
     expect(rounds.map((round) => answerOf(round).id)).toContain('w_cnoun01');
-    expect(app.knowledge.recordOf('w_cnoun01')).toEqual({
-      mark: 'known',
-      step: 3,
-      reviewDay: '2026-10-11',
-      learned: false,
-    });
-    expect(words.filter(({ id }) => app.knowledge.recordOf(id) !== undefined)).toHaveLength(1);
+    expect(learningOf(app)).toEqual([['w_cnoun01', 0]]);
+    expect(app.knowledge.state).toMatchObject({ knownWords: 1, due: ['w_cnoun01'] });
   });
 
   it('goes on to the next Round when the «Не знаю» mark fails to write, and reports the failure', async () => {
@@ -967,22 +959,20 @@ describe('the Knowledge Marks a Game leaves', () => {
     await app.game.next();
 
     expect(current(app)).toMatchObject({ lives: 4, roundsPassed: 1, status: 'playing' });
-    expect(app.knowledge.recordOf(asked)).toBeUndefined();
+    expect(app.knowledge.markOf(asked)).toBeUndefined();
+    expect(learningOf(app)).toEqual([]);
   });
 
   it('marks nothing with the knowledge Feature Switch off, and keeps the records there are', async () => {
-    const app = await run({ records: dueOnThreeDays(), on: ['rarityFilter'] });
+    const records = dueOnThreeDays();
+    const app = await run({ records, on: ['rarityFilter'] });
 
     await playGame(app, [1, 2, 3, 4, 5]);
     await playWrongOn(app, 'w_cnoun01');
 
-    expect(app.knowledge.recordOf('w_cnoun01')).toEqual({
-      mark: 'known',
-      step: 3,
-      reviewDay: '2026-10-11',
-      learned: false,
-    });
-    expect(words.filter(({ id }) => app.knowledge.recordOf(id) !== undefined)).toHaveLength(1);
+    const on = await run({ records });
+    expect(learningOf(on)).toEqual([['w_cnoun01', 0]]);
+    expect(on.knowledge.state).toMatchObject({ knownWords: 1, due: ['w_cnoun01'] });
   });
 });
 

@@ -60,7 +60,7 @@ A Correction due for Review takes the Correction slot, every 5th card of the Cyc
 
 ## Amendment: which Entries the «Вчу» list holds (0.8.6, #475)
 
-The knowledge module's `learning` lists every Entry with a Review day, that is every Entry marked Unknown and not yet Learned, with its next Review day and its row, sorted by that day. An Entry answered Known on a Review since stays in it until it is Learned, so the list shows «через 3 дні» too. An Entry already due keeps its past Review day and leads the list. A removed mark is gone with its record, an id the Language Pack no longer has is left out as in Favorites, and with the `knowledge` Feature Switch off the list is empty.
+The knowledge module's `learning` lists every Entry with a Review day, that is every Entry marked Unknown and not yet Learned, with its next Review day and its row, sorted by that day. Since architecture review 3 it is part of the module's `state`, a snapshot with `subscribe` like Favorites, each row with its local days until the Review, and it follows the day change (ADR 0022), so after midnight «через 1 день» becomes «сьогодні». An Entry answered Known on a Review since stays in it until it is Learned, so the list shows «через 3 дні» too. An Entry already due keeps its past Review day and leads the list. A removed mark is gone with its record, an id the Language Pack no longer has is left out as in Favorites, and with the `knowledge` Feature Switch off the list is empty.
 
 ### Considered Options
 
@@ -76,7 +76,7 @@ The Feed tells a card it is a Review (`review` on the card) when the card's Entr
 
 ## Amendment: what the knowledge counts count (0.8.6, #477)
 
-The knowledge module's `counts` gives Progress three numbers: the Words and the Corrections whose mark is Known, a Learned Entry among them and an Entry Known on a Review that is not Learned yet, and the Entries due today, the same ones `due` gives the Feed. A removed mark is gone with its record and counts no more; an id the Language Pack no longer has is no Word and no Correction. The module reads each marked Entry's kind once, when it opens or when the Entry is first marked, so Progress follows the counts at once, as it follows Favorites, and a new local day changes the due count with the Streak. With the `knowledge` Feature Switch off all three are 0.
+The knowledge module gives Progress three numbers (since architecture review 3 in its `state`: the two Known counts and the Entries due today, of which Progress counts those not Hidden): the Words and the Corrections whose mark is Known, a Learned Entry among them and an Entry Known on a Review that is not Learned yet, and the Entries due today, the same ones `due` gives the Feed. A removed mark is gone with its record and counts no more; an id the Language Pack no longer has is no Word and no Correction. The module reads each marked Entry's kind once, when it opens or when the Entry is first marked, so Progress follows the counts at once, as it follows Favorites, and a new local day changes the due count with the Streak. With the `knowledge` Feature Switch off all three are 0.
 
 ## Amendment: the statistics leave Hidden Entries out of today's Review (0.8.6, #478)
 

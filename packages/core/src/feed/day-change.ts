@@ -20,10 +20,12 @@ import type { WordOfTheDay } from './word-of-the-day';
  * 1. the Word of the Day module takes the Word of the day's morning
  *    notification (ADR 0016's amendment for 0.4), before anything else can
  *    read the day or drop a passed morning record;
- * 2. today becomes an Active Day, in the write of the Entry a notification
+ * 2. the Knowledge Marks turn to the day, so the Entries due today are due
+ *    and the «Вчу» list counts the days from it;
+ * 3. today becomes an Active Day, in the write of the Entry a notification
  *    or the widget opened, if one did;
- * 3. the notification plan is made again, with the permission read again;
- * 4. the Feed opens the day with its Word of the Day.
+ * 4. the notification plan is made again, with the permission read again;
+ * 5. the Feed opens the day with its Word of the Day.
  *
  * A step that fails leaves the day to turn again on the next report. A later
  * report the same day records the Active Day again, which writes nothing once
@@ -53,6 +55,7 @@ export interface DayChange {
 export function createDayChange({
   clock,
   wordOfTheDay,
+  followKnowledgeDay,
   recordToday,
   todayChange,
   replan,
@@ -60,6 +63,8 @@ export function createDayChange({
 }: {
   clock: Clock;
   wordOfTheDay: Pick<WordOfTheDay, 'takeMorningWord'>;
+  /** Makes the Knowledge Marks follow today. */
+  followKnowledgeDay: () => void;
   /** Writes today as an Active Day. */
   recordToday: () => Promise<void>;
   /** The change that makes today an Active Day, for another write. */
@@ -81,7 +86,10 @@ export function createDayChange({
   async function follow(recordActiveDay: () => Promise<void>, planAnyway: boolean): Promise<void> {
     const today = todayKey(clock);
     const newDay = today !== turnedTo;
-    if (newDay) await wordOfTheDay.takeMorningWord();
+    if (newDay) {
+      await wordOfTheDay.takeMorningWord();
+      followKnowledgeDay();
+    }
     await recordActiveDay();
     if (newDay || planAnyway) await replan();
     if (newDay) {
