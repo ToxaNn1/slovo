@@ -173,9 +173,14 @@ export async function openComposition({
     takeMorningWord: () => day.takeMorningWord(),
     scheduling,
   });
+  // Before the Knowledge Marks, which leave a Hidden Entry out. A hide or a
+  // restore calls `eligibilityChanged`, which needs the Feed and the Game
+  // declared below; that is safe, as none can come before the composition opens.
+  const hiddenEntries = await openHiddenEntries({ rows, userState, clock, eligibilityChanged });
   const { knowledge, followDay: followKnowledgeDay } = await openKnowledge({
     edition,
     rows,
+    hiddenEntries,
     userState,
     clock,
   });
@@ -213,10 +218,9 @@ export async function openComposition({
     await replan();
     await followGameEligibility();
   }
-  const [favorites, collections, hiddenEntries, mix] = await Promise.all([
+  const [favorites, collections, mix] = await Promise.all([
     openFavorites({ rows, userState, clock }),
     openCollections({ rows, userState, clock, random }),
-    openHiddenEntries({ rows, userState, clock, eligibilityChanged }),
     entries
       .categories()
       .then((categories) => openMix({ edition, categories, userState, eligibilityChanged })),
@@ -229,7 +233,6 @@ export async function openComposition({
     collections,
     game,
     knowledge,
-    hiddenEntries,
   });
   const day = createDayChange({
     clock,

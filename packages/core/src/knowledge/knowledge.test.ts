@@ -153,6 +153,45 @@ describe('Knowledge Marks', () => {
     expect(learningOf(app)).toEqual([['w_one', 3]]);
   });
 
+  it('leaves a Hidden Entry out of the «Вчу» list and the due Entries until it is restored', async () => {
+    const time = fakeClock('2026-10-19T09:00:00.000Z');
+    const app = await run({ clock: time.clock });
+    await app.knowledge.tap('w_one', 'unknown');
+    await app.knowledge.tap('w_two', 'unknown');
+    time.advance(DAY);
+    await app.resume();
+    let told = 0;
+    app.knowledge.subscribe(() => {
+      told += 1;
+    });
+
+    await app.hiddenEntries.hide('w_one');
+    expect(learningOf(app)).toEqual([['w_two', 0]]);
+    expect(app.knowledge.state.due).toEqual(['w_two']);
+    expect(app.knowledge.weak()).toEqual(['w_two']);
+    expect(told).toBe(1);
+
+    await app.hiddenEntries.restore('w_one');
+    expect(learningOf(app)).toEqual([
+      ['w_one', 0],
+      ['w_two', 0],
+    ]);
+    expect(app.knowledge.state.due).toEqual(['w_one', 'w_two']);
+    expect(told).toBe(2);
+  });
+
+  it('keeps a due Entry out of the Mix in the «Вчу» list and the due Entries', async () => {
+    const time = fakeClock('2026-10-19T09:00:00.000Z');
+    const app = await run({ clock: time.clock });
+    await app.knowledge.tap('c_one', 'unknown');
+    time.advance(DAY);
+    await app.resume();
+
+    await app.mix.setCorrections(false);
+    expect(learningOf(app)).toEqual([['c_one', 0]]);
+    expect(app.knowledge.state.due).toEqual(['c_one']);
+  });
+
   it('answers by the interval rule alone, so Unknown on an Entry marked Unknown starts it again', async () => {
     const time = fakeClock('2026-10-19T09:00:00.000Z');
     const app = await run({ clock: time.clock });
