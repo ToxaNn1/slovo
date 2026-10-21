@@ -8,6 +8,7 @@ import {
 } from '@slovo/server-core';
 import type { HttpBindings } from '@hono/node-server';
 import { Hono } from 'hono';
+import { bodyLimit } from 'hono/body-limit';
 import { requestId, type RequestIdVariables } from 'hono/request-id';
 import type { Logger } from 'pino';
 
@@ -18,6 +19,14 @@ import type { Database } from './database/database';
 import { createEditions } from './edition/editions';
 import { createRateLimits } from './rate-limits';
 import { createUserRecords } from './sync/user-records';
+
+/**
+ * The largest request body the API reads; it refuses a larger one before
+ * parsing it. The largest request is a push of 500 changes, each a key of 200
+ * characters and a value of 8 KB of JSON (ADR 0041): 4.7 MB at most, when
+ * every character of its keys takes six bytes of JSON (`\u0001`).
+ */
+const MAX_BODY_BYTES = 8 * 1024 * 1024;
 
 /** What the backend is built from. A test gives its own. */
 export interface AppDependencies {
@@ -129,6 +138,17 @@ export function createApp({
       return c.json({ status: 'unavailable' }, 503);
     }
   });
+
+  // A body too large to be a request of the API is refused before it is
+  // parsed and before any Session is checked: at once when its Content-Length
+  // says so, else once it has come past the limit.
+  app.use(
+    '/v1/*',
+    bodyLimit({
+      maxSize: MAX_BODY_BYTES,
+      onError: (c) => c.json({ code: 'PAYLOAD_TOO_LARGE' }, 413),
+    }),
+  );
 
   // The API contract at `/v1`, its description at `/docs`.
   for (const path of ['/v1/*', '/docs', '/docs/*']) {

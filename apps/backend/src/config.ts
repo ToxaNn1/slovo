@@ -1,11 +1,23 @@
 import { EDITIONS_DIR } from '@slovo/language-pack/edition';
 import { z } from 'zod';
 
+/**
+ * The `AUTH_SECRET` of `.env.example`, which anyone can read: a backend that
+ * signed its Sessions with it would sign them with no secret (ADR 0030).
+ */
+const EXAMPLE_AUTH_SECRET = 'replace-with-at-least-32-random-characters';
+
 /** The environment the server reads at start. `.env.example` lists every variable. */
 export const ServerConfigSchema = z.object({
   DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/, error: 'must be a postgres:// URL' }),
   SMTP_URL: z.url({ protocol: /^smtps?$/, error: 'must be an smtp:// or smtps:// URL' }),
-  AUTH_SECRET: z.string().min(32, 'must be at least 32 characters'),
+  AUTH_SECRET: z
+    .string()
+    .min(32, 'must be at least 32 characters')
+    .refine(
+      (secret) => secret !== EXAMPLE_AUTH_SECRET,
+      'is the example value; make your own: openssl rand -base64 32',
+    ),
   // The address the sign-in emails come from; the Edition names the sender.
   MAIL_FROM: z.email({ error: 'must be an email address' }).default('no-reply@slovo.app'),
   // 0 takes any free port.

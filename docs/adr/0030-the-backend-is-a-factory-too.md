@@ -77,3 +77,14 @@ Feature Switches still come from the Edition config, and the owner can now turn 
 ## Amendment: the `sync` domain keeps the records of Sync (0.8, ADR 0041)
 
 The backend gains a fourth domain folder on both sides, `sync`: the server Core's Sync, with its `UserRecords` port, and the backend's `sync.push` and `sync.pull` procedures with the port's adapter over the `user_records` table, whose rows carry `edition_id` and go with their Account through the cascade. Its procedures reach the Account through the session gate, whose middleware now lives in the backend's `account` folder for every procedure of a Session to use, and they ask the Edition registry for both the `account` and the `sync` Feature Switches.
+
+## Amendment: what a request may bring, what a log line may show, and which secret signs (whole-project review)
+
+- **A request body is at most 8 MB** (8 × 1024 × 1024 bytes). The backend refuses a larger one under `/v1` before it parses it and before any Session is checked, with `413 { code: "PAYLOAD_TOO_LARGE" }`, so no client, signed in or not, makes it read gigabytes. The largest request of the contract is a push of 500 changes with keys of 200 characters and values of 8 KB (ADR 0041): 4.7 MB at most, when every character of its keys takes six bytes of JSON (`\u0001`), so 8 MB leaves room. Like the bare `404 NOT_FOUND` of an unknown address and the bare `500 INTERNAL`, the answer is the app's, not a procedure's, and the contract doesn't list it.
+- **A failed query's log line holds none of its values.** Drizzle wraps a failed query in an error whose message, stack and `params` carry the values it bound: an email, a Session token, a rate-limit key. The logger's error serializer writes such an error as its SQL, whose values are `$1`, `$2`..., its stack frames, and its cause; Postgres's own error as its SQLSTATE (`errorCode`), constraint, table and column, without its message and detail, which may quote a value. Each cause of any error comes on its own under `cause`, so a value never reaches a line through an error that wraps it.
+- **The `AUTH_SECRET` of `.env.example` is refused.** Anyone can read it, so Sessions signed with it would be signed with no secret, and the signature is what keeps the plain tokens of a leaked database from signing anyone in. The server refuses to start with it, naming the variable; `pnpm dev` gives a `.env` that keeps it a fresh secret.
+
+### Considered Options
+
+- **A limit per procedure**: rejected. Every request but a push is a few hundred bytes, and one limit at the size of the largest request is enough against a flood; the deployed proxy (0.9) may cap bodies too, but nothing did.
+- **Redacting `params` by path**: rejected. pino's redaction reaches named fields, not the message and the stack, which repeat the values.

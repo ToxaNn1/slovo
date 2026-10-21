@@ -81,6 +81,23 @@ describe('a record of a push', () => {
   });
 });
 
+describe('the largest push', () => {
+  it('fits under the limit of a request body', async () => {
+    const { signIn } = syncing();
+    const { device } = await signIn();
+    const now = Date.now();
+    // A control character takes six bytes of JSON (`\u0001`), the most a
+    // character of a key takes; the value is 8192 bytes of JSON, quotes included.
+    const changes = Array.from({ length: 500 }, (_, index) => ({
+      key: String(index).padStart(200, '\u0001'),
+      value: '\u0001'.repeat(1365),
+      changedAt: now,
+    }));
+
+    await expect(device.sync.push({ editionId: 'uk', changes })).resolves.toEqual({});
+  });
+});
+
 // Each test keeps 20 000 records, 40 pushes and 40 pulls, which takes a
 // while beside the other files.
 describe('the records of an Account in an Edition', { timeout: 60_000 }, () => {
@@ -133,6 +150,35 @@ describe('the records of an Account in an Edition', { timeout: 60_000 }, () => {
     await expect(tablet.sync.pull({ editionId: 'uk', after: kept.cursor })).resolves.toMatchObject({
       records: [last],
     });
+  });
+
+  it('are at most 20 000 when two pushes come at once: one is kept, the other is TOO_MANY_RECORDS', async () => {
+    const { signIn } = syncing();
+    const email = newEmail();
+    const { device: phone } = await signIn(email);
+    const { device: tablet } = await signIn(email);
+    const now = Date.now();
+    await keep(phone, 19_500, now - 1);
+
+    // Each push alone fits, but not both.
+    const pushes = await Promise.allSettled(
+      [phone, tablet].map((device, index) =>
+        device.sync.push({
+          editionId: 'uk',
+          changes: Array.from({ length: 500 }, (_, n) => ({
+            key: `favorites.${String(index)}.${String(n)}`,
+            value: true,
+            changedAt: now,
+          })),
+        }),
+      ),
+    );
+
+    expect(pushes.map(({ status }) => status).sort()).toEqual(['fulfilled', 'rejected']);
+    expect(pushes.find((push) => push.status === 'rejected')?.reason).toMatchObject({
+      code: 'TOO_MANY_RECORDS',
+    });
+    expect((await pullAll(tablet)).records).toHaveLength(20_000);
   });
 
   it('at the limit still take a push that only replaces records kept', async () => {

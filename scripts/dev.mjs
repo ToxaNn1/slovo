@@ -3,7 +3,8 @@
 // 1. Docker Desktop (opened when its daemon is down) and the local services of
 //    compose.yaml: Postgres and Mailpit.
 // 2. apps/backend/.env, made from .env.example with a fresh AUTH_SECRET when
-//    it is missing.
+//    it is missing, or given a fresh one when it keeps the example's, which
+//    the backend refuses.
 // 3. The backend's migrations and the Edition's Language Pack.
 // 4. The backend in watch mode, then Metro, each on the first free port from
 //    its default, so a second worktree or a running smoke flow never collides.
@@ -61,14 +62,18 @@ async function startDocker() {
 
 function makeEnvFile() {
   const env = `${root}/apps/backend/.env`;
-  if (existsSync(env)) return;
-  step('Making apps/backend/.env from .env.example');
-  copyFileSync(`${root}/apps/backend/.env.example`, env);
+  const example = `${root}/apps/backend/.env.example`;
+  if (!existsSync(env)) {
+    step('Making apps/backend/.env from .env.example');
+    copyFileSync(example, env);
+  }
+  // A copy made by hand may keep the example's AUTH_SECRET too.
+  const exampleSecret = /^AUTH_SECRET=.*$/m.exec(readFileSync(example, 'utf8'))?.[0];
+  const text = readFileSync(env, 'utf8');
+  if (exampleSecret === undefined || !text.split('\n').includes(exampleSecret)) return;
+  step('Giving apps/backend/.env a fresh AUTH_SECRET');
   const secret = randomBytes(32).toString('base64');
-  writeFileSync(
-    env,
-    readFileSync(env, 'utf8').replace(/^AUTH_SECRET=.*$/m, `AUTH_SECRET=${secret}`),
-  );
+  writeFileSync(env, text.replace(exampleSecret, `AUTH_SECRET=${secret}`));
 }
 
 function portIsFree(port) {
