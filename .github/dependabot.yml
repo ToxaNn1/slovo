@@ -8,9 +8,10 @@ updates:
       npm-minor-and-patch:
         update-types: [minor, patch]
     ignore:
-      # typescript-eslint only supports TypeScript below 6.1; lift this once it supports 7.
+      # typescript-eslint only supports TypeScript below 6.1 (its peer range);
+      # raise this bound once it supports a newer TypeScript.
       - dependency-name: typescript
-        update-types: ['version-update:semver-major']
+        versions: ['>=6.1']
       # Node is pinned to 22 (.nvmrc); its types follow that major.
       - dependency-name: '@types/node'
         update-types: ['version-update:semver-major']
