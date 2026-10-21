@@ -1,7 +1,9 @@
 import { spawn } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { Writable } from 'node:stream';
 
 import { describeApi } from '@slovo/contracts/api-description';
+import { sql } from 'drizzle-orm';
 import { describe, expect, it, onTestFinished } from 'vitest';
 
 import { createDatabase } from './database/database';
@@ -103,6 +105,20 @@ describe('a request', () => {
     expect(lines).toContainEqual(
       expect.objectContaining({ requestId: 'abc-123', path: '/health', status: 200 }),
     );
+  });
+
+  it('with a body over 8 MB answers 413 PAYLOAD_TOO_LARGE, with no Session needed', async () => {
+    const { request } = testApp();
+    const email = `${'a'.repeat(8 * 1024 * 1024)}@mail.com`;
+
+    const response = await request('/v1/account/sign-in-codes', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email, editionId: 'uk' }),
+    });
+
+    expect(response.status).toBe(413);
+    expect(await response.json()).toEqual({ code: 'PAYLOAD_TOO_LARGE' });
   });
 
   it('gets a new x-request-id when it brings none', async () => {
@@ -207,6 +223,29 @@ describe('the logs', () => {
     expect(written).not.toContain('secret-token');
   });
 
+  it('carry no value of a failed query: its text and the error code instead', async () => {
+    const own = await createTestDatabase(testDatabaseUrl());
+    onTestFinished(() => own.drop());
+    const database = createDatabase(own.url, silentLogger);
+    onTestFinished(() => database.close());
+    // Postgres refuses the window of an email's codes, and its detail quotes the row.
+    await database.db.execute(
+      sql`alter table rate_limits add constraint refuses_emails check (key not like 'codesPerEmail:%')`,
+    );
+    const { lines, logger } = logLines();
+    const { client } = testApp({ database, logger });
+
+    const failure = client.account.requestCode({ email: 'anna@mail.com', editionId: 'uk' });
+
+    await expect(failure).rejects.toMatchObject({ status: 500 });
+    expect(JSON.stringify(lines)).not.toContain('anna@mail.com');
+    const logged = lines.find((line) => line['msg'] === 'unexpected failure');
+    expect(logged?.['err']).toMatchObject({
+      query: expect.stringContaining('insert into "rate_limits"') as unknown,
+      cause: { errorCode: '23514', constraint: 'refuses_emails' },
+    });
+  });
+
   it("keep a logged error's code, which names its kind", () => {
     const { lines, logger } = logLines();
 
@@ -232,6 +271,16 @@ describe('the server', { timeout: 30_000 }, () => {
 
     expect(await server.exited).toBe(1);
     expect(server.output().stderr).toContain('AUTH_SECRET');
+  });
+
+  it('refuses to start with the AUTH_SECRET of .env.example, which anyone can read', async () => {
+    const example = readFileSync(new URL('../.env.example', import.meta.url), 'utf8');
+    const secret = /^AUTH_SECRET=(.*)$/m.exec(example)?.[1];
+    expect(secret).toBeDefined();
+    const server = runServer({ ...VALID_ENV, AUTH_SECRET: secret ?? '' });
+
+    expect(await server.exited).toBe(1);
+    expect(server.output().stderr).toContain('AUTH_SECRET: is the example value');
   });
 
   it('stops on SIGTERM', async () => {

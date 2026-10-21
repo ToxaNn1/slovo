@@ -112,6 +112,25 @@ describe('the code requests from one IP address', () => {
     ).resolves.toEqual({});
   });
 
+  it('count the IP address of the connection, whatever X-Forwarded-For says', async () => {
+    const { request, mailer } = limitedApp();
+    // Anyone can send the header, so a new address in each one changes nothing.
+    const requestCodeForwarded = (email: string) =>
+      request('/v1/account/sign-in-codes', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-forwarded-for': newIp() },
+        body: JSON.stringify({ email, editionId: 'uk' }),
+      });
+    for (let sent = 0; sent < 20; sent++) {
+      expect((await requestCodeForwarded(newEmail())).status).toBe(200);
+    }
+
+    const twentyFirst = await requestCodeForwarded(newEmail());
+
+    expect(twentyFirst.status).toBe(429);
+    expect(mailer.sent).toHaveLength(20);
+  });
+
   it('open again when the 10 minutes have passed', async () => {
     const { client, requestCode } = limitedApp();
     for (let sent = 0; sent < 20; sent++) {
