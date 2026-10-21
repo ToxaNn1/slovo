@@ -10,11 +10,13 @@ import {
   openUserState,
   trackChanges,
   userStateRecords,
+  type SyncApi,
   type UserStateChanges,
 } from '../index';
 import { fakeClock, randomOf, word } from '../test-support';
 
-const { activeDays, favorites, gameBest, history } = userStateRecords;
+const { activeDays, collectionEntries, collections, favorites, gameBest, history } =
+  userStateRecords;
 
 const content = createMemoryContentPort({
   words: [word('w_one'), word('w_two'), word('w_three'), word('w_sea', { categoryId: 'sea' })],
@@ -36,13 +38,16 @@ function account(start = '2026-10-18T09:00:00.000Z') {
   const time = fakeClock(start);
   const server = createFakeSyncApi({ clock: time.clock });
 
-  /** A device over its own user state: the records it keeps, as an older app may have left them. */
-  async function device(records = new Map<string, string>()) {
+  /**
+   * A device over its own user state: the records it keeps, as an older app
+   * may have left them, and the Sync API it reaches the fake backend through.
+   */
+  async function device(records = new Map<string, string>(), api: SyncApi = server) {
     const userState = trackChanges({
       userState: await openUserState({ port: createMemoryUserStatePort(records) }),
       clock: time.clock,
     });
-    const sync = createSyncExchange({ userState, api: server });
+    const sync = createSyncExchange({ userState, api });
     return {
       records,
       userState,
@@ -629,6 +634,53 @@ describe('an interrupted sync', () => {
     expect(await tablet.userState.read(favorites.record('w_one'))).toBeUndefined();
     expect(await tablet.userState.cursor()).toBeUndefined();
     expect([...(await tablet.userState.pendingChanges()).keys()]).toEqual(['settings.theme']);
+  });
+
+  // ADR 0013: an Entry of a Collection whose record is absent is left as it is.
+  it('keeps an Entry of a Collection whose record is still to come through a Collections write between the pages', async () => {
+    const { device, server, time } = account();
+    const phone = await device();
+    const app = await phone.open();
+    const created = await app.collections.create('Море', 'w_one');
+    if (!created.ok) throw new Error('The Collection was refused');
+    const { id } = created.collection;
+    await phone.write(
+      new Map(
+        Array.from({ length: 499 }, (_, index) => [
+          ...favorites.record(`f_${String(index)}`).change('2026-10-18T08:00:00.000Z'),
+        ]).flat(),
+      ),
+    );
+    await phone.sync();
+    time.advance(HOUR);
+    // Renamed after its Entry was added, the Collection is kept again behind the rest.
+    await app.collections.rename(id, 'Море і небо');
+    await phone.sync();
+    // The tablet's pull is cut after its first page, which holds the Entry but not the Collection.
+    let cut = true;
+    const tablet = await device(new Map(), {
+      ...server,
+      pull: (token, after) =>
+        cut && after !== undefined
+          ? Promise.resolve({ ok: false, reason: 'offline' })
+          : server.pull(token, after),
+    });
+    expect(await tablet.sync()).toEqual({ ok: false, reason: 'offline', changed: true });
+    expect(await tablet.userState.read(collectionEntries.record(`${id}.w_one`))).toBeDefined();
+    expect(await tablet.userState.read(collections.record(id))).toBeUndefined();
+    // Still offline, the reader sees no Collection yet and makes one of their own.
+    const opened = await tablet.open();
+    expect(opened.collections.list).toEqual([]);
+    await opened.collections.create('Небо', 'w_two');
+    cut = false;
+    time.advance(HOUR);
+
+    expect(await tablet.sync()).toEqual({ ok: true, changed: true });
+    await phone.sync();
+
+    expect(server.records.get(`collectionEntries.${id}.w_one`)?.value).not.toBeNull();
+    expect((await tablet.open()).collections.has(id, 'w_one')).toBe(true);
+    expect((await phone.open()).collections.has(id, 'w_one')).toBe(true);
   });
 });
 
