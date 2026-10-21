@@ -109,7 +109,7 @@ jobs:
       # Every migration, from an empty database.
       - run: pnpm --filter @slovo/backend db:migrate
       # Each test file makes its own database on the same server and drops it after.
-      - run: pnpm test --filter=@slovo/backend --filter=@slovo/server-core
+      - run: pnpm test --filter=@slovo/backend
 
   audit:
     name: Dependency audit

@@ -32,7 +32,7 @@ export const CORRECTION_EVERY = 5;
  * isn't a Correction's turn. A Correction due for Review takes the
  * Correction's turn itself.
  */
-export const REVIEW_EVERY = 3;
+const REVIEW_EVERY = 3;
 
 /**
  * The Feed of one app session. Its cards are the ones shown so far, oldest
