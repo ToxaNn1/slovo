@@ -99,7 +99,7 @@ Sync (spec #378) merges the user state record by record by the marks this ADR de
 
 **A synced record's encoding never changes.** Migration 4 is the last migration that may re-encode a record that syncs, since nothing synced before 0.8. From 0.8 an older app on another device reads what this one writes, so a new encoding takes a new key, and the older app reads the unknown key as absent through its schema. Migrations may still change `device-only` records.
 
-**An orphaned Collection entry is dropped.** An Entry of a Collection whose Collection record is absent reads as absent: it is in no Collection and counts nowhere. The next write of the Collections deletes it in the same write, so a Collection deleted on one device stays deleted even if another device added to it meanwhile, and the deletion syncs.
+**An orphaned Collection entry is dropped.** An Entry of a Collection whose Collection record is absent reads as absent: it is in no Collection and counts nowhere. The next write of the Collections deletes it in the same write, so a Collection deleted on one device stays deleted even if another device added to it meanwhile, and the deletion syncs. (Superseded by the amendment "an orphaned Collection entry is left as it is" below: it still reads as absent, but nothing deletes it.)
 
 **A Mix with no Category reads as every Category.** Two devices can each take out a different last Category, and the merge keeps both. A Mix with no Category in it reads as the Edition's default (every Category in the Ukrainian Edition), by the fallback ADR 0019's rule already has, so a merge can never leave the Feed empty. Nothing is written for it; the next change of the Mix writes the Categories the reader sees as in, as before.
 
@@ -127,3 +127,14 @@ The app opens the tracked user state first, before the settings and the composit
 - **A queue table beside `records`, or a change column on it**: rejected. Both adapters would need a migration of their own and the contract suite would grow, and the queue would no longer share the records' atomic batch.
 - **Each module writes its own pending changes**: rejected. A module could forget one, and every module would have to know about Sync.
 - **Track writes only while signed in**: rejected. A change made while signed out would lose its time and lose to an older change at the next sign-in.
+
+## Amendment: an orphaned Collection entry is left as it is (whole-project review)
+
+The 0.8 amendment above had the next write of the Collections delete an Entry of a Collection whose record is absent, and the deletion sync. But absent is also a passing state of a pull. Each page is applied in its own write (ADR 0041), the Account keeps its records in the order of their sequence numbers, and a record kept again takes a new one, so a Collection renamed after its Entries were added lands on a later page than they do. A pull cut between those pages, by the network or by iOS ending the app, left the Entries reading as orphans; the reader's next change of any Collection then tombstoned them with the device's time, the tombstones won on the Account, and the Entries left the Collection on every device.
+
+From now on nothing deletes such a record. An Entry of a Collection whose record is absent still reads as absent, is in no Collection and counts nowhere, and its record stays where it is, on the device and on the Account, until the Collection's record arrives, or for good. A Collection deleted on one device still stays deleted everywhere, since its own tombstone wins by last write wins; the Entries another device added to it meanwhile are stray records that every device reads as absent. What a stray costs is one record kept for nothing, no more than its tombstone would, since the Account keeps tombstones for good (ADR 0041); a new Collection takes a fresh random id, so a stray never joins one.
+
+### Considered Options
+
+- **Delete the orphans in the write of the pull's last page, as History is trimmed**: rejected. A whole pull is still not the whole Account: a device pushes its pending changes in batches of 500, and when the network drops between two of them, a Collection's record can wait in the second batch for hours while its Entries are already on the Account. A pull between the two is complete, would tombstone the Entries with the device's time, and the tombstones would win over the Collection when it arrives. And the tombstones save nothing: the Account keeps them as long as the records.
+- **Delete the orphans on the device only, with no pending change**: rejected. A pull never brings a record again below the cursor, so the device would lose the Entries of a Collection that arrived later for good, while the other devices keep them.

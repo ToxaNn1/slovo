@@ -310,11 +310,12 @@ describe('Collections', () => {
     expect(app.collections.of('w_one').map((collection) => collection.id)).toEqual([id]);
   });
 
-  it('reads an Entry of a Collection whose record is absent as absent, and deletes it in the next write of the Collections', async () => {
+  it('reads an Entry of a Collection whose record is absent as absent, and leaves its record as it is', async () => {
     const records = new Map<string, string>();
     const port = createMemoryUserStatePort(records);
     const writes: Map<string, string | undefined>[] = [];
-    // A merge kept another device's Entries of a Collection this device deleted.
+    // A pull brought another device's Entries of a Collection whose record is absent:
+    // deleted here, or still to come on a later page (ADR 0013).
     records.set('collectionEntries.k_deleted.w_one', JSON.stringify('2026-10-11T07:00:00.000Z'));
     records.set('collectionEntries.k_deleted.c_one', JSON.stringify('2026-10-11T07:30:00.000Z'));
     const app = await openComposition({
@@ -342,27 +343,21 @@ describe('Collections', () => {
 
     writes.length = 0;
     const { id } = await create(app, 'New', 'w_two');
+    await app.collections.add(id, 'w_three');
 
-    expect(writes).toHaveLength(1);
-    expect([...(writes[0]?.keys() ?? [])].sort()).toEqual(
+    expect(writes.map((changes) => [...changes.keys()].sort())).toEqual([
+      [`collectionEntries.${id}.w_two`, `collections.${id}`],
+      [`collectionEntries.${id}.w_three`],
+    ]);
+    expect([...records.keys()].filter((key) => key.startsWith('collection')).sort()).toEqual(
       [
         'collectionEntries.k_deleted.c_one',
         'collectionEntries.k_deleted.w_one',
+        `collectionEntries.${id}.w_three`,
         `collectionEntries.${id}.w_two`,
         `collections.${id}`,
       ].sort(),
     );
-    expect([...records.keys()].filter((key) => key.startsWith('collection')).sort()).toEqual([
-      `collectionEntries.${id}.w_two`,
-      `collections.${id}`,
-    ]);
-
-    writes.length = 0;
-    await app.collections.add(id, 'w_three');
-
-    expect(writes.map((changes) => [...changes.keys()])).toEqual([
-      [`collectionEntries.${id}.w_three`],
-    ]);
   });
 
   it('changes nothing in memory when keeping the change fails', async () => {

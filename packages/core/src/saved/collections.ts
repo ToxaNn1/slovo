@@ -170,22 +170,16 @@ export async function openCollections({
     userState.list(collectionEntryRecords),
   ]);
   const filedByCollection = new Map<string, Map<string, Filed>>();
-  /**
-   * The deletions of the records of Entries in no Collection that exists, such
-   * as another device's Entry of a Collection deleted here: they read as
-   * absent, and the next write of the Collections deletes them (ADR 0013).
-   */
-  let orphans = new Map<string, string | undefined>();
   await Promise.all(
     [...storedEntries].map(async ([id, added]) => {
       // Neither id holds a `.`, so the first one splits them.
       const dot = id.indexOf('.');
       const collectionId = id.slice(0, dot);
       const entryId = id.slice(dot + 1);
-      if (dot < 0 || !storedCollections.has(collectionId)) {
-        mergeInto(orphans, collectionEntryRecords.record(id).change(undefined));
-        return;
-      }
+      // An Entry of a Collection whose record is absent (deleted on another
+      // device, or still to come with a later page of a pull) reads as absent,
+      // and its record is left as it is (ADR 0013).
+      if (dot < 0 || !storedCollections.has(collectionId)) return;
       const row = await rows.row(entryId);
       if (row === undefined) return;
       const filed = filedByCollection.get(collectionId) ?? new Map<string, Filed>();
@@ -206,11 +200,7 @@ export async function openCollections({
     views.set(id, viewOf(stored));
   }
 
-  /** Writes the changes, and in the same write deletes the records of Entries in no Collection. */
-  async function write(changes: UserStateChanges): Promise<void> {
-    await userState.write(new Map([...orphans, ...changes]));
-    orphans = new Map();
-  }
+  const write = (changes: UserStateChanges) => userState.write(changes);
 
   let list: readonly Collection[] = NONE;
   /** The Entries of each Collection, made when asked for and dropped when that Collection changes. */

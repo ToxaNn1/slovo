@@ -115,9 +115,25 @@ export function createSyncExchange({
     });
   }
 
+  /** The device's value and pending change of the key, as they stand. */
+  async function mineOf(
+    key: string,
+  ): Promise<{ mine: Json | undefined; waiting: PendingChange | undefined }> {
+    const [mine, pending] = await Promise.all([
+      userState.read(everyRecord.record(key)),
+      userState.read(syncPending.record(key)),
+    ]);
+    const waiting =
+      pending === undefined
+        ? undefined
+        : { changedAt: new Date(pending.changedAt), value: pending.value ?? undefined };
+    return { mine, waiting };
+  }
+
   /**
    * Applies one page of the pull, with its cursor, in one write, trimming
-   * History on the last; whether it changed a record.
+   * History on the last; whether it changed a record. It reads only the
+   * page's own keys, so a page costs its size, not the whole user state's.
    */
   async function apply({
     records,
@@ -130,16 +146,13 @@ export function createSyncExchange({
   }): Promise<boolean> {
     let changed = false;
     await userState.merge(async () => {
-      const local = await userState.list(everyRecord);
-      const pending = await userState.pendingChanges();
       const untracked = new Map<string, string | undefined>(syncCursor.change(cursor));
       const tracked = new Map<string, string | undefined>();
       for (const { key, value, changedAt } of records) {
         const mark = syncMarkOf(key);
         if (mark === 'device-only') continue;
-        const mine = local.get(key);
+        const { mine, waiting } = await mineOf(key);
         const theirs = value ?? undefined;
-        const waiting = pending.get(key);
         if (mark === 'union' && theirs === undefined) continue;
         if (mark === 'highest' && higher(mine, theirs)) {
           tracked.set(key, JSON.stringify(mine));
