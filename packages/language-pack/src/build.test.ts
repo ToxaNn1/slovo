@@ -1125,7 +1125,7 @@ describe('recordContent', () => {
 });
 
 describe('content targets', () => {
-  /** A copy of the valid fixture: 2 live Words (rarity 1 and 3, both in "speech"), 4 Corrections. */
+  /** A copy of the valid fixture: 2 live Words (rarity 1 and 3, both in "speech"), 4 Corrections, 2 Idioms. */
   function editionWithTargets(targets: Json): string {
     const editionDir = copyFixture('valid');
     writeFileSync(join(editionDir, 'content/targets.json'), JSON.stringify(targets));
@@ -1142,6 +1142,7 @@ describe('content targets', () => {
     const editionDir = editionWithTargets({
       minWords: 2,
       minCorrections: 4,
+      minIdioms: 2,
       minWordsPerCategory: 0,
       everyWordHasStress: true,
     });
@@ -1162,6 +1163,14 @@ describe('content targets', () => {
 
     expect(missedTargets(editionDir)).toEqual([
       { target: 'minCorrections', message: '4 Corrections, below the target of 5' },
+    ]);
+  });
+
+  it('misses the Idiom count when there are fewer live Idioms than the target', () => {
+    const editionDir = editionWithTargets({ minIdioms: 3 });
+
+    expect(missedTargets(editionDir)).toEqual([
+      { target: 'minIdioms', message: '2 Idioms, below the target of 3' },
     ]);
   });
 
