@@ -15,7 +15,7 @@ import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { CorrectionSchema, WordSchema } from '@slovo/contracts';
-import { createEntries, type Entries } from '@slovo/core';
+import { buildWordCard, createEntries, type Entries } from '@slovo/core';
 
 import {
   buildLanguagePack,
@@ -387,6 +387,13 @@ describe('buildLanguagePack', () => {
       ['an id without the Word prefix', 'word-10.json', 'word-10', 'id', /w_/],
       ['a repeated register label', 'w_fx1013.json', 'w_fx1013', 'registers', /repeat/i],
       [
+        'a region on a Word without the dialectal register label',
+        'w_fx1024.json',
+        'w_fx1024',
+        'region',
+        /only a dialect word/i,
+      ],
+      [
         'a link to a Correction that does not exist',
         'w_fx1014.json',
         'w_fx1014',
@@ -490,7 +497,7 @@ describe('buildLanguagePack', () => {
     it('reports nothing but those errors', () => {
       // The copy with a duplicate id is also misnamed, so it fails twice; the
       // surzhyk Correction with a Stress mark fails for its form and its example.
-      expect(errors()).toHaveLength(35);
+      expect(errors()).toHaveLength(36);
     });
   });
 
@@ -730,7 +737,7 @@ describe('buildLanguagePack', () => {
         { rarity: 4, words: 0 },
         { rarity: 5, words: 0 },
       ],
-      coverage: { examples: 1, synonyms: 1, etymology: 0, stress: 2 },
+      coverage: { examples: 1, synonyms: 1, etymology: 0, stress: 2, region: 0 },
       corrections: 4,
       retiredCorrections: 0,
       correctionsPerType: [
@@ -754,6 +761,31 @@ describe('buildLanguagePack', () => {
     expect(printed).toMatch(/calque\s+0/);
   });
 
+  it('counts the Words with a region, and gives a dialect Word card its region', async () => {
+    const editionDir = copyFixture('valid');
+    editJson(editionDir, 'content/words/w_fx0002.json', (word) => ({
+      ...word,
+      registers: ['dialectal'],
+      region: 'Гуцульщина',
+    }));
+    record(editionDir);
+    const outFile = packPath();
+
+    const result = buildLanguagePack({ editionDir, outFile });
+
+    if (!result.ok) throw new Error(result.errors.map(formatBuildError).join('\n'));
+    expect(result.report.coverage.region).toBe(1);
+    expect(formatContentReport(result.report)).toMatch(/region\s+1\/2 \(50%\)/);
+    await withEntries(outFile, async (entries) => {
+      const word = await entries.get('w_fx0002');
+      if (word?.kind !== 'word') throw new Error('No Word w_fx0002');
+      expect(await buildWordCard({ word, entries })).toMatchObject({
+        registers: ['dialectal'],
+        region: 'Гуцульщина',
+      });
+    });
+  });
+
   it('rounds coverage down in the printed report, so 100% means every Word', () => {
     const result = buildLanguagePack({ editionDir: fixture('valid'), outFile: packPath() });
     if (!result.ok) throw new Error(result.errors.map(formatBuildError).join('\n'));
@@ -761,12 +793,13 @@ describe('buildLanguagePack', () => {
     const printed = formatContentReport({
       ...result.report,
       words: 521,
-      coverage: { examples: 519, synonyms: 2, etymology: 0, stress: 521 },
+      coverage: { examples: 519, synonyms: 2, etymology: 0, stress: 521, region: 3 },
     });
 
     expect(printed).toMatch(/Examples\s+519\/521 \(99%\)/);
     expect(printed).toMatch(/Synonyms\s+2\/521 \(0%\)/);
     expect(printed).toMatch(/Stress\s+521\/521 \(100%\)/);
+    expect(printed).toMatch(/region\s+3\/521 \(0%\)/);
   });
 
   it('yields the same ids, checksum and file when the same content is built twice', async () => {
@@ -782,7 +815,7 @@ describe('buildLanguagePack', () => {
     expect(b.ids).toEqual(a.ids);
     expect(a.metadata).toEqual({
       editionId: 'fixture',
-      contentVersion: 3,
+      contentVersion: 4,
       contentChecksum: expect.stringMatching(/^sha256:[0-9a-f]{64}$/) as string,
       packFormat: 3,
     });
@@ -813,7 +846,7 @@ describe('buildLanguagePack', () => {
           file: 'content/manifest.json',
           field: 'contentChecksum',
           message: expect.stringMatching(
-            /content changed since content version 3.*pnpm build:pack fixture --record/i,
+            /content changed since content version 4.*pnpm build:pack fixture --record/i,
           ) as string,
         },
       ]);
@@ -826,7 +859,7 @@ describe('buildLanguagePack', () => {
     record(editionDir);
     editJson(editionDir, 'content/manifest.json', (manifest) => ({
       ...manifest,
-      contentVersion: 3,
+      contentVersion: 4,
     }));
 
     expect(buildErrors(editionDir)).toEqual([
@@ -916,8 +949,8 @@ describe('recordContent', () => {
 
     expect(recordContent({ editionDir })).toEqual({
       ok: true,
-      previousContentVersion: 3,
-      contentVersion: 3,
+      previousContentVersion: 4,
+      contentVersion: 4,
       contentChecksum: manifestOf(editionDir)['contentChecksum'],
       newIds: [],
     });
@@ -935,12 +968,12 @@ describe('recordContent', () => {
     const recorded = recordContent({ editionDir });
     const result = buildLanguagePack({ editionDir, outFile: edited });
 
-    expect(recorded).toMatchObject({ ok: true, previousContentVersion: 3, contentVersion: 4 });
+    expect(recorded).toMatchObject({ ok: true, previousContentVersion: 4, contentVersion: 5 });
     expect(result.ok).toBe(true);
     const { metadata } = await readBack(edited);
-    expect(metadata).toMatchObject({ contentVersion: 4 });
+    expect(metadata).toMatchObject({ contentVersion: 5 });
     expect(manifestOf(editionDir)).toEqual({
-      contentVersion: 4,
+      contentVersion: 5,
       contentChecksum: metadata.contentChecksum,
     });
     expect(metadata.contentChecksum).not.toBe((await readBack(original)).metadata.contentChecksum);
@@ -995,7 +1028,7 @@ describe('recordContent', () => {
       ok: false,
       errors: [expect.objectContaining({ entryId: 'w_fx0002', field: 'rarity' })],
     });
-    expect(manifestOf(editionDir)).toMatchObject({ contentVersion: 3 });
+    expect(manifestOf(editionDir)).toMatchObject({ contentVersion: 4 });
   });
 
   it('starts the registry of an Edition never recorded with every id, in order', () => {

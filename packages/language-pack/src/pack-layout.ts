@@ -36,6 +36,7 @@ CREATE TABLE words (
   category_id TEXT NOT NULL REFERENCES categories (id),
   rarity INTEGER NOT NULL,
   etymology TEXT,
+  region TEXT,
   retired INTEGER NOT NULL
 ) WITHOUT ROWID;
 
@@ -123,7 +124,8 @@ CREATE TABLE sources (
  * new value of a closed set in the contracts, which its contract check
  * refuses); content changes and additions it ignores never raise it. Format 2
  * keeps format 1's layout and admits the Correction Types of 0.8.7; format 3
- * keeps it too and admits the Idioms and the Word's region of 0.8.8.
+ * keeps it too, adding only the Word's region column, and admits the Idioms
+ * and the Word's region of 0.8.8.
  */
 export const PACK_FORMAT = 3;
 

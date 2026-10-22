@@ -17,12 +17,13 @@ export interface ContentReport {
   }[];
   /** One bucket per rarity, 1 to 5. */
   readonly rarity: readonly { readonly rarity: number; readonly words: number }[];
-  /** How many Words have at least one Example, at least one Synonym, an etymology, a Stress. */
+  /** How many Words have at least one Example, at least one Synonym, an etymology, a Stress, a region. */
   readonly coverage: {
     readonly examples: number;
     readonly synonyms: number;
     readonly etymology: number;
     readonly stress: number;
+    readonly region: number;
   };
   readonly corrections: number;
   readonly retiredCorrections: number;
@@ -57,6 +58,7 @@ export function contentReport({
       synonyms: count((word) => word.synonyms.length > 0),
       etymology: count((word) => word.etymology !== undefined),
       stress: count((word) => word.stress.length > 0),
+      region: count((word) => word.region !== undefined),
     },
     corrections: corrections.length,
     retiredCorrections: allCorrections.length - corrections.length,
@@ -105,6 +107,7 @@ export function formatContentReport(report: ContentReport): string {
     `    Synonyms   ${share(coverage.synonyms)}`,
     `    etymology  ${share(coverage.etymology)}`,
     `    Stress     ${share(coverage.stress)}`,
+    `    region     ${share(coverage.region)}`,
     `  Corrections: ${String(corrections)} (${retiredCorrectionsNote})`,
     '  Corrections per Correction Type:',
     ...correctionsPerType.map(

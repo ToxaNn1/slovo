@@ -8,7 +8,7 @@ import { fill, useEdition } from '../providers/EditionProvider';
 import { useWordTextSizes, type TextSize } from '../providers/FontSizeProvider';
 import { SectionLabel } from '../primitives/headings';
 import { OutlinedChip } from '../primitives/OutlinedChip';
-import { partOfSpeechText } from './part-of-speech';
+import { partOfSpeechText, registerText } from './part-of-speech';
 import { stressLabel } from './stress-label';
 import { blockGap, minTouchTarget, space, typeSize, wordCardControls } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
@@ -18,7 +18,7 @@ import { WordOfTheDayBadge } from './WordOfTheDayBadge';
 
 /**
  * The Word card's blocks inside the Entry card's frame: the Lemma with Stress,
- * part of speech and register chips, the primary Definition, the first
+ * part of speech and register chips, the dialectal one with the region, the primary Definition, the first
  * Example, Synonyms and antonyms, the Category chip, the details behind
  * "more" and the linked Corrections. It draws only the sections the Core put
  * in the card, at the user's font size. Under Self-check it keeps the Lemma,
@@ -112,8 +112,8 @@ export function WordCardBody({
                 <OutlinedChip
                   key={register}
                   testID={`word-register-${register}`}
-                  text={strings.registers[register].short}
-                  accessibilityLabel={strings.registers[register].full}
+                  text={registerText(strings, register, card.region, 'short')}
+                  accessibilityLabel={registerText(strings, register, card.region, 'full')}
                   size="tight"
                 />
               ))}

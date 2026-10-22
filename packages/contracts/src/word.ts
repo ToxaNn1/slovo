@@ -64,6 +64,9 @@ export const RaritySchema = z.int().min(1).max(5);
  * Lemma's characters, in ascending order; a Lemma may have more than one
  * valid Stress. It stays empty in Editions that don't mark Stress.
  *
+ * `region` names where a dialect Word is said, a short text in the Edition's
+ * language; only a Word with the dialectal register label carries one.
+ *
  * `correctionIds` links the Corrections the Word is the standard form for.
  *
  * List fields default to empty and `retired` to false, so authored content
@@ -98,6 +101,7 @@ export const WordSchema = z
       .array(RegisterSchema)
       .refine(hasNoRepeats, 'Register labels must not repeat')
       .default([]),
+    region: TextSchema.optional(),
     categoryId: z.string().min(1),
     rarity: RaritySchema,
     sources: z.array(SourceSchema).min(1),
@@ -113,6 +117,13 @@ export const WordSchema = z
     }
     if (word.partOfSpeech !== 'noun' && word.gender !== undefined) {
       context.addIssue({ code: 'custom', path: ['gender'], message: 'Only nouns carry a gender' });
+    }
+    if (word.region !== undefined && !word.registers.includes('dialectal')) {
+      context.addIssue({
+        code: 'custom',
+        path: ['region'],
+        message: 'Only a dialect Word, with the dialectal register label, carries a region',
+      });
     }
   });
 

@@ -61,7 +61,7 @@ describe('openPack', () => {
     if (!opening.ok) throw new Error(opening.reason);
     const metadata = {
       editionId: 'fixture',
-      contentVersion: 3,
+      contentVersion: 4,
       contentChecksum: recordedChecksum,
       packFormat: 3,
     };

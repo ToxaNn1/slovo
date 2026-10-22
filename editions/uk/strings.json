@@ -183,6 +183,7 @@
         "full": "розмовне"
       }
     },
+    "registerWithRegion": "{register}, {region}",
     "example": "«{text}»",
     "exampleAuthor": "— {author}",
     "synonym": "Синонім:",
