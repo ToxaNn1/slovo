@@ -21,3 +21,14 @@ Until 0.8.8 SLOVO had two kinds of Entry, Words and Corrections. A fixed express
 - **A fourth kind of Entry for place names**: rejected. One chip differs; everything else is shared (above).
 - **A separate `expressions` table per Idiom Type**: rejected. One table with an `idiom_type` column reads like the Correction's `correction_type`, and the format already rises for the new kind (ADR 0032).
 - **Idioms in a Category of the Mix rather than a switch of their own**: rejected. Categories hold Words and reach older apps through a Content update; a whole kind of Entry needs the Feature Switch an Edition or the owner can turn off (ADR 0040).
+
+## Amendment: the build refuses bad Idioms and counts them per Idiom Type (0.8.8, #552)
+
+The Language Pack build refuses:
+
+- an expression not in NFC (the Idiom contract);
+- an expression with a character other than the Edition's alphabet in either case, its Lemma punctuation and the space. A Lemma is checked in lower case; an expression keeps its case so the message names the character as written, such as a Latin capital in place of a Cyrillic one;
+- a place name without an etymology. The Idiom contract refuses it, as the Word contract refuses a noun without gender, so every reader of an Idiom holds to the rule;
+- a live Idiom whose expression, in lower case by the Edition's locale, is another live Idiom's. A Retired Idiom frees its expression, as a Retired Word frees its Lemma and primary Definition.
+
+The content report counts live Idioms, the Retired Idioms left out and the Idioms of each Idiom Type, in the order the contracts list them.
