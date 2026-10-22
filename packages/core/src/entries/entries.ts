@@ -51,8 +51,8 @@ export interface Entries {
   eligibleOfKind(kind: EntryKind): Promise<EligibleOfKind>;
   /**
    * Any Entry by id, eligible or not: a Retired one, or a Correction when the
-   * Edition turns Corrections off. So the Entries the user keeps stay
-   * reachable.
+   * Edition turns Corrections off, or an Idiom, which no Entry list covers
+   * yet (0.8.8). So the Entries the user keeps stay reachable.
    */
   get(id: string): Promise<Entry | undefined>;
   /**
@@ -138,6 +138,9 @@ export function createEntries(
       const corrections = await Promise.all(ids.map((id) => content.getCorrection(id)));
       return corrections.filter((correction) => correction !== undefined);
     },
+    async idiom() {
+      return content.getIdioms(await content.listIdiomIds());
+    },
   };
 
   /**
@@ -149,6 +152,7 @@ export function createEntries(
   const live: Record<EntryKind, () => Promise<ReadonlyMap<string, Entry>>> = {
     word: byId('word'),
     correction: byId('correction'),
+    idiom: byId('idiom'),
   };
 
   /**
@@ -192,6 +196,8 @@ export function createEntries(
   }
 
   async function eligibleOfKind(kind: EntryKind): Promise<EligibleOfKind> {
+    // No Idiom is eligible until Idioms join the Mix (0.8.8, #553).
+    if (kind === 'idiom') return { entries: [] };
     if (kind === 'correction' && !(await correctionsInMix())) {
       return { refusal: 'corrections-out-of-mix' };
     }
@@ -207,19 +213,23 @@ export function createEntries(
     eligible,
     eligibleOfKind,
     async get(id) {
-      return (await content.getWord(id)) ?? content.getCorrection(id);
+      return (
+        (await content.getWord(id)) ?? (await content.getCorrection(id)) ?? content.getIdiom(id)
+      );
     },
     async getMany(ids) {
       const found = new Map<string, Entry>();
       const unique = [...new Set(ids)];
       if (unique.length === 0) return found;
       for (const word of await content.getWords(unique)) found.set(word.id, word);
-      // As `get` does, an id is a Correction only when it is no Word.
+      // As `get` does, an id is a Correction or an Idiom only when it is no Word.
       const rest = unique.filter((id) => !found.has(id));
       if (rest.length === 0) return found;
-      for (const correction of await content.getCorrections(rest)) {
-        found.set(correction.id, correction);
-      }
+      const [corrections, idioms] = await Promise.all([
+        content.getCorrections(rest),
+        content.getIdioms(rest),
+      ]);
+      for (const entry of [...corrections, ...idioms]) found.set(entry.id, entry);
       return found;
     },
     categories,

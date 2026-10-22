@@ -8,12 +8,14 @@ import {
   EditionDecorSchema,
   EditionStringsSchema,
   EditionTokensSchema,
+  IdiomSchema,
   SplashDecorSchema,
   WidgetSnapshotSchema,
   WordSchema,
   type Correction,
   type EditionConfig,
   type Entry,
+  type Idiom,
   type Word,
 } from '@slovo/contracts';
 import type { z } from 'zod';
@@ -47,6 +49,10 @@ const FONTS_DIR = 'assets/fonts';
 const DECOR_DIR = 'decor';
 const WORDS_DIR = 'content/words';
 const CORRECTIONS_DIR = 'content/corrections';
+const IDIOMS_DIR = 'content/idioms';
+
+/** The folder each kind of Entry is authored in, by the prefix of its id. */
+const ENTRY_DIRS: Record<string, string> = { w_: WORDS_DIR, c_: CORRECTIONS_DIR, i_: IDIOMS_DIR };
 
 /** The contract each JSON file of an Edition is checked against. */
 const SCHEMAS = {
@@ -90,6 +96,7 @@ export class EditionFolderError extends Error {
 export interface AuthoredContent {
   readonly words: readonly Authored<Word>[];
   readonly corrections: readonly Authored<Correction>[];
+  readonly idioms: readonly Authored<Idiom>[];
   /** The Entry files that couldn't be read or broke the schema; the other Entries are kept. */
   readonly errors: readonly BuildError[];
 }
@@ -110,7 +117,7 @@ export interface EditionFiles {
   decorFile(name: string): string;
   /** Every font file the Edition brings, in code-unit order. */
   fonts(): string[];
-  /** Every Word and Correction the Edition authors, in a stable order. */
+  /** Every Word, Correction and Idiom the Edition authors, in a stable order. */
   entries(): AuthoredContent;
   /** The file an Entry with this id is authored in, relative to the folder. */
   entryFile(id: string): string;
@@ -122,7 +129,7 @@ export interface EditionFolder extends EditionFiles {
   readonly config: EditionConfig;
   /**
    * Checks Words that are not in the Edition yet with the build's own checks,
-   * against the Edition's existing Words and Corrections, and returns the
+   * against the Edition's existing Entries, and returns the
    * errors that belong to the new Words. The Words must have passed the Word
    * schema. Each is located in the file it would be authored in, so an error
    * reads as the build would print it. The errors of the existing content are
@@ -175,9 +182,12 @@ export function openEdition(editionsDir: string, editionId: string): EditionFold
       content ??= files.entries();
       const drafts = words.map((word) => ({ file: files.entryFile(word.id), entry: word }));
       const draftFiles = new Set(drafts.map(({ file }) => file));
-      return checkContent(config, [...content.words, ...drafts], content.corrections).filter(
-        ({ file }) => draftFiles.has(file),
-      );
+      return checkContent(
+        config,
+        [...content.words, ...drafts],
+        content.corrections,
+        content.idioms,
+      ).filter(({ file }) => draftFiles.has(file));
     },
   };
 }
@@ -215,9 +225,10 @@ export function editionFiles(dir: string): EditionFiles {
       const errors: BuildError[] = [];
       const words = readEntries(dir, WORDS_DIR, WordSchema, errors);
       const corrections = readEntries(dir, CORRECTIONS_DIR, CorrectionSchema, errors);
-      return { words, corrections, errors };
+      const idioms = readEntries(dir, IDIOMS_DIR, IdiomSchema, errors);
+      return { words, corrections, idioms, errors };
     },
-    entryFile: (id) => `${id.startsWith('w_') ? WORDS_DIR : CORRECTIONS_DIR}/${id}.json`,
+    entryFile: (id) => `${ENTRY_DIRS[id.slice(0, 2)] ?? CORRECTIONS_DIR}/${id}.json`,
   };
 }
 

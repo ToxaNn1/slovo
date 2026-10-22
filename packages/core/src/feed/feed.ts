@@ -1,4 +1,4 @@
-import type { Entry, Word } from '@slovo/contracts';
+import type { Correction, Word } from '@slovo/contracts';
 
 import { buildCorrectionCard } from '../entries/correction-card';
 import type { Cycle } from './cycle';
@@ -106,17 +106,21 @@ export function isTodaysWordOfTheDay(card: WordFeedCard, clock: Clock): boolean 
 
 /**
  * The card of an Entry, built from the Language Pack's Entries. The card of a
- * Word on the day it is the Word of the Day carries that day.
+ * Word on the day it is the Word of the Day carries that day. An Idiom has no
+ * card yet (0.8.8), so no Idiom reaches it.
  */
 export async function buildEntryCard(
   entries: Entries,
   entry: Word,
   wordOfTheDay?: LocalDate,
 ): Promise<WordFeedCard>;
-export async function buildEntryCard(entries: Entries, entry: Entry): Promise<EntryFeedCard>;
 export async function buildEntryCard(
   entries: Entries,
-  entry: Entry,
+  entry: Word | Correction,
+): Promise<EntryFeedCard>;
+export async function buildEntryCard(
+  entries: Entries,
+  entry: Word | Correction,
   wordOfTheDay?: LocalDate,
 ): Promise<EntryFeedCard> {
   if (entry.kind === 'correction') {
@@ -299,7 +303,7 @@ export async function openFeed({
     if (position?.date !== todayKey(clock)) return false;
     if (!cycle.covers(position.entryId)) return false;
     const entry = await entries.get(position.entryId);
-    if (entry === undefined) return false;
+    if (entry === undefined || entry.kind === 'idiom') return false;
     const today = wordOfTheDay.chosen();
     const opening =
       today !== undefined && cycle.covers(today.wordId) ? await wordOfTheDayCard(today) : undefined;
@@ -343,7 +347,7 @@ export async function openFeed({
     let card: FeedCard = { kind: 'end-of-cycle' };
     if (id !== undefined) {
       const entry = await entries.get(id);
-      if (entry === undefined) return undefined;
+      if (entry === undefined || entry.kind === 'idiom') return undefined;
       card = asReviewIfDue(await buildEntryCard(entries, entry), knowledge);
     }
     session.add(card, tooEarly);

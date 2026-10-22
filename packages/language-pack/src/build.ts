@@ -39,7 +39,10 @@ export function buildLanguagePack({
   const unregistered =
     source.registry === undefined
       ? []
-      : unregisteredEntries([...source.words, ...source.corrections], source.registry);
+      : unregisteredEntries(
+          [...source.words, ...source.corrections, ...source.idioms],
+          source.registry,
+        );
   const errors = [
     ...source.errors,
     ...unregistered.map(({ file, entry }) => ({

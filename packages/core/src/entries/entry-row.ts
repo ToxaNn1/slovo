@@ -1,4 +1,11 @@
-import type { CorrectionType, Entry, Gender, PartOfSpeech, Register } from '@slovo/contracts';
+import type {
+  Correction,
+  CorrectionType,
+  Gender,
+  PartOfSpeech,
+  Register,
+  Word,
+} from '@slovo/contracts';
 
 import type { Entries } from './entries';
 import { renderStress } from './stress';
@@ -34,8 +41,8 @@ export type EntryRowModel =
       readonly correctionType: CorrectionType;
     };
 
-/** The row model of an Entry. */
-export function buildEntryRow(entry: Entry): EntryRowModel {
+/** The row model of an Entry. An Idiom has no row yet (0.8.8). */
+export function buildEntryRow(entry: Word | Correction): EntryRowModel {
   if (entry.kind === 'word') {
     return {
       kind: 'word',
@@ -84,7 +91,7 @@ export function createEntryRows(entries: Pick<Entries, 'getMany'>): EntryRows {
         read.then(
           (found) => {
             const entry = found.get(entryId);
-            return entry === undefined ? undefined : buildEntryRow(entry);
+            return entry === undefined || entry.kind === 'idiom' ? undefined : buildEntryRow(entry);
           },
           (error: unknown) => {
             // A failed read is tried again next time.

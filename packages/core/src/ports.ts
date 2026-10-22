@@ -1,4 +1,11 @@
-import type { Category, Correction, PackMetadata, PublishedPack, Word } from '@slovo/contracts';
+import type {
+  Category,
+  Correction,
+  Idiom,
+  PackMetadata,
+  PublishedPack,
+  Word,
+} from '@slovo/contracts';
 
 /**
  * Reads a compiled Language Pack. Each platform supplies an adapter (Node for
@@ -46,6 +53,18 @@ export interface ContentReadPort {
    * the Correction, in a stable order.
    */
   listLinkedWordIds(correctionId: string): Promise<readonly string[]>;
+  /**
+   * The ids of the Idioms that are not retired, in a stable order. A Retired
+   * Idiom is left out, so nothing new picks it.
+   */
+  listIdiomIds(): Promise<readonly string[]>;
+  /** Any Idiom by id, a Retired Idiom included, so kept Idioms stay reachable. */
+  getIdiom(id: string): Promise<Idiom | undefined>;
+  /**
+   * The Idioms of the ids, as `getIdiom` gives each, read at once, in no set
+   * order. An id the pack has no Idiom for is left out.
+   */
+  getIdioms(ids: readonly string[]): Promise<readonly Idiom[]>;
 }
 
 /**

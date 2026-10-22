@@ -73,6 +73,14 @@ export {
   type CorrectionType,
   type ExamplePair,
 } from './correction';
+export {
+  IdiomIdSchema,
+  IdiomSchema,
+  IdiomTypeSchema,
+  type Idiom,
+  type IdiomInput,
+  type IdiomType,
+} from './idiom';
 export { EntrySchema, type Entry, type EntryKind } from './entry';
 export { SYNC_BATCH_SIZE } from './sync';
 export { SourceSchema, type Source } from './shared';

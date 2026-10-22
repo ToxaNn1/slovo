@@ -10,6 +10,8 @@ export type {
   Example,
   ExamplePair,
   Gender,
+  Idiom,
+  IdiomType,
   PartOfSpeech,
   Register,
   Word,

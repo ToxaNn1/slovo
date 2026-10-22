@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
-import type { Correction, Entry, Word } from '@slovo/contracts';
+import type { Correction, Entry, Idiom, Word } from '@slovo/contracts';
 
 import type { BuildError } from './build-error';
 import { checkContent, type Authored } from './check-content';
@@ -18,6 +18,7 @@ export interface EditionSource {
   readonly editionId?: string;
   readonly words: readonly Authored<Word>[];
   readonly corrections: readonly Authored<Correction>[];
+  readonly idioms: readonly Authored<Idiom>[];
   /** The known ids: none when the registry is optional and missing, unset when it can't be read. */
   readonly registry?: readonly string[];
   /** Set when there are no errors. */
@@ -55,13 +56,13 @@ export function readEdition(
 
   const config = readOrCollect(() => folder.read('config'));
   const manifest = readOrCollect(() => folder.read('manifest'));
-  const { words, corrections, errors: entryErrors } = folder.entries();
+  const { words, corrections, idioms, errors: entryErrors } = folder.entries();
   errors.push(...entryErrors);
   const targets = readOrCollect(() => folder.readIfPresent('targets') ?? {});
   const registry = readOrCollect(() =>
     registryRequired ? folder.read('idRegistry') : (folder.readIfPresent('idRegistry') ?? []),
   );
-  if (config !== undefined) errors.push(...checkContent(config, words, corrections));
+  if (config !== undefined) errors.push(...checkContent(config, words, corrections, idioms));
   if (registry !== undefined) {
     errors.push(
       ...missingEntryErrors(
@@ -76,6 +77,7 @@ export function readEdition(
     errors,
     words,
     corrections,
+    idioms,
     ...(config === undefined ? {} : { editionId: config.id }),
     ...(registry === undefined ? {} : { registry }),
   };
@@ -93,6 +95,7 @@ export function readEdition(
     categories: config.categories,
     words: sortedById(words),
     corrections: sortedById(corrections),
+    idioms: sortedById(idioms),
   };
   return { ...source, valid: { content, manifest, targets } };
 }

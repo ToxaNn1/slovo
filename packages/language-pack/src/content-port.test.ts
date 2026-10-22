@@ -36,13 +36,15 @@ function openPack(editionDir: string) {
   return openLanguagePack(outFile);
 }
 
-/** The fixture Edition with Correction c_fx0002 retired, so both kinds have a Retired Entry. */
-function editionWithRetiredCorrection(): string {
+/** The fixture Edition with Correction c_fx0002 and Idiom i_fx0002 retired, so every kind has a Retired Entry. */
+function editionWithRetiredEntries(): string {
   const editionDir = join(workDir(), 'edition');
   cpSync(fixtureDir, editionDir, { recursive: true });
-  const file = join(editionDir, 'content/corrections/c_fx0002.json');
-  const correction = JSON.parse(readFileSync(file, 'utf8')) as Record<string, unknown>;
-  writeFileSync(file, JSON.stringify({ ...correction, retired: true }));
+  for (const file of ['content/corrections/c_fx0002.json', 'content/idioms/i_fx0002.json']) {
+    const path = join(editionDir, file);
+    const entry = JSON.parse(readFileSync(path, 'utf8')) as Record<string, unknown>;
+    writeFileSync(path, JSON.stringify({ ...entry, retired: true }));
+  }
   if (!recordContent({ editionDir }).ok) throw new Error('The fixture does not record');
   return editionDir;
 }
@@ -50,11 +52,12 @@ function editionWithRetiredCorrection(): string {
 /** The Categories and Entries of an Edition as authored, through the one reader (ADR 0035). */
 function authored(editionDir: string) {
   const files = editionFiles(editionDir);
-  const { words, corrections } = files.entries();
+  const { words, corrections, idioms } = files.entries();
   return {
     categories: files.read('config').categories,
     words: words.map(({ entry }) => entry),
     corrections: corrections.map(({ entry }) => entry),
+    idioms: idioms.map(({ entry }) => entry),
   };
 }
 
@@ -88,7 +91,7 @@ describe.each(adapters)('the content read port %s', (_, open) => {
   let close: () => void;
 
   beforeAll(() => {
-    ({ content, close } = open(editionWithRetiredCorrection()));
+    ({ content, close } = open(editionWithRetiredEntries()));
   });
 
   afterAll(() => {
@@ -161,6 +164,38 @@ describe.each(adapters)('the content read port %s', (_, open) => {
       expect(correction).toEqual(await content.getCorrection(correction.id));
     }
     expect(await content.getCorrections([])).toEqual([]);
+  });
+
+  it('lists the live Idioms in a stable order, leaving a Retired Idiom out', async () => {
+    expect(await content.listIdiomIds()).toEqual(['i_fx0001']);
+  });
+
+  it('gives any Idiom by id with its fields, a Retired Idiom included', async () => {
+    expect(await content.getIdiom('i_fx0001')).toEqual({
+      kind: 'idiom',
+      id: 'i_fx0001',
+      expression: 'бити байдики',
+      idiomType: 'idiom',
+      primaryDefinition: 'Тестове значення: ледарювати, нічого не робити.',
+      extraDefinitions: ['Тестове друге значення: марнувати час.'],
+      examples: [{ text: 'Цілий день він бив байдики.', author: 'Тестовий автор' }],
+      etymology: 'Тестове походження: від назви цурпалків для дитячої гри.',
+      sources: [{ title: 'Тестове джерело', url: 'https://example.org/baidyky' }],
+      retired: false,
+    });
+    expect(await content.getIdiom('i_fx0002')).toMatchObject({
+      idiomType: 'placeName',
+      retired: true,
+    });
+    expect(await content.getIdiom('i_missing')).toBeUndefined();
+  });
+
+  it('gives the Idioms of many ids at once, each as by id, a Retired Idiom included', async () => {
+    const idioms = await content.getIdioms([...manyMissing, 'i_fx0002', 'w_fx0002', 'i_fx0001']);
+
+    expect(idsOf(idioms)).toEqual(['i_fx0001', 'i_fx0002']);
+    for (const idiom of idioms) expect(idiom).toEqual(await content.getIdiom(idiom.id));
+    expect(await content.getIdioms([])).toEqual([]);
   });
 
   it('lists the live Words linked to a Correction, leaving a Retired Word out', async () => {

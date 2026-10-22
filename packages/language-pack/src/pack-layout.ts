@@ -2,6 +2,7 @@ import {
   PackMetadataSchema,
   type Category,
   type Correction,
+  type Idiom,
   type PackMetadata,
   type Word,
 } from '@slovo/contracts';
@@ -25,7 +26,7 @@ CREATE TABLE categories (
 -- Every Entry, whatever its kind.
 CREATE TABLE entries (
   id TEXT PRIMARY KEY,
-  kind TEXT NOT NULL CHECK (kind IN ('word', 'correction'))
+  kind TEXT NOT NULL CHECK (kind IN ('word', 'correction', 'idiom'))
 ) WITHOUT ROWID;
 
 CREATE TABLE words (
@@ -106,6 +107,30 @@ CREATE TABLE word_corrections (
 
 CREATE INDEX word_corrections_by_correction ON word_corrections (correction_id, word_id);
 
+CREATE TABLE idioms (
+  id TEXT PRIMARY KEY REFERENCES entries (id),
+  expression TEXT NOT NULL,
+  idiom_type TEXT NOT NULL,
+  etymology TEXT,
+  retired INTEGER NOT NULL
+) WITHOUT ROWID;
+
+-- Position 0 is the primary Definition, the rest are extra Definitions.
+CREATE TABLE idiom_definitions (
+  idiom_id TEXT NOT NULL REFERENCES idioms (id),
+  position INTEGER NOT NULL,
+  text TEXT NOT NULL,
+  PRIMARY KEY (idiom_id, position)
+) WITHOUT ROWID;
+
+CREATE TABLE idiom_examples (
+  idiom_id TEXT NOT NULL REFERENCES idioms (id),
+  position INTEGER NOT NULL,
+  text TEXT NOT NULL,
+  author TEXT,
+  PRIMARY KEY (idiom_id, position)
+) WITHOUT ROWID;
+
 -- Keyed by Entry id, so every kind of Entry records its sources here.
 CREATE TABLE sources (
   entry_id TEXT NOT NULL REFERENCES entries (id),
@@ -172,4 +197,5 @@ export interface PackContent {
   readonly categories: readonly Category[];
   readonly words: readonly Word[];
   readonly corrections: readonly Correction[];
+  readonly idioms: readonly Idiom[];
 }

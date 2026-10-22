@@ -10,6 +10,7 @@ import { GameStringsSchema } from './game';
 import { HiddenStringsSchema } from './hidden';
 import { HidingStringsSchema } from './hiding';
 import { HistoryStringsSchema } from './history';
+import { IdiomCardStringsSchema } from './idiom-card';
 import { KnowledgeStringsSchema } from './knowledge';
 import { LearningStringsSchema } from './learning';
 import { MixStringsSchema } from './mix';
@@ -39,6 +40,7 @@ export const EditionStringsSchema = z.strictObject({
   settings: SettingsStringsSchema,
   wordCard: WordCardStringsSchema,
   correctionCard: CorrectionCardStringsSchema,
+  idiomCard: IdiomCardStringsSchema,
   favorites: FavoritesStringsSchema,
   collections: CollectionsStringsSchema,
   history: HistoryStringsSchema,

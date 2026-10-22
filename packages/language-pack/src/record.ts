@@ -46,7 +46,10 @@ export function recordContent({ editionDir }: { editionDir: string }): RecordRes
       ],
     };
   }
-  const newIds = unregisteredEntries([...source.words, ...source.corrections], registry)
+  const newIds = unregisteredEntries(
+    [...source.words, ...source.corrections, ...source.idioms],
+    registry,
+  )
     .map(({ entry }) => entry.id)
     .toSorted(compare);
   const check = checkContentVersion(content, manifest);

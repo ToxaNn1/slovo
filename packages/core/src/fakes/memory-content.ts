@@ -1,4 +1,4 @@
-import type { Category, Correction, Word } from '@slovo/contracts';
+import type { Category, Correction, Idiom, Word } from '@slovo/contracts';
 
 import type { ContentReadPort } from '../ports';
 
@@ -13,10 +13,12 @@ export function createMemoryContentPort({
   categories,
   words = [],
   corrections = [],
+  idioms = [],
 }: {
   categories?: readonly Category[];
   words?: readonly Word[];
   corrections?: readonly Correction[];
+  idioms?: readonly Idiom[];
 } = {}): ContentReadPort {
   const liveWords = words.filter((word) => !word.retired);
   const packCategories =
@@ -46,5 +48,9 @@ export function createMemoryContentPort({
           .filter((word) => word.correctionIds.includes(correctionId))
           .map((word) => word.id),
       ),
+    listIdiomIds: () =>
+      Promise.resolve(idioms.filter((idiom) => !idiom.retired).map((idiom) => idiom.id)),
+    getIdiom: (id) => Promise.resolve(idioms.find((idiom) => idiom.id === id)),
+    getIdioms: (ids) => Promise.resolve(idioms.filter((idiom) => ids.includes(idiom.id))),
   };
 }

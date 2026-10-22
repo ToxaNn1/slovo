@@ -17,6 +17,7 @@ const validConfig = {
   featureSwitches: {
     game: true,
     corrections: true,
+    idioms: true,
     account: true,
     sync: true,
     contentUpdates: true,
@@ -36,7 +37,7 @@ const validConfig = {
     fontSize: 'M',
     vibration: true,
     notificationTimes: ['09:00'],
-    mix: { categories: 'all', corrections: true },
+    mix: { categories: 'all', corrections: true, idioms: true },
   },
   categories: [
     { id: 'nature', displayName: 'Nature' },
@@ -131,7 +132,7 @@ describe('loadEdition', () => {
       ...validConfig,
       userSettingDefaults: {
         ...validConfig.userSettingDefaults,
-        mix: { categories: ['speech'], corrections: false },
+        mix: { categories: ['speech'], corrections: false, idioms: true },
       },
     });
 
@@ -311,7 +312,7 @@ describe('loadEdition', () => {
       {
         userSettingDefaults: {
           ...userSettingDefaults,
-          mix: { categories: ['nature', 'military'], corrections: true },
+          mix: { categories: ['nature', 'military'], corrections: true, idioms: true },
         },
       },
       'userSettingDefaults.mix.categories.1',
@@ -321,7 +322,7 @@ describe('loadEdition', () => {
       {
         userSettingDefaults: {
           ...userSettingDefaults,
-          mix: { categories: [], corrections: true },
+          mix: { categories: [], corrections: true, idioms: true },
         },
       },
       'userSettingDefaults.mix.categories',
