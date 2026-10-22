@@ -206,7 +206,7 @@ export function testEditions(
         file,
         announced: {
           contentVersion: built.metadata.contentVersion,
-          packFormat: 1,
+          packFormat: built.metadata.packFormat,
           size: bytes.byteLength,
           fileSha256: sha256(bytes),
         },

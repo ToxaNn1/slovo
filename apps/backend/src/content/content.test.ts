@@ -1,3 +1,4 @@
+import { PACK_FORMAT } from '@slovo/language-pack';
 import type { Edition } from '@slovo/server-core';
 import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
@@ -9,7 +10,7 @@ describe('content.latest', () => {
   it('answers none for the Ukrainian Edition while no pack is published', async () => {
     const { client } = testApp();
 
-    const latest = await client.content.latest({ editionId: 'uk', packFormat: 1 });
+    const latest = await client.content.latest({ editionId: 'uk', packFormat: PACK_FORMAT });
 
     expect(latest).toEqual({ pack: null });
   });
@@ -49,12 +50,12 @@ describe('publishing a Language Pack', () => {
 
     await expect(publish(pack)).resolves.toEqual({ ok: true, pack: pack.announced });
 
-    await expect(client.content.latest({ editionId: 'published', packFormat: 1 })).resolves.toEqual(
-      { pack: pack.announced },
-    );
-    await expect(client.content.latest({ editionId: 'published', packFormat: 2 })).resolves.toEqual(
-      { pack: null },
-    );
+    await expect(
+      client.content.latest({ editionId: 'published', packFormat: PACK_FORMAT }),
+    ).resolves.toEqual({ pack: pack.announced });
+    await expect(
+      client.content.latest({ editionId: 'published', packFormat: PACK_FORMAT + 1 }),
+    ).resolves.toEqual({ pack: null });
   });
 
   it('makes a pack of a higher content version the latest', async () => {
@@ -68,7 +69,9 @@ describe('publishing a Language Pack', () => {
     await expect(publish(second, folder.read())).resolves.toMatchObject({ ok: true });
 
     expect(second.announced.contentVersion).toBeGreaterThan(first.announced.contentVersion);
-    await expect(client.content.latest({ editionId: 'grown', packFormat: 1 })).resolves.toEqual({
+    await expect(
+      client.content.latest({ editionId: 'grown', packFormat: PACK_FORMAT }),
+    ).resolves.toEqual({
       pack: second.announced,
     });
   });
@@ -82,7 +85,7 @@ describe('publishing a Language Pack', () => {
     await expect(publish(stale)).resolves.toEqual({ ok: false, reason: 'not-recorded' });
 
     await expect(
-      client.content.latest({ editionId: 'unrecorded', packFormat: 1 }),
+      client.content.latest({ editionId: 'unrecorded', packFormat: PACK_FORMAT }),
     ).resolves.toEqual({ pack: null });
   });
 
@@ -97,7 +100,7 @@ describe('publishing a Language Pack', () => {
     });
 
     for (const editionId of ['mine', 'theirs']) {
-      await expect(client.content.latest({ editionId, packFormat: 1 })).resolves.toEqual({
+      await expect(client.content.latest({ editionId, packFormat: PACK_FORMAT })).resolves.toEqual({
         pack: null,
       });
     }
@@ -117,7 +120,9 @@ describe('publishing a Language Pack', () => {
       reason: 'version-not-higher',
     });
 
-    await expect(client.content.latest({ editionId: 'shrunk', packFormat: 1 })).resolves.toEqual({
+    await expect(
+      client.content.latest({ editionId: 'shrunk', packFormat: PACK_FORMAT }),
+    ).resolves.toEqual({
       pack: newer.announced,
     });
     // Had it been kept, its version would be published now.
@@ -135,7 +140,9 @@ describe('publishing a Language Pack', () => {
 
     await expect(publish(pack)).resolves.toEqual({ ok: false, reason: 'already-published' });
 
-    await expect(client.content.latest({ editionId: 'twice', packFormat: 1 })).resolves.toEqual({
+    await expect(
+      client.content.latest({ editionId: 'twice', packFormat: PACK_FORMAT }),
+    ).resolves.toEqual({
       pack: pack.announced,
     });
   });
@@ -280,7 +287,7 @@ describe('an Edition with content updates switched off', () => {
     const { client } = testApp({ editions: withContentUpdatesOff(folder.read()) });
 
     await expect(
-      client.content.latest({ editionId: 'switched-off', packFormat: 1 }),
+      client.content.latest({ editionId: 'switched-off', packFormat: PACK_FORMAT }),
     ).rejects.toMatchObject({ code: 'NOT_FOUND', status: 404 });
     await expect(
       client.content.download({
