@@ -1,0 +1,16 @@
+{
+  "id": "c_fx1009",
+  "nonStandardForm": "всі́гда",
+  "correctionType": "surzhyk",
+  "standardEquivalents": ["завжди"],
+  "explanation": "Тестове пояснення.",
+  "examplePair": {
+    "nonStandard": "Тестове речення з всі́гда.",
+    "standard": "Тестове речення з завжди."
+  },
+  "sources": [
+    {
+      "title": "Тестове джерело"
+    }
+  ]
+}

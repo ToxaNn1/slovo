@@ -1,0 +1,16 @@
+{
+  "id": "c_fx1008",
+  "nonStandardForm": "ви́падок",
+  "correctionType": "wrongStress",
+  "standardEquivalents": ["випа́дки"],
+  "explanation": "Тестове пояснення.",
+  "examplePair": {
+    "nonStandard": "Тестове речення з ви́падок.",
+    "standard": "Тестове речення з випа́дки."
+  },
+  "sources": [
+    {
+      "title": "Тестове джерело"
+    }
+  ]
+}

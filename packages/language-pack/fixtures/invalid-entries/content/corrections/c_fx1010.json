@@ -1,0 +1,16 @@
+{
+  "id": "c_fx1010",
+  "nonStandardForm": "каталог",
+  "correctionType": "wrongStress",
+  "standardEquivalents": ["катало́г"],
+  "explanation": "Тестове пояснення.",
+  "examplePair": {
+    "nonStandard": "Тестове речення з каталог.",
+    "standard": "Тестове речення з катало́г."
+  },
+  "sources": [
+    {
+      "title": "Тестове джерело"
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 import type { EditionStrings } from '@slovo/contracts';
-import { coreDecor, type Decor, type EntryFeedCard } from '@slovo/core';
+import { coreDecor, type CorrectionCardModel, type Decor, type EntryFeedCard } from '@slovo/core';
 import { ActionRow, DecorProvider, EditionProvider, EntryCard, KnowledgeButtons } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen, within } from '@testing-library/react-native';
@@ -22,7 +22,7 @@ const strings = {
   correctionCard: {
     title: 'Correction',
     correctionType: 'Type: {type}',
-    correctionTypes: { calque: 'calque', anglicism: 'anglicism' },
+    correctionTypes: { calque: 'calque', anglicism: 'anglicism', wrongStress: 'stress' },
     nonStandard: 'Non-standard',
     standard: 'Standard',
     otherEquivalents: 'Also: {equivalents}',
@@ -41,18 +41,28 @@ const strings = {
   },
 } as unknown as EditionStrings;
 
-const card: EntryFeedCard = {
+const correctionCard: CorrectionCardModel = {
+  kind: 'correction',
+  correctionId: 'c1',
+  nonStandardForm: 'take part',
+  mainEquivalent: 'join in',
+  otherEquivalents: [],
+  correctionType: 'calque',
+  explanation: 'A long explanation.',
+  examplePair: { nonStandard: 'I take part.', standard: 'I join in.' },
+  sourceTitles: [],
+};
+
+const card: EntryFeedCard = { kind: 'correction', correctionCard };
+
+/** A stress trap: the Correction Type `wrongStress`, its forms marked. */
+const stressTrap: EntryFeedCard = {
   kind: 'correction',
   correctionCard: {
-    kind: 'correction',
-    correctionId: 'c1',
-    nonStandardForm: 'take part',
-    mainEquivalent: 'join in',
-    otherEquivalents: [],
-    correctionType: 'calque',
-    explanation: 'A long explanation.',
-    examplePair: { nonStandard: 'I take part.', standard: 'I join in.' },
-    sourceTitles: [],
+    ...correctionCard,
+    correctionType: 'wrongStress',
+    nonStandardForm: 'ca\u0301talog',
+    mainEquivalent: 'catalo\u0301g',
   },
 };
 
@@ -114,6 +124,13 @@ describe('EntryCard', () => {
     for (const corner of ['topLeft', 'topRight', 'bottomLeft', 'bottomRight']) {
       expect(frame.getByTestId(`card-corner-${corner}`, { hidden: true })).toBeTruthy();
     }
+  });
+
+  it("shows the Edition's name of the wrong-stress Correction Type as the chip of a stress trap", async () => {
+    await render(inEdition(<EntryCard card={stressTrap} />));
+
+    expect(screen.getByText('stress')).toBeTruthy();
+    expect(screen.getByLabelText('Type: stress')).toBeTruthy();
   });
 
   it('names the sources of a Correction in a line under the example pair', async () => {

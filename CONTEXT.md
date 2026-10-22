@@ -53,7 +53,7 @@ The dictionary form of a Word as it is written.
 _Avoid_: Title, headword
 
 **Stress**:
-The stressed vowel position(s) of a Lemma; a Lemma may have more than one valid Stress. Only exists in Editions whose language marks stress.
+The stressed vowel position(s) of a Lemma; a Lemma may have more than one valid Stress. Only exists in Editions whose language marks stress. A wrong-stress Correction's forms carry Stress too, written into their text as the combining acute mark after the stressed vowel (ADR 0045).
 _Avoid_: Accent
 
 **Definition**:
@@ -83,7 +83,7 @@ A Correction withdrawn from the Language Pack. Like a Retired Word, it never app
 _Avoid_: Deleted correction
 
 **Correction Type**:
-Why the form is non-standard: russianism, calque, surzhyk, officialese (канцелярит) or anglicism (англіцизм), an English borrowing where a dictionary word of the Edition's language serves.
+Why the form is non-standard: russianism, calque, surzhyk, officialese (канцелярит), anglicism (англіцизм), an English borrowing where a dictionary word of the Edition's language serves, or wrong stress (`wrongStress`, «наголос»: a stress trap, the right word said with the wrong Stress).
 
 **Entry card**:
 How the app shows one Entry: a Word card or a Correction card in the same frame, with the action row (heart, Collections, share, hide) under it. The Feed and every screen that opens a kept Entry show the same Entry card.

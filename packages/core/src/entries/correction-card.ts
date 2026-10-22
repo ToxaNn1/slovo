@@ -3,8 +3,9 @@ import type { Correction, CorrectionType, ExamplePair } from '@slovo/contracts';
 /**
  * What a Correction card shows, decided by the Core: the UI draws it and
  * never picks sections itself. It carries data and keys only; the UI turns
- * the Correction Type key into the Edition's string. A Correction carries no
- * Stress, so its texts show as written.
+ * the Correction Type key into the Edition's string. A Correction's texts
+ * show as written; a wrong-stress Correction writes its Stress marks into
+ * them (ADR 0045).
  */
 export interface CorrectionCardModel {
   readonly kind: 'correction';

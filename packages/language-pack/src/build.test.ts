@@ -90,6 +90,23 @@ async function linkedIds(entries: Entries, id: string): Promise<string[]> {
   return (await entries.linkedCorrections(word)).map((correction) => correction.id);
 }
 
+/** Adds a stress trap, a wrong-stress Correction, to a copy of the valid fixture. */
+function addStressTrap(editionDir: string): void {
+  const stressTrap = {
+    id: 'c_fx0005',
+    nonStandardForm: 'ката\u0301лог',
+    correctionType: 'wrongStress',
+    standardEquivalents: ['катало\u0301г'],
+    explanation: 'Тестове пояснення.',
+    examplePair: { nonStandard: 'Я шукаю ката\u0301лог.', standard: 'Я шукаю катало\u0301г.' },
+    sources: [{ title: 'Тестове джерело' }],
+  };
+  writeFileSync(join(editionDir, 'content/corrections/c_fx0005.json'), JSON.stringify(stressTrap));
+  const idsPath = join(editionDir, 'content/ids.json');
+  const ids = JSON.parse(readFileSync(idsPath, 'utf8')) as string[];
+  writeFileSync(idsPath, JSON.stringify([...ids, 'c_fx0005']));
+}
+
 function buildErrors(editionDir: string): readonly BuildError[] {
   const outFile = packPath();
   const result = buildLanguagePack({ editionDir, outFile });
@@ -402,6 +419,41 @@ describe('buildLanguagePack', () => {
         /repeat/i,
       ],
       ['an id without the Correction prefix', 'correction-4.json', 'correction-4', 'id', /c_/],
+      [
+        'a wrong-stress Correction whose non-standard form has no Stress mark',
+        'c_fx1010.json',
+        'c_fx1010',
+        'nonStandardForm',
+        /required.*stress mark/i,
+      ],
+      [
+        'a wrong-stress Correction whose standard equivalent has no Stress mark',
+        'c_fx1006.json',
+        'c_fx1006',
+        'standardEquivalents.0',
+        /required.*stress mark/i,
+      ],
+      [
+        'a Stress mark after a consonant',
+        'c_fx1007.json',
+        'c_fx1007',
+        'nonStandardForm',
+        /"т", not a vowel/i,
+      ],
+      [
+        'a wrong-stress Correction whose forms differ in more than their Stress',
+        'c_fx1008.json',
+        'c_fx1008',
+        'standardEquivalents.0',
+        /only in .*stress/i,
+      ],
+      [
+        'a Stress mark in a Correction of another type',
+        'c_fx1009.json',
+        'c_fx1009',
+        'nonStandardForm',
+        /only a wrong-stress correction/i,
+      ],
     ])('%s', (_rule, file, entryId, field, message) => {
       expect(errors()).toContainEqual({
         file: `content/corrections/${file}`,
@@ -436,8 +488,9 @@ describe('buildLanguagePack', () => {
     });
 
     it('reports nothing but those errors', () => {
-      // The copy with a duplicate id is also misnamed, so it fails twice.
-      expect(errors()).toHaveLength(29);
+      // The copy with a duplicate id is also misnamed, so it fails twice; the
+      // surzhyk Correction with a Stress mark fails for its form and its example.
+      expect(errors()).toHaveLength(35);
     });
   });
 
@@ -476,6 +529,51 @@ describe('buildLanguagePack', () => {
     expect(buildLanguagePack({ editionDir, outFile }).ok).toBe(true);
     await withEntries(outFile, async (entries) => {
       expect(await entries.get('w_fx0003')).toMatchObject({ stress: [] });
+    });
+  });
+
+  it('rejects a wrong-stress Correction in an Edition that does not mark Stress', () => {
+    const editionDir = copyFixture('valid');
+    editJson(editionDir, 'edition.json', (config) => ({
+      ...config,
+      languageTraits: {
+        ...(config['languageTraits'] as Json),
+        marksStress: false,
+        vowels: undefined,
+      },
+    }));
+    for (const file of validWordFiles) {
+      editJson(editionDir, file, (word) => ({ ...word, stress: undefined }));
+    }
+    addStressTrap(editionDir);
+
+    expect(buildErrors(editionDir)).toEqual([
+      {
+        file: 'content/corrections/c_fx0005.json',
+        entryId: 'c_fx0005',
+        field: 'correctionType',
+        message: expect.stringMatching(/does not mark stress/i) as string,
+      },
+    ]);
+  });
+
+  it('builds a wrong-stress Correction whose texts keep their Stress marks', async () => {
+    const editionDir = copyFixture('valid');
+    addStressTrap(editionDir);
+    record(editionDir);
+    const outFile = packPath();
+
+    expect(buildLanguagePack({ editionDir, outFile }).ok).toBe(true);
+    await withEntries(outFile, async (entries) => {
+      expect(await entries.get('c_fx0005')).toMatchObject({
+        correctionType: 'wrongStress',
+        nonStandardForm: 'ката\u0301лог',
+        standardEquivalents: ['катало\u0301г'],
+        examplePair: {
+          nonStandard: 'Я шукаю ката\u0301лог.',
+          standard: 'Я шукаю катало\u0301г.',
+        },
+      });
     });
   });
 
@@ -641,6 +739,7 @@ describe('buildLanguagePack', () => {
         { correctionType: 'surzhyk', corrections: 1 },
         { correctionType: 'officialese', corrections: 1 },
         { correctionType: 'anglicism', corrections: 0 },
+        { correctionType: 'wrongStress', corrections: 0 },
       ],
     });
     const printed = formatContentReport(result.report);

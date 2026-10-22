@@ -1,7 +1,7 @@
 import type { Word } from '@slovo/contracts';
 
-/** The combining acute accent, drawn over the character it follows. */
-const STRESS_MARK = '́';
+/** The combining acute accent, drawn over the character it follows: the Stress mark. */
+export const STRESS_MARK = '́';
 
 /**
  * The Lemma as it is shown to the reader: a combining acute accent follows each
