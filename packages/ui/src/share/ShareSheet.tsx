@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
-  Animated,
   PixelRatio,
   ScrollView,
   StyleSheet,
@@ -9,6 +8,12 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
+import Animated, {
+  ReduceMotion,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { BottomSheet } from '../primitives/BottomSheet';
 import { useEdition } from '../providers/EditionProvider';
@@ -180,12 +185,13 @@ function ShareSheetContent({
 function Toast({ message }: { message: string }) {
   const { colors, fontFamilies } = useTokens();
   const { voice } = useEdition();
-  const opacity = useRef(new Animated.Value(0)).current;
+  const opacity = useSharedValue(0);
   const [shown, setShown] = useState(true);
 
   useEffect(() => {
     AccessibilityInfo.announceForAccessibility(message);
-    Animated.timing(opacity, { toValue: 1, duration: FADE_MS, useNativeDriver: true }).start();
+    // A fade is already the calm form Reduce Motion asks for, so it runs either way, as the undo toast's does.
+    opacity.value = withTiming(1, { duration: FADE_MS, reduceMotion: ReduceMotion.Never });
     const timer = setTimeout(() => {
       setShown(false);
     }, TOAST_MS);
@@ -193,12 +199,13 @@ function Toast({ message }: { message: string }) {
       clearTimeout(timer);
     };
   }, [message, opacity]);
+  const fadeStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
 
   if (!shown) return null;
   return (
     <Animated.View
       testID="share-toast"
-      style={[styles.toast, { opacity, backgroundColor: colors.ink }]}
+      style={[styles.toast, { backgroundColor: colors.ink }, fadeStyle]}
     >
       <Text
         {...voice}
