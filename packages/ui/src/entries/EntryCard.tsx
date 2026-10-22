@@ -5,9 +5,11 @@ import { StyleSheet, View } from 'react-native';
 import { CorrectionCardBody } from './CorrectionCard';
 import { ConcealedProvider, useSelfCheck } from './self-check';
 import { CardCorners } from '../decor/DecorSlots';
+import { OutlineButton } from '../primitives/OutlineButton';
+import { useEdition } from '../providers/EditionProvider';
 import { ReviewLabel } from './ReviewLabel';
 import { useCompactLayout, useLemmaSize } from '../providers/FontSizeProvider';
-import { blockGap, space, wordCardSide } from '../tokens';
+import { blockGap, correctionCardLayout, space, wordCardSide } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { WordCardBody } from './WordCard';
 
@@ -33,7 +35,12 @@ const COMPACT_PADDING = 0.75;
 /** The padding and the space between blocks from the design, for each kind of card. */
 const SPACING = {
   word: { top: space[8], side: wordCardSide, bottom: wordCardSide, gap: blockGap },
-  correction: { top: 28, side: wordCardSide, bottom: 24, gap: space[4] },
+  correction: {
+    top: correctionCardLayout.paddingTop,
+    side: wordCardSide,
+    bottom: space[6],
+    gap: space[4],
+  },
 } as const;
 
 /**
@@ -46,6 +53,7 @@ const SPACING = {
  */
 export function EntryCard({ card, onOpenCorrection, actions, selfCheck = false }: EntryCardProps) {
   const { concealed, reveal } = useSelfCheck(selfCheck);
+  const { strings } = useEdition();
   const { colors, radii } = useTokens();
   const lemmaSize = useLemmaSize();
   const compact = useCompactLayout();
@@ -78,14 +86,20 @@ export function EntryCard({ card, onOpenCorrection, actions, selfCheck = false }
             lemmaSize={lemmaSize}
             onOpenCorrection={onOpenCorrection}
             concealed={concealed}
-            onReveal={reveal}
           />
         ) : (
           <CorrectionCardBody
             card={card.correctionCard}
             lemmaSize={lemmaSize}
             concealed={concealed}
-            onReveal={reveal}
+          />
+        )}
+        {concealed && (
+          <OutlineButton
+            testID={`${card.kind}-reveal`}
+            // The Edition names the reveal for each kind: a Word's meaning, a Correction's right form.
+            label={(card.kind === 'word' ? strings.wordCard : strings.correctionCard).reveal}
+            onPress={reveal}
           />
         )}
         {/* Corner ornaments over the edges (Decor slot 3), on both kinds of card. */}

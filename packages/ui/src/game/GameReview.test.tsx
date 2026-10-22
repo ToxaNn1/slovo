@@ -110,13 +110,13 @@ describe('GameReview', () => {
     await renderReview();
 
     expect(screen.getByRole('header', { name: 'Your Rounds' })).toBeTruthy();
-    expect(
-      screen.getAllByRole('button').map((row) => row.props['accessibilityLabel'] as string),
-    ).toEqual([
-      '1, candid, right',
-      '2, dour, wrong, you picked brittle',
-      '3, in the meantimes, wrong, you picked in the meanwhiles',
-    ]);
+    expect(screen.getAllByRole('button')).toEqual(
+      [
+        '1, candid, right',
+        '2, dour, wrong, you picked brittle',
+        '3, in the meantimes, wrong, you picked in the meanwhiles',
+      ].map((name) => screen.getByRole('button', { name })),
+    );
     expect(screen.getByTestId('game-review-row-1')).toHaveTextContent(/✓/);
     expect(screen.getByTestId('game-review-row-2')).toHaveTextContent(/✗/);
     expect(screen.getByText('you picked brittle')).toBeTruthy();
@@ -128,9 +128,7 @@ describe('GameReview', () => {
 
     await fireEvent.press(screen.getByTestId('game-review-row-1'));
 
-    expect(screen.getByTestId('game-review-row-1')).toHaveProp('accessibilityState', {
-      expanded: true,
-    });
+    expect(screen.getByRole('button', { name: '1, candid, right', expanded: true })).toBeTruthy();
     expect(screen.getByText('open and honest')).toBeTruthy();
     expect(screen.getByText('“a candid talk”')).toBeTruthy();
     expect(screen.getByText('— Austen')).toBeTruthy();

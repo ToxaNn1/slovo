@@ -1,10 +1,7 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { space } from '../tokens';
-
-/** The size of each action-row button, from the design. */
-const ACTION_SIZE = 52;
+import { actionButtonSize, space } from '../tokens';
 
 export interface ActionRowProps {
   /** The «Знаю» and «Не знаю» buttons, on a line of their own above the icons; the row leaves them out without. */
@@ -44,5 +41,10 @@ const styles = StyleSheet.create({
   container: { marginTop: space[3] },
   marks: { marginBottom: space[1] },
   row: { flexDirection: 'row', justifyContent: 'space-around' },
-  slot: { width: ACTION_SIZE, height: ACTION_SIZE, alignItems: 'center', justifyContent: 'center' },
+  slot: {
+    width: actionButtonSize,
+    height: actionButtonSize,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

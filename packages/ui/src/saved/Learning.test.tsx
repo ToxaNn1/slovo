@@ -1,6 +1,6 @@
 import type { EditionStrings } from '@slovo/contracts';
-import type { EntryRowModel } from '@slovo/core';
-import { EditionProvider, LearningCard, LearningRow, type LearningItem } from '@slovo/ui';
+import type { EntryRowModel, LearningEntry } from '@slovo/core';
+import { EditionProvider, LearningCard, LearningRow } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import type { ReactElement } from 'react';
@@ -36,13 +36,36 @@ const correction: EntryRowModel = {
   correctionType: 'calque',
 };
 
-async function renderInEdition(element: ReactElement) {
+/** The Entry of the «Вчу» list with its row, `days` local days from its next Review. */
+const learning = (row: EntryRowModel, days: number): LearningEntry => ({
+  entryId: row.entryId,
+  row,
+  daysUntilReview: days,
+});
+
+/** The same strings in a language with four plural forms, as Ukrainian has. */
+const ukStrings = {
+  learning: {
+    ...strings.learning,
+    reviewDay: {
+      ...strings.learning.reviewDay,
+      inDays: {
+        one: 'in {count} day (one)',
+        few: 'in {count} days (few)',
+        many: 'in {count} days (many)',
+        other: 'in {count} days (other)',
+      },
+    },
+  },
+} as EditionStrings;
+
+async function renderInEdition(element: ReactElement, { locale = 'en', learning = strings } = {}) {
   await render(
     <GestureHandlerRootView>
       <EditionProvider
-        edition={{ locale: 'en' }}
+        edition={{ locale }}
         strings={
-          { ...strings, correctionCard: { insteadOf: 'instead of {form}' } } as EditionStrings
+          { ...learning, correctionCard: { insteadOf: 'instead of {form}' } } as EditionStrings
         }
       >
         {element}
@@ -60,10 +83,7 @@ describe('LearningRow', () => {
     [7, 'in 7 days'],
   ])('shows the Entry and its next Review day %i days away as «%s»', async (days, label) => {
     await renderInEdition(
-      <LearningRow
-        item={{ row: word('w1', 'river'), daysUntilReview: days }}
-        onPress={jest.fn()}
-      />,
+      <LearningRow entry={learning(word('w1', 'river'), days)} onPress={jest.fn()} />,
     );
 
     expect(screen.getByText('river')).toBeTruthy();
@@ -72,10 +92,21 @@ describe('LearningRow', () => {
     expect(screen.getByRole('button', { name: `river, what river means, ${label}` })).toBeTruthy();
   });
 
-  it('shows a Correction with the form it replaces', async () => {
+  it.each([
+    [2, 'in 2 days (few)'],
+    [5, 'in 5 days (many)'],
+    [21, 'in 21 day (one)'],
+  ])('takes the plural form of the Edition’s language, %i days away', async (days, label) => {
     await renderInEdition(
-      <LearningRow item={{ row: correction, daysUntilReview: 1 }} onPress={jest.fn()} />,
+      <LearningRow entry={learning(word('w1', 'river'), days)} onPress={jest.fn()} />,
+      { locale: 'uk', learning: ukStrings },
     );
+
+    expect(screen.getByText(label)).toBeTruthy();
+  });
+
+  it('shows a Correction with the form it replaces', async () => {
+    await renderInEdition(<LearningRow entry={learning(correction, 1)} onPress={jest.fn()} />);
 
     expect(screen.getByRole('button', { name: 'right, instead of wrong, tomorrow' })).toBeTruthy();
   });
@@ -83,7 +114,7 @@ describe('LearningRow', () => {
   it('opens the Entry on a tap', async () => {
     const onPress = jest.fn();
     await renderInEdition(
-      <LearningRow item={{ row: word('w1', 'river'), daysUntilReview: 1 }} onPress={onPress} />,
+      <LearningRow entry={learning(word('w1', 'river'), 1)} onPress={onPress} />,
     );
 
     await fireEvent.press(screen.getByTestId('learning-row-w1-open'));
@@ -93,24 +124,26 @@ describe('LearningRow', () => {
 
   it('offers no action to rename, delete or take the Entry out', async () => {
     await renderInEdition(
-      <LearningRow item={{ row: word('w1', 'river'), daysUntilReview: 1 }} onPress={jest.fn()} />,
+      <LearningRow entry={learning(word('w1', 'river'), 1)} onPress={jest.fn()} />,
     );
 
-    expect(screen.getByTestId('learning-row-w1-open')).toHaveProp('accessibilityActions', []);
-    expect(screen.queryAllByRole('button')).toHaveLength(1);
+    // Nothing behind a swipe either: the row's one button is the row itself.
+    expect(screen.queryAllByRole('button', { includeHiddenElements: true })).toEqual([
+      screen.getByTestId('learning-row-w1-open'),
+    ]);
   });
 });
 
 describe('LearningCard', () => {
-  const items: readonly LearningItem[] = [
-    { row: word('w1', 'river'), daysUntilReview: 0 },
-    { row: word('w2', 'stone'), daysUntilReview: 1 },
-    { row: correction, daysUntilReview: 3 },
-    { row: word('w3', 'cloud'), daysUntilReview: 7 },
+  const entries = [
+    learning(word('w1', 'river'), 0),
+    learning(word('w2', 'stone'), 1),
+    learning(correction, 3),
+    learning(word('w3', 'cloud'), 7),
   ];
 
   it('shows the count and the next three Entries with their Review days', async () => {
-    await renderInEdition(<LearningCard items={items} onPress={jest.fn()} />);
+    await renderInEdition(<LearningCard entries={entries} onPress={jest.fn()} />);
 
     expect(screen.getByText('Learning')).toBeTruthy();
     expect(screen.getByText('4')).toBeTruthy();
@@ -122,7 +155,7 @@ describe('LearningCard', () => {
 
   it('opens the list on a tap', async () => {
     const onPress = jest.fn();
-    await renderInEdition(<LearningCard items={items} onPress={onPress} />);
+    await renderInEdition(<LearningCard entries={entries} onPress={onPress} />);
 
     await fireEvent.press(screen.getByRole('button', { name: 'Learning, 4 entries' }));
 

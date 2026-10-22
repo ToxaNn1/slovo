@@ -7,11 +7,10 @@ import { OrnamentDivider } from '../decor/DecorSlots';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useWordTextSizes, type TextSize } from '../providers/FontSizeProvider';
 import { SectionLabel } from '../primitives/headings';
-import { OutlineButton } from '../primitives/OutlineButton';
 import { OutlinedChip } from '../primitives/OutlinedChip';
 import { partOfSpeechText } from './part-of-speech';
 import { stressLabel } from './stress-label';
-import { minTouchTarget, space, typeSize, wordCardControls } from '../tokens';
+import { blockGap, minTouchTarget, space, typeSize, wordCardControls } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { usePageTurnActions } from '../primitives/VerticalPager';
 import { WholeWordsText } from '../primitives/WholeWordsText';
@@ -23,7 +22,8 @@ import { WordOfTheDayBadge } from './WordOfTheDayBadge';
  * Example, Synonyms and antonyms, the Category chip, the details behind
  * "more" and the linked Corrections. It draws only the sections the Core put
  * in the card, at the user's font size. Under Self-check it keeps the Lemma,
- * part of speech and Category, and a button that reveals the rest.
+ * part of speech and Category; the Entry card draws the button that reveals
+ * the rest under them.
  */
 export function WordCardBody({
   card,
@@ -32,7 +32,6 @@ export function WordCardBody({
   lemmaSize,
   onOpenCorrection,
   concealed,
-  onReveal,
 }: {
   card: WordCardModel;
   /** On the card of the Word of the Day: the local day it is the Word of. */
@@ -42,9 +41,8 @@ export function WordCardBody({
   /** The Lemma's size at the user's font size, smaller in the compact layout. */
   lemmaSize: TextSize;
   onOpenCorrection: ((correctionId: string) => void) | undefined;
-  /** Self-check: only the Lemma, part of speech and Category, and the button that reveals the rest. */
+  /** Self-check: only the Lemma, part of speech and Category. */
   concealed: boolean;
-  onReveal: () => void;
 }) {
   const { colors, fontFamilies, radii } = useTokens();
   const sizes = useWordTextSizes();
@@ -128,10 +126,7 @@ export function WordCardBody({
         <OrnamentDivider />
       </View>
       {concealed ? (
-        <>
-          {categoryChip}
-          <OutlineButton testID="word-reveal" label={strings.reveal} onPress={onReveal} />
-        </>
+        categoryChip
       ) : (
         <>
           <Text
@@ -176,7 +171,12 @@ export function WordCardBody({
               {...voice}
               style={[styles.oftenSaid, { borderTopColor: colors.line }]}
             >
-              <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+              <Svg
+                width={wordCardControls.oftenSaidIcon}
+                height={wordCardControls.oftenSaidIcon}
+                viewBox="0 0 24 24"
+                fill="none"
+              >
                 <Path
                   d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"
                   stroke={colors.accent}
@@ -285,8 +285,8 @@ function Details({ details }: { details: NonNullable<WordCardModel['details']> }
           {strings.wordCard.more}
         </Text>
         <Svg
-          width={14}
-          height={14}
+          width={wordCardControls.moreChevron}
+          height={wordCardControls.moreChevron}
           viewBox="0 0 24 24"
           fill="none"
           style={open ? styles.chevronOpen : undefined}
@@ -341,9 +341,6 @@ function DetailSection({ title, children }: { title: string; children: ReactNode
   );
 }
 
-/** The details keep the card's 18 between blocks. */
-const DETAILS_GAP = 18;
-
 const styles = StyleSheet.create({
   // Over the blocks below it, so the Pronunciation message can open over them.
   header: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3], zIndex: 1 },
@@ -381,7 +378,8 @@ const styles = StyleSheet.create({
   },
   moreText: { fontSize: typeSize.body, fontWeight: '700' },
   chevronOpen: { transform: [{ rotate: '180deg' }] },
-  details: { gap: DETAILS_GAP, marginTop: space[4] },
+  // The details keep the card's gap between blocks.
+  details: { gap: blockGap, marginTop: space[4] },
   detailSection: { gap: space[2] },
   etymology: { fontSize: typeSize.body, lineHeight: typeSize.body * 1.5 },
   oftenSaid: {

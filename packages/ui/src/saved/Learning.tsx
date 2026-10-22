@@ -1,15 +1,8 @@
-import type { EntryRowModel } from '@slovo/core';
+import type { LearningEntry } from '@slovo/core';
 
 import { EntryRow } from '../entries/EntryRow';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { SavedCard, SavedCardRows } from './SavedCard';
-
-/** An Entry of the «Вчу» list: its row and how many local days until its next Review. */
-export interface LearningItem {
-  readonly row: EntryRowModel;
-  /** 0 or less while it is due, 1 for tomorrow, and so on. */
-  readonly daysUntilReview: number;
-}
 
 /** How many of the next Entries the «Вчу» card shows. */
 const NEXT_SHOWN = 3;
@@ -30,13 +23,13 @@ function useReviewDayText(): (daysUntilReview: number) => string {
  * tap opens the Entry; the list is the Core's own, so the row has no action to
  * rename, delete or take the Entry out.
  */
-export function LearningRow({ item, onPress }: { item: LearningItem; onPress: () => void }) {
+export function LearningRow({ entry, onPress }: { entry: LearningEntry; onPress: () => void }) {
   const reviewDayText = useReviewDayText();
   return (
     <EntryRow
-      testID={`learning-row-${item.row.entryId}`}
-      row={item.row}
-      trailing={reviewDayText(item.daysUntilReview)}
+      testID={`learning-row-${entry.entryId}`}
+      row={entry.row}
+      trailing={reviewDayText(entry.daysUntilReview)}
       onPress={onPress}
     />
   );
@@ -47,11 +40,11 @@ export function LearningRow({ item, onPress }: { item: LearningItem; onPress: ()
  * Review with their days. A tap opens the list.
  */
 export function LearningCard({
-  items,
+  entries,
   onPress,
 }: {
   /** Every Entry of the list, the next Review first. */
-  items: readonly LearningItem[];
+  entries: readonly LearningEntry[];
   onPress: () => void;
 }) {
   const { strings, count } = useEdition();
@@ -61,12 +54,14 @@ export function LearningCard({
     <SavedCard
       testID="saved-learning"
       title={learning.title}
-      count={items.length}
-      accessibilityLabel={fill(learning.cardLabel, { count: count(learning.count, items.length) })}
+      count={entries.length}
+      accessibilityLabel={fill(learning.cardLabel, {
+        count: count(learning.count, entries.length),
+      })}
       onPress={onPress}
     >
       <SavedCardRows
-        rows={items.slice(0, NEXT_SHOWN).map(({ row, daysUntilReview }) => ({
+        rows={entries.slice(0, NEXT_SHOWN).map(({ row, daysUntilReview }) => ({
           title: row.title,
           trailing: reviewDayText(daysUntilReview),
         }))}

@@ -7,9 +7,8 @@ import { OrnamentDivider } from '../decor/DecorSlots';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useWordTextSizes, type TextSize } from '../providers/FontSizeProvider';
 import { SectionLabel } from '../primitives/headings';
-import { OutlineButton } from '../primitives/OutlineButton';
 import { OutlinedChip } from '../primitives/OutlinedChip';
-import { space, typeSize, withAlpha } from '../tokens';
+import { correctionCardLayout, space, typeSize, withAlpha } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { usePageTurnActions } from '../primitives/VerticalPager';
 import { WholeWordsText } from '../primitives/WholeWordsText';
@@ -19,21 +18,20 @@ import { WholeWordsText } from '../primitives/WholeWordsText';
  * Type, the non-standard form muted and struck through, the main standard
  * equivalent at the Lemma's size with the others under it, the explanation,
  * the example pair and, when the Correction has sources, a line naming them. A Correction carries no Stress, and nothing on the card
- * reads as an error. Under Self-check it keeps only the non-standard form,
- * asks how to say it right and offers a button that reveals the rest.
+ * reads as an error. Under Self-check it keeps only the non-standard form and
+ * asks how to say it right; the Entry card draws the button that reveals the
+ * rest under it.
  */
 export function CorrectionCardBody({
   card,
   lemmaSize: mainSize,
   concealed,
-  onReveal,
 }: {
   card: CorrectionCardModel;
   /** The Lemma's size at the user's font size, which the main standard equivalent takes. */
   lemmaSize: TextSize;
-  /** Self-check: only the non-standard form, the question and the button that reveals the rest. */
+  /** Self-check: only the non-standard form and the question. */
   concealed: boolean;
-  onReveal: () => void;
 }) {
   const { colors, fontFamilies, radii } = useTokens();
   const sizes = useWordTextSizes();
@@ -87,16 +85,13 @@ export function CorrectionCardBody({
         <OrnamentDivider centre="arrow" />
       </View>
       {concealed ? (
-        <>
-          <Text
-            testID="correction-how-to-say"
-            {...voice}
-            style={[styles.label, { color: colors.accent, fontFamily: fontFamilies.ui }]}
-          >
-            {strings.howToSay}
-          </Text>
-          <OutlineButton testID="correction-reveal" label={strings.reveal} onPress={onReveal} />
-        </>
+        <Text
+          testID="correction-how-to-say"
+          {...voice}
+          style={[styles.label, { color: colors.accent, fontFamily: fontFamilies.ui }]}
+        >
+          {strings.howToSay}
+        </Text>
       ) : (
         <>
           <View style={styles.form}>
@@ -204,14 +199,16 @@ export function CorrectionCardBody({
 function Mark({ lineHeight, children }: { lineHeight: number; children: ReactNode }) {
   return (
     <View style={[styles.mark, { height: lineHeight }]}>
-      <Svg width={MARK_SIZE} height={MARK_SIZE} viewBox="0 0 24 24">
+      <Svg
+        width={correctionCardLayout.exampleMark}
+        height={correctionCardLayout.exampleMark}
+        viewBox="0 0 24 24"
+      >
         {children}
       </Svg>
     </View>
   );
 }
-
-const MARK_SIZE = 18;
 
 /** What sits between the titles of a Correction's sources on the source line. */
 const SOURCE_SEPARATOR = '; ';
@@ -238,6 +235,6 @@ const styles = StyleSheet.create({
   examplePair: { gap: space[3], paddingVertical: space[4], paddingHorizontal: space[4] },
   exampleRow: { flexDirection: 'row', gap: space[3] },
   source: { fontSize: typeSize.meta, lineHeight: typeSize.meta * 1.4 },
-  mark: { width: MARK_SIZE, justifyContent: 'center' },
+  mark: { width: correctionCardLayout.exampleMark, justifyContent: 'center' },
   sentence: { flex: 1 },
 });

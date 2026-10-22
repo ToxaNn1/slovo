@@ -27,7 +27,7 @@ const LEMMA_LINE_HEIGHT = 1.3;
 const BODY_LINE_HEIGHT = 1.5;
 
 /** The type sizes of a font-size step, from the one table in `fontSizeSteps`. */
-export function wordTextSizes(step: FontSize): WordTextSizes {
+function wordTextSizes(step: FontSize): WordTextSizes {
   const { lemma, definition, example } = fontSizeSteps[step];
   return {
     step,

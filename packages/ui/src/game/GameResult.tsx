@@ -16,9 +16,6 @@ import { WholeWordsText } from '../primitives/WholeWordsText';
 const NUMBER_MAX_FONT_SCALE = 1.3;
 /** How far they may scale the smaller text, so it never breaks a word. */
 const TEXT_MAX_FONT_SCALE = 1.5;
-/** The victory illustration's width on a win and on a loss, from the design. */
-const WIN_ILLUSTRATION_WIDTH = 120;
-const LOSS_ILLUSTRATION_WIDTH = 64;
 /** The title's size, from the design. */
 const TITLE_SIZE = { fontSize: typeSize.resultTitle, lineHeight: typeSize.resultTitle * 1.1 };
 
@@ -104,7 +101,7 @@ export function GameResult({
       contentContainerStyle={styles.screen}
     >
       <VictoryIllustration
-        width={won ? WIN_ILLUSTRATION_WIDTH : LOSS_ILLUSTRATION_WIDTH}
+        width={won ? resultLayout.winIllustration : resultLayout.lossIllustration}
         stitched={won}
       />
       <View accessible {...voice} style={styles.text}>

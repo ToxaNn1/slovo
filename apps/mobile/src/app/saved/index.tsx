@@ -120,7 +120,7 @@ export default function SavedScreen() {
         </SavedCard>
         {learningShown && (
           <LearningCard
-            items={learning}
+            entries={learning}
             onPress={() => {
               openScreen('/saved/learning');
             }}
