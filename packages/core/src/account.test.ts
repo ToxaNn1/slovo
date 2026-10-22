@@ -427,7 +427,7 @@ describe('the Account signed in', () => {
     const release = api.hold();
 
     const checking = account.refresh();
-    expect(account.state).toMatchObject({ status: 'signed-in', inFlight: 'refresh' });
+    expect(account.state).toMatchObject({ status: 'signed-in', inFlight: undefined });
     await account.signOut();
     release();
     await checking;
@@ -438,6 +438,49 @@ describe('the Account signed in', () => {
       problem: undefined,
     });
     expect(await sessions.read()).toBeUndefined();
+  });
+
+  it('checks the Session in the background, so deleting goes ahead at once and the check changes nothing after', async () => {
+    const { account, api, sessions, time } = await signedIn();
+    time.advance(60 * 60_000);
+    const release = api.hold();
+
+    const checking = account.refresh();
+    await account.delete();
+    release();
+    await checking;
+
+    expect(api.accounts).toEqual([]);
+    expect(account.state).toEqual({
+      status: 'signed-out',
+      inFlight: undefined,
+      problem: undefined,
+    });
+    expect(await sessions.read()).toBeUndefined();
+  });
+
+  it('checks the Session once at a time, however often it is asked', async () => {
+    const { account, api, time } = await signedIn();
+    time.advance(60 * 60_000);
+    const release = api.hold();
+
+    const checking = [account.refresh(), account.refresh()];
+    release();
+    await Promise.all(checking);
+
+    expect(api.calls.filter((call) => call === 'me')).toHaveLength(1);
+  });
+
+  it('keeps the problem shown while it checks the Session', async () => {
+    const { account, api, time } = await signedIn();
+    api.failNext('offline', 'offline', 'offline', 'offline');
+    await account.signOutEverywhere();
+    time.advance(60 * 60_000);
+
+    await account.refresh();
+
+    expect(api.calls).toContain('me');
+    expect(account.state).toMatchObject({ status: 'signed-in', problem: 'offline' });
   });
 
   it('signs out everywhere, ending every Session of the Account', async () => {

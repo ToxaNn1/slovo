@@ -39,7 +39,7 @@ Now one module of the shell, `answerOf` in `apps/mobile/src/api.ts`, turns every
 
 ## Amendment: the snapshot names the request in flight, and the value rules come from the contracts (architecture review 2)
 
-The snapshot said only whether a request was in flight. The SLOVO ID screen kept two states of its own to know which button's spinner to turn, which request it had started and when it ended, and only Maestro checked them. Now `inFlight` names the action of the Account whose request is in flight (`requestCode`, `resendCode`, `verifyCode`, `signOutEverywhere`, `delete` or `refresh`), or is `undefined`, and the screen only reads it. The Core's tests check which request each action shows.
+The snapshot said only whether a request was in flight. The SLOVO ID screen kept two states of its own to know which button's spinner to turn, which request it had started and when it ended, and only Maestro checked them. Now `inFlight` names the action of the Account whose request is in flight (`requestCode`, `resendCode`, `verifyCode`, `signOutEverywhere`, `delete` or `refresh`; `refresh` left it with the amendment for batch B3 below), or is `undefined`, and the screen only reads it. The Core's tests check which request each action shows.
 
 The rules of the values both sides check were written in several places: six digits in the contract, in the better-auth adapter and as a pattern in the Core; trimming, lower-casing and checking an email in the Core and in the server Core; and the Core kept its own copy of the published pack's shape. Had one copy drifted, the app would have sent what the backend refuses as `BAD_REQUEST`. Now `@slovo/contracts` holds them once: `SIGN_IN_CODE_DIGITS` and `SignInCodeSchema` for the Sign-in code, `AccountEmailSchema` for the email of an Account, and `PublishedPack` for the pack the backend announces. The Core, the server Core, the adapter and the screen's code field derive from them. The `/v1` description stays the same: the API still takes the email as typed, and the backend makes the Account's email of it.
 
@@ -62,3 +62,14 @@ Sync (spec #378, ADR 0041) is the first module besides the Account that makes re
 - **The Account's rule for a 429, shown at once and not waited for**: rejected. There is nothing to show, and the next write or return would ask again within the limit's window.
 - **Giving Sync the Session's token and its own 401 rule**: rejected. Two modules would end the Session, and the rule that an answer outdated by a sign-out changes nothing would live twice.
 - **Forgetting the cursor at once at the sign-out**: rejected. A sync running at that moment could write a cursor of the ended Session after it, and the next sign-in would skip the first-sign-in rule.
+
+## Amendment: the check of the Session runs in the background (whole-project review, batch B3)
+
+The check of the Session (`refresh`) went through the same path as the reader's requests, so it showed `refresh` in flight through up to three tries again, several seconds against a failing server. The SLOVO ID screen disables «Вийти на всіх пристроях» and «Видалити» while any request is in flight, so both went grey with no spinner right after Settings opened, and a deletion confirmed in a dialog opened before the check started did nothing. The check also cleared the problem the screen showed.
+
+Now the check runs in the background, as Sync's requests do: it shows nothing in flight, keeps the problem shown and holds back no action, so `inFlight` names only the reader's requests (`requestCode`, `resendCode`, `verifyCode`, `signOutEverywhere` or `delete`). It still tries again by the one rule and applies the 401 rule, and its answer changes nothing once the Session ended on the way, such as by a deletion made meanwhile. One check runs at a time: a `refresh` asked while one is in flight waits for it.
+
+### Considered Options
+
+- **Keep the check in flight, and let signing out everywhere or deleting wait for it**: rejected. Nothing is lost, but the buttons still go grey for seconds with no reason the reader can see.
+- **Keep it as it was**: rejected. A confirmed deletion that silently does nothing is the one thing the screen must never do.

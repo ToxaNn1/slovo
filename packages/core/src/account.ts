@@ -22,10 +22,10 @@ const CHECK_HOLDS = 60 * 60_000;
 export type AccountProblem =
   'offline' | 'invalid-email' | 'wrong-code' | 'code-expired' | 'too-many-requests' | 'unexpected';
 
-/** The actions of the Account that make a request of the server, by name. */
+/** The actions of the reader that make a request of the server, by name. */
 export type AccountRequest = keyof Pick<
   Account,
-  'requestCode' | 'resendCode' | 'verifyCode' | 'signOutEverywhere' | 'delete' | 'refresh'
+  'requestCode' | 'resendCode' | 'verifyCode' | 'signOutEverywhere' | 'delete'
 >;
 
 /**
@@ -52,8 +52,8 @@ export type AccountState = (
 
 /**
  * The reader's Account («SLOVO ID») on this device, with every rule of
- * signing in, out and deleting it. While a request is in flight no other
- * starts, signing out aside. A request that fails with no answer or a server
+ * signing in, out and deleting it. While a request of the reader is in
+ * flight no other starts, signing out aside. A request that fails with no answer or a server
  * error is tried again, at most 3 times, with backoff and jitter (ADR 0037).
  * Whenever the server says the Session has ended, the device forgets
  * it and shows signed out, with no problem. Nothing here touches the user
@@ -94,8 +94,11 @@ export interface Account {
   /**
    * Tells the server of the sign-outs it missed, and checks the Session with
    * it at most once an hour: a check that finds no server counts for nothing,
-   * and offline the Session holds. The shell calls it when the app returns to
-   * the foreground and when Settings opens.
+   * and offline the Session holds. The check is in the background, one at a
+   * time: it shows nothing in flight, keeps the problem shown and holds back
+   * no action of the reader; its answer changes nothing once the Session
+   * ended on the way. The shell calls it when the app returns to the
+   * foreground and when Settings opens.
    */
   refresh(): Promise<void>;
   /**
@@ -161,6 +164,8 @@ export async function openAccount({
   /** The tokens of the Sessions signed out on this device that the server has not heard of yet. */
   const untold: string[] = [];
   let telling: Promise<void> | undefined;
+  /** The check of the Session with the server in flight, if any. */
+  let checking: Promise<void> | undefined;
 
   const retried = <A extends Answer>(call: () => Promise<A>) =>
     withRetries(call, { schedule, random });
@@ -318,14 +323,16 @@ export async function openAccount({
       const current = token;
       if (current === undefined) return;
       if (checkedAt !== undefined && clock.now().getTime() - checkedAt < CHECK_HOLDS) return;
-      await request(
-        'refresh',
-        () => api.me(current),
-        (answer) => {
-          if (answer.ok) checkedAt = clock.now().getTime();
-          return state;
-        },
-      );
+      checking ??= (async () => {
+        const ended = endedSessions;
+        const answer = await retried(() => api.me(current));
+        if (ended !== endedSessions) return;
+        if (answer.ok) checkedAt = clock.now().getTime();
+        else if (unauthorized(answer)) change(await endSession());
+      })().finally(() => {
+        checking = undefined;
+      });
+      await checking;
     },
     async withSession(lent) {
       const current = token;

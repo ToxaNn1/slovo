@@ -163,7 +163,8 @@ function nextEntryId(
     if (dueCorrection !== undefined) return dueCorrection;
     if (id !== undefined && unseenCorrections.includes(id)) return id;
   }
-  const reviewSlot = (session.cards.length + 1) % REVIEW_EVERY === 0;
+  // Counting every card of the session, also the dropped ones, so a hide never moves the slots.
+  const reviewSlot = (session.all.length + 1) % REVIEW_EVERY === 0;
   return (reviewSlot ? reviewEntryId(due.words, session) : undefined) ?? id;
 }
 
@@ -289,7 +290,9 @@ export async function openFeed({
 
   /**
    * Opens on the card the reader was on, if it was today and the Cycle still
-   * covers its Entry, after today's Word of the Day, so the reader can go back to it.
+   * covers its Entry, after today's Word of the Day, so the reader can go back
+   * to it. Without that card, such as when today's Word is Hidden since, the
+   * day isn't opened, so its Word of the Day, chosen again, comes next.
    */
   async function restore(): Promise<boolean> {
     const position = await userState.read(feedPosition);
@@ -298,9 +301,9 @@ export async function openFeed({
     const entry = await entries.get(position.entryId);
     if (entry === undefined) return false;
     const today = wordOfTheDay.chosen();
-    if (today !== undefined) openedDay = position.date;
     const opening =
       today !== undefined && cycle.covers(today.wordId) ? await wordOfTheDayCard(today) : undefined;
+    if (opening !== undefined) openedDay = position.date;
     const restored =
       opening?.wordCard.wordId === entry.id
         ? undefined

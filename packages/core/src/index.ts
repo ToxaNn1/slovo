@@ -108,7 +108,6 @@ export {
 } from './knowledge/knowledge-record';
 export { type Knowledge, type KnowledgeState, type LearningEntry } from './knowledge/knowledge';
 export {
-  daysUntil,
   formatTimeOfDay,
   localDayOf,
   localTimeOf,

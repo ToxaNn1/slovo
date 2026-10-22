@@ -42,7 +42,7 @@ The Game's mistake answers Unknown by the rule alone (`answer`), never removing 
 
 ## Amendment: which card is a Review slot (0.8.6, #468)
 
-A Review slot is every 3rd card of the Feed's session, counting every card shown so far, the Word of the Day included, unless that card is a Correction's turn: the Correction slot (every 5th card of the Cycle) keeps its card, so with Corrections the Reviews fall on cards 3, 6, 9, 12, 18 and so on. Of the due Words the Cycle covers, the slot takes the one not shown in this session yet, else the one shown longest ago, in the Cycle order, never the Entry of the card before it. A due Word the reader swipes past without answering so comes back at a later slot, and two or more due Words take the slots in turn. The knowledge module gives the Feed the Entries due today, none with the `knowledge` Feature Switch off; the Cycle's order decides which of them are eligible.
+A Review slot is every 3rd card of the Feed's session, counting every card shown so far, the Word of the Day included and a card a hide took out since, so a hide never moves the slots, unless that card is a Correction's turn: the Correction slot (every 5th card of the Cycle) keeps its card, so with Corrections the Reviews fall on cards 3, 6, 9, 12, 18 and so on. Of the due Words the Cycle covers, the slot takes the one not shown in this session yet, else the one shown longest ago, in the Cycle order, never the Entry of the card before it. A due Word the reader swipes past without answering so comes back at a later slot, and two or more due Words take the slots in turn. The knowledge module gives the Feed the Entries due today, none with the `knowledge` Feature Switch off; the Cycle's order decides which of them are eligible.
 
 ### Considered Options
 
