@@ -1,0 +1,27 @@
+{
+  "id": "w_7e596g",
+  "lemma": "плай",
+  "stress": [2],
+  "partOfSpeech": "noun",
+  "gender": "masculine",
+  "primaryDefinition": "Стежка в горах (звичайно в Карпатах).",
+  "extraDefinitions": ["Плескатий гребінь гори із пасовищами в Карпатах."],
+  "examples": [
+    {
+      "text": "Ми рушили крутим плаєм у гори."
+    },
+    {
+      "text": "Юра йшов довгий час верхом, плаєм, лишаючи село по лівій руці."
+    }
+  ],
+  "registers": ["dialectal"],
+  "region": "Карпати",
+  "categoryId": "dialects",
+  "rarity": 4,
+  "sources": [
+    {
+      "title": "Тлумачний словник української мови. Томи 1-15 (А-П'ЯТЬ)",
+      "url": "https://goroh.pp.ua/Тлумачення/плай"
+    }
+  ]
+}

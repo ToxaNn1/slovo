@@ -11,6 +11,8 @@ export const ContentTargetsSchema = z.strictObject({
   minWords: z.int().nonnegative().optional(),
   minCorrections: z.int().nonnegative().optional(),
   minWordsPerCategory: z.int().nonnegative().optional(),
+  /** A floor of Words for each named Category, taken over `minWordsPerCategory` for it. */
+  minWordsByCategory: z.record(z.string(), z.int().nonnegative()).optional(),
   /** Every rarity, 1 to 5, has at least one Word. */
   everyRarity: z.boolean().optional(),
   /** Every Word has at least one Stress. */
@@ -29,8 +31,14 @@ export interface MissedTarget {
 
 export function missedTargets(report: ContentReport, targets: ContentTargets): MissedTarget[] {
   const missed: MissedTarget[] = [];
-  const { minWords, minCorrections, minWordsPerCategory, everyRarity, everyWordHasStress } =
-    targets;
+  const {
+    minWords,
+    minCorrections,
+    minWordsPerCategory,
+    minWordsByCategory = {},
+    everyRarity,
+    everyWordHasStress,
+  } = targets;
 
   if (minWords !== undefined && report.words < minWords) {
     missed.push({
@@ -44,14 +52,26 @@ export function missedTargets(report: ContentReport, targets: ContentTargets): M
       message: `${String(report.corrections)} Corrections, below the target of ${String(minCorrections)}`,
     });
   }
-  if (minWordsPerCategory !== undefined) {
-    for (const { categoryId, words } of report.wordsPerCategory) {
-      if (words < minWordsPerCategory) {
-        missed.push({
-          target: 'minWordsPerCategory',
-          message: `Category "${categoryId}" has ${String(words)} Words, below the target of ${String(minWordsPerCategory)}`,
-        });
-      }
+  for (const { categoryId, words } of report.wordsPerCategory) {
+    const floor = minWordsByCategory[categoryId];
+    const [target, min] =
+      floor === undefined
+        ? (['minWordsPerCategory', minWordsPerCategory] as const)
+        : (['minWordsByCategory', floor] as const);
+    if (min !== undefined && words < min) {
+      missed.push({
+        target,
+        message: `Category "${categoryId}" has ${String(words)} Words, below the target of ${String(min)}`,
+      });
+    }
+  }
+  const categoryIds = new Set(report.wordsPerCategory.map(({ categoryId }) => categoryId));
+  for (const categoryId of Object.keys(minWordsByCategory)) {
+    if (!categoryIds.has(categoryId)) {
+      missed.push({
+        target: 'minWordsByCategory',
+        message: `No Category "${categoryId}" in the Edition`,
+      });
     }
   }
   if (everyRarity === true) {
