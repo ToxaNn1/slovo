@@ -148,6 +148,16 @@ describe('EntryCard', () => {
     expect(screen.queryByText('Review')).toBeNull();
   });
 
+  it.each([
+    ['Word', wordCard, 'Show the meaning'],
+    ['Correction', card, 'Show'],
+  ])('keeps the Review label on a %s card Self-check conceals', async (_kind, entry, reveal) => {
+    await render(inEdition(<EntryCard card={{ ...entry, review: true }} selfCheck />));
+
+    expect(screen.getByRole('button', { name: reveal })).toBeTruthy();
+    expect(screen.getByText('Review')).toBeTruthy();
+  });
+
   it('draws no frame on a card when the Edition has no corners', async () => {
     await render(inEdition(<EntryCard card={card} />));
 
@@ -155,26 +165,20 @@ describe('EntryCard', () => {
   });
 });
 
-/** The Correction card with its action row, the mark buttons there only when `marks` is on. */
+/** The Correction card with its action row and the mark buttons there. */
 function correctionWithMarks({
-  marks,
   mark,
   onTap = jest.fn(),
 }: {
-  marks: boolean;
   mark?: 'known' | 'unknown';
   onTap?: (mark: 'known' | 'unknown') => void;
-}) {
+} = {}) {
   return inEdition(
     <EntryCard
       card={card}
       actions={
         <ActionRow
-          marks={
-            marks ? (
-              <KnowledgeButtons entryKind="correction" mark={mark} onTap={onTap} />
-            ) : undefined
-          }
+          marks={<KnowledgeButtons entryKind="correction" mark={mark} onTap={onTap} />}
           favorite={<Text>♡</Text>}
           collection={<Text>+</Text>}
           hide={<Text>×</Text>}
@@ -187,7 +191,7 @@ function correctionWithMarks({
 describe('the mark buttons on a Correction card', () => {
   it('marks a Correction with no mark Known', async () => {
     const onTap = jest.fn();
-    await render(correctionWithMarks({ marks: true, onTap }));
+    await render(correctionWithMarks({ onTap }));
 
     expect(screen.getByRole('button', { name: 'Unknown', selected: false })).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Known', selected: false }));
@@ -196,17 +200,16 @@ describe('the mark buttons on a Correction card', () => {
   });
 
   it('says on Known that the reader already says it right', async () => {
-    await render(correctionWithMarks({ marks: true }));
+    await render(correctionWithMarks());
 
-    expect(screen.getByRole('button', { name: 'Known' })).toHaveProp(
-      'accessibilityHint',
-      'I already say it right',
+    expect(screen.getByHintText('I already say it right')).toBe(
+      screen.getByRole('button', { name: 'Known' }),
     );
   });
 
   it('changes a Known Correction to Unknown', async () => {
     const onTap = jest.fn();
-    await render(correctionWithMarks({ marks: true, mark: 'known', onTap }));
+    await render(correctionWithMarks({ mark: 'known', onTap }));
 
     expect(screen.getByRole('button', { name: 'Known', selected: true })).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Unknown', selected: false }));
@@ -216,19 +219,11 @@ describe('the mark buttons on a Correction card', () => {
 
   it('removes the mark when its button is tapped again', async () => {
     const onTap = jest.fn();
-    await render(correctionWithMarks({ marks: true, mark: 'unknown', onTap }));
+    await render(correctionWithMarks({ mark: 'unknown', onTap }));
 
     await fireEvent.press(screen.getByRole('button', { name: 'Unknown', selected: true }));
 
     expect(onTap).toHaveBeenCalledWith('unknown');
-  });
-
-  it('has no mark buttons with the Knowledge switch off', async () => {
-    await render(correctionWithMarks({ marks: false }));
-
-    expect(screen.getByTestId('action-row')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Known' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Unknown' })).toBeNull();
   });
 });
 

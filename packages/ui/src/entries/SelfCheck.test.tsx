@@ -167,6 +167,18 @@ describe('Self-check', () => {
     expect(screen.getByText('What first means.', { includeHiddenElements: true })).toBeTruthy();
   });
 
+  it('keeps the marks of a Word inactive until the reader reveals it', async () => {
+    const onMark = jest.fn();
+    await renderFeed(true, CARDS, onMark);
+    await fireEvent.press(screen.getByRole('button', { name: 'Unknown', disabled: true }));
+    expect(onMark).not.toHaveBeenCalled();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Show the meaning' }));
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Known', disabled: false }));
+    expect(onMark).toHaveBeenCalledWith('known');
+  });
+
   it('hides nothing with Self-check off', async () => {
     await renderFeed(false);
 

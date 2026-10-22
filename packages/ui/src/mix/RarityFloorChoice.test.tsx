@@ -34,10 +34,9 @@ describe('RarityFloorChoice', () => {
 
     expect(screen.getByText('Rarity')).toBeTruthy();
     for (const { floor, label } of options) {
-      expect(screen.getByLabelText(label)).toHaveProp('accessibilityState', {
-        selected: floor === 3,
-        disabled: false,
-      });
+      expect(
+        screen.getByRole('button', { name: label, selected: floor === 3, disabled: false }),
+      ).toBeTruthy();
     }
   });
 
