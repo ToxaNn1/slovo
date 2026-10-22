@@ -182,7 +182,7 @@ async function run({
       id: 'test',
       isFeatureEnabled: (feature) => (feature === 'game' && game) || on.includes(feature),
       userSettingDefaults: {
-        mix: { categoryIds: categories.map(({ id }) => id), corrections: false },
+        mix: { categoryIds: categories.map(({ id }) => id), corrections: false, idioms: true },
         notificationTimes: [],
       },
       languageTraits: { distractorRule: 'same-part-of-speech' },

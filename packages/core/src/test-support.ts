@@ -1,4 +1,4 @@
-import type { Correction, Word } from '@slovo/contracts';
+import type { Correction, Idiom, Word } from '@slovo/contracts';
 
 import type { Clock, ContentReadPort, Random } from './ports';
 
@@ -63,6 +63,22 @@ export function correction(id: string, overrides: Partial<Correction> = {}): Cor
     standardEquivalents: [id.slice(2), `also ${id.slice(2)}`],
     explanation: 'An explanation.',
     examplePair: { nonStandard: 'People say this.', standard: 'Better say this.' },
+    sources: [{ title: 'Test source' }],
+    retired: false,
+    ...overrides,
+  };
+}
+
+/** A live Idiom, an idiom proper, with nothing but what the Core reads. */
+export function idiom(id: string, overrides: Partial<Idiom> = {}): Idiom {
+  return {
+    kind: 'idiom',
+    id,
+    expression: `to ${id.slice(2)}`,
+    idiomType: 'idiom',
+    primaryDefinition: 'A meaning.',
+    extraDefinitions: [],
+    examples: [],
     sources: [{ title: 'Test source' }],
     retired: false,
     ...overrides,

@@ -190,11 +190,12 @@ function reviewEntryId(due: readonly string[], session: FeedSession): string | u
 /** The Entries due for Review that the Cycle covers, so neither Hidden nor out of the Mix, in its order. */
 function eligibleDue(cycle: Cycle, knowledge: Pick<Knowledge, 'state'>): EntryIds {
   const due = new Set(knowledge.state.due);
-  if (due.size === 0) return { words: [], corrections: [] };
-  const { words, corrections } = cycle.order();
+  if (due.size === 0) return { words: [], corrections: [], idioms: [] };
+  const { words, corrections, idioms } = cycle.order();
   return {
     words: words.filter((id) => due.has(id)),
     corrections: corrections.filter((id) => due.has(id)),
+    idioms: idioms.filter((id) => due.has(id)),
   };
 }
 

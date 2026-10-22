@@ -74,7 +74,7 @@ async function open({
       id: 'test',
       languageTraits: { distractorRule: 'same-part-of-speech' },
       userSettingDefaults: {
-        mix: { categoryIds: ['test'], corrections: correctionsInMix },
+        mix: { categoryIds: ['test'], corrections: correctionsInMix, idioms: true },
         notificationTimes: [],
       },
       isFeatureEnabled: () => true,

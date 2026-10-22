@@ -48,7 +48,7 @@ async function run({
       isFeatureEnabled: (feature) => on.includes(feature),
       languageTraits: { distractorRule: 'same-part-of-speech' },
       userSettingDefaults: {
-        mix: { categoryIds: ['test', 'other'], corrections: true },
+        mix: { categoryIds: ['test', 'other'], corrections: true, idioms: true },
         notificationTimes: [],
       },
     },

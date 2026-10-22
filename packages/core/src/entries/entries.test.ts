@@ -6,11 +6,12 @@ import {
   createEntries,
   createMemoryContentPort,
   createMemoryUserStatePort,
+  openRemoteSwitches,
   openUserState,
   type Edition,
   type MixEdition,
 } from '../index';
-import { countingReads } from '../test-support';
+import { countingReads, idiom, randomOf } from '../test-support';
 
 function word(id: string, overrides: Partial<Word> = {}): Word {
   return {
@@ -62,6 +63,12 @@ const words = [
   word('w_plain', { categoryId: 'nature' }),
 ];
 
+const idioms = [
+  idiom('i_lazy'),
+  idiom('i_place', { idiomType: 'placeName' }),
+  idiom('i_old', { retired: true }),
+];
+
 /** The Language Pack's Categories, in its order. */
 const categories = [
   { id: 'speech', displayName: 'Speech' },
@@ -69,28 +76,53 @@ const categories = [
 ];
 
 /**
- * An Edition with the Corrections Feature Switch on or off, and `speech` and
- * `nature` in its default Mix.
+ * An Edition with the Corrections and Idioms Feature Switches on or off, and
+ * `speech` and `nature`, Corrections and Idioms in its default Mix.
  */
-const editionWith = (corrections: boolean): Pick<Edition, 'isFeatureEnabled'> & MixEdition => ({
-  isFeatureEnabled: (feature) => feature === 'corrections' && corrections,
-  userSettingDefaults: { mix: { categoryIds: ['speech', 'nature'], corrections: true } },
+const editionWith = (
+  corrections: boolean,
+  idioms = true,
+): Pick<Edition, 'isFeatureEnabled'> & MixEdition => ({
+  isFeatureEnabled: (feature) =>
+    (feature === 'corrections' && corrections) || (feature === 'idioms' && idioms),
+  userSettingDefaults: {
+    mix: { categoryIds: ['speech', 'nature'], corrections: true, idioms: true },
+  },
 });
 
-const open = ({ correctionsSwitch = true } = {}) =>
+const openContent = () => createMemoryContentPort({ categories, words, corrections, idioms });
+
+const open = ({ correctionsSwitch = true, idiomsSwitch = true } = {}) =>
   createEntries({
-    content: createMemoryContentPort({ categories, words, corrections }),
-    edition: editionWith(correctionsSwitch),
+    content: openContent(),
+    edition: editionWith(correctionsSwitch, idiomsSwitch),
   });
+
+/** The Entries over the user state's records, written as the user state keeps them. */
+async function openOver(records: Record<string, unknown>, edition = editionWith(true)) {
+  const port = createMemoryUserStatePort();
+  await port.write(
+    new Map(Object.entries(records).map(([key, value]) => [key, JSON.stringify(value)])),
+  );
+  return {
+    port,
+    entries: createEntries({
+      content: openContent(),
+      edition,
+      userState: await openUserState({ port }),
+    }),
+  };
+}
 
 const ids = (entries: readonly { id: string }[]) => entries.map(({ id }) => id);
 
 describe('the Entries', () => {
   describe('eligible', () => {
-    it('are the live Words and the live Corrections, each kind in the Language Pack order', async () => {
+    it('are the live Words, Corrections and Idioms, each kind in the Language Pack order', async () => {
       expect(await open().eligible()).toEqual({
         words: ['w_always', 'w_talkative', 'w_plain'],
         corrections: ['c_always', 'c_chatty'],
+        idioms: ['i_lazy', 'i_place'],
       });
     });
 
@@ -98,13 +130,43 @@ describe('the Entries', () => {
       expect(await open({ correctionsSwitch: false }).eligible()).toEqual({
         words: ['w_always', 'w_talkative', 'w_plain'],
         corrections: [],
+        idioms: ['i_lazy', 'i_place'],
       });
+    });
+
+    it('hold no Idiom when the Edition turns Idioms off', async () => {
+      const entries = open({ idiomsSwitch: false });
+
+      expect((await entries.eligible()).idioms).toEqual([]);
+      expect(await entries.eligibleOfKind('idiom')).toEqual({ entries: [] });
+    });
+
+    it('hold no Idiom when Idioms are turned off remotely, by the answer the device kept', async () => {
+      const port = createMemoryUserStatePort();
+      const userState = await openUserState({ port });
+      await port.write(
+        new Map([['edition.switches', JSON.stringify({ off: ['idioms'], etag: '"idioms"' })]]),
+      );
+      const remote = await openRemoteSwitches({
+        edition: editionWith(true),
+        api: { switches: () => Promise.reject(new Error('offline')) },
+        userState,
+        schedule: (run) => {
+          run();
+          return () => undefined;
+        },
+        random: randomOf(0),
+      });
+      const entries = createEntries({ content: openContent(), edition: remote.edition, userState });
+
+      expect((await entries.eligible()).idioms).toEqual([]);
+      expect(await entries.eligibleOfKind('idiom')).toEqual({ entries: [] });
     });
 
     it('leave out every Hidden Entry, read afresh on every call', async () => {
       const port = createMemoryUserStatePort();
       const entries = createEntries({
-        content: createMemoryContentPort({ categories, words, corrections }),
+        content: openContent(),
         edition: editionWith(true),
         userState: await openUserState({ port }),
       });
@@ -112,19 +174,23 @@ describe('the Entries', () => {
         new Map([
           ['hidden.w_talkative', JSON.stringify('2026-10-11T06:00:00.000Z')],
           ['hidden.c_chatty', JSON.stringify('2026-10-11T06:00:00.000Z')],
+          ['hidden.i_lazy', JSON.stringify('2026-10-11T06:00:00.000Z')],
         ]),
       );
 
       expect(await entries.eligible()).toEqual({
         words: ['w_always', 'w_plain'],
         corrections: ['c_always'],
+        idioms: ['i_place'],
       });
+      expect(await entries.eligibleOfKind('idiom')).toEqual({ entries: [idioms[1]] });
 
       await port.write(new Map([['hidden.w_talkative', undefined]]));
 
       expect(await entries.eligible()).toEqual({
         words: ['w_always', 'w_talkative', 'w_plain'],
         corrections: ['c_always'],
+        idioms: ['i_place'],
       });
     });
 
@@ -139,6 +205,7 @@ describe('the Entries', () => {
         ],
         words,
         corrections,
+        idioms,
       });
       const entries = createEntries({
         content: {
@@ -155,6 +222,7 @@ describe('the Entries', () => {
       expect(await entries.eligible()).toEqual({
         words: ['w_plain', 'w_always', 'w_talkative'],
         corrections: ['c_always', 'c_chatty'],
+        idioms: ['i_lazy', 'i_place'],
       });
       expect(asked).toEqual(['nature', 'speech']);
 
@@ -168,6 +236,48 @@ describe('the Entries', () => {
       expect(await entries.eligible()).toEqual({
         words: ['w_always', 'w_talkative'],
         corrections: [],
+        idioms: ['i_lazy', 'i_place'],
+      });
+    });
+
+    it('hold the Idioms only while they are in the Mix, and say when they are out', async () => {
+      const { port, entries } = await openOver({ 'mix.idioms': false });
+
+      expect((await entries.eligible()).idioms).toEqual([]);
+      expect(await entries.eligibleOfKind('idiom')).toEqual({ refusal: 'idioms-out-of-mix' });
+
+      await port.write(new Map([['mix.idioms', JSON.stringify(true)]]));
+
+      expect((await entries.eligible()).idioms).toEqual(['i_lazy', 'i_place']);
+      expect(await entries.eligibleOfKind('idiom')).toEqual({ entries: idioms.slice(0, 2) });
+    });
+
+    it('say that Idioms are out of the Mix whether or not the Edition turns them on', async () => {
+      const { entries } = await openOver({ 'mix.idioms': false }, editionWith(true, false));
+
+      expect(await entries.eligibleOfKind('idiom')).toEqual({ refusal: 'idioms-out-of-mix' });
+    });
+
+    it('hold Idioms by the Edition default Mix until the user chooses', async () => {
+      const edition = {
+        ...editionWith(true),
+        userSettingDefaults: {
+          mix: { categoryIds: 'all' as const, corrections: true, idioms: false },
+        },
+      };
+      const { entries } = await openOver({}, edition);
+
+      expect(await entries.eligibleOfKind('idiom')).toEqual({ refusal: 'idioms-out-of-mix' });
+    });
+
+    it('leave Idioms untouched by the Rarity Floor', async () => {
+      const edition = { ...editionWith(true), isFeatureEnabled: () => true };
+      const { entries } = await openOver({ 'mix.rarityFloor': 5 }, edition);
+
+      expect(await entries.eligible()).toEqual({
+        words: [],
+        corrections: ['c_always', 'c_chatty'],
+        idioms: ['i_lazy', 'i_place'],
       });
     });
 
@@ -177,7 +287,7 @@ describe('the Entries', () => {
         edition: editionWith(true),
       });
 
-      expect(await entries.eligible()).toEqual({ words: [], corrections: [] });
+      expect(await entries.eligible()).toEqual({ words: [], corrections: [], idioms: [] });
     });
   });
 

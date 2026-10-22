@@ -60,7 +60,7 @@ async function run({
         feature === 'widget' ? withWidget : withCorrections && feature === 'corrections',
       languageTraits: { distractorRule: 'same-part-of-speech' },
       userSettingDefaults: {
-        mix: { categoryIds: categories.map(({ id }) => id), corrections: true },
+        mix: { categoryIds: categories.map(({ id }) => id), corrections: true, idioms: true },
         notificationTimes: [],
       },
     },

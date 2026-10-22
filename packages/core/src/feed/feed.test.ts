@@ -54,7 +54,10 @@ const editionWith = (
   id: 'test',
   isFeatureEnabled: (feature) => feature === 'corrections' && corrections,
   languageTraits: { distractorRule: 'same-part-of-speech' },
-  userSettingDefaults: { mix: { categoryIds: ['test'], corrections: true }, notificationTimes: [] },
+  userSettingDefaults: {
+    mix: { categoryIds: ['test'], corrections: true, idioms: true },
+    notificationTimes: [],
+  },
 });
 
 /** The id of the Entry a card shows, if it shows one. */
