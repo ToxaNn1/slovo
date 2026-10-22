@@ -40,6 +40,7 @@ interface WordRow {
   category_id: string;
   rarity: number;
   etymology: string | null;
+  region: string | null;
   retired: number;
 }
 
@@ -196,6 +197,7 @@ export function createPackReader(db: PackDatabase): PackReader {
         antonyms: relatedOf('antonym'),
         ...(row.etymology === null ? {} : { etymology: row.etymology }),
         registers: (registers.get(row.id) ?? []).map((r) => r.register),
+        ...(row.region === null ? {} : { region: row.region }),
         categoryId: row.category_id,
         rarity: row.rarity,
         sources: (wordSources.get(row.id) ?? []).map(sourceOf),

@@ -1,0 +1,17 @@
+{
+  "id": "w_fx1024",
+  "lemma": "ґазда",
+  "stress": [1],
+  "partOfSpeech": "noun",
+  "gender": "masculine",
+  "primaryDefinition": "Господар.",
+  "categoryId": "speech",
+  "rarity": 3,
+  "sources": [
+    {
+      "title": "Тестове джерело"
+    }
+  ],
+  "registers": ["archaic"],
+  "region": "Гуцульщина"
+}

@@ -19,7 +19,8 @@
   "synonyms": ["хуртовина", "завірюха"],
   "antonyms": ["затишшя"],
   "etymology": "Від дієслова замітати.",
-  "registers": ["bookish", "colloquial"],
+  "registers": ["bookish", "colloquial", "dialectal"],
+  "region": "Гуцульщина",
   "categoryId": "nature",
   "rarity": 2,
   "sources": [

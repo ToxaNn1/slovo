@@ -68,6 +68,7 @@ describe('the Word card', () => {
       synonyms: [],
       antonyms: [],
       registers: [],
+      region: undefined,
       categoryId: 'household-crafts',
       categoryName: 'Побут і ремесла',
       details: undefined,
