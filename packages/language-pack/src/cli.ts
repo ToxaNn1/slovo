@@ -88,14 +88,12 @@ function main(): number {
     return 1;
   }
 
-  const { metadata, wordCount, correctionCount, report, missedTargets } = result;
+  const { metadata, report, missedTargets } = result;
   console.log(`Built the Language Pack for "${metadata.editionId}"`);
   console.log(`  file:            ${displayPath(outFile)}`);
   console.log(`  content version: ${String(metadata.contentVersion)}`);
   console.log(`  pack format:     ${String(metadata.packFormat)}`);
   console.log(`  checksum:        ${metadata.contentChecksum}`);
-  console.log(`  Words:           ${String(wordCount)}`);
-  console.log(`  Corrections:     ${String(correctionCount)}`);
   console.log('');
   console.log(formatContentReport(report));
   console.log('');
