@@ -10,7 +10,7 @@ The Correction card draws the same corner ornaments (Decor slot 3, ADR 0014) as 
 
 ## Amendment: Self-check belongs to the Entry card (0.8.6)
 
-Self-check is the Entry card's too. A screen tells the card only whether Self-check applies there; the card keeps the reveal, decides what each kind conceals until it (a Word's Definition and what follows, its register labels; a Correction's right form, explanation and type), conceals it again once the card leaves the screen, and tells its action slot through a React context, so the Knowledge Mark buttons there stay inactive until the reveal. The action row stays the shell's (device share), and no screen passes the concealed state twice.
+Self-check is the Entry card's too. A screen tells the card only whether Self-check applies there; the card keeps the reveal, decides what each kind conceals until it (a Word's Definition and what follows, its register labels; a Correction's right form, explanation and type), conceals it again once the card leaves the screen, and tells its action slot through a React context, so the Knowledge Mark buttons there stay inactive until the reveal. The action row stays the shell's (device share), and no screen passes the concealed state twice. «Поділитися» and «До колекції» stay active while the card is concealed, though the Share Card's preview shows the meaning: the owner chose to keep them so (21.10.2026).
 
 ### Considered Options
 
