@@ -32,17 +32,20 @@ const adapters: [string, () => Store][] = [
     'in SQLite',
     () => {
       const file = join(mkdtempSync(join(tmpdir(), 'slovo-user-state-')), 'user-state.db');
-      return { open: () => openSqliteUserState(nodeDriver(new DatabaseSync(file))) };
+      return { open: () => openSqliteUserState(nodeDriver(file)) };
     },
   ],
 ];
 
 /**
  * Puts `node:sqlite` behind the slice of expo-sqlite the adapter needs, so the
- * suite runs the same adapter code as the app.
+ * suite runs the same adapter code as the app: the database in WAL mode, as
+ * the app opens it, and each exclusive transaction on a connection of its own.
  */
-function nodeDriver(db: DatabaseSync): UserStateDatabase {
+function nodeDriver(file: string): UserStateDatabase {
+  const db = new DatabaseSync(file);
   databases.push(db);
+  db.exec('PRAGMA journal_mode = WAL');
   return {
     execAsync: (sql) => {
       db.exec(sql);
@@ -52,15 +55,17 @@ function nodeDriver(db: DatabaseSync): UserStateDatabase {
       Promise.resolve((db.prepare(sql).get(...params) as T | undefined) ?? null),
     getAllAsync: <T>(sql: string, params: string[]) =>
       Promise.resolve(db.prepare(sql).all(...params) as T[]),
-    runAsync: (sql, params) => Promise.resolve(db.prepare(sql).run(...params)),
-    async withTransactionAsync(task) {
-      db.exec('BEGIN');
+    async withExclusiveTransactionAsync(task) {
+      const txn = new DatabaseSync(file);
+      txn.exec('BEGIN');
       try {
-        await task();
-        db.exec('COMMIT');
+        await task({ runAsync: (sql, params) => Promise.resolve(txn.prepare(sql).run(...params)) });
+        txn.exec('COMMIT');
       } catch (error) {
-        db.exec('ROLLBACK');
+        txn.exec('ROLLBACK');
         throw error;
+      } finally {
+        txn.close();
       }
     },
   };
@@ -181,6 +186,33 @@ describe.each(adapters)('the user state %s', (_, createStore) => {
     await Promise.all(['1', '2', '3'].map((value) => port.write(new Map([['n', value]]))));
 
     expect(await port.get('n')).toBe('3');
+  });
+
+  it('shows a read made while a write is applied all of the write or none of it', async () => {
+    const port = await createStore().open();
+    const before = new Map([
+      ['pair.a', 'old'],
+      ['pair.b', 'old'],
+    ]);
+    const after = new Map([
+      ['pair.a', 'new'],
+      ['pair.b', 'new'],
+    ]);
+    await port.write(before);
+
+    const written = port.write(after);
+    const reads: Promise<ReadonlyMap<string, string>>[] = [];
+    // A read at each turn of the write, from before its first change to after its last.
+    for (let turn = 0; turn < 8; turn++) {
+      reads.push(port.list('pair.'));
+      await Promise.resolve();
+    }
+    await written;
+
+    const whole = [Object.fromEntries(before), Object.fromEntries(after)];
+    for (const read of await Promise.all(reads))
+      expect(whole).toContainEqual(Object.fromEntries(read));
+    expect(await port.list('pair.')).toEqual(after);
   });
 
   it('keeps the 0.4 records, whole lists included, and finds each kind by its prefix', async () => {
