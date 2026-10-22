@@ -200,8 +200,27 @@ export const wordCardSide = 26;
 /** The spacing inside an Entry's row in a list, off the 4-pt grid. */
 export const entryRow = { minHeight: 60, compactMinHeight: 52, lineGap: 3, titleGap: 10 } as const;
 
-/** The Word card's small controls: the Category chip's vertical padding and the gap inside the «more» button. */
-export const wordCardControls = { chipPaddingVertical: 7, moreGap: 6 } as const;
+/**
+ * The Word card's small controls: the Category chip's vertical padding, the
+ * gap inside the «more» button and the side of its chevron, and the side of
+ * the icon on the «often said» line.
+ */
+export const wordCardControls = {
+  chipPaddingVertical: 7,
+  moreGap: 6,
+  moreChevron: 14,
+  oftenSaidIcon: 16,
+} as const;
+
+/**
+ * The Correction card's padding over its content, off the 4-pt grid (the
+ * design's 28; its sides are the Word card's and its bottom is `space[6]`),
+ * and the side of the mark before each sentence of its example pair.
+ */
+export const correctionCardLayout = { paddingTop: 28, exampleMark: 18 } as const;
+
+/** The side of each button of the action row under the Entry card, from the design. */
+export const actionButtonSize = 52;
 
 /** The padding of the Word of the day badge. */
 export const badgePadding = { horizontal: 10, vertical: 6 } as const;
@@ -218,8 +237,16 @@ export const outlinedChipPadding = {
 /** The horizontal padding of a Game mode's card (the design's 22). */
 export const modeCardPaddingHorizontal = 22;
 
-/** The gaps of the Game's result: between its numbers, and inside one number. */
-export const resultLayout = { numbersGap: 28, numberGap: 2 } as const;
+/**
+ * The Game's result: the gaps between its numbers and inside one number, and
+ * the width of the victory illustration (Decor slot 4) on a win and on a loss.
+ */
+export const resultLayout = {
+  numbersGap: 28,
+  numberGap: 2,
+  winIllustration: 120,
+  lossIllustration: 64,
+} as const;
 
 /** The empty state's space over its illustration. */
 export const emptyStatePaddingTop = 80;
