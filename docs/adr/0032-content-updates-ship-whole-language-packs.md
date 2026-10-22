@@ -54,3 +54,9 @@ So a change an older app can't read is also a new value of a closed set in the c
 
 - **Keep format 1 and let an older app skip an Entry it can't read**: rejected. An app already in the App Store refuses the Entry at its contract check, and skipping it would need a new app first, which the old apps on readers' phones never get.
 - **The app reads formats 1 and 2**: rejected for now. The bundled pack is format 2, so no pack of format 1 is newer than it; reading format 1 too would only keep alive a code path no pack needs.
+
+## Amendment: Idioms and the Word's region take pack format 3 (0.8.8, #550)
+
+0.8.8 adds the Idiom, the third kind of Entry, and a region on a dialect Word. The pack's layout stays as it was, but an app that knows only Words and Corrections refuses a pack with an Idiom, and an app that knows no region refuses a Word that names one: both fail its contract check, as a new Correction Type did in 0.8.7.
+
+So the Language Pack build writes format 3 from 0.8.8; format 3 keeps format 1's layout. The app reads format 3 only, through the same `PACK_FORMAT`, so an app that reads only format 2 never downloads a pack with Idioms or regions. The bundled pack is format 3, so no pack of an older format is newer than it, and the app reads no older format, for the reason the format 2 amendment gives.

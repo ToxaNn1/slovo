@@ -122,9 +122,10 @@ CREATE TABLE sources (
  * table or column it reads removed, renamed or given another meaning, or a
  * new value of a closed set in the contracts, which its contract check
  * refuses); content changes and additions it ignores never raise it. Format 2
- * keeps format 1's layout and admits the Correction Types of 0.8.7.
+ * keeps format 1's layout and admits the Correction Types of 0.8.7; format 3
+ * keeps it too and admits the Idioms and the Word's region of 0.8.8.
  */
-export const PACK_FORMAT = 2;
+export const PACK_FORMAT = 3;
 
 /**
  * Where each field of the pack metadata lies in the `metadata` table, and how
