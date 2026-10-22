@@ -3,5 +3,8 @@
   "minCorrections": 50,
   "minWordsPerCategory": 45,
   "everyRarity": true,
-  "everyWordHasStress": true
+  "everyWordHasStress": true,
+  "minWordsByCategory": {
+    "dialects": 3
+  }
 }

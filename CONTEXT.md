@@ -76,7 +76,7 @@ A thematic group a Word belongs to (e.g. human body, emotions, military).
 _Avoid_: Topic, tag, theme
 
 **Rare Word**:
-The editorial standard for every Word: a normative dictionary word that an educated native speaker most likely doesn't know or hardly uses, but is worth knowing. It excludes profanity, surzhyk and russianisms, narrow jargon and proper names. Each Word carries a rarity from 1 ("heard it, never use it") to 5 ("almost nobody knows it").
+The editorial standard for every Word: a normative dictionary word that an educated native speaker most likely doesn't know or hardly uses, but is worth knowing. It excludes profanity, surzhyk and russianisms, narrow jargon and proper names. A dialect Word, with the dialectal register label («діал.») and its Region, is a Rare Word too when a normative dictionary (e.g. СУМ, Грінченко) or a dialect dictionary that names the Region lists it. Each Word carries a rarity from 1 ("heard it, never use it") to 5 ("almost nobody knows it").
 
 **Correction**:
 A non-standard form people commonly use (often a phrase) paired with one or more standard equivalents in the Edition's language, plus a short neutral explanation, e.g. «на протязі року» → «протягом року». A Core concept; each Edition supplies its own Corrections. A Word may point to the Corrections it is the standard form for (протягом → «на протязі»), so each is reachable from the other without duplicating data.

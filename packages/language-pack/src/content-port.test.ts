@@ -172,7 +172,16 @@ describe.each(adapters)('the content read port %s', (_, open) => {
 });
 
 describe('the Ukrainian Language Pack', () => {
-  it('lists the 10 Categories in their order, keeping the ids its Words already use', async () => {
+  it('builds and meets every content target, the Category floor of «Діалекти» included', () => {
+    const result = buildLanguagePack({
+      editionDir: ukrainianDir,
+      outFile: join(workDir(), 'language-pack.db'),
+    });
+
+    expect(result.ok && result.missedTargets).toEqual([]);
+  });
+
+  it('lists the 11 Categories in their order, keeping the ids its Words already use', async () => {
     const pack = openPack(ukrainianDir);
     try {
       const categories = await pack.listCategories();
@@ -188,10 +197,28 @@ describe('the Ukrainian Language Pack', () => {
         'Історія та старовина',
         'Наука',
         'Мова і мовлення',
+        'Діалекти',
       ]);
       expect(categories.map(({ id }) => id)).toEqual(
         expect.arrayContaining(['nature-weather', 'household-crafts', 'language-speech']),
       );
+    } finally {
+      pack.close();
+    }
+  });
+
+  it('gives every Word of «Діалекти» the dialectal register label and a region', async () => {
+    const pack = openPack(ukrainianDir);
+    try {
+      const words = await Promise.all(
+        (await pack.listWordIds('dialects')).map((wordId) => pack.getWord(wordId)),
+      );
+
+      expect(words.length).toBeGreaterThanOrEqual(3);
+      for (const word of words) {
+        expect(word?.registers).toContain('dialectal');
+        expect(word?.region).toEqual(expect.any(String));
+      }
     } finally {
       pack.close();
     }

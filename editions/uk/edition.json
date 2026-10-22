@@ -79,6 +79,10 @@
     {
       "id": "language-speech",
       "displayName": "Мова і мовлення"
+    },
+    {
+      "id": "dialects",
+      "displayName": "Діалекти"
     }
   ]
 }
