@@ -63,3 +63,14 @@ The Game decides the retry, not the shell. A planning that fails is tried again 
 ## Amendment: up to 5 Rounds come from Unknown or due Entries (0.8.6)
 
 ADR 0043 draws up to 5 of a Game's 15 Rounds from eligible Entries that are Unknown or due for Review, the rest from the pool above. The fallback stays: with fewer than 15 eligible Entries in History the pool is every eligible Entry of the kind. A wrong answer marks the Entry Unknown; answers never move an interval, and the Game keeps its Round answers until the result screen without storing them.
+
+## Amendment: no Distractor shares the answer's Definition (after 0.8.6)
+
+Several Words share one primary Definition: худоребрий, худокостий and сухокостий all read «Кістлявий, худий.». «Вгадай слово» could offer two of them in one Round, and the prompt then fit two options, so the reader could not tell which one was right.
+
+«Вгадай слово» never offers a Distractor whose primary Definition is the answer's. Two Definitions are the same when they match after case, runs of spaces and Stress marks are set aside. When too few Distractors are left, the Round can't be built, as for a Word without three other Lemmas to stand beside it: the mode makes no fair Round of that Word (see the amendment on 15 fair Rounds above).
+
+### Considered Options
+
+- **Show a second line, such as the Lemma's first Example, when Definitions match**: rejected. The prompt is the Definition alone; a Round that needs a second clue is not a fair Round.
+- **Give each of those Words its own Definition in the content**: rejected alone. The dictionary writes them alike, and a later Word may share a Definition again; the Game must hold the rule itself.
