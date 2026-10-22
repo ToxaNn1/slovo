@@ -211,7 +211,9 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
 
   it('writes no Seen, no History and no Active Day while it is played, only its best result', async () => {
     const { port, writes } = recordingPort(new Map());
-    const app = await run(5, port);
+    // A seed whose Rounds never offer two Words with the same primary Definition,
+    // which the player below can't tell apart and would answer wrong.
+    const app = await run(6, port);
     writes.length = 0;
 
     await playGame(app);
