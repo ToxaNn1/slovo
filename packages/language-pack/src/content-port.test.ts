@@ -207,7 +207,7 @@ describe.each(adapters)('the content read port %s', (_, open) => {
 });
 
 describe('the Ukrainian Language Pack', () => {
-  it('builds and meets every content target, the Category floors of «Діалекти» and «Дотепна лайка» included', () => {
+  it('builds and meets every content target, the floors of «Діалекти», «Дотепна лайка» and Idioms included', () => {
     const result = buildLanguagePack({
       editionDir: ukrainianDir,
       outFile: join(workDir(), 'language-pack.db'),
