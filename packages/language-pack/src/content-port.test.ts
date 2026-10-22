@@ -207,7 +207,7 @@ describe.each(adapters)('the content read port %s', (_, open) => {
 });
 
 describe('the Ukrainian Language Pack', () => {
-  it('builds and meets every content target, the Category floor of «Діалекти» included', () => {
+  it('builds and meets every content target, the Category floors of «Діалекти» and «Дотепна лайка» included', () => {
     const result = buildLanguagePack({
       editionDir: ukrainianDir,
       outFile: join(workDir(), 'language-pack.db'),
@@ -216,7 +216,7 @@ describe('the Ukrainian Language Pack', () => {
     expect(result.ok && result.missedTargets).toEqual([]);
   });
 
-  it('lists the 11 Categories in their order, keeping the ids its Words already use', async () => {
+  it('lists the 12 Categories in their order, keeping the ids its Words already use', async () => {
     const pack = openPack(ukrainianDir);
     try {
       const categories = await pack.listCategories();
@@ -233,6 +233,7 @@ describe('the Ukrainian Language Pack', () => {
         'Наука',
         'Мова і мовлення',
         'Діалекти',
+        'Дотепна лайка',
       ]);
       expect(categories.map(({ id }) => id)).toEqual(
         expect.arrayContaining(['nature-weather', 'household-crafts', 'language-speech']),
@@ -242,17 +243,33 @@ describe('the Ukrainian Language Pack', () => {
     }
   });
 
-  it('gives every Word of «Діалекти» the dialectal register label and a region', async () => {
+  it('holds 15 Words in «Діалекти», each with the dialectal register label and a region', async () => {
     const pack = openPack(ukrainianDir);
     try {
       const words = await Promise.all(
         (await pack.listWordIds('dialects')).map((wordId) => pack.getWord(wordId)),
       );
 
-      expect(words.length).toBeGreaterThanOrEqual(3);
+      expect(words).toHaveLength(15);
       for (const word of words) {
         expect(word?.registers).toContain('dialectal');
         expect(word?.region).toEqual(expect.any(String));
+      }
+    } finally {
+      pack.close();
+    }
+  });
+
+  it('holds 15 Words in «Дотепна лайка», each with its Stress', async () => {
+    const pack = openPack(ukrainianDir);
+    try {
+      const words = await Promise.all(
+        (await pack.listWordIds('witty-insults')).map((wordId) => pack.getWord(wordId)),
+      );
+
+      expect(words).toHaveLength(15);
+      for (const word of words) {
+        expect(word?.stress).not.toEqual([]);
       }
     } finally {
       pack.close();

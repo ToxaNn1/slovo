@@ -85,6 +85,10 @@
     {
       "id": "dialects",
       "displayName": "Діалекти"
+    },
+    {
+      "id": "witty-insults",
+      "displayName": "Дотепна лайка"
     }
   ]
 }
