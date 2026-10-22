@@ -75,7 +75,7 @@ describe('edition.switches', () => {
     'statistics',
     'knowledge',
     'selfCheck',
-    'rarityFilter',
+    'rarityFloor',
     'gameReview',
   ])('turns the %s switch off remotely and back on', async (feature) => {
     const { client, switchOff, clearSwitch } = servingEditions('polish');

@@ -108,8 +108,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   knowledge: z.boolean(),
   /** Self-check: the setting that hides a card's meaning until the reader reveals it. */
   selfCheck: z.boolean(),
-  /** The rarity filter: the Mix's Rarity Floor, the lowest rarity of the Words shown. */
-  rarityFilter: z.boolean(),
+  /** The Mix's Rarity Floor: the lowest rarity of the Words shown. */
+  rarityFloor: z.boolean(),
   /** Game Review: the list of every Round on the Game's result. */
   gameReview: z.boolean(),
 });

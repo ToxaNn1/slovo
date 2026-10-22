@@ -8,7 +8,7 @@ import { MixChip } from './MixChip';
 /**
  * The Rarity Floor choice of the Mix screen: one chip per floor, «від 1» to
  * «від 5», the one in the Mix filled. Nothing is drawn while `shown` is false,
- * which is while the rarityFilter Feature Switch is off in effect (ADR 0040).
+ * which is while the rarityFloor Feature Switch is off in effect (ADR 0040).
  */
 export function RarityFloorChoice({
   shown,

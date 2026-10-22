@@ -157,14 +157,14 @@ export function createEntries(
 
   /**
    * The Words of the ids at the Rarity Floor or above it, while the Edition
-   * turns the rarity filter on; every one of them otherwise, or at the lowest
+   * turns its rarityFloor switch on; every one of them otherwise, or at the lowest
    * floor, without reading the Words.
    */
   async function atRarityFloor(
     ids: readonly string[],
     floor: number | undefined,
   ): Promise<readonly string[]> {
-    if (floor === undefined || floor <= 1 || !edition.isFeatureEnabled('rarityFilter')) return ids;
+    if (floor === undefined || floor <= 1 || !edition.isFeatureEnabled('rarityFloor')) return ids;
     const words = await live.word();
     return ids.filter((id) => {
       const word = words.get(id);

@@ -28,7 +28,7 @@ const validConfig = {
     statistics: true,
     knowledge: true,
     selfCheck: true,
-    rarityFilter: true,
+    rarityFloor: true,
     gameReview: true,
   },
   userSettingDefaults: {
@@ -92,7 +92,7 @@ describe('loadEdition', () => {
     'statistics',
     'knowledge',
     'selfCheck',
-    'rarityFilter',
+    'rarityFloor',
     'gameReview',
   ] as const)('reports the %s Feature Switch, which an Edition may turn off', (feature) => {
     const on = loadEdition(validConfig);
@@ -227,9 +227,9 @@ describe('loadEdition', () => {
       'featureSwitches.selfCheck',
     ],
     [
-      'a missing rarity filter Feature Switch',
-      withoutSwitch('rarityFilter'),
-      'featureSwitches.rarityFilter',
+      'a missing Rarity Floor Feature Switch',
+      withoutSwitch('rarityFloor'),
+      'featureSwitches.rarityFloor',
     ],
     [
       'a missing Game Review Feature Switch',

@@ -13,8 +13,7 @@ export type BuildResult =
   | {
       readonly ok: true;
       readonly metadata: PackMetadata;
-      readonly wordCount: number;
-      readonly correctionCount: number;
+      /** The counts, Retired Words and Retired Corrections left out (ADR 0009). */
       readonly report: ContentReport;
       /** The content targets the Edition declares and the content misses. */
       readonly missedTargets: readonly MissedTarget[];
@@ -66,8 +65,6 @@ export function buildLanguagePack({
   return {
     ok: true,
     metadata,
-    wordCount: content.words.length,
-    correctionCount: content.corrections.length,
     report,
     missedTargets: missedTargets(report, targets),
   };
