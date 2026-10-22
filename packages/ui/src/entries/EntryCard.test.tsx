@@ -22,7 +22,7 @@ const strings = {
   correctionCard: {
     title: 'Correction',
     correctionType: 'Type: {type}',
-    correctionTypes: { calque: 'calque' },
+    correctionTypes: { calque: 'calque', anglicism: 'anglicism' },
     nonStandard: 'Non-standard',
     standard: 'Standard',
     otherEquivalents: 'Also: {equivalents}',
@@ -128,6 +128,16 @@ describe('EntryCard', () => {
     await render(inEdition(<EntryCard card={card} />));
 
     expect(screen.queryByTestId('correction-source')).toBeNull();
+  });
+
+  it('names the Correction Type of an anglicism in its chip', async () => {
+    const anglicism = { ...card.correctionCard, correctionType: 'anglicism' as const };
+
+    await render(inEdition(<EntryCard card={{ kind: 'correction', correctionCard: anglicism }} />));
+
+    const chip = screen.getByTestId('correction-type');
+    expect(chip).toHaveTextContent('anglicism');
+    expect(chip).toHaveProp('accessibilityLabel', 'Type: anglicism');
   });
 
   it.each([

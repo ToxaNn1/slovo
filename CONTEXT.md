@@ -83,7 +83,7 @@ A Correction withdrawn from the Language Pack. Like a Retired Word, it never app
 _Avoid_: Deleted correction
 
 **Correction Type**:
-Why the form is non-standard: russianism, calque, surzhyk or officialese (канцелярит).
+Why the form is non-standard: russianism, calque, surzhyk, officialese (канцелярит) or anglicism (англіцизм), an English borrowing where a dictionary word of the Edition's language serves.
 
 **Entry card**:
 How the app shows one Entry: a Word card or a Correction card in the same frame, with the action row (heart, Collections, share, hide) under it. The Feed and every screen that opens a kept Entry show the same Entry card.

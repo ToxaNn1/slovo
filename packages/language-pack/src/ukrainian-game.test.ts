@@ -21,7 +21,12 @@ import {
   type Word,
 } from '@slovo/core';
 
-import { buildLanguagePack, openLanguagePack, type NodeLanguagePack } from './index';
+import {
+  buildLanguagePack,
+  type ContentReport,
+  openLanguagePack,
+  type NodeLanguagePack,
+} from './index';
 import { ukrainian, ukrainianFolder } from './test-support';
 
 // The Core's Game over the real Ukrainian Language Pack, opened through the
@@ -32,13 +37,14 @@ let workDir: string;
 let pack: NodeLanguagePack;
 let words: readonly Word[];
 let corrections: readonly Correction[];
+let report: ContentReport;
 
 beforeAll(async () => {
   workDir = mkdtempSync(join(tmpdir(), 'slovo-game-'));
   const outFile = join(workDir, 'language-pack.db');
-  if (!buildLanguagePack({ editionDir: ukrainianFolder.dir, outFile }).ok) {
-    throw new Error('The Ukrainian Language Pack does not build');
-  }
+  const result = buildLanguagePack({ editionDir: ukrainianFolder.dir, outFile });
+  if (!result.ok) throw new Error('The Ukrainian Language Pack does not build');
+  report = result.report;
   pack = openLanguagePack(outFile);
   words = await pack.listWords();
   const ids = await pack.listCorrectionIds();
@@ -236,6 +242,20 @@ async function playCorrections(app: Composition): Promise<Round[]> {
   return rounds;
 }
 
+describe('the anglicisms of the Ukrainian Language Pack', () => {
+  it('builds the pack with its anglicisms and counts them in the report', () => {
+    const anglicisms = corrections.filter(({ correctionType }) => correctionType === 'anglicism');
+
+    expect(anglicisms.map(({ nonStandardForm }) => nonStandardForm)).toEqual(
+      expect.arrayContaining(['дедлайн', 'тінейджер', 'лузер']),
+    );
+    expect(report.correctionsPerType).toContainEqual({
+      correctionType: 'anglicism',
+      corrections: anglicisms.length,
+    });
+  });
+});
+
 describe('«Обери правильне» over the Ukrainian Language Pack', () => {
   it('plays a full Game of 15 different Corrections', async () => {
     const app = await run(7);
@@ -268,7 +288,7 @@ describe('«Обери правильне» over the Ukrainian Language Pack', (
     }
   });
 
-  it("offers other Corrections' main equivalents, of the same Correction Type, never the asked one's own", async () => {
+  it("offers other Corrections' main equivalents, of the same Correction Type first, never the asked one's own", async () => {
     for (const seed of [1, 2, 3]) {
       for (const round of await playCorrections(await run(seed))) {
         const asked = askedOf(round);
@@ -277,18 +297,43 @@ describe('«Обери правильне» over the Ukrainian Language Pack', (
         expect(texts.filter((text) => asked.standardEquivalents.includes(text))).toEqual([
           asked.standardEquivalents[0],
         ]);
-        for (const text of texts.filter((text) => text !== asked.standardEquivalents[0])) {
+        const sameType = corrections.filter(
+          (other) => other.id !== asked.id && other.correctionType === asked.correctionType,
+        );
+        const distractors = texts.filter((text) => text !== asked.standardEquivalents[0]);
+        expect(
+          distractors.filter((text) =>
+            sameType.some((other) => other.standardEquivalents[0] === text),
+          ),
+        ).toHaveLength(Math.min(3, sameType.length));
+        for (const text of distractors) {
           expect(
             corrections.some(
-              (other) =>
-                other.id !== asked.id &&
-                other.correctionType === asked.correctionType &&
-                other.standardEquivalents[0] === text,
+              (other) => other.id !== asked.id && other.standardEquivalents[0] === text,
             ),
           ).toBe(true);
         }
       }
     }
+  });
+
+  it('plays a Round about an anglicism, offering the other anglicisms first', async () => {
+    const anglicisms = corrections.filter(({ correctionType }) => correctionType === 'anglicism');
+    let round: Round | undefined;
+    for (let seed = 1; round === undefined && seed <= 40; seed += 1) {
+      round = (await playCorrections(await run(seed))).find(
+        (played) => askedOf(played).correctionType === 'anglicism',
+      );
+    }
+    if (round === undefined) throw new Error('No Game asked about an anglicism');
+
+    const asked = askedOf(round);
+    const texts = round.options.map(({ text }) => text);
+    expect(new Set(texts).size).toBe(4);
+    expect(texts[round.answer?.correct ?? -1]).toBe(asked.standardEquivalents[0]);
+    expect(texts).toEqual(
+      expect.arrayContaining(anglicisms.map((anglicism) => anglicism.standardEquivalents[0])),
+    );
   });
 
   it("shows the Correction's explanation on the sheet", async () => {
