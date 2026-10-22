@@ -1,13 +1,13 @@
-import { cpSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { CorrectionSchema, EditionConfigSchema, WordSchema } from '@slovo/contracts';
 import { createMemoryContentPort, type ContentReadPort } from '@slovo/core';
 
+import { editionFiles } from './edition-folder';
 import { buildLanguagePack, openLanguagePack, recordContent } from './index';
 
 // One contract for both adapters of the Core's content read port: the
@@ -47,18 +47,15 @@ function editionWithRetiredCorrection(): string {
   return editionDir;
 }
 
-/** The Categories of an Edition as authored, in its order. */
-function authoredCategories(editionDir: string) {
-  const config = JSON.parse(readFileSync(join(editionDir, 'edition.json'), 'utf8')) as unknown;
-  return EditionConfigSchema.parse(config).categories;
-}
-
-/** The Entries of an Edition as authored, each kind in id order. */
-function authored(editionDir: string, kind: 'words' | 'corrections'): unknown[] {
-  const dir = join(editionDir, 'content', kind);
-  return readdirSync(dir)
-    .sort()
-    .map((file) => JSON.parse(readFileSync(join(dir, file), 'utf8')) as unknown);
+/** The Categories and Entries of an Edition as authored, through the one reader (ADR 0035). */
+function authored(editionDir: string) {
+  const files = editionFiles(editionDir);
+  const { words, corrections } = files.entries();
+  return {
+    categories: files.read('config').categories,
+    words: words.map(({ entry }) => entry),
+    corrections: corrections.map(({ entry }) => entry),
+  };
 }
 
 const adapters: [
@@ -68,13 +65,7 @@ const adapters: [
   [
     'in memory',
     (editionDir) => ({
-      content: createMemoryContentPort({
-        categories: authoredCategories(editionDir),
-        words: authored(editionDir, 'words').map((word) => WordSchema.parse(word)),
-        corrections: authored(editionDir, 'corrections').map((correction) =>
-          CorrectionSchema.parse(correction),
-        ),
-      }),
+      content: createMemoryContentPort(authored(editionDir)),
       close: () => undefined,
     }),
   ],
