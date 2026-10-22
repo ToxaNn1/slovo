@@ -298,7 +298,8 @@ describe('Corrections in the Feed over the Ukrainian Language Pack', () => {
     const card = feed.cards[CORRECTION_EVERY - 1];
     const correction = await content.getCorrection(entryIdOf(card) ?? '');
 
-    expect(correctionCardOf(card)).toEqual({
+    // The stressed vowels of a stress trap's forms are the stress traps' test.
+    expect(correctionCardOf(card)).toMatchObject({
       kind: 'correction',
       correctionId: correction?.id,
       nonStandardForm: correction?.nonStandardForm,

@@ -1,4 +1,4 @@
-import type { Example, LocalDate, WordCardModel } from '@slovo/core';
+import { withoutStress, type Example, type LocalDate, type WordCardModel } from '@slovo/core';
 import { useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
@@ -200,7 +200,7 @@ export function WordCardBody({
                     key={correctionId}
                     testID={`word-often-said-${correctionId}`}
                     accessibilityRole="button"
-                    accessibilityLabel={`${strings.oftenSaid} ${nonStandardForm}`}
+                    accessibilityLabel={`${strings.oftenSaid} ${withoutStress(nonStandardForm)}`}
                     accessibilityHint={strings.oftenSaidHint}
                     {...voice}
                     disabled={onOpenCorrection === undefined}

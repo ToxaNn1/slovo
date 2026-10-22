@@ -13,6 +13,8 @@ Until 0.8.7 a Correction could show no stress mistake: no Correction Type fitted
 
 The example pair is not checked: a sentence may hold the word in an inflected form or several of them, and the author marks the Stress where it matters.
 
+**VoiceOver (0.8.7, #531).** The two forms of a stress trap are spelled alike, so read as written VoiceOver would say them the same way. The Correction card model gives the stressed vowels of the non-standard form and of the main standard equivalent, found from the marks in the text (empty for other Correction Types, which carry no marks), and the UI labels both forms with the Lemma's Stress label: the form without its mark, then where the Stress falls («дзвонить, наголос на о»), on the card, in Self-check and on the Share Card. Every other text, the explanation, the example pair, the other equivalents and list rows, goes to VoiceOver without the mark.
+
 **Why stress traps stay out of the Correction mode.** «Обери правильне» shows a Correction's «people often say» sentence and asks for the standard form among four options. A stress trap's non-standard form and standard equivalent are the same letters, so the options would differ only in a mark the reader can't tell apart at a glance, the Distractors of other Corrections would be whole other words and give the answer away, and a Round marked where the sentence holds the form as written would find the non-standard form at the place the marks make different. The Game therefore asks about no stress trap and offers none as a Distractor (0.8.7, #532); stress traps teach in the Feed, in Self-check and in Review.
 
 ## Considered Options

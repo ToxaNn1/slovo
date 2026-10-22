@@ -1,4 +1,4 @@
-import type { Favorite } from '@slovo/core';
+import { withoutStress, type Favorite } from '@slovo/core';
 import {
   BackLink,
   EmptyState,
@@ -37,7 +37,7 @@ function FavoriteRow({ favorite: { entryId, row, addedAt } }: { favorite: Favori
         {
           name: 'remove',
           label: strings.remove,
-          accessibilityLabel: fill(strings.removeLabel, { title: row.title }),
+          accessibilityLabel: fill(strings.removeLabel, { title: withoutStress(row.title) }),
           tone: 'destructive',
           onPress: remove,
         },

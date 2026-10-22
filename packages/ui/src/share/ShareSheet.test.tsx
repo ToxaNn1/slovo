@@ -11,6 +11,7 @@ const metrics = {
 };
 
 const strings = {
+  wordCard: { stress: 'stress on {vowels}', stressOr: 'or' },
   share: {
     title: 'Share the card',
     format: 'Format',
@@ -28,7 +29,9 @@ const card: CorrectionCardModel = {
   kind: 'correction',
   correctionId: 'c1',
   nonStandardForm: 'take part',
+  nonStandardStressedVowels: [],
   mainEquivalent: 'join in',
+  mainEquivalentStressedVowels: [],
   otherEquivalents: [],
   correctionType: 'calque',
   explanation: 'Why join in is better.',
