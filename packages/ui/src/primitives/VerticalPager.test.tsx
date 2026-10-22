@@ -34,22 +34,27 @@ async function renderPager({
     success: jest.fn(),
     warning: jest.fn(),
   };
-  await render(
+  const pager = (items: readonly string[]) => (
     <HapticsProvider haptics={haptics}>
       <VerticalPager
         testID="pager"
-        items={PAGES}
+        items={items}
         initialIndex={initialIndex}
         onIndexChange={onIndexChange}
         renderPage={(page) => <TurnablePage page={page} />}
         turnActionLabels={TURN_LABELS}
       />
-    </HapticsProvider>,
+    </HapticsProvider>
   );
+  await render(pager(PAGES));
   // The pages are drawn once the pager knows its height.
   await fireEvent(screen.getByTestId('pager'), 'layout', {
     nativeEvent: { layout: { x: 0, y: 0, width: 400, height: HEIGHT } },
   });
+  /** Gives the pager other pages, as its owner does when pages leave. */
+  return async (items: readonly string[]) => {
+    await screen.rerender(pager(items));
+  };
 }
 
 /** How long a swipe's motion takes, from the design. */
@@ -161,6 +166,14 @@ describe('VerticalPager', () => {
 
     expect(onIndexChange).not.toHaveBeenCalled();
     expect(screen.getByText('Third')).toBeTruthy();
+  });
+
+  it('shows the last page left once the current page and those after it leave', async () => {
+    const setPages = await renderPager({ initialIndex: 2 });
+
+    await setPages(['First', 'Second']);
+
+    expect(screen.getByText('Second')).toBeTruthy();
   });
 
   it('turns the page with the VoiceOver actions of the current page', async () => {

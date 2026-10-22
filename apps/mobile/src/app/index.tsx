@@ -58,7 +58,8 @@ function FeedScreen() {
   const { dismiss: dismissSwipeHint } = swipeHint;
   // A hide or its undo drops or puts back cards, and the reader's card moves
   // with them: the pager shows it at once. When the Feed has no card to put
-  // after a hidden one, the pager stays on its page.
+  // after a hidden one, the Feed is told no position past its cards, and the
+  // pager shows its last card.
   useEffect(() => {
     const position = readerPosition();
     if (position >= cards.length) return;

@@ -1,6 +1,6 @@
 import { createContext, useContext, useState } from 'react';
 
-import { useIsCurrentPage } from '../primitives/VerticalPager';
+import { useIsPageOnScreen } from '../primitives/VerticalPager';
 
 /** Self-check on one Entry card: whether it conceals its meaning, and how to reveal it. */
 interface SelfCheck {
@@ -12,13 +12,13 @@ interface SelfCheck {
 /**
  * Self-check on an Entry card: where it applies, the card conceals its
  * meaning until the reader reveals it. The reveal lasts while the card is on
- * screen and resets once the reader turns to another page.
+ * screen and resets once a turn to another page has taken it off screen.
  */
 export function useSelfCheck(applies: boolean): SelfCheck {
-  const current = useIsCurrentPage();
+  const onScreen = useIsPageOnScreen();
   const [revealed, setRevealed] = useState(false);
   // The card left the screen: it is concealed again when the reader comes back.
-  if (revealed && !current) setRevealed(false);
+  if (revealed && !onScreen) setRevealed(false);
   return {
     concealed: applies && !revealed,
     reveal: () => {
