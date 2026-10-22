@@ -56,6 +56,12 @@ export interface Entries {
    */
   get(id: string): Promise<Entry | undefined>;
   /**
+   * Any Entries by id, as `get` gives each, read together, so many Entries
+   * cost a read of each kind rather than one per Entry. An id the Language
+   * Pack doesn't have is not in the map.
+   */
+  getMany(ids: readonly string[]): Promise<ReadonlyMap<string, Entry>>;
+  /**
    * Every Category of the Language Pack, with its display name, in its order,
    * read once: the pack never changes while it is open (ADR 0033).
    */
@@ -202,6 +208,19 @@ export function createEntries(
     eligibleOfKind,
     async get(id) {
       return (await content.getWord(id)) ?? content.getCorrection(id);
+    },
+    async getMany(ids) {
+      const found = new Map<string, Entry>();
+      const unique = [...new Set(ids)];
+      if (unique.length === 0) return found;
+      for (const word of await content.getWords(unique)) found.set(word.id, word);
+      // As `get` does, an id is a Correction only when it is no Word.
+      const rest = unique.filter((id) => !found.has(id));
+      if (rest.length === 0) return found;
+      for (const correction of await content.getCorrections(rest)) {
+        found.set(correction.id, correction);
+      }
+      return found;
     },
     categories,
     linksCorrections,

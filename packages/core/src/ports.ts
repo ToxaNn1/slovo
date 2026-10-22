@@ -25,12 +25,22 @@ export interface ContentReadPort {
   /** Any Word by id, a Retired Word included, so kept Words stay reachable. */
   getWord(id: string): Promise<Word | undefined>;
   /**
+   * The Words of the ids, as `getWord` gives each, read at once, in no set
+   * order. An id the pack has no Word for is left out.
+   */
+  getWords(ids: readonly string[]): Promise<readonly Word[]>;
+  /**
    * The ids of the Corrections that are not retired, in a stable order. A
    * Retired Correction is left out, so nothing new picks it.
    */
   listCorrectionIds(): Promise<readonly string[]>;
   /** Any Correction by id, a Retired Correction included, so kept Corrections stay reachable. */
   getCorrection(id: string): Promise<Correction | undefined>;
+  /**
+   * The Corrections of the ids, as `getCorrection` gives each, read at once,
+   * in no set order. An id the pack has no Correction for is left out.
+   */
+  getCorrections(ids: readonly string[]): Promise<readonly Correction[]>;
   /**
    * The ids of the Words that are not retired and are the standard form for
    * the Correction, in a stable order.

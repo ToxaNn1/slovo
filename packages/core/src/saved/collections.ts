@@ -169,24 +169,25 @@ export async function openCollections({
     userState.list(collectionRecords),
     userState.list(collectionEntryRecords),
   ]);
+  const kept = [...storedEntries].flatMap(([id, added]) => {
+    // Neither id holds a `.`, so the first one splits them.
+    const dot = id.indexOf('.');
+    const collectionId = id.slice(0, dot);
+    // An Entry of a Collection whose record is absent (deleted on another
+    // device, or still to come with a later page of a pull) reads as absent,
+    // and its record is left as it is (ADR 0013).
+    if (dot < 0 || !storedCollections.has(collectionId)) return [];
+    return [{ collectionId, entryId: id.slice(dot + 1), added }];
+  });
+  const rowOf = await rows.rows(kept.map(({ entryId }) => entryId));
   const filedByCollection = new Map<string, Map<string, Filed>>();
-  await Promise.all(
-    [...storedEntries].map(async ([id, added]) => {
-      // Neither id holds a `.`, so the first one splits them.
-      const dot = id.indexOf('.');
-      const collectionId = id.slice(0, dot);
-      const entryId = id.slice(dot + 1);
-      // An Entry of a Collection whose record is absent (deleted on another
-      // device, or still to come with a later page of a pull) reads as absent,
-      // and its record is left as it is (ADR 0013).
-      if (dot < 0 || !storedCollections.has(collectionId)) return;
-      const row = await rows.row(entryId);
-      if (row === undefined) return;
-      const filed = filedByCollection.get(collectionId) ?? new Map<string, Filed>();
-      filed.set(entryId, { addedAt: new Date(added), row });
-      filedByCollection.set(collectionId, filed);
-    }),
-  );
+  for (const { collectionId, entryId, added } of kept) {
+    const row = rowOf.get(entryId);
+    if (row === undefined) continue;
+    const filed = filedByCollection.get(collectionId) ?? new Map<string, Filed>();
+    filed.set(entryId, { addedAt: new Date(added), row });
+    filedByCollection.set(collectionId, filed);
+  }
   const collections = new Map<string, Stored>();
   const views = new Map<string, Collection>();
   for (const [id, { name, createdAt }] of storedCollections) {

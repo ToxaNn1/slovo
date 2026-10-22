@@ -73,14 +73,12 @@ export async function openEntryList<TimeKey extends string>({
   const newest = newestFirst(timeOf, (entry) => entry.entryId);
 
   const stored = await userState.list(records);
-  const kept = await Promise.all(
-    [...stored].map(async ([entryId, at]) => {
-      const row = await rows.row(entryId);
-      return row === undefined ? undefined : listed(entryId, new Date(at), row);
-    }),
-  );
-  let list: readonly ListedEntry<TimeKey>[] = kept
-    .filter((entry) => entry !== undefined)
+  const rowOf = await rows.rows(stored.keys());
+  let list: readonly ListedEntry<TimeKey>[] = [...stored]
+    .flatMap(([entryId, at]) => {
+      const row = rowOf.get(entryId);
+      return row === undefined ? [] : [listed(entryId, new Date(at), row)];
+    })
     .sort(newest);
   const subscribers = createSubscribers();
 

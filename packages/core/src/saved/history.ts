@@ -73,17 +73,16 @@ export async function openHistory({
   userState: UserState;
 }): Promise<{ history: History; recorder: HistoryRecorder }> {
   const stored = await userState.list(historyRecords);
+  const rowOf = await rows.rows(stored.keys());
   // Every record counts towards the cap, also one whose Entry the Language Pack doesn't have.
-  let kept: readonly Kept[] = (
-    await Promise.all(
-      [...stored].map(async ([entryId, { seenAt, wordOfTheDay }]) => ({
-        entryId,
-        seenAt: new Date(seenAt),
-        wordOfTheDay,
-        row: await rows.row(entryId),
-      })),
-    )
-  ).sort(newestKept);
+  let kept: readonly Kept[] = [...stored]
+    .map(([entryId, { seenAt, wordOfTheDay }]) => ({
+      entryId,
+      seenAt: new Date(seenAt),
+      wordOfTheDay,
+      row: rowOf.get(entryId),
+    }))
+    .sort(newestKept);
   const listOf = (from: readonly Kept[]) =>
     from.filter((entry): entry is HistoryEntry => entry.row !== undefined);
   let list = listOf(kept);

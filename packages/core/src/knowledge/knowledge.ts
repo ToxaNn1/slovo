@@ -138,7 +138,7 @@ export async function openKnowledge({
   const inTurn = createInTurn();
   const subscribers = createSubscribers();
   /** The row of each marked Entry the Language Pack has, so the state needs no read. */
-  const rowOf = new Map<string, EntryRowModel>();
+  const rowOf = new Map(await rows.rows(records.keys()));
 
   /** Reads the Entry's row, once. */
   async function readRow(entryId: string): Promise<void> {
@@ -146,7 +146,6 @@ export async function openKnowledge({
     const row = await rows.row(entryId);
     if (row !== undefined) rowOf.set(entryId, row);
   }
-  await Promise.all([...records.keys()].map(readRow));
 
   /** The state of the records on today's local day, the `knowledge` Feature Switch aside. */
   function stateOf(): KnowledgeState {

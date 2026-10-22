@@ -203,7 +203,7 @@ export function createNotificationPlanner({
   scheduling: { scheduler, ellipsis },
 }: {
   cycle: Pick<Cycle, 'order' | 'unseen'>;
-  entries: Pick<Entries, 'get'>;
+  entries: Pick<Entries, 'get' | 'getMany'>;
   userState: UserState;
   clock: Clock;
   edition: PlanEdition;
@@ -292,8 +292,10 @@ export function createNotificationPlanner({
     const stored = await reservedWords.stored();
     const planned: PlannedWord[] = [];
     const notifications: PlannedNotification[] = [];
-    for (const reserved of chooseWords(slots, stored, times[0])) {
-      const word = await entries.get(reserved.wordId);
+    const chosen = chooseWords(slots, stored, times[0]);
+    const words = await entries.getMany(chosen.map(({ wordId }) => wordId));
+    for (const reserved of chosen) {
+      const word = words.get(reserved.wordId);
       if (word?.kind !== 'word') continue;
       planned.push(reserved);
       notifications.push({

@@ -132,7 +132,7 @@ export async function openNotifications({
   edition: NotificationsEdition;
   userState: UserState;
   cycle: Pick<Cycle, 'order' | 'unseen'>;
-  entries: Pick<Entries, 'get'>;
+  entries: Pick<Entries, 'get' | 'getMany'>;
   clock: Clock;
   wordOfTheDay: Pick<WordOfTheDay, 'chosen'>;
   takeMorningWord: () => Promise<void>;

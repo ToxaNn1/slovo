@@ -24,7 +24,6 @@ type BindValue = string | number;
  */
 export interface PackDatabase {
   getAllAsync<T>(sql: string, params: BindValue[]): Promise<T[]>;
-  getFirstAsync<T>(sql: string, params: BindValue[]): Promise<T | null>;
 }
 
 /** The Core's read port over a compiled Language Pack, plus the pack's metadata. */
@@ -64,10 +63,7 @@ const SQL = {
   categories: 'SELECT id, display_name FROM categories ORDER BY position',
   wordIds: 'SELECT id FROM words WHERE retired = 0 ORDER BY id',
   wordIdsInCategory: 'SELECT id FROM words WHERE retired = 0 AND category_id = ? ORDER BY id',
-  sources: 'SELECT title, url, archived_url FROM sources WHERE entry_id = ? ORDER BY position',
   correctionIds: 'SELECT id FROM corrections WHERE retired = 0 ORDER BY id',
-  correction: 'SELECT * FROM corrections WHERE id = ?',
-  equivalents: 'SELECT text FROM correction_equivalents WHERE correction_id = ? ORDER BY position',
   linkedWordIds: `
     SELECT words.id FROM word_corrections JOIN words ON words.id = word_corrections.word_id
     WHERE word_corrections.correction_id = ? AND words.retired = 0
@@ -82,8 +78,27 @@ interface WordFilter {
   readonly params: BindValue[];
 }
 
-const oneWord = (id: string): WordFilter => ({ where: 'id = ?', params: [id] });
 const liveWords: WordFilter = { where: 'retired = 0', params: [] };
+
+/** The ids a read of many Entries binds at most, well under SQLite's limit of bound values. */
+const IDS_PER_READ = 500;
+
+/** The ids in parts of at most `IDS_PER_READ`, each with the list of placeholders that binds it. */
+function inParts(ids: readonly string[]): { readonly list: string; readonly params: string[] }[] {
+  const parts = [];
+  for (let first = 0; first < ids.length; first += IDS_PER_READ) {
+    const params = ids.slice(first, first + IDS_PER_READ);
+    parts.push({ list: `(${params.map(() => '?').join(', ')})`, params });
+  }
+  return parts;
+}
+
+/** The parts of the Corrections of the ids, each row with the id of its Correction. */
+const correctionParts = (list: string) => ({
+  corrections: `SELECT * FROM corrections WHERE id IN ${list} ORDER BY id`,
+  equivalents: `SELECT correction_id AS entry_id, text FROM correction_equivalents WHERE correction_id IN ${list} ORDER BY correction_id, position`,
+  sources: `SELECT entry_id, title, url, archived_url FROM sources WHERE entry_id IN ${list} ORDER BY entry_id, position`,
+});
 
 /**
  * The tables that hold the parts of a Word, each row with the id of its Word,
@@ -103,16 +118,24 @@ const wordParts = (where: string) => {
   };
 };
 
-/** Rows by the id of their Word, each Word's in the order they came. */
-function byWord<T extends { word_id: string }>(rows: readonly T[]): ReadonlyMap<string, T[]> {
-  const grouped = new Map<string, T[]>();
+/** Rows by the id of their Entry, each Entry's in the order they came. */
+function grouped<T>(rows: readonly T[], idOf: (row: T) => string): ReadonlyMap<string, T[]> {
+  const groups = new Map<string, T[]>();
   for (const row of rows) {
-    const group = grouped.get(row.word_id);
-    if (group === undefined) grouped.set(row.word_id, [row]);
+    const group = groups.get(idOf(row));
+    if (group === undefined) groups.set(idOf(row), [row]);
     else group.push(row);
   }
-  return grouped;
+  return groups;
 }
+
+/** Rows by the id of their Word. */
+const byWord = <T extends { word_id: string }>(rows: readonly T[]) =>
+  grouped(rows, (row) => row.word_id);
+
+/** Rows by the id of their Correction. */
+const byCorrection = <T extends { entry_id: string }>(rows: readonly T[]) =>
+  grouped(rows, (row) => row.entry_id);
 
 const sourceOf = ({ title, url, archived_url }: SourceRow): Source => ({
   title,
@@ -130,11 +153,6 @@ export function createPackReader(db: PackDatabase): PackReader {
   async function column(sql: string, params: BindValue[], name: string): Promise<string[]> {
     const rows = await db.getAllAsync<Record<string, string>>(sql, params);
     return rows.map((row) => String(row[name]));
-  }
-
-  async function sources(entryId: string): Promise<Source[]> {
-    const rows = await db.getAllAsync<SourceRow>(SQL.sources, [entryId]);
-    return rows.map(sourceOf);
   }
 
   /** The Words the filter takes, in id order, each with all its parts. */
@@ -187,24 +205,41 @@ export function createPackReader(db: PackDatabase): PackReader {
     });
   }
 
-  async function getCorrection(id: string): Promise<Correction | undefined> {
-    const row = await db.getFirstAsync<CorrectionRow>(SQL.correction, [id]);
-    if (row === null) return undefined;
-    const [standardEquivalents, correctionSources] = await Promise.all([
-      column(SQL.equivalents, [id], 'text'),
-      sources(id),
-    ]);
-    // Parsing checks the pack against the contracts and types the Correction.
-    return CorrectionSchema.parse({
-      id: row.id,
-      nonStandardForm: row.non_standard_form,
-      correctionType: row.correction_type,
-      standardEquivalents,
-      explanation: row.explanation,
-      examplePair: { nonStandard: row.example_non_standard, standard: row.example_standard },
-      sources: correctionSources,
-      retired: row.retired === 1,
-    });
+  /** The Words of the ids, in id order within each part of `IDS_PER_READ`. */
+  async function readWordsOf(ids: readonly string[]): Promise<Word[]> {
+    const parts = await Promise.all(
+      inParts(ids).map(({ list, params }) => readWords({ where: `id IN ${list}`, params })),
+    );
+    return parts.flat();
+  }
+
+  /** The Corrections of the ids, each with all its parts, three queries per `IDS_PER_READ`. */
+  async function readCorrections(ids: readonly string[]): Promise<Correction[]> {
+    const parts = await Promise.all(
+      inParts(ids).map(async ({ list, params }) => {
+        const sql = correctionParts(list);
+        type WithEntryId<T> = T & { entry_id: string };
+        const [rows, equivalents, correctionSources] = await Promise.all([
+          db.getAllAsync<CorrectionRow>(sql.corrections, params),
+          db.getAllAsync<WithEntryId<{ text: string }>>(sql.equivalents, params).then(byCorrection),
+          db.getAllAsync<WithEntryId<SourceRow>>(sql.sources, params).then(byCorrection),
+        ]);
+        return rows.map((row) =>
+          // Parsing checks the pack against the contracts and types the Correction.
+          CorrectionSchema.parse({
+            id: row.id,
+            nonStandardForm: row.non_standard_form,
+            correctionType: row.correction_type,
+            standardEquivalents: (equivalents.get(row.id) ?? []).map((r) => r.text),
+            explanation: row.explanation,
+            examplePair: { nonStandard: row.example_non_standard, standard: row.example_standard },
+            sources: (correctionSources.get(row.id) ?? []).map(sourceOf),
+            retired: row.retired === 1,
+          }),
+        );
+      }),
+    );
+    return parts.flat();
   }
 
   return {
@@ -220,9 +255,11 @@ export function createPackReader(db: PackDatabase): PackReader {
         ? column(SQL.wordIds, [], 'id')
         : column(SQL.wordIdsInCategory, [categoryId], 'id'),
     listWords: () => readWords(liveWords),
-    getWord: async (id) => (await readWords(oneWord(id)))[0],
+    getWord: async (id) => (await readWordsOf([id]))[0],
+    getWords: readWordsOf,
     listCorrectionIds: () => column(SQL.correctionIds, [], 'id'),
-    getCorrection,
+    getCorrection: async (id) => (await readCorrections([id]))[0],
+    getCorrections: readCorrections,
     listLinkedWordIds: (correctionId) => column(SQL.linkedWordIds, [correctionId], 'id'),
     metadata: async () => metadataOf(await db.getAllAsync<MetadataRow>(SQL.metadata, [])),
   };
