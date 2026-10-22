@@ -10,13 +10,14 @@ import { userStateRecords } from '../user-state/user-state-schema';
 export interface EntryIds {
   readonly words: readonly string[];
   readonly corrections: readonly string[];
+  readonly idioms: readonly string[];
 }
 
 /**
  * Why no Entry of a kind is eligible, whatever the Language Pack holds: the
- * user took Corrections, as a whole, out of the Mix.
+ * user took Corrections, or Idioms, as a whole, out of the Mix.
  */
-export type KindRefusal = 'corrections-out-of-mix';
+export type KindRefusal = 'corrections-out-of-mix' | 'idioms-out-of-mix';
 
 /** The eligible Entries of one kind, or why the kind, as a whole, is not eligible. */
 export type EligibleOfKind =
@@ -28,31 +29,32 @@ export type EligibleOfKind =
  * the Feed, the Cycle, the Word of the Day and the card builders never check
  * Retired, a Feature Switch or the Mix themselves. An eligible Entry is live
  * (not Retired), of a kind the Edition turns on, in the user's Mix (a Word at
- * its Rarity Floor or rarer) and not Hidden (ADR 0015, 0019).
+ * its Rarity Floor or rarer; the Rarity Floor doesn't touch Corrections or
+ * Idioms) and not Hidden (ADR 0015, 0019).
  */
 export interface Entries {
   /**
    * The ids of the eligible Entries: the live Words of the Categories in the
    * Mix at the Rarity Floor or rarer, Category by Category in the Language
-   * Pack's order, and the live
-   * Corrections when the Edition turns Corrections on and they are in the
-   * Mix, each in the Language Pack's stable order, leaving out every Hidden
-   * Entry. Read afresh on every call.
+   * Pack's order, and the live Corrections, and the live Idioms, each kind
+   * when the Edition turns it on and it is in the Mix, each in the Language
+   * Pack's stable order, leaving out every Hidden Entry. Read afresh on every
+   * call.
    */
   eligible(): Promise<EntryIds>;
   /**
    * The eligible Entries of one kind themselves, in the order `eligible` gives
    * their ids, for a feature that weighs them all at once, such as the Game;
-   * or, for Corrections out of the Mix, whether or not the Edition turns them
-   * on, why none are. Read afresh on every call, but for the live Entries
-   * themselves, which are read from the Language Pack once: it never changes
-   * while it is open.
+   * or, for Corrections or Idioms out of the Mix, whether or not the Edition
+   * turns them on, why none are. Read afresh on every call, but for the live
+   * Entries themselves, which are read from the Language Pack once: it never
+   * changes while it is open.
    */
   eligibleOfKind(kind: EntryKind): Promise<EligibleOfKind>;
   /**
-   * Any Entry by id, eligible or not: a Retired one, or a Correction when the
-   * Edition turns Corrections off, or an Idiom, which no Entry list covers
-   * yet (0.8.8). So the Entries the user keeps stay reachable.
+   * Any Entry by id, eligible or not: a Retired one, or a Correction or an
+   * Idiom when the Edition turns its kind off. So the Entries the user keeps
+   * stay reachable.
    */
   get(id: string): Promise<Entry | undefined>;
   /**
@@ -113,6 +115,7 @@ export function createEntries(
 ): Entries {
   const { content, edition } = options;
   const withCorrections = () => edition.isFeatureEnabled('corrections');
+  const withIdioms = () => edition.isFeatureEnabled('idioms');
 
   const categories = readOnce(() => content.listCategories());
 
@@ -126,6 +129,11 @@ export function createEntries(
   /** Whether Corrections, as a whole, are in the user's Mix; without a Mix they always are. */
   async function correctionsInMix(): Promise<boolean> {
     return (await readUserMix())?.corrections ?? true;
+  }
+
+  /** Whether Idioms, as a whole, are in the user's Mix; without a Mix they always are. */
+  async function idiomsInMix(): Promise<boolean> {
+    return (await readUserMix())?.idioms ?? true;
   }
 
   const linksCorrections = async () => withCorrections() && (await correctionsInMix());
@@ -187,26 +195,33 @@ export function createEntries(
       readUserMix(),
       'userState' in options ? options.userState.list(hiddenRecords) : new Map<string, string>(),
     ]);
-    const [words, corrections] = await Promise.all([
+    const [words, corrections, idioms] = await Promise.all([
       wordIds(mix?.categoryIds).then((ids) => atRarityFloor(ids, mix?.rarityFloor)),
       withCorrections() && (mix?.corrections ?? true) ? content.listCorrectionIds() : [],
+      withIdioms() && (mix?.idioms ?? true) ? content.listIdiomIds() : [],
     ]);
     const shown = (id: string) => !hidden.has(id);
-    return { words: words.filter(shown), corrections: corrections.filter(shown) };
+    return {
+      words: words.filter(shown),
+      corrections: corrections.filter(shown),
+      idioms: idioms.filter(shown),
+    };
   }
 
+  /** The ids of the eligible Entries of the kind. */
+  const idsOfKind: Record<EntryKind, (ids: EntryIds) => readonly string[]> = {
+    word: ({ words }) => words,
+    correction: ({ corrections }) => corrections,
+    idiom: ({ idioms }) => idioms,
+  };
+
   async function eligibleOfKind(kind: EntryKind): Promise<EligibleOfKind> {
-    // No Idiom is eligible until Idioms join the Mix (0.8.8, #553).
-    if (kind === 'idiom') return { entries: [] };
     if (kind === 'correction' && !(await correctionsInMix())) {
       return { refusal: 'corrections-out-of-mix' };
     }
+    if (kind === 'idiom' && !(await idiomsInMix())) return { refusal: 'idioms-out-of-mix' };
     const [ids, entries] = await Promise.all([eligible(), live[kind]()]);
-    return {
-      entries: (kind === 'word' ? ids.words : ids.corrections).flatMap(
-        (id) => entries.get(id) ?? [],
-      ),
-    };
+    return { entries: idsOfKind[kind](ids).flatMap((id) => entries.get(id) ?? []) };
   }
 
   return {

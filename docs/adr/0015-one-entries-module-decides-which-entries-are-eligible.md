@@ -40,3 +40,14 @@ The content read port now also gives the Words and the Corrections of many ids a
 ### Considered Options
 
 - **Read the kept Entries from the live Words the Entries module already keeps**: rejected. That read takes every Word in full, about 0.4 s, and the composition plans the Game Modes last so the launch never waits for it; a reader with one Favorite would wait for it at every launch, and Retired Words and Corrections would still need reads of their own.
+
+## Amendment: Idioms are eligible like Corrections (0.8.8)
+
+ADR 0046 makes the Idiom the third kind of Entry, turned on through the Feature Switch `idioms`, with the Edition's default Mix saying whether Idioms are in. The Entries module alone decides their eligibility, by the same rules as Corrections: a live Idiom is eligible when the Edition turns Idioms on and they are not off remotely (ADR 0040), when Idioms, as a whole, are in the reader's Mix and when it is not Hidden. The Rarity Floor doesn't touch Idioms, which have no rarity. The ids of the eligible Entries carry the Idioms as a third list, in the Language Pack's stable order, and the eligible Entries of the kind `idiom` come with a refusal of their own, Idioms out of the Mix, whether or not the Edition turns them on, so the Game can pass it on as it does for Corrections (ADR 0024).
+
+The reader's choice is one new record in the user state, `mix.idioms`, kept and synced last write wins by the client's change time like `mix.corrections` (ADR 0041); a new key needs no migration, since without it the Edition's default holds. The Cycle covers the eligible Idioms in its order from this change on, so a Seen mark on an Idiom counts and an Idiom keeps its place when eligibility is read again; the Feed deals them from its own ticket (ADR 0046, the Idiom turn).
+
+### Considered Options
+
+- **A kind-agnostic list of eligible ids**: rejected. The Feed, the Cycle, the notification plan and the Game each take one kind at a time, and the Correction's turn and the Idiom's turn count their own kind.
+- **One Mix record for Corrections and Idioms together**: rejected. Each is a switch of its own on the Mix screen, and one record would merge two devices' choices into one write.

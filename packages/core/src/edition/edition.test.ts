@@ -123,7 +123,7 @@ describe('loadEdition', () => {
       fontSize: 'M',
       vibration: true,
       notificationTimes: ['09:00'],
-      mix: { categoryIds: 'all', corrections: true },
+      mix: { categoryIds: 'all', corrections: true, idioms: true },
     });
   });
 
@@ -139,6 +139,7 @@ describe('loadEdition', () => {
     expect(edition.userSettingDefaults.mix).toEqual({
       categoryIds: ['speech'],
       corrections: false,
+      idioms: true,
     });
   });
 

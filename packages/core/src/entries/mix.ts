@@ -18,6 +18,8 @@ export interface MixState {
   readonly categoryIds: readonly string[];
   /** Whether Corrections, as a whole, are in the Mix. */
   readonly corrections: boolean;
+  /** Whether Idioms, as a whole, are in the Mix. */
+  readonly idioms: boolean;
   /** The Hidden Categories: the Categories out of the Mix, in the Language Pack's order (ADR 0019). */
   readonly hiddenCategories: readonly Category[];
   /** The one Category left in the Mix, which can't be taken out; nothing while more are in. */
@@ -30,8 +32,8 @@ export interface MixState {
 }
 
 /**
- * The Mix: the Categories, plus Corrections as a whole, the user chose to see
- * in everything new, and the Rarity Floor. A Category out of the Mix is a Hidden Category, so the
+ * The Mix: the Categories, plus Corrections and Idioms each as a whole, the
+ * user chose to see in everything new, and the Rarity Floor. A Category out of the Mix is a Hidden Category, so the
  * Mix screen, the hide action and the Hidden screen all change it here (ADR
  * 0019). Read from the user state once, when it opens, like the Cycle, so
  * open one per app session (the Core composition does). A change is made in
@@ -51,10 +53,12 @@ export interface Mix {
   takeOut(categoryId: string): Promise<boolean>;
   /** Puts the Category back in the Mix. A Category the Language Pack doesn't have is skipped. */
   putBack(categoryId: string): Promise<void>;
-  /** Puts every Category in the Mix at once. Corrections stay as they are. */
+  /** Puts every Category in the Mix at once. Corrections and Idioms stay as they are. */
   turnAllOn(): Promise<void>;
   /** Puts Corrections, as a whole, in the Mix or takes them out. */
   setCorrections(inMix: boolean): Promise<void>;
+  /** Puts Idioms, as a whole, in the Mix or takes them out. */
+  setIdioms(inMix: boolean): Promise<void>;
   /** Sets the Rarity Floor. A floor that is not a rarity, a whole number from 1 to 5, is skipped. */
   setRarityFloor(floor: number): Promise<void>;
   /** Calls `listener` after each change of the state. Returns the call that stops it. */
@@ -64,16 +68,18 @@ export interface Mix {
 const {
   mixCategories: categoryRecords,
   mixCorrections: correctionsRecord,
+  mixIdioms: idiomsRecord,
   mixRarityFloor: rarityFloorRecord,
 } = userStateRecords;
 
 /** The Rarity Floor while the user chose none: every Word is in. */
 const DEFAULT_RARITY_FLOOR = 1;
 
-/** The places in the Mix the user chose: by Category id, and for Corrections; and the Rarity Floor. */
+/** The places in the Mix the user chose: by Category id, for Corrections and for Idioms; and the Rarity Floor. */
 interface MixChoices {
   readonly categories: ReadonlyMap<string, boolean>;
   readonly corrections: boolean | undefined;
+  readonly idioms: boolean | undefined;
   readonly rarityFloor: number | undefined;
 }
 
@@ -113,6 +119,7 @@ function mixStateOf(
     allCategories: categories,
     categoryIds,
     corrections: choices.corrections ?? mix.corrections,
+    idioms: choices.idioms ?? mix.idioms,
     hiddenCategories: categories.filter(({ id }) => !categoryIds.includes(id)),
     lastCategoryId: categoryIds.length === 1 ? categoryIds[0] : undefined,
     rarityFloor: choices.rarityFloor ?? DEFAULT_RARITY_FLOOR,
@@ -120,12 +127,13 @@ function mixStateOf(
 }
 
 async function readChoices(userState: Pick<UserState, 'list' | 'read'>): Promise<MixChoices> {
-  const [categories, corrections, rarityFloor] = await Promise.all([
+  const [categories, corrections, idioms, rarityFloor] = await Promise.all([
     userState.list(categoryRecords),
     userState.read(correctionsRecord),
+    userState.read(idiomsRecord),
     userState.read(rarityFloorRecord),
   ]);
-  return { categories, corrections, rarityFloor };
+  return { categories, corrections, idioms, rarityFloor };
 }
 
 /**
@@ -176,7 +184,11 @@ export async function openMix({
    */
   async function change(
     places: ReadonlyMap<string, boolean>,
-    { corrections = state.corrections, rarityFloor = state.rarityFloor } = {},
+    {
+      corrections = state.corrections,
+      idioms = state.idioms,
+      rarityFloor = state.rarityFloor,
+    } = {},
   ): Promise<void> {
     const wanted = new Map<string, boolean>();
     // A Category in only because none would be otherwise is written in, so the
@@ -193,6 +205,9 @@ export async function openMix({
     if (corrections !== state.corrections) {
       for (const [key, value] of correctionsRecord.change(corrections)) writes.set(key, value);
     }
+    if (idioms !== state.idioms) {
+      for (const [key, value] of idiomsRecord.change(idioms)) writes.set(key, value);
+    }
     if (rarityFloor !== state.rarityFloor) {
       for (const [key, value] of rarityFloorRecord.change(rarityFloor)) writes.set(key, value);
     }
@@ -201,6 +216,7 @@ export async function openMix({
     const next: MixChoices = {
       categories: changed,
       corrections: corrections === state.corrections ? choices.corrections : corrections,
+      idioms: idioms === state.idioms ? choices.idioms : idioms,
       rarityFloor: rarityFloor === state.rarityFloor ? choices.rarityFloor : rarityFloor,
     };
     try {
@@ -233,6 +249,10 @@ export async function openMix({
     await change(new Map(), { corrections: inMix });
   }
 
+  async function setIdioms(inMix: boolean): Promise<void> {
+    await change(new Map(), { idioms: inMix });
+  }
+
   async function setRarityFloor(floor: number): Promise<void> {
     if (!RaritySchema.safeParse(floor).success) return;
     await change(new Map(), { rarityFloor: floor });
@@ -248,6 +268,7 @@ export async function openMix({
     putBack: (categoryId) => inTurn(() => putBack(categoryId)),
     turnAllOn: () => inTurn(turnAllOn),
     setCorrections: (inMix) => inTurn(() => setCorrections(inMix)),
+    setIdioms: (inMix) => inTurn(() => setIdioms(inMix)),
     setRarityFloor: (floor) => inTurn(() => setRarityFloor(floor)),
     subscribe: subscribers.subscribe,
   };

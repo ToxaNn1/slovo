@@ -37,7 +37,7 @@ async function run({
       isFeatureEnabled: (feature) => on.includes(feature),
       languageTraits: { distractorRule: 'same-part-of-speech' },
       userSettingDefaults: {
-        mix: { categoryIds: ['test'], corrections: true },
+        mix: { categoryIds: ['test'], corrections: true, idioms: true },
         notificationTimes: [],
       },
     },
@@ -313,7 +313,7 @@ describe('Knowledge Marks', () => {
         isFeatureEnabled: (feature) => feature === 'knowledge',
         languageTraits: { distractorRule: 'same-part-of-speech' },
         userSettingDefaults: {
-          mix: { categoryIds: ['test'], corrections: false },
+          mix: { categoryIds: ['test'], corrections: false, idioms: true },
           notificationTimes: [],
         },
       },

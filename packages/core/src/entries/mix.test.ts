@@ -15,7 +15,7 @@ import {
   type FeedCard,
   type UserStatePort,
 } from '../index';
-import { correction, fakeClock, word } from '../test-support';
+import { correction, fakeClock, idiom, word } from '../test-support';
 
 /** The Language Pack's Categories, in its order. */
 const nature: Category = { id: 'nature', displayName: 'Nature' };
@@ -41,6 +41,7 @@ const content = createMemoryContentPort({
     ),
   ),
   corrections: correctionIds.map((id) => correction(id)),
+  idioms: [idiom('i_one'), idiom('i_two')],
 });
 
 const MINUTE = 60_000;
@@ -53,6 +54,7 @@ async function run({
   clock = fakeClock().clock,
   defaultCategoryIds = categories.map(({ id }) => id),
   correctionsSwitch = true,
+  idiomsSwitch = true,
   rarityFloorSwitch = true,
 }: {
   records?: Map<string, string>;
@@ -62,6 +64,7 @@ async function run({
   /** The Categories of the Edition's default Mix: every one of the pack, or these. */
   defaultCategoryIds?: 'all' | readonly string[];
   correctionsSwitch?: boolean;
+  idiomsSwitch?: boolean;
   rarityFloorSwitch?: boolean;
 } = {}): Promise<Composition> {
   return openComposition({
@@ -70,10 +73,11 @@ async function run({
       id: 'test',
       isFeatureEnabled: (feature) =>
         (feature === 'corrections' && correctionsSwitch) ||
+        (feature === 'idioms' && idiomsSwitch) ||
         (feature === 'rarityFloor' && rarityFloorSwitch),
       languageTraits: { distractorRule: 'same-part-of-speech' },
       userSettingDefaults: {
-        mix: { categoryIds: defaultCategoryIds, corrections: true },
+        mix: { categoryIds: defaultCategoryIds, corrections: true, idioms: true },
         notificationTimes: [],
       },
     },
@@ -134,13 +138,14 @@ const isCorrection = (id: string) => id.startsWith('c_');
 const isWordBelow = (floor: number) => (id: string) => (rarityOf.get(id) ?? floor) < floor;
 
 describe('the Mix', () => {
-  it('starts as the Edition default: every Category and Corrections in, no Hidden Category', async () => {
+  it('starts as the Edition default: every Category, Corrections and Idioms in, no Hidden Category', async () => {
     const app = await run();
 
     expect(app.mix.state).toEqual({
       allCategories: categories,
       categoryIds: ['nature', 'speech', 'crafts'],
       corrections: true,
+      idioms: true,
       hiddenCategories: [],
       lastCategoryId: undefined,
       rarityFloor: 1,
@@ -333,6 +338,21 @@ describe('the Mix', () => {
     expect(records.get('mix.corrections')).toBe('true');
   });
 
+  it('turns Idioms off and on with the `mix.idioms` record, leaving the rest of the Mix as it is', async () => {
+    const records = new Map<string, string>();
+    const app = await run({ records });
+
+    await app.mix.setIdioms(false);
+
+    expect(app.mix.state.idioms).toBe(false);
+    expect(mixRecordsOf(records)).toEqual({ 'mix.idioms': 'false' });
+
+    await app.mix.setIdioms(true);
+
+    expect(app.mix.state.idioms).toBe(true);
+    expect(records.get('mix.idioms')).toBe('true');
+  });
+
   it('sets the Rarity Floor with the `mix.rarityFloor` record, and skips one that is no rarity', async () => {
     const records = new Map<string, string>();
     const app = await run({ records });
@@ -372,6 +392,7 @@ describe('the Mix', () => {
     const first = await run({ records });
     await first.mix.takeOut('nature');
     await first.mix.setCorrections(false);
+    await first.mix.setIdioms(false);
     await first.mix.setRarityFloor(3);
 
     const app = await run({ records });
@@ -380,6 +401,7 @@ describe('the Mix', () => {
     expect(app.mix.state).toMatchObject({
       categoryIds: ['speech', 'crafts'],
       corrections: false,
+      idioms: false,
       rarityFloor: 3,
     });
   });

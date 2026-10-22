@@ -21,7 +21,10 @@ import { correction, fakeClock, word } from '../test-support';
 const testCategories = {
   id: 'test',
   languageTraits: { distractorRule: 'same-part-of-speech' as const },
-  userSettingDefaults: { mix: { categoryIds: ['test'], corrections: true }, notificationTimes: [] },
+  userSettingDefaults: {
+    mix: { categoryIds: ['test'], corrections: true, idioms: true },
+    notificationTimes: [],
+  },
 };
 
 /** A small pack: eight live Words, a Retired Word, two live Corrections and a Retired one. */

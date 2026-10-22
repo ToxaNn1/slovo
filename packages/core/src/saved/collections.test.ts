@@ -16,7 +16,10 @@ import { correction, fakeClock, steppingRandom, word } from '../test-support';
 const testCategories = {
   id: 'test',
   languageTraits: { distractorRule: 'same-part-of-speech' as const },
-  userSettingDefaults: { mix: { categoryIds: ['test'], corrections: true }, notificationTimes: [] },
+  userSettingDefaults: {
+    mix: { categoryIds: ['test'], corrections: true, idioms: true },
+    notificationTimes: [],
+  },
 };
 
 const content = createMemoryContentPort({

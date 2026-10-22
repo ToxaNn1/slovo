@@ -23,6 +23,8 @@ const GameModeStringsSchema = z.strictObject({
     'too-few-entries': TextSchema,
     /** Corrections out of the reader's Mix; only a mode that asks about Corrections meets it. */
     'corrections-out-of-mix': TextSchema.optional(),
+    /** Idioms out of the reader's Mix; only a mode that asks about Idioms meets it (0.8.8). */
+    'idioms-out-of-mix': TextSchema.optional(),
   }),
 });
 

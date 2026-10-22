@@ -72,7 +72,7 @@ async function run({
       isFeatureEnabled: (feature) => !switchedOff.includes(feature),
       languageTraits: { distractorRule: 'same-part-of-speech' },
       userSettingDefaults: {
-        mix: { categoryIds: mixCategoryIds, corrections: true },
+        mix: { categoryIds: mixCategoryIds, corrections: true, idioms: true },
         notificationTimes: defaultTimes,
       },
       notificationSound: notificationSound ?? undefined,

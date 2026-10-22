@@ -38,7 +38,7 @@ async function open({
 }> {
   const userState = await openUserState({ port });
   const cycle = await openCycle({
-    entries: { eligible: () => Promise.resolve({ words, corrections }) },
+    entries: { eligible: () => Promise.resolve({ words, corrections, idioms: [] }) },
     userState,
     random,
   });

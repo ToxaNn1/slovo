@@ -97,7 +97,12 @@ describe('the Idioms of the Ukrainian Edition', () => {
     expect(found.has('w_missing')).toBe(false);
   });
 
-  it('shows no Idiom yet: none is eligible until Idioms join the Mix', async () => {
-    expect(await entries.eligibleOfKind('idiom')).toEqual({ entries: [] });
+  it('has every live Idiom eligible, in the pack order, without a user state', async () => {
+    const ids = await pack.listIdiomIds();
+
+    expect((await entries.eligible()).idioms).toEqual(ids);
+    expect(await entries.eligibleOfKind('idiom')).toEqual({
+      entries: await Promise.all(ids.map((id) => entries.get(id))),
+    });
   });
 });

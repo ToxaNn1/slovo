@@ -57,7 +57,7 @@ describe('openUserState', () => {
       defaults: { theme: 'system', fontSize: 'M', vibration: true },
     });
     const cycle = await openCycle({
-      entries: { eligible: () => Promise.resolve({ words, corrections: [] }) },
+      entries: { eligible: () => Promise.resolve({ words, corrections: [], idioms: [] }) },
       userState,
       random: { next: () => 0.5 },
     });
@@ -120,7 +120,8 @@ describe('openUserState', () => {
     });
     const cycle = await openCycle({
       entries: {
-        eligible: () => Promise.resolve({ words: ['w_1', 'w_2'], corrections: ['c_1', 'c_2'] }),
+        eligible: () =>
+          Promise.resolve({ words: ['w_1', 'w_2'], corrections: ['c_1', 'c_2'], idioms: [] }),
       },
       userState,
       random: { next: () => 0.5 },
@@ -133,7 +134,7 @@ describe('openUserState', () => {
         ['schema.version', '4'],
       ]),
     ]);
-    expect(cycle.unseen()).toEqual({ words: ['w_2'], corrections: ['c_2'] });
+    expect(cycle.unseen()).toEqual({ words: ['w_2'], corrections: ['c_2'], idioms: [] });
     expect(records.get('favorites.w_2')).toBe('"2026-10-17T08:00:00.000Z"');
   });
 

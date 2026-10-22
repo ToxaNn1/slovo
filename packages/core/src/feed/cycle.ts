@@ -84,9 +84,10 @@ function shuffle(ids: readonly string[], seed: number): string[] {
   return ranked.map(({ id }) => id);
 }
 
-const orderOf = ({ words, corrections }: EntryIds, seed: number): EntryIds => ({
+const orderOf = ({ words, corrections, idioms }: EntryIds, seed: number): EntryIds => ({
   words: shuffle(words, seed),
   corrections: shuffle(corrections, seed),
+  idioms: shuffle(idioms, seed),
 });
 
 /**
@@ -133,11 +134,16 @@ export async function openCycle({
 
   return {
     order: () => order,
-    covers: (entryId) => order.words.includes(entryId) || order.corrections.includes(entryId),
-    isEmpty: () => order.words.length === 0 && order.corrections.length === 0,
+    covers: (entryId) =>
+      order.words.includes(entryId) ||
+      order.corrections.includes(entryId) ||
+      order.idioms.includes(entryId),
+    isEmpty: () =>
+      order.words.length === 0 && order.corrections.length === 0 && order.idioms.length === 0,
     unseen: () => ({
       words: order.words.filter((id) => !seen.has(id)),
       corrections: order.corrections.filter((id) => !seen.has(id)),
+      idioms: order.idioms.filter((id) => !seen.has(id)),
     }),
     markSeen(entryId) {
       if (seen.has(entryId)) return { changes: new Map(), commit: () => undefined };
