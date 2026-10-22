@@ -898,11 +898,12 @@ describe('recordContent', () => {
     expect(manifestOf(editionDir)).toMatchObject({ contentVersion: 3 });
   });
 
-  it('starts the registry of an Edition that has none with every id, in order', () => {
+  it('starts the registry of an Edition never recorded with every id, in order', () => {
     const editionDir = copyFixture('valid');
     rmSync(join(editionDir, 'content/ids.json'));
+    writeFileSync(join(editionDir, 'content/manifest.json'), JSON.stringify({ contentVersion: 1 }));
 
-    expect(recordContent({ editionDir })).toMatchObject({ ok: true, contentVersion: 3 });
+    expect(recordContent({ editionDir })).toMatchObject({ ok: true, contentVersion: 2 });
     expect(registryOf(editionDir)).toEqual([
       'c_fx0001',
       'c_fx0002',
@@ -912,6 +913,24 @@ describe('recordContent', () => {
       'w_fx0002',
       'w_fx0003',
     ]);
+  });
+  it('refuses to start a registry for an Edition recorded before, whose ids may have shipped', () => {
+    const editionDir = copyFixture('valid');
+    rmSync(join(editionDir, 'content/ids.json'));
+    const manifest = readFileSync(join(editionDir, 'content/manifest.json'), 'utf8');
+
+    expect(recordContent({ editionDir })).toEqual({
+      ok: false,
+      errors: [
+        {
+          file: 'content/ids.json',
+          message:
+            'Missing, though the content was recorded before: restore it from git, since a new registry would free the ids of deleted Entries',
+        },
+      ],
+    });
+    expect(existsSync(join(editionDir, 'content/ids.json'))).toBe(false);
+    expect(readFileSync(join(editionDir, 'content/manifest.json'), 'utf8')).toBe(manifest);
   });
 });
 
