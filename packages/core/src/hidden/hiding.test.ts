@@ -283,7 +283,7 @@ describe('the undo of a hide', () => {
 });
 
 describe('an unhide', () => {
-  it('restores a Hidden Entry, gives its row, and its undo hides it again at its old place in the list', async () => {
+  it('restores a Hidden Entry, gives its row and when it was hidden, and its undo hides it again at its old place in the list', async () => {
     const time = fakeClock();
     const app = await run({ clock: time.clock });
     await app.hide({ kind: 'entry', entryId: 'w_nature0' });
@@ -307,6 +307,7 @@ describe('an unhide', () => {
       },
     });
     expect(hiddenIdsOf(app)).toEqual(['w_crafts2', 'w_nature0']);
+    expect(unhidden?.hiddenAt).toEqual(before.find(({ entryId }) => entryId === 'c_one')?.hiddenAt);
 
     time.advance(MINUTE);
     await unhidden?.undo?.();

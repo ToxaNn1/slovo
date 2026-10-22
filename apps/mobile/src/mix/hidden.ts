@@ -2,11 +2,12 @@ import type { HiddenEntry, HideTarget } from '@slovo/core';
 import { fill, useEdition, useUndoToast } from '@slovo/ui';
 import { useMemo } from 'react';
 
-import { useComposition } from '../composition';
+import { compositionOpening, useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
 import { useEditionInEffect } from '../edition/remote-switches';
 import { useSubscribed } from '../opening';
 import { hiddenScreenModel, hiddenSummary, type HiddenScreenModel } from './hidden-screen';
+import { undoRestore } from './hiding-undo';
 import { useMixState } from './mix';
 
 const strings = editionStrings.hidden;
@@ -36,8 +37,9 @@ export function useHiddenScreenModel(): HiddenScreenModel {
 
 /**
  * The calls of the Hidden screen, each an unhide of the Core composition.
- * Bringing an Entry back shows the undo toast, which calls the undo the
- * composition returns, so the Entry goes back to its old place in the list; a Category or Corrections
+ * Bringing an Entry back shows the undo toast, which hides it again at the
+ * time the composition returns, in the composition open at the tap, so the
+ * Entry goes back to its old place in the list; a Category or Corrections
  * goes back in the Mix with no toast. A change that could not be kept is
  * logged and leaves things as they were. Needs an `UndoToastProvider` above it.
  */
@@ -52,15 +54,19 @@ export function useHiddenChanges(): {
   function unhide(target: HideTarget): void {
     composition.unhide(target).then(
       (result) => {
-        if (result?.changed.kind !== 'entry' || result.undo === undefined) return;
-        const { undo } = result;
+        if (result?.changed.kind !== 'entry' || result.hiddenAt === undefined) return;
+        const { hiddenAt } = result;
+        const { entryId } = result.changed;
         showToast({
           message: fill(strings.entryRestored, { title: result.changed.row.title }),
           undoLabel: strings.undo,
           onUndo() {
-            undo().catch((error: unknown) => {
-              console.error('Could not hide the Entry again', error);
-            });
+            compositionOpening
+              .opened()
+              .then((current) => undoRestore(current, entryId, hiddenAt))
+              .catch((error: unknown) => {
+                console.error('Could not hide the Entry again', error);
+              });
           },
         });
       },

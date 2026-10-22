@@ -25,6 +25,11 @@ export interface HideResult {
 export interface UnhideResult {
   readonly changed: HidingChange;
   /**
+   * When the restored Entry was hidden, for its undo in a composition opened
+   * again since (ADR 0018); nothing for a Category or Corrections.
+   */
+  readonly hiddenAt: Date | undefined;
+  /**
    * Hides the Entry again at the time it was hidden before, so it returns to
    * its old place in the Hidden list. Nothing for a Category or Corrections,
    * which come back with no toast.
@@ -99,6 +104,7 @@ export function createHiding({
       if (hiddenAt === undefined) return undefined;
       return {
         changed: { kind: 'entry', entryId, row: hidden.row },
+        hiddenAt,
         undo: () => hiddenEntries.hide(entryId, hiddenAt),
       };
     }
@@ -106,11 +112,11 @@ export function createHiding({
       const { categoryId } = target;
       if (!mix.state.hiddenCategories.some(({ id }) => id === categoryId)) return undefined;
       await mix.putBack(categoryId);
-      return { changed: { kind: 'category', categoryId }, undo: undefined };
+      return { changed: { kind: 'category', categoryId }, hiddenAt: undefined, undo: undefined };
     }
     if (mix.state.corrections) return undefined;
     await mix.setCorrections(true);
-    return { changed: { kind: 'corrections' }, undo: undefined };
+    return { changed: { kind: 'corrections' }, hiddenAt: undefined, undo: undefined };
   }
 
   return {

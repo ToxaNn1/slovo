@@ -130,7 +130,10 @@ describe('an opening', () => {
 });
 
 /** An opening whose every open the test settles in turn, counting them. */
-function heldOpens<T = string>(onError: (error: unknown) => void = vi.fn()) {
+function heldOpens<T = string>(
+  onError: (error: unknown) => void = vi.fn(),
+  close?: (old: T) => void,
+) {
   const opens: ReturnType<typeof deferred<T>>[] = [];
   const opening = openOnce(
     () => {
@@ -138,7 +141,7 @@ function heldOpens<T = string>(onError: (error: unknown) => void = vi.fn()) {
       opens.push(open);
       return open.promise;
     },
-    { onError },
+    close === undefined ? { onError } : { onError, close },
   );
   return { opening, opens };
 }
@@ -223,6 +226,27 @@ describe('a reopen', () => {
     await reopened;
 
     expect(opening.state).toEqual({ status: 'ready', value: 'opened over the change' });
+  });
+
+  it('closes the old value once its subscribers are told of the new one, and keeps it on a failure', async () => {
+    const said: string[] = [];
+    const { opening, opens } = heldOpens(vi.fn(), (old) => said.push(`closed ${old}`));
+    opening.subscribe(() => {
+      if (opening.state.status === 'ready') said.push(`told ${opening.state.value}`);
+    });
+    opens[0]?.resolve('first');
+    await settle();
+
+    const failed = opening.reopen();
+    await settle();
+    opens[1]?.reject(new Error('no user state'));
+    await failed;
+    const reopened = opening.reopen();
+    await settle();
+    opens[2]?.resolve('third');
+    await reopened;
+
+    expect(said).toEqual(['told first', 'told third', 'closed first']);
   });
 
   it('opens nothing for an opening never read or failed: its first read or its retry opens it afresh', async () => {

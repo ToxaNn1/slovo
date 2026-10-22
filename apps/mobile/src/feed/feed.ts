@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useComposition } from '../composition';
 import { useInForeground } from '../lifecycle';
 import { useSubscribed } from '../opening';
+import { cardOnScreen, type TurnedTo } from './feed-screen';
 
 export interface FeedState {
   readonly cards: readonly FeedCard[];
@@ -33,12 +34,8 @@ export interface FeedState {
  */
 export function useFeed(): FeedState {
   const { feed, onboarding } = useComposition();
-  /**
-   * The card on screen, once the reader turned a page in this Feed; until
-   * then, and in the Feed of a reopened composition, the one it opens on.
-   */
-  const [turnedTo, setTurnedTo] = useState<{ in: Feed; position: number }>();
-  const position = turnedTo?.in === feed ? turnedTo.position : feed.startPosition;
+  /** The page the reader turned to last, in the Feed they turned it in. */
+  const [turnedTo, setTurnedTo] = useState<TurnedTo>();
   const onCardChange = useCallback(
     (to: number) => {
       setTurnedTo({ in: feed, position: to });
@@ -48,9 +45,8 @@ export function useFeed(): FeedState {
   const focused = useIsFocused();
   const inForeground = useInForeground();
   const covered = useSubscribed(onboarding, ({ state }) => state.step !== undefined);
-  // The Feed is in sight while Home is focused, the app is in the foreground
-  // and no onboarding covers it; otherwise no card is on screen.
-  const inSight = focused && inForeground && !covered;
+  const onScreen = cardOnScreen({ feed, turnedTo, focused, inForeground, covered });
+  const inSight = onScreen !== undefined;
   const cards = useSubscribed(feed, (open) => open.cards);
   const readerPosition = useCallback(() => feed.position, [feed]);
   // Kept from render to render, so the Feed's pages re-render only when their card changes.
@@ -60,11 +56,13 @@ export function useFeed(): FeedState {
   );
 
   // A new position goes straight to the Feed, which takes the card that left
-  // off the screen itself; only the Feed going out of sight reports none.
+  // off the screen itself; only the Feed going out of sight reports none. The
+  // Feed of a composition a reopen replaced is closed by then, so its
+  // cleanup keeps nothing, and the new Feed opens on the reader's card.
   useEffect(() => {
-    if (!inSight) return;
-    report(feed.show(position));
-  }, [feed, inSight, position]);
+    if (onScreen === undefined) return;
+    report(feed.show(onScreen));
+  }, [feed, onScreen]);
   useEffect(() => {
     if (!inSight) return;
     return () => {

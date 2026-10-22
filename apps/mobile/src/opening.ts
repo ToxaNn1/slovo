@@ -33,6 +33,7 @@ export interface Opening<T> extends Source {
    * Reopens run in turn, each after the one before ends. One asked while the
    * opening still opens waits for it; an opening not read yet or failed has
    * nothing to reopen, since its first read or its retry opens it afresh.
+   * The old value is closed once the subscribers are told of the new one.
    * Settles once it ends, and never rejects.
    */
   reopen(): Promise<void>;
@@ -42,14 +43,23 @@ const loading = { status: 'loading' } as const;
 
 /**
  * Opens `open` on the first read and shares it for the app run, until a
- * reopen opens it again. A failure
+ * reopen opens it again and hands the old value to `close`. A failure
  * is reported to `onError`; then the opening is ready with `fallback` when it
  * has one, or it fails with a retry that opens it again. Once ready it stays
  * ready, also through a reopen, so the fallback is used at most once.
  */
 export function openOnce<T>(
   open: () => Promise<T>,
-  { onError, fallback }: { onError: (error: unknown) => void; fallback?: () => Promise<T> },
+  {
+    onError,
+    fallback,
+    close,
+  }: {
+    onError: (error: unknown) => void;
+    fallback?: () => Promise<T>;
+    /** Closes a value a reopen replaced, once nothing reads it any more. */
+    close?: (old: T) => void;
+  },
 ): Opening<T> {
   let state: OpeningState<T> | undefined;
   const listeners = new Set<() => void>();
@@ -110,6 +120,7 @@ export function openOnce<T>(
   async function reopenWhenSettled(): Promise<void> {
     await settled();
     if (state?.status !== 'ready') return;
+    const old = state.value;
     let value: T;
     try {
       value = await open();
@@ -118,6 +129,8 @@ export function openOnce<T>(
       return;
     }
     change({ status: 'ready', value });
+    // Every subscriber has the new value: what still holds the old one only lets go of it.
+    close?.(old);
   }
 
   function current(): OpeningState<T> {
