@@ -245,11 +245,12 @@ async function playCorrections(app: Composition): Promise<Round[]> {
 }
 
 describe('the anglicisms of the Ukrainian Language Pack', () => {
-  it('builds the pack with its anglicisms and counts them in the report', () => {
+  it('builds the pack with its 15 anglicisms and counts them in the report', () => {
     const anglicisms = corrections.filter(({ correctionType }) => correctionType === 'anglicism');
 
+    expect(anglicisms).toHaveLength(15);
     expect(anglicisms.map(({ nonStandardForm }) => nonStandardForm)).toEqual(
-      expect.arrayContaining(['дедлайн', 'тінейджер', 'лузер']),
+      expect.arrayContaining(['дедлайн', 'тінейджер', 'лузер', 'меседж', 'голкіпер', 'дисконт']),
     );
     expect(report.correctionsPerType).toContainEqual({
       correctionType: 'anglicism',
@@ -335,9 +336,10 @@ describe('«Обери правильне» over the Ukrainian Language Pack', (
     const texts = round.options.map(({ text }) => text);
     expect(new Set(texts).size).toBe(4);
     expect(texts[round.answer?.correct ?? -1]).toBe(asked.standardEquivalents[0]);
-    expect(texts).toEqual(
-      expect.arrayContaining(anglicisms.map((anglicism) => anglicism.standardEquivalents[0])),
-    );
+    const others = anglicisms
+      .filter((anglicism) => anglicism.id !== asked.id)
+      .map((anglicism) => anglicism.standardEquivalents[0]);
+    expect(texts.filter((text) => others.includes(text))).toHaveLength(3);
   });
 
   it("shows the Correction's explanation on the sheet", async () => {
