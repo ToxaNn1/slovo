@@ -67,6 +67,10 @@ _Avoid_: Usage, sample
 **Synonym**:
 A word with a close meaning, shown to help understanding.
 
+**Region**:
+Where a dialect Word is said (e.g. Гуцульщина), a short text in the Edition's language. Only a Word with the dialectal register label («діал.») carries one, and the Language Pack build refuses it on any other Word. The Entry card, its Self-check state once revealed and the Share Card show it after that label, «діал., Гуцульщина», and VoiceOver reads it there.
+_Avoid_: Area, dialect, location
+
 **Category**:
 A thematic group a Word belongs to (e.g. human body, emotions, military).
 _Avoid_: Topic, tag, theme
