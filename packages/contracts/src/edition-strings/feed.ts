@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { TextSchema } from '../shared';
+import { templateOf } from './shared';
 
 /** The Feed's own texts: its screen states, the hint and the Word of the Day badge. */
 export const feedStringsShape = {
@@ -27,7 +28,7 @@ export const feedStringsShape = {
   /** The badge on the card of the Word of the Day. */
   wordOfTheDay: z.strictObject({
     /** The badge text; `{day}` stands for the day of the month and `{month}` for its name. */
-    badge: TextSchema,
+    badge: templateOf('day', 'month'),
     /** The month names as the badge uses them, January first. */
     months: z.array(TextSchema).length(12),
   }),

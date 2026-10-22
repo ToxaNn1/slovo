@@ -36,6 +36,18 @@ describe('Edition UI strings', () => {
   it.each(editions)('the %s Edition has every UI string the shell needs', (edition) => {
     expect(EditionStringsSchema.safeParse(readJson(edition, 'strings')).error).toBeUndefined();
   });
+
+  // The contracts require only `other`, since the forms differ by language
+  // (ADR 0020), so a missing form of the Edition's language is caught here.
+  it.each(editions)('the %s Edition gives every count the plural forms its language has', (id) => {
+    const edition = openEdition(EDITIONS_DIR, id);
+    const categories = new Intl.PluralRules(edition.config.locale).resolvedOptions()
+      .pluralCategories;
+    const counts = pluralsOf(edition.read('strings'));
+
+    expect(counts.length).toBeGreaterThan(0);
+    for (const forms of counts) expect(Object.keys(forms).sort()).toEqual([...categories].sort());
+  });
 });
 
 describe('the 0.4 UI strings groups', () => {
@@ -48,18 +60,6 @@ describe('the 0.4 UI strings groups', () => {
     const result = EditionStringsSchema.safeParse(without);
 
     expect(result.error?.issues.map((issue) => issue.path.join('.'))).toContain(group);
-  });
-
-  it('gives every count the plural forms Ukrainian has', () => {
-    const categories = new Intl.PluralRules('uk-UA').resolvedOptions().pluralCategories;
-    const counts = [
-      ...pluralsOf(strings['stats']),
-      ...pluralsOf(strings['onboarding']),
-      ...pluralsOf(strings['notifications']),
-    ];
-
-    expect(counts.length).toBeGreaterThan(0);
-    for (const forms of counts) expect(Object.keys(forms).sort()).toEqual([...categories].sort());
   });
 });
 
@@ -101,14 +101,6 @@ describe('the 0.5 UI strings group', () => {
     const result = EditionStringsSchema.safeParse({ ...strings, game: { ...game, best } });
 
     expect(result.error?.issues.map((issue) => issue.path.join('.'))).toEqual(['game.best.few']);
-  });
-
-  it('gives every count and label of the Game the plural forms Ukrainian has', () => {
-    const categories = new Intl.PluralRules('uk-UA').resolvedOptions().pluralCategories;
-    const counts = [...pluralsOf(strings['game']), ...pluralsOf(strings['stats'])];
-
-    expect(counts.length).toBeGreaterThan(0);
-    for (const forms of counts) expect(Object.keys(forms).sort()).toEqual([...categories].sort());
   });
 });
 
@@ -450,17 +442,9 @@ describe('the 0.7 account and email strings groups', () => {
   it('rejects a text that neither group has', () => {
     expect(issuesOf({ ...strings, email: { ...email, footer: 'Дякуємо.' } })).toEqual(['email']);
   });
-
-  it('gives every count of the Account the plural forms Ukrainian has', () => {
-    const categories = new Intl.PluralRules('uk-UA').resolvedOptions().pluralCategories;
-    const counts = pluralsOf(account);
-
-    expect(counts.length).toBeGreaterThan(0);
-    for (const forms of counts) expect(Object.keys(forms).sort()).toEqual([...categories].sort());
-  });
 });
 
-/** Every plural-forms object (one with an `other` form) in a strings group. */
+/** Every plural-forms object (one with an `other` form) in the strings or a group of them. */
 function pluralsOf(value: unknown): Record<string, string>[] {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return [];
   const record = value as Record<string, unknown>;
@@ -507,6 +491,34 @@ describe('plural forms of a label beside its number', () => {
     ['a form with the count in it', { one: '{count} день поспіль', other: 'днів поспіль' }],
   ])('rejects %s', (_, forms) => {
     expect(PluralLabelSchema.safeParse(forms).success).toBe(false);
+  });
+});
+
+describe('UI strings the app fills in', () => {
+  const strings = openEdition(EDITIONS_DIR, 'uk').read('strings');
+  const { wordOfTheDay, mix, settings } = strings;
+
+  it.each([
+    ['mix.rarity.floor', { ...strings, mix: { ...mix, rarity: { ...mix.rarity, floor: 'від' } } }],
+    [
+      'wordOfTheDay.badge',
+      { ...strings, wordOfTheDay: { ...wordOfTheDay, badge: 'Слово дня · {day}' } },
+    ],
+    [
+      'settings.soonAccessibilityLabel',
+      { ...strings, settings: { ...settings, soonAccessibilityLabel: 'скоро буде доступно' } },
+    ],
+    [
+      'settings.about.editionLine',
+      {
+        ...strings,
+        settings: { ...settings, about: { ...settings.about, editionLine: 'Українське видання' } },
+      },
+    ],
+  ])('needs every placeholder in %s', (path, changed) => {
+    const result = EditionStringsSchema.safeParse(changed);
+
+    expect(result.error?.issues.map((issue) => issue.path.join('.'))).toEqual([path]);
   });
 });
 

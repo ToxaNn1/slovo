@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { FontSizeSchema, ThemeSchema } from '../edition';
 import { TextSchema } from '../shared';
+import { templateOf } from './shared';
 
 export const SettingsStringsSchema = z.strictObject({
   /** The Settings screen title. */
@@ -23,7 +24,7 @@ export const SettingsStringsSchema = z.strictObject({
   /** The tag on a row that a later version brings. */
   soon: TextSchema,
   /** What VoiceOver reads for a row that a later version brings. Takes `{label}`. */
-  soonAccessibilityLabel: TextSchema,
+  soonAccessibilityLabel: templateOf('label'),
   /** The switch that hides the Streak everywhere it is drawn. */
   hideStreak: TextSchema,
   /** The switch that turns Self-check on. */
@@ -46,7 +47,7 @@ export const SettingsStringsSchema = z.strictObject({
   /** The About screen. */
   about: z.strictObject({
     /** The Edition's line under its name. Takes `{version}`. */
-    editionLine: TextSchema,
+    editionLine: templateOf('version'),
     /** What SLOVO is. */
     description: TextSchema,
     /** Where the words come from. */
