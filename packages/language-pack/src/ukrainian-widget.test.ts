@@ -6,6 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
   serializeWidgetSnapshot,
+  type Correction,
   WidgetSnapshotSchema,
   type WidgetSnapshot,
 } from '@slovo/contracts';
@@ -24,6 +25,9 @@ import { ukrainian, ukrainianFolder } from './test-support';
 // builds over the real Ukrainian Language Pack, and the example the widget's
 // gallery shows. It lives here because only this package can build and read
 // a pack in Node.
+
+/** The combining acute accent a stress trap writes its Stress with. */
+const STRESS_MARK = '\u0301';
 
 let workDir: string;
 let pack: NodeLanguagePack;
@@ -110,6 +114,38 @@ describe('The Widget Snapshot of the Ukrainian Edition', () => {
     const entryIds = new Set(parsed.entries.map(({ id }) => id));
     expect(modeIdsOf(parsed).filter((id) => !entryIds.has(id))).toEqual([]);
     expect([...entryIds, ...modeIdsOf(parsed)]).not.toContain(second);
+  });
+
+  it('keeps the Stress marks of a stress trap on screen and reads it to VoiceOver without them', async () => {
+    const app = await openComposition({
+      content: pack,
+      edition: ukrainian,
+      userState: await openUserState({ port: createMemoryUserStatePort() }),
+      clock: fakeClock('2026-10-16T09:00:00+03:00').clock,
+      random: seededRandom(7),
+    });
+    const stressTraps = (
+      await Promise.all((await pack.listCorrectionIds()).map((id) => pack.getCorrection(id)))
+    ).filter(
+      (correction): correction is Correction => correction?.correctionType === 'wrongStress',
+    );
+    expect(stressTraps).not.toEqual([]);
+
+    const snapshot = await app.widget.snapshot();
+    if (snapshot === undefined) throw new Error('No Widget Snapshot was built');
+    for (const { id, standardEquivalents, nonStandardForm } of stressTraps) {
+      const [headline, secondLine] = [standardEquivalents[0] ?? '', nonStandardForm];
+      expect(headline).toContain(STRESS_MARK);
+      expect(secondLine).toContain(STRESS_MARK);
+      const unmarked = (text: string) => text.replaceAll(STRESS_MARK, '');
+      expect(snapshot.entries.find((entry) => entry.id === id)).toEqual({
+        kind: 'correction',
+        id,
+        headline,
+        secondLine,
+        voiceOver: `${unmarked(headline)}, ${unmarked(secondLine)}`,
+      });
+    }
   });
 
   it('has a checked-in example that parses, for the widget gallery', () => {
