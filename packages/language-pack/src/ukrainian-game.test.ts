@@ -19,6 +19,7 @@ import {
   type UserStatePort,
   userStateRecords,
   type Word,
+  withoutStress,
 } from '@slovo/core';
 
 import {
@@ -181,6 +182,31 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
     }
   });
 
+  it("never offers a Distractor with the answer's Definition, as «Кістлявий, худий.» three Words share", async () => {
+    const definitionOf = (text: string) =>
+      withoutStress(text).toLowerCase().replace(/\s+/g, ' ').trim();
+    const shared = (definition: string) =>
+      words.filter((word) => definitionOf(word.primaryDefinition) === definition).length > 1;
+    const asked: Asked[] = [];
+    for (const seed of [1, 2, 3, 4]) {
+      const app = await run(seed);
+      for (const { id } of (await pack.listCategories()).filter(({ id }) => id !== 'human-body')) {
+        await app.hide({ kind: 'category', categoryId: id });
+      }
+      asked.push(...(await playGame(app)));
+    }
+
+    expect(asked.some(({ round }) => shared(definitionOf(round.prompt)))).toBe(true);
+    for (const { round } of asked) {
+      const prompt = definitionOf(round.prompt);
+      expect(
+        round.options.filter(({ text }) =>
+          wordsReading(text).some((word) => definitionOf(word.primaryDefinition) === prompt),
+        ),
+      ).toHaveLength(1);
+    }
+  });
+
   it('shows the Lemma and its first Example, with its author, on the sheet', async () => {
     for (const { answer, round } of await playGame(await run(11))) {
       expect(round.answer?.sheet).toEqual({
@@ -211,8 +237,6 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
 
   it('writes no Seen, no History and no Active Day while it is played, only its best result', async () => {
     const { port, writes } = recordingPort(new Map());
-    // A seed whose Rounds never offer two Words with the same primary Definition,
-    // which the player below can't tell apart and would answer wrong.
     const app = await run(6, port);
     writes.length = 0;
 
