@@ -172,6 +172,14 @@ const today = '2026-10-11T09:00:00+03:00';
 const WALK_TIMEOUT_MS = 20_000;
 
 describe('the Feed over the Ukrainian Language Pack', () => {
+  it('opens a pack the build writes in pack format 2 and shows its first card', async () => {
+    expect(await pack.metadata()).toMatchObject({ editionId: 'uk', packFormat: 2 });
+
+    const feed = await run(new Map(), fakeClock(today).clock);
+
+    expect(liveIds).toContain(entryIdOf(feed.cards[0]));
+  });
+
   it(
     'offers each live Word once and never a Retired Word',
     { timeout: WALK_TIMEOUT_MS },

@@ -63,7 +63,7 @@ describe('openPack', () => {
       editionId: 'fixture',
       contentVersion: 3,
       contentChecksum: recordedChecksum,
-      packFormat: 1,
+      packFormat: 2,
     };
     expect(opening.metadata).toEqual(metadata);
     expect(await opening.reader.metadata()).toEqual(metadata);

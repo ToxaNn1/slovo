@@ -2,6 +2,8 @@ import { randomUUID } from 'node:crypto';
 
 import { describe, expect, it } from 'vitest';
 
+import { PACK_FORMAT } from '@slovo/language-pack';
+
 import { testApp, testEditions } from '../test-support';
 
 const newEmail = () => `reader-${randomUUID()}@example.com`;
@@ -11,7 +13,7 @@ describe('the Editions', () => {
     const { client } = testApp({ editions: testEditions(['uk', 'pl']).read() });
 
     for (const editionId of ['uk', 'pl']) {
-      await expect(client.content.latest({ editionId, packFormat: 1 })).resolves.toEqual({
+      await expect(client.content.latest({ editionId, packFormat: PACK_FORMAT })).resolves.toEqual({
         pack: null,
       });
     }
@@ -20,7 +22,9 @@ describe('the Editions', () => {
   it('refuse an Edition the backend did not find as NOT_FOUND', async () => {
     const { client } = testApp({ editions: testEditions(['uk']).read() });
 
-    await expect(client.content.latest({ editionId: 'pl', packFormat: 1 })).rejects.toMatchObject({
+    await expect(
+      client.content.latest({ editionId: 'pl', packFormat: PACK_FORMAT }),
+    ).rejects.toMatchObject({
       code: 'NOT_FOUND',
       status: 404,
       defined: true,
@@ -163,7 +167,7 @@ describe('a feature turned off remotely', () => {
     await switchOff('remote-off', 'contentUpdates');
 
     await expect(
-      client.content.latest({ editionId: 'remote-off', packFormat: 1 }),
+      client.content.latest({ editionId: 'remote-off', packFormat: PACK_FORMAT }),
     ).rejects.toMatchObject({ code: 'NOT_FOUND', status: 404 });
     await expect(client.content.download({ params })).rejects.toMatchObject({
       code: 'NOT_FOUND',
@@ -172,7 +176,7 @@ describe('a feature turned off remotely', () => {
 
     await clearSwitch('remote-off', 'contentUpdates');
     await expect(
-      client.content.latest({ editionId: 'remote-off', packFormat: 1 }),
+      client.content.latest({ editionId: 'remote-off', packFormat: PACK_FORMAT }),
     ).resolves.toEqual({ pack: pack.announced });
   });
 
@@ -191,7 +195,7 @@ describe('a feature turned off remotely', () => {
     await switchOff('partly-off', 'game');
 
     await expect(
-      client.content.latest({ editionId: 'partly-off', packFormat: 1 }),
+      client.content.latest({ editionId: 'partly-off', packFormat: PACK_FORMAT }),
     ).resolves.toEqual({ pack: null });
   });
 
@@ -208,7 +212,7 @@ describe('a feature turned off remotely', () => {
     });
 
     await expect(
-      client.content.latest({ editionId: 'edition-off', packFormat: 1 }),
+      client.content.latest({ editionId: 'edition-off', packFormat: PACK_FORMAT }),
     ).rejects.toMatchObject({ code: 'NOT_FOUND', status: 404 });
   });
 });
