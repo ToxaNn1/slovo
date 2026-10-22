@@ -5,6 +5,7 @@
   "everyRarity": true,
   "everyWordHasStress": true,
   "minWordsByCategory": {
-    "dialects": 3
+    "dialects": 15,
+    "witty-insults": 15
   }
 }
