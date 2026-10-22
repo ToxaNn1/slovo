@@ -182,30 +182,37 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
     }
   });
 
-  it("never offers a Distractor with the answer's Definition, as «Кістлявий, худий.» three Words share", async () => {
-    const definitionOf = (text: string) =>
-      withoutStress(text).toLowerCase().replace(/\s+/g, ' ').trim();
-    const shared = (definition: string) =>
-      words.filter((word) => definitionOf(word.primaryDefinition) === definition).length > 1;
-    const asked: Asked[] = [];
-    for (const seed of [1, 2, 3, 4]) {
-      const app = await run(seed);
-      for (const { id } of (await pack.listCategories()).filter(({ id }) => id !== 'human-body')) {
-        await app.hide({ kind: 'category', categoryId: id });
+  // Each hide plans the Rounds again, so four narrowed Games outrun Vitest's 5 s default on CI.
+  it(
+    "never offers a Distractor with the answer's Definition, as «Кістлявий, худий.» three Words share",
+    { timeout: 20_000 },
+    async () => {
+      const definitionOf = (text: string) =>
+        withoutStress(text).toLowerCase().replace(/\s+/g, ' ').trim();
+      const shared = (definition: string) =>
+        words.filter((word) => definitionOf(word.primaryDefinition) === definition).length > 1;
+      const asked: Asked[] = [];
+      for (const seed of [1, 2, 3, 4]) {
+        const app = await run(seed);
+        for (const { id } of (await pack.listCategories()).filter(
+          ({ id }) => id !== 'human-body',
+        )) {
+          await app.hide({ kind: 'category', categoryId: id });
+        }
+        asked.push(...(await playGame(app)));
       }
-      asked.push(...(await playGame(app)));
-    }
 
-    expect(asked.some(({ round }) => shared(definitionOf(round.prompt)))).toBe(true);
-    for (const { round } of asked) {
-      const prompt = definitionOf(round.prompt);
-      expect(
-        round.options.filter(({ text }) =>
-          wordsReading(text).some((word) => definitionOf(word.primaryDefinition) === prompt),
-        ),
-      ).toHaveLength(1);
-    }
-  });
+      expect(asked.some(({ round }) => shared(definitionOf(round.prompt)))).toBe(true);
+      for (const { round } of asked) {
+        const prompt = definitionOf(round.prompt);
+        expect(
+          round.options.filter(({ text }) =>
+            wordsReading(text).some((word) => definitionOf(word.primaryDefinition) === prompt),
+          ),
+        ).toHaveLength(1);
+      }
+    },
+  );
 
   it('shows the Lemma and its first Example, with its author, on the sheet', async () => {
     for (const { answer, round } of await playGame(await run(11))) {
