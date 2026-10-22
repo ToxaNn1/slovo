@@ -177,6 +177,22 @@ describe('History', () => {
     expect(idsUnder(records, 'history.')).toHaveLength(lastCycle.length);
   });
 
+  it('keeps the newest Seen first when the clock goes back, as reopening reads it', async () => {
+    const records = new Map<string, string>();
+    const time = fakeClock();
+    const app = await run({ records, clock: time.clock });
+    await readLastCard(app, time);
+    const first = idAt(app, 0);
+
+    // The device clock is set back an hour, as by a manual change.
+    time.advance(-60 * 60_000);
+    await look(app, time, 1);
+    const second = idAt(app, 1);
+
+    expect(idsOf(app)).toEqual([first, second]);
+    expect(idsOf(await run({ records, clock: time.clock }))).toEqual([first, second]);
+  });
+
   it(`keeps the last ${String(HISTORY_CAP)} Entries, evicting the oldest in the same write`, async () => {
     const records = new Map<string, string>();
     const port = createMemoryUserStatePort(records);

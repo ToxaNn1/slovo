@@ -177,6 +177,19 @@ describe('Review in the Feed', () => {
     expect((await firstCards(app.feed, 12))[11]).toBe(due);
   });
 
+  it('keeps the Review slots where they were when the reader hides a card', async () => {
+    const records = new Map<string, string>();
+    const [due] = await markSeenWordsUnknown(records, { count: 3, unknown: 1 });
+    const app = await run({ records, at: dayTwo });
+    const shown = await firstCards(app.feed, 4);
+    expect(shown[2]).toBe(due);
+
+    await app.hiddenEntries.hide(shown[1] ?? '');
+
+    // The hidden card was the 2nd of the session, so the 6th is the 5th shown.
+    expect((await firstCards(app.feed, 5))[4]).toBe(due);
+  });
+
   it('skips a due Word out of the Mix or under the Rarity Floor until it is eligible again', async () => {
     const records = new Map<string, string>();
     const due = ['w_other', 'w_common'];

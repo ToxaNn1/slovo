@@ -838,6 +838,23 @@ describe('the Word of the Day in the Feed', () => {
     expect(reopened.startPosition).toBe(1);
   });
 
+  it('is chosen again, next after the card the reader was on, when the app reopens the same local day after it was Hidden', async () => {
+    const records = new Map<string, string>();
+    const app = await runApp({ records, clock: fakeClock('2026-10-11T09:00:00+03:00').clock });
+    const { feed } = app;
+    await feed.show(0);
+    await feed.show(1);
+    const hidden = entryIdOf(feed.cards[0]) ?? '';
+    await app.hide({ kind: 'entry', entryId: hidden });
+
+    const reopened = await run({ records, clock: fakeClock('2026-10-11T21:00:00+03:00').clock });
+    await reopened.show(reopened.startPosition);
+
+    expect(entryIdsOf(reopened.cards)[0]).toBe(entryIdOf(feed.cards[0]));
+    expect(wordOfTheDayOf(reopened.cards[1])).toEqual({ year: 2026, month: 10, day: 11 });
+    expect(entryIdsOf(reopened.cards)).not.toContain(hidden);
+  });
+
   it('starts the new local day in a Feed left open over midnight', async () => {
     const time = fakeClock('2026-10-11T23:58:00+03:00');
     const app = await runApp({ clock: time.clock });

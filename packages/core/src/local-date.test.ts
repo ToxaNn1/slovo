@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { daysUntil, localDayOf, untilNextLocalDay } from './index';
+import { localDayOf, untilNextLocalDay } from './index';
 import { fakeClock } from './test-support';
 
 describe('localDayOf', () => {
@@ -24,23 +24,6 @@ describe('localDayOf', () => {
       date: { year: 2026, month: 10, day: 10 },
       daysAgo: 0,
     });
-  });
-});
-
-describe('daysUntil', () => {
-  it('counts the local days from today to the date in the clock time zone', () => {
-    const time = fakeClock('2026-10-19T00:30:00+03:00');
-    const until = (date: string) => daysUntil(date, time.clock);
-
-    expect(until('2026-10-19')).toBe(0);
-    expect(until('2026-10-20')).toBe(1);
-    expect(until('2026-10-22')).toBe(3);
-    expect(until('2026-11-02')).toBe(14);
-    expect(until('2026-10-17')).toBe(-2);
-
-    // In London it is still the day before, so the date is one day further.
-    time.moveTo('Europe/London');
-    expect(until('2026-10-20')).toBe(2);
   });
 });
 

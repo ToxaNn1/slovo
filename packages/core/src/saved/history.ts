@@ -45,8 +45,8 @@ export interface History {
 export interface HistoryRecorder {
   /**
    * Writes `changes` (the Feed's new Seen mark) and the Entry's History entry
-   * in one write, the Entry on top with the time it was Seen, evicting the
-   * oldest beyond `HISTORY_CAP`.
+   * in one write, the Entry with the time it was Seen, which puts it on top
+   * unless the clock went back, evicting the oldest beyond `HISTORY_CAP`.
    */
   record(seen: Seen, changes: UserStateChanges): Promise<void>;
 }
@@ -103,15 +103,24 @@ export async function openHistory({
   ): Promise<void> {
     const row = await rows.row(entryId);
     const others = kept.filter((entry) => entry.entryId !== entryId);
-    const evicted = others.slice(HISTORY_CAP - 1);
+    // In its place by Seen time, as reopening and the Sync's trim order it,
+    // also when the clock went back or a synced entry is ahead of it.
+    const found = others.findIndex((entry) => entry.seenAt.getTime() <= seenAt.getTime());
+    const at = found === -1 ? others.length : found;
+    const all = [
+      ...others.slice(0, at),
+      { entryId, seenAt, wordOfTheDay, row },
+      ...others.slice(at),
+    ];
+    const evicted = all.slice(HISTORY_CAP);
     await userState.write(
       new Map([
         ...changes,
-        ...evicted.flatMap((entry) => [...historyRecords.record(entry.entryId).change(undefined)]),
         ...historyRecords.record(entryId).change({ seenAt: seenAt.toISOString(), wordOfTheDay }),
+        ...evicted.flatMap((entry) => [...historyRecords.record(entry.entryId).change(undefined)]),
       ]),
     );
-    changeKept([{ entryId, seenAt, wordOfTheDay, row }, ...others.slice(0, HISTORY_CAP - 1)]);
+    changeKept(all.slice(0, HISTORY_CAP));
   }
 
   async function clear(): Promise<void> {
