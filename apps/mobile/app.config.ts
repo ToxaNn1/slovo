@@ -192,7 +192,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
     name: edition.config.displayName,
     slug: 'slovo',
     owner: 'anton_de',
-    version: '0.8.6',
+    version: '0.8.7',
     scheme,
     orientation: 'portrait',
     userInterfaceStyle: 'automatic',
