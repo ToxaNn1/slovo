@@ -205,7 +205,8 @@
       "calque": "калька",
       "surzhyk": "суржик",
       "officialese": "канцелярит",
-      "anglicism": "англіцизм"
+      "anglicism": "англіцизм",
+      "wrongStress": "наголос"
     },
     "correctionType": "Тип: {type}",
     "nonStandard": "Так часто кажуть",

@@ -1,0 +1,23 @@
+# A Correction writes its Stress in its text
+
+Until 0.8.7 a Correction could show no stress mistake: no Correction Type fitted, and its forms carried no Stress. A Word records its Stress as vowel positions in the Lemma (ADR 0011's content checks, the `stress` field) and the Core draws the combining acute mark over the stressed vowel when it shows the Lemma. 0.8.7 adds the Correction Type `wrongStress`, a stress trap: the right word said with the wrong Stress, such as «випа́док» for «ви́падок». A stress trap writes its Stress into its text: the combining acute mark (U+0301) follows the stressed vowel in its non-standard form, in each standard equivalent and on the word in its example pair. The texts travel through the pack and the Core as written, and the Entry card, the Share Card, History, Hidden and the «Вчу» list show them without any Stress logic of their own.
+
+**No position field.** A Word's Stress is a list of positions because a Lemma may have several valid Stresses and the Lemma is one word. A stress trap's Stress lives in two forms and in two sentences of the example pair; positions would need four fields that count characters of four texts, and the example pair's positions would break with every edit of the sentence. The mark in the text is what the reader sees, is authored and reviewed in one place, and the existing Stress helpers of the Core take it out where VoiceOver reads the text (ADR 0029). The mark stays out of a Lemma, as before: a Word still records positions.
+
+**The build checks.** The Language Pack build refuses:
+
+- a `wrongStress` Correction in an Edition whose language traits don't mark Stress;
+- a `wrongStress` Correction whose non-standard form or any standard equivalent carries no Stress mark, or a mark that doesn't follow one of the Edition's vowels;
+- a `wrongStress` Correction whose non-standard form and a standard equivalent differ in anything but their Stress marks, ignoring case: the two are one word said two ways;
+- a Stress mark in any text of a Correction of another Correction Type, so only a stress trap carries marks and the Correction mode's comparisons of forms stay free of them.
+
+The example pair is not checked: a sentence may hold the word in an inflected form or several of them, and the author marks the Stress where it matters.
+
+**Why stress traps stay out of the Correction mode.** «Обери правильне» shows a Correction's «people often say» sentence and asks for the standard form among four options. A stress trap's non-standard form and standard equivalent are the same letters, so the options would differ only in a mark the reader can't tell apart at a glance, the Distractors of other Corrections would be whole other words and give the answer away, and a Round marked where the sentence holds the form as written would find the non-standard form at the place the marks make different. The Game therefore asks about no stress trap and offers none as a Distractor (0.8.7, #532); stress traps teach in the Feed, in Self-check and in Review.
+
+## Considered Options
+
+- **Stress positions on the Correction, as on a Word**: rejected. Four position fields over four texts, each breaking with an edit of its text, for what one mark in the text shows (above).
+- **A separate Entry kind for stress traps**: rejected. A stress trap is a Correction in everything but its Type: the same card, the same Knowledge Marks, the same lists. A new kind would add a parallel path through every screen for one chip.
+- **Marks allowed in every Correction's explanation**: rejected. A mark in a Correction of another Type would be either a stress trap in disguise or a stray character; refusing it keeps the rule simple and the Correction mode's comparisons plain.
+- **Stress traps in the Correction mode with options that differ only in the mark**: rejected (above).

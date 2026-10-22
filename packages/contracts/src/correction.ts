@@ -10,13 +10,18 @@ export const CorrectionIdSchema = z
   .string()
   .regex(/^c_[a-z0-9]+$/, 'Expected a Correction id: c_ followed by lowercase letters and digits');
 
-/** Why a form is non-standard. */
+/**
+ * Why a form is non-standard. A `wrongStress` Correction, a stress trap,
+ * writes its Stress into its texts with the combining acute mark after the
+ * stressed vowel (ADR 0045).
+ */
 export const CorrectionTypeSchema = z.enum([
   'russianism',
   'calque',
   'surzhyk',
   'officialese',
   'anglicism',
+  'wrongStress',
 ]);
 
 export type CorrectionType = z.infer<typeof CorrectionTypeSchema>;

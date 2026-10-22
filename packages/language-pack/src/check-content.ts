@@ -1,4 +1,5 @@
 import type { Correction, EditionConfig, Entry, Word } from '@slovo/contracts';
+import { STRESS_MARK, withoutStress } from '@slovo/core';
 
 import type { BuildError } from './build-error';
 
@@ -99,6 +100,63 @@ export function checkContent(
         !vowels.includes(letter.toLocaleLowerCase(config.locale))
       ) {
         fail(`stress.${String(index)}`, `Position ${String(position)} is "${letter}", not a vowel`);
+      }
+    });
+  }
+
+  for (const { file, entry: correction } of corrections) {
+    const fail = (field: string, message: string) => {
+      errors.push({ file, entryId: correction.id, field, message });
+    };
+    const texts: readonly (readonly [field: string, text: string])[] = [
+      ['nonStandardForm', correction.nonStandardForm],
+      ...correction.standardEquivalents.map(
+        (text, index) => [`standardEquivalents.${String(index)}`, text] as const,
+      ),
+      ['explanation', correction.explanation],
+      ['examplePair.nonStandard', correction.examplePair.nonStandard],
+      ['examplePair.standard', correction.examplePair.standard],
+    ];
+
+    if (correction.correctionType !== 'wrongStress') {
+      for (const [field, text] of texts) {
+        if (text.includes(STRESS_MARK)) {
+          fail(field, 'Not allowed: only a wrong-stress Correction writes Stress marks');
+        }
+      }
+      continue;
+    }
+    if (!marksStress) {
+      fail('correctionType', 'Not allowed: the Edition does not mark Stress');
+      continue;
+    }
+
+    // A stress trap's forms carry their Stress: a mark after a vowel in each.
+    const forms = texts.slice(0, 1 + correction.standardEquivalents.length);
+    for (const [field, text] of forms) {
+      if (!text.includes(STRESS_MARK)) {
+        fail(field, 'Required: a wrong-stress Correction writes a Stress mark in each form');
+        continue;
+      }
+      const characters = Array.from(text);
+      characters.forEach((character, index) => {
+        if (character !== STRESS_MARK) return;
+        const letter = characters[index - 1];
+        if (letter === undefined || !vowels?.includes(letter.toLocaleLowerCase(config.locale))) {
+          fail(field, `The Stress mark follows "${letter ?? ''}", not a vowel`);
+        }
+      });
+    }
+
+    // The two forms are one word said two ways, so only their Stress differs.
+    const sameWord = (text: string) => withoutStress(text).toLocaleLowerCase(config.locale);
+    const nonStandard = sameWord(correction.nonStandardForm);
+    correction.standardEquivalents.forEach((equivalent, index) => {
+      if (sameWord(equivalent) !== nonStandard) {
+        fail(
+          `standardEquivalents.${String(index)}`,
+          "A wrong-stress Correction's forms differ only in their Stress marks",
+        );
       }
     });
   }

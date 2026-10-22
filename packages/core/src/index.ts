@@ -142,7 +142,7 @@ export {
   type SettingsDefaults,
   type UserSettings,
 } from './settings';
-export { renderStress } from './entries/stress';
+export { renderStress, STRESS_MARK, withoutStress } from './entries/stress';
 export { createSwipeHint, type SwipeHint } from './feed/swipe-hint';
 export { type Widget } from './widget';
 export {
