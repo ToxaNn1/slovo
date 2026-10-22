@@ -32,11 +32,14 @@ export function createMemoryContentPort({
       ),
     listWords: () => Promise.resolve(liveWords),
     getWord: (id) => Promise.resolve(words.find((word) => word.id === id)),
+    getWords: (ids) => Promise.resolve(words.filter((word) => ids.includes(word.id))),
     listCorrectionIds: () =>
       Promise.resolve(
         corrections.filter((correction) => !correction.retired).map((correction) => correction.id),
       ),
     getCorrection: (id) => Promise.resolve(corrections.find((correction) => correction.id === id)),
+    getCorrections: (ids) =>
+      Promise.resolve(corrections.filter((correction) => ids.includes(correction.id))),
     listLinkedWordIds: (correctionId) =>
       Promise.resolve(
         liveWords

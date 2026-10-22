@@ -21,8 +21,6 @@ export function nodePackDatabase(db: DatabaseSync): PackDatabase {
   return {
     getAllAsync: <T>(sql: string, params: (string | number)[]) =>
       Promise.resolve(prepare(sql).all(...params) as T[]),
-    getFirstAsync: <T>(sql: string, params: (string | number)[]) =>
-      Promise.resolve((prepare(sql).get(...params) as T | undefined) ?? null),
   };
 }
 

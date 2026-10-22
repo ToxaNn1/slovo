@@ -30,3 +30,13 @@ The live Entries themselves are read from the Language Pack once per Entries mod
 ## Amendment: due Entries come back on top of the Cycle order (0.8.6)
 
 ADR 0043 puts Review slots in the Feed: a due Word in every 3rd Word slot and a due Correction in the next Correction slot. A due Entry that is Hidden or not eligible is skipped until it is eligible again, so the Entries module still decides eligibility alone, now also under a Rarity Floor. The Cycle order itself doesn't change.
+
+## Amendment: the Entries the user keeps are read together (whole-project review fix, B4)
+
+Favorites, the Hidden Entries, Collections, History and the Knowledge Marks read the row of every Entry they keep when the composition opens, and the notification plan reads every Word it plans. Each of them read one Entry by id at a time: about eight queries per Word, and eleven per Correction, which is asked for as a Word first. A reader with a few hundred kept Entries waited for thousands of queries at every launch and every reopen, and a plan of 64 Words made about 500 queries one after another.
+
+The content read port now also gives the Words and the Corrections of many ids at once (`getWords`, `getCorrections`), one query per table for every 500 ids, and the Entries module gives any Entries by id together (`getMany`): the Words first, and only the ids that are no Word as Corrections, as `get` does for one. Each list asks for the rows of its Entries together, and the plan for its Words, so each costs at most eleven queries however many Entries it holds. A row read once is still kept for the app session, and a read that fails is still tried again on the next call.
+
+### Considered Options
+
+- **Read the kept Entries from the live Words the Entries module already keeps**: rejected. That read takes every Word in full, about 0.4 s, and the composition plans the Game Modes last so the launch never waits for it; a reader with one Favorite would wait for it at every launch, and Retired Words and Corrections would still need reads of their own.

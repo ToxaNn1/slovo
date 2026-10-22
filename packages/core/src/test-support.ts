@@ -1,6 +1,6 @@
 import type { Correction, Word } from '@slovo/contracts';
 
-import type { Clock, Random } from './ports';
+import type { Clock, ContentReadPort, Random } from './ports';
 
 // Helpers the Core's tests share. They are not part of the public `index.ts`.
 
@@ -98,4 +98,22 @@ export function seededRandom(seed: number): Random {
       return state / 2 ** 32;
     },
   };
+}
+
+/** The content read port, counting each read it answers, of any kind. */
+export function countingReads(content: ContentReadPort): {
+  content: ContentReadPort;
+  reads: () => number;
+} {
+  let reads = 0;
+  const counted = Object.fromEntries(
+    Object.entries(content).map(([name, read]) => [
+      name,
+      (...args: never[]) => {
+        reads += 1;
+        return (read as (...args: never[]) => unknown)(...args);
+      },
+    ]),
+  ) as unknown as ContentReadPort;
+  return { content: counted, reads: () => reads };
 }

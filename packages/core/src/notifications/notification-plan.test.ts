@@ -15,7 +15,7 @@ import {
   type FakeNotificationScheduler,
   type PlannedNotification,
 } from '../index';
-import { correction, fakeClock, word } from '../test-support';
+import { correction, countingReads, fakeClock, word } from '../test-support';
 
 /** The instant these tests start at. */
 const start = '2026-10-14T08:00:00+03:00';
@@ -52,9 +52,11 @@ async function run({
   app: Composition;
   scheduler: FakeNotificationScheduler;
   records: Map<string, string>;
+  /** How many reads of the pack the app made so far. */
+  reads: () => number;
 }> {
-  const app = await openComposition({
-    content: createMemoryContentPort({
+  const { content, reads } = countingReads(
+    createMemoryContentPort({
       categories: [
         { id: 'test', displayName: 'Test' },
         { id: 'other', displayName: 'Other' },
@@ -62,6 +64,9 @@ async function run({
       words,
       corrections,
     }),
+  );
+  const app = await openComposition({
+    content,
     edition: {
       id: 'test',
       isFeatureEnabled: (feature) => !switchedOff.includes(feature),
@@ -77,7 +82,7 @@ async function run({
     random: { next: () => 0.25 },
     scheduling: { scheduler, ellipsis: '…' },
   });
-  return { app, scheduler, records };
+  return { app, scheduler, records, reads };
 }
 
 /** The last plan the scheduler was given; it fails the test when there is none. */
@@ -157,6 +162,21 @@ describe('the notification plan', () => {
     expect(slots).toHaveLength(64);
     expect(slots[0]).toBe('2026-10-14T10:00');
     expect(slots.at(-1)).toBe('2026-10-20T13:00');
+  });
+
+  it('reads the planned Words together, however many it plans', async () => {
+    /** How many reads of the pack planning again with the times takes. */
+    async function readsToPlan(times: readonly string[]): Promise<number> {
+      const records = new Map([['notifications.times', JSON.stringify(times)]]);
+      const { app, scheduler, reads } = await run({ records });
+      const before = reads();
+      await app.resume();
+      expect(planOf(scheduler)).toHaveLength(times.length === 1 ? 14 : 64);
+      return reads() - before;
+    }
+    const tenTimes = Array.from({ length: 10 }, (_, index) => `${String(index + 10)}:00`);
+
+    expect(await readsToPlan(tenTimes)).toBe(await readsToPlan(['10:00']));
   });
 
   it('keeps every local time and its Word after a time-zone change', async () => {

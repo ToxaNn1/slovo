@@ -64,30 +64,56 @@ export function buildEntryRow(entry: Entry): EntryRowModel {
 export interface EntryRows {
   /** The row model of any Entry, Retired or not; nothing for an id the Language Pack doesn't have. */
   row(entryId: string): Promise<EntryRowModel | undefined>;
+  /**
+   * The row models of the Entries, by id, as `row` gives each, those not read
+   * yet read together, so a list opens with a read of each kind rather than
+   * one per Entry. An id the Language Pack doesn't have is not in the map.
+   */
+  rows(entryIds: Iterable<string>): Promise<ReadonlyMap<string, EntryRowModel>>;
 }
 
-export function createEntryRows(entries: Pick<Entries, 'get'>): EntryRows {
-  const rows = new Map<string, Promise<EntryRowModel | undefined>>();
+export function createEntryRows(entries: Pick<Entries, 'getMany'>): EntryRows {
+  const kept = new Map<string, Promise<EntryRowModel | undefined>>();
 
-  async function read(entryId: string): Promise<EntryRowModel | undefined> {
-    try {
-      const entry = await entries.get(entryId);
-      return entry === undefined ? undefined : buildEntryRow(entry);
-    } catch (error) {
-      // A failed read is tried again next time.
-      rows.delete(entryId);
-      throw error;
+  /** Reads the rows of the Entries together, and keeps each. */
+  function read(entryIds: readonly string[]): void {
+    const read = entries.getMany(entryIds);
+    for (const entryId of entryIds) {
+      kept.set(
+        entryId,
+        read.then(
+          (found) => {
+            const entry = found.get(entryId);
+            return entry === undefined ? undefined : buildEntryRow(entry);
+          },
+          (error: unknown) => {
+            // A failed read is tried again next time.
+            kept.delete(entryId);
+            throw error;
+          },
+        ),
+      );
     }
   }
 
+  async function rows(entryIds: Iterable<string>): Promise<ReadonlyMap<string, EntryRowModel>> {
+    const ids = [...new Set(entryIds)];
+    const unread = ids.filter((entryId) => !kept.has(entryId));
+    if (unread.length > 0) read(unread);
+    const found = new Map<string, EntryRowModel>();
+    await Promise.all(
+      ids.map(async (entryId) => {
+        const row = await kept.get(entryId);
+        if (row !== undefined) found.set(entryId, row);
+      }),
+    );
+    return found;
+  }
+
   return {
-    row(entryId) {
-      let row = rows.get(entryId);
-      if (row === undefined) {
-        row = read(entryId);
-        rows.set(entryId, row);
-      }
-      return row;
+    async row(entryId) {
+      return (await rows([entryId])).get(entryId);
     },
+    rows,
   };
 }

@@ -10,6 +10,7 @@ import {
   type Edition,
   type MixEdition,
 } from '../index';
+import { countingReads } from '../test-support';
 
 function word(id: string, overrides: Partial<Word> = {}): Word {
   return {
@@ -196,6 +197,30 @@ describe('the Entries', () => {
 
     it('gives nothing for an unknown id', async () => {
       expect(await open().get('w_missing')).toBeUndefined();
+    });
+
+    it('gives many Entries at once as it gives each, leaving an unknown id out', async () => {
+      const entries = open({ correctionsSwitch: false });
+      const many = ['w_talkative', 'c_chatty', 'w_gone', 'c_old', 'w_missing', 'w_talkative'];
+
+      const found = await entries.getMany(many);
+
+      expect([...found.keys()].toSorted()).toEqual(['c_chatty', 'c_old', 'w_gone', 'w_talkative']);
+      for (const [id, entry] of found) expect(entry).toEqual(await entries.get(id));
+      expect(await entries.getMany([])).toEqual(new Map());
+    });
+
+    it('reads many Entries as often as a few', async () => {
+      /** How many reads of the pack it takes to get the Entries. */
+      async function readsToGet(ids: readonly string[]): Promise<number> {
+        const counted = countingReads(createMemoryContentPort({ categories, words, corrections }));
+        await createEntries({ content: counted.content, edition: editionWith(true) }).getMany(ids);
+        return counted.reads();
+      }
+
+      expect(
+        await readsToGet(['w_always', 'w_talkative', 'w_gone', 'w_plain', 'c_chatty', 'c_old']),
+      ).toBe(await readsToGet(['w_always', 'c_chatty']));
     });
   });
 

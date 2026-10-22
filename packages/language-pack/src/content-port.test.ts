@@ -126,6 +126,18 @@ describe.each(adapters)('the content read port %s', (_, open) => {
     expect(await content.getWord('w_missing')).toBeUndefined();
   });
 
+  /** More ids than one read of the pack binds, none of them in the pack. */
+  const manyMissing = Array.from({ length: 1200 }, (_, place) => `x_${String(place)}`);
+  const idsOf = (entries: readonly { id: string }[]) => entries.map(({ id }) => id).toSorted();
+
+  it('gives the Words of many ids at once, each as by id, a Retired Word included', async () => {
+    const words = await content.getWords([...manyMissing, 'w_fx0002', 'c_fx0001', 'w_fx0001']);
+
+    expect(idsOf(words)).toEqual(['w_fx0001', 'w_fx0002']);
+    for (const word of words) expect(word).toEqual(await content.getWord(word.id));
+    expect(await content.getWords([])).toEqual([]);
+  });
+
   it('lists the live Corrections in a stable order, leaving a Retired Correction out', async () => {
     expect(await content.listCorrectionIds()).toEqual(['c_fx0001', 'c_fx0003', 'c_fx0004']);
   });
@@ -134,6 +146,21 @@ describe.each(adapters)('the content read port %s', (_, open) => {
     expect(await content.getCorrection('c_fx0001')).toMatchObject({ kind: 'correction' });
     expect(await content.getCorrection('c_fx0002')).toMatchObject({ retired: true });
     expect(await content.getCorrection('c_missing')).toBeUndefined();
+  });
+
+  it('gives the Corrections of many ids at once, each as by id, a Retired Correction included', async () => {
+    const corrections = await content.getCorrections([
+      ...manyMissing,
+      'c_fx0002',
+      'w_fx0002',
+      'c_fx0001',
+    ]);
+
+    expect(idsOf(corrections)).toEqual(['c_fx0001', 'c_fx0002']);
+    for (const correction of corrections) {
+      expect(correction).toEqual(await content.getCorrection(correction.id));
+    }
+    expect(await content.getCorrections([])).toEqual([]);
   });
 
   it('lists the live Words linked to a Correction, leaving a Retired Word out', async () => {
