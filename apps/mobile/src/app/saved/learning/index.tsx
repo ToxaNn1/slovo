@@ -48,12 +48,12 @@ function Learning() {
     >
       <FlatList
         data={list}
-        keyExtractor={(item) => item.row.entryId}
-        renderItem={({ item }) => (
+        keyExtractor={(entry) => entry.entryId}
+        renderItem={({ item: entry }) => (
           <LearningRow
-            item={item}
+            entry={entry}
             onPress={() => {
-              openScreen(`/saved/learning/${item.row.entryId}`);
+              openScreen(`/saved/learning/${entry.entryId}`);
             }}
           />
         )}

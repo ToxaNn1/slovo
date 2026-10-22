@@ -2,34 +2,26 @@
  * The UI: Edition-neutral components that read every text, design token and
  * Decor from the Edition.
  */
-export { ActionRow, type ActionRowProps } from './primitives/ActionRow';
+export { ActionRow } from './primitives/ActionRow';
 export { DeleteAccountButton } from './DeleteAccountButton';
 export { ResendButton } from './ResendButton';
 export { BackLink } from './primitives/BackLink';
 export { FeedError, FeedLoading, SwipeHint } from './feed/FeedStates';
 export { FontSizePreview } from './settings/FontSizePreview';
-export {
-  FontSizeProvider,
-  useWordTextSizes,
-  wordTextSizes,
-  type TextSize,
-  type WordTextSizes,
-} from './providers/FontSizeProvider';
-export { DecorProvider, useDecor } from './decor/DecorProvider';
+export { FontSizeProvider } from './providers/FontSizeProvider';
+export { DecorProvider } from './decor/DecorProvider';
 export { EditionProvider, fill, useEdition } from './providers/EditionProvider';
 export { EndOfCycleCard } from './feed/EndOfCycleCard';
-export { EntryCard, type EntryCardProps } from './entries/EntryCard';
+export { EntryCard } from './entries/EntryCard';
 export {
   CardCorners,
   DecorBackground,
   EmptyStateIllustration,
   OrnamentBand,
-  OrnamentDivider,
 } from './decor/DecorSlots';
 export { ConfirmationDialog } from './primitives/ConfirmationDialog';
 export { EmptyState } from './primitives/EmptyState';
 export { EntryRow, type EntryRowAction } from './entries/EntryRow';
-export { type RowAction } from './primitives/SwipeableRow';
 export { FavoriteButton } from './saved/FavoriteButton';
 export { ClearHistoryButton } from './saved/ClearHistoryButton';
 export { CollectionMenuSheet } from './saved/CollectionMenuSheet';
@@ -38,7 +30,7 @@ export { GameModeCard } from './game/GameModeCard';
 export { GameResult } from './game/GameResult';
 export { GameReview } from './game/GameReview';
 export { GameRound } from './game/GameRound';
-export { HapticsProvider, useHaptics } from './providers/HapticsProvider';
+export { HapticsProvider } from './providers/HapticsProvider';
 export { HideButton } from './mix/HideButton';
 export { KnowledgeButtons } from './knowledge/KnowledgeButtons';
 export { HideChoiceSheet } from './mix/HideChoiceSheet';
@@ -62,26 +54,21 @@ export {
   SavedCardCollections,
   SavedCardRows,
   SavedCardTitles,
-  type SavedCardRow,
 } from './saved/SavedCard';
-export { LearningCard, LearningRow, type LearningItem } from './saved/Learning';
+export { LearningCard, LearningRow } from './saved/Learning';
 export { CollectionButton } from './saved/CollectionButton';
 export { CollectionNameField, CollectionRow, NewCollectionButton } from './saved/CollectionRow';
 export { CollectionSheet } from './saved/CollectionSheet';
 export { BottomSheet } from './primitives/BottomSheet';
 export { SheetTitle } from './primitives/SheetParts';
 export { Placeholder } from './primitives/Placeholder';
-export {
-  PronunciationButton,
-  type PronunciationButtonProps,
-  type PronunciationButtonState,
-} from './entries/PronunciationButton';
-export { SegmentedControl, type Segment } from './primitives/SegmentedControl';
+export { PronunciationButton } from './entries/PronunciationButton';
+export { SegmentedControl } from './primitives/SegmentedControl';
 export { ProblemLine, TextField } from './primitives/TextField';
 export { ShareButton } from './share/ShareButton';
 export { ShareSheet, type ShareSheetOutcome } from './share/ShareSheet';
 export { NavigationRow, SettingsGroup, SoonRow, SwitchRow, TimeRow } from './settings/SettingsRows';
-export { SplashOverlay, type SplashOverlayProps } from './onboarding/SplashOverlay';
+export { SplashOverlay } from './onboarding/SplashOverlay';
 export { StatsPill } from './progress/StatsPill';
 export { StatsSheet } from './progress/StatsSheet';
 export { stressLabel } from './entries/stress-label';
@@ -90,7 +77,6 @@ export {
   cardSpace,
   coreTokens,
   designTokens,
-  fontSizeSteps,
   lineHeight,
   minTouchTarget,
   rowPadding,
@@ -101,21 +87,12 @@ export {
   type DesignTokens,
   type ShareCardFormat,
 } from './tokens';
-export {
-  InvertedTokens,
-  TokensProvider,
-  useSchemeColors,
-  useTokens,
-  type Tokens,
-} from './providers/TokensProvider';
+export { TokensProvider, useTokens } from './providers/TokensProvider';
 export { UndoToastProvider, useUndoToast, type UndoToastContent } from './primitives/UndoToast';
 export {
   PagerScrollView,
-  useIsPageOnScreen,
   usePageTurnActions,
   VerticalPager,
   type VerticalPagerHandle,
-  type VerticalPagerProps,
 } from './primitives/VerticalPager';
 export { GuideStep, WidgetDrawing } from './settings/WidgetGuide';
-export { useReduceMotion } from './providers/useReduceMotion';
