@@ -295,7 +295,7 @@ describe('«Обери правильне» over the Ukrainian Language Pack', (
     for (const seed of [1, 2, 3]) {
       for (const round of await playCorrections(await run(seed))) {
         const asked = askedOf(round);
-        // The 3 stress traps top up with other Types until #532 leaves them out of the mode.
+        // The stress traps top up with other Types until #532 leaves them out of the mode.
         if (asked.correctionType === 'wrongStress') continue;
         const texts = round.options.map(({ text }) => text);
         expect(new Set(texts).size).toBe(4);
