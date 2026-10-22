@@ -1,4 +1,3 @@
-import type { CollectionResult } from '@slovo/core';
 import {
   BackLink,
   CollectionMenuSheet,
@@ -18,7 +17,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { editionStrings } from '../../../edition/edition';
 import { useOpenScreen } from '../../../entries/use-open-screen';
-import { refusalText } from '../../../saved/collection-refusal';
 import { useCollectionChanges, useCollectionRows } from '../../../saved/collections';
 import type { CollectionRowModel } from '../../../saved/collections-screen';
 import { createMenuFollowUp } from '../../../saved/menu-follow-up';
@@ -78,20 +76,14 @@ export default function CollectionsScreen() {
     },
     [afterMenu],
   );
-  /** Keeps the name the field gives; closes the field, or says why the name is refused. */
-  const keepName = useCallback(
-    async (keep: () => Promise<CollectionResult | undefined>): Promise<string | undefined> => {
-      const result = await keep();
-      if (result === undefined || result.ok) {
-        setEditing(undefined);
-        return undefined;
-      }
-      return refusalText(collectionStrings.sheet.refusal, result.reason);
-    },
-    [],
-  );
+  /** Closes the field once its name is kept; a refused name stays in it, with why. */
+  const keepName = useCallback(async (kept: Promise<string | undefined>) => {
+    const refusal = await kept;
+    if (refusal === undefined) setEditing(undefined);
+    return refusal;
+  }, []);
   const keepRename = useCallback(
-    (id: string, name: string) => keepName(() => rename(id, name)),
+    (id: string, name: string) => keepName(rename(id, name)),
     [keepName, rename],
   );
 
@@ -148,7 +140,7 @@ export default function CollectionsScreen() {
                   testID="collections-new"
                   overline={strings.newOverline}
                   placeholder={collectionStrings.sheet.namePlaceholder}
-                  onSubmit={(name) => keepName(() => create(name))}
+                  onSubmit={(name) => keepName(create(name))}
                   onCancel={stopEditing}
                 />
               </View>

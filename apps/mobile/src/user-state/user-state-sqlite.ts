@@ -9,8 +9,16 @@ export interface UserStateDatabase {
   execAsync(sql: string): Promise<void>;
   getFirstAsync<T>(sql: string, params: string[]): Promise<T | null>;
   getAllAsync<T>(sql: string, params: string[]): Promise<T[]>;
+  /**
+   * Runs `task` in a transaction on a connection of its own, so the reads of
+   * this one see none of its changes until it commits.
+   */
+  withExclusiveTransactionAsync(task: (txn: UserStateTransaction) => Promise<void>): Promise<void>;
+}
+
+/** The slice of a transaction's own connection a write needs. */
+export interface UserStateTransaction {
   runAsync(sql: string, params: string[]): Promise<unknown>;
-  withTransactionAsync(task: () => Promise<void>): Promise<void>;
 }
 
 /**
@@ -39,7 +47,8 @@ const SQL = {
  */
 export async function openSqliteUserState(db: UserStateDatabase): Promise<UserStatePort> {
   await db.execAsync(LAYOUT);
-  // One transaction at a time: a write waits for the one before it.
+  // One transaction at a time: a write waits for the one before it. Each
+  // runs on its own connection, so a read made meanwhile sees all of it or none.
   let lastWrite: Promise<unknown> = Promise.resolve();
 
   return {
@@ -53,11 +62,11 @@ export async function openSqliteUserState(db: UserStateDatabase): Promise<UserSt
     },
     write(changes) {
       const write = lastWrite.then(() =>
-        db.withTransactionAsync(async () => {
+        db.withExclusiveTransactionAsync(async (txn) => {
           for (const [key, value] of changes) {
             await (value === undefined
-              ? db.runAsync(SQL.delete, [key])
-              : db.runAsync(SQL.set, [key, value]));
+              ? txn.runAsync(SQL.delete, [key])
+              : txn.runAsync(SQL.set, [key, value]));
           }
         }),
       );

@@ -24,6 +24,7 @@ async function openTracked(port: UserStatePort): Promise<TrackedUserState> {
 
 async function openStoredUserState(): Promise<TrackedUserState> {
   const db = await openDatabaseAsync(DATABASE_NAME);
+  // Reads go on while a write commits on its own connection.
   await db.execAsync('PRAGMA journal_mode = WAL');
   return openTracked(await openSqliteUserState(db));
 }
