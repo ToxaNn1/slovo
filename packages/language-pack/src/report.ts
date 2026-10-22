@@ -1,10 +1,16 @@
-import { CorrectionTypeSchema, type CorrectionType, type Word } from '@slovo/contracts';
+import {
+  CorrectionTypeSchema,
+  IdiomTypeSchema,
+  type CorrectionType,
+  type IdiomType,
+  type Word,
+} from '@slovo/contracts';
 
 import type { PackContent } from './pack-layout';
 
 /**
  * How much content a pack holds and how complete it is. Counts leave
- * Retired Words and Retired Corrections out.
+ * Retired Words, Retired Corrections and Retired Idioms out.
  */
 export interface ContentReport {
   readonly words: number;
@@ -32,6 +38,13 @@ export interface ContentReport {
     readonly correctionType: CorrectionType;
     readonly corrections: number;
   }[];
+  readonly idioms: number;
+  readonly retiredIdioms: number;
+  /** One bucket per Idiom Type, in the order the contracts list them. */
+  readonly idiomsPerType: readonly {
+    readonly idiomType: IdiomType;
+    readonly idioms: number;
+  }[];
 }
 
 const RARITIES = [1, 2, 3, 4, 5];
@@ -40,9 +53,11 @@ export function contentReport({
   categories,
   words: allWords,
   corrections: allCorrections,
+  idioms: allIdioms,
 }: PackContent): ContentReport {
   const words = allWords.filter((word) => !word.retired);
   const corrections = allCorrections.filter((correction) => !correction.retired);
+  const idioms = allIdioms.filter((idiom) => !idiom.retired);
   const count = (test: (word: Word) => boolean) => words.filter(test).length;
   return {
     words: words.length,
@@ -67,6 +82,12 @@ export function contentReport({
       corrections: corrections.filter((correction) => correction.correctionType === correctionType)
         .length,
     })),
+    idioms: idioms.length,
+    retiredIdioms: allIdioms.length - idioms.length,
+    idiomsPerType: IdiomTypeSchema.options.map((idiomType) => ({
+      idiomType,
+      idioms: idioms.filter((idiom) => idiom.idiomType === idiomType).length,
+    })),
   };
 }
 
@@ -80,13 +101,18 @@ export function formatContentReport(report: ContentReport): string {
     corrections,
     retiredCorrections,
     correctionsPerType,
+    idioms,
+    retiredIdioms,
+    idiomsPerType,
   } = report;
   const retired = `${String(retiredWords)} Retired Word${retiredWords === 1 ? '' : 's'} left out`;
   const retiredCorrectionsNote = `${String(retiredCorrections)} Retired Correction${retiredCorrections === 1 ? '' : 's'} left out`;
+  const retiredIdiomsNote = `${String(retiredIdioms)} Retired Idiom${retiredIdioms === 1 ? '' : 's'} left out`;
   const idWidth = Math.max(...wordsPerCategory.map((category) => category.categoryId.length));
   const nameWidth = Math.max(...wordsPerCategory.map((category) => category.displayName.length));
   const mostOfOneRarity = Math.max(1, ...rarity.map((bucket) => bucket.words));
   const typeWidth = Math.max(...correctionsPerType.map((bucket) => bucket.correctionType.length));
+  const idiomTypeWidth = Math.max(...idiomsPerType.map((bucket) => bucket.idiomType.length));
   const share = (part: number) =>
     `${String(part)}/${String(words)} (${String(words === 0 ? 0 : Math.floor((part * 100) / words))}%)`;
 
@@ -113,6 +139,12 @@ export function formatContentReport(report: ContentReport): string {
     ...correctionsPerType.map(
       ({ correctionType, corrections: ofType }) =>
         `    ${correctionType.padEnd(typeWidth)}  ${String(ofType)}`,
+    ),
+    `  Idioms: ${String(idioms)} (${retiredIdiomsNote})`,
+    '  Idioms per Idiom Type:',
+    ...idiomsPerType.map(
+      ({ idiomType, idioms: ofType }) =>
+        `    ${idiomType.padEnd(idiomTypeWidth)}  ${String(ofType)}`,
     ),
   ].join('\n');
 }

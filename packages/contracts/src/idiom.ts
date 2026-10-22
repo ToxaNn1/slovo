@@ -27,28 +27,39 @@ export type IdiomType = z.infer<typeof IdiomTypeSchema>;
  * Stress, part of speech, Category, rarity or Pronunciation (ADR 0046).
  *
  * The expression is in Unicode NFC; which letters it may hold depends on the
- * Edition, so the Language Pack build checks them.
+ * Edition, so the Language Pack build checks them. A place name requires its
+ * etymology.
  *
  * `kind` tells Entries apart. Authored files may leave it out, because the
  * folder already says what they hold. List fields default to empty and
  * `retired` to false; a Retired Idiom stays reachable by id but is left out
  * like a Retired Word.
  */
-export const IdiomSchema = z.strictObject({
-  kind: z.literal('idiom').default('idiom'),
-  id: IdiomIdSchema,
-  expression: TextSchema.refine(
-    (expression) => expression === expression.normalize('NFC'),
-    'Expected the expression in Unicode NFC, with every letter composed',
-  ),
-  idiomType: IdiomTypeSchema,
-  primaryDefinition: TextSchema,
-  extraDefinitions: z.array(TextSchema).default([]),
-  examples: z.array(ExampleSchema).default([]),
-  etymology: TextSchema.optional(),
-  sources: z.array(SourceSchema).min(1),
-  retired: z.boolean().default(false),
-});
+export const IdiomSchema = z
+  .strictObject({
+    kind: z.literal('idiom').default('idiom'),
+    id: IdiomIdSchema,
+    expression: TextSchema.refine(
+      (expression) => expression === expression.normalize('NFC'),
+      'Expected the expression in Unicode NFC, with every letter composed',
+    ),
+    idiomType: IdiomTypeSchema,
+    primaryDefinition: TextSchema,
+    extraDefinitions: z.array(TextSchema).default([]),
+    examples: z.array(ExampleSchema).default([]),
+    etymology: TextSchema.optional(),
+    sources: z.array(SourceSchema).min(1),
+    retired: z.boolean().default(false),
+  })
+  .superRefine((idiom, context) => {
+    if (idiom.idiomType === 'placeName' && idiom.etymology === undefined) {
+      context.addIssue({
+        code: 'custom',
+        path: ['etymology'],
+        message: 'Required for a place name: its etymology tells the story of its name',
+      });
+    }
+  });
 
 /** An Idiom with every default filled in, as the Core returns it. */
 export type Idiom = z.output<typeof IdiomSchema>;

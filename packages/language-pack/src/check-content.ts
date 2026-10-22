@@ -105,6 +105,41 @@ export function checkContent(
     });
   }
 
+  // An expression holds words, so it may also hold a space, and its letters
+  // in either case, such as a place name's capital.
+  const expressionTokens = [
+    ...alphabet.flatMap((letter) => [letter, letter.toLocaleUpperCase(config.locale)]),
+    ...lemmaPunctuation,
+    ' ',
+  ].toSorted((a, b) => b.length - a.length);
+  // A live Idiom's expression, in lower case, names one Idiom only.
+  const idiomByExpression = new Map<string, Authored<Idiom>>();
+
+  for (const { file, entry: idiom } of idioms) {
+    const fail = (message: string) => {
+      errors.push({ file, entryId: idiom.id, field: 'expression', message });
+    };
+
+    const stray = strayCharacter(idiom.expression, expressionTokens);
+    if (stray !== undefined) {
+      fail(
+        `"${stray}" (${codePointLabel(stray)}) is not a letter of the alphabet, punctuation or space the Edition allows`,
+      );
+    }
+
+    if (!idiom.retired) {
+      const expression = idiom.expression.toLocaleLowerCase(config.locale);
+      const first = idiomByExpression.get(expression);
+      if (first === undefined) {
+        idiomByExpression.set(expression, { file, entry: idiom });
+      } else if (first.entry.id !== idiom.id) {
+        fail(
+          `Same expression as ${first.entry.id} in ${first.file}: author it once, or retire one of them`,
+        );
+      }
+    }
+  }
+
   for (const { file, entry: correction } of corrections) {
     const fail = (field: string, message: string) => {
       errors.push({ file, entryId: correction.id, field, message });

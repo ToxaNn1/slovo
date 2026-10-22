@@ -470,6 +470,36 @@ describe('buildLanguagePack', () => {
       });
     });
 
+    it.each([
+      ['an expression that is not in Unicode NFC', 'i_fx1001', 'expression', /NFC/],
+      [
+        'an expression with a letter outside the alphabet',
+        'i_fx1002',
+        'expression',
+        /"i" \(U\+0069\) is not a letter/,
+      ],
+      [
+        'an expression with a capital letter outside the alphabet',
+        'i_fx1003',
+        'expression',
+        /"T" \(U\+0054\) is not a letter/,
+      ],
+      ['a place name without an etymology', 'i_fx1004', 'etymology', /required for a place name/i],
+      [
+        'an Idiom that repeats the expression of another, in another case',
+        'i_fx1006',
+        'expression',
+        /same expression as i_fx1005/i,
+      ],
+    ])('%s', (_rule, entryId, field, message) => {
+      expect(errors()).toContainEqual({
+        file: `content/idioms/${entryId}.json`,
+        entryId,
+        field,
+        message: expect.stringMatching(message) as string,
+      });
+    });
+
     it('rejects a file that is not an Entry file', () => {
       expect(errors()).toContainEqual({
         file: 'content/words/notes.txt',
@@ -497,7 +527,7 @@ describe('buildLanguagePack', () => {
     it('reports nothing but those errors', () => {
       // The copy with a duplicate id is also misnamed, so it fails twice; the
       // surzhyk Correction with a Stress mark fails for its form and its example.
-      expect(errors()).toHaveLength(36);
+      expect(errors()).toHaveLength(41);
     });
   });
 
@@ -669,6 +699,23 @@ describe('buildLanguagePack', () => {
     ]);
   });
 
+  it('builds an Idiom that takes over the expression of a Retired Idiom', () => {
+    const editionDir = copyFixture('valid');
+    const idiom = readJsonFile(join(editionDir, 'content/idioms/i_fx0001.json'));
+    editJson(editionDir, 'content/idioms/i_fx0001.json', (retired) => ({
+      ...retired,
+      retired: true,
+    }));
+    writeFileSync(
+      join(editionDir, 'content/idioms/i_fx0003.json'),
+      JSON.stringify({ ...idiom, id: 'i_fx0003', expression: 'Бити байдики' }),
+    );
+    record(editionDir);
+
+    const result = buildLanguagePack({ editionDir, outFile: packPath() });
+    expect(result.ok ? [] : result.errors).toEqual([]);
+  });
+
   it('builds homonyms, and a Word that takes over from a Retired Word', () => {
     const editionDir = copyFixture('valid');
     const write = (word: Json) => {
@@ -748,6 +795,12 @@ describe('buildLanguagePack', () => {
         { correctionType: 'anglicism', corrections: 0 },
         { correctionType: 'wrongStress', corrections: 0 },
       ],
+      idioms: 2,
+      retiredIdioms: 0,
+      idiomsPerType: [
+        { idiomType: 'idiom', idioms: 1 },
+        { idiomType: 'placeName', idioms: 1 },
+      ],
     });
     const printed = formatContentReport(result.report);
     expect(printed).toMatch(/Words:\s+2 \(1 Retired Word left out\)/);
@@ -759,6 +812,8 @@ describe('buildLanguagePack', () => {
     expect(printed).toMatch(/Corrections:\s+4 \(0 Retired Corrections left out\)/);
     expect(printed).toMatch(/russianism\s+2/);
     expect(printed).toMatch(/calque\s+0/);
+    expect(printed).toMatch(/Idioms:\s+2 \(0 Retired Idioms left out\)/);
+    expect(printed).toMatch(/Idioms per Idiom Type:\n\s+idiom\s+1\n\s+placeName\s+1/);
   });
 
   it('counts the Words with a region, and gives a dialect Word card its region', async () => {
