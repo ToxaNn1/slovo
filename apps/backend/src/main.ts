@@ -23,9 +23,10 @@ const app = createApp({
   authSecret: config.AUTH_SECRET,
 });
 const server = await startServer({ app, database, port: config.PORT });
-logger.info({ port: server.port }, 'listening');
 
 // A host stops the server with SIGTERM before it replaces it; Ctrl-C sends SIGINT.
+// The handlers come before the line that says the server listens: until a
+// process has one, a signal ends it at once, without stopping the server.
 for (const signal of ['SIGTERM', 'SIGINT'] as const) {
   process.once(signal, () => {
     logger.info({ signal }, 'stopping');
@@ -40,3 +41,4 @@ for (const signal of ['SIGTERM', 'SIGINT'] as const) {
     );
   });
 }
+logger.info({ port: server.port }, 'listening');
