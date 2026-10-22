@@ -1,20 +1,10 @@
 import type { KnowledgeMark } from '@slovo/core';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { useConcealed } from '../entries/self-check';
+import { OutlineButton } from '../primitives/OutlineButton';
 import { useEdition } from '../providers/EditionProvider';
-import { useTokens } from '../providers/TokensProvider';
-import {
-  disabledOpacity,
-  minTouchTarget,
-  outlineButtonRadius,
-  space,
-  typeSize,
-  withAlpha,
-} from '../tokens';
-
-/** How far the largest text sizes of iOS may scale a label, so both buttons stay on one line. */
-const LABEL_MAX_FONT_SCALE = 1.2;
+import { space } from '../tokens';
 
 /**
  * The «Знаю» and «Не знаю» buttons of an Entry card (ADR 0043): the chosen
@@ -40,21 +30,25 @@ export function KnowledgeButtons({
   const inactive = useConcealed();
   return (
     <View style={styles.row}>
-      <MarkButton
+      <OutlineButton
         testID="knowledge-known"
         label={strings.knowledge.known}
-        hint={entryKind === 'correction' ? strings.knowledge.correctionKnownHint : undefined}
+        accessibilityHint={
+          entryKind === 'correction' ? strings.knowledge.correctionKnownHint : undefined
+        }
         selected={mark === 'known'}
         disabled={inactive}
+        paired
         onPress={() => {
           onTap('known');
         }}
       />
-      <MarkButton
+      <OutlineButton
         testID="knowledge-unknown"
         label={strings.knowledge.unknown}
         selected={mark === 'unknown'}
         disabled={inactive}
+        paired
         onPress={() => {
           onTap('unknown');
         }}
@@ -63,69 +57,6 @@ export function KnowledgeButtons({
   );
 }
 
-function MarkButton({
-  label,
-  hint,
-  selected,
-  disabled,
-  onPress,
-  testID,
-}: {
-  label: string;
-  hint?: string | undefined;
-  selected: boolean;
-  disabled: boolean;
-  onPress: () => void;
-  testID: string;
-}) {
-  const { colors, fontFamilies } = useTokens();
-  const { voice } = useEdition();
-  return (
-    <Pressable
-      testID={testID}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityHint={hint}
-      accessibilityState={{ selected, disabled }}
-      {...voice}
-      disabled={disabled}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.button,
-        {
-          opacity: disabled ? disabledOpacity : 1,
-          borderColor: selected ? colors.accent : withAlpha(colors.accent, 0.45),
-          backgroundColor: selected
-            ? colors.accent
-            : pressed
-              ? colors.surfaceSunken
-              : 'transparent',
-        },
-      ]}
-    >
-      <Text
-        maxFontSizeMultiplier={LABEL_MAX_FONT_SCALE}
-        style={[
-          styles.label,
-          { color: selected ? colors.background : colors.accent, fontFamily: fontFamilies.ui },
-        ]}
-      >
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', justifyContent: 'center', gap: space[3] },
-  button: {
-    minHeight: minTouchTarget,
-    minWidth: minTouchTarget,
-    paddingHorizontal: space[5],
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderRadius: outlineButtonRadius,
-  },
-  label: { fontSize: typeSize.body, fontWeight: '700' },
 });

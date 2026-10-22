@@ -53,7 +53,8 @@ describe('KnowledgeButtons', () => {
   it('gives Known no hint on a Word', async () => {
     await render(buttons(undefined, jest.fn()));
 
-    expect(screen.getByRole('button', { name: 'Known' })).not.toHaveProp('accessibilityHint');
+    expect(screen.getByRole('button', { name: 'Known' })).toBeTruthy();
+    expect(screen.queryAllByHintText(/./)).toHaveLength(0);
   });
 
   it('taps the chosen button again to remove its mark', async () => {
