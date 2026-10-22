@@ -112,6 +112,78 @@ export interface Composition extends Hiding {
    * Entry opened from it (ADR 0026).
    */
   readonly widget: Widget;
+  /**
+   * Closes the composition, once the shell opened another over the same user
+   * state (ADR 0036): from then on it writes nothing to the user state, hands
+   * the device no plan, and the Game tries no planning of its offers again.
+   * What it reads stays as it was. Resolves once the writes and the plans it
+   * had under way end; never rejects.
+   */
+  close(): Promise<void>;
+}
+
+/**
+ * The ports the composition writes through, made to do nothing once it
+ * closes: a write, a plan handed to the device or a planning of the Game's
+ * offers tried again. `close` cancels the tries waiting and resolves once the
+ * writes and the plans under way end.
+ */
+function closable({
+  userState,
+  scheduling,
+  schedule,
+}: {
+  userState: UserState;
+  scheduling?: NotificationScheduling;
+  schedule?: Schedule;
+}): {
+  userState: UserState;
+  scheduling: NotificationScheduling | undefined;
+  schedule: Schedule | undefined;
+  close: () => Promise<void>;
+} {
+  let closed = false;
+  const underWay = new Set<Promise<void>>();
+  const waiting = new Set<() => void>();
+  /** Runs `change` unless the composition is closed, and keeps it under way until it ends. */
+  function unlessClosed(change: () => Promise<void>): Promise<void> {
+    if (closed) return Promise.resolve();
+    const done = change();
+    underWay.add(done);
+    const end = () => underWay.delete(done);
+    done.then(end, end);
+    return done;
+  }
+  return {
+    userState: { ...userState, write: (changes) => unlessClosed(() => userState.write(changes)) },
+    scheduling: scheduling && {
+      ...scheduling,
+      scheduler: {
+        ...scheduling.scheduler,
+        replacePlan: (plan) => unlessClosed(() => scheduling.scheduler.replacePlan(plan)),
+      },
+    },
+    schedule:
+      schedule &&
+      ((run, delay) => {
+        if (closed) return () => undefined;
+        const cancel = schedule(() => {
+          waiting.delete(cancel);
+          run();
+        }, delay);
+        waiting.add(cancel);
+        return () => {
+          waiting.delete(cancel);
+          cancel();
+        };
+      }),
+    async close() {
+      closed = true;
+      for (const cancel of waiting) cancel();
+      waiting.clear();
+      await Promise.allSettled(underWay);
+    },
+  };
 }
 
 /** The Core's own Game Modes, registered through the same Extension Point as an Edition's. */
@@ -128,17 +200,16 @@ const coreGameModes: readonly GameMode[] = [guessWord, correctionMode];
  * The Game offers the Core's Game Modes, then `gameModes`, the ones an Edition
  * adds through the Extension Point. It tries a failed planning of their
  * offers again by `schedule`, and on each `resume`; without `schedule`, as in
- * tests of other features, only on `resume`.
+ * tests of other features, only on `resume`. Close it with `close` once
+ * another opens over the same user state.
  */
 export async function openComposition({
   content,
   edition,
-  userState,
   clock,
   random,
-  scheduling,
-  schedule,
   gameModes = [],
+  ...ports
 }: {
   content: ContentReadPort;
   edition: Pick<Edition, 'id' | 'isFeatureEnabled'> &
@@ -152,6 +223,7 @@ export async function openComposition({
   schedule?: Schedule;
   gameModes?: readonly GameMode[];
 }): Promise<Composition> {
+  const { userState, scheduling, schedule, close } = closable(ports);
   const entries = createEntries({ content, edition, userState });
   const rows = createEntryRows(entries);
   const cycle = await openCycle({ entries, userState, random });
@@ -304,5 +376,6 @@ export async function openComposition({
       clock,
       opened: openedFromOutside,
     }),
+    close,
   };
 }

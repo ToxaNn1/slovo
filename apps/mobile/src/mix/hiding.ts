@@ -2,9 +2,10 @@ import type { Composition, EntryFeedCard } from '@slovo/core';
 import { useUndoToast, type UndoToastContent } from '@slovo/ui';
 import { useState } from 'react';
 
-import { useComposition } from '../composition';
+import { compositionOpening, useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
 import { hideChoice, hideToast, type HideOption } from './hide-choice';
+import { undoHide } from './hiding-undo';
 
 const { hiding: strings } = editionStrings;
 
@@ -22,7 +23,7 @@ export interface HideChoiceProps {
  * it opens: «hide this Entry», on a Word card «hide its Category», on a
  * Correction card «hide Corrections», and cancel. Hiding shows the undo
  * toast, whose undo restores the Entry or puts the Category or Corrections
- * back in the Mix. The Feed follows the Core at once: it drops the cards and
+ * back in the Mix, in the composition open at the tap. The Feed follows the Core at once: it drops the cards and
  * puts them back on undo. An Entry hidden already stays as it is, with
  * nothing to undo.
  */
@@ -73,9 +74,12 @@ async function hide(
     message,
     undoLabel: strings.undo,
     onUndo() {
-      result.undo().catch((error: unknown) => {
-        console.error('Could not undo the hide', error);
-      });
+      compositionOpening
+        .opened()
+        .then((current) => undoHide(current, result.changed))
+        .catch((error: unknown) => {
+          console.error('Could not undo the hide', error);
+        });
     },
   });
 }

@@ -37,13 +37,20 @@ async function openOver(content: PackReader): Promise<Composition> {
  * it, opened once per app run and shared by every screen, since its Cycle and
  * Word of the Day keep their state in memory (ADR 0013, 0018). Every screen
  * sees the same state, so a retry from its gate opens it again for all. It
- * reopens when an effective value of a Feature Switch changes (ADR 0040).
+ * reopens when an effective value of a Feature Switch changes (ADR 0040) or a
+ * sync changed the user state, and the composition it replaced closes, so
+ * what still holds that one, such as a Feed effect's cleanup, changes
+ * nothing; an undo toast undoes in the composition open at the tap (ADR 0018).
  */
 export const compositionOpening = openOnce(
   async () => openOver((await languagePackOpening.opened()).reader),
   {
     onError(error) {
       console.error('Could not open the Core composition', error);
+    },
+    close(old) {
+      // It never rejects.
+      void old.close();
     },
   },
 );
