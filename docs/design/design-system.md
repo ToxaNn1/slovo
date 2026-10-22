@@ -176,7 +176,7 @@ Each component is shown in the screens listed; light and dark refer to the Ukrai
 - **Review** (0.8.6): an outlined accent label "ПОВТОРЕННЯ" at the top of a card the Feed brought back for Review, on Word and Correction cards alike, drawn like the badge (overline type, badge padding, `radius.chip`) with a 1 pt accent border on the surface.
 - **Linked to a Correction**: a footer row under a hairline, with a lightbulb icon and «Часто кажуть: _на протязі_». The row is left out while Corrections are out of the Mix (Settings › Мій Мікс), on the Feed and on the Entry screen, and comes back with them.
 
-**Correction card** (`feed-correction-card-*`). The same card with the same four corner ornaments (Decor slot 3, drawn since 0.8.5). Overline "ВИПРАВЛЕННЯ" with an outlined Correction Type chip on the right (росіянізм / калька / суржик / канцелярит). "Так часто кажуть" over the non-standard form in muted ink, struck through in a soft accent. A divider whose centre is a downward arrow instead of the rosette. "Українською краще" in accent over the standard form at Lemma size. A neutral explanation. An example pair on `surfaceSunken`: "—" before the non-standard sentence, a ✓ in `color.correct` before the standard one. Under it, when the Correction has sources, a muted line naming them (Manrope 13, «Джерело: ‹title›»; several titles are joined with «; »), built in 0.8.5 and left out without sources. No red "error" styling anywhere.
+**Correction card** (`feed-correction-card-*`). The same card with the same four corner ornaments (Decor slot 3, drawn since 0.8.5). Overline "ВИПРАВЛЕННЯ" with an outlined Correction Type chip on the right (росіянізм / калька / суржик / канцелярит / англіцизм). "Так часто кажуть" over the non-standard form in muted ink, struck through in a soft accent. A divider whose centre is a downward arrow instead of the rosette. "Українською краще" in accent over the standard form at Lemma size. A neutral explanation. An example pair on `surfaceSunken`: "—" before the non-standard sentence, a ✓ in `color.correct` before the standard one. Under it, when the Correction has sources, a muted line naming them (Manrope 13, «Джерело: ‹title›»; several titles are joined with «; »), built in 0.8.5 and left out without sources. No red "error" styling anywhere.
 
 **Action row** (`feed-word-card-dark`, `feed-word-card-favorited-dark`). Four 52 pt icon buttons spread evenly under the card: Favorite (heart), Share, Add to Collection (bookmark with a plus), Hide (thumb down). Labels exist only for VoiceOver: "Додати в Улюблене" / "Прибрати з Улюбленого", "Поділитися", "Додати до колекції", "Не показувати". A favorited heart fills with `color.heart` and pops.
 
@@ -375,7 +375,7 @@ Ukrainian copy from the canvas, quoted as is, for implementers to reuse. Sample 
 - Synonym and antonym labels: «Синонім:», «Антонім:»
 - Linked Correction: «Часто кажуть: …»
 - Correction card: «ВИПРАВЛЕННЯ», «Так часто кажуть», «Українською краще»
-- Correction Types: «росіянізм», «калька», «суржик», «канцелярит»
+- Correction Types: «росіянізм», «калька», «суржик», «канцелярит», «англіцизм»
 - Register labels: «розм.», «заст.» (the brief also lists застаріле, діалектне, книжне, розмовне)
 - Action row (VoiceOver): «Додати в Улюблене» / «Прибрати з Улюбленого», «Поділитися», «Додати до колекції», «Не показувати»
 - Swipe hint: «Гортайте вгору — наступне слово»

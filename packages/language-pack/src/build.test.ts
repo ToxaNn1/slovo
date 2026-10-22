@@ -640,6 +640,7 @@ describe('buildLanguagePack', () => {
         { correctionType: 'calque', corrections: 0 },
         { correctionType: 'surzhyk', corrections: 1 },
         { correctionType: 'officialese', corrections: 1 },
+        { correctionType: 'anglicism', corrections: 0 },
       ],
     });
     const printed = formatContentReport(result.report);

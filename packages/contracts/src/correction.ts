@@ -11,7 +11,13 @@ export const CorrectionIdSchema = z
   .regex(/^c_[a-z0-9]+$/, 'Expected a Correction id: c_ followed by lowercase letters and digits');
 
 /** Why a form is non-standard. */
-export const CorrectionTypeSchema = z.enum(['russianism', 'calque', 'surzhyk', 'officialese']);
+export const CorrectionTypeSchema = z.enum([
+  'russianism',
+  'calque',
+  'surzhyk',
+  'officialese',
+  'anglicism',
+]);
 
 export type CorrectionType = z.infer<typeof CorrectionTypeSchema>;
 
