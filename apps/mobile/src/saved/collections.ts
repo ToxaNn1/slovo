@@ -1,4 +1,4 @@
-import type { Collection, CollectionEntry, Collections } from '@slovo/core';
+import type { Collection, CollectionEntry, CollectionResult, Collections } from '@slovo/core';
 import { useEdition } from '@slovo/ui';
 import { useMemo } from 'react';
 
@@ -6,6 +6,7 @@ import { useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
 import { keep } from '../keep';
 import { useSubscribed } from '../opening';
+import { refusalText } from './collection-refusal';
 import { collectionRows, type CollectionRowModel } from './collections-screen';
 
 /** The Collections, newest first, kept up to date. */
@@ -50,12 +51,21 @@ export function useEntryCollections(entryId: string): {
   };
 }
 
+/** Why the Core refused a name, in the Edition's words; nothing once the name is kept or the Collection is gone. */
+async function refusalOf(
+  result: Promise<CollectionResult | undefined>,
+): Promise<string | undefined> {
+  const kept = await result;
+  if (kept === undefined || kept.ok) return undefined;
+  return refusalText(editionStrings.collections.sheet.refusal, kept.reason);
+}
+
 /** The calls of the Collections screen that change a Collection. */
 export function useCollectionChanges(): {
-  /** Makes an empty Collection; resolves to the Collection, or why its name is refused. */
-  create: (name: string) => ReturnType<Collections['create']>;
-  /** Renames a Collection; resolves to the Collection, or why the name is refused. */
-  rename: (collectionId: string, name: string) => ReturnType<Collections['rename']>;
+  /** Makes an empty Collection; resolves to why its name is refused, or to nothing once it is kept. */
+  create: (name: string) => Promise<string | undefined>;
+  /** Renames a Collection; resolves to why the name is refused, or to nothing once it is kept. */
+  rename: (collectionId: string, name: string) => Promise<string | undefined>;
   /** Deletes a Collection with its Entry records; the Entries stay wherever else they are kept. */
   remove: (collectionId: string) => void;
 } {
@@ -64,8 +74,8 @@ export function useCollectionChanges(): {
   return useMemo(
     () => ({
       // A name that could not be kept rejects: the field stays open with the name as typed.
-      create: (name) => collections.create(name),
-      rename: (collectionId, name) => collections.rename(collectionId, name),
+      create: (name) => refusalOf(collections.create(name)),
+      rename: (collectionId, name) => refusalOf(collections.rename(collectionId, name)),
       remove(collectionId) {
         void keep('Collections', collections.delete(collectionId), undefined);
       },

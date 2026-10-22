@@ -1,6 +1,7 @@
-import type { Feed, FeedCard } from '@slovo/core';
+import type { FeedCard } from '@slovo/core';
+import type { VerticalPagerHandle } from '@slovo/ui';
 import { useIsFocused } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type RefObject } from 'react';
 
 import { useComposition } from '../composition';
 import { useInForeground } from '../lifecycle';
@@ -14,25 +15,18 @@ export interface FeedState {
   /** Tells the Feed which card is on screen now. */
   readonly onCardChange: (position: number) => void;
   /**
-   * The reader's position as the Feed keeps it: the card on screen, or the
-   * card the reader left while the Feed is out of sight. It moves when a
-   * hide or its undo drops or puts back cards, also out of sight, so the
-   * pager shows it after the cards change.
+   * Opens a Correction the Word card at `position` links, as the card right
+   * after it, and turns the pager to it once it is drawn.
    */
-  readonly readerPosition: () => number;
-  /**
-   * Opens a Correction the Word card at `position` links, as the card
-   * right after it. Resolves to that card's position, or nothing.
-   */
-  readonly openLinkedCorrection: Feed['openLinkedCorrection'];
+  readonly openCorrection: (position: number, correctionId: string) => void;
 }
 
 /**
- * The Feed of the session's Core composition.
+ * The Feed of the session's Core composition, on the pager that shows it.
  * It tells the Feed which card is on screen while the Feed is in sight, and
- * that none is otherwise.
+ * that none is otherwise, and keeps the pager on the reader's card.
  */
-export function useFeed(): FeedState {
+export function useFeed(pager: RefObject<VerticalPagerHandle | null>): FeedState {
   const { feed, onboarding } = useComposition();
   /** The page the reader turned to last, in the Feed they turned it in. */
   const [turnedTo, setTurnedTo] = useState<TurnedTo>();
@@ -48,10 +42,15 @@ export function useFeed(): FeedState {
   const onScreen = cardOnScreen({ feed, turnedTo, focused, inForeground, covered });
   const inSight = onScreen !== undefined;
   const cards = useSubscribed(feed, (open) => open.cards);
-  const readerPosition = useCallback(() => feed.position, [feed]);
+  /** The page to turn to once it is drawn, such as a Correction opened from a Word. */
+  const [turnTo, setTurnTo] = useState<number>();
   // Kept from render to render, so the Feed's pages re-render only when their card changes.
-  const openLinkedCorrection = useCallback<Feed['openLinkedCorrection']>(
-    (at, correctionId) => feed.openLinkedCorrection(at, correctionId),
+  const openCorrection = useCallback(
+    (position: number, correctionId: string) => {
+      feed.openLinkedCorrection(position, correctionId).then(setTurnTo, (error: unknown) => {
+        console.error('Could not open the linked Correction', error);
+      });
+    },
     [feed],
   );
 
@@ -70,13 +69,23 @@ export function useFeed(): FeedState {
     };
   }, [feed, inSight]);
 
-  return {
-    cards,
-    startPosition: feed.startPosition,
-    onCardChange,
-    readerPosition,
-    openLinkedCorrection,
-  };
+  useEffect(() => {
+    if (turnTo === undefined) return;
+    pager.current?.turnTo(turnTo);
+    setTurnTo(undefined);
+  }, [pager, turnTo]);
+  // A hide or its undo drops or puts back cards, and the reader's card moves
+  // with them, also out of sight: the pager shows it at once. When the Feed
+  // has no card to put after a hidden one, the Feed is told no position past
+  // its cards, and the pager shows its last card.
+  useEffect(() => {
+    const position = feed.position;
+    if (position >= cards.length) return;
+    pager.current?.showPage(position);
+    onCardChange(position);
+  }, [pager, feed, cards, onCardChange]);
+
+  return { cards, startPosition: feed.startPosition, onCardChange, openCorrection };
 }
 
 function report(done: Promise<void>): void {

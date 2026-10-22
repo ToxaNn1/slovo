@@ -1,4 +1,3 @@
-import { relativeTimeOf } from '@slovo/core';
 import {
   cardSpace,
   fill,
@@ -19,9 +18,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useCollectionList } from '../../saved/collections';
 import { editionStrings } from '../../edition/edition';
-import { deviceClock } from '../../device/device-clock';
 import { useFavoriteList } from '../../saved/favorites';
-import { useHistoryList, useHistoryText } from '../../saved/history';
+import { useHistoryPreview } from '../../saved/history';
 import { useLearningList } from '../../saved/learning';
 import { useOpenScreen } from '../../entries/use-open-screen';
 import { useShown } from '../../shown-in-effect';
@@ -52,16 +50,11 @@ export default function SavedScreen() {
   const collections = useCollectionList();
   const learning = useLearningList();
   const { learning: learningShown } = useShown();
-  const history = useHistoryList();
-  const historyText = useHistoryText();
+  const history = useHistoryPreview(NEWEST_SHOWN);
   const { colors } = useTokens();
   const { count } = useEdition();
   const openScreen = useOpenScreen();
 
-  const latest = history.slice(0, NEWEST_SHOWN).map(({ row, seenAt }) => ({
-    title: row.title,
-    ...historyText.relative(relativeTimeOf(seenAt, deviceClock)),
-  }));
   return (
     <SafeAreaView
       testID="saved"
@@ -129,13 +122,13 @@ export default function SavedScreen() {
         <SavedCard
           testID="saved-history"
           title={historyStrings.title}
-          count={history.length}
-          accessibilityLabel={historyText.cardLabel(history.length, latest)}
+          count={history.count}
+          accessibilityLabel={history.label}
           onPress={() => {
             openScreen('/saved/history');
           }}
         >
-          <SavedCardRows rows={latest.map(({ title, text }) => ({ title, trailing: text }))} />
+          <SavedCardRows rows={history.rows} />
         </SavedCard>
       </ScrollView>
     </SafeAreaView>

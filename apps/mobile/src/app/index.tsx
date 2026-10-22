@@ -12,7 +12,7 @@ import {
   VerticalPager,
   type VerticalPagerHandle,
 } from '@slovo/ui';
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -40,43 +40,16 @@ export default function HomeScreen() {
 }
 
 function FeedScreen() {
-  const feed = useFeed();
+  const pager = useRef<VerticalPagerHandle>(null);
+  const feed = useFeed(pager);
   const swipeHint = useSwipeHint();
   const { colors } = useTokens();
   const { top } = useSafeAreaInsets();
-  const pager = useRef<VerticalPagerHandle>(null);
-  /** The page to turn to once it is drawn, such as a Correction opened from a Word. */
-  const [turnTo, setTurnTo] = useState<number>();
 
-  useEffect(() => {
-    if (turnTo === undefined) return;
-    pager.current?.turnTo(turnTo);
-    setTurnTo(undefined);
-  }, [turnTo]);
-
-  const { cards, readerPosition, onCardChange, openLinkedCorrection } = feed;
+  const { cards, onCardChange, openCorrection } = feed;
   const { dismiss: dismissSwipeHint } = swipeHint;
-  // A hide or its undo drops or puts back cards, and the reader's card moves
-  // with them: the pager shows it at once. When the Feed has no card to put
-  // after a hidden one, the Feed is told no position past its cards, and the
-  // pager shows its last card.
-  useEffect(() => {
-    const position = readerPosition();
-    if (position >= cards.length) return;
-    pager.current?.showPage(position);
-    onCardChange(position);
-  }, [cards, readerPosition, onCardChange]);
-
   // Kept from render to render: a swipe re-renders the pager, and its pages
   // re-render only when their card changes.
-  const openCorrection = useCallback(
-    (position: number, correctionId: string) => {
-      openLinkedCorrection(position, correctionId).then(setTurnTo, (error: unknown) => {
-        console.error('Could not open the linked Correction', error);
-      });
-    },
-    [openLinkedCorrection],
-  );
   const renderPage = useCallback(
     (card: FeedCard, position: number) => (
       <FeedPage
