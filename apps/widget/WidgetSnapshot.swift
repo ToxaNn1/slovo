@@ -37,6 +37,9 @@ struct WidgetEntry: Decodable, Hashable {
   let headline: String
   /// A Word's primary Definition, or the non-standard form a Correction replaces.
   let secondLine: String
+  /// The headline, then the second line, as VoiceOver reads them: whole words,
+  /// with no Stress mark, since the voices break a word at the mark.
+  let voiceOver: String
 }
 
 /// A Collection as its Widget Mode shows it.

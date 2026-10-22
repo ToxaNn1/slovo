@@ -67,6 +67,16 @@ struct EntryView: View {
         .padding(.top, 10)
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+    // One element for VoiceOver: the Widget Mode's name, then the Entry's
+    // VoiceOver text, which has no Stress mark, or the mode's state (ADR 0026).
+    .accessibilityElement(children: .combine)
+    .accessibilityLabel(accessibilityText)
+  }
+
+  private var accessibilityText: String {
+    [moment.overline, moment.entry?.voiceOver ?? moment.emptyState]
+      .compactMap { $0 }
+      .joined(separator: ". ")
   }
 
   /// The headline scales down before it wraps, and wraps only between words,
