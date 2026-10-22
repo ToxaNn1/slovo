@@ -43,3 +43,14 @@ The device's `PackFiles` adapter names what it does at launch: `throwAwayAllBut(
 ### Considered Options
 
 - **The choice answers the version, and a second method forgets a pack that failed to open**: rejected. The shell would have to call the two in order, so half of the rule would live in the shell again, and a shell that skipped the second call would keep a pack that fails at every launch.
+
+## Amendment: a new value of a closed set takes a new pack format (0.8.7, #527)
+
+0.8.7 adds Correction Types. The pack's layout stays as it was, but an app that knows only the old Correction Types refuses a pack with a new one: the Language Pack checks what it reads against the contracts, and a Correction Type the app doesn't know fails that check.
+
+So a change an older app can't read is also a new value of a closed set in the contracts that a pack carries, such as a Correction Type, not only a table or column removed, renamed or given another meaning. It raises the pack format like a layout change, and the app asks only for packs of the formats it reads, so an older app never downloads such a pack. The Language Pack build writes format 2 from 0.8.7; format 2 keeps format 1's layout. The formats the app reads stay one constant, `PACK_FORMAT` of `@slovo/language-pack`, which the build writes and the app's Content update module reads, so the two can't drift apart.
+
+### Considered Options
+
+- **Keep format 1 and let an older app skip an Entry it can't read**: rejected. An app already in the App Store refuses the Entry at its contract check, and skipping it would need a new app first, which the old apps on readers' phones never get.
+- **The app reads formats 1 and 2**: rejected for now. The bundled pack is format 2, so no pack of format 1 is newer than it; reading format 1 too would only keep alive a code path no pack needs.
