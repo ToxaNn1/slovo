@@ -28,6 +28,13 @@ function firstOccurrence(text: string, form: string): TextRange | undefined {
 
 const optionOf = (text: string): RoundOption => ({ text, stressedVowels: [] });
 
+/**
+ * Whether the mode plays the Correction: a stress trap's forms differ only in
+ * their Stress marks, so a Round would be trivial and a Distractor would give
+ * the Round away (ADR 0045).
+ */
+const plays = (correction: Correction) => correction.correctionType !== 'wrongStress';
+
 /** A Correction's main standard equivalent, the right option of a Round that asks about it. */
 const mainEquivalentOf = (correction: Correction) => correction.standardEquivalents[0] ?? '';
 
@@ -38,18 +45,20 @@ const mainEquivalentOf = (correction: Correction) => correction.standardEquivale
  * four standard forms, the Correction's main standard equivalent among them.
  * The three Distractors are the main standard equivalents of other eligible
  * Corrections, of the same Correction Type first, never one of this
- * Correction's own equivalents, no two options alike (ADR 0024). Its sheet
- * shows the main standard equivalent and the Correction's explanation.
+ * Correction's own equivalents, no two options alike (ADR 0024). It asks
+ * about no stress trap and offers none (ADR 0045). Its sheet shows the main
+ * standard equivalent and the Correction's explanation.
  */
 export const correctionMode: GameMode = {
   id: 'correction',
   entryKind: 'correction',
   isOn: (edition) => edition.isFeatureEnabled('corrections'),
   buildRound({ answer, eligible, random }) {
-    if (answer.kind !== 'correction') return undefined;
+    if (answer.kind !== 'correction' || !plays(answer)) return undefined;
     const taken = new Set(answer.standardEquivalents.map(folded));
     const others = eligible.filter(
-      (entry): entry is Correction => entry.kind === 'correction' && entry.id !== answer.id,
+      (entry): entry is Correction =>
+        entry.kind === 'correction' && entry.id !== answer.id && plays(entry),
     );
     const distractors: string[] = [];
     for (const other of [
