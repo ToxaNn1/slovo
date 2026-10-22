@@ -28,7 +28,7 @@ describe('the Ukrainian Edition', () => {
     expect(edition.isFeatureEnabled('statistics')).toBe(true);
     expect(edition.isFeatureEnabled('knowledge')).toBe(true);
     expect(edition.isFeatureEnabled('selfCheck')).toBe(true);
-    expect(edition.isFeatureEnabled('rarityFilter')).toBe(true);
+    expect(edition.isFeatureEnabled('rarityFloor')).toBe(true);
     expect(edition.isFeatureEnabled('gameReview')).toBe(true);
   });
 

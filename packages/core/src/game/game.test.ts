@@ -161,7 +161,7 @@ async function run({
   pack = content,
   planned = true,
   schedule,
-  on = ['rarityFilter', 'knowledge'],
+  on = ['rarityFloor', 'knowledge'],
 }: {
   records?: Map<string, string>;
   port?: UserStatePort;
@@ -794,7 +794,7 @@ describe('the Words a Game asks about', () => {
     const records = new Map<string, string>();
     const { port, writes } = recordingPort(records);
     // The knowledge Feature Switch off, so no mistake writes a «Не знаю» mark.
-    const app = await run({ port, on: ['rarityFilter'] });
+    const app = await run({ port, on: ['rarityFloor'] });
     writes.length = 0;
 
     await playGame(app, [3, 4]);
@@ -859,7 +859,7 @@ describe('the Rounds about Entries marked «Не знаю» or due', () => {
 
   it('plans the Rounds as before without a mark, with Learned Words only, and with the knowledge Feature Switch off', async () => {
     const before = asked(
-      await playGame(await run({ records: await marked(), on: ['rarityFilter'] })),
+      await playGame(await run({ records: await marked(), on: ['rarityFloor'] })),
     );
 
     expect(asked(await playGame(await run({ records: await marked() })))).toEqual(before);
@@ -873,7 +873,7 @@ describe('the Rounds about Entries marked «Не знаю» or due', () => {
     const unknownOff = await marked(async (app) => {
       for (const id of unknown) await app.knowledge.tap(id, 'unknown');
     });
-    expect(asked(await playGame(await run({ records: unknownOff, on: ['rarityFilter'] })))).toEqual(
+    expect(asked(await playGame(await run({ records: unknownOff, on: ['rarityFloor'] })))).toEqual(
       before,
     );
   });
@@ -965,7 +965,7 @@ describe('the Knowledge Marks a Game leaves', () => {
 
   it('marks nothing with the knowledge Feature Switch off, and keeps the records there are', async () => {
     const records = dueOnThreeDays();
-    const app = await run({ records, on: ['rarityFilter'] });
+    const app = await run({ records, on: ['rarityFloor'] });
 
     await playGame(app, [1, 2, 3, 4, 5]);
     await playWrongOn(app, 'w_cnoun01');
@@ -1004,7 +1004,7 @@ describe('the best result', () => {
     const records = new Map<string, string>();
     const { port, writes } = recordingPort(records);
     // The knowledge Feature Switch off, so no mistake writes a «Не знаю» mark.
-    const app = await run({ port, on: ['rarityFilter'] });
+    const app = await run({ port, on: ['rarityFloor'] });
     writes.length = 0;
 
     // Lost in Round 8: 7 Rounds passed.
@@ -1046,7 +1046,7 @@ describe('the best result', () => {
     const records = new Map<string, string>();
     const { port, writes } = recordingPort(records);
     // The knowledge Feature Switch off, so no mistake writes a «Не знаю» mark.
-    const app = await run({ port, on: ['rarityFilter'] });
+    const app = await run({ port, on: ['rarityFloor'] });
     writes.length = 0;
     await app.game.start('guess-word');
     for (let round = 1; round <= 10; round += 1) await play(app, true);

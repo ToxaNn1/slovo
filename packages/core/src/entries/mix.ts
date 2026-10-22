@@ -24,7 +24,7 @@ export interface MixState {
   readonly lastCategoryId: string | undefined;
   /**
    * The Rarity Floor, 1 to 5: only Words of that rarity or rarer are eligible
-   * while the Edition turns the rarity filter on. Corrections have no rarity.
+   * while the Edition turns its rarityFloor switch on. Corrections have no rarity.
    */
   readonly rarityFloor: number;
 }

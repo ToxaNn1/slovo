@@ -25,7 +25,7 @@
     "statistics": true,
     "knowledge": true,
     "selfCheck": true,
-    "rarityFilter": true,
+    "rarityFloor": true,
     "gameReview": true
   },
   "userSettingDefaults": {

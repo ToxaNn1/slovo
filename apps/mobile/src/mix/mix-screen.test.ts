@@ -98,10 +98,9 @@ describe('the Мій Мікс screen', () => {
 });
 
 describe('the Rarity Floor choice of the Мій Мікс screen', () => {
-  const withoutRarityFilter: Edition = {
+  const withoutRarityFloor: Edition = {
     ...ukrainian,
-    isFeatureEnabled: (feature) =>
-      feature !== 'rarityFilter' && ukrainian.isFeatureEnabled(feature),
+    isFeatureEnabled: (feature) => feature !== 'rarityFloor' && ukrainian.isFeatureEnabled(feature),
   };
 
   it('offers floors from 1 to 5, on the lowest until the reader chooses one', async () => {
@@ -121,12 +120,12 @@ describe('the Rarity Floor choice of the Мій Мікс screen', () => {
     expect(mixScreenModel({ edition: ukrainian, mix: mix.state }).rarity?.floor).toBe(4);
   });
 
-  it('leaves the choice out while the rarityFilter switch is off', async () => {
+  it('leaves the choice out while the rarityFloor switch is off', async () => {
     const { mix } = await open(ukrainian);
 
     await mix.setRarityFloor(4);
 
-    expect(mixScreenModel({ edition: withoutRarityFilter, mix: mix.state }).rarity).toBe(undefined);
+    expect(mixScreenModel({ edition: withoutRarityFloor, mix: mix.state }).rarity).toBe(undefined);
   });
 });
 

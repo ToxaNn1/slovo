@@ -53,7 +53,7 @@ async function run({
   clock = fakeClock().clock,
   defaultCategoryIds = categories.map(({ id }) => id),
   correctionsSwitch = true,
-  rarityFilterSwitch = true,
+  rarityFloorSwitch = true,
 }: {
   records?: Map<string, string>;
   port?: UserStatePort;
@@ -62,7 +62,7 @@ async function run({
   /** The Categories of the Edition's default Mix: every one of the pack, or these. */
   defaultCategoryIds?: 'all' | readonly string[];
   correctionsSwitch?: boolean;
-  rarityFilterSwitch?: boolean;
+  rarityFloorSwitch?: boolean;
 } = {}): Promise<Composition> {
   return openComposition({
     content: pack,
@@ -70,7 +70,7 @@ async function run({
       id: 'test',
       isFeatureEnabled: (feature) =>
         (feature === 'corrections' && correctionsSwitch) ||
-        (feature === 'rarityFilter' && rarityFilterSwitch),
+        (feature === 'rarityFloor' && rarityFloorSwitch),
       languageTraits: { distractorRule: 'same-part-of-speech' },
       userSettingDefaults: {
         mix: { categoryIds: defaultCategoryIds, corrections: true },
@@ -662,11 +662,11 @@ describe('eligibility over the Mix', () => {
     expect(words(await walk(app.feed))).toEqual(words(twin));
   });
 
-  it('a Rarity Floor narrows nothing while the Edition turns the rarity filter off', async () => {
+  it('a Rarity Floor narrows nothing while the Edition turns its rarityFloor switch off', async () => {
     const records = new Map<string, string>();
     await (await run({ records })).mix.setRarityFloor(5);
 
-    const app = await run({ records, rarityFilterSwitch: false });
+    const app = await run({ records, rarityFloorSwitch: false });
 
     expect(app.mix.state.rarityFloor).toBe(5);
     expect(new Set(await walk(app.feed))).toEqual(

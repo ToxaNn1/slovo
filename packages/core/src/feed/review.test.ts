@@ -33,7 +33,7 @@ async function run({
   records,
   at,
   withCorrections = false,
-  on = ['knowledge', 'corrections', 'rarityFilter'],
+  on = ['knowledge', 'corrections', 'rarityFloor'],
 }: {
   records: Map<string, string>;
   at: string;
@@ -143,7 +143,7 @@ describe('Review in the Feed', () => {
     await markSeenWordsUnknown(records, { count: 3, unknown: 0 });
     const unmarked = new Map(records);
     await markUnknown(records, ['w_05', 'w_06']);
-    const off: FeatureSwitch[] = ['corrections', 'rarityFilter'];
+    const off: FeatureSwitch[] = ['corrections', 'rarityFloor'];
 
     const ids = await firstCards((await run({ records, at: dayTwo, on: off })).feed, 12);
 

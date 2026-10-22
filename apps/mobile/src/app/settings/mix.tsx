@@ -10,7 +10,7 @@ const strings = editionStrings.mix;
 
 /**
  * Settings › Мій Мікс: a chip for every Category of the Edition and «Усі»,
- * the Rarity Floor choice while the rarity filter is on, and the Corrections
+ * the Rarity Floor choice while its switch is on, and the Corrections
  * switch when the Edition turns Corrections on. A change
  * applies at once (the Core's Mix, ADR 0019). The last Category's chip is
  * disabled, with a hint why.

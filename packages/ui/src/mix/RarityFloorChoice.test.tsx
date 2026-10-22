@@ -50,7 +50,7 @@ describe('RarityFloorChoice', () => {
     expect(onChange).toHaveBeenCalledWith(4);
   });
 
-  it('is not drawn while the rarityFilter switch is off', async () => {
+  it('is not drawn while the rarityFloor switch is off', async () => {
     await renderInEdition(choice({ shown: false }));
 
     expect(screen.queryByText('Rarity')).toBeNull();
