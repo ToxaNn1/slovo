@@ -129,8 +129,11 @@ interface TurnActions {
 
 const PagerContext = createContext<PagerContextValue | undefined>(undefined);
 const PageIndexContext = createContext(0);
-/** Whether the page is the one before the reader; true outside a pager. */
-const PageCurrentContext = createContext(true);
+/**
+ * Whether the page is on screen: the one before the reader, or one still
+ * moving off screen; true outside a pager.
+ */
+const PageOnScreenContext = createContext(true);
 /**
  * The VoiceOver actions of the page, which turn it as a swipe would; none
  * on a page that isn't current. Each page has its own, so a turn re-renders
@@ -161,6 +164,8 @@ export function VerticalPager<Item>({
   const [index, setIndex] = useState(initialIndex);
   /** The page nearest to the screen's position, while a swipe moves. */
   const [nearest, setNearest] = useState(initialIndex);
+  /** The page the screen last came to rest on, alone on screen. */
+  const [settled, setSettled] = useState(initialIndex);
   const [height, setHeight] = useState(0);
   /** The page on screen, in pages; fractional while a swipe moves. */
   const position = useSharedValue(initialIndex);
@@ -186,6 +191,14 @@ export function VerticalPager<Item>({
       if (near !== previous) scheduleOnRN(setNearest, near);
     },
   );
+  // On a whole page the screen shows that page alone: the others are off it,
+  // or invisible with Reduce Motion.
+  useAnimatedReaction(
+    () => (Number.isInteger(position.value) ? position.value : undefined),
+    (rest, previous) => {
+      if (rest !== undefined && rest !== previous) scheduleOnRN(setSettled, rest);
+    },
+  );
 
   const turn = useCallback(
     (target: number) => {
@@ -206,16 +219,25 @@ export function VerticalPager<Item>({
     [index, items.length, motion, position, turn, turnedTo],
   );
 
-  function showPage(target: number) {
-    const clamped = Math.min(Math.max(target, 0), items.length - 1);
-    if (clamped === index) return;
-    turnedTo.value = clamped;
-    setIndex(clamped);
-    setNearest(clamped);
-    position.value = clamped;
-  }
+  const showPage = useCallback(
+    (target: number) => {
+      const clamped = Math.min(Math.max(target, 0), items.length - 1);
+      if (clamped === index) return;
+      turnedTo.value = clamped;
+      setIndex(clamped);
+      setNearest(clamped);
+      position.value = clamped;
+    },
+    [index, items.length, position, turnedTo],
+  );
 
   useImperativeHandle(ref, () => ({ turnTo, showPage }));
+
+  // The current page and those after it left, and the owner showed none
+  // in its place: the last page left is shown, rather than none.
+  useEffect(() => {
+    if (items.length > 0 && index >= items.length) showPage(items.length - 1);
+  }, [index, items.length, showPage]);
 
   // The current page's cards read them, so they change only with the current
   // page, not each time a swipe passes a page or the pager's owner re-renders.
@@ -332,6 +354,7 @@ export function VerticalPager<Item>({
                   key={first + offset}
                   index={first + offset}
                   current={first + offset === index}
+                  onScreen={first + offset === index || first + offset === settled}
                   turnActions={first + offset === index ? turnActions : undefined}
                   position={position}
                   height={height}
@@ -350,6 +373,7 @@ export function VerticalPager<Item>({
 function Page({
   index,
   current,
+  onScreen,
   turnActions,
   position,
   height,
@@ -358,6 +382,8 @@ function Page({
 }: {
   index: number;
   current: boolean;
+  /** Current, or still moving off screen after a turn. */
+  onScreen: boolean;
   turnActions: TurnActions | undefined;
   position: SharedValue<number>;
   height: number;
@@ -380,9 +406,9 @@ function Page({
       style={[StyleSheet.absoluteFill, { height }, style]}
     >
       <PageIndexContext value={index}>
-        <PageCurrentContext value={current}>
+        <PageOnScreenContext value={onScreen}>
           <PageTurnActionsContext value={turnActions}>{children}</PageTurnActionsContext>
-        </PageCurrentContext>
+        </PageOnScreenContext>
       </PageIndexContext>
     </Animated.View>
   );
@@ -398,11 +424,12 @@ export function usePageTurnActions(): Partial<TurnActions> {
 }
 
 /**
- * Whether the page is the one before the reader, rather than a neighbour
- * waiting off screen. Always true outside a `VerticalPager`.
+ * Whether the page is on screen: the one before the reader, or the one a
+ * turn takes away until its motion ends, rather than a neighbour waiting off
+ * screen. Always true outside a `VerticalPager`.
  */
-export function useIsCurrentPage(): boolean {
-  return useContext(PageCurrentContext);
+export function useIsPageOnScreen(): boolean {
+  return useContext(PageOnScreenContext);
 }
 
 const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView);

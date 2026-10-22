@@ -111,7 +111,7 @@ export {
 export { UndoToastProvider, useUndoToast, type UndoToastContent } from './primitives/UndoToast';
 export {
   PagerScrollView,
-  useIsCurrentPage,
+  useIsPageOnScreen,
   usePageTurnActions,
   VerticalPager,
   type VerticalPagerHandle,

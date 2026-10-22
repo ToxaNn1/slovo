@@ -155,6 +155,18 @@ describe('Self-check', () => {
     expect(screen.getByRole('button', { name: 'Show the meaning' })).toBeTruthy();
   });
 
+  it('keeps the card revealed while it slides out of view', async () => {
+    await renderFeed(true);
+    await fireEvent.press(screen.getByRole('button', { name: 'Show the meaning' }));
+
+    await fireEvent(screen.getByText('first'), 'accessibilityAction', {
+      nativeEvent: { actionName: 'next' },
+    });
+
+    // The card on its way out is no longer the reader's, so VoiceOver no longer reaches it.
+    expect(screen.getByText('What first means.', { includeHiddenElements: true })).toBeTruthy();
+  });
+
   it('hides nothing with Self-check off', async () => {
     await renderFeed(false);
 
