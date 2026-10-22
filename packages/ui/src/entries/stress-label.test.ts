@@ -12,6 +12,10 @@ describe('stressLabel', () => {
     expect(stressLabel(strings, 'lemma', ['e'])).toBe('lemma, stress on e');
   });
 
+  it('reads the text without its Stress mark', () => {
+    expect(stressLabel(strings, 'lemma\u0301', ['a'])).toBe('lemma, stress on a');
+  });
+
   it('joins several valid stresses with the Edition’s "or"', () => {
     expect(stressLabel(strings, 'lemma', ['e', 'a'])).toBe('lemma, stress on e or a');
   });

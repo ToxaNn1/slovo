@@ -1,16 +1,19 @@
 import { fill, type EditionStrings } from '@slovo/contracts';
+import { withoutStress } from '@slovo/core';
 
 /**
- * What VoiceOver reads for text with Stress, such as a Lemma: the text, then
- * where the Stress falls («наголос на а»), since the voices skip the mark.
- * The text alone when it has no stressed vowel.
+ * What VoiceOver reads for text with Stress, such as a Lemma or a stress
+ * trap's form: the text without its Stress marks, which break a word in the
+ * voices, then where the Stress falls («наголос на а»). The text alone when it
+ * has no stressed vowel.
  */
 export function stressLabel(
   { stress, stressOr }: Pick<EditionStrings['wordCard'], 'stress' | 'stressOr'>,
   text: string,
   stressedVowels: readonly string[],
 ): string {
+  const spoken = withoutStress(text);
   return stressedVowels.length === 0
-    ? text
-    : `${text}, ${fill(stress, { vowels: stressedVowels.join(` ${stressOr} `) })}`;
+    ? spoken
+    : `${spoken}, ${fill(stress, { vowels: stressedVowels.join(` ${stressOr} `) })}`;
 }

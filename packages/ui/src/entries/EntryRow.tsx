@@ -1,4 +1,4 @@
-import type { EntryRowModel } from '@slovo/core';
+import { withoutStress, type EntryRowModel } from '@slovo/core';
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
@@ -63,9 +63,13 @@ export function EntryRow({
         ? row.definition
         : fill(strings.correctionCard.insteadOf, { form: row.nonStandardForm });
   }
-  const accessibilityLabel =
+  // The voices break a word at the Stress mark, so VoiceOver reads the row without it.
+  const accessibilityLabel = withoutStress(
     ownAccessibilityLabel ??
-    [row.title, subtitle, trailing].filter((part) => part !== undefined && part !== '').join(', ');
+      [row.title, subtitle, trailing]
+        .filter((part) => part !== undefined && part !== '')
+        .join(', '),
+  );
   const hasAccessory = accessory !== undefined;
   const stacked = hasAccessory && fontScale > STACK_AT_FONT_SCALE;
 

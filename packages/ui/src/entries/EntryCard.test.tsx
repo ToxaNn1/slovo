@@ -18,6 +18,8 @@ const strings = {
     antonyms: 'Antonyms',
     example: '{text}',
     reveal: 'Show the meaning',
+    stress: 'stress on {vowels}',
+    stressOr: 'or',
   },
   correctionCard: {
     title: 'Correction',
@@ -45,7 +47,9 @@ const correctionCard: CorrectionCardModel = {
   kind: 'correction',
   correctionId: 'c1',
   nonStandardForm: 'take part',
+  nonStandardStressedVowels: [],
   mainEquivalent: 'join in',
+  mainEquivalentStressedVowels: [],
   otherEquivalents: [],
   correctionType: 'calque',
   explanation: 'A long explanation.',
@@ -62,7 +66,11 @@ const stressTrap: EntryFeedCard = {
     ...correctionCard,
     correctionType: 'wrongStress',
     nonStandardForm: 'ca\u0301talog',
+    nonStandardStressedVowels: ['a'],
     mainEquivalent: 'catalo\u0301g',
+    mainEquivalentStressedVowels: ['o'],
+    explanation: 'Say catalo\u0301g, as in dialo\u0301g.',
+    examplePair: { nonStandard: 'Open the ca\u0301talog.', standard: 'Open the catalo\u0301g.' },
   },
 };
 
@@ -342,5 +350,47 @@ describe('Self-check on a Correction card', () => {
     expect(screen.getByTestId('correction-example-pair')).toBeTruthy();
     expect(screen.queryByText('How to say it?')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Show' })).toBeNull();
+  });
+});
+
+describe('VoiceOver on a stress trap', () => {
+  it('says where the Stress of each form falls on the card', async () => {
+    await render(inEdition(<EntryCard card={stressTrap} />));
+
+    expect(screen.getByTestId('correction-non-standard')).toHaveProp(
+      'accessibilityLabel',
+      'Non-standard: catalog, stress on a',
+    );
+    expect(screen.getByTestId('correction-standard')).toHaveProp(
+      'accessibilityLabel',
+      'Standard: catalog, stress on o',
+    );
+  });
+
+  it('reads the explanation and the example pair without the Stress mark', async () => {
+    await render(inEdition(<EntryCard card={stressTrap} />));
+
+    expect(screen.getByTestId('correction-explanation')).toHaveProp(
+      'accessibilityLabel',
+      'Say catalog, as in dialog.',
+    );
+    expect(screen.getByLabelText('Not: Open the catalog.')).toBeTruthy();
+    expect(screen.getByLabelText('Right: Open the catalog.')).toBeTruthy();
+  });
+
+  it('says where the Stress of the non-standard form falls in Self-check', async () => {
+    await render(inEdition(<EntryCard card={stressTrap} selfCheck />));
+
+    expect(screen.getByTestId('correction-non-standard')).toHaveProp(
+      'accessibilityLabel',
+      'Non-standard: catalog, stress on a',
+    );
+  });
+
+  it('reads the forms of another Correction Type as written', async () => {
+    await render(inEdition(<EntryCard card={card} />));
+
+    expect(screen.getByLabelText('Non-standard: take part')).toBeTruthy();
+    expect(screen.getByLabelText('Standard: join in')).toBeTruthy();
   });
 });

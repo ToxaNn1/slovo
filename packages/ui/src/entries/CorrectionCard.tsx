@@ -1,4 +1,4 @@
-import type { CorrectionCardModel } from '@slovo/core';
+import { withoutStress, type CorrectionCardModel } from '@slovo/core';
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
@@ -12,13 +12,16 @@ import { correctionCardLayout, space, typeSize, withAlpha } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { usePageTurnActions } from '../primitives/VerticalPager';
 import { WholeWordsText } from '../primitives/WholeWordsText';
+import { stressLabel } from './stress-label';
 
 /**
  * The Correction card's blocks inside the Entry card's frame: the Correction
  * Type, the non-standard form muted and struck through, the main standard
  * equivalent at the Lemma's size with the others under it, the explanation,
- * the example pair and, when the Correction has sources, a line naming them. A Correction carries no Stress, and nothing on the card
- * reads as an error. Under Self-check it keeps only the non-standard form and
+ * the example pair and, when the Correction has sources, a line naming them.
+ * Nothing on the card reads as an error. A stress trap's texts carry their
+ * Stress marks (ADR 0045): VoiceOver reads each form with where its Stress
+ * falls, as for a Lemma, and every other text without the mark. Under Self-check it keeps only the non-standard form and
  * asks how to say it right; the Entry card draws the button that reveals the
  * rest under it.
  */
@@ -38,6 +41,9 @@ export function CorrectionCardBody({
   const edition = useEdition();
   const { voice } = edition;
   const strings = edition.strings.correctionCard;
+  // The voices skip the Stress mark, so VoiceOver also says where it falls.
+  const formLabel = (form: string, stressedVowels: readonly string[]) =>
+    stressLabel(edition.strings.wordCard, form, stressedVowels);
   // In the Feed, VoiceOver turns to the next or previous card from the two forms.
   const turnActions = usePageTurnActions();
   const correctionType = strings.correctionTypes[card.correctionType];
@@ -59,7 +65,7 @@ export function CorrectionCardBody({
       <View
         testID="correction-non-standard"
         accessible
-        accessibilityLabel={`${strings.nonStandard}: ${card.nonStandardForm}`}
+        accessibilityLabel={`${strings.nonStandard}: ${formLabel(card.nonStandardForm, card.nonStandardStressedVowels)}`}
         {...voice}
         {...turnActions}
         style={styles.form}
@@ -98,7 +104,7 @@ export function CorrectionCardBody({
             <View
               testID="correction-standard"
               accessible
-              accessibilityLabel={`${strings.standard}: ${card.mainEquivalent}`}
+              accessibilityLabel={`${strings.standard}: ${formLabel(card.mainEquivalent, card.mainEquivalentStressedVowels)}`}
               {...voice}
               {...turnActions}
               style={styles.form}
@@ -123,6 +129,9 @@ export function CorrectionCardBody({
             {card.otherEquivalents.length === 0 ? null : (
               <Text
                 testID="correction-other-equivalents"
+                accessibilityLabel={withoutStress(
+                  fill(strings.otherEquivalents, { equivalents: card.otherEquivalents.join(', ') }),
+                )}
                 {...voice}
                 style={[styles.body, { color: colors.inkSecondary, fontFamily: fontFamilies.ui }]}
               >
@@ -132,6 +141,7 @@ export function CorrectionCardBody({
           </View>
           <Text
             testID="correction-explanation"
+            accessibilityLabel={withoutStress(card.explanation)}
             {...voice}
             style={[styles.explanation, { color: colors.ink, fontFamily: fontFamilies.ui }]}
           >
@@ -147,7 +157,7 @@ export function CorrectionCardBody({
             <View
               accessible
               accessibilityLabel={fill(strings.exampleNonStandard, {
-                text: card.examplePair.nonStandard,
+                text: withoutStress(card.examplePair.nonStandard),
               })}
               {...voice}
               style={styles.exampleRow}
@@ -162,7 +172,7 @@ export function CorrectionCardBody({
             <View
               accessible
               accessibilityLabel={fill(strings.exampleStandard, {
-                text: card.examplePair.standard,
+                text: withoutStress(card.examplePair.standard),
               })}
               {...voice}
               style={styles.exampleRow}

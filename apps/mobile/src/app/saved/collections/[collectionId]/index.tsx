@@ -1,4 +1,4 @@
-import type { CollectionEntry } from '@slovo/core';
+import { withoutStress, type CollectionEntry } from '@slovo/core';
 import {
   BackLink,
   EmptyState,
@@ -50,7 +50,10 @@ export default function CollectionScreen() {
           {
             name: 'remove',
             label: strings.remove,
-            accessibilityLabel: fill(strings.removeLabel, { title: row.title, name }),
+            accessibilityLabel: fill(strings.removeLabel, {
+              title: withoutStress(row.title),
+              name,
+            }),
             tone: 'destructive',
             onPress: () => {
               remove(entryId);

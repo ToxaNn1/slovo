@@ -380,8 +380,8 @@ function accessibilityParts(
 ): (string | undefined)[] {
   if (card.kind === 'correction') {
     return [
-      `${strings.share.nonStandard}: ${card.nonStandardForm}`,
-      `${strings.share.standard}: ${card.mainEquivalent}`,
+      `${strings.share.nonStandard}: ${stressLabel(strings.wordCard, card.nonStandardForm, card.nonStandardStressedVowels)}`,
+      `${strings.share.standard}: ${stressLabel(strings.wordCard, card.mainEquivalent, card.mainEquivalentStressedVowels)}`,
     ];
   }
   return [

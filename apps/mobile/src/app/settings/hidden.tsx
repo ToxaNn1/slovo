@@ -1,3 +1,4 @@
+import { withoutStress } from '@slovo/core';
 import {
   BackLink,
   EntryRow,
@@ -63,7 +64,7 @@ function HiddenList() {
               <OutlineButton
                 testID={`hidden-entry-${entryId}-restore`}
                 label={strings.restore}
-                accessibilityLabel={fill(strings.restoreLabel, { title: row.title })}
+                accessibilityLabel={fill(strings.restoreLabel, { title: withoutStress(row.title) })}
                 onPress={() => {
                   restoreEntry(entryId);
                 }}
