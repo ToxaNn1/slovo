@@ -16,6 +16,7 @@ const strings: Strings = {
     colloquial: { short: 'coll.', full: 'colloquial' },
     archaic: { short: 'arch.', full: 'archaic' },
   } as Strings['registers'],
+  registerWithRegion: '{register}, {region}',
 };
 
 describe('partOfSpeechText', () => {
@@ -39,7 +40,7 @@ describe('partOfSpeechText', () => {
 });
 
 describe('wordGrammarText', () => {
-  const noun = { partOfSpeech: 'noun', gender: 'feminine' } as const;
+  const noun = { partOfSpeech: 'noun', gender: 'feminine', region: undefined } as const;
 
   it('is the part of speech alone without a register', () => {
     expect(wordGrammarText(strings, { ...noun, registers: [] }, 'short')).toBe('n., f.');
@@ -61,7 +62,12 @@ describe('wordGrammarText', () => {
     expect(
       wordGrammarText(
         strings,
-        { partOfSpeech: 'verb', gender: undefined, registers: ['archaic', 'colloquial'] },
+        {
+          partOfSpeech: 'verb',
+          gender: undefined,
+          registers: ['archaic', 'colloquial'],
+          region: undefined,
+        },
         'full',
       ),
     ).toBe('verb, archaic, colloquial');

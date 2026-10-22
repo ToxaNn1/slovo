@@ -50,6 +50,7 @@ function wordCard(lemma: string): EntryFeedCard {
       synonyms: [],
       antonyms: [],
       registers: [],
+      region: undefined,
       categoryId: 'k1',
       categoryName: undefined,
       details: undefined,

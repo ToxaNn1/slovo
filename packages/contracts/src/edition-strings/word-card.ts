@@ -26,6 +26,8 @@ export const WordCardStringsSchema = z.strictObject({
   partOfSpeechWithGender: templateOf('partOfSpeech', 'gender'),
   /** Every register label, e.g. "заст." / "застаріле". */
   registers: z.record(RegisterSchema, LabelSchema),
+  /** How the dialectal register label and a Word's region join, e.g. "{register}, {region}". */
+  registerWithRegion: templateOf('register', 'region'),
   /** An Example as the card quotes it, e.g. "«{text}»". */
   example: templateOf('text'),
   /** The line under an Example that names its author, e.g. "— {author}". */

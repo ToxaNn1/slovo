@@ -17,7 +17,8 @@ const strings = {
     partsOfSpeech: { noun: { short: 'n.', full: 'noun' } },
     genders: {},
     partOfSpeechWithGender: '{partOfSpeech}, {gender}',
-    registers: {},
+    registers: { dialectal: { short: 'dial.', full: 'dialectal' } },
+    registerWithRegion: '{register}, {region}',
     category: '{category}',
     synonym: 'Synonym',
     synonyms: 'Synonyms',
@@ -101,6 +102,7 @@ const wordCard: EntryFeedCard = {
     synonyms: [],
     antonyms: [],
     registers: [],
+    region: undefined,
     categoryId: 'k1',
     categoryName: undefined,
     details: undefined,
@@ -331,6 +333,31 @@ const wordWithEverything: EntryFeedCard = {
     categoryName: 'Rare',
   },
 };
+
+/** A dialect Word that names where it is said. */
+const dialectWord: EntryFeedCard = {
+  kind: 'word',
+  wordCard: { ...wordWithEverything.wordCard, registers: ['dialectal'], region: 'Hutsulshchyna' },
+};
+
+describe('the region of a dialect Word', () => {
+  it('follows the dialectal register label on the card and in its VoiceOver label', async () => {
+    await render(inEdition(<EntryCard card={dialectWord} />));
+
+    expect(screen.getByTestId('word-register-dialectal')).toHaveTextContent('dial., Hutsulshchyna');
+    expect(screen.getByLabelText('dialectal, Hutsulshchyna')).toBeTruthy();
+  });
+
+  it('shows with the label once the reader reveals a Self-check card', async () => {
+    await render(inEdition(<EntryCard card={dialectWord} selfCheck />));
+    expect(screen.queryByTestId('word-register-dialectal')).toBeNull();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Show the meaning' }));
+
+    expect(screen.getByTestId('word-register-dialectal')).toHaveTextContent('dial., Hutsulshchyna');
+    expect(screen.getByLabelText('dialectal, Hutsulshchyna')).toBeTruthy();
+  });
+});
 
 describe('Self-check on a Word card', () => {
   it('shows only the Lemma, part of speech and Category until revealed', async () => {
