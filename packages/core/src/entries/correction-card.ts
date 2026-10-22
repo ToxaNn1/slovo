@@ -1,5 +1,7 @@
 import type { Correction, CorrectionType, ExamplePair } from '@slovo/contracts';
 
+import { markedStressedVowelsOf } from './stress';
+
 /**
  * What a Correction card shows, decided by the Core: the UI draws it and
  * never picks sections itself. It carries data and keys only; the UI turns
@@ -12,8 +14,15 @@ export interface CorrectionCardModel {
   readonly correctionId: string;
   /** The non-standard form people commonly use. */
   readonly nonStandardForm: string;
+  /**
+   * The stressed vowels of the non-standard form, found from its marks, as
+   * VoiceOver names them; empty for a Correction Type other than a stress trap.
+   */
+  readonly nonStandardStressedVowels: readonly string[];
   /** The standard equivalent the card puts first. */
   readonly mainEquivalent: string;
+  /** The stressed vowels of the main standard equivalent, as for the non-standard form. */
+  readonly mainEquivalentStressedVowels: readonly string[];
   /** The other standard equivalents, in their order; empty when there is one. */
   readonly otherEquivalents: readonly string[];
   readonly correctionType: CorrectionType;
@@ -34,7 +43,9 @@ export function buildCorrectionCard(correction: Correction): CorrectionCardModel
     kind: 'correction',
     correctionId: correction.id,
     nonStandardForm: correction.nonStandardForm,
+    nonStandardStressedVowels: markedStressedVowelsOf(correction.nonStandardForm),
     mainEquivalent,
+    mainEquivalentStressedVowels: markedStressedVowelsOf(mainEquivalent),
     otherEquivalents,
     correctionType: correction.correctionType,
     explanation: correction.explanation,
