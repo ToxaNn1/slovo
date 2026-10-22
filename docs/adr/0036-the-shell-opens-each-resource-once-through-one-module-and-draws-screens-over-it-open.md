@@ -67,3 +67,12 @@ A reopen is not a launch, and the reports do not tell it: whoever reopens does w
 ## Amendment: the settings fall back to the defaults the Core settings module gives (architecture review 3)
 
 The settings' fallback no longer spells the defaults out. `Settings.defaults` gives the settings in effect until the user chooses: the Edition's defaults for the Theme, the font size and vibration, and the Core's own for the settings no Edition sets, the hidden Streak and Self-check. The fallback opens the settings over the user state and is ready with those, so a setting with no Edition default has its default in the Core alone.
+
+## Amendment: a failed read of the kept Entries fails the composition's opening (whole-project review fix, B4)
+
+The composition reads the rows of the Entries the user keeps as it opens: Favorites, the Hidden Entries, Collections, History and the Knowledge Marks each read theirs together, one read per list (ADR 0015 amendment, B4). A read of the Language Pack that fails there fails the whole opening, as any failure of the composition's opening does: the reader sees the full-screen error state with «Спробувати ще», and the retry opens the composition again, reading every row anew, since a failed read is never kept. A reopen that fails keeps the composition it had, as above. Nothing opens with lists short of the Entries whose read failed (owner decision 22.10).
+
+### Considered Options
+
+- **Open without the rows that failed to read, and read them again at the next opening**: rejected. History, «Вчу», Favorites and Collections would open short or empty and the counts of Known Entries too low, with nothing to tell the reader why, while a pack that can't be read can't show any Entry anyway.
+- **Try the read again a few times first, as the Game's planning does (ADR 0024)**: rejected. It only delays the same two outcomes; the pack is read on the device, where a failure seldom passes by itself, and the error state's retry is there for one that does.
