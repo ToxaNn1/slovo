@@ -12,3 +12,9 @@ The numbers belong to the Edition, not to the Core or the build tool. The Core s
 ## Amendment: the Categories in `edition.json` are read at build time only (ADR 0033)
 
 `edition.json` is still the Edition config the Core loads, but its Categories are now only the content source the pack build writes into the pack. The app reads Categories from the Language Pack, so a content update can add one (ADR 0033).
+
+## Amendment: a Category floor overrides the per-Category target (0.8.8)
+
+A new Category starts small and grows to the floor of Words per Category over several content updates. `minWordsByCategory` in `content/targets.json` names Categories and gives each its own floor of Words, which the build takes over `minWordsPerCategory` for that Category only; every other Category keeps the general floor. A Category floor that names a Category the Edition doesn't have is a missed target, so a typo or a removed Category never goes unseen. The Ukrainian Edition gives «Діалекти» a floor of 3 while its Words are written, and raises it as they land.
+
+Considered: leaving the new Category out of `minWordsPerCategory` by lowering that floor for every Category (rejected: it would stop guarding the ten full Categories), and holding the Category back until it has 45 Words (rejected: content ships in small reviewed steps).

@@ -1119,6 +1119,37 @@ describe('content targets', () => {
     ]);
   });
 
+  it('takes a Category floor over the per-Category target for the Categories it names', () => {
+    const editionDir = editionWithTargets({
+      minWordsPerCategory: 1,
+      minWordsByCategory: { nature: 0 },
+    });
+
+    expect(missedTargets(editionDir)).toEqual([]);
+  });
+
+  it('misses a Category floor, naming the Category that falls short', () => {
+    const editionDir = editionWithTargets({
+      minWordsPerCategory: 0,
+      minWordsByCategory: { speech: 3 },
+    });
+
+    expect(missedTargets(editionDir)).toEqual([
+      {
+        target: 'minWordsByCategory',
+        message: 'Category "speech" has 2 Words, below the target of 3',
+      },
+    ]);
+  });
+
+  it('misses a Category floor for a Category the Edition does not have, so a typo never goes unseen', () => {
+    const editionDir = editionWithTargets({ minWordsByCategory: { natrue: 0 } });
+
+    expect(missedTargets(editionDir)).toEqual([
+      { target: 'minWordsByCategory', message: 'No Category "natrue" in the Edition' },
+    ]);
+  });
+
   it('misses the rarity target, naming every rarity without Words', () => {
     const editionDir = editionWithTargets({ everyRarity: true });
 
