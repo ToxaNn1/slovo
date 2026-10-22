@@ -32,7 +32,7 @@ export function writePack(outFile: string, content: PackContent, metadata: PackM
     });
 
     const insertEntry = db.prepare('INSERT INTO entries (id, kind) VALUES (?, ?)');
-    for (const entry of [...content.words, ...content.corrections]) {
+    for (const entry of [...content.words, ...content.corrections, ...content.idioms]) {
       insertEntry.run(entry.id, entry.kind);
     }
 
@@ -92,6 +92,33 @@ export function writePack(outFile: string, content: PackContent, metadata: PackM
         insertEquivalent.run(correction.id, position, text);
       });
       insertSources(correction);
+    }
+
+    const insertIdiom = db.prepare(`
+      INSERT INTO idioms (id, expression, idiom_type, etymology, retired)
+      VALUES (?, ?, ?, ?, ?)
+    `);
+    const insertIdiomDefinition = db.prepare(
+      'INSERT INTO idiom_definitions (idiom_id, position, text) VALUES (?, ?, ?)',
+    );
+    const insertIdiomExample = db.prepare(
+      'INSERT INTO idiom_examples (idiom_id, position, text, author) VALUES (?, ?, ?, ?)',
+    );
+    for (const idiom of content.idioms) {
+      insertIdiom.run(
+        idiom.id,
+        idiom.expression,
+        idiom.idiomType,
+        idiom.etymology ?? null,
+        idiom.retired ? 1 : 0,
+      );
+      [idiom.primaryDefinition, ...idiom.extraDefinitions].forEach((text, position) => {
+        insertIdiomDefinition.run(idiom.id, position, text);
+      });
+      idiom.examples.forEach((example, position) => {
+        insertIdiomExample.run(idiom.id, position, example.text, example.author ?? null);
+      });
+      insertSources(idiom);
     }
 
     const insertCorrectionLink = db.prepare(

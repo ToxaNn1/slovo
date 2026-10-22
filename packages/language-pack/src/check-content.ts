@@ -1,4 +1,4 @@
-import type { Correction, EditionConfig, Entry, Word } from '@slovo/contracts';
+import type { Correction, EditionConfig, Entry, Idiom, Word } from '@slovo/contracts';
 import { STRESS_MARK, withoutStress } from '@slovo/core';
 
 import type { BuildError } from './build-error';
@@ -17,6 +17,7 @@ export function checkContent(
   config: EditionConfig,
   words: readonly Authored<Word>[],
   corrections: readonly Authored<Correction>[],
+  idioms: readonly Authored<Idiom>[],
 ): BuildError[] {
   const errors: BuildError[] = [];
   const { marksStress, vowels, alphabet, lemmaPunctuation = [] } = config.languageTraits;
@@ -26,7 +27,7 @@ export function checkContent(
   const correctionIds = new Set(corrections.map(({ entry }) => entry.id));
   const fileById = new Map<string, string>();
 
-  for (const { file, entry } of [...words, ...corrections]) {
+  for (const { file, entry } of [...words, ...corrections, ...idioms]) {
     const firstFile = fileById.get(entry.id);
     if (firstFile === undefined) {
       fileById.set(entry.id, file);

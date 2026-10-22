@@ -14,6 +14,7 @@
   "featureSwitches": {
     "game": true,
     "corrections": true,
+    "idioms": true,
     "account": true,
     "sync": true,
     "contentUpdates": true,
@@ -35,7 +36,8 @@
     "notificationTimes": ["09:00"],
     "mix": {
       "categories": "all",
-      "corrections": true
+      "corrections": true,
+      "idioms": true
     }
   },
   "categories": [

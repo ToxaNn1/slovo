@@ -12,9 +12,9 @@ const TEXT_MAX_FONT_SCALE = 1.5;
 
 /** What a row leads with: the Word asked about, or the Correction's non-standard form. */
 function titleOf({ entry, answer }: PlayedRound) {
-  return entry.kind === 'word'
-    ? answer.sheet.answer
-    : { text: entry.nonStandardForm, stressedVowels: [] as readonly string[] };
+  return entry.kind === 'correction'
+    ? { text: entry.nonStandardForm, stressedVowels: [] as readonly string[] }
+    : answer.sheet.answer;
 }
 
 /**

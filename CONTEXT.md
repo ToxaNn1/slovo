@@ -37,7 +37,7 @@ _Avoid_: Skin, theme (a Theme is the user's light/dark choice)
 ### Entries
 
 **Entry**:
-Anything the user can discover, keep and share: either a Word or a Correction. Favorites, Collections, History, Seen and the Feed all work with Entries.
+Anything the user can discover, keep and share: a Word, a Correction or an Idiom. Favorites, Collections, History, Seen and the Feed all work with Entries.
 _Avoid_: Item, card, content
 
 **Word**:
@@ -88,6 +88,18 @@ _Avoid_: Deleted correction
 
 **Correction Type**:
 Why the form is non-standard: russianism, calque, surzhyk, officialese (канцелярит), anglicism (англіцизм), an English borrowing where a dictionary word of the Edition's language serves, or wrong stress (`wrongStress`, «наголос»: a stress trap, the right word said with the wrong Stress).
+
+**Idiom**:
+A fixed expression whose meaning is not the sum of its words, with its Definitions, Examples and, where known, its origin, e.g. «бити байдики» → «ледарювати». The third kind of Entry (ADR 0046); a Core concept, each Edition supplies its own. An Idiom has an expression instead of a Lemma, and no Stress, part of speech, Category, rarity or Pronunciation. Its Ukrainian name is «фразеологізм».
+_Avoid_: Phrase, expression (for the Entry; the expression is its text), saying, proverb
+
+**Idiom Type**:
+What kind of fixed expression an Idiom is: `idiom` («фразеологізм»), an idiom proper, or `placeName` («топонім»), a place name whose etymology tells the story of its name and is required. A place name shares the Idiom's card, Feed turn, Mix switch and lists; only its chip differs.
+_Avoid_: Subtype, kind (a kind is Word, Correction or Idiom)
+
+**Retired Idiom**:
+An Idiom withdrawn from the Language Pack. Like a Retired Word, it never appears anywhere new, but stays visible wherever the user already keeps it.
+_Avoid_: Deleted idiom
 
 **Entry card**:
 How the app shows one Entry: a Word card or a Correction card in the same frame, with the action row (heart, Collections, share, hide) under it. The Feed and every screen that opens a kept Entry show the same Entry card.

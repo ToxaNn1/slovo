@@ -1,8 +1,10 @@
 import {
   CategorySchema,
   CorrectionSchema,
+  IdiomSchema,
   WordSchema,
   type Correction,
+  type Idiom,
   type PackMetadata,
   type Source,
   type Word,
@@ -54,6 +56,14 @@ interface CorrectionRow {
   retired: number;
 }
 
+interface IdiomRow {
+  id: string;
+  expression: string;
+  idiom_type: string;
+  etymology: string | null;
+  retired: number;
+}
+
 interface SourceRow {
   title: string;
   url: string | null;
@@ -65,6 +75,7 @@ const SQL = {
   wordIds: 'SELECT id FROM words WHERE retired = 0 ORDER BY id',
   wordIdsInCategory: 'SELECT id FROM words WHERE retired = 0 AND category_id = ? ORDER BY id',
   correctionIds: 'SELECT id FROM corrections WHERE retired = 0 ORDER BY id',
+  idiomIds: 'SELECT id FROM idioms WHERE retired = 0 ORDER BY id',
   linkedWordIds: `
     SELECT words.id FROM word_corrections JOIN words ON words.id = word_corrections.word_id
     WHERE word_corrections.correction_id = ? AND words.retired = 0
@@ -101,6 +112,14 @@ const correctionParts = (list: string) => ({
   sources: `SELECT entry_id, title, url, archived_url FROM sources WHERE entry_id IN ${list} ORDER BY entry_id, position`,
 });
 
+/** The parts of the Idioms of the ids, each row with the id of its Idiom. */
+const idiomParts = (list: string) => ({
+  idioms: `SELECT * FROM idioms WHERE id IN ${list} ORDER BY id`,
+  definitions: `SELECT idiom_id AS entry_id, text FROM idiom_definitions WHERE idiom_id IN ${list} ORDER BY idiom_id, position`,
+  examples: `SELECT idiom_id AS entry_id, text, author FROM idiom_examples WHERE idiom_id IN ${list} ORDER BY idiom_id, position`,
+  sources: `SELECT entry_id, title, url, archived_url FROM sources WHERE entry_id IN ${list} ORDER BY entry_id, position`,
+});
+
 /**
  * The tables that hold the parts of a Word, each row with the id of its Word,
  * read for every Word the filter takes in one query per table.
@@ -134,8 +153,8 @@ function grouped<T>(rows: readonly T[], idOf: (row: T) => string): ReadonlyMap<s
 const byWord = <T extends { word_id: string }>(rows: readonly T[]) =>
   grouped(rows, (row) => row.word_id);
 
-/** Rows by the id of their Correction. */
-const byCorrection = <T extends { entry_id: string }>(rows: readonly T[]) =>
+/** Rows by the id of their Entry, for the kinds whose parts name it `entry_id`. */
+const byEntry = <T extends { entry_id: string }>(rows: readonly T[]) =>
   grouped(rows, (row) => row.entry_id);
 
 const sourceOf = ({ title, url, archived_url }: SourceRow): Source => ({
@@ -215,16 +234,54 @@ export function createPackReader(db: PackDatabase): PackReader {
     return parts.flat();
   }
 
+  type WithEntryId<T> = T & { entry_id: string };
+
+  /** The Idioms of the ids, each with all its parts, four queries per `IDS_PER_READ`. */
+  async function readIdioms(ids: readonly string[]): Promise<Idiom[]> {
+    const parts = await Promise.all(
+      inParts(ids).map(async ({ list, params }) => {
+        const sql = idiomParts(list);
+        const [rows, definitions, examples, idiomSources] = await Promise.all([
+          db.getAllAsync<IdiomRow>(sql.idioms, params),
+          db.getAllAsync<WithEntryId<{ text: string }>>(sql.definitions, params).then(byEntry),
+          db
+            .getAllAsync<WithEntryId<{ text: string; author: string | null }>>(sql.examples, params)
+            .then(byEntry),
+          db.getAllAsync<WithEntryId<SourceRow>>(sql.sources, params).then(byEntry),
+        ]);
+        return rows.map((row) => {
+          const [primaryDefinition, ...extraDefinitions] = (definitions.get(row.id) ?? []).map(
+            (r) => r.text,
+          );
+          // Parsing checks the pack against the contracts and types the Idiom.
+          return IdiomSchema.parse({
+            id: row.id,
+            expression: row.expression,
+            idiomType: row.idiom_type,
+            primaryDefinition,
+            extraDefinitions,
+            examples: (examples.get(row.id) ?? []).map(({ text, author }) =>
+              author === null ? { text } : { text, author },
+            ),
+            ...(row.etymology === null ? {} : { etymology: row.etymology }),
+            sources: (idiomSources.get(row.id) ?? []).map(sourceOf),
+            retired: row.retired === 1,
+          });
+        });
+      }),
+    );
+    return parts.flat();
+  }
+
   /** The Corrections of the ids, each with all its parts, three queries per `IDS_PER_READ`. */
   async function readCorrections(ids: readonly string[]): Promise<Correction[]> {
     const parts = await Promise.all(
       inParts(ids).map(async ({ list, params }) => {
         const sql = correctionParts(list);
-        type WithEntryId<T> = T & { entry_id: string };
         const [rows, equivalents, correctionSources] = await Promise.all([
           db.getAllAsync<CorrectionRow>(sql.corrections, params),
-          db.getAllAsync<WithEntryId<{ text: string }>>(sql.equivalents, params).then(byCorrection),
-          db.getAllAsync<WithEntryId<SourceRow>>(sql.sources, params).then(byCorrection),
+          db.getAllAsync<WithEntryId<{ text: string }>>(sql.equivalents, params).then(byEntry),
+          db.getAllAsync<WithEntryId<SourceRow>>(sql.sources, params).then(byEntry),
         ]);
         return rows.map((row) =>
           // Parsing checks the pack against the contracts and types the Correction.
@@ -263,6 +320,9 @@ export function createPackReader(db: PackDatabase): PackReader {
     getCorrection: async (id) => (await readCorrections([id]))[0],
     getCorrections: readCorrections,
     listLinkedWordIds: (correctionId) => column(SQL.linkedWordIds, [correctionId], 'id'),
+    listIdiomIds: () => column(SQL.idiomIds, [], 'id'),
+    getIdiom: async (id) => (await readIdioms([id]))[0],
+    getIdioms: readIdioms,
     metadata: async () => metadataOf(await db.getAllAsync<MetadataRow>(SQL.metadata, [])),
   };
 }

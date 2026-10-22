@@ -86,6 +86,8 @@ export type LanguageTraits = z.infer<typeof LanguageTraitsSchema>;
 export const FeatureSwitchesSchema = z.strictObject({
   game: z.boolean(),
   corrections: z.boolean(),
+  /** Idioms: the third kind of Entry, idioms and place names (ADR 0046). */
+  idioms: z.boolean(),
   /** The Account (SLOVO ID): its Settings row, its screen and the backend's answers to it. */
   account: z.boolean(),
   /** Sync: the background exchange of the reader's words with their Account. Apart from `account`, so Sync can stop while sign-in keeps working. */
@@ -155,6 +157,8 @@ export const MixConfigSchema = z.strictObject({
   ]),
   /** Whether Corrections, as a whole, are in the Mix. */
   corrections: z.boolean(),
+  /** Whether Idioms, as a whole, are in the Mix. */
+  idioms: z.boolean(),
 });
 
 export type MixConfig = z.infer<typeof MixConfigSchema>;

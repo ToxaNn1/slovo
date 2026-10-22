@@ -1042,6 +1042,8 @@ describe('recordContent', () => {
       'c_fx0002',
       'c_fx0003',
       'c_fx0004',
+      'i_fx0001',
+      'i_fx0002',
       'w_fx0001',
       'w_fx0002',
       'w_fx0003',

@@ -1,7 +1,8 @@
 import {
   WIDGET_SNAPSHOT_FORMAT,
-  type Entry,
+  type Correction,
   type WidgetEntry,
+  type Word,
   type WidgetSnapshot,
 } from '@slovo/contracts';
 
@@ -41,14 +42,17 @@ export interface Widget {
   opened(entryId: string): Promise<EntryFeedCard | undefined>;
 }
 
-/** The eligible Entries of a kind, or none when the kind as a whole is out. */
-const entriesOf = (eligible: EligibleOfKind) => ('entries' in eligible ? eligible.entries : []);
+/** The eligible Entries of a kind, or none when the kind as a whole is out. An Idiom has no widget entry yet (0.8.8). */
+const entriesOf = (eligible: EligibleOfKind) =>
+  ('entries' in eligible ? eligible.entries : []).filter(
+    (entry): entry is Word | Correction => entry.kind !== 'idiom',
+  );
 
 /**
  * An Entry as the widget shows it: what its row in a list leads with, then
  * its second line, and both as VoiceOver reads them.
  */
-function widgetEntry(entry: Entry): WidgetEntry {
+function widgetEntry(entry: Word | Correction): WidgetEntry {
   const row = buildEntryRow(entry);
   const secondLine = row.kind === 'word' ? row.definition : row.nonStandardForm;
   return {
