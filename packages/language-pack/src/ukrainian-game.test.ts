@@ -295,8 +295,6 @@ describe('«Обери правильне» over the Ukrainian Language Pack', (
     for (const seed of [1, 2, 3]) {
       for (const round of await playCorrections(await run(seed))) {
         const asked = askedOf(round);
-        // The stress traps top up with other Types until #532 leaves them out of the mode.
-        if (asked.correctionType === 'wrongStress') continue;
         const texts = round.options.map(({ text }) => text);
         expect(new Set(texts).size).toBe(4);
         expect(texts.filter((text) => asked.standardEquivalents.includes(text))).toEqual([
@@ -340,6 +338,46 @@ describe('«Обери правильне» over the Ukrainian Language Pack', (
       .filter((anglicism) => anglicism.id !== asked.id)
       .map((anglicism) => anglicism.standardEquivalents[0]);
     expect(texts.filter((text) => others.includes(text))).toHaveLength(3);
+  });
+
+  it('asks about no stress trap and offers none as an option', async () => {
+    const stressTraps = corrections.filter(
+      ({ correctionType }) => correctionType === 'wrongStress',
+    );
+    expect(stressTraps.length).toBeGreaterThan(0);
+    const trapForms = new Set(
+      stressTraps.flatMap(({ standardEquivalents }) => standardEquivalents),
+    );
+
+    for (const seed of [1, 2, 3, 4, 5, 6]) {
+      for (const round of await playCorrections(await run(seed))) {
+        expect(askedOf(round).correctionType).not.toBe('wrongStress');
+        expect(round.options.filter(({ text }) => trapForms.has(text))).toEqual([]);
+      }
+    }
+  });
+
+  it('fills a Game whose Unknown Entries include every stress trap with other Corrections', async () => {
+    const stressTraps = corrections.filter(
+      ({ correctionType }) => correctionType === 'wrongStress',
+    );
+    const app = await run(5);
+    for (const { id } of stressTraps) await app.knowledge.tap(id, 'unknown');
+    await app.knowledge.tap(
+      corrections.find(({ correctionType }) => correctionType === 'calque')?.id ?? '',
+      'unknown',
+    );
+    expect(app.game.state.modes).toContainEqual({
+      modeId: 'correction',
+      entryKind: 'correction',
+      canStart: true,
+    });
+
+    const rounds = await playCorrections(app);
+
+    expect(rounds).toHaveLength(GAME_ROUNDS);
+    expect(rounds.map((round) => askedOf(round).correctionType)).not.toContain('wrongStress');
+    expect(rounds.map((round) => askedOf(round).correctionType)).toContain('calque');
   });
 
   it("shows the Correction's explanation on the sheet", async () => {
