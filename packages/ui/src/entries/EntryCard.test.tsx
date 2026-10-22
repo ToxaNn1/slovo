@@ -1,9 +1,16 @@
 import type { EditionStrings } from '@slovo/contracts';
 import { coreDecor, type CorrectionCardModel, type Decor, type EntryFeedCard } from '@slovo/core';
-import { ActionRow, DecorProvider, EditionProvider, EntryCard, KnowledgeButtons } from '@slovo/ui';
+import {
+  ActionRow,
+  DecorProvider,
+  EditionProvider,
+  EntryCard,
+  KnowledgeButtons,
+  PronunciationButton,
+} from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen, within } from '@testing-library/react-native';
-import { Text } from 'react-native';
+import { Dimensions, Text } from 'react-native';
 
 const strings = {
   wordCard: {
@@ -18,6 +25,7 @@ const strings = {
     antonyms: 'Antonyms',
     example: '{text}',
     reveal: 'Show the meaning',
+    pronunciation: { label: 'Pronounce', stop: 'Stop', noVoice: 'No voice' },
     stress: 'stress on {vowels}',
     stressOr: 'or',
   },
@@ -99,6 +107,28 @@ const wordCard: EntryFeedCard = {
     linkedCorrections: [],
   },
 };
+
+/**
+ * The longest Word of the Day the Ukrainian pack can show, its text as long as
+ * the pack's (the UI holds no Ukrainian): the longest Lemma, «блискавковідвід»
+ * (15 letters), with its Example (148 characters), carrying the longest
+ * primary Definition, of «каніфоль» (246 characters).
+ */
+const longestWordOfTheDay = {
+  kind: 'word',
+  wordOfTheDay: { year: 2026, month: 10, day: 22 },
+  wordCard: {
+    ...wordCard.wordCard,
+    lemma: 'lightninggua\u0301rds',
+    stressedVowels: ['a'],
+    primaryDefinition:
+      'Natural resin extracted from the sap of conifers; a hard, glassy, yellow or dark red substance that is used in making varnish, soap, rubber and paper, and so on, and also for rubbing bows of string instruments before they are played by musicians.',
+    example: {
+      text: 'After the successful test of the lightning rod built by Franklin on 10 May 1752, the science of electrical phenomena finally gained its recognition.',
+    },
+    categoryName: 'Engineering',
+  },
+} as const satisfies EntryFeedCard;
 
 const motif = {
   width: 4,
@@ -197,6 +227,36 @@ describe('EntryCard', () => {
     await render(inEdition(<EntryCard card={card} />));
 
     expect(screen.queryByTestId('card-corner-topLeft', { hidden: true })).toBeNull();
+  });
+
+  it('keeps the Category chip and the Pronunciation button on the longest Word of the Day on the SE', async () => {
+    // The iPhone SE's window, which takes the compact layout.
+    const window = Dimensions.get('window');
+    Dimensions.set({ window: { width: 375, height: 667, scale: 2, fontScale: 1 } });
+    const speak = jest.fn();
+
+    try {
+      await render(
+        <EditionProvider
+          edition={{ locale: 'en' }}
+          strings={strings}
+          pronunciation={() => (
+            <PronunciationButton state="idle" onPress={speak} onDismissMessage={jest.fn()} />
+          )}
+        >
+          <EntryCard card={longestWordOfTheDay} />
+        </EditionProvider>,
+      );
+
+      expect(screen.getByTestId('word-lemma')).toHaveTextContent(
+        longestWordOfTheDay.wordCard.lemma,
+      );
+      expect(screen.getByLabelText('Engineering')).toBeTruthy();
+      await fireEvent.press(screen.getByRole('button', { name: 'Pronounce' }));
+      expect(speak).toHaveBeenCalledTimes(1);
+    } finally {
+      Dimensions.set({ window });
+    }
   });
 });
 
