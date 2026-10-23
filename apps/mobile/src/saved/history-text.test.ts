@@ -1,9 +1,4 @@
-import {
-  localDayOf,
-  relativeTimeOf,
-  type EntryRowModel,
-  type HistoryEntry,
-} from '@slovo/core';
+import { localDayOf, relativeTimeOf, type EntryRowModel, type HistoryEntry } from '@slovo/core';
 import { describe, expect, it } from 'vitest';
 
 import { historyText } from './history-text';
