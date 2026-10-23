@@ -34,8 +34,8 @@ export interface Shown {
     | {
         /** The Streak and the Best Streak. */
         readonly streak: boolean;
-        /** The knowledge rows: the Known Words with or without the Known Corrections, or none. */
-        readonly knowledge: 'words-and-corrections' | 'words' | 'none';
+        /** The knowledge rows, with the Known Corrections and the Known Idioms each shown or left out, or none. */
+        readonly knowledge: { readonly corrections: boolean; readonly idioms: boolean } | 'none';
       }
     | undefined;
   /** The Sync status line of the SLOVO ID screen. */
@@ -46,8 +46,8 @@ export interface Shown {
  * What the reader is shown, from the Edition in effect (ADR 0040), the
  * reader's settings and their Mix. A feature shows only while its Feature
  * Switch is on in effect; the reader may hide the Streak and turns
- * Self-check on, and the Known Corrections count only while Corrections are
- * in the Mix as well.
+ * Self-check on, and the Known Corrections and the Known Idioms each count
+ * only while they are in the Mix as well.
  */
 export function shownOf({
   edition,
@@ -56,11 +56,12 @@ export function shownOf({
 }: {
   edition: Pick<Edition, 'isFeatureEnabled'>;
   settings: Pick<UserSettings, 'hideStreak' | 'selfCheck'>;
-  mix: Pick<MixState, 'corrections'>;
+  mix: Pick<MixState, 'corrections' | 'idioms'>;
 }): Shown {
   const on = (feature: FeatureSwitch) => edition.isFeatureEnabled(feature);
   const knowledge = on('knowledge');
   const corrections = on('corrections') && mix.corrections;
+  const idioms = on('idioms') && mix.idioms;
   return {
     tabs: allTabs.filter((tab) => tab !== 'game' || on('game')),
     gameReview: on('gameReview'),
@@ -75,7 +76,7 @@ export function shownOf({
     stats: on('statistics')
       ? {
           streak: !settings.hideStreak,
-          knowledge: !knowledge ? 'none' : corrections ? 'words-and-corrections' : 'words',
+          knowledge: knowledge ? { corrections, idioms } : 'none',
         }
       : undefined,
     sync: on('sync'),

@@ -249,6 +249,7 @@ describe('The stats sheet’s numbers', () => {
       inCollections: 0,
       knownWords: 0,
       knownCorrections: 0,
+      knownIdioms: 0,
       dueToday: 0,
     });
   });

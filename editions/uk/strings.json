@@ -556,6 +556,8 @@
     },
     "known": "Знаю {words} · {corrections}",
     "knownWithoutCorrections": "Знаю {words}",
+    "knownWithIdioms": "Знаю {words} · {corrections} · {idioms}",
+    "knownWithoutCorrectionsWithIdioms": "Знаю {words} · {idioms}",
     "knownWords": {
       "one": "{count} слово",
       "few": "{count} слова",
@@ -567,6 +569,12 @@
       "few": "{count} Виправлення",
       "many": "{count} Виправлень",
       "other": "{count} Виправлення"
+    },
+    "knownIdioms": {
+      "one": "{count} фразеологізм",
+      "few": "{count} фразеологізми",
+      "many": "{count} фразеологізмів",
+      "other": "{count} фразеологізму"
     },
     "dueToday": "На повторення сьогодні: {count}"
   },

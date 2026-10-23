@@ -44,6 +44,8 @@ export interface KnowledgeState {
   readonly knownWords: number;
   /** The Corrections marked Known, Learned or not. */
   readonly knownCorrections: number;
+  /** The Idioms marked Known, place names too, Learned or not. */
+  readonly knownIdioms: number;
   /**
    * The Entries due for Review today, in no set order, for the Feed to bring
    * back, the Game to ask and Progress to count.
@@ -97,6 +99,7 @@ const off: KnowledgeState = {
   learning: [],
   knownWords: 0,
   knownCorrections: 0,
+  knownIdioms: 0,
   due: [],
   shown: new Map(),
 };
@@ -104,6 +107,7 @@ const off: KnowledgeState = {
 const sameState = (one: KnowledgeState, other: KnowledgeState) =>
   one.knownWords === other.knownWords &&
   one.knownCorrections === other.knownCorrections &&
+  one.knownIdioms === other.knownIdioms &&
   one.due.length === other.due.length &&
   one.due.every((entryId, place) => other.due[place] === entryId) &&
   one.shown.size === other.shown.size &&
@@ -155,11 +159,13 @@ export async function openKnowledge({
     const shown = new Map<string, ShownKnowledge>();
     let knownWords = 0;
     let knownCorrections = 0;
+    let knownIdioms = 0;
     for (const [entryId, record] of records) {
       if (record.mark === 'known') {
         const kind = rowOf.get(entryId)?.kind;
         if (kind === 'word') knownWords += 1;
         if (kind === 'correction') knownCorrections += 1;
+        if (kind === 'idiom') knownIdioms += 1;
       }
       // A Hidden Entry's card, opened where the reader keeps it, still shows its mark.
       shown.set(entryId, shownMark(record, today) ?? 'review');
@@ -174,7 +180,7 @@ export async function openKnowledge({
         const daysUntilReview = dayNumber(parseLocalDate(reviewDay)) - dayNumber(today);
         return row === undefined ? [] : [{ entryId, daysUntilReview, row }];
       });
-    return { learning, knownWords, knownCorrections, due, shown };
+    return { learning, knownWords, knownCorrections, knownIdioms, due, shown };
   }
 
   let state = stateOf();
