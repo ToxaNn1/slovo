@@ -1,3 +1,4 @@
+import type { EntryKind } from '@slovo/contracts';
 import type { Edition, FeatureSwitch, MixState, UserSettings } from '@slovo/core';
 
 /** Every tab in its final order: Home, Settings, Game, Saved. */
@@ -34,8 +35,11 @@ export interface Shown {
     | {
         /** The Streak and the Best Streak. */
         readonly streak: boolean;
-        /** The knowledge rows, with the Known Corrections and the Known Idioms each shown or left out, or none. */
-        readonly knowledge: { readonly corrections: boolean; readonly idioms: boolean } | 'none';
+        /**
+         * The knowledge rows, with the kinds of Entry whose Known count shows, in
+         * order: the Words, then the Corrections and the Idioms unless left out; or none.
+         */
+        readonly knowledge: readonly EntryKind[] | 'none';
       }
     | undefined;
   /** The Sync status line of the SLOVO ID screen. */
@@ -60,8 +64,11 @@ export function shownOf({
 }): Shown {
   const on = (feature: FeatureSwitch) => edition.isFeatureEnabled(feature);
   const knowledge = on('knowledge');
-  const corrections = on('corrections') && mix.corrections;
-  const idioms = on('idioms') && mix.idioms;
+  const knownKinds: readonly EntryKind[] = [
+    'word',
+    ...(on('corrections') && mix.corrections ? (['correction'] as const) : []),
+    ...(on('idioms') && mix.idioms ? (['idiom'] as const) : []),
+  ];
   return {
     tabs: allTabs.filter((tab) => tab !== 'game' || on('game')),
     gameReview: on('gameReview'),
@@ -76,7 +83,7 @@ export function shownOf({
     stats: on('statistics')
       ? {
           streak: !settings.hideStreak,
-          knowledge: knowledge ? { corrections, idioms } : 'none',
+          knowledge: knowledge ? knownKinds : 'none',
         }
       : undefined,
     sync: on('sync'),

@@ -1090,7 +1090,7 @@ describe('the Knowledge Marks a Game leaves', () => {
 
     expect(app.knowledge.state.shown.get('w_cnoun01')).toBe('unknown');
     expect(learningOf(app)).toEqual([['w_cnoun01', 1]]);
-    expect(app.knowledge.state.knownWords).toBe(0);
+    expect(app.knowledge.state.known.word).toBe(0);
   });
 
   it('leaves every record as it was after right answers', async () => {
@@ -1100,7 +1100,7 @@ describe('the Knowledge Marks a Game leaves', () => {
 
     expect(rounds.map((round) => answerOf(round).id)).toContain('w_cnoun01');
     expect(learningOf(app)).toEqual([['w_cnoun01', 0]]);
-    expect(app.knowledge.state).toMatchObject({ knownWords: 1, due: ['w_cnoun01'] });
+    expect(app.knowledge.state).toMatchObject({ known: { word: 1 }, due: ['w_cnoun01'] });
   });
 
   it('goes on to the next Round when the «Не знаю» mark fails to write, and reports the failure', async () => {
@@ -1135,7 +1135,7 @@ describe('the Knowledge Marks a Game leaves', () => {
 
     const on = await run({ records });
     expect(learningOf(on)).toEqual([['w_cnoun01', 0]]);
-    expect(on.knowledge.state).toMatchObject({ knownWords: 1, due: ['w_cnoun01'] });
+    expect(on.knowledge.state).toMatchObject({ known: { word: 1 }, due: ['w_cnoun01'] });
   });
 });
 

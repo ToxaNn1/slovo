@@ -28,13 +28,9 @@ const strings = {
     inCollections: plural('in collections'),
     gameBest: plural('best game'),
     gameBestLabel: plural('best game'),
-    known: 'know {words} · {corrections}',
-    knownWithoutCorrections: 'know {words}',
-    knownWithIdioms: 'know {words} · {corrections} · {idioms}',
-    knownWithoutCorrectionsWithIdioms: 'know {words} · {idioms}',
-    knownWords: forms('word'),
-    knownCorrections: forms('correction'),
-    knownIdioms: forms('idiom'),
+    known: 'know {counts}',
+    knownJoiner: ' · ',
+    knownByKind: { word: forms('word'), correction: forms('correction'), idiom: forms('idiom') },
     dueToday: 'due today: {count}',
   },
 } as unknown as EditionStrings;
@@ -46,13 +42,11 @@ const progress: ProgressState = {
   favorites: 7,
   inCollections: 3,
   bestResult: undefined,
-  knownWords: 0,
-  knownCorrections: 0,
-  knownIdioms: 0,
+  known: { word: 0, correction: 0, idiom: 0 },
   dueToday: 0,
 };
 
-const wordsAndCorrections = { corrections: true, idioms: false } as const;
+const wordsAndCorrections = ['word', 'correction'] as const;
 
 async function renderInEdition(children: ReactNode, locale = 'en') {
   await render(
@@ -117,7 +111,7 @@ describe('StatsSheet', () => {
     await renderInEdition(
       <StatsSheet
         visible
-        stats={{ ...progress, knownWords: n, knownCorrections: n, knownIdioms: n, dueToday: n }}
+        stats={{ ...progress, known: { word: n, correction: n, idiom: n }, dueToday: n }}
         onClose={() => undefined}
       />,
       'uk',
@@ -136,7 +130,7 @@ describe('StatsSheet', () => {
       <StatsSheet
         visible
         knowledge={wordsAndCorrections}
-        stats={{ ...progress, knownWords: 12, knownCorrections: 3, knownIdioms: 8, dueToday: 0 }}
+        stats={{ ...progress, known: { word: 12, correction: 3, idiom: 8 }, dueToday: 0 }}
         onClose={() => undefined}
       />,
       'uk',
@@ -154,8 +148,8 @@ describe('StatsSheet', () => {
     await renderInEdition(
       <StatsSheet
         visible
-        knowledge={{ corrections: true, idioms: true }}
-        stats={{ ...progress, knownWords: 120, knownCorrections: 12, knownIdioms: 8 }}
+        knowledge={['word', 'correction', 'idiom']}
+        stats={{ ...progress, known: { word: 120, correction: 12, idiom: 8 } }}
         onClose={() => undefined}
       />,
       'uk',
@@ -170,8 +164,8 @@ describe('StatsSheet', () => {
     await renderInEdition(
       <StatsSheet
         visible
-        knowledge={{ corrections: false, idioms: true }}
-        stats={{ ...progress, knownWords: 12, knownCorrections: 3, knownIdioms: 1 }}
+        knowledge={['word', 'idiom']}
+        stats={{ ...progress, known: { word: 12, correction: 3, idiom: 1 } }}
         onClose={() => undefined}
       />,
       'uk',
@@ -188,8 +182,8 @@ describe('StatsSheet', () => {
     await renderInEdition(
       <StatsSheet
         visible
-        knowledge={{ corrections: false, idioms: false }}
-        stats={{ ...progress, knownWords: 12, knownCorrections: 3, knownIdioms: 8, dueToday: 2 }}
+        knowledge={['word']}
+        stats={{ ...progress, known: { word: 12, correction: 3, idiom: 8 }, dueToday: 2 }}
         onClose={() => undefined}
       />,
       'uk',
@@ -205,7 +199,7 @@ describe('StatsSheet', () => {
       <StatsSheet
         visible
         knowledge="none"
-        stats={{ ...progress, knownWords: 4, knownCorrections: 2, dueToday: 1 }}
+        stats={{ ...progress, known: { word: 4, correction: 2, idiom: 0 }, dueToday: 1 }}
         onClose={() => undefined}
       />,
       'uk',

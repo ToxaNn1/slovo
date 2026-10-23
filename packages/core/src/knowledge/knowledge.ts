@@ -1,3 +1,5 @@
+import type { EntryKind } from '@slovo/contracts';
+
 import type { Edition } from '../edition/edition';
 import type { EntryRowModel, EntryRows } from '../entries/entry-row';
 import type { HiddenEntries } from '../hidden/hidden-entries';
@@ -23,6 +25,13 @@ export interface LearningEntry {
   readonly row: EntryRowModel;
 }
 
+/**
+ * The Entries marked Known, Learned or not, counted by their kind of Entry
+ * (Idioms with place names). An id the Language Pack doesn't have is counted
+ * as no kind.
+ */
+export type KnownCounts = Readonly<Record<EntryKind, number>>;
+
 /** What an Entry's card shows about knowledge: its Knowledge Mark, or none while it is due, as a Review. */
 export type ShownKnowledge = KnowledgeMark | 'review';
 
@@ -40,12 +49,8 @@ export interface KnowledgeState {
    * day. An id the Language Pack doesn't have is left out.
    */
   readonly learning: readonly LearningEntry[];
-  /** The Words marked Known, Learned or not. An id the Language Pack doesn't have is no Word. */
-  readonly knownWords: number;
-  /** The Corrections marked Known, Learned or not. */
-  readonly knownCorrections: number;
-  /** The Idioms marked Known, place names too, Learned or not. */
-  readonly knownIdioms: number;
+  /** The Entries marked Known, by kind; the same object until a count changes. */
+  readonly known: KnownCounts;
   /**
    * The Entries due for Review today, in no set order, for the Feed to bring
    * back, the Game to ask and Progress to count.
@@ -94,20 +99,16 @@ export interface Knowledge {
   subscribe(listener: () => void): () => void;
 }
 
+const noneKnown: KnownCounts = { word: 0, correction: 0, idiom: 0 };
+
 /** The state with the `knowledge` Feature Switch off. */
-const off: KnowledgeState = {
-  learning: [],
-  knownWords: 0,
-  knownCorrections: 0,
-  knownIdioms: 0,
-  due: [],
-  shown: new Map(),
-};
+const off: KnowledgeState = { learning: [], known: noneKnown, due: [], shown: new Map() };
+
+const sameCounts = (one: KnownCounts, other: KnownCounts) =>
+  (Object.keys(one) as EntryKind[]).every((kind) => one[kind] === other[kind]);
 
 const sameState = (one: KnowledgeState, other: KnowledgeState) =>
-  one.knownWords === other.knownWords &&
-  one.knownCorrections === other.knownCorrections &&
-  one.knownIdioms === other.knownIdioms &&
+  one.known === other.known &&
   one.due.length === other.due.length &&
   one.due.every((entryId, place) => other.due[place] === entryId) &&
   one.shown.size === other.shown.size &&
@@ -151,22 +152,19 @@ export async function openKnowledge({
     if (row !== undefined) rowOf.set(entryId, row);
   }
 
-  /** The state of the records on today's local day, the `knowledge` Feature Switch aside. */
-  function stateOf(): KnowledgeState {
+  /**
+   * The state of the records on today's local day, the `knowledge` Feature
+   * Switch aside, keeping the `known` counts it had while they are the same.
+   */
+  function stateOf(had: KnownCounts = noneKnown): KnowledgeState {
     const today = todayDate(clock);
     const reviews: { entryId: string; reviewDay: string }[] = [];
     const due: string[] = [];
     const shown = new Map<string, ShownKnowledge>();
-    let knownWords = 0;
-    let knownCorrections = 0;
-    let knownIdioms = 0;
+    const counts = { ...noneKnown };
     for (const [entryId, record] of records) {
-      if (record.mark === 'known') {
-        const kind = rowOf.get(entryId)?.kind;
-        if (kind === 'word') knownWords += 1;
-        if (kind === 'correction') knownCorrections += 1;
-        if (kind === 'idiom') knownIdioms += 1;
-      }
+      const kind = rowOf.get(entryId)?.kind;
+      if (record.mark === 'known' && kind !== undefined) counts[kind] += 1;
       // A Hidden Entry's card, opened where the reader keeps it, still shows its mark.
       shown.set(entryId, shownMark(record, today) ?? 'review');
       if (hiddenEntries.has(entryId)) continue;
@@ -180,7 +178,8 @@ export async function openKnowledge({
         const daysUntilReview = dayNumber(parseLocalDate(reviewDay)) - dayNumber(today);
         return row === undefined ? [] : [{ entryId, daysUntilReview, row }];
       });
-    return { learning, knownWords, knownCorrections, knownIdioms, due, shown };
+    const known = sameCounts(counts, had) ? had : counts;
+    return { learning, known, due, shown };
   }
 
   let state = stateOf();
@@ -188,7 +187,7 @@ export async function openKnowledge({
 
   /** Makes the state again, and tells the subscribers when it changed. */
   function follow(): void {
-    const next = stateOf();
+    const next = stateOf(state.known);
     if (sameState(next, state)) return;
     state = next;
     subscribers.tell();

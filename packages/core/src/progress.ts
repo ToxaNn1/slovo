@@ -2,7 +2,7 @@ import type { Collections } from './saved/collections';
 import type { Favorites } from './saved/favorites';
 import type { Game } from './game/game';
 import type { History } from './saved/history';
-import type { Knowledge } from './knowledge/knowledge';
+import type { Knowledge, KnownCounts } from './knowledge/knowledge';
 import { createInTurn, createSubscribers } from './in-turn';
 import { dayNumber, parseLocalDate, todayBounds, todayKey } from './local-date';
 import type { Clock, UserStateChanges } from './ports';
@@ -31,12 +31,8 @@ export interface ProgressState {
   readonly inCollections: number;
   /** The Game's best result; none before the first finished Game, or with the Game off. */
   readonly bestResult: number | undefined;
-  /** The Words marked Known, Learned or not. */
-  readonly knownWords: number;
-  /** The Corrections marked Known, Learned or not. */
-  readonly knownCorrections: number;
-  /** The Idioms marked Known, place names too, Learned or not. */
-  readonly knownIdioms: number;
+  /** The Entries marked Known, by kind, as the Knowledge Marks give them. */
+  readonly known: KnownCounts;
   /** The Entries due for Review today, which the Knowledge Marks give with a Hidden Entry left out. */
   readonly dueToday: number;
 }
@@ -159,9 +155,7 @@ export async function openProgress({
         ),
       ).size,
       bestResult: game.state.bestResult,
-      knownWords: knowledge.state.knownWords,
-      knownCorrections: knowledge.state.knownCorrections,
-      knownIdioms: knowledge.state.knownIdioms,
+      known: knowledge.state.known,
       dueToday: knowledge.state.due.length,
     };
   }

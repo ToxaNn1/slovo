@@ -557,27 +557,27 @@
       "many": "Найкраще у Грі: {count} з {total}",
       "other": "Найкраще у Грі: {count} з {total}"
     },
-    "known": "Знаю {words} · {corrections}",
-    "knownWithoutCorrections": "Знаю {words}",
-    "knownWithIdioms": "Знаю {words} · {corrections} · {idioms}",
-    "knownWithoutCorrectionsWithIdioms": "Знаю {words} · {idioms}",
-    "knownWords": {
-      "one": "{count} слово",
-      "few": "{count} слова",
-      "many": "{count} слів",
-      "other": "{count} слова"
-    },
-    "knownCorrections": {
-      "one": "{count} Виправлення",
-      "few": "{count} Виправлення",
-      "many": "{count} Виправлень",
-      "other": "{count} Виправлення"
-    },
-    "knownIdioms": {
-      "one": "{count} фразеологізм",
-      "few": "{count} фразеологізми",
-      "many": "{count} фразеологізмів",
-      "other": "{count} фразеологізму"
+    "known": "Знаю {counts}",
+    "knownJoiner": " · ",
+    "knownByKind": {
+      "word": {
+        "one": "{count} слово",
+        "few": "{count} слова",
+        "many": "{count} слів",
+        "other": "{count} слова"
+      },
+      "correction": {
+        "one": "{count} Виправлення",
+        "few": "{count} Виправлення",
+        "many": "{count} Виправлень",
+        "other": "{count} Виправлення"
+      },
+      "idiom": {
+        "one": "{count} фразеологізм",
+        "few": "{count} фразеологізми",
+        "many": "{count} фразеологізмів",
+        "other": "{count} фразеологізму"
+      }
     },
     "dueToday": "На повторення сьогодні: {count}"
   },

@@ -12,7 +12,7 @@ import {
   type UserStateChanges,
   type UserStatePort,
 } from './index';
-import { correction, fakeClock, steppingRandom, word } from './test-support';
+import { correction, fakeClock, knownCounts, steppingRandom, word } from './test-support';
 
 /** The Edition's one Category, the test Words' own, and its default Mix of every Category. */
 const testCategories = {
@@ -247,9 +247,7 @@ describe('The stats sheet’s numbers', () => {
       seenToday: 0,
       favorites: 0,
       inCollections: 0,
-      knownWords: 0,
-      knownCorrections: 0,
-      knownIdioms: 0,
+      known: knownCounts(),
       dueToday: 0,
     });
   });
@@ -384,13 +382,8 @@ describe('The knowledge counts', () => {
     });
   }
 
-  const countsOf = ({
-    knownWords,
-    knownCorrections,
-    dueToday,
-  }: Composition['progress']['state']) => ({
-    knownWords,
-    knownCorrections,
+  const countsOf = ({ known, dueToday }: Composition['progress']['state']) => ({
+    known,
     dueToday,
   });
 
@@ -407,8 +400,7 @@ describe('The knowledge counts', () => {
     await app.knowledge.tap('c_two', 'unknown');
 
     expect(countsOf(app.progress.state)).toEqual({
-      knownWords: 1,
-      knownCorrections: 1,
+      known: knownCounts({ word: 1, correction: 1 }),
       dueToday: 0,
     });
     // An Unknown mark is due tomorrow, so it changes no number today.
@@ -424,15 +416,13 @@ describe('The knowledge counts', () => {
     time.advance(DAY);
     await app.resume();
     expect(countsOf(app.progress.state)).toEqual({
-      knownWords: 0,
-      knownCorrections: 0,
+      known: knownCounts(),
       dueToday: 2,
     });
 
     await app.knowledge.tap('w_two', 'known');
     expect(countsOf(app.progress.state)).toEqual({
-      knownWords: 1,
-      knownCorrections: 0,
+      known: knownCounts({ word: 1 }),
       dueToday: 1,
     });
   });
@@ -445,8 +435,7 @@ describe('The knowledge counts', () => {
     await app.knowledge.tap('w_one', 'known');
 
     expect(countsOf(app.progress.state)).toEqual({
-      knownWords: 0,
-      knownCorrections: 1,
+      known: knownCounts({ correction: 1 }),
       dueToday: 0,
     });
   });
@@ -489,8 +478,7 @@ describe('The knowledge counts', () => {
     await app.knowledge.tap('w_one', 'known');
 
     expect(countsOf(app.progress.state)).toEqual({
-      knownWords: 0,
-      knownCorrections: 0,
+      known: knownCounts(),
       dueToday: 0,
     });
   });

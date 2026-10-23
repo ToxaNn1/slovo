@@ -1,8 +1,17 @@
 import type { Correction, Idiom, Word } from '@slovo/contracts';
 
+import type { KnownCounts } from './knowledge/knowledge';
 import type { Clock, ContentReadPort, Random } from './ports';
 
 // Helpers the Core's tests share. They are not part of the public `index.ts`.
+
+/** The Known counts by kind of Entry: those named, and 0 for every other kind. */
+export const knownCounts = (counts: Partial<KnownCounts> = {}): KnownCounts => ({
+  word: 0,
+  correction: 0,
+  idiom: 0,
+  ...counts,
+});
 
 /** The instant a fake clock starts at, unless a test names one: 09:00 in Kyiv. */
 const defaultStart = '2026-10-11T09:00:00+03:00';
