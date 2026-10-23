@@ -5,7 +5,6 @@ import type { Word } from '@slovo/contracts';
 import {
   createMemoryContentPort,
   createMemoryUserStatePort,
-  entryIdOf,
   HISTORY_CAP,
   openComposition,
   openUserState,
@@ -73,7 +72,7 @@ async function readLastCard(app: Composition, time: ReturnType<typeof fakeClock>
 
 /** The Entry the card at `position` shows. */
 function idAt(app: Composition, position: number): string {
-  const id = entryIdOf(app.feed.cards[position]);
+  const id = app.feed.cards[position]?.entryId;
   if (id === undefined) throw new Error(`No Entry card at ${String(position)}`);
   return id;
 }

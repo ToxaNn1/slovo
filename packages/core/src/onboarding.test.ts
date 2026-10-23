@@ -125,7 +125,7 @@ function wordOfTheDayOf(app: Composition) {
   if (card?.kind !== 'word' || card.wordOfTheDay === undefined) {
     throw new Error('Expected the Word of the Day');
   }
-  return card.wordCard;
+  return card.model;
 }
 
 /** A promise the test settles by hand. */

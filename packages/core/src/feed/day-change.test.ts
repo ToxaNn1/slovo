@@ -4,7 +4,6 @@ import {
   createFakeNotificationScheduler,
   createMemoryContentPort,
   createMemoryUserStatePort,
-  entryIdOf,
   openComposition,
   openUserState,
   type Clock,
@@ -84,8 +83,8 @@ const activeDaysIn = (records: ReadonlyMap<string, string>) =>
 const cardsOf = ({ feed }: Composition) =>
   feed.cards.map((card) =>
     card.kind === 'word' && card.wordOfTheDay !== undefined
-      ? `${card.wordCard.wordId}@${String(card.wordOfTheDay.day)}`
-      : entryIdOf(card),
+      ? `${card.entryId}@${String(card.wordOfTheDay.day)}`
+      : card.entryId,
   );
 
 describe('the day change', () => {
@@ -203,7 +202,7 @@ describe('the day change', () => {
     hold = true;
     const card = await app.openedFromNotification(evening);
 
-    expect(card === undefined ? undefined : entryIdOf(card)).toBe(evening);
+    expect(card?.entryId).toBe(evening);
     expect(app.history.list[0]?.entryId).toBe(evening);
     // The day's plan goes on after the card is given, and hangs there.
     await vi.waitFor(() => {

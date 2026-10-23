@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 import {
   createMemoryContentPort,
   createMemoryUserStatePort,
-  entryIdOf,
   openComposition,
   openUserState,
   type Clock,
@@ -107,7 +106,7 @@ describe('Favorites', () => {
     app.favorites.subscribe(() => {
       told += 1;
     });
-    const onScreen = entryIdOf(app.feed.cards[0]);
+    const onScreen = app.feed.cards[0]?.entryId;
     if (onScreen === undefined) throw new Error('The Feed opens on no Entry');
 
     await app.favorites.toggle(onScreen);
@@ -128,7 +127,7 @@ describe('an Entry opened from a list', () => {
     const card = await app.entryCard('w_three');
     await app.entryRow('w_three');
 
-    expect(entryIdOf(card)).toBe('w_three');
+    expect(card?.entryId).toBe('w_three');
     expect(records).toEqual(before);
   });
 
@@ -139,11 +138,13 @@ describe('an Entry opened from a list', () => {
 
     expect(await app.entryCard('w_old')).toMatchObject({
       kind: 'word',
-      wordCard: { wordId: 'w_old', lemma: 'óld' },
+      entryId: 'w_old',
+      model: { lemma: 'óld' },
     });
     expect(await app.entryCard('c_old')).toMatchObject({
       kind: 'correction',
-      correctionCard: { correctionId: 'c_old', mainEquivalent: 'old' },
+      entryId: 'c_old',
+      model: { mainEquivalent: 'old' },
     });
     expect(await app.entryRow('w_old')).toEqual({
       kind: 'word',
@@ -159,7 +160,7 @@ describe('an Entry opened from a list', () => {
 
   it("opens today's Word of the Day with its day, as the Feed shows it", async () => {
     const app = await run();
-    const today = entryIdOf(app.feed.cards[app.feed.startPosition]);
+    const today = app.feed.cards[app.feed.startPosition]?.entryId;
 
     expect(await app.entryCard(today ?? '')).toMatchObject({
       kind: 'word',
@@ -169,7 +170,7 @@ describe('an Entry opened from a list', () => {
 
   it('opens any other Word without a day', async () => {
     const app = await run();
-    const today = entryIdOf(app.feed.cards[app.feed.startPosition]);
+    const today = app.feed.cards[app.feed.startPosition]?.entryId;
     const other = ['w_one', 'w_two'].find((id) => id !== today) ?? '';
 
     expect(await app.entryCard(other)).not.toHaveProperty('wordOfTheDay');

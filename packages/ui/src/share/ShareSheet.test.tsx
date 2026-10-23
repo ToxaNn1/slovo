@@ -1,5 +1,5 @@
 import type { EditionStrings } from '@slovo/contracts';
-import type { CorrectionCardModel, IdiomCardModel } from '@slovo/core';
+import type { EntryFeedCard, IdiomCardModel, IdiomFeedCard } from '@slovo/core';
 import { EditionProvider, ShareSheet, type ShareSheetOutcome } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen, within } from '@testing-library/react-native';
@@ -26,27 +26,28 @@ const strings = {
   idiomCard: { idiomTypes: { idiom: 'idiom', placeName: 'place name' }, etymology: 'Origin' },
 } as unknown as EditionStrings;
 
-const card: CorrectionCardModel = {
+const card: EntryFeedCard = {
   kind: 'correction',
-  correctionId: 'c1',
-  nonStandardForm: 'take part',
-  nonStandardStressedVowels: [],
-  mainEquivalent: 'join in',
-  mainEquivalentStressedVowels: [],
-  otherEquivalents: [],
-  correctionType: 'calque',
-  explanation: 'Why join in is better.',
-  examplePair: { nonStandard: 'I take part.', standard: 'I join in.' },
-  sourceTitles: [],
+  entryId: 'c1',
+  model: {
+    kind: 'correction',
+    correctionId: 'c1',
+    nonStandardForm: 'take part',
+    nonStandardStressedVowels: [],
+    mainEquivalent: 'join in',
+    mainEquivalentStressedVowels: [],
+    otherEquivalents: [],
+    correctionType: 'calque',
+    explanation: 'Why join in is better.',
+    examplePair: { nonStandard: 'I take part.', standard: 'I join in.' },
+    sourceTitles: [],
+  },
 };
 
 /** How long the toast stays, from the design. */
 const TOAST_MS = 4000;
 
-async function renderSheet(
-  outcome: ShareSheetOutcome,
-  shown: CorrectionCardModel | IdiomCardModel = card,
-) {
+async function renderSheet(outcome: ShareSheetOutcome, shown: EntryFeedCard = card) {
   const onClose = jest.fn();
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
@@ -99,8 +100,8 @@ describe('ShareSheet', () => {
   });
 });
 
-function idiomCard(overrides: Partial<IdiomCardModel> = {}): IdiomCardModel {
-  return {
+function idiomCard(overrides: Partial<IdiomCardModel> = {}): IdiomFeedCard {
+  const model: IdiomCardModel = {
     kind: 'idiom',
     idiomId: 'i1',
     expression: 'to beat the bushes',
@@ -112,6 +113,7 @@ function idiomCard(overrides: Partial<IdiomCardModel> = {}): IdiomCardModel {
     sourceTitles: ['A phrase dictionary'],
     ...overrides,
   };
+  return { kind: 'idiom', entryId: model.idiomId, model };
 }
 
 /** The Share Card in the preview; the one drawn off screen for the image is the same. */

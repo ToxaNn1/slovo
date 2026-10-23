@@ -4,13 +4,7 @@ import { buildCorrectionCard } from '../entries/correction-card';
 import { buildIdiomCard } from '../entries/idiom-card';
 import type { Cycle } from './cycle';
 import type { Entries, EntryIds } from '../entries/entries';
-import {
-  asReviewIfDue,
-  entryIdOf,
-  type EntryFeedCard,
-  type FeedCard,
-  type WordFeedCard,
-} from './feed-card';
+import { asReviewIfDue, type EntryFeedCard, type FeedCard, type WordFeedCard } from './feed-card';
 import { createFeedSession, type FeedSession } from './feed-session';
 import type { HistoryRecorder, Seen } from '../saved/history';
 import { createInTurn, createSubscribers } from '../in-turn';
@@ -127,14 +121,15 @@ export async function buildEntryCard(
   entry: Entry,
   wordOfTheDay?: LocalDate,
 ): Promise<EntryFeedCard> {
+  const entryId = entry.id;
   if (entry.kind === 'correction') {
-    return { kind: 'correction', correctionCard: buildCorrectionCard(entry) };
+    return { kind: 'correction', entryId, model: buildCorrectionCard(entry) };
   }
-  if (entry.kind === 'idiom') return { kind: 'idiom', idiomCard: buildIdiomCard(entry) };
-  const wordCard = await buildWordCard({ word: entry, entries });
+  if (entry.kind === 'idiom') return { kind: 'idiom', entryId, model: buildIdiomCard(entry) };
+  const model = await buildWordCard({ word: entry, entries });
   return wordOfTheDay === undefined
-    ? { kind: 'word', wordCard }
-    : { kind: 'word', wordCard, wordOfTheDay };
+    ? { kind: 'word', entryId, model }
+    : { kind: 'word', entryId, model, wordOfTheDay };
 }
 
 const { feedPosition } = userStateRecords;
@@ -155,7 +150,7 @@ const { feedPosition } = userStateRecords;
  */
 function nextEntryId(unseen: EntryIds, session: FeedSession, due: EntryIds): string | undefined {
   const shown = session.shownIds();
-  const last = entryIdOf(session.cards.at(-1));
+  const last = session.cards.at(-1)?.entryId;
   const inCycle = session.cycleCards();
   /** Whether the next card is the turn of the kind that comes every `every`th card. */
   function turnOf(kind: EntryFeedCard['kind'], every: number): boolean {
@@ -202,9 +197,9 @@ function nextEntryId(unseen: EntryIds, session: FeedSession, due: EntryIds): str
  * the reader answers it, Seen or not.
  */
 function reviewEntryId(due: readonly string[], session: FeedSession): string | undefined {
-  const last = entryIdOf(session.cards.at(-1));
+  const last = session.cards.at(-1)?.entryId;
   // Each Entry's last place in the session.
-  const shownAt = new Map(session.cards.map((card, place) => [entryIdOf(card), place]));
+  const shownAt = new Map(session.cards.map((card, place) => [card.entryId, place]));
   return due
     .filter((id) => id !== last)
     .sort((a, b) => (shownAt.get(a) ?? -1) - (shownAt.get(b) ?? -1))[0];
@@ -336,7 +331,7 @@ export async function openFeed({
       today !== undefined && cycle.covers(today.wordId) ? await wordOfTheDayCard(today) : undefined;
     if (opening !== undefined) openedDay = position.date;
     const restored =
-      opening?.wordCard.wordId === entry.id
+      opening?.entryId === entry.id
         ? undefined
         : asReviewIfDue(await buildEntryCard(entries, entry), knowledge);
     if (opening !== undefined) session.add(opening);
@@ -388,11 +383,11 @@ export async function openFeed({
     correctionId: string,
   ): Promise<number | undefined> {
     const card = session.cards[position];
-    const linked = card?.kind === 'word' ? card.wordCard.linkedCorrections : [];
+    const linked = card?.kind === 'word' ? card.model.linkedCorrections : [];
     if (card === undefined || !linked.some((link) => link.correctionId === correctionId))
       return undefined;
     // Tapped again: the Correction's card is already there.
-    if (entryIdOf(session.cards[position + 1]) === correctionId) return position + 1;
+    if (session.cards[position + 1]?.entryId === correctionId) return position + 1;
     const correction = await entries.get(correctionId);
     if (correction?.kind !== 'correction') return undefined;
     session.insertAfter(card, asReviewIfDue(await buildEntryCard(entries, correction), knowledge));
@@ -468,7 +463,7 @@ export async function openFeed({
 
   /** The Entry of a card that left the screen, if it stayed there long enough to be Seen. */
   function seenOnLeaving(left: FeedCard | undefined, stayed: number): string | undefined {
-    const entryId = entryIdOf(left);
+    const entryId = left?.entryId;
     // A card of an earlier Cycle counts for that Cycle only.
     if (left === undefined || entryId === undefined || !session.inCurrentCycle(left))
       return undefined;
@@ -547,7 +542,7 @@ export async function openFeed({
     // Leaving the screen, or coming back to the card left, keeps the reader where they were.
     if (shown !== undefined) session.moveTo(shown);
     onScreenSince = shown === undefined ? undefined : now;
-    const entryId = shown === undefined ? undefined : entryIdOf(session.readerCard);
+    const entryId = shown === undefined ? undefined : session.readerCard?.entryId;
     // In turn with the requests that change the cards, so a new Cycle never
     // starts between the card leaving the screen and its Entry becoming Seen.
     const kept = inTurnTellingSeen(() => keepScreenChange({ left, stayed, entryId, now, date }));
@@ -568,7 +563,7 @@ export async function openFeed({
     const rebuilt = new Map<FeedCard, FeedCard>();
     for (const card of session.all) {
       if (card.kind !== 'word') continue;
-      const entry = await entries.get(card.wordCard.wordId);
+      const entry = await entries.get(card.entryId);
       if (entry?.kind === 'word')
         rebuilt.set(card, await buildEntryCard(entries, entry, card.wordOfTheDay));
     }
@@ -599,7 +594,7 @@ export async function openFeed({
   async function followCovered(): Promise<string | undefined> {
     const out = new Set(
       session.all.filter((card) => {
-        const entryId = entryIdOf(card);
+        const entryId = card.entryId;
         return entryId !== undefined && !cycle.covers(entryId);
       }),
     );
@@ -628,7 +623,7 @@ export async function openFeed({
       left,
       stayed: now - since,
       // Adding the next card may move the reader's place.
-      entryId: entryIdOf(session.readerCard),
+      entryId: session.readerCard?.entryId,
       now,
       date: todayKey(clock),
     });

@@ -12,7 +12,6 @@ import {
 } from '@slovo/contracts';
 import {
   createMemoryUserStatePort,
-  entryIdOf,
   openComposition,
   openUserState,
   type Clock,
@@ -195,7 +194,7 @@ describe('The Widget Snapshot of the Ukrainian Edition', () => {
     const card = await app.widget.opened(idiomId);
 
     expect(card?.kind).toBe('idiom');
-    expect(card === undefined ? undefined : entryIdOf(card)).toBe(idiomId);
+    expect(card?.entryId).toBe(idiomId);
     expect(app.history.list.map(({ entryId }) => entryId)).toContain(idiomId);
   });
 

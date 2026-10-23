@@ -10,7 +10,6 @@ import {
   type Composition,
   type FeatureSwitch,
   type Feed,
-  type FeedCard,
 } from '../index';
 import { correction, fakeClock, idiom, randomOf, word } from '../test-support';
 
@@ -69,18 +68,12 @@ async function run({
   return Object.assign(app, { advance });
 }
 
-const entryIdOf = (card: FeedCard | undefined) => {
-  if (card?.kind === 'word') return card.wordCard.wordId;
-  if (card?.kind === 'correction') return card.correctionCard.correctionId;
-  return card?.kind === 'idiom' ? card.idiomCard.idiomId : undefined;
-};
-
 /** The ids of the Feed's first `count` cards, asking for the next card until there are that many. */
 async function firstCards(feed: Feed, count: number): Promise<(string | undefined)[]> {
   while (feed.cards.length < count) {
     if ((await feed.next()) === undefined) break;
   }
-  return feed.cards.slice(0, count).map(entryIdOf);
+  return feed.cards.slice(0, count).map((card) => card.entryId);
 }
 
 /**
@@ -107,7 +100,7 @@ async function markSeenWordsUnknown(
     .slice(0, count)
     .filter((card) => card.kind === 'word')
     .slice(-unknown)
-    .map((card) => entryIdOf(card) ?? '');
+    .map((card) => card.entryId);
   for (const id of marked) await app.knowledge.tap(id, 'unknown');
   return marked;
 }
@@ -251,7 +244,7 @@ describe('Review in the Feed', () => {
 
     await firstCards(app.feed, 10);
     const reviews = app.feed.cards.flatMap((card, index) =>
-      card.kind !== 'end-of-cycle' && card.review === true ? [[index, entryIdOf(card)]] : [],
+      card.kind !== 'end-of-cycle' && card.review === true ? [[index, card.entryId]] : [],
     );
 
     expect(reviews).toEqual([

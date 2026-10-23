@@ -65,27 +65,19 @@ const editionWith = (
   },
 });
 
-/** The id of the Entry a card shows, if it shows one. */
-const entryIdOf = (card: FeedCard | undefined) => {
-  if (card?.kind === 'word') return card.wordCard.wordId;
-  if (card?.kind === 'correction') return card.correctionCard.correctionId;
-  return card?.kind === 'idiom' ? card.idiomCard.idiomId : undefined;
-};
-
 /** The local day a card is the Word of the Day of, if it is. */
 const wordOfTheDayOf = (card: FeedCard | undefined) =>
   card?.kind === 'word' ? card.wordOfTheDay : undefined;
 
 /** The Word card a card shows, if it shows one. */
-const wordCardOf = (card: FeedCard | undefined) =>
-  card?.kind === 'word' ? card.wordCard : undefined;
+const wordCardOf = (card: FeedCard | undefined) => (card?.kind === 'word' ? card.model : undefined);
 
 /** The Correction card a card shows, if it shows one. */
 const correctionCardOf = (card: FeedCard | undefined) =>
-  card?.kind === 'correction' ? card.correctionCard : undefined;
+  card?.kind === 'correction' ? card.model : undefined;
 
 /** The ids of the Entries the cards show, in order. */
-const entryIdsOf = (cards: readonly FeedCard[]) => cards.flatMap((card) => entryIdOf(card) ?? []);
+const entryIdsOf = (cards: readonly FeedCard[]) => cards.flatMap((card) => card.entryId ?? []);
 
 /**
  * The Core composition of one app run over the given records: the user state
@@ -146,7 +138,7 @@ function failingPort(records: Map<string, string>, failing: () => boolean): User
 async function walk(feed: Feed, shown = entryIdsOf(feed.cards)): Promise<string[]> {
   const ids = [...shown];
   for (;;) {
-    const id = entryIdOf(await feed.next());
+    const id = (await feed.next())?.entryId;
     if (id === undefined || ids.includes(id)) return ids;
     ids.push(id);
   }
@@ -166,7 +158,7 @@ describe('the Feed', () => {
 
     const [second, third] = await Promise.all([feed.next(), feed.next()]);
 
-    expect([entryIdOf(second), entryIdOf(third)]).toEqual(expected.slice(1, 3));
+    expect([second?.entryId, third?.entryId]).toEqual(expected.slice(1, 3));
     expect(feed.cards).toHaveLength(3);
   });
 
@@ -175,9 +167,9 @@ describe('the Feed', () => {
     const next = await feed.next();
 
     for (const card of [feed.cards[0], next]) {
-      expect(card?.kind === 'word' ? card.wordCard : undefined).toMatchObject({
+      expect(card?.kind === 'word' ? card.model : undefined).toMatchObject({
         kind: 'word',
-        wordId: entryIdOf(card),
+        wordId: card?.entryId,
         primaryDefinition: 'A meaning.',
       });
     }
@@ -206,7 +198,7 @@ describe('the Feed', () => {
       const records = new Map<string, string>();
       const time = fakeClock('2026-10-11T09:00:00+03:00');
       const feed = await run({ records, clock: time.clock });
-      const first = entryIdOf(feed.cards[0]);
+      const first = feed.cards[0]?.entryId;
 
       await look(feed, time, 0, SEEN_DWELL_MS);
 
@@ -237,14 +229,14 @@ describe('the Feed', () => {
       const records = new Map<string, string>();
       const time = fakeClock('2026-10-11T09:00:00+03:00');
       const feed = await run({ records, clock: time.clock });
-      const first = entryIdOf(feed.cards[0]);
+      const first = feed.cards[0]?.entryId;
 
       await look(feed, time, 0, SEEN_DWELL_MS);
       time.advance(60_000);
       const reopened = await run({ records, clock: time.clock });
 
       expect(wordOfTheDayOf(feed.cards[0])).toEqual({ year: 2026, month: 10, day: 11 });
-      expect(entryIdOf(reopened.cards[0])).toBe(first);
+      expect(reopened.cards[0]?.entryId).toBe(first);
       expect(wordOfTheDayOf(reopened.cards[0])).toEqual({ year: 2026, month: 10, day: 11 });
       expect(await unseenNextDay(records)).not.toContain(first);
     });
@@ -260,7 +252,7 @@ describe('the Feed', () => {
         words,
         clock: time.clock,
       });
-      const first = entryIdOf(feed.cards[0]);
+      const first = feed.cards[0]?.entryId;
       await feed.show(0);
       time.advance(SEEN_DWELL_MS);
 
@@ -271,7 +263,7 @@ describe('the Feed', () => {
 
       // The other Word is Seen, so the Entry whose Seen mark failed is the
       // only one left: it comes again instead of the end-of-Cycle card.
-      expect(entryIdOf(feed.cards.at(-1))).toBe(first);
+      expect(feed.cards.at(-1)?.entryId).toBe(first);
       const nextDay = fakeClock('2026-10-12T09:00:00+03:00').clock;
       expect(await walk(await run({ records, words, clock: nextDay }))).toEqual([first]);
     });
@@ -337,7 +329,7 @@ describe('the Feed', () => {
 
       const card = await feed.next();
 
-      expect(entryIdOf(card)).toBe(expected[3]);
+      expect(card?.entryId).toBe(expected[3]);
       expect(entryIdsOf(feed.cards)).toEqual(expected.slice(0, 4));
     });
 
@@ -351,7 +343,7 @@ describe('the Feed', () => {
 
       await look(feed, time, 0, SEEN_DWELL_MS);
 
-      expect(await unseenNextDay(records)).not.toContain(entryIdOf(feed.cards[0]));
+      expect(await unseenNextDay(records)).not.toContain(feed.cards[0]?.entryId);
     });
 
     it('offers no Seen Word again after a restart in the same Cycle', async () => {
@@ -378,7 +370,7 @@ describe('the Feed', () => {
     async function firstSeen(feed: Feed, records: Map<string, string>) {
       const nextDay = fakeClock('2026-10-12T09:00:00+03:00').clock;
       return !(await walk(await run({ records, clock: nextDay }))).includes(
-        entryIdOf(feed.cards[0]) ?? '',
+        feed.cards[0]?.entryId ?? '',
       );
     }
 
@@ -501,7 +493,7 @@ describe('the Feed', () => {
 
       const again = [await feed.next(), await feed.next()];
 
-      expect(again.map(entryIdOf)).toEqual(order.slice(0, 2));
+      expect(again.map((card) => card?.entryId)).toEqual(order.slice(0, 2));
     });
   });
 
@@ -543,12 +535,12 @@ describe('the Feed', () => {
       const feed = await run({ words: small, clock: time.clock });
       await readLastCard(feed, time, SEEN_DWELL_MS);
       await readLastCard(feed, time, 200);
-      const skipped = entryIdOf(feed.cards[1]);
+      const skipped = feed.cards[1]?.entryId;
 
       const again = await readLastCard(feed, time, SEEN_DWELL_MS);
       const end = await readLastCard(feed, time, SEEN_DWELL_MS);
 
-      expect(entryIdOf(again)).toBe(skipped);
+      expect(again?.entryId).toBe(skipped);
       expect(end?.kind).toBe('end-of-cycle');
     });
 
@@ -558,13 +550,13 @@ describe('the Feed', () => {
       await readLastCard(feed, time, SEEN_DWELL_MS);
       await readLastCard(feed, time, SEEN_DWELL_MS);
       await feed.show(2);
-      const last = entryIdOf(feed.cards[2]);
+      const last = feed.cards[2]?.entryId;
 
       // Off the last unseen Word after 200 ms, onto the card the Feed got ready.
       time.advance(200);
       await feed.show(3);
 
-      expect(entryIdOf(feed.cards[3])).toBe(last);
+      expect(feed.cards[3]?.entryId).toBe(last);
       // The end-of-Cycle card comes once that Word is Seen.
       expect(feed.cards[4]?.kind).toBe('end-of-cycle');
       time.advance(SEEN_DWELL_MS);
@@ -580,7 +572,7 @@ describe('the Feed', () => {
 
       const newCycle: string[] = [];
       while (newCycle.length < liveIds.length)
-        newCycle.push(entryIdOf(await readLastCard(feed, time, SEEN_DWELL_MS)) ?? 'none');
+        newCycle.push((await readLastCard(feed, time, SEEN_DWELL_MS))?.entryId ?? 'none');
 
       expect(lastCycle).toEqual(await walk(await run({ random: randomOf(0.25) })));
       // The order a first Cycle shuffled with the second seed has.
@@ -601,7 +593,7 @@ describe('the Feed', () => {
         random: randomSequence(0.25, 0.75, 0.5),
       });
       await readToTheEnd(feed, time);
-      const wordOfTheDay = entryIdOf(feed.cards[0]);
+      const wordOfTheDay = feed.cards[0]?.entryId;
 
       failing = true;
       await expect(feed.next()).rejects.toThrow('The disk is full');
@@ -656,9 +648,7 @@ describe('the Feed', () => {
       time.advance(60_000);
       const restarted = await run({ records, words: small, clock: time.clock });
 
-      expect(entryIdOf(restarted.cards[restarted.startPosition])).toBe(
-        entryIdOf(feed.cards.at(-2)),
-      );
+      expect(restarted.cards[restarted.startPosition]?.entryId).toBe(feed.cards.at(-2)?.entryId);
       expect((await restarted.next())?.kind).toBe('end-of-cycle');
     });
 
@@ -674,7 +664,9 @@ describe('the Feed', () => {
 
       expect(wordOfTheDayOf(newCycle[0])).toEqual({ year: 2026, month: 10, day: 12 });
       // Nothing is Seen in the new Cycle: every Word comes again.
-      expect(new Set(newCycle.map(entryIdOf))).toEqual(new Set(['w_one', 'w_two', 'w_three']));
+      expect(new Set(newCycle.map((card) => card?.entryId))).toEqual(
+        new Set(['w_one', 'w_two', 'w_three']),
+      );
     });
 
     it('counts nothing Seen in the new Cycle when the reader goes back to a card of the last one', async () => {
@@ -740,7 +732,9 @@ describe('the Feed', () => {
       await Promise.all(shown);
 
       const newCycle = [feed.cards[end + 1], await feed.next(), await feed.next()];
-      expect(new Set(newCycle.map(entryIdOf))).toEqual(new Set(['w_one', 'w_two', 'w_three']));
+      expect(new Set(newCycle.map((card) => card?.entryId))).toEqual(
+        new Set(['w_one', 'w_two', 'w_three']),
+      );
     });
 
     it('never comes when the Language Pack has no live Word', async () => {
@@ -758,7 +752,7 @@ describe('the Feed', () => {
       while (feed.cards.length <= position) await feed.next();
       await feed.show(position);
       time.advance(500);
-      return entryIdOf(feed.cards[position]);
+      return feed.cards[position]?.entryId;
     }
 
     it('opens on the card the reader was on when the app reopens the same day', async () => {
@@ -770,7 +764,7 @@ describe('the Feed', () => {
         clock: fakeClock('2026-10-11T21:00:00+03:00').clock,
       });
 
-      expect(entryIdOf(reopened.cards[reopened.startPosition])).toBe(last);
+      expect(reopened.cards[reopened.startPosition]?.entryId).toBe(last);
     });
 
     it("opens on the day's Word of the Day on another local day, in the clock time zone", async () => {
@@ -784,7 +778,7 @@ describe('the Feed', () => {
       });
 
       expect(reopened.cards).toHaveLength(1);
-      expect(entryIdOf(reopened.cards[0])).not.toBe(last);
+      expect(reopened.cards[0]?.entryId).not.toBe(last);
       expect(wordOfTheDayOf(reopened.cards[0])).toEqual({ year: 2026, month: 10, day: 12 });
     });
 
@@ -810,7 +804,7 @@ describe('the Word of the Day in the Feed', () => {
 
     expect(feed.cards).toHaveLength(1);
     expect(wordOfTheDayOf(feed.cards[0])).toEqual({ year: 2026, month: 10, day: 11 });
-    expect(liveIds).toContain(entryIdOf(feed.cards[0]));
+    expect(liveIds).toContain(feed.cards[0]?.entryId);
   });
 
   it('stays the same, with its mark, when the app reopens later the same local day', async () => {
@@ -828,10 +822,8 @@ describe('the Word of the Day in the Feed', () => {
     });
 
     expect(
-      evening.cards.map((card) => ({ id: entryIdOf(card), wordOfTheDay: wordOfTheDayOf(card) })),
-    ).toEqual([
-      { id: entryIdOf(first.cards[0]), wordOfTheDay: { year: 2026, month: 10, day: 11 } },
-    ]);
+      evening.cards.map((card) => ({ id: card.entryId, wordOfTheDay: wordOfTheDayOf(card) })),
+    ).toEqual([{ id: first.cards[0]?.entryId, wordOfTheDay: { year: 2026, month: 10, day: 11 } }]);
   });
 
   it('can be reached by going back when the app reopens the same local day on another card', async () => {
@@ -844,10 +836,7 @@ describe('the Word of the Day in the Feed', () => {
 
     const reopened = await run({ records, clock: fakeClock('2026-10-11T21:00:00+03:00').clock });
 
-    expect(entryIdsOf(reopened.cards)).toEqual([
-      entryIdOf(first.cards[0]),
-      entryIdOf(first.cards[2]),
-    ]);
+    expect(entryIdsOf(reopened.cards)).toEqual([first.cards[0]?.entryId, first.cards[2]?.entryId]);
     expect(wordOfTheDayOf(reopened.cards[0])).toEqual({ year: 2026, month: 10, day: 11 });
     expect(reopened.startPosition).toBe(1);
   });
@@ -858,13 +847,13 @@ describe('the Word of the Day in the Feed', () => {
     const { feed } = app;
     await feed.show(0);
     await feed.show(1);
-    const hidden = entryIdOf(feed.cards[0]) ?? '';
+    const hidden = feed.cards[0]?.entryId ?? '';
     await app.hide({ kind: 'entry', entryId: hidden });
 
     const reopened = await run({ records, clock: fakeClock('2026-10-11T21:00:00+03:00').clock });
     await reopened.show(reopened.startPosition);
 
-    expect(entryIdsOf(reopened.cards)[0]).toBe(entryIdOf(feed.cards[0]));
+    expect(entryIdsOf(reopened.cards)[0]).toBe(feed.cards[0]?.entryId);
     expect(wordOfTheDayOf(reopened.cards[1])).toEqual({ year: 2026, month: 10, day: 11 });
     expect(entryIdsOf(reopened.cards)).not.toContain(hidden);
   });
@@ -881,7 +870,7 @@ describe('the Word of the Day in the Feed', () => {
     const card = await feed.next();
 
     expect(wordOfTheDayOf(card)).toEqual({ year: 2026, month: 10, day: 12 });
-    expect(entryIdsOf(feed.cards.slice(0, 2))).not.toContain(entryIdOf(card));
+    expect(entryIdsOf(feed.cards.slice(0, 2))).not.toContain(card?.entryId);
     expect(wordOfTheDayOf(await feed.next())).toBeUndefined();
   });
 
@@ -898,7 +887,7 @@ describe('the Word of the Day in the Feed', () => {
 
     expect(feed.cards).toHaveLength(2);
     expect(wordOfTheDayOf(feed.cards[1])).toEqual({ year: 2026, month: 10, day: 12 });
-    expect(entryIdOf(feed.cards[1])).not.toBe(entryIdOf(feed.cards[0]));
+    expect(feed.cards[1]?.entryId).not.toBe(feed.cards[0]?.entryId);
   });
 
   it('comes next, in place of the card got ready the day before, when the app comes back to a new local day before the composition turns to it', async () => {
@@ -1007,10 +996,10 @@ describe('Corrections in the Feed', () => {
     const card = feed.cards[4];
 
     expect(card?.kind).toBe('correction');
-    const name = entryIdOf(card)?.slice(2) ?? '';
+    const name = card?.entryId?.slice(2) ?? '';
     expect(correctionCardOf(card)).toMatchObject({
       kind: 'correction',
-      correctionId: entryIdOf(card),
+      correctionId: card?.entryId,
       nonStandardForm: `not ${name}`,
       mainEquivalent: name,
       otherEquivalents: [`also ${name}`],
@@ -1023,7 +1012,7 @@ describe('Corrections in the Feed', () => {
     const time = fakeClock('2026-10-11T09:00:00+03:00');
     const feed = await run({ records, corrections, clock: time.clock });
     while (feed.cards.length < 10) await feed.next();
-    const [read, skipped] = [entryIdOf(feed.cards[4]), entryIdOf(feed.cards[9])];
+    const [read, skipped] = [feed.cards[4]?.entryId, feed.cards[9]?.entryId];
 
     await look(feed, time, 4, SEEN_DWELL_MS);
     await look(feed, time, 9, 300);
@@ -1043,7 +1032,7 @@ describe('Corrections in the Feed', () => {
     await look(feed, time, 1, SEEN_DWELL_MS);
 
     // The card the Feed got ready while the last Word was on screen.
-    expect(entryIdOf(feed.cards[2])).toBe('c_one');
+    expect(feed.cards[2]?.entryId).toBe('c_one');
   });
 
   it('ends the Cycle only once every live Word and Correction is Seen, and starts the next one with the Corrections unseen again', async () => {
@@ -1060,7 +1049,7 @@ describe('Corrections in the Feed', () => {
       time.advance(SEEN_DWELL_MS);
       await feed.show(undefined);
       const next = feed.cards[position + 1];
-      offered.push(next?.kind === 'end-of-cycle' ? 'end' : entryIdOf(next));
+      offered.push(next?.kind === 'end-of-cycle' ? 'end' : next?.entryId);
     }
 
     // After the Word of the Day: the other Word, the Correction, the end, then a new Cycle.
@@ -1100,8 +1089,8 @@ describe('Corrections in the Feed', () => {
     });
 
     const card = reopened.cards[reopened.startPosition];
-    expect(entryIdOf(card)).toBe(entryIdOf(feed.cards[4]));
-    expect(correctionCardOf(card)?.correctionId).toBe(entryIdOf(feed.cards[4]));
+    expect(card?.entryId).toBe(feed.cards[4]?.entryId);
+    expect(correctionCardOf(card)?.correctionId).toBe(feed.cards[4]?.entryId);
   });
 
   describe('a Word linked to a Correction («Часто кажуть»)', () => {
@@ -1116,8 +1105,8 @@ describe('Corrections in the Feed', () => {
     /** A Feed whose card at `position` is the linked Word, with the next card ready. */
     async function feedOnLinkedWord(options: Parameters<typeof run>[0] = {}) {
       const feed = await run({ words, corrections: linkedCorrections, ...options });
-      while (!feed.cards.some((card) => entryIdOf(card) === linked.id)) await feed.next();
-      const position = feed.cards.findIndex((card) => entryIdOf(card) === linked.id);
+      while (!feed.cards.some((card) => card.entryId === linked.id)) await feed.next();
+      const position = feed.cards.findIndex((card) => card.entryId === linked.id);
       if (feed.cards.length === position + 1) await feed.next();
       return { feed, position };
     }
@@ -1132,23 +1121,23 @@ describe('Corrections in the Feed', () => {
 
     it('opens the linked Correction as the card right after the Word, and goes on after it', async () => {
       const { feed, position } = await feedOnLinkedWord();
-      const before = feed.cards.map((card) => entryIdOf(card));
+      const before = feed.cards.map((card) => card.entryId);
       expect(before).not.toContain('c_protiazi');
 
       const opened = await feed.openLinkedCorrection(position, 'c_protiazi');
 
       expect(opened).toBe(position + 1);
       const card: FeedCard | undefined = feed.cards[position + 1];
-      expect(entryIdOf(card)).toBe('c_protiazi');
+      expect(card?.entryId).toBe('c_protiazi');
       expect(correctionCardOf(card)?.mainEquivalent).toBe('protiazi');
-      expect(feed.cards.map((shown) => entryIdOf(shown))).toEqual([
+      expect(feed.cards.map((shown) => shown.entryId)).toEqual([
         ...before.slice(0, position + 1),
         'c_protiazi',
         ...before.slice(position + 1),
       ]);
       const next = await feed.next();
-      expect(entryIdOf(next)).not.toBe('c_protiazi');
-      expect(before).not.toContain(entryIdOf(next));
+      expect(next?.entryId).not.toBe('c_protiazi');
+      expect(before).not.toContain(next?.entryId);
     });
 
     it('opens the same card again when tapped twice', async () => {
@@ -1224,7 +1213,8 @@ describe("today's Word of the Day", () => {
   const card = (wordOfTheDay?: WordFeedCard['wordOfTheDay']) =>
     ({
       kind: 'word',
-      wordCard: {} as WordFeedCard['wordCard'],
+      entryId: 'w_one',
+      model: {} as WordFeedCard['model'],
       ...(wordOfTheDay === undefined ? {} : { wordOfTheDay }),
     }) satisfies WordFeedCard;
 
@@ -1367,8 +1357,8 @@ describe('Idioms in the Feed', () => {
     const card = feed.cards[IDIOM_EVERY - 1];
 
     expect(card?.kind).toBe('idiom');
-    const id = entryIdOf(card) ?? '';
-    expect(card?.kind === 'idiom' ? card.idiomCard : undefined).toMatchObject({
+    const id = card?.entryId ?? '';
+    expect(card?.kind === 'idiom' ? card.model : undefined).toMatchObject({
       kind: 'idiom',
       idiomId: id,
       expression: `to ${id.slice(2)}`,
@@ -1384,8 +1374,8 @@ describe('Idioms in the Feed', () => {
     const feed = await run({ records, corrections, idioms, clock: time.clock });
     while (feed.cards.length < IDIOM_EVERY * 2) await feed.next();
     const [read, skipped] = [
-      entryIdOf(feed.cards[IDIOM_EVERY - 1]),
-      entryIdOf(feed.cards[IDIOM_EVERY * 2 - 1]),
+      feed.cards[IDIOM_EVERY - 1]?.entryId,
+      feed.cards[IDIOM_EVERY * 2 - 1]?.entryId,
     ];
     expect(kindsOf([read ?? '', skipped ?? ''])).toBe('II');
 
@@ -1417,7 +1407,7 @@ describe('Idioms in the Feed', () => {
       time.advance(SEEN_DWELL_MS);
       await feed.show(undefined);
       const next = feed.cards[position + 1];
-      offered.push(next?.kind === 'end-of-cycle' ? 'end' : entryIdOf(next));
+      offered.push(next?.kind === 'end-of-cycle' ? 'end' : next?.entryId);
     }
 
     // After the Word of the Day: the other Word, the Correction, the Idiom, the end, then a new Cycle.
@@ -1432,11 +1422,11 @@ describe('Idioms in the Feed', () => {
     const feed = await run({ records, idioms, clock: time.clock });
     while (feed.cards.length < IDIOM_EVERY) await feed.next();
     await feed.show(IDIOM_EVERY - 1);
-    const idiomId = entryIdOf(feed.cards[IDIOM_EVERY - 1]);
+    const idiomId = feed.cards[IDIOM_EVERY - 1]?.entryId;
 
     const reopened = await run({ records, idioms, clock: time.clock });
 
     expect(reopened.cards[reopened.startPosition]?.kind).toBe('idiom');
-    expect(entryIdOf(reopened.cards[reopened.startPosition])).toBe(idiomId);
+    expect(reopened.cards[reopened.startPosition]?.entryId).toBe(idiomId);
   });
 });

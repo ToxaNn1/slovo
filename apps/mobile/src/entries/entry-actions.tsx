@@ -1,4 +1,4 @@
-import { entryIdOf, isTodaysWordOfTheDay, type Composition, type EntryFeedCard } from '@slovo/core';
+import { isTodaysWordOfTheDay, type Composition, type EntryFeedCard } from '@slovo/core';
 import {
   ActionRow,
   CollectionButton,
@@ -37,7 +37,7 @@ const shareFormat = createShareFormatMemory();
  * `UndoToastProvider` for the toast after a hide.
  */
 export function EntryActions({ card }: { card: EntryFeedCard }) {
-  const entryId = entryIdOf(card);
+  const { entryId } = card;
   const favorite = useFavorite(entryId);
   const hide = useHide(card);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -112,20 +112,14 @@ function EntryShareSheet({
   return (
     <ShareSheet
       visible={visible}
-      card={
-        card.kind === 'word'
-          ? card.wordCard
-          : card.kind === 'correction'
-            ? card.correctionCard
-            : card.idiomCard
-      }
+      card={card}
       wordOfTheDay={card.kind === 'word' && isTodaysWordOfTheDay(card, deviceClock)}
       watermark={edition.displayName}
       initialFormat={shareFormat.format}
       onFormatChange={(format) => {
         shareFormat.choose(format);
       }}
-      onShare={(view, format) => share(view, entryIdOf(card), format)}
+      onShare={(view, format) => share(view, card.entryId, format)}
       onClose={onClose}
     />
   );

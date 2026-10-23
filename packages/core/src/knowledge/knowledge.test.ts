@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 import {
   createMemoryContentPort,
   createMemoryUserStatePort,
-  entryIdOf,
   openComposition,
   openUserState,
   type Clock,
@@ -115,7 +114,7 @@ describe('Knowledge Marks', () => {
     expect(app.knowledge.state.shown.get('w_one')).toBe('review');
     expect(await app.entryCard('w_one')).toMatchObject({ review: true });
     while ((await app.feed.next())?.kind === 'word');
-    const feedCard = app.feed.cards.find((card) => entryIdOf(card) === 'w_one');
+    const feedCard = app.feed.cards.find((card) => card.entryId === 'w_one');
     expect(feedCard).toMatchObject({ review: true });
     expect(await app.entryCard('w_two')).not.toHaveProperty('review');
 

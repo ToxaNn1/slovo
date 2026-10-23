@@ -1,4 +1,4 @@
-import { entryIdOf, type FeedCard } from './feed-card';
+import { type FeedCard } from './feed-card';
 
 /**
  * Every card of the Feed's app session and the reader's place among them,
@@ -129,7 +129,7 @@ export function createFeedSession(): FeedSession {
     cycleCards: () => session.slice(cycleStart).filter((card) => !dropped.has(card)),
     shownIds(except) {
       const shown = session.filter((card) => card !== except);
-      return new Set(shown.slice(cycleStart).flatMap((card) => entryIdOf(card) ?? []));
+      return new Set(shown.slice(cycleStart).flatMap((card) => card.entryId ?? []));
     },
     startCycle() {
       cycleStart = session.length;

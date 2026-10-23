@@ -1,4 +1,4 @@
-import { entryIdOf, type FeedCard } from '@slovo/core';
+import type { FeedCard } from '@slovo/core';
 import {
   DecorBackground,
   EndOfCycleCard,
@@ -54,7 +54,7 @@ function FeedScreen() {
     (card: FeedCard, position: number) => (
       <FeedPage
         // A card that takes the place of a hidden one starts afresh, scrolled to its top.
-        key={entryIdOf(card) ?? card.kind}
+        key={card.entryId ?? card.kind}
         card={card}
         position={position}
         onOpenCorrection={openCorrection}

@@ -5,7 +5,6 @@ import type { Word } from '@slovo/contracts';
 import {
   createMemoryContentPort,
   createMemoryUserStatePort,
-  entryIdOf,
   openComposition,
   openUserState,
   SEEN_DWELL_MS,
@@ -63,7 +62,7 @@ async function run({
 const idsOf = ({ hiddenEntries }: Composition) => hiddenEntries.list.map(({ entryId }) => entryId);
 
 /** The ids of the Entries the cards show, in order. */
-const entryIdsOf = (cards: readonly FeedCard[]) => cards.flatMap((card) => entryIdOf(card) ?? []);
+const entryIdsOf = (cards: readonly FeedCard[]) => cards.flatMap((card) => card.entryId ?? []);
 
 /**
  * The ids of every Entry the Feed offers from where it stands, after the
@@ -72,7 +71,7 @@ const entryIdsOf = (cards: readonly FeedCard[]) => cards.flatMap((card) => entry
 async function walk(feed: Feed): Promise<string[]> {
   const ids = entryIdsOf(feed.cards);
   for (;;) {
-    const id = entryIdOf(await feed.next());
+    const id = (await feed.next())?.entryId;
     if (id === undefined || ids.includes(id)) return ids;
     ids.push(id);
   }
@@ -92,7 +91,7 @@ async function readToTheNextCycle(feed: Feed, time: ReturnType<typeof fakeClock>
       await feed.show(position + 1);
       return read;
     }
-    read.push(entryIdOf(card) ?? '');
+    read.push(card?.entryId ?? '');
     time.advance(SEEN_DWELL_MS);
   }
 }
@@ -193,7 +192,7 @@ describe('Hidden Entries', () => {
   it('reads eligibility again before it tells the subscribers', async () => {
     const app = await run();
     await turnTo(app.feed, 1);
-    const hidden = entryIdOf(app.feed.cards[1]) ?? '';
+    const hidden = app.feed.cards[1]?.entryId ?? '';
     const told: { hidden: boolean; feed: readonly string[] }[] = [];
     app.hiddenEntries.subscribe(() =>
       told.push({ hidden: app.hiddenEntries.has(hidden), feed: entryIdsOf(app.feed.cards) }),
@@ -280,7 +279,7 @@ describe('a Hidden Entry', () => {
     await app.feed.show(0);
     time.advance(SEEN_DWELL_MS);
     await app.feed.show(1);
-    const seen = entryIdOf(app.feed.cards[0]) ?? '';
+    const seen = app.feed.cards[0]?.entryId ?? '';
     const cycle = records.get('feed.cycle');
     const hidden = twin.find((id, index) => index > 2 && id.startsWith('w_')) ?? '';
 
@@ -307,7 +306,7 @@ describe('a Hidden Entry', () => {
     const records = new Map<string, string>();
     const time = fakeClock();
     const first = await run({ records, clock: time.clock });
-    const wordOfTheDay = entryIdOf(first.feed.cards[0]) ?? '';
+    const wordOfTheDay = first.feed.cards[0]?.entryId ?? '';
 
     await first.hiddenEntries.hide(wordOfTheDay);
     time.advance(MINUTE);
@@ -318,7 +317,7 @@ describe('a Hidden Entry', () => {
       kind: 'word',
       wordOfTheDay: { year: 2026, month: 10, day: 11 },
     });
-    expect(entryIdOf(opening)).not.toBe(wordOfTheDay);
+    expect(opening?.entryId).not.toBe(wordOfTheDay);
     expect(await walk(app.feed)).not.toContain(wordOfTheDay);
   });
 
@@ -326,7 +325,7 @@ describe('a Hidden Entry', () => {
     const records = new Map<string, string>();
     const time = fakeClock();
     const app = await run({ records, clock: time.clock });
-    const entryId = entryIdOf(app.feed.cards[0]) ?? '';
+    const entryId = app.feed.cards[0]?.entryId ?? '';
     await app.feed.show(0);
     time.advance(SEEN_DWELL_MS);
     await app.feed.show(1);
@@ -376,14 +375,14 @@ describe('the Feed, when an Entry is hidden or restored', () => {
     await app.hiddenEntries.hide(hidden ?? '');
 
     expect(entryIdsOf(app.feed.cards).slice(0, 2)).toEqual([second, onScreen]);
-    expect(entryIdOf(app.feed.cards[app.feed.position])).toBe(onScreen);
+    expect(app.feed.cards[app.feed.position]?.entryId).toBe(onScreen);
   });
 
   it('drops a hidden card that is ready but not on screen, and gets the next one ready', async () => {
     const app = await run();
     const twin = await walk((await run()).feed);
     await app.feed.show(0);
-    const hidden = entryIdOf(app.feed.cards[1]) ?? '';
+    const hidden = app.feed.cards[1]?.entryId ?? '';
 
     await app.hiddenEntries.hide(hidden);
 
@@ -411,7 +410,7 @@ describe('the Feed, when an Entry is hidden or restored', () => {
 
     expect(entryIdsOf(app.feed.cards)).toEqual(before.filter((id) => id !== hidden));
     expect(app.feed.position).toBe(1);
-    expect(entryIdOf(app.feed.cards[1])).toBe(next);
+    expect(app.feed.cards[1]?.entryId).toBe(next);
   });
 
   it('keeps the reader on a card before the one hidden while no card is on screen', async () => {
@@ -422,7 +421,7 @@ describe('the Feed, when an Entry is hidden or restored', () => {
 
     await app.hiddenEntries.hide(hidden ?? '');
 
-    expect(entryIdOf(app.feed.cards[app.feed.position])).toBe(onScreen);
+    expect(app.feed.cards[app.feed.position]?.entryId).toBe(onScreen);
   });
 
   it('gives the place back to the card the reader left on an undo while no card is on screen', async () => {
@@ -442,14 +441,14 @@ describe('the Feed, when an Entry is hidden or restored', () => {
   it('gives the place back on an undo after the reader left the screen, as they haven’t moved', async () => {
     const app = await run();
     await turnTo(app.feed, 1);
-    const hidden = entryIdOf(app.feed.cards[1]) ?? '';
+    const hidden = app.feed.cards[1]?.entryId ?? '';
     await app.hiddenEntries.hide(hidden);
     await app.feed.show(undefined);
 
     await app.hiddenEntries.restore(hidden);
 
     expect(app.feed.position).toBe(1);
-    expect(entryIdOf(app.feed.cards[1])).toBe(hidden);
+    expect(app.feed.cards[1]?.entryId).toBe(hidden);
   });
 
   /** Leaves card 1 before it is Seen and hides it while no card is on screen. */
@@ -460,11 +459,11 @@ describe('the Feed, when an Entry is hidden or restored', () => {
     await turnTo(app.feed, 1);
     time.advance(SEEN_DWELL_MS - 1);
     await app.feed.show(undefined);
-    const hidden = entryIdOf(app.feed.cards[1]) ?? '';
+    const hidden = app.feed.cards[1]?.entryId ?? '';
     time.advance(MINUTE);
     await app.hiddenEntries.hide(hidden);
     time.advance(MINUTE);
-    return { records, time, app, hidden, next: entryIdOf(app.feed.cards[1]) ?? '' };
+    return { records, time, app, hidden, next: app.feed.cards[1]?.entryId ?? '' };
   }
 
   it('leaves the card the reader left unseen when it is hidden while no card is on screen', async () => {
@@ -479,7 +478,7 @@ describe('the Feed, when an Entry is hidden or restored', () => {
     await app.feed.show(app.feed.position);
 
     const reopened = await run({ records, clock: time.clock });
-    expect(entryIdOf(reopened.feed.cards[reopened.feed.startPosition])).toBe(next);
+    expect(reopened.feed.cards[reopened.feed.startPosition]?.entryId).toBe(next);
   });
 
   it('counts the dwell time of the card that took the place from the reader’s coming back', async () => {
@@ -495,7 +494,7 @@ describe('the Feed, when an Entry is hidden or restored', () => {
   it('gets the next card into the place of the only card, hidden before any card was on screen', async () => {
     const app = await run();
     const twin = await walk((await run()).feed);
-    const hidden = entryIdOf(app.feed.cards[0]) ?? '';
+    const hidden = app.feed.cards[0]?.entryId ?? '';
 
     await app.hiddenEntries.hide(hidden);
 
@@ -515,7 +514,7 @@ describe('the Feed, when an Entry is hidden or restored', () => {
     const ids = entryIdsOf(app.feed.cards);
     expect(ids.slice(0, 3)).toEqual(before);
     expect(app.feed.position).toBe(1);
-    expect(entryIdOf(app.feed.cards[1])).toBe(hidden);
+    expect(app.feed.cards[1]?.entryId).toBe(hidden);
     expect(new Set(ids).size).toBe(ids.length);
   });
 
@@ -535,15 +534,15 @@ describe('the Feed, when an Entry is hidden or restored', () => {
   it('puts the card back without taking the screen once the reader has moved on', async () => {
     const app = await run();
     await turnTo(app.feed, 1);
-    const hidden = entryIdOf(app.feed.cards[1]) ?? '';
+    const hidden = app.feed.cards[1]?.entryId ?? '';
     await app.hiddenEntries.hide(hidden);
     await app.feed.show(2);
-    const onScreen = entryIdOf(app.feed.cards[2]);
+    const onScreen = app.feed.cards[2]?.entryId;
 
     await app.hiddenEntries.restore(hidden);
 
-    expect(entryIdOf(app.feed.cards[1])).toBe(hidden);
-    expect(entryIdOf(app.feed.cards[app.feed.position])).toBe(onScreen);
+    expect(app.feed.cards[1]?.entryId).toBe(hidden);
+    expect(app.feed.cards[app.feed.position]?.entryId).toBe(onScreen);
   });
 
   it(`makes the hidden card on screen Seen, into History, once it stayed there ${String(SEEN_DWELL_MS)} ms`, async () => {
@@ -551,7 +550,7 @@ describe('the Feed, when an Entry is hidden or restored', () => {
     const time = fakeClock();
     const app = await run({ records, clock: time.clock });
     await turnTo(app.feed, 1);
-    const hidden = entryIdOf(app.feed.cards[1]) ?? '';
+    const hidden = app.feed.cards[1]?.entryId ?? '';
     time.advance(SEEN_DWELL_MS);
 
     await app.hiddenEntries.hide(hidden);
@@ -565,7 +564,7 @@ describe('the Feed, when an Entry is hidden or restored', () => {
     const time = fakeClock();
     const app = await run({ records, clock: time.clock });
     await turnTo(app.feed, 1);
-    const hidden = entryIdOf(app.feed.cards[1]) ?? '';
+    const hidden = app.feed.cards[1]?.entryId ?? '';
     time.advance(SEEN_DWELL_MS - 1);
 
     await app.hiddenEntries.hide(hidden);
@@ -580,8 +579,8 @@ describe('the Feed, when an Entry is hidden or restored', () => {
     const app = await run({ records, clock: time.clock });
     await turnTo(app.feed, 1);
     time.advance(SEEN_DWELL_MS);
-    await app.hiddenEntries.hide(entryIdOf(app.feed.cards[1]) ?? '');
-    const next = entryIdOf(app.feed.cards[1]) ?? '';
+    await app.hiddenEntries.hide(app.feed.cards[1]?.entryId ?? '');
+    const next = app.feed.cards[1]?.entryId ?? '';
 
     time.advance(SEEN_DWELL_MS - 1);
     await app.feed.show(2);
@@ -603,11 +602,11 @@ describe('the Feed, when an Entry is hidden or restored', () => {
       time.advance(SEEN_DWELL_MS);
     }
     await app.feed.show(end);
-    const hidden = entryIdOf(app.feed.cards[end + 1]) ?? '';
+    const hidden = app.feed.cards[end + 1]?.entryId ?? '';
     /** The card on screen and the one after it. */
     const onScreenAndNext = () => {
       const position = app.feed.position;
-      return [app.feed.cards[position]?.kind, entryIdOf(app.feed.cards[position + 1])];
+      return [app.feed.cards[position]?.kind, app.feed.cards[position + 1]?.entryId];
     };
 
     await app.hiddenEntries.hide(hidden);
@@ -633,12 +632,12 @@ describe('the Feed, when an Entry is hidden or restored', () => {
     const time = fakeClock();
     const app = await run({ records, clock: time.clock });
     await turnTo(app.feed, 1);
-    await app.hiddenEntries.hide(entryIdOf(app.feed.cards[1]) ?? '');
-    const onScreen = entryIdOf(app.feed.cards[1]);
+    await app.hiddenEntries.hide(app.feed.cards[1]?.entryId ?? '');
+    const onScreen = app.feed.cards[1]?.entryId;
     time.advance(MINUTE);
 
     const reopened = await run({ records, clock: time.clock });
 
-    expect(entryIdOf(reopened.feed.cards[reopened.feed.startPosition])).toBe(onScreen);
+    expect(reopened.feed.cards[reopened.feed.startPosition]?.entryId).toBe(onScreen);
   });
 });

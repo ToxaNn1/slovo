@@ -128,23 +128,16 @@ async function run(
   return composition.feed;
 }
 
-/** The id of the Entry a card shows, if it shows one. */
-const entryIdOf = (card: FeedCard | undefined) => {
-  if (card?.kind === 'word') return card.wordCard.wordId;
-  if (card?.kind === 'correction') return card.correctionCard.correctionId;
-  return card?.kind === 'idiom' ? card.idiomCard.idiomId : undefined;
-};
-
 /** The local day a card is the Word of the Day of, if it is. */
 const wordOfTheDayOf = (card: FeedCard | undefined) =>
   card?.kind === 'word' ? card.wordOfTheDay : undefined;
 
 /** The Correction card a card shows, if it shows one. */
 const correctionCardOf = (card: FeedCard | undefined) =>
-  card?.kind === 'correction' ? card.correctionCard : undefined;
+  card?.kind === 'correction' ? card.model : undefined;
 
 /** The ids of the Entries the cards show, in order. */
-const entryIdsOf = (cards: readonly FeedCard[]) => cards.flatMap((card) => entryIdOf(card) ?? []);
+const entryIdsOf = (cards: readonly FeedCard[]) => cards.flatMap((card) => card.entryId ?? []);
 
 /**
  * Every Entry the Feed offers from where it stands, until it repeats, reaches
@@ -153,7 +146,7 @@ const entryIdsOf = (cards: readonly FeedCard[]) => cards.flatMap((card) => entry
 async function walk(feed: Feed): Promise<string[]> {
   const ids = entryIdsOf(feed.cards);
   for (;;) {
-    const id = entryIdOf(await feed.next());
+    const id = (await feed.next())?.entryId;
     if (id === undefined || ids.includes(id)) return ids;
     ids.push(id);
   }
@@ -187,7 +180,7 @@ describe('the Feed over the Ukrainian Language Pack', () => {
 
     const feed = await run(new Map(), fakeClock(today).clock);
 
-    expect(liveIds).toContain(entryIdOf(feed.cards[0]));
+    expect(liveIds).toContain(feed.cards[0]?.entryId);
   });
 
   it(
@@ -279,7 +272,7 @@ describe('the Feed over the Ukrainian Language Pack', () => {
 
     expect(wordOfTheDayOf(feed.cards[0])).toEqual({ year: 2026, month: 10, day: 11 });
     expect(wordOfTheDayOf(nextDay.cards[0])).toEqual({ year: 2026, month: 10, day: 12 });
-    expect(read).not.toContain(entryIdOf(nextDay.cards[0]));
+    expect(read).not.toContain(nextDay.cards[0]?.entryId);
     expect(lateThatDay.cards).toEqual(nextDay.cards.slice(0, 1));
   });
 });
@@ -295,7 +288,7 @@ describe('Corrections in the Feed over the Ukrainian Language Pack', () => {
     while (feed.cards.length < CORRECTION_EVERY) await feed.next();
 
     const card = feed.cards[CORRECTION_EVERY - 1];
-    const [entry] = await content.getEntries([entryIdOf(card) ?? '']);
+    const [entry] = await content.getEntries([card?.entryId ?? '']);
     const correction = entry?.kind === 'correction' ? entry : undefined;
 
     // The stressed vowels of a stress trap's forms are the stress traps' test.
@@ -339,10 +332,10 @@ describe('Idioms in the Feed over the Ukrainian Language Pack', () => {
     while (feed.cards.length < IDIOM_EVERY) await feed.next();
 
     const card = feed.cards[IDIOM_EVERY - 1];
-    const [entry] = await content.getEntries([entryIdOf(card) ?? '']);
+    const [entry] = await content.getEntries([card?.entryId ?? '']);
     const idiom = entry?.kind === 'idiom' ? entry : undefined;
 
-    expect(card?.kind === 'idiom' ? card.idiomCard : undefined).toEqual({
+    expect(card?.kind === 'idiom' ? card.model : undefined).toEqual({
       kind: 'idiom',
       idiomId: idiom?.id,
       expression: idiom?.expression,
@@ -376,24 +369,25 @@ describe('Favorites over the Ukrainian Language Pack', () => {
     if (word?.kind !== 'word' || correctionId === undefined)
       throw new Error('No Word or Correction');
 
-    await first.favorites.toggle(word.wordCard.wordId);
+    await first.favorites.toggle(word.entryId);
     time.advance(60_000);
     await first.favorites.toggle(correctionId);
     const app = await open(records, time.clock);
 
     expect(app.favorites.list.map((favorite) => favorite.entryId)).toEqual([
       correctionId,
-      word.wordCard.wordId,
+      word.entryId,
     ]);
     expect(app.favorites.list[1]?.row).toMatchObject({
       kind: 'word',
-      title: word.wordCard.lemma,
-      secondLine: word.wordCard.primaryDefinition,
+      title: word.model.lemma,
+      secondLine: word.model.primaryDefinition,
       kindKey: 'word',
     });
     expect(await app.entryCard(correctionId)).toMatchObject({
       kind: 'correction',
-      correctionCard: { correctionId, mainEquivalent: app.favorites.list[0]?.row.title },
+      entryId: correctionId,
+      model: { mainEquivalent: app.favorites.list[0]?.row.title },
     });
   });
 });

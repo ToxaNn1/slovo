@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 import {
   createMemoryContentPort,
   createMemoryUserStatePort,
-  entryIdOf,
   openComposition,
   openUserState,
   type Clock,
@@ -65,7 +64,7 @@ const keysSince = (writes: readonly UserStateChanges[], before: number) =>
 const historyIdsOf = ({ history }: Composition) => history.list.map(({ entryId }) => entryId);
 
 /** Today's Word of the Day: the card the Feed opens on. */
-const wordOfTheDayOf = ({ feed }: Composition) => entryIdOf(feed.cards[feed.startPosition]);
+const wordOfTheDayOf = ({ feed }: Composition) => feed.cards[feed.startPosition]?.entryId;
 
 describe('opening an Entry from the widget', () => {
   it('writes Seen, the History entry and today as an Active Day in one write, and gives its card', async () => {
@@ -77,7 +76,7 @@ describe('opening an Entry from the widget', () => {
 
     const card = await app.widget.opened('w_three');
 
-    expect(card === undefined ? undefined : entryIdOf(card)).toBe('w_three');
+    expect(card?.entryId).toBe('w_three');
     expect(keysSince(writes, before)).toEqual([
       ['activeDays.2026-10-12', 'feed.seen.w_three', 'history.w_three'],
     ]);
@@ -99,7 +98,7 @@ describe('opening an Entry from the widget', () => {
     const card = await app.widget.opened('c_one');
 
     expect(card).toMatchObject({ kind: 'correction' });
-    expect(card === undefined ? undefined : entryIdOf(card)).toBe('c_one');
+    expect(card?.entryId).toBe('c_one');
     expect(keysSince(writes, before)).toEqual([
       ['activeDays.2026-10-12', 'feed.seen.c_one', 'history.c_one'],
     ]);
@@ -133,7 +132,7 @@ describe('opening an Entry from the widget', () => {
 
     const card = await app.widget.opened('w_two');
 
-    expect(card === undefined ? undefined : entryIdOf(card)).toBe('w_two');
+    expect(card?.entryId).toBe('w_two');
     expect(keysSince(writes, before)).toEqual([['activeDays.2026-10-12']]);
     expect(records.has('feed.seen.w_two')).toBe(false);
     expect(historyIdsOf(app)).toEqual([]);
@@ -147,7 +146,7 @@ describe('opening an Entry from the widget', () => {
 
     const card = await app.widget.opened('w_old');
 
-    expect(card === undefined ? undefined : entryIdOf(card)).toBe('w_old');
+    expect(card?.entryId).toBe('w_old');
     expect(keysSince(writes, before)).toEqual([['activeDays.2026-10-12']]);
     expect(records.has('feed.seen.w_old')).toBe(false);
     expect(historyIdsOf(app)).toEqual([]);
@@ -161,7 +160,7 @@ describe('opening an Entry from the widget', () => {
 
     const card = await app.widget.opened('c_one');
 
-    expect(card === undefined ? undefined : entryIdOf(card)).toBe('c_one');
+    expect(card?.entryId).toBe('c_one');
     expect(keysSince(writes, before)).toEqual([['activeDays.2026-10-12']]);
     expect(records.has('feed.seen.c_one')).toBe(false);
     expect(historyIdsOf(app)).toEqual([]);
@@ -189,7 +188,7 @@ describe('opening an Entry from the widget', () => {
 
     const card = await app.widget.opened('c_one');
 
-    expect(card === undefined ? undefined : entryIdOf(card)).toBe('c_one');
+    expect(card?.entryId).toBe('c_one');
     expect(writes).toHaveLength(before);
     expect(app.history.list).toBe(history);
   });

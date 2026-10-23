@@ -53,7 +53,6 @@ export {
   type Feed,
 } from './feed/feed';
 export {
-  entryIdOf,
   type CorrectionFeedCard,
   type EntryFeedCard,
   type FeedCard,

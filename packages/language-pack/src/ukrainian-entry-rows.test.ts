@@ -91,7 +91,8 @@ describe('the rows of the Idioms the reader keeps', () => {
 
     expect(await app.entryCard(PLACE_NAME)).toMatchObject({
       kind: 'idiom',
-      idiomCard: { idiomId: PLACE_NAME, expression: 'Бердичів', idiomType: 'placeName' },
+      entryId: PLACE_NAME,
+      model: { expression: 'Бердичів', idiomType: 'placeName' },
     });
   });
 
