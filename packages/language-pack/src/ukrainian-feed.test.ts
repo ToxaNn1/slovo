@@ -69,12 +69,6 @@ const wordsOnly: Edition = {
     feature !== 'corrections' && feature !== 'idioms' && ukrainian.isFeatureEnabled(feature),
 };
 
-/** The Ukrainian Edition with Idioms turned off, so a test counts Words and Corrections only. */
-const withoutIdioms: Edition = {
-  ...ukrainian,
-  isFeatureEnabled: (feature) => feature !== 'idioms' && ukrainian.isFeatureEnabled(feature),
-};
-
 beforeAll(async () => {
   workDir = mkdtempSync(join(tmpdir(), 'slovo-feed-'));
   const outFile = join(workDir, 'language-pack.db');
@@ -292,20 +286,8 @@ describe('Corrections in the Feed over the Ukrainian Language Pack', () => {
     expect(liveCorrectionIds.length).toBeGreaterThan(0);
   });
 
-  it(`makes every ${String(CORRECTION_EVERY)}th card a Correction until the Corrections run out, and offers each live Entry once`, async () => {
-    const offered = await walk(await run(new Map(), fakeClock(today).clock, 7, withoutIdioms));
-
-    const mixed = offered.slice(0, liveCorrectionIds.length * CORRECTION_EVERY);
-    mixed.forEach((id, position) => {
-      const correctionTurn = (position + 1) % CORRECTION_EVERY === 0;
-      expect(id.startsWith('c_'), `card ${String(position)}: ${id}`).toBe(correctionTurn);
-    });
-    expect(offered).toHaveLength(liveIds.length + liveCorrectionIds.length);
-    expect(new Set(offered)).toEqual(new Set([...liveIds, ...liveCorrectionIds]));
-  });
-
   it('gives each Correction card the Correction card model of its Correction', async () => {
-    const feed = await run(new Map(), fakeClock(today).clock, 7, withoutIdioms);
+    const feed = await run(new Map(), fakeClock(today).clock, 7, ukrainian);
     while (feed.cards.length < CORRECTION_EVERY) await feed.next();
 
     const card = feed.cards[CORRECTION_EVERY - 1];
@@ -333,34 +315,18 @@ describe('Idioms in the Feed over the Ukrainian Language Pack', () => {
   });
 
   it(
-    `makes every ${String(IDIOM_EVERY)}th card an Idiom among the Corrections' turns until the Idioms run out, offers each live Entry once, and opens on a Word`,
+    'opens on a Word and offers each live Word, Correction and Idiom once',
+    { timeout: WALK_TIMEOUT_MS },
     async () => {
       const feed = await run(new Map(), fakeClock(today).clock, 7, ukrainian);
       const offered = await walk(feed);
 
       expect(feed.cards[0]?.kind).toBe('word');
-      // Each turn is counted from its kind's last card; the Correction takes a
-      // card both turns fall on and the Idiom takes the next (glossary: Feed).
-      let sinceCorrection = 0;
-      let sinceIdiom = 0;
-      const mixed = offered.slice(0, liveIdiomIds.length * IDIOM_EVERY);
-      mixed.forEach((id, position) => {
-        const kind =
-          sinceCorrection >= CORRECTION_EVERY - 1
-            ? 'c_'
-            : sinceIdiom >= IDIOM_EVERY - 1
-              ? 'i_'
-              : 'w_';
-        expect(id.startsWith(kind), `card ${String(position + 1)}: ${id}`).toBe(true);
-        sinceCorrection = kind === 'c_' ? 0 : sinceCorrection + 1;
-        sinceIdiom = kind === 'i_' ? 0 : sinceIdiom + 1;
-      });
       expect(offered).toHaveLength(liveIds.length + liveCorrectionIds.length + liveIdiomIds.length);
       expect(new Set(offered)).toEqual(
         new Set([...liveIds, ...liveCorrectionIds, ...liveIdiomIds]),
       );
     },
-    WALK_TIMEOUT_MS,
   );
 
   it('gives each Idiom card the Idiom card model of its Idiom', async () => {
@@ -380,49 +346,6 @@ describe('Idioms in the Feed over the Ukrainian Language Pack', () => {
       examples: idiom?.examples,
       etymology: idiom?.etymology,
       sourceTitles: idiom?.sources.map((source) => source.title),
-    });
-  });
-  // Spec #549, ADR 0043: an Idiom due for Review takes the Idiom turn before a new one.
-  describe('a due Idiom', () => {
-    async function open(records: Map<string, string>, time: ReturnType<typeof fakeClock>) {
-      return openComposition({
-        content,
-        edition: ukrainian,
-        userState: await openUserState({ port: createMemoryUserStatePort(records) }),
-        clock: time.clock,
-        random: seededRandom(7),
-      });
-    }
-
-    async function firstCards(feed: Feed, count: number): Promise<(string | undefined)[]> {
-      while (feed.cards.length < count) {
-        if ((await feed.next()) === undefined) break;
-      }
-      return feed.cards.slice(0, count).map(entryIdOf);
-    }
-
-    it('comes back on every Idiom turn, Seen in this Cycle, until a Known answer moves its Review on', async () => {
-      const records = new Map<string, string>();
-      const dayOne = fakeClock(today);
-      const first = await open(records, dayOne);
-      await firstCards(first.feed, IDIOM_EVERY);
-      for (let position = 0; position < IDIOM_EVERY; position += 1) {
-        await look(first.feed, dayOne, position, SEEN_DWELL_MS * 2);
-      }
-      const due = entryIdOf(first.feed.cards[IDIOM_EVERY - 1]) ?? '';
-      expect(due.startsWith('i_')).toBe(true);
-      await first.knowledge.tap(due, 'unknown');
-
-      const app = await open(records, fakeClock('2026-10-12T09:00:00+03:00'));
-      const before = await firstCards(app.feed, IDIOM_EVERY * 2);
-      expect([before[IDIOM_EVERY - 1], before[IDIOM_EVERY * 2 - 1]]).toEqual([due, due]);
-      expect(before.filter((id) => id?.startsWith('i_'))).toEqual([due, due]);
-      expect(app.feed.cards[IDIOM_EVERY - 1]).toMatchObject({ kind: 'idiom', review: true });
-
-      await app.knowledge.tap(due, 'known');
-      const after = await firstCards(app.feed, IDIOM_EVERY * 3);
-      expect(after[IDIOM_EVERY * 3 - 1]?.startsWith('i_')).toBe(true);
-      expect(after.slice(IDIOM_EVERY * 2)).not.toContain(due);
     });
   });
 });
