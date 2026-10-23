@@ -154,7 +154,7 @@ _Avoid_: OTP, PIN, password
 ### Discovery
 
 **Feed**:
-The vertical stream of Entries the user swipes through on the home screen; Corrections are mixed in among Words. While Entries are due for Review, every 3rd card is a Word due for Review, labelled «Повторення», and a Correction due for Review takes the next Correction slot before a new Correction.
+The vertical stream of Entries the user swipes through on the home screen; Corrections and Idioms are mixed in among Words. Every 5th card of the Cycle is a Correction's turn while the Cycle has unseen Corrections, and every 7th card an Idiom's turn while it has unseen Idioms, each counted from its kind's last card; when both turns fall on one card the Correction takes it and the Idiom the next. While Entries are due for Review, every 3rd card that is neither turn is a Word due for Review, labelled «Повторення», and a Correction due for Review takes the next Correction's turn before a new Correction. The Word of the Day and the Review slot stay Words only.
 _Avoid_: Timeline, home list
 
 **Seen**:
