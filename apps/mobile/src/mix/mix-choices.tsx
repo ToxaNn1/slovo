@@ -22,13 +22,13 @@ const strings = editionStrings.mix;
  * The choices of the Mix, for Settings › Мій Мікс and the onboarding's Mix
  * step: a chip for «Усі» and every Category of the Edition, the line saying
  * why the last Category's chip is disabled, the Rarity Floor choice while the
- * rarityFloor switch is on, and the Corrections switch when the Edition turns
- * Corrections on. A change applies at once (the Core's Mix,
+ * rarityFloor switch is on, and the Corrections and Idioms switches, each when
+ * the Edition turns it on. A change applies at once (the Core's Mix,
  * ADR 0019).
  */
 export function MixChoices() {
   const state = useMixState();
-  const { toggleCategory, turnAllOn, setCorrections, setRarityFloor } = useMixChanges();
+  const { toggleCategory, turnAllOn, setCorrections, setIdioms, setRarityFloor } = useMixChanges();
   const { colors, fontFamilies } = useTokens();
   const { voice } = useEdition();
   const edition = useEditionInEffect();
@@ -86,16 +86,27 @@ export function MixChoices() {
           />
         </View>
       )}
-      {model.corrections !== undefined && (
-        <View style={styles.corrections}>
+      {(model.corrections !== undefined || model.idioms !== undefined) && (
+        <View style={styles.switches}>
           <SettingsGroup>
-            <SwitchRow
-              testID="mix-corrections"
-              label={strings.corrections.title}
-              subtitle={strings.corrections.subtitle}
-              value={model.corrections.on}
-              onChange={setCorrections}
-            />
+            {model.corrections !== undefined && (
+              <SwitchRow
+                testID="mix-corrections"
+                label={strings.corrections.title}
+                subtitle={strings.corrections.subtitle}
+                value={model.corrections.on}
+                onChange={setCorrections}
+              />
+            )}
+            {model.idioms !== undefined && (
+              <SwitchRow
+                testID="mix-idioms"
+                label={strings.idioms.title}
+                subtitle={strings.idioms.subtitle}
+                value={model.idioms.on}
+                onChange={setIdioms}
+              />
+            )}
           </SettingsGroup>
         </View>
       )}
@@ -107,5 +118,5 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
   hint: { fontSize: typeSize.body, marginTop: space[3] },
   rarity: { marginTop: space[6] },
-  corrections: { marginTop: space[6] },
+  switches: { marginTop: space[6] },
 });

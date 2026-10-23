@@ -20,6 +20,8 @@ export interface MixScreenModel {
   readonly lastCategoryHint: boolean;
   /** The Corrections switch, left out when the Edition doesn't turn Corrections on. */
   readonly corrections: { readonly on: boolean } | undefined;
+  /** The Idioms switch, left out when the Edition doesn't turn Idioms on. */
+  readonly idioms: { readonly on: boolean } | undefined;
   /** The Rarity Floor choice, left out while the Edition turns its rarityFloor switch off. */
   readonly rarity: { readonly floor: number; readonly floors: readonly number[] } | undefined;
 }
@@ -44,6 +46,7 @@ export function mixScreenModel({
     allOn: mix.hiddenCategories.length === 0,
     lastCategoryHint: mix.lastCategoryId !== undefined,
     corrections: edition.isFeatureEnabled('corrections') ? { on: mix.corrections } : undefined,
+    idioms: edition.isFeatureEnabled('idioms') ? { on: mix.idioms } : undefined,
     rarity: edition.isFeatureEnabled('rarityFloor')
       ? { floor: mix.rarityFloor, floors: RARITY_FLOORS }
       : undefined,
