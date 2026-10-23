@@ -12,6 +12,7 @@ import {
 } from '@slovo/contracts';
 import {
   createMemoryUserStatePort,
+  entryIdOf,
   openComposition,
   openUserState,
   type Clock,
@@ -146,6 +147,57 @@ describe('The Widget Snapshot of the Ukrainian Edition', () => {
         voiceOver: `${unmarked(headline)}, ${unmarked(secondLine)}`,
       });
     }
+  });
+
+  it('shows an Idiom in each Widget Mode with its expression and primary Definition', async () => {
+    const { clock, advance } = fakeClock('2026-10-16T09:00:00+03:00');
+    const app = await openComposition({
+      content: pack,
+      edition: ukrainian,
+      userState: await openUserState({ port: createMemoryUserStatePort() }),
+      clock,
+      random: seededRandom(7),
+    });
+    const [idiom] = await pack.getIdioms(await pack.listIdiomIds());
+    if (idiom === undefined) throw new Error('The pack has no Idiom');
+    await app.favorites.add(idiom.id);
+    advance(60_000);
+    const sayings = await app.collections.create('Приказки', idiom.id);
+    if (!sayings.ok) throw new Error('The Collection was not created');
+
+    const snapshot = await app.widget.snapshot();
+    if (snapshot === undefined) throw new Error('No Widget Snapshot was built');
+
+    expect(snapshot.entries.find(({ id }) => id === idiom.id)).toEqual({
+      kind: 'idiom',
+      id: idiom.id,
+      headline: idiom.expression,
+      secondLine: idiom.primaryDefinition,
+      voiceOver: `${idiom.expression}, ${idiom.primaryDefinition}`,
+    });
+    expect(snapshot.allEntries).toContain(idiom.id);
+    expect(snapshot.favorites).toEqual([idiom.id]);
+    expect(snapshot.collections).toEqual([
+      { id: sayings.collection.id, name: 'Приказки', entryIds: [idiom.id] },
+    ]);
+  });
+
+  it('opens an Idiom from the widget on its card and marks it Seen', async () => {
+    const app = await openComposition({
+      content: pack,
+      edition: ukrainian,
+      userState: await openUserState({ port: createMemoryUserStatePort() }),
+      clock: fakeClock('2026-10-16T09:00:00+03:00').clock,
+      random: seededRandom(7),
+    });
+    const [idiomId] = await pack.listIdiomIds();
+    if (idiomId === undefined) throw new Error('The pack has no Idiom');
+
+    const card = await app.widget.opened(idiomId);
+
+    expect(card?.kind).toBe('idiom');
+    expect(card === undefined ? undefined : entryIdOf(card)).toBe(idiomId);
+    expect(app.history.list.map(({ entryId }) => entryId)).toContain(idiomId);
   });
 
   it('has a checked-in example that parses, for the widget gallery', () => {

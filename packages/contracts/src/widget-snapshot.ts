@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { CorrectionIdSchema } from './correction';
+import { IdiomIdSchema } from './idiom';
 import { hasNoRepeats, TextSchema } from './shared';
 import { WordIdSchema } from './word';
 
@@ -11,10 +12,14 @@ export const WIDGET_SNAPSHOT_FORMAT = 1;
 const WidgetEntryText = {
   /**
    * What the widget leads with: a Word's Lemma with each valid Stress as the
-   * combining acute mark, or a Correction's main standard equivalent.
+   * combining acute mark, a Correction's main standard equivalent, or an
+   * Idiom's expression.
    */
   headline: TextSchema,
-  /** The line under it: a Word's primary Definition, or the non-standard form a Correction replaces. */
+  /**
+   * The line under it: a Word's or an Idiom's primary Definition, or the
+   * non-standard form a Correction replaces.
+   */
   secondLine: TextSchema,
   /**
    * The headline, then the second line, as VoiceOver reads them: whole words,
@@ -27,6 +32,7 @@ const WidgetEntryText = {
 const WidgetEntrySchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('word'), id: WordIdSchema, ...WidgetEntryText }),
   z.strictObject({ kind: z.literal('correction'), id: CorrectionIdSchema, ...WidgetEntryText }),
+  z.strictObject({ kind: z.literal('idiom'), id: IdiomIdSchema, ...WidgetEntryText }),
 ]);
 
 const EntryIdsSchema = z
