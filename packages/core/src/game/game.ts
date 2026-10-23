@@ -45,7 +45,7 @@ export interface GameState {
 /**
  * The Game: the Game Modes on offer and the Game in play, kept in memory for
  * the app session and never in the user state. A Game asks 15 different
- * eligible Entries of its mode's kind: up to 5 the reader is weak on (ADR
+ * eligible Entries of the kinds its mode asks about: up to 5 the reader is weak on (ADR
  * 0043), the rest those in History when there are at least 15, else any (ADR
  * 0024). Playing never writes Seen, History or Active Days; a finished Game
  * writes only the best result, when it beats it.
@@ -188,7 +188,10 @@ export async function openGame({
   async function followEligibility(): Promise<void> {
     // Each mode with the eligible Entries of its kind, read afresh, all at once.
     const read = await Promise.all(
-      modes.map(async (mode) => ({ mode, eligible: await entries.eligibleOfKind(mode.entryKind) })),
+      modes.map(async (mode) => ({
+        mode,
+        eligible: await entries.eligibleOfKind(mode.entryKind, mode.alsoAsks),
+      })),
     );
     // Planned one after another, so the modes draw from the random source in turn.
     const offers = read.map(({ mode, eligible }) => offerOf(mode, planRounds(mode, eligible)));
@@ -231,7 +234,7 @@ export async function openGame({
   async function start(modeId: string): Promise<void> {
     const mode = modes.find(({ id }) => id === modeId);
     if (mode === undefined) throw new Error(`No Game Mode «${modeId}» is on offer`);
-    const plan = planRounds(mode, await entries.eligibleOfKind(mode.entryKind));
+    const plan = planRounds(mode, await entries.eligibleOfKind(mode.entryKind, mode.alsoAsks));
     // The offer says what the plan does already, unless the mode's fair Rounds hang on the draw.
     const offers = state.modes.map((offer) =>
       offer.modeId === modeId ? offerOf(mode, plan) : offer,
