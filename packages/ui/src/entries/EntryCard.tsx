@@ -24,7 +24,8 @@ export interface EntryCardProps {
   /**
    * Self-check applies to the card: until the reader reveals it, a Word card
    * shows only its Lemma, part of speech and Category, a Correction card only
-   * its non-standard form, and the Knowledge Mark buttons in `actions` are
+   * its non-standard form, an Idiom card only its expression and its chip,
+   * and the Knowledge Mark buttons in `actions` are
    * inactive. The reveal resets once the card leaves the screen.
    */
   selfCheck?: boolean;
