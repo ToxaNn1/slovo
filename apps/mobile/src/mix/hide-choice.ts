@@ -1,12 +1,5 @@
 import { fill, type EditionStrings } from '@slovo/contracts';
-import {
-  entryIdOf,
-  type EntryFeedCard,
-  type HideTarget,
-  type HidingChange,
-  type MixKind,
-  type MixState,
-} from '@slovo/core';
+import type { EntryFeedCard, HideTarget, HidingChange, MixKind, MixState } from '@slovo/core';
 
 /** One option of the hide choice, with what it hides and the undo toast it shows when it hides something of the Mix. */
 export type HideOption =
@@ -56,7 +49,7 @@ export function hideChoice({
 }): readonly HideOption[] {
   const entry: HideOption = {
     kind: 'entry',
-    target: { kind: 'entry', entryId: entryIdOf(card) },
+    target: { kind: 'entry', entryId: card.entryId },
     label: strings.choice.entry,
   };
   if (card.kind !== 'word') {
@@ -65,7 +58,7 @@ export function hideChoice({
     const target = { kind: 'whole-kind', entryKind } as const;
     return [entry, { kind: 'whole-kind', target, ...wholeKindStrings(entryKind, strings) }];
   }
-  const { categoryId, categoryName } = card.wordCard;
+  const { categoryId, categoryName } = card.model;
   if (
     categoryName === undefined ||
     !mix.categoryIds.includes(categoryId) ||

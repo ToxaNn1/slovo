@@ -1,4 +1,4 @@
-import { entryIdOf, type Composition, type EntryFeedCard } from '@slovo/core';
+import type { Composition, EntryFeedCard } from '@slovo/core';
 import {
   BackLink,
   DecorBackground,
@@ -74,7 +74,7 @@ export function EntryScreen({
             }}
           />
         </View>
-        {card !== undefined && card !== null && entryIdOf(card) === entryId && (
+        {card?.entryId === entryId && (
           <ScrollView
             // The sheet of the action row is a child in React's tree, so a tap in its
             // name field must not be swallowed to put the keyboard away.
@@ -84,7 +84,7 @@ export function EntryScreen({
             <EntryCard
               card={card}
               onOpenCorrection={(correctionId) => {
-                const word = card.kind === 'word' ? card.wordCard.lemma : back;
+                const word = card.kind === 'word' ? card.model.lemma : back;
                 openScreen(`${route}/${correctionId}?back=${encodeURIComponent(word)}`);
               }}
               actions={<EntryActions card={card} />}

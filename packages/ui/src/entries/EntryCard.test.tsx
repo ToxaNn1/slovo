@@ -5,6 +5,7 @@ import {
   type Decor,
   type EntryFeedCard,
   type IdiomCardModel,
+  type WordFeedCard,
 } from '@slovo/core';
 import {
   ActionRow,
@@ -79,12 +80,13 @@ const correctionCard: CorrectionCardModel = {
   sourceTitles: [],
 };
 
-const card: EntryFeedCard = { kind: 'correction', correctionCard };
+const card: EntryFeedCard = { kind: 'correction', entryId: 'c1', model: correctionCard };
 
 /** A stress trap: the Correction Type `wrongStress`, its forms marked. */
 const stressTrap: EntryFeedCard = {
   kind: 'correction',
-  correctionCard: {
+  entryId: 'c1',
+  model: {
     ...correctionCard,
     correctionType: 'wrongStress',
     nonStandardForm: 'ca\u0301talog',
@@ -98,12 +100,13 @@ const stressTrap: EntryFeedCard = {
 
 function cardWithSources(sourceTitles: readonly string[]): EntryFeedCard {
   if (card.kind !== 'correction') throw new Error('The fixture is a Correction card');
-  return { ...card, correctionCard: { ...card.correctionCard, sourceTitles } };
+  return { ...card, model: { ...card.model, sourceTitles } };
 }
 
-const wordCard: EntryFeedCard = {
+const wordCard: WordFeedCard = {
   kind: 'word',
-  wordCard: {
+  entryId: 'w1',
+  model: {
     kind: 'word',
     wordId: 'w1',
     lemma: 'lemma',
@@ -132,8 +135,9 @@ const wordCard: EntryFeedCard = {
 const longestWordOfTheDay = {
   kind: 'word',
   wordOfTheDay: { year: 2026, month: 10, day: 22 },
-  wordCard: {
-    ...wordCard.wordCard,
+  entryId: 'w1',
+  model: {
+    ...wordCard.model,
     lemma: 'lightninggua\u0301rds',
     stressedVowels: ['a'],
     primaryDefinition:
@@ -164,7 +168,7 @@ describe('EntryCard', () => {
   it.each([
     ['Word', wordCard, 'word-card'],
     ['Correction', card, 'correction-card'],
-    ['Idiom', { kind: 'idiom' as const, idiomCard: idiomCard() }, 'idiom-card'],
+    ['Idiom', { kind: 'idiom' as const, entryId: 'i1', model: idiomCard() }, 'idiom-card'],
   ])('draws the Decor frame on a %s card in all four corners', async (_kind, entry, testID) => {
     await render(
       inEdition(
@@ -202,9 +206,11 @@ describe('EntryCard', () => {
   });
 
   it('names the Correction Type of an anglicism in its chip', async () => {
-    const anglicism = { ...card.correctionCard, correctionType: 'anglicism' as const };
+    const anglicism = { ...card.model, correctionType: 'anglicism' as const };
 
-    await render(inEdition(<EntryCard card={{ kind: 'correction', correctionCard: anglicism }} />));
+    await render(
+      inEdition(<EntryCard card={{ kind: 'correction', entryId: 'c1', model: anglicism }} />),
+    );
 
     const chip = screen.getByTestId('correction-type');
     expect(chip).toHaveTextContent('anglicism');
@@ -264,9 +270,7 @@ describe('EntryCard', () => {
         </EditionProvider>,
       );
 
-      expect(screen.getByTestId('word-lemma')).toHaveTextContent(
-        longestWordOfTheDay.wordCard.lemma,
-      );
+      expect(screen.getByTestId('word-lemma')).toHaveTextContent(longestWordOfTheDay.model.lemma);
       expect(screen.getByLabelText('Engineering')).toBeTruthy();
       await fireEvent.press(screen.getByRole('button', { name: 'Pronounce' }));
       expect(speak).toHaveBeenCalledTimes(1);
@@ -338,10 +342,11 @@ describe('the mark buttons on a Correction card', () => {
   });
 });
 
-const wordWithEverything: EntryFeedCard = {
+const wordWithEverything: WordFeedCard = {
   kind: 'word',
-  wordCard: {
-    ...wordCard.wordCard,
+  entryId: 'w1',
+  model: {
+    ...wordCard.model,
     example: { text: 'An example.' },
     synonyms: ['alike'],
     categoryName: 'Rare',
@@ -351,7 +356,8 @@ const wordWithEverything: EntryFeedCard = {
 /** A dialect Word that names where it is said. */
 const dialectWord: EntryFeedCard = {
   kind: 'word',
-  wordCard: { ...wordWithEverything.wordCard, registers: ['dialectal'], region: 'Hutsulshchyna' },
+  entryId: 'w1',
+  model: { ...wordWithEverything.model, registers: ['dialectal'], region: 'Hutsulshchyna' },
 };
 
 describe('the region of a dialect Word', () => {
@@ -416,7 +422,7 @@ function correctionWithEverything(): EntryFeedCard {
   if (withSources.kind !== 'correction') throw new Error('The fixture is a Correction card');
   return {
     ...withSources,
-    correctionCard: { ...withSources.correctionCard, otherEquivalents: ['take a hand'] },
+    model: { ...withSources.model, otherEquivalents: ['take a hand'] },
   };
 }
 
@@ -525,7 +531,9 @@ const placeName = idiomCard({
 
 describe('the Idiom card', () => {
   it('shows the expression, its chip, Definitions, Examples, «Origin» and sources of an idiom', async () => {
-    await render(inEdition(<EntryCard card={{ kind: 'idiom', idiomCard: idiomCard() }} />));
+    await render(
+      inEdition(<EntryCard card={{ kind: 'idiom', entryId: 'i1', model: idiomCard() }} />),
+    );
 
     expect(screen.getByTestId('idiom-expression')).toHaveTextContent('to beat the bushes');
     expect(screen.getByTestId('idiom-type')).toHaveTextContent('idiom');
@@ -541,7 +549,9 @@ describe('the Idiom card', () => {
   });
 
   it('shows the chip «place name» on a place name card, and only the sections it has', async () => {
-    await render(inEdition(<EntryCard card={{ kind: 'idiom', idiomCard: placeName }} />));
+    await render(
+      inEdition(<EntryCard card={{ kind: 'idiom', entryId: 'i2', model: placeName }} />),
+    );
 
     expect(screen.getByTestId('idiom-expression')).toHaveTextContent('Berdychiv');
     expect(screen.getByTestId('idiom-type')).toHaveTextContent('place name');
@@ -562,7 +572,9 @@ describe('the Idiom card', () => {
   ])(
     'has VoiceOver read the expression of %s with its kind, then its Definition',
     async (_kind, model, heading, definition) => {
-      await render(inEdition(<EntryCard card={{ kind: 'idiom', idiomCard: model }} />));
+      await render(
+        inEdition(<EntryCard card={{ kind: 'idiom', entryId: model.idiomId, model }} />),
+      );
 
       expect(screen.getByRole('header', { name: heading })).toBeTruthy();
       expect(screen.getByTestId('idiom-definition')).toHaveTextContent(definition);
@@ -571,7 +583,9 @@ describe('the Idiom card', () => {
 
   it('keeps the expression and its chip under Self-check and shows the rest once revealed', async () => {
     await render(
-      inEdition(<EntryCard card={{ kind: 'idiom', idiomCard: idiomCard() }} selfCheck />),
+      inEdition(
+        <EntryCard card={{ kind: 'idiom', entryId: 'i1', model: idiomCard() }} selfCheck />,
+      ),
     );
 
     expect(screen.getByRole('header', { name: 'to beat the bushes, idiom' })).toBeTruthy();

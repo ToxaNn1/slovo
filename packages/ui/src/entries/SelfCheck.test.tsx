@@ -46,7 +46,8 @@ const strings = {
 function wordCard(lemma: string): EntryFeedCard {
   return {
     kind: 'word',
-    wordCard: {
+    entryId: lemma,
+    model: {
       kind: 'word',
       wordId: lemma,
       lemma,
@@ -69,7 +70,8 @@ function wordCard(lemma: string): EntryFeedCard {
 
 const correctionCard: EntryFeedCard = {
   kind: 'correction',
-  correctionCard: {
+  entryId: 'c1',
+  model: {
     kind: 'correction',
     correctionId: 'c1',
     nonStandardForm: 'take part',
@@ -86,7 +88,8 @@ const correctionCard: EntryFeedCard = {
 
 const idiomCard: EntryFeedCard = {
   kind: 'idiom',
-  idiomCard: {
+  entryId: 'i1',
+  model: {
     kind: 'idiom',
     idiomId: 'i1',
     expression: 'to beat the bushes',

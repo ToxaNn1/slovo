@@ -6,7 +6,6 @@ import {
   createFakeNotificationScheduler,
   createMemoryContentPort,
   createMemoryUserStatePort,
-  entryIdOf,
   NOTIFICATION_BODY_LENGTH,
   openComposition,
   openUserState,
@@ -413,7 +412,7 @@ function wordsOfTheDayIn({ feed }: Composition): Map<string, string> {
       if (card.kind !== 'word' || card.wordOfTheDay === undefined) return [];
       const { year, month, day } = card.wordOfTheDay;
       const date = new Date(Date.UTC(year, month - 1, day)).toISOString().slice(0, 10);
-      return [[date, card.wordCard.wordId]];
+      return [[date, card.entryId]];
     }),
   );
 }
@@ -659,7 +658,7 @@ describe('the plan following the Feed', () => {
     // The reader reads the Word of the Day and the card after it.
     await readTo(app, time, 2);
 
-    const seen = [entryIdOf(app.feed.cards[0]), entryIdOf(app.feed.cards[1])];
+    const seen = [app.feed.cards[0]?.entryId, app.feed.cards[1]?.entryId];
     expect(before.get('2026-10-14T09:00')).toBe(seen[0]);
     expect([...before.values()]).toContain(seen[1]);
     const after = wordsBySlot(planOf(scheduler));
@@ -681,7 +680,7 @@ describe('the plan following the Feed', () => {
 
     await readTo(app, time, 1);
 
-    expect(entryIdOf(app.feed.cards[0])).toBe(today);
+    expect(app.feed.cards[0]?.entryId).toBe(today);
     expect(app.history.list[0]?.entryId).toBe(today);
     expect(scheduler.plan).toBe(before);
   });

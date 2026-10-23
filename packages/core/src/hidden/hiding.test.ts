@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 import {
   createMemoryContentPort,
   createMemoryUserStatePort,
-  entryIdOf,
   MIX_KINDS,
   openComposition,
   openUserState,
@@ -60,7 +59,7 @@ async function run({
 }
 
 /** The ids of the Entries the cards show, in order. */
-const entryIdsOf = (cards: readonly FeedCard[]) => cards.flatMap((card) => entryIdOf(card) ?? []);
+const entryIdsOf = (cards: readonly FeedCard[]) => cards.flatMap((card) => card.entryId ?? []);
 
 /** Shows every card up to `position`, as the reader swiping to it. */
 async function turnTo(feed: Feed, position: number): Promise<void> {
@@ -252,7 +251,7 @@ describe('the undo of a hide', () => {
     await hidden?.undo();
 
     expect(entryIdsOf(app.feed.cards).slice(0, before.length)).toEqual(before);
-    expect(entryIdOf(app.feed.cards[app.feed.position])).toBe(onScreen);
+    expect(app.feed.cards[app.feed.position]?.entryId).toBe(onScreen);
   });
 
   it('makes the cards of a hidden Category come back to the Feed where they were', async () => {
@@ -267,7 +266,7 @@ describe('the undo of a hide', () => {
     await hidden?.undo();
 
     expect(entryIdsOf(app.feed.cards).slice(0, before.length)).toEqual(before);
-    expect(entryIdOf(app.feed.cards[app.feed.position])).toBe(onScreen);
+    expect(app.feed.cards[app.feed.position]?.entryId).toBe(onScreen);
   });
 
   it('makes the Correction cards come back to the Feed where they were', async () => {

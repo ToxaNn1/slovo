@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 import {
   createMemoryContentPort,
   createMemoryUserStatePort,
-  entryIdOf,
   openComposition,
   openUserState,
   SEEN_DWELL_MS,
@@ -89,7 +88,7 @@ async function run({
 }
 
 /** The ids of the Entries the cards show, in order. */
-const entryIdsOf = (cards: readonly FeedCard[]) => cards.flatMap((card) => entryIdOf(card) ?? []);
+const entryIdsOf = (cards: readonly FeedCard[]) => cards.flatMap((card) => card.entryId ?? []);
 
 /**
  * The ids of every Entry the Feed offers from where it stands, after the
@@ -98,7 +97,7 @@ const entryIdsOf = (cards: readonly FeedCard[]) => cards.flatMap((card) => entry
 async function walk(feed: Feed): Promise<string[]> {
   const ids = entryIdsOf(feed.cards);
   for (;;) {
-    const id = entryIdOf(await feed.next());
+    const id = (await feed.next())?.entryId;
     if (id === undefined || ids.includes(id)) return ids;
     ids.push(id);
   }
@@ -124,7 +123,7 @@ async function readToTheNextCycle(feed: Feed, time: ReturnType<typeof fakeClock>
       await feed.show(position + 1);
       return read;
     }
-    read.push(entryIdOf(card) ?? '');
+    read.push(card?.entryId ?? '');
     time.advance(SEEN_DWELL_MS);
   }
 }
@@ -280,7 +279,7 @@ describe('the Mix', () => {
       expect(offered.filter(isWordOf(military))).not.toEqual([]);
       expect(offered.filter(isWordOf(speech))).toEqual([]);
       const card = await app.entryCard(wordIdsOf(military)[0] ?? '');
-      expect(card?.kind === 'word' ? card.wordCard.categoryName : undefined).toBe('Military');
+      expect(card?.kind === 'word' ? card.model.categoryName : undefined).toBe('Military');
     });
 
     it('keeps it out of a Mix whose default lists the Categories, as a Hidden Category', async () => {
@@ -532,7 +531,7 @@ describe('eligibility over the Mix', () => {
     await app.feed.show(0);
     time.advance(SEEN_DWELL_MS);
     await app.feed.show(1);
-    const seen = entryIdOf(app.feed.cards[0]) ?? '';
+    const seen = app.feed.cards[0]?.entryId ?? '';
     const cycle = records.get('feed.cycle');
     const held = entryIdsOf(app.feed.cards);
     const hidden = categories.find((category) => !held.some(isWordOf(category))) ?? nature;
@@ -579,7 +578,7 @@ describe('eligibility over the Mix', () => {
     await app.mix.putBack(hidden.id);
 
     expect(entryIdsOf(app.feed.cards).slice(0, before.length)).toEqual(before);
-    expect(entryIdOf(app.feed.cards[app.feed.position])).toBe(onScreen);
+    expect(app.feed.cards[app.feed.position]?.entryId).toBe(onScreen);
   });
 
   it('a Category taken out with the card on screen and the next one puts a new card on screen in the same change, and keeps the reader’s place on it', async () => {
@@ -587,7 +586,7 @@ describe('eligibility over the Mix', () => {
     const time = fakeClock();
     const app = await run({ records, clock: time.clock });
     const categoryOf = (card: FeedCard | undefined) =>
-      categories.find((category) => isWordOf(category)(entryIdOf(card) ?? ''));
+      categories.find((category) => isWordOf(category)(card?.entryId ?? ''));
     // Reads on, past the Word of the Day, to a Word card whose ready card is a
     // Word of the same Category.
     await app.feed.show(app.feed.startPosition);
@@ -615,16 +614,16 @@ describe('eligibility over the Mix', () => {
     expect(told).not.toContain(false);
     const now = app.feed.cards[app.feed.position];
     expect(now?.kind).not.toBe('end-of-cycle');
-    expect(isWordOf(hidden)(entryIdOf(now) ?? '')).toBe(false);
+    expect(isWordOf(hidden)(now?.entryId ?? '')).toBe(false);
     expect(app.feed.cards[app.feed.position + 1]).toBeDefined();
     time.advance(MINUTE);
     const reopened = await run({ records, clock: time.clock });
-    expect(entryIdOf(reopened.feed.cards[reopened.feed.startPosition])).toBe(entryIdOf(now));
+    expect(reopened.feed.cards[reopened.feed.startPosition]?.entryId).toBe(now?.entryId);
 
     await app.mix.putBack(hidden.id);
 
     expect(entryIdsOf(app.feed.cards).slice(0, before.length)).toEqual(before);
-    expect(entryIdOf(app.feed.cards[app.feed.position])).toBe(onScreen);
+    expect(app.feed.cards[app.feed.position]?.entryId).toBe(onScreen);
   });
 
   it('a Rarity Floor of 4 leaves only Words of rarity 4 and 5, and every Correction, in this Cycle, the next one and after reopening', async () => {
@@ -653,7 +652,7 @@ describe('eligibility over the Mix', () => {
     await app.feed.show(0);
     time.advance(SEEN_DWELL_MS);
     await app.feed.show(1);
-    const seen = entryIdOf(app.feed.cards[0]) ?? '';
+    const seen = app.feed.cards[0]?.entryId ?? '';
     const cycle = records.get('feed.cycle');
     const held = entryIdsOf(app.feed.cards);
 
@@ -696,7 +695,7 @@ describe('eligibility over the Mix', () => {
     const records = new Map<string, string>();
     const time = fakeClock();
     const first = await run({ records, clock: time.clock });
-    const wordOfTheDay = entryIdOf(first.feed.cards[0]) ?? '';
+    const wordOfTheDay = first.feed.cards[0]?.entryId ?? '';
     const category = categories.find((each) => isWordOf(each)(wordOfTheDay)) ?? nature;
 
     await first.mix.takeOut(category.id);
@@ -708,7 +707,7 @@ describe('eligibility over the Mix', () => {
       kind: 'word',
       wordOfTheDay: { year: 2026, month: 10, day: 11 },
     });
-    expect(isWordOf(category)(entryIdOf(opening) ?? '')).toBe(false);
+    expect(isWordOf(category)(opening?.entryId ?? '')).toBe(false);
   });
 });
 
@@ -734,14 +733,14 @@ describe('linked Corrections («Часто кажуть») over the Mix', () => 
     while (!entryIdsOf(app.feed.cards).includes(linked.id)) {
       if ((await app.feed.next()) === undefined) break;
     }
-    const card = app.feed.cards.find((shown) => entryIdOf(shown) === linked.id);
-    return { card, links: card?.kind === 'word' ? card.wordCard.linkedCorrections : undefined };
+    const card = app.feed.cards.find((shown) => shown.entryId === linked.id);
+    return { card, links: card?.kind === 'word' ? card.model.linkedCorrections : undefined };
   }
 
   /** The linked Corrections of the Word on the Entry screen. */
   async function entryScreenLinks(app: Composition) {
     const card = await app.entryCard(linked.id);
-    return card?.kind === 'word' ? card.wordCard.linkedCorrections : undefined;
+    return card?.kind === 'word' ? card.model.linkedCorrections : undefined;
   }
 
   it('leaves the block off the Entry screen while Corrections are out of the Mix, and brings it back with them', async () => {
@@ -785,8 +784,8 @@ describe('linked Corrections («Часто кажуть») over the Mix', () => 
     expect(told).toBeGreaterThan(0);
     const out = app.feed.cards[position];
     expect(out).not.toBe(before.card);
-    expect(entryIdOf(out)).toBe(linked.id);
-    expect(out?.kind === 'word' ? out.wordCard.linkedCorrections : undefined).toEqual([]);
+    expect(out?.entryId).toBe(linked.id);
+    expect(out?.kind === 'word' ? out.model.linkedCorrections : undefined).toEqual([]);
     expect(await app.feed.openLinkedCorrection(position, 'c_one')).toBeUndefined();
     const toldOut = told;
 
@@ -794,7 +793,7 @@ describe('linked Corrections («Часто кажуть») over the Mix', () => 
 
     expect(told).toBeGreaterThan(toldOut);
     const back = app.feed.cards[position];
-    expect(back?.kind === 'word' ? back.wordCard.linkedCorrections : undefined).toEqual(links);
+    expect(back?.kind === 'word' ? back.model.linkedCorrections : undefined).toEqual(links);
     expect(await app.feed.openLinkedCorrection(position, 'c_one')).toBe(position + 1);
   });
 

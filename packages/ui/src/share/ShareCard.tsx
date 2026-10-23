@@ -1,5 +1,10 @@
 import type { EditionStrings } from '@slovo/contracts';
-import type { CorrectionCardModel, IdiomCardModel, WordCardModel } from '@slovo/core';
+import type {
+  CorrectionCardModel,
+  EntryFeedCard,
+  IdiomCardModel,
+  WordCardModel,
+} from '@slovo/core';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -62,13 +67,10 @@ function useShrinkToFit(floor: number): [number, (measuredAt: number, fits: bool
   return [scale, report];
 }
 
-/** The card of an Entry of any kind, as the Core built it. */
-type ShareableCard = WordCardModel | CorrectionCardModel | IdiomCardModel;
-
 /** What a Share Card shows. */
 export interface ShareCardContent {
   /** The Entry's card, as the Core built it for the Feed. */
-  card: ShareableCard;
+  card: EntryFeedCard;
   /** Whether it is today's Word of the Day, which the overline then says in place of the Category. */
   wordOfTheDay: boolean;
   /** The watermark: the Edition's display name. */
@@ -93,19 +95,12 @@ export interface ShareCardContent {
  * tall for the card shrinks until it fits; nothing is cut.
  */
 export function ShareCard(props: ShareCardContent & { format: ShareCardFormat; width: number }) {
-  const { card } = props;
-  const id =
-    card.kind === 'word'
-      ? card.wordId
-      : card.kind === 'correction'
-        ? card.correctionId
-        : card.idiomId;
   // A new Entry or format measures from the design's sizes again.
-  return <FittedCard key={`${id}-${props.format}`} {...props} />;
+  return <FittedCard key={`${props.card.entryId}-${props.format}`} {...props} />;
 }
 
 function FittedCard({
-  card,
+  card: { model },
   wordOfTheDay,
   watermark,
   format,
@@ -130,13 +125,13 @@ function FittedCard({
   }, [room, content, reportText]);
 
   const overline =
-    card.kind === 'correction'
-      ? edition.strings.correctionCard.correctionTypes[card.correctionType]
-      : card.kind === 'idiom'
-        ? edition.strings.idiomCard.idiomTypes[card.idiomType]
+    model.kind === 'correction'
+      ? edition.strings.correctionCard.correctionTypes[model.correctionType]
+      : model.kind === 'idiom'
+        ? edition.strings.idiomCard.idiomTypes[model.idiomType]
         : wordOfTheDay
           ? edition.strings.share.wordOfTheDay
-          : card.categoryName;
+          : model.categoryName;
   /** A size of the design's text, shrunk with the rest of the text. */
   const text = (size: number) => size * unit * textScale;
   const headline = (value: string) => (
@@ -159,13 +154,13 @@ function FittedCard({
     </Text>
   );
   const blocks =
-    card.kind === 'word' ? (
-      <WordBlocks card={card} headline={headline} text={text} format={format} />
-    ) : card.kind === 'idiom' ? (
-      <IdiomBlocks card={card} headline={headline} text={text} format={format} />
+    model.kind === 'word' ? (
+      <WordBlocks card={model} headline={headline} text={text} format={format} />
+    ) : model.kind === 'idiom' ? (
+      <IdiomBlocks card={model} headline={headline} text={text} format={format} />
     ) : (
       <CorrectionBlocks
-        card={card}
+        card={model}
         headline={headline}
         text={text}
         format={format}
@@ -177,7 +172,7 @@ function FittedCard({
     <View
       testID="share-card"
       accessible
-      accessibilityLabel={sentences([overline, ...accessibilityParts(card, edition.strings)])}
+      accessibilityLabel={sentences([overline, ...accessibilityParts(model, edition.strings)])}
       {...voice}
       style={[
         styles.card,
@@ -453,7 +448,10 @@ function sentences(parts: (string | undefined)[]): string {
 }
 
 /** What VoiceOver reads of the card after its overline. */
-function accessibilityParts(card: ShareableCard, strings: EditionStrings): (string | undefined)[] {
+function accessibilityParts(
+  card: EntryFeedCard['model'],
+  strings: EditionStrings,
+): (string | undefined)[] {
   if (card.kind === 'idiom') {
     return [
       card.expression,

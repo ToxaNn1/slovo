@@ -83,7 +83,7 @@ export function EntryCard({ card, onOpenCorrection, actions, selfCheck = false }
         {card.review === true && <ReviewLabel />}
         {card.kind === 'word' ? (
           <WordCardBody
-            card={card.wordCard}
+            card={card.model}
             wordOfTheDay={card.wordOfTheDay}
             compact={compact}
             lemmaSize={lemmaSize}
@@ -91,13 +91,9 @@ export function EntryCard({ card, onOpenCorrection, actions, selfCheck = false }
             concealed={concealed}
           />
         ) : card.kind === 'correction' ? (
-          <CorrectionCardBody
-            card={card.correctionCard}
-            lemmaSize={lemmaSize}
-            concealed={concealed}
-          />
+          <CorrectionCardBody card={card.model} lemmaSize={lemmaSize} concealed={concealed} />
         ) : (
-          <IdiomCardBody card={card.idiomCard} lemmaSize={lemmaSize} concealed={concealed} />
+          <IdiomCardBody card={card.model} lemmaSize={lemmaSize} concealed={concealed} />
         )}
         {concealed && (
           <OutlineButton
