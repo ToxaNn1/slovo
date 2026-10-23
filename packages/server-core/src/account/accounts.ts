@@ -1,7 +1,16 @@
 import { AccountEmailSchema, ACCOUNT_NAME, fill } from '@slovo/contracts';
 
 import type { EditionRegistry, NotServing } from '../edition/edition-registry';
-import type { AccountRecord, Authenticator, Clock, CodeCheck, Mailer, RateLimits } from '../ports';
+import type {
+  AccountRecord,
+  Authenticator,
+  Clock,
+  CodeCheck,
+  GoogleVerifier,
+  Mailer,
+  RateLimits,
+  SignedIn,
+} from '../ports';
 import type { TooManyRequests } from '../rate-limit';
 import { createSignInLimits } from './sign-in-limits';
 
@@ -9,6 +18,12 @@ import { createSignInLimits } from './sign-in-limits';
 interface InvalidEmail {
   readonly ok: false;
   readonly reason: 'invalid-email';
+}
+
+/** Why a Google identity token signs nobody in. */
+interface GoogleRefused {
+  readonly ok: false;
+  readonly reason: 'invalid-token' | 'foreign-audience' | 'unverified-email';
 }
 
 /** What a token that carries no Session that is on gets. */
@@ -32,7 +47,7 @@ export interface Session {
   readonly [opened]: true;
 }
 
-/** The Account rules of the backend: Sign-in codes and Sessions. */
+/** The Account rules of the backend: the Sign-in methods and Sessions. */
 export interface Accounts {
   /**
    * Sends a new Sign-in code to the email in the language of the Edition. The
@@ -56,6 +71,19 @@ export interface Accounts {
     code: string,
     ip: string,
   ): Promise<CodeCheck | InvalidEmail | TooManyRequests>;
+  /**
+   * Signs in with a Google identity token (ADR 0047): the token must check
+   * against Google's keys, be for SLOVO and carry an email Google verified.
+   * The email's Account is the one any Sign-in method reaches; the first
+   * sign-in of an email creates it. An Edition that doesn't serve Google
+   * sign-in, or a backend with no Google client id, refuses as switched off,
+   * and so does a request from the IP address `ip` over its limit.
+   */
+  signInWithGoogle(
+    idToken: string,
+    editionId: string,
+    ip: string,
+  ): Promise<({ readonly ok: true } & SignedIn) | GoogleRefused | NotServing | TooManyRequests>;
   /**
    * The Session the token carries, the one way to act on an Account; using a
    * Session extends it. Without a token, or with one that carries no Session
@@ -83,17 +111,21 @@ function normalised(email: string): string | undefined {
 }
 
 const invalidEmail: InvalidEmail = { ok: false, reason: 'invalid-email' };
+const invalidToken: GoogleRefused = { ok: false, reason: 'invalid-token' };
+const switchedOff: NotServing = { ok: false, reason: 'switched-off' };
 const unauthorized: Unauthorized = { ok: false, reason: 'unauthorized' };
 
 export function createAccounts({
   editions,
   authenticator,
+  google,
   mailer,
   rateLimits,
   clock,
 }: {
   editions: EditionRegistry;
   authenticator: Authenticator;
+  google: GoogleVerifier;
   mailer: Mailer;
   rateLimits: RateLimits;
   clock: Clock;
@@ -124,6 +156,23 @@ export function createAccounts({
       const email = normalised(typedEmail);
       if (email === undefined) return invalidEmail;
       return (await limits.codeCheck(ip)) ?? authenticator.checkCode(email, code);
+    },
+
+    async signInWithGoogle(idToken, editionId, ip) {
+      const serving = await editions.serving(editionId, 'googleSignIn');
+      if (!serving.ok) return serving;
+      const overLimit = await limits.googleSignIn(ip);
+      if (overLimit !== undefined) return overLimit;
+
+      const check = await google.verify(idToken);
+      if (!check.ok) return check.reason === 'not-configured' ? switchedOff : check;
+      const { identity } = check;
+      if (!identity.emailVerified) return { ok: false, reason: 'unverified-email' };
+      // Google gives emails, so one that is not an email is no token of Google's.
+      const email = normalised(identity.email);
+      if (email === undefined) return invalidToken;
+      const signedIn = await authenticator.signInWithGoogle({ ...identity, email });
+      return { ok: true, ...signedIn };
     },
 
     async session(token) {

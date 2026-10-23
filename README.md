@@ -179,7 +179,7 @@ The backend serves every Edition from one deployment ([ADR 0008](docs/adr/0008-o
 
    Postgres is published on 55432, not on its default 5432, which other projects on the machine may hold; Mailpit keeps its own ports, and the backend takes 8787, the address the app expects in development. To move one, set its variable when you start the services, e.g. `SLOVO_POSTGRES_PORT=55433 docker compose up --detach --wait`, and change the URL in `.env` to match. `docker compose stop` stops the services and keeps the data.
 
-2. Copy the example environment and fill it in. The server reads it at start and refuses to start, naming the variable, when one is missing or wrong. It refuses the example's `AUTH_SECRET` too, which anyone can read: put your own, made with `openssl rand -base64 32` (`pnpm dev` puts one itself). `.env` stays out of git.
+2. Copy the example environment and fill it in. The server reads it at start and refuses to start, naming the variable, when one is missing or wrong. It refuses the example's `AUTH_SECRET` too, which anyone can read: put your own, made with `openssl rand -base64 32` (`pnpm dev` puts one itself). `GOOGLE_CLIENT_IDS` holds SLOVO's OAuth client ids at Google, comma-separated, for Sign in with Google ([ADR 0047](docs/adr/0047-one-account-per-email-whatever-the-sign-in-method.md)); left empty, the backend refuses Google sign-ins as switched off. The repository holds no real id. `.env` stays out of git.
 
    ```sh
    cp apps/backend/.env.example apps/backend/.env

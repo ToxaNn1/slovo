@@ -12,6 +12,8 @@ const SIGN_IN_LIMITS = {
   codeRequestsPerIp: { requests: 20, windowSeconds: 10 * 60 },
   /** Sign-in code checks from one IP address. */
   codeChecksPerIp: { requests: 30, windowSeconds: 10 * 60 },
+  /** Google sign-ins from one IP address: each costs a check of the token against Google's keys. */
+  googleSignInsPerIp: { requests: 30, windowSeconds: 10 * 60 },
 } as const;
 
 /** Counts the sign-in requests against their limits. */
@@ -20,6 +22,8 @@ export interface SignInLimits {
   codeRequest(email: string, ip: string): Promise<TooManyRequests | undefined>;
   /** Counts a Sign-in code check from the IP address; none when it may be checked. */
   codeCheck(ip: string): Promise<TooManyRequests | undefined>;
+  /** Counts a Google sign-in from the IP address; none when its token may be verified. */
+  googleSignIn(ip: string): Promise<TooManyRequests | undefined>;
 }
 
 export function createSignInLimits({
@@ -37,5 +41,6 @@ export function createSignInLimits({
     codeRequest: async (email, ip) =>
       (await count('codeRequestsPerIp', ip)) ?? count('codesPerEmail', email),
     codeCheck: (ip) => count('codeChecksPerIp', ip),
+    googleSignIn: (ip) => count('googleSignInsPerIp', ip),
   };
 }

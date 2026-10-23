@@ -40,6 +40,9 @@ const INTERNAL_COLUMNS = Object.values(schema)
   .filter(([key]) => !ANSWERED_COLUMNS.has(key))
   .flatMap(([key, column]) => [key, column.name]);
 
+/** The requests that start a Session, whose answer carries its token. */
+const SIGN_INS = new Set(['POST /v1/account/sessions', 'POST /v1/account/google-sessions']);
+
 /** One answer of the API, as its client got it. */
 interface Answer {
   readonly request: string;
@@ -86,7 +89,7 @@ async function recordedBackend() {
 }
 
 it("answers no stored token, Sign-in code or its hash, password field, internal column or another Account's record in any procedure", async () => {
-  const { client, clientOf, answers, mailer, keptSignInCode, db, pack, switchOff } =
+  const { client, clientOf, answers, mailer, google, keptSignInCode, db, pack, switchOff } =
     await recordedBackend();
   /** What the database keeps that no answer may show. */
   const secrets = new Set<string>();
@@ -136,6 +139,32 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
           await client.account.verifyCode({ email, code });
           await client.account.verifyCode({ email, code }).catch(refused);
           await signIn();
+        },
+        signInWithGoogle: async () => {
+          const email = `reader-${randomUUID()}@example.com`;
+          const idToken = google.token({ email });
+          secrets.add(idToken);
+          const { token } = await client.account.signInWithGoogle({ idToken, editionId: EDITION });
+          const rows = await db
+            .select({ session: sessions.token, method: schema.signInMethods.providerAccountId })
+            .from(sessions)
+            .innerJoin(accounts, eq(accounts.id, sessions.accountId))
+            .innerJoin(schema.signInMethods, eq(schema.signInMethods.accountId, accounts.id))
+            .where(eq(accounts.email, email));
+          for (const row of rows) for (const secret of Object.values(row)) secrets.add(secret);
+          await clientOf(token).account.me();
+          await client.account
+            .signInWithGoogle({ idToken: 'not-a-token', editionId: EDITION })
+            .catch(refused);
+          await client.account
+            .signInWithGoogle({
+              idToken: google.token({ email }, { audience: 'another-app.example' }),
+              editionId: EDITION,
+            })
+            .catch(refused);
+          await client.account
+            .signInWithGoogle({ idToken: google.token({ email }), editionId: 'pl' })
+            .catch(refused);
         },
         me: async () => {
           await (await signIn()).account.me();
@@ -229,9 +258,7 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
   for (const { request, status, headers, body } of answers) {
     // A new Session's token is the one secret an answer carries, to its own device.
     const shown =
-      request === 'POST /v1/account/sessions' && status === 200
-        ? { ...(body as object), token: undefined }
-        : body;
+      SIGN_INS.has(request) && status === 200 ? { ...(body as object), token: undefined } : body;
     const text = `${headers} ${JSON.stringify(shown)}`;
     expect({
       request,

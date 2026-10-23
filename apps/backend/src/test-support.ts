@@ -15,7 +15,14 @@ import { createApiClient } from '@slovo/contracts/api';
 import type { EditionConfig } from '@slovo/contracts';
 import { buildLanguagePack, recordContent } from '@slovo/language-pack';
 import { EDITIONS_DIR, editionFiles, openEdition } from '@slovo/language-pack/edition';
-import { systemClock, type Edition, type Mail, type Mailer } from '@slovo/server-core';
+import {
+  systemClock,
+  type Edition,
+  type GoogleIdentity,
+  type GoogleVerifier,
+  type Mail,
+  type Mailer,
+} from '@slovo/server-core';
 import pg from 'pg';
 import { pino, type Logger } from 'pino';
 import { afterAll, afterEach, beforeAll, beforeEach, onTestFinished, vi } from 'vitest';
@@ -123,6 +130,85 @@ function createFakeMailer(): FakeMailer {
       const code = sent.findLast((mail) => mail.to === email)?.text.match(/\b[0-9]{6}\b/)?.[0];
       if (code === undefined) throw new Error(`no Sign-in code was sent to ${email}`);
       return code;
+    },
+  };
+}
+
+/** The Google client id of the test backends, unless a test gives its own. */
+export const TEST_GOOGLE_CLIENT_ID = 'slovo-test.apps.googleusercontent.com';
+
+/** What a fake Google identity token carries, as the fake Google signed it. */
+interface FakeGoogleToken extends GoogleIdentity {
+  /** The client id of the app the token is for. */
+  readonly audience: string;
+  /** When the token runs out, in milliseconds since the epoch. */
+  readonly expiresAt: number;
+  /** The fake Google's signature; a token of another signer doesn't check. */
+  readonly signature: string;
+}
+
+/** What makes a token the fake Google gives differ from the one a valid sign-in needs. */
+interface FakeTokenOptions {
+  /** The app the token is for; the backend's own client id unless given. */
+  readonly audience?: string;
+  /** When the token runs out; an hour from now unless given. */
+  readonly expiresAt?: Date;
+  /** Whether the fake Google signed it; a token signed by someone else doesn't check. */
+  readonly signed?: boolean;
+}
+
+/** How long a Google identity token lasts. */
+const GOOGLE_TOKEN_MS = 60 * 60 * 1000;
+
+const FAKE_GOOGLE_SIGNATURE = 'signed-by-the-fake-google';
+
+/**
+ * A fake Google, in two parts: the sign-in sheet's side, which gives the app
+ * identity tokens, and the verifier's side, which checks them the way the
+ * real verifier checks Google's: the signature, the expiry against the
+ * test's clock and the audience against the backend's client ids.
+ */
+export interface FakeGoogle extends GoogleVerifier {
+  /**
+   * An identity token for the email, as the sign-in sheet would give it:
+   * for the backend's own app, for an hour, with the email verified, unless
+   * the test says otherwise.
+   */
+  token(
+    identity: Partial<GoogleIdentity> & Pick<GoogleIdentity, 'email'>,
+    options?: FakeTokenOptions,
+  ): string;
+}
+
+export function createFakeGoogle(clientIds: readonly string[]): FakeGoogle {
+  return {
+    token({ email, subject = `google-${email}`, emailVerified = true }, options = {}) {
+      const token: FakeGoogleToken = {
+        subject,
+        email,
+        emailVerified,
+        audience: options.audience ?? TEST_GOOGLE_CLIENT_ID,
+        expiresAt: (options.expiresAt ?? new Date(Date.now() + GOOGLE_TOKEN_MS)).getTime(),
+        signature: options.signed === false ? 'signed-by-someone-else' : FAKE_GOOGLE_SIGNATURE,
+      };
+      return Buffer.from(JSON.stringify(token)).toString('base64url');
+    },
+    verify(idToken) {
+      if (clientIds.length === 0) return Promise.resolve({ ok: false, reason: 'not-configured' });
+      let token: FakeGoogleToken;
+      try {
+        token = JSON.parse(Buffer.from(idToken, 'base64url').toString()) as FakeGoogleToken;
+      } catch {
+        return Promise.resolve({ ok: false, reason: 'invalid-token' });
+      }
+      if (token.signature !== FAKE_GOOGLE_SIGNATURE || token.expiresAt <= Date.now()) {
+        return Promise.resolve({ ok: false, reason: 'invalid-token' });
+      }
+      if (!clientIds.includes(token.audience)) {
+        return Promise.resolve({ ok: false, reason: 'foreign-audience' });
+      }
+      const { subject, email, emailVerified } = token;
+      return Promise.resolve({ ok: true, identity: { subject, email, emailVerified } });
     },
   };
 }
@@ -248,13 +334,15 @@ interface TestAppOptions {
   readonly logger?: Logger;
   /** The Editions the backend serves; the repo's own unless given. */
   readonly editions?: readonly Edition[];
+  /** The backend's Google client ids; the test one unless given. None turns Google sign-in off. */
+  readonly googleClientIds?: readonly string[];
   /** Sees every answer before the test gets it, with the request it answers. */
   readonly onAnswer?: (request: Request, response: Response) => Promise<void>;
 }
 
 /**
- * The backend built by its composition root, with the test's clock and a
- * fake Mailer, and the ways a test sends it requests: the API's client, or a
+ * The backend built by its composition root, with the test's clock, a fake
+ * Mailer and a fake Google, and the ways a test sends it requests: the API's client, or a
  * request of its own. Every request goes to the app in process, so no port is
  * opened, and comes on a connection: from the backend's own IP address unless
  * the test names another, so the limits per IP of one test never reach
@@ -264,16 +352,19 @@ export function testApp({
   database: given,
   logger = silentLogger,
   editions = readEditions(EDITIONS_DIR),
+  googleClientIds = [TEST_GOOGLE_CLIENT_ID],
   onAnswer,
 }: TestAppOptions = {}) {
   const database = given ?? createDatabase(testDatabaseUrl(), silentLogger);
   const mailer = createFakeMailer();
+  const google = createFakeGoogle(googleClientIds);
   const app = createApp({
     database,
     clock: systemClock,
     logger,
     editions,
     mailer,
+    google,
     authSecret: TEST_AUTH_SECRET,
   });
   const ip = newIp();
@@ -302,6 +393,8 @@ export function testApp({
     ip,
     /** Every email the backend sent. */
     mailer,
+    /** The fake Google the backend verifies tokens with, and the tokens its sign-in sheet gives. */
+    google,
     database,
     /** What the database keeps of the Sign-in code waiting for the email (see the Authenticator). */
     keptSignInCode: (email: string) => keptSignInCode(database, email),

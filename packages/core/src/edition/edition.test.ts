@@ -20,6 +20,7 @@ const validConfig = {
     corrections: true,
     idioms: true,
     account: true,
+    googleSignIn: true,
     sync: true,
     contentUpdates: true,
     notifications: true,
@@ -191,6 +192,11 @@ describe('loadEdition', () => {
   it.each([
     ['a missing Feature Switch', withoutSwitch('game'), 'featureSwitches.game'],
     ['a missing Account Feature Switch', withoutSwitch('account'), 'featureSwitches.account'],
+    [
+      'a missing Google sign-in Feature Switch',
+      withoutSwitch('googleSignIn'),
+      'featureSwitches.googleSignIn',
+    ],
     ['a missing sync Feature Switch', withoutSwitch('sync'), 'featureSwitches.sync'],
     [
       'a missing content updates Feature Switch',

@@ -16,6 +16,7 @@
     "corrections": true,
     "idioms": true,
     "account": true,
+    "googleSignIn": true,
     "sync": true,
     "contentUpdates": true,
     "notifications": true,

@@ -4,6 +4,7 @@ import {
   createSync,
   type Clock,
   type Edition,
+  type GoogleVerifier,
   type Mailer,
 } from '@slovo/server-core';
 import type { HttpBindings } from '@hono/node-server';
@@ -37,6 +38,8 @@ export interface AppDependencies {
   readonly editions: readonly Edition[];
   /** Sends the sign-in emails. */
   readonly mailer: Mailer;
+  /** Verifies the Google identity tokens of Google sign-ins. */
+  readonly google: GoogleVerifier;
   /** Signs the Sessions' tokens. */
   readonly authSecret: string;
 }
@@ -74,6 +77,7 @@ export function createApp({
   logger,
   editions,
   mailer,
+  google,
   authSecret,
 }: AppDependencies) {
   const editionRegistry = createEditions({ database, clock, editions });
@@ -81,6 +85,7 @@ export function createApp({
   const accounts = createAccounts({
     editions: editionRegistry,
     authenticator: createAuthenticator(database, { secret: authSecret, logger }),
+    google,
     mailer,
     rateLimits,
     clock,

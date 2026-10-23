@@ -1,6 +1,7 @@
 // The backend's entry point (`pnpm dev`, `pnpm start`).
 import { systemClock } from '@slovo/server-core';
 
+import { createGoogleVerifier } from './account/google-verifier';
 import { createSmtpMailer } from './account/smtp-mailer';
 import { createApp } from './app';
 import { readConfig, ServerConfigSchema } from './config';
@@ -20,6 +21,7 @@ const app = createApp({
   logger,
   editions,
   mailer,
+  google: createGoogleVerifier({ clientIds: config.GOOGLE_CLIENT_IDS }),
   authSecret: config.AUTH_SECRET,
 });
 const server = await startServer({ app, database, port: config.PORT });

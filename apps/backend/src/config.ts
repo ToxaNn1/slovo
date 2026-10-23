@@ -20,6 +20,18 @@ export const ServerConfigSchema = z.object({
     ),
   // The address the sign-in emails come from; the Edition names the sender.
   MAIL_FROM: z.email({ error: 'must be an email address' }).default('no-reply@slovo.app'),
+  // The OAuth client ids of SLOVO at Google, comma-separated: one per app
+  // that signs in with Google (ADR 0047). A Google identity token must name
+  // one as its audience. Empty, or unset, turns Google sign-in off.
+  GOOGLE_CLIENT_IDS: z
+    .string()
+    .default('')
+    .transform((ids) =>
+      ids
+        .split(',')
+        .map((id) => id.trim())
+        .filter((id) => id !== ''),
+    ),
   // 0 takes any free port.
   PORT: z.coerce.number().int().min(0).max(65535).default(8787),
   // The folder that holds one folder per Edition (ADR 0035).
