@@ -46,10 +46,10 @@ export function historyText({
     });
 
   return {
-    /** «слово», «виправлення» or «слово дня». */
+    /** «слово», «виправлення», «фразеологізм», «топонім» or «слово дня». */
     kind({ row, wordOfTheDay }: Pick<HistoryEntry, 'row' | 'wordOfTheDay'>): string {
       if (wordOfTheDay) return strings.kinds.wordOfTheDay;
-      return row.kind === 'word' ? strings.kinds.word : strings.kinds.correction;
+      return strings.kinds[row.kind === 'idiom' ? row.idiomType : row.kind];
     },
 
     /** «Сьогодні», «Учора» or the date, with the year only for another year. */

@@ -35,6 +35,8 @@ function labelParts(
   row: EntryRowModel,
   strings: EditionStrings,
 ): { short: string[]; full: string[] } {
+  // The kind before the labels already names the Idiom Type.
+  if (row.kind === 'idiom') return { short: [], full: [] };
   if (row.kind === 'correction') {
     const type = strings.correctionCard.correctionTypes[row.correctionType];
     return { short: [type], full: [type] };
@@ -54,15 +56,17 @@ function labelParts(
 
 function entryModel({ entryId, row }: HiddenEntry, strings: EditionStrings): HiddenEntryModel {
   const { hidden, history } = strings;
-  const kind = history.kinds[row.kind];
+  const kind = history.kinds[row.kind === 'idiom' ? row.idiomType : row.kind];
   const parts = labelParts(row, strings);
   const join = (forms: readonly string[]) => forms.join(hidden.labelSeparator);
+  const label = (template: string, forms: readonly string[]) =>
+    forms.length === 0 ? kind : fill(template, { kind, labels: join(forms) });
   return {
     entryId,
     row,
     labels: {
-      text: fill(hidden.rowLabels, { kind, labels: join(parts.short) }),
-      spoken: fill(hidden.rowLabelsSpoken, { kind, labels: join(parts.full) }),
+      text: label(hidden.rowLabels, parts.short),
+      spoken: label(hidden.rowLabelsSpoken, parts.full),
     },
   };
 }

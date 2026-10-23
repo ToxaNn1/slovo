@@ -363,7 +363,9 @@
     "kinds": {
       "word": "слово",
       "correction": "виправлення",
-      "wordOfTheDay": "слово дня"
+      "wordOfTheDay": "слово дня",
+      "idiom": "фразеологізм",
+      "placeName": "топонім"
     },
     "days": {
       "today": "Сьогодні",

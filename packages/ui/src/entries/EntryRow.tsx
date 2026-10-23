@@ -16,8 +16,8 @@ const ACCESSORY_TITLE_MAX_FONT_SCALE = 1.3;
 /**
  * One Entry in a list (Favorites, Collections, History and Hidden), built
  * from the Core's row model: a Word's Lemma with its Stress over its
- * Definition on one line, or a Correction's standard equivalent over the
- * non-standard form it replaces. The trailing text is what the screen puts
+ * Definition on one line, an Idiom's expression over its Definition, or a
+ * Correction's standard equivalent over the non-standard form it replaces. The trailing text is what the screen puts
  * on the right (a date, a kind, a time). A tap opens the Entry; the actions
  * slide out from the right and are VoiceOver actions too.
  *
@@ -59,9 +59,9 @@ export function EntryRow({
   let subtitle = ownSubtitle;
   if (!compact && subtitle === undefined) {
     subtitle =
-      row.kind === 'word'
-        ? row.definition
-        : fill(strings.correctionCard.insteadOf, { form: row.nonStandardForm });
+      row.kind === 'correction'
+        ? fill(strings.correctionCard.insteadOf, { form: row.nonStandardForm })
+        : row.definition;
   }
   // The voices break a word at the Stress mark, so VoiceOver reads the row without it.
   const accessibilityLabel = withoutStress(
