@@ -32,6 +32,9 @@ export const HistoryStringsSchema = z.strictObject({
     word: TextSchema,
     correction: TextSchema,
     wordOfTheDay: TextSchema,
+    /** An Idiom of each Idiom Type. */
+    idiom: TextSchema,
+    placeName: TextSchema,
   }),
   /** The headings that group the list by day. The screen draws them in capitals. */
   days: z.strictObject({
