@@ -156,56 +156,51 @@ describe('the «Приховане» screen', () => {
     expect(model.empty).toBe(false);
   });
 
-  it('lists Corrections taken out of the Mix as hidden too, so the screen is not empty, and drops them once they are on', async () => {
+  it.each([
+    ['correction', 'Виправлення', 'Увімкнути Виправлення'],
+    ['idiom', 'Фразеологізми', 'Увімкнути Фразеологізми'],
+  ] as const)(
+    'lists the kind %s taken out of the Mix as hidden too, so the screen is not empty, and brings it back into the Mix on its offer',
+    async (entryKind, name, turnOnLabel) => {
+      const { app } = await open();
+      expect(modelOf(app).kinds).toEqual([]);
+
+      await app.hide({ kind: 'whole-kind', entryKind });
+
+      expect(modelOf(app).kinds).toEqual([{ entryKind, name, turnOnLabel }]);
+      expect(modelOf(app).empty).toBe(false);
+
+      await app.unhide({ kind: 'whole-kind', entryKind });
+
+      expect(app.mix.state.kinds[entryKind]).toBe(true);
+      expect(modelOf(app).kinds).toEqual([]);
+      expect(modelOf(app).empty).toBe(true);
+    },
+  );
+
+  it('lists the kinds out of the Mix in the Mix’s order: Corrections before Idioms', async () => {
     const { app } = await open();
-    expect(modelOf(app).corrections).toBe(undefined);
+    await app.mix.setKind('idiom', false);
+    await app.mix.setKind('correction', false);
 
-    await app.mix.setCorrections(false);
-
-    expect(modelOf(app).corrections).toEqual({ name: 'Виправлення' });
-    expect(modelOf(app).empty).toBe(false);
-
-    await app.mix.setCorrections(true);
-
-    expect(modelOf(app).corrections).toBe(undefined);
-    expect(modelOf(app).empty).toBe(true);
+    expect(modelOf(app).kinds.map(({ entryKind }) => entryKind)).toEqual(['correction', 'idiom']);
   });
 
-  it('leaves Corrections out of the screen when the Edition does not turn them on', async () => {
-    const { app } = await open();
-    await app.mix.setCorrections(false);
+  it.each([
+    ['correction', 'corrections'],
+    ['idiom', 'idioms'],
+  ] as const)(
+    'leaves the kind %s out of the screen when the Edition does not turn it on',
+    async (entryKind, feature) => {
+      const { app } = await open();
+      await app.mix.setKind(entryKind, false);
 
-    const model = modelOf(app, { isFeatureEnabled: () => false });
+      const model = modelOf(app, { isFeatureEnabled: (each) => each !== feature });
 
-    expect(model.corrections).toBe(undefined);
-    expect(model.empty).toBe(true);
-  });
-
-  it('lists Idioms taken out of the Mix as hidden too, and brings them back into the Mix on its offer', async () => {
-    const { app } = await open();
-    expect(modelOf(app).idioms).toBe(undefined);
-
-    await app.hide({ kind: 'idioms' });
-
-    expect(modelOf(app).idioms).toEqual({ name: 'Фразеологізми' });
-    expect(modelOf(app).empty).toBe(false);
-
-    await app.unhide({ kind: 'idioms' });
-
-    expect(app.mix.state.idioms).toBe(true);
-    expect(modelOf(app).idioms).toBe(undefined);
-    expect(modelOf(app).empty).toBe(true);
-  });
-
-  it('leaves Idioms out of the screen when the Edition does not turn them on', async () => {
-    const { app } = await open();
-    await app.mix.setIdioms(false);
-
-    const model = modelOf(app, { isFeatureEnabled: (feature) => feature !== 'idioms' });
-
-    expect(model.idioms).toBe(undefined);
-    expect(model.empty).toBe(true);
-  });
+      expect(model.kinds).toEqual([]);
+      expect(model.empty).toBe(true);
+    },
+  );
 
   it('puts a Category back in the Mix, so the Mix and the screen never disagree', async () => {
     const { app } = await open();

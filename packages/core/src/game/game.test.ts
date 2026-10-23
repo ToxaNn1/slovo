@@ -544,7 +544,7 @@ describe('the idioms «Вгадай слово» asks about', () => {
     const unknown = ['i_idiom01', 'i_idiom02', 'i_idiom03'];
     const outOfMix = await runWith({ words, idioms });
     for (const id of unknown) await outOfMix.knowledge.tap(id, 'unknown');
-    await outOfMix.mix.setIdioms(false);
+    await outOfMix.mix.setKind('idiom', false);
     const switchedOff = await runWith({ words, idioms }, ['knowledge']);
 
     for (const app of [outOfMix, switchedOff]) {

@@ -1,4 +1,4 @@
-import type { MixState } from '@slovo/core';
+import type { MixKind, MixState } from '@slovo/core';
 import { useEdition } from '@slovo/ui';
 import { useMemo } from 'react';
 
@@ -30,8 +30,8 @@ export function useMixChanges(): {
   /** Puts the Category in the Mix (`inMix`) or takes it out. */
   toggleCategory: (categoryId: string, inMix: boolean) => void;
   turnAllOn: () => void;
-  setCorrections: (inMix: boolean) => void;
-  setIdioms: (inMix: boolean) => void;
+  /** Puts the kind of Entry (Corrections, Idioms) as a whole in the Mix (`inMix`) or takes it out. */
+  setKind: (kind: MixKind, inMix: boolean) => void;
   setRarityFloor: (floor: number) => void;
 } {
   const { mix } = useComposition();
@@ -47,11 +47,8 @@ export function useMixChanges(): {
     turnAllOn: () => {
       keep(mix.turnAllOn());
     },
-    setCorrections: (inMix) => {
-      keep(mix.setCorrections(inMix));
-    },
-    setIdioms: (inMix) => {
-      keep(mix.setIdioms(inMix));
+    setKind: (kind, inMix) => {
+      keep(mix.setKind(kind, inMix));
     },
     setRarityFloor: (floor) => {
       keep(mix.setRarityFloor(floor));

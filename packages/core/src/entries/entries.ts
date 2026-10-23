@@ -1,7 +1,14 @@
 import type { Category, Correction, Entry, EntryKind, Word } from '@slovo/contracts';
 
 import type { Edition } from '../edition/edition';
-import { readMix, type MixEdition } from './mix';
+import {
+  featureOfKind,
+  readMix,
+  type MixEdition,
+  type MixKind,
+  type MixKindName,
+  type MixState,
+} from './mix';
 import type { ContentReadPort } from '../ports';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
@@ -15,9 +22,10 @@ export interface EntryIds {
 
 /**
  * Why no Entry of a kind is eligible, whatever the Language Pack holds: the
- * user took Corrections, or Idioms, as a whole, out of the Mix.
+ * user took the kind as a whole (Corrections, Idioms) out of the Mix. Names
+ * the kind as the Edition strings do.
  */
-export type KindRefusal = 'corrections-out-of-mix' | 'idioms-out-of-mix';
+export type KindRefusal = `${MixKindName}-out-of-mix`;
 
 /** The eligible Entries of one kind, or why the kind, as a whole, is not eligible. */
 export type EligibleOfKind =
@@ -115,8 +123,6 @@ export function createEntries(
       },
 ): Entries {
   const { content, edition } = options;
-  const withCorrections = () => edition.isFeatureEnabled('corrections');
-  const withIdioms = () => edition.isFeatureEnabled('idioms');
 
   const categories = readOnce(() => content.listCategories());
 
@@ -127,23 +133,26 @@ export function createEntries(
     return readMix({ categories: await categories(), edition: mixEdition, userState });
   }
 
-  /** Whether Corrections, as a whole, are in the user's Mix; without a Mix they always are. */
-  async function correctionsInMix(): Promise<boolean> {
-    return (await readUserMix())?.corrections ?? true;
-  }
+  /** Whether the kind of Entry, as a whole, is in the user's Mix; without a Mix it always is. */
+  const kindInMix = (kind: MixKind, mix: MixState | undefined) => mix?.kinds[kind] ?? true;
 
-  /** Whether Idioms, as a whole, are in the user's Mix; without a Mix they always are. */
-  async function idiomsInMix(): Promise<boolean> {
-    return (await readUserMix())?.idioms ?? true;
-  }
+  /** Whether the Edition turns the kind of Entry on and the user has it in the Mix. */
+  const kindShown = (kind: MixKind, mix: MixState | undefined) =>
+    edition.isFeatureEnabled(featureOfKind(kind)) && kindInMix(kind, mix);
 
-  const linksCorrections = async () => withCorrections() && (await correctionsInMix());
+  const linksCorrections = async () => kindShown('correction', await readUserMix());
+
+  /** How to list the ids of every live Entry of a kind in the Mix as a whole from the Language Pack. */
+  const listIds: Record<MixKind, () => Promise<readonly string[]>> = {
+    correction: () => content.listCorrectionIds(),
+    idiom: () => content.listIdiomIds(),
+  };
 
   /** How to read every live Entry of a kind from the Language Pack. */
   const readLive: Record<EntryKind, () => Promise<readonly Entry[]>> = {
     word: () => content.listWords(),
-    correction: async () => content.getEntries(await content.listCorrectionIds()),
-    idiom: async () => content.getEntries(await content.listIdiomIds()),
+    correction: async () => content.getEntries(await listIds.correction()),
+    idiom: async () => content.getEntries(await listIds.idiom()),
   };
 
   /**
@@ -190,10 +199,11 @@ export function createEntries(
       readUserMix(),
       'userState' in options ? options.userState.list(hiddenRecords) : new Map<string, string>(),
     ]);
+    const ofKind = (kind: MixKind) => (kindShown(kind, mix) ? listIds[kind]() : []);
     const [words, corrections, idioms] = await Promise.all([
       wordIds(mix?.categoryIds).then((ids) => atRarityFloor(ids, mix?.rarityFloor)),
-      withCorrections() && (mix?.corrections ?? true) ? content.listCorrectionIds() : [],
-      withIdioms() && (mix?.idioms ?? true) ? content.listIdiomIds() : [],
+      ofKind('correction'),
+      ofKind('idiom'),
     ]);
     const shown = (id: string) => !hidden.has(id);
     return {
@@ -214,10 +224,9 @@ export function createEntries(
     kind: EntryKind,
     alsoOf: readonly EntryKind[] = [],
   ): Promise<EligibleOfKind> {
-    if (kind === 'correction' && !(await correctionsInMix())) {
-      return { refusal: 'corrections-out-of-mix' };
+    if (kind !== 'word' && !kindInMix(kind, await readUserMix())) {
+      return { refusal: `${featureOfKind(kind)}-out-of-mix` };
     }
-    if (kind === 'idiom' && !(await idiomsInMix())) return { refusal: 'idioms-out-of-mix' };
     const kinds = [kind, ...alsoOf];
     const [ids, ...entries] = await Promise.all([eligible(), ...kinds.map((each) => live[each]())]);
     return {

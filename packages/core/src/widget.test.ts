@@ -138,13 +138,13 @@ describe('The Widget Snapshot', () => {
   it('shows Corrections only while they are in the Mix', async () => {
     const app = await run();
     await app.favorites.add('c_one');
-    await app.hide({ kind: 'corrections' });
+    await app.hide({ kind: 'whole-kind', entryKind: 'correction' });
 
     const out = await snapshotOf(app);
     expect(out.allEntries).toEqual(['w_nature0', 'w_nature1', 'w_speech0', 'w_speech1']);
     expect(out.favorites).toEqual([]);
 
-    await app.unhide({ kind: 'corrections' });
+    await app.unhide({ kind: 'whole-kind', entryKind: 'correction' });
     const back = await snapshotOf(app);
     expect(back.allEntries).toEqual([
       'w_nature0',

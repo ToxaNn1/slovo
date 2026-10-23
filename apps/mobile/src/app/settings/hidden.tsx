@@ -1,4 +1,4 @@
-import { withoutStress } from '@slovo/core';
+import { featureOfKind, withoutStress, type MixKind } from '@slovo/core';
 import {
   BackLink,
   EntryRow,
@@ -41,7 +41,7 @@ export default function HiddenScreen() {
 
 function HiddenList() {
   const model = useHiddenScreenModel();
-  const { restoreEntry, turnCategoryOn, turnCorrectionsOn, turnIdiomsOn } = useHiddenChanges();
+  const { restoreEntry, turnCategoryOn, turnKindOn } = useHiddenChanges();
   const { colors } = useTokens();
   const router = useRouter();
 
@@ -83,14 +83,11 @@ function HiddenList() {
           />
         }
         ListFooterComponent={
-          model.categories.length > 0 ||
-          model.corrections !== undefined ||
-          model.idioms !== undefined ? (
+          model.categories.length > 0 || model.kinds.length > 0 ? (
             <CategoriesSection
               model={model}
               onTurnCategoryOn={turnCategoryOn}
-              onTurnCorrectionsOn={turnCorrectionsOn}
-              onTurnIdiomsOn={turnIdiomsOn}
+              onTurnKindOn={turnKindOn}
             />
           ) : null
         }
@@ -143,17 +140,15 @@ function HiddenHeader({
   );
 }
 
-/** Below the list: the Hidden Categories, the Corrections and the Idioms, each with the button that turns it on. */
+/** Below the list: the Hidden Categories and each kind out of the Mix as a whole, each with the button that turns it on. */
 function CategoriesSection({
   model,
   onTurnCategoryOn,
-  onTurnCorrectionsOn,
-  onTurnIdiomsOn,
+  onTurnKindOn,
 }: {
   model: HiddenScreenModel;
   onTurnCategoryOn: (id: string) => void;
-  onTurnCorrectionsOn: () => void;
-  onTurnIdiomsOn: () => void;
+  onTurnKindOn: (entryKind: MixKind) => void;
 }) {
   return (
     <View testID="hidden-categories" style={styles.section}>
@@ -169,22 +164,17 @@ function CategoriesSection({
           }}
         />
       ))}
-      {model.corrections !== undefined && (
+      {model.kinds.map(({ entryKind, name, turnOnLabel }) => (
         <TurnOnRow
-          testID="hidden-corrections"
-          name={model.corrections.name}
-          accessibilityLabel={strings.turnOnCorrectionsLabel}
-          onTurnOn={onTurnCorrectionsOn}
+          key={entryKind}
+          testID={`hidden-${featureOfKind(entryKind)}`}
+          name={name}
+          accessibilityLabel={turnOnLabel}
+          onTurnOn={() => {
+            onTurnKindOn(entryKind);
+          }}
         />
-      )}
-      {model.idioms !== undefined && (
-        <TurnOnRow
-          testID="hidden-idioms"
-          name={model.idioms.name}
-          accessibilityLabel={strings.turnOnIdiomsLabel}
-          onTurnOn={onTurnIdiomsOn}
-        />
-      )}
+      ))}
     </View>
   );
 }

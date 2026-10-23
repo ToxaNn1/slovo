@@ -187,7 +187,7 @@ describe('Knowledge Marks', () => {
     time.advance(DAY);
     await app.resume();
 
-    await app.mix.setCorrections(false);
+    await app.mix.setKind('correction', false);
     expect(learningOf(app)).toEqual([['c_one', 0]]);
     expect(app.knowledge.state.due).toEqual(['c_one']);
   });

@@ -1,4 +1,4 @@
-import { RaritySchema, type Category } from '@slovo/contracts';
+import { RaritySchema, type Category, type EntryKind } from '@slovo/contracts';
 
 import type { DefaultMix, UserSettingDefaults } from '../edition/edition';
 import { createInTurn, createSubscribers } from '../in-turn';
@@ -10,16 +10,60 @@ export interface MixEdition {
   readonly userSettingDefaults: Pick<UserSettingDefaults, 'mix'>;
 }
 
+/**
+ * A kind of Entry that is in or out of the Mix as a whole: every kind but
+ * the Word, whose Categories are in or out one by one (ADR 0019).
+ */
+export type MixKind = Exclude<EntryKind, 'word'>;
+
+/** Whether each kind of Entry is in the Mix as a whole. */
+export type KindsInMix = Readonly<Record<MixKind, boolean>>;
+
+/**
+ * The name of a kind of Entry as a whole: its Feature Switch, the key of its
+ * Edition strings and the first word of its Game refusal.
+ */
+export type MixKindName = 'corrections' | 'idioms';
+
+/**
+ * Each kind of Entry in the Mix as a whole, in the Mix screen's order: the
+ * Feature Switch that turns it on, which names the kind as a whole
+ * (`corrections`, `idioms`) in the Edition strings and the Game's refusals;
+ * its user-state record (ADR 0013, 0041); and whether the Edition's default
+ * Mix holds it. A further kind is one more line here and nowhere else.
+ */
+const KINDS: Readonly<
+  Record<
+    MixKind,
+    {
+      readonly feature: MixKindName;
+      readonly record: typeof userStateRecords.mixCorrections;
+      readonly byDefault: (mix: DefaultMix) => boolean;
+    }
+  >
+> = {
+  correction: {
+    feature: 'corrections',
+    record: userStateRecords.mixCorrections,
+    byDefault: (mix) => mix.corrections,
+  },
+  idiom: { feature: 'idioms', record: userStateRecords.mixIdioms, byDefault: (mix) => mix.idioms },
+};
+
+/** The kinds of Entry in the Mix as a whole, in the Mix screen's order. */
+export const MIX_KINDS = Object.keys(KINDS) as readonly MixKind[];
+
+/** The Feature Switch that turns the kind of Entry on, which also names the kind as a whole. */
+export const featureOfKind = (kind: MixKind): MixKindName => KINDS[kind].feature;
+
 /** The Mix as it stands. */
 export interface MixState {
   /** Every Category of the Language Pack, in or out of the Mix, with its display name, in its order (ADR 0033). */
   readonly allCategories: readonly Category[];
   /** The Categories in the Mix, by id, in the Language Pack's order. */
   readonly categoryIds: readonly string[];
-  /** Whether Corrections, as a whole, are in the Mix. */
-  readonly corrections: boolean;
-  /** Whether Idioms, as a whole, are in the Mix. */
-  readonly idioms: boolean;
+  /** Whether each kind of Entry, as a whole, is in the Mix: Corrections and Idioms. */
+  readonly kinds: KindsInMix;
   /** The Hidden Categories: the Categories out of the Mix, in the Language Pack's order (ADR 0019). */
   readonly hiddenCategories: readonly Category[];
   /** The one Category left in the Mix, which can't be taken out; nothing while more are in. */
@@ -32,7 +76,7 @@ export interface MixState {
 }
 
 /**
- * The Mix: the Categories, plus Corrections and Idioms each as a whole, the
+ * The Mix: the Categories, plus each other kind of Entry as a whole, the
  * user chose to see in everything new, and the Rarity Floor. A Category out of the Mix is a Hidden Category, so the
  * Mix screen, the hide action and the Hidden screen all change it here (ADR
  * 0019). Read from the user state once, when it opens, like the Cycle, so
@@ -53,34 +97,31 @@ export interface Mix {
   takeOut(categoryId: string): Promise<boolean>;
   /** Puts the Category back in the Mix. A Category the Language Pack doesn't have is skipped. */
   putBack(categoryId: string): Promise<void>;
-  /** Puts every Category in the Mix at once. Corrections and Idioms stay as they are. */
+  /** Puts every Category in the Mix at once. The kinds as a whole stay as they are. */
   turnAllOn(): Promise<void>;
-  /** Puts Corrections, as a whole, in the Mix or takes them out. */
-  setCorrections(inMix: boolean): Promise<void>;
-  /** Puts Idioms, as a whole, in the Mix or takes them out. */
-  setIdioms(inMix: boolean): Promise<void>;
+  /** Puts the kind of Entry, as a whole, in the Mix or takes it out. */
+  setKind(kind: MixKind, inMix: boolean): Promise<void>;
   /** Sets the Rarity Floor. A floor that is not a rarity, a whole number from 1 to 5, is skipped. */
   setRarityFloor(floor: number): Promise<void>;
   /** Calls `listener` after each change of the state. Returns the call that stops it. */
   subscribe(listener: () => void): () => void;
 }
 
-const {
-  mixCategories: categoryRecords,
-  mixCorrections: correctionsRecord,
-  mixIdioms: idiomsRecord,
-  mixRarityFloor: rarityFloorRecord,
-} = userStateRecords;
+const { mixCategories: categoryRecords, mixRarityFloor: rarityFloorRecord } = userStateRecords;
 
 /** The Rarity Floor while the user chose none: every Word is in. */
 const DEFAULT_RARITY_FLOOR = 1;
 
-/** The places in the Mix the user chose: by Category id, for Corrections and for Idioms; and the Rarity Floor. */
+/** The places in the Mix the user chose: by Category id, by kind of Entry as a whole; and the Rarity Floor. */
 interface MixChoices {
   readonly categories: ReadonlyMap<string, boolean>;
-  readonly corrections: boolean | undefined;
-  readonly idioms: boolean | undefined;
+  readonly kinds: Readonly<Record<MixKind, boolean | undefined>>;
   readonly rarityFloor: number | undefined;
+}
+
+/** A record over each kind of Entry in the Mix as a whole, from what `of` gives for it. */
+function eachKind<T>(of: (kind: MixKind) => T): Readonly<Record<MixKind, T>> {
+  return Object.fromEntries(MIX_KINDS.map((kind) => [kind, of(kind)])) as Record<MixKind, T>;
 }
 
 /** Whether the Category is in the Edition's default Mix: always when the default is all. */
@@ -118,8 +159,7 @@ function mixStateOf(
   return {
     allCategories: categories,
     categoryIds,
-    corrections: choices.corrections ?? mix.corrections,
-    idioms: choices.idioms ?? mix.idioms,
+    kinds: eachKind((kind) => choices.kinds[kind] ?? KINDS[kind].byDefault(mix)),
     hiddenCategories: categories.filter(({ id }) => !categoryIds.includes(id)),
     lastCategoryId: categoryIds.length === 1 ? categoryIds[0] : undefined,
     rarityFloor: choices.rarityFloor ?? DEFAULT_RARITY_FLOOR,
@@ -127,13 +167,12 @@ function mixStateOf(
 }
 
 async function readChoices(userState: Pick<UserState, 'list' | 'read'>): Promise<MixChoices> {
-  const [categories, corrections, idioms, rarityFloor] = await Promise.all([
+  const [categories, rarityFloor, read] = await Promise.all([
     userState.list(categoryRecords),
-    userState.read(correctionsRecord),
-    userState.read(idiomsRecord),
     userState.read(rarityFloorRecord),
+    Promise.all(MIX_KINDS.map((kind) => userState.read(KINDS[kind].record))),
   ]);
-  return { categories, corrections, idioms, rarityFloor };
+  return { categories, kinds: eachKind((kind) => read[MIX_KINDS.indexOf(kind)]), rarityFloor };
 }
 
 /**
@@ -184,11 +223,7 @@ export async function openMix({
    */
   async function change(
     places: ReadonlyMap<string, boolean>,
-    {
-      corrections = state.corrections,
-      idioms = state.idioms,
-      rarityFloor = state.rarityFloor,
-    } = {},
+    { kinds = state.kinds, rarityFloor = state.rarityFloor } = {},
   ): Promise<void> {
     const wanted = new Map<string, boolean>();
     // A Category in only because none would be otherwise is written in, so the
@@ -202,11 +237,9 @@ export async function openMix({
       changed.set(id, isIn);
       for (const [key, value] of categoryRecords.record(id).change(isIn)) writes.set(key, value);
     }
-    if (corrections !== state.corrections) {
-      for (const [key, value] of correctionsRecord.change(corrections)) writes.set(key, value);
-    }
-    if (idioms !== state.idioms) {
-      for (const [key, value] of idiomsRecord.change(idioms)) writes.set(key, value);
+    for (const kind of MIX_KINDS) {
+      if (kinds[kind] === state.kinds[kind]) continue;
+      for (const [key, value] of KINDS[kind].record.change(kinds[kind])) writes.set(key, value);
     }
     if (rarityFloor !== state.rarityFloor) {
       for (const [key, value] of rarityFloorRecord.change(rarityFloor)) writes.set(key, value);
@@ -215,8 +248,9 @@ export async function openMix({
     await userState.write(writes);
     const next: MixChoices = {
       categories: changed,
-      corrections: corrections === state.corrections ? choices.corrections : corrections,
-      idioms: idioms === state.idioms ? choices.idioms : idioms,
+      kinds: eachKind((kind) =>
+        kinds[kind] === state.kinds[kind] ? choices.kinds[kind] : kinds[kind],
+      ),
       rarityFloor: rarityFloor === state.rarityFloor ? choices.rarityFloor : rarityFloor,
     };
     try {
@@ -245,12 +279,8 @@ export async function openMix({
     await change(new Map(categories.map(({ id }) => [id, true])));
   }
 
-  async function setCorrections(inMix: boolean): Promise<void> {
-    await change(new Map(), { corrections: inMix });
-  }
-
-  async function setIdioms(inMix: boolean): Promise<void> {
-    await change(new Map(), { idioms: inMix });
+  async function setKind(kind: MixKind, inMix: boolean): Promise<void> {
+    await change(new Map(), { kinds: { ...state.kinds, [kind]: inMix } });
   }
 
   async function setRarityFloor(floor: number): Promise<void> {
@@ -267,8 +297,7 @@ export async function openMix({
     takeOut: (categoryId) => inTurn(() => takeOut(categoryId)),
     putBack: (categoryId) => inTurn(() => putBack(categoryId)),
     turnAllOn: () => inTurn(turnAllOn),
-    setCorrections: (inMix) => inTurn(() => setCorrections(inMix)),
-    setIdioms: (inMix) => inTurn(() => setIdioms(inMix)),
+    setKind: (kind, inMix) => inTurn(() => setKind(kind, inMix)),
     setRarityFloor: (floor) => inTurn(() => setRarityFloor(floor)),
     subscribe: subscribers.subscribe,
   };

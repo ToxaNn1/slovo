@@ -1,4 +1,4 @@
-import type { HiddenEntry, HideTarget } from '@slovo/core';
+import type { HiddenEntry, HideTarget, MixKind } from '@slovo/core';
 import { fill, useEdition, useUndoToast } from '@slovo/ui';
 import { useMemo } from 'react';
 
@@ -46,8 +46,8 @@ export function useHiddenScreenModel(): HiddenScreenModel {
 export function useHiddenChanges(): {
   restoreEntry: (entryId: string) => void;
   turnCategoryOn: (categoryId: string) => void;
-  turnCorrectionsOn: () => void;
-  turnIdiomsOn: () => void;
+  /** Puts the kind of Entry (Corrections, Idioms) as a whole back in the Mix. */
+  turnKindOn: (entryKind: MixKind) => void;
 } {
   const composition = useComposition();
   const showToast = useUndoToast();
@@ -84,11 +84,8 @@ export function useHiddenChanges(): {
     turnCategoryOn: (categoryId) => {
       unhide({ kind: 'category', categoryId });
     },
-    turnCorrectionsOn: () => {
-      unhide({ kind: 'corrections' });
-    },
-    turnIdiomsOn: () => {
-      unhide({ kind: 'idioms' });
+    turnKindOn: (entryKind) => {
+      unhide({ kind: 'whole-kind', entryKind });
     },
   };
 }

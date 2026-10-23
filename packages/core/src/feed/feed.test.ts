@@ -1323,14 +1323,14 @@ describe('Idioms in the Feed', () => {
 
   it('offers no Idiom when Idioms are out of the Mix, and mixes them in again once they are back', async () => {
     const app = await runApp({ corrections, idioms });
-    await app.mix.setIdioms(false);
+    await app.mix.setKind('idiom', false);
 
     const without = await walk(app.feed);
 
     expect(without.some((id) => id.startsWith('i_'))).toBe(false);
     expect(new Set(without)).toEqual(new Set([...liveIds, ...corrections.map(({ id }) => id)]));
 
-    await app.mix.setIdioms(true);
+    await app.mix.setKind('idiom', true);
     const after = await walk(app.feed);
     expect(after.filter((id) => id.startsWith('i_'))).toEqual(expect.arrayContaining(liveIdiomIds));
   });

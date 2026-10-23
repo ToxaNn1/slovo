@@ -76,39 +76,39 @@ describe('the Мій Мікс screen', () => {
     expect(await mix.takeOut(first.id)).toBe(false);
   });
 
-  it('shows the Corrections switch only when the Edition turns Corrections on', async () => {
-    const withoutCorrections: Edition = {
-      ...ukrainian,
-      isFeatureEnabled: (feature) =>
-        feature !== 'corrections' && ukrainian.isFeatureEnabled(feature),
-    };
+  it.each([
+    ['correction', 'corrections'],
+    ['idiom', 'idioms'],
+  ] as const)(
+    'shows the switch of the kind %s, which takes it out of the Mix and back, only when the Edition turns it on',
+    async (entryKind, feature) => {
+      const without: Edition = {
+        ...ukrainian,
+        isFeatureEnabled: (each) => each !== feature && ukrainian.isFeatureEnabled(each),
+      };
+      const { mix } = await open(ukrainian);
+      const switchOf = (edition: Edition) =>
+        mixScreenModel({ edition, mix: mix.state }).kinds.find(
+          (each) => each.entryKind === entryKind,
+        );
+
+      expect(switchOf(ukrainian)).toEqual({ entryKind, on: true });
+      await mix.setKind(entryKind, false);
+      expect(switchOf(ukrainian)).toEqual({ entryKind, on: false });
+      await mix.setKind(entryKind, true);
+      expect(switchOf(ukrainian)).toEqual({ entryKind, on: true });
+      expect(switchOf(without)).toBe(undefined);
+    },
+  );
+
+  it('lists the switches in the Mix’s order: Corrections, then Idioms', async () => {
     const { mix } = await open(ukrainian);
 
-    expect(mixScreenModel({ edition: ukrainian, mix: mix.state }).corrections).toEqual({
-      on: true,
-    });
-    await mix.setCorrections(false);
-    expect(mixScreenModel({ edition: ukrainian, mix: mix.state }).corrections).toEqual({
-      on: false,
-    });
-    expect(mixScreenModel({ edition: withoutCorrections, mix: mix.state }).corrections).toBe(
-      undefined,
-    );
-  });
-
-  it('shows the Idioms switch, which takes Idioms out of the Mix and back, only when the Edition turns Idioms on', async () => {
-    const withoutIdioms: Edition = {
-      ...ukrainian,
-      isFeatureEnabled: (feature) => feature !== 'idioms' && ukrainian.isFeatureEnabled(feature),
-    };
-    const { mix } = await open(ukrainian);
-
-    expect(mixScreenModel({ edition: ukrainian, mix: mix.state }).idioms).toEqual({ on: true });
-    await mix.setIdioms(false);
-    expect(mixScreenModel({ edition: ukrainian, mix: mix.state }).idioms).toEqual({ on: false });
-    await mix.setIdioms(true);
-    expect(mixScreenModel({ edition: ukrainian, mix: mix.state }).idioms).toEqual({ on: true });
-    expect(mixScreenModel({ edition: withoutIdioms, mix: mix.state }).idioms).toBe(undefined);
+    expect(
+      mixScreenModel({ edition: ukrainian, mix: mix.state }).kinds.map(
+        ({ entryKind }) => entryKind,
+      ),
+    ).toEqual(['correction', 'idiom']);
   });
 });
 
@@ -149,7 +149,7 @@ describe('the «Мій Мікс» row of Settings', () => {
     const { mix } = await open(ukrainian);
 
     expect(mixSummary({ mix: mix.state, strings: strings.mix, count })).toBe('Усі');
-    await mix.setCorrections(false);
+    await mix.setKind('correction', false);
     expect(mixSummary({ mix: mix.state, strings: strings.mix, count })).toBe('Усі');
   });
 

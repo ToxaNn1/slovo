@@ -1,5 +1,13 @@
 import { fill, type EditionStrings, type Plural } from '@slovo/contracts';
-import type { Edition, EntryRowModel, HiddenEntry, MixState } from '@slovo/core';
+import {
+  featureOfKind,
+  MIX_KINDS,
+  type Edition,
+  type EntryRowModel,
+  type HiddenEntry,
+  type MixKind,
+  type MixState,
+} from '@slovo/core';
 import { entryKindLabel } from '@slovo/ui/entry-row-text';
 
 /** A Hidden Entry's row on the Hidden screen. */
@@ -16,6 +24,14 @@ export interface HiddenCategoryModel {
   readonly name: string;
 }
 
+/** The row of a kind of Entry out of the Mix as a whole on the Hidden screen. */
+export interface HiddenKindModel {
+  readonly entryKind: MixKind;
+  readonly name: string;
+  /** What VoiceOver reads for its «Увімкнути» button. */
+  readonly turnOnLabel: string;
+}
+
 /** What the Hidden screen draws, from the Hidden Entries and the Mix. */
 export interface HiddenScreenModel {
   /** The Hidden Entries, newest first. */
@@ -23,15 +39,10 @@ export interface HiddenScreenModel {
   /** The Hidden Categories, in the Language Pack's order: the Categories out of the Mix (ADR 0019). */
   readonly categories: readonly HiddenCategoryModel[];
   /**
-   * Corrections as a whole, when they are out of the Mix (ADR 0019) and the
-   * Edition turns them on; nothing otherwise.
+   * Each kind of Entry as a whole (Corrections, Idioms) that is out of the
+   * Mix (ADR 0019) while the Edition turns it on, in the Mix's order.
    */
-  readonly corrections: { readonly name: string } | undefined;
-  /**
-   * Idioms as a whole, when they are out of the Mix and the Edition turns
-   * them on; nothing otherwise.
-   */
-  readonly idioms: { readonly name: string } | undefined;
+  readonly kinds: readonly HiddenKindModel[];
   /** Whether nothing is hidden, which is when the screen says so. */
   readonly empty: boolean;
 }
@@ -58,6 +69,14 @@ function labelParts(
     short: [withGender('short'), ...row.registers.map((register) => registers[register].short)],
     full: [withGender('full'), ...row.registers.map((register) => registers[register].full)],
   };
+}
+
+/** The row of the kind as a whole, in the Edition's words. */
+function kindModel(entryKind: MixKind, strings: EditionStrings): HiddenKindModel {
+  const { hidden, correctionCard, mix } = strings;
+  return entryKind === 'correction'
+    ? { entryKind, name: correctionCard.title, turnOnLabel: hidden.turnOnCorrectionsLabel }
+    : { entryKind, name: mix.idioms.title, turnOnLabel: hidden.turnOnIdiomsLabel };
 }
 
 function entryModel({ entryId, row }: HiddenEntry, strings: EditionStrings): HiddenEntryModel {
@@ -93,24 +112,14 @@ export function hiddenScreenModel({
     id,
     name: displayName,
   }));
-  const corrections =
-    edition.isFeatureEnabled('corrections') && !mix.corrections
-      ? { name: strings.correctionCard.title }
-      : undefined;
-  const idioms =
-    edition.isFeatureEnabled('idioms') && !mix.idioms
-      ? { name: strings.mix.idioms.title }
-      : undefined;
+  const kinds = MIX_KINDS.filter(
+    (kind) => edition.isFeatureEnabled(featureOfKind(kind)) && !mix.kinds[kind],
+  ).map((kind) => kindModel(kind, strings));
   return {
     entries,
     categories,
-    corrections,
-    idioms,
-    empty:
-      entries.length === 0 &&
-      categories.length === 0 &&
-      corrections === undefined &&
-      idioms === undefined,
+    kinds,
+    empty: entries.length === 0 && categories.length === 0 && kinds.length === 0,
   };
 }
 

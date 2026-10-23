@@ -1,5 +1,5 @@
 import type { EditionStrings, Plural } from '@slovo/contracts';
-import type { Edition, MixState } from '@slovo/core';
+import { featureOfKind, MIX_KINDS, type Edition, type MixKind, type MixState } from '@slovo/core';
 
 /** A Category's chip on the Mix screen. */
 export interface MixChipModel {
@@ -18,10 +18,11 @@ export interface MixScreenModel {
   readonly allOn: boolean;
   /** Whether to say why a chip is disabled. */
   readonly lastCategoryHint: boolean;
-  /** The Corrections switch, left out when the Edition doesn't turn Corrections on. */
-  readonly corrections: { readonly on: boolean } | undefined;
-  /** The Idioms switch, left out when the Edition doesn't turn Idioms on. */
-  readonly idioms: { readonly on: boolean } | undefined;
+  /**
+   * The switch of each kind of Entry in the Mix as a whole (Corrections,
+   * Idioms), in the Mix's order, leaving out a kind the Edition doesn't turn on.
+   */
+  readonly kinds: readonly { readonly entryKind: MixKind; readonly on: boolean }[];
   /** The Rarity Floor choice, left out while the Edition turns its rarityFloor switch off. */
   readonly rarity: { readonly floor: number; readonly floors: readonly number[] } | undefined;
 }
@@ -45,8 +46,9 @@ export function mixScreenModel({
     })),
     allOn: mix.hiddenCategories.length === 0,
     lastCategoryHint: mix.lastCategoryId !== undefined,
-    corrections: edition.isFeatureEnabled('corrections') ? { on: mix.corrections } : undefined,
-    idioms: edition.isFeatureEnabled('idioms') ? { on: mix.idioms } : undefined,
+    kinds: MIX_KINDS.filter((kind) => edition.isFeatureEnabled(featureOfKind(kind))).map(
+      (entryKind) => ({ entryKind, on: mix.kinds[entryKind] }),
+    ),
     rarity: edition.isFeatureEnabled('rarityFloor')
       ? { floor: mix.rarityFloor, floors: RARITY_FLOORS }
       : undefined,

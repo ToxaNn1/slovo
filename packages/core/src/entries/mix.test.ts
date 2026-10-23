@@ -145,8 +145,7 @@ describe('the Mix', () => {
     expect(app.mix.state).toEqual({
       allCategories: categories,
       categoryIds: ['nature', 'speech', 'crafts'],
-      corrections: true,
-      idioms: true,
+      kinds: { correction: true, idiom: true },
       hiddenCategories: [],
       lastCategoryId: undefined,
       rarityFloor: 1,
@@ -308,15 +307,15 @@ describe('the Mix', () => {
     expect(app.mix.state.hiddenCategories).toEqual([]);
   });
 
-  it('turns every Category on at once, leaving Corrections as they are', async () => {
+  it('turns every Category on at once, leaving the kinds as a whole as they are', async () => {
     const records = new Map<string, string>();
     const app = await run({ records, defaultCategoryIds: ['speech'] });
-    await app.mix.setCorrections(false);
+    await app.mix.setKind('correction', false);
 
     await app.mix.turnAllOn();
 
     expect(app.mix.state.categoryIds).toEqual(['nature', 'speech', 'crafts']);
-    expect(app.mix.state.corrections).toBe(false);
+    expect(app.mix.state.kinds.correction).toBe(false);
     expect(mixRecordsOf(records)).toEqual({
       'mix.categories.nature': 'true',
       'mix.categories.crafts': 'true',
@@ -324,35 +323,27 @@ describe('the Mix', () => {
     });
   });
 
-  it('turns Corrections off and on with the `mix.corrections` record', async () => {
-    const records = new Map<string, string>();
-    const app = await run({ records });
+  it.each([
+    ['correction', 'mix.corrections'],
+    ['idiom', 'mix.idioms'],
+  ] as const)(
+    'takes the kind %s as a whole out of the Mix and back with its `%s` record, leaving the rest of the Mix as it is',
+    async (kind, record) => {
+      const records = new Map<string, string>();
+      const app = await run({ records });
+      const expected = { ...app.mix.state.kinds, [kind]: false };
 
-    await app.mix.setCorrections(false);
+      await app.mix.setKind(kind, false);
 
-    expect(app.mix.state.corrections).toBe(false);
-    expect(records.get('mix.corrections')).toBe('false');
+      expect(app.mix.state.kinds).toEqual(expected);
+      expect(mixRecordsOf(records)).toEqual({ [record]: 'false' });
 
-    await app.mix.setCorrections(true);
+      await app.mix.setKind(kind, true);
 
-    expect(app.mix.state.corrections).toBe(true);
-    expect(records.get('mix.corrections')).toBe('true');
-  });
-
-  it('turns Idioms off and on with the `mix.idioms` record, leaving the rest of the Mix as it is', async () => {
-    const records = new Map<string, string>();
-    const app = await run({ records });
-
-    await app.mix.setIdioms(false);
-
-    expect(app.mix.state.idioms).toBe(false);
-    expect(mixRecordsOf(records)).toEqual({ 'mix.idioms': 'false' });
-
-    await app.mix.setIdioms(true);
-
-    expect(app.mix.state.idioms).toBe(true);
-    expect(records.get('mix.idioms')).toBe('true');
-  });
+      expect(app.mix.state.kinds[kind]).toBe(true);
+      expect(records.get(record)).toBe('true');
+    },
+  );
 
   it('sets the Rarity Floor with the `mix.rarityFloor` record, and skips one that is no rarity', async () => {
     const records = new Map<string, string>();
@@ -392,8 +383,8 @@ describe('the Mix', () => {
     const records = new Map<string, string>();
     const first = await run({ records });
     await first.mix.takeOut('nature');
-    await first.mix.setCorrections(false);
-    await first.mix.setIdioms(false);
+    await first.mix.setKind('correction', false);
+    await first.mix.setKind('idiom', false);
     await first.mix.setRarityFloor(3);
 
     const app = await run({ records });
@@ -401,8 +392,7 @@ describe('the Mix', () => {
     expect(app.mix.state).toEqual(first.mix.state);
     expect(app.mix.state).toMatchObject({
       categoryIds: ['speech', 'crafts'],
-      corrections: false,
-      idioms: false,
+      kinds: { correction: false, idiom: false },
       rarityFloor: 3,
     });
   });
@@ -425,7 +415,7 @@ describe('the Mix', () => {
     await expect(app.mix.takeOut('speech')).rejects.toThrow('The disk is full');
     await expect(app.mix.putBack('nature')).rejects.toThrow('The disk is full');
     await expect(app.mix.turnAllOn()).rejects.toThrow('The disk is full');
-    await expect(app.mix.setCorrections(false)).rejects.toThrow('The disk is full');
+    await expect(app.mix.setKind('correction', false)).rejects.toThrow('The disk is full');
     await expect(app.mix.setRarityFloor(5)).rejects.toThrow('The disk is full');
 
     expect(app.mix.state).toBe(state);
@@ -446,7 +436,7 @@ describe('the Mix', () => {
 
       await app.mix.putBack('speech');
       await app.mix.turnAllOn();
-      await app.mix.setCorrections(true);
+      await app.mix.setKind('correction', true);
       await app.mix.setRarityFloor(1);
       expect(app.mix.state).toBe(all);
       expect(told).toBe(0);
@@ -458,7 +448,7 @@ describe('the Mix', () => {
       expect(app.mix.state).toBe(out);
       expect(told).toBe(1);
 
-      await app.mix.setCorrections(false);
+      await app.mix.setKind('correction', false);
       expect(app.mix.state).not.toBe(out);
       expect(told).toBe(2);
 
@@ -489,7 +479,7 @@ describe('eligibility over the Mix', () => {
     const time = fakeClock();
     const app = await run({ records, clock: time.clock });
 
-    await app.mix.setCorrections(false);
+    await app.mix.setKind('correction', false);
 
     expect((await offeredNext(app.feed)).filter(isCorrection)).toEqual([]);
     expect((await readToTheNextCycle(app.feed, time)).slice(2).filter(isCorrection)).toEqual([]);
@@ -501,7 +491,7 @@ describe('eligibility over the Mix', () => {
   it('holds no Correction while the Edition turns Corrections off, even with Corrections in the Mix', async () => {
     const app = await run({ correctionsSwitch: false });
 
-    expect(app.mix.state.corrections).toBe(true);
+    expect(app.mix.state.kinds.correction).toBe(true);
     expect((await walk(app.feed)).filter(isCorrection)).toEqual([]);
   });
 
@@ -548,7 +538,7 @@ describe('eligibility over the Mix', () => {
     const hidden = categories.find((category) => !held.some(isWordOf(category))) ?? nature;
 
     await app.mix.takeOut(hidden.id);
-    await app.mix.setCorrections(false);
+    await app.mix.setKind('correction', false);
 
     expect(records.get('feed.cycle')).toBe(cycle);
     expect(records.get(`feed.seen.${seen}`)).toBe('1');
@@ -563,9 +553,9 @@ describe('eligibility over the Mix', () => {
     const hidden = categories.find((category) => !held.some(isWordOf(category))) ?? nature;
 
     await app.mix.takeOut(hidden.id);
-    await app.mix.setCorrections(false);
+    await app.mix.setKind('correction', false);
     await app.mix.turnAllOn();
-    await app.mix.setCorrections(true);
+    await app.mix.setKind('correction', true);
 
     expect(await walk(app.feed)).toEqual(twin);
   });
@@ -758,16 +748,16 @@ describe('linked Corrections («Часто кажуть») over the Mix', () => 
     const app = await run({ pack });
     expect(await entryScreenLinks(app)).toEqual(links);
 
-    await app.mix.setCorrections(false);
+    await app.mix.setKind('correction', false);
     expect(await entryScreenLinks(app)).toEqual([]);
 
-    await app.mix.setCorrections(true);
+    await app.mix.setKind('correction', true);
     expect(await entryScreenLinks(app)).toEqual(links);
   });
 
   it('leaves the block off the Entry screen after reopening with Corrections out of the Mix', async () => {
     const records = new Map<string, string>();
-    await (await run({ records, pack })).mix.setCorrections(false);
+    await (await run({ records, pack })).mix.setKind('correction', false);
 
     expect(await entryScreenLinks(await run({ records, pack }))).toEqual([]);
   });
@@ -790,7 +780,7 @@ describe('linked Corrections («Часто кажуть») over the Mix', () => 
     });
     const position = entryIdsOf(app.feed.cards).indexOf(linked.id);
 
-    await app.mix.setCorrections(false);
+    await app.mix.setKind('correction', false);
 
     expect(told).toBeGreaterThan(0);
     const out = app.feed.cards[position];
@@ -800,7 +790,7 @@ describe('linked Corrections («Часто кажуть») over the Mix', () => 
     expect(await app.feed.openLinkedCorrection(position, 'c_one')).toBeUndefined();
     const toldOut = told;
 
-    await app.mix.setCorrections(true);
+    await app.mix.setKind('correction', true);
 
     expect(told).toBeGreaterThan(toldOut);
     const back = app.feed.cards[position];

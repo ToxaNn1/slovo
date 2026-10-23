@@ -180,7 +180,16 @@ export {
   type MemoryPackFiles,
 } from './fakes/memory-pack-files';
 export { type Progress, type ProgressState } from './progress';
-export { type Mix, type MixEdition, type MixState } from './entries/mix';
+export {
+  featureOfKind,
+  MIX_KINDS,
+  type KindsInMix,
+  type Mix,
+  type MixEdition,
+  type MixKind,
+  type MixKindName,
+  type MixState,
+} from './entries/mix';
 export {
   type Onboarding,
   type OnboardingState,

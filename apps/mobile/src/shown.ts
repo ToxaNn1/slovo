@@ -1,5 +1,12 @@
 import type { EntryKind } from '@slovo/contracts';
-import type { Edition, FeatureSwitch, MixState, UserSettings } from '@slovo/core';
+import {
+  featureOfKind,
+  MIX_KINDS,
+  type Edition,
+  type FeatureSwitch,
+  type MixState,
+  type UserSettings,
+} from '@slovo/core';
 
 /** Every tab in its final order: Home, Settings, Game, Saved. */
 const allTabs = ['home', 'settings', 'game', 'saved'] as const;
@@ -60,14 +67,14 @@ export function shownOf({
 }: {
   edition: Pick<Edition, 'isFeatureEnabled'>;
   settings: Pick<UserSettings, 'hideStreak' | 'selfCheck'>;
-  mix: Pick<MixState, 'corrections' | 'idioms'>;
+  mix: Pick<MixState, 'kinds'>;
 }): Shown {
   const on = (feature: FeatureSwitch) => edition.isFeatureEnabled(feature);
   const knowledge = on('knowledge');
+  // The kinds the Known count joins: Words, and each kind as a whole on and in the Mix.
   const knownKinds: readonly EntryKind[] = [
     'word',
-    ...(on('corrections') && mix.corrections ? (['correction'] as const) : []),
-    ...(on('idioms') && mix.idioms ? (['idiom'] as const) : []),
+    ...MIX_KINDS.filter((kind) => on(featureOfKind(kind)) && mix.kinds[kind]),
   ];
   return {
     tabs: allTabs.filter((tab) => tab !== 'game' || on('game')),
