@@ -1,6 +1,7 @@
 {
   "minWords": 500,
   "minCorrections": 50,
+  "minIdioms": 30,
   "minWordsPerCategory": 45,
   "everyRarity": true,
   "everyWordHasStress": true,

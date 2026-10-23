@@ -44,14 +44,15 @@ describe('the Idioms of the Ukrainian Edition', () => {
     });
   });
 
-  it('holds 2 idioms and 1 place name, each with its sources', async () => {
+  it('holds 15 Idioms of each Idiom Type, each with its sources', async () => {
     const idioms = await pack.getIdioms(await pack.listIdiomIds());
+    const ofType = (idiomType: string) => idioms.filter((idiom) => idiom.idiomType === idiomType);
 
-    expect(idioms.map(({ idiomType, expression }) => [idiomType, expression])).toEqual([
-      ['idiom', 'бити байдики'],
-      ['placeName', 'Бердичів'],
-      ['idiom', 'пекти раків'],
-    ]);
+    expect(ofType('idiom')).toHaveLength(15);
+    expect(ofType('placeName')).toHaveLength(15);
+    expect(idioms.map(({ expression }) => expression)).toEqual(
+      expect.arrayContaining(['бити байдики', 'пекти раків', 'Бердичів']),
+    );
     for (const idiom of idioms) expect(idiom.sources.length).toBeGreaterThan(0);
   });
 
