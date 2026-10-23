@@ -303,6 +303,8 @@ export const shareCardLayout = {
       definition: 19,
       label: 13,
       nonStandard: 32,
+      /** A place name's etymology, between the part of speech and the Definition: the design has no Idiom yet. */
+      etymology: 15,
       watermark: 11,
     },
   },
@@ -319,6 +321,7 @@ export const shareCardLayout = {
       definition: 15,
       label: 12,
       nonStandard: 20,
+      etymology: 12,
       watermark: 10,
     },
   },

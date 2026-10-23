@@ -1,8 +1,8 @@
 import type { EditionStrings } from '@slovo/contracts';
-import type { CorrectionCardModel } from '@slovo/core';
+import type { CorrectionCardModel, IdiomCardModel } from '@slovo/core';
 import { EditionProvider, ShareSheet, type ShareSheetOutcome } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, within } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 const metrics = {
@@ -23,6 +23,7 @@ const strings = {
     standard: 'Better',
   },
   correctionCard: { correctionTypes: { calque: 'calque' } },
+  idiomCard: { idiomTypes: { idiom: 'idiom', placeName: 'place name' }, etymology: 'Origin' },
 } as unknown as EditionStrings;
 
 const card: CorrectionCardModel = {
@@ -42,14 +43,17 @@ const card: CorrectionCardModel = {
 /** How long the toast stays, from the design. */
 const TOAST_MS = 4000;
 
-async function renderSheet(outcome: ShareSheetOutcome) {
+async function renderSheet(
+  outcome: ShareSheetOutcome,
+  shown: CorrectionCardModel | IdiomCardModel = card,
+) {
   const onClose = jest.fn();
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
       <EditionProvider edition={{ locale: 'en' }} strings={strings}>
         <ShareSheet
           visible
-          card={card}
+          card={shown}
           wordOfTheDay={false}
           watermark="SLOVO"
           initialFormat="story"
@@ -92,5 +96,63 @@ describe('ShareSheet', () => {
 
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(screen.queryByText('Could not make the image.')).not.toBeOnTheScreen();
+  });
+});
+
+function idiomCard(overrides: Partial<IdiomCardModel> = {}): IdiomCardModel {
+  return {
+    kind: 'idiom',
+    idiomId: 'i1',
+    expression: 'to beat the bushes',
+    idiomType: 'idiom',
+    primaryDefinition: 'To idle about.',
+    extraDefinitions: ['To waste time.'],
+    examples: [{ text: 'He beat the bushes all day.' }],
+    etymology: 'From the hunt.',
+    sourceTitles: ['A phrase dictionary'],
+    ...overrides,
+  };
+}
+
+/** The Share Card in the preview; the one drawn off screen for the image is the same. */
+function previewCard() {
+  return within(screen.getByTestId('share-preview')).getByTestId('share-card');
+}
+
+describe('The Share Card of an Idiom', () => {
+  it("shows an idiom's chip, its expression and its primary Definition", async () => {
+    await renderSheet('closed', idiomCard());
+
+    const shown = previewCard();
+    expect(within(shown).getByText('idiom')).toBeOnTheScreen();
+    expect(within(shown).getByText('to beat the bushes')).toBeOnTheScreen();
+    expect(within(shown).getByText('To idle about.')).toBeOnTheScreen();
+    expect(within(shown).queryByText('To waste time.')).not.toBeOnTheScreen();
+    expect(within(shown).queryByText('From the hunt.')).not.toBeOnTheScreen();
+    expect(within(shown).queryByText('He beat the bushes all day.')).not.toBeOnTheScreen();
+    expect(shown).toHaveAccessibleName('idiom. to beat the bushes. To idle about.');
+  });
+
+  it("adds a place name's etymology under «Origin»", async () => {
+    await renderSheet(
+      'closed',
+      idiomCard({
+        idiomId: 'i2',
+        expression: 'Kyiv',
+        idiomType: 'placeName',
+        primaryDefinition: 'The capital on the Dnipro.',
+        etymology: 'Named after Kyi',
+      }),
+    );
+
+    const shown = previewCard();
+    expect(within(shown).getByText('place name')).toBeOnTheScreen();
+    expect(within(shown).getByText('Kyiv')).toBeOnTheScreen();
+    expect(within(shown).getByText('The capital on the Dnipro.')).toBeOnTheScreen();
+    expect(within(shown).getByText('Origin')).toBeOnTheScreen();
+    expect(within(shown).getByText('Named after Kyi')).toBeOnTheScreen();
+    expect(shown).toHaveAccessibleName(
+      'place name. Kyiv. The capital on the Dnipro. Origin: Named after Kyi',
+    );
   });
 });
