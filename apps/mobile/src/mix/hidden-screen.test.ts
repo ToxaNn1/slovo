@@ -113,7 +113,7 @@ describe('the «Приховане» screen', () => {
 
   it('lists the Hidden Entries newest first, each with its kind and labels', async () => {
     const { app, advance } = await open();
-    for (const id of ['w_one', 'c_one', 'w_two']) {
+    for (const id of ['w_one', 'c_one', 'i_one', 'w_two']) {
       await app.hiddenEntries.hide(id);
       advance();
     }
@@ -121,15 +121,22 @@ describe('the «Приховане» screen', () => {
     const model = modelOf(app);
 
     expect(model.empty).toBe(false);
-    expect(model.entries.map(({ entryId }) => entryId)).toEqual(['w_two', 'c_one', 'w_one']);
+    expect(model.entries.map(({ entryId }) => entryId)).toEqual([
+      'w_two',
+      'i_one',
+      'c_one',
+      'w_one',
+    ]);
     expect(model.entries.map(({ labels }) => labels.text)).toEqual([
       'слово · ім., ж. р.',
+      'фразеологізм',
       'виправлення · росіянізм',
       'слово · присл., заст.',
     ]);
     // VoiceOver reads the whole words, not the abbreviations.
     expect(model.entries.map(({ labels }) => labels.spoken)).toEqual([
       'слово, іменник, жіночий рід',
+      'фразеологізм',
       'виправлення, росіянізм',
       'слово, прислівник, застаріле',
     ]);

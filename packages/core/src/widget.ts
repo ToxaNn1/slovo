@@ -13,7 +13,6 @@ import type { EntryFeedCard } from './feed/feed-card';
 import type { Edition } from './edition/edition';
 import type { Onboarding } from './onboarding';
 import type { Clock } from './ports';
-import { withoutStress } from './entries/stress';
 
 /**
  * What the home-screen widget shows, decided by the Core, so the widget holds
@@ -46,17 +45,17 @@ const entriesOf = (eligible: EligibleOfKind) => ('entries' in eligible ? eligibl
 
 /**
  * An Entry as the widget shows it: what its row in a list leads with, then
- * its second line, and both as VoiceOver reads them.
+ * its second line, and both as VoiceOver reads them, all as the Entry row
+ * says them.
  */
 function widgetEntry(entry: Entry): WidgetEntry {
   const row = buildEntryRow(entry);
-  const secondLine = row.kind === 'correction' ? row.nonStandardForm : row.definition;
   return {
     kind: entry.kind,
     id: row.entryId,
     headline: row.title,
-    secondLine,
-    voiceOver: `${withoutStress(row.title)}, ${withoutStress(secondLine)}`,
+    secondLine: row.secondLine,
+    voiceOver: row.spoken,
   };
 }
 

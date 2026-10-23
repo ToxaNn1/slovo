@@ -23,6 +23,10 @@ The Entry card draws an Idiom (ADR 0046) in the same frame, with the same corner
 
 The Idiom card shows all its sections at once, without the Word card's «Детальніше»: an Idiom has fewer of them, and the story of a place name is the point of its card.
 
+## Amendment: the Entry row names and reads an Entry for every list and the widget (architecture review 4)
+
+The Core's Entry row (`buildEntryRow`) owns how an Entry is named and read wherever it is listed: Favorites, Collections, History, the Hidden screen, the «Вчу» list and the widget. For every kind it gives the title (a Word's Lemma with Stress, a Correction's main standard equivalent, an Idiom's expression), the second line (the primary Definition, or the non-standard form a Correction replaces), the key of the kind's name (`word`, `correction`, or the Idiom Type `idiom` or `placeName`, which indexes the Edition's `history.kinds`) and the VoiceOver text that is kind-specific: the title and the second line in whole words, with no Stress mark. The Core stays language-agnostic: one helper of the UI package (`@slovo/ui/entry-row-text`) turns the key into the Edition's word and wraps a Correction's second line in «замість …»; no screen branches on the kind for these texts, and the widget's snapshot (ADR 0026) copies the row's texts as they are. The Game Review keeps leading a Correction's row with the non-standard form the Round asked about, which is the row's second line, and says so in one comment.
+
 ## Considered Options
 
 - **A Word card and a Correction card that share a frame component**: rejected. Every screen would still branch on the kind and pass each card its parts, and the action row would be added twice.

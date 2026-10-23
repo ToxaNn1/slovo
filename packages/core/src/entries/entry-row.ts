@@ -10,57 +10,78 @@ import type {
 } from '@slovo/contracts';
 
 import type { Entries } from './entries';
-import { renderStress } from './stress';
+import { renderStress, withoutStress } from './stress';
+
+/** What indexes the Edition's name of a row's kind: an Idiom goes by its Idiom Type (ADR 0046). */
+export type EntryKindKey = 'word' | 'correction' | IdiomType;
+
+/** What every row says of its Entry, whatever its kind. */
+interface EntryRowText {
+  readonly entryId: string;
+  /**
+   * What the row leads with: a Word's Lemma with every Stress mark applied, a
+   * Correction's main standard equivalent, or an Idiom's expression as written.
+   */
+  readonly title: string;
+  /**
+   * The line under the title: a Word's or an Idiom's primary Definition, or
+   * the non-standard form a Correction replaces.
+   */
+  readonly secondLine: string;
+  /** The key of the kind's name in the Edition's words («слово», «виправлення», «фразеологізм», «топонім»). */
+  readonly kindKey: EntryKindKey;
+  /**
+   * The title and the second line as VoiceOver reads them: whole words, with
+   * no Stress mark, since the voices break a word at the mark.
+   */
+  readonly spoken: string;
+}
 
 /**
  * What one row of a list shows for an Entry (Favorites, Collections, History,
- * the Hidden screen and the «Вчу» list), decided by the Core. It carries data only; the UI adds the
- * Edition's words and what each screen puts on the right (a date, a kind, a
- * time).
+ * the Hidden screen, the «Вчу» list and the widget), decided by the Core: how
+ * the Entry is named and read, the same on every surface (ADR 0017). It
+ * carries data and keys only; the UI adds the Edition's words and what each
+ * screen puts on the right (a date, a kind, a time).
  */
 export type EntryRowModel =
-  | {
+  | (EntryRowText & {
       readonly kind: 'word';
-      readonly entryId: string;
-      /** What the row leads with: the Lemma with every Stress mark applied. */
-      readonly title: string;
-      /** The primary Definition, which the row shows on one line. */
-      readonly definition: string;
       /** What labels the Word, as codes the UI turns into the Edition's words (the Hidden screen shows them). */
       readonly partOfSpeech: PartOfSpeech;
       /** Only a noun has one. */
       readonly gender?: Gender;
       readonly registers: readonly Register[];
-    }
-  | {
+    })
+  | (EntryRowText & {
       readonly kind: 'correction';
-      readonly entryId: string;
-      /** What the row leads with: the standard equivalent the Correction card puts first. */
-      readonly title: string;
-      /** The non-standard form the row says it replaces. */
-      readonly nonStandardForm: string;
-      /** Why the form is non-standard. */
+      /** Why the form is non-standard, a key the UI turns into the Edition's word (the Hidden screen shows it). */
       readonly correctionType: CorrectionType;
-    }
-  | {
-      readonly kind: 'idiom';
-      readonly entryId: string;
-      /** What the row leads with: the fixed expression, as written. */
-      readonly title: string;
-      /** What kind of Idiom it is, a key the UI turns into the Edition's word («фразеологізм», «топонім»). */
-      readonly idiomType: IdiomType;
-      /** The primary Definition, which the row shows on one line. */
-      readonly definition: string;
-    };
+    })
+  | (EntryRowText & { readonly kind: 'idiom' });
+
+/** The texts of a row, as VoiceOver reads them too. */
+function rowText(
+  entryId: string,
+  title: string,
+  secondLine: string,
+  kindKey: EntryKindKey,
+): EntryRowText {
+  return {
+    entryId,
+    title,
+    secondLine,
+    kindKey,
+    spoken: `${withoutStress(title)}, ${withoutStress(secondLine)}`,
+  };
+}
 
 /** The row model of an Entry. */
 export function buildEntryRow(entry: Word | Correction | Idiom): EntryRowModel {
   if (entry.kind === 'word') {
     return {
       kind: 'word',
-      entryId: entry.id,
-      title: renderStress(entry),
-      definition: entry.primaryDefinition,
+      ...rowText(entry.id, renderStress(entry), entry.primaryDefinition, 'word'),
       partOfSpeech: entry.partOfSpeech,
       ...(entry.gender === undefined ? {} : { gender: entry.gender }),
       registers: entry.registers,
@@ -69,18 +90,18 @@ export function buildEntryRow(entry: Word | Correction | Idiom): EntryRowModel {
   if (entry.kind === 'idiom') {
     return {
       kind: 'idiom',
-      entryId: entry.id,
-      title: entry.expression,
-      idiomType: entry.idiomType,
-      definition: entry.primaryDefinition,
+      ...rowText(entry.id, entry.expression, entry.primaryDefinition, entry.idiomType),
     };
   }
   return {
     kind: 'correction',
-    entryId: entry.id,
-    // The contracts require at least one standard equivalent.
-    title: entry.standardEquivalents[0] ?? entry.nonStandardForm,
-    nonStandardForm: entry.nonStandardForm,
+    ...rowText(
+      entry.id,
+      // The contracts require at least one standard equivalent.
+      entry.standardEquivalents[0] ?? entry.nonStandardForm,
+      entry.nonStandardForm,
+      'correction',
+    ),
     correctionType: entry.correctionType,
   };
 }
