@@ -187,7 +187,7 @@ export default {
       name: 'no-orphans',
       comment:
         'A module that imports nothing and is imported by nothing is dead. Tool ' +
-        "configuration files, Jest's setup and resolver files, the Expo Router routes and " +
+        "configuration files, Jest's setup, resolver and stand-in files, the Expo Router routes and " +
         "the Maestro flows' scripts (found by their place, not by an import) are entry points.",
       severity: 'error',
       from: {
@@ -195,7 +195,7 @@ export default {
         pathNot: [
           '\\.d\\.ts$',
           '(^|/)[^/]+\\.config\\.(js|cjs|mjs|ts)$',
-          '(^|/)jest\\.(setup|resolver)\\.(js|cjs)$',
+          '(^|/)jest\\.(setup|resolver|glass-effect)\\.(js|cjs)$',
           '^apps/mobile/src/app/',
           '^apps/mobile/maestro/',
         ],
