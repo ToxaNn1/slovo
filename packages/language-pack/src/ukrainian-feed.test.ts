@@ -382,6 +382,49 @@ describe('Idioms in the Feed over the Ukrainian Language Pack', () => {
       sourceTitles: idiom?.sources.map((source) => source.title),
     });
   });
+  // Spec #549, ADR 0043: an Idiom due for Review takes the Idiom turn before a new one.
+  describe('a due Idiom', () => {
+    async function open(records: Map<string, string>, time: ReturnType<typeof fakeClock>) {
+      return openComposition({
+        content,
+        edition: ukrainian,
+        userState: await openUserState({ port: createMemoryUserStatePort(records) }),
+        clock: time.clock,
+        random: seededRandom(7),
+      });
+    }
+
+    async function firstCards(feed: Feed, count: number): Promise<(string | undefined)[]> {
+      while (feed.cards.length < count) {
+        if ((await feed.next()) === undefined) break;
+      }
+      return feed.cards.slice(0, count).map(entryIdOf);
+    }
+
+    it('comes back on every Idiom turn, Seen in this Cycle, until a Known answer moves its Review on', async () => {
+      const records = new Map<string, string>();
+      const dayOne = fakeClock(today);
+      const first = await open(records, dayOne);
+      await firstCards(first.feed, IDIOM_EVERY);
+      for (let position = 0; position < IDIOM_EVERY; position += 1) {
+        await look(first.feed, dayOne, position, SEEN_DWELL_MS * 2);
+      }
+      const due = entryIdOf(first.feed.cards[IDIOM_EVERY - 1]) ?? '';
+      expect(due.startsWith('i_')).toBe(true);
+      await first.knowledge.tap(due, 'unknown');
+
+      const app = await open(records, fakeClock('2026-10-12T09:00:00+03:00'));
+      const before = await firstCards(app.feed, IDIOM_EVERY * 2);
+      expect([before[IDIOM_EVERY - 1], before[IDIOM_EVERY * 2 - 1]]).toEqual([due, due]);
+      expect(before.filter((id) => id?.startsWith('i_'))).toEqual([due, due]);
+      expect(app.feed.cards[IDIOM_EVERY - 1]).toMatchObject({ kind: 'idiom', review: true });
+
+      await app.knowledge.tap(due, 'known');
+      const after = await firstCards(app.feed, IDIOM_EVERY * 3);
+      expect(after[IDIOM_EVERY * 3 - 1]?.startsWith('i_')).toBe(true);
+      expect(after.slice(IDIOM_EVERY * 2)).not.toContain(due);
+    });
+  });
 });
 
 describe('Favorites over the Ukrainian Language Pack', () => {
