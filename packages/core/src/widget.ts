@@ -54,9 +54,9 @@ const entriesOf = (eligible: EligibleOfKind) =>
  */
 function widgetEntry(entry: Word | Correction): WidgetEntry {
   const row = buildEntryRow(entry);
-  const secondLine = row.kind === 'word' ? row.definition : row.nonStandardForm;
+  const secondLine = row.kind === 'correction' ? row.nonStandardForm : row.definition;
   return {
-    kind: row.kind,
+    kind: entry.kind,
     id: row.entryId,
     headline: row.title,
     secondLine,

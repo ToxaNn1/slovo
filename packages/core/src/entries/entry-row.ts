@@ -2,6 +2,8 @@ import type {
   Correction,
   CorrectionType,
   Gender,
+  Idiom,
+  IdiomType,
   PartOfSpeech,
   Register,
   Word,
@@ -11,8 +13,8 @@ import type { Entries } from './entries';
 import { renderStress } from './stress';
 
 /**
- * What one row of a list shows for an Entry (Favorites, and later Collections
- * and History), decided by the Core. It carries data only; the UI adds the
+ * What one row of a list shows for an Entry (Favorites, Collections, History,
+ * the Hidden screen and the «Вчу» list), decided by the Core. It carries data only; the UI adds the
  * Edition's words and what each screen puts on the right (a date, a kind, a
  * time).
  */
@@ -39,10 +41,20 @@ export type EntryRowModel =
       readonly nonStandardForm: string;
       /** Why the form is non-standard. */
       readonly correctionType: CorrectionType;
+    }
+  | {
+      readonly kind: 'idiom';
+      readonly entryId: string;
+      /** What the row leads with: the fixed expression, as written. */
+      readonly title: string;
+      /** What kind of Idiom it is, a key the UI turns into the Edition's word («фразеологізм», «топонім»). */
+      readonly idiomType: IdiomType;
+      /** The primary Definition, which the row shows on one line. */
+      readonly definition: string;
     };
 
-/** The row model of an Entry. An Idiom has no row yet (0.8.8). */
-export function buildEntryRow(entry: Word | Correction): EntryRowModel {
+/** The row model of an Entry. */
+export function buildEntryRow(entry: Word | Correction | Idiom): EntryRowModel {
   if (entry.kind === 'word') {
     return {
       kind: 'word',
@@ -52,6 +64,15 @@ export function buildEntryRow(entry: Word | Correction): EntryRowModel {
       partOfSpeech: entry.partOfSpeech,
       ...(entry.gender === undefined ? {} : { gender: entry.gender }),
       registers: entry.registers,
+    };
+  }
+  if (entry.kind === 'idiom') {
+    return {
+      kind: 'idiom',
+      entryId: entry.id,
+      title: entry.expression,
+      idiomType: entry.idiomType,
+      definition: entry.primaryDefinition,
     };
   }
   return {
@@ -91,7 +112,7 @@ export function createEntryRows(entries: Pick<Entries, 'getMany'>): EntryRows {
         read.then(
           (found) => {
             const entry = found.get(entryId);
-            return entry === undefined || entry.kind === 'idiom' ? undefined : buildEntryRow(entry);
+            return entry === undefined ? undefined : buildEntryRow(entry);
           },
           (error: unknown) => {
             // A failed read is tried again next time.
