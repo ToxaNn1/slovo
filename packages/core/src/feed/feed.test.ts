@@ -1298,6 +1298,28 @@ describe('Idioms in the Feed', () => {
     expect(kindsOf(ids.slice(0, collision + 1))).toBe(expected);
   });
 
+  it(`counts each turn from its kind's last card, so the Idiom the collision moved sets the next one ${String(IDIOM_EVERY)} cards after it`, async () => {
+    const many = Array.from({ length: 30 }, (_, index) => word(`w_many${String(index)}`));
+    const manyCorrections = Array.from({ length: 9 }, (_, index) =>
+      correction(`c_many${String(index)}`),
+    );
+    const manyIdioms = Array.from({ length: 7 }, (_, index) => idiom(`i_many${String(index)}`));
+
+    const ids = await walk(
+      await run({ words: many, corrections: manyCorrections, idioms: manyIdioms }),
+    );
+
+    // Cards 28 to 45. Card 35 is both turns: the Correction takes it, the Idiom
+    // card 36, and the next Idiom card 43, not 42.
+    expect(kindsOf(ids.slice(27, 45))).toBe('IWCWWWWCIWWWCWWIWC');
+  });
+
+  it('ends the Idiom turns once every Idiom of the Cycle was shown, and Words take their cards', async () => {
+    const ids = await walk(await run({ idioms: [idiom('i_only')] }));
+
+    expect(kindsOf(ids)).toBe('WWWWWWIWWWW');
+  });
+
   it('offers no Idiom when Idioms are out of the Mix, and mixes them in again once they are back', async () => {
     const app = await runApp({ corrections, idioms });
     await app.mix.setIdioms(false);

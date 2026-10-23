@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Correction, Word } from '@slovo/contracts';
+import type { Correction, Idiom, Word } from '@slovo/contracts';
 
 import {
   createMemoryContentPort,
@@ -12,7 +12,7 @@ import {
   type Feed,
   type FeedCard,
 } from '../index';
-import { correction, fakeClock, randomOf, word } from '../test-support';
+import { correction, fakeClock, idiom, randomOf, word } from '../test-support';
 
 /** Twenty Words of the test Category, one of another Category and one of rarity 1. */
 const words: readonly Word[] = [
@@ -25,6 +25,10 @@ const corrections: readonly Correction[] = Array.from({ length: 4 }, (_, index) 
   correction(`c_${String(index)}`),
 );
 
+const idioms: readonly Idiom[] = Array.from({ length: 4 }, (_, index) =>
+  idiom(`i_${String(index)}`),
+);
+
 const dayOne = '2026-10-11T09:00:00+03:00';
 const dayTwo = '2026-10-12T09:00:00+03:00';
 
@@ -33,16 +37,22 @@ async function run({
   records,
   at,
   withCorrections = false,
-  on = ['knowledge', 'corrections', 'rarityFloor'],
+  withIdioms = false,
+  on = ['knowledge', 'corrections', 'idioms', 'rarityFloor'],
 }: {
   records: Map<string, string>;
   at: string;
   withCorrections?: boolean;
+  withIdioms?: boolean;
   on?: readonly FeatureSwitch[];
 }): Promise<Composition & { advance: (ms: number) => void }> {
   const { clock, advance } = fakeClock(at);
   const app = await openComposition({
-    content: createMemoryContentPort({ words, corrections: withCorrections ? corrections : [] }),
+    content: createMemoryContentPort({
+      words,
+      corrections: withCorrections ? corrections : [],
+      idioms: withIdioms ? idioms : [],
+    }),
     edition: {
       id: 'test',
       isFeatureEnabled: (feature) => on.includes(feature),
@@ -61,7 +71,8 @@ async function run({
 
 const entryIdOf = (card: FeedCard | undefined) => {
   if (card?.kind === 'word') return card.wordCard.wordId;
-  return card?.kind === 'correction' ? card.correctionCard.correctionId : undefined;
+  if (card?.kind === 'correction') return card.correctionCard.correctionId;
+  return card?.kind === 'idiom' ? card.idiomCard.idiomId : undefined;
 };
 
 /** The ids of the Feed's first `count` cards, asking for the next card until there are that many. */
@@ -83,9 +94,10 @@ async function markSeenWordsUnknown(
     count,
     unknown,
     withCorrections = false,
-  }: { count: number; unknown: number; withCorrections?: boolean },
+    withIdioms = false,
+  }: { count: number; unknown: number; withCorrections?: boolean; withIdioms?: boolean },
 ): Promise<string[]> {
-  const app = await run({ records, at: dayOne, withCorrections });
+  const app = await run({ records, at: dayOne, withCorrections, withIdioms });
   for (let position = 0; position < count; position += 1) {
     await app.feed.show(position);
     app.advance(1000);
@@ -105,8 +117,9 @@ async function markUnknown(
   records: Map<string, string>,
   ids: readonly string[],
   withCorrections = false,
+  withIdioms = false,
 ): Promise<void> {
-  const app = await run({ records, at: dayOne, withCorrections });
+  const app = await run({ records, at: dayOne, withCorrections, withIdioms });
   for (const id of ids) await app.knowledge.tap(id, 'unknown');
 }
 
@@ -300,5 +313,52 @@ describe('Review in the Feed', () => {
         ),
       );
     });
+  });
+
+  // Spec #549, ADR 0043: an Idiom due for Review takes the next Idiom turn.
+  describe('a due Idiom', () => {
+    it('takes the Idiom turns, every 7th card, until the reader answers it', async () => {
+      const records = new Map<string, string>();
+      await markUnknown(records, ['i_0'], true, true);
+      const app = await run({ records, at: dayTwo, withCorrections: true, withIdioms: true });
+
+      const before = await firstCards(app.feed, 14);
+      expect([before[6], before[13]]).toEqual(['i_0', 'i_0']);
+      expect(before.filter((id) => id?.startsWith('i_'))).toEqual(['i_0', 'i_0']);
+      expect(app.feed.cards[6]).toMatchObject({ kind: 'idiom', review: true });
+
+      await app.knowledge.tap('i_0', 'known');
+      const after = await firstCards(app.feed, 21);
+      expect(after.slice(14)).not.toContain('i_0');
+      expect(after[20]?.startsWith('i_')).toBe(true);
+    });
+  });
+
+  it('keeps the Review slots for Words, while a due Correction and a due Idiom wait for their own turns', async () => {
+    const records = new Map<string, string>();
+    const [dueWord] = await markSeenWordsUnknown(records, {
+      count: 3,
+      unknown: 1,
+      withCorrections: true,
+      withIdioms: true,
+    });
+    await markUnknown(records, ['c_0', 'i_0'], true, true);
+
+    const ids = await firstCards(
+      (await run({ records, at: dayTwo, withCorrections: true, withIdioms: true })).feed,
+      21,
+    );
+
+    // 'R' for the due Word, 'C' for the due Correction, 'I' for the due Idiom,
+    // 'W' for any other Word. Cards 15 and 21 are Review slots, taken by the turns.
+    const kinds = ids
+      .map((id) => {
+        if (id === dueWord) return 'R';
+        if (id === 'c_0') return 'C';
+        if (id === 'i_0') return 'I';
+        return id?.startsWith('w_') === true ? 'W' : '?';
+      })
+      .join('');
+    expect(kinds).toBe('WWRWCRIWRCWRWICWWRWCI');
   });
 });
