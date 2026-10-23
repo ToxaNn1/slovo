@@ -26,8 +26,9 @@ const strings = editionStrings.hidden;
 
 /**
  * Settings › Приховане: the Hidden Entries newest first, each with its kind
- * and labels and «Повернути», and the Hidden Categories with «Увімкнути»,
- * which puts the Category back in the Mix. Bringing an Entry back shows an
+ * and labels and «Повернути», and the Hidden Categories, and Corrections and
+ * Idioms when they are out of the Mix, each with «Увімкнути», which puts it
+ * back in the Mix. Bringing an Entry back shows an
  * undo toast. Nothing hidden says so.
  */
 export default function HiddenScreen() {
@@ -40,7 +41,7 @@ export default function HiddenScreen() {
 
 function HiddenList() {
   const model = useHiddenScreenModel();
-  const { restoreEntry, turnCategoryOn, turnCorrectionsOn } = useHiddenChanges();
+  const { restoreEntry, turnCategoryOn, turnCorrectionsOn, turnIdiomsOn } = useHiddenChanges();
   const { colors } = useTokens();
   const router = useRouter();
 
@@ -82,11 +83,14 @@ function HiddenList() {
           />
         }
         ListFooterComponent={
-          model.categories.length > 0 || model.corrections !== undefined ? (
+          model.categories.length > 0 ||
+          model.corrections !== undefined ||
+          model.idioms !== undefined ? (
             <CategoriesSection
               model={model}
               onTurnCategoryOn={turnCategoryOn}
               onTurnCorrectionsOn={turnCorrectionsOn}
+              onTurnIdiomsOn={turnIdiomsOn}
             />
           ) : null
         }
@@ -139,15 +143,17 @@ function HiddenHeader({
   );
 }
 
-/** Below the list: the Hidden Categories and the Corrections, each with the button that turns it on. */
+/** Below the list: the Hidden Categories, the Corrections and the Idioms, each with the button that turns it on. */
 function CategoriesSection({
   model,
   onTurnCategoryOn,
   onTurnCorrectionsOn,
+  onTurnIdiomsOn,
 }: {
   model: HiddenScreenModel;
   onTurnCategoryOn: (id: string) => void;
   onTurnCorrectionsOn: () => void;
+  onTurnIdiomsOn: () => void;
 }) {
   return (
     <View testID="hidden-categories" style={styles.section}>
@@ -169,6 +175,14 @@ function CategoriesSection({
           name={model.corrections.name}
           accessibilityLabel={strings.turnOnCorrectionsLabel}
           onTurnOn={onTurnCorrectionsOn}
+        />
+      )}
+      {model.idioms !== undefined && (
+        <TurnOnRow
+          testID="hidden-idioms"
+          name={model.idioms.name}
+          accessibilityLabel={strings.turnOnIdiomsLabel}
+          onTurnOn={onTurnIdiomsOn}
         />
       )}
     </View>

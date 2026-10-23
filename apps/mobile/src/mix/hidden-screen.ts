@@ -26,6 +26,11 @@ export interface HiddenScreenModel {
    * Edition turns them on; nothing otherwise.
    */
   readonly corrections: { readonly name: string } | undefined;
+  /**
+   * Idioms as a whole, when they are out of the Mix and the Edition turns
+   * them on; nothing otherwise.
+   */
+  readonly idioms: { readonly name: string } | undefined;
   /** Whether nothing is hidden, which is when the screen says so. */
   readonly empty: boolean;
 }
@@ -91,11 +96,20 @@ export function hiddenScreenModel({
     edition.isFeatureEnabled('corrections') && !mix.corrections
       ? { name: strings.correctionCard.title }
       : undefined;
+  const idioms =
+    edition.isFeatureEnabled('idioms') && !mix.idioms
+      ? { name: strings.mix.idioms.title }
+      : undefined;
   return {
     entries,
     categories,
     corrections,
-    empty: entries.length === 0 && categories.length === 0 && corrections === undefined,
+    idioms,
+    empty:
+      entries.length === 0 &&
+      categories.length === 0 &&
+      corrections === undefined &&
+      idioms === undefined,
   };
 }
 

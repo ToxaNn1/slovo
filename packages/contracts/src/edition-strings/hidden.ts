@@ -25,6 +25,8 @@ export const HiddenStringsSchema = z.strictObject({
   turnOnLabel: templateOf('name'),
   /** The Corrections row's button as VoiceOver reads it. */
   turnOnCorrectionsLabel: TextSchema,
+  /** The Idioms row's button as VoiceOver reads it. */
+  turnOnIdiomsLabel: TextSchema,
   /** What labels a row under its Lemma, e.g. «слово · ім., ж. р.». Takes `{kind}` and `{labels}`. */
   rowLabels: templateOf('kind', 'labels'),
   /** The same line as VoiceOver reads it. Takes `{kind}` and `{labels}`. */

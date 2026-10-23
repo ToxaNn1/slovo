@@ -1,4 +1,4 @@
-import { type Correction, type Word } from '@slovo/contracts';
+import { type Correction, type Idiom, type Word } from '@slovo/contracts';
 import {
   createMemoryContentPort,
   createMemoryUserStatePort,
@@ -47,9 +47,26 @@ const correction: Correction = {
   retired: false,
 };
 
+const idiom: Idiom = {
+  kind: 'idiom',
+  id: 'i_test',
+  expression: 'бити байдики',
+  idiomType: 'idiom',
+  primaryDefinition: 'Ледарювати.',
+  extraDefinitions: [],
+  examples: [],
+  sources: [{ title: 'Test source' }],
+  retired: false,
+};
+
 async function open(): Promise<Composition> {
   return openComposition({
-    content: createMemoryContentPort({ categories, words: [word], corrections: [correction] }),
+    content: createMemoryContentPort({
+      categories,
+      words: [word],
+      corrections: [correction],
+      idioms: [idiom],
+    }),
     edition: ukrainian,
     userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
     clock: { now: () => new Date('2026-10-13T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
@@ -133,6 +150,35 @@ describe('the hide choice', () => {
 
     expect(choice.map(({ kind }) => kind)).toEqual(['entry']);
   });
+
+  it('offers an Idiom card’s Entry and Idioms as a whole, with their toast', async () => {
+    const app = await open();
+
+    const choice = choiceOn(app, await cardOf(app, idiom.id));
+
+    expect(choice).toEqual([
+      {
+        kind: 'entry',
+        target: { kind: 'entry', entryId: idiom.id },
+        label: 'Не показувати цей запис',
+      },
+      {
+        kind: 'idioms',
+        target: { kind: 'idioms' },
+        label: 'Не показувати Фразеологізми',
+        toast: 'Фразеологізми приховано',
+      },
+    ]);
+  });
+
+  it('leaves Idioms out when they are out of the Mix already', async () => {
+    const app = await open();
+    await app.mix.setIdioms(false);
+
+    const choice = choiceOn(app, await cardOf(app, idiom.id));
+
+    expect(choice.map(({ kind }) => kind)).toEqual(['entry']);
+  });
 });
 
 describe('the toast of a hide', () => {
@@ -160,5 +206,12 @@ describe('the toast of a hide', () => {
     const app = await open();
 
     expect(await toastAfter(app, correction.id, 1)).toBe('Виправлення приховано');
+  });
+
+  it('is the Idioms toast for hidden Idioms, which are out of the Mix then', async () => {
+    const app = await open();
+
+    expect(await toastAfter(app, idiom.id, 1)).toBe('Фразеологізми приховано');
+    expect(app.mix.state.idioms).toBe(false);
   });
 });

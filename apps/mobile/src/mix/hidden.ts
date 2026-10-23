@@ -39,14 +39,15 @@ export function useHiddenScreenModel(): HiddenScreenModel {
  * The calls of the Hidden screen, each an unhide of the Core composition.
  * Bringing an Entry back shows the undo toast, which hides it again at the
  * time the composition returns, in the composition open at the tap, so the
- * Entry goes back to its old place in the list; a Category or Corrections
- * goes back in the Mix with no toast. A change that could not be kept is
+ * Entry goes back to its old place in the list; a Category, Corrections or
+ * Idioms go back in the Mix with no toast. A change that could not be kept is
  * logged and leaves things as they were. Needs an `UndoToastProvider` above it.
  */
 export function useHiddenChanges(): {
   restoreEntry: (entryId: string) => void;
   turnCategoryOn: (categoryId: string) => void;
   turnCorrectionsOn: () => void;
+  turnIdiomsOn: () => void;
 } {
   const composition = useComposition();
   const showToast = useUndoToast();
@@ -85,6 +86,9 @@ export function useHiddenChanges(): {
     },
     turnCorrectionsOn: () => {
       unhide({ kind: 'corrections' });
+    },
+    turnIdiomsOn: () => {
+      unhide({ kind: 'idioms' });
     },
   };
 }
