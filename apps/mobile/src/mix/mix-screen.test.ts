@@ -95,6 +95,21 @@ describe('the Мій Мікс screen', () => {
       undefined,
     );
   });
+
+  it('shows the Idioms switch, which takes Idioms out of the Mix and back, only when the Edition turns Idioms on', async () => {
+    const withoutIdioms: Edition = {
+      ...ukrainian,
+      isFeatureEnabled: (feature) => feature !== 'idioms' && ukrainian.isFeatureEnabled(feature),
+    };
+    const { mix } = await open(ukrainian);
+
+    expect(mixScreenModel({ edition: ukrainian, mix: mix.state }).idioms).toEqual({ on: true });
+    await mix.setIdioms(false);
+    expect(mixScreenModel({ edition: ukrainian, mix: mix.state }).idioms).toEqual({ on: false });
+    await mix.setIdioms(true);
+    expect(mixScreenModel({ edition: ukrainian, mix: mix.state }).idioms).toEqual({ on: true });
+    expect(mixScreenModel({ edition: withoutIdioms, mix: mix.state }).idioms).toBe(undefined);
+  });
 });
 
 describe('the Rarity Floor choice of the Мій Мікс screen', () => {

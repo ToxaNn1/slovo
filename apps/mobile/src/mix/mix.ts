@@ -31,6 +31,7 @@ export function useMixChanges(): {
   toggleCategory: (categoryId: string, inMix: boolean) => void;
   turnAllOn: () => void;
   setCorrections: (inMix: boolean) => void;
+  setIdioms: (inMix: boolean) => void;
   setRarityFloor: (floor: number) => void;
 } {
   const { mix } = useComposition();
@@ -48,6 +49,9 @@ export function useMixChanges(): {
     },
     setCorrections: (inMix) => {
       keep(mix.setCorrections(inMix));
+    },
+    setIdioms: (inMix) => {
+      keep(mix.setIdioms(inMix));
     },
     setRarityFloor: (floor) => {
       keep(mix.setRarityFloor(floor));
