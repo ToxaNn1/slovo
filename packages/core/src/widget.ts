@@ -1,8 +1,7 @@
 import {
   WIDGET_SNAPSHOT_FORMAT,
-  type Correction,
+  type Entry,
   type WidgetEntry,
-  type Word,
   type WidgetSnapshot,
 } from '@slovo/contracts';
 
@@ -32,8 +31,8 @@ export interface Widget {
    */
   snapshot(): Promise<WidgetSnapshot | undefined>;
   /**
-   * Opens an Entry the widget showed, a Word or a Correction, by the rule and
-   * the one write of an Entry opened from a notification (see
+   * Opens an Entry the widget showed, a Word, a Correction or an Idiom, by
+   * the rule and the one write of an Entry opened from a notification (see
    * `Composition.openedFromNotification`): its Entry card once it is Seen, in
    * History and today is an Active Day. An Entry that isn't eligible or is
    * Seen already in the Cycle only makes today an Active Day. Nothing for an
@@ -42,17 +41,14 @@ export interface Widget {
   opened(entryId: string): Promise<EntryFeedCard | undefined>;
 }
 
-/** The eligible Entries of a kind, or none when the kind as a whole is out. An Idiom has no widget entry yet (0.8.8). */
-const entriesOf = (eligible: EligibleOfKind) =>
-  ('entries' in eligible ? eligible.entries : []).filter(
-    (entry): entry is Word | Correction => entry.kind !== 'idiom',
-  );
+/** The eligible Entries of a kind, or none when the kind as a whole is out. */
+const entriesOf = (eligible: EligibleOfKind) => ('entries' in eligible ? eligible.entries : []);
 
 /**
  * An Entry as the widget shows it: what its row in a list leads with, then
  * its second line, and both as VoiceOver reads them.
  */
-function widgetEntry(entry: Word | Correction): WidgetEntry {
+function widgetEntry(entry: Entry): WidgetEntry {
   const row = buildEntryRow(entry);
   const secondLine = row.kind === 'correction' ? row.nonStandardForm : row.definition;
   return {
@@ -89,11 +85,12 @@ export function createWidget({
   return {
     async snapshot() {
       if (!edition.isFeatureEnabled('widget')) return undefined;
-      const [words, corrections] = await Promise.all([
+      const [words, corrections, idioms] = await Promise.all([
         entries.eligibleOfKind('word'),
         entries.eligibleOfKind('correction'),
+        entries.eligibleOfKind('idiom'),
       ]);
-      const eligible = [...entriesOf(words), ...entriesOf(corrections)];
+      const eligible = [...entriesOf(words), ...entriesOf(corrections), ...entriesOf(idioms)];
       const eligibleIds = new Set(eligible.map(({ id }) => id));
       const onlyEligible = (kept: readonly { entryId: string }[]) =>
         kept.map(({ entryId }) => entryId).filter((id) => eligibleIds.has(id));
