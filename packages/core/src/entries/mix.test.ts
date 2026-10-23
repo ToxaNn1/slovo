@@ -30,6 +30,7 @@ const categories = [nature, speech, crafts];
 const wordIdsOf = (category: Category) =>
   [0, 1, 2].map((index) => `w_${category.id}${String(index)}`);
 const correctionIds = ['c_one', 'c_two'];
+const idiomIds = ['i_one', 'i_two'];
 const rarityOf = new Map(
   categories.flatMap(wordIdsOf).map((id, index) => [id, (index % 5) + 1] as const),
 );
@@ -41,7 +42,7 @@ const content = createMemoryContentPort({
     ),
   ),
   corrections: correctionIds.map((id) => correction(id)),
-  idioms: [idiom('i_one'), idiom('i_two')],
+  idioms: idiomIds.map((id) => idiom(id)),
 });
 
 const MINUTE = 60_000;
@@ -203,7 +204,7 @@ describe('the Mix', () => {
     expect(app.mix.state.hiddenCategories).toEqual([nature, crafts]);
     expect(app.mix.state.lastCategoryId).toBe('speech');
     expect(new Set(await walk(app.feed))).toEqual(
-      new Set([...wordIdsOf(speech), ...correctionIds]),
+      new Set([...wordIdsOf(speech), ...correctionIds, ...idiomIds]),
     );
 
     await app.mix.putBack('crafts');
@@ -229,7 +230,7 @@ describe('the Mix', () => {
     expect(app.mix.state.categoryIds).toEqual(['speech']);
     expect(app.mix.state.lastCategoryId).toBe('speech');
     expect(new Set(await walk(app.feed))).toEqual(
-      new Set([...wordIdsOf(speech), ...correctionIds]),
+      new Set([...wordIdsOf(speech), ...correctionIds, ...idiomIds]),
     );
 
     await app.mix.putBack('crafts');
@@ -251,7 +252,7 @@ describe('the Mix', () => {
     expect(app.mix.state.categoryIds).toEqual(['nature', 'speech', 'crafts']);
     expect(app.mix.state.hiddenCategories).toEqual([]);
     expect(new Set(await walk(app.feed))).toEqual(
-      new Set([...categories.flatMap(wordIdsOf), ...correctionIds]),
+      new Set([...categories.flatMap(wordIdsOf), ...correctionIds, ...idiomIds]),
     );
     expect(mixRecordsOf(records)).toEqual(mixRecords);
   });
@@ -517,7 +518,12 @@ describe('eligibility over the Mix', () => {
     await app.mix.takeOut(hidden.id);
 
     expect(app.mix.state.hiddenCategories).toEqual([hidden]);
-    expect(await walk(app.feed)).toEqual(twin.filter((id) => !isWordOf(hidden)(id)));
+    // The Words keep the twin's order; the Idiom's turn, counted in cards, may land elsewhere.
+    const offered = await walk(app.feed);
+    expect(new Set(offered)).toEqual(new Set(twin.filter((id) => !isWordOf(hidden)(id))));
+    expect(offered.filter((id) => id.startsWith('w_'))).toEqual(
+      twin.filter((id) => id.startsWith('w_') && !isWordOf(hidden)(id)),
+    );
     expect((await readToTheNextCycle(app.feed, time)).filter(isWordOf(hidden))).toEqual([]);
     const reopened = await run({ records, clock: time.clock });
     expect((await walk(reopened.feed)).filter(isWordOf(hidden))).toEqual([]);
@@ -692,7 +698,7 @@ describe('eligibility over the Mix', () => {
 
     expect(app.mix.state.rarityFloor).toBe(5);
     expect(new Set(await walk(app.feed))).toEqual(
-      new Set([...categories.flatMap(wordIdsOf), ...correctionIds]),
+      new Set([...categories.flatMap(wordIdsOf), ...correctionIds, ...idiomIds]),
     );
   });
 

@@ -1,5 +1,6 @@
 import type { Knowledge } from '../knowledge/knowledge';
 import type { CorrectionCardModel } from '../entries/correction-card';
+import type { IdiomCardModel } from '../entries/idiom-card';
 import type { LocalDate } from '../local-date';
 import type { WordCardModel } from '../entries/word-card';
 
@@ -23,8 +24,17 @@ export interface CorrectionFeedCard {
   readonly review?: true;
 }
 
-/** The card of an Entry: a Word or a Correction. */
-export type EntryFeedCard = WordFeedCard | CorrectionFeedCard;
+/** The card of an Idiom. */
+export interface IdiomFeedCard {
+  readonly kind: 'idiom';
+  /** What the card shows, built by the Core. */
+  readonly idiomCard: IdiomCardModel;
+  /** On the card of an Entry due for Review as the card was made, labelled «Повторення». */
+  readonly review?: true;
+}
+
+/** The card of an Entry: a Word, a Correction or an Idiom. */
+export type EntryFeedCard = WordFeedCard | CorrectionFeedCard | IdiomFeedCard;
 
 /**
  * One card of the Feed: an Entry, or the end-of-Cycle card that tells the
@@ -37,7 +47,8 @@ export function entryIdOf(card: EntryFeedCard): string;
 export function entryIdOf(card: FeedCard | undefined): string | undefined;
 export function entryIdOf(card: FeedCard | undefined): string | undefined {
   if (card?.kind === 'word') return card.wordCard.wordId;
-  return card?.kind === 'correction' ? card.correctionCard.correctionId : undefined;
+  if (card?.kind === 'correction') return card.correctionCard.correctionId;
+  return card?.kind === 'idiom' ? card.idiomCard.idiomId : undefined;
 }
 
 /**

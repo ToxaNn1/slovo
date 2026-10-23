@@ -7,6 +7,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   CORRECTION_EVERY,
   createFakeNotificationScheduler,
+  IDIOM_EVERY,
   createMemoryUserStatePort,
   openComposition,
   openUserState,
@@ -33,6 +34,7 @@ let pack: NodeLanguagePack;
 let content: ContentReadPort;
 let liveIds: readonly string[];
 let liveCorrectionIds: readonly string[];
+let liveIdiomIds: readonly string[];
 
 /**
  * Remembers every Word and Correction by id. The pack never changes while it
@@ -43,6 +45,7 @@ let liveCorrectionIds: readonly string[];
 function remembering(port: ContentReadPort): ContentReadPort {
   const words = new Map<string, ReturnType<ContentReadPort['getWord']>>();
   const corrections = new Map<string, ReturnType<ContentReadPort['getCorrection']>>();
+  const idioms = new Map<string, ReturnType<ContentReadPort['getIdiom']>>();
   function remember<T>(known: Map<string, T>, id: string, read: () => T): T {
     let value = known.get(id);
     if (value === undefined) {
@@ -55,13 +58,21 @@ function remembering(port: ContentReadPort): ContentReadPort {
     ...port,
     getWord: (id) => remember(words, id, () => port.getWord(id)),
     getCorrection: (id) => remember(corrections, id, () => port.getCorrection(id)),
+    getIdiom: (id) => remember(idioms, id, () => port.getIdiom(id)),
   };
 }
 
-/** The Ukrainian Edition with Corrections turned off, so a test counts Words only. */
+/** The Ukrainian Edition with Corrections and Idioms turned off, so a test counts Words only. */
 const wordsOnly: Edition = {
   ...ukrainian,
-  isFeatureEnabled: (feature) => feature !== 'corrections' && ukrainian.isFeatureEnabled(feature),
+  isFeatureEnabled: (feature) =>
+    feature !== 'corrections' && feature !== 'idioms' && ukrainian.isFeatureEnabled(feature),
+};
+
+/** The Ukrainian Edition with Idioms turned off, so a test counts Words and Corrections only. */
+const withoutIdioms: Edition = {
+  ...ukrainian,
+  isFeatureEnabled: (feature) => feature !== 'idioms' && ukrainian.isFeatureEnabled(feature),
 };
 
 beforeAll(async () => {
@@ -73,6 +84,7 @@ beforeAll(async () => {
   content = remembering(pack);
   liveIds = await pack.listWordIds();
   liveCorrectionIds = await pack.listCorrectionIds();
+  liveIdiomIds = await pack.listIdiomIds();
 });
 
 afterAll(() => {
@@ -122,7 +134,8 @@ async function run(
 /** The id of the Entry a card shows, if it shows one. */
 const entryIdOf = (card: FeedCard | undefined) => {
   if (card?.kind === 'word') return card.wordCard.wordId;
-  return card?.kind === 'correction' ? card.correctionCard.correctionId : undefined;
+  if (card?.kind === 'correction') return card.correctionCard.correctionId;
+  return card?.kind === 'idiom' ? card.idiomCard.idiomId : undefined;
 };
 
 /** The local day a card is the Word of the Day of, if it is. */
@@ -280,7 +293,7 @@ describe('Corrections in the Feed over the Ukrainian Language Pack', () => {
   });
 
   it(`makes every ${String(CORRECTION_EVERY)}th card a Correction until the Corrections run out, and offers each live Entry once`, async () => {
-    const offered = await walk(await run(new Map(), fakeClock(today).clock, 7, ukrainian));
+    const offered = await walk(await run(new Map(), fakeClock(today).clock, 7, withoutIdioms));
 
     const mixed = offered.slice(0, liveCorrectionIds.length * CORRECTION_EVERY);
     mixed.forEach((id, position) => {
@@ -292,7 +305,7 @@ describe('Corrections in the Feed over the Ukrainian Language Pack', () => {
   });
 
   it('gives each Correction card the Correction card model of its Correction', async () => {
-    const feed = await run(new Map(), fakeClock(today).clock, 7, ukrainian);
+    const feed = await run(new Map(), fakeClock(today).clock, 7, withoutIdioms);
     while (feed.cards.length < CORRECTION_EVERY) await feed.next();
 
     const card = feed.cards[CORRECTION_EVERY - 1];
@@ -309,6 +322,56 @@ describe('Corrections in the Feed over the Ukrainian Language Pack', () => {
       explanation: correction?.explanation,
       examplePair: correction?.examplePair,
       sourceTitles: correction?.sources.map((source) => source.title),
+    });
+  });
+});
+
+describe('Idioms in the Feed over the Ukrainian Language Pack', () => {
+  it('turns the Idioms Feature Switch on and has live Idioms to mix in', () => {
+    expect(ukrainian.isFeatureEnabled('idioms')).toBe(true);
+    expect(liveIdiomIds.length).toBeGreaterThan(0);
+  });
+
+  it(
+    `makes every ${String(IDIOM_EVERY)}th card an Idiom among the Corrections' turns until the Idioms run out, offers each live Entry once, and opens on a Word`,
+    async () => {
+      const feed = await run(new Map(), fakeClock(today).clock, 7, ukrainian);
+      const offered = await walk(feed);
+
+      expect(feed.cards[0]?.kind).toBe('word');
+      const mixed = offered.slice(0, liveIdiomIds.length * IDIOM_EVERY);
+      mixed.forEach((id, position) => {
+        const card = position + 1;
+        const correctionTurn = card % CORRECTION_EVERY === 0;
+        const idiomTurn = card % IDIOM_EVERY === 0;
+        const kind = correctionTurn ? 'c_' : idiomTurn ? 'i_' : 'w_';
+        expect(id.startsWith(kind), `card ${String(position)}: ${id}`).toBe(true);
+      });
+      expect(offered).toHaveLength(liveIds.length + liveCorrectionIds.length + liveIdiomIds.length);
+      expect(new Set(offered)).toEqual(
+        new Set([...liveIds, ...liveCorrectionIds, ...liveIdiomIds]),
+      );
+    },
+    WALK_TIMEOUT_MS,
+  );
+
+  it('gives each Idiom card the Idiom card model of its Idiom', async () => {
+    const feed = await run(new Map(), fakeClock(today).clock, 7, ukrainian);
+    while (feed.cards.length < IDIOM_EVERY) await feed.next();
+
+    const card = feed.cards[IDIOM_EVERY - 1];
+    const idiom = await content.getIdiom(entryIdOf(card) ?? '');
+
+    expect(card?.kind === 'idiom' ? card.idiomCard : undefined).toEqual({
+      kind: 'idiom',
+      idiomId: idiom?.id,
+      expression: idiom?.expression,
+      idiomType: idiom?.idiomType,
+      primaryDefinition: idiom?.primaryDefinition,
+      extraDefinitions: idiom?.extraDefinitions,
+      examples: idiom?.examples,
+      etymology: idiom?.etymology,
+      sourceTitles: idiom?.sources.map((source) => source.title),
     });
   });
 });

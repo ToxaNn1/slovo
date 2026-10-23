@@ -32,6 +32,7 @@ export {
   type Collections,
 } from './saved/collections';
 export { buildCorrectionCard, type CorrectionCardModel } from './entries/correction-card';
+export { buildIdiomCard, type IdiomCardModel } from './entries/idiom-card';
 export { openCycle, type Cycle, type CycleChange } from './feed/cycle';
 export { coreDecor, InvalidDecorError, loadDecor, type Decor } from './edition/decor';
 export {
@@ -46,6 +47,7 @@ export { type Favorite, type Favorites } from './saved/favorites';
 export {
   buildEntryCard,
   CORRECTION_EVERY,
+  IDIOM_EVERY,
   isTodaysWordOfTheDay,
   SEEN_DWELL_MS,
   type Feed,
@@ -55,6 +57,7 @@ export {
   type CorrectionFeedCard,
   type EntryFeedCard,
   type FeedCard,
+  type IdiomFeedCard,
   type WordFeedCard,
 } from './feed/feed-card';
 export { type Game, type GameModeOffer, type GameState } from './game/game';

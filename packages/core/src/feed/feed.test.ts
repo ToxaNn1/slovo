@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Correction, Word } from '@slovo/contracts';
+import type { Correction, Idiom, Word } from '@slovo/contracts';
 
 import {
   buildEntryCard,
+  CORRECTION_EVERY,
   createEntries,
   createMemoryContentPort,
   createMemoryUserStatePort,
@@ -20,6 +21,7 @@ import {
   type NotificationsEdition,
   type Feed,
   type FeedCard,
+  IDIOM_EVERY,
   type Random,
   type UserStatePort,
   type WordFeedCard,
@@ -27,6 +29,7 @@ import {
 import {
   correction,
   fakeClock,
+  idiom,
   randomOf,
   randomSequence,
   word as sharedWord,
@@ -45,14 +48,16 @@ const pack = [
 ];
 
 /**
- * An Edition with the Corrections Feature Switch on or off, whose one
- * Category, the test Words' own, is in its default Mix.
+ * An Edition with the Corrections and Idioms Feature Switches on or off, whose
+ * one Category, the test Words' own, is in its default Mix.
  */
 const editionWith = (
   corrections: boolean,
+  idioms = true,
 ): Pick<Edition, 'id' | 'isFeatureEnabled'> & MixEdition & NotificationsEdition & GameEdition => ({
   id: 'test',
-  isFeatureEnabled: (feature) => feature === 'corrections' && corrections,
+  isFeatureEnabled: (feature) =>
+    (feature === 'corrections' && corrections) || (feature === 'idioms' && idioms),
   languageTraits: { distractorRule: 'same-part-of-speech' },
   userSettingDefaults: {
     mix: { categoryIds: ['test'], corrections: true, idioms: true },
@@ -63,7 +68,8 @@ const editionWith = (
 /** The id of the Entry a card shows, if it shows one. */
 const entryIdOf = (card: FeedCard | undefined) => {
   if (card?.kind === 'word') return card.wordCard.wordId;
-  return card?.kind === 'correction' ? card.correctionCard.correctionId : undefined;
+  if (card?.kind === 'correction') return card.correctionCard.correctionId;
+  return card?.kind === 'idiom' ? card.idiomCard.idiomId : undefined;
 };
 
 /** The local day a card is the Word of the Day of, if it is. */
@@ -92,8 +98,10 @@ async function runApp({
   random = randomOf(0.25),
   words = pack,
   corrections = [],
-  content = createMemoryContentPort({ words, corrections }),
+  idioms = [],
+  content = createMemoryContentPort({ words, corrections, idioms }),
   correctionsSwitch = true,
+  idiomsSwitch = true,
 }: {
   records?: Map<string, string>;
   port?: UserStatePort;
@@ -101,12 +109,14 @@ async function runApp({
   random?: Random;
   words?: readonly Word[];
   corrections?: readonly Correction[];
+  idioms?: readonly Idiom[];
   content?: ContentReadPort;
   correctionsSwitch?: boolean;
+  idiomsSwitch?: boolean;
 } = {}): Promise<Composition> {
   return openComposition({
     content,
-    edition: editionWith(correctionsSwitch),
+    edition: editionWith(correctionsSwitch, idiomsSwitch),
     userState: await openUserState({ port }),
     clock,
     random,
@@ -1227,5 +1237,169 @@ describe("today's Word of the Day", () => {
 
   it('is not the card of any other Word', () => {
     expect(isTodaysWordOfTheDay(card(), clock)).toBe(false);
+  });
+});
+
+describe('Idioms in the Feed', () => {
+  const liveIdioms = ['i_live0', 'i_live1', 'i_live2'].map((id) => idiom(id));
+  const idioms = [...liveIdioms, idiom('i_retired', { retired: true })];
+  const liveIdiomIds = liveIdioms.map(({ id }) => id);
+  const corrections = ['c_live0', 'c_live1', 'c_live2', 'c_live3'].map((id) => correction(id));
+
+  /** 'W' for a Word card, 'C' for a Correction card, 'I' for an Idiom card. */
+  const kindsOf = (ids: readonly string[]) =>
+    ids.map((id) => (id.startsWith('c_') ? 'C' : id.startsWith('i_') ? 'I' : 'W')).join('');
+
+  /** Shows the card at `position` for `ms`, as the UI reports it. */
+  async function look(
+    feed: Feed,
+    time: ReturnType<typeof fakeClock>,
+    position: number,
+    ms: number,
+  ) {
+    await feed.show(position);
+    time.advance(ms);
+    await feed.show(undefined);
+  }
+
+  it(`mixes an Idiom in as every ${String(IDIOM_EVERY)}th card of the Cycle while unseen Idioms remain, among the Corrections' turns`, async () => {
+    const ids = await walk(await run({ corrections, idioms }));
+
+    expect(kindsOf(ids.slice(0, 14))).toBe('WWWWCWIWWCWWWI');
+  });
+
+  it('offers every live Idiom once and never a Retired Idiom, after the Words when the Words run out first', async () => {
+    const ids = await walk(await run({ corrections, idioms }));
+
+    expect(ids).toHaveLength(liveIds.length + corrections.length + liveIdiomIds.length);
+    expect(new Set(ids)).toEqual(new Set([...liveIds, ...corrections.map(({ id }) => id), ...liveIdiomIds]));
+    expect(kindsOf(ids)).toBe('WWWWCWIWWCWWWICCI');
+  });
+
+  it(`gives the card both turns fall on to the Correction, and the next card to the Idiom`, async () => {
+    const collision = CORRECTION_EVERY * IDIOM_EVERY;
+    const many = Array.from({ length: 30 }, (_, index) => word(`w_many${String(index)}`));
+    const manyCorrections = Array.from({ length: 8 }, (_, index) => correction(`c_many${String(index)}`));
+    const manyIdioms = Array.from({ length: 6 }, (_, index) => idiom(`i_many${String(index)}`));
+
+    const ids = await walk(
+      await run({ words: many, corrections: manyCorrections, idioms: manyIdioms }),
+    );
+
+    const expected = Array.from({ length: collision + 1 }, (_, index) => {
+      const card = index + 1;
+      if (card % CORRECTION_EVERY === 0) return 'C';
+      return card % IDIOM_EVERY === 0 || card === collision + 1 ? 'I' : 'W';
+    }).join('');
+    expect(kindsOf(ids.slice(0, collision + 1))).toBe(expected);
+  });
+
+  it('offers no Idiom when Idioms are out of the Mix, and mixes them in again once they are back', async () => {
+    const app = await runApp({ corrections, idioms });
+    await app.mix.setIdioms(false);
+
+    const without = await walk(app.feed);
+
+    expect(without.some((id) => id.startsWith('i_'))).toBe(false);
+    expect(new Set(without)).toEqual(new Set([...liveIds, ...corrections.map(({ id }) => id)]));
+
+    await app.mix.setIdioms(true);
+    const after = await walk(app.feed);
+    expect(after.filter((id) => id.startsWith('i_'))).toEqual(expect.arrayContaining(liveIdiomIds));
+  });
+
+  it('offers no Idiom when the Idioms Feature Switch is off', async () => {
+    const ids = await walk(await run({ idioms, idiomsSwitch: false }));
+
+    expect(new Set(ids)).toEqual(new Set(liveIds));
+  });
+
+  it('opens every local day on a Word of the Day that is a Word, never an Idiom', async () => {
+    const records = new Map<string, string>();
+    const few = [word('w_one'), word('w_two')];
+    const days = ['2026-10-11', '2026-10-12', '2026-10-13'];
+
+    for (const day of days) {
+      const feed = await run({ records, words: few, idioms, clock: fakeClock(`${day}T09:00:00+03:00`).clock });
+      expect(feed.cards[0]?.kind).toBe('word');
+      expect(wordOfTheDayOf(feed.cards[0])).toEqual(expect.objectContaining({ day: Number(day.slice(-2)) }));
+    }
+  });
+
+  it('gives an Idiom card the Idiom card model of its Idiom', async () => {
+    const feed = await run({ idioms });
+    while (feed.cards.length < IDIOM_EVERY) await feed.next();
+
+    const card = feed.cards[IDIOM_EVERY - 1];
+
+    expect(card?.kind).toBe('idiom');
+    const id = entryIdOf(card) ?? '';
+    expect(card?.kind === 'idiom' ? card.idiomCard : undefined).toMatchObject({
+      kind: 'idiom',
+      idiomId: id,
+      expression: `to ${id.slice(2)}`,
+      idiomType: 'idiom',
+      primaryDefinition: 'A meaning.',
+      sourceTitles: ['Test source'],
+    });
+  });
+
+  it('marks an Idiom Seen after the dwell, never offering it again in the Cycle, and not after a quick swipe', async () => {
+    const records = new Map<string, string>();
+    const time = fakeClock('2026-10-11T09:00:00+03:00');
+    const feed = await run({ records, corrections, idioms, clock: time.clock });
+    while (feed.cards.length < IDIOM_EVERY * 2) await feed.next();
+    const [read, skipped] = [entryIdOf(feed.cards[IDIOM_EVERY - 1]), entryIdOf(feed.cards[IDIOM_EVERY * 2 - 1])];
+    expect(kindsOf([read ?? '', skipped ?? ''])).toBe('II');
+
+    await look(feed, time, IDIOM_EVERY - 1, SEEN_DWELL_MS);
+    await look(feed, time, IDIOM_EVERY * 2 - 1, 300);
+
+    const nextDay = fakeClock('2026-10-12T09:00:00+03:00').clock;
+    const unseen = await walk(await run({ records, corrections, idioms, clock: nextDay }));
+    expect(unseen).not.toContain(read);
+    expect(unseen).toContain(skipped);
+  });
+
+  it('ends the Cycle only once every live Word, Correction and Idiom is Seen, and starts the next one with the Idioms unseen again', async () => {
+    const small = [word('w_one'), word('w_two')];
+    const smallIdioms = [idiom('i_one'), idiom('i_old', { retired: true })];
+    const time = fakeClock('2026-10-11T09:00:00+03:00');
+    const feed = await run({
+      words: small,
+      corrections: [correction('c_one')],
+      idioms: smallIdioms,
+      clock: time.clock,
+    });
+
+    // The Feed gets the next card ready while the reader looks at each card.
+    const offered = [];
+    for (let card = 0; card < 8; card++) {
+      const position = feed.cards.length - 1;
+      await feed.show(position);
+      time.advance(SEEN_DWELL_MS);
+      await feed.show(undefined);
+      const next = feed.cards[position + 1];
+      offered.push(next?.kind === 'end-of-cycle' ? 'end' : entryIdOf(next));
+    }
+
+    // After the Word of the Day: the other Word, the Correction, the Idiom, the end, then a new Cycle.
+    expect(offered.slice(0, 3)).toEqual([expect.stringMatching(/^w_/), 'c_one', 'i_one']);
+    expect(offered[3]).toBe('end');
+    expect(new Set(offered.slice(4))).toEqual(new Set(['w_one', 'w_two', 'c_one', 'i_one']));
+  });
+
+  it('opens on the Idiom card the reader was on when the app reopens the same day', async () => {
+    const records = new Map<string, string>();
+    const time = fakeClock('2026-10-11T09:00:00+03:00');
+    const feed = await run({ records, idioms, clock: time.clock });
+    while (feed.cards.length < IDIOM_EVERY) await feed.next();
+    await feed.show(IDIOM_EVERY - 1);
+    const idiomId = entryIdOf(feed.cards[IDIOM_EVERY - 1]);
+
+    const reopened = await run({ records, idioms, clock: time.clock });
+
+    expect(reopened.cards[reopened.startPosition]?.kind).toBe('idiom');
+    expect(entryIdOf(reopened.cards[reopened.startPosition])).toBe(idiomId);
   });
 });
