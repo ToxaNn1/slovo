@@ -125,10 +125,9 @@ describe('The Widget Snapshot of the Ukrainian Edition', () => {
       clock: fakeClock('2026-10-16T09:00:00+03:00').clock,
       random: seededRandom(7),
     });
-    const stressTraps = (
-      await Promise.all((await pack.listCorrectionIds()).map((id) => pack.getCorrection(id)))
-    ).filter(
-      (correction): correction is Correction => correction?.correctionType === 'wrongStress',
+    const stressTraps = (await pack.getEntries(await pack.listCorrectionIds())).filter(
+      (entry): entry is Correction =>
+        entry.kind === 'correction' && entry.correctionType === 'wrongStress',
     );
     expect(stressTraps).not.toEqual([]);
 
@@ -158,8 +157,8 @@ describe('The Widget Snapshot of the Ukrainian Edition', () => {
       clock,
       random: seededRandom(7),
     });
-    const [idiom] = await pack.getIdioms(await pack.listIdiomIds());
-    if (idiom === undefined) throw new Error('The pack has no Idiom');
+    const [idiom] = await pack.getEntries(await pack.listIdiomIds());
+    if (idiom?.kind !== 'idiom') throw new Error('The pack has no Idiom');
     await app.favorites.add(idiom.id);
     advance(60_000);
     const sayings = await app.collections.create('Приказки', idiom.id);

@@ -1,11 +1,4 @@
-import type {
-  Category,
-  Correction,
-  Idiom,
-  PackMetadata,
-  PublishedPack,
-  Word,
-} from '@slovo/contracts';
+import type { Category, Entry, PackMetadata, PublishedPack, Word } from '@slovo/contracts';
 
 /**
  * Reads a compiled Language Pack. Each platform supplies an adapter (Node for
@@ -29,25 +22,18 @@ export interface ContentReadPort {
    * once, for a feature that needs them all, such as the Game's Distractors.
    */
   listWords(): Promise<readonly Word[]>;
-  /** Any Word by id, a Retired Word included, so kept Words stay reachable. */
-  getWord(id: string): Promise<Word | undefined>;
   /**
-   * The Words of the ids, as `getWord` gives each, read at once, in no set
-   * order. An id the pack has no Word for is left out.
+   * The Entries of the ids, whatever their kind, read at once, in no set
+   * order: a Retired Entry included, so kept Entries stay reachable, and an
+   * id the pack has no Entry for left out. The pack records each id's kind of
+   * Entry, so one call reads each kind once.
    */
-  getWords(ids: readonly string[]): Promise<readonly Word[]>;
+  getEntries(ids: readonly string[]): Promise<readonly Entry[]>;
   /**
    * The ids of the Corrections that are not retired, in a stable order. A
    * Retired Correction is left out, so nothing new picks it.
    */
   listCorrectionIds(): Promise<readonly string[]>;
-  /** Any Correction by id, a Retired Correction included, so kept Corrections stay reachable. */
-  getCorrection(id: string): Promise<Correction | undefined>;
-  /**
-   * The Corrections of the ids, as `getCorrection` gives each, read at once,
-   * in no set order. An id the pack has no Correction for is left out.
-   */
-  getCorrections(ids: readonly string[]): Promise<readonly Correction[]>;
   /**
    * The ids of the Words that are not retired and are the standard form for
    * the Correction, in a stable order.
@@ -58,13 +44,6 @@ export interface ContentReadPort {
    * Idiom is left out, so nothing new picks it.
    */
   listIdiomIds(): Promise<readonly string[]>;
-  /** Any Idiom by id, a Retired Idiom included, so kept Idioms stay reachable. */
-  getIdiom(id: string): Promise<Idiom | undefined>;
-  /**
-   * The Idioms of the ids, as `getIdiom` gives each, read at once, in no set
-   * order. An id the pack has no Idiom for is left out.
-   */
-  getIdioms(ids: readonly string[]): Promise<readonly Idiom[]>;
 }
 
 /**

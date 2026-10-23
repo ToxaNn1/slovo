@@ -4,6 +4,8 @@ import {
   IdiomSchema,
   WordSchema,
   type Correction,
+  type Entry,
+  type EntryKind,
   type Idiom,
   type PackMetadata,
   type Source,
@@ -76,6 +78,7 @@ const SQL = {
   wordIdsInCategory: 'SELECT id FROM words WHERE retired = 0 AND category_id = ? ORDER BY id',
   correctionIds: 'SELECT id FROM corrections WHERE retired = 0 ORDER BY id',
   idiomIds: 'SELECT id FROM idioms WHERE retired = 0 ORDER BY id',
+  entryKinds: (list: string) => `SELECT id, kind FROM entries WHERE id IN ${list}`,
   linkedWordIds: `
     SELECT words.id FROM word_corrections JOIN words ON words.id = word_corrections.word_id
     WHERE word_corrections.correction_id = ? AND words.retired = 0
@@ -301,6 +304,36 @@ export function createPackReader(db: PackDatabase): PackReader {
     return parts.flat();
   }
 
+  /** How to read the Entries of each kind by id. */
+  const readOfKind: Record<EntryKind, (ids: readonly string[]) => Promise<Entry[]>> = {
+    word: readWordsOf,
+    correction: readCorrections,
+    idiom: readIdioms,
+  };
+
+  /**
+   * The Entries of the ids, whatever their kind: the `entries` table says
+   * each id's kind in one query per `IDS_PER_READ`, then each kind present is
+   * read at once.
+   */
+  async function readEntries(ids: readonly string[]): Promise<Entry[]> {
+    const kinds = await Promise.all(
+      inParts(ids).map(({ list, params }) =>
+        db.getAllAsync<{ id: string; kind: EntryKind }>(SQL.entryKinds(list), params),
+      ),
+    );
+    const idsOfKind = new Map<EntryKind, string[]>();
+    for (const { id, kind } of kinds.flat()) {
+      const ofKind = idsOfKind.get(kind);
+      if (ofKind === undefined) idsOfKind.set(kind, [id]);
+      else ofKind.push(id);
+    }
+    const parts = await Promise.all(
+      [...idsOfKind].map(([kind, ofKind]) => readOfKind[kind](ofKind)),
+    );
+    return parts.flat();
+  }
+
   return {
     async listCategories() {
       const rows = await db.getAllAsync<{ id: string; display_name: string }>(SQL.categories, []);
@@ -314,15 +347,10 @@ export function createPackReader(db: PackDatabase): PackReader {
         ? column(SQL.wordIds, [], 'id')
         : column(SQL.wordIdsInCategory, [categoryId], 'id'),
     listWords: () => readWords(liveWords),
-    getWord: async (id) => (await readWordsOf([id]))[0],
-    getWords: readWordsOf,
+    getEntries: readEntries,
     listCorrectionIds: () => column(SQL.correctionIds, [], 'id'),
-    getCorrection: async (id) => (await readCorrections([id]))[0],
-    getCorrections: readCorrections,
     listLinkedWordIds: (correctionId) => column(SQL.linkedWordIds, [correctionId], 'id'),
     listIdiomIds: () => column(SQL.idiomIds, [], 'id'),
-    getIdiom: async (id) => (await readIdioms([id]))[0],
-    getIdioms: readIdioms,
     metadata: async () => metadataOf(await db.getAllAsync<MetadataRow>(SQL.metadata, [])),
   };
 }

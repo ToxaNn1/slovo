@@ -50,9 +50,8 @@ beforeAll(async () => {
   report = result.report;
   pack = openLanguagePack(outFile);
   words = await pack.listWords();
-  const ids = await pack.listCorrectionIds();
-  corrections = (await Promise.all(ids.map((id) => pack.getCorrection(id)))).filter(
-    (correction) => correction !== undefined,
+  corrections = (await pack.getEntries(await pack.listCorrectionIds())).filter(
+    (entry): entry is Correction => entry.kind === 'correction',
   );
 });
 
@@ -274,7 +273,9 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
 
 describe('the idioms «Вгадай слово» asks about in the Ukrainian Language Pack', () => {
   it('asks idioms marked «Не знаю» with idioms only, never a place name, and Words with Words only', async () => {
-    const idioms = await pack.getIdioms(await pack.listIdiomIds());
+    const idioms = (await pack.getEntries(await pack.listIdiomIds())).filter(
+      (entry): entry is Idiom => entry.kind === 'idiom',
+    );
     const proper = idioms.filter(({ idiomType }) => idiomType === 'idiom');
     const entries: readonly (Word | Idiom)[] = [...words, ...idioms];
     const textOf = (entry: Word | Idiom) =>

@@ -292,13 +292,15 @@ describe('the Entries', () => {
   });
 
   describe('by id', () => {
-    it('gives any Word or Correction, a Retired one included, so kept Entries stay reachable', async () => {
+    it('gives any Word, Correction or Idiom, a Retired one included, so kept Entries stay reachable', async () => {
       const entries = open();
 
       expect(await entries.get('w_talkative')).toEqual(talkative);
       expect(await entries.get('c_chatty')).toEqual(chatty);
+      expect(await entries.get('i_lazy')).toMatchObject({ kind: 'idiom', id: 'i_lazy' });
       expect(await entries.get('w_gone')).toMatchObject({ retired: true });
       expect(await entries.get('c_old')).toMatchObject({ retired: true });
+      expect(await entries.get('i_old')).toMatchObject({ retired: true });
     });
 
     it('gives a Correction the user keeps even when the Edition turns Corrections off', async () => {
@@ -311,26 +313,38 @@ describe('the Entries', () => {
 
     it('gives many Entries at once as it gives each, leaving an unknown id out', async () => {
       const entries = open({ correctionsSwitch: false });
-      const many = ['w_talkative', 'c_chatty', 'w_gone', 'c_old', 'w_missing', 'w_talkative'];
+      const many = [
+        'w_talkative',
+        'c_chatty',
+        'i_old',
+        'w_gone',
+        'c_old',
+        'w_missing',
+        'w_talkative',
+      ];
 
       const found = await entries.getMany(many);
 
-      expect([...found.keys()].toSorted()).toEqual(['c_chatty', 'c_old', 'w_gone', 'w_talkative']);
+      expect([...found.keys()].toSorted()).toEqual([
+        'c_chatty',
+        'c_old',
+        'i_old',
+        'w_gone',
+        'w_talkative',
+      ]);
       for (const [id, entry] of found) expect(entry).toEqual(await entries.get(id));
       expect(await entries.getMany([])).toEqual(new Map());
     });
 
-    it('reads many Entries as often as a few', async () => {
-      /** How many reads of the pack it takes to get the Entries. */
-      async function readsToGet(ids: readonly string[]): Promise<number> {
-        const counted = countingReads(createMemoryContentPort({ categories, words, corrections }));
-        await createEntries({ content: counted.content, edition: editionWith(true) }).getMany(ids);
-        return counted.reads();
-      }
+    it('reads one Entry of any kind, or many, in one read of the Language Pack', async () => {
+      const counted = countingReads(openContent());
+      const entries = createEntries({ content: counted.content, edition: editionWith(true) });
 
-      expect(
-        await readsToGet(['w_always', 'w_talkative', 'w_gone', 'w_plain', 'c_chatty', 'c_old']),
-      ).toBe(await readsToGet(['w_always', 'c_chatty']));
+      await entries.get('i_lazy');
+      expect(counted.reads()).toBe(1);
+
+      await entries.getMany(['w_always', 'w_talkative', 'w_gone', 'c_chatty', 'c_old', 'i_old']);
+      expect(counted.reads()).toBe(2);
     });
   });
 

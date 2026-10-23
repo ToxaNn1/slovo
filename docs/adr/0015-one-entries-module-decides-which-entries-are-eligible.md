@@ -51,3 +51,12 @@ The reader's choice is one new record in the user state, `mix.idioms`, kept and 
 
 - **A kind-agnostic list of eligible ids**: rejected. The Feed, the Cycle, the notification plan and the Game each take one kind at a time, and the Correction's turn and the Idiom's turn count their own kind.
 - **One Mix record for Corrections and Idioms together**: rejected. Each is a switch of its own on the Mix screen, and one record would merge two devices' choices into one write.
+
+## Amendment: the content read port gives any Entry by id, from the pack's kind of Entry (architecture review 4)
+
+The port grew three getters with every kind of Entry (one by id, many by id, and the kind's live ids), and `get` and `getMany` asked them kind by kind, a Word first, although the Language Pack records every Entry's kind in its `entries` table since format 1. The per-kind getters by id are gone: the port gives the Entries of any ids, whatever their kind, in one call (`getEntries`), a Retired Entry included, so kept Entries stay reachable (ADR 0046). The pack reader asks the `entries` table which kind each id is, one query per 500 ids, and then reads each kind present at once, as before; the in-memory adapter answers from the Entries it holds. The Entries module reads one Entry or many in that one call, and the live Corrections and Idioms by their listed ids the same way. The port still lists the live ids of each kind, which the eligibility and the Feed need, gives every live Word at once for the Game's Distractors, and lists the Words a Correction links. Both adapters hold to the one contract suite.
+
+### Considered Options
+
+- **A kind-agnostic getter beside the per-kind ones**: rejected. Two paths to one Entry, and the port would still grow with every kind.
+- **The Entries module keeps asking kind by kind, in parallel**: rejected. Three reads of the pack for one id the pack can name in one, and the next kind adds a fourth.

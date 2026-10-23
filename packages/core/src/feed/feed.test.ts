@@ -427,7 +427,8 @@ describe('the Feed', () => {
       const feed = await run({
         content: {
           ...content,
-          getWord: (id) => (failing ? Promise.reject(new Error('disk')) : content.getWord(id)),
+          getEntries: (ids) =>
+            failing ? Promise.reject(new Error('disk')) : content.getEntries(ids),
         },
         correctionsSwitch: false,
       });

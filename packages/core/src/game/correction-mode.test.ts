@@ -250,9 +250,9 @@ describe('«Обери правильне» on offer', () => {
     const read: string[] = [];
     const pack: ContentReadPort = {
       ...content,
-      getCorrection(id) {
-        read.push(id);
-        return content.getCorrection(id);
+      getEntries(ids) {
+        read.push(...ids.filter((id) => id.startsWith('c_')));
+        return content.getEntries(ids);
       },
     };
     const app = await run({ pack });

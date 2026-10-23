@@ -6,6 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
   createEntries,
+  type Idiom,
   createMemoryUserStatePort,
   openComposition,
   openUserState,
@@ -52,7 +53,9 @@ describe('the Idioms of the Ukrainian Edition', () => {
 
   // The total is the Edition's `minIdioms` content target; the build checks it.
   it('holds Idioms of each Idiom Type, each with its sources', async () => {
-    const idioms = await pack.getIdioms(await pack.listIdiomIds());
+    const idioms = (await pack.getEntries(await pack.listIdiomIds())).filter(
+      (entry): entry is Idiom => entry.kind === 'idiom',
+    );
     const ofType = (idiomType: string) => idioms.filter((idiom) => idiom.idiomType === idiomType);
 
     expect(ofType('idiom').length).toBeGreaterThan(0);
