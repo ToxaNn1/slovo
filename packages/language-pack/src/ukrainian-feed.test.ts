@@ -388,7 +388,8 @@ describe('Favorites over the Ukrainian Language Pack', () => {
     expect(app.favorites.list[1]?.row).toMatchObject({
       kind: 'word',
       title: word.wordCard.lemma,
-      definition: word.wordCard.primaryDefinition,
+      secondLine: word.wordCard.primaryDefinition,
+      kindKey: 'word',
     });
     expect(await app.entryCard(correctionId)).toMatchObject({
       kind: 'correction',

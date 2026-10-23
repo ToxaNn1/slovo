@@ -44,15 +44,17 @@ const idiomRow = {
   kind: 'idiom',
   entryId: IDIOM,
   title: 'бити байдики',
-  idiomType: 'idiom',
-  definition: 'Ледарювати, нічого не робити.',
+  secondLine: 'Ледарювати, нічого не робити.',
+  kindKey: 'idiom',
+  spoken: 'бити байдики, Ледарювати, нічого не робити.',
 };
 const placeNameRow = {
   kind: 'idiom',
   entryId: PLACE_NAME,
   title: 'Бердичів',
-  idiomType: 'placeName',
-  definition: "Місто на Житомирщині, на річці Гнилоп'ять.",
+  secondLine: "Місто на Житомирщині, на річці Гнилоп'ять.",
+  kindKey: 'placeName',
+  spoken: "Бердичів, Місто на Житомирщині, на річці Гнилоп'ять.",
 };
 
 /** The composition over the pack for a reader who Saw both Idioms and marks them Unknown. */
