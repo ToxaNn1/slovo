@@ -230,7 +230,7 @@ export function WordCardBody({
 }
 
 /** An Example in italics, with its author's line only when the source names one. */
-function ExampleText({
+export function ExampleText({
   example,
   size,
   testID,
@@ -332,9 +332,18 @@ function Details({ details }: { details: NonNullable<WordCardModel['details']> }
   );
 }
 
-function DetailSection({ title, children }: { title: string; children: ReactNode }) {
+/** A titled section of a card, such as «Етимологія». */
+export function DetailSection({
+  title,
+  testID,
+  children,
+}: {
+  title: string;
+  testID?: string;
+  children: ReactNode;
+}) {
   return (
-    <View style={styles.detailSection}>
+    <View testID={testID} style={styles.detailSection}>
       <SectionLabel>{title}</SectionLabel>
       {children}
     </View>
