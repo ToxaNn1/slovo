@@ -235,24 +235,31 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
     }
   });
 
-  it('tops the Distractors up with other Words for the only verb of a one-Category Mix', async () => {
-    const verbRounds: Asked[] = [];
-    for (let seed = 1; verbRounds.length === 0 && seed <= 40; seed += 1) {
-      const app = await runWords(seed);
-      for (const { id } of (await pack.listCategories()).filter(({ id }) => id !== 'human-body')) {
-        await app.hide({ kind: 'category', categoryId: id });
+  // Like the test above, each hide plans the Rounds again, for as many Games as it takes to ask the verb.
+  it(
+    'tops the Distractors up with other Words for the only verb of a one-Category Mix',
+    { timeout: 20_000 },
+    async () => {
+      const verbRounds: Asked[] = [];
+      for (let seed = 1; verbRounds.length === 0 && seed <= 40; seed += 1) {
+        const app = await runWords(seed);
+        for (const { id } of (await pack.listCategories()).filter(
+          ({ id }) => id !== 'human-body',
+        )) {
+          await app.hide({ kind: 'category', categoryId: id });
+        }
+        const asked = await playGame(app);
+        expect(asked.every(({ answer }) => answer.categoryId === 'human-body')).toBe(true);
+        verbRounds.push(...asked.filter(({ answer }) => answer.partOfSpeech === 'verb'));
       }
-      const asked = await playGame(app);
-      expect(asked.every(({ answer }) => answer.categoryId === 'human-body')).toBe(true);
-      verbRounds.push(...asked.filter(({ answer }) => answer.partOfSpeech === 'verb'));
-    }
 
-    expect(verbRounds.length).toBeGreaterThan(0);
-    for (const { options } of verbRounds) {
-      expect(options.filter((option) => option.partOfSpeech === 'verb')).toHaveLength(1);
-      expect(options.every((option) => option.categoryId === 'human-body')).toBe(true);
-    }
-  });
+      expect(verbRounds.length).toBeGreaterThan(0);
+      for (const { options } of verbRounds) {
+        expect(options.filter((option) => option.partOfSpeech === 'verb')).toHaveLength(1);
+        expect(options.every((option) => option.categoryId === 'human-body')).toBe(true);
+      }
+    },
+  );
 
   it('writes no Seen, no History and no Active Day while it is played, only its best result', async () => {
     const { port, writes } = recordingPort(new Map());
