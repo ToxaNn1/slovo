@@ -1,30 +1,12 @@
 import type { NotificationsState, NotificationTimeRefusal } from '@slovo/core';
 import { useEdition } from '@slovo/ui';
-import { useRouter } from 'expo-router';
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { useComposition } from '../composition';
-import { onDeviceNotificationTap } from './device-notifications';
 import { editionStrings } from '../edition/edition';
 import { keep } from '../keep';
 import { useSubscribed } from '../opening';
 import { notificationsSummary } from './notifications-summary';
-
-/**
- * Opens the Word of each notification the reader taps on the Entry screen,
- * through the link that marks it as from a notification. Draws nothing.
- */
-export function NotificationTaps() {
-  const router = useRouter();
-  useEffect(
-    () =>
-      onDeviceNotificationTap((link) => {
-        router.push(link);
-      }),
-    [router],
-  );
-  return null;
-}
 
 /** The Notification times and the sound as they stand, kept up to date. */
 export function useNotificationsState(): NotificationsState {
