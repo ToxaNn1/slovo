@@ -3,17 +3,19 @@ import { describe, expect, it } from 'vitest';
 import type { Correction, FeatureSwitch, Word } from '@slovo/contracts';
 
 import {
-  createFakeNotificationScheduler,
-  createMemoryContentPort,
   createMemoryUserStatePort,
   NOTIFICATION_BODY_LENGTH,
   openComposition,
   openUserState,
   type Clock,
   type Composition,
-  type FakeNotificationScheduler,
   type PlannedNotification,
 } from '../index';
+import {
+  createFakeNotificationScheduler,
+  createMemoryContentPort,
+  type FakeNotificationScheduler,
+} from '../testing';
 import { correction, countingReads, fakeClock, word } from '../test-support';
 
 /** The instant these tests start at. */

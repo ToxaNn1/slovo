@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 import type { Correction, Idiom, Word } from '@slovo/contracts';
 
 import {
-  createMemoryContentPort,
   createMemoryUserStatePort,
   openComposition,
   openUserState,
@@ -11,6 +10,7 @@ import {
   type FeatureSwitch,
   type Feed,
 } from '../index';
+import { createMemoryContentPort } from '../testing';
 import { correction, fakeClock, idiom, randomOf, word } from '../test-support';
 
 /** Twenty Words of the test Category, one of another Category and one of rarity 1. */

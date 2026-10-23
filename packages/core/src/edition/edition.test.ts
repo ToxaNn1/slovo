@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { InvalidEditionConfigError, loadEdition } from '../index';
+import { loadEdition } from '../index';
+import { InvalidEditionConfigError } from './edition';
 
 const validConfig = {
   id: 'test',

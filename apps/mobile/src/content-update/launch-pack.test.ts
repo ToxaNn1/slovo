@@ -2,15 +2,17 @@ import { readFileSync } from 'node:fs';
 
 import {
   createContentUpdate,
-  createFakeContentApi,
-  createMemoryPackFiles,
   createMemoryUserStatePort,
   loadEdition,
   openUserState,
   type Edition,
-  type MemoryPackFile,
   type PackVersion,
 } from '@slovo/core';
+import {
+  createFakeContentApi,
+  createMemoryPackFiles,
+  type MemoryPackFile,
+} from '@slovo/core/testing';
 import { PACK_FORMAT } from '@slovo/language-pack/reader';
 import { describe, expect, it } from 'vitest';
 

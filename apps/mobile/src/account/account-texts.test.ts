@@ -1,10 +1,5 @@
-import {
-  createFakeAccountApi,
-  createMemorySessionStore,
-  openAccount,
-  systemRandom,
-  type Account,
-} from '@slovo/core';
+import { createMemorySessionStore, openAccount, systemRandom, type Account } from '@slovo/core';
+import { createFakeAccountApi } from '@slovo/core/testing';
 import { describe, expect, it } from 'vitest';
 
 import { accountProblemLine, accountSummary } from './account-texts';

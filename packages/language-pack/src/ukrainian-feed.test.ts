@@ -7,7 +7,6 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   CORRECTION_EVERY,
   type Entry,
-  createFakeNotificationScheduler,
   IDIOM_EVERY,
   createMemoryUserStatePort,
   openComposition,
@@ -21,6 +20,7 @@ import {
   NOTIFICATION_BODY_LENGTH,
   type Random,
 } from '@slovo/core';
+import { createFakeNotificationScheduler } from '@slovo/core/testing';
 
 import { buildLanguagePack, openLanguagePack, type NodeLanguagePack } from './index';
 import { ukrainian, ukrainianFolder } from './test-support';

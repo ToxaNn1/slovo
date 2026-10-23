@@ -1,8 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import {
-  createFakeNotificationScheduler,
-  createMemoryContentPort,
   createMemoryUserStatePort,
   openComposition,
   openUserState,
@@ -10,6 +8,7 @@ import {
   type Schedule,
   type UserStatePort,
 } from './index';
+import { createFakeNotificationScheduler, createMemoryContentPort } from './testing';
 import { fakeClock, word } from './test-support';
 
 const SECOND = 1000;

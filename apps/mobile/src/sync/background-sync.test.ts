@@ -1,8 +1,4 @@
 import {
-  createFakeAccountApi,
-  createFakeNotificationScheduler,
-  createFakeSyncApi,
-  createMemoryContentPort,
   createMemorySessionStore,
   createMemoryUserStatePort,
   createSettings,
@@ -16,6 +12,12 @@ import {
   type Schedule,
   type Sync,
 } from '@slovo/core';
+import {
+  createFakeAccountApi,
+  createFakeNotificationScheduler,
+  createFakeSyncApi,
+  createMemoryContentPort,
+} from '@slovo/core/testing';
 import type { WidgetSnapshot } from '@slovo/contracts';
 import type { AppStateStatus } from 'react-native';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';

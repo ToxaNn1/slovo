@@ -2,7 +2,7 @@
 
 Until 0.6 `packages/core/src`, `packages/ui/src` and `apps/mobile/src` each kept every module in one flat folder. The files of one feature were scattered alphabetically, so nothing showed what belongs together or which layer is which.
 
-The modules of these three packages are grouped into folders named after the domains of `CONTEXT.md`, and the files inside a folder stay flat. Each package moves in its own change, the Core first, and the UI and the app follow. The set of folders is the same in each package, so everything about Collections lies in `saved/` in the Core, the UI and the app. The Core's folders are `edition/`, `user-state/`, `entries/`, `hidden/`, `saved/`, `feed/`, `notifications/`, `game/` and `fakes/`, the test doubles of its ports that `index.ts` exports. The UI and the app take the same names where they have the domain, plus their own layers: the UI's `providers/`, `decor/` and `primitives/` sit below its domain folders and import none of them. The app's own are `device/`, the device code its adapters share, and `foreground/`, which tells the shell when the app is in the foreground; a device adapter sits in its domain, such as `device-share` in `share/`. The app's config plugins sit in `apps/mobile/plugins/`, outside `src/`.
+The modules of these three packages are grouped into folders named after the domains of `CONTEXT.md`, and the files inside a folder stay flat. Each package moves in its own change, the Core first, and the UI and the app follow. The set of folders is the same in each package, so everything about Collections lies in `saved/` in the Core, the UI and the app. The Core's folders are `edition/`, `user-state/`, `entries/`, `hidden/`, `saved/`, `feed/`, `notifications/`, `game/` and `fakes/`, the test doubles of its ports that `testing.ts` exports (see the amendment below). The UI and the app take the same names where they have the domain, plus their own layers: the UI's `providers/`, `decor/` and `primitives/` sit below its domain folders and import none of them. The app's own are `device/`, the device code its adapters share, and `foreground/`, which tells the shell when the app is in the foreground; a device adapter sits in its domain, such as `device-share` in `share/`. The app's config plugins sit in `apps/mobile/plugins/`, outside `src/`.
 
 The rules:
 
@@ -14,6 +14,10 @@ The rules:
 - Domain folders import each other in one direction. `no-circular` already rejects a cycle between files; a cycle between folders means a module sits in the wrong one.
 
 Not regrouped: `apps/mobile/src/app/` holds the Expo Router routes, whose paths are the app's links. `packages/language-pack` is one build pipeline, `packages/contracts` already has its `edition-strings/`, and `tools/sourcing` is small. Edition content, `docs/` and the Maestro flows are data and documents, whose numbering or ids give their order. An older ADR keeps the path it was written with, such as ADR 0013's `packages/core/src/user-state-schema.ts`, now in `user-state/`.
+
+## Amendment: the fakes sit behind the Core's testing entry (architecture review 4)
+
+The Core has two entry points. `index.ts` (`@slovo/core`) exports only what another part of the workspace imports, plus every Extension Point (ADR 0006); a name no caller outside the Core uses is not exported. `testing.ts` (`@slovo/core/testing`) exports the fakes in `fakes/` that the tests of the app and the Language Pack use. Only a test or a test-support module imports it, and no app or package ships it (dependency-cruiser's `only-tests-import-the-core-testing-entry`). The one exception is the memory Session store: the shell keeps the Session in it on a development client without the Keychain, so `index.ts` exports it.
 
 ## Considered Options
 

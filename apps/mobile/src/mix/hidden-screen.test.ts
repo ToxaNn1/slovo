@@ -1,12 +1,12 @@
 import { type Word } from '@slovo/contracts';
 import {
-  createMemoryContentPort,
   createMemoryUserStatePort,
   openComposition,
   openUserState,
   type Composition,
   type Edition,
 } from '@slovo/core';
+import { createMemoryContentPort } from '@slovo/core/testing';
 import { describe, expect, it } from 'vitest';
 
 import { hiddenScreenModel, hiddenSummary } from './hidden-screen';

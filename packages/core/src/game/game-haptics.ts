@@ -10,7 +10,7 @@ import type { Schedule } from '../ports';
 export const LIFE_LOST_DELAY = 200;
 
 /** How long after the win's first success haptic its second one comes. */
-export const WIN_SECOND_SUCCESS = 300;
+const WIN_SECOND_SUCCESS = 300;
 
 /**
  * The haptics of a Game's changes, each a sequence over the app's `Haptics`.

@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  createMemoryContentPort,
   createMemoryUserStatePort,
   createSettings,
   openComposition,
@@ -11,6 +10,7 @@ import {
   type UserStateChanges,
   type UserStatePort,
 } from '../index';
+import { createMemoryContentPort } from '../testing';
 import { fakeClock, word } from '../test-support';
 
 const {

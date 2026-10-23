@@ -4,11 +4,11 @@ import {
   createMemoryUserStatePort,
   createSettings,
   createSwipeHint,
-  openCycle,
   openUserState,
-  openWordOfTheDay,
   type UserStateChanges,
 } from '../index';
+import { openCycle } from '../feed/cycle';
+import { openWordOfTheDay } from '../feed/word-of-the-day';
 
 // The contract suite in apps/mobile covers migrations on every adapter; these
 // cover what only the Core decides.

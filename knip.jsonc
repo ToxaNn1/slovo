@@ -41,8 +41,9 @@
     },
     // Not listed, found by Knip itself: the `src/cli.ts` of language-pack and
     // sourcing (their `build-pack` and `source-words` scripts; the app's
-    // `eas-build-post-install` runs build-pack). `index.ts` of contracts and
-    // core is a deliberate public API for future Editions: Knip treats the
-    // exports of a package entry as used, so none is listed as ignored.
+    // `eas-build-post-install` runs build-pack). Knip treats the exports of a
+    // package entry as used: `index.ts` of contracts is a deliberate public
+    // API for future Editions, and that of core exports only what other parts
+    // import plus its Extension Points (ADR 0027), so none is listed as ignored.
   },
 }

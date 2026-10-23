@@ -1,12 +1,12 @@
 import { type Correction, type Idiom, type Word } from '@slovo/contracts';
 import {
-  createMemoryContentPort,
   createMemoryUserStatePort,
   openComposition,
   openUserState,
   type Composition,
   type EntryFeedCard,
 } from '@slovo/core';
+import { createMemoryContentPort } from '@slovo/core/testing';
 import { describe, expect, it } from 'vitest';
 
 import { hideChoice, hideToast } from './hide-choice';

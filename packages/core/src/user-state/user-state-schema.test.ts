@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { createMemoryUserStatePort, openUserState, syncMarkOf, userStateRecords } from '../index';
+import { createMemoryUserStatePort, openUserState, userStateRecords } from '../index';
+import { syncMarkOf } from './user-state-schema';
 
 const { activeDays, notificationTimes, notificationSound, notificationPlan, onboardingFinished } =
   userStateRecords;

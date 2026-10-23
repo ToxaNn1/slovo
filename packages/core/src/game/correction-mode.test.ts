@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 import type { Correction, CorrectionType, Word } from '@slovo/contracts';
 
 import {
-  createMemoryContentPort,
   createMemoryUserStatePort,
   GAME_ROUNDS,
   openComposition,
@@ -14,6 +13,7 @@ import {
   type CurrentGame,
   type Round,
 } from '../index';
+import { createMemoryContentPort } from '../testing';
 import { seededRandom } from '../test-support';
 
 function correction(

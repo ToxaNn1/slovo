@@ -1,17 +1,17 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  createMemoryContentPort,
   createMemoryUserStatePort,
   MIX_KINDS,
   openComposition,
   openUserState,
-  type Category,
   type Clock,
   type Composition,
   type Feed,
   type FeedCard,
 } from '../index';
+import { createMemoryContentPort } from '../testing';
+import type { Category } from '@slovo/contracts';
 import { correction, fakeClock, word } from '../test-support';
 
 /** The Language Pack's Categories, in its order. */

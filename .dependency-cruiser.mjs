@@ -87,6 +87,15 @@ export default {
       to: { path: '^packages/contracts/src/api/test-support\\.ts$' },
     },
     {
+      name: 'only-tests-import-the-core-testing-entry',
+      comment:
+        "ADR 0027: the fakes of the Core's ports are test doubles, so only a test or a " +
+        'test-support module imports `@slovo/core/testing`, and no app or package ships them.',
+      severity: 'error',
+      from: { pathNot: ['\\.test\\.tsx?$', '(^|/)test-support\\.ts$'] },
+      to: { path: '^packages/core/src/testing\\.ts$' },
+    },
+    {
       name: 'ui-does-not-reach-up-or-sideways',
       comment:
         'ADR 0002, 0017: the UI draws what the Core models (ADR 0017), so it may import ' +
@@ -160,7 +169,7 @@ export default {
           '^packages/$2/',
           SHARED_CONFIG,
           '^packages/[^/]+/package\\.json$',
-          '^packages/[^/]+/src/(index|tokens|entries/part-of-speech|entries/entry-row-text|progress/known-line|pack-reader|edition-folder|api|api-description|api/test-support)\\.ts$',
+          '^packages/[^/]+/src/(index|testing|tokens|entries/part-of-speech|entries/entry-row-text|progress/known-line|pack-reader|edition-folder|api|api-description|api/test-support)\\.ts$',
         ],
       },
     },

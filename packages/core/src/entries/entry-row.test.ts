@@ -1,12 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  buildEntryRow,
-  createMemoryContentPort,
-  createMemoryUserStatePort,
-  openComposition,
-  openUserState,
-} from '../index';
+import { buildEntryRow, createMemoryUserStatePort, openComposition, openUserState } from '../index';
+import { createMemoryContentPort } from '../testing';
 import { correction, countingReads, fakeClock, idiom, word } from '../test-support';
 
 const words = Array.from({ length: 40 }, (_, place) => word(`w_${String(place).padStart(2, '0')}`));

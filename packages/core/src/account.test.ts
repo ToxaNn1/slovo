@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  createFakeAccountApi,
   createMemorySessionStore,
   openAccount,
   createMemoryUserStatePort,
@@ -9,6 +8,7 @@ import {
   type Random,
   type Schedule,
 } from './index';
+import { createFakeAccountApi } from './testing';
 import { fakeClock, randomOf } from './test-support';
 
 /** A schedule that runs what it is given at once and keeps each delay asked for. */
