@@ -13,6 +13,8 @@ import {
   type Composition,
   type Correction,
   type CurrentGame,
+  type Idiom,
+  type PlayedRound,
   type Random,
   type Round,
   type UserStateChanges,
@@ -112,6 +114,16 @@ async function run(seed: number, port = createMemoryUserStatePort(new Map())) {
   return offersPlanned(app);
 }
 
+/**
+ * The composition of `run` with Idioms out of the Mix, so that «Вгадай
+ * слово» asks about Words alone, for the tests of Word Rounds.
+ */
+async function runWords(seed: number, port?: UserStatePort) {
+  const app = await run(seed, port);
+  await app.mix.setIdioms(false);
+  return app;
+}
+
 function current(app: Composition): CurrentGame {
   const game = app.game.state.current;
   if (game === undefined) throw new Error('No Game in play');
@@ -158,7 +170,7 @@ async function playGame(app: Composition): Promise<Asked[]> {
 
 describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
   it('offers the mode to a new reader and plays a full Game of 15 different Words', async () => {
-    const app = await run(7);
+    const app = await runWords(7);
     expect(app.game.state.modes).toEqual([
       { modeId: 'guess-word', entryKind: 'word', canStart: true },
       { modeId: 'correction', entryKind: 'correction', canStart: true },
@@ -173,7 +185,7 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
 
   it("offers three Distractors of the answer's part of speech, none with the answer's Lemma", async () => {
     for (const seed of [1, 2, 3]) {
-      for (const { answer, options } of await playGame(await run(seed))) {
+      for (const { answer, options } of await playGame(await runWords(seed))) {
         expect(
           options.filter((option) => option.partOfSpeech === answer.partOfSpeech),
         ).toHaveLength(4);
@@ -193,7 +205,7 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
         words.filter((word) => definitionOf(word.primaryDefinition) === definition).length > 1;
       const asked: Asked[] = [];
       for (const seed of [1, 2, 3, 4]) {
-        const app = await run(seed);
+        const app = await runWords(seed);
         for (const { id } of (await pack.listCategories()).filter(
           ({ id }) => id !== 'human-body',
         )) {
@@ -215,7 +227,7 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
   );
 
   it('shows the Lemma and its first Example, with its author, on the sheet', async () => {
-    for (const { answer, round } of await playGame(await run(11))) {
+    for (const { answer, round } of await playGame(await runWords(11))) {
       expect(round.answer?.sheet).toEqual({
         answer: expect.objectContaining({ text: renderStress(answer) }) as unknown,
         example: answer.examples[0],
@@ -223,33 +235,84 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
     }
   });
 
-  it('tops the Distractors up with other Words for the only verb of a one-Category Mix', async () => {
-    const verbRounds: Asked[] = [];
-    for (let seed = 1; verbRounds.length === 0 && seed <= 40; seed += 1) {
-      const app = await run(seed);
-      for (const { id } of (await pack.listCategories()).filter(({ id }) => id !== 'human-body')) {
-        await app.hide({ kind: 'category', categoryId: id });
+  // Like the test above, each hide plans the Rounds again, for as many Games as it takes to ask the verb.
+  it(
+    'tops the Distractors up with other Words for the only verb of a one-Category Mix',
+    { timeout: 20_000 },
+    async () => {
+      const verbRounds: Asked[] = [];
+      for (let seed = 1; verbRounds.length === 0 && seed <= 40; seed += 1) {
+        const app = await runWords(seed);
+        for (const { id } of (await pack.listCategories()).filter(
+          ({ id }) => id !== 'human-body',
+        )) {
+          await app.hide({ kind: 'category', categoryId: id });
+        }
+        const asked = await playGame(app);
+        expect(asked.every(({ answer }) => answer.categoryId === 'human-body')).toBe(true);
+        verbRounds.push(...asked.filter(({ answer }) => answer.partOfSpeech === 'verb'));
       }
-      const asked = await playGame(app);
-      expect(asked.every(({ answer }) => answer.categoryId === 'human-body')).toBe(true);
-      verbRounds.push(...asked.filter(({ answer }) => answer.partOfSpeech === 'verb'));
-    }
 
-    expect(verbRounds.length).toBeGreaterThan(0);
-    for (const { options } of verbRounds) {
-      expect(options.filter((option) => option.partOfSpeech === 'verb')).toHaveLength(1);
-      expect(options.every((option) => option.categoryId === 'human-body')).toBe(true);
-    }
-  });
+      expect(verbRounds.length).toBeGreaterThan(0);
+      for (const { options } of verbRounds) {
+        expect(options.filter((option) => option.partOfSpeech === 'verb')).toHaveLength(1);
+        expect(options.every((option) => option.categoryId === 'human-body')).toBe(true);
+      }
+    },
+  );
 
   it('writes no Seen, no History and no Active Day while it is played, only its best result', async () => {
     const { port, writes } = recordingPort(new Map());
-    const app = await run(6, port);
+    const app = await runWords(6, port);
     writes.length = 0;
 
     await playGame(app);
 
     expect(writes).toEqual([userStateRecords.gameBest.change(current(app).roundsPassed)]);
+  });
+});
+
+describe('the idioms «Вгадай слово» asks about in the Ukrainian Language Pack', () => {
+  it('asks idioms marked «Не знаю» with idioms only, never a place name, and Words with Words only', async () => {
+    const idioms = await pack.getIdioms(await pack.listIdiomIds());
+    const proper = idioms.filter(({ idiomType }) => idiomType === 'idiom');
+    const entries: readonly (Word | Idiom)[] = [...words, ...idioms];
+    const textOf = (entry: Word | Idiom) =>
+      entry.kind === 'word' ? renderStress(entry) : entry.expression;
+    const offered = (round: Round) =>
+      round.options.map(({ text }) => {
+        const reading = entries.filter((entry) => textOf(entry) === text);
+        const entry =
+          reading.find(({ primaryDefinition }) => primaryDefinition === round.prompt) ?? reading[0];
+        if (entry === undefined) throw new Error(`No Entry reads «${text}»`);
+        return entry;
+      });
+    const played: PlayedRound[] = [];
+    for (const seed of [1, 2, 3]) {
+      const app = await run(seed);
+      for (const { id } of idioms) await app.knowledge.tap(id, 'unknown');
+      await app.game.start('guess-word');
+      while (current(app).status === 'playing') {
+        const { round } = current(app);
+        void app.game.answer(
+          offered(round).findIndex(({ primaryDefinition }) => primaryDefinition === round.prompt),
+        );
+        await app.game.next();
+      }
+      expect(current(app)).toMatchObject({ roundsPassed: GAME_ROUNDS, status: 'won' });
+      played.push(...current(app).played);
+    }
+
+    for (const round of played) {
+      expect(offered(round).map(({ kind }) => kind)).toEqual(Array(4).fill(round.entry.kind));
+    }
+    const shown = played.flatMap((round) => [round.entry, ...offered(round)]);
+    expect(shown.filter((entry) => entry.kind === 'idiom' && entry.idiomType !== 'idiom')).toEqual(
+      [],
+    );
+    // An idiom makes a fair Round only with three other idioms to stand beside it.
+    const askedIdioms = played.filter(({ entry }) => entry.kind === 'idiom');
+    expect(askedIdioms).toHaveLength(proper.length < 4 ? 0 : 3 * Math.min(5, proper.length));
   });
 });
 

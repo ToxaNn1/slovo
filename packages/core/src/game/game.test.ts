@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Example, PartOfSpeech, Word } from '@slovo/contracts';
+import type { Example, Idiom, PartOfSpeech, Word } from '@slovo/contracts';
 
 import {
   createMemoryContentPort,
@@ -24,7 +24,7 @@ import {
   type UserStateChanges,
   type UserStatePort,
 } from '../index';
-import { seededRandom } from '../test-support';
+import { idiom, seededRandom } from '../test-support';
 
 function word(
   id: string,
@@ -394,6 +394,169 @@ describe('a Round of «Вгадай слово»', () => {
     const places = (await playGame(app)).map(rightOf);
 
     expect(new Set(places).size).toBeGreaterThan(1);
+  });
+});
+
+describe('the idioms «Вгадай слово» asks about', () => {
+  const idiomOf = (id: string, overrides: Partial<Idiom> = {}) =>
+    idiom(id, {
+      expression: `to ${id.slice(2)}`,
+      primaryDefinition: `The sense of ${id.slice(2)}.`,
+      examples: [{ text: `An example of ${id.slice(2)}.`, author: 'An author' }],
+      ...overrides,
+    });
+
+  /** 16 idioms, two more that share one Definition, 3 place names and a Retired idiom. */
+  const idioms = [
+    ...numbered('i_idiom', 16).map((id) => idiomOf(id)),
+    idiomOf('i_twin1', { primaryDefinition: 'A shared sense.' }),
+    idiomOf('i_twin2', { primaryDefinition: 'A shared sense.' }),
+    ...numbered('i_place', 3).map((id) =>
+      idiomOf(id, { idiomType: 'placeName', etymology: 'The story of its name.' }),
+    ),
+    idiomOf('i_old', { retired: true }),
+  ];
+  const twins = ['i_twin1', 'i_twin2'];
+  const placeNames = numbered('i_place', 3);
+  const entries: readonly (Word | Idiom)[] = [...words, ...idioms];
+
+  /** What an option of the Entry reads. */
+  const textOf = (entry: Word | Idiom) =>
+    entry.kind === 'word' ? renderStress(entry) : entry.expression;
+
+  /** The Entries a Round offers, in the order shown. */
+  const offered = (round: Round) =>
+    round.options.map(({ text }) => {
+      const option = entries.find((entry) => textOf(entry) === text);
+      if (option === undefined) throw new Error(`No Entry reads «${text}»`);
+      return option;
+    });
+
+  /** The option whose Entry has the prompt for its primary Definition. */
+  const rightAmong = (round: Round) =>
+    offered(round).findIndex(({ primaryDefinition }) => primaryDefinition === round.prompt);
+
+  /** The Core composition over a pack of the Words and the idioms, with Idioms on. */
+  const runWith = (
+    pack: { words?: readonly Word[]; idioms?: readonly Idiom[] },
+    on: readonly FeatureSwitch[] = ['knowledge', 'idioms'],
+    seed?: number,
+  ) =>
+    run({
+      pack: createMemoryContentPort({ categories, ...pack }),
+      on,
+      ...(seed === undefined ? {} : { seed }),
+    });
+
+  /** Plays «Вгадай слово» to its end, wrong only in the Rounds about the Entries listed. */
+  async function playAll(app: Composition, wrongOn: readonly string[] = []) {
+    await app.game.start('guess-word');
+    while (current(app).status === 'playing') {
+      const { round } = current(app);
+      const asked = offered(round)[rightAmong(round)];
+      await play(app, !wrongOn.includes(asked?.id ?? ''), rightAmong);
+    }
+    return current(app).played;
+  }
+
+  it("asks an idiom's primary Definition with four idioms, and shows it with its first Example once answered", async () => {
+    const app = await runWith({ idioms });
+
+    const played = await playAll(app);
+
+    expect(played).toHaveLength(GAME_ROUNDS);
+    for (const { entry, prompt, options, answer } of played) {
+      if (entry.kind !== 'idiom') throw new Error(`A Round asked about ${entry.id}`);
+      expect(prompt).toBe(entry.primaryDefinition);
+      expect(options).toHaveLength(4);
+      expect(options.map(({ text }) => text)).toContain(entry.expression);
+      expect(options.every(({ stressedVowels }) => stressedVowels.length === 0)).toBe(true);
+      expect(answer.sheet).toEqual({
+        answer: { text: entry.expression, stressedVowels: [] },
+        example: entry.examples[0],
+      });
+    }
+  });
+
+  it("never offers an idiom with the answer's primary Definition, whatever the draw", async () => {
+    for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
+      const app = await runWith({ idioms }, undefined, seed);
+      for (const id of twins) await app.knowledge.tap(id, 'unknown');
+
+      const played = await playAll(app);
+
+      const twinRounds = played.filter(({ entry }) => twins.includes(entry.id));
+      expect(twinRounds.map(({ entry }) => entry.id).toSorted()).toEqual(twins);
+      for (const round of twinRounds) {
+        expect(offered(round).filter(({ id }) => twins.includes(id))).toEqual([round.entry]);
+      }
+    }
+  });
+
+  it('never asks about or offers a place name or a Retired idiom, even one marked «Не знаю»', async () => {
+    const app = await runWith({ idioms });
+    for (const id of placeNames) await app.knowledge.tap(id, 'unknown');
+
+    const played = await playAll(app);
+
+    const shown = played.flatMap((round) => [round.entry, ...offered(round)]).map(({ id }) => id);
+    expect(shown.filter((id) => placeNames.includes(id) || id === 'i_old')).toEqual([]);
+  });
+
+  it("can't start with 14 idioms and 3 place names: a place name makes no Round", async () => {
+    const app = await runWith({
+      idioms: idioms.filter(({ id }) => ![...twins, 'i_idiom15', 'i_idiom16'].includes(id)),
+    });
+
+    expect(app.game.state.modes).toEqual([
+      { modeId: 'guess-word', entryKind: 'word', canStart: false, refusal: 'too-few-entries' },
+    ]);
+  });
+
+  it('asks about Words and idioms in one Game: a Word Round offers Words only, an idiom Round idioms only', async () => {
+    const unknown = ['i_idiom01', 'i_idiom02', 'i_idiom03'];
+    const app = await runWith({ words, idioms });
+    for (const id of unknown) await app.knowledge.tap(id, 'unknown');
+
+    const played = await playAll(app);
+
+    const kinds = played.map(({ entry }) => entry.kind);
+    expect(kinds).toContain('word');
+    expect(kinds).toContain('idiom');
+    for (const round of played) {
+      expect(offered(round).map(({ kind }) => kind)).toEqual(Array(4).fill(round.entry.kind));
+    }
+    expect(played.filter(({ entry }) => unknown.includes(entry.id))).toHaveLength(3);
+  });
+
+  it('marks the idiom of a wrong answer «Не знаю»', async () => {
+    const app = await runWith({ idioms });
+    await app.game.start('guess-word');
+    const { round } = current(app);
+    const asked = offered(round)[rightAmong(round)]?.id ?? '';
+
+    await play(app, false, rightAmong);
+
+    expect(app.knowledge.state.shown.get(asked)).toBe('unknown');
+  });
+
+  it('asks no idiom with Idioms out of the Mix or the Feature Switch off, and still plays the Words', async () => {
+    const unknown = ['i_idiom01', 'i_idiom02', 'i_idiom03'];
+    const outOfMix = await runWith({ words, idioms });
+    for (const id of unknown) await outOfMix.knowledge.tap(id, 'unknown');
+    await outOfMix.mix.setIdioms(false);
+    const switchedOff = await runWith({ words, idioms }, ['knowledge']);
+
+    for (const app of [outOfMix, switchedOff]) {
+      expect(app.game.state.modes).toEqual([
+        { modeId: 'guess-word', entryKind: 'word', canStart: true },
+      ]);
+      const played = await playAll(app);
+      expect(played).toHaveLength(GAME_ROUNDS);
+      expect(
+        played.flatMap((round) => [round.entry, ...offered(round)]).map(({ kind }) => kind),
+      ).not.toContain('idiom');
+    }
   });
 });
 

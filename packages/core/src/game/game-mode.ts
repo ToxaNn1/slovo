@@ -54,7 +54,7 @@ export interface RoundContent {
 export interface RoundInput {
   /** The Entry the Round asks about, of the mode's kind. */
   readonly answer: Entry;
-  /** Every eligible Entry of the mode's kind, the answer among them: where Distractors come from. */
+  /** Every eligible Entry of the kinds the mode asks about, the answer among them: where Distractors come from. */
   readonly eligible: readonly Entry[];
   /** The source of every shuffle. */
   readonly random: Random;
@@ -68,8 +68,14 @@ export interface RoundInput {
 export interface GameMode {
   /** Unique among the modes, such as `guess-word`. */
   readonly id: string;
-  /** The kind of Entry its Rounds ask about. */
+  /** The kind of Entry its Rounds ask about, which its card names and whose refusal it gives. */
   readonly entryKind: EntryKind;
+  /**
+   * Other kinds of Entry its Rounds may ask about, such as idioms in «Вгадай
+   * слово»; a kind with no eligible Entry, such as Idioms out of the Mix,
+   * leaves the mode asking about the rest.
+   */
+  readonly alsoAsks?: readonly EntryKind[];
   /** Whether the Edition turns the mode on; a mode that is off is never on offer. */
   isOn(edition: GameEdition): boolean;
   /**

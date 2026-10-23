@@ -74,3 +74,15 @@ Several Words share one primary Definition: худоребрий, худокос
 
 - **Show a second line, such as the Lemma's first Example, when Definitions match**: rejected. The prompt is the Definition alone; a Round that needs a second clue is not a fair Round.
 - **Give each of those Words its own Definition in the content**: rejected alone. The dictionary writes them alike, and a later Word may share a Definition again; the Game must hold the rule itself.
+
+## Amendment: «Вгадай слово» asks about idioms too (0.8.8, #562)
+
+ADR 0046 adds the Idiom, and the owner's answer of 2026-10-22 lets idioms play in the Core Game Mode rather than in a mode of their own. «Вгадай слово» asks about idioms of Idiom Type `idiom` as well as Words: an idiom's Round gives its primary Definition and offers four idioms, its expression with no Stress. The three Distractors are other eligible idioms drawn at random from the whole pack, no two with one expression and none whose primary Definition is the answer's, by the rule of the amendment above; the Distractor rule picks among Words only, since an idiom has no part of speech. A place name builds no Round and is never a Distractor, so the Round planning skips it as it skips any Entry its mode can make no fair Round of. A Word Round never offers an idiom, and an idiom Round never offers a Word. The sheet shows the expression and the idiom's first Example.
+
+A Game Mode still names one kind of Entry, the one its card names and whose refusal it gives, and may name other kinds its Rounds also ask about. Its Rounds are planned over the eligible Entries of all of them, read in one pass by the Entries module, so the pool, the 15 different answers and the up to 5 Rounds about Unknown or due Entries (ADR 0043) take idioms and Words alike, and a wrong answer marks an idiom Unknown as it marks a Word. A kind besides the mode's own with no eligible Entry, such as Idioms out of the Mix or turned off, leaves the mode asking about the rest: «Вгадай слово» never gives `idioms-out-of-mix` as its refusal, and its card needs no text for it.
+
+### Considered Options
+
+- **A Game Mode of its own for idioms**: rejected for 0.8.8. The owner kept the idiom modes «Фразеологізм» and «Склади фразеологізм» for 1.x; with 15 idioms, a mode of their own would have one Game's worth of Rounds.
+- **A mode that names a list of kinds, with no kind of its own**: rejected. The card, its strings and its refusal belong to one kind; «Вгадай слово» would refuse because Idioms are out of the Mix while its Words still play.
+- **Place names as Rounds that ask for the place from its description**: rejected (ADR 0046). No Round asks the reader to guess a city.

@@ -48,9 +48,10 @@ export interface Entries {
    * or, for Corrections or Idioms out of the Mix, whether or not the Edition
    * turns them on, why none are. Read afresh on every call, but for the live
    * Entries themselves, which are read from the Language Pack once: it never
-   * changes while it is open.
+   * changes while it is open. With `alsoOf`, the eligible Entries of those
+   * kinds follow, none of a kind out of the Mix, and only `kind` can refuse.
    */
-  eligibleOfKind(kind: EntryKind): Promise<EligibleOfKind>;
+  eligibleOfKind(kind: EntryKind, alsoOf?: readonly EntryKind[]): Promise<EligibleOfKind>;
   /**
    * Any Entry by id, eligible or not: a Retired one, or a Correction or an
    * Idiom when the Edition turns its kind off. So the Entries the user keeps
@@ -215,13 +216,21 @@ export function createEntries(
     idiom: ({ idioms }) => idioms,
   };
 
-  async function eligibleOfKind(kind: EntryKind): Promise<EligibleOfKind> {
+  async function eligibleOfKind(
+    kind: EntryKind,
+    alsoOf: readonly EntryKind[] = [],
+  ): Promise<EligibleOfKind> {
     if (kind === 'correction' && !(await correctionsInMix())) {
       return { refusal: 'corrections-out-of-mix' };
     }
     if (kind === 'idiom' && !(await idiomsInMix())) return { refusal: 'idioms-out-of-mix' };
-    const [ids, entries] = await Promise.all([eligible(), live[kind]()]);
-    return { entries: idsOfKind[kind](ids).flatMap((id) => entries.get(id) ?? []) };
+    const kinds = [kind, ...alsoOf];
+    const [ids, ...entries] = await Promise.all([eligible(), ...kinds.map((each) => live[each]())]);
+    return {
+      entries: kinds.flatMap((each, index) =>
+        idsOfKind[each](ids).flatMap((id) => entries[index]?.get(id) ?? []),
+      ),
+    };
   }
 
   return {
