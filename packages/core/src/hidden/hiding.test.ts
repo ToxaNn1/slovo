@@ -196,6 +196,32 @@ describe('a hide', () => {
     expect(app.mix.state).toBe(state);
     expect(records).toEqual(kept);
   });
+
+  it('takes Idioms out of the Mix, and its undo puts them back', async () => {
+    const app = await run();
+
+    const hidden = await app.hide({ kind: 'idioms' });
+
+    expect(hidden?.changed).toEqual({ kind: 'idioms' });
+    expect(app.mix.state.idioms).toBe(false);
+
+    await hidden?.undo();
+
+    expect(app.mix.state.idioms).toBe(true);
+  });
+
+  it('changes nothing for Idioms out of the Mix already', async () => {
+    const records = new Map<string, string>();
+    const app = await run({ records });
+    await app.hide({ kind: 'idioms' });
+    const state = app.mix.state;
+    const kept = new Map(records);
+
+    expect(await app.hide({ kind: 'idioms' })).toBeUndefined();
+
+    expect(app.mix.state).toBe(state);
+    expect(records).toEqual(kept);
+  });
 });
 
 describe('two hides at once', () => {
@@ -203,6 +229,7 @@ describe('two hides at once', () => {
     ['an Entry', { kind: 'entry', entryId: 'w_speech1' }],
     ['a Category', { kind: 'category', categoryId: 'speech' }],
     ['Corrections', { kind: 'corrections' }],
+    ['Idioms', { kind: 'idioms' }],
   ] as const)(
     'on %s: one changes it and gives the undo, the other changes nothing',
     async (_, target) => {
@@ -221,6 +248,7 @@ describe('two unhides at once', () => {
     ['an Entry', { kind: 'entry', entryId: 'w_speech1' }],
     ['a Category', { kind: 'category', categoryId: 'speech' }],
     ['Corrections', { kind: 'corrections' }],
+    ['Idioms', { kind: 'idioms' }],
   ] as const)('on %s: one changes it, the other changes nothing', async (_, target) => {
     const app = await run();
     await app.hide(target);
@@ -367,6 +395,26 @@ describe('an unhide', () => {
     const kept = new Map(records);
 
     expect(await app.unhide({ kind: 'corrections' })).toBeUndefined();
+
+    expect(records).toEqual(kept);
+  });
+
+  it('puts Idioms back in the Mix, with no undo', async () => {
+    const app = await run();
+    await app.hide({ kind: 'idioms' });
+
+    const unhidden = await app.unhide({ kind: 'idioms' });
+
+    expect(unhidden).toEqual({ changed: { kind: 'idioms' }, undo: undefined });
+    expect(app.mix.state.idioms).toBe(true);
+  });
+
+  it('changes nothing for Idioms in the Mix', async () => {
+    const records = new Map<string, string>();
+    const app = await run({ records });
+    const kept = new Map(records);
+
+    expect(await app.unhide({ kind: 'idioms' })).toBeUndefined();
 
     expect(records).toEqual(kept);
   });

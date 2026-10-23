@@ -3,11 +3,12 @@ import type { HiddenEntries } from './hidden-entries';
 import { createInTurn } from '../in-turn';
 import type { Mix } from '../entries/mix';
 
-/** What a hide or an unhide is for: one Entry, one Category, or Corrections as a whole. */
+/** What a hide or an unhide is for: one Entry, one Category, or Corrections or Idioms as a whole. */
 export type HideTarget =
   | { readonly kind: 'entry'; readonly entryId: string }
   | { readonly kind: 'category'; readonly categoryId: string }
-  | { readonly kind: 'corrections' };
+  | { readonly kind: 'corrections' }
+  | { readonly kind: 'idioms' };
 
 /** What a hide or an unhide changed: its target, and for an Entry the row whose title a toast names. */
 export type HidingChange =
@@ -17,7 +18,7 @@ export type HidingChange =
 /** A hide that changed something, with the undo its toast offers. */
 export interface HideResult {
   readonly changed: HidingChange;
-  /** Takes the hide back: restores the Entry, or puts the Category or Corrections back in the Mix. */
+  /** Takes the hide back: restores the Entry, or puts the Category, Corrections or Idioms back in the Mix. */
   readonly undo: () => Promise<void>;
 }
 
@@ -26,12 +27,12 @@ export interface UnhideResult {
   readonly changed: HidingChange;
   /**
    * When the restored Entry was hidden, for its undo in a composition opened
-   * again since (ADR 0018); nothing for a Category or Corrections.
+   * again since (ADR 0018); nothing for a Category, Corrections or Idioms.
    */
   readonly hiddenAt: Date | undefined;
   /**
    * Hides the Entry again at the time it was hidden before, so it returns to
-   * its old place in the Hidden list. Nothing for a Category or Corrections,
+   * its old place in the Hidden list. Nothing for a Category, Corrections or Idioms,
    * which come back with no toast.
    */
   readonly undo: (() => Promise<void>) | undefined;
@@ -40,17 +41,17 @@ export interface UnhideResult {
 /** The hide action of a card and the unhide of the Hidden screen, over the Hidden Entries and the Mix. */
 export interface Hiding {
   /**
-   * Hides the Entry, or takes the Category or Corrections out of the Mix.
-   * Nothing changes for an Entry Hidden already or one the Language Pack
+   * Hides the Entry, or takes the Category, Corrections or Idioms out of the
+   * Mix. Nothing changes for an Entry Hidden already or one the Language Pack
    * doesn't have, a Category out of the Mix already, the last one in it or
-   * one the Edition doesn't have, or Corrections out already.
+   * one the Edition doesn't have, or Corrections or Idioms out already.
    */
   hide(target: HideTarget): Promise<HideResult | undefined>;
   /**
-   * Restores the Hidden Entry, or puts the Hidden Category or Corrections
-   * back in the Mix. Nothing changes for an Entry that is not Hidden, a
+   * Restores the Hidden Entry, or puts the Hidden Category, Corrections or
+   * Idioms back in the Mix. Nothing changes for an Entry that is not Hidden, a
    * Category in the Mix already or one the Edition doesn't have, or
-   * Corrections in already.
+   * Corrections or Idioms in already.
    */
   unhide(target: HideTarget): Promise<UnhideResult | undefined>;
 }
@@ -89,6 +90,11 @@ export function createHiding({
       if (!(await mix.takeOut(categoryId))) return undefined;
       return { changed: { kind: 'category', categoryId }, undo: () => mix.putBack(categoryId) };
     }
+    if (target.kind === 'idioms') {
+      if (!mix.state.idioms) return undefined;
+      await mix.setIdioms(false);
+      return { changed: { kind: 'idioms' }, undo: () => mix.setIdioms(true) };
+    }
     if (!mix.state.corrections) return undefined;
     await mix.setCorrections(false);
     return { changed: { kind: 'corrections' }, undo: () => mix.setCorrections(true) };
@@ -113,6 +119,11 @@ export function createHiding({
       if (!mix.state.hiddenCategories.some(({ id }) => id === categoryId)) return undefined;
       await mix.putBack(categoryId);
       return { changed: { kind: 'category', categoryId }, hiddenAt: undefined, undo: undefined };
+    }
+    if (target.kind === 'idioms') {
+      if (mix.state.idioms) return undefined;
+      await mix.setIdioms(true);
+      return { changed: { kind: 'idioms' }, hiddenAt: undefined, undo: undefined };
     }
     if (mix.state.corrections) return undefined;
     await mix.setCorrections(true);
