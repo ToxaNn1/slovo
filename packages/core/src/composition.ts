@@ -332,8 +332,7 @@ export async function openComposition({
   planOffers();
   async function entryCard(entryId: string): Promise<EntryFeedCard | undefined> {
     const entry = await entries.get(entryId);
-    // An Idiom has no card yet (0.8.8).
-    if (entry === undefined || entry.kind === 'idiom') return undefined;
+    if (entry === undefined) return undefined;
     // Today's Word of the Day carries its day, as on its Feed card.
     const today = wordOfTheDay.chosen();
     const card =

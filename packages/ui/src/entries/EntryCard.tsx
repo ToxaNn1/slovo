@@ -1,6 +1,6 @@
-import type { EntryFeedCard } from '@slovo/core';
+import type { EntryFeedCard, IdiomCardModel } from '@slovo/core';
 import type { ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { CorrectionCardBody } from './CorrectionCard';
 import { ConcealedProvider, useSelfCheck } from './self-check';
@@ -8,13 +8,19 @@ import { CardCorners } from '../decor/DecorSlots';
 import { OutlineButton } from '../primitives/OutlineButton';
 import { useEdition } from '../providers/EditionProvider';
 import { ReviewLabel } from './ReviewLabel';
-import { useCompactLayout, useLemmaSize } from '../providers/FontSizeProvider';
+import {
+  useCompactLayout,
+  useLemmaSize,
+  useWordTextSizes,
+  type TextSize,
+} from '../providers/FontSizeProvider';
 import { blockGap, correctionCardLayout, space, wordCardSide } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
+import { WholeWordsText } from '../primitives/WholeWordsText';
 import { WordCardBody } from './WordCard';
 
 export interface EntryCardProps {
-  /** The card of a Word or a Correction, as the Core built it. */
+  /** The card of a Word, a Correction or an Idiom, as the Core built it. */
   card: EntryFeedCard;
   /** Opens a linked Correction when the reader taps its form in a Word's «often said» line. */
   onOpenCorrection?: (correctionId: string) => void;
@@ -41,7 +47,52 @@ const SPACING = {
     bottom: space[6],
     gap: space[4],
   },
+  idiom: { top: space[8], side: wordCardSide, bottom: wordCardSide, gap: blockGap },
 } as const;
+
+/**
+ * The Idiom card's blocks inside the Entry card's frame, so far the
+ * expression at the Lemma's size and its primary Definition; the full Idiom
+ * card, with its chip, Examples and «Походження», is drawn in 0.8.8. Under
+ * Self-check it keeps only the expression.
+ */
+function IdiomCardBody({
+  card,
+  lemmaSize,
+  concealed,
+}: {
+  card: IdiomCardModel;
+  lemmaSize: TextSize;
+  concealed: boolean;
+}) {
+  const { colors, fontFamilies } = useTokens();
+  const sizes = useWordTextSizes();
+  const { voice } = useEdition();
+  return (
+    <>
+      <WholeWordsText
+        text={card.expression}
+        size={lemmaSize}
+        tracking={-0.01}
+        testID="idiom-expression"
+        accessibilityRole="header"
+        {...voice}
+        numberOfLines={2}
+        adjustsFontSizeToFit
+        style={{ color: colors.ink, fontFamily: fontFamilies.word }}
+      />
+      {concealed ? null : (
+        <Text
+          testID="idiom-definition"
+          {...voice}
+          style={[sizes.definition, { color: colors.ink, fontFamily: fontFamilies.word }]}
+        >
+          {card.primaryDefinition}
+        </Text>
+      )}
+    </>
+  );
+}
 
 /**
  * The Entry card: a Word's or a Correction's card in the one card frame, at
@@ -87,18 +138,20 @@ export function EntryCard({ card, onOpenCorrection, actions, selfCheck = false }
             onOpenCorrection={onOpenCorrection}
             concealed={concealed}
           />
-        ) : (
+        ) : card.kind === 'correction' ? (
           <CorrectionCardBody
             card={card.correctionCard}
             lemmaSize={lemmaSize}
             concealed={concealed}
           />
+        ) : (
+          <IdiomCardBody card={card.idiomCard} lemmaSize={lemmaSize} concealed={concealed} />
         )}
         {concealed && (
           <OutlineButton
             testID={`${card.kind}-reveal`}
-            // The Edition names the reveal for each kind: a Word's meaning, a Correction's right form.
-            label={(card.kind === 'word' ? strings.wordCard : strings.correctionCard).reveal}
+            // The Edition names the reveal for each kind: a Word's or an Idiom's meaning, a Correction's right form.
+            label={(card.kind === 'correction' ? strings.correctionCard : strings.wordCard).reveal}
             onPress={reveal}
           />
         )}

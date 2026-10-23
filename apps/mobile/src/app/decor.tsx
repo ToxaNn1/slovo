@@ -180,9 +180,7 @@ function useFirstCards(): ShowcaseCards {
     let active = true;
     async function firstCard(id: string | undefined) {
       const entry = id === undefined ? undefined : await entries.get(id);
-      return entry === undefined || entry.kind === 'idiom'
-        ? undefined
-        : buildEntryCard(entries, entry);
+      return entry === undefined ? undefined : buildEntryCard(entries, entry);
     }
     void entries
       .eligible()
