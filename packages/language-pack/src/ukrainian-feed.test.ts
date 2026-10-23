@@ -339,13 +339,21 @@ describe('Idioms in the Feed over the Ukrainian Language Pack', () => {
       const offered = await walk(feed);
 
       expect(feed.cards[0]?.kind).toBe('word');
+      // Each turn is counted from its kind's last card; the Correction takes a
+      // card both turns fall on and the Idiom takes the next (glossary: Feed).
+      let sinceCorrection = 0;
+      let sinceIdiom = 0;
       const mixed = offered.slice(0, liveIdiomIds.length * IDIOM_EVERY);
       mixed.forEach((id, position) => {
-        const card = position + 1;
-        const correctionTurn = card % CORRECTION_EVERY === 0;
-        const idiomTurn = card % IDIOM_EVERY === 0;
-        const kind = correctionTurn ? 'c_' : idiomTurn ? 'i_' : 'w_';
-        expect(id.startsWith(kind), `card ${String(position)}: ${id}`).toBe(true);
+        const kind =
+          sinceCorrection >= CORRECTION_EVERY - 1
+            ? 'c_'
+            : sinceIdiom >= IDIOM_EVERY - 1
+              ? 'i_'
+              : 'w_';
+        expect(id.startsWith(kind), `card ${String(position + 1)}: ${id}`).toBe(true);
+        sinceCorrection = kind === 'c_' ? 0 : sinceCorrection + 1;
+        sinceIdiom = kind === 'i_' ? 0 : sinceIdiom + 1;
       });
       expect(offered).toHaveLength(liveIds.length + liveCorrectionIds.length + liveIdiomIds.length);
       expect(new Set(offered)).toEqual(
