@@ -4,7 +4,13 @@ import { join } from 'node:path';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { createEntries, type Entries } from '@slovo/core';
+import {
+  createEntries,
+  createMemoryUserStatePort,
+  openComposition,
+  openUserState,
+  type Entries,
+} from '@slovo/core';
 
 import { buildLanguagePack, openLanguagePack, type NodeLanguagePack } from './index';
 import { ukrainian, ukrainianFolder } from './test-support';
@@ -104,6 +110,37 @@ describe('the Idioms of the Ukrainian Edition', () => {
     expect((await entries.eligible()).idioms).toEqual(ids);
     expect(await entries.eligibleOfKind('idiom')).toEqual({
       entries: await Promise.all(ids.map((id) => entries.get(id))),
+    });
+  });
+});
+
+describe('the Known Idioms of the Ukrainian Language Pack', () => {
+  it('counts the Idioms marked Known, a place name too, apart from the Words and Corrections', async () => {
+    const app = await openComposition({
+      content: pack,
+      edition: ukrainian,
+      userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
+      clock: { now: () => new Date('2026-10-23T09:00:00+03:00'), timeZone: () => 'Europe/Kyiv' },
+      random: { next: () => 0.25 },
+    });
+    const [wordId] = await pack.listWordIds();
+    if (wordId === undefined) throw new Error('The Ukrainian Language Pack has no Words');
+
+    await app.knowledge.tap('i_8f3kq2', 'known');
+    await app.knowledge.tap('i_d5tc9n', 'known');
+    await app.knowledge.tap('i_m2vr7s', 'unknown');
+    await app.knowledge.tap('c_0ci49m', 'known');
+    await app.knowledge.tap(wordId, 'known');
+
+    expect(app.knowledge.state).toMatchObject({
+      knownWords: 1,
+      knownCorrections: 1,
+      knownIdioms: 2,
+    });
+    expect(app.progress.state).toMatchObject({
+      knownWords: 1,
+      knownCorrections: 1,
+      knownIdioms: 2,
     });
   });
 });

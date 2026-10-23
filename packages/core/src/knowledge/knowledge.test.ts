@@ -298,6 +298,7 @@ describe('Knowledge Marks', () => {
       learning: [],
       knownWords: 0,
       knownCorrections: 0,
+      knownIdioms: 0,
       due: [],
       shown: new Map(),
     });

@@ -35,6 +35,8 @@ export interface ProgressState {
   readonly knownWords: number;
   /** The Corrections marked Known, Learned or not. */
   readonly knownCorrections: number;
+  /** The Idioms marked Known, place names too, Learned or not. */
+  readonly knownIdioms: number;
   /** The Entries due for Review today, which the Knowledge Marks give with a Hidden Entry left out. */
   readonly dueToday: number;
 }
@@ -159,6 +161,7 @@ export async function openProgress({
       bestResult: game.state.bestResult,
       knownWords: knowledge.state.knownWords,
       knownCorrections: knowledge.state.knownCorrections,
+      knownIdioms: knowledge.state.knownIdioms,
       dueToday: knowledge.state.due.length,
     };
   }
