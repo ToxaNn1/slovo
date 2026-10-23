@@ -1,5 +1,11 @@
 import type { EditionStrings } from '@slovo/contracts';
-import { coreDecor, type CorrectionCardModel, type Decor, type EntryFeedCard } from '@slovo/core';
+import {
+  coreDecor,
+  type CorrectionCardModel,
+  type Decor,
+  type EntryFeedCard,
+  type IdiomCardModel,
+} from '@slovo/core';
 import {
   ActionRow,
   DecorProvider,
@@ -29,6 +35,13 @@ const strings = {
     pronunciation: { label: 'Pronounce', stop: 'Stop', noVoice: 'No voice' },
     stress: 'stress on {vowels}',
     stressOr: 'or',
+    extraDefinitions: 'Other meanings',
+  },
+  idiomCard: {
+    idiomTypes: { idiom: 'idiom', placeName: 'place name' },
+    heading: '{expression}, {type}',
+    etymology: 'Origin',
+    source: 'Source: {source}',
   },
   correctionCard: {
     title: 'Correction',
@@ -151,6 +164,7 @@ describe('EntryCard', () => {
   it.each([
     ['Word', wordCard, 'word-card'],
     ['Correction', card, 'correction-card'],
+    ['Idiom', { kind: 'idiom' as const, idiomCard: idiomCard() }, 'idiom-card'],
   ])('draws the Decor frame on a %s card in all four corners', async (_kind, entry, testID) => {
     await render(
       inEdition(
@@ -479,5 +493,95 @@ describe('VoiceOver on a stress trap', () => {
 
     expect(screen.getByLabelText('Non-standard: take part')).toBeTruthy();
     expect(screen.getByLabelText('Standard: join in')).toBeTruthy();
+  });
+});
+
+function idiomCard(overrides: Partial<IdiomCardModel> = {}): IdiomCardModel {
+  return {
+    kind: 'idiom',
+    idiomId: 'i1',
+    expression: 'to beat the bushes',
+    idiomType: 'idiom',
+    primaryDefinition: 'To idle about.',
+    extraDefinitions: ['To search everywhere.'],
+    examples: [{ text: 'He beat the bushes all day.' }, { text: 'Stop beating the bushes.' }],
+    etymology: 'From the hunt.',
+    sourceTitles: ['A phrase dictionary'],
+    ...overrides,
+  };
+}
+
+/** A place name, whose story is its etymology. */
+const placeName = idiomCard({
+  idiomId: 'i2',
+  expression: 'Berdychiv',
+  idiomType: 'placeName',
+  primaryDefinition: 'A town in the Zhytomyr region.',
+  extraDefinitions: [],
+  examples: [{ text: 'They drove to Berdychiv.' }],
+  etymology: 'Named after the Berdy tribe.',
+  sourceTitles: [],
+});
+
+describe('the Idiom card', () => {
+  it('shows the expression, its chip, Definitions, Examples, «Origin» and sources of an idiom', async () => {
+    await render(inEdition(<EntryCard card={{ kind: 'idiom', idiomCard: idiomCard() }} />));
+
+    expect(screen.getByTestId('idiom-expression')).toHaveTextContent('to beat the bushes');
+    expect(screen.getByTestId('idiom-type')).toHaveTextContent('idiom');
+    expect(screen.getByTestId('idiom-definition')).toHaveTextContent('To idle about.');
+    expect(screen.getByTestId('idiom-extra-definitions')).toHaveTextContent(
+      'Other meanings2. To search everywhere.',
+    );
+    expect(screen.getAllByTestId('idiom-example')).toHaveLength(2);
+    expect(screen.getByText('He beat the bushes all day.')).toBeTruthy();
+    expect(screen.getByText('Stop beating the bushes.')).toBeTruthy();
+    expect(screen.getByTestId('idiom-etymology')).toHaveTextContent('OriginFrom the hunt.');
+    expect(screen.getByTestId('idiom-source')).toHaveTextContent('Source: A phrase dictionary');
+  });
+
+  it('shows the chip «place name» on a place name card, and only the sections it has', async () => {
+    await render(inEdition(<EntryCard card={{ kind: 'idiom', idiomCard: placeName }} />));
+
+    expect(screen.getByTestId('idiom-expression')).toHaveTextContent('Berdychiv');
+    expect(screen.getByTestId('idiom-type')).toHaveTextContent('place name');
+    expect(screen.getByTestId('idiom-definition')).toHaveTextContent(
+      'A town in the Zhytomyr region.',
+    );
+    expect(screen.getByText('They drove to Berdychiv.')).toBeTruthy();
+    expect(screen.getByTestId('idiom-etymology')).toHaveTextContent(
+      'OriginNamed after the Berdy tribe.',
+    );
+    expect(screen.queryByTestId('idiom-extra-definitions')).toBeNull();
+    expect(screen.queryByTestId('idiom-source')).toBeNull();
+  });
+
+  it.each([
+    ['an idiom', idiomCard(), 'to beat the bushes, idiom', 'To idle about.'],
+    ['a place name', placeName, 'Berdychiv, place name', 'A town in the Zhytomyr region.'],
+  ])(
+    'has VoiceOver read the expression of %s with its kind, then its Definition',
+    async (_kind, model, heading, definition) => {
+      await render(inEdition(<EntryCard card={{ kind: 'idiom', idiomCard: model }} />));
+
+      expect(screen.getByRole('header', { name: heading })).toBeTruthy();
+      expect(screen.getByTestId('idiom-definition')).toHaveTextContent(definition);
+    },
+  );
+
+  it('keeps the expression and its chip under Self-check and shows the rest once revealed', async () => {
+    await render(
+      inEdition(<EntryCard card={{ kind: 'idiom', idiomCard: idiomCard() }} selfCheck />),
+    );
+
+    expect(screen.getByRole('header', { name: 'to beat the bushes, idiom' })).toBeTruthy();
+    for (const concealedPart of ['idiom-definition', 'idiom-example', 'idiom-etymology']) {
+      expect(screen.queryByTestId(concealedPart)).toBeNull();
+    }
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Show the meaning' }));
+
+    expect(screen.getByTestId('idiom-definition')).toHaveTextContent('To idle about.');
+    expect(screen.getByTestId('idiom-etymology')).toBeTruthy();
   });
 });

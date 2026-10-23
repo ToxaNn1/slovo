@@ -225,7 +225,9 @@
       "idiom": "фразеологізм",
       "placeName": "топонім"
     },
-    "etymology": "Походження"
+    "etymology": "Походження",
+    "heading": "{expression}, {type}",
+    "source": "Джерело: {source}"
   },
   "favorites": {
     "title": "Улюблене",
