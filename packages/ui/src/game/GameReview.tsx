@@ -10,18 +10,21 @@ import { minTouchTarget, rowPadding, space, typeSize } from '../tokens';
 /** How far the largest text sizes of iOS may scale the rows' text, so it never breaks a word. */
 const TEXT_MAX_FONT_SCALE = 1.5;
 
-/** What a row leads with: the Word asked about, or the Correction's non-standard form. */
+/**
+ * What a row leads with: the Word asked about, the Correction's non-standard
+ * form, or the idiom's expression, which carries no Stress.
+ */
 function titleOf({ entry, answer }: PlayedRound) {
-  return entry.kind === 'correction'
-    ? { text: entry.nonStandardForm, stressedVowels: [] as readonly string[] }
-    : answer.sheet.answer;
+  if (entry.kind === 'correction') return { text: entry.nonStandardForm, stressedVowels: [] };
+  if (entry.kind === 'idiom') return { text: entry.expression, stressedVowels: [] };
+  return answer.sheet.answer;
 }
 
 /**
  * The Game Review under the result: every Round of the Game just over, in
  * order, with ✓ or ✗ and the reader's wrong pick. A tap expands a Round: a
- * Word's Definition, Example and etymology, or a Correction's right form and
- * explanation; a second tap opens the Entry. One Round is expanded at a time.
+ * Word's or an idiom's Definition, Example and etymology, or a Correction's
+ * right form and explanation; a second tap opens the Entry. One Round is expanded at a time.
  */
 export function GameReview({
   rounds,
@@ -179,7 +182,7 @@ function ReviewDetails({ round: { entry, answer } }: { round: PlayedRound }) {
       {entry.etymology === undefined ? null : (
         <View>
           <Text maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE} style={heading}>
-            {strings.wordCard.etymology}
+            {entry.kind === 'idiom' ? strings.idiomCard.etymology : strings.wordCard.etymology}
           </Text>
           <Text maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE} style={body}>
             {entry.etymology}
