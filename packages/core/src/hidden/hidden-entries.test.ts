@@ -156,7 +156,9 @@ describe('Hidden Entries', () => {
       kind: 'correction',
       entryId: 'c_one',
       title: 'one',
-      nonStandardForm: 'not one',
+      secondLine: 'not one',
+      kindKey: 'correction',
+      spoken: 'one, not one',
       correctionType: 'calque',
     });
   });

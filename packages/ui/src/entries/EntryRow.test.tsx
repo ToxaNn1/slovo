@@ -6,13 +6,36 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import type { ComponentProps } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+const strings = { correctionCard: { insteadOf: 'instead of «{form}»' } } as EditionStrings;
+
 const row: EntryRowModel = {
   kind: 'word',
   entryId: 'w1',
   title: 'lemma',
-  definition: 'what it means',
+  secondLine: 'what it means',
+  kindKey: 'word',
+  spoken: 'lemma, what it means',
   partOfSpeech: 'adjective',
   registers: [],
+};
+
+const correction: EntryRowModel = {
+  kind: 'correction',
+  entryId: 'c1',
+  title: 'right',
+  secondLine: 'wrong',
+  kindKey: 'correction',
+  spoken: 'right, wrong',
+  correctionType: 'calque',
+};
+
+const idiom: EntryRowModel = {
+  kind: 'idiom',
+  entryId: 'i1',
+  title: 'spill the beans',
+  secondLine: 'to give away a secret',
+  kindKey: 'idiom',
+  spoken: 'spill the beans, to give away a secret',
 };
 
 function deleteAction(onPress: () => void): EntryRowAction {
@@ -25,11 +48,14 @@ function deleteAction(onPress: () => void): EntryRowAction {
   };
 }
 
-async function renderRow(props: Pick<ComponentProps<typeof EntryRow>, 'onPress' | 'actions'>) {
+async function renderRow({
+  row: shown = row,
+  ...props
+}: Partial<Pick<ComponentProps<typeof EntryRow>, 'row' | 'onPress' | 'actions'>> = {}) {
   await render(
     <GestureHandlerRootView>
-      <EditionProvider edition={{ locale: 'en' }} strings={{} as EditionStrings}>
-        <EntryRow row={row} trailing="12:30" {...props} />
+      <EditionProvider edition={{ locale: 'en' }} strings={strings}>
+        <EntryRow row={shown} trailing="12:30" {...props} />
       </EditionProvider>
     </GestureHandlerRootView>,
   );
@@ -43,6 +69,20 @@ describe('EntryRow', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'lemma, what it means, 12:30' }));
 
     expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('puts the form a Correction replaces under its standard equivalent', async () => {
+    await renderRow({ row: correction });
+
+    expect(screen.getByLabelText('right, instead of «wrong», 12:30')).toBeTruthy();
+    expect(screen.getByText('instead of «wrong»')).toBeTruthy();
+  });
+
+  it('puts the Definition under an Idiom and reads both to VoiceOver', async () => {
+    await renderRow({ row: idiom });
+
+    expect(screen.getByLabelText('spill the beans, to give away a secret, 12:30')).toBeTruthy();
+    expect(screen.getByText('to give away a secret')).toBeTruthy();
   });
 
   it('runs an action from behind the swipe', async () => {

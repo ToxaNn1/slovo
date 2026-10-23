@@ -1,5 +1,6 @@
 import { fill, type EditionStrings, type Plural } from '@slovo/contracts';
 import type { Edition, EntryRowModel, HiddenEntry, MixState } from '@slovo/core';
+import { entryKindLabel } from '@slovo/ui/entry-row-text';
 
 /** A Hidden Entry's row on the Hidden screen. */
 export interface HiddenEntryModel {
@@ -61,7 +62,7 @@ function labelParts(
 
 function entryModel({ entryId, row }: HiddenEntry, strings: EditionStrings): HiddenEntryModel {
   const { hidden, history } = strings;
-  const kind = history.kinds[row.kind === 'idiom' ? row.idiomType : row.kind];
+  const kind = entryKindLabel(history.kinds, row);
   const parts = labelParts(row, strings);
   const join = (forms: readonly string[]) => forms.join(hidden.labelSeparator);
   const label = (template: string, forms: readonly string[]) =>

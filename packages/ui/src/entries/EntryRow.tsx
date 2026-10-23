@@ -2,7 +2,8 @@ import { withoutStress, type EntryRowModel } from '@slovo/core';
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
-import { fill, useEdition } from '../providers/EditionProvider';
+import { entryRowSubtitle } from './entry-row-text';
+import { useEdition } from '../providers/EditionProvider';
 import { entryRow, rowPadding, space, STACK_AT_FONT_SCALE, typeSize } from '../tokens';
 import { rowActionProps, SwipeableRow, type RowAction } from '../primitives/SwipeableRow';
 import { useTokens } from '../providers/TokensProvider';
@@ -14,12 +15,12 @@ export type EntryRowAction = RowAction;
 const ACCESSORY_TITLE_MAX_FONT_SCALE = 1.3;
 
 /**
- * One Entry in a list (Favorites, Collections, History and Hidden), built
- * from the Core's row model: a Word's Lemma with its Stress over its
- * Definition on one line, an Idiom's expression over its Definition, or a
- * Correction's standard equivalent over the non-standard form it replaces. The trailing text is what the screen puts
- * on the right (a date, a kind, a time). A tap opens the Entry; the actions
- * slide out from the right and are VoiceOver actions too.
+ * One Entry in a list (Favorites, Collections, History, Hidden and «Вчу»),
+ * built from the Core's Entry row: its title over its second line, in the
+ * Edition's words (a Correction's «замість …»), on one line. The trailing
+ * text is what the screen puts on the right (a date, a kind, a time). A tap
+ * opens the Entry; the actions slide out from the right and are VoiceOver
+ * actions too.
  *
  * A screen can put its own line under the title (`subtitle`) and a button
  * after the text (`accessory`, the Hidden screen's «Повернути»). A row with no
@@ -38,7 +39,7 @@ export function EntryRow({
 }: {
   row: EntryRowModel;
   trailing?: string;
-  /** The line under the title, in place of the Definition or the non-standard form. */
+  /** The line under the title, in place of the row's second line. */
   subtitle?: string;
   /** What VoiceOver reads for the row, in place of the title, subtitle and trailing text. */
   accessibilityLabel?: string;
@@ -56,13 +57,8 @@ export function EntryRow({
   const { colors, fontFamilies } = useTokens();
   const { strings, voice } = useEdition();
   const { fontScale } = useWindowDimensions();
-  let subtitle = ownSubtitle;
-  if (!compact && subtitle === undefined) {
-    subtitle =
-      row.kind === 'correction'
-        ? fill(strings.correctionCard.insteadOf, { form: row.nonStandardForm })
-        : row.definition;
-  }
+  const subtitle =
+    ownSubtitle ?? (compact ? undefined : entryRowSubtitle(strings.correctionCard, row));
   // The voices break a word at the Stress mark, so VoiceOver reads the row without it.
   const accessibilityLabel = withoutStress(
     ownAccessibilityLabel ??

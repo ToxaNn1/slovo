@@ -1,4 +1,4 @@
-import { localDayOf, relativeTimeOf, type HistoryEntry } from '@slovo/core';
+import { localDayOf, relativeTimeOf, type EntryRowModel, type HistoryEntry } from '@slovo/core';
 import { describe, expect, it } from 'vitest';
 
 import { historyText } from './history-text';
@@ -54,25 +54,23 @@ describe('the History texts', () => {
 
   it('says what kind of Entry a row is', () => {
     const entry = (
-      kind: 'word' | 'correction',
-      wordOfTheDay: boolean,
-    ): Pick<HistoryEntry, 'row' | 'wordOfTheDay'> => ({
-      wordOfTheDay,
-      row:
-        kind === 'word'
-          ? {
-              kind,
-              entryId: 'w_a',
-              title: 'a',
-              definition: 'A.',
-              partOfSpeech: 'noun',
-              registers: [],
-            }
-          : { kind, entryId: 'c_a', title: 'a', nonStandardForm: 'b', correctionType: 'calque' },
-    });
+      kindKey: EntryRowModel['kindKey'],
+      wordOfTheDay = false,
+    ): Pick<HistoryEntry, 'row' | 'wordOfTheDay'> => {
+      const text = { title: 'a', secondLine: 'b', spoken: 'a, b' };
+      const row: EntryRowModel =
+        kindKey === 'word'
+          ? { kind: 'word', entryId: 'w_a', ...text, kindKey, partOfSpeech: 'noun', registers: [] }
+          : kindKey === 'correction'
+            ? { kind: 'correction', entryId: 'c_a', ...text, kindKey, correctionType: 'calque' }
+            : { kind: 'idiom', entryId: 'i_a', ...text, kindKey };
+      return { wordOfTheDay, row };
+    };
 
-    expect(text.kind(entry('word', false))).toBe('слово');
-    expect(text.kind(entry('correction', false))).toBe('виправлення');
+    expect(text.kind(entry('word'))).toBe('слово');
+    expect(text.kind(entry('correction'))).toBe('виправлення');
+    expect(text.kind(entry('idiom'))).toBe('фразеологізм');
+    expect(text.kind(entry('placeName'))).toBe('топонім');
     expect(text.kind(entry('word', true))).toBe('слово дня');
   });
 

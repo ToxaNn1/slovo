@@ -23,7 +23,9 @@ const word = (entryId: string, title: string): EntryRowModel => ({
   kind: 'word',
   entryId,
   title,
-  definition: `what ${title} means`,
+  secondLine: `what ${title} means`,
+  kindKey: 'word',
+  spoken: `${title}, what ${title} means`,
   partOfSpeech: 'noun',
   registers: [],
 });
@@ -32,7 +34,9 @@ const correction: EntryRowModel = {
   kind: 'correction',
   entryId: 'c1',
   title: 'right',
-  nonStandardForm: 'wrong',
+  secondLine: 'wrong',
+  kindKey: 'correction',
+  spoken: 'right, wrong',
   correctionType: 'calque',
 };
 

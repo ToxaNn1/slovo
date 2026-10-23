@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  buildEntryRow,
   createMemoryContentPort,
   createMemoryUserStatePort,
   openComposition,
   openUserState,
 } from '../index';
-import { correction, countingReads, fakeClock, word } from '../test-support';
+import { correction, countingReads, fakeClock, idiom, word } from '../test-support';
 
 const words = Array.from({ length: 40 }, (_, place) => word(`w_${String(place).padStart(2, '0')}`));
 const corrections = Array.from({ length: 10 }, (_, place) => correction(`c_${String(place)}`));
@@ -74,5 +75,79 @@ describe('the rows of the Entries the user keeps', () => {
     expect(kept.app.history.list).toHaveLength(52);
     expect(kept.app.collections.entries('c1')).toHaveLength(52);
     expect(kept.app.knowledge.state).toMatchObject({ knownWords: 41, knownCorrections: 11 });
+  });
+});
+
+describe('the row of an Entry', () => {
+  it('leads a Word with its Lemma and Stress over its primary Definition, and says «слово»', () => {
+    const row = buildEntryRow(
+      word('w_veremiia', {
+        lemma: 'веремія',
+        stress: [5],
+        primaryDefinition: 'Метушня, що́ зчинилася.',
+      }),
+    );
+
+    expect(row).toMatchObject({
+      kind: 'word',
+      entryId: 'w_veremiia',
+      title: 'веремі́я',
+      secondLine: 'Метушня, що́ зчинилася.',
+      kindKey: 'word',
+      // VoiceOver reads whole words: the voices break a word at the Stress mark.
+      spoken: 'веремія, Метушня, що зчинилася.',
+    });
+  });
+
+  it('leads a Correction with its main standard equivalent over the form it replaces, and says «виправлення»', () => {
+    const row = buildEntryRow(
+      correction('c_protiahom', {
+        nonStandardForm: 'на протязі року',
+        standardEquivalents: ['протягом року', 'упродовж року'],
+      }),
+    );
+
+    expect(row).toMatchObject({
+      kind: 'correction',
+      entryId: 'c_protiahom',
+      title: 'протягом року',
+      secondLine: 'на протязі року',
+      kindKey: 'correction',
+      spoken: 'протягом року, на протязі року',
+    });
+  });
+
+  it('leads an Idiom with its expression over its primary Definition, and says «фразеологізм»', () => {
+    const row = buildEntryRow(
+      idiom('i_baidyky', { expression: 'бити байдики', primaryDefinition: 'Ледарювати.' }),
+    );
+
+    expect(row).toMatchObject({
+      kind: 'idiom',
+      entryId: 'i_baidyky',
+      title: 'бити байдики',
+      secondLine: 'Ледарювати.',
+      kindKey: 'idiom',
+      spoken: 'бити байдики, Ледарювати.',
+    });
+  });
+
+  it('says «топонім» for a place name, which otherwise reads as an Idiom', () => {
+    const row = buildEntryRow(
+      idiom('i_berdychiv', {
+        expression: 'Бердичів',
+        idiomType: 'placeName',
+        primaryDefinition: 'Місто на Житомирщині.',
+        etymology: 'Від імені Бердич.',
+      }),
+    );
+
+    expect(row).toMatchObject({
+      kind: 'idiom',
+      title: 'Бердичів',
+      secondLine: 'Місто на Житомирщині.',
+      kindKey: 'placeName',
+      spoken: 'Бердичів, Місто на Житомирщині.',
+    });
   });
 });

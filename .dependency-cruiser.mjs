@@ -160,7 +160,7 @@ export default {
           '^packages/$2/',
           SHARED_CONFIG,
           '^packages/[^/]+/package\\.json$',
-          '^packages/[^/]+/src/(index|tokens|entries/part-of-speech|pack-reader|edition-folder|api|api-description|api/test-support)\\.ts$',
+          '^packages/[^/]+/src/(index|tokens|entries/part-of-speech|entries/entry-row-text|pack-reader|edition-folder|api|api-description|api/test-support)\\.ts$',
         ],
       },
     },

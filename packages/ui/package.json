@@ -6,6 +6,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./entry-row-text": "./src/entries/entry-row-text.ts",
     "./part-of-speech": "./src/entries/part-of-speech.ts",
     "./stress-label": "./src/entries/stress-label.ts",
     "./tokens": "./src/tokens.ts"

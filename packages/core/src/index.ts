@@ -42,7 +42,7 @@ export {
   type EntryIds,
   type KindRefusal,
 } from './entries/entries';
-export { type EntryRowModel } from './entries/entry-row';
+export { buildEntryRow, type EntryKindKey, type EntryRowModel } from './entries/entry-row';
 export { type Favorite, type Favorites } from './saved/favorites';
 export {
   buildEntryCard,
