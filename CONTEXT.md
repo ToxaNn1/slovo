@@ -237,7 +237,7 @@ A run of up to 15 Rounds in one Game Mode, with 5 Lives. Up to 5 of the 15 Round
 _Avoid_: Quiz, practice, test
 
 **Game Mode**:
-The kind of challenge in a Game. The Core mode is Definition → pick the Word; the Correction mode is a sentence with a non-standard form → pick the standard equivalent. Editions may add modes through an Extension Point.
+The kind of challenge in a Game. The Core mode is Definition → pick the Word, and asks about idioms of Idiom Type `idiom` the same way, with four idioms; place names never play. The Correction mode is a sentence with a non-standard form → pick the standard equivalent. Editions may add modes through an Extension Point.
 
 **Round**:
 One prompt with four options, exactly one correct.
