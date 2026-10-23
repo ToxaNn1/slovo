@@ -458,11 +458,13 @@
       "entry": "Не показувати цей запис",
       "category": "Не показувати категорію «{category}»",
       "corrections": "Не показувати Виправлення",
+      "idioms": "Не показувати Фразеологізми",
       "cancel": "Скасувати"
     },
     "entryHidden": "«{title}» приховано",
     "categoryHidden": "Категорію «{category}» приховано",
     "correctionsHidden": "Виправлення приховано",
+    "idiomsHidden": "Фразеологізми приховано",
     "undo": "Скасувати"
   },
   "mix": {
@@ -506,6 +508,7 @@
     "turnOn": "Увімкнути",
     "turnOnLabel": "Увімкнути категорію «{name}»",
     "turnOnCorrectionsLabel": "Увімкнути Виправлення",
+    "turnOnIdiomsLabel": "Увімкнути Фразеологізми",
     "rowLabels": "{kind} · {labels}",
     "rowLabelsSpoken": "{kind}, {labels}",
     "labelSeparator": ", ",

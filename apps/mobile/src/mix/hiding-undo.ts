@@ -6,7 +6,7 @@ import type { Composition, HidingChange } from '@slovo/core';
  * composition that hid or restored, and closes it (ADR 0018).
  */
 
-/** Takes a hide back: restores the Entry, or puts the Category or Corrections back in the Mix. */
+/** Takes a hide back: restores the Entry, or puts the Category, Corrections or Idioms back in the Mix. */
 export async function undoHide(
   composition: Pick<Composition, 'unhide'>,
   changed: HidingChange,

@@ -15,6 +15,8 @@ export const HidingStringsSchema = z.strictObject({
     category: templateOf('category'),
     /** On a Correction card: takes Corrections, as a whole, out of the Mix. */
     corrections: TextSchema,
+    /** On an Idiom card: takes Idioms, as a whole, out of the Mix. */
+    idioms: TextSchema,
     cancel: TextSchema,
   }),
   /** The undo toast after hiding an Entry. Takes `{title}`, what the Entry's row leads with. */
@@ -23,6 +25,8 @@ export const HidingStringsSchema = z.strictObject({
   categoryHidden: templateOf('category'),
   /** The undo toast after hiding Corrections. */
   correctionsHidden: TextSchema,
+  /** The undo toast after hiding Idioms. */
+  idiomsHidden: TextSchema,
   /** The undo button of the toasts. */
   undo: TextSchema,
 });

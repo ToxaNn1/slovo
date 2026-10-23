@@ -21,8 +21,9 @@ export interface HideChoiceProps {
 /**
  * The hide button's tap for one card, and the props of the hide choice sheet
  * it opens: «hide this Entry», on a Word card «hide its Category», on a
- * Correction card «hide Corrections», and cancel. Hiding shows the undo
- * toast, whose undo restores the Entry or puts the Category or Corrections
+ * Correction card «hide Corrections», on an Idiom card «hide Idioms», and
+ * cancel. Hiding shows the undo toast, whose undo restores the Entry or puts
+ * the Category, Corrections or Idioms
  * back in the Mix, in the composition open at the tap. The Feed follows the Core at once: it drops the cards and
  * puts them back on undo. An Entry hidden already stays as it is, with
  * nothing to undo.

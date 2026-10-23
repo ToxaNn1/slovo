@@ -60,6 +60,19 @@ const content = createMemoryContentPort({
       retired: false,
     },
   ],
+  idioms: [
+    {
+      kind: 'idiom',
+      id: 'i_one',
+      expression: 'бити байдики',
+      idiomType: 'idiom',
+      primaryDefinition: 'Ледарювати.',
+      extraDefinitions: [],
+      examples: [],
+      sources: [{ title: 'Test source' }],
+      retired: false,
+    },
+  ],
 });
 
 async function open(): Promise<{ app: Composition; advance: () => void }> {
@@ -158,6 +171,32 @@ describe('the «Приховане» screen', () => {
     const model = modelOf(app, { isFeatureEnabled: () => false });
 
     expect(model.corrections).toBe(undefined);
+    expect(model.empty).toBe(true);
+  });
+
+  it('lists Idioms taken out of the Mix as hidden too, and brings them back into the Mix on its offer', async () => {
+    const { app } = await open();
+    expect(modelOf(app).idioms).toBe(undefined);
+
+    await app.hide({ kind: 'idioms' });
+
+    expect(modelOf(app).idioms).toEqual({ name: 'Фразеологізми' });
+    expect(modelOf(app).empty).toBe(false);
+
+    await app.unhide({ kind: 'idioms' });
+
+    expect(app.mix.state.idioms).toBe(true);
+    expect(modelOf(app).idioms).toBe(undefined);
+    expect(modelOf(app).empty).toBe(true);
+  });
+
+  it('leaves Idioms out of the screen when the Edition does not turn them on', async () => {
+    const { app } = await open();
+    await app.mix.setIdioms(false);
+
+    const model = modelOf(app, { isFeatureEnabled: (feature) => feature !== 'idioms' });
+
+    expect(model.idioms).toBe(undefined);
     expect(model.empty).toBe(true);
   });
 
