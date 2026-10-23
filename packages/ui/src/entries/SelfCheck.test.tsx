@@ -18,6 +18,14 @@ const strings = {
     registers: {},
     category: '{category}',
     reveal: 'Show the meaning',
+    extraDefinitions: 'Other meanings',
+    example: '{text}',
+  },
+  idiomCard: {
+    idiomTypes: { idiom: 'idiom', placeName: 'place name' },
+    heading: '{expression}, {type}',
+    etymology: 'Origin',
+    source: 'Source: {source}',
   },
   correctionCard: {
     title: 'Correction',
@@ -76,6 +84,21 @@ const correctionCard: EntryFeedCard = {
   },
 };
 
+const idiomCard: EntryFeedCard = {
+  kind: 'idiom',
+  idiomCard: {
+    kind: 'idiom',
+    idiomId: 'i1',
+    expression: 'to beat the bushes',
+    idiomType: 'idiom',
+    primaryDefinition: 'To idle about.',
+    extraDefinitions: ['To search everywhere.'],
+    examples: [{ text: 'He beat the bushes all day.' }],
+    etymology: 'From the hunt.',
+    sourceTitles: [],
+  },
+};
+
 const CARDS = [wordCard('first'), wordCard('second')];
 const TURN_LABELS = { next: 'Next page', previous: 'Previous page' };
 /** How long a page turn's motion takes, from the design. */
@@ -119,10 +142,14 @@ async function renderFeed(
   });
 }
 
-/** Turns the page with the VoiceOver action on the current card's Lemma or non-standard form. */
+/** Turns the page with the VoiceOver action on the current card's Lemma, non-standard form or expression. */
 async function turn(from: string, actionName: 'next' | 'previous') {
   const target =
-    from === 'take part' ? screen.getByTestId('correction-non-standard') : screen.getByText(from);
+    from === 'take part'
+      ? screen.getByTestId('correction-non-standard')
+      : from === 'to beat the bushes'
+        ? screen.getByTestId('idiom-expression')
+        : screen.getByText(from);
   await fireEvent(target, 'accessibilityAction', { nativeEvent: { actionName } });
   await act(async () => {
     await jest.advanceTimersByTimeAsync(SWIPE_MS);
@@ -212,5 +239,37 @@ describe('Self-check', () => {
 
     expect(screen.queryByText('Why join in is better.')).toBeNull();
     expect(screen.getByRole('button', { name: 'Show' })).toBeTruthy();
+  });
+
+  it('shows only the expression and chip of an Idiom, its marks inactive, until the reader reveals it', async () => {
+    const onMark = jest.fn();
+    await renderFeed(true, [idiomCard, wordCard('second')], onMark);
+    expect(screen.getByRole('header', { name: 'to beat the bushes, idiom' })).toBeTruthy();
+    for (const concealed of ['To idle about.', '2. To search everywhere.', 'From the hunt.']) {
+      expect(screen.queryByText(concealed)).toBeNull();
+    }
+    expect(screen.queryByTestId('idiom-example')).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: 'Known', disabled: true }));
+    expect(onMark).not.toHaveBeenCalled();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Show the meaning' }));
+
+    expect(screen.getByText('To idle about.')).toBeTruthy();
+    expect(screen.getByText('2. To search everywhere.')).toBeTruthy();
+    expect(screen.getByTestId('idiom-example')).toHaveTextContent('He beat the bushes all day.');
+    expect(screen.getByTestId('idiom-etymology')).toHaveTextContent('OriginFrom the hunt.');
+    await fireEvent.press(screen.getByRole('button', { name: 'Known', disabled: false }));
+    expect(onMark).toHaveBeenCalledWith('known');
+  });
+
+  it('hides the Idiom again once its card has left the screen', async () => {
+    await renderFeed(true, [idiomCard, wordCard('second')]);
+    await fireEvent.press(screen.getByRole('button', { name: 'Show the meaning' }));
+
+    await turn('to beat the bushes', 'next');
+    await turn('second', 'previous');
+
+    expect(screen.queryByText('To idle about.')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Show the meaning' })).toBeTruthy();
   });
 });
