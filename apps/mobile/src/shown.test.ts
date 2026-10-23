@@ -128,7 +128,7 @@ describe('what the reader is shown', () => {
         shownOf({
           edition: editionWithout(...off),
           settings: { hideStreak, selfCheck },
-          mix: { corrections: correctionsInMix, idioms: idiomsInMix },
+          mix: { kinds: { correction: correctionsInMix, idiom: idiomsInMix } },
         }),
       ).toEqual({ ...everything, ...shown });
     },

@@ -4,6 +4,7 @@ import {
   type EntryFeedCard,
   type HideTarget,
   type HidingChange,
+  type MixKind,
   type MixState,
 } from '@slovo/core';
 
@@ -21,25 +22,28 @@ export type HideOption =
       readonly toast: string;
     }
   | {
-      readonly kind: 'corrections';
-      readonly target: Extract<HideTarget, { readonly kind: 'corrections' }>;
-      readonly label: string;
-      readonly toast: string;
-    }
-  | {
-      readonly kind: 'idioms';
-      readonly target: Extract<HideTarget, { readonly kind: 'idioms' }>;
+      readonly kind: 'whole-kind';
+      readonly target: Extract<HideTarget, { readonly kind: 'whole-kind' }>;
       readonly label: string;
       readonly toast: string;
     };
 
+/** The words of the option that takes the kind of Entry as a whole out of the Mix, and of its toast. */
+function wholeKindStrings(
+  entryKind: MixKind,
+  strings: EditionStrings['hiding'],
+): { label: string; toast: string } {
+  return entryKind === 'correction'
+    ? { label: strings.choice.corrections, toast: strings.correctionsHidden }
+    : { label: strings.choice.idioms, toast: strings.idiomsHidden };
+}
+
 /**
  * The options of the hide choice a card's hide button opens: always its
- * Entry; on a Word card its Category too, on a Correction card Corrections
- * and on an Idiom card Idioms as a whole, each left out when it is out of the
- * Mix already.
- * The last Category in the Mix is left out, as it can't be taken out (ADR
- * 0019).
+ * Entry; on a Word card its Category too, and on any other card its kind as a
+ * whole (Corrections, Idioms), each left out when it is out of the Mix
+ * already. The last Category in the Mix is left out, as it can't be taken out
+ * (ADR 0019).
  */
 export function hideChoice({
   card,
@@ -55,31 +59,11 @@ export function hideChoice({
     target: { kind: 'entry', entryId: entryIdOf(card) },
     label: strings.choice.entry,
   };
-  if (card.kind === 'idiom') {
-    return mix.idioms
-      ? [
-          entry,
-          {
-            kind: 'idioms',
-            target: { kind: 'idioms' },
-            label: strings.choice.idioms,
-            toast: strings.idiomsHidden,
-          },
-        ]
-      : [entry];
-  }
-  if (card.kind === 'correction') {
-    return mix.corrections
-      ? [
-          entry,
-          {
-            kind: 'corrections',
-            target: { kind: 'corrections' },
-            label: strings.choice.corrections,
-            toast: strings.correctionsHidden,
-          },
-        ]
-      : [entry];
+  if (card.kind !== 'word') {
+    const entryKind = card.kind;
+    if (!mix.kinds[entryKind]) return [entry];
+    const target = { kind: 'whole-kind', entryKind } as const;
+    return [entry, { kind: 'whole-kind', target, ...wholeKindStrings(entryKind, strings) }];
   }
   const { categoryId, categoryName } = card.wordCard;
   if (
@@ -102,8 +86,8 @@ export function hideChoice({
 
 /**
  * The undo toast's text for a hide that changed something: the Entry's title,
- * or the option's own toast for a Category, Corrections or Idioms. Nothing for a
- * change the option didn't ask for.
+ * or the option's own toast for a Category or a kind as a whole. Nothing for
+ * a change the option didn't ask for.
  */
 export function hideToast({
   option,

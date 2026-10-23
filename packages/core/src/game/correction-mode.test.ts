@@ -237,7 +237,7 @@ describe('«Обери правильне» on offer', () => {
     expect(app.game.state.current).toBeUndefined();
     expect(app.game.state.modes[1]).toMatchObject({ refusal: 'corrections-out-of-mix' });
 
-    await app.mix.setCorrections(true);
+    await app.mix.setKind('correction', true);
 
     expect(app.game.state.modes[1]).toEqual({
       modeId: 'correction',
@@ -257,8 +257,8 @@ describe('«Обери правильне» on offer', () => {
     };
     const app = await run({ pack });
 
-    await app.mix.setCorrections(false);
-    await app.mix.setCorrections(true);
+    await app.mix.setKind('correction', false);
+    await app.mix.setKind('correction', true);
     await app.game.start('correction');
 
     expect(current(app).status).toBe('playing');

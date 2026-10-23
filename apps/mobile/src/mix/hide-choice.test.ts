@@ -134,8 +134,8 @@ describe('the hide choice', () => {
         label: 'Не показувати цей запис',
       },
       {
-        kind: 'corrections',
-        target: { kind: 'corrections' },
+        kind: 'whole-kind',
+        target: { kind: 'whole-kind', entryKind: 'correction' },
         label: 'Не показувати Виправлення',
         toast: 'Виправлення приховано',
       },
@@ -144,7 +144,7 @@ describe('the hide choice', () => {
 
   it('leaves Corrections out when they are out of the Mix already', async () => {
     const app = await open();
-    await app.mix.setCorrections(false);
+    await app.mix.setKind('correction', false);
 
     const choice = choiceOn(app, await cardOf(app, correction.id));
 
@@ -163,8 +163,8 @@ describe('the hide choice', () => {
         label: 'Не показувати цей запис',
       },
       {
-        kind: 'idioms',
-        target: { kind: 'idioms' },
+        kind: 'whole-kind',
+        target: { kind: 'whole-kind', entryKind: 'idiom' },
         label: 'Не показувати Фразеологізми',
         toast: 'Фразеологізми приховано',
       },
@@ -173,7 +173,7 @@ describe('the hide choice', () => {
 
   it('leaves Idioms out when they are out of the Mix already', async () => {
     const app = await open();
-    await app.mix.setIdioms(false);
+    await app.mix.setKind('idiom', false);
 
     const choice = choiceOn(app, await cardOf(app, idiom.id));
 
@@ -212,6 +212,6 @@ describe('the toast of a hide', () => {
     const app = await open();
 
     expect(await toastAfter(app, idiom.id, 1)).toBe('Фразеологізми приховано');
-    expect(app.mix.state.idioms).toBe(false);
+    expect(app.mix.state.kinds.idiom).toBe(false);
   });
 });

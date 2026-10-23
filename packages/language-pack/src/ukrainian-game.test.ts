@@ -119,7 +119,7 @@ async function run(seed: number, port = createMemoryUserStatePort(new Map())) {
  */
 async function runWords(seed: number, port?: UserStatePort) {
   const app = await run(seed, port);
-  await app.mix.setIdioms(false);
+  await app.mix.setKind('idiom', false);
   return app;
 }
 

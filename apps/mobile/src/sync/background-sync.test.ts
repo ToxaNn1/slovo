@@ -205,7 +205,7 @@ describe('the shell syncs in the background', () => {
       await app();
     const first = await held(composition);
     await held(settings);
-    expect(first.mix.state.corrections).toBe(true);
+    expect(first.mix.state.kinds.correction).toBe(true);
     const plansBefore = plans.length;
     const changedAt = time.clock.now().getTime() + 1_000;
     await server.push('another-session', [{ key: 'mix.corrections', value: false, changedAt }]);
@@ -216,7 +216,7 @@ describe('the shell syncs in the background', () => {
 
     const second = await held(composition);
     expect(second).not.toBe(first);
-    expect(second.mix.state.corrections).toBe(false);
+    expect(second.mix.state.kinds.correction).toBe(false);
     expect((await held(settings)).current.theme).toBe('dark');
     expect(plans.length).toBeGreaterThan(plansBefore);
     expect(widgetWrites).toHaveLength(1);

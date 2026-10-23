@@ -1,4 +1,5 @@
 import { fill } from '@slovo/contracts';
+import { featureOfKind } from '@slovo/core';
 import {
   MixChip,
   RarityFloorChoice,
@@ -28,7 +29,7 @@ const strings = editionStrings.mix;
  */
 export function MixChoices() {
   const state = useMixState();
-  const { toggleCategory, turnAllOn, setCorrections, setIdioms, setRarityFloor } = useMixChanges();
+  const { toggleCategory, turnAllOn, setKind, setRarityFloor } = useMixChanges();
   const { colors, fontFamilies } = useTokens();
   const { voice } = useEdition();
   const edition = useEditionInEffect();
@@ -86,27 +87,24 @@ export function MixChoices() {
           />
         </View>
       )}
-      {(model.corrections !== undefined || model.idioms !== undefined) && (
+      {model.kinds.length > 0 && (
         <View style={styles.switches}>
           <SettingsGroup>
-            {model.corrections !== undefined && (
-              <SwitchRow
-                testID="mix-corrections"
-                label={strings.corrections.title}
-                subtitle={strings.corrections.subtitle}
-                value={model.corrections.on}
-                onChange={setCorrections}
-              />
-            )}
-            {model.idioms !== undefined && (
-              <SwitchRow
-                testID="mix-idioms"
-                label={strings.idioms.title}
-                subtitle={strings.idioms.subtitle}
-                value={model.idioms.on}
-                onChange={setIdioms}
-              />
-            )}
+            {model.kinds.map(({ entryKind, on }) => {
+              const name = featureOfKind(entryKind);
+              return (
+                <SwitchRow
+                  key={entryKind}
+                  testID={`mix-${name}`}
+                  label={strings[name].title}
+                  subtitle={strings[name].subtitle}
+                  value={on}
+                  onChange={(inMix) => {
+                    setKind(entryKind, inMix);
+                  }}
+                />
+              );
+            })}
           </SettingsGroup>
         </View>
       )}
