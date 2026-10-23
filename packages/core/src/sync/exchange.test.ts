@@ -236,7 +236,7 @@ describe('two devices of one Account', () => {
 
     for (const open of [await phone.open(), await tablet.open()]) {
       expect(open.knowledge.state.shown.get('w_one')).toBe('known');
-      expect(open.knowledge.state).toMatchObject({ learning: [], knownWords: 1 });
+      expect(open.knowledge.state).toMatchObject({ learning: [], known: { word: 1 } });
     }
     expect(server.records.get('knowledge.w_one')?.value).toEqual({
       mark: 'known',

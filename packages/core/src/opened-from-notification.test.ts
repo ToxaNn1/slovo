@@ -11,7 +11,7 @@ import {
   type UserStateChanges,
   type UserStatePort,
 } from './index';
-import { fakeClock, word } from './test-support';
+import { fakeClock, knownCounts, word } from './test-support';
 
 /** The Edition's one Category, the test Words' own, and its default Mix of every Category. */
 const testCategories = {
@@ -83,9 +83,7 @@ describe('opening a Word from a notification', () => {
       seenToday: 1,
       favorites: 0,
       inCollections: 0,
-      knownWords: 0,
-      knownCorrections: 0,
-      knownIdioms: 0,
+      known: knownCounts(),
       dueToday: 0,
     });
   });

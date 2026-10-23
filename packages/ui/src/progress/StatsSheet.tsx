@@ -1,8 +1,9 @@
-import type { EditionStrings } from '@slovo/contracts';
+import type { EntryKind } from '@slovo/contracts';
 import { GAME_ROUNDS, type ProgressState } from '@slovo/core';
 import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { BottomSheet } from '../primitives/BottomSheet';
+import { knownLine } from './known-line';
 import { OrnamentBand } from '../decor/DecorSlots';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { space, STACK_AT_FONT_SCALE, typeSize } from '../tokens';
@@ -10,15 +11,6 @@ import { useTokens } from '../providers/TokensProvider';
 
 /** How far the largest text sizes of iOS may scale the numbers, so the big Streak fits beside its words. */
 const NUMBER_MAX_FONT_SCALE = 1.5;
-
-/** The template of the row of the Known Entries, by the counts it shows beside the Known Words. */
-function knownTemplate(
-  words: EditionStrings['stats'],
-  { corrections, idioms }: { readonly corrections: boolean; readonly idioms: boolean },
-): string {
-  if (idioms) return corrections ? words.knownWithIdioms : words.knownWithoutCorrectionsWithIdioms;
-  return corrections ? words.known : words.knownWithoutCorrections;
-}
 
 /** One count of the sheet's grid: the number over the words that name it. */
 function Count({
@@ -64,9 +56,8 @@ function Count({
  * Streak with its Best Streak, Decor slot 2's band, then the Entries Seen
  * today, the Favorites count, the Entries in Collections and the best Game
  * result once a Game has finished, each in the Edition's plural form, and
- * under them the Known Words, with the Known Corrections and then the Known
- * Idioms unless they are left out, and the Entries due for Review today,
- * unless the knowledge rows are hidden. It
+ * under them the Known count of each kind of Entry shown, and the Entries
+ * due for Review today, unless the knowledge rows are hidden. It
  * closes with a swipe down, a tap outside or VoiceOver's escape gesture, and
  * with Reduce Motion it appears without sliding. While the reader hides the
  * Streak, the Streak with its Best Streak is left out. Needs a
@@ -76,14 +67,14 @@ export function StatsSheet({
   visible,
   stats,
   hideStreak = false,
-  knowledge = { corrections: true, idioms: true },
+  knowledge = ['word', 'correction', 'idiom'],
   onClose,
 }: {
   visible: boolean;
   stats: ProgressState;
   hideStreak?: boolean;
-  /** The knowledge rows, with the Known Corrections and the Known Idioms each shown or left out, or none. */
-  knowledge?: { readonly corrections: boolean; readonly idioms: boolean } | 'none';
+  /** The knowledge rows, with the kinds of Entry whose Known count shows, in order, or none. */
+  knowledge?: readonly EntryKind[] | 'none';
   onClose: () => void;
 }) {
   const { colors, fontFamilies } = useTokens();
@@ -168,11 +159,7 @@ export function StatsSheet({
               {...voice}
               style={[styles.knowledgeRow, { color: colors.ink, fontFamily: fontFamilies.ui }]}
             >
-              {fill(knownTemplate(words, knowledge), {
-                words: count(words.knownWords, stats.knownWords),
-                corrections: count(words.knownCorrections, stats.knownCorrections),
-                idioms: count(words.knownIdioms, stats.knownIdioms),
-              })}
+              {knownLine(words, stats.known, knowledge, count)}
             </Text>
             <Text
               testID="stats-due-today"

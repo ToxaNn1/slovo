@@ -74,7 +74,9 @@ describe('the rows of the Entries the user keeps', () => {
     expect(kept.app.favorites.list).toHaveLength(52);
     expect(kept.app.history.list).toHaveLength(52);
     expect(kept.app.collections.entries('c1')).toHaveLength(52);
-    expect(kept.app.knowledge.state).toMatchObject({ knownWords: 41, knownCorrections: 11 });
+    expect(kept.app.knowledge.state).toMatchObject({
+      known: { word: 41, correction: 11 },
+    });
   });
 });
 

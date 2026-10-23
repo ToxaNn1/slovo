@@ -15,7 +15,7 @@ const everything: Shown = {
   selfCheck: false,
   selfCheckSetting: true,
   learning: true,
-  stats: { streak: true, knowledge: { corrections: true, idioms: true } },
+  stats: { streak: true, knowledge: ['word', 'correction', 'idiom'] },
   sync: true,
 };
 
@@ -73,7 +73,7 @@ describe('what the reader is shown', () => {
       'the statistics without the Streak when the reader hides it',
       {
         hideStreak: true,
-        shown: { stats: { streak: false, knowledge: { corrections: true, idioms: true } } },
+        shown: { stats: { streak: false, knowledge: ['word', 'correction', 'idiom'] } },
       },
     ],
     [
@@ -85,14 +85,14 @@ describe('what the reader is shown', () => {
       'the Known Words alone with Corrections off',
       {
         off: ['corrections'],
-        shown: { stats: { streak: true, knowledge: { corrections: false, idioms: true } } },
+        shown: { stats: { streak: true, knowledge: ['word', 'idiom'] } },
       },
     ],
     [
       'the Known Words alone with the Mix without Corrections',
       {
         correctionsInMix: false,
-        shown: { stats: { streak: true, knowledge: { corrections: false, idioms: true } } },
+        shown: { stats: { streak: true, knowledge: ['word', 'idiom'] } },
       },
     ],
     // Spec #549, #565: no count of Known Idioms while the reader sees none, as with Corrections.
@@ -100,14 +100,14 @@ describe('what the reader is shown', () => {
       'no Known Idioms with Idioms off',
       {
         off: ['idioms'],
-        shown: { stats: { streak: true, knowledge: { corrections: true, idioms: false } } },
+        shown: { stats: { streak: true, knowledge: ['word', 'correction'] } },
       },
     ],
     [
       'no Known Idioms with the Mix without Idioms',
       {
         idiomsInMix: false,
-        shown: { stats: { streak: true, knowledge: { corrections: true, idioms: false } } },
+        shown: { stats: { streak: true, knowledge: ['word', 'correction'] } },
       },
     ],
     ['no Sync status with Sync off', { off: ['sync'], shown: { sync: false } }],

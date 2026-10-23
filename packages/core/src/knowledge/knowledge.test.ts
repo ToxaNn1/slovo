@@ -11,7 +11,7 @@ import {
   type ContentReadPort,
   type FeatureSwitch,
 } from '../index';
-import { correction, fakeClock, word } from '../test-support';
+import { correction, fakeClock, knownCounts, word } from '../test-support';
 
 const content = createMemoryContentPort({
   words: [word('w_one'), word('w_two'), word('w_three')],
@@ -67,7 +67,7 @@ describe('Knowledge Marks', () => {
     expect(learningOf(next)).toEqual([['w_one', 1]]);
     expect(next.knowledge.state.shown.get('w_one')).toBe('unknown');
     expect(next.knowledge.state.shown.get('c_one')).toBe('known');
-    expect(next.knowledge.state).toMatchObject({ knownWords: 0, knownCorrections: 1 });
+    expect(next.knowledge.state).toMatchObject({ known: knownCounts({ correction: 1 }) });
     expect(next.knowledge.state.shown.get('w_two')).toBeUndefined();
   });
 
@@ -296,9 +296,7 @@ describe('Knowledge Marks', () => {
 
     expect((await run({ records, on: ['corrections'] })).knowledge.state).toEqual({
       learning: [],
-      knownWords: 0,
-      knownCorrections: 0,
-      knownIdioms: 0,
+      known: knownCounts(),
       due: [],
       shown: new Map(),
     });
