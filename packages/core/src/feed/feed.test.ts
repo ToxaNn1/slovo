@@ -1272,14 +1272,18 @@ describe('Idioms in the Feed', () => {
     const ids = await walk(await run({ corrections, idioms }));
 
     expect(ids).toHaveLength(liveIds.length + corrections.length + liveIdiomIds.length);
-    expect(new Set(ids)).toEqual(new Set([...liveIds, ...corrections.map(({ id }) => id), ...liveIdiomIds]));
+    expect(new Set(ids)).toEqual(
+      new Set([...liveIds, ...corrections.map(({ id }) => id), ...liveIdiomIds]),
+    );
     expect(kindsOf(ids)).toBe('WWWWCWIWWCWWWICCI');
   });
 
   it(`gives the card both turns fall on to the Correction, and the next card to the Idiom`, async () => {
     const collision = CORRECTION_EVERY * IDIOM_EVERY;
     const many = Array.from({ length: 30 }, (_, index) => word(`w_many${String(index)}`));
-    const manyCorrections = Array.from({ length: 8 }, (_, index) => correction(`c_many${String(index)}`));
+    const manyCorrections = Array.from({ length: 8 }, (_, index) =>
+      correction(`c_many${String(index)}`),
+    );
     const manyIdioms = Array.from({ length: 6 }, (_, index) => idiom(`i_many${String(index)}`));
 
     const ids = await walk(
@@ -1320,9 +1324,16 @@ describe('Idioms in the Feed', () => {
     const days = ['2026-10-11', '2026-10-12', '2026-10-13'];
 
     for (const day of days) {
-      const feed = await run({ records, words: few, idioms, clock: fakeClock(`${day}T09:00:00+03:00`).clock });
+      const feed = await run({
+        records,
+        words: few,
+        idioms,
+        clock: fakeClock(`${day}T09:00:00+03:00`).clock,
+      });
       expect(feed.cards[0]?.kind).toBe('word');
-      expect(wordOfTheDayOf(feed.cards[0])).toEqual(expect.objectContaining({ day: Number(day.slice(-2)) }));
+      expect(wordOfTheDayOf(feed.cards[0])).toEqual(
+        expect.objectContaining({ day: Number(day.slice(-2)) }),
+      );
     }
   });
 
@@ -1349,7 +1360,10 @@ describe('Idioms in the Feed', () => {
     const time = fakeClock('2026-10-11T09:00:00+03:00');
     const feed = await run({ records, corrections, idioms, clock: time.clock });
     while (feed.cards.length < IDIOM_EVERY * 2) await feed.next();
-    const [read, skipped] = [entryIdOf(feed.cards[IDIOM_EVERY - 1]), entryIdOf(feed.cards[IDIOM_EVERY * 2 - 1])];
+    const [read, skipped] = [
+      entryIdOf(feed.cards[IDIOM_EVERY - 1]),
+      entryIdOf(feed.cards[IDIOM_EVERY * 2 - 1]),
+    ];
     expect(kindsOf([read ?? '', skipped ?? ''])).toBe('II');
 
     await look(feed, time, IDIOM_EVERY - 1, SEEN_DWELL_MS);

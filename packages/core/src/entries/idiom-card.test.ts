@@ -30,7 +30,11 @@ describe('the Idiom card', () => {
   });
 
   it('carries the place name type and leaves the etymology out when an idiom has none', () => {
-    expect(buildIdiomCard(idiom('i_place', { idiomType: 'placeName', etymology: 'Named after Berdych.' }))).toMatchObject({
+    expect(
+      buildIdiomCard(
+        idiom('i_place', { idiomType: 'placeName', etymology: 'Named after Berdych.' }),
+      ),
+    ).toMatchObject({
       idiomType: 'placeName',
       etymology: 'Named after Berdych.',
     });
