@@ -149,6 +149,7 @@ const { feedPosition } = userStateRecords;
  * when both turns fall on one card the Correction takes it and the Idiom the
  * next (ADR 0046). Any kind fills in for another when it has none left.
  * A Correction's turn goes to a Correction due for Review before a new one,
+ * an Idiom's turn to an Idiom due for Review before a new one,
  * and every `REVIEW_EVERY`th card of the session that isn't a Correction's
  * or an Idiom's goes to a Word due for Review, if any (ADR 0043).
  */
@@ -184,7 +185,11 @@ function nextEntryId(unseen: EntryIds, session: FeedSession, due: EntryIds): str
     if (dueCorrection !== undefined) return dueCorrection;
     if (id !== undefined && unseen.corrections.includes(id)) return id;
   }
-  if (idiomTurn && id !== undefined && unseen.idioms.includes(id)) return id;
+  if (idiomTurn) {
+    const dueIdiom = reviewEntryId(due.idioms, session);
+    if (dueIdiom !== undefined) return dueIdiom;
+    if (id !== undefined && unseen.idioms.includes(id)) return id;
+  }
   // Counting every card of the session, also the dropped ones, so a hide never moves the slots.
   const reviewSlot = (session.all.length + 1) % REVIEW_EVERY === 0;
   return (reviewSlot ? reviewEntryId(due.words, session) : undefined) ?? id;
@@ -249,7 +254,8 @@ function eligibleDue(cycle: Cycle, knowledge: Pick<Knowledge, 'state'>): EntryId
  * While Words are due for Review, every `REVIEW_EVERY`th card of the session
  * that isn't a Correction's turn shows one, Seen in this Cycle or not, until
  * the reader answers it (ADR 0043). While Corrections are due, the
- * Correction's turn shows one before a new Correction, in the same way. A
+ * Correction's turn shows one before a new Correction, in the same way, and
+ * while Idioms are due, the Idiom's turn shows one before a new Idiom. A
  * due Entry the Cycle doesn't cover (Hidden, out of the Mix, under the
  * Rarity Floor) waits until it does. Its card is Seen and joins History as
  * any card does. Every card whose Entry is due as the Feed adds it, in a
