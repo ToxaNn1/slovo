@@ -1,4 +1,4 @@
-import type { Correction, EditionStrings, Word } from '@slovo/contracts';
+import type { Correction, EditionStrings, Idiom, Word } from '@slovo/contracts';
 import type { PlayedRound } from '@slovo/core';
 import { EditionProvider, GameReview } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
@@ -23,6 +23,7 @@ const strings = {
     etymology: 'Etymology',
   },
   correctionCard: { standard: 'Better' },
+  idiomCard: { etymology: 'Origin' },
 } as unknown as EditionStrings;
 
 const candid: Word = {
@@ -66,10 +67,23 @@ const correction: Correction = {
   retired: false,
 };
 
+const spillTheBeans: Idiom = {
+  kind: 'idiom',
+  id: 'i_spillthebeans',
+  expression: 'spill the beans',
+  idiomType: 'idiom',
+  primaryDefinition: 'to give away a secret',
+  extraDefinitions: [],
+  examples: [{ text: 'Who spilled the beans?' }],
+  etymology: 'from voting with beans in ancient Greece',
+  sources: [],
+  retired: false,
+};
+
 /** A Round of the Game over, asked about `entry`, with the reader's pick among four options. */
 function played(
   number: number,
-  entry: Word | Correction,
+  entry: Word | Correction | Idiom,
   answer: string,
   chosen: string,
 ): PlayedRound {
@@ -82,7 +96,7 @@ function played(
   };
   return {
     number,
-    prompt: entry.kind === 'word' ? entry.primaryDefinition : entry.nonStandardForm,
+    prompt: entry.kind === 'correction' ? entry.nonStandardForm : entry.primaryDefinition,
     highlight: undefined,
     options,
     answer: roundAnswer,
@@ -95,6 +109,7 @@ const rounds = [
   played(1, candid, 'candid', 'candid'),
   played(2, dour, 'dour', 'brittle'),
   played(3, correction, 'in the meantime', 'in the meanwhiles'),
+  played(4, spillTheBeans, 'spill the beans', 'bite the dust'),
 ];
 
 async function renderReview({ onOpen = jest.fn() }: { onOpen?: (entryId: string) => void } = {}) {
@@ -115,6 +130,7 @@ describe('GameReview', () => {
         '1, candid, right',
         '2, dour, wrong, you picked brittle',
         '3, in the meantimes, wrong, you picked in the meanwhiles',
+        '4, spill the beans, wrong, you picked bite the dust',
       ].map((name) => screen.getByRole('button', { name })),
     );
     expect(screen.getByTestId('game-review-row-1')).toHaveTextContent(/✓/);
@@ -155,6 +171,24 @@ describe('GameReview', () => {
     expect(screen.getByText('The phrase takes the singular.')).toBeTruthy();
   });
 
+  it('expands an idiom on a tap: its Definition, Example and origin', async () => {
+    await renderReview();
+
+    await fireEvent.press(screen.getByTestId('game-review-row-4'));
+
+    expect(
+      screen.getByRole('button', {
+        name: '4, spill the beans, wrong, you picked bite the dust',
+        expanded: true,
+      }),
+    ).toBeTruthy();
+    expect(screen.getByText('to give away a secret')).toBeTruthy();
+    expect(screen.getByText('“Who spilled the beans?”')).toBeTruthy();
+    expect(screen.getByText('Origin')).toBeTruthy();
+    expect(screen.getByText('from voting with beans in ancient Greece')).toBeTruthy();
+    expect(screen.queryByText('Etymology')).toBeNull();
+  });
+
   it('opens the Entry on a second tap, and keeps one Round expanded at a time', async () => {
     const onOpen = jest.fn();
     await renderReview({ onOpen });
@@ -166,6 +200,9 @@ describe('GameReview', () => {
     expect(onOpen).not.toHaveBeenCalled();
     await fireEvent.press(screen.getByTestId('game-review-row-2'));
 
-    expect(onOpen.mock.calls).toEqual([['w_dour']]);
+    await fireEvent.press(screen.getByTestId('game-review-row-4'));
+    await fireEvent.press(screen.getByTestId('game-review-row-4'));
+
+    expect(onOpen.mock.calls).toEqual([['w_dour'], ['i_spillthebeans']]);
   });
 });
