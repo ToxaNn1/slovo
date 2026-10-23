@@ -17,6 +17,12 @@ Self-check is the Entry card's too. A screen tells the card only whether Self-ch
 - **The screen keeps the reveal state and passes it to the card and to the action row**: rejected. The two values had to agree with nothing to enforce it, and each screen with Self-check would repeat the wiring.
 - **A render-prop action slot that receives the state**: not adopted. Only the Knowledge Mark buttons care, so a context they read keeps the slot a plain node.
 
+## Amendment: the Idiom card is the third kind (0.8.8, #556)
+
+The Entry card draws an Idiom (ADR 0046) in the same frame, with the same corner Decor and the same action row as a Word and a Correction. It draws the Core's Idiom card model and picks no sections itself: the expression at the Lemma's size with the chip of its Idiom Type under it, the Edition's «фразеологізм» or «топонім»; the ornament divider; the primary Definition and the others numbered on from 2, under the Word card's «Інші значення»; every Example; «Походження» with the etymology; and the line naming the sources, as on a Correction. A place name differs only in its chip. The expression and its chip are one VoiceOver header, which reads the expression, then its kind, through the Edition's heading string; the Definition follows. The expression has no Stress, so the card has no Pronunciation button. Under Self-check the card keeps the expression and its chip, conceals everything after the divider and reveals it with the Word card's button, since both ask for the meaning.
+
+The Idiom card shows all its sections at once, without the Word card's «Детальніше»: an Idiom has fewer of them, and the story of a place name is the point of its card.
+
 ## Considered Options
 
 - **A Word card and a Correction card that share a frame component**: rejected. Every screen would still branch on the kind and pass each card its parts, and the action row would be added twice.
