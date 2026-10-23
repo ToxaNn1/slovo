@@ -22,14 +22,9 @@ beforeAll(async () => {
   const result = buildLanguagePack({ editionDir: ukrainianFolder.dir, outFile });
   if (!result.ok) throw new Error('The Ukrainian Language Pack does not build');
   pack = openLanguagePack(outFile);
-  const words = await Promise.all((await pack.listWordIds()).map((id) => pack.getWord(id)));
+  const words = await pack.listWords();
   const entries = createEntries({ content: pack, edition: { isFeatureEnabled: () => true } });
-  cards = await Promise.all(
-    words.map((word) => {
-      if (word === undefined) throw new Error('A listed Word is missing');
-      return buildWordCard({ word, entries });
-    }),
-  );
+  cards = await Promise.all(words.map((word) => buildWordCard({ word, entries })));
 });
 
 afterAll(() => {

@@ -116,62 +116,26 @@ describe.each(adapters)('the content read port %s', (_, open) => {
     expect(await content.listWordIds('unknown')).toEqual([]);
   });
 
+  /** The Entries by id, as `getEntries` gives them, in id order. */
+  const byId = (entries: readonly { id: string }[]) =>
+    entries.toSorted((a, b) => a.id.localeCompare(b.id));
+  const idsOf = (entries: readonly { id: string }[]) => entries.map(({ id }) => id).toSorted();
+  /** One Entry by id. */
+  const one = async (id: string) => (await content.getEntries([id]))[0];
+
   it('gives the live Words themselves in the order it lists them, each as by id', async () => {
     const words = await content.listWords();
 
     expect(words.map((word) => word.id)).toEqual(await content.listWordIds());
-    for (const word of words) expect(word).toEqual(await content.getWord(word.id));
+    expect(byId(await content.getEntries(words.map((word) => word.id)))).toEqual(words);
   });
 
-  it('gives any Word by id, a Retired Word included', async () => {
-    expect(await content.getWord('w_fx0002')).toMatchObject({ lemma: 'балакучий' });
-    expect(await content.getWord('w_fx0001')).toMatchObject({ retired: true });
-    expect(await content.getWord('w_missing')).toBeUndefined();
-  });
-
-  /** More ids than one read of the pack binds, none of them in the pack. */
-  const manyMissing = Array.from({ length: 1200 }, (_, place) => `x_${String(place)}`);
-  const idsOf = (entries: readonly { id: string }[]) => entries.map(({ id }) => id).toSorted();
-
-  it('gives the Words of many ids at once, each as by id, a Retired Word included', async () => {
-    const words = await content.getWords([...manyMissing, 'w_fx0002', 'c_fx0001', 'w_fx0001']);
-
-    expect(idsOf(words)).toEqual(['w_fx0001', 'w_fx0002']);
-    for (const word of words) expect(word).toEqual(await content.getWord(word.id));
-    expect(await content.getWords([])).toEqual([]);
-  });
-
-  it('lists the live Corrections in a stable order, leaving a Retired Correction out', async () => {
-    expect(await content.listCorrectionIds()).toEqual(['c_fx0001', 'c_fx0003', 'c_fx0004']);
-  });
-
-  it('gives any Correction by id, a Retired Correction included', async () => {
-    expect(await content.getCorrection('c_fx0001')).toMatchObject({ kind: 'correction' });
-    expect(await content.getCorrection('c_fx0002')).toMatchObject({ retired: true });
-    expect(await content.getCorrection('c_missing')).toBeUndefined();
-  });
-
-  it('gives the Corrections of many ids at once, each as by id, a Retired Correction included', async () => {
-    const corrections = await content.getCorrections([
-      ...manyMissing,
-      'c_fx0002',
-      'w_fx0002',
-      'c_fx0001',
-    ]);
-
-    expect(idsOf(corrections)).toEqual(['c_fx0001', 'c_fx0002']);
-    for (const correction of corrections) {
-      expect(correction).toEqual(await content.getCorrection(correction.id));
-    }
-    expect(await content.getCorrections([])).toEqual([]);
-  });
-
-  it('lists the live Idioms in a stable order, leaving a Retired Idiom out', async () => {
-    expect(await content.listIdiomIds()).toEqual(['i_fx0001']);
-  });
-
-  it('gives any Idiom by id with its fields, a Retired Idiom included', async () => {
-    expect(await content.getIdiom('i_fx0001')).toEqual({
+  it('gives any Entry by id whatever its kind, a Retired one included, and nothing for an unknown id', async () => {
+    expect(await one('w_fx0002')).toMatchObject({ kind: 'word', lemma: 'балакучий' });
+    expect(await one('w_fx0001')).toMatchObject({ kind: 'word', retired: true });
+    expect(await one('c_fx0001')).toMatchObject({ kind: 'correction', retired: false });
+    expect(await one('c_fx0002')).toMatchObject({ kind: 'correction', retired: true });
+    expect(await one('i_fx0001')).toEqual({
       kind: 'idiom',
       id: 'i_fx0001',
       expression: 'бити байдики',
@@ -183,19 +147,23 @@ describe.each(adapters)('the content read port %s', (_, open) => {
       sources: [{ title: 'Тестове джерело', url: 'https://example.org/baidyky' }],
       retired: false,
     });
-    expect(await content.getIdiom('i_fx0002')).toMatchObject({
-      idiomType: 'placeName',
-      retired: true,
-    });
-    expect(await content.getIdiom('i_missing')).toBeUndefined();
+    expect(await one('i_fx0002')).toMatchObject({ idiomType: 'placeName', retired: true });
+    for (const id of ['w_missing', 'c_missing', 'i_missing']) {
+      expect(await one(id)).toBeUndefined();
+    }
   });
 
-  it('gives the Idioms of many ids at once, each as by id, a Retired Idiom included', async () => {
-    const idioms = await content.getIdioms([...manyMissing, 'i_fx0002', 'w_fx0002', 'i_fx0001']);
+  /** More ids than one read of the pack binds, none of them in the pack. */
+  const manyMissing = Array.from({ length: 1200 }, (_, place) => `x_${String(place)}`);
 
-    expect(idsOf(idioms)).toEqual(['i_fx0001', 'i_fx0002']);
-    for (const idiom of idioms) expect(idiom).toEqual(await content.getIdiom(idiom.id));
-    expect(await content.getIdioms([])).toEqual([]);
+  it('gives the Entries of many ids of every kind at once, each as by id, leaving an unknown id out', async () => {
+    const ids = ['w_fx0002', 'c_fx0002', 'i_fx0001', 'w_fx0001', 'c_fx0001', 'i_fx0002'];
+
+    const entries = await content.getEntries([...manyMissing, ...ids]);
+
+    expect(idsOf(entries)).toEqual(ids.toSorted());
+    for (const entry of entries) expect(entry).toEqual(await one(entry.id));
+    expect(await content.getEntries([])).toEqual([]);
   });
 
   it('lists the live Words linked to a Correction, leaving a Retired Word out', async () => {
@@ -246,14 +214,15 @@ describe('the Ukrainian Language Pack', () => {
   it('holds 15 Words in «Діалекти», each with the dialectal register label and a region', async () => {
     const pack = openPack(ukrainianDir);
     try {
-      const words = await Promise.all(
-        (await pack.listWordIds('dialects')).map((wordId) => pack.getWord(wordId)),
-      );
+      const words = await pack.getEntries(await pack.listWordIds('dialects'));
 
       expect(words).toHaveLength(15);
       for (const word of words) {
-        expect(word?.registers).toContain('dialectal');
-        expect(word?.region).toEqual(expect.any(String));
+        expect(word).toMatchObject({
+          kind: 'word',
+          registers: expect.arrayContaining(['dialectal']) as unknown,
+          region: expect.any(String) as unknown,
+        });
       }
     } finally {
       pack.close();
@@ -263,13 +232,11 @@ describe('the Ukrainian Language Pack', () => {
   it('holds 15 Words in «Дотепна лайка», each with its Stress', async () => {
     const pack = openPack(ukrainianDir);
     try {
-      const words = await Promise.all(
-        (await pack.listWordIds('witty-insults')).map((wordId) => pack.getWord(wordId)),
-      );
+      const words = await pack.getEntries(await pack.listWordIds('witty-insults'));
 
       expect(words).toHaveLength(15);
       for (const word of words) {
-        expect(word?.stress).not.toEqual([]);
+        expect(word.kind === 'word' && word.stress).not.toEqual([]);
       }
     } finally {
       pack.close();
@@ -286,8 +253,11 @@ describe('the Ukrainian Language Pack', () => {
         })),
       );
       for (const { id, wordIds } of byCategory) {
-        const words = await Promise.all(wordIds.map((wordId) => pack.getWord(wordId)));
-        expect(words.every((word) => word?.categoryId === id && !word.retired)).toBe(true);
+        const words = await pack.getEntries(wordIds);
+        expect(words).toHaveLength(wordIds.length);
+        expect(
+          words.every((word) => word.kind === 'word' && word.categoryId === id && !word.retired),
+        ).toBe(true);
       }
       const listed = byCategory.flatMap(({ wordIds }) => wordIds);
       expect(listed.toSorted()).toEqual([...(await pack.listWordIds())].toSorted());
@@ -302,7 +272,8 @@ describe('the Ukrainian Language Pack', () => {
       const words = await pack.listWords();
 
       expect(words.map((word) => word.id)).toEqual(await pack.listWordIds());
-      for (const word of words) expect(word).toEqual(await pack.getWord(word.id));
+      const each = await pack.getEntries(words.map((word) => word.id));
+      expect(each.toSorted((a, b) => a.id.localeCompare(b.id))).toEqual(words);
     } finally {
       pack.close();
     }

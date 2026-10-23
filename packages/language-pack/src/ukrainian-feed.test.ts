@@ -6,6 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
   CORRECTION_EVERY,
+  type Entry,
   createFakeNotificationScheduler,
   IDIOM_EVERY,
   createMemoryUserStatePort,
@@ -43,22 +44,24 @@ let liveIdiomIds: readonly string[];
  * Words costs seconds on a loaded machine, and a test walks several times.
  */
 function remembering(port: ContentReadPort): ContentReadPort {
-  const words = new Map<string, ReturnType<ContentReadPort['getWord']>>();
-  const corrections = new Map<string, ReturnType<ContentReadPort['getCorrection']>>();
-  const idioms = new Map<string, ReturnType<ContentReadPort['getIdiom']>>();
-  function remember<T>(known: Map<string, T>, id: string, read: () => T): T {
-    let value = known.get(id);
-    if (value === undefined) {
-      value = read();
-      known.set(id, value);
-    }
-    return value;
-  }
+  const known = new Map<string, Promise<Entry | undefined>>();
   return {
     ...port,
-    getWord: (id) => remember(words, id, () => port.getWord(id)),
-    getCorrection: (id) => remember(corrections, id, () => port.getCorrection(id)),
-    getIdiom: (id) => remember(idioms, id, () => port.getIdiom(id)),
+    async getEntries(ids) {
+      const unknown = ids.filter((id) => !known.has(id));
+      const read = unknown.length > 0 ? port.getEntries(unknown) : Promise.resolve([]);
+      const entries = await Promise.all(
+        ids.map((id) => {
+          let kept = known.get(id);
+          if (kept === undefined) {
+            kept = read.then((found) => found.find((entry) => entry.id === id));
+            known.set(id, kept);
+          }
+          return kept;
+        }),
+      );
+      return entries.filter((entry) => entry !== undefined);
+    },
   };
 }
 
@@ -193,12 +196,13 @@ describe('the Feed over the Ukrainian Language Pack', () => {
     async () => {
       const offered = await walk(await run(new Map(), fakeClock(today).clock));
 
-      const words = await Promise.all(offered.map((id) => content.getWord(id)));
+      const words = await content.getEntries(offered);
       expect(offered).toHaveLength(liveIds.length);
       expect(new Set(offered)).toEqual(new Set(liveIds));
-      expect(words.filter((word) => word?.retired !== false)).toEqual([]);
+      expect(words).toHaveLength(offered.length);
+      expect(words.filter((word) => word.retired)).toEqual([]);
       // The content has Retired Words, so leaving them out is tested for real.
-      expect(await pack.getWord('w_z21mlp')).toMatchObject({ retired: true });
+      expect(await pack.getEntries(['w_z21mlp'])).toMatchObject([{ retired: true }]);
     },
   );
 
@@ -291,7 +295,8 @@ describe('Corrections in the Feed over the Ukrainian Language Pack', () => {
     while (feed.cards.length < CORRECTION_EVERY) await feed.next();
 
     const card = feed.cards[CORRECTION_EVERY - 1];
-    const correction = await content.getCorrection(entryIdOf(card) ?? '');
+    const [entry] = await content.getEntries([entryIdOf(card) ?? '']);
+    const correction = entry?.kind === 'correction' ? entry : undefined;
 
     // The stressed vowels of a stress trap's forms are the stress traps' test.
     expect(correctionCardOf(card)).toMatchObject({
@@ -334,7 +339,8 @@ describe('Idioms in the Feed over the Ukrainian Language Pack', () => {
     while (feed.cards.length < IDIOM_EVERY) await feed.next();
 
     const card = feed.cards[IDIOM_EVERY - 1];
-    const idiom = await content.getIdiom(entryIdOf(card) ?? '');
+    const [entry] = await content.getEntries([entryIdOf(card) ?? '']);
+    const idiom = entry?.kind === 'idiom' ? entry : undefined;
 
     expect(card?.kind === 'idiom' ? card.idiomCard : undefined).toEqual({
       kind: 'idiom',

@@ -21,6 +21,7 @@ export function createMemoryContentPort({
   idioms?: readonly Idiom[];
 } = {}): ContentReadPort {
   const liveWords = words.filter((word) => !word.retired);
+  const entries = [...words, ...corrections, ...idioms];
   const packCategories =
     categories ??
     [...new Set(words.map((word) => word.categoryId))].map((id) => ({ id, displayName: id }));
@@ -33,15 +34,11 @@ export function createMemoryContentPort({
           .map((word) => word.id),
       ),
     listWords: () => Promise.resolve(liveWords),
-    getWord: (id) => Promise.resolve(words.find((word) => word.id === id)),
-    getWords: (ids) => Promise.resolve(words.filter((word) => ids.includes(word.id))),
+    getEntries: (ids) => Promise.resolve(entries.filter((entry) => ids.includes(entry.id))),
     listCorrectionIds: () =>
       Promise.resolve(
         corrections.filter((correction) => !correction.retired).map((correction) => correction.id),
       ),
-    getCorrection: (id) => Promise.resolve(corrections.find((correction) => correction.id === id)),
-    getCorrections: (ids) =>
-      Promise.resolve(corrections.filter((correction) => ids.includes(correction.id))),
     listLinkedWordIds: (correctionId) =>
       Promise.resolve(
         liveWords
@@ -50,7 +47,5 @@ export function createMemoryContentPort({
       ),
     listIdiomIds: () =>
       Promise.resolve(idioms.filter((idiom) => !idiom.retired).map((idiom) => idiom.id)),
-    getIdiom: (id) => Promise.resolve(idioms.find((idiom) => idiom.id === id)),
-    getIdioms: (ids) => Promise.resolve(idioms.filter((idiom) => ids.includes(idiom.id))),
   };
 }

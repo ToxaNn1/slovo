@@ -59,9 +59,9 @@ export interface Entries {
    */
   get(id: string): Promise<Entry | undefined>;
   /**
-   * Any Entries by id, as `get` gives each, read together, so many Entries
-   * cost a read of each kind rather than one per Entry. An id the Language
-   * Pack doesn't have is not in the map.
+   * Any Entries by id, as `get` gives each, read together in one read of the
+   * Language Pack, whatever their kinds. An id the Language Pack doesn't have
+   * is not in the map.
    */
   getMany(ids: readonly string[]): Promise<ReadonlyMap<string, Entry>>;
   /**
@@ -142,14 +142,8 @@ export function createEntries(
   /** How to read every live Entry of a kind from the Language Pack. */
   const readLive: Record<EntryKind, () => Promise<readonly Entry[]>> = {
     word: () => content.listWords(),
-    async correction() {
-      const ids = await content.listCorrectionIds();
-      const corrections = await Promise.all(ids.map((id) => content.getCorrection(id)));
-      return corrections.filter((correction) => correction !== undefined);
-    },
-    async idiom() {
-      return content.getIdioms(await content.listIdiomIds());
-    },
+    correction: async () => content.getEntries(await content.listCorrectionIds()),
+    idiom: async () => content.getEntries(await content.listIdiomIds()),
   };
 
   /**
@@ -237,35 +231,26 @@ export function createEntries(
     eligible,
     eligibleOfKind,
     async get(id) {
-      return (
-        (await content.getWord(id)) ?? (await content.getCorrection(id)) ?? content.getIdiom(id)
-      );
+      return (await content.getEntries([id]))[0];
     },
     async getMany(ids) {
-      const found = new Map<string, Entry>();
       const unique = [...new Set(ids)];
-      if (unique.length === 0) return found;
-      for (const word of await content.getWords(unique)) found.set(word.id, word);
-      // As `get` does, an id is a Correction or an Idiom only when it is no Word.
-      const rest = unique.filter((id) => !found.has(id));
-      if (rest.length === 0) return found;
-      const [corrections, idioms] = await Promise.all([
-        content.getCorrections(rest),
-        content.getIdioms(rest),
-      ]);
-      for (const entry of [...corrections, ...idioms]) found.set(entry.id, entry);
-      return found;
+      if (unique.length === 0) return new Map();
+      return new Map((await content.getEntries(unique)).map((entry) => [entry.id, entry]));
     },
     categories,
     linksCorrections,
     async linkedCorrections(word) {
       if (!(await linksCorrections())) return [];
-      const corrections = await Promise.all(
-        word.correctionIds.map((id) => content.getCorrection(id)),
+      const linked = new Map(
+        (await content.getEntries(word.correctionIds)).map((entry) => [entry.id, entry]),
       );
-      return corrections.filter(
-        (correction): correction is Correction => correction?.retired === false,
-      );
+      return word.correctionIds
+        .map((id) => linked.get(id))
+        .filter(
+          (correction): correction is Correction =>
+            correction?.kind === 'correction' && !correction.retired,
+        );
     },
   };
 }
