@@ -29,3 +29,13 @@ A write or a plan the old composition started before it closed still ends as it 
 - **Close the old composition before the new one opens**: rejected. The reader keeps using the old one while the new one opens, and every heart, hide or mark tapped meanwhile would be lost.
 - **A `closed` check in each module (the Feed's `show`, the plan, the Hiding's undo)**: rejected. Each module would carry the same rule, and a write path missed or added later would stay open.
 - **An undo after a reopen does nothing, or the reopen takes the toast away**: rejected by the owner. The reader would tap «Скасувати» and see the Entry stay Hidden, or see the toast go before its time.
+
+## Amendment: the reactions to eligibility and to the day stay a hand-written ordered chain (architecture review 4, candidate 7)
+
+The review asked whether the modules that react to a change of eligibility (the Cycle, the Feed, the notification plan, the Game Modes on offer) and to the day change should register as a named list of followers instead of being called in turn inside `openComposition`. They stay a hand-written chain, for three reasons:
+
+- The chain is four awaited calls in `eligibilityChanged`, in one place with its order written beside it. A list of followers would hold the same four calls with the same order, plus a registration seam with one adapter, the composition itself. The deletion test finds nothing to delete. Its history agrees: the calls changed when the Feed (#129), the plan (#174) and the Game (#216) arrived, and no feature since, the Knowledge Marks and Idioms included, had to touch it.
+- The order carries the behaviour: the Cycle reads the eligible Entries before the Feed drops its cards, and the plan is made again only once the Feed has followed. A list would hide that order in the position of its items, where a reader cannot see why.
+- The day change already has its own module (ADR 0022), and its steps are not alike: one takes the morning Word, one records the Active Day in a write that differs between a return and an opened Entry, one makes the plan on some reports only, one opens the Feed on a date. A uniform list of followers cannot express them without growing back into the module it would replace.
+
+A later review should reopen this only if adding a reaction keeps forcing edits to the chain, or the order stops fitting in one function.
