@@ -48,6 +48,8 @@ export function hideChoice({
     target: { kind: 'entry', entryId: entryIdOf(card) },
     label: strings.choice.entry,
   };
+  // An Idiom offers only itself until Idioms get their Mix option (0.8.8).
+  if (card.kind === 'idiom') return [entry];
   if (card.kind === 'correction') {
     return mix.corrections
       ? [

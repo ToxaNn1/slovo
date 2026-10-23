@@ -1,4 +1,11 @@
-import { entryIdOf, isTodaysWordOfTheDay, type Composition, type EntryFeedCard } from '@slovo/core';
+import {
+  entryIdOf,
+  isTodaysWordOfTheDay,
+  type Composition,
+  type CorrectionFeedCard,
+  type EntryFeedCard,
+  type WordFeedCard,
+} from '@slovo/core';
 import {
   ActionRow,
   CollectionButton,
@@ -43,7 +50,8 @@ export function EntryActions({ card }: { card: EntryFeedCard }) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const buttons = useShown().entryButtons;
-  const share = buttons.shareCard ? shareCardOnDevice : undefined;
+  // An Idiom has no Share Card yet (0.8.8).
+  const share = buttons.shareCard && card.kind !== 'idiom' ? shareCardOnDevice : undefined;
   const knowledge = useKnowledgeMark(entryId);
   return (
     <>
@@ -80,7 +88,7 @@ export function EntryActions({ card }: { card: EntryFeedCard }) {
           setSheetOpen(false);
         }}
       />
-      {share !== undefined && (
+      {share !== undefined && card.kind !== 'idiom' && (
         <EntryShareSheet
           card={card}
           share={share}
@@ -104,7 +112,7 @@ function EntryShareSheet({
   visible,
   onClose,
 }: {
-  card: EntryFeedCard;
+  card: WordFeedCard | CorrectionFeedCard;
   share: NonNullable<typeof shareCardOnDevice>;
   visible: boolean;
   onClose: () => void;
