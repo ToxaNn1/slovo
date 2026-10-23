@@ -33,12 +33,24 @@ export const StatsStringsSchema = z.strictObject({
    * Takes `{words}`, `knownWords` filled, and `{corrections}`, `knownCorrections` filled.
    */
   known: templateOf('words', 'corrections'),
-  /** The row of the Known Entries while Corrections are off or out of the Mix, e.g. «Знаю 12 слів». Takes `{words}`. */
+  /** The row of the Known Entries while Corrections and Idioms are off or out of the Mix, e.g. «Знаю 12 слів». Takes `{words}`. */
   knownWithoutCorrections: templateOf('words'),
+  /**
+   * The row of the Known Entries with the Known Idioms, e.g. «Знаю 120 слів · 12 Виправлень · 8 фразеологізмів».
+   * Takes `{words}`, `{corrections}` and `{idioms}`, `knownIdioms` filled.
+   */
+  knownWithIdioms: templateOf('words', 'corrections', 'idioms'),
+  /**
+   * The row of the Known Entries with the Known Idioms while Corrections are off or out of the Mix,
+   * e.g. «Знаю 12 слів · 8 фразеологізмів». Takes `{words}` and `{idioms}`.
+   */
+  knownWithoutCorrectionsWithIdioms: templateOf('words', 'idioms'),
   /** The Words marked Known, in the row of the Known Entries, e.g. «12 слів». Takes `{count}`. */
   knownWords: PluralSchema,
   /** The Corrections marked Known, in the row of the Known Entries, e.g. «3 Виправлення». Takes `{count}`. */
   knownCorrections: PluralSchema,
+  /** The Idioms marked Known, place names too, in the row of the Known Entries, e.g. «8 фразеологізмів». Takes `{count}`. */
+  knownIdioms: PluralSchema,
   /** The row of the Entries due for Review today, e.g. «На повторення сьогодні: 4». Takes `{count}`. */
   dueToday: templateOf('count'),
 });

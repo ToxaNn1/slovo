@@ -30,8 +30,11 @@ const strings = {
     gameBestLabel: plural('best game'),
     known: 'know {words} · {corrections}',
     knownWithoutCorrections: 'know {words}',
+    knownWithIdioms: 'know {words} · {corrections} · {idioms}',
+    knownWithoutCorrectionsWithIdioms: 'know {words} · {idioms}',
     knownWords: forms('word'),
     knownCorrections: forms('correction'),
+    knownIdioms: forms('idiom'),
     dueToday: 'due today: {count}',
   },
 } as unknown as EditionStrings;
@@ -45,8 +48,11 @@ const progress: ProgressState = {
   bestResult: undefined,
   knownWords: 0,
   knownCorrections: 0,
+  knownIdioms: 0,
   dueToday: 0,
 };
+
+const wordsAndCorrections = { corrections: true, idioms: false } as const;
 
 async function renderInEdition(children: ReactNode, locale = 'en') {
   await render(
@@ -107,18 +113,20 @@ describe('StatsSheet', () => {
     [5, 'many'],
     [11, 'many'],
     [21, 'one'],
-  ])('draws the Known Words and Corrections and today’s Review for %i', async (n, form) => {
+  ])('draws the Known Words, Corrections and Idioms and today’s Review for %i', async (n, form) => {
     await renderInEdition(
       <StatsSheet
         visible
-        stats={{ ...progress, knownWords: n, knownCorrections: n, dueToday: n }}
+        stats={{ ...progress, knownWords: n, knownCorrections: n, knownIdioms: n, dueToday: n }}
         onClose={() => undefined}
       />,
       'uk',
     );
 
     expect(
-      screen.getByText(`know ${String(n)} word (${form}) · ${String(n)} correction (${form})`),
+      screen.getByText(
+        `know ${String(n)} word (${form}) · ${String(n)} correction (${form}) · ${String(n)} idiom (${form})`,
+      ),
     ).toBeOnTheScreen();
     expect(screen.getByText(`due today: ${String(n)}`)).toBeOnTheScreen();
   });
@@ -127,30 +135,68 @@ describe('StatsSheet', () => {
     await renderInEdition(
       <StatsSheet
         visible
-        stats={{ ...progress, knownWords: 12, knownCorrections: 3, dueToday: 0 }}
+        knowledge={wordsAndCorrections}
+        stats={{ ...progress, knownWords: 12, knownCorrections: 3, knownIdioms: 8, dueToday: 0 }}
         onClose={() => undefined}
       />,
       'uk',
     );
 
-    expect(screen.getByText('know 12 word (many) · 3 correction (few)')).toBeOnTheScreen();
+    expect(screen.getByTestId('stats-known')).toHaveTextContent(
+      'know 12 word (many) · 3 correction (few)',
+    );
+    expect(screen.queryByText(/idiom/)).not.toBeOnTheScreen();
     expect(screen.getByText('due today: 0')).toBeOnTheScreen();
   });
 
-  // Owner decision 19.10, #478: no count of Known Corrections while the reader sees none.
-  it('draws the Known Words without the Known Corrections while Corrections are left out', async () => {
+  // Spec #549, #565: the Known Idioms after the Known Corrections while the reader sees Idioms.
+  it('draws the Known Idioms after the Known Corrections', async () => {
     await renderInEdition(
       <StatsSheet
         visible
-        knowledge="words"
-        stats={{ ...progress, knownWords: 12, knownCorrections: 3, dueToday: 2 }}
+        knowledge={{ corrections: true, idioms: true }}
+        stats={{ ...progress, knownWords: 120, knownCorrections: 12, knownIdioms: 8 }}
+        onClose={() => undefined}
+      />,
+      'uk',
+    );
+
+    expect(screen.getByTestId('stats-known')).toHaveTextContent(
+      'know 120 word (many) · 12 correction (many) · 8 idiom (many)',
+    );
+  });
+
+  it('draws the Known Idioms after the Known Words while Corrections are left out', async () => {
+    await renderInEdition(
+      <StatsSheet
+        visible
+        knowledge={{ corrections: false, idioms: true }}
+        stats={{ ...progress, knownWords: 12, knownCorrections: 3, knownIdioms: 1 }}
+        onClose={() => undefined}
+      />,
+      'uk',
+    );
+
+    expect(screen.getByTestId('stats-known')).toHaveTextContent(
+      'know 12 word (many) · 1 idiom (one)',
+    );
+    expect(screen.queryByText(/correction/)).not.toBeOnTheScreen();
+  });
+
+  // Owner decision 19.10, #478: no count of Known Corrections while the reader sees none.
+  it('draws the Known Words alone while Corrections and Idioms are left out', async () => {
+    await renderInEdition(
+      <StatsSheet
+        visible
+        knowledge={{ corrections: false, idioms: false }}
+        stats={{ ...progress, knownWords: 12, knownCorrections: 3, knownIdioms: 8, dueToday: 2 }}
         onClose={() => undefined}
       />,
       'uk',
     );
 
     expect(screen.getByTestId('stats-known')).toHaveTextContent('know 12 word (many)');
-    expect(screen.queryByText(/correction/)).not.toBeOnTheScreen();
+    expect(screen.queryByText(/correction|idiom/)).not.toBeOnTheScreen();
     expect(screen.getByText('due today: 2')).toBeOnTheScreen();
   });
 
