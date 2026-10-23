@@ -1,5 +1,5 @@
 import type { EditionStrings } from '@slovo/contracts';
-import type { CorrectionCardModel, WordCardModel } from '@slovo/core';
+import type { CorrectionCardModel, IdiomCardModel, WordCardModel } from '@slovo/core';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -62,10 +62,13 @@ function useShrinkToFit(floor: number): [number, (measuredAt: number, fits: bool
   return [scale, report];
 }
 
+/** The card of an Entry of any kind, as the Core built it. */
+type ShareableCard = WordCardModel | CorrectionCardModel | IdiomCardModel;
+
 /** What a Share Card shows. */
 export interface ShareCardContent {
   /** The Entry's card, as the Core built it for the Feed. */
-  card: WordCardModel | CorrectionCardModel;
+  card: ShareableCard;
   /** Whether it is today's Word of the Day, which the overline then says in place of the Category. */
   wordOfTheDay: boolean;
   /** The watermark: the Edition's display name. */
@@ -80,15 +83,23 @@ export interface ShareCardContent {
  * with gender and registers, and the primary Definition; a Correction's shows
  * «Так часто кажуть» over the non-standard form struck through, the divider
  * with the Correction's arrow and «Українською краще» over the main standard
- * equivalent. The overline (today's Word of the Day, the Category or the
- * Correction Type) tops the Story and starts the Square's footer; the watermark
+ * equivalent; an Idiom's shows its expression and its primary Definition, and
+ * a place name's adds «Походження» over its etymology. The overline (today's
+ * Word of the Day, the Category, the Correction Type or the chip of the Idiom
+ * Type) tops the Story and starts the Square's footer; the watermark
  * ends both. The card is laid out at its own size, so it is sharp at any size,
  * and its type keeps the design's proportions whatever the reader's text size.
  * A headline too wide for its line shrinks to a floor and then wraps; text too
  * tall for the card shrinks until it fits; nothing is cut.
  */
 export function ShareCard(props: ShareCardContent & { format: ShareCardFormat; width: number }) {
-  const id = props.card.kind === 'word' ? props.card.wordId : props.card.correctionId;
+  const { card } = props;
+  const id =
+    card.kind === 'word'
+      ? card.wordId
+      : card.kind === 'correction'
+        ? card.correctionId
+        : card.idiomId;
   // A new Entry or format measures from the design's sizes again.
   return <FittedCard key={`${id}-${props.format}`} {...props} />;
 }
@@ -121,9 +132,11 @@ function FittedCard({
   const overline =
     card.kind === 'correction'
       ? edition.strings.correctionCard.correctionTypes[card.correctionType]
-      : wordOfTheDay
-        ? edition.strings.share.wordOfTheDay
-        : card.categoryName;
+      : card.kind === 'idiom'
+        ? edition.strings.idiomCard.idiomTypes[card.idiomType]
+        : wordOfTheDay
+          ? edition.strings.share.wordOfTheDay
+          : card.categoryName;
   /** A size of the design's text, shrunk with the rest of the text. */
   const text = (size: number) => size * unit * textScale;
   const headline = (value: string) => (
@@ -148,6 +161,8 @@ function FittedCard({
   const blocks =
     card.kind === 'word' ? (
       <WordBlocks card={card} headline={headline} text={text} format={format} />
+    ) : card.kind === 'idiom' ? (
+      <IdiomBlocks card={card} headline={headline} text={text} format={format} />
     ) : (
       <CorrectionBlocks
         card={card}
@@ -162,9 +177,7 @@ function FittedCard({
     <View
       testID="share-card"
       accessible
-      accessibilityLabel={[overline, ...accessibilityParts(card, edition.strings)]
-        .filter((part) => part !== undefined)
-        .join('. ')}
+      accessibilityLabel={sentences([overline, ...accessibilityParts(card, edition.strings)])}
       {...voice}
       style={[
         styles.card,
@@ -279,7 +292,7 @@ function CardEnd({
 
 /** What a block needs to draw its text at the card's scale. */
 interface BlockProps {
-  /** The headline (the Lemma or the main standard equivalent), shrinking to fit its line. */
+  /** The headline (the Lemma, the main standard equivalent or the expression), shrinking to fit its line. */
   headline: (value: string) => ReactNode;
   /** A size of the design's text in this card's points. */
   text: (size: number) => number;
@@ -306,18 +319,70 @@ function WordBlocks({ card, headline, text, format }: BlockProps & { card: WordC
       >
         {wordGrammarText(strings.wordCard, card, 'short')}
       </Text>
-      <Text
-        allowFontScaling={false}
-        style={{
-          fontSize: text(type.definition),
-          lineHeight: text(type.definition) * DEFINITION_LINE_HEIGHT,
-          color: colors.ink,
-          fontFamily: fontFamilies.word,
-        }}
-      >
-        {card.primaryDefinition}
-      </Text>
+      <Definition text={text} size={type.definition} value={card.primaryDefinition} />
     </>
+  );
+}
+
+/**
+ * An Idiom's blocks: the expression and the primary Definition, and a place
+ * name's «Походження» over its etymology, the story of its name.
+ */
+function IdiomBlocks({ card, headline, text, format }: BlockProps & { card: IdiomCardModel }) {
+  const { colors, fontFamilies } = useTokens();
+  const { strings } = useEdition();
+  const { type, labelGap } = shareCardLayout[format];
+  return (
+    <>
+      {headline(card.expression)}
+      <Definition text={text} size={type.definition} value={card.primaryDefinition} />
+      {card.idiomType === 'placeName' && card.etymology !== undefined && (
+        <View style={{ gap: text(labelGap) }}>
+          <Text
+            allowFontScaling={false}
+            style={[
+              styles.label,
+              { fontSize: text(type.label), color: colors.accent, fontFamily: fontFamilies.ui },
+            ]}
+          >
+            {strings.idiomCard.etymology}
+          </Text>
+          <Text
+            allowFontScaling={false}
+            style={{
+              fontSize: text(type.etymology),
+              lineHeight: text(type.etymology) * DEFINITION_LINE_HEIGHT,
+              color: colors.inkSecondary,
+              fontFamily: fontFamilies.ui,
+            }}
+          >
+            {card.etymology}
+          </Text>
+        </View>
+      )}
+    </>
+  );
+}
+
+/** The primary Definition of a Word or an Idiom. */
+function Definition({
+  text,
+  size,
+  value,
+}: Pick<BlockProps, 'text'> & { size: number; value: string }) {
+  const { colors, fontFamilies } = useTokens();
+  return (
+    <Text
+      allowFontScaling={false}
+      style={{
+        fontSize: text(size),
+        lineHeight: text(size) * DEFINITION_LINE_HEIGHT,
+        color: colors.ink,
+        fontFamily: fontFamilies.word,
+      }}
+    >
+      {value}
+    </Text>
   );
 }
 
@@ -373,11 +438,31 @@ function CorrectionBlocks({
   );
 }
 
+/**
+ * The parts VoiceOver reads, one sentence each: a part ending in its own full
+ * stop takes no other.
+ */
+function sentences(parts: (string | undefined)[]): string {
+  return parts
+    .filter((part) => part !== undefined)
+    .reduce(
+      (label, part) =>
+        label === '' ? part : `${label}${/[.!?…]$/.test(label) ? ' ' : '. '}${part}`,
+      '',
+    );
+}
+
 /** What VoiceOver reads of the card after its overline. */
-function accessibilityParts(
-  card: WordCardModel | CorrectionCardModel,
-  strings: EditionStrings,
-): (string | undefined)[] {
+function accessibilityParts(card: ShareableCard, strings: EditionStrings): (string | undefined)[] {
+  if (card.kind === 'idiom') {
+    return [
+      card.expression,
+      card.primaryDefinition,
+      card.idiomType === 'placeName' && card.etymology !== undefined
+        ? `${strings.idiomCard.etymology}: ${card.etymology}`
+        : undefined,
+    ];
+  }
   if (card.kind === 'correction') {
     return [
       `${strings.share.nonStandard}: ${stressLabel(strings.wordCard, card.nonStandardForm, card.nonStandardStressedVowels)}`,
