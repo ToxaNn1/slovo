@@ -1,13 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  createMemoryUserStatePort,
-  openCycle,
-  openUserState,
-  type Cycle,
-  type CycleChange,
-  type Random,
-} from '../index';
+import { createMemoryUserStatePort, openUserState, type Random } from '../index';
+import { openCycle, type Cycle, type CycleChange } from './cycle';
 import { randomOf, randomSequence } from '../test-support';
 
 const wordIds = Array.from({ length: 10 }, (_, index) => `w_${String(index)}`);

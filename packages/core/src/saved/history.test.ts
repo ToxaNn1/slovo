@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 import type { Word } from '@slovo/contracts';
 
 import {
-  createMemoryContentPort,
   createMemoryUserStatePort,
   HISTORY_CAP,
   openComposition,
@@ -14,6 +13,7 @@ import {
   type UserStateChanges,
   type UserStatePort,
 } from '../index';
+import { createMemoryContentPort } from '../testing';
 import { correction, fakeClock, word } from '../test-support';
 
 /** The Edition's one Category, the test Words' own, and its default Mix of every Category. */

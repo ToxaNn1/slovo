@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Example, Idiom, PartOfSpeech, Word } from '@slovo/contracts';
+import type { Category, Example, Idiom, PartOfSpeech, Word } from '@slovo/contracts';
 
 import {
-  createMemoryContentPort,
   createMemoryUserStatePort,
   GAME_LIVES,
   GAME_ROUNDS,
@@ -12,7 +11,6 @@ import {
   renderStress,
   SEEN_DWELL_MS,
   userStateRecords,
-  type Category,
   type Clock,
   type Composition,
   type ContentReadPort,
@@ -24,6 +22,7 @@ import {
   type UserStateChanges,
   type UserStatePort,
 } from '../index';
+import { createMemoryContentPort } from '../testing';
 import { idiom, seededRandom } from '../test-support';
 
 function word(

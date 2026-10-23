@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
+import { parseLocalDate } from '../index';
 import {
   answerKnowledge,
   isDue,
   isLearned,
-  parseLocalDate,
   shownMark,
   type KnowledgeRecord,
-} from '../index';
+} from './knowledge-record';
 
 const day = parseLocalDate;
 const monday = day('2026-10-19');

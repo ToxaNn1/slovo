@@ -5,7 +5,8 @@ import { fileURLToPath } from 'node:url';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { createMemoryContentPort, type ContentReadPort } from '@slovo/core';
+import { type ContentReadPort } from '@slovo/core';
+import { createMemoryContentPort } from '@slovo/core/testing';
 
 import { editionFiles } from './edition-folder';
 import { buildLanguagePack, openLanguagePack, recordContent } from './index';

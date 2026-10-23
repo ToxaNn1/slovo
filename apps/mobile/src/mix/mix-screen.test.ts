@@ -1,5 +1,4 @@
 import {
-  createMemoryContentPort,
   createMemoryUserStatePort,
   openComposition,
   openUserState,
@@ -7,6 +6,7 @@ import {
   type Composition,
   type Edition,
 } from '@slovo/core';
+import { createMemoryContentPort } from '@slovo/core/testing';
 import { describe, expect, it } from 'vitest';
 
 import { mixScreenModel, mixSummary } from './mix-screen';

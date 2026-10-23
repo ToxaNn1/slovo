@@ -6,7 +6,6 @@ import {
   buildEntryCard,
   CORRECTION_EVERY,
   createEntries,
-  createMemoryContentPort,
   createMemoryUserStatePort,
   isTodaysWordOfTheDay,
   openComposition,
@@ -16,9 +15,7 @@ import {
   type Composition,
   type ContentReadPort,
   type Edition,
-  type MixEdition,
   type GameEdition,
-  type NotificationsEdition,
   type Feed,
   type FeedCard,
   IDIOM_EVERY,
@@ -26,6 +23,9 @@ import {
   type UserStatePort,
   type WordFeedCard,
 } from '../index';
+import { createMemoryContentPort } from '../testing';
+import { type MixEdition } from '../entries/mix';
+import { type NotificationsEdition } from '../notifications/notifications';
 import {
   correction,
   fakeClock,

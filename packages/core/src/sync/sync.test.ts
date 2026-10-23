@@ -2,8 +2,6 @@ import type { FeatureSwitch } from '@slovo/contracts';
 import { describe, expect, it } from 'vitest';
 
 import {
-  createFakeAccountApi,
-  createFakeSyncApi,
   createMemorySessionStore,
   createMemoryUserStatePort,
   openAccount,
@@ -11,10 +9,11 @@ import {
   openUserState,
   trackChanges,
   userStateRecords,
-  SYNC_AFTER_WRITE,
   type Schedule,
   type UserStateChanges,
 } from '../index';
+import { createFakeAccountApi, createFakeSyncApi } from '../testing';
+import { SYNC_AFTER_WRITE } from './sync';
 import { fakeClock, randomOf } from '../test-support';
 
 const { favorites, syncCursor, syncSyncedAt, theme } = userStateRecords;

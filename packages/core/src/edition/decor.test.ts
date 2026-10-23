@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { coreDecor, InvalidDecorError, loadDecor } from '../index';
+import { coreDecor, loadDecor } from '../index';
+import { InvalidDecorError } from './decor';
 
 const stitch = (light: string, dark: string) => ({
   width: 4,

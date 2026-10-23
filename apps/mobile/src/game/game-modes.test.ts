@@ -1,6 +1,5 @@
 import type { Word } from '@slovo/contracts';
 import {
-  createMemoryContentPort,
   createMemoryUserStatePort,
   openComposition,
   openUserState,
@@ -8,6 +7,7 @@ import {
   type Composition,
   type GameMode,
 } from '@slovo/core';
+import { createMemoryContentPort } from '@slovo/core/testing';
 import { describe, expect, it } from 'vitest';
 
 import { gameModeCard, gameModeStrings } from './game-modes';

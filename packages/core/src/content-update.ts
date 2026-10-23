@@ -7,7 +7,7 @@ import type { UserState } from './user-state/user-state';
 import { userStateRecords } from './user-state/user-state-schema';
 
 /** How long after a check the next one is due: 24 hours. */
-export const CONTENT_UPDATE_EVERY = 24 * 60 * 60 * 1000;
+const CONTENT_UPDATE_EVERY = 24 * 60 * 60 * 1000;
 
 /**
  * Content updates: the newer Language Packs of the Edition that the app

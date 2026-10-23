@@ -1,11 +1,11 @@
 import {
-  createMemoryContentPort,
   createMemoryUserStatePort,
   openComposition,
   openUserState,
   type Clock,
   type Composition,
 } from '@slovo/core';
+import { createMemoryContentPort } from '@slovo/core/testing';
 import { describe, expect, it } from 'vitest';
 
 import { undoHide, undoRestore } from './hiding-undo';

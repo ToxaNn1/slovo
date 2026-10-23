@@ -1,17 +1,19 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import {
-  createFakeNotificationScheduler,
-  createMemoryContentPort,
   createMemoryUserStatePort,
   openComposition,
   openUserState,
   type Clock,
   type Composition,
-  type FakeNotificationScheduler,
   type PlannedNotification,
   type UserStateChanges,
 } from '../index';
+import {
+  createFakeNotificationScheduler,
+  createMemoryContentPort,
+  type FakeNotificationScheduler,
+} from '../testing';
 import { fakeClock, word } from '../test-support';
 
 /** More Words than the plan holds, so every notification gets one. */

@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  createFakeNotificationScheduler,
-  createMemoryContentPort,
   createMemoryUserStatePort,
   openComposition,
   openUserState,
@@ -14,6 +12,7 @@ import {
   type OnboardingStep,
   type PlannedNotification,
 } from './index';
+import { createFakeNotificationScheduler, createMemoryContentPort } from './testing';
 import { fakeClock, word } from './test-support';
 
 /** The instant these tests start at. */

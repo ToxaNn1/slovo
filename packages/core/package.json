@@ -5,7 +5,8 @@
   "description": "The language-agnostic Core shared by every Edition. Pure TypeScript: no React or React Native.",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./testing": "./src/testing.ts"
   },
   "scripts": {
     "lint": "eslint .",

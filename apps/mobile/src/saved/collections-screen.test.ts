@@ -1,12 +1,12 @@
 import { type Word } from '@slovo/contracts';
 import {
-  createMemoryContentPort,
   createMemoryUserStatePort,
   openComposition,
   openUserState,
   type Composition,
   type Random,
 } from '@slovo/core';
+import { createMemoryContentPort } from '@slovo/core/testing';
 import { describe, expect, it } from 'vitest';
 
 import { collectionRows } from './collections-screen';

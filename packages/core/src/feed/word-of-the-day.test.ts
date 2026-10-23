@@ -2,15 +2,13 @@ import { describe, expect, it } from 'vitest';
 
 import {
   createMemoryUserStatePort,
-  openCycle,
   openUserState,
-  openWordOfTheDay,
   type Clock,
-  type Cycle,
   type Random,
   type UserStatePort,
-  type WordOfTheDay,
 } from '../index';
+import { openCycle, type Cycle } from './cycle';
+import { openWordOfTheDay, type WordOfTheDay } from './word-of-the-day';
 import { fakeClock, randomOf, randomSequence } from '../test-support';
 
 const wordIds = Array.from({ length: 10 }, (_, index) => `w_${String(index)}`);

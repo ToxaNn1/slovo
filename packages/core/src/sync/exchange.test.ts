@@ -1,11 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  createFakeSyncApi,
-  createMemoryContentPort,
   createMemoryUserStatePort,
   createSettings,
-  createSyncExchange,
   openComposition,
   openUserState,
   trackChanges,
@@ -13,6 +10,8 @@ import {
   type SyncApi,
   type UserStateChanges,
 } from '../index';
+import { createFakeSyncApi, createMemoryContentPort } from '../testing';
+import { createSyncExchange } from './exchange';
 import { fakeClock, randomOf, word } from '../test-support';
 
 const { activeDays, collectionEntries, collections, favorites, gameBest, history } =

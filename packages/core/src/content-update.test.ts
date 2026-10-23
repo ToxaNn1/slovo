@@ -2,14 +2,12 @@ import { describe, expect, it } from 'vitest';
 
 import {
   createContentUpdate,
-  createFakeContentApi,
-  createMemoryPackFiles,
   createMemoryUserStatePort,
   openUserState,
-  type MemoryPackFile,
   type PackVersion,
   type Schedule,
 } from './index';
+import { createFakeContentApi, createMemoryPackFiles, type MemoryPackFile } from './testing';
 import { fakeClock, randomOf } from './test-support';
 
 const HOUR = 60 * 60 * 1000;

@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import type { Correction, Word } from '@slovo/contracts';
 
-import { buildWordCard, createEntries, createMemoryContentPort } from '../index';
+import { buildWordCard, createEntries } from '../index';
+import { createMemoryContentPort } from '../testing';
 
 /** A Word with only what every Word has; each test adds what it needs. */
 function word(overrides: Partial<Word> = {}): Word {

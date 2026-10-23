@@ -4,13 +4,13 @@ import type { Correction, Word } from '@slovo/contracts';
 
 import {
   createEntries,
-  createMemoryContentPort,
   createMemoryUserStatePort,
   openRemoteSwitches,
   openUserState,
   type Edition,
-  type MixEdition,
 } from '../index';
+import { createMemoryContentPort } from '../testing';
+import { type MixEdition } from './mix';
 import { countingReads, idiom, randomOf } from '../test-support';
 
 function word(id: string, overrides: Partial<Word> = {}): Word {

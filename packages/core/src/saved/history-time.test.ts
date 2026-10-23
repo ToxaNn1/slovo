@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  createMemoryContentPort,
   createMemoryUserStatePort,
   groupByLocalDay,
   openComposition,
@@ -10,6 +9,7 @@ import {
   SEEN_DWELL_MS,
   type Clock,
 } from '../index';
+import { createMemoryContentPort } from '../testing';
 import { fakeClock, word } from '../test-support';
 
 /** The Edition's one Category, the test Words' own, and its default Mix of every Category. */

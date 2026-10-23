@@ -1,16 +1,15 @@
-import type { WidgetSnapshot } from '@slovo/contracts';
+import type { Category, WidgetSnapshot } from '@slovo/contracts';
 import { describe, expect, it } from 'vitest';
 
 import {
-  createMemoryContentPort,
   createMemoryUserStatePort,
   openComposition,
   openUserState,
-  type Category,
   type Clock,
   type Composition,
   type ContentReadPort,
 } from './index';
+import { createMemoryContentPort } from './testing';
 import { correction, fakeClock, steppingRandom, word } from './test-support';
 
 /** The instant these tests start at. */

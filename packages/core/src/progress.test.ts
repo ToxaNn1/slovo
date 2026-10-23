@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  createMemoryContentPort,
   createMemoryUserStatePort,
   openComposition,
   openUserState,
@@ -12,6 +11,7 @@ import {
   type UserStateChanges,
   type UserStatePort,
 } from './index';
+import { createMemoryContentPort } from './testing';
 import { correction, fakeClock, knownCounts, steppingRandom, word } from './test-support';
 
 /** The Edition's one Category, the test Words' own, and its default Mix of every Category. */

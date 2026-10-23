@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildIdiomCard } from '../index';
+import { buildIdiomCard } from './idiom-card';
 import { idiom } from '../test-support';
 
 describe('the Idiom card', () => {

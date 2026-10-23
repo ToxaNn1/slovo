@@ -1,13 +1,15 @@
 import {
-  createFakeNotificationScheduler,
-  createMemoryContentPort,
   createMemoryUserStatePort,
   openComposition,
   openUserState,
   systemRandom,
   type Composition,
-  type FakeNotificationScheduler,
 } from '@slovo/core';
+import {
+  createFakeNotificationScheduler,
+  createMemoryContentPort,
+  type FakeNotificationScheduler,
+} from '@slovo/core/testing';
 import { describe, expect, it } from 'vitest';
 
 import { notificationsSummary } from './notifications-summary';
