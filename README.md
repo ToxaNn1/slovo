@@ -6,9 +6,9 @@ SLOVO helps people discover, learn and share rare words of a single language. Th
 >
 > - the monorepo with the Core, the shared contracts, the Language Pack build and a UI package;
 > - the mobile shell: one Expo app that builds the Ukrainian Edition, with the final four tabs;
-> - Home is the Feed: the Word of the Day, Word cards with Pronunciation, Corrections mixed in, Seen and Cycles kept on the device, in the Ukrainian Decor;
+> - Home is the Feed: the Word of the Day, Word cards with Pronunciation, Corrections and Idioms mixed in, Seen and Cycles kept on the device, in the Ukrainian Decor;
 > - Settings with the Theme and the font size;
-> - the Ukrainian Edition's content (Words and Corrections) and a content quality gate that CI runs on every change;
+> - the Ukrainian Edition's content (Words, Corrections and Idioms) and a content quality gate that CI runs on every change;
 > - CI with lint, typecheck, tests, a dependency audit and secret scanning.
 >
 > My words, the Game, the widget and the backend arrive in later versions; see the [master spec](https://github.com/ToxaNn1/slovo/issues/1) for the roadmap.
@@ -104,7 +104,7 @@ You need the Node version in [`.nvmrc`](.nvmrc), pnpm, Xcode with an iOS Simulat
 4. Check the result. The tabs read Головна, Налаштування, Гра, Збережене (Home, Settings, Game, Saved). Home is the Feed, one card per screen:
    - Each local day opens on its Word of the Day, badged «Слово дня · 12 жовтня». Swipe up for the next card and down to go back; a hint says so on the first launch only.
    - A Word card shows the Lemma with its Stress marks, the part of speech, the Definition, an Example, Synonyms, register and Category chips, and «Детальніше» for the rest. The speaker button reads the Lemma aloud with the device's Ukrainian voice, or explains how to get one.
-   - About every fifth card is a Correction («Так часто кажуть → Українською краще»).
+   - About every fifth card is a Correction («Так часто кажуть → Українською краще»), and about every seventh an Idiom («бити байдики» → «ледарювати») or a place name.
    - A card that stays on screen for 0.5 s is Seen and doesn't come back in the same Cycle. Once everything is Seen, the end-of-Cycle card says so, and the next swipe starts a new Cycle. The Feed reopens on the last card the same day.
    - While the Language Pack opens, the Feed shows a skeleton card with the divider being stitched; if the pack can't be opened, a local error state («Нитка урвалася») offers to try again.
 

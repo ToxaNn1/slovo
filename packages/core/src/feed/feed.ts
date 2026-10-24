@@ -247,7 +247,7 @@ function eligibleDue(cycle: Cycle, knowledge: Pick<Knowledge, 'state'>): EntryId
  * Word, Correction and Idiom is Seen. The Word of the Day is always a Word.
  *
  * While Words are due for Review, every `REVIEW_EVERY`th card of the session
- * that isn't a Correction's turn shows one, Seen in this Cycle or not, until
+ * that isn't a Correction's or an Idiom's turn shows one, Seen in this Cycle or not, until
  * the reader answers it (ADR 0043). While Corrections are due, the
  * Correction's turn shows one before a new Correction, in the same way, and
  * while Idioms are due, the Idiom's turn shows one before a new Idiom. A

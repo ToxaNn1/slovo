@@ -12,7 +12,15 @@ Until 0.8.8 SLOVO had two kinds of Entry, Words and Corrections. A fixed express
 
 **The Game.** The Core Game Mode asks about idioms of Idiom Type `idiom` as it asks about Words: the Round gives the idiom's primary Definition and offers four idioms. Its Distractors are other live idioms drawn from the whole pack (ADR 0024), never one whose primary Definition is the answer's. A place name builds no Round and is never a Distractor: no Round asks the reader to guess a city from its description. A Word Round never offers an idiom, and the other way round.
 
-**What this ADR leaves to its tickets.** The build's refusals (an expression not in NFC or with a character outside the Edition's alphabet, its Lemma punctuation and the space; a place name without an etymology; two live Idioms with one expression), the eligibility of Idioms (ADR 0015), the Idiom card (ADR 0017) and the Game (ADR 0024) are recorded as amendments of those ADRs when the tickets land. Until the eligibility ticket lands no Idiom is eligible, so nothing shows one: the Core reads Idioms by id only.
+**What this ADR leaves to its tickets.** The build's refusals (an expression not in NFC or with a character outside the Edition's alphabet, its Lemma punctuation and the space; a place name without an etymology; two live Idioms with one expression), the eligibility of Idioms (ADR 0015), the Idiom card (ADR 0017) and the Game (ADR 0024) are recorded as amendments of those ADRs.
+
+**The region on a Word.** 0.8.8 also lets a dialect Word say where it is said. A Word may carry a region, a short text in the Edition's language, and only a Word with the dialectal register label («діал.») may: the Word contract refuses a region on any other Word, so every reader of a Word holds to the rule. The label alone stays allowed, because a Word the dictionaries mark «діал.» without naming a place is still a dialect Word, and the build must not invent a place for it. The region is free text, with no closed list of regions: dictionaries name places at every scale, and a list would refuse a correct Word until someone extended it. The Entry card, its Self-check state once revealed and the Share Card show the region after the label, and VoiceOver reads it there.
+
+**The Rare Word policy.** The Rare Word policy (the glossary's _Rare Word_) says which Words the Edition may author:
+
+- An obscene word is never a Rare Word. A dictionary insult marked «лайл.» or «зневажл.» is, because the dictionaries mark it as an old, witty insult. The line is obscenity, not profanity.
+- A dialect Word, with the dialectal register label and its region, is a Rare Word when a normative dictionary (СУМ, Грінченко) or a dialect dictionary that names the region lists it.
+- A place name is not a Word: the policy keeps proper names out of Words, and a place name is an Idiom of Idiom Type `placeName` (above).
 
 ## Considered Options
 

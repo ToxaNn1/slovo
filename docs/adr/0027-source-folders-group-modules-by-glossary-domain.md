@@ -17,7 +17,7 @@ Not regrouped: `apps/mobile/src/app/` holds the Expo Router routes, whose paths 
 
 ## Amendment: the fakes sit behind the Core's testing entry (architecture review 4)
 
-The Core has two entry points. `index.ts` (`@slovo/core`) exports only what another part of the workspace imports, plus every Extension Point (ADR 0006); a name no caller outside the Core uses is not exported. `testing.ts` (`@slovo/core/testing`) exports the fakes in `fakes/` that the tests of the app and the Language Pack use. Only a test or a test-support module imports it, and no app or package ships it (dependency-cruiser's `only-tests-import-the-core-testing-entry`). The one exception is the memory Session store: the shell keeps the Session in it on a development client without the Keychain, so `index.ts` exports it.
+The Core has two entry points. `index.ts` (`@slovo/core`) exports only what another part of the workspace imports, plus every Extension Point (ADR 0006); a name no caller outside the Core uses is not exported. A test counts as a caller: a name that a test of another package imports (not through `@slovo/core/testing`) stays in `index.ts`. `testing.ts` (`@slovo/core/testing`) exports the fakes in `fakes/` that the tests of the app and the Language Pack use. Only a test or a test-support module imports it, and no app or package ships it (dependency-cruiser's `only-tests-import-the-core-testing-entry`). The one exception is the memory Session store: the shell keeps the Session in it on a development client without the Keychain, so `index.ts` exports it.
 
 ## Considered Options
 
