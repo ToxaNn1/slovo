@@ -1,4 +1,4 @@
-import { describe, expect, it, jest } from '@jest/globals';
+import { describe, expect, it, vi } from 'vitest';
 import type { ErrorEvent } from '@sentry/react-native';
 
 import { startCrashReports, type CrashReportsSdk } from './crash-reports';
@@ -9,8 +9,8 @@ const ACCOUNT_ID = 'acc_7f3c9a1e2b4d4c0f9e8a6b5c4d3e2f1a';
 
 /** Stands in for Sentry's SDK: it keeps the options it was started with. */
 function fakeSentry() {
-  const init = jest.fn<CrashReportsSdk['init']>();
-  const load = jest.fn(() => ({ init }));
+  const init = vi.fn<CrashReportsSdk['init']>();
+  const load = vi.fn(() => ({ init }));
   return {
     load,
     init,
