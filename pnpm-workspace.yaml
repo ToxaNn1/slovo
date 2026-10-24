@@ -18,6 +18,9 @@ overrides:
   # @xmldom/xmldom has high advisories; Expo's own reader has the same API
   # and a patched xmldom.
   '@bacons/xcode>@expo/plist': ^0.8.1
+  # zod 4 before 4.6.6 can exhaust memory (GHSA-mrhx-c7xc-m3w5); tools that
+  # take any zod 4 (knip, the React hooks lint plugin) get the patched one.
+  'zod@>=4 <4.6.6': ^4.6.7
 
 # High advisories with no patched release yet, reachable only through
 # build-time tooling (Expo CLI code signing, Metro's file watcher) and never
@@ -29,3 +32,6 @@ auditConfig:
   ignoreGhsas:
     - GHSA-86w9-cpqp-85rv # node-forge, via @expo/cli; reviewed 2026-10-11
     - GHSA-vfj7-8cjw-p6xm # braces, via metro; reviewed 2026-10-11
+    # zod 3 has no patched release; SLOVO's own zod is 4.6.7+, so this only
+    # covers zod 3.25 inside @expo/cli (build-time). Reviewed 2026-10-24.
+    - GHSA-mrhx-c7xc-m3w5 # zod 3, via @expo/cli; reviewed 2026-10-24

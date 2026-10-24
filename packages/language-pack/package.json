@@ -18,7 +18,7 @@
   "dependencies": {
     "@slovo/contracts": "workspace:*",
     "@slovo/core": "workspace:*",
-    "zod": "^4.6.5"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@slovo/config": "workspace:*",
