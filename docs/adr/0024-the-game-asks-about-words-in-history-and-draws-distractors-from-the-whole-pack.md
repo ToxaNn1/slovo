@@ -86,3 +86,7 @@ A Game Mode still names one kind of Entry, the one its card names and whose refu
 - **A Game Mode of its own for idioms**: rejected for 0.8.8. The owner kept the idiom modes «Фразеологізм» and «Склади фразеологізм» for 1.x; with 15 idioms, a mode of their own would have one Game's worth of Rounds.
 - **A mode that names a list of kinds, with no kind of its own**: rejected. The card, its strings and its refusal belong to one kind; «Вгадай слово» would refuse because Idioms are out of the Mix while its Words still play.
 - **Place names as Rounds that ask for the place from its description**: rejected (ADR 0046). No Round asks the reader to guess a city.
+
+## Amendment: the History threshold counts only Entries the mode can ask about (0.8.9, #623)
+
+The pool is the eligible Entries in History only when at least 15 of them make a Round in the mode, so a place name in History, which builds no Round, never counts towards the threshold.

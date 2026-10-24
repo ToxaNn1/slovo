@@ -39,10 +39,13 @@ export interface WordOfTheDay {
    * the day before's, so every day starts with a new Word. Words in `avoid` are passed
    * over while the Cycle has other unseen Words.
    *
-   * When every Word is Seen, it starts a new Cycle first (`startedCycle`),
-   * where nothing is Seen and `avoid` no longer counts. The new Cycle and the
-   * choice are kept in one write, so neither is kept without the other.
-   * Returns nothing when the Cycle covers no Word.
+   * When every Word is Seen but a Correction or an Idiom of the Cycle isn't,
+   * the Cycle goes on (ADR 0016): the day takes a Seen Word, the next in the
+   * Cycle order after the day before's. Only when every Entry of the Cycle is
+   * Seen does it start a new Cycle first (`startedCycle`), where nothing is
+   * Seen and `avoid` no longer counts. The new Cycle and the choice are kept
+   * in one write, so neither is kept without the other. Returns nothing when
+   * the Cycle covers no Word.
    */
   today(options?: {
     avoid?: ReadonlySet<string>;
@@ -74,6 +77,16 @@ export async function openWordOfTheDay({
   ) {
     const fresh = unseen.filter((id) => id !== dayBefore);
     return fresh.find((id) => !avoid.has(id)) ?? fresh[0] ?? unseen[0];
+  }
+
+  /** The Word after the day before's in the Cycle order, round and round, while the Cycle goes on. */
+  function wordAfter(
+    order: readonly string[],
+    dayBefore: string | undefined,
+    avoid: ReadonlySet<string>,
+  ) {
+    const at = dayBefore === undefined ? -1 : order.indexOf(dayBefore);
+    return nextWordId([...order.slice(at + 1), ...order.slice(0, at + 1)], dayBefore, avoid);
   }
 
   /** The Word of today's record, unless today needs a Word of the Day chosen. */
@@ -119,8 +132,13 @@ export async function openWordOfTheDay({
         const id = kept(today) ?? (await chooseMorningWord(today));
         if (id !== undefined) return { wordId: id, date, startedCycle: false };
         const dayBefore = record?.entryId;
-        let next = nextWordId(cycle.unseen().words, dayBefore, avoid);
-        // Every Word is Seen, so the day starts a new Cycle, where nothing is Seen.
+        const unseen = cycle.unseen();
+        let next = nextWordId(unseen.words, dayBefore, avoid);
+        // Every Word is Seen, but the Cycle goes on while another kind is unseen.
+        if (next === undefined && unseen.corrections.length + unseen.idioms.length > 0) {
+          next = wordAfter(cycle.order().words, dayBefore, avoid);
+        }
+        // Every Entry is Seen, so the day starts a new Cycle, where nothing is Seen.
         const started =
           next === undefined && cycle.order().words.length > 0 ? await cycle.start() : undefined;
         if (started !== undefined) next = nextWordId(started.order.words, dayBefore, new Set());

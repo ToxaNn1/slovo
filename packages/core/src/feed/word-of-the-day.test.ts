@@ -22,6 +22,7 @@ async function open({
   random = randomOf(0.25),
   words = wordIds,
   corrections = [],
+  idioms = [],
 }: {
   records?: Map<string, string>;
   port?: UserStatePort;
@@ -29,6 +30,7 @@ async function open({
   random?: Random;
   words?: readonly string[];
   corrections?: readonly string[];
+  idioms?: readonly string[];
 } = {}): Promise<{
   cycle: Cycle;
   wordOfTheDay: WordOfTheDay;
@@ -36,7 +38,7 @@ async function open({
 }> {
   const userState = await openUserState({ port });
   const cycle = await openCycle({
-    entries: { eligible: () => Promise.resolve({ words, corrections, idioms: [] }) },
+    entries: { eligible: () => Promise.resolve({ words, corrections, idioms }) },
     userState,
     random,
   });
@@ -53,9 +55,13 @@ async function open({
 }
 
 /** Today's Word of the Day on the given morning, Seen once chosen. */
-async function readOn(records: Map<string, string>, day: number, words = wordIds) {
+async function readOn(
+  records: Map<string, string>,
+  day: number,
+  others: { corrections?: readonly string[]; idioms?: readonly string[] } = {},
+) {
   const clock = fakeClock(`2026-10-${String(day)}T09:00:00+03:00`).clock;
-  const run = await open({ records, clock, words });
+  const run = await open({ records, clock, ...others });
   const today = await run.wordOfTheDay.today();
   await run.keepSeen(today?.wordId ?? '');
   return { ...run, today };
@@ -149,6 +155,46 @@ describe('the Word of the Day', () => {
   });
 
   describe('when every Word is Seen', () => {
+    it.each([
+      ['an Idiom', { idioms: ['i_0'] }],
+      ['a Correction', { corrections: ['c_0'] }],
+    ])(
+      'keeps the Cycle while %s is unseen on a new day, with a Seen Word other than the day before',
+      async (_kind, others) => {
+        const records = new Map<string, string>();
+        for (let day = 11; day < 11 + wordIds.length; day++) await readOn(records, day, others);
+        const dayBefore = (
+          await open({ records, ...others, clock: fakeClock('2026-10-20T21:00:00+03:00').clock })
+        ).wordOfTheDay.chosen();
+
+        const { cycle, wordOfTheDay } = await open({
+          records,
+          ...others,
+          clock: fakeClock('2026-10-21T09:00:00+03:00').clock,
+        });
+        expect(cycle.unseen().words).toEqual([]);
+        const order = cycle.order();
+        const today = await wordOfTheDay.today({ avoid: new Set(wordIds) });
+
+        expect(today?.startedCycle).toBe(false);
+        expect(today?.date).toEqual({ year: 2026, month: 10, day: 21 });
+        expect(today?.wordId).toMatch(/^w_/);
+        expect(today?.wordId).not.toBe(dayBefore?.wordId);
+        // The same Cycle: the other kind is still unseen, and every Word still Seen.
+        expect(cycle.order()).toEqual(order);
+        expect(cycle.unseen()).toEqual({ words: [], corrections: [], idioms: [], ...others });
+        // The next day moves on in the Cycle order, so no Word comes two days running.
+        const nextDay = await open({
+          records,
+          ...others,
+          clock: fakeClock('2026-10-22T09:00:00+03:00').clock,
+        });
+        const tomorrow = await nextDay.wordOfTheDay.today();
+        expect(tomorrow?.startedCycle).toBe(false);
+        expect(tomorrow?.wordId).not.toBe(today?.wordId);
+        expect(nextDay.cycle.order()).toEqual(order);
+      },
+    );
     it('starts a new Cycle, in which nothing is Seen, with a Word other than the day before', async () => {
       const records = new Map<string, string>();
       for (let day = 11; day < 11 + wordIds.length; day++) await readOn(records, day);
