@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
+import { systemClock, type Clock } from '@slovo/server-core';
 import { exportJWK, generateKeyPair, SignJWT, type CryptoKey, type JWK } from 'jose';
 import { describe, expect, it } from 'vitest';
 
@@ -19,15 +20,22 @@ async function googleKey() {
 
 type GoogleKey = Awaited<ReturnType<typeof googleKey>>;
 
-/** An identity token for the email as Google signs it with the key, for SLOVO's app, for an hour. */
-function tokenOf(key: { kid: string; privateKey: CryptoKey }, email: string) {
+/**
+ * An identity token for the email as Google signs it with the key, issued at
+ * the time for an hour, for SLOVO's app unless another audience is named.
+ */
+function tokenOf(
+  key: { kid: string; privateKey: CryptoKey },
+  email: string,
+  { at = new Date(), audience = TEST_GOOGLE_CLIENT_ID }: { at?: Date; audience?: string } = {},
+) {
   return new SignJWT({ email, email_verified: true })
     .setProtectedHeader({ alg: 'RS256', kid: key.kid, typ: 'JWT' })
     .setIssuer('https://accounts.google.com')
-    .setAudience(TEST_GOOGLE_CLIENT_ID)
+    .setAudience(audience)
     .setSubject(`google-${email}`)
-    .setIssuedAt()
-    .setExpirationTime('1h')
+    .setIssuedAt(at)
+    .setExpirationTime(new Date(at.getTime() + HOUR))
     .sign(key.privateKey);
 }
 
@@ -61,13 +69,21 @@ function googleKeysEndpoint(keys: GoogleKey[]) {
   };
 }
 
-/** The backend verifying Google's tokens with the real verifier, which fetches the keys from the endpoint. */
-async function backendWithGoogle() {
+/**
+ * The backend verifying Google's tokens with the real verifier, which fetches
+ * the keys from the endpoint and reads the time from the clock, the test's
+ * unless another is given.
+ */
+async function backendWithGoogle(clock: Clock = systemClock) {
   const key = await googleKey();
   const keys = [key];
   const endpoint = googleKeysEndpoint(keys);
   const backend = testApp({
-    google: createGoogleVerifier({ clientIds: [TEST_GOOGLE_CLIENT_ID], fetch: endpoint.fetch }),
+    google: createGoogleVerifier({
+      clientIds: [TEST_GOOGLE_CLIENT_ID],
+      fetch: endpoint.fetch,
+      clock,
+    }),
   });
   const signIn = async (idToken: string) =>
     backend.client.account.signInWithGoogle({ idToken, editionId: 'uk' });
@@ -99,6 +115,19 @@ describe("Google's keys", () => {
     expect(endpoint.fetched).toHaveLength(2);
   });
 
+  it('expire by the clock the verifier is given, which also dates the tokens', async () => {
+    let now = new Date();
+    const { key, endpoint, signIn } = await backendWithGoogle({ now: () => now });
+    await signIn(await tokenOf(key, newEmail(), { at: now }));
+
+    now = new Date(now.getTime() + HOUR + MINUTE);
+
+    await expect(signIn(await tokenOf(key, newEmail(), { at: now }))).resolves.toMatchObject({
+      token: expect.any(String) as unknown,
+    });
+    expect(endpoint.fetched).toHaveLength(2);
+  });
+
   it('are fetched again for a token signed with a key Google has published since', async () => {
     const { key, keys, endpoint, signIn } = await backendWithGoogle();
     await signIn(await tokenOf(key, newEmail()));
@@ -125,6 +154,22 @@ describe("Google's keys", () => {
 
     await expect(signIn(forged)).rejects.toMatchObject({ code: 'INVALID_TOKEN' });
     expect(reports).toEqual([]);
+  });
+
+  it('do not check a token Google did not sign that names another app, which is INVALID_TOKEN', async () => {
+    const { key, signIn } = await backendWithGoogle();
+    const forged = await tokenOf({ ...(await googleKey()), kid: key.kid }, newEmail(), {
+      audience: 'another-app.example',
+    });
+
+    await expect(signIn(forged)).rejects.toMatchObject({ code: 'INVALID_TOKEN' });
+  });
+
+  it('check a token Google signed for another app, which is FOREIGN_AUDIENCE', async () => {
+    const { key, signIn } = await backendWithGoogle();
+    const foreign = await tokenOf(key, newEmail(), { audience: 'another-app.example' });
+
+    await expect(signIn(foreign)).rejects.toMatchObject({ code: 'FOREIGN_AUDIENCE' });
   });
 
   for (const failure of ['answers 503', 'unreachable'] as const) {
