@@ -5,6 +5,10 @@ import { Linking, Text } from 'react-native';
 
 import EntryLayout from '../app/entry/_layout';
 import EntryFromLinkScreen from '../app/entry/[entryId]';
+import GameEntryScreen from '../app/game/[entryId]';
+import FavoriteEntryScreen from '../app/saved/favorites/[entryId]';
+import HistoryEntryScreen from '../app/saved/history/[entryId]';
+import LearningEntryScreen from '../app/saved/learning/[entryId]';
 import { editionStrings } from '../edition/edition';
 import { createOutsideLinks } from './entry-link';
 import { NotificationTaps } from '../notifications/notification-taps';
@@ -76,6 +80,10 @@ async function renderApp() {
       '+not-found': () => <Text>No such route</Text>,
       'entry/_layout': EntryLayout,
       'entry/[entryId]': EntryFromLinkScreen,
+      'saved/favorites/[entryId]': FavoriteEntryScreen,
+      'saved/history/[entryId]': HistoryEntryScreen,
+      'saved/learning/[entryId]': LearningEntryScreen,
+      'game/[entryId]': GameEntryScreen,
     },
     { initialUrl: '/' },
   );
@@ -118,6 +126,31 @@ describe('a link from outside the app', () => {
 
     expect(app.pathname()).toBe('/entry/w_bevz');
     expect(entryScreen()).toBe(`${home} | inside`);
+  });
+
+  it.each([
+    ['a trailing slash', 'slovo-uk://entry/w_bevz/?back=Вхід&from=widget'],
+    ['a doubled slash', 'slovo-uk://entry//w_bevz?back=Вхід&from=widget'],
+    ['slashes doubled and trailing', 'slovo-uk://entry//w_bevz//?back=Вхід&from=notification'],
+  ])('with %s opens the Entry without the label, so it goes into no History', async (_, link) => {
+    const app = await renderApp();
+    await app.open(link);
+
+    expect(app.pathname()).toBe('/entry/w_bevz');
+    expect(entryScreen()).toBe(`${home} | inside`);
+  });
+
+  it.each([
+    ['Favorites', 'saved/favorites', editionStrings.favorites.title],
+    ['History', 'saved/history', editionStrings.history.title],
+    ['Learning', 'saved/learning', editionStrings.learning.title],
+    ['the Game', 'game', editionStrings.game.title],
+  ])('to an Entry of %s opens it without the label it names', async (_, route, title) => {
+    const app = await renderApp();
+    await app.open(`slovo-uk://${route}/w_bevz/?back=Вхід&from=widget`);
+
+    expect(app.pathname()).toBe(`/${route}/w_bevz`);
+    expect(entryScreen()).toBe(`${title} | inside`);
   });
 
   it('from the widget, with the key of its snapshot, opens the Entry as from the widget', async () => {
