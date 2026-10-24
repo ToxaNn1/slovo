@@ -85,7 +85,7 @@ export function createApp({
   reporter,
 }: AppDependencies) {
   const editionRegistry = createEditions({ database, clock, editions });
-  const rateLimits = createRateLimits(database);
+  const rateLimits = createRateLimits(database, { secret: authSecret });
   const accounts = createAccounts({
     editions: editionRegistry,
     authenticator: createAuthenticator(database, { secret: authSecret, logger }),

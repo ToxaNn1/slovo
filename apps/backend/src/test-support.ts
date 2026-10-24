@@ -319,7 +319,7 @@ const TEST_AUTH_SECRET = 'a-test-secret-that-is-at-least-32-characters';
 
 /** An IP address no other test uses, from the range kept for documentation (RFC 3849). */
 export const newIp = () =>
-  `2001:db8::${[0, 0, 0].map(() => randomInt(0x10000).toString(16)).join(':')}`;
+  `2001:db8:${[0, 0].map(() => randomInt(0x10000).toString(16)).join(':')}::1`;
 
 /**
  * What Node's HTTP server gives the app with a request that came on a

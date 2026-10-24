@@ -2,9 +2,12 @@ import { randomUUID } from 'node:crypto';
 
 import { describe, expect, it } from 'vitest';
 
+import { rateLimits } from '../database/schema';
+
 import { newIp, passTime, testApp } from '../test-support';
 
 const MINUTE = 60 * 1000;
+const HOUR = 60 * MINUTE;
 
 /** An email no other test uses. */
 const newEmail = () => `reader-${randomUUID()}@example.com`;
@@ -89,6 +92,98 @@ describe('the codes sent to one email', () => {
   });
 });
 
+describe('the codes sent to one email in a day', () => {
+  /** 5 codes to the email, each from an IP address of its own. */
+  const sendFiveCodes = async (
+    clientFrom: ReturnType<typeof limitedApp>['clientFrom'],
+    email: string,
+  ) => {
+    for (let sent = 0; sent < 5; sent++) {
+      await clientFrom(newIp()).account.requestCode({ email, editionId: 'uk' });
+    }
+  };
+
+  it('are at most 10: the 11th is TOO_MANY_REQUESTS with Retry-After until the day ends, and sends nothing', async () => {
+    const { clientFrom, requestCode, mailer } = limitedApp();
+    const email = newEmail();
+    await sendFiveCodes(clientFrom, email);
+    passTime(HOUR);
+    await sendFiveCodes(clientFrom, email);
+    // A fresh hour, so only the day's limit refuses.
+    passTime(HOUR);
+
+    const eleventh = await requestCode(email, newIp());
+
+    expect(await refusal(eleventh)).toEqual({
+      status: 429,
+      code: 'TOO_MANY_REQUESTS',
+      message: 'Too many requests',
+      // The day began with the first code, 2 hours ago.
+      retryAfter: String(22 * 60 * 60),
+    });
+    expect(mailer.sent.filter((mail) => mail.to === email)).toHaveLength(10);
+    await expect(
+      clientFrom(newIp()).account.requestCode({ email: newEmail(), editionId: 'uk' }),
+    ).resolves.toEqual({});
+  });
+
+  it('open again the next day', async () => {
+    const { clientFrom, requestCode, mailer } = limitedApp();
+    const email = newEmail();
+    await sendFiveCodes(clientFrom, email);
+    passTime(HOUR);
+    await sendFiveCodes(clientFrom, email);
+    passTime(HOUR);
+    expect((await requestCode(email, newIp())).status).toBe(429);
+
+    passTime(22 * HOUR);
+
+    await expect(
+      clientFrom(newIp()).account.requestCode({ email, editionId: 'uk' }),
+    ).resolves.toEqual({});
+    expect(mailer.sent.filter((mail) => mail.to === email)).toHaveLength(11);
+  });
+});
+
+describe('the code checks for one email in a day', () => {
+  it('are at most 25: the 26th is TOO_MANY_REQUESTS with Retry-After until the day ends', async () => {
+    const { verifyCode } = limitedApp();
+    const email = newEmail();
+    // Each from an IP address of its own, so only the limit of the email holds.
+    for (let checked = 0; checked < 25; checked++) {
+      await expect(verifyCode(email, newIp())).resolves.toMatchObject({ status: 400 });
+    }
+    passTime(HOUR);
+
+    const twentySixth = await verifyCode(email, newIp());
+
+    expect(await refusal(twentySixth)).toEqual({
+      status: 429,
+      code: 'TOO_MANY_REQUESTS',
+      message: 'Too many requests',
+      retryAfter: String(23 * 60 * 60),
+    });
+    // Another email is not held back.
+    await expect(verifyCode(newEmail(), newIp())).resolves.toMatchObject({ status: 400 });
+  });
+
+  it('open again the next day', async () => {
+    const { clientFrom, verifyCode, mailer } = limitedApp();
+    const email = newEmail();
+    for (let checked = 0; checked < 25; checked++) {
+      await verifyCode(email, newIp());
+    }
+    expect((await verifyCode(email, newIp())).status).toBe(429);
+
+    passTime(24 * HOUR);
+
+    await clientFrom(newIp()).account.requestCode({ email, editionId: 'uk' });
+    await expect(
+      clientFrom(newIp()).account.verifyCode({ email, code: mailer.codeSentTo(email) }),
+    ).resolves.toMatchObject({ email });
+  });
+});
+
 describe('the code requests from one IP address', () => {
   it('are at most 20 in 10 minutes: the 21st is TOO_MANY_REQUESTS with Retry-After, and sends nothing', async () => {
     const { client, clientFrom, requestCode, mailer } = limitedApp();
@@ -111,6 +206,42 @@ describe('the code requests from one IP address', () => {
     // Another IP address is not held back.
     await expect(
       clientFrom(newIp()).account.requestCode({ email, editionId: 'uk' }),
+    ).resolves.toEqual({});
+  });
+
+  it('count an IPv6 client by its /64: the addresses of one share the count', async () => {
+    const { clientFrom, requestCode, mailer } = limitedApp();
+    for (let sent = 0; sent < 20; sent++) {
+      await clientFrom(`2001:db8:7:1::${(sent + 1).toString(16)}`).account.requestCode({
+        email: newEmail(),
+        editionId: 'uk',
+      });
+    }
+    const email = newEmail();
+
+    // Another address of the same /64, written in full.
+    const twentyFirst = await requestCode(email, '2001:0db8:0007:0001:ffff:ffff:ffff:ffff');
+
+    expect(twentyFirst.status).toBe(429);
+    expect(mailer.sent.filter((mail) => mail.to === email)).toEqual([]);
+    // The next /64 is not held back.
+    await expect(
+      clientFrom('2001:db8:7:2::1').account.requestCode({ email, editionId: 'uk' }),
+    ).resolves.toEqual({});
+  });
+
+  it('count an IPv4-mapped IPv6 address as its IPv4', async () => {
+    const { clientFrom, requestCode } = limitedApp();
+    for (let sent = 0; sent < 20; sent++) {
+      await clientFrom('::ffff:203.0.113.5').account.requestCode({
+        email: newEmail(),
+        editionId: 'uk',
+      });
+    }
+
+    expect((await requestCode(newEmail(), '203.0.113.5')).status).toBe(429);
+    await expect(
+      clientFrom('203.0.113.6').account.requestCode({ email: newEmail(), editionId: 'uk' }),
     ).resolves.toEqual({});
   });
 
@@ -252,5 +383,31 @@ describe('the Google sign-ins from one IP address', () => {
     passTime(10 * MINUTE);
 
     expect((await signInWithGoogle(email)).status).toBe(200);
+  });
+});
+
+describe('the windows the limits keep', () => {
+  it('name no email and no IP address: a dump of the table tells nobody who tried to sign in', async () => {
+    const { client, clientFrom, database, google, mailer } = limitedApp();
+    const email = newEmail();
+    const ip = '2001:db8:7:9::15';
+    await clientFrom(ip).account.requestCode({ email, editionId: 'uk' });
+    await clientFrom(ip).account.verifyCode({ email, code: mailer.codeSentTo(email) });
+    await client.account.signInWithGoogle({
+      idToken: google.token({ email }),
+      editionId: 'uk',
+    });
+
+    const keys = (await database.db.select({ key: rateLimits.key }).from(rateLimits)).map(
+      (row) => row.key,
+    );
+
+    expect(keys.length).toBeGreaterThanOrEqual(5);
+    for (const key of keys) {
+      expect(key).not.toContain(email);
+      expect(key).not.toContain('@');
+      expect(key).not.toContain('2001:db8');
+      expect(key).not.toMatch(/\d+\.\d+\.\d+\.\d+/);
+    }
   });
 });
