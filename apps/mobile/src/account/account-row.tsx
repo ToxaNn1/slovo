@@ -5,6 +5,7 @@ import { useFocusEffect } from 'expo-router';
 import { useCallback } from 'react';
 
 import { useOpenScreen } from '../entries/use-open-screen';
+import { logError } from '../log';
 import type { Opening } from '../opening';
 import { useAccountSummary } from './account';
 
@@ -22,7 +23,7 @@ export function AccountRow({ opening }: { opening: Opening<Account> }) {
         .opened()
         .then((account) => account.refresh())
         .catch((error: unknown) => {
-          console.error('Could not refresh the Account', error);
+          logError('Could not refresh the Account', error);
         });
     }, [opening]),
   );

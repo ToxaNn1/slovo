@@ -6,6 +6,7 @@ import { apiClientOf } from '../api';
 import { deviceClock } from '../device/device-clock';
 import { edition } from '../edition/edition';
 import { remoteSwitchesOpening } from '../edition/remote-switches';
+import { logError } from '../log';
 import { openOnce, type Opening } from '../opening';
 import { storedUserState } from '../user-state/stored-user-state';
 import { createSyncApi } from './sync-api';
@@ -35,7 +36,7 @@ function openSyncApart(account: Opening<Account> | undefined): Opening<Sync> | u
   if (account === undefined || !edition.isFeatureEnabled('sync')) return undefined;
   return openOnce(() => openOver(account), {
     onError(error) {
-      console.error('Could not open Sync', error);
+      logError('Could not open Sync', error);
     },
   });
 }

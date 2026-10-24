@@ -6,6 +6,7 @@ import { useMemo } from 'react';
 import { useComposition } from '../composition';
 import { deviceClock } from '../device/device-clock';
 import { editionStrings } from '../edition/edition';
+import { logError } from '../log';
 import { useSubscribed } from '../opening';
 import { historySections, type HistorySection } from './history-screen';
 import { historyText } from './history-text';
@@ -23,7 +24,7 @@ export function useClearHistory(): () => void {
   const { history } = useComposition();
   return () => {
     history.clear().catch((error: unknown) => {
-      console.error('Could not clear History', error);
+      logError('Could not clear History', error);
     });
   };
 }

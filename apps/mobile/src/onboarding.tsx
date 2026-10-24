@@ -16,6 +16,7 @@ import { AccountScreen } from './account/account-screen';
 import { accountOpening } from './account/device-account';
 import { useComposition } from './composition';
 import { editionStrings } from './edition/edition';
+import { logError } from './log';
 import { MixChoices } from './mix/mix-choices';
 import { NotificationTimes } from './notifications/notification-times';
 import { useSubscribed, type Opening } from './opening';
@@ -47,7 +48,7 @@ function sampleLookOf(sample: SampleNotification | undefined): SampleNotificatio
 /** Logs what the onboarding could not do on a tap. */
 function report(done: Promise<void>): void {
   done.catch((error: unknown) => {
-    console.error('Could not go on with the onboarding', error);
+    logError('Could not go on with the onboarding', error);
   });
 }
 

@@ -5,6 +5,7 @@ import { importDatabaseFromAssetAsync, openDatabaseAsync, type SQLiteDatabase } 
 import languagePack from 'slovo-edition/language-pack';
 import { useMemo } from 'react';
 
+import { logError } from '../log';
 import { edition } from './edition';
 import { openDeviceContentUpdate } from '../content-update/device-content-updates';
 import { devicePackFiles, type DevicePackFiles } from '../content-update/device-pack-files';
@@ -79,12 +80,12 @@ export const languagePackOpening = openOnce(
       contentUpdates: devicePackFiles === undefined ? undefined : contentUpdatesOn(devicePackFiles),
       openBundled,
       onError(error) {
-        console.error('Content updates failed at launch', error);
+        logError('Content updates failed at launch', error);
       },
     }),
   {
     onError(error) {
-      console.error('Could not open the Language Pack', error);
+      logError('Could not open the Language Pack', error);
     },
   },
 );

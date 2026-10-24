@@ -8,6 +8,7 @@ import {
 import { openDatabaseAsync } from 'expo-sqlite';
 
 import { deviceClock } from '../device/device-clock';
+import { logError } from '../log';
 import { openOnce } from '../opening';
 import { openSqliteUserState } from './user-state-sqlite';
 
@@ -37,7 +38,7 @@ async function openStoredUserState(): Promise<TrackedUserState> {
  */
 export const storedUserState = openOnce(openStoredUserState, {
   onError(error) {
-    console.error('Could not open the user state; nothing will be kept', error);
+    logError('Could not open the user state; nothing will be kept', error);
   },
   fallback: () => openTracked(createMemoryUserStatePort()),
 });

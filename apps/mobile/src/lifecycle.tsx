@@ -9,6 +9,7 @@ import { languagePackOpening } from './edition/language-pack';
 import { remoteSwitchesOpening } from './edition/remote-switches';
 import { createForeground } from './foreground/foreground';
 import { reportForeground } from './foreground/foreground-reports';
+import { logError } from './log';
 import { settingsOpening } from './settings';
 import { syncInBackground, reopenAfterSync } from './sync/background-sync';
 import { syncOpening } from './sync/device-sync';
@@ -49,7 +50,7 @@ export function Lifecycle() {
     reports.listen(compositionOpening, (composition, moment) => {
       if (moment !== 'return' && moment !== 'new-day') return;
       composition.resume().catch((error: unknown) => {
-        console.error('Could not follow the app into the foreground', error);
+        logError('Could not follow the app into the foreground', error);
       });
     });
     const writeWidgetSnapshot = createWidgetSnapshotWriter(deviceWidget);
@@ -95,7 +96,7 @@ export function Lifecycle() {
             if (on) await account.refresh();
           })
           .catch((error: unknown) => {
-            console.error('Could not refresh the Account', error);
+            logError('Could not refresh the Account', error);
           });
       });
     }

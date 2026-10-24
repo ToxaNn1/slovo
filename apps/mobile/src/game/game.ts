@@ -2,6 +2,7 @@ import type { GameState } from '@slovo/core';
 
 import { useComposition } from '../composition';
 import { keep } from '../keep';
+import { logError } from '../log';
 import { useSubscribed } from '../opening';
 
 /** The Game as it stands, kept up to date. */
@@ -19,7 +20,7 @@ export function useGameActions() {
   return {
     start: (modeId: string) => {
       game.start(modeId).catch((error: unknown) => {
-        console.error('Could not start a Game', error);
+        logError('Could not start a Game', error);
       });
     },
     answer: (option: number) => {
@@ -27,7 +28,7 @@ export function useGameActions() {
     },
     next: () => {
       game.next().catch((error: unknown) => {
-        console.error('Could not go on to the next Round', error);
+        logError('Could not go on to the next Round', error);
       });
     },
     leave: () => {

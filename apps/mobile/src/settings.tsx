@@ -10,6 +10,7 @@ import { createContext, useContext, useState, type ReactNode } from 'react';
 import { Appearance, useColorScheme } from 'react-native';
 
 import { edition } from './edition/edition';
+import { logError } from './log';
 import { openOnce, useSubscribed } from './opening';
 import { storedUserState } from './user-state/stored-user-state';
 
@@ -43,7 +44,7 @@ export const settingsOpening = openOnce(
   },
   {
     onError(error) {
-      console.error('Could not read the settings; using their defaults', error);
+      logError('Could not read the settings; using their defaults', error);
     },
     fallback: async () => {
       const settings = await settingsOverUserState();
@@ -81,7 +82,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     applyToNativeViews(next);
     setChanged({ over: settings, current: next });
     settings.update(changes).catch((error: unknown) => {
-      console.error('Could not keep the settings', error);
+      logError('Could not keep the settings', error);
     });
   }
 

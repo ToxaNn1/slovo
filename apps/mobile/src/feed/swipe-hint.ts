@@ -1,6 +1,7 @@
 import { createSwipeHint, type SwipeHint } from '@slovo/core';
 import { useCallback, useEffect, useState } from 'react';
 
+import { logError } from '../log';
 import { storedUserState } from '../user-state/stored-user-state';
 
 /**
@@ -24,7 +25,7 @@ export function useSwipeHint(): { visible: boolean; markShown: () => void; dismi
         if ((await hint.isDue()) && active) setDue(hint);
       })
       .catch((error: unknown) => {
-        console.error('Could not read the swipe hint', error);
+        logError('Could not read the swipe hint', error);
       });
     return () => {
       active = false;
@@ -33,7 +34,7 @@ export function useSwipeHint(): { visible: boolean; markShown: () => void; dismi
 
   const markShown = useCallback(() => {
     due?.markShown().catch((error: unknown) => {
-      console.error('Could not keep the swipe hint', error);
+      logError('Could not keep the swipe hint', error);
     });
   }, [due]);
   const dismiss = useCallback(() => {

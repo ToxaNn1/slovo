@@ -22,6 +22,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { deviceClock } from '../device/device-clock';
 import { editionStrings } from '../edition/edition';
+import { logError } from '../log';
 import { Opened } from '../opened';
 import { useOpened, type Opening } from '../opening';
 import { SyncStatusLine } from '../sync/sync-status-line';
@@ -39,7 +40,7 @@ const now = () => deviceClock.now();
  */
 function run(request: Promise<void>): void {
   request.catch((error: unknown) => {
-    console.error('The Account could not do what the reader asked', error);
+    logError('The Account could not do what the reader asked', error);
   });
 }
 

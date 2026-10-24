@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState, type RefObject } from 'react';
 
 import { useComposition } from '../composition';
 import { useInForeground } from '../lifecycle';
+import { logError } from '../log';
 import { useSubscribed } from '../opening';
 import { cardOnScreen, type TurnedTo } from './feed-screen';
 
@@ -48,7 +49,7 @@ export function useFeed(pager: RefObject<VerticalPagerHandle | null>): FeedState
   const openCorrection = useCallback(
     (position: number, correctionId: string) => {
       feed.openLinkedCorrection(position, correctionId).then(setTurnTo, (error: unknown) => {
-        console.error('Could not open the linked Correction', error);
+        logError('Could not open the linked Correction', error);
       });
     },
     [feed],
@@ -90,6 +91,6 @@ export function useFeed(pager: RefObject<VerticalPagerHandle | null>): FeedState
 
 function report(done: Promise<void>): void {
   done.catch((error: unknown) => {
-    console.error('Could not keep the Feed state or get the next card ready', error);
+    logError('Could not keep the Feed state or get the next card ready', error);
   });
 }

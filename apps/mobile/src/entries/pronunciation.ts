@@ -1,3 +1,5 @@
+import { logError } from '../log';
+
 /** A voice the device can speak with, as `expo-speech` lists it. */
 export interface SpeechVoice {
   /** A BCP 47 language tag, e.g. "uk-UA". */
@@ -89,7 +91,7 @@ export function createPronunciation({
       try {
         voices = await speech.getAvailableVoicesAsync();
       } catch (error) {
-        console.error('Could not list the voices for Pronunciation', error);
+        logError('Could not list the voices for Pronunciation', error);
         return;
       }
       if (latestTap !== tap) return;
@@ -116,7 +118,7 @@ export function createPronunciation({
         onDone: finish,
         onStopped: finish,
         onError: (error) => {
-          console.error('Could not pronounce the Lemma', error);
+          logError('Could not pronounce the Lemma', error);
           finish();
         },
       });

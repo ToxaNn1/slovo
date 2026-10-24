@@ -18,6 +18,7 @@ import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { edition, editionStrings } from '../../edition/edition';
+import { logError } from '../../log';
 
 const strings = editionStrings.settings;
 
@@ -27,7 +28,7 @@ const version = Constants.expoConfig?.version ?? '';
 /** Opens one of the Edition's legal pages in the browser. */
 function openLegalPage(address: string) {
   Linking.openURL(address).catch((error: unknown) => {
-    console.error('Could not open a legal page', error);
+    logError('Could not open a legal page', error);
   });
 }
 

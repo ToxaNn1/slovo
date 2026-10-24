@@ -16,4 +16,11 @@ export default [
       'react-hooks/exhaustive-deps': 'error',
     },
   },
+  {
+    // A release build keeps the device's log where anyone with the unlocked
+    // phone and a Mac can read it, so the app writes to it only through its
+    // logger, which scrubs personal data the way crash reports do (#661).
+    rules: { 'no-console': 'error' },
+  },
+  { files: ['src/log.ts'], rules: { 'no-console': 'off' } },
 ];
