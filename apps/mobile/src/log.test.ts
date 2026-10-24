@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, jest } from '@jest/globals';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { logError, logWarning } from './log';
 
@@ -22,12 +22,12 @@ function logged(calls: unknown[][]): string {
 }
 
 afterEach(() => {
-  jest.restoreAllMocks();
+  vi.restoreAllMocks();
 });
 
 describe('the app logger', () => {
   it("takes the email, token, IP address and Sign-in code out of an error's message", () => {
-    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     logError('Could not sign in', leakyError());
 
@@ -38,7 +38,7 @@ describe('the app logger', () => {
   });
 
   it('scrubs what it is given that is not an error', () => {
-    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     logError(`Could not sign in ${EMAIL}`, `refused ${CODE}`);
 
@@ -48,7 +48,7 @@ describe('the app logger', () => {
   });
 
   it('scrubs a warning the same way', () => {
-    const consoleWarn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 
     logWarning('Could not write the Widget Snapshot', leakyError());
 

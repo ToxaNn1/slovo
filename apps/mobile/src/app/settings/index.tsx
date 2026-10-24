@@ -21,7 +21,7 @@ import { useHiddenSummary } from '../../mix/hidden';
 import { useMixSummary } from '../../mix/mix';
 import { useNotificationsSummary } from '../../notifications/notifications';
 import { useShown } from '../../shown-in-effect';
-import { useSettings } from '../../settings';
+import { useSettings } from '../../settings/settings';
 import { useOpenScreen } from '../../entries/use-open-screen';
 
 const strings = editionStrings.settings;

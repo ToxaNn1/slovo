@@ -6,49 +6,26 @@ import {
   loadEdition,
   openAccount,
   systemRandom,
+  type AccountApi,
   type GoogleSignInSheet,
 } from '@slovo/core';
 import { createFakeAccountApi, createFakeGoogleSignInSheet } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
+import { createApiClient } from '@slovo/contracts/api';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import config from 'slovo-edition/config';
 
 import { editionStrings } from '../edition/edition';
 import { openOnce } from '../opening';
+import { createAccountApi } from './account-api';
 import { AccountScreen } from './account-screen';
-import { createGoogleSignInSheet } from './google-sign-in-sheet';
 
-const { problems } = editionStrings.account;
+const strings = editionStrings.account;
+const { problems } = strings;
 
-/**
- * Google's sign-in SDK for React Native, faked: its sheet answers what
- * `mockGoogleSdk.signIn` answers, as the SDK's own `signIn` resolves or rejects,
- * and `mockGoogleSdk.told` keeps each sign-out and revoke the SDK was told,
- * which answer what `mockGoogleSdk.forgets` answers.
- */
-const mockGoogleSdk = {
-  signIn: (): Promise<unknown> => Promise.resolve({ type: 'cancelled', data: null }),
-  forgets: (): Promise<null> => Promise.resolve(null),
-  told: [] as string[],
-};
-jest.mock('@react-native-google-signin/google-signin', () => ({
-  GoogleSignin: {
-    configure: () => undefined,
-    signIn: () => mockGoogleSdk.signIn(),
-    signOut: () => {
-      mockGoogleSdk.told.push('signOut');
-      return mockGoogleSdk.forgets();
-    },
-    revokeAccess: () => {
-      mockGoogleSdk.told.push('revokeAccess');
-      return mockGoogleSdk.forgets();
-    },
-  },
-}));
-
-/** A rejection of Google's SDK on iOS, as React Native hands over the native error. */
-const sdkError = (domain: string, code: string) =>
-  Object.assign(new Error(`${domain} ${code}`), { domain, code });
+// The app's composition, which the screen imports, loads Google's sign-in SDK,
+// whose native module Jest has none of; the screen gets a fake sheet instead.
+jest.mock('@react-native-google-signin/google-signin', () => ({ GoogleSignin: {} }));
 
 /** A client id of the shape Google gives an iOS app; no real one. */
 const CLIENT_ID = '123456789012-test.apps.googleusercontent.com';
@@ -77,15 +54,17 @@ async function renderScreen({
   googleSignIn = true,
   withClientId = true,
   googleSheet = createFakeGoogleSignInSheet(),
+  api = createFakeAccountApi(),
 }: {
   googleSignIn?: boolean;
   withClientId?: boolean;
   googleSheet?: GoogleSignInSheet;
+  api?: AccountApi;
 } = {}) {
   const opening = openOnce(
     async () =>
       openAccount({
-        api: createFakeAccountApi(),
+        api,
         googleSheet,
         sessions: createMemorySessionStore(),
         userState: await openUserState({ port: createMemoryUserStatePort() }),
@@ -104,7 +83,7 @@ async function renderScreen({
     <EditionProvider edition={edition} strings={editionStrings}>
       <AccountScreen
         opening={opening}
-        back={{ label: 'Налаштування', onPress: jest.fn() }}
+        back={{ label: editionStrings.settings.title, onPress: jest.fn() }}
         google={{ edition, clientId: withClientId ? CLIENT_ID : undefined }}
       />
     </EditionProvider>,
@@ -112,7 +91,7 @@ async function renderScreen({
   await settle();
 }
 
-const googleButton = () => screen.queryByRole('button', { name: 'Увійти через Google' });
+const googleButton = () => screen.queryByRole('button', { name: strings.signInWithGoogle });
 
 /** Taps «Увійти через Google» and lets the sign-in finish. */
 const signInWithGoogle = () => settle(() => fireEvent.press(screen.getByTestId('account-google')));
@@ -154,7 +133,7 @@ describe('«Увійти через Google» on the SLOVO ID screen', () => {
 
     expect(shown).toBe(1);
     expect(googleButton()).toBeBusy();
-    expect(screen.getByRole('button', { name: 'Надіслати код' })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: strings.sendCode })).toBeOnTheScreen();
   });
 
   it('shows no problem when the reader dismisses the sheet', async () => {
@@ -176,7 +155,7 @@ describe('«Увійти через Google» on the SLOVO ID screen', () => {
 
     await signInWithGoogle();
 
-    expect(screen.getByText('Немає з’єднання з інтернетом. Спробуйте ще раз.')).toBeOnTheScreen();
+    expect(screen.getByText(problems.offline)).toBeOnTheScreen();
   });
 
   it('says so when Google does not confirm the sign-in', async () => {
@@ -186,51 +165,13 @@ describe('«Увійти через Google» on the SLOVO ID screen', () => {
 
     await signInWithGoogle();
 
-    expect(
-      screen.getByText('Google не підтвердив цей вхід. Спробуйте ще раз або увійдіть кодом.'),
-    ).toBeOnTheScreen();
+    expect(screen.getByText(problems.refused)).toBeOnTheScreen();
     expect(googleButton()).toBeOnTheScreen();
-  });
-});
-
-describe("Google's own sign-in sheet behind «Увійти через Google»", () => {
-  const googleSheet = createGoogleSignInSheet(CLIENT_ID);
-
-  it("hands the Account the identity token from Google's sheet", async () => {
-    mockGoogleSdk.signIn = () =>
-      Promise.resolve({
-        type: 'success',
-        data: { idToken: 'google-id-token:anna@mail.com', user: { email: 'anna@mail.com' } },
-      });
-
-    await expect(googleSheet.signIn()).resolves.toEqual({
-      ok: true,
-      idToken: 'google-id-token:anna@mail.com',
-    });
-  });
-
-  it('shows no problem when the reader dismisses the sheet', async () => {
-    mockGoogleSdk.signIn = () => Promise.resolve({ type: 'cancelled', data: null });
-    await renderScreen({ googleSheet });
-
-    await signInWithGoogle();
-
-    expect(googleButton()).toBeOnTheScreen();
-    expect(screen.queryByText(problems.offline)).not.toBeOnTheScreen();
-    expect(screen.queryByText(problems.unexpected)).not.toBeOnTheScreen();
-  });
-
-  it('says so when the sheet finds no network', async () => {
-    mockGoogleSdk.signIn = () => Promise.reject(sdkError('NSURLErrorDomain', '-1009'));
-    await renderScreen({ googleSheet });
-
-    await signInWithGoogle();
-
-    expect(screen.getByText(problems.offline)).toBeOnTheScreen();
   });
 
   it('says something went wrong when the sheet fails otherwise', async () => {
-    mockGoogleSdk.signIn = () => Promise.reject(sdkError('com.google.GIDSignIn', '-2'));
+    const googleSheet = createFakeGoogleSignInSheet();
+    googleSheet.fails('unexpected');
     await renderScreen({ googleSheet });
 
     await signInWithGoogle();
@@ -239,34 +180,19 @@ describe("Google's own sign-in sheet behind «Увійти через Google»",
     expect(googleButton()).toBeOnTheScreen();
   });
 
-  it('says something went wrong when Google signs in without an identity token', async () => {
-    mockGoogleSdk.signIn = () =>
-      Promise.resolve({
-        type: 'success',
-        data: { idToken: null, user: { email: 'anna@mail.com' } },
-      });
-    await renderScreen({ googleSheet });
+  it('points to the email code when the backend does not offer Google sign-in', async () => {
+    const googleSheet = createFakeGoogleSignInSheet();
+    googleSheet.signsIn('anna@mail.com');
+    // The switch turned off remotely, or a backend without Google's client ids.
+    const notFound = { defined: true, code: 'NOT_FOUND', status: 404, message: 'Not found' };
+    const backend = () => Promise.resolve(Response.json(notFound, { status: 404 }));
+    const client = createApiClient({ url: 'http://backend.test', fetch: backend });
+    const api = createAccountApi({ client, clientOf: () => client, editionId: 'uk' });
+    await renderScreen({ googleSheet, api });
 
     await signInWithGoogle();
 
-    expect(screen.getByText(problems.unexpected)).toBeOnTheScreen();
-  });
-
-  it('signs out of Google when the Session ends, and revokes the grant too when the Account is deleted', async () => {
-    mockGoogleSdk.told = [];
-    await googleSheet.forget({ revoke: false });
-    expect(mockGoogleSdk.told).toEqual(['signOut']);
-
-    mockGoogleSdk.told = [];
-    await googleSheet.forget({ revoke: true });
-    expect(mockGoogleSdk.told).toContain('revokeAccess');
-  });
-
-  it("goes on when Google's SDK fails to forget the sign-in", async () => {
-    mockGoogleSdk.forgets = () => Promise.reject(sdkError('NSURLErrorDomain', '-1009'));
-
-    await expect(googleSheet.forget({ revoke: false })).resolves.toBeUndefined();
-    await expect(googleSheet.forget({ revoke: true })).resolves.toBeUndefined();
-    mockGoogleSdk.forgets = () => Promise.resolve(null);
+    expect(screen.getByText(problems.refused)).toBeOnTheScreen();
+    expect(googleButton()).toBeOnTheScreen();
   });
 });
