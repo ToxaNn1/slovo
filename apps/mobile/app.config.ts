@@ -157,6 +157,29 @@ function withWidgetExtension(
   ]);
 }
 
+/** The build's Google client id for iOS, as `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` names it (ADR 0047). */
+const GOOGLE_CLIENT_ID_VARIABLE = 'EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID';
+const GOOGLE_CLIENT_ID_SUFFIX = '.apps.googleusercontent.com';
+
+/**
+ * Google's sign-in SDK with the URL scheme its sheet returns to, the client
+ * id reversed, when the build has a Google client id for iOS; nothing
+ * without one, and «Увійти через Google» stays hidden. The id comes from the
+ * build's environment, never the repository.
+ */
+function googleSignIn(): NonNullable<ExpoConfig['plugins']> {
+  // Expo types every environment variable as `any`; narrow it here.
+  const value: unknown = process.env[GOOGLE_CLIENT_ID_VARIABLE];
+  if (typeof value !== 'string' || value === '') return [];
+  if (!value.endsWith(GOOGLE_CLIENT_ID_SUFFIX)) {
+    throw new Error(
+      `${GOOGLE_CLIENT_ID_VARIABLE} is not a Google client id for iOS: expected one ending in ${GOOGLE_CLIENT_ID_SUFFIX}`,
+    );
+  }
+  const iosUrlScheme = `com.googleusercontent.apps.${value.slice(0, -GOOGLE_CLIENT_ID_SUFFIX.length)}`;
+  return [['@react-native-google-signin/google-signin', { iosUrlScheme }]];
+}
+
 function selectEdition(editionsDir: string): EditionFolder {
   const known = listEditions(editionsDir);
   const hint = `Known Editions: ${known.join(', ')}. Example: ${EDITION_VARIABLE}=${known[0] ?? '<edition>'} pnpm start`;
@@ -221,6 +244,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       ['expo-build-properties', { ios: { deploymentTarget: '17.0' } }],
       // The widget extension, from apps/widget/expo-target.config.json (ADR 0026).
       ['@bacons/apple-targets', { root: '..', match: 'widget' }],
+      ...googleSignIn(),
     ],
     extra: {
       edition: { id: edition.config.id },
