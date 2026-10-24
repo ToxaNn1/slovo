@@ -221,6 +221,12 @@ export interface GoogleSignInSheet {
     | { readonly ok: true; readonly idToken: string }
     | { readonly ok: false; readonly reason: 'cancelled' | 'offline' | 'unexpected' }
   >;
+  /**
+   * Forgets the Google sign-in this device keeps, once its Session has ended,
+   * and with `revoke` also takes back the reader's grant to the app, as when
+   * the Account is deleted. The Account goes on whether or not it succeeds.
+   */
+  forget(options: { readonly revoke: boolean }): Promise<void>;
 }
 
 /** A JSON value, as the value of a record travels to the backend and back. */
