@@ -10,7 +10,7 @@ import {
   type ContentReadPort,
 } from './index';
 import { createMemoryContentPort } from './testing';
-import { correction, fakeClock, steppingRandom, word } from './test-support';
+import { correction, fakeClock, idiom, steppingRandom, word } from './test-support';
 
 /** The instant these tests start at. */
 const start = '2026-10-16T09:00:00+03:00';
@@ -30,6 +30,13 @@ const words = [
 ];
 const corrections = [correction('c_one'), correction('c_two')];
 const pack = createMemoryContentPort({ categories, words, corrections });
+/** The same pack with two live Idioms. */
+const withIdiomsPack = createMemoryContentPort({
+  categories,
+  words,
+  corrections,
+  idioms: [idiom('i_one'), idiom('i_two')],
+});
 
 const MINUTE = 60_000;
 
@@ -42,12 +49,14 @@ async function run({
   content = pack,
   clock = fakeClock(start).clock,
   withCorrections = true,
+  withIdioms = true,
   withWidget = true,
 }: {
   records?: Map<string, string>;
   content?: ContentReadPort;
   clock?: Clock;
   withCorrections?: boolean;
+  withIdioms?: boolean;
   /** Whether the Feature Switch of the widget is on, as the Edition in effect has it. */
   withWidget?: boolean;
 } = {}): Promise<Composition> {
@@ -56,7 +65,9 @@ async function run({
     edition: {
       id: 'test',
       isFeatureEnabled: (feature) =>
-        feature === 'widget' ? withWidget : withCorrections && feature === 'corrections',
+        feature === 'widget'
+          ? withWidget
+          : (withCorrections && feature === 'corrections') || (withIdioms && feature === 'idioms'),
       languageTraits: { distractorRule: 'same-part-of-speech' },
       userSettingDefaults: {
         mix: { categoryIds: categories.map(({ id }) => id), corrections: true, idioms: true },
@@ -154,6 +165,61 @@ describe('The Widget Snapshot', () => {
       'c_two',
     ]);
     expect(back.favorites).toEqual(['c_one']);
+  });
+
+  it('leaves out Idioms when the Edition turns them off, even ones the user keeps', async () => {
+    const app = await run({ content: withIdiomsPack, withIdioms: false });
+    await app.favorites.add('i_one');
+    const created = await app.collections.create('Sayings', 'i_one');
+    if (!created.ok) throw new Error('The Collection was not created');
+
+    const snapshot = await snapshotOf(app);
+
+    expect(snapshot.allEntries).toEqual([
+      'w_nature0',
+      'w_nature1',
+      'w_speech0',
+      'w_speech1',
+      'c_one',
+      'c_two',
+    ]);
+    expect(snapshot.favorites).toEqual([]);
+    expect(snapshot.collections).toEqual([
+      { id: created.collection.id, name: 'Sayings', entryIds: [] },
+    ]);
+    expect(snapshot.entries.map(({ kind }) => kind)).not.toContain('idiom');
+  });
+
+  it('shows Idioms only while they are in the Mix', async () => {
+    const app = await run({ content: withIdiomsPack });
+    await app.favorites.add('i_one');
+    await app.hide({ kind: 'whole-kind', entryKind: 'idiom' });
+
+    const out = await snapshotOf(app);
+    expect(out.allEntries).toEqual([
+      'w_nature0',
+      'w_nature1',
+      'w_speech0',
+      'w_speech1',
+      'c_one',
+      'c_two',
+    ]);
+    expect(out.favorites).toEqual([]);
+    expect(out.entries.map(({ kind }) => kind)).not.toContain('idiom');
+
+    await app.unhide({ kind: 'whole-kind', entryKind: 'idiom' });
+    const back = await snapshotOf(app);
+    expect(back.allEntries).toEqual([
+      'w_nature0',
+      'w_nature1',
+      'w_speech0',
+      'w_speech1',
+      'c_one',
+      'c_two',
+      'i_one',
+      'i_two',
+    ]);
+    expect(back.favorites).toEqual(['i_one']);
   });
 
   it('shows the eligible Favorites, newest first', async () => {
