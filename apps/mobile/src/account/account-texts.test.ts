@@ -1,4 +1,11 @@
-import { createMemorySessionStore, openAccount, systemRandom, type Account } from '@slovo/core';
+import {
+  createMemorySessionStore,
+  createMemoryUserStatePort,
+  openUserState,
+  openAccount,
+  systemRandom,
+  type Account,
+} from '@slovo/core';
 import { createFakeAccountApi, createFakeGoogleSignInSheet } from '@slovo/core/testing';
 import { describe, expect, it } from 'vitest';
 
@@ -11,6 +18,7 @@ async function open() {
     api,
     googleSheet: createFakeGoogleSignInSheet(),
     sessions: createMemorySessionStore(),
+    userState: await openUserState({ port: createMemoryUserStatePort() }),
     clock: fakeClock().clock,
     schedule: (run) => {
       run();

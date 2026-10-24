@@ -12,6 +12,8 @@ import type {
   SessionStore,
 } from './ports';
 import { withRetries, type Answer } from './retry';
+import type { UserState } from './user-state/user-state';
+import { userStateRecords } from './user-state/user-state-schema';
 
 /** How long after a Sign-in code was sent another can be sent, in milliseconds. */
 const RESEND_AFTER = 60_000;
@@ -69,7 +71,8 @@ export type AccountState = (
  * error is tried again, at most 3 times, with backoff and jitter (ADR 0037).
  * Whenever the server says the Session has ended, the device forgets
  * it and shows signed out, with no problem. Nothing here touches the user
- * state: the reader's words stay whatever happens to the Account.
+ * state but the installed marker: the reader's words stay whatever happens to
+ * the Account.
  */
 export interface Account {
   /**
@@ -155,12 +158,16 @@ const signedIn = (email: string): AccountState => ({
 
 /**
  * Opens the Account from the Session the device keeps, apart from the Core
- * composition, since it needs no Language Pack (ADR 0037).
+ * composition, since it needs no Language Pack (ADR 0037). A fresh install
+ * starts signed out: when the user state lacks the installed marker, a Session
+ * kept is one an earlier install left in the Keychain, so it is forgotten, the
+ * server is told in the background, and the marker is written.
  */
 export async function openAccount({
   api,
   googleSheet,
   sessions,
+  userState,
   clock,
   schedule,
   random,
@@ -168,6 +175,8 @@ export async function openAccount({
   api: AccountApi;
   googleSheet: GoogleSignInSheet;
   sessions: SessionStore;
+  /** The user state, opened, which holds the installed marker. */
+  userState: Pick<UserState, 'read' | 'write'>;
   clock: Clock;
   /** What failed requests wait by before they are tried again. */
   schedule: Schedule;
@@ -317,6 +326,15 @@ export async function openAccount({
           ? endSession({ revoke: name === 'delete' })
           : { ...state, problem: problemOf(answer.reason) },
     );
+  }
+
+  if ((await userState.read(userStateRecords.installed)) === undefined) {
+    if (token !== undefined) {
+      untold.push(token);
+      state = await endSession();
+      void tellSignOuts().catch(() => undefined);
+    }
+    await userState.write(userStateRecords.installed.change(true));
   }
 
   return {

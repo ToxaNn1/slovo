@@ -40,6 +40,13 @@ export const userStateRecords = {
   schemaVersion: declareRecord(SCHEMA_VERSION_KEY, z.number().int().nonnegative(), {
     sync: 'device-only',
   }),
+  /**
+   * That this install of the app has opened its Account. Deleting the app
+   * deletes the user state but, on iOS, not the Session in the Keychain, so
+   * an Account that opens without the marker forgets a Session it finds
+   * (#660). It stays on the device.
+   */
+  installed: declareRecord('installed', z.literal(true), { sync: 'device-only' }),
   /** The user's Theme. */
   theme: declareRecord('settings.theme', ThemeSchema),
   /** The user's font size. */
@@ -291,6 +298,18 @@ export const userStateMigrations: readonly UserStateMigration[] = [
         if (parseJson(value) === true) changes.set(key, JSON.stringify(cycle.data?.id ?? 1));
       }
       return changes;
+    },
+  },
+  // 0.8.9: the installed marker. A store that holds a record besides its schema
+  // version was kept by this install before the marker, so its Session stays;
+  // a new store holds none, so the Account forgets a Session left from an
+  // earlier install.
+  {
+    version: 5,
+    async migrate({ list }) {
+      const records = await list('');
+      const kept = [...records.keys()].some((key) => key !== 'schema.version');
+      return new Map(kept ? [['installed', JSON.stringify(true)]] : []);
     },
   },
 ];

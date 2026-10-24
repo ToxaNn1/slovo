@@ -73,3 +73,12 @@ Now the check runs in the background, as Sync's requests do: it shows nothing in
 
 - **Keep the check in flight, and let signing out everywhere or deleting wait for it**: rejected. Nothing is lost, but the buttons still go grey for seconds with no reason the reader can see.
 - **Keep it as it was**: rejected. A confirmed deletion that silently does nothing is the one thing the screen must never do.
+
+## Amendment: a fresh install forgets a Session left from an earlier install (0.8.9, #660)
+
+On iOS, deleting the app deletes the user state but leaves the Session in the Keychain, so a new install on the same device opened signed in to the old Account (security review #617, F3). The Account now opens over the user state too. The user state holds an installed marker; when the Account opens without it and finds a Session, it forgets that Session by the same path as signing out (the Google sign-in with it), tells the server in the background (offline, the next `refresh` tells it), and writes the marker; without a Session it only writes the marker. The Account opens before Sync can lend its Session, so a left Session never syncs. User-state migration 5 writes the marker for a store that holds any record besides its schema version, so an install updated from an earlier version stays signed in.
+
+### Considered Options
+
+- **The marker in the Keychain beside the Session**: rejected. The Keychain is what outlives the app; only a store the app's deletion removes can tell a new install.
+- **Await telling the server at launch**: rejected. Offline, the tries and their backoff would hold the Account's opening for seconds; the sign-out is best effort, as signing out is.

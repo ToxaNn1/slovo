@@ -91,9 +91,12 @@ async function device({
     }),
     clock: time.clock,
   });
+  // This install has run before, so the Account keeps the Session it finds.
+  await userState.write(userStateRecords.installed.change(true));
   const account = await openAccount({
     api: accountApi,
     googleSheet,
+    userState,
     sessions: createMemorySessionStore(
       signedIn ? { token: 'a-session', email: 'anna@mail.com' } : undefined,
     ),
@@ -520,6 +523,7 @@ describe('Sync and the end of a Session', () => {
         api: createFakeAccountApi(),
         googleSheet: createFakeGoogleSignInSheet(),
         sessions: createMemorySessionStore(),
+        userState,
         clock: time.clock,
         schedule: testSchedule(time).schedule,
         random: randomOf(0.5),

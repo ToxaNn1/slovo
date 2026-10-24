@@ -1,12 +1,15 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
   createMemorySessionStore,
   openAccount,
   createMemoryUserStatePort,
+  openUserState,
+  userStateRecords,
   type KeptSession,
   type Random,
   type Schedule,
+  type UserStatePort,
 } from './index';
 import { createFakeAccountApi, createFakeGoogleSignInSheet } from './testing';
 import { fakeClock, randomOf } from './test-support';
@@ -22,20 +25,31 @@ function atOnce() {
   return { schedule, delays };
 }
 
+/** A user state this install of the app has kept before: it holds the installed marker. */
+async function installedUserState(port: UserStatePort = createMemoryUserStatePort()) {
+  const userState = await openUserState({ port });
+  await userState.write(userStateRecords.installed.change(true));
+  return userState;
+}
+
 async function setup({
   kept,
   random = randomOf(0.5),
-}: { kept?: KeptSession; random?: Random } = {}) {
+  port,
+}: { kept?: KeptSession; random?: Random; port?: UserStatePort } = {}) {
   const api = createFakeAccountApi();
   const googleSheet = createFakeGoogleSignInSheet();
   const sessions = createMemorySessionStore(kept);
   const time = fakeClock();
   const later = atOnce();
-  const open = () =>
+  const installed = await installedUserState(port);
+  /** Launches the app: over the user state given, or the one this install kept. */
+  const open = async (userState = installed) =>
     openAccount({
       api,
       googleSheet,
       sessions,
+      userState,
       clock: time.clock,
       schedule: later.schedule,
       random,
@@ -907,14 +921,17 @@ describe('the Account tries a request again', () => {
 
 describe('the Account and the user state', () => {
   it('leaves the user state as it was through signing in, out and deleting', async () => {
-    const records = new Map([
-      ['favorite:w-1', '{"addedAt":"2026-10-01T09:00:00.000Z"}'],
-      ['setting:theme', '"dark"'],
-    ]);
-    const userState = createMemoryUserStatePort(records);
+    const userState = createMemoryUserStatePort(
+      new Map([
+        ['favorites.w-1', '"2026-10-01T09:00:00.000Z"'],
+        ['settings.theme', '"dark"'],
+      ]),
+    );
+    const { account, googleSheet } = await setup({ port: userState });
     const before = await userState.list('');
-    const { account, googleSheet } = await signedIn();
 
+    await account.requestCode(anna.email);
+    await account.verifyCode('100001');
     await account.signOut();
     await account.requestCode(anna.email);
     await account.verifyCode('100002');
@@ -924,5 +941,85 @@ describe('the Account and the user state', () => {
     await account.delete();
 
     expect(await userState.list('')).toEqual(before);
+  });
+});
+
+describe('the Account on a fresh install', () => {
+  /** The app deleted after signing in, and installed again: the Session outlived the user state. */
+  async function reinstalled() {
+    const parts = await signedIn();
+    const account = await parts.open(await openUserState({ port: createMemoryUserStatePort() }));
+    return { ...parts, account };
+  }
+
+  it('forgets a Session left from an earlier install and tells the server', async () => {
+    const { account, api, googleSheet, sessions } = await reinstalled();
+
+    expect(account.state).toEqual({
+      status: 'signed-out',
+      inFlight: undefined,
+      problem: undefined,
+    });
+    expect(await sessions.read()).toBeUndefined();
+    expect(googleSheet.forgotten).toEqual([{ revoke: false }]);
+    await vi.waitFor(() => {
+      expect(api.sessionTokens).toEqual([]);
+    });
+  });
+
+  it('forgets such a Session once: a Session kept after it holds at the next launch', async () => {
+    const userState = await openUserState({ port: createMemoryUserStatePort() });
+    const { open, sessions } = await signedIn();
+    await open(userState);
+
+    await sessions.keep(anna);
+    const account = await open(userState);
+
+    expect(account.state).toMatchObject({ status: 'signed-in', email: 'anna@mail.com' });
+  });
+
+  it('forgets such a Session on the device when the server cannot be told, and tells it at a refresh', async () => {
+    const { api, open, sessions } = await signedIn();
+    api.failNext('offline', 'offline', 'offline', 'offline');
+
+    const account = await open(await openUserState({ port: createMemoryUserStatePort() }));
+    await vi.waitFor(() => {
+      expect(api.calls.filter((call) => call === 'signOut')).toHaveLength(4);
+    });
+
+    expect(account.state).toMatchObject({ status: 'signed-out', problem: undefined });
+    expect(await sessions.read()).toBeUndefined();
+    expect(api.sessionTokens).toEqual(['session-1']);
+
+    await account.refresh();
+    expect(api.sessionTokens).toEqual([]);
+  });
+
+  it('keeps a Session signed in on a fresh install for the next launch', async () => {
+    const userState = await openUserState({ port: createMemoryUserStatePort() });
+    const { open } = await setup();
+    const first = await open(userState);
+    await first.requestCode(anna.email);
+    await first.verifyCode('100001');
+
+    const account = await open(userState);
+
+    expect(account.state).toMatchObject({ status: 'signed-in', email: 'anna@mail.com' });
+  });
+
+  it('keeps the Session of an install upgraded from a version before the marker', async () => {
+    const { api, open, sessions } = await setup({ kept: anna });
+    const upgraded = createMemoryUserStatePort(
+      new Map([
+        ['schema.version', '4'],
+        ['favorites.w-1', '"2026-10-01T09:00:00.000Z"'],
+      ]),
+    );
+
+    const account = await open(await openUserState({ port: upgraded }));
+
+    expect(account.state).toMatchObject({ status: 'signed-in', email: 'anna@mail.com' });
+    expect(await sessions.read()).toEqual(anna);
+    expect(api.calls).toEqual([]);
   });
 });
