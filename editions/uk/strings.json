@@ -369,6 +369,7 @@
       "idiom": "фразеологізм",
       "placeName": "топонім"
     },
+    "kindBeside": "{kind} · {time}",
     "days": {
       "today": "Сьогодні",
       "yesterday": "Учора",

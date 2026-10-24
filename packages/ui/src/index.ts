@@ -58,6 +58,7 @@ export {
 } from './saved/SavedCard';
 export { LearningCard, LearningRow } from './saved/Learning';
 export { CollectionButton } from './saved/CollectionButton';
+export { CollectionEntryRow } from './saved/CollectionEntryRow';
 export { CollectionNameField, CollectionRow, NewCollectionButton } from './saved/CollectionRow';
 export { CollectionSheet } from './saved/CollectionSheet';
 export { BottomSheet } from './primitives/BottomSheet';
