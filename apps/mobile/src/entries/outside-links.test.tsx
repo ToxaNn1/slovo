@@ -3,18 +3,18 @@ import { router, Slot } from 'expo-router';
 import { act, renderRouter, screen } from 'expo-router/testing-library';
 import { Linking, Text } from 'react-native';
 
-import EntryLayout from './app/entry/_layout';
-import EntryFromLinkScreen from './app/entry/[entryId]';
-import { editionStrings } from './edition/edition';
-import { createOutsideLinks } from './entries/entry-link';
-import { NotificationTaps } from './notifications/notification-taps';
+import EntryLayout from '../app/entry/_layout';
+import EntryFromLinkScreen from '../app/entry/[entryId]';
+import { editionStrings } from '../edition/edition';
+import { createOutsideLinks } from './entry-link';
+import { NotificationTaps } from '../notifications/notification-taps';
 
 /**
  * The Entry screen's place: what the Entry route hands it, its «Назад» label
  * and where it opened from, which decides whether the Entry is Seen and goes
  * into History (`EntryScreen`).
  */
-jest.mock('./entries/entry-screen', () => {
+jest.mock('./entry-screen', () => {
   const { createElement } = jest.requireActual<typeof import('react')>('react');
   const { Text: StandIn } = jest.requireActual<typeof import('react-native')>('react-native');
   return {
