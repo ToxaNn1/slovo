@@ -27,20 +27,20 @@ The vocabulary used here and in the code is defined in [`CONTEXT.md`](CONTEXT.md
 
 Parts marked as placeholders are reserved and filled by later versions.
 
-| Path                     | Role                                                                                    |
-| ------------------------ | --------------------------------------------------------------------------------------- |
-| `apps/mobile`            | One Expo app that builds whichever Edition the environment variable selects.            |
-| `apps/widget`            | The native SwiftUI home-screen widget, linked into the iOS project at prebuild.         |
-| `apps/backend`           | The API: the HTTP shell, the adapters and the composition root of the backend.          |
-| `packages/core`          | Pure TypeScript domain logic (no React, no React Native).                               |
-| `packages/ui`            | Screens, components, design tokens and Decor slots.                                     |
-| `packages/contracts`     | Zod schemas for Entries, the Edition config and the Language Pack.                      |
-| `packages/server-core`   | The backend's rules and ports (no HTTP, no SQL, no language).                           |
-| `packages/language-pack` | Builds an Edition's content into a read-only SQLite Language Pack and reads packs back. |
-| `packages/config`        | Shared TypeScript, ESLint and Prettier configuration.                                   |
-| `editions/<edition>`     | One folder per Edition: configuration, strings, design tokens, Decor, content, assets.  |
-| `tools/sourcing`         | Dev-only tool that drafts Words from goroh.pp.ua and СУМ-11 for human review.           |
-| `docs/`                  | Architecture decision records in `docs/adr/` and the design brief in `docs/design/`.    |
+| Path                     | Role                                                                                                |
+| ------------------------ | --------------------------------------------------------------------------------------------------- |
+| `apps/mobile`            | One Expo app that builds whichever Edition the environment variable selects.                        |
+| `apps/widget`            | The native SwiftUI home-screen widget, linked into the iOS project at prebuild.                     |
+| `apps/backend`           | The API: the HTTP shell, the adapters and the composition root of the backend.                      |
+| `packages/core`          | Pure TypeScript domain logic (no React, no React Native).                                           |
+| `packages/ui`            | Screens, components, design tokens and Decor slots.                                                 |
+| `packages/contracts`     | Zod schemas for Entries, the Edition config and the Language Pack.                                  |
+| `packages/server-core`   | The backend's rules and ports (no HTTP, no SQL, no language).                                       |
+| `packages/language-pack` | Builds an Edition's content into a read-only SQLite Language Pack and reads packs back.             |
+| `packages/config`        | Shared TypeScript, ESLint and Prettier configuration.                                               |
+| `editions/<edition>`     | One folder per Edition: configuration, strings, design tokens, Decor, content, assets, legal pages. |
+| `tools/sourcing`         | Dev-only tool that drafts Words from goroh.pp.ua and СУМ-11 for human review.                       |
+| `docs/`                  | Architecture decision records in `docs/adr/` and the design brief in `docs/design/`.                |
 
 ## Documents
 
@@ -48,6 +48,7 @@ Parts marked as placeholders are reserved and filled by later versions.
 - [`docs/adr/`](docs/adr/): architecture decision records.
 - [Master spec, issue #1](https://github.com/ToxaNn1/slovo/issues/1): product vision, every decision so far and the roadmap from 0.1 to 1.0.
 - [0.1 Foundation spec, issue #2](https://github.com/ToxaNn1/slovo/issues/2) and [0.2 Feed spec, issue #51](https://github.com/ToxaNn1/slovo/issues/51): the versions built so far and their tickets.
+- `editions/<edition>/legal/`: the Edition's privacy policy and terms, which the workflow `Pages` publishes to GitHub Pages at `https://toxann1.github.io/slovo/<edition>/<page>` on every change on `main`. Pages must be on in the repository settings with "GitHub Actions" as its source.
 - [`CLAUDE.md`](CLAUDE.md): the guide for coding agents (`AGENTS.md` points to it).
 
 ## Run the Ukrainian Edition on the simulator
