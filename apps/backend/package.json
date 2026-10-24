@@ -18,16 +18,16 @@
   },
   "dependencies": {
     "@hono/node-server": "^2.1.5",
-    "@orpc/openapi": "^1.15.7",
-    "@orpc/server": "^1.15.7",
+    "@orpc/openapi": "^1.16.0",
+    "@orpc/server": "^1.16.0",
     "@sentry/node": "^11.8.0",
     "@slovo/contracts": "workspace:*",
     "@slovo/language-pack": "workspace:*",
     "@slovo/server-core": "workspace:*",
-    "better-auth": "^1.7.9",
+    "better-auth": "^1.7.12",
     "drizzle-orm": "^0.45.4",
     "hono": "^4.13.13",
-    "jose": "^6.2.12",
+    "jose": "^6.2.13",
     "nodemailer": "^10.2.0",
     "pg": "^8.23.1",
     "pino": "^10.4.0",
@@ -40,8 +40,8 @@
     "@types/nodemailer": "^8.0.2",
     "@types/pg": "^8.23.1",
     "drizzle-kit": "^0.31.11",
-    "eslint": "^10.12.0",
+    "eslint": "^10.13.0",
     "typescript": "~6.0.3",
-    "vitest": "^5.0.3"
+    "vitest": "^5.0.5"
   }
 }
