@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 
 import { useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
+import { logError } from '../log';
 import { useSubscribed } from '../opening';
 import { mixSummary } from './mix-screen';
 
@@ -37,7 +38,7 @@ export function useMixChanges(): {
   const { mix } = useComposition();
   const keep = (change: Promise<unknown>) => {
     change.catch((error: unknown) => {
-      console.error('Could not keep the change of the Mix', error);
+      logError('Could not keep the change of the Mix', error);
     });
   };
   return {

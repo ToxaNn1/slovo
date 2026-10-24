@@ -5,6 +5,7 @@ import { useMemo } from 'react';
 import { compositionOpening, useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
 import { useEditionInEffect } from '../edition/remote-switches';
+import { logError } from '../log';
 import { useSubscribed } from '../opening';
 import { hiddenScreenModel, hiddenSummary, type HiddenScreenModel } from './hidden-screen';
 import { undoRestore } from './hiding-undo';
@@ -66,13 +67,13 @@ export function useHiddenChanges(): {
               .opened()
               .then((current) => undoRestore(current, entryId, hiddenAt))
               .catch((error: unknown) => {
-                console.error('Could not hide the Entry again', error);
+                logError('Could not hide the Entry again', error);
               });
           },
         });
       },
       (error: unknown) => {
-        console.error('Could not bring the hidden change back', error);
+        logError('Could not bring the hidden change back', error);
       },
     );
   }

@@ -5,6 +5,7 @@ import { apiClient, apiClientOf } from '../api';
 import { deviceClock } from '../device/device-clock';
 import { nativeModules } from '../device/device-native-modules';
 import { edition } from '../edition/edition';
+import { logError } from '../log';
 import { openOnce, type Opening } from '../opening';
 import { createAccountApi } from './account-api';
 import { googleSignInSheet } from './google-sign-in-sheet';
@@ -45,7 +46,7 @@ export const accountOpening: Opening<Account> | undefined = edition.isFeatureEna
         }),
       {
         onError(error) {
-          console.error('Could not read the Session', error);
+          logError('Could not read the Session', error);
         },
       },
     )

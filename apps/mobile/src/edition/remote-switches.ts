@@ -2,6 +2,7 @@ import { openRemoteSwitches, systemRandom, type Edition } from '@slovo/core';
 import { systemSchedule } from '@slovo/ui';
 
 import { apiClient } from '../api';
+import { logError } from '../log';
 import { openOnce, useOpened, useSubscribed } from '../opening';
 import { storedUserState } from '../user-state/stored-user-state';
 import { edition } from './edition';
@@ -24,7 +25,7 @@ export const remoteSwitchesOpening = openOnce(
     }),
   {
     onError(error) {
-      console.error('Could not open the remote Feature Switches', error);
+      logError('Could not open the remote Feature Switches', error);
     },
   },
 );

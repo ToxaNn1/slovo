@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { compositionOpening, useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
 import { useEditionInEffect } from '../edition/remote-switches';
+import { logError } from '../log';
 import { hideChoice, hideToast, type HideOption } from './hide-choice';
 import { undoHide } from './hiding-undo';
 
@@ -53,7 +54,7 @@ export function useHide(card: EntryFeedCard): { open: () => void; choice: HideCh
         const option = options.find(({ kind }) => kind === key);
         if (option === undefined) return;
         hide(composition, option, showToast).catch((error: unknown) => {
-          console.error('Could not hide from the card', error);
+          logError('Could not hide from the card', error);
         });
       },
       onCancel() {
@@ -81,7 +82,7 @@ async function hide(
         .opened()
         .then((current) => undoHide(current, result.changed))
         .catch((error: unknown) => {
-          console.error('Could not undo the hide', error);
+          logError('Could not undo the hide', error);
         });
     },
   });

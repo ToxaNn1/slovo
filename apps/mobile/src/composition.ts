@@ -4,6 +4,7 @@ import { systemSchedule } from '@slovo/ui';
 import { useEffect, useState } from 'react';
 
 import { deviceClock } from './device/device-clock';
+import { logError } from './log';
 import { deviceNotificationScheduler } from './notifications/device-notifications';
 import { editionStrings } from './edition/edition';
 import { languagePackOpening } from './edition/language-pack';
@@ -46,7 +47,7 @@ export const compositionOpening = openOnce(
   async () => openOver((await languagePackOpening.opened()).reader),
   {
     onError(error) {
-      console.error('Could not open the Core composition', error);
+      logError('Could not open the Core composition', error);
     },
     close(old) {
       // It never rejects.
@@ -81,7 +82,7 @@ export function useCompositionRead<T>(
         if (active) setValue(result);
       },
       (error: unknown) => {
-        console.error(failure, error);
+        logError(failure, error);
       },
     );
     return () => {

@@ -1,5 +1,7 @@
 import { serializeWidgetSnapshot, type WidgetSnapshot } from '@slovo/contracts';
 
+import { logWarning } from '../log';
+
 /** The file in the App Group's container the widget reads the Widget Snapshot from. */
 export const WIDGET_SNAPSHOT_FILE = 'widget-snapshot.json';
 
@@ -54,7 +56,7 @@ export function createWidgetSnapshotWriter(
       await widget.container.replace(STAGED_WIDGET_SNAPSHOT_FILE, WIDGET_SNAPSHOT_FILE);
       widget.reloadTimelines();
     } catch (error) {
-      console.warn('Could not write the Widget Snapshot; the next write tries again', error);
+      logWarning('Could not write the Widget Snapshot; the next write tries again', error);
     }
   }
 
