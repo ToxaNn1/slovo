@@ -1,6 +1,6 @@
 import { useEditionInEffect } from './edition/remote-switches';
 import { useMixState } from './mix/mix';
-import { useSettings } from './settings';
+import { useSettings } from './settings/settings';
 import { shownOf, type Shown } from './shown';
 
 /**

@@ -4,8 +4,8 @@ import { Slot } from 'expo-router';
 import { fireEvent, renderRouter, screen } from 'expo-router/testing-library';
 import { Linking } from 'react-native';
 
-import AboutScreen from './app/settings/about';
-import { edition, editionStrings } from './edition/edition';
+import AboutScreen from '../app/settings/about';
+import { edition, editionStrings } from '../edition/edition';
 
 /** About as the app routes to it, under the Edition's strings. */
 async function renderAbout() {

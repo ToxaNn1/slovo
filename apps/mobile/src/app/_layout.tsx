@@ -29,7 +29,7 @@ import { NotificationTaps } from '../notifications/notification-taps';
 import { Onboarding } from '../onboarding';
 import { Opened } from '../opened';
 import { LemmaPronunciation } from '../entries/pronunciation-button';
-import { SettingsProvider, useColorSchemeInEffect, useSettings } from '../settings';
+import { SettingsProvider, useColorSchemeInEffect, useSettings } from '../settings/settings';
 import type { Tab } from '../shown';
 import { useShown } from '../shown-in-effect';
 

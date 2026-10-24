@@ -10,7 +10,7 @@ import { remoteSwitchesOpening } from './edition/remote-switches';
 import { createForeground } from './foreground/foreground';
 import { reportForeground } from './foreground/foreground-reports';
 import { logError } from './log';
-import { settingsOpening } from './settings';
+import { settingsOpening } from './settings/settings';
 import { syncInBackground, reopenAfterSync } from './sync/background-sync';
 import { syncOpening } from './sync/device-sync';
 import { deviceWidget, deviceWidgetLinkKey } from './widget/device-widget';

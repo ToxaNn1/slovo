@@ -9,10 +9,10 @@ import {
 import { createContext, useContext, useState, type ReactNode } from 'react';
 import { Appearance, useColorScheme } from 'react-native';
 
-import { edition } from './edition/edition';
-import { logError } from './log';
-import { openOnce, useSubscribed } from './opening';
-import { storedUserState } from './user-state/stored-user-state';
+import { edition } from '../edition/edition';
+import { logError } from '../log';
+import { openOnce, useSubscribed } from '../opening';
+import { storedUserState } from '../user-state/stored-user-state';
 
 /** Makes native views (alerts, keyboards) follow the Theme too. */
 function applyToNativeViews({ theme }: UserSettings): void {
