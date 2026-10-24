@@ -1,8 +1,9 @@
 # First half of the smoke flow (ticket #452): the feature flows from launch to
-# the Collections, then 0.8.6 Learning. `smoke.yaml` runs it and `smoke-2.yaml`
-# in a row; `pnpm smoke:halves` runs them at once on two simulators. The halves
-# share no app state, and no flow of this half needs the backend. Settings are
-# the same as in `smoke.yaml`: `-e METRO_URL=…`, `APP_ID`, `SCHEME`.
+# the Collections, then 0.8.6 Learning, 0.8.7 Corrections and 0.8.8
+# Phraseology. `smoke.yaml` runs it and `smoke-2.yaml` in a row;
+# `pnpm smoke:halves` runs them at once on two simulators. The halves share no
+# app state, and no flow of this half needs the backend. Settings are the same
+# as in `smoke.yaml`: `-e METRO_URL=…`, `APP_ID`, `SCHEME`.
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
 - evalScript: ${output.devClientLink = (SCHEME || 'slovo-uk') + '://expo-development-client/?url=' + encodeURIComponent(METRO_URL || 'http://localhost:8081')}
@@ -40,3 +41,8 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - runFlow: flows/self-check.yaml
 - runFlow: flows/game-review.yaml
 - runFlow: flows/rarity-floor.yaml
+# 0.8.7 Corrections and 0.8.8 Phraseology (#620).
+- runFlow: flows/stress-trap.yaml
+- runFlow: flows/idiom.yaml
+- runFlow: flows/place-name.yaml
+- runFlow: flows/mix-kinds.yaml

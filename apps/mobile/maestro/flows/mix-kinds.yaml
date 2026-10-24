@@ -1,0 +1,100 @@
+# «Виправлення» and «Фразеологізми» in Мій Мікс: a switch for each, on by
+# default. Off, the Feed drops their cards at once, so the card on screen is a
+# Word's; the Mix keeps both off; on again, they are back in the Mix. A subflow
+# of `smoke.yaml`; run it from there. It starts by turning both on, whatever an
+# earlier run left, and leaves them on.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- runFlow:
+    file: ../open-settings-row.yaml
+    env:
+      ROW: settings-row-my-mix
+- tapOn:
+    id: settings-row-my-mix
+- assertVisible:
+    id: mix
+# The switches sit under the Categories and the Rarity Floor.
+- scrollUntilVisible:
+    element:
+      id: mix-idioms
+    centerElement: true
+- runFlow:
+    when:
+      visible:
+        id: mix-corrections
+        checked: false
+    commands:
+      - tapOn:
+          id: mix-corrections
+- runFlow:
+    when:
+      visible:
+        id: mix-idioms
+        checked: false
+    commands:
+      - tapOn:
+          id: mix-idioms
+- assertVisible:
+    id: mix-corrections
+    text: Виправлення
+    checked: true
+- assertVisible:
+    id: mix-idioms
+    text: Фразеологізми
+    checked: true
+- takeScreenshot: mix-kinds-on
+# Both off.
+- tapOn:
+    id: mix-corrections
+- tapOn:
+    id: mix-idioms
+- assertVisible:
+    id: mix-corrections
+    checked: false
+- assertVisible:
+    id: mix-idioms
+    checked: false
+- takeScreenshot: mix-kinds-off
+# The Feed shows a Word card: a Correction or an Idiom card on screen left it.
+- tapOn:
+    id: mix-back
+- tapOn:
+    id: tab-home
+- assertVisible:
+    id: word-card
+- assertNotVisible:
+    id: correction-card
+- assertNotVisible:
+    id: idiom-card
+# The Mix keeps them off: the screen opens as it was left.
+- runFlow:
+    file: ../open-settings-row.yaml
+    env:
+      ROW: settings-row-my-mix
+- tapOn:
+    id: settings-row-my-mix
+- scrollUntilVisible:
+    element:
+      id: mix-idioms
+    centerElement: true
+- assertVisible:
+    id: mix-corrections
+    checked: false
+- assertVisible:
+    id: mix-idioms
+    checked: false
+# Back on.
+- tapOn:
+    id: mix-corrections
+- tapOn:
+    id: mix-idioms
+- assertVisible:
+    id: mix-corrections
+    checked: true
+- assertVisible:
+    id: mix-idioms
+    checked: true
+- tapOn:
+    id: mix-back
+- assertVisible:
+    id: settings-row-my-mix

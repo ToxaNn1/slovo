@@ -1,0 +1,43 @@
+# A stress trap: a Correction of the type «наголос», зручни́й → зру́чний. Its
+# link opens the Entry screen with the card: the chip names the type, and
+# VoiceOver says where the Stress falls in both forms, as the voices skip the
+# Stress mark; then the explanation and the example pair. Back lands on the
+# Feed. A subflow of `smoke.yaml`; run it from there. The link carries no
+# `from`, so the Correction does not become Seen.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- tapOn:
+    id: tab-home
+- openLink: ${(SCHEME || 'slovo-uk') + '://entry/c_31zb8j'}
+# A simulator asks once whether the link may open the app.
+- runFlow:
+    when:
+      visible: Open
+    commands:
+      - tapOn: Open
+- assertVisible:
+    id: entry-screen
+- assertVisible:
+    id: correction-card
+- assertVisible:
+    id: correction-type
+    text: '.*наголос'
+- assertVisible:
+    id: correction-non-standard
+    text: 'Так часто кажуть: зручний, наголос на и'
+- assertVisible:
+    id: correction-standard
+    text: 'Українською краще: зручний, наголос на у'
+- takeScreenshot: stress-trap-card
+# The explanation and the example pair sit under the forms, which may be
+# taller than the screen.
+- scrollUntilVisible:
+    element:
+      id: correction-explanation
+- scrollUntilVisible:
+    element:
+      id: correction-example-pair
+- tapOn:
+    id: entry-screen-back
+- assertVisible:
+    id: home
