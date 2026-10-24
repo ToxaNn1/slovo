@@ -6,15 +6,18 @@ import {
   loadEdition,
   openAccount,
   systemRandom,
+  type AccountApi,
   type GoogleSignInSheet,
 } from '@slovo/core';
 import { createFakeAccountApi, createFakeGoogleSignInSheet } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
+import { createApiClient } from '@slovo/contracts/api';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import config from 'slovo-edition/config';
 
 import { editionStrings } from '../edition/edition';
 import { openOnce } from '../opening';
+import { createAccountApi } from './account-api';
 import { AccountScreen } from './account-screen';
 
 const strings = editionStrings.account;
@@ -51,15 +54,17 @@ async function renderScreen({
   googleSignIn = true,
   withClientId = true,
   googleSheet = createFakeGoogleSignInSheet(),
+  api = createFakeAccountApi(),
 }: {
   googleSignIn?: boolean;
   withClientId?: boolean;
   googleSheet?: GoogleSignInSheet;
+  api?: AccountApi;
 } = {}) {
   const opening = openOnce(
     async () =>
       openAccount({
-        api: createFakeAccountApi(),
+        api,
         googleSheet,
         sessions: createMemorySessionStore(),
         userState: await openUserState({ port: createMemoryUserStatePort() }),
@@ -175,4 +180,19 @@ describe('«Увійти через Google» on the SLOVO ID screen', () => {
     expect(googleButton()).toBeOnTheScreen();
   });
 
+  it('points to the email code when the backend does not offer Google sign-in', async () => {
+    const googleSheet = createFakeGoogleSignInSheet();
+    googleSheet.signsIn('anna@mail.com');
+    // The switch turned off remotely, or a backend without Google's client ids.
+    const notFound = { defined: true, code: 'NOT_FOUND', status: 404, message: 'Not found' };
+    const backend = () => Promise.resolve(Response.json(notFound, { status: 404 }));
+    const client = createApiClient({ url: 'http://backend.test', fetch: backend });
+    const api = createAccountApi({ client, clientOf: () => client, editionId: 'uk' });
+    await renderScreen({ googleSheet, api });
+
+    await signInWithGoogle();
+
+    expect(screen.getByText(problems.refused)).toBeOnTheScreen();
+    expect(googleButton()).toBeOnTheScreen();
+  });
 });

@@ -52,8 +52,13 @@ export function createAccountApi({
     async signInWithGoogle(idToken) {
       const answer = await answerOf(
         client.account.signInWithGoogle({ idToken, editionId }),
+        // A backend that doesn't offer Google sign-in (NOT_FOUND: the switch turned off
+        // remotely, or no Google client ids) refuses it too, so the reader turns to the code.
         ({ code }) =>
-          code === 'INVALID_TOKEN' || code === 'FOREIGN_AUDIENCE' || code === 'EMAIL_NOT_VERIFIED'
+          code === 'INVALID_TOKEN' ||
+          code === 'FOREIGN_AUDIENCE' ||
+          code === 'EMAIL_NOT_VERIFIED' ||
+          code === 'NOT_FOUND'
             ? ({ ok: false, reason: 'refused' } as const)
             : undefined,
       );

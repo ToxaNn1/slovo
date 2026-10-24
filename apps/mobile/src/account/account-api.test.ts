@@ -113,6 +113,16 @@ describe('the Account API over the contract’s client', () => {
     },
   );
 
+  it('answers a Google sign-in the backend does not offer refused, so the reader turns to the email code', async () => {
+    // NOT_FOUND: the switch turned off remotely, or a backend without Google's client ids.
+    const accountApi = accountApiServedBy(failingWith('NOT_FOUND'));
+
+    await expect(accountApi.signInWithGoogle('the-google-token')).resolves.toEqual({
+      ok: false,
+      reason: 'refused',
+    });
+  });
+
   it('answers the email of the Session’s Account, sending the Session as a bearer token', async () => {
     const sessions: (string | null)[] = [];
     const accountApi = accountApiServedBy({
@@ -218,7 +228,10 @@ describe('the Account API over the contract’s client', () => {
   });
 
   it.each(
-    everyCall.flatMap((call) => [[call, 'BAD_REQUEST'] as const, [call, 'NOT_FOUND'] as const]),
+    everyCall.flatMap((call) => [
+      [call, 'BAD_REQUEST'] as const,
+      ...(call === 'signInWithGoogle' ? [] : [[call, 'NOT_FOUND'] as const]),
+    ]),
   )('%s answers unexpected when the backend answers %s', async (call, code) => {
     const accountApi = accountApiServedBy(failingWith(code));
 
