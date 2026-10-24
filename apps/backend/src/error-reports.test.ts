@@ -69,9 +69,9 @@ describe('an unexpected failure', () => {
     onTestFinished(() => own.drop());
     const database = createDatabase(own.url, silentLogger);
     onTestFinished(() => database.close());
-    // Postgres refuses the window of an email's codes, and its detail quotes the row.
+    // Postgres refuses every window of a limit, and its detail quotes the row.
     await database.db.execute(
-      sql`alter table rate_limits add constraint refuses_emails check (key not like 'codesPerEmail:%')`,
+      sql`alter table rate_limits add constraint refuses_windows check (false)`,
     );
     const { client, reports } = testApp({ database });
 

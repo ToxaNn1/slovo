@@ -63,8 +63,8 @@ export interface Accounts {
   ): Promise<{ readonly ok: true } | InvalidEmail | NotServing | TooManyRequests>;
   /**
    * Signs in with the code last sent to the email; the first right code
-   * creates the Account. A check from the IP address `ip` over its limit is
-   * refused.
+   * creates the Account. A check from the IP address `ip` or for the email
+   * over its limit is refused.
    */
   verifyCode(
     email: string,
@@ -155,7 +155,7 @@ export function createAccounts({
     async verifyCode(typedEmail, code, ip) {
       const email = normalised(typedEmail);
       if (email === undefined) return invalidEmail;
-      return (await limits.codeCheck(ip)) ?? authenticator.checkCode(email, code);
+      return (await limits.codeCheck(email, ip)) ?? authenticator.checkCode(email, code);
     },
 
     async signInWithGoogle(idToken, editionId, ip) {

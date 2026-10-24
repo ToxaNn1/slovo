@@ -88,3 +88,17 @@ The backend gains a fourth domain folder on both sides, `sync`: the server Core'
 
 - **A limit per procedure**: rejected. Every request but a push is a few hundred bytes, and one limit at the size of the largest request is enough against a flood; the deployed proxy (0.9) may cap bodies too, but nothing did.
 - **Redacting `params` by path**: rejected. pino's redaction reaches named fields, not the message and the stack, which repeat the values.
+
+## Amendment: the sign-in limits count an IPv6 client by its /64, cap each email per day, and keep no email or IP (0.8.9, #649)
+
+The security review of 0.8.9 (#618, findings F3, F5, F12) found three weak spots in the sign-in limits, and this amendment closes them.
+
+- **A per-IP limit counts an IPv6 client by its /64.** A host normally owns a whole /64 and would skip every per-IP limit by rotating addresses in it, so the server Core counts an IPv6 address as its /64 prefix, and an IPv4-mapped IPv6 address (`::ffff:a.b.c.d`, how Node's dual-stack socket gives an IPv4 connection) as its IPv4. An address that parses as neither counts as written.
+- **Each email has a day's limits.** A Sign-in code has 5 tries and a new code brings 5 fresh ones, so the hour's 5 codes gave a guesser with spread IPs 25 tries an hour with no end. Two limits per email join the hour's: 10 codes a day and 25 code checks a day, so one email takes at most 25 guesses a day against a million codes. A code request counts against the IP, then the hour, then the day, so a refused request leaves the later limits uncounted; a code check counts against the IP, then the day.
+- **The `rate_limits` table names no email and no IP address.** The backend's `RateLimits` adapter keys each window by the HMAC-SHA256 of the server Core's key, with a key derived from `AUTH_SECRET` for this use alone, so the one secret of the host signs the Sessions' tokens and hides the limits' subjects without one standing in for the other. Counting is unchanged, and the server Core doesn't know. A dump of the table tells nobody who tried to sign in.
+
+### Considered Options
+
+- **Lengthening the code's window after repeated spent codes**: deferred. The day's limits bound the guesses by themselves; a growing window would be a second mechanism for the same budget.
+- **Hashing with `AUTH_SECRET` itself**: rejected. One key for two uses lets a leak of the limits' keys, which are hashes of guessable strings, say something about the key that signs tokens; a derived key costs one line.
+- **A separate `RATE_LIMITS_SECRET`**: rejected. One more secret to provision for a key that protects short-lived counters; the derived key gives the separation.

@@ -151,14 +151,15 @@ export const signInCodes = pgTable(
 
 /**
  * The windows the sign-in limits and Sync's limit of requests count requests
- * in (src/rate-limits.ts), one row per key: the limit with the email, IP
- * address or Session id it counts. A row whose window has ended is deleted,
- * so none of them is kept longer than its limit needs.
+ * in (src/rate-limits.ts), one row per key: the HMAC of the limit with the
+ * email, IP address or Session id it counts, so the table names none of them.
+ * A row whose window has ended is deleted, so none is kept longer than its
+ * limit needs.
  */
 export const rateLimits = pgTable(
   'rate_limits',
   {
-    /** The limit and what it counts, such as `codesPerEmail:anna@mail.com`. */
+    /** The HMAC of the limit and what it counts (`codesPerEmail:<email>`), so no email or IP address is kept. */
     key: text('key').primaryKey(),
     /** The requests the window holds. */
     count: integer('count').notNull(),
