@@ -1,9 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
-import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
-import { accounts, sessions, signInMethods } from '../database/schema';
 import { passTime, testApp, testEditions } from '../test-support';
 
 const MINUTE = 60 * 1000;
@@ -26,28 +24,12 @@ function signingIn() {
     const { token } = await client.account.verifyCode({ email, code: mailer.codeSentTo(email) });
     return token;
   }
-  /** What the database keeps of the email's Account, and how many Accounts it keeps for the email. */
-  async function rowsOf(email: string) {
-    const { db } = backend.database;
-    const found = await db.select().from(accounts).where(eq(accounts.email, email));
-    const [account] = found;
-    const ofAccount = async (table: typeof sessions | typeof signInMethods) =>
-      account === undefined ? [] : db.select().from(table).where(eq(table.accountId, account.id));
-    return {
-      account,
-      accountRows: found.length,
-      sessions: await ofAccount(sessions),
-      signInMethods: await ofAccount(signInMethods),
-      signInCode: await backend.keptSignInCode(email),
-    };
-  }
   return {
     ...backend,
     /** The Account procedures of a device signed in to the email's Account with Google. */
     signInWithGoogle: async (email: string) => clientOf(await googleToken(email)).account,
     /** The Account procedures of a device signed in to the email's Account with a Sign-in code. */
     signInWithCode: async (email: string) => clientOf(await codeToken(email)).account,
-    rowsOf,
   };
 }
 

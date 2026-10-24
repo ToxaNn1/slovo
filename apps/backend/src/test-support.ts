@@ -23,6 +23,7 @@ import {
   type Mail,
   type Mailer,
 } from '@slovo/server-core';
+import { eq } from 'drizzle-orm';
 import pg from 'pg';
 import { pino, type Logger } from 'pino';
 import { afterAll, afterEach, beforeAll, beforeEach, onTestFinished, vi } from 'vitest';
@@ -32,6 +33,7 @@ import { createApp } from './app';
 import { publishPack } from './content/publish-pack';
 import { createDatabase, type Database } from './database/database';
 import { migrateDatabase } from './database/migrate';
+import { accounts, sessions, signInMethods } from './database/schema';
 import { readEditions } from './edition/edition-folders';
 import { createEditions } from './edition/editions';
 import type { ErrorReport } from './error-reporter';
@@ -393,6 +395,24 @@ export function testApp({
   let closed: Promise<void> | undefined;
   const close = () => (closed ??= database.close());
   if (given === undefined) onTestFinished(close);
+  /**
+   * What the database keeps of the email's Account, how many Accounts it
+   * keeps for the email, and the Sign-in code waiting for it.
+   */
+  async function rowsOf(email: string) {
+    const { db } = database;
+    const found = await db.select().from(accounts).where(eq(accounts.email, email));
+    const [account] = found;
+    const ofAccount = async (table: typeof sessions | typeof signInMethods) =>
+      account === undefined ? [] : db.select().from(table).where(eq(table.accountId, account.id));
+    return {
+      account,
+      accountRows: found.length,
+      sessions: await ofAccount(sessions),
+      signInMethods: await ofAccount(signInMethods),
+      signInCode: await keptSignInCode(database, email),
+    };
+  }
   return {
     /** The app itself, for a test that serves it over HTTP. */
     app,
@@ -407,6 +427,7 @@ export function testApp({
     database,
     /** What the database keeps of the Sign-in code waiting for the email (see the Authenticator). */
     keptSignInCode: (email: string) => keptSignInCode(database, email),
+    rowsOf,
     /** Sends a request of the test's own, to read what the client doesn't, such as headers. */
     request: (path: string, init?: RequestInit, from?: string) =>
       send(new Request(new URL(path, 'http://backend.test'), init), from),
