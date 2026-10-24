@@ -134,7 +134,7 @@ describe('openUserState', () => {
         ['schema.version', '4'],
       ]),
       new Map([
-        ['installed', 'true'],
+        ['app.installed', 'true'],
         ['schema.version', '5'],
       ]),
     ]);
