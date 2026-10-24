@@ -56,5 +56,8 @@ export const SettingsStringsSchema = z.strictObject({
     feedback: TextSchema,
     suggestWord: z.strictObject({ title: TextSchema, subtitle: TextSchema }),
     reportError: z.strictObject({ title: TextSchema, subtitle: TextSchema }),
+    /** The rows that open the Edition's legal pages in the browser. */
+    privacyPolicy: TextSchema,
+    terms: TextSchema,
   }),
 });

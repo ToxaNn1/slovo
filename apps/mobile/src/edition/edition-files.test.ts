@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 
 import {
+  EditionConfigSchema,
   EditionDecorSchema,
   EditionStringsSchema,
   EditionTokensSchema,
@@ -238,6 +239,39 @@ describe('the 0.8 Sync strings', () => {
     };
 
     expect(issuesOf(changed)).toEqual([`onboarding.account.${key}`]);
+  });
+});
+
+describe('the legal pages of About', () => {
+  const strings = readJson('uk', 'strings') as Record<string, unknown>;
+  const settings = strings['settings'] as Record<string, unknown>;
+  const about = settings['about'] as Record<string, unknown>;
+  const issuesOf = (changed: unknown) =>
+    EditionStringsSchema.safeParse(changed).error?.issues.map((issue) => issue.path.join('.'));
+
+  it.each(editions)('the %s Edition names the web addresses of its legal pages', (edition) => {
+    const config = EditionConfigSchema.parse(readJson(edition, 'config'));
+
+    expect(Object.keys(config.legalPages)).toEqual(['privacy', 'terms']);
+  });
+
+  it("the Ukrainian Edition opens its pages on the project's GitHub Pages", () => {
+    expect(EditionConfigSchema.parse(readJson('uk', 'config')).legalPages).toEqual({
+      privacy: 'https://toxann1.github.io/slovo/uk/privacy',
+      terms: 'https://toxann1.github.io/slovo/uk/terms',
+    });
+  });
+
+  it.each(['privacyPolicy', 'terms'])('the Ukrainian Edition needs settings.about.%s', (key) => {
+    const changed = {
+      ...strings,
+      settings: {
+        ...settings,
+        about: Object.fromEntries(Object.entries(about).filter(([name]) => name !== key)),
+      },
+    };
+
+    expect(issuesOf(changed)).toEqual([`settings.about.${key}`]);
   });
 });
 

@@ -3,6 +3,7 @@ import {
   CardCorners,
   fill,
   lineHeight,
+  NavigationRow,
   SectionLabel,
   SettingsGroup,
   SoonRow,
@@ -13,19 +14,27 @@ import {
 } from '@slovo/ui';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { editionStrings } from '../../edition/edition';
+import { edition, editionStrings } from '../../edition/edition';
 
 const strings = editionStrings.settings;
 
 /** The version of the app, as the build declares it. */
 const version = Constants.expoConfig?.version ?? '';
 
+/** Opens one of the Edition's legal pages in the browser. */
+function openLegalPage(address: string) {
+  Linking.openURL(address).catch((error: unknown) => {
+    console.error('Could not open a legal page', error);
+  });
+}
+
 /**
  * About: the Edition's name and version, what SLOVO is and where its words
- * come from. Suggesting a word and reporting a mistake wait for the backend (0.7).
+ * come from, and its privacy policy and terms, which open in the browser.
+ * Suggesting a word and reporting a mistake wait for the backend (0.7).
  */
 export default function AboutScreen() {
   const { colors, fontFamilies, radii } = useTokens();
@@ -94,6 +103,24 @@ export default function AboutScreen() {
               testID="about-row-report-error"
               label={strings.about.reportError.title}
               subtitle={strings.about.reportError.subtitle}
+            />
+          </SettingsGroup>
+        </View>
+        <View style={styles.section}>
+          <SettingsGroup>
+            <NavigationRow
+              testID="about-row-privacy"
+              label={strings.about.privacyPolicy}
+              onPress={() => {
+                openLegalPage(edition.legalPages.privacy);
+              }}
+            />
+            <NavigationRow
+              testID="about-row-terms"
+              label={strings.about.terms}
+              onPress={() => {
+                openLegalPage(edition.legalPages.terms);
+              }}
             />
           </SettingsGroup>
         </View>

@@ -42,6 +42,10 @@
     }
   },
   "notificationSound": "notification.wav",
+  "legalPages": {
+    "privacy": "https://toxann1.github.io/slovo/uk/privacy",
+    "terms": "https://toxann1.github.io/slovo/uk/terms"
+  },
   "categories": [
     {
       "id": "human-body",

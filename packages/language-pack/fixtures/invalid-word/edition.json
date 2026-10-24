@@ -41,6 +41,10 @@
       "idioms": true
     }
   },
+  "legalPages": {
+    "privacy": "https://example.org/privacy",
+    "terms": "https://example.org/terms"
+  },
   "categories": [
     {
       "id": "nature",

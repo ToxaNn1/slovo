@@ -3,6 +3,7 @@ import {
   type FeatureSwitch,
   type FontSize,
   type LanguageTraits,
+  type LegalPages,
   type Theme,
 } from '@slovo/contracts';
 
@@ -43,6 +44,8 @@ export interface Edition {
   readonly userSettingDefaults: UserSettingDefaults;
   /** The file name of the Edition's notification sound, which the shell bundles; without one, notifications play the system sound. */
   readonly notificationSound: string | undefined;
+  /** The addresses of the privacy policy and the terms, which About opens in the browser. */
+  readonly legalPages: LegalPages;
   /** Whether the Edition turns the given Core feature on. */
   isFeatureEnabled(feature: FeatureSwitch): boolean;
 }
@@ -73,6 +76,7 @@ export function loadEdition(config: unknown): Edition {
     featureSwitches,
     userSettingDefaults,
     notificationSound,
+    legalPages,
   } = result.data;
   const { mix, ...settings } = userSettingDefaults;
   return {
@@ -86,6 +90,7 @@ export function loadEdition(config: unknown): Edition {
       mix: { categoryIds: mix.categories, corrections: mix.corrections, idioms: mix.idioms },
     },
     notificationSound,
+    legalPages,
     isFeatureEnabled: (feature) => featureSwitches[feature],
   };
 }
