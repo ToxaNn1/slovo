@@ -1,3 +1,4 @@
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import type { GoogleSignInSheet } from '@slovo/core';
 
 const clientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
@@ -10,12 +11,52 @@ const clientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
 export const googleClientId: string | undefined =
   clientId === undefined || clientId === '' ? undefined : clientId;
 
+/** The domain of the errors iOS gives when a request finds no network or loses it. */
+const NETWORK_ERROR_DOMAIN = 'NSURLErrorDomain';
+
+/** Whether Google's SDK rejected with an error of iOS's networking, as React Native hands it over. */
+function isNetworkError(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'domain' in error &&
+    error.domain === NETWORK_ERROR_DOMAIN
+  );
+}
+
 /**
- * The Core's Google sign-in sheet port (ADR 0047) on this device. Until the
- * adapter for Google's sign-in SDK lands (#613) the binary has no sheet, so a
- * Google sign-in fails as unexpected; the button that starts one stays hidden
- * while the build has no Google client id.
+ * The Core's Google sign-in sheet port (ADR 0047) on Google's sign-in SDK for
+ * React Native, for the app's OAuth client id for iOS: Google's own native
+ * sheet, configured at its first showing. The SDK answers a dismissed sheet
+ * as cancelled; an error of the network is offline, and any other error, or a
+ * sign-in without an identity token, is unexpected.
  */
-export const googleSignInSheet: GoogleSignInSheet = {
-  signIn: () => Promise.resolve({ ok: false, reason: 'unexpected' }),
-};
+export function createGoogleSignInSheet(iosClientId: string): GoogleSignInSheet {
+  let configured = false;
+  return {
+    async signIn() {
+      try {
+        if (!configured) {
+          GoogleSignin.configure({ iosClientId });
+          configured = true;
+        }
+        const response = await GoogleSignin.signIn();
+        if (response.type === 'cancelled') return { ok: false, reason: 'cancelled' };
+        const { idToken } = response.data;
+        return idToken === null ? { ok: false, reason: 'unexpected' } : { ok: true, idToken };
+      } catch (error) {
+        return { ok: false, reason: isNetworkError(error) ? 'offline' : 'unexpected' };
+      }
+    },
+  };
+}
+
+/**
+ * The Google sign-in sheet of this device: Google's own, for the build's
+ * client id. A build without one has no sheet, so a Google sign-in fails as
+ * unexpected; the button that starts one stays hidden there.
+ */
+export const googleSignInSheet: GoogleSignInSheet =
+  googleClientId === undefined
+    ? { signIn: () => Promise.resolve({ ok: false, reason: 'unexpected' }) }
+    : createGoogleSignInSheet(googleClientId);

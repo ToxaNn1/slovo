@@ -386,4 +386,31 @@ describe('app config', () => {
       /no notification sound.*editions\/uk\/assets\/notification\.wav/s,
     );
   });
+
+  it("leaves Google's sign-in sheet out while the build has no Google client id", () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+    vi.stubEnv('EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID', '');
+
+    const plugins = appConfig(context).plugins ?? [];
+
+    expect(plugins.flat()).not.toContain('@react-native-google-signin/google-signin');
+  });
+
+  it("registers the URL scheme Google's sign-in sheet returns to, from the build's client id", () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+    vi.stubEnv('EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID', '123456789012-abc.apps.googleusercontent.com');
+
+    expect(pluginOptions(appConfig(context), '@react-native-google-signin/google-signin')).toEqual({
+      iosUrlScheme: 'com.googleusercontent.apps.123456789012-abc',
+    });
+  });
+
+  it('refuses a Google client id that is not one for iOS', () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+    vi.stubEnv('EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID', 'com.googleusercontent.apps.123456789012-abc');
+
+    expect(() => appConfig(context)).toThrow(
+      /EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID.*\.apps\.googleusercontent\.com/s,
+    );
+  });
 });
