@@ -26,16 +26,19 @@ function signingIn() {
     const { token } = await client.account.verifyCode({ email, code: mailer.codeSentTo(email) });
     return token;
   }
-  /** What the database keeps of the email's Account. */
+  /** What the database keeps of the email's Account, and how many Accounts it keeps for the email. */
   async function rowsOf(email: string) {
     const { db } = backend.database;
-    const [account] = await db.select().from(accounts).where(eq(accounts.email, email));
+    const found = await db.select().from(accounts).where(eq(accounts.email, email));
+    const [account] = found;
     const ofAccount = async (table: typeof sessions | typeof signInMethods) =>
       account === undefined ? [] : db.select().from(table).where(eq(table.accountId, account.id));
     return {
       account,
+      accountRows: found.length,
       sessions: await ofAccount(sessions),
       signInMethods: await ofAccount(signInMethods),
+      signInCode: await backend.keptSignInCode(email),
     };
   }
   return {
@@ -68,31 +71,6 @@ describe('signing in with a Google identity token', () => {
     expect(rows.signInMethods).toMatchObject([{ providerId: 'google' }]);
   });
 
-  it('signs the same Account in again with a later token, and records Google once', async () => {
-    const { signInWithGoogle, rowsOf } = signingIn();
-    const email = newEmail();
-
-    const first = await (await signInWithGoogle(email)).me();
-    const second = await (await signInWithGoogle(email)).me();
-
-    expect(second).toEqual(first);
-    const rows = await rowsOf(email);
-    expect(rows.sessions).toHaveLength(2);
-    expect(rows.signInMethods).toHaveLength(1);
-  });
-
-  it('reaches the Account a Sign-in code made for the email, and a code reaches the one Google made', async () => {
-    const { signInWithGoogle, signInWithCode } = signingIn();
-    const byCodeFirst = newEmail();
-    const byGoogleFirst = newEmail();
-
-    const codeMade = await (await signInWithCode(byCodeFirst)).me();
-    const googleMade = await (await signInWithGoogle(byGoogleFirst)).me();
-
-    await expect((await signInWithGoogle(byCodeFirst)).me()).resolves.toEqual(codeMade);
-    await expect((await signInWithCode(byGoogleFirst)).me()).resolves.toEqual(googleMade);
-  });
-
   it('keeps the email as the Account keeps it, whatever its capitals', async () => {
     const { client, google } = signingIn();
     const email = newEmail();
@@ -103,6 +81,70 @@ describe('signing in with a Google identity token', () => {
     });
 
     expect(session.email).toBe(email);
+  });
+});
+
+describe('one email reaches one Account (ADR 0047)', () => {
+  it('with Google after a Sign-in code made it: the same Account, with Google recorded', async () => {
+    const { signInWithGoogle, signInWithCode, rowsOf } = signingIn();
+    const email = newEmail();
+    const codeMade = await (await signInWithCode(email)).me();
+
+    const byGoogle = await signInWithGoogle(email);
+
+    await expect(byGoogle.me()).resolves.toEqual(codeMade);
+    expect(await rowsOf(email)).toMatchObject({
+      accountRows: 1,
+      sessions: [{}, {}],
+      signInMethods: [{ providerId: 'google' }],
+    });
+  });
+
+  it('with a Sign-in code after Google made it: the same Account, and the code adds no method', async () => {
+    const { signInWithGoogle, signInWithCode, rowsOf } = signingIn();
+    const email = newEmail();
+    const googleMade = await (await signInWithGoogle(email)).me();
+
+    const byCode = await signInWithCode(email);
+
+    await expect(byCode.me()).resolves.toEqual(googleMade);
+    expect(await rowsOf(email)).toMatchObject({
+      accountRows: 1,
+      sessions: [{}, {}],
+      signInMethods: [{ providerId: 'google' }],
+    });
+  });
+
+  it('with Google twice: the same Account, and Google recorded once', async () => {
+    const { signInWithGoogle, rowsOf } = signingIn();
+    const email = newEmail();
+    const first = await (await signInWithGoogle(email)).me();
+
+    const second = await (await signInWithGoogle(email)).me();
+
+    expect(second).toEqual(first);
+    expect(await rowsOf(email)).toMatchObject({
+      accountRows: 1,
+      sessions: [{}, {}],
+      signInMethods: [{ providerId: 'google' }],
+    });
+  });
+
+  it('with Google under another Google identity of the same email: the same Account, each identity recorded', async () => {
+    const { client, clientOf, google, signInWithGoogle, rowsOf } = signingIn();
+    const email = newEmail();
+    const first = await (await signInWithGoogle(email)).me();
+
+    const { token } = await client.account.signInWithGoogle({
+      idToken: google.token({ email, subject: 'google-another-identity' }),
+      editionId: 'uk',
+    });
+
+    await expect(clientOf(token).account.me()).resolves.toEqual(first);
+    expect(await rowsOf(email)).toMatchObject({
+      accountRows: 1,
+      signInMethods: [{ providerId: 'google' }, { providerId: 'google' }],
+    });
   });
 });
 
@@ -263,23 +305,50 @@ describe('an Account Google made', () => {
     const { account } = await rowsOf(email);
     await expect(again.delete()).resolves.toEqual({});
 
-    expect(await rowsOf(email)).toEqual({ account: undefined, sessions: [], signInMethods: [] });
+    expect(await rowsOf(email)).toMatchObject({ accountRows: 0, sessions: [], signInMethods: [] });
     expect(account).toBeDefined();
     await expect(again.me()).rejects.toMatchObject(unauthorized);
   });
 
-  it('once deleted lets the same email sign in to a new, empty Account', async () => {
-    const { signInWithGoogle, rowsOf } = signingIn();
+  it('that a Sign-in code also signed in is deleted whole: both methods, every Session and the waiting code', async () => {
+    const { client, signInWithGoogle, signInWithCode, rowsOf } = signingIn();
+    const email = newEmail();
+    const phone = await signInWithGoogle(email);
+    const tablet = await signInWithCode(email);
+    await client.account.requestCode({ email, editionId: 'uk' });
+    expect(await rowsOf(email)).toMatchObject({
+      accountRows: 1,
+      sessions: [{}, {}],
+      signInMethods: [{ providerId: 'google' }],
+      signInCode: {},
+    });
+
+    await expect(phone.delete()).resolves.toEqual({});
+
+    expect(await rowsOf(email)).toMatchObject({
+      accountRows: 0,
+      sessions: [],
+      signInMethods: [],
+      signInCode: undefined,
+    });
+    await expect(tablet.me()).rejects.toMatchObject({ code: 'UNAUTHORIZED', status: 401 });
+  });
+
+  it('once deleted lets the same email sign in to a new, empty Account, by Google or by a code', async () => {
+    const { signInWithGoogle, signInWithCode, rowsOf } = signingIn();
     const email = newEmail();
     const first = await signInWithGoogle(email);
     const deleted = await rowsOf(email);
     await first.delete();
 
     passTime(MINUTE);
-    const again = await signInWithGoogle(email);
+    const byCode = await (await signInWithCode(email)).me();
+    const byGoogle = await (await signInWithGoogle(email)).me();
 
-    await expect(again.me()).resolves.toMatchObject({ email });
+    expect(byGoogle).toEqual(byCode);
+    expect(Date.parse(byCode.createdAt)).toBeGreaterThan(deleted.account?.createdAt.getTime() ?? 0);
     const created = await rowsOf(email);
+    expect(created.accountRows).toBe(1);
     expect(created.account?.id).not.toBe(deleted.account?.id);
     expect(created.signInMethods).toHaveLength(1);
   });
