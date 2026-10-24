@@ -6,6 +6,10 @@
 export { createFakeAccountApi } from './fakes/fake-account-api';
 export { createFakeContentApi } from './fakes/fake-content-api';
 export {
+  createFakeGoogleSignInSheet,
+  type FakeGoogleSignInSheet,
+} from './fakes/fake-google-sign-in-sheet';
+export {
   createFakeNotificationScheduler,
   type FakeNotificationScheduler,
 } from './fakes/fake-notification-scheduler';

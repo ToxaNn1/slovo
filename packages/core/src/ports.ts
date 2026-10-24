@@ -182,6 +182,20 @@ export interface AccountApi {
     | { readonly ok: false; readonly reason: 'code-expired' }
     | AccountApiFailure
   >;
+  /**
+   * Signs in with a Google identity token. The first sign-in of an email
+   * creates its Account, whatever Sign-in method (ADR 0047); the answer is the
+   * new Session's token and the Account's email. The backend refuses a token
+   * that is not Google's, has expired, is for another app or names an email
+   * Google hasn't verified.
+   */
+  signInWithGoogle(
+    idToken: string,
+  ): Promise<
+    | { readonly ok: true; readonly token: string; readonly email: string }
+    | { readonly ok: false; readonly reason: 'refused' }
+    | AccountApiFailure
+  >;
   /** The email of the Session's Account. */
   me(token: string): Promise<{ readonly ok: true; readonly email: string } | AccountApiFailure>;
   /** Ends the Session. */
@@ -190,6 +204,23 @@ export interface AccountApi {
   signOutEverywhere(token: string): Promise<{ readonly ok: true } | AccountApiFailure>;
   /** Deletes the Session's Account with every Session of it, for good. */
   delete(token: string): Promise<{ readonly ok: true } | AccountApiFailure>;
+}
+
+/**
+ * Google's native sign-in sheet, as the Core sees it (ADR 0047): the shell
+ * implements this port on Google's SDK. The sheet never rejects: the reader
+ * signs in, dismisses it, or it fails.
+ */
+export interface GoogleSignInSheet {
+  /**
+   * Shows the sheet and answers the Google identity token of the reader who
+   * signed in, that the reader cancelled, or that it found no network or
+   * failed otherwise.
+   */
+  signIn(): Promise<
+    | { readonly ok: true; readonly idToken: string }
+    | { readonly ok: false; readonly reason: 'cancelled' | 'offline' | 'unexpected' }
+  >;
 }
 
 /** A JSON value, as the value of a record travels to the backend and back. */
