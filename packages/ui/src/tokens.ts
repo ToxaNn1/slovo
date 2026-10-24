@@ -353,6 +353,20 @@ export const onboardingRosetteWidth = 120;
 /** The text on a filled option of the Game and on a destructive swipe action, white in both Themes. */
 export const onFill = '#FFFFFF';
 
+/**
+ * «Sign in with Google» in Google's branding rules for the button
+ * (https://developers.google.com/identity/branding-guidelines): the fill,
+ * stroke and label of its light and dark themes, which follow the Theme, and
+ * the side and the four colours of Google's "G" logo. Google's, not an
+ * Edition's, so no Edition token changes them.
+ */
+export const googleSignInButton = {
+  light: { fill: '#FFFFFF', stroke: '#747775', label: '#1F1F1F' },
+  dark: { fill: '#131314', stroke: '#8E918F', label: '#E3E3E3' },
+  logoSize: 20,
+  logo: { blue: '#4285F4', green: '#34A853', yellow: '#FBBC05', red: '#EA4335' },
+} as const;
+
 /** The colour of a shadow, black in both Themes. */
 export const shadowColor = '#000000';
 

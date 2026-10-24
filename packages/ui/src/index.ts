@@ -46,6 +46,7 @@ export {
   type SampleNotificationLook,
 } from './onboarding/Onboarding';
 export { OutlineButton } from './primitives/OutlineButton';
+export { GoogleSignInButton } from './primitives/GoogleSignInButton';
 export { PrimaryButton } from './primitives/PrimaryButton';
 export { SecondaryButton } from './primitives/SecondaryButton';
 export {
