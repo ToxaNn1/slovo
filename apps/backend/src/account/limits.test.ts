@@ -27,6 +27,8 @@ function limitedApp() {
     requestCode: (email: string, ip?: string) =>
       post('sign-in-codes', { email, editionId: 'uk' }, ip),
     verifyCode: (email: string, ip?: string) => post('sessions', { email, code: '000000' }, ip),
+    signInWithGoogle: (email: string, ip?: string) =>
+      post('google-sessions', { idToken: backend.google.token({ email }), editionId: 'uk' }, ip),
   };
 }
 
@@ -207,5 +209,48 @@ describe('a spent Sign-in code', () => {
       message: 'Too many requests',
       retryAfter: null,
     });
+  });
+});
+
+describe('the Google sign-ins from one IP address', () => {
+  it('are at most 30 in 10 minutes: the 31st is TOO_MANY_REQUESTS with Retry-After', async () => {
+    const { clientFrom, google, signInWithGoogle } = limitedApp();
+    for (let signedIn = 0; signedIn < 30; signedIn++) {
+      await expect(signInWithGoogle(newEmail())).resolves.toMatchObject({ status: 200 });
+    }
+    passTime(9 * MINUTE + 59_500);
+
+    const email = newEmail();
+    expect(await refusal(await signInWithGoogle(email))).toEqual({
+      status: 429,
+      code: 'TOO_MANY_REQUESTS',
+      message: 'Too many requests',
+      // Half a second is left, which counts as a whole one.
+      retryAfter: '1',
+    });
+    // Another IP address is not held back.
+    await expect(
+      clientFrom(newIp()).account.signInWithGoogle({
+        idToken: google.token({ email }),
+        editionId: 'uk',
+      }),
+    ).resolves.toMatchObject({ email });
+  });
+
+  it('open again when the 10 minutes have passed, and leave the code checks uncounted', async () => {
+    const { client, mailer, signInWithGoogle } = limitedApp();
+    for (let signedIn = 0; signedIn < 30; signedIn++) {
+      await signInWithGoogle(newEmail());
+    }
+    const email = newEmail();
+    expect((await signInWithGoogle(email)).status).toBe(429);
+    await client.account.requestCode({ email, editionId: 'uk' });
+    await expect(
+      client.account.verifyCode({ email, code: mailer.codeSentTo(email) }),
+    ).resolves.toMatchObject({ email });
+
+    passTime(10 * MINUTE);
+
+    expect((await signInWithGoogle(email)).status).toBe(200);
   });
 });

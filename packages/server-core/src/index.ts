@@ -23,6 +23,9 @@ export {
   type Clock,
   type CodeCheck,
   type ContentPackStore,
+  type GoogleIdentity,
+  type GoogleTokenCheck,
+  type GoogleVerifier,
   type Json,
   type KeptRecord,
   type Mail,
@@ -31,5 +34,6 @@ export {
   type RateLimits,
   type RecordChange,
   type RemoteSwitchStore,
+  type SignedIn,
   type UserRecords,
 } from './ports';

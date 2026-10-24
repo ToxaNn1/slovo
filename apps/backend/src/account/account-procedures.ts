@@ -55,6 +55,25 @@ export function accountProcedures(accounts: Accounts) {
       }
     }),
 
+    signInWithGoogle: account.signInWithGoogle.handler(async ({ input, context, errors }) => {
+      const check = await accounts.signInWithGoogle(input.idToken, input.editionId, context.ip);
+      if (check.ok) return { token: check.token, email: check.account.email };
+      switch (check.reason) {
+        case 'invalid-token':
+          throw errors.INVALID_TOKEN();
+        case 'foreign-audience':
+          throw errors.FOREIGN_AUDIENCE();
+        case 'unverified-email':
+          throw errors.EMAIL_NOT_VERIFIED();
+        case 'unknown-edition':
+        case 'switched-off':
+          throw errors.NOT_FOUND();
+        case 'too-many-requests':
+          retryAfter(context, check);
+          throw errors.TOO_MANY_REQUESTS();
+      }
+    }),
+
     me: account.me.use(signedIn).handler(({ context: { session } }) => ({
       email: session.account.email,
       createdAt: session.account.createdAt.toISOString(),

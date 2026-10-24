@@ -1,10 +1,12 @@
+import { createHmac } from 'node:crypto';
+
 import { SIGN_IN_CODE_DIGITS } from '@slovo/contracts';
 import type { AccountRecord, Authenticator, CodeCheck } from '@slovo/server-core';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { APIError } from 'better-auth/api';
 import { bearer, emailOTP } from 'better-auth/plugins';
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import type { Logger } from 'pino';
 
 import type { Database } from '../database/database';
@@ -25,6 +27,9 @@ const SIGN_IN_CODE = {
 
 /** How long a Session lasts after its last use: one used now and then never ends. */
 const SESSION_SECONDS = 90 * 24 * 60 * 60;
+
+/** How better-auth names Google among the Sign-in methods. */
+const GOOGLE = 'google';
 
 /** The kind of Sign-in code: better-auth's email OTP also has others SLOVO never uses. */
 const SIGN_IN = 'sign-in';
@@ -62,6 +67,15 @@ const SESSION_UPDATE_SECONDS = 24 * 60 * 60;
 
 const codeExpired: CodeCheck = { ok: false, reason: 'code-expired' };
 const tooManyTries: CodeCheck = { ok: false, reason: 'too-many-tries' };
+
+/**
+ * A Session's token in the signed form the bearer plugin gives and demands
+ * (ADR 0030): the token, a dot and its HMAC-SHA256 with the secret in
+ * base64, as better-auth signs its Session cookie. The tests prove the form
+ * by using a token signed here.
+ */
+const signedToken = (token: string, secret: string) =>
+  `${token}.${createHmac('sha256', secret).update(token).digest('base64')}`;
 
 /** The headers that carry a Session's token to better-auth. */
 const bearerHeaders = (token: string) => new Headers({ authorization: `Bearer ${token}` });
@@ -194,6 +208,43 @@ export function createAuthenticator(
             throw error;
         }
       }
+    },
+
+    // better-auth's own social sign-in verifies the token itself, with no
+    // way in for the server Core's verifier, so the adapter does what it
+    // would: finds or creates the user, links the provider's account and
+    // starts a Session.
+    async signInWithGoogle({ subject, email }) {
+      const { internalAdapter, secret } = await auth.$context;
+      const found = await internalAdapter.findUserByEmail(email);
+      // SLOVO asks for no name; the email is verified by Google.
+      const user =
+        found?.user ??
+        (await internalAdapter.createUser(
+          { email, emailVerified: true, name: '' },
+          { method: 'oauth', oauth: { providerId: GOOGLE } },
+        ));
+      // By the table: with the renamed fields (ADR 0030) better-auth reads a
+      // Sign-in method back with the Account's id where the subject should be.
+      const [linked] = await database.db
+        .select({ id: signInMethods.id })
+        .from(signInMethods)
+        .where(
+          and(
+            eq(signInMethods.accountId, user.id),
+            eq(signInMethods.providerId, GOOGLE),
+            eq(signInMethods.providerAccountId, subject),
+          ),
+        );
+      if (linked === undefined) {
+        await internalAdapter.linkAccount({
+          userId: user.id,
+          providerId: GOOGLE,
+          accountId: subject,
+        });
+      }
+      const session = await internalAdapter.createSession(user.id);
+      return { token: signedToken(session.token, secret), account: accountRecord(user) };
     },
 
     async sessionOf(token) {

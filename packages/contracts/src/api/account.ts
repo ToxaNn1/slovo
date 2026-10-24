@@ -11,6 +11,13 @@ import { procedure, signedIn } from './procedure';
 const TypedEmailSchema = z.string().max(320);
 
 /**
+ * A Google identity token as Google's sign-in sheet gave it to the app: a
+ * JWT, which the backend verifies. Google's are under 2 KB; the limit only
+ * keeps a request from carrying anything else.
+ */
+const GoogleIdTokenSchema = z.string().min(1).max(4096);
+
+/**
  * The input of an action that needs nothing but its Session: no body, or an
  * empty one, so a field naming another Account is refused (ADR 0031).
  */
@@ -18,8 +25,9 @@ const NoInputSchema = z.strictObject({}).optional();
 
 /**
  * The Account procedures. They carry no Edition: one Account works in every
- * Edition (spec #333). Only the Sign-in code request names one, so the email
- * is in that Edition's language.
+ * Edition (spec #333). Only the two that start a sign-in name one: the
+ * Sign-in code request, so the email is in that Edition's language, and the
+ * Google sign-in, for the Edition's `googleSignIn` Feature Switch.
  */
 export const accountContract = {
   requestCode: procedure
@@ -64,6 +72,37 @@ export const accountContract = {
       TOO_MANY_REQUESTS: { message: 'Too many requests' },
     })
     .input(z.strictObject({ email: TypedEmailSchema, code: SignInCodeSchema }))
+    .output(
+      z.object({
+        /** The Session's token, sent back as `Authorization: Bearer <token>`. */
+        token: z.string(),
+        /** The Account's email, trimmed and lower-cased. */
+        email: z.string(),
+      }),
+    ),
+
+  signInWithGoogle: procedure
+    .route({
+      method: 'POST',
+      path: '/account/google-sessions',
+      summary: 'Sign in with a Google identity token',
+      description:
+        "The backend verifies the token with Google's keys; the first sign-in of an email creates its Account, and an email with an Account reaches it, whatever Sign-in method made it (ADR 0047). The answer is the new Session's token.",
+      tags: ['account'],
+    })
+    .errors({
+      /** The token is not a Google identity token, its signature doesn't check, or it has expired. */
+      INVALID_TOKEN: { status: 401, message: 'The token is not valid' },
+      /** The token was issued to an app that is not SLOVO. */
+      FOREIGN_AUDIENCE: { status: 401, message: 'The token is for another app' },
+      /** Google has not verified the email, so it can't name an Account. */
+      EMAIL_NOT_VERIFIED: { status: 403, message: 'The email is not verified' },
+      /** An Edition the backend doesn't serve, or one with Google sign-in switched off or not configured. */
+      NOT_FOUND: { message: 'Not found' },
+      /** Over the limit of Google sign-ins per IP; `Retry-After` says, in seconds, when to try again. */
+      TOO_MANY_REQUESTS: { message: 'Too many requests' },
+    })
+    .input(z.strictObject({ idToken: GoogleIdTokenSchema, editionId: EditionIdSchema }))
     .output(
       z.object({
         /** The Session's token, sent back as `Authorization: Bearer <token>`. */

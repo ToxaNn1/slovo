@@ -136,7 +136,7 @@ The most consecutive Active Days the user has ever had, derived from them like t
 _Avoid_: Top streak, longest chain
 
 **Account**:
-The optional identity ("SLOVO ID") that keeps a user's words and progress across devices. One Account works in every Edition, and the user sees it as «SLOVO ID» in each of them; each Edition's data stays separate. Without an Account everything lives on the device only.
+The optional identity ("SLOVO ID") that keeps a user's words and progress across devices. One Account works in every Edition, and the user sees it as «SLOVO ID» in each of them; each Edition's data stays separate. An email has one Account, which every Sign-in method reaches: a Sign-in code or Sign in with Google. Without an Account everything lives on the device only.
 _Avoid_: Cabinet, profile, login
 
 **Session**:
@@ -150,6 +150,10 @@ _Avoid_: Backup, replication, cloud save
 **Sign-in code**:
 The one-time six-digit code from the email that signs the reader in. The first right code for an email creates its Account.
 _Avoid_: OTP, PIN, password
+
+**Sign-in method**:
+A way a reader proves an email to sign in: a Sign-in code, or Sign in with Google, whose identity token the backend verifies. Whatever the method, the email's one Account signs in, and the first sign-in of an email creates it (ADR 0047). The Edition's Feature Switch `googleSignIn` turns the Google method on.
+_Avoid_: Provider, login type, auth method
 
 ### Discovery
 

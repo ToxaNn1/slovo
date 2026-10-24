@@ -339,10 +339,10 @@ const unauthorized = { code: 'UNAUTHORIZED', status: 401, defined: true };
 
 /**
  * Each Account procedure that acts on the Account of the request's Session:
- * every one but the two that sign in. The types ask for a new one.
+ * every one but the three that sign in. The types ask for a new one.
  */
 const sessionProcedures: Record<
-  Exclude<keyof ApiClient['account'], 'requestCode' | 'verifyCode'>,
+  Exclude<keyof ApiClient['account'], 'requestCode' | 'verifyCode' | 'signInWithGoogle'>,
   (account: ApiClient['account']) => Promise<unknown>
 > = {
   me: (account) => account.me(),

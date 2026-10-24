@@ -90,6 +90,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   idioms: z.boolean(),
   /** The Account (SLOVO ID): its Settings row, its screen and the backend's answers to it. */
   account: z.boolean(),
+  /** Sign in with Google: the second Sign-in method, its button and the backend's procedure for it (ADR 0047). */
+  googleSignIn: z.boolean(),
   /** Sync: the background exchange of the reader's words with their Account. Apart from `account`, so Sync can stop while sign-in keeps working. */
   sync: z.boolean(),
   /** Content updates: the app's daily check for a newer Language Pack. */

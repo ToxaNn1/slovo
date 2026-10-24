@@ -56,13 +56,48 @@ export interface AccountRecord {
 
 /** What checking a Sign-in code gives the Authenticator. */
 export type CodeCheck =
-  | { readonly ok: true; readonly token: string; readonly account: AccountRecord }
+  | ({ readonly ok: true } & SignedIn)
   /** The code is not the one last sent to the email; `triesLeft` more may be tried. */
   | { readonly ok: false; readonly reason: 'wrong-code'; readonly triesLeft: number }
   /** No code is waiting for the email: it ran out of time, or none was sent. */
   | { readonly ok: false; readonly reason: 'code-expired' }
   /** Every try of the code is spent. */
   | { readonly ok: false; readonly reason: 'too-many-tries' };
+
+/** Who a Google identity token names, as Google verified it. */
+export interface GoogleIdentity {
+  /** Google's own id of the person, which never changes; the email may. */
+  readonly subject: string;
+  /** The email as the token carries it. */
+  readonly email: string;
+  /** Whether Google has verified that the person owns the email. */
+  readonly emailVerified: boolean;
+}
+
+/** What verifying a Google identity token gives. */
+export type GoogleTokenCheck =
+  | { readonly ok: true; readonly identity: GoogleIdentity }
+  /** The backend has no Google client id, so no token can be for it. */
+  | { readonly ok: false; readonly reason: 'not-configured' }
+  /** The token is not a Google identity token, its signature doesn't check, or it has expired. */
+  | { readonly ok: false; readonly reason: 'invalid-token' }
+  /** The token was issued to an app that is not SLOVO: its audience is none of the client ids. */
+  | { readonly ok: false; readonly reason: 'foreign-audience' };
+
+/**
+ * Verifies Google identity tokens (better-auth's Google provider in the
+ * backend): the signature against Google's keys, the issuer, the expiry and
+ * the audience against SLOVO's client ids, which come from the environment.
+ */
+export interface GoogleVerifier {
+  verify(idToken: string): Promise<GoogleTokenCheck>;
+}
+
+/** What a sign-in that proved its identity gives: a new Session of the Account. */
+export interface SignedIn {
+  readonly token: string;
+  readonly account: AccountRecord;
+}
 
 /**
  * Signs readers in: keeps the Sign-in codes and the Sessions of the Accounts
@@ -81,6 +116,12 @@ export interface Authenticator {
    * code for an email creates its Account; a right code starts a Session.
    */
   checkCode(email: string, code: string): Promise<CodeCheck>;
+  /**
+   * Signs in the Account of the identity's email, creating it when the email
+   * has none, and records the Google identity as a Sign-in method of the
+   * Account once. The email is verified and normalised already.
+   */
+  signInWithGoogle(identity: GoogleIdentity): Promise<SignedIn>;
   /**
    * The Session the token carries, by its id, with its Account, if the
    * Session is on. Using a Session extends it.
