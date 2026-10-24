@@ -358,6 +358,7 @@ describe('the 0.7 account and email strings groups', () => {
 
   it.each([
     'signedOut',
+    'signInWithGoogle',
     'emailLabel',
     'sendCode',
     'codeLabel',

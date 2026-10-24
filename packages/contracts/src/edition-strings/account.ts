@@ -59,6 +59,8 @@ const SyncStatusStringsSchema = z.strictObject({
 export const AccountStringsSchema = z.strictObject({
   /** The Settings row's value while the reader is signed out. */
   signedOut: TextSchema,
+  /** The button that signs in with Google, above the email field, in the words of Google's branding rules (ADR 0047). */
+  signInWithGoogle: TextSchema,
   /** The label of the email field. */
   emailLabel: TextSchema,
   /** The button that sends the Sign-in code. */

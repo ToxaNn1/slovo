@@ -799,6 +799,7 @@
   },
   "account": {
     "signedOut": "Увійти",
+    "signInWithGoogle": "Увійти через Google",
     "emailLabel": "Електронна пошта",
     "sendCode": "Надіслати код",
     "codeLabel": "Код із листа",

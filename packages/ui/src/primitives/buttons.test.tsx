@@ -1,5 +1,5 @@
 import type { EditionStrings } from '@slovo/contracts';
-import { EditionProvider, PrimaryButton, SecondaryButton } from '@slovo/ui';
+import { EditionProvider, GoogleSignInButton, PrimaryButton, SecondaryButton } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
@@ -16,6 +16,7 @@ function Edition({ children }: { children: ReactNode }) {
 describe.each([
   ['PrimaryButton', PrimaryButton],
   ['SecondaryButton', SecondaryButton],
+  ['GoogleSignInButton', GoogleSignInButton],
 ])('%s', (_, Button) => {
   it('acts on a press', async () => {
     const onPress = jest.fn();
