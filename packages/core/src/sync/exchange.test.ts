@@ -385,7 +385,7 @@ describe('two devices of one Account', () => {
 
     expect(server.records.has('notifications.sound')).toBe(false);
     expect((await tablet.settings.read()).vibration).toBe(true);
-    expect(tablet.records.get('schema.version')).toBe('4');
+    expect(tablet.records.get('schema.version')).toBe('5');
     expect(await tablet.userState.pendingChanges()).toEqual(new Map());
     expect(await tablet.userState.cursor()).not.toBe(999);
   });

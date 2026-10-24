@@ -7,6 +7,7 @@ import { nativeModules } from '../device/device-native-modules';
 import { edition } from '../edition/edition';
 import { logError } from '../log';
 import { openOnce, type Opening } from '../opening';
+import { storedUserState } from '../user-state/stored-user-state';
 import { createAccountApi } from './account-api';
 import { googleSignInSheet } from './google-sign-in-sheet';
 import { createSessionStore } from './session-store';
@@ -27,11 +28,13 @@ const keychain = nativeModules.load(
  * composition (ADR 0036, 0037), or undefined when the Edition's `account`
  * switch is off. Its Session is in the Keychain, or in memory while the
  * binary lacks it. When the Keychain can't be read, the opening fails with a
- * retry, so a Session kept there is never shadowed by one in memory.
+ * retry, so a Session kept there is never shadowed by one in memory. It opens
+ * after the user state, whose installed marker tells a Session of this install
+ * from one an earlier install left in the Keychain.
  */
 export const accountOpening: Opening<Account> | undefined = edition.isFeatureEnabled('account')
   ? openOnce(
-      () =>
+      async () =>
         openAccount({
           api: createAccountApi({
             client: apiClient,
@@ -40,6 +43,7 @@ export const accountOpening: Opening<Account> | undefined = edition.isFeatureEna
           }),
           googleSheet: googleSignInSheet,
           sessions: createSessionStore(keychain),
+          userState: await storedUserState.opened(),
           clock: deviceClock,
           schedule: systemSchedule,
           random: systemRandom,

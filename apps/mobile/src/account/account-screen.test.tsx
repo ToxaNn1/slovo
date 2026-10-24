@@ -1,6 +1,8 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import {
   createMemorySessionStore,
+  createMemoryUserStatePort,
+  openUserState,
   loadEdition,
   openAccount,
   systemRandom,
@@ -81,11 +83,12 @@ async function renderScreen({
   googleSheet?: GoogleSignInSheet;
 } = {}) {
   const opening = openOnce(
-    () =>
+    async () =>
       openAccount({
         api: createFakeAccountApi(),
         googleSheet,
         sessions: createMemorySessionStore(),
+        userState: await openUserState({ port: createMemoryUserStatePort() }),
         clock,
         schedule: (run) => {
           run();

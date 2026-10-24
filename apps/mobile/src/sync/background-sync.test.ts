@@ -8,6 +8,7 @@ import {
   openUserState,
   systemRandom,
   trackChanges,
+  userStateRecords,
   type Composition,
   type Schedule,
   type Sync,
@@ -81,10 +82,13 @@ async function app() {
     userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
     clock: time.clock,
   });
+  // This install has run before, so the Account keeps the Session it finds.
+  await userState.write(userStateRecords.installed.change(true));
   const account = await openAccount({
     api: createFakeAccountApi(),
     googleSheet: createFakeGoogleSignInSheet(),
     sessions: createMemorySessionStore({ token: 'a-session', email: 'anna@mail.com' }),
+    userState,
     clock: time.clock,
     schedule,
     random: systemRandom,

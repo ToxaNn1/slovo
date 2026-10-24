@@ -103,7 +103,7 @@ describe('openUserState', () => {
     expect([...records.keys()].filter((key) => key.startsWith('feed.seen'))).toEqual([]);
   });
 
-  it('reads the user state a 0.7 app kept: Seen in the current Cycle stays Seen, in one write with the version', async () => {
+  it('reads the user state a 0.7 app kept: Seen in the current Cycle stays Seen, and the install is marked, each step in one write with its version', async () => {
     // The Seen records exactly as 0.7 wrote them, at schema version 3.
     const records = new Map([
       ['schema.version', '3'],
@@ -132,6 +132,10 @@ describe('openUserState', () => {
         ['feed.seen.w_1', '4'],
         ['feed.seen.c_1', '4'],
         ['schema.version', '4'],
+      ]),
+      new Map([
+        ['installed', 'true'],
+        ['schema.version', '5'],
       ]),
     ]);
     expect(cycle.unseen()).toEqual({ words: ['w_2'], corrections: ['c_2'], idioms: [] });
