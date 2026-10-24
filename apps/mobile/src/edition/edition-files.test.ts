@@ -390,6 +390,7 @@ describe('the 0.7 account and email strings groups', () => {
     'wrong-code',
     'code-expired',
     'too-many-requests',
+    'refused',
     'unexpected',
   ])('needs a line for the problem %s', (problem) => {
     const problems = without(account['problems'], problem);

@@ -5,6 +5,7 @@ import type {
   AccountApi,
   AccountApiFailure,
   Clock,
+  GoogleSignInSheet,
   Random,
   RequestFailure,
   Schedule,
@@ -18,14 +19,25 @@ const RESEND_AFTER = 60_000;
 /** How long a check of the Session with the server holds, in milliseconds: an hour. */
 const CHECK_HOLDS = 60 * 60_000;
 
-/** Why the last request of the Account did not do what the reader asked. */
+/**
+ * Why the last request of the Account did not do what the reader asked.
+ * `refused` is a Google sign-in the backend refused: the token was not
+ * Google's, had expired, was for another app or named an email Google hasn't
+ * verified (ADR 0047).
+ */
 export type AccountProblem =
-  'offline' | 'invalid-email' | 'wrong-code' | 'code-expired' | 'too-many-requests' | 'unexpected';
+  | 'offline'
+  | 'invalid-email'
+  | 'wrong-code'
+  | 'code-expired'
+  | 'too-many-requests'
+  | 'refused'
+  | 'unexpected';
 
 /** The actions of the reader that make a request of the server, by name. */
 export type AccountRequest = keyof Pick<
   Account,
-  'requestCode' | 'resendCode' | 'verifyCode' | 'signOutEverywhere' | 'delete'
+  'requestCode' | 'resendCode' | 'verifyCode' | 'signInWithGoogle' | 'signOutEverywhere' | 'delete'
 >;
 
 /**
@@ -52,8 +64,8 @@ export type AccountState = (
 
 /**
  * The reader's Account («SLOVO ID») on this device, with every rule of
- * signing in, out and deleting it. While a request of the reader is in
- * flight no other starts, signing out aside. A request that fails with no answer or a server
+ * signing in, by a Sign-in code or with Google, out and deleting it. While a
+ * request of the reader is in flight no other starts, signing out aside. A request that fails with no answer or a server
  * error is tried again, at most 3 times, with backoff and jitter (ADR 0037).
  * Whenever the server says the Session has ended, the device forgets
  * it and shows signed out, with no problem. Nothing here touches the user
@@ -82,6 +94,14 @@ export interface Account {
    * the tries left.
    */
   verifyCode(code: string): Promise<void>;
+  /**
+   * Signs in with Google, when signed out: shows Google's sheet and sends the
+   * identity token it answers to the backend, which signs the email's one
+   * Account in, whatever Sign-in method made it (ADR 0047). The sheet counts
+   * as the request in flight. A sheet the reader cancels leaves the Account
+   * as it was, with no problem; a refused token is the problem `refused`.
+   */
+  signInWithGoogle(): Promise<void>;
   /**
    * Signs this device out at once, even offline, and tells the server; when
    * it can't, the next `refresh` tells it.
@@ -120,7 +140,7 @@ const unauthorized = (answer: Answer) => !answer.ok && answer.reason === 'unauth
  * The problem a failed request shows. A server that fails through every try
  * is out of reach, as when offline.
  */
-function problemOf(reason: RequestFailure['reason'] | 'code-expired'): AccountProblem {
+function problemOf(reason: RequestFailure['reason'] | 'code-expired' | 'refused'): AccountProblem {
   return reason === 'server-error' ? 'offline' : reason;
 }
 
@@ -139,12 +159,14 @@ const signedIn = (email: string): AccountState => ({
  */
 export async function openAccount({
   api,
+  googleSheet,
   sessions,
   clock,
   schedule,
   random,
 }: {
   api: AccountApi;
+  googleSheet: GoogleSignInSheet;
   sessions: SessionStore;
   clock: Clock;
   /** What failed requests wait by before they are tried again. */
@@ -184,6 +206,21 @@ export async function openAccount({
     return signedOut;
   }
 
+  /** Keeps the Session a sign-in started, and answers signed in. */
+  async function startSession(session: { token: string; email: string }): Promise<AccountState> {
+    await sessions.keep(session);
+    token = session.token;
+    checkedAt = clock.now().getTime();
+    return signedIn(session.email);
+  }
+
+  /** Clears the last problem and shows the action `name` in flight, when none is. */
+  function begin(name: AccountRequest): boolean {
+    if (state.inFlight !== undefined) return false;
+    change({ ...state, inFlight: name, problem: undefined });
+    return true;
+  }
+
   /**
    * Makes the request of the action `name`, none while another is in flight:
    * it clears the last problem, shows the action in flight, tries the request
@@ -196,9 +233,15 @@ export async function openAccount({
     call: () => Promise<A>,
     settle: (answer: Exclude<A, Unauthorized>) => AccountState | Promise<AccountState>,
   ): Promise<void> {
-    if (state.inFlight !== undefined) return;
+    if (begin(name)) await complete(call, settle);
+  }
+
+  /** The request of the action in flight, from its call to the state it settles in. */
+  async function complete<A extends Answer>(
+    call: () => Promise<A>,
+    settle: (answer: Exclude<A, Unauthorized>) => AccountState | Promise<AccountState>,
+  ): Promise<void> {
     const ended = endedSessions;
-    change({ ...state, inFlight: name, problem: undefined });
     let next: AccountState;
     try {
       const answer = await retried(call);
@@ -297,17 +340,37 @@ export async function openAccount({
         'verifyCode',
         () => api.verifyCode(sent.email, code),
         async (answer) => {
-          if (answer.ok) {
-            await sessions.keep({ token: answer.token, email: answer.email });
-            token = answer.token;
-            checkedAt = clock.now().getTime();
-            return signedIn(answer.email);
-          }
+          if (answer.ok) return startSession({ token: answer.token, email: answer.email });
           if (answer.reason === 'wrong-code') {
             return { ...sent, triesLeft: answer.triesLeft, problem: 'wrong-code' };
           }
           return { ...sent, problem: problemOf(answer.reason) };
         },
+      );
+    },
+    async signInWithGoogle() {
+      if (state.status !== 'signed-out' || !begin('signInWithGoogle')) return;
+      let shown: Awaited<ReturnType<GoogleSignInSheet['signIn']>>;
+      try {
+        shown = await googleSheet.signIn();
+      } catch (error) {
+        change({ ...state, inFlight: undefined });
+        throw error;
+      }
+      if (!shown.ok) {
+        change({
+          ...state,
+          inFlight: undefined,
+          problem: shown.reason === 'cancelled' ? undefined : shown.reason,
+        });
+        return;
+      }
+      await complete(
+        () => api.signInWithGoogle(shown.idToken),
+        (answer) =>
+          answer.ok
+            ? startSession({ token: answer.token, email: answer.email })
+            : { ...state, problem: problemOf(answer.reason) },
       );
     },
     async signOut() {

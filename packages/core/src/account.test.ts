@@ -8,7 +8,7 @@ import {
   type Random,
   type Schedule,
 } from './index';
-import { createFakeAccountApi } from './testing';
+import { createFakeAccountApi, createFakeGoogleSignInSheet } from './testing';
 import { fakeClock, randomOf } from './test-support';
 
 /** A schedule that runs what it is given at once and keeps each delay asked for. */
@@ -27,19 +27,21 @@ async function setup({
   random = randomOf(0.5),
 }: { kept?: KeptSession; random?: Random } = {}) {
   const api = createFakeAccountApi();
+  const googleSheet = createFakeGoogleSignInSheet();
   const sessions = createMemorySessionStore(kept);
   const time = fakeClock();
   const later = atOnce();
   const open = () =>
     openAccount({
       api,
+      googleSheet,
       sessions,
       clock: time.clock,
       schedule: later.schedule,
       random,
     });
   const account = await open();
-  return { account, api, sessions, time, delays: later.delays, open };
+  return { account, api, googleSheet, sessions, time, delays: later.delays, open };
 }
 
 describe('the Account', () => {
@@ -587,6 +589,179 @@ describe('the Account signed in', () => {
   });
 });
 
+describe('the Account signs in with Google', () => {
+  it('from signed out, through the sheet, and stays signed in', async () => {
+    const { account, api, googleSheet, sessions, open } = await setup();
+    googleSheet.signsIn('Anna@Mail.com');
+
+    await account.signInWithGoogle();
+
+    expect(account.state).toEqual({
+      status: 'signed-in',
+      email: 'anna@mail.com',
+      inFlight: undefined,
+      problem: undefined,
+    });
+    expect(api.calls).toEqual(['signInWithGoogle']);
+    expect(api.accounts).toEqual(['anna@mail.com']);
+    expect(await sessions.read()).toEqual({ token: 'session-1', email: 'anna@mail.com' });
+    const reopened = await open();
+    expect(reopened.state).toMatchObject({ status: 'signed-in', email: 'anna@mail.com' });
+  });
+
+  it('reaches the Account a Sign-in code made, and a code reaches the one Google made', async () => {
+    const { account, api, googleSheet } = await signedIn();
+    await account.signOut();
+    googleSheet.signsIn(anna.email);
+
+    await account.signInWithGoogle();
+    expect(account.state).toMatchObject({ status: 'signed-in', email: anna.email });
+    expect(api.accounts).toEqual([anna.email]);
+
+    await account.signOut();
+    await account.requestCode(anna.email);
+    await account.verifyCode('100002');
+    expect(account.state).toMatchObject({ status: 'signed-in', email: anna.email });
+    expect(api.accounts).toEqual([anna.email]);
+  });
+
+  it('stays signed out with no problem when the reader cancels the sheet', async () => {
+    const { account, api, googleSheet } = await setup();
+    googleSheet.cancels();
+
+    await account.signInWithGoogle();
+
+    expect(googleSheet.shown).toBe(1);
+    expect(api.calls).toEqual([]);
+    expect(account.state).toEqual({
+      status: 'signed-out',
+      inFlight: undefined,
+      problem: undefined,
+    });
+  });
+
+  it('says it is offline when the sheet finds no network, and signs in once it does', async () => {
+    const { account, googleSheet } = await setup();
+    googleSheet.fails('offline');
+    await account.signInWithGoogle();
+    expect(account.state).toEqual({
+      status: 'signed-out',
+      inFlight: undefined,
+      problem: 'offline',
+    });
+
+    googleSheet.signsIn(anna.email);
+    await account.signInWithGoogle();
+    expect(account.state).toMatchObject({ status: 'signed-in', problem: undefined });
+  });
+
+  it('says it is offline when no try with the token reaches the server', async () => {
+    const { account, api, googleSheet } = await setup();
+    googleSheet.signsIn(anna.email);
+    api.failNext('offline', 'offline', 'offline', 'offline');
+
+    await account.signInWithGoogle();
+
+    expect(api.calls).toEqual(Array<string>(4).fill('signInWithGoogle'));
+    expect(account.state).toEqual({
+      status: 'signed-out',
+      inFlight: undefined,
+      problem: 'offline',
+    });
+  });
+
+  it('says the sign-in was refused when the backend refuses the token, and makes no Account', async () => {
+    const { account, api, googleSheet } = await setup();
+    googleSheet.signsIn(anna.email, { verified: false });
+
+    await account.signInWithGoogle();
+
+    expect(api.calls).toEqual(['signInWithGoogle']);
+    expect(api.accounts).toEqual([]);
+    expect(account.state).toEqual({
+      status: 'signed-out',
+      inFlight: undefined,
+      problem: 'refused',
+    });
+  });
+
+  it('says there were too many requests when the backend holds the sign-in back', async () => {
+    const { account, api, googleSheet } = await setup();
+    googleSheet.signsIn(anna.email);
+    api.failNext('too-many-requests');
+
+    await account.signInWithGoogle();
+
+    expect(account.state).toMatchObject({ status: 'signed-out', problem: 'too-many-requests' });
+  });
+
+  it('says something went wrong when the sheet fails otherwise', async () => {
+    const { account, googleSheet } = await setup();
+    googleSheet.fails('unexpected');
+
+    await account.signInWithGoogle();
+
+    expect(account.state).toMatchObject({ status: 'signed-out', problem: 'unexpected' });
+  });
+
+  it('shows the sign-in in flight while the sheet is up, and starts no other request meanwhile', async () => {
+    const { account, api, googleSheet } = await setup();
+    let release: () => void = () => undefined;
+    const pending = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    googleSheet.signIn = async () => {
+      await pending;
+      return { ok: true, idToken: 'not-a-token' };
+    };
+
+    const signingIn = account.signInWithGoogle();
+    expect(account.state).toMatchObject({ status: 'signed-out', inFlight: 'signInWithGoogle' });
+
+    await account.requestCode(anna.email);
+    await account.signInWithGoogle();
+    expect(api.calls).toEqual([]);
+
+    release();
+    await signingIn;
+    expect(account.state).toMatchObject({ inFlight: undefined, problem: 'refused' });
+  });
+
+  it('opens no sheet once a Sign-in code is sent, nor while signed in', async () => {
+    const { account, googleSheet } = await setup();
+    await account.requestCode(anna.email);
+    await account.signInWithGoogle();
+    expect(googleSheet.shown).toBe(0);
+
+    await account.verifyCode('100001');
+    await account.signInWithGoogle();
+    expect(googleSheet.shown).toBe(0);
+  });
+
+  it('signs out, signs out everywhere and deletes the Account as after a Sign-in code', async () => {
+    const { account, api, googleSheet, sessions } = await setup();
+    googleSheet.signsIn(anna.email);
+    await account.signInWithGoogle();
+
+    await account.signOut();
+    expect(account.state).toMatchObject({ status: 'signed-out', problem: undefined });
+    expect(await sessions.read()).toBeUndefined();
+    expect(api.sessionTokens).toEqual([]);
+
+    googleSheet.signsIn(anna.email);
+    await account.signInWithGoogle();
+    await account.signOutEverywhere();
+    expect(account.state).toMatchObject({ status: 'signed-out', problem: undefined });
+    expect(api.sessionTokens).toEqual([]);
+
+    googleSheet.signsIn(anna.email);
+    await account.signInWithGoogle();
+    await account.delete();
+    expect(account.state).toMatchObject({ status: 'signed-out', problem: undefined });
+    expect(api.accounts).toEqual([]);
+  });
+});
+
 describe('the Account tries a request again', () => {
   it('on no answer and a server error, waiting twice as long each time', async () => {
     const { account, api, delays } = await setup();
@@ -676,14 +851,14 @@ describe('the Account and the user state', () => {
     ]);
     const userState = createMemoryUserStatePort(records);
     const before = await userState.list('');
-    const { account } = await signedIn();
+    const { account, googleSheet } = await signedIn();
 
     await account.signOut();
     await account.requestCode(anna.email);
     await account.verifyCode('100002');
     await account.signOutEverywhere();
-    await account.requestCode(anna.email);
-    await account.verifyCode('100003');
+    googleSheet.signsIn(anna.email);
+    await account.signInWithGoogle();
     await account.delete();
 
     expect(await userState.list('')).toEqual(before);

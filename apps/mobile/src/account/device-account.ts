@@ -7,6 +7,7 @@ import { nativeModules } from '../device/device-native-modules';
 import { edition } from '../edition/edition';
 import { openOnce, type Opening } from '../opening';
 import { createAccountApi } from './account-api';
+import { googleSignInSheet } from './google-sign-in-sheet';
 import { createSessionStore } from './session-store';
 
 /**
@@ -36,6 +37,7 @@ export const accountOpening: Opening<Account> | undefined = edition.isFeatureEna
             clientOf: apiClientOf,
             editionId: edition.id,
           }),
+          googleSheet: googleSignInSheet,
           sessions: createSessionStore(keychain),
           clock: deviceClock,
           schedule: systemSchedule,

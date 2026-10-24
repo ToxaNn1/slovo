@@ -12,7 +12,7 @@ import {
   type Schedule,
   type UserStateChanges,
 } from '../index';
-import { createFakeAccountApi, createFakeSyncApi } from '../testing';
+import { createFakeAccountApi, createFakeGoogleSignInSheet, createFakeSyncApi } from '../testing';
 import { SYNC_AFTER_WRITE } from './sync';
 import { fakeClock, randomOf } from '../test-support';
 
@@ -76,6 +76,7 @@ async function device({
     return Promise.resolve({ ok: false, reason: 'offline' } as const);
   };
   const accountApi = createFakeAccountApi();
+  const googleSheet = createFakeGoogleSignInSheet();
   const records = new Map<string, string>();
   /** Which writes the device's store refuses: none, unless the test says. */
   const disk = { refuses: (_changes: UserStateChanges) => false };
@@ -92,6 +93,7 @@ async function device({
   });
   const account = await openAccount({
     api: accountApi,
+    googleSheet,
     sessions: createMemorySessionStore(
       signedIn ? { token: 'a-session', email: 'anna@mail.com' } : undefined,
     ),
@@ -121,6 +123,7 @@ async function device({
     server,
     account,
     accountApi,
+    googleSheet,
     userState,
     records,
     time,
@@ -208,6 +211,21 @@ describe('Sync syncs', () => {
 
     await account.requestCode('anna@mail.com');
     await account.verifyCode('100001');
+    await advance(0);
+
+    expect(syncs()).toBe(1);
+    expect(server.records.has('favorites.w_one')).toBe(true);
+  });
+
+  it('when a Session starts with Google in the foreground, so the first Google sign-in merges the device’s user state', async () => {
+    const { sync, account, googleSheet, server, addFavorite, advance, syncs } = await device({
+      signedIn: false,
+    });
+    await addFavorite('w_one');
+    sync.foreground();
+    googleSheet.signsIn('anna@mail.com');
+
+    await account.signInWithGoogle();
     await advance(0);
 
     expect(syncs()).toBe(1);
@@ -500,6 +518,7 @@ describe('Sync and the end of a Session', () => {
       api: createFakeSyncApi({ clock: time.clock }),
       account: await openAccount({
         api: createFakeAccountApi(),
+        googleSheet: createFakeGoogleSignInSheet(),
         sessions: createMemorySessionStore(),
         clock: time.clock,
         schedule: testSchedule(time).schedule,

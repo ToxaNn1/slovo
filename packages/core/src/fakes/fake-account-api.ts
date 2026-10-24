@@ -1,4 +1,5 @@
 import type { AccountApi, AccountApiFailure } from '../ports';
+import { fakeGoogleIdentityOf } from './fake-google-sign-in-sheet';
 
 /** How many tries a Sign-in code of the fake allows, as the backend's do. */
 const CODE_TRIES = 5;
@@ -11,8 +12,9 @@ export interface SentCode {
 
 /**
  * An Account API for tests that answers like the backend, in memory: it
- * sends Sign-in codes to a mailbox the test reads, creates an Account on its
- * first right code, and keeps Sessions by token.
+ * sends Sign-in codes to a mailbox the test reads, takes the Google identity
+ * tokens of the fake Google sign-in sheet, creates an Account on the first
+ * sign-in of its email, and keeps Sessions by token.
  */
 export interface FakeAccountApi extends AccountApi {
   /** The Sign-in codes sent, oldest first. */
@@ -73,6 +75,15 @@ export function createFakeAccountApi(): FakeAccountApi {
     return act(email);
   }
 
+  /** Signs the email in: its Account, created at its first sign-in, gets a new Session. */
+  function startSession(email: string) {
+    accounts.add(email);
+    sessionCount += 1;
+    const token = `session-${String(sessionCount)}`;
+    sessions.set(token, email);
+    return { ok: true, token, email } as const;
+  }
+
   function endSessionsOf(email: string): void {
     for (const [token, owner] of sessions) if (owner === email) sessions.delete(token);
   }
@@ -125,11 +136,14 @@ export function createFakeAccountApi(): FakeAccountApi {
         return { ok: false, reason: 'wrong-code', triesLeft: live.triesLeft };
       }
       codes.delete(email);
-      accounts.add(email);
-      sessionCount += 1;
-      const token = `session-${String(sessionCount)}`;
-      sessions.set(token, email);
-      return { ok: true, token, email };
+      return startSession(email);
+    },
+    async signInWithGoogle(idToken) {
+      const failure = await arrive('signInWithGoogle');
+      if (failure !== undefined) return failure;
+      const identity = fakeGoogleIdentityOf(idToken);
+      if (identity?.verified !== true) return { ok: false, reason: 'refused' };
+      return startSession(identity.email.trim().toLowerCase());
     },
     me: (token) => withSession('me', token, (email) => ({ ok: true, email }) as const),
     signOut: (token) =>

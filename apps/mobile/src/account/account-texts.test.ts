@@ -1,5 +1,5 @@
 import { createMemorySessionStore, openAccount, systemRandom, type Account } from '@slovo/core';
-import { createFakeAccountApi } from '@slovo/core/testing';
+import { createFakeAccountApi, createFakeGoogleSignInSheet } from '@slovo/core/testing';
 import { describe, expect, it } from 'vitest';
 
 import { accountProblemLine, accountSummary } from './account-texts';
@@ -9,6 +9,7 @@ async function open() {
   const api = createFakeAccountApi();
   const account = await openAccount({
     api,
+    googleSheet: createFakeGoogleSignInSheet(),
     sessions: createMemorySessionStore(),
     clock: fakeClock().clock,
     schedule: (run) => {

@@ -105,6 +105,7 @@ export {
   type AccountApiFailure,
   type Clock,
   type ContentReadPort,
+  type GoogleSignInSheet,
   type KeptSession,
   type NotificationPermission,
   type NotificationSchedulerPort,

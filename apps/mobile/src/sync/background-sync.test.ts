@@ -14,6 +14,7 @@ import {
 } from '@slovo/core';
 import {
   createFakeAccountApi,
+  createFakeGoogleSignInSheet,
   createFakeNotificationScheduler,
   createFakeSyncApi,
   createMemoryContentPort,
@@ -82,6 +83,7 @@ async function app() {
   });
   const account = await openAccount({
     api: createFakeAccountApi(),
+    googleSheet: createFakeGoogleSignInSheet(),
     sessions: createMemorySessionStore({ token: 'a-session', email: 'anna@mail.com' }),
     clock: time.clock,
     schedule,
