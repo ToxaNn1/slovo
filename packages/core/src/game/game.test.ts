@@ -542,6 +542,41 @@ describe('the idioms «Вгадай слово» asks about', () => {
     expect(played.filter(({ entry }) => unknown.includes(entry.id))).toHaveLength(3);
   });
 
+  it('asks an idiom due for Review today along with the Words in History', async () => {
+    const history = historyOf(numbered('w_nnoun', 14).concat('w_snoun03'));
+    const due = userStateRecords.knowledge
+      .record('i_idiom01')
+      .change({ mark: 'known', step: 3, reviewDay: '2026-10-11', learned: false }) as Map<
+      string,
+      string
+    >;
+    const runOver = (records: Map<string, string>) =>
+      run({
+        pack: createMemoryContentPort({ categories, words, idioms }),
+        on: ['knowledge', 'idioms'],
+        records,
+      });
+
+    const before = await playAll(await runOver(new Map(history)));
+    const after = await playAll(await runOver(new Map([...history, ...due])));
+
+    expect(before.map(({ entry }) => entry.kind)).not.toContain('idiom');
+    expect(after.map(({ entry }) => entry.id)).toContain('i_idiom01');
+  });
+
+  it('never offers a Hidden idiom as a Distractor, whatever the draw', async () => {
+    const hidden = ['i_idiom01', 'i_idiom02'];
+    for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
+      const app = await runWith({ idioms }, undefined, seed);
+      for (const entryId of hidden) await app.hide({ kind: 'entry', entryId });
+
+      const played = await playAll(app);
+
+      const shown = played.flatMap((round) => [round.entry, ...offered(round)]).map(({ id }) => id);
+      expect(shown.filter((id) => hidden.includes(id))).toEqual([]);
+    }
+  });
+
   it('marks the idiom of a wrong answer «Не знаю»', async () => {
     const app = await runWith({ idioms });
     await app.game.start('guess-word');
