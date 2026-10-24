@@ -1,0 +1,62 @@
+# Review: an Entry the reader marked Unknown on an earlier day comes back. The
+# «Вчу» list leads with it, «сьогодні»; its Entry screen shows the label
+# «Повторення» and no mark, and «Не знаю» answers the Review: the mark shows,
+# the label stays, and the Entry moves to «завтра».
+# A subflow of `smoke.yaml`; run it from there. The app's clock is the
+# simulator's, so a Review is due only on a day after the marks of an earlier
+# run (`knowledge-marks.yaml` and the Game's mistakes leave Unknown Entries for
+# the next day). On an app with none due, as after a fresh install, the flow
+# only checks that the Saved tab shows the «Вчу» card.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- tapOn:
+    id: tab-saved
+- scrollUntilVisible:
+    element:
+      id: saved-learning
+- tapOn:
+    id: saved-learning
+- assertVisible:
+    id: learning
+- runFlow:
+    when:
+      visible:
+        id: learning-row-.*-open
+        text: '.*, сьогодні'
+    commands:
+      - takeScreenshot: review-learning-due
+      - tapOn:
+          id: learning-row-.*-open
+          text: '.*, сьогодні'
+      - assertVisible:
+          id: entry-screen
+      - assertVisible:
+          id: review-label
+          text: Повторення
+      # The buttons sit under the card, which may be taller than the screen.
+      - scrollUntilVisible:
+          element:
+            id: knowledge-unknown
+      - waitForAnimationToEnd
+      # A due Entry's card shows no mark: either button is an answer.
+      - assertVisible:
+          id: knowledge-known
+          selected: false
+      - assertVisible:
+          id: knowledge-unknown
+          selected: false
+      - takeScreenshot: review-entry-due
+      # «Не знаю» on a Review starts it again at 1 day.
+      - tapOn:
+          id: knowledge-unknown
+      - assertVisible:
+          id: knowledge-unknown
+          selected: true
+      - tapOn:
+          id: entry-screen-back
+      - assertVisible:
+          id: learning
+- tapOn:
+    id: learning-back
+- assertVisible:
+    id: saved

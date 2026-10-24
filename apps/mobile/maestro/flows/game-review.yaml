@@ -1,0 +1,118 @@
+# The Game Review: a Game of «Вгадай слово» played to its end lists every
+# Round under the result, ✓ or ✗. A tap expands a Round, a second tap opens
+# its Entry, and an Entry the reader got wrong is marked «Не знаю».
+# A subflow of `smoke.yaml`; run it from there. It starts on any screen of the
+# Game tab: a Game kept in memory is left first. It leaves the Feed.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- tapOn:
+    id: tab-game
+- runFlow:
+    when:
+      visible:
+        id: game-exit
+    commands:
+      - tapOn:
+          id: game-exit
+      - tapOn:
+          id: game-exit-dialog-destructive
+- runFlow:
+    when:
+      visible:
+        id: game-result
+    commands:
+      - scrollUntilVisible:
+          element:
+            id: game-home
+          direction: UP
+      - tapOn:
+          id: game-home
+      - tapOn:
+          id: tab-game
+- assertVisible:
+    id: game-modes
+- tapOn:
+    id: game-mode-guess-word
+- assertVisible:
+    id: game-round
+# At most 15 Rounds; five wrong answers end the Game sooner, so the first
+# option of every Round leaves at least one wrong answer all but surely. Each
+# scroll brings its target up at the largest text sizes and does nothing
+# otherwise.
+- repeat:
+    while:
+      notVisible:
+        id: game-result
+    times: 15
+    commands:
+      - scrollUntilVisible:
+          element:
+            id: game-option-0
+          direction: DOWN
+      - tapOn:
+          id: game-option-0
+      - assertVisible:
+          id: game-sheet-title
+      - scrollUntilVisible:
+          element:
+            id: game-next
+          direction: DOWN
+      # One tap: a second one, while the sheet slides away, would land on the tab bar.
+      - tapOn:
+          id: game-next
+          retryTapIfNoChange: false
+      - waitForAnimationToEnd
+- assertVisible:
+    id: game-result
+# The Review lists the Rounds in order, the first one first.
+- scrollUntilVisible:
+    element:
+      id: game-review
+- scrollUntilVisible:
+    element:
+      id: game-review-row-1
+- assertVisible:
+    id: game-review-row-1
+    text: '1, .+, (правильно|помилка.*)'
+- takeScreenshot: game-review
+# A wrong Round names the reader's pick. A tap expands it.
+- scrollUntilVisible:
+    element:
+      id: game-review-row-.*
+      text: '\d+, .+, помилка, Ваш вибір: .+'
+    centerElement: true
+- assertNotVisible:
+    id: game-review-details
+- tapOn:
+    id: game-review-row-.*
+    text: '\d+, .+, помилка, Ваш вибір: .+'
+- assertVisible:
+    id: game-review-details
+- takeScreenshot: game-review-expanded
+# A second tap opens its Entry, which the mistake marked «Не знаю».
+- tapOn:
+    id: game-review-row-.*
+    text: '\d+, .+, помилка, Ваш вибір: .+'
+- assertVisible:
+    id: entry-screen
+- scrollUntilVisible:
+    element:
+      id: knowledge-unknown
+- waitForAnimationToEnd
+- assertVisible:
+    id: knowledge-unknown
+    selected: true
+- takeScreenshot: game-review-entry
+# Back to the result, with the Review as it was.
+- tapOn:
+    id: entry-screen-back
+- assertVisible:
+    id: game-review
+- scrollUntilVisible:
+    element:
+      id: game-home
+    direction: UP
+- tapOn:
+    id: game-home
+- assertVisible:
+    id: home
