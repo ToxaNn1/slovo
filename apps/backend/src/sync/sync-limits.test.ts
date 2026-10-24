@@ -81,6 +81,50 @@ describe('a record of a push', () => {
   });
 });
 
+/** The value of a record as the client types it. */
+type RecordValue = Parameters<ApiClient['sync']['push']>[0]['changes'][number]['value'];
+
+/** A JSON value of arrays nested `depth` levels deep, as JSON.parse reads it. */
+const nested = (depth: number) => JSON.parse('['.repeat(depth) + ']'.repeat(depth)) as RecordValue;
+
+describe('a record of a push with a value nested deeper than 32 levels', () => {
+  it('is BAD_REQUEST, and nothing of the push is kept or reported', async () => {
+    const { signIn, reports } = syncing();
+    const { device } = await signIn();
+    const now = Date.now();
+    const fits = { key: 'notes.deep', value: nested(32), changedAt: now };
+
+    for (const over of [nested(33), { text: nested(32) }]) {
+      await expect(
+        device.sync.push({
+          editionId: 'uk',
+          changes: [fits, { key: 'notes.over', value: over, changedAt: now }],
+        }),
+      ).rejects.toMatchObject(badRequest);
+    }
+    expect(reports).toEqual([]);
+    await expect(pullAll(device)).resolves.toMatchObject({ records: [] });
+    await expect(device.sync.push({ editionId: 'uk', changes: [fits] })).resolves.toEqual({});
+  });
+
+  it('is BAD_REQUEST, not a failure, when it is thousands of levels deep, which no client of the API sends', async () => {
+    const { signIn, request, reports } = syncing();
+    const { token } = await signIn();
+    // The app's client can't even write a value this deep; a flood of them comes from a script.
+    const body = `{"changes":[{"key":"notes.over","value":${'['.repeat(3000)}${']'.repeat(3000)},"changedAt":0}]}`;
+
+    const response = await request('/v1/editions/uk/records', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+      body,
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject(badRequest);
+    expect(reports).toEqual([]);
+  });
+});
+
 describe('the largest push', () => {
   it('fits under the limit of a request body', async () => {
     const { signIn } = syncing();

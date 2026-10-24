@@ -7,11 +7,43 @@ import { signedIn } from './procedure';
 /** The key of a record of the user state, as the app's Core names it. */
 const RecordKeySchema = z.string().min(1);
 
+/** How many levels of arrays and objects a record value may nest. */
+const VALUE_DEPTH = 32;
+
+/**
+ * How many levels of arrays and objects the value nests, with a loop rather
+ * than recursion, so a value of any depth is counted on a fixed stack.
+ */
+function depthOf(value: unknown): number {
+  let deepest = 0;
+  const open: { readonly node: unknown; readonly depth: number }[] = [{ node: value, depth: 0 }];
+  for (let next = open.pop(); next !== undefined; next = open.pop()) {
+    const { node, depth } = next;
+    if (typeof node !== 'object' || node === null) continue;
+    deepest = Math.max(deepest, depth + 1);
+    for (const child of Object.values(node)) open.push({ node: child, depth: depth + 1 });
+  }
+  return deepest;
+}
+
+type JsonValue = z.output<ReturnType<typeof z.json>>;
+
 /**
  * The value of a record as JSON, or `null` for a tombstone: the record is
- * deleted. The backend keeps it without reading it (ADR 0041).
+ * deleted. The backend keeps it without reading it (ADR 0041). It nests at
+ * most 32 levels deep: Zod checks JSON by recursion, and a value nested a few
+ * thousand levels deep would overflow the stack, so the depth is counted
+ * first, and a value too deep is refused as any other wrong field.
  */
-const RecordValueSchema = z.json();
+const RecordValueSchema = z.preprocess((value: JsonValue, context) => {
+  if (depthOf(value) > VALUE_DEPTH) {
+    context.addIssue({
+      code: 'custom',
+      message: `nests deeper than ${String(VALUE_DEPTH)} levels`,
+    });
+  }
+  return value;
+}, z.json());
 
 /**
  * When the app's Core wrote the change, in milliseconds since 1970-01-01 UTC,
@@ -54,7 +86,7 @@ export const syncContract = {
       path: '/editions/{editionId}/records',
       summary: "Keep a device's changes of its records",
       description:
-        "Each change replaces the record kept under its key only when its change time is later; a change time later than the server's own time counts as the server's. A change that is not later is ignored without an error: the next pull answers the record kept. A key has at most 200 characters and a value at most 8 KB as compact JSON in UTF-8; a push with one over is BAD_REQUEST. An Account keeps at most 20 000 records in an Edition, tombstones included; a push that would go over is TOO_MANY_RECORDS. Either is refused whole.",
+        "Each change replaces the record kept under its key only when its change time is later; a change time later than the server's own time counts as the server's. A change that is not later is ignored without an error: the next pull answers the record kept. A key has at most 200 characters and a value at most 8 KB as compact JSON in UTF-8, nested at most 32 levels deep; a push with one over is BAD_REQUEST. An Account keeps at most 20 000 records in an Edition, tombstones included; a push that would go over is TOO_MANY_RECORDS. Either is refused whole.",
       tags: ['sync'],
     })
     .errors({
