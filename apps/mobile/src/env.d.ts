@@ -5,5 +5,7 @@ declare namespace NodeJS {
     readonly EXPO_PUBLIC_SLOVO_API_URL?: string;
     /** The app's OAuth client id for iOS at Google; without it «Увійти через Google» stays hidden (ADR 0047). */
     readonly EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID?: string;
+    /** The DSN of the app's project at Sentry; unset, the app reports no crashes. */
+    readonly EXPO_PUBLIC_SENTRY_DSN?: string;
   }
 }

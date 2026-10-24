@@ -6,8 +6,11 @@ packages:
 
 # Dependencies allowed to run install scripts. esbuild (used by tsx) ships its
 # binary in a platform package, so its postinstall check isn't needed.
+# @sentry/cli (via @sentry/react-native) downloads its binary to upload source
+# maps and debug files, which the app's builds don't do.
 allowBuilds:
   esbuild: false
+  '@sentry/cli': false
 
 # Peers that pnpm installs on its own, pinned to the versions Expo SDK 57
 # expects (see expo/bundledNativeModules.json).
