@@ -55,3 +55,7 @@ The shell still tells the Feed only which card is on screen, or that none is. It
 ## Amendment: the Feed's next card can be a due Entry (0.8.6)
 
 The Feed's rule for the next card gains the Review slots of ADR 0043: a due Word in every 3rd Word slot, a due Correction in the Correction slot before a new one, and a due Entry stays due until the reader marks it. A Review overrides Seen. The shell still tells the Feed only which card is on screen, or that none is.
+
+## Amendment: a new day keeps the Cycle while a Correction or an Idiom is unseen (0.8.9, #623)
+
+The Cycle ends only when every eligible Word, Correction and Idiom in it is Seen, also on a new day: when every Word is Seen but another kind isn't, the Word of the Day takes a Seen Word, the next in the Cycle order after the day before's, and only the Feed's end-of-Cycle card starts a new Cycle.
