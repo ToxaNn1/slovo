@@ -18,7 +18,7 @@
     "test": "vitest run && jest"
   },
   "devDependencies": {
-    "@jest/globals": "29.7.0",
+    "@jest/globals": "30.5.2",
     "@react-native/jest-preset": "0.86.3",
     "@slovo/config": "workspace:*",
     "@testing-library/react-native": "14.1.0",
