@@ -493,6 +493,27 @@ describe('a Sync procedure', () => {
     },
   );
 
+  it('refuses a request without a Session before it reads the body: a deep value or a bad field is UNAUTHORIZED, not BAD_REQUEST', async () => {
+    const { client, request, reports } = syncing();
+    const unauthorized = { code: 'UNAUTHORIZED', status: 401, defined: true };
+    // A value nested thousands of levels deep, which only a script sends.
+    const deep = await request('/v1/editions/uk/records', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: `{"changes":[{"key":"favorites.aa","value":${'['.repeat(3000)}${']'.repeat(3000)},"changedAt":0}]}`,
+    });
+
+    expect(deep.status).toBe(401);
+    await expect(deep.json()).resolves.toMatchObject(unauthorized);
+    await expect(
+      client.sync.push({ editionId: 'uk', changes: [{ key: '' }] } as never),
+    ).rejects.toMatchObject(unauthorized);
+    await expect(client.sync.pull({ editionId: 'uk', after: -1 })).rejects.toMatchObject(
+      unauthorized,
+    );
+    expect(reports).toEqual([]);
+  });
+
   it.each(Object.entries(syncProcedures))(
     '%s is NOT_FOUND in an Edition the backend did not find',
     async (_, run) => {

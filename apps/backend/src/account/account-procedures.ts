@@ -16,7 +16,10 @@ interface AccountContext {
 
 /** The Account procedures of the contract, over the server Core's Accounts. */
 export function accountProcedures(accounts: Accounts) {
-  const account = implement(apiContract.account).$context<AccountContext>();
+  const account = implement(apiContract.account)
+    .$context<AccountContext>()
+    // The Session gate runs before the input is read, as in the Sync procedures.
+    .$config({ initialInputValidationIndex: Number.POSITIVE_INFINITY });
 
   const signedIn = sessionGate(accounts);
 

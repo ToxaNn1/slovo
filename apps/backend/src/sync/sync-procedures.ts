@@ -14,7 +14,11 @@ interface SyncContext {
 
 /** The Sync procedures of the contract, over the server Core's Sync. */
 export function syncProcedures(sync: Sync, accounts: Accounts) {
-  const records = implement(apiContract.sync).$context<SyncContext>();
+  const records = implement(apiContract.sync)
+    .$context<SyncContext>()
+    // The Session gate runs before the input is read: oRPC validates the
+    // input before the middlewares a procedure adds unless told otherwise.
+    .$config({ initialInputValidationIndex: Number.POSITIVE_INFINITY });
   const signedIn = sessionGate(accounts);
   return records.router({
     push: records.push.use(signedIn).handler(async ({ input, context, errors }) => {
