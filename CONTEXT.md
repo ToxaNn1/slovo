@@ -57,11 +57,11 @@ The stressed vowel position(s) of a Lemma; a Lemma may have more than one valid 
 _Avoid_: Accent
 
 **Definition**:
-The explanation of one meaning of a Word, written in the Edition's language. A Word has one primary Definition and may have more.
+The explanation of one meaning of a Word or an Idiom, written in the Edition's language. A Word or an Idiom has one primary Definition and may have more.
 _Avoid_: Description, meaning, explanation
 
 **Example**:
-A sentence showing the Word in use.
+A sentence showing a Word or an Idiom in use.
 _Avoid_: Usage, sample
 
 **Synonym**:
@@ -76,7 +76,7 @@ A thematic group a Word belongs to (e.g. human body, emotions, military).
 _Avoid_: Topic, tag, theme
 
 **Rare Word**:
-The editorial standard for every Word: a normative dictionary word that an educated native speaker most likely doesn't know or hardly uses, but is worth knowing. It excludes obscene words, surzhyk and russianisms, narrow jargon and proper names; an old, witty dictionary insult marked «лайл.» or «зневажл.» (e.g. бевзь, телепень) is a Rare Word, an obscene word never is. A dialect Word, with the dialectal register label («діал.») and its Region, is a Rare Word too when a normative dictionary (e.g. СУМ, Грінченко) or a dialect dictionary that names the Region lists it. Each Word carries a rarity from 1 ("heard it, never use it") to 5 ("almost nobody knows it").
+The editorial standard for every Word: a normative dictionary word that an educated native speaker most likely doesn't know or hardly uses, but is worth knowing. It excludes obscene words, surzhyk and russianisms, narrow jargon and proper names; an old, witty dictionary insult marked «лайл.» or «зневажл.» (e.g. бевзь, телепень) is a Rare Word, an obscene word never is. A place name is not a Word: it is an Idiom of Idiom Type `placeName`. A dialect Word, with the dialectal register label («діал.») and its Region, is a Rare Word too when a normative dictionary (e.g. СУМ, Грінченко) or a dialect dictionary that names the Region lists it. Each Word carries a rarity from 1 ("heard it, never use it") to 5 ("almost nobody knows it").
 
 **Correction**:
 A non-standard form people commonly use (often a phrase) paired with one or more standard equivalents in the Edition's language, plus a short neutral explanation, e.g. «на протязі року» → «протягом року». A Core concept; each Edition supplies its own Corrections. A Word may point to the Corrections it is the standard form for (протягом → «на протязі»), so each is reachable from the other without duplicating data.
@@ -102,7 +102,7 @@ An Idiom withdrawn from the Language Pack. Like a Retired Word, it never appears
 _Avoid_: Deleted idiom
 
 **Entry card**:
-How the app shows one Entry: a Word card or a Correction card in the same frame, with the action row (heart, Collections, share, hide) under it. The Feed and every screen that opens a kept Entry show the same Entry card.
+How the app shows one Entry: a Word card, a Correction card or an Idiom card in the same frame, with the action row (heart, Collections, share, hide) under it. The Feed and every screen that opens a kept Entry show the same Entry card.
 _Avoid_: Item, tile (for a card; a tile is the motif Decor slot 1 repeats)
 
 ### User's words
@@ -192,7 +192,7 @@ The set of Categories, plus Corrections as a whole and Idioms as a whole, that t
 _Avoid_: Filter, preferences
 
 **Rarity Floor**:
-The lowest rarity of Words the reader wants, «від 1» to «від 5», default «від 1». Only Words of that rarity or rarer are eligible, in the Feed and the Game, so a high floor leaves only the rarest Words. Corrections have no rarity and are not affected. Part of the Mix.
+The lowest rarity of Words the reader wants, «від 1» to «від 5», default «від 1». Only Words of that rarity or rarer are eligible, in the Feed and the Game, so a high floor leaves only the rarest Words. Corrections and Idioms have no rarity and are not affected. Part of the Mix.
 _Avoid_: Difficulty, level
 
 **Hidden Entry**:

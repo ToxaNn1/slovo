@@ -108,7 +108,7 @@ export const FeatureSwitchesSchema = z.strictObject({
   wordOfTheDay: z.boolean(),
   /** The statistics screens and the Streak. */
   statistics: z.boolean(),
-  /** Knowledge Marks: the Known / Unknown marks on Words and Corrections, and the Review they feed. */
+  /** Knowledge Marks: the Known / Unknown marks on Words, Corrections and Idioms, and the Review they feed. */
   knowledge: z.boolean(),
   /** Self-check: the setting that hides a card's meaning until the reader reveals it. */
   selfCheck: z.boolean(),
