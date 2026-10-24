@@ -38,8 +38,8 @@ afterAll(() => {
 });
 
 describe('the stress traps of the Ukrainian Language Pack', () => {
-  it('holds wrong-stress Corrections', () => {
-    expect(stressTraps.length).toBeGreaterThan(0);
+  it('holds at least 15 wrong-stress Corrections', () => {
+    expect(stressTraps.length).toBeGreaterThanOrEqual(15);
   });
 
   it('keeps the Stress mark in both forms and in the example pair of each', () => {
