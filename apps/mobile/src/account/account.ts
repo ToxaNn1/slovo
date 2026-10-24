@@ -1,4 +1,4 @@
-import type { Account, AccountState } from '@slovo/core';
+import type { Account, AccountState, Edition } from '@slovo/core';
 import { useEdition } from '@slovo/ui';
 
 import { editionStrings } from '../edition/edition';
@@ -6,6 +6,7 @@ import { useEditionInEffect } from '../edition/remote-switches';
 import { useSubscribed, type Opening, type Source } from '../opening';
 import { accountOpening } from './device-account';
 import { accountProblemLine, accountSummary } from './account-texts';
+import { googleClientId } from './google-sign-in-sheet';
 
 /**
  * The opening of the Account while its switch is on in effect, so its row and
@@ -14,6 +15,19 @@ import { accountProblemLine, accountSummary } from './account-texts';
  */
 export function useAccountInEffect(): Opening<Account> | undefined {
   return useEditionInEffect().isFeatureEnabled('account') ? accountOpening : undefined;
+}
+
+/** What the SLOVO ID screen offers Google sign-in by: the Edition's switch in effect and the build's client id. */
+export interface AccountScreenGoogle {
+  /** The Edition as the app runs it, its `googleSignIn` switch at its effective value. */
+  readonly edition: Edition;
+  /** The build's Google client id, if it has one. */
+  readonly clientId: string | undefined;
+}
+
+/** What the SLOVO ID screen offers Google sign-in by on this device: the switch in effect and the build's client id. */
+export function useAccountScreenGoogle(): AccountScreenGoogle {
+  return { edition: useEditionInEffect(), clientId: googleClientId };
 }
 
 /** The Account as it stands, or undefined while it opens or when it failed to. */

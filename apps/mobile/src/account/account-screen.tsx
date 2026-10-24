@@ -4,6 +4,7 @@ import {
   BackLink,
   DeleteAccountButton,
   fill,
+  GoogleSignInButton,
   PrimaryButton,
   ProblemLine,
   ResendButton,
@@ -24,7 +25,7 @@ import { editionStrings } from '../edition/edition';
 import { Opened } from '../opened';
 import { useOpened, type Opening } from '../opening';
 import { SyncStatusLine } from '../sync/sync-status-line';
-import { useAccountProblemLine, useAccountState } from './account';
+import { useAccountProblemLine, useAccountState, type AccountScreenGoogle } from './account';
 
 const strings = editionStrings.account;
 
@@ -51,7 +52,8 @@ export interface AccountScreenBack {
 
 /**
  * The SLOVO ID screen, of Settings and of the onboarding's SLOVO ID step:
- * signing in with a Sign-in code sent to the email, or, signed in, the email
+ * signing in with Google, while the Edition's switch is on and the build has
+ * its Google client id, or with a Sign-in code sent to the email, or, signed in, the email
  * with signing out, signing out everywhere and deleting the Account behind the
  * SLOVO confirmation dialog. It draws the Account's state and calls its actions; the rules
  * are the Account's own.
@@ -59,18 +61,28 @@ export interface AccountScreenBack {
 export function AccountScreen({
   opening,
   back,
+  google,
 }: {
   opening: Opening<Account>;
   back: AccountScreenBack;
+  google: AccountScreenGoogle;
 }) {
   return (
     <Opened opening={opening} failedTestID="account-failed">
-      <AccountContent opening={opening} back={back} />
+      <AccountContent opening={opening} back={back} google={google} />
     </Opened>
   );
 }
 
-function AccountContent({ opening, back }: { opening: Opening<Account>; back: AccountScreenBack }) {
+function AccountContent({
+  opening,
+  back,
+  google,
+}: {
+  opening: Opening<Account>;
+  back: AccountScreenBack;
+  google: AccountScreenGoogle;
+}) {
   const account = useOpened(opening);
   const state = useAccountState(account);
   const problem = useAccountProblemLine(state);
@@ -99,7 +111,14 @@ function AccountContent({ opening, back }: { opening: Opening<Account>; back: Ac
         {state.status === 'signed-in' ? (
           <SignedIn account={account} state={state} problem={problem} />
         ) : (
-          <SignIn account={account} state={state} problem={problem} />
+          <SignIn
+            account={account}
+            state={state}
+            problem={problem}
+            withGoogle={
+              google.edition.isFeatureEnabled('googleSignIn') && google.clientId !== undefined
+            }
+          />
         )}
       </ScrollView>
     </SafeAreaView>
@@ -109,7 +128,8 @@ function AccountContent({ opening, back }: { opening: Opening<Account>; back: Ac
 type StateOf<S extends AccountState['status']> = Extract<AccountState, { status: S }>;
 
 /**
- * Signed out: the email field and «Надіслати код». Once the code is sent, the
+ * Signed out: «Увійти через Google» when it is offered, then the email field
+ * and «Надіслати код». Once the code is sent, the
  * email stays over the code field, which signs in as soon as it holds the
  * code, with «Надіслати ще раз» and «Змінити пошту» under it.
  */
@@ -117,10 +137,13 @@ function SignIn({
   account,
   state,
   problem,
+  withGoogle,
 }: {
   account: Account;
   state: StateOf<'signed-out' | 'code-sent'>;
   problem: string | undefined;
+  /** Whether «Увійти через Google» is offered. */
+  withGoogle: boolean;
 }) {
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
@@ -131,6 +154,17 @@ function SignIn({
     };
     return (
       <View style={styles.form}>
+        {withGoogle && (
+          <GoogleSignInButton
+            testID="account-google"
+            label={strings.signInWithGoogle}
+            busy={state.inFlight === 'signInWithGoogle'}
+            disabled={state.inFlight !== undefined}
+            onPress={() => {
+              run(account.signInWithGoogle());
+            }}
+          />
+        )}
         <TextField
           testID="account-email"
           label={strings.emailLabel}
