@@ -42,6 +42,11 @@ export interface FakeGoogleSignInSheet extends GoogleSignInSheet {
   cancels(): void;
   /** The next sheet fails: it found no network, or something else went wrong. */
   fails(reason: 'offline' | 'unexpected'): void;
+  /**
+   * The next sheet stays up until the test calls the release it gives back;
+   * then it answers what the test said next.
+   */
+  holds(): () => void;
   /** Each time from now on, forgetting the Google sign-in fails. */
   failsToForget(): void;
 }
@@ -51,6 +56,7 @@ export function createFakeGoogleSignInSheet(): FakeGoogleSignInSheet {
   const forgotten: { revoke: boolean }[] = [];
   let forgetFails = false;
   let shown = 0;
+  let held: Promise<void> | undefined;
   return {
     get shown() {
       return shown;
@@ -68,9 +74,19 @@ export function createFakeGoogleSignInSheet(): FakeGoogleSignInSheet {
     fails(reason) {
       answers.push({ ok: false, reason });
     },
-    signIn() {
+    holds() {
+      let release: () => void = () => undefined;
+      held = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      return release;
+    },
+    async signIn() {
       shown += 1;
-      return Promise.resolve(answers.shift() ?? { ok: false, reason: 'cancelled' });
+      const up = held;
+      held = undefined;
+      await up;
+      return answers.shift() ?? { ok: false, reason: 'cancelled' };
     },
     failsToForget() {
       forgetFails = true;
