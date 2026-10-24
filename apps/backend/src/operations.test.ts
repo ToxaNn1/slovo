@@ -206,7 +206,7 @@ describe('/docs', () => {
 });
 
 describe('the logs', () => {
-  it('carry no email, code or token, at the top of a line or one level down', () => {
+  it('carry no email, code or token, at the top of a line or two levels down', () => {
     const { lines, logger } = logLines();
 
     logger.info({
@@ -215,6 +215,7 @@ describe('the logs', () => {
       token: 'secret-token',
       account: { email: 'anna@mail.com', token: 'secret-token' },
       headers: { authorization: 'Bearer secret-token' },
+      ctx: { user: { email: 'anna@mail.com', code: '123456', token: 'secret-token' } },
     });
 
     const written = JSON.stringify(lines);

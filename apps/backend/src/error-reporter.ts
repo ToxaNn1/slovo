@@ -35,7 +35,7 @@ const PERSONAL_DATA: readonly (readonly [RegExp, string])[] = [
 ];
 
 /** The message with every email, token, IP address and Sign-in code it quotes taken out. */
-function scrubbed(message: string): string {
+export function scrubbed(message: string): string {
   return PERSONAL_DATA.reduce((text, [pattern, mark]) => text.replace(pattern, mark), message);
 }
 

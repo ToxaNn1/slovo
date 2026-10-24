@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { Writable } from 'node:stream';
 
 import type { ApiClient } from '@slovo/contracts/api';
 import { eq, getTableColumns, is, type Column } from 'drizzle-orm';
@@ -7,6 +8,7 @@ import { expect, it } from 'vitest';
 
 import * as schema from './database/schema';
 import { accounts, sessions } from './database/schema';
+import { createLogger } from './logger';
 import { testApp, testEditions } from './test-support';
 
 /** The Edition of this test, with a published pack. */
@@ -283,4 +285,27 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
       cookie: /set-cookie|set-auth-token/i.test(headers),
     }).toEqual({ request, secrets: [], columns: [], password: false, cookie: false });
   }
+});
+
+it('logs an unexpected failure whose message quotes an email with no email', async () => {
+  const lines: string[] = [];
+  const logger = createLogger(
+    new Writable({
+      write(chunk: Buffer, _encoding, done) {
+        lines.push(chunk.toString());
+        done();
+      },
+    }),
+  );
+  const email = `reader-${randomUUID()}@example.com`;
+  const { client } = testApp({
+    logger,
+    google: { verify: () => Promise.reject(new Error(`User ${email} not found`)) },
+  });
+
+  const failure = client.account.signInWithGoogle({ idToken: 'a-token', editionId: 'uk' });
+
+  await expect(failure).rejects.toMatchObject({ status: 500 });
+  expect(lines.join('')).toContain('unexpected failure');
+  expect(lines.join('')).not.toContain(email);
 });
