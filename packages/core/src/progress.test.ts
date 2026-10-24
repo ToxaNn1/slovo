@@ -407,6 +407,21 @@ describe('The knowledge counts', () => {
     expect(told).toBe(2);
   });
 
+  it('keeps the same snapshot and tells no one when an unmarked Entry is marked Unknown', async () => {
+    const app = await runKnowing(fakeClock('2026-10-19T09:00:00+03:00').clock);
+    const before = app.progress.state;
+    let told = 0;
+    app.progress.subscribe(() => {
+      told += 1;
+    });
+
+    await app.knowledge.tap('w_one', 'unknown');
+
+    expect(app.knowledge.state.shown.get('w_one')).toBe('unknown');
+    expect(app.progress.state).toBe(before);
+    expect(told).toBe(0);
+  });
+
   it('counts an Entry due for Review today, and a Known answer on the Review as Known', async () => {
     const time = fakeClock('2026-10-19T09:00:00+03:00');
     const app = await runKnowing(time.clock);
