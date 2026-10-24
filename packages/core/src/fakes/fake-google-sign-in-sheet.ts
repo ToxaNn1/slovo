@@ -24,11 +24,14 @@ export function fakeGoogleIdentityOf(idToken: string): FakeGoogleIdentity | unde
 
 /**
  * A Google sign-in sheet for tests: each time it is shown it answers what the
- * test said next, in order, and cancels when the test said nothing.
+ * test said next, in order, and cancels when the test said nothing. It keeps
+ * each time it was told to forget the sign-in.
  */
 export interface FakeGoogleSignInSheet extends GoogleSignInSheet {
   /** How many times the sheet was shown. */
   readonly shown: number;
+  /** Each time the sheet was told to forget the Google sign-in, in order. */
+  readonly forgotten: readonly { readonly revoke: boolean }[];
   /**
    * The next sheet signs the reader in as the email, with a Google identity
    * token for it that the fake Account API takes; one for an email Google
@@ -39,15 +42,20 @@ export interface FakeGoogleSignInSheet extends GoogleSignInSheet {
   cancels(): void;
   /** The next sheet fails: it found no network, or something else went wrong. */
   fails(reason: 'offline' | 'unexpected'): void;
+  /** Each time from now on, forgetting the Google sign-in fails. */
+  failsToForget(): void;
 }
 
 export function createFakeGoogleSignInSheet(): FakeGoogleSignInSheet {
   const answers: SheetAnswer[] = [];
+  const forgotten: { revoke: boolean }[] = [];
+  let forgetFails = false;
   let shown = 0;
   return {
     get shown() {
       return shown;
     },
+    forgotten,
     signsIn(email, { verified = true } = {}) {
       answers.push({
         ok: true,
@@ -63,6 +71,13 @@ export function createFakeGoogleSignInSheet(): FakeGoogleSignInSheet {
     signIn() {
       shown += 1;
       return Promise.resolve(answers.shift() ?? { ok: false, reason: 'cancelled' });
+    },
+    failsToForget() {
+      forgetFails = true;
+    },
+    forget({ revoke }) {
+      forgotten.push({ revoke });
+      return forgetFails ? Promise.reject(new Error('Google forgot nothing')) : Promise.resolve();
     },
   };
 }

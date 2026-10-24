@@ -760,6 +760,68 @@ describe('the Account signs in with Google', () => {
     expect(account.state).toMatchObject({ status: 'signed-out', problem: undefined });
     expect(api.accounts).toEqual([]);
   });
+
+  it('forgets the Google sign-in whenever the Session ends, and revokes it when the Account is deleted', async () => {
+    const { account, api, googleSheet, time } = await setup();
+    googleSheet.signsIn(anna.email);
+    await account.signInWithGoogle();
+    expect(googleSheet.forgotten).toEqual([]);
+
+    await account.signOut();
+    expect(googleSheet.forgotten).toEqual([{ revoke: false }]);
+
+    googleSheet.signsIn(anna.email);
+    await account.signInWithGoogle();
+    await account.signOutEverywhere();
+    expect(googleSheet.forgotten).toEqual([{ revoke: false }, { revoke: false }]);
+
+    googleSheet.signsIn(anna.email);
+    await account.signInWithGoogle();
+    api.endSessions();
+    time.advance(60 * 60_000);
+    await account.refresh();
+    expect(account.state).toMatchObject({ status: 'signed-out' });
+    expect(googleSheet.forgotten).toEqual([
+      { revoke: false },
+      { revoke: false },
+      { revoke: false },
+    ]);
+
+    googleSheet.signsIn(anna.email);
+    await account.signInWithGoogle();
+    await account.delete();
+    expect(googleSheet.forgotten).toEqual([
+      { revoke: false },
+      { revoke: false },
+      { revoke: false },
+      { revoke: true },
+    ]);
+  });
+
+  it('ends the Session even when forgetting the Google sign-in fails', async () => {
+    const { account, api, googleSheet, sessions } = await setup();
+    googleSheet.failsToForget();
+    googleSheet.signsIn(anna.email);
+    await account.signInWithGoogle();
+
+    await account.signOut();
+    expect(account.state).toEqual({
+      status: 'signed-out',
+      inFlight: undefined,
+      problem: undefined,
+    });
+    expect(await sessions.read()).toBeUndefined();
+
+    googleSheet.signsIn(anna.email);
+    await account.signInWithGoogle();
+    await account.delete();
+    expect(account.state).toEqual({
+      status: 'signed-out',
+      inFlight: undefined,
+      problem: undefined,
+    });
+    expect(api.accounts).toEqual([]);
+  });
 });
 
 describe('the Account tries a request again', () => {

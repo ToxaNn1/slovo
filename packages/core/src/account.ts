@@ -197,12 +197,18 @@ export async function openAccount({
     subscribers.tell();
   }
 
-  /** Forgets this device's Session, so the answers in flight with it are outdated, and answers signed out. */
-  async function endSession(): Promise<AccountState> {
+  /**
+   * Forgets this device's Session, so the answers in flight with it are
+   * outdated, and the Google sign-in with it, revoked when the Account is
+   * deleted; answers signed out. A Google sign-in that fails to be forgotten
+   * changes nothing.
+   */
+  async function endSession({ revoke = false } = {}): Promise<AccountState> {
     endedSessions += 1;
     token = undefined;
     checkedAt = undefined;
     await sessions.forget();
+    await googleSheet.forget({ revoke }).catch(() => undefined);
     return signedOut;
   }
 
@@ -306,7 +312,10 @@ export async function openAccount({
     await request(
       name,
       () => api[name](current),
-      (answer) => (answer.ok ? endSession() : { ...state, problem: problemOf(answer.reason) }),
+      (answer) =>
+        answer.ok
+          ? endSession({ revoke: name === 'delete' })
+          : { ...state, problem: problemOf(answer.reason) },
     );
   }
 
