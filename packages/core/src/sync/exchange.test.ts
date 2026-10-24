@@ -178,6 +178,26 @@ describe('two devices of one Account', () => {
     expect(server.records.get('mix.rarityFloor')?.value).toBe(2);
   });
 
+  it('let the newer choice of Idioms in the Mix win, on either device', async () => {
+    const { device, server, time } = account();
+    const phone = await device();
+    const tablet = await device();
+    await (await phone.open()).mix.setKind('idiom', false);
+    time.advance(HOUR);
+    const tabletMix = (await tablet.open()).mix;
+    await tabletMix.setKind('idiom', false);
+    await tabletMix.setKind('idiom', true);
+    await tablet.sync();
+    time.advance(HOUR);
+
+    await phone.sync();
+    await tablet.sync();
+
+    expect((await phone.open()).mix.state.kinds.idiom).toBe(true);
+    expect((await tablet.open()).mix.state.kinds.idiom).toBe(true);
+    expect(server.records.get('mix.idioms')?.value).toBe(true);
+  });
+
   it('carry a choice to hide the Streak to the other device', async () => {
     const { device } = account();
     const phone = await device();
