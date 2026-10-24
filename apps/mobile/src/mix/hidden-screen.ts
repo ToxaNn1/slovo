@@ -73,10 +73,16 @@ function labelParts(
 
 /** The row of the kind as a whole, in the Edition's words. */
 function kindModel(entryKind: MixKind, strings: EditionStrings): HiddenKindModel {
-  const { hidden, correctionCard, mix } = strings;
-  return entryKind === 'correction'
-    ? { entryKind, name: correctionCard.title, turnOnLabel: hidden.turnOnCorrectionsLabel }
-    : { entryKind, name: mix.idioms.title, turnOnLabel: hidden.turnOnIdiomsLabel };
+  const { hidden, mix } = strings;
+  const turnOnLabels: Record<MixKind, string> = {
+    correction: hidden.turnOnCorrectionsLabel,
+    idiom: hidden.turnOnIdiomsLabel,
+  };
+  return {
+    entryKind,
+    name: mix[featureOfKind(entryKind)].title,
+    turnOnLabel: turnOnLabels[entryKind],
+  };
 }
 
 function entryModel({ entryId, row }: HiddenEntry, strings: EditionStrings): HiddenEntryModel {

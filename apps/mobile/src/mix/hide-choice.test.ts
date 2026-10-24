@@ -1,9 +1,11 @@
 import { type Correction, type Idiom, type Word } from '@slovo/contracts';
 import {
   createMemoryUserStatePort,
+  featureOfKind,
   openComposition,
   openUserState,
   type Composition,
+  type Edition,
   type EntryFeedCard,
 } from '@slovo/core';
 import { createMemoryContentPort } from '@slovo/core/testing';
@@ -80,8 +82,11 @@ async function cardOf(app: Composition, entryId: string): Promise<EntryFeedCard>
   return card;
 }
 
-const choiceOn = (app: Composition, card: EntryFeedCard) =>
-  hideChoice({ card, mix: app.mix.state, strings: strings.hiding });
+const choiceOn = (
+  app: Composition,
+  card: EntryFeedCard,
+  edition: Pick<Edition, 'isFeatureEnabled'> = ukrainian,
+) => hideChoice({ card, mix: app.mix.state, edition, strings: strings.hiding });
 
 describe('the hide choice', () => {
   it('offers a Word card’s Entry and its Category, named, with the Category’s toast', async () => {
@@ -178,6 +183,33 @@ describe('the hide choice', () => {
     const choice = choiceOn(app, await cardOf(app, idiom.id));
 
     expect(choice.map(({ kind }) => kind)).toEqual(['entry']);
+  });
+
+  describe.each([
+    ['Corrections', 'correction', correction.id],
+    ['Idioms', 'idiom', idiom.id],
+  ] as const)('by the Feature Switch of %s', (_name, entryKind, entryId) => {
+    const feature = featureOfKind(entryKind);
+
+    it('offers the kind as a whole while the switch is on', async () => {
+      const app = await open();
+
+      const choice = choiceOn(app, await cardOf(app, entryId), {
+        isFeatureEnabled: (each) => each === feature,
+      });
+
+      expect(choice.map(({ kind }) => kind)).toEqual(['entry', 'whole-kind']);
+    });
+
+    it('offers only the Entry while the switch is off', async () => {
+      const app = await open();
+
+      const choice = choiceOn(app, await cardOf(app, entryId), {
+        isFeatureEnabled: (each) => each !== feature,
+      });
+
+      expect(choice.map(({ kind }) => kind)).toEqual(['entry']);
+    });
   });
 });
 
