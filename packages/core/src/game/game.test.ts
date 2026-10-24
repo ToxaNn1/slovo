@@ -512,6 +512,20 @@ describe('the idioms «Вгадай слово» asks about', () => {
     ]);
   });
 
+  it("doesn't ask about History with 14 Words and 2 place names in it: a place name makes no Round", async () => {
+    const met = numbered('w_nnoun', 14);
+    const app = await run({
+      pack: createMemoryContentPort({ categories, words, idioms }),
+      on: ['knowledge', 'idioms'],
+      records: historyOf([...met, 'i_place01', 'i_place02']),
+    });
+
+    const played = await playAll(app);
+
+    // History is below the threshold, so the Game asks about the whole pack, not History first.
+    expect(played.filter(({ entry }) => !met.includes(entry.id)).length).toBeGreaterThan(1);
+  });
+
   it('asks about Words and idioms in one Game: a Word Round offers Words only, an idiom Round idioms only', async () => {
     const unknown = ['i_idiom01', 'i_idiom02', 'i_idiom03'];
     const app = await runWith({ words, idioms });

@@ -41,6 +41,16 @@ export type RoundPlanner = (
   asked?: ReadonlySet<string>,
 ) => RoundPlan;
 
+/** Whether at least `count` of the items pass the test, checking no more than it takes. */
+function enough<T>(items: readonly T[], test: (item: T) => boolean, count: number): boolean {
+  let passed = 0;
+  for (const item of items) {
+    if (passed >= count) break;
+    if (test(item)) passed += 1;
+  }
+  return passed >= count;
+}
+
 /** A Round as a Game Mode built it, checked to hold four options with one of them right. */
 function checkedRound(mode: GameMode, round: RoundContent): RoundContent {
   const { options, correct } = round;
@@ -55,8 +65,9 @@ function checkedRound(mode: GameMode, round: RoundContent): RoundContent {
  * for `openGame`. Up to `WEAK_ROUNDS` Rounds of a Game ask about eligible
  * Entries the reader is weak on, marked Unknown or due for Review (ADR
  * 0043); the Rounds already `asked` about such Entries count. The others ask
- * first about the pool, the eligible Entries in History when there are at
- * least `GAME_ROUNDS`, else every eligible one; should the pool make too few
+ * first about the pool, the eligible Entries in History when at least
+ * `GAME_ROUNDS` of them make a Round (a place name makes none, ADR 0024),
+ * else every eligible one; should the pool make too few
  * fair Rounds, the other eligible Entries fill in, the weak ones left over
  * last. The one place that decides whether a mode can start: its offer and a
  * start both come from it, so they always agree.
@@ -77,7 +88,10 @@ export function createRoundPlanner({
     const eligible = ofKind.entries;
     const met = new Set(history.list.map(({ entryId }) => entryId));
     const inHistory = eligible.filter((entry) => met.has(entry.id));
-    const pool = new Set(inHistory.length >= GAME_ROUNDS ? inHistory : eligible);
+    /** Whether the mode can ask about the Entry: it makes a Round of it. */
+    const askable = (answer: Entry) =>
+      mode.buildRound({ answer, eligible, random, edition }) !== undefined;
+    const pool = new Set(enough(inHistory, askable, GAME_ROUNDS) ? inHistory : eligible);
     const weak = new Set(knowledge.weak());
     const weakAsked = [...asked].filter((id) => weak.has(id)).length;
     const unasked = eligible.filter((entry) => !asked.has(entry.id));
