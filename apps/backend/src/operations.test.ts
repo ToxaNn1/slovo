@@ -301,6 +301,16 @@ describe('the server', { timeout: 30_000 }, () => {
     expect(server.output().stderr).toContain('SENTRY_DSN');
   });
 
+  it('refuses to start with an http:// SENTRY_DSN, which would send its reports in the clear, naming it', async () => {
+    const server = runServer({
+      ...VALID_ENV,
+      SENTRY_DSN: 'http://public-key@o1.ingest.sentry.io/1',
+    });
+
+    expect(await server.exited).toBe(1);
+    expect(server.output().stderr).toContain('SENTRY_DSN: must be an https:// Sentry DSN');
+  });
+
   it('stops on SIGTERM', async () => {
     const server = runServer({ ...VALID_ENV, DATABASE_URL: testDatabaseUrl(), PORT: '0' });
     await server.listening;

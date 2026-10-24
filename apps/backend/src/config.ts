@@ -33,10 +33,11 @@ export const ServerConfigSchema = z.object({
         .filter((id) => id !== ''),
     ),
   // Where the backend reports its unexpected failures (spec #603). Empty, or
-  // unset, reports nothing; the repository holds no real DSN.
+  // unset, reports nothing; the repository holds no real DSN. Only https://,
+  // so no report crosses the network in the clear.
   SENTRY_DSN: z.preprocess(
     (dsn) => (dsn === '' ? undefined : dsn),
-    z.url({ protocol: /^https?$/, error: 'must be an https:// Sentry DSN' }).optional(),
+    z.url({ protocol: /^https$/, error: 'must be an https:// Sentry DSN' }).optional(),
   ),
   // 0 takes any free port.
   PORT: z.coerce.number().int().min(0).max(65535).default(8787),
