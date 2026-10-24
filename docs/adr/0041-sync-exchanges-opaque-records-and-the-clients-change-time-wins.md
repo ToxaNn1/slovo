@@ -94,3 +94,9 @@ How it fails, tries again and treats the Session's end is ADR 0037's amendment f
 
 - **Keeping the last sync's time in memory only**: rejected. A launch whose first sync can't go through, held back by a limit or refused, would show no time at all, and the line's date and year would never show.
 - **The changed signal in the snapshot, as a count**: rejected. Every subscriber of the status line would be told of it, and the shell would have to keep the last count to tell a new change from an old one.
+
+## Amendment: a record value nests at most 32 levels (0.8.9, #648)
+
+A record's value nests at most 32 levels of arrays and objects. A push with a deeper value is `BAD_REQUEST` (400), refused whole like any other wrong field, and is no unexpected failure, so it makes no crash report (ADR 0048). Zod checks JSON by recursion, and a value nested a few thousand levels deep overflowed the stack: an ordinary bad request became a 500 and a report (review #618, F1, F10). The contract's schema of the value counts the depth first, with a loop rather than recursion, so a value of any depth is counted on a fixed stack and a too-deep one never reaches the recursive check. The user state's deepest value is a few levels, so 32 leaves room for any record the app will write.
+
+Unlike the key and value limits, this one lives in the contract's schema: it must run before the schema's own check, which is the one that overflows, so it can't wait for the server Core. The Session gate runs before the input is read (`signedInRouter`), so a push without a Session is `UNAUTHORIZED` whatever its body, and no anonymous request reaches the check at all.
