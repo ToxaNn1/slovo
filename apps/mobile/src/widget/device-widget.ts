@@ -1,6 +1,8 @@
+import { systemRandom } from '@slovo/core';
+
 import { nativeModules } from '../device/device-native-modules';
 import { appGroup } from '../edition/edition';
-import type { WidgetDevice } from './widget-snapshot';
+import { createWidgetLinkKey, type WidgetDevice } from './widget-snapshot';
 
 /**
  * The device's side of the widget: the App Group's container through
@@ -32,9 +34,23 @@ export const deviceWidget = nativeModules.load('widget', (): WidgetDevice => {
       async replace(from, to) {
         await file(from).move(file(to), { overwrite: true });
       },
+      async read(name) {
+        const shared = file(name);
+        return shared.exists ? await shared.text() : undefined;
+      },
     },
     reloadTimelines() {
       ExtensionStorage.reloadWidget();
     },
   };
 });
+
+/**
+ * The key the widget's links carry, kept in the Widget Snapshot in the App
+ * Group (`createWidgetLinkKey`), or none without the native modules, so no
+ * link opens as the widget's there.
+ */
+export const deviceWidgetLinkKey: () => Promise<string | undefined> =
+  deviceWidget === undefined
+    ? () => Promise.resolve(undefined)
+    : createWidgetLinkKey(deviceWidget.container, systemRandom);

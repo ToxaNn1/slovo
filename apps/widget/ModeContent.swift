@@ -9,6 +9,8 @@ struct ModeContent {
   let entries: [WidgetEntry]
   /// The line of the empty or broken state, when the mode has no Entry to show.
   let emptyState: String?
+  /// The snapshot's key for the widget's links to an Entry.
+  let linkKey: String?
 
   init(of snapshot: WidgetSnapshot?, _ configuration: ChooseMode) {
     self.init(of: snapshot, mode: configuration.mode, collectionId: configuration.collection?.id)
@@ -17,6 +19,7 @@ struct ModeContent {
   init(of snapshot: WidgetSnapshot?, mode: ModeChoice, collectionId: String?) {
     let ids: [String]
     let empty: String
+    linkKey = snapshot?.linkKey
     switch mode {
     case .allEntries:
       overline = Self.text("allEntries")
