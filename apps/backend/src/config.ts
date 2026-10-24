@@ -32,6 +32,12 @@ export const ServerConfigSchema = z.object({
         .map((id) => id.trim())
         .filter((id) => id !== ''),
     ),
+  // Where the backend reports its unexpected failures (spec #603). Empty, or
+  // unset, reports nothing; the repository holds no real DSN.
+  SENTRY_DSN: z.preprocess(
+    (dsn) => (dsn === '' ? undefined : dsn),
+    z.url({ protocol: /^https?$/, error: 'must be an https:// Sentry DSN' }).optional(),
+  ),
   // 0 takes any free port.
   PORT: z.coerce.number().int().min(0).max(65535).default(8787),
   // The folder that holds one folder per Edition (ADR 0035).

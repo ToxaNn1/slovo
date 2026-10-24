@@ -9,21 +9,35 @@ import type { Logger } from 'pino';
 
 import { accountProcedures } from './account/account-procedures';
 import { contentProcedures } from './content/content-procedures';
+import { reportOf, type ErrorReporter } from './error-reporter';
 import { editionProcedures } from './edition/edition-procedures';
 import { syncProcedures } from './sync/sync-procedures';
 
 /** What every unexpected failure answers, with status 500: nothing internal (spec #333). */
 export const INTERNAL_FAILURE = { code: 'INTERNAL' } as const;
 
-/** Logs an unexpected failure with its stack; the logger carries the request id. */
-export function logUnexpectedFailure(logger: Logger, error: unknown): void {
+/** What a request knows to tell of an unexpected failure. */
+interface FailureContext {
+  /** The request's logger, which carries its request id. */
+  logger: Logger;
+  requestId: string;
+  reporter: ErrorReporter;
+}
+
+/**
+ * Logs an unexpected failure with its stack, and reports it with no personal
+ * data (spec #603); a refused request (4xx) is neither.
+ */
+export function onUnexpectedFailure(
+  { logger, requestId, reporter }: FailureContext,
+  error: unknown,
+): void {
   logger.error({ err: error }, 'unexpected failure');
+  reporter.report(reportOf(error, requestId));
 }
 
 /** What a request brings to the API. */
-interface ApiContext extends ResponseHeadersPluginContext {
-  /** The request's logger, which carries its request id. */
-  logger: Logger;
+interface ApiContext extends ResponseHeadersPluginContext, FailureContext {
   /** The request's headers, where a Session travels. */
   headers: Headers;
   /** The IP address of the request's connection. */
@@ -64,7 +78,7 @@ export function createApiHandler({
         } catch (error) {
           // A refused request (4xx) is an answer the contract lists.
           if (error instanceof ORPCError && error.status < 500) throw error;
-          logUnexpectedFailure(options.context.logger, error);
+          onUnexpectedFailure(options.context, error);
           return {
             matched: true,
             response: { status: 500, headers: {}, body: INTERNAL_FAILURE },

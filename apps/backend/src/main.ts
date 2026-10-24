@@ -8,6 +8,7 @@ import { readConfig, ServerConfigSchema } from './config';
 import { createDatabase } from './database/database';
 import { readEditions } from './edition/edition-folders';
 import { createLogger } from './logger';
+import { createSentryReporter } from './sentry-reporter';
 import { startServer } from './server';
 
 const config = readConfig(ServerConfigSchema, process.env);
@@ -23,6 +24,7 @@ const app = createApp({
   mailer,
   google: createGoogleVerifier({ clientIds: config.GOOGLE_CLIENT_IDS }),
   authSecret: config.AUTH_SECRET,
+  reporter: await createSentryReporter(config.SENTRY_DSN),
 });
 const server = await startServer({ app, database, port: config.PORT });
 

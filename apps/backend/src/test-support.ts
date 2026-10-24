@@ -34,6 +34,7 @@ import { createDatabase, type Database } from './database/database';
 import { migrateDatabase } from './database/migrate';
 import { readEditions } from './edition/edition-folders';
 import { createEditions } from './edition/editions';
+import type { ErrorReport } from './error-reporter';
 
 /** The Postgres of the repo's `compose.yaml`, which the tests use unless `DATABASE_URL` names another. */
 const LOCAL_DATABASE_URL = 'postgres://slovo:slovo@localhost:55432/slovo';
@@ -336,6 +337,8 @@ interface TestAppOptions {
   readonly editions?: readonly Edition[];
   /** The backend's Google client ids; the test one unless given. None turns Google sign-in off. */
   readonly googleClientIds?: readonly string[];
+  /** The Google verifier; the fake Google of the client ids unless given. */
+  readonly google?: GoogleVerifier;
   /** Sees every answer before the test gets it, with the request it answers. */
   readonly onAnswer?: (request: Request, response: Response) => Promise<void>;
 }
@@ -353,19 +356,23 @@ export function testApp({
   logger = silentLogger,
   editions = readEditions(EDITIONS_DIR),
   googleClientIds = [TEST_GOOGLE_CLIENT_ID],
+  google: givenGoogle,
   onAnswer,
 }: TestAppOptions = {}) {
   const database = given ?? createDatabase(testDatabaseUrl(), silentLogger);
   const mailer = createFakeMailer();
   const google = createFakeGoogle(googleClientIds);
+  const reports: ErrorReport[] = [];
   const app = createApp({
     database,
     clock: systemClock,
     logger,
     editions,
     mailer,
-    google,
+    google: givenGoogle ?? google,
     authSecret: TEST_AUTH_SECRET,
+    // A fake Sentry: it keeps every report.
+    reporter: { report: (report) => reports.push(report) },
   });
   const ip = newIp();
   // The one way a request reaches the app.
@@ -395,6 +402,8 @@ export function testApp({
     mailer,
     /** The fake Google the backend verifies tokens with, and the tokens its sign-in sheet gives. */
     google,
+    /** Every report of an unexpected failure the backend sent, oldest first. */
+    reports: reports as readonly ErrorReport[],
     database,
     /** What the database keeps of the Sign-in code waiting for the email (see the Authenticator). */
     keptSignInCode: (email: string) => keptSignInCode(database, email),
