@@ -22,6 +22,7 @@ import { edition, editionDecor, editionStrings, editionTokens } from '../edition
 import { hapticEngine } from '../haptics';
 import { languagePackOpening } from '../edition/language-pack';
 import { compositionOpening } from '../composition';
+import { startCrashReports } from '../crash-reports';
 import { LaunchSplash } from '../launch-splash';
 import { Lifecycle } from '../lifecycle';
 import { NotificationTaps } from '../notifications/notification-taps';
@@ -31,6 +32,9 @@ import { LemmaPronunciation } from '../entries/pronunciation-button';
 import { SettingsProvider, useColorSchemeInEffect, useSettings } from '../settings';
 import type { Tab } from '../shown';
 import { useShown } from '../shown-in-effect';
+
+// Before the first screen, so a crash at launch is reported too.
+startCrashReports(process.env.EXPO_PUBLIC_SENTRY_DSN);
 
 const { tabs } = editionStrings;
 
