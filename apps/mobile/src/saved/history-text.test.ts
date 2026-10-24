@@ -52,26 +52,26 @@ describe('the History texts', () => {
     expect(headingOf()).toBe('Сьогодні');
   });
 
-  it('says what kind of Entry a row is', () => {
+  it('labels a row by its kind, or an Idiom by its Idiom Type', () => {
     const entry = (
-      kindKey: EntryRowModel['kindKey'],
+      labelKey: EntryRowModel['labelKey'],
       wordOfTheDay = false,
     ): Pick<HistoryEntry, 'row' | 'wordOfTheDay'> => {
       const text = { title: 'a', secondLine: 'b', spoken: 'a, b' };
       const row: EntryRowModel =
-        kindKey === 'word'
-          ? { kind: 'word', entryId: 'w_a', ...text, kindKey, partOfSpeech: 'noun', registers: [] }
-          : kindKey === 'correction'
-            ? { kind: 'correction', entryId: 'c_a', ...text, kindKey, correctionType: 'calque' }
-            : { kind: 'idiom', entryId: 'i_a', ...text, kindKey };
+        labelKey === 'word'
+          ? { kind: 'word', entryId: 'w_a', ...text, labelKey, partOfSpeech: 'noun', registers: [] }
+          : labelKey === 'correction'
+            ? { kind: 'correction', entryId: 'c_a', ...text, labelKey, correctionType: 'calque' }
+            : { kind: 'idiom', entryId: 'i_a', ...text, labelKey };
       return { wordOfTheDay, row };
     };
 
-    expect(text.kind(entry('word'))).toBe('слово');
-    expect(text.kind(entry('correction'))).toBe('виправлення');
-    expect(text.kind(entry('idiom'))).toBe('фразеологізм');
-    expect(text.kind(entry('placeName'))).toBe('топонім');
-    expect(text.kind(entry('word', true))).toBe('слово дня');
+    expect(text.label(entry('word'))).toBe('слово');
+    expect(text.label(entry('correction'))).toBe('виправлення');
+    expect(text.label(entry('idiom'))).toBe('фразеологізм');
+    expect(text.label(entry('placeName'))).toBe('топонім');
+    expect(text.label(entry('word', true))).toBe('слово дня');
   });
 
   it('reads the Saved card to VoiceOver in full: the count, then each row with its age', () => {

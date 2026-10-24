@@ -382,7 +382,7 @@ describe('Favorites over the Ukrainian Language Pack', () => {
       kind: 'word',
       title: word.model.lemma,
       secondLine: word.model.primaryDefinition,
-      kindKey: 'word',
+      labelKey: 'word',
     });
     expect(await app.entryCard(correctionId)).toMatchObject({
       kind: 'correction',

@@ -2,27 +2,27 @@ import { fill, type EditionStrings } from '@slovo/contracts';
 import type { EntryRowModel } from '@slovo/core';
 
 /**
- * The Edition's name of a row's kind, as the Core's Entry row keys it:
+ * The Edition's label of a row, its kind or an Idiom's Idiom Type, as the Core's Entry row keys it:
  * «слово», «виправлення», «фразеологізм» or «топонім» (ADR 0017). The one
  * place a screen turns the key into the word.
  */
-export function entryKindLabel(
+export function entryLabel(
   kinds: EditionStrings['history']['kinds'],
-  { kindKey }: Pick<EntryRowModel, 'kindKey'>,
+  { labelKey }: Pick<EntryRowModel, 'labelKey'>,
 ): string {
-  return kinds[kindKey];
+  return kinds[labelKey];
 }
 
 /**
- * The text on the right of a row that names the row's kind beside a time, as
+ * The text on the right of a row that puts the row's label beside a time, as
  * Collections and «Вчу» say it: «фразеологізм · сьогодні».
  */
-export function entryKindBeside(
+export function entryLabelBeside(
   strings: Pick<EditionStrings['history'], 'kinds' | 'kindBeside'>,
-  row: Pick<EntryRowModel, 'kindKey'>,
+  row: Pick<EntryRowModel, 'labelKey'>,
   time: string,
 ): string {
-  return fill(strings.kindBeside, { kind: entryKindLabel(strings.kinds, row), time });
+  return fill(strings.kindBeside, { kind: entryLabel(strings.kinds, row), time });
 }
 
 /**

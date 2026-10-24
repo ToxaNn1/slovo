@@ -13,7 +13,7 @@ const row: EntryRowModel = {
   entryId: 'w1',
   title: 'lemma',
   secondLine: 'what it means',
-  kindKey: 'word',
+  labelKey: 'word',
   spoken: 'lemma, what it means',
   partOfSpeech: 'adjective',
   registers: [],
@@ -24,7 +24,7 @@ const correction: EntryRowModel = {
   entryId: 'c1',
   title: 'right',
   secondLine: 'wrong',
-  kindKey: 'correction',
+  labelKey: 'correction',
   spoken: 'right, wrong',
   correctionType: 'calque',
 };
@@ -34,7 +34,7 @@ const idiom: EntryRowModel = {
   entryId: 'i1',
   title: 'spill the beans',
   secondLine: 'to give away a secret',
-  kindKey: 'idiom',
+  labelKey: 'idiom',
   spoken: 'spill the beans, to give away a secret',
 };
 

@@ -72,7 +72,7 @@ export interface ShareCardContent {
   /** The Entry's card, as the Core built it for the Feed. */
   card: EntryFeedCard;
   /** Whether it is today's Word of the Day, which the overline then says in place of the Category. */
-  wordOfTheDay: boolean;
+  todaysWordOfTheDay: boolean;
   /** The watermark: the Edition's display name. */
   watermark: string;
 }
@@ -101,7 +101,7 @@ export function ShareCard(props: ShareCardContent & { format: ShareCardFormat; w
 
 function FittedCard({
   card: { model },
-  wordOfTheDay,
+  todaysWordOfTheDay,
   watermark,
   format,
   width,
@@ -129,7 +129,7 @@ function FittedCard({
       ? edition.strings.correctionCard.correctionTypes[model.correctionType]
       : model.kind === 'idiom'
         ? edition.strings.idiomCard.idiomTypes[model.idiomType]
-        : wordOfTheDay
+        : todaysWordOfTheDay
           ? edition.strings.share.wordOfTheDay
           : model.categoryName;
   /** A size of the design's text, shrunk with the rest of the text. */

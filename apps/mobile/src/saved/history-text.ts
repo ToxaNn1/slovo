@@ -8,7 +8,7 @@ import {
   type LocalDay,
   type RelativeTime,
 } from '@slovo/core';
-import { entryKindLabel } from '@slovo/ui/entry-row-text';
+import { entryLabel } from '@slovo/ui/entry-row-text';
 
 /** A time as a row says it, on screen and as VoiceOver reads it. */
 export interface RelativeText {
@@ -17,7 +17,7 @@ export interface RelativeText {
 }
 
 /**
- * The words of History, from the Edition's strings: the kind of an Entry, the
+ * The words of History, from the Edition's strings: the label of an Entry, the
  * heading of a day and how long ago an Entry was Seen. The Core decides which
  * day and which time; this only says them in the Edition's language, so the
  * clock's time zone still decides the day.
@@ -48,8 +48,8 @@ export function historyText({
 
   return {
     /** «слово», «виправлення», «фразеологізм», «топонім» or «слово дня». */
-    kind({ row, wordOfTheDay }: Pick<HistoryEntry, 'row' | 'wordOfTheDay'>): string {
-      return wordOfTheDay ? strings.kinds.wordOfTheDay : entryKindLabel(strings.kinds, row);
+    label({ row, wordOfTheDay }: Pick<HistoryEntry, 'row' | 'wordOfTheDay'>): string {
+      return wordOfTheDay ? strings.kinds.wordOfTheDay : entryLabel(strings.kinds, row);
     },
 
     /** «Сьогодні», «Учора» or the date, with the year only for another year. */

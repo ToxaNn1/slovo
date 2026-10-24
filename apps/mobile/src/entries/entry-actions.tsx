@@ -113,7 +113,7 @@ function EntryShareSheet({
     <ShareSheet
       visible={visible}
       card={card}
-      wordOfTheDay={card.kind === 'word' && isTodaysWordOfTheDay(card, deviceClock)}
+      todaysWordOfTheDay={card.kind === 'word' && isTodaysWordOfTheDay(card, deviceClock)}
       watermark={edition.displayName}
       initialFormat={shareFormat.format}
       onFormatChange={(format) => {

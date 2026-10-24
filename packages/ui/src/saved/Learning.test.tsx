@@ -37,7 +37,7 @@ const word = (entryId: string, title: string): EntryRowModel => ({
   entryId,
   title,
   secondLine: `what ${title} means`,
-  kindKey: 'word',
+  labelKey: 'word',
   spoken: `${title}, what ${title} means`,
   partOfSpeech: 'noun',
   registers: [],
@@ -48,7 +48,7 @@ const idiom: EntryRowModel = {
   entryId: 'i1',
   title: 'spill the beans',
   secondLine: 'To give away a secret.',
-  kindKey: 'idiom',
+  labelKey: 'idiom',
   spoken: 'spill the beans, To give away a secret.',
 };
 
@@ -57,7 +57,7 @@ const correction: EntryRowModel = {
   entryId: 'c1',
   title: 'right',
   secondLine: 'wrong',
-  kindKey: 'correction',
+  labelKey: 'correction',
   spoken: 'right, wrong',
   correctionType: 'calque',
 };

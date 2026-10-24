@@ -1,6 +1,6 @@
 import { withoutStress, type CollectionEntry } from '@slovo/core';
 
-import { entryKindBeside } from '../entries/entry-row-text';
+import { entryLabelBeside } from '../entries/entry-row-text';
 import { EntryRow } from '../entries/EntryRow';
 import { fill, useEdition } from '../providers/EditionProvider';
 
@@ -28,7 +28,7 @@ export function CollectionEntryRow({
   return (
     <EntryRow
       row={row}
-      trailing={entryKindBeside(strings.history, row, added)}
+      trailing={entryLabelBeside(strings.history, row, added)}
       onPress={onPress}
       actions={[
         {

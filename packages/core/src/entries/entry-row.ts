@@ -12,8 +12,8 @@ import type {
 import type { Entries } from './entries';
 import { renderStress, withoutStress } from './stress';
 
-/** What indexes the Edition's name of a row's kind: an Idiom goes by its Idiom Type (ADR 0046). */
-export type EntryKindKey = 'word' | 'correction' | IdiomType;
+/** What indexes the Edition's label of a row: a Word's or a Correction's kind, or an Idiom's Idiom Type (ADR 0046). */
+export type EntryLabelKey = 'word' | 'correction' | IdiomType;
 
 /** What every row says of its Entry, whatever its kind. */
 interface EntryRowText {
@@ -28,8 +28,8 @@ interface EntryRowText {
    * the non-standard form a Correction replaces.
    */
   readonly secondLine: string;
-  /** The key of the kind's name in the Edition's words («слово», «виправлення», «фразеологізм», «топонім»). */
-  readonly kindKey: EntryKindKey;
+  /** The key of the row's label in the Edition's words («слово», «виправлення», «фразеологізм», «топонім»). */
+  readonly labelKey: EntryLabelKey;
   /**
    * The title and the second line as VoiceOver reads them: whole words, with
    * no Stress mark, since the voices break a word at the mark.
@@ -65,13 +65,13 @@ function rowText(
   entryId: string,
   title: string,
   secondLine: string,
-  kindKey: EntryKindKey,
+  labelKey: EntryLabelKey,
 ): EntryRowText {
   return {
     entryId,
     title,
     secondLine,
-    kindKey,
+    labelKey,
     spoken: `${withoutStress(title)}, ${withoutStress(secondLine)}`,
   };
 }

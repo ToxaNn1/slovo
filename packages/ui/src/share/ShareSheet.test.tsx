@@ -55,7 +55,7 @@ async function renderSheet(outcome: ShareSheetOutcome, shown: EntryFeedCard = ca
         <ShareSheet
           visible
           card={shown}
-          wordOfTheDay={false}
+          todaysWordOfTheDay={false}
           watermark="SLOVO"
           initialFormat="story"
           onFormatChange={jest.fn()}
