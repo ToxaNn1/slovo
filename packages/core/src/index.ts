@@ -91,7 +91,7 @@ export { type ProgressState } from './progress';
 export { featureOfKind, MIX_KINDS, type MixKind, type MixState } from './entries/mix';
 export { type OnboardingStep, type SampleNotification } from './onboarding';
 // The shell keeps the Session in memory on a development client without the Keychain.
-export { createMemorySessionStore } from './fakes/memory-session-store';
+export { createMemorySessionStore } from './memory-session-store';
 export { openSync, type Sync, type SyncState } from './sync/sync';
 export { NOTIFICATION_BODY_LENGTH } from './notifications/notification-plan';
 export {
