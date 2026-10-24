@@ -1,0 +1,32 @@
+# An Idiom: «мокрим рядном накрити», of the Idiom Type «фразеологізм». Its link
+# opens the Entry screen with the Idiom card: the expression with its chip,
+# which VoiceOver reads as one heading, the Definition and an Example. Back
+# lands on the Feed. A subflow of `smoke.yaml`; run it from there. The link
+# carries no `from`, so the Idiom does not become Seen.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- tapOn:
+    id: tab-home
+- openLink: ${(SCHEME || 'slovo-uk') + '://entry/i_4cdxqs'}
+# A simulator asks once whether the link may open the app.
+- runFlow:
+    when:
+      visible: Open
+    commands:
+      - tapOn: Open
+- assertVisible:
+    id: entry-screen
+- assertVisible:
+    id: idiom-card
+- assertVisible: мокрим рядном накрити, фразеологізм
+- assertVisible:
+    id: idiom-definition
+- takeScreenshot: idiom-card
+# The Example sits under the Definition, which may be taller than the screen.
+- scrollUntilVisible:
+    element:
+      id: idiom-example
+- tapOn:
+    id: entry-screen-back
+- assertVisible:
+    id: home

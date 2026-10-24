@@ -1,0 +1,37 @@
+# A place name: the Idiom «Київ» of the Idiom Type «топонім». Its link opens
+# the Entry screen with the Idiom card: the expression with its chip, which
+# VoiceOver reads as one heading, the Definition, «Походження» and the line
+# naming its sources. Back lands on the Feed. A subflow of `smoke.yaml`; run it
+# from there. The link carries no `from`, so the Idiom does not become Seen.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- tapOn:
+    id: tab-home
+- openLink: ${(SCHEME || 'slovo-uk') + '://entry/i_25u9l7'}
+# A simulator asks once whether the link may open the app.
+- runFlow:
+    when:
+      visible: Open
+    commands:
+      - tapOn: Open
+- assertVisible:
+    id: entry-screen
+- assertVisible:
+    id: idiom-card
+- assertVisible: Київ, топонім
+- assertVisible:
+    id: idiom-definition
+    text: Столиця України, на Дніпрі.
+- takeScreenshot: place-name-card
+# «Походження» and the sources sit under the Definition, which may be taller
+# than the screen.
+- scrollUntilVisible:
+    element:
+      id: idiom-etymology
+- scrollUntilVisible:
+    element:
+      id: idiom-source
+- tapOn:
+    id: entry-screen-back
+- assertVisible:
+    id: home
