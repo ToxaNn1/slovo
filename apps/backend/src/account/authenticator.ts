@@ -212,8 +212,8 @@ export function createAuthenticator(
 
     // better-auth's own social sign-in verifies the token itself, with no
     // way in for the server Core's verifier, so the adapter does what it
-    // would: finds or creates the user, links the provider's account and
-    // starts a Session.
+    // would: finds or creates the Account, records the Google identity as a
+    // Sign-in method and starts a Session.
     async signInWithGoogle({ subject, email }) {
       const { internalAdapter, secret } = await auth.$context;
       const found = await internalAdapter.findUserByEmail(email);
