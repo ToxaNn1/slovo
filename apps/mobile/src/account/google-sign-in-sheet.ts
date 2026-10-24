@@ -29,7 +29,11 @@ function isNetworkError(error: unknown): boolean {
  * React Native, for the app's OAuth client id for iOS: Google's own native
  * sheet, configured at its first showing. The SDK answers a dismissed sheet
  * as cancelled; an error of the network is offline, and any other error, or a
- * sign-in without an identity token, is unexpected.
+ * sign-in without an identity token, is unexpected. It asks for Google's
+ * default scopes: the iOS SDK always adds `email` and `profile`, so no
+ * narrower request is possible. Forgetting the sign-in signs out of the SDK,
+ * which drops the Google user it keeps in the Keychain; revoking first takes
+ * back the reader's grant at Google too. A failure of either changes nothing.
  */
 export function createGoogleSignInSheet(iosClientId: string): GoogleSignInSheet {
   let configured = false;
@@ -48,6 +52,10 @@ export function createGoogleSignInSheet(iosClientId: string): GoogleSignInSheet 
         return { ok: false, reason: isNetworkError(error) ? 'offline' : 'unexpected' };
       }
     },
+    async forget({ revoke }) {
+      if (revoke) await GoogleSignin.revokeAccess().catch(() => undefined);
+      await GoogleSignin.signOut().catch(() => undefined);
+    },
   };
 }
 
@@ -58,5 +66,8 @@ export function createGoogleSignInSheet(iosClientId: string): GoogleSignInSheet 
  */
 export const googleSignInSheet: GoogleSignInSheet =
   googleClientId === undefined
-    ? { signIn: () => Promise.resolve({ ok: false, reason: 'unexpected' }) }
+    ? {
+        signIn: () => Promise.resolve({ ok: false, reason: 'unexpected' }),
+        forget: () => Promise.resolve(),
+      }
     : createGoogleSignInSheet(googleClientId);
