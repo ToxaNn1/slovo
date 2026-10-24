@@ -1,0 +1,81 @@
+# The Rarity Floor: Мій Мікс offers «від 1» to «від 5», «від 1» by default;
+# a higher floor is kept and the Feed still shows a card. A subflow of
+# `smoke.yaml`; run it from there. It starts by putting the floor back to
+# «від 1», whatever an earlier run left, and leaves it there.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- runFlow:
+    file: ../open-settings-row.yaml
+    env:
+      ROW: settings-row-my-mix
+- tapOn:
+    id: settings-row-my-mix
+- assertVisible:
+    id: mix
+- scrollUntilVisible:
+    element:
+      id: mix-rarity-5
+    centerElement: true
+- runFlow:
+    when:
+      visible:
+        id: mix-rarity-1
+        selected: false
+    commands:
+      - tapOn:
+          id: mix-rarity-1
+- assertVisible:
+    id: mix-rarity-1
+    text: від 1
+    selected: true
+# A higher floor applies at once: its chip is filled, the others are not.
+- tapOn:
+    id: mix-rarity-5
+- assertVisible:
+    id: mix-rarity-5
+    text: від 5
+    selected: true
+- assertVisible:
+    id: mix-rarity-1
+    selected: false
+- takeScreenshot: rarity-floor-5
+# The Mix keeps it: the screen opens as it was left.
+- tapOn:
+    id: mix-back
+- tapOn:
+    id: settings-row-my-mix
+- scrollUntilVisible:
+    element:
+      id: mix-rarity-5
+    centerElement: true
+- assertVisible:
+    id: mix-rarity-5
+    selected: true
+# The Feed still has a card under the floor: only the rarest Words, and the
+# Corrections, which have no rarity.
+- tapOn:
+    id: mix-back
+- tapOn:
+    id: tab-home
+- assertVisible:
+    id: (word|correction|idiom)-card
+# Back to «від 1».
+- runFlow:
+    file: ../open-settings-row.yaml
+    env:
+      ROW: settings-row-my-mix
+- tapOn:
+    id: settings-row-my-mix
+- scrollUntilVisible:
+    element:
+      id: mix-rarity-1
+    centerElement: true
+- tapOn:
+    id: mix-rarity-1
+- assertVisible:
+    id: mix-rarity-1
+    selected: true
+- tapOn:
+    id: mix-back
+- assertVisible:
+    id: settings-row-my-mix

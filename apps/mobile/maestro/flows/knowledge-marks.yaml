@@ -1,0 +1,99 @@
+# Knowledge Marks and the «Вчу» list: «Не знаю» on a Feed card fills its
+# button, «Знаю» changes the mark, the same button again removes it, and an
+# Entry marked «Не знаю» is in the «Вчу» list with its Review «завтра» and
+# opens from there.
+# A subflow of `smoke.yaml`; run it from there. It leaves the card on screen
+# marked «Не знаю», so a run on a later day finds it due (`review.yaml`).
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- tapOn:
+    id: tab-home
+# The buttons sit under the card, which may be taller than the screen.
+- scrollUntilVisible:
+    element:
+      id: knowledge-unknown
+# Then off the tab bar, which covers the bottom of a card that barely fits: a
+# short slow drag scrolls the card further, or to its end, and is too short
+# and slow to turn the page.
+- swipe:
+    start: 50%, 60%
+    end: 50%, 48%
+    duration: 800
+# A tap while the card still glides only stops it.
+- waitForAnimationToEnd
+# «Не знаю» marks the Entry Unknown, or answers it if an earlier run left it
+# due; either way the card shows the mark.
+- tapOn:
+    id: knowledge-unknown
+- assertVisible:
+    id: knowledge-unknown
+    selected: true
+- assertVisible:
+    id: knowledge-known
+    selected: false
+- takeScreenshot: knowledge-unknown
+# Tapping the other mark changes it.
+- tapOn:
+    id: knowledge-known
+- assertVisible:
+    id: knowledge-known
+    selected: true
+- assertVisible:
+    id: knowledge-unknown
+    selected: false
+# Tapping the same one again removes it.
+- tapOn:
+    id: knowledge-known
+- assertVisible:
+    id: knowledge-known
+    selected: false
+- assertVisible:
+    id: knowledge-unknown
+    selected: false
+# «Не знаю» again: the Entry is due tomorrow.
+- tapOn:
+    id: knowledge-unknown
+- assertVisible:
+    id: knowledge-unknown
+    selected: true
+# The Saved tab's «Вчу» card counts it, and the list shows its Review day.
+- tapOn:
+    id: tab-saved
+- scrollUntilVisible:
+    element:
+      id: saved-learning
+- assertVisible:
+    id: saved-learning
+    text: 'Вчу, [1-9]\d* запис.*'
+- tapOn:
+    id: saved-learning
+- assertVisible:
+    id: learning
+- assertNotVisible:
+    id: learning-empty
+- scrollUntilVisible:
+    element:
+      id: learning-row-.*-open
+      text: '.*, завтра'
+- takeScreenshot: knowledge-learning
+# A row opens its Entry, with the mark it has.
+- tapOn:
+    id: learning-row-.*-open
+    text: '.*, завтра'
+- assertVisible:
+    id: entry-screen
+- scrollUntilVisible:
+    element:
+      id: knowledge-unknown
+- waitForAnimationToEnd
+- assertVisible:
+    id: knowledge-unknown
+    selected: true
+- tapOn:
+    id: entry-screen-back
+- assertVisible:
+    id: learning
+- tapOn:
+    id: learning-back
+- assertVisible:
+    id: saved

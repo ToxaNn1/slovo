@@ -1,0 +1,101 @@
+# Self-check («Перевір себе»): with the setting on, a Feed card conceals its
+# meaning behind a reveal button and its Knowledge Mark buttons are inactive;
+# the reveal shows the meaning and makes them work, and the next card is
+# concealed again. A subflow of `smoke.yaml`; run it from there. It starts by
+# turning the setting off, whatever an earlier run left, and leaves it off.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- runFlow:
+    file: ../open-settings-row.yaml
+    env:
+      ROW: settings-self-check
+- runFlow:
+    when:
+      visible:
+        id: settings-self-check
+        checked: true
+    commands:
+      - tapOn:
+          id: settings-self-check
+- assertVisible:
+    id: settings-self-check
+    checked: false
+- tapOn:
+    id: settings-self-check
+- assertVisible:
+    id: settings-self-check
+    checked: true
+# The card on screen conceals its meaning: a Word, a Correction or an Idiom.
+- tapOn:
+    id: tab-home
+- scrollUntilVisible:
+    element:
+      id: (word|correction|idiom)-reveal
+- assertNotVisible:
+    id: word-definition|correction-standard|idiom-definition
+- takeScreenshot: self-check-concealed
+- tapOn:
+    id: (word|correction|idiom)-reveal
+- assertVisible:
+    id: word-definition|correction-standard|idiom-definition
+- assertNotVisible:
+    id: (word|correction|idiom)-reveal
+# The buttons sit under the card, which may be taller than the screen.
+- scrollUntilVisible:
+    element:
+      id: knowledge-known
+# Then off the tab bar, which covers the bottom of a card that barely fits: a
+# short slow drag scrolls the card further, or to its end, and is too short
+# and slow to turn the page.
+- swipe:
+    start: 50%, 60%
+    end: 50%, 48%
+    duration: 800
+- waitForAnimationToEnd
+- assertVisible:
+    id: knowledge-known
+    enabled: true
+- takeScreenshot: self-check-revealed
+# The next card is concealed, and its buttons do nothing until the reveal. A
+# card taller than the screen scrolls first, so swipe until the page turns.
+- repeat:
+    while:
+      notVisible:
+        id: (word|correction|idiom)-reveal
+    times: 8
+    commands:
+      - swipe:
+          start: 50%, 70%
+          end: 50%, 20%
+          duration: 300
+      - waitForAnimationToEnd
+- assertVisible:
+    id: (word|correction|idiom)-reveal
+- scrollUntilVisible:
+    element:
+      id: knowledge-known
+- swipe:
+    start: 50%, 60%
+    end: 50%, 48%
+    duration: 800
+- waitForAnimationToEnd
+- assertVisible:
+    id: knowledge-known
+    enabled: false
+- assertVisible:
+    id: knowledge-unknown
+    enabled: false
+# Self-check off again: the card shows its meaning.
+- runFlow:
+    file: ../open-settings-row.yaml
+    env:
+      ROW: settings-self-check
+- tapOn:
+    id: settings-self-check
+- assertVisible:
+    id: settings-self-check
+    checked: false
+- tapOn:
+    id: tab-home
+- assertNotVisible:
+    id: (word|correction|idiom)-reveal
