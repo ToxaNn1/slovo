@@ -95,7 +95,7 @@ const guessWordCard = {
   entryKind: 'word',
   overline: 'Визначення → слово',
   title: 'Вгадай слово',
-  description: 'Читаєте визначення — обираєте одне слово з чотирьох.',
+  description: 'Читаєте визначення — обираєте одне слово чи вислів з чотирьох.',
   sample: { prompt: '«метушня, безлад»', answer: 'веремі́я' },
 };
 const correctionCard = {
@@ -130,7 +130,8 @@ describe('the card of each Game Mode on offer', () => {
       {
         ...guessWordCard,
         canStart: false,
-        refusal: 'Замало слів у вашому Міксі. Поверніть кілька категорій у Налаштуваннях.',
+        refusal:
+          'Замало слів і висловів у вашому Міксі. Поверніть кілька категорій у Налаштуваннях.',
       },
       {
         ...correctionCard,
