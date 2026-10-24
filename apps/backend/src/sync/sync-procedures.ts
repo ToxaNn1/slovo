@@ -1,8 +1,7 @@
-import { implement } from '@orpc/server';
 import { apiContract } from '@slovo/contracts/api';
 import type { Accounts, Sync } from '@slovo/server-core';
 
-import { sessionGate } from '../account/session-gate';
+import { sessionGate, signedInRouter } from '../account/session-gate';
 import { retryAfter } from '../retry-after';
 
 /** What a request brings to the Sync procedures. */
@@ -14,11 +13,7 @@ interface SyncContext {
 
 /** The Sync procedures of the contract, over the server Core's Sync. */
 export function syncProcedures(sync: Sync, accounts: Accounts) {
-  const records = implement(apiContract.sync)
-    .$context<SyncContext>()
-    // The Session gate runs before the input is read: oRPC validates the
-    // input before the middlewares a procedure adds unless told otherwise.
-    .$config({ initialInputValidationIndex: Number.POSITIVE_INFINITY });
+  const records = signedInRouter(apiContract.sync).$context<SyncContext>();
   const signedIn = sessionGate(accounts);
   return records.router({
     push: records.push.use(signedIn).handler(async ({ input, context, errors }) => {

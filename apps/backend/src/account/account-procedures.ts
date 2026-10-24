@@ -1,9 +1,8 @@
-import { implement } from '@orpc/server';
 import { apiContract } from '@slovo/contracts/api';
 import type { Accounts } from '@slovo/server-core';
 
 import { retryAfter } from '../retry-after';
-import { sessionGate } from './session-gate';
+import { sessionGate, signedInRouter } from './session-gate';
 
 /** What a request brings to the Account procedures. */
 interface AccountContext {
@@ -16,10 +15,7 @@ interface AccountContext {
 
 /** The Account procedures of the contract, over the server Core's Accounts. */
 export function accountProcedures(accounts: Accounts) {
-  const account = implement(apiContract.account)
-    .$context<AccountContext>()
-    // The Session gate runs before the input is read, as in the Sync procedures.
-    .$config({ initialInputValidationIndex: Number.POSITIVE_INFINITY });
+  const account = signedInRouter(apiContract.account).$context<AccountContext>();
 
   const signedIn = sessionGate(accounts);
 
