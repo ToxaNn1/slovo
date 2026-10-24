@@ -153,18 +153,33 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
             .where(eq(accounts.email, email));
           for (const row of rows) for (const secret of Object.values(row)) secrets.add(secret);
           await clientOf(token).account.me();
-          await client.account
-            .signInWithGoogle({ idToken: 'not-a-token', editionId: EDITION })
-            .catch(refused);
-          await client.account
-            .signInWithGoogle({
-              idToken: google.token({ email }, { audience: 'another-app.example' }),
-              editionId: EDITION,
-            })
-            .catch(refused);
-          await client.account
-            .signInWithGoogle({ idToken: google.token({ email }), editionId: 'pl' })
-            .catch(refused);
+          /** A Google sign-in the backend refuses, whose token no answer may echo. */
+          const refusedGoogle = async (refusedToken: string, editionId = EDITION) => {
+            secrets.add(refusedToken);
+            await client.account
+              .signInWithGoogle({ idToken: refusedToken, editionId })
+              .catch(refused);
+          };
+          await refusedGoogle('not-a-token');
+          await refusedGoogle(google.token({ email }, { audience: 'another-app.example' }));
+          await refusedGoogle(google.token({ email }, { expiresAt: new Date(Date.now() - 1000) }));
+          await refusedGoogle(google.token({ email, emailVerified: false }));
+          await refusedGoogle(google.token({ email }), 'pl');
+          // Over the per-IP limit of Google sign-ins: TOO_MANY_REQUESTS with Retry-After.
+          for (let tried = 0; tried < 30; tried++) {
+            await client.account
+              .signInWithGoogle({ idToken: google.token({ email }), editionId: EDITION })
+              .catch(refused);
+          }
+          await refusedGoogle(google.token({ email }));
+          const overLimit = answers.at(-1);
+          expect(overLimit).toMatchObject({
+            request: 'POST /v1/account/google-sessions',
+            status: 429,
+          });
+          expect(overLimit?.headers).toContain('retry-after');
+          await switchOff(EDITION, 'googleSignIn');
+          await refusedGoogle(google.token({ email }));
         },
         me: async () => {
           await (await signIn()).account.me();
