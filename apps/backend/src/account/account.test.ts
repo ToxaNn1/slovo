@@ -419,26 +419,21 @@ describe('signing out everywhere', () => {
 
 describe('deleting the Account', () => {
   it('deletes the Account, its Sessions, its sign-in methods and the codes for its email', async () => {
-    const { client, database, signIn, rowsOf } = signingIn();
+    const { client, clientOf, database, google, signIn, rowsOf } = signingIn();
     const { db } = database;
     const email = newEmail();
     const phone = await signIn(email);
-    const tablet = await signIn(email);
+    // A Google sign-in to the same Account records the method (ADR 0047).
+    const tablet = clientOf(
+      (await client.account.signInWithGoogle({ idToken: google.token({ email }), editionId: 'uk' }))
+        .token,
+    ).account;
     const id = (await rowsOf(email)).account?.id ?? '';
-    // Sign in with Apple and Google arrive in 0.9; this row stands for one.
-    const now = new Date();
-    await db.insert(signInMethods).values({
-      accountId: id,
-      providerId: 'apple',
-      providerAccountId: 'apple-id',
-      createdAt: now,
-      updatedAt: now,
-    });
     // A code waiting for the email when the Account goes.
     await client.account.requestCode({ email, editionId: 'uk' });
     expect(await rowsOf(email)).toMatchObject({
       sessions: [{}, {}],
-      signInMethods: [{}],
+      signInMethods: [{ providerId: 'google' }],
       signInCode: {},
     });
 
