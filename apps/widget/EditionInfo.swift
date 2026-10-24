@@ -15,11 +15,14 @@ enum EditionInfo {
   static let uiFontFamily = value("SLOVOUIFont")
 
   /// The link that opens an Entry in the app or, without one (an empty or
-  /// broken state), the app's root, which is the Feed.
-  static func url(opening entry: WidgetEntry?) -> URL? {
+  /// broken state), the app's root, which is the Feed. It carries the
+  /// snapshot's `key`, without which the app opens it as a plain link: the
+  /// Entry is not Seen.
+  static func url(opening entry: WidgetEntry?, key: String?) -> URL? {
     guard let scheme = urlScheme else { return nil }
     guard let entry else { return URL(string: "\(scheme)://") }
-    return URL(string: "\(scheme)://entry/\(entry.id)?from=widget")
+    let keyParam = key.map { "&key=\($0)" } ?? ""
+    return URL(string: "\(scheme)://entry/\(entry.id)?from=widget\(keyParam)")
   }
 
   /// The Edition's word font at `size`, in the upright face nearest `weight`.

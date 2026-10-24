@@ -8,6 +8,8 @@ struct EntryMoment: TimelineEntry {
   let entry: WidgetEntry?
   /// The line of the mode's empty or broken state, when it has no Entry.
   let emptyState: String?
+  /// The snapshot's key, which the link to the Entry carries.
+  let linkKey: String?
 }
 
 /// The widget's timeline over the Entries of its Widget Mode.
@@ -42,7 +44,9 @@ struct EntryTimeline: AppIntentTimelineProvider {
   private static func moment(of content: ModeContent, at date: Date, showing entry: WidgetEntry?)
     -> EntryMoment
   {
-    EntryMoment(date: date, overline: content.overline, entry: entry, emptyState: content.emptyState)
+    EntryMoment(
+      date: date, overline: content.overline, entry: entry, emptyState: content.emptyState,
+      linkKey: content.linkKey)
   }
 
   func placeholder(in context: Context) -> EntryMoment {

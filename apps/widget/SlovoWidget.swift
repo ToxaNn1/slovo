@@ -14,7 +14,7 @@ struct SlovoWidget: Widget {
       moment in
       EntryView(moment: moment)
         .containerBackground(Color("background"), for: .widget)
-        .widgetURL(EditionInfo.url(opening: moment.entry))
+        .widgetURL(EditionInfo.url(opening: moment.entry, key: moment.linkKey))
     }
     .configurationDisplayName(Text("galleryName"))
     .description(Text("galleryDescription"))

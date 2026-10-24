@@ -13,7 +13,7 @@ import { logError } from './log';
 import { settingsOpening } from './settings';
 import { syncInBackground, reopenAfterSync } from './sync/background-sync';
 import { syncOpening } from './sync/device-sync';
-import { deviceWidget } from './widget/device-widget';
+import { deviceWidget, deviceWidgetLinkKey } from './widget/device-widget';
 import { createWidgetSnapshotWriter } from './widget/widget-snapshot';
 
 /** Whether the feature is on in effect, by the remote Feature Switches the app knows (ADR 0040). */
@@ -53,7 +53,7 @@ export function Lifecycle() {
         logError('Could not follow the app into the foreground', error);
       });
     });
-    const writeWidgetSnapshot = createWidgetSnapshotWriter(deviceWidget);
+    const writeWidgetSnapshot = createWidgetSnapshotWriter(deviceWidget, deviceWidgetLinkKey);
     reports.listen(compositionOpening, (composition, moment) => {
       if (moment === 'launch' || moment === 'background') {
         writeWidgetSnapshot(() => composition.widget.snapshot());

@@ -69,6 +69,13 @@ export const WidgetSnapshotSchema = z
     favorites: EntryIdsSchema,
     /** The Collections, newest first, empty ones included. */
     collections: z.array(WidgetCollectionSchema),
+    /**
+     * The key the widget's links to an Entry carry as `key=`, so the app
+     * opens only those as the widget's: a link another app or a web page
+     * opens can't know it. The app adds it to the Core's snapshot and keeps
+     * it from one snapshot to the next; the Edition's example has none.
+     */
+    linkKey: z.string().min(1).optional(),
   })
   .superRefine((snapshot, context) => {
     const ids = snapshot.entries.map(({ id }) => id);
