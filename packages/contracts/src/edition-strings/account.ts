@@ -26,6 +26,8 @@ const AccountProblemsSchema = z.strictObject({
   'code-expired': TextSchema,
   /** Too many requests, for this email or from this network. */
   'too-many-requests': TextSchema,
+  /** The backend refused the Google sign-in: the token didn't check, or Google hasn't verified the email (ADR 0047). */
+  refused: TextSchema,
   /** The backend answered what the request never expects, such as an Edition it doesn't serve. */
   unexpected: TextSchema,
 });
