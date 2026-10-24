@@ -283,6 +283,24 @@ describe('the server', { timeout: 30_000 }, () => {
     expect(server.output().stderr).toContain('AUTH_SECRET: is the example value');
   });
 
+  it('starts with no SENTRY_DSN, as .env.example gives it, and then reports nothing', async () => {
+    const server = runServer({
+      ...VALID_ENV,
+      DATABASE_URL: testDatabaseUrl(),
+      PORT: '0',
+      SENTRY_DSN: '',
+    });
+
+    await server.listening;
+  });
+
+  it('refuses to start with a SENTRY_DSN that is no URL, naming it', async () => {
+    const server = runServer({ ...VALID_ENV, SENTRY_DSN: 'not-a-dsn' });
+
+    expect(await server.exited).toBe(1);
+    expect(server.output().stderr).toContain('SENTRY_DSN');
+  });
+
   it('stops on SIGTERM', async () => {
     const server = runServer({ ...VALID_ENV, DATABASE_URL: testDatabaseUrl(), PORT: '0' });
     await server.listening;

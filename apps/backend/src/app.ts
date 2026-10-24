@@ -14,9 +14,10 @@ import { requestId, type RequestIdVariables } from 'hono/request-id';
 import type { Logger } from 'pino';
 
 import { createAuthenticator } from './account/authenticator';
-import { createApiHandler, INTERNAL_FAILURE, logUnexpectedFailure } from './api';
+import { createApiHandler, INTERNAL_FAILURE, onUnexpectedFailure } from './api';
 import { createContentPackStore } from './content/content-pack-store';
 import type { Database } from './database/database';
+import type { ErrorReporter } from './error-reporter';
 import { createEditions } from './edition/editions';
 import { createRateLimits } from './rate-limits';
 import { createUserRecords } from './sync/user-records';
@@ -42,6 +43,8 @@ export interface AppDependencies {
   readonly google: GoogleVerifier;
   /** Signs the Sessions' tokens. */
   readonly authSecret: string;
+  /** Where the unexpected failures (500) are reported. */
+  readonly reporter: ErrorReporter;
 }
 
 type Variables = RequestIdVariables & {
@@ -79,6 +82,7 @@ export function createApp({
   mailer,
   google,
   authSecret,
+  reporter,
 }: AppDependencies) {
   const editionRegistry = createEditions({ database, clock, editions });
   const rateLimits = createRateLimits(database);
@@ -159,7 +163,13 @@ export function createApp({
   for (const path of ['/v1/*', '/docs', '/docs/*']) {
     app.use(path, async (c, next) => {
       const { matched, response } = await api.handle(c.req.raw, {
-        context: { logger: c.var.logger, headers: c.req.raw.headers, ip: c.var.ip },
+        context: {
+          logger: c.var.logger,
+          requestId: c.var.requestId,
+          reporter,
+          headers: c.req.raw.headers,
+          ip: c.var.ip,
+        },
       });
       if (matched) return c.newResponse(response.body, response);
       return next();
@@ -171,7 +181,7 @@ export function createApp({
 
   // The one global handler of what the API's own handler doesn't catch.
   app.onError((error, c) => {
-    logUnexpectedFailure(c.var.logger, error);
+    onUnexpectedFailure({ logger: c.var.logger, requestId: c.var.requestId, reporter }, error);
     return c.json(INTERNAL_FAILURE, 500);
   });
 

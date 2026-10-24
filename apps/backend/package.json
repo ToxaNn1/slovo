@@ -20,6 +20,7 @@
     "@hono/node-server": "^2.1.5",
     "@orpc/openapi": "^1.15.7",
     "@orpc/server": "^1.15.7",
+    "@sentry/node": "^11.8.0",
     "@slovo/contracts": "workspace:*",
     "@slovo/language-pack": "workspace:*",
     "@slovo/server-core": "workspace:*",
