@@ -25,8 +25,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
 # Last, as they clear the app's state for a fresh install.
 - runFlow: flows/stats-pill.yaml
 - runFlow: flows/stats-sheet.yaml
-- runFlow: flows/open-from-notification.yaml
-- runFlow: flows/open-from-widget.yaml
+- runFlow: flows/outside-links.yaml
 - runFlow: flows/notifications-denied.yaml
 # Also from a fresh install.
 - runFlow: flows/onboarding.yaml

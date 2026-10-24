@@ -40,3 +40,15 @@ All the text is the Edition's `widget` strings, written into the extension's str
 ## Amendment: a switched-off widget stops updating (0.8.5)
 
 With the `widget` Feature Switch off (ADR 0040), by its effective value at the time of the call, `widget.snapshot()` builds nothing, so the app writes no new Widget Snapshot and asks WidgetKit for no reload. The widget keeps the last file and just stops updating; there is no placeholder, and no native change, since the extension already shows what it last read. With the switch on again the next write is as before.
+
+## Amendment: only the widget's links open as the widget's (0.8.9)
+
+The app's scheme can't tell who opened a link, so the security review (#617, F5) found that any app or web page could open `entry/<id>?from=widget` and make the reader's History list Entries they never read, or name the label of «Назад». Expo Router hands every link from outside the app to `app/+native-intent.tsx` and none from inside it. There a link keeps its path and drops every search param, so «Назад» shows the app's own label and the Entry opens as a plain link: not Seen, in no History. A notification never comes from outside: the app opens a tapped one's Word inside it, so `from=notification` from outside is dropped too.
+
+Only the widget's link to an Entry keeps `from=widget`, and only with the key of the Widget Snapshot the widget reads now. The snapshot carries that key as `linkKey`, which the app adds to the Core's snapshot (the contracts allow it, the Edition's example has none), and the widget appends it to its links as `key=`. The app keeps one key for the app run: the one of the snapshot in the App Group, which the links on the home screen carry already, or, with none there, a new one from the random source, which the next snapshot takes there. No other app or web page can read the App Group, so none can make a link that passes for the widget's. A widget built before 0.8.9 sends no key, so its links open as plain links until the next build.
+
+### Considered Options
+
+- **Every link from outside the app opens as a plain link**, the widget's too: rejected. An Entry opened from the widget would no longer be Seen, against this ADR.
+- **The key in a file or a store of its own**: rejected. The snapshot is already the one file the app writes and the widget reads, and its schema is checked on both sides.
+- **The Maestro flows open the widget's and a notification's links**: no longer possible, as Maestro can neither read the key nor tap a notification; the smoke opens forged links and checks that History stays empty, and the Jest tests of the outside links cover the real ones.

@@ -1,0 +1,56 @@
+# A link from outside the app opens its Entry as a plain link: another app or
+# a web page can open the Edition's scheme with the marks of a notification's
+# or the widget's link, and with a label for «Назад», but the Entry screen
+# shows the app's own label and the Entry goes into no History. A tapped
+# notification opens its Word inside the app, and the widget's link carries
+# the key of its Widget Snapshot, which no other app can read; the Jest tests
+# of the outside links cover both. A subflow of `smoke-2.yaml`; run it from
+# there. It clears the app's state.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+# A fresh install, so History starts empty.
+- runFlow:
+    file: ../fresh-install.yaml
+# A notification's mark and a label of its own, for кракелюр, a Word of the Ukrainian Edition.
+- openLink: ${(SCHEME || 'slovo-uk') + '://entry/w_00g2ap?from=notification&back=%D0%92%D1%85%D1%96%D0%B4'}
+# A simulator asks once whether the link may open the app.
+- runFlow:
+    when:
+      visible: Open
+    commands:
+      - tapOn: Open
+- assertVisible:
+    id: word-card
+- assertNotVisible: Вхід
+- takeScreenshot: outside-links-entry
+- tapOn:
+    id: entry-screen-back
+- assertVisible:
+    id: home
+# The widget's mark without its key, for «приймати до уваги» → «брати до уваги», a Correction.
+- openLink: ${(SCHEME || 'slovo-uk') + '://entry/c_77szl9?from=widget'}
+- runFlow:
+    when:
+      visible: Open
+    commands:
+      - tapOn: Open
+- assertVisible:
+    id: correction-standard
+- tapOn:
+    id: entry-screen-back
+- assertVisible:
+    id: home
+# Neither Entry was Seen, so History is still empty.
+- tapOn:
+    id: tab-saved
+- tapOn:
+    id: saved-history
+- assertVisible:
+    id: history-empty
+- takeScreenshot: outside-links-history
+- tapOn:
+    id: history-back
+- tapOn:
+    id: tab-home
+- assertVisible:
+    id: home
