@@ -23,6 +23,7 @@ function accountApiOver(fetch: (request: Request) => Promise<Response>) {
 const calls: Record<keyof AccountApi, (api: AccountApi) => Promise<unknown>> = {
   requestCode: (api) => api.requestCode('anna@example.com'),
   verifyCode: (api) => api.verifyCode('anna@example.com', '123456'),
+  signInWithGoogle: (api) => api.signInWithGoogle('the-google-token'),
   me: (api) => api.me('the-token'),
   signOut: (api) => api.signOut('the-token'),
   signOutEverywhere: (api) => api.signOutEverywhere('the-token'),
@@ -72,6 +73,45 @@ describe('the Account API over the contract’s client', () => {
       { input: { email: 'anna@example.com', code: '123456' }, session: null },
     ]);
   });
+
+  it('signs in with a Google identity token for the Edition, and answers the new Session’s token and the Account’s email', async () => {
+    const asked: unknown[] = [];
+    const accountApi = accountApiServedBy({
+      account: {
+        signInWithGoogle: ({ input, context }) => {
+          asked.push({ input, session: context.headers.get('authorization') });
+          return { token: 'the-token', email: 'anna@example.com' };
+        },
+      },
+    });
+
+    await expect(accountApi.signInWithGoogle('the-google-token')).resolves.toEqual({
+      ok: true,
+      token: 'the-token',
+      email: 'anna@example.com',
+    });
+    expect(asked).toEqual([
+      { input: { idToken: 'the-google-token', editionId: 'uk' }, session: null },
+    ]);
+  });
+
+  it.each(['INVALID_TOKEN', 'FOREIGN_AUDIENCE', 'EMAIL_NOT_VERIFIED'] as const)(
+    'answers a Google sign-in the backend refuses as %s refused',
+    async (code) => {
+      const accountApi = accountApiServedBy({
+        account: {
+          signInWithGoogle: ({ errors }) => {
+            throw errors[code]();
+          },
+        },
+      });
+
+      await expect(accountApi.signInWithGoogle('the-google-token')).resolves.toEqual({
+        ok: false,
+        reason: 'refused',
+      });
+    },
+  );
 
   it('answers the email of the Session’s Account, sending the Session as a bearer token', async () => {
     const sessions: (string | null)[] = [];
@@ -137,7 +177,7 @@ describe('the Account API over the contract’s client', () => {
     });
   });
 
-  it.each(['requestCode', 'verifyCode'] as const)(
+  it.each(['requestCode', 'verifyCode', 'signInWithGoogle'] as const)(
     '%s answers too many requests over a limit',
     async (call) => {
       const accountApi = accountApiServedBy(failingWith('TOO_MANY_REQUESTS'));

@@ -7,7 +7,8 @@ const unauthorized = { ok: false, reason: 'unauthorized' } as const;
 
 /**
  * The Core's `AccountApi` on the API contract's client. The Sign-in code
- * request names the running Edition, so the email is in its language; the
+ * request names the running Edition, so the email is in its language, and
+ * the Google sign-in names it for its `googleSignIn` Feature Switch; the
  * calls that act on an Account go through the client of its Session, which
  * sends the token as `Authorization: Bearer`.
  */
@@ -45,6 +46,17 @@ export function createAccountApi({
         if (error.code === 'CODE_EXPIRED') return { ok: false, reason: 'code-expired' } as const;
         return undefined;
       });
+      if (!answer.ok) return answer;
+      return { ok: true, token: answer.output.token, email: answer.output.email };
+    },
+    async signInWithGoogle(idToken) {
+      const answer = await answerOf(
+        client.account.signInWithGoogle({ idToken, editionId }),
+        ({ code }) =>
+          code === 'INVALID_TOKEN' || code === 'FOREIGN_AUDIENCE' || code === 'EMAIL_NOT_VERIFIED'
+            ? ({ ok: false, reason: 'refused' } as const)
+            : undefined,
+      );
       if (!answer.ok) return answer;
       return { ok: true, token: answer.output.token, email: answer.output.email };
     },
