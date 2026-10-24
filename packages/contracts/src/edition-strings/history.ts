@@ -36,6 +36,12 @@ export const HistoryStringsSchema = z.strictObject({
     idiom: TextSchema,
     placeName: TextSchema,
   }),
+  /**
+   * A row's kind beside its time on the right of the row, where Collections
+   * and «Вчу» put when the Entry was added or is next due. Takes `{kind}` and
+   * `{time}`.
+   */
+  kindBeside: templateOf('kind', 'time'),
   /** The headings that group the list by day. The screen draws them in capitals. */
   days: z.strictObject({
     today: TextSchema,

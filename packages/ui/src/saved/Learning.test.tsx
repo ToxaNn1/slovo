@@ -6,7 +6,20 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import type { ReactElement } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+/** The kinds of Entry and how a row names one beside its time. */
+const history = {
+  kinds: {
+    word: 'word',
+    correction: 'correction',
+    wordOfTheDay: 'word of the day',
+    idiom: 'idiom',
+    placeName: 'place name',
+  },
+  kindBeside: '{kind} · {time}',
+};
+
 const strings = {
+  history,
   learning: {
     title: 'Learning',
     count: { one: '{count} entry', other: '{count} entries' },
@@ -30,6 +43,15 @@ const word = (entryId: string, title: string): EntryRowModel => ({
   registers: [],
 });
 
+const idiom: EntryRowModel = {
+  kind: 'idiom',
+  entryId: 'i1',
+  title: 'spill the beans',
+  secondLine: 'To give away a secret.',
+  kindKey: 'idiom',
+  spoken: 'spill the beans, To give away a secret.',
+};
+
 const correction: EntryRowModel = {
   kind: 'correction',
   entryId: 'c1',
@@ -49,6 +71,7 @@ const learning = (row: EntryRowModel, days: number): LearningEntry => ({
 
 /** The same strings in a language with four plural forms, as Ukrainian has. */
 const ukStrings = {
+  history,
   learning: {
     ...strings.learning,
     reviewDay: {
@@ -85,15 +108,27 @@ describe('LearningRow', () => {
     [1, 'tomorrow'],
     [3, 'in 3 days'],
     [7, 'in 7 days'],
-  ])('shows the Entry and its next Review day %i days away as «%s»', async (days, label) => {
-    await renderInEdition(
-      <LearningRow entry={learning(word('w1', 'river'), days)} onPress={jest.fn()} />,
-    );
+  ])(
+    'shows the Entry, its kind and its next Review day %i days away as «%s»',
+    async (days, label) => {
+      await renderInEdition(
+        <LearningRow entry={learning(word('w1', 'river'), days)} onPress={jest.fn()} />,
+      );
 
-    expect(screen.getByText('river')).toBeTruthy();
-    expect(screen.getByText('what river means')).toBeTruthy();
-    expect(screen.getByText(label)).toBeTruthy();
-    expect(screen.getByRole('button', { name: `river, what river means, ${label}` })).toBeTruthy();
+      expect(screen.getByText('river')).toBeTruthy();
+      expect(screen.getByText('what river means')).toBeTruthy();
+      expect(screen.getByText(`word · ${label}`)).toBeTruthy();
+      expect(
+        screen.getByRole('button', { name: `river, what river means, word · ${label}` }),
+      ).toBeTruthy();
+    },
+  );
+
+  it('names an Idiom’s kind beside its next Review day', async () => {
+    await renderInEdition(<LearningRow entry={learning(idiom, 1)} onPress={jest.fn()} />);
+
+    expect(screen.getByText('spill the beans')).toBeTruthy();
+    expect(screen.getByText('idiom · tomorrow')).toBeTruthy();
   });
 
   it.each([
@@ -106,13 +141,15 @@ describe('LearningRow', () => {
       { locale: 'uk', learning: ukStrings },
     );
 
-    expect(screen.getByText(label)).toBeTruthy();
+    expect(screen.getByText(`word · ${label}`)).toBeTruthy();
   });
 
   it('shows a Correction with the form it replaces', async () => {
     await renderInEdition(<LearningRow entry={learning(correction, 1)} onPress={jest.fn()} />);
 
-    expect(screen.getByRole('button', { name: 'right, instead of wrong, tomorrow' })).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'right, instead of wrong, correction · tomorrow' }),
+    ).toBeTruthy();
   });
 
   it('opens the Entry on a tap', async () => {

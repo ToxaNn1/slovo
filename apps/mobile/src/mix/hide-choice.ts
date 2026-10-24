@@ -1,5 +1,13 @@
 import { fill, type EditionStrings } from '@slovo/contracts';
-import type { EntryFeedCard, HideTarget, HidingChange, MixKind, MixState } from '@slovo/core';
+import {
+  featureOfKind,
+  type Edition,
+  type EntryFeedCard,
+  type HideTarget,
+  type HidingChange,
+  type MixKind,
+  type MixState,
+} from '@slovo/core';
 
 /** One option of the hide choice, with what it hides and the undo toast it shows when it hides something of the Mix. */
 export type HideOption =
@@ -26,25 +34,30 @@ function wholeKindStrings(
   entryKind: MixKind,
   strings: EditionStrings['hiding'],
 ): { label: string; toast: string } {
-  return entryKind === 'correction'
-    ? { label: strings.choice.corrections, toast: strings.correctionsHidden }
-    : { label: strings.choice.idioms, toast: strings.idiomsHidden };
+  const toasts: Record<MixKind, string> = {
+    correction: strings.correctionsHidden,
+    idiom: strings.idiomsHidden,
+  };
+  return { label: strings.choice[featureOfKind(entryKind)], toast: toasts[entryKind] };
 }
 
 /**
  * The options of the hide choice a card's hide button opens: always its
  * Entry; on a Word card its Category too, and on any other card its kind as a
  * whole (Corrections, Idioms), each left out when it is out of the Mix
- * already. The last Category in the Mix is left out, as it can't be taken out
+ * already; the kind as a whole also while the Edition in effect turns it off
+ * (ADR 0040), as the Mix screen then doesn't offer it back. The last Category in the Mix is left out, as it can't be taken out
  * (ADR 0019).
  */
 export function hideChoice({
   card,
   mix,
+  edition,
   strings,
 }: {
   card: EntryFeedCard;
   mix: MixState;
+  edition: Pick<Edition, 'isFeatureEnabled'>;
   strings: EditionStrings['hiding'];
 }): readonly HideOption[] {
   const entry: HideOption = {
@@ -54,7 +67,9 @@ export function hideChoice({
   };
   if (card.kind !== 'word') {
     const entryKind = card.kind;
-    if (!mix.kinds[entryKind]) return [entry];
+    if (!edition.isFeatureEnabled(featureOfKind(entryKind)) || !mix.kinds[entryKind]) {
+      return [entry];
+    }
     const target = { kind: 'whole-kind', entryKind } as const;
     return [entry, { kind: 'whole-kind', target, ...wholeKindStrings(entryKind, strings) }];
   }

@@ -1,9 +1,8 @@
-import { withoutStress, type CollectionEntry } from '@slovo/core';
+import type { CollectionEntry } from '@slovo/core';
 import {
   BackLink,
+  CollectionEntryRow,
   EmptyState,
-  EntryRow,
-  fill,
   rowPadding,
   ScreenTitle,
   space,
@@ -24,9 +23,10 @@ const { collections: collectionStrings } = editionStrings;
 const strings = collectionStrings.entries;
 
 /**
- * A Collection: its Entries newest first, each row with when it was added. A
- * tap opens the Entry screen; a swipe (or the VoiceOver action) takes the Entry
- * out of this Collection only. An empty Collection says so, with a hint.
+ * A Collection: its Entries newest first, each row with its kind and when it
+ * was added. A tap opens the Entry screen; a swipe (or the VoiceOver action)
+ * takes the Entry out of this Collection only. An empty Collection says so,
+ * with a hint.
  */
 export default function CollectionScreen() {
   const { collectionId } = useLocalSearchParams<{ collectionId: string }>();
@@ -38,28 +38,18 @@ export default function CollectionScreen() {
 
   const name = collection?.name ?? '';
 
-  function renderEntry({ entryId, row, addedAt }: CollectionEntry) {
+  function renderEntry(entry: CollectionEntry) {
     return (
-      <EntryRow
-        row={row}
-        trailing={addedOn(addedAt)}
+      <CollectionEntryRow
+        entry={entry}
+        added={addedOn(entry.addedAt)}
+        collectionName={name}
         onPress={() => {
-          openScreen(`/saved/collections/${collectionId}/${entryId}`);
+          openScreen(`/saved/collections/${collectionId}/${entry.entryId}`);
         }}
-        actions={[
-          {
-            name: 'remove',
-            label: strings.remove,
-            accessibilityLabel: fill(strings.removeLabel, {
-              title: withoutStress(row.title),
-              name,
-            }),
-            tone: 'destructive',
-            onPress: () => {
-              remove(entryId);
-            },
-          },
-        ]}
+        onRemove={() => {
+          remove(entry.entryId);
+        }}
       />
     );
   }
