@@ -85,7 +85,7 @@ export type GoogleTokenCheck =
   | { readonly ok: false; readonly reason: 'foreign-audience' };
 
 /**
- * Verifies Google identity tokens (better-auth's Google provider in the
+ * Verifies Google identity tokens (`jose` with Google's kept keys in the
  * backend): the signature against Google's keys, the issuer, the expiry and
  * the audience against SLOVO's client ids, which come from the environment.
  */
