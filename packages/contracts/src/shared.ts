@@ -17,7 +17,8 @@ export const ColorSchema = z.union(
   'Expected #RRGGBB or rgba(r, g, b, a)',
 );
 
-const WebAddressSchema = z.url({ protocol: /^https?$/ });
+/** A web address, `http` or `https`. */
+export const WebAddressSchema = z.url({ protocol: /^https?$/ });
 
 /** Where content was taken from: a citation, its web address and an archived copy. */
 export const SourceSchema = z.strictObject({

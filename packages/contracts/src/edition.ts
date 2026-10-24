@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { NotificationSoundFileSchema } from './notification-sound';
+import { WebAddressSchema } from './shared';
 
 const KebabCaseIdSchema = z
   .string()
@@ -178,6 +179,14 @@ export const UserSettingDefaultsConfigSchema = z.strictObject({
 
 export type UserSettingDefaultsConfig = z.infer<typeof UserSettingDefaultsConfigSchema>;
 
+/** The web addresses of the Edition's legal pages, which About opens in the browser. */
+export const LegalPagesSchema = z.strictObject({
+  privacy: WebAddressSchema,
+  terms: WebAddressSchema,
+});
+
+export type LegalPages = z.infer<typeof LegalPagesSchema>;
+
 /** The id of an Edition, e.g. `uk`. */
 export const EditionIdSchema = z.string().regex(/^[a-z][a-z0-9-]*$/, 'Expected a lowercase id');
 
@@ -199,6 +208,7 @@ export const EditionConfigSchema = z
      * system default sound.
      */
     notificationSound: NotificationSoundFileSchema.optional(),
+    legalPages: LegalPagesSchema,
     /**
      * The Categories, in their order, as the Language Pack build writes them
      * into the pack. The app reads them from the pack only (ADR 0033).

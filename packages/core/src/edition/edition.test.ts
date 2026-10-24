@@ -41,6 +41,10 @@ const validConfig = {
     notificationTimes: ['09:00'],
     mix: { categories: 'all', corrections: true, idioms: true },
   },
+  legalPages: {
+    privacy: 'https://example.org/test/privacy',
+    terms: 'https://example.org/test/terms',
+  },
   categories: [
     { id: 'nature', displayName: 'Nature' },
     { id: 'speech', displayName: 'Speech' },
@@ -176,6 +180,31 @@ describe('loadEdition', () => {
     });
 
     expect(edition.userSettingDefaults.vibration).toBe(false);
+  });
+
+  it('reports the addresses of its privacy policy and its terms, which About opens', () => {
+    expect(loadEdition(validConfig).legalPages).toEqual({
+      privacy: 'https://example.org/test/privacy',
+      terms: 'https://example.org/test/terms',
+    });
+  });
+
+  it.each(['privacy', 'terms'] as const)('requires the address of the %s page', (page) => {
+    const { [page]: _removed, ...legalPages } = validConfig.legalPages;
+
+    expect(() => loadEdition({ ...validConfig, legalPages })).toThrow(`legalPages.${page}`);
+  });
+
+  it('requires the legal pages', () => {
+    const { legalPages: _removed, ...config } = validConfig;
+
+    expect(() => loadEdition(config)).toThrow('legalPages');
+  });
+
+  it('rejects a legal page address that is not a web address', () => {
+    expect(() =>
+      loadEdition({ ...validConfig, legalPages: { ...validConfig.legalPages, terms: 'terms.md' } }),
+    ).toThrow('legalPages.terms');
   });
 
   it('rejects an invalid Edition config, naming the field', () => {
