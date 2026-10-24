@@ -72,6 +72,8 @@ async function renderApp() {
         redirectSystemPath: createOutsideLinks(() => Promise.resolve(WIDGET_LINK_KEY)),
       },
       index: () => <Text>Feed</Text>,
+      // Expo Router's own screen for a path with no route, which needs the app's manifest.
+      '+not-found': () => <Text>No such route</Text>,
       'entry/_layout': EntryLayout,
       'entry/[entryId]': EntryFromLinkScreen,
     },
@@ -123,6 +125,39 @@ describe('a link from outside the app', () => {
     await app.open(`slovo-uk://entry/c_77szl9?from=widget&key=${WIDGET_LINK_KEY}`);
 
     expect(entryScreen()).toBe(`${home} | widget`);
+  });
+});
+
+describe('a link from outside the app to no Entry', () => {
+  it("opens, as the dev client's link, the route of the link in it", async () => {
+    const app = await renderApp();
+
+    await app.open(
+      `slovo-uk://expo-development-client/?url=${encodeURIComponent('http://192.168.1.20:8082')}`,
+    );
+
+    expect(app.pathname()).toBe('/');
+    expect(screen.getByText('Feed')).toBeTruthy();
+  });
+
+  it("opens, as the dev client's link to an Entry, the Entry without the label it names", async () => {
+    const app = await renderApp();
+
+    await app.open(
+      `slovo-uk://expo-development-client/?url=${encodeURIComponent('slovo-uk://entry/w_bevz?back=Вхід&from=notification')}`,
+    );
+
+    expect(app.pathname()).toBe('/entry/w_bevz');
+    expect(entryScreen()).toBe(`${home} | inside`);
+  });
+
+  it('goes on to the router as it came, to a path the app has no route for', async () => {
+    const app = await renderApp();
+
+    await app.open('slovo-uk://nowhere/at-all?from=widget');
+
+    expect(app.pathname()).toBe('/nowhere/at-all');
+    expect(screen.getByText('No such route')).toBeTruthy();
   });
 });
 

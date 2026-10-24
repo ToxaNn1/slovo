@@ -19,28 +19,48 @@ export function openedFromOf(params: { readonly from?: string }): OpenedFrom | u
   return undefined;
 }
 
-/** An Entry's path, `entry/<id>`, after the scheme or a leading slash. */
+/** An Entry's path, `/entry/<id>`. */
 const entryPath = /^\/entry\/[^/]+$/;
+
+/** A link's scheme, such as `slovo-uk://`, after which its host is the first part of the path. */
+const schemePrefix = /^[a-z][a-z0-9+.-]*:\/\//i;
+
+/**
+ * The path and search of the route a link opens, as Expo Router reads it:
+ * after the scheme, or, for the dev client's link
+ * (`<scheme>://expo-development-client/?url=<link>`), that of the link in its
+ * `url`, with the origin of a web address taken away.
+ */
+function routeOf(link: string): { path: string; search: string } {
+  const [location = '', search = ''] = link.replace(/#.*$/, '').split('?');
+  const rest = location.replace(schemePrefix, '');
+  if (schemePrefix.test(location) && /^expo-development-client\/?$/.test(rest)) {
+    const inner = new URLSearchParams(search).get('url') ?? '';
+    return routeOf(inner.replace(/^https?:\/\/[^/?#]*/i, ''));
+  }
+  return { path: `/${rest.replace(/^\/+/, '')}`, search };
+}
 
 /**
  * The path a link from outside the app opens, such as a link another app or
- * a web page opens with the Edition's scheme: the link's path and none of its
- * search params, so it can't name the label of «Назад» or pass for a
- * notification's link, which never comes from outside (`NotificationTaps`
- * opens it inside the app). Only the widget's link to an Entry keeps its mark,
- * and only with the key of the Widget Snapshot the widget reads now, which an
- * app or a web page can't read; any other is a plain link, so its Entry is
- * not Seen and goes into no History.
+ * a web page opens with the Edition's scheme. A link to an Entry opens with
+ * its path and none of its search params, so it can't name the label of
+ * «Назад» or pass for a notification's link, which never comes from outside
+ * (`NotificationTaps` opens it inside the app). Only the widget's link keeps
+ * its mark, and only with the key of the Widget Snapshot the widget reads now,
+ * which an app or a web page can't read; any other is a plain link, so its
+ * Entry is not Seen and goes into no History. Every other link, the dev
+ * client's among them, goes on to Expo Router as it came.
  */
 function outsidePath(link: string, widgetLinkKey: string | undefined): string {
-  const [location = '', search = ''] = link.replace(/#.*$/, '').split('?');
-  const path = `/${location.replace(/^[a-z][a-z0-9+.-]*:\/\//i, '').replace(/^\/+/, '')}`;
+  const { path, search } = routeOf(link);
+  if (!entryPath.test(path)) return link;
   const params = new URLSearchParams(search);
   const fromWidget =
     params.get('from') === widgetSource &&
     widgetLinkKey !== undefined &&
     params.get('key') === widgetLinkKey;
-  return entryPath.test(path) && fromWidget ? `${path}?from=${widgetSource}` : path;
+  return fromWidget ? `${path}?from=${widgetSource}` : path;
 }
 
 /**
