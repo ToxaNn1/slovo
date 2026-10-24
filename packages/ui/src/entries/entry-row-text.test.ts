@@ -1,6 +1,6 @@
 import type { EditionStrings } from '@slovo/contracts';
 import type { EntryRowModel } from '@slovo/core';
-import { entryKindLabel, entryRowSubtitle } from '@slovo/ui/entry-row-text';
+import { entryLabel, entryRowSubtitle } from '@slovo/ui/entry-row-text';
 import { describe, expect, it } from 'vitest';
 
 const kinds: EditionStrings['history']['kinds'] = {
@@ -18,7 +18,7 @@ const word: EntryRowModel = {
   entryId: 'w_a',
   title: 'cándid',
   secondLine: 'Open and honest.',
-  kindKey: 'word',
+  labelKey: 'word',
   spoken: 'candid, Open and honest.',
   partOfSpeech: 'adjective',
   registers: [],
@@ -29,26 +29,26 @@ const correction: EntryRowModel = {
   entryId: 'c_a',
   title: 'in the meantime',
   secondLine: 'in the meantimes',
-  kindKey: 'correction',
+  labelKey: 'correction',
   spoken: 'in the meantime, in the meantimes',
   correctionType: 'calque',
 };
 
-const idiom = (kindKey: 'idiom' | 'placeName'): EntryRowModel => ({
+const idiom = (labelKey: 'idiom' | 'placeName'): EntryRowModel => ({
   kind: 'idiom',
   entryId: 'i_a',
   title: 'spill the beans',
   secondLine: 'To give away a secret.',
-  kindKey,
+  labelKey,
   spoken: 'spill the beans, To give away a secret.',
 });
 
 describe('the words of an Entry row', () => {
   it('names the kind of each row, a place name by its Idiom Type', () => {
-    expect(entryKindLabel(kinds, word)).toBe('word');
-    expect(entryKindLabel(kinds, correction)).toBe('correction');
-    expect(entryKindLabel(kinds, idiom('idiom'))).toBe('idiom');
-    expect(entryKindLabel(kinds, idiom('placeName'))).toBe('place name');
+    expect(entryLabel(kinds, word)).toBe('word');
+    expect(entryLabel(kinds, correction)).toBe('correction');
+    expect(entryLabel(kinds, idiom('idiom'))).toBe('idiom');
+    expect(entryLabel(kinds, idiom('placeName'))).toBe('place name');
   });
 
   it('puts the Definition under a Word or an Idiom, and the replaced form under a Correction', () => {

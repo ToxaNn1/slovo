@@ -25,18 +25,18 @@ const word: EntryRowModel = {
   entryId: 'w1',
   title: 'ríver',
   secondLine: 'what river means',
-  kindKey: 'word',
+  labelKey: 'word',
   spoken: 'river, what river means',
   partOfSpeech: 'noun',
   registers: [],
 };
 
-const idiom = (kindKey: 'idiom' | 'placeName'): EntryRowModel => ({
+const idiom = (labelKey: 'idiom' | 'placeName'): EntryRowModel => ({
   kind: 'idiom',
   entryId: 'i1',
   title: 'spill the beans',
   secondLine: 'To give away a secret.',
-  kindKey,
+  labelKey,
   spoken: 'spill the beans, To give away a secret.',
 });
 
@@ -74,8 +74,8 @@ describe('CollectionEntryRow', () => {
   it.each<['idiom' | 'placeName', string]>([
     ['idiom', 'idiom · today'],
     ['placeName', 'place name · today'],
-  ])('names an Idiom’s kind by its Idiom Type, %s', async (kindKey, trailing) => {
-    await renderRow(idiom(kindKey));
+  ])('labels an Idiom by its Idiom Type, %s', async (labelKey, trailing) => {
+    await renderRow(idiom(labelKey));
 
     expect(screen.getByText('spill the beans')).toBeTruthy();
     expect(screen.getByText(trailing)).toBeTruthy();

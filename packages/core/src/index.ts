@@ -18,7 +18,7 @@ export { buildCorrectionCard, type CorrectionCardModel } from './entries/correct
 export { type IdiomCardModel } from './entries/idiom-card';
 export { coreDecor, loadDecor, type Decor } from './edition/decor';
 export { createEntries, type Entries } from './entries/entries';
-export { buildEntryRow, type EntryRowModel } from './entries/entry-row';
+export type { EntryRowModel } from './entries/entry-row';
 export { type Favorite } from './saved/favorites';
 export {
   buildEntryCard,

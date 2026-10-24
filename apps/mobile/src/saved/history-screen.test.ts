@@ -121,10 +121,10 @@ describe('the «Історія» screen', () => {
 
     const [today] = sectionsOf(app, clock);
 
-    expect(today?.data.map(({ row, kind }) => ({ title: row.title, kind }))).toEqual([
-      { title: 'two', kind: 'слово' },
-      { title: 'наступний', kind: 'виправлення' },
-      { title: 'one', kind: 'слово дня' },
+    expect(today?.data.map(({ row, label }) => ({ title: row.title, label }))).toEqual([
+      { title: 'two', label: 'слово' },
+      { title: 'наступний', label: 'виправлення' },
+      { title: 'one', label: 'слово дня' },
     ]);
   });
 });

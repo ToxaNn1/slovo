@@ -1,4 +1,4 @@
-import { buildEntryRow, type PlayedRound } from '@slovo/core';
+import type { PlayedRound } from '@slovo/core';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -12,16 +12,17 @@ const TEXT_MAX_FONT_SCALE = 1.5;
 
 /**
  * What a row leads with. A Word's comes from the answer sheet, the Lemma with
- * the stressed vowels VoiceOver names. The others read the Entry row: an
- * idiom's title, its expression; but a Correction's second line, the
- * non-standard form, not the standard equivalent its row leads with, because
- * the Round asked about that form («Як правильно?») and the Review lists what
- * was asked.
+ * the stressed vowels VoiceOver names; an Idiom's is its expression. A
+ * Correction's is the non-standard form, not the standard equivalent its
+ * Entry row leads with, because the Round asked about that form («Як
+ * правильно?») and the Review lists what was asked.
  */
 function titleOf({ entry, answer }: PlayedRound) {
   if (entry.kind === 'word') return answer.sheet.answer;
-  const row = buildEntryRow(entry);
-  return { text: row.kind === 'correction' ? row.secondLine : row.title, stressedVowels: [] };
+  return {
+    text: entry.kind === 'correction' ? entry.nonStandardForm : entry.expression,
+    stressedVowels: [],
+  };
 }
 
 /**

@@ -57,7 +57,7 @@ export default function HistoryScreen() {
           <EntryRow
             compact
             row={item.row}
-            trailing={item.kind}
+            trailing={item.label}
             onPress={() => {
               openScreen(`/saved/history/${item.entryId}`);
             }}

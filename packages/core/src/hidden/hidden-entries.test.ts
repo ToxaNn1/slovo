@@ -156,7 +156,7 @@ describe('Hidden Entries', () => {
       entryId: 'c_one',
       title: 'one',
       secondLine: 'not one',
-      kindKey: 'correction',
+      labelKey: 'correction',
       spoken: 'one, not one',
       correctionType: 'calque',
     });

@@ -1,6 +1,6 @@
 import type { LearningEntry } from '@slovo/core';
 
-import { entryKindBeside } from '../entries/entry-row-text';
+import { entryLabelBeside } from '../entries/entry-row-text';
 import { EntryRow } from '../entries/EntryRow';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { SavedCard, SavedCardRows } from './SavedCard';
@@ -31,7 +31,7 @@ export function LearningRow({ entry, onPress }: { entry: LearningEntry; onPress:
     <EntryRow
       testID={`learning-row-${entry.entryId}`}
       row={entry.row}
-      trailing={entryKindBeside(strings.history, entry.row, reviewDayText(entry.daysUntilReview))}
+      trailing={entryLabelBeside(strings.history, entry.row, reviewDayText(entry.daysUntilReview))}
       onPress={onPress}
     />
   );

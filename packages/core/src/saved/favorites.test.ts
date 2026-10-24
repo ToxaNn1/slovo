@@ -151,7 +151,7 @@ describe('an Entry opened from a list', () => {
       entryId: 'w_old',
       title: 'óld',
       secondLine: 'The meaning of old.',
-      kindKey: 'word',
+      labelKey: 'word',
       spoken: 'old, The meaning of old.',
       partOfSpeech: 'noun',
       registers: [],

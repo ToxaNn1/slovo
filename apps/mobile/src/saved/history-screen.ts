@@ -6,8 +6,8 @@ import type { historyText } from './history-text';
 export interface HistoryEntryModel {
   readonly entryId: string;
   readonly row: EntryRowModel;
-  /** «слово», «виправлення» or «слово дня». */
-  readonly kind: string;
+  /** «слово», «виправлення», «фразеологізм», «топонім» or «слово дня». */
+  readonly label: string;
 }
 
 /** A day on the History screen: its heading and the Entries Seen that day, newest first. */
@@ -29,7 +29,7 @@ export function historySections({
   clock,
 }: {
   history: readonly HistoryEntry[];
-  text: Pick<ReturnType<typeof historyText>, 'dayHeading' | 'kind'>;
+  text: Pick<ReturnType<typeof historyText>, 'dayHeading' | 'label'>;
   clock: Clock;
 }): readonly HistorySection[] {
   return groupByLocalDay(history, ({ seenAt }) => seenAt, clock).map(({ day, entries }) => ({
@@ -38,7 +38,7 @@ export function historySections({
     data: entries.map((entry) => ({
       entryId: entry.entryId,
       row: entry.row,
-      kind: text.kind(entry),
+      label: text.label(entry),
     })),
   }));
 }

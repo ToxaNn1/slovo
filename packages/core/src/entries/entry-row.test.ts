@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildEntryRow, createMemoryUserStatePort, openComposition, openUserState } from '../index';
+import { createMemoryUserStatePort, openComposition, openUserState } from '../index';
 import { createMemoryContentPort } from '../testing';
 import { correction, countingReads, fakeClock, idiom, word } from '../test-support';
+import { buildEntryRow } from './entry-row';
 
 const words = Array.from({ length: 40 }, (_, place) => word(`w_${String(place).padStart(2, '0')}`));
 const corrections = Array.from({ length: 10 }, (_, place) => correction(`c_${String(place)}`));
@@ -90,7 +91,7 @@ describe('the row of an Entry', () => {
       entryId: 'w_veremiia',
       title: 'веремі́я',
       secondLine: 'Метушня, що́ зчинилася.',
-      kindKey: 'word',
+      labelKey: 'word',
       // VoiceOver reads whole words: the voices break a word at the Stress mark.
       spoken: 'веремія, Метушня, що зчинилася.',
     });
@@ -109,7 +110,7 @@ describe('the row of an Entry', () => {
       entryId: 'c_protiahom',
       title: 'протягом року',
       secondLine: 'на протязі року',
-      kindKey: 'correction',
+      labelKey: 'correction',
       spoken: 'протягом року, на протязі року',
     });
   });
@@ -124,7 +125,7 @@ describe('the row of an Entry', () => {
       entryId: 'i_baidyky',
       title: 'бити байдики',
       secondLine: 'Ледарювати.',
-      kindKey: 'idiom',
+      labelKey: 'idiom',
       spoken: 'бити байдики, Ледарювати.',
     });
   });
@@ -143,7 +144,7 @@ describe('the row of an Entry', () => {
       kind: 'idiom',
       title: 'Бердичів',
       secondLine: 'Місто на Житомирщині.',
-      kindKey: 'placeName',
+      labelKey: 'placeName',
       spoken: 'Бердичів, Місто на Житомирщині.',
     });
   });

@@ -45,7 +45,7 @@ const idiomRow = {
   entryId: IDIOM,
   title: 'бити байдики',
   secondLine: 'Ледарювати, нічого не робити.',
-  kindKey: 'idiom',
+  labelKey: 'idiom',
   spoken: 'бити байдики, Ледарювати, нічого не робити.',
 };
 const placeNameRow = {
@@ -53,7 +53,7 @@ const placeNameRow = {
   entryId: PLACE_NAME,
   title: 'Бердичів',
   secondLine: "Місто на Житомирщині, на річці Гнилоп'ять.",
-  kindKey: 'placeName',
+  labelKey: 'placeName',
   spoken: "Бердичів, Місто на Житомирщині, на річці Гнилоп'ять.",
 };
 
