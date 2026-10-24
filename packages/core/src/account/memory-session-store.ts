@@ -1,4 +1,4 @@
-import type { KeptSession, SessionStore } from './ports';
+import type { KeptSession, SessionStore } from '../ports';
 
 /**
  * A Session store held in memory: in tests, and in the shell on a development

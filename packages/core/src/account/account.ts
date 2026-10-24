@@ -1,6 +1,6 @@
 import { AccountEmailSchema, SignInCodeSchema } from '@slovo/contracts';
 
-import { createSubscribers } from './in-turn';
+import { createSubscribers } from '../in-turn';
 import type {
   AccountApi,
   AccountApiFailure,
@@ -10,10 +10,10 @@ import type {
   RequestFailure,
   Schedule,
   SessionStore,
-} from './ports';
-import { withRetries, type Answer } from './retry';
-import type { UserState } from './user-state/user-state';
-import { userStateRecords } from './user-state/user-state-schema';
+} from '../ports';
+import { withRetries, type Answer } from '../retry';
+import type { UserState } from '../user-state/user-state';
+import { userStateRecords } from '../user-state/user-state-schema';
 
 /** How long after a Sign-in code was sent another can be sent, in milliseconds. */
 const RESEND_AFTER = 60_000;

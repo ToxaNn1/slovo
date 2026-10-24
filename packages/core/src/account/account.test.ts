@@ -10,9 +10,9 @@ import {
   type Random,
   type Schedule,
   type UserStatePort,
-} from './index';
-import { createFakeAccountApi, createFakeGoogleSignInSheet } from './testing';
-import { fakeClock, randomOf } from './test-support';
+} from '../index';
+import { createFakeAccountApi, createFakeGoogleSignInSheet } from '../testing';
+import { fakeClock, randomOf } from '../test-support';
 
 /** A schedule that runs what it is given at once and keeps each delay asked for. */
 function atOnce() {

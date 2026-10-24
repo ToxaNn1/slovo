@@ -1,4 +1,4 @@
-import type { Account } from '../account';
+import type { Account } from '../account/account';
 import type { Edition } from '../edition/edition';
 import { createSubscribers } from '../in-turn';
 import type { Clock, Random, Schedule, SyncApi } from '../ports';
