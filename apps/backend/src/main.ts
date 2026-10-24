@@ -22,7 +22,7 @@ const app = createApp({
   logger,
   editions,
   mailer,
-  google: createGoogleVerifier({ clientIds: config.GOOGLE_CLIENT_IDS }),
+  google: createGoogleVerifier({ clientIds: config.GOOGLE_CLIENT_IDS, clock: systemClock }),
   authSecret: config.AUTH_SECRET,
   reporter: await createSentryReporter(config.SENTRY_DSN),
 });

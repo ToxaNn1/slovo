@@ -319,20 +319,7 @@ function signingIn() {
   }
   /** The Account procedures of a device signed in to the email's Account. */
   const signIn = async (email: string) => backend.clientOf(await signInToken(email)).account;
-  /** What the database keeps of the email's Account and of the Sign-in code waiting for it. */
-  async function rowsOf(email: string) {
-    const { db } = backend.database;
-    const [account] = await db.select().from(accounts).where(eq(accounts.email, email));
-    const ofAccount = async (table: typeof sessions | typeof signInMethods) =>
-      account === undefined ? [] : db.select().from(table).where(eq(table.accountId, account.id));
-    return {
-      account,
-      sessions: await ofAccount(sessions),
-      signInMethods: await ofAccount(signInMethods),
-      signInCode: await backend.keptSignInCode(email),
-    };
-  }
-  return { ...backend, signIn, signInToken, rowsOf };
+  return { ...backend, signIn, signInToken };
 }
 
 const unauthorized = { code: 'UNAUTHORIZED', status: 401, defined: true };

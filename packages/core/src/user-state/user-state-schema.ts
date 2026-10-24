@@ -25,6 +25,9 @@ import type { UserStateMigration } from './user-state-migration';
 /** The record that holds the schema version of the user state, a whole number. */
 export const SCHEMA_VERSION_KEY = 'schema.version';
 
+/** The record that marks the user state as kept by this install of the app. */
+const INSTALLED_KEY = 'app.installed';
+
 /** An instant, kept as an ISO 8601 date and time in UTC. */
 const InstantSchema = z.iso.datetime();
 
@@ -46,7 +49,7 @@ export const userStateRecords = {
    * an Account that opens without the marker forgets a Session it finds
    * (#660). It stays on the device.
    */
-  installed: declareRecord('installed', z.literal(true), { sync: 'device-only' }),
+  installed: declareRecord(INSTALLED_KEY, z.literal(true), { sync: 'device-only' }),
   /** The user's Theme. */
   theme: declareRecord('settings.theme', ThemeSchema),
   /** The user's font size. */
@@ -308,8 +311,8 @@ export const userStateMigrations: readonly UserStateMigration[] = [
     version: 5,
     async migrate({ list }) {
       const records = await list('');
-      const kept = [...records.keys()].some((key) => key !== 'schema.version');
-      return new Map(kept ? [['installed', JSON.stringify(true)]] : []);
+      const kept = [...records.keys()].some((key) => key !== SCHEMA_VERSION_KEY);
+      return new Map(kept ? [[INSTALLED_KEY, JSON.stringify(true)]] : []);
     },
   },
 ];

@@ -2,17 +2,10 @@ import { DrizzleQueryError } from 'drizzle-orm';
 import pg from 'pg';
 import { pino, type DestinationStream, type Logger } from 'pino';
 
-import { scrubbed } from './error-reporter';
+import { framesOf, namesOf, scrubbed } from './error-text';
 
 /** The fields a log line never shows: personal data and secrets (spec #333). */
 const REDACTED_FIELDS = ['email', 'code', 'token', 'authorization'];
-
-/** The `at ...` lines of an error's stack, without the message above them. */
-function framesOf(error: Error): string {
-  const stack = error.stack ?? '';
-  const start = stack.indexOf('\n    at ');
-  return start === -1 ? '' : stack.slice(start);
-}
 
 /** An error's stack with the message at its top scrubbed as the error's report scrubs it. */
 function scrubbedStack(error: Error): string | undefined {
@@ -48,17 +41,11 @@ function serializeError(error: unknown, shown = new WeakSet<Error>()): unknown {
     };
   }
   if (error instanceof pg.DatabaseError) {
-    const { severity, code, schema, table, column, dataType, constraint, routine } = error;
+    const { code, ...names } = namesOf(error);
     return {
       type: 'DatabaseError',
-      severity,
+      ...names,
       errorCode: code,
-      schema,
-      table,
-      column,
-      dataType,
-      constraint,
-      routine,
       stack: `DatabaseError${framesOf(error)}`,
     };
   }

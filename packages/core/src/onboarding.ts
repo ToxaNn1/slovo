@@ -1,4 +1,4 @@
-import type { AccountState } from './account';
+import type { AccountState } from './account/account';
 import type { Entries } from './entries/entries';
 import { createSubscribers } from './in-turn';
 import { formatTimeOfDay } from './local-date';

@@ -1,4 +1,4 @@
-import { ORPCError, os } from '@orpc/server';
+import { implement, ORPCError, os } from '@orpc/server';
 import type { Accounts } from '@slovo/server-core';
 
 /** The token of the request's `Authorization: Bearer <token>`, if any. */
@@ -18,4 +18,13 @@ export function sessionGate(accounts: Accounts) {
     if (!opened.ok) throw new ORPCError('UNAUTHORIZED');
     return next({ context: { session: opened.session } });
   });
+}
+
+/**
+ * The router of a contract whose procedures a Session gates: the gate runs
+ * before the input is read, as oRPC validates the input before the
+ * middlewares a procedure adds unless told otherwise.
+ */
+export function signedInRouter<T extends Parameters<typeof implement>[0]>(contract: T) {
+  return implement(contract, { initialInputValidationIndex: Number.POSITIVE_INFINITY });
 }

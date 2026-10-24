@@ -1,4 +1,4 @@
-import type { GoogleVerifier } from '@slovo/server-core';
+import type { Clock, GoogleVerifier } from '@slovo/server-core';
 import { createRemoteJWKSet, customFetch, errors, jwtVerify, type JWTPayload } from 'jose';
 
 /** Where Google publishes the keys it signs identity tokens with. */
@@ -36,55 +36,39 @@ function maxAgeOf(response: Response): number {
  * fetches them again too, at most every 30 seconds (jose's cooldown), for a
  * key Google has published since.
  */
-function googleKeys(fetch: typeof globalThis.fetch) {
+function googleKeys(fetch: typeof globalThis.fetch, clock: Clock) {
   let expiresAt = 0;
   const keys = createRemoteJWKSet(GOOGLE_KEYS_URL, {
     // Kept until Google's max-age, which `get` checks, not jose's own.
     cacheMaxAge: Number.POSITIVE_INFINITY,
     [customFetch]: async (url, init) => {
       const response = await fetch(url, init);
-      if (response.ok) expiresAt = Date.now() + maxAgeOf(response);
+      if (response.ok) expiresAt = clock.now().getTime() + maxAgeOf(response);
       return response;
     },
   });
   return {
     async get() {
-      if (keys.fresh && Date.now() >= expiresAt) await keys.reload();
+      if (keys.fresh && clock.now().getTime() >= expiresAt) await keys.reload();
       return keys;
     },
   };
 }
 
 /**
- * The audience a Google identity token names, read without checking it: for
- * telling a token of another app from one that doesn't check at all. None
- * when the token is not even a JWT.
- */
-function unverifiedAudience(idToken: string): readonly string[] | undefined {
-  const payload = idToken.split('.')[1];
-  if (payload === undefined) return undefined;
-  try {
-    const claims = JSON.parse(Buffer.from(payload, 'base64url').toString()) as { aud?: unknown };
-    if (typeof claims.aud === 'string') return [claims.aud];
-    if (Array.isArray(claims.aud)) return claims.aud.filter((aud) => typeof aud === 'string');
-    return undefined;
-  } catch {
-    return undefined;
-  }
-}
-
-/**
  * The token's claims once its signature checks against Google's keys and it
- * is RS256, from Google, at most an hour old with 30 seconds' tolerance,
- * unexpired and for one of the audiences (the checks of better-auth's Google
- * provider). None when the token is not good; a failure that is not the
- * token's, such as fetching the keys, is thrown.
+ * is RS256, from Google, at most an hour old by the clock with 30 seconds'
+ * tolerance, unexpired and for one of the audiences (the checks of
+ * better-auth's Google provider). When the token is not good, why: for
+ * another app when only its checked audience is wrong, else invalid. A
+ * failure that is not the token's, such as fetching the keys, is thrown.
  */
 async function verifiedClaims(
   idToken: string,
   keys: ReturnType<typeof googleKeys>,
   audience: readonly string[],
-): Promise<JWTPayload | null> {
+  clock: Clock,
+): Promise<JWTPayload | 'foreign-audience' | 'invalid-token'> {
   try {
     const { payload } = await jwtVerify(idToken, await keys.get(), {
       algorithms: ['RS256'],
@@ -92,10 +76,14 @@ async function verifiedClaims(
       audience: [...audience],
       maxTokenAge: '1h',
       clockTolerance: 30,
+      currentDate: clock.now(),
     });
     return payload;
   } catch (error) {
-    if (BAD_TOKEN_ERRORS.some((bad) => error instanceof bad)) return null;
+    if (error instanceof errors.JWTClaimValidationFailed && error.claim === 'aud') {
+      return 'foreign-audience';
+    }
+    if (BAD_TOKEN_ERRORS.some((bad) => error instanceof bad)) return 'invalid-token';
     throw error;
   }
 }
@@ -110,21 +98,20 @@ async function verifiedClaims(
 export function createGoogleVerifier({
   clientIds,
   fetch = globalThis.fetch,
+  clock,
 }: {
   readonly clientIds: readonly string[];
   /** How Google's keys are fetched; the global `fetch` unless given. */
   readonly fetch?: typeof globalThis.fetch;
+  /** The time the keys expire by and the token's age and expiry are checked at. */
+  readonly clock: Clock;
 }): GoogleVerifier {
-  const keys = googleKeys(fetch);
+  const keys = googleKeys(fetch, clock);
   return {
     async verify(idToken) {
       if (clientIds.length === 0) return { ok: false, reason: 'not-configured' };
-      const claims = await verifiedClaims(idToken, keys, clientIds);
-      if (claims === null) {
-        const audience = unverifiedAudience(idToken);
-        const foreign = audience !== undefined && !audience.some((aud) => clientIds.includes(aud));
-        return { ok: false, reason: foreign ? 'foreign-audience' : 'invalid-token' };
-      }
+      const claims = await verifiedClaims(idToken, keys, clientIds, clock);
+      if (typeof claims === 'string') return { ok: false, reason: claims };
       const { sub, email, email_verified } = claims;
       if (typeof sub !== 'string' || typeof email !== 'string') {
         return { ok: false, reason: 'invalid-token' };

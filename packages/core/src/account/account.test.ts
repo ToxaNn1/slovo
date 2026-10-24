@@ -10,9 +10,9 @@ import {
   type Random,
   type Schedule,
   type UserStatePort,
-} from './index';
-import { createFakeAccountApi, createFakeGoogleSignInSheet } from './testing';
-import { fakeClock, randomOf } from './test-support';
+} from '../index';
+import { createFakeAccountApi, createFakeGoogleSignInSheet } from '../testing';
+import { fakeClock, randomOf } from '../test-support';
 
 /** A schedule that runs what it is given at once and keeps each delay asked for. */
 function atOnce() {
@@ -720,14 +720,8 @@ describe('the Account signs in with Google', () => {
 
   it('shows the sign-in in flight while the sheet is up, and starts no other request meanwhile', async () => {
     const { account, api, googleSheet } = await setup();
-    let release: () => void = () => undefined;
-    const pending = new Promise<void>((resolve) => {
-      release = resolve;
-    });
-    googleSheet.signIn = async () => {
-      await pending;
-      return { ok: true, idToken: 'not-a-token' };
-    };
+    const release = googleSheet.holds();
+    googleSheet.signsIn(anna.email, { verified: false });
 
     const signingIn = account.signInWithGoogle();
     expect(account.state).toMatchObject({ status: 'signed-out', inFlight: 'signInWithGoogle' });
