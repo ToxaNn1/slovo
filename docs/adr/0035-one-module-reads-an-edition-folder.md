@@ -16,3 +16,7 @@ Until 0.7 about ten modules knew how `editions/<id>/` is laid out. The Language 
 - **A package of its own**: rejected. One module would make a shallow package, and the Language Pack already reads Editions in Node and owns `BuildError`.
 - **The module on the package's main entry**: rejected. Every Expo command would load SQLite and print its warning.
 - **Metro takes a file map from the app config's `extra`**: rejected. `extra` ships in the app's manifest, and Metro would still read the locale on its own.
+
+## Amendment: the legal pages are the one part it doesn't name (0.8.9, ADR 0049)
+
+Each Edition's legal pages live in `editions/<id>/legal/`, and the module doesn't name that folder: no code reads the pages, and the GitHub Pages workflow gathers them with a shell loop before any dependency is installed. The first Node code that reads them goes through this module, which names `legal/` then (ADR 0049).
