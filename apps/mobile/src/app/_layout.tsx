@@ -24,7 +24,7 @@ import { languagePackOpening } from '../edition/language-pack';
 import { compositionOpening } from '../composition';
 import { LaunchSplash } from '../launch-splash';
 import { Lifecycle } from '../lifecycle';
-import { NotificationTaps } from '../notifications/notifications';
+import { NotificationTaps } from '../notifications/notification-taps';
 import { Onboarding } from '../onboarding';
 import { Opened } from '../opened';
 import { LemmaPronunciation } from '../entries/pronunciation-button';
