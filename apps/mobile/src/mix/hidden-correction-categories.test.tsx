@@ -46,6 +46,7 @@ function correction(id: string, categoryId: string): Correction {
     explanation: 'Калька.',
     examplePair: { nonStandard: 'Приймати участь.', standard: 'Брати участь.' },
     categoryId,
+    literaryUses: [],
     sources: [{ title: 'Test source' }],
     retired: false,
   };
