@@ -4,7 +4,7 @@ import type { BuildError } from './build-error';
 import { checkContentVersion } from './content-manifest';
 import { missedTargets, type MissedTarget } from './content-targets';
 import { unregisteredEntries } from './id-registry';
-import { PACK_FORMAT } from './pack-layout';
+import { PACK_FORMAT, type PackContent } from './pack-layout';
 import { readEdition } from './read-edition';
 import { contentReport, type ContentReport } from './report';
 import { writePack } from './write-pack';
@@ -20,6 +20,25 @@ export type BuildResult =
     }
   | { readonly ok: false; readonly errors: readonly BuildError[] };
 
+export type CheckResult =
+  | {
+      readonly ok: true;
+      /** The content targets the Edition declares and the content misses. */
+      readonly missedTargets: readonly MissedTarget[];
+    }
+  | { readonly ok: false; readonly errors: readonly BuildError[] };
+
+/**
+ * Checks an Edition's content with the build's own rules and writes nothing:
+ * it refuses exactly what `buildLanguagePack` refuses, and reports the
+ * content targets the content misses.
+ */
+export function checkLanguagePack({ editionDir }: { editionDir: string }): CheckResult {
+  const checked = checkEdition(editionDir);
+  if (!checked.ok) return checked;
+  return { ok: true, missedTargets: checked.missedTargets };
+}
+
 /**
  * Validates an Edition's config and content, Entry by Entry, across Entries
  * and against the id registry and the content manifest, and compiles them
@@ -34,6 +53,22 @@ export function buildLanguagePack({
   editionDir: string;
   outFile: string;
 }): BuildResult {
+  const checked = checkEdition(editionDir);
+  if (!checked.ok) return checked;
+  const { content, metadata, report, missedTargets } = checked;
+  writePack(outFile, content, metadata);
+  return { ok: true, metadata, report, missedTargets };
+}
+
+function checkEdition(editionDir: string):
+  | {
+      ok: true;
+      content: PackContent;
+      metadata: PackMetadata;
+      report: ContentReport;
+      missedTargets: MissedTarget[];
+    }
+  | { ok: false; errors: readonly BuildError[] } {
   const source = readEdition(editionDir, { registryRequired: true });
   const command = `pnpm build:pack ${source.editionId ?? '<edition-id>'} --record`;
   const unregistered =
@@ -63,12 +98,6 @@ export function buildLanguagePack({
     packFormat: PACK_FORMAT,
   };
 
-  writePack(outFile, content, metadata);
   const report = contentReport(content);
-  return {
-    ok: true,
-    metadata,
-    report,
-    missedTargets: missedTargets(report, targets),
-  };
+  return { ok: true, content, metadata, report, missedTargets: missedTargets(report, targets) };
 }

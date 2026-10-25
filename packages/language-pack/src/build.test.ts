@@ -19,6 +19,7 @@ import { buildWordCard, createEntries, type Entries } from '@slovo/core';
 
 import {
   buildLanguagePack,
+  checkLanguagePack,
   formatBuildError,
   formatContentReport,
   openLanguagePack,
@@ -933,6 +934,31 @@ describe('buildLanguagePack', () => {
         message: expect.stringMatching(/not recorded.*--record/i) as string,
       },
     ]);
+  });
+});
+
+describe('checkLanguagePack', () => {
+  it('passes valid content with the targets it misses, as the build does', () => {
+    const editionDir = copyFixture('valid');
+    writeFileSync(join(editionDir, 'content/targets.json'), JSON.stringify({ minWords: 3 }));
+
+    expect(checkLanguagePack({ editionDir })).toEqual({
+      ok: true,
+      missedTargets: [{ target: 'minWords', message: '2 Words, below the target of 3' }],
+    });
+  });
+
+  it('refuses what the build refuses and writes no pack', () => {
+    const editionDir = copyFixture('valid');
+    editJson(editionDir, 'content/words/w_fx0002.json', (word) => ({ ...word, rarity: 9 }));
+
+    const result = checkLanguagePack({ editionDir });
+
+    expect(result).toEqual({ ok: false, errors: buildErrors(editionDir) });
+    expect(result.ok ? [] : result.errors).toEqual([
+      expect.objectContaining({ file: 'content/words/w_fx0002.json', field: 'rarity' }),
+    ]);
+    expect(existsSync(join(editionDir, 'dist'))).toBe(false);
   });
 });
 
