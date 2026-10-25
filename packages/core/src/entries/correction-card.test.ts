@@ -86,7 +86,7 @@ describe('the Correction card', () => {
     expect(card.otherEquivalents).toEqual(['упродовж року', 'цілий рік']);
   });
 
-  it('carries the literary uses of the standard form, in their order, each with its author and work', () => {
+  it('carries the literary uses of the standard form, in their order, each with its author and work', async () => {
     const literaryUses = [
       {
         text: 'Протягом року він писав щодня.',
@@ -104,6 +104,6 @@ describe('the Correction card', () => {
       },
     ];
 
-    expect(buildCorrectionCard(correction({ literaryUses })).literaryUses).toEqual(literaryUses);
+    expect((await build(correction({ literaryUses }))).literaryUses).toEqual(literaryUses);
   });
 });
