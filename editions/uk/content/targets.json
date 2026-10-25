@@ -8,6 +8,7 @@
   "everyWordHasStress": true,
   "minWordsByCategory": {
     "dialects": 15,
-    "witty-insults": 15
+    "witty-insults": 15,
+    "folk-names": 15
   }
 }

@@ -94,6 +94,10 @@
     {
       "id": "witty-insults",
       "displayName": "Дотепна лайка"
+    },
+    {
+      "id": "folk-names",
+      "displayName": "Народні назви"
     }
   ],
   "correctionCategories": [
