@@ -211,6 +211,7 @@ describe('the Ukrainian Language Pack', () => {
         'Мова і мовлення',
         'Діалекти',
         'Дотепна лайка',
+        'Народні назви',
       ]);
       expect(categories.map(({ id }) => id)).toEqual(
         expect.arrayContaining(['nature-weather', 'household-crafts', 'language-speech']),
@@ -269,6 +270,20 @@ describe('the Ukrainian Language Pack', () => {
       expect(words).toHaveLength(15);
       for (const word of words) {
         expect(word.kind === 'word' && word.stress).not.toEqual([]);
+      }
+    } finally {
+      pack.close();
+    }
+  });
+
+  it('holds 15 Words in «Народні назви», each with its sources', async () => {
+    const pack = openPack(ukrainianDir);
+    try {
+      const words = await pack.getEntries(await pack.listWordIds('folk-names'));
+
+      expect(words).toHaveLength(15);
+      for (const word of words) {
+        expect(word.kind === 'word' && word.sources).not.toEqual([]);
       }
     } finally {
       pack.close();
