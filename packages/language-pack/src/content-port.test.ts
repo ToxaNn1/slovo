@@ -214,6 +214,7 @@ describe('the Ukrainian Language Pack', () => {
         'Народні назви',
         'Старі ремесла',
         'Розстріляна лексика',
+        'Слова-хамелеони',
       ]);
       expect(categories.map(({ id }) => id)).toEqual(
         expect.arrayContaining(['nature-weather', 'household-crafts', 'language-speech']),
@@ -323,10 +324,13 @@ describe('the Ukrainian Language Pack', () => {
     }
   });
 
-  it('holds 15 Words in «Розстріляна лексика», each with its history and sources', async () => {
+  it.each([
+    ['Розстріляна лексика', 'repressed-words'],
+    ['Слова-хамелеони', 'chameleon-words'],
+  ])('holds 15 Words in «%s», each with its history and sources', async (_name, categoryId) => {
     const pack = openPack(ukrainianDir);
     try {
-      const words = await pack.getEntries(await pack.listWordIds('repressed-words'));
+      const words = await pack.getEntries(await pack.listWordIds(categoryId));
 
       expect(words).toHaveLength(15);
       for (const word of words) {
