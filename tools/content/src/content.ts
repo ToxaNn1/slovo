@@ -16,6 +16,8 @@ export interface Terminal {
   problem(line: string): void;
   /** Asks a yes-or-no question, yes by default; no when nothing more can be read. */
   confirm(question: string): Promise<boolean>;
+  /** Asks a question and returns the answer, or undefined when nothing more can be read. */
+  ask(question: string): Promise<string | undefined>;
 }
 
 /** What every command works with: the Edition, and the ports to the owner. */
@@ -65,6 +67,83 @@ export async function newEntry(kind: EntryKind, tool: ContentTool): Promise<numb
 }
 
 /**
+ * Opens an existing Entry in the editor, found by its id, or by its Lemma,
+ * expression or non-standard form, with or without stress marks and in any
+ * case. When the text matches several Entries, such as homonyms, it lists
+ * them and asks which one to open. After each save the content is checked
+ * and recorded as `newEntry` does; an Entry closed unchanged writes nothing.
+ * Returns the exit code.
+ */
+export async function editEntry(text: string, tool: ContentTool): Promise<number> {
+  const { edition, terminal } = tool;
+  let matches: Match[];
+  if (/^[a-z]_[a-z0-9]+$/.test(text) && existsSync(join(edition.dir, edition.entryFile(text)))) {
+    matches = [{ id: text }];
+  } else {
+    try {
+      matches = matchingEntries(edition, text);
+    } catch (error) {
+      if (!(error instanceof EditionFolderError)) throw error;
+      reportProblems(terminal, `Edition "${edition.id}"`, error.errors.map(formatBuildError));
+      return 1;
+    }
+  }
+  if (matches.length === 0) {
+    terminal.problem(`No Entry of Edition "${edition.id}" matches "${text}"`);
+    return 1;
+  }
+  const match = matches.length === 1 ? matches[0] : await pick(matches, terminal);
+  if (match === undefined) {
+    terminal.problem('No Entry picked: nothing opened');
+    return 1;
+  }
+  const file = edition.entryFile(match.id);
+  return editUntilRecorded(file, readFileSync(join(edition.dir, file), 'utf8'), tool, 'keep');
+}
+
+/**
+ * Retires an Entry: it stays in its file, marked retired, because its id is
+ * never reused (ADR 0010), and the content is recorded as `newEntry` does.
+ * Returns the exit code.
+ */
+export function retireEntry(id: string, { edition, terminal }: ContentTool): number {
+  const file = edition.entryFile(id);
+  const path = join(edition.dir, file);
+  if (!existsSync(path)) {
+    terminal.problem(`No Entry of Edition "${edition.id}" has the id "${id}"`);
+    return 1;
+  }
+  const before = readFileSync(path, 'utf8');
+  let entry: unknown;
+  try {
+    entry = JSON.parse(before);
+  } catch {
+    terminal.problem(`${file}: Invalid JSON: fix it with pnpm content edit ${id}`);
+    return 1;
+  }
+  if (typeof entry === 'object' && entry !== null && 'retired' in entry && entry.retired === true) {
+    terminal.print(`${file} is already retired: nothing written`);
+    return 0;
+  }
+  // Rewrites only the flag, so the file keeps the owner's formatting.
+  writeFileSync(
+    path,
+    /"retired":\s*false/.test(before)
+      ? before.replace(/"retired":\s*false/, '"retired": true')
+      : before.replace(/\s*\}\s*$/, ',\n  "retired": true\n}\n'),
+  );
+  const recorded = recordContent({ editionDir: edition.dir });
+  if (!recorded.ok) {
+    writeFileSync(path, before);
+    reportProblems(terminal, `${file} not retired`, recorded.errors.map(formatBuildError));
+    return 1;
+  }
+  terminal.print(`Retired ${file}`);
+  printContentVersion(terminal, recorded);
+  return 0;
+}
+
+/**
  * Checks the whole Edition with the build's own rules, writing nothing, and
  * reports every problem and every content target it misses. Returns the
  * exit code.
@@ -88,25 +167,31 @@ export function checkEdition({ edition, terminal }: ContentTool): number {
 
 /**
  * Opens an Entry file until it passes and its content is recorded, or the
- * owner leaves it. A file closed as it was before the command, or deleted,
- * is removed and nothing is recorded.
+ * owner leaves it. A file closed as it was before the command writes
+ * nothing: a draft is removed, an existing Entry kept as it was. A deleted
+ * draft is gone; a deleted Entry is written back, since its id stays taken
+ * (ADR 0010) and only retiring withdraws it.
  */
-async function editUntilRecorded(file: string, before: string, tool: ContentTool): Promise<number> {
+async function editUntilRecorded(
+  file: string,
+  before: string,
+  tool: ContentTool,
+  unchanged: 'remove' | 'keep' = 'remove',
+): Promise<number> {
   const { edition, editor, terminal } = tool;
   const path = join(edition.dir, file);
   for (;;) {
     editor.open(path);
     if (!existsSync(path) || readFileSync(path, 'utf8') === before) {
-      rmSync(path, { force: true });
+      if (unchanged === 'remove') rmSync(path, { force: true });
+      else writeFileSync(path, before);
       terminal.print(`${file} closed unchanged: nothing written`);
       return 0;
     }
     const recorded = recordContent({ editionDir: edition.dir });
     if (recorded.ok) {
       terminal.print(`Recorded ${file}`);
-      terminal.print(
-        `  content version: ${String(recorded.contentVersion)} (was ${String(recorded.previousContentVersion)})`,
-      );
+      printContentVersion(terminal, recorded);
       return 0;
     }
     reportProblems(terminal, `${file} not recorded`, recorded.errors.map(formatBuildError));
@@ -117,6 +202,77 @@ async function editUntilRecorded(file: string, before: string, tool: ContentTool
       return 1;
     }
   }
+}
+
+function printContentVersion(
+  terminal: Terminal,
+  {
+    contentVersion,
+    previousContentVersion,
+  }: { contentVersion: number; previousContentVersion: number },
+): void {
+  terminal.print(
+    `  content version: ${String(contentVersion)} (was ${String(previousContentVersion)})`,
+  );
+}
+
+/** An Entry a text matched, with what the owner tells it apart by. */
+interface Match {
+  readonly id: string;
+  readonly label?: string;
+}
+
+/** The Entries whose Lemma, expression or non-standard form is the text, in id order. */
+function matchingEntries(edition: EditionFolder, text: string): Match[] {
+  const { words, corrections, idioms } = edition.entries();
+  const wanted = comparable(text);
+  return [
+    ...words.map(({ entry }) => ({ entry, text: entry.lemma, gist: entry.primaryDefinition })),
+    ...corrections.map(({ entry }) => ({
+      entry,
+      text: entry.nonStandardForm,
+      gist: `→ ${entry.standardEquivalents.join(', ')}`,
+    })),
+    ...idioms.map(({ entry }) => ({
+      entry,
+      text: entry.expression,
+      gist: entry.primaryDefinition,
+    })),
+  ]
+    .filter(({ text: candidate }) => comparable(candidate) === wanted)
+    .map(({ entry, text: candidate, gist }) => ({
+      id: entry.id,
+      label: `${entry.id} ${kindOf(entry.id)} ${candidate}: ${short(gist)}${entry.retired ? ' (retired)' : ''}`,
+    }))
+    .toSorted((a, b) => (a.id < b.id ? -1 : 1));
+}
+
+/** Lists the matches and asks for one by its number or its id. */
+async function pick(matches: readonly Match[], terminal: Terminal): Promise<Match | undefined> {
+  terminal.print(`${String(matches.length)} Entries match:`);
+  matches.forEach(({ label }, index) => {
+    terminal.print(`  ${String(index + 1)}. ${label ?? ''}`);
+  });
+  const answer = (await terminal.ask(`Open which? [1-${String(matches.length)}]`))?.trim() ?? '';
+  return matches[Number(answer) - 1] ?? matches.find(({ id }) => id === answer);
+}
+
+/** A text as the owner may type it: stress marks dropped, in lower case. */
+function comparable(text: string): string {
+  return text
+    .normalize('NFD')
+    .replace(/\u0301/g, '')
+    .normalize('NFC')
+    .trim()
+    .toLocaleLowerCase();
+}
+
+function kindOf(id: string): string {
+  return Object.entries(ENTRY_KINDS).find(([, prefix]) => id.startsWith(prefix))?.[0] ?? 'entry';
+}
+
+function short(text: string): string {
+  return text.length > 60 ? `${text.slice(0, 59)}…` : text;
 }
 
 function reportProblems(

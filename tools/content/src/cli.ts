@@ -2,13 +2,16 @@
  * Drafts and checks an Edition's content:
  *
  *   pnpm content new word|correction|idiom --edition <id>
+ *   pnpm content edit <id or text> --edition <id>
+ *   pnpm content retire <id> --edition <id>
  *   pnpm content check --edition <id>
  *
- * `new` drafts an Entry with a fresh id and opens it in `$VISUAL`, else
- * `$EDITOR`, else `vi`; after each save it checks the content with the
- * Language Pack build's rules and records it, or prints the problems and
- * offers to reopen the file. `check` checks the whole Edition and writes
- * nothing. `$SLOVO_EDITIONS_DIR` points the tool at another editions folder,
+ * `new` drafts an Entry with a fresh id and `edit` finds an existing one;
+ * either opens it in `$VISUAL`, else `$EDITOR`, else `vi`, and after each
+ * save checks the content with the Language Pack build's rules and records
+ * it, or prints the problems and offers to reopen the file. `retire` marks
+ * an Entry retired and records the content. `check` checks the whole
+ * Edition and writes nothing. `$SLOVO_EDITIONS_DIR` points the tool at another editions folder,
  * as the tests do.
  */
 import { spawnSync } from 'node:child_process';
@@ -24,8 +27,10 @@ import {
 
 import {
   checkEdition,
+  editEntry,
   ENTRY_KINDS,
   newEntry,
+  retireEntry,
   type ContentTool,
   type Editor,
   type EntryKind,
@@ -34,6 +39,8 @@ import {
 
 const USAGE = [
   'Usage: pnpm content new word|correction|idiom --edition <id>',
+  '       pnpm content edit <id or text> --edition <id>',
+  '       pnpm content retire <id> --edition <id>',
   '       pnpm content check --edition <id>',
 ].join('\n');
 
@@ -55,15 +62,19 @@ const terminal: Terminal = {
   problem: (line) => {
     console.error(line);
   },
-  confirm(question) {
+  async confirm(question) {
+    const answer = await this.ask(question);
+    return answer !== undefined && !/^n/i.test(answer.trim());
+  },
+  ask(question) {
     // One reader per question, so the editor has the terminal to itself in between.
     const reader = createInterface({ input: process.stdin, output: process.stdout });
     return new Promise((resolve) => {
       reader.on('close', () => {
-        resolve(false);
+        resolve(undefined);
       });
       reader.question(`${question} `, (answer) => {
-        resolve(!/^n/i.test(answer.trim()));
+        resolve(answer);
         reader.close();
       });
     });
@@ -76,9 +87,12 @@ async function main(): Promise<number> {
     options: { edition: { type: 'string' } },
   });
   const [command, ...rest] = positionals;
-  const kind = command === 'new' && rest.length === 1 ? entryKind(rest[0]) : undefined;
+  const [argument] = rest;
+  const kind = command === 'new' && rest.length === 1 ? entryKind(argument) : undefined;
   const known =
-    (command === 'new' && kind !== undefined) || (command === 'check' && rest.length === 0);
+    (command === 'new' && kind !== undefined) ||
+    ((command === 'edit' || command === 'retire') && rest.length === 1) ||
+    (command === 'check' && rest.length === 0);
   if (!known || values.edition === undefined) {
     console.error(USAGE);
     return 2;
@@ -93,7 +107,10 @@ async function main(): Promise<number> {
     return error.reason === 'unknown' ? 2 : 1;
   }
   const tool: ContentTool = { edition, editor, terminal, random: Math.random };
-  return kind === undefined ? checkEdition(tool) : newEntry(kind, tool);
+  if (kind !== undefined) return newEntry(kind, tool);
+  if (command === 'edit') return editEntry(argument ?? '', tool);
+  if (command === 'retire') return retireEntry(argument ?? '', tool);
+  return checkEdition(tool);
 }
 
 function entryKind(name: string | undefined): EntryKind | undefined {
