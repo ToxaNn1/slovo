@@ -32,6 +32,7 @@ const strings = {
     antonym: 'Antonym',
     antonyms: 'Antonyms',
     example: '{text}',
+    exampleAuthor: '— {author}',
     reveal: 'Show the meaning',
     pronunciation: { label: 'Pronounce', stop: 'Stop', noVoice: 'No voice' },
     stress: 'stress on {vowels}',
@@ -61,6 +62,9 @@ const strings = {
     source: 'Source: {source}',
     howToSay: 'How to say it?',
     reveal: 'Show',
+    literaryUses: 'How it is really written',
+    literaryUseSource: '{author}, {work}',
+    literaryUseSourceWithYear: '{author}, {work}, {year}',
   },
   wordOfTheDay: { badge: 'Word of the day · {day} {month}', months: [] },
   knowledge: {
@@ -512,6 +516,75 @@ describe('Self-check on a Correction card', () => {
     expect(screen.getByTestId('correction-example-pair')).toBeTruthy();
     expect(screen.queryByText('How to say it?')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Show' })).toBeNull();
+  });
+});
+
+describe('the literary uses on a Correction card', () => {
+  const withUses: EntryFeedCard = {
+    kind: 'correction',
+    entryId: 'c1',
+    model: {
+      ...correctionCard,
+      literaryUses: [
+        {
+          text: 'They all joined in the song.',
+          author: 'An Author',
+          work: 'A Long Poem',
+          authorDeathYear: 1861,
+          workYear: 1840,
+        },
+        {
+          text: 'Join in, he said.',
+          author: 'Another Author',
+          work: 'A Tale',
+          authorDeathYear: 1916,
+        },
+      ],
+    },
+  };
+
+  it('shows each use with its author, work and year under the heading when the Correction has uses', async () => {
+    await render(inEdition(<EntryCard card={withUses} />));
+
+    const section = within(screen.getByTestId('correction-literary-uses'));
+    expect(section.getByRole('header', { name: 'How it is really written' })).toBeTruthy();
+    expect(section.getByText('They all joined in the song.')).toBeTruthy();
+    expect(section.getByText('— An Author, A Long Poem, 1840')).toBeTruthy();
+    expect(section.getByText('Join in, he said.')).toBeTruthy();
+    expect(section.getByText('— Another Author, A Tale')).toBeTruthy();
+  });
+
+  it('is absent when the Correction has none', async () => {
+    await render(inEdition(<EntryCard card={card} />));
+
+    expect(screen.queryByTestId('correction-literary-uses')).toBeNull();
+    expect(screen.queryByText('How it is really written')).toBeNull();
+  });
+
+  it('stays hidden under Self-check until revealed', async () => {
+    await render(inEdition(<EntryCard card={withUses} selfCheck />));
+    expect(screen.queryByTestId('correction-literary-uses')).toBeNull();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Show' }));
+
+    expect(screen.getByTestId('correction-literary-uses')).toBeTruthy();
+  });
+
+  it('wraps every use whole at the largest font size', async () => {
+    const window = Dimensions.get('window');
+    Dimensions.set({ window: { ...window, fontScale: 3.12 } });
+
+    try {
+      await render(inEdition(<EntryCard card={withUses} />));
+
+      const section = within(screen.getByTestId('correction-literary-uses'));
+      for (const text of ['They all joined in the song.', '— An Author, A Long Poem, 1840']) {
+        expect(section.getByText(text)).not.toHaveProp('numberOfLines');
+        expect(section.getByText(text)).not.toHaveProp('adjustsFontSizeToFit');
+      }
+    } finally {
+      Dimensions.set({ window });
+    }
   });
 });
 

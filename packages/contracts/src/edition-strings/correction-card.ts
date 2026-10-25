@@ -28,4 +28,10 @@ export const CorrectionCardStringsSchema = z.strictObject({
   howToSay: TextSchema,
   /** Self-check: the button that reveals a hidden Correction card's right form, e.g. "Показати". */
   reveal: TextSchema,
+  /** The heading over a Correction's literary uses, e.g. "Як пишуть насправді". */
+  literaryUses: TextSchema,
+  /** The line under a literary use naming its author and work, e.g. "{author}, «{work}»". */
+  literaryUseSource: templateOf('author', 'work'),
+  /** The same line when the work's year is known, e.g. "{author}, «{work}», {year}". */
+  literaryUseSourceWithYear: templateOf('author', 'work', 'year'),
 });
