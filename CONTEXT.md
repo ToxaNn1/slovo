@@ -91,10 +91,10 @@ Why the form is non-standard: russianism, calque, surzhyk, officialese (канц
 
 **Idiom**:
 A fixed expression whose meaning is not the sum of its words, with its Definitions, Examples and, where known, its origin, e.g. «бити байдики» → «ледарювати». The third kind of Entry (ADR 0046); a Core concept, each Edition supplies its own. An Idiom has an expression instead of a Lemma, and no Stress, part of speech, Category, rarity or Pronunciation. Its Ukrainian name is «фразеологізм».
-_Avoid_: Phrase, expression (for the Entry; the expression is its text), saying, proverb
+_Avoid_: Phrase, expression (for the Entry; the expression is its text); saying or proverb for the Entry (a proverb is an Idiom of Idiom Type `proverb`)
 
 **Idiom Type**:
-What kind of fixed expression an Idiom is: `idiom` («фразеологізм»), an idiom proper, or `placeName` («топонім»), a place name whose etymology tells the story of its name and is required. A place name shares the Idiom's card, Feed turn, Mix switch and lists; only its chip differs.
+What kind of fixed expression an Idiom is: `idiom` («фразеологізм»), an idiom proper; `placeName` («топонім»), a place name whose etymology tells the story of its name and is required; or `proverb` («прислів’я»), a proverb or saying. A place name and a proverb share the Idiom's card, Feed turn, Mix switch and lists; only the chip differs.
 _Avoid_: Subtype, kind (a kind is Word, Correction or Idiom)
 
 **Retired Idiom**:

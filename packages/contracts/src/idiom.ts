@@ -12,11 +12,11 @@ export const IdiomIdSchema = z
   .regex(/^i_[a-z0-9]+$/, 'Expected an Idiom id: i_ followed by lowercase letters and digits');
 
 /**
- * What kind of fixed expression an Idiom is: an idiom proper («фразеологізм»)
- * or a place name («топонім»), whose story is its etymology (ADR 0046). The
- * Edition strings name each type.
+ * What kind of fixed expression an Idiom is: an idiom proper («фразеологізм»),
+ * a place name («топонім»), whose story is its etymology, or a proverb
+ * («прислів’я») (ADR 0046). The Edition strings name each type.
  */
-export const IdiomTypeSchema = z.enum(['idiom', 'placeName']);
+export const IdiomTypeSchema = z.enum(['idiom', 'placeName', 'proverb']);
 
 export type IdiomType = z.infer<typeof IdiomTypeSchema>;
 

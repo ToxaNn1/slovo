@@ -20,7 +20,13 @@ export function checkContent(
   idioms: readonly Authored<Idiom>[],
 ): BuildError[] {
   const errors: BuildError[] = [];
-  const { marksStress, vowels, alphabet, lemmaPunctuation = [] } = config.languageTraits;
+  const {
+    marksStress,
+    vowels,
+    alphabet,
+    lemmaPunctuation = [],
+    expressionPunctuation = [],
+  } = config.languageTraits;
   // Longest first, so a letter written with several characters wins over its first character.
   const lemmaTokens = [...alphabet, ...lemmaPunctuation].toSorted((a, b) => b.length - a.length);
   const categoryIds = new Set(config.categories.map((category) => category.id));
@@ -106,11 +112,13 @@ export function checkContent(
     });
   }
 
-  // An expression holds words, so it may also hold a space, and its letters
-  // in either case, such as a place name's capital.
+  // An expression holds words, so it may also hold a space, its letters in
+  // either case, such as a place name's capital, and the Edition's
+  // expression punctuation, such as a proverb's comma.
   const expressionTokens = [
     ...alphabet.flatMap((letter) => [letter, letter.toLocaleUpperCase(config.locale)]),
     ...lemmaPunctuation,
+    ...expressionPunctuation,
     ' ',
   ].toSorted((a, b) => b.length - a.length);
   // A live Idiom's expression, in lower case, names one Idiom only.

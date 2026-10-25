@@ -48,6 +48,7 @@ describe('the Idioms of the Ukrainian Edition', () => {
     expect(ukrainianFolder.read('strings').idiomCard.idiomTypes).toEqual({
       idiom: 'фразеологізм',
       placeName: 'топонім',
+      proverb: 'прислів’я',
     });
   });
 
@@ -93,6 +94,15 @@ describe('the Idioms of the Ukrainian Edition', () => {
       idiomType: 'placeName',
       primaryDefinition: "Місто на Житомирщині, на річці Гнилоп'ять.",
       etymology: expect.stringContaining('Бердич') as string,
+    });
+  });
+
+  it('gives a proverb by id as an Idiom of Idiom Type proverb, with its sources', async () => {
+    expect(await entries.get('i_c8i00h')).toMatchObject({
+      kind: 'idiom',
+      expression: 'хто посіє впору, той матиме хліба гору',
+      idiomType: 'proverb',
+      sources: [expect.objectContaining({ url: 'https://goroh.pp.ua/Фразеологія/посієш' })],
     });
   });
 

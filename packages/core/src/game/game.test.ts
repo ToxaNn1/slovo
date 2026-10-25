@@ -405,7 +405,7 @@ describe('the idioms «Вгадай слово» asks about', () => {
       ...overrides,
     });
 
-  /** 16 idioms, two more that share one Definition, 3 place names and a Retired idiom. */
+  /** 16 idioms, two more that share one Definition, 3 place names, 2 proverbs and a Retired idiom. */
   const idioms = [
     ...numbered('i_idiom', 16).map((id) => idiomOf(id)),
     idiomOf('i_twin1', { primaryDefinition: 'A shared sense.' }),
@@ -413,10 +413,12 @@ describe('the idioms «Вгадай слово» asks about', () => {
     ...numbered('i_place', 3).map((id) =>
       idiomOf(id, { idiomType: 'placeName', etymology: 'The story of its name.' }),
     ),
+    ...numbered('i_proverb', 2).map((id) => idiomOf(id, { idiomType: 'proverb' })),
     idiomOf('i_old', { retired: true }),
   ];
   const twins = ['i_twin1', 'i_twin2'];
   const placeNames = numbered('i_place', 3);
+  const proverbs = numbered('i_proverb', 2);
   const entries: readonly (Word | Idiom)[] = [...words, ...idioms];
 
   /** What an option of the Entry reads. */
@@ -492,14 +494,16 @@ describe('the idioms «Вгадай слово» asks about', () => {
     }
   });
 
-  it('never asks about or offers a place name or a Retired idiom, even one marked «Не знаю»', async () => {
+  it('never asks about or offers a place name, a proverb or a Retired idiom, even one marked «Не знаю»', async () => {
     const app = await runWith({ idioms });
-    for (const id of placeNames) await app.knowledge.tap(id, 'unknown');
+    for (const id of [...placeNames, ...proverbs]) await app.knowledge.tap(id, 'unknown');
 
     const played = await playAll(app);
 
     const shown = played.flatMap((round) => [round.entry, ...offered(round)]).map(({ id }) => id);
-    expect(shown.filter((id) => placeNames.includes(id) || id === 'i_old')).toEqual([]);
+    expect(
+      shown.filter((id) => placeNames.includes(id) || proverbs.includes(id) || id === 'i_old'),
+    ).toEqual([]);
   });
 
   it("can't start with 14 idioms and 3 place names: a place name makes no Round", async () => {
