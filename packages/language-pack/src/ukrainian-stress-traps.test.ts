@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import type { Correction } from '@slovo/contracts';
-import { buildCorrectionCard } from '@slovo/core';
+import { buildCorrectionCard, createEntries, type CorrectionCardModel } from '@slovo/core';
 
 import { buildLanguagePack, openLanguagePack, type NodeLanguagePack } from './index';
 import { ukrainianFolder } from './test-support';
@@ -19,6 +19,7 @@ let workDir: string;
 let pack: NodeLanguagePack;
 let corrections: Correction[];
 let stressTraps: Correction[];
+let cardOf: (correction: Correction) => Promise<CorrectionCardModel>;
 
 beforeAll(async () => {
   workDir = mkdtempSync(join(tmpdir(), 'slovo-stress-traps-'));
@@ -30,6 +31,8 @@ beforeAll(async () => {
     (entry): entry is Correction => entry.kind === 'correction',
   );
   stressTraps = corrections.filter((correction) => correction.correctionType === 'wrongStress');
+  const entries = createEntries({ content: pack, edition: { isFeatureEnabled: () => true } });
+  cardOf = (correction) => buildCorrectionCard({ correction, entries });
 });
 
 afterAll(() => {
@@ -57,10 +60,10 @@ describe('the stress traps of the Ukrainian Language Pack', () => {
 });
 
 describe('the Correction card of a Ukrainian stress trap', () => {
-  it('gives the stressed vowels of its non-standard form and its main equivalent', () => {
+  it('gives the stressed vowels of its non-standard form and its main equivalent', async () => {
     const catalog = corrections.find(({ id }) => id === 'c_vaadzf');
     if (catalog === undefined) throw new Error('The stress trap «катало́г» is missing');
-    const card = buildCorrectionCard(catalog);
+    const card = await cardOf(catalog);
 
     expect(card.nonStandardForm).toBe('ката́лог');
     expect(card.nonStandardStressedVowels).toEqual(['а']);
@@ -68,18 +71,18 @@ describe('the Correction card of a Ukrainian stress trap', () => {
     expect(card.mainEquivalentStressedVowels).toEqual(['о']);
   });
 
-  it('gives each stress trap a stressed vowel on both forms', () => {
-    for (const card of stressTraps.map(buildCorrectionCard)) {
+  it('gives each stress trap a stressed vowel on both forms', async () => {
+    for (const card of await Promise.all(stressTraps.map(cardOf))) {
       expect(card.nonStandardStressedVowels).toHaveLength(1);
       expect(card.mainEquivalentStressedVowels).toHaveLength(1);
     }
   });
 
-  it('gives no stressed vowel on the card of a Correction of another type', () => {
+  it('gives no stressed vowel on the card of a Correction of another type', async () => {
     const others = corrections.filter(({ correctionType }) => correctionType !== 'wrongStress');
 
     expect(others.length).toBeGreaterThan(0);
-    for (const card of others.map(buildCorrectionCard)) {
+    for (const card of await Promise.all(others.map(cardOf))) {
       expect(card.nonStandardStressedVowels).toEqual([]);
       expect(card.mainEquivalentStressedVowels).toEqual([]);
     }

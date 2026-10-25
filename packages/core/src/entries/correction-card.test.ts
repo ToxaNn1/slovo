@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import type { Correction } from '@slovo/contracts';
 
-import { buildCorrectionCard } from '../index';
+import { buildCorrectionCard, createEntries } from '../index';
+import { createMemoryContentPort } from '../testing';
 
 /** A Correction with one standard equivalent; each test adds what it needs. */
 function correction(overrides: Partial<Correction> = {}): Correction {
@@ -24,9 +25,20 @@ function correction(overrides: Partial<Correction> = {}): Correction {
   };
 }
 
+const build = (from: Correction) =>
+  buildCorrectionCard({
+    correction: from,
+    entries: createEntries({
+      content: createMemoryContentPort({
+        correctionCategories: [{ id: 'everyday', displayName: 'Побут' }],
+      }),
+      edition: { isFeatureEnabled: () => true },
+    }),
+  });
+
 describe('the Correction card', () => {
-  it('shows the non-standard form, the main equivalent, the Correction Type, the explanation and the example pair', () => {
-    expect(buildCorrectionCard(correction())).toEqual({
+  it('shows the non-standard form, the main equivalent, the Correction Type, the Category, named by the Language Pack, the explanation and the example pair', async () => {
+    expect(await build(correction())).toEqual({
       kind: 'correction',
       correctionId: 'c_protiazi',
       nonStandardForm: 'на протязі року',
@@ -40,12 +52,18 @@ describe('the Correction card', () => {
         nonStandard: 'Ремонт тривав на протязі року.',
         standard: 'Ремонт тривав протягом року.',
       },
+      categoryId: 'everyday',
+      categoryName: 'Побут',
       sourceTitles: ['Test source'],
     });
   });
 
-  it('names its sources by their titles, in their order', () => {
-    const card = buildCorrectionCard(
+  it('names no Category the Language Pack does not have', async () => {
+    expect((await build(correction({ categoryId: 'gone' }))).categoryName).toBeUndefined();
+  });
+
+  it('names its sources by their titles, in their order', async () => {
+    const card = await build(
       correction({
         sources: [
           { title: 'За СУМ-20', url: 'https://example.com' },
@@ -57,8 +75,8 @@ describe('the Correction card', () => {
     expect(card.sourceTitles).toEqual(['За СУМ-20', 'Антоненко-Давидович']);
   });
 
-  it('puts the first standard equivalent first and the others after it, in their order', () => {
-    const card = buildCorrectionCard(
+  it('puts the first standard equivalent first and the others after it, in their order', async () => {
+    const card = await build(
       correction({ standardEquivalents: ['протягом року', 'упродовж року', 'цілий рік'] }),
     );
 

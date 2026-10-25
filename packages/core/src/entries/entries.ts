@@ -77,6 +77,8 @@ export interface Entries {
    * read once: the pack never changes while it is open (ADR 0033).
    */
   categories(): Promise<readonly Category[]>;
+  /** Every Category of Corrections of the Language Pack, as `categories` gives the Words'. */
+  correctionCategories(): Promise<readonly Category[]>;
   /**
    * The live Corrections the Word is the standard form for, in the order the
    * Word links them, or none when the Edition turns Corrections off or the
@@ -266,6 +268,7 @@ export function createEntries(
       return new Map((await content.getEntries(unique)).map((entry) => [entry.id, entry]));
     },
     categories,
+    correctionCategories,
     linksCorrections,
     async linkedCorrections(word) {
       if (!(await linksCorrections())) return [];
