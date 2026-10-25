@@ -151,9 +151,10 @@ CREATE TABLE sources (
  * keeps format 1's layout and admits the Correction Types of 0.8.7; format 3
  * keeps it too, adding only the Idiom tables (`idioms`, `idiom_definitions`
  * and `idiom_examples`), the kind `'idiom'` and the Word's region column, and
- * admits the Idioms and the Word's region of 0.8.8.
+ * admits the Idioms and the Word's region of 0.8.8; format 4 keeps format 3's
+ * layout and admits what 0.8.10 adds to the closed sets and fields.
  */
-export const PACK_FORMAT = 3;
+export const PACK_FORMAT = 4;
 
 /**
  * Where each field of the pack metadata lies in the `metadata` table, and how

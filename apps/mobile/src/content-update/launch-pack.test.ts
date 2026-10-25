@@ -197,6 +197,15 @@ describe('the Language Pack the app opens at launch', () => {
     expect(app.errors).toHaveLength(1);
   });
 
+  it('asks the backend for the newest pack of format 4, the one the app reads', async () => {
+    const app = device();
+
+    const { contentUpdate } = await app.launch();
+    await contentUpdate?.checkForUpdate();
+
+    expect(app.contentApi.asked).toEqual([4]);
+  });
+
   it('opens a pack downloaded in one run from the next launch, never in the run that kept it', async () => {
     const app = device();
     app.contentApi.publish({
