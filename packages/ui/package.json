@@ -23,7 +23,7 @@
     "@slovo/config": "workspace:*",
     "@testing-library/react-native": "14.1.0",
     "@types/react": "~19.2.18",
-    "babel-jest": "29.7.0",
+    "babel-jest": "30.5.2",
     "babel-preset-expo": "57.0.14",
     "eslint": "^10.13.0",
     "eslint-plugin-react-hooks": "^7.1.1",
