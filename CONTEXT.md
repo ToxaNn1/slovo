@@ -86,6 +86,10 @@ The editorial standard for every Word: a normative dictionary word that an educa
 A non-standard form people commonly use (often a phrase) paired with one or more standard equivalents in the Edition's language, plus a short neutral explanation, e.g. «на протязі року» → «протягом року». A Core concept; each Edition supplies its own Corrections. A Word may point to the Corrections it is the standard form for (протягом → «на протязі»), so each is reachable from the other without duplicating data.
 _Avoid_: Mistake, error, surzhyk card
 
+**Literary Use**:
+A real use of a Correction's standard form in literature, quoted with its author and work and shown under the Correction («Як пишуть насправді»). Only texts in the public domain (ADR 0045); a Correction carries up to three.
+_Avoid_: Quote, citation (a citation is a source)
+
 **Retired Correction**:
 A Correction withdrawn from the Language Pack. Like a Retired Word, it never appears anywhere new and is no longer linked from Words, but stays visible wherever the user already keeps it.
 _Avoid_: Deleted correction
