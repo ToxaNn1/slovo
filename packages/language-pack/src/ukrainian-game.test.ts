@@ -183,11 +183,14 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
   });
 
   it("offers three Distractors of the answer's part of speech, none with the answer's Lemma", async () => {
+    // A part of speech with fewer than four Words (достеменно is the only adverb) fills up with others.
+    const wordsOf = (partOfSpeech: Word['partOfSpeech']) =>
+      words.filter((word) => word.partOfSpeech === partOfSpeech).length;
     for (const seed of [1, 2, 3]) {
       for (const { answer, options } of await playGame(await runWords(seed))) {
         expect(
           options.filter((option) => option.partOfSpeech === answer.partOfSpeech),
-        ).toHaveLength(4);
+        ).toHaveLength(Math.min(4, wordsOf(answer.partOfSpeech)));
         expect(new Set(options.map((option) => option.lemma)).size).toBe(4);
       }
     }
