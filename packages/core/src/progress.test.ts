@@ -19,7 +19,12 @@ const testCategories = {
   id: 'test',
   languageTraits: { distractorRule: 'same-part-of-speech' as const },
   userSettingDefaults: {
-    mix: { categoryIds: ['test'], correctionCategoryIds: 'all' as const, corrections: false, idioms: true },
+    mix: {
+      categoryIds: ['test'],
+      correctionCategoryIds: 'all' as const,
+      corrections: false,
+      idioms: true,
+    },
     notificationTimes: [],
   },
 };
@@ -372,7 +377,12 @@ describe('The knowledge counts', () => {
         ...testCategories,
         userSettingDefaults: {
           ...testCategories.userSettingDefaults,
-          mix: { categoryIds: ['test'], correctionCategoryIds: 'all' as const, corrections: true, idioms: true },
+          mix: {
+            categoryIds: ['test'],
+            correctionCategoryIds: 'all' as const,
+            corrections: true,
+            idioms: true,
+          },
         },
         isFeatureEnabled: (feature) => on.includes(feature),
       },

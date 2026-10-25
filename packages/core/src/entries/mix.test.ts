@@ -904,7 +904,10 @@ describe('the Categories of Corrections in the Mix', () => {
     const pack = createMemoryContentPort({
       categories: [twin, nature],
       correctionCategories,
-      words: [word('w_work0', { categoryId: twin.id }), word('w_nature0', { categoryId: nature.id })],
+      words: [
+        word('w_work0', { categoryId: twin.id }),
+        word('w_nature0', { categoryId: nature.id }),
+      ],
       corrections: [correction('c_one', { categoryId: work.id })],
     });
     const records = new Map<string, string>();

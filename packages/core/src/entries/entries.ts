@@ -200,7 +200,9 @@ export function createEntries(
    * The live Corrections of the Categories of Corrections in the Mix, in the
    * Language Pack's order, or every live Correction without a Mix (ADR 0050).
    */
-  async function correctionIds(categoryIds: readonly string[] | undefined): Promise<readonly string[]> {
+  async function correctionIds(
+    categoryIds: readonly string[] | undefined,
+  ): Promise<readonly string[]> {
     const ids = await listIds.correction();
     if (categoryIds === undefined) return ids;
     const corrections = await live.correction();

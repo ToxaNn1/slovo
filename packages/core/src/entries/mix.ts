@@ -361,7 +361,10 @@ export async function openMix({
   }
 
   async function putBack(categoryId: string, of: CategoryKind): Promise<void> {
-    if (!isCategory(categoryId, of) || categoriesInMix(state, of).categoryIds.includes(categoryId)) {
+    if (
+      !isCategory(categoryId, of) ||
+      categoriesInMix(state, of).categoryIds.includes(categoryId)
+    ) {
       return;
     }
     await change({ [of]: new Map([[categoryId, true]]) });

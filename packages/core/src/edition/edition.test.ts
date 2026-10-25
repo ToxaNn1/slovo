@@ -384,7 +384,12 @@ describe('loadEdition', () => {
       {
         userSettingDefaults: {
           ...userSettingDefaults,
-          mix: { categories: 'all', correctionCategories: ['nature'], corrections: true, idioms: true },
+          mix: {
+            categories: 'all',
+            correctionCategories: ['nature'],
+            corrections: true,
+            idioms: true,
+          },
         },
       },
       'userSettingDefaults.mix.correctionCategories.0',

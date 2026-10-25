@@ -16,7 +16,12 @@ const testCategories = {
   id: 'test',
   languageTraits: { distractorRule: 'same-part-of-speech' as const },
   userSettingDefaults: {
-    mix: { categoryIds: ['test'], correctionCategoryIds: 'all' as const, corrections: true, idioms: true },
+    mix: {
+      categoryIds: ['test'],
+      correctionCategoryIds: 'all' as const,
+      corrections: true,
+      idioms: true,
+    },
     notificationTimes: [],
   },
 };
