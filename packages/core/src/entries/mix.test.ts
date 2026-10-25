@@ -28,7 +28,16 @@ const categories = [nature, speech, crafts];
  */
 const wordIdsOf = (category: Category) =>
   [0, 1, 2].map((index) => `w_${category.id}${String(index)}`);
+/** The Language Pack's Categories of Corrections, in its order (ADR 0050). */
+const work: Category = { id: 'work', displayName: 'At work' };
+const shop: Category = { id: 'shop', displayName: 'In the shop' };
+const correctionCategories = [work, shop];
+/** The live Corrections: the first at work, the second in the shop. */
 const correctionIds = ['c_one', 'c_two'];
+const correctionCategoryOf = new Map([
+  ['c_one', work.id],
+  ['c_two', shop.id],
+]);
 const idiomIds = ['i_one', 'i_two'];
 const rarityOf = new Map(
   categories.flatMap(wordIdsOf).map((id, index) => [id, (index % 5) + 1] as const),
@@ -40,7 +49,10 @@ const content = createMemoryContentPort({
       word(id, { categoryId: category.id, rarity: rarityOf.get(id) ?? 1 }),
     ),
   ),
-  corrections: correctionIds.map((id) => correction(id)),
+  correctionCategories,
+  corrections: correctionIds.map((id) =>
+    correction(id, { categoryId: correctionCategoryOf.get(id) ?? work.id }),
+  ),
   idioms: idiomIds.map((id) => idiom(id)),
 });
 
@@ -53,6 +65,7 @@ async function run({
   port = createMemoryUserStatePort(records),
   clock = fakeClock().clock,
   defaultCategoryIds = categories.map(({ id }) => id),
+  defaultCorrectionCategoryIds = 'all',
   correctionsSwitch = true,
   idiomsSwitch = true,
   rarityFloorSwitch = true,
@@ -63,6 +76,8 @@ async function run({
   clock?: Clock;
   /** The Categories of the Edition's default Mix: every one of the pack, or these. */
   defaultCategoryIds?: 'all' | readonly string[];
+  /** The Categories of Corrections of the Edition's default Mix: every one of the pack, or these. */
+  defaultCorrectionCategoryIds?: 'all' | readonly string[];
   correctionsSwitch?: boolean;
   idiomsSwitch?: boolean;
   rarityFloorSwitch?: boolean;
@@ -77,7 +92,12 @@ async function run({
         (feature === 'rarityFloor' && rarityFloorSwitch),
       languageTraits: { distractorRule: 'same-part-of-speech' },
       userSettingDefaults: {
-        mix: { categoryIds: defaultCategoryIds, corrections: true, idioms: true },
+        mix: {
+          categoryIds: defaultCategoryIds,
+          correctionCategoryIds: defaultCorrectionCategoryIds,
+          corrections: true,
+          idioms: true,
+        },
         notificationTimes: [],
       },
     },
@@ -144,6 +164,12 @@ describe('the Mix', () => {
     expect(app.mix.state).toEqual({
       allCategories: categories,
       categoryIds: ['nature', 'speech', 'crafts'],
+      correctionCategories: {
+        allCategories: correctionCategories,
+        categoryIds: ['work', 'shop'],
+        hiddenCategories: [],
+        lastCategoryId: undefined,
+      },
       kinds: { correction: true, idiom: true },
       hiddenCategories: [],
       lastCategoryId: undefined,
@@ -806,5 +832,160 @@ describe('linked Corrections («Часто кажуть») over the Mix', () => 
     await app.mix.putBack('crafts');
 
     expect(app.feed.cards).toEqual(cards);
+  });
+});
+
+describe('the Categories of Corrections in the Mix', () => {
+  /** The ids of the Corrections the Feed offers from where it stands, each once, in id order. */
+  const correctionsOffered = async (feed: Feed) =>
+    [...new Set((await walk(feed)).filter(isCorrection))].sort();
+
+  it('starts as the Edition default: every Category of Corrections in, none Hidden, apart from the Words’ list', async () => {
+    const app = await run();
+
+    expect(app.mix.state.correctionCategories).toEqual({
+      allCategories: correctionCategories,
+      categoryIds: ['work', 'shop'],
+      hiddenCategories: [],
+      lastCategoryId: undefined,
+    });
+    expect(app.mix.state.allCategories).toEqual(categories);
+  });
+
+  it('takes a Category of Corrections out and puts it back, one `mix.correctionCategories.` record per Category, leaving the Words’ Categories as they are', async () => {
+    const records = new Map<string, string>();
+    const app = await run({ records });
+
+    expect(await app.mix.takeOut('work', 'correction')).toBe(true);
+
+    expect(app.mix.state.correctionCategories.categoryIds).toEqual(['shop']);
+    expect(app.mix.state.correctionCategories.hiddenCategories).toEqual([work]);
+    expect(app.mix.state.correctionCategories.lastCategoryId).toBe('shop');
+    expect(app.mix.state.categoryIds).toEqual(['nature', 'speech', 'crafts']);
+    expect(mixRecordsOf(records)).toEqual({ 'mix.correctionCategories.work': 'false' });
+
+    await app.mix.putBack('work', 'correction');
+
+    expect(app.mix.state.correctionCategories.categoryIds).toEqual(['work', 'shop']);
+    expect(app.mix.state.correctionCategories.hiddenCategories).toEqual([]);
+    expect(mixRecordsOf(records)).toEqual({ 'mix.correctionCategories.work': 'true' });
+  });
+
+  it('a Correction is eligible only while Corrections are in and its Category is in', async () => {
+    const app = await run();
+    expect(await correctionsOffered(app.feed)).toEqual(['c_one', 'c_two']);
+
+    await app.mix.takeOut('work', 'correction');
+    expect(await correctionsOffered(app.feed)).toEqual(['c_two']);
+
+    await app.mix.setKind('correction', false);
+    expect(await correctionsOffered(app.feed)).toEqual([]);
+
+    await app.mix.setKind('correction', true);
+    await app.mix.putBack('work', 'correction');
+    expect(await correctionsOffered(app.feed)).toEqual(['c_one', 'c_two']);
+  });
+
+  it('refuses to take out the last Category of Corrections, and names it', async () => {
+    const records = new Map<string, string>();
+    const app = await run({ records });
+    await app.mix.takeOut('shop', 'correction');
+    const state = app.mix.state;
+
+    expect(state.correctionCategories.lastCategoryId).toBe('work');
+    expect(await app.mix.takeOut('work', 'correction')).toBe(false);
+
+    expect(app.mix.state).toBe(state);
+    expect(records.has('mix.correctionCategories.work')).toBe(false);
+  });
+
+  it('keeps the two lists apart: a Word Category and a Category of Corrections may share an id', async () => {
+    const twin: Category = { id: 'work', displayName: 'Work words' };
+    const pack = createMemoryContentPort({
+      categories: [twin, nature],
+      correctionCategories,
+      words: [
+        word('w_work0', { categoryId: twin.id }),
+        word('w_nature0', { categoryId: nature.id }),
+      ],
+      corrections: [correction('c_one', { categoryId: work.id })],
+    });
+    const records = new Map<string, string>();
+    const app = await run({ records, pack, defaultCategoryIds: 'all' });
+
+    await app.mix.takeOut('work', 'correction');
+
+    expect(app.mix.state.categoryIds).toEqual(['work', 'nature']);
+    expect(app.mix.state.correctionCategories.categoryIds).toEqual(['shop']);
+    expect(mixRecordsOf(records)).toEqual({ 'mix.correctionCategories.work': 'false' });
+    expect((await walk(app.feed)).filter((id) => id.startsWith('w_'))).toEqual(
+      expect.arrayContaining(['w_work0', 'w_nature0']),
+    );
+  });
+
+  it('turns every Category on at once, of Words and of Corrections', async () => {
+    const records = new Map<string, string>();
+    const app = await run({ records, defaultCategoryIds: ['speech'] });
+    await app.mix.takeOut('work', 'correction');
+
+    await app.mix.turnAllOn();
+
+    expect(app.mix.state.categoryIds).toEqual(['nature', 'speech', 'crafts']);
+    expect(app.mix.state.correctionCategories.hiddenCategories).toEqual([]);
+    expect(mixRecordsOf(records)).toEqual({
+      'mix.categories.nature': 'true',
+      'mix.categories.crafts': 'true',
+      'mix.correctionCategories.work': 'true',
+    });
+  });
+
+  it('applies the Edition default to every Category of Corrections the user never touched', async () => {
+    const records = new Map<string, string>();
+    const app = await run({ records, defaultCorrectionCategoryIds: ['shop'] });
+
+    expect(app.mix.state.correctionCategories.categoryIds).toEqual(['shop']);
+    expect(app.mix.state.correctionCategories.hiddenCategories).toEqual([work]);
+    expect(await correctionsOffered(app.feed)).toEqual(['c_two']);
+
+    await app.mix.putBack('work', 'correction');
+
+    expect(app.mix.state.correctionCategories.categoryIds).toEqual(['work', 'shop']);
+    expect(mixRecordsOf(records)).toEqual({ 'mix.correctionCategories.work': 'true' });
+  });
+
+  it('reads a Mix with no Category of Corrections in it, as a merge of two devices can leave, as the Edition default, and writes nothing for it', async () => {
+    const records = new Map<string, string>([
+      ['mix.correctionCategories.work', 'false'],
+      ['mix.correctionCategories.shop', 'false'],
+    ]);
+    const app = await run({ records });
+
+    expect(app.mix.state.correctionCategories.categoryIds).toEqual(['work', 'shop']);
+    expect(mixRecordsOf(records)).toEqual({
+      'mix.correctionCategories.work': 'false',
+      'mix.correctionCategories.shop': 'false',
+    });
+  });
+
+  it('skips a Category of Corrections the Language Pack does not have, and a Word Category offered as one', async () => {
+    const records = new Map<string, string>();
+    const app = await run({ records });
+
+    expect(await app.mix.takeOut('nature', 'correction')).toBe(false);
+    await app.mix.putBack('bus', 'correction');
+
+    expect(mixRecordsOf(records)).toEqual({});
+  });
+
+  it('survives reopening', async () => {
+    const records = new Map<string, string>();
+    const first = await run({ records });
+    await first.mix.takeOut('work', 'correction');
+
+    const app = await run({ records });
+
+    expect(app.mix.state).toEqual(first.mix.state);
+    expect(app.mix.state.correctionCategories.categoryIds).toEqual(['shop']);
+    expect(await correctionsOffered(app.feed)).toEqual(['c_two']);
   });
 });

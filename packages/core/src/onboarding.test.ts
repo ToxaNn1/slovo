@@ -68,7 +68,12 @@ async function run({
     edition: {
       id: 'test',
       userSettingDefaults: {
-        mix: { categoryIds: ['test', 'other'], corrections: false, idioms: true },
+        mix: {
+          categoryIds: ['test', 'other'],
+          correctionCategoryIds: 'all' as const,
+          corrections: false,
+          idioms: true,
+        },
         notificationTimes: ['09:00', '13:00', '19:00'],
       },
       isFeatureEnabled: (feature) =>

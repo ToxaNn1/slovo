@@ -168,6 +168,15 @@ export const MixConfigSchema = z.strictObject({
     // At least one Category always stays in the Mix (ADR 0019).
     z.array(KebabCaseIdSchema).min(1, 'Expected at least one Category'),
   ]),
+  /**
+   * The Categories of Corrections in the Mix (ADR 0050): every one of the
+   * Language Pack, or the listed ids. They sit under Corrections as a whole.
+   */
+  correctionCategories: z.union([
+    z.literal('all'),
+    // At least one Category of Corrections always stays in the Mix, as of Words (ADR 0019).
+    z.array(KebabCaseIdSchema).min(1, 'Expected at least one Category of Corrections'),
+  ]),
   /** Whether Corrections, as a whole, are in the Mix. */
   corrections: z.boolean(),
   /** Whether Idioms, as a whole, are in the Mix. */
@@ -246,20 +255,23 @@ export const EditionConfigSchema = z
       });
       return ids;
     };
-    const seen = idsOf(categories, 'categories');
-    idsOf(correctionCategories, 'correctionCategories');
-
-    const mixCategories = userSettingDefaults.mix.categories;
-    if (mixCategories === 'all') return;
-    mixCategories.forEach((id, index) => {
-      if (!seen.has(id)) {
-        context.addIssue({
-          code: 'custom',
-          path: ['userSettingDefaults', 'mix', 'categories', index],
-          message: `Unknown Category id "${id}"`,
-        });
-      }
-    });
+    const known = {
+      categories: idsOf(categories, 'categories'),
+      correctionCategories: idsOf(correctionCategories, 'correctionCategories'),
+    };
+    for (const field of ['categories', 'correctionCategories'] as const) {
+      const inMix = userSettingDefaults.mix[field];
+      if (inMix === 'all') continue;
+      inMix.forEach((id, index) => {
+        if (!known[field].has(id)) {
+          context.addIssue({
+            code: 'custom',
+            path: ['userSettingDefaults', 'mix', field, index],
+            message: `Unknown Category id "${id}"`,
+          });
+        }
+      });
+    }
   });
 
 export type EditionConfig = z.infer<typeof EditionConfigSchema>;

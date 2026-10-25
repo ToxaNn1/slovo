@@ -39,7 +39,7 @@ describe('the Ukrainian Edition', () => {
       fontSize: 'M',
       vibration: true,
       notificationTimes: ['09:00', '13:00', '19:00'],
-      mix: { categoryIds: 'all', corrections: true, idioms: true },
+      mix: { categoryIds: 'all', correctionCategoryIds: 'all', corrections: true, idioms: true },
     });
   });
 });

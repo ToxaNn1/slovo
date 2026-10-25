@@ -188,7 +188,7 @@ A setting («Перевір себе», off by default) that hides the answer on
 _Avoid_: Quiz mode, test mode
 
 **Mix**:
-The set of Categories, plus Corrections as a whole and Idioms as a whole, that the user chose to see in the Feed, notifications, widgets and the Game. At least one Category always stays in the Mix. The Mix also holds the Rarity Floor.
+The set of Categories of Words, plus Corrections as a whole with their own Categories under it, plus Idioms as a whole, that the user chose to see in the Feed, notifications, widgets and the Game. At least one Category of each list always stays in the Mix. The Mix also holds the Rarity Floor.
 _Avoid_: Filter, preferences
 
 **Rarity Floor**:
@@ -204,7 +204,7 @@ A Category, of Words or of Corrections, the user took out of their Mix, whether 
 _Avoid_: Muted topic
 
 **Eligible Entry**:
-An Entry that may appear anywhere new (the Feed, notifications, widgets, the Game): not Retired, of a kind the Edition turns on (and not off remotely), in the user's Mix (a Word of a Category in the Mix at the Rarity Floor or rarer; a Correction or an Idiom while its kind is in) and not Hidden. An Entry that is not eligible stays visible wherever the user already keeps it.
+An Entry that may appear anywhere new (the Feed, notifications, widgets, the Game): not Retired, of a kind the Edition turns on (and not off remotely), in the user's Mix (a Word of a Category in the Mix at the Rarity Floor or rarer; a Correction while Corrections and its Category are in; an Idiom while Idioms are in) and not Hidden. An Entry that is not eligible stays visible wherever the user already keeps it.
 _Avoid_: Available, visible, active entry
 
 **Reserved**:

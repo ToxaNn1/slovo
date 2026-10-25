@@ -14,6 +14,8 @@ import {
  */
 export interface DefaultMix {
   readonly categoryIds: 'all' | readonly string[];
+  /** The Categories of Corrections in the Mix, under Corrections as a whole (ADR 0050). */
+  readonly correctionCategoryIds: 'all' | readonly string[];
   readonly corrections: boolean;
   readonly idioms: boolean;
 }
@@ -87,7 +89,12 @@ export function loadEdition(config: unknown): Edition {
     languageTraits,
     userSettingDefaults: {
       ...settings,
-      mix: { categoryIds: mix.categories, corrections: mix.corrections, idioms: mix.idioms },
+      mix: {
+        categoryIds: mix.categories,
+        correctionCategoryIds: mix.correctionCategories,
+        corrections: mix.corrections,
+        idioms: mix.idioms,
+      },
     },
     notificationSound,
     legalPages,
