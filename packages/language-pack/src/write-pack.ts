@@ -83,6 +83,12 @@ export function writePack(outFile: string, content: PackContent, metadata: PackM
     const insertEquivalent = db.prepare(
       'INSERT INTO correction_equivalents (correction_id, position, text) VALUES (?, ?, ?)',
     );
+    const insertLiteraryUse = db.prepare(`
+      INSERT INTO correction_literary_uses (
+        correction_id, position, text, author, work, author_death_year, work_year, url
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `);
     for (const correction of content.corrections) {
       insertCorrection.run(
         correction.id,
@@ -96,6 +102,18 @@ export function writePack(outFile: string, content: PackContent, metadata: PackM
       );
       correction.standardEquivalents.forEach((text, position) => {
         insertEquivalent.run(correction.id, position, text);
+      });
+      correction.literaryUses.forEach((use, position) => {
+        insertLiteraryUse.run(
+          correction.id,
+          position,
+          use.text,
+          use.author,
+          use.work,
+          use.authorDeathYear,
+          use.workYear ?? null,
+          use.url ?? null,
+        );
       });
       insertSources(correction);
     }

@@ -47,6 +47,7 @@ const correction: Correction = {
   examplePair: { nonStandard: 'Приймати участь.', standard: 'Брати участь.' },
   categoryId: 'everyday',
   sources: [{ title: 'Test source' }],
+  literaryUses: [],
   retired: false,
 };
 

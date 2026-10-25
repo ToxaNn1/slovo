@@ -20,5 +20,15 @@
       "title": "Друге тестове джерело"
     }
   ],
+  "literaryUses": [
+    {
+      "text": "Він завжди приходив, коли сонце сідало.",
+      "author": "Тестовий автор",
+      "work": "Тестовий твір",
+      "authorDeathYear": 1861,
+      "workYear": 1840,
+      "url": "https://example.org/tvir"
+    }
+  ],
   "retired": false
 }

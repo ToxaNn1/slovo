@@ -74,6 +74,7 @@ export function correction(id: string, overrides: Partial<Correction> = {}): Cor
     examplePair: { nonStandard: 'People say this.', standard: 'Better say this.' },
     categoryId: 'everyday',
     sources: [{ title: 'Test source' }],
+    literaryUses: [],
     retired: false,
     ...overrides,
   };

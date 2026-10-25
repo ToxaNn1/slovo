@@ -1,4 +1,4 @@
-import type { Correction, CorrectionType, ExamplePair } from '@slovo/contracts';
+import type { Correction, CorrectionType, ExamplePair, LiteraryUse } from '@slovo/contracts';
 
 import type { Entries } from './entries';
 import { markedStressedVowelsOf } from './stress';
@@ -34,6 +34,8 @@ export interface CorrectionCardModel {
   readonly examplePair: ExamplePair;
   /** The titles of the Correction's sources, in their order; the card names them in a line. */
   readonly sourceTitles: readonly string[];
+  /** Real uses of the standard form in literature, in their order; empty when there are none. */
+  readonly literaryUses: readonly LiteraryUse[];
 }
 
 /** The Correction card of a Correction, naming the Category the Entries give for it. */
@@ -64,5 +66,6 @@ export async function buildCorrectionCard({
     explanation: correction.explanation,
     examplePair: correction.examplePair,
     sourceTitles: correction.sources.map((source) => source.title),
+    literaryUses: correction.literaryUses,
   };
 }

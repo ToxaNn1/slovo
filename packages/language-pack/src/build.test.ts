@@ -184,6 +184,7 @@ describe('buildLanguagePack', () => {
         },
         categoryId: 'work',
         sources: [{ title: 'Тестове джерело' }],
+        literaryUses: [],
         retired: false,
       });
       expect(await entries.get('c_missing')).toBeUndefined();
@@ -801,7 +802,72 @@ describe('buildLanguagePack', () => {
     expect(await withEntries(outFile, (entries) => entries.get('c_fx0006'))).toEqual({
       ...paronym,
       kind: 'correction',
+      literaryUses: [],
       retired: false,
+    });
+  });
+
+  describe('literary uses of a Correction', () => {
+    /** A copy of the valid fixture whose Correction c_fx0001 carries the given literary uses. */
+    function withLiteraryUses(literaryUses: Json[]): string {
+      const editionDir = copyFixture('valid');
+      editJson(editionDir, 'content/corrections/c_fx0001.json', (json) => ({
+        ...json,
+        literaryUses,
+      }));
+      record(editionDir);
+      return editionDir;
+    }
+
+    const use = (authorDeathYear: number): Json => ({
+      text: 'Він завжди приходив вчасно.',
+      author: 'Тестовий автор',
+      work: 'Тестовий твір',
+      authorDeathYear,
+    });
+
+    it('builds them and reads them back in their order, each with its author and work', async () => {
+      const literaryUses = [
+        { ...use(1861), workYear: 1840, url: 'https://example.org/work' },
+        use(1913),
+      ];
+      const editionDir = withLiteraryUses(literaryUses);
+      const outFile = packPath();
+
+      const result = buildLanguagePack({ editionDir, outFile });
+
+      expect(result.ok ? [] : result.errors).toEqual([]);
+      const correction = await withEntries(outFile, (entries) => entries.get('c_fx0001'));
+      expect(correction?.kind === 'correction' && correction.literaryUses).toEqual(literaryUses);
+    });
+
+    it('refuses a text not yet in the public domain: 70 years after the author died, from the next 1 January', () => {
+      const editionDir = withLiteraryUses([use(1913), use(1960)]);
+      const build = (today: Date) => buildLanguagePack({ editionDir, outFile: packPath(), today });
+
+      const refused = build(new Date(2030, 11, 31));
+      expect(refused.ok ? [] : refused.errors).toEqual([
+        {
+          file: 'content/corrections/c_fx0001.json',
+          entryId: 'c_fx0001',
+          field: 'literaryUses.1.authorDeathYear',
+          message: 'Not in the public domain until 1 January 2031',
+        },
+      ]);
+      expect(checkLanguagePack({ editionDir, today: new Date(2030, 11, 31) }).ok).toBe(false);
+      expect(build(new Date(2031, 0, 1)).ok).toBe(true);
+    });
+
+    it('refuses more than three on a Correction', () => {
+      const editionDir = copyFixture('valid');
+      editJson(editionDir, 'content/corrections/c_fx0001.json', (json) => ({
+        ...json,
+        literaryUses: [use(1861), use(1861), use(1861), use(1861)],
+      }));
+
+      expect(buildErrors(editionDir)).toContainEqual(
+        expect.objectContaining({ entryId: 'c_fx0001', field: 'literaryUses' }),
+      );
     });
   });
 
@@ -1032,7 +1098,7 @@ describe('buildLanguagePack', () => {
     expect(b.ids).toEqual(a.ids);
     expect(a.metadata).toEqual({
       editionId: 'fixture',
-      contentVersion: 6,
+      contentVersion: 7,
       contentChecksum: expect.stringMatching(/^sha256:[0-9a-f]{64}$/) as string,
       packFormat: 4,
     });
@@ -1063,7 +1129,7 @@ describe('buildLanguagePack', () => {
           file: 'content/manifest.json',
           field: 'contentChecksum',
           message: expect.stringMatching(
-            /content changed since content version 6.*pnpm build:pack fixture --record/i,
+            /content changed since content version 7.*pnpm build:pack fixture --record/i,
           ) as string,
         },
       ]);
@@ -1076,7 +1142,7 @@ describe('buildLanguagePack', () => {
     record(editionDir);
     editJson(editionDir, 'content/manifest.json', (manifest) => ({
       ...manifest,
-      contentVersion: 6,
+      contentVersion: 7,
     }));
 
     expect(buildErrors(editionDir)).toEqual([
@@ -1191,8 +1257,8 @@ describe('recordContent', () => {
 
     expect(recordContent({ editionDir })).toEqual({
       ok: true,
-      previousContentVersion: 6,
-      contentVersion: 6,
+      previousContentVersion: 7,
+      contentVersion: 7,
       contentChecksum: manifestOf(editionDir)['contentChecksum'],
       newIds: [],
     });
@@ -1210,12 +1276,12 @@ describe('recordContent', () => {
     const recorded = recordContent({ editionDir });
     const result = buildLanguagePack({ editionDir, outFile: edited });
 
-    expect(recorded).toMatchObject({ ok: true, previousContentVersion: 6, contentVersion: 7 });
+    expect(recorded).toMatchObject({ ok: true, previousContentVersion: 7, contentVersion: 8 });
     expect(result.ok).toBe(true);
     const { metadata } = await readBack(edited);
-    expect(metadata).toMatchObject({ contentVersion: 7 });
+    expect(metadata).toMatchObject({ contentVersion: 8 });
     expect(manifestOf(editionDir)).toEqual({
-      contentVersion: 7,
+      contentVersion: 8,
       contentChecksum: metadata.contentChecksum,
     });
     expect(metadata.contentChecksum).not.toBe((await readBack(original)).metadata.contentChecksum);
@@ -1270,7 +1336,7 @@ describe('recordContent', () => {
       ok: false,
       errors: [expect.objectContaining({ entryId: 'w_fx0002', field: 'rarity' })],
     });
-    expect(manifestOf(editionDir)).toMatchObject({ contentVersion: 6 });
+    expect(manifestOf(editionDir)).toMatchObject({ contentVersion: 7 });
   });
 
   it('starts the registry of an Edition never recorded with every id, in order', () => {

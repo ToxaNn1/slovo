@@ -86,6 +86,7 @@ const correctionCard: EntryFeedCard = {
     explanation: 'Why join in is better.',
     examplePair: { nonStandard: 'I take part.', standard: 'I join in.' },
     sourceTitles: [],
+    literaryUses: [],
   },
 };
 

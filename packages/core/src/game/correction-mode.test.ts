@@ -41,6 +41,7 @@ function correction(
     examplePair: { nonStandard: sentence, standard: `They said ${id.slice(2)} right.` },
     categoryId: 'everyday',
     sources: [{ title: 'Test source' }],
+    literaryUses: [],
     retired,
   };
 }

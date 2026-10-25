@@ -7,6 +7,7 @@ import {
   type Entry,
   type EntryKind,
   type Idiom,
+  type LiteraryUse,
   type PackMetadata,
   type Source,
   type Word,
@@ -58,6 +59,15 @@ interface CorrectionRow {
   example_standard: string;
   category_id: string;
   retired: number;
+}
+
+interface LiteraryUseRow {
+  text: string;
+  author: string;
+  work: string;
+  author_death_year: number;
+  work_year: number | null;
+  url: string | null;
 }
 
 interface IdiomRow {
@@ -115,6 +125,7 @@ function inParts(ids: readonly string[]): { readonly list: string; readonly para
 const correctionParts = (list: string) => ({
   corrections: `SELECT * FROM corrections WHERE id IN ${list} ORDER BY id`,
   equivalents: `SELECT correction_id AS entry_id, text FROM correction_equivalents WHERE correction_id IN ${list} ORDER BY correction_id, position`,
+  literaryUses: `SELECT correction_id AS entry_id, text, author, work, author_death_year, work_year, url FROM correction_literary_uses WHERE correction_id IN ${list} ORDER BY correction_id, position`,
   sources: `SELECT entry_id, title, url, archived_url FROM sources WHERE entry_id IN ${list} ORDER BY entry_id, position`,
 });
 
@@ -167,6 +178,15 @@ const sourceOf = ({ title, url, archived_url }: SourceRow): Source => ({
   title,
   ...(url === null ? {} : { url }),
   ...(archived_url === null ? {} : { archivedUrl: archived_url }),
+});
+
+const literaryUseOf = (row: LiteraryUseRow): LiteraryUse => ({
+  text: row.text,
+  author: row.author,
+  work: row.work,
+  authorDeathYear: row.author_death_year,
+  ...(row.work_year === null ? {} : { workYear: row.work_year }),
+  ...(row.url === null ? {} : { url: row.url }),
 });
 
 /**
@@ -280,14 +300,15 @@ export function createPackReader(db: PackDatabase): PackReader {
     return parts.flat();
   }
 
-  /** The Corrections of the ids, each with all its parts, three queries per `IDS_PER_READ`. */
+  /** The Corrections of the ids, each with all its parts, four queries per `IDS_PER_READ`. */
   async function readCorrections(ids: readonly string[]): Promise<Correction[]> {
     const parts = await Promise.all(
       inParts(ids).map(async ({ list, params }) => {
         const sql = correctionParts(list);
-        const [rows, equivalents, correctionSources] = await Promise.all([
+        const [rows, equivalents, literaryUses, correctionSources] = await Promise.all([
           db.getAllAsync<CorrectionRow>(sql.corrections, params),
           db.getAllAsync<WithEntryId<{ text: string }>>(sql.equivalents, params).then(byEntry),
+          db.getAllAsync<WithEntryId<LiteraryUseRow>>(sql.literaryUses, params).then(byEntry),
           db.getAllAsync<WithEntryId<SourceRow>>(sql.sources, params).then(byEntry),
         ]);
         return rows.map((row) =>
@@ -301,6 +322,7 @@ export function createPackReader(db: PackDatabase): PackReader {
             examplePair: { nonStandard: row.example_non_standard, standard: row.example_standard },
             categoryId: row.category_id,
             sources: (correctionSources.get(row.id) ?? []).map(sourceOf),
+            literaryUses: (literaryUses.get(row.id) ?? []).map(literaryUseOf),
             retired: row.retired === 1,
           }),
         );
