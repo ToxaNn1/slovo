@@ -1,4 +1,5 @@
 import { withoutStress, type CorrectionCardModel } from '@slovo/core';
+import type { EditionStrings, LiteraryUse } from '@slovo/contracts';
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
@@ -14,13 +15,15 @@ import { usePageTurnActions } from '../primitives/VerticalPager';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 import { CategoryChip } from './CategoryChip';
 import { stressLabel } from './stress-label';
+import { DetailSection, ExampleText } from './WordCard';
 
 /**
  * The Correction card's blocks inside the Entry card's frame: the Correction
  * Type, the non-standard form muted and struck through, the main standard
  * equivalent at the Lemma's size with the others under it, the explanation,
- * the example pair, the Category chip as on the Word card and, when the
- * Correction has sources, a line naming them.
+ * the example pair, the Category chip as on the Word card, the Correction's
+ * literary uses under their heading, each like a Word's Example with its
+ * author, work and year, and, when the Correction has sources, a line naming them.
  * Nothing on the card reads as an error. A stress trap's texts carry their
  * Stress marks (ADR 0045): VoiceOver reads each form with where its Stress
  * falls, as for a Lemma, and every other text without the mark. Under Self-check it keeps only the non-standard form and
@@ -195,6 +198,17 @@ export function CorrectionCardBody({
           {card.categoryName === undefined ? null : (
             <CategoryChip testID="correction-category" name={card.categoryName} />
           )}
+          {card.literaryUses.length === 0 ? null : (
+            <DetailSection testID="correction-literary-uses" title={strings.literaryUses}>
+              {card.literaryUses.map((use) => (
+                <ExampleText
+                  key={`${use.author}-${use.text}`}
+                  example={{ text: use.text, author: literaryUseSource(strings, use) }}
+                  size={sizes.example}
+                />
+              ))}
+            </DetailSection>
+          )}
           {card.sourceTitles.length === 0 ? null : (
             <Text
               testID="correction-source"
@@ -208,6 +222,16 @@ export function CorrectionCardBody({
       )}
     </>
   );
+}
+
+/** The line naming a literary use's author and work, with the work's year when it is known. */
+function literaryUseSource(
+  strings: EditionStrings['correctionCard'],
+  { author, work, workYear }: LiteraryUse,
+): string {
+  return workYear === undefined
+    ? fill(strings.literaryUseSource, { author, work })
+    : fill(strings.literaryUseSourceWithYear, { author, work, year: String(workYear) });
 }
 
 /** The mark before a sentence of the example pair, centred on its first line. */
