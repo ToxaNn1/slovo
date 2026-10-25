@@ -71,6 +71,7 @@ describe('the Word card', () => {
       antonyms: [],
       registers: [],
       region: undefined,
+      history: undefined,
       categoryId: 'household-crafts',
       categoryName: 'Побут і ремесла',
       details: undefined,
@@ -180,6 +181,13 @@ describe('the Word card', () => {
         { correctionId: 'c_live', nonStandardForm: 'на протязі' },
       ]);
     });
+  });
+
+  it('carries the history of a Word that has one', async () => {
+    const card = await build(word({ history: 'Слово вилучили зі словників 1933 року.' }));
+
+    expect(card.history).toBe('Слово вилучили зі словників 1933 року.');
+    expect(card.details).toBeUndefined();
   });
 
   describe('details', () => {

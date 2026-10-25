@@ -31,6 +31,7 @@ export function checkContent(
   const lemmaTokens = [...alphabet, ...lemmaPunctuation].toSorted((a, b) => b.length - a.length);
   const categoryIds = new Set(config.categories.map((category) => category.id));
   const correctionCategoryIds = new Set(config.correctionCategories.map(({ id }) => id));
+  const categoriesRequiringHistory = new Set(config.categoriesRequiringHistory);
   const correctionIds = new Set(corrections.map(({ entry }) => entry.id));
   const fileById = new Map<string, string>();
 
@@ -85,6 +86,10 @@ export function checkContent(
 
     if (!categoryIds.has(word.categoryId)) {
       fail('categoryId', `Unknown Category "${word.categoryId}"`);
+    }
+
+    if (word.history === undefined && categoriesRequiringHistory.has(word.categoryId)) {
+      fail('history', `Required: Category "${word.categoryId}" requires history`);
     }
 
     if (!marksStress) {

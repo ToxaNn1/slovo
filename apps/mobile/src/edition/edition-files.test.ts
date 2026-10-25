@@ -306,6 +306,25 @@ describe('the string of the Correction Type paronym', () => {
   });
 });
 
+describe('the Categories that require history', () => {
+  // Every Edition names them, an empty list when none does.
+  it.each(editions)('the %s Edition names the Categories that require history', (edition) => {
+    const config = readJson(edition, 'config') as Record<string, unknown>;
+    const { categoriesRequiringHistory: _removed, ...without } = config;
+
+    expect(EditionConfigSchema.parse(config).categoriesRequiringHistory).toBeInstanceOf(Array);
+    expect(
+      EditionConfigSchema.safeParse(without).error?.issues.map((issue) => issue.path.join('.')),
+    ).toEqual(['categoriesRequiringHistory']);
+  });
+
+  it('the Ukrainian Edition requires history of no Category yet', () => {
+    expect(EditionConfigSchema.parse(readJson('uk', 'config')).categoriesRequiringHistory).toEqual(
+      [],
+    );
+  });
+});
+
 describe('the legal pages of About', () => {
   const strings = readJson('uk', 'strings') as Record<string, unknown>;
   const settings = strings['settings'] as Record<string, unknown>;

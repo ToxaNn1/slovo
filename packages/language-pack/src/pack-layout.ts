@@ -45,6 +45,7 @@ CREATE TABLE words (
   rarity INTEGER NOT NULL,
   etymology TEXT,
   region TEXT,
+  history TEXT,
   retired INTEGER NOT NULL
 ) WITHOUT ROWID;
 
@@ -161,7 +162,8 @@ CREATE TABLE sources (
  * and `idiom_examples`), the kind `'idiom'` and the Word's region column, and
  * admits the Idioms and the Word's region of 0.8.8; format 4 keeps format 3's
  * layout and admits what 0.8.10 adds to the closed sets and fields, such as
- * the table `correction_categories` and the Correction's category column.
+ * the table `correction_categories`, the Correction's category column and the
+ * Word's history column.
  */
 export const PACK_FORMAT = 4;
 

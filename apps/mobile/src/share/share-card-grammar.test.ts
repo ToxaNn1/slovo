@@ -12,6 +12,7 @@ describe('the grammar line of a Word on its Share Card, in the Ukrainian Edition
       gender: 'feminine',
       registers: [],
       region: undefined,
+      history: undefined,
     } as const;
 
     expect(wordGrammarText(strings, word, 'short')).toBe('ім., ж. р.');
@@ -24,6 +25,7 @@ describe('the grammar line of a Word on its Share Card, in the Ukrainian Edition
       gender: 'feminine',
       registers: ['colloquial'],
       region: undefined,
+      history: undefined,
     } as const;
 
     expect(wordGrammarText(strings, word, 'short')).toBe('ім., ж. р. · розм.');
@@ -36,6 +38,7 @@ describe('the grammar line of a Word on its Share Card, in the Ukrainian Edition
       gender: undefined,
       registers: ['dialectal', 'archaic'],
       region: undefined,
+      history: undefined,
     } as const;
 
     expect(wordGrammarText(strings, word, 'short')).toBe('дієсл. · діал. · заст.');

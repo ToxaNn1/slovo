@@ -66,5 +66,6 @@
       "id": "shop",
       "displayName": "У магазині"
     }
-  ]
+  ],
+  "categoriesRequiringHistory": []
 }

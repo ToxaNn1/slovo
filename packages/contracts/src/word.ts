@@ -67,6 +67,11 @@ export const RaritySchema = z.int().min(1).max(5);
  * `region` names where a dialect Word is said, a short text in the Edition's
  * language; only a Word with the dialectal register label carries one.
  *
+ * `history` tells how the Word left the language or changed its meaning, a
+ * text in the Edition's language beside the etymology, which tells where the
+ * Word comes from. The Edition names the Categories whose Words must carry
+ * one; the Language Pack build checks them.
+ *
  * `correctionIds` links the Corrections the Word is the standard form for.
  *
  * List fields default to empty and `retired` to false, so authored content
@@ -102,6 +107,7 @@ export const WordSchema = z
       .refine(hasNoRepeats, 'Register labels must not repeat')
       .default([]),
     region: TextSchema.optional(),
+    history: TextSchema.optional(),
     categoryId: z.string().min(1),
     rarity: RaritySchema,
     sources: z.array(SourceSchema).min(1),

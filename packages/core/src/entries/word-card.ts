@@ -45,6 +45,8 @@ export interface WordCardModel {
   readonly registers: readonly Register[];
   /** Where a dialect Word is said, shown after its dialectal register label. */
   readonly region: string | undefined;
+  /** How the Word left the language or changed its meaning. */
+  readonly history: string | undefined;
   readonly categoryId: string;
   /** The display name of the Word's Category, from the Language Pack; nothing for one the pack doesn't have. */
   readonly categoryName: string | undefined;
@@ -81,6 +83,7 @@ export async function buildWordCard({
     antonyms: word.antonyms,
     registers: word.registers,
     region: word.region,
+    history: word.history,
     categoryId: word.categoryId,
     categoryName: categories.find(({ id }) => id === word.categoryId)?.displayName,
     details: detailsOf(word),
