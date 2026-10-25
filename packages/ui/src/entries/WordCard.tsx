@@ -20,7 +20,7 @@ import { CategoryChip } from './CategoryChip';
 /**
  * The Word card's blocks inside the Entry card's frame: the Lemma with Stress,
  * part of speech and register chips, the dialectal one with the region, the primary Definition, the first
- * Example, Synonyms and antonyms, the Category chip, the details behind
+ * Example, the Word History under its heading, Synonyms and antonyms, the Category chip, the details behind
  * "more" and the linked Corrections. It draws only the sections the Core put
  * in the card, at the user's font size. Under Self-check it keeps the Lemma,
  * part of speech and Category; the Entry card draws the button that reveals
@@ -125,6 +125,19 @@ export function WordCardBody({
           </Text>
           {card.example === undefined ? null : (
             <ExampleText testID="word-example" example={card.example} size={sizes.example} />
+          )}
+          {card.history === undefined ? null : (
+            <DetailSection testID="word-history" title={strings.history}>
+              <Text
+                {...voice}
+                style={[
+                  styles.sectionText,
+                  { color: colors.inkSecondary, fontFamily: fontFamilies.ui },
+                ]}
+              >
+                {card.history}
+              </Text>
+            </DetailSection>
           )}
           {relations.length === 0 && !compact ? null : (
             <View style={compact ? styles.compactRow : styles.relations}>
@@ -304,7 +317,7 @@ function Details({ details }: { details: NonNullable<WordCardModel['details']> }
               <Text
                 {...voice}
                 style={[
-                  styles.etymology,
+                  styles.sectionText,
                   { color: colors.inkSecondary, fontFamily: fontFamilies.ui },
                 ]}
               >
@@ -369,7 +382,8 @@ const styles = StyleSheet.create({
   // The details keep the card's gap between blocks.
   details: { gap: blockGap, marginTop: space[4] },
   detailSection: { gap: space[2] },
-  etymology: { fontSize: typeSize.body, lineHeight: typeSize.body * 1.5 },
+  // The text under a section heading: the Word History and the etymology.
+  sectionText: { fontSize: typeSize.body, lineHeight: typeSize.body * 1.5 },
   oftenSaid: {
     flexDirection: 'row',
     alignItems: 'center',

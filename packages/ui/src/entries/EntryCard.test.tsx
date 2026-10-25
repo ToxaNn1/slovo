@@ -38,6 +38,7 @@ const strings = {
     stress: 'stress on {vowels}',
     stressOr: 'or',
     extraDefinitions: 'Other meanings',
+    history: 'History of the word',
   },
   idiomCard: {
     idiomTypes: { idiom: 'idiom', placeName: 'place name', proverb: 'proverb' },
@@ -434,6 +435,51 @@ describe('the region of a dialect Word', () => {
 
     expect(screen.getByTestId('word-register-dialectal')).toHaveTextContent('dial., Hutsulshchyna');
     expect(screen.getByLabelText('dialectal, Hutsulshchyna')).toBeTruthy();
+  });
+});
+
+describe('the Word History on a Word card', () => {
+  const history =
+    'Fell out of use when the trade it named disappeared, and came back as a figure of speech.';
+  const wordWithHistory: EntryFeedCard = { ...wordCard, model: { ...wordCard.model, history } };
+
+  it('shows under its heading when the Word has history', async () => {
+    await render(inEdition(<EntryCard card={wordWithHistory} />));
+
+    const section = within(screen.getByTestId('word-history'));
+    expect(section.getByRole('header', { name: 'History of the word' })).toBeTruthy();
+    expect(section.getByText(history)).toBeTruthy();
+  });
+
+  it('is absent when the Word has none', async () => {
+    await render(inEdition(<EntryCard card={wordCard} />));
+
+    expect(screen.queryByTestId('word-history')).toBeNull();
+    expect(screen.queryByText('History of the word')).toBeNull();
+  });
+
+  it('stays hidden under Self-check until revealed', async () => {
+    await render(inEdition(<EntryCard card={wordWithHistory} selfCheck />));
+    expect(screen.queryByTestId('word-history')).toBeNull();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Show the meaning' }));
+
+    expect(screen.getByTestId('word-history')).toBeTruthy();
+  });
+
+  it('wraps its whole text at the largest font size', async () => {
+    const window = Dimensions.get('window');
+    Dimensions.set({ window: { ...window, fontScale: 3.12 } });
+
+    try {
+      await render(inEdition(<EntryCard card={wordWithHistory} />));
+
+      const text = within(screen.getByTestId('word-history')).getByText(history);
+      expect(text).not.toHaveProp('numberOfLines');
+      expect(text).not.toHaveProp('adjustsFontSizeToFit');
+    } finally {
+      Dimensions.set({ window });
+    }
   });
 });
 

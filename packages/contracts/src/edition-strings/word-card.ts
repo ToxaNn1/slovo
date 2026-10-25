@@ -46,6 +46,8 @@ export const WordCardStringsSchema = z.strictObject({
   etymology: TextSchema,
   extraDefinitions: TextSchema,
   moreExamples: TextSchema,
+  /** The heading of the Word History on the card, e.g. "Історія слова". */
+  history: TextSchema,
   /** The label before the non-standard forms of the linked Corrections. */
   oftenSaid: TextSchema,
   /** What VoiceOver says a linked Correction's form does when tapped, e.g. "Відкриває виправлення". */
