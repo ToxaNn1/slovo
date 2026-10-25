@@ -39,7 +39,7 @@ const validConfig = {
     fontSize: 'M',
     vibration: true,
     notificationTimes: ['09:00'],
-    mix: { categories: 'all', corrections: true, idioms: true },
+    mix: { categories: 'all', correctionCategories: 'all', corrections: true, idioms: true },
   },
   legalPages: {
     privacy: 'https://example.org/test/privacy',
@@ -133,7 +133,7 @@ describe('loadEdition', () => {
       fontSize: 'M',
       vibration: true,
       notificationTimes: ['09:00'],
-      mix: { categoryIds: 'all', corrections: true, idioms: true },
+      mix: { categoryIds: 'all', correctionCategoryIds: 'all', corrections: true, idioms: true },
     });
   });
 
@@ -142,12 +142,18 @@ describe('loadEdition', () => {
       ...validConfig,
       userSettingDefaults: {
         ...validConfig.userSettingDefaults,
-        mix: { categories: ['speech'], corrections: false, idioms: true },
+        mix: {
+          categories: ['speech'],
+          correctionCategories: ['work'],
+          corrections: false,
+          idioms: true,
+        },
       },
     });
 
     expect(edition.userSettingDefaults.mix).toEqual({
       categoryIds: ['speech'],
+      correctionCategoryIds: ['work'],
       corrections: false,
       idioms: true,
     });
@@ -353,7 +359,12 @@ describe('loadEdition', () => {
       {
         userSettingDefaults: {
           ...userSettingDefaults,
-          mix: { categories: ['nature', 'military'], corrections: true, idioms: true },
+          mix: {
+            categories: ['nature', 'military'],
+            correctionCategories: 'all',
+            corrections: true,
+            idioms: true,
+          },
         },
       },
       'userSettingDefaults.mix.categories.1',
@@ -363,10 +374,40 @@ describe('loadEdition', () => {
       {
         userSettingDefaults: {
           ...userSettingDefaults,
-          mix: { categories: [], corrections: true, idioms: true },
+          mix: { categories: [], correctionCategories: 'all', corrections: true, idioms: true },
         },
       },
       'userSettingDefaults.mix.categories',
+    ],
+    [
+      'a default Mix with an unknown Category of Corrections',
+      {
+        userSettingDefaults: {
+          ...userSettingDefaults,
+          mix: { categories: 'all', correctionCategories: ['nature'], corrections: true, idioms: true },
+        },
+      },
+      'userSettingDefaults.mix.correctionCategories.0',
+    ],
+    [
+      'a default Mix with no Category of Corrections',
+      {
+        userSettingDefaults: {
+          ...userSettingDefaults,
+          mix: { categories: 'all', correctionCategories: [], corrections: true, idioms: true },
+        },
+      },
+      'userSettingDefaults.mix.correctionCategories',
+    ],
+    [
+      'a default Mix without the Categories of Corrections',
+      {
+        userSettingDefaults: {
+          ...userSettingDefaults,
+          mix: { categories: 'all', corrections: true, idioms: true },
+        },
+      },
+      'userSettingDefaults.mix.correctionCategories',
     ],
     [
       'a repeated Category id',
