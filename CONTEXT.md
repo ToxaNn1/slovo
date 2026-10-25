@@ -72,7 +72,7 @@ Where a dialect Word is said (e.g. Гуцульщина), a short text in the Ed
 _Avoid_: Area, dialect, location
 
 **Category**:
-A thematic group a Word belongs to (e.g. human body, emotions, military).
+A thematic group a Word or a Correction belongs to. Words and Corrections each have the Edition's own list: Words by what they name (e.g. human body, emotions, military), Corrections by where a reader meets them (e.g. at work, in a shop, transport). Every Word and every Correction has one Category of its list.
 _Avoid_: Topic, tag, theme
 
 **Rare Word**:
@@ -200,7 +200,7 @@ An Entry the user disliked; it never appears in the Feed, notifications, widgets
 _Avoid_: Disliked, blocked, muted, hidden word
 
 **Hidden Category**:
-A Category the user took out of their Mix, whether from the Mix itself, from a card's hide action or on the Hidden screen. Hiding a Category and taking it out of the Mix are one and the same; its Words are excluded from everything new the same way as a Hidden Entry.
+A Category, of Words or of Corrections, the user took out of their Mix, whether from the Mix itself, from a card's hide action or on the Hidden screen. Hiding a Category and taking it out of the Mix are one and the same; its Words or Corrections are excluded from everything new the same way as a Hidden Entry.
 _Avoid_: Muted topic
 
 **Eligible Entry**:
