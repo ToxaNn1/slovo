@@ -58,6 +58,7 @@ const content = createMemoryContentPort({
       examplePair: { nonStandard: 'Так кажуть.', standard: 'Краще так.' },
       categoryId: 'everyday',
       sources: [{ title: 'Test source' }],
+      literaryUses: [],
       retired: false,
     },
   ],

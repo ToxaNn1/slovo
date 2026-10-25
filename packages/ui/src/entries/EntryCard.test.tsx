@@ -85,6 +85,7 @@ const correctionCard: CorrectionCardModel = {
   explanation: 'A long explanation.',
   examplePair: { nonStandard: 'I take part.', standard: 'I join in.' },
   sourceTitles: [],
+  literaryUses: [],
 };
 
 const card: EntryFeedCard = { kind: 'correction', entryId: 'c1', model: correctionCard };

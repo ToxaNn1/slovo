@@ -40,6 +40,7 @@ function correction(id: string, nonStandardForm: string, retired = false): Corre
     examplePair: { nonStandard: 'People say this.', standard: 'Better say this.' },
     categoryId: 'everyday',
     sources: [{ title: 'Test source' }],
+    literaryUses: [],
     retired,
   };
 }

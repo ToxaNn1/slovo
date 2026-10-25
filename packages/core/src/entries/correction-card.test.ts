@@ -20,6 +20,7 @@ function correction(overrides: Partial<Correction> = {}): Correction {
     },
     categoryId: 'everyday',
     sources: [{ title: 'Test source' }],
+    literaryUses: [],
     retired: false,
     ...overrides,
   };
@@ -55,6 +56,7 @@ describe('the Correction card', () => {
       categoryId: 'everyday',
       categoryName: 'Побут',
       sourceTitles: ['Test source'],
+      literaryUses: [],
     });
   });
 
@@ -82,5 +84,26 @@ describe('the Correction card', () => {
 
     expect(card.mainEquivalent).toBe('протягом року');
     expect(card.otherEquivalents).toEqual(['упродовж року', 'цілий рік']);
+  });
+
+  it('carries the literary uses of the standard form, in their order, each with its author and work', async () => {
+    const literaryUses = [
+      {
+        text: 'Протягом року він писав щодня.',
+        author: 'Test Author',
+        work: 'Test Work',
+        authorDeathYear: 1900,
+        workYear: 1890,
+        url: 'https://example.com/work',
+      },
+      {
+        text: 'Протягом року нічого не змінилось.',
+        author: 'Second Author',
+        work: 'Second Work',
+        authorDeathYear: 1910,
+      },
+    ];
+
+    expect((await build(correction({ literaryUses }))).literaryUses).toEqual(literaryUses);
   });
 });

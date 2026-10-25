@@ -73,6 +73,7 @@ export {
   type CorrectionInput,
   type CorrectionType,
   type ExamplePair,
+  type LiteraryUse,
 } from './correction';
 export {
   IdiomIdSchema,

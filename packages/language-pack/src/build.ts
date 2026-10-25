@@ -5,6 +5,7 @@ import { checkContentVersion } from './content-manifest';
 import { missedTargets, type MissedTarget } from './content-targets';
 import { unregisteredEntries } from './id-registry';
 import { PACK_FORMAT, type PackContent } from './pack-layout';
+import { protectedLiteraryUses } from './public-domain';
 import { readEdition } from './read-edition';
 import { contentReport, type ContentReport } from './report';
 import { writePack } from './write-pack';
@@ -33,8 +34,15 @@ export type CheckResult =
  * it refuses exactly what `buildLanguagePack` refuses, and reports the
  * content targets the content misses.
  */
-export function checkLanguagePack({ editionDir }: { editionDir: string }): CheckResult {
-  const checked = checkEdition(editionDir);
+export function checkLanguagePack({
+  editionDir,
+  today = new Date(),
+}: {
+  editionDir: string;
+  /** The day the public domain is judged on (ADR 0045). */
+  today?: Date;
+}): CheckResult {
+  const checked = checkEdition(editionDir, today);
   if (!checked.ok) return checked;
   return { ok: true, missedTargets: checked.missedTargets };
 }
@@ -43,24 +51,31 @@ export function checkLanguagePack({ editionDir }: { editionDir: string }): Check
  * Validates an Edition's config and content, Entry by Entry, across Entries
  * and against the id registry and the content manifest, and compiles them
  * into a SQLite Language Pack at `outFile` with a content report, checked
- * against the content targets the Edition declares. Nothing is written when
+ * against the content targets the Edition declares. It refuses a literary use
+ * not yet in the public domain on `today`. Nothing is written when
  * there are errors; missed targets are not errors.
  */
 export function buildLanguagePack({
   editionDir,
   outFile,
+  today = new Date(),
 }: {
   editionDir: string;
   outFile: string;
+  /** The day the public domain is judged on (ADR 0045). */
+  today?: Date;
 }): BuildResult {
-  const checked = checkEdition(editionDir);
+  const checked = checkEdition(editionDir, today);
   if (!checked.ok) return checked;
   const { content, metadata, report, missedTargets } = checked;
   writePack(outFile, content, metadata);
   return { ok: true, metadata, report, missedTargets };
 }
 
-function checkEdition(editionDir: string):
+function checkEdition(
+  editionDir: string,
+  today: Date,
+):
   | {
       ok: true;
       content: PackContent;
@@ -86,6 +101,7 @@ function checkEdition(editionDir: string):
       field: 'id',
       message: `Not in content/ids.json: record new ids with ${command}`,
     })),
+    ...protectedLiteraryUses(source.corrections, today),
   ];
   if (errors.length > 0 || source.valid === undefined) return { ok: false, errors };
 

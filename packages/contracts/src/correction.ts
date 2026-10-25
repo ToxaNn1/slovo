@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { hasNoRepeats, SourceSchema, TextSchema } from './shared';
+import { hasNoRepeats, SourceSchema, TextSchema, WebAddressSchema } from './shared';
 
 /**
  * A Correction id: opaque, assigned when the Correction is authored and never
@@ -37,6 +37,25 @@ export const ExamplePairSchema = z.strictObject({
 export type ExamplePair = z.infer<typeof ExamplePairSchema>;
 
 /**
+ * A real use of a Correction's standard form in literature, quoted with its
+ * author and work. Only public-domain texts: the build refuses one before
+ * 1 January of the 71st year after the author's death (ADR 0045).
+ */
+export const LiteraryUseSchema = z.strictObject({
+  text: TextSchema,
+  author: TextSchema,
+  work: TextSchema,
+  /** The year the author died, from which the build counts the public domain. */
+  authorDeathYear: z.int(),
+  /** The year the work was written or first published. */
+  workYear: z.int().optional(),
+  /** Where the text can be read. */
+  url: WebAddressSchema.optional(),
+});
+
+export type LiteraryUse = z.infer<typeof LiteraryUseSchema>;
+
+/**
  * A Correction as authored in an Edition's content and as returned by the
  * Core: a non-standard form people commonly use, paired with its standard
  * equivalents (the main one first) and a short neutral explanation.
@@ -59,6 +78,8 @@ export const CorrectionSchema = z.strictObject({
   /** One of the Edition's Categories of Corrections, a list apart from the Words' (ADR 0050). */
   categoryId: z.string().min(1),
   sources: z.array(SourceSchema).min(1),
+  /** Real uses of the standard form in literature, in the order the card shows them. */
+  literaryUses: z.array(LiteraryUseSchema).max(3).default([]),
   retired: z.boolean().default(false),
 });
 

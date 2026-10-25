@@ -65,6 +65,7 @@ const correction: Correction = {
   examplePair: { nonStandard: 'in the meantimes', standard: 'in the meantime' },
   categoryId: 'everyday',
   sources: [],
+  literaryUses: [],
   retired: false,
 };
 

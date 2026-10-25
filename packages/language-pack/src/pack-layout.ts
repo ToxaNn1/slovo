@@ -106,6 +106,19 @@ CREATE TABLE correction_equivalents (
   PRIMARY KEY (correction_id, position)
 ) WITHOUT ROWID;
 
+-- Real uses of a Correction's standard form in literature, in the card's order.
+CREATE TABLE correction_literary_uses (
+  correction_id TEXT NOT NULL REFERENCES corrections (id),
+  position INTEGER NOT NULL,
+  text TEXT NOT NULL,
+  author TEXT NOT NULL,
+  work TEXT NOT NULL,
+  author_death_year INTEGER NOT NULL,
+  work_year INTEGER,
+  url TEXT,
+  PRIMARY KEY (correction_id, position)
+) WITHOUT ROWID;
+
 -- A Word links the Corrections it is the standard form for.
 CREATE TABLE word_corrections (
   word_id TEXT NOT NULL REFERENCES words (id),
@@ -162,8 +175,8 @@ CREATE TABLE sources (
  * and `idiom_examples`), the kind `'idiom'` and the Word's region column, and
  * admits the Idioms and the Word's region of 0.8.8; format 4 keeps format 3's
  * layout and admits what 0.8.10 adds to the closed sets and fields, such as
- * the table `correction_categories`, the Correction's category column and the
- * Word's history column.
+ * the table `correction_categories`, the Correction's category column, the
+ * Word's history column and the table `correction_literary_uses`.
  */
 export const PACK_FORMAT = 4;
 
