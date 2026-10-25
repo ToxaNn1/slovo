@@ -776,6 +776,35 @@ describe('buildLanguagePack', () => {
     ]);
   });
 
+  it('builds a paronym, a Correction of Correction Type paronym, and reads it back', async () => {
+    const editionDir = copyFixture('valid');
+    const paronym = {
+      id: 'c_fx0006',
+      nonStandardForm: 'ефективна сукня',
+      correctionType: 'paronym',
+      standardEquivalents: ['ефектна сукня'],
+      explanation: 'Тестове пояснення: ефективний дає наслідок, ефектний вражає.',
+      examplePair: {
+        nonStandard: 'Вона вдягла ефективну сукню.',
+        standard: 'Вона вдягла ефектну сукню.',
+      },
+      categoryId: 'shop',
+      sources: [{ title: 'Тестове джерело' }],
+    };
+    writeFileSync(join(editionDir, 'content/corrections/c_fx0006.json'), JSON.stringify(paronym));
+    record(editionDir);
+    const outFile = packPath();
+
+    const result = buildLanguagePack({ editionDir, outFile });
+
+    expect(result.ok ? [] : result.errors).toEqual([]);
+    expect(await withEntries(outFile, (entries) => entries.get('c_fx0006'))).toEqual({
+      ...paronym,
+      kind: 'correction',
+      retired: false,
+    });
+  });
+
   it('builds homonyms, and a Word that takes over from a Retired Word', () => {
     const editionDir = copyFixture('valid');
     const write = (word: Json) => {
@@ -854,6 +883,7 @@ describe('buildLanguagePack', () => {
         { correctionType: 'officialese', corrections: 1 },
         { correctionType: 'anglicism', corrections: 0 },
         { correctionType: 'wrongStress', corrections: 0 },
+        { correctionType: 'paronym', corrections: 0 },
       ],
       correctionsPerCategory: [
         { categoryId: 'work', displayName: 'На роботі', corrections: 3 },

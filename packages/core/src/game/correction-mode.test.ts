@@ -344,7 +344,7 @@ describe('a Round of «Обери правильне»', () => {
         ),
       );
       // A lone russianism tops up with other Types; three officialese have two others;
-      // the pack holds no anglicism and no stress trap.
+      // the pack holds no anglicism, no stress trap and no paronym.
       const expected = {
         russianism: 0,
         officialese: 2,
@@ -352,6 +352,7 @@ describe('a Round of «Обери правильне»', () => {
         surzhyk: 3,
         anglicism: 0,
         wrongStress: 0,
+        paronym: 0,
       }[asked.correctionType];
       expect(sameType).toHaveLength(expected);
     }

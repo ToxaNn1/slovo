@@ -209,7 +209,8 @@
       "surzhyk": "суржик",
       "officialese": "канцелярит",
       "anglicism": "англіцизм",
-      "wrongStress": "наголос"
+      "wrongStress": "наголос",
+      "paronym": "пароніми"
     },
     "correctionType": "Тип: {type}",
     "nonStandard": "Так часто кажуть",
