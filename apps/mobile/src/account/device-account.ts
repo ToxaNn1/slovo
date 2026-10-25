@@ -9,7 +9,7 @@ import { logError } from '../log';
 import { openOnce, type Opening } from '../opening';
 import { storedUserState } from '../user-state/stored-user-state';
 import { createAccountApi } from './account-api';
-import { googleSignInSheet } from './google-sign-in-sheet';
+import { createGoogleSignInSheet, noGoogleSignInSheet } from './google-sign-in-sheet';
 import { createSessionStore } from './session-store';
 
 /**
@@ -22,6 +22,38 @@ const keychain = nativeModules.load(
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   () => require('expo-secure-store') as typeof import('expo-secure-store'),
 );
+
+type GoogleSdkModule = typeof import('@react-native-google-signin/google-signin');
+
+const clientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+
+/**
+ * Google's sign-in SDK, or undefined while the installed binary lacks its
+ * native module (a dev client built before the 0.8.9 batch). Like the
+ * Keychain, it is required here and nowhere else.
+ */
+const googleSdk = nativeModules.load(
+  'googleSignIn',
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  () => (require('@react-native-google-signin/google-signin') as GoogleSdkModule).GoogleSignin,
+);
+
+/**
+ * The build's Google client id for iOS (ADR 0047), from its environment and
+ * never the repository, or undefined when the build has none or its binary
+ * lacks Google's SDK. «Увійти через Google» shows only with one.
+ */
+export const googleClientId: string | undefined =
+  clientId === undefined || clientId === '' || googleSdk === undefined ? undefined : clientId;
+
+/**
+ * The Google sign-in sheet of this device: Google's own, for the build's
+ * client id, or the sheet of a build without Google's.
+ */
+const googleSignInSheet =
+  googleClientId === undefined || googleSdk === undefined
+    ? noGoogleSignInSheet
+    : createGoogleSignInSheet(googleSdk, googleClientId);
 
 /**
  * The reader's Account («SLOVO ID»), opened once per app run apart from the

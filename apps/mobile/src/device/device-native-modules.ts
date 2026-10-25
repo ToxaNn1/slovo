@@ -12,7 +12,7 @@ import { createNativeModules } from './native-module';
  * reload. Sharing needs the view capture, with `expo-file-system` to move
  * its image into the cache. Content updates need `expo-file-system` to keep
  * a downloaded Language Pack, and the Session needs `expo-secure-store`, the
- * Keychain.
+ * Keychain. Google sign-in needs Google's SDK, a module of the registry.
  */
 export const nativeModules = createNativeModules({
   notifications: () =>
@@ -27,4 +27,5 @@ export const nativeModules = createNativeModules({
     requireOptionalNativeModule('FileSystem') !== null,
   contentUpdates: () => requireOptionalNativeModule('FileSystem') !== null,
   keychain: () => requireOptionalNativeModule('ExpoSecureStore') !== null,
+  googleSignIn: () => TurboModuleRegistry.get('RNGoogleSignin') !== null,
 });

@@ -9,6 +9,7 @@ const installed: NativeModuleProbes = {
   shareCapture: () => true,
   contentUpdates: () => true,
   keychain: () => true,
+  googleSignIn: () => true,
 };
 
 describe('the native modules of the installed dev client', () => {

@@ -120,6 +120,7 @@ describe('the Language Pack the app opens at launch', () => {
       shareCapture: () => false,
       contentUpdates: () => false,
       keychain: () => false,
+      googleSignIn: () => false,
     });
 
     const launched = await app.launch({

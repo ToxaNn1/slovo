@@ -12,6 +12,7 @@ const installed: NativeModuleProbes = {
   shareCapture: () => true,
   contentUpdates: () => true,
   keychain: () => true,
+  googleSignIn: () => true,
 };
 
 /** A Keychain that keeps its items in a map, as `expo-secure-store` does in the device's Keychain. */
