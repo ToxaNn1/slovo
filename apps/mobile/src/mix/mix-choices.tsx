@@ -10,12 +10,13 @@ import {
   useEdition,
   useTokens,
 } from '@slovo/ui';
+import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { editionStrings } from '../edition/edition';
 import { useEditionInEffect } from '../edition/remote-switches';
 import { useMixChanges, useMixState } from './mix';
-import { mixScreenModel } from './mix-screen';
+import { mixScreenModel, type MixCategoriesModel } from './mix-screen';
 
 const strings = editionStrings.mix;
 
@@ -24,54 +25,36 @@ const strings = editionStrings.mix;
  * step: a chip for «Усі» and every Category of the Edition, the line saying
  * why the last Category's chip is disabled, the Rarity Floor choice while the
  * rarityFloor switch is on, and the Corrections and Idioms switches, each when
- * the Edition turns it on. A change applies at once (the Core's Mix,
- * ADR 0019).
+ * the Edition turns it on, with the chips of the Categories of Corrections
+ * under the Corrections switch while it is on (ADR 0050). A change applies at
+ * once (the Core's Mix, ADR 0019).
  */
 export function MixChoices() {
   const state = useMixState();
   const { toggleCategory, turnAllOn, setKind, setRarityFloor } = useMixChanges();
-  const { colors, fontFamilies } = useTokens();
-  const { voice } = useEdition();
   const edition = useEditionInEffect();
 
   const model = mixScreenModel({ edition, mix: state });
 
   return (
     <>
-      <View style={styles.chips}>
-        <MixChip
-          testID="mix-chip-all"
-          label={strings.all}
-          on={model.allOn}
-          feature
-          onPress={turnAllOn}
-        />
-        {model.chips.map((chip) => (
+      <CategoryChips
+        list={model}
+        testIDPrefix="mix"
+        hint={strings.lastCategoryHint}
+        onToggle={(id, inMix) => {
+          toggleCategory(id, inMix);
+        }}
+        all={
           <MixChip
-            key={chip.id}
-            testID={`mix-chip-${chip.id}`}
-            label={chip.name}
-            on={chip.on}
-            disabled={chip.disabled}
-            accessibilityHint={strings.lastCategoryHint}
-            onPress={() => {
-              toggleCategory(chip.id, !chip.on);
-            }}
+            testID="mix-chip-all"
+            label={strings.all}
+            on={model.allOn}
+            feature
+            onPress={turnAllOn}
           />
-        ))}
-      </View>
-      {model.lastCategoryHint && (
-        <Text
-          testID="mix-last-category-hint"
-          // VoiceOver reads it as the hint of the disabled chip instead.
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          {...voice}
-          style={[styles.hint, { color: colors.muted, fontFamily: fontFamilies.ui }]}
-        >
-          {strings.lastCategoryHint}
-        </Text>
-      )}
+        }
+      />
       {model.rarity !== undefined && (
         <View style={styles.rarity}>
           <RarityFloorChoice
@@ -90,9 +73,9 @@ export function MixChoices() {
       {model.kinds.length > 0 && (
         <View style={styles.switches}>
           <SettingsGroup>
-            {model.kinds.map(({ entryKind, on }) => {
+            {model.kinds.flatMap(({ entryKind, on }) => {
               const name = featureOfKind(entryKind);
-              return (
+              const row = (
                 <SwitchRow
                   key={entryKind}
                   testID={`mix-${name}`}
@@ -104,9 +87,83 @@ export function MixChoices() {
                   }}
                 />
               );
+              const categories = entryKind === 'correction' && model.correctionCategories;
+              if (!categories) return [row];
+              return [
+                row,
+                <View key="correction-categories" style={styles.underSwitch}>
+                  <CategoryChips
+                    list={categories}
+                    testIDPrefix="mix-correction"
+                    hint={strings.corrections.lastCategoryHint}
+                    label={(name) => fill(strings.corrections.category, { category: name })}
+                    onToggle={(id, inMix) => {
+                      toggleCategory(id, inMix, 'correction');
+                    }}
+                  />
+                </View>,
+              ];
             })}
           </SettingsGroup>
         </View>
+      )}
+    </>
+  );
+}
+
+/**
+ * The chips of one list of Categories, the Words' or the Corrections', after
+ * `all` when given, and the line saying why the last Category's chip is
+ * disabled, which VoiceOver reads as that chip's hint instead. `label` gives
+ * a chip's VoiceOver label from its Category's name.
+ */
+function CategoryChips({
+  list,
+  testIDPrefix,
+  hint,
+  label = (name) => name,
+  onToggle,
+  all,
+}: {
+  list: MixCategoriesModel;
+  testIDPrefix: string;
+  hint: string;
+  label?: (name: string) => string;
+  onToggle: (categoryId: string, inMix: boolean) => void;
+  all?: ReactNode;
+}) {
+  const { colors, fontFamilies } = useTokens();
+  const { voice } = useEdition();
+  return (
+    <>
+      <View style={styles.chips}>
+        {all}
+        {list.chips.map((chip) => (
+          <MixChip
+            key={chip.id}
+            testID={`${testIDPrefix}-chip-${chip.id}`}
+            label={chip.name}
+            accessibilityLabel={label(chip.name)}
+            on={chip.on}
+            disabled={chip.disabled}
+            accessibilityHint={hint}
+            onPress={() => {
+              onToggle(chip.id, !chip.on);
+            }}
+          />
+        ))}
+      </View>
+      {list.lastCategoryHint && (
+        <Text
+          testID={`${testIDPrefix}-last-category-hint`}
+          // VoiceOver reads it as the hint of the disabled chip instead.
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          {...voice}
+          style={[styles.hint, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+        >
+          {hint}
+        </Text>
       )}
     </>
   );
@@ -117,4 +174,5 @@ const styles = StyleSheet.create({
   hint: { fontSize: typeSize.body, marginTop: space[3] },
   rarity: { marginTop: space[6] },
   switches: { marginTop: space[6] },
+  underSwitch: { paddingHorizontal: space[4], paddingVertical: space[3] },
 });
