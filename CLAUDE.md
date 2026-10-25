@@ -10,7 +10,7 @@ SLOVO is a factory of single-language rare-word apps: one language-agnostic Core
 
 ## Source of truth
 
-`CONTEXT.md` (glossary) and `docs/adr/` (decisions) override every other document, including tickets and specs.
+`CONTEXT.md` (glossary) and `docs/adr/` (decisions) override every other document, including tickets and specs. `docs/adr/README.md` indexes every ADR in one line each; read it before opening ADRs one by one.
 
 - Use glossary terms exactly, in code, tests, docs and commit messages. Avoid the words each term lists under _Avoid_.
 - Respect every ADR. When a ticket conflicts with the glossary or an ADR, stop and report the conflict to the owner.
