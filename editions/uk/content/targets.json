@@ -3,6 +3,7 @@
   "minCorrections": 50,
   "minIdioms": 30,
   "minWordsPerCategory": 45,
+  "minCorrectionsPerCategory": 5,
   "everyRarity": true,
   "everyWordHasStress": true,
   "minWordsByCategory": {

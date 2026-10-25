@@ -39,6 +39,7 @@ function correction(
     standardEquivalents,
     explanation: `Why ${id.slice(2)} reads better.`,
     examplePair: { nonStandard: sentence, standard: `They said ${id.slice(2)} right.` },
+    categoryId: 'everyday',
     sources: [{ title: 'Test source' }],
     retired,
   };

@@ -8,6 +8,7 @@
     "nonStandard": "За вікном мела метель.",
     "standard": "За вікном мела заметіль."
   },
+  "categoryId": "shop",
   "sources": [
     {
       "title": "Тестове джерело"

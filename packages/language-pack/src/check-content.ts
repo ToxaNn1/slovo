@@ -24,6 +24,7 @@ export function checkContent(
   // Longest first, so a letter written with several characters wins over its first character.
   const lemmaTokens = [...alphabet, ...lemmaPunctuation].toSorted((a, b) => b.length - a.length);
   const categoryIds = new Set(config.categories.map((category) => category.id));
+  const correctionCategoryIds = new Set(config.correctionCategories.map(({ id }) => id));
   const correctionIds = new Set(corrections.map(({ entry }) => entry.id));
   const fileById = new Map<string, string>();
 
@@ -144,6 +145,9 @@ export function checkContent(
     const fail = (field: string, message: string) => {
       errors.push({ file, entryId: correction.id, field, message });
     };
+    if (!correctionCategoryIds.has(correction.categoryId)) {
+      fail('categoryId', `Unknown Category "${correction.categoryId}"`);
+    }
     const texts: readonly (readonly [field: string, text: string])[] = [
       ['nonStandardForm', correction.nonStandardForm],
       ...correction.standardEquivalents.map(

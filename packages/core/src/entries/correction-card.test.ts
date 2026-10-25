@@ -17,6 +17,7 @@ function correction(overrides: Partial<Correction> = {}): Correction {
       nonStandard: 'Ремонт тривав на протязі року.',
       standard: 'Ремонт тривав протягом року.',
     },
+    categoryId: 'everyday',
     sources: [{ title: 'Test source' }],
     retired: false,
     ...overrides,

@@ -44,6 +44,7 @@ function correction(id: string, retired = false): Correction {
     standardEquivalents: [id.slice(2)],
     explanation: 'An explanation.',
     examplePair: { nonStandard: 'People say this.', standard: 'Better say this.' },
+    categoryId: 'everyday',
     sources: [{ title: 'Test source' }],
     retired,
   };

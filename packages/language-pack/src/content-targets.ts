@@ -14,6 +14,8 @@ export const ContentTargetsSchema = z.strictObject({
   minWordsPerCategory: z.int().nonnegative().optional(),
   /** A floor of Words for each named Category, taken over `minWordsPerCategory` for it. */
   minWordsByCategory: z.record(z.string(), z.int().nonnegative()).optional(),
+  /** A floor of Corrections for each of the Edition's Categories of Corrections. */
+  minCorrectionsPerCategory: z.int().nonnegative().optional(),
   /** Every rarity, 1 to 5, has at least one Word. */
   everyRarity: z.boolean().optional(),
   /** Every Word has at least one Stress. */
@@ -38,6 +40,7 @@ export function missedTargets(report: ContentReport, targets: ContentTargets): M
     minIdioms,
     minWordsPerCategory,
     minWordsByCategory = {},
+    minCorrectionsPerCategory,
     everyRarity,
     everyWordHasStress,
   } = targets;
@@ -79,6 +82,14 @@ export function missedTargets(report: ContentReport, targets: ContentTargets): M
       missed.push({
         target: 'minWordsByCategory',
         message: `No Category "${categoryId}" in the Edition`,
+      });
+    }
+  }
+  for (const { categoryId, corrections } of report.correctionsPerCategory) {
+    if (minCorrectionsPerCategory !== undefined && corrections < minCorrectionsPerCategory) {
+      missed.push({
+        target: 'minCorrectionsPerCategory',
+        message: `Category "${categoryId}" has ${String(corrections)} Corrections, below the target of ${String(minCorrectionsPerCategory)}`,
       });
     }
   }

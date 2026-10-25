@@ -23,6 +23,13 @@ CREATE TABLE categories (
   position INTEGER NOT NULL
 ) WITHOUT ROWID;
 
+-- The Categories of Corrections, a list apart from the Words' (ADR 0050).
+CREATE TABLE correction_categories (
+  id TEXT PRIMARY KEY,
+  display_name TEXT NOT NULL,
+  position INTEGER NOT NULL
+) WITHOUT ROWID;
+
 -- Every Entry, whatever its kind.
 CREATE TABLE entries (
   id TEXT PRIMARY KEY,
@@ -86,6 +93,7 @@ CREATE TABLE corrections (
   explanation TEXT NOT NULL,
   example_non_standard TEXT NOT NULL,
   example_standard TEXT NOT NULL,
+  category_id TEXT NOT NULL REFERENCES correction_categories (id),
   retired INTEGER NOT NULL
 ) WITHOUT ROWID;
 
@@ -152,7 +160,8 @@ CREATE TABLE sources (
  * keeps it too, adding only the Idiom tables (`idioms`, `idiom_definitions`
  * and `idiom_examples`), the kind `'idiom'` and the Word's region column, and
  * admits the Idioms and the Word's region of 0.8.8; format 4 keeps format 3's
- * layout and admits what 0.8.10 adds to the closed sets and fields.
+ * layout and admits what 0.8.10 adds to the closed sets and fields, such as
+ * the table `correction_categories` and the Correction's category column.
  */
 export const PACK_FORMAT = 4;
 
@@ -197,6 +206,7 @@ export interface PackContent {
   readonly editionId: string;
   readonly contentVersion: number;
   readonly categories: readonly Category[];
+  readonly correctionCategories: readonly Category[];
   readonly words: readonly Word[];
   readonly corrections: readonly Correction[];
   readonly idioms: readonly Idiom[];

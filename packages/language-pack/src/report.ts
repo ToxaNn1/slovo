@@ -38,6 +38,12 @@ export interface ContentReport {
     readonly correctionType: CorrectionType;
     readonly corrections: number;
   }[];
+  /** Every Category of Corrections of the Edition, in its order, empty ones included. */
+  readonly correctionsPerCategory: readonly {
+    readonly categoryId: string;
+    readonly displayName: string;
+    readonly corrections: number;
+  }[];
   readonly idioms: number;
   readonly retiredIdioms: number;
   /** One bucket per Idiom Type, in the order the contracts list them. */
@@ -51,6 +57,7 @@ const RARITIES = [1, 2, 3, 4, 5];
 
 export function contentReport({
   categories,
+  correctionCategories,
   words: allWords,
   corrections: allCorrections,
   idioms: allIdioms,
@@ -82,6 +89,11 @@ export function contentReport({
       corrections: corrections.filter((correction) => correction.correctionType === correctionType)
         .length,
     })),
+    correctionsPerCategory: correctionCategories.map(({ id, displayName }) => ({
+      categoryId: id,
+      displayName,
+      corrections: corrections.filter((correction) => correction.categoryId === id).length,
+    })),
     idioms: idioms.length,
     retiredIdioms: allIdioms.length - idioms.length,
     idiomsPerType: IdiomTypeSchema.options.map((idiomType) => ({
@@ -101,6 +113,7 @@ export function formatContentReport(report: ContentReport): string {
     corrections,
     retiredCorrections,
     correctionsPerType,
+    correctionsPerCategory,
     idioms,
     retiredIdioms,
     idiomsPerType,
@@ -112,6 +125,12 @@ export function formatContentReport(report: ContentReport): string {
   const nameWidth = Math.max(...wordsPerCategory.map((category) => category.displayName.length));
   const mostOfOneRarity = Math.max(1, ...rarity.map((bucket) => bucket.words));
   const typeWidth = Math.max(...correctionsPerType.map((bucket) => bucket.correctionType.length));
+  const correctionIdWidth = Math.max(
+    ...correctionsPerCategory.map((category) => category.categoryId.length),
+  );
+  const correctionNameWidth = Math.max(
+    ...correctionsPerCategory.map((category) => category.displayName.length),
+  );
   const idiomTypeWidth = Math.max(...idiomsPerType.map((bucket) => bucket.idiomType.length));
   const share = (part: number) =>
     `${String(part)}/${String(words)} (${String(words === 0 ? 0 : Math.floor((part * 100) / words))}%)`;
@@ -139,6 +158,11 @@ export function formatContentReport(report: ContentReport): string {
     ...correctionsPerType.map(
       ({ correctionType, corrections: ofType }) =>
         `    ${correctionType.padEnd(typeWidth)}  ${String(ofType)}`,
+    ),
+    '  Corrections per Category:',
+    ...correctionsPerCategory.map(
+      ({ categoryId, displayName, corrections: inCategory }) =>
+        `    ${categoryId.padEnd(correctionIdWidth)}  ${displayName.padEnd(correctionNameWidth)}  ${String(inCategory)}`,
     ),
     `  Idioms: ${String(idioms)} (${retiredIdiomsNote})`,
     '  Idioms per Idiom Type:',

@@ -1,0 +1,17 @@
+{
+  "id": "c_fx1012",
+  "nonStandardForm": "вдруг",
+  "correctionType": "russianism",
+  "standardEquivalents": ["раптом"],
+  "explanation": "Тестове пояснення.",
+  "examplePair": {
+    "nonStandard": "Тестове речення з вдруг.",
+    "standard": "Тестове речення з раптом."
+  },
+  "categoryId": "speech",
+  "sources": [
+    {
+      "title": "Тестове джерело"
+    }
+  ]
+}

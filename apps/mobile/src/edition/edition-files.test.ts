@@ -242,6 +242,19 @@ describe('the 0.8 Sync strings', () => {
   });
 });
 
+describe('the Categories of Corrections', () => {
+  // Every Edition groups its Corrections in a list of its own (ADR 0050).
+  it.each(editions)('the %s Edition lists its Categories of Corrections', (edition) => {
+    const config = readJson(edition, 'config') as Record<string, unknown>;
+    const { correctionCategories: _removed, ...without } = config;
+
+    expect(EditionConfigSchema.parse(config).correctionCategories.length).toBeGreaterThan(0);
+    expect(
+      EditionConfigSchema.safeParse(without).error?.issues.map((issue) => issue.path.join('.')),
+    ).toEqual(['correctionCategories']);
+  });
+});
+
 describe('the legal pages of About', () => {
   const strings = readJson('uk', 'strings') as Record<string, unknown>;
   const settings = strings['settings'] as Record<string, unknown>;

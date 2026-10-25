@@ -55,6 +55,7 @@ interface CorrectionRow {
   explanation: string;
   example_non_standard: string;
   example_standard: string;
+  category_id: string;
   retired: number;
 }
 
@@ -74,6 +75,7 @@ interface SourceRow {
 
 const SQL = {
   categories: 'SELECT id, display_name FROM categories ORDER BY position',
+  correctionCategories: 'SELECT id, display_name FROM correction_categories ORDER BY position',
   wordIds: 'SELECT id FROM words WHERE retired = 0 ORDER BY id',
   wordIdsInCategory: 'SELECT id FROM words WHERE retired = 0 AND category_id = ? ORDER BY id',
   correctionIds: 'SELECT id FROM corrections WHERE retired = 0 ORDER BY id',
@@ -295,6 +297,7 @@ export function createPackReader(db: PackDatabase): PackReader {
             standardEquivalents: (equivalents.get(row.id) ?? []).map((r) => r.text),
             explanation: row.explanation,
             examplePair: { nonStandard: row.example_non_standard, standard: row.example_standard },
+            categoryId: row.category_id,
             sources: (correctionSources.get(row.id) ?? []).map(sourceOf),
             retired: row.retired === 1,
           }),
@@ -334,14 +337,18 @@ export function createPackReader(db: PackDatabase): PackReader {
     return parts.flat();
   }
 
+  /** The Categories of one list, in the pack's order. */
+  async function readCategories(sql: string) {
+    const rows = await db.getAllAsync<{ id: string; display_name: string }>(sql, []);
+    // Parsing checks the pack against the contracts and types the Category.
+    return rows.map(({ id, display_name }) =>
+      CategorySchema.parse({ id, displayName: display_name }),
+    );
+  }
+
   return {
-    async listCategories() {
-      const rows = await db.getAllAsync<{ id: string; display_name: string }>(SQL.categories, []);
-      // Parsing checks the pack against the contracts and types the Category.
-      return rows.map(({ id, display_name }) =>
-        CategorySchema.parse({ id, displayName: display_name }),
-      );
-    },
+    listCategories: () => readCategories(SQL.categories),
+    listCorrectionCategories: () => readCategories(SQL.correctionCategories),
     listWordIds: (categoryId) =>
       categoryId === undefined
         ? column(SQL.wordIds, [], 'id')

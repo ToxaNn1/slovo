@@ -54,5 +54,15 @@
       "id": "speech",
       "displayName": "Мовлення"
     }
+  ],
+  "correctionCategories": [
+    {
+      "id": "work",
+      "displayName": "На роботі"
+    },
+    {
+      "id": "shop",
+      "displayName": "У магазині"
+    }
   ]
 }

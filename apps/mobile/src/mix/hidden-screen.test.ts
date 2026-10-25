@@ -56,6 +56,7 @@ const content = createMemoryContentPort({
       standardEquivalents: ['наступний'],
       explanation: 'An explanation.',
       examplePair: { nonStandard: 'Так кажуть.', standard: 'Краще так.' },
+      categoryId: 'everyday',
       sources: [{ title: 'Test source' }],
       retired: false,
     },

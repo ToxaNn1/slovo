@@ -1,0 +1,16 @@
+{
+  "id": "c_fx1011",
+  "nonStandardForm": "тоже",
+  "correctionType": "russianism",
+  "standardEquivalents": ["теж"],
+  "explanation": "Тестове пояснення.",
+  "examplePair": {
+    "nonStandard": "Тестове речення з тоже.",
+    "standard": "Тестове речення з теж."
+  },
+  "sources": [
+    {
+      "title": "Тестове джерело"
+    }
+  ]
+}

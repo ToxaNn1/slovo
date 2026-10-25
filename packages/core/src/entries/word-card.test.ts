@@ -38,6 +38,7 @@ function correction(id: string, nonStandardForm: string, retired = false): Corre
     standardEquivalents: ['протягом'],
     explanation: 'An explanation.',
     examplePair: { nonStandard: 'People say this.', standard: 'Better say this.' },
+    categoryId: 'everyday',
     sources: [{ title: 'Test source' }],
     retired,
   };
