@@ -1,4 +1,4 @@
-import type { HiddenEntry, HideTarget, MixKind } from '@slovo/core';
+import type { CategoryKind, HiddenEntry, HideTarget, MixKind } from '@slovo/core';
 import { fill, useEdition, useUndoToast } from '@slovo/ui';
 import { useMemo } from 'react';
 
@@ -46,7 +46,8 @@ export function useHiddenScreenModel(): HiddenScreenModel {
  */
 export function useHiddenChanges(): {
   restoreEntry: (entryId: string) => void;
-  turnCategoryOn: (categoryId: string) => void;
+  /** Puts the Category of the list, the Words' or the Corrections', back in the Mix. */
+  turnCategoryOn: (categoryId: string, of: CategoryKind) => void;
   /** Puts the kind of Entry (Corrections, Idioms) as a whole back in the Mix. */
   turnKindOn: (entryKind: MixKind) => void;
 } {
@@ -82,8 +83,10 @@ export function useHiddenChanges(): {
     restoreEntry: (entryId) => {
       unhide({ kind: 'entry', entryId });
     },
-    turnCategoryOn: (categoryId) => {
-      unhide({ kind: 'category', categoryId });
+    turnCategoryOn: (categoryId, of) => {
+      unhide(
+        of === 'word' ? { kind: 'category', categoryId } : { kind: 'category', categoryId, of },
+      );
     },
     turnKindOn: (entryKind) => {
       unhide({ kind: 'whole-kind', entryKind });

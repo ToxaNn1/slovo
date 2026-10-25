@@ -40,8 +40,13 @@ function word(id: string, categoryId: string, extra: Partial<Word> = {}): Word {
   };
 }
 
+/** The Language Pack's Categories of Corrections, a list of their own (ADR 0050). */
+const everyday = { id: 'everyday', displayName: 'Щодня' };
+const work = { id: 'work', displayName: 'На роботі' };
+
 const content = createMemoryContentPort({
   categories: [first, second, third],
+  correctionCategories: [everyday, work],
   words: [
     word('w_one', first.id, { registers: ['archaic'] }),
     word('w_two', second.id, { partOfSpeech: 'noun', gender: 'feminine' }),
@@ -152,10 +157,56 @@ describe('the «Приховане» screen', () => {
     const model = modelOf(app);
 
     expect(model.categories).toEqual([
-      { id: first.id, name: first.displayName },
-      { id: second.id, name: second.displayName },
+      { id: first.id, of: 'word', name: first.displayName },
+      { id: second.id, of: 'word', name: second.displayName },
     ]);
     expect(model.empty).toBe(false);
+  });
+
+  it('lists the Hidden Categories of Corrections after the Words’, named as Corrections', async () => {
+    const { app } = await open();
+    await app.hide({ kind: 'category', categoryId: work.id, of: 'correction' });
+    await app.mix.takeOut(first.id);
+
+    const model = modelOf(app);
+
+    expect(model.categories).toEqual([
+      { id: first.id, of: 'word', name: first.displayName },
+      { id: work.id, of: 'correction', name: 'Виправлення: На роботі' },
+    ]);
+    expect(model.empty).toBe(false);
+  });
+
+  it('brings a Category of Corrections back into the Mix on its offer, leaving the Words’ as they are', async () => {
+    const { app } = await open();
+    await app.hide({ kind: 'category', categoryId: work.id, of: 'correction' });
+
+    await app.unhide({ kind: 'category', categoryId: work.id, of: 'correction' });
+
+    expect(app.mix.state.correctionCategories.categoryIds).toEqual([everyday.id, work.id]);
+    expect(modelOf(app).categories).toEqual([]);
+    expect(modelOf(app).empty).toBe(true);
+  });
+
+  it('leaves the Hidden Categories of Corrections out while Corrections are out as a whole, which the screen offers instead', async () => {
+    const { app } = await open();
+    await app.hide({ kind: 'category', categoryId: work.id, of: 'correction' });
+    await app.mix.setKind('correction', false);
+
+    const model = modelOf(app);
+
+    expect(model.categories).toEqual([]);
+    expect(model.kinds.map(({ entryKind }) => entryKind)).toEqual(['correction']);
+  });
+
+  it('leaves the Hidden Categories of Corrections out while the Edition turns Corrections off', async () => {
+    const { app } = await open();
+    await app.hide({ kind: 'category', categoryId: work.id, of: 'correction' });
+
+    const model = modelOf(app, { isFeatureEnabled: (each) => each !== 'corrections' });
+
+    expect(model.categories).toEqual([]);
+    expect(model.empty).toBe(true);
   });
 
   it.each([
