@@ -212,6 +212,7 @@ describe('the Ukrainian Language Pack', () => {
         'Діалекти',
         'Дотепна лайка',
         'Народні назви',
+        'Старі ремесла',
       ]);
       expect(categories.map(({ id }) => id)).toEqual(
         expect.arrayContaining(['nature-weather', 'household-crafts', 'language-speech']),
@@ -280,6 +281,20 @@ describe('the Ukrainian Language Pack', () => {
     const pack = openPack(ukrainianDir);
     try {
       const words = await pack.getEntries(await pack.listWordIds('folk-names'));
+
+      expect(words).toHaveLength(15);
+      for (const word of words) {
+        expect(word.kind === 'word' && word.sources).not.toEqual([]);
+      }
+    } finally {
+      pack.close();
+    }
+  });
+
+  it('holds 15 Words in «Старі ремесла», each with its sources', async () => {
+    const pack = openPack(ukrainianDir);
+    try {
+      const words = await pack.getEntries(await pack.listWordIds('old-crafts'));
 
       expect(words).toHaveLength(15);
       for (const word of words) {

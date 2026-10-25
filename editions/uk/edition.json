@@ -98,6 +98,10 @@
     {
       "id": "folk-names",
       "displayName": "Народні назви"
+    },
+    {
+      "id": "old-crafts",
+      "displayName": "Старі ремесла"
     }
   ],
   "correctionCategories": [
