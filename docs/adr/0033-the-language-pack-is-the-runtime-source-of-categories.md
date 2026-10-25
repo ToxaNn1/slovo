@@ -9,7 +9,7 @@ The Language Pack is the only place the app reads Categories from: the Categorie
 - A Word card carries its Category's display name. The Feed, the Entry screen, the hide choice and the Share Card take the name from the card.
 - The Core's `Edition` keeps only what can't change without a store build, such as the default Mix and the Feature Switches. It has no Categories, and the UI's `EditionProvider` names none.
 
-`edition.json` lists both kinds of Category (`categories` and `correctionCategories`) as the content source the pack build writes into the pack and checks the Entries against; the build refuses an Entry whose Category is not in its list. The app reads them at build time only. Loading the Edition checks that a default Mix that lists Categories lists only ones the file has; the default Mix changes only with a store build anyway.
+`edition.json` lists both kinds of Category (`categories` and `correctionCategories`) as the content source the pack build writes into the pack and checks the Entries against; the build refuses an Entry whose Category is not in its list. It also names the Categories of Words whose Words must carry their Word History (`categoriesRequiringHistory`, an empty list when none does), every one of them in `categories`; the build refuses a Word in such a Category without it. The pack carries each Word's history, not the list, so the rule binds the content and never the app. The app reads them at build time only. Loading the Edition checks that a default Mix that lists Categories lists only ones the file has; the default Mix changes only with a store build anyway.
 
 ## Considered Options
 
