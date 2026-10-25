@@ -123,7 +123,8 @@ export async function buildEntryCard(
 ): Promise<EntryFeedCard> {
   const entryId = entry.id;
   if (entry.kind === 'correction') {
-    return { kind: 'correction', entryId, model: buildCorrectionCard(entry) };
+    const model = await buildCorrectionCard({ correction: entry, entries });
+    return { kind: 'correction', entryId, model };
   }
   if (entry.kind === 'idiom') return { kind: 'idiom', entryId, model: buildIdiomCard(entry) };
   const model = await buildWordCard({ word: entry, entries });

@@ -1,5 +1,6 @@
 import type { Correction, CorrectionType, ExamplePair } from '@slovo/contracts';
 
+import type { Entries } from './entries';
 import { markedStressedVowelsOf } from './stress';
 
 /**
@@ -26,19 +27,29 @@ export interface CorrectionCardModel {
   /** The other standard equivalents, in their order; empty when there is one. */
   readonly otherEquivalents: readonly string[];
   readonly correctionType: CorrectionType;
+  readonly categoryId: string;
+  /** The display name of the Correction's Category, from the Language Pack; nothing for one the pack doesn't have. */
+  readonly categoryName: string | undefined;
   readonly explanation: string;
   readonly examplePair: ExamplePair;
   /** The titles of the Correction's sources, in their order; the card names them in a line. */
   readonly sourceTitles: readonly string[];
 }
 
-/** The Correction card of a Correction. */
-export function buildCorrectionCard(correction: Correction): CorrectionCardModel {
+/** The Correction card of a Correction, naming the Category the Entries give for it. */
+export async function buildCorrectionCard({
+  correction,
+  entries,
+}: {
+  correction: Correction;
+  entries: Pick<Entries, 'correctionCategories'>;
+}): Promise<CorrectionCardModel> {
   const [mainEquivalent, ...otherEquivalents] = correction.standardEquivalents;
   // The contracts require at least one standard equivalent.
   if (mainEquivalent === undefined) {
     throw new Error(`Correction ${correction.id} has no standard equivalent`);
   }
+  const categories = await entries.correctionCategories();
   return {
     kind: 'correction',
     correctionId: correction.id,
@@ -48,6 +59,8 @@ export function buildCorrectionCard(correction: Correction): CorrectionCardModel
     mainEquivalentStressedVowels: markedStressedVowelsOf(mainEquivalent),
     otherEquivalents,
     correctionType: correction.correctionType,
+    categoryId: correction.categoryId,
+    categoryName: categories.find(({ id }) => id === correction.categoryId)?.displayName,
     explanation: correction.explanation,
     examplePair: correction.examplePair,
     sourceTitles: correction.sources.map((source) => source.title),
