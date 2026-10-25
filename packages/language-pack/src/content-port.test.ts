@@ -305,6 +305,23 @@ describe('the Ukrainian Language Pack', () => {
     }
   });
 
+  it('holds at least 15 Idioms of type proverb, each with its sources', async () => {
+    const pack = openPack(ukrainianDir);
+    try {
+      const idioms = await pack.getEntries(await pack.listIdiomIds());
+      const proverbs = idioms.filter(
+        (idiom) => idiom.kind === 'idiom' && idiom.idiomType === 'proverb',
+      );
+
+      expect(proverbs.length).toBeGreaterThanOrEqual(15);
+      for (const proverb of proverbs) {
+        expect(proverb.kind === 'idiom' && proverb.sources).not.toEqual([]);
+      }
+    } finally {
+      pack.close();
+    }
+  });
+
   it('lists every live Word under its own Category', async () => {
     const pack = openPack(ukrainianDir);
     try {
