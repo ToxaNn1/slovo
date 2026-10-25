@@ -40,6 +40,7 @@ Parts marked as placeholders are reserved and filled by later versions.
 | `packages/config`        | Shared TypeScript, ESLint and Prettier configuration.                                               |
 | `editions/<edition>`     | One folder per Edition: configuration, strings, design tokens, Decor, content, assets, legal pages. |
 | `tools/sourcing`         | Dev-only tool that drafts Words from goroh.pp.ua and СУМ-11 for human review.                       |
+| `tools/content`          | Dev-only CLI that drafts Entries in `$EDITOR` and checks an Edition with the build's rules.         |
 | `docs/`                  | Architecture decision records in `docs/adr/` and the design brief in `docs/design/`.                |
 
 ## Documents
@@ -278,6 +279,7 @@ All commands run from the repo root. CI runs `lint`, `typecheck`, `deps`, `knip`
 | `pnpm switch:clear`    | `pnpm switch:clear uk game` clears the remote switch of a feature, so its config decides again.                                                                                                                                                                                                                               |
 | `pnpm smoke:halves`    | The full Maestro smoke as two halves at once on two simulators, with a pass/fail list per half; see [Run the Ukrainian Edition on the simulator](#run-the-ukrainian-edition-on-the-simulator).                                                                                                                                |
 | `pnpm source:words`    | Drafts Words for review; see [`tools/sourcing/README.md`](tools/sourcing/README.md).                                                                                                                                                                                                                                          |
+| `pnpm content`         | `pnpm content new word --edition uk` drafts an Entry with a fresh id in `$EDITOR` and records it once it passes; `pnpm content check --edition uk` checks the whole Edition. See [`tools/content/README.md`](tools/content/README.md).                                                                                        |
 | `pnpm format`          | Rewrites files with Prettier.                                                                                                                                                                                                                                                                                                 |
 
 Dependency advisories that have no fix yet are ignored in [`pnpm-workspace.yaml`](pnpm-workspace.yaml) with a review date. Look at that list when you touch dependencies, and drop an entry as soon as a patched release exists.
