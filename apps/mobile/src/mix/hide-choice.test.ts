@@ -17,6 +17,9 @@ import { strings, ukrainian } from '../test-support';
 /** The Language Pack's Categories, in its order. */
 const first = { id: 'nature-weather', displayName: 'Природа і погода' };
 const categories = [first, { id: 'household-crafts', displayName: 'Побут і ремесла' }];
+/** The Language Pack's Categories of Corrections, a list of their own (ADR 0050). */
+const everyday = { id: 'everyday', displayName: 'Щодня' };
+const correctionCategories = [everyday, { id: 'work', displayName: 'На роботі' }];
 
 const word: Word = {
   kind: 'word',
@@ -67,6 +70,7 @@ async function open(): Promise<Composition> {
   return openComposition({
     content: createMemoryContentPort({
       categories,
+      correctionCategories,
       words: [word],
       corrections: [correction],
       idioms: [idiom],
@@ -88,7 +92,7 @@ const choiceOn = (
   app: Composition,
   card: EntryFeedCard,
   edition: Pick<Edition, 'isFeatureEnabled'> = ukrainian,
-) => hideChoice({ card, mix: app.mix.state, edition, strings: strings.hiding });
+) => hideChoice({ card, mix: app.mix.state, edition, strings });
 
 describe('the hide choice', () => {
   it('offers a Word card’s Entry and its Category, named, with the Category’s toast', async () => {
@@ -129,7 +133,7 @@ describe('the hide choice', () => {
     expect(choiceOn(app, await cardOf(app, word.id)).map(({ kind }) => kind)).toEqual(['entry']);
   });
 
-  it('offers a Correction card’s Entry and Corrections as a whole, with their toast', async () => {
+  it('offers a Correction card’s Entry, its Category of Corrections and Corrections as a whole, with their toasts', async () => {
     const app = await open();
 
     const choice = choiceOn(app, await cardOf(app, correction.id));
@@ -141,12 +145,40 @@ describe('the hide choice', () => {
         label: 'Не показувати цей запис',
       },
       {
+        kind: 'category',
+        target: { kind: 'category', categoryId: everyday.id, of: 'correction' },
+        label: `Не показувати категорію «${everyday.displayName}»`,
+        toast: `Категорію «${everyday.displayName}» приховано`,
+      },
+      {
         kind: 'whole-kind',
         target: { kind: 'whole-kind', entryKind: 'correction' },
         label: 'Не показувати Виправлення',
         toast: 'Виправлення приховано',
       },
     ]);
+  });
+
+  it('offers the last Category of Corrections in the Mix disabled, saying why', async () => {
+    const app = await open();
+    await app.mix.takeOut('work', 'correction');
+
+    const choice = choiceOn(app, await cardOf(app, correction.id));
+
+    expect(choice.map(({ kind }) => kind)).toEqual(['entry', 'category', 'whole-kind']);
+    expect(choice[1]).toMatchObject({
+      label: `Не показувати категорію «${everyday.displayName}»`,
+      disabledHint: strings.mix.corrections.lastCategoryHint,
+    });
+  });
+
+  it('leaves the Category of Corrections out when it is out of the Mix already', async () => {
+    const app = await open();
+    await app.mix.takeOut(everyday.id, 'correction');
+
+    const choice = choiceOn(app, await cardOf(app, correction.id));
+
+    expect(choice.map(({ kind }) => kind)).toEqual(['entry', 'whole-kind']);
   });
 
   it('leaves Corrections out when they are out of the Mix already', async () => {
@@ -200,7 +232,9 @@ describe('the hide choice', () => {
         isFeatureEnabled: (each) => each === feature,
       });
 
-      expect(choice.map(({ kind }) => kind)).toEqual(['entry', 'whole-kind']);
+      expect(choice.map(({ kind }) => kind)).toEqual(
+        entryKind === 'correction' ? ['entry', 'category', 'whole-kind'] : ['entry', 'whole-kind'],
+      );
     });
 
     it('offers only the Entry while the switch is off', async () => {
@@ -236,10 +270,20 @@ describe('the toast of a hide', () => {
     expect(await toastAfter(app, word.id, 1)).toBe(`Категорію «${first.displayName}» приховано`);
   });
 
+  it('is the Category’s toast for a hidden Category of Corrections, which is out of the Mix then', async () => {
+    const app = await open();
+
+    expect(await toastAfter(app, correction.id, 1)).toBe(
+      `Категорію «${everyday.displayName}» приховано`,
+    );
+    expect(app.mix.state.correctionCategories.categoryIds).toEqual(['work']);
+    expect(app.mix.state.categoryIds).toHaveLength(categories.length);
+  });
+
   it('is the Corrections toast for hidden Corrections', async () => {
     const app = await open();
 
-    expect(await toastAfter(app, correction.id, 1)).toBe('Виправлення приховано');
+    expect(await toastAfter(app, correction.id, 2)).toBe('Виправлення приховано');
   });
 
   it('is the Idioms toast for hidden Idioms, which are out of the Mix then', async () => {

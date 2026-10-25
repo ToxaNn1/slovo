@@ -14,7 +14,11 @@ const { hiding: strings } = editionStrings;
 /** What the hide choice sheet of `HideChoiceSheet` is given. */
 export interface HideChoiceProps {
   readonly visible: boolean;
-  readonly options: readonly { readonly key: string; readonly label: string }[];
+  readonly options: readonly {
+    readonly key: string;
+    readonly label: string;
+    readonly disabledHint?: string;
+  }[];
   readonly cancelLabel: string;
   readonly onChoose: (key: string) => void;
   readonly onCancel: () => void;
@@ -23,7 +27,8 @@ export interface HideChoiceProps {
 /**
  * The hide button's tap for one card, and the props of the hide choice sheet
  * it opens: «hide this Entry», on a Word card «hide its Category», on a
- * Correction card «hide Corrections», on an Idiom card «hide Idioms» (each
+ * Correction card «hide its Category» and «hide Corrections», on an Idiom
+ * card «hide Idioms» (each
  * while the Edition in effect turns its kind on), and cancel. Hiding shows
  * the undo toast, whose undo restores the Entry or puts the Category,
  * Corrections or Idioms back in the Mix, in the composition open at the tap.
@@ -40,19 +45,26 @@ export function useHide(card: EntryFeedCard): { open: () => void; choice: HideCh
   return {
     open() {
       // Read when the sheet opens, so it follows every change of the Mix.
-      setOptions(hideChoice({ card, mix: composition.mix.state, edition, strings }));
+      setOptions(
+        hideChoice({ card, mix: composition.mix.state, edition, strings: editionStrings }),
+      );
       setVisible(true);
     },
     choice: {
       visible,
-      options: options.map(({ kind, label }) => ({ key: kind, label })),
+      options: options.map((option) => ({
+        key: option.kind,
+        label: option.label,
+        ...(option.kind === 'category' &&
+          option.disabledHint !== undefined && { disabledHint: option.disabledHint }),
+      })),
       cancelLabel: strings.choice.cancel,
       onChoose(key) {
         // The sheet is still on screen while it slides out: a second tap hides nothing more.
         if (!visible) return;
         setVisible(false);
         const option = options.find(({ kind }) => kind === key);
-        if (option === undefined) return;
+        if (option === undefined || (option.kind === 'category' && option.disabledHint)) return;
         hide(composition, option, showToast).catch((error: unknown) => {
           logError('Could not hide from the card', error);
         });
