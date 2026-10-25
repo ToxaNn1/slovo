@@ -203,7 +203,12 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
       const shared = (definition: string) =>
         words.filter((word) => definitionOf(word.primaryDefinition) === definition).length > 1;
       const asked: Asked[] = [];
-      for (const seed of [1, 2, 3, 4]) {
+      // Play seeded Games until one asks a shared Definition, so new content never hides the case.
+      for (
+        let seed = 1;
+        seed <= 20 && !asked.some(({ round }) => shared(definitionOf(round.prompt)));
+        seed += 1
+      ) {
         const app = await runWords(seed);
         for (const { id } of (await pack.listCategories()).filter(
           ({ id }) => id !== 'human-body',
