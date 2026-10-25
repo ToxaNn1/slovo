@@ -213,6 +213,7 @@ describe('the Ukrainian Language Pack', () => {
         'Дотепна лайка',
         'Народні назви',
         'Старі ремесла',
+        'Розстріляна лексика',
       ]);
       expect(categories.map(({ id }) => id)).toEqual(
         expect.arrayContaining(['nature-weather', 'household-crafts', 'language-speech']),
@@ -316,6 +317,21 @@ describe('the Ukrainian Language Pack', () => {
       expect(proverbs.length).toBeGreaterThanOrEqual(15);
       for (const proverb of proverbs) {
         expect(proverb.kind === 'idiom' && proverb.sources).not.toEqual([]);
+      }
+    } finally {
+      pack.close();
+    }
+  });
+
+  it('holds 15 Words in «Розстріляна лексика», each with its history and sources', async () => {
+    const pack = openPack(ukrainianDir);
+    try {
+      const words = await pack.getEntries(await pack.listWordIds('repressed-words'));
+
+      expect(words).toHaveLength(15);
+      for (const word of words) {
+        expect(word.kind === 'word' && word.history).toBeTruthy();
+        expect(word.kind === 'word' && word.sources).not.toEqual([]);
       }
     } finally {
       pack.close();

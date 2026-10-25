@@ -104,6 +104,10 @@
     {
       "id": "old-crafts",
       "displayName": "Старі ремесла"
+    },
+    {
+      "id": "repressed-words",
+      "displayName": "Розстріляна лексика"
     }
   ],
   "correctionCategories": [
@@ -136,5 +140,5 @@
       "displayName": "Дозвілля і медіа"
     }
   ],
-  "categoriesRequiringHistory": []
+  "categoriesRequiringHistory": ["repressed-words"]
 }
