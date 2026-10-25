@@ -39,7 +39,7 @@ const strings = {
     extraDefinitions: 'Other meanings',
   },
   idiomCard: {
-    idiomTypes: { idiom: 'idiom', placeName: 'place name' },
+    idiomTypes: { idiom: 'idiom', placeName: 'place name', proverb: 'proverb' },
     heading: '{expression}, {type}',
     etymology: 'Origin',
     source: 'Source: {source}',
@@ -529,6 +529,18 @@ const placeName = idiomCard({
   sourceTitles: [],
 });
 
+/** A proverb: the Idiom card with its own chip. */
+const proverb = idiomCard({
+  idiomId: 'i3',
+  expression: 'the early bird catches the worm',
+  idiomType: 'proverb',
+  primaryDefinition: 'Who starts early, wins.',
+  extraDefinitions: [],
+  examples: [],
+  etymology: undefined,
+  sourceTitles: ['A book of proverbs'],
+});
+
 describe('the Idiom card', () => {
   it('shows the expression, its chip, Definitions, Examples, «Origin» and sources of an idiom', async () => {
     await render(
@@ -566,9 +578,21 @@ describe('the Idiom card', () => {
     expect(screen.queryByTestId('idiom-source')).toBeNull();
   });
 
+  it('shows the chip «proverb» on a proverb card', async () => {
+    await render(inEdition(<EntryCard card={{ kind: 'idiom', entryId: 'i3', model: proverb }} />));
+
+    expect(screen.getByTestId('idiom-expression')).toHaveTextContent(
+      'the early bird catches the worm',
+    );
+    expect(screen.getByTestId('idiom-type')).toHaveTextContent('proverb');
+    expect(screen.getByTestId('idiom-definition')).toHaveTextContent('Who starts early, wins.');
+    expect(screen.queryByTestId('idiom-etymology')).toBeNull();
+  });
+
   it.each([
     ['an idiom', idiomCard(), 'to beat the bushes, idiom', 'To idle about.'],
     ['a place name', placeName, 'Berdychiv, place name', 'A town in the Zhytomyr region.'],
+    ['a proverb', proverb, 'the early bird catches the worm, proverb', 'Who starts early, wins.'],
   ])(
     'has VoiceOver read the expression of %s with its kind, then its Definition',
     async (_kind, model, heading, definition) => {

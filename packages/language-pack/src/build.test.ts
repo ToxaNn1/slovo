@@ -727,6 +727,55 @@ describe('buildLanguagePack', () => {
     expect(result.ok ? [] : result.errors).toEqual([]);
   });
 
+  it('builds a proverb, an Idiom of Idiom Type proverb, and reads it back', async () => {
+    const editionDir = copyFixture('valid');
+    const proverb = {
+      id: 'i_fx0003',
+      expression: 'хто рано встає, тому Бог дає',
+      idiomType: 'proverb',
+      primaryDefinition: 'Тестове значення: хто починає працю вчасно, тому щастить.',
+      sources: [{ title: 'Тестове джерело' }],
+    };
+    writeFileSync(join(editionDir, 'content/idioms/i_fx0003.json'), JSON.stringify(proverb));
+    record(editionDir);
+    const outFile = packPath();
+
+    const result = buildLanguagePack({ editionDir, outFile });
+
+    expect(result.ok ? [] : result.errors).toEqual([]);
+    expect(await withEntries(outFile, (entries) => entries.get('i_fx0003'))).toEqual({
+      ...proverb,
+      kind: 'idiom',
+      extraDefinitions: [],
+      examples: [],
+      retired: false,
+    });
+  });
+
+  it("allows in an expression only the Edition's expression punctuation besides a Lemma's", () => {
+    const editionDir = copyFixture('valid');
+    editJson(editionDir, 'content/idioms/i_fx0001.json', (idiom) => ({
+      ...idiom,
+      expression: 'бити байдики — ледарювати, гаяти час',
+    }));
+    record(editionDir);
+    const result = buildLanguagePack({ editionDir, outFile: packPath() });
+    expect(result.ok ? [] : result.errors).toEqual([]);
+
+    editJson(editionDir, 'edition.json', (config) => ({
+      ...config,
+      languageTraits: { ...(config['languageTraits'] as Json), expressionPunctuation: ',' },
+    }));
+    expect(buildErrors(editionDir)).toEqual([
+      {
+        file: 'content/idioms/i_fx0001.json',
+        entryId: 'i_fx0001',
+        field: 'expression',
+        message: expect.stringMatching(/"—" \(U\+2014\) is not a letter/) as string,
+      },
+    ]);
+  });
+
   it('builds homonyms, and a Word that takes over from a Retired Word', () => {
     const editionDir = copyFixture('valid');
     const write = (word: Json) => {
@@ -815,6 +864,7 @@ describe('buildLanguagePack', () => {
       idiomsPerType: [
         { idiomType: 'idiom', idioms: 1 },
         { idiomType: 'placeName', idioms: 1 },
+        { idiomType: 'proverb', idioms: 0 },
       ],
     });
     const printed = formatContentReport(result.report);
@@ -831,7 +881,9 @@ describe('buildLanguagePack', () => {
       /Corrections per Category:\n\s+work\s+На роботі\s+3\n\s+shop\s+У магазині\s+1/,
     );
     expect(printed).toMatch(/Idioms:\s+2 \(0 Retired Idioms left out\)/);
-    expect(printed).toMatch(/Idioms per Idiom Type:\n\s+idiom\s+1\n\s+placeName\s+1/);
+    expect(printed).toMatch(
+      /Idioms per Idiom Type:\n\s+idiom\s+1\n\s+placeName\s+1\n\s+proverb\s+0/,
+    );
   });
 
   it('counts the Words with a region, and gives a dialect Word card its region', async () => {

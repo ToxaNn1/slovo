@@ -71,6 +71,7 @@ describe('the History texts', () => {
     expect(text.label(entry('correction'))).toBe('виправлення');
     expect(text.label(entry('idiom'))).toBe('фразеологізм');
     expect(text.label(entry('placeName'))).toBe('топонім');
+    expect(text.label(entry('proverb'))).toBe('прислів’я');
     expect(text.label(entry('word', true))).toBe('слово дня');
   });
 

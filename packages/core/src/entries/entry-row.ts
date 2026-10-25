@@ -28,7 +28,7 @@ interface EntryRowText {
    * the non-standard form a Correction replaces.
    */
   readonly secondLine: string;
-  /** The key of the row's label in the Edition's words («слово», «виправлення», «фразеологізм», «топонім»). */
+  /** The key of the row's label in the Edition's words («слово», «виправлення», «фразеологізм», «топонім», «прислів’я»). */
   readonly labelKey: EntryLabelKey;
   /**
    * The title and the second line as VoiceOver reads them: whole words, with

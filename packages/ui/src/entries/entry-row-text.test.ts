@@ -9,6 +9,7 @@ const kinds: EditionStrings['history']['kinds'] = {
   wordOfTheDay: 'word of the day',
   idiom: 'idiom',
   placeName: 'place name',
+  proverb: 'proverb',
 };
 
 const correctionCard = { insteadOf: 'instead of «{form}»' };

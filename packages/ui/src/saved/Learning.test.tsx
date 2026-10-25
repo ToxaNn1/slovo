@@ -14,6 +14,7 @@ const history = {
     wordOfTheDay: 'word of the day',
     idiom: 'idiom',
     placeName: 'place name',
+    proverb: 'proverb',
   },
   kindBeside: '{kind} · {time}',
 };

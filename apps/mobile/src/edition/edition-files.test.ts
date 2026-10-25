@@ -255,6 +255,34 @@ describe('the Categories of Corrections', () => {
   });
 });
 
+describe('the strings of the Idiom Type proverb', () => {
+  const strings = readJson('uk', 'strings') as Record<string, Record<string, unknown>>;
+  /** The strings with one key left out of a group nested under `group`. */
+  const without = (group: 'idiomCard' | 'history', nested: string, key: string) => {
+    const outer = strings[group] ?? {};
+    const { [key]: _removed, ...rest } = outer[nested] as Record<string, unknown>;
+    return { ...strings, [group]: { ...outer, [nested]: rest } };
+  };
+
+  it('the Ukrainian Edition calls a proverb «прислів’я» on its card and in its lists', () => {
+    const parsed = EditionStringsSchema.parse(strings);
+
+    expect(parsed.idiomCard.idiomTypes.proverb).toBe('прислів’я');
+    expect(parsed.history.kinds.proverb).toBe('прислів’я');
+  });
+
+  it.each([
+    ['idiomCard', 'idiomTypes'],
+    ['history', 'kinds'],
+  ] as const)('needs %s.%s.proverb of every Edition', (group, nested) => {
+    expect(
+      EditionStringsSchema.safeParse(without(group, nested, 'proverb')).error?.issues.map((issue) =>
+        issue.path.join('.'),
+      ),
+    ).toEqual([`${group}.${nested}.proverb`]);
+  });
+});
+
 describe('the legal pages of About', () => {
   const strings = readJson('uk', 'strings') as Record<string, unknown>;
   const settings = strings['settings'] as Record<string, unknown>;
