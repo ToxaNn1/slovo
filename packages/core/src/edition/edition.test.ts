@@ -53,6 +53,7 @@ const validConfig = {
     { id: 'work', displayName: 'At work' },
     { id: 'shop', displayName: 'In the shop' },
   ],
+  categoriesRequiringHistory: ['speech'],
 };
 
 describe('loadEdition', () => {
@@ -203,6 +204,10 @@ describe('loadEdition', () => {
     const { [page]: _removed, ...legalPages } = validConfig.legalPages;
 
     expect(() => loadEdition({ ...validConfig, legalPages })).toThrow(`legalPages.${page}`);
+  });
+
+  it('accepts an Edition whose Categories require no history', () => {
+    expect(() => loadEdition({ ...validConfig, categoriesRequiringHistory: [] })).not.toThrow();
   });
 
   it('requires the legal pages', () => {
@@ -439,6 +444,16 @@ describe('loadEdition', () => {
         ],
       },
       'correctionCategories.1.id',
+    ],
+    [
+      'no Categories that require history',
+      { categoriesRequiringHistory: undefined },
+      'categoriesRequiringHistory',
+    ],
+    [
+      'an unknown Category that requires history',
+      { categoriesRequiringHistory: ['speech', 'work'] },
+      'categoriesRequiringHistory.1',
     ],
   ])('rejects %s, naming the field', (_, override, field) => {
     const load = () => loadEdition({ ...validConfig, ...override });

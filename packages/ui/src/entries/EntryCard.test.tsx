@@ -142,6 +142,7 @@ const wordCard: WordFeedCard = {
     antonyms: [],
     registers: [],
     region: undefined,
+    history: undefined,
     categoryId: 'k1',
     categoryName: undefined,
     details: undefined,

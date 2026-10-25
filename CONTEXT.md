@@ -44,6 +44,10 @@ _Avoid_: Item, card, content
 A single dictionary entry shown to the user, identified by an id that stays stable across Language Pack updates. Homonyms (коса the hair, коса the tool) are separate Words; shades of one meaning are several Definitions of one Word.
 _Avoid_: Card, entry, term
 
+**Word History**:
+How a Word left the language or changed its meaning, a text in the Edition's language that the Word may carry (the field `history`). An Edition may require it of the Words of some Categories. It is neither where the Word comes from, its etymology, nor the user's History of Seen Entries.
+_Avoid_: Etymology, history on its own
+
 **Retired Word**:
 A Word withdrawn from the Language Pack. It never appears in the Feed, notifications, widgets or the Game, but stays visible wherever the user already keeps it (Favorites, Collections, History).
 _Avoid_: Deleted word

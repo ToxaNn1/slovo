@@ -239,40 +239,60 @@ export const EditionConfigSchema = z
      * the pack.
      */
     correctionCategories: z.array(CategorySchema).min(1),
+    /**
+     * The ids of the Categories whose Words must carry their history; the
+     * Language Pack build refuses a Word in one of them without it. Empty
+     * when no Category requires it.
+     */
+    categoriesRequiringHistory: z.array(KebabCaseIdSchema),
   })
-  .superRefine(({ categories, correctionCategories, userSettingDefaults }, context) => {
-    const idsOf = (list: readonly Category[], field: 'categories' | 'correctionCategories') => {
-      const ids = new Set<string>();
-      list.forEach(({ id }, index) => {
-        if (ids.has(id)) {
+  .superRefine(
+    (
+      { categories, correctionCategories, categoriesRequiringHistory, userSettingDefaults },
+      context,
+    ) => {
+      const idsOf = (list: readonly Category[], field: 'categories' | 'correctionCategories') => {
+        const ids = new Set<string>();
+        list.forEach(({ id }, index) => {
+          if (ids.has(id)) {
+            context.addIssue({
+              code: 'custom',
+              path: [field, index, 'id'],
+              message: `Duplicate Category id "${id}"`,
+            });
+          }
+          ids.add(id);
+        });
+        return ids;
+      };
+      const known = {
+        categories: idsOf(categories, 'categories'),
+        correctionCategories: idsOf(correctionCategories, 'correctionCategories'),
+      };
+      categoriesRequiringHistory.forEach((id, index) => {
+        if (!known.categories.has(id)) {
           context.addIssue({
             code: 'custom',
-            path: [field, index, 'id'],
-            message: `Duplicate Category id "${id}"`,
-          });
-        }
-        ids.add(id);
-      });
-      return ids;
-    };
-    const known = {
-      categories: idsOf(categories, 'categories'),
-      correctionCategories: idsOf(correctionCategories, 'correctionCategories'),
-    };
-    for (const field of ['categories', 'correctionCategories'] as const) {
-      const inMix = userSettingDefaults.mix[field];
-      if (inMix === 'all') continue;
-      inMix.forEach((id, index) => {
-        if (!known[field].has(id)) {
-          context.addIssue({
-            code: 'custom',
-            path: ['userSettingDefaults', 'mix', field, index],
+            path: ['categoriesRequiringHistory', index],
             message: `Unknown Category id "${id}"`,
           });
         }
       });
-    }
-  });
+      for (const field of ['categories', 'correctionCategories'] as const) {
+        const inMix = userSettingDefaults.mix[field];
+        if (inMix === 'all') continue;
+        inMix.forEach((id, index) => {
+          if (!known[field].has(id)) {
+            context.addIssue({
+              code: 'custom',
+              path: ['userSettingDefaults', 'mix', field, index],
+              message: `Unknown Category id "${id}"`,
+            });
+          }
+        });
+      }
+    },
+  );
 
 export type EditionConfig = z.infer<typeof EditionConfigSchema>;
 

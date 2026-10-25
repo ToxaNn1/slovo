@@ -941,6 +941,68 @@ describe('buildLanguagePack', () => {
     });
   });
 
+  it('builds the history of a Word and gives its Word card the history', async () => {
+    const editionDir = copyFixture('valid');
+    editJson(editionDir, 'content/words/w_fx0002.json', (word) => ({
+      ...word,
+      history: 'Слово вилучили зі словників 1933 року.',
+    }));
+    record(editionDir);
+    const outFile = packPath();
+
+    const result = buildLanguagePack({ editionDir, outFile });
+
+    if (!result.ok) throw new Error(result.errors.map(formatBuildError).join('\n'));
+    await withEntries(outFile, async (entries) => {
+      const word = await entries.get('w_fx0002');
+      if (word?.kind !== 'word') throw new Error('No Word w_fx0002');
+      expect(word.history).toBe('Слово вилучили зі словників 1933 року.');
+      expect((await buildWordCard({ word, entries })).history).toBe(
+        'Слово вилучили зі словників 1933 року.',
+      );
+    });
+  });
+
+  it('refuses a Word without history in a Category that requires it, and builds one with it', () => {
+    const editionDir = copyFixture('valid');
+    const requireHistoryOf = (categoryId: string) => {
+      editJson(editionDir, 'edition.json', (config) => ({
+        ...config,
+        categoriesRequiringHistory: [categoryId],
+      }));
+    };
+
+    // The only Word in "nature" carries its history.
+    requireHistoryOf('nature');
+    expect(buildLanguagePack({ editionDir, outFile: packPath() }).ok).toBe(true);
+
+    requireHistoryOf('speech');
+    expect(buildErrors(editionDir)).toEqual(
+      ['w_fx0002', 'w_fx0003'].map((entryId) => ({
+        file: `content/words/${entryId}.json`,
+        entryId,
+        field: 'history',
+        message: expect.stringMatching(/category "speech" requires history/i) as string,
+      })),
+    );
+  });
+
+  it('refuses an unknown Category among the Categories that require history', () => {
+    const editionDir = copyFixture('valid');
+    editJson(editionDir, 'edition.json', (config) => ({
+      ...config,
+      categoriesRequiringHistory: ['work'],
+    }));
+
+    expect(buildErrors(editionDir)).toEqual([
+      {
+        file: 'edition.json',
+        field: 'categoriesRequiringHistory.0',
+        message: expect.stringMatching(/unknown category id "work"/i) as string,
+      },
+    ]);
+  });
+
   it('rounds coverage down in the printed report, so 100% means every Word', () => {
     const result = buildLanguagePack({ editionDir: fixture('valid'), outFile: packPath() });
     if (!result.ok) throw new Error(result.errors.map(formatBuildError).join('\n'));
@@ -970,7 +1032,7 @@ describe('buildLanguagePack', () => {
     expect(b.ids).toEqual(a.ids);
     expect(a.metadata).toEqual({
       editionId: 'fixture',
-      contentVersion: 5,
+      contentVersion: 6,
       contentChecksum: expect.stringMatching(/^sha256:[0-9a-f]{64}$/) as string,
       packFormat: 4,
     });
@@ -1001,7 +1063,7 @@ describe('buildLanguagePack', () => {
           file: 'content/manifest.json',
           field: 'contentChecksum',
           message: expect.stringMatching(
-            /content changed since content version 5.*pnpm build:pack fixture --record/i,
+            /content changed since content version 6.*pnpm build:pack fixture --record/i,
           ) as string,
         },
       ]);
@@ -1014,7 +1076,7 @@ describe('buildLanguagePack', () => {
     record(editionDir);
     editJson(editionDir, 'content/manifest.json', (manifest) => ({
       ...manifest,
-      contentVersion: 5,
+      contentVersion: 6,
     }));
 
     expect(buildErrors(editionDir)).toEqual([
@@ -1129,8 +1191,8 @@ describe('recordContent', () => {
 
     expect(recordContent({ editionDir })).toEqual({
       ok: true,
-      previousContentVersion: 5,
-      contentVersion: 5,
+      previousContentVersion: 6,
+      contentVersion: 6,
       contentChecksum: manifestOf(editionDir)['contentChecksum'],
       newIds: [],
     });
@@ -1148,12 +1210,12 @@ describe('recordContent', () => {
     const recorded = recordContent({ editionDir });
     const result = buildLanguagePack({ editionDir, outFile: edited });
 
-    expect(recorded).toMatchObject({ ok: true, previousContentVersion: 5, contentVersion: 6 });
+    expect(recorded).toMatchObject({ ok: true, previousContentVersion: 6, contentVersion: 7 });
     expect(result.ok).toBe(true);
     const { metadata } = await readBack(edited);
-    expect(metadata).toMatchObject({ contentVersion: 6 });
+    expect(metadata).toMatchObject({ contentVersion: 7 });
     expect(manifestOf(editionDir)).toEqual({
-      contentVersion: 6,
+      contentVersion: 7,
       contentChecksum: metadata.contentChecksum,
     });
     expect(metadata.contentChecksum).not.toBe((await readBack(original)).metadata.contentChecksum);
@@ -1208,7 +1270,7 @@ describe('recordContent', () => {
       ok: false,
       errors: [expect.objectContaining({ entryId: 'w_fx0002', field: 'rarity' })],
     });
-    expect(manifestOf(editionDir)).toMatchObject({ contentVersion: 5 });
+    expect(manifestOf(editionDir)).toMatchObject({ contentVersion: 6 });
   });
 
   it('starts the registry of an Edition never recorded with every id, in order', () => {
