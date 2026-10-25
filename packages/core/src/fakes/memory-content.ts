@@ -7,26 +7,31 @@ import type { ContentReadPort } from '../ports';
  * in the order given, and holds to the same contract as the pack reader.
  * Without `categories` it lists the Categories of the Words, in the order
  * they first appear, each named by its id, so every Word has its Category as
- * in a pack.
+ * in a pack. Without `correctionCategories` it lists those of the
+ * Corrections the same way.
  */
 export function createMemoryContentPort({
   categories,
+  correctionCategories,
   words = [],
   corrections = [],
   idioms = [],
 }: {
   categories?: readonly Category[];
+  correctionCategories?: readonly Category[];
   words?: readonly Word[];
   corrections?: readonly Correction[];
   idioms?: readonly Idiom[];
 } = {}): ContentReadPort {
   const liveWords = words.filter((word) => !word.retired);
   const entries = [...words, ...corrections, ...idioms];
-  const packCategories =
-    categories ??
-    [...new Set(words.map((word) => word.categoryId))].map((id) => ({ id, displayName: id }));
+  const categoriesOf = (entries: readonly (Word | Correction)[]) =>
+    [...new Set(entries.map((entry) => entry.categoryId))].map((id) => ({ id, displayName: id }));
+  const packCategories = categories ?? categoriesOf(words);
+  const packCorrectionCategories = correctionCategories ?? categoriesOf(corrections);
   return {
     listCategories: () => Promise.resolve(packCategories),
+    listCorrectionCategories: () => Promise.resolve(packCorrectionCategories),
     listWordIds: (categoryId) =>
       Promise.resolve(
         liveWords

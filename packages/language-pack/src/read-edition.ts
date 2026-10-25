@@ -93,6 +93,7 @@ export function readEdition(
     editionId: config.id,
     contentVersion: manifest.contentVersion,
     categories: config.categories,
+    correctionCategories: config.correctionCategories,
     words: sortedById(words),
     corrections: sortedById(corrections),
     idioms: sortedById(idioms),

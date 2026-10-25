@@ -12,6 +12,12 @@ export interface ContentReadPort {
    */
   listCategories(): Promise<readonly Category[]>;
   /**
+   * Every Category of Corrections of the pack, a list apart from the Words'
+   * (ADR 0050), with its display name, in the pack's order, also one whose
+   * Corrections are all Retired.
+   */
+  listCorrectionCategories(): Promise<readonly Category[]>;
+  /**
    * The ids of the Words that are not retired, in a stable order; only those
    * of the Category when one is given. A Retired Word is left out, so nothing
    * new picks it.

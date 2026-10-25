@@ -24,12 +24,17 @@ export function writePack(outFile: string, content: PackContent, metadata: PackM
     const insertMetadata = db.prepare('INSERT INTO metadata (key, value) VALUES (?, ?)');
     for (const { key, value } of metadataRows(metadata)) insertMetadata.run(key, value);
 
-    const insertCategory = db.prepare(
-      'INSERT INTO categories (id, display_name, position) VALUES (?, ?, ?)',
-    );
-    content.categories.forEach((category, position) => {
-      insertCategory.run(category.id, category.displayName, position);
-    });
+    for (const [table, categories] of [
+      ['categories', content.categories],
+      ['correction_categories', content.correctionCategories],
+    ] as const) {
+      const insertCategory = db.prepare(
+        `INSERT INTO ${table} (id, display_name, position) VALUES (?, ?, ?)`,
+      );
+      categories.forEach((category, position) => {
+        insertCategory.run(category.id, category.displayName, position);
+      });
+    }
 
     const insertEntry = db.prepare('INSERT INTO entries (id, kind) VALUES (?, ?)');
     for (const entry of [...content.words, ...content.corrections, ...content.idioms]) {
@@ -71,9 +76,9 @@ export function writePack(outFile: string, content: PackContent, metadata: PackM
     const insertCorrection = db.prepare(`
       INSERT INTO corrections (
         id, non_standard_form, correction_type, explanation, example_non_standard, example_standard,
-        retired
+        category_id, retired
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
     const insertEquivalent = db.prepare(
       'INSERT INTO correction_equivalents (correction_id, position, text) VALUES (?, ?, ?)',
@@ -86,6 +91,7 @@ export function writePack(outFile: string, content: PackContent, metadata: PackM
         correction.explanation,
         correction.examplePair.nonStandard,
         correction.examplePair.standard,
+        correction.categoryId,
         correction.retired ? 1 : 0,
       );
       correction.standardEquivalents.forEach((text, position) => {

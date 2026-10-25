@@ -56,6 +56,7 @@ function authored(editionDir: string) {
   const { words, corrections, idioms } = files.entries();
   return {
     categories: files.read('config').categories,
+    correctionCategories: files.read('config').correctionCategories,
     words: words.map(({ entry }) => entry),
     corrections: corrections.map(({ entry }) => entry),
     idioms: idioms.map(({ entry }) => entry),
@@ -103,6 +104,13 @@ describe.each(adapters)('the content read port %s', (_, open) => {
     expect(await content.listCategories()).toEqual([
       { id: 'nature', displayName: 'Природа' },
       { id: 'speech', displayName: 'Мовлення' },
+    ]);
+  });
+
+  it("lists every Category of Corrections in the Edition order, apart from the Words' Categories", async () => {
+    expect(await content.listCorrectionCategories()).toEqual([
+      { id: 'work', displayName: 'На роботі' },
+      { id: 'shop', displayName: 'У магазині' },
     ]);
   });
 
@@ -176,7 +184,7 @@ describe.each(adapters)('the content read port %s', (_, open) => {
 });
 
 describe('the Ukrainian Language Pack', () => {
-  it('builds and meets every content target, the floors of «Діалекти», «Дотепна лайка» and Idioms included', () => {
+  it('builds and meets every content target, the floors of «Діалекти», «Дотепна лайка», Idioms and Corrections per Category included', () => {
     const result = buildLanguagePack({
       editionDir: ukrainianDir,
       outFile: join(workDir(), 'language-pack.db'),
@@ -207,6 +215,29 @@ describe('the Ukrainian Language Pack', () => {
       expect(categories.map(({ id }) => id)).toEqual(
         expect.arrayContaining(['nature-weather', 'household-crafts', 'language-speech']),
       );
+    } finally {
+      pack.close();
+    }
+  });
+
+  it('lists the 7 Categories of Corrections in their order, every one holding live Corrections', async () => {
+    const pack = openPack(ukrainianDir);
+    try {
+      const categories = await pack.listCorrectionCategories();
+      const corrections = await pack.getEntries(await pack.listCorrectionIds());
+
+      expect(categories.map(({ displayName }) => displayName)).toEqual([
+        'У розмові',
+        'Вдома',
+        'На роботі',
+        'У магазині',
+        'Транспорт',
+        'У школі',
+        'Дозвілля і медіа',
+      ]);
+      expect(
+        new Set(corrections.map((entry) => (entry.kind === 'correction' ? entry.categoryId : ''))),
+      ).toEqual(new Set(categories.map(({ id }) => id)));
     } finally {
       pack.close();
     }

@@ -63,6 +63,7 @@ const correction: Correction = {
   standardEquivalents: ['in the meantime', 'meanwhile'],
   explanation: 'The phrase takes the singular.',
   examplePair: { nonStandard: 'in the meantimes', standard: 'in the meantime' },
+  categoryId: 'everyday',
   sources: [],
   retired: false,
 };

@@ -9,6 +9,7 @@ const contentAt = (contentVersion: number, displayName = 'Мовлення'): Pa
   editionId: 'fixture',
   contentVersion,
   categories: [{ id: 'speech', displayName }],
+  correctionCategories: [{ id: 'work', displayName: 'На роботі' }],
   words: [],
   corrections: [],
   idioms: [],
@@ -78,6 +79,7 @@ describe('checkContentVersion', () => {
       corrections: [],
       words: [],
       categories: [{ displayName: 'Мовлення', id: 'speech' }],
+      correctionCategories: [{ displayName: 'На роботі', id: 'work' }],
       contentVersion: 4,
       editionId: 'fixture',
     };

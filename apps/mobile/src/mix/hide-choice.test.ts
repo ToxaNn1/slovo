@@ -45,6 +45,7 @@ const correction: Correction = {
   standardEquivalents: ['брати участь'],
   explanation: 'Калька.',
   examplePair: { nonStandard: 'Приймати участь.', standard: 'Брати участь.' },
+  categoryId: 'everyday',
   sources: [{ title: 'Test source' }],
   retired: false,
 };

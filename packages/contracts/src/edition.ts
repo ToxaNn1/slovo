@@ -12,7 +12,11 @@ const LanguageTagSchema = z
   .string()
   .regex(/^[a-z]{2,3}(-[A-Z]{2})?$/, 'Expected a BCP 47 tag such as uk-UA');
 
-/** A thematic group of Words, with its display name in the Edition's language. */
+/**
+ * A thematic group of Words, or of Corrections, with its display name in the
+ * Edition's language. The Words and the Corrections each have their own list
+ * (ADR 0050).
+ */
 export const CategorySchema = z.strictObject({
   id: KebabCaseIdSchema,
   displayName: z.string().min(1),
@@ -214,19 +218,30 @@ export const EditionConfigSchema = z
      * into the pack. The app reads them from the pack only (ADR 0033).
      */
     categories: z.array(CategorySchema).min(1),
+    /**
+     * The Categories of Corrections, a list of their own beside the Words'
+     * (ADR 0050), in their order, as the Language Pack build writes them into
+     * the pack.
+     */
+    correctionCategories: z.array(CategorySchema).min(1),
   })
-  .superRefine(({ categories, userSettingDefaults }, context) => {
-    const seen = new Set<string>();
-    categories.forEach(({ id }, index) => {
-      if (seen.has(id)) {
-        context.addIssue({
-          code: 'custom',
-          path: ['categories', index, 'id'],
-          message: `Duplicate Category id "${id}"`,
-        });
-      }
-      seen.add(id);
-    });
+  .superRefine(({ categories, correctionCategories, userSettingDefaults }, context) => {
+    const idsOf = (list: readonly Category[], field: 'categories' | 'correctionCategories') => {
+      const ids = new Set<string>();
+      list.forEach(({ id }, index) => {
+        if (ids.has(id)) {
+          context.addIssue({
+            code: 'custom',
+            path: [field, index, 'id'],
+            message: `Duplicate Category id "${id}"`,
+          });
+        }
+        ids.add(id);
+      });
+      return ids;
+    };
+    const seen = idsOf(categories, 'categories');
+    idsOf(correctionCategories, 'correctionCategories');
 
     const mixCategories = userSettingDefaults.mix.categories;
     if (mixCategories === 'all') return;

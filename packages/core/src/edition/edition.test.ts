@@ -49,6 +49,10 @@ const validConfig = {
     { id: 'nature', displayName: 'Nature' },
     { id: 'speech', displayName: 'Speech' },
   ],
+  correctionCategories: [
+    { id: 'work', displayName: 'At work' },
+    { id: 'shop', displayName: 'In the shop' },
+  ],
 };
 
 describe('loadEdition', () => {
@@ -373,6 +377,22 @@ describe('loadEdition', () => {
         ],
       },
       'categories.1.id',
+    ],
+    ['no Correction Categories', { correctionCategories: undefined }, 'correctionCategories'],
+    [
+      'an empty list of Correction Categories',
+      { correctionCategories: [] },
+      'correctionCategories',
+    ],
+    [
+      'a repeated Correction Category id',
+      {
+        correctionCategories: [
+          { id: 'work', displayName: 'At work' },
+          { id: 'work', displayName: 'At the office' },
+        ],
+      },
+      'correctionCategories.1.id',
     ],
   ])('rejects %s, naming the field', (_, override, field) => {
     const load = () => loadEdition({ ...validConfig, ...override });

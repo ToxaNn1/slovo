@@ -100,6 +100,7 @@ function addStressTrap(editionDir: string): void {
     standardEquivalents: ['катало\u0301г'],
     explanation: 'Тестове пояснення.',
     examplePair: { nonStandard: 'Я шукаю ката\u0301лог.', standard: 'Я шукаю катало\u0301г.' },
+    categoryId: 'shop',
     sources: [{ title: 'Тестове джерело' }],
   };
   writeFileSync(join(editionDir, 'content/corrections/c_fx0005.json'), JSON.stringify(stressTrap));
@@ -181,6 +182,7 @@ describe('buildLanguagePack', () => {
           nonStandard: 'Який він разговорчивий!',
           standard: 'Який він балакучий!',
         },
+        categoryId: 'work',
         sources: [{ title: 'Тестове джерело' }],
         retired: false,
       });
@@ -462,6 +464,14 @@ describe('buildLanguagePack', () => {
         'nonStandardForm',
         /only a wrong-stress correction/i,
       ],
+      ['a Correction without a Category', 'c_fx1011.json', 'c_fx1011', 'categoryId', /string/],
+      [
+        "a Correction in a Category of Words, not one of the Corrections' Categories",
+        'c_fx1012.json',
+        'c_fx1012',
+        'categoryId',
+        /unknown category "speech"/i,
+      ],
     ])('%s', (_rule, file, entryId, field, message) => {
       expect(errors()).toContainEqual({
         file: `content/corrections/${file}`,
@@ -528,7 +538,7 @@ describe('buildLanguagePack', () => {
     it('reports nothing but those errors', () => {
       // The copy with a duplicate id is also misnamed, so it fails twice; the
       // surzhyk Correction with a Stress mark fails for its form and its example.
-      expect(errors()).toHaveLength(41);
+      expect(errors()).toHaveLength(43);
     });
   });
 
@@ -796,6 +806,10 @@ describe('buildLanguagePack', () => {
         { correctionType: 'anglicism', corrections: 0 },
         { correctionType: 'wrongStress', corrections: 0 },
       ],
+      correctionsPerCategory: [
+        { categoryId: 'work', displayName: 'На роботі', corrections: 3 },
+        { categoryId: 'shop', displayName: 'У магазині', corrections: 1 },
+      ],
       idioms: 2,
       retiredIdioms: 0,
       idiomsPerType: [
@@ -813,6 +827,9 @@ describe('buildLanguagePack', () => {
     expect(printed).toMatch(/Corrections:\s+4 \(0 Retired Corrections left out\)/);
     expect(printed).toMatch(/russianism\s+2/);
     expect(printed).toMatch(/calque\s+0/);
+    expect(printed).toMatch(
+      /Corrections per Category:\n\s+work\s+На роботі\s+3\n\s+shop\s+У магазині\s+1/,
+    );
     expect(printed).toMatch(/Idioms:\s+2 \(0 Retired Idioms left out\)/);
     expect(printed).toMatch(/Idioms per Idiom Type:\n\s+idiom\s+1\n\s+placeName\s+1/);
   });
@@ -871,7 +888,7 @@ describe('buildLanguagePack', () => {
     expect(b.ids).toEqual(a.ids);
     expect(a.metadata).toEqual({
       editionId: 'fixture',
-      contentVersion: 4,
+      contentVersion: 5,
       contentChecksum: expect.stringMatching(/^sha256:[0-9a-f]{64}$/) as string,
       packFormat: 4,
     });
@@ -902,7 +919,7 @@ describe('buildLanguagePack', () => {
           file: 'content/manifest.json',
           field: 'contentChecksum',
           message: expect.stringMatching(
-            /content changed since content version 4.*pnpm build:pack fixture --record/i,
+            /content changed since content version 5.*pnpm build:pack fixture --record/i,
           ) as string,
         },
       ]);
@@ -915,7 +932,7 @@ describe('buildLanguagePack', () => {
     record(editionDir);
     editJson(editionDir, 'content/manifest.json', (manifest) => ({
       ...manifest,
-      contentVersion: 4,
+      contentVersion: 5,
     }));
 
     expect(buildErrors(editionDir)).toEqual([
@@ -1030,8 +1047,8 @@ describe('recordContent', () => {
 
     expect(recordContent({ editionDir })).toEqual({
       ok: true,
-      previousContentVersion: 4,
-      contentVersion: 4,
+      previousContentVersion: 5,
+      contentVersion: 5,
       contentChecksum: manifestOf(editionDir)['contentChecksum'],
       newIds: [],
     });
@@ -1049,12 +1066,12 @@ describe('recordContent', () => {
     const recorded = recordContent({ editionDir });
     const result = buildLanguagePack({ editionDir, outFile: edited });
 
-    expect(recorded).toMatchObject({ ok: true, previousContentVersion: 4, contentVersion: 5 });
+    expect(recorded).toMatchObject({ ok: true, previousContentVersion: 5, contentVersion: 6 });
     expect(result.ok).toBe(true);
     const { metadata } = await readBack(edited);
-    expect(metadata).toMatchObject({ contentVersion: 5 });
+    expect(metadata).toMatchObject({ contentVersion: 6 });
     expect(manifestOf(editionDir)).toEqual({
-      contentVersion: 5,
+      contentVersion: 6,
       contentChecksum: metadata.contentChecksum,
     });
     expect(metadata.contentChecksum).not.toBe((await readBack(original)).metadata.contentChecksum);
@@ -1109,7 +1126,7 @@ describe('recordContent', () => {
       ok: false,
       errors: [expect.objectContaining({ entryId: 'w_fx0002', field: 'rarity' })],
     });
-    expect(manifestOf(editionDir)).toMatchObject({ contentVersion: 4 });
+    expect(manifestOf(editionDir)).toMatchObject({ contentVersion: 5 });
   });
 
   it('starts the registry of an Edition never recorded with every id, in order', () => {
@@ -1218,6 +1235,17 @@ describe('content targets', () => {
     });
 
     expect(missedTargets(editionDir)).toEqual([]);
+  });
+
+  it('misses the per-Category target of Corrections, naming every Category that falls short', () => {
+    const editionDir = editionWithTargets({ minCorrectionsPerCategory: 2 });
+
+    expect(missedTargets(editionDir)).toEqual([
+      {
+        target: 'minCorrectionsPerCategory',
+        message: 'Category "shop" has 1 Corrections, below the target of 2',
+      },
+    ]);
   });
 
   it('misses a Category floor, naming the Category that falls short', () => {

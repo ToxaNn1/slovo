@@ -54,6 +54,8 @@ export const CorrectionSchema = z.strictObject({
     .refine(hasNoRepeats, 'Standard equivalents must not repeat'),
   explanation: TextSchema,
   examplePair: ExamplePairSchema,
+  /** One of the Edition's Categories of Corrections, a list apart from the Words' (ADR 0050). */
+  categoryId: z.string().min(1),
   sources: z.array(SourceSchema).min(1),
   retired: z.boolean().default(false),
 });
