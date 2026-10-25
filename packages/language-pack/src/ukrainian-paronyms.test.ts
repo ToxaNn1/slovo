@@ -4,6 +4,8 @@ import { join } from 'node:path';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import type { Correction } from '@slovo/contracts';
+
 import { buildLanguagePack, openLanguagePack, type NodeLanguagePack } from './index';
 import { ukrainianFolder } from './test-support';
 
@@ -46,5 +48,17 @@ describe('the paronyms of the Ukrainian Language Pack', () => {
         expect.objectContaining({ url: 'https://goroh.pp.ua/Тлумачення/ефективний' }),
       ],
     });
+  });
+
+  it('holds at least 15 paronyms, each with its sources and a different non-standard form', async () => {
+    const paronyms = (await pack.getEntries(await pack.listCorrectionIds())).filter(
+      (entry): entry is Correction =>
+        entry.kind === 'correction' && entry.correctionType === 'paronym',
+    );
+
+    expect(paronyms.length).toBeGreaterThanOrEqual(15);
+    for (const paronym of paronyms) expect(paronym.sources.length).toBeGreaterThan(0);
+    const forms = paronyms.map((paronym) => paronym.nonStandardForm);
+    expect(new Set(forms).size).toBe(forms.length);
   });
 });
