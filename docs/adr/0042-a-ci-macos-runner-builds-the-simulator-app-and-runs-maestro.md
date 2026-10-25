@@ -10,7 +10,7 @@ ADR 0004 sends every native build to EAS, because the owner's laptop (macOS 14.5
 
 **The built app is cached by its native inputs.** The development client changes only with a native change; the JavaScript comes from Metro. So the workflow caches the built `.app` under a key made from the lockfile, the workflow, the app config and its plugins, the prebuilt `ios/` folder (without the Xcode project file, whose object ids change on every prebuild), the widget's prebuilt files, the Edition's `edition.json`, assets and Decor, and the Xcode version. A run with the cache skips `pod install` and `xcodebuild`.
 
-This amends ADR 0004 (a test build may run on a CI runner) and ADR 0028 (Maestro may run in CI).
+ADR 0004 (a test build may run on a CI runner) and ADR 0028 (Maestro may run in CI) allow this.
 
 ## Considered Options
 

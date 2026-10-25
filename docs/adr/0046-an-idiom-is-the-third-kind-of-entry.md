@@ -12,7 +12,7 @@ Until 0.8.8 SLOVO had two kinds of Entry, Words and Corrections. A fixed express
 
 **The Game.** The Core Game Mode asks about idioms of Idiom Type `idiom` as it asks about Words: the Round gives the idiom's primary Definition and offers four idioms. Its Distractors are other live idioms drawn from the whole pack (ADR 0024), never one whose primary Definition is the answer's. A place name builds no Round and is never a Distractor: no Round asks the reader to guess a city from its description. A Word Round never offers an idiom, and the other way round.
 
-**What this ADR leaves to its tickets.** The build's refusals (an expression not in NFC or with a character outside the Edition's alphabet, its Lemma punctuation and the space; a place name without an etymology; two live Idioms with one expression), the eligibility of Idioms (ADR 0015), the Idiom card (ADR 0017) and the Game (ADR 0024) are recorded as amendments of those ADRs.
+**The build refuses** an expression not in NFC; an expression with a character other than the Edition's alphabet in either case, its Lemma punctuation and the space (checked in its own case, so the message names the character as written); a place name without an etymology (the Idiom contract refuses it, as the Word contract refuses a noun without gender); and a live Idiom whose expression, lower-cased by the Edition's locale, is another live Idiom's. A Retired Idiom frees its expression. The content report counts live Idioms, Retired Idioms left out and the Idioms of each Idiom Type. Eligibility, the card and the Game Round of an Idiom are in ADR 0015, 0017 and 0024.
 
 **The region on a Word.** 0.8.8 also lets a dialect Word say where it is said. A Word may carry a region, a short text in the Edition's language, and only a Word with the dialectal register label («діал.») may: the Word contract refuses a region on any other Word, so every reader of a Word holds to the rule. The label alone stays allowed, because a Word the dictionaries mark «діал.» without naming a place is still a dialect Word, and the build must not invent a place for it. The region is free text, with no closed list of regions: dictionaries name places at every scale, and a list would refuse a correct Word until someone extended it. The Entry card, its Self-check state once revealed and the Share Card show the region after the label, and VoiceOver reads it there.
 
@@ -29,14 +29,3 @@ Until 0.8.8 SLOVO had two kinds of Entry, Words and Corrections. A fixed express
 - **A fourth kind of Entry for place names**: rejected. One chip differs; everything else is shared (above).
 - **A separate `expressions` table per Idiom Type**: rejected. One table with an `idiom_type` column reads like the Correction's `correction_type`, and the format already rises for the new kind (ADR 0032).
 - **Idioms in a Category of the Mix rather than a switch of their own**: rejected. Categories hold Words and reach older apps through a Content update; a whole kind of Entry needs the Feature Switch an Edition or the owner can turn off (ADR 0040).
-
-## Amendment: the build refuses bad Idioms and counts them per Idiom Type (0.8.8, #552)
-
-The Language Pack build refuses:
-
-- an expression not in NFC (the Idiom contract);
-- an expression with a character other than the Edition's alphabet in either case, its Lemma punctuation and the space. A Lemma is checked in lower case; an expression keeps its case so the message names the character as written, such as a Latin capital in place of a Cyrillic one;
-- a place name without an etymology. The Idiom contract refuses it, as the Word contract refuses a noun without gender, so every reader of an Idiom holds to the rule;
-- a live Idiom whose expression, in lower case by the Edition's locale, is another live Idiom's. A Retired Idiom frees its expression, as a Retired Word frees its Lemma and primary Definition.
-
-The content report counts live Idioms, the Retired Idioms left out and the Idioms of each Idiom Type, in the order the contracts list them.
