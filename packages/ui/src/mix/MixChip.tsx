@@ -8,10 +8,12 @@ import { useTokens } from '../providers/TokensProvider';
  * A chip of the Mix: a Category, or «Усі». On is filled ink, off is the
  * surface with a line border; «Усі» is filled accent while everything is on
  * (`feature` marks it). A disabled chip, the last Category in the Mix, is
- * dimmed and reads its hint to VoiceOver.
+ * dimmed and reads its hint to VoiceOver. VoiceOver reads the chip by its
+ * `label` unless `accessibilityLabel` names it otherwise.
  */
 export function MixChip({
   label,
+  accessibilityLabel = label,
   on,
   onPress,
   disabled = false,
@@ -20,6 +22,7 @@ export function MixChip({
   testID,
 }: {
   label: string;
+  accessibilityLabel?: string;
   on: boolean;
   onPress: () => void;
   disabled?: boolean;
@@ -34,7 +37,7 @@ export function MixChip({
     <Pressable
       testID={testID}
       accessibilityRole="button"
-      accessibilityLabel={label}
+      accessibilityLabel={accessibilityLabel}
       accessibilityHint={disabled ? accessibilityHint : undefined}
       accessibilityState={{ selected: on, disabled }}
       {...voice}

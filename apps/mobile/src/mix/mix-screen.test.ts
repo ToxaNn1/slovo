@@ -18,9 +18,16 @@ const categories = Array.from({ length: 10 }, (_, index) => ({
   displayName: `Категорія ${String(index)}`,
 }));
 
+/** The Language Pack's three Categories of Corrections, in its order. */
+const correctionCategories = [
+  { id: 'work', displayName: 'На роботі' },
+  { id: 'shop', displayName: 'У магазині' },
+  { id: 'transport', displayName: 'Транспорт' },
+];
+
 async function open(edition: Edition): Promise<Composition> {
   return openComposition({
-    content: createMemoryContentPort({ categories }),
+    content: createMemoryContentPort({ categories, correctionCategories }),
     edition,
     userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
     clock: { now: () => new Date('2026-10-13T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
@@ -109,6 +116,82 @@ describe('the Мій Мікс screen', () => {
         ({ entryKind }) => entryKind,
       ),
     ).toEqual(['correction', 'idiom']);
+  });
+});
+
+describe('the Categories of Corrections on the Мій Мікс screen', () => {
+  const withoutCorrections: Edition = {
+    ...ukrainian,
+    isFeatureEnabled: (feature) => feature !== 'corrections' && ukrainian.isFeatureEnabled(feature),
+  };
+
+  it('offers every Category of Corrections of the Language Pack in its order, all on in the default Mix', async () => {
+    const { mix } = await open(ukrainian);
+
+    expect(mixScreenModel({ edition: ukrainian, mix: mix.state }).correctionCategories).toEqual({
+      chips: correctionCategories.map(({ id, displayName }) => ({
+        id,
+        name: displayName,
+        on: true,
+        disabled: false,
+      })),
+      lastCategoryHint: false,
+    });
+  });
+
+  it('shows a Category of Corrections taken out as off, apart from the Words’ Categories, until it is put back', async () => {
+    const { mix } = await open(ukrainian);
+    const onOf = () =>
+      mixScreenModel({ edition: ukrainian, mix: mix.state }).correctionCategories?.chips.map(
+        ({ on }) => on,
+      );
+
+    await mix.takeOut('shop', 'correction');
+    expect(onOf()).toEqual([true, false, true]);
+    expect(mixScreenModel({ edition: ukrainian, mix: mix.state }).allOn).toBe(true);
+
+    await mix.putBack('shop', 'correction');
+    expect(onOf()).toEqual([true, true, true]);
+  });
+
+  it('disables the chip of the last Category of Corrections in the Mix and says why', async () => {
+    const { mix } = await open(ukrainian);
+    await mix.takeOut('work', 'correction');
+    await mix.takeOut('shop', 'correction');
+
+    const model = mixScreenModel({ edition: ukrainian, mix: mix.state });
+
+    expect(
+      model.correctionCategories?.chips.filter(({ disabled }) => disabled).map(({ id }) => id),
+    ).toEqual(['transport']);
+    expect(model.correctionCategories?.lastCategoryHint).toBe(true);
+    // The Words' list keeps its own last Category.
+    expect(model.lastCategoryHint).toBe(false);
+  });
+
+  it('leaves them out while Corrections are out of the Mix, and brings them back as they were', async () => {
+    const { mix } = await open(ukrainian);
+    await mix.takeOut('shop', 'correction');
+
+    await mix.setKind('correction', false);
+    expect(mixScreenModel({ edition: ukrainian, mix: mix.state }).correctionCategories).toBe(
+      undefined,
+    );
+
+    await mix.setKind('correction', true);
+    expect(
+      mixScreenModel({ edition: ukrainian, mix: mix.state }).correctionCategories?.chips.map(
+        ({ on }) => on,
+      ),
+    ).toEqual([true, false, true]);
+  });
+
+  it('leaves them out while the Edition turns Corrections off', async () => {
+    const { mix } = await open(ukrainian);
+
+    expect(
+      mixScreenModel({ edition: withoutCorrections, mix: mix.state }).correctionCategories,
+    ).toBe(undefined);
   });
 });
 

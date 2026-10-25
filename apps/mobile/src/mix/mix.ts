@@ -1,4 +1,4 @@
-import type { MixKind, MixState } from '@slovo/core';
+import type { CategoryKind, MixKind, MixState } from '@slovo/core';
 import { useEdition } from '@slovo/ui';
 import { useMemo } from 'react';
 
@@ -28,8 +28,8 @@ export function useMixSummary(): string {
  * and leaves the Mix as it was.
  */
 export function useMixChanges(): {
-  /** Puts the Category in the Mix (`inMix`) or takes it out. */
-  toggleCategory: (categoryId: string, inMix: boolean) => void;
+  /** Puts the Category of the kind's list, the Words' unless given, in the Mix (`inMix`) or takes it out. */
+  toggleCategory: (categoryId: string, inMix: boolean, of?: CategoryKind) => void;
   turnAllOn: () => void;
   /** Puts the kind of Entry (Corrections, Idioms) as a whole in the Mix (`inMix`) or takes it out. */
   setKind: (kind: MixKind, inMix: boolean) => void;
@@ -42,8 +42,8 @@ export function useMixChanges(): {
     });
   };
   return {
-    toggleCategory: (categoryId, inMix) => {
-      keep(inMix ? mix.putBack(categoryId) : mix.takeOut(categoryId));
+    toggleCategory: (categoryId, inMix, of) => {
+      keep(inMix ? mix.putBack(categoryId, of) : mix.takeOut(categoryId, of));
     },
     turnAllOn: () => {
       keep(mix.turnAllOn());
