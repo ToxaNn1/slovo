@@ -1,140 +1,34 @@
 # The Core owns the user-state schema; adapters store text records by key
 
-The user state (settings, and from 0.2 on the Feed's Seen, Cycle and Word of the Day) lives behind a narrow Core port: get one text record by key, and write a batch of changes all at once or not at all. The Core owns everything about what is stored: the keys, the encoding of each value and the schema version. The schema version is itself a record. On open, the Core brings an older schema forward one migration at a time, writing each step together with its version so an interrupted upgrade resumes where it stopped. Migrations are forward-only: a step that has shipped is never edited or removed, and a schema newer than the app knows is refused and left untouched.
+The user state lives behind a narrow Core port: get one text record by key, list every record whose key starts with a prefix, and write a batch of changes all at once or not at all. A prefix is matched as it is, with case counting and no wildcards, and the records come in no set order. The Core owns everything about what is stored: the keys, the encoding of each value and the schema version. The adapters only keep records: in memory for tests, and one `records (key, value)` table in a writable SQLite database apart from the Language Pack in the app (matching prefixes with `instr`, since `LIKE` ignores case and reads `%` and `_` as wildcards). That layout never changes, so the adapters need no migrations of their own, and one contract suite holds both to the same behaviour, migrations included.
 
-The adapters only keep records: in memory for tests, and one `records (key, value)` table in a writable SQLite database apart from the Language Pack in the app. Its layout never changes, so the adapters need no migrations of their own, and one contract suite holds both to the same behaviour, migrations included.
+**The schema.** The Core declares each record once, in `packages/core/src/user-state/user-state-schema.ts`: a key, or a key prefix for records of one kind, the schema of the value and how it syncs. Every value is kept as JSON and read through its schema, so a record that holds no value of its schema reads as absent. State is kept one record per thing (per setting, per Seen Entry, per History entry, Favorite, Collection, Collection entry, Hidden Entry, Knowledge Mark, Category of the Mix, Active Day, planned notification), so sync can merge it record by record (ADR 0005); no key holds a whole list that two devices would change apart. A new record reads as absent or as the Edition's default until it is first written, so adding one needs no migration.
 
-Per-record keys (one record per setting, and later one per Favorite or Collection) keep the door open for last-write-wins sync per record (ADR 0005).
+**Migrations.** The schema version is itself a record. On open, the Core brings an older schema forward one migration at a time, writing each step together with its version so an interrupted upgrade resumes where it stopped. Migrations are forward-only: a step that has shipped is never edited or removed, and a schema newer than the app knows is refused and left untouched. A record that syncs never changes its encoding, since an older app on another device reads what this one writes: a new encoding takes a new key, which the older app reads as absent. Migrations may still change `device-only` records.
+
+**Sync marks.** Each record syncs by its mark, and the schema answers the mark of a key: its mark, last write wins for an unmarked record, or nothing for a key it doesn't declare (a record of a newer app), which sync keeps as it is.
+
+- `device-only` records stay on the device: the schema version, the installed marker, vibration (a tablet may have no haptics), the Feed's place, the swipe hint, the Word of the Day (the Word of the morning notification each device's own plan Reserves, ADR 0021, 0022), the notification times, sound and plan, the onboarding finished (it ends with the ask for each device's own permission to notify), the last content update check (the pack it downloads is this device's), the remote Feature Switches (ADR 0040) and the Sync records below.
+- `union` keeps every device's records: the Active Days, so the Streak derived from them is the same everywhere.
+- `highest` keeps the higher value: the best Game result, which never goes down.
+- Everything else syncs by last write wins (ADR 0041): the Theme, the font size and the other synced settings, Favorites, Collections and their Entries, History, Hidden Entries, Knowledge Marks, the Mix, the Cycle and Seen.
+
+**Merge invariants.** A Seen record holds the id of the Cycle it was Seen in, and only a record of the current Cycle counts, so a device offline since an older Cycle can't carry that Cycle's marks into a new one. Starting a new Cycle deletes every Seen record it can list, of any Cycle, and those deletions sync. An Entry of a Collection whose Collection record is absent reads as absent and counts nowhere, and nothing deletes its record: absent is also a passing state of a pull or of a push sent in batches, and a tombstone written then would win over the Collection when it arrives. A Mix with no Category in it reads as the Edition's default, so a merge can never leave the Feed empty. An empty list of notification times is stored as an empty list, since an absent record means the Edition's default times.
+
+**The Sync queue.** Pending changes (`sync.pending.` + the key of the changed record, holding the instant it changed and the record's new text, or `null` for a tombstone) and the cursor (`sync.cursor`, the server's sequence number of the last record pulled) are records of the user state too. The Core wraps the user state it hands to its modules (`trackChanges`): each write of a record that syncs also writes its pending change, with the time from the injected clock, in the same atomic batch, signed in or not. `device-only` and undeclared keys are never tracked. The app opens the tracked user state first, before the settings and the composition, and every feature shares it, so no write goes around it. Sync deletes the pending changes the Account accepted, each only while it still holds what was sent, and writes and that deletion run one at a time.
+
+**State kept for the app session.** The Cycle, the Word of the Day, History and the Game read their records once, when they open, and keep them in memory, so the Feed never waits on a read to pick its next card. The shell opens one of each per app session and hands them to every feature, since a second instance would not see the first one's changes. A change is made in memory only after its write: a Cycle change, or an Active Day of Progress, returns the user-state changes that keep it and a commit step; the caller writes them, alone or in one write with its own, and commits once the write succeeds, so a failed write leaves memory and the user state in agreement. The caller commits one change before it asks for the next; the Feed does this in its one-request-at-a-time queue. The Word of the Day also reads the Reserved Words while today has no Word of the Day kept or the kept one is no longer eligible, because the plan writes its records during the session and only they say which Word the morning notification carries (ADR 0016).
+
+**History.** An Entry joins History (one record per Entry, the instant it was Seen and whether it was the Word of the Day's card) in the same write as its Seen mark, from the Feed or from a Word opened from a notification; the latter also writes today's Active Day in that write, through the Feed's queue, so a new Cycle never starts between the Seen mark and its commit (ADR 0018). A Word the Cycle no longer covers, or one Seen already, gets only the Active Day. An Entry Seen again in a later Cycle moves to the top, and the write that adds the 501st entry also deletes the oldest. History takes its record and a clear one at a time.
 
 ## Considered Options
 
-- **SQL tables per feature, with SQL migrations in the SQLite adapter**: rejected for now. Every feature would be written twice (SQL and in memory) and the schema would live outside the Core, so the in-memory adapter could not prove a migration. Revisit if a feature needs queries over many records that JavaScript can't handle at its size.
-- **One JSON document for the whole user state**: rejected. Every change would rewrite everything, and sync could not resolve conflicts per record.
-
-## Amendment: listing records by key prefix (after 0.2)
-
-One record per Favorite or per Collection only works if the Core can find them all, so the port gains a third operation: list every record whose key starts with a prefix. The prefix is matched as it is, with case counting and no wildcards (the SQLite adapter uses `instr`, since `LIKE` ignores case and reads `%` and `_` as wildcards), and the records come in no set order. The contract suite holds both adapters to it. The `records` table is unchanged.
-
-The Core declares each record once, in `packages/core/src/user-state-schema.ts`: a key, or a key prefix for records of one kind, and the schema of the value. Every value is kept as JSON and read through its schema, so a record that holds no value of its schema reads as absent. 0.2 kept the settings as bare text, so migration 2 re-encodes them as JSON; the other 0.2 records were JSON already and keep their keys.
-
-## Amendment: Seen per Entry, and state kept in memory for the app session (after 0.2)
-
-0.2 kept Seen as one array record, `feed.seen`, and every Seen mark rewrote the whole array. That is the one-JSON-blob shape this ADR rejected: two devices' Seen sets could not merge under last-write-wins sync (ADR 0005). Seen is now one record per Entry, `feed.seen.` + Entry id, holding `true`. Migration 3 splits the stored array into those records and deletes `feed.seen` in one write; an array that does not parse is dropped, since 0.2 read nothing Seen from it either. Starting a new Cycle deletes every `feed.seen.` record it can list in the same write as the new Cycle, also records it never read.
-
-The Cycle and the Word of the Day read the user state once, when they open, and keep it in memory for the app session, so the Feed never waits on a read to pick its next card. The trade-offs:
-
-- **One of each per app session, shared.** A second instance over the same user state would not see the first one's changes. So the shell opens one Cycle and one Word of the Day per app session and hands them to the Feed, and later to History, notifications, the widget and the Game; the Feed no longer opens its own.
-- **A change is made in memory only after its write.** A Cycle change (a Seen mark, a new Cycle) returns the user-state changes that keep it and a commit step. The caller writes the changes, alone or in one write with its own (the Word of the Day writes a new Cycle with its choice), and commits once the write succeeds. A failed write is never committed, so memory and the user state agree and the next try starts one new Cycle, not two. The Word of the Day keeps its choice in memory the same way. The caller must commit one change before it asks for the next; the Feed does this by writing and committing in its one-request-at-a-time queue.
-
-### Considered Options
-
-- **Keep Seen as one record and say so here**: rejected. History (0.3) and sync (0.8) build on Seen, and a later split would need the same migration with more data to carry.
-- **The Cycle writes its own changes**: rejected. Callers need a Cycle change in the same write as their own records (the Word of the Day now, History in 0.3), so the Cycle would need to take extra changes, and the Word of the Day must choose from the new Cycle's order before anything is written.
-- **Read the user state on every question**: rejected for now. The Feed asks for the unseen Entries on every card, and a shared instance per session gives the same consistency without the reads. Revisit when sync can change records under a running app.
-
-## Amendment: History joins the Feed's Seen write (0.3)
-
-History is one record per Entry, `history.` + Entry id, holding the instant it was Seen and whether it was the Word of the Day's card. An Entry joins History only when it becomes Seen in the Feed, in the same write as its Seen mark (ADR 0018): going back to a card already Seen in the Cycle records nothing, and an Entry Seen again in a later Cycle moves to the top with the new time. The write that adds the 501st entry also deletes the oldest. History starts empty in 0.3: 0.2 kept no times for what was Seen, so there is nothing to bring forward.
-
-Here the Feed hands its changes (the Seen mark and its position) to History, which writes them with its own record in one write and then updates its list; the Feed commits the Cycle change after that write, as before. History does not return a change for the Feed to write, unlike the Cycle, because clearing History runs outside the Feed. History takes its record and a clear one at a time, so a clear never lands between a record's choice of the entry to evict and its write.
-
-## Amendment: the 0.4 records, and which of them sync (0.4)
-
-0.4 declares its records once, up front, in `packages/core/src/user-state-schema.ts`, so the features that fill them in don't collide:
-
-- an Active Day: `activeDays.` + the local date (`YYYY-MM-DD`), holding `true`;
-- the notification times: `notifications.times`, a list of local times (`HH:MM`);
-- the notification sound: `notifications.sound`, on or off;
-- a planned notification: `notifications.plan.` + the local date + `T` + the local time, holding the id of its Word. A Word with such a record is Reserved, so Reserved is never stored on its own;
-- the onboarding finished: `onboarding.finished`, the instant it finished.
-
-Every one reads as absent or as the Edition's default (no times record means the Edition's times, no sound record means sound on, no finished record means the onboarding opens), so 0.4 adds no migration and the `records` table and the adapters stay as they are. The dates and times hold no `.`, so no prefix overlaps another.
-
-The schema marks how each record syncs when sync arrives (ADR 0005), so 0.8 doesn't have to guess. `device-only` records stay on the device: the notification times, the sound and the plan, because a phone and a tablet may remind the same reader differently and the plan is built from the device's own permission and local time. `union` records of every device are all kept: the Active Days, so the Streak derived from them is the same everywhere. A record with no mark syncs by last write wins, one record at a time, as before.
-
-An empty list of times is stored as an empty list, not as an absent record or a deleted one. Absent means "the Edition's default times", so deleting the record on the last removal would bring the defaults back instead of stopping the notifications.
-
-## Amendment: a Word opened from a notification is Seen in one write with History and today's Active Day (0.4)
-
-The glossary's Seen also covers a Word the reader opened from a notification, so the Feed is no longer the only way into History. The composition's "opened from a notification" call writes the Seen mark, the History entry and today's Active Day in one write. The Feed module keeps it: it writes it in turn with its cards through the same step as a card leaving the screen, so a new Cycle never starts between the Seen mark and its commit. The History entry is the Word of the Day's card only when the Word is today's Word of the Day. A Word the Cycle no longer covers (Hidden, Retired, out of the Mix) or one Seen already gets only the Active Day, so a Hidden Entry never re-enters History, and opening the same Word again writes nothing.
-
-Progress returns the Active Day as a change with a commit step, like the Cycle, so its record goes into that one write; recording today on its own (the composition opening, the app returning to the foreground) writes the same change alone.
-
-## Amendment: the onboarding finished stays on the device (0.4)
-
-The 0.4 records listed above left `onboarding.finished` unmarked, so it would sync by last write wins. It is now `device-only`. The onboarding ends with the ask for permission to notify, and that permission belongs to each device: a reader who finished it on a phone is still asked on a tablet. The record changes only its mark, so there is still no migration.
-
-### Considered Options
-
-- **Last write wins, as unmarked**: rejected. A second device would skip the onboarding and never ask for its own permission there.
-
-## Amendment: the Word of the Day reads the Reserved Words while a day has no Word yet (0.4)
-
-The Word of the Day still reads its own record once, when it opens. From 0.4 it also reads the Reserved Words (ADR 0021) while today has no Word of the Day kept, or the kept one is no longer eligible: the day change asks it to take the Word of the day's morning notification (ADR 0022), and `today` does the same before it chooses. Once the day's Word is kept, nothing is read until the next local day, so the Feed still never waits on a read for a card after the day's first one.
-
-The read stays because the plan writes its records during the session: last evening's plan Reserves this morning's Word, and only the plan records say which Word that is.
-
-### Considered Options
-
-- **Keep the Reserved Words in memory in the Word of the Day**: rejected. Every plan would have to hand its records over, and the copy would repeat the plan records, which ADR 0016's amendment for 0.4 already rejects.
-- **Read the plan records once, when the Word of the Day opens**: rejected. An app left open over midnight would miss the morning Word the evening's plan Reserved.
-
-## Amendment: the best Game result keeps the higher value (0.5)
-
-0.5 adds one record: `game.best`, the best result, a whole number of Rounds passed from 0 to 15 (ADR 0024). It reads as absent until the first finished Game, so there is still no migration and the `records` table stays as it is.
-
-It takes a new sync mark, `highest`: sync keeps the higher of two devices' values. Last write wins would let a phone's lower result replace a tablet's higher one, and a best result never goes down. The Game reads the record once, when it opens, and writes it before it shows the finished Game, as a Cycle change is written before it is made in memory, so a failed write leaves the Game answered and «Далі» tries again.
-
-## Amendment: the last content update check stays on the device (0.7)
-
-0.7 adds one record: `contentUpdate.checkedAt`, the instant the last check for a content update started (spec #333). It reads as absent until the first check, so a check is due and there is still no migration. It is `device-only`: the pack the check downloads is kept on this device only, so another device's check says nothing about it. A check writes the record before it asks the backend, so a check that fails, or an app closed in the middle of one, still waits a day for the next, and the app asks at most once a day.
-
-## Amendment: the user state is ready to merge (0.8)
-
-Sync (spec #378) merges the user state record by record by the marks this ADR declares, so 0.8 settles every mark and the merge outcomes that would break an invariant before sync starts.
-
-**The 0.8 marks.** `device-only` now also covers the schema version, the Feed's place (`feed.position`), the swipe hint (`feed.swipeHintShown`), the Word of the Day (`feed.wordOfTheDay`) and vibration (`settings.vibration`), beside the notification times, sound and plan, the onboarding finished, the last content update check and the last answer of the remote Feature Switches (`edition.switches`, ADR 0040), which each device asks for itself. The Word of the Day stays because it is the Word of the morning notification each device's own plan Reserves (ADR 0021, 0022); vibration stays because a tablet may have no haptics. Last write wins (no mark) stays for the Theme, the font size, Favorites, Collections and their Entries, History, Hidden Entries, the Mix (each Category and Corrections), `feed.cycle` and Seen. `union` (Active Days) and `highest` (the best Game result) stay. The schema version is declared as a record too, so every key the Core writes has a declaration, and the schema answers the mark of a key: its mark, last write wins for an unmarked one, or nothing for a key it doesn't declare, such as a record of a newer app, which sync keeps as it is.
-
-**Seen remembers its Cycle (migration 4).** A Seen record holds the id of the Cycle it was Seen in instead of `true`, and only a record of the current Cycle counts as Seen. A device offline since an older Cycle can't carry that Cycle's marks into a new one: they read as not Seen, so the Feed offers those Entries again. Migration 4 rewrites every record that holds `true` with the current Cycle's id in one write with the version; when no Cycle record reads, it takes 1, the id of the Cycle that then opens. Starting a new Cycle still deletes every Seen record it lists, of any Cycle, and those deletions sync. When two devices start Cycles apart, `feed.cycle` follows last write wins and the other device's marks of its own Cycle stop counting.
-
-**A synced record's encoding never changes.** Migration 4 is the last migration that may re-encode a record that syncs, since nothing synced before 0.8. From 0.8 an older app on another device reads what this one writes, so a new encoding takes a new key, and the older app reads the unknown key as absent through its schema. Migrations may still change `device-only` records.
-
-**An orphaned Collection entry is dropped.** An Entry of a Collection whose Collection record is absent reads as absent: it is in no Collection and counts nowhere. The next write of the Collections deletes it in the same write, so a Collection deleted on one device stays deleted even if another device added to it meanwhile, and the deletion syncs. (Superseded by the amendment "an orphaned Collection entry is left as it is" below: it still reads as absent, but nothing deletes it.)
-
-**A Mix with no Category reads as every Category.** Two devices can each take out a different last Category, and the merge keeps both. A Mix with no Category in it reads as the Edition's default (every Category in the Ukrainian Edition), by the fallback ADR 0019's rule already has, so a merge can never leave the Feed empty. Nothing is written for it; the next change of the Mix writes the Categories the reader sees as in, as before.
-
-### Considered Options
-
-- **Keep Seen as `true` and clear Seen on a Cycle change from another device**: rejected. The device would have to tell which Seen marks came with the other Cycle, and a mark that arrives after the Cycle record would still count.
-- **Re-encode a synced record in a later migration and make every app understand both**: rejected. An app that shipped can't learn the new encoding, and it would read the record as absent or overwrite it.
-- **Write the Category back in when a merge empties the Mix**: rejected. Both devices would write at once and race each other; reading the empty Mix as the default needs no write.
-
-## Amendment: the Sync queue lives in the user state, and every write is tracked (0.8)
-
-Sync (spec #378) has to know which records changed since the last push, and when. The queue and the cursor are records of the user state, so the `records` table and its adapters stay exactly as this ADR defines them:
-
-- a pending change: `sync.pending.` + the key of the changed record, holding the instant it changed and the record's new text, or `null` for a deletion (a tombstone). One per changed key: the next write of the key replaces it;
-- the cursor: `sync.cursor`, the server's sequence number of the last record pulled.
-
-Both are `device-only`, so they never sync themselves.
-
-**Every write is tracked.** The Core wraps the user state it hands to its modules (`trackChanges`): each write of a record that syncs (last write wins, `union` or `highest`) also writes the pending change of each such key, with the time from the injected clock, in the same atomic batch. A write that fails leaves no pending change, and no module changes. `device-only` records, the schema version, the pending changes and the cursor are never tracked, nor is a key the schema doesn't declare. Changes are tracked whether or not the reader is signed in, so a change made while signed out keeps its real time. Records written before 0.8 have no pending change, and nothing is back-filled: the first sync of a device pushes them by the first-sign-in rule.
-
-The app opens the tracked user state first, before the settings and the composition, and every feature shares it, so no write goes around it. Sync reads the pending changes and the cursor through it, and deletes the pending changes the Account accepted, each only while it still holds what was sent, so a newer change of the same key written meanwhile stays for the next push. Writes and that deletion run one at a time, so a write can't land between the deletion's read and its write.
-
-### Considered Options
-
-- **A queue table beside `records`, or a change column on it**: rejected. Both adapters would need a migration of their own and the contract suite would grow, and the queue would no longer share the records' atomic batch.
-- **Each module writes its own pending changes**: rejected. A module could forget one, and every module would have to know about Sync.
-- **Track writes only while signed in**: rejected. A change made while signed out would lose its time and lose to an older change at the next sign-in.
-
-## Amendment: an orphaned Collection entry is left as it is (whole-project review)
-
-The 0.8 amendment above had the next write of the Collections delete an Entry of a Collection whose record is absent, and the deletion sync. But absent is also a passing state of a pull. Each page is applied in its own write (ADR 0041), the Account keeps its records in the order of their sequence numbers, and a record kept again takes a new one, so a Collection renamed after its Entries were added lands on a later page than they do. A pull cut between those pages, by the network or by iOS ending the app, left the Entries reading as orphans; the reader's next change of any Collection then tombstoned them with the device's time, the tombstones won on the Account, and the Entries left the Collection on every device.
-
-From now on nothing deletes such a record. An Entry of a Collection whose record is absent still reads as absent, is in no Collection and counts nowhere, and its record stays where it is, on the device and on the Account, until the Collection's record arrives, or for good. A Collection deleted on one device still stays deleted everywhere, since its own tombstone wins by last write wins; the Entries another device added to it meanwhile are stray records that every device reads as absent. What a stray costs is one record kept for nothing, no more than its tombstone would, since the Account keeps tombstones for good (ADR 0041); a new Collection takes a fresh random id, so a stray never joins one.
-
-### Considered Options
-
-- **Delete the orphans in the write of the pull's last page, as History is trimmed**: rejected. A whole pull is still not the whole Account: a device pushes its pending changes in batches of 500, and when the network drops between two of them, a Collection's record can wait in the second batch for hours while its Entries are already on the Account. A pull between the two is complete, would tombstone the Entries with the device's time, and the tombstones would win over the Collection when it arrives. And the tombstones save nothing: the Account keeps them as long as the records.
-- **Delete the orphans on the device only, with no pending change**: rejected. A pull never brings a record again below the cursor, so the device would lose the Entries of a Collection that arrived later for good, while the other devices keep them.
+- **SQL tables per feature, with SQL migrations in the SQLite adapter, or a queue table or change column beside `records`**: rejected. Every feature would be written twice and the schema would live outside the Core, so the in-memory adapter could not prove a migration, and a queue table would not share the records' atomic batch. Revisit if a feature needs queries over many records that JavaScript can't handle at its size.
+- **One JSON document for the whole user state, or one record for a whole list such as Seen**: rejected. Every change would rewrite everything, and sync could not resolve conflicts per record.
+- **Re-encode a synced record in a later migration and make every app understand both**: rejected. An app that shipped can't learn the new encoding.
+- **Clear Seen on a Cycle change from another device**: rejected. The device could not tell which Seen marks came with the other Cycle.
+- **Delete orphaned Collection entries, on the next write or after a whole pull, on the Account or on the device only**: rejected. A Collection's record can arrive hours after its Entries, its tombstones would win over it, and a device-only deletion would lose the Entries for good below the cursor; the Account keeps tombstones as long as the records anyway.
+- **Write the Category back in when a merge empties the Mix**: rejected. Both devices would write at once and race each other.
+- **Each module writes its own pending changes, or track writes only while signed in**: rejected. A module could forget one, and a change made while signed out would lose its time.
+- **The Cycle writes its own changes**: rejected. Callers need a Cycle change in the same write as their own records.
+- **Read the user state on every question, or the plan records only once when the Word of the Day opens**: rejected. The Feed asks for unseen Entries on every card, and an app left open over midnight would miss the morning Word the evening's plan Reserved.

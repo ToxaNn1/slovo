@@ -18,7 +18,7 @@ import type { WordOfTheDay } from './word-of-the-day';
  * turns to it, in this order:
  *
  * 1. the Word of the Day module takes the Word of the day's morning
- *    notification (ADR 0016's amendment for 0.4), before anything else can
+ *    notification (ADR 0016), before anything else can
  *    read the day or drop a passed morning record;
  * 2. the Knowledge Marks turn to the day, so the Entries due today are due
  *    and the «Вчу» list counts the days from it;
