@@ -318,10 +318,10 @@ describe('the Categories that require history', () => {
     ).toEqual(['categoriesRequiringHistory']);
   });
 
-  it('the Ukrainian Edition requires history of no Category yet', () => {
-    expect(EditionConfigSchema.parse(readJson('uk', 'config')).categoriesRequiringHistory).toEqual(
-      [],
-    );
+  it('the Ukrainian Edition requires history of «Розстріляна лексика»', () => {
+    expect(EditionConfigSchema.parse(readJson('uk', 'config')).categoriesRequiringHistory).toEqual([
+      'repressed-words',
+    ]);
   });
 });
 
