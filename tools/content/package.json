@@ -2,7 +2,7 @@
   "name": "@slovo/content",
   "version": "0.0.0",
   "private": true,
-  "description": "Dev-only CLI that drafts and checks an Edition's content through $EDITOR, with the Language Pack build's own rules.",
+  "description": "Dev-only CLI that drafts, edits, retires and checks an Edition's content through $EDITOR, with the Language Pack build's own rules.",
   "type": "module",
   "scripts": {
     "content": "tsx --disable-warning=ExperimentalWarning src/cli.ts",

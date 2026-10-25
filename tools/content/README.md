@@ -1,6 +1,6 @@
 # Content CLI
 
-Dev-only tooling, never shipped in an app. It drafts and checks an Edition's content, so nobody copies JSON files, invents ids or learns about a mistake from the build. Files open in your editor; the checks are the Language Pack build's own (`@slovo/language-pack`), and the Edition is read through the one module that reads an Edition folder (ADR 0035).
+Dev-only tooling, never shipped in an app. It drafts, edits, retires and checks an Edition's content, so nobody copies JSON files, invents ids or learns about a mistake from the build. Files open in your editor; the checks are the Language Pack build's own (`@slovo/language-pack`), and the Edition is read through the one module that reads an Edition folder (ADR 0035).
 
 ## New Entries
 
@@ -17,6 +17,25 @@ When you close the file, the tool checks the whole content as the build does:
 - **It passes:** the content is recorded as `pnpm build:pack uk --record` records it. The new id joins `content/ids.json` and the content version in `content/manifest.json` grows (ADR 0011).
 - **It has problems:** each prints as the file, the Entry, the field and what is wrong, as the build prints them, for example `content/words/w_k3x9qa.json › Entry w_k3x9qa › stress.0: Position 0 is "т", not a vowel`. The tool offers to reopen the file (`Y` by default). If you decline, the draft stays where it is, unrecorded; fix it and run `pnpm build:pack uk --record`.
 - **You closed it unchanged** (or deleted it): the draft is removed. Nothing is written and no id is issued.
+
+## Edit an Entry
+
+```sh
+pnpm content edit w_k3x9qa --edition uk
+pnpm content edit купина --edition uk
+```
+
+The tool finds the Entry by its id, or by its text: a Word's Lemma, an Idiom's expression or a Correction's non-standard form, typed in any case and with or without stress marks. It opens the Entry's file in the editor and, after you close it, checks and records the content as `new` does. An Entry you closed unchanged stays as it was and nothing is written; a file you deleted is written back, since an Entry is withdrawn only by retiring it.
+
+When the text matches several Entries, such as the homonyms «купина», the tool lists them, each with its id, kind, text and a short definition (a Correction's standard equivalents), and asks which one to open, by its number or its id. An empty answer opens nothing.
+
+## Retire an Entry
+
+```sh
+pnpm content retire w_k3x9qa --edition uk
+```
+
+Marks the Entry retired (`"retired": true`) and keeps its file, because its id is never reused (ADR 0010): a Retired Entry never appears anywhere new, but stays visible wherever the user already keeps it. The content is then recorded as `new` records it. If the Edition has problems the build refuses, the file is left as it was and the problems print. Retiring an Entry may leave a content target short; `pnpm content check` reports it.
 
 ## Check the Edition
 

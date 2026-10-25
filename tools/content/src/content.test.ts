@@ -240,6 +240,186 @@ describe('pnpm content new', () => {
   });
 });
 
+/** The Ukrainian Edition's Entries, to pick the ones the tests open. */
+const authored = ukrainian.entries();
+const unstressed = (text: string) =>
+  text
+    .normalize('NFD')
+    .replace(/\u0301/g, '')
+    .normalize('NFC');
+/** The first of the Entries whose text no other Entry of the list shares. */
+function single<E extends { id: string }>(
+  authoredEntries: readonly { entry: E }[],
+  text: (entry: E) => string,
+): E {
+  const entries = authoredEntries.map(({ entry }) => entry);
+  const found = entries.find(
+    (one) => entries.filter((other) => text(other) === text(one)).length === 1,
+  );
+  if (found === undefined) throw new Error('No Entry with a text of its own');
+  return found;
+}
+const word = single(authored.words, (entry) => entry.lemma);
+const idiom = single(authored.idioms, (entry) => entry.expression);
+const stressedCorrection = single(
+  authored.corrections.filter(
+    ({ entry }) => entry.nonStandardForm !== unstressed(entry.nonStandardForm),
+  ),
+  (entry) => unstressed(entry.nonStandardForm),
+);
+const homonyms = authored.words
+  .filter(
+    ({ entry }) => authored.words.filter((other) => other.entry.lemma === entry.lemma).length > 1,
+  )
+  .map(({ entry }) => entry);
+const homonymLemma = homonyms[0]?.lemma ?? '';
+const homonymIds = homonyms
+  .filter(({ lemma }) => lemma === homonymLemma)
+  .map(({ id }) => id)
+  .toSorted();
+
+describe('pnpm content edit', () => {
+  it.each([
+    ['its id', word.id, word.id, { primaryDefinition: 'Нове значення.' }],
+    ['its Lemma', word.lemma, word.id, { primaryDefinition: 'Нове значення.' }],
+    ['its expression', idiom.expression, idiom.id, { primaryDefinition: 'Нове значення.' }],
+    [
+      'its non-standard form, typed without the stress mark',
+      unstressed(stressedCorrection.nonStandardForm),
+      stressedCorrection.id,
+      { explanation: 'Нове пояснення.' },
+    ],
+  ])('opens an Entry found by %s and records it once it passes', (_text, text, id, edit) => {
+    const file = ukrainian.entryFile(id);
+    const before = { registry: registry(), version: manifest().contentVersion };
+
+    const run = content(['edit', text, '--edition', 'uk'], {
+      edits: [edit],
+    });
+
+    expect(run.stderr).toBe('');
+    expect(run.status).toBe(0);
+    expect(run.opened).toEqual([file]);
+    expect(readJson(file)).toMatchObject({ id, ...edit });
+    expect(run.stdout).toContain(`Recorded ${file}`);
+    expect(registry()).toEqual(before.registry);
+    expect(manifest().contentVersion).toBe(before.version + 1);
+    expect(content(['check', '--edition', 'uk']).status).toBe(0);
+  });
+
+  it('lists the Entries a text matches and opens the one the owner picks', () => {
+    expect(homonymIds.length).toBeGreaterThan(1);
+    const [, second = ''] = homonymIds;
+    const file = ukrainian.entryFile(second);
+
+    const run = content(['edit', homonymLemma, '--edition', 'uk'], {
+      edits: [{ primaryDefinition: 'Нове значення.' }],
+      answers: '2\n',
+    });
+
+    expect(run.status).toBe(0);
+    homonymIds.forEach((id, index) => {
+      expect(run.stdout).toMatch(
+        new RegExp(`${String(index + 1)}\\. ${id} word ${homonymLemma}: \\S`),
+      );
+    });
+    expect(run.stdout).toContain(`Open which? [1-${String(homonymIds.length)}]`);
+    expect(run.opened).toEqual([file]);
+    expect(run.stdout).toContain(`Recorded ${file}`);
+  });
+
+  it('opens nothing when the owner picks none of the matches', () => {
+    const run = content(['edit', homonymLemma, '--edition', 'uk'], { answers: '\n' });
+
+    expect(run.status).toBe(1);
+    expect(run.opened).toEqual([]);
+    expect(run.stderr).toContain('No Entry picked: nothing opened');
+  });
+
+  it('opens nothing for a text no Entry matches', () => {
+    const run = content(['edit', 'немаєтакогослова', '--edition', 'uk']);
+
+    expect(run.status).toBe(1);
+    expect(run.opened).toEqual([]);
+    expect(run.stderr).toContain('No Entry of Edition "uk" matches "немаєтакогослова"');
+  });
+
+  it('prints each problem of a broken save and keeps the file unrecorded when not reopened', () => {
+    const file = ukrainian.entryFile(word.id);
+    const before = manifest();
+
+    const run = content(['edit', word.id, '--edition', 'uk'], {
+      edits: [{ rarity: 9 }],
+      answers: 'n\n',
+    });
+
+    expect(run.status).toBe(1);
+    expect(run.stderr).toContain(`${file} › Entry ${word.id} › rarity:`);
+    expect(run.stderr).toContain(`Kept ${file}, not recorded`);
+    expect(readJson(file)).toMatchObject({ rarity: 9 });
+    expect(manifest()).toEqual(before);
+  });
+
+  it('writes nothing for an Entry closed unchanged', () => {
+    const file = ukrainian.entryFile(idiom.id);
+    const before = { text: readFileSync(join(editionDir, file), 'utf8'), manifest: manifest() };
+
+    const run = content(['edit', idiom.id, '--edition', 'uk'], { edits: [null] });
+
+    expect(run.status).toBe(0);
+    expect(run.stdout).toContain(`${file} closed unchanged: nothing written`);
+    expect(readFileSync(join(editionDir, file), 'utf8')).toBe(before.text);
+    expect(manifest()).toEqual(before.manifest);
+  });
+});
+
+describe('pnpm content retire', () => {
+  it.each([
+    ['Word', word.id],
+    ['Correction', stressedCorrection.id],
+    ['Idiom', idiom.id],
+  ])('retires a %s, keeps its file and records the content', (_kind, id) => {
+    const file = ukrainian.entryFile(id);
+    const entry = readJson(file) as Record<string, unknown>;
+    const before = { registry: registry(), version: manifest().contentVersion };
+
+    const run = content(['retire', id, '--edition', 'uk']);
+
+    expect(run.stderr).toBe('');
+    expect(run.status).toBe(0);
+    expect(run.opened).toEqual([]);
+    expect(readJson(file)).toEqual({ ...entry, retired: true });
+    expect(run.stdout).toContain(`Retired ${file}`);
+    expect(registry()).toEqual(before.registry);
+    expect(manifest().contentVersion).toBe(before.version + 1);
+    // Retiring may miss a content target, but the build has nothing to refuse.
+    expect(content(['check', '--edition', 'uk']).stdout).toContain('Edition "uk": no problems');
+  });
+
+  it('writes nothing for an Entry already retired', () => {
+    const retired = authored.words.find(({ entry }) => entry.retired)?.entry.id ?? '';
+    const file = ukrainian.entryFile(retired);
+    const before = { text: readFileSync(join(editionDir, file), 'utf8'), manifest: manifest() };
+
+    const run = content(['retire', retired, '--edition', 'uk']);
+
+    expect(run.status).toBe(0);
+    expect(run.stdout).toContain(`${file} is already retired: nothing written`);
+    expect(readFileSync(join(editionDir, file), 'utf8')).toBe(before.text);
+    expect(manifest()).toEqual(before.manifest);
+  });
+
+  it('refuses an id no Entry has, and a missing id', () => {
+    const unknown = content(['retire', 'w_000000', '--edition', 'uk']);
+    const missing = content(['retire', '--edition', 'uk']);
+
+    expect(unknown.status).toBe(1);
+    expect(unknown.stderr).toContain('No Entry of Edition "uk" has the id "w_000000"');
+    expect(missing.status).toBe(2);
+    expect(missing.stderr).toMatch(/Usage: pnpm content/);
+  });
+});
+
 describe('pnpm content check', () => {
   it('passes the Edition as it is', () => {
     const run = content(['check', '--edition', 'uk']);
