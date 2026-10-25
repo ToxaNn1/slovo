@@ -331,6 +331,7 @@ function draftEntry(kind: EntryKind, id: string, edition: EditionFolder): Record
         standardEquivalents: [''],
         explanation: '',
         examplePair: { nonStandard: '', standard: '' },
+        categoryId: edition.config.correctionCategories[0]?.id ?? '',
         sources,
       };
     case 'idiom':
