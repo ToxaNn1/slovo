@@ -2,6 +2,7 @@ import type { EditionStrings } from '@slovo/contracts';
 import { EditionProvider, HideChoiceSheet } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import type { ComponentProps } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 const metrics = {
@@ -9,12 +10,12 @@ const metrics = {
   insets: { top: 0, left: 0, right: 0, bottom: 0 },
 };
 
-const options = [
+const options: ComponentProps<typeof HideChoiceSheet>['options'] = [
   { key: 'entry', label: 'Hide this Entry' },
   { key: 'category', label: 'Hide the Category “Nature”' },
 ];
 
-async function renderSheet(visible = true) {
+async function renderSheet(visible = true, shown: typeof options = options) {
   const onChoose = jest.fn();
   const onCancel = jest.fn();
   await render(
@@ -22,7 +23,7 @@ async function renderSheet(visible = true) {
       <EditionProvider edition={{ locale: 'en' }} strings={{} as EditionStrings}>
         <HideChoiceSheet
           visible={visible}
-          options={options}
+          options={shown}
           cancelLabel="Cancel"
           onChoose={onChoose}
           onCancel={onCancel}
@@ -73,5 +74,23 @@ describe('HideChoiceSheet', () => {
 
     expect(onCancel).toHaveBeenCalledTimes(1);
     expect(onChoose).not.toHaveBeenCalled();
+  });
+
+  it('offers a row with a disabled hint dimmed, takes no tap on it, and says why', async () => {
+    const { onChoose } = await renderSheet(true, [
+      { key: 'entry', label: 'Hide this Entry' },
+      { key: 'category', label: 'Hide the Category “Work”', disabledHint: 'It is the last one.' },
+    ]);
+
+    const row = screen.getByTestId('hide-choice-category');
+    expect(row).toBeDisabled();
+    expect(row).toHaveProp('accessibilityHint', 'It is the last one.');
+    await fireEvent.press(row);
+    expect(onChoose).not.toHaveBeenCalled();
+    // The line is hidden from VoiceOver, which reads it as the row's hint instead.
+    expect(
+      screen.getByTestId('hide-choice-category-hint', { includeHiddenElements: true }),
+    ).toHaveTextContent('It is the last one.');
+    expect(screen.getByTestId('hide-choice-entry')).toBeEnabled();
   });
 });
