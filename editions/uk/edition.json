@@ -95,5 +95,35 @@
       "id": "witty-insults",
       "displayName": "Дотепна лайка"
     }
+  ],
+  "correctionCategories": [
+    {
+      "id": "conversation",
+      "displayName": "У розмові"
+    },
+    {
+      "id": "home",
+      "displayName": "Вдома"
+    },
+    {
+      "id": "work",
+      "displayName": "На роботі"
+    },
+    {
+      "id": "shop",
+      "displayName": "У магазині"
+    },
+    {
+      "id": "transport",
+      "displayName": "Транспорт"
+    },
+    {
+      "id": "school",
+      "displayName": "У школі"
+    },
+    {
+      "id": "leisure-media",
+      "displayName": "Дозвілля і медіа"
+    }
   ]
 }
