@@ -60,7 +60,7 @@ const editionWith = (
     (feature === 'corrections' && corrections) || (feature === 'idioms' && idioms),
   languageTraits: { distractorRule: 'same-part-of-speech' },
   userSettingDefaults: {
-    mix: { categoryIds: ['test'], corrections: true, idioms: true },
+    mix: { categoryIds: ['test'], correctionCategoryIds: 'all' as const, corrections: true, idioms: true },
     notificationTimes: [],
   },
 });

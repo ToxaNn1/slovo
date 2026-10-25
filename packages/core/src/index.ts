@@ -88,7 +88,16 @@ export { buildWordCard, type WordCardModel } from './entries/word-card';
 export { createContentUpdate, type ContentUpdate } from './content-update';
 export type { ContentApi, PackFiles, PackVersion } from './ports';
 export { type ProgressState } from './progress';
-export { featureOfKind, MIX_KINDS, type MixKind, type MixState } from './entries/mix';
+export {
+  CATEGORY_KINDS,
+  categoriesInMix,
+  featureOfKind,
+  MIX_KINDS,
+  type CategoriesInMix,
+  type CategoryKind,
+  type MixKind,
+  type MixState,
+} from './entries/mix';
 export { type OnboardingStep, type SampleNotification } from './onboarding';
 // The shell keeps the Session in memory on a development client without the Keychain.
 export { createMemorySessionStore } from './account/memory-session-store';

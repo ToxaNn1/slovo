@@ -125,12 +125,14 @@ export function createEntries(
   const { content, edition } = options;
 
   const categories = readOnce(() => content.listCategories());
+  const correctionCategories = readOnce(() => content.listCorrectionCategories());
 
-  /** The user's Mix over the Language Pack's Categories; nothing without the user state. */
+  /** The user's Mix over the Language Pack's Categories, the Words' and the Corrections'; nothing without the user state. */
   async function readUserMix() {
     if (!('userState' in options)) return undefined;
     const { edition: mixEdition, userState } = options;
-    return readMix({ categories: await categories(), edition: mixEdition, userState });
+    const [word, correction] = await Promise.all([categories(), correctionCategories()]);
+    return readMix({ categories: { word, correction }, edition: mixEdition, userState });
   }
 
   /** Whether the kind of Entry, as a whole, is in the user's Mix; without a Mix it always is. */
@@ -194,6 +196,20 @@ export function createEntries(
     });
   }
 
+  /**
+   * The live Corrections of the Categories of Corrections in the Mix, in the
+   * Language Pack's order, or every live Correction without a Mix (ADR 0050).
+   */
+  async function correctionIds(categoryIds: readonly string[] | undefined): Promise<readonly string[]> {
+    const ids = await listIds.correction();
+    if (categoryIds === undefined) return ids;
+    const corrections = await live.correction();
+    return ids.filter((id) => {
+      const correction = corrections.get(id);
+      return correction?.kind === 'correction' && categoryIds.includes(correction.categoryId);
+    });
+  }
+
   async function eligible(): Promise<EntryIds> {
     const [mix, hidden] = await Promise.all([
       readUserMix(),
@@ -202,7 +218,7 @@ export function createEntries(
     const ofKind = (kind: MixKind) => (kindShown(kind, mix) ? listIds[kind]() : []);
     const [words, corrections, idioms] = await Promise.all([
       wordIds(mix?.categoryIds).then((ids) => atRarityFloor(ids, mix?.rarityFloor)),
-      ofKind('correction'),
+      kindShown('correction', mix) ? correctionIds(mix?.correctionCategories.categoryIds) : [],
       ofKind('idiom'),
     ]);
     const shown = (id: string) => !hidden.has(id);

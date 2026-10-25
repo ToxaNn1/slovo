@@ -70,7 +70,12 @@ async function run({
           : (withCorrections && feature === 'corrections') || (withIdioms && feature === 'idioms'),
       languageTraits: { distractorRule: 'same-part-of-speech' },
       userSettingDefaults: {
-        mix: { categoryIds: categories.map(({ id }) => id), corrections: true, idioms: true },
+        mix: {
+          categoryIds: categories.map(({ id }) => id),
+          correctionCategoryIds: 'all' as const,
+          corrections: true,
+          idioms: true,
+        },
         notificationTimes: [],
       },
     },

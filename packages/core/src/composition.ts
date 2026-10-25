@@ -293,9 +293,10 @@ export async function openComposition({
   const [favorites, collections, mix] = await Promise.all([
     openFavorites({ rows, userState, clock }),
     openCollections({ rows, userState, clock, random }),
-    entries
-      .categories()
-      .then((categories) => openMix({ edition, categories, userState, eligibilityChanged })),
+    Promise.all([entries.categories(), content.listCorrectionCategories()]).then(
+      ([word, correction]) =>
+        openMix({ edition, categories: { word, correction }, userState, eligibilityChanged }),
+    ),
   ]);
   const { progress, recordToday, todayChange } = await openProgress({
     userState,

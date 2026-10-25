@@ -220,7 +220,7 @@ describe('the settings and the composition over the tracked user state', () => {
         isFeatureEnabled: () => false,
         languageTraits: { distractorRule: 'same-part-of-speech' },
         userSettingDefaults: {
-          mix: { categoryIds: ['test'], corrections: false, idioms: true },
+          mix: { categoryIds: ['test'], correctionCategoryIds: 'all' as const, corrections: false, idioms: true },
           notificationTimes: [],
         },
       },

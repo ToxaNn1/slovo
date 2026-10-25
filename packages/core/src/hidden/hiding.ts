@@ -1,12 +1,13 @@
 import type { EntryRowModel, EntryRows } from '../entries/entry-row';
 import type { HiddenEntries } from './hidden-entries';
 import { createInTurn } from '../in-turn';
-import type { Mix, MixKind } from '../entries/mix';
+import { categoriesInMix, type CategoryKind, type Mix, type MixKind } from '../entries/mix';
 
 /** What a hide or an unhide is for: one Entry, one Category, or a kind of Entry (Corrections, Idioms) as a whole. */
 export type HideTarget =
   | { readonly kind: 'entry'; readonly entryId: string }
-  | { readonly kind: 'category'; readonly categoryId: string }
+  /** A Category of the Words' list, or of the Corrections' when `of` says so (ADR 0050). */
+  | { readonly kind: 'category'; readonly categoryId: string; readonly of?: CategoryKind }
   | { readonly kind: 'whole-kind'; readonly entryKind: MixKind };
 
 /** What a hide or an unhide changed: its target, and for an Entry the row whose title a toast names. */
@@ -83,11 +84,11 @@ export function createHiding({
       };
     }
     if (target.kind === 'category') {
-      const { categoryId } = target;
+      const { categoryId, of = 'word' } = target;
       // `takeOut` resolves to true for a Category out already, so that is checked first.
-      if (!mix.state.categoryIds.includes(categoryId)) return undefined;
-      if (!(await mix.takeOut(categoryId))) return undefined;
-      return { changed: { kind: 'category', categoryId }, undo: () => mix.putBack(categoryId) };
+      if (!categoriesInMix(mix.state, of).categoryIds.includes(categoryId)) return undefined;
+      if (!(await mix.takeOut(categoryId, of))) return undefined;
+      return { changed: target, undo: () => mix.putBack(categoryId, of) };
     }
     const { entryKind } = target;
     if (!mix.state.kinds[entryKind]) return undefined;
@@ -110,10 +111,12 @@ export function createHiding({
       };
     }
     if (target.kind === 'category') {
-      const { categoryId } = target;
-      if (!mix.state.hiddenCategories.some(({ id }) => id === categoryId)) return undefined;
-      await mix.putBack(categoryId);
-      return { changed: { kind: 'category', categoryId }, hiddenAt: undefined, undo: undefined };
+      const { categoryId, of = 'word' } = target;
+      if (!categoriesInMix(mix.state, of).hiddenCategories.some(({ id }) => id === categoryId)) {
+        return undefined;
+      }
+      await mix.putBack(categoryId, of);
+      return { changed: target, hiddenAt: undefined, undo: undefined };
     }
     const { entryKind } = target;
     if (mix.state.kinds[entryKind]) return undefined;

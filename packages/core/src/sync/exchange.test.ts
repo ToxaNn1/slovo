@@ -27,7 +27,7 @@ const edition = {
   isFeatureEnabled: (feature: string) => feature === 'knowledge',
   languageTraits: { distractorRule: 'same-part-of-speech' as const },
   userSettingDefaults: {
-    mix: { categoryIds: ['test', 'sea'], corrections: false, idioms: true },
+    mix: { categoryIds: ['test', 'sea'], correctionCategoryIds: 'all' as const, corrections: false, idioms: true },
     notificationTimes: [],
   },
 };

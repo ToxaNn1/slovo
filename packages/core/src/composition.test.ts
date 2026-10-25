@@ -43,7 +43,7 @@ async function run({
       isFeatureEnabled: () => true,
       languageTraits: { distractorRule: 'same-part-of-speech' },
       userSettingDefaults: {
-        mix: { categoryIds: ['test'], corrections: true, idioms: true },
+        mix: { categoryIds: ['test'], correctionCategoryIds: 'all' as const, corrections: true, idioms: true },
         notificationTimes: ['09:00', '13:00', '19:00'],
       },
     },

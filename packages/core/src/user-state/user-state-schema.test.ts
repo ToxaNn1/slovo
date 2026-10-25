@@ -120,6 +120,7 @@ describe('the 0.8 sync marks', () => {
       'history.w_1',
       'hidden.w_1',
       'mix.categories.nature',
+      'mix.correctionCategories.work',
       'mix.corrections',
       'mix.idioms',
       'mix.rarityFloor',

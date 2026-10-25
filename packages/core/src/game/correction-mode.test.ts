@@ -156,7 +156,7 @@ async function run({
       id: 'test',
       isFeatureEnabled: (feature) => feature === 'game' || withCorrections,
       userSettingDefaults: {
-        mix: { categoryIds: ['nature'], corrections: correctionsInMix, idioms: true },
+        mix: { categoryIds: ['nature'], correctionCategoryIds: 'all' as const, corrections: correctionsInMix, idioms: true },
         notificationTimes: [],
       },
       languageTraits: { distractorRule: 'same-part-of-speech' },

@@ -87,7 +87,7 @@ const editionWith = (
   isFeatureEnabled: (feature) =>
     (feature === 'corrections' && corrections) || (feature === 'idioms' && idioms),
   userSettingDefaults: {
-    mix: { categoryIds: ['speech', 'nature'], corrections: true, idioms: true },
+    mix: { categoryIds: ['speech', 'nature'], correctionCategoryIds: 'all' as const, corrections: true, idioms: true },
   },
 });
 
@@ -263,7 +263,7 @@ describe('the Entries', () => {
       const edition = {
         ...editionWith(true),
         userSettingDefaults: {
-          mix: { categoryIds: 'all' as const, corrections: true, idioms: false },
+          mix: { categoryIds: 'all' as const, correctionCategoryIds: 'all' as const, corrections: true, idioms: false },
         },
       };
       const { entries } = await openOver({}, edition);

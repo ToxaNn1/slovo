@@ -41,7 +41,7 @@ async function open(records: Map<string, string>) {
       isFeatureEnabled: (feature) => feature === 'corrections' || feature === 'knowledge',
       languageTraits: { distractorRule: 'same-part-of-speech' },
       userSettingDefaults: {
-        mix: { categoryIds: ['test'], corrections: true, idioms: true },
+        mix: { categoryIds: ['test'], correctionCategoryIds: 'all' as const, corrections: true, idioms: true },
         notificationTimes: [],
       },
     },
