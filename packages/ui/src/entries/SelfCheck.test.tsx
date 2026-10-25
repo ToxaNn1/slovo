@@ -81,6 +81,8 @@ const correctionCard: EntryFeedCard = {
     mainEquivalentStressedVowels: [],
     otherEquivalents: [],
     correctionType: 'calque',
+    categoryId: 'everyday',
+    categoryName: 'Everyday speech',
     explanation: 'Why join in is better.',
     examplePair: { nonStandard: 'I take part.', standard: 'I join in.' },
     sourceTitles: [],

@@ -15,6 +15,7 @@ import { useTokens } from '../providers/TokensProvider';
 import { usePageTurnActions } from '../primitives/VerticalPager';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 import { WordOfTheDayBadge } from './WordOfTheDayBadge';
+import { CategoryChip } from './CategoryChip';
 
 /**
  * The Word card's blocks inside the Entry card's frame: the Lemma with Stress,
@@ -44,7 +45,7 @@ export function WordCardBody({
   /** Self-check: only the Lemma, part of speech and Category. */
   concealed: boolean;
 }) {
-  const { colors, fontFamilies, radii } = useTokens();
+  const { colors, fontFamilies } = useTokens();
   const sizes = useWordTextSizes();
   const edition = useEdition();
   const { voice, Pronunciation } = edition;
@@ -56,22 +57,7 @@ export function WordCardBody({
   const grammar = (form: 'short' | 'full') => partOfSpeechText(strings, card, form);
 
   const categoryChip =
-    categoryName === undefined ? null : (
-      <View
-        testID="word-category"
-        accessible
-        accessibilityLabel={fill(strings.category, { category: categoryName })}
-        {...voice}
-        style={[
-          styles.categoryChip,
-          { backgroundColor: colors.surfaceSunken, borderRadius: radii.chip },
-        ]}
-      >
-        <Text style={[styles.categoryText, { color: colors.ink, fontFamily: fontFamilies.ui }]}>
-          {categoryName}
-        </Text>
-      </View>
-    );
+    categoryName === undefined ? null : <CategoryChip testID="word-category" name={categoryName} />;
   const relations = [
     { key: 'synonyms', words: card.synonyms, one: strings.synonym, many: strings.synonyms },
     { key: 'antonyms', words: card.antonyms, one: strings.antonym, many: strings.antonyms },
@@ -369,13 +355,6 @@ const styles = StyleSheet.create({
   },
   // On the SE the relations share a row with the Category chip, which keeps its width.
   compactRelations: { flex: 1, minWidth: 0 },
-  categoryChip: {
-    alignSelf: 'flex-start',
-    flexShrink: 0,
-    paddingHorizontal: space[3],
-    paddingVertical: wordCardControls.chipPaddingVertical,
-  },
-  categoryText: { fontSize: typeSize.chip, fontWeight: '600' },
   // A full touch target that looks no taller than its label.
   moreButton: {
     alignSelf: 'flex-start',

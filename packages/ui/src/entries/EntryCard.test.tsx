@@ -26,7 +26,7 @@ const strings = {
     partOfSpeechWithGender: '{partOfSpeech}, {gender}',
     registers: { dialectal: { short: 'dial.', full: 'dialectal' } },
     registerWithRegion: '{register}, {region}',
-    category: '{category}',
+    category: 'Category: {category}',
     synonym: 'Synonym',
     synonyms: 'Synonyms',
     antonym: 'Antonym',
@@ -80,6 +80,8 @@ const correctionCard: CorrectionCardModel = {
   mainEquivalentStressedVowels: [],
   otherEquivalents: [],
   correctionType: 'calque',
+  categoryId: 'everyday',
+  categoryName: 'Everyday speech',
   explanation: 'A long explanation.',
   examplePair: { nonStandard: 'I take part.', standard: 'I join in.' },
   sourceTitles: [],
@@ -250,6 +252,24 @@ describe('EntryCard', () => {
     expect(chip).toHaveProp('accessibilityLabel', 'Type: anglicism');
   });
 
+  it('names the Category of a Correction in a chip, which VoiceOver reads as its Category', async () => {
+    await render(inEdition(<EntryCard card={card} />));
+
+    const chip = screen.getByTestId('correction-category');
+    expect(chip).toHaveTextContent('Everyday speech');
+    expect(chip).toHaveProp('accessibilityLabel', 'Category: Everyday speech');
+  });
+
+  it('draws no Category chip on a Correction whose Category the Language Pack does not have', async () => {
+    const unnamed = { ...correctionCard, categoryName: undefined };
+
+    await render(
+      inEdition(<EntryCard card={{ kind: 'correction', entryId: 'c1', model: unnamed }} />),
+    );
+
+    expect(screen.queryByTestId('correction-category')).toBeNull();
+  });
+
   it.each([
     ['Word', wordCard],
     ['Correction', card],
@@ -304,7 +324,7 @@ describe('EntryCard', () => {
       );
 
       expect(screen.getByTestId('word-lemma')).toHaveTextContent(longestWordOfTheDay.model.lemma);
-      expect(screen.getByLabelText('Engineering')).toBeTruthy();
+      expect(screen.getByLabelText('Category: Engineering')).toBeTruthy();
       await fireEvent.press(screen.getByRole('button', { name: 'Pronounce' }));
       expect(speak).toHaveBeenCalledTimes(1);
     } finally {
@@ -469,6 +489,7 @@ describe('Self-check on a Correction card', () => {
     expect(screen.getByRole('button', { name: 'Show' })).toBeTruthy();
     for (const concealedPart of [
       'correction-type',
+      'correction-category',
       'correction-standard',
       'correction-other-equivalents',
       'correction-explanation',
