@@ -47,7 +47,12 @@ const strings = {
   correctionCard: {
     title: 'Correction',
     correctionType: 'Type: {type}',
-    correctionTypes: { calque: 'calque', anglicism: 'anglicism', wrongStress: 'stress' },
+    correctionTypes: {
+      calque: 'calque',
+      anglicism: 'anglicism',
+      wrongStress: 'stress',
+      paronym: 'paronyms',
+    },
     nonStandard: 'Non-standard',
     standard: 'Standard',
     otherEquivalents: 'Also: {equivalents}',
@@ -95,6 +100,24 @@ const stressTrap: EntryFeedCard = {
     mainEquivalentStressedVowels: ['o'],
     explanation: 'Say catalo\u0301g, as in dialo\u0301g.',
     examplePair: { nonStandard: 'Open the ca\u0301talog.', standard: 'Open the catalo\u0301g.' },
+  },
+};
+
+/** A paronym: the Correction Type `paronym`, the swapped word in a phrase. */
+const paronym: EntryFeedCard = {
+  kind: 'correction',
+  entryId: 'c2',
+  model: {
+    ...correctionCard,
+    correctionId: 'c2',
+    correctionType: 'paronym',
+    nonStandardForm: 'an effective dress',
+    mainEquivalent: 'an effectual dress',
+    explanation: 'Effective works; effectual strikes the eye.',
+    examplePair: {
+      nonStandard: 'She wore an effective dress.',
+      standard: 'She wore an effectual dress.',
+    },
   },
 };
 
@@ -189,6 +212,15 @@ describe('EntryCard', () => {
 
     expect(screen.getByText('stress')).toBeTruthy();
     expect(screen.getByLabelText('Type: stress')).toBeTruthy();
+  });
+
+  it("shows the Edition's name of the paronym Correction Type as the chip of a paronym", async () => {
+    await render(inEdition(<EntryCard card={paronym} />));
+
+    expect(screen.getByText('paronyms')).toBeTruthy();
+    expect(screen.getByLabelText('Type: paronyms')).toBeTruthy();
+    expect(screen.getByText('an effective dress')).toBeTruthy();
+    expect(screen.getByText('an effectual dress')).toBeTruthy();
   });
 
   it('names the sources of a Correction in a line under the example pair', async () => {

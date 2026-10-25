@@ -13,7 +13,8 @@ export const CorrectionIdSchema = z
 /**
  * Why a form is non-standard. A `wrongStress` Correction, a stress trap,
  * writes its Stress into its texts with the combining acute mark after the
- * stressed vowel (ADR 0045).
+ * stressed vowel (ADR 0045). A `paronym` Correction swaps a word for its
+ * look-alike, such as «ефективна сукня» for «ефектна сукня».
  */
 export const CorrectionTypeSchema = z.enum([
   'russianism',
@@ -22,6 +23,7 @@ export const CorrectionTypeSchema = z.enum([
   'officialese',
   'anglicism',
   'wrongStress',
+  'paronym',
 ]);
 
 export type CorrectionType = z.infer<typeof CorrectionTypeSchema>;

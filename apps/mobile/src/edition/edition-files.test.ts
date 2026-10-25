@@ -283,6 +283,29 @@ describe('the strings of the Idiom Type proverb', () => {
   });
 });
 
+describe('the string of the Correction Type paronym', () => {
+  const strings = readJson('uk', 'strings') as Record<string, Record<string, unknown>>;
+  const correctionCard = strings['correctionCard'] ?? {};
+
+  it('the Ukrainian Edition calls a paronym «пароніми» on its card', () => {
+    expect(EditionStringsSchema.parse(strings).correctionCard.correctionTypes.paronym).toBe(
+      'пароніми',
+    );
+  });
+
+  it('needs correctionCard.correctionTypes.paronym of every Edition', () => {
+    const { paronym: _removed, ...rest } = correctionCard['correctionTypes'] as Record<
+      string,
+      unknown
+    >;
+    const changed = { ...strings, correctionCard: { ...correctionCard, correctionTypes: rest } };
+
+    expect(
+      EditionStringsSchema.safeParse(changed).error?.issues.map((issue) => issue.path.join('.')),
+    ).toEqual(['correctionCard.correctionTypes.paronym']);
+  });
+});
+
 describe('the legal pages of About', () => {
   const strings = readJson('uk', 'strings') as Record<string, unknown>;
   const settings = strings['settings'] as Record<string, unknown>;
