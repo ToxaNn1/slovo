@@ -1,4 +1,4 @@
-import { featureOfKind, withoutStress, type MixKind } from '@slovo/core';
+import { featureOfKind, withoutStress, type CategoryKind, type MixKind } from '@slovo/core';
 import {
   BackLink,
   EntryRow,
@@ -26,7 +26,8 @@ const strings = editionStrings.hidden;
 
 /**
  * Settings › Приховане: the Hidden Entries newest first, each with its kind
- * and labels and «Повернути», and the Hidden Categories, and Corrections and
+ * and labels and «Повернути», and the Hidden Categories, of Words and of
+ * Corrections, and Corrections and
  * Idioms when they are out of the Mix, each with «Увімкнути», which puts it
  * back in the Mix. Bringing an Entry back shows an
  * undo toast. Nothing hidden says so.
@@ -147,20 +148,20 @@ function CategoriesSection({
   onTurnKindOn,
 }: {
   model: HiddenScreenModel;
-  onTurnCategoryOn: (id: string) => void;
+  onTurnCategoryOn: (id: string, of: CategoryKind) => void;
   onTurnKindOn: (entryKind: MixKind) => void;
 }) {
   return (
     <View testID="hidden-categories" style={styles.section}>
       <SectionLabel style={styles.sectionLabel}>{strings.categories}</SectionLabel>
-      {model.categories.map(({ id, name }) => (
+      {model.categories.map(({ id, of, name }) => (
         <TurnOnRow
-          key={id}
-          testID={`hidden-category-${id}`}
+          key={`${of}-${id}`}
+          testID={of === 'word' ? `hidden-category-${id}` : `hidden-correction-category-${id}`}
           name={name}
           accessibilityLabel={fill(strings.turnOnLabel, { name })}
           onTurnOn={() => {
-            onTurnCategoryOn(id);
+            onTurnCategoryOn(id, of);
           }}
         />
       ))}

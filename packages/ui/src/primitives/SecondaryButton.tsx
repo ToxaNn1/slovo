@@ -21,6 +21,7 @@ export function SecondaryButton({
   destructive = false,
   busy = false,
   disabled = false,
+  accessibilityHint,
   testID,
 }: {
   label: string;
@@ -29,6 +30,8 @@ export function SecondaryButton({
   /** Whether the request of the button is on the way. */
   busy?: boolean | undefined;
   disabled?: boolean | undefined;
+  /** What VoiceOver reads after the label, such as why the button is disabled. */
+  accessibilityHint?: string | undefined;
   testID?: string | undefined;
 }) {
   const { colors, fontFamilies, radii } = useTokens();
@@ -39,6 +42,7 @@ export function SecondaryButton({
       testID={testID}
       accessibilityRole="button"
       accessibilityState={{ busy, disabled: busy || disabled }}
+      accessibilityHint={accessibilityHint}
       {...voice}
       disabled={busy || disabled}
       onPress={onPress}

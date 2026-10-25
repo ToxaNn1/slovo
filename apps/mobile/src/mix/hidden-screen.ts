@@ -2,6 +2,7 @@ import { fill, type EditionStrings, type Plural } from '@slovo/contracts';
 import {
   featureOfKind,
   MIX_KINDS,
+  type CategoryKind,
   type Edition,
   type EntryRowModel,
   type HiddenEntry,
@@ -21,6 +22,9 @@ export interface HiddenEntryModel {
 /** A Hidden Category's row on the Hidden screen. */
 export interface HiddenCategoryModel {
   readonly id: string;
+  /** The list the Category is of, the Words' or the Corrections' (ADR 0050). */
+  readonly of: CategoryKind;
+  /** Its display name; a Category of Corrections says so. */
   readonly name: string;
 }
 
@@ -36,7 +40,12 @@ export interface HiddenKindModel {
 export interface HiddenScreenModel {
   /** The Hidden Entries, newest first. */
   readonly entries: readonly HiddenEntryModel[];
-  /** The Hidden Categories, in the Language Pack's order: the Categories out of the Mix (ADR 0019). */
+  /**
+   * The Hidden Categories, in the Language Pack's order: the Categories out of
+   * the Mix (ADR 0019), the Words' and then the Corrections' (ADR 0050). The
+   * Corrections' are left out while Corrections as a whole are out or the
+   * Edition turns them off, as on the Mix screen.
+   */
   readonly categories: readonly HiddenCategoryModel[];
   /**
    * Each kind of Entry as a whole (Corrections, Idioms) that is out of the
@@ -114,10 +123,21 @@ export function hiddenScreenModel({
   strings: EditionStrings;
 }): HiddenScreenModel {
   const entries = hiddenEntries.map((hiddenEntry) => entryModel(hiddenEntry, strings));
-  const categories = mix.hiddenCategories.map(({ id, displayName }) => ({
-    id,
-    name: displayName,
-  }));
+  const correctionsIn = edition.isFeatureEnabled('corrections') && mix.kinds.correction;
+  const categories: HiddenCategoryModel[] = [
+    ...mix.hiddenCategories.map(({ id, displayName }) => ({
+      id,
+      of: 'word' as const,
+      name: displayName,
+    })),
+    ...(correctionsIn ? mix.correctionCategories.hiddenCategories : []).map(
+      ({ id, displayName }) => ({
+        id,
+        of: 'correction' as const,
+        name: fill(strings.mix.corrections.category, { category: displayName }),
+      }),
+    ),
+  ];
   const kinds = MIX_KINDS.filter(
     (kind) => edition.isFeatureEnabled(featureOfKind(kind)) && !mix.kinds[kind],
   ).map((kind) => kindModel(kind, strings));
