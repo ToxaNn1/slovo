@@ -1,6 +1,6 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
-import { createGoogleSignInSheet } from './google-sign-in-sheet';
+import { createGoogleSignInSheet, type GoogleSignInSdk } from './google-sign-in-sheet';
 
 /**
  * Google's sign-in SDK for React Native, faked: its sheet answers what
@@ -8,25 +8,23 @@ import { createGoogleSignInSheet } from './google-sign-in-sheet';
  * and `googleSdk.told` keeps each sign-out and revoke the SDK was told,
  * which answer what `googleSdk.forgets` answers.
  */
-const googleSdk = vi.hoisted(() => ({
+const googleSdk = {
   signIn: (): Promise<unknown> => Promise.resolve({ type: 'cancelled', data: null }),
   forgets: (): Promise<null> => Promise.resolve(null),
   told: [] as string[],
-}));
-vi.mock('@react-native-google-signin/google-signin', () => ({
-  GoogleSignin: {
-    configure: () => undefined,
-    signIn: () => googleSdk.signIn(),
-    signOut: () => {
-      googleSdk.told.push('signOut');
-      return googleSdk.forgets();
-    },
-    revokeAccess: () => {
-      googleSdk.told.push('revokeAccess');
-      return googleSdk.forgets();
-    },
+};
+const GoogleSignin = {
+  configure: () => undefined,
+  signIn: () => googleSdk.signIn(),
+  signOut: () => {
+    googleSdk.told.push('signOut');
+    return googleSdk.forgets();
   },
-}));
+  revokeAccess: () => {
+    googleSdk.told.push('revokeAccess');
+    return googleSdk.forgets();
+  },
+} as unknown as GoogleSignInSdk;
 
 /** A rejection of Google's SDK on iOS, as React Native hands over the native error. */
 const sdkError = (domain: string, code: string) =>
@@ -41,7 +39,7 @@ beforeEach(() => {
 });
 
 describe("Google's own sign-in sheet behind «Увійти через Google»", () => {
-  const googleSheet = createGoogleSignInSheet(CLIENT_ID);
+  const googleSheet = createGoogleSignInSheet(GoogleSignin, CLIENT_ID);
 
   it("hands the Account the identity token from Google's sheet", async () => {
     googleSdk.signIn = () =>

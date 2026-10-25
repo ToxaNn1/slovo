@@ -1,15 +1,11 @@
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import type { GoogleSignin } from '@react-native-google-signin/google-signin';
 import type { GoogleSignInSheet } from '@slovo/core';
 
-const clientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
-
-/**
- * The build's Google client id for iOS (ADR 0047), from its environment and
- * never the repository, or undefined when the build has none.
- * «Увійти через Google» shows only with one.
- */
-export const googleClientId: string | undefined =
-  clientId === undefined || clientId === '' ? undefined : clientId;
+/** What the sheet uses of Google's sign-in SDK for React Native. */
+export type GoogleSignInSdk = Pick<
+  typeof GoogleSignin,
+  'configure' | 'signIn' | 'signOut' | 'revokeAccess'
+>;
 
 /** The domain of the errors iOS gives when a request finds no network or loses it. */
 const NETWORK_ERROR_DOMAIN = 'NSURLErrorDomain';
@@ -26,7 +22,7 @@ function isNetworkError(error: unknown): boolean {
 
 /**
  * The Core's Google sign-in sheet port (ADR 0047) on Google's sign-in SDK for
- * React Native, for the app's OAuth client id for iOS: Google's own native
+ * React Native, as the app loads it, for the app's OAuth client id for iOS: Google's own native
  * sheet, configured at its first showing. The SDK answers a dismissed sheet
  * as cancelled; an error of the network is offline, and any other error, or a
  * sign-in without an identity token, is unexpected. It asks for Google's
@@ -35,16 +31,19 @@ function isNetworkError(error: unknown): boolean {
  * which drops the Google user it keeps in the Keychain; revoking first takes
  * back the reader's grant at Google too. A failure of either changes nothing.
  */
-export function createGoogleSignInSheet(iosClientId: string): GoogleSignInSheet {
+export function createGoogleSignInSheet(
+  sdk: GoogleSignInSdk,
+  iosClientId: string,
+): GoogleSignInSheet {
   let configured = false;
   return {
     async signIn() {
       try {
         if (!configured) {
-          GoogleSignin.configure({ iosClientId });
+          sdk.configure({ iosClientId });
           configured = true;
         }
-        const response = await GoogleSignin.signIn();
+        const response = await sdk.signIn();
         if (response.type === 'cancelled') return { ok: false, reason: 'cancelled' };
         const { idToken } = response.data;
         return idToken === null ? { ok: false, reason: 'unexpected' } : { ok: true, idToken };
@@ -53,21 +52,18 @@ export function createGoogleSignInSheet(iosClientId: string): GoogleSignInSheet 
       }
     },
     async forget({ revoke }) {
-      if (revoke) await GoogleSignin.revokeAccess().catch(() => undefined);
-      await GoogleSignin.signOut().catch(() => undefined);
+      if (revoke) await sdk.revokeAccess().catch(() => undefined);
+      await sdk.signOut().catch(() => undefined);
     },
   };
 }
 
 /**
- * The Google sign-in sheet of this device: Google's own, for the build's
- * client id. A build without one has no sheet, so a Google sign-in fails as
- * unexpected; the button that starts one stays hidden there.
+ * The sheet of a build without Google's: one without a client id, or whose
+ * binary lacks the SDK's native module. A Google sign-in fails as unexpected;
+ * the button that starts one stays hidden there.
  */
-export const googleSignInSheet: GoogleSignInSheet =
-  googleClientId === undefined
-    ? {
-        signIn: () => Promise.resolve({ ok: false, reason: 'unexpected' }),
-        forget: () => Promise.resolve(),
-      }
-    : createGoogleSignInSheet(googleClientId);
+export const noGoogleSignInSheet: GoogleSignInSheet = {
+  signIn: () => Promise.resolve({ ok: false, reason: 'unexpected' }),
+  forget: () => Promise.resolve(),
+};

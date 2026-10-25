@@ -4,9 +4,8 @@ import { useEdition } from '@slovo/ui';
 import { editionStrings } from '../edition/edition';
 import { useEditionInEffect } from '../edition/remote-switches';
 import { useSubscribed, type Opening, type Source } from '../opening';
-import { accountOpening } from './device-account';
+import { accountOpening, googleClientId } from './device-account';
 import { accountProblemLine, accountSummary } from './account-texts';
-import { googleClientId } from './google-sign-in-sheet';
 
 /**
  * The opening of the Account while its switch is on in effect, so its row and

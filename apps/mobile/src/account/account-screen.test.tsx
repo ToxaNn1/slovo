@@ -23,10 +23,6 @@ import { AccountScreen } from './account-screen';
 const strings = editionStrings.account;
 const { problems } = strings;
 
-// The app's composition, which the screen imports, loads Google's sign-in SDK,
-// whose native module Jest has none of; the screen gets a fake sheet instead.
-jest.mock('@react-native-google-signin/google-signin', () => ({ GoogleSignin: {} }));
-
 /** A client id of the shape Google gives an iOS app; no real one. */
 const CLIENT_ID = '123456789012-test.apps.googleusercontent.com';
 
