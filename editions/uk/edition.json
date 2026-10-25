@@ -108,6 +108,10 @@
     {
       "id": "repressed-words",
       "displayName": "Розстріляна лексика"
+    },
+    {
+      "id": "chameleon-words",
+      "displayName": "Слова-хамелеони"
     }
   ],
   "correctionCategories": [
@@ -140,5 +144,5 @@
       "displayName": "Дозвілля і медіа"
     }
   ],
-  "categoriesRequiringHistory": ["repressed-words"]
+  "categoriesRequiringHistory": ["repressed-words", "chameleon-words"]
 }

@@ -318,9 +318,10 @@ describe('the Categories that require history', () => {
     ).toEqual(['categoriesRequiringHistory']);
   });
 
-  it('the Ukrainian Edition requires history of «Розстріляна лексика»', () => {
+  it('the Ukrainian Edition requires history of «Розстріляна лексика» and «Слова-хамелеони»', () => {
     expect(EditionConfigSchema.parse(readJson('uk', 'config')).categoriesRequiringHistory).toEqual([
       'repressed-words',
+      'chameleon-words',
     ]);
   });
 });

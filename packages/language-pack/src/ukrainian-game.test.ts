@@ -183,11 +183,16 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
   });
 
   it("offers three Distractors of the answer's part of speech, none with the answer's Lemma", async () => {
-    for (const seed of [1, 2, 3]) {
-      for (const { answer, options } of await playGame(await runWords(seed))) {
+    // A part of speech with fewer than four Words (достеменно is the only adverb) fills up with others.
+    const wordsOf = (partOfSpeech: Word['partOfSpeech']) =>
+      words.filter((word) => word.partOfSpeech === partOfSpeech).length;
+    // One composition plays three Games: opening one plans the Game over the whole pack, the slow part.
+    const app = await runWords(1);
+    for (let game = 0; game < 3; game += 1) {
+      for (const { answer, options } of await playGame(app)) {
         expect(
           options.filter((option) => option.partOfSpeech === answer.partOfSpeech),
-        ).toHaveLength(4);
+        ).toHaveLength(Math.min(4, wordsOf(answer.partOfSpeech)));
         expect(new Set(options.map((option) => option.lemma)).size).toBe(4);
       }
     }
@@ -282,21 +287,25 @@ describe('the idioms «Вгадай слово» asks about in the Ukrainian Lan
       (entry): entry is Idiom => entry.kind === 'idiom',
     );
     const proper = idioms.filter(({ idiomType }) => idiomType === 'idiom');
-    const entries: readonly (Word | Idiom)[] = [...words, ...idioms];
-    const textOf = (entry: Word | Idiom) =>
-      entry.kind === 'word' ? renderStress(entry) : entry.expression;
+    // The Entries by the text an option shows, built once: reading every Entry per option is slow.
+    const byText = new Map<string, (Word | Idiom)[]>();
+    for (const entry of [...words, ...idioms]) {
+      const text = entry.kind === 'word' ? renderStress(entry) : entry.expression;
+      byText.set(text, [...(byText.get(text) ?? []), entry]);
+    }
     const offered = (round: Round) =>
       round.options.map(({ text }) => {
-        const reading = entries.filter((entry) => textOf(entry) === text);
+        const reading = byText.get(text) ?? [];
         const entry =
           reading.find(({ primaryDefinition }) => primaryDefinition === round.prompt) ?? reading[0];
         if (entry === undefined) throw new Error(`No Entry reads «${text}»`);
         return entry;
       });
     const played: PlayedRound[] = [];
-    for (const seed of [1, 2, 3]) {
-      const app = await run(seed);
-      for (const { id } of idioms) await app.knowledge.tap(id, 'unknown');
+    // One composition plays three Games: opening one plans the Game over the whole pack, the slow part.
+    const app = await run(1);
+    for (const { id } of idioms) await app.knowledge.tap(id, 'unknown');
+    for (let game = 0; game < 3; game += 1) {
       await app.game.start('guess-word');
       while (current(app).status === 'playing') {
         const { round } = current(app);
