@@ -113,12 +113,20 @@ async function run(seed: number, port = createMemoryUserStatePort(new Map())) {
   return offersPlanned(app);
 }
 
+/** The composition of `run` with Synonym Rows and Tips out of the Mix, so the Game asks Words and Idioms. */
+async function runWordsAndIdioms(seed: number, port?: UserStatePort) {
+  const app = await run(seed, port);
+  await app.mix.setKind('synonymRow', false);
+  await app.mix.setKind('tip', false);
+  return app;
+}
+
 /**
- * The composition of `run` with Idioms out of the Mix, so that «Вгадай
- * слово» asks about Words alone, for the tests of Word Rounds.
+ * The composition of `run` with Idioms, Synonym Rows and Tips out of the Mix,
+ * so that «Вгадай слово» asks about Words alone, for the tests of Word Rounds.
  */
 async function runWords(seed: number, port?: UserStatePort) {
-  const app = await run(seed, port);
+  const app = await runWordsAndIdioms(seed, port);
   await app.mix.setKind('idiom', false);
   return app;
 }
@@ -303,7 +311,7 @@ describe('the idioms «Вгадай слово» asks about in the Ukrainian Lan
       });
     const played: PlayedRound[] = [];
     // One composition plays three Games: opening one plans the Game over the whole pack, the slow part.
-    const app = await run(1);
+    const app = await runWordsAndIdioms(1);
     for (const { id } of idioms) await app.knowledge.tap(id, 'unknown');
     for (let game = 0; game < 3; game += 1) {
       await app.game.start('guess-word');
