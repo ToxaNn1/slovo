@@ -57,6 +57,7 @@ export function checkContent(
   const categoryIds = new Set(config.categories.map((category) => category.id));
   const correctionCategoryIds = new Set(config.correctionCategories.map(({ id }) => id));
   const categoriesRequiringHistory = new Set(config.categoriesRequiringHistory);
+  const originCodes = new Set(config.originLanguages.map(({ code }) => code));
   const correctionIds = new Set(corrections.map(({ entry }) => entry.id));
   const fileById = new Map<string, string>();
 
@@ -121,6 +122,13 @@ export function checkContent(
 
     if (word.history === undefined && categoriesRequiringHistory.has(word.categoryId)) {
       fail('history', `Required: Category "${word.categoryId}" requires history`);
+    }
+
+    if (word.origin !== undefined && !originCodes.has(word.origin)) {
+      fail(
+        'origin',
+        `Unknown origin language "${word.origin}": the Edition's originLanguages list no such code`,
+      );
     }
 
     if (!marksStress) {

@@ -48,6 +48,7 @@ CREATE TABLE words (
   etymology TEXT,
   region TEXT,
   history TEXT,
+  origin TEXT,
   retired INTEGER NOT NULL
 ) WITHOUT ROWID;
 
@@ -232,9 +233,11 @@ CREATE TABLE sources (
  * keeps format 4's layout, adding only the Synonym Row tables
  * (`synonym_rows`, `synonym_row_members` and `synonym_row_stress`), the Tip
  * tables (`tips` and `tip_wrong_answers`) and the kinds `'synonymRow'` and
- * `'tip'`, and admits the Synonym Rows and Tips of 0.8.11 (ADR 0051).
+ * `'tip'`, and admits the Synonym Rows and Tips of 0.8.11 (ADR 0051); format 6
+ * keeps format 5's layout, adding only the Word's origin column, and admits
+ * the Word's origin of 0.8.12 (ADR 0052).
  */
-export const PACK_FORMAT = 5;
+export const PACK_FORMAT = 6;
 
 /**
  * Where each field of the pack metadata lies in the `metadata` table, and how

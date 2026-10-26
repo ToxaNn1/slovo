@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { CorrectionIdSchema } from './correction';
+import { OriginLanguageSchema } from './edition';
 import { hasNoRepeats, SourceSchema, TextSchema } from './shared';
 
 /**
@@ -72,6 +73,9 @@ export const RaritySchema = z.int().min(1).max(5);
  * Word comes from. The Edition names the Categories whose Words must carry
  * one; the Language Pack build checks them.
  *
+ * `origin` names the language the Word comes from, a code from the Edition's
+ * `originLanguages` list, which the Language Pack build checks (ADR 0052).
+ *
  * `correctionIds` links the Corrections the Word is the standard form for.
  *
  * List fields default to empty and `retired` to false, so authored content
@@ -108,6 +112,7 @@ export const WordSchema = z
       .default([]),
     region: TextSchema.optional(),
     history: TextSchema.optional(),
+    origin: OriginLanguageSchema.shape.code.optional(),
     categoryId: z.string().min(1),
     rarity: RaritySchema,
     sources: z.array(SourceSchema).min(1),
