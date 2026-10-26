@@ -77,6 +77,10 @@ const validConfig = {
     { id: 'shop', displayName: 'In the shop' },
   ],
   categoriesRequiringHistory: ['speech'],
+  originLanguages: [
+    { code: 'la', name: 'Latin' },
+    { code: 'other', name: 'Other' },
+  ],
 };
 
 /** The Feature Switches of the Game Modes and the Daily Crossword (ADR 0052). */
@@ -269,6 +273,10 @@ describe('loadEdition', () => {
     const { [page]: _removed, ...legalPages } = validConfig.legalPages;
 
     expect(() => loadEdition({ ...validConfig, legalPages })).toThrow(`legalPages.${page}`);
+  });
+
+  it('accepts an Edition that lists no origin languages', () => {
+    expect(() => loadEdition({ ...validConfig, originLanguages: [] })).not.toThrow();
   });
 
   it('accepts an Edition whose Categories require no history', () => {
@@ -549,6 +557,22 @@ describe('loadEdition', () => {
       'an unknown Category that requires history',
       { categoriesRequiringHistory: ['speech', 'work'] },
       'categoriesRequiringHistory.1',
+    ],
+    ['no origin languages', { originLanguages: undefined }, 'originLanguages'],
+    [
+      'a repeated origin language code',
+      {
+        originLanguages: [
+          { code: 'la', name: 'Latin' },
+          { code: 'la', name: 'Late Latin' },
+        ],
+      },
+      'originLanguages.1.code',
+    ],
+    [
+      'an origin language without a name',
+      { originLanguages: [{ code: 'la', name: '' }] },
+      'originLanguages.0.name',
     ],
   ])('rejects %s, naming the field', (_, override, field) => {
     const load = () => loadEdition({ ...validConfig, ...override });

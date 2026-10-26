@@ -162,5 +162,19 @@
       "displayName": "Дозвілля і медіа"
     }
   ],
-  "categoriesRequiringHistory": ["repressed-words", "chameleon-words"]
+  "categoriesRequiringHistory": ["repressed-words", "chameleon-words"],
+  "originLanguages": [
+    { "code": "la", "name": "латина" },
+    { "code": "el", "name": "грецька" },
+    { "code": "trk", "name": "тюркські" },
+    { "code": "pl", "name": "польська" },
+    { "code": "de", "name": "німецька" },
+    { "code": "fr", "name": "французька" },
+    { "code": "it", "name": "італійська" },
+    { "code": "en", "name": "англійська" },
+    { "code": "hbo", "name": "давньоєврейська" },
+    { "code": "cu", "name": "церковнослов’янська" },
+    { "code": "proto-slavic", "name": "праслов’янська" },
+    { "code": "other", "name": "інша" }
+  ]
 }
