@@ -826,6 +826,20 @@ describe('buildLanguagePack', () => {
       expect(await readTips(outFile, ['t_fx0002'])).toEqual([{ ...plainTip, kind: 'tip' }]);
     });
 
+    it('lists the ids of the live Tips, leaving a Retired one out', async () => {
+      const outFile = packPath();
+      const retired = { ...fullTip, id: 't_fx0002', retired: true };
+
+      buildLanguagePack({ editionDir: withTips([fullTip, retired]), outFile });
+
+      const pack = openLanguagePack(outFile);
+      try {
+        expect(await pack.listTipIds()).toEqual(['t_fx0001']);
+      } finally {
+        pack.close();
+      }
+    });
+
     it('keeps Tips out of the Entries the screens are given', async () => {
       const outFile = packPath();
 
@@ -1111,6 +1125,20 @@ describe('buildLanguagePack', () => {
           message: expect.stringMatching(/same text as members\.2:/i) as string,
         });
       });
+    });
+
+    it('lists the ids of the live Synonym Rows, leaving a Retired one out', async () => {
+      const outFile = packPath();
+      const retired = { ...fullRow, id: 'r_fx0002', retired: true };
+
+      buildLanguagePack({ editionDir: withRows([fullRow, retired]), outFile });
+
+      const pack = openLanguagePack(outFile);
+      try {
+        expect(await pack.listSynonymRowIds()).toEqual(['r_fx0001']);
+      } finally {
+        pack.close();
+      }
     });
 
     it('keeps Synonym Rows out of the Entries the screens are given', async () => {

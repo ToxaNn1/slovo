@@ -56,6 +56,16 @@ export interface ContentReadPort {
    * the Word only as its dominant, or only as plain text, doesn't link it.
    */
   listLinkingSynonymRowIds(wordId: string): Promise<readonly string[]>;
+  /**
+   * The ids of the Synonym Rows that are not retired, in a stable order. A
+   * Retired Synonym Row is left out, so nothing new picks it.
+   */
+  listSynonymRowIds(): Promise<readonly string[]>;
+  /**
+   * The ids of the Tips that are not retired, in a stable order. A Retired
+   * Tip is left out, so nothing new picks it.
+   */
+  listTipIds(): Promise<readonly string[]>;
 }
 
 /**
