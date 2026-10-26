@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Correction, Idiom, Word } from '@slovo/contracts';
+import type { Correction, Idiom, SynonymRow, Tip, Word } from '@slovo/contracts';
 
 import {
   createMemoryUserStatePort,
@@ -28,6 +28,35 @@ const idioms: readonly Idiom[] = Array.from({ length: 4 }, (_, index) =>
   idiom(`i_${String(index)}`),
 );
 
+const synonymRows: readonly SynonymRow[] = Array.from({ length: 4 }, (_, index) => ({
+  kind: 'synonymRow',
+  id: `r_${String(index)}`,
+  dominant: { text: 'іти', stress: [2] },
+  meaning: 'Рухатися пішки.',
+  members: [
+    { text: 'простувати', stress: [6] },
+    { text: 'чимчикувати', stress: [6] },
+  ],
+  sources: [{ title: 'Test source' }],
+  retired: false,
+}));
+
+const tips: readonly Tip[] = Array.from({ length: 4 }, (_, index) => ({
+  kind: 'tip',
+  id: `t_${String(index)}`,
+  title: 'Котра година?',
+  nonStandardForm: 'Скільки час?',
+  standardForm: 'Котра година?',
+  explanation: 'Про час питають «котра година».',
+  sources: [{ title: 'Test source' }],
+  gameQuestion: {
+    prompt: 'Як запитати про час?',
+    rightAnswer: 'Котра година?',
+    wrongAnswers: ['Скільки час?', 'Скільки годин?', 'Який час?'],
+  },
+  retired: false,
+}));
+
 const dayOne = '2026-10-11T09:00:00+03:00';
 const dayTwo = '2026-10-12T09:00:00+03:00';
 
@@ -37,12 +66,14 @@ async function run({
   at,
   withCorrections = false,
   withIdioms = false,
-  on = ['knowledge', 'corrections', 'idioms', 'rarityFloor'],
+  withRowsAndTips = false,
+  on = ['knowledge', 'corrections', 'idioms', 'synonymRows', 'tips', 'rarityFloor'],
 }: {
   records: Map<string, string>;
   at: string;
   withCorrections?: boolean;
   withIdioms?: boolean;
+  withRowsAndTips?: boolean;
   on?: readonly FeatureSwitch[];
 }): Promise<Composition & { advance: (ms: number) => void }> {
   const { clock, advance } = fakeClock(at);
@@ -51,6 +82,8 @@ async function run({
       words,
       corrections: withCorrections ? corrections : [],
       idioms: withIdioms ? idioms : [],
+      synonymRows: withRowsAndTips ? synonymRows : [],
+      tips: withRowsAndTips ? tips : [],
     }),
     edition: {
       id: 'test',
@@ -360,5 +393,86 @@ describe('Review in the Feed', () => {
       })
       .join('');
     expect(kinds).toBe('WWRWCRIWRCWRWICWWRWCI');
+  });
+
+  // Spec #730, ADR 0043, 0051: a due Synonym Row or Tip takes its kind's next turn before a new one.
+  describe('a due Synonym Row and a due Tip', () => {
+    /** 'R' for the due Word, 'S' for the due row, 'T' for the due Tip, lower case for a new one, 'W' for any other Word. */
+    function kindsOf(
+      ids: readonly (string | undefined)[],
+      {
+        dueWord,
+        dueRow = 'r_0',
+        dueTip = 't_0',
+      }: {
+        dueWord?: string | undefined;
+        dueRow?: string | undefined;
+        dueTip?: string | undefined;
+      } = {},
+    ): string {
+      return ids
+        .map((id) => {
+          if (id === dueWord) return 'R';
+          if (id === dueRow) return 'S';
+          if (id === dueTip) return 'T';
+          if (id?.startsWith('r_') === true) return 's';
+          if (id?.startsWith('t_') === true) return 't';
+          return id?.startsWith('w_') === true ? 'W' : '?';
+        })
+        .join('');
+    }
+
+    it('take their turns, every 9th and every 11th card, until the reader answers them', async () => {
+      const records = new Map<string, string>();
+      await markUnknown(records, ['r_0', 't_0']);
+      const app = await run({ records, at: dayTwo, withRowsAndTips: true });
+
+      const before = await firstCards(app.feed, 22);
+      expect(kindsOf(before)).toBe('WWWWWWWWSWTWWWWWWSWWWT');
+      expect(app.feed.cards[8]).toMatchObject({ kind: 'synonymRow', review: true });
+      expect(app.feed.cards[10]).toMatchObject({ kind: 'tip', review: true });
+
+      await app.knowledge.tap('r_0', 'known');
+      await app.knowledge.tap('t_0', 'known');
+      const after = await firstCards(app.feed, 27);
+      expect(kindsOf(after.slice(22))).toBe('WWWWs');
+      expect(app.feed.cards[26]).not.toHaveProperty('review');
+    });
+
+    it('come back on their turns though Seen in this Cycle', async () => {
+      const records = new Map<string, string>();
+      const app = await run({ records, at: dayOne, withRowsAndTips: true });
+      for (let position = 0; position < 11; position += 1) {
+        await app.feed.show(position);
+        app.advance(1000);
+      }
+      await app.feed.show(undefined);
+      const dueRow = app.feed.cards[8]?.entryId;
+      const dueTip = app.feed.cards[10]?.entryId;
+      expect([dueRow?.startsWith('r_'), dueTip?.startsWith('t_')]).toEqual([true, true]);
+      await app.knowledge.tap(dueRow ?? '', 'unknown');
+      await app.knowledge.tap(dueTip ?? '', 'unknown');
+
+      const ids = await firstCards(
+        (await run({ records, at: dayTwo, withRowsAndTips: true })).feed,
+        12,
+      );
+
+      expect(kindsOf(ids, { dueRow, dueTip })).toBe('WWWWWWWWSWTW');
+    });
+
+    it('leave the Review slots and the Word of the Day to Words', async () => {
+      const records = new Map<string, string>();
+      const [dueWord] = await markSeenWordsUnknown(records, { count: 3, unknown: 1 });
+      await markUnknown(records, ['r_0', 't_0']);
+
+      const app = await run({ records, at: dayTwo, withRowsAndTips: true });
+      const ids = await firstCards(app.feed, 22);
+
+      expect(app.feed.cards[0]).toMatchObject({ kind: 'word' });
+      expect(app.feed.cards[0]?.kind === 'word' && app.feed.cards[0].wordOfTheDay).toBeTruthy();
+      // Cards 3, 6, 9, ... are Review slots: the row's turns take cards 9 and 18 from the due Word.
+      expect(kindsOf(ids, { dueWord })).toBe('WWRWWRWWSWTRWWRWWSWWRT');
+    });
   });
 });
