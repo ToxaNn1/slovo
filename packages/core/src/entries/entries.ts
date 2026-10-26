@@ -26,6 +26,14 @@ export type ShownKind = ShownEntry['kind'];
 const isShown = (entry: Entry): entry is ShownEntry =>
   entry.kind !== 'synonymRow' && entry.kind !== 'tip';
 
+/** An Entry of a kind the Game may ask about: one the screens show, or a Synonym Row (spec #730). */
+export type AskableEntry = ShownEntry | SynonymRow;
+
+/** The kind of an Entry the Game may ask about. */
+export type AskableKind = AskableEntry['kind'];
+
+const isAskable = (entry: Entry): entry is AskableEntry => entry.kind !== 'tip';
+
 /** The ids of Entries, each kind in its own list. */
 export interface EntryIds {
   readonly words: readonly string[];
@@ -43,8 +51,8 @@ export interface EntryIds {
 export type KindRefusal = `${MixKindName}-out-of-mix`;
 
 /** The eligible Entries of one kind, or why the kind, as a whole, is not eligible. */
-export type EligibleOfKind =
-  { readonly entries: readonly ShownEntry[] } | { readonly refusal: KindRefusal };
+export type EligibleOfKind<E extends AskableEntry = ShownEntry> =
+  { readonly entries: readonly E[] } | { readonly refusal: KindRefusal };
 
 /**
  * The Entries of the Language Pack as this Edition and this user may see
@@ -74,9 +82,13 @@ export interface Entries {
    * turns them on, why none are. Read afresh on every call, but for the live
    * Entries themselves, which are read from the Language Pack once: it never
    * changes while it is open. With `alsoOf`, the eligible Entries of those
-   * kinds follow, none of a kind out of the Mix, and only `kind` can refuse.
+   * kinds follow, none of a kind out of the Mix, and only `kind` can refuse;
+   * they may be Synonym Rows, which the Game asks about.
    */
-  eligibleOfKind(kind: ShownKind, alsoOf?: readonly ShownKind[]): Promise<EligibleOfKind>;
+  eligibleOfKind<Also extends AskableKind = never>(
+    kind: ShownKind,
+    alsoOf?: readonly Also[],
+  ): Promise<EligibleOfKind<Extract<AskableEntry, { kind: ShownKind | Also }>>>;
   /**
    * Any Entry by id, eligible or not: a Retired one, or a Correction or an
    * Idiom when the Edition turns its kind off. So the Entries the user keeps
@@ -179,10 +191,11 @@ export function createEntries(
   };
 
   /** How to read every live Entry of a kind from the Language Pack. */
-  const readLive: Record<ShownKind, () => Promise<readonly Entry[]>> = {
+  const readLive: Record<AskableKind, () => Promise<readonly Entry[]>> = {
     word: () => content.listWords(),
     correction: async () => content.getEntries(await listIds.correction()),
     idiom: async () => content.getEntries(await listIds.idiom()),
+    synonymRow: async () => content.getEntries(await listIds.synonymRow()),
   };
 
   /** The Entries of the ids the screens show, read together. */
@@ -193,15 +206,16 @@ export function createEntries(
    * The live Entries of each kind by id, read once: the Language Pack never
    * changes while it is open. A read that fails is tried again on the next call.
    */
-  const byId = (kind: ShownKind) =>
+  const byId = (kind: AskableKind) =>
     readOnce(
       async () =>
-        new Map((await readLive[kind]()).filter(isShown).map((entry) => [entry.id, entry])),
+        new Map((await readLive[kind]()).filter(isAskable).map((entry) => [entry.id, entry])),
     );
-  const live: Record<ShownKind, () => Promise<ReadonlyMap<string, ShownEntry>>> = {
+  const live: Record<AskableKind, () => Promise<ReadonlyMap<string, AskableEntry>>> = {
     word: byId('word'),
     correction: byId('correction'),
     idiom: byId('idiom'),
+    synonymRow: byId('synonymRow'),
   };
 
   /**
@@ -271,16 +285,17 @@ export function createEntries(
   }
 
   /** The ids of the eligible Entries of the kind. */
-  const idsOfKind: Record<ShownKind, (ids: EntryIds) => readonly string[]> = {
+  const idsOfKind: Record<AskableKind, (ids: EntryIds) => readonly string[]> = {
     word: ({ words }) => words,
     correction: ({ corrections }) => corrections,
     idiom: ({ idioms }) => idioms,
+    synonymRow: ({ synonymRows }) => synonymRows,
   };
 
   async function eligibleOfKind(
     kind: ShownKind,
-    alsoOf: readonly ShownKind[] = [],
-  ): Promise<EligibleOfKind> {
+    alsoOf: readonly AskableKind[] = [],
+  ): Promise<EligibleOfKind<AskableEntry>> {
     if (kind !== 'word' && !kindInMix(kind, await readUserMix())) {
       return { refusal: `${featureOfKind(kind)}-out-of-mix` };
     }
@@ -295,7 +310,8 @@ export function createEntries(
 
   return {
     eligible,
-    eligibleOfKind,
+    // The kinds asked for pick the Entries returned, as the generic signature says.
+    eligibleOfKind: eligibleOfKind as Entries['eligibleOfKind'],
     async get(id) {
       return (await readShown([id]))[0];
     },

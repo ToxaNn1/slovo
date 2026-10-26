@@ -1,4 +1,4 @@
-import type { EligibleOfKind, ShownEntry } from '../entries/entries';
+import type { AskableEntry, EligibleOfKind } from '../entries/entries';
 import type { AnswerSheet, GameMode, RoundContent, RoundOption, TextRange } from './game-mode';
 import { GAME_ROUNDS, type PlannedRound, type RoundPlanner } from './round-plan';
 
@@ -29,7 +29,7 @@ export interface Round {
 /** A Round the reader answered: what the Game Review lists. */
 export interface PlayedRound extends Round {
   /** The Entry the Round asked about. */
-  readonly entry: ShownEntry;
+  readonly entry: AskableEntry;
   readonly answer: RoundAnswer;
   /** Whether the reader chose the right option. */
   readonly right: boolean;
@@ -87,7 +87,7 @@ export interface GameInPlay {
    * eligible Entries of the mode's kind, while the Game is not over. When the
    * mode can't make the rest, they stay as they were.
    */
-  replan(game: CurrentGame, eligible: EligibleOfKind): void;
+  replan(game: CurrentGame, eligible: EligibleOfKind<AskableEntry>): void;
 }
 
 const roundOf = ({ prompt, highlight, options }: RoundContent, number: number): Round => ({
