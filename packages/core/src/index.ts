@@ -30,6 +30,12 @@ export {
   type ConcealedTipCardModel,
   type SelfCheckCardModel,
 } from './entries/self-check';
+export {
+  buildSynonymRowShareCard,
+  buildTipShareCard,
+  type SynonymRowShareCardModel,
+  type TipShareCardModel,
+} from './entries/share-card';
 export { coreDecor, loadDecor, type Decor } from './edition/decor';
 export { createEntries, type Entries, type ShownEntry, type ShownKind } from './entries/entries';
 export type { EntryRowModel } from './entries/entry-row';
@@ -116,7 +122,11 @@ export { type OnboardingStep, type SampleNotification } from './onboarding';
 // The shell keeps the Session in memory on a development client without the Keychain.
 export { createMemorySessionStore } from './account/memory-session-store';
 export { openSync, type Sync, type SyncState } from './sync/sync';
-export { NOTIFICATION_BODY_LENGTH } from './notifications/notification-plan';
+export {
+  NOTIFICATION_BODY_LENGTH,
+  notificationText,
+  type NotificationText,
+} from './notifications/notification-text';
 export {
   type NotificationTimeRefusal,
   type NotificationsState,

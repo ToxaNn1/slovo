@@ -651,7 +651,8 @@
     }
   },
   "notificationBody": {
-    "ellipsis": "…"
+    "ellipsis": "…",
+    "tipStandardForm": "Так: {form}"
   },
   "game": {
     "title": "Гра",
