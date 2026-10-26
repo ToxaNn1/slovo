@@ -892,10 +892,15 @@ describe('buildLanguagePack', () => {
         id: 'r_fx0002',
         dominant: { text: 'іти', stress: [0] },
         meaning: 'Тестове значення: рухатися пішки.',
-        members: ['простувати', 'чимчикувати', 'шкандибати', 'дибати', 'сунути'].map((text) => ({
-          text,
-          stress: [1],
-        })),
+        members: (
+          [
+            ['простувати', 7],
+            ['чимчикувати', 8],
+            ['шкандибати', 7],
+            ['дибати', 3],
+            ['сунути', 1],
+          ] as const
+        ).map(([text, stressed]) => ({ text, stress: [stressed] })),
         sources: [{ title: 'Тестове джерело' }],
         retired: true,
       };
@@ -916,8 +921,9 @@ describe('buildLanguagePack', () => {
       };
       const outFile = packPath();
 
-      buildLanguagePack({ editionDir: withRows([row]), outFile });
+      const result = buildLanguagePack({ editionDir: withRows([row]), outFile });
 
+      expect(result.ok ? [] : result.errors).toEqual([]);
       expect(await readRows(outFile, ['r_fx0001'])).toEqual([
         {
           ...fullRow,
@@ -926,6 +932,99 @@ describe('buildLanguagePack', () => {
           retired: false,
         },
       ]);
+    });
+
+    describe('refuses a bad Synonym Row and says why', () => {
+      const member = (place: number) => fullRow.members[place] as Json;
+      const withMembers = (members: Json[]) => ({ ...fullRow, members });
+
+      /** The build's refusals for the row, which is written but not recorded. */
+      function refusals(row: Json) {
+        const editionDir = copyFixture('valid');
+        mkdirSync(join(editionDir, 'content/synonym-rows'), { recursive: true });
+        writeFileSync(join(editionDir, 'content/synonym-rows/r_fx0001.json'), JSON.stringify(row));
+        const result = buildLanguagePack({ editionDir, outFile: packPath() });
+        return result.ok ? [] : result.errors;
+      }
+
+      it.each<[string, Json, string, RegExp]>([
+        [
+          'fewer than 5 members',
+          withMembers(fullRow.members.slice(0, 4)),
+          'members',
+          /at least 5|>=5/i,
+        ],
+        [
+          'more than 12 members',
+          withMembers(
+            Array.from({ length: 13 }, (_, place) => ({
+              text: `слово${'а'.repeat(place)}`,
+              stress: [2],
+            })),
+          ),
+          'members',
+          /at most 12|<=12/i,
+        ],
+        [
+          'two members with the same text',
+          withMembers([...fullRow.members.slice(0, 4), { text: 'мовити', stress: [3] }]),
+          'members.4.text',
+          /same text as members\.1:/i,
+        ],
+        [
+          'a shade note over 60 characters',
+          withMembers([{ ...member(0), shadeNote: 'н'.repeat(61) }, ...fullRow.members.slice(1)]),
+          'members.0.shadeNote',
+          /at most 60|<=60/i,
+        ],
+        ['no source', { ...fullRow, sources: [] }, 'sources', /at least 1|>=1/i],
+        [
+          'an unknown Word id on the dominant',
+          { ...fullRow, dominant: { ...fullRow.dominant, wordId: 'w_fx9999' } },
+          'dominant.wordId',
+          /unknown word "w_fx9999"/i,
+        ],
+        [
+          'an unknown Word id on a member',
+          withMembers([
+            member(0),
+            { ...member(1), wordId: 'w_fx9999' },
+            ...fullRow.members.slice(2),
+          ]),
+          'members.1.wordId',
+          /unknown word "w_fx9999"/i,
+        ],
+        [
+          'Stress on a letter that is not a vowel',
+          { ...fullRow, dominant: { ...fullRow.dominant, stress: [0] } },
+          'dominant.stress.0',
+          /position 0 is "г", not a vowel/i,
+        ],
+        [
+          'Stress out of the range of the text',
+          withMembers([...fullRow.members.slice(0, 4), { ...member(4), stress: [8] }]),
+          'members.4.stress.0',
+          /position 8 is out of range for the 8-letter text/i,
+        ],
+      ])('%s', (_rule, row, field, message) => {
+        expect(refusals(row)).toContainEqual({
+          file: 'content/synonym-rows/r_fx0001.json',
+          entryId: 'r_fx0001',
+          field,
+          message: expect.stringMatching(message) as string,
+        });
+      });
+
+      it('compares member texts in lower case', () => {
+        const row = withMembers([...fullRow.members.slice(0, 4), { text: 'Казати', stress: [3] }]);
+
+        expect(refusals(row)).toContainEqual({
+          file: 'content/synonym-rows/r_fx0001.json',
+          entryId: 'r_fx0001',
+          field: 'members.4.text',
+          message: expect.stringMatching(/same text as members\.2:/i) as string,
+        });
+      });
     });
 
     it('keeps Synonym Rows out of the Entries the screens are given', async () => {
