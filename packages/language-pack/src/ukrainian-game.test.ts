@@ -151,14 +151,30 @@ interface Asked {
   readonly round: Round;
 }
 
+/** The Example the Round shows with a gap in it, if it is one of the Entry's (L10). */
+const gappedIn = ({ examples }: Word | Idiom, { prompt, highlight }: Round) => {
+  if (highlight === undefined) return undefined;
+  const [before, after] = [prompt.slice(0, highlight.start), prompt.slice(highlight.end)];
+  return examples.find(
+    ({ text }) =>
+      text.length > before.length + after.length && text.startsWith(before) && text.endsWith(after),
+  );
+};
+
+/** Whether the Round asks about the Entry: by its primary Definition, or by its Example with a gap. */
+const asks = (entry: Word | Idiom, round: Round) =>
+  round.highlight === undefined
+    ? entry.primaryDefinition === round.prompt
+    : gappedIn(entry, round) !== undefined;
+
 /** The Words that read as the option, with its Stress. */
 const wordsReading = (text: string) => words.filter((word) => renderStress(word) === text);
 
 /**
  * Plays a Game of «Вгадай слово» to its end, always right, and tells what
- * each Round asked. The answer is the option whose Word has the prompt as its
- * primary Definition, as the reader would find it; of two homonyms that read
- * alike, the one with that Definition.
+ * each Round asked. The answer is the option whose Word the Round asks
+ * about, by its primary Definition or its Example with a gap, as the reader
+ * would find it; of two homonyms that read alike, the one it asks about.
  */
 async function playGame(app: Composition): Promise<Asked[]> {
   await app.game.start('guess-word');
@@ -167,14 +183,13 @@ async function playGame(app: Composition): Promise<Asked[]> {
     const { round } = current(app);
     const options = optionsOf(round).map(({ text }) => {
       const reading = wordsReading(text);
-      const word =
-        reading.find((candidate) => candidate.primaryDefinition === round.prompt) ?? reading[0];
+      const word = reading.find((candidate) => asks(candidate, round)) ?? reading[0];
       if (word === undefined) throw new Error(`No Word reads «${text}»`);
       return word;
     });
-    const right = options.findIndex((word) => word.primaryDefinition === round.prompt);
+    const right = options.findIndex((word) => asks(word, round));
     const answer = options[right];
-    if (answer === undefined) throw new Error(`No option has the Definition «${round.prompt}»`);
+    if (answer === undefined) throw new Error(`No option answers «${round.prompt}»`);
     void app.game.answer({ form: 'pick', option: right });
     asked.push({ answer, options, round: current(app).round });
     await app.game.next();
@@ -241,8 +256,8 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
       }
 
       expect(asked.some(({ round }) => shared(definitionOf(round.prompt)))).toBe(true);
-      for (const { round } of asked) {
-        const prompt = definitionOf(round.prompt);
+      for (const { answer, round } of asked) {
+        const prompt = definitionOf(answer.primaryDefinition);
         expect(
           optionsOf(round).filter(({ text }) =>
             wordsReading(text).some((word) => definitionOf(word.primaryDefinition) === prompt),
@@ -252,11 +267,11 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
     },
   );
 
-  it('shows the Lemma and its first Example, with its author, on the sheet', async () => {
+  it('shows the Lemma and its first Example, or the one with the gap, with its author, on the sheet', async () => {
     for (const { answer, round } of await playGame(await runWords(11))) {
       expect(round.answer?.sheet).toEqual({
         answer: expect.objectContaining({ text: renderStress(answer) }) as unknown,
-        example: answer.examples[0],
+        example: gappedIn(answer, round) ?? answer.examples[0],
       });
     }
   });
@@ -315,8 +330,7 @@ describe('the idioms «Вгадай слово» asks about in the Ukrainian Lan
     const offered = (round: Round) =>
       optionsOf(round).map(({ text }) => {
         const reading = byText.get(text) ?? [];
-        const entry =
-          reading.find(({ primaryDefinition }) => primaryDefinition === round.prompt) ?? reading[0];
+        const entry = reading.find((candidate) => asks(candidate, round)) ?? reading[0];
         if (entry === undefined) throw new Error(`No Entry reads «${text}»`);
         return entry;
       });
@@ -330,9 +344,7 @@ describe('the idioms «Вгадай слово» asks about in the Ukrainian Lan
         const { round } = current(app);
         void app.game.answer({
           form: 'pick',
-          option: offered(round).findIndex(
-            ({ primaryDefinition }) => primaryDefinition === round.prompt,
-          ),
+          option: offered(round).findIndex((entry) => asks(entry, round)),
         });
         await app.game.next();
       }
