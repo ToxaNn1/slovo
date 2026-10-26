@@ -16,7 +16,7 @@ import type { AnyEntryCard } from './feed/feed-card';
 import type { Edition } from './edition/edition';
 import type { Onboarding } from './onboarding';
 import { notificationText } from './notifications/notification-text';
-import type { Clock, ContentReadPort } from './ports';
+import type { Clock } from './ports';
 import { withoutStress } from './entries/stress';
 
 /**
@@ -93,7 +93,6 @@ const isRowOrTip = (entry: Entry): entry is SynonymRow | Tip =>
  * outside the app, which a notification shares.
  */
 export function createWidget({
-  content,
   edition,
   entries,
   favorites,
@@ -102,7 +101,6 @@ export function createWidget({
   clock,
   opened,
 }: {
-  content: Pick<ContentReadPort, 'getEntries'>;
   edition: Pick<Edition, 'id' | 'isFeatureEnabled'>;
   entries: Entries;
   favorites: Favorites;
@@ -121,15 +119,12 @@ export function createWidget({
         entries.eligible(),
       ]);
       const rowOrTipIds = [...synonymRows, ...tips];
-      const read = new Map(
-        rowOrTipIds.length === 0
-          ? []
-          : (await content.getEntries(rowOrTipIds))
-              .filter(isRowOrTip)
-              .map((entry) => [entry.id, entry]),
-      );
+      const read = await entries.getManyOfAnyKind(rowOrTipIds);
       // In the order `eligible` gives, whatever order the Language Pack reads them in.
-      const rowsAndTips = rowOrTipIds.flatMap((id) => read.get(id) ?? []);
+      const rowsAndTips = rowOrTipIds.flatMap((id) => {
+        const entry = read.get(id);
+        return entry !== undefined && isRowOrTip(entry) ? [entry] : [];
+      });
       const eligible = [
         ...[...entriesOf(words), ...entriesOf(corrections), ...entriesOf(idioms)].map(widgetEntry),
         ...rowsAndTips.map((entry) => widgetRowOrTip(entry, strings)),
