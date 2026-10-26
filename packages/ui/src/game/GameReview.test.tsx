@@ -1,4 +1,4 @@
-import type { Correction, EditionStrings, Idiom, Word } from '@slovo/contracts';
+import type { Correction, EditionStrings, Idiom, SynonymRow, Word } from '@slovo/contracts';
 import type { PlayedRound } from '@slovo/core';
 import { EditionProvider, GameReview } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
@@ -82,10 +82,26 @@ const spillTheBeans: Idiom = {
   retired: false,
 };
 
+const walk: SynonymRow = {
+  kind: 'synonymRow',
+  id: 'r_walk',
+  dominant: { text: 'walk', stress: [1] },
+  meaning: 'to go on foot',
+  members: [
+    { text: 'stroll', stress: [3] },
+    { text: 'amble', stress: [0] },
+    { text: 'stride', stress: [3] },
+    { text: 'hike', stress: [1] },
+    { text: 'trudge', stress: [2] },
+  ],
+  sources: [],
+  retired: false,
+};
+
 /** A Round of the Game over, asked about `entry`, with the reader's pick among four options. */
 function played(
   number: number,
-  entry: Word | Correction | Idiom,
+  entry: Word | Correction | Idiom | SynonymRow,
   answer: string,
   chosen: string,
 ): PlayedRound {
@@ -98,7 +114,12 @@ function played(
   };
   return {
     number,
-    prompt: entry.kind === 'correction' ? entry.nonStandardForm : entry.primaryDefinition,
+    prompt:
+      entry.kind === 'correction'
+        ? entry.nonStandardForm
+        : entry.kind === 'synonymRow'
+          ? 'wa\u0301lk'
+          : entry.primaryDefinition,
     highlight: undefined,
     options,
     answer: roundAnswer,
@@ -112,6 +133,7 @@ const rounds = [
   played(2, dour, 'dour', 'brittle'),
   played(3, correction, 'in the meantime', 'in the meanwhiles'),
   played(4, spillTheBeans, 'spill the beans', 'bite the dust'),
+  played(5, walk, 'stro\u0301ll', 'ru\u0301n'),
 ];
 
 async function renderReview({ onOpen = jest.fn() }: { onOpen?: (entryId: string) => void } = {}) {
@@ -133,6 +155,7 @@ describe('GameReview', () => {
         '2, dour, wrong, you picked brittle',
         '3, in the meantimes, wrong, you picked in the meanwhiles',
         '4, spill the beans, wrong, you picked bite the dust',
+        '5, walk, wrong, you picked ru\u0301n',
       ].map((name) => screen.getByRole('button', { name })),
     );
     expect(screen.getByTestId('game-review-row-1')).toHaveTextContent(/✓/);
@@ -189,6 +212,22 @@ describe('GameReview', () => {
     expect(screen.getByText('Origin')).toBeTruthy();
     expect(screen.getByText('from voting with beans in ancient Greece')).toBeTruthy();
     expect(screen.queryByText('Etymology')).toBeNull();
+  });
+
+  it('expands a Synonym Row on a tap: its members with their Stress', async () => {
+    await renderReview();
+
+    await fireEvent.press(screen.getByTestId('game-review-row-5'));
+
+    expect(
+      screen.getByRole('button', {
+        name: '5, walk, wrong, you picked ru\u0301n',
+        expanded: true,
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.getByText('stro\u0301ll, a\u0301mble, stri\u0301de, hi\u0301ke, tru\u0301dge'),
+    ).toBeTruthy();
   });
 
   it('opens the Entry on a second tap, and keeps one Round expanded at a time', async () => {
