@@ -11,8 +11,18 @@ import {
   type RoundContent,
 } from './game-mode';
 
-/** How many Rounds a Game has, in every Game Mode. */
+/** How many Rounds a Game has, in a Game Mode that sets no Round limit of its own. */
 export const GAME_ROUNDS = 15;
+
+/** How many Rounds a Game in the mode has at most; none in a mode with no Round limit. */
+export const roundLimitOf = ({ roundLimit = GAME_ROUNDS }: GameMode): number | undefined =>
+  roundLimit === 'none' ? undefined : roundLimit;
+
+/**
+ * How many Rounds a Game in the mode starts with, and so how many eligible
+ * Entries the mode needs: its Round limit, or `GAME_ROUNDS` without one.
+ */
+export const roundsToPlanOf = (mode: GameMode): number => roundLimitOf(mode) ?? GAME_ROUNDS;
 
 /** How many Rounds of a Game, at most, ask about Entries the reader is weak on (ADR 0043). */
 const WEAK_ROUNDS = 5;
@@ -28,9 +38,9 @@ export type RoundPlan =
   { readonly rounds: readonly PlannedRound[] } | { readonly refusal: GameModeRefusal };
 
 /**
- * Plans `count` Rounds of the mode, by default a Game's, each asking about
- * another eligible Entry than the ones `asked`; or says why the mode can't
- * make them.
+ * Plans `count` Rounds of the mode, by default the ones a Game in it starts
+ * with (`roundsToPlanOf`), each asking about another eligible Entry than the
+ * ones `asked`; or says why the mode can't make them.
  */
 export type RoundPlanner = (
   mode: GameMode,
@@ -81,7 +91,7 @@ export function createRoundPlanner({
   random: Random;
   edition: GameEdition;
 }): RoundPlanner {
-  return (mode, ofKind, count = GAME_ROUNDS, asked = new Set()) => {
+  return (mode, ofKind, count = roundsToPlanOf(mode), asked = new Set()) => {
     if ('refusal' in ofKind) return ofKind;
     const eligible = ofKind.entries;
     const met = new Set(history.list.map(({ entryId }) => entryId));

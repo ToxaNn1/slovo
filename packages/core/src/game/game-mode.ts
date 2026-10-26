@@ -76,6 +76,17 @@ export interface GameMode {
    * Idioms out of the Mix, leaves the mode asking about the rest.
    */
   readonly alsoAsks?: readonly AskableKind[];
+  /**
+   * The Lives a Game in the mode starts with: `GAME_LIVES` when left out,
+   * or none, so that a mistake never ends the Game.
+   */
+  readonly lives?: number | 'none';
+  /**
+   * How many Rounds a Game in the mode has, which it also needs eligible
+   * Entries for: `GAME_ROUNDS` when left out, or none, so that the Game goes
+   * on until its Lives run out or the mode has no Round left.
+   */
+  readonly roundLimit?: number | 'none';
   /** Whether the Edition turns the mode on; a mode that is off is never on offer. */
   isOn(edition: GameEdition): boolean;
   /**

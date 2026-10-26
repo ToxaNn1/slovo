@@ -1873,6 +1873,76 @@ describe('the Game Mode Extension Point', () => {
   });
 });
 
+describe('the Lives and the Round limit a Game Mode sets', () => {
+  /** A mistake, then «Далі», in a mode whose right option comes first. */
+  const mistake = (app: Composition) => play(app, false, () => 0);
+  const right = (app: Composition) => play(app, true, () => 0);
+
+  it('starts a Game with the Lives the mode sets, and loses it on the mistake that takes the last one', async () => {
+    const app = await run({ gameModes: [{ ...lemmaMode, lives: 3, roundLimit: 'none' }] });
+    await app.game.start('test-lemma');
+    expect(current(app)).toMatchObject({ lives: 3, status: 'playing' });
+
+    await mistake(app);
+    await right(app);
+    await mistake(app);
+    expect(current(app)).toMatchObject({ roundsPassed: 3, lives: 1, status: 'playing' });
+
+    await mistake(app);
+    expect(current(app)).toMatchObject({ roundsPassed: 3, lives: 0, status: 'lost' });
+    expect(current(app).played).toHaveLength(4);
+  });
+
+  it('ends a Game with no Round limit only when its Lives run out or its mode has no Round left', async () => {
+    const app = await run({ gameModes: [{ ...lemmaMode, lives: 3, roundLimit: 'none' }] });
+    await app.game.start('test-lemma');
+    while (current(app).status === 'playing') await right(app);
+
+    // The mode plans 15 Rounds and has no more to ask: the Game is over with every Life.
+    expect(current(app)).toMatchObject({ roundsPassed: 15, lives: 3, status: 'won' });
+  });
+
+  it('never ends a Game on mistakes in a mode with no Lives, and shows no Lives in it', async () => {
+    const app = await run({ gameModes: [{ ...lemmaMode, lives: 'none' }] });
+    await app.game.start('test-lemma');
+    expect(current(app).lives).toBeUndefined();
+
+    while (current(app).status === 'playing') await mistake(app);
+
+    expect(current(app)).toMatchObject({ roundsPassed: 15, lives: undefined, status: 'won' });
+    expect(current(app).played.every(({ right }) => !right)).toBe(true);
+  });
+
+  it('wins a Game after the Rounds of the limit the mode sets, and needs that many eligible Entries', async () => {
+    const app = await run({ gameModes: [{ ...lemmaMode, roundLimit: 10 }] });
+    await app.hide({ kind: 'category', categoryId: 'nature' });
+    await app.hide({ kind: 'entry', entryId: 'w_cnoun01' });
+    // 12 eligible Words: too few for «Вгадай слово», enough for a mode of 10 Rounds.
+    expect(app.game.state.modes).toEqual([
+      { modeId: 'guess-word', entryKind: 'word', canStart: false, refusal: 'too-few-entries' },
+      { modeId: 'test-lemma', entryKind: 'word', canStart: true },
+    ]);
+
+    await app.game.start('test-lemma');
+    const prompts: string[] = [];
+    while (current(app).status === 'playing') {
+      prompts.push(current(app).round.prompt);
+      await right(app);
+    }
+
+    expect(current(app)).toMatchObject({ roundsPassed: 10, lives: GAME_LIVES, status: 'won' });
+    expect(new Set(prompts).size).toBe(10);
+  });
+
+  it('plays «Вгадай слово» as before: 15 Rounds with 5 Lives', async () => {
+    const app = await run();
+    const rounds = await playGame(app, [2, 4, 6, 8, 10]);
+
+    expect(rounds).toHaveLength(10);
+    expect(current(app)).toMatchObject({ roundsPassed: 9, lives: 0, status: 'lost' });
+  });
+});
+
 describe('whether a Game Mode can start', () => {
   /**
    * A Game Mode that can make a fair Round only of a noun, so it may have 15

@@ -126,12 +126,14 @@ export function GameResult({
           label={count(words.result.rounds, GAME_ROUNDS)}
           spoken={fill(words.round.progressLabel, progress)}
         />
-        <ResultNumber
-          testID="game-result-lives"
-          value={String(lives)}
-          label={count(words.result.lives, lives)}
-          spoken={`${String(lives)} ${count(words.result.lives, lives)}`}
-        />
+        {lives !== undefined && (
+          <ResultNumber
+            testID="game-result-lives"
+            value={String(lives)}
+            label={count(words.result.lives, lives)}
+            spoken={`${String(lives)} ${count(words.result.lives, lives)}`}
+          />
+        )}
         {bestResult === undefined ? null : (
           <ResultNumber
             testID="game-result-best"
