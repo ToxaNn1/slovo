@@ -35,6 +35,20 @@ const validConfig = {
     selfCheck: true,
     rarityFloor: true,
     gameReview: true,
+    gameGuessWord: true,
+    gameCorrection: true,
+    gameStress: true,
+    gamePairs: true,
+    gameSurvival: true,
+    gameTimed: true,
+    gameIdiomMeaning: true,
+    gameAnglicism: true,
+    gameBuildIdiom: true,
+    gameTypeWord: true,
+    gameAnagram: true,
+    gameByLetters: true,
+    gameOrigin: true,
+    dailyCrossword: true,
   },
   userSettingDefaults: {
     theme: 'system',
@@ -64,6 +78,24 @@ const validConfig = {
   ],
   categoriesRequiringHistory: ['speech'],
 };
+
+/** The Feature Switches of the Game Modes and the Daily Crossword (ADR 0052). */
+const gamePartSwitches = [
+  'gameGuessWord',
+  'gameCorrection',
+  'gameStress',
+  'gamePairs',
+  'gameSurvival',
+  'gameTimed',
+  'gameIdiomMeaning',
+  'gameAnglicism',
+  'gameBuildIdiom',
+  'gameTypeWord',
+  'gameAnagram',
+  'gameByLetters',
+  'gameOrigin',
+  'dailyCrossword',
+] as const;
 
 describe('loadEdition', () => {
   it('reports the Edition id, locale and whether it marks Stress', () => {
@@ -101,7 +133,18 @@ describe('loadEdition', () => {
     expect(edition.isFeatureEnabled('corrections')).toBe(true);
   });
 
+  it('turns every Game Mode and the Daily Crossword off while the Game is off', () => {
+    const edition = loadEdition({
+      ...validConfig,
+      featureSwitches: { ...validConfig.featureSwitches, game: false },
+    });
+
+    for (const feature of gamePartSwitches) expect(edition.isFeatureEnabled(feature)).toBe(false);
+    expect(edition.isFeatureEnabled('gameReview')).toBe(true);
+  });
+
   it.each([
+    ...gamePartSwitches,
     'synonymRows',
     'tips',
     'account',
@@ -512,5 +555,12 @@ describe('loadEdition', () => {
 
     expect(load).toThrow(InvalidEditionConfigError);
     expect(load).toThrow(`\n${field}: `);
+  });
+
+  it.each(gamePartSwitches)('rejects a missing %s Feature Switch, naming the field', (feature) => {
+    const load = () => loadEdition({ ...validConfig, ...withoutSwitch(feature) });
+
+    expect(load).toThrow(InvalidEditionConfigError);
+    expect(load).toThrow(`\nfeatureSwitches.${feature}: `);
   });
 });

@@ -5,7 +5,7 @@ import type { Random, RemoteSwitchesAnswer, Schedule, SwitchesApi } from '../por
 import { withRetries } from '../retry';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
-import type { Edition } from './edition';
+import { switchedOn, type Edition } from './edition';
 
 const everyFeature = FeatureSwitchesSchema.keyof().options;
 
@@ -14,7 +14,8 @@ const everyFeature = FeatureSwitchesSchema.keyof().options;
  * features the owner turned off on the backend, which the app asks for at
  * launch and on each return to the foreground. A remote switch only turns a
  * feature off: the effective value of a Feature Switch is the Edition's value
- * and not off remotely.
+ * and not off remotely, and a Game Mode's or the Daily Crossword's only while
+ * `game`'s is on too (ADR 0052).
  */
 export interface RemoteSwitches<E extends Pick<Edition, 'isFeatureEnabled'>> {
   /**
@@ -64,8 +65,9 @@ export async function openRemoteSwitches<E extends Pick<Edition, 'isFeatureEnabl
   let kept: RemoteSwitchesAnswer | undefined = await userState.read(record).catch(() => undefined);
   let remotelyOff = new Set(kept?.off);
 
-  const isFeatureEnabled = (feature: FeatureSwitch) =>
-    edition.isFeatureEnabled(feature) && !remotelyOff.has(feature);
+  const isFeatureEnabled = switchedOn(
+    (feature: FeatureSwitch) => edition.isFeatureEnabled(feature) && !remotelyOff.has(feature),
+  );
   /** The effective values, by feature, as one text to compare. */
   const effective = () => everyFeature.map((feature) => isFeatureEnabled(feature)).join();
   const inEffect = (): E => ({ ...edition, isFeatureEnabled });

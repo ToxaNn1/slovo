@@ -55,6 +55,33 @@ export interface Edition {
   isFeatureEnabled(feature: FeatureSwitch): boolean;
 }
 
+/** The Feature Switches of the Game Modes and the Daily Crossword, each off while `game` is (ADR 0052). */
+const GAME_PART_SWITCHES: ReadonlySet<FeatureSwitch> = new Set([
+  'gameGuessWord',
+  'gameCorrection',
+  'gameStress',
+  'gamePairs',
+  'gameSurvival',
+  'gameTimed',
+  'gameIdiomMeaning',
+  'gameAnglicism',
+  'gameBuildIdiom',
+  'gameTypeWord',
+  'gameAnagram',
+  'gameByLetters',
+  'gameOrigin',
+  'dailyCrossword',
+]);
+
+/**
+ * Whether a feature is on, from whether each switch is on by itself: a Game
+ * Mode or the Daily Crossword only while `game` is on too (ADR 0052).
+ */
+export function switchedOn(isOn: (feature: FeatureSwitch) => boolean) {
+  return (feature: FeatureSwitch) =>
+    isOn(feature) && (!GAME_PART_SWITCHES.has(feature) || isOn('game'));
+}
+
 /** Thrown when an Edition config doesn't match the contracts. */
 export class InvalidEditionConfigError extends Error {
   override readonly name = 'InvalidEditionConfigError';
@@ -103,6 +130,6 @@ export function loadEdition(config: unknown): Edition {
     },
     notificationSound,
     legalPages,
-    isFeatureEnabled: (feature) => featureSwitches[feature],
+    isFeatureEnabled: switchedOn((feature) => featureSwitches[feature]),
   };
 }
