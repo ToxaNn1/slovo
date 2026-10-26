@@ -37,18 +37,77 @@ export interface TextRange {
   readonly end: number;
 }
 
-/** A Round as a Game Mode builds it: one prompt with four options, exactly one correct. */
-export interface RoundContent {
-  /** What the Round asks, such as a Definition. */
+/** A Word of a pairs grid with its Definition: one Round of the grid. */
+export interface GridPair {
+  /** The Entry the pair asks about, marked Unknown on a wrong match. */
+  readonly entry: AskableEntry;
+  readonly word: RoundOption;
+  readonly definition: string;
+  readonly sheet: AnswerSheet;
+}
+
+/**
+ * The form of a Round's answer, which the Game Mode decides (ADR 0052): a
+ * pick of options, a tap on a vowel, a pair in a pairs grid, chips tapped in
+ * order, or typed text. Each form but the pairs grid carries the sheet shown
+ * after the answer; a grid carries one per pair.
+ */
+export type RoundForm =
+  | {
+      readonly form: 'pick';
+      /** The `ROUND_OPTIONS` options, in the order shown. */
+      readonly options: readonly RoundOption[];
+      /** The place of the right option among them. */
+      readonly correct: number;
+      readonly sheet: AnswerSheet;
+    }
+  | {
+      readonly form: 'vowel';
+      /** Where in the prompt each vowel to tap stands, in order. */
+      readonly vowels: readonly number[];
+      /** The vowels among them that are stressed, any of which is right. */
+      readonly stressed: readonly number[];
+      readonly sheet: AnswerSheet;
+    }
+  | {
+      readonly form: 'pairs';
+      /** Up to `ROUND_OPTIONS` pairs, each a Round of its own. */
+      readonly pairs: readonly GridPair[];
+      /** The places of the pairs whose Words show, in the order shown. */
+      readonly wordOrder: readonly number[];
+      /** The places of the pairs whose Definitions show, in the order shown. */
+      readonly definitionOrder: readonly number[];
+    }
+  | {
+      readonly form: 'chips';
+      /** The chips, in the order shown. */
+      readonly chips: readonly string[];
+      /** The chips in the right order; equal chips are interchangeable. */
+      readonly expected: readonly string[];
+      readonly sheet: AnswerSheet;
+    }
+  | {
+      readonly form: 'typed';
+      /** The text to type, compared the way `typedAnswerMatches` does. */
+      readonly expected: string;
+      readonly sheet: AnswerSheet;
+    };
+
+/** A Round as a Game Mode builds it: one prompt with exactly one right answer, in the mode's answer form. */
+export type RoundContent = RoundForm & {
+  /** What the Round asks, such as a Definition; nothing for a pairs grid. */
   readonly prompt: string;
   /** The part of the prompt to mark, such as a non-standard form in a sentence; nothing to mark when left out. */
   readonly highlight?: TextRange;
-  /** The four options, in the order shown. */
-  readonly options: readonly RoundOption[];
-  /** The place of the right option among them. */
-  readonly correct: number;
-  readonly sheet: AnswerSheet;
-}
+};
+
+/** How many Rounds the content holds: one, or one per pair of a pairs grid. */
+export const roundsIn = (content: RoundContent): number =>
+  content.form === 'pairs' ? content.pairs.length : 1;
+
+/** The ids of the Entries a pairs grid asks about besides the Round's own; none in another form. */
+export const entriesIn = (content: RoundContent): string[] =>
+  content.form === 'pairs' ? content.pairs.map(({ entry }) => entry.id) : [];
 
 /** What a Game Mode builds a Round from. */
 export interface RoundInput {

@@ -85,6 +85,7 @@ function roundOf<T extends Word | Idiom>(
   if (distractors.length < ROUND_OPTIONS - 1) return undefined;
   const options = shuffled([answer, ...distractors], random);
   return {
+    form: 'pick',
     prompt: answer.primaryDefinition,
     options: options.map(optionOf),
     correct: options.indexOf(answer),
@@ -136,6 +137,7 @@ function synonymRound(
   if (right === undefined || distractors.length < ROUND_OPTIONS - 1) return undefined;
   const options = shuffled([right, ...distractors], random);
   return {
+    form: 'pick',
     prompt: rowWordOption(answer.dominant).text,
     options: options.map(rowWordOption),
     correct: options.indexOf(right),
@@ -154,6 +156,7 @@ function tipRound({ gameQuestion, example }: Tip, random: Random): RoundContent 
   const { prompt, rightAnswer, wrongAnswers } = gameQuestion;
   const options = shuffled([rightAnswer, ...wrongAnswers], random);
   return {
+    form: 'pick',
     prompt,
     options: options.map(tipAnswerOption),
     correct: options.indexOf(rightAnswer),

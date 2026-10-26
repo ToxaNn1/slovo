@@ -83,6 +83,7 @@ export const correctionMode: GameMode = {
     const prompt = answer.examplePair.nonStandard;
     const highlight = firstOccurrence(prompt, answer.nonStandardForm);
     return {
+      form: 'pick',
       prompt,
       ...(highlight === undefined ? {} : { highlight }),
       options: options.map(optionOf),
