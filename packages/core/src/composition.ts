@@ -1,4 +1,5 @@
 import { openCollections, type Collections } from './saved/collections';
+import { anagramMode } from './game/anagram-mode';
 import { byLettersMode } from './game/by-letters-mode';
 import { correctionMode } from './game/correction-mode';
 import { openCycle } from './feed/cycle';
@@ -195,6 +196,7 @@ const coreGameModes: readonly GameMode[] = [
   correctionMode,
   stressMode,
   pairsMode,
+  anagramMode,
   byLettersMode,
 ];
 
