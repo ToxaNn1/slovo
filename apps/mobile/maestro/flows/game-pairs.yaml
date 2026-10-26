@@ -1,0 +1,61 @@
+# The pairs mode «Пари»: it plays from its card, the first Word and the first
+# Definition left and «Далі» in every Round, each sheet with the Word, to the
+# result screen, and «На головну» goes to the Feed. A subflow of `smoke.yaml`;
+# run it from there. It leaves no Game in play.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- tapOn:
+    id: tab-game
+- scrollUntilVisible:
+    element:
+      id: game-mode-pairs
+    direction: DOWN
+- tapOn:
+    id: game-mode-pairs
+- assertVisible:
+    id: game-round
+- assertVisible:
+    text: Знайдіть пари
+# At most 15 Rounds, one a pair; five wrong pairs end the Game sooner. A pair
+# gone leaves its cells disabled, so each tap takes the first cell still left.
+# Each scroll brings its target up at the largest text sizes and does nothing otherwise.
+- repeat:
+    while:
+      notVisible:
+        id: game-result
+    times: 15
+    commands:
+      - tapOn:
+          id: pairs-word-\d+
+          enabled: true
+          index: 0
+      - scrollUntilVisible:
+          element:
+            id: pairs-definition-\d+
+            enabled: true
+          direction: DOWN
+      - tapOn:
+          id: pairs-definition-\d+
+          enabled: true
+          index: 0
+      - assertVisible:
+          id: game-sheet-title
+      - scrollUntilVisible:
+          element:
+            id: game-next
+          direction: DOWN
+      # One tap: a second one, while the sheet slides away, would land on the tab bar.
+      - tapOn:
+          id: game-next
+          retryTapIfNoChange: false
+      - waitForAnimationToEnd
+- assertVisible:
+    id: game-result
+- scrollUntilVisible:
+    element:
+      id: game-home
+    direction: DOWN
+- tapOn:
+    id: game-home
+- assertVisible:
+    id: home

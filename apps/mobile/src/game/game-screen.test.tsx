@@ -130,6 +130,25 @@ function shape(): string[] {
     .map(String);
 }
 
+/** A pairs grid's cells with the ones gone, which VoiceOver skips, so that a place counts them too. */
+const ALL_CELLS = { includeHiddenElements: true };
+
+/**
+ * The pairs of the grid on the screen still to match: the place of each Word
+ * left among the Words with the place of its own Definition, «слово{n}»'s
+ * being «The meaning of test{n}.».
+ */
+function pairsLeft(): { word: number; definition: number }[] {
+  const definitions = screen
+    .getAllByTestId(/^pairs-definition-/, ALL_CELLS)
+    .map((cell): unknown => cell.props['accessibilityLabel']);
+  return screen.getAllByTestId(/^pairs-word-/, ALL_CELLS).flatMap((cell, word) => {
+    if (cell.props['accessibilityElementsHidden'] === true) return [];
+    const n = /\d+/.exec(String(cell.props['accessibilityLabel']))?.[0] ?? '';
+    return [{ word, definition: definitions.indexOf(`The meaning of test${n}.`) }];
+  });
+}
+
 beforeEach(async () => {
   await open();
 });
@@ -143,6 +162,7 @@ describe('the Game screen', () => {
       'Слова',
       'game-mode-guess-word',
       'game-mode-stress',
+      'game-mode-pairs',
       'Виправлення',
       'game-mode-correction',
     ]);
@@ -173,7 +193,13 @@ describe('the Game screen', () => {
     await open({ switchedOff: ['corrections'] });
     await renderScreen();
 
-    expect(shape()).toEqual(['Гра', 'Слова', 'game-mode-guess-word', 'game-mode-stress']);
+    expect(shape()).toEqual([
+      'Гра',
+      'Слова',
+      'game-mode-guess-word',
+      'game-mode-stress',
+      'game-mode-pairs',
+    ]);
     expect(screen.queryByText('Виправлення')).toBeNull();
   });
 
@@ -196,5 +222,50 @@ describe('the Game screen', () => {
     await waitFor(() => {
       expect(screen.getByText('Перемога!')).toBeOnTheScreen();
     });
+  });
+
+  it('starts «Пари» from its card and plays four grids of 4, 4, 4 and 3 pairs to the result screen', async () => {
+    await renderScreen();
+
+    await fireEvent.press(screen.getByTestId('game-mode-pairs'));
+
+    const grids: number[] = [];
+    for (let round = 1; round <= 15; round += 1) {
+      await waitFor(() => {
+        expect(screen.getByTestId('game-progress').props['accessibilityLabel']).toBe(
+          `Пройдено раундів: ${String(round - 1)} з 15`,
+        );
+      });
+      expect(screen.getByText('Знайдіть пари')).toBeOnTheScreen();
+      const left = pairsLeft();
+      // A grid with none of its pairs gone yet is a new one.
+      if (left.length === screen.getAllByTestId(/^pairs-word-/, ALL_CELLS).length)
+        grids.push(left.length);
+      const [{ word, definition }] = left as [(typeof left)[number]];
+      await fireEvent.press(screen.getByTestId(`pairs-word-${String(word)}`));
+      await fireEvent.press(screen.getByTestId(`pairs-definition-${String(definition)}`));
+      expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Правильно!');
+      await fireEvent.press(screen.getByTestId('game-next'));
+    }
+
+    await waitFor(() => {
+      expect(screen.getByText('Перемога!')).toBeOnTheScreen();
+    });
+    expect(grids).toEqual([4, 4, 4, 3]);
+  });
+
+  it('takes a Life for a wrong pair in «Пари»', async () => {
+    await renderScreen();
+
+    await fireEvent.press(screen.getByTestId('game-mode-pairs'));
+    await waitFor(() => {
+      expect(screen.getByTestId('pairs')).toBeOnTheScreen();
+    });
+    const [{ word, definition }] = pairsLeft() as [{ word: number; definition: number }];
+    await fireEvent.press(screen.getByTestId(`pairs-word-${String(word)}`));
+    await fireEvent.press(screen.getByTestId(`pairs-definition-${String((definition + 1) % 4)}`));
+
+    expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
+    expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 4 з 5');
   });
 });
