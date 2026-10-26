@@ -1,0 +1,54 @@
+# The Stress mode «Наголос»: it plays from its card, the first vowel and
+# «Далі» in every Round, each sheet with the answer, to the result screen, and
+# «На головну» goes to the Feed. A subflow of `smoke.yaml`; run it from there.
+# It leaves no Game in play.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- tapOn:
+    id: tab-game
+- scrollUntilVisible:
+    element:
+      id: game-mode-stress
+    direction: DOWN
+- tapOn:
+    id: game-mode-stress
+- assertVisible:
+    id: game-round
+- assertVisible:
+    text: Де наголос\?
+# At most 15 Rounds; five wrong answers end the Game sooner. Each scroll brings
+# its target up at the largest text sizes and does nothing otherwise.
+- repeat:
+    while:
+      notVisible:
+        id: game-result
+    times: 15
+    commands:
+      - scrollUntilVisible:
+          element:
+            id: game-vowels
+          direction: DOWN
+      - tapOn:
+          id: game-vowels-\d+
+          index: 0
+      - assertVisible:
+          id: game-sheet-title
+      - scrollUntilVisible:
+          element:
+            id: game-next
+          direction: DOWN
+      # One tap: a second one, while the sheet slides away, would land on the tab bar.
+      - tapOn:
+          id: game-next
+          retryTapIfNoChange: false
+      - waitForAnimationToEnd
+- assertVisible:
+    id: game-result
+- scrollUntilVisible:
+    element:
+      id: game-home
+    direction: DOWN
+- tapOn:
+    id: game-home
+- assertVisible:
+    id: home

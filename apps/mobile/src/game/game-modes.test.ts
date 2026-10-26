@@ -195,10 +195,15 @@ describe('the modes the Game screen offers', () => {
     const offers = [
       { modeId: 'guess-word', entryKind: 'word', canStart: true },
       { modeId: 'stress', entryKind: 'word', canStart: true },
+      { modeId: 'pairs', entryKind: 'word', canStart: true },
       { modeId: 'correction', entryKind: 'correction', canStart: true },
     ] as const;
 
-    expect(playedOffers(offers).map(({ modeId }) => modeId)).toEqual(['guess-word', 'correction']);
+    expect(playedOffers(offers).map(({ modeId }) => modeId)).toEqual([
+      'guess-word',
+      'stress',
+      'correction',
+    ]);
   });
 });
 
@@ -206,6 +211,7 @@ describe('the label over a Round', () => {
   it.each([
     ['guess-word', 'Визначення'],
     ['correction', 'Як сказати краще?'],
+    ['stress', 'Де наголос?'],
   ])('reads the %s mode’s own label', (modeId, label) => {
     expect(gameModeStrings(strings.modes, modeId).roundLabel).toBe(label);
   });
