@@ -15,18 +15,20 @@ import {
   useTokens,
 } from '@slovo/ui';
 import { useRouter } from 'expo-router';
-import { FlatList, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { useMemo } from 'react';
+import { SectionList, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { editionStrings } from '../../edition/edition';
 import { useHiddenChanges, useHiddenScreenModel } from '../../mix/hidden';
-import type { HiddenScreenModel } from '../../mix/hidden-screen';
+import type { HiddenEntryModel, HiddenScreenModel } from '../../mix/hidden-screen';
 
 const strings = editionStrings.hidden;
 
 /**
  * Settings › Приховане: the Hidden Entries newest first, each with its kind
- * and labels and «Повернути», and the Hidden Categories, of Words and of
+ * and labels and «Повернути», Synonym Rows and Tips each in their own
+ * section, and the Hidden Categories, of Words and of
  * Corrections, and Corrections and
  * Idioms when they are out of the Mix, each with «Увімкнути», which puts it
  * back in the Mix. Bringing an Entry back shows an
@@ -42,6 +44,7 @@ export default function HiddenScreen() {
 
 function HiddenList() {
   const model = useHiddenScreenModel();
+  const sections = useMemo(() => hiddenSections(model), [model]);
   const { restoreEntry, turnCategoryOn, turnKindOn } = useHiddenChanges();
   const { colors } = useTokens();
   const router = useRouter();
@@ -52,10 +55,16 @@ function HiddenList() {
       edges={['top']}
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
-      <FlatList
+      <SectionList<HiddenEntryModel, HiddenSection>
         contentContainerStyle={styles.content}
-        data={model.entries}
+        sections={sections}
         keyExtractor={({ entryId }) => entryId}
+        stickySectionHeadersEnabled={false}
+        renderSectionHeader={({ section: { testID, title } }) => (
+          <View testID={testID} style={styles.section}>
+            <SectionLabel style={styles.sectionLabel}>{title}</SectionLabel>
+          </View>
+        )}
         renderItem={({ item: { entryId, row, labels } }) => (
           <EntryRow
             testID={`hidden-entry-${entryId}`}
@@ -77,7 +86,6 @@ function HiddenList() {
         ListHeaderComponent={
           <HiddenHeader
             empty={model.empty}
-            hasEntries={model.entries.length > 0}
             onBack={() => {
               router.back();
             }}
@@ -97,16 +105,29 @@ function HiddenList() {
   );
 }
 
-/** Above the list: back link, title, the empty line, and the Entries label when there are Entries. */
-function HiddenHeader({
-  empty,
-  hasEntries,
-  onBack,
-}: {
-  empty: boolean;
-  hasEntries: boolean;
-  onBack: () => void;
-}) {
+/** A section of Hidden Entries: the Words, Corrections and Idioms, or the Hidden Entries of one kind as a whole. */
+interface HiddenSection {
+  readonly testID: string;
+  readonly title: string;
+  readonly data: readonly HiddenEntryModel[];
+}
+
+/** The sections of Hidden Entries that hold any: «Записи», then Synonym Rows and Tips. */
+function hiddenSections(model: HiddenScreenModel): HiddenSection[] {
+  return [
+    ...(model.entries.length > 0
+      ? [{ testID: 'hidden-entries', title: strings.entries, data: model.entries }]
+      : []),
+    ...model.sections.map(({ name, title, entries }) => ({
+      testID: `hidden-section-${name}`,
+      title,
+      data: entries,
+    })),
+  ];
+}
+
+/** Above the list: back link, title, and the empty line. */
+function HiddenHeader({ empty, onBack }: { empty: boolean; onBack: () => void }) {
   const { colors, fontFamilies } = useTokens();
   const { voice } = useEdition();
   return (
@@ -131,11 +152,6 @@ function HiddenHeader({
         >
           {strings.empty}
         </Text>
-      )}
-      {hasEntries && (
-        <View testID="hidden-entries" style={styles.section}>
-          <SectionLabel style={styles.sectionLabel}>{strings.entries}</SectionLabel>
-        </View>
       )}
     </>
   );

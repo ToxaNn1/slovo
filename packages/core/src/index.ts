@@ -122,6 +122,7 @@ export {
   type CategoriesInMix,
   type CategoryKind,
   type MixKind,
+  type MixKindName,
   type MixState,
 } from './entries/mix';
 export { type OnboardingStep, type SampleNotification } from './onboarding';

@@ -31,7 +31,7 @@ export function useMixChanges(): {
   /** Puts the Category of the kind's list, the Words' unless given, in the Mix (`inMix`) or takes it out. */
   toggleCategory: (categoryId: string, inMix: boolean, of?: CategoryKind) => void;
   turnAllOn: () => void;
-  /** Puts the kind of Entry (Corrections, Idioms) as a whole in the Mix (`inMix`) or takes it out. */
+  /** Puts the kind of Entry (Corrections, Idioms, Synonym Rows, Tips) as a whole in the Mix (`inMix`) or takes it out. */
   setKind: (kind: MixKind, inMix: boolean) => void;
   setRarityFloor: (floor: number) => void;
 } {

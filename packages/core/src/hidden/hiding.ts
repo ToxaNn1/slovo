@@ -3,7 +3,7 @@ import type { HiddenEntries } from './hidden-entries';
 import { createInTurn } from '../in-turn';
 import { categoriesInMix, type CategoryKind, type Mix, type MixKind } from '../entries/mix';
 
-/** What a hide or an unhide is for: one Entry, one Category, or a kind of Entry (Corrections, Idioms) as a whole. */
+/** What a hide or an unhide is for: one Entry, one Category, or a kind of Entry (Corrections, Idioms, Synonym Rows, Tips) as a whole. */
 export type HideTarget =
   | { readonly kind: 'entry'; readonly entryId: string }
   /** A Category of the Words' list, or of the Corrections' when `of` says so (ADR 0050). */

@@ -48,7 +48,7 @@ export function useHiddenChanges(): {
   restoreEntry: (entryId: string) => void;
   /** Puts the Category of the list, the Words' or the Corrections', back in the Mix. */
   turnCategoryOn: (categoryId: string, of: CategoryKind) => void;
-  /** Puts the kind of Entry (Corrections, Idioms) as a whole back in the Mix. */
+  /** Puts the kind of Entry (Corrections, Idioms, Synonym Rows, Tips) as a whole back in the Mix. */
   turnKindOn: (entryKind: MixKind) => void;
 } {
   const composition = useComposition();

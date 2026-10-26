@@ -137,4 +137,17 @@ describe.each([
       { entryId, row: { title } },
     ]);
   });
+
+  it('hides it from its card, and the toast says so', async () => {
+    await renderCard(entryId);
+
+    await fireEvent.press(screen.getByTestId('hide-button'));
+    await settle();
+    expect(screen.getByTestId('hide-choice-whole-kind')).toBeOnTheScreen();
+    await fireEvent.press(screen.getByTestId('hide-choice-entry'));
+    await settle();
+
+    expect(mockComposition.hiddenEntries.has(entryId)).toBe(true);
+    expect(screen.getByText(`«${title}» приховано`)).toBeOnTheScreen();
+  });
 });

@@ -5,9 +5,9 @@ import {
   featureOfKind,
   readMix,
   type MixEdition,
+  type MixKind,
   type MixKindName,
   type MixState,
-  type WholeKind,
 } from './mix';
 import type { ContentReadPort } from '../ports';
 import type { UserState } from '../user-state/user-state';
@@ -44,7 +44,7 @@ export interface EntryIds {
 
 /**
  * Why no Entry of a kind is eligible, whatever the Language Pack holds: the
- * user took the kind as a whole (Corrections, Idioms) out of the Mix. Names
+ * user took the kind as a whole (Corrections, Idioms, Synonym Rows, Tips) out of the Mix. Names
  * the kind as the Edition strings do.
  */
 export type KindRefusal = `${MixKindName}-out-of-mix`;
@@ -184,16 +184,16 @@ export function createEntries(
   }
 
   /** Whether the kind of Entry, as a whole, is in the user's Mix; without a Mix it always is. */
-  const kindInMix = (kind: WholeKind, mix: MixState | undefined) => mix?.kinds[kind] ?? true;
+  const kindInMix = (kind: MixKind, mix: MixState | undefined) => mix?.kinds[kind] ?? true;
 
   /** Whether the Edition turns the kind of Entry on and the user has it in the Mix. */
-  const kindShown = (kind: WholeKind, mix: MixState | undefined) =>
+  const kindShown = (kind: MixKind, mix: MixState | undefined) =>
     edition.isFeatureEnabled(featureOfKind(kind)) && kindInMix(kind, mix);
 
   const linksCorrections = async () => kindShown('correction', await readUserMix());
 
   /** How to list the ids of every live Entry of a kind in the Mix as a whole from the Language Pack. */
-  const listIds: Record<WholeKind, () => Promise<readonly string[]>> = {
+  const listIds: Record<MixKind, () => Promise<readonly string[]>> = {
     correction: () => content.listCorrectionIds(),
     idiom: () => content.listIdiomIds(),
     synonymRow: () => content.listSynonymRowIds(),
@@ -275,7 +275,7 @@ export function createEntries(
       readUserMix(),
       'userState' in options ? options.userState.list(hiddenRecords) : new Map<string, string>(),
     ]);
-    const ofKind = (kind: WholeKind) => (kindShown(kind, mix) ? listIds[kind]() : []);
+    const ofKind = (kind: MixKind) => (kindShown(kind, mix) ? listIds[kind]() : []);
     const [words, corrections, idioms, synonymRows, tips] = await Promise.all([
       wordIds(mix?.categoryIds).then((ids) => atRarityFloor(ids, mix?.rarityFloor)),
       kindShown('correction', mix) ? correctionIds(mix?.correctionCategories.categoryIds) : [],

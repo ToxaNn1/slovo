@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { TextSchema } from '../shared';
 import { PluralSchema, templateOf } from './shared';
 
-/** The texts of the Mix screen: the Category chips, the Corrections and Idioms switches with the Categories of Corrections, and the last-Category hints. */
+/** The texts of the Mix screen: the Category chips, the switches of Corrections, Idioms, Synonym Rows and Tips, with the Categories of Corrections, and the last-Category hints. */
 export const MixStringsSchema = z.strictObject({
   /** The screen's title; the name of the Settings row. */
   title: TextSchema,
@@ -27,6 +27,10 @@ export const MixStringsSchema = z.strictObject({
   }),
   /** The Idioms switch's name and what it shows. */
   idioms: z.strictObject({ title: TextSchema, subtitle: TextSchema }),
+  /** The Synonym Rows switch's name and what it shows; also the Hidden screen's section of hidden rows. */
+  synonymRows: z.strictObject({ title: TextSchema, subtitle: TextSchema }),
+  /** The Tips switch's name and what it shows; also the Hidden screen's section of hidden Tips. */
+  tips: z.strictObject({ title: TextSchema, subtitle: TextSchema }),
   /** The Rarity Floor choice: its name, the line under it, and a floor's chip. Takes `{rarity}`. */
   rarity: z.strictObject({ title: TextSchema, subtitle: TextSchema, floor: templateOf('rarity') }),
   /** The line that says why the last Category's chip can't be turned off. VoiceOver reads it as that chip's hint. */

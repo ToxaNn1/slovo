@@ -7,6 +7,7 @@ import {
   type EntryRowModel,
   type HiddenEntry,
   type MixKind,
+  type MixKindName,
   type MixState,
 } from '@slovo/core';
 import { entryLabel } from '@slovo/ui/entry-row-text';
@@ -36,10 +37,25 @@ export interface HiddenKindModel {
   readonly turnOnLabel: string;
 }
 
+/** A section of the Hidden screen with the Hidden Entries of one kind as a whole (Synonym Rows, Tips). */
+export interface HiddenSectionModel {
+  /** The kind's name as a whole, e.g. `synonymRows`. */
+  readonly name: MixKindName;
+  readonly title: string;
+  /** Its Hidden Entries, newest first. */
+  readonly entries: readonly HiddenEntryModel[];
+}
+
 /** What the Hidden screen draws, from the Hidden Entries and the Mix. */
 export interface HiddenScreenModel {
-  /** The Hidden Entries, newest first. */
+  /** The Hidden Words, Corrections and Idioms, newest first. */
   readonly entries: readonly HiddenEntryModel[];
+  /**
+   * The Hidden Synonym Rows and Tips, each kind in its own section in the
+   * Mix's order, left out while it holds none or the Edition turns the kind off
+   * (spec #730).
+   */
+  readonly sections: readonly HiddenSectionModel[];
   /**
    * The Hidden Categories, in the Language Pack's order: the Categories out of
    * the Mix (ADR 0019), the Words' and then the Corrections' (ADR 0050). The
@@ -48,13 +64,16 @@ export interface HiddenScreenModel {
    */
   readonly categories: readonly HiddenCategoryModel[];
   /**
-   * Each kind of Entry as a whole (Corrections, Idioms) that is out of the
+   * Each kind of Entry as a whole (Corrections, Idioms, Synonym Rows, Tips) that is out of the
    * Mix (ADR 0019) while the Edition turns it on, in the Mix's order.
    */
   readonly kinds: readonly HiddenKindModel[];
   /** Whether nothing is hidden, which is when the screen says so. */
   readonly empty: boolean;
 }
+
+/** The kinds whose Hidden Entries have a section of their own, in the Mix's order (spec #730). */
+const SECTION_KINDS: readonly MixKind[] = ['synonymRow', 'tip'];
 
 /** The labels of a row in the Edition's words, as short forms and as whole words. */
 function labelParts(
@@ -88,6 +107,8 @@ function kindModel(entryKind: MixKind, strings: EditionStrings): HiddenKindModel
   const turnOnLabels: Record<MixKind, string> = {
     correction: hidden.turnOnCorrectionsLabel,
     idiom: hidden.turnOnIdiomsLabel,
+    synonymRow: hidden.turnOnSynonymRowsLabel,
+    tip: hidden.turnOnTipsLabel,
   };
   return {
     entryKind,
@@ -124,7 +145,18 @@ export function hiddenScreenModel({
   mix: MixState;
   strings: EditionStrings;
 }): HiddenScreenModel {
-  const entries = hiddenEntries.map((hiddenEntry) => entryModel(hiddenEntry, strings));
+  const entries = hiddenEntries
+    .filter(({ row }) => row.kind !== 'synonymRow' && row.kind !== 'tip')
+    .map((hiddenEntry) => entryModel(hiddenEntry, strings));
+  const sections = SECTION_KINDS.filter((kind) => edition.isFeatureEnabled(featureOfKind(kind)))
+    .map((kind) => ({
+      name: featureOfKind(kind),
+      title: strings.mix[featureOfKind(kind)].title,
+      entries: hiddenEntries
+        .filter(({ row }) => row.kind === kind)
+        .map((hiddenEntry) => entryModel(hiddenEntry, strings)),
+    }))
+    .filter((section) => section.entries.length > 0);
   const correctionsIn = edition.isFeatureEnabled('corrections') && mix.kinds.correction;
   const categories: HiddenCategoryModel[] = [
     ...mix.hiddenCategories.map(({ id, displayName }) => ({
@@ -145,9 +177,14 @@ export function hiddenScreenModel({
   ).map((kind) => kindModel(kind, strings));
   return {
     entries,
+    sections,
     categories,
     kinds,
-    empty: entries.length === 0 && categories.length === 0 && kinds.length === 0,
+    empty:
+      entries.length === 0 &&
+      sections.length === 0 &&
+      categories.length === 0 &&
+      kinds.length === 0,
   };
 }
 

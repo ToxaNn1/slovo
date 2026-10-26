@@ -25,17 +25,10 @@ export const CATEGORY_KINDS: readonly CategoryKind[] = ['word', 'correction'];
  * Idioms, Synonym Rows and Tips (ADR 0051). The Word's Categories are in or
  * out one by one (ADR 0019).
  */
-export type WholeKind = Extract<EntryKind, 'correction' | 'idiom' | 'synonymRow' | 'tip'>;
-
-/**
- * A kind of Entry in the Mix as a whole that the screens show: Corrections and
- * Idioms. Synonym Rows and Tips are in or out of the Mix like them, but no
- * screen shows them yet (spec #730).
- */
-export type MixKind = Extract<WholeKind, 'correction' | 'idiom'>;
+export type MixKind = Extract<EntryKind, 'correction' | 'idiom' | 'synonymRow' | 'tip'>;
 
 /** Whether each kind of Entry is in the Mix as a whole. */
-export type KindsInMix = Readonly<Record<WholeKind, boolean>>;
+export type KindsInMix = Readonly<Record<MixKind, boolean>>;
 
 /**
  * The name of each kind of Entry as a whole: its Feature Switch, the key of
@@ -48,7 +41,7 @@ interface KindNames {
   readonly tip: 'tips';
 }
 
-/** The name of a kind of Entry as a whole that the screens show. */
+/** The name of a kind of Entry as a whole. */
 export type MixKindName = KindNames[MixKind];
 
 /**
@@ -60,7 +53,7 @@ export type MixKindName = KindNames[MixKind];
  * and nowhere else.
  */
 const KINDS: {
-  readonly [Kind in WholeKind]: {
+  readonly [Kind in MixKind]: {
     readonly feature: KindNames[Kind];
     readonly record: typeof userStateRecords.mixCorrections;
     readonly byDefault: (mix: DefaultMix) => boolean;
@@ -81,13 +74,10 @@ const KINDS: {
 };
 
 /** Every kind of Entry in the Mix as a whole, in the Mix screen's order. */
-const WHOLE_KINDS = Object.keys(KINDS) as readonly WholeKind[];
-
-/** The kinds of Entry in the Mix as a whole that the screens show, in the Mix screen's order. */
-export const MIX_KINDS: readonly MixKind[] = ['correction', 'idiom'];
+export const MIX_KINDS = Object.keys(KINDS) as readonly MixKind[];
 
 /** The Feature Switch that turns the kind of Entry on, which also names the kind as a whole. */
-export const featureOfKind = <Kind extends WholeKind>(kind: Kind): KindNames[Kind] =>
+export const featureOfKind = <Kind extends MixKind>(kind: Kind): KindNames[Kind] =>
   KINDS[kind].feature;
 
 /** One list of Categories in the Mix, the Words' or the Corrections', as it stands. */
@@ -145,7 +135,7 @@ export interface Mix {
   /** Puts every Category, of Words and of Corrections, in the Mix at once. The kinds as a whole stay as they are. */
   turnAllOn(): Promise<void>;
   /** Puts the kind of Entry, as a whole, in the Mix or takes it out. */
-  setKind(kind: WholeKind, inMix: boolean): Promise<void>;
+  setKind(kind: MixKind, inMix: boolean): Promise<void>;
   /** Sets the Rarity Floor. A floor that is not a rarity, a whole number from 1 to 5, is skipped. */
   setRarityFloor(floor: number): Promise<void>;
   /** Calls `listener` after each change of the state. Returns the call that stops it. */
@@ -187,13 +177,13 @@ type CategoryChoices = Readonly<Record<CategoryKind, ReadonlyMap<string, boolean
 /** The places in the Mix the user chose: by Category of each list, by kind of Entry as a whole; and the Rarity Floor. */
 interface MixChoices {
   readonly categories: CategoryChoices;
-  readonly kinds: Readonly<Record<WholeKind, boolean | undefined>>;
+  readonly kinds: Readonly<Record<MixKind, boolean | undefined>>;
   readonly rarityFloor: number | undefined;
 }
 
 /** A record over each kind of Entry in the Mix as a whole, from what `of` gives for it. */
-function eachKind<T>(of: (kind: WholeKind) => T): Readonly<Record<WholeKind, T>> {
-  return Object.fromEntries(WHOLE_KINDS.map((kind) => [kind, of(kind)])) as Record<WholeKind, T>;
+function eachKind<T>(of: (kind: MixKind) => T): Readonly<Record<MixKind, T>> {
+  return Object.fromEntries(MIX_KINDS.map((kind) => [kind, of(kind)])) as Record<MixKind, T>;
 }
 
 /** A record over each kind of Entry with Categories, from what `of` gives for it. */
@@ -273,11 +263,11 @@ async function readChoices(userState: Pick<UserState, 'list' | 'read'>): Promise
   const [lists, rarityFloor, read] = await Promise.all([
     Promise.all(CATEGORY_KINDS.map((kind) => userState.list(CATEGORY_LISTS[kind].records))),
     userState.read(rarityFloorRecord),
-    Promise.all(WHOLE_KINDS.map((kind) => userState.read(KINDS[kind].record))),
+    Promise.all(MIX_KINDS.map((kind) => userState.read(KINDS[kind].record))),
   ]);
   return {
     categories: eachList((kind) => lists[CATEGORY_KINDS.indexOf(kind)] ?? new Map()),
-    kinds: eachKind((kind) => read[WHOLE_KINDS.indexOf(kind)]),
+    kinds: eachKind((kind) => read[MIX_KINDS.indexOf(kind)]),
     rarityFloor,
   };
 }
@@ -350,7 +340,7 @@ export async function openMix({
       }
       return next;
     });
-    for (const kind of WHOLE_KINDS) {
+    for (const kind of MIX_KINDS) {
       if (kinds[kind] === state.kinds[kind]) continue;
       for (const [key, value] of KINDS[kind].record.change(kinds[kind])) writes.set(key, value);
     }
@@ -398,7 +388,7 @@ export async function openMix({
     await change(eachList((of) => new Map(categories[of].map(({ id }) => [id, true]))));
   }
 
-  async function setKind(kind: WholeKind, inMix: boolean): Promise<void> {
+  async function setKind(kind: MixKind, inMix: boolean): Promise<void> {
     await change({}, { kinds: { ...state.kinds, [kind]: inMix } });
   }
 

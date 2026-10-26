@@ -108,14 +108,14 @@ describe('the Мій Мікс screen', () => {
     },
   );
 
-  it('lists the switches in the Mix’s order: Corrections, then Idioms', async () => {
+  it('lists the switches in the Mix’s order: Corrections, Idioms, Synonym Rows, then Tips', async () => {
     const { mix } = await open(ukrainian);
 
     expect(
       mixScreenModel({ edition: ukrainian, mix: mix.state }).kinds.map(
         ({ entryKind }) => entryKind,
       ),
-    ).toEqual(['correction', 'idiom']);
+    ).toEqual(['correction', 'idiom', 'synonymRow', 'tip']);
   });
 });
 
