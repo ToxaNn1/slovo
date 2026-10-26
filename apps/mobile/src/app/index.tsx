@@ -123,25 +123,33 @@ const FeedPage = memo(function FeedPage({
         <EndOfCycleCard />
       </View>
     );
-  // The Synonym Row and Tip cards come with the screens that show them (spec #730).
-  if (card.kind === 'synonymRow' || card.kind === 'tip')
+  // The Tip card comes with the screen that shows it (spec #730).
+  if (card.kind === 'tip')
     return <View testID={`feed-card-${String(position)}`} style={styles.page} />;
   return (
     // The content scrolls under the top row but stops at the status bar.
     <View testID={`feed-card-${String(position)}`} style={[styles.page, { paddingTop: top }]}>
       <PagerScrollView contentContainerStyle={styles.content}>
-        <EntryCard
-          card={card}
-          onOpenCorrection={(correctionId) => {
-            onOpenCorrection(position, correctionId);
-          }}
-          // A member of a Synonym Row opens its Word over the Feed, Hidden or out of the Mix alike.
-          onOpenWord={(wordId) => {
-            openScreen(`/entry/${wordId}`);
-          }}
-          selfCheck={selfCheck}
-          actions={<EntryActions card={card} />}
-        />
+        {card.kind === 'synonymRow' ? (
+          // Its action row comes with the tickets that hide, list and share rows (spec #730).
+          <EntryCard
+            card={card}
+            // A member opens its Word over the Feed, Hidden or out of the Mix alike.
+            onOpenWord={(wordId) => {
+              openScreen(`/entry/${wordId}`);
+            }}
+            selfCheck={selfCheck}
+          />
+        ) : (
+          <EntryCard
+            card={card}
+            onOpenCorrection={(correctionId) => {
+              onOpenCorrection(position, correctionId);
+            }}
+            selfCheck={selfCheck}
+            actions={<EntryActions card={card} />}
+          />
+        )}
       </PagerScrollView>
     </View>
   );
