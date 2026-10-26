@@ -179,7 +179,7 @@ function CardContent({
       {best === undefined ? null : (
         <Text
           maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
-          style={[overlineType, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+          style={[styles.best, { color: colors.muted, fontFamily: fontFamilies.ui }]}
         >
           {best}
         </Text>
@@ -212,4 +212,5 @@ const styles = StyleSheet.create({
   italic: { fontStyle: 'italic' },
   correctionSample: { fontSize: typeSize.listItem },
   struck: { textDecorationLine: 'line-through' },
+  best: { fontSize: typeSize.body, lineHeight: typeSize.body * 1.4 },
 });
