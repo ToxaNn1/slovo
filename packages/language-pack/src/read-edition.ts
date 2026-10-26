@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
-import type { Correction, Entry, Idiom, Word } from '@slovo/contracts';
+import type { Correction, Entry, Idiom, SynonymRow, Word } from '@slovo/contracts';
 
 import type { BuildError } from './build-error';
 import { checkContent, type Authored } from './check-content';
@@ -19,6 +19,7 @@ export interface EditionSource {
   readonly words: readonly Authored<Word>[];
   readonly corrections: readonly Authored<Correction>[];
   readonly idioms: readonly Authored<Idiom>[];
+  readonly synonymRows: readonly Authored<SynonymRow>[];
   /** The known ids: none when the registry is optional and missing, unset when it can't be read. */
   readonly registry?: readonly string[];
   /** Set when there are no errors. */
@@ -56,7 +57,7 @@ export function readEdition(
 
   const config = readOrCollect(() => folder.read('config'));
   const manifest = readOrCollect(() => folder.read('manifest'));
-  const { words, corrections, idioms, errors: entryErrors } = folder.entries();
+  const { words, corrections, idioms, synonymRows, errors: entryErrors } = folder.entries();
   errors.push(...entryErrors);
   const targets = readOrCollect(() => folder.readIfPresent('targets') ?? {});
   const registry = readOrCollect(() =>
@@ -78,6 +79,7 @@ export function readEdition(
     words,
     corrections,
     idioms,
+    synonymRows,
     ...(config === undefined ? {} : { editionId: config.id }),
     ...(registry === undefined ? {} : { registry }),
   };
@@ -97,6 +99,7 @@ export function readEdition(
     words: sortedById(words),
     corrections: sortedById(corrections),
     idioms: sortedById(idioms),
+    synonymRows: sortedById(synonymRows),
   };
   return { ...source, valid: { content, manifest, targets } };
 }

@@ -1,6 +1,5 @@
-import type { EntryKind } from '@slovo/contracts';
-
 import type { Edition } from '../edition/edition';
+import type { ShownKind } from '../entries/entries';
 import type { EntryRowModel, EntryRows } from '../entries/entry-row';
 import type { HiddenEntries } from '../hidden/hidden-entries';
 import { createInTurn, createSubscribers } from '../in-turn';
@@ -30,7 +29,7 @@ export interface LearningEntry {
  * (Idioms with place names). An id the Language Pack doesn't have is counted
  * as no kind.
  */
-export type KnownCounts = Readonly<Record<EntryKind, number>>;
+export type KnownCounts = Readonly<Record<ShownKind, number>>;
 
 /** What an Entry's card shows about knowledge: its Knowledge Mark, or none while it is due, as a Review. */
 export type ShownKnowledge = KnowledgeMark | 'review';
@@ -105,7 +104,7 @@ const noneKnown: KnownCounts = { word: 0, correction: 0, idiom: 0 };
 const off: KnowledgeState = { learning: [], known: noneKnown, due: [], shown: new Map() };
 
 const sameCounts = (one: KnownCounts, other: KnownCounts) =>
-  (Object.keys(one) as EntryKind[]).every((kind) => one[kind] === other[kind]);
+  (Object.keys(one) as ShownKind[]).every((kind) => one[kind] === other[kind]);
 
 const sameState = (one: KnowledgeState, other: KnowledgeState) =>
   one.known === other.known &&

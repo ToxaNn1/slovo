@@ -1,9 +1,9 @@
-import type { Entry, Word } from '@slovo/contracts';
+import type { Word } from '@slovo/contracts';
 
 import { buildCorrectionCard } from '../entries/correction-card';
 import { buildIdiomCard } from '../entries/idiom-card';
 import type { Cycle } from './cycle';
-import type { Entries, EntryIds } from '../entries/entries';
+import type { Entries, EntryIds, ShownEntry } from '../entries/entries';
 import { asReviewIfDue, type EntryFeedCard, type FeedCard, type WordFeedCard } from './feed-card';
 import { createFeedSession, type FeedSession } from './feed-session';
 import type { HistoryRecorder, Seen } from '../saved/history';
@@ -115,10 +115,10 @@ export async function buildEntryCard(
   entry: Word,
   wordOfTheDay?: LocalDate,
 ): Promise<WordFeedCard>;
-export async function buildEntryCard(entries: Entries, entry: Entry): Promise<EntryFeedCard>;
+export async function buildEntryCard(entries: Entries, entry: ShownEntry): Promise<EntryFeedCard>;
 export async function buildEntryCard(
   entries: Entries,
-  entry: Entry,
+  entry: ShownEntry,
   wordOfTheDay?: LocalDate,
 ): Promise<EntryFeedCard> {
   const entryId = entry.id;

@@ -1,7 +1,7 @@
-import type { Entry, EntryKind, Example, LanguageTraits } from '@slovo/contracts';
+import type { Example, LanguageTraits } from '@slovo/contracts';
 
 import type { Edition } from '../edition/edition';
-import type { KindRefusal } from '../entries/entries';
+import type { KindRefusal, ShownEntry, ShownKind } from '../entries/entries';
 import type { Random } from '../ports';
 
 /** How many options a Round offers, exactly one of them correct. */
@@ -53,9 +53,9 @@ export interface RoundContent {
 /** What a Game Mode builds a Round from. */
 export interface RoundInput {
   /** The Entry the Round asks about, of the mode's kind. */
-  readonly answer: Entry;
+  readonly answer: ShownEntry;
   /** Every eligible Entry of the kinds the mode asks about, the answer among them: where Distractors come from. */
-  readonly eligible: readonly Entry[];
+  readonly eligible: readonly ShownEntry[];
   /** The source of every shuffle. */
   readonly random: Random;
   readonly edition: GameEdition;
@@ -69,13 +69,13 @@ export interface GameMode {
   /** Unique among the modes, such as `guess-word`. */
   readonly id: string;
   /** The kind of Entry its Rounds ask about, which its card names and whose refusal it gives. */
-  readonly entryKind: EntryKind;
+  readonly entryKind: ShownKind;
   /**
    * Other kinds of Entry its Rounds may ask about, such as idioms in «Вгадай
    * слово»; a kind with no eligible Entry, such as Idioms out of the Mix,
    * leaves the mode asking about the rest.
    */
-  readonly alsoAsks?: readonly EntryKind[];
+  readonly alsoAsks?: readonly ShownKind[];
   /** Whether the Edition turns the mode on; a mode that is off is never on offer. */
   isOn(edition: GameEdition): boolean;
   /**

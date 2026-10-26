@@ -1,10 +1,10 @@
-import type { EntryKind } from '@slovo/contracts';
 import {
   featureOfKind,
   MIX_KINDS,
   type Edition,
   type FeatureSwitch,
   type MixState,
+  type ShownKind,
   type UserSettings,
 } from '@slovo/core';
 
@@ -46,7 +46,7 @@ export interface Shown {
          * The knowledge rows, with the kinds of Entry whose Known count shows, in
          * order: the Words, then the Corrections and the Idioms unless left out; or none.
          */
-        readonly knowledge: readonly EntryKind[] | 'none';
+        readonly knowledge: readonly ShownKind[] | 'none';
       }
     | undefined;
   /** The Sync status line of the SLOVO ID screen. */
@@ -72,7 +72,7 @@ export function shownOf({
   const on = (feature: FeatureSwitch) => edition.isFeatureEnabled(feature);
   const knowledge = on('knowledge');
   // The kinds the Known count joins: Words, and each kind as a whole on and in the Mix.
-  const knownKinds: readonly EntryKind[] = [
+  const knownKinds: readonly ShownKind[] = [
     'word',
     ...MIX_KINDS.filter((kind) => on(featureOfKind(kind)) && mix.kinds[kind]),
   ];

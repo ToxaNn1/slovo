@@ -37,7 +37,12 @@ export function writePack(outFile: string, content: PackContent, metadata: PackM
     }
 
     const insertEntry = db.prepare('INSERT INTO entries (id, kind) VALUES (?, ?)');
-    for (const entry of [...content.words, ...content.corrections, ...content.idioms]) {
+    for (const entry of [
+      ...content.words,
+      ...content.corrections,
+      ...content.idioms,
+      ...content.synonymRows,
+    ]) {
       insertEntry.run(entry.id, entry.kind);
     }
 
@@ -181,6 +186,45 @@ export function writePack(outFile: string, content: PackContent, metadata: PackM
         insertCorrectionLink.run(word.id, position, correctionId);
       });
       insertSources(word);
+    }
+
+    const insertRow = db.prepare(`
+      INSERT INTO synonym_rows (
+        id, dominant, dominant_word_id, meaning, example_text, example_author, retired
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `);
+    const insertRowMember = db.prepare(`
+      INSERT INTO synonym_row_members (row_id, position, text, word_id, shade_note)
+      VALUES (?, ?, ?, ?, ?)
+    `);
+    const insertRowStress = db.prepare(
+      'INSERT INTO synonym_row_stress (row_id, member, position) VALUES (?, ?, ?)',
+    );
+    // After the Words, whose ids a row may link.
+    for (const row of content.synonymRows) {
+      insertRow.run(
+        row.id,
+        row.dominant.text,
+        row.dominant.wordId ?? null,
+        row.meaning,
+        row.example?.text ?? null,
+        row.example?.author ?? null,
+        row.retired ? 1 : 0,
+      );
+      row.members.forEach((member, position) => {
+        insertRowMember.run(
+          row.id,
+          position,
+          member.text,
+          member.wordId ?? null,
+          member.shadeNote ?? null,
+        );
+      });
+      [row.dominant, ...row.members].forEach(({ stress }, member) => {
+        for (const position of stress) insertRowStress.run(row.id, member, position);
+      });
+      insertSources(row);
     }
 
     db.exec('COMMIT');

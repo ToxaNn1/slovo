@@ -1,12 +1,7 @@
-import {
-  WIDGET_SNAPSHOT_FORMAT,
-  type Entry,
-  type WidgetEntry,
-  type WidgetSnapshot,
-} from '@slovo/contracts';
+import { WIDGET_SNAPSHOT_FORMAT, type WidgetEntry, type WidgetSnapshot } from '@slovo/contracts';
 
 import type { Collections } from './saved/collections';
-import type { EligibleOfKind, Entries } from './entries/entries';
+import type { EligibleOfKind, Entries, ShownEntry } from './entries/entries';
 import { buildEntryRow } from './entries/entry-row';
 import type { Favorites } from './saved/favorites';
 import type { EntryFeedCard } from './feed/feed-card';
@@ -48,7 +43,7 @@ const entriesOf = (eligible: EligibleOfKind) => ('entries' in eligible ? eligibl
  * its second line, and both as VoiceOver reads them, all as the Entry row
  * says them.
  */
-function widgetEntry(entry: Entry): WidgetEntry {
+function widgetEntry(entry: ShownEntry): WidgetEntry {
   const row = buildEntryRow(entry);
   return {
     kind: entry.kind,

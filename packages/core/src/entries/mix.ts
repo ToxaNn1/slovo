@@ -21,10 +21,11 @@ export type CategoryKind = Extract<EntryKind, 'word' | 'correction'>;
 export const CATEGORY_KINDS: readonly CategoryKind[] = ['word', 'correction'];
 
 /**
- * A kind of Entry that is in or out of the Mix as a whole: every kind but
- * the Word, whose Categories are in or out one by one (ADR 0019).
+ * A kind of Entry that is in or out of the Mix as a whole: Corrections and
+ * Idioms. The Word's Categories are in or out one by one (ADR 0019); the
+ * Synonym Row is not in the Mix yet, so no Synonym Row is eligible.
  */
-export type MixKind = Exclude<EntryKind, 'word'>;
+export type MixKind = Extract<EntryKind, 'correction' | 'idiom'>;
 
 /** Whether each kind of Entry is in the Mix as a whole. */
 export type KindsInMix = Readonly<Record<MixKind, boolean>>;
