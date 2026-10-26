@@ -25,6 +25,17 @@ export function gameModeStrings(modes: GameModesStrings, modeId: string): GameMo
 }
 
 /**
+ * The Game Modes whose Rounds the app's screens play. A mode the Core offers
+ * gets its card once its screen comes (spec #772), so no card opens a Round
+ * the app can't show.
+ */
+const PLAYED_MODES: ReadonlySet<string> = new Set(['guess-word', 'correction']);
+
+/** The offers of the modes the app plays, in the Core's order. */
+export const playedOffers = (offers: readonly GameModeOffer[]): GameModeOffer[] =>
+  offers.filter(({ modeId }) => PLAYED_MODES.has(modeId));
+
+/**
  * The card of a Game Mode on offer, in the Edition's texts; a mode still
  * planned can't start yet and says no reason. It throws for a mode without
  * texts, or without a text for the reason it can't start.

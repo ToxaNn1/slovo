@@ -19,7 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { editionStrings } from '../../edition/edition';
 import { useOpenScreen } from '../../entries/use-open-screen';
 import { useGameActions, useGameState } from '../../game/game';
-import { gameModeCard, gameModeStrings } from '../../game/game-modes';
+import { gameModeCard, gameModeStrings, playedOffers } from '../../game/game-modes';
 import { useShown } from '../../shown-in-effect';
 
 const { game: strings } = editionStrings;
@@ -56,7 +56,7 @@ function Game() {
     >
       {current === undefined ? (
         <ModeScreen
-          modes={state.modes}
+          modes={playedOffers(state.modes)}
           bestResult={state.bestResults['guess-word']}
           onStart={actions.start}
         />
