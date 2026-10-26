@@ -1,4 +1,4 @@
-import type { Composition, EntryFeedCard } from '@slovo/core';
+import type { AnyEntryCard, Composition } from '@slovo/core';
 import { useUndoToast, type UndoToastContent } from '@slovo/ui';
 import { useState } from 'react';
 
@@ -28,14 +28,14 @@ export interface HideChoiceProps {
  * The hide button's tap for one card, and the props of the hide choice sheet
  * it opens: «hide this Entry», on a Word card «hide its Category», on a
  * Correction card «hide its Category» and «hide Corrections», on an Idiom
- * card «hide Idioms» (each
+ * card «hide Idioms», on a Synonym Row or a Tip card «hide» its kind (each
  * while the Edition in effect turns its kind on), and cancel. Hiding shows
- * the undo toast, whose undo restores the Entry or puts the Category,
- * Corrections or Idioms back in the Mix, in the composition open at the tap.
+ * the undo toast, whose undo restores the Entry or puts the Category or the
+ * kind back in the Mix, in the composition open at the tap.
  * The Feed follows the Core at once: it drops the cards and puts them back on
  * undo. An Entry hidden already stays as it is, with nothing to undo.
  */
-export function useHide(card: EntryFeedCard): { open: () => void; choice: HideChoiceProps } {
+export function useHide(card: AnyEntryCard): { open: () => void; choice: HideChoiceProps } {
   const composition = useComposition();
   const edition = useEditionInEffect();
   const showToast = useUndoToast();

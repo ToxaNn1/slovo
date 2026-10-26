@@ -25,6 +25,10 @@ const GameModeStringsSchema = z.strictObject({
     'corrections-out-of-mix': TextSchema.optional(),
     /** Idioms out of the reader's Mix; only a mode that asks about Idioms meets it (0.8.8). */
     'idioms-out-of-mix': TextSchema.optional(),
+    /** Synonym Rows out of the reader's Mix; only a mode that asks about Synonym Rows alone meets it. */
+    'synonymRows-out-of-mix': TextSchema.optional(),
+    /** Tips out of the reader's Mix; only a mode that asks about Tips alone meets it. */
+    'tips-out-of-mix': TextSchema.optional(),
   }),
 });
 

@@ -4,7 +4,7 @@ import {
   featureOfKind,
   type CategoryKind,
   type Edition,
-  type EntryFeedCard,
+  type AnyEntryCard,
   type HideTarget,
   type HidingChange,
   type MixKind,
@@ -41,6 +41,8 @@ function wholeKindStrings(
   const toasts: Record<MixKind, string> = {
     correction: strings.correctionsHidden,
     idiom: strings.idiomsHidden,
+    synonymRow: strings.synonymRowsHidden,
+    tip: strings.tipsHidden,
   };
   return { label: strings.choice[featureOfKind(entryKind)], toast: toasts[entryKind] };
 }
@@ -76,7 +78,7 @@ function categoryOption(
 /**
  * The options of the hide choice a card's hide button opens: always its
  * Entry; on a Word or a Correction card its Category; on any card but a
- * Word's its kind as a whole (Corrections, Idioms). Each is left out when it
+ * Word's its kind as a whole (Corrections, Idioms, Synonym Rows, Tips). Each is left out when it
  * is out of the Mix already, and everything of a kind the Edition in effect
  * turns off (ADR 0040), as the Mix screen then doesn't offer it back.
  */
@@ -86,7 +88,7 @@ export function hideChoice({
   edition,
   strings,
 }: {
-  card: EntryFeedCard;
+  card: AnyEntryCard;
   mix: MixState;
   edition: Pick<Edition, 'isFeatureEnabled'>;
   strings: EditionStrings;

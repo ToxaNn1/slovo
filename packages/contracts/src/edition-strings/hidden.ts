@@ -27,6 +27,10 @@ export const HiddenStringsSchema = z.strictObject({
   turnOnCorrectionsLabel: TextSchema,
   /** The Idioms row's button as VoiceOver reads it. */
   turnOnIdiomsLabel: TextSchema,
+  /** What VoiceOver reads for the «Увімкнути» button of Synonym Rows out of the Mix. */
+  turnOnSynonymRowsLabel: TextSchema,
+  /** What VoiceOver reads for the «Увімкнути» button of Tips out of the Mix. */
+  turnOnTipsLabel: TextSchema,
   /** What labels a row under its Lemma, e.g. «слово · ім., ж. р.». Takes `{kind}` and `{labels}`. */
   rowLabels: templateOf('kind', 'labels'),
   /** The same line as VoiceOver reads it. Takes `{kind}` and `{labels}`. */

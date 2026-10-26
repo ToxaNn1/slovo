@@ -1,6 +1,5 @@
 import {
   featureOfKind,
-  MIX_KINDS,
   type Edition,
   type FeatureSwitch,
   type MixState,
@@ -10,6 +9,9 @@ import {
 
 /** Every tab in its final order: Home, Settings, Game, Saved. */
 const allTabs = ['home', 'settings', 'game', 'saved'] as const;
+
+/** The kinds as a whole whose Known count shows in the statistics, after the Words'. */
+const KNOWN_WHOLE_KINDS = ['correction', 'idiom'] as const;
 
 export type Tab = (typeof allTabs)[number];
 
@@ -71,10 +73,10 @@ export function shownOf({
 }): Shown {
   const on = (feature: FeatureSwitch) => edition.isFeatureEnabled(feature);
   const knowledge = on('knowledge');
-  // The kinds the Known count joins: Words, and each kind as a whole on and in the Mix.
+  // The kinds the Known count joins: Words, and Corrections and Idioms while on and in the Mix.
   const knownKinds: readonly ShownKind[] = [
     'word',
-    ...MIX_KINDS.filter((kind) => on(featureOfKind(kind)) && mix.kinds[kind]),
+    ...KNOWN_WHOLE_KINDS.filter((kind) => on(featureOfKind(kind)) && mix.kinds[kind]),
   ];
   return {
     tabs: allTabs.filter((tab) => tab !== 'game' || on('game')),

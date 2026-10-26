@@ -49,18 +49,21 @@ export function EntryActions({ card }: { card: AnyEntryCard }) {
 }
 
 /**
- * The action row of a Synonym Row's or a Tip's card: the heart and «До
- * колекції» (spec #730).
+ * The action row of a Synonym Row's or a Tip's card: the heart, «До
+ * колекції» and the hide button (spec #730).
  */
 function RowOrTipActions({ card }: { card: SynonymRowFeedCard | TipFeedCard }) {
   const favorite = useFavorite(card.entryId);
   const collection = useCollectionAction(card.entryId);
+  const hide = useHide(card);
   return (
     <>
       <ActionRow
         favorite={<FavoriteButton inFavorites={favorite.inFavorites} onToggle={favorite.toggle} />}
         collection={collection.button}
+        hide={<HideButton onPress={hide.open} />}
       />
+      <HideChoiceSheet {...hide.choice} />
       {collection.sheet}
     </>
   );

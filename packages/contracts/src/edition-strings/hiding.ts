@@ -17,6 +17,10 @@ export const HidingStringsSchema = z.strictObject({
     corrections: TextSchema,
     /** On an Idiom card: takes Idioms, as a whole, out of the Mix. */
     idioms: TextSchema,
+    /** On a Synonym Row card: takes Synonym Rows, as a whole, out of the Mix. */
+    synonymRows: TextSchema,
+    /** On a Tip card: takes Tips, as a whole, out of the Mix. */
+    tips: TextSchema,
     cancel: TextSchema,
   }),
   /** The undo toast after hiding an Entry. Takes `{title}`, what the Entry's row leads with. */
@@ -27,6 +31,10 @@ export const HidingStringsSchema = z.strictObject({
   correctionsHidden: TextSchema,
   /** The undo toast after hiding Idioms. */
   idiomsHidden: TextSchema,
+  /** The undo toast after hiding Synonym Rows. */
+  synonymRowsHidden: TextSchema,
+  /** The undo toast after hiding Tips. */
+  tipsHidden: TextSchema,
   /** The undo button of the toasts. */
   undo: TextSchema,
 });

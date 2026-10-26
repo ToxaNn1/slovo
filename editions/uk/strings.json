@@ -483,12 +483,16 @@
       "category": "Не показувати категорію «{category}»",
       "corrections": "Не показувати Виправлення",
       "idioms": "Не показувати Фразеологізми",
+      "synonymRows": "Не показувати Синонімічні ряди",
+      "tips": "Не показувати Поради",
       "cancel": "Скасувати"
     },
     "entryHidden": "«{title}» приховано",
     "categoryHidden": "Категорію «{category}» приховано",
     "correctionsHidden": "Виправлення приховано",
     "idiomsHidden": "Фразеологізми приховано",
+    "synonymRowsHidden": "Синонімічні ряди приховано",
+    "tipsHidden": "Поради приховано",
     "undo": "Скасувати"
   },
   "mix": {
@@ -510,6 +514,14 @@
     "idioms": {
       "title": "Фразеологізми",
       "subtitle": "Сталі вирази й топоніми з їхнім походженням"
+    },
+    "synonymRows": {
+      "title": "Синонімічні ряди",
+      "subtitle": "Різні слова для одного значення"
+    },
+    "tips": {
+      "title": "Поради",
+      "subtitle": "Як говорити й писати по-українському"
     },
     "rarity": {
       "title": "Рідкість",
@@ -535,6 +547,8 @@
     "turnOnLabel": "Увімкнути категорію «{name}»",
     "turnOnCorrectionsLabel": "Увімкнути Виправлення",
     "turnOnIdiomsLabel": "Увімкнути Фразеологізми",
+    "turnOnSynonymRowsLabel": "Увімкнути Синонімічні ряди",
+    "turnOnTipsLabel": "Увімкнути Поради",
     "rowLabels": "{kind} · {labels}",
     "rowLabelsSpoken": "{kind}, {labels}",
     "labelSeparator": ", ",
