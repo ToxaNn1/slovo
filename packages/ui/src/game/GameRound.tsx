@@ -42,6 +42,7 @@ import {
 } from '../tokens';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { ease, RIGHT_FILL, shake, WRONG_FILL } from './round-motion';
+import { PairsGrid } from './PairsGrid';
 import { useGameHaptics } from './useGameHaptics';
 import { VowelButtons } from './VowelButtons';
 import { useReduceMotion } from '../providers/useReduceMotion';
@@ -92,9 +93,10 @@ type PickAnswer = Extract<RoundAnswer, { form: 'pick' }>;
 /**
  * A Round of the Game in play (`game-round-dark`): the header with the ✕, the
  * prompt under its label, the four options and, once answered, the sheet.
- * It plays the pick form and the vowel form, whose Word stands in the card
- * with each vowel a button; the screens of the other answer forms come with
- * their Game Modes (spec #772). A
+ * It plays the pick form, the vowel form, whose Word stands in the card
+ * with each vowel a button, and the pairs form, whose grid stands under the
+ * mode's label in place of the card and the options; the screens of the other
+ * answer forms come with their Game Modes (spec #772). A
  * Synonym Row's Round asks «Що є синонімом до „{dominant}“?» and a Tip's its
  * own question, each under its kind's label rather than the mode's.
  * The ✕ asks first, with the SLOVO confirmation dialog, as «Очистити Історію?»
@@ -168,6 +170,19 @@ export function GameRound({
               testID="game-vowels"
             />
           </RoundCard>
+        ) : round.form === 'pairs' ? (
+          <>
+            <RoundLabel label={asked.label} />
+            <PairsGrid
+              key={round.number}
+              words={round.words}
+              definitions={round.definitions}
+              answer={answer?.form === 'pairs' ? answer : undefined}
+              onAnswer={(word, definition) => {
+                onAnswer({ form: 'pairs', word, definition });
+              }}
+            />
+          </>
         ) : (
           <RoundCard label={asked.label} prompt={asked.prompt} highlight={round.highlight} />
         )}
@@ -471,6 +486,26 @@ function RoundCard({
 }
 
 /**
+ * The mode's label over a Round without a prompt, such as a pairs grid, which
+ * VoiceOver reads as the Round's heading before the grid.
+ */
+function RoundLabel({ label }: { label: string }) {
+  const { colors, fontFamilies } = useTokens();
+  const { voice } = useEdition();
+  return (
+    <Text
+      testID="game-prompt"
+      accessibilityRole="header"
+      maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+      {...voice}
+      style={[overlineType, styles.label, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+    >
+      {label}
+    </Text>
+  );
+}
+
+/**
  * One option of a Round, 58 pt tall. Once the Round is answered, the right
  * option fills in the correct colour with «Правильно», a wrong choice in the
  * wrong colour with «Ваш вибір», and the others fade; the fills are the light
@@ -712,6 +747,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: space[6],
     borderWidth: 1,
   },
+  label: { marginHorizontal: space[1] },
   option: {
     minHeight: OPTION_HEIGHT,
     flexDirection: 'row',

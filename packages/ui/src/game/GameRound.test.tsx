@@ -77,7 +77,9 @@ const first: CurrentGame = {
 
 /** The Game with its Round answered as given, as the Game in play answers it. */
 function answered(game: CurrentGame, given: GivenAnswer): CurrentGame {
-  return given.form === 'vowel' ? answeredVowel(game, given.position) : answeredPick(game, given);
+  if (given.form === 'vowel') return answeredVowel(game, given.position);
+  if (given.form === 'pairs') return answeredPair(game, given.word, given.definition);
+  return answeredPick(game, given);
 }
 
 /** The Game with its pick Round answered with the option at that place. */
@@ -182,6 +184,57 @@ const tipRound: CurrentGame = {
   },
 };
 
+/** A pairs grid of «Пари»: its Words, and the place of each one's Definition among the Definitions. */
+const PAIR_WORDS = ['ardent', 'candid'] as const;
+const PAIR_DEFINITIONS = ['open and honest', 'full of passion'] as const;
+const OWN_DEFINITION = [1, 0] as const;
+
+const pairsRound: CurrentGame = {
+  ...first,
+  modeId: 'pairs',
+  round: {
+    number: 1,
+    entryKind: 'word',
+    prompt: '',
+    highlight: undefined,
+    form: 'pairs',
+    words: PAIR_WORDS.map((text) => ({ shown: { text, stressedVowels: [] }, gone: false })),
+    definitions: PAIR_DEFINITIONS.map((shown) => ({ shown, gone: false })),
+    answer: undefined,
+  },
+};
+
+/** The Game with its pairs Round answered with the Word, then the Definition at those places. */
+function answeredPair(game: CurrentGame, word: number, definition: number): CurrentGame {
+  const correct = OWN_DEFINITION[word] ?? -1;
+  const right = definition === correct;
+  return {
+    ...game,
+    round: {
+      ...game.round,
+      answer: {
+        form: 'pairs',
+        word,
+        definition,
+        correct,
+        right,
+        sheet: {
+          answer: { text: PAIR_WORDS[word] ?? '', stressedVowels: [] },
+          example: { text: 'An ardent reader.', author: undefined },
+        },
+      },
+    },
+    lives: right || game.lives === undefined ? game.lives : game.lives - 1,
+    status: 'answered',
+  };
+}
+
+/** The mode's label over a Round, by its answer form. */
+const LABELS: Partial<Record<CurrentGame['round']['form'], string>> = {
+  vowel: 'Where is the stress?',
+  pairs: 'Find the pairs',
+};
+
 function Game({
   start,
   onAnswer,
@@ -195,7 +248,7 @@ function Game({
   return (
     <GameRound
       game={game}
-      label={game.round.form === 'vowel' ? 'Where is the stress?' : 'Definition'}
+      label={LABELS[game.round.form] ?? 'Definition'}
       onAnswer={(given) => {
         onAnswer(given);
         setGame((shown) => answered(shown, given));
@@ -328,6 +381,40 @@ describe('GameRound', () => {
       expect(screen.getByTestId('game-sheet-explanation')).toHaveTextContent(
         'Say MAngo, not manGO.',
       );
+    });
+  });
+
+  describe('a pairs Round', () => {
+    it('asks under the mode’s label with the grid’s Words and Definitions as buttons', async () => {
+      await renderRound(jest.fn(), jest.fn(), pairsRound);
+
+      expect(screen.getByRole('header', { name: 'Find the pairs' })).toBeTruthy();
+      expect(
+        screen.getAllByRole('button').map((button): unknown => button.props['accessibilityLabel']),
+      ).toEqual(['Leave the Game', 'ardent', 'candid', 'open and honest', 'full of passion']);
+    });
+
+    it('answers with the Word, then the Definition tapped, and shows the Word with its Example', async () => {
+      const onAnswer = jest.fn();
+      await renderRound(onAnswer, jest.fn(), pairsRound);
+
+      await fireEvent.press(screen.getByRole('button', { name: 'candid' }));
+      await fireEvent.press(screen.getByRole('button', { name: 'open and honest' }));
+
+      expect(onAnswer).toHaveBeenCalledWith({ form: 'pairs', word: 1, definition: 0 });
+      expect(screen.getByRole('header', { name: 'Right!' })).toBeTruthy();
+      expect(screen.getByText('An ardent reader.')).toBeOnTheScreen();
+      expect(screen.getByLabelText('Lives: 5 of 5')).toBeOnTheScreen();
+    });
+
+    it('takes a Life for a wrong pair', async () => {
+      await renderRound(jest.fn(), jest.fn(), pairsRound);
+
+      await fireEvent.press(screen.getByRole('button', { name: 'ardent' }));
+      await fireEvent.press(screen.getByRole('button', { name: 'open and honest' }));
+
+      expect(screen.getByRole('header', { name: 'Not this time' })).toBeTruthy();
+      expect(screen.getByLabelText('Lives: 4 of 5')).toBeOnTheScreen();
     });
   });
 
