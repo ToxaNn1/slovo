@@ -49,22 +49,25 @@ export function EntryActions({ card }: { card: AnyEntryCard }) {
 }
 
 /**
- * The action row of a Synonym Row's or a Tip's card: the heart, «До
- * колекції» and the hide button (spec #730).
+ * The action row of a Synonym Row's or a Tip's card: the heart, share, «До
+ * колекції» and the hide button (spec #730). Share is there as on every card.
  */
 function RowOrTipActions({ card }: { card: SynonymRowFeedCard | TipFeedCard }) {
   const favorite = useFavorite(card.entryId);
   const collection = useCollectionAction(card.entryId);
+  const share = useShareAction(card);
   const hide = useHide(card);
   return (
     <>
       <ActionRow
         favorite={<FavoriteButton inFavorites={favorite.inFavorites} onToggle={favorite.toggle} />}
+        share={share.button}
         collection={collection.button}
         hide={<HideButton onPress={hide.open} />}
       />
       <HideChoiceSheet {...hide.choice} />
       {collection.sheet}
+      {share.sheet}
     </>
   );
 }
@@ -73,17 +76,15 @@ function RowOrTipActions({ card }: { card: SynonymRowFeedCard | TipFeedCard }) {
  * The action row of a Word's, a Correction's or an Idiom's card. The «Знаю»
  * and «Не знаю» buttons are there only when the Knowledge switch is on in
  * effect, and inactive while Self-check conceals the card's meaning (the card
- * tells them). Share is there only when the binary can capture the Share Card
- * and the Share Cards switch is on in effect.
+ * tells them).
  */
 function ShownEntryActions({ card }: { card: EntryFeedCard }) {
   const { entryId } = card;
   const favorite = useFavorite(entryId);
   const hide = useHide(card);
   const collection = useCollectionAction(entryId);
-  const [shareOpen, setShareOpen] = useState(false);
+  const share = useShareAction(card);
   const buttons = useShown().entryButtons;
-  const share = buttons.shareCard ? shareCardOnDevice : undefined;
   const knowledge = useKnowledgeMark(entryId);
   return (
     <>
@@ -94,32 +95,45 @@ function ShownEntryActions({ card }: { card: EntryFeedCard }) {
           ) : undefined
         }
         favorite={<FavoriteButton inFavorites={favorite.inFavorites} onToggle={favorite.toggle} />}
-        share={
-          share !== undefined ? (
-            <ShareButton
-              onPress={() => {
-                setShareOpen(true);
-              }}
-            />
-          ) : undefined
-        }
+        share={share.button}
         collection={collection.button}
         hide={<HideButton onPress={hide.open} />}
       />
       <HideChoiceSheet {...hide.choice} />
       {collection.sheet}
-      {share !== undefined && (
-        <EntryShareSheet
-          card={card}
-          share={share}
-          visible={shareOpen}
-          onClose={() => {
-            setShareOpen(false);
-          }}
-        />
-      )}
+      {share.sheet}
     </>
   );
+}
+
+/**
+ * The share button of an Entry's action row, and the share sheet it opens:
+ * there only when the binary can capture the Share Card and the Share Cards
+ * switch is on in effect.
+ */
+function useShareAction(card: AnyEntryCard): { button: ReactNode; sheet: ReactNode } {
+  const [open, setOpen] = useState(false);
+  const share = useShown().entryButtons.shareCard ? shareCardOnDevice : undefined;
+  if (share === undefined) return { button: undefined, sheet: undefined };
+  return {
+    button: (
+      <ShareButton
+        onPress={() => {
+          setOpen(true);
+        }}
+      />
+    ),
+    sheet: (
+      <EntryShareSheet
+        card={card}
+        share={share}
+        visible={open}
+        onClose={() => {
+          setOpen(false);
+        }}
+      />
+    ),
+  };
 }
 
 /**
@@ -132,7 +146,7 @@ function EntryShareSheet({
   visible,
   onClose,
 }: {
-  card: EntryFeedCard;
+  card: AnyEntryCard;
   share: NonNullable<typeof shareCardOnDevice>;
   visible: boolean;
   onClose: () => void;

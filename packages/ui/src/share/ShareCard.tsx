@@ -1,15 +1,20 @@
 import type { EditionStrings } from '@slovo/contracts';
-import type {
-  CorrectionCardModel,
-  EntryFeedCard,
-  IdiomCardModel,
-  WordCardModel,
+import {
+  buildSynonymRowShareCard,
+  buildTipShareCard,
+  withoutStress,
+  type AnyEntryCard,
+  type CorrectionCardModel,
+  type IdiomCardModel,
+  type SynonymRowShareCardModel,
+  type TipShareCardModel,
+  type WordCardModel,
 } from '@slovo/core';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { DecorBackground, OrnamentDivider, ShareCardFrame } from '../decor/DecorSlots';
-import { useEdition } from '../providers/EditionProvider';
+import { fill, useEdition } from '../providers/EditionProvider';
 import { wordGrammarText } from '../entries/part-of-speech';
 import { stressLabel } from '../entries/stress-label';
 import { shareCardLayout, withAlpha, type ShareCardFormat } from '../tokens';
@@ -38,6 +43,10 @@ const DEFINITION_LINE_HEIGHT = 1.45;
 const FOOTER_LINE_HEIGHT = 1.4;
 /** The strike through the non-standard form, in the accent colour at the design's 50%. */
 const STRIKE_ALPHA = 0.5;
+/** A Tip's title, above its forms, at the Definition's size and this much larger. */
+const TIP_TITLE_SCALE = 1.2;
+/** What ends the members of a Synonym Row that has more than its Share Card shows. */
+const MORE_MEMBERS = '…';
 
 /** Text that doesn't fit shrinks by this share of its size at a time. */
 const SHRINK_STEP = 0.05;
@@ -70,7 +79,7 @@ function useShrinkToFit(floor: number): [number, (measuredAt: number, fits: bool
 /** What a Share Card shows. */
 export interface ShareCardContent {
   /** The Entry's card, as the Core built it for the Feed. */
-  card: EntryFeedCard;
+  card: AnyEntryCard;
   /** Whether it is today's Word of the Day, which the overline then says in place of the Category. */
   todaysWordOfTheDay: boolean;
   /** The watermark: the Edition's display name. */
@@ -86,9 +95,13 @@ export interface ShareCardContent {
  * «Так часто кажуть» over the non-standard form struck through, the divider
  * with the Correction's arrow and «Українською краще» over the main standard
  * equivalent; an Idiom's shows its expression and its primary Definition, and
- * a place name's adds «Походження» over its etymology. The overline (today's
- * Word of the Day, the Category, the Correction Type or the chip of the Idiom
- * Type) tops the Story and starts the Square's footer; the watermark
+ * a place name's adds «Походження» over its etymology. A Synonym Row's and
+ * a Tip's show what the Core decides for their Share Card (ADR 0051): a row's
+ * dominant, its meaning and its first 6 members, ending in «…» when it has
+ * more; a Tip's title over its forms, drawn as a Correction's, the
+ * non-standard one only when it has one. The overline (today's Word of the
+ * Day, the Category, the Correction Type, the chip of the Idiom Type or of the
+ * row or the Tip) tops the Story and starts the Square's footer; the watermark
  * ends both. The card is laid out at its own size, so it is sharp at any size,
  * and its type keeps the design's proportions whatever the reader's text size.
  * A headline too wide for its line shrinks to a floor and then wraps; text too
@@ -124,14 +137,7 @@ function FittedCard({
     }
   }, [room, content, reportText]);
 
-  const overline =
-    model.kind === 'correction'
-      ? edition.strings.correctionCard.correctionTypes[model.correctionType]
-      : model.kind === 'idiom'
-        ? edition.strings.idiomCard.idiomTypes[model.idiomType]
-        : todaysWordOfTheDay
-          ? edition.strings.share.wordOfTheDay
-          : model.categoryName;
+  const overline = overlineOf(model, todaysWordOfTheDay, edition.strings);
   /** A size of the design's text, shrunk with the rest of the text. */
   const text = (size: number) => size * unit * textScale;
   const headline = (value: string) => (
@@ -153,26 +159,25 @@ function FittedCard({
       {value}
     </Text>
   );
+  const blockProps = { headline, text, format, dividerScale: unit };
   const blocks =
     model.kind === 'word' ? (
-      <WordBlocks card={model} headline={headline} text={text} format={format} />
+      <WordBlocks card={model} {...blockProps} />
     ) : model.kind === 'idiom' ? (
-      <IdiomBlocks card={model} headline={headline} text={text} format={format} />
+      <IdiomBlocks card={model} {...blockProps} />
+    ) : model.kind === 'synonymRow' ? (
+      <SynonymRowBlocks card={buildSynonymRowShareCard(model)} {...blockProps} />
+    ) : model.kind === 'tip' ? (
+      <TipBlocks card={buildTipShareCard(model)} {...blockProps} />
     ) : (
-      <CorrectionBlocks
-        card={model}
-        headline={headline}
-        text={text}
-        format={format}
-        dividerScale={unit}
-      />
+      <CorrectionBlocks card={model} {...blockProps} />
     );
 
   return (
     <View
       testID="share-card"
       accessible
-      accessibilityLabel={sentences([overline, ...accessibilityParts(model, edition.strings)])}
+      accessibilityLabel={accessibilityLabel(model, overline, edition.strings)}
       {...voice}
       style={[
         styles.card,
@@ -292,6 +297,8 @@ interface BlockProps {
   /** A size of the design's text in this card's points. */
   text: (size: number) => number;
   format: ShareCardFormat;
+  /** The design's points in the card's points, for Decor slot 2. */
+  dividerScale: number;
 }
 
 /**
@@ -386,13 +393,86 @@ function Definition({
  * through, Decor slot 2 with the Correction's arrow, and «Українською краще»
  * over the main standard equivalent.
  */
-function CorrectionBlocks({
+function CorrectionBlocks({ card, ...props }: BlockProps & { card: CorrectionCardModel }) {
+  return (
+    <Forms {...props} nonStandardForm={card.nonStandardForm} standardForm={card.mainEquivalent} />
+  );
+}
+
+/**
+ * A Synonym Row's blocks: the dominant, its meaning and the members the Core
+ * shares, ending in «…» when the row has more.
+ */
+function SynonymRowBlocks({
   card,
   headline,
   text,
   format,
+}: BlockProps & { card: SynonymRowShareCardModel }) {
+  const { colors, fontFamilies } = useTokens();
+  const { type } = shareCardLayout[format];
+  return (
+    <>
+      {headline(card.dominant)}
+      <Definition text={text} size={type.definition} value={card.meaning} />
+      <Text
+        allowFontScaling={false}
+        style={{
+          fontSize: text(type.definition),
+          lineHeight: text(type.definition) * DEFINITION_LINE_HEIGHT,
+          color: colors.accent,
+          fontFamily: fontFamilies.word,
+        }}
+      >
+        {membersText(card)}
+      </Text>
+    </>
+  );
+}
+
+/**
+ * A Tip's blocks: its title over its forms, drawn as a Correction's; with no
+ * non-standard form, Decor slot 2 has no arrow and only the standard form
+ * follows it.
+ */
+function TipBlocks({ card, ...props }: BlockProps & { card: TipShareCardModel }) {
+  const { colors, fontFamilies } = useTokens();
+  const { type } = shareCardLayout[props.format];
+  const size = props.text(type.definition) * TIP_TITLE_SCALE;
+  return (
+    <>
+      <Text
+        allowFontScaling={false}
+        style={[
+          styles.tipTitle,
+          {
+            fontSize: size,
+            lineHeight: size * NON_STANDARD_LINE_HEIGHT,
+            color: colors.ink,
+            fontFamily: fontFamilies.word,
+          },
+        ]}
+      >
+        {card.title}
+      </Text>
+      <Forms {...props} nonStandardForm={card.nonStandardForm} standardForm={card.standardForm} />
+    </>
+  );
+}
+
+/**
+ * «Так часто кажуть» over the non-standard form struck through, when there is
+ * one, Decor slot 2, with an arrow after a non-standard form, and «Українською
+ * краще» over the standard form as the headline.
+ */
+function Forms({
+  nonStandardForm,
+  standardForm,
+  headline,
+  text,
+  format,
   dividerScale,
-}: BlockProps & { card: CorrectionCardModel; dividerScale: number }) {
+}: BlockProps & { nonStandardForm: string | undefined; standardForm: string }) {
   const { colors, fontFamilies } = useTokens();
   const { strings } = useEdition();
   const { type, labelGap } = shareCardLayout[format];
@@ -406,28 +486,33 @@ function CorrectionBlocks({
   );
   return (
     <>
-      <View style={{ gap: text(labelGap) }}>
-        {label(strings.share.nonStandard, colors.muted)}
-        <Text
-          allowFontScaling={false}
-          style={[
-            styles.nonStandard,
-            {
-              fontSize: text(type.nonStandard),
-              lineHeight: text(type.nonStandard) * NON_STANDARD_LINE_HEIGHT,
-              color: colors.muted,
-              fontFamily: fontFamilies.word,
-              textDecorationColor: withAlpha(colors.accent, STRIKE_ALPHA),
-            },
-          ]}
-        >
-          {card.nonStandardForm}
-        </Text>
-      </View>
-      <OrnamentDivider centre="arrow" scale={dividerScale} />
+      {nonStandardForm !== undefined && (
+        <View style={{ gap: text(labelGap) }}>
+          {label(strings.share.nonStandard, colors.muted)}
+          <Text
+            allowFontScaling={false}
+            style={[
+              styles.nonStandard,
+              {
+                fontSize: text(type.nonStandard),
+                lineHeight: text(type.nonStandard) * NON_STANDARD_LINE_HEIGHT,
+                color: colors.muted,
+                fontFamily: fontFamilies.word,
+                textDecorationColor: withAlpha(colors.accent, STRIKE_ALPHA),
+              },
+            ]}
+          >
+            {nonStandardForm}
+          </Text>
+        </View>
+      )}
+      <OrnamentDivider
+        centre={nonStandardForm !== undefined ? 'arrow' : 'ornament'}
+        scale={dividerScale}
+      />
       <View style={{ gap: text(labelGap) }}>
         {label(strings.share.standard, colors.accent)}
-        {headline(card.mainEquivalent)}
+        {headline(standardForm)}
       </View>
     </>
   );
@@ -447,9 +532,70 @@ function sentences(parts: (string | undefined)[]): string {
     );
 }
 
-/** What VoiceOver reads of the card after its overline. */
+/** A Synonym Row's members on its Share Card, ending in «…» when it has more. */
+function membersText(card: SynonymRowShareCardModel): string {
+  return `${card.members.join(', ')}${card.moreMembers ? MORE_MEMBERS : ''}`;
+}
+
+/**
+ * The overline: today's Word of the Day or the Category of a Word, the
+ * Correction Type, the chip of the Idiom Type, or the chip of a row or a Tip.
+ */
+function overlineOf(
+  card: AnyEntryCard['model'],
+  todaysWordOfTheDay: boolean,
+  strings: EditionStrings,
+): string | undefined {
+  switch (card.kind) {
+    case 'correction':
+      return strings.correctionCard.correctionTypes[card.correctionType];
+    case 'idiom':
+      return strings.idiomCard.idiomTypes[card.idiomType];
+    case 'synonymRow':
+      return strings.synonymRowCard.chip;
+    case 'tip':
+      return strings.tipCard.chip;
+    case 'word':
+      return todaysWordOfTheDay ? strings.share.wordOfTheDay : card.categoryName;
+  }
+}
+
+/**
+ * What VoiceOver reads of the card: its overline, then its parts. A row's and
+ * a Tip's heading already name their kind, as on their cards, so they start
+ * with it in place of the overline.
+ */
+function accessibilityLabel(
+  card: AnyEntryCard['model'],
+  overline: string | undefined,
+  strings: EditionStrings,
+): string {
+  if (card.kind === 'synonymRow') {
+    const shared = buildSynonymRowShareCard(card);
+    return sentences([
+      fill(strings.synonymRowCard.heading, {
+        dominant: withoutStress(shared.dominant),
+        members: withoutStress(membersText(shared)),
+      }),
+      shared.meaning,
+    ]);
+  }
+  if (card.kind === 'tip') {
+    const shared = buildTipShareCard(card);
+    return sentences([
+      fill(strings.tipCard.heading, { title: withoutStress(shared.title) }),
+      shared.nonStandardForm === undefined
+        ? undefined
+        : `${strings.share.nonStandard}: ${withoutStress(shared.nonStandardForm)}`,
+      `${strings.share.standard}: ${withoutStress(shared.standardForm)}`,
+    ]);
+  }
+  return sentences([overline, ...accessibilityParts(card, strings)]);
+}
+
+/** What VoiceOver reads of a Word's, a Correction's or an Idiom's card after its overline. */
 function accessibilityParts(
-  card: EntryFeedCard['model'],
+  card: Exclude<AnyEntryCard['model'], { kind: 'synonymRow' | 'tip' }>,
   strings: EditionStrings,
 ): (string | undefined)[] {
   if (card.kind === 'idiom') {
@@ -481,6 +627,7 @@ const styles = StyleSheet.create({
   squareRoom: { flex: 1, justifyContent: 'flex-start' },
   overline: { fontWeight: '700', textTransform: 'uppercase' },
   headline: { fontWeight: '500' },
+  tipTitle: { fontWeight: '500' },
   partOfSpeech: { fontWeight: '500' },
   label: { fontWeight: '500' },
   nonStandard: { fontWeight: '400', textDecorationLine: 'line-through' },
