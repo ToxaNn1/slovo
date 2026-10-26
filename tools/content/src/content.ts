@@ -35,6 +35,7 @@ export const ENTRY_KINDS = {
   correction: 'c_',
   idiom: 'i_',
   'synonym-row': 'r_',
+  tip: 't_',
 } as const;
 
 export type EntryKind = keyof typeof ENTRY_KINDS;
@@ -75,7 +76,7 @@ export async function newEntry(kind: EntryKind, tool: ContentTool): Promise<numb
 
 /**
  * Opens an existing Entry in the editor, found by its id, or by its Lemma,
- * expression, non-standard form or a Synonym Row's dominant, with or without stress marks and in any
+ * expression, non-standard form, a Synonym Row's dominant or a Tip's title, with or without stress marks and in any
  * case. When the text matches several Entries, such as homonyms, it lists
  * them and asks which one to open. After each save the content is checked
  * and recorded as `newEntry` does; an Entry closed unchanged writes nothing.
@@ -229,9 +230,9 @@ interface Match {
   readonly label?: string;
 }
 
-/** The Entries whose Lemma, expression, non-standard form or dominant is the text, in id order. */
+/** The Entries whose Lemma, expression, non-standard form, dominant or title is the text, in id order. */
 function matchingEntries(edition: EditionFolder, text: string): Match[] {
-  const { words, corrections, idioms, synonymRows } = edition.entries();
+  const { words, corrections, idioms, synonymRows, tips } = edition.entries();
   const wanted = comparable(text);
   return [
     ...words.map(({ entry }) => ({ entry, text: entry.lemma, gist: entry.primaryDefinition })),
@@ -246,6 +247,7 @@ function matchingEntries(edition: EditionFolder, text: string): Match[] {
       gist: entry.primaryDefinition,
     })),
     ...synonymRows.map(({ entry }) => ({ entry, text: entry.dominant.text, gist: entry.meaning })),
+    ...tips.map(({ entry }) => ({ entry, text: entry.title, gist: entry.standardForm })),
   ]
     .filter(({ text: candidate }) => comparable(candidate) === wanted)
     .map(({ entry, text: candidate, gist }) => ({
@@ -362,6 +364,16 @@ function draftEntry(kind: EntryKind, id: string, edition: EditionFolder): Record
         meaning: '',
         members: Array.from({ length: 5 }, rowWord),
         sources,
+      };
+    case 'tip':
+      return {
+        kind,
+        id,
+        title: '',
+        standardForm: '',
+        explanation: '',
+        sources,
+        gameQuestion: { prompt: '', rightAnswer: '', wrongAnswers: ['', '', ''] },
       };
   }
 }
