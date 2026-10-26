@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Word } from '@slovo/contracts';
+import type { Correction, Word } from '@slovo/contracts';
 
 import {
   buildGameReview,
@@ -13,7 +13,7 @@ import {
   type Round,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
-import { seededRandom, word } from '../test-support';
+import { correction, seededRandom, word } from '../test-support';
 
 /** The Ukrainian Edition's vowels. */
 const vowels = ['а', 'е', 'є', 'и', 'і', 'ї', 'о', 'у', 'ю', 'я'];
@@ -51,12 +51,65 @@ const words: Word[] = [
 
 const content = createMemoryContentPort({ words });
 
-/** Where the vowels of the Round's Word stand, and which of them are stressed. */
+/**
+ * Two stress traps, their main standard equivalent first, each with where the
+ * vowels of that form without Stress stand (ADR 0045).
+ */
+const traps: readonly {
+  id: string;
+  nonStandard: string;
+  form: string;
+  lemma: string;
+  stress: number[];
+  vowels: number[];
+}[] = [
+  {
+    id: 'c_vypadok',
+    nonStandard: 'випа́док',
+    form: 'ви́падок',
+    lemma: 'випадок',
+    stress: [1],
+    vowels: [1, 3, 5],
+  },
+  {
+    id: 'c_dzvonyt',
+    nonStandard: 'дзво́нить',
+    form: 'дзвони́ть',
+    lemma: 'дзвонить',
+    stress: [5],
+    vowels: [3, 5],
+  },
+];
+
+const trapCorrections: Correction[] = traps.map(({ id, nonStandard, form }) =>
+  correction(id, {
+    correctionType: 'wrongStress',
+    nonStandardForm: nonStandard,
+    standardEquivalents: [form],
+    explanation: `Кажуть ${form}.`,
+  }),
+);
+
+/** The Words with the two stress traps and a calque, which never plays in «Наголос». */
+const withTraps = createMemoryContentPort({
+  words,
+  corrections: [
+    ...trapCorrections,
+    correction('c_kalka', {
+      nonStandardForm: 'приймати участь',
+      standardEquivalents: ['брати участь'],
+    }),
+  ],
+});
+
+/** Where the vowels of the Round's Word or stress trap stand, and which of them are stressed. */
 function expectedOf({ prompt }: Round) {
-  const asked = playing.find(({ lemma }) => lemma === prompt);
-  if (asked === undefined) throw new Error(`No playing Word is «${prompt}»`);
+  const asked = [...playing, ...traps].find(({ lemma }) => lemma === prompt);
+  if (asked === undefined) throw new Error(`No playing Word or stress trap is «${prompt}»`);
   return asked;
 }
+
+const trapOf = ({ prompt }: Round) => traps.find(({ lemma }) => lemma === prompt);
 
 /** Waits until the Game has planned its offers, which it does once the composition is open. */
 async function offersPlanned(app: Composition): Promise<Composition> {
@@ -78,13 +131,17 @@ async function run({
   seed = 7,
   off = [],
   marksStress = true,
+  pack = content,
+  corrections = true,
 }: {
   seed?: number;
   off?: readonly string[];
   marksStress?: boolean;
+  pack?: typeof content;
+  corrections?: boolean;
 } = {}): Promise<Composition> {
   const app = await openComposition({
-    content,
+    content: pack,
     edition: {
       id: 'test',
       isFeatureEnabled: (feature) => !off.includes(feature),
@@ -92,7 +149,7 @@ async function run({
         mix: {
           categoryIds: ['test'],
           correctionCategoryIds: 'all' as const,
-          corrections: true,
+          corrections,
           idioms: true,
           synonymRows: true,
           tips: true,
@@ -261,5 +318,71 @@ describe('a Round of «Наголос»', () => {
         .map(({ prompt }) => prompt)
         .sort(),
     ).toEqual([...weak].sort());
+  });
+});
+
+describe('a stress trap in «Наголос»', () => {
+  /** Every Round of Games with the stress traps in the pack, one Game per seed, each answered right. */
+  async function roundsWithTraps(corrections = true): Promise<Round[]> {
+    const rounds: Round[] = [];
+    for (const seed of [1, 2, 3, 4, 5, 6]) {
+      const app = await run({ seed, pack: withTraps, corrections });
+      rounds.push(...(await playGame(app, ({ stress }) => stress[0] ?? -1)));
+    }
+    return rounds;
+  }
+
+  it('shows its standard form without Stress, the answer its Stress, the sheet its explanation', async () => {
+    const rounds = (await roundsWithTraps()).filter((round) => trapOf(round) !== undefined);
+
+    expect(new Set(rounds.map(({ prompt }) => prompt))).toEqual(
+      new Set(traps.map(({ lemma }) => lemma)),
+    );
+    for (const round of rounds) {
+      const { form, lemma, stress, vowels: places } = expectedOf(round) as (typeof traps)[number];
+      expect(round).toMatchObject({ form: 'vowel', vowels: places });
+      expect(round.answer).toMatchObject({ form: 'vowel', stressed: stress, right: true });
+      expect(round.answer?.sheet).toEqual({
+        answer: { text: form, stressedVowels: stress.map((place) => lemma[place]) },
+        example: undefined,
+        explanation: `Кажуть ${form}.`,
+      });
+    }
+  });
+
+  it('never asks about a Correction of another Correction Type', async () => {
+    const prompts = (await roundsWithTraps()).map(({ prompt }) => prompt);
+
+    expect(prompts.some((prompt) => prompt.includes('участь'))).toBe(false);
+  });
+
+  it('costs a Life for an unstressed vowel and marks the Correction «Не знаю»', async () => {
+    for (const seed of [1, 2, 3, 4, 5, 6]) {
+      const app = await run({ seed, pack: withTraps });
+      await app.game.start('stress');
+      while (current(app).status === 'playing' && trapOf(current(app).round) === undefined) {
+        const { stress } = expectedOf(current(app).round);
+        await app.game.answer({ form: 'vowel', position: stress[0] ?? -1 });
+        await app.game.next();
+      }
+      const trap = trapOf(current(app).round);
+      if (trap === undefined) continue;
+      const wrong = trap.vowels.find((place) => !trap.stress.includes(place)) ?? -1;
+
+      await app.game.answer({ form: 'vowel', position: wrong });
+
+      expect(current(app).round.answer).toMatchObject({ chosen: wrong, right: false });
+      expect(current(app).lives).toBe(4);
+      expect(app.knowledge.state.shown.get(trap.id)).toBe('unknown');
+      return;
+    }
+    throw new Error('No Game asked about a stress trap');
+  });
+
+  it('asks about none with Corrections out of the Mix', async () => {
+    const rounds = await roundsWithTraps(false);
+
+    expect(rounds).toHaveLength(6 * GAME_ROUNDS);
+    expect(rounds.filter((round) => trapOf(round) !== undefined)).toEqual([]);
   });
 });
