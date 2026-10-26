@@ -1,0 +1,80 @@
+{
+  "kind": "synonymRow",
+  "id": "r_u4ywcn",
+  "dominant": {
+    "text": "смуток",
+    "stress": [2]
+  },
+  "meaning": "Сумний, пригнічений настрій.",
+  "members": [
+    {
+      "text": "сум",
+      "stress": [1]
+    },
+    {
+      "text": "журба",
+      "stress": [4],
+      "shadeNote": "з тривогою, клопотом"
+    },
+    {
+      "text": "зажура",
+      "stress": [3],
+      "wordId": "w_1zahnw",
+      "shadeNote": "тиха, затаєна"
+    },
+    {
+      "text": "туга",
+      "stress": [1],
+      "shadeNote": "за втраченим чи далеким"
+    },
+    {
+      "text": "присмуток",
+      "stress": [2],
+      "wordId": "w_qesnfb",
+      "shadeNote": "легкий, ледь помітний"
+    },
+    {
+      "text": "скруха",
+      "stress": [3],
+      "wordId": "w_3p8gu4",
+      "shadeNote": "тяжка, гнітюча"
+    },
+    {
+      "text": "гризота",
+      "stress": [4],
+      "wordId": "w_freah5",
+      "shadeNote": "що точить душу"
+    },
+    {
+      "text": "хандра",
+      "stress": [5],
+      "wordId": "w_lklgry",
+      "shadeNote": "похмура, з нудьгою"
+    },
+    {
+      "text": "розпука",
+      "stress": [4],
+      "wordId": "w_ho938i",
+      "shadeNote": "аж до відчаю"
+    },
+    {
+      "text": "печаль",
+      "stress": [3],
+      "shadeNote": "книжно, поетично"
+    },
+    {
+      "text": "нудьга",
+      "stress": [5],
+      "shadeNote": "від безділля, одноманітності"
+    }
+  ],
+  "sources": [
+    {
+      "title": "Бурячок А. А. Словник синонімів української мови: у 2 т. — К.: Наукова думка, 1999–2000"
+    },
+    {
+      "title": "Горох. Синонімія: «смуток»",
+      "url": "https://goroh.pp.ua/Синонімія/смуток"
+    }
+  ]
+}
