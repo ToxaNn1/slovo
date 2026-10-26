@@ -11,6 +11,9 @@ export const TipIdSchema = z
   .string()
   .regex(/^t_[a-z0-9]+$/, 'Expected a Tip id: t_ followed by lowercase letters and digits');
 
+/** The most characters a Tip's explanation may have. */
+export const TIP_EXPLANATION_MAX_LENGTH = 300;
+
 /** A Tip's own Game question: a prompt with one right answer and three wrong ones. */
 export const TipGameQuestionSchema = z.strictObject({
   prompt: TextSchema,
@@ -22,11 +25,11 @@ export type TipGameQuestion = z.infer<typeof TipGameQuestionSchema>;
 
 /**
  * A Tip as authored in an Edition's content and as returned by the Core: a
- * rule of good speech with a title («Котра година?»), its standard form, a
- * short explanation, its sources and its own Game question; optionally the
- * non-standard form it replaces and an example. A Tip with no non-standard
- * form shows only the right way. It has no Category, rarity or Pronunciation
- * (ADR 0051).
+ * rule of good speech with a title («Котра година?»), its standard form, an
+ * explanation of at most 300 characters, at least one source and its own Game
+ * question; optionally the non-standard form it replaces and an example. A
+ * Tip with no non-standard form shows only the right way. It has no Category,
+ * rarity or Pronunciation (ADR 0051).
  *
  * `kind` tells Entries apart. Authored files may leave it out, because the
  * folder already says what they hold. `retired` defaults to false; a Retired
@@ -38,9 +41,9 @@ export const TipSchema = z.strictObject({
   title: TextSchema,
   nonStandardForm: TextSchema.optional(),
   standardForm: TextSchema,
-  explanation: TextSchema,
+  explanation: TextSchema.max(TIP_EXPLANATION_MAX_LENGTH),
   example: ExampleSchema.optional(),
-  sources: z.array(SourceSchema),
+  sources: z.array(SourceSchema).min(1),
   gameQuestion: TipGameQuestionSchema,
   retired: z.boolean().default(false),
 });

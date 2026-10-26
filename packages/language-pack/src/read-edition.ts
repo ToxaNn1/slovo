@@ -6,6 +6,7 @@ import type { Correction, Entry, Idiom, SynonymRow, Tip, Word } from '@slovo/con
 import type { BuildError } from './build-error';
 import { checkContent, type Authored } from './check-content';
 import { checkSynonymRows } from './check-synonym-rows';
+import { checkTips } from './check-tips';
 import type { ContentManifest } from './content-manifest';
 import type { ContentTargets } from './content-targets';
 import { editionFiles, EditionFolderError } from './edition-folder';
@@ -69,6 +70,7 @@ export function readEdition(
     errors.push(
       ...checkContent(config, words, corrections, idioms),
       ...checkSynonymRows(config, words, synonymRows),
+      ...checkTips(config, tips),
     );
   }
   if (registry !== undefined) {

@@ -95,6 +95,7 @@ export {
   type SynonymRowMember,
 } from './synonym-row';
 export {
+  TIP_EXPLANATION_MAX_LENGTH,
   TipGameQuestionSchema,
   TipIdSchema,
   TipSchema,
