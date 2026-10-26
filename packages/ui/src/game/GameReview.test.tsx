@@ -174,7 +174,7 @@ describe('GameReview', () => {
         '2, dour, wrong, you picked brittle',
         '3, in the meantimes, wrong, you picked in the meanwhiles',
         '4, spill the beans, wrong, you picked bite the dust',
-        '5, walk, wrong, you picked ru\u0301n',
+        '5, walk, stress on a, wrong, you picked ru\u0301n',
         '6, What time is it?, wrong, you picked How many hours?',
       ].map((name) => screen.getByRole('button', { name })),
     );
@@ -241,7 +241,7 @@ describe('GameReview', () => {
 
     expect(
       screen.getByRole('button', {
-        name: '5, walk, wrong, you picked ru\u0301n',
+        name: '5, walk, stress on a, wrong, you picked ru\u0301n',
         expanded: true,
       }),
     ).toBeTruthy();
@@ -281,5 +281,19 @@ describe('GameReview', () => {
     await fireEvent.press(screen.getByTestId('game-review-row-4'));
 
     expect(onOpen.mock.calls).toEqual([['w_dour'], ['i_spillthebeans']]);
+  });
+
+  it('opens a Synonym Row and a Tip on a second tap', async () => {
+    const onOpen = jest.fn();
+    await renderReview({ onOpen });
+
+    await fireEvent.press(screen.getByTestId('game-review-row-5'));
+    expect(onOpen).not.toHaveBeenCalled();
+    await fireEvent.press(screen.getByTestId('game-review-row-5'));
+    await fireEvent.press(screen.getByTestId('game-review-row-6'));
+    expect(onOpen).toHaveBeenCalledTimes(1);
+    await fireEvent.press(screen.getByTestId('game-review-row-6'));
+
+    expect(onOpen.mock.calls).toEqual([['r_walk'], ['t_whattime']]);
   });
 });
