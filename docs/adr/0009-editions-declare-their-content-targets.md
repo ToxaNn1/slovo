@@ -1,6 +1,6 @@
 # Each Edition declares its content targets, and the pack build enforces them
 
-An Edition may declare the floor its content must reach in `content/targets.json`: a minimum number of Words, of Corrections (`minCorrections`), of Idioms (`minIdioms`) and of Words per Category, every rarity present, and every Word with a Stress. The Language Pack build checks the content report against those targets. A missed target does not stop the pack from being written, but `pnpm build:pack` exits non-zero and lists every miss, so CI fails. Counts leave Retired Entries out, as the content report does.
+An Edition may declare the floor its content must reach in `content/targets.json`: a minimum number of Words, of Corrections (`minCorrections`), of Idioms (`minIdioms`), of Words per Category and of Corrections per Category of Corrections (`minCorrectionsPerCategory`, ADR 0050), every rarity present, and every Word with a Stress. The Language Pack build checks the content report against those targets. A missed target does not stop the pack from being written, but `pnpm build:pack` exits non-zero and lists every miss, so CI fails. Counts leave Retired Entries out, as the content report does.
 
 `minWordsByCategory` names Categories and gives each its own floor of Words, which the build takes over `minWordsPerCategory` for that Category only, so a new Category can grow to the general floor over several content updates while the full ones stay guarded. A floor that names a Category the Edition doesn't have is a missed target.
 
