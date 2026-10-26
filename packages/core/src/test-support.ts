@@ -12,6 +12,8 @@ export const knownCounts = (counts: Partial<KnownCounts> = {}): KnownCounts => (
   word: 0,
   correction: 0,
   idiom: 0,
+  synonymRow: 0,
+  tip: 0,
   ...counts,
 });
 

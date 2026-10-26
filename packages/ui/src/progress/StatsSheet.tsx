@@ -1,4 +1,5 @@
-import { GAME_ROUNDS, type ProgressState, type ShownKind } from '@slovo/core';
+import type { EntryKind } from '@slovo/contracts';
+import { GAME_ROUNDS, type ProgressState } from '@slovo/core';
 import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { BottomSheet } from '../primitives/BottomSheet';
@@ -73,7 +74,7 @@ export function StatsSheet({
   stats: ProgressState;
   hideStreak?: boolean;
   /** The knowledge rows, with the kinds of Entry whose Known count shows, in order, or none. */
-  knowledge?: readonly ShownKind[] | 'none';
+  knowledge?: readonly EntryKind[] | 'none';
   onClose: () => void;
 }) {
   const { colors, fontFamilies } = useTokens();

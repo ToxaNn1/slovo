@@ -1,5 +1,6 @@
+import type { EntryKind } from '@slovo/contracts';
+
 import type { Edition } from '../edition/edition';
-import type { ShownKind } from '../entries/entries';
 import type { EntryRowModel, EntryRows } from '../entries/entry-row';
 import type { HiddenEntries } from '../hidden/hidden-entries';
 import { createInTurn, createSubscribers } from '../in-turn';
@@ -26,10 +27,10 @@ export interface LearningEntry {
 
 /**
  * The Entries marked Known, Learned or not, counted by their kind of Entry
- * (Idioms with place names). An id the Language Pack doesn't have is counted
- * as no kind.
+ * (Idioms with place names), Synonym Rows and Tips too (spec #730 story 37).
+ * An id the Language Pack doesn't have is counted as no kind.
  */
-export type KnownCounts = Readonly<Record<ShownKind, number>>;
+export type KnownCounts = Readonly<Record<EntryKind, number>>;
 
 /** What an Entry's card shows about knowledge: its Knowledge Mark, or none while it is due, as a Review. */
 export type ShownKnowledge = KnowledgeMark | 'review';
@@ -98,13 +99,13 @@ export interface Knowledge {
   subscribe(listener: () => void): () => void;
 }
 
-const noneKnown: KnownCounts = { word: 0, correction: 0, idiom: 0 };
+const noneKnown: KnownCounts = { word: 0, correction: 0, idiom: 0, synonymRow: 0, tip: 0 };
 
 /** The state with the `knowledge` Feature Switch off. */
 const off: KnowledgeState = { learning: [], known: noneKnown, due: [], shown: new Map() };
 
 const sameCounts = (one: KnownCounts, other: KnownCounts) =>
-  (Object.keys(one) as ShownKind[]).every((kind) => one[kind] === other[kind]);
+  (Object.keys(one) as EntryKind[]).every((kind) => one[kind] === other[kind]);
 
 const sameState = (one: KnowledgeState, other: KnowledgeState) =>
   one.known === other.known &&
@@ -163,13 +164,7 @@ export async function openKnowledge({
     const counts = { ...noneKnown };
     for (const [entryId, record] of records) {
       const kind = rowOf.get(entryId)?.kind;
-      // The counts keep to the kinds Progress shows, which has none for Synonym Rows and Tips (spec #730).
-      if (
-        record.mark === 'known' &&
-        (kind === 'word' || kind === 'correction' || kind === 'idiom')
-      ) {
-        counts[kind] += 1;
-      }
+      if (record.mark === 'known' && kind !== undefined) counts[kind] += 1;
       // A Hidden Entry's card, opened where the reader keeps it, still shows its mark.
       shown.set(entryId, shownMark(record, today) ?? 'review');
       if (hiddenEntries.has(entryId)) continue;

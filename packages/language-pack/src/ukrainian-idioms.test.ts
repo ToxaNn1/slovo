@@ -147,7 +147,7 @@ describe('the Known Idioms of the Ukrainian Language Pack', () => {
     await app.knowledge.tap('c_0ci49m', 'known');
     await app.knowledge.tap(wordId, 'known');
 
-    const known = { word: 1, correction: 1, idiom: 2 };
+    const known = { word: 1, correction: 1, idiom: 2, synonymRow: 0, tip: 0 };
     expect(app.knowledge.state.known).toEqual(known);
     expect(app.progress.state.known).toEqual(known);
   });

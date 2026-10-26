@@ -12,7 +12,15 @@ import {
   type UserStatePort,
 } from './index';
 import { createMemoryContentPort } from './testing';
-import { correction, fakeClock, knownCounts, steppingRandom, word } from './test-support';
+import {
+  correction,
+  fakeClock,
+  knownCounts,
+  steppingRandom,
+  synonymRow,
+  tip,
+  word,
+} from './test-support';
 
 /** The Edition's one Category, the test Words' own, and its default Mix of every Category. */
 const testCategories = {
@@ -419,6 +427,29 @@ describe('The knowledge counts', () => {
     });
     // An Unknown mark is due tomorrow, so it changes no number today.
     expect(told).toBe(2);
+  });
+
+  it('counts Known Synonym Rows and Tips apart from Words, Corrections and Idioms', async () => {
+    const app = await openComposition({
+      content: createMemoryContentPort({
+        words: [word('w_one')],
+        synonymRows: [synonymRow('s_one'), synonymRow('s_two')],
+        tips: [tip('t_one')],
+      }),
+      edition: { ...testCategories, isFeatureEnabled: (feature) => feature === 'knowledge' },
+      userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
+      clock: fakeClock('2026-10-19T09:00:00+03:00').clock,
+      random: steppingRandom(),
+    });
+
+    await app.knowledge.tap('s_one', 'known');
+    await app.knowledge.tap('s_two', 'known');
+    await app.knowledge.tap('t_one', 'known');
+
+    expect(countsOf(app.progress.state)).toEqual({
+      known: knownCounts({ synonymRow: 2, tip: 1 }),
+      dueToday: 0,
+    });
   });
 
   it('keeps the same snapshot and tells no one when an unmarked Entry is marked Unknown', async () => {
