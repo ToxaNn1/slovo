@@ -95,6 +95,12 @@ export type RoundForm =
       readonly form: 'typed';
       /** The text to type, compared the way `typedAnswerMatches` does. */
       readonly expected: string;
+      /**
+       * Whether the text shows as blanks, one per character, which «Відкрити
+       * літеру» opens; the places of the characters that stay in place, such
+       * as an apostrophe, show them from the start. No blanks when left out.
+       */
+      readonly blanks?: { readonly inPlace: readonly number[] };
       readonly sheet: AnswerSheet;
     };
 

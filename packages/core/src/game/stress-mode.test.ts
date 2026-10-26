@@ -290,6 +290,8 @@ describe('a Round of «Наголос»', () => {
 
   it('costs a Life for an unstressed vowel, marks the Word «Не знаю» and lists it in the Game Review', async () => {
     const app = await run();
+    // «завжди» has no unstressed vowel to tap.
+    await app.hide({ kind: 'entry', entryId: idOf('завжди') });
     await app.game.start('stress');
     const asked = expectedOf(current(app).round);
     const wrong = asked.vowels.find((place) => !asked.stress.includes(place)) ?? -1;

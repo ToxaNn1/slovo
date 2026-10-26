@@ -1,4 +1,5 @@
 import { openCollections, type Collections } from './saved/collections';
+import { byLettersMode } from './game/by-letters-mode';
 import { correctionMode } from './game/correction-mode';
 import { openCycle } from './feed/cycle';
 import { createDayChange } from './feed/day-change';
@@ -189,7 +190,13 @@ function closable({
 }
 
 /** The Core's own Game Modes, registered through the same Extension Point as an Edition's. */
-const coreGameModes: readonly GameMode[] = [guessWord, correctionMode, stressMode, pairsMode];
+const coreGameModes: readonly GameMode[] = [
+  guessWord,
+  correctionMode,
+  stressMode,
+  pairsMode,
+  byLettersMode,
+];
 
 /**
  * Opens the composition for a new app session, once the Language Pack is

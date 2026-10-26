@@ -101,6 +101,12 @@ export interface Game {
    * that write fails, nothing changes. Nothing changes before an answer.
    */
   next(): Promise<void>;
+  /**
+   * «Відкрити літеру»: opens the first blank of the current Round's typed
+   * text, one letter at a time until one is left, at no cost. Nothing changes
+   * in a Round without blanks, with one blank left or once it is answered.
+   */
+  openLetter(): void;
   /** Drops the Game in play or just over, so the mode screen shows again. It never writes the best result. */
   leave(): void;
 }
@@ -354,6 +360,11 @@ export async function openGame({
       start: (modeId) => inTurn(() => start(modeId)),
       answer,
       next: () => inTurn(next),
+      openLetter() {
+        const game = state.current;
+        const opened = game && played?.openLetter(game);
+        if (opened !== undefined) changeCurrent(opened);
+      },
       leave() {
         played = undefined;
         if (state.current !== undefined) changeCurrent(undefined);
