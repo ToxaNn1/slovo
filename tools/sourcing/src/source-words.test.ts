@@ -637,16 +637,34 @@ describe('sourceWords', () => {
     ]);
   });
 
-  it('keeps register labels that goroh prints as plain text', async () => {
-    const { options } = setup({ lemmaList: 'товмач history-antiquity 4\n' });
+  it('writes the Latin look-alikes the dictionaries put into Cyrillic words in Cyrillic', async () => {
+    const { options } = setup({ lemmaList: 'ятір household-crafts 3\n' });
 
     await sourceWords(options);
 
+    // goroh prints this Example as «Вiн … в дiдiв Кирилiв ятiр…», with a Latin "i".
+    const word = WordSchema.parse(readDrafts(options.outDir)[0]);
+    expect(word.examples.map((example) => example.text)).toContainEqual(
+      expect.stringContaining("Він обов'язково хоче носом уїхати в дідів Кирилів ятір"),
+    );
+  });
+
+  it('reads a register label goroh prints as plain text, and marks the Word only when every meaning carries it', async () => {
+    const { options } = setup({ lemmaList: 'товмач history-antiquity 4\n' });
+
+    const result = await sourceWords(options);
+
+    // СУМ labels only the first meaning `заст.`; the second is in use.
     const word = WordSchema.parse(readDrafts(options.outDir)[0]);
     expect(word.primaryDefinition).toBe(
       'Той, хто усно перекладає з однієї мови на іншу під час бесіди, офіційних переговорів і т. ін.; перекладач.',
     );
-    expect(word.registers).toEqual(['archaic']);
+    expect(word.extraDefinitions).toContain("Той, хто тлумачить, роз'яснює що-небудь.");
+    expect(word.registers).toEqual([]);
+    expect(flagsOf(result, 'товмач')).toContainEqual({
+      kind: 'other-labels',
+      message: expect.stringContaining('перекладач.» застаріле') as string,
+    });
   });
 
   it('reads a verb whose endings give its plural form as a verb', async () => {

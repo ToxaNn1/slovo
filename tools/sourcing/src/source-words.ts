@@ -568,8 +568,14 @@ function draftDefinitions(article: DictionaryArticle): Step<{
   const flags: Flag[] = [];
   const [primary, ...extra] = article.definitions;
   const labels = [...article.labels, ...(primary?.labels ?? [])];
+  // A label on a meaning holds for that meaning only, so it marks the Word
+  // when the article carries it or every meaning does: СУМ may label just the
+  // first meaning `заст.`.
+  const marksWord = (label: string) =>
+    article.labels.includes(label) ||
+    article.definitions.every((definition) => definition.labels.includes(label));
   const registers = unique(
-    labels.flatMap((label) => {
+    labels.filter(marksWord).flatMap((label) => {
       const register = REGISTERS[label];
       return register === undefined ? [] : [register];
     }),
@@ -580,7 +586,12 @@ function draftDefinitions(article: DictionaryArticle): Step<{
       flagOf('other-labels', `Dictionary labels not carried over: ${otherLabels.join(', ')}`),
     );
   }
-  const labelledMeanings = extra.filter((definition) => definition.labels.length > 0);
+  const primaryUncarried =
+    primary?.labels.some((label) => REGISTERS[label] !== undefined && !marksWord(label)) ?? false;
+  const labelledMeanings = [
+    ...(primary !== undefined && primaryUncarried ? [primary] : []),
+    ...extra.filter((definition) => definition.labels.length > 0),
+  ];
   if (labelledMeanings.length > 0) {
     flags.push(
       flagOf(

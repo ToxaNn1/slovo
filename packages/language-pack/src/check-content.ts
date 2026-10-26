@@ -49,6 +49,12 @@ export function checkContent(
   // with the same Lemma and primary Definition are one Word authored twice.
   const wordByLemmaAndDefinition = new Map<string, Authored<Word>>();
 
+  for (const { file, entry } of [...words, ...corrections, ...idioms]) {
+    for (const [field, message] of mixedScriptWords(entry)) {
+      errors.push({ file, entryId: entry.id, field, message });
+    }
+  }
+
   for (const { file, entry: word } of words) {
     const fail = (field: string, message: string) => {
       errors.push({ file, entryId: word.id, field, message });
@@ -214,6 +220,88 @@ export function checkContent(
     });
   }
   return errors;
+}
+
+const SCRIPTS = ['Latin', 'Cyrillic', 'Greek', 'Armenian', 'Georgian', 'Hebrew', 'Arabic'].map(
+  (name) => ({ name, pattern: new RegExp(`\\p{Script=${name}}`, 'u') }),
+);
+
+/**
+ * The fields the script check leaves out. A Lemma and an Idiom's expression
+ * hold only the Edition's alphabet, which is checked already. The etymology
+ * quotes forms of other languages in their scholarly spelling, such as
+ * Proto-Slavic *světъ with its Cyrillic yer.
+ */
+const UNCHECKED_SCRIPT_FIELDS = new Set(['lemma', 'expression', 'etymology']);
+
+/**
+ * The words of an Entry's text that mix letters of two scripts, such as a Latin
+ * "i" copied into a Cyrillic word: they look right but break search and screen
+ * readers. Each comes as its dotted field and the message.
+ */
+function mixedScriptWords(entry: Entry): [field: string, message: string][] {
+  const found: [string, string][] = [];
+  const visit = (value: unknown, field: string) => {
+    if (typeof value === 'string') {
+      const words = (value.match(/[\p{L}\p{M}]+/gu) ?? []).map(scriptedWord);
+      words.forEach(({ word, letters, main }, index) => {
+        const stray = letters.find(({ script }) => script !== main);
+        const before = words[index - 1]?.main;
+        const after = words[index + 1]?.main;
+        if (stray !== undefined) {
+          found.push([
+            field,
+            `The word "${word}" mixes ${main ?? ''} and ${stray.script} letters (${letterLabel(stray.letter)}): write each word in one script`,
+          ]);
+        } else if (
+          // A one-letter word, such as a Latin "i" for the conjunction, in another script than the words around it.
+          letters.length === 1 &&
+          before !== undefined &&
+          before === after &&
+          before !== main
+        ) {
+          found.push([
+            field,
+            `The word "${word}" stands in ${main ?? ''} between ${before} words (${letterLabel(word)}): write each word in one script`,
+          ]);
+        }
+      });
+    } else if (Array.isArray(value)) {
+      value.forEach((item, index) => {
+        visit(item, `${field}.${String(index)}`);
+      });
+    } else if (typeof value === 'object' && value !== null) {
+      for (const [key, item] of Object.entries(value)) {
+        if (field === '' && UNCHECKED_SCRIPT_FIELDS.has(key)) continue;
+        visit(item, field === '' ? key : `${field}.${key}`);
+      }
+    }
+  };
+  visit(entry, '');
+  return found;
+}
+
+/** A word's letters with their scripts, and the script most of them are in: the first letter's on a tie. */
+function scriptedWord(word: string): {
+  word: string;
+  letters: { letter: string; script: string }[];
+  main: string | undefined;
+} {
+  const letters = Array.from(word).flatMap((letter) => {
+    const script = SCRIPTS.find(({ pattern }) => pattern.test(letter));
+    return script === undefined ? [] : [{ letter, script: script.name }];
+  });
+  const count = (script: string) => letters.filter((letter) => letter.script === script).length;
+  const main = letters
+    .map(({ script }) => script)
+    .reduce<string | undefined>((best, script) => {
+      return best === undefined || count(script) > count(best) ? script : best;
+    }, undefined);
+  return { word, letters, main };
+}
+
+function letterLabel(letter: string): string {
+  return `"${letter}" ${codePointLabel(letter)}`;
 }
 
 /** The first character of the text that no token covers, reading the tokens off from the start. */

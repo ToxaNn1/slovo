@@ -3,9 +3,48 @@ const STRESS_MARK = '́';
 
 const APOSTROPHES = /[’ʼ`]/g;
 
-/** Collapses runs of whitespace (including no-break spaces) into one space. */
+/**
+ * Collapses runs of whitespace (including no-break spaces) into one space, and
+ * writes the Latin look-alikes the dictionaries put into Cyrillic words, such
+ * as the "i" in `вiд`, as the Cyrillic letters they stand for.
+ */
 export function squeeze(text: string): string {
-  return text.replace(/\s+/g, ' ').trim();
+  return text
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/[\p{L}\p{M}]+/gu, inCyrillic);
+}
+
+const CYRILLIC_LOOK_ALIKES: Readonly<Record<string, string>> = {
+  a: 'а',
+  c: 'с',
+  e: 'е',
+  i: 'і',
+  o: 'о',
+  p: 'р',
+  x: 'х',
+  y: 'у',
+  A: 'А',
+  B: 'В',
+  C: 'С',
+  E: 'Е',
+  H: 'Н',
+  I: 'І',
+  K: 'К',
+  M: 'М',
+  O: 'О',
+  P: 'Р',
+  T: 'Т',
+  X: 'Х',
+};
+
+/** A word mostly in Cyrillic, its Latin letters all look-alikes, in Cyrillic; any other word as it is. */
+function inCyrillic(word: string): string {
+  const latin = word.match(/\p{Script=Latin}/gu) ?? [];
+  const cyrillic = word.match(/\p{Script=Cyrillic}/gu) ?? [];
+  if (latin.length === 0 || cyrillic.length <= latin.length) return word;
+  if (!latin.every((letter) => letter in CYRILLIC_LOOK_ALIKES)) return word;
+  return word.replace(/\p{Script=Latin}/gu, (letter) => CYRILLIC_LOOK_ALIKES[letter] ?? letter);
 }
 
 /** Drops stress marks from dictionary text. */
