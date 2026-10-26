@@ -22,6 +22,7 @@ export {
   type SynonymRowMemberModel,
   type SynonymRowWordModel,
 } from './entries/synonym-row-card';
+export { buildTipCard, type TipCardModel } from './entries/tip-card';
 export { coreDecor, loadDecor, type Decor } from './edition/decor';
 export { createEntries, type Entries, type ShownEntry, type ShownKind } from './entries/entries';
 export type { EntryRowModel } from './entries/entry-row';
