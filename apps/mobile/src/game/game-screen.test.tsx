@@ -8,10 +8,11 @@ import {
   systemRandom,
   type Composition,
   type Edition,
+  type Haptics,
 } from '@slovo/core';
 import { createMemoryContentPort } from '@slovo/core/testing';
-import { EditionProvider } from '@slovo/ui';
-import { render, screen, waitFor, within } from '@testing-library/react-native';
+import { EditionProvider, HapticsProvider } from '@slovo/ui';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import config from 'slovo-edition/config';
 
@@ -49,12 +50,12 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ navigate: () => undefined, push: () => undefined }),
 }));
 
-/** A Word of one Category, with nothing but what the Game reads. */
+/** A Word of one Category, with nothing but what the Game reads: «слово» and its number, stressed on its first vowel. */
 const word = (index: number): Word => ({
   kind: 'word',
   id: `w_test${String(index)}`,
-  lemma: `test${String(index)}`,
-  stress: [0],
+  lemma: `слово${String(index)}`,
+  stress: [2],
   partOfSpeech: 'noun',
   primaryDefinition: `The meaning of test${String(index)}.`,
   extraDefinitions: [],
@@ -68,6 +69,14 @@ const word = (index: number): Word => ({
   correctionIds: [],
   retired: false,
 });
+
+const haptics: Haptics = {
+  selection: jest.fn(),
+  impactLight: jest.fn(),
+  impactMedium: jest.fn(),
+  success: jest.fn(),
+  warning: jest.fn(),
+};
 
 const metrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
@@ -99,7 +108,9 @@ async function renderScreen() {
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
       <EditionProvider edition={edition} strings={editionStrings}>
-        <GameScreen />
+        <HapticsProvider haptics={haptics}>
+          <GameScreen />
+        </HapticsProvider>
       </EditionProvider>
     </SafeAreaProvider>,
   );
@@ -131,6 +142,7 @@ describe('the Game screen', () => {
       'Гра',
       'Слова',
       'game-mode-guess-word',
+      'game-mode-stress',
       'Виправлення',
       'game-mode-correction',
     ]);
@@ -161,7 +173,28 @@ describe('the Game screen', () => {
     await open({ switchedOff: ['corrections'] });
     await renderScreen();
 
-    expect(shape()).toEqual(['Гра', 'Слова', 'game-mode-guess-word']);
+    expect(shape()).toEqual(['Гра', 'Слова', 'game-mode-guess-word', 'game-mode-stress']);
     expect(screen.queryByText('Виправлення')).toBeNull();
+  });
+
+  it('starts «Наголос» from its card and plays a whole Game to the result screen', async () => {
+    await renderScreen();
+
+    await fireEvent.press(screen.getByTestId('game-mode-stress'));
+
+    for (let round = 1; round <= 15; round += 1) {
+      await waitFor(() => {
+        expect(screen.getByTestId('game-vowels')).toBeOnTheScreen();
+      });
+      expect(screen.getByText('Де наголос?')).toBeOnTheScreen();
+      // «слово» and its number: the first «о» is stressed, the second a vowel to tap too.
+      await fireEvent.press(screen.getByRole('button', { name: 'о, третя літера' }));
+      expect(screen.getByRole('button', { name: 'о, третя літера, Правильно' })).toBeTruthy();
+      await fireEvent.press(screen.getByTestId('game-next'));
+    }
+
+    await waitFor(() => {
+      expect(screen.getByText('Перемога!')).toBeOnTheScreen();
+    });
   });
 });

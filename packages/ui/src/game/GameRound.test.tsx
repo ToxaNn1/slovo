@@ -1,5 +1,5 @@
 import type { EditionStrings } from '@slovo/contracts';
-import type { CurrentGame, Haptics } from '@slovo/core';
+import type { CurrentGame, GivenAnswer, Haptics, RoundAnswer } from '@slovo/core';
 import { EditionProvider, GameRound, HapticsProvider } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
@@ -17,6 +17,11 @@ const strings = {
       chosen: 'Your choice',
       synonymRow: { label: 'Synonyms', prompt: 'What is a synonym of “{dominant}”?' },
       tip: { label: 'Tip' },
+    },
+    letters: {
+      label: '{letter}, {place} letter',
+      empty: '{place} letter, empty',
+      ordinals: ['first', 'second', 'third', 'fourth', 'fifth', 'sixth'],
     },
     exit: {
       label: 'Leave the Game',
@@ -70,8 +75,14 @@ const first: CurrentGame = {
   status: 'playing',
 };
 
-/** The Game with its Round answered with the option at that place, as the Game in play answers it. */
-function answered(game: CurrentGame, chosen: number): CurrentGame {
+/** The Game with its Round answered as given, as the Game in play answers it. */
+function answered(game: CurrentGame, given: GivenAnswer): CurrentGame {
+  return given.form === 'vowel' ? answeredVowel(game, given.position) : answeredPick(game, given);
+}
+
+/** The Game with its pick Round answered with the option at that place. */
+function answeredPick(game: CurrentGame, given: GivenAnswer): CurrentGame {
+  const chosen = given.form === 'pick' ? given.option : -1;
   return {
     ...game,
     round: {
@@ -85,6 +96,71 @@ function answered(game: CurrentGame, chosen: number): CurrentGame {
       },
     },
     lives: chosen === CORRECT || game.lives === undefined ? game.lives : game.lives - 1,
+    status: 'answered',
+  };
+}
+
+/** A Round of «Наголос» about a Word, «banana» with its second vowel stressed, its sheet the Word's Example. */
+const wordVowelRound: CurrentGame = {
+  ...first,
+  modeId: 'stress',
+  round: {
+    number: 1,
+    entryKind: 'word',
+    prompt: 'banana',
+    highlight: undefined,
+    form: 'vowel',
+    vowels: [1, 3, 5],
+    answer: undefined,
+  },
+};
+
+/** A Round of «Наголос» about a stress trap, «mango» stressed on its first vowel, its sheet the explanation. */
+const trapVowelRound: CurrentGame = {
+  ...first,
+  modeId: 'stress',
+  round: {
+    number: 1,
+    entryKind: 'correction',
+    prompt: 'mango',
+    highlight: undefined,
+    form: 'vowel',
+    vowels: [1, 4],
+    answer: undefined,
+  },
+};
+
+/** What the Core holds back of each vowel Round until it is answered: its stressed vowels and its sheet, by prompt. */
+const VOWEL_ANSWERS: Record<string, Pick<VowelAnswer, 'stressed' | 'sheet'>> = {
+  banana: {
+    stressed: [3],
+    sheet: {
+      answer: { text: 'bana\u0301na', stressedVowels: ['a'] },
+      example: { text: 'A banana a day.', author: 'A. Grocer' },
+    },
+  },
+  mango: {
+    stressed: [1],
+    sheet: {
+      answer: { text: 'ma\u0301ngo', stressedVowels: ['a'] },
+      example: undefined,
+      explanation: 'Say MAngo, not manGO.',
+    },
+  },
+};
+
+type VowelAnswer = Extract<RoundAnswer, { form: 'vowel' }>;
+
+/** The Game with its vowel Round answered with the vowel at that position. */
+function answeredVowel(game: CurrentGame, chosen: number): CurrentGame {
+  const { round } = game;
+  const held = VOWEL_ANSWERS[round.prompt];
+  if (held === undefined) throw new Error(`No vowel Round is «${round.prompt}»`);
+  const right = held.stressed.includes(chosen);
+  return {
+    ...game,
+    round: { ...round, answer: { form: 'vowel', chosen, right, ...held } },
+    lives: right || game.lives === undefined ? game.lives : game.lives - 1,
     status: 'answered',
   };
 }
@@ -112,17 +188,17 @@ function Game({
   onLeave,
 }: {
   start: CurrentGame;
-  onAnswer: (option: number) => void;
+  onAnswer: (given: GivenAnswer) => void;
   onLeave: () => void;
 }) {
   const [game, setGame] = useState(start);
   return (
     <GameRound
       game={game}
-      label="Definition"
-      onAnswer={(option) => {
-        onAnswer(option);
-        setGame((shown) => answered(shown, option));
+      label={game.round.form === 'vowel' ? 'Where is the stress?' : 'Definition'}
+      onAnswer={(given) => {
+        onAnswer(given);
+        setGame((shown) => answered(shown, given));
       }}
       onNext={jest.fn()}
       onLeave={onLeave}
@@ -131,7 +207,7 @@ function Game({
 }
 
 async function renderRound(
-  onAnswer: (option: number) => void = jest.fn(),
+  onAnswer: (given: GivenAnswer) => void = jest.fn(),
   onLeave: () => void = jest.fn(),
   start: CurrentGame = first,
 ) {
@@ -176,7 +252,7 @@ describe('GameRound', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'brittle, Your choice' }));
 
     expect(onAnswer).toHaveBeenCalledTimes(1);
-    expect(onAnswer).toHaveBeenCalledWith(1);
+    expect(onAnswer).toHaveBeenCalledWith({ form: 'pick', option: 1 });
     expect(screen.getByRole('button', { name: 'brittle, Your choice' })).toBeTruthy();
   });
 
@@ -192,7 +268,7 @@ describe('GameRound', () => {
 
     await fireEvent.press(screen.getByRole('button', { name: 'candid' }));
 
-    expect(onAnswer).toHaveBeenCalledWith(CORRECT);
+    expect(onAnswer).toHaveBeenCalledWith({ form: 'pick', option: CORRECT });
     expect(screen.getByRole('button', { name: 'candid, Right' })).toBeTruthy();
     expect(screen.getByRole('header', { name: 'Right!' })).toBeTruthy();
   });
@@ -207,10 +283,52 @@ describe('GameRound', () => {
 
     await fireEvent.press(screen.getByRole('button', { name: 'dour' }));
 
-    expect(onAnswer).toHaveBeenCalledWith(3);
+    expect(onAnswer).toHaveBeenCalledWith({ form: 'pick', option: 3 });
     expect(screen.getByRole('button', { name: 'dour, Your choice' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'candid, Right' })).toBeTruthy();
     expect(screen.getByRole('header', { name: 'Not this time' })).toBeTruthy();
+  });
+
+  describe('a vowel Round', () => {
+    it('asks under the mode’s label with the Word’s vowels as buttons VoiceOver reads by place', async () => {
+      await renderRound(jest.fn(), jest.fn(), wordVowelRound);
+
+      expect(screen.getByText('Where is the stress?')).toBeOnTheScreen();
+      expect(screen.getByTestId('game-vowels')).toHaveTextContent('banana', { exact: true });
+      expect(
+        screen.getAllByRole('button').map((button): unknown => button.props['accessibilityLabel']),
+      ).toEqual(['Leave the Game', 'a, second letter', 'a, fourth letter', 'a, sixth letter']);
+    });
+
+    it('answers a Word with the vowel tapped and shows the Word with its Stress and Example', async () => {
+      const onAnswer = jest.fn();
+      await renderRound(onAnswer, jest.fn(), wordVowelRound);
+
+      await fireEvent.press(screen.getByRole('button', { name: 'a, fourth letter' }));
+
+      expect(onAnswer).toHaveBeenCalledWith({ form: 'vowel', position: 3 });
+      expect(screen.getByRole('button', { name: 'a, fourth letter, Right' })).toBeTruthy();
+      expect(screen.getByRole('header', { name: 'Right!' })).toBeTruthy();
+      expect(screen.getByText('bana\u0301na')).toBeOnTheScreen();
+      expect(screen.getByText('A banana a day.')).toBeOnTheScreen();
+    });
+
+    it('shows a stress trap’s wrong tap beside its Stress, and the explanation in the sheet', async () => {
+      const onAnswer = jest.fn();
+      await renderRound(onAnswer, jest.fn(), trapVowelRound);
+
+      await fireEvent.press(screen.getByRole('button', { name: 'o, fifth letter' }));
+      await fireEvent.press(screen.getByRole('button', { name: 'a, second letter, Right' }));
+
+      expect(onAnswer).toHaveBeenCalledTimes(1);
+      expect(onAnswer).toHaveBeenCalledWith({ form: 'vowel', position: 4 });
+      expect(screen.getByRole('button', { name: 'o, fifth letter, Your choice' })).toBeTruthy();
+      expect(screen.getByRole('header', { name: 'Not this time' })).toBeTruthy();
+      expect(screen.getByText('ma\u0301ngo')).toBeOnTheScreen();
+      expect(screen.getByTestId('game-sheet-explanation')).toHaveTextContent(
+        'Say MAngo, not manGO.',
+      );
+    });
   });
 
   describe('leaving', () => {
