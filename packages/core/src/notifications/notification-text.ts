@@ -33,7 +33,10 @@ export function notificationBody(text: string, ellipsis: string): string {
   return `${cut.replace(CLAUSE_END, '')}${ellipsis}`;
 }
 
-/** What a notification of an Entry reads, decided by the Core (ADR 0051). */
+/**
+ * What a notification of a Synonym Row or a Tip would read, decided by the
+ * Core. The widget shows it; the notification plan carries Words only (ADR 0051).
+ */
 export interface NotificationText {
   /** The Entry a tap on the notification opens. */
   readonly entryId: string;

@@ -1,11 +1,4 @@
-import {
-  isTodaysWordOfTheDay,
-  type AnyEntryCard,
-  type Composition,
-  type EntryFeedCard,
-  type SynonymRowFeedCard,
-  type TipFeedCard,
-} from '@slovo/core';
+import { isTodaysWordOfTheDay, type AnyEntryCard, type Composition } from '@slovo/core';
 import {
   ActionRow,
   CollectionButton,
@@ -35,50 +28,14 @@ import { useShown } from '../shown-in-effect';
 const shareFormat = createShareFormatMemory();
 
 /**
- * The action row of an Entry card, wherever the card appears: the Feed (its
- * Word of the Day too) and the Entry screen a list opens. Each action fills
- * its own slot. A Synonym Row's and a Tip's card has its own row (spec #730).
- * Its screen gives it an `UndoToastProvider` for the toast after a hide.
+ * The action row of an Entry card of any kind, wherever the card appears: the
+ * Feed (its Word of the Day too) and the Entry screen a list opens. Each action
+ * fills its own slot. The «Знаю» and «Не знаю» buttons are there only when the
+ * Knowledge switch is on in effect, and inactive while Self-check conceals the
+ * card's meaning (the card tells them). Its screen gives it an
+ * `UndoToastProvider` for the toast after a hide.
  */
 export function EntryActions({ card }: { card: AnyEntryCard }) {
-  return card.kind === 'synonymRow' || card.kind === 'tip' ? (
-    <RowOrTipActions card={card} />
-  ) : (
-    <ShownEntryActions card={card} />
-  );
-}
-
-/**
- * The action row of a Synonym Row's or a Tip's card: the heart, share, «До
- * колекції» and the hide button (spec #730). Share is there as on every card.
- */
-function RowOrTipActions({ card }: { card: SynonymRowFeedCard | TipFeedCard }) {
-  const favorite = useFavorite(card.entryId);
-  const collection = useCollectionAction(card.entryId);
-  const share = useShareAction(card);
-  const hide = useHide(card);
-  return (
-    <>
-      <ActionRow
-        favorite={<FavoriteButton inFavorites={favorite.inFavorites} onToggle={favorite.toggle} />}
-        share={share.button}
-        collection={collection.button}
-        hide={<HideButton onPress={hide.open} />}
-      />
-      <HideChoiceSheet {...hide.choice} />
-      {collection.sheet}
-      {share.sheet}
-    </>
-  );
-}
-
-/**
- * The action row of a Word's, a Correction's or an Idiom's card. The «Знаю»
- * and «Не знаю» buttons are there only when the Knowledge switch is on in
- * effect, and inactive while Self-check conceals the card's meaning (the card
- * tells them).
- */
-function ShownEntryActions({ card }: { card: EntryFeedCard }) {
   const { entryId } = card;
   const favorite = useFavorite(entryId);
   const hide = useHide(card);

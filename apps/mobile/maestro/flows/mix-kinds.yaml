@@ -1,8 +1,8 @@
-# «Виправлення» and «Фразеологізми» in Мій Мікс: a switch for each, on by
-# default. Off, the Feed drops their cards at once, so the card on screen is a
-# Word's; the Mix keeps both off; on again, they are back in the Mix. A subflow
-# of `smoke.yaml`; run it from there. It starts by turning both on, whatever an
-# earlier run left, and leaves them on.
+# «Виправлення», «Фразеологізми», «Синонімічні ряди» and «Поради» in Мій Мікс:
+# a switch for each, on by default. Off, the Feed drops their cards at once, so
+# the card on screen is a Word's; the Mix keeps them off; on again, they are
+# back in the Mix. A subflow of `smoke.yaml`; run it from there. It starts by
+# turning all four on, whatever an earlier run left, and leaves them on.
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
 - runFlow:
@@ -16,7 +16,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
 # The switches sit under the Categories and the Rarity Floor.
 - scrollUntilVisible:
     element:
-      id: mix-idioms
+      id: mix-tips
     centerElement: true
 - runFlow:
     when:
@@ -34,6 +34,22 @@ appId: ${APP_ID || 'app.slovo.uk'}
     commands:
       - tapOn:
           id: mix-idioms
+- runFlow:
+    when:
+      visible:
+        id: mix-synonymRows
+        checked: false
+    commands:
+      - tapOn:
+          id: mix-synonymRows
+- runFlow:
+    when:
+      visible:
+        id: mix-tips
+        checked: false
+    commands:
+      - tapOn:
+          id: mix-tips
 - assertVisible:
     id: mix-corrections
     text: Виправлення
@@ -42,20 +58,38 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: mix-idioms
     text: Фразеологізми
     checked: true
+- assertVisible:
+    id: mix-synonymRows
+    text: Синонімічні ряди
+    checked: true
+- assertVisible:
+    id: mix-tips
+    text: Поради
+    checked: true
 - takeScreenshot: mix-kinds-on
-# Both off.
+# All four off.
 - tapOn:
     id: mix-corrections
 - tapOn:
     id: mix-idioms
+- tapOn:
+    id: mix-synonymRows
+- tapOn:
+    id: mix-tips
 - assertVisible:
     id: mix-corrections
     checked: false
 - assertVisible:
     id: mix-idioms
+    checked: false
+- assertVisible:
+    id: mix-synonymRows
+    checked: false
+- assertVisible:
+    id: mix-tips
     checked: false
 - takeScreenshot: mix-kinds-off
-# The Feed shows a Word card: a Correction or an Idiom card on screen left it.
+# The Feed shows a Word card: a Correction, Idiom, Synonym Row or Tip card on screen left it.
 - tapOn:
     id: mix-back
 - tapOn:
@@ -66,6 +100,10 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: correction-card
 - assertNotVisible:
     id: idiom-card
+- assertNotVisible:
+    id: synonymRow-card
+- assertNotVisible:
+    id: tip-card
 # The Mix keeps them off: the screen opens as it was left.
 - runFlow:
     file: ../open-settings-row.yaml
@@ -75,7 +113,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: settings-row-my-mix
 - scrollUntilVisible:
     element:
-      id: mix-idioms
+      id: mix-tips
     centerElement: true
 - assertVisible:
     id: mix-corrections
@@ -83,16 +121,32 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - assertVisible:
     id: mix-idioms
     checked: false
+- assertVisible:
+    id: mix-synonymRows
+    checked: false
+- assertVisible:
+    id: mix-tips
+    checked: false
 # Back on.
 - tapOn:
     id: mix-corrections
 - tapOn:
     id: mix-idioms
+- tapOn:
+    id: mix-synonymRows
+- tapOn:
+    id: mix-tips
 - assertVisible:
     id: mix-corrections
     checked: true
 - assertVisible:
     id: mix-idioms
+    checked: true
+- assertVisible:
+    id: mix-synonymRows
+    checked: true
+- assertVisible:
+    id: mix-tips
     checked: true
 - tapOn:
     id: mix-back

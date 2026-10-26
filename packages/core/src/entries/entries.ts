@@ -133,9 +133,9 @@ export interface Entries {
   linksCorrections(): Promise<boolean>;
   /**
    * The first live Synonym Row, in the Language Pack's stable order, that
-   * links the live Word as a member, or none when no row does or the Edition
-   * turns Synonym Rows off (ADR 0051). Derived from the rows: nothing on the
-   * Word names it.
+   * links the live Word as a member, or none when no row does, the Edition
+   * turns Synonym Rows off or the reader keeps them out of the Mix (ADR 0051).
+   * Derived from the rows: nothing on the Word names it.
    */
   linkingSynonymRow(word: Word): Promise<SynonymRow | undefined>;
 }
@@ -355,7 +355,8 @@ export function createEntries(
         );
     },
     async linkingSynonymRow(word) {
-      if (!edition.isFeatureEnabled('synonymRows')) return undefined;
+      // Like a link to a Correction, none while the reader keeps Synonym Rows out of the Mix.
+      if (!kindShown('synonymRow', await readUserMix())) return undefined;
       const [first] = await content.listLinkingSynonymRowIds(word.id);
       if (first === undefined) return undefined;
       const [row] = await content.getEntries([first]);
