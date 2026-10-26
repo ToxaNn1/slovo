@@ -1,5 +1,5 @@
-import type { AskableEntry, EligibleOfKind } from '../entries/entries';
-import type { AnswerSheet, GameMode, RoundContent, RoundOption, TextRange } from './game-mode';
+import type { AskableEntry, AskableKind, EligibleOfKind } from '../entries/entries';
+import type { AnswerSheet, GameMode, RoundOption, TextRange } from './game-mode';
 import { GAME_ROUNDS, type PlannedRound, type RoundPlanner } from './round-plan';
 
 /** How many Lives a Game starts with, in every Game Mode. */
@@ -18,6 +18,8 @@ export interface RoundAnswer {
 export interface Round {
   /** Which Round of the Game it is, from 1 to `GAME_ROUNDS`. */
   readonly number: number;
+  /** The kind of Entry it asks about, by which the shell lays it out, such as a Synonym Row's question. */
+  readonly entryKind: AskableKind;
   readonly prompt: string;
   /** The part of the prompt to mark, which the shell draws and VoiceOver names; none to mark. */
   readonly highlight: TextRange | undefined;
@@ -90,11 +92,12 @@ export interface GameInPlay {
   replan(game: CurrentGame, eligible: EligibleOfKind<AskableEntry>): void;
 }
 
-const roundOf = ({ prompt, highlight, options }: RoundContent, number: number): Round => ({
+const roundOf = ({ entry, content }: PlannedRound, number: number): Round => ({
   number,
-  prompt,
-  highlight,
-  options,
+  entryKind: entry.kind,
+  prompt: content.prompt,
+  highlight: content.highlight,
+  options: content.options,
   answer: undefined,
 });
 
@@ -114,7 +117,7 @@ export function createGameInPlay(
     mode,
     first: {
       modeId: mode.id,
-      round: roundOf(first.content, 1),
+      round: roundOf(first, 1),
       roundsPassed: 0,
       lives: GAME_LIVES,
       played: [],
@@ -141,7 +144,7 @@ export function createGameInPlay(
       if (game.status !== 'answered') return undefined;
       if (game.lives === 0) return { ...game, status: 'lost' };
       const roundsPassed = game.roundsPassed + 1;
-      const upcoming = roundsPassed < GAME_ROUNDS ? rounds[roundsPassed]?.content : undefined;
+      const upcoming = roundsPassed < GAME_ROUNDS ? rounds[roundsPassed] : undefined;
       if (upcoming === undefined) return { ...game, roundsPassed, status: 'won' };
       return {
         ...game,

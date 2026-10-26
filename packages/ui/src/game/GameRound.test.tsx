@@ -15,6 +15,8 @@ const strings = {
       highlight: 'Marked: {text}',
       correct: 'Right',
       chosen: 'Your choice',
+      synonymRow: { label: 'Synonyms', prompt: 'What is a synonym of “{dominant}”?' },
+      tip: { label: 'Tip' },
     },
     exit: {
       label: 'Leave the Game',
@@ -55,6 +57,7 @@ const first: CurrentGame = {
   modeId: 'definition-to-word',
   round: {
     number: 1,
+    entryKind: 'word',
     prompt: 'open and honest',
     highlight: undefined,
     options: OPTIONS.map((text) => ({ text, stressedVowels: [] })),
@@ -83,8 +86,33 @@ function answered(game: CurrentGame, chosen: number): CurrentGame {
   };
 }
 
-function Game({ onAnswer, onLeave }: { onAnswer: (option: number) => void; onLeave: () => void }) {
-  const [game, setGame] = useState(first);
+/** The first Round asking about a Synonym Row, the dominant its prompt, as the Core builds it. */
+const rowRound: CurrentGame = {
+  ...first,
+  round: { ...first.round, entryKind: 'synonymRow', prompt: 'frank' },
+};
+
+/** The first Round asking a Tip its own question, a long one, as the Core builds it. */
+const tipRound: CurrentGame = {
+  ...first,
+  round: {
+    ...first.round,
+    entryKind: 'tip',
+    prompt:
+      'Which of these words would you choose to describe a friend who always says what they think?',
+  },
+};
+
+function Game({
+  start,
+  onAnswer,
+  onLeave,
+}: {
+  start: CurrentGame;
+  onAnswer: (option: number) => void;
+  onLeave: () => void;
+}) {
+  const [game, setGame] = useState(start);
   return (
     <GameRound
       game={game}
@@ -102,12 +130,13 @@ function Game({ onAnswer, onLeave }: { onAnswer: (option: number) => void; onLea
 async function renderRound(
   onAnswer: (option: number) => void = jest.fn(),
   onLeave: () => void = jest.fn(),
+  start: CurrentGame = first,
 ) {
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
       <EditionProvider edition={{ locale: 'en' }} strings={strings}>
         <HapticsProvider haptics={haptics}>
-          <Game onAnswer={onAnswer} onLeave={onLeave} />
+          <Game start={start} onAnswer={onAnswer} onLeave={onLeave} />
         </HapticsProvider>
       </EditionProvider>
     </SafeAreaProvider>,
@@ -146,6 +175,39 @@ describe('GameRound', () => {
     expect(onAnswer).toHaveBeenCalledTimes(1);
     expect(onAnswer).toHaveBeenCalledWith(1);
     expect(screen.getByRole('button', { name: 'brittle, Your choice' })).toBeTruthy();
+  });
+
+  it("asks a Synonym Row's question under its own label, and takes an answer", async () => {
+    const onAnswer = jest.fn();
+    await renderRound(onAnswer, jest.fn(), rowRound);
+
+    expect(screen.getByTestId('game-prompt')).toHaveAccessibleName(
+      'Synonyms. What is a synonym of “frank”?',
+    );
+    expect(screen.getByText('What is a synonym of “frank”?')).toBeOnTheScreen();
+    expect(screen.queryByText('Definition')).not.toBeOnTheScreen();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'candid' }));
+
+    expect(onAnswer).toHaveBeenCalledWith(CORRECT);
+    expect(screen.getByRole('button', { name: 'candid, Right' })).toBeTruthy();
+    expect(screen.getByRole('header', { name: 'Right!' })).toBeTruthy();
+  });
+
+  it('asks a Tip its own question, whole however long, under its own label, and takes an answer', async () => {
+    const onAnswer = jest.fn();
+    await renderRound(onAnswer, jest.fn(), tipRound);
+
+    expect(screen.getByTestId('game-prompt')).toHaveAccessibleName(`Tip. ${tipRound.round.prompt}`);
+    expect(screen.getByText(tipRound.round.prompt)).toBeOnTheScreen();
+    expect(screen.queryByText('Definition')).not.toBeOnTheScreen();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'dour' }));
+
+    expect(onAnswer).toHaveBeenCalledWith(3);
+    expect(screen.getByRole('button', { name: 'dour, Your choice' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'candid, Right' })).toBeTruthy();
+    expect(screen.getByRole('header', { name: 'Not this time' })).toBeTruthy();
   });
 
   describe('leaving', () => {

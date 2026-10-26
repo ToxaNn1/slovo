@@ -721,7 +721,12 @@
       "lives": "Життів: {count} з {total}",
       "highlight": "Виділено: {text}",
       "correct": "Правильно",
-      "chosen": "Ваш вибір"
+      "chosen": "Ваш вибір",
+      "synonymRow": {
+        "label": "Синоніми",
+        "prompt": "Що є синонімом до „{dominant}“?"
+      },
+      "tip": { "label": "Порада" }
     },
     "exit": {
       "label": "Вийти з гри",

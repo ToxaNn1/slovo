@@ -759,6 +759,16 @@ describe('the Synonym Rows «Вгадай слово» asks about', () => {
     }
   });
 
+  it('marks each Round with the kind of Entry it asks about, so the screen lays out a row Round as one', async () => {
+    const app = await unknown(await runWith(), live.slice(0, 5));
+
+    const played = await playAll(app);
+
+    expect(played.some(({ entryKind }) => entryKind === 'synonymRow')).toBe(true);
+    expect(played.some(({ entryKind }) => entryKind === 'word')).toBe(true);
+    for (const { entry, entryKind } of played) expect(entryKind).toBe(entry.kind);
+  });
+
   it('offers as Distractors only members of other live rows, never a text of the row asked, whatever the draw', async () => {
     for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
       const app = await unknown(await runWith({ seed }), ['r_go', 'r_say', 'r_run', 'r_shout']);
@@ -947,6 +957,20 @@ describe('the Tips «Вгадай слово» asks about', () => {
       expect(options.every(({ stressedVowels }) => stressedVowels.length === 0)).toBe(true);
       expect(answer.sheet).toEqual({ answer: options[answer.correct], example: entry.example });
     }
+  });
+
+  it('marks each Round with the kind of Entry it asks about, so the screen lays out a Tip Round as one', async () => {
+    const app = await unknown(await runWith(), live);
+    await app.game.start('guess-word');
+
+    const kinds = new Set<string>();
+    while (current(app).status === 'playing') {
+      const { round } = current(app);
+      kinds.add(round.entryKind);
+      expect(round.entryKind).toBe(tipOfRound(round) === undefined ? 'word' : 'tip');
+      await play(app, true, rightAmong);
+    }
+    expect([...kinds].toSorted()).toEqual(['tip', 'word']);
   });
 
   it('shuffles the four answers with the injected randomness', async () => {
