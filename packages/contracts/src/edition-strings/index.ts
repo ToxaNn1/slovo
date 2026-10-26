@@ -23,6 +23,7 @@ import { SplashStringsSchema } from './splash';
 import { StatsStringsSchema } from './stats';
 import { SynonymRowCardStringsSchema } from './synonym-row-card';
 import { TabsStringsSchema } from './tabs';
+import { TipCardStringsSchema } from './tip-card';
 import { WidgetStringsSchema } from './widget';
 import { WordCardStringsSchema } from './word-card';
 
@@ -43,6 +44,7 @@ export const EditionStringsSchema = z.strictObject({
   correctionCard: CorrectionCardStringsSchema,
   idiomCard: IdiomCardStringsSchema,
   synonymRowCard: SynonymRowCardStringsSchema,
+  tipCard: TipCardStringsSchema,
   favorites: FavoritesStringsSchema,
   collections: CollectionsStringsSchema,
   history: HistoryStringsSchema,
