@@ -4,12 +4,13 @@ import {
   GAME_ROUNDS,
   LIFE_LOST_DELAY,
   type CurrentGame,
+  type GivenAnswer,
   type Round,
   type RoundAnswer,
   type RoundOption,
   type TextRange,
 } from '@slovo/core';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
@@ -42,6 +43,7 @@ import {
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { ease, RIGHT_FILL, shake, WRONG_FILL } from './round-motion';
 import { useGameHaptics } from './useGameHaptics';
+import { VowelButtons } from './VowelButtons';
 import { useReduceMotion } from '../providers/useReduceMotion';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 
@@ -84,13 +86,14 @@ const LIFE_STEP = {
 /** The progress bar grows in 400 ms. */
 const BAR_GROWTH = { duration: 400, easing: ease, reduceMotion: ReduceMotion.Never };
 
-/** The answer to a Round of the pick form, the one this screen plays. */
+/** The answer to a Round of the pick form. */
 type PickAnswer = Extract<RoundAnswer, { form: 'pick' }>;
 
 /**
  * A Round of the Game in play (`game-round-dark`): the header with the ✕, the
  * prompt under its label, the four options and, once answered, the sheet.
- * It plays the pick form; the screens of the other answer forms come with
+ * It plays the pick form and the vowel form, whose Word stands in the card
+ * with each vowel a button; the screens of the other answer forms come with
  * their Game Modes (spec #772). A
  * Synonym Row's Round asks «Що є синонімом до „{dominant}“?» and a Tip's its
  * own question, each under its kind's label rather than the mode's.
@@ -107,7 +110,7 @@ export function GameRound({
   game: CurrentGame;
   /** The label over the prompt, the Game Mode's, for a Round about a Word, an idiom or a Correction. */
   label: string;
-  onAnswer: (option: number) => void;
+  onAnswer: (given: GivenAnswer) => void;
   onNext: () => void;
   /** Leaves the Game, once the reader has confirmed it. */
   onLeave: () => void;
@@ -147,7 +150,27 @@ export function GameRound({
         }}
       />
       <ScrollView contentContainerStyle={styles.round}>
-        <RoundCard label={asked.label} prompt={asked.prompt} highlight={round.highlight} />
+        {round.form === 'vowel' ? (
+          <RoundCard label={asked.label} prompt={asked.prompt} highlight={undefined}>
+            <VowelButtons
+              key={round.number}
+              text={round.prompt}
+              vowels={round.vowels}
+              answer={answer?.form === 'vowel' ? answer : undefined}
+              onAnswer={(position) => {
+                onAnswer({ form: 'vowel', position });
+              }}
+              texts={{
+                vowelLabel: (letter, place) => letterLabel(strings.game.letters, letter, place),
+                correct: strings.game.round.correct,
+                chosen: strings.game.round.chosen,
+              }}
+              testID="game-vowels"
+            />
+          </RoundCard>
+        ) : (
+          <RoundCard label={asked.label} prompt={asked.prompt} highlight={round.highlight} />
+        )}
         <View style={styles.options}>
           {options.map((option, place) => (
             <AnswerOption
@@ -156,7 +179,7 @@ export function GameRound({
               place={place}
               answer={pickAnswer}
               onPress={() => {
-                onAnswer(place);
+                onAnswer({ form: 'pick', option: place });
               }}
             />
           ))}
@@ -198,6 +221,18 @@ function askedAs(
   }
   if (entryKind === 'tip') return { label: strings.tip.label, prompt };
   return { label, prompt };
+}
+
+/**
+ * What VoiceOver reads for a letter at its place among a Word's letters from
+ * 0, «а, третя літера»; past the Edition's ordinals, the place's number.
+ */
+function letterLabel(
+  texts: EditionStrings['game']['letters'],
+  letter: string,
+  place: number,
+): string {
+  return fill(texts.label, { letter, place: texts.ordinals[place] ?? String(place + 1) });
 }
 
 /**
@@ -362,16 +397,21 @@ function Life({ full }: { full: boolean }) {
  * its label over the prompt on a surface card with the Edition's corners, the
  * highlight, such as a non-standard form, on the sunken fill and underlined in
  * the accent. VoiceOver reads it before the options, then names the highlight.
+ * An answer drawn in the prompt's place, such as the vowel buttons, stands in
+ * for the prompt, and VoiceOver reads the label, then each of its buttons.
  */
 function RoundCard({
   label,
   prompt,
   highlight,
+  children,
 }: {
   label: string;
   prompt: string;
   /** The part of the prompt to mark; nothing to mark. */
   highlight: TextRange | undefined;
+  /** What the card shows for the prompt, the answer drawn in it; the prompt's text if nothing. */
+  children?: ReactNode;
 }) {
   const { colors, fontFamilies, radii } = useTokens();
   const { strings, voice } = useEdition();
@@ -384,13 +424,14 @@ function RoundCard({
   return (
     <View
       testID="game-prompt"
-      accessible
-      accessibilityLabel={[
-        `${label}${ENDS_IN_PUNCTUATION.test(label) ? '' : '.'} ${prompt}`,
-        marked,
-      ]
-        .filter(Boolean)
-        .join(' ')}
+      accessible={children === undefined}
+      accessibilityLabel={
+        children === undefined
+          ? [`${label}${ENDS_IN_PUNCTUATION.test(label) ? '' : '.'} ${prompt}`, marked]
+              .filter(Boolean)
+              .join(' ')
+          : undefined
+      }
       {...voice}
       style={[
         styles.card,
@@ -400,28 +441,31 @@ function RoundCard({
       <CardCorners corners={['topLeft', 'bottomRight']} />
       <Text
         maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+        {...voice}
         style={[overlineType, { color: colors.muted, fontFamily: fontFamilies.ui }]}
       >
         {label}
       </Text>
-      <WholeWordsText
-        text={prompt}
-        size={PROMPT_SIZE}
-        tracking={0}
-        style={{ color: colors.ink, fontFamily: fontFamilies.word }}
-        highlight={
-          highlight === undefined
-            ? undefined
-            : {
-                range: highlight,
-                style: {
-                  backgroundColor: colors.surfaceSunken,
-                  textDecorationLine: 'underline',
-                  textDecorationColor: colors.accent,
-                },
-              }
-        }
-      />
+      {children ?? (
+        <WholeWordsText
+          text={prompt}
+          size={PROMPT_SIZE}
+          tracking={0}
+          style={{ color: colors.ink, fontFamily: fontFamilies.word }}
+          highlight={
+            highlight === undefined
+              ? undefined
+              : {
+                  range: highlight,
+                  style: {
+                    backgroundColor: colors.surfaceSunken,
+                    textDecorationLine: 'underline',
+                    textDecorationColor: colors.accent,
+                  },
+                }
+          }
+        />
+      )}
     </View>
   );
 }
