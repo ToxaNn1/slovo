@@ -1,5 +1,5 @@
-import { renderStress, type PlayedRound } from '@slovo/core';
-import { useState } from 'react';
+import { buildGameReview, type GameReviewItem, type PlayedRound } from '@slovo/core';
+import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { stressLabel } from '../entries/stress-label';
@@ -11,29 +11,12 @@ import { minTouchTarget, rowPadding, space, typeSize } from '../tokens';
 const TEXT_MAX_FONT_SCALE = 1.5;
 
 /**
- * What a row leads with. A Word's comes from the answer sheet, the Lemma with
- * the stressed vowels VoiceOver names; an Idiom's is its expression. A
- * Correction's is the non-standard form, not the standard equivalent its
- * Entry row leads with, because the Round asked about that form («Як
- * правильно?») and the Review lists what was asked. A Synonym Row's is its
- * dominant with its Stress, the Round's prompt. A Tip's is its title, the
- * rule its card leads with.
- */
-function titleOf({ entry, answer, prompt }: PlayedRound) {
-  if (entry.kind === 'word') return answer.sheet.answer;
-  if (entry.kind === 'synonymRow') return { text: prompt, stressedVowels: [] };
-  if (entry.kind === 'tip') return { text: entry.title, stressedVowels: [] };
-  return {
-    text: entry.kind === 'correction' ? entry.nonStandardForm : entry.expression,
-    stressedVowels: [],
-  };
-}
-
-/**
  * The Game Review under the result: every Round of the Game just over, in
- * order, with ✓ or ✗ and the reader's wrong pick. A tap expands a Round: a
- * Word's or an idiom's Definition, Example and etymology, a Correction's
- * right form and explanation, a Synonym Row's members, or a Tip's explanation; a second tap opens the Entry. One Round is expanded at a time.
+ * order, as the Core's Game Review items, with ✓ or ✗ and the reader's wrong
+ * pick. A tap expands a Round: a Word's or an idiom's Definition, Example and
+ * etymology, a Correction's right form and explanation, a Synonym Row's
+ * members, or a Tip's explanation; a second tap opens the Entry. One Round is
+ * expanded at a time.
  */
 export function GameReview({
   rounds,
@@ -46,6 +29,7 @@ export function GameReview({
 }) {
   const { colors, fontFamilies } = useTokens();
   const { strings, voice } = useEdition();
+  const items = useMemo(() => buildGameReview(rounds), [rounds]);
   const [expanded, setExpanded] = useState<number>();
   return (
     <View testID="game-review" style={styles.review}>
@@ -57,14 +41,14 @@ export function GameReview({
       >
         {strings.game.review.title}
       </Text>
-      {rounds.map((round) => (
+      {items.map((item) => (
         <ReviewRow
-          key={round.number}
-          round={round}
-          expanded={expanded === round.number}
+          key={item.number}
+          item={item}
+          expanded={expanded === item.number}
           onPress={() => {
-            if (expanded === round.number) onOpen(round.entry.id);
-            else setExpanded(round.number);
+            if (expanded === item.number) onOpen(item.entryId);
+            else setExpanded(item.number);
           }}
         />
       ))}
@@ -73,31 +57,29 @@ export function GameReview({
 }
 
 function ReviewRow({
-  round,
+  item: { number, title, right, picked: pickedOption, details },
   expanded,
   onPress,
 }: {
-  round: PlayedRound;
+  item: GameReviewItem;
   expanded: boolean;
   onPress: () => void;
 }) {
   const { colors, fontFamilies } = useTokens();
   const { strings, voice } = useEdition();
   const { review } = strings.game;
-  const title = titleOf(round);
-  const picked = round.right
-    ? undefined
-    : fill(review.picked, { text: round.options[round.answer.chosen]?.text ?? '' });
+  const picked =
+    pickedOption === undefined ? undefined : fill(review.picked, { text: pickedOption.text });
   const label = [
-    String(round.number),
+    String(number),
     stressLabel(strings.wordCard, title.text, title.stressedVowels),
-    round.right ? review.right : review.wrong,
+    right ? review.right : review.wrong,
     ...(picked === undefined ? [] : [picked]),
   ].join(', ');
   return (
     <View style={[styles.row, { borderColor: colors.line }]}>
       <Pressable
-        testID={`game-review-row-${String(round.number)}`}
+        testID={`game-review-row-${String(number)}`}
         accessibilityRole="button"
         accessibilityLabel={label}
         accessibilityHint={expanded ? review.openHint : review.expandHint}
@@ -110,7 +92,7 @@ function ReviewRow({
           maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
           style={[styles.number, { color: colors.muted, fontFamily: fontFamilies.ui }]}
         >
-          {round.number}
+          {number}
         </Text>
         <View style={styles.text}>
           <Text
@@ -132,63 +114,61 @@ function ReviewRow({
           maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
           style={[
             styles.mark,
-            { color: round.right ? colors.correct : colors.wrong, fontFamily: fontFamilies.ui },
+            { color: right ? colors.correct : colors.wrong, fontFamily: fontFamilies.ui },
           ]}
         >
-          {round.right ? '✓' : '✗'}
+          {right ? '✓' : '✗'}
         </Text>
       </Pressable>
-      {expanded ? <ReviewDetails round={round} /> : null}
+      {expanded ? <ReviewDetails details={details} /> : null}
     </View>
   );
 }
 
 /** What an expanded Round shows of its Entry. */
-function ReviewDetails({ round: { entry, answer } }: { round: PlayedRound }) {
+function ReviewDetails({ details }: { details: GameReviewItem['details'] }) {
   const { colors, fontFamilies } = useTokens();
   const { strings, voice } = useEdition();
   const body = [styles.body, { color: colors.ink, fontFamily: fontFamilies.word }];
   const heading = [styles.heading, { color: colors.muted, fontFamily: fontFamilies.ui }];
-  if (entry.kind === 'correction') {
+  if (details.kind === 'correction') {
     return (
       <View testID="game-review-details" {...voice} style={styles.details}>
         <Text maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE} style={heading}>
           {strings.correctionCard.standard}
         </Text>
         <Text maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE} style={[body, styles.form]}>
-          {answer.sheet.answer.text}
+          {details.standardForm}
         </Text>
         <Text maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE} style={body}>
-          {entry.explanation}
+          {details.explanation}
         </Text>
       </View>
     );
   }
-  if (entry.kind === 'tip') {
+  if (details.kind === 'tip') {
     return (
       <View testID="game-review-details" {...voice} style={styles.details}>
         <Text maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE} style={body}>
-          {entry.explanation}
+          {details.explanation}
         </Text>
       </View>
     );
   }
-  if (entry.kind === 'synonymRow') {
+  if (details.kind === 'synonymRow') {
     return (
       <View testID="game-review-details" {...voice} style={styles.details}>
         <Text maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE} style={body}>
-          {entry.members
-            .map(({ text, stress }) => renderStress({ lemma: text, stress }))
-            .join(', ')}
+          {details.members.map(({ text }) => text).join(', ')}
         </Text>
       </View>
     );
   }
-  const example = entry.examples[0];
+  const { definition, example, etymology } = details;
   return (
     <View testID="game-review-details" {...voice} style={styles.details}>
       <Text maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE} style={body}>
-        {entry.primaryDefinition}
+        {definition}
       </Text>
       {example === undefined ? null : (
         <View>
@@ -208,13 +188,13 @@ function ReviewDetails({ round: { entry, answer } }: { round: PlayedRound }) {
           )}
         </View>
       )}
-      {entry.etymology === undefined ? null : (
+      {etymology === undefined ? null : (
         <View>
           <Text maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE} style={heading}>
-            {entry.kind === 'idiom' ? strings.idiomCard.etymology : strings.wordCard.etymology}
+            {details.kind === 'idiom' ? strings.idiomCard.etymology : strings.wordCard.etymology}
           </Text>
           <Text maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE} style={body}>
-            {entry.etymology}
+            {etymology}
           </Text>
         </View>
       )}
