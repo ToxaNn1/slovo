@@ -30,6 +30,12 @@ export {
   type ConcealedTipCardModel,
   type SelfCheckCardModel,
 } from './entries/self-check';
+export {
+  buildSynonymRowShareCard,
+  buildTipShareCard,
+  type SynonymRowShareCardModel,
+  type TipShareCardModel,
+} from './entries/share-card';
 export { coreDecor, loadDecor, type Decor } from './edition/decor';
 export { createEntries, type Entries, type ShownEntry, type ShownKind } from './entries/entries';
 export type { EntryRowModel } from './entries/entry-row';
