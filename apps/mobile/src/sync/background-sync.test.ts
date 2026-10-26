@@ -20,7 +20,6 @@ import {
   createFakeSyncApi,
   createMemoryContentPort,
 } from '@slovo/core/testing';
-import type { WidgetSnapshot } from '@slovo/contracts';
 import type { AppStateStatus } from 'react-native';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -139,7 +138,7 @@ async function app() {
     },
     { onError: () => undefined },
   );
-  const widgetWrites: (() => Promise<WidgetSnapshot | undefined>)[] = [];
+  const widgetWrites: Composition['widget'][] = [];
   const appState = fakeAppState();
   const reports = reportForeground({ clock: time.clock, appState: appState.source });
   syncInBackground({
@@ -148,7 +147,7 @@ async function app() {
     reopen: reopenAfterSync({
       settings,
       composition,
-      writeWidgetSnapshot: (snapshot) => widgetWrites.push(snapshot),
+      writeWidgetSnapshot: (widget) => widgetWrites.push(widget),
     }),
   });
   return {
@@ -228,7 +227,7 @@ describe('the shell syncs in the background', () => {
     expect((await held(settings)).current.theme).toBe('dark');
     expect(plans.length).toBeGreaterThan(plansBefore);
     expect(widgetWrites).toHaveLength(1);
-    await expect(widgetWrites[0]?.()).resolves.toMatchObject({});
+    expect(widgetWrites[0]).toBe(second.widget);
     reports.stop();
   });
 
@@ -256,7 +255,7 @@ describe('the shell syncs in the background', () => {
     await reopenAfterSync({
       settings: { reopen: () => Promise.resolve() },
       composition: composition as unknown as Opening<Composition>,
-      writeWidgetSnapshot: (snapshot) => written.push(snapshot),
+      writeWidgetSnapshot: (widget) => written.push(widget),
     })();
 
     expect(written).toEqual([]);

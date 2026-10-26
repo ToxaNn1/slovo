@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { CorrectionIdSchema } from './correction';
 import { IdiomIdSchema } from './idiom';
 import { hasNoRepeats, TextSchema } from './shared';
+import { SynonymRowIdSchema } from './synonym-row';
+import { TipIdSchema } from './tip';
 import { WordIdSchema } from './word';
 
 /** The format of the Widget Snapshot; a change the widget can't read takes the next number. */
@@ -12,13 +14,16 @@ export const WIDGET_SNAPSHOT_FORMAT = 1;
 const WidgetEntryText = {
   /**
    * What the widget leads with: a Word's Lemma with each valid Stress as the
-   * combining acute mark, a Correction's main standard equivalent, or an
-   * Idiom's expression.
+   * combining acute mark, a Correction's main standard equivalent, an
+   * Idiom's expression, a Synonym Row's dominant with its Stress, or a Tip's
+   * title.
    */
   headline: TextSchema,
   /**
-   * The line under it: a Word's or an Idiom's primary Definition, or the
-   * non-standard form a Correction replaces.
+   * The line under it: a Word's or an Idiom's primary Definition, the
+   * non-standard form a Correction replaces, a Synonym Row's first 3 members
+   * with their Stress and the ellipsis, or a Tip's standard form in the
+   * Edition's words («Так: …»).
    */
   secondLine: TextSchema,
   /**
@@ -28,11 +33,16 @@ const WidgetEntryText = {
   voiceOver: TextSchema,
 };
 
-/** An Entry any Widget Mode may show, ready to draw. */
+/**
+ * An Entry any Widget Mode may show, ready to draw. The widget never reads
+ * `kind`, so a new kind keeps the format (ADR 0026).
+ */
 const WidgetEntrySchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('word'), id: WordIdSchema, ...WidgetEntryText }),
   z.strictObject({ kind: z.literal('correction'), id: CorrectionIdSchema, ...WidgetEntryText }),
   z.strictObject({ kind: z.literal('idiom'), id: IdiomIdSchema, ...WidgetEntryText }),
+  z.strictObject({ kind: z.literal('synonymRow'), id: SynonymRowIdSchema, ...WidgetEntryText }),
+  z.strictObject({ kind: z.literal('tip'), id: TipIdSchema, ...WidgetEntryText }),
 ]);
 
 const EntryIdsSchema = z

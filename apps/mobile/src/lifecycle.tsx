@@ -1,9 +1,10 @@
-import type { FeatureSwitch } from '@slovo/core';
+import type { Composition, FeatureSwitch } from '@slovo/core';
 import { useEffect, useSyncExternalStore } from 'react';
 import { AppState } from 'react-native';
 
 import { accountOpening } from './account/device-account';
 import { compositionOpening } from './composition';
+import { editionStrings } from './edition/edition';
 import { deviceClock } from './device/device-clock';
 import { languagePackOpening } from './edition/language-pack';
 import { remoteSwitchesOpening } from './edition/remote-switches';
@@ -53,11 +54,13 @@ export function Lifecycle() {
         logError('Could not follow the app into the foreground', error);
       });
     });
-    const writeWidgetSnapshot = createWidgetSnapshotWriter(deviceWidget, deviceWidgetLinkKey);
+    const writeSnapshot = createWidgetSnapshotWriter(deviceWidget, deviceWidgetLinkKey);
+    // The widget writes a Synonym Row's and a Tip's text in the Edition's words.
+    const writeWidgetSnapshot = (widget: Composition['widget']) => {
+      writeSnapshot(() => widget.snapshot(editionStrings.notificationBody));
+    };
     reports.listen(compositionOpening, (composition, moment) => {
-      if (moment === 'launch' || moment === 'background') {
-        writeWidgetSnapshot(() => composition.widget.snapshot());
-      }
+      if (moment === 'launch' || moment === 'background') writeWidgetSnapshot(composition.widget);
     });
     reports.listen(remoteSwitchesOpening, (switches, moment) => {
       if (moment !== 'launch' && moment !== 'return') return;
@@ -67,7 +70,7 @@ export function Lifecycle() {
         await compositionOpening.reopen();
         // A reopen does what the launch did: the composition makes the plan as it opens.
         const { state } = compositionOpening;
-        if (state.status === 'ready') writeWidgetSnapshot(() => state.value.widget.snapshot());
+        if (state.status === 'ready') writeWidgetSnapshot(state.value.widget);
       });
     });
     if (syncOpening !== undefined) {
