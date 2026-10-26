@@ -58,8 +58,8 @@ function editJson(editionDir: string, file: string, edit: (json: Json) => Json):
 }
 
 /** Records edited content, as `pnpm build:pack --record` does, so the copy builds again. */
-function record(editionDir: string): void {
-  const result = recordContent({ editionDir });
+function record(editionDir: string, today = new Date()): void {
+  const result = recordContent({ editionDir, today });
   if (!result.ok) throw new Error(result.errors.map(formatBuildError).join('\n'));
 }
 
@@ -1091,14 +1091,17 @@ describe('buildLanguagePack', () => {
   });
 
   describe('literary uses of a Correction', () => {
-    /** A copy of the valid fixture whose Correction c_fx0001 carries the given literary uses. */
+    /**
+     * A copy of the valid fixture whose Correction c_fx0001 carries the given
+     * literary uses, recorded on a day they are all in the public domain.
+     */
     function withLiteraryUses(literaryUses: Json[]): string {
       const editionDir = copyFixture('valid');
       editJson(editionDir, 'content/corrections/c_fx0001.json', (json) => ({
         ...json,
         literaryUses,
       }));
-      record(editionDir);
+      record(editionDir, new Date(9999, 0, 1));
       return editionDir;
     }
 
@@ -1620,6 +1623,36 @@ describe('recordContent', () => {
       errors: [expect.objectContaining({ entryId: 'w_fx0002', field: 'rarity' })],
     });
     expect(manifestOf(editionDir)).toMatchObject({ contentVersion: 7 });
+  });
+
+  it('records nothing while a literary use is not yet in the public domain, as the build refuses it', () => {
+    const editionDir = copyFixture('valid');
+    editJson(editionDir, 'content/corrections/c_fx0001.json', (json) => ({
+      ...json,
+      literaryUses: [
+        {
+          text: 'Він завжди приходив вчасно.',
+          author: 'Тестовий автор',
+          work: 'Тестовий твір',
+          authorDeathYear: 1960,
+        },
+      ],
+    }));
+    const manifest = readFileSync(join(editionDir, 'content/manifest.json'), 'utf8');
+
+    expect(recordContent({ editionDir, today: new Date(2030, 11, 31) })).toEqual({
+      ok: false,
+      errors: [
+        {
+          file: 'content/corrections/c_fx0001.json',
+          entryId: 'c_fx0001',
+          field: 'literaryUses.0.authorDeathYear',
+          message: 'Not in the public domain until 1 January 2031',
+        },
+      ],
+    });
+    expect(readFileSync(join(editionDir, 'content/manifest.json'), 'utf8')).toBe(manifest);
+    expect(recordContent({ editionDir, today: new Date(2031, 0, 1) })).toMatchObject({ ok: true });
   });
 
   it('starts the registry of an Edition never recorded with every id, in order', () => {
