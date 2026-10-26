@@ -1,7 +1,7 @@
 import type { AskableEntry, AskableKind, EligibleOfKind } from '../entries/entries';
 import type { AnswerSheet, GameMode, RoundOption, TextRange } from './game-mode';
 import { entriesIn, roundsIn } from './game-mode';
-import { roundLimitOf, type PlannedRound, type RoundPlanner } from './round-plan';
+import { GAME_ROUNDS, roundLimitOf, type PlannedRound, type RoundPlanner } from './round-plan';
 import { typedAnswerMatches } from './typed-answer';
 
 /** How many Lives a Game starts with, in a Game Mode that sets no Lives of its own. */
@@ -157,8 +157,8 @@ export interface GameInPlay {
   answer(game: CurrentGame, given: GivenAnswer): CurrentGame | undefined;
   /**
    * The Game after «Далі»: lost at 0 Lives, won after the last Round of the
-   * mode's limit or, without one, after the last Round the mode has, else at
-   * the next Round. Nothing before an answer.
+   * mode's limit or, without one, after the last Round the mode can plan,
+   * else at the next Round. Nothing before an answer.
    */
   next(game: CurrentGame): CurrentGame | undefined;
   /**
@@ -323,18 +323,26 @@ function judge(
 
 /**
  * Starts a Game in the mode over its planned Rounds, which `planRounds`
- * builds anew on `replan`; nothing without a Round. The pairs of a pairs grid
- * are Rounds of their own, one after another, until the grid is empty.
+ * builds anew from the eligible Entries on `replan`; nothing without a Round.
+ * The pairs of a pairs grid are Rounds of their own, one after another, until
+ * the grid is empty. In a mode with no Round limit, the Game plans
+ * `GAME_ROUNDS` more Rounds whenever it runs out of them.
  */
 export function createGameInPlay(
   mode: GameMode,
   planned: readonly PlannedRound[],
   planRounds: RoundPlanner,
+  eligibleAtStart: EligibleOfKind<AskableEntry>,
 ): GameInPlay | undefined {
   const first = planned[0];
   if (first === undefined) return undefined;
   let rounds = planned;
+  let eligible = eligibleAtStart;
   const roundLimit = roundLimitOf(mode);
+
+  /** The ids of the Entries the planned Rounds ask about, a grid's pairs included. */
+  const askedIn = (some: readonly PlannedRound[]) =>
+    new Set(some.flatMap(({ entry, content }) => [entry.id, ...entriesIn(content)]));
 
   /**
    * The planned Round the Game's Round of that number comes from, its place
@@ -381,6 +389,10 @@ export function createGameInPlay(
       if (game.status !== 'answered') return undefined;
       if (game.lives === 0) return { ...game, status: 'lost' };
       const roundsPassed = game.roundsPassed + 1;
+      if (roundLimit === undefined && plannedAt(roundsPassed + 1) === undefined) {
+        const more = planRounds(mode, eligible, GAME_ROUNDS, askedIn(rounds));
+        if ('rounds' in more) rounds = [...rounds, ...more.rounds];
+      }
       const upcoming =
         roundLimit === undefined || roundsPassed < roundLimit
           ? plannedAt(roundsPassed + 1)
@@ -393,19 +405,15 @@ export function createGameInPlay(
         status: 'playing',
       };
     },
-    replan(game, eligible) {
+    replan(game, eligibleNow) {
       if (game.status !== 'playing' && game.status !== 'answered') return;
+      eligible = eligibleNow;
       const at = plannedAt(game.round.number);
       if (at === undefined) return;
       const shown = rounds.slice(0, at.place + 1);
       const shownRounds = shown.reduce((sum, { content }) => sum + roundsIn(content), 0);
       const all = rounds.reduce((sum, { content }) => sum + roundsIn(content), 0);
-      const rest = planRounds(
-        mode,
-        eligible,
-        (roundLimit ?? all) - shownRounds,
-        new Set(shown.flatMap(({ entry, content }) => [entry.id, ...entriesIn(content)])),
-      );
+      const rest = planRounds(mode, eligible, (roundLimit ?? all) - shownRounds, askedIn(shown));
       if ('rounds' in rest) rounds = [...shown, ...rest.rounds];
     },
   };

@@ -51,9 +51,10 @@ export interface GameState {
  * The Game: the Game Modes on offer and the Game in play, kept in memory for
  * the app session and never in the user state. A Game asks as many
  * different eligible Entries of the kinds its mode asks about as the mode's
- * Round limit, 15 by default (`roundsToPlanOf`): up to 5 the reader is weak
- * on (ADR 0043), the rest those in History when there are at least 15, else
- * any (ADR 0024). A mode may set its own Lives too, or none (ADR 0052). Playing never writes Seen, History or Active Days; a finished Game
+ * Round limit, 15 by default (`roundsToPlanOf`), each pair of a grid
+ * counted: up to 5 the reader is weak on, first (ADR 0043, 0052), the rest
+ * those in History when there are at least 15, else any (ADR 0024). A mode
+ * with no Round limit asks them again, reshuffled, once it has asked them all. A mode may set its own Lives too, or none (ADR 0052). Playing never writes Seen, History or Active Days; a finished Game
  * writes only its mode's Best result, when it beats it (ADR 0052).
  */
 export interface Game {
@@ -250,13 +251,15 @@ export async function openGame({
   async function start(modeId: string): Promise<void> {
     const mode = modes.find(({ id }) => id === modeId);
     if (mode === undefined) throw new Error(`No Game Mode «${modeId}» is on offer`);
-    const plan = planRounds(mode, await entries.eligibleOfKind(mode.entryKind, mode.alsoAsks));
+    const eligible = await entries.eligibleOfKind(mode.entryKind, mode.alsoAsks);
+    const plan = planRounds(mode, eligible);
     // The offer says what the plan does already, unless the mode's fair Rounds hang on the draw.
     const offers = state.modes.map((offer) =>
       offer.modeId === modeId ? offerOf(mode, plan) : offer,
     );
     const modesNow = sameOffers(offers, state.modes) ? state.modes : offers;
-    played = 'rounds' in plan ? createGameInPlay(mode, plan.rounds, planRounds) : undefined;
+    played =
+      'rounds' in plan ? createGameInPlay(mode, plan.rounds, planRounds, eligible) : undefined;
     change({ ...state, modes: modesNow, current: played?.first });
   }
 

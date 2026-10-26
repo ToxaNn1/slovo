@@ -115,6 +115,13 @@ export interface RoundInput {
   readonly answer: AskableEntry;
   /** Every eligible Entry of the kinds the mode asks about, the answer among them: where Distractors come from. */
   readonly eligible: readonly AskableEntry[];
+  /**
+   * The eligible Entries the Game would ask about after the answer, in
+   * order, none of them asked yet: where a pairs grid takes its other pairs from.
+   */
+  readonly next: readonly AskableEntry[];
+  /** How many Rounds the content may hold at most, such as the pairs of a grid: the Rounds the Game still plans. */
+  readonly upTo: number;
   /** The source of every shuffle. */
   readonly random: Random;
   readonly edition: GameEdition;
