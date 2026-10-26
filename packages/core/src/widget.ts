@@ -66,9 +66,9 @@ function widgetEntry(entry: ShownEntry): WidgetEntry {
 }
 
 /**
- * A Synonym Row or a Tip as the widget shows it: the title and the body of
- * its notification, so both read the same (spec #730), and both as VoiceOver
- * reads them.
+ * A Synonym Row or a Tip as the widget shows it: the title and the body its
+ * notification would have, cut like a notification body, and both as VoiceOver
+ * reads them. Notifications themselves carry Words only (ADR 0051).
  */
 function widgetRowOrTip(
   entry: SynonymRow | Tip,
