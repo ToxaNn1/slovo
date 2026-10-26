@@ -483,3 +483,178 @@ describe('pnpm content check', () => {
     expect(run.stderr).toMatch(/content\/manifest\.json.*pnpm build:pack uk --record/);
   });
 });
+
+describe('a Synonym Row', () => {
+  const folder = 'content/synonym-rows';
+  /** A row whose first member links a Word of the Edition. */
+  const validRow = {
+    dominant: { text: 'тестоговорити', stress: [10] },
+    meaning: 'Тестове значення: висловлювати думки словами.',
+    members: [
+      { text: word.lemma, stress: word.stress, wordId: word.id, shadeNote: 'тестовий відтінок' },
+      { text: 'тестомовити', stress: [6] },
+      { text: 'тестоказати', stress: [8] },
+      { text: 'тестобалакати', stress: [8] },
+      { text: 'тестогомоніти', stress: [10] },
+    ],
+    sources: [{ title: 'Тестове джерело' }],
+  };
+  const idOf = (file = '') => file.slice(folder.length + 1, -'.json'.length);
+  /** Drafts and records a valid row, and returns its file and id. */
+  function recordedRow() {
+    const run = content(['new', 'synonym-row', '--edition', 'uk'], { edits: [validRow] });
+    expect(run.stderr).toBe('');
+    expect(run.status).toBe(0);
+    const [file = ''] = run.opened;
+    return { file, id: idOf(file) };
+  }
+
+  it('is drafted with a fresh r_ id and every field it requires, and recorded once it passes', () => {
+    const before = { registry: registry(), version: manifest().contentVersion };
+
+    const run = content(['new', 'synonym-row', '--edition', 'uk'], {
+      edits: [{ meaning: 'Тестове значення.' }, validRow],
+      answers: 'y\n',
+    });
+
+    expect(run.status).toBe(0);
+    const [file = '', reopened, ...others] = run.opened;
+    const id = idOf(file);
+    expect(file).toBe(`${folder}/${id}.json`);
+    expect(id).toMatch(/^r_[a-z0-9]{6}$/);
+    expect(reopened).toBe(file);
+    expect(others).toEqual([]);
+    expect(before.registry).not.toContain(id);
+    expect(run.stderr).toContain(`${file} › Entry ${id} › dominant.text:`);
+    expect(readJson(file)).toEqual({
+      kind: 'synonymRow',
+      id,
+      ...validRow,
+    });
+    expect(registry()).toEqual([...before.registry, id]);
+    expect(manifest().contentVersion).toBe(before.version + 1);
+    expect(run.stdout).toContain(`Recorded ${file}`);
+    expect(content(['check', '--edition', 'uk']).status).toBe(0);
+  });
+
+  it('writes a draft that names every field a row requires', () => {
+    const run = content(['new', 'synonym-row', '--edition', 'uk'], {
+      edits: [{ meaning: 'Тестове значення.' }],
+      answers: 'n\n',
+    });
+    const [file = ''] = run.opened;
+
+    const member = { text: '', stress: [] };
+    expect(readJson(file)).toEqual({
+      kind: 'synonymRow',
+      id: idOf(file),
+      dominant: { text: '', stress: [] },
+      meaning: 'Тестове значення.',
+      members: [member, member, member, member, member],
+      sources: [{ title: '' }],
+    });
+  });
+
+  it("prints each problem of a bad row with the build's reasons and records nothing", () => {
+    const before = { registry: registry(), manifest: manifest() };
+
+    const run = content(['new', 'synonym-row', '--edition', 'uk'], {
+      edits: [
+        {
+          ...validRow,
+          dominant: { text: 'тестоговорити', stress: [0], wordId: 'w_000000' },
+          members: [...validRow.members, { text: 'ТестоМовити', stress: [6] }],
+        },
+      ],
+      answers: 'n\n',
+    });
+
+    expect(run.status).toBe(1);
+    const [file = ''] = run.opened;
+    const id = idOf(file);
+    const problem = (field: string) => `${file} › Entry ${id} › ${field}:`;
+    expect(run.stderr).toContain(`${problem('dominant.stress.0')} Position 0 is "т", not a vowel`);
+    expect(run.stderr).toContain(`${problem('dominant.wordId')} Unknown Word "w_000000"`);
+    expect(run.stderr).toContain(`${problem('members.5.text')} Same text as members.1:`);
+    expect(run.stderr).toContain(`Kept ${file}, not recorded`);
+    expect(registry()).toEqual(before.registry);
+    expect(manifest()).toEqual(before.manifest);
+  });
+
+  it.each([
+    ['its id', (id: string) => id],
+    ['its dominant, typed in another case', () => 'ТестоГоворити'],
+  ])('is opened by %s and recorded once it passes', (_by, text) => {
+    const { file, id } = recordedRow();
+    const version = manifest().contentVersion;
+
+    const run = content(['edit', text(id), '--edition', 'uk'], {
+      edits: [{ meaning: 'Нове значення.' }],
+    });
+
+    expect(run.stderr).toBe('');
+    expect(run.status).toBe(0);
+    expect(run.opened).toEqual([file]);
+    expect(readJson(file)).toMatchObject({ id, meaning: 'Нове значення.' });
+    expect(run.stdout).toContain(`Recorded ${file}`);
+    expect(manifest().contentVersion).toBe(version + 1);
+  });
+
+  it('is listed among the Entries its dominant matches', () => {
+    const { id } = recordedRow();
+    const twin = recordedRow();
+
+    const run = content(['edit', 'тестоговорити', '--edition', 'uk'], { answers: '\n' });
+
+    const [first, second] = [id, twin.id].toSorted();
+    expect(run.stdout).toContain(
+      `1. ${String(first)} synonym-row тестоговорити: Тестове значення: висловлювати думки словами.`,
+    );
+    expect(run.stdout).toContain(`2. ${String(second)} synonym-row тестоговорити:`);
+  });
+
+  it('keeps an edit that breaks it unrecorded and prints why', () => {
+    const { file, id } = recordedRow();
+    const before = manifest();
+
+    const run = content(['edit', id, '--edition', 'uk'], {
+      edits: [{ members: validRow.members.slice(0, 4) }],
+      answers: 'n\n',
+    });
+
+    expect(run.status).toBe(1);
+    expect(run.stderr).toContain(`${file} › Entry ${id} › members:`);
+    expect(run.stderr).toContain(`Kept ${file}, not recorded`);
+    expect(manifest()).toEqual(before);
+  });
+
+  it('is retired, keeps its file and the content is recorded', () => {
+    const { file, id } = recordedRow();
+    const row = readJson(file) as Record<string, unknown>;
+    const version = manifest().contentVersion;
+
+    const run = content(['retire', id, '--edition', 'uk']);
+
+    expect(run.stderr).toBe('');
+    expect(run.status).toBe(0);
+    expect(readJson(file)).toEqual({ ...row, retired: true });
+    expect(run.stdout).toContain(`Retired ${file}`);
+    expect(manifest().contentVersion).toBe(version + 1);
+    expect(content(['check', '--edition', 'uk']).stdout).toContain('Edition "uk": no problems');
+  });
+
+  it('is checked with the rest of the Edition, each problem in its file and field', () => {
+    const { file, id } = recordedRow();
+    const row = readJson(file) as typeof validRow;
+    writeFileSync(
+      join(editionDir, file),
+      JSON.stringify({ ...row, members: [...row.members, { text: 'тестомовити', stress: [6] }] }),
+    );
+
+    const run = content(['check', '--edition', 'uk']);
+
+    expect(run.status).toBe(1);
+    expect(run.stderr).toContain('Edition "uk": 1 problem(s)');
+    expect(run.stderr).toContain(`${file} › Entry ${id} › members.5.text: `);
+  });
+});

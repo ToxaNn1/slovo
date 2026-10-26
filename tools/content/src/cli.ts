@@ -1,7 +1,7 @@
 /**
  * Drafts and checks an Edition's content:
  *
- *   pnpm content new word|correction|idiom --edition <id>
+ *   pnpm content new word|correction|idiom|synonym-row --edition <id>
  *   pnpm content edit <id or text> --edition <id>
  *   pnpm content retire <id> --edition <id>
  *   pnpm content check --edition <id>
@@ -38,7 +38,7 @@ import {
 } from './content';
 
 const USAGE = [
-  'Usage: pnpm content new word|correction|idiom --edition <id>',
+  'Usage: pnpm content new word|correction|idiom|synonym-row --edition <id>',
   '       pnpm content edit <id or text> --edition <id>',
   '       pnpm content retire <id> --edition <id>',
   '       pnpm content check --edition <id>',

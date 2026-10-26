@@ -8,9 +8,10 @@ Dev-only tooling, never shipped in an app. It drafts, edits, retires and checks 
 pnpm content new word --edition uk
 pnpm content new correction --edition uk
 pnpm content new idiom --edition uk
+pnpm content new synonym-row --edition uk
 ```
 
-The tool drafts the Entry in the file the build reads it from, such as `editions/uk/content/words/w_k3x9qa.json`, with an id no Entry of the Edition has had (ADR 0010). The draft names every field the kind requires and the lists most Entries fill; texts are empty, and fields that take one of a few values hold a sample. It opens in `$VISUAL`, else `$EDITOR`, else `vi`. An editor that returns at once needs its wait flag, such as `EDITOR="code --wait"`.
+The tool drafts the Entry in the file the build reads it from, such as `editions/uk/content/words/w_k3x9qa.json`, with an id no Entry of the Edition has had (ADR 0010). The draft names every field the kind requires and the lists most Entries fill; texts are empty, and fields that take one of a few values hold a sample. A Synonym Row's draft holds its dominant and five members, each a text with its Stress, the positions of its stressed vowels (ADR 0051); add a `wordId` to link a Word, a `shadeNote` of at most 60 characters, or more members, up to 12. It opens in `$VISUAL`, else `$EDITOR`, else `vi`. An editor that returns at once needs its wait flag, such as `EDITOR="code --wait"`.
 
 When you close the file, the tool checks the whole content as the build does:
 
@@ -25,9 +26,9 @@ pnpm content edit w_k3x9qa --edition uk
 pnpm content edit купина --edition uk
 ```
 
-The tool finds the Entry by its id, or by its text: a Word's Lemma, an Idiom's expression or a Correction's non-standard form, typed in any case and with or without stress marks. It opens the Entry's file in the editor and, after you close it, checks and records the content as `new` does. An Entry you closed unchanged stays as it was and nothing is written; a file you deleted is written back, since an Entry is withdrawn only by retiring it.
+The tool finds the Entry by its id, or by its text: a Word's Lemma, an Idiom's expression, a Correction's non-standard form or a Synonym Row's dominant, typed in any case and with or without stress marks. It opens the Entry's file in the editor and, after you close it, checks and records the content as `new` does. An Entry you closed unchanged stays as it was and nothing is written; a file you deleted is written back, since an Entry is withdrawn only by retiring it.
 
-When the text matches several Entries, such as the homonyms «купина», the tool lists them, each with its id, kind, text and a short definition (a Correction's standard equivalents), and asks which one to open, by its number or its id. An empty answer opens nothing.
+When the text matches several Entries, such as the homonyms «купина», the tool lists them, each with its id, kind, text and a short definition (a Correction's standard equivalents, a Synonym Row's meaning), and asks which one to open, by its number or its id. An empty answer opens nothing.
 
 ## Retire an Entry
 
