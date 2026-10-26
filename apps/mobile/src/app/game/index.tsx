@@ -7,6 +7,7 @@ import {
   GameRound,
   rowPadding,
   ScreenTitle,
+  SectionLabel,
   space,
   typeSize,
   useEdition,
@@ -19,7 +20,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { editionStrings } from '../../edition/edition';
 import { useOpenScreen } from '../../entries/use-open-screen';
 import { useGameActions, useGameState } from '../../game/game';
-import { gameModeCard, gameModeStrings, playedOffers } from '../../game/game-modes';
+import { gameModeCard, gameModeGroups, gameModeStrings, playedOffers } from '../../game/game-modes';
 import { useShown } from '../../shown-in-effect';
 
 const { game: strings } = editionStrings;
@@ -95,8 +96,9 @@ function Game() {
 }
 
 /**
- * The mode screen (`game-mode-select-dark`): the title, what a Game is with
- * the best result once a Game has finished, and a card per mode.
+ * The mode screen (`game-mode-select-dark`): the title, what a Game of
+ * «Вгадай слово» is with its Best result once it has one, and a card per
+ * mode on offer, with its own Best result, under the titles of their groups.
  */
 function ModeScreen({
   modes,
@@ -130,15 +132,20 @@ function ModeScreen({
               : ` ${fill(count(strings.best, bestResult), { total: String(GAME_ROUNDS) })}`}
           </Text>
         </View>
-        {modes.map((offer) => (
-          <GameModeCard
-            key={offer.modeId}
-            testID={`game-mode-${offer.modeId}`}
-            {...gameModeCard(offer, strings.modes)}
-            onPress={() => {
-              onStart(offer.modeId);
-            }}
-          />
+        {gameModeGroups(modes, strings).map(({ title, offers }) => (
+          <View key={title} style={styles.group}>
+            <SectionLabel style={styles.groupTitle}>{title}</SectionLabel>
+            {offers.map((offer) => (
+              <GameModeCard
+                key={offer.modeId}
+                testID={`game-mode-${offer.modeId}`}
+                {...gameModeCard(offer, strings)}
+                onPress={() => {
+                  onStart(offer.modeId);
+                }}
+              />
+            ))}
+          </View>
         ))}
       </ScrollView>
     </View>
@@ -154,5 +161,7 @@ const styles = StyleSheet.create({
     paddingBottom: space[8],
   },
   heading: { gap: space[4], marginHorizontal: space[1], marginBottom: space[2] },
+  group: { gap: space[4] },
+  groupTitle: { marginHorizontal: space[1], marginTop: space[2] },
   rules: { fontSize: typeSize.body, lineHeight: typeSize.body * 1.5 },
 });
