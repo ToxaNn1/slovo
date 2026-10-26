@@ -1,0 +1,61 @@
+# Game Modes of 0.8.12
+
+Until 0.8.12 the Game had two Game Modes, «Вгадай слово» and «Обери правильне», and every Game had one shape: 15 Rounds, 5 Lives, four options. Nothing trained Stress, anglicisms, idioms or where a Word comes from; a reader could recognise a Word without recalling or spelling it; there was no endless run, no race against the clock and nothing the same for everyone today; and one best result mixed every mode. Spec #772 adds eleven Game Modes, typed answers, a Best result per Game Mode and the Daily Crossword. The decisions come from the owner's grilling of 2026-10-25.
+
+**The Game Mode shape grows.** Every mode is a Core Game Mode registered through the existing Extension Point (ADR 0006, 0024), and the Core stays language-agnostic. A mode now sets its own Lives (or none), its own Round limit (or none) and a time limit (or none); without its own values a Game is up to 15 Rounds with 5 Lives. A Round is one prompt with exactly one right answer, and the mode decides its answer form: a pick of options, a tap on a vowel, a pairs grid, chips tapped in order, or typed text. The Game in play keeps one Round at a time; the pairs of a pairs grid are its Rounds.
+
+**Mode ids and Feature Switches.** `guess-word` and `correction` keep their ids; the new ones are `stress`, `pairs`, `survival`, `timed`, `idiom-meaning`, `anglicism`, `build-idiom`, `type-word`, `anagram`, `by-letters` and `origin`. Each mode has its own Feature Switch, `game` followed by its id in camel case (`gameGuessWord`, `gameCorrection`, `gameStress`, `gamePairs`, `gameSurvival`, `gameTimed`, `gameIdiomMeaning`, `gameAnglicism`, `gameBuildIdiom`, `gameTypeWord`, `gameAnagram`, `gameByLetters`, `gameOrigin`), and the Daily Crossword has `dailyCrossword`. They are required of every Edition and all on in the Ukrainian Edition. With `game` off, every mode and the Daily Crossword are off; a mode whose switch is off is absent from the Game screen, not refused on its card. A remote switch only turns a mode off (ADR 0040).
+
+**What every mode shares.**
+
+- **Weak Rounds.** Up to 5 Rounds of a Game ask about eligible Entries that are Unknown or due for Review (ADR 0043), in every mode. «Виживання» and «На час» put them at the start; «Пари» counts them in pairs.
+- **Starting.** A 15-Round mode needs 15 eligible Entries of its kinds that make a fair Round, as before (ADR 0024). «Виживання» and «На час» need 15 too; once every eligible Entry has been asked, they reshuffle and ask them again. «Звідки слово» needs at least 8 Words with an origin in the Mix. Round planning alone decides whether a mode can start, and the card gives its refusal before any tap.
+- **Unknown, not Review.** A mistake in any mode marks the Entry Unknown; Game answers never move a Review (ADR 0043).
+- **The answer sheet** follows each answer in every mode except «На час».
+- **The Game Review** closes every mode: each Round's prompt → its right answer, plus the reader's pick or typed text on a mistake, a tap expanding the Entry. «Наголос» shows the stressed form, «Склади вислів» the whole expression, and each pair of «Пари» is one row. The Core builds the rows (`buildGameReview`, ADR 0051).
+- **Haptics** are the same for a right and a wrong answer in every mode (ADR 0025); in «На час» a wrong answer costs no Life, so no Life haptic follows it.
+- **Leaving.** A Game left before its end never counts towards a Best result, since the Game lives in memory only (ADR 0024).
+
+**Typed answers.** One Core comparison judges every typed answer: it ignores case, Stress marks, the kind of apostrophe (' ʼ ’) and spaces at the ends, and keeps г and ґ, е and ё distinct, so the Game still teaches spelling. A wrong typed answer costs a Life and the answer sheet shows the right one.
+
+**The modes.**
+
+- **«Вгадай слово» (`guess-word`) gets harder as it goes**, always: Rounds 1–5 give a Definition → pick of four; Rounds 6–10 an Example with the Word replaced by a gap → pick of four, only when an Example contains the Lemma as written (Stress and case set aside), otherwise a Definition Round; Rounds 11–15 a Definition → type the Word. Idioms, Synonym Rows and Tips stay four-option picks at every stage.
+- **«Наголос» (`stress`)**: the Lemma without Stress, each vowel of the Edition's vowels a button; any of the Word's stressed vowels is right; Words with one vowel never play. The 15 `wrongStress` Corrections play too: their standard form without Stress, the answer its Stress, the answer sheet the Correction's explanation. The mode is off in an Edition that doesn't mark Stress.
+- **«Пари» (`pairs`)**: a grid of 4 Words and 4 Definitions; the reader taps a Word, then its Definition. A right pair leaves the grid, the next grid comes when one empties, up to 4 grids and 15 pairs (4 + 4 + 4 + 3). A wrong pair costs a Life and marks Unknown the Word whose Definition was matched wrongly.
+- **«Анаграми» (`anagram`)**: a Definition and the Word's letters as shuffled chips tapped in order; Words of 4–9 letters.
+- **«За буквами» (`by-letters`)**: a Definition and blanks to type the Word into; «Відкрити літеру» opens one letter at a time until one is left, with no penalty. In both letter modes an apostrophe or a hyphen stays in place and is never a chip or a blank, and a Word with a space doesn't play.
+- **«Впиши слово» (`type-word`)**: a Correction's sentence with its non-standard form → type the standard form. A stress trap doesn't play there, since the comparison ignores Stress marks (ADR 0045). It asks about Corrections but sits in the «Слова» group, as the owner agreed.
+- **«Звідки слово» (`origin`)**: a Word with its Definition → pick of four origin languages, the Distractors from the Edition's list of origin languages.
+- **«Обери правильне» (`correction`)** stays as ADR 0024 and 0045 describe it. **«Англіцизми» (`anglicism`)** is the same mode with Corrections of Correction Type `anglicism` only.
+- **«Фразеологізми» (`idiom-meaning`)**: an idiom or a proverb → pick of four meanings. Place names never play.
+- **«Склади вислів» (`build-idiom`)**: a meaning and the words of its expression as shuffled chips without punctuation, tapped in order, compared ignoring case, equal words interchangeable; expressions of 2–8 words only. A wrong chip shakes and costs a Life.
+- **«Виживання» (`survival`)**: 3 Lives and no Round limit; Rounds from «Вгадай слово» (Definition picks only, no stages) and «Обери правильне», about half each. Its result is the Rounds passed.
+- **«На час» (`timed`)**: 60 seconds and no Lives; a mistake simply moves on, and the result is the right answers. Rounds are «Вгадай слово» Definition picks with no answer sheet. The time comes from the injected clock and pauses while the app is in the background.
+
+The Game screen lists the Daily Crossword's card on top, then the mode cards in four groups: «Слова» (Вгадай слово, Наголос, Пари, Анаграми, За буквами, Впиши слово, Звідки слово), «Виправлення» (Обери правильне, Англіцизми), «Вислови» (Фразеологізми, Склади вислів) and «Виклик» (Виживання, На час). Each mode's strings come from `game.modes` under its id (ADR 0024). Under Reduce Motion the chip shake and other movement drop and the haptics stay; chips, cells, vowels and the timer carry VoiceOver labels.
+
+**A Best result per mode.** Each Game Mode keeps its own Best result, one per Game Mode per Edition: the user-state record `game.best.<mode id>`, written only when a finished Game beats it and synced as `highest` (ADR 0013, 0041). A 15-Round mode keeps the 0–15 range; «Виживання» counts Rounds passed and has no upper bound; «На час» counts right answers. The old single record `game.best` becomes the Best result of «Вгадай слово»: one forward migration (ADR 0013) writes its value as `game.best.guess-word`, and `game.best` is no longer read or written. Each mode card shows its Best result («Найкраще: {n} з {total}», or «Найкраще: {n}» for «Виживання» and «На час»), and the statistics screen keeps its line for «Вгадай слово».
+
+**The Daily Crossword** («Кросворд дня») is one 5 × 5 mini crossword a day, the same for every reader on that local date. It is not a Game: it has no Rounds, no Lives, no Best result and no Game Review.
+
+- **Words.** 4–6 crossing words of 3–5 letters, from the pack's Words and the one-word standard forms of Corrections. A Word's clue is its primary Definition, a Correction's its explanation. No Retired Entry is picked; the Mix, Hidden Entries and the Rarity Floor don't apply. A word doesn't repeat within 30 days, since the supply of short words is thin.
+- **Generation.** The Language Pack build generates the days deterministically from the date and keeps them in the Edition's content in the repository. A published day never changes; new days are only appended, so that at least 400 days lie ahead. An Entry Retired later stays in its day. The build refuses a day that breaks these rules.
+- **Play.** The day is the device's local date. A tap on a cell selects its word and shows its clue; typing fills cells; a correctly filled word turns green, and wrong letters are never marked. «Відкрити літеру» opens the selected cell with no penalty. A solved crossword shows «Розв'язано!» and its card ✓ for the rest of the day; the card otherwise offers «Почати» or «Продовжити».
+- **State.** Progress and the solved state are `device-only` records of the user state, with no Sync. Solving makes nothing Seen and changes no Knowledge Mark. There is no archive of past days.
+
+**Word origin and pack format 6.** A Word gains the optional field `origin`, a language code from the Edition's `originLanguages` list, each a code and a name; the Edition owns the list, so the Core stays language-agnostic. The Language Pack build refuses an unknown code, and the content CLI adds, edits and checks `origin`. The Ukrainian Edition lists about 12 origin languages and gives at least 60 Words an `origin` taken from their existing etymology, nothing invented. The pack carries `origin` and the crossword days, which an app on format 5 can't read, so the build writes pack format 6 and the app reads only it (ADR 0032); format 5 is no longer published.
+
+## Considered Options
+
+- **Keep one best result for every mode**: rejected. A strong run in one mode hid progress in another, and «Виживання» has no upper bound to share a range with.
+- **Keep `game.best` as the record of «Вгадай слово»**: rejected. Its 0–15 schema and its meaning («any mode») belong to the old record; a new key for every mode reads alike, and a synced record never changes its meaning in place (ADR 0013).
+- **Strict comparison of typed text**: rejected. A reader would lose a Life for a capital letter, a Stress mark or the kind of apostrophe their keyboard types.
+- **Loose г/ґ and е/ё**: rejected. The Game would stop teaching spelling.
+- **A gap Round from every Example**: rejected. An Example that inflects the Lemma would hide text that isn't the answer.
+- **Typed or staged Rounds for Idioms, Synonym Rows and Tips**: rejected. Their answers are long or have more than one way to write them, so only a pick stays fair.
+- **The timer from the Round screen's own clock**: rejected. Time must be injected for tests, and a phone call must not cost the run.
+- **The Daily Crossword generated on the device**: rejected. Every reader must get the same grid on a date, and a content update must never swap today's crossword.
+- **The Daily Crossword synced, with an archive or streaks**: rejected for now. A daily puzzle needs neither, and they are out of scope for 0.8.12.
+- **A word never repeats in the crossword**: rejected. The supply of 3–5-letter words would run out within the 400 days ahead.
+- **Origins as free text on the Word**: rejected. «Звідки слово» needs a closed list to draw Distractors from, and the build can check a code.

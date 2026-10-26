@@ -6,7 +6,7 @@ Until 0.5 the haptics of a Game were played by the views that animate it. An ans
 
 The delay that follows an animation is stated once, as `LIFE_LOST_DELAY` in the Core: the wrong choice fills for that long and the Life pops after it, so the Round screen takes both from the constant. The win's second success follows no animation and stays the module's own.
 
-A wrong answer is the only way to lose a Life, so the Life's haptic belongs to the wrong answer and the Life view no longer plays one.
+A wrong answer is the only way to lose a Life, so the Life's haptic belongs to the wrong answer and the Life view no longer plays one. Every Game Mode plays the same sequences, whatever its answer form (ADR 0052); in «На час», which has no Lives, a wrong answer plays warning alone.
 
 ## Considered Options
 

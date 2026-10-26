@@ -15,7 +15,7 @@ Until 0.8.6 SLOVO could not tell whether the reader knew an Entry: an unknown En
 - **Which due Entry.** Of the due Entries of the slot's kind the Cycle covers, the slot takes the one not shown in this session yet, else the one shown longest ago, in Cycle order, never the Entry of the card before it, so a swiped-past Entry comes back at a later slot.
 - **«Повторення».** A card is labelled a Review when its Entry is due as it is shown: at a slot, at its own turn in the Cycle, as the Word of the Day, as a linked Correction, or on an Entry screen opened from «Вчу», the Game Review, Favorites, a notification or the widget. It keeps the label once answered.
 
-**The Game takes up to 5 of its 15 Rounds from Entries the reader is weak on**, eligible and Unknown or due, and the rest from ADR 0024's pool, with its fallback. The Round answers are kept until the result screen for the Game Review, never stored.
+**The Game takes up to 5 Rounds of a Game from Entries the reader is weak on**, eligible and Unknown or due, in every Game Mode, and the rest from ADR 0024's pool, with its fallback (ADR 0052). The Daily Crossword is not a Game: it marks nothing and moves no Review. The Round answers are kept until the result screen for the Game Review, never stored.
 
 **The «Вчу» list** holds every Entry with a Review day (marked Unknown and not yet Learned, including one since answered Known on a Review), sorted by that day, each row with its local days until the Review, so a due Entry leads. An id the Language Pack no longer has is left out, as in Favorites.
 
