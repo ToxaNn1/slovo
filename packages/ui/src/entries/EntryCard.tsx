@@ -23,6 +23,8 @@ export interface EntryCardProps {
   onOpenCorrection?: (correctionId: string) => void;
   /** Opens a Word when the reader taps a linked member of a Synonym Row. */
   onOpenWord?: (wordId: string) => void;
+  /** Opens the Synonym Row a Word card names as the row the Word is a member of. */
+  onOpenSynonymRow?: (synonymRowId: string) => void;
   /** The action row under the card: in 0.3 the heart, Collections, share and hide. */
   actions?: ReactNode;
   /**
@@ -65,6 +67,7 @@ export function EntryCard({
   card,
   onOpenCorrection,
   onOpenWord,
+  onOpenSynonymRow,
   actions,
   selfCheck = false,
 }: EntryCardProps) {
@@ -101,6 +104,7 @@ export function EntryCard({
             compact={compact}
             lemmaSize={lemmaSize}
             onOpenCorrection={onOpenCorrection}
+            onOpenSynonymRow={onOpenSynonymRow}
             concealed={concealed}
           />
         ) : card.kind === 'correction' ? (

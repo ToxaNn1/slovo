@@ -52,6 +52,10 @@ export const WordCardStringsSchema = z.strictObject({
   oftenSaid: TextSchema,
   /** What VoiceOver says a linked Correction's form does when tapped, e.g. "Відкриває виправлення". */
   oftenSaidHint: TextSchema,
+  /** The line of the Synonym Row the Word is a member of, e.g. "У синонімічному ряду: {dominant}" (ADR 0051). */
+  synonymRow: templateOf('dominant'),
+  /** What VoiceOver says the Synonym Row line does when tapped, e.g. "Відкриває синонімічний ряд". */
+  synonymRowHint: TextSchema,
   /** Self-check: the button that reveals a hidden Word card's meaning, e.g. "Показати значення". */
   reveal: TextSchema,
 });

@@ -39,6 +39,8 @@ const strings = {
     stressOr: 'or',
     extraDefinitions: 'Other meanings',
     history: 'History of the word',
+    synonymRow: 'In the synonym row: {dominant}',
+    synonymRowHint: 'Opens the synonym row',
   },
   idiomCard: {
     idiomTypes: { idiom: 'idiom', placeName: 'place name', proverb: 'proverb' },
@@ -481,6 +483,57 @@ describe('the Word History on a Word card', () => {
     } finally {
       Dimensions.set({ window });
     }
+  });
+});
+
+describe('the Synonym Row line on a Word card', () => {
+  const wordInRow: EntryFeedCard = {
+    ...wordCard,
+    model: {
+      ...wordCard.model,
+      synonymRow: {
+        synonymRowId: 'r_go',
+        dominant: { text: 'go\u0301', stressedVowels: ['o'], wordId: 'w_go' },
+      },
+    },
+  };
+
+  it('names the dominant of the row the Word is a member of', async () => {
+    await render(inEdition(<EntryCard card={wordInRow} />));
+
+    const line = within(screen.getByTestId('word-synonym-row'));
+    expect(line.getByText(/^In the synonym row: /)).toBeTruthy();
+    expect(line.getByText('go\u0301')).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'In the synonym row: go, stress on o' }),
+    ).toBeTruthy();
+  });
+
+  it('opens the row on a tap', async () => {
+    const onOpenSynonymRow = jest.fn();
+    await render(inEdition(<EntryCard card={wordInRow} onOpenSynonymRow={onOpenSynonymRow} />));
+
+    await fireEvent.press(
+      screen.getByRole('button', { name: 'In the synonym row: go, stress on o' }),
+    );
+
+    expect(onOpenSynonymRow).toHaveBeenCalledWith('r_go');
+  });
+
+  it('is absent when the Word is in no row', async () => {
+    await render(inEdition(<EntryCard card={wordCard} />));
+
+    expect(screen.queryByTestId('word-synonym-row')).toBeNull();
+    expect(screen.queryByText(/In the synonym row/)).toBeNull();
+  });
+
+  it('stays hidden under Self-check until revealed', async () => {
+    await render(inEdition(<EntryCard card={wordInRow} selfCheck />));
+    expect(screen.queryByTestId('word-synonym-row')).toBeNull();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Show the meaning' }));
+
+    expect(screen.getByTestId('word-synonym-row')).toBeTruthy();
   });
 });
 

@@ -1,4 +1,4 @@
-import type { Composition, EntryFeedCard } from '@slovo/core';
+import type { Composition, EntryFeedCard, SynonymRowFeedCard, TipFeedCard } from '@slovo/core';
 import {
   BackLink,
   DecorBackground,
@@ -23,8 +23,9 @@ import { useOpenScreen } from './use-open-screen';
  * whether or not the list still holds it, so it stays open when a tap on the
  * heart takes the Entry out, until the reader goes back. A Correction a Word
  * card links opens as the next Entry screen of the same `route`, its link
- * back named for the Word; a Word a member of a Synonym Row links opens the
- * same way, its link back named as this screen's. Opening it never makes the
+ * back named for the Word, and so does the Synonym Row a Word card names; a
+ * Word a member of a Synonym Row links opens the same way, its link back
+ * named as this screen's. Opening it never makes the
  * Entry Seen, unless it
  * opens from a notification or the widget. Hiding its Entry hides it and
  * keeps the screen open, with the undo toast.
@@ -92,7 +93,16 @@ export function EntryScreen({
               onOpenWord={(wordId) => {
                 openScreen(`${route}/${wordId}?back=${encodeURIComponent(back)}`);
               }}
-              actions={<EntryActions card={card} />}
+              onOpenSynonymRow={(synonymRowId) => {
+                const word = card.kind === 'word' ? card.model.lemma : back;
+                openScreen(`${route}/${synonymRowId}?back=${encodeURIComponent(word)}`);
+              }}
+              // The action row of rows and Tips comes with the tickets that hide, list and share them (spec #730).
+              actions={
+                card.kind === 'synonymRow' || card.kind === 'tip' ? undefined : (
+                  <EntryActions card={card} />
+                )
+              }
             />
           </ScrollView>
         )}
@@ -106,7 +116,7 @@ function openEntry(
   composition: Composition,
   entryId: string,
   openedFrom: OpenedFrom | undefined,
-): Promise<EntryFeedCard | undefined> {
+): Promise<EntryFeedCard | SynonymRowFeedCard | TipFeedCard | undefined> {
   switch (openedFrom) {
     case 'notification':
       return composition.openedFromNotification(entryId);
