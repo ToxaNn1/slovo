@@ -8,7 +8,7 @@ import {
   type MixKind,
   type MixKindName,
   type MixState,
-  } from './mix';
+} from './mix';
 import type { ContentReadPort } from '../ports';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
