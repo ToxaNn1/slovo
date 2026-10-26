@@ -30,7 +30,21 @@
     "knowledge": true,
     "selfCheck": true,
     "rarityFloor": true,
-    "gameReview": true
+    "gameReview": true,
+    "gameGuessWord": true,
+    "gameCorrection": true,
+    "gameStress": true,
+    "gamePairs": true,
+    "gameSurvival": true,
+    "gameTimed": true,
+    "gameIdiomMeaning": true,
+    "gameAnglicism": true,
+    "gameBuildIdiom": true,
+    "gameTypeWord": true,
+    "gameAnagram": true,
+    "gameByLetters": true,
+    "gameOrigin": true,
+    "dailyCrossword": true
   },
   "userSettingDefaults": {
     "theme": "system",

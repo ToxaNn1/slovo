@@ -131,6 +131,34 @@ export const FeatureSwitchesSchema = z.strictObject({
   rarityFloor: z.boolean(),
   /** Game Review: the list of every Round on the Game's result. */
   gameReview: z.boolean(),
+  /** The Game Mode «Вгадай слово» (`guess-word`); off while `game` is (ADR 0052). */
+  gameGuessWord: z.boolean(),
+  /** The Game Mode «Обери правильне» (`correction`); off while `game` is (ADR 0052). */
+  gameCorrection: z.boolean(),
+  /** The Game Mode «Наголос» (`stress`); off while `game` is (ADR 0052). */
+  gameStress: z.boolean(),
+  /** The Game Mode «Пари» (`pairs`); off while `game` is (ADR 0052). */
+  gamePairs: z.boolean(),
+  /** The Game Mode «Виживання» (`survival`); off while `game` is (ADR 0052). */
+  gameSurvival: z.boolean(),
+  /** The Game Mode «На час» (`timed`); off while `game` is (ADR 0052). */
+  gameTimed: z.boolean(),
+  /** The Game Mode «Фразеологізми» (`idiom-meaning`); off while `game` is (ADR 0052). */
+  gameIdiomMeaning: z.boolean(),
+  /** The Game Mode «Англіцизми» (`anglicism`); off while `game` is (ADR 0052). */
+  gameAnglicism: z.boolean(),
+  /** The Game Mode «Склади вислів» (`build-idiom`); off while `game` is (ADR 0052). */
+  gameBuildIdiom: z.boolean(),
+  /** The Game Mode «Впиши слово» (`type-word`); off while `game` is (ADR 0052). */
+  gameTypeWord: z.boolean(),
+  /** The Game Mode «Анаграми» (`anagram`); off while `game` is (ADR 0052). */
+  gameAnagram: z.boolean(),
+  /** The Game Mode «За буквами» (`by-letters`); off while `game` is (ADR 0052). */
+  gameByLetters: z.boolean(),
+  /** The Game Mode «Звідки слово» (`origin`); off while `game` is (ADR 0052). */
+  gameOrigin: z.boolean(),
+  /** The Daily Crossword; off while `game` is (ADR 0052). */
+  dailyCrossword: z.boolean(),
 });
 
 export type FeatureSwitches = z.infer<typeof FeatureSwitchesSchema>;
