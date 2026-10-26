@@ -155,6 +155,7 @@ const wordCard: WordFeedCard = {
     categoryName: undefined,
     details: undefined,
     linkedCorrections: [],
+    synonymRow: undefined,
   },
 };
 

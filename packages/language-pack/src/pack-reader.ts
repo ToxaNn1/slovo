@@ -130,6 +130,13 @@ const SQL = {
     WHERE word_corrections.correction_id = ? AND words.retired = 0
     ORDER BY words.id
   `,
+  linkingSynonymRowIds: `
+    SELECT DISTINCT synonym_rows.id FROM synonym_row_members
+    JOIN synonym_rows ON synonym_rows.id = synonym_row_members.row_id
+    JOIN words ON words.id = synonym_row_members.word_id
+    WHERE synonym_row_members.word_id = ? AND synonym_rows.retired = 0 AND words.retired = 0
+    ORDER BY synonym_rows.id
+  `,
   metadata: 'SELECT key, value FROM metadata',
 };
 
@@ -532,6 +539,7 @@ export function createPackReader(db: PackDatabase): PackReader {
     listCorrectionIds: () => column(SQL.correctionIds, [], 'id'),
     listLinkedWordIds: (correctionId) => column(SQL.linkedWordIds, [correctionId], 'id'),
     listIdiomIds: () => column(SQL.idiomIds, [], 'id'),
+    listLinkingSynonymRowIds: (wordId) => column(SQL.linkingSynonymRowIds, [wordId], 'id'),
     metadata: async () => metadataOf(await db.getAllAsync<MetadataRow>(SQL.metadata, [])),
   };
 }

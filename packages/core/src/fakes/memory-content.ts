@@ -1,4 +1,4 @@
-import type { Category, Correction, Idiom, Word } from '@slovo/contracts';
+import type { Category, Correction, Idiom, SynonymRow, Word } from '@slovo/contracts';
 
 import type { ContentReadPort } from '../ports';
 
@@ -16,15 +16,17 @@ export function createMemoryContentPort({
   words = [],
   corrections = [],
   idioms = [],
+  synonymRows = [],
 }: {
   categories?: readonly Category[];
   correctionCategories?: readonly Category[];
   words?: readonly Word[];
   corrections?: readonly Correction[];
   idioms?: readonly Idiom[];
+  synonymRows?: readonly SynonymRow[];
 } = {}): ContentReadPort {
   const liveWords = words.filter((word) => !word.retired);
-  const entries = [...words, ...corrections, ...idioms];
+  const entries = [...words, ...corrections, ...idioms, ...synonymRows];
   const categoriesOf = (entries: readonly (Word | Correction)[]) =>
     [...new Set(entries.map((entry) => entry.categoryId))].map((id) => ({ id, displayName: id }));
   const packCategories = categories ?? categoriesOf(words);
@@ -52,5 +54,15 @@ export function createMemoryContentPort({
       ),
     listIdiomIds: () =>
       Promise.resolve(idioms.filter((idiom) => !idiom.retired).map((idiom) => idiom.id)),
+    listLinkingSynonymRowIds: (wordId) =>
+      Promise.resolve(
+        liveWords.some((word) => word.id === wordId)
+          ? synonymRows
+              .filter(
+                (row) => !row.retired && row.members.some((member) => member.wordId === wordId),
+              )
+              .map((row) => row.id)
+          : [],
+      ),
   };
 }

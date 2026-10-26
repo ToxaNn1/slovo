@@ -1,4 +1,4 @@
-import type { Category, Correction, Entry, Word } from '@slovo/contracts';
+import type { Category, Correction, Entry, SynonymRow, Word } from '@slovo/contracts';
 
 import type { Edition } from '../edition/edition';
 import {
@@ -105,6 +105,13 @@ export interface Entries {
    * can tell when the links of the Word cards it holds went stale.
    */
   linksCorrections(): Promise<boolean>;
+  /**
+   * The first live Synonym Row, in the Language Pack's stable order, that
+   * links the live Word as a member, or none when no row does or the Edition
+   * turns Synonym Rows off (ADR 0051). Derived from the rows: nothing on the
+   * Word names it.
+   */
+  linkingSynonymRow(word: Word): Promise<SynonymRow | undefined>;
 }
 
 const { hiddenEntries: hiddenRecords } = userStateRecords;
@@ -301,6 +308,13 @@ export function createEntries(
           (correction): correction is Correction =>
             correction?.kind === 'correction' && !correction.retired,
         );
+    },
+    async linkingSynonymRow(word) {
+      if (!edition.isFeatureEnabled('synonymRows')) return undefined;
+      const [first] = await content.listLinkingSynonymRowIds(word.id);
+      if (first === undefined) return undefined;
+      const [row] = await content.getEntries([first]);
+      return row?.kind === 'synonymRow' ? row : undefined;
     },
   };
 }

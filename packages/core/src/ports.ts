@@ -50,6 +50,12 @@ export interface ContentReadPort {
    * Idiom is left out, so nothing new picks it.
    */
   listIdiomIds(): Promise<readonly string[]>;
+  /**
+   * The ids of the Synonym Rows that are not retired and link the Word as a
+   * member while the Word is not retired, in a stable order. A row that names
+   * the Word only as its dominant, or only as plain text, doesn't link it.
+   */
+  listLinkingSynonymRowIds(wordId: string): Promise<readonly string[]>;
 }
 
 /**

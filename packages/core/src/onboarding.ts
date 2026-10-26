@@ -144,7 +144,10 @@ export async function openOnboarding({
 }: {
   userState: UserState;
   clock: Clock;
-  entries: Pick<Entries, 'get' | 'linkedCorrections' | 'categories'>;
+  entries: Pick<
+    Entries,
+    'get' | 'getMany' | 'linkedCorrections' | 'categories' | 'linkingSynonymRow'
+  >;
   wordOfTheDay: Pick<WordOfTheDay, 'chosen'>;
   notifications: Pick<Notifications, 'askPermission' | 'subscribe'>;
   nextMorning: () => Promise<MorningNotification | undefined>;
