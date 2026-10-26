@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Category, Example, Idiom, PartOfSpeech, SynonymRow, Word } from '@slovo/contracts';
+import type {
+  Category,
+  Example,
+  Idiom,
+  PartOfSpeech,
+  SynonymRow,
+  Tip,
+  Word,
+} from '@slovo/contracts';
 
 import {
   createMemoryUserStatePort,
@@ -790,6 +798,134 @@ describe('the Synonym Rows «Вгадай слово» asks about', () => {
       const played = await playAll(app);
       expect(played).toHaveLength(GAME_ROUNDS);
       expect(played.map(({ entry }) => entry.kind)).not.toContain('synonymRow');
+    }
+  });
+});
+
+describe('the Tips «Вгадай слово» asks about', () => {
+  const tipOf = (id: string, withExample = true): Tip => ({
+    kind: 'tip',
+    id,
+    title: `The rule of ${id}`,
+    standardForm: `The right way of ${id}`,
+    explanation: `Why ${id} is said so.`,
+    ...(withExample ? { example: { text: `An example of ${id}.` } } : {}),
+    sources: [{ title: 'Test source' }],
+    gameQuestion: {
+      prompt: `How is ${id} said?`,
+      rightAnswer: `${id}: right`,
+      wrongAnswers: [`${id}: wrong 1`, `${id}: wrong 2`, `${id}: wrong 3`],
+    },
+    retired: false,
+  });
+
+  /** Five live Tips, one with no Example, and a Retired Tip. */
+  const tips = [
+    tipOf('t_time'),
+    tipOf('t_greet', false),
+    tipOf('t_comma'),
+    tipOf('t_apology'),
+    tipOf('t_thanks'),
+    { ...tipOf('t_old'), retired: true },
+  ];
+  const live = ['t_time', 't_greet', 't_comma', 't_apology', 't_thanks'];
+
+  /** The Tip a Round asks about: the one whose own question is its prompt, if any. */
+  const tipOfRound = (round: Round) =>
+    tips.find(({ gameQuestion }) => gameQuestion.prompt === round.prompt);
+
+  /** The option that names the right answer of the Tip asked, or the Word asked. */
+  const rightAmong = (round: Round) => {
+    const tip = tipOfRound(round);
+    return tip === undefined
+      ? rightOf(round)
+      : round.options.findIndex(({ text }) => text === tip.gameQuestion.rightAnswer);
+  };
+
+  /** The Core composition over a pack of the Words and the Tips, with Tips on. */
+  const runWith = ({
+    on = ['knowledge', 'tips'],
+    seed,
+  }: { on?: readonly FeatureSwitch[]; seed?: number } = {}) =>
+    run({
+      pack: createMemoryContentPort({ categories, words, tips }),
+      on,
+      ...(seed === undefined ? {} : { seed }),
+    });
+
+  /** Plays «Вгадай слово» to its end, wrong only in the Rounds about the Entries listed. */
+  async function playAll(app: Composition, wrongOn: readonly string[] = []) {
+    await app.game.start('guess-word');
+    while (current(app).status === 'playing') {
+      const { round } = current(app);
+      const asked = (tipOfRound(round) ?? answerOf(round)).id;
+      await play(app, !wrongOn.includes(asked), rightAmong);
+    }
+    return current(app).played;
+  }
+
+  /** Marks the Entries «Не знаю», so the Game asks about up to 5 of them. */
+  async function unknown(app: Composition, ids: readonly string[]) {
+    for (const id of ids) await app.knowledge.tap(id, 'unknown');
+    return app;
+  }
+
+  it('asks a Tip its own question with its four answers, exactly one right, and shows the right answer with its Example once answered', async () => {
+    const app = await unknown(await runWith(), live);
+
+    const played = await playAll(app);
+
+    const tipRounds = played.filter(({ entry }) => entry.kind === 'tip');
+    expect(tipRounds.map(({ entry }) => entry.id).toSorted()).toEqual(live.toSorted());
+    for (const { entry, prompt, options, answer } of tipRounds) {
+      if (entry.kind !== 'tip') throw new Error(`A Round asked about ${entry.id}`);
+      const { gameQuestion } = entry;
+      expect(prompt).toBe(gameQuestion.prompt);
+      expect(options.map(({ text }) => text).toSorted()).toEqual(
+        [gameQuestion.rightAnswer, ...gameQuestion.wrongAnswers].toSorted(),
+      );
+      expect(options.filter(({ text }) => text === gameQuestion.rightAnswer)).toEqual([
+        options[answer.correct],
+      ]);
+      expect(options.every(({ stressedVowels }) => stressedVowels.length === 0)).toBe(true);
+      expect(answer.sheet).toEqual({ answer: options[answer.correct], example: entry.example });
+    }
+  });
+
+  it('shuffles the four answers with the injected randomness', async () => {
+    const places = new Set<number>();
+    for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
+      const app = await unknown(await runWith({ seed }), live);
+      for (const { entry, answer } of await playAll(app)) {
+        if (entry.kind === 'tip') places.add(answer.correct);
+      }
+    }
+
+    expect(places.size).toBeGreaterThan(1);
+  });
+
+  it('marks the Tip of a wrong answer «Не знаю», and leaves a Tip answered right unmarked', async () => {
+    const app = await runWith({ seed: 3 });
+
+    const played = await playAll(app, ['t_time', 't_greet', 't_comma']);
+
+    const tipRounds = played.filter(({ entry }) => entry.kind === 'tip');
+    expect(tipRounds.length).toBeGreaterThan(0);
+    for (const { entry, right } of tipRounds) {
+      expect(app.knowledge.state.shown.get(entry.id)).toBe(right ? undefined : 'unknown');
+    }
+    expect(tipRounds.some(({ right }) => !right)).toBe(true);
+  });
+
+  it('asks no Tip with Tips out of the Mix or the Feature Switch off, and still plays the Words', async () => {
+    const outOfMix = await unknown(await runWith(), live);
+    await outOfMix.mix.setKind('tip', false);
+    const switchedOff = await unknown(await runWith({ on: ['knowledge'] }), live);
+
+    for (const app of [outOfMix, switchedOff]) {
+      const played = await playAll(app);
+      expect(played).toHaveLength(GAME_ROUNDS);
+      expect(played.map(({ entry }) => entry.kind)).not.toContain('tip');
     }
   });
 });

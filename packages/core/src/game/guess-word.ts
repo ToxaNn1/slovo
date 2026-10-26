@@ -4,6 +4,7 @@ import type {
   Idiom,
   SynonymRow,
   SynonymRowDominant,
+  Tip,
   Word,
 } from '@slovo/contracts';
 
@@ -142,6 +143,24 @@ function synonymRound(
   };
 }
 
+/** An answer to a Tip's own question, which carries no Stress. */
+const tipAnswerOption = (text: string): RoundOption => ({ text, stressedVowels: [] });
+
+/**
+ * The Round that is the Tip's own question: its prompt, and its right answer
+ * and three wrong ones in a random order (spec #730).
+ */
+function tipRound({ gameQuestion, example }: Tip, random: Random): RoundContent {
+  const { prompt, rightAnswer, wrongAnswers } = gameQuestion;
+  const options = shuffled([rightAnswer, ...wrongAnswers], random);
+  return {
+    prompt,
+    options: options.map(tipAnswerOption),
+    correct: options.indexOf(rightAnswer),
+    sheet: { answer: tipAnswerOption(rightAnswer), example },
+  };
+}
+
 /**
  * «Вгадай слово», the Core's Definition → Word mode, which asks about idioms
  * too (ADR 0046). A Round shows the answer's primary Definition and four
@@ -155,12 +174,14 @@ function synonymRound(
  * least 4 are eligible: a row's Round shows its dominant with its Stress, for
  * the screen to ask «Що є синонімом до „{домінанта}“?», and offers one member
  * of the row and three members of other rows (see `synonymRound`); its sheet
- * shows that member and the row's Example, if it has one.
+ * shows that member and the row's Example, if it has one. It asks about Tips
+ * too, with no quota: a Tip's Round is its own question (see `tipRound`); its
+ * sheet shows the right answer and the Tip's Example, if it has one.
  */
 export const guessWord: GameMode = {
   id: 'guess-word',
   entryKind: 'word',
-  alsoAsks: ['idiom', 'synonymRow'],
+  alsoAsks: ['idiom', 'synonymRow', 'tip'],
   isOn: () => true,
   buildRound({ answer, eligible, random, edition }) {
     if (answer.kind === 'word') {
@@ -172,6 +193,7 @@ export const guessWord: GameMode = {
       return roundOf(answer, order, wordOptions, random);
     }
     if (answer.kind === 'synonymRow') return synonymRound(answer, eligible, random);
+    if (answer.kind === 'tip') return tipRound(answer, random);
     if (!isIdiomProper(answer)) return undefined;
     const definition = definitionOf(answer);
     const others = eligible.filter(

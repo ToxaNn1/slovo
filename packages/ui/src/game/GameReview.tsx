@@ -16,11 +16,13 @@ const TEXT_MAX_FONT_SCALE = 1.5;
  * Correction's is the non-standard form, not the standard equivalent its
  * Entry row leads with, because the Round asked about that form («Як
  * правильно?») and the Review lists what was asked. A Synonym Row's is its
- * dominant with its Stress, the Round's prompt.
+ * dominant with its Stress, the Round's prompt. A Tip's is its title, the
+ * rule its card leads with.
  */
 function titleOf({ entry, answer, prompt }: PlayedRound) {
   if (entry.kind === 'word') return answer.sheet.answer;
   if (entry.kind === 'synonymRow') return { text: prompt, stressedVowels: [] };
+  if (entry.kind === 'tip') return { text: entry.title, stressedVowels: [] };
   return {
     text: entry.kind === 'correction' ? entry.nonStandardForm : entry.expression,
     stressedVowels: [],
@@ -31,7 +33,7 @@ function titleOf({ entry, answer, prompt }: PlayedRound) {
  * The Game Review under the result: every Round of the Game just over, in
  * order, with ✓ or ✗ and the reader's wrong pick. A tap expands a Round: a
  * Word's or an idiom's Definition, Example and etymology, a Correction's
- * right form and explanation, or a Synonym Row's members; a second tap opens the Entry. One Round is expanded at a time.
+ * right form and explanation, a Synonym Row's members, or a Tip's explanation; a second tap opens the Entry. One Round is expanded at a time.
  */
 export function GameReview({
   rounds,
@@ -156,6 +158,15 @@ function ReviewDetails({ round: { entry, answer } }: { round: PlayedRound }) {
         <Text maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE} style={[body, styles.form]}>
           {answer.sheet.answer.text}
         </Text>
+        <Text maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE} style={body}>
+          {entry.explanation}
+        </Text>
+      </View>
+    );
+  }
+  if (entry.kind === 'tip') {
+    return (
+      <View testID="game-review-details" {...voice} style={styles.details}>
         <Text maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE} style={body}>
           {entry.explanation}
         </Text>
