@@ -1,4 +1,4 @@
-import type { PlayedRound } from '@slovo/core';
+import { renderStress, type PlayedRound } from '@slovo/core';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -15,10 +15,12 @@ const TEXT_MAX_FONT_SCALE = 1.5;
  * the stressed vowels VoiceOver names; an Idiom's is its expression. A
  * Correction's is the non-standard form, not the standard equivalent its
  * Entry row leads with, because the Round asked about that form («Як
- * правильно?») and the Review lists what was asked.
+ * правильно?») and the Review lists what was asked. A Synonym Row's is its
+ * dominant with its Stress, the Round's prompt.
  */
-function titleOf({ entry, answer }: PlayedRound) {
+function titleOf({ entry, answer, prompt }: PlayedRound) {
   if (entry.kind === 'word') return answer.sheet.answer;
+  if (entry.kind === 'synonymRow') return { text: prompt, stressedVowels: [] };
   return {
     text: entry.kind === 'correction' ? entry.nonStandardForm : entry.expression,
     stressedVowels: [],
@@ -28,8 +30,8 @@ function titleOf({ entry, answer }: PlayedRound) {
 /**
  * The Game Review under the result: every Round of the Game just over, in
  * order, with ✓ or ✗ and the reader's wrong pick. A tap expands a Round: a
- * Word's or an idiom's Definition, Example and etymology, or a Correction's
- * right form and explanation; a second tap opens the Entry. One Round is expanded at a time.
+ * Word's or an idiom's Definition, Example and etymology, a Correction's
+ * right form and explanation, or a Synonym Row's members; a second tap opens the Entry. One Round is expanded at a time.
  */
 export function GameReview({
   rounds,
@@ -156,6 +158,17 @@ function ReviewDetails({ round: { entry, answer } }: { round: PlayedRound }) {
         </Text>
         <Text maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE} style={body}>
           {entry.explanation}
+        </Text>
+      </View>
+    );
+  }
+  if (entry.kind === 'synonymRow') {
+    return (
+      <View testID="game-review-details" {...voice} style={styles.details}>
+        <Text maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE} style={body}>
+          {entry.members
+            .map(({ text, stress }) => renderStress({ lemma: text, stress }))
+            .join(', ')}
         </Text>
       </View>
     );

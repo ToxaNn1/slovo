@@ -1,4 +1,4 @@
-import type { EligibleOfKind, ShownEntry } from '../entries/entries';
+import type { AskableEntry, EligibleOfKind } from '../entries/entries';
 import type { Knowledge } from '../knowledge/knowledge';
 import type { Random } from '../ports';
 import type { History } from '../saved/history';
@@ -19,7 +19,7 @@ const WEAK_ROUNDS = 5;
 
 /** A Round of the Game in play, with the Entry it asks about. */
 export interface PlannedRound {
-  readonly entry: ShownEntry;
+  readonly entry: AskableEntry;
   readonly content: RoundContent;
 }
 
@@ -34,7 +34,7 @@ export type RoundPlan =
  */
 export type RoundPlanner = (
   mode: GameMode,
-  ofKind: EligibleOfKind,
+  ofKind: EligibleOfKind<AskableEntry>,
   count?: number,
   asked?: ReadonlySet<string>,
 ) => RoundPlan;
@@ -87,7 +87,7 @@ export function createRoundPlanner({
     const met = new Set(history.list.map(({ entryId }) => entryId));
     const inHistory = eligible.filter((entry) => met.has(entry.id));
     /** Whether the mode can ask about the Entry: it makes a Round of it. */
-    const askable = (answer: ShownEntry) =>
+    const askable = (answer: AskableEntry) =>
       mode.buildRound({ answer, eligible, random, edition }) !== undefined;
     const pool = new Set(enough(inHistory, askable, GAME_ROUNDS) ? inHistory : eligible);
     const weak = new Set(knowledge.weak());
@@ -100,8 +100,8 @@ export function createRoundPlanner({
     const others = unasked.filter((entry) => !weak.has(entry.id));
     const built: PlannedRound[] = [];
     /** Builds a Round about each answer in turn, until there are `upTo`. */
-    function build(answers: readonly ShownEntry[], upTo: number): ShownEntry[] {
-      const tried: ShownEntry[] = [];
+    function build(answers: readonly AskableEntry[], upTo: number): AskableEntry[] {
+      const tried: AskableEntry[] = [];
       for (const answer of answers) {
         if (built.length >= upTo) break;
         tried.push(answer);

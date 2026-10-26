@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Category, Example, Idiom, PartOfSpeech, Word } from '@slovo/contracts';
+import type { Category, Example, Idiom, PartOfSpeech, SynonymRow, Word } from '@slovo/contracts';
 
 import {
   createMemoryUserStatePort,
@@ -615,6 +615,181 @@ describe('the idioms «Вгадай слово» asks about', () => {
       expect(
         played.flatMap((round) => [round.entry, ...offered(round)]).map(({ kind }) => kind),
       ).not.toContain('idiom');
+    }
+  });
+});
+
+describe('the Synonym Rows «Вгадай слово» asks about', () => {
+  const rowOf = (id: string, dominant: string, members: readonly string[]): SynonymRow => ({
+    kind: 'synonymRow',
+    id,
+    dominant: { text: dominant, stress: [0] },
+    meaning: `The sense of ${dominant}.`,
+    members: members.map((text) => ({ text, stress: [1] })),
+    example: { text: `An example of ${dominant}.` },
+    sources: [{ title: 'Test source' }],
+    retired: false,
+  });
+
+  /** Six live rows, two pairs of them sharing a member, and a Retired row. */
+  const rows = [
+    rowOf('r_go', 'іти', ['простувати', 'чимчикувати', 'шкандибати', 'дибати', 'чалапати']),
+    rowOf('r_say', 'говорити', ['мовити', 'казати', 'балакати', 'гомоніти', 'проказувати']),
+    rowOf('r_look', 'дивитися', ['глядіти', 'позирати', 'зиркати', 'споглядати', 'видивлятися']),
+    rowOf('r_eat', 'їсти', ['споживати', 'трапезувати', 'уминати', 'наминати', 'смакувати']),
+    rowOf('r_run', 'бігти', ['мчати', 'гнати', 'летіти', 'чимчикувати', 'дременути']),
+    rowOf('r_shout', 'кричати', ['волати', 'горлати', 'репетувати', 'верещати', 'казати']),
+    {
+      ...rowOf('r_old', 'спати', ['дрімати', 'куняти', 'почивати', 'спочивати', 'ночувати']),
+      retired: true,
+    },
+  ];
+  const live = ['r_go', 'r_say', 'r_look', 'r_eat', 'r_run', 'r_shout'];
+
+  /** What a word of a row reads in a Round: its text with its Stress. */
+  const shownAs = ({ text, stress }: { text: string; stress: number[] }) =>
+    renderStress({ lemma: text, stress });
+
+  /** The row a Round asks about: the one whose dominant is its prompt, if any. */
+  const rowOfRound = (round: Round) =>
+    rows.find(({ dominant }) => shownAs(dominant) === round.prompt);
+
+  /** The row a Round asks about; fails the test when it asks about a Word. */
+  function rowAsked(round: Round): SynonymRow {
+    const row = rowOfRound(round);
+    if (row === undefined) throw new Error(`No row has the dominant «${round.prompt}»`);
+    return row;
+  }
+
+  /** The texts of a row as it reads: its dominant and its members. */
+  const textsOf = (row: SynonymRow) => [row.dominant, ...row.members].map(shownAs);
+
+  /** The option that names a member of the row asked, or the Word asked. */
+  const rightAmong = (round: Round) =>
+    rowOfRound(round) !== undefined
+      ? round.options.findIndex(({ text }) => rowAsked(round).members.map(shownAs).includes(text))
+      : rightOf(round);
+
+  /** The Core composition over a pack of the Words and the rows, with Synonym Rows on. */
+  const runWith = ({
+    synonymRows = rows,
+    on = ['knowledge', 'synonymRows'],
+    seed,
+    records,
+  }: {
+    synonymRows?: readonly SynonymRow[];
+    on?: readonly FeatureSwitch[];
+    seed?: number;
+    records?: Map<string, string>;
+  } = {}) =>
+    run({
+      pack: createMemoryContentPort({ categories, words, synonymRows }),
+      on,
+      ...(records === undefined ? {} : { records }),
+      ...(seed === undefined ? {} : { seed }),
+    });
+
+  /** Plays «Вгадай слово» to its end, wrong only in the Rounds about the Entries listed. */
+  async function playAll(app: Composition, wrongOn: readonly string[] = []) {
+    await app.game.start('guess-word');
+    while (current(app).status === 'playing') {
+      const { round } = current(app);
+      const asked = (rowOfRound(round) ?? answerOf(round)).id;
+      await play(app, !wrongOn.includes(asked), rightAmong);
+    }
+    return current(app).played;
+  }
+
+  /** Marks the Entries «Не знаю», so the Game asks about up to 5 of them. */
+  async function unknown(app: Composition, ids: readonly string[]) {
+    for (const id of ids) await app.knowledge.tap(id, 'unknown');
+    return app;
+  }
+
+  it('asks the dominant of a row with four words, one of them its member, and shows the member with its Example once answered', async () => {
+    const app = await unknown(await runWith(), live.slice(0, 5));
+
+    const played = await playAll(app);
+
+    const rowRounds = played.filter(({ entry }) => entry.kind === 'synonymRow');
+    expect(rowRounds.map(({ entry }) => entry.id).toSorted()).toEqual(live.slice(0, 5).toSorted());
+    for (const { entry, prompt, options, answer } of rowRounds) {
+      if (entry.kind !== 'synonymRow') throw new Error(`A Round asked about ${entry.id}`);
+      expect(prompt).toBe(shownAs(entry.dominant));
+      expect(options).toHaveLength(4);
+      const members = options.filter(({ text }) => entry.members.map(shownAs).includes(text));
+      expect(members).toEqual([options[answer.correct]]);
+      expect(options.every(({ stressedVowels }) => stressedVowels.length === 1)).toBe(true);
+      expect(answer.sheet).toEqual({ answer: options[answer.correct], example: entry.example });
+    }
+  });
+
+  it('offers as Distractors only members of other live rows, never a text of the row asked, whatever the draw', async () => {
+    for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
+      const app = await unknown(await runWith({ seed }), ['r_go', 'r_say', 'r_run', 'r_shout']);
+
+      const played = await playAll(app);
+
+      const rowRounds = played.filter(({ entry }) => entry.kind === 'synonymRow');
+      expect(rowRounds.length).toBeGreaterThanOrEqual(4);
+      for (const round of rowRounds) {
+        const asked = rowAsked(round);
+        const others = rows.filter(({ id }) => live.includes(id) && id !== asked.id);
+        const distractors = round.options.filter((_, index) => index !== round.answer.correct);
+        expect(new Set(round.options.map(({ text }) => text)).size).toBe(4);
+        for (const { text } of distractors) {
+          expect(textsOf(asked)).not.toContain(text);
+          expect(others.some((row) => row.members.map(shownAs).includes(text))).toBe(true);
+        }
+      }
+    }
+  });
+
+  it('plays rows with 4 rows in the Mix, and none with fewer: 3 live rows, or 4 with one Hidden', async () => {
+    const four = rows.filter(({ id }) =>
+      ['r_go', 'r_say', 'r_look', 'r_eat', 'r_old'].includes(id),
+    );
+    const three = four.filter(({ id }) => id !== 'r_eat');
+    const askedKinds = async (app: Composition) =>
+      (await playAll(await unknown(app, live))).map(({ entry }) => entry.kind);
+    const hidden = userStateRecords.hiddenEntries
+      .record('r_eat')
+      .change('2026-10-01T09:00:00.000Z') as Map<string, string>;
+    const hiding = await runWith({ synonymRows: four, records: new Map(hidden) });
+
+    expect(await askedKinds(await runWith({ synonymRows: four }))).toContain('synonymRow');
+    for (const app of [await runWith({ synonymRows: three }), hiding]) {
+      expect(app.game.state.modes).toEqual([
+        { modeId: 'guess-word', entryKind: 'word', canStart: true },
+      ]);
+      const kinds = await askedKinds(app);
+      expect(kinds).toHaveLength(GAME_ROUNDS);
+      expect(kinds).not.toContain('synonymRow');
+    }
+  });
+
+  it('marks the row of a wrong answer «Не знаю», and leaves a row answered right unmarked', async () => {
+    const app = await runWith({ seed: 3 });
+
+    const played = await playAll(app, ['r_go', 'r_say', 'r_look']);
+
+    const rowRounds = played.filter(({ entry }) => entry.kind === 'synonymRow');
+    expect(rowRounds.length).toBeGreaterThan(0);
+    for (const { entry, right } of rowRounds) {
+      expect(app.knowledge.state.shown.get(entry.id)).toBe(right ? undefined : 'unknown');
+    }
+    expect(rowRounds.some(({ right }) => !right)).toBe(true);
+  });
+
+  it('asks no row with Synonym Rows out of the Mix or the Feature Switch off, and still plays the Words', async () => {
+    const outOfMix = await unknown(await runWith(), live);
+    await outOfMix.mix.setKind('synonymRow', false);
+    const switchedOff = await unknown(await runWith({ on: ['knowledge'] }), live);
+
+    for (const app of [outOfMix, switchedOff]) {
+      const played = await playAll(app);
+      expect(played).toHaveLength(GAME_ROUNDS);
+      expect(played.map(({ entry }) => entry.kind)).not.toContain('synonymRow');
     }
   });
 });

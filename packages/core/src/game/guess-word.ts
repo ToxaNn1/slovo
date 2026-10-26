@@ -1,4 +1,11 @@
-import type { DistractorRule, Entry, Idiom, Word } from '@slovo/contracts';
+import type {
+  DistractorRule,
+  Entry,
+  Idiom,
+  SynonymRow,
+  SynonymRowDominant,
+  Word,
+} from '@slovo/contracts';
 
 import {
   ROUND_OPTIONS,
@@ -7,6 +14,7 @@ import {
   type RoundContent,
   type RoundOption,
 } from './game-mode';
+import type { AskableEntry } from '../entries/entries';
 import type { Random } from '../ports';
 import { renderStress, stressedVowelsOf, withoutStress } from '../entries/stress';
 
@@ -83,6 +91,57 @@ function roundOf<T extends Word | Idiom>(
   };
 }
 
+/** How many Synonym Rows must be eligible for any of them to play (spec #730). */
+const ROWS_TO_PLAY = 4;
+
+/** A word of a Synonym Row as it reads: its text with its Stress. */
+const rowWordOption = ({ text, stress }: SynonymRowDominant): RoundOption => ({
+  text: renderStress({ lemma: text, stress }),
+  stressedVowels: stressedVowelsOf({ lemma: text, stress }),
+});
+
+/** A word of a Synonym Row as the reader tells it apart: its text without case, whatever its Stress. */
+const rowTextOf = ({ text }: SynonymRowDominant) => text.toLowerCase();
+
+/**
+ * The Round that asks for a synonym of the row's dominant: one of its
+ * members, drawn at random, is right, and the three Distractors are members
+ * of three other rows, one of each, whose text is not in the row asked, nor
+ * another option's. Nothing with fewer than `ROWS_TO_PLAY` eligible rows, or
+ * fewer than three such members.
+ */
+function synonymRound(
+  answer: SynonymRow,
+  eligible: readonly AskableEntry[],
+  random: Random,
+): RoundContent | undefined {
+  const others = eligible.filter(
+    (entry): entry is SynonymRow => entry.kind === 'synonymRow' && entry.id !== answer.id,
+  );
+  if (others.length + 1 < ROWS_TO_PLAY) return undefined;
+  const taken = new Set([answer.dominant, ...answer.members].map(rowTextOf));
+  const distractors: SynonymRowDominant[] = [];
+  for (const row of shuffled(others, random)) {
+    if (distractors.length === ROUND_OPTIONS - 1) break;
+    const [member] = shuffled(
+      row.members.filter((each) => !taken.has(rowTextOf(each))),
+      random,
+    );
+    if (member === undefined) continue;
+    taken.add(rowTextOf(member));
+    distractors.push(member);
+  }
+  const [right] = shuffled(answer.members, random);
+  if (right === undefined || distractors.length < ROUND_OPTIONS - 1) return undefined;
+  const options = shuffled([right, ...distractors], random);
+  return {
+    prompt: rowWordOption(answer.dominant).text,
+    options: options.map(rowWordOption),
+    correct: options.indexOf(right),
+    sheet: { answer: rowWordOption(right), example: answer.example },
+  };
+}
+
 /**
  * «Вгадай слово», the Core's Definition → Word mode, which asks about idioms
  * too (ADR 0046). A Round shows the answer's primary Definition and four
@@ -92,12 +151,16 @@ function roundOf<T extends Word | Idiom>(
  * so homonyms never share a Round. An idiom's Round offers four idioms, the
  * three Distractors drawn at random from the other idioms; a place name is
  * never asked or offered. Its sheet shows the answer and its first Example,
- * if it has one.
+ * if it has one. It asks about Synonym Rows too, with no quota, only while at
+ * least 4 are eligible: a row's Round shows its dominant with its Stress, for
+ * the screen to ask «Що є синонімом до „{домінанта}“?», and offers one member
+ * of the row and three members of other rows (see `synonymRound`); its sheet
+ * shows that member and the row's Example, if it has one.
  */
 export const guessWord: GameMode = {
   id: 'guess-word',
   entryKind: 'word',
-  alsoAsks: ['idiom'],
+  alsoAsks: ['idiom', 'synonymRow'],
   isOn: () => true,
   buildRound({ answer, eligible, random, edition }) {
     if (answer.kind === 'word') {
@@ -108,6 +171,7 @@ export const guessWord: GameMode = {
       const order = distractorOrder[edition.languageTraits.distractorRule](answer, others, random);
       return roundOf(answer, order, wordOptions, random);
     }
+    if (answer.kind === 'synonymRow') return synonymRound(answer, eligible, random);
     if (!isIdiomProper(answer)) return undefined;
     const definition = definitionOf(answer);
     const others = eligible.filter(
