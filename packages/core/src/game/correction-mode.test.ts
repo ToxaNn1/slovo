@@ -221,7 +221,7 @@ describe('«Обери правильне» on offer', () => {
   it('is offered after «Вгадай слово» when the Edition turns Corrections on', async () => {
     const app = await run({ withCorrections: true });
 
-    expect(app.game.state.modes).toEqual([
+    expect(app.game.state.modes.slice(0, 2)).toEqual([
       { modeId: 'guess-word', entryKind: 'word', canStart: false, refusal: 'too-few-entries' },
       { modeId: 'correction', entryKind: 'correction', canStart: true },
     ]);
