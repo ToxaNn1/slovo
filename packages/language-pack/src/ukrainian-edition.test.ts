@@ -18,6 +18,8 @@ describe('the Ukrainian Edition', () => {
   it('turns every Feature Switch on', () => {
     expect(edition.isFeatureEnabled('game')).toBe(true);
     expect(edition.isFeatureEnabled('corrections')).toBe(true);
+    expect(edition.isFeatureEnabled('synonymRows')).toBe(true);
+    expect(edition.isFeatureEnabled('tips')).toBe(true);
     expect(edition.isFeatureEnabled('account')).toBe(true);
     expect(edition.isFeatureEnabled('sync')).toBe(true);
     expect(edition.isFeatureEnabled('contentUpdates')).toBe(true);

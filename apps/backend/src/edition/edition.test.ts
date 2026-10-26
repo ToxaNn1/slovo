@@ -71,6 +71,8 @@ describe('edition.switches', () => {
   });
 
   it.each([
+    'synonymRows',
+    'tips',
     'notifications',
     'widget',
     'shareCards',
