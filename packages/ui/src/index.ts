@@ -32,6 +32,7 @@ export { GameReview } from './game/GameReview';
 export { GameRound } from './game/GameRound';
 export { TypedAnswer, type TypedAnswerBlank } from './game/TypedAnswer';
 export { OrderedChips } from './game/OrderedChips';
+export { PairsGrid } from './game/PairsGrid';
 export { HapticsProvider } from './providers/HapticsProvider';
 export { HideButton } from './mix/HideButton';
 export { KnowledgeButtons } from './knowledge/KnowledgeButtons';
