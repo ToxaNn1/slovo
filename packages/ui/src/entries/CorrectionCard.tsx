@@ -49,8 +49,6 @@ export function CorrectionCardBody({
   // The voices skip the Stress mark, so VoiceOver also says where it falls.
   const formLabel = (form: string, stressedVowels: readonly string[]) =>
     stressLabel(edition.strings.wordCard, form, stressedVowels);
-  // In the Feed, VoiceOver turns to the next or previous card from the two forms.
-  const turnActions = usePageTurnActions();
   const correctionType = strings.correctionTypes[card.correctionType];
   const sentence = [sizes.example, { fontFamily: fontFamilies.word }];
 
@@ -67,30 +65,11 @@ export function CorrectionCardBody({
           />
         )}
       </View>
-      <View
+      <NonStandardForm
         testID="correction-non-standard"
-        accessible
-        accessibilityLabel={`${strings.nonStandard}: ${formLabel(card.nonStandardForm, card.nonStandardStressedVowels)}`}
-        {...voice}
-        {...turnActions}
-        style={styles.form}
-      >
-        <Text style={[styles.label, { color: colors.muted, fontFamily: fontFamilies.ui }]}>
-          {strings.nonStandard}
-        </Text>
-        <Text
-          style={[
-            styles.nonStandardForm,
-            {
-              color: colors.muted,
-              fontFamily: fontFamilies.word,
-              textDecorationColor: withAlpha(colors.accent, 0.55),
-            },
-          ]}
-        >
-          {card.nonStandardForm}
-        </Text>
-      </View>
+        form={card.nonStandardForm}
+        spoken={formLabel(card.nonStandardForm, card.nonStandardStressedVowels)}
+      />
       <View>
         {/* Decor slot 2 with an arrow from the non-standard form to the standard one. */}
         <OrnamentDivider centre="arrow" />
@@ -106,31 +85,12 @@ export function CorrectionCardBody({
       ) : (
         <>
           <View style={styles.form}>
-            <View
+            <StandardForm
               testID="correction-standard"
-              accessible
-              accessibilityLabel={`${strings.standard}: ${formLabel(card.mainEquivalent, card.mainEquivalentStressedVowels)}`}
-              {...voice}
-              {...turnActions}
-              style={styles.form}
-            >
-              <Text style={[styles.label, { color: colors.accent, fontFamily: fontFamilies.ui }]}>
-                {strings.standard}
-              </Text>
-              <WholeWordsText
-                text={card.mainEquivalent}
-                size={mainSize}
-                tracking={-0.01}
-                // A phrase wraps; a single word shrinks to fit rather than break.
-                numberOfLines={card.mainEquivalent.includes(' ') ? 3 : 1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.5}
-                style={[
-                  styles.mainEquivalent,
-                  { color: colors.ink, fontFamily: fontFamilies.word },
-                ]}
-              />
-            </View>
+              form={card.mainEquivalent}
+              spoken={formLabel(card.mainEquivalent, card.mainEquivalentStressedVowels)}
+              size={mainSize}
+            />
             {card.otherEquivalents.length === 0 ? null : (
               <Text
                 testID="correction-other-equivalents"
@@ -221,6 +181,100 @@ export function CorrectionCardBody({
         </>
       )}
     </>
+  );
+}
+
+/**
+ * The non-standard form under the label «Так часто кажуть», muted and struck
+ * through, as one element VoiceOver reads with its label; the Tip card shows
+ * its non-standard form the same way.
+ */
+export function NonStandardForm({
+  form,
+  spoken,
+  testID,
+}: {
+  form: string;
+  /** What VoiceOver reads for the form, such as with where its Stress falls. */
+  spoken: string;
+  testID: string;
+}) {
+  const { colors, fontFamilies } = useTokens();
+  const { strings, voice } = useEdition();
+  // In the Feed, VoiceOver turns to the next or previous card from the forms.
+  const turnActions = usePageTurnActions();
+  return (
+    <View
+      testID={testID}
+      accessible
+      accessibilityLabel={`${strings.correctionCard.nonStandard}: ${spoken}`}
+      {...voice}
+      {...turnActions}
+      style={styles.form}
+    >
+      <Text style={[styles.label, { color: colors.muted, fontFamily: fontFamilies.ui }]}>
+        {strings.correctionCard.nonStandard}
+      </Text>
+      <Text
+        style={[
+          styles.nonStandardForm,
+          {
+            color: colors.muted,
+            fontFamily: fontFamilies.word,
+            textDecorationColor: withAlpha(colors.accent, 0.55),
+          },
+        ]}
+      >
+        {form}
+      </Text>
+    </View>
+  );
+}
+
+/**
+ * The standard form under the label «Українською краще», at the Lemma's
+ * size, as one element VoiceOver reads with its label; the Tip card shows its
+ * standard form the same way.
+ */
+export function StandardForm({
+  form,
+  spoken,
+  size,
+  testID,
+}: {
+  form: string;
+  /** What VoiceOver reads for the form, such as with where its Stress falls. */
+  spoken: string;
+  /** The Lemma's size at the user's font size. */
+  size: TextSize;
+  testID: string;
+}) {
+  const { colors, fontFamilies } = useTokens();
+  const { strings, voice } = useEdition();
+  const turnActions = usePageTurnActions();
+  return (
+    <View
+      testID={testID}
+      accessible
+      accessibilityLabel={`${strings.correctionCard.standard}: ${spoken}`}
+      {...voice}
+      {...turnActions}
+      style={styles.form}
+    >
+      <Text style={[styles.label, { color: colors.accent, fontFamily: fontFamilies.ui }]}>
+        {strings.correctionCard.standard}
+      </Text>
+      <WholeWordsText
+        text={form}
+        size={size}
+        tracking={-0.01}
+        // A phrase wraps; a single word shrinks to fit rather than break.
+        numberOfLines={form.includes(' ') ? 3 : 1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.5}
+        style={[styles.mainEquivalent, { color: colors.ink, fontFamily: fontFamilies.word }]}
+      />
+    </View>
   );
 }
 
