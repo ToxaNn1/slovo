@@ -658,3 +658,212 @@ describe('a Synonym Row', () => {
     expect(run.stderr).toContain(`${file} › Entry ${id} › members.5.text: `);
   });
 });
+
+describe('a Tip', () => {
+  const folder = 'content/tips';
+  const validTip = {
+    title: 'Тестопорада?',
+    nonStandardForm: 'Тестонеправильно',
+    standardForm: 'Тестоправильно',
+    explanation: 'Тестове пояснення: так кажуть українською.',
+    sources: [{ title: 'Тестове джерело' }],
+    gameQuestion: {
+      prompt: 'Як сказати правильно?',
+      rightAnswer: 'Тестоправильно',
+      wrongAnswers: ['Тестонеправильно', 'Тестохибно', 'Тестокриво'],
+    },
+  };
+  const idOf = (file = '') => file.slice(folder.length + 1, -'.json'.length);
+  /** Drafts and records a valid Tip, and returns its file and id. */
+  function recordedTip() {
+    const run = content(['new', 'tip', '--edition', 'uk'], { edits: [validTip] });
+    expect(run.stderr).toBe('');
+    expect(run.status).toBe(0);
+    const [file = ''] = run.opened;
+    return { file, id: idOf(file) };
+  }
+
+  it('is drafted with a fresh t_ id and every field it requires, and recorded once it passes', () => {
+    const before = { registry: registry(), version: manifest().contentVersion };
+
+    const run = content(['new', 'tip', '--edition', 'uk'], {
+      edits: [{ title: 'Тестопорада?' }, validTip],
+      answers: 'y\n',
+    });
+
+    expect(run.status).toBe(0);
+    const [file = '', reopened, ...others] = run.opened;
+    const id = idOf(file);
+    expect(file).toBe(`${folder}/${id}.json`);
+    expect(id).toMatch(/^t_[a-z0-9]{6}$/);
+    expect(reopened).toBe(file);
+    expect(others).toEqual([]);
+    expect(before.registry).not.toContain(id);
+    expect(run.stderr).toContain(`${file} › Entry ${id} › standardForm:`);
+    expect(readJson(file)).toEqual({ kind: 'tip', id, ...validTip });
+    expect(registry()).toEqual([...before.registry, id]);
+    expect(manifest().contentVersion).toBe(before.version + 1);
+    expect(run.stdout).toContain(`Recorded ${file}`);
+    expect(content(['check', '--edition', 'uk']).status).toBe(0);
+  });
+
+  it('writes a draft that names every field a Tip requires, its Game question included', () => {
+    const run = content(['new', 'tip', '--edition', 'uk'], {
+      edits: [{ title: 'Тестопорада?' }],
+      answers: 'n\n',
+    });
+    const [file = ''] = run.opened;
+
+    expect(readJson(file)).toEqual({
+      kind: 'tip',
+      id: idOf(file),
+      title: 'Тестопорада?',
+      standardForm: '',
+      explanation: '',
+      sources: [{ title: '' }],
+      gameQuestion: { prompt: '', rightAnswer: '', wrongAnswers: ['', '', ''] },
+    });
+  });
+
+  it("prints each problem of a bad Tip with the build's reasons and records nothing", () => {
+    const before = { registry: registry(), manifest: manifest() };
+
+    const run = content(['new', 'tip', '--edition', 'uk'], {
+      edits: [
+        {
+          ...validTip,
+          explanation: 'т'.repeat(301),
+          sources: [],
+        },
+      ],
+      answers: 'n\n',
+    });
+
+    expect(run.status).toBe(1);
+    const [file = ''] = run.opened;
+    const id = idOf(file);
+    const problem = (field: string) => `${file} › Entry ${id} › ${field}:`;
+    expect(run.stderr).toContain(problem('explanation'));
+    expect(run.stderr).toContain(problem('sources'));
+    expect(run.stderr).toContain(`Kept ${file}, not recorded`);
+    expect(registry()).toEqual(before.registry);
+    expect(manifest()).toEqual(before.manifest);
+
+    const answers = content(['new', 'tip', '--edition', 'uk'], {
+      edits: [
+        {
+          ...validTip,
+          gameQuestion: {
+            ...validTip.gameQuestion,
+            wrongAnswers: ['ТестоПравильно', 'Тестохибно', 'Тестокриво'],
+          },
+        },
+      ],
+      answers: 'n\n',
+    });
+    const [other = ''] = answers.opened;
+    expect(answers.stderr).toContain(
+      `${other} › Entry ${idOf(other)} › gameQuestion.wrongAnswers.0: Same answer as rightAnswer`,
+    );
+  });
+
+  it('refuses a Game question without three wrong answers', () => {
+    const run = content(['new', 'tip', '--edition', 'uk'], {
+      edits: [
+        {
+          ...validTip,
+          gameQuestion: { ...validTip.gameQuestion, wrongAnswers: ['Тестохибно', 'Тестокриво'] },
+        },
+      ],
+      answers: 'n\n',
+    });
+
+    expect(run.status).toBe(1);
+    const [file = ''] = run.opened;
+    expect(run.stderr).toContain(`${file} › Entry ${idOf(file)} › gameQuestion.wrongAnswers`);
+    expect(run.stderr).toContain(`Kept ${file}, not recorded`);
+  });
+
+  it.each([
+    ['its id', (id: string) => id],
+    ['its title, typed in another case', () => 'тестоПОРАДА?'],
+  ])('is opened by %s and recorded once it passes', (_by, text) => {
+    const { file, id } = recordedTip();
+    const version = manifest().contentVersion;
+
+    const run = content(['edit', text(id), '--edition', 'uk'], {
+      edits: [{ explanation: 'Нове пояснення.' }],
+    });
+
+    expect(run.stderr).toBe('');
+    expect(run.status).toBe(0);
+    expect(run.opened).toEqual([file]);
+    expect(readJson(file)).toMatchObject({ id, explanation: 'Нове пояснення.' });
+    expect(run.stdout).toContain(`Recorded ${file}`);
+    expect(manifest().contentVersion).toBe(version + 1);
+  });
+
+  it('is listed among the Entries its title matches', () => {
+    const { id } = recordedTip();
+    const twin = recordedTip();
+
+    const run = content(['edit', 'Тестопорада?', '--edition', 'uk'], { answers: '\n' });
+
+    const [first, second] = [id, twin.id].toSorted();
+    expect(run.stdout).toContain(`1. ${String(first)} tip Тестопорада?: Тестоправильно`);
+    expect(run.stdout).toContain(`2. ${String(second)} tip Тестопорада?:`);
+  });
+
+  it('keeps an edit that breaks it unrecorded and prints why', () => {
+    const { file, id } = recordedTip();
+    const before = manifest();
+
+    const run = content(['edit', id, '--edition', 'uk'], {
+      edits: [{ sources: [] }],
+      answers: 'n\n',
+    });
+
+    expect(run.status).toBe(1);
+    expect(run.stderr).toContain(`${file} › Entry ${id} › sources:`);
+    expect(run.stderr).toContain(`Kept ${file}, not recorded`);
+    expect(manifest()).toEqual(before);
+  });
+
+  it('is retired, keeps its file and the content is recorded', () => {
+    const { file, id } = recordedTip();
+    const tip = readJson(file) as Record<string, unknown>;
+    const version = manifest().contentVersion;
+
+    const run = content(['retire', id, '--edition', 'uk']);
+
+    expect(run.stderr).toBe('');
+    expect(run.status).toBe(0);
+    expect(readJson(file)).toEqual({ ...tip, retired: true });
+    expect(run.stdout).toContain(`Retired ${file}`);
+    expect(manifest().contentVersion).toBe(version + 1);
+    expect(content(['check', '--edition', 'uk']).stdout).toContain('Edition "uk": no problems');
+  });
+
+  it('is checked with the rest of the Edition, each problem in its file and field', () => {
+    const { file, id } = recordedTip();
+    const tip = readJson(file) as typeof validTip;
+    writeFileSync(
+      join(editionDir, file),
+      JSON.stringify({
+        ...tip,
+        gameQuestion: {
+          ...tip.gameQuestion,
+          wrongAnswers: ['тестохибно', 'Тестохибно', 'Тестокриво'],
+        },
+      }),
+    );
+
+    const run = content(['check', '--edition', 'uk']);
+
+    expect(run.status).toBe(1);
+    expect(run.stderr).toContain('Edition "uk": 1 problem(s)');
+    expect(run.stderr).toContain(
+      `${file} › Entry ${id} › gameQuestion.wrongAnswers.1: Same answer as wrongAnswers.0`,
+    );
+  });
+});
