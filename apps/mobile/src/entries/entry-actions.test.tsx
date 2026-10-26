@@ -165,6 +165,36 @@ describe.each([
     ]);
   });
 
+  it('marks it Known with «Знаю», and the button shows the mark', async () => {
+    await renderCard(entryId);
+
+    await fireEvent.press(screen.getByTestId('knowledge-known'));
+    await settle();
+
+    expect(mockComposition.knowledge.state.shown.get(entryId)).toBe('known');
+    expect(screen.getByTestId('knowledge-known')).toBeSelected();
+  });
+
+  it('keeps «Знаю» and «Не знаю» inactive until Self-check is revealed', async () => {
+    const card = await mockComposition.entryCard(entryId);
+    if (card === undefined) throw new Error(`No card for ${entryId}`);
+    await render(
+      <SafeAreaProvider initialMetrics={metrics}>
+        <EditionProvider edition={edition} strings={editionStrings}>
+          <HapticsProvider haptics={haptics}>
+            <UndoToastProvider>
+              <EntryCard card={card} actions={<EntryActions card={card} />} selfCheck />
+            </UndoToastProvider>
+          </HapticsProvider>
+        </EditionProvider>
+      </SafeAreaProvider>,
+    );
+
+    expect(screen.getByTestId('knowledge-unknown')).toBeDisabled();
+    await fireEvent.press(screen.getByTestId(`${card.kind}-reveal`));
+    expect(screen.getByTestId('knowledge-unknown')).toBeEnabled();
+  });
+
   it('hides it from its card, and the toast says so', async () => {
     await renderCard(entryId);
 

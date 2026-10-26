@@ -1,4 +1,4 @@
-import type { EntryFeedCard, KnowledgeMark } from '@slovo/core';
+import type { AnyEntryCard, KnowledgeMark } from '@slovo/core';
 import { StyleSheet, View } from 'react-native';
 
 import { useConcealed } from '../entries/self-check';
@@ -20,7 +20,7 @@ export function KnowledgeButtons({
   onTap,
 }: {
   /** The kind of Entry the card shows. */
-  entryKind: EntryFeedCard['kind'];
+  entryKind: AnyEntryCard['kind'];
   /** The mark the card shows: none without one, and none while the Entry is due. */
   mark: KnowledgeMark | undefined;
   onTap: (mark: KnowledgeMark) => void;
