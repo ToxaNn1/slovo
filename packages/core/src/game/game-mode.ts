@@ -127,6 +127,8 @@ export interface RoundInput {
   readonly next: readonly AskableEntry[];
   /** How many Rounds the content may hold at most, such as the pairs of a grid: the Rounds the Game still plans. */
   readonly upTo: number;
+  /** Which Round of the Game the content starts at, from 1, such as a stage of «Вгадай слово». */
+  readonly round: number;
   /** The source of every shuffle. */
   readonly random: Random;
   readonly edition: GameEdition;

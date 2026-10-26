@@ -43,13 +43,15 @@ export type RoundPlan =
  * Plans `count` Rounds of the mode, each pair of a grid counted, by default
  * the ones a Game in it starts with (`roundsToPlanOf`), each asking about
  * another eligible Entry than the ones `asked` (in a mode with no Round
- * limit, then about them again); or says why the mode can't make them.
+ * limit, then about them again), the first of them the Game's Round
+ * `from`, by default its first; or says why the mode can't make them.
  */
 export type RoundPlanner = (
   mode: GameMode,
   ofKind: EligibleOfKind<AskableEntry>,
   count?: number,
   asked?: ReadonlySet<string>,
+  from?: number,
 ) => RoundPlan;
 
 /** Whether at least `count` of the items pass the test, checking no more than it takes. */
@@ -130,14 +132,15 @@ export function createRoundPlanner({
   random: Random;
   edition: GameEdition;
 }): RoundPlanner {
-  return (mode, ofKind, count = roundsToPlanOf(mode), asked = new Set()) => {
+  return (mode, ofKind, count = roundsToPlanOf(mode), asked = new Set(), from = 1) => {
     if ('refusal' in ofKind) return ofKind;
     const eligible = ofKind.entries;
     const met = new Set(history.list.map(({ entryId }) => entryId));
     const inHistory = eligible.filter((entry) => met.has(entry.id));
     /** Whether the mode can ask about the Entry: it makes a Round of it. */
     const askable = (answer: AskableEntry) =>
-      mode.buildRound({ answer, eligible, next: [], upTo: 1, random, edition }) !== undefined;
+      mode.buildRound({ answer, eligible, next: [], upTo: 1, round: from, random, edition }) !==
+      undefined;
     const pool = new Set(enough(inHistory, askable, GAME_ROUNDS) ? inHistory : eligible);
     const weak = new Set(knowledge.weak());
     const unasked = eligible.filter((entry) => !asked.has(entry.id));
@@ -171,7 +174,15 @@ export function createRoundPlanner({
           return weakNext >= 0;
         });
         const upTo = count - planned;
-        const round = mode.buildRound({ answer, eligible, next, upTo, random, edition });
+        const round = mode.buildRound({
+          answer,
+          eligible,
+          next,
+          upTo,
+          round: from + planned,
+          random,
+          edition,
+        });
         if (round === undefined) continue;
         const content = checkedRound(mode, round, upTo);
         for (const id of new Set([answer.id, ...entriesIn(content)])) {
