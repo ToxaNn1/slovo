@@ -44,10 +44,11 @@ export interface GameState {
 
 /**
  * The Game: the Game Modes on offer and the Game in play, kept in memory for
- * the app session and never in the user state. A Game asks 15 different
- * eligible Entries of the kinds its mode asks about: up to 5 the reader is weak on (ADR
- * 0043), the rest those in History when there are at least 15, else any (ADR
- * 0024). Playing never writes Seen, History or Active Days; a finished Game
+ * the app session and never in the user state. A Game asks as many
+ * different eligible Entries of the kinds its mode asks about as the mode's
+ * Round limit, 15 by default (`roundsToPlanOf`): up to 5 the reader is weak
+ * on (ADR 0043), the rest those in History when there are at least 15, else
+ * any (ADR 0024). A mode may set its own Lives too, or none (ADR 0052). Playing never writes Seen, History or Active Days; a finished Game
  * writes only the best result, when it beats it.
  */
 export interface Game {
@@ -74,7 +75,7 @@ export interface Game {
   answer(option: number): Promise<void>;
   /**
    * «Далі» after an answer: at 0 Lives the Game is lost; after the last Round
-   * it is won; otherwise the next Round comes. A Game that ends with more
+   * of the mode's limit, or the last one it has, it is won; otherwise the next Round comes. A Game that ends with more
    * Rounds passed than the best result becomes it, kept before it shows; when
    * that write fails, nothing changes. Nothing changes before an answer.
    */

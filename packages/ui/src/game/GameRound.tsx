@@ -223,7 +223,8 @@ function GameHeader({
   onExit,
 }: {
   roundsPassed: number;
-  lives: number;
+  /** The Lives left; none in a mode without Lives, which shows none. */
+  lives: number | undefined;
   onExit: () => void;
 }) {
   const { colors, fontFamilies } = useTokens();
@@ -259,17 +260,22 @@ function GameHeader({
           <Animated.View style={unfilled} />
         </View>
       </View>
-      <View
-        testID="game-lives"
-        accessible
-        accessibilityLabel={fill(words.lives, { count: String(lives), total: String(GAME_LIVES) })}
-        {...voice}
-        style={styles.lives}
-      >
-        {Array.from({ length: GAME_LIVES }, (_, life) => (
-          <Life key={life} full={life < lives} />
-        ))}
-      </View>
+      {lives !== undefined && (
+        <View
+          testID="game-lives"
+          accessible
+          accessibilityLabel={fill(words.lives, {
+            count: String(lives),
+            total: String(GAME_LIVES),
+          })}
+          {...voice}
+          style={styles.lives}
+        >
+          {Array.from({ length: GAME_LIVES }, (_, life) => (
+            <Life key={life} full={life < lives} />
+          ))}
+        </View>
+      )}
     </View>
   );
 }

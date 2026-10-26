@@ -1,9 +1,13 @@
 import type { AskableEntry, AskableKind, EligibleOfKind } from '../entries/entries';
 import type { AnswerSheet, GameMode, RoundOption, TextRange } from './game-mode';
-import { GAME_ROUNDS, type PlannedRound, type RoundPlanner } from './round-plan';
+import { roundLimitOf, type PlannedRound, type RoundPlanner } from './round-plan';
 
-/** How many Lives a Game starts with, in every Game Mode. */
+/** How many Lives a Game starts with, in a Game Mode that sets no Lives of its own. */
 export const GAME_LIVES = 5;
+
+/** The Lives a Game in the mode starts with; none in a mode without Lives. */
+export const livesOf = ({ lives = GAME_LIVES }: GameMode): number | undefined =>
+  lives === 'none' ? undefined : lives;
 
 /** The answer given to a Round. */
 export interface RoundAnswer {
@@ -16,7 +20,7 @@ export interface RoundAnswer {
 
 /** A Round as the reader plays it. */
 export interface Round {
-  /** Which Round of the Game it is, from 1 to `GAME_ROUNDS`. */
+  /** Which Round of the Game it is, from 1 up to the mode's Round limit, `GAME_ROUNDS` by default. */
   readonly number: number;
   /** The kind of Entry it asks about, by which the shell lays it out, such as a Synonym Row's question. */
   readonly entryKind: AskableKind;
@@ -50,11 +54,11 @@ export interface CurrentGame {
   readonly round: Round;
   /**
    * The Rounds answered, right or wrong, but for the one that cost the last
-   * Life; it moves up on «Далі». A won Game passed all `GAME_ROUNDS`.
+   * Life; it moves up on «Далі». A won Game passed every Round the mode had.
    */
   readonly roundsPassed: number;
-  /** The Lives left, from `GAME_LIVES` to 0. */
-  readonly lives: number;
+  /** The Lives left, from the mode's Lives (`GAME_LIVES` by default) to 0; none in a mode without Lives. */
+  readonly lives: number | undefined;
   /**
    * Every Round answered so far, in order, the one that cost the last Life
    * included; kept in memory only, until the Game is left.
@@ -75,13 +79,14 @@ export interface GameInPlay {
   readonly first: CurrentGame;
   /**
    * The Game with its Round answered with the option at that place: a wrong
-   * answer costs a Life. Nothing unless a Round waits for an answer and has
-   * that option.
+   * answer costs a Life, in a mode with Lives. Nothing unless a Round waits
+   * for an answer and has that option.
    */
   answer(game: CurrentGame, option: number): CurrentGame | undefined;
   /**
-   * The Game after «Далі»: lost at 0 Lives, won after the last Round, else
-   * at the next Round. Nothing before an answer.
+   * The Game after «Далі»: lost at 0 Lives, won after the last Round of the
+   * mode's limit or, without one, after the last Round the mode has, else at
+   * the next Round. Nothing before an answer.
    */
   next(game: CurrentGame): CurrentGame | undefined;
   /**
@@ -113,13 +118,14 @@ export function createGameInPlay(
   const first = planned[0];
   if (first === undefined) return undefined;
   let rounds = planned;
+  const roundLimit = roundLimitOf(mode);
   return {
     mode,
     first: {
       modeId: mode.id,
       round: roundOf(first, 1),
       roundsPassed: 0,
-      lives: GAME_LIVES,
+      lives: livesOf(mode),
       played: [],
       status: 'playing',
     },
@@ -136,7 +142,7 @@ export function createGameInPlay(
           ...game.played,
           { ...game.round, answer, entry: planned.entry, right: option === correct },
         ],
-        lives: option === correct ? game.lives : game.lives - 1,
+        lives: option === correct || game.lives === undefined ? game.lives : game.lives - 1,
         status: 'answered',
       };
     },
@@ -144,7 +150,8 @@ export function createGameInPlay(
       if (game.status !== 'answered') return undefined;
       if (game.lives === 0) return { ...game, status: 'lost' };
       const roundsPassed = game.roundsPassed + 1;
-      const upcoming = roundsPassed < GAME_ROUNDS ? rounds[roundsPassed] : undefined;
+      const upcoming =
+        roundLimit === undefined || roundsPassed < roundLimit ? rounds[roundsPassed] : undefined;
       if (upcoming === undefined) return { ...game, roundsPassed, status: 'won' };
       return {
         ...game,
@@ -159,7 +166,7 @@ export function createGameInPlay(
       const rest = planRounds(
         mode,
         eligible,
-        GAME_ROUNDS - shown.length,
+        (roundLimit ?? rounds.length) - shown.length,
         new Set(shown.map(({ entry }) => entry.id)),
       );
       if ('rounds' in rest) rounds = [...shown, ...rest.rounds];

@@ -62,6 +62,7 @@ export {
 export { type GameModeOffer, type GameState } from './game/game';
 export {
   GAME_LIVES,
+  livesOf,
   type CurrentGame,
   type PlayedRound,
   type Round,
@@ -79,7 +80,7 @@ export {
   type TextRange,
 } from './game/game-mode';
 export { buildGameReview, type GameReviewDetails, type GameReviewItem } from './game/game-review';
-export { GAME_ROUNDS } from './game/round-plan';
+export { GAME_ROUNDS, roundLimitOf } from './game/round-plan';
 export { typedAnswerMatches } from './game/typed-answer';
 export { createGameHaptics, LIFE_LOST_DELAY, type GameHaptics } from './game/game-haptics';
 export { createHaptics, type HapticEngine, type Haptics } from './game/haptics';

@@ -81,7 +81,7 @@ function answered(game: CurrentGame, chosen: number): CurrentGame {
         sheet: { answer: { text: OPTIONS[CORRECT], stressedVowels: [] }, example: undefined },
       },
     },
-    lives: chosen === CORRECT ? game.lives : game.lives - 1,
+    lives: chosen === CORRECT || game.lives === undefined ? game.lives : game.lives - 1,
     status: 'answered',
   };
 }
