@@ -121,6 +121,9 @@ const FeedPage = memo(function FeedPage({
         <EndOfCycleCard />
       </View>
     );
+  // The Synonym Row and Tip cards come with the screens that show them (spec #730).
+  if (card.kind === 'synonymRow' || card.kind === 'tip')
+    return <View testID={`feed-card-${String(position)}`} style={styles.page} />;
   return (
     // The content scrolls under the top row but stops at the status bar.
     <View testID={`feed-card-${String(position)}`} style={[styles.page, { paddingTop: top }]}>

@@ -2,9 +2,18 @@ import type { Word } from '@slovo/contracts';
 
 import { buildCorrectionCard } from '../entries/correction-card';
 import { buildIdiomCard } from '../entries/idiom-card';
+import { buildSynonymRowCard } from '../entries/synonym-row-card';
+import { buildTipCard } from '../entries/tip-card';
 import type { Cycle } from './cycle';
 import type { Entries, EntryIds, ShownEntry } from '../entries/entries';
-import { asReviewIfDue, type EntryFeedCard, type FeedCard, type WordFeedCard } from './feed-card';
+import {
+  asReviewIfDue,
+  type EntryFeedCard,
+  type FeedCard,
+  type SynonymRowFeedCard,
+  type TipFeedCard,
+  type WordFeedCard,
+} from './feed-card';
 import { createFeedSession, type FeedSession } from './feed-session';
 import type { HistoryRecorder, Seen } from '../saved/history';
 import { createInTurn, createSubscribers } from '../in-turn';
@@ -30,9 +39,38 @@ export const CORRECTION_EVERY = 5;
 export const IDIOM_EVERY = 7;
 
 /**
+ * One card in this many is a Synonym Row's, while the Cycle has unseen rows.
+ * When it falls on a Correction's or an Idiom's turn, they take the card first
+ * and the row the next (ADR 0051).
+ */
+export const SYNONYM_ROW_EVERY = 9;
+
+/**
+ * One card in this many is a Tip's, while the Cycle has unseen Tips. When it
+ * falls on the turn of any other kind, that kind takes the card first and the
+ * Tip the next (ADR 0051).
+ */
+export const TIP_EVERY = 11;
+
+/**
+ * The kinds that take turns, in the order they take a card their turns fall
+ * on together: each with its Entries' list and how often its turn comes.
+ */
+const TURNS = [
+  { kind: 'correction', ids: 'corrections', every: CORRECTION_EVERY },
+  { kind: 'idiom', ids: 'idioms', every: IDIOM_EVERY },
+  { kind: 'synonymRow', ids: 'synonymRows', every: SYNONYM_ROW_EVERY },
+  { kind: 'tip', ids: 'tips', every: TIP_EVERY },
+] as const satisfies readonly {
+  kind: Exclude<FeedCard['kind'], 'word' | 'end-of-cycle'>;
+  ids: keyof EntryIds;
+  every: number;
+}[];
+
+/**
  * One card in this many is a Word's due for Review, while any is due and it
- * isn't a Correction's or an Idiom's turn. A Correction due for Review takes
- * the Correction's turn itself.
+ * isn't another kind's turn. An Entry of another kind due for Review takes
+ * its kind's turn itself.
  */
 const REVIEW_EVERY = 3;
 
@@ -133,6 +171,24 @@ export async function buildEntryCard(
     : { kind: 'word', entryId, model, wordOfTheDay };
 }
 
+/**
+ * The card of any Entry the Feed shows, built from the Language Pack's
+ * Entries, or nothing when the Language Pack doesn't have it.
+ */
+async function buildFeedCard(
+  entries: Entries,
+  id: string,
+): Promise<EntryFeedCard | SynonymRowFeedCard | TipFeedCard | undefined> {
+  const entry = await entries.get(id);
+  if (entry !== undefined) return buildEntryCard(entries, entry);
+  const rowOrTip = await entries.getSynonymRowOrTip(id);
+  if (rowOrTip?.kind === 'synonymRow') {
+    const model = await buildSynonymRowCard({ synonymRow: rowOrTip, entries });
+    return { kind: 'synonymRow', entryId: id, model };
+  }
+  return rowOrTip && { kind: 'tip', entryId: id, model: buildTipCard({ tip: rowOrTip }) };
+}
+
 const { feedPosition } = userStateRecords;
 
 /**
@@ -140,33 +196,30 @@ const { feedPosition } = userStateRecords;
  * one the reader swiped past too quickly to be Seen. Never the Entry of the
  * last card, which the reader is on while the app gets the next card ready:
  * when it is the only unseen Entry left, the Cycle ends after it. A
- * Correction takes its turn every `CORRECTION_EVERY`th card of the Cycle and
- * an Idiom every `IDIOM_EVERY`th, each counted from its kind's last card;
- * when both turns fall on one card the Correction takes it and the Idiom the
- * next (ADR 0046). Any kind fills in for another when it has none left.
- * A Correction's turn goes to a Correction due for Review before a new one,
- * an Idiom's turn to an Idiom due for Review before a new one,
- * and every `REVIEW_EVERY`th card of the session that isn't a Correction's
- * or an Idiom's goes to a Word due for Review, if any (ADR 0043).
+ * Correction takes its turn every `CORRECTION_EVERY`th card of the Cycle, an
+ * Idiom every `IDIOM_EVERY`th, a Synonym Row every `SYNONYM_ROW_EVERY`th and
+ * a Tip every `TIP_EVERY`th, each counted from its kind's last card; when
+ * turns fall on one card they take it in the order of `TURNS` and each loser
+ * the next (ADR 0046, 0051). Any kind fills in for another when it has none
+ * left. A kind's turn goes to an Entry of the kind due for Review before a
+ * new one, and every `REVIEW_EVERY`th card of the session that is no other
+ * kind's turn goes to a Word due for Review, if any (ADR 0043).
  */
 function nextEntryId(unseen: EntryIds, session: FeedSession, due: EntryIds): string | undefined {
   const shown = session.shownIds();
   const last = session.cards.at(-1)?.entryId;
   const inCycle = session.cycleCards();
   /** Whether the next card is the turn of the kind that comes every `every`th card. */
-  function turnOf(kind: EntryFeedCard['kind'], every: number): boolean {
+  function turnOf(kind: FeedCard['kind'], every: number): boolean {
     const since = [...inCycle].reverse().findIndex((card) => card.kind === kind);
     return (since === -1 ? inCycle.length : since) >= every - 1;
   }
-  const correctionTurn = turnOf('correction', CORRECTION_EVERY);
-  const idiomTurn = turnOf('idiom', IDIOM_EVERY);
+  const turns = TURNS.filter(({ kind, every }) => turnOf(kind, every));
   // The kinds in the order the next card goes to them: the turns first, then Words.
   const kinds: readonly (keyof EntryIds)[] = [
-    ...(correctionTurn ? (['corrections'] as const) : []),
-    ...(idiomTurn ? (['idioms'] as const) : []),
+    ...turns.map(({ ids }) => ids),
     'words',
-    'corrections',
-    'idioms',
+    ...TURNS.map(({ ids }) => ids),
   ];
   function pick(fits: (id: string) => boolean): string | undefined {
     for (const kind of kinds) {
@@ -176,15 +229,10 @@ function nextEntryId(unseen: EntryIds, session: FeedSession, due: EntryIds): str
     return undefined;
   }
   const id = pick((id) => !shown.has(id)) ?? pick((id) => id !== last);
-  if (correctionTurn) {
-    const dueCorrection = reviewEntryId(due.corrections, session);
-    if (dueCorrection !== undefined) return dueCorrection;
-    if (id !== undefined && unseen.corrections.includes(id)) return id;
-  }
-  if (idiomTurn) {
-    const dueIdiom = reviewEntryId(due.idioms, session);
-    if (dueIdiom !== undefined) return dueIdiom;
-    if (id !== undefined && unseen.idioms.includes(id)) return id;
+  for (const { ids } of turns) {
+    const dueOfKind = reviewEntryId(due[ids], session);
+    if (dueOfKind !== undefined) return dueOfKind;
+    if (id !== undefined && unseen[ids].includes(id)) return id;
   }
   // Counting every card of the session, also the dropped ones, so a hide never moves the slots.
   const reviewSlot = (session.all.length + 1) % REVIEW_EVERY === 0;
@@ -243,17 +291,17 @@ function eligibleDue(cycle: Cycle, knowledge: Pick<Knowledge, 'state'>): EntryId
  *
  * The Cycle covers the eligible Entries. When they hold Corrections, every
  * `CORRECTION_EVERY`th card is a Correction's while the Cycle has unseen
- * Corrections, and when they hold Idioms, every `IDIOM_EVERY`th card is an
- * Idiom's while the Cycle has unseen Idioms; the Correction goes first when
- * both turns fall on one card (ADR 0046). Corrections and Idioms are
- * shuffled and Seen like Words, and the Cycle ends only once every eligible
- * Word, Correction and Idiom is Seen. The Word of the Day is always a Word.
+ * Corrections, and likewise every `IDIOM_EVERY`th an Idiom's, every
+ * `SYNONYM_ROW_EVERY`th a Synonym Row's and every `TIP_EVERY`th a Tip's;
+ * when turns fall on one card, the Correction goes first, then the Idiom,
+ * the Synonym Row and the Tip, and each loser takes the next card (ADR 0046,
+ * 0051). Every kind is shuffled and Seen like Words, and the Cycle ends only
+ * once every eligible Entry is Seen. The Word of the Day is always a Word.
  *
  * While Words are due for Review, every `REVIEW_EVERY`th card of the session
- * that isn't a Correction's or an Idiom's turn shows one, Seen in this Cycle or not, until
- * the reader answers it (ADR 0043). While Corrections are due, the
- * Correction's turn shows one before a new Correction, in the same way, and
- * while Idioms are due, the Idiom's turn shows one before a new Idiom. A
+ * that is no other kind's turn shows one, Seen in this Cycle or not, until
+ * the reader answers it (ADR 0043). While Entries of another kind are due,
+ * the kind's turn shows one before a new Entry of the kind, in the same way. A
  * due Entry the Cycle doesn't cover (Hidden, out of the Mix, under the
  * Rarity Floor) waits until it does. Its card is Seen and joins History as
  * any card does. Every card whose Entry is due as the Feed adds it, in a
@@ -327,16 +375,13 @@ export async function openFeed({
     const position = await userState.read(feedPosition);
     if (position?.date !== todayKey(clock)) return false;
     if (!cycle.covers(position.entryId)) return false;
-    const entry = await entries.get(position.entryId);
-    if (entry === undefined) return false;
+    const card = await buildFeedCard(entries, position.entryId);
+    if (card === undefined) return false;
     const today = wordOfTheDay.chosen();
     const opening =
       today !== undefined && cycle.covers(today.wordId) ? await wordOfTheDayCard(today) : undefined;
     if (opening !== undefined) openedDay = position.date;
-    const restored =
-      opening?.entryId === entry.id
-        ? undefined
-        : asReviewIfDue(await buildEntryCard(entries, entry), knowledge);
+    const restored = opening?.entryId === card.entryId ? undefined : asReviewIfDue(card, knowledge);
     if (opening !== undefined) session.add(opening);
     if (restored !== undefined) session.add(restored);
     subscribers.tell();
@@ -352,10 +397,13 @@ export async function openFeed({
     // an earlier Cycle whose next cards were all dropped.
     const atEnd = last?.kind === 'end-of-cycle' && session.inCurrentCycle(last);
     const unseen = cycle.unseen();
-    const unseenLeft = unseen.words.length + unseen.corrections.length + unseen.idioms.length;
+    const { words, corrections, idioms, synonymRows, tips } = unseen;
+    const unseenLeft = [words, corrections, idioms, synonymRows, tips].some(
+      ({ length }) => length > 0,
+    );
     // The end-of-Cycle card came too early when the reader left the last unseen
     // Entry before it was Seen: the next card takes its place.
-    const tooEarly = atEnd && unseenLeft > 0 ? last : undefined;
+    const tooEarly = atEnd && unseenLeft ? last : undefined;
     // A new local day starts with its Word of the Day, also in a Feed left open over midnight.
     if (dayToOpen !== undefined) {
       const card = await addWordOfTheDay(tooEarly);
@@ -372,9 +420,9 @@ export async function openFeed({
     const id = nextEntryId(cycle.unseen(), session, eligibleDue(cycle, knowledge));
     let card: FeedCard = { kind: 'end-of-cycle' };
     if (id !== undefined) {
-      const entry = await entries.get(id);
-      if (entry === undefined) return undefined;
-      card = asReviewIfDue(await buildEntryCard(entries, entry), knowledge);
+      const entryCard = await buildFeedCard(entries, id);
+      if (entryCard === undefined) return undefined;
+      card = asReviewIfDue(entryCard, knowledge);
     }
     session.add(card, tooEarly);
     subscribers.tell();
