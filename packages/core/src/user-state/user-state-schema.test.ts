@@ -66,26 +66,29 @@ describe('the 0.4 user-state records', () => {
   });
 });
 
-// Spec #215, "User-state records": the best Game result.
-describe('the 0.5 user-state record', () => {
+// Spec #772, "Best result per mode": one Best result per Game Mode.
+describe('the 0.8.12 Best result records', () => {
   const { gameBest } = userStateRecords;
 
-  it('keeps the best result under `game.best`, marked to keep the higher of two values in sync', () => {
-    expect(gameBest.key).toBe('game.best');
+  it("keeps each mode's Best result under `game.best.` and its mode id, marked to keep the higher of two values in sync", () => {
+    expect(gameBest.record('guess-word').key).toBe('game.best.guess-word');
+    expect(gameBest.record('survival').key).toBe('game.best.survival');
     expect(gameBest.sync).toBe('highest');
   });
 
-  it('reads as absent before anything is written, with no migration', async () => {
+  it('reads as absent before anything is written', async () => {
     const userState = await openUserState({ port: createMemoryUserStatePort() });
 
-    expect(await userState.read(gameBest)).toBeUndefined();
+    expect(await userState.read(gameBest.record('guess-word'))).toBeUndefined();
   });
 
-  it('holds the Rounds passed, from 0 to 15, and reads anything else as absent', () => {
-    expect(gameBest.decode('0')).toBe(0);
-    expect(gameBest.decode('15')).toBe(15);
-    for (const text of ['-1', '16', '7.5', '"7"', 'null']) {
-      expect(gameBest.decode(text)).toBeUndefined();
+  it('holds any whole number from 0, since a mode with no Round limit has no upper bound, and reads anything else as absent', () => {
+    const survival = gameBest.record('survival');
+    expect(survival.decode('0')).toBe(0);
+    expect(survival.decode('15')).toBe(15);
+    expect(survival.decode('230')).toBe(230);
+    for (const text of ['-1', '7.5', '"7"', 'null']) {
+      expect(survival.decode(text)).toBeUndefined();
     }
   });
 });
@@ -133,9 +136,14 @@ describe('the 0.8 sync marks', () => {
     }
   });
 
-  it('keeps every device’s Active Days and the higher best Game result', () => {
+  it('keeps every device’s Active Days and the higher Best result of each Game Mode', () => {
     expect(syncMarkOf('activeDays.2026-10-18')).toBe('union');
-    expect(syncMarkOf('game.best')).toBe('highest');
+    expect(syncMarkOf('game.best.guess-word')).toBe('highest');
+    expect(syncMarkOf('game.best.timed')).toBe('highest');
+  });
+
+  it('no longer knows the single best result of 0.8.11, which a migration carried to «Вгадай слово»', () => {
+    expect(syncMarkOf('game.best')).toBeUndefined();
   });
 
   it('knows no mark for a key the schema does not declare, such as a newer app’s record', () => {

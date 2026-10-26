@@ -212,11 +212,14 @@ export const userStateRecords = {
     { sync: 'device-only' },
   ),
   /**
-   * The best Game result: the most Rounds passed in one finished Game, from 0
-   * to the 15 Rounds of a Game; without the record, no Game has finished yet.
-   * Sync keeps the higher of two devices' results (0.8).
+   * The Best result of each Game Mode, one record per mode, by mode id: the
+   * best result of one finished Game in it, Rounds passed or, in a mode with
+   * no Lives, right answers. The Game keeps a 15-Round mode within 0–15; a
+   * mode with no Round limit has no upper bound. Without the record, no Game
+   * in the mode has finished yet. Sync keeps the higher of two devices'
+   * results (ADR 0052).
    */
-  gameBest: declareRecord('game.best', z.number().int().min(0).max(15), { sync: 'highest' }),
+  gameBest: declareRecords('game.best.', z.number().int().nonnegative(), { sync: 'highest' }),
   /**
    * The changes of synced records not yet sent to the Account, one record per
    * changed record, by its key: the instant it changed and its new text, or
@@ -333,6 +336,31 @@ export const userStateMigrations: readonly UserStateMigration[] = [
       const records = await list('');
       const kept = [...records.keys()].some((key) => key !== SCHEMA_VERSION_KEY);
       return new Map(kept ? [[INSTALLED_KEY, JSON.stringify(true)]] : []);
+    },
+  },
+  // 0.8.12: a Best result per Game Mode (ADR 0052). The single `game.best` of
+  // every mode becomes the Best result of «Вгадай слово», under a new key that
+  // syncs as `highest`, with a pending change from the first-sign-in time so
+  // the Account gets it too; `game.best` stays as it is and is no longer read.
+  {
+    version: 6,
+    async migrate({ get }) {
+      const text = await get('game.best');
+      const best = z
+        .number()
+        .int()
+        .min(0)
+        .max(15)
+        .safeParse(text === undefined ? undefined : parseJson(text));
+      if (!best.success) return new Map();
+      const value = JSON.stringify(best.data);
+      return new Map([
+        ['game.best.guess-word', value],
+        [
+          'sync.pending.game.best.guess-word',
+          JSON.stringify({ changedAt: new Date(0).toISOString(), value }),
+        ],
+      ]);
     },
   },
 ];

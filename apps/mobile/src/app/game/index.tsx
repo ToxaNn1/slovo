@@ -55,11 +55,15 @@ function Game() {
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
       {current === undefined ? (
-        <ModeScreen modes={state.modes} bestResult={state.bestResult} onStart={actions.start} />
+        <ModeScreen
+          modes={state.modes}
+          bestResult={state.bestResults['guess-word']}
+          onStart={actions.start}
+        />
       ) : current.status === 'won' || current.status === 'lost' ? (
         <GameResult
           game={current}
-          bestResult={state.bestResult}
+          bestResult={state.bestResults[current.modeId]}
           onAgain={() => {
             actions.start(current.modeId);
           }}
