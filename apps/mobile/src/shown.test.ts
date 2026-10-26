@@ -15,7 +15,7 @@ const everything: Shown = {
   selfCheck: false,
   selfCheckSetting: true,
   learning: true,
-  stats: { streak: true, knowledge: ['word', 'correction', 'idiom'] },
+  stats: { streak: true, knowledge: ['word', 'correction', 'idiom', 'synonymRow', 'tip'] },
   sync: true,
 };
 
@@ -25,6 +25,8 @@ interface Case {
   readonly selfCheck?: boolean;
   readonly correctionsInMix?: boolean;
   readonly idiomsInMix?: boolean;
+  readonly synonymRowsInMix?: boolean;
+  readonly tipsInMix?: boolean;
   readonly shown: Partial<Shown>;
 }
 
@@ -73,7 +75,9 @@ describe('what the reader is shown', () => {
       'the statistics without the Streak when the reader hides it',
       {
         hideStreak: true,
-        shown: { stats: { streak: false, knowledge: ['word', 'correction', 'idiom'] } },
+        shown: {
+          stats: { streak: false, knowledge: ['word', 'correction', 'idiom', 'synonymRow', 'tip'] },
+        },
       },
     ],
     [
@@ -85,14 +89,14 @@ describe('what the reader is shown', () => {
       'the Known Words alone with Corrections off',
       {
         off: ['corrections'],
-        shown: { stats: { streak: true, knowledge: ['word', 'idiom'] } },
+        shown: { stats: { streak: true, knowledge: ['word', 'idiom', 'synonymRow', 'tip'] } },
       },
     ],
     [
       'the Known Words alone with the Mix without Corrections',
       {
         correctionsInMix: false,
-        shown: { stats: { streak: true, knowledge: ['word', 'idiom'] } },
+        shown: { stats: { streak: true, knowledge: ['word', 'idiom', 'synonymRow', 'tip'] } },
       },
     ],
     // Spec #549, #565: no count of Known Idioms while the reader sees none, as with Corrections.
@@ -100,14 +104,47 @@ describe('what the reader is shown', () => {
       'no Known Idioms with Idioms off',
       {
         off: ['idioms'],
-        shown: { stats: { streak: true, knowledge: ['word', 'correction'] } },
+        shown: { stats: { streak: true, knowledge: ['word', 'correction', 'synonymRow', 'tip'] } },
       },
     ],
     [
       'no Known Idioms with the Mix without Idioms',
       {
         idiomsInMix: false,
-        shown: { stats: { streak: true, knowledge: ['word', 'correction'] } },
+        shown: { stats: { streak: true, knowledge: ['word', 'correction', 'synonymRow', 'tip'] } },
+      },
+    ],
+    // Spec #730 story 37, #1015: Known Synonym Rows and Tips count while the reader sees them.
+    [
+      'no Known Synonym Rows with Synonym Rows off',
+      {
+        off: ['synonymRows'],
+        shown: { stats: { streak: true, knowledge: ['word', 'correction', 'idiom', 'tip'] } },
+      },
+    ],
+    [
+      'no Known Synonym Rows with the Mix without Synonym Rows',
+      {
+        synonymRowsInMix: false,
+        shown: { stats: { streak: true, knowledge: ['word', 'correction', 'idiom', 'tip'] } },
+      },
+    ],
+    [
+      'no Known Tips with Tips off',
+      {
+        off: ['tips'],
+        shown: {
+          stats: { streak: true, knowledge: ['word', 'correction', 'idiom', 'synonymRow'] },
+        },
+      },
+    ],
+    [
+      'no Known Tips with the Mix without Tips',
+      {
+        tipsInMix: false,
+        shown: {
+          stats: { streak: true, knowledge: ['word', 'correction', 'idiom', 'synonymRow'] },
+        },
       },
     ],
     ['no Sync status with Sync off', { off: ['sync'], shown: { sync: false } }],
@@ -121,6 +158,8 @@ describe('what the reader is shown', () => {
         selfCheck = false,
         correctionsInMix = true,
         idiomsInMix = true,
+        synonymRowsInMix = true,
+        tipsInMix = true,
         shown,
       },
     ) => {
@@ -132,8 +171,8 @@ describe('what the reader is shown', () => {
             kinds: {
               correction: correctionsInMix,
               idiom: idiomsInMix,
-              synonymRow: true,
-              tip: true,
+              synonymRow: synonymRowsInMix,
+              tip: tipsInMix,
             },
           },
         }),

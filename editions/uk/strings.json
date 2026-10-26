@@ -617,6 +617,18 @@
         "few": "{count} фразеологізми",
         "many": "{count} фразеологізмів",
         "other": "{count} фразеологізму"
+      },
+      "synonymRow": {
+        "one": "{count} синонімічний ряд",
+        "few": "{count} синонімічні ряди",
+        "many": "{count} синонімічних рядів",
+        "other": "{count} синонімічного ряду"
+      },
+      "tip": {
+        "one": "{count} порада",
+        "few": "{count} поради",
+        "many": "{count} порад",
+        "other": "{count} поради"
       }
     },
     "dueToday": "На повторення сьогодні: {count}"

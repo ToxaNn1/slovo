@@ -30,7 +30,13 @@ const strings = {
     gameBestLabel: plural('best game'),
     known: 'know {counts}',
     knownJoiner: ' · ',
-    knownByKind: { word: forms('word'), correction: forms('correction'), idiom: forms('idiom') },
+    knownByKind: {
+      word: forms('word'),
+      correction: forms('correction'),
+      idiom: forms('idiom'),
+      synonymRow: forms('synonymRow'),
+      tip: forms('tip'),
+    },
     dueToday: 'due today: {count}',
   },
 } as unknown as EditionStrings;
@@ -42,7 +48,7 @@ const progress: ProgressState = {
   favorites: 7,
   inCollections: 3,
   bestResult: undefined,
-  known: { word: 0, correction: 0, idiom: 0 },
+  known: { word: 0, correction: 0, idiom: 0, synonymRow: 0, tip: 0 },
   dueToday: 0,
 };
 
@@ -111,7 +117,11 @@ describe('StatsSheet', () => {
     await renderInEdition(
       <StatsSheet
         visible
-        stats={{ ...progress, known: { word: n, correction: n, idiom: n }, dueToday: n }}
+        stats={{
+          ...progress,
+          known: { word: n, correction: n, idiom: n, synonymRow: n, tip: n },
+          dueToday: n,
+        }}
         onClose={() => undefined}
       />,
       'uk',
@@ -130,7 +140,11 @@ describe('StatsSheet', () => {
       <StatsSheet
         visible
         knowledge={wordsAndCorrections}
-        stats={{ ...progress, known: { word: 12, correction: 3, idiom: 8 }, dueToday: 0 }}
+        stats={{
+          ...progress,
+          known: { word: 12, correction: 3, idiom: 8, synonymRow: 0, tip: 0 },
+          dueToday: 0,
+        }}
         onClose={() => undefined}
       />,
       'uk',
@@ -149,7 +163,10 @@ describe('StatsSheet', () => {
       <StatsSheet
         visible
         knowledge={['word', 'correction', 'idiom']}
-        stats={{ ...progress, known: { word: 120, correction: 12, idiom: 8 } }}
+        stats={{
+          ...progress,
+          known: { word: 120, correction: 12, idiom: 8, synonymRow: 0, tip: 0 },
+        }}
         onClose={() => undefined}
       />,
       'uk',
@@ -160,12 +177,32 @@ describe('StatsSheet', () => {
     );
   });
 
+  // Spec #730 story 37, #1015: the Known Synonym Rows and Tips last, while the reader sees them.
+  it('draws the Known Synonym Rows and Tips after the Known Idioms', async () => {
+    await renderInEdition(
+      <StatsSheet
+        visible
+        knowledge={['word', 'correction', 'idiom', 'synonymRow', 'tip']}
+        stats={{
+          ...progress,
+          known: { word: 120, correction: 15, idiom: 8, synonymRow: 5, tip: 3 },
+        }}
+        onClose={() => undefined}
+      />,
+      'uk',
+    );
+
+    expect(screen.getByTestId('stats-known')).toHaveTextContent(
+      'know 120 word (many) · 15 correction (many) · 8 idiom (many) · 5 synonymRow (many) · 3 tip (few)',
+    );
+  });
+
   it('draws the Known Idioms after the Known Words while Corrections are left out', async () => {
     await renderInEdition(
       <StatsSheet
         visible
         knowledge={['word', 'idiom']}
-        stats={{ ...progress, known: { word: 12, correction: 3, idiom: 1 } }}
+        stats={{ ...progress, known: { word: 12, correction: 3, idiom: 1, synonymRow: 0, tip: 0 } }}
         onClose={() => undefined}
       />,
       'uk',
@@ -183,7 +220,11 @@ describe('StatsSheet', () => {
       <StatsSheet
         visible
         knowledge={['word']}
-        stats={{ ...progress, known: { word: 12, correction: 3, idiom: 8 }, dueToday: 2 }}
+        stats={{
+          ...progress,
+          known: { word: 12, correction: 3, idiom: 8, synonymRow: 0, tip: 0 },
+          dueToday: 2,
+        }}
         onClose={() => undefined}
       />,
       'uk',
@@ -199,7 +240,11 @@ describe('StatsSheet', () => {
       <StatsSheet
         visible
         knowledge="none"
-        stats={{ ...progress, known: { word: 4, correction: 2, idiom: 0 }, dueToday: 1 }}
+        stats={{
+          ...progress,
+          known: { word: 4, correction: 2, idiom: 0, synonymRow: 0, tip: 0 },
+          dueToday: 1,
+        }}
         onClose={() => undefined}
       />,
       'uk',

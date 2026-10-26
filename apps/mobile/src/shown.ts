@@ -1,17 +1,15 @@
+import type { EntryKind } from '@slovo/contracts';
 import {
   featureOfKind,
+  MIX_KINDS,
   type Edition,
   type FeatureSwitch,
   type MixState,
-  type ShownKind,
   type UserSettings,
 } from '@slovo/core';
 
 /** Every tab in its final order: Home, Settings, Game, Saved. */
 const allTabs = ['home', 'settings', 'game', 'saved'] as const;
-
-/** The kinds as a whole whose Known count shows in the statistics, after the Words'. */
-const KNOWN_WHOLE_KINDS = ['correction', 'idiom'] as const;
 
 export type Tab = (typeof allTabs)[number];
 
@@ -46,9 +44,10 @@ export interface Shown {
         readonly streak: boolean;
         /**
          * The knowledge rows, with the kinds of Entry whose Known count shows, in
-         * order: the Words, then the Corrections and the Idioms unless left out; or none.
+         * order: the Words, then the Corrections, the Idioms, the Synonym Rows and
+         * the Tips unless left out; or none.
          */
-        readonly knowledge: readonly ShownKind[] | 'none';
+        readonly knowledge: readonly EntryKind[] | 'none';
       }
     | undefined;
   /** The Sync status line of the SLOVO ID screen. */
@@ -59,8 +58,8 @@ export interface Shown {
  * What the reader is shown, from the Edition in effect (ADR 0040), the
  * reader's settings and their Mix. A feature shows only while its Feature
  * Switch is on in effect; the reader may hide the Streak and turns
- * Self-check on, and the Known Corrections and the Known Idioms each count
- * only while they are in the Mix as well.
+ * Self-check on, and the Known Corrections, Idioms, Synonym Rows and Tips
+ * each count only while they are in the Mix as well.
  */
 export function shownOf({
   edition,
@@ -73,10 +72,10 @@ export function shownOf({
 }): Shown {
   const on = (feature: FeatureSwitch) => edition.isFeatureEnabled(feature);
   const knowledge = on('knowledge');
-  // The kinds the Known count joins: Words, and Corrections and Idioms while on and in the Mix.
-  const knownKinds: readonly ShownKind[] = [
+  // The kinds the Known count joins: Words, and every kind as a whole while on and in the Mix.
+  const knownKinds: readonly EntryKind[] = [
     'word',
-    ...KNOWN_WHOLE_KINDS.filter((kind) => on(featureOfKind(kind)) && mix.kinds[kind]),
+    ...MIX_KINDS.filter((kind) => on(featureOfKind(kind)) && mix.kinds[kind]),
   ];
   return {
     tabs: allTabs.filter((tab) => tab !== 'game' || on('game')),
