@@ -23,7 +23,9 @@ import { useOpenScreen } from './use-open-screen';
  * whether or not the list still holds it, so it stays open when a tap on the
  * heart takes the Entry out, until the reader goes back. A Correction a Word
  * card links opens as the next Entry screen of the same `route`, its link
- * back named for the Word. Opening it never makes the Entry Seen, unless it
+ * back named for the Word; a Word a member of a Synonym Row links opens the
+ * same way, its link back named as this screen's. Opening it never makes the
+ * Entry Seen, unless it
  * opens from a notification or the widget. Hiding its Entry hides it and
  * keeps the screen open, with the undo toast.
  */
@@ -86,6 +88,9 @@ export function EntryScreen({
               onOpenCorrection={(correctionId) => {
                 const word = card.kind === 'word' ? card.model.lemma : back;
                 openScreen(`${route}/${correctionId}?back=${encodeURIComponent(word)}`);
+              }}
+              onOpenWord={(wordId) => {
+                openScreen(`${route}/${wordId}?back=${encodeURIComponent(back)}`);
               }}
               actions={<EntryActions card={card} />}
             />

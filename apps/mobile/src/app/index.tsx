@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { editionStrings } from '../edition/edition';
 import { EntryActions } from '../entries/entry-actions';
+import { useOpenScreen } from '../entries/use-open-screen';
 import { useFeed } from '../feed/feed';
 import { TOP_ROW } from '../edition/feed-loading';
 import { StatsPillAndSheet } from '../progress';
@@ -112,6 +113,7 @@ const FeedPage = memo(function FeedPage({
 }) {
   const { top } = useSafeAreaInsets();
   const { selfCheck } = useShown();
+  const openScreen = useOpenScreen();
   if (card.kind === 'end-of-cycle')
     return (
       <View
@@ -132,6 +134,10 @@ const FeedPage = memo(function FeedPage({
           card={card}
           onOpenCorrection={(correctionId) => {
             onOpenCorrection(position, correctionId);
+          }}
+          // A member of a Synonym Row opens its Word over the Feed, Hidden or out of the Mix alike.
+          onOpenWord={(wordId) => {
+            openScreen(`/entry/${wordId}`);
           }}
           selfCheck={selfCheck}
           actions={<EntryActions card={card} />}
