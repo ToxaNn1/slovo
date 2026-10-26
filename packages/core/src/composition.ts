@@ -368,6 +368,7 @@ export async function openComposition({
     openedFromNotification: openedFromOutside,
     entryRow: (entryId) => rows.row(entryId),
     widget: createWidget({
+      content,
       edition,
       entries,
       favorites,

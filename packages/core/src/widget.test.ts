@@ -1,4 +1,10 @@
-import type { Category, WidgetSnapshot } from '@slovo/contracts';
+import {
+  WidgetSnapshotSchema,
+  type Category,
+  type SynonymRow,
+  type Tip,
+  type WidgetSnapshot,
+} from '@slovo/contracts';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -38,6 +44,53 @@ const withIdiomsPack = createMemoryContentPort({
   idioms: [idiom('i_one'), idiom('i_two')],
 });
 
+/** A live Synonym Row of «іти» with five members, each with its Stress. */
+const ityRow: SynonymRow = {
+  kind: 'synonymRow',
+  id: 'r_ity',
+  dominant: { text: 'іти', stress: [2] },
+  meaning: 'Рухатися пішки.',
+  members: [
+    { text: 'простувати', stress: [7] },
+    { text: 'чимчикувати', stress: [4] },
+    { text: 'шкандибати', stress: [7] },
+    { text: 'дибати', stress: [1] },
+    { text: 'чалапати', stress: [3] },
+  ],
+  sources: [{ title: 'Test source' }],
+  retired: false,
+};
+
+/** A live Tip on asking the time. */
+const timeTip: Tip = {
+  kind: 'tip',
+  id: 't_kotrahodyna',
+  title: 'Котра година?',
+  nonStandardForm: 'Скільки час?',
+  standardForm: 'Котра година?',
+  explanation: 'Про час питають «котра година».',
+  sources: [{ title: 'Test source' }],
+  gameQuestion: {
+    prompt: 'Як запитати про час?',
+    rightAnswer: 'Котра година?',
+    wrongAnswers: ['Скільки час?', 'Скільки годин?', 'Який час?'],
+  },
+  retired: false,
+};
+
+/** The same pack with a live and a Retired Synonym Row, and a live and a Retired Tip. */
+const withRowsAndTipsPack = createMemoryContentPort({
+  categories,
+  words,
+  corrections,
+  idioms: [idiom('i_one')],
+  synonymRows: [ityRow, { ...ityRow, id: 'r_old', retired: true }],
+  tips: [timeTip, { ...timeTip, id: 't_old', retired: true }],
+});
+
+/** The Edition's words the widget writes a row's and a Tip's second line with. */
+const strings = { ellipsis: '…', tipStandardForm: 'Так: {form}' };
+
 const MINUTE = 60_000;
 
 /** Any VoiceOver text, for a test about what the widget shows. */
@@ -50,6 +103,7 @@ async function run({
   clock = fakeClock(start).clock,
   withCorrections = true,
   withIdioms = true,
+  withRowsAndTips = true,
   withWidget = true,
 }: {
   records?: Map<string, string>;
@@ -57,6 +111,8 @@ async function run({
   clock?: Clock;
   withCorrections?: boolean;
   withIdioms?: boolean;
+  /** Whether the Feature Switches of Synonym Rows and Tips are on. */
+  withRowsAndTips?: boolean;
   /** Whether the Feature Switch of the widget is on, as the Edition in effect has it. */
   withWidget?: boolean;
 } = {}): Promise<Composition> {
@@ -67,7 +123,9 @@ async function run({
       isFeatureEnabled: (feature) =>
         feature === 'widget'
           ? withWidget
-          : (withCorrections && feature === 'corrections') || (withIdioms && feature === 'idioms'),
+          : (withCorrections && feature === 'corrections') ||
+            (withIdioms && feature === 'idioms') ||
+            (withRowsAndTips && (feature === 'synonymRows' || feature === 'tips')),
       languageTraits: { distractorRule: 'same-part-of-speech' },
       userSettingDefaults: {
         mix: {
@@ -89,7 +147,7 @@ async function run({
 
 /** The Widget Snapshot of an app whose widget is on; it fails the test when there is none. */
 async function snapshotOf(app: Composition): Promise<WidgetSnapshot> {
-  const snapshot = await app.widget.snapshot();
+  const snapshot = await app.widget.snapshot(strings);
   if (snapshot === undefined) throw new Error('No Widget Snapshot was built');
   return snapshot;
 }
@@ -99,7 +157,7 @@ describe('The Widget Snapshot', () => {
     const off = await run({ withWidget: false });
     const on = await run();
 
-    expect(await off.widget.snapshot()).toBeUndefined();
+    expect(await off.widget.snapshot(strings)).toBeUndefined();
     expect((await snapshotOf(on)).allEntries).toHaveLength(6);
   });
 
@@ -375,6 +433,68 @@ describe('The Widget Snapshot', () => {
       headline: 'протягом року',
       secondLine: 'на протязі року',
     });
+  });
+
+  it('shows the live Synonym Rows and Tips after the other kinds in the mode of all Entries', async () => {
+    const app = await run({ content: withRowsAndTipsPack });
+
+    const snapshot = await snapshotOf(app);
+
+    expect(snapshot.allEntries).toEqual([
+      'w_nature0',
+      'w_nature1',
+      'w_speech0',
+      'w_speech1',
+      'c_one',
+      'c_two',
+      'i_one',
+      'r_ity',
+      't_kotrahodyna',
+    ]);
+    expect(WidgetSnapshotSchema.parse(snapshot)).toEqual(snapshot);
+  });
+
+  it('heads a Synonym Row with its dominant over its first 3 members, and a Tip with its title over «Так: …»', async () => {
+    const app = await run({ content: withRowsAndTipsPack });
+
+    const { entries } = await snapshotOf(app);
+
+    expect(entries.filter(({ kind }) => kind === 'synonymRow' || kind === 'tip')).toEqual([
+      {
+        kind: 'synonymRow',
+        id: 'r_ity',
+        headline: 'іти\u0301',
+        secondLine: 'простува\u0301ти, чимчи\u0301кувати, шкандиба\u0301ти…',
+        voiceOver: 'іти, простувати, чимчикувати, шкандибати…',
+      },
+      {
+        kind: 'tip',
+        id: 't_kotrahodyna',
+        headline: 'Котра година?',
+        secondLine: 'Так: Котра година?',
+        voiceOver: 'Котра година?, Так: Котра година?',
+      },
+    ]);
+  });
+
+  it('leaves out Synonym Rows and Tips when the Edition turns them off, or once they are out of the Mix', async () => {
+    const off = await run({ content: withRowsAndTipsPack, withRowsAndTips: false });
+    const app = await run({ content: withRowsAndTipsPack });
+    await app.mix.setKind('synonymRow', false);
+    await app.mix.setKind('tip', false);
+
+    for (const snapshot of [await snapshotOf(off), await snapshotOf(app)]) {
+      expect(snapshot.allEntries).toEqual([
+        'w_nature0',
+        'w_nature1',
+        'w_speech0',
+        'w_speech1',
+        'c_one',
+        'c_two',
+        'i_one',
+      ]);
+      expect(snapshot.entries.map(({ id }) => id)).toEqual(snapshot.allEntries);
+    }
   });
 
   it('names the Edition and the time it was built, and tells whether the onboarding is finished', async () => {

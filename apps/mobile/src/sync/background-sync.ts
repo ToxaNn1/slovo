@@ -1,4 +1,3 @@
-import type { WidgetSnapshot } from '@slovo/contracts';
 import type { Composition, Sync } from '@slovo/core';
 
 import type { ForegroundReports } from '../foreground/foreground-reports';
@@ -56,7 +55,8 @@ export function reopenAfterSync({
 }: {
   settings: Pick<Opening<unknown>, 'reopen'>;
   composition: Opening<Composition>;
-  writeWidgetSnapshot: (snapshot: () => Promise<WidgetSnapshot | undefined>) => void;
+  /** Writes the Widget Snapshot the widget builds. */
+  writeWidgetSnapshot: (widget: Composition['widget']) => void;
 }): () => Promise<void> {
   return async () => {
     const before = composition.state;
@@ -64,7 +64,7 @@ export function reopenAfterSync({
     const { state } = composition;
     // A reopen that failed kept the composition the Widget Snapshot was written from.
     if (state.status === 'ready' && state !== before) {
-      writeWidgetSnapshot(() => state.value.widget.snapshot());
+      writeWidgetSnapshot(state.value.widget);
     }
   };
 }

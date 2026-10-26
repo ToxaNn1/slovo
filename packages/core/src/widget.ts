@@ -1,4 +1,12 @@
-import { WIDGET_SNAPSHOT_FORMAT, type WidgetEntry, type WidgetSnapshot } from '@slovo/contracts';
+import {
+  WIDGET_SNAPSHOT_FORMAT,
+  type EditionStrings,
+  type Entry,
+  type SynonymRow,
+  type Tip,
+  type WidgetEntry,
+  type WidgetSnapshot,
+} from '@slovo/contracts';
 
 import type { Collections } from './saved/collections';
 import type { EligibleOfKind, Entries, ShownEntry } from './entries/entries';
@@ -7,7 +15,9 @@ import type { Favorites } from './saved/favorites';
 import type { EntryFeedCard } from './feed/feed-card';
 import type { Edition } from './edition/edition';
 import type { Onboarding } from './onboarding';
-import type { Clock } from './ports';
+import { notificationText } from './notifications/notification-text';
+import type { Clock, ContentReadPort } from './ports';
+import { withoutStress } from './entries/stress';
 
 /**
  * What the home-screen widget shows, decided by the Core, so the widget holds
@@ -17,13 +27,14 @@ export interface Widget {
   /**
    * The Widget Snapshot of the user state as it is now, for the app to write
    * into the App Group: every Widget Mode with only Eligible Entries in it
-   * (ADR 0015), and each of those Entries once, with its text ready to show.
-   * Pure data; the contracts serialize it. Nothing while the widget's
-   * Feature Switch is off, by its effective value at the time of the call: the
-   * app writes no new snapshot and the widget just stops updating, with no
-   * placeholder (ADR 0026).
+   * (ADR 0015), and each of those Entries once, with its text ready to show:
+   * a Synonym Row's and a Tip's in the Edition's `strings`, as their
+   * notification reads. Pure data; the contracts serialize it. Nothing while
+   * the widget's Feature Switch is off, by its effective value at the time of
+   * the call: the app writes no new snapshot and the widget just stops
+   * updating, with no placeholder (ADR 0026).
    */
-  snapshot(): Promise<WidgetSnapshot | undefined>;
+  snapshot(strings: EditionStrings['notificationBody']): Promise<WidgetSnapshot | undefined>;
   /**
    * Opens an Entry the widget showed, a Word, a Correction or an Idiom, by
    * the rule and the one write of an Entry opened from a notification (see
@@ -55,11 +66,34 @@ function widgetEntry(entry: ShownEntry): WidgetEntry {
 }
 
 /**
+ * A Synonym Row or a Tip as the widget shows it: the title and the body of
+ * its notification, so both read the same (spec #730), and both as VoiceOver
+ * reads them.
+ */
+function widgetRowOrTip(
+  entry: SynonymRow | Tip,
+  strings: EditionStrings['notificationBody'],
+): WidgetEntry {
+  const { title, body } = notificationText(entry, strings);
+  return {
+    kind: entry.kind,
+    id: entry.id,
+    headline: title,
+    secondLine: body,
+    voiceOver: `${withoutStress(title)}, ${withoutStress(body)}`,
+  };
+}
+
+const isRowOrTip = (entry: Entry): entry is SynonymRow | Tip =>
+  entry.kind === 'synonymRow' || entry.kind === 'tip';
+
+/**
  * The widget over the composition's Entries, Favorites, Collections and
  * onboarding. `opened` is the composition's step for an Entry opened from
  * outside the app, which a notification shares.
  */
 export function createWidget({
+  content,
   edition,
   entries,
   favorites,
@@ -68,6 +102,7 @@ export function createWidget({
   clock,
   opened,
 }: {
+  content: Pick<ContentReadPort, 'getEntries'>;
   edition: Pick<Edition, 'id' | 'isFeatureEnabled'>;
   entries: Entries;
   favorites: Favorites;
@@ -77,14 +112,28 @@ export function createWidget({
   opened: Widget['opened'];
 }): Widget {
   return {
-    async snapshot() {
+    async snapshot(strings) {
       if (!edition.isFeatureEnabled('widget')) return undefined;
-      const [words, corrections, idioms] = await Promise.all([
+      const [words, corrections, idioms, { synonymRows, tips }] = await Promise.all([
         entries.eligibleOfKind('word'),
         entries.eligibleOfKind('correction'),
         entries.eligibleOfKind('idiom'),
+        entries.eligible(),
       ]);
-      const eligible = [...entriesOf(words), ...entriesOf(corrections), ...entriesOf(idioms)];
+      const rowOrTipIds = [...synonymRows, ...tips];
+      const read = new Map(
+        rowOrTipIds.length === 0
+          ? []
+          : (await content.getEntries(rowOrTipIds))
+              .filter(isRowOrTip)
+              .map((entry) => [entry.id, entry]),
+      );
+      // In the order `eligible` gives, whatever order the Language Pack reads them in.
+      const rowsAndTips = rowOrTipIds.flatMap((id) => read.get(id) ?? []);
+      const eligible = [
+        ...[...entriesOf(words), ...entriesOf(corrections), ...entriesOf(idioms)].map(widgetEntry),
+        ...rowsAndTips.map((entry) => widgetRowOrTip(entry, strings)),
+      ];
       const eligibleIds = new Set(eligible.map(({ id }) => id));
       const onlyEligible = (kept: readonly { entryId: string }[]) =>
         kept.map(({ entryId }) => entryId).filter((id) => eligibleIds.has(id));
@@ -93,7 +142,7 @@ export function createWidget({
         editionId: edition.id,
         writtenAt: clock.now().toISOString(),
         onboardingFinished: onboarding.state.finishedAt !== undefined,
-        entries: eligible.map(widgetEntry),
+        entries: eligible,
         allEntries: eligible.map(({ id }) => id),
         favorites: onlyEligible(favorites.list),
         collections: collections.list.map(({ id, name }) => ({

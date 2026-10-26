@@ -26,6 +26,9 @@ import { ukrainian, ukrainianFolder } from './test-support';
 // gallery shows. It lives here because only this package can build and read
 // a pack in Node.
 
+/** The Ukrainian Edition's words the widget writes a Synonym Row's and a Tip's second line with. */
+const notificationStrings = ukrainianFolder.read('strings').notificationBody;
+
 /** The combining acute accent a stress trap writes its Stress with. */
 const STRESS_MARK = '\u0301';
 
@@ -101,7 +104,7 @@ describe('The Widget Snapshot of the Ukrainian Edition', () => {
     await app.collections.add(letters.collection.id, second);
     await app.hide({ kind: 'entry', entryId: second });
 
-    const snapshot = await app.widget.snapshot();
+    const snapshot = await app.widget.snapshot(notificationStrings);
     if (snapshot === undefined) throw new Error('No Widget Snapshot was built');
     const parsed = WidgetSnapshotSchema.parse(JSON.parse(serializeWidgetSnapshot(snapshot)));
 
@@ -130,7 +133,7 @@ describe('The Widget Snapshot of the Ukrainian Edition', () => {
     );
     expect(stressTraps).not.toEqual([]);
 
-    const snapshot = await app.widget.snapshot();
+    const snapshot = await app.widget.snapshot(notificationStrings);
     if (snapshot === undefined) throw new Error('No Widget Snapshot was built');
     for (const { id, standardEquivalents, nonStandardForm } of stressTraps) {
       const [headline, secondLine] = [standardEquivalents[0] ?? '', nonStandardForm];
@@ -163,7 +166,7 @@ describe('The Widget Snapshot of the Ukrainian Edition', () => {
     const sayings = await app.collections.create('Приказки', idiom.id);
     if (!sayings.ok) throw new Error('The Collection was not created');
 
-    const snapshot = await app.widget.snapshot();
+    const snapshot = await app.widget.snapshot(notificationStrings);
     if (snapshot === undefined) throw new Error('No Widget Snapshot was built');
 
     expect(snapshot.entries.find(({ id }) => id === idiom.id)).toEqual({
