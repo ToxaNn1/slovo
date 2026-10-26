@@ -164,7 +164,10 @@ export async function openKnowledge({
     for (const [entryId, record] of records) {
       const kind = rowOf.get(entryId)?.kind;
       // The counts keep to the kinds Progress shows, which has none for Synonym Rows and Tips (spec #730).
-      if (record.mark === 'known' && (kind === 'word' || kind === 'correction' || kind === 'idiom')) {
+      if (
+        record.mark === 'known' &&
+        (kind === 'word' || kind === 'correction' || kind === 'idiom')
+      ) {
         counts[kind] += 1;
       }
       // A Hidden Entry's card, opened where the reader keeps it, still shows its mark.

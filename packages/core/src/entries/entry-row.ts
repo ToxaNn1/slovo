@@ -1,10 +1,4 @@
-import type {
-  CorrectionType,
-  Gender,
-  IdiomType,
-  PartOfSpeech,
-  Register,
-} from '@slovo/contracts';
+import type { CorrectionType, Gender, IdiomType, PartOfSpeech, Register } from '@slovo/contracts';
 
 import type { AskableEntry, Entries } from './entries';
 import { renderStress, withoutStress } from './stress';

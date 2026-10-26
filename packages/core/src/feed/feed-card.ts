@@ -50,7 +50,8 @@ export type AnyEntryCard = EntryFeedCard | SynonymRowFeedCard | TipFeedCard;
  * end-of-Cycle card shows no Entry, so any card's `entryId` reads undefined
  * there.
  */
-export type FeedCard = AnyEntryCard | { readonly kind: 'end-of-cycle'; readonly entryId?: undefined };
+export type FeedCard =
+  AnyEntryCard | { readonly kind: 'end-of-cycle'; readonly entryId?: undefined };
 
 /**
  * The card as a Review, labelled «Повторення», while the Entry's card shows

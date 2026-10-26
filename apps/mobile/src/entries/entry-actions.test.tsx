@@ -11,12 +11,7 @@ import {
   type Haptics,
 } from '@slovo/core';
 import { createMemoryContentPort } from '@slovo/core/testing';
-import {
-  EditionProvider,
-  EntryCard,
-  HapticsProvider,
-  UndoToastProvider,
-} from '@slovo/ui';
+import { EditionProvider, EntryCard, HapticsProvider, UndoToastProvider } from '@slovo/ui';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import config from 'slovo-edition/config';
@@ -58,7 +53,11 @@ const tip: Tip = {
   standardForm: 'Котра година?',
   explanation: 'Час не рахують, а питають, котра година.',
   sources: [{ title: 'Антоненко-Давидович. Як ми говоримо' }],
-  gameQuestion: { prompt: 'Як спитати?', rightAnswer: 'Котра година?', wrongAnswers: ['A', 'B', 'C'] },
+  gameQuestion: {
+    prompt: 'Як спитати?',
+    rightAnswer: 'Котра година?',
+    wrongAnswers: ['A', 'B', 'C'],
+  },
   retired: false,
 };
 
