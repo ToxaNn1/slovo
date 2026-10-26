@@ -844,14 +844,14 @@ describe('buildLanguagePack', () => {
       }
     }
 
-    it('builds a Tip and reads it back with every field, in pack format 5', async () => {
+    it('builds a Tip and reads it back with every field, in pack format 6', async () => {
       const editionDir = withTips([fullTip]);
       const outFile = packPath();
 
       const result = buildLanguagePack({ editionDir, outFile });
 
       expect(result.ok ? [] : result.errors).toEqual([]);
-      expect(result).toMatchObject({ ok: true, metadata: { packFormat: 5 } });
+      expect(result).toMatchObject({ ok: true, metadata: { packFormat: 6 } });
       expect(await readTips(outFile, ['t_fx0001'])).toEqual([
         { ...fullTip, kind: 'tip', retired: false },
       ]);
@@ -1026,14 +1026,14 @@ describe('buildLanguagePack', () => {
       }
     }
 
-    it('builds a Synonym Row and reads it back with every field, in pack format 5', async () => {
+    it('builds a Synonym Row and reads it back with every field, in pack format 6', async () => {
       const editionDir = withRows([fullRow]);
       const outFile = packPath();
 
       const result = buildLanguagePack({ editionDir, outFile });
 
       expect(result.ok ? [] : result.errors).toEqual([]);
-      expect(result).toMatchObject({ ok: true, metadata: { packFormat: 5 } });
+      expect(result).toMatchObject({ ok: true, metadata: { packFormat: 6 } });
       expect(await readRows(outFile, ['r_fx0001'])).toEqual([
         { ...fullRow, kind: 'synonymRow', retired: false },
       ]);
@@ -1481,6 +1481,67 @@ describe('buildLanguagePack', () => {
     });
   });
 
+  describe('the origin of a Word', () => {
+    /** A copy of the valid fixture whose Edition also lists Latin and Greek as origin languages. */
+    function withOriginLanguages(): string {
+      const editionDir = copyFixture('valid');
+      editJson(editionDir, 'edition.json', (config) => ({
+        ...config,
+        originLanguages: [
+          ...(config['originLanguages'] as Json[]),
+          { code: 'la', name: 'латина' },
+          { code: 'grc', name: 'грецька' },
+        ],
+      }));
+      return editionDir;
+    }
+
+    it("builds a Word with an origin from the Edition's list and reads it back, in pack format 6", async () => {
+      const editionDir = withOriginLanguages();
+      editJson(editionDir, 'content/words/w_fx0002.json', (word) => ({ ...word, origin: 'la' }));
+      record(editionDir);
+      const outFile = packPath();
+
+      const result = buildLanguagePack({ editionDir, outFile });
+
+      if (!result.ok) throw new Error(result.errors.map(formatBuildError).join('\n'));
+      expect(result.metadata.packFormat).toBe(6);
+      await withEntries(outFile, async (entries) => {
+        const word = await entries.get('w_fx0002');
+        const other = await entries.get('w_fx0003');
+        if (word?.kind !== 'word' || other?.kind !== 'word') throw new Error('No Words');
+        expect(word.origin).toBe('la');
+        expect(other).not.toHaveProperty('origin');
+      });
+    });
+
+    it('refuses an origin code the Edition does not list', () => {
+      const editionDir = withOriginLanguages();
+      editJson(editionDir, 'content/words/w_fx0002.json', (word) => ({ ...word, origin: 'fr' }));
+
+      expect(buildErrors(editionDir)).toEqual([
+        {
+          file: 'content/words/w_fx0002.json',
+          entryId: 'w_fx0002',
+          field: 'origin',
+          message: expect.stringMatching(/unknown origin language "fr"/i) as string,
+        },
+      ]);
+    });
+
+    it('refuses an origin that is not a language code', () => {
+      const editionDir = withOriginLanguages();
+      editJson(editionDir, 'content/words/w_fx0002.json', (word) => ({
+        ...word,
+        origin: 'Латина',
+      }));
+
+      expect(buildErrors(editionDir)).toEqual([
+        expect.objectContaining({ entryId: 'w_fx0002', field: 'origin' }),
+      ]);
+    });
+  });
+
   it('refuses a Word without history in a Category that requires it, and builds one with it', () => {
     const editionDir = copyFixture('valid');
     const requireHistoryOf = (categoryId: string) => {
@@ -1552,7 +1613,7 @@ describe('buildLanguagePack', () => {
       editionId: 'fixture',
       contentVersion: 7,
       contentChecksum: expect.stringMatching(/^sha256:[0-9a-f]{64}$/) as string,
-      packFormat: 5,
+      packFormat: 6,
     });
     expect(b.metadata).toEqual(a.metadata);
     expect(readFileSync(second).equals(readFileSync(first))).toBe(true);
@@ -1563,8 +1624,8 @@ describe('buildLanguagePack', () => {
 
     const result = buildLanguagePack({ editionDir: fixture('valid'), outFile });
 
-    expect(result).toMatchObject({ ok: true, metadata: { packFormat: 5 } });
-    expect((await readBack(outFile)).metadata.packFormat).toBe(5);
+    expect(result).toMatchObject({ ok: true, metadata: { packFormat: 6 } });
+    expect((await readBack(outFile)).metadata.packFormat).toBe(6);
   });
 
   it.each([
