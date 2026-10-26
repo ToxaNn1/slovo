@@ -4,6 +4,7 @@ import type { BuildError } from './build-error';
 import { checkContentVersion } from './content-manifest';
 import { editionFiles } from './edition-folder';
 import { ID_REGISTRY_FILE, unregisteredEntries } from './id-registry';
+import { protectedLiteraryUses } from './public-domain';
 import { compare, readEdition } from './read-edition';
 
 export type RecordResult =
@@ -23,12 +24,22 @@ export type RecordResult =
  * raises the content version and records the checksum the pack will have.
  * Known ids are never dropped. It starts a registry only for an Edition never
  * recorded: one recorded before may have shipped ids a new registry would
- * free (ADR 0010). Writes nothing when the content has errors.
+ * free (ADR 0010). Writes nothing when the content has errors, a literary
+ * use not yet in the public domain on `today` among them, as the build
+ * refuses it.
  */
-export function recordContent({ editionDir }: { editionDir: string }): RecordResult {
+export function recordContent({
+  editionDir,
+  today = new Date(),
+}: {
+  editionDir: string;
+  /** The day the public domain is judged on (ADR 0045). */
+  today?: Date;
+}): RecordResult {
   const source = readEdition(editionDir, { registryRequired: false });
-  if (source.errors.length > 0 || source.valid === undefined || source.registry === undefined) {
-    return { ok: false, errors: source.errors };
+  const errors = [...source.errors, ...protectedLiteraryUses(source.corrections, today)];
+  if (errors.length > 0 || source.valid === undefined || source.registry === undefined) {
+    return { ok: false, errors };
   }
   const { registry } = source;
 

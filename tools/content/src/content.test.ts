@@ -199,6 +199,34 @@ describe('pnpm content new', () => {
     expect(manifest()).toEqual(before.manifest);
   });
 
+  it("refuses a literary use not yet in the public domain with the build's message, and records nothing", () => {
+    const before = { registry: registry(), manifest: manifest() };
+    // An author who died this year stays protected for 70 more years, whatever today is.
+    const authorDeathYear = new Date().getFullYear();
+    const literaryUse = {
+      text: 'Це тестоформа.',
+      author: 'Тестовий автор',
+      work: 'Тестовий твір',
+      authorDeathYear,
+    };
+
+    const run = content(['new', 'correction', '--edition', 'uk'], {
+      edits: [{ ...validCorrection, literaryUses: [literaryUse] }],
+      answers: 'n\n',
+    });
+
+    expect(run.status).toBe(1);
+    const [file = ''] = run.opened;
+    const id = file.slice('content/corrections/'.length, -'.json'.length);
+    expect(run.stderr).toContain(
+      `${file} › Entry ${id} › literaryUses.0.authorDeathYear: Not in the public domain until 1 January ${String(authorDeathYear + 71)}`,
+    );
+    expect(run.stdout).not.toContain(`Recorded ${file}`);
+    expect(run.stderr).toContain(`Kept ${file}, not recorded`);
+    expect(registry()).toEqual(before.registry);
+    expect(manifest()).toEqual(before.manifest);
+  });
+
   it('reopens a broken draft on request and records it once it is fixed', () => {
     const before = registry();
 
