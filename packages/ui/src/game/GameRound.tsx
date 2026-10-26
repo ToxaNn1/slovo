@@ -40,6 +40,7 @@ import {
   withAlpha,
 } from '../tokens';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
+import { ease, RIGHT_FILL, shake, WRONG_FILL } from './round-motion';
 import { useGameHaptics } from './useGameHaptics';
 import { useReduceMotion } from '../providers/useReduceMotion';
 import { WholeWordsText } from '../primitives/WholeWordsText';
@@ -67,28 +68,8 @@ const SHEET_ANSWER_SIZE = {
 /** Whether a label ends in punctuation of its own, such as «?», so VoiceOver needs no full stop after it. */
 const ENDS_IN_PUNCTUATION = /\p{P}$/u;
 
-/**
- * The canvas's CSS `ease`, for the Game's motion below, from the design's
- * motion table and canvas keyframes. Each motion runs whatever the system
- * setting, which would otherwise skip the fills and fades too; with Reduce
- * Motion the components leave out the shake, the scale and the pop themselves.
- */
-const ease = Easing.bezier(0.25, 0.1, 0.25, 1);
-/** The right option fills in 250 ms; with a right answer it also grows to 1.03. */
-const RIGHT_FILL = { duration: 250, easing: ease, reduceMotion: ReduceMotion.Never };
+/** A right answer's option grows to 1.03 as it fills. */
 const RIGHT_SCALE = 1.03;
-/**
- * A wrong choice fills in 200 ms (`LIFE_LOST_DELAY`, which the Life's haptic
- * waits for too), and the other options fade as quickly.
- */
-const WRONG_FILL = { duration: LIFE_LOST_DELAY, easing: ease, reduceMotion: ReduceMotion.Never };
-/** A wrong choice shakes ±4 pt twice in 400 ms: five steps between the keyframes. */
-const SHAKE = [-4, 4, -4, 4, 0] as const;
-const SHAKE_STEP = {
-  duration: 80,
-  easing: Easing.inOut(Easing.ease),
-  reduceMotion: ReduceMotion.Never,
-};
 /**
  * A lost Life pops in 500 ms, up to 1.4 and −12° and back, and its fill fades
  * to the outline on the way back. It comes once the wrong choice has filled,
@@ -497,7 +478,7 @@ function AnswerOption({
     if (!chosen) return;
     if (reduceMotion) return;
     if (right) grown.value = withTiming(1, RIGHT_FILL);
-    else shift.value = withSequence(...SHAKE.map((offset) => withTiming(offset, SHAKE_STEP)));
+    else shift.value = shake();
     // The shared values are stable, and a change of Reduce Motion finds the
     // answer already shown, so only the answer given moves the option.
   }, [answer, right, chosen, reduceMotion, answered, grown, shift]);
