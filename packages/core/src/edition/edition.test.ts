@@ -19,6 +19,8 @@ const validConfig = {
     game: true,
     corrections: true,
     idioms: true,
+    synonymRows: true,
+    tips: true,
     account: true,
     googleSignIn: true,
     sync: true,
@@ -93,6 +95,8 @@ describe('loadEdition', () => {
   });
 
   it.each([
+    'synonymRows',
+    'tips',
     'account',
     'sync',
     'contentUpdates',
@@ -289,6 +293,12 @@ describe('loadEdition', () => {
       withoutSwitch('gameReview'),
       'featureSwitches.gameReview',
     ],
+    [
+      'a missing Synonym Rows Feature Switch',
+      withoutSwitch('synonymRows'),
+      'featureSwitches.synonymRows',
+    ],
+    ['a missing Tips Feature Switch', withoutSwitch('tips'), 'featureSwitches.tips'],
     [
       'an unknown Feature Switch',
       { featureSwitches: { ...validConfig.featureSwitches, share: true } },

@@ -99,6 +99,10 @@ export const FeatureSwitchesSchema = z.strictObject({
   corrections: z.boolean(),
   /** Idioms: the third kind of Entry, idioms and place names (ADR 0046). */
   idioms: z.boolean(),
+  /** Synonym Rows: the fourth kind of Entry, a dominant word and a row of its synonyms (ADR 0051). */
+  synonymRows: z.boolean(),
+  /** Tips: the fifth kind of Entry, rules of good speech (ADR 0051). */
+  tips: z.boolean(),
   /** The Account (SLOVO ID): its Settings row, its screen and the backend's answers to it. */
   account: z.boolean(),
   /** Sign in with Google: the second Sign-in method, its button and the backend's procedure for it (ADR 0047). */

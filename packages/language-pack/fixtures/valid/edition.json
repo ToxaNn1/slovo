@@ -16,6 +16,8 @@
     "game": true,
     "corrections": true,
     "idioms": true,
+    "synonymRows": true,
+    "tips": true,
     "account": true,
     "googleSignIn": true,
     "sync": true,
