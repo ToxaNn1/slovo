@@ -11,7 +11,7 @@ import {
   useEdition,
   useTokens,
 } from '@slovo/ui';
-import { favoriteTrailing } from '@slovo/ui/entry-row-text';
+import { entryLabelBeside } from '@slovo/ui/entry-row-text';
 import { useRouter } from 'expo-router';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -30,7 +30,7 @@ function FavoriteRow({ favorite: { entryId, row, addedAt } }: { favorite: Favori
   return (
     <EntryRow
       row={row}
-      trailing={favoriteTrailing(editionStrings.history, row, addedOn(addedAt))}
+      trailing={entryLabelBeside(editionStrings.history, row, addedOn(addedAt))}
       onPress={() => {
         openScreen(`/saved/favorites/${entryId}`);
       }}
