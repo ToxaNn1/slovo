@@ -8,9 +8,10 @@ import {
 } from '@slovo/contracts';
 
 /**
- * The Edition's default Mix: the Categories, plus Corrections and Idioms each
- * as a whole, a new user sees. `'all'` is every Category of the Language
- * Pack, also one a content update adds (ADR 0019, 0033, 0046).
+ * The Edition's default Mix: the Categories, plus Corrections, Idioms,
+ * Synonym Rows and Tips each as a whole, a new user sees. `'all'` is every
+ * Category of the Language Pack, also one a content update adds (ADR 0019,
+ * 0033, 0046, 0051).
  */
 export interface DefaultMix {
   readonly categoryIds: 'all' | readonly string[];
@@ -18,6 +19,8 @@ export interface DefaultMix {
   readonly correctionCategoryIds: 'all' | readonly string[];
   readonly corrections: boolean;
   readonly idioms: boolean;
+  readonly synonymRows: boolean;
+  readonly tips: boolean;
 }
 
 /** The settings a new user starts with, as declared by the Edition. */
@@ -94,6 +97,8 @@ export function loadEdition(config: unknown): Edition {
         correctionCategoryIds: mix.correctionCategories,
         corrections: mix.corrections,
         idioms: mix.idioms,
+        synonymRows: mix.synonymRows,
+        tips: mix.tips,
       },
     },
     notificationSound,

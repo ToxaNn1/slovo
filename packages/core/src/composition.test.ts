@@ -48,6 +48,8 @@ async function run({
           correctionCategoryIds: 'all' as const,
           corrections: true,
           idioms: true,
+          synonymRows: true,
+          tips: true,
         },
         notificationTimes: ['09:00', '13:00', '19:00'],
       },

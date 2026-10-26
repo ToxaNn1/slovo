@@ -84,11 +84,26 @@ function shuffle(ids: readonly string[], seed: number): string[] {
   return ranked.map(({ id }) => id);
 }
 
-const orderOf = ({ words, corrections, idioms }: EntryIds, seed: number): EntryIds => ({
-  words: shuffle(words, seed),
-  corrections: shuffle(corrections, seed),
-  idioms: shuffle(idioms, seed),
+/** Each kind's list of the ids, with what `of` makes of it. */
+const eachList = (ids: EntryIds, of: (list: readonly string[]) => readonly string[]): EntryIds => ({
+  words: of(ids.words),
+  corrections: of(ids.corrections),
+  idioms: of(ids.idioms),
+  synonymRows: of(ids.synonymRows),
+  tips: of(ids.tips),
 });
+
+/** Every list of the ids, whatever its kind. */
+const allLists = ({ words, corrections, idioms, synonymRows, tips }: EntryIds) => [
+  words,
+  corrections,
+  idioms,
+  synonymRows,
+  tips,
+];
+
+const orderOf = (ids: EntryIds, seed: number): EntryIds =>
+  eachList(ids, (list) => shuffle(list, seed));
 
 /**
  * Opens the current Cycle, or starts the first one with a seed from the
@@ -134,17 +149,9 @@ export async function openCycle({
 
   return {
     order: () => order,
-    covers: (entryId) =>
-      order.words.includes(entryId) ||
-      order.corrections.includes(entryId) ||
-      order.idioms.includes(entryId),
-    isEmpty: () =>
-      order.words.length === 0 && order.corrections.length === 0 && order.idioms.length === 0,
-    unseen: () => ({
-      words: order.words.filter((id) => !seen.has(id)),
-      corrections: order.corrections.filter((id) => !seen.has(id)),
-      idioms: order.idioms.filter((id) => !seen.has(id)),
-    }),
+    covers: (entryId) => allLists(order).some((list) => list.includes(entryId)),
+    isEmpty: () => allLists(order).every((list) => list.length === 0),
+    unseen: () => eachList(order, (list) => list.filter((id) => !seen.has(id))),
     markSeen(entryId) {
       if (seen.has(entryId)) return { changes: new Map(), commit: () => undefined };
       return {

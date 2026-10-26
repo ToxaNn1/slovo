@@ -225,6 +225,8 @@ describe('the settings and the composition over the tracked user state', () => {
             correctionCategoryIds: 'all' as const,
             corrections: false,
             idioms: true,
+            synonymRows: true,
+            tips: true,
           },
           notificationTimes: [],
         },

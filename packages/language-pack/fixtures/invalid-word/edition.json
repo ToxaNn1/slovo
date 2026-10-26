@@ -41,7 +41,9 @@
       "categories": "all",
       "correctionCategories": "all",
       "corrections": true,
-      "idioms": true
+      "idioms": true,
+      "synonymRows": true,
+      "tips": true
     }
   },
   "legalPages": {

@@ -124,6 +124,8 @@ const SQL = {
   wordIdsInCategory: 'SELECT id FROM words WHERE retired = 0 AND category_id = ? ORDER BY id',
   correctionIds: 'SELECT id FROM corrections WHERE retired = 0 ORDER BY id',
   idiomIds: 'SELECT id FROM idioms WHERE retired = 0 ORDER BY id',
+  synonymRowIds: 'SELECT id FROM synonym_rows WHERE retired = 0 ORDER BY id',
+  tipIds: 'SELECT id FROM tips WHERE retired = 0 ORDER BY id',
   entryKinds: (list: string) => `SELECT id, kind FROM entries WHERE id IN ${list}`,
   linkedWordIds: `
     SELECT words.id FROM word_corrections JOIN words ON words.id = word_corrections.word_id
@@ -540,6 +542,8 @@ export function createPackReader(db: PackDatabase): PackReader {
     listLinkedWordIds: (correctionId) => column(SQL.linkedWordIds, [correctionId], 'id'),
     listIdiomIds: () => column(SQL.idiomIds, [], 'id'),
     listLinkingSynonymRowIds: (wordId) => column(SQL.linkingSynonymRowIds, [wordId], 'id'),
+    listSynonymRowIds: () => column(SQL.synonymRowIds, [], 'id'),
+    listTipIds: () => column(SQL.tipIds, [], 'id'),
     metadata: async () => metadataOf(await db.getAllAsync<MetadataRow>(SQL.metadata, [])),
   };
 }
