@@ -1,4 +1,10 @@
-import { CorrectionIdSchema, IdiomIdSchema, WordIdSchema, type Entry } from '@slovo/contracts';
+import {
+  CorrectionIdSchema,
+  IdiomIdSchema,
+  SynonymRowIdSchema,
+  WordIdSchema,
+  type Entry,
+} from '@slovo/contracts';
 import { z } from 'zod';
 
 import type { BuildError } from './build-error';
@@ -13,7 +19,7 @@ export const ID_REGISTRY_FILE = 'content/ids.json';
  * Entry can take the id over from the users' Favorites and History.
  */
 export const IdRegistrySchema = z
-  .array(z.union([WordIdSchema, CorrectionIdSchema, IdiomIdSchema]))
+  .array(z.union([WordIdSchema, CorrectionIdSchema, IdiomIdSchema, SynonymRowIdSchema]))
   .refine((ids) => new Set(ids).size === ids.length, 'Ids must not repeat');
 
 /** A known id whose Entry file is gone, so its id could be issued again. */

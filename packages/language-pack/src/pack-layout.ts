@@ -4,6 +4,7 @@ import {
   type Correction,
   type Idiom,
   type PackMetadata,
+  type SynonymRow,
   type Word,
 } from '@slovo/contracts';
 
@@ -33,7 +34,7 @@ CREATE TABLE correction_categories (
 -- Every Entry, whatever its kind.
 CREATE TABLE entries (
   id TEXT PRIMARY KEY,
-  kind TEXT NOT NULL CHECK (kind IN ('word', 'correction', 'idiom'))
+  kind TEXT NOT NULL CHECK (kind IN ('word', 'correction', 'idiom', 'synonymRow'))
 ) WITHOUT ROWID;
 
 CREATE TABLE words (
@@ -153,6 +154,35 @@ CREATE TABLE idiom_examples (
   PRIMARY KEY (idiom_id, position)
 ) WITHOUT ROWID;
 
+CREATE TABLE synonym_rows (
+  id TEXT PRIMARY KEY REFERENCES entries (id),
+  dominant TEXT NOT NULL,
+  dominant_word_id TEXT REFERENCES words (id),
+  meaning TEXT NOT NULL,
+  example_text TEXT,
+  example_author TEXT,
+  retired INTEGER NOT NULL
+) WITHOUT ROWID;
+
+-- The members of a Synonym Row, in the card's order.
+CREATE TABLE synonym_row_members (
+  row_id TEXT NOT NULL REFERENCES synonym_rows (id),
+  position INTEGER NOT NULL,
+  text TEXT NOT NULL,
+  word_id TEXT REFERENCES words (id),
+  shade_note TEXT,
+  PRIMARY KEY (row_id, position)
+) WITHOUT ROWID;
+
+-- The Stress of a Synonym Row's words: member 0 is the dominant, member n
+-- the member at position n - 1.
+CREATE TABLE synonym_row_stress (
+  row_id TEXT NOT NULL REFERENCES synonym_rows (id),
+  member INTEGER NOT NULL,
+  position INTEGER NOT NULL,
+  PRIMARY KEY (row_id, member, position)
+) WITHOUT ROWID;
+
 -- Keyed by Entry id, so every kind of Entry records its sources here.
 CREATE TABLE sources (
   entry_id TEXT NOT NULL REFERENCES entries (id),
@@ -176,9 +206,12 @@ CREATE TABLE sources (
  * admits the Idioms and the Word's region of 0.8.8; format 4 keeps format 3's
  * layout and admits what 0.8.10 adds to the closed sets and fields, such as
  * the table `correction_categories`, the Correction's category column, the
- * Word's history column and the table `correction_literary_uses`.
+ * Word's history column and the table `correction_literary_uses`; format 5
+ * keeps format 4's layout, adding only the Synonym Row tables
+ * (`synonym_rows`, `synonym_row_members` and `synonym_row_stress`) and the
+ * kind `'synonymRow'`, and admits the Synonym Rows of 0.8.11 (ADR 0051).
  */
-export const PACK_FORMAT = 4;
+export const PACK_FORMAT = 5;
 
 /**
  * Where each field of the pack metadata lies in the `metadata` table, and how
@@ -225,4 +258,5 @@ export interface PackContent {
   readonly words: readonly Word[];
   readonly corrections: readonly Correction[];
   readonly idioms: readonly Idiom[];
+  readonly synonymRows: readonly SynonymRow[];
 }

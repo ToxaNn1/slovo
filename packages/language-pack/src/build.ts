@@ -90,7 +90,7 @@ function checkEdition(
     source.registry === undefined
       ? []
       : unregisteredEntries(
-          [...source.words, ...source.corrections, ...source.idioms],
+          [...source.words, ...source.corrections, ...source.idioms, ...source.synonymRows],
           source.registry,
         );
   const errors = [

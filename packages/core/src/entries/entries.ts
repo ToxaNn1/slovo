@@ -1,4 +1,4 @@
-import type { Category, Correction, Entry, EntryKind, Word } from '@slovo/contracts';
+import type { Category, Correction, Entry, Word } from '@slovo/contracts';
 
 import type { Edition } from '../edition/edition';
 import {
@@ -12,6 +12,18 @@ import {
 import type { ContentReadPort } from '../ports';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
+
+/**
+ * An Entry of a kind the screens show: every kind but the Synonym Row, which
+ * no screen shows yet (spec #730). The Entries leave Synonym Rows out, as if
+ * the Language Pack didn't have them, so no screen is handed one.
+ */
+export type ShownEntry = Exclude<Entry, { kind: 'synonymRow' }>;
+
+/** The kind of an Entry the screens show. */
+export type ShownKind = ShownEntry['kind'];
+
+const isShown = (entry: Entry): entry is ShownEntry => entry.kind !== 'synonymRow';
 
 /** The ids of Entries, each kind in its own list. */
 export interface EntryIds {
@@ -29,7 +41,7 @@ export type KindRefusal = `${MixKindName}-out-of-mix`;
 
 /** The eligible Entries of one kind, or why the kind, as a whole, is not eligible. */
 export type EligibleOfKind =
-  { readonly entries: readonly Entry[] } | { readonly refusal: KindRefusal };
+  { readonly entries: readonly ShownEntry[] } | { readonly refusal: KindRefusal };
 
 /**
  * The Entries of the Language Pack as this Edition and this user may see
@@ -59,19 +71,19 @@ export interface Entries {
    * changes while it is open. With `alsoOf`, the eligible Entries of those
    * kinds follow, none of a kind out of the Mix, and only `kind` can refuse.
    */
-  eligibleOfKind(kind: EntryKind, alsoOf?: readonly EntryKind[]): Promise<EligibleOfKind>;
+  eligibleOfKind(kind: ShownKind, alsoOf?: readonly ShownKind[]): Promise<EligibleOfKind>;
   /**
    * Any Entry by id, eligible or not: a Retired one, or a Correction or an
    * Idiom when the Edition turns its kind off. So the Entries the user keeps
-   * stay reachable.
+   * stay reachable. A Synonym Row reads as missing.
    */
-  get(id: string): Promise<Entry | undefined>;
+  get(id: string): Promise<ShownEntry | undefined>;
   /**
    * Any Entries by id, as `get` gives each, read together in one read of the
    * Language Pack, whatever their kinds. An id the Language Pack doesn't have
    * is not in the map.
    */
-  getMany(ids: readonly string[]): Promise<ReadonlyMap<string, Entry>>;
+  getMany(ids: readonly string[]): Promise<ReadonlyMap<string, ShownEntry>>;
   /**
    * Every Category of the Language Pack, with its display name, in its order,
    * read once: the pack never changes while it is open (ADR 0033).
@@ -153,19 +165,26 @@ export function createEntries(
   };
 
   /** How to read every live Entry of a kind from the Language Pack. */
-  const readLive: Record<EntryKind, () => Promise<readonly Entry[]>> = {
+  const readLive: Record<ShownKind, () => Promise<readonly Entry[]>> = {
     word: () => content.listWords(),
     correction: async () => content.getEntries(await listIds.correction()),
     idiom: async () => content.getEntries(await listIds.idiom()),
   };
 
+  /** The Entries of the ids the screens show, read together. */
+  const readShown = async (ids: readonly string[]) =>
+    (await content.getEntries(ids)).filter(isShown);
+
   /**
    * The live Entries of each kind by id, read once: the Language Pack never
    * changes while it is open. A read that fails is tried again on the next call.
    */
-  const byId = (kind: EntryKind) =>
-    readOnce(async () => new Map((await readLive[kind]()).map((entry) => [entry.id, entry])));
-  const live: Record<EntryKind, () => Promise<ReadonlyMap<string, Entry>>> = {
+  const byId = (kind: ShownKind) =>
+    readOnce(
+      async () =>
+        new Map((await readLive[kind]()).filter(isShown).map((entry) => [entry.id, entry])),
+    );
+  const live: Record<ShownKind, () => Promise<ReadonlyMap<string, ShownEntry>>> = {
     word: byId('word'),
     correction: byId('correction'),
     idiom: byId('idiom'),
@@ -234,15 +253,15 @@ export function createEntries(
   }
 
   /** The ids of the eligible Entries of the kind. */
-  const idsOfKind: Record<EntryKind, (ids: EntryIds) => readonly string[]> = {
+  const idsOfKind: Record<ShownKind, (ids: EntryIds) => readonly string[]> = {
     word: ({ words }) => words,
     correction: ({ corrections }) => corrections,
     idiom: ({ idioms }) => idioms,
   };
 
   async function eligibleOfKind(
-    kind: EntryKind,
-    alsoOf: readonly EntryKind[] = [],
+    kind: ShownKind,
+    alsoOf: readonly ShownKind[] = [],
   ): Promise<EligibleOfKind> {
     if (kind !== 'word' && !kindInMix(kind, await readUserMix())) {
       return { refusal: `${featureOfKind(kind)}-out-of-mix` };
@@ -260,12 +279,12 @@ export function createEntries(
     eligible,
     eligibleOfKind,
     async get(id) {
-      return (await content.getEntries([id]))[0];
+      return (await readShown([id]))[0];
     },
     async getMany(ids) {
       const unique = [...new Set(ids)];
       if (unique.length === 0) return new Map();
-      return new Map((await content.getEntries(unique)).map((entry) => [entry.id, entry]));
+      return new Map((await readShown(unique)).map((entry) => [entry.id, entry]));
     },
     categories,
     correctionCategories,

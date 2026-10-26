@@ -1,5 +1,5 @@
-import { fill, type EditionStrings, type EntryKind, type Plural } from '@slovo/contracts';
-import type { KnownCounts } from '@slovo/core';
+import { fill, type EditionStrings, type Plural } from '@slovo/contracts';
+import type { KnownCounts, ShownKind } from '@slovo/core';
 
 /**
  * The row of the Known Entries of the stats sheet: the Known count of each
@@ -9,7 +9,7 @@ import type { KnownCounts } from '@slovo/core';
 export function knownLine(
   strings: Pick<EditionStrings['stats'], 'known' | 'knownJoiner' | 'knownByKind'>,
   known: KnownCounts,
-  kinds: readonly EntryKind[],
+  kinds: readonly ShownKind[],
   count: (forms: Plural, count: number) => string,
 ): string {
   return fill(strings.known, {

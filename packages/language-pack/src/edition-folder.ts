@@ -10,12 +10,14 @@ import {
   EditionTokensSchema,
   IdiomSchema,
   SplashDecorSchema,
+  SynonymRowSchema,
   WidgetSnapshotSchema,
   WordSchema,
   type Correction,
   type EditionConfig,
   type Entry,
   type Idiom,
+  type SynonymRow,
   type Word,
 } from '@slovo/contracts';
 import type { z } from 'zod';
@@ -50,9 +52,15 @@ const DECOR_DIR = 'decor';
 const WORDS_DIR = 'content/words';
 const CORRECTIONS_DIR = 'content/corrections';
 const IDIOMS_DIR = 'content/idioms';
+const SYNONYM_ROWS_DIR = 'content/synonym-rows';
 
 /** The folder each kind of Entry is authored in, by the prefix of its id. */
-const ENTRY_DIRS: Record<string, string> = { w_: WORDS_DIR, c_: CORRECTIONS_DIR, i_: IDIOMS_DIR };
+const ENTRY_DIRS: Record<string, string> = {
+  w_: WORDS_DIR,
+  c_: CORRECTIONS_DIR,
+  i_: IDIOMS_DIR,
+  r_: SYNONYM_ROWS_DIR,
+};
 
 /** The contract each JSON file of an Edition is checked against. */
 const SCHEMAS = {
@@ -97,6 +105,7 @@ export interface AuthoredContent {
   readonly words: readonly Authored<Word>[];
   readonly corrections: readonly Authored<Correction>[];
   readonly idioms: readonly Authored<Idiom>[];
+  readonly synonymRows: readonly Authored<SynonymRow>[];
   /** The Entry files that couldn't be read or broke the schema; the other Entries are kept. */
   readonly errors: readonly BuildError[];
 }
@@ -117,7 +126,7 @@ export interface EditionFiles {
   decorFile(name: string): string;
   /** Every font file the Edition brings, in code-unit order. */
   fonts(): string[];
-  /** Every Word, Correction and Idiom the Edition authors, in a stable order. */
+  /** Every Word, Correction, Idiom and Synonym Row the Edition authors, in a stable order. */
   entries(): AuthoredContent;
   /** The file an Entry with this id is authored in, relative to the folder. */
   entryFile(id: string): string;
@@ -226,7 +235,8 @@ export function editionFiles(dir: string): EditionFiles {
       const words = readEntries(dir, WORDS_DIR, WordSchema, errors);
       const corrections = readEntries(dir, CORRECTIONS_DIR, CorrectionSchema, errors);
       const idioms = readEntries(dir, IDIOMS_DIR, IdiomSchema, errors);
-      return { words, corrections, idioms, errors };
+      const synonymRows = readEntries(dir, SYNONYM_ROWS_DIR, SynonymRowSchema, errors);
+      return { words, corrections, idioms, synonymRows, errors };
     },
     entryFile: (id) => `${ENTRY_DIRS[id.slice(0, 2)] ?? CORRECTIONS_DIR}/${id}.json`,
   };

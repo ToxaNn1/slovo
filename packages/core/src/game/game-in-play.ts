@@ -1,6 +1,4 @@
-import type { Entry } from '@slovo/contracts';
-
-import type { EligibleOfKind } from '../entries/entries';
+import type { EligibleOfKind, ShownEntry } from '../entries/entries';
 import type { AnswerSheet, GameMode, RoundContent, RoundOption, TextRange } from './game-mode';
 import { GAME_ROUNDS, type PlannedRound, type RoundPlanner } from './round-plan';
 
@@ -31,7 +29,7 @@ export interface Round {
 /** A Round the reader answered: what the Game Review lists. */
 export interface PlayedRound extends Round {
   /** The Entry the Round asked about. */
-  readonly entry: Entry;
+  readonly entry: ShownEntry;
   readonly answer: RoundAnswer;
   /** Whether the reader chose the right option. */
   readonly right: boolean;

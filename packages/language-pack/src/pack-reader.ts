@@ -2,6 +2,7 @@ import {
   CategorySchema,
   CorrectionSchema,
   IdiomSchema,
+  SynonymRowSchema,
   WordSchema,
   type Correction,
   type Entry,
@@ -10,6 +11,7 @@ import {
   type LiteraryUse,
   type PackMetadata,
   type Source,
+  type SynonymRow,
   type Word,
 } from '@slovo/contracts';
 import type { ContentReadPort } from '@slovo/core';
@@ -78,6 +80,22 @@ interface IdiomRow {
   retired: number;
 }
 
+interface SynonymRowRow {
+  id: string;
+  dominant: string;
+  dominant_word_id: string | null;
+  meaning: string;
+  example_text: string | null;
+  example_author: string | null;
+  retired: number;
+}
+
+interface RowMemberRow {
+  text: string;
+  word_id: string | null;
+  shade_note: string | null;
+}
+
 interface SourceRow {
   title: string;
   url: string | null;
@@ -134,6 +152,29 @@ const idiomParts = (list: string) => ({
   idioms: `SELECT * FROM idioms WHERE id IN ${list} ORDER BY id`,
   definitions: `SELECT idiom_id AS entry_id, text FROM idiom_definitions WHERE idiom_id IN ${list} ORDER BY idiom_id, position`,
   examples: `SELECT idiom_id AS entry_id, text, author FROM idiom_examples WHERE idiom_id IN ${list} ORDER BY idiom_id, position`,
+  sources: `SELECT entry_id, title, url, archived_url FROM sources WHERE entry_id IN ${list} ORDER BY entry_id, position`,
+});
+
+/**
+ * The parts of the Synonym Rows of the ids, each row with the id of its
+ * Synonym Row. A link to a Word reads back only while the Word is live, so a
+ * Word Retired later leaves its dominant or member as plain text (ADR 0051).
+ */
+const synonymRowParts = (list: string) => ({
+  rows: `
+    SELECT synonym_rows.id, dominant, words.id AS dominant_word_id, meaning, example_text,
+      example_author, synonym_rows.retired
+    FROM synonym_rows
+    LEFT JOIN words ON words.id = synonym_rows.dominant_word_id AND words.retired = 0
+    WHERE synonym_rows.id IN ${list} ORDER BY synonym_rows.id
+  `,
+  members: `
+    SELECT row_id AS entry_id, text, words.id AS word_id, shade_note
+    FROM synonym_row_members
+    LEFT JOIN words ON words.id = synonym_row_members.word_id AND words.retired = 0
+    WHERE row_id IN ${list} ORDER BY row_id, position
+  `,
+  stress: `SELECT row_id AS entry_id, member, position FROM synonym_row_stress WHERE row_id IN ${list} ORDER BY row_id, member, position`,
   sources: `SELECT entry_id, title, url, archived_url FROM sources WHERE entry_id IN ${list} ORDER BY entry_id, position`,
 });
 
@@ -331,11 +372,57 @@ export function createPackReader(db: PackDatabase): PackReader {
     return parts.flat();
   }
 
+  /** The Synonym Rows of the ids, each with all its parts, four queries per `IDS_PER_READ`. */
+  async function readSynonymRows(ids: readonly string[]): Promise<SynonymRow[]> {
+    const parts = await Promise.all(
+      inParts(ids).map(async ({ list, params }) => {
+        const sql = synonymRowParts(list);
+        const [rows, members, stress, rowSources] = await Promise.all([
+          db.getAllAsync<SynonymRowRow>(sql.rows, params),
+          db.getAllAsync<WithEntryId<RowMemberRow>>(sql.members, params).then(byEntry),
+          db
+            .getAllAsync<WithEntryId<{ member: number; position: number }>>(sql.stress, params)
+            .then(byEntry),
+          db.getAllAsync<WithEntryId<SourceRow>>(sql.sources, params).then(byEntry),
+        ]);
+        return rows.map((row) => {
+          const stressOf = (member: number) =>
+            (stress.get(row.id) ?? []).filter((r) => r.member === member).map((r) => r.position);
+          const linked = (wordId: string | null) => (wordId === null ? {} : { wordId });
+          // Parsing checks the pack against the contracts and types the Synonym Row.
+          return SynonymRowSchema.parse({
+            id: row.id,
+            dominant: { text: row.dominant, stress: stressOf(0), ...linked(row.dominant_word_id) },
+            meaning: row.meaning,
+            members: (members.get(row.id) ?? []).map((member, position) => ({
+              text: member.text,
+              stress: stressOf(position + 1),
+              ...linked(member.word_id),
+              ...(member.shade_note === null ? {} : { shadeNote: member.shade_note }),
+            })),
+            ...(row.example_text === null
+              ? {}
+              : {
+                  example:
+                    row.example_author === null
+                      ? { text: row.example_text }
+                      : { text: row.example_text, author: row.example_author },
+                }),
+            sources: (rowSources.get(row.id) ?? []).map(sourceOf),
+            retired: row.retired === 1,
+          });
+        });
+      }),
+    );
+    return parts.flat();
+  }
+
   /** How to read the Entries of each kind by id. */
   const readOfKind: Record<EntryKind, (ids: readonly string[]) => Promise<Entry[]>> = {
     word: readWordsOf,
     correction: readCorrections,
     idiom: readIdioms,
+    synonymRow: readSynonymRows,
   };
 
   /**

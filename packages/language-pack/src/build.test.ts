@@ -753,6 +753,108 @@ describe('buildLanguagePack', () => {
     });
   });
 
+  describe('Synonym Rows', () => {
+    /** A Synonym Row with every field, its dominant and one member linking a Word. */
+    const fullRow = {
+      id: 'r_fx0001',
+      dominant: { text: 'говорити', stress: [5], wordId: 'w_fx0002' },
+      meaning: 'Тестове значення: висловлювати думки словами.',
+      members: [
+        { text: 'балакати', stress: [3], wordId: 'w_fx0002', shadeNote: 'розмовне' },
+        { text: 'мовити', stress: [1] },
+        { text: 'казати', stress: [3], shadeNote: 'нейтральне' },
+        { text: 'теревенити', stress: [7] },
+        { text: 'гомоніти', stress: [5] },
+      ],
+      example: { text: 'Вони довго говорили біля хати.', author: 'Тестовий автор' },
+      sources: [{ title: 'Тестове джерело', url: 'https://example.com/rows' }],
+    };
+
+    function withRows(rows: Json[]): string {
+      const editionDir = copyFixture('valid');
+      mkdirSync(join(editionDir, 'content/synonym-rows'), { recursive: true });
+      for (const row of rows) {
+        writeFileSync(
+          join(editionDir, `content/synonym-rows/${String(row['id'])}.json`),
+          JSON.stringify(row),
+        );
+      }
+      record(editionDir);
+      return editionDir;
+    }
+
+    async function readRows(outFile: string, ids: string[]) {
+      const pack = openLanguagePack(outFile);
+      try {
+        return await pack.getEntries(ids);
+      } finally {
+        pack.close();
+      }
+    }
+
+    it('builds a Synonym Row and reads it back with every field, in pack format 5', async () => {
+      const editionDir = withRows([fullRow]);
+      const outFile = packPath();
+
+      const result = buildLanguagePack({ editionDir, outFile });
+
+      expect(result.ok ? [] : result.errors).toEqual([]);
+      expect(result).toMatchObject({ ok: true, metadata: { packFormat: 5 } });
+      expect(await readRows(outFile, ['r_fx0001'])).toEqual([
+        { ...fullRow, kind: 'synonymRow', retired: false },
+      ]);
+    });
+
+    it('reads back a Retired Synonym Row and a row of plain members without notes, example or links', async () => {
+      const plainRow = {
+        id: 'r_fx0002',
+        dominant: { text: 'іти', stress: [0] },
+        meaning: 'Тестове значення: рухатися пішки.',
+        members: ['простувати', 'чимчикувати', 'шкандибати', 'дибати', 'сунути'].map((text) => ({
+          text,
+          stress: [1],
+        })),
+        sources: [{ title: 'Тестове джерело' }],
+        retired: true,
+      };
+      const outFile = packPath();
+
+      buildLanguagePack({ editionDir: withRows([plainRow]), outFile });
+
+      expect(await readRows(outFile, ['r_fx0002'])).toEqual([{ ...plainRow, kind: 'synonymRow' }]);
+    });
+
+    it('drops the link to a Retired Word, keeping the dominant or the member as plain text', async () => {
+      const row = {
+        ...fullRow,
+        dominant: { ...fullRow.dominant, wordId: 'w_fx0001' },
+        members: fullRow.members.map((member, place) =>
+          place === 1 ? { ...member, wordId: 'w_fx0001' } : member,
+        ),
+      };
+      const outFile = packPath();
+
+      buildLanguagePack({ editionDir: withRows([row]), outFile });
+
+      expect(await readRows(outFile, ['r_fx0001'])).toEqual([
+        {
+          ...fullRow,
+          kind: 'synonymRow',
+          dominant: { text: 'говорити', stress: [5] },
+          retired: false,
+        },
+      ]);
+    });
+
+    it('keeps Synonym Rows out of the Entries the screens are given', async () => {
+      const outFile = packPath();
+
+      buildLanguagePack({ editionDir: withRows([fullRow]), outFile });
+
+      expect(await withEntries(outFile, (entries) => entries.get('r_fx0001'))).toBeUndefined();
+    });
+  });
+
   it("allows in an expression only the Edition's expression punctuation besides a Lemma's", () => {
     const editionDir = copyFixture('valid');
     editJson(editionDir, 'content/idioms/i_fx0001.json', (idiom) => ({
@@ -1100,7 +1202,7 @@ describe('buildLanguagePack', () => {
       editionId: 'fixture',
       contentVersion: 7,
       contentChecksum: expect.stringMatching(/^sha256:[0-9a-f]{64}$/) as string,
-      packFormat: 4,
+      packFormat: 5,
     });
     expect(b.metadata).toEqual(a.metadata);
     expect(readFileSync(second).equals(readFileSync(first))).toBe(true);
@@ -1111,8 +1213,8 @@ describe('buildLanguagePack', () => {
 
     const result = buildLanguagePack({ editionDir: fixture('valid'), outFile });
 
-    expect(result).toMatchObject({ ok: true, metadata: { packFormat: 4 } });
-    expect((await readBack(outFile)).metadata.packFormat).toBe(4);
+    expect(result).toMatchObject({ ok: true, metadata: { packFormat: 5 } });
+    expect((await readBack(outFile)).metadata.packFormat).toBe(5);
   });
 
   it.each([

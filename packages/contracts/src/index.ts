@@ -83,6 +83,17 @@ export {
   type IdiomInput,
   type IdiomType,
 } from './idiom';
+export {
+  SHADE_NOTE_MAX_LENGTH,
+  SynonymRowDominantSchema,
+  SynonymRowIdSchema,
+  SynonymRowMemberSchema,
+  SynonymRowSchema,
+  type SynonymRow,
+  type SynonymRowDominant,
+  type SynonymRowInput,
+  type SynonymRowMember,
+} from './synonym-row';
 export { EntrySchema, type Entry, type EntryKind } from './entry';
 export { SYNC_BATCH_SIZE } from './sync';
 export { SourceSchema, type Source } from './shared';
