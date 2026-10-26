@@ -33,6 +33,20 @@ describe('the Ukrainian Edition', () => {
     expect(edition.isFeatureEnabled('selfCheck')).toBe(true);
     expect(edition.isFeatureEnabled('rarityFloor')).toBe(true);
     expect(edition.isFeatureEnabled('gameReview')).toBe(true);
+    expect(edition.isFeatureEnabled('gameGuessWord')).toBe(true);
+    expect(edition.isFeatureEnabled('gameCorrection')).toBe(true);
+    expect(edition.isFeatureEnabled('gameStress')).toBe(true);
+    expect(edition.isFeatureEnabled('gamePairs')).toBe(true);
+    expect(edition.isFeatureEnabled('gameSurvival')).toBe(true);
+    expect(edition.isFeatureEnabled('gameTimed')).toBe(true);
+    expect(edition.isFeatureEnabled('gameIdiomMeaning')).toBe(true);
+    expect(edition.isFeatureEnabled('gameAnglicism')).toBe(true);
+    expect(edition.isFeatureEnabled('gameBuildIdiom')).toBe(true);
+    expect(edition.isFeatureEnabled('gameTypeWord')).toBe(true);
+    expect(edition.isFeatureEnabled('gameAnagram')).toBe(true);
+    expect(edition.isFeatureEnabled('gameByLetters')).toBe(true);
+    expect(edition.isFeatureEnabled('gameOrigin')).toBe(true);
+    expect(edition.isFeatureEnabled('dailyCrossword')).toBe(true);
   });
 
   it('starts new users on the agreed defaults', () => {
