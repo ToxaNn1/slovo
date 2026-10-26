@@ -3,6 +3,31 @@ import { STRESS_MARK, withoutStress } from '@slovo/core';
 
 import type { BuildError } from './build-error';
 
+/**
+ * Checks that each Stress position of a text falls on one of its letters, and
+ * on a vowel when the Edition names its vowels; `fail` gets the index of each
+ * position that does not, and why.
+ */
+export function checkStress(
+  config: EditionConfig,
+  { text, stress, named }: { text: string; stress: readonly number[]; named: string },
+  fail: (index: number, message: string) => void,
+): void {
+  const { vowels } = config.languageTraits;
+  const letters = Array.from(text);
+  stress.forEach((position, index) => {
+    const letter = letters[position];
+    if (letter === undefined) {
+      fail(
+        index,
+        `Position ${String(position)} is out of range for the ${String(letters.length)}-letter ${named}`,
+      );
+    } else if (vowels !== undefined && !vowels.includes(letter.toLocaleLowerCase(config.locale))) {
+      fail(index, `Position ${String(position)} is "${letter}", not a vowel`);
+    }
+  });
+}
+
 /** An Entry that passed the schema, with the file it was authored in. */
 export interface Authored<T extends Entry> {
   readonly file: string;
@@ -106,21 +131,13 @@ export function checkContent(
       fail('stress', 'Required: the Edition marks Stress');
       continue;
     }
-    const letters = Array.from(word.lemma);
-    word.stress.forEach((position, index) => {
-      const letter = letters[position];
-      if (letter === undefined) {
-        fail(
-          `stress.${String(index)}`,
-          `Position ${String(position)} is out of range for the ${String(letters.length)}-letter Lemma`,
-        );
-      } else if (
-        vowels !== undefined &&
-        !vowels.includes(letter.toLocaleLowerCase(config.locale))
-      ) {
-        fail(`stress.${String(index)}`, `Position ${String(position)} is "${letter}", not a vowel`);
-      }
-    });
+    checkStress(
+      config,
+      { text: word.lemma, stress: word.stress, named: 'Lemma' },
+      (index, message) => {
+        fail(`stress.${String(index)}`, message);
+      },
+    );
   }
 
   // An expression holds words, so it may also hold a space, its letters in

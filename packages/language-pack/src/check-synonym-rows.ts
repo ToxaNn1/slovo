@@ -1,7 +1,7 @@
 import type { EditionConfig, SynonymRow, Word } from '@slovo/contracts';
 
 import type { BuildError } from './build-error';
-import type { Authored } from './check-content';
+import { checkStress, type Authored } from './check-content';
 
 /**
  * The checks the schema can't make on a Synonym Row alone: they need the
@@ -16,7 +16,6 @@ export function checkSynonymRows(
   synonymRows: readonly Authored<SynonymRow>[],
 ): BuildError[] {
   const errors: BuildError[] = [];
-  const { vowels } = config.languageTraits;
   const wordIds = new Set(words.map(({ entry }) => entry.id));
 
   for (const { file, entry: row } of synonymRows) {
@@ -32,24 +31,13 @@ export function checkSynonymRows(
       if (word.wordId !== undefined && !wordIds.has(word.wordId)) {
         fail(`${field}.wordId`, `Unknown Word "${word.wordId}"`);
       }
-      const letters = Array.from(word.text);
-      word.stress.forEach((position, index) => {
-        const letter = letters[position];
-        if (letter === undefined) {
-          fail(
-            `${field}.stress.${String(index)}`,
-            `Position ${String(position)} is out of range for the ${String(letters.length)}-letter text`,
-          );
-        } else if (
-          vowels !== undefined &&
-          !vowels.includes(letter.toLocaleLowerCase(config.locale))
-        ) {
-          fail(
-            `${field}.stress.${String(index)}`,
-            `Position ${String(position)} is "${letter}", not a vowel`,
-          );
-        }
-      });
+      checkStress(
+        config,
+        { text: word.text, stress: word.stress, named: 'text' },
+        (index, message) => {
+          fail(`${field}.stress.${String(index)}`, message);
+        },
+      );
     }
 
     const placeByText = new Map<string, number>();
