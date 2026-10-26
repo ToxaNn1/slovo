@@ -1,5 +1,7 @@
 import type { Correction, Idiom, SynonymRow, Tip, Word } from '@slovo/contracts';
 
+import type { PlayedRound, Round, RoundAnswer } from './game/game-in-play';
+import type { RoundOption } from './game/game-mode';
 import type { KnownCounts } from './knowledge/knowledge';
 import type { Clock, ContentReadPort, Random } from './ports';
 
@@ -173,4 +175,22 @@ export function countingReads(content: ContentReadPort): {
     ]),
   ) as unknown as ContentReadPort;
   return { content: counted, reads: () => reads };
+}
+
+/** The options of a Round of the pick form, the one every Core mode of 0.8.11 plays. */
+export function optionsOf(round: Round): readonly RoundOption[] {
+  if (round.form !== 'pick') throw new Error(`Round ${String(round.number)} is no pick`);
+  return round.options;
+}
+
+/** A Round played in the pick form, its options and its answer's places narrowed to it. */
+export function pickPlayed(round: PlayedRound): PlayedRound & {
+  readonly form: 'pick';
+  readonly options: readonly RoundOption[];
+  readonly answer: RoundAnswer & { readonly form: 'pick' };
+} {
+  if (round.form !== 'pick' || round.answer.form !== 'pick') {
+    throw new Error(`Round ${String(round.number)} is no pick`);
+  }
+  return { ...round, answer: round.answer };
 }

@@ -90,6 +90,12 @@ function detailsOf({ entry, answer }: PlayedRound): GameReviewDetails {
   }
 }
 
+/** The option the reader picked instead of the right one; nothing on a right answer. Other answer forms: #777. */
+function pickedOf(round: PlayedRound): RoundOption | undefined {
+  if (round.right || round.form !== 'pick' || round.answer.form !== 'pick') return undefined;
+  return round.options[round.answer.chosen];
+}
+
 /** The Game Review of the Rounds played: one item for each, in their order. */
 export function buildGameReview(rounds: readonly PlayedRound[]): GameReviewItem[] {
   return rounds.map((round) => ({
@@ -97,7 +103,7 @@ export function buildGameReview(rounds: readonly PlayedRound[]): GameReviewItem[
     entryId: round.entry.id,
     title: titleOf(round),
     right: round.right,
-    picked: round.right ? undefined : round.options[round.answer.chosen],
+    picked: pickedOf(round),
     details: detailsOf(round),
   }));
 }

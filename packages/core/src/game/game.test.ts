@@ -26,13 +26,14 @@ import {
   type CurrentGame,
   type FeatureSwitch,
   type GameMode,
+  type RoundContent,
   type Round,
   type Schedule,
   type UserStateChanges,
   type UserStatePort,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
-import { idiom, seededRandom } from '../test-support';
+import { idiom, optionsOf, pickPlayed, seededRandom } from '../test-support';
 
 function word(
   id: string,
@@ -112,7 +113,7 @@ function answerOf(round: Round): Word {
 
 /** The Words a Round offers, in the order shown. */
 const optionWordsOf = (round: Round) =>
-  round.options.map(({ text }) => {
+  optionsOf(round).map(({ text }) => {
     const option = words.find((w) => renderStress(w) === text);
     if (option === undefined) throw new Error(`No Word reads «${text}»`);
     return option;
@@ -120,7 +121,7 @@ const optionWordsOf = (round: Round) =>
 
 /** The option that names the answer. */
 const rightOf = (round: Round) =>
-  round.options.findIndex(({ text }) => text === renderStress(answerOf(round)));
+  optionsOf(round).findIndex(({ text }) => text === renderStress(answerOf(round)));
 
 const clock: Clock = {
   now: () => new Date('2026-10-11T09:00:00+03:00'),
@@ -234,7 +235,10 @@ function current(app: Composition): CurrentGame {
 async function play(app: Composition, right: boolean, rightOption = rightOf): Promise<void> {
   const { round } = current(app);
   const option = rightOption(round);
-  void app.game.answer(right ? option : (option + 1) % round.options.length);
+  void app.game.answer({
+    form: 'pick',
+    option: right ? option : (option + 1) % optionsOf(round).length,
+  });
   await app.game.next();
 }
 
@@ -306,11 +310,11 @@ describe('a Round of «Вгадай слово»', () => {
       status: 'playing',
     });
     expect(game.round).toMatchObject({ number: 1, answer: undefined });
-    expect(game.round.options).toHaveLength(4);
+    expect(optionsOf(game.round)).toHaveLength(4);
     const answer = answerOf(game.round);
     const options = optionWordsOf(game.round);
     expect(options).toContain(answer);
-    expect(game.round.options.map((option) => option.stressedVowels)).toEqual(
+    expect(optionsOf(game.round).map((option) => option.stressedVowels)).toEqual(
       options.map((option) => [option.lemma[option.stress[0] ?? 0]]),
     );
   });
@@ -320,12 +324,14 @@ describe('a Round of «Вгадай слово»', () => {
     await app.game.start('guess-word');
     const { round } = current(app);
 
-    void app.game.answer(rightOf(round));
+    void app.game.answer({ form: 'pick', option: rightOf(round) });
 
     const answer = answerOf(round);
     expect(current(app).round.answer).toEqual({
+      form: 'pick',
       chosen: rightOf(round),
       correct: rightOf(round),
+      right: true,
       sheet: {
         answer: { text: renderStress(answer), stressedVowels: [answer.lemma[0]] },
         example: { text: `An example of ${answer.id.slice(2)}.`, author: 'An author' },
@@ -340,7 +346,7 @@ describe('a Round of «Вгадай слово»', () => {
       await app.game.start('guess-word');
       while (current(app).status === 'playing') {
         const { round } = current(app);
-        void app.game.answer(rightOf(round));
+        void app.game.answer({ form: 'pick', option: rightOf(round) });
         sheets.push({ answer: answerOf(round), sheet: current(app).round.answer?.sheet });
         await app.game.next();
       }
@@ -443,7 +449,7 @@ describe('the idioms «Вгадай слово» asks about', () => {
 
   /** The Entries a Round offers, in the order shown. */
   const offered = (round: Round) =>
-    round.options.map(({ text }) => {
+    optionsOf(round).map(({ text }) => {
       const option = entries.find((entry) => textOf(entry) === text);
       if (option === undefined) throw new Error(`No Entry reads «${text}»`);
       return option;
@@ -482,7 +488,7 @@ describe('the idioms «Вгадай слово» asks about', () => {
     const played = await playAll(app);
 
     expect(played).toHaveLength(GAME_ROUNDS);
-    for (const { entry, prompt, options, answer } of played) {
+    for (const { entry, prompt, options, answer } of played.map(pickPlayed)) {
       if (entry.kind !== 'idiom') throw new Error(`A Round asked about ${entry.id}`);
       expect(prompt).toBe(entry.primaryDefinition);
       expect(options).toHaveLength(4);
@@ -702,7 +708,9 @@ describe('the Synonym Rows «Вгадай слово» asks about', () => {
   /** The option that names a member of the row asked, or the Word asked. */
   const rightAmong = (round: Round) =>
     rowOfRound(round) !== undefined
-      ? round.options.findIndex(({ text }) => rowAsked(round).members.map(shownAs).includes(text))
+      ? optionsOf(round).findIndex(({ text }) =>
+          rowAsked(round).members.map(shownAs).includes(text),
+        )
       : rightOf(round);
 
   /** The Core composition over a pack of the Words and the rows, with Synonym Rows on. */
@@ -748,7 +756,7 @@ describe('the Synonym Rows «Вгадай слово» asks about', () => {
 
     const rowRounds = played.filter(({ entry }) => entry.kind === 'synonymRow');
     expect(rowRounds.map(({ entry }) => entry.id).toSorted()).toEqual(live.slice(0, 5).toSorted());
-    for (const { entry, prompt, options, answer } of rowRounds) {
+    for (const { entry, prompt, options, answer } of rowRounds.map(pickPlayed)) {
       if (entry.kind !== 'synonymRow') throw new Error(`A Round asked about ${entry.id}`);
       expect(prompt).toBe(shownAs(entry.dominant));
       expect(options).toHaveLength(4);
@@ -780,8 +788,10 @@ describe('the Synonym Rows «Вгадай слово» asks about', () => {
       for (const round of rowRounds) {
         const asked = rowAsked(round);
         const others = rows.filter(({ id }) => live.includes(id) && id !== asked.id);
-        const distractors = round.options.filter((_, index) => index !== round.answer.correct);
-        expect(new Set(round.options.map(({ text }) => text)).size).toBe(4);
+        const distractors = optionsOf(round).filter(
+          (_, index) => index !== pickPlayed(round).answer.correct,
+        );
+        expect(new Set(optionsOf(round).map(({ text }) => text)).size).toBe(4);
         for (const { text } of distractors) {
           expect(textsOf(asked)).not.toContain(text);
           expect(others.some((row) => row.members.map(shownAs).includes(text))).toBe(true);
@@ -844,7 +854,7 @@ describe('the Synonym Rows «Вгадай слово» asks about', () => {
         entryId: entry.id,
         title: { text: round.prompt, stressedVowels: [expect.any(String)] },
         right: !['r_go', 'r_say'].includes(entry.id),
-        picked: round.right ? undefined : round.options[round.answer.chosen],
+        picked: round.right ? undefined : optionsOf(round)[pickPlayed(round).answer.chosen],
         details: {
           kind: 'synonymRow',
           members: entry.members.map((member) => ({
@@ -906,7 +916,7 @@ describe('the Tips «Вгадай слово» asks about', () => {
     const tip = tipOfRound(round);
     return tip === undefined
       ? rightOf(round)
-      : round.options.findIndex(({ text }) => text === tip.gameQuestion.rightAnswer);
+      : optionsOf(round).findIndex(({ text }) => text === tip.gameQuestion.rightAnswer);
   };
 
   /** The Core composition over a pack of the Words and the Tips, with Tips on. */
@@ -944,7 +954,7 @@ describe('the Tips «Вгадай слово» asks about', () => {
 
     const tipRounds = played.filter(({ entry }) => entry.kind === 'tip');
     expect(tipRounds.map(({ entry }) => entry.id).toSorted()).toEqual(live.toSorted());
-    for (const { entry, prompt, options, answer } of tipRounds) {
+    for (const { entry, prompt, options, answer } of tipRounds.map(pickPlayed)) {
       if (entry.kind !== 'tip') throw new Error(`A Round asked about ${entry.id}`);
       const { gameQuestion } = entry;
       expect(prompt).toBe(gameQuestion.prompt);
@@ -977,7 +987,7 @@ describe('the Tips «Вгадай слово» asks about', () => {
     const places = new Set<number>();
     for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
       const app = await unknown(await runWith({ seed }), live);
-      for (const { entry, answer } of await playAll(app)) {
+      for (const { entry, answer } of (await playAll(app)).map(pickPlayed)) {
         if (entry.kind === 'tip') places.add(answer.correct);
       }
     }
@@ -1016,7 +1026,7 @@ describe('the Tips «Вгадай слово» asks about', () => {
         entryId: entry.id,
         title: { text: entry.title, stressedVowels: [] },
         right: !['t_time', 't_greet'].includes(entry.id),
-        picked: round.right ? undefined : round.options[round.answer.chosen],
+        picked: round.right ? undefined : optionsOf(round)[pickPlayed(round).answer.chosen],
         details: { kind: 'tip', explanation: entry.explanation },
       });
     }
@@ -1043,10 +1053,10 @@ describe('the rules of a Game', () => {
     const app = await run();
     await app.game.start('guess-word');
     const right = rightOf(current(app).round);
-    void app.game.answer(right);
+    void app.game.answer({ form: 'pick', option: right });
     const answered = app.game.state;
 
-    void app.game.answer((right + 1) % 4);
+    void app.game.answer({ form: 'pick', option: (right + 1) % 4 });
 
     expect(app.game.state).toBe(answered);
     expect(current(app)).toMatchObject({ lives: 5, status: 'answered' });
@@ -1057,7 +1067,7 @@ describe('the rules of a Game', () => {
     await app.game.start('guess-word');
     const right = rightOf(current(app).round);
 
-    void app.game.answer((right + 1) % 4);
+    void app.game.answer({ form: 'pick', option: (right + 1) % 4 });
 
     expect(current(app)).toMatchObject({ lives: 4, roundsPassed: 0, status: 'answered' });
     expect(current(app).round.answer).toMatchObject({ chosen: (right + 1) % 4, correct: right });
@@ -1125,7 +1135,7 @@ describe('the rules of a Game', () => {
     await app.game.start('guess-word');
     for (let round = 1; round <= 4; round += 1) await play(app, false);
     const { round } = current(app);
-    void app.game.answer((rightOf(round) + 1) % 4);
+    void app.game.answer({ form: 'pick', option: (rightOf(round) + 1) % 4 });
 
     expect(current(app)).toMatchObject({ lives: 0, roundsPassed: 4, status: 'answered' });
     await app.game.next();
@@ -1146,9 +1156,11 @@ describe('the rules of a Game', () => {
       const wrong = [2, 5].includes(round.number);
       expect(entry.entry).toEqual(answerOf(round));
       expect(entry.right).toBe(!wrong);
-      expect(entry.answer.correct).toBe(rightOf(round));
-      expect(entry.answer.chosen).toBe(wrong ? (rightOf(round) + 1) % 4 : rightOf(round));
-      expect(entry.options).toEqual(round.options);
+      expect(entry.answer).toMatchObject({
+        correct: rightOf(round),
+        chosen: wrong ? (rightOf(round) + 1) % 4 : rightOf(round),
+      });
+      expect(optionsOf(entry)).toEqual(optionsOf(round));
     });
   });
 
@@ -1175,7 +1187,7 @@ describe('the rules of a Game', () => {
     expect(current(app).played).toEqual([]);
 
     await play(app, true);
-    void app.game.answer((rightOf(current(app).round) + 1) % 4);
+    void app.game.answer({ form: 'pick', option: (rightOf(current(app).round) + 1) % 4 });
 
     expect(current(app).played.map(({ number, right }) => [number, right])).toEqual([
       [1, true],
@@ -1207,7 +1219,7 @@ describe('the rules of a Game', () => {
     await playGame(app);
     const over = app.game.state;
 
-    void app.game.answer(0);
+    void app.game.answer({ form: 'pick', option: 0 });
     await app.game.next();
     expect(app.game.state).toBe(over);
 
@@ -1262,7 +1274,7 @@ describe('the rules of a Game', () => {
     ]);
 
     await app.game.start('guess-word');
-    void app.game.answer(0);
+    void app.game.answer({ form: 'pick', option: 0 });
     expect(current(app).status).toBe('answered');
 
     app.game.leave();
@@ -1275,7 +1287,7 @@ describe('the rules of a Game', () => {
     app.game.leave();
     const modeScreen = app.game.state;
 
-    void app.game.answer(0);
+    void app.game.answer({ form: 'pick', option: 0 });
     await app.game.next();
 
     expect(app.game.state).toBe(modeScreen);
@@ -1324,7 +1336,7 @@ describe('the rules of a Game', () => {
     });
 
     await app.game.start('guess-word');
-    void app.game.answer(0);
+    void app.game.answer({ form: 'pick', option: 0 });
     await app.game.next();
 
     expect(changes).toBe(3);
@@ -1397,12 +1409,12 @@ describe('the Words a Game asks about', () => {
       await app.game.start('guess-word');
       while (current(app).status === 'playing') {
         const { round } = current(app);
-        expect(round.options.every(({ text }) => rareReading(text) !== undefined)).toBe(true);
-        const right = round.options.findIndex(
+        expect(optionsOf(round).every(({ text }) => rareReading(text) !== undefined)).toBe(true);
+        const right = optionsOf(round).findIndex(
           ({ text }) => rareReading(text)?.primaryDefinition === round.prompt,
         );
         expect(right).not.toBe(-1);
-        void app.game.answer(right);
+        void app.game.answer({ form: 'pick', option: right });
         await app.game.next();
       }
     }
@@ -1596,7 +1608,9 @@ describe('the Knowledge Marks a Game leaves', () => {
 
     failing = true;
     const { round } = current(app);
-    await expect(app.game.answer((rightOf(round) + 1) % 4)).rejects.toThrow('The disk is full');
+    await expect(
+      app.game.answer({ form: 'pick', option: (rightOf(round) + 1) % 4 }),
+    ).rejects.toThrow('The disk is full');
     await app.game.next();
 
     expect(current(app)).toMatchObject({ lives: 4, roundsPassed: 1, status: 'playing' });
@@ -1694,7 +1708,7 @@ describe('the best result', () => {
     // The fifth Life lost, but «Далі» not tapped: the Game isn't over yet.
     await app.game.start('guess-word');
     for (let round = 1; round <= 4; round += 1) await play(app, false);
-    void app.game.answer((rightOf(current(app).round) + 1) % 4);
+    void app.game.answer({ form: 'pick', option: (rightOf(current(app).round) + 1) % 4 });
 
     app.game.leave();
 
@@ -1715,7 +1729,7 @@ describe('the best result', () => {
     });
     await app.game.start('guess-word');
     for (let round = 1; round <= 4; round += 1) await play(app, false);
-    await app.game.answer((rightOf(current(app).round) + 1) % 4);
+    await app.game.answer({ form: 'pick', option: (rightOf(current(app).round) + 1) % 4 });
     const answered = app.game.state;
 
     failing = true;
@@ -1786,6 +1800,7 @@ const lemmaMode: GameMode = {
     if (answer.kind !== 'word') return undefined;
     const option = (text: string) => ({ text, stressedVowels: [] });
     return {
+      form: 'pick',
       prompt: answer.id,
       options: [option(answer.lemma), option('one'), option('two'), option('three')],
       correct: 0,
@@ -2261,5 +2276,224 @@ describe('a failed planning of the offers', () => {
     expect(later.delays).toEqual([]);
     expect(reads).toEqual(['listWords']);
     expect(app.game.state.modes).toBe(offers);
+  });
+});
+
+describe('the answer forms of a Round', () => {
+  const option = (text: string) => ({ text, stressedVowels: [] });
+  const sheetOf = (text: string) => ({ answer: option(text), example: undefined });
+
+  /** A Game Mode of one answer form, each Round built from the Word it asks about. */
+  const modeOf = (
+    id: string,
+    build: (answer: Word, others: readonly Word[]) => RoundContent,
+    rest: Partial<GameMode> = {},
+  ): GameMode => ({
+    id,
+    entryKind: 'word',
+    isOn: () => true,
+    buildRound: ({ answer, eligible }) =>
+      answer.kind === 'word'
+        ? build(
+            answer,
+            eligible.filter((entry): entry is Word => entry.kind === 'word' && entry !== answer),
+          )
+        : undefined,
+    ...rest,
+  });
+
+  /** «Наголос» in short: the vowels at the places 0 and 2, the one at 2 stressed. */
+  const vowelMode = modeOf('test-vowel', ({ lemma }) => ({
+    form: 'vowel',
+    prompt: lemma,
+    vowels: [0, 2],
+    stressed: [2],
+    sheet: sheetOf(lemma),
+  }));
+
+  /** «Анаграми» in short: three chips shown as c, a, b, right in the order a, b, c. */
+  const chipsMode = modeOf('test-chips', ({ lemma }) => ({
+    form: 'chips',
+    prompt: lemma,
+    chips: ['c', 'a', 'b'],
+    expected: ['a', 'b', 'c'],
+    sheet: sheetOf(lemma),
+  }));
+
+  /** «Впиши слово» in short: type the Lemma. */
+  const typedMode = modeOf('test-typed', ({ lemma }) => ({
+    form: 'typed',
+    prompt: lemma,
+    expected: lemma,
+    sheet: sheetOf(lemma),
+  }));
+
+  /**
+   * «Пари» in short: the Word and the next three eligible ones, their
+   * Definitions shown in the reverse order, in a Game of two grids.
+   */
+  const pairsMode = modeOf(
+    'test-pairs',
+    (answer, others) => {
+      const pairs = [answer, ...others.slice(0, 3)].map((entry) => ({
+        entry,
+        word: option(entry.lemma),
+        definition: entry.primaryDefinition,
+        sheet: sheetOf(entry.primaryDefinition),
+      }));
+      return {
+        form: 'pairs',
+        prompt: '',
+        pairs,
+        wordOrder: [0, 1, 2, 3],
+        definitionOrder: [3, 2, 1, 0],
+      };
+    },
+    { roundLimit: 8 },
+  );
+
+  async function startIn(mode: GameMode): Promise<Composition> {
+    const app = await run({ gameModes: [mode] });
+    await app.game.start(mode.id);
+    return app;
+  }
+
+  it('judges a vowel tap: a stressed vowel is right, another vowel costs a Life, a tap elsewhere is no answer', async () => {
+    const app = await startIn(vowelMode);
+    expect(current(app).round).toMatchObject({ form: 'vowel', vowels: [0, 2], answer: undefined });
+
+    await app.game.answer({ form: 'vowel', position: 1 });
+    expect(current(app)).toMatchObject({ status: 'playing', lives: GAME_LIVES });
+
+    await app.game.answer({ form: 'vowel', position: 2 });
+    expect(current(app)).toMatchObject({ status: 'answered', lives: GAME_LIVES });
+    expect(current(app).round.answer).toMatchObject({ form: 'vowel', chosen: 2, right: true });
+
+    await app.game.next();
+    await app.game.answer({ form: 'vowel', position: 0 });
+    expect(current(app)).toMatchObject({ status: 'answered', lives: GAME_LIVES - 1 });
+    expect(current(app).round.answer).toMatchObject({ form: 'vowel', chosen: 0, right: false });
+    expect(current(app).played.map(({ right }) => right)).toEqual([true, false]);
+  });
+
+  it('judges chips tapped in order: the right order is right, another or a part of it costs a Life', async () => {
+    const app = await startIn(chipsMode);
+    expect(current(app).round).toMatchObject({ form: 'chips', chips: ['c', 'a', 'b'] });
+
+    await app.game.answer({ form: 'chips', chips: [1, 2, 0] });
+    expect(current(app)).toMatchObject({ status: 'answered', lives: GAME_LIVES });
+    expect(current(app).round.answer).toMatchObject({
+      form: 'chips',
+      chosen: [1, 2, 0],
+      right: true,
+    });
+
+    await app.game.next();
+    await app.game.answer({ form: 'chips', chips: [1, 0, 2] });
+    expect(current(app)).toMatchObject({ status: 'answered', lives: GAME_LIVES - 1 });
+
+    await app.game.next();
+    await app.game.answer({ form: 'chips', chips: [1, 2] });
+    expect(current(app)).toMatchObject({ status: 'answered', lives: GAME_LIVES - 2 });
+    expect(current(app).round.answer).toMatchObject({
+      form: 'chips',
+      chosen: [1, 2],
+      right: false,
+    });
+  });
+
+  it('judges typed text the way spec #772 compares it: case set aside, other text costs a Life', async () => {
+    const app = await startIn(typedMode);
+    expect(current(app).round).toMatchObject({ form: 'typed', answer: undefined });
+    const { prompt } = current(app).round;
+
+    await app.game.answer({ form: 'typed', text: ` ${prompt.toUpperCase()}` });
+    expect(current(app)).toMatchObject({ status: 'answered', lives: GAME_LIVES });
+    expect(current(app).round.answer).toMatchObject({ form: 'typed', right: true });
+
+    await app.game.next();
+    await app.game.answer({ form: 'typed', text: 'something else' });
+    expect(current(app)).toMatchObject({ status: 'answered', lives: GAME_LIVES - 1 });
+    expect(current(app).round.answer).toMatchObject({
+      form: 'typed',
+      typed: 'something else',
+      right: false,
+    });
+  });
+
+  it('plays the four pairs of a pairs grid as four Rounds, a wrong pair costing a Life, then the next grid', async () => {
+    const app = await startIn(pairsMode);
+    const first = current(app).round;
+    if (first.form !== 'pairs') throw new Error('Not a pairs grid');
+    expect(first.words).toHaveLength(4);
+    expect(first.definitions.map(({ shown }) => shown)).toEqual(
+      [...first.words].reverse().map(({ shown }) => `The meaning of ${shown.text}.`),
+    );
+
+    // The first Word matched to its Definition, the last one shown.
+    await app.game.answer({ form: 'pairs', word: 0, definition: 3 });
+    expect(current(app)).toMatchObject({ status: 'answered', lives: GAME_LIVES });
+    expect(current(app).round.answer).toMatchObject({ form: 'pairs', right: true, correct: 3 });
+    expect(current(app).played[0]?.entry.id).toBe(`w_${first.words[0]?.shown.text ?? ''}`);
+    await app.game.next();
+    expect(current(app)).toMatchObject({ roundsPassed: 1, status: 'playing' });
+    expect(current(app).round.number).toBe(2);
+    const second = current(app).round;
+    if (second.form !== 'pairs') throw new Error('Not a pairs grid');
+    expect(second.words.map(({ gone }) => gone)).toEqual([true, false, false, false]);
+    expect(second.definitions.map(({ gone }) => gone)).toEqual([false, false, false, true]);
+
+    // A pair already gone takes no answer; the second Word matched to the wrong Definition.
+    await app.game.answer({ form: 'pairs', word: 0, definition: 2 });
+    expect(current(app).status).toBe('playing');
+    await app.game.answer({ form: 'pairs', word: 1, definition: 1 });
+    expect(current(app)).toMatchObject({ status: 'answered', lives: GAME_LIVES - 1 });
+    expect(current(app).round.answer).toMatchObject({
+      form: 'pairs',
+      word: 1,
+      definition: 1,
+      correct: 2,
+      right: false,
+    });
+    expect(current(app).played[1]?.entry.id).toBe(`w_${first.words[1]?.shown.text ?? ''}`);
+    await app.game.next();
+    const third = current(app).round;
+    if (third.form !== 'pairs') throw new Error('Not a pairs grid');
+    expect(third.words.map(({ gone }) => gone)).toEqual([true, true, false, false]);
+    expect(third.definitions.map(({ gone }) => gone)).toEqual([false, false, true, true]);
+
+    await app.game.answer({ form: 'pairs', word: 2, definition: 1 });
+    await app.game.next();
+    await app.game.answer({ form: 'pairs', word: 3, definition: 0 });
+    await app.game.next();
+    expect(current(app)).toMatchObject({
+      roundsPassed: 4,
+      lives: GAME_LIVES - 1,
+      status: 'playing',
+    });
+    const next = current(app).round;
+    if (next.form !== 'pairs') throw new Error('Not a pairs grid');
+    expect(next.number).toBe(5);
+    expect(next.words.every(({ gone }) => !gone)).toBe(true);
+    expect(next.words.map(({ shown }) => shown.text)).not.toEqual(
+      first.words.map(({ shown }) => shown.text),
+    );
+
+    for (let pair = 0; pair < 4; pair += 1) {
+      await app.game.answer({ form: 'pairs', word: pair, definition: 3 - pair });
+      await app.game.next();
+    }
+    expect(current(app)).toMatchObject({ roundsPassed: 8, status: 'won' });
+    expect(current(app).played).toHaveLength(8);
+  });
+
+  it('takes no answer of another form than the Round has', async () => {
+    const app = await startIn(typedMode);
+
+    await app.game.answer({ form: 'pick', option: 0 });
+    await app.game.answer({ form: 'chips', chips: [0] });
+
+    expect(current(app)).toMatchObject({ status: 'playing', lives: GAME_LIVES });
+    expect(current(app).round.answer).toBeUndefined();
   });
 });

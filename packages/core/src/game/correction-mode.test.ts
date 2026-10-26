@@ -15,7 +15,7 @@ import {
   type Round,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
-import { seededRandom } from '../test-support';
+import { optionsOf, seededRandom } from '../test-support';
 
 function correction(
   id: string,
@@ -117,7 +117,7 @@ function askedOf(round: Round): Correction {
 
 /** The option that is the asked Correction's main standard equivalent. */
 const rightOf = (round: Round) =>
-  round.options.findIndex(({ text }) => text === askedOf(round).standardEquivalents[0]);
+  optionsOf(round).findIndex(({ text }) => text === askedOf(round).standardEquivalents[0]);
 
 /** The live Corrections whose main standard equivalent an option is. */
 const offeringOf = (text: string) =>
@@ -203,7 +203,7 @@ async function playGame(app: Composition): Promise<Round[]> {
   await app.game.start('correction');
   const rounds: Round[] = [];
   while (current(app).status === 'playing') {
-    void app.game.answer(rightOf(current(app).round));
+    void app.game.answer({ form: 'pick', option: rightOf(current(app).round) });
     rounds.push(current(app).round);
     await app.game.next();
   }
@@ -296,12 +296,12 @@ describe('a Round of «Обери правильне»', () => {
     expect(rounds).toHaveLength(2 * GAME_ROUNDS);
     for (const round of rounds) {
       const asked = askedOf(round);
-      expect(round.options).toHaveLength(4);
-      expect(round.options[rightOf(round)]).toEqual({
+      expect(optionsOf(round)).toHaveLength(4);
+      expect(optionsOf(round)[rightOf(round)]).toEqual({
         text: asked.standardEquivalents[0],
         stressedVowels: [],
       });
-      expect(round.answer?.correct).toBe(rightOf(round));
+      expect(round.answer).toMatchObject({ form: 'pick', correct: rightOf(round) });
     }
   });
 
@@ -341,7 +341,7 @@ describe('a Round of «Обери правильне»', () => {
   it('offers the main equivalents of other Corrections of the same Correction Type first', async () => {
     for (const round of await roundsOfSeeds([1, 2, 3])) {
       const asked = askedOf(round);
-      const distractors = round.options.filter((_, place) => place !== rightOf(round));
+      const distractors = optionsOf(round).filter((_, place) => place !== rightOf(round));
       const sameType = distractors.filter(({ text }) =>
         offeringOf(text).some(
           (c) => c.id !== asked.id && c.correctionType === asked.correctionType,
@@ -368,7 +368,7 @@ describe('a Round of «Обери правильне»', () => {
     expect(askingCalque01.length).toBeGreaterThan(0);
 
     for (const round of rounds) {
-      const texts = round.options.map(({ text }) => text);
+      const texts = optionsOf(round).map(({ text }) => text);
       expect(new Set(texts).size).toBe(4);
       const own = askedOf(round).standardEquivalents;
       expect(texts.filter((text) => own.includes(text))).toEqual([own[0]]);
@@ -382,12 +382,14 @@ describe('a Round of «Обери правильне»', () => {
     const { round } = current(app);
     const wrong = (rightOf(round) + 1) % 4;
 
-    void app.game.answer(wrong);
+    void app.game.answer({ form: 'pick', option: wrong });
 
     const asked = askedOf(round);
     expect(current(app).round.answer).toEqual({
+      form: 'pick',
       chosen: wrong,
       correct: rightOf(round),
+      right: false,
       sheet: {
         answer: { text: asked.standardEquivalents[0], stressedVowels: [] },
         example: undefined,
@@ -401,7 +403,7 @@ describe('a Round of «Обери правильне»', () => {
     const { round } = current(app);
     const wrong = (rightOf(round) + 1) % 4;
 
-    void app.game.answer(wrong);
+    void app.game.answer({ form: 'pick', option: wrong });
 
     const asked = askedOf(round);
     expect(buildGameReview(current(app).played)).toEqual([
@@ -410,7 +412,7 @@ describe('a Round of «Обери правильне»', () => {
         entryId: asked.id,
         title: { text: asked.nonStandardForm, stressedVowels: [] },
         right: false,
-        picked: round.options[wrong],
+        picked: optionsOf(round)[wrong],
         details: {
           kind: 'correction',
           standardForm: asked.standardEquivalents[0],
@@ -450,7 +452,7 @@ describe('the Knowledge Marks «Обери правильне» leaves', () => {
     await app.game.start('correction');
     const { round } = current(app);
 
-    void app.game.answer((rightOf(round) + 1) % round.options.length);
+    void app.game.answer({ form: 'pick', option: (rightOf(round) + 1) % optionsOf(round).length });
     await app.game.next();
 
     expect(app.knowledge.state.shown.get(askedOf(round).id)).toBe('unknown');

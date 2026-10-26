@@ -59,11 +59,41 @@ function enough<T>(items: readonly T[], test: (item: T) => boolean, count: numbe
   return passed >= count;
 }
 
-/** A Round as a Game Mode built it, checked to hold four options with one of them right. */
+/** Whether the Round as a Game Mode built it has exactly one right answer in its form. */
+function wellFormed(round: RoundContent): boolean {
+  switch (round.form) {
+    case 'pick':
+      return round.options.length === ROUND_OPTIONS && round.options[round.correct] !== undefined;
+    case 'vowel':
+      return (
+        round.stressed.length > 0 && round.stressed.every((vowel) => round.vowels.includes(vowel))
+      );
+    case 'pairs': {
+      const places = round.pairs.map((_, place) => place).sort();
+      const sorted = (order: readonly number[]) => [...order].sort();
+      return (
+        round.pairs.length > 0 &&
+        round.pairs.length <= ROUND_OPTIONS &&
+        sorted(round.wordOrder).join() === places.join() &&
+        sorted(round.definitionOrder).join() === places.join()
+      );
+    }
+    case 'chips':
+      return (
+        round.chips.length > 0 &&
+        [...round.chips].sort().join('\u0000') === [...round.expected].sort().join('\u0000')
+      );
+    case 'typed':
+      return round.expected.length > 0;
+  }
+}
+
+/** A Round as a Game Mode built it, checked to have exactly one right answer in its form. */
 function checkedRound(mode: GameMode, round: RoundContent): RoundContent {
-  const { options, correct } = round;
-  if (options.length !== ROUND_OPTIONS || options[correct] === undefined) {
-    throw new Error(`The Game Mode «${mode.id}» built a Round without four options and one right`);
+  if (!wellFormed(round)) {
+    throw new Error(
+      `The Game Mode «${mode.id}» built a «${round.form}» Round without one right answer`,
+    );
   }
   return round;
 }

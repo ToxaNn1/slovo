@@ -17,6 +17,7 @@ import {
   type PlayedRound,
   type Random,
   type Round,
+  type RoundOption,
   type UserStateChanges,
   type UserStatePort,
   userStateRecords,
@@ -31,6 +32,12 @@ import {
   type NodeLanguagePack,
 } from './index';
 import { ukrainian, ukrainianFolder } from './test-support';
+
+/** The options of a Round of the pick form, the one every Core mode of 0.8.11 plays. */
+function optionsOf(round: Round): readonly RoundOption[] {
+  if (round.form !== 'pick') throw new Error(`Round ${String(round.number)} is no pick`);
+  return round.options;
+}
 
 // The Core's Game over the real Ukrainian Language Pack, opened through the
 // Core composition (spec #215, seam 1). It lives here because only this
@@ -158,7 +165,7 @@ async function playGame(app: Composition): Promise<Asked[]> {
   const asked: Asked[] = [];
   while (current(app).status === 'playing') {
     const { round } = current(app);
-    const options = round.options.map(({ text }) => {
+    const options = optionsOf(round).map(({ text }) => {
       const reading = wordsReading(text);
       const word =
         reading.find((candidate) => candidate.primaryDefinition === round.prompt) ?? reading[0];
@@ -168,7 +175,7 @@ async function playGame(app: Composition): Promise<Asked[]> {
     const right = options.findIndex((word) => word.primaryDefinition === round.prompt);
     const answer = options[right];
     if (answer === undefined) throw new Error(`No option has the Definition «${round.prompt}»`);
-    void app.game.answer(right);
+    void app.game.answer({ form: 'pick', option: right });
     asked.push({ answer, options, round: current(app).round });
     await app.game.next();
   }
@@ -235,7 +242,7 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
       for (const { round } of asked) {
         const prompt = definitionOf(round.prompt);
         expect(
-          round.options.filter(({ text }) =>
+          optionsOf(round).filter(({ text }) =>
             wordsReading(text).some((word) => definitionOf(word.primaryDefinition) === prompt),
           ),
         ).toHaveLength(1);
@@ -302,7 +309,7 @@ describe('the idioms «Вгадай слово» asks about in the Ukrainian Lan
       byText.set(text, [...(byText.get(text) ?? []), entry]);
     }
     const offered = (round: Round) =>
-      round.options.map(({ text }) => {
+      optionsOf(round).map(({ text }) => {
         const reading = byText.get(text) ?? [];
         const entry =
           reading.find(({ primaryDefinition }) => primaryDefinition === round.prompt) ?? reading[0];
@@ -317,9 +324,12 @@ describe('the idioms «Вгадай слово» asks about in the Ukrainian Lan
       await app.game.start('guess-word');
       while (current(app).status === 'playing') {
         const { round } = current(app);
-        void app.game.answer(
-          offered(round).findIndex(({ primaryDefinition }) => primaryDefinition === round.prompt),
-        );
+        void app.game.answer({
+          form: 'pick',
+          option: offered(round).findIndex(
+            ({ primaryDefinition }) => primaryDefinition === round.prompt,
+          ),
+        });
         await app.game.next();
       }
       expect(current(app)).toMatchObject({ roundsPassed: GAME_ROUNDS, status: 'won' });
@@ -352,9 +362,12 @@ async function playCorrections(app: Composition): Promise<Round[]> {
   const rounds: Round[] = [];
   while (current(app).status === 'playing') {
     const { round } = current(app);
-    void app.game.answer(
-      round.options.findIndex(({ text }) => text === askedOf(round).standardEquivalents[0]),
-    );
+    void app.game.answer({
+      form: 'pick',
+      option: optionsOf(round).findIndex(
+        ({ text }) => text === askedOf(round).standardEquivalents[0],
+      ),
+    });
     rounds.push(current(app).round);
     await app.game.next();
   }
@@ -412,7 +425,7 @@ describe('«Обери правильне» over the Ukrainian Language Pack', (
     for (const seed of [1, 2, 3]) {
       for (const round of await playCorrections(await run(seed))) {
         const asked = askedOf(round);
-        const texts = round.options.map(({ text }) => text);
+        const texts = optionsOf(round).map(({ text }) => text);
         expect(new Set(texts).size).toBe(4);
         expect(texts.filter((text) => asked.standardEquivalents.includes(text))).toEqual([
           asked.standardEquivalents[0],
@@ -448,9 +461,10 @@ describe('«Обери правильне» over the Ukrainian Language Pack', (
     if (round === undefined) throw new Error('No Game asked about an anglicism');
 
     const asked = askedOf(round);
-    const texts = round.options.map(({ text }) => text);
+    const texts = optionsOf(round).map(({ text }) => text);
     expect(new Set(texts).size).toBe(4);
-    expect(texts[round.answer?.correct ?? -1]).toBe(asked.standardEquivalents[0]);
+    const correct = round.answer?.form === 'pick' ? round.answer.correct : -1;
+    expect(texts[correct]).toBe(asked.standardEquivalents[0]);
     const others = anglicisms
       .filter((anglicism) => anglicism.id !== asked.id)
       .map((anglicism) => anglicism.standardEquivalents[0]);
@@ -469,7 +483,7 @@ describe('«Обери правильне» over the Ukrainian Language Pack', (
     for (const seed of [1, 2, 3, 4, 5, 6]) {
       for (const round of await playCorrections(await run(seed))) {
         expect(askedOf(round).correctionType).not.toBe('wrongStress');
-        expect(round.options.filter(({ text }) => trapForms.has(text))).toEqual([]);
+        expect(optionsOf(round).filter(({ text }) => trapForms.has(text))).toEqual([]);
       }
     }
   });

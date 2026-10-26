@@ -8,7 +8,12 @@ import type { Random, Schedule } from '../ports';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
 import type { GameEdition, GameMode, GameModeRefusal } from './game-mode';
-import { createGameInPlay, type CurrentGame, type GameInPlay } from './game-in-play';
+import {
+  createGameInPlay,
+  type CurrentGame,
+  type GameInPlay,
+  type GivenAnswer,
+} from './game-in-play';
 import { createRoundPlanner, type RoundPlan } from './round-plan';
 
 /** How long the Game waits before each new try of a failed planning of its offers, in milliseconds. */
@@ -66,13 +71,15 @@ export interface Game {
    */
   start(modeId: string): Promise<void>;
   /**
-   * Answers the current Round with the option at that place. A wrong answer
-   * costs a Life at once and marks the Round's Entry «Не знаю» in the
-   * background, before the next «Далі» goes on. Resolves once the mark is
-   * written; a mark that fails to write rejects, for the shell to log, and
-   * the Game goes on. Nothing changes once the Round is answered.
+   * Answers the current Round in its form: an option picked, a vowel tapped,
+   * a pair matched, chips in order or typed text. A wrong answer costs a Life
+   * at once and marks the Round's Entry «Не знаю» in the background, before
+   * the next «Далі» goes on. Resolves once the mark is written; a mark that
+   * fails to write rejects, for the shell to log, and the Game goes on.
+   * Nothing changes once the Round is answered, or on an answer of another
+   * form than the Round's.
    */
-  answer(option: number): Promise<void>;
+  answer(given: GivenAnswer): Promise<void>;
   /**
    * «Далі» after an answer: at 0 Lives the Game is lost; after the last Round
    * of the mode's limit, or the last one it has, it is won; otherwise the next Round comes. A Game that ends with more
@@ -245,9 +252,9 @@ export async function openGame({
     change({ ...state, modes: modesNow, current: played?.first });
   }
 
-  async function answer(option: number): Promise<void> {
+  async function answer(given: GivenAnswer): Promise<void> {
     const game = state.current;
-    const answered = game && played?.answer(game, option);
+    const answered = game && played?.answer(game, given);
     if (answered === undefined) return;
     changeCurrent(answered);
     const round = answered.played.at(-1);
