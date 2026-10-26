@@ -12,7 +12,7 @@ import type { Collections } from './saved/collections';
 import type { EligibleOfKind, Entries, ShownEntry } from './entries/entries';
 import { buildEntryRow } from './entries/entry-row';
 import type { Favorites } from './saved/favorites';
-import type { EntryFeedCard } from './feed/feed-card';
+import type { EntryFeedCard, SynonymRowFeedCard, TipFeedCard } from './feed/feed-card';
 import type { Edition } from './edition/edition';
 import type { Onboarding } from './onboarding';
 import { notificationText } from './notifications/notification-text';
@@ -43,7 +43,7 @@ export interface Widget {
    * Seen already in the Cycle only makes today an Active Day. Nothing for an
    * id the Language Pack doesn't have: the Feed opens instead.
    */
-  opened(entryId: string): Promise<EntryFeedCard | undefined>;
+  opened(entryId: string): Promise<EntryFeedCard | SynonymRowFeedCard | TipFeedCard | undefined>;
 }
 
 /** The eligible Entries of a kind, or none when the kind as a whole is out. */

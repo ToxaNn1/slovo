@@ -172,10 +172,10 @@ export async function buildEntryCard(
 }
 
 /**
- * The card of any Entry the Feed shows, built from the Language Pack's
- * Entries, or nothing when the Language Pack doesn't have it.
+ * The card of an Entry of any kind, built from the Language Pack's Entries,
+ * or nothing when the Language Pack doesn't have it.
  */
-async function buildFeedCard(
+export async function buildFeedCard(
   entries: Entries,
   id: string,
 ): Promise<EntryFeedCard | SynonymRowFeedCard | TipFeedCard | undefined> {

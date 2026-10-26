@@ -21,7 +21,7 @@ import { CategoryChip } from './CategoryChip';
  * The Word card's blocks inside the Entry card's frame: the Lemma with Stress,
  * part of speech and register chips, the dialectal one with the region, the primary Definition, the first
  * Example, the Word History under its heading, Synonyms and antonyms, the Category chip, the details behind
- * "more" and the linked Corrections. It draws only the sections the Core put
+ * "more", the Synonym Row the Word is a member of and the linked Corrections. It draws only the sections the Core put
  * in the card, at the user's font size. Under Self-check it keeps the Lemma,
  * part of speech and Category; the Entry card draws the button that reveals
  * the rest under them.
@@ -32,6 +32,7 @@ export function WordCardBody({
   compact,
   lemmaSize,
   onOpenCorrection,
+  onOpenSynonymRow,
   concealed,
 }: {
   card: WordCardModel;
@@ -42,6 +43,7 @@ export function WordCardBody({
   /** The Lemma's size at the user's font size, smaller in the compact layout. */
   lemmaSize: TextSize;
   onOpenCorrection: ((correctionId: string) => void) | undefined;
+  onOpenSynonymRow: ((synonymRowId: string) => void) | undefined;
   /** Self-check: only the Lemma, part of speech and Category. */
   concealed: boolean;
 }) {
@@ -164,6 +166,9 @@ export function WordCardBody({
           )}
           {compact ? null : categoryChip}
           {card.details === undefined ? null : <Details details={card.details} />}
+          {card.synonymRow === undefined ? null : (
+            <SynonymRowLine synonymRow={card.synonymRow} onOpen={onOpenSynonymRow} />
+          )}
           {card.linkedCorrections.length === 0 ? null : (
             <View
               testID="word-often-said"
@@ -229,6 +234,52 @@ export function WordCardBody({
 }
 
 /** An Example in italics, with its author's line only when the source names one. */
+/**
+ * «У синонімічному ряду: {домінанта}», the row the Word is a member of, as a
+ * button that opens the row (ADR 0051).
+ */
+function SynonymRowLine({
+  synonymRow: { synonymRowId, dominant },
+  onOpen,
+}: {
+  synonymRow: NonNullable<WordCardModel['synonymRow']>;
+  onOpen: ((synonymRowId: string) => void) | undefined;
+}) {
+  const { colors, fontFamilies } = useTokens();
+  const { strings, voice } = useEdition();
+  // The dominant stands out as the link inside the Edition's sentence around it.
+  const [before = '', after = ''] = strings.wordCard.synonymRow.split('{dominant}');
+  return (
+    <Pressable
+      testID="word-synonym-row"
+      accessibilityRole="button"
+      accessibilityLabel={fill(strings.wordCard.synonymRow, {
+        dominant: stressLabel(strings.wordCard, dominant.text, dominant.stressedVowels),
+      })}
+      accessibilityHint={strings.wordCard.synonymRowHint}
+      {...voice}
+      disabled={onOpen === undefined}
+      // The one line grows to a full touch target.
+      hitSlop={{ top: space[3], bottom: space[3] }}
+      onPress={() => onOpen?.(synonymRowId)}
+      style={styles.synonymRow}
+    >
+      <Text style={[styles.relation, { color: colors.muted, fontFamily: fontFamilies.ui }]}>
+        {before}
+        <Text
+          style={[
+            styles.synonymRowDominant,
+            { color: colors.accent, fontFamily: fontFamilies.word },
+          ]}
+        >
+          {dominant.text}
+        </Text>
+        {after}
+      </Text>
+    </Pressable>
+  );
+}
+
 export function ExampleText({
   example,
   size,
@@ -360,6 +411,8 @@ const styles = StyleSheet.create({
   author: { marginTop: space[1], fontSize: typeSize.meta, fontWeight: '500' },
   relations: { gap: space[1] },
   relation: { fontSize: typeSize.body, lineHeight: typeSize.body * 1.4 },
+  synonymRow: { alignSelf: 'flex-start' },
+  synonymRowDominant: { fontWeight: '500' },
   compactRow: {
     flexDirection: 'row',
     alignItems: 'center',

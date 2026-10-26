@@ -200,6 +200,8 @@
     "history": "Історія слова",
     "oftenSaid": "Часто кажуть:",
     "oftenSaidHint": "Відкриває виправлення",
+    "synonymRow": "У синонімічному ряду: {dominant}",
+    "synonymRowHint": "Відкриває синонімічний ряд",
     "reveal": "Показати значення"
   },
   "correctionCard": {

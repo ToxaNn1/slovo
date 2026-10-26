@@ -146,6 +146,10 @@ const FeedPage = memo(function FeedPage({
             onOpenCorrection={(correctionId) => {
               onOpenCorrection(position, correctionId);
             }}
+            // The row the Word is a member of opens over the Feed, as a member opens its Word.
+            onOpenSynonymRow={(synonymRowId) => {
+              openScreen(`/entry/${synonymRowId}`);
+            }}
             selfCheck={selfCheck}
             actions={<EntryActions card={card} />}
           />
