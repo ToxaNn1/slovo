@@ -1,4 +1,4 @@
-import type { EntryFeedCard, SynonymRowFeedCard } from '@slovo/core';
+import type { EntryFeedCard, SynonymRowFeedCard, TipFeedCard } from '@slovo/core';
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -6,6 +6,7 @@ import { CorrectionCardBody } from './CorrectionCard';
 import { IdiomCardBody } from './IdiomCard';
 import { ConcealedProvider, useSelfCheck } from './self-check';
 import { SynonymRowCardBody } from './SynonymRowCard';
+import { TipCardBody } from './TipCard';
 import { CardCorners } from '../decor/DecorSlots';
 import { OutlineButton } from '../primitives/OutlineButton';
 import { useEdition } from '../providers/EditionProvider';
@@ -16,8 +17,8 @@ import { useTokens } from '../providers/TokensProvider';
 import { WordCardBody } from './WordCard';
 
 export interface EntryCardProps {
-  /** The card of a Word, a Correction, an Idiom or a Synonym Row, as the Core built it. */
-  card: EntryFeedCard | SynonymRowFeedCard;
+  /** The card of a Word, a Correction, an Idiom, a Synonym Row or a Tip, as the Core built it. */
+  card: EntryFeedCard | SynonymRowFeedCard | TipFeedCard;
   /** Opens a linked Correction when the reader taps its form in a Word's «often said» line. */
   onOpenCorrection?: (correctionId: string) => void;
   /** Opens a Word when the reader taps a linked member of a Synonym Row. */
@@ -28,7 +29,8 @@ export interface EntryCardProps {
    * Self-check applies to the card: until the reader reveals it, a Word card
    * shows only its Lemma, part of speech and Category, a Correction card only
    * its non-standard form, an Idiom card only its expression and its chip, a
-   * Synonym Row card only its dominant and its chip, and the Knowledge Mark buttons in `actions` are
+   * Synonym Row card only its dominant and its chip, a Tip card only its
+   * title, its chip and its non-standard form, and the Knowledge Mark buttons in `actions` are
    * inactive. The reveal resets once the card leaves the screen.
    */
   selfCheck?: boolean;
@@ -48,10 +50,11 @@ const SPACING = {
   },
   idiom: { top: space[8], side: wordCardSide, bottom: wordCardSide, gap: blockGap },
   synonymRow: { top: space[8], side: wordCardSide, bottom: wordCardSide, gap: blockGap },
+  tip: { top: space[8], side: wordCardSide, bottom: wordCardSide, gap: blockGap },
 } as const;
 
 /**
- * The Entry card: a Word's, a Correction's, an Idiom's or a Synonym Row's card in the one card frame, at
+ * The Entry card: a Word's, a Correction's, an Idiom's, a Synonym Row's or a Tip's card in the one card frame, at
  * the user's font size, with the compact layout on narrow screens, the Decor
  * slots and the action row under it. A card brought back for Review carries
  * the Review label on top. Under Self-check the card conceals its meaning
@@ -104,19 +107,26 @@ export function EntryCard({
           <CorrectionCardBody card={card.model} lemmaSize={lemmaSize} concealed={concealed} />
         ) : card.kind === 'idiom' ? (
           <IdiomCardBody card={card.model} lemmaSize={lemmaSize} concealed={concealed} />
-        ) : (
+        ) : card.kind === 'synonymRow' ? (
           <SynonymRowCardBody
             card={card.model}
             lemmaSize={lemmaSize}
             concealed={concealed}
             onOpenWord={onOpenWord}
           />
+        ) : (
+          <TipCardBody card={card.model} lemmaSize={lemmaSize} concealed={concealed} />
         )}
         {concealed && (
           <OutlineButton
             testID={`${card.kind}-reveal`}
-            // The Edition names the reveal for each kind: a Word's, an Idiom's or a row's meaning, a Correction's right form.
-            label={(card.kind === 'correction' ? strings.correctionCard : strings.wordCard).reveal}
+            // The Edition names the reveal for each kind: a Word's, an Idiom's or a row's meaning, a Correction's or a Tip's right form.
+            label={
+              (card.kind === 'correction' || card.kind === 'tip'
+                ? strings.correctionCard
+                : strings.wordCard
+              ).reveal
+            }
             onPress={reveal}
           />
         )}

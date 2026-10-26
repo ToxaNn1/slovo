@@ -123,14 +123,14 @@ const FeedPage = memo(function FeedPage({
         <EndOfCycleCard />
       </View>
     );
-  // The Tip card comes with the screen that shows it (spec #730).
-  if (card.kind === 'tip')
-    return <View testID={`feed-card-${String(position)}`} style={styles.page} />;
   return (
     // The content scrolls under the top row but stops at the status bar.
     <View testID={`feed-card-${String(position)}`} style={[styles.page, { paddingTop: top }]}>
       <PagerScrollView contentContainerStyle={styles.content}>
-        {card.kind === 'synonymRow' ? (
+        {card.kind === 'tip' ? (
+          // Its action row comes with the tickets that hide, list and share Tips (spec #730).
+          <EntryCard card={card} selfCheck={selfCheck} />
+        ) : card.kind === 'synonymRow' ? (
           // Its action row comes with the tickets that hide, list and share rows (spec #730).
           <EntryCard
             card={card}

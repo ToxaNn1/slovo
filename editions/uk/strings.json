@@ -243,6 +243,10 @@
     "concealedHeading": "{dominant}, синонімічний ряд",
     "source": "Джерело: {source}"
   },
+  "tipCard": {
+    "chip": "порада",
+    "heading": "Порада: {title}"
+  },
   "favorites": {
     "title": "Улюблене",
     "count": {
