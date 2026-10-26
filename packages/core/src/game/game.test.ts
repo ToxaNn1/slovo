@@ -756,7 +756,9 @@ describe('the Synonym Rows «Вгадай слово» asks about', () => {
     const played = await playAll(app);
 
     const rowRounds = played.filter(({ entry }) => entry.kind === 'synonymRow');
-    expect(rowRounds.map(({ entry }) => entry.id).toSorted()).toEqual(live.slice(0, 5).toSorted());
+    expect(rowRounds.map(({ entry }) => entry.id)).toEqual(
+      expect.arrayContaining(live.slice(0, 5)),
+    );
     for (const { entry, prompt, options, answer } of rowRounds.map(pickPlayed)) {
       if (entry.kind !== 'synonymRow') throw new Error(`A Round asked about ${entry.id}`);
       expect(prompt).toBe(shownAs(entry.dominant));
@@ -1965,10 +1967,15 @@ describe('the Lives and the Round limit a Game Mode sets', () => {
   it('ends a Game with no Round limit only when its Lives run out or its mode has no Round left', async () => {
     const app = await run({ gameModes: [{ ...lemmaMode, lives: 3, roundLimit: 'none' }] });
     await app.game.start('test-lemma');
-    while (current(app).status === 'playing') await right(app);
+    for (let round = 0; round < 2 * GAME_ROUNDS; round += 1) await right(app);
+    expect(current(app)).toMatchObject({ roundsPassed: 2 * GAME_ROUNDS, status: 'playing' });
 
-    // The mode plans 15 Rounds and has no more to ask: the Game is over with every Life.
-    expect(current(app)).toMatchObject({ roundsPassed: 15, lives: 3, status: 'won' });
+    // Every Word hidden: the mode plans no Round after those planned already.
+    await app.hide({ kind: 'category', categoryId: 'nature' });
+    await app.hide({ kind: 'category', categoryId: 'speech' });
+    await app.hide({ kind: 'category', categoryId: 'crafts' });
+    while (current(app).status === 'playing') await right(app);
+    expect(current(app)).toMatchObject({ lives: 3, status: 'won' });
   });
 
   it('never ends a Game on mistakes in a mode with no Lives, and shows no Lives in it', async () => {
@@ -2383,13 +2390,17 @@ describe('the answer forms of a Round', () => {
   }));
 
   /**
-   * «Пари» in short: the Word and the next three eligible ones, their
+   * «Пари» in short: the Word and the three the Game would ask next, their
    * Definitions shown in the reverse order, in a Game of two grids.
    */
-  const pairsMode = modeOf(
-    'test-pairs',
-    (answer, others) => {
-      const pairs = [answer, ...others.slice(0, 3)].map((entry) => ({
+  const pairsMode: GameMode = {
+    id: 'test-pairs',
+    entryKind: 'word',
+    isOn: () => true,
+    roundLimit: 8,
+    buildRound: ({ answer, next }) => {
+      const words = [answer, ...next].filter((entry): entry is Word => entry.kind === 'word');
+      const pairs = words.slice(0, 4).map((entry) => ({
         entry,
         word: option(entry.lemma),
         definition: entry.primaryDefinition,
@@ -2403,8 +2414,7 @@ describe('the answer forms of a Round', () => {
         definitionOrder: [3, 2, 1, 0],
       };
     },
-    { roundLimit: 8 },
-  );
+  };
 
   async function startIn(mode: GameMode): Promise<Composition> {
     const app = await run({ gameModes: [mode] });
@@ -2631,5 +2641,125 @@ describe('the answer forms of a Round', () => {
 
     expect(current(app)).toMatchObject({ status: 'playing', lives: GAME_LIVES });
     expect(current(app).round.answer).toBeUndefined();
+  });
+});
+
+// Spec #772, ADR 0052: weak Rounds in every Game Mode; a mode with no Round limit repeats its Entries reshuffled.
+describe('weak Rounds and reshuffled repeats in every Game Mode', () => {
+  const unknown = numbered('w_nnoun', 8);
+  const endlessMode: GameMode = { ...lemmaMode, id: 'test-endless', lives: 3, roundLimit: 'none' };
+
+  /**
+   * «Пари» in short: the Word and the Entries the Game would ask next, up to
+   * 4 pairs and no more than the Rounds left, the Definitions shown reversed.
+   */
+  const pairsMode: GameMode = {
+    id: 'test-pairs',
+    entryKind: 'word',
+    isOn: () => true,
+    buildRound: ({ answer, next, upTo }) => {
+      const pairs = [answer, ...next].slice(0, Math.min(4, upTo)).map((entry) => {
+        const text = entry.kind === 'word' ? entry.lemma : entry.id;
+        return {
+          entry,
+          word: { text, stressedVowels: [] },
+          definition: `The meaning of ${text}.`,
+          sheet: { answer: { text, stressedVowels: [] }, example: undefined },
+        };
+      });
+      const places = pairs.map((_, place) => place);
+      return {
+        form: 'pairs',
+        prompt: '',
+        pairs,
+        wordOrder: places,
+        definitionOrder: places.toReversed(),
+      };
+    },
+  };
+
+  /** Starts a Game in the mode with the 8 Words marked «Не знаю». */
+  async function startWeak(mode: GameMode, records = new Map<string, string>()) {
+    const app = await run({ records, gameModes: [mode] });
+    for (const id of unknown) await app.knowledge.tap(id, 'unknown');
+    await app.game.start(mode.id);
+    return app;
+  }
+
+  /** Plays right answers in a mode whose right option comes first, up to `rounds` of them or the Game's end. */
+  async function playRight(app: Composition, rounds = Infinity): Promise<string[]> {
+    const ids: string[] = [];
+    while (current(app).status === 'playing' && ids.length < rounds) {
+      ids.push(current(app).round.prompt);
+      await play(app, true, () => 0);
+    }
+    return ids;
+  }
+
+  it('asks 5 of 8 Words marked «Не знаю» in a 15-Round mode', async () => {
+    const ids = await playRight(await startWeak(lemmaMode));
+
+    expect(ids).toHaveLength(GAME_ROUNDS);
+    expect(new Set(ids).size).toBe(GAME_ROUNDS);
+    expect(ids.filter((id) => unknown.includes(id))).toHaveLength(5);
+  });
+
+  it('asks 5 of 8 Words marked «Не знаю» at the start of a mode with no Round limit', async () => {
+    const ids = await playRight(await startWeak(endlessMode), 30);
+
+    expect(ids.slice(0, 5).every((id) => unknown.includes(id))).toBe(true);
+    expect(ids.slice(5, GAME_ROUNDS).some((id) => unknown.includes(id))).toBe(false);
+  });
+
+  it('counts pairs in a pairs mode: 15 pairs in grids of 4, 4, 4 and 3, the first 5 about Words marked «Не знаю»', async () => {
+    const app = await startWeak({ ...pairsMode, roundLimit: GAME_ROUNDS });
+    const grids: number[] = [];
+    while (current(app).status === 'playing') {
+      const { round } = current(app);
+      if (round.form !== 'pairs') throw new Error('Not a pairs grid');
+      if (round.words.every(({ gone }) => !gone)) grids.push(round.words.length);
+      const word = round.words.findIndex(({ gone }) => !gone);
+      await app.game.answer({ form: 'pairs', word, definition: round.words.length - 1 - word });
+      await app.game.next();
+    }
+    const ids = current(app).played.map(({ entry }) => entry.id);
+
+    expect(current(app)).toMatchObject({ roundsPassed: GAME_ROUNDS, status: 'won' });
+    expect(grids).toEqual([4, 4, 4, 3]);
+    expect(new Set(ids).size).toBe(GAME_ROUNDS);
+    expect(ids.slice(0, 5).every((id) => unknown.includes(id))).toBe(true);
+    expect(ids.filter((id) => unknown.includes(id))).toHaveLength(5);
+  });
+
+  it('keeps a Game with no Round limit going over 15 eligible Entries, asking them again reshuffled', async () => {
+    const app = await run({ gameModes: [endlessMode] });
+    await app.hide({ kind: 'category', categoryId: 'speech' });
+    await app.hide({ kind: 'category', categoryId: 'crafts' });
+    await app.hide({ kind: 'entry', entryId: 'w_nadj01' });
+    await app.hide({ kind: 'entry', entryId: 'w_nadj02' });
+    await app.game.start(endlessMode.id);
+
+    const ids = await playRight(app, 3 * GAME_ROUNDS);
+
+    expect(current(app)).toMatchObject({ roundsPassed: 3 * GAME_ROUNDS, status: 'playing' });
+    const cycles = [0, 1, 2].map((cycle) =>
+      ids.slice(cycle * GAME_ROUNDS, (cycle + 1) * GAME_ROUNDS),
+    );
+    for (const cycle of cycles) expect(cycle.toSorted()).toEqual(cycles[0]?.toSorted());
+    expect(new Set(cycles[0]).size).toBe(GAME_ROUNDS);
+    expect(cycles[1]).not.toEqual(cycles[0]);
+  });
+
+  it('still refuses to start a mode with no Round limit over fewer than 15 eligible Entries', async () => {
+    const app = await run({ gameModes: [endlessMode] });
+    // 13 eligible Words: too few for 15 different Rounds, though a Game would repeat them later.
+    await app.hide({ kind: 'category', categoryId: 'nature' });
+
+    expect(app.game.state.modes.find(({ modeId }) => modeId === endlessMode.id)).toEqual({
+      modeId: endlessMode.id,
+      entryKind: 'word',
+      canStart: false,
+      refusal: 'too-few-entries',
+    });
   });
 });
