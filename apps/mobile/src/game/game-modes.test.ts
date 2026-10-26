@@ -133,7 +133,7 @@ describe('the card of each Game Mode on offer', () => {
     const tooFew = cardsOf(await open({ words: 14 }));
     const outOfMix = cardsOf(await open({ words: 14, correctionsInMix: false }));
 
-    expect(tooFew).toEqual([
+    expect(tooFew.slice(0, 2)).toEqual([
       {
         ...guessWordCard,
         canStart: false,

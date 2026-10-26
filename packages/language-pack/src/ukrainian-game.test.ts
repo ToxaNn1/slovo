@@ -189,6 +189,7 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
       { modeId: 'guess-word', entryKind: 'word', canStart: true },
       { modeId: 'correction', entryKind: 'correction', canStart: true },
       { modeId: 'stress', entryKind: 'word', canStart: true },
+      { modeId: 'pairs', entryKind: 'word', canStart: true },
     ]);
 
     const asked = await playGame(app);
