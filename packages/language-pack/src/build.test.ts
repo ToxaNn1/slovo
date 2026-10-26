@@ -833,6 +833,92 @@ describe('buildLanguagePack', () => {
 
       expect(await withEntries(outFile, (entries) => entries.get('t_fx0001'))).toBeUndefined();
     });
+
+    describe('refuses a bad Tip and says why', () => {
+      const { gameQuestion } = fullTip;
+      const withQuestion = (question: Json) => ({ ...fullTip, gameQuestion: question });
+      const { gameQuestion: _, ...tipWithoutQuestion } = fullTip;
+
+      /** The build's refusals for the Tip, which is written but not recorded. */
+      function refusals(tip: Json) {
+        const editionDir = copyFixture('valid');
+        mkdirSync(join(editionDir, 'content/tips'), { recursive: true });
+        writeFileSync(join(editionDir, 'content/tips/t_fx0001.json'), JSON.stringify(tip));
+        const result = buildLanguagePack({ editionDir, outFile: packPath() });
+        return result.ok ? [] : result.errors;
+      }
+
+      it.each<[string, Json, string, RegExp]>([
+        [
+          'an explanation over 300 characters',
+          { ...fullTip, explanation: 'п'.repeat(301) },
+          'explanation',
+          /at most 300|<=300/i,
+        ],
+        ['no Game question', tipWithoutQuestion, 'gameQuestion', /expected object/i],
+        [
+          'a Game question without a right answer',
+          withQuestion({ prompt: gameQuestion.prompt, wrongAnswers: gameQuestion.wrongAnswers }),
+          'gameQuestion.rightAnswer',
+          /expected string/i,
+        ],
+        [
+          'a Game question with two wrong answers',
+          withQuestion({ ...gameQuestion, wrongAnswers: gameQuestion.wrongAnswers.slice(0, 2) }),
+          'gameQuestion.wrongAnswers',
+          /3/,
+        ],
+        [
+          'a Game question with four wrong answers',
+          withQuestion({
+            ...gameQuestion,
+            wrongAnswers: [...gameQuestion.wrongAnswers, 'Яка година?'],
+          }),
+          'gameQuestion.wrongAnswers',
+          /3/,
+        ],
+        [
+          'a wrong answer that repeats the right one',
+          withQuestion({
+            ...gameQuestion,
+            wrongAnswers: ['Скільки час?', 'Котра година?', 'Який час?'],
+          }),
+          'gameQuestion.wrongAnswers.1',
+          /same answer as rightAnswer:/i,
+        ],
+        [
+          'two wrong answers that are the same',
+          withQuestion({
+            ...gameQuestion,
+            wrongAnswers: ['Скільки час?', 'Який час?', 'Скільки час?'],
+          }),
+          'gameQuestion.wrongAnswers.2',
+          /same answer as wrongAnswers\.0:/i,
+        ],
+        ['no source', { ...fullTip, sources: [] }, 'sources', /at least 1|>=1/i],
+      ])('%s', (_rule, tip, field, message) => {
+        expect(refusals(tip)).toContainEqual({
+          file: 'content/tips/t_fx0001.json',
+          entryId: 't_fx0001',
+          field,
+          message: expect.stringMatching(message) as string,
+        });
+      });
+
+      it('compares answers in lower case', () => {
+        const tip = withQuestion({
+          ...gameQuestion,
+          wrongAnswers: ['Скільки час?', 'Скільки годин?', 'котра година?'],
+        });
+
+        expect(refusals(tip)).toContainEqual({
+          file: 'content/tips/t_fx0001.json',
+          entryId: 't_fx0001',
+          field: 'gameQuestion.wrongAnswers.2',
+          message: expect.stringMatching(/same answer as rightAnswer:/i) as string,
+        });
+      });
+    });
   });
 
   describe('Synonym Rows', () => {
