@@ -47,6 +47,50 @@ export const GameStringsSchema = z.strictObject({
    * `{count}`, the best result, which picks the form, and `{total}`, the Rounds of a Game.
    */
   best: pluralOf('total'),
+  /** The titles of the mode screen's groups of mode cards, e.g. «Слова». */
+  groups: z.strictObject({
+    /** The modes that ask about Words, e.g. «Слова». */
+    words: TextSchema,
+    /** The modes that ask about Corrections, e.g. «Виправлення». */
+    corrections: TextSchema,
+    /** The modes that ask about Idioms, e.g. «Вислови». */
+    idioms: TextSchema,
+    /** The modes with their own Lives, Round limit or time limit, e.g. «Виклик». */
+    challenge: TextSchema,
+  }),
+  /** The Best result of a Game Mode on its card. */
+  modeBest: z.strictObject({
+    /** In a mode with a Round limit, e.g. «Найкраще: 12 з 15». Takes `{n}`, the Best result, and `{total}`, the Rounds of a Game. */
+    outOf: templateOf('n', 'total'),
+    /** In a mode without a Round limit, e.g. «Найкраще: 23». Takes `{n}`, the Best result. */
+    count: templateOf('n'),
+  }),
+  /** The button that opens one letter of the answer, in a mode that has it and in the Daily Crossword. */
+  openLetter: TextSchema,
+  /** What VoiceOver reads for a letter in its place in a Word: a vowel button, a blank, a crossword cell. */
+  letters: z.strictObject({
+    /** A letter, e.g. «а, третя літера». Takes `{letter}` and `{place}`, one of the `ordinals`. */
+    label: templateOf('letter', 'place'),
+    /** A place with no letter yet, e.g. «третя літера, порожня». Takes `{place}`, one of the `ordinals`. */
+    empty: templateOf('place'),
+    /** Each place in a Word from the first, as the labels read it, e.g. «перша», «друга». */
+    ordinals: z.array(TextSchema).min(1),
+  }),
+  /** The Daily Crossword's card on the mode screen and its screen; it is not a Game. */
+  dailyCrossword: z.strictObject({
+    /** Its name, e.g. «Кросворд дня». */
+    title: TextSchema,
+    /** Its name with the day on the card, e.g. «Кросворд дня · 26 жовтня». Takes `{date}`, the day and month. */
+    dated: templateOf('date'),
+    /** The card's button before any letter is in, e.g. «Почати». */
+    start: TextSchema,
+    /** The card's button once some letters are in, e.g. «Продовжити». */
+    resume: TextSchema,
+    /** The card's mark once today's is solved, e.g. «✓ Розв’язано». */
+    solvedMark: TextSchema,
+    /** The screen's line once it is solved, e.g. «Розв’язано!». */
+    solved: TextSchema,
+  }),
   /**
    * The texts of each Game Mode on offer, by its id: the Core's own and any
    * an Edition registers (ADR 0024).
@@ -77,6 +121,8 @@ export const GameStringsSchema = z.strictObject({
     synonymRow: z.strictObject({ label: TextSchema, prompt: templateOf('dominant') }),
     /** A Tip's Round, which asks the Tip's own question: the label over it, e.g. «ПОРАДА». */
     tip: z.strictObject({ label: TextSchema }),
+    /** What VoiceOver reads of the timer of a mode with a time limit, e.g. «лишилось 40 секунд». Takes `{count}`, the seconds left. */
+    timer: PluralSchema,
   }),
   /** The ✕ that leaves a Game and its confirmation, a system alert. */
   exit: z.strictObject({

@@ -105,6 +105,94 @@ describe('the 0.5 UI strings group', () => {
   });
 });
 
+describe('the 0.8.12 Game strings', () => {
+  const strings = readJson('uk', 'strings') as Record<string, unknown>;
+  const game = strings['game'] as Record<string, unknown>;
+  /** The strings with the Game's texts changed. */
+  const withGame = (changed: Record<string, unknown>) => ({
+    ...strings,
+    game: { ...game, ...changed },
+  });
+  /** The issues the strings schema finds, as paths. */
+  const issuesOf = (changed: unknown) =>
+    EditionStringsSchema.safeParse(changed).error?.issues.map((issue) => issue.path.join('.'));
+  const parsed = EditionStringsSchema.parse(strings).game;
+
+  it('the Ukrainian Edition carries the agreed texts verbatim', () => {
+    expect(parsed.groups).toEqual({
+      words: 'Слова',
+      corrections: 'Виправлення',
+      idioms: 'Вислови',
+      challenge: 'Виклик',
+    });
+    expect(parsed.modeBest).toEqual({
+      outOf: 'Найкраще: {n} з {total}',
+      count: 'Найкраще: {n}',
+    });
+    expect(parsed.openLetter).toBe('Відкрити літеру');
+    expect(parsed.dailyCrossword).toMatchObject({
+      title: 'Кросворд дня',
+      start: 'Почати',
+      resume: 'Продовжити',
+      solved: 'Розв’язано!',
+    });
+  });
+
+  it('the Ukrainian Edition names every mode as agreed', () => {
+    expect(
+      Object.fromEntries(Object.entries(parsed.modes).map(([id, mode]) => [id, mode.title])),
+    ).toEqual({
+      'guess-word': 'Вгадай слово',
+      stress: 'Наголос',
+      pairs: 'Пари',
+      anagram: 'Анаграми',
+      'by-letters': 'За буквами',
+      'type-word': 'Впиши слово',
+      origin: 'Звідки слово',
+      correction: 'Обери правильне',
+      anglicism: 'Англіцизми',
+      'idiom-meaning': 'Фразеологізми',
+      'build-idiom': 'Склади вислів',
+      survival: 'Виживання',
+      timed: 'На час',
+    });
+  });
+
+  it.each(['groups', 'modeBest', 'openLetter', 'dailyCrossword', 'letters'])(
+    'the Ukrainian Edition needs game.%s',
+    (key) => {
+      const without = Object.fromEntries(Object.entries(game).filter(([name]) => name !== key));
+
+      expect(issuesOf({ ...strings, game: without })).toEqual([`game.${key}`]);
+    },
+  );
+
+  it.each([
+    ['modeBest.outOf', { modeBest: { outOf: 'Найкраще: {n}', count: 'Найкраще: {n}' } }],
+    ['modeBest.count', { modeBest: { outOf: 'Найкраще: {n} з {total}', count: 'Найкраще' } }],
+    [
+      'dailyCrossword.dated',
+      { dailyCrossword: { ...(game['dailyCrossword'] as object), dated: 'Кросворд дня' } },
+    ],
+    ['letters.label', { letters: { ...(game['letters'] as object), label: '{letter}, літера' } }],
+    ['letters.empty', { letters: { ...(game['letters'] as object), empty: 'порожня' } }],
+  ])('needs the placeholders of game.%s', (path, changed) => {
+    expect(issuesOf(withGame(changed))).toEqual([`game.${path}`]);
+  });
+
+  it('needs the seconds left in every form of the timer VoiceOver reads', () => {
+    const round = game['round'] as Record<string, unknown>;
+    const timer = { ...(round['timer'] as object), many: 'лишилось мало секунд' };
+
+    expect(issuesOf(withGame({ round: { ...round, timer } }))).toEqual(['game.round.timer.many']);
+  });
+
+  it('names a place for every letter of the longest Word as VoiceOver reads it', () => {
+    expect(parsed.letters.ordinals.length).toBeGreaterThanOrEqual(15);
+    expect(parsed.letters.ordinals.slice(0, 3)).toEqual(['перша', 'друга', 'третя']);
+  });
+});
+
 describe('the 0.6 widget strings group', () => {
   const strings = readJson('uk', 'strings') as Record<string, unknown>;
   const widget = strings['widget'] as { guide: Record<string, unknown> };
@@ -403,10 +491,24 @@ describe('the strings of each Game Mode', () => {
     EditionStringsSchema.safeParse(changed).error?.issues.map((issue) => issue.path.join('.'));
 
   it('the Ukrainian Edition holds one entry per Core Game Mode, under its id', () => {
-    expect(Object.keys(modes)).toEqual(['guess-word', 'correction']);
+    expect(Object.keys(modes)).toEqual([
+      'guess-word',
+      'stress',
+      'pairs',
+      'anagram',
+      'by-letters',
+      'type-word',
+      'origin',
+      'correction',
+      'anglicism',
+      'idiom-meaning',
+      'build-idiom',
+      'survival',
+      'timed',
+    ]);
   });
 
-  it.each(['guess-word', 'correction'])(
+  it.each(Object.keys(modes))(
     'needs the %s mode to say what its card says with too few eligible Entries',
     (modeId) => {
       const mode = modes[modeId] ?? {};
@@ -435,6 +537,16 @@ describe('the strings of each Game Mode', () => {
       );
     },
   );
+
+  it.each([
+    ['correction', 'corrections-out-of-mix'],
+    ['type-word', 'corrections-out-of-mix'],
+    ['anglicism', 'corrections-out-of-mix'],
+    ['idiom-meaning', 'idioms-out-of-mix'],
+    ['build-idiom', 'idioms-out-of-mix'],
+  ])('the Ukrainian %s mode says what its card says with %s', (modeId, refusal) => {
+    expect(modes[modeId]?.['refusals']).toHaveProperty([refusal]);
+  });
 
   it('takes a mode an Edition adds under its own id, in the same shape', () => {
     expect(issuesOf(withModes({ 'test-lemma': modes['guess-word'] }))).toBeUndefined();
