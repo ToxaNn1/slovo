@@ -129,6 +129,7 @@ function played(
   };
   return {
     number,
+    entryKind: entry.kind,
     prompt:
       entry.kind === 'correction'
         ? entry.nonStandardForm

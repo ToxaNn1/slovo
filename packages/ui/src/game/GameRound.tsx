@@ -1,8 +1,10 @@
+import type { EditionStrings } from '@slovo/contracts';
 import {
   GAME_LIVES,
   GAME_ROUNDS,
   LIFE_LOST_DELAY,
   type CurrentGame,
+  type Round,
   type RoundAnswer,
   type RoundOption,
   type TextRange,
@@ -103,7 +105,9 @@ const BAR_GROWTH = { duration: 400, easing: ease, reduceMotion: ReduceMotion.Nev
 
 /**
  * A Round of the Game in play (`game-round-dark`): the header with the ✕, the
- * prompt under its label, the four options and, once answered, the sheet.
+ * prompt under its label, the four options and, once answered, the sheet. A
+ * Synonym Row's Round asks «Що є синонімом до „{dominant}“?» and a Tip's its
+ * own question, each under its kind's label rather than the mode's.
  * The ✕ asks first, with the SLOVO confirmation dialog, as «Очистити Історію?»
  * does; «Грати далі» leaves the Round as it was.
  */
@@ -115,7 +119,7 @@ export function GameRound({
   onLeave,
 }: {
   game: CurrentGame;
-  /** The label over the prompt, the Game Mode's. */
+  /** The label over the prompt, the Game Mode's, for a Round about a Word, an idiom or a Correction. */
   label: string;
   onAnswer: (option: number) => void;
   onNext: () => void;
@@ -143,6 +147,7 @@ export function GameRound({
 
   const [asking, setAsking] = useState(false);
   const exit = strings.game.exit;
+  const asked = askedAs(round, label, strings.game.round);
 
   return (
     <View testID="game-round" style={styles.screen}>
@@ -154,7 +159,7 @@ export function GameRound({
         }}
       />
       <ScrollView contentContainerStyle={styles.round}>
-        <RoundCard label={label} prompt={round.prompt} highlight={round.highlight} />
+        <RoundCard label={asked.label} prompt={asked.prompt} highlight={round.highlight} />
         <View style={styles.options}>
           {round.options.map((option, place) => (
             <AnswerOption
@@ -187,6 +192,24 @@ export function GameRound({
       />
     </View>
   );
+}
+
+/**
+ * The label and the prompt a Round shows by the kind of Entry it asks about:
+ * a Synonym Row's question on its dominant, a Tip's own question under the
+ * Tip's label, any other Round's prompt under the mode's label.
+ */
+function askedAs(
+  { entryKind, prompt }: Round,
+  label: string,
+  strings: EditionStrings['game']['round'],
+): { label: string; prompt: string } {
+  if (entryKind === 'synonymRow') {
+    const { synonymRow } = strings;
+    return { label: synonymRow.label, prompt: fill(synonymRow.prompt, { dominant: prompt }) };
+  }
+  if (entryKind === 'tip') return { label: strings.tip.label, prompt };
+  return { label, prompt };
 }
 
 /**

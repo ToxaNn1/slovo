@@ -65,6 +65,14 @@ export const GameStringsSchema = z.strictObject({
     correct: TextSchema,
     /** The tag of the reader's wrong choice. */
     chosen: TextSchema,
+    /**
+     * A Synonym Row's Round, in any Game Mode that asks about rows: the label
+     * over its question, e.g. «СИНОНІМИ», and the question, e.g. «Що є
+     * синонімом до „іти“?». Takes `{dominant}`, the row's dominant with its Stress.
+     */
+    synonymRow: z.strictObject({ label: TextSchema, prompt: templateOf('dominant') }),
+    /** A Tip's Round, which asks the Tip's own question: the label over it, e.g. «ПОРАДА». */
+    tip: z.strictObject({ label: TextSchema }),
   }),
   /** The ✕ that leaves a Game and its confirmation, a system alert. */
   exit: z.strictObject({
