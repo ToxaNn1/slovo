@@ -326,6 +326,36 @@ describe('the Categories that require history', () => {
   });
 });
 
+describe('the origin languages', () => {
+  // Every Edition lists them (ADR 0052), an empty list when it gives no Word an origin.
+  it.each(editions)('the %s Edition lists the languages Words come from', (edition) => {
+    const config = readJson(edition, 'config') as Record<string, unknown>;
+    const { originLanguages: _removed, ...without } = config;
+
+    expect(EditionConfigSchema.parse(config).originLanguages).toBeInstanceOf(Array);
+    expect(
+      EditionConfigSchema.safeParse(without).error?.issues.map((issue) => issue.path.join('.')),
+    ).toEqual(['originLanguages']);
+  });
+
+  it('the Ukrainian Edition lists twelve, by ISO 639 code where one fits', () => {
+    expect(EditionConfigSchema.parse(readJson('uk', 'config')).originLanguages).toEqual([
+      { code: 'la', name: 'латина' },
+      { code: 'el', name: 'грецька' },
+      { code: 'trk', name: 'тюркські' },
+      { code: 'pl', name: 'польська' },
+      { code: 'de', name: 'німецька' },
+      { code: 'fr', name: 'французька' },
+      { code: 'it', name: 'італійська' },
+      { code: 'en', name: 'англійська' },
+      { code: 'hbo', name: 'давньоєврейська' },
+      { code: 'cu', name: 'церковнослов’янська' },
+      { code: 'proto-slavic', name: 'праслов’янська' },
+      { code: 'other', name: 'інша' },
+    ]);
+  });
+});
+
 describe('the legal pages of About', () => {
   const strings = readJson('uk', 'strings') as Record<string, unknown>;
   const settings = strings['settings'] as Record<string, unknown>;

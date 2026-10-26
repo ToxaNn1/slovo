@@ -24,6 +24,19 @@ export const CategorySchema = z.strictObject({
 
 export type Category = z.infer<typeof CategorySchema>;
 
+/**
+ * A language Words come from, for a Word's `origin` and «Звідки слово»
+ * (ADR 0052). The code is an ISO 639 code where one fits the language, e.g.
+ * `la` or `trk`, otherwise a lowercase English word, e.g. `proto-slavic` or
+ * `other`; the name is in the Edition's language.
+ */
+export const OriginLanguageSchema = z.strictObject({
+  code: KebabCaseIdSchema,
+  name: z.string().min(1),
+});
+
+export type OriginLanguage = z.infer<typeof OriginLanguageSchema>;
+
 /** How the Game picks Distractors for a Round. */
 export const DistractorRuleSchema = z.enum(['same-part-of-speech']);
 
@@ -281,10 +294,22 @@ export const EditionConfigSchema = z
      * when no Category requires it.
      */
     categoriesRequiringHistory: z.array(KebabCaseIdSchema),
+    /**
+     * The languages Words come from, in their order (ADR 0052): the Edition
+     * owns the list, so the Core stays language-agnostic. Empty when the
+     * Edition gives no Word an origin.
+     */
+    originLanguages: z.array(OriginLanguageSchema),
   })
   .superRefine(
     (
-      { categories, correctionCategories, categoriesRequiringHistory, userSettingDefaults },
+      {
+        categories,
+        correctionCategories,
+        categoriesRequiringHistory,
+        originLanguages,
+        userSettingDefaults,
+      },
       context,
     ) => {
       const idsOf = (list: readonly Category[], field: 'categories' | 'correctionCategories') => {
@@ -313,6 +338,17 @@ export const EditionConfigSchema = z
             message: `Unknown Category id "${id}"`,
           });
         }
+      });
+      const codes = new Set<string>();
+      originLanguages.forEach(({ code }, index) => {
+        if (codes.has(code)) {
+          context.addIssue({
+            code: 'custom',
+            path: ['originLanguages', index, 'code'],
+            message: `Duplicate origin language code "${code}"`,
+          });
+        }
+        codes.add(code);
       });
       for (const field of ['categories', 'correctionCategories'] as const) {
         const inMix = userSettingDefaults.mix[field];
