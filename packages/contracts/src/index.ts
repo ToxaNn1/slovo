@@ -128,3 +128,12 @@ export {
   type WidgetEntry,
   type WidgetSnapshot,
 } from './widget-snapshot';
+export {
+  CROSSWORD_SIZE,
+  CROSSWORD_WORDS,
+  CrosswordDaySchema,
+  CrosswordDaysSchema,
+  CrosswordWordSchema,
+  type CrosswordDay,
+  type CrosswordWord,
+} from './crossword';

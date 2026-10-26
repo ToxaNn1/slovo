@@ -8,6 +8,7 @@
  */
 export { buildLanguagePack, checkLanguagePack, type BuildResult, type CheckResult } from './build';
 export { formatBuildError, type BuildError } from './build-error';
+export { generateDailyCrossword, type CrosswordResult } from './crossword';
 export type { ContentTarget, ContentTargets, MissedTarget } from './content-targets';
 export { PACK_FORMAT } from './pack-layout';
 export { openLanguagePack, type NodeLanguagePack } from './read-pack';

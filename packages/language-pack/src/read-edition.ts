@@ -1,7 +1,15 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
-import type { Correction, Entry, Idiom, SynonymRow, Tip, Word } from '@slovo/contracts';
+import type {
+  Correction,
+  CrosswordDay,
+  Entry,
+  Idiom,
+  SynonymRow,
+  Tip,
+  Word,
+} from '@slovo/contracts';
 
 import type { BuildError } from './build-error';
 import { checkContent, type Authored } from './check-content';
@@ -9,7 +17,7 @@ import { checkSynonymRows } from './check-synonym-rows';
 import { checkTips } from './check-tips';
 import type { ContentManifest } from './content-manifest';
 import type { ContentTargets } from './content-targets';
-import { editionFiles, EditionFolderError } from './edition-folder';
+import { CROSSWORD_DAYS_FILE, editionFiles, EditionFolderError } from './edition-folder';
 import { missingEntryErrors } from './id-registry';
 import type { PackContent } from './pack-layout';
 
@@ -63,6 +71,7 @@ export function readEdition(
   const { words, corrections, idioms, synonymRows, tips, errors: entryErrors } = folder.entries();
   errors.push(...entryErrors);
   const targets = readOrCollect(() => folder.readIfPresent('targets') ?? {});
+  const crosswordDays = readOrCollect(() => folder.readIfPresent('crosswordDays'));
   const registry = readOrCollect(() =>
     registryRequired ? folder.read('idRegistry') : (folder.readIfPresent('idRegistry') ?? []),
   );
@@ -73,6 +82,7 @@ export function readEdition(
       ...checkTips(config, tips),
     );
   }
+  errors.push(...unknownCrosswordEntries(crosswordDays ?? [], [...words, ...corrections]));
   if (registry !== undefined) {
     errors.push(
       ...missingEntryErrors(
@@ -111,8 +121,33 @@ export function readEdition(
     idioms: sortedById(idioms),
     synonymRows: sortedById(synonymRows),
     tips: sortedById(tips),
+    ...(crosswordDays === undefined ? {} : { crosswordDays }),
   };
   return { ...source, valid: { content, manifest, targets } };
+}
+
+/**
+ * The words of crossword days that no Word or Correction of the Edition
+ * stands behind. A Retired one still does: its day stays as it was made.
+ */
+function unknownCrosswordEntries(
+  days: readonly CrosswordDay[],
+  entries: readonly Authored<Entry>[],
+): BuildError[] {
+  const ids = new Set(entries.map(({ entry }) => entry.id));
+  return days.flatMap(({ words }, day) =>
+    words.flatMap(({ entryId }, word) =>
+      ids.has(entryId)
+        ? []
+        : [
+            {
+              file: CROSSWORD_DAYS_FILE,
+              field: `${String(day)}.words.${String(word)}.entryId`,
+              message: `No Word or Correction ${entryId} in the Edition`,
+            },
+          ],
+    ),
+  );
 }
 
 function sortedById<T extends Entry>(authored: readonly Authored<T>[]): T[] {
