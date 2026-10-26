@@ -711,6 +711,51 @@ describe('buildLanguagePack', () => {
     ]);
   });
 
+  it('refuses a word that mixes scripts, such as a Latin "i" in a Cyrillic word', () => {
+    const editionDir = copyFixture('valid');
+    editJson(editionDir, 'content/words/w_fx0002.json', (word) => ({
+      ...word,
+      primaryDefinition: 'Будь-що, сказане вiд себе.',
+      examples: [{ text: 'Він сказав це вголос.' }, { text: 'Свiчка Iскри.' }],
+    }));
+
+    expect(buildErrors(editionDir)).toEqual([
+      {
+        file: 'content/words/w_fx0002.json',
+        entryId: 'w_fx0002',
+        field: 'primaryDefinition',
+        message:
+          'The word "вiд" mixes Cyrillic and Latin letters ("i" U+0069): write each word in one script',
+      },
+      {
+        file: 'content/words/w_fx0002.json',
+        entryId: 'w_fx0002',
+        field: 'examples.1.text',
+        message:
+          'The word "Свiчка" mixes Cyrillic and Latin letters ("i" U+0069): write each word in one script',
+      },
+      {
+        file: 'content/words/w_fx0002.json',
+        entryId: 'w_fx0002',
+        field: 'examples.1.text',
+        message:
+          'The word "Iскри" mixes Cyrillic and Latin letters ("I" U+0049): write each word in one script',
+      },
+    ]);
+  });
+
+  it('builds an etymology that quotes forms of other languages in their scholarly spelling', () => {
+    const editionDir = copyFixture('valid');
+    editJson(editionDir, 'content/words/w_fx0002.json', (word) => ({
+      ...word,
+      etymology: 'Від псл. *světъ, пор. лит. šviesà, нім. Welt.',
+    }));
+    record(editionDir);
+
+    const result = buildLanguagePack({ editionDir, outFile: packPath() });
+    expect(result.ok ? [] : result.errors).toEqual([]);
+  });
+
   it('builds an Idiom that takes over the expression of a Retired Idiom', () => {
     const editionDir = copyFixture('valid');
     const idiom = readJsonFile(join(editionDir, 'content/idioms/i_fx0001.json'));
