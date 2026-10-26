@@ -10,7 +10,7 @@ import {
 import { createMemoryContentPort } from '@slovo/core/testing';
 import { describe, expect, it } from 'vitest';
 
-import { gameModeCard, gameModeStrings } from './game-modes';
+import { gameModeCard, gameModeStrings, playedOffers } from './game-modes';
 import { strings as allStrings } from '../test-support';
 
 const { game: strings } = allStrings;
@@ -158,6 +158,18 @@ describe('the card of each Game Mode on offer', () => {
 
     expect(app.game.state.modes.map(({ modeId }) => modeId)).toContain('test-unnamed');
     expect(() => cardsOf(app)).toThrow('test-unnamed');
+  });
+});
+
+describe('the modes the Game screen offers', () => {
+  it('keeps the modes the app plays and leaves out one whose screen is still to come', () => {
+    const offers = [
+      { modeId: 'guess-word', entryKind: 'word', canStart: true },
+      { modeId: 'stress', entryKind: 'word', canStart: true },
+      { modeId: 'correction', entryKind: 'correction', canStart: true },
+    ] as const;
+
+    expect(playedOffers(offers).map(({ modeId }) => modeId)).toEqual(['guess-word', 'correction']);
   });
 });
 

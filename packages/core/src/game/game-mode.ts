@@ -7,9 +7,14 @@ import type { Random } from '../ports';
 /** How many options a Round offers, exactly one of them correct. */
 export const ROUND_OPTIONS = 4;
 
-/** What the Game needs to know of the Edition: its Feature Switches and its Distractor rule. */
+/**
+ * What the Game needs to know of the Edition: its Feature Switches, its
+ * Distractor rule, and whether it marks Stress and on which vowels; an
+ * Edition that leaves them out marks no Stress.
+ */
 export type GameEdition = Pick<Edition, 'isFeatureEnabled'> & {
-  readonly languageTraits: Pick<LanguageTraits, 'distractorRule'>;
+  readonly languageTraits: Pick<LanguageTraits, 'distractorRule'> &
+    Partial<Pick<LanguageTraits, 'marksStress' | 'vowels'>>;
 };
 
 /** One option of a Round, or the answer its sheet names. */
