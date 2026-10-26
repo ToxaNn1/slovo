@@ -21,7 +21,10 @@ async function open({
 } = {}): Promise<Cycle> {
   const userState = await openUserState({ port: createMemoryUserStatePort(records) });
   return openCycle({
-    entries: { eligible: () => Promise.resolve({ words, corrections, idioms: [] }) },
+    entries: {
+      eligible: () =>
+        Promise.resolve({ words, corrections, idioms: [], synonymRows: [], tips: [] }),
+    },
     userState,
     random,
   });
@@ -65,7 +68,13 @@ describe('the Cycle', () => {
   it('covers nothing when it is given no Entry', async () => {
     const cycle = await open({ words: [], corrections: [] });
 
-    expect(cycle.order()).toEqual({ words: [], corrections: [], idioms: [] });
+    expect(cycle.order()).toEqual({
+      words: [],
+      corrections: [],
+      idioms: [],
+      synonymRows: [],
+      tips: [],
+    });
     expect(cycle.isEmpty()).toBe(true);
   });
 
@@ -92,6 +101,8 @@ describe('the Cycle', () => {
         words: otherWords,
         corrections: otherCorrections,
         idioms: [],
+        synonymRows: [],
+        tips: [],
       });
       expect(cycle.order().words).toContain(word);
     });
@@ -183,7 +194,13 @@ describe('the Cycle', () => {
   describe('eligibility read again', () => {
     /** A Cycle over Entries whose eligibility the test changes between reads. */
     async function openOver(records = new Map<string, string>()) {
-      const eligible = { words: [...wordIds], corrections: [...correctionIds], idioms: [] };
+      const eligible = {
+        words: [...wordIds],
+        corrections: [...correctionIds],
+        idioms: [],
+        synonymRows: [],
+        tips: [],
+      };
       const userState = await openUserState({ port: createMemoryUserStatePort(records) });
       const cycle = await openCycle({
         entries: { eligible: () => Promise.resolve({ ...eligible }) },
@@ -207,6 +224,8 @@ describe('the Cycle', () => {
         words: before.words.filter((id) => id !== word),
         corrections: before.corrections.filter((id) => id !== correction),
         idioms: [],
+        synonymRows: [],
+        tips: [],
       });
       expect(cycle.covers(word)).toBe(false);
       expect(cycle.covers(correction)).toBe(false);
@@ -333,7 +352,14 @@ describe('the Cycle', () => {
       const userState = await openUserState({ port: createMemoryUserStatePort() });
       const cycle = await openCycle({
         entries: {
-          eligible: () => Promise.resolve({ words: [...words], corrections: [], idioms: [] }),
+          eligible: () =>
+            Promise.resolve({
+              words: [...words],
+              corrections: [],
+              idioms: [],
+              synonymRows: [],
+              tips: [],
+            }),
         },
         userState,
         random: randomOf(0.25),

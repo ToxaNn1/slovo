@@ -186,6 +186,8 @@ async function run({
           correctionCategoryIds: 'all' as const,
           corrections: false,
           idioms: true,
+          synonymRows: true,
+          tips: true,
         },
         notificationTimes: [],
       },

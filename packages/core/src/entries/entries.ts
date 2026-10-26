@@ -5,9 +5,9 @@ import {
   featureOfKind,
   readMix,
   type MixEdition,
-  type MixKind,
   type MixKindName,
   type MixState,
+  type WholeKind,
 } from './mix';
 import type { ContentReadPort } from '../ports';
 import type { UserState } from '../user-state/user-state';
@@ -31,6 +31,8 @@ export interface EntryIds {
   readonly words: readonly string[];
   readonly corrections: readonly string[];
   readonly idioms: readonly string[];
+  readonly synonymRows: readonly string[];
+  readonly tips: readonly string[];
 }
 
 /**
@@ -49,18 +51,20 @@ export type EligibleOfKind =
  * them. It is the only module that decides which Entries are eligible, so
  * the Feed, the Cycle, the Word of the Day and the card builders never check
  * Retired, a Feature Switch or the Mix themselves. An eligible Entry is live
- * (not Retired), of a kind the Edition turns on, in the user's Mix (a Word at
- * its Rarity Floor or rarer; the Rarity Floor doesn't touch Corrections or
- * Idioms) and not Hidden (ADR 0015, 0019).
+ * (not Retired), of a kind the Edition turns on and no remote Feature Switch
+ * turns off, in the user's Mix (a Word at its Rarity Floor or rarer; the
+ * Rarity Floor touches no other kind) and not Hidden (ADR 0015, 0019, 0040,
+ * 0051). Synonym Rows and Tips are eligible by the same rules, though the
+ * screens are not given them yet (spec #730).
  */
 export interface Entries {
   /**
    * The ids of the eligible Entries: the live Words of the Categories in the
    * Mix at the Rarity Floor or rarer, Category by Category in the Language
-   * Pack's order, and the live Corrections, and the live Idioms, each kind
-   * when the Edition turns it on and it is in the Mix, each in the Language
-   * Pack's stable order, leaving out every Hidden Entry. Read afresh on every
-   * call.
+   * Pack's order, and the live Corrections, Idioms, Synonym Rows and Tips,
+   * each kind when the Edition turns it on and it is in the Mix, each in the
+   * Language Pack's stable order, leaving out every Hidden Entry. Read afresh
+   * on every call.
    */
   eligible(): Promise<EntryIds>;
   /**
@@ -158,18 +162,20 @@ export function createEntries(
   }
 
   /** Whether the kind of Entry, as a whole, is in the user's Mix; without a Mix it always is. */
-  const kindInMix = (kind: MixKind, mix: MixState | undefined) => mix?.kinds[kind] ?? true;
+  const kindInMix = (kind: WholeKind, mix: MixState | undefined) => mix?.kinds[kind] ?? true;
 
   /** Whether the Edition turns the kind of Entry on and the user has it in the Mix. */
-  const kindShown = (kind: MixKind, mix: MixState | undefined) =>
+  const kindShown = (kind: WholeKind, mix: MixState | undefined) =>
     edition.isFeatureEnabled(featureOfKind(kind)) && kindInMix(kind, mix);
 
   const linksCorrections = async () => kindShown('correction', await readUserMix());
 
   /** How to list the ids of every live Entry of a kind in the Mix as a whole from the Language Pack. */
-  const listIds: Record<MixKind, () => Promise<readonly string[]>> = {
+  const listIds: Record<WholeKind, () => Promise<readonly string[]>> = {
     correction: () => content.listCorrectionIds(),
     idiom: () => content.listIdiomIds(),
+    synonymRow: () => content.listSynonymRowIds(),
+    tip: () => content.listTipIds(),
   };
 
   /** How to read every live Entry of a kind from the Language Pack. */
@@ -246,17 +252,21 @@ export function createEntries(
       readUserMix(),
       'userState' in options ? options.userState.list(hiddenRecords) : new Map<string, string>(),
     ]);
-    const ofKind = (kind: MixKind) => (kindShown(kind, mix) ? listIds[kind]() : []);
-    const [words, corrections, idioms] = await Promise.all([
+    const ofKind = (kind: WholeKind) => (kindShown(kind, mix) ? listIds[kind]() : []);
+    const [words, corrections, idioms, synonymRows, tips] = await Promise.all([
       wordIds(mix?.categoryIds).then((ids) => atRarityFloor(ids, mix?.rarityFloor)),
       kindShown('correction', mix) ? correctionIds(mix?.correctionCategories.categoryIds) : [],
       ofKind('idiom'),
+      ofKind('synonymRow'),
+      ofKind('tip'),
     ]);
     const shown = (id: string) => !hidden.has(id);
     return {
       words: words.filter(shown),
       corrections: corrections.filter(shown),
       idioms: idioms.filter(shown),
+      synonymRows: synonymRows.filter(shown),
+      tips: tips.filter(shown),
     };
   }
 

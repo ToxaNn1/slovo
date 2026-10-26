@@ -46,6 +46,8 @@ async function open(records: Map<string, string>) {
           correctionCategoryIds: 'all' as const,
           corrections: true,
           idioms: true,
+          synonymRows: true,
+          tips: true,
         },
         notificationTimes: [],
       },

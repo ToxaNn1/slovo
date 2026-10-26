@@ -41,7 +41,14 @@ const validConfig = {
     fontSize: 'M',
     vibration: true,
     notificationTimes: ['09:00'],
-    mix: { categories: 'all', correctionCategories: 'all', corrections: true, idioms: true },
+    mix: {
+      categories: 'all',
+      correctionCategories: 'all',
+      corrections: true,
+      idioms: true,
+      synonymRows: true,
+      tips: true,
+    },
   },
   legalPages: {
     privacy: 'https://example.org/test/privacy',
@@ -138,7 +145,14 @@ describe('loadEdition', () => {
       fontSize: 'M',
       vibration: true,
       notificationTimes: ['09:00'],
-      mix: { categoryIds: 'all', correctionCategoryIds: 'all', corrections: true, idioms: true },
+      mix: {
+        categoryIds: 'all',
+        correctionCategoryIds: 'all',
+        corrections: true,
+        idioms: true,
+        synonymRows: true,
+        tips: true,
+      },
     });
   });
 
@@ -152,6 +166,8 @@ describe('loadEdition', () => {
           correctionCategories: ['work'],
           corrections: false,
           idioms: true,
+          synonymRows: true,
+          tips: true,
         },
       },
     });
@@ -161,6 +177,8 @@ describe('loadEdition', () => {
       correctionCategoryIds: ['work'],
       corrections: false,
       idioms: true,
+      synonymRows: true,
+      tips: true,
     });
   });
 
@@ -379,6 +397,8 @@ describe('loadEdition', () => {
             correctionCategories: 'all',
             corrections: true,
             idioms: true,
+            synonymRows: true,
+            tips: true,
           },
         },
       },
@@ -389,7 +409,14 @@ describe('loadEdition', () => {
       {
         userSettingDefaults: {
           ...userSettingDefaults,
-          mix: { categories: [], correctionCategories: 'all', corrections: true, idioms: true },
+          mix: {
+            categories: [],
+            correctionCategories: 'all',
+            corrections: true,
+            idioms: true,
+            synonymRows: true,
+            tips: true,
+          },
         },
       },
       'userSettingDefaults.mix.categories',
@@ -404,6 +431,8 @@ describe('loadEdition', () => {
             correctionCategories: ['nature'],
             corrections: true,
             idioms: true,
+            synonymRows: true,
+            tips: true,
           },
         },
       },
@@ -414,7 +443,14 @@ describe('loadEdition', () => {
       {
         userSettingDefaults: {
           ...userSettingDefaults,
-          mix: { categories: 'all', correctionCategories: [], corrections: true, idioms: true },
+          mix: {
+            categories: 'all',
+            correctionCategories: [],
+            corrections: true,
+            idioms: true,
+            synonymRows: true,
+            tips: true,
+          },
         },
       },
       'userSettingDefaults.mix.correctionCategories',
@@ -424,7 +460,13 @@ describe('loadEdition', () => {
       {
         userSettingDefaults: {
           ...userSettingDefaults,
-          mix: { categories: 'all', corrections: true, idioms: true },
+          mix: {
+            categories: 'all',
+            corrections: true,
+            idioms: true,
+            synonymRows: true,
+            tips: true,
+          },
         },
       },
       'userSettingDefaults.mix.correctionCategories',

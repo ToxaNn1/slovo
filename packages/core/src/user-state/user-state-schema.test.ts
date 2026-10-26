@@ -123,6 +123,8 @@ describe('the 0.8 sync marks', () => {
       'mix.correctionCategories.work',
       'mix.corrections',
       'mix.idioms',
+      'mix.synonymRows',
+      'mix.tips',
       'mix.rarityFloor',
       'feed.cycle',
       'feed.seen.w_1',

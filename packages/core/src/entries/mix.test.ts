@@ -97,6 +97,8 @@ async function run({
           correctionCategoryIds: defaultCorrectionCategoryIds,
           corrections: true,
           idioms: true,
+          synonymRows: true,
+          tips: true,
         },
         notificationTimes: [],
       },
@@ -158,7 +160,7 @@ const isCorrection = (id: string) => id.startsWith('c_');
 const isWordBelow = (floor: number) => (id: string) => (rarityOf.get(id) ?? floor) < floor;
 
 describe('the Mix', () => {
-  it('starts as the Edition default: every Category, Corrections and Idioms in, no Hidden Category', async () => {
+  it('starts as the Edition default: every Category and every kind as a whole in, no Hidden Category', async () => {
     const app = await run();
 
     expect(app.mix.state).toEqual({
@@ -170,7 +172,7 @@ describe('the Mix', () => {
         hiddenCategories: [],
         lastCategoryId: undefined,
       },
-      kinds: { correction: true, idiom: true },
+      kinds: { correction: true, idiom: true, synonymRow: true, tip: true },
       hiddenCategories: [],
       lastCategoryId: undefined,
       rarityFloor: 1,
@@ -351,6 +353,8 @@ describe('the Mix', () => {
   it.each([
     ['correction', 'mix.corrections'],
     ['idiom', 'mix.idioms'],
+    ['synonymRow', 'mix.synonymRows'],
+    ['tip', 'mix.tips'],
   ] as const)(
     'takes the kind %s as a whole out of the Mix and back with its `%s` record, leaving the rest of the Mix as it is',
     async (kind, record) => {

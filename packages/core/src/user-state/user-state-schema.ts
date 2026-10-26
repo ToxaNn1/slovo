@@ -147,6 +147,18 @@ export const userStateRecords = {
    */
   mixIdioms: declareRecord('mix.idioms', z.boolean()),
   /**
+   * Whether the user has Synonym Rows, as a whole, in the Mix; without it, the
+   * Edition's default Mix. It syncs last write wins like the rest of the Mix
+   * (ADR 0041, 0051).
+   */
+  mixSynonymRows: declareRecord('mix.synonymRows', z.boolean()),
+  /**
+   * Whether the user has Tips, as a whole, in the Mix; without it, the
+   * Edition's default Mix. It syncs last write wins like the rest of the Mix
+   * (ADR 0041, 0051).
+   */
+  mixTips: declareRecord('mix.tips', z.boolean()),
+  /**
    * The Rarity Floor the user chose, 1 to 5; without it, 1, so every Word is
    * in. It syncs last write wins like the rest of the Mix (ADR 0041).
    */

@@ -79,6 +79,8 @@ async function open({
           correctionCategoryIds: 'all' as const,
           corrections: correctionsInMix,
           idioms: true,
+          synonymRows: true,
+          tips: true,
         },
         notificationTimes: [],
       },

@@ -21,51 +21,74 @@ export type CategoryKind = Extract<EntryKind, 'word' | 'correction'>;
 export const CATEGORY_KINDS: readonly CategoryKind[] = ['word', 'correction'];
 
 /**
- * A kind of Entry that is in or out of the Mix as a whole: Corrections and
- * Idioms. The Word's Categories are in or out one by one (ADR 0019); the
- * Synonym Row is not in the Mix yet, so no Synonym Row is eligible.
+ * A kind of Entry that is in or out of the Mix as a whole: Corrections,
+ * Idioms, Synonym Rows and Tips (ADR 0051). The Word's Categories are in or
+ * out one by one (ADR 0019).
  */
-export type MixKind = Extract<EntryKind, 'correction' | 'idiom'>;
-
-/** Whether each kind of Entry is in the Mix as a whole. */
-export type KindsInMix = Readonly<Record<MixKind, boolean>>;
+export type WholeKind = Extract<EntryKind, 'correction' | 'idiom' | 'synonymRow' | 'tip'>;
 
 /**
- * The name of a kind of Entry as a whole: its Feature Switch, the key of its
- * Edition strings and the first word of its Game refusal.
+ * A kind of Entry in the Mix as a whole that the screens show: Corrections and
+ * Idioms. Synonym Rows and Tips are in or out of the Mix like them, but no
+ * screen shows them yet (spec #730).
  */
-export type MixKindName = 'corrections' | 'idioms';
+export type MixKind = Extract<WholeKind, 'correction' | 'idiom'>;
+
+/** Whether each kind of Entry is in the Mix as a whole. */
+export type KindsInMix = Readonly<Record<WholeKind, boolean>>;
+
+/**
+ * The name of each kind of Entry as a whole: its Feature Switch, the key of
+ * its Edition strings and the first word of its Game refusal.
+ */
+interface KindNames {
+  readonly correction: 'corrections';
+  readonly idiom: 'idioms';
+  readonly synonymRow: 'synonymRows';
+  readonly tip: 'tips';
+}
+
+/** The name of a kind of Entry as a whole that the screens show. */
+export type MixKindName = KindNames[MixKind];
 
 /**
  * Each kind of Entry in the Mix as a whole, in the Mix screen's order: the
  * Feature Switch that turns it on, which names the kind as a whole
- * (`corrections`, `idioms`) in the Edition strings and the Game's refusals;
- * its user-state record (ADR 0013, 0041); and whether the Edition's default
- * Mix holds it. A further kind is one more line here and nowhere else.
+ * (`corrections`, `idioms`, `synonymRows`, `tips`) in the Edition strings and
+ * the Game's refusals; its user-state record (ADR 0013, 0041); and whether
+ * the Edition's default Mix holds it. A further kind is one more line here
+ * and nowhere else.
  */
-const KINDS: Readonly<
-  Record<
-    MixKind,
-    {
-      readonly feature: MixKindName;
-      readonly record: typeof userStateRecords.mixCorrections;
-      readonly byDefault: (mix: DefaultMix) => boolean;
-    }
-  >
-> = {
+const KINDS: {
+  readonly [Kind in WholeKind]: {
+    readonly feature: KindNames[Kind];
+    readonly record: typeof userStateRecords.mixCorrections;
+    readonly byDefault: (mix: DefaultMix) => boolean;
+  };
+} = {
   correction: {
     feature: 'corrections',
     record: userStateRecords.mixCorrections,
     byDefault: (mix) => mix.corrections,
   },
   idiom: { feature: 'idioms', record: userStateRecords.mixIdioms, byDefault: (mix) => mix.idioms },
+  synonymRow: {
+    feature: 'synonymRows',
+    record: userStateRecords.mixSynonymRows,
+    byDefault: (mix) => mix.synonymRows,
+  },
+  tip: { feature: 'tips', record: userStateRecords.mixTips, byDefault: (mix) => mix.tips },
 };
 
-/** The kinds of Entry in the Mix as a whole, in the Mix screen's order. */
-export const MIX_KINDS = Object.keys(KINDS) as readonly MixKind[];
+/** Every kind of Entry in the Mix as a whole, in the Mix screen's order. */
+const WHOLE_KINDS = Object.keys(KINDS) as readonly WholeKind[];
+
+/** The kinds of Entry in the Mix as a whole that the screens show, in the Mix screen's order. */
+export const MIX_KINDS: readonly MixKind[] = ['correction', 'idiom'];
 
 /** The Feature Switch that turns the kind of Entry on, which also names the kind as a whole. */
-export const featureOfKind = (kind: MixKind): MixKindName => KINDS[kind].feature;
+export const featureOfKind = <Kind extends WholeKind>(kind: Kind): KindNames[Kind] =>
+  KINDS[kind].feature;
 
 /** One list of Categories in the Mix, the Words' or the Corrections', as it stands. */
 export interface CategoriesInMix {
@@ -87,11 +110,11 @@ export interface CategoriesInMix {
 export interface MixState extends CategoriesInMix {
   /** The Categories of Corrections, in or out one by one under Corrections as a whole (ADR 0050). */
   readonly correctionCategories: CategoriesInMix;
-  /** Whether each kind of Entry, as a whole, is in the Mix: Corrections and Idioms. */
+  /** Whether each kind of Entry, as a whole, is in the Mix: Corrections, Idioms, Synonym Rows and Tips. */
   readonly kinds: KindsInMix;
   /**
    * The Rarity Floor, 1 to 5: only Words of that rarity or rarer are eligible
-   * while the Edition turns its rarityFloor switch on. Corrections and Idioms have no rarity.
+   * while the Edition turns its rarityFloor switch on. No other kind of Entry has a rarity.
    */
   readonly rarityFloor: number;
 }
@@ -122,7 +145,7 @@ export interface Mix {
   /** Puts every Category, of Words and of Corrections, in the Mix at once. The kinds as a whole stay as they are. */
   turnAllOn(): Promise<void>;
   /** Puts the kind of Entry, as a whole, in the Mix or takes it out. */
-  setKind(kind: MixKind, inMix: boolean): Promise<void>;
+  setKind(kind: WholeKind, inMix: boolean): Promise<void>;
   /** Sets the Rarity Floor. A floor that is not a rarity, a whole number from 1 to 5, is skipped. */
   setRarityFloor(floor: number): Promise<void>;
   /** Calls `listener` after each change of the state. Returns the call that stops it. */
@@ -164,13 +187,13 @@ type CategoryChoices = Readonly<Record<CategoryKind, ReadonlyMap<string, boolean
 /** The places in the Mix the user chose: by Category of each list, by kind of Entry as a whole; and the Rarity Floor. */
 interface MixChoices {
   readonly categories: CategoryChoices;
-  readonly kinds: Readonly<Record<MixKind, boolean | undefined>>;
+  readonly kinds: Readonly<Record<WholeKind, boolean | undefined>>;
   readonly rarityFloor: number | undefined;
 }
 
 /** A record over each kind of Entry in the Mix as a whole, from what `of` gives for it. */
-function eachKind<T>(of: (kind: MixKind) => T): Readonly<Record<MixKind, T>> {
-  return Object.fromEntries(MIX_KINDS.map((kind) => [kind, of(kind)])) as Record<MixKind, T>;
+function eachKind<T>(of: (kind: WholeKind) => T): Readonly<Record<WholeKind, T>> {
+  return Object.fromEntries(WHOLE_KINDS.map((kind) => [kind, of(kind)])) as Record<WholeKind, T>;
 }
 
 /** A record over each kind of Entry with Categories, from what `of` gives for it. */
@@ -250,11 +273,11 @@ async function readChoices(userState: Pick<UserState, 'list' | 'read'>): Promise
   const [lists, rarityFloor, read] = await Promise.all([
     Promise.all(CATEGORY_KINDS.map((kind) => userState.list(CATEGORY_LISTS[kind].records))),
     userState.read(rarityFloorRecord),
-    Promise.all(MIX_KINDS.map((kind) => userState.read(KINDS[kind].record))),
+    Promise.all(WHOLE_KINDS.map((kind) => userState.read(KINDS[kind].record))),
   ]);
   return {
     categories: eachList((kind) => lists[CATEGORY_KINDS.indexOf(kind)] ?? new Map()),
-    kinds: eachKind((kind) => read[MIX_KINDS.indexOf(kind)]),
+    kinds: eachKind((kind) => read[WHOLE_KINDS.indexOf(kind)]),
     rarityFloor,
   };
 }
@@ -327,7 +350,7 @@ export async function openMix({
       }
       return next;
     });
-    for (const kind of MIX_KINDS) {
+    for (const kind of WHOLE_KINDS) {
       if (kinds[kind] === state.kinds[kind]) continue;
       for (const [key, value] of KINDS[kind].record.change(kinds[kind])) writes.set(key, value);
     }
@@ -375,7 +398,7 @@ export async function openMix({
     await change(eachList((of) => new Map(categories[of].map(({ id }) => [id, true]))));
   }
 
-  async function setKind(kind: MixKind, inMix: boolean): Promise<void> {
+  async function setKind(kind: WholeKind, inMix: boolean): Promise<void> {
     await change({}, { kinds: { ...state.kinds, [kind]: inMix } });
   }
 

@@ -38,7 +38,9 @@ async function open({
 }> {
   const userState = await openUserState({ port });
   const cycle = await openCycle({
-    entries: { eligible: () => Promise.resolve({ words, corrections, idioms }) },
+    entries: {
+      eligible: () => Promise.resolve({ words, corrections, idioms, synonymRows: [], tips: [] }),
+    },
     userState,
     random,
   });
@@ -182,7 +184,14 @@ describe('the Word of the Day', () => {
         expect(today?.wordId).not.toBe(dayBefore?.wordId);
         // The same Cycle: the other kind is still unseen, and every Word still Seen.
         expect(cycle.order()).toEqual(order);
-        expect(cycle.unseen()).toEqual({ words: [], corrections: [], idioms: [], ...others });
+        expect(cycle.unseen()).toEqual({
+          words: [],
+          corrections: [],
+          idioms: [],
+          synonymRows: [],
+          tips: [],
+          ...others,
+        });
         // The next day moves on in the Cycle order, so no Word comes two days running.
         const nextDay = await open({
           records,

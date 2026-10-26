@@ -32,6 +32,8 @@ const edition = {
       correctionCategoryIds: 'all' as const,
       corrections: false,
       idioms: true,
+      synonymRows: true,
+      tips: true,
     },
     notificationTimes: [],
   },
@@ -202,6 +204,32 @@ describe('two devices of one Account', () => {
     expect((await tablet.open()).mix.state.kinds.idiom).toBe(true);
     expect(server.records.get('mix.idioms')?.value).toBe(true);
   });
+
+  it.each([
+    ['synonymRow', 'mix.synonymRows'],
+    ['tip', 'mix.tips'],
+  ] as const)(
+    'let the newer choice of the kind %s in the Mix win, on either device, by its `%s` record',
+    async (kind, record) => {
+      const { device, server, time } = account();
+      const phone = await device();
+      const tablet = await device();
+      await (await phone.open()).mix.setKind(kind, false);
+      time.advance(HOUR);
+      const tabletMix = (await tablet.open()).mix;
+      await tabletMix.setKind(kind, false);
+      await tabletMix.setKind(kind, true);
+      await tablet.sync();
+      time.advance(HOUR);
+
+      await phone.sync();
+      await tablet.sync();
+
+      expect((await phone.open()).mix.state.kinds[kind]).toBe(true);
+      expect((await tablet.open()).mix.state.kinds[kind]).toBe(true);
+      expect(server.records.get(record)?.value).toBe(true);
+    },
+  );
 
   it('carry a choice to hide the Streak to the other device', async () => {
     const { device } = account();

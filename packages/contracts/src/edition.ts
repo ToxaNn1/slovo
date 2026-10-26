@@ -185,6 +185,10 @@ export const MixConfigSchema = z.strictObject({
   corrections: z.boolean(),
   /** Whether Idioms, as a whole, are in the Mix. */
   idioms: z.boolean(),
+  /** Whether Synonym Rows, as a whole, are in the Mix (ADR 0051). */
+  synonymRows: z.boolean(),
+  /** Whether Tips, as a whole, are in the Mix (ADR 0051). */
+  tips: z.boolean(),
 });
 
 export type MixConfig = z.infer<typeof MixConfigSchema>;
