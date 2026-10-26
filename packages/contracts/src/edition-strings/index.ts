@@ -21,6 +21,7 @@ import { SettingsStringsSchema } from './settings';
 import { ShareStringsSchema } from './share';
 import { SplashStringsSchema } from './splash';
 import { StatsStringsSchema } from './stats';
+import { SynonymRowCardStringsSchema } from './synonym-row-card';
 import { TabsStringsSchema } from './tabs';
 import { WidgetStringsSchema } from './widget';
 import { WordCardStringsSchema } from './word-card';
@@ -41,6 +42,7 @@ export const EditionStringsSchema = z.strictObject({
   wordCard: WordCardStringsSchema,
   correctionCard: CorrectionCardStringsSchema,
   idiomCard: IdiomCardStringsSchema,
+  synonymRowCard: SynonymRowCardStringsSchema,
   favorites: FavoritesStringsSchema,
   collections: CollectionsStringsSchema,
   history: HistoryStringsSchema,

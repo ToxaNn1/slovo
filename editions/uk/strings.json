@@ -237,6 +237,12 @@
     "heading": "{expression}, {type}",
     "source": "Джерело: {source}"
   },
+  "synonymRowCard": {
+    "chip": "синоніми",
+    "heading": "{dominant}, синонімічний ряд: {members}",
+    "concealedHeading": "{dominant}, синонімічний ряд",
+    "source": "Джерело: {source}"
+  },
   "favorites": {
     "title": "Улюблене",
     "count": {
