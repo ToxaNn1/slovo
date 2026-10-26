@@ -526,6 +526,27 @@ describe('the Entries', () => {
       expect(ids(await entries.linkedCorrections(talkative))).toEqual(['c_chatty', 'c_always']);
     });
 
+    it('lead from a Word to no Synonym Row while Synonym Rows are out of the Mix, and back when they return', async () => {
+      const row = synonymRow('r_talk');
+      const linking: SynonymRow = {
+        ...row,
+        members: [{ text: 'балакучий', stress: [3], wordId: 'w_talkative' }, ...row.members],
+      };
+      const port = createMemoryUserStatePort();
+      const entries = createEntries({
+        content: createMemoryContentPort({ words: [talkative], synonymRows: [linking] }),
+        edition: editionWith(true),
+        userState: await openUserState({ port }),
+      });
+      expect((await entries.linkingSynonymRow(talkative))?.id).toBe('r_talk');
+
+      await port.write(new Map([['mix.synonymRows', JSON.stringify(false)]]));
+      expect(await entries.linkingSynonymRow(talkative)).toBeUndefined();
+
+      await port.write(new Map([['mix.synonymRows', JSON.stringify(true)]]));
+      expect((await entries.linkingSynonymRow(talkative))?.id).toBe('r_talk');
+    });
+
     it('lead from a Retired Word to its live Corrections, so a kept Word keeps its links', async () => {
       expect(ids(await open().linkedCorrections(gone))).toEqual(['c_always']);
     });
