@@ -37,7 +37,7 @@ _Avoid_: Skin, theme (a Theme is the user's light/dark choice)
 ### Entries
 
 **Entry**:
-Anything the user can discover, keep and share: a Word, a Correction or an Idiom. Favorites, Collections, History, Seen and the Feed all work with Entries.
+Anything the user can discover, keep and share: a Word, a Correction, an Idiom, a Synonym Row or a Tip. Favorites, Collections, History, Seen and the Feed all work with Entries.
 _Avoid_: Item, card, content
 
 **Word**:
@@ -83,7 +83,7 @@ _Avoid_: Topic, tag, theme
 The editorial standard for every Word: a normative dictionary word that an educated native speaker most likely doesn't know or hardly uses, but is worth knowing. It excludes obscene words, surzhyk and russianisms, narrow jargon and proper names; an old, witty dictionary insult marked «лайл.» or «зневажл.» (e.g. бевзь, телепень) is a Rare Word, an obscene word never is. A place name is not a Word: it is an Idiom of Idiom Type `placeName`. A dialect Word, with the dialectal register label («діал.») and its Region, is a Rare Word too when a normative dictionary (e.g. СУМ, Грінченко) or a dialect dictionary that names the Region lists it. Each Word carries a rarity from 1 ("heard it, never use it") to 5 ("almost nobody knows it").
 
 **Correction**:
-A non-standard form people commonly use (often a phrase) paired with one or more standard equivalents in the Edition's language, plus a short neutral explanation, e.g. «на протязі року» → «протягом року». A Core concept; each Edition supplies its own Corrections. A Word may point to the Corrections it is the standard form for (протягом → «на протязі»), so each is reachable from the other without duplicating data.
+A non-standard form people commonly use (often a phrase) paired with one or more standard equivalents in the Edition's language, plus a short neutral explanation, e.g. «на протязі року» → «протягом року». A Core concept; each Edition supplies its own Corrections. A Word may point to the Corrections it is the standard form for (протягом → «на протязі»), so each is reachable from the other without duplicating data. A rule with no one form to swap is a Tip, not a Correction.
 _Avoid_: Mistake, error, surzhyk card
 
 **Literary Use**:
@@ -103,14 +103,22 @@ _Avoid_: Phrase, expression (for the Entry; the expression is its text); saying 
 
 **Idiom Type**:
 What kind of fixed expression an Idiom is: `idiom` («фразеологізм»), an idiom proper; `placeName` («топонім»), a place name whose etymology tells the story of its name and is required; or `proverb` («прислів’я»), a proverb or saying. A place name and a proverb share the Idiom's card, Feed turn, Mix switch and lists; only the chip differs.
-_Avoid_: Subtype, kind (a kind is Word, Correction or Idiom)
+_Avoid_: Subtype, kind (a kind is Word, Correction, Idiom, Synonym Row or Tip)
 
 **Retired Idiom**:
 An Idiom withdrawn from the Language Pack. Like a Retired Word, it never appears anywhere new, but stays visible wherever the user already keeps it.
 _Avoid_: Deleted idiom
 
+**Synonym Row**:
+A dominant word with a short meaning line and a row of 5 to 12 of its synonyms, its members, each with its Stress and an optional note on its shade, e.g. «іти → простувати, чимчикувати, шкандибати». The fourth kind of Entry (ADR 0051); a Core concept, each Edition supplies its own. A member or the dominant may link a Word of the Language Pack, and that Word's card links back to the row («У синонімічному ряду: іти»). A Synonym Row has no Category, rarity or Pronunciation; a Retired one behaves like a Retired Word. Its Ukrainian name is «синонімічний ряд». Its members are not the Synonyms a Word lists.
+_Avoid_: Synonym set, thesaurus
+
+**Tip**:
+A rule of good speech with its standard form, a short explanation and its own Game question, e.g. «Котра година?» instead of «Скільки час?». The fifth kind of Entry (ADR 0051); a Core concept, each Edition supplies its own. It may show a non-standard form, but needs none (the vocative «пане Андрію» has no wrong form to show). The boundary with a Correction: one form swapped for one standard form is a Correction; a rule, a construction, etiquette or punctuation is a Tip. A Tip has no Category, rarity or Pronunciation; a Retired one behaves like a Retired Word. Its Ukrainian name is «порада».
+_Avoid_: Hack, advice, lifehack
+
 **Entry card**:
-How the app shows one Entry: a Word card, a Correction card or an Idiom card in the same frame, with the action row (heart, Collections, share, hide) under it. The Feed and every screen that opens a kept Entry show the same Entry card.
+How the app shows one Entry: a Word card, a Correction card, an Idiom card, a Synonym Row card or a Tip card in the same frame, with the action row (heart, Collections, share, hide) under it. The Feed and every screen that opens a kept Entry show the same Entry card.
 _Avoid_: Item, tile (for a card; a tile is the motif Decor slot 1 repeats)
 
 ### User's words
@@ -166,7 +174,7 @@ _Avoid_: Provider, login type, auth method
 ### Discovery
 
 **Feed**:
-The vertical stream of Entries the user swipes through on the home screen; Corrections and Idioms are mixed in among Words. Every 5th card of the Cycle is a Correction's turn while the Cycle has unseen Corrections, and every 7th card an Idiom's turn while it has unseen Idioms, each counted from its kind's last card; when both turns fall on one card the Correction takes it and the Idiom the next. While Entries are due for Review, every 3rd card that is neither turn is a Word due for Review, labelled «Повторення», and a Correction due for Review takes the next Correction's turn before a new Correction, as an Idiom due for Review takes the next Idiom's turn before a new Idiom, Seen in this Cycle or not. The Word of the Day and the Review slot stay Words only.
+The vertical stream of Entries the user swipes through on the home screen; Corrections, Idioms, Synonym Rows and Tips are mixed in among Words. Every 5th card of the Cycle is a Correction's turn while the Cycle has unseen Corrections, every 7th an Idiom's turn while it has unseen Idioms, every 9th a Synonym Row's turn while it has unseen Synonym Rows and every 11th a Tip's turn while it has unseen Tips, each counted from its kind's last card. When turns fall on one card the order is Correction, Idiom, Synonym Row, Tip, and each loser takes the next card. While Entries are due for Review, every 3rd card that is no other kind's turn is a Word due for Review, labelled «Повторення», and a Correction, an Idiom, a Synonym Row or a Tip due for Review takes the next turn of its kind before a new one, Seen in this Cycle or not. The Word of the Day and the Review slot stay Words only.
 _Avoid_: Timeline, home list
 
 **Seen**:
@@ -192,19 +200,19 @@ An Entry is due for Review on or after its Review day, and stays due until the r
 An Entry that is Known on its 7-day Review, or Known with no earlier mark. It stops coming back for Review, stays in the Cycle and is counted as known in the statistics.
 
 **Self-check**:
-A setting («Перевір себе», off by default) that hides the answer on an Entry card until the reader taps: a Word card shows only the Lemma with Stress, part of speech and Category, a Correction card only the non-standard form, an Idiom card only the expression and the chip of its Idiom Type. The Knowledge Mark buttons work only after the reveal. It applies to the Feed, the Word of the Day included, and not to the widget or Share Cards.
+A setting («Перевір себе», off by default) that hides the answer on an Entry card until the reader taps: a Word card shows only the Lemma with Stress, part of speech and Category, a Correction card only the non-standard form, an Idiom card only the expression and the chip of its Idiom Type, a Synonym Row card only its dominant («іти → ?»), a Tip card only its title and its non-standard form (only the title when it has none). The Knowledge Mark buttons work only after the reveal. It applies to the Feed, the Word of the Day included, and not to the widget or Share Cards.
 _Avoid_: Quiz mode, test mode
 
 **Mix**:
-The set of Categories of Words, plus Corrections as a whole with their own Categories under it, plus Idioms as a whole, that the user chose to see in the Feed, notifications, widgets and the Game. At least one Category of each list always stays in the Mix. The Mix also holds the Rarity Floor.
+The set of Categories of Words, plus Corrections as a whole with their own Categories under it, plus Idioms, Synonym Rows and Tips each as a whole, that the user chose to see in the Feed, notifications, widgets and the Game. At least one Category of each list always stays in the Mix. The Mix also holds the Rarity Floor.
 _Avoid_: Filter, preferences
 
 **Rarity Floor**:
-The lowest rarity of Words the reader wants, «від 1» to «від 5», default «від 1». Only Words of that rarity or rarer are eligible, in the Feed and the Game, so a high floor leaves only the rarest Words. Corrections and Idioms have no rarity and are not affected. Part of the Mix.
+The lowest rarity of Words the reader wants, «від 1» to «від 5», default «від 1». Only Words of that rarity or rarer are eligible, in the Feed and the Game, so a high floor leaves only the rarest Words. Entries of other kinds have no rarity and are not affected. Part of the Mix.
 _Avoid_: Difficulty, level
 
 **Hidden Entry**:
-An Entry the user disliked; it never appears in the Feed, notifications, widgets or the Game again unless unhidden.
+An Entry the user disliked; it never appears in the Feed, notifications, widgets or the Game again unless unhidden. Any kind of Entry can be hidden from its card, and the Hidden screen lists Hidden Entries by kind, Synonym Rows («Синонімічні ряди») and Tips («Поради») included, while the Edition turns the kind on.
 _Avoid_: Disliked, blocked, muted, hidden word
 
 **Hidden Category**:
@@ -212,7 +220,7 @@ A Category, of Words or of Corrections, the user took out of their Mix, whether 
 _Avoid_: Muted topic
 
 **Eligible Entry**:
-An Entry that may appear anywhere new (the Feed, notifications, widgets, the Game): not Retired, of a kind the Edition turns on (and not off remotely), in the user's Mix (a Word of a Category in the Mix at the Rarity Floor or rarer; a Correction while Corrections and its Category are in; an Idiom while Idioms are in) and not Hidden. An Entry that is not eligible stays visible wherever the user already keeps it.
+An Entry that may appear anywhere new (the Feed, notifications, widgets, the Game): not Retired, of a kind the Edition turns on (and not off remotely), in the user's Mix (a Word of a Category in the Mix at the Rarity Floor or rarer; a Correction while Corrections and its Category are in; an Idiom while Idioms are in; a Synonym Row while Synonym Rows are in; a Tip while Tips are in) and not Hidden. An Entry that is not eligible stays visible wherever the user already keeps it.
 _Avoid_: Available, visible, active entry
 
 **Reserved**:
@@ -249,7 +257,7 @@ A run of up to 15 Rounds in one Game Mode, with 5 Lives. Up to 5 of the 15 Round
 _Avoid_: Quiz, practice, test
 
 **Game Mode**:
-The kind of challenge in a Game. The Core mode is Definition → pick the Word, and asks about idioms of Idiom Type `idiom` the same way, with four idioms; place names never play. The Correction mode is a sentence with a non-standard form → pick the standard equivalent. Editions may add modes through an Extension Point.
+The kind of challenge in a Game. The Core mode is Definition → pick the Word, and asks about idioms of Idiom Type `idiom` the same way, with four idioms; place names never play. It also draws Synonym Rows, asking «Що є синонімом до „{домінанта}“?» with one member of the row right and members of other rows wrong (only while the Mix holds at least 4 Synonym Rows), and Tips, each asking its own Game question. The Correction mode is a sentence with a non-standard form → pick the standard equivalent. Editions may add modes through an Extension Point.
 
 **Round**:
 One prompt with four options, exactly one correct.
@@ -267,5 +275,5 @@ The most Rounds passed in one finished Game, in any Game Mode; one per Edition. 
 _Avoid_: High score, top score
 
 **Game Review**:
-The result screen's list of every played Round in order, ✓ or ✗, with the reader's pick on a wrong answer. A tap expands the Definition, Example and etymology (a Correction: the right form and the explanation); a second tap opens the Entry. Its answers are kept only until the result screen and are not stored.
+The result screen's list of every played Round in order, ✓ or ✗, with the reader's pick on a wrong answer. A tap expands the Definition, Example and etymology (a Correction: the right form and the explanation; a Synonym Row: its members; a Tip: its explanation); a second tap opens the Entry. Its answers are kept only until the result screen and are not stored.
 _Avoid_: Mistakes list, answer log
