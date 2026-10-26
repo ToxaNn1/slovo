@@ -186,7 +186,7 @@ One pass through all eligible Entries. When every Entry is Seen, the user is tol
 _Avoid_: Round (that is a Game term), loop
 
 **Knowledge Mark**:
-What the reader says about an Entry on its card: Known («Знаю») or Unknown («Не знаю»). Tapping the other mark changes it, tapping the same one again removes it. On a Correction, Known means "I already say it right". A mistake in the Game is an Unknown mark; there is no separate list of hard words.
+What the reader says about an Entry on its card: Known («Знаю») or Unknown («Не знаю»). Tapping the other mark changes it, tapping the same one again removes it. On a Correction, Known means "I already say it right". A mistake in any Game Mode is an Unknown mark; there is no separate list of hard words.
 _Avoid_: Rating, grade
 
 **Review**:
@@ -253,27 +253,38 @@ _Avoid_: Widget cache, widget database
 ### Game
 
 **Game**:
-A run of up to 15 Rounds in one Game Mode, with 5 Lives. Up to 5 of the 15 Rounds are drawn from eligible Entries that are Unknown or due for Review, the rest as before; a wrong answer marks the Entry Unknown. At its end the Game shows its Game Review.
+A run of Rounds in one Game Mode: up to 15 Rounds with 5 Lives by default. A Game Mode may set its own Lives, Round limit and time limit: «Виживання» has 3 Lives and no Round limit, «На час» 60 seconds and no Lives. In every Game Mode up to 5 Rounds are drawn from eligible Entries that are Unknown or due for Review, the rest as before; a wrong answer marks the Entry Unknown. At its end the Game shows its Game Review. The Daily Crossword is not a Game.
 _Avoid_: Quiz, practice, test
 
 **Game Mode**:
-The kind of challenge in a Game. The Core mode is Definition → pick the Word, and asks about idioms of Idiom Type `idiom` the same way, with four idioms; place names never play. It also draws Synonym Rows, asking «Що є синонімом до „{домінанта}“?» with one member of the row right and members of other rows wrong (only while the Mix holds at least 4 Synonym Rows), and Tips, each asking its own Game question. The Correction mode is a sentence with a non-standard form → pick the standard equivalent. Editions may add modes through an Extension Point.
+The kind of challenge in a Game. A Game Mode sets its Lives (or none), its Round limit (or none), its time limit (or none) and the form of its answers, and has its own Feature Switch. The Core modes, in four groups:
+
+- «Слова»: «Вгадай слово» (`guess-word`), a Definition → pick the Word, getting harder as it goes (Rounds 6–10 an Example with a gap, Rounds 11–15 a Definition → type the Word); it asks about idioms of Idiom Type `idiom` the same way, with four idioms (place names never play), about Synonym Rows with «Що є синонімом до „{домінанта}“?», one member of the row right and members of other rows wrong (only while the Mix holds at least 4 Synonym Rows), and about Tips, each with its own Game question; «Наголос» (`stress`), tap the stressed vowel; «Пари» (`pairs`), match 4 Words to 4 Definitions; «Анаграми» (`anagram`), assemble the Word from shuffled letters; «За буквами» (`by-letters`), type the Word, opening letters if needed; «Впиши слово» (`type-word`), a sentence with a non-standard form → type the standard form; «Звідки слово» (`origin`), pick the language a Word came from.
+- «Виправлення»: «Обери правильне» (`correction`), a sentence with a non-standard form → pick the standard equivalent; «Англіцизми» (`anglicism`), the same with anglicisms only.
+- «Вислови»: «Фразеологізми» (`idiom-meaning`), an idiom or a proverb → pick its meaning; «Склади вислів» (`build-idiom`), assemble an expression from its words.
+- «Виклик»: «Виживання» (`survival`), 3 Lives and no Round limit; «На час» (`timed`), 60 seconds and no Lives.
+
+Editions may add modes through an Extension Point.
 
 **Round**:
-One prompt with four options, exactly one correct.
+One prompt with exactly one right answer. The number and form of its options depend on the Game Mode: a pick of options, a tap on a vowel, a pair in a pairs grid, chips tapped in order, or typed text.
 _Avoid_: Level, question
 
 **Life**:
-One allowed mistake; a wrong answer costs a Life, losing all Lives ends the Game.
+One allowed mistake in a Game Mode with Lives; a wrong answer costs a Life, losing all Lives ends the Game.
 _Avoid_: Heart, attempt
 
 **Distractor**:
 A wrong option in a Round.
 
 **Best result**:
-The most Rounds passed in one finished Game, in any Game Mode; one per Edition. Stored, since finished Games are not kept, and written only when a finished Game beats it; a Game left before its end never counts.
+The highest result of one finished Game in a Game Mode: the Rounds passed, or the right answers in «На час»; one per Game Mode per Edition. Stored, since finished Games are not kept, and written only when a finished Game beats it; a Game left before its end never counts.
 _Avoid_: High score, top score
 
 **Game Review**:
-The result screen's list of every played Round in order, ✓ or ✗, with the reader's pick on a wrong answer. A tap expands the Definition, Example and etymology (a Correction: the right form and the explanation; a Synonym Row: its members; a Tip: its explanation); a second tap opens the Entry. Its answers are kept only until the result screen and are not stored.
+The result screen's list of every played Round in order, in every Game Mode: its prompt → its right answer, ✓ or ✗, with the reader's pick or typed text on a wrong answer; each pair of «Пари» is one row. A tap expands the Definition, Example and etymology (a Correction: the right form and the explanation; a Synonym Row: its members; a Tip: its explanation); a second tap opens the Entry. Its answers are kept only until the result screen and are not stored.
 _Avoid_: Mistakes list, answer log
+
+**Daily Crossword**:
+«Кросворд дня»: one 5×5 mini crossword a day, the same for every reader on a local date, its clues the Definitions of Words and the explanations of Corrections. It is not a Game: it has no Rounds, no Lives, no Best result and no Game Review, and solving it makes nothing Seen and changes no Knowledge Mark.
+_Avoid_: Daily puzzle, crossword game, Word of the Day
