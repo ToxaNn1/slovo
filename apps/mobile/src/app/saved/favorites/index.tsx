@@ -11,6 +11,7 @@ import {
   useEdition,
   useTokens,
 } from '@slovo/ui';
+import { favoriteTrailing } from '@slovo/ui/entry-row-text';
 import { useRouter } from 'expo-router';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -29,7 +30,7 @@ function FavoriteRow({ favorite: { entryId, row, addedAt } }: { favorite: Favori
   return (
     <EntryRow
       row={row}
-      trailing={addedOn(addedAt)}
+      trailing={favoriteTrailing(editionStrings.history, row, addedOn(addedAt))}
       onPress={() => {
         openScreen(`/saved/favorites/${entryId}`);
       }}
@@ -48,7 +49,7 @@ function FavoriteRow({ favorite: { entryId, row, addedAt } }: { favorite: Favori
 
 /**
  * Favorites: every Entry the reader keeps, newest first, each row with when
- * it was added. A tap opens the Entry screen; a swipe (or the VoiceOver
+ * it was added, a Synonym Row's and a Tip's with its kind too. A tap opens the Entry screen; a swipe (or the VoiceOver
  * action) takes the Entry out. An empty list leads back to the Feed.
  */
 export default function FavoritesScreen() {

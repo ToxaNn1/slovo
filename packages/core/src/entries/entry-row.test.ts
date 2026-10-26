@@ -2,7 +2,15 @@ import { describe, expect, it } from 'vitest';
 
 import { createMemoryUserStatePort, openComposition, openUserState } from '../index';
 import { createMemoryContentPort } from '../testing';
-import { correction, countingReads, fakeClock, idiom, word } from '../test-support';
+import {
+  correction,
+  countingReads,
+  fakeClock,
+  idiom,
+  synonymRow,
+  tip,
+  word,
+} from '../test-support';
 import { buildEntryRow } from './entry-row';
 
 const words = Array.from({ length: 40 }, (_, place) => word(`w_${String(place).padStart(2, '0')}`));
@@ -10,6 +18,8 @@ const corrections = Array.from({ length: 10 }, (_, place) => correction(`c_${Str
 const content = createMemoryContentPort({
   words: [...words, word('w_old', { retired: true })],
   corrections: [...corrections, correction('c_old', { retired: true })],
+  synonymRows: [synonymRow('r_walk'), synonymRow('r_old', { retired: true })],
+  tips: [tip('t_hour')],
 });
 
 const at = '2026-10-11T06:00:00.000Z';
@@ -67,6 +77,9 @@ describe('the rows of the Entries the user keeps', () => {
       ...corrections.map(({ id }) => id),
       'w_old',
       'c_old',
+      'r_walk',
+      'r_old',
+      't_hour',
       'w_missing',
     ];
 
@@ -74,9 +87,9 @@ describe('the rows of the Entries the user keeps', () => {
 
     expect(kept.reads).toBe((await open(keeping(few))).reads);
     // Every Entry the pack has, Retired or not, and not the one it lacks.
-    expect(kept.app.favorites.list).toHaveLength(52);
-    expect(kept.app.history.list).toHaveLength(52);
-    expect(kept.app.collections.entries('c1')).toHaveLength(52);
+    expect(kept.app.favorites.list).toHaveLength(55);
+    expect(kept.app.history.list).toHaveLength(55);
+    expect(kept.app.collections.entries('c1')).toHaveLength(55);
     expect(kept.app.knowledge.state).toMatchObject({
       known: { word: 41, correction: 11 },
     });
@@ -153,6 +166,56 @@ describe('the row of an Entry', () => {
       secondLine: 'Місто на Житомирщині.',
       labelKey: 'placeName',
       spoken: 'Бердичів, Місто на Житомирщині.',
+    });
+  });
+
+  it('leads a Synonym Row with its dominant and Stress over its meaning, and says «синоніми»', () => {
+    const row = buildEntryRow(
+      synonymRow('r_ity', {
+        dominant: { text: 'іти', stress: [2] },
+        meaning: 'Рухатися пішки.',
+      }),
+    );
+
+    expect(row).toMatchObject({
+      kind: 'synonymRow',
+      entryId: 'r_ity',
+      title: 'іти́',
+      secondLine: 'Рухатися пішки.',
+      labelKey: 'synonymRow',
+      spoken: 'іти, Рухатися пішки.',
+    });
+  });
+
+  it('leads a Tip with its title over its standard form, and says «порада»', () => {
+    const row = buildEntryRow(
+      tip('t_hour', { title: 'Котра година?', standardForm: 'Котра година зараз?' }),
+    );
+
+    expect(row).toMatchObject({
+      kind: 'tip',
+      entryId: 't_hour',
+      title: 'Котра година?',
+      secondLine: 'Котра година зараз?',
+      labelKey: 'tip',
+      spoken: 'Котра година?, Котра година зараз?',
+    });
+  });
+});
+
+describe('the card of an Entry a list opens', () => {
+  it('is a Synonym Row card or a Tip card for a row or a Tip', async () => {
+    const { app } = await open(new Map());
+
+    expect(await app.entryCard('r_walk')).toMatchObject({
+      kind: 'synonymRow',
+      entryId: 'r_walk',
+      model: { dominant: { text: 'wa\u0301lk' } },
+    });
+    expect(await app.entryCard('t_hour')).toMatchObject({
+      kind: 'tip',
+      entryId: 't_hour',
+      model: { title: 'What time is it?' },
     });
   });
 });

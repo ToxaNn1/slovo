@@ -128,10 +128,8 @@ const FeedPage = memo(function FeedPage({
     <View testID={`feed-card-${String(position)}`} style={[styles.page, { paddingTop: top }]}>
       <PagerScrollView contentContainerStyle={styles.content}>
         {card.kind === 'tip' ? (
-          // Its action row comes with the tickets that hide, list and share Tips (spec #730).
-          <EntryCard card={card} selfCheck={selfCheck} />
+          <EntryCard card={card} selfCheck={selfCheck} actions={<EntryActions card={card} />} />
         ) : card.kind === 'synonymRow' ? (
-          // Its action row comes with the tickets that hide, list and share rows (spec #730).
           <EntryCard
             card={card}
             // A member opens its Word over the Feed, Hidden or out of the Mix alike.
@@ -139,6 +137,7 @@ const FeedPage = memo(function FeedPage({
               openScreen(`/entry/${wordId}`);
             }}
             selfCheck={selfCheck}
+            actions={<EntryActions card={card} />}
           />
         ) : (
           <EntryCard

@@ -12,7 +12,7 @@ export interface ActionRowProps {
   share?: ReactNode;
   /** Adds the Entry to Collections. */
   collection?: ReactNode;
-  /** Hides the Entry, or its Category. */
+  /** Hides the Entry, or its Category; the row leaves its slot out without it. */
   hide?: ReactNode;
 }
 
@@ -20,8 +20,9 @@ export interface ActionRowProps {
  * The action row under the Entry card (ADR 0017): one 52 pt slot per action,
  * spread evenly across the card's width, the same on a Word and a Correction
  * card: the heart, share, Collections and hide, as the design has it. Without
- * a share action the other three spread over the row. The mark buttons, when
- * given, sit on a line above them.
+ * a share or a hide action the others spread over the row, as on a Synonym
+ * Row's and a Tip's card (spec #730). The mark buttons, when given, sit on a
+ * line above them.
  */
 export function ActionRow({ marks, favorite, share, collection, hide }: ActionRowProps) {
   return (
@@ -31,7 +32,7 @@ export function ActionRow({ marks, favorite, share, collection, hide }: ActionRo
         <View style={styles.slot}>{favorite}</View>
         {share !== undefined && <View style={styles.slot}>{share}</View>}
         <View style={styles.slot}>{collection}</View>
-        <View style={styles.slot}>{hide}</View>
+        {hide !== undefined && <View style={styles.slot}>{hide}</View>}
       </View>
     </View>
   );

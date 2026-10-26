@@ -7,12 +7,7 @@ import { createEntries } from './entries/entries';
 import { createEntryRows, type EntryRowModel } from './entries/entry-row';
 import { openFavorites, type Favorites } from './saved/favorites';
 import { buildEntryCard, buildFeedCard, openFeed, type Feed } from './feed/feed';
-import {
-  asReviewIfDue,
-  type EntryFeedCard,
-  type SynonymRowFeedCard,
-  type TipFeedCard,
-} from './feed/feed-card';
+import { asReviewIfDue, type AnyEntryCard } from './feed/feed-card';
 import { openGame, type Game } from './game/game';
 import type { GameEdition, GameMode } from './game/game-mode';
 import { guessWord } from './game/guess-word';
@@ -97,7 +92,7 @@ export interface Composition extends Hiding {
    * makes the Entry Seen: Seen comes from the Feed, a notification or the
    * widget.
    */
-  entryCard(entryId: string): Promise<EntryFeedCard | SynonymRowFeedCard | TipFeedCard | undefined>;
+  entryCard(entryId: string): Promise<AnyEntryCard | undefined>;
   /**
    * Opens a Word from a notification: its Entry card, like `entryCard`, once
    * it is Seen, in History and today is an Active Day, in one write. It joins
@@ -109,9 +104,7 @@ export interface Composition extends Hiding {
    * again writes nothing new. On a new local day it turns the composition to
    * the day, as `resume` does, with today's Active Day in the Word's write.
    */
-  openedFromNotification(
-    entryId: string,
-  ): Promise<EntryFeedCard | SynonymRowFeedCard | TipFeedCard | undefined>;
+  openedFromNotification(entryId: string): Promise<AnyEntryCard | undefined>;
   /** The row model of any Entry, Retired or not, for a list; nothing for an id the Language Pack doesn't have. */
   entryRow(entryId: string): Promise<EntryRowModel | undefined>;
   /**
@@ -337,9 +330,7 @@ export async function openComposition({
   // launch never waits for it. A start or a change of eligibility waits its turn
   // behind it, and a planning that fails is tried again (see `planOffers`).
   planOffers();
-  async function entryCard(
-    entryId: string,
-  ): Promise<EntryFeedCard | SynonymRowFeedCard | TipFeedCard | undefined> {
+  async function entryCard(entryId: string): Promise<AnyEntryCard | undefined> {
     const entry = await entries.get(entryId);
     // Today's Word of the Day carries its day, as on its Feed card.
     const today = wordOfTheDay.chosen();
@@ -352,9 +343,7 @@ export async function openComposition({
     return asReviewIfDue(card, knowledge);
   }
   /** An Entry opened from outside the app, from a notification or the widget: one rule for both. */
-  async function openedFromOutside(
-    entryId: string,
-  ): Promise<EntryFeedCard | SynonymRowFeedCard | TipFeedCard | undefined> {
+  async function openedFromOutside(entryId: string): Promise<AnyEntryCard | undefined> {
     await day.opened((activeDay) => markOpenedSeen(entryId, activeDay));
     return entryCard(entryId);
   }

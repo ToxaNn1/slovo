@@ -3,7 +3,7 @@ import type { EntryRowModel } from '@slovo/core';
 
 /**
  * The Edition's label of a row, its kind or an Idiom's Idiom Type, as the Core's Entry row keys it:
- * «слово», «виправлення», «фразеологізм» or «топонім» (ADR 0017). The one
+ * «слово», «виправлення», «фразеологізм», «топонім», «синоніми» or «порада» (ADR 0017). The one
  * place a screen turns the key into the word.
  */
 export function entryLabel(
@@ -26,8 +26,24 @@ export function entryLabelBeside(
 }
 
 /**
+ * The text on the right of a Favorites row: when the Entry went in, after the
+ * label of a Synonym Row or a Tip, whose title would read as a Word's or a
+ * Correction's without it (spec #730): «синоніми · сьогодні».
+ */
+export function favoriteTrailing(
+  strings: Pick<EditionStrings['history'], 'kinds' | 'kindBeside'>,
+  row: Pick<EntryRowModel, 'kind' | 'labelKey'>,
+  added: string,
+): string {
+  return row.kind === 'synonymRow' || row.kind === 'tip'
+    ? entryLabelBeside(strings, row, added)
+    : added;
+}
+
+/**
  * The line under a row's title in the Edition's words: a Word's or an
- * Idiom's Definition as the Entry row says it, or «замість «{form}»» around the
+ * Idiom's Definition, a Synonym Row's meaning or a Tip's standard form as the
+ * Entry row says it, or «замість «{form}»» around the
  * form a Correction replaces.
  */
 export function entryRowSubtitle(

@@ -51,6 +51,7 @@ export {
   type Feed,
 } from './feed/feed';
 export {
+  type AnyEntryCard,
   type EntryFeedCard,
   type FeedCard,
   type IdiomFeedCard,

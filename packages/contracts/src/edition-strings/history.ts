@@ -36,6 +36,8 @@ export const HistoryStringsSchema = z.strictObject({
     idiom: TextSchema,
     placeName: TextSchema,
     proverb: TextSchema,
+    synonymRow: TextSchema,
+    tip: TextSchema,
   }),
   /**
    * A row's kind beside its time on the right of the row, where Collections

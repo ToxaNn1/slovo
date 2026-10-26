@@ -61,8 +61,10 @@ function labelParts(
   row: EntryRowModel,
   strings: EditionStrings,
 ): { short: string[]; full: string[] } {
-  // The row's label before the labels already names the Idiom Type.
-  if (row.kind === 'idiom') return { short: [], full: [] };
+  // The row's label before the labels already names the Idiom Type, the Synonym Row or the Tip.
+  if (row.kind === 'idiom' || row.kind === 'synonymRow' || row.kind === 'tip') {
+    return { short: [], full: [] };
+  }
   if (row.kind === 'correction') {
     const type = strings.correctionCard.correctionTypes[row.correctionType];
     return { short: [type], full: [type] };

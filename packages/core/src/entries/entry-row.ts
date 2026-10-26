@@ -1,34 +1,34 @@
-import type {
-  Correction,
-  CorrectionType,
-  Gender,
-  Idiom,
-  IdiomType,
-  PartOfSpeech,
-  Register,
-  Word,
-} from '@slovo/contracts';
+import type { CorrectionType, Gender, IdiomType, PartOfSpeech, Register } from '@slovo/contracts';
 
-import type { Entries } from './entries';
+import type { AskableEntry, Entries } from './entries';
 import { renderStress, withoutStress } from './stress';
 
-/** What indexes the Edition's label of a row: a Word's or a Correction's kind, or an Idiom's Idiom Type (ADR 0046). */
-export type EntryLabelKey = 'word' | 'correction' | IdiomType;
+/**
+ * What indexes the Edition's label of a row: the kind of a Word, a
+ * Correction, a Synonym Row or a Tip, or an Idiom's Idiom Type (ADR 0046).
+ */
+export type EntryLabelKey = 'word' | 'correction' | 'synonymRow' | 'tip' | IdiomType;
 
 /** What every row says of its Entry, whatever its kind. */
 interface EntryRowText {
   readonly entryId: string;
   /**
    * What the row leads with: a Word's Lemma with every Stress mark applied, a
-   * Correction's main standard equivalent, or an Idiom's expression as written.
+   * Correction's main standard equivalent, an Idiom's expression as written,
+   * a Synonym Row's dominant with its Stress or a Tip's title.
    */
   readonly title: string;
   /**
-   * The line under the title: a Word's or an Idiom's primary Definition, or
-   * the non-standard form a Correction replaces.
+   * The line under the title: a Word's or an Idiom's primary Definition, the
+   * non-standard form a Correction replaces, a Synonym Row's meaning or a
+   * Tip's standard form.
    */
   readonly secondLine: string;
-  /** The key of the row's label in the Edition's words («слово», «виправлення», «фразеологізм», «топонім», «прислів’я»). */
+  /**
+   * The key of the row's label in the Edition's words («слово»,
+   * «виправлення», «фразеологізм», «топонім», «прислів’я», «синоніми»,
+   * «порада»).
+   */
   readonly labelKey: EntryLabelKey;
   /**
    * The title and the second line as VoiceOver reads them: whole words, with
@@ -58,7 +58,9 @@ export type EntryRowModel =
       /** Why the form is non-standard, a key the UI turns into the Edition's word (the Hidden screen shows it). */
       readonly correctionType: CorrectionType;
     })
-  | (EntryRowText & { readonly kind: 'idiom' });
+  | (EntryRowText & { readonly kind: 'idiom' })
+  | (EntryRowText & { readonly kind: 'synonymRow' })
+  | (EntryRowText & { readonly kind: 'tip' });
 
 /** The texts of a row, as VoiceOver reads them too. */
 function rowText(
@@ -77,7 +79,7 @@ function rowText(
 }
 
 /** The row model of an Entry. */
-export function buildEntryRow(entry: Word | Correction | Idiom): EntryRowModel {
+export function buildEntryRow(entry: AskableEntry): EntryRowModel {
   if (entry.kind === 'word') {
     return {
       kind: 'word',
@@ -92,6 +94,16 @@ export function buildEntryRow(entry: Word | Correction | Idiom): EntryRowModel {
       kind: 'idiom',
       ...rowText(entry.id, entry.expression, entry.primaryDefinition, entry.idiomType),
     };
+  }
+  if (entry.kind === 'synonymRow') {
+    const { text, stress } = entry.dominant;
+    return {
+      kind: 'synonymRow',
+      ...rowText(entry.id, renderStress({ lemma: text, stress }), entry.meaning, 'synonymRow'),
+    };
+  }
+  if (entry.kind === 'tip') {
+    return { kind: 'tip', ...rowText(entry.id, entry.title, entry.standardForm, 'tip') };
   }
   return {
     kind: 'correction',
@@ -121,12 +133,12 @@ export interface EntryRows {
   rows(entryIds: Iterable<string>): Promise<ReadonlyMap<string, EntryRowModel>>;
 }
 
-export function createEntryRows(entries: Pick<Entries, 'getMany'>): EntryRows {
+export function createEntryRows(entries: Pick<Entries, 'getManyOfAnyKind'>): EntryRows {
   const kept = new Map<string, Promise<EntryRowModel | undefined>>();
 
   /** Reads the rows of the Entries together, and keeps each. */
   function read(entryIds: readonly string[]): void {
-    const read = entries.getMany(entryIds);
+    const read = entries.getManyOfAnyKind(entryIds);
     for (const entryId of entryIds) {
       kept.set(
         entryId,

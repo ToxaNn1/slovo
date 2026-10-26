@@ -14,9 +14,10 @@ import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
 
 /**
- * An Entry of a kind the screens show: every kind but the Synonym Row and the
- * Tip, which no screen shows yet (spec #730). The Entries leave them out, as
- * if the Language Pack didn't have them, so no screen is handed one.
+ * An Entry of a kind every screen shows: every kind but the Synonym Row and
+ * the Tip, which only the Feed, the lists and the Entry screen a list opens
+ * show yet (spec #730). `get` and `getMany` leave them out, as if the
+ * Language Pack didn't have them, so no other screen is handed one.
  */
 export type ShownEntry = Exclude<Entry, { kind: 'synonymRow' | 'tip' }>;
 
@@ -60,8 +61,7 @@ export type EligibleOfKind<E extends AskableEntry = ShownEntry> =
  * (not Retired), of a kind the Edition turns on and no remote Feature Switch
  * turns off, in the user's Mix (a Word at its Rarity Floor or rarer; the
  * Rarity Floor touches no other kind) and not Hidden (ADR 0015, 0019, 0040,
- * 0051). Synonym Rows and Tips are eligible by the same rules, though the
- * screens are not given them yet (spec #730).
+ * 0051). Synonym Rows and Tips are eligible by the same rules.
  */
 export interface Entries {
   /**
@@ -94,9 +94,9 @@ export interface Entries {
    */
   get(id: string): Promise<ShownEntry | undefined>;
   /**
-   * A Synonym Row or a Tip by id, eligible or not, for the Feed, which gives
-   * them their turns before any other screen shows them (spec #730). An
-   * Entry of another kind reads as missing.
+   * A Synonym Row or a Tip by id, eligible or not, for its card on the Feed
+   * and the Entry screen a list opens (spec #730). An Entry of another kind
+   * reads as missing.
    */
   getSynonymRowOrTip(id: string): Promise<SynonymRow | Tip | undefined>;
   /**
@@ -105,6 +105,12 @@ export interface Entries {
    * is not in the map.
    */
   getMany(ids: readonly string[]): Promise<ReadonlyMap<string, ShownEntry>>;
+  /**
+   * Any Entries by id, as `getMany` reads them, Synonym Rows and Tips too: the
+   * lists that keep an Entry (Favorites, Collections, History) list every
+   * kind (spec #730).
+   */
+  getManyOfAnyKind(ids: readonly string[]): Promise<ReadonlyMap<string, AskableEntry>>;
   /**
    * Every Category of the Language Pack, with its display name, in its order,
    * read once: the pack never changes while it is open (ADR 0033).
@@ -327,6 +333,11 @@ export function createEntries(
       const unique = [...new Set(ids)];
       if (unique.length === 0) return new Map();
       return new Map((await readShown(unique)).map((entry) => [entry.id, entry]));
+    },
+    async getManyOfAnyKind(ids) {
+      const unique = [...new Set(ids)];
+      if (unique.length === 0) return new Map();
+      return new Map((await content.getEntries(unique)).map((entry) => [entry.id, entry]));
     },
     categories,
     correctionCategories,

@@ -1,4 +1,4 @@
-import type { Composition, EntryFeedCard, SynonymRowFeedCard, TipFeedCard } from '@slovo/core';
+import type { AnyEntryCard, Composition } from '@slovo/core';
 import {
   BackLink,
   DecorBackground,
@@ -97,12 +97,7 @@ export function EntryScreen({
                 const word = card.kind === 'word' ? card.model.lemma : back;
                 openScreen(`${route}/${synonymRowId}?back=${encodeURIComponent(word)}`);
               }}
-              // The action row of rows and Tips comes with the tickets that hide, list and share them (spec #730).
-              actions={
-                card.kind === 'synonymRow' || card.kind === 'tip' ? undefined : (
-                  <EntryActions card={card} />
-                )
-              }
+              actions={<EntryActions card={card} />}
             />
           </ScrollView>
         )}
@@ -116,7 +111,7 @@ function openEntry(
   composition: Composition,
   entryId: string,
   openedFrom: OpenedFrom | undefined,
-): Promise<EntryFeedCard | SynonymRowFeedCard | TipFeedCard | undefined> {
+): Promise<AnyEntryCard | undefined> {
   switch (openedFrom) {
     case 'notification':
       return composition.openedFromNotification(entryId);
