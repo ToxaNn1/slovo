@@ -711,12 +711,12 @@ describe('buildLanguagePack', () => {
     ]);
   });
 
-  it('refuses a word that mixes scripts, such as a Latin "i" in a Cyrillic word', () => {
+  it('refuses a word that mixes scripts, such as a Latin "i" in a Cyrillic word or between two', () => {
     const editionDir = copyFixture('valid');
     editJson(editionDir, 'content/words/w_fx0002.json', (word) => ({
       ...word,
       primaryDefinition: 'Будь-що, сказане вiд себе.',
-      examples: [{ text: 'Він сказав це вголос.' }, { text: 'Свiчка Iскри.' }],
+      examples: [{ text: 'Він сказав це вголос.' }, { text: 'Свiчка Iскри, луки i мечі.' }],
     }));
 
     expect(buildErrors(editionDir)).toEqual([
@@ -741,6 +741,13 @@ describe('buildLanguagePack', () => {
         message:
           'The word "Iскри" mixes Cyrillic and Latin letters ("I" U+0049): write each word in one script',
       },
+      {
+        file: 'content/words/w_fx0002.json',
+        entryId: 'w_fx0002',
+        field: 'examples.1.text',
+        message:
+          'The word "i" stands in Latin between Cyrillic words ("i" U+0069): write each word in one script',
+      },
     ]);
   });
 
@@ -748,7 +755,7 @@ describe('buildLanguagePack', () => {
     const editionDir = copyFixture('valid');
     editJson(editionDir, 'content/words/w_fx0002.json', (word) => ({
       ...word,
-      etymology: 'Від псл. *světъ, пор. лит. šviesà, нім. Welt.',
+      etymology: 'Від псл. *světъ, пор. лит. šviesà, нім. Welt; суфікс -t- і звук b.',
     }));
     record(editionDir);
 
