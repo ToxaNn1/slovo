@@ -867,3 +867,69 @@ describe('a Tip', () => {
     );
   });
 });
+
+describe("a Word's origin", () => {
+  const originCodes = ukrainian.config.originLanguages.map(({ code, name }) => `${code} (${name})`);
+  const origin = ukrainian.config.originLanguages[0]?.code ?? '';
+
+  it("is offered from the Edition's codes when a Word is drafted, and recorded once it passes", () => {
+    const run = content(['new', 'word', '--edition', 'uk'], { edits: [{ ...validWord, origin }] });
+
+    expect(run.stderr).toBe('');
+    expect(run.status).toBe(0);
+    expect(run.stdout).toContain(`origin: one of ${originCodes.join(', ')}, or none`);
+    const [file = ''] = run.opened;
+    expect(readJson(file)).toMatchObject({ origin });
+    expect(run.stdout).toContain(`Recorded ${file}`);
+    expect(content(['check', '--edition', 'uk']).status).toBe(0);
+  });
+
+  it("is offered from the Edition's codes when a Word is edited, and recorded once it passes", () => {
+    const file = ukrainian.entryFile(word.id);
+
+    const run = content(['edit', word.id, '--edition', 'uk'], { edits: [{ origin }] });
+
+    expect(run.stderr).toBe('');
+    expect(run.status).toBe(0);
+    expect(run.stdout).toContain(`origin: one of ${originCodes.join(', ')}, or none`);
+    expect(readJson(file)).toMatchObject({ id: word.id, origin });
+    expect(run.stdout).toContain(`Recorded ${file}`);
+  });
+
+  it('is not offered for an Entry of another kind', () => {
+    const run = content(['edit', idiom.id, '--edition', 'uk'], { edits: [null] });
+
+    expect(run.stdout).not.toContain('origin:');
+  });
+
+  it('refuses a code the Edition does not list, and records nothing', () => {
+    const before = { registry: registry(), manifest: manifest() };
+
+    const run = content(['new', 'word', '--edition', 'uk'], {
+      edits: [{ ...validWord, origin: 'xx' }],
+      answers: 'n\n',
+    });
+
+    expect(run.status).toBe(1);
+    const [file = ''] = run.opened;
+    const id = file.slice('content/words/'.length, -'.json'.length);
+    expect(run.stderr).toContain(`${file} › Entry ${id} › origin: Unknown origin language "xx"`);
+    expect(run.stderr).toContain(`Kept ${file}, not recorded`);
+    expect(registry()).toEqual(before.registry);
+    expect(manifest()).toEqual(before.manifest);
+  });
+
+  it('is checked with the rest of the Edition, an unknown code reported in its file and field', () => {
+    const file = ukrainian.entryFile(word.id);
+    const entry = readJson(file) as Record<string, unknown>;
+    writeFileSync(join(editionDir, file), JSON.stringify({ ...entry, origin: 'xx' }));
+
+    const run = content(['check', '--edition', 'uk']);
+
+    expect(run.status).toBe(1);
+    expect(run.stderr).toContain('Edition "uk": 1 problem(s)');
+    expect(run.stderr).toContain(
+      `${file} › Entry ${word.id} › origin: Unknown origin language "xx"`,
+    );
+  });
+});

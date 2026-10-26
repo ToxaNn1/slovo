@@ -42,7 +42,8 @@ export type EntryKind = keyof typeof ENTRY_KINDS;
 
 /**
  * Drafts an Entry of the given kind with an id no Entry of the Edition has
- * had, in the file the build reads it from, and opens it in the editor.
+ * had, in the file the build reads it from, and opens it in the editor. For
+ * a Word it first prints the origin codes the Edition lists.
  * Once the draft passes the build's checks, the content is recorded as
  * `pnpm build:pack --record` records it: the new id joins the id registry
  * and the content version grows. A draft closed unchanged is removed, so
@@ -71,6 +72,7 @@ export async function newEntry(kind: EntryKind, tool: ContentTool): Promise<numb
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, draft);
   terminal.print(`Drafted ${file}`);
+  if (kind === 'word') offerOrigins(tool);
   return editUntilRecorded(file, draft, tool);
 }
 
@@ -78,7 +80,8 @@ export async function newEntry(kind: EntryKind, tool: ContentTool): Promise<numb
  * Opens an existing Entry in the editor, found by its id, or by its Lemma,
  * expression, non-standard form, a Synonym Row's dominant or a Tip's title, with or without stress marks and in any
  * case. When the text matches several Entries, such as homonyms, it lists
- * them and asks which one to open. After each save the content is checked
+ * them and asks which one to open. For a Word it first prints the origin
+ * codes the Edition lists. After each save the content is checked
  * and recorded as `newEntry` does; an Entry closed unchanged writes nothing.
  * Returns the exit code.
  */
@@ -106,6 +109,7 @@ export async function editEntry(text: string, tool: ContentTool): Promise<number
     return 1;
   }
   const file = edition.entryFile(match.id);
+  if (match.id.startsWith(ENTRY_KINDS.word)) offerOrigins(tool);
   return editUntilRecorded(file, readFileSync(join(edition.dir, file), 'utf8'), tool, 'keep');
 }
 
@@ -210,6 +214,12 @@ async function editUntilRecorded(
       return 1;
     }
   }
+}
+
+/** Prints the origin codes the Edition lists, which a Word's optional `origin` takes one of. */
+function offerOrigins({ edition, terminal }: ContentTool): void {
+  const codes = edition.config.originLanguages.map(({ code, name }) => `${code} (${name})`);
+  terminal.print(`  origin: one of ${codes.join(', ')}, or none`);
 }
 
 function printContentVersion(
