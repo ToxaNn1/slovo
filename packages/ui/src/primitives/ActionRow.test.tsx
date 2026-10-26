@@ -43,4 +43,16 @@ describe('ActionRow', () => {
 
     expect(screen.queryByTestId('marks')).toBeNull();
   });
+
+  it('spreads the heart and Collections alone over the row without share and hide, as on a Synonym Row', async () => {
+    await render(
+      <ActionRow
+        favorite={<Text testID="favorite">♡</Text>}
+        collection={<Text testID="collection">+</Text>}
+      />,
+    );
+
+    const [slots] = screen.getByTestId('action-row').children;
+    expect(typeof slots === 'string' ? [] : slots?.children).toHaveLength(2);
+  });
 });
