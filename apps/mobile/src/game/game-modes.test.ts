@@ -99,8 +99,9 @@ async function open({
 }
 
 /** The cards of the modes on offer, in the Edition's texts. */
+/** The cards of the modes the app plays, as the Game screen shows them. */
 const cardsOf = ({ game }: Composition) =>
-  game.state.modes.map((offer) => gameModeCard(offer, strings));
+  playedOffers(game.state.modes).map((offer) => gameModeCard(offer, strings));
 
 const guessWordCard = {
   entryKind: 'word',
@@ -186,7 +187,9 @@ describe('the card of each Game Mode on offer', () => {
     const app = await open({ words: 15, gameModes: [unnamedMode] });
 
     expect(app.game.state.modes.map(({ modeId }) => modeId)).toContain('test-unnamed');
-    expect(() => cardsOf(app)).toThrow('test-unnamed');
+    expect(() => app.game.state.modes.map((offer) => gameModeCard(offer, strings))).toThrow(
+      'test-unnamed',
+    );
   });
 });
 
@@ -260,8 +263,8 @@ describe('the groups of the modes on offer', () => {
   it('lists only the modes the Core offers, and no group without one', async () => {
     const app = await open({ words: 15 });
 
-    expect(shapeOf(gameModeGroups(app.game.state.modes, strings))).toEqual([
-      ['Слова', ['guess-word', 'pairs', 'by-letters']],
+    expect(shapeOf(gameModeGroups(playedOffers(app.game.state.modes), strings))).toEqual([
+      ['Слова', ['guess-word', 'pairs']],
       ['Виправлення', ['correction']],
     ]);
   });
@@ -269,8 +272,8 @@ describe('the groups of the modes on offer', () => {
   it('leaves out a mode the Edition switches off', async () => {
     const app = await open({ words: 15, switchedOff: ['corrections'] });
 
-    expect(shapeOf(gameModeGroups(app.game.state.modes, strings))).toEqual([
-      ['Слова', ['guess-word', 'pairs', 'by-letters']],
+    expect(shapeOf(gameModeGroups(playedOffers(app.game.state.modes), strings))).toEqual([
+      ['Слова', ['guess-word', 'pairs']],
     ]);
   });
 
