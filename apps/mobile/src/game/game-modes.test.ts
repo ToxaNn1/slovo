@@ -6,11 +6,12 @@ import {
   systemRandom,
   type Composition,
   type GameMode,
+  type GameModeOffer,
 } from '@slovo/core';
 import { createMemoryContentPort } from '@slovo/core/testing';
 import { describe, expect, it } from 'vitest';
 
-import { gameModeCard, gameModeStrings, playedOffers } from './game-modes';
+import { gameModeCard, gameModeGroups, gameModeStrings, playedOffers } from './game-modes';
 import { strings as allStrings } from '../test-support';
 
 const { game: strings } = allStrings;
@@ -63,10 +64,13 @@ async function open({
   words,
   correctionsInMix = true,
   gameModes,
+  switchedOff = [],
 }: {
   words: number;
   correctionsInMix?: boolean;
   gameModes?: readonly GameMode[];
+  /** The Feature Switches turned off; every other one is on. */
+  switchedOff?: readonly string[];
 }): Promise<Composition> {
   const app = await openComposition({
     content: createMemoryContentPort({ words: Array.from({ length: words }, (_, i) => word(i)) }),
@@ -84,7 +88,7 @@ async function open({
         },
         notificationTimes: [],
       },
-      isFeatureEnabled: () => true,
+      isFeatureEnabled: (feature) => !switchedOff.includes(feature),
     },
     userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
     clock: { now: () => new Date('2026-10-15T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
@@ -96,7 +100,7 @@ async function open({
 
 /** The cards of the modes on offer, in the Edition's texts. */
 const cardsOf = ({ game }: Composition) =>
-  game.state.modes.map((offer) => gameModeCard(offer, strings.modes));
+  game.state.modes.map((offer) => gameModeCard(offer, strings));
 
 const guessWordCard = {
   entryKind: 'word',
@@ -117,16 +121,26 @@ describe('the card of each Game Mode on offer', () => {
   it('draws a mode that can start with its texts and no refusal', async () => {
     const [guessWord] = cardsOf(await open({ words: 15 }));
 
-    expect(guessWord).toEqual({ ...guessWordCard, canStart: true, refusal: undefined });
+    expect(guessWord).toEqual({
+      ...guessWordCard,
+      canStart: true,
+      refusal: undefined,
+      best: undefined,
+    });
   });
 
   it("draws a mode still planned as one that can't start yet, with no refusal", () => {
     const card = gameModeCard(
       { modeId: 'guess-word', entryKind: 'word', canStart: false, planning: true },
-      strings.modes,
+      strings,
     );
 
-    expect(card).toEqual({ ...guessWordCard, canStart: false, refusal: undefined });
+    expect(card).toEqual({
+      ...guessWordCard,
+      canStart: false,
+      refusal: undefined,
+      best: undefined,
+    });
   });
 
   it("says why a mode can't start, in its own text for each refusal", async () => {
@@ -139,18 +153,33 @@ describe('the card of each Game Mode on offer', () => {
         canStart: false,
         refusal:
           'Замало слів і висловів у вашому Міксі. Поверніть кілька категорій у Налаштуваннях.',
+        best: undefined,
       },
       {
         ...correctionCard,
         canStart: false,
         refusal: 'Замало виправлень у вашому Міксі. Поверніть приховані в Налаштуваннях.',
+        best: undefined,
       },
     ]);
     expect(outOfMix[1]).toEqual({
       ...correctionCard,
       canStart: false,
       refusal: 'Виправлень немає у вашому Міксі. Увімкніть їх у Налаштуваннях.',
+      best: undefined,
     });
+  });
+
+  it.each([
+    [{ result: 12, of: 15 }, 'Найкраще: 12 з 15'],
+    [{ result: 23 }, 'Найкраще: 23'],
+  ])('shows the Best result %j as «%s»', (best, text) => {
+    const card = gameModeCard(
+      { modeId: 'guess-word', entryKind: 'word', canStart: true, best },
+      strings,
+    );
+
+    expect(card.best).toBe(text);
   });
 
   it('fails loudly for a registered mode the Edition gives no strings', async () => {
@@ -183,5 +212,62 @@ describe('the label over a Round', () => {
 
   it('fails loudly for a mode the Edition gives no strings', () => {
     expect(() => gameModeStrings(strings.modes, 'test-unnamed')).toThrow('test-unnamed');
+  });
+});
+
+/** An offer of the mode that can start, with nothing else on it. */
+const offer = (modeId: string): GameModeOffer => ({ modeId, entryKind: 'word', canStart: true });
+
+/** The groups as their titles and the ids of their modes, in order. */
+const shapeOf = (groups: ReturnType<typeof gameModeGroups>) =>
+  groups.map(({ title, offers }) => [title, offers.map(({ modeId }) => modeId)]);
+
+describe('the groups of the modes on offer', () => {
+  it('puts every mode in its group, the groups and the modes in the agreed order', () => {
+    const shuffled = [
+      'timed',
+      'build-idiom',
+      'anglicism',
+      'origin',
+      'survival',
+      'type-word',
+      'idiom-meaning',
+      'by-letters',
+      'correction',
+      'anagram',
+      'pairs',
+      'stress',
+      'guess-word',
+    ].map(offer);
+
+    expect(shapeOf(gameModeGroups(shuffled, strings))).toEqual([
+      ['Слова', ['guess-word', 'stress', 'pairs', 'anagram', 'by-letters', 'type-word', 'origin']],
+      ['Виправлення', ['correction', 'anglicism']],
+      ['Вислови', ['idiom-meaning', 'build-idiom']],
+      ['Виклик', ['survival', 'timed']],
+    ]);
+  });
+
+  it('lists only the modes the Core offers, and no group without one', async () => {
+    const app = await open({ words: 15 });
+
+    expect(shapeOf(gameModeGroups(app.game.state.modes, strings))).toEqual([
+      ['Слова', ['guess-word']],
+      ['Виправлення', ['correction']],
+    ]);
+  });
+
+  it('leaves out a mode the Edition switches off', async () => {
+    const app = await open({ words: 15, switchedOff: ['corrections'] });
+
+    expect(shapeOf(gameModeGroups(app.game.state.modes, strings))).toEqual([
+      ['Слова', ['guess-word']],
+    ]);
+  });
+
+  it('fails loudly for a mode on offer in no group', () => {
+    expect(() => gameModeGroups([offer('guess-word'), offer('test-unnamed')], strings)).toThrow(
+      'test-unnamed',
+    );
   });
 });

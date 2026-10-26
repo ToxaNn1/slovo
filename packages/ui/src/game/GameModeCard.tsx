@@ -24,9 +24,10 @@ const PRESSED_INVERTED_OPACITY = 0.85;
  * arrow, in a surface card with the Edition's corner. The card of a mode
  * that asks about Corrections is drawn on the ink fill in the other colour
  * scheme, without the corner, and its sample's non-standard form is struck
- * through. A tap starts a Game. A mode that can't start fades and takes no
- * tap; once it knows why, it says so in place of the sample. VoiceOver reads
- * the card as one button.
+ * through. Once the mode has a Best result, the card ends with it. A tap
+ * starts a Game. A mode that can't start fades and takes no tap; once it
+ * knows why, it says so in place of the sample. VoiceOver reads the card as
+ * one button.
  */
 export function GameModeCard({
   entryKind,
@@ -36,6 +37,7 @@ export function GameModeCard({
   sample,
   canStart,
   refusal,
+  best,
   onPress,
   testID,
 }: {
@@ -50,6 +52,8 @@ export function GameModeCard({
   canStart: boolean;
   /** Why the mode can't start now; nothing when it can, or while that is not known yet. */
   refusal: string | undefined;
+  /** The mode's Best result, such as «Найкраще: 12 з 15»; nothing before its first finished Game. */
+  best: string | undefined;
   onPress: () => void;
   testID?: string;
 }) {
@@ -65,13 +69,14 @@ export function GameModeCard({
       description={description}
       sample={sample}
       refusal={refusal}
+      best={best}
     />
   );
   return (
     <Pressable
       testID={testID}
       accessibilityRole="button"
-      accessibilityLabel={[title, description, refusal].filter(Boolean).join('. ')}
+      accessibilityLabel={[title, description, refusal, best].filter(Boolean).join('. ')}
       accessibilityState={{ disabled: unavailable }}
       {...voice}
       disabled={unavailable}
@@ -105,6 +110,7 @@ function CardContent({
   description,
   sample,
   refusal,
+  best,
 }: {
   /** Whether it is a Correction mode's card, on the ink fill, its sample's prompt struck through. */
   inverted: boolean;
@@ -113,6 +119,7 @@ function CardContent({
   description: string;
   sample: { readonly prompt: string; readonly answer: string };
   refusal: string | undefined;
+  best: string | undefined;
 }) {
   const { colors, fontFamilies } = useTokens();
   return (
@@ -169,6 +176,14 @@ function CardContent({
           </Svg>
         </View>
       )}
+      {best === undefined ? null : (
+        <Text
+          maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+          style={[styles.best, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+        >
+          {best}
+        </Text>
+      )}
     </>
   );
 }
@@ -197,4 +212,5 @@ const styles = StyleSheet.create({
   italic: { fontStyle: 'italic' },
   correctionSample: { fontSize: typeSize.listItem },
   struck: { textDecorationLine: 'line-through' },
+  best: { fontSize: typeSize.body, lineHeight: typeSize.body * 1.4 },
 });
