@@ -11,6 +11,7 @@ import type {
 } from '@slovo/contracts';
 
 import {
+  buildGameReview,
   createMemoryUserStatePort,
   GAME_LIVES,
   GAME_ROUNDS,
@@ -494,6 +495,32 @@ describe('the idioms «Вгадай слово» asks about', () => {
     }
   });
 
+  it('lists an idiom Round in the Game Review led by its expression, expanding into its Definition, Example and etymology', async () => {
+    const app = await runWith({ idioms });
+
+    const played = await playAll(app);
+
+    expect(buildGameReview(played)).toEqual(
+      played.map((round) => {
+        if (round.entry.kind !== 'idiom') throw new Error(`A Round asked about ${round.entry.id}`);
+        const { entry } = round;
+        return {
+          number: round.number,
+          entryId: entry.id,
+          title: { text: entry.expression, stressedVowels: [] },
+          right: true,
+          picked: undefined,
+          details: {
+            kind: 'idiom',
+            definition: entry.primaryDefinition,
+            example: entry.examples[0],
+            etymology: entry.etymology,
+          },
+        };
+      }),
+    );
+  });
+
   it("never offers an idiom with the answer's primary Definition, whatever the draw", async () => {
     for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
       const app = await runWith({ idioms }, undefined, seed);
@@ -789,6 +816,36 @@ describe('the Synonym Rows «Вгадай слово» asks about', () => {
     expect(rowRounds.some(({ right }) => !right)).toBe(true);
   });
 
+  it('lists a row Round in the Game Review led by its dominant, expanding into every member, with the wrong pick, to open the row', async () => {
+    const app = await unknown(await runWith({ seed: 3 }), live.slice(0, 5));
+
+    const played = await playAll(app, ['r_go', 'r_say']);
+
+    const items = buildGameReview(played);
+    const rowItems = items.filter(({ details }) => details.kind === 'synonymRow');
+    expect(rowItems.some(({ right }) => right)).toBe(true);
+    expect(rowItems.some(({ right }) => !right)).toBe(true);
+    for (const item of rowItems) {
+      const round = played[item.number - 1];
+      if (round?.entry.kind !== 'synonymRow') throw new Error(`Item ${String(item.number)}`);
+      const { entry } = round;
+      expect(item).toEqual({
+        number: round.number,
+        entryId: entry.id,
+        title: { text: round.prompt, stressedVowels: [expect.any(String)] },
+        right: !['r_go', 'r_say'].includes(entry.id),
+        picked: round.right ? undefined : round.options[round.answer.chosen],
+        details: {
+          kind: 'synonymRow',
+          members: entry.members.map((member) => ({
+            text: shownAs(member),
+            stressedVowels: [expect.any(String)],
+          })),
+        },
+      });
+    }
+  });
+
   it('asks no row with Synonym Rows out of the Mix or the Feature Switch off, and still plays the Words', async () => {
     const outOfMix = await unknown(await runWith(), live);
     await outOfMix.mix.setKind('synonymRow', false);
@@ -915,6 +972,33 @@ describe('the Tips «Вгадай слово» asks about', () => {
       expect(app.knowledge.state.shown.get(entry.id)).toBe(right ? undefined : 'unknown');
     }
     expect(tipRounds.some(({ right }) => !right)).toBe(true);
+  });
+
+  it('lists a Tip Round in the Game Review led by its title, expanding into its explanation, with the wrong pick, to open the Tip', async () => {
+    const app = await unknown(await runWith({ seed: 3 }), live);
+
+    const played = await playAll(app, ['t_time', 't_greet']);
+
+    const items = buildGameReview(played);
+    const tipItems = items.filter(({ details }) => details.kind === 'tip');
+    expect(tipItems).toHaveLength(live.length);
+    expect(tipItems.filter(({ right }) => !right)).toHaveLength(2);
+    for (const item of tipItems) {
+      const round = played[item.number - 1];
+      if (round?.entry.kind !== 'tip') throw new Error(`Item ${String(item.number)}`);
+      const { entry } = round;
+      expect(item).toEqual({
+        number: round.number,
+        entryId: entry.id,
+        title: { text: entry.title, stressedVowels: [] },
+        right: !['t_time', 't_greet'].includes(entry.id),
+        picked: round.right ? undefined : round.options[round.answer.chosen],
+        details: { kind: 'tip', explanation: entry.explanation },
+      });
+    }
+    for (const { picked } of tipItems) {
+      if (picked !== undefined) expect(picked.text).toMatch(/: wrong \d$/);
+    }
   });
 
   it('asks no Tip with Tips out of the Mix or the Feature Switch off, and still plays the Words', async () => {

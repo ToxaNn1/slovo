@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { Correction, CorrectionType, Word } from '@slovo/contracts';
 
 import {
+  buildGameReview,
   createMemoryUserStatePort,
   GAME_ROUNDS,
   openComposition,
@@ -393,6 +394,30 @@ describe('a Round of «Обери правильне»', () => {
         explanation: `Why ${asked.id.slice(2)} reads better.`,
       },
     });
+  });
+  it('lists the Round in the Game Review led by the non-standard form, expanding into the standard form and the explanation', async () => {
+    const app = await run();
+    await app.game.start('correction');
+    const { round } = current(app);
+    const wrong = (rightOf(round) + 1) % 4;
+
+    void app.game.answer(wrong);
+
+    const asked = askedOf(round);
+    expect(buildGameReview(current(app).played)).toEqual([
+      {
+        number: 1,
+        entryId: asked.id,
+        title: { text: asked.nonStandardForm, stressedVowels: [] },
+        right: false,
+        picked: round.options[wrong],
+        details: {
+          kind: 'correction',
+          standardForm: asked.standardEquivalents[0],
+          explanation: `Why ${asked.id.slice(2)} reads better.`,
+        },
+      },
+    ]);
   });
 });
 

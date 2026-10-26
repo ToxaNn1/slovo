@@ -96,7 +96,7 @@ function roundOf<T extends Word | Idiom>(
 const ROWS_TO_PLAY = 4;
 
 /** A word of a Synonym Row as it reads: its text with its Stress. */
-const rowWordOption = ({ text, stress }: SynonymRowDominant): RoundOption => ({
+export const rowWordOption = ({ text, stress }: SynonymRowDominant): RoundOption => ({
   text: renderStress({ lemma: text, stress }),
   stressedVowels: stressedVowelsOf({ lemma: text, stress }),
 });

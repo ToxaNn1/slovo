@@ -77,6 +77,7 @@ export {
   type RoundOption,
   type TextRange,
 } from './game/game-mode';
+export { buildGameReview, type GameReviewDetails, type GameReviewItem } from './game/game-review';
 export { GAME_ROUNDS } from './game/round-plan';
 export { createGameHaptics, LIFE_LOST_DELAY, type GameHaptics } from './game/game-haptics';
 export { createHaptics, type HapticEngine, type Haptics } from './game/haptics';
