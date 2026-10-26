@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Correction, Word } from '@slovo/contracts';
+import type { Correction, SynonymRow, Word } from '@slovo/contracts';
 
 import { buildWordCard, createEntries } from '../index';
 import { createMemoryContentPort } from '../testing';
@@ -45,15 +45,47 @@ function correction(id: string, nonStandardForm: string, retired = false): Corre
   };
 }
 
-const build = (from: Word, corrections: readonly Correction[] = []) =>
+/** A Synonym Row of five plain members, with `members` put first; each test adds what it needs. */
+function synonymRow(
+  id: string,
+  members: readonly { text: string; wordId?: string }[],
+  overrides: Partial<SynonymRow> = {},
+): SynonymRow {
+  return {
+    kind: 'synonymRow',
+    id,
+    dominant: { text: 'безлад', stress: [4] },
+    meaning: 'Відсутність порядку.',
+    members: [...members, 'гармидер', 'кавардак', 'розгардіяш', 'шарварок']
+      .slice(0, 5)
+      .map((member) =>
+        typeof member === 'string' ? { text: member, stress: [0] } : { stress: [0], ...member },
+      ),
+    sources: [{ title: 'Test source' }],
+    retired: false,
+    ...overrides,
+  };
+}
+
+const build = (
+  from: Word,
+  corrections: readonly Correction[] = [],
+  {
+    words = [],
+    synonymRows = [],
+    synonymRowsOn = true,
+  }: { words?: readonly Word[]; synonymRows?: readonly SynonymRow[]; synonymRowsOn?: boolean } = {},
+) =>
   buildWordCard({
     word: from,
     entries: createEntries({
       content: createMemoryContentPort({
         categories: [{ id: 'household-crafts', displayName: 'Побут і ремесла' }],
+        words: [from, ...words],
         corrections,
+        synonymRows,
       }),
-      edition: { isFeatureEnabled: () => true },
+      edition: { isFeatureEnabled: (feature) => feature !== 'synonymRows' || synonymRowsOn },
     }),
   });
 
@@ -77,6 +109,7 @@ describe('the Word card', () => {
       categoryName: 'Побут і ремесла',
       details: undefined,
       linkedCorrections: [],
+      synonymRow: undefined,
     });
   });
 
@@ -181,6 +214,79 @@ describe('the Word card', () => {
       expect(card.linkedCorrections).toEqual([
         { correctionId: 'c_live', nonStandardForm: 'на протязі' },
       ]);
+    });
+  });
+
+  describe('the Synonym Row back-link', () => {
+    const member = { text: 'веремія', wordId: 'w_veremija' };
+
+    it('carries the first live row that links the Word as a member, with its dominant linked as members are', async () => {
+      const card = await build(word(), [], {
+        words: [word({ id: 'w_bezlad', lemma: 'безлад' })],
+        synonymRows: [
+          synonymRow('r_retired', [member], { retired: true }),
+          synonymRow('r_bezlad', [member], {
+            dominant: { text: 'безлад', stress: [4], wordId: 'w_bezlad' },
+          }),
+          synonymRow('r_kolotnecha', [member], { dominant: { text: 'колотнеча', stress: [6] } }),
+        ],
+      });
+
+      expect(card.synonymRow).toEqual({
+        synonymRowId: 'r_bezlad',
+        dominant: { text: 'безла́д', stressedVowels: ['а'], wordId: 'w_bezlad' },
+      });
+    });
+
+    it('leaves the dominant as plain text when its Word is Retired or not in the Language Pack', async () => {
+      const card = await build(word(), [], {
+        words: [word({ id: 'w_bezlad', lemma: 'безлад', retired: true })],
+        synonymRows: [
+          synonymRow('r_bezlad', [member], {
+            dominant: { text: 'безлад', stress: [4], wordId: 'w_bezlad' },
+          }),
+        ],
+      });
+
+      expect(card.synonymRow?.dominant.wordId).toBeUndefined();
+    });
+
+    it('carries nothing for a Word in no row, the dominant of a row or a member as plain text', async () => {
+      const card = await build(word(), [], {
+        synonymRows: [
+          synonymRow('r_dominant', [], {
+            dominant: { text: 'веремія', stress: [5], wordId: 'w_veremija' },
+          }),
+          synonymRow('r_plain', [{ text: 'веремія' }]),
+        ],
+      });
+
+      expect(card.synonymRow).toBeUndefined();
+    });
+
+    it('carries nothing when only a Retired row links the Word', async () => {
+      const card = await build(word(), [], {
+        synonymRows: [synonymRow('r_retired', [member], { retired: true })],
+      });
+
+      expect(card.synonymRow).toBeUndefined();
+    });
+
+    it('carries nothing for a Retired Word, which no row links', async () => {
+      const card = await build(word({ retired: true }), [], {
+        synonymRows: [synonymRow('r_bezlad', [member])],
+      });
+
+      expect(card.synonymRow).toBeUndefined();
+    });
+
+    it('carries nothing while the Edition turns Synonym Rows off', async () => {
+      const card = await build(word(), [], {
+        synonymRows: [synonymRow('r_bezlad', [member])],
+        synonymRowsOn: false,
+      });
+
+      expect(card.synonymRow).toBeUndefined();
     });
   });
 

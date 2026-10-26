@@ -65,6 +65,7 @@ function wordCard(lemma: string): EntryFeedCard {
       categoryName: undefined,
       details: undefined,
       linkedCorrections: [],
+      synonymRow: undefined,
     },
   };
 }

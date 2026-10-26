@@ -37,10 +37,34 @@ function openPack(editionDir: string) {
   return openLanguagePack(outFile);
 }
 
-/** The fixture Edition with Correction c_fx0002 and Idiom i_fx0002 retired, so every kind has a Retired Entry. */
+/** A Synonym Row of the fixture whose second member links the Word, Retired or not. */
+const synonymRow = (id: string, wordId: string, retired = false) => ({
+  id,
+  dominant: { text: 'говорити', stress: [5], wordId },
+  meaning: 'Тестове значення: висловлювати думки словами.',
+  members: ['балакати', 'мовити', 'казати', 'теревенити', 'гомоніти'].map((text, place) =>
+    place === 1 ? { text, stress: [1], wordId } : { text, stress: [1] },
+  ),
+  sources: [{ title: 'Тестове джерело' }],
+  retired,
+});
+
+/**
+ * The fixture Edition with Correction c_fx0002 and Idiom i_fx0002 retired, so
+ * every kind has a Retired Entry, and Synonym Rows linking the live Word
+ * w_fx0002 and the Retired Word w_fx0001, one of them Retired.
+ */
 function editionWithRetiredEntries(): string {
   const editionDir = join(workDir(), 'edition');
   cpSync(fixtureDir, editionDir, { recursive: true });
+  for (const row of [
+    synonymRow('r_fx0001', 'w_fx0002', true),
+    synonymRow('r_fx0002', 'w_fx0002'),
+    synonymRow('r_fx0003', 'w_fx0002'),
+    synonymRow('r_fx0004', 'w_fx0001'),
+  ]) {
+    writeFileSync(join(editionDir, `content/synonym-rows/${row.id}.json`), JSON.stringify(row));
+  }
   for (const file of ['content/corrections/c_fx0002.json', 'content/idioms/i_fx0002.json']) {
     const path = join(editionDir, file);
     const entry = JSON.parse(readFileSync(path, 'utf8')) as Record<string, unknown>;
@@ -53,13 +77,14 @@ function editionWithRetiredEntries(): string {
 /** The Categories and Entries of an Edition as authored, through the one reader (ADR 0035). */
 function authored(editionDir: string) {
   const files = editionFiles(editionDir);
-  const { words, corrections, idioms } = files.entries();
+  const { words, corrections, idioms, synonymRows } = files.entries();
   return {
     categories: files.read('config').categories,
     correctionCategories: files.read('config').correctionCategories,
     words: words.map(({ entry }) => entry),
     corrections: corrections.map(({ entry }) => entry),
     idioms: idioms.map(({ entry }) => entry),
+    synonymRows: synonymRows.map(({ entry }) => entry),
   };
 }
 
@@ -180,6 +205,13 @@ describe.each(adapters)('the content read port %s', (_, open) => {
     // Linked from a Retired Word only.
     expect(await content.listLinkedWordIds('c_fx0003')).toEqual([]);
     expect(await content.listLinkedWordIds('c_fx0004')).toEqual([]);
+  });
+
+  it('lists the live Synonym Rows linking a live Word as a member, leaving out a Retired row and a Retired Word', async () => {
+    expect(await content.listLinkingSynonymRowIds('w_fx0002')).toEqual(['r_fx0002', 'r_fx0003']);
+    // Linked only from a Retired Word, and named nowhere.
+    expect(await content.listLinkingSynonymRowIds('w_fx0001')).toEqual([]);
+    expect(await content.listLinkingSynonymRowIds('w_missing')).toEqual([]);
   });
 });
 
