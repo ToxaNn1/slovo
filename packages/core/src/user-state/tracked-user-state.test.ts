@@ -96,13 +96,13 @@ describe('the tracked user state', () => {
     );
   });
 
-  it('tracks every synced record of a batch, the Active Days and the best Game result too', async () => {
+  it('tracks every synced record of a batch, the Active Days and a Best result too', async () => {
     const { userState } = await tracked();
 
     await userState.write(
       new Map([
         ...activeDays.record('2026-10-18').change(true),
-        ...gameBest.change(9),
+        ...gameBest.record('guess-word').change(9),
         ...collections
           .record('k_1')
           .change({ name: 'Море', createdAt: '2026-10-18T09:00:00.000Z' }),
@@ -112,7 +112,7 @@ describe('the tracked user state', () => {
     expect([...(await userState.pendingChanges()).keys()].sort()).toEqual([
       'activeDays.2026-10-18',
       'collections.k_1',
-      'game.best',
+      'game.best.guess-word',
     ]);
   });
 
@@ -171,7 +171,7 @@ describe('the tracked user state', () => {
     expect(told).toBe(1);
     await userState.write(vibration.change(false));
     await userState.merge(() =>
-      Promise.resolve({ untracked: new Map(), tracked: gameBest.change(3) }),
+      Promise.resolve({ untracked: new Map(), tracked: gameBest.record('guess-word').change(3) }),
     );
     await userState.deleteSent(await userState.pendingChanges());
     failing = true;
@@ -319,7 +319,7 @@ describe('merging what Sync makes', () => {
     await userState.merge(() =>
       Promise.resolve({
         untracked: new Map([...theme.change('dark'), ...syncCursor.change(7)]),
-        tracked: gameBest.change(9),
+        tracked: gameBest.record('guess-word').change(9),
       }),
     );
 
@@ -327,8 +327,11 @@ describe('merging what Sync makes', () => {
       new Map([
         ['settings.theme', '"dark"'],
         ['sync.cursor', '7'],
-        ['game.best', '9'],
-        ['sync.pending.game.best', '{"changedAt":"2026-10-18T09:00:00.000Z","value":"9"}'],
+        ['game.best.guess-word', '9'],
+        [
+          'sync.pending.game.best.guess-word',
+          '{"changedAt":"2026-10-18T09:00:00.000Z","value":"9"}',
+        ],
       ]),
     ]);
   });

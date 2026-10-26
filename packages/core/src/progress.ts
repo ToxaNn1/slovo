@@ -29,7 +29,10 @@ export interface ProgressState {
   readonly favorites: number;
   /** The Entries in Collections, each counted once however many Collections it is in. */
   readonly inCollections: number;
-  /** The Game's best result; none before the first finished Game, or with the Game off. */
+  /**
+   * The Best result of «Вгадай слово», which the statistics screen keeps;
+   * none before its first finished Game, or with the Game off.
+   */
   readonly bestResult: number | undefined;
   /** The Entries marked Known, by kind, as the Knowledge Marks give them. */
   readonly known: KnownCounts;
@@ -154,7 +157,7 @@ export async function openProgress({
           collections.entries(collection.id).map((entry) => entry.entryId),
         ),
       ).size,
-      bestResult: game.state.bestResult,
+      bestResult: game.state.bestResults['guess-word'],
       known: knowledge.state.known,
       dueToday: knowledge.state.due.length,
     };

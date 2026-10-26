@@ -260,6 +260,7 @@ describe('the Game Modes on offer', () => {
     expect(app.game.state).toEqual({
       modes: [{ modeId: 'guess-word', entryKind: 'word', canStart: true }],
       current: undefined,
+      bestResults: {},
     });
   });
 
@@ -1246,7 +1247,7 @@ describe('the rules of a Game', () => {
         { modeId: 'guess-word', entryKind: 'word', canStart: false, refusal: 'too-few-entries' },
       ],
       current: undefined,
-      bestResult: 15,
+      bestResults: { 'guess-word': 15 },
     });
   });
 
@@ -1443,7 +1444,7 @@ describe('the Words a Game asks about', () => {
     }
   });
 
-  it('writes no Seen, no History and no Active Day while it is played, only its best result', async () => {
+  it('writes no Seen, no History and no Active Day while it is played, only its Best result', async () => {
     const records = new Map<string, string>();
     const { port, writes } = recordingPort(records);
     // The knowledge Feature Switch off, so no mistake writes a «Не знаю» mark.
@@ -1453,7 +1454,7 @@ describe('the Words a Game asks about', () => {
     await playGame(app, [3, 4]);
     await playGame(app, [1, 2, 3, 4, 5]);
 
-    expect(writes).toEqual([userStateRecords.gameBest.change(15)]);
+    expect(writes).toEqual([userStateRecords.gameBest.record('guess-word').change(15)]);
     expect(app.history.list).toEqual([]);
   });
 });
@@ -1631,28 +1632,29 @@ describe('the Knowledge Marks a Game leaves', () => {
   });
 });
 
-// Spec #215, "Best result": the most Rounds passed in one finished Game, in any Game Mode.
-describe('the best result', () => {
+// Spec #772, "Best result per mode": each Game Mode keeps its own Best result.
+describe('the Best result per mode', () => {
   const { gameBest } = userStateRecords;
+  const guessWordBest = gameBest.record('guess-word');
 
   it('is absent at first, on the Game and in the progress snapshot', async () => {
     const records = new Map<string, string>();
     const app = await run({ records });
 
-    expect(app.game.state.bestResult).toBeUndefined();
+    expect(app.game.state.bestResults).toEqual({});
     expect(app.progress.state.bestResult).toBeUndefined();
-    expect(records.has(gameBest.key)).toBe(false);
+    expect([...records.keys()].filter((key) => key.startsWith(gameBest.prefix))).toEqual([]);
   });
 
-  it('is written by the first finished Game, even the shortest loss', async () => {
+  it('is written for the mode by its first finished Game, even the shortest loss', async () => {
     const records = new Map<string, string>();
     const app = await run({ records });
 
     await playGame(app, [1, 2, 3, 4, 5]);
 
     expect(current(app)).toMatchObject({ roundsPassed: 4, status: 'lost' });
-    expect(app.game.state.bestResult).toBe(4);
-    expect(gameBest.decode(records.get(gameBest.key))).toBe(4);
+    expect(app.game.state.bestResults).toEqual({ 'guess-word': 4 });
+    expect(guessWordBest.decode(records.get(guessWordBest.key))).toBe(4);
   });
 
   it('is written by a finished Game that beats it, won or lost, and unchanged by one that does not', async () => {
@@ -1664,27 +1666,60 @@ describe('the best result', () => {
 
     // Lost in Round 8: 7 Rounds passed.
     await playGame(app, [3, 5, 6, 7, 8]);
-    expect(app.game.state.bestResult).toBe(7);
+    expect(app.game.state.bestResults['guess-word']).toBe(7);
     // Lost in Round 5: 4 Rounds passed, fewer than 7.
     await playGame(app, [1, 2, 3, 4, 5]);
-    expect(app.game.state.bestResult).toBe(7);
+    expect(app.game.state.bestResults['guess-word']).toBe(7);
     // Lost in Round 8 again: as many as 7, which doesn't beat it.
     await playGame(app, [1, 2, 3, 4, 8]);
-    expect(app.game.state.bestResult).toBe(7);
+    expect(app.game.state.bestResults['guess-word']).toBe(7);
     await playGame(app, [2]);
-    expect(app.game.state.bestResult).toBe(15);
+    expect(app.game.state.bestResults['guess-word']).toBe(15);
 
-    expect(writes).toEqual([gameBest.change(7), gameBest.change(15)]);
-    expect(gameBest.decode(records.get(gameBest.key))).toBe(15);
+    expect(writes).toEqual([guessWordBest.change(7), guessWordBest.change(15)]);
+    expect(guessWordBest.decode(records.get(guessWordBest.key))).toBe(15);
   });
 
-  it('shows the Game just finished in the best result of the same snapshot', async () => {
-    const app = await run({ records: gameBest.change(3) as Map<string, string> });
+  it("beats only the Best result of the finished Game's mode", async () => {
+    const records = new Map(guessWordBest.change(7) as Map<string, string>);
+    const { port, writes } = recordingPort(records);
+    const app = await run({ port, on: ['rarityFloor'], gameModes: [lemmaMode] });
+    writes.length = 0;
+
+    await app.game.start('test-lemma');
+    while (current(app).status === 'playing') await play(app, true, () => 0);
+
+    expect(app.game.state.bestResults).toEqual({ 'guess-word': 7, 'test-lemma': 15 });
+    expect(writes).toEqual([gameBest.record('test-lemma').change(15)]);
+    expect(app.progress.state.bestResult).toBe(7);
+
+    // A shorter Game of «Вгадай слово» leaves the other mode's Best result as it is.
+    await playGame(app, [1, 2, 3, 4, 5]);
+    expect(app.game.state.bestResults).toEqual({ 'guess-word': 7, 'test-lemma': 15 });
+  });
+
+  it('counts the right answers of a finished Game in a mode with no Lives', async () => {
+    const records = new Map<string, string>();
+    const app = await run({ records, gameModes: [{ ...lemmaMode, lives: 'none' }] });
+
+    await app.game.start('test-lemma');
+    while (current(app).status === 'playing') {
+      await play(app, current(app).round.number % 2 === 1, () => 0);
+    }
+
+    // Right in the 8 odd Rounds of 15.
+    expect(current(app)).toMatchObject({ roundsPassed: 15, status: 'won' });
+    expect(app.game.state.bestResults['test-lemma']).toBe(8);
+    expect(gameBest.record('test-lemma').decode(records.get('game.best.test-lemma'))).toBe(8);
+  });
+
+  it('shows the Game just finished in the Best result of the same snapshot', async () => {
+    const app = await run({ records: guessWordBest.change(3) as Map<string, string> });
     const finished: { roundsPassed: number; bestResult: number | undefined }[] = [];
     app.game.subscribe(() => {
-      const { current: game, bestResult } = app.game.state;
+      const { current: game, bestResults } = app.game.state;
       if (game?.status === 'won' || game?.status === 'lost') {
-        finished.push({ roundsPassed: game.roundsPassed, bestResult });
+        finished.push({ roundsPassed: game.roundsPassed, bestResult: bestResults[game.modeId] });
       }
     });
 
@@ -1713,7 +1748,7 @@ describe('the best result', () => {
     app.game.leave();
 
     expect(writes).toEqual([]);
-    expect(app.game.state.bestResult).toBeUndefined();
+    expect(app.game.state.bestResults).toEqual({});
   });
 
   it('keeps the Game as it was when the record fails to write, and finishes it on the next «Далі»', async () => {
@@ -1739,8 +1774,8 @@ describe('the best result', () => {
     failing = false;
     await app.game.next();
     expect(current(app)).toMatchObject({ roundsPassed: 4, status: 'lost' });
-    expect(app.game.state.bestResult).toBe(4);
-    expect(gameBest.decode(records.get(gameBest.key))).toBe(4);
+    expect(app.game.state.bestResults['guess-word']).toBe(4);
+    expect(guessWordBest.decode(records.get(guessWordBest.key))).toBe(4);
   });
 
   it('survives reopening, a new Cycle and a cleared History', async () => {
@@ -1749,7 +1784,7 @@ describe('the best result', () => {
     let now = new Date('2026-10-12T09:00:00+03:00').getTime();
     const time: Clock = { now: () => new Date(now), timeZone: () => 'Europe/Kyiv' };
     const app = await run({ records, time });
-    expect(app.game.state.bestResult).toBe(7);
+    expect(app.game.state.bestResults['guess-word']).toBe(7);
 
     // Read every card, then the card after the end-of-Cycle card starts a new Cycle.
     while (app.feed.cards.at(-1)?.kind !== 'end-of-cycle') {
@@ -1762,14 +1797,14 @@ describe('the best result', () => {
     await app.history.clear();
 
     expect(app.history.list).toEqual([]);
-    expect(app.game.state.bestResult).toBe(7);
+    expect(app.game.state.bestResults['guess-word']).toBe(7);
     expect(app.progress.state.bestResult).toBe(7);
     const reopened = await run({ records, time });
-    expect(reopened.game.state.bestResult).toBe(7);
+    expect(reopened.game.state.bestResults['guess-word']).toBe(7);
     expect(reopened.progress.state.bestResult).toBe(7);
   });
 
-  it('shows in the progress snapshot, which tells its subscribers when it changes', async () => {
+  it('shows the one of «Вгадай слово» in the progress snapshot, which tells its subscribers when it changes', async () => {
     const app = await run();
     const before = app.progress.state;
     let told = 0;
@@ -1783,10 +1818,29 @@ describe('the best result', () => {
     expect(told).toBe(1);
   });
 
-  it('is absent on the Game and in the progress snapshot when the Edition turns the Game off', async () => {
-    const app = await run({ records: gameBest.change(13) as Map<string, string>, game: false });
+  it('shows the single best result a 0.8.11 app kept as the Best result of «Вгадай слово»', async () => {
+    const records = new Map([
+      ['schema.version', '5'],
+      ['app.installed', 'true'],
+      ['game.best', '9'],
+    ]);
+    const app = await run({ records, gameModes: [lemmaMode] });
 
-    expect(app.game.state.bestResult).toBeUndefined();
+    expect(app.game.state.bestResults).toEqual({ 'guess-word': 9 });
+    expect(app.progress.state.bestResult).toBe(9);
+
+    // A Game that passes 10 Rounds beats it; one that passes 9 would not.
+    await playGame(app, [7, 8, 9, 10, 11]);
+    expect(app.game.state.bestResults).toEqual({ 'guess-word': 10 });
+  });
+
+  it('is absent on the Game and in the progress snapshot when the Edition turns the Game off', async () => {
+    const app = await run({
+      records: guessWordBest.change(13) as Map<string, string>,
+      game: false,
+    });
+
+    expect(app.game.state.bestResults).toEqual({});
     expect(app.progress.state.bestResult).toBeUndefined();
   });
 });

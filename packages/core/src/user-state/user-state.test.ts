@@ -9,6 +9,7 @@ import {
 } from '../index';
 import { openCycle } from '../feed/cycle';
 import { openWordOfTheDay } from '../feed/word-of-the-day';
+import { userStateRecords } from './user-state-schema';
 
 // The contract suite in apps/mobile covers migrations on every adapter; these
 // cover what only the Core decides.
@@ -146,6 +147,7 @@ describe('openUserState', () => {
         ['app.installed', 'true'],
         ['schema.version', '5'],
       ]),
+      new Map([['schema.version', '6']]),
     ]);
     expect(cycle.unseen()).toEqual({
       words: ['w_2'],
@@ -168,6 +170,48 @@ describe('openUserState', () => {
       await openUserState({ port: createMemoryUserStatePort(records) });
 
       expect(records.get('feed.seen.w_1'), cycle).toBe('1');
+    }
+  });
+
+  it('makes the single best result a 0.8.11 app kept the Best result of «Вгадай слово», waiting to sync, in one write with its version', async () => {
+    const records = new Map([
+      ['schema.version', '5'],
+      ['app.installed', 'true'],
+      ['game.best', '9'],
+    ]);
+    const port = createMemoryUserStatePort(records);
+    const writes: UserStateChanges[] = [];
+
+    const userState = await openUserState({
+      port: { ...port, write: (changes) => (writes.push(changes), port.write(changes)) },
+    });
+
+    expect(writes).toEqual([
+      new Map([
+        ['game.best.guess-word', '9'],
+        [
+          'sync.pending.game.best.guess-word',
+          '{"changedAt":"1970-01-01T00:00:00.000Z","value":"9"}',
+        ],
+        ['schema.version', '6'],
+      ]),
+    ]);
+    expect(await userState.read(userStateRecords.gameBest.record('guess-word'))).toBe(9);
+    expect(await userState.read(userStateRecords.gameBest.record('correction'))).toBeUndefined();
+  });
+
+  it('gives «Вгадай слово» no Best result when 0.8.11 kept none, or one that does not read', async () => {
+    for (const best of [undefined, 'not JSON', '16', '"9"']) {
+      const records = new Map([['schema.version', '5']]);
+      if (best !== undefined) records.set('game.best', best);
+
+      await openUserState({ port: createMemoryUserStatePort(records) });
+
+      expect(
+        [...records.keys()].filter((key) => key.includes('game.best.')),
+        best,
+      ).toEqual([]);
+      expect(records.get('schema.version')).toBe('6');
     }
   });
 });

@@ -16,6 +16,7 @@ import { fakeClock, randomOf, word } from '../test-support';
 
 const { activeDays, collectionEntries, collections, favorites, gameBest, history } =
   userStateRecords;
+const guessWordBest = gameBest.record('guess-word');
 
 const content = createMemoryContentPort({
   words: [word('w_one'), word('w_two'), word('w_three'), word('w_sea', { categoryId: 'sea' })],
@@ -362,42 +363,80 @@ describe('two devices of one Account', () => {
     ]);
   });
 
-  it('keep the higher best Game result on both, even when the higher one is older', async () => {
+  it('keep the higher Best result of a Game Mode on both, even when the higher one is older', async () => {
     const { device, server, time } = account();
     const phone = await device();
     const tablet = await device();
-    await phone.write(gameBest.change(9));
+    await phone.write(guessWordBest.change(9));
     time.advance(HOUR);
-    await tablet.write(gameBest.change(5));
+    await tablet.write(guessWordBest.change(5));
     await tablet.sync();
     time.advance(HOUR);
 
     expect(await phone.sync()).toEqual({ ok: true, changed: false });
     await tablet.sync();
 
-    expect(await phone.userState.read(gameBest)).toBe(9);
-    expect(await tablet.userState.read(gameBest)).toBe(9);
+    expect(await phone.userState.read(guessWordBest)).toBe(9);
+    expect(await tablet.userState.read(guessWordBest)).toBe(9);
     // The phone wrote its result again, so it won on the server with a new change time.
-    expect(server.records.get('game.best')).toMatchObject({
+    expect(server.records.get('game.best.guess-word')).toMatchObject({
       value: 9,
       changedAt: new Date('2026-10-18T11:00:00.000Z').getTime(),
     });
   });
 
-  it('keep the higher best Game result when the Account’s is higher', async () => {
+  it('keep the higher Best result of a Game Mode when the Account’s is higher', async () => {
     const { device, time } = account();
     const phone = await device();
     const tablet = await device();
-    await phone.write(gameBest.change(12));
+    await phone.write(guessWordBest.change(12));
     await phone.sync();
     time.advance(HOUR);
-    await tablet.write(gameBest.change(4));
+    await tablet.write(guessWordBest.change(4));
 
     await tablet.sync();
     await phone.sync();
 
-    expect(await tablet.userState.read(gameBest)).toBe(12);
-    expect(await phone.userState.read(gameBest)).toBe(12);
+    expect(await tablet.userState.read(guessWordBest)).toBe(12);
+    expect(await phone.userState.read(guessWordBest)).toBe(12);
+  });
+
+  it('keep the higher Best result of each Game Mode on its own', async () => {
+    const { device, time } = account();
+    const phone = await device();
+    const tablet = await device();
+    const survivalBest = gameBest.record('survival');
+    await phone.write(new Map([...guessWordBest.change(9), ...survivalBest.change(3)]));
+    await tablet.write(new Map([...guessWordBest.change(5), ...survivalBest.change(40)]));
+
+    await phone.sync();
+    time.advance(HOUR);
+    await tablet.sync();
+    time.advance(HOUR);
+    await phone.sync();
+
+    for (const { userState } of [phone, tablet]) {
+      expect(await userState.read(guessWordBest)).toBe(9);
+      expect(await userState.read(survivalBest)).toBe(40);
+    }
+  });
+
+  it('bring the best result a signed-in 0.8.11 app kept to the Account as the Best result of «Вгадай слово»', async () => {
+    const { device } = account();
+    const phone = await device(
+      new Map([
+        ['schema.version', '5'],
+        ['app.installed', 'true'],
+        ['sync.cursor', '0'],
+        ['game.best', '11'],
+      ]),
+    );
+    const tablet = await device();
+
+    await phone.sync();
+    await tablet.sync();
+
+    expect(await tablet.userState.read(guessWordBest)).toBe(11);
   });
 
   it('leave `device-only` records on each device, also those the Account holds', async () => {
@@ -418,7 +457,7 @@ describe('two devices of one Account', () => {
 
     expect(server.records.has('notifications.sound')).toBe(false);
     expect((await tablet.settings.read()).vibration).toBe(true);
-    expect(tablet.records.get('schema.version')).toBe('5');
+    expect(tablet.records.get('schema.version')).toBe('6');
     expect(await tablet.userState.pendingChanges()).toEqual(new Map());
     expect(await tablet.userState.cursor()).not.toBe(999);
   });

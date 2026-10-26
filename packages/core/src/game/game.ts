@@ -33,18 +33,18 @@ export type GameModeOffer = {
   | { readonly canStart: false; readonly planning: true }
 );
 
-/** The Game as it stands: the modes on offer, the Game in play and the best result. */
+/** The Game as it stands: the modes on offer, the Game in play and each mode's Best result. */
 export interface GameState {
   /** The Game Modes the Edition turns on, in the order they register; none with the Game off. */
   readonly modes: readonly GameModeOffer[];
   /** The Game in play or just over; none on the mode screen. */
   readonly current: CurrentGame | undefined;
   /**
-   * The best result: the most Rounds passed in one finished Game, in any
-   * Game Mode, the Game just over included. None before the first finished
-   * Game, or with the Game off.
+   * The Best result of each Game Mode on offer, by mode id, the Game just
+   * over included: the best result of one finished Game in it (`resultOf`).
+   * A mode has none before its first finished Game; none has with the Game off.
    */
-  readonly bestResult: number | undefined;
+  readonly bestResults: Readonly<Partial<Record<string, number>>>;
 }
 
 /**
@@ -54,7 +54,7 @@ export interface GameState {
  * Round limit, 15 by default (`roundsToPlanOf`): up to 5 the reader is weak
  * on (ADR 0043), the rest those in History when there are at least 15, else
  * any (ADR 0024). A mode may set its own Lives too, or none (ADR 0052). Playing never writes Seen, History or Active Days; a finished Game
- * writes only the best result, when it beats it.
+ * writes only its mode's Best result, when it beats it (ADR 0052).
  */
 export interface Game {
   /**
@@ -101,6 +101,14 @@ const sameOffers = (one: readonly GameModeOffer[], other: readonly GameModeOffer
   one.length === other.length && one.every((offer, index) => sameOffer(offer, other[index]));
 
 const { gameBest } = userStateRecords;
+
+/**
+ * The result of a finished Game, which its mode's Best result keeps: the
+ * right answers in a mode with no Lives, such as «На час», else the Rounds
+ * passed (ADR 0052).
+ */
+const resultOf = (over: CurrentGame): number =>
+  over.lives === undefined ? over.played.filter(({ right }) => right).length : over.roundsPassed;
 
 /** The offer of a Game Mode: it can start when it can make its Rounds. */
 const offerOf = ({ id, entryKind }: GameMode, plan: RoundPlan): GameModeOffer =>
@@ -169,7 +177,7 @@ export async function openGame({
       planning: true,
     })),
     current: undefined,
-    bestResult: gameOn ? await userState.read(gameBest) : undefined,
+    bestResults: await bestResultsOf(modes),
   };
   /** The Game in play, or just over; none on the mode screen. */
   let played: GameInPlay | undefined;
@@ -277,13 +285,25 @@ export async function openGame({
    * during the write stays left.
    */
   async function finish(game: CurrentGame, over: CurrentGame): Promise<void> {
-    const beaten = state.bestResult === undefined || over.roundsPassed > state.bestResult;
-    if (beaten) await userState.write(gameBest.change(over.roundsPassed));
+    const result = resultOf(over);
+    const best = state.bestResults[over.modeId];
+    const beaten = best === undefined || result > best;
+    if (beaten) await userState.write(gameBest.record(over.modeId).change(result));
     change({
       ...state,
       current: state.current === game ? over : state.current,
-      bestResult: beaten ? over.roundsPassed : state.bestResult,
+      bestResults: beaten ? { ...state.bestResults, [over.modeId]: result } : state.bestResults,
     });
+  }
+
+  /** The Best result of each mode, read from the user state; a mode with none is left out. */
+  async function bestResultsOf(
+    on: readonly GameMode[],
+  ): Promise<Readonly<Partial<Record<string, number>>>> {
+    const read = await Promise.all(
+      on.map(async ({ id }) => [id, await userState.read(gameBest.record(id))] as const),
+    );
+    return Object.fromEntries(read.filter(([, best]) => best !== undefined));
   }
 
   return {
