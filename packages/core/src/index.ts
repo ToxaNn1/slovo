@@ -59,7 +59,7 @@ export {
   type TipFeedCard,
   type WordFeedCard,
 } from './feed/feed-card';
-export { type GameModeOffer, type GameState } from './game/game';
+export { type GameModeOffer, type GameState, type OfferedBest } from './game/game';
 export {
   GAME_LIVES,
   livesOf,

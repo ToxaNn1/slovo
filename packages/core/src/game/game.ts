@@ -14,24 +14,37 @@ import {
   type GameInPlay,
   type GivenAnswer,
 } from './game-in-play';
-import { createRoundPlanner, type RoundPlan } from './round-plan';
+import { createRoundPlanner, roundLimitOf, type RoundPlan } from './round-plan';
 
 /** How long the Game waits before each new try of a failed planning of its offers, in milliseconds. */
 const OFFER_PLANNING_RETRY_DELAYS: readonly number[] = [1_000, 2_000, 4_000];
 
 /**
  * A Game Mode on offer, with what its card needs from the Core: the mode's
- * id, the kind of Entry it asks about, and whether a Game in it can start
- * now, or why not; or, just after the Game opens, that it is still planned.
+ * id, the kind of Entry it asks about, its Best result, and whether a Game in
+ * it can start now, or why not; or, just after the Game opens, that it is
+ * still planned.
  */
 export type GameModeOffer = {
   readonly modeId: string;
   readonly entryKind: EntryKind;
+  /** The mode's Best result; left out before its first finished Game. */
+  readonly best?: OfferedBest;
 } & (
   | { readonly canStart: true }
   | { readonly canStart: false; readonly refusal: GameModeRefusal }
   | { readonly canStart: false; readonly planning: true }
 );
+
+/**
+ * The Best result on a mode's offer: `of` is the mode's Round limit, when it
+ * has one, so that the result counts Rounds of it («12 з 15»); without one
+ * the result is a bare number («23»).
+ */
+export interface OfferedBest {
+  readonly result: number;
+  readonly of?: number;
+}
 
 /** The Game as it stands: the modes on offer, the Game in play and each mode's Best result. */
 export interface GameState {
@@ -92,11 +105,15 @@ export interface Game {
   leave(): void;
 }
 
-/** Whether two offers say the same, field by field. */
+/** Whether two offers say the same, field by field, their Best results included. */
 const sameOffer = (one: GameModeOffer, other: GameModeOffer | undefined) =>
   other !== undefined &&
   Object.keys(one).length === Object.keys(other).length &&
-  Object.entries(one).every(([key, value]) => (other as Record<string, unknown>)[key] === value);
+  Object.entries(one).every(([key, value]) =>
+    key === 'best'
+      ? one.best?.result === other.best?.result && one.best?.of === other.best?.of
+      : (other as Record<string, unknown>)[key] === value,
+  );
 
 const sameOffers = (one: readonly GameModeOffer[], other: readonly GameModeOffer[]) =>
   one.length === other.length && one.every((offer, index) => sameOffer(offer, other[index]));
@@ -111,11 +128,24 @@ const { gameBest } = userStateRecords;
 const resultOf = (over: CurrentGame): number =>
   over.lives === undefined ? over.played.filter(({ right }) => right).length : over.roundsPassed;
 
+/** A mode's Best result as its offer says it, out of the mode's Round limit when it has one. */
+function offeredBest(mode: GameMode, result: number): OfferedBest {
+  const of = roundLimitOf(mode);
+  return of === undefined ? { result } : { result, of };
+}
+
+/** What every offer of a Game Mode says: its id, kind and Best result, if any. */
+const offeredMode = (mode: GameMode, best: number | undefined) => ({
+  modeId: mode.id,
+  entryKind: mode.entryKind,
+  ...(best === undefined ? {} : { best: offeredBest(mode, best) }),
+});
+
 /** The offer of a Game Mode: it can start when it can make its Rounds. */
-const offerOf = ({ id, entryKind }: GameMode, plan: RoundPlan): GameModeOffer =>
+const offerOf = (mode: GameMode, plan: RoundPlan, best: number | undefined): GameModeOffer =>
   'rounds' in plan
-    ? { modeId: id, entryKind, canStart: true }
-    : { modeId: id, entryKind, canStart: false, refusal: plan.refusal };
+    ? { ...offeredMode(mode, best), canStart: true }
+    : { ...offeredMode(mode, best), canStart: false, refusal: plan.refusal };
 
 /**
  * Opens the Game over the eligible Entries, History and the Knowledge Marks,
@@ -170,15 +200,15 @@ export async function openGame({
   const subscribers = createSubscribers();
   const inTurn = createInTurn();
 
+  const bestResults = await bestResultsOf(modes);
   let state: GameState = {
-    modes: modes.map(({ id, entryKind }) => ({
-      modeId: id,
-      entryKind,
+    modes: modes.map((mode) => ({
+      ...offeredMode(mode, bestResults[mode.id]),
       canStart: false,
       planning: true,
     })),
     current: undefined,
-    bestResults: await bestResultsOf(modes),
+    bestResults,
   };
   /** The Game in play, or just over; none on the mode screen. */
   let played: GameInPlay | undefined;
@@ -211,7 +241,9 @@ export async function openGame({
       })),
     );
     // Planned one after another, so the modes draw from the random source in turn.
-    const offers = read.map(({ mode, eligible }) => offerOf(mode, planRounds(mode, eligible)));
+    const offers = read.map(({ mode, eligible }) =>
+      offerOf(mode, planRounds(mode, eligible), state.bestResults[mode.id]),
+    );
     if (!sameOffers(offers, state.modes)) change({ ...state, modes: offers });
     const game = state.current;
     const eligible = read.find(({ mode }) => mode === played?.mode)?.eligible;
@@ -255,7 +287,7 @@ export async function openGame({
     const plan = planRounds(mode, eligible);
     // The offer says what the plan does already, unless the mode's fair Rounds hang on the draw.
     const offers = state.modes.map((offer) =>
-      offer.modeId === modeId ? offerOf(mode, plan) : offer,
+      offer.modeId === modeId ? offerOf(mode, plan, state.bestResults[modeId]) : offer,
     );
     const modesNow = sameOffers(offers, state.modes) ? state.modes : offers;
     played =
@@ -292,8 +324,12 @@ export async function openGame({
     const best = state.bestResults[over.modeId];
     const beaten = best === undefined || result > best;
     if (beaten) await userState.write(gameBest.record(over.modeId).change(result));
+    const mode = beaten ? modes.find(({ id }) => id === over.modeId) : undefined;
     change({
       ...state,
+      modes: state.modes.map((offer) =>
+        offer.modeId === mode?.id ? { ...offer, best: offeredBest(mode, result) } : offer,
+      ),
       current: state.current === game ? over : state.current,
       bestResults: beaten ? { ...state.bestResults, [over.modeId]: result } : state.bestResults,
     });

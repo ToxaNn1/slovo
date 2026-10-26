@@ -1246,7 +1246,13 @@ describe('the rules of a Game', () => {
 
     expect(app.game.state).toEqual({
       modes: [
-        { modeId: 'guess-word', entryKind: 'word', canStart: false, refusal: 'too-few-entries' },
+        {
+          modeId: 'guess-word',
+          entryKind: 'word',
+          canStart: false,
+          refusal: 'too-few-entries',
+          best: { result: 15, of: 15 },
+        },
       ],
       current: undefined,
       bestResults: { 'guess-word': 15 },
@@ -1261,7 +1267,7 @@ describe('the rules of a Game', () => {
 
     expect(app.game.state.current).toBeUndefined();
     expect(app.game.state.modes).toEqual([
-      { modeId: 'guess-word', entryKind: 'word', canStart: true },
+      { modeId: 'guess-word', entryKind: 'word', canStart: true, best: { result: 15, of: 15 } },
     ]);
   });
 
@@ -1804,6 +1810,52 @@ describe('the Best result per mode', () => {
     const reopened = await run({ records, time });
     expect(reopened.game.state.bestResults['guess-word']).toBe(7);
     expect(reopened.progress.state.bestResult).toBe(7);
+  });
+
+  it("rides on its mode's offer, out of the mode's Round limit, or bare in a mode with none", async () => {
+    const survival: GameMode = { ...lemmaMode, lives: 3, roundLimit: 'none' };
+    const app = await run({
+      records: guessWordBest.change(12) as Map<string, string>,
+      gameModes: [survival],
+    });
+
+    // «12 з 15» for «Вгадай слово»; none yet for the mode with no Round limit.
+    expect(app.game.state.modes).toEqual([
+      { modeId: 'guess-word', entryKind: 'word', canStart: true, best: { result: 12, of: 15 } },
+      { modeId: 'test-lemma', entryKind: 'word', canStart: true },
+    ]);
+
+    await app.game.start('test-lemma');
+    for (const right of [true, true, false, false, false]) {
+      await play(app, right, () => 0);
+    }
+
+    // «4», a bare number, once its first Game is over.
+    expect(current(app)).toMatchObject({ roundsPassed: 4, status: 'lost' });
+    expect(app.game.state.modes[1]).toEqual({
+      modeId: 'test-lemma',
+      entryKind: 'word',
+      canStart: true,
+      best: { result: 4 },
+    });
+    expect(app.game.state.modes[0]).toMatchObject({ best: { result: 12, of: 15 } });
+  });
+
+  it('rides on the offer while the modes are still planned', async () => {
+    const app = await run({
+      records: guessWordBest.change(12) as Map<string, string>,
+      planned: false,
+    });
+
+    expect(app.game.state.modes).toEqual([
+      {
+        modeId: 'guess-word',
+        entryKind: 'word',
+        canStart: false,
+        planning: true,
+        best: { result: 12, of: 15 },
+      },
+    ]);
   });
 
   it('shows the one of «Вгадай слово» in the progress snapshot, which tells its subscribers when it changes', async () => {
