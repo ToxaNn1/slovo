@@ -2,6 +2,7 @@ import {
   PackMetadataSchema,
   type Category,
   type Correction,
+  type CrosswordDay,
   type Idiom,
   type PackMetadata,
   type SynonymRow,
@@ -206,6 +207,20 @@ CREATE TABLE tip_wrong_answers (
   PRIMARY KEY (tip_id, position)
 ) WITHOUT ROWID;
 
+-- The Daily Crossword, a row per word of a day (ADR 0052). A day keeps the
+-- answer and clue it was made with, so a later edit of its Entry never changes it.
+CREATE TABLE crossword_words (
+  date TEXT NOT NULL,
+  position INTEGER NOT NULL,
+  entry_id TEXT NOT NULL REFERENCES entries (id),
+  answer TEXT NOT NULL,
+  clue TEXT NOT NULL,
+  start_row INTEGER NOT NULL,
+  start_column INTEGER NOT NULL,
+  direction TEXT NOT NULL CHECK (direction IN ('across', 'down')),
+  PRIMARY KEY (date, position)
+) WITHOUT ROWID;
+
 -- Keyed by Entry id, so every kind of Entry records its sources here.
 CREATE TABLE sources (
   entry_id TEXT NOT NULL REFERENCES entries (id),
@@ -234,8 +249,9 @@ CREATE TABLE sources (
  * (`synonym_rows`, `synonym_row_members` and `synonym_row_stress`), the Tip
  * tables (`tips` and `tip_wrong_answers`) and the kinds `'synonymRow'` and
  * `'tip'`, and admits the Synonym Rows and Tips of 0.8.11 (ADR 0051); format 6
- * keeps format 5's layout, adding only the Word's origin column, and admits
- * the Word's origin of 0.8.12 (ADR 0052).
+ * keeps format 5's layout, adding only the Word's origin column and the table
+ * `crossword_words`, and admits the Word's origin and the Daily Crossword of
+ * 0.8.12 (ADR 0052).
  */
 export const PACK_FORMAT = 6;
 
@@ -286,4 +302,10 @@ export interface PackContent {
   readonly idioms: readonly Idiom[];
   readonly synonymRows: readonly SynonymRow[];
   readonly tips: readonly Tip[];
+  /**
+   * The days of the Daily Crossword, in date order; unset when the Edition
+   * keeps none, so the content checksum of an Edition without days stays as
+   * it was.
+   */
+  readonly crosswordDays?: readonly CrosswordDay[];
 }

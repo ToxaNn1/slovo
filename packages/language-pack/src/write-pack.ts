@@ -258,6 +258,16 @@ export function writePack(outFile: string, content: PackContent, metadata: PackM
       insertSources(tip);
     }
 
+    const insertCrosswordWord = db.prepare(`
+      INSERT INTO crossword_words (date, position, entry_id, answer, clue, start_row, start_column, direction)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    for (const { date, words } of content.crosswordDays ?? []) {
+      words.forEach(({ entryId, answer, clue, row, column, direction }, position) => {
+        insertCrosswordWord.run(date, position, entryId, answer, clue, row, column, direction);
+      });
+    }
+
     db.exec('COMMIT');
   } catch (error) {
     db.close();

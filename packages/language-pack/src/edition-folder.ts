@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 import {
   CorrectionSchema,
+  CrosswordDaysSchema,
   EditionConfigSchema,
   EditionDecorSchema,
   EditionStringsSchema,
@@ -33,6 +34,9 @@ import { ID_REGISTRY_FILE, IdRegistrySchema } from './id-registry';
 /** The editions folder of this repo, which holds one folder per Edition. */
 export const EDITIONS_DIR = fileURLToPath(new URL('../../../editions', import.meta.url));
 
+/** Where an Edition keeps the days of its Daily Crossword (ADR 0052). */
+export const CROSSWORD_DAYS_FILE = 'content/crossword-days.json';
+
 /** Where each file of an Edition lies in its folder. */
 const FILES = {
   config: 'edition.json',
@@ -44,6 +48,7 @@ const FILES = {
   idRegistry: ID_REGISTRY_FILE,
   manifest: MANIFEST_FILE,
   targets: 'content/targets.json',
+  crosswordDays: CROSSWORD_DAYS_FILE,
   icon: 'assets/icon.png',
   languagePack: 'dist/language-pack.db',
 } as const;
@@ -77,6 +82,7 @@ const SCHEMAS = {
   idRegistry: IdRegistrySchema,
   manifest: ContentManifestSchema,
   targets: ContentTargetsSchema,
+  crosswordDays: CrosswordDaysSchema,
 } satisfies Partial<Record<EditionFile, z.ZodType>>;
 
 /** A file of an Edition, named by what it holds. */
