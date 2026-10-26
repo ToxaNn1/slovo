@@ -42,8 +42,7 @@ export type TipFeedCard = EntryFeedCardOf<'tip', TipCardModel>;
  * One card of the Feed: an Entry, or the end-of-Cycle card that tells the
  * reader every live Entry is Seen and the next card starts a new Cycle. The
  * end-of-Cycle card shows no Entry, so any card's `entryId` reads undefined
- * there. Only the Feed gives the cards of Synonym Rows and Tips, which no
- * other screen shows yet (spec #730).
+ * there.
  */
 export type FeedCard =
   | EntryFeedCard

@@ -157,3 +157,68 @@ describe('a closed composition', () => {
     expect(records.has('favorites.w_03')).toBe(true);
   });
 });
+
+describe('an Entry opened by id', () => {
+  /** A pack with a Word, a Synonym Row that links it as a member and a Tip. */
+  const withRowAndTip = createMemoryContentPort({
+    categories: [{ id: 'test', displayName: 'Test' }],
+    words: [word('w_ity'), word('w_prostuvaty')],
+    synonymRows: [
+      {
+        kind: 'synonymRow',
+        id: 'r_ity',
+        dominant: { text: 'іти', stress: [2], wordId: 'w_ity' },
+        meaning: 'Рухатися пішки.',
+        members: [
+          { text: 'простувати', stress: [7], wordId: 'w_prostuvaty' },
+          { text: 'чимчикувати', stress: [4] },
+          { text: 'шкандибати', stress: [7] },
+          { text: 'дибати', stress: [1] },
+          { text: 'чалапати', stress: [3] },
+        ],
+        sources: [{ title: 'Test source' }],
+        retired: false,
+      },
+    ],
+    tips: [
+      {
+        kind: 'tip',
+        id: 't_kotrahodyna',
+        title: 'Котра година?',
+        nonStandardForm: 'Скільки час?',
+        standardForm: 'Котра година?',
+        explanation: 'Про час питають «котра година».',
+        sources: [{ title: 'Test source' }],
+        gameQuestion: {
+          prompt: 'Як запитати про час?',
+          rightAnswer: 'Котра година?',
+          wrongAnswers: ['Скільки час?', 'Скільки годин?', 'Який час?'],
+        },
+        retired: false,
+      },
+    ],
+  });
+
+  it('opens the Synonym Row a Word card links back to, as its Feed card shows it', async () => {
+    const { app } = await run({ pack: withRowAndTip });
+
+    const wordCard = await app.entryCard('w_prostuvaty');
+    const rowId = wordCard?.kind === 'word' ? wordCard.model.synonymRow?.synonymRowId : undefined;
+
+    expect(rowId).toBe('r_ity');
+    expect(await app.entryCard(rowId ?? '')).toMatchObject({
+      kind: 'synonymRow',
+      entryId: 'r_ity',
+      model: { synonymRowId: 'r_ity', dominant: { text: 'іти́', wordId: 'w_ity' } },
+    });
+  });
+
+  it('opens a Tip by its id', async () => {
+    const { app } = await run({ pack: withRowAndTip });
+
+    expect(await app.entryCard('t_kotrahodyna')).toMatchObject({
+      kind: 'tip',
+      entryId: 't_kotrahodyna',
+    });
+  });
+});

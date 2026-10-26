@@ -84,7 +84,8 @@ async function open(): Promise<Composition> {
 
 async function cardOf(app: Composition, entryId: string): Promise<EntryFeedCard> {
   const card = await app.entryCard(entryId);
-  if (card === undefined) throw new Error(`No card for ${entryId}`);
+  if (card === undefined || card.kind === 'synonymRow' || card.kind === 'tip')
+    throw new Error(`No card of a Word, a Correction or an Idiom for ${entryId}`);
   return card;
 }
 
