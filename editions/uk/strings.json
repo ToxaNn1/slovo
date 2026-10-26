@@ -386,7 +386,9 @@
       "wordOfTheDay": "слово дня",
       "idiom": "фразеологізм",
       "placeName": "топонім",
-      "proverb": "прислів’я"
+      "proverb": "прислів’я",
+      "synonymRow": "синоніми",
+      "tip": "порада"
     },
     "kindBeside": "{kind} · {time}",
     "days": {

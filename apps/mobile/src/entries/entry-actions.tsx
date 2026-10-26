@@ -1,4 +1,11 @@
-import { isTodaysWordOfTheDay, type Composition, type EntryFeedCard } from '@slovo/core';
+import {
+  isTodaysWordOfTheDay,
+  type AnyEntryCard,
+  type Composition,
+  type EntryFeedCard,
+  type SynonymRowFeedCard,
+  type TipFeedCard,
+} from '@slovo/core';
 import {
   ActionRow,
   CollectionButton,
@@ -10,7 +17,7 @@ import {
   ShareButton,
   ShareSheet,
 } from '@slovo/ui';
-import { useCallback, useState } from 'react';
+import { useCallback, useState, type ReactNode } from 'react';
 
 import { refusalText } from '../saved/collection-refusal';
 import { deviceClock } from '../device/device-clock';
@@ -30,17 +37,47 @@ const shareFormat = createShareFormatMemory();
 /**
  * The action row of an Entry card, wherever the card appears: the Feed (its
  * Word of the Day too) and the Entry screen a list opens. Each action fills
- * its own slot. The «Знаю» and «Не знаю» buttons are there only when the
- * Knowledge switch is on in effect, and inactive while Self-check conceals
- * the card's meaning (the card tells them). Share is there only when the binary can capture the Share Card and the Share Cards switch
- * is on in effect. Its screen gives it an
- * `UndoToastProvider` for the toast after a hide.
+ * its own slot. A Synonym Row's and a Tip's card has its own row (spec #730).
+ * Its screen gives it an `UndoToastProvider` for the toast after a hide.
  */
-export function EntryActions({ card }: { card: EntryFeedCard }) {
+export function EntryActions({ card }: { card: AnyEntryCard }) {
+  return card.kind === 'synonymRow' || card.kind === 'tip' ? (
+    <RowOrTipActions card={card} />
+  ) : (
+    <ShownEntryActions card={card} />
+  );
+}
+
+/**
+ * The action row of a Synonym Row's or a Tip's card: the heart and «До
+ * колекції» (spec #730).
+ */
+function RowOrTipActions({ card }: { card: SynonymRowFeedCard | TipFeedCard }) {
+  const favorite = useFavorite(card.entryId);
+  const collection = useCollectionAction(card.entryId);
+  return (
+    <>
+      <ActionRow
+        favorite={<FavoriteButton inFavorites={favorite.inFavorites} onToggle={favorite.toggle} />}
+        collection={collection.button}
+      />
+      {collection.sheet}
+    </>
+  );
+}
+
+/**
+ * The action row of a Word's, a Correction's or an Idiom's card. The «Знаю»
+ * and «Не знаю» buttons are there only when the Knowledge switch is on in
+ * effect, and inactive while Self-check conceals the card's meaning (the card
+ * tells them). Share is there only when the binary can capture the Share Card
+ * and the Share Cards switch is on in effect.
+ */
+function ShownEntryActions({ card }: { card: EntryFeedCard }) {
   const { entryId } = card;
   const favorite = useFavorite(entryId);
   const hide = useHide(card);
-  const [sheetOpen, setSheetOpen] = useState(false);
+  const collection = useCollectionAction(entryId);
   const [shareOpen, setShareOpen] = useState(false);
   const buttons = useShown().entryButtons;
   const share = buttons.shareCard ? shareCardOnDevice : undefined;
@@ -63,23 +100,11 @@ export function EntryActions({ card }: { card: EntryFeedCard }) {
             />
           ) : undefined
         }
-        collection={
-          <CollectionButton
-            onPress={() => {
-              setSheetOpen(true);
-            }}
-          />
-        }
+        collection={collection.button}
         hide={<HideButton onPress={hide.open} />}
       />
       <HideChoiceSheet {...hide.choice} />
-      <EntryCollectionSheet
-        entryId={entryId}
-        visible={sheetOpen}
-        onClose={() => {
-          setSheetOpen(false);
-        }}
-      />
+      {collection.sheet}
       {share !== undefined && (
         <EntryShareSheet
           card={card}
@@ -123,6 +148,29 @@ function EntryShareSheet({
       onClose={onClose}
     />
   );
+}
+
+/** The «До колекції» button of an Entry's action row, and the sheet it opens. */
+function useCollectionAction(entryId: string): { button: ReactNode; sheet: ReactNode } {
+  const [open, setOpen] = useState(false);
+  return {
+    button: (
+      <CollectionButton
+        onPress={() => {
+          setOpen(true);
+        }}
+      />
+    ),
+    sheet: (
+      <EntryCollectionSheet
+        entryId={entryId}
+        visible={open}
+        onClose={() => {
+          setOpen(false);
+        }}
+      />
+    ),
+  };
 }
 
 /** The «До колекції» sheet of one Entry, over the Core's Collections. */

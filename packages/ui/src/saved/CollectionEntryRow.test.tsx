@@ -14,6 +14,8 @@ const strings = {
       idiom: 'idiom',
       placeName: 'place name',
       proverb: 'proverb',
+      synonymRow: 'synonyms',
+      tip: 'tip',
     },
     kindBeside: '{kind} · {time}',
   },
@@ -40,6 +42,24 @@ const idiom = (labelKey: 'idiom' | 'placeName'): EntryRowModel => ({
   labelKey,
   spoken: 'spill the beans, To give away a secret.',
 });
+
+const synonymRow: EntryRowModel = {
+  kind: 'synonymRow',
+  entryId: 'r1',
+  title: 'wálk',
+  secondLine: 'To move on foot.',
+  labelKey: 'synonymRow',
+  spoken: 'walk, To move on foot.',
+};
+
+const tip: EntryRowModel = {
+  kind: 'tip',
+  entryId: 't1',
+  title: 'What time is it?',
+  secondLine: 'What time is it now?',
+  labelKey: 'tip',
+  spoken: 'What time is it?, What time is it now?',
+};
 
 const filed = (row: EntryRowModel): CollectionEntry => ({
   entryId: row.entryId,
@@ -80,6 +100,20 @@ describe('CollectionEntryRow', () => {
 
     expect(screen.getByText('spill the beans')).toBeTruthy();
     expect(screen.getByText(trailing)).toBeTruthy();
+  });
+
+  it.each([
+    ['a Synonym Row by its dominant', synonymRow, 'wálk', 'To move on foot.', 'synonyms · today'],
+    ['a Tip by its title', tip, 'What time is it?', 'What time is it now?', 'tip · today'],
+  ])('shows %s, with its kind, and opens it on a tap', async (_, row, title, line, trailing) => {
+    const onPress = jest.fn();
+    await renderRow(row, { onPress });
+
+    expect(screen.getByText(title)).toBeTruthy();
+    expect(screen.getByText(line)).toBeTruthy();
+    expect(screen.getByText(trailing)).toBeTruthy();
+    await fireEvent.press(screen.getByTestId(`entry-row-${row.entryId}-open`));
+    expect(onPress).toHaveBeenCalledTimes(1);
   });
 
   it('opens the Entry on a tap', async () => {

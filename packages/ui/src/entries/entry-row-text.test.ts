@@ -1,6 +1,6 @@
 import type { EditionStrings } from '@slovo/contracts';
 import type { EntryRowModel } from '@slovo/core';
-import { entryLabel, entryRowSubtitle } from '@slovo/ui/entry-row-text';
+import { entryLabel, entryRowSubtitle, favoriteTrailing } from '@slovo/ui/entry-row-text';
 import { describe, expect, it } from 'vitest';
 
 const kinds: EditionStrings['history']['kinds'] = {
@@ -10,6 +10,8 @@ const kinds: EditionStrings['history']['kinds'] = {
   idiom: 'idiom',
   placeName: 'place name',
   proverb: 'proverb',
+  synonymRow: 'synonyms',
+  tip: 'tip',
 };
 
 const correctionCard = { insteadOf: 'instead of «{form}»' };
@@ -44,17 +46,49 @@ const idiom = (labelKey: 'idiom' | 'placeName'): EntryRowModel => ({
   spoken: 'spill the beans, To give away a secret.',
 });
 
+const synonymRow: EntryRowModel = {
+  kind: 'synonymRow',
+  entryId: 'r_a',
+  title: 'wálk',
+  secondLine: 'To move on foot.',
+  labelKey: 'synonymRow',
+  spoken: 'walk, To move on foot.',
+};
+
+const tip: EntryRowModel = {
+  kind: 'tip',
+  entryId: 't_a',
+  title: 'What time is it?',
+  secondLine: 'What time is it now?',
+  labelKey: 'tip',
+  spoken: 'What time is it?, What time is it now?',
+};
+
 describe('the words of an Entry row', () => {
   it('names the kind of each row, a place name by its Idiom Type', () => {
     expect(entryLabel(kinds, word)).toBe('word');
     expect(entryLabel(kinds, correction)).toBe('correction');
     expect(entryLabel(kinds, idiom('idiom'))).toBe('idiom');
     expect(entryLabel(kinds, idiom('placeName'))).toBe('place name');
+    expect(entryLabel(kinds, synonymRow)).toBe('synonyms');
+    expect(entryLabel(kinds, tip)).toBe('tip');
   });
 
   it('puts the Definition under a Word or an Idiom, and the replaced form under a Correction', () => {
     expect(entryRowSubtitle(correctionCard, word)).toBe('Open and honest.');
     expect(entryRowSubtitle(correctionCard, idiom('placeName'))).toBe('To give away a secret.');
     expect(entryRowSubtitle(correctionCard, correction)).toBe('instead of «in the meantimes»');
+    expect(entryRowSubtitle(correctionCard, synonymRow)).toBe('To move on foot.');
+    expect(entryRowSubtitle(correctionCard, tip)).toBe('What time is it now?');
+  });
+
+  it('puts the label of a Synonym Row or a Tip beside when it went into Favorites, and only the time for the other kinds', () => {
+    const strings = { kinds, kindBeside: '{kind} · {time}' };
+
+    expect(favoriteTrailing(strings, synonymRow, 'today')).toBe('synonyms · today');
+    expect(favoriteTrailing(strings, tip, 'today')).toBe('tip · today');
+    expect(favoriteTrailing(strings, word, 'today')).toBe('today');
+    expect(favoriteTrailing(strings, correction, 'today')).toBe('today');
+    expect(favoriteTrailing(strings, idiom('idiom'), 'today')).toBe('today');
   });
 });

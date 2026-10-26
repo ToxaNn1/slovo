@@ -63,7 +63,9 @@ describe('the History texts', () => {
           ? { kind: 'word', entryId: 'w_a', ...text, labelKey, partOfSpeech: 'noun', registers: [] }
           : labelKey === 'correction'
             ? { kind: 'correction', entryId: 'c_a', ...text, labelKey, correctionType: 'calque' }
-            : { kind: 'idiom', entryId: 'i_a', ...text, labelKey };
+            : labelKey === 'synonymRow' || labelKey === 'tip'
+              ? { kind: labelKey, entryId: 'r_a', ...text, labelKey }
+              : { kind: 'idiom', entryId: 'i_a', ...text, labelKey };
       return { wordOfTheDay, row };
     };
 
@@ -72,6 +74,8 @@ describe('the History texts', () => {
     expect(text.label(entry('idiom'))).toBe('фразеологізм');
     expect(text.label(entry('placeName'))).toBe('топонім');
     expect(text.label(entry('proverb'))).toBe('прислів’я');
+    expect(text.label(entry('synonymRow'))).toBe('синоніми');
+    expect(text.label(entry('tip'))).toBe('порада');
     expect(text.label(entry('word', true))).toBe('слово дня');
   });
 
