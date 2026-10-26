@@ -14,6 +14,7 @@ const contentAt = (contentVersion: number, displayName = 'Мовлення'): Pa
   corrections: [],
   idioms: [],
   synonymRows: [],
+  tips: [],
 });
 
 /** The manifest that records the content, as `--record` writes it. */
@@ -76,6 +77,7 @@ describe('checkContentVersion', () => {
 
   it('gives equal content the same checksum, whatever the order of its keys', () => {
     const reordered: PackContent = {
+      tips: [],
       synonymRows: [],
       idioms: [],
       corrections: [],

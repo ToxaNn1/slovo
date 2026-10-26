@@ -47,7 +47,13 @@ export function recordContent({ editionDir }: { editionDir: string }): RecordRes
     };
   }
   const newIds = unregisteredEntries(
-    [...source.words, ...source.corrections, ...source.idioms, ...source.synonymRows],
+    [
+      ...source.words,
+      ...source.corrections,
+      ...source.idioms,
+      ...source.synonymRows,
+      ...source.tips,
+    ],
     registry,
   )
     .map(({ entry }) => entry.id)

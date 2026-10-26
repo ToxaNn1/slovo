@@ -94,6 +94,14 @@ export {
   type SynonymRowInput,
   type SynonymRowMember,
 } from './synonym-row';
+export {
+  TipGameQuestionSchema,
+  TipIdSchema,
+  TipSchema,
+  type Tip,
+  type TipGameQuestion,
+  type TipInput,
+} from './tip';
 export { EntrySchema, type Entry, type EntryKind } from './entry';
 export { SYNC_BATCH_SIZE } from './sync';
 export { SourceSchema, type Source } from './shared';

@@ -3,6 +3,7 @@ import {
   CorrectionSchema,
   IdiomSchema,
   SynonymRowSchema,
+  TipSchema,
   WordSchema,
   type Correction,
   type Entry,
@@ -12,6 +13,7 @@ import {
   type PackMetadata,
   type Source,
   type SynonymRow,
+  type Tip,
   type Word,
 } from '@slovo/contracts';
 import type { ContentReadPort } from '@slovo/core';
@@ -96,6 +98,19 @@ interface RowMemberRow {
   shade_note: string | null;
 }
 
+interface TipRow {
+  id: string;
+  title: string;
+  non_standard_form: string | null;
+  standard_form: string;
+  explanation: string;
+  example_text: string | null;
+  example_author: string | null;
+  question_prompt: string;
+  right_answer: string;
+  retired: number;
+}
+
 interface SourceRow {
   title: string;
   url: string | null;
@@ -175,6 +190,13 @@ const synonymRowParts = (list: string) => ({
     WHERE row_id IN ${list} ORDER BY row_id, position
   `,
   stress: `SELECT row_id AS entry_id, member, position FROM synonym_row_stress WHERE row_id IN ${list} ORDER BY row_id, member, position`,
+  sources: `SELECT entry_id, title, url, archived_url FROM sources WHERE entry_id IN ${list} ORDER BY entry_id, position`,
+});
+
+/** The parts of the Tips of the ids, each row with the id of its Tip. */
+const tipParts = (list: string) => ({
+  tips: `SELECT id, title, non_standard_form, standard_form, explanation, example_text, example_author, question_prompt, right_answer, retired FROM tips WHERE id IN ${list} ORDER BY id`,
+  wrongAnswers: `SELECT tip_id AS entry_id, text FROM tip_wrong_answers WHERE tip_id IN ${list} ORDER BY tip_id, position`,
   sources: `SELECT entry_id, title, url, archived_url FROM sources WHERE entry_id IN ${list} ORDER BY entry_id, position`,
 });
 
@@ -417,12 +439,53 @@ export function createPackReader(db: PackDatabase): PackReader {
     return parts.flat();
   }
 
+  /** The Tips of the ids, each with all its parts, three queries per `IDS_PER_READ`. */
+  async function readTips(ids: readonly string[]): Promise<Tip[]> {
+    const parts = await Promise.all(
+      inParts(ids).map(async ({ list, params }) => {
+        const sql = tipParts(list);
+        const [tips, wrongAnswers, tipSources] = await Promise.all([
+          db.getAllAsync<TipRow>(sql.tips, params),
+          db.getAllAsync<WithEntryId<{ text: string }>>(sql.wrongAnswers, params).then(byEntry),
+          db.getAllAsync<WithEntryId<SourceRow>>(sql.sources, params).then(byEntry),
+        ]);
+        // Parsing checks the pack against the contracts and types the Tip.
+        return tips.map((tip) =>
+          TipSchema.parse({
+            id: tip.id,
+            title: tip.title,
+            ...(tip.non_standard_form === null ? {} : { nonStandardForm: tip.non_standard_form }),
+            standardForm: tip.standard_form,
+            explanation: tip.explanation,
+            ...(tip.example_text === null
+              ? {}
+              : {
+                  example:
+                    tip.example_author === null
+                      ? { text: tip.example_text }
+                      : { text: tip.example_text, author: tip.example_author },
+                }),
+            sources: (tipSources.get(tip.id) ?? []).map(sourceOf),
+            gameQuestion: {
+              prompt: tip.question_prompt,
+              rightAnswer: tip.right_answer,
+              wrongAnswers: (wrongAnswers.get(tip.id) ?? []).map(({ text }) => text),
+            },
+            retired: tip.retired === 1,
+          }),
+        );
+      }),
+    );
+    return parts.flat();
+  }
+
   /** How to read the Entries of each kind by id. */
   const readOfKind: Record<EntryKind, (ids: readonly string[]) => Promise<Entry[]>> = {
     word: readWordsOf,
     correction: readCorrections,
     idiom: readIdioms,
     synonymRow: readSynonymRows,
+    tip: readTips,
   };
 
   /**

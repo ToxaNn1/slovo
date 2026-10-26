@@ -14,16 +14,17 @@ import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
 
 /**
- * An Entry of a kind the screens show: every kind but the Synonym Row, which
- * no screen shows yet (spec #730). The Entries leave Synonym Rows out, as if
- * the Language Pack didn't have them, so no screen is handed one.
+ * An Entry of a kind the screens show: every kind but the Synonym Row and the
+ * Tip, which no screen shows yet (spec #730). The Entries leave them out, as
+ * if the Language Pack didn't have them, so no screen is handed one.
  */
-export type ShownEntry = Exclude<Entry, { kind: 'synonymRow' }>;
+export type ShownEntry = Exclude<Entry, { kind: 'synonymRow' | 'tip' }>;
 
 /** The kind of an Entry the screens show. */
 export type ShownKind = ShownEntry['kind'];
 
-const isShown = (entry: Entry): entry is ShownEntry => entry.kind !== 'synonymRow';
+const isShown = (entry: Entry): entry is ShownEntry =>
+  entry.kind !== 'synonymRow' && entry.kind !== 'tip';
 
 /** The ids of Entries, each kind in its own list. */
 export interface EntryIds {
@@ -75,7 +76,7 @@ export interface Entries {
   /**
    * Any Entry by id, eligible or not: a Retired one, or a Correction or an
    * Idiom when the Edition turns its kind off. So the Entries the user keeps
-   * stay reachable. A Synonym Row reads as missing.
+   * stay reachable. A Synonym Row or a Tip reads as missing.
    */
   get(id: string): Promise<ShownEntry | undefined>;
   /**

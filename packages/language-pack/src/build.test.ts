@@ -753,6 +753,88 @@ describe('buildLanguagePack', () => {
     });
   });
 
+  describe('Tips', () => {
+    /** A Tip with every field, the optional ones included. */
+    const fullTip = {
+      id: 't_fx0001',
+      title: 'Котра година?',
+      nonStandardForm: 'Скільки час?',
+      standardForm: 'Котра година?',
+      explanation: 'Тестове пояснення: про час питають порядковим числівником.',
+      example: { text: 'Перепрошую, котра година?', author: 'Тестовий автор' },
+      sources: [{ title: 'Тестове джерело', url: 'https://example.com/tips' }],
+      gameQuestion: {
+        prompt: 'Як правильно спитати про час?',
+        rightAnswer: 'Котра година?',
+        wrongAnswers: ['Скільки час?', 'Скільки годин?', 'Який час?'],
+      },
+    };
+
+    function withTips(tips: Json[]): string {
+      const editionDir = copyFixture('valid');
+      mkdirSync(join(editionDir, 'content/tips'), { recursive: true });
+      for (const tip of tips) {
+        writeFileSync(
+          join(editionDir, `content/tips/${String(tip['id'])}.json`),
+          JSON.stringify(tip),
+        );
+      }
+      record(editionDir);
+      return editionDir;
+    }
+
+    async function readTips(outFile: string, ids: string[]) {
+      const pack = openLanguagePack(outFile);
+      try {
+        return await pack.getEntries(ids);
+      } finally {
+        pack.close();
+      }
+    }
+
+    it('builds a Tip and reads it back with every field, in pack format 5', async () => {
+      const editionDir = withTips([fullTip]);
+      const outFile = packPath();
+
+      const result = buildLanguagePack({ editionDir, outFile });
+
+      expect(result.ok ? [] : result.errors).toEqual([]);
+      expect(result).toMatchObject({ ok: true, metadata: { packFormat: 5 } });
+      expect(await readTips(outFile, ['t_fx0001'])).toEqual([
+        { ...fullTip, kind: 'tip', retired: false },
+      ]);
+    });
+
+    it('reads back a Retired Tip with no non-standard form and no example', async () => {
+      const plainTip = {
+        id: 't_fx0002',
+        title: 'Кличний відмінок у звертанні',
+        standardForm: 'пане Андрію',
+        explanation: 'Тестове пояснення: у звертанні вживаємо кличний відмінок.',
+        sources: [{ title: 'Тестове джерело' }],
+        gameQuestion: {
+          prompt: 'Як звернутися до Андрія?',
+          rightAnswer: 'пане Андрію',
+          wrongAnswers: ['пан Андрій', 'пане Андрій', 'пан Андрію'],
+        },
+        retired: true,
+      };
+      const outFile = packPath();
+
+      buildLanguagePack({ editionDir: withTips([plainTip]), outFile });
+
+      expect(await readTips(outFile, ['t_fx0002'])).toEqual([{ ...plainTip, kind: 'tip' }]);
+    });
+
+    it('keeps Tips out of the Entries the screens are given', async () => {
+      const outFile = packPath();
+
+      buildLanguagePack({ editionDir: withTips([fullTip]), outFile });
+
+      expect(await withEntries(outFile, (entries) => entries.get('t_fx0001'))).toBeUndefined();
+    });
+  });
+
   describe('Synonym Rows', () => {
     /** A Synonym Row with every field, its dominant and one member linking a Word. */
     const fullRow = {
