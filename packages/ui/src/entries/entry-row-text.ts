@@ -15,7 +15,7 @@ export function entryLabel(
 
 /**
  * The text on the right of a row that puts the row's label beside a time, as
- * Collections and «Вчу» say it: «фразеологізм · сьогодні».
+ * Favorites, Collections and «Вчу» say it: «фразеологізм · сьогодні».
  */
 export function entryLabelBeside(
   strings: Pick<EditionStrings['history'], 'kinds' | 'kindBeside'>,
@@ -23,21 +23,6 @@ export function entryLabelBeside(
   time: string,
 ): string {
   return fill(strings.kindBeside, { kind: entryLabel(strings.kinds, row), time });
-}
-
-/**
- * The text on the right of a Favorites row: when the Entry went in, after the
- * label of a Synonym Row or a Tip, whose title would read as a Word's or a
- * Correction's without it (spec #730): «синоніми · сьогодні».
- */
-export function favoriteTrailing(
-  strings: Pick<EditionStrings['history'], 'kinds' | 'kindBeside'>,
-  row: Pick<EntryRowModel, 'kind' | 'labelKey'>,
-  added: string,
-): string {
-  return row.kind === 'synonymRow' || row.kind === 'tip'
-    ? entryLabelBeside(strings, row, added)
-    : added;
 }
 
 /**

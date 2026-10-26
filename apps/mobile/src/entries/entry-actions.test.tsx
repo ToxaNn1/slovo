@@ -12,7 +12,7 @@ import {
 } from '@slovo/core';
 import { createMemoryContentPort } from '@slovo/core/testing';
 import { EditionProvider, EntryCard, HapticsProvider, UndoToastProvider } from '@slovo/ui';
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, within } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import config from 'slovo-edition/config';
 
@@ -31,6 +31,14 @@ jest.mock('../composition', () => ({
   useCompositionRead: () => undefined,
 }));
 jest.mock('../edition/remote-switches', () => ({ useEditionInEffect: () => mockEdition }));
+// The buttons of the action row as the Edition ships them, without the settings and the Mix.
+jest.mock('../shown-in-effect', () => ({
+  useShown: () => ({ entryButtons: { shareCard: true, pronunciation: true, knowledge: true } }),
+}));
+// A binary that can capture the Share Card.
+jest.mock('../share/device-share', () => ({
+  shareCardOnDevice: () => Promise.resolve('closed'),
+}));
 
 const row: SynonymRow = {
   kind: 'synonymRow',
@@ -110,9 +118,28 @@ async function renderCard(entryId: string): Promise<AnyEntryCard> {
 }
 
 describe.each([
-  ['a Synonym Row', 'r_walk', 'іти́'],
-  ['a Tip', 't_hour', 'Котра година?'],
-])('the action row of %s', (_, entryId, title) => {
+  [
+    'a Synonym Row',
+    'r_walk',
+    'іти́',
+    'іти, синонімічний ряд: простувати, чимчикувати, шкандибати, дибати, чалапати. Рухатися пішки.',
+  ],
+  [
+    'a Tip',
+    't_hour',
+    'Котра година?',
+    'Порада: Котра година? Так часто кажуть: Скільки часу? Українською краще: Котра година?',
+  ],
+])('the action row of %s', (_, entryId, title, shareCardName) => {
+  it('shares it from its own Share Card', async () => {
+    await renderCard(entryId);
+
+    await fireEvent.press(screen.getByTestId('share-button'));
+
+    const preview = within(screen.getByTestId('share-preview')).getByTestId('share-card');
+    expect(preview).toHaveAccessibleName(shareCardName);
+  });
+
   it('keeps it in Favorites, where its row leads with its title', async () => {
     await renderCard(entryId);
 

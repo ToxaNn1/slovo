@@ -1,5 +1,14 @@
 import type { EditionStrings } from '@slovo/contracts';
-import type { EntryFeedCard, IdiomCardModel, IdiomFeedCard } from '@slovo/core';
+import type {
+  AnyEntryCard,
+  EntryFeedCard,
+  IdiomCardModel,
+  IdiomFeedCard,
+  SynonymRowCardModel,
+  SynonymRowFeedCard,
+  TipCardModel,
+  TipFeedCard,
+} from '@slovo/core';
 import { EditionProvider, ShareSheet, type ShareSheetOutcome } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen, within } from '@testing-library/react-native';
@@ -24,6 +33,8 @@ const strings = {
   },
   correctionCard: { correctionTypes: { calque: 'calque' } },
   idiomCard: { idiomTypes: { idiom: 'idiom', placeName: 'place name' }, etymology: 'Origin' },
+  synonymRowCard: { chip: 'synonyms', heading: '{dominant}, synonym row: {members}' },
+  tipCard: { chip: 'tip', heading: 'Tip: {title}' },
 } as unknown as EditionStrings;
 
 const card: EntryFeedCard = {
@@ -50,7 +61,7 @@ const card: EntryFeedCard = {
 /** How long the toast stays, from the design. */
 const TOAST_MS = 4000;
 
-async function renderSheet(outcome: ShareSheetOutcome, shown: EntryFeedCard = card) {
+async function renderSheet(outcome: ShareSheetOutcome, shown: AnyEntryCard = card) {
   const onClose = jest.fn();
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
@@ -159,5 +170,105 @@ describe('The Share Card of an Idiom', () => {
     expect(shown).toHaveAccessibleName(
       'place name. Kyiv. The capital on the Dnipro. Origin: Named after Kyi',
     );
+  });
+});
+
+function synonymRowCard(members: readonly string[]): SynonymRowFeedCard {
+  const model: SynonymRowCardModel = {
+    kind: 'synonymRow',
+    synonymRowId: 'r1',
+    dominant: { text: 'wa\u0301lk', stressedVowels: ['a'], wordId: undefined },
+    meaning: 'To move on foot.',
+    members: members.map((text) => ({
+      text,
+      stressedVowels: [],
+      wordId: undefined,
+      shadeNote: 'a shade',
+    })),
+    example: { text: 'They walked to the river.' },
+    sourceTitles: ['A synonym dictionary'],
+  };
+  return { kind: 'synonymRow', entryId: model.synonymRowId, model };
+}
+
+describe('The Share Card of a Synonym Row', () => {
+  it('shows its chip, the dominant, the meaning and the members', async () => {
+    await renderSheet('closed', synonymRowCard(['stro\u0301ll', 'limp', 'tramp']));
+
+    const shown = previewCard();
+    expect(within(shown).getByText('synonyms')).toBeOnTheScreen();
+    expect(within(shown).getByText('wa\u0301lk')).toBeOnTheScreen();
+    expect(within(shown).getByText('To move on foot.')).toBeOnTheScreen();
+    expect(within(shown).getByText('stro\u0301ll, limp, tramp')).toBeOnTheScreen();
+    expect(within(shown).queryByText('a shade')).not.toBeOnTheScreen();
+    expect(within(shown).queryByText('They walked to the river.')).not.toBeOnTheScreen();
+    expect(shown).toHaveAccessibleName('walk, synonym row: stroll, limp, tramp. To move on foot.');
+  });
+
+  it('ends a long row in «…» after its first 6 members', async () => {
+    await renderSheet(
+      'closed',
+      synonymRowCard(['stroll', 'limp', 'tramp', 'pace', 'trudge', 'march', 'hike']),
+    );
+
+    const shown = previewCard();
+    expect(within(shown).getByText('stroll, limp, tramp, pace, trudge, march…')).toBeOnTheScreen();
+    expect(within(shown).queryByText(/hike/)).not.toBeOnTheScreen();
+    expect(shown).toHaveAccessibleName(
+      'walk, synonym row: stroll, limp, tramp, pace, trudge, march… To move on foot.',
+    );
+  });
+});
+
+function tipCard(overrides: Partial<TipCardModel> = {}): TipFeedCard {
+  const model: TipCardModel = {
+    kind: 'tip',
+    tipId: 't1',
+    title: 'Asking the time',
+    nonStandardForm: 'How much time?',
+    standardForm: 'What time is it?',
+    explanation: 'Why the hour is asked so.',
+    example: { text: 'What time is it, please?' },
+    sourceTitles: ['A style guide'],
+    ...overrides,
+  };
+  return { kind: 'tip', entryId: model.tipId, model };
+}
+
+describe('The Share Card of a Tip', () => {
+  it('shows its chip, the title, the non-standard form and the standard form', async () => {
+    await renderSheet('closed', tipCard());
+
+    const shown = previewCard();
+    expect(within(shown).getByText('tip')).toBeOnTheScreen();
+    expect(within(shown).getByText('Asking the time')).toBeOnTheScreen();
+    expect(within(shown).getByText('Often said')).toBeOnTheScreen();
+    expect(within(shown).getByText('How much time?')).toBeOnTheScreen();
+    expect(within(shown).getByText('Better')).toBeOnTheScreen();
+    expect(within(shown).getByText('What time is it?')).toBeOnTheScreen();
+    expect(within(shown).queryByText('Why the hour is asked so.')).not.toBeOnTheScreen();
+    expect(within(shown).queryByText('What time is it, please?')).not.toBeOnTheScreen();
+    expect(shown).toHaveAccessibleName(
+      'Tip: Asking the time. Often said: How much time? Better: What time is it?',
+    );
+  });
+
+  it('shows only the standard form of a Tip with no non-standard form', async () => {
+    await renderSheet(
+      'closed',
+      tipCard({
+        tipId: 't2',
+        title: 'Greeting',
+        nonStandardForm: undefined,
+        standardForm: 'Good day!',
+      }),
+    );
+
+    const shown = previewCard();
+    expect(within(shown).getByText('Greeting')).toBeOnTheScreen();
+    expect(within(shown).queryByText('Often said')).not.toBeOnTheScreen();
+    expect(within(shown).getByText('Better')).toBeOnTheScreen();
+    expect(within(shown).getByText('Good day!')).toBeOnTheScreen();
+    expect(shown).toHaveAccessibleName('Tip: Greeting. Better: Good day!');
   });
 });

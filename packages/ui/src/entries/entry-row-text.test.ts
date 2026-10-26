@@ -1,6 +1,6 @@
 import type { EditionStrings } from '@slovo/contracts';
 import type { EntryRowModel } from '@slovo/core';
-import { entryLabel, entryRowSubtitle, favoriteTrailing } from '@slovo/ui/entry-row-text';
+import { entryLabel, entryLabelBeside, entryRowSubtitle } from '@slovo/ui/entry-row-text';
 import { describe, expect, it } from 'vitest';
 
 const kinds: EditionStrings['history']['kinds'] = {
@@ -82,13 +82,14 @@ describe('the words of an Entry row', () => {
     expect(entryRowSubtitle(correctionCard, tip)).toBe('What time is it now?');
   });
 
-  it('puts the label of a Synonym Row or a Tip beside when it went into Favorites, and only the time for the other kinds', () => {
+  it('puts the label of every kind beside a time, as Favorites and Collections say it', () => {
     const strings = { kinds, kindBeside: '{kind} · {time}' };
 
-    expect(favoriteTrailing(strings, synonymRow, 'today')).toBe('synonyms · today');
-    expect(favoriteTrailing(strings, tip, 'today')).toBe('tip · today');
-    expect(favoriteTrailing(strings, word, 'today')).toBe('today');
-    expect(favoriteTrailing(strings, correction, 'today')).toBe('today');
-    expect(favoriteTrailing(strings, idiom('idiom'), 'today')).toBe('today');
+    expect(entryLabelBeside(strings, word, 'today')).toBe('word · today');
+    expect(entryLabelBeside(strings, correction, 'today')).toBe('correction · today');
+    expect(entryLabelBeside(strings, idiom('idiom'), 'today')).toBe('idiom · today');
+    expect(entryLabelBeside(strings, idiom('placeName'), 'today')).toBe('place name · today');
+    expect(entryLabelBeside(strings, synonymRow, 'today')).toBe('synonyms · today');
+    expect(entryLabelBeside(strings, tip, 'today')).toBe('tip · today');
   });
 });
