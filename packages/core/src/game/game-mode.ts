@@ -42,6 +42,13 @@ export interface TextRange {
   readonly end: number;
 }
 
+/** A character of a chips answer that stays in place and is no chip, such as an apostrophe. */
+export interface FixedChip {
+  /** How many chips the answer has before it. */
+  readonly at: number;
+  readonly text: string;
+}
+
 /** A Word of a pairs grid with its Definition: one Round of the grid. */
 export interface GridPair {
   /** The Entry the pair asks about, marked Unknown on a wrong match. */
@@ -89,6 +96,8 @@ export type RoundForm =
       readonly chips: readonly string[];
       /** The chips in the right order; equal chips are interchangeable. */
       readonly expected: readonly string[];
+      /** The characters of the answer that stay in place among the chips; none when left out. */
+      readonly fixed?: readonly FixedChip[];
       readonly sheet: AnswerSheet;
     }
   | {

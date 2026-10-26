@@ -73,6 +73,7 @@ export {
 export {
   ROUND_OPTIONS,
   type AnswerSheet,
+  type FixedChip,
   type GameEdition,
   type GameMode,
   type GameModeRefusal,

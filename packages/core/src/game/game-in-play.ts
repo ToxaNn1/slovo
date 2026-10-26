@@ -1,5 +1,5 @@
 import type { AskableEntry, AskableKind, EligibleOfKind } from '../entries/entries';
-import type { AnswerSheet, GameMode, RoundOption, TextRange } from './game-mode';
+import type { AnswerSheet, FixedChip, GameMode, RoundOption, TextRange } from './game-mode';
 import { entriesIn, roundsIn } from './game-mode';
 import { GAME_ROUNDS, roundLimitOf, type PlannedRound, type RoundPlanner } from './round-plan';
 import { typedAnswerMatches } from './typed-answer';
@@ -100,7 +100,12 @@ export type Round = {
       readonly words: readonly GridCell<RoundOption>[];
       readonly definitions: readonly GridCell<string>[];
     }
-  | { readonly form: 'chips'; readonly chips: readonly string[] }
+  | {
+      readonly form: 'chips';
+      readonly chips: readonly string[];
+      /** The characters of the answer that stay in place among the chips. */
+      readonly fixed: readonly FixedChip[];
+    }
   | {
       readonly form: 'typed';
       /**
@@ -240,7 +245,7 @@ function roundOf(
       };
     }
     case 'chips':
-      return { ...base, form: 'chips', chips: content.chips };
+      return { ...base, form: 'chips', chips: content.chips, fixed: content.fixed ?? [] };
     case 'typed': {
       const inPlace = content.blanks?.inPlace;
       const blanks =
