@@ -26,13 +26,11 @@ export type ShownKind = ShownEntry['kind'];
 const isShown = (entry: Entry): entry is ShownEntry =>
   entry.kind !== 'synonymRow' && entry.kind !== 'tip';
 
-/** An Entry of a kind the Game may ask about: one the screens show, or a Synonym Row (spec #730). */
-export type AskableEntry = ShownEntry | SynonymRow;
+/** An Entry of a kind the Game may ask about: one the screens show, a Synonym Row or a Tip (spec #730). */
+export type AskableEntry = ShownEntry | SynonymRow | Tip;
 
 /** The kind of an Entry the Game may ask about. */
 export type AskableKind = AskableEntry['kind'];
-
-const isAskable = (entry: Entry): entry is AskableEntry => entry.kind !== 'tip';
 
 /** The ids of Entries, each kind in its own list. */
 export interface EntryIds {
@@ -83,7 +81,7 @@ export interface Entries {
    * Entries themselves, which are read from the Language Pack once: it never
    * changes while it is open. With `alsoOf`, the eligible Entries of those
    * kinds follow, none of a kind out of the Mix, and only `kind` can refuse;
-   * they may be Synonym Rows, which the Game asks about.
+   * they may be Synonym Rows or Tips, which the Game asks about.
    */
   eligibleOfKind<Also extends AskableKind = never>(
     kind: ShownKind,
@@ -202,6 +200,7 @@ export function createEntries(
     correction: async () => content.getEntries(await listIds.correction()),
     idiom: async () => content.getEntries(await listIds.idiom()),
     synonymRow: async () => content.getEntries(await listIds.synonymRow()),
+    tip: async () => content.getEntries(await listIds.tip()),
   };
 
   /** The Entries of the ids the screens show, read together. */
@@ -213,15 +212,13 @@ export function createEntries(
    * changes while it is open. A read that fails is tried again on the next call.
    */
   const byId = (kind: AskableKind) =>
-    readOnce(
-      async () =>
-        new Map((await readLive[kind]()).filter(isAskable).map((entry) => [entry.id, entry])),
-    );
+    readOnce(async () => new Map((await readLive[kind]()).map((entry) => [entry.id, entry])));
   const live: Record<AskableKind, () => Promise<ReadonlyMap<string, AskableEntry>>> = {
     word: byId('word'),
     correction: byId('correction'),
     idiom: byId('idiom'),
     synonymRow: byId('synonymRow'),
+    tip: byId('tip'),
   };
 
   /**
@@ -296,6 +293,7 @@ export function createEntries(
     correction: ({ corrections }) => corrections,
     idiom: ({ idioms }) => idioms,
     synonymRow: ({ synonymRows }) => synonymRows,
+    tip: ({ tips }) => tips,
   };
 
   async function eligibleOfKind(
