@@ -2541,6 +2541,88 @@ describe('the answer forms of a Round', () => {
     expect(current(app).played).toHaveLength(8);
   });
 
+  /** The reader's answer each Game Review row shows, in the order played: nothing on a right answer. */
+  const answersReviewed = (app: Composition) =>
+    buildGameReview(current(app).played).map(({ picked }) => picked);
+
+  it('lists a vowel Round in the Game Review with the stressed form, and the vowel tapped on a mistake', async () => {
+    const app = await startIn(vowelMode);
+    await app.game.answer({ form: 'vowel', position: 2 });
+    await app.game.next();
+    await app.game.answer({ form: 'vowel', position: 0 });
+    const [tapped, ...rest] = Array.from(current(app).round.prompt);
+
+    const items = buildGameReview(current(app).played);
+
+    expect(items.map(({ title }) => title.text)).toEqual(
+      current(app).played.map(({ prompt }) => prompt),
+    );
+    expect(items.map(({ right }) => right)).toEqual([true, false]);
+    expect(answersReviewed(app)).toEqual([
+      undefined,
+      { text: `${tapped ?? ''}́${rest.join('')}`, stressedVowels: [tapped] },
+    ]);
+  });
+
+  it('lists a chips Round in the Game Review with the chips the reader tapped, in order, on a mistake', async () => {
+    const app = await startIn(chipsMode);
+    await app.game.answer({ form: 'chips', chips: [1, 2, 0] });
+    await app.game.next();
+    await app.game.answer({ form: 'chips', chips: [1, 0, 2] });
+    await app.game.next();
+    await app.game.answer({ form: 'chips', chips: [1, 2] });
+
+    expect(answersReviewed(app)).toEqual([undefined, option('acb'), option('ab')]);
+  });
+
+  it('joins word chips with a space in the Game Review, as «Склади вислів» has them', async () => {
+    const wordsMode = modeOf('test-words', ({ lemma }) => ({
+      form: 'chips',
+      prompt: lemma,
+      chips: ['beans', 'spill', 'the'],
+      expected: ['spill', 'the', 'beans'],
+      sheet: sheetOf('spill the beans'),
+    }));
+    const app = await startIn(wordsMode);
+    await app.game.answer({ form: 'chips', chips: [2, 1] });
+
+    expect(answersReviewed(app)).toEqual([option('the spill')]);
+  });
+
+  it("lists a typed Round in the Game Review with the reader's text on a mistake", async () => {
+    const app = await startIn(typedMode);
+    await app.game.answer({ form: 'typed', text: current(app).round.prompt });
+    await app.game.next();
+    await app.game.answer({ form: 'typed', text: ' something else ' });
+
+    expect(buildGameReview(current(app).played).map(({ right }) => right)).toEqual([true, false]);
+    expect(answersReviewed(app)).toEqual([undefined, option('something else')]);
+  });
+
+  it('lists each pair of a pairs grid as one Game Review row, with the Definition matched on a mistake', async () => {
+    const app = await startIn(pairsMode);
+    const grid = current(app).round;
+    if (grid.form !== 'pairs') throw new Error('Not a pairs grid');
+    const words = grid.words.map(({ shown }) => shown);
+    const definitions = grid.definitions.map(({ shown }) => shown);
+    await app.game.answer({ form: 'pairs', word: 0, definition: 3 });
+    await app.game.next();
+    await app.game.answer({ form: 'pairs', word: 1, definition: 2 });
+    await app.game.next();
+    await app.game.answer({ form: 'pairs', word: 2, definition: 0 });
+
+    const items = buildGameReview(current(app).played);
+
+    expect(items.map(({ number, entryId, right }) => ({ number, entryId, right }))).toEqual(
+      words.slice(0, 3).map(({ text }, place) => ({
+        number: place + 1,
+        entryId: `w_${text}`,
+        right: place !== 2,
+      })),
+    );
+    expect(answersReviewed(app)).toEqual([undefined, undefined, option(definitions[0] ?? '')]);
+  });
+
   it('takes no answer of another form than the Round has', async () => {
     const app = await startIn(typedMode);
 
