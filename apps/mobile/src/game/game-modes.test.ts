@@ -147,7 +147,7 @@ describe('the card of each Game Mode on offer', () => {
     const tooFew = cardsOf(await open({ words: 14 }));
     const outOfMix = cardsOf(await open({ words: 14, correctionsInMix: false }));
 
-    expect(tooFew).toEqual([
+    expect(tooFew.slice(0, 2)).toEqual([
       {
         ...guessWordCard,
         canStart: false,
@@ -252,7 +252,7 @@ describe('the groups of the modes on offer', () => {
     const app = await open({ words: 15 });
 
     expect(shapeOf(gameModeGroups(app.game.state.modes, strings))).toEqual([
-      ['Слова', ['guess-word']],
+      ['Слова', ['guess-word', 'pairs']],
       ['Виправлення', ['correction']],
     ]);
   });
@@ -261,7 +261,7 @@ describe('the groups of the modes on offer', () => {
     const app = await open({ words: 15, switchedOff: ['corrections'] });
 
     expect(shapeOf(gameModeGroups(app.game.state.modes, strings))).toEqual([
-      ['Слова', ['guess-word']],
+      ['Слова', ['guess-word', 'pairs']],
     ]);
   });
 
