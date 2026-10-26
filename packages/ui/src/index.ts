@@ -30,6 +30,7 @@ export { GameModeCard } from './game/GameModeCard';
 export { GameResult } from './game/GameResult';
 export { GameReview } from './game/GameReview';
 export { GameRound } from './game/GameRound';
+export { TypedAnswer, type TypedAnswerBlank } from './game/TypedAnswer';
 export { HapticsProvider } from './providers/HapticsProvider';
 export { HideButton } from './mix/HideButton';
 export { KnowledgeButtons } from './knowledge/KnowledgeButtons';
