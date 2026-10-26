@@ -36,6 +36,8 @@ let content: ContentReadPort;
 let liveIds: readonly string[];
 let liveCorrectionIds: readonly string[];
 let liveIdiomIds: readonly string[];
+let liveSynonymRowIds: readonly string[];
+let liveTipIds: readonly string[];
 
 /**
  * Remembers every Word and Correction by id. The pack never changes while it
@@ -65,11 +67,11 @@ function remembering(port: ContentReadPort): ContentReadPort {
   };
 }
 
-/** The Ukrainian Edition with Corrections and Idioms turned off, so a test counts Words only. */
+/** The Ukrainian Edition with every other kind of Entry turned off, so a test counts Words only. */
+const otherKinds = new Set(['corrections', 'idioms', 'synonymRows', 'tips']);
 const wordsOnly: Edition = {
   ...ukrainian,
-  isFeatureEnabled: (feature) =>
-    feature !== 'corrections' && feature !== 'idioms' && ukrainian.isFeatureEnabled(feature),
+  isFeatureEnabled: (feature) => !otherKinds.has(feature) && ukrainian.isFeatureEnabled(feature),
 };
 
 beforeAll(async () => {
@@ -82,6 +84,8 @@ beforeAll(async () => {
   liveIds = await pack.listWordIds();
   liveCorrectionIds = await pack.listCorrectionIds();
   liveIdiomIds = await pack.listIdiomIds();
+  liveSynonymRowIds = await pack.listSynonymRowIds();
+  liveTipIds = await pack.listTipIds();
 });
 
 afterAll(() => {
@@ -313,17 +317,22 @@ describe('Idioms in the Feed over the Ukrainian Language Pack', () => {
   });
 
   it(
-    'opens on a Word and offers each live Word, Correction and Idiom once',
+    'opens on a Word and offers each live Entry of every kind once',
     { timeout: WALK_TIMEOUT_MS },
     async () => {
       const feed = await run(new Map(), fakeClock(today).clock, 7, ukrainian);
       const offered = await walk(feed);
 
       expect(feed.cards[0]?.kind).toBe('word');
-      expect(offered).toHaveLength(liveIds.length + liveCorrectionIds.length + liveIdiomIds.length);
-      expect(new Set(offered)).toEqual(
-        new Set([...liveIds, ...liveCorrectionIds, ...liveIdiomIds]),
-      );
+      const live = [
+        ...liveIds,
+        ...liveCorrectionIds,
+        ...liveIdiomIds,
+        ...liveSynonymRowIds,
+        ...liveTipIds,
+      ];
+      expect(offered).toHaveLength(live.length);
+      expect(new Set(offered)).toEqual(new Set(live));
     },
   );
 
