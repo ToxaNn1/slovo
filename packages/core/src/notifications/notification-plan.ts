@@ -25,6 +25,7 @@ import {
   type StoredPlan,
 } from '../feed/reserved-words';
 import { renderStress } from '../entries/stress';
+import { notificationBody } from './notification-text';
 import type { UserState } from '../user-state/user-state';
 import type { WordOfTheDay } from '../feed/word-of-the-day';
 
@@ -33,9 +34,6 @@ const MAX_PLANNED_NOTIFICATIONS = 64;
 
 /** How many local days of Notification times the plan reaches, from the next time ahead. */
 const PLAN_DAYS = 14;
-
-/** The most characters a notification body holds, its ellipsis included. */
-export const NOTIFICATION_BODY_LENGTH = 80;
 
 /**
  * What the plan needs from the shell: the device's notification scheduler,
@@ -103,31 +101,6 @@ function slotsAhead(times: readonly TimeOfDay[], clock: Clock): Slot[] {
 function isMorningOf(earliest: TimeOfDay, clock: Clock): (slot: Slot) => boolean {
   const today = dayNumber(todayDate(clock));
   return ({ date, time }) => dayNumber(date) === today && compareTimesOfDay(time, earliest) === 0;
-}
-
-/**
- * The spaces, dashes and punctuation at the end of a text that only end a
- * clause, by Unicode class so they count in every script: a comma, a full
- * stop, a colon, an Arabic comma, a danda. Marks that say something stay:
- * question and exclamation marks, quotation marks, brackets, apostrophes and
- * signs such as `%`.
- */
-const CLAUSE_END = /(?:\s|\p{Pd}|(?![!?¡¿؟‽%'"*/\\&#@])\p{Po})+$/u;
-
-/**
- * The body of a notification: the text, or when it is longer than
- * `NOTIFICATION_BODY_LENGTH`, its start cut at a word boundary, without the
- * punctuation that ends a clause before the cut, and the ellipsis.
- */
-function notificationBody(text: string, ellipsis: string): string {
-  const characters = Array.from(text);
-  if (characters.length <= NOTIFICATION_BODY_LENGTH) return text;
-  const room = NOTIFICATION_BODY_LENGTH - Array.from(ellipsis).length;
-  // One character more than fits, so a space right after the cut counts as a boundary.
-  const head = characters.slice(0, room + 1).join('');
-  const boundary = head.search(/\s\S*$/u);
-  const cut = boundary > 0 ? head.slice(0, boundary) : characters.slice(0, room).join('');
-  return `${cut.replace(CLAUSE_END, '')}${ellipsis}`;
 }
 
 /** The plan of the Notification times on the device's scheduler, for the Notifications module. */
