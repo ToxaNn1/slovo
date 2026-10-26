@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Correction, Idiom, Word } from '@slovo/contracts';
+import type { Correction, Idiom, SynonymRow, Tip, Word } from '@slovo/contracts';
 
 import {
   buildEntryCard,
@@ -20,6 +20,8 @@ import {
   type FeedCard,
   IDIOM_EVERY,
   type Random,
+  SYNONYM_ROW_EVERY,
+  TIP_EVERY,
   type UserStatePort,
   type WordFeedCard,
 } from '../index';
@@ -48,16 +50,22 @@ const pack = [
 ];
 
 /**
- * An Edition with the Corrections and Idioms Feature Switches on or off, whose
- * one Category, the test Words' own, is in its default Mix.
+ * An Edition with the Corrections, Idioms, Synonym Rows and Tips Feature
+ * Switches on or off, whose one Category, the test Words' own, is in its
+ * default Mix.
  */
 const editionWith = (
   corrections: boolean,
   idioms = true,
+  synonymRows = true,
+  tips = true,
 ): Pick<Edition, 'id' | 'isFeatureEnabled'> & MixEdition & NotificationsEdition & GameEdition => ({
   id: 'test',
   isFeatureEnabled: (feature) =>
-    (feature === 'corrections' && corrections) || (feature === 'idioms' && idioms),
+    (feature === 'corrections' && corrections) ||
+    (feature === 'idioms' && idioms) ||
+    (feature === 'synonymRows' && synonymRows) ||
+    (feature === 'tips' && tips),
   languageTraits: { distractorRule: 'same-part-of-speech' },
   userSettingDefaults: {
     mix: {
@@ -98,9 +106,13 @@ async function runApp({
   words = pack,
   corrections = [],
   idioms = [],
-  content = createMemoryContentPort({ words, corrections, idioms }),
+  synonymRows = [],
+  tips = [],
+  content = createMemoryContentPort({ words, corrections, idioms, synonymRows, tips }),
   correctionsSwitch = true,
   idiomsSwitch = true,
+  synonymRowsSwitch = true,
+  tipsSwitch = true,
 }: {
   records?: Map<string, string>;
   port?: UserStatePort;
@@ -109,13 +121,17 @@ async function runApp({
   words?: readonly Word[];
   corrections?: readonly Correction[];
   idioms?: readonly Idiom[];
+  synonymRows?: readonly SynonymRow[];
+  tips?: readonly Tip[];
   content?: ContentReadPort;
   correctionsSwitch?: boolean;
   idiomsSwitch?: boolean;
+  synonymRowsSwitch?: boolean;
+  tipsSwitch?: boolean;
 } = {}): Promise<Composition> {
   return openComposition({
     content,
-    edition: editionWith(correctionsSwitch, idiomsSwitch),
+    edition: editionWith(correctionsSwitch, idiomsSwitch, synonymRowsSwitch, tipsSwitch),
     userState: await openUserState({ port }),
     clock,
     random,
@@ -1435,5 +1451,256 @@ describe('Idioms in the Feed', () => {
 
     expect(reopened.cards[reopened.startPosition]?.kind).toBe('idiom');
     expect(reopened.cards[reopened.startPosition]?.entryId).toBe(idiomId);
+  });
+});
+
+describe('Synonym Rows and Tips in the Feed', () => {
+  /** A live Synonym Row of two plain members. */
+  const synonymRow = (id: string, overrides: Partial<SynonymRow> = {}): SynonymRow => ({
+    kind: 'synonymRow',
+    id,
+    dominant: { text: 'іти', stress: [2] },
+    meaning: 'Рухатися пішки.',
+    members: [
+      { text: 'простувати', stress: [6] },
+      { text: 'чимчикувати', stress: [6] },
+    ],
+    sources: [{ title: 'Test source' }],
+    retired: false,
+    ...overrides,
+  });
+  /** A live Tip with a non-standard form. */
+  const tip = (id: string, overrides: Partial<Tip> = {}): Tip => ({
+    kind: 'tip',
+    id,
+    title: 'Котра година?',
+    nonStandardForm: 'Скільки час?',
+    standardForm: 'Котра година?',
+    explanation: 'Про час питають «котра година».',
+    sources: [{ title: 'Test source' }],
+    gameQuestion: {
+      prompt: 'Як запитати про час?',
+      rightAnswer: 'Котра година?',
+      wrongAnswers: ['Скільки час?', 'Скільки годин?', 'Який час?'],
+    },
+    retired: false,
+    ...overrides,
+  });
+
+  const many = <Entry>(count: number, prefix: string, make: (id: string) => Entry) =>
+    Array.from({ length: count }, (_, index) => make(`${prefix}${String(index)}`));
+  const manyWords = many(120, 'w_many', (id) => word(id));
+  const manyRows = many(14, 'r_many', (id) => synonymRow(id));
+  const manyTips = many(12, 't_many', (id) => tip(id));
+  const liveRows = [synonymRow('r_live0'), synonymRow('r_live1')];
+  const liveTips = [tip('t_live0'), tip('t_live1')];
+  const rows = [...liveRows, synonymRow('r_retired', { retired: true })];
+  const tips = [...liveTips, tip('t_retired', { retired: true })];
+
+  /** 'W' for a Word card, 'C', 'I', 'R' and 'T' for a Correction, an Idiom, a Synonym Row and a Tip card. */
+  const kindsOf = (ids: readonly string[]) =>
+    ids.map((id) => ({ c: 'C', i: 'I', r: 'R', t: 'T' })[id[0] ?? ''] ?? 'W').join('');
+
+  /**
+   * The kinds of the cards 1 to `length` when each turn comes every so many
+   * cards from the first card, before any two turns fall on one card.
+   */
+  const everyNth = (length: number, turns: readonly (readonly [string, number])[]) =>
+    Array.from({ length }, (_, index) => {
+      const card = index + 1;
+      return turns.find(([, every]) => card % every === 0)?.[0] ?? 'W';
+    }).join('');
+
+  /** Shows the card at `position` for `ms`, as the UI reports it. */
+  async function look(
+    feed: Feed,
+    time: ReturnType<typeof fakeClock>,
+    position: number,
+    ms: number,
+  ) {
+    await feed.show(position);
+    time.advance(ms);
+    await feed.show(undefined);
+  }
+
+  it(`gives a Synonym Row every ${String(SYNONYM_ROW_EVERY)}th card and a Tip every ${String(TIP_EVERY)}th over a long Feed, each counted from its kind's last card`, async () => {
+    const ids = await walk(await run({ words: manyWords, synonymRows: manyRows, tips: manyTips }));
+
+    const collision = SYNONYM_ROW_EVERY * TIP_EVERY;
+    // Card 99 is both turns: the row takes it, the Tip card 100, and the next
+    // Tip card 111, not 110, while the next row is card 108.
+    const expected =
+      everyNth(collision, [
+        ['R', SYNONYM_ROW_EVERY],
+        ['T', TIP_EVERY],
+      ]) + 'TWWWWWWWRWWT';
+    expect(kindsOf(ids.slice(0, expected.length))).toBe(expected);
+  });
+
+  it.each([
+    ['C', 'R', CORRECTION_EVERY, SYNONYM_ROW_EVERY],
+    ['I', 'R', IDIOM_EVERY, SYNONYM_ROW_EVERY],
+    ['C', 'T', CORRECTION_EVERY, TIP_EVERY],
+    ['I', 'T', IDIOM_EVERY, TIP_EVERY],
+    ['R', 'T', SYNONYM_ROW_EVERY, TIP_EVERY],
+  ] as const)(
+    'gives the card the turns of %s and %s fall on to the first, and the next card to the second',
+    async (first, second, firstEvery, secondEvery) => {
+      const collision = firstEvery * secondEvery;
+      const ofKind = {
+        C: { corrections: many(12, 'c_many', (id) => correction(id)) },
+        I: { idioms: many(12, 'i_many', (id) => idiom(id)) },
+        R: { synonymRows: manyRows },
+        T: { tips: manyTips },
+      };
+
+      const ids = await walk(await run({ words: manyWords, ...ofKind[first], ...ofKind[second] }));
+
+      const expected =
+        everyNth(collision, [
+          [first, firstEvery],
+          [second, secondEvery],
+        ]) + second;
+      expect(kindsOf(ids.slice(0, collision + 1))).toBe(expected);
+    },
+  );
+
+  it('gives the card the turns of a Correction, an Idiom and a Synonym Row fall on to the Correction, then the Idiom, then the row', async () => {
+    // The Correction's turn comes every fifth card, the Idiom's every seventh
+    // and the row's every ninth: card 35 is the Correction's and the Idiom's,
+    // so the Idiom takes card 36, which is the row's turn too; the row takes 37.
+    // Cards 28 to 38:
+    const ids = await walk(
+      await run({
+        words: manyWords,
+        corrections: many(12, 'c_many', (id) => correction(id)),
+        idioms: many(12, 'i_many', (id) => idiom(id)),
+        synonymRows: manyRows,
+      }),
+    );
+
+    expect(kindsOf(ids.slice(27, 38))).toBe('IWCWWWWCIRW');
+  });
+
+  it('ends the turns of a kind once each of its Entries of the Cycle was shown, and Words take their cards', async () => {
+    const ids = await walk(
+      await run({ words: manyWords, synonymRows: [synonymRow('r_only')], tips: [tip('t_only')] }),
+    );
+
+    expect(kindsOf(ids.slice(0, 30))).toBe(`WWWWWWWWRWT${'W'.repeat(19)}`);
+  });
+
+  it('offers every live Synonym Row and Tip once and never a Retired one, after the Words when the Words run out first', async () => {
+    const ids = await walk(await run({ synonymRows: rows, tips }));
+
+    expect(new Set(ids)).toEqual(
+      new Set([...liveIds, ...liveRows.map(({ id }) => id), ...liveTips.map(({ id }) => id)]),
+    );
+    expect(ids).toHaveLength(liveIds.length + liveRows.length + liveTips.length);
+    expect(kindsOf(ids)).toBe('WWWWWWWWRWTWRT');
+  });
+
+  it.each([
+    ['synonymRow', 'r_'],
+    ['tip', 't_'],
+  ] as const)(
+    'offers no %s when its kind is out of the Mix, and mixes them in again once it is back',
+    async (kind, prefix) => {
+      const app = await runApp({ synonymRows: rows, tips });
+      await app.mix.setKind(kind, false);
+
+      const without = await walk(app.feed);
+
+      expect(without.some((id) => id.startsWith(prefix))).toBe(false);
+
+      await app.mix.setKind(kind, true);
+      const after = await walk(app.feed);
+      expect(after.filter((id) => id.startsWith(prefix))).toHaveLength(2);
+    },
+  );
+
+  it('offers no Synonym Row or Tip when their Feature Switches are off', async () => {
+    const ids = await walk(
+      await run({ synonymRows: rows, tips, synonymRowsSwitch: false, tipsSwitch: false }),
+    );
+
+    expect(new Set(ids)).toEqual(new Set(liveIds));
+  });
+
+  it('gives a Synonym Row card the Synonym Row card model of its row, and a Tip card the Tip card model of its Tip', async () => {
+    const feed = await run({ words: manyWords, synonymRows: rows, tips });
+    while (feed.cards.length < TIP_EVERY) await feed.next();
+
+    const [rowCard, tipCard] = [feed.cards[SYNONYM_ROW_EVERY - 1], feed.cards[TIP_EVERY - 1]];
+
+    expect(rowCard?.entryId).toMatch(/^r_live/);
+    expect(rowCard).toMatchObject({
+      kind: 'synonymRow',
+      model: {
+        kind: 'synonymRow',
+        synonymRowId: rowCard?.entryId,
+        meaning: 'Рухатися пішки.',
+        sourceTitles: ['Test source'],
+      },
+    });
+    expect(tipCard?.entryId).toMatch(/^t_live/);
+    expect(tipCard).toMatchObject({
+      kind: 'tip',
+      model: { kind: 'tip', tipId: tipCard?.entryId, title: 'Котра година?' },
+    });
+  });
+
+  it('marks a Synonym Row and a Tip Seen after the dwell, never offering them again in the Cycle, and not after a quick swipe', async () => {
+    const records = new Map<string, string>();
+    const time = fakeClock('2026-10-11T09:00:00+03:00');
+    const options = { records, words: manyWords, synonymRows: rows, tips };
+    const feed = await run({ ...options, clock: time.clock });
+    while (feed.cards.length < SYNONYM_ROW_EVERY * 2) await feed.next();
+    const read = [SYNONYM_ROW_EVERY - 1, TIP_EVERY - 1];
+    const skipped = SYNONYM_ROW_EVERY * 2 - 1;
+    expect(kindsOf([...read, skipped].map((at) => feed.cards[at]?.entryId ?? ''))).toBe('RTR');
+
+    for (const at of read) await look(feed, time, at, SEEN_DWELL_MS);
+    await look(feed, time, skipped, SEEN_DWELL_MS - 1);
+
+    const nextDay = fakeClock('2026-10-12T09:00:00+03:00').clock;
+    const unseen = await walk(await run({ ...options, clock: nextDay }));
+    for (const at of read) expect(unseen).not.toContain(feed.cards[at]?.entryId);
+    expect(unseen).toContain(feed.cards[skipped]?.entryId);
+  });
+
+  it('ends the Cycle only once every live Synonym Row and Tip is Seen too', async () => {
+    const time = fakeClock('2026-10-11T09:00:00+03:00');
+    const feed = await run({
+      words: [word('w_one')],
+      synonymRows: [synonymRow('r_one')],
+      tips: [tip('t_one')],
+      clock: time.clock,
+    });
+
+    const offered = [];
+    for (let card = 0; card < 3; card++) {
+      const position = feed.cards.length - 1;
+      await look(feed, time, position, SEEN_DWELL_MS);
+      const next = feed.cards[position + 1];
+      offered.push(next?.kind === 'end-of-cycle' ? 'end' : next?.entryId);
+    }
+
+    expect(offered).toEqual(['r_one', 't_one', 'end']);
+  });
+
+  it('opens on the Synonym Row card the reader was on when the app reopens the same day', async () => {
+    const records = new Map<string, string>();
+    const time = fakeClock('2026-10-11T09:00:00+03:00');
+    const feed = await run({ records, synonymRows: rows, clock: time.clock });
+    while (feed.cards.length < SYNONYM_ROW_EVERY) await feed.next();
+    await feed.show(SYNONYM_ROW_EVERY - 1);
+
+    const reopened = await run({ records, synonymRows: rows, clock: time.clock });
+
+    expect(reopened.cards[reopened.startPosition]).toMatchObject({
+      kind: 'synonymRow',
+      entryId: feed.cards[SYNONYM_ROW_EVERY - 1]?.entryId,
+    });
   });
 });

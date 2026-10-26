@@ -1,4 +1,4 @@
-import type { Category, Correction, Entry, SynonymRow, Word } from '@slovo/contracts';
+import type { Category, Correction, Entry, SynonymRow, Tip, Word } from '@slovo/contracts';
 
 import type { Edition } from '../edition/edition';
 import {
@@ -95,6 +95,12 @@ export interface Entries {
    * stay reachable. A Synonym Row or a Tip reads as missing.
    */
   get(id: string): Promise<ShownEntry | undefined>;
+  /**
+   * A Synonym Row or a Tip by id, eligible or not, for the Feed, which gives
+   * them their turns before any other screen shows them (spec #730). An
+   * Entry of another kind reads as missing.
+   */
+  getSynonymRowOrTip(id: string): Promise<SynonymRow | Tip | undefined>;
   /**
    * Any Entries by id, as `get` gives each, read together in one read of the
    * Language Pack, whatever their kinds. An id the Language Pack doesn't have
@@ -314,6 +320,10 @@ export function createEntries(
     eligibleOfKind: eligibleOfKind as Entries['eligibleOfKind'],
     async get(id) {
       return (await readShown([id]))[0];
+    },
+    async getSynonymRowOrTip(id) {
+      const [entry] = await content.getEntries([id]);
+      return entry?.kind === 'synonymRow' || entry?.kind === 'tip' ? entry : undefined;
     },
     async getMany(ids) {
       const unique = [...new Set(ids)];

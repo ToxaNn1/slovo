@@ -46,12 +46,16 @@ export {
   IDIOM_EVERY,
   isTodaysWordOfTheDay,
   SEEN_DWELL_MS,
+  SYNONYM_ROW_EVERY,
+  TIP_EVERY,
   type Feed,
 } from './feed/feed';
 export {
   type EntryFeedCard,
   type FeedCard,
   type IdiomFeedCard,
+  type SynonymRowFeedCard,
+  type TipFeedCard,
   type WordFeedCard,
 } from './feed/feed-card';
 export { type GameModeOffer, type GameState } from './game/game';

@@ -2,6 +2,8 @@ import type { Knowledge } from '../knowledge/knowledge';
 import type { CorrectionCardModel } from '../entries/correction-card';
 import type { IdiomCardModel } from '../entries/idiom-card';
 import type { LocalDate } from '../local-date';
+import type { SynonymRowCardModel } from '../entries/synonym-row-card';
+import type { TipCardModel } from '../entries/tip-card';
 import type { WordCardModel } from '../entries/word-card';
 
 /** What every card of an Entry carries, whatever its kind. */
@@ -27,23 +29,33 @@ export type CorrectionFeedCard = EntryFeedCardOf<'correction', CorrectionCardMod
 /** The card of an Idiom. */
 export type IdiomFeedCard = EntryFeedCardOf<'idiom', IdiomCardModel>;
 
-/** The card of an Entry: a Word, a Correction or an Idiom. */
+/** The card of an Entry of a kind the screens show: a Word, a Correction or an Idiom. */
 export type EntryFeedCard = WordFeedCard | CorrectionFeedCard | IdiomFeedCard;
+
+/** The card of a Synonym Row. */
+export type SynonymRowFeedCard = EntryFeedCardOf<'synonymRow', SynonymRowCardModel>;
+
+/** The card of a Tip. */
+export type TipFeedCard = EntryFeedCardOf<'tip', TipCardModel>;
 
 /**
  * One card of the Feed: an Entry, or the end-of-Cycle card that tells the
  * reader every live Entry is Seen and the next card starts a new Cycle. The
  * end-of-Cycle card shows no Entry, so any card's `entryId` reads undefined
- * there.
+ * there. Only the Feed gives the cards of Synonym Rows and Tips, which no
+ * other screen shows yet (spec #730).
  */
 export type FeedCard =
-  EntryFeedCard | { readonly kind: 'end-of-cycle'; readonly entryId?: undefined };
+  | EntryFeedCard
+  | SynonymRowFeedCard
+  | TipFeedCard
+  | { readonly kind: 'end-of-cycle'; readonly entryId?: undefined };
 
 /**
  * The card as a Review, labelled «Повторення», while the Entry's card shows
  * one: wherever it is shown, the Feed and every Entry screen (ADR 0043).
  */
-export function asReviewIfDue<Card extends EntryFeedCard>(
+export function asReviewIfDue<Card extends EntryFeedCard | SynonymRowFeedCard | TipFeedCard>(
   card: Card,
   knowledge: Pick<Knowledge, 'state'>,
 ): Card {
