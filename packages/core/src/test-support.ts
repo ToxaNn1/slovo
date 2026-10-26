@@ -1,4 +1,4 @@
-import type { Correction, Idiom, Word } from '@slovo/contracts';
+import type { Correction, Idiom, SynonymRow, Tip, Word } from '@slovo/contracts';
 
 import type { KnownCounts } from './knowledge/knowledge';
 import type { Clock, ContentReadPort, Random } from './ports';
@@ -91,6 +91,36 @@ export function idiom(id: string, overrides: Partial<Idiom> = {}): Idiom {
     extraDefinitions: [],
     examples: [],
     sources: [{ title: 'Test source' }],
+    retired: false,
+    ...overrides,
+  };
+}
+
+/** A live Synonym Row of «walk», with nothing but what the Core reads. */
+export function synonymRow(id: string, overrides: Partial<SynonymRow> = {}): SynonymRow {
+  return {
+    kind: 'synonymRow',
+    id,
+    dominant: { text: 'walk', stress: [1] },
+    meaning: 'To move on foot.',
+    members: ['stroll', 'stride', 'trudge', 'amble', 'plod'].map((text) => ({ text, stress: [0] })),
+    sources: [{ title: 'Test source' }],
+    retired: false,
+    ...overrides,
+  };
+}
+
+/** A live Tip, with nothing but what the Core reads. */
+export function tip(id: string, overrides: Partial<Tip> = {}): Tip {
+  return {
+    kind: 'tip',
+    id,
+    title: 'What time is it?',
+    nonStandardForm: 'How much time?',
+    standardForm: 'What time is it?',
+    explanation: 'Time is asked, not counted.',
+    sources: [{ title: 'Test source' }],
+    gameQuestion: { prompt: 'How to ask?', rightAnswer: 'This', wrongAnswers: ['A', 'B', 'C'] },
     retired: false,
     ...overrides,
   };

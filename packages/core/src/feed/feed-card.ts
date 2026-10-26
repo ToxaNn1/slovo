@@ -39,22 +39,24 @@ export type SynonymRowFeedCard = EntryFeedCardOf<'synonymRow', SynonymRowCardMod
 export type TipFeedCard = EntryFeedCardOf<'tip', TipCardModel>;
 
 /**
+ * The card of an Entry of any kind: those the screens show, a Synonym Row's
+ * and a Tip's, which the Feed and the Entry screen a list opens show (spec #730).
+ */
+export type AnyEntryCard = EntryFeedCard | SynonymRowFeedCard | TipFeedCard;
+
+/**
  * One card of the Feed: an Entry, or the end-of-Cycle card that tells the
  * reader every live Entry is Seen and the next card starts a new Cycle. The
  * end-of-Cycle card shows no Entry, so any card's `entryId` reads undefined
  * there.
  */
-export type FeedCard =
-  | EntryFeedCard
-  | SynonymRowFeedCard
-  | TipFeedCard
-  | { readonly kind: 'end-of-cycle'; readonly entryId?: undefined };
+export type FeedCard = AnyEntryCard | { readonly kind: 'end-of-cycle'; readonly entryId?: undefined };
 
 /**
  * The card as a Review, labelled «Повторення», while the Entry's card shows
  * one: wherever it is shown, the Feed and every Entry screen (ADR 0043).
  */
-export function asReviewIfDue<Card extends EntryFeedCard | SynonymRowFeedCard | TipFeedCard>(
+export function asReviewIfDue<Card extends AnyEntryCard>(
   card: Card,
   knowledge: Pick<Knowledge, 'state'>,
 ): Card {

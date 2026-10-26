@@ -8,10 +8,9 @@ import type { Cycle } from './cycle';
 import type { Entries, EntryIds, ShownEntry } from '../entries/entries';
 import {
   asReviewIfDue,
+  type AnyEntryCard,
   type EntryFeedCard,
   type FeedCard,
-  type SynonymRowFeedCard,
-  type TipFeedCard,
   type WordFeedCard,
 } from './feed-card';
 import { createFeedSession, type FeedSession } from './feed-session';
@@ -178,7 +177,7 @@ export async function buildEntryCard(
 export async function buildFeedCard(
   entries: Entries,
   id: string,
-): Promise<EntryFeedCard | SynonymRowFeedCard | TipFeedCard | undefined> {
+): Promise<AnyEntryCard | undefined> {
   const entry = await entries.get(id);
   if (entry !== undefined) return buildEntryCard(entries, entry);
   const rowOrTip = await entries.getSynonymRowOrTip(id);
