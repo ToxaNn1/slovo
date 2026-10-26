@@ -79,7 +79,9 @@ function Game() {
         <GameRound
           game={current}
           label={gameModeStrings(strings.modes, current.modeId).roundLabel}
-          onAnswer={actions.answer}
+          onAnswer={(option) => {
+            actions.answer({ form: 'pick', option });
+          }}
           onNext={actions.next}
           onLeave={actions.leave}
         />

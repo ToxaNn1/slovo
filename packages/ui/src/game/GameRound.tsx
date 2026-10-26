@@ -103,9 +103,14 @@ const LIFE_STEP = {
 /** The progress bar grows in 400 ms. */
 const BAR_GROWTH = { duration: 400, easing: ease, reduceMotion: ReduceMotion.Never };
 
+/** The answer to a Round of the pick form, the one this screen plays. */
+type PickAnswer = Extract<RoundAnswer, { form: 'pick' }>;
+
 /**
  * A Round of the Game in play (`game-round-dark`): the header with the ✕, the
- * prompt under its label, the four options and, once answered, the sheet. A
+ * prompt under its label, the four options and, once answered, the sheet.
+ * It plays the pick form; the screens of the other answer forms come with
+ * their Game Modes (spec #772). A
  * Synonym Row's Round asks «Що є синонімом до „{dominant}“?» and a Tip's its
  * own question, each under its kind's label rather than the mode's.
  * The ✕ asks first, with the SLOVO confirmation dialog, as «Очистити Історію?»
@@ -140,7 +145,7 @@ export function GameRound({
     }
     if (shownAnswered.current) return;
     shownAnswered.current = true;
-    if (answer.chosen === answer.correct) gameHaptics.rightAnswer();
+    if (answer.right) gameHaptics.rightAnswer();
     else gameHaptics.wrongAnswer();
     // New haptics, after a change of Vibration, find the answer already played.
   }, [answer, gameHaptics]);
@@ -148,6 +153,8 @@ export function GameRound({
   const [asking, setAsking] = useState(false);
   const exit = strings.game.exit;
   const asked = askedAs(round, label, strings.game.round);
+  const options = round.form === 'pick' ? round.options : [];
+  const pickAnswer = answer?.form === 'pick' ? answer : undefined;
 
   return (
     <View testID="game-round" style={styles.screen}>
@@ -161,12 +168,12 @@ export function GameRound({
       <ScrollView contentContainerStyle={styles.round}>
         <RoundCard label={asked.label} prompt={asked.prompt} highlight={round.highlight} />
         <View style={styles.options}>
-          {round.options.map((option, place) => (
+          {options.map((option, place) => (
             <AnswerOption
               key={`${String(round.number)}-${String(place)}`}
               option={option}
               place={place}
-              answer={round.answer}
+              answer={pickAnswer}
               onPress={() => {
                 onAnswer(place);
               }}
@@ -457,7 +464,7 @@ function AnswerOption({
   /** Its place among the options. */
   place: number;
   /** The Round's answer, once given. */
-  answer: RoundAnswer | undefined;
+  answer: PickAnswer | undefined;
   onPress: () => void;
 }) {
   const { colors, fontFamilies, radii } = useTokens();
@@ -582,7 +589,7 @@ function AnswerSheet({ answer, onNext }: { answer: RoundAnswer | undefined; onNe
 function AnswerSheetContent({ answer, onNext }: { answer: RoundAnswer; onNext: () => void }) {
   const { colors, fontFamilies } = useTokens();
   const { strings, voice } = useEdition();
-  const right = answer.chosen === answer.correct;
+  const { right } = answer;
   const { example, explanation } = answer.sheet;
   return (
     <ScrollView style={styles.sheetScroll} contentContainerStyle={styles.sheetContent}>

@@ -60,6 +60,7 @@ const first: CurrentGame = {
     entryKind: 'word',
     prompt: 'open and honest',
     highlight: undefined,
+    form: 'pick',
     options: OPTIONS.map((text) => ({ text, stressedVowels: [] })),
     answer: undefined,
   },
@@ -76,8 +77,10 @@ function answered(game: CurrentGame, chosen: number): CurrentGame {
     round: {
       ...game.round,
       answer: {
+        form: 'pick',
         chosen,
         correct: CORRECT,
+        right: chosen === CORRECT,
         sheet: { answer: { text: OPTIONS[CORRECT], stressedVowels: [] }, example: undefined },
       },
     },

@@ -123,8 +123,10 @@ function played(
   const texts = [answer, chosen === answer ? 'other' : chosen, 'third', 'fourth'];
   const options = texts.map((text) => ({ text, stressedVowels: [] }));
   const roundAnswer = {
+    form: 'pick' as const,
     chosen: texts.indexOf(chosen),
     correct: 0,
+    right: chosen === answer,
     sheet: { answer: { text: answer, stressedVowels: [] }, example: undefined },
   };
   return {
@@ -139,6 +141,7 @@ function played(
             ? entry.gameQuestion.prompt
             : entry.primaryDefinition,
     highlight: undefined,
+    form: 'pick',
     options,
     answer: roundAnswer,
     entry,

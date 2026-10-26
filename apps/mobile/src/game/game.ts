@@ -1,4 +1,4 @@
-import type { GameState } from '@slovo/core';
+import type { GameState, GivenAnswer } from '@slovo/core';
 
 import { useComposition } from '../composition';
 import { keep } from '../keep';
@@ -23,8 +23,8 @@ export function useGameActions() {
         logError('Could not start a Game', error);
       });
     },
-    answer: (option: number) => {
-      void keep('the Knowledge Mark', game.answer(option), undefined);
+    answer: (given: GivenAnswer) => {
+      void keep('the Knowledge Mark', game.answer(given), undefined);
     },
     next: () => {
       game.next().catch((error: unknown) => {
