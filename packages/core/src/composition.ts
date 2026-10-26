@@ -11,6 +11,7 @@ import { asReviewIfDue, type AnyEntryCard } from './feed/feed-card';
 import { openGame, type Game } from './game/game';
 import type { GameEdition, GameMode } from './game/game-mode';
 import { guessWord } from './game/guess-word';
+import { stressMode } from './game/stress-mode';
 import { openHistory, type History } from './saved/history';
 import { openKnowledge, type Knowledge } from './knowledge/knowledge';
 import { openHiddenEntries, type HiddenEntries } from './hidden/hidden-entries';
@@ -187,7 +188,7 @@ function closable({
 }
 
 /** The Core's own Game Modes, registered through the same Extension Point as an Edition's. */
-const coreGameModes: readonly GameMode[] = [guessWord, correctionMode];
+const coreGameModes: readonly GameMode[] = [guessWord, correctionMode, stressMode];
 
 /**
  * Opens the composition for a new app session, once the Language Pack is
