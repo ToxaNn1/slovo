@@ -42,6 +42,7 @@ export function writePack(outFile: string, content: PackContent, metadata: PackM
       ...content.corrections,
       ...content.idioms,
       ...content.synonymRows,
+      ...content.tips,
     ]) {
       insertEntry.run(entry.id, entry.kind);
     }
@@ -225,6 +226,35 @@ export function writePack(outFile: string, content: PackContent, metadata: PackM
         for (const position of stress) insertRowStress.run(row.id, member, position);
       });
       insertSources(row);
+    }
+
+    const insertTip = db.prepare(`
+      INSERT INTO tips (
+        id, title, non_standard_form, standard_form, explanation, example_text, example_author,
+        question_prompt, right_answer, retired
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    const insertWrongAnswer = db.prepare(
+      'INSERT INTO tip_wrong_answers (tip_id, position, text) VALUES (?, ?, ?)',
+    );
+    for (const tip of content.tips) {
+      insertTip.run(
+        tip.id,
+        tip.title,
+        tip.nonStandardForm ?? null,
+        tip.standardForm,
+        tip.explanation,
+        tip.example?.text ?? null,
+        tip.example?.author ?? null,
+        tip.gameQuestion.prompt,
+        tip.gameQuestion.rightAnswer,
+        tip.retired ? 1 : 0,
+      );
+      tip.gameQuestion.wrongAnswers.forEach((text, position) => {
+        insertWrongAnswer.run(tip.id, position, text);
+      });
+      insertSources(tip);
     }
 
     db.exec('COMMIT');

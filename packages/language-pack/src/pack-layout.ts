@@ -5,6 +5,7 @@ import {
   type Idiom,
   type PackMetadata,
   type SynonymRow,
+  type Tip,
   type Word,
 } from '@slovo/contracts';
 
@@ -34,7 +35,7 @@ CREATE TABLE correction_categories (
 -- Every Entry, whatever its kind.
 CREATE TABLE entries (
   id TEXT PRIMARY KEY,
-  kind TEXT NOT NULL CHECK (kind IN ('word', 'correction', 'idiom', 'synonymRow'))
+  kind TEXT NOT NULL CHECK (kind IN ('word', 'correction', 'idiom', 'synonymRow', 'tip'))
 ) WITHOUT ROWID;
 
 CREATE TABLE words (
@@ -183,6 +184,27 @@ CREATE TABLE synonym_row_stress (
   PRIMARY KEY (row_id, member, position)
 ) WITHOUT ROWID;
 
+CREATE TABLE tips (
+  id TEXT PRIMARY KEY REFERENCES entries (id),
+  title TEXT NOT NULL,
+  non_standard_form TEXT,
+  standard_form TEXT NOT NULL,
+  explanation TEXT NOT NULL,
+  example_text TEXT,
+  example_author TEXT,
+  question_prompt TEXT NOT NULL,
+  right_answer TEXT NOT NULL,
+  retired INTEGER NOT NULL
+) WITHOUT ROWID;
+
+-- The wrong answers of a Tip's Game question, in order.
+CREATE TABLE tip_wrong_answers (
+  tip_id TEXT NOT NULL REFERENCES tips (id),
+  position INTEGER NOT NULL,
+  text TEXT NOT NULL,
+  PRIMARY KEY (tip_id, position)
+) WITHOUT ROWID;
+
 -- Keyed by Entry id, so every kind of Entry records its sources here.
 CREATE TABLE sources (
   entry_id TEXT NOT NULL REFERENCES entries (id),
@@ -208,8 +230,9 @@ CREATE TABLE sources (
  * the table `correction_categories`, the Correction's category column, the
  * Word's history column and the table `correction_literary_uses`; format 5
  * keeps format 4's layout, adding only the Synonym Row tables
- * (`synonym_rows`, `synonym_row_members` and `synonym_row_stress`) and the
- * kind `'synonymRow'`, and admits the Synonym Rows of 0.8.11 (ADR 0051).
+ * (`synonym_rows`, `synonym_row_members` and `synonym_row_stress`), the Tip
+ * tables (`tips` and `tip_wrong_answers`) and the kinds `'synonymRow'` and
+ * `'tip'`, and admits the Synonym Rows and Tips of 0.8.11 (ADR 0051).
  */
 export const PACK_FORMAT = 5;
 
@@ -259,4 +282,5 @@ export interface PackContent {
   readonly corrections: readonly Correction[];
   readonly idioms: readonly Idiom[];
   readonly synonymRows: readonly SynonymRow[];
+  readonly tips: readonly Tip[];
 }
