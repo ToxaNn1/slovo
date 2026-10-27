@@ -265,6 +265,25 @@ async function pickTheWordOfThePrompt() {
   await fireEvent.press(screen.getByRole('button', { name: new RegExp(`^слово${n},`) }));
 }
 
+/**
+ * Answers a Round of «Виживання» right or wrong: of a Word, its Definition
+ * «The meaning of test{n}.» asks for «слово{n}»; of a Correction, the
+ * sentence with «хибне{n}» for «добре{n}».
+ */
+async function answerSurvivalRound(right: boolean) {
+  const prompt = String(screen.getByTestId('game-prompt').props['accessibilityLabel']);
+  const n = /хибне(\d+)/.exec(prompt)?.[1];
+  const answer = n === undefined ? `слово${/\d+/.exec(prompt)?.[0] ?? ''}` : `добре${n}`;
+  const options = screen.getAllByRole('button', { name: /^(слово|добре)\d+/ });
+  const option = options.find(
+    (one) => String(one.props['accessibilityLabel']).split(',')[0] === answer,
+  );
+  const wrong = options.find((one) => one !== option);
+  const tapped = right ? option : wrong;
+  if (tapped === undefined) throw new Error(`No option for «${prompt}»`);
+  await fireEvent.press(tapped);
+}
+
 /** Starts «Вгадай слово» from its card and picks the right Word in each of its first ten Rounds. */
 async function startGuessWordAtRound11() {
   await fireEvent.press(screen.getByTestId('game-mode-guess-word'));
@@ -352,11 +371,13 @@ describe('the Game screen', () => {
       'Вислови',
       'game-mode-idiom-meaning',
       'game-mode-build-idiom',
+      'Виклик',
+      'game-mode-survival',
     ]);
   });
 
   it('shows each mode’s own Best result on its card, out of its Round limit', async () => {
-    await open({ best: { 'guess-word': 12, correction: 7 } });
+    await open({ best: { 'guess-word': 12, correction: 7, survival: 23 } });
     await renderScreen();
 
     expect(
@@ -365,6 +386,8 @@ describe('the Game screen', () => {
     expect(
       within(screen.getByTestId('game-mode-correction')).getByText('Найкраще: 7 з 15'),
     ).toBeTruthy();
+    // «Виживання» has no Round limit, so its Best result stands alone.
+    expect(within(screen.getByTestId('game-mode-survival')).getByText('Найкраще: 23')).toBeTruthy();
     // The line under the title keeps «Вгадай слово»'s Best result.
     expect(screen.getByTestId('game-rules')).toHaveTextContent(/Найкраще — 12 \/ 15\./);
   });
@@ -879,5 +902,48 @@ describe('the Game screen', () => {
     expect(screen.getByTestId('game-sheet')).toHaveTextContent(meaning, { exact: false });
     expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 4 з 5');
     expect(warning).toHaveBeenCalled();
+  });
+
+  it('starts «Виживання» from its card with 3 Lives and no Round limit, mixing Words and Corrections, and ends on the third mistake with the Rounds passed', async () => {
+    await open({ corrections: 15 });
+    await renderScreen();
+
+    await fireEvent.press(screen.getByTestId('game-mode-survival'));
+
+    const kinds = new Set<string>();
+    const mistakes = [3, 8, 12];
+    for (let round = 1; round <= 12; round += 1) {
+      await waitFor(() => {
+        expect(screen.getByTestId('game-progress').props['accessibilityLabel']).toBe(
+          `Пройдено раундів: ${String(round - 1)}`,
+        );
+      });
+      expect(screen.getByTestId('game-progress')).toHaveTextContent(
+        `Пройдено: ${String(round - 1)}`,
+      );
+      expect(screen.queryByTestId('game-progress-bar')).toBeNull();
+      const prompt = String(screen.getByTestId('game-prompt').props['accessibilityLabel']);
+      kinds.add(prompt.includes('хибне') ? 'correction' : 'word');
+      const right = !mistakes.includes(round);
+      await answerSurvivalRound(right);
+      expect(screen.getByTestId('game-sheet-title')).toHaveTextContent(
+        right ? 'Правильно!' : 'Не цього разу',
+      );
+      const lives = 3 - mistakes.filter((at) => at <= round).length;
+      expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe(
+        `Життів: ${String(lives)} з 3`,
+      );
+      await fireEvent.press(screen.getByTestId('game-next'));
+    }
+
+    await waitFor(() => {
+      expect(screen.getByText('Життя закінчилися')).toBeOnTheScreen();
+    });
+    expect(kinds).toEqual(new Set(['word', 'correction']));
+    expect(screen.getByTestId('game-result-rounds')).toHaveTextContent(/^11 ?раунд/);
+    expect(screen.getByTestId('game-result-rounds').props['accessibilityLabel']).toBe(
+      'Пройдено раундів: 11',
+    );
+    expect(screen.getByTestId('game-result-best')).toHaveTextContent(/^11/);
   });
 });
