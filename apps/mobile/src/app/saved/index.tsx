@@ -21,6 +21,7 @@ import { editionStrings } from '@/edition/edition';
 import { useFavoriteList } from '@/saved/favorites';
 import { useHistoryPreview } from '@/saved/history';
 import { useLearningList } from '@/saved/learning';
+import { useWordOfTheDayArchive } from '@/saved/word-of-the-day-archive';
 import { useOpenScreen } from '@/entries/use-open-screen';
 import { useShown } from '@/shown-in-effect';
 
@@ -28,9 +29,10 @@ const {
   favorites: strings,
   collections: collectionStrings,
   history: historyStrings,
+  wordOfTheDayArchive: archiveStrings,
 } = editionStrings;
 
-/** How many of the newest Lemmas the Favorites card shows, and of the latest rows the History card. */
+/** How many of the newest Lemmas the Favorites and «Слова дня» cards show, and of the latest rows the History card. */
 const NEWEST_SHOWN = 3;
 /** How many of the newest Collections the Collections card shows. */
 const NEWEST_COLLECTIONS_SHOWN = 3;
@@ -41,7 +43,8 @@ const NEWEST_COLLECTIONS_SHOWN = 3;
  * (Decor slot 2). Collections follows on the surface with its count and
  * its newest Collections. The «Вчу» card, while Knowledge Marks are on in
  * effect, shows its count and the next Entries due for Review with their
- * days. The History card shows its three latest rows with
+ * days. The «Слова дня» card, while the Word of the Day archive is on in
+ * effect, shows its count and its newest Lemmas. The History card shows its three latest rows with
  * how long ago each was Seen, and VoiceOver reads the card, rows and times
  * included, in full.
  */
@@ -49,7 +52,8 @@ export default function SavedScreen() {
   const favorites = useFavoriteList();
   const collections = useCollectionList();
   const learning = useLearningList();
-  const { learning: learningShown } = useShown();
+  const { learning: learningShown, wordOfTheDayArchive: archiveShown } = useShown();
+  const archive = useWordOfTheDayArchive() ?? [];
   const history = useHistoryPreview(NEWEST_SHOWN);
   const { colors } = useTokens();
   const { count } = useEdition();
@@ -118,6 +122,21 @@ export default function SavedScreen() {
               openScreen('/saved/learning');
             }}
           />
+        )}
+        {archiveShown && (
+          <SavedCard
+            testID="saved-words-of-the-day"
+            title={archiveStrings.title}
+            count={archive.length}
+            accessibilityLabel={fill(archiveStrings.cardLabel, {
+              count: count(archiveStrings.count, archive.length),
+            })}
+            onPress={() => {
+              openScreen('/saved/words-of-the-day');
+            }}
+          >
+            <SavedCardTitles titles={archive.slice(0, NEWEST_SHOWN).map((day) => day.row.title)} />
+          </SavedCard>
         )}
         <SavedCard
           testID="saved-history"

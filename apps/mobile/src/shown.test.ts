@@ -20,6 +20,7 @@ const everything: Shown = {
   dailyLimit: true,
   search: true,
   moods: true,
+  wordOfTheDayArchive: true,
 };
 
 interface Case {
@@ -41,6 +42,10 @@ describe('what the reader is shown', () => {
       { off: ['game'], shown: { tabs: ['home', 'settings', 'saved'] } },
     ],
     ['no Search button with Search off', { off: ['search'], shown: { search: false } }],
+    [
+      'no «Слова дня» card with the Word of the Day archive off',
+      { off: ['wordOfTheDayArchive'], shown: { wordOfTheDayArchive: false } },
+    ],
     ['no Game Review with its switch off', { off: ['gameReview'], shown: { gameReview: false } }],
     [
       'no Daily Limit choice with the Daily Limit off',

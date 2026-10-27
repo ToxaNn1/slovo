@@ -58,6 +58,8 @@ export interface Shown {
   readonly search: boolean;
   /** The 🎲 «Слово під настрій» of the «Головна» header, which opens the moods. */
   readonly moods: boolean;
+  /** The «Слова дня» card of the Saved tab and the Word of the Day archive it opens. */
+  readonly wordOfTheDayArchive: boolean;
 }
 
 /**
@@ -104,5 +106,6 @@ export function shownOf({
     dailyLimit: on('dailyLimit'),
     search: on('search'),
     moods: on('moods'),
+    wordOfTheDayArchive: on('wordOfTheDayArchive'),
   };
 }
