@@ -91,6 +91,13 @@ CREATE TABLE word_registers (
   PRIMARY KEY (word_id, position)
 ) WITHOUT ROWID;
 
+CREATE TABLE word_moods (
+  word_id TEXT NOT NULL REFERENCES words (id),
+  position INTEGER NOT NULL,
+  mood TEXT NOT NULL,
+  PRIMARY KEY (word_id, position)
+) WITHOUT ROWID;
+
 CREATE TABLE corrections (
   id TEXT PRIMARY KEY REFERENCES entries (id),
   non_standard_form TEXT NOT NULL,
@@ -251,9 +258,10 @@ CREATE TABLE sources (
  * `'tip'`, and admits the Synonym Rows and Tips of 0.8.11 (ADR 0051); format 6
  * keeps format 5's layout, adding only the Word's origin column and the table
  * `crossword_words`, and admits the Word's origin and the Daily Crossword of
- * 0.8.12 (ADR 0052).
+ * 0.8.12 (ADR 0052); format 7 keeps format 6's layout, adding only the table
+ * `word_moods`, and admits the Word's moods of 0.8.13 (ADR 0054).
  */
-export const PACK_FORMAT = 6;
+export const PACK_FORMAT = 7;
 
 /**
  * Where each field of the pack metadata lies in the `metadata` table, and how

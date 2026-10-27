@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { CorrectionIdSchema } from './correction';
-import { OriginLanguageSchema } from './edition';
+import { MoodSchema, OriginLanguageSchema } from './edition';
 import { hasNoRepeats, SourceSchema, TextSchema } from './shared';
 
 /**
@@ -76,6 +76,10 @@ export const RaritySchema = z.int().min(1).max(5);
  * `origin` names the language the Word comes from, a code from the Edition's
  * `originLanguages` list, which the Language Pack build checks (ADR 0052).
  *
+ * `moods` lists the moods the Word fits, ids from the Edition's `moods` list,
+ * which the Language Pack build checks (ADR 0054). A Word without moods
+ * leaves the field out rather than listing none.
+ *
  * `correctionIds` links the Corrections the Word is the standard form for.
  *
  * List fields default to empty and `retired` to false, so authored content
@@ -113,6 +117,11 @@ export const WordSchema = z
     region: TextSchema.optional(),
     history: TextSchema.optional(),
     origin: OriginLanguageSchema.shape.code.optional(),
+    moods: z
+      .array(MoodSchema.shape.id)
+      .min(1, 'Leave moods out of a Word without moods')
+      .refine(hasNoRepeats, 'Moods must not repeat')
+      .optional(),
     categoryId: z.string().min(1),
     rarity: RaritySchema,
     sources: z.array(SourceSchema).min(1),
