@@ -71,8 +71,11 @@ function enough<T>(items: readonly T[], test: (item: T) => boolean, count: numbe
  */
 function inTurns(answers: readonly AskableEntry[]): AskableEntry[] {
   const byKind = new Map<string, AskableEntry[]>();
-  for (const answer of answers)
-    byKind.set(answer.kind, [...(byKind.get(answer.kind) ?? []), answer]);
+  for (const answer of answers) {
+    const ofKind = byKind.get(answer.kind);
+    if (ofKind === undefined) byKind.set(answer.kind, [answer]);
+    else ofKind.push(answer);
+  }
   const turns: AskableEntry[] = [];
   for (let turn = 0; turns.length < answers.length; turn += 1) {
     for (const ofKind of byKind.values()) {
