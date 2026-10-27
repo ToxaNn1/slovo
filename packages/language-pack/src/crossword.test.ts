@@ -207,5 +207,12 @@ describe('the crossword days of an Edition', () => {
     expect(errorsWith([day])).toContain(
       `content/crossword-days.json › 0.words.0.entryId: No Word or Correction ${first.entryId} in the Edition`,
     );
+
+    const [, second, ...others] = rest;
+    if (second === undefined) throw new Error('Too few words');
+    const twice = { ...day, words: [first, { ...second, entryId: first.entryId }, ...others] };
+    expect(errorsWith([twice])).toContain(
+      `content/crossword-days.json › 0.words.1.entryId: ${first.entryId} is already a word of the day`,
+    );
   });
 });

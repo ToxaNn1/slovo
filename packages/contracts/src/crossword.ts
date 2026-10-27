@@ -33,8 +33,8 @@ export const CrosswordWordSchema = z.strictObject({
 export type CrosswordWord = z.infer<typeof CrosswordWordSchema>;
 
 /**
- * The Daily Crossword of one date, `YYYY-MM-DD`: 4–6 words on a 5 × 5 grid.
- * Every word lies inside the grid and crosses another, all of them hang
+ * The Daily Crossword of one date, `YYYY-MM-DD`: 4–6 words on a 5 × 5 grid,
+ * each from another Entry. Every word lies inside the grid and crosses another, all of them hang
  * together, crossing words agree on their shared letter, and every run of two
  * or more letters in a row or a column is one of the words, so the grid reads
  * nothing but its words.
@@ -45,6 +45,15 @@ export const CrosswordDaySchema = z
     words: z.array(CrosswordWordSchema).min(CROSSWORD_WORDS.min).max(CROSSWORD_WORDS.max),
   })
   .superRefine(({ words }, context) => {
+    words.forEach(({ entryId }, i) => {
+      if (words.findIndex((other) => other.entryId === entryId) < i) {
+        context.addIssue({
+          code: 'custom',
+          path: ['words', i, 'entryId'],
+          message: `${entryId} is already a word of the day`,
+        });
+      }
+    });
     for (const problem of crosswordGridProblems(words))
       context.addIssue({ code: 'custom', ...problem });
   });
