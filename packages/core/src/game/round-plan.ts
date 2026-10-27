@@ -64,6 +64,28 @@ function enough<T>(items: readonly T[], test: (item: T) => boolean, count: numbe
   return passed >= count;
 }
 
+/**
+ * The answers with their kinds taking turns, each kind in the order given,
+ * the kinds in the order they first come; a kind with none left gives way
+ * to the others.
+ */
+function inTurns(answers: readonly AskableEntry[]): AskableEntry[] {
+  const byKind = new Map<string, AskableEntry[]>();
+  for (const answer of answers) {
+    const ofKind = byKind.get(answer.kind);
+    if (ofKind === undefined) byKind.set(answer.kind, [answer]);
+    else ofKind.push(answer);
+  }
+  const turns: AskableEntry[] = [];
+  for (let turn = 0; turns.length < answers.length; turn += 1) {
+    for (const ofKind of byKind.values()) {
+      const answer = ofKind[turn];
+      if (answer !== undefined) turns.push(answer);
+    }
+  }
+  return turns;
+}
+
 /** Whether the Round as a Game Mode built it has exactly one right answer in its form. */
 function wellFormed(round: RoundContent): boolean {
   switch (round.form) {
@@ -117,7 +139,9 @@ function checkedRound(mode: GameMode, round: RoundContent, upTo: number): RoundC
  * make too few fair Rounds, the other eligible Entries fill in, the weak ones
  * left over last. Each pair of a pairs grid counts as a Round. In a mode with
  * no Round limit, once a Game under way has asked about every eligible Entry,
- * the rest of its Rounds ask about them again, reshuffled. The one place that
+ * the rest of its Rounds ask about them again, reshuffled. In a mode whose
+ * Rounds take turns, the kinds of Entry take turns within the weak Entries
+ * and within the rest, the pool first in each kind. The one place that
  * decides whether a mode can start: its offer and a start both come from it,
  * so they always agree.
  */
@@ -193,26 +217,33 @@ export function createRoundPlanner({
         planned += roundsIn(content);
       }
     }
+    /** The answers in turns of their kinds in a mode whose Rounds take turns, else as given. */
+    const ordered = (answers: readonly AskableEntry[]) =>
+      mode.takesTurns === true ? inTurns(answers) : answers;
     build(
       [
-        ...weakDrawn,
-        ...shuffled(
-          others.filter((entry) => pool.has(entry)),
-          random,
-        ),
-        ...shuffled(
-          others.filter((entry) => !pool.has(entry)),
-          random,
-        ),
+        ...ordered(weakDrawn),
+        ...ordered([
+          ...shuffled(
+            others.filter((entry) => pool.has(entry)),
+            random,
+          ),
+          ...shuffled(
+            others.filter((entry) => !pool.has(entry)),
+            random,
+          ),
+        ]),
       ],
       true,
     );
     build(weakDrawn, false);
     if (planned < count && asked.size > 0 && roundLimitOf(mode) === undefined) {
       build(
-        shuffled(
-          eligible.filter((entry) => !taken.has(entry.id)),
-          random,
+        ordered(
+          shuffled(
+            eligible.filter((entry) => !taken.has(entry.id)),
+            random,
+          ),
         ),
         false,
       );
