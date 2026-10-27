@@ -19,9 +19,9 @@ import { useMemo } from 'react';
 import { SectionList, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { editionStrings } from '../../edition/edition';
-import { useHiddenChanges, useHiddenScreenModel } from '../../mix/hidden';
-import type { HiddenEntryModel, HiddenScreenModel } from '../../mix/hidden-screen';
+import { editionStrings } from '@/edition/edition';
+import { useHiddenChanges, useHiddenScreenModel } from '@/mix/hidden';
+import type { HiddenEntryModel, HiddenScreenModel } from '@/mix/hidden-screen';
 
 const strings = editionStrings.hidden;
 

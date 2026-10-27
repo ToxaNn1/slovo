@@ -13,10 +13,10 @@ import { Redirect, useRouter } from 'expo-router';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { editionStrings } from '../../../edition/edition';
-import { useOpenScreen } from '../../../entries/use-open-screen';
-import { useLearningList } from '../../../saved/learning';
-import { useShown } from '../../../shown-in-effect';
+import { editionStrings } from '@/edition/edition';
+import { useOpenScreen } from '@/entries/use-open-screen';
+import { useLearningList } from '@/saved/learning';
+import { useShown } from '@/shown-in-effect';
 
 const { learning: strings } = editionStrings;
 

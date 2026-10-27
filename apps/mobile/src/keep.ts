@@ -1,4 +1,4 @@
-import { logError } from './log';
+import { logError } from './diagnostics/log';
 
 /**
  * Waits for a change of what the user keeps (`subject`, such as Favorites). One

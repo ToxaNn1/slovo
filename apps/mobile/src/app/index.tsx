@@ -16,14 +16,14 @@ import { memo, useCallback, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { editionStrings } from '../edition/edition';
-import { EntryActions } from '../entries/entry-actions';
-import { useOpenScreen } from '../entries/use-open-screen';
-import { useFeed } from '../feed/feed';
-import { TOP_ROW } from '../edition/feed-loading';
-import { StatsPillAndSheet } from '../progress';
-import { useShown } from '../shown-in-effect';
-import { useSwipeHint } from '../feed/swipe-hint';
+import { editionStrings } from '@/edition/edition';
+import { EntryActions } from '@/entries/entry-actions';
+import { useOpenScreen } from '@/entries/use-open-screen';
+import { useFeed } from '@/feed/feed';
+import { TOP_ROW } from '@/edition/feed-loading';
+import { StatsPillAndSheet } from '@/progress/progress';
+import { useShown } from '@/shown-in-effect';
+import { useSwipeHint } from '@/feed/swipe-hint';
 
 const { feed: feedStrings } = editionStrings;
 const turnActionLabels = { next: feedStrings.nextEntry, previous: feedStrings.previousEntry };

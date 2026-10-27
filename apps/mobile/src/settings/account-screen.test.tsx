@@ -17,7 +17,7 @@ import config from 'slovo-edition/config';
 
 import { editionStrings } from '../edition/edition';
 import { openOnce } from '../opening';
-import { createAccountApi } from './account-api';
+import { createAccountApi } from '../account/account-api';
 import { AccountScreen } from './account-screen';
 
 const strings = editionStrings.account;

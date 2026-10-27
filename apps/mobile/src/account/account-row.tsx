@@ -5,7 +5,7 @@ import { useFocusEffect } from 'expo-router';
 import { useCallback } from 'react';
 
 import { useOpenScreen } from '../entries/use-open-screen';
-import { logError } from '../log';
+import { logError } from '../diagnostics/log';
 import type { Opening } from '../opening';
 import { useAccountSummary } from './account';
 

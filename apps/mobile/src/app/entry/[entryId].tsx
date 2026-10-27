@@ -1,8 +1,8 @@
 import { useLocalSearchParams } from 'expo-router';
 
-import { editionStrings } from '../../edition/edition';
-import { openedFromOf } from '../../entries/entry-link';
-import { EntryScreen } from '../../entries/entry-screen';
+import { editionStrings } from '@/edition/edition';
+import { openedFromOf } from '@/entries/entry-link';
+import { EntryScreen } from '@/entries/entry-screen';
 
 /**
  * An Entry opened from a link, `slovo-<edition id>://entry/<id>`. A

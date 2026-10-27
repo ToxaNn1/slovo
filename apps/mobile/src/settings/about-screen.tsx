@@ -18,7 +18,7 @@ import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { edition, editionStrings } from '../edition/edition';
-import { logError } from '../log';
+import { logError } from '../diagnostics/log';
 
 const strings = editionStrings.settings;
 

@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState, type RefObject } from 'react';
 
 import { useComposition } from '../composition';
 import { useInForeground } from '../foreground/in-foreground';
-import { logError } from '../log';
+import { logError } from '../diagnostics/log';
 import { useSubscribed } from '../opening';
 import { cardOnScreen, type TurnedTo } from './feed-screen';
 

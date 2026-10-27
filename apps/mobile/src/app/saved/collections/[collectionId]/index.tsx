@@ -14,10 +14,10 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { addedOn } from '../../../../saved/added-on';
-import { useCollectionEntries } from '../../../../saved/collections';
-import { editionStrings } from '../../../../edition/edition';
-import { useOpenScreen } from '../../../../entries/use-open-screen';
+import { addedOn } from '@/saved/added-on';
+import { useCollectionEntries } from '@/saved/collections';
+import { editionStrings } from '@/edition/edition';
+import { useOpenScreen } from '@/entries/use-open-screen';
 
 const { collections: collectionStrings } = editionStrings;
 const strings = collectionStrings.entries;

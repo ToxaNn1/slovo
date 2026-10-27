@@ -5,7 +5,7 @@ import { useComposition } from '../composition';
 import { deviceClock } from '../device/device-clock';
 import { useInForeground } from '../foreground/in-foreground';
 import { keep } from '../keep';
-import { logError } from '../log';
+import { logError } from '../diagnostics/log';
 import { useSubscribed } from '../opening';
 
 /** The Game as it stands, kept up to date. */

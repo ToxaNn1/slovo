@@ -12,7 +12,7 @@ import { useCallback, useEffect, useState, type ComponentProps } from 'react';
 
 import { useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
-import { logError } from '../log';
+import { logError } from '../diagnostics/log';
 
 /** What the Daily Crossword's card draws. */
 export type DailyCrosswordCardContent = Omit<

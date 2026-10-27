@@ -1,4 +1,4 @@
-import { ScreenStack } from '../../entries/screen-stack';
+import { ScreenStack } from '@/entries/screen-stack';
 
 /**
  * The Saved tab's own stack: the overview, Favorites, Collections → a Collection,

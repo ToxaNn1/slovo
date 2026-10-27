@@ -1,7 +1,7 @@
 import { knownLine } from '@slovo/ui/known-line';
 import { describe, expect, it } from 'vitest';
 
-import { count, strings } from './test-support';
+import { count, strings } from '../test-support';
 
 const line = (
   kinds: Parameters<typeof knownLine>[2],

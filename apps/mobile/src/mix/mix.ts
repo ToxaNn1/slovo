@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 
 import { useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
-import { logError } from '../log';
+import { logError } from '../diagnostics/log';
 import { useSubscribed } from '../opening';
 import { mixSummary } from './mix-screen';
 

@@ -14,10 +14,10 @@ import { useRouter } from 'expo-router';
 import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { editionStrings } from '../../edition/edition';
-import { logError } from '../../log';
-import { useNotificationsChanges, useNotificationsState } from '../../notifications/notifications';
-import { NotificationTimes } from '../../notifications/notification-times';
+import { editionStrings } from '@/edition/edition';
+import { logError } from '@/diagnostics/log';
+import { useNotificationsChanges, useNotificationsState } from '@/notifications/notifications';
+import { NotificationTimes } from '@/notifications/notification-times';
 
 const strings = editionStrings.notifications;
 

@@ -1,8 +1,8 @@
 import { useLocalSearchParams } from 'expo-router';
 
-import { useCollectionList } from '../../../../saved/collections';
-import { editionStrings } from '../../../../edition/edition';
-import { EntryScreen } from '../../../../entries/entry-screen';
+import { useCollectionList } from '@/saved/collections';
+import { editionStrings } from '@/edition/edition';
+import { EntryScreen } from '@/entries/entry-screen';
 
 /** An Entry opened from a Collection, or a Correction opened from a Word's Entry screen there. */
 export default function CollectionEntryScreen() {

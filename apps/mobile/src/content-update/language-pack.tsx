@@ -5,18 +5,18 @@ import { importDatabaseFromAssetAsync, openDatabaseAsync, type SQLiteDatabase } 
 import languagePack from 'slovo-edition/language-pack';
 import { useMemo } from 'react';
 
-import { logError } from '../log';
-import { edition } from './edition';
-import { openDeviceContentUpdate } from '../content-update/device-content-updates';
-import { devicePackFiles, type DevicePackFiles } from '../content-update/device-pack-files';
+import { logError } from '../diagnostics/log';
+import { edition } from '../edition/edition';
+import { openDeviceContentUpdate } from './device-content-updates';
+import { devicePackFiles, type DevicePackFiles } from './device-pack-files';
 import {
   openLaunchPack,
   type ContentUpdates,
   type LaunchPack,
   type OpenedPack,
-} from '../content-update/launch-pack';
+} from './launch-pack';
 import { openOnce, useOpened } from '../opening';
-import { remoteSwitchesOpening, useEditionInEffect } from './remote-switches';
+import { remoteSwitchesOpening, useEditionInEffect } from '../edition/remote-switches';
 
 const DATABASE_NAME = 'language-pack.db';
 

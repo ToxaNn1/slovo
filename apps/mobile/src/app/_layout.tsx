@@ -1,5 +1,5 @@
 // Before anything that counts in the Edition's language.
-import '../intl-polyfill';
+import '@/shell/intl-polyfill';
 
 import { createHaptics } from '@slovo/core';
 import {
@@ -18,20 +18,20 @@ import { useMemo, type ComponentProps } from 'react';
 import { Pressable } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
-import { edition, editionDecor, editionStrings, editionTokens } from '../edition/edition';
-import { hapticEngine } from '../haptics';
-import { languagePackOpening } from '../edition/language-pack';
-import { compositionOpening } from '../composition';
-import { startCrashReports } from '../crash-reports';
-import { LaunchSplash } from '../launch-splash';
-import { Lifecycle } from '../lifecycle';
-import { NotificationTaps } from '../notifications/notification-taps';
-import { Onboarding } from '../onboarding';
-import { Opened } from '../opened';
-import { LemmaPronunciation } from '../entries/pronunciation-button';
-import { SettingsProvider, useColorSchemeInEffect, useSettings } from '../settings/settings';
-import type { Tab } from '../shown';
-import { useShown } from '../shown-in-effect';
+import { edition, editionDecor, editionStrings, editionTokens } from '@/edition/edition';
+import { hapticEngine } from '@/game/haptics';
+import { languagePackOpening } from '@/content-update/language-pack';
+import { compositionOpening } from '@/composition';
+import { startCrashReports } from '@/diagnostics/crash-reports';
+import { LaunchSplash } from '@/shell/launch-splash';
+import { Lifecycle } from '@/shell/lifecycle';
+import { NotificationTaps } from '@/entries/notification-taps';
+import { Onboarding } from '@/onboarding/onboarding';
+import { Opened } from '@/opened';
+import { LemmaPronunciation } from '@/entries/pronunciation-button';
+import { SettingsProvider, useColorSchemeInEffect, useSettings } from '@/settings/settings';
+import type { Tab } from '@/shown';
+import { useShown } from '@/shown-in-effect';
 
 // Before the first screen, so a crash at launch is reported too.
 startCrashReports(process.env.EXPO_PUBLIC_SENTRY_DSN);

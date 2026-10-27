@@ -22,11 +22,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { deviceClock } from '../device/device-clock';
 import { editionStrings } from '../edition/edition';
-import { logError } from '../log';
+import { logError } from '../diagnostics/log';
 import { Opened } from '../opened';
 import { useOpened, type Opening } from '../opening';
 import { SyncStatusLine } from '../sync/sync-status-line';
-import { useAccountProblemLine, useAccountState, type AccountScreenGoogle } from './account';
+import {
+  useAccountProblemLine,
+  useAccountState,
+  type AccountScreenGoogle,
+} from '../account/account';
 
 const strings = editionStrings.account;
 

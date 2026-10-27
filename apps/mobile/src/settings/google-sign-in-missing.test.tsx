@@ -20,7 +20,7 @@ jest.mock('@react-native-google-signin/google-signin', () => {
   throw new Error("TurboModuleRegistry.getEnforcing(...): 'RNGoogleSignin' could not be found.");
 });
 // Node has `Intl.PluralRules` already, which the polyfill adds on Hermes.
-jest.mock('../intl-polyfill', () => ({}));
+jest.mock('../shell/intl-polyfill', () => ({}));
 
 /** The time stands still: no countdown runs on the signed-out screen. */
 const clock = { now: () => new Date('2026-10-25T09:00:00Z'), timeZone: () => 'Europe/Kyiv' };
@@ -33,8 +33,9 @@ describe('A binary without the Google sign-in module', () => {
   it('hides «Увійти через Google» on the SLOVO ID screen', async () => {
     const { edition, editionStrings } =
       jest.requireActual<typeof import('../edition/edition')>('../edition/edition');
-    const { googleClientId } =
-      jest.requireActual<typeof import('./device-account')>('./device-account');
+    const { googleClientId } = jest.requireActual<typeof import('../account/device-account')>(
+      '../account/device-account',
+    );
     const { openOnce } = jest.requireActual<typeof import('../opening')>('../opening');
     const { AccountScreen } =
       jest.requireActual<typeof import('./account-screen')>('./account-screen');
