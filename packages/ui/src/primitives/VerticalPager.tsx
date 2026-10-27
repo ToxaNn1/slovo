@@ -143,6 +143,8 @@ const PageOnScreenContext = createContext(true);
  * the cards of the pages it makes current or not current, and no others.
  */
 const PageTurnActionsContext = createContext<TurnActions | undefined>(undefined);
+/** Turns the pager to the page after the current one; none on another page or the last. */
+const TurnToNextPageContext = createContext<(() => void) | undefined>(undefined);
 
 /**
  * Full-screen pages stacked vertically: swipe up for the next page, down for
@@ -262,6 +264,15 @@ export function VerticalPager<Item>({
       },
     };
   }, [index, items.length, turnActionLabels, turnTo]);
+  const turnToNext = useMemo(
+    () =>
+      index < items.length - 1
+        ? () => {
+            turnTo(index + 1);
+          }
+        : undefined,
+    [index, items.length, turnTo],
+  );
   const pager = useMemo(() => ({ panRef, scrolls, turning }), [scrolls, turning]);
 
   // Gesture Handler asks for a memoised gesture: a new one on each render
@@ -359,6 +370,7 @@ export function VerticalPager<Item>({
                   current={first + offset === index}
                   onScreen={first + offset === index || first + offset === settled}
                   turnActions={first + offset === index ? turnActions : undefined}
+                  turnToNext={first + offset === index ? turnToNext : undefined}
                   position={position}
                   height={height}
                   crossFade={reduceMotion}
@@ -378,6 +390,7 @@ function Page({
   current,
   onScreen,
   turnActions,
+  turnToNext,
   position,
   height,
   crossFade,
@@ -388,6 +401,7 @@ function Page({
   /** Current, or still moving off screen after a turn. */
   onScreen: boolean;
   turnActions: TurnActions | undefined;
+  turnToNext: (() => void) | undefined;
   position: SharedValue<number>;
   height: number;
   /** Reduce Motion: the page stays in place and fades in and out instead of moving. */
@@ -410,7 +424,9 @@ function Page({
     >
       <PageIndexContext value={index}>
         <PageOnScreenContext value={onScreen}>
-          <PageTurnActionsContext value={turnActions}>{children}</PageTurnActionsContext>
+          <PageTurnActionsContext value={turnActions}>
+            <TurnToNextPageContext value={turnToNext}>{children}</TurnToNextPageContext>
+          </PageTurnActionsContext>
         </PageOnScreenContext>
       </PageIndexContext>
     </Animated.View>
@@ -424,6 +440,15 @@ function Page({
  */
 export function usePageTurnActions(): Partial<TurnActions> {
   return useContext(PageTurnActionsContext) ?? {};
+}
+
+/**
+ * Turns a `VerticalPager` from its current page to the next with the swipe's
+ * motion, as if the reader swiped there, such as a card's button that leads
+ * on. None outside a pager, on a page that isn't current or on the last page.
+ */
+export function useTurnToNextPage(): (() => void) | undefined {
+  return useContext(TurnToNextPageContext);
 }
 
 /**

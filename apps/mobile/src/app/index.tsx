@@ -1,4 +1,5 @@
 import {
+  DailyLimitCard,
   DecorBackground,
   EndOfCycleCard,
   EntryCard,
@@ -30,8 +31,9 @@ const { feed: feedStrings } = editionStrings;
 const turnActionLabels = { next: feedStrings.nextEntry, previous: feedStrings.previousEntry };
 
 /**
- * Home is the Feed: a vertical stream of Entry cards, one per screen. Its undo
- * toasts outlive the card they came from, also when no card is left.
+ * Home is the Feed: a vertical stream of Entry cards and Feed Notices, one per
+ * screen. Its undo toasts outlive the card they came from, also when no card
+ * is left.
  */
 export default function HomeScreen() {
   return (
@@ -58,7 +60,7 @@ function FeedScreen() {
     (card: DrawnCard, position: number) => (
       <FeedPage
         // A card that takes the place of a hidden one starts afresh, scrolled to its top.
-        key={card.entryId ?? card.kind}
+        key={card.kind === 'notice' ? `notice-${card.notice}` : (card.entryId ?? card.kind)}
         card={card}
         position={position}
         onOpenCorrection={openCorrection}
@@ -126,13 +128,13 @@ const FeedPage = memo(function FeedPage({
   const { top } = useSafeAreaInsets();
   const { selfCheck } = useShown();
   const openScreen = useOpenScreen();
-  if (card.kind === 'end-of-cycle')
+  if (card.kind === 'end-of-cycle' || card.kind === 'notice')
     return (
       <View
         testID={`feed-card-${String(position)}`}
-        style={[styles.page, styles.endOfCycle, { paddingTop: top + TOP_ROW }]}
+        style={[styles.page, styles.centred, { paddingTop: top + TOP_ROW }]}
       >
-        <EndOfCycleCard />
+        {card.kind === 'end-of-cycle' ? <EndOfCycleCard /> : <DailyLimitCard />}
       </View>
     );
   return (
@@ -190,5 +192,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: space[6],
     paddingBottom: space[6],
   },
-  endOfCycle: { paddingHorizontal: space[6], paddingBottom: space[6] },
+  // The end-of-Cycle card and a Feed Notice sit in the middle of the page, under the top row.
+  centred: { paddingHorizontal: space[6], paddingBottom: space[6] },
 });

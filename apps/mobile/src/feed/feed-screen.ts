@@ -1,4 +1,4 @@
-import type { Feed, FeedCard, FeedNoticeCard } from '@slovo/core';
+import type { Feed, FeedCard, FeedNotice, FeedNoticeCard } from '@slovo/core';
 
 /** The page the reader turned to, in the Feed they turned it in. */
 export interface TurnedTo {
@@ -30,10 +30,16 @@ export function cardOnScreen({
   return turnedTo?.in === feed ? turnedTo.position : feed.startPosition;
 }
 
-/** A card the shell draws: every card but a Feed Notice, until a Feed Notice gets its card. */
-export type DrawnCard = Exclude<FeedCard, FeedNoticeCard>;
+/** The Feed Notices the shell draws a card for; the others wait for theirs. */
+const DRAWN_NOTICES = ['dailyLimit'] as const satisfies readonly FeedNotice[];
 
-const drawn = (card: FeedCard): card is DrawnCard => card.kind !== 'notice';
+/** A card the shell draws: every card but a Feed Notice that has no card yet. */
+export type DrawnCard =
+  | Exclude<FeedCard, FeedNoticeCard>
+  | (FeedNoticeCard & { readonly notice: (typeof DRAWN_NOTICES)[number] });
+
+const drawn = (card: FeedCard): card is DrawnCard =>
+  card.kind !== 'notice' || (DRAWN_NOTICES as readonly FeedNotice[]).includes(card.notice);
 
 /**
  * The pages of the pager over the Feed's cards: a card the shell can't draw
