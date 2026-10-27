@@ -66,7 +66,8 @@ const otherWay = (direction: CrosswordWord['direction']) =>
  * The Daily Crossword's grid with its clue line under it. A tap on a cell
  * selects it and its word, across if one reads that way and down otherwise; a
  * second tap on a crossing cell turns to the other word. The selected word's
- * cells are shaded and its clue shown. A tap opens the keyboard: a letter
+ * cells are shaded and its clue shown. A tap opens the keyboard, unless every
+ * word is right: a letter
  * fills the selected cell and moves on along the word, the delete key erases
  * the cell or, if it is empty, the one behind. The cells of a right word turn
  * green and take no letter; a wrong letter is never marked. «Відкрити літеру»
@@ -100,7 +101,7 @@ export function CrosswordGrid({
   };
   testID: string;
 }) {
-  const { colors } = useTokens();
+  const { colors, fontFamilies } = useTokens();
   const { voice } = useEdition();
   const keyboard = useRef<TextInput>(null);
   const first = words[0];
@@ -111,10 +112,11 @@ export function CrosswordGrid({
   const selectedPlaces = selected ? placesOf(selected) : [];
   const rightPlaces = words.filter((word) => word.right === true).flatMap(placesOf);
   const isRight = (place: CrosswordPlace) => rightPlaces.some((at) => samePlace(at, place));
+  const solved = words.every((word) => word.right === true);
   const letterAt = (place: CrosswordPlace) => letters[place.row]?.[place.column];
 
   const tap = (place: CrosswordPlace) => {
-    keyboard.current?.focus();
+    if (!solved) keyboard.current?.focus();
     const again = selection !== undefined && samePlace(selection.place, place);
     const preferred = again ? otherWay(selection.direction) : (selection?.direction ?? 'across');
     const direction = wordAt(words, place, preferred) ? preferred : otherWay(preferred);
@@ -192,7 +194,7 @@ export function CrosswordGrid({
           testID={`${testID}-clue`}
           accessibilityLiveRegion="polite"
           {...voice}
-          style={[styles.clue, { color: colors.ink }]}
+          style={[styles.clue, { color: colors.ink, fontFamily: fontFamilies.ui }]}
         >
           {selected.clue}
         </Text>

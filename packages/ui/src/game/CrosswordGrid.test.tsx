@@ -9,6 +9,7 @@ import {
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { useState } from 'react';
+import { TextInput } from 'react-native';
 
 const texts = {
   cellLabel: (letter: string | undefined, place: CrosswordPlace) =>
@@ -151,6 +152,28 @@ describe('CrosswordGrid', () => {
       expect(cell(0, column)).toHaveStyle({ backgroundColor: correct });
     expect(cell(2, 1)).not.toHaveStyle({ backgroundColor: correct });
     expect(cell(2, 1)).not.toHaveStyle({ backgroundColor: coreTokens.colors.light.wrong });
+  });
+
+  it('opens the keyboard on a tap of a cell, but not once the grid is solved', async () => {
+    const focus = jest.spyOn(TextInput.prototype, 'focus');
+    await render(<Crossword />);
+    focus.mockClear();
+
+    await fireEvent.press(cell(2, 0));
+    expect(focus).toHaveBeenCalledTimes(1);
+
+    await type('ten');
+    await fireEvent.press(cell(0, 0));
+    await type('cat');
+    await fireEvent.press(cell(1, 0));
+    await type('u');
+    await fireEvent.press(cell(1, 2));
+    await type('i');
+    focus.mockClear();
+    await fireEvent.press(cell(0, 1));
+
+    expect(focus).not.toHaveBeenCalled();
+    focus.mockRestore();
   });
 
   it('opens the selected cell with «open a letter»', async () => {
