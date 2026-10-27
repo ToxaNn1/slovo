@@ -12,7 +12,7 @@ Until 0.8.12 the Game had two Game Modes, «Вгадай слово» and «Об
 - **Starting.** A 15-Round mode needs 15 eligible Entries of its kinds that make a fair Round, as before (ADR 0024). «Виживання» and «На час» need 15 too; once every eligible Entry has been asked, they reshuffle and ask them again. «Звідки слово» needs at least 8 Words with an origin in the Mix. Round planning alone decides whether a mode can start, and the card gives its refusal before any tap.
 - **Unknown, not Review.** A mistake in any mode marks the Entry Unknown; Game answers never move a Review (ADR 0043).
 - **The answer sheet** follows each answer in every mode except «На час».
-- **The Game Review** closes every mode: each Round's prompt → its right answer, plus the reader's pick or typed text on a mistake, a tap expanding the Entry. «Наголос» shows the stressed form, «Склади вислів» the whole expression, and each pair of «Пари» is one row. The Core builds the rows (`buildGameReview`, ADR 0051).
+- **The Game Review** closes every mode: each Round's prompt → its right answer, plus the reader's pick («Ваш вибір: …») or typed text («Ви ввели: …») on a mistake, a tap expanding the Entry. «Наголос» shows the stressed form, «Склади вислів» the whole expression, each pair of «Пари» is one row, and a row of «Звідки слово» leads with the Word, its right language beside it («<Lemma> — <language>»). The Core builds the rows (`buildGameReview`, ADR 0051).
 - **Haptics** are the same for a right and a wrong answer in every mode (ADR 0025); in «На час» a wrong answer costs no Life, so no Life haptic follows it.
 - **Leaving.** A Game left before its end never counts towards a Best result, since the Game lives in memory only (ADR 0024).
 

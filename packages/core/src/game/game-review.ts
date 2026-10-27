@@ -1,6 +1,6 @@
 import type { Example } from '@slovo/contracts';
 
-import type { PlayedRound } from './game-in-play';
+import type { PlayedRound, RoundAnswer } from './game-in-play';
 import type { FixedChip, RoundOption } from './game-mode';
 import { rowWordOption } from './guess-word';
 import { renderStress, stressedVowelsOf } from '../entries/stress';
@@ -27,6 +27,12 @@ export type GameReviewDetails =
     }
   | { readonly kind: 'tip'; readonly explanation: string };
 
+/** The reader's answer instead of the right one, with the form it was given in. */
+export type GameReviewAnswer = RoundOption & {
+  /** How the reader gave it, such as `typed` for the text typed and `pick` for an option chosen. */
+  readonly form: RoundAnswer['form'];
+};
+
 /**
  * A Round of the Game just over as the Game Review lists it, decided by the
  * Core. The first tap expands the item into its `details`; the second opens
@@ -44,6 +50,12 @@ export interface GameReviewItem {
    * equivalent its Entry row leads with; a row's is the Round's prompt.
    */
   readonly title: RoundOption;
+  /**
+   * The right answer beside the title, when it names something other than
+   * the Entry: the origin language of the Word in «Звідки слово». Nothing
+   * when the right answer is the Entry itself.
+   */
+  readonly answer: RoundOption | undefined;
   /** Whether the reader answered right. */
   readonly right: boolean;
   /**
@@ -52,7 +64,7 @@ export interface GameReviewItem {
    * matched to a pair's Word, the chips tapped in order, or the text typed.
    * Nothing for a Round answered right.
    */
-  readonly picked: RoundOption | undefined;
+  readonly picked: GameReviewAnswer | undefined;
   readonly details: GameReviewDetails;
 }
 
@@ -61,7 +73,7 @@ const plain = (text: string): RoundOption => ({ text, stressedVowels: [] });
 function titleOf({ entry, answer }: PlayedRound): RoundOption {
   switch (entry.kind) {
     case 'word':
-      return answer.sheet.answer;
+      return answer.sheet.asked ?? answer.sheet.answer;
     case 'idiom':
       return plain(entry.expression);
     case 'correction':
@@ -113,7 +125,12 @@ const lettersJoined = (tapped: readonly string[], fixed: readonly FixedChip[] = 
  * on a right answer. Letter chips join into one Word, the characters that
  * stay in place among them, word chips with spaces.
  */
-function pickedOf(round: PlayedRound): RoundOption | undefined {
+function pickedOf(round: PlayedRound): GameReviewAnswer | undefined {
+  const option = pickedOptionOf(round);
+  return option === undefined ? undefined : { ...option, form: round.answer.form };
+}
+
+function pickedOptionOf(round: PlayedRound): RoundOption | undefined {
   if (round.right) return undefined;
   const { answer } = round;
   switch (answer.form) {
@@ -143,6 +160,7 @@ export function buildGameReview(rounds: readonly PlayedRound[]): GameReviewItem[
     number: round.number,
     entryId: round.entry.id,
     title: titleOf(round),
+    answer: round.answer.sheet.asked === undefined ? undefined : round.answer.sheet.answer,
     right: round.right,
     picked: pickedOf(round),
     details: detailsOf(round),

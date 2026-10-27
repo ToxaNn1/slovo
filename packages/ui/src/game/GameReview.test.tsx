@@ -11,6 +11,8 @@ const strings = {
       right: 'right',
       wrong: 'wrong',
       picked: 'you picked {text}',
+      typed: 'you typed {text}',
+      withAnswer: '{title} — {answer}',
       expandHint: 'Shows what it means',
       openHint: 'Opens the entry',
     },
@@ -306,6 +308,21 @@ const formRounds: PlayedRound[] = [
   },
 ];
 
+/** Two Rounds of the origin mode, where the right answer is the language of the Word asked about. */
+const originRounds: PlayedRound[] = [
+  { ...played(1, record, 'Latin', 'Latin'), prompt: 're\u0301cord' },
+  { ...played(2, candid, 'Latin', 'Greek'), prompt: 'candid' },
+].map((round) => ({
+  ...round,
+  answer: {
+    ...round.answer,
+    sheet: {
+      ...round.answer.sheet,
+      asked: round.entry === record ? option('re\u0301cord', ['e']) : option('candid'),
+    },
+  },
+}));
+
 async function renderReview({
   onOpen = jest.fn(),
   played = rounds,
@@ -464,7 +481,7 @@ describe('GameReview', () => {
         '7, spill the beans, right',
         '8, spill the beans, wrong, you picked beans the spill',
         '9, in the meantimes, right',
-        '10, candid, wrong, you picked candit',
+        '10, candid, wrong, you typed candit',
       ].map((name) => screen.getByRole('button', { name })),
     );
     expect(screen.getByTestId('game-review-row-1')).toHaveTextContent('1re\u0301cord✓');
@@ -479,8 +496,20 @@ describe('GameReview', () => {
     expect(screen.getByTestId('game-review-row-8')).toHaveTextContent(
       '8spill the beansyou picked beans the spill✗',
     );
-    expect(screen.getByTestId('game-review-row-10')).toHaveTextContent(
-      '10candidyou picked candit✗',
+    expect(screen.getByTestId('game-review-row-10')).toHaveTextContent('10candidyou typed candit✗');
+  });
+
+  it('leads a Round of the origin mode with the Word asked about, its right language beside it', async () => {
+    await renderReview({ played: originRounds });
+
+    expect(screen.getAllByRole('button')).toEqual(
+      ['1, record, stress on e — Latin, right', '2, candid — Latin, wrong, you picked Greek'].map(
+        (name) => screen.getByRole('button', { name }),
+      ),
+    );
+    expect(screen.getByTestId('game-review-row-1')).toHaveTextContent('1re\u0301cord — Latin✓');
+    expect(screen.getByTestId('game-review-row-2')).toHaveTextContent(
+      '2candid — Latinyou picked Greek✗',
     );
   });
 

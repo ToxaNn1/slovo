@@ -37,6 +37,12 @@ export interface AnswerSheet {
   readonly example: Example | undefined;
   /** Why the answer is right, such as a Correction's explanation. */
   readonly explanation?: string;
+  /**
+   * The Entry the Round asked about, when the answer names something else:
+   * the Word of «Звідки слово», whose origin language is the answer. Left out
+   * when the answer is the Entry itself.
+   */
+  readonly asked?: RoundOption;
 }
 
 /** A stretch of a text, from the character at `start` up to the one at `end`, which it leaves out. */

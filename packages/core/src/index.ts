@@ -85,7 +85,12 @@ export {
   type RoundOption,
   type TextRange,
 } from './game/game-mode';
-export { buildGameReview, type GameReviewDetails, type GameReviewItem } from './game/game-review';
+export {
+  buildGameReview,
+  type GameReviewAnswer,
+  type GameReviewDetails,
+  type GameReviewItem,
+} from './game/game-review';
 export { GAME_ROUNDS, roundLimitOf } from './game/round-plan';
 export { staysInPlace } from './game/by-letters-mode';
 export { gapOf } from './game/guess-word';

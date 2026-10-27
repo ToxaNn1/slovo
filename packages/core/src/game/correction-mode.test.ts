@@ -423,8 +423,9 @@ describe('a Round of «Обери правильне»', () => {
         number: 1,
         entryId: asked.id,
         title: { text: asked.nonStandardForm, stressedVowels: [] },
+        answer: undefined,
         right: false,
-        picked: optionsOf(round)[wrong],
+        picked: { ...optionsOf(round)[wrong], form: 'pick' },
         details: {
           kind: 'correction',
           standardForm: asked.standardEquivalents[0],

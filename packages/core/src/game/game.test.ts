@@ -895,7 +895,10 @@ describe('the Synonym Rows «Вгадай слово» asks about', () => {
         entryId: entry.id,
         title: { text: round.prompt, stressedVowels: [expect.any(String)] },
         right: !['r_go', 'r_say'].includes(entry.id),
-        picked: round.right ? undefined : optionsOf(round)[pickPlayed(round).answer.chosen],
+        answer: undefined,
+        picked: round.right
+          ? undefined
+          : { ...optionsOf(round)[pickPlayed(round).answer.chosen], form: 'pick' },
         details: {
           kind: 'synonymRow',
           members: entry.members.map((member) => ({
@@ -1067,7 +1070,10 @@ describe('the Tips «Вгадай слово» asks about', () => {
         entryId: entry.id,
         title: { text: entry.title, stressedVowels: [] },
         right: !['t_time', 't_greet'].includes(entry.id),
-        picked: round.right ? undefined : optionsOf(round)[pickPlayed(round).answer.chosen],
+        answer: undefined,
+        picked: round.right
+          ? undefined
+          : { ...optionsOf(round)[pickPlayed(round).answer.chosen], form: 'pick' },
         details: { kind: 'tip', explanation: entry.explanation },
       });
     }
@@ -2677,7 +2683,7 @@ describe('the answer forms of a Round', () => {
     expect(items.map(({ right }) => right)).toEqual([true, false]);
     expect(answersReviewed(app)).toEqual([
       undefined,
-      { text: `${tapped ?? ''}́${rest.join('')}`, stressedVowels: [tapped] },
+      { text: `${tapped ?? ''}́${rest.join('')}`, stressedVowels: [tapped], form: 'vowel' },
     ]);
   });
 
@@ -2689,7 +2695,11 @@ describe('the answer forms of a Round', () => {
     await app.game.next();
     await app.game.answer({ form: 'chips', chips: [1, 2] });
 
-    expect(answersReviewed(app)).toEqual([undefined, option('acb'), option('ab')]);
+    expect(answersReviewed(app)).toEqual([
+      undefined,
+      { ...option('acb'), form: 'chips' },
+      { ...option('ab'), form: 'chips' },
+    ]);
   });
 
   it('joins word chips with a space in the Game Review, as «Склади вислів» has them', async () => {
@@ -2703,7 +2713,7 @@ describe('the answer forms of a Round', () => {
     const app = await startIn(wordsMode);
     await app.game.answer({ form: 'chips', chips: [2, 1] });
 
-    expect(answersReviewed(app)).toEqual([option('the spill')]);
+    expect(answersReviewed(app)).toEqual([{ ...option('the spill'), form: 'chips' }]);
   });
 
   it("lists a typed Round in the Game Review with the reader's text on a mistake", async () => {
@@ -2713,7 +2723,10 @@ describe('the answer forms of a Round', () => {
     await app.game.answer({ form: 'typed', text: ' something else ' });
 
     expect(buildGameReview(current(app).played).map(({ right }) => right)).toEqual([true, false]);
-    expect(answersReviewed(app)).toEqual([undefined, option('something else')]);
+    expect(answersReviewed(app)).toEqual([
+      undefined,
+      { ...option('something else'), form: 'typed' },
+    ]);
   });
 
   it('lists each pair of a pairs grid as one Game Review row, with the Definition matched on a mistake', async () => {
@@ -2737,7 +2750,11 @@ describe('the answer forms of a Round', () => {
         right: place !== 2,
       })),
     );
-    expect(answersReviewed(app)).toEqual([undefined, undefined, option(definitions[0] ?? '')]);
+    expect(answersReviewed(app)).toEqual([
+      undefined,
+      undefined,
+      { ...option(definitions[0] ?? ''), form: 'pairs' },
+    ]);
   });
 
   it('takes no answer of another form than the Round has', async () => {
