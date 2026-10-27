@@ -1,16 +1,16 @@
-import type { FeedCard } from '@slovo/core';
 import type { VerticalPagerHandle } from '@slovo/ui';
 import { useIsFocused } from 'expo-router';
-import { useCallback, useEffect, useState, type RefObject } from 'react';
+import { useCallback, useEffect, useMemo, useState, type RefObject } from 'react';
 
 import { useComposition } from '../composition';
 import { useInForeground } from '../foreground/in-foreground';
 import { logError } from '../diagnostics/log';
 import { useSubscribed } from '../opening';
-import { cardOnScreen, type TurnedTo } from './feed-screen';
+import { cardOnScreen, pagesOf, type DrawnCard, type TurnedTo } from './feed-screen';
 
+/** The Feed as the pager shows it: its positions are pages, see `pagesOf`. */
 export interface FeedState {
-  readonly cards: readonly FeedCard[];
+  readonly cards: readonly DrawnCard[];
   /** The position of the card the Feed opens on. */
   readonly startPosition: number;
   /** Tells the Feed which card is on screen now. */
@@ -25,34 +25,41 @@ export interface FeedState {
 /**
  * The Feed of the session's Core composition, on the pager that shows it.
  * It tells the Feed which card is on screen while the Feed is in sight, and
- * that none is otherwise, and keeps the pager on the reader's card.
+ * that none is otherwise, and keeps the pager on the reader's card. A Feed
+ * Notice the shell can't draw yet gets no page.
  */
 export function useFeed(pager: RefObject<VerticalPagerHandle | null>): FeedState {
   const { feed, onboarding } = useComposition();
-  /** The page the reader turned to last, in the Feed they turned it in. */
+  const all = useSubscribed(feed, (open) => open.cards);
+  const { pages: cards, positionOf, pageOf } = useMemo(() => pagesOf(all), [all]);
+  /** The card the reader turned to last, by the Feed's position, in the Feed they turned it in. */
   const [turnedTo, setTurnedTo] = useState<TurnedTo>();
   const onCardChange = useCallback(
     (to: number) => {
-      setTurnedTo({ in: feed, position: to });
+      setTurnedTo({ in: feed, position: positionOf(to) });
     },
-    [feed],
+    [feed, positionOf],
   );
   const focused = useIsFocused();
   const inForeground = useInForeground();
   const covered = useSubscribed(onboarding, ({ state }) => state.step !== undefined);
   const onScreen = cardOnScreen({ feed, turnedTo, focused, inForeground, covered });
   const inSight = onScreen !== undefined;
-  const cards = useSubscribed(feed, (open) => open.cards);
   /** The page to turn to once it is drawn, such as a Correction opened from a Word. */
   const [turnTo, setTurnTo] = useState<number>();
   // Kept from render to render, so the Feed's pages re-render only when their card changes.
   const openCorrection = useCallback(
     (position: number, correctionId: string) => {
-      feed.openLinkedCorrection(position, correctionId).then(setTurnTo, (error: unknown) => {
-        logError('Could not open the linked Correction', error);
-      });
+      feed.openLinkedCorrection(positionOf(position), correctionId).then(
+        (opened) => {
+          setTurnTo(opened === undefined ? undefined : pageOf(opened));
+        },
+        (error: unknown) => {
+          logError('Could not open the linked Correction', error);
+        },
+      );
     },
-    [feed],
+    [feed, positionOf, pageOf],
   );
 
   // A new position goes straight to the Feed, which takes the card that left
@@ -81,14 +88,14 @@ export function useFeed(pager: RefObject<VerticalPagerHandle | null>): FeedState
   // has no card to put after a hidden one, the Feed is told no position past
   // its cards, and the pager shows its last card.
   useEffect(() => {
-    const position = feed.position;
-    if (position >= cards.length) return;
-    pager.current?.showPage(position);
+    const page = pageOf(feed.position);
+    if (page >= cards.length) return;
+    pager.current?.showPage(page);
     // eslint-disable-next-line react-hooks/set-state-in-effect -- predates the compiler rules; rewrite is pending (ADR 0059)
-    onCardChange(position);
-  }, [pager, feed, cards, onCardChange]);
+    onCardChange(page);
+  }, [pager, feed, cards, pageOf, onCardChange]);
 
-  return { cards, startPosition: feed.startPosition, onCardChange, openCorrection };
+  return { cards, startPosition: pageOf(feed.startPosition), onCardChange, openCorrection };
 }
 
 function report(done: Promise<void>): void {

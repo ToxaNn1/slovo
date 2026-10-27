@@ -25,6 +25,7 @@ Until 0.8.13 SLOVO handed the reader one Entry after another but didn't help the
 - **Rhythm untouched.** A Feed Notice counts in no turn of Corrections, Idioms, Synonym Rows or Tips and in no Review slot (ADR 0043, 0051), and makes nothing Seen; the Word of the Day still opens the Feed.
 - **Placement.** From the second card on, the Feed Notices of the day each take a card of their own, in the order Weekly Recap, first-week card, Yesterday. The Daily Limit card comes as the next card once the limit is reached.
 - **Closing.** Swiping past a Feed Notice closes it for the local day; what is closed is a `device-only` record.
+- **Ready and drawn.** The Feed keeps the next Entry card ready behind a Feed Notice, so the swipe after it never waits. A Feed Notice the app shell can't draw yet gets no page, so it is never shown and never closed.
 
 **The Weekly Recap** («Ваш тиждень») is a Feed Notice from the first open of a local Monday, about the local Monday–Sunday week before it, with no card when that week had no Active Day.
 
