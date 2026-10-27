@@ -22,12 +22,15 @@ const ACCESSORY_TITLE_MAX_FONT_SCALE = 1.3;
  * opens the Entry; the actions slide out from the right and are VoiceOver
  * actions too.
  *
- * A screen can put its own line under the title (`subtitle`) and a button
+ * A screen can put its own text before the title (`leading`, the date of the
+ * Word of the Day archive's «26 жовтня · сумирний»), its own line under the
+ * title (`subtitle`) and a button
  * after the text (`accessory`, the Hidden screen's «Повернути»). A row with no
  * `onPress` is read, not opened. Needs a `GestureHandlerRootView` above it.
  */
 export function EntryRow({
   row,
+  leading,
   trailing,
   subtitle: ownSubtitle,
   accessibilityLabel: ownAccessibilityLabel,
@@ -38,6 +41,8 @@ export function EntryRow({
   testID = `entry-row-${row.entryId}`,
 }: {
   row: EntryRowModel;
+  /** The text before the title, a dot between them, read first. */
+  leading?: string;
   trailing?: string;
   /** The line under the title, in place of the row's second line. */
   subtitle?: string;
@@ -62,7 +67,7 @@ export function EntryRow({
   // The voices break a word at the Stress mark, so VoiceOver reads the row without it.
   const accessibilityLabel = withoutStress(
     ownAccessibilityLabel ??
-      [row.title, subtitle, trailing]
+      [leading, row.title, subtitle, trailing]
         .filter((part) => part !== undefined && part !== '')
         .join(', '),
   );
@@ -77,6 +82,11 @@ export function EntryRow({
           maxFontSizeMultiplier={hasAccessory ? ACCESSORY_TITLE_MAX_FONT_SCALE : undefined}
           style={[styles.title, { color: colors.ink, fontFamily: fontFamilies.word }]}
         >
+          {leading !== undefined && (
+            <Text style={[styles.leading, { color: colors.muted, fontFamily: fontFamilies.ui }]}>
+              {leading} ·{' '}
+            </Text>
+          )}
           {row.title}
         </Text>
         {trailing !== undefined && (
@@ -190,6 +200,7 @@ const styles = StyleSheet.create({
     columnGap: entryRow.titleGap,
   },
   title: { flexShrink: 1, fontSize: typeSize.subhead, fontWeight: '500' },
+  leading: { fontWeight: '500' },
   trailing: { flexShrink: 0, fontSize: typeSize.smallLabel, fontWeight: '500' },
   subtitle: { fontSize: typeSize.caption, lineHeight: typeSize.caption * 1.4 },
 });

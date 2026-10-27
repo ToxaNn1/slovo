@@ -32,7 +32,11 @@ import { survivalMode } from './game/survival-mode';
 import { timedMode } from './game/timed-mode';
 import { typeWordMode } from './game/type-word-mode';
 import { openHistory, type History } from './saved/history';
-import { createWordOfTheDayArchiveRecorder } from './saved/word-of-the-day-archive';
+import {
+  createWordOfTheDayArchive,
+  createWordOfTheDayArchiveRecorder,
+  type WordOfTheDayArchive,
+} from './saved/word-of-the-day-archive';
 import { openKnowledge, type Knowledge } from './knowledge/knowledge';
 import { openHiddenEntries, type HiddenEntries } from './mix/hidden-entries';
 import { createHiding, type Hiding } from './mix/hiding';
@@ -72,6 +76,12 @@ export interface Composition extends Hiding {
   readonly collections: Collections;
   /** History, which the Feed records in the same write as Seen. */
   readonly history: History;
+  /**
+   * The Word of the Day archive «Слова дня», the days whose Word of the Day's
+   * card was Seen, read afresh on each call (ADR 0054). Opening a Word from it
+   * makes nothing Seen: open it with `entryCard`.
+   */
+  readonly wordOfTheDayArchive: WordOfTheDayArchive;
   /** The Hidden Entries, eligible nowhere until restored. */
   readonly hiddenEntries: HiddenEntries;
   /** The Mix, whose Categories out of it are the Hidden Categories (ADR 0019). */
@@ -295,10 +305,12 @@ export async function openComposition({
   /**
    * An Edition that leaves out `searchLetters` or its sort locale, as in
    * tests of other features, has Search read each letter as itself and sort
-   * in the default locale; one that leaves out `moods` offers none.
+   * in the default locale; one that leaves out `moods` offers none, and one
+   * that leaves out its `locale` has the Word of the Day archive write its
+   * dates in the default locale.
    */
   edition: Pick<Edition, 'id' | 'isFeatureEnabled'> &
-    Partial<Pick<Edition, 'searchLetters' | 'moods'>> &
+    Partial<Pick<Edition, 'searchLetters' | 'moods' | 'locale'>> &
     MixEdition &
     NotificationsEdition &
     GameEdition &
@@ -475,6 +487,7 @@ export async function openComposition({
     favorites,
     collections,
     history,
+    wordOfTheDayArchive: createWordOfTheDayArchive({ content, edition, userState, clock }),
     hiddenEntries,
     mix,
     knowledge,

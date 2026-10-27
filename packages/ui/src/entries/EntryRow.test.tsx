@@ -51,7 +51,9 @@ function deleteAction(onPress: () => void): EntryRowAction {
 async function renderRow({
   row: shown = row,
   ...props
-}: Partial<Pick<ComponentProps<typeof EntryRow>, 'row' | 'onPress' | 'actions'>> = {}) {
+}: Partial<
+  Pick<ComponentProps<typeof EntryRow>, 'row' | 'onPress' | 'actions' | 'leading' | 'compact'>
+> = {}) {
   await render(
     <GestureHandlerRootView>
       <EditionProvider edition={{ locale: 'en' }} strings={strings}>
@@ -69,6 +71,14 @@ describe('EntryRow', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'lemma, what it means, 12:30' }));
 
     expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('puts the leading text before the title, a dot between, and reads it first', async () => {
+    await renderRow({ leading: '26 October', compact: true });
+
+    expect(screen.getByLabelText('26 October, lemma, 12:30')).toHaveTextContent(
+      '26 October · lemma12:30',
+    );
   });
 
   it('puts the form a Correction replaces under its standard equivalent', async () => {
