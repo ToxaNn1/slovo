@@ -1,6 +1,6 @@
 import type { AskableEntry, AskableKind, EligibleOfKind } from '../entries/entries';
 import type { AnswerSheet, FixedChip, GameMode, RoundOption, TextRange } from './game-mode';
-import { entriesIn, roundsIn } from './game-mode';
+import { chipsMatch, entriesIn, roundsIn } from './game-mode';
 import { GAME_ROUNDS, roundLimitOf, type PlannedRound, type RoundPlanner } from './round-plan';
 import { typedAnswerMatches } from './typed-answer';
 
@@ -261,10 +261,6 @@ function roundOf(
 /** Whether more than one blank is left, so that «Відкрити літеру» may open one. */
 const canOpenLetterIn = (blanks: readonly (string | undefined)[] | undefined) =>
   blanks !== undefined && blanks.filter((blank) => blank === undefined).length > 1;
-
-/** Whether the chips tapped are the right ones in the right order, equal chips interchangeable. */
-const chipsMatch = (tapped: readonly string[], right: readonly string[]) =>
-  tapped.length === right.length && tapped.every((chip, place) => chip === right[place]);
 
 /**
  * The answer judged against the Round's content, with the Entry it asked

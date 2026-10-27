@@ -1,21 +1,11 @@
 import { renderStress, stressedVowelsOf } from '../entries/stress';
-import { shuffled, type FixedChip, type GameMode } from './game-mode';
+import { outOfOrder, shuffled, type FixedChip, type GameMode } from './game-mode';
 
 /** How many letters a Word that plays has, at least and at most. */
 const LETTERS = { min: 4, max: 9 } as const;
 
 /** The characters of a Word that stay in place and are never chips: an apostrophe of any kind or a hyphen. */
 const IN_PLACE = new Set(["'", 'ʼ', '’', '-']);
-
-/**
- * The chips of a shuffle, never in the right order: when the shuffle left
- * them so, they move one place on, which no Word of 4 letters or more with
- * two different letters can be in.
- */
-function outOfOrder(letters: readonly string[], chips: readonly string[]): readonly string[] {
-  const inOrder = chips.every((chip, place) => chip === letters[place]);
-  return inOrder ? [...chips.slice(1), ...chips.slice(0, 1)] : chips;
-}
 
 /**
  * «Анаграми», the Core's anagram mode (ADR 0052): a Round shows a Word's
