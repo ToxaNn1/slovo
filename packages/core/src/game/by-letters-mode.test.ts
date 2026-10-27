@@ -300,7 +300,7 @@ describe('«Відкрити літеру» in «За буквами»', () => {
     expect(buildGameReview(current(app).played)[0]).toMatchObject({ right: true });
   });
 
-  it('opens nothing once the Round is answered, and the next Round starts with every blank', async () => {
+  it('opens nothing once the Round is answered, and the next Round starts with every letter blank', async () => {
     const app = await startAt('кобза');
     await app.game.answer({ form: 'typed', text: 'кобза' });
     const answered = app.game.state;
@@ -309,7 +309,9 @@ describe('«Відкрити літеру» in «За буквами»', () => {
     expect(app.game.state).toBe(answered);
 
     await app.game.next();
-    expect(blanksOf(app)?.every((blank) => blank === undefined)).toBe(true);
+    expect(blanksOf(app)?.every((blank) => blank === undefined || ['ʼ', '-'].includes(blank))).toBe(
+      true,
+    );
     expect(current(app).round).toMatchObject({ canOpenLetter: true });
   });
 });
