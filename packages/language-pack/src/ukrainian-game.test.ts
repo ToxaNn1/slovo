@@ -463,7 +463,9 @@ describe('«Обери правильне» over the Ukrainian Language Pack', (
 
   it('highlights the non-standard form where the sentence holds it as written, and nothing where it is inflected', async () => {
     const rounds: Round[] = [];
-    for (const seed of [1, 2, 3, 4]) rounds.push(...(await playCorrections(await run(seed))));
+    // One composition plays four Games, as in the test of stress traps below.
+    const app = await run(1);
+    for (let game = 0; game < 4; game += 1) rounds.push(...(await playCorrections(app)));
     const highlighted = rounds.filter((round) => round.highlight !== undefined);
     const plain = rounds.filter((round) => round.highlight === undefined);
 
@@ -484,8 +486,10 @@ describe('«Обери правильне» over the Ukrainian Language Pack', (
   });
 
   it("offers other Corrections' main equivalents, of the same Correction Type first, never the asked one's own", async () => {
-    for (const seed of [1, 2, 3]) {
-      for (const round of await playCorrections(await run(seed))) {
+    // One composition plays three Games, as in the test of stress traps below.
+    const app = await run(1);
+    for (let game = 0; game < 3; game += 1) {
+      for (const round of await playCorrections(app)) {
         const asked = askedOf(round);
         const texts = optionsOf(round).map(({ text }) => text);
         expect(new Set(texts).size).toBe(4);
@@ -542,8 +546,10 @@ describe('«Обери правильне» over the Ukrainian Language Pack', (
       stressTraps.flatMap(({ standardEquivalents }) => standardEquivalents),
     );
 
-    for (const seed of [1, 2, 3, 4, 5, 6]) {
-      for (const round of await playCorrections(await run(seed))) {
+    // One composition plays six Games: opening one reads and plans over the whole pack, the slow part.
+    const app = await run(1);
+    for (let game = 0; game < 6; game += 1) {
+      for (const round of await playCorrections(app)) {
         expect(askedOf(round).correctionType).not.toBe('wrongStress');
         expect(optionsOf(round).filter(({ text }) => trapForms.has(text))).toEqual([]);
       }
