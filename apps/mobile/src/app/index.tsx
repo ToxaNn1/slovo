@@ -3,6 +3,7 @@ import {
   DecorBackground,
   EndOfCycleCard,
   EntryCard,
+  FirstWeekCard,
   PagerScrollView,
   Placeholder,
   SearchButton,
@@ -21,7 +22,8 @@ import { editionStrings } from '@/edition/edition';
 import { EntryActions } from '@/entries/entry-actions';
 import { useOpenScreen } from '@/entries/use-open-screen';
 import { useFeed } from '@/feed/feed';
-import type { DrawnCard } from '@/feed/feed-screen';
+import type { DrawnCard, DrawnNoticeCard } from '@/feed/feed-screen';
+import { useFirstWeekStreak } from '@/feed/first-week';
 import { TOP_ROW } from '@/edition/feed-loading';
 import { MoodButtonAndSheet } from '@/mood/mood';
 import { StatsPillAndSheet } from '@/progress/progress';
@@ -136,7 +138,7 @@ const FeedPage = memo(function FeedPage({
         testID={`feed-card-${String(position)}`}
         style={[styles.page, styles.centred, { paddingTop: top + TOP_ROW }]}
       >
-        {card.kind === 'end-of-cycle' ? <EndOfCycleCard /> : <DailyLimitCard />}
+        {card.kind === 'end-of-cycle' ? <EndOfCycleCard /> : <NoticeCard card={card} />}
       </View>
     );
   return (
@@ -173,6 +175,15 @@ const FeedPage = memo(function FeedPage({
     </View>
   );
 });
+
+function NoticeCard({ card }: { card: DrawnNoticeCard }) {
+  const streak = useFirstWeekStreak();
+  return card.notice === 'firstWeek' ? (
+    <FirstWeekCard day={card.firstWeekDay} streak={streak} />
+  ) : (
+    <DailyLimitCard />
+  );
+}
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
