@@ -14,7 +14,12 @@ const strings = {
     mix: { next: 'Next' },
     notifications: { later: 'Later' },
   },
-  rarityTest: { start: 'Check your level', result: 'Your level: from {n}' },
+  rarityTest: {
+    start: 'Check your level',
+    subtitle: 'A few words to pick your rarity',
+    progress: '{n} of {total}',
+    result: 'Your level: from {n}',
+  },
   knowledge: { known: 'Known', unknown: 'Unknown' },
 } as EditionStrings;
 
@@ -51,6 +56,7 @@ describe('OnboardingRarityTest', () => {
     await renderStep();
 
     expect(screen.getByRole('header', { name: 'Check your level' })).toBeTruthy();
+    expect(screen.getByText('A few words to pick your rarity')).toBeTruthy();
     expect(screen.getByText('STEP 3 OF 4')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Start' })).toBeTruthy();
   });
@@ -85,6 +91,17 @@ describe('OnboardingRarityTest', () => {
 
     expect(screen.getByLabelText('word 1')).toBeTruthy();
     expect(screen.queryByLabelText('word 0')).toBeNull();
+  });
+
+  it('counts the Words asked about, out of all of them', async () => {
+    await renderStep();
+    await fireEvent.press(screen.getByRole('button', { name: 'Start' }));
+    expect(screen.getByText('1 of 6')).toBeTruthy();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Unknown' }));
+
+    expect(screen.getByText('2 of 6')).toBeTruthy();
+    expect(screen.queryByText('1 of 6')).toBeNull();
   });
 
   it('sets the floor by a full test and shows it on the result, then goes on', async () => {

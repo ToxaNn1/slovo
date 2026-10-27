@@ -18,6 +18,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: onboarding-rarity-test
 - assertVisible: КРОК 3 З 5
 - assertVisible: Перевірити рівень
+- assertVisible: 10 слів — і ми підберемо рідкість саме для вас
 - assertVisible:
     id: onboarding-rarity-later
 - takeScreenshot: onboarding-rarity-test
@@ -25,6 +26,9 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: onboarding-rarity-start
 - assertVisible:
     id: onboarding-rarity-lemma
+- assertVisible:
+    id: onboarding-rarity-progress
+    text: 1 з 10
 - takeScreenshot: onboarding-rarity-question
 # «Знаю» on every Word: the floor is the rarest.
 - repeat:

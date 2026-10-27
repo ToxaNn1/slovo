@@ -471,12 +471,17 @@ export function OnboardingRarityTest({
   const [phase, setPhase] = useState<RarityTestPhase>({ kind: 'offer' });
   /** Whether the answers are applied, so a second tap on the last Word applies nothing. */
   const applied = useRef(false);
-  // VoiceOver stays on the buttons, so it says each next Word asked about.
-  const spoken =
-    phase.kind === 'asking' && phase.answers.length > 0 ? words[phase.answers.length] : undefined;
+  /** «3 з 10» over the Word asked about. */
+  const progressOf = (asked: number) =>
+    fill(strings.rarityTest.progress, { n: String(asked + 1), total: String(words.length) });
+  // VoiceOver stays on the buttons, so it says where the test is and each next Word.
+  const asked = phase.kind === 'asking' ? phase.answers.length : 0;
+  const spoken = asked > 0 ? words[asked] : undefined;
+  const announcement =
+    spoken === undefined ? undefined : `${progressOf(asked)}, ${spoken.accessibilityLabel}`;
   useEffect(() => {
-    if (spoken !== undefined) AccessibilityInfo.announceForAccessibility(spoken.accessibilityLabel);
-  }, [spoken]);
+    if (announcement !== undefined) AccessibilityInfo.announceForAccessibility(announcement);
+  }, [announcement]);
 
   const answer = (known: boolean) => {
     if (phase.kind !== 'asking') return;
@@ -522,7 +527,16 @@ export function OnboardingRarityTest({
           </>
         }
       >
-        {title(strings.rarityTest.start)}
+        <View style={styles.heading}>
+          {title(strings.rarityTest.start)}
+          <Text
+            {...voice}
+            maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+            style={[styles.subtitle, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+          >
+            {strings.rarityTest.subtitle}
+          </Text>
+        </View>
       </OnboardingStep>
     );
   }
@@ -574,6 +588,16 @@ export function OnboardingRarityTest({
         </>
       }
     >
+      {word !== undefined && (
+        <Text
+          testID="onboarding-rarity-progress"
+          {...voice}
+          maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+          style={[styles.counter, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+        >
+          {progressOf(phase.answers.length)}
+        </Text>
+      )}
       {word !== undefined && (
         <WholeWordsText
           text={word.lemma}
@@ -807,6 +831,7 @@ const styles = StyleSheet.create({
   },
   footer: { paddingHorizontal: SIDE, paddingTop: space[3], paddingBottom: space[4], gap: space[5] },
   dots: { flexDirection: 'row', alignItems: 'center', gap: DOT.gap },
+  counter: { fontSize: typeSize.body, fontWeight: '600' },
   later: { minHeight: minTouchTarget, alignItems: 'center', justifyContent: 'center' },
   laterLabel: { fontSize: typeSize.button, fontWeight: '600' },
   sample: {

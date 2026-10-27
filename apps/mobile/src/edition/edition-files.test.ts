@@ -210,6 +210,8 @@ describe('the 0.8.13 strings', () => {
   it('the Ukrainian Edition carries the agreed Rarity Test texts verbatim', () => {
     expect(parsed.rarityTest).toMatchObject({
       start: 'Перевірити рівень',
+      subtitle: '10 слів — і ми підберемо рідкість саме для вас',
+      progress: '{n} з {total}',
       retake: 'Пройти тест ще раз',
       result: 'Ваш рівень: від {n}',
     });
@@ -294,6 +296,7 @@ describe('the 0.8.13 strings', () => {
 
   it.each([
     ['rarityTest.result', { rarityTest: { ...strings['rarityTest'], result: 'Ваш рівень' } }],
+    ['rarityTest.progress', { rarityTest: { ...strings['rarityTest'], progress: '{n} з 10' } }],
     ['search.resultLabel', { search: { ...strings['search'], resultLabel: '{kind}' } }],
   ])('needs every placeholder in %s', (path, changed) => {
     expect(issuesOf({ ...strings, ...changed })).toEqual([path]);

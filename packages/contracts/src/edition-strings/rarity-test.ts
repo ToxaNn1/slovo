@@ -10,6 +10,10 @@ import { templateOf } from './shared';
 export const RarityTestStringsSchema = z.strictObject({
   /** Offers the test in onboarding after the Mix. */
   start: TextSchema,
+  /** What the offer in onboarding says under its title. */
+  subtitle: TextSchema,
+  /** Where the test is, over the Word asked about. Takes `{n}`, its number, and `{total}`. */
+  progress: templateOf('n', 'total'),
   /** The Settings row that takes the test again. */
   retake: TextSchema,
   /** The result screen. Takes `{n}`, the Rarity Floor. */
