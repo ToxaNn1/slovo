@@ -2222,7 +2222,7 @@ describe('whether a Game Mode can start', () => {
     ) as unknown as ContentReadPort;
   }
 
-  it('reads the eligible Entries once for a start, whether it starts or not', async () => {
+  it('reads nothing of the pack again for a start, whether it starts or not', async () => {
     const reads: string[] = [];
     const app = await run({
       pack: countingPack(reads),
@@ -2235,9 +2235,9 @@ describe('whether a Game Mode can start', () => {
     reads.length = 0;
     await app.game.start('test-lemma');
 
-    // One read of the eligible ids, a query per Category in the Mix; the Words were read once already.
-    expect(started).toEqual(['listWordIds', 'listWordIds', 'listWordIds']);
-    expect(reads).toEqual(started);
+    // The live ids, a query per Category in the Mix, and the Words were read once already, by the offers.
+    expect(started).toEqual([]);
+    expect(reads).toEqual([]);
   });
 
   it('reads the Words of the pack once a session, however often the offers are planned', async () => {
@@ -2372,19 +2372,23 @@ describe('a failed planning of the offers', () => {
     });
     let failed = false;
     let starting = false;
-    /** For each read of the eligible ids while the start waits, whether the offers were planned by then. */
+    /** For each read of the Hidden Entries by the start, whether the offers were planned by then. */
     const plannedAtRead: boolean[] = [];
     const later = handSchedule();
+    const port = createMemoryUserStatePort(new Map());
     const app = await run({
-      pack: {
-        ...content,
-        listWordIds(categoryId) {
-          if (starting)
+      port: {
+        ...port,
+        list(prefix) {
+          if (starting && prefix === userStateRecords.hiddenEntries.prefix)
             plannedAtRead.push(
               app.game.state.modes.every((offer) => 'canStart' in offer && !('planning' in offer)),
             );
-          return content.listWordIds(categoryId);
+          return port.list(prefix);
         },
+      },
+      pack: {
+        ...content,
         async listWords() {
           if (!failed) {
             failed = true;
@@ -2401,11 +2405,12 @@ describe('a failed planning of the offers', () => {
     await later.runNext();
     starting = true;
     const start = app.game.start('guess-word');
+    expect(app.game.state.modes).toEqual(planning);
     release();
     await start;
 
-    // The try reads the eligible ids, a query per Category, while the offers are still planned; the start, only after.
-    expect(plannedAtRead).toEqual([false, false, false, true, true, true]);
+    // The try read the eligible Entries before the start; the start, only once the offers were planned.
+    expect(plannedAtRead).toEqual([true]);
     expect(app.game.state.modes).toEqual(ready);
     expect(current(app)).toMatchObject({ modeId: 'guess-word', status: 'playing' });
   });
