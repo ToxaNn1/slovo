@@ -159,7 +159,18 @@ async function pickTheWordOfThePrompt() {
   await fireEvent.press(screen.getByRole('button', { name: new RegExp(`^слово${n},`) }));
 }
 
-/** The Word a Round of «За буквами» asks about: «слово{n}», its Definition «The meaning of test{n}.». */
+/** Taps the shuffled letter chips of a Round of «Анаграми» in the order of the text. */
+async function assemble(text: string) {
+  for (const letter of text) {
+    const chip = screen
+      .getAllByTestId(/^chips-\d+$/)
+      .find((one) => one.props['accessibilityLabel'] === letter);
+    if (chip === undefined) throw new Error(`No chip «${letter}» left`);
+    await fireEvent.press(chip);
+  }
+}
+
+/** The Word a Round of «За буквами» or «Анаграми» asks about: «слово{n}», its Definition «The meaning of test{n}.». */
 function theWordOfThePrompt(): string {
   const prompt = String(screen.getByTestId('game-prompt').props['accessibilityLabel']);
   return `слово${/\d+/.exec(prompt)?.[0] ?? ''}`;
@@ -179,6 +190,7 @@ describe('the Game screen', () => {
       'game-mode-guess-word',
       'game-mode-stress',
       'game-mode-pairs',
+      'game-mode-anagram',
       'game-mode-by-letters',
       'Виправлення',
       'game-mode-correction',
@@ -216,6 +228,7 @@ describe('the Game screen', () => {
       'game-mode-guess-word',
       'game-mode-stress',
       'game-mode-pairs',
+      'game-mode-anagram',
       'game-mode-by-letters',
     ]);
     expect(screen.queryByText('Виправлення')).toBeNull();
@@ -360,6 +373,48 @@ describe('the Game screen', () => {
 
     expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
     expect(screen.getByTestId('game-sheet')).toHaveTextContent(/слово\d+/);
+    expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 4 з 5');
+  });
+
+  it('starts «Анаграми» from its card and plays a whole Game, assembling each Word, to the result screen', async () => {
+    await renderScreen();
+
+    await fireEvent.press(screen.getByTestId('game-mode-anagram'));
+
+    for (let round = 1; round <= 15; round += 1) {
+      await waitFor(() => {
+        expect(screen.getByTestId('game-progress').props['accessibilityLabel']).toBe(
+          `Пройдено раундів: ${String(round - 1)} з 15`,
+        );
+      });
+      expect(screen.getByTestId('game-prompt').props['accessibilityLabel']).toMatch(
+        /^Визначення\. The meaning of test\d+\.$/,
+      );
+      // A chip for each of «слово{n}»'s letters and digits.
+      expect(screen.getAllByTestId(/^chips-\d+$/)).toHaveLength(theWordOfThePrompt().length);
+      await assemble(theWordOfThePrompt());
+      expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Правильно!');
+      await fireEvent.press(screen.getByTestId('game-next'));
+    }
+
+    await waitFor(() => {
+      expect(screen.getByText('Перемога!')).toBeOnTheScreen();
+    });
+  });
+
+  it('takes a Life for a Word of «Анаграми» assembled wrong and shows the right one', async () => {
+    await renderScreen();
+
+    await fireEvent.press(screen.getByTestId('game-mode-anagram'));
+    await waitFor(() => {
+      expect(screen.getByTestId('chips')).toBeOnTheScreen();
+    });
+    const word = theWordOfThePrompt();
+    // «слово{n}» backwards, its number first: never the Word.
+    await assemble(Array.from(word).reverse().join(''));
+
+    expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
+    expect(screen.getByTestId('game-sheet')).toHaveTextContent(word, { exact: false });
     expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 4 з 5');
   });
 });

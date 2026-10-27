@@ -208,6 +208,7 @@ describe('the modes the Game screen offers', () => {
       'guess-word',
       'stress',
       'pairs',
+      'anagram',
       'by-letters',
       'correction',
     ]);
@@ -220,6 +221,7 @@ describe('the label over a Round', () => {
     ['correction', 'Як сказати краще?'],
     ['stress', 'Де наголос?'],
     ['pairs', 'Знайдіть пари'],
+    ['anagram', 'Визначення'],
     ['by-letters', 'Визначення'],
   ])('reads the %s mode’s own label', (modeId, label) => {
     expect(gameModeStrings(strings.modes, modeId).roundLabel).toBe(label);
@@ -267,7 +269,7 @@ describe('the groups of the modes on offer', () => {
     const app = await open({ words: 15 });
 
     expect(shapeOf(gameModeGroups(playedOffers(app.game.state.modes), strings))).toEqual([
-      ['Слова', ['guess-word', 'pairs', 'by-letters']],
+      ['Слова', ['guess-word', 'pairs', 'anagram', 'by-letters']],
       ['Виправлення', ['correction']],
     ]);
   });
@@ -276,7 +278,7 @@ describe('the groups of the modes on offer', () => {
     const app = await open({ words: 15, switchedOff: ['corrections'] });
 
     expect(shapeOf(gameModeGroups(playedOffers(app.game.state.modes), strings))).toEqual([
-      ['Слова', ['guess-word', 'pairs', 'by-letters']],
+      ['Слова', ['guess-word', 'pairs', 'anagram', 'by-letters']],
     ]);
   });
 

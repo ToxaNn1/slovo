@@ -37,6 +37,7 @@ const PLAYED_MODES: ReadonlySet<string> = new Set([
   'correction',
   'stress',
   'pairs',
+  'anagram',
   'by-letters',
 ]);
 
