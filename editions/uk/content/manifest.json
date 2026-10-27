@@ -1,4 +1,5 @@
 {
-  "contentVersion": 40,
-  "contentChecksum": "sha256:3f852334c16ee59394337342a83ef1c482ee21f6fcfbc702db14e4ac9ff6bb6d"
+  "contentVersion": 41,
+  "contentChecksum": "sha256:2b1e52b3b27ae258592f0c158ac5af2963a809cfc34b78b57c72b05110896c8d",
+  "crosswordDaysChecksum": "sha256:dd547a9cc5881e36c377fb43d2e79f02d88c119cfc9d41f41b0c5bdbf87f7560"
 }
