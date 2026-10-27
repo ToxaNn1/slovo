@@ -16,6 +16,7 @@ import config from 'slovo-edition/config';
 
 import SearchScreen from '../app/search/index';
 import { edition, editionStrings } from '../edition/edition';
+import { screenSettled } from '../entries/use-open-screen';
 
 /** The composition the screen reads, opened afresh for each test. */
 let mockComposition: Composition;
@@ -62,6 +63,8 @@ const metrics = {
 
 beforeEach(async () => {
   mockPushed.length = 0;
+  // A screen an earlier test opened would hold the next tap.
+  screenSettled();
   mockComposition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'nature', displayName: 'Природа' }],
@@ -149,6 +152,83 @@ describe('the Search screen', () => {
     expect(await mockComposition.recentQueries.list()).toEqual(['сум']);
     expect((await mockComposition.openedFromSearch('w_sad'))?.entryId).toBe('w_sad');
     expect(mockComposition.history.list).toEqual([]);
+  });
+
+  it('shows «За значенням» from 3 letters: the Words whose Definition holds the query', async () => {
+    await renderSearch();
+
+    await type('meaning of ґре');
+
+    expect(screen.getByTestId('search-group-byMeaning')).toHaveTextContent(
+      strings.groups.byMeaning,
+    );
+    expect(screen.getByTestId('search-meaning-w_polite')).toHaveAccessibleName(
+      'За значенням: ґречний',
+    );
+    expect(screen.queryByTestId('search-meaning-w_quiet')).not.toBeOnTheScreen();
+    expect(screen.queryByTestId('search-group-words')).not.toBeOnTheScreen();
+    expect(screen.queryByTestId('search-nothing-found')).not.toBeOnTheScreen();
+
+    await fireEvent.press(screen.getByTestId('search-meaning-w_polite'));
+    await settle();
+    expect(mockPushed).toEqual([`/search/w_polite?back=${encodeURIComponent(strings.title)}`]);
+  });
+
+  it('shows no «За значенням» for 2 letters', async () => {
+    await renderSearch();
+
+    await type('of');
+
+    expect(screen.queryByTestId('search-group-byMeaning')).not.toBeOnTheScreen();
+    expect(screen.getByTestId('search-nothing-found')).toBeOnTheScreen();
+  });
+
+  it('shows the recent queries, newest first, while the field is empty', async () => {
+    await mockComposition.recentQueries.resultOpened('сум');
+    await mockComposition.recentQueries.resultOpened('гре');
+    await renderSearch();
+
+    expect(screen.getByTestId('search-recent-0')).toHaveAccessibleName('гре');
+    expect(screen.getByTestId('search-recent-1')).toHaveAccessibleName('сум');
+    expect(screen.getByTestId('search-recent-clear')).toHaveTextContent(strings.clear);
+
+    await type('сум');
+    expect(screen.queryByTestId('search-recent-0')).not.toBeOnTheScreen();
+    expect(screen.queryByTestId('search-recent-clear')).not.toBeOnTheScreen();
+  });
+
+  it('runs a recent query on a tap', async () => {
+    await mockComposition.recentQueries.resultOpened('гре');
+    await renderSearch();
+
+    await fireEvent.press(screen.getByTestId('search-recent-0'));
+    await settle();
+
+    expect(screen.getByTestId('search-field')).toHaveDisplayValue('гре');
+    expect(screen.getByTestId('search-result-w_polite')).toBeOnTheScreen();
+  });
+
+  it('empties the recent queries with «Очистити»', async () => {
+    await mockComposition.recentQueries.resultOpened('сум');
+    await renderSearch();
+
+    await fireEvent.press(screen.getByTestId('search-recent-clear'));
+    await settle();
+
+    expect(screen.queryByTestId('search-recent-0')).not.toBeOnTheScreen();
+    expect(screen.queryByTestId('search-recent-clear')).not.toBeOnTheScreen();
+    expect(await mockComposition.recentQueries.list()).toEqual([]);
+  });
+
+  it('shows a query kept from an opened result once the field is emptied again', async () => {
+    await renderSearch();
+    await type('сум');
+    await fireEvent.press(screen.getByTestId('search-result-w_sad'));
+    await settle();
+
+    await type('');
+
+    expect(screen.getByTestId('search-recent-0')).toHaveAccessibleName('сум');
   });
 
   it('keeps no query while no result is opened', async () => {
