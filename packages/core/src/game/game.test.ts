@@ -330,7 +330,9 @@ describe('a Round of «Вгадай слово»', () => {
     expect(game).toMatchObject({
       modeId: 'guess-word',
       roundsPassed: 0,
+      roundLimit: GAME_ROUNDS,
       lives: GAME_LIVES,
+      livesAtStart: GAME_LIVES,
       status: 'playing',
     });
     expect(game.round).toMatchObject({ number: 1, answer: undefined });

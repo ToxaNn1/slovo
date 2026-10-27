@@ -11,6 +11,8 @@ const strings = {
     round: {
       progress: '{passed} / {total}',
       progressLabel: 'Rounds passed: {passed} of {total}',
+      passed: 'Passed: {passed}',
+      passedLabel: 'Rounds passed: {passed}',
       lives: 'Lives: {count} of {total}',
       highlight: 'Marked: {text}',
       gap: { label: 'Which word is missing?', voiceOver: 'gap' },
@@ -73,7 +75,9 @@ const first: CurrentGame = {
     answer: undefined,
   },
   roundsPassed: 0,
+  roundLimit: 15,
   lives: 5,
+  livesAtStart: 5,
   played: [],
   status: 'playing',
 };
@@ -390,6 +394,34 @@ async function renderRound(
 }
 
 describe('GameRound', () => {
+  it('counts the Rounds passed out of the Round limit and the Lives out of those the Game started with', async () => {
+    await renderRound(jest.fn(), jest.fn(), { ...first, roundsPassed: 7, lives: 4 });
+
+    expect(screen.getByTestId('game-progress').props['accessibilityLabel']).toBe(
+      'Rounds passed: 7 of 15',
+    );
+    expect(screen.getByText('7 / 15')).toBeTruthy();
+    expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Lives: 4 of 5');
+  });
+
+  it('counts the Rounds passed with no limit in a mode without one, and its own Lives', async () => {
+    await renderRound(jest.fn(), jest.fn(), {
+      ...first,
+      modeId: 'survival',
+      roundsPassed: 23,
+      roundLimit: undefined,
+      lives: 2,
+      livesAtStart: 3,
+    });
+
+    expect(screen.getByTestId('game-progress').props['accessibilityLabel']).toBe(
+      'Rounds passed: 23',
+    );
+    expect(screen.getByText('Passed: 23')).toBeTruthy();
+    expect(screen.queryByTestId('game-progress-bar')).toBeNull();
+    expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Lives: 2 of 3');
+  });
+
   it('shows a right answer as right', async () => {
     await renderRound();
 

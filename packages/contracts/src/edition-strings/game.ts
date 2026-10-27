@@ -104,6 +104,10 @@ export const GameStringsSchema = z.strictObject({
     progress: templateOf('passed', 'total'),
     /** What VoiceOver reads for it, e.g. «Пройдено раундів: 7 з 15». Takes `{passed}` and `{total}`. */
     progressLabel: templateOf('passed', 'total'),
+    /** The Rounds passed in a mode with no Round limit, e.g. «Пройдено: 23». Takes `{passed}`. */
+    passed: templateOf('passed'),
+    /** What VoiceOver reads for it, e.g. «Пройдено раундів: 23». Takes `{passed}`. */
+    passedLabel: templateOf('passed'),
     /** What VoiceOver reads for the Lives, e.g. «Життів: 4 з 5». Takes `{count}` and `{total}`. */
     lives: templateOf('count', 'total'),
     /**

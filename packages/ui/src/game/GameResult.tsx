@@ -1,4 +1,4 @@
-import { GAME_ROUNDS, type CurrentGame } from '@slovo/core';
+import type { CurrentGame } from '@slovo/core';
 import { useEffect, useRef } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -54,7 +54,8 @@ function ResultNumber({
 
 /**
  * The result screen (`game-result-win-dark`, `game-result-loss-dark`): the
- * title and the line of a win or a loss, the Rounds passed, the Lives left
+ * title and the line of a win or a loss, the Rounds passed (out of the
+ * mode's Round limit, or alone in a mode without one), the Lives left
  * and the best result when there is one, «Ще раз» for a new Game in the same
  * mode and «На головну» for the Feed. A win arrives with the success haptic
  * twice. The Edition's victory illustration (Decor slot 6) sits over the
@@ -80,9 +81,9 @@ export function GameResult({
   const { colors, fontFamilies } = useTokens();
   const { strings, voice, count } = useEdition();
   const words = strings.game;
-  const { roundsPassed, lives } = game;
+  const { roundsPassed, roundLimit, lives } = game;
   const won = game.status === 'won';
-  const progress = { passed: String(roundsPassed), total: String(GAME_ROUNDS) };
+  const progress = { passed: String(roundsPassed), total: String(roundLimit ?? '') };
   const gameHaptics = useGameHaptics();
   // Whether the win has played, so only the screen's arrival plays it.
   const played = useRef(false);
@@ -116,15 +117,20 @@ export function GameResult({
           maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
           style={[styles.line, { color: colors.muted, fontFamily: fontFamilies.ui }]}
         >
-          {won ? count(words.result.won.line, GAME_ROUNDS) : words.result.lost.line}
+          {won ? count(words.result.won.line, roundsPassed) : words.result.lost.line}
         </Text>
       </View>
       <View style={styles.numbers}>
         <ResultNumber
           testID="game-result-rounds"
-          value={fill(words.round.progress, progress)}
-          label={count(words.result.rounds, GAME_ROUNDS)}
-          spoken={fill(words.round.progressLabel, progress)}
+          value={
+            roundLimit === undefined ? String(roundsPassed) : fill(words.round.progress, progress)
+          }
+          label={count(words.result.rounds, roundLimit ?? roundsPassed)}
+          spoken={fill(
+            roundLimit === undefined ? words.round.passedLabel : words.round.progressLabel,
+            progress,
+          )}
         />
         {lives !== undefined && (
           <ResultNumber

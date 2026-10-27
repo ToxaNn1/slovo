@@ -196,7 +196,8 @@ describe('a Game of «Виживання»', () => {
     const app = await run();
     await app.game.start('survival');
 
-    expect(current(app)).toMatchObject({ lives: 3, status: 'playing' });
+    expect(current(app)).toMatchObject({ lives: 3, livesAtStart: 3, status: 'playing' });
+    expect(current(app).roundLimit).toBeUndefined();
 
     const rounds = await play(app, { wrong: [2, 5, 9] });
 

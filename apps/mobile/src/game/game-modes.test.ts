@@ -207,6 +207,7 @@ describe('the modes the Game screen offers', () => {
       { modeId: 'idiom-meaning', entryKind: 'idiom', canStart: true },
       { modeId: 'build-idiom', entryKind: 'idiom', canStart: true },
       { modeId: 'origin', entryKind: 'word', canStart: true },
+      { modeId: 'survival', entryKind: 'correction', canStart: true },
     ] as const;
 
     expect(playedOffers(offers).map(({ modeId }) => modeId)).toEqual([
@@ -220,6 +221,7 @@ describe('the modes the Game screen offers', () => {
       'anglicism',
       'idiom-meaning',
       'build-idiom',
+      'survival',
     ]);
   });
 });
@@ -236,6 +238,7 @@ describe('the label over a Round', () => {
     ['build-idiom', 'Складіть вислів'],
     ['anglicism', 'Як сказати краще?'],
     ['idiom-meaning', 'Що це означає?'],
+    ['survival', 'Виживання'],
   ])('reads the %s mode’s own label', (modeId, label) => {
     expect(gameModeStrings(strings.modes, modeId).roundLabel).toBe(label);
   });
@@ -285,6 +288,7 @@ describe('the groups of the modes on offer', () => {
       ['Слова', ['guess-word', 'pairs', 'anagram', 'by-letters', 'type-word']],
       ['Виправлення', ['correction', 'anglicism']],
       ['Вислови', ['idiom-meaning', 'build-idiom']],
+      ['Виклик', ['survival']],
     ]);
   });
 
