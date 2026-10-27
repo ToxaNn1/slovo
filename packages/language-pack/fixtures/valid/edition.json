@@ -97,5 +97,6 @@
     }
   ],
   "categoriesRequiringHistory": [],
-  "originLanguages": [{ "code": "proto-slavic", "name": "праслов'янська" }]
+  "originLanguages": [{ "code": "proto-slavic", "name": "праслов'янська" }],
+  "moods": [{ "id": "calm", "name": "спокійний", "emoji": "😌" }]
 }

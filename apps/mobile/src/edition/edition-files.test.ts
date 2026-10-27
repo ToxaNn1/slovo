@@ -435,6 +435,30 @@ describe('the origin languages', () => {
   });
 });
 
+describe('the moods', () => {
+  // Every Edition lists its moods (ADR 0054), an empty list when it has none.
+  it.each(editions)('the %s Edition lists its moods', (edition) => {
+    const config = readJson(edition, 'config') as Record<string, unknown>;
+    const { moods: _removed, ...without } = config;
+
+    expect(EditionConfigSchema.parse(config).moods).toBeInstanceOf(Array);
+    expect(
+      EditionConfigSchema.safeParse(without).error?.issues.map((issue) => issue.path.join('.')),
+    ).toEqual(['moods']);
+  });
+
+  it('the Ukrainian Edition lists six moods', () => {
+    expect(EditionConfigSchema.parse(readJson('uk', 'config')).moods).toEqual([
+      { id: 'joyful', name: 'Радісний', emoji: '😊' },
+      { id: 'sad', name: 'Сумний', emoji: '😢' },
+      { id: 'in-love', name: 'Закоханий', emoji: '😍' },
+      { id: 'energetic', name: 'Бадьорий', emoji: '⚡' },
+      { id: 'calm', name: 'Спокійний', emoji: '😌' },
+      { id: 'thoughtful', name: 'Задумливий', emoji: '🤔' },
+    ]);
+  });
+});
+
 describe('the legal pages of About', () => {
   const strings = readJson('uk', 'strings') as Record<string, unknown>;
   const settings = strings['settings'] as Record<string, unknown>;

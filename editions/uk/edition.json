@@ -187,5 +187,13 @@
     { "code": "cu", "name": "церковнослов’янська" },
     { "code": "proto-slavic", "name": "праслов’янська" },
     { "code": "other", "name": "інша" }
+  ],
+  "moods": [
+    { "id": "joyful", "name": "Радісний", "emoji": "😊" },
+    { "id": "sad", "name": "Сумний", "emoji": "😢" },
+    { "id": "in-love", "name": "Закоханий", "emoji": "😍" },
+    { "id": "energetic", "name": "Бадьорий", "emoji": "⚡" },
+    { "id": "calm", "name": "Спокійний", "emoji": "😌" },
+    { "id": "thoughtful", "name": "Задумливий", "emoji": "🤔" }
   ]
 }

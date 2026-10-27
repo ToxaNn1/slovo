@@ -37,6 +37,18 @@ export const OriginLanguageSchema = z.strictObject({
 
 export type OriginLanguage = z.infer<typeof OriginLanguageSchema>;
 
+/**
+ * A Mood («настрій») a Word may carry (ADR 0054): its id, its name in the
+ * Edition's language and its emoji.
+ */
+export const MoodSchema = z.strictObject({
+  id: KebabCaseIdSchema,
+  name: z.string().min(1),
+  emoji: z.string().min(1),
+});
+
+export type Mood = z.infer<typeof MoodSchema>;
+
 /** How the Game picks Distractors for a Round. */
 export const DistractorRuleSchema = z.enum(['same-part-of-speech']);
 
@@ -322,6 +334,11 @@ export const EditionConfigSchema = z
      * Edition gives no Word an origin.
      */
     originLanguages: z.array(OriginLanguageSchema),
+    /**
+     * The moods, in their order (ADR 0054): the Edition owns the list, so the
+     * Core stays language-agnostic. Empty when the Edition has no moods.
+     */
+    moods: z.array(MoodSchema),
   })
   .superRefine(
     (
@@ -330,6 +347,7 @@ export const EditionConfigSchema = z
         correctionCategories,
         categoriesRequiringHistory,
         originLanguages,
+        moods,
         userSettingDefaults,
       },
       context,
@@ -371,6 +389,17 @@ export const EditionConfigSchema = z
           });
         }
         codes.add(code);
+      });
+      const moodIds = new Set<string>();
+      moods.forEach(({ id }, index) => {
+        if (moodIds.has(id)) {
+          context.addIssue({
+            code: 'custom',
+            path: ['moods', index, 'id'],
+            message: `Duplicate mood id "${id}"`,
+          });
+        }
+        moodIds.add(id);
       });
       for (const field of ['categories', 'correctionCategories'] as const) {
         const inMix = userSettingDefaults.mix[field];
