@@ -4,7 +4,7 @@ import { useIsFocused } from 'expo-router';
 import { useCallback, useEffect, useState, type RefObject } from 'react';
 
 import { useComposition } from '../composition';
-import { useInForeground } from '../lifecycle';
+import { useInForeground } from '../foreground/in-foreground';
 import { logError } from '../log';
 import { useSubscribed } from '../opening';
 import { cardOnScreen, type TurnedTo } from './feed-screen';
