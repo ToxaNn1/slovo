@@ -130,9 +130,9 @@ describe('the crossword days the pack build keeps in the Edition', () => {
     });
   });
 
-  it('repeats no word within 24 days', () => {
+  it('repeats no word within 20 days', () => {
     recorded.forEach((day, i) => {
-      const recent = recorded.slice(Math.max(0, i - 23), i).flatMap(({ words }) => words);
+      const recent = recorded.slice(Math.max(0, i - 19), i).flatMap(({ words }) => words);
       for (const { entryId } of day.words) {
         expect(recent.map((word) => word.entryId)).not.toContain(entryId);
       }
@@ -237,7 +237,7 @@ describe('the crossword days the pack build keeps in the Edition', () => {
     ]);
   }, 60_000);
 
-  it('refuses a word repeated within 24 days', () => {
+  it('refuses a word repeated within 20 days', () => {
     const [first, second] = recorded;
     if (first === undefined || second === undefined) throw new Error('Too few days');
     const repeated = { ...second, words: first.words };
@@ -246,14 +246,14 @@ describe('the crossword days the pack build keeps in the Edition', () => {
       notRecorded,
       ...first.words.map(
         ({ entryId }, i) =>
-          `${DAYS_FILE} › 1.words.${String(i)}.entryId: ${entryId} is also in the day of 2027-01-01: a word comes back only 24 days or more later`,
+          `${DAYS_FILE} › 1.words.${String(i)}.entryId: ${entryId} is also in the day of 2027-01-01: a word comes back only 20 days or more later`,
       ),
     ]);
   }, 60_000);
 });
 
 describe("the crossword days of the Ukrainian Edition's content", () => {
-  it('reach 400 days ahead with --record, no word coming back within 24 days', () => {
+  it('reach 400 days ahead with --record, no word coming back within 20 days', () => {
     const dir = mkdtempSync(join(tmpdir(), 'slovo-crossword-uk-'));
     workDirs.push(dir);
     const editionDir = join(dir, 'uk');

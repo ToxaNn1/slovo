@@ -32,7 +32,7 @@ const SEARCH_BUDGET = 500;
  * one-word main standard forms of the Corrections that are not Retired, clued
  * by their explanation, with «…» in place of the answer wherever a clue names
  * it. It is the day `--record` keeps or would append for the date: a recorded
- * day as it is, and a later one with no word of the 23 days before it. The
+ * day as it is, and a later one with no word of the 19 days before it. The
  * same content and date always give the same day.
  * It refuses when the content has errors or no grid can be made.
  */
@@ -83,7 +83,7 @@ type DaysResult =
 
 /**
  * The days from `first` through `last` that follow the days given, one a
- * day, each with no word of the 23 days before it.
+ * day, each with no word of the 19 days before it.
  */
 function daysThrough(
   content: PackContent,
@@ -100,7 +100,7 @@ function daysThrough(
   return { ok: true, days: days.slice(before.length) };
 }
 
-/** The Daily Crossword of a date with no word of the 23 days before it among the days given. */
+/** The Daily Crossword of a date with no word of the 19 days before it among the days given. */
 function dayAfterDays(
   content: PackContent,
   days: readonly CrosswordDay[],
