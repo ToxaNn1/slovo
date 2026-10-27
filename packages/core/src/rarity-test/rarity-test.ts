@@ -1,5 +1,6 @@
 import type { Edition } from '../edition/edition';
 import type { Entries } from '../entries/entries';
+import type { Mix } from '../entries/mix';
 import { renderStress } from '../entries/stress';
 import { shuffled } from '../game/game-mode';
 import type { Random } from '../ports';
@@ -18,6 +19,12 @@ export interface RarityTestWord {
   readonly lemmaWithStress: string;
 }
 
+/** The reader's answer on a drawn Word: «Знаю» (`known`) or «Не знаю». */
+export interface RarityTestAnswer {
+  readonly rarity: number;
+  readonly known: boolean;
+}
+
 /** The Rarity Test (ADR 0054): «Перевірка рівня», which sets the Rarity Floor. */
 export interface RarityTest {
   /**
@@ -28,22 +35,33 @@ export interface RarityTest {
    * remote switch does). Each draw is new; it writes nothing, so no Word is Seen.
    */
   draw(): Promise<readonly RarityTestWord[]>;
+  /**
+   * Sets the Rarity Floor by the answers, at once, and resolves to it: the
+   * lowest rarity with «Не знаю», or 5 when every Word is known. A retake
+   * overwrites the floor. It sets no Knowledge Mark, starts no Review and
+   * makes nothing Seen. Nothing is set, and it resolves to nothing, for no
+   * answers or while the Edition turns the Rarity Test or the Rarity Floor
+   * off (or a remote switch does).
+   */
+  apply(answers: readonly RarityTestAnswer[]): Promise<number | undefined>;
 }
 
 export function createRarityTest({
   edition,
   entries,
+  mix,
   random,
 }: {
   edition: Pick<Edition, 'isFeatureEnabled'>;
   entries: Pick<Entries, 'eligibleWordsOfAnyRarity'>;
+  mix: Pick<Mix, 'setRarityFloor'>;
   random: Random;
 }): RarityTest {
+  const isOn = () =>
+    edition.isFeatureEnabled('rarityTest') && edition.isFeatureEnabled('rarityFloor');
   return {
     async draw() {
-      if (!edition.isFeatureEnabled('rarityTest') || !edition.isFeatureEnabled('rarityFloor')) {
-        return [];
-      }
+      if (!isOn()) return [];
       const words = await entries.eligibleWordsOfAnyRarity();
       return RARITIES.flatMap((rarity) =>
         shuffled(
@@ -53,6 +71,13 @@ export function createRarityTest({
           .slice(0, WORDS_PER_RARITY)
           .map((word) => ({ wordId: word.id, rarity, lemmaWithStress: renderStress(word) })),
       );
+    },
+    async apply(answers) {
+      if (!isOn() || answers.length === 0) return undefined;
+      const unknown = answers.filter((answer) => !answer.known).map((answer) => answer.rarity);
+      const floor = Math.min(Math.max(...RARITIES), ...unknown);
+      await mix.setRarityFloor(floor);
+      return floor;
     },
   };
 }

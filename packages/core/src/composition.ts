@@ -103,7 +103,7 @@ export interface Composition extends Hiding {
    * permission, and its sample notification, taken from the plan.
    */
   readonly onboarding: Onboarding;
-  /** The Rarity Test, which draws the Words it asks about. */
+  /** The Rarity Test, which draws the Words it asks about and sets the Rarity Floor by the answers. */
   readonly rarityTest: RarityTest;
   /**
    * Opens today's Daily Crossword with the letters this device kept for it,
@@ -415,7 +415,7 @@ export async function openComposition({
     notifications,
     game,
     onboarding,
-    rarityTest: createRarityTest({ edition, entries, random }),
+    rarityTest: createRarityTest({ edition, entries, mix, random }),
     async openDailyCrossword() {
       if (crossword === undefined) return undefined;
       return openDailyCrossword({ content: crossword, userState, clock, edition });

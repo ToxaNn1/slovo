@@ -133,3 +133,70 @@ describe('the Rarity Test draw', () => {
     expect(await withoutFloor.rarityTest.draw()).toEqual([]);
   });
 });
+
+describe('the Rarity Test floor', () => {
+  /** Answers each drawn Word: «Не знаю» for the rarities in `unknown`, «Знаю» for the rest. */
+  const answer = async (app: Composition, unknown: readonly number[] = []) =>
+    (await app.rarityTest.draw()).map((drawn) => ({
+      ...drawn,
+      known: !unknown.includes(drawn.rarity),
+    }));
+
+  it('sets the Rarity Floor to the lowest rarity with «Не знаю», at once', async () => {
+    const app = await open();
+    const answers = (await answer(app, [3, 5])).map((each, index) =>
+      each.rarity === 3 && index % 2 === 0 ? { ...each, known: true } : each,
+    );
+
+    expect(await app.rarityTest.apply(answers)).toBe(3);
+    expect(app.mix.state.rarityFloor).toBe(3);
+  });
+
+  it('sets «від 5» when every Word is known', async () => {
+    const app = await open();
+
+    expect(await app.rarityTest.apply(await answer(app))).toBe(5);
+    expect(app.mix.state.rarityFloor).toBe(5);
+  });
+
+  it('sets «від 1» when no Word is known', async () => {
+    const app = await open();
+    await app.mix.setRarityFloor(4);
+
+    expect(await app.rarityTest.apply(await answer(app, [1, 2, 3, 4, 5]))).toBe(1);
+    expect(app.mix.state.rarityFloor).toBe(1);
+  });
+
+  it('overwrites the floor on a retake', async () => {
+    const app = await open();
+    await app.rarityTest.apply(await answer(app, [2]));
+
+    await app.rarityTest.apply(await answer(app, [4]));
+
+    expect(app.mix.state.rarityFloor).toBe(4);
+  });
+
+  it('sets no Knowledge Mark, starts no Review and makes nothing Seen', async () => {
+    const app = await open();
+    const before = app.knowledge.state;
+
+    await app.rarityTest.apply(await answer(app, [3]));
+
+    expect(app.knowledge.state).toEqual(before);
+    expect(app.knowledge.weak()).toEqual([]);
+    expect(app.history.list).toEqual([]);
+    for (const { wordId } of await app.rarityTest.draw()) {
+      expect((await app.entryCard(wordId))?.review).toBeFalsy();
+    }
+  });
+
+  it('sets nothing while the Edition turns the Rarity Test or the Rarity Floor off', async () => {
+    const answers = await answer(await open(), [2]);
+    for (const off of [['rarityTest'], ['rarityFloor']] as const) {
+      const app = await open({ off });
+
+      expect(await app.rarityTest.apply(answers)).toBeUndefined();
+      expect(app.mix.state.rarityFloor).toBe(1);
+    }
+  });
+});
