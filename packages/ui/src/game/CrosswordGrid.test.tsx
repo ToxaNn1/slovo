@@ -162,4 +162,20 @@ describe('CrosswordGrid', () => {
 
     expect(onOpenLetter).toHaveBeenCalledWith({ row: 1, column: 2 });
   });
+
+  it('opens a cell that holds a wrong letter, never one of a right word', async () => {
+    const onOpenLetter = jest.fn();
+    await render(<Crossword onOpenLetter={onOpenLetter} />);
+    await type('cxt');
+
+    await fireEvent.press(cell(0, 1));
+    await fireEvent.press(screen.getByRole('button', { name: 'Open a letter' }));
+    expect(onOpenLetter).toHaveBeenCalledWith({ row: 0, column: 1 });
+
+    await fireEvent.press(cell(0, 0));
+    await fireEvent.press(cell(0, 0));
+    await type('cut');
+    await fireEvent.press(cell(1, 0));
+    expect(screen.getByRole('button', { name: 'Open a letter' })).toBeDisabled();
+  });
 });

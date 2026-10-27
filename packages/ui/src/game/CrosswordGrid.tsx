@@ -69,7 +69,9 @@ const otherWay = (direction: CrosswordWord['direction']) =>
  * cells are shaded and its clue shown. A tap opens the keyboard: a letter
  * fills the selected cell and moves on along the word, the delete key erases
  * the cell or, if it is empty, the one behind. The cells of a right word turn
- * green and take no letter; a wrong letter is never marked. The screen keeps
+ * green and take no letter; a wrong letter is never marked. «Відкрити літеру»
+ * opens the selected cell, a wrong letter in it included, unless its word is
+ * right. The screen keeps
  * the letters and which words are right (the Core decides them) and passes the
  * texts; the grid keeps the selection.
  */
@@ -217,7 +219,7 @@ export function CrosswordGrid({
           onPress={() => {
             onOpenLetter(selection.place);
           }}
-          disabled={letterAt(selection.place) !== undefined}
+          disabled={isRight(selection.place)}
           testID={`${testID}-open-letter`}
         />
       )}
