@@ -42,9 +42,18 @@ const distractorOrder: Record<
   ],
 };
 
+/** The Definitions `definitionOf` has told apart, by Entry: every Round compares the answer with all eligible Entries. */
+const definitions = new WeakMap<Word | Idiom, string>();
+
 /** A primary Definition as the reader tells it apart: without case, extra spaces or Stress marks. */
-const definitionOf = ({ primaryDefinition }: Word | Idiom) =>
-  withoutStress(primaryDefinition).toLowerCase().replace(/\s+/g, ' ').trim();
+function definitionOf(entry: Word | Idiom): string {
+  let definition = definitions.get(entry);
+  if (definition === undefined) {
+    definition = withoutStress(entry.primaryDefinition).toLowerCase().replace(/\s+/g, ' ').trim();
+    definitions.set(entry, definition);
+  }
+  return definition;
+}
 
 /** A Word's option, its Lemma with Stress; homonyms share a Lemma, so they never meet in a Round. */
 const wordOptions = {
