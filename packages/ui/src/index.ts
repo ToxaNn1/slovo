@@ -82,6 +82,7 @@ export { ShareSheet, type ShareSheetOutcome } from './share/ShareSheet';
 export { NavigationRow, SettingsGroup, SoonRow, SwitchRow, TimeRow } from './settings/SettingsRows';
 export { SplashOverlay } from './onboarding/SplashOverlay';
 export { SearchButton } from './search/SearchButton';
+export { RecentQueries } from './search/RecentQueries';
 export { StatsPill } from './progress/StatsPill';
 export { StatsSheet } from './progress/StatsSheet';
 export { stressLabel } from './entries/stress-label';
