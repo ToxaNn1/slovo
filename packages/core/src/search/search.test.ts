@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import type { FeatureSwitch, Word } from '@slovo/contracts';
+import type { FeatureSwitch } from '@slovo/contracts';
 
 import { createMemoryUserStatePort, createSearch, openUserState } from '../index';
 import { createMemoryContentPort } from '../testing';
-import { word } from '../test-support';
+import { correction, idiom, synonymRow, tip, word } from '../test-support';
 
 /** An Ukrainian-like Edition: Search on, ґ read as г and ё as е. */
 const edition = (off: readonly FeatureSwitch[] = []) => ({
@@ -14,14 +14,14 @@ const edition = (off: readonly FeatureSwitch[] = []) => ({
 });
 
 async function searchOver(
-  words: readonly Word[],
+  pack: Parameters<typeof createMemoryContentPort>[0],
   { hidden = [], off = [] }: { hidden?: readonly string[]; off?: readonly FeatureSwitch[] } = {},
 ) {
   const records = new Map(
     hidden.map((id) => [`hidden.${id}`, JSON.stringify('2026-10-20T10:00:00.000Z')]),
   );
   return createSearch({
-    content: createMemoryContentPort({ words }),
+    content: createMemoryContentPort(pack),
     edition: edition(off),
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
   });
@@ -39,13 +39,13 @@ describe('Search over Word Lemmas', () => {
   ];
 
   it('finds a Lemma whose first or a later word starts with the query', async () => {
-    const search = await searchOver(words);
+    const search = await searchOver({ words });
 
     expect(await lemmasOf(search, 'сум')).toEqual(['на сумирному', 'сумирний']);
   });
 
   it('gives nothing for a query of one character, however it is padded', async () => {
-    const search = await searchOver(words);
+    const search = await searchOver({ words });
 
     expect(await lemmasOf(search, 'су')).toEqual(['на сумирному', 'сумирний']);
     expect(await lemmasOf(search, 'с')).toEqual([]);
@@ -54,7 +54,7 @@ describe('Search over Word Lemmas', () => {
   });
 
   it('finds from 2 characters, ignoring case, Stress marks and г or ґ', async () => {
-    const search = await searchOver(words);
+    const search = await searchOver({ words });
 
     expect(await lemmasOf(search, 'СУ')).toEqual(['на сумирному', 'сумирний']);
     expect(await lemmasOf(search, 'су́м')).toEqual(['на сумирному', 'сумирний']);
@@ -62,14 +62,16 @@ describe('Search over Word Lemmas', () => {
   });
 
   it('puts an exact match first, then the rest in the Edition’s alphabet', async () => {
-    const search = await searchOver([
-      word('w_long', { lemma: 'ґава' }),
-      word('w_g', { lemma: 'гав' }),
-      word('w_exact', { lemma: 'га' }),
-      word('w_ye', { lemma: 'гає' }),
-      word('w_e', { lemma: 'гад' }),
-      word('w_phrase', { lemma: 'а гаття' }),
-    ]);
+    const search = await searchOver({
+      words: [
+        word('w_long', { lemma: 'ґава' }),
+        word('w_g', { lemma: 'гав' }),
+        word('w_exact', { lemma: 'га' }),
+        word('w_ye', { lemma: 'гає' }),
+        word('w_e', { lemma: 'гад' }),
+        word('w_phrase', { lemma: 'а гаття' }),
+      ],
+    });
 
     expect(await lemmasOf(search, 'га')).toEqual(['га', 'а гаття', 'гав', 'гад', 'гає', 'ґава']);
   });
@@ -80,7 +82,7 @@ describe('Search over Word Lemmas', () => {
         lemma: `слово${String(59 - index).padStart(2, '0')}`,
       }),
     );
-    const search = await searchOver(many);
+    const search = await searchOver({ words: many });
 
     const found = await lemmasOf(search, 'слово');
     expect(found).toHaveLength(50);
@@ -90,11 +92,13 @@ describe('Search over Word Lemmas', () => {
 
   it('leaves out Hidden and Retired Words', async () => {
     const search = await searchOver(
-      [
-        word('w_live', { lemma: 'сумирний' }),
-        word('w_hidden', { lemma: 'сумовитий' }),
-        word('w_retired', { lemma: 'сумний', retired: true }),
-      ],
+      {
+        words: [
+          word('w_live', { lemma: 'сумирний' }),
+          word('w_hidden', { lemma: 'сумовитий' }),
+          word('w_retired', { lemma: 'сумний', retired: true }),
+        ],
+      },
       { hidden: ['w_hidden'] },
     );
 
@@ -122,10 +126,128 @@ describe('Search over Word Lemmas', () => {
   });
 
   it('finds nothing while the Edition turns Search off', async () => {
-    const on = await searchOver(words);
-    const off = await searchOver(words, { off: ['search'] });
+    const on = await searchOver({ words });
+    const off = await searchOver({ words }, { off: ['search'] });
 
     expect(await lemmasOf(on, 'сум')).toEqual(['на сумирному', 'сумирний']);
     expect(await lemmasOf(off, 'сум')).toEqual([]);
+  });
+});
+
+/** The visible text of each Entry found, group by group. */
+const groupsOf = async (search: Awaited<ReturnType<typeof searchOver>>, query: string) => {
+  const found = await search.search(query);
+  return {
+    words: found.words.map(({ lemma }) => lemma),
+    corrections: found.corrections.map(({ nonStandardForm }) => nonStandardForm),
+    idioms: found.idioms.map(({ expression }) => expression),
+    synonymRows: found.synonymRows.map(({ dominant }) => dominant.text),
+    tips: found.tips.map(({ title }) => title),
+  };
+};
+
+const NO_GROUPS = { words: [], corrections: [], idioms: [], synonymRows: [], tips: [] };
+
+describe('Search over every kind of Entry', () => {
+  const pack = {
+    words: [word('w_cheer', { lemma: 'бадьорий' })],
+    corrections: [
+      correction('c_take', {
+        nonStandardForm: 'бажаючий',
+        standardEquivalents: ['охочий', 'той, хто бажає'],
+      }),
+    ],
+    idioms: [idiom('i_crow', { expression: 'бити байдики' })],
+    synonymRows: [
+      synonymRow('s_brave', {
+        dominant: { text: 'сміливий', stress: [2] },
+        members: ['відважний', 'хоробрий', 'безстрашний', 'бравий', 'бадьористий'].map((text) => ({
+          text,
+          stress: [0],
+        })),
+      }),
+    ],
+    tips: [tip('t_ba', { title: 'Бажано чи бажаніше?' })],
+  };
+
+  it('puts a match of each kind in its own group', async () => {
+    const search = await searchOver(pack);
+
+    expect(await groupsOf(search, 'ба')).toEqual({
+      words: ['бадьорий'],
+      corrections: ['бажаючий'],
+      idioms: ['бити байдики'],
+      synonymRows: ['сміливий'],
+      tips: ['Бажано чи бажаніше?'],
+    });
+  });
+
+  it('finds a Correction by its non-standard form or by any standard one', async () => {
+    const search = await searchOver(pack);
+
+    expect((await groupsOf(search, 'бажаю')).corrections).toEqual(['бажаючий']);
+    expect((await groupsOf(search, 'охоч')).corrections).toEqual(['бажаючий']);
+    expect((await groupsOf(search, 'хто')).corrections).toEqual(['бажаючий']);
+  });
+
+  it('finds a Synonym Row by its dominant or by a member', async () => {
+    const search = await searchOver(pack);
+
+    expect((await groupsOf(search, 'сміл')).synonymRows).toEqual(['сміливий']);
+    expect((await groupsOf(search, 'хороб')).synonymRows).toEqual(['сміливий']);
+  });
+
+  it('puts an Entry with an exact text first, then the rest in the Edition’s alphabet', async () => {
+    const search = await searchOver({
+      corrections: [
+        correction('c_long', { nonStandardForm: 'ґава', standardEquivalents: ['ворона'] }),
+        correction('c_b', { nonStandardForm: 'брати участь', standardEquivalents: ['гав'] }),
+        correction('c_exact', { nonStandardForm: 'ясно', standardEquivalents: ['га'] }),
+      ],
+    });
+
+    expect((await groupsOf(search, 'га')).corrections).toEqual(['ясно', 'брати участь', 'ґава']);
+  });
+
+  it('gives at most 50 Entries a group', async () => {
+    const search = await searchOver({
+      tips: Array.from({ length: 60 }, (_, index) =>
+        tip(`t_${String(index)}`, { title: `порада ${String(index).padStart(2, '0')}` }),
+      ),
+    });
+
+    expect((await groupsOf(search, 'пор')).tips).toHaveLength(50);
+  });
+
+  it('leaves out Hidden and Retired Entries of every kind', async () => {
+    const search = await searchOver(
+      {
+        corrections: [
+          correction('c_hidden', { nonStandardForm: 'бажаючий' }),
+          correction('c_retired', { nonStandardForm: 'бажаний', retired: true }),
+        ],
+        idioms: [idiom('i_retired', { expression: 'бити байдики', retired: true })],
+        synonymRows: [synonymRow('s_hidden', { dominant: { text: 'бравий', stress: [2] } })],
+        tips: [tip('t_retired', { title: 'Бажано', retired: true })],
+      },
+      { hidden: ['c_hidden', 's_hidden'] },
+    );
+
+    expect(await groupsOf(search, 'ба')).toEqual(NO_GROUPS);
+    expect(await groupsOf(search, 'бр')).toEqual(NO_GROUPS);
+  });
+
+  it('gives no group for a kind the Edition turns off', async () => {
+    const search = await searchOver(pack, {
+      off: ['corrections', 'idioms', 'synonymRows', 'tips'],
+    });
+
+    expect(await groupsOf(search, 'ба')).toEqual({ ...NO_GROUPS, words: ['бадьорий'] });
+  });
+
+  it('finds nothing of any kind while the Edition turns Search off', async () => {
+    const search = await searchOver(pack, { off: ['search'] });
+
+    expect(await groupsOf(search, 'ба')).toEqual(NO_GROUPS);
   });
 });
