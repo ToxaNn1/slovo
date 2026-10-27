@@ -26,6 +26,7 @@ async function openOver(content: PackReader): Promise<Composition> {
       scheduler: deviceNotificationScheduler,
       ellipsis: editionStrings.notificationBody.ellipsis,
       titles: editionStrings.notificationTemplates.titles,
+      farewell: editionStrings.notificationTemplates.farewell,
     },
   });
   // The modes on offer stay the same for the session: one without its strings fails here, at launch.

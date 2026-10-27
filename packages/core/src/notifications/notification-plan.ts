@@ -42,13 +42,14 @@ const PLAN_DAYS = 14;
 
 /**
  * What the plan needs from the shell: the device's notification scheduler,
- * and from the Edition's UI strings the mark that ends a cut body and the
- * title templates, each with `{word}`.
+ * and from the Edition's UI strings the mark that ends a cut body, the title
+ * templates, each with `{word}`, and the farewell of the polite pause.
  */
 export interface NotificationScheduling {
   readonly scheduler: NotificationSchedulerPort;
   readonly ellipsis: string;
   readonly titles: readonly string[];
+  readonly farewell: string;
 }
 
 const { notificationTitles: titlesRecord } = userStateRecords;
@@ -104,6 +105,31 @@ function slotsAhead(times: readonly TimeOfDay[], clock: Clock): Slot[] {
     }
   }
   return slots;
+}
+
+/**
+ * The slots of the polite pause (ADR 0054): every time from the next one
+ * still ahead today to the last of the `PLAN_DAYS`th local day after today,
+ * the last of which is the farewell. Every plan is made with the app open,
+ * so today is the day of the last open. When the times hold more than
+ * `MAX_PLANNED_NOTIFICATIONS`, the farewell stays the last and the slots
+ * with a Word end earlier.
+ */
+function slotsUntilPause(
+  times: readonly TimeOfDay[],
+  clock: Clock,
+): { slots: Slot[]; farewell: Slot | undefined } {
+  const today = todayDate(clock);
+  const now = localTimeOf(clock.now(), clock);
+  const slots: Slot[] = [];
+  for (let day = 0; day <= PLAN_DAYS; day += 1) {
+    const date = localDateAfter(today, day);
+    for (const time of times) {
+      if (day > 0 || compareTimesOfDay(time, now) > 0) slots.push({ date, time });
+    }
+  }
+  const farewell = slots.pop();
+  return { slots: slots.slice(0, MAX_PLANNED_NOTIFICATIONS - 1), farewell };
 }
 
 /**
@@ -182,6 +208,12 @@ export const noNotificationPlanner: NotificationPlanner = {
  * is no next morning. With the Word of the Day's off no notification carries
  * it: the earliest time of a day is a notification like the others.
  *
+ * With the `politePause` Feature Switch on, the plan reaches no further than
+ * the 14th local day after the last open, and the last time of that day is
+ * the Edition's farewell, with no title and no Word, so it Reserves none;
+ * nothing comes after it until the next open plans again (ADR 0054). Off,
+ * the plan holds 14 days of times from the next one ahead.
+ *
  * Each notification is titled by one of the Edition's title templates with
  * its Word, the Lemma with its Stress; the body is the primary Definition.
  * A notification still ahead keeps its template unless the one before it now
@@ -199,7 +231,7 @@ export function createNotificationPlanner({
   random,
   edition,
   wordOfTheDay,
-  scheduling: { scheduler, ellipsis, titles },
+  scheduling: { scheduler, ellipsis, titles, farewell },
 }: {
   cycle: Pick<Cycle, 'order' | 'unseen'>;
   entries: Pick<Entries, 'get' | 'getMany'>;
@@ -292,6 +324,13 @@ export function createNotificationPlanner({
 
   const notificationsOn = () => edition.isFeatureEnabled('notifications');
 
+  /** The slots with a Word, and the farewell's while the polite pause is on. */
+  function slotsOf(times: readonly TimeOfDay[]): { slots: Slot[]; farewell: Slot | undefined } {
+    return edition.isFeatureEnabled('politePause')
+      ? slotsUntilPause(times, clock)
+      : { slots: slotsAhead(times, clock), farewell: undefined };
+  }
+
   function soundOf(on: boolean): PlannedSound {
     if (!on) return 'silent';
     return edition.notificationSound === undefined ? 'system' : { file: edition.notificationSound };
@@ -308,7 +347,7 @@ export function createNotificationPlanner({
         ? today !== undefined && cycle.unseen().words.includes(today)
           ? today
           : undefined
-        : chooseWords(slotsAhead(times, clock), await reservedWords.stored(), earliest).find(
+        : chooseWords(slotsOf(times).slots, await reservedWords.stored(), earliest).find(
             ({ slot }) => compareTimesOfDay(slot.time, earliest) === 0,
           )?.wordId;
     const word = wordId === undefined ? undefined : await entries.get(wordId);
@@ -321,7 +360,10 @@ export function createNotificationPlanner({
   }
 
   async function plan({ times, sound, permission }: PlanSettings): Promise<void> {
-    const slots = permission === 'allowed' && notificationsOn() ? slotsAhead(times, clock) : [];
+    const { slots, farewell: farewellSlot } =
+      permission === 'allowed' && notificationsOn()
+        ? slotsOf(times)
+        : { slots: [], farewell: undefined };
     const stored = await reservedWords.stored();
     const chosen = chooseWords(slots, stored, times[0]);
     const words = await entries.getMany(chosen.map(({ wordId }) => wordId));
@@ -341,6 +383,15 @@ export function createNotificationPlanner({
         sound: soundOf(sound),
       }),
     );
+    if (farewellSlot !== undefined) {
+      notifications.push({
+        date: dateKeyOf(farewellSlot.date),
+        time: formatTimeOfDay(farewellSlot.time),
+        title: '',
+        body: farewell,
+        sound: soundOf(sound),
+      });
+    }
     await stored.replace(planned.map(({ reserved }) => reserved));
     await scheduler.replacePlan(notifications);
   }

@@ -38,6 +38,7 @@ async function run({
   notificationSound = 'notification.wav',
   mixCategoryIds = ['test'],
   switchedOff = [],
+  politePause = false,
   titles = ['{word}'],
 }: {
   words?: readonly Word[];
@@ -50,6 +51,8 @@ async function run({
   mixCategoryIds?: readonly string[];
   /** The Feature Switches whose effective value is off. */
   switchedOff?: readonly FeatureSwitch[];
+  /** Whether the polite pause is on; off unless a test is about it. */
+  politePause?: boolean;
   /** The Edition's notification title templates. */
   titles?: readonly string[];
 } = {}): Promise<{
@@ -73,7 +76,8 @@ async function run({
     content,
     edition: {
       id: 'test',
-      isFeatureEnabled: (feature) => !switchedOff.includes(feature),
+      isFeatureEnabled: (feature) =>
+        !switchedOff.includes(feature) && (politePause || feature !== 'politePause'),
       languageTraits: { distractorRule: 'same-part-of-speech' },
       userSettingDefaults: {
         mix: {
@@ -91,10 +95,13 @@ async function run({
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock,
     random: { next: () => 0.25 },
-    scheduling: { scheduler, ellipsis: '…', titles },
+    scheduling: { scheduler, ellipsis: '…', titles, farewell },
   });
   return { app, scheduler, records, reads };
 }
+
+/** The Edition's farewell, the last notification of the polite pause. */
+const farewell = 'Ставимо сповіщення на паузу';
 
 /** Ten title templates, each telling its number before the Word. */
 const titles = Array.from({ length: 10 }, (_, index) => `Шаблон ${String(index)}: {word}`);
@@ -112,10 +119,12 @@ function planOf(scheduler: FakeNotificationScheduler): readonly PlannedNotificat
 const slotsOf = (plan: readonly PlannedNotification[]) =>
   plan.map(({ date, time }) => `${date}T${time}`);
 
-/** The Word of each planned notification, by its local date and time. */
+/** The Word of each planned notification with one, by its local date and time. */
 const wordsBySlot = (plan: readonly PlannedNotification[]) =>
-  new Map(
-    plan.map((notification) => [`${notification.date}T${notification.time}`, notification.wordId]),
+  new Map<string, string>(
+    plan.flatMap(({ date, time, wordId }) =>
+      wordId === undefined ? [] : [[`${date}T${time}`, wordId]],
+    ),
   );
 
 /** The local dates from the first to the last, `YYYY-MM-DD`. */
@@ -556,6 +565,88 @@ describe('the Feature Switches of notifications and the Word of the Day', () => 
 
     expect(planOf(on.scheduler)).toHaveLength(2);
     expect(planOf(off.scheduler)).toHaveLength(3);
+  });
+});
+
+describe('the polite pause', () => {
+  it('plans up to the 14th day after the last open, and its last time is the farewell with no Word', async () => {
+    const { scheduler } = await run({ politePause: true });
+
+    const plan = planOf(scheduler);
+    expect(slotsOf(plan)).toEqual(
+      datesFrom('2026-10-14', 15).flatMap((date) => defaultTimes.map((time) => `${date}T${time}`)),
+    );
+    expect(plan.at(-1)).toEqual({
+      date: '2026-10-28',
+      time: '19:00',
+      title: '',
+      body: farewell,
+      sound: { file: 'notification.wav' },
+    });
+    expect(plan.slice(0, -1).every(({ wordId }) => wordId !== undefined)).toBe(true);
+  });
+
+  it('Reserves no Word for the farewell', async () => {
+    const { app, scheduler } = await run({ politePause: true });
+    await app.resume();
+
+    const words = planOf(scheduler).flatMap(({ wordId }) => (wordId === undefined ? [] : [wordId]));
+    expect(words).toHaveLength(44);
+    expect(new Set(words).size).toBe(44);
+  });
+
+  it('moves the farewell to the 14th day after an open on day 5', async () => {
+    const time = fakeClock(start);
+    const { app, scheduler } = await run({ politePause: true, clock: time.clock });
+
+    time.set('2026-10-19T10:00:00+03:00');
+    await app.resume();
+
+    const plan = planOf(scheduler);
+    expect(slotsOf(plan)[0]).toBe('2026-10-19T13:00');
+    expect(slotsOf(plan).at(-1)).toBe('2026-11-02T19:00');
+    expect(plan.filter(({ wordId }) => wordId === undefined)).toEqual([
+      expect.objectContaining({ date: '2026-11-02', time: '19:00', body: farewell }),
+    ]);
+    expect(wordsBySlot(plan).get('2026-10-28T19:00')).toBeDefined();
+  });
+
+  it('keeps the farewell as the last of the 64 notifications when the times hold more', async () => {
+    const tenTimes = Array.from({ length: 10 }, (_, index) => `${String(index + 10)}:00`);
+    const records = new Map([['notifications.times', JSON.stringify(tenTimes)]]);
+
+    const { scheduler } = await run({ records, politePause: true });
+
+    const slots = slotsOf(planOf(scheduler));
+    expect(slots).toHaveLength(64);
+    expect(slots.at(-2)).toBe('2026-10-20T12:00');
+    expect(slots.at(-1)).toBe('2026-10-28T19:00');
+    expect(planOf(scheduler).at(-1)?.body).toBe(farewell);
+  });
+
+  it('gives the farewell when the only time is the morning, and no morning Word that day', async () => {
+    const records = new Map([['notifications.times', JSON.stringify(['09:00'])]]);
+
+    const { scheduler } = await run({ records, politePause: true });
+
+    const plan = planOf(scheduler);
+    expect(plan).toHaveLength(15);
+    expect(plan.at(-1)).toMatchObject({ date: '2026-10-28', time: '09:00', body: farewell });
+    expect(plan.at(-1)?.wordId).toBeUndefined();
+  });
+
+  it('keeps 14 days of times from the next one ahead, with no farewell, with it switched off', async () => {
+    const { scheduler } = await run();
+
+    const plan = planOf(scheduler);
+    expect(plan).toHaveLength(42);
+    expect(plan.every(({ wordId }) => wordId !== undefined)).toBe(true);
+  });
+
+  it('plans nothing, the farewell included, with notifications switched off', async () => {
+    const { scheduler } = await run({ politePause: true, switchedOff: ['notifications'] });
+
+    expect(planOf(scheduler)).toEqual([]);
   });
 });
 
