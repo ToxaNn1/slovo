@@ -63,7 +63,7 @@ async function run({
     }),
     clock,
     random: { next: () => 0.25 },
-    scheduling: { scheduler, ellipsis: '…' },
+    scheduling: { scheduler, ellipsis: '…', titles: ['{word}'] },
   });
   return { app, records, writes, scheduler };
 }

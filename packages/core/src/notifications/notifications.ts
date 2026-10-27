@@ -12,7 +12,7 @@ import {
   type NotificationScheduling,
   type PlanEdition,
 } from './notification-plan';
-import type { Clock, NotificationPermission } from '../ports';
+import type { Clock, NotificationPermission, Random } from '../ports';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
 import type { WordOfTheDay } from '../feed/word-of-the-day';
@@ -125,6 +125,7 @@ export async function openNotifications({
   cycle,
   entries,
   clock,
+  random,
   wordOfTheDay,
   takeMorningWord,
   scheduling,
@@ -134,6 +135,7 @@ export async function openNotifications({
   cycle: Pick<Cycle, 'order' | 'unseen'>;
   entries: Pick<Entries, 'get' | 'getMany'>;
   clock: Clock;
+  random: Random;
   wordOfTheDay: Pick<WordOfTheDay, 'chosen'>;
   takeMorningWord: () => Promise<void>;
   scheduling: NotificationScheduling | undefined;
@@ -161,6 +163,7 @@ export async function openNotifications({
           entries,
           userState,
           clock,
+          random,
           edition,
           wordOfTheDay,
           scheduling,

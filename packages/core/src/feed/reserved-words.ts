@@ -58,7 +58,7 @@ export interface ReservedWords {
 const { notificationPlan: planRecords } = userStateRecords;
 
 /** The id of a notification's plan record: its local date and time joined with a `T`. */
-const slotId = ({ date, time }: Slot) => `${dateKeyOf(date)}T${formatTimeOfDay(time)}`;
+export const slotId = ({ date, time }: Slot) => `${dateKeyOf(date)}T${formatTimeOfDay(time)}`;
 
 export function createReservedWords({ userState }: { userState: UserState }): ReservedWords {
   /** The Word of each plan record, by its id. */

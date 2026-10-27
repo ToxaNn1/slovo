@@ -87,7 +87,9 @@ async function run({
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock,
     random: { next: () => 0.25 },
-    ...(scheduler === undefined ? {} : { scheduling: { scheduler, ellipsis: '…' } }),
+    ...(scheduler === undefined
+      ? {}
+      : { scheduling: { scheduler, ellipsis: '…', titles: ['{word}'] } }),
   });
 }
 

@@ -410,7 +410,7 @@ describe('the notification plan over the Ukrainian Language Pack', () => {
       userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
       clock: fakeClock('2026-10-14T08:00:00+03:00').clock,
       random: seededRandom(7),
-      scheduling: { scheduler, ellipsis: '…' },
+      scheduling: { scheduler, ellipsis: '…', titles: ['{word}'] },
     });
 
     const plan = scheduler.plan ?? [];

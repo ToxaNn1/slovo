@@ -1,3 +1,5 @@
+import { fill } from '@slovo/contracts';
+
 import type { Cycle } from '../feed/cycle';
 import type { Edition } from '../edition/edition';
 import type { Entries } from '../entries/entries';
@@ -17,9 +19,11 @@ import type {
   NotificationSchedulerPort,
   PlannedNotification,
   PlannedSound,
+  Random,
 } from '../ports';
 import {
   createReservedWords,
+  slotId,
   type PlannedWord,
   type Slot,
   type StoredPlan,
@@ -27,6 +31,7 @@ import {
 import { renderStress } from '../entries/stress';
 import { notificationBody } from './notification-text';
 import type { UserState } from '../user-state/user-state';
+import { userStateRecords } from '../user-state/user-state-schema';
 import type { WordOfTheDay } from '../feed/word-of-the-day';
 
 /** The most notifications the plan holds: the most iOS keeps pending for one app. */
@@ -37,12 +42,16 @@ const PLAN_DAYS = 14;
 
 /**
  * What the plan needs from the shell: the device's notification scheduler,
- * and the mark that ends a cut body, from the Edition's UI strings.
+ * and from the Edition's UI strings the mark that ends a cut body and the
+ * title templates, each with `{word}`.
  */
 export interface NotificationScheduling {
   readonly scheduler: NotificationSchedulerPort;
   readonly ellipsis: string;
+  readonly titles: readonly string[];
 }
+
+const { notificationTitles: titlesRecord } = userStateRecords;
 
 /**
  * What the plan needs to know of the Edition: its notification sound, if it
@@ -95,6 +104,16 @@ function slotsAhead(times: readonly TimeOfDay[], clock: Clock): Slot[] {
     }
   }
   return slots;
+}
+
+/**
+ * A template drawn with `random` from `count`, never `previous`: the draw
+ * lands among the others. With one template, that one.
+ */
+function drawTemplate(count: number, previous: number | undefined, random: Random): number {
+  const others = previous === undefined || previous >= count || count < 2 ? count : count - 1;
+  const drawn = Math.min(Math.floor(random.next() * others), others - 1);
+  return others < count && drawn >= (previous ?? 0) ? drawn + 1 : drawn;
 }
 
 /** Whether a slot is this morning's: today at the earliest Notification time. */
@@ -163,6 +182,12 @@ export const noNotificationPlanner: NotificationPlanner = {
  * is no next morning. With the Word of the Day's off no notification carries
  * it: the earliest time of a day is a notification like the others.
  *
+ * Each notification is titled by one of the Edition's title templates with
+ * its Word, the Lemma with its Stress; the body is the primary Definition.
+ * A notification still ahead keeps its template unless the one before it now
+ * has the same; any other is drawn with `random`, never the template of the
+ * notification just before, the last that came included (ADR 0054).
+ *
  * `nextMorning` answers which morning notification a plan made now would
  * hold, also while the device doesn't let the app notify, and writes nothing.
  */
@@ -171,14 +196,16 @@ export function createNotificationPlanner({
   entries,
   userState,
   clock,
+  random,
   edition,
   wordOfTheDay,
-  scheduling: { scheduler, ellipsis },
+  scheduling: { scheduler, ellipsis, titles },
 }: {
   cycle: Pick<Cycle, 'order' | 'unseen'>;
   entries: Pick<Entries, 'get' | 'getMany'>;
   userState: UserState;
   clock: Clock;
+  random: Random;
   edition: PlanEdition;
   wordOfTheDay: Pick<WordOfTheDay, 'chosen'>;
   scheduling: NotificationScheduling;
@@ -230,6 +257,39 @@ export function createNotificationPlanner({
     return edition.isFeatureEnabled('wordOfTheDay') ? wordOfTheDay.chosen()?.wordId : undefined;
   }
 
+  /**
+   * The title template of each planned notification, in time order, and
+   * keeps them with the template of the last notification that came.
+   */
+  async function chooseTemplates(planned: readonly PlannedWord[]): Promise<number[]> {
+    const stored = (await userState.read(titlesRecord)) ?? { planned: {} };
+    const now = slotId({ date: todayDate(clock), time: localTimeOf(clock.now(), clock) });
+    const [cameLast] = Object.keys(stored.planned)
+      .filter((id) => id <= now)
+      .sort()
+      .reverse();
+    const last = cameLast === undefined ? stored.last : stored.planned[cameLast];
+    let previous = last;
+    const templates = new Map<string, number>();
+    for (const { slot } of planned) {
+      const id = slotId(slot);
+      const kept = stored.planned[id];
+      previous =
+        kept !== undefined && kept < titles.length && kept !== previous
+          ? kept
+          : drawTemplate(titles.length, previous, random);
+      templates.set(id, previous);
+    }
+    const next = {
+      ...(last === undefined ? {} : { last }),
+      planned: Object.fromEntries(templates),
+    };
+    if (JSON.stringify(next) !== JSON.stringify(stored)) {
+      await userState.write(titlesRecord.change(next));
+    }
+    return planned.map(({ slot }) => templates.get(slotId(slot)) ?? 0);
+  }
+
   const notificationsOn = () => edition.isFeatureEnabled('notifications');
 
   function soundOf(on: boolean): PlannedSound {
@@ -263,24 +323,25 @@ export function createNotificationPlanner({
   async function plan({ times, sound, permission }: PlanSettings): Promise<void> {
     const slots = permission === 'allowed' && notificationsOn() ? slotsAhead(times, clock) : [];
     const stored = await reservedWords.stored();
-    const planned: PlannedWord[] = [];
-    const notifications: PlannedNotification[] = [];
     const chosen = chooseWords(slots, stored, times[0]);
     const words = await entries.getMany(chosen.map(({ wordId }) => wordId));
-    for (const reserved of chosen) {
+    const planned = chosen.flatMap((reserved) => {
       const word = words.get(reserved.wordId);
-      if (word?.kind !== 'word') continue;
-      planned.push(reserved);
-      notifications.push({
-        date: dateKeyOf(reserved.slot.date),
-        time: formatTimeOfDay(reserved.slot.time),
-        title: renderStress(word),
+      return word?.kind === 'word' ? [{ reserved, word }] : [];
+    });
+    const templates = await chooseTemplates(planned.map(({ reserved }) => reserved));
+    const notifications = planned.map(
+      ({ reserved: { slot }, word }, index): PlannedNotification => ({
+        date: dateKeyOf(slot.date),
+        time: formatTimeOfDay(slot.time),
+        // Every Edition lists its templates, so a template is always drawn.
+        title: fill(titles[templates[index] ?? 0] ?? '{word}', { word: renderStress(word) }),
         body: notificationBody(word.primaryDefinition, ellipsis),
         wordId: word.id,
         sound: soundOf(sound),
-      });
-    }
-    await stored.replace(planned);
+      }),
+    );
+    await stored.replace(planned.map(({ reserved }) => reserved));
     await scheduler.replacePlan(notifications);
   }
 

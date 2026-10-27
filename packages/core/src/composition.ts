@@ -284,6 +284,7 @@ export async function openComposition({
     cycle,
     entries,
     clock,
+    random,
     wordOfTheDay,
     // The plan and the day change need each other (`replan`, `takeMorningWord`),
     // so `day` is declared below, once the plan and the Feed it turns are open.

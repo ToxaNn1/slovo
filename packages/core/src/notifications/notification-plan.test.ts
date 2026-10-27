@@ -38,6 +38,7 @@ async function run({
   notificationSound = 'notification.wav',
   mixCategoryIds = ['test'],
   switchedOff = [],
+  titles = ['{word}'],
 }: {
   words?: readonly Word[];
   corrections?: readonly Correction[];
@@ -49,6 +50,8 @@ async function run({
   mixCategoryIds?: readonly string[];
   /** The Feature Switches whose effective value is off. */
   switchedOff?: readonly FeatureSwitch[];
+  /** The Edition's notification title templates. */
+  titles?: readonly string[];
 } = {}): Promise<{
   app: Composition;
   scheduler: FakeNotificationScheduler;
@@ -88,10 +91,16 @@ async function run({
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock,
     random: { next: () => 0.25 },
-    scheduling: { scheduler, ellipsis: '…' },
+    scheduling: { scheduler, ellipsis: '…', titles },
   });
   return { app, scheduler, records, reads };
 }
+
+/** Ten title templates, each telling its number before the Word. */
+const titles = Array.from({ length: 10 }, (_, index) => `Шаблон ${String(index)}: {word}`);
+
+/** The number of the template a title came from. */
+const templateOf = (title: string | undefined) => title?.split(':')[0] ?? '';
 
 /** The last plan the scheduler was given; it fails the test when there is none. */
 function planOf(scheduler: FakeNotificationScheduler): readonly PlannedNotification[] {
@@ -346,6 +355,47 @@ describe('the notification plan', () => {
     expect(soundsOf(own)).toEqual(all({ file: 'notification.wav' }));
     expect(soundsOf(system)).toEqual(all('system'));
     expect(soundsOf(silent)).toEqual(all('silent'));
+  });
+
+  it("titles each notification from the Edition's templates, never the one just before, and keeps the body", async () => {
+    // The injected randomness lands on the same template at every draw.
+    const words = Array.from({ length: 20 }, (_, index) =>
+      word(`w_${String(index).padStart(2, '0')}`, {
+        lemma: 'слово',
+        stress: [2],
+        primaryDefinition: `Значення ${String(index)}.`,
+      }),
+    );
+
+    const { scheduler } = await run({ words, titles });
+
+    const plan = planOf(scheduler);
+    expect(plan).toHaveLength(20);
+    const used = plan.map(({ title }) => templateOf(title));
+    expect(plan.map(({ title }) => title)).toEqual(used.map((template) => `${template}: сло́во`));
+    expect(used.every((template) => titles.some((title) => title.startsWith(`${template}:`)))).toBe(
+      true,
+    );
+    expect(used.slice(1).every((template, index) => template !== used[index])).toBe(true);
+    expect(plan.map(({ body }) => body)).toEqual(
+      plan.map(({ wordId }) => words.find(({ id }) => id === wordId)?.primaryDefinition),
+    );
+  });
+
+  it('never opens a new plan with the template of the notification that came last', async () => {
+    const time = fakeClock(start);
+    const records = new Map([['notifications.times', JSON.stringify(['09:00'])]]);
+    const { scheduler } = await run({ records, clock: time.clock, titles });
+    const nineToday = planOf(scheduler).find(({ date }) => date === '2026-10-14');
+
+    // The 09:00 notification has come; the next run moves the time to 10:00.
+    time.set('2026-10-14T09:30:00+03:00');
+    const { app, scheduler: later } = await run({ records, clock: time.clock, titles });
+    await app.notifications.keepTime('10:00', '09:00');
+
+    const [next] = planOf(later);
+    expect(next).toMatchObject({ date: '2026-10-14', time: '10:00' });
+    expect(templateOf(next?.title)).not.toBe(templateOf(nineToday?.title));
   });
 
   it('titles a notification with the Lemma and its Stress, and gives the primary Definition as the body', async () => {
