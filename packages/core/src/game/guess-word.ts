@@ -292,7 +292,7 @@ export const guessWord: GameMode = {
   id: 'guess-word',
   entryKind: 'word',
   alsoAsks: ['idiom', 'synonymRow', 'tip'],
-  isOn: () => true,
+  isOn: (edition) => edition.isFeatureEnabled('gameGuessWord'),
   buildRound({ answer, eligible, round, random, edition }) {
     if (answer.kind === 'word') {
       const definition = definitionOf(answer);
