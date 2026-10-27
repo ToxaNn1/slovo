@@ -9,7 +9,7 @@ import { useOpenScreen } from '../entries/use-open-screen';
 /** A group of the Search screen: the kind of Entry its results are. */
 export type SearchGroupName = keyof SearchResults;
 
-/** One group of results, under its kind's chip («Слова», «Виправлення», …). */
+/** One group of results, under its chip («Слова», «Виправлення», …, «За значенням»). */
 export interface SearchGroup {
   readonly name: SearchGroupName;
   readonly title: string;
@@ -18,7 +18,7 @@ export interface SearchGroup {
 
 /** What the Search screen shows for a query. */
 export interface SearchScreenModel {
-  /** The groups that found anything, in the order of the kinds. */
+  /** The groups that found anything, in the order of the kinds, «За значенням» last. */
   readonly groups: readonly SearchGroup[];
   /** Whether Search answered the query and found nothing: «Нічого не знайдено». */
   readonly nothingFound: boolean;
@@ -31,11 +31,15 @@ const groupOrder: readonly SearchGroupName[] = [
   'idioms',
   'synonymRows',
   'tips',
+  'byMeaning',
 ];
 
 const nothingYet: SearchScreenModel = { groups: [], nothingFound: false };
 
-/** The screen's model for a query: each kind's results as Entry rows, the empty groups left out. */
+/**
+ * The screen's model for a query: each kind's results, then «За значенням»,
+ * as Entry rows, the empty groups left out.
+ */
 async function searchScreenModel(
   composition: Composition,
   query: string,
@@ -97,4 +101,43 @@ export function useOpenSearchResult(query: string): (entryId: string) => void {
     },
     [composition, openScreen, query],
   );
+}
+
+/** The recent queries the Search screen offers while its field is empty, and «Очистити». */
+export interface RecentQueriesModel {
+  /** The last 10 queries a result was opened from, newest first. */
+  readonly queries: readonly string[];
+  /** Empties them («Очистити»). */
+  readonly clear: () => void;
+}
+
+/**
+ * The recent queries, read again each time the field is emptied, so a query
+ * kept by opening a result shows once the reader comes back to an empty field.
+ */
+export function useRecentQueries(fieldEmpty: boolean): RecentQueriesModel {
+  const composition = useComposition();
+  const [queries, setQueries] = useState<readonly string[]>([]);
+  useEffect(() => {
+    if (!fieldEmpty) return;
+    let active = true;
+    composition.recentQueries.list().then(
+      (kept) => {
+        if (active) setQueries(kept);
+      },
+      (error: unknown) => {
+        logError('Could not read the recent queries', error);
+      },
+    );
+    return () => {
+      active = false;
+    };
+  }, [composition, fieldEmpty]);
+  const clear = useCallback(() => {
+    setQueries([]);
+    composition.recentQueries.clear().catch((error: unknown) => {
+      logError('Could not clear the recent queries', error);
+    });
+  }, [composition]);
+  return { queries, clear };
 }

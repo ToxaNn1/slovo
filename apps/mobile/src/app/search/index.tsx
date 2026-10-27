@@ -3,6 +3,7 @@ import {
   EntryRow,
   fill,
   OutlinedChip,
+  RecentQueries,
   space,
   TextField,
   typeSize,
@@ -15,20 +16,28 @@ import { SectionList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { editionStrings } from '@/edition/edition';
-import { useOpenSearchResult, useSearchScreen, type SearchGroup } from '@/search/search';
+import {
+  useOpenSearchResult,
+  useRecentQueries,
+  useSearchScreen,
+  type SearchGroup,
+} from '@/search/search';
 
 const strings = editionStrings.search;
 
 /**
  * Search («Пошук»), from the magnifier of the «Головна» header: a field and,
- * from 2 letters, what it finds, each kind in its group under its chip, or
- * «Нічого не знайдено». A result opens its Entry card, which makes nothing
- * Seen, and keeps the query among the recent ones.
+ * from 2 letters, what it finds, each kind in its group under its chip and
+ * from 3 «За значенням», or «Нічого не знайдено». A result opens its Entry
+ * card, which makes nothing Seen, and keeps the query among the recent ones,
+ * which the empty field lists with «Очистити»; a tap on one runs it again.
  */
 export default function SearchScreen() {
   const [query, setQuery] = useState('');
   const { groups, nothingFound } = useSearchScreen(query);
   const openResult = useOpenSearchResult(query);
+  const fieldEmpty = query.trim() === '';
+  const recent = useRecentQueries(fieldEmpty);
   const { colors } = useTokens();
   const router = useRouter();
 
@@ -56,9 +65,9 @@ export default function SearchScreen() {
             />
           </View>
         )}
-        renderItem={({ item: row, section: { title } }) => (
+        renderItem={({ item: row, section: { name, title } }) => (
           <EntryRow
-            testID={`search-result-${row.entryId}`}
+            testID={`${name === 'byMeaning' ? 'search-meaning' : 'search-result'}-${row.entryId}`}
             row={row}
             accessibilityLabel={fill(strings.resultLabel, { kind: title, text: row.title })}
             onPress={() => {
@@ -67,13 +76,20 @@ export default function SearchScreen() {
           />
         )}
         ListHeaderComponent={
-          <SearchHeader
-            query={query}
-            onQueryChange={setQuery}
-            onBack={() => {
-              router.back();
-            }}
-          />
+          <>
+            <SearchHeader
+              query={query}
+              onQueryChange={setQuery}
+              onBack={() => {
+                router.back();
+              }}
+            />
+            {fieldEmpty && recent.queries.length > 0 && (
+              <View style={styles.recent}>
+                <RecentQueries queries={recent.queries} onRun={setQuery} onClear={recent.clear} />
+              </View>
+            )}
+          </>
         }
         ListEmptyComponent={nothingFound ? <NothingFound /> : null}
       />
@@ -126,6 +142,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { paddingBottom: space[8] },
   header: { gap: space[3], paddingHorizontal: space[5], paddingTop: space[2] },
+  recent: { marginHorizontal: space[5], marginTop: space[2] },
   group: { flexDirection: 'row', marginHorizontal: space[6], marginTop: space[4] },
   nothingFound: {
     marginHorizontal: space[5],
