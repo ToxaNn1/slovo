@@ -4,6 +4,7 @@ import {
   EntryCard,
   PagerScrollView,
   Placeholder,
+  SearchButton,
   space,
   SwipeHint,
   UndoToastProvider,
@@ -46,6 +47,8 @@ function FeedScreen() {
   const swipeHint = useSwipeHint();
   const { colors } = useTokens();
   const { top } = useSafeAreaInsets();
+  const shown = useShown();
+  const openScreen = useOpenScreen();
 
   const { cards, onCardChange, openCorrection } = feed;
   const { dismiss: dismissSwipeHint } = swipeHint;
@@ -89,6 +92,15 @@ function FeedScreen() {
       {/* The top row stays put over the cards, like the background. */}
       <View pointerEvents="box-none" style={[styles.topRow, { top }]}>
         <StatsPillAndSheet />
+        {shown.search && (
+          <View style={styles.search}>
+            <SearchButton
+              onPress={() => {
+                openScreen('/search');
+              }}
+            />
+          </View>
+        )}
       </View>
       {swipeHint.visible ? (
         <SwipeHint
@@ -167,6 +179,8 @@ const styles = StyleSheet.create({
     height: TOP_ROW,
     justifyContent: 'center',
   },
+  // At the row's right end, in the middle of its height, with the Stats pill or without it.
+  search: { position: 'absolute', right: 0 },
   page: { flex: 1 },
   // A card that fits sits in the middle of the page; a taller one starts at the top.
   content: {
