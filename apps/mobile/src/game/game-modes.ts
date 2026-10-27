@@ -41,6 +41,7 @@ const PLAYED_MODES: ReadonlySet<string> = new Set([
   'anagram',
   'by-letters',
   'type-word',
+  'origin',
   'idiom-meaning',
   'build-idiom',
   'survival',

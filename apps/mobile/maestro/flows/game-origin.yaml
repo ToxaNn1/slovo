@@ -1,0 +1,54 @@
+# The pick mode «Звідки слово», a Word with its Definition → pick its language: it plays
+# from its card, the first option and «Далі» in every Round, to the result
+# screen, and «На головну» goes to the Feed. A subflow of `smoke.yaml`; run it
+# from there. It leaves no Game in play.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- tapOn:
+    id: tab-game
+- scrollUntilVisible:
+    element:
+      id: game-mode-origin
+    direction: DOWN
+- tapOn:
+    id: game-mode-origin
+- assertVisible:
+    id: game-round
+- assertVisible:
+    id: game-prompt
+    text: Звідки це слово.*
+# At most 8 Rounds; five wrong answers end the Game sooner. Each scroll brings
+# its target up at the largest text sizes and does nothing otherwise.
+- repeat:
+    while:
+      notVisible:
+        id: game-result
+    times: 8
+    commands:
+      - scrollUntilVisible:
+          element:
+            id: game-option-0
+          direction: DOWN
+      - tapOn:
+          id: game-option-0
+      - assertVisible:
+          id: game-sheet-title
+      - scrollUntilVisible:
+          element:
+            id: game-next
+          direction: DOWN
+      # One tap: a second one, while the sheet slides away, would land on the tab bar.
+      - tapOn:
+          id: game-next
+          retryTapIfNoChange: false
+      - waitForAnimationToEnd
+- assertVisible:
+    id: game-result
+- scrollUntilVisible:
+    element:
+      id: game-home
+    direction: DOWN
+- tapOn:
+    id: game-home
+- assertVisible:
+    id: home
