@@ -8,7 +8,18 @@ const FirstWeekCardSchema = z.strictObject({ title: TextSchema, text: TextSchema
 
 /** The Feed Notices: Feed cards that are not Entries. */
 export const FeedNoticesStringsSchema = z.strictObject({
-  weeklyRecap: z.strictObject({ title: TextSchema }),
+  /** The Weekly Recap card: its title and the labels of its four numbers. */
+  weeklyRecap: z.strictObject({
+    title: TextSchema,
+    /** The label of the Entries Seen in the week. */
+    seen: TextSchema,
+    /** The label of the Favorites added in the week. */
+    saved: TextSchema,
+    /** The label of the Known marks set in the week. */
+    known: TextSchema,
+    /** The label of the Streak. */
+    streak: TextSchema,
+  }),
   /** Asks about yesterday's Word of the Day. */
   yesterday: z.strictObject({ title: TextSchema }),
   /** The card at the Daily Limit. */

@@ -14,8 +14,9 @@ import {
   VerticalPager,
   YesterdayCard,
   type VerticalPagerHandle,
+  WeeklyRecapCard,
 } from '@slovo/ui';
-import type { WordCardModel } from '@slovo/core';
+import type { FeedCard, FeedNoticeCard, WordCardModel } from '@slovo/core';
 import { memo, useCallback, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -24,13 +25,13 @@ import { editionStrings } from '@/edition/edition';
 import { EntryActions, useKnowledgeButtons } from '@/entries/entry-actions';
 import { useOpenScreen } from '@/entries/use-open-screen';
 import { useFeed } from '@/feed/feed';
-import type { DrawnCard, DrawnNoticeCard } from '@/feed/feed-screen';
 import { useFirstWeekStreak } from '@/feed/first-week';
 import { TOP_ROW } from '@/edition/feed-loading';
 import { MoodButtonAndSheet } from '@/mood/mood';
 import { StatsPillAndSheet } from '@/progress/progress';
 import { useShown } from '@/shown-in-effect';
 import { useSwipeHint } from '@/feed/swipe-hint';
+import { useWeeklyRecap } from '@/feed/weekly-recap';
 
 const { feed: feedStrings } = editionStrings;
 const turnActionLabels = { next: feedStrings.nextEntry, previous: feedStrings.previousEntry };
@@ -62,7 +63,7 @@ function FeedScreen() {
   // Kept from render to render: a swipe re-renders the pager, and its pages
   // re-render only when their card changes.
   const renderPage = useCallback(
-    (card: DrawnCard, position: number) => (
+    (card: FeedCard, position: number) => (
       <FeedPage
         // A card that takes the place of a hidden one starts afresh, scrolled to its top.
         key={card.kind === 'notice' ? `notice-${card.notice}` : (card.entryId ?? card.kind)}
@@ -126,7 +127,7 @@ const FeedPage = memo(function FeedPage({
   position,
   onOpenCorrection,
 }: {
-  card: DrawnCard;
+  card: FeedCard;
   position: number;
   /** Opens the Correction that the Word card at `position` links. */
   onOpenCorrection: (position: number, correctionId: string) => void;
@@ -180,9 +181,10 @@ const FeedPage = memo(function FeedPage({
   );
 });
 
-/** A Feed Notice that sits in the middle of its page: the first-week card or the Daily Limit card. */
-function NoticeCard({ card }: { card: Exclude<DrawnNoticeCard, { notice: 'yesterday' }> }) {
+/** A Feed Notice that sits in the middle of its page: the Weekly Recap, the first-week card or the Daily Limit card. */
+function NoticeCard({ card }: { card: Exclude<FeedNoticeCard, { notice: 'yesterday' }> }) {
   const streak = useFirstWeekStreak();
+  if (card.notice === 'weeklyRecap') return <WeeklyRecapNotice card={card} />;
   return card.notice === 'firstWeek' ? (
     <FirstWeekCard day={card.firstWeekDay} streak={streak} />
   ) : (
@@ -194,6 +196,13 @@ function NoticeCard({ card }: { card: Exclude<DrawnNoticeCard, { notice: 'yester
 function YesterdayNotice({ word }: { word: WordCardModel }) {
   const marks = useKnowledgeButtons({ kind: 'word', entryId: word.wordId });
   return <YesterdayCard word={word} marks={marks} />;
+}
+
+/** The Weekly Recap card with the numbers of its day, without the Streak while it is not shown. */
+function WeeklyRecapNotice({ card }: { card: FeedNoticeCard }) {
+  const recap = useWeeklyRecap(card.day);
+  const { stats } = useShown();
+  return <WeeklyRecapCard recap={recap} hideStreak={stats?.streak !== true} />;
 }
 
 const styles = StyleSheet.create({

@@ -1,7 +1,6 @@
-import type { FeedCard } from '@slovo/core';
 import { describe, expect, it } from 'vitest';
 
-import { cardOnScreen, pagesOf } from './feed-screen';
+import { cardOnScreen } from './feed-screen';
 
 const feed = { startPosition: 2 };
 const inSight = { focused: true, inForeground: true, covered: false };
@@ -31,73 +30,5 @@ describe('the card the Feed is told is on screen', () => {
     expect(
       cardOnScreen({ feed, turnedTo: { in: feed, position: 5 }, ...inSight, ...out }),
     ).toBeUndefined();
-  });
-});
-
-describe('the pages of the Feed', () => {
-  const end: FeedCard = { kind: 'end-of-cycle' };
-  const notice: FeedCard = {
-    kind: 'notice',
-    notice: 'weeklyRecap',
-    day: { year: 2026, month: 10, day: 27 },
-  };
-  const otherEnd: FeedCard = { kind: 'end-of-cycle' };
-  const cards = [end, notice, otherEnd];
-
-  it('skip a Feed Notice the shell draws no card for yet', () => {
-    expect(pagesOf(cards).pages).toEqual([end, otherEnd]);
-  });
-
-  it('give the Daily Limit card a page', () => {
-    const dailyLimit: FeedCard = { ...notice, notice: 'dailyLimit' };
-
-    expect(pagesOf([end, dailyLimit, otherEnd]).pages).toEqual([end, dailyLimit, otherEnd]);
-  });
-
-  it('give the first-week card a page', () => {
-    const firstWeek: FeedCard = { ...notice, notice: 'firstWeek', firstWeekDay: 7 };
-
-    expect(pagesOf([end, firstWeek, otherEnd]).pages).toEqual([end, firstWeek, otherEnd]);
-  });
-
-  it('give Yesterday a page', () => {
-    const yesterday: FeedCard = {
-      ...notice,
-      notice: 'yesterday',
-      word: {
-        kind: 'word',
-        wordId: 'w1',
-        lemma: 'сумирний',
-        stressedVowels: [],
-        partOfSpeech: 'adjective',
-        gender: undefined,
-        primaryDefinition: 'Тихий, лагідний.',
-        example: undefined,
-        synonyms: [],
-        antonyms: [],
-        registers: [],
-        region: undefined,
-        history: undefined,
-        categoryId: 'k1',
-        categoryName: undefined,
-        details: undefined,
-        linkedCorrections: [],
-        synonymRow: undefined,
-      },
-    };
-
-    expect(pagesOf([end, yesterday, otherEnd]).pages).toEqual([end, yesterday, otherEnd]);
-  });
-
-  it("map each page to the Feed's position of its card, and a page past the last on from the last card", () => {
-    const { positionOf } = pagesOf(cards);
-
-    expect([0, 1, 2].map(positionOf)).toEqual([0, 2, 3]);
-  });
-
-  it("map the Feed's position to its page, and a skipped Feed Notice to the page after it", () => {
-    const { pageOf } = pagesOf(cards);
-
-    expect([0, 1, 2, 3].map(pageOf)).toEqual([0, 1, 1, 2]);
   });
 });

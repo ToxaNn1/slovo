@@ -774,7 +774,13 @@
     "result": "Ваш рівень: від {n}"
   },
   "feedNotices": {
-    "weeklyRecap": { "title": "Ваш тиждень" },
+    "weeklyRecap": {
+      "title": "Ваш тиждень",
+      "seen": "переглянуто",
+      "saved": "збережено",
+      "known": "знаю",
+      "streak": "серія"
+    },
     "yesterday": { "title": "Пам’ятаєте вчорашнє слово?" },
     "dailyLimit": {
       "message": "На сьогодні досить. Повертайтеся завтра",
