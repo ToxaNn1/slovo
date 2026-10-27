@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text } from 'react-native';
 
 import { CardCorners } from '../decor/DecorSlots';
 import { useEdition } from '../providers/EditionProvider';
@@ -14,12 +14,14 @@ const TEXT_MAX_FONT_SCALE = 1.5;
  * The Daily Crossword's card on top of the mode screen: its name with today's
  * date, then «Почати» or «Продовжити» in the accent colour, or, once today's
  * is solved, its mark in the colour of a right answer. A surface card with
- * the Edition's corner, as a mode card; VoiceOver reads it as one element.
+ * the Edition's corner, as a mode card; a tap opens the crossword's screen.
+ * VoiceOver reads it as one button.
  */
 export function DailyCrosswordCard({
   title,
   state,
   solved,
+  onPress,
   testID,
 }: {
   /** Its name with today's date, such as «Кросворд дня · 26 жовтня». */
@@ -28,19 +30,26 @@ export function DailyCrosswordCard({
   state: string;
   /** Whether today's is solved. */
   solved: boolean;
+  /** Opens the crossword's screen. */
+  onPress: () => void;
   testID?: string;
 }) {
   const { colors, radii, fontFamilies } = useTokens();
   const { voice } = useEdition();
   return (
-    <View
+    <Pressable
       testID={testID}
-      accessible
+      accessibilityRole="button"
       accessibilityLabel={`${title}. ${state}`}
       {...voice}
-      style={[
+      onPress={onPress}
+      style={({ pressed }) => [
         styles.card,
-        { backgroundColor: colors.surface, borderColor: colors.line, borderRadius: radii.card },
+        {
+          backgroundColor: pressed ? colors.surfaceSunken : colors.surface,
+          borderColor: colors.line,
+          borderRadius: radii.card,
+        },
       ]}
     >
       <CardCorners corners={['topLeft']} />
@@ -59,7 +68,7 @@ export function DailyCrosswordCard({
       >
         {state}
       </Text>
-    </View>
+    </Pressable>
   );
 }
 

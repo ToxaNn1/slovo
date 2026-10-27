@@ -99,7 +99,7 @@ function Game() {
 /**
  * The mode screen (`game-mode-select-dark`): the title, what a Game of
  * «Вгадай слово» is with its Best result once it has one, the Daily
- * Crossword's card while it is on, and a card per mode on offer, with its own
+ * Crossword's card while it is on, which opens its screen, and a card per mode on offer, with its own
  * Best result, under the titles of their groups.
  */
 function ModeScreen({
@@ -114,6 +114,7 @@ function ModeScreen({
   const { colors, fontFamilies } = useTokens();
   const { voice, count } = useEdition();
   const crossword = useDailyCrosswordCard();
+  const openScreen = useOpenScreen();
   return (
     <View testID="game-modes" style={styles.screen}>
       <DecorBackground />
@@ -136,7 +137,13 @@ function ModeScreen({
           </Text>
         </View>
         {crossword === undefined ? null : (
-          <DailyCrosswordCard testID="daily-crossword" {...crossword} />
+          <DailyCrosswordCard
+            testID="daily-crossword"
+            {...crossword}
+            onPress={() => {
+              openScreen('/game/crossword');
+            }}
+          />
         )}
         {gameModeGroups(modes, strings).map(({ title, offers }) => (
           <View key={title} style={styles.group}>

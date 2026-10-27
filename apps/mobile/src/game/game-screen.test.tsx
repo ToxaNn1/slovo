@@ -48,6 +48,10 @@ jest.mock('../settings/settings', () => ({
 jest.mock('expo-router', () => ({
   Redirect: () => null,
   useRouter: () => ({ navigate: () => undefined, push: () => undefined }),
+  // The screen comes into view as it renders, as a tab's first screen does.
+  useFocusEffect: (effect: () => () => void) => {
+    jest.requireActual<typeof import('react')>('react').useEffect(effect, [effect]);
+  },
 }));
 
 /**
@@ -217,12 +221,13 @@ async function renderScreen() {
   });
 }
 
-/** The titles over the cards and the mode cards, top to bottom, as VoiceOver meets them. */
+/** The titles over the mode cards and the mode cards, top to bottom, as VoiceOver meets them. */
 function shape(): string[] {
   return within(screen.getByTestId('game-modes'))
     .getAllByRole(/^(header|button)$/)
     .map((node): unknown => node.props['testID'] ?? node.props['children'])
-    .map(String);
+    .map(String)
+    .filter((id) => id !== 'daily-crossword');
 }
 
 /** A pairs grid's cells with the ones gone, which VoiceOver skips, so that a place counts them too. */
