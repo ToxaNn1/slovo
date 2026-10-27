@@ -5,6 +5,7 @@ import {
   type FontSize,
   type LanguageTraits,
   type LegalPages,
+  type Mood,
   type OriginLanguage,
   type Theme,
 } from '@slovo/contracts';
@@ -56,6 +57,8 @@ export interface Edition {
   readonly legalPages: LegalPages;
   /** The languages Words come from, in their order, which «Звідки слово» offers (ADR 0052). */
   readonly originLanguages: readonly OriginLanguage[];
+  /** The moods a Word may carry, in their order, which «Слово під настрій» offers (ADR 0054). */
+  readonly moods: readonly Mood[];
   /** The letters Search reads as another, such as ґ as г (ADR 0054). */
   readonly searchLetters: Readonly<Record<string, string>>;
   /** Whether the Edition turns the given Core feature on. */
@@ -117,6 +120,7 @@ export function loadEdition(config: unknown): Edition {
     notificationSound,
     legalPages,
     originLanguages,
+    moods,
     searchLetters,
   } = result.data;
   const { mix, ...settings } = userSettingDefaults;
@@ -140,6 +144,7 @@ export function loadEdition(config: unknown): Edition {
     notificationSound,
     legalPages,
     originLanguages,
+    moods,
     searchLetters,
     isFeatureEnabled: switchedOn((feature) => featureSwitches[feature]),
   };

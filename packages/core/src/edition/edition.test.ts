@@ -330,6 +330,10 @@ describe('loadEdition', () => {
     expect(loadEdition({ ...validConfig, searchLetters: {} }).searchLetters).toEqual({});
   });
 
+  it('reports the moods in their order', () => {
+    expect(loadEdition(validConfig).moods.map(({ id }) => id)).toEqual(['joyful', 'calm']);
+  });
+
   it('accepts an Edition that lists no moods', () => {
     expect(() => loadEdition({ ...validConfig, moods: [] })).not.toThrow();
   });
