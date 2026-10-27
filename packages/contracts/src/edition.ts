@@ -172,6 +172,28 @@ export const FeatureSwitchesSchema = z.strictObject({
   gameOrigin: z.boolean(),
   /** The Daily Crossword; off while `game` is (ADR 0052). */
   dailyCrossword: z.boolean(),
+  /** Search: its header button and screen over every non-Retired, non-Hidden Entry (ADR 0054). */
+  search: z.boolean(),
+  /** The Rarity Test: the short test that sets the Rarity Floor (ADR 0054). */
+  rarityTest: z.boolean(),
+  /** The Weekly Recap «Ваш тиждень»: the Monday Feed Notice about the week before (ADR 0054). */
+  weeklyRecap: z.boolean(),
+  /** Yesterday: the Feed Notice «Пам'ятаєте вчорашнє слово?» (ADR 0054). */
+  yesterday: z.boolean(),
+  /** The Word of the Day archive «Слова дня» in Saved (ADR 0054). */
+  wordOfTheDayArchive: z.boolean(),
+  /** The Active Days calendar on the statistics screen (ADR 0054). */
+  activeDaysCalendar: z.boolean(),
+  /** The Daily Limit: its setting and its Feed Notice (ADR 0054). */
+  dailyLimit: z.boolean(),
+  /** The polite pause: the notification plan stops 14 days after the last open, with the Edition's farewell (ADR 0054). */
+  politePause: z.boolean(),
+  /** The first week: one intro Feed Notice on each of a new reader's first 7 Active Days (ADR 0054). */
+  firstWeek: z.boolean(),
+  /** The widget hint: the sheet after the first finished Game and the guide to adding the widget (ADR 0054). */
+  widgetHint: z.boolean(),
+  /** Mood: the moods a Word may carry and «Слово під настрій» (ADR 0054). */
+  moods: z.boolean(),
 });
 
 export type FeatureSwitches = z.infer<typeof FeatureSwitchesSchema>;

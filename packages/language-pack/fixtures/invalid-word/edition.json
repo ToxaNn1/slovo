@@ -44,7 +44,18 @@
     "gameAnagram": true,
     "gameByLetters": true,
     "gameOrigin": true,
-    "dailyCrossword": true
+    "dailyCrossword": true,
+    "search": true,
+    "rarityTest": true,
+    "weeklyRecap": true,
+    "yesterday": true,
+    "wordOfTheDayArchive": true,
+    "activeDaysCalendar": true,
+    "dailyLimit": true,
+    "politePause": true,
+    "firstWeek": true,
+    "widgetHint": true,
+    "moods": true
   },
   "userSettingDefaults": {
     "theme": "system",

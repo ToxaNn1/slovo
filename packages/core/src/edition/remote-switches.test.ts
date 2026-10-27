@@ -110,6 +110,18 @@ describe('the remote Feature Switches', () => {
     expect(switches.edition.isFeatureEnabled('account')).toBe(true);
   });
 
+  it('turn one feature of 0.8.13 off remotely and keep the others', async () => {
+    const app = device();
+    app.backend.turnOff('search');
+    const switches = await app.launch();
+
+    await switches.ask();
+
+    expect(switches.edition.isFeatureEnabled('search')).toBe(false);
+    expect(switches.edition.isFeatureEnabled('moods')).toBe(true);
+    expect(switches.edition.isFeatureEnabled('dailyLimit')).toBe(true);
+  });
+
   it('give every Game Mode and the Daily Crossword as off once the Game is off remotely', async () => {
     const app = device();
     app.backend.turnOff('game');

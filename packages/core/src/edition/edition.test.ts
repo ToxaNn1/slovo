@@ -49,6 +49,17 @@ const validConfig = {
     gameByLetters: true,
     gameOrigin: true,
     dailyCrossword: true,
+    search: true,
+    rarityTest: true,
+    weeklyRecap: true,
+    yesterday: true,
+    wordOfTheDayArchive: true,
+    activeDaysCalendar: true,
+    dailyLimit: true,
+    politePause: true,
+    firstWeek: true,
+    widgetHint: true,
+    moods: true,
   },
   userSettingDefaults: {
     theme: 'system',
@@ -101,6 +112,21 @@ const gamePartSwitches = [
   'dailyCrossword',
 ] as const;
 
+/** The Feature Switches of the features of 0.8.13 (ADR 0054). */
+const learningSwitches = [
+  'search',
+  'rarityTest',
+  'weeklyRecap',
+  'yesterday',
+  'wordOfTheDayArchive',
+  'activeDaysCalendar',
+  'dailyLimit',
+  'politePause',
+  'firstWeek',
+  'widgetHint',
+  'moods',
+] as const;
+
 describe('loadEdition', () => {
   it('reports the Edition id, locale and whether it marks Stress', () => {
     const edition = loadEdition(validConfig);
@@ -149,6 +175,7 @@ describe('loadEdition', () => {
 
   it.each([
     ...gamePartSwitches,
+    ...learningSwitches,
     'synonymRows',
     'tips',
     'account',
@@ -581,10 +608,13 @@ describe('loadEdition', () => {
     expect(load).toThrow(`\n${field}: `);
   });
 
-  it.each(gamePartSwitches)('rejects a missing %s Feature Switch, naming the field', (feature) => {
-    const load = () => loadEdition({ ...validConfig, ...withoutSwitch(feature) });
+  it.each([...gamePartSwitches, ...learningSwitches])(
+    'rejects a missing %s Feature Switch, naming the field',
+    (feature) => {
+      const load = () => loadEdition({ ...validConfig, ...withoutSwitch(feature) });
 
-    expect(load).toThrow(InvalidEditionConfigError);
-    expect(load).toThrow(`\nfeatureSwitches.${feature}: `);
-  });
+      expect(load).toThrow(InvalidEditionConfigError);
+      expect(load).toThrow(`\nfeatureSwitches.${feature}: `);
+    },
+  );
 });
