@@ -195,5 +195,6 @@
     { "id": "energetic", "name": "Бадьорий", "emoji": "⚡" },
     { "id": "calm", "name": "Спокійний", "emoji": "😌" },
     { "id": "thoughtful", "name": "Задумливий", "emoji": "🤔" }
-  ]
+  ],
+  "searchLetters": { "ґ": "г", "ё": "е" }
 }

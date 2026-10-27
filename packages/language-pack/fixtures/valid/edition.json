@@ -98,5 +98,6 @@
   ],
   "categoriesRequiringHistory": [],
   "originLanguages": [{ "code": "proto-slavic", "name": "праслов'янська" }],
-  "moods": [{ "id": "calm", "name": "спокійний", "emoji": "😌" }]
+  "moods": [{ "id": "calm", "name": "спокійний", "emoji": "😌" }],
+  "searchLetters": { "ґ": "г" }
 }

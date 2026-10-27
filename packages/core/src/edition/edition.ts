@@ -54,6 +54,8 @@ export interface Edition {
   readonly legalPages: LegalPages;
   /** The languages Words come from, in their order, which «Звідки слово» offers (ADR 0052). */
   readonly originLanguages: readonly OriginLanguage[];
+  /** The letters Search reads as another, such as ґ as г (ADR 0054). */
+  readonly searchLetters: Readonly<Record<string, string>>;
   /** Whether the Edition turns the given Core feature on. */
   isFeatureEnabled(feature: FeatureSwitch): boolean;
 }
@@ -113,6 +115,7 @@ export function loadEdition(config: unknown): Edition {
     notificationSound,
     legalPages,
     originLanguages,
+    searchLetters,
   } = result.data;
   const { mix, ...settings } = userSettingDefaults;
   return {
@@ -135,6 +138,7 @@ export function loadEdition(config: unknown): Edition {
     notificationSound,
     legalPages,
     originLanguages,
+    searchLetters,
     isFeatureEnabled: switchedOn((feature) => featureSwitches[feature]),
   };
 }

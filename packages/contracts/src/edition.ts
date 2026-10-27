@@ -58,6 +58,9 @@ export type DistractorRule = z.infer<typeof DistractorRuleSchema>;
  * Letters authored as one string separated by spaces (a letter may span
  * several characters) and parsed into a list of unique letters.
  */
+/** One lower-case letter. */
+const LowerCaseLetterSchema = z.string().regex(/^\p{Ll}$/u, 'Expected one lower-case letter');
+
 const LetterListSchema = z
   .string()
   .transform((letters) => letters.split(' ').filter((letter) => letter !== ''))
@@ -339,6 +342,13 @@ export const EditionConfigSchema = z
      * Core stays language-agnostic. Empty when the Edition has no moods.
      */
     moods: z.array(MoodSchema),
+    /**
+     * The letters Search reads as another (ADR 0054), each lower-case letter
+     * to the one it reads as, such as ґ to г: the Edition owns them, so the
+     * Core stays language-agnostic. Empty when Search reads each letter as
+     * itself.
+     */
+    searchLetters: z.record(LowerCaseLetterSchema, LowerCaseLetterSchema),
   })
   .superRefine(
     (

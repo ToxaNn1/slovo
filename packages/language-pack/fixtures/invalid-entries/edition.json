@@ -97,5 +97,6 @@
   ],
   "categoriesRequiringHistory": [],
   "originLanguages": [],
-  "moods": []
+  "moods": [],
+  "searchLetters": { "ґ": "г" }
 }
