@@ -1,7 +1,5 @@
 import type { EditionStrings } from '@slovo/contracts';
 import {
-  GAME_LIVES,
-  GAME_ROUNDS,
   gapOf,
   LIFE_LOST_DELAY,
   staysInPlace,
@@ -157,7 +155,9 @@ export function GameRound({
     <View testID="game-round" style={styles.screen}>
       <GameHeader
         roundsPassed={game.roundsPassed}
+        roundLimit={game.roundLimit}
         lives={game.lives}
+        livesAtStart={game.livesAtStart}
         onExit={() => {
           setAsking(true);
         }}
@@ -333,23 +333,30 @@ function TypedRoundAnswer({
 
 /**
  * The Round's header (`game-round-dark`): the ✕ at its start, the Rounds
- * passed over a bar that grows as they pass, and the Lives on the right, full
+ * passed over a bar that grows as they pass towards the mode's Round limit,
+ * or with no limit just the Rounds passed, and the Lives on the right, full
  * in the heart colour, lost as an outline.
  */
 function GameHeader({
   roundsPassed,
+  roundLimit,
   lives,
+  livesAtStart,
   onExit,
 }: {
   roundsPassed: number;
+  /** The mode's Round limit; none in a mode without one, which shows no bar. */
+  roundLimit: number | undefined;
   /** The Lives left; none in a mode without Lives, which shows none. */
   lives: number | undefined;
+  /** The Lives the Game started with. */
+  livesAtStart: number | undefined;
   onExit: () => void;
 }) {
   const { colors, fontFamilies } = useTokens();
   const { strings, voice } = useEdition();
   const words = strings.game.round;
-  const progress = { passed: String(roundsPassed), total: String(GAME_ROUNDS) };
+  const progress = { passed: String(roundsPassed), total: String(roundLimit ?? '') };
   const passed = useSharedValue(roundsPassed);
   useEffect(() => {
     passed.value = withTiming(roundsPassed, BAR_GROWTH);
@@ -357,14 +364,17 @@ function GameHeader({
   }, [roundsPassed, passed]);
   // The share of the Rounds passed, as flex weights, so the bar needs no width.
   const filled = useAnimatedStyle(() => ({ flex: passed.value }));
-  const unfilled = useAnimatedStyle(() => ({ flex: GAME_ROUNDS - passed.value }));
+  const unfilled = useAnimatedStyle(() => ({ flex: (roundLimit ?? 0) - passed.value }));
   return (
     <View style={styles.header}>
       <ExitButton onPress={onExit} />
       <View
         testID="game-progress"
         accessible
-        accessibilityLabel={fill(words.progressLabel, progress)}
+        accessibilityLabel={fill(
+          roundLimit === undefined ? words.passedLabel : words.progressLabel,
+          progress,
+        )}
         {...voice}
         style={styles.progress}
       >
@@ -372,25 +382,27 @@ function GameHeader({
           maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
           style={[styles.progressText, { color: colors.ink, fontFamily: fontFamilies.ui }]}
         >
-          {fill(words.progress, progress)}
+          {fill(roundLimit === undefined ? words.passed : words.progress, progress)}
         </Text>
-        <View style={[styles.bar, { backgroundColor: colors.track }]}>
-          <Animated.View style={[filled, { backgroundColor: colors.accent }]} />
-          <Animated.View style={unfilled} />
-        </View>
+        {roundLimit === undefined ? null : (
+          <View testID="game-progress-bar" style={[styles.bar, { backgroundColor: colors.track }]}>
+            <Animated.View style={[filled, { backgroundColor: colors.accent }]} />
+            <Animated.View style={unfilled} />
+          </View>
+        )}
       </View>
-      {lives !== undefined && (
+      {lives !== undefined && livesAtStart !== undefined && (
         <View
           testID="game-lives"
           accessible
           accessibilityLabel={fill(words.lives, {
             count: String(lives),
-            total: String(GAME_LIVES),
+            total: String(livesAtStart),
           })}
           {...voice}
           style={styles.lives}
         >
-          {Array.from({ length: GAME_LIVES }, (_, life) => (
+          {Array.from({ length: livesAtStart }, (_, life) => (
             <Life key={life} full={life < lives} />
           ))}
         </View>

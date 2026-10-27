@@ -918,6 +918,8 @@
     "round": {
       "progress": "{passed} / {total}",
       "progressLabel": "Пройдено раундів: {passed} з {total}",
+      "passed": "Пройдено: {passed}",
+      "passedLabel": "Пройдено раундів: {passed}",
       "lives": "Життів: {count} з {total}",
       "highlight": "Виділено: {text}",
       "correct": "Правильно",
