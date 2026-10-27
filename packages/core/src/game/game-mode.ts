@@ -9,14 +9,16 @@ export const ROUND_OPTIONS = 4;
 
 /**
  * What the Game needs to know of the Edition: its Feature Switches, its
- * Distractor rule, whether it marks Stress and on which vowels, and the
- * punctuation an Idiom's expression may hold; an Edition that leaves them
- * out marks no Stress and has no expression punctuation.
+ * Distractor rule, whether it marks Stress and on which vowels, the
+ * punctuation an Idiom's expression may hold and the languages Words come
+ * from; an Edition that leaves them out marks no Stress, has no expression
+ * punctuation and no origin languages.
  */
-export type GameEdition = Pick<Edition, 'isFeatureEnabled'> & {
-  readonly languageTraits: Pick<LanguageTraits, 'distractorRule'> &
-    Partial<Pick<LanguageTraits, 'marksStress' | 'vowels' | 'expressionPunctuation'>>;
-};
+export type GameEdition = Pick<Edition, 'isFeatureEnabled'> &
+  Partial<Pick<Edition, 'originLanguages'>> & {
+    readonly languageTraits: Pick<LanguageTraits, 'distractorRule'> &
+      Partial<Pick<LanguageTraits, 'marksStress' | 'vowels' | 'expressionPunctuation'>>;
+  };
 
 /** One option of a Round, or the answer its sheet names. */
 export interface RoundOption {
@@ -120,6 +122,8 @@ export type RoundContent = RoundForm & {
   readonly prompt: string;
   /** The part of the prompt to mark, such as a non-standard form in a sentence; nothing to mark when left out. */
   readonly highlight?: TextRange;
+  /** The Definition shown under the prompt, such as a Word's in «Звідки слово»; none when left out. */
+  readonly definition?: string;
 };
 
 /** How many Rounds the content holds: one, or one per pair of a pairs grid. */

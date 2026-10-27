@@ -27,6 +27,7 @@ export {
   type LanguageTraits,
   type LegalPages,
   type MixConfig,
+  type OriginLanguage,
   type Theme,
   type UserSettingDefaultsConfig,
 } from './edition';
