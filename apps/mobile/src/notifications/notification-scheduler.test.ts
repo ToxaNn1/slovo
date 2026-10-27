@@ -94,6 +94,21 @@ describe('the notification scheduler on expo-notifications', () => {
       expect(trigger).not.toHaveProperty('timezone');
   });
 
+  it('schedules the farewell with no title and no Word', async () => {
+    const { module, notifications } = mockNotifications();
+    const scheduler = createNotificationScheduler(notifications, native);
+    const { wordId: _none, ...farewell } = planned({ title: '', body: 'До зустрічі' });
+
+    await scheduler.replacePlan([farewell]);
+
+    expect(module.scheduleNotificationAsync.mock.calls[0]?.[0].content).toEqual({
+      title: '',
+      body: 'До зустрічі',
+      sound: 'notification.wav',
+      data: {},
+    });
+  });
+
   it('cancels the old plan before it schedules the new one', async () => {
     const { module, notifications } = mockNotifications();
     const scheduler = createNotificationScheduler(notifications, native);

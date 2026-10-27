@@ -108,7 +108,13 @@ function schedulerOn(
     const { hour, minute } = parseTimeOfDay(time);
     return notifications.scheduleNotificationAsync({
       identifier: `${date}T${time}`,
-      content: { title, body, sound: soundOf(sound), data: { wordId } },
+      content: {
+        title,
+        body,
+        sound: soundOf(sound),
+        // The farewell carries no Word: a tap on it only opens the app.
+        data: wordId === undefined ? {} : { wordId },
+      },
       trigger: { type: SchedulableTriggerInputTypes.CALENDAR, year, month, day, hour, minute },
     });
   }
