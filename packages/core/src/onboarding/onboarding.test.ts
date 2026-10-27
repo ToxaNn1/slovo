@@ -695,7 +695,7 @@ describe('Onboarding', () => {
       expect(stepOf(app)).toMatchObject({ kind: 'notifications', number: 3, total: 3 });
     });
 
-    it('is passed over when it has no Word to ask about', async () => {
+    it('is left out when it has no Word to ask about, counting the steps without it', async () => {
       const app = await run({
         rarityTest: true,
         content: createMemoryContentPort({
@@ -704,11 +704,33 @@ describe('Onboarding', () => {
           corrections: [],
         }),
       });
+      expect(stepOf(app)).toMatchObject({ kind: 'welcome', number: 1, total: 3 });
       await goTo(app, 'mix');
 
       await app.onboarding.next();
 
-      expect(stepOf(app).kind).toBe('notifications');
+      expect(stepOf(app)).toMatchObject({ kind: 'notifications', number: 3, total: 3 });
+    });
+
+    it('is passed over once the Mix leaves it no Word, and the count follows', async () => {
+      const app = await run({
+        rarityTest: true,
+        content: createMemoryContentPort({
+          categories,
+          words: [
+            word('w_gone', { categoryId: 'test', retired: true }),
+            word('w_other', { categoryId: 'other' }),
+          ],
+          corrections: [],
+        }),
+      });
+      await goTo(app, 'mix');
+      expect(stepOf(app)).toMatchObject({ number: 2, total: 4 });
+      await app.mix.takeOut('other');
+
+      await app.onboarding.next();
+
+      expect(stepOf(app)).toMatchObject({ kind: 'notifications', number: 3, total: 3 });
     });
   });
 

@@ -141,7 +141,7 @@ const noSample = (): undefined => undefined;
  * notification, which the sample shows. `account` says whether the Edition
  * has the Account, which brings the SLOVO ID step. `rarityTest` is the
  * composition's Rarity Test while the Edition turns it on, which brings the
- * Rarity Test step; the step is passed over when its draw has no Word.
+ * Rarity Test step while its draw has a Word.
  */
 export async function openOnboarding({
   userState,
@@ -166,9 +166,20 @@ export async function openOnboarding({
   rarityTest: Pick<RarityTest, 'draw'> | undefined;
 }): Promise<Onboarding> {
   const subscribers = createSubscribers();
-  const steps: readonly StepKind[] = STEPS.filter(
-    (kind) => (kind !== 'account' || account) && (kind !== 'rarityTest' || rarityTest),
+  /** The Rarity Test's Words, or none while it is off; a draw that fails asks about none. */
+  const drawn = async () => (await rarityTest?.draw().catch(() => [])) ?? [];
+  const finished = await userState.read(onboardingFinished);
+  /**
+   * The steps the onboarding has now. The Rarity Test step is left out from
+   * the start when its draw has no Word, and from the moment it would open
+   * when the Mix chosen leaves it none, so the count follows.
+   */
+  let steps: readonly StepKind[] = STEPS.filter(
+    (kind) => (kind !== 'account' || account) && kind !== 'rarityTest',
   );
+  if (finished === undefined && (await drawn()).length > 0) {
+    steps = STEPS.filter((kind) => kind !== 'account' || account);
+  }
 
   async function wordCardOf(wordId: string | undefined): Promise<WordCardModel | undefined> {
     const word = wordId === undefined ? undefined : await entries.get(wordId);
@@ -188,8 +199,9 @@ export async function openOnboarding({
   }
 
   /**
-   * The step at `index` in the order, with what it shows, or the one after it
-   * when it has nothing to show; nothing past the last step.
+   * The step at `index` in the order, with what it shows; the Rarity Test step
+   * leaves the steps when it has nothing to show, and the next takes its
+   * place. Nothing past the last step.
    */
   async function stepAt(index: number): Promise<OnboardingStep | undefined> {
     const place = { number: index + 1, total: steps.length };
@@ -200,14 +212,15 @@ export async function openOnboarding({
     }
     if (kind === 'mix' || kind === 'account') return { kind, ...place };
     if (kind === 'rarityTest') {
-      const words = (await rarityTest?.draw()) ?? [];
-      return words.length === 0 ? stepAt(index + 1) : { kind, ...place, words };
+      const words = await drawn();
+      if (words.length > 0) return { kind, ...place, words };
+      steps = steps.filter((each) => each !== 'rarityTest');
+      return stepAt(index);
     }
     // The step comes without a sample rather than not at all when it can't be read.
     return { kind: 'notifications', ...place, sample: await sampleNotification().catch(noSample) };
   }
 
-  const finished = await userState.read(onboardingFinished);
   let state: OnboardingState =
     finished === undefined
       ? { finishedAt: undefined, step: await stepAt(0) }
