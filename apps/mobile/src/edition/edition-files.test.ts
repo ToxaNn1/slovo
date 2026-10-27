@@ -248,6 +248,18 @@ describe('the 0.8.13 strings', () => {
     expect(issuesOf(changed)).toEqual(['feedNotices.firstWeek.days']);
   });
 
+  it('needs a seventh day’s text without the Streak, for a reader who hides it', () => {
+    const feedNotices = strings['feedNotices'] as { firstWeek: Record<string, unknown> };
+    const firstWeek = Object.fromEntries(
+      Object.entries(feedNotices.firstWeek).filter(([name]) => name !== 'lastDayTextNoStreak'),
+    );
+
+    expect(parsed.feedNotices.firstWeek.lastDayTextNoStreak).not.toBe('');
+    expect(issuesOf({ ...strings, feedNotices: { ...feedNotices, firstWeek } })).toEqual([
+      'feedNotices.firstWeek.lastDayTextNoStreak',
+    ]);
+  });
+
   it('needs the Streak as {count} in every form of the seventh day’s text', () => {
     const feedNotices = strings['feedNotices'] as { firstWeek: { lastDayText: object } };
     const changed = {

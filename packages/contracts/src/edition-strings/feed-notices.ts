@@ -34,5 +34,7 @@ export const FeedNoticesStringsSchema = z.strictObject({
     ]),
     /** The text of the seventh day's card. Takes `{count}`, the Streak. */
     lastDayText: pluralOf(),
+    /** The seventh day's text for a reader who hides the Streak, so it names no Streak. */
+    lastDayTextNoStreak: TextSchema,
   }),
 });
