@@ -15,6 +15,7 @@ import type { GameEdition, GameMode } from './game/game-mode';
 import { guessWord } from './game/guess-word';
 import { pairsMode } from './game/pairs-mode';
 import { stressMode } from './game/stress-mode';
+import { typeWordMode } from './game/type-word-mode';
 import { openHistory, type History } from './saved/history';
 import { openKnowledge, type Knowledge } from './knowledge/knowledge';
 import { openHiddenEntries, type HiddenEntries } from './hidden/hidden-entries';
@@ -198,6 +199,7 @@ const coreGameModes: readonly GameMode[] = [
   pairsMode,
   anagramMode,
   byLettersMode,
+  typeWordMode,
 ];
 
 /**
