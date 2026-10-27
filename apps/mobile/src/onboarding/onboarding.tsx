@@ -2,7 +2,6 @@ import type {
   Account,
   OnboardingStep,
   RarityTestAnswer,
-  RarityTestWord,
   SampleNotification,
   WordCardModel,
 } from '@slovo/core';
@@ -14,7 +13,6 @@ import {
   OnboardingWelcome,
   stressLabel,
   type HeroWord,
-  type RarityTestQuestion,
   type SampleNotificationLook,
 } from '@slovo/ui';
 import { useState, type ReactNode } from 'react';
@@ -27,6 +25,7 @@ import { useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
 import { logError } from '../diagnostics/log';
 import { MixChoices } from '../mix/mix-choices';
+import { rarityTestQuestionOf, useApplyRarityTest } from '../mix/rarity-test';
 import { NotificationTimes } from '../notifications/notification-times';
 import { useSubscribed, type Opening } from '../opening';
 
@@ -54,18 +53,6 @@ function sampleLookOf(sample: SampleNotification | undefined): SampleNotificatio
     : { ...lemmaOf(sample.wordCard), body: sample.body, time: sample.time };
 }
 
-function questionOf({
-  rarity,
-  lemmaWithStress,
-  stressedVowels,
-}: RarityTestWord): RarityTestQuestion {
-  return {
-    rarity,
-    lemma: lemmaWithStress,
-    accessibilityLabel: stressLabel(editionStrings.wordCard, lemmaWithStress, stressedVowels),
-  };
-}
-
 /** Logs what the onboarding could not do on a tap. */
 function report(done: Promise<void>): void {
   done.catch((error: unknown) => {
@@ -81,7 +68,8 @@ function report(done: Promise<void>): void {
  * step.
  */
 export function Onboarding() {
-  const { onboarding, rarityTest } = useComposition();
+  const { onboarding } = useComposition();
+  const applyRarityTest = useApplyRarityTest();
   const step = useSubscribed(onboarding, ({ state }) => state.step);
   /** Whether the SLOVO ID screen is open over the step. */
   const [signingIn, setSigningIn] = useState(false);
@@ -97,13 +85,7 @@ export function Onboarding() {
       step={step}
       onNext={next}
       onSkip={skip}
-      onApplyRarityTest={(answers) =>
-        // A floor that can't be set leaves the one the Mix has, and the step goes on.
-        rarityTest.apply(answers).catch((error: unknown) => {
-          logError('Could not set the Rarity Floor', error);
-          return undefined;
-        })
-      }
+      onApplyRarityTest={applyRarityTest}
       onAllow={() => {
         report(onboarding.allowNotifications());
       }}
@@ -200,7 +182,7 @@ function Step({
       <OnboardingRarityTest
         step={number}
         total={total}
-        words={step.words.map(questionOf)}
+        words={step.words.map(rarityTestQuestionOf)}
         onApply={onApplyRarityTest}
         onNext={onNext}
         onSkip={onSkip}

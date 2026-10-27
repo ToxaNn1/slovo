@@ -49,7 +49,8 @@ const dailyLimitSegments = dailyLimits.map((dailyLimit) => ({
 
 /**
  * Settings: SLOVO ID when the Account is on in effect, the Theme, the font
- * size, the Daily Limit while it is on in effect and the rows of the design. The rows of later versions show as soon.
+ * size, the Daily Limit while it is on in effect, «Пройти тест ще раз» while
+ * the Rarity Test is, and the rows of the design. The rows of later versions show as soon.
  */
 export default function SettingsScreen() {
   const { current, update } = useSettings();
@@ -154,6 +155,15 @@ export default function SettingsScreen() {
                 openScreen('/settings/mix');
               }}
             />
+            {shown.rarityTest && (
+              <NavigationRow
+                testID="settings-row-rarity-test"
+                label={editionStrings.rarityTest.retake}
+                onPress={() => {
+                  openScreen('/settings/rarity-test');
+                }}
+              />
+            )}
             <NavigationRow
               testID="settings-row-hidden"
               label={strings.rows.hidden}
