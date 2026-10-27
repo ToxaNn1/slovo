@@ -43,7 +43,7 @@ export type EntryKind = keyof typeof ENTRY_KINDS;
 /**
  * Drafts an Entry of the given kind with an id no Entry of the Edition has
  * had, in the file the build reads it from, and opens it in the editor. For
- * a Word it first prints the origin codes the Edition lists.
+ * a Word it first prints the origin codes and the moods the Edition lists.
  * Once the draft passes the build's checks, the content is recorded as
  * `pnpm build:pack --record` records it: the new id joins the id registry
  * and the content version grows. A draft closed unchanged is removed, so
@@ -72,7 +72,7 @@ export async function newEntry(kind: EntryKind, tool: ContentTool): Promise<numb
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, draft);
   terminal.print(`Drafted ${file}`);
-  if (kind === 'word') offerOrigins(tool);
+  if (kind === 'word') offerWordFields(tool);
   return editUntilRecorded(file, draft, tool);
 }
 
@@ -81,7 +81,7 @@ export async function newEntry(kind: EntryKind, tool: ContentTool): Promise<numb
  * expression, non-standard form, a Synonym Row's dominant or a Tip's title, with or without stress marks and in any
  * case. When the text matches several Entries, such as homonyms, it lists
  * them and asks which one to open. For a Word it first prints the origin
- * codes the Edition lists. After each save the content is checked
+ * codes and the moods the Edition lists. After each save the content is checked
  * and recorded as `newEntry` does; an Entry closed unchanged writes nothing.
  * Returns the exit code.
  */
@@ -109,7 +109,7 @@ export async function editEntry(text: string, tool: ContentTool): Promise<number
     return 1;
   }
   const file = edition.entryFile(match.id);
-  if (match.id.startsWith(ENTRY_KINDS.word)) offerOrigins(tool);
+  if (match.id.startsWith(ENTRY_KINDS.word)) offerWordFields(tool);
   return editUntilRecorded(file, readFileSync(join(edition.dir, file), 'utf8'), tool, 'keep');
 }
 
@@ -182,7 +182,8 @@ export function checkEdition({ edition, terminal }: ContentTool): number {
  * owner leaves it. A file closed as it was before the command writes
  * nothing: a draft is removed, an existing Entry kept as it was. A deleted
  * draft is gone; a deleted Entry is written back, since its id stays taken
- * (ADR 0010) and only retiring withdraws it.
+ * (ADR 0010) and only retiring withdraws it. A Word saved with its last
+ * mood removed loses the field, since a Word without moods leaves it out.
  */
 async function editUntilRecorded(
   file: string,
@@ -200,6 +201,7 @@ async function editUntilRecorded(
       terminal.print(`${file} closed unchanged: nothing written`);
       return 0;
     }
+    dropEmptyMoods(path);
     const recorded = recordContent({ editionDir: edition.dir });
     if (recorded.ok) {
       terminal.print(`Recorded ${file}`);
@@ -216,10 +218,31 @@ async function editUntilRecorded(
   }
 }
 
-/** Prints the origin codes the Edition lists, which a Word's optional `origin` takes one of. */
-function offerOrigins({ edition, terminal }: ContentTool): void {
-  const codes = edition.config.originLanguages.map(({ code, name }) => `${code} (${name})`);
+/**
+ * Prints the origin codes the Edition lists, which a Word's optional `origin`
+ * takes one of, and the moods, which its optional `moods` takes any of.
+ */
+function offerWordFields({ edition, terminal }: ContentTool): void {
+  const { originLanguages, moods } = edition.config;
+  const codes = originLanguages.map(({ code, name }) => `${code} (${name})`);
   terminal.print(`  origin: one of ${codes.join(', ')}, or none`);
+  if (moods.length === 0) return;
+  const ids = moods.map(({ id, name }) => `${id} (${name})`);
+  terminal.print(`  moods: any of ${ids.join(', ')}, or none`);
+}
+
+/** Rewrites a Word saved with an empty `moods` list without the field. */
+function dropEmptyMoods(path: string): void {
+  let entry: unknown;
+  try {
+    entry = JSON.parse(readFileSync(path, 'utf8'));
+  } catch {
+    return;
+  }
+  if (typeof entry !== 'object' || entry === null || !('moods' in entry)) return;
+  const { moods, ...rest } = entry;
+  if (!Array.isArray(moods) || moods.length > 0) return;
+  writeFileSync(path, `${JSON.stringify(rest, null, 2)}\n`);
 }
 
 function printContentVersion(
