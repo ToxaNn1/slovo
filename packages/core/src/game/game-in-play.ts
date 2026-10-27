@@ -101,7 +101,17 @@ export type Round = {
       readonly definitions: readonly GridCell<string>[];
     }
   | { readonly form: 'chips'; readonly chips: readonly string[] }
-  | { readonly form: 'typed' }
+  | {
+      readonly form: 'typed';
+      /**
+       * The text to type as blanks, one per character: a character in place
+       * or a letter opened, or nothing while blank; no blanks in a Round
+       * that shows none.
+       */
+      readonly blanks: readonly (string | undefined)[] | undefined;
+      /** Whether «Відкрити літеру» opens a letter: while more than one blank is left. */
+      readonly canOpenLetter: boolean;
+    }
 );
 
 /** A Round the reader answered: what the Game Review lists. */
@@ -161,6 +171,12 @@ export interface GameInPlay {
    * else at the next Round. Nothing before an answer.
    */
   next(game: CurrentGame): CurrentGame | undefined;
+  /**
+   * The Game with «Відкрити літеру»: the first blank of the Round's typed
+   * text opened, at no cost. Nothing unless the Round waits for an answer
+   * and more than one blank is left.
+   */
+  openLetter(game: CurrentGame): CurrentGame | undefined;
   /**
    * Builds the Rounds after the ones the Game has shown anew from the
    * eligible Entries of the mode's kind, while the Game is not over. When the
@@ -225,10 +241,21 @@ function roundOf(
     }
     case 'chips':
       return { ...base, form: 'chips', chips: content.chips };
-    case 'typed':
-      return { ...base, form: 'typed' };
+    case 'typed': {
+      const inPlace = content.blanks?.inPlace;
+      const blanks =
+        inPlace &&
+        Array.from(content.expected, (character, place) =>
+          inPlace.includes(place) ? character : undefined,
+        );
+      return { ...base, form: 'typed', blanks, canOpenLetter: canOpenLetterIn(blanks) };
+    }
   }
 }
+
+/** Whether more than one blank is left, so that «Відкрити літеру» may open one. */
+const canOpenLetterIn = (blanks: readonly (string | undefined)[] | undefined) =>
+  blanks !== undefined && blanks.filter((blank) => blank === undefined).length > 1;
 
 /** Whether the chips tapped are the right ones in the right order, equal chips interchangeable. */
 const chipsMatch = (tapped: readonly string[], right: readonly string[]) =>
@@ -404,6 +431,20 @@ export function createGameInPlay(
         round: roundOf(upcoming.planned, roundsPassed + 1, game.played, upcoming.inGrid),
         status: 'playing',
       };
+    },
+    openLetter(game) {
+      const { round } = game;
+      if (game.status !== 'playing' || round.form !== 'typed' || !round.canOpenLetter) {
+        return undefined;
+      }
+      const at = plannedAt(round.number);
+      if (at?.planned.content.form !== 'typed') return undefined;
+      const letters = Array.from(at.planned.content.expected);
+      const first = round.blanks?.indexOf(undefined) ?? -1;
+      const blanks = round.blanks?.map((blank, place) =>
+        place === first ? letters[place] : blank,
+      );
+      return { ...game, round: { ...round, blanks, canOpenLetter: canOpenLetterIn(blanks) } };
     },
     replan(game, eligibleNow) {
       if (game.status !== 'playing' && game.status !== 'answered') return;
