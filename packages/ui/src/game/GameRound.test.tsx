@@ -1,5 +1,5 @@
 import type { EditionStrings } from '@slovo/contracts';
-import type { CurrentGame, GivenAnswer, Haptics, RoundAnswer } from '@slovo/core';
+import type { CurrentGame, GivenAnswer, Haptics, PlayedRound, RoundAnswer } from '@slovo/core';
 import { EditionProvider, GameRound, HapticsProvider } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
@@ -21,6 +21,7 @@ const strings = {
       synonymRow: { label: 'Synonyms', prompt: 'What is a synonym of “{dominant}”?' },
       tip: { label: 'Tip' },
       typed: { label: 'Your answer', submit: 'Check' },
+      timer: { one: '{count} second left', other: '{count} seconds left' },
     },
     openLetter: 'Open a letter',
     letters: {
@@ -51,12 +52,16 @@ const metrics = {
   insets: { top: 0, left: 0, right: 0, bottom: 0 },
 };
 
+/** The haptics of a right and a wrong answer. */
+const success = jest.fn();
+const warning = jest.fn();
+
 const haptics: Haptics = {
   selection: jest.fn(),
   impactLight: jest.fn(),
   impactMedium: jest.fn(),
-  success: jest.fn(),
-  warning: jest.fn(),
+  success,
+  warning,
 };
 
 const OPTIONS = ['ardent', 'brittle', 'candid', 'dour'] as const;
@@ -670,6 +675,80 @@ describe('GameRound', () => {
       expect(screen.getByRole('header', { name: 'Not this time' })).toBeTruthy();
       expect(screen.getByTestId('game-sheet')).toHaveTextContent(TYPED, { exact: false });
       expect(screen.getByLabelText('Lives: 4 of 5')).toBeOnTheScreen();
+    });
+  });
+
+  describe('a timed Game', () => {
+    /** A Round of a mode that moves on, 60 seconds of play, with no Lives, its clock running. */
+    const timed: CurrentGame = {
+      ...first,
+      modeId: 'timed',
+      roundLimit: undefined,
+      lives: undefined,
+      livesAtStart: undefined,
+      timeLimit: 60_000,
+      time: { left: 60_000, endsAt: new Date('2026-10-26T09:01:00Z') },
+    };
+
+    /** The Round on the screen with the time the screen ticks, which a test changes by `rerender`. */
+    function TimedRound({ game, timeLeft }: { game: CurrentGame; timeLeft: number }) {
+      return (
+        <SafeAreaProvider initialMetrics={metrics}>
+          <EditionProvider edition={{ locale: 'en' }} strings={strings}>
+            <HapticsProvider haptics={haptics}>
+              <GameRound
+                game={game}
+                timeLeft={timeLeft}
+                label="Definition"
+                onAnswer={jest.fn()}
+                onNext={jest.fn()}
+                onLeave={jest.fn()}
+                onOpenLetter={jest.fn()}
+              />
+            </HapticsProvider>
+          </EditionProvider>
+        </SafeAreaProvider>
+      );
+    }
+
+    /** The Game gone on to its next Round with the current one answered as given, as a mode that moves on does. */
+    function movedOn(game: CurrentGame, right: boolean): CurrentGame {
+      const { round } = answeredPick(game, { form: 'pick', option: right ? CORRECT : 0 });
+      const { answer } = round;
+      if (answer === undefined) throw new Error('No answer');
+      const entry = { kind: 'word', id: 'w_candid' } as PlayedRound['entry'];
+      return {
+        ...game,
+        round: { ...game.round, number: game.round.number + 1 },
+        roundsPassed: game.roundsPassed + 1,
+        played: [...game.played, { ...round, answer, entry, right }],
+      };
+    }
+
+    it('shows the time left on top in place of the Rounds passed, and no Lives', async () => {
+      await render(<TimedRound game={timed} timeLeft={39_200} />);
+
+      expect(screen.getByRole('timer', { name: '40 seconds left' })).toHaveTextContent('40');
+      expect(screen.queryByTestId('game-progress')).not.toBeOnTheScreen();
+      expect(screen.queryByTestId('game-lives')).not.toBeOnTheScreen();
+    });
+
+    it('plays the haptic of each answer as the next Round comes at once, with no sheet', async () => {
+      success.mockClear();
+      warning.mockClear();
+      const { rerender } = await render(<TimedRound game={timed} timeLeft={60_000} />);
+      const right = movedOn(timed, true);
+
+      await rerender(<TimedRound game={right} timeLeft={58_000} />);
+
+      expect(success).toHaveBeenCalledTimes(1);
+      expect(warning).not.toHaveBeenCalled();
+
+      await rerender(<TimedRound game={movedOn(right, false)} timeLeft={56_000} />);
+
+      expect(success).toHaveBeenCalledTimes(1);
+      expect(warning).toHaveBeenCalledTimes(1);
+      expect(screen.queryByTestId('game-next')).not.toBeOnTheScreen();
     });
   });
 

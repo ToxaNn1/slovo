@@ -183,6 +183,10 @@ export const GameStringsSchema = z.strictObject({
       line: PluralSchema,
     }),
     lost: z.strictObject({ title: TextSchema, line: TextSchema }),
+    /** The end of a Game in a mode with a time limit, once its time is up, e.g. «Час вийшов!». */
+    timeUp: z.strictObject({ title: TextSchema, line: TextSchema }),
+    /** The word under the right answers of a Game in a mode with a time limit, e.g. «правильних відповідей». */
+    right: PluralLabelSchema,
     /** The word under the Rounds passed, «11 / 15», agreeing with the Rounds of a Game, e.g. «раундів». */
     rounds: PluralLabelSchema,
     /** The word under the Lives left, e.g. «життів». */

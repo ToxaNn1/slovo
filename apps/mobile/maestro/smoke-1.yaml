@@ -27,6 +27,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - runFlow: flows/game-correction.yaml
 - runFlow: flows/game-anglicism.yaml
 - runFlow: flows/game-idiom-meaning.yaml
+- runFlow: flows/game-timed.yaml
 - runFlow: flows/game-stress.yaml
 - runFlow: flows/game-pairs.yaml
 - runFlow: flows/game-anagram.yaml

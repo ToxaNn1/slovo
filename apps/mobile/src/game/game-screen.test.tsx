@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { CrosswordDaySchema, type Correction, type Idiom, type Word } from '@slovo/contracts';
 import {
   createMemoryUserStatePort,
@@ -6,13 +6,15 @@ import {
   openComposition,
   openUserState,
   systemRandom,
+  type Clock,
   type Composition,
   type Edition,
   type Haptics,
+  type Schedule,
 } from '@slovo/core';
 import { createMemoryContentPort } from '@slovo/core/testing';
-import { EditionProvider, HapticsProvider } from '@slovo/ui';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react-native';
+import { EditionProvider, HapticsProvider, systemSchedule } from '@slovo/ui';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import config from 'slovo-edition/config';
 
@@ -41,6 +43,31 @@ jest.mock('../composition', () => ({
   useComposition: () => mockComposition,
   compositionOpening: { opened: () => Promise.resolve(mockComposition) },
 }));
+/** Whether the app is in the foreground, as a test moves it, and who listens to it. */
+let mockInForeground = true;
+const mockForegroundListeners = new Set<() => void>();
+
+jest.mock('../foreground/in-foreground', () => ({
+  useInForeground: () =>
+    jest.requireActual<typeof import('react')>('react').useSyncExternalStore(
+      (listener: () => void) => {
+        mockForegroundListeners.add(listener);
+        return () => {
+          mockForegroundListeners.delete(listener);
+        };
+      },
+      () => mockInForeground,
+    ),
+}));
+
+/** Sends the app to the background, or brings it back to the foreground. */
+async function moveApp(to: 'background' | 'foreground') {
+  mockInForeground = to === 'foreground';
+  await act(() => {
+    for (const listener of mockForegroundListeners) listener();
+  });
+}
+
 jest.mock('../edition/remote-switches', () => ({ useEditionInEffect: () => mockEdition }));
 jest.mock('../settings/settings', () => ({
   useSettings: () => ({ current: { hideStreak: false, selfCheck: false } }),
@@ -178,6 +205,8 @@ async function open({
   idioms = 0,
   switchedOff = [],
   crossword,
+  clock = { now: () => new Date('2026-10-26T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
+  schedule,
 }: {
   best?: Record<string, number>;
   corrections?: number;
@@ -185,6 +214,10 @@ async function open({
   idioms?: number;
   switchedOff?: readonly string[];
   crossword?: { date: string; letters: Record<string, string> };
+  /** The clock the Core reads; a stopped one on the morning of 26 October by default. */
+  clock?: Clock;
+  /** What the Core runs something later by; nothing by default. */
+  schedule?: Schedule;
 } = {}) {
   mockEdition = editionWithout(switchedOff);
   const records = new Map(
@@ -207,8 +240,9 @@ async function open({
     },
     edition: mockEdition,
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
-    clock: { now: () => new Date('2026-10-26T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
+    clock,
     random: systemRandom,
+    ...(schedule === undefined ? {} : { schedule }),
   });
 }
 
@@ -348,7 +382,29 @@ function theWordOfThePrompt(): string {
   return `слово${/\d+/.exec(prompt)?.[0] ?? ''}`;
 }
 
+/** Picks an option other than the Word whose number is the prompt's, wrong in a Round of «Вгадай слово». */
+async function pickAnotherWord() {
+  const prompt = String(screen.getByTestId('game-prompt').props['accessibilityLabel']);
+  const right = new RegExp(`^слово${/\d+/.exec(prompt)?.[0] ?? ''},`);
+  const wrong = screen
+    .getAllByTestId(/^game-option-\d+$/)
+    .find((option) => !right.test(String(option.props['accessibilityLabel'])));
+  if (wrong === undefined) throw new Error('No wrong option');
+  await fireEvent.press(wrong);
+}
+
+/** The time left on the timer as VoiceOver reads it. */
+const timerLabel = () => String(screen.getByTestId('game-timer').props['accessibilityLabel']);
+
+/** Lets the given milliseconds pass on the faked clock and timers. */
+async function pass(ms: number) {
+  await act(() => {
+    jest.advanceTimersByTime(ms);
+  });
+}
+
 beforeEach(async () => {
+  mockInForeground = true;
   await open();
 });
 
@@ -373,6 +429,7 @@ describe('the Game screen', () => {
       'game-mode-build-idiom',
       'Виклик',
       'game-mode-survival',
+      'game-mode-timed',
     ]);
   });
 
@@ -414,6 +471,8 @@ describe('the Game screen', () => {
       'Вислови',
       'game-mode-idiom-meaning',
       'game-mode-build-idiom',
+      'Виклик',
+      'game-mode-timed',
     ]);
     expect(screen.queryByText('Виправлення')).toBeNull();
   });
@@ -945,5 +1004,87 @@ describe('the Game screen', () => {
       'Пройдено раундів: 11',
     );
     expect(screen.getByTestId('game-result-best')).toHaveTextContent(/^11/);
+  });
+
+  describe('«На час»', () => {
+    beforeEach(async () => {
+      jest.useFakeTimers({ now: new Date('2026-10-26T09:00:00Z') });
+      // The faked system time, which the faked timers move and the timer reads too.
+      await open({
+        clock: { now: () => new Date(), timeZone: () => 'Europe/Kyiv' },
+        schedule: systemSchedule,
+      });
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('starts from its card and races 60 seconds with the timer on top, a mistake moving on, to the result screen', async () => {
+      await renderScreen();
+
+      await fireEvent.press(screen.getByTestId('game-mode-timed'));
+
+      await waitFor(() => {
+        expect(timerLabel()).toBe('лишилось 60 секунд');
+      });
+      expect(screen.queryByTestId('game-progress')).toBeNull();
+      expect(screen.queryByTestId('game-lives')).toBeNull();
+      expect(screen.getByText('Визначення')).toBeOnTheScreen();
+      for (let answered = 0; answered < 3; answered += 1) {
+        await pickTheWordOfThePrompt();
+        // The next Round comes at once, with no sheet.
+        expect(screen.queryByTestId('game-next')).toBeNull();
+        expect(screen.getAllByTestId(/^game-option-\d+$/)).toHaveLength(4);
+      }
+      warning.mockClear();
+      await pickAnotherWord();
+      expect(warning).toHaveBeenCalled();
+      expect(screen.queryByTestId('game-next')).toBeNull();
+      expect(screen.getAllByTestId(/^game-option-\d+$/)).toHaveLength(4);
+
+      await pass(10_000);
+
+      expect(timerLabel()).toBe('лишилось 50 секунд');
+
+      await pass(50_000);
+
+      await waitFor(() => {
+        expect(screen.getByText('Час вийшов!')).toBeOnTheScreen();
+      });
+      expect(screen.getByTestId('game-result-right').props['accessibilityLabel']).toBe(
+        '3 правильні відповіді',
+      );
+      expect(screen.queryByTestId('game-result-rounds')).toBeNull();
+      expect(screen.queryByTestId('game-result-lives')).toBeNull();
+      expect(screen.getByTestId('game-result-best')).toHaveTextContent('3', { exact: false });
+    });
+
+    it('stops the timer while the app is in the background, and runs it on from there on return', async () => {
+      await renderScreen();
+      await fireEvent.press(screen.getByTestId('game-mode-timed'));
+      await waitFor(() => {
+        expect(timerLabel()).toBe('лишилось 60 секунд');
+      });
+      await pass(20_000);
+
+      await moveApp('background');
+      await pass(5 * 60_000);
+
+      expect(timerLabel()).toBe('лишилось 40 секунд');
+      expect(screen.getByTestId('game-round')).toBeOnTheScreen();
+
+      await moveApp('foreground');
+      await pass(39_000);
+
+      expect(timerLabel()).toBe('лишилась 1 секунда');
+      expect(screen.getByTestId('game-round')).toBeOnTheScreen();
+
+      await pass(1_000);
+
+      await waitFor(() => {
+        expect(screen.getByText('Час вийшов!')).toBeOnTheScreen();
+      });
+    });
   });
 });

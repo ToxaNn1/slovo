@@ -1,0 +1,47 @@
+# The mode «На час», 60 seconds of Definition picks: it starts from its card
+# with the timer on top, an answer moves on at once with no sheet, and once
+# the time is up the result screen shows the right answers; «На головну» goes
+# to the Feed. A subflow of `smoke.yaml`; run it from there. It leaves no Game
+# in play.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- tapOn:
+    id: tab-game
+- scrollUntilVisible:
+    element:
+      id: game-mode-timed
+    direction: DOWN
+- tapOn:
+    id: game-mode-timed
+- assertVisible:
+    id: game-timer
+- assertNotVisible:
+    id: game-lives
+# Five answers, each going on to the next Round with no sheet. Each scroll
+# brings its target up at the largest text sizes and does nothing otherwise.
+- repeat:
+    times: 5
+    commands:
+      - scrollUntilVisible:
+          element:
+            id: game-option-0
+          direction: DOWN
+      - tapOn:
+          id: game-option-0
+      - assertNotVisible:
+          id: game-next
+# The rest of the minute runs out.
+- extendedWaitUntil:
+    visible:
+      id: game-result
+    timeout: 70000
+- assertVisible:
+    id: game-result-right
+- scrollUntilVisible:
+    element:
+      id: game-home
+    direction: DOWN
+- tapOn:
+    id: game-home
+- assertVisible:
+    id: home
