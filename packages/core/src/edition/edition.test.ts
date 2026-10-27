@@ -96,6 +96,7 @@ const validConfig = {
     { id: 'joyful', name: 'Joyful', emoji: '😊' },
     { id: 'calm', name: 'Calm', emoji: '😌' },
   ],
+  searchLetters: { b: 'a' },
 };
 
 /** The Feature Switches of the Game Modes and the Daily Crossword (ADR 0052). */
@@ -308,6 +309,14 @@ describe('loadEdition', () => {
 
   it('accepts an Edition that lists no origin languages', () => {
     expect(() => loadEdition({ ...validConfig, originLanguages: [] })).not.toThrow();
+  });
+
+  it('reports the letters Search reads as another', () => {
+    expect(loadEdition(validConfig).searchLetters).toEqual({ b: 'a' });
+  });
+
+  it('accepts an Edition whose Search reads every letter as itself', () => {
+    expect(loadEdition({ ...validConfig, searchLetters: {} }).searchLetters).toEqual({});
   });
 
   it('accepts an Edition that lists no moods', () => {
@@ -631,6 +640,10 @@ describe('loadEdition', () => {
       { moods: [{ id: 'In Love', name: 'In love', emoji: '😍' }] },
       'moods.0.id',
     ],
+    ['no Search letters', { searchLetters: undefined }, 'searchLetters'],
+    ['a Search letter of two letters', { searchLetters: { ab: 'a' } }, 'searchLetters.ab'],
+    ['an upper-case Search letter', { searchLetters: { B: 'a' } }, 'searchLetters.B'],
+    ['a Search letter read as two letters', { searchLetters: { b: 'ac' } }, 'searchLetters.b'],
   ])('rejects %s, naming the field', (_, override, field) => {
     const load = () => loadEdition({ ...validConfig, ...override });
 

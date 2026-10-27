@@ -97,6 +97,7 @@ export { GAME_ROUNDS, roundLimitOf } from './game/round-plan';
 export { staysInPlace } from './game/by-letters-mode';
 export { gapOf } from './game/guess-word';
 export { typedAnswerMatches } from './game/typed-answer';
+export { createSearch, type Search, type SearchResults } from './search/search';
 export { searchKey, type SearchLetters } from './search/search-key';
 export { createGameHaptics, LIFE_LOST_DELAY, type GameHaptics } from './game/game-haptics';
 export { createHaptics, type HapticEngine, type Haptics } from './game/haptics';

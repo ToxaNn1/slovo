@@ -533,6 +533,26 @@ describe('the origin languages', () => {
   });
 });
 
+describe('the Search letters', () => {
+  // Every Edition names the letters Search reads as another (ADR 0054), none when it reads each as itself.
+  it.each(editions)('the %s Edition names its Search letters', (edition) => {
+    const config = readJson(edition, 'config') as Record<string, unknown>;
+    const { searchLetters: _removed, ...without } = config;
+
+    expect(EditionConfigSchema.parse(config).searchLetters).toBeInstanceOf(Object);
+    expect(
+      EditionConfigSchema.safeParse(without).error?.issues.map((issue) => issue.path.join('.')),
+    ).toEqual(['searchLetters']);
+  });
+
+  it('the Ukrainian Edition reads ґ as г and ё as е', () => {
+    expect(EditionConfigSchema.parse(readJson('uk', 'config')).searchLetters).toEqual({
+      ґ: 'г',
+      ё: 'е',
+    });
+  });
+});
+
 describe('the moods', () => {
   // Every Edition lists its moods (ADR 0054), an empty list when it has none.
   it.each(editions)('the %s Edition lists its moods', (edition) => {
