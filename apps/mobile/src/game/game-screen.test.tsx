@@ -462,8 +462,14 @@ describe('the Game screen', () => {
     ).toBeTruthy();
     // «Виживання» has no Round limit, so its Best result stands alone.
     expect(within(screen.getByTestId('game-mode-survival')).getByText('Найкраще: 23')).toBeTruthy();
-    // The line under the title keeps «Вгадай слово»'s Best result.
-    expect(screen.getByTestId('game-rules')).toHaveTextContent(/Найкраще — 12 \/ 15\./);
+  });
+
+  it('shows no rules line under the title, so a Best result shows on its card alone', async () => {
+    await open({ best: { 'guess-word': 12 } });
+    await renderScreen();
+
+    expect(screen.queryByText(/15 раундів, 5 життів/)).toBeNull();
+    expect(screen.getAllByText(/Найкраще/)).toHaveLength(1);
   });
 
   it('shows no Best result on a mode without a finished Game', async () => {

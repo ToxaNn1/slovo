@@ -1,8 +1,7 @@
-import { GAME_LIVES, GAME_ROUNDS, type GameModeOffer } from '@slovo/core';
+import type { GameModeOffer } from '@slovo/core';
 import {
   DailyCrosswordCard,
   DecorBackground,
-  fill,
   GameModeCard,
   GameResult,
   GameRound,
@@ -10,12 +9,10 @@ import {
   ScreenTitle,
   SectionLabel,
   space,
-  typeSize,
-  useEdition,
   useTokens,
 } from '@slovo/ui';
 import { Redirect, useRouter } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { editionStrings } from '../../edition/edition';
@@ -26,9 +23,6 @@ import { gameModeCard, gameModeGroups, gameModeStrings } from '../../game/game-m
 import { useShown } from '../../shown-in-effect';
 
 const { game: strings } = editionStrings;
-
-/** How far the largest text sizes of iOS may scale the line under the title, so it never breaks a word. */
-const RULES_MAX_FONT_SCALE = 1.5;
 
 /**
  * The Game tab: the mode screen, a Round with its answer sheet, or the result
@@ -61,11 +55,7 @@ function Game() {
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
       {current === undefined ? (
-        <ModeScreen
-          modes={state.modes}
-          bestResult={state.bestResults['guess-word']}
-          onStart={actions.start}
-        />
+        <ModeScreen modes={state.modes} onStart={actions.start} />
       ) : current.status === 'won' || current.status === 'lost' ? (
         <GameResult
           game={current}
@@ -101,22 +91,17 @@ function Game() {
 }
 
 /**
- * The mode screen (`game-mode-select-dark`): the title, what a Game of
- * «Вгадай слово» is with its Best result once it has one, the Daily
- * Crossword's card while it is on, which opens its screen, and a card per mode on offer, with its own
- * Best result, under the titles of their groups.
+ * The mode screen (`game-mode-select-dark`): the title, the Daily Crossword's
+ * card while it is on, which opens its screen, and a card per mode on offer,
+ * with its own Best result, under the titles of their groups.
  */
 function ModeScreen({
   modes,
-  bestResult,
   onStart,
 }: {
   modes: readonly GameModeOffer[];
-  bestResult: number | undefined;
   onStart: (modeId: string) => void;
 }) {
-  const { colors, fontFamilies } = useTokens();
-  const { voice, count } = useEdition();
   const crossword = useDailyCrosswordCard();
   const openScreen = useOpenScreen();
   return (
@@ -125,20 +110,6 @@ function ModeScreen({
       <ScrollView contentContainerStyle={styles.modes}>
         <View style={styles.heading}>
           <ScreenTitle>{strings.title}</ScreenTitle>
-          <Text
-            testID="game-rules"
-            {...voice}
-            maxFontSizeMultiplier={RULES_MAX_FONT_SCALE}
-            style={[styles.rules, { color: colors.muted, fontFamily: fontFamilies.ui }]}
-          >
-            {fill(strings.rules, {
-              rounds: count(strings.rounds, GAME_ROUNDS),
-              lives: count(strings.lives, GAME_LIVES),
-            })}
-            {bestResult === undefined
-              ? null
-              : ` ${fill(count(strings.best, bestResult), { total: String(GAME_ROUNDS) })}`}
-          </Text>
         </View>
         {crossword === undefined ? null : (
           <DailyCrosswordCard
@@ -177,8 +148,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: space[5],
     paddingBottom: space[8],
   },
-  heading: { gap: space[4], marginHorizontal: space[1], marginBottom: space[2] },
+  heading: { marginHorizontal: space[1], marginBottom: space[2] },
   group: { gap: space[4] },
   groupTitle: { marginHorizontal: space[1], marginTop: space[2] },
-  rules: { fontSize: typeSize.body, lineHeight: typeSize.body * 1.5 },
 });
