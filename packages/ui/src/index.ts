@@ -3,8 +3,8 @@
  * Decor from the Edition.
  */
 export { ActionRow } from './primitives/ActionRow';
-export { DeleteAccountButton } from './DeleteAccountButton';
-export { ResendButton } from './ResendButton';
+export { DeleteAccountButton } from './account/DeleteAccountButton';
+export { ResendButton } from './account/ResendButton';
 export { BackLink } from './primitives/BackLink';
 export { FeedError, FeedLoading, SwipeHint } from './feed/FeedStates';
 export { FontSizePreview } from './settings/FontSizePreview';

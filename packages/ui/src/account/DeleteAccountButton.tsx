@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
-import { ConfirmationDialog } from './primitives/ConfirmationDialog';
-import { SecondaryButton } from './primitives/SecondaryButton';
+import { ConfirmationDialog } from '../primitives/ConfirmationDialog';
+import { SecondaryButton } from '../primitives/SecondaryButton';
 
 /**
  * The destructive «Видалити SLOVO ID» button of the SLOVO ID screen. A press
