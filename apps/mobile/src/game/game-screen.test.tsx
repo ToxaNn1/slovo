@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import type { Correction, Word } from '@slovo/contracts';
+import type { Correction, Idiom, Word } from '@slovo/contracts';
 import {
   createMemoryUserStatePort,
   loadEdition,
@@ -95,12 +95,32 @@ const correction = (index: number): Correction => ({
   retired: false,
 });
 
+/**
+ * An Idiom with nothing but what the Game reads: «перше» and its number, then
+ * «друге» and «третє» after a comma and a dash, which are no chips, its
+ * Definition «The sense of idiom{n}.».
+ */
+const idiom = (index: number): Idiom => ({
+  kind: 'idiom',
+  id: `i_test${String(index)}`,
+  expression: `перше${String(index)}, друге — третє`,
+  idiomType: 'idiom',
+  primaryDefinition: `The sense of idiom${String(index)}.`,
+  extraDefinitions: [],
+  examples: [],
+  sources: [{ title: 'Test source' }],
+  retired: false,
+});
+
+/** The haptic of a wrong answer. */
+const warning = jest.fn();
+
 const haptics: Haptics = {
   selection: jest.fn(),
   impactLight: jest.fn(),
   impactMedium: jest.fn(),
   success: jest.fn(),
-  warning: jest.fn(),
+  warning,
 };
 
 const metrics = {
@@ -109,16 +129,18 @@ const metrics = {
 };
 
 /**
- * Opens the composition over 15 Words and the given number of Corrections,
- * with the given Best results by mode id kept from before.
+ * Opens the composition over 15 Words and the given numbers of Corrections
+ * and Idioms, with the given Best results by mode id kept from before.
  */
 async function open({
   best = {},
   corrections = 0,
+  idioms = 0,
   switchedOff = [],
 }: {
   best?: Record<string, number>;
   corrections?: number;
+  idioms?: number;
   switchedOff?: readonly string[];
 } = {}) {
   mockEdition = editionWithout(switchedOff);
@@ -130,6 +152,7 @@ async function open({
       categories: [{ id: 'nature', displayName: 'Природа' }],
       words: Array.from({ length: 15 }, (_, i) => word(i)),
       corrections: Array.from({ length: corrections }, (_, i) => correction(i)),
+      idioms: Array.from({ length: idioms }, (_, i) => idiom(i)),
     }),
     edition: mockEdition,
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
@@ -215,6 +238,23 @@ async function assemble(text: string) {
   }
 }
 
+/** Taps the shuffled word chips of a Round of «Склади вислів» in the order of the words. */
+async function assembleWords(words: readonly string[]) {
+  for (const text of words) {
+    const chip = screen
+      .getAllByTestId(/^chips-\d+$/)
+      .find((one) => one.props['accessibilityLabel'] === text);
+    if (chip === undefined) throw new Error(`No chip «${text}» left`);
+    await fireEvent.press(chip);
+  }
+}
+
+/** The words of the expression a Round of «Склади вислів» asks for, for the prompt's «The sense of idiom{n}.». */
+function theWordsOfThePrompt(): string[] {
+  const prompt = String(screen.getByTestId('game-prompt').props['accessibilityLabel']);
+  return [`перше${/idiom(\d+)/.exec(prompt)?.[1] ?? ''}`, 'друге', 'третє'];
+}
+
 /** The standard form a Round of «Впиши слово» asks for: «добре{n}» for the prompt's «хибне{n}». */
 function theStandardFormOfThePrompt(): string {
   const prompt = String(screen.getByTestId('game-prompt').props['accessibilityLabel']);
@@ -246,6 +286,8 @@ describe('the Game screen', () => {
       'game-mode-type-word',
       'Виправлення',
       'game-mode-correction',
+      'Вислови',
+      'game-mode-build-idiom',
     ]);
   });
 
@@ -282,6 +324,8 @@ describe('the Game screen', () => {
       'game-mode-pairs',
       'game-mode-anagram',
       'game-mode-by-letters',
+      'Вислови',
+      'game-mode-build-idiom',
     ]);
     expect(screen.queryByText('Виправлення')).toBeNull();
   });
@@ -562,5 +606,61 @@ describe('the Game screen', () => {
       `Чому ${standard} краще.`,
     );
     expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 4 з 5');
+  });
+
+  it('starts «Склади вислів» from its card and plays a whole Game, assembling each expression, to the result screen', async () => {
+    await open({ idioms: 15 });
+    await renderScreen();
+
+    await fireEvent.press(screen.getByTestId('game-mode-build-idiom'));
+
+    for (let round = 1; round <= 15; round += 1) {
+      await waitFor(() => {
+        expect(screen.getByTestId('game-progress').props['accessibilityLabel']).toBe(
+          `Пройдено раундів: ${String(round - 1)} з 15`,
+        );
+      });
+      expect(screen.getByTestId('game-prompt').props['accessibilityLabel']).toMatch(
+        /^Складіть вислів\. The sense of idiom\d+\.$/,
+      );
+      // A chip for each word, the comma and the dash none.
+      expect(
+        screen
+          .getAllByTestId(/^chips-\d+$/)
+          .map((chip): unknown => chip.props['accessibilityLabel']),
+      ).toEqual(expect.arrayContaining(theWordsOfThePrompt()));
+      expect(screen.getAllByTestId(/^chips-\d+$/)).toHaveLength(3);
+      await assembleWords(theWordsOfThePrompt());
+      expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Правильно!');
+      // The sheet shows the whole expression, its punctuation too.
+      expect(screen.getByTestId('game-sheet')).toHaveTextContent(', друге — третє', {
+        exact: false,
+      });
+      await fireEvent.press(screen.getByTestId('game-next'));
+    }
+
+    await waitFor(() => {
+      expect(screen.getByText('Перемога!')).toBeOnTheScreen();
+    });
+  });
+
+  it('takes a Life for an expression of «Склади вислів» assembled wrong and shows the right one', async () => {
+    await open({ idioms: 15 });
+    await renderScreen();
+
+    await fireEvent.press(screen.getByTestId('game-mode-build-idiom'));
+    await waitFor(() => {
+      expect(screen.getByTestId('chips')).toBeOnTheScreen();
+    });
+    const words = theWordsOfThePrompt();
+    warning.mockClear();
+    await assembleWords(words.toReversed());
+
+    expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
+    expect(screen.getByTestId('game-sheet')).toHaveTextContent(`${words[0] ?? ''}, друге — третє`, {
+      exact: false,
+    });
+    expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 4 з 5');
+    expect(warning).toHaveBeenCalled();
   });
 });

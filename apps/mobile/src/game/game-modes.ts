@@ -40,6 +40,7 @@ const PLAYED_MODES: ReadonlySet<string> = new Set([
   'anagram',
   'by-letters',
   'type-word',
+  'build-idiom',
 ]);
 
 /** The offers of the modes the app plays, in the Core's order. */
