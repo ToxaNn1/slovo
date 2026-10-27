@@ -34,6 +34,12 @@ export interface DailyCrosswordWord {
   readonly right: boolean;
 }
 
+/**
+ * How far the reader is with the day, for its card: no letter in the grid
+ * («Почати»), some letters («Продовжити»), or every word right («✓ Розв'язано»).
+ */
+export type DailyCrosswordProgress = 'untouched' | 'started' | 'solved';
+
 /** The Daily Crossword of a local date with the letters typed into it on this device. */
 export interface DailyCrosswordState {
   /** The local date, `YYYY-MM-DD`. */
@@ -41,6 +47,7 @@ export interface DailyCrosswordState {
   /** The letters typed, by row and column; a place no word reads through stays empty. */
   readonly letters: readonly (readonly (string | undefined)[])[];
   readonly words: readonly DailyCrosswordWord[];
+  readonly progress: DailyCrosswordProgress;
 }
 
 /** Today's Daily Crossword in play. */
@@ -53,6 +60,12 @@ export interface DailyCrossword {
    * already right. A wrong letter is never marked.
    */
   setLetter(place: CrosswordPlace, letter: string | undefined): Promise<DailyCrosswordState>;
+  /**
+   * «Відкрити літеру»: puts the cell's right letter in it, over a wrong one,
+   * with no penalty, and keeps it on this device. Nothing changes for a place
+   * no word reads through.
+   */
+  openCell(place: CrosswordPlace): Promise<DailyCrosswordState>;
 }
 
 const placeKey = ({ row, column }: CrosswordPlace) => `${String(row)},${String(column)}`;
@@ -67,6 +80,14 @@ function placesOf({ row, column, direction, answer }: CrosswordWord): CrosswordP
 const isRight = (word: CrosswordWord, letters: ReadonlyMap<string, string>) =>
   placesOf(word).every((place, i) => letters.get(placeKey(place)) === Array.from(word.answer)[i]);
 
+function progressOf(
+  day: CrosswordDay,
+  letters: ReadonlyMap<string, string>,
+): DailyCrosswordProgress {
+  if (day.words.every((word) => isRight(word, letters))) return 'solved';
+  return letters.size === 0 ? 'untouched' : 'started';
+}
+
 function stateOf(day: CrosswordDay, letters: ReadonlyMap<string, string>): DailyCrosswordState {
   return {
     date: day.date,
@@ -80,6 +101,7 @@ function stateOf(day: CrosswordDay, letters: ReadonlyMap<string, string>): Daily
       clue: word.clue,
       right: isRight(word, letters),
     })),
+    progress: progressOf(day, letters),
   };
 }
 
@@ -88,7 +110,8 @@ function stateOf(day: CrosswordDay, letters: ReadonlyMap<string, string>): Daily
  * device kept for it, or nothing when the Edition has it off (it is off while
  * the Game is) or the pack has no day for the date. A new local date starts
  * an empty grid: only the letters of the date they were typed on are kept, so
- * the shell opens it again when the next local day starts. It is not a Game
+ * the shell opens it again when the next local day starts. A solved day stays
+ * solved for the rest of that day, as its right words take no more letters. It is not a Game
  * and never touches Seen or Knowledge Marks; its letters stay on this device
  * with no Sync (ADR 0052).
  */
@@ -113,26 +136,39 @@ export async function openDailyCrossword({
   const inTurn = createInTurn();
   let state = stateOf(day, letters);
 
+  const wordsAt = (place: CrosswordPlace) =>
+    day.words.filter((word) => placesOf(word).some((at) => placeKey(at) === placeKey(place)));
+
+  const keep = async () => {
+    await userState.write(crosswordProgress.change({ date, letters: Object.fromEntries(letters) }));
+    state = stateOf(day, letters);
+    return state;
+  };
+
   return {
     get state() {
       return state;
     },
     setLetter: (place, letter) =>
       inTurn(async () => {
-        const words = day.words.filter((word) =>
-          placesOf(word).some((at) => placeKey(at) === placeKey(place)),
-        );
+        const words = wordsAt(place);
         const lowercase = letter?.toLowerCase();
         const fits = lowercase === undefined || /^\p{L}$/u.test(lowercase);
         if (words.length === 0 || !fits || words.some((word) => isRight(word, letters)))
           return state;
         if (lowercase === undefined) letters.delete(placeKey(place));
         else letters.set(placeKey(place), lowercase);
-        await userState.write(
-          crosswordProgress.change({ date, letters: Object.fromEntries(letters) }),
-        );
-        state = stateOf(day, letters);
-        return state;
+        return keep();
+      }),
+    openCell: (place) =>
+      inTurn(async () => {
+        const [word] = wordsAt(place);
+        if (word === undefined) return state;
+        const index = placesOf(word).findIndex((at) => placeKey(at) === placeKey(place));
+        const letter = Array.from(word.answer)[index];
+        if (letter === undefined || letters.get(placeKey(place)) === letter) return state;
+        letters.set(placeKey(place), letter);
+        return keep();
       }),
   };
 }

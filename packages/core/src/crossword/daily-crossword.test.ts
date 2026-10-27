@@ -176,6 +176,85 @@ describe('the Daily Crossword', () => {
     expect(crossword.state.words[0]?.right).toBe(true);
   });
 
+  it('opens the right letter in a cell, over a wrong one, with no penalty', async () => {
+    const crossword = await open();
+    if (crossword === undefined) throw new Error('Expected a crossword');
+    await crossword.setLetter({ row: 0, column: 1 }, 'и');
+
+    await crossword.openCell({ row: 0, column: 1 });
+    await crossword.openCell({ row: 2, column: 3 });
+
+    expect(crossword.state.letters[0]?.[1]).toBe('і');
+    expect(crossword.state.letters[2]?.[3]).toBe('и');
+  });
+
+  it('opens nothing where no word reads, and keeps an opened letter through a restart', async () => {
+    const records = new Map<string, string>();
+    const crossword = await open({ records });
+    await crossword?.openCell({ row: 1, column: 1 });
+
+    expect(crossword?.state.letters).toEqual(emptyGrid);
+
+    await crossword?.openCell({ row: 0, column: 0 });
+
+    expect((await open({ records }))?.state.letters[0]?.[0]).toBe('к');
+  });
+
+  it('marks a word right once its last cell is opened', async () => {
+    const crossword = await open();
+    if (crossword === undefined) throw new Error('Expected a crossword');
+    await fill(crossword, 'кі', { row: 0, column: 0 }, 'across');
+
+    await crossword.openCell({ row: 0, column: 2 });
+
+    expect(crossword.state.words[0]?.right).toBe(true);
+  });
+
+  it('is untouched with no letter, started with a letter and solved once every word is right', async () => {
+    const crossword = await open();
+    if (crossword === undefined) throw new Error('Expected a crossword');
+
+    expect(crossword.state.progress).toBe('untouched');
+
+    await crossword.setLetter({ row: 0, column: 0 }, 'к');
+
+    expect(crossword.state.progress).toBe('started');
+
+    await crossword.setLetter({ row: 0, column: 0 }, undefined);
+
+    expect(crossword.state.progress).toBe('untouched');
+
+    await fill(crossword, 'кіт', { row: 0, column: 0 }, 'across');
+    await fill(crossword, 'кот', { row: 0, column: 0 }, 'down');
+    await fill(crossword, 'так', { row: 0, column: 2 }, 'down');
+
+    expect(crossword.state.progress).toBe('started');
+
+    await crossword.openCell({ row: 2, column: 3 });
+    await crossword.openCell({ row: 2, column: 4 });
+
+    expect(crossword.state.progress).toBe('solved');
+  });
+
+  it('stays solved for the rest of the day, and the next day starts untouched', async () => {
+    const time = fakeClock('2026-10-11T09:00:00+03:00');
+    const records = new Map<string, string>();
+    const crossword = await open({ records, clock: time.clock });
+    if (crossword === undefined) throw new Error('Expected a crossword');
+    await fill(crossword, 'кіт', { row: 0, column: 0 }, 'across');
+    await fill(crossword, 'кот', { row: 0, column: 0 }, 'down');
+    await fill(crossword, 'так', { row: 0, column: 2 }, 'down');
+    await fill(crossword, 'кит', { row: 2, column: 2 }, 'across');
+
+    time.set('2026-10-11T23:59:00+03:00');
+
+    expect((await open({ records, clock: time.clock }))?.state.progress).toBe('solved');
+
+    time.set('2026-10-12T00:01:00+03:00');
+
+    expect((await open({ records, clock: time.clock }))?.state.progress).toBe('untouched');
+  });
+
   it('makes nothing Seen and changes no Knowledge Mark: it keeps only its own device record', async () => {
     const records = new Map<string, string>();
     const crossword = await open({ records });
@@ -184,7 +263,8 @@ describe('the Daily Crossword', () => {
     await fill(crossword, 'кіт', { row: 0, column: 0 }, 'across');
     await fill(crossword, 'кот', { row: 0, column: 0 }, 'down');
     await fill(crossword, 'так', { row: 0, column: 2 }, 'down');
-    await fill(crossword, 'кит', { row: 2, column: 2 }, 'across');
+    await fill(crossword, 'ки', { row: 2, column: 2 }, 'across');
+    await crossword.openCell({ row: 2, column: 4 });
 
     expect([...records.keys()].filter((key) => !before.has(key))).toEqual(['crossword.progress']);
   });

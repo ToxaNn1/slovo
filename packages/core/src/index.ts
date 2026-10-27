@@ -112,6 +112,7 @@ export {
   type CrosswordPlace,
   type CrosswordReadPort,
   type DailyCrossword,
+  type DailyCrosswordProgress,
   type DailyCrosswordState,
   type DailyCrosswordWord,
 } from './crossword/daily-crossword';
