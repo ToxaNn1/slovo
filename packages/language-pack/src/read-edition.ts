@@ -17,6 +17,7 @@ import { checkSynonymRows } from './check-synonym-rows';
 import { checkTips } from './check-tips';
 import type { ContentManifest } from './content-manifest';
 import type { ContentTargets } from './content-targets';
+import { crosswordDayErrors } from './crossword-days';
 import { CROSSWORD_DAYS_FILE, editionFiles, EditionFolderError } from './edition-folder';
 import { missingEntryErrors } from './id-registry';
 import type { PackContent } from './pack-layout';
@@ -82,7 +83,10 @@ export function readEdition(
       ...checkTips(config, tips),
     );
   }
-  errors.push(...unknownCrosswordEntries(crosswordDays ?? [], [...words, ...corrections]));
+  errors.push(
+    ...unknownCrosswordEntries(crosswordDays ?? [], [...words, ...corrections]),
+    ...crosswordDayErrors(crosswordDays, manifest, config?.id),
+  );
   if (registry !== undefined) {
     errors.push(
       ...missingEntryErrors(

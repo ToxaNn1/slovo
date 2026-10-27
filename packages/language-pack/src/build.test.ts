@@ -1774,6 +1774,7 @@ describe('recordContent', () => {
       contentVersion: 7,
       contentChecksum: manifestOf(editionDir)['contentChecksum'],
       newIds: [],
+      newCrosswordDays: [],
     });
     expect(readFileSync(join(editionDir, 'content/manifest.json'), 'utf8')).toBe(manifest);
     expect(readFileSync(join(editionDir, 'content/ids.json'), 'utf8')).toBe(registry);

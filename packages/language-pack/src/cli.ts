@@ -12,7 +12,9 @@
  * After editing the content, `--record` first appends the new ids to the id
  * registry (`content/ids.json`) and, when the content changed, raises the
  * content version in `content/manifest.json`. Without it, a build of
- * unrecorded content fails, so CI catches it.
+ * unrecorded content fails, so CI catches it. For an Edition that keeps
+ * crossword days (`content/crossword-days.json`), `--record` also appends days
+ * so that 400 lie ahead (ADR 0052).
  */
 import { relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -70,12 +72,13 @@ function main(): number {
       for (const error of recorded.errors) console.error(`  ${formatBuildError(error)}`);
       return 1;
     }
-    const { previousContentVersion, contentVersion, newIds } = recorded;
+    const { previousContentVersion, contentVersion, newIds, newCrosswordDays } = recorded;
     console.log(`Recorded the content of "${editionId}"`);
     console.log(
       `  content version: ${String(contentVersion)}${contentVersion === previousContentVersion ? ' (unchanged)' : ` (was ${String(previousContentVersion)})`}`,
     );
     console.log(`  new ids:         ${String(newIds.length)}`);
+    console.log(`  crossword days:  ${String(newCrosswordDays.length)} appended`);
     console.log('');
   }
 

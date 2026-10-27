@@ -11,6 +11,7 @@ import {
 import { withoutStress } from '@slovo/core';
 
 import type { BuildError } from './build-error';
+import { CROSSWORD_DAYS_AHEAD, CROSSWORD_REPEAT_DAYS, dateAfter } from './crossword-days';
 import type { PackContent } from './pack-layout';
 import { readEdition } from './read-edition';
 
@@ -46,7 +47,46 @@ export function generateDailyCrossword({
   if (source.errors.length > 0 || source.valid === undefined) {
     return { ok: false, errors: source.errors };
   }
-  const supply = crosswordSupply(source.valid.content);
+  return crosswordDayOf(source.valid.content, date, new Set());
+}
+
+/**
+ * The days to append to an Edition's crossword days so that 400 lie ahead of
+ * `today` (ADR 0052): from the day after its last one, or from `today` when
+ * it has none. No word of a new day was in the
+ * 29 days before it. It gives the new days, none when enough lie ahead, and
+ * refuses when a day can't be made.
+ */
+export function newCrosswordDays(
+  content: PackContent,
+  today: string,
+):
+  | { readonly ok: true; readonly days: readonly CrosswordDay[] }
+  | Extract<CrosswordResult, { ok: false }> {
+  const days = [...(content.crosswordDays ?? [])];
+  const last = dateAfter(today, CROSSWORD_DAYS_AHEAD);
+  const known = days.length;
+  for (
+    let date = days.length === 0 ? today : dateAfter(days.at(-1)?.date ?? today, 1);
+    date <= last;
+    date = dateAfter(date, 1)
+  ) {
+    const since = dateAfter(date, 1 - CROSSWORD_REPEAT_DAYS);
+    const recent = days.filter((day) => day.date >= since).flatMap(({ words }) => words);
+    const result = crosswordDayOf(content, date, new Set(recent.map((word) => word.entryId)));
+    if (!result.ok) return result;
+    days.push(result.day);
+  }
+  return { ok: true, days: days.slice(known) };
+}
+
+/** The Daily Crossword of a date from content, with none of the Entries to avoid. */
+function crosswordDayOf(
+  content: PackContent,
+  date: string,
+  avoid: ReadonlySet<string>,
+): CrosswordResult {
+  const supply = crosswordSupply(content).filter(({ entryId }) => !avoid.has(entryId));
   const words = searchGrid(supply, randomOf(date));
   if (words === undefined) {
     return {
