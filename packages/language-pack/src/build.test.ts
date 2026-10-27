@@ -844,14 +844,14 @@ describe('buildLanguagePack', () => {
       }
     }
 
-    it('builds a Tip and reads it back with every field, in pack format 6', async () => {
+    it('builds a Tip and reads it back with every field, in pack format 7', async () => {
       const editionDir = withTips([fullTip]);
       const outFile = packPath();
 
       const result = buildLanguagePack({ editionDir, outFile });
 
       expect(result.ok ? [] : result.errors).toEqual([]);
-      expect(result).toMatchObject({ ok: true, metadata: { packFormat: 6 } });
+      expect(result).toMatchObject({ ok: true, metadata: { packFormat: 7 } });
       expect(await readTips(outFile, ['t_fx0001'])).toEqual([
         { ...fullTip, kind: 'tip', retired: false },
       ]);
@@ -1026,14 +1026,14 @@ describe('buildLanguagePack', () => {
       }
     }
 
-    it('builds a Synonym Row and reads it back with every field, in pack format 6', async () => {
+    it('builds a Synonym Row and reads it back with every field, in pack format 7', async () => {
       const editionDir = withRows([fullRow]);
       const outFile = packPath();
 
       const result = buildLanguagePack({ editionDir, outFile });
 
       expect(result.ok ? [] : result.errors).toEqual([]);
-      expect(result).toMatchObject({ ok: true, metadata: { packFormat: 6 } });
+      expect(result).toMatchObject({ ok: true, metadata: { packFormat: 7 } });
       expect(await readRows(outFile, ['r_fx0001'])).toEqual([
         { ...fullRow, kind: 'synonymRow', retired: false },
       ]);
@@ -1496,7 +1496,7 @@ describe('buildLanguagePack', () => {
       return editionDir;
     }
 
-    it("builds a Word with an origin from the Edition's list and reads it back, in pack format 6", async () => {
+    it("builds a Word with an origin from the Edition's list and reads it back, in pack format 7", async () => {
       const editionDir = withOriginLanguages();
       editJson(editionDir, 'content/words/w_fx0002.json', (word) => ({ ...word, origin: 'la' }));
       record(editionDir);
@@ -1505,7 +1505,7 @@ describe('buildLanguagePack', () => {
       const result = buildLanguagePack({ editionDir, outFile });
 
       if (!result.ok) throw new Error(result.errors.map(formatBuildError).join('\n'));
-      expect(result.metadata.packFormat).toBe(6);
+      expect(result.metadata.packFormat).toBe(7);
       await withEntries(outFile, async (entries) => {
         const word = await entries.get('w_fx0002');
         const other = await entries.get('w_fx0003');
@@ -1538,6 +1538,69 @@ describe('buildLanguagePack', () => {
 
       expect(buildErrors(editionDir)).toEqual([
         expect.objectContaining({ entryId: 'w_fx0002', field: 'origin' }),
+      ]);
+    });
+  });
+
+  describe('the moods of a Word', () => {
+    /** A copy of the valid fixture whose Edition also lists a joyful mood. */
+    function withMoods(): string {
+      const editionDir = copyFixture('valid');
+      editJson(editionDir, 'edition.json', (config) => ({
+        ...config,
+        moods: [...(config['moods'] as Json[]), { id: 'joyful', name: 'радісний', emoji: '😊' }],
+      }));
+      return editionDir;
+    }
+
+    it("builds a Word with moods from the Edition's list and reads them back in order, in pack format 7", async () => {
+      const editionDir = withMoods();
+      editJson(editionDir, 'content/words/w_fx0002.json', (word) => ({
+        ...word,
+        moods: ['joyful', 'calm'],
+      }));
+      record(editionDir);
+      const outFile = packPath();
+
+      const result = buildLanguagePack({ editionDir, outFile });
+
+      if (!result.ok) throw new Error(result.errors.map(formatBuildError).join('\n'));
+      expect(result.metadata.packFormat).toBe(7);
+      await withEntries(outFile, async (entries) => {
+        const word = await entries.get('w_fx0002');
+        const other = await entries.get('w_fx0003');
+        if (word?.kind !== 'word' || other?.kind !== 'word') throw new Error('No Words');
+        expect(word.moods).toEqual(['joyful', 'calm']);
+        expect(other).not.toHaveProperty('moods');
+      });
+    });
+
+    it('refuses a mood id the Edition does not list', () => {
+      const editionDir = withMoods();
+      editJson(editionDir, 'content/words/w_fx0002.json', (word) => ({
+        ...word,
+        moods: ['calm', 'gloomy'],
+      }));
+
+      expect(buildErrors(editionDir)).toEqual([
+        {
+          file: 'content/words/w_fx0002.json',
+          entryId: 'w_fx0002',
+          field: 'moods',
+          message: expect.stringMatching(/unknown mood "gloomy"/i) as string,
+        },
+      ]);
+    });
+
+    it.each([
+      ['a repeated mood', ['calm', 'calm']],
+      ['an empty list of moods', []],
+    ])('refuses %s', (_, moods) => {
+      const editionDir = withMoods();
+      editJson(editionDir, 'content/words/w_fx0002.json', (word) => ({ ...word, moods }));
+
+      expect(buildErrors(editionDir)).toEqual([
+        expect.objectContaining({ entryId: 'w_fx0002', field: 'moods' }),
       ]);
     });
   });
@@ -1613,7 +1676,7 @@ describe('buildLanguagePack', () => {
       editionId: 'fixture',
       contentVersion: 7,
       contentChecksum: expect.stringMatching(/^sha256:[0-9a-f]{64}$/) as string,
-      packFormat: 6,
+      packFormat: 7,
     });
     expect(b.metadata).toEqual(a.metadata);
     expect(readFileSync(second).equals(readFileSync(first))).toBe(true);
@@ -1624,8 +1687,8 @@ describe('buildLanguagePack', () => {
 
     const result = buildLanguagePack({ editionDir: fixture('valid'), outFile });
 
-    expect(result).toMatchObject({ ok: true, metadata: { packFormat: 6 } });
-    expect((await readBack(outFile)).metadata.packFormat).toBe(6);
+    expect(result).toMatchObject({ ok: true, metadata: { packFormat: 7 } });
+    expect((await readBack(outFile)).metadata.packFormat).toBe(7);
   });
 
   it.each([

@@ -179,8 +179,8 @@ const today = '2026-10-11T09:00:00+03:00';
 const WALK_TIMEOUT_MS = 20_000;
 
 describe('the Feed over the Ukrainian Language Pack', () => {
-  it('opens a pack the build writes in pack format 6 and shows its first card', async () => {
-    expect(await pack.metadata()).toMatchObject({ editionId: 'uk', packFormat: 6 });
+  it('opens a pack the build writes in pack format 7 and shows its first card', async () => {
+    expect(await pack.metadata()).toMatchObject({ editionId: 'uk', packFormat: 7 });
 
     const feed = await run(new Map(), fakeClock(today).clock);
 

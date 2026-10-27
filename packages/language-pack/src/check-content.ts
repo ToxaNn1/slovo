@@ -58,6 +58,7 @@ export function checkContent(
   const correctionCategoryIds = new Set(config.correctionCategories.map(({ id }) => id));
   const categoriesRequiringHistory = new Set(config.categoriesRequiringHistory);
   const originCodes = new Set(config.originLanguages.map(({ code }) => code));
+  const moodIds = new Set(config.moods.map(({ id }) => id));
   const correctionIds = new Set(corrections.map(({ entry }) => entry.id));
   const fileById = new Map<string, string>();
 
@@ -129,6 +130,11 @@ export function checkContent(
         'origin',
         `Unknown origin language "${word.origin}": the Edition's originLanguages list no such code`,
       );
+    }
+
+    for (const mood of word.moods ?? []) {
+      if (!moodIds.has(mood))
+        fail('moods', `Unknown mood "${mood}": the Edition's moods list no such id`);
     }
 
     if (!marksStress) {

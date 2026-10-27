@@ -64,6 +64,9 @@ export function writePack(outFile: string, content: PackContent, metadata: PackM
     const insertRegister = db.prepare(
       'INSERT INTO word_registers (word_id, position, register) VALUES (?, ?, ?)',
     );
+    const insertMood = db.prepare(
+      'INSERT INTO word_moods (word_id, position, mood) VALUES (?, ?, ?)',
+    );
     const insertSource = db.prepare(
       'INSERT INTO sources (entry_id, position, title, url, archived_url) VALUES (?, ?, ?, ?, ?)',
     );
@@ -183,6 +186,9 @@ export function writePack(outFile: string, content: PackContent, metadata: PackM
       });
       word.registers.forEach((register, position) => {
         insertRegister.run(word.id, position, register);
+      });
+      word.moods?.forEach((mood, position) => {
+        insertMood.run(word.id, position, mood);
       });
       word.correctionIds.forEach((correctionId, position) => {
         insertCorrectionLink.run(word.id, position, correctionId);
