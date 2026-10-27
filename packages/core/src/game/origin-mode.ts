@@ -1,4 +1,4 @@
-import { renderStress } from '../entries/stress';
+import { renderStress, stressedVowelsOf } from '../entries/stress';
 import { ROUND_OPTIONS, shuffled, type GameMode } from './game-mode';
 
 /**
@@ -37,6 +37,7 @@ export const originMode: GameMode = {
       sheet: {
         answer: { text: origin.name, stressedVowels: [] },
         example: undefined,
+        asked: { text: renderStress(answer), stressedVowels: stressedVowelsOf(answer) },
         ...(answer.etymology !== undefined && { explanation: answer.etymology }),
       },
     };

@@ -246,6 +246,7 @@ describe('a Round of «Звідки слово»', () => {
         answer: { text: nameOf(withOrigin[lemma] ?? ''), stressedVowels: [] },
         example: undefined,
         explanation: `Where ${lemma} comes from.`,
+        asked: { text: round.prompt, stressedVowels: [lemma[1]] },
       });
     }
   });
@@ -277,8 +278,27 @@ describe('a Round of «Звідки слово»', () => {
     expect(app.knowledge.state.due).toEqual([]);
     expect(buildGameReview(current(app).played)[0]).toMatchObject({
       entryId: idOf(asked),
+      title: { text: round.prompt },
+      answer: { text: nameOf(withOrigin[asked] ?? ''), stressedVowels: [] },
       right: false,
-      picked: { text: optionsOf(round)[wrong] },
+      picked: { form: 'pick', text: optionsOf(round)[wrong] },
+    });
+  });
+
+  it('leads a Game Review item with the Word asked about, its right language beside it', async () => {
+    const app = await run();
+    await app.game.start('origin');
+    const { round } = current(app);
+    const asked = lemmaOf(round);
+
+    await app.game.answer({ form: 'pick', option: rightPick(round) });
+
+    expect(buildGameReview(current(app).played)[0]).toMatchObject({
+      // Every Word here is stressed on its second letter.
+      title: { text: round.prompt, stressedVowels: [asked[1]] },
+      answer: { text: nameOf(withOrigin[asked] ?? ''), stressedVowels: [] },
+      right: true,
+      picked: undefined,
     });
   });
 

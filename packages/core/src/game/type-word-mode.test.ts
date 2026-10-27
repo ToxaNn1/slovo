@@ -303,8 +303,9 @@ describe('a Round of «Впиши слово»', () => {
         number: 1,
         entryId: 'c_surzhyk01',
         title: { text: 'пірья', stressedVowels: [] },
+        answer: undefined,
         right: false,
-        picked: { text: 'пірья', stressedVowels: [] },
+        picked: { form: 'typed', text: 'пірья', stressedVowels: [] },
         details: {
           kind: 'correction',
           standardForm: 'пірʼя',

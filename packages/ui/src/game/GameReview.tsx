@@ -15,7 +15,9 @@ const TEXT_MAX_FONT_SCALE = 1.5;
  * order, as the Core's Game Review items, with ✓ or ✗ and, on a mistake, the
  * reader's answer in the Round's form: the option picked, the form stressed on
  * the vowel tapped, the Definition matched to a pair's Word, the chips tapped
- * as one Word or expression, or the text typed; VoiceOver reads a stressed
+ * as one Word or expression, or the text typed, which reads «Ви ввели» where a
+ * pick reads «Ваш вибір». A Round of «Звідки слово» leads with the Word, its
+ * right language beside it. VoiceOver reads a stressed
  * answer without its marks, then where the Stress falls. A tap expands a
  * Round: a Word's or an idiom's Definition, Example and etymology, a
  * Correction's right form and explanation, a Synonym Row's members, or a Tip's
@@ -60,7 +62,7 @@ export function GameReview({
 }
 
 function ReviewRow({
-  item: { number, title, right, picked: pickedOption, details },
+  item: { number, title, answer, right, picked: pickedOption, details },
   expanded,
   onPress,
 }: {
@@ -71,16 +73,19 @@ function ReviewRow({
   const { colors, fontFamilies } = useTokens();
   const { strings, voice } = useEdition();
   const { review } = strings.game;
+  const pickedTemplate = pickedOption?.form === 'typed' ? review.typed : review.picked;
   const picked =
-    pickedOption === undefined ? undefined : fill(review.picked, { text: pickedOption.text });
+    pickedOption === undefined ? undefined : fill(pickedTemplate, { text: pickedOption.text });
+  const withAnswer = (text: string) =>
+    answer === undefined ? text : fill(review.withAnswer, { title: text, answer: answer.text });
   const label = [
     String(number),
-    stressLabel(strings.wordCard, title.text, title.stressedVowels),
+    withAnswer(stressLabel(strings.wordCard, title.text, title.stressedVowels)),
     right ? review.right : review.wrong,
     ...(pickedOption === undefined
       ? []
       : [
-          fill(review.picked, {
+          fill(pickedTemplate, {
             text: stressLabel(strings.wordCard, pickedOption.text, pickedOption.stressedVowels),
           }),
         ]),
@@ -108,7 +113,7 @@ function ReviewRow({
             maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
             style={[styles.lemma, { color: colors.ink, fontFamily: fontFamilies.word }]}
           >
-            {title.text}
+            {withAnswer(title.text)}
           </Text>
           {picked === undefined ? null : (
             <Text

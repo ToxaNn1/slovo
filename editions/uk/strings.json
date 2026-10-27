@@ -1000,6 +1000,8 @@
       "right": "правильно",
       "wrong": "помилка",
       "picked": "Ваш вибір: {text}",
+      "typed": "Ви ввели: {text}",
+      "withAnswer": "{title} — {answer}",
       "expandHint": "Показує пояснення",
       "openHint": "Відкриває запис"
     }

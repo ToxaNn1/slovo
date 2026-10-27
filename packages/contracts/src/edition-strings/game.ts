@@ -170,6 +170,14 @@ export const GameStringsSchema = z.strictObject({
     wrong: TextSchema,
     /** The reader's wrong pick under the row, e.g. «Ваш вибір: шпаркий». Takes `{text}`. */
     picked: templateOf('text'),
+    /** The text the reader typed instead of the right one, e.g. «Ви ввели: шпаркий». Takes `{text}`. */
+    typed: templateOf('text'),
+    /**
+     * A row whose right answer names something other than its Entry, the row's
+     * title then that answer, e.g. «бурса — латина» in «Звідки слово». Takes
+     * `{title}` and `{answer}`.
+     */
+    withAnswer: templateOf('title', 'answer'),
     /** What VoiceOver says a tap on a row does: expand it. */
     expandHint: TextSchema,
     /** What VoiceOver says a tap on an expanded row does: open the Entry. */

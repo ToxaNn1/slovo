@@ -249,8 +249,9 @@ describe('a Round of «Фразеологізми»', () => {
         number: 1,
         entryId: 'i_proverb3',
         title: { text: 'expression proverb3', stressedVowels: [] },
+        answer: undefined,
         right: false,
-        picked: round.options[wrong],
+        picked: { ...round.options[wrong], form: 'pick' },
         details: {
           kind: 'idiom',
           definition: 'meaning proverb3',
