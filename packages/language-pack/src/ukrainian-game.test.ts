@@ -109,10 +109,22 @@ async function offersPlanned(app: Composition): Promise<Composition> {
   return app;
 }
 
-async function run(seed: number, port = createMemoryUserStatePort(new Map())) {
+/**
+ * The Ukrainian Edition with every Game Mode off but «Вгадай слово», for the
+ * tests that play many seeded Games of it: the other modes' planning would
+ * draw on the same random source and slow every hide.
+ */
+const guessWordOnly: typeof ukrainian = {
+  ...ukrainian,
+  isFeatureEnabled: (feature) =>
+    ukrainian.isFeatureEnabled(feature) &&
+    (!/^game[A-Z]/.test(feature) || ['gameGuessWord', 'gameReview'].includes(feature)),
+};
+
+async function run(seed: number, port = createMemoryUserStatePort(new Map()), edition = ukrainian) {
   const app = await openComposition({
     content: pack,
-    edition: ukrainian,
+    edition,
     userState: await openUserState({ port }),
     clock: { now: () => new Date('2026-10-15T09:00:00+03:00'), timeZone: () => 'Europe/Kyiv' },
     random: seededRandom(seed),
@@ -121,8 +133,8 @@ async function run(seed: number, port = createMemoryUserStatePort(new Map())) {
 }
 
 /** The composition of `run` with Synonym Rows and Tips out of the Mix, so the Game asks Words and Idioms. */
-async function runWordsAndIdioms(seed: number, port?: UserStatePort) {
-  const app = await run(seed, port);
+async function runWordsAndIdioms(seed: number, port?: UserStatePort, edition = ukrainian) {
+  const app = await run(seed, port, edition);
   await app.mix.setKind('synonymRow', false);
   await app.mix.setKind('tip', false);
   return app;
@@ -132,8 +144,8 @@ async function runWordsAndIdioms(seed: number, port?: UserStatePort) {
  * The composition of `run` with Idioms, Synonym Rows and Tips out of the Mix,
  * so that «Вгадай слово» asks about Words alone, for the tests of Word Rounds.
  */
-async function runWords(seed: number, port?: UserStatePort) {
-  const app = await runWordsAndIdioms(seed, port);
+async function runWords(seed: number, port?: UserStatePort, edition = ukrainian) {
+  const app = await runWordsAndIdioms(seed, port, edition);
   await app.mix.setKind('idiom', false);
   return app;
 }
@@ -248,7 +260,7 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
         seed <= 20 && !asked.some(({ round }) => shared(definitionOf(round.prompt)));
         seed += 1
       ) {
-        const app = await runWords(seed);
+        const app = await runWords(seed, undefined, guessWordOnly);
         for (const { id } of (await pack.listCategories()).filter(
           ({ id }) => id !== 'human-body',
         )) {
@@ -285,7 +297,7 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
     async () => {
       const verbRounds: Asked[] = [];
       for (let seed = 1; verbRounds.length === 0 && seed <= 40; seed += 1) {
-        const app = await runWords(seed);
+        const app = await runWords(seed, undefined, guessWordOnly);
         for (const { id } of (await pack.listCategories()).filter(
           ({ id }) => id !== 'human-body',
         )) {
