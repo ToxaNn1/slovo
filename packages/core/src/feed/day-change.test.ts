@@ -63,7 +63,7 @@ async function run({
     }),
     clock,
     random: { next: () => 0.25 },
-    scheduling: { scheduler, ellipsis: '…', titles: ['{word}'] },
+    scheduling: { scheduler, ellipsis: '…', titles: ['{word}'], farewell: 'Farewell' },
   });
   return { app, records, writes, scheduler };
 }
@@ -104,7 +104,7 @@ describe('the day change', () => {
 
     expect(activeDaysIn(records)).toEqual(['2026-10-14']);
     expect(app.progress.state.streak).toBe(1);
-    expect(planOf(scheduler)).toHaveLength(28);
+    expect(planOf(scheduler)).toHaveLength(30); // Two times up to the 14th day, the farewell last.
     // The Feed opens on today's Word of the Day, which the morning notification carries.
     expect(cardsOf(app)).toEqual([`${wordAt(planOf(scheduler), '2026-10-14T09:00')}@14`]);
   });

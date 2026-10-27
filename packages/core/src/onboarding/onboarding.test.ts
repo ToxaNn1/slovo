@@ -89,7 +89,7 @@ async function run({
     random: { next: () => 0.25 },
     ...(scheduler === undefined
       ? {}
-      : { scheduling: { scheduler, ellipsis: '…', titles: ['{word}'] } }),
+      : { scheduling: { scheduler, ellipsis: '…', titles: ['{word}'], farewell: 'Farewell' } }),
   });
 }
 
