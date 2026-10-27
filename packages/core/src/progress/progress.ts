@@ -6,8 +6,10 @@ import type { Knowledge, KnownCounts } from '../knowledge/knowledge';
 import { createInTurn, createSubscribers } from '../in-turn';
 import { dayNumber, parseLocalDate, todayBounds, todayKey } from '../local-date';
 import type { Clock, UserStateChanges } from '../ports';
+import type { Edition } from '../edition/edition';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
+import { calendarMonths, type CalendarMonth } from './calendar';
 
 /**
  * The reader's progress as it stands, as the stats sheet shows it: the Streak
@@ -53,6 +55,13 @@ export interface Progress {
    * tells the subscribers, so it stays the same object until a number changes.
    */
   readonly state: ProgressState;
+  /**
+   * The months of the Active Days calendar as of now, oldest first, from the
+   * month of the first Active Day to the current one; none with the
+   * `activeDaysCalendar` Feature Switch off. A change of the Active Days tells
+   * the subscribers, so read it again then.
+   */
+  calendar(): readonly CalendarMonth[];
   /** Calls `listener` after each change of the state. Returns the call that stops it. */
   subscribe(listener: () => void): () => void;
 }
@@ -106,6 +115,7 @@ export interface ActiveDayChange {
  * Game, so a change of any of them changes the state at once.
  */
 export async function openProgress({
+  edition,
   userState,
   clock,
   history,
@@ -114,6 +124,7 @@ export async function openProgress({
   game,
   knowledge,
 }: {
+  edition: Pick<Edition, 'isFeatureEnabled'>;
   userState: UserState;
   clock: Clock;
   history: History;
@@ -211,6 +222,10 @@ export async function openProgress({
       get state() {
         return state;
       },
+      calendar: () =>
+        edition.isFeatureEnabled('activeDaysCalendar')
+          ? calendarMonths(activeDays, todayKey(clock))
+          : [],
       subscribe: subscribers.subscribe,
     },
     recordToday: () => inTurn(recordToday),
