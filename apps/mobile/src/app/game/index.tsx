@@ -1,5 +1,6 @@
 import { GAME_LIVES, GAME_ROUNDS, type GameModeOffer } from '@slovo/core';
 import {
+  DailyCrosswordCard,
   DecorBackground,
   fill,
   GameModeCard,
@@ -19,6 +20,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { editionStrings } from '../../edition/edition';
 import { useOpenScreen } from '../../entries/use-open-screen';
+import { useDailyCrosswordCard } from '../../game/daily-crossword';
 import { useGameActions, useGameState } from '../../game/game';
 import { gameModeCard, gameModeGroups, gameModeStrings, playedOffers } from '../../game/game-modes';
 import { useShown } from '../../shown-in-effect';
@@ -96,8 +98,9 @@ function Game() {
 
 /**
  * The mode screen (`game-mode-select-dark`): the title, what a Game of
- * «Вгадай слово» is with its Best result once it has one, and a card per
- * mode on offer, with its own Best result, under the titles of their groups.
+ * «Вгадай слово» is with its Best result once it has one, the Daily
+ * Crossword's card while it is on, and a card per mode on offer, with its own
+ * Best result, under the titles of their groups.
  */
 function ModeScreen({
   modes,
@@ -110,6 +113,7 @@ function ModeScreen({
 }) {
   const { colors, fontFamilies } = useTokens();
   const { voice, count } = useEdition();
+  const crossword = useDailyCrosswordCard();
   return (
     <View testID="game-modes" style={styles.screen}>
       <DecorBackground />
@@ -131,6 +135,9 @@ function ModeScreen({
               : ` ${fill(count(strings.best, bestResult), { total: String(GAME_ROUNDS) })}`}
           </Text>
         </View>
+        {crossword === undefined ? null : (
+          <DailyCrosswordCard testID="daily-crossword" {...crossword} />
+        )}
         {gameModeGroups(modes, strings).map(({ title, offers }) => (
           <View key={title} style={styles.group}>
             <SectionLabel style={styles.groupTitle}>{title}</SectionLabel>

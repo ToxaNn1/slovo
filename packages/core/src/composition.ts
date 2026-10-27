@@ -4,6 +4,11 @@ import { anglicismMode } from './game/anglicism-mode';
 import { buildIdiomMode } from './game/build-idiom-mode';
 import { byLettersMode } from './game/by-letters-mode';
 import { correctionMode } from './game/correction-mode';
+import {
+  openDailyCrossword,
+  type CrosswordReadPort,
+  type DailyCrossword,
+} from './crossword/daily-crossword';
 import { openCycle } from './feed/cycle';
 import { createDayChange } from './feed/day-change';
 import type { Edition } from './edition/edition';
@@ -92,6 +97,13 @@ export interface Composition extends Hiding {
    * permission, and its sample notification, taken from the plan.
    */
   readonly onboarding: Onboarding;
+  /**
+   * Opens today's Daily Crossword with the letters this device kept for it,
+   * for its card and its screen; nothing when the Edition has it off, the pack
+   * has no day for the local date or the composition was opened without
+   * `crossword`. Open it again once the next local day starts.
+   */
+  openDailyCrossword(): Promise<DailyCrossword | undefined>;
   /**
    * The Entry card of any Entry, Retired or not, for a screen that opens a
    * kept Entry or the Synonym Row a Word card links back to; nothing for an id the Language Pack doesn't have. The card of
@@ -228,9 +240,12 @@ export async function openComposition({
   clock,
   random,
   gameModes = [],
+  crossword,
   ...ports
 }: {
   content: ContentReadPort;
+  /** The Daily Crossword's days, which the pack reader gives next to `content`; without it, as in tests of other features, there is none. */
+  crossword?: CrosswordReadPort;
   edition: Pick<Edition, 'id' | 'isFeatureEnabled'> &
     MixEdition &
     NotificationsEdition &
@@ -382,6 +397,10 @@ export async function openComposition({
     notifications,
     game,
     onboarding,
+    async openDailyCrossword() {
+      if (crossword === undefined) return undefined;
+      return openDailyCrossword({ content: crossword, userState, clock, edition });
+    },
     ...createHiding({ rows, hiddenEntries, mix }),
     entryCard,
     openedFromNotification: openedFromOutside,

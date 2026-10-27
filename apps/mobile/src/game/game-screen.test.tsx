@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import type { Correction, Idiom, Word } from '@slovo/contracts';
+import { CrosswordDaySchema, type Correction, type Idiom, type Word } from '@slovo/contracts';
 import {
   createMemoryUserStatePort,
   loadEdition,
@@ -129,24 +129,58 @@ const metrics = {
 };
 
 /**
- * Opens the composition over 15 Words and the given numbers of Corrections
- * and Idioms, with the given Best results by mode id kept from before.
+ * The Daily Crossword of the test's day, 26 October, of four words:
+ *
+ *     к і т
+ *     о . а
+ *     т . к и т
+ */
+const crosswordDay = CrosswordDaySchema.parse({
+  date: '2026-10-26',
+  words: [
+    { entryId: 'w_cat', answer: 'кіт', clue: 'Звір', row: 0, column: 0, direction: 'across' },
+    { entryId: 'w_tomcat', answer: 'кот', clue: 'Він же', row: 0, column: 0, direction: 'down' },
+    { entryId: 'w_yes', answer: 'так', clue: 'Згода', row: 0, column: 2, direction: 'down' },
+    { entryId: 'w_whale', answer: 'кит', clue: 'Ссавець', row: 2, column: 2, direction: 'across' },
+  ],
+});
+
+/** Its letters by place, all of them right. */
+const SOLVED = {
+  '0,0': 'к',
+  '0,1': 'і',
+  '0,2': 'т',
+  '1,0': 'о',
+  '2,0': 'т',
+  '1,2': 'а',
+  '2,2': 'к',
+  '2,3': 'и',
+  '2,4': 'т',
+};
+
+/**
+ * Opens the composition over 15 Words, the given numbers of Corrections and
+ * Idioms and the Daily Crossword of the day, with the given Best results by
+ * mode id and the crossword's letters, typed on the given date, kept from before.
  */
 async function open({
   best = {},
   corrections = 0,
   idioms = 0,
   switchedOff = [],
+  crossword,
 }: {
   best?: Record<string, number>;
   corrections?: number;
   idioms?: number;
   switchedOff?: readonly string[];
+  crossword?: { date: string; letters: Record<string, string> };
 } = {}) {
   mockEdition = editionWithout(switchedOff);
   const records = new Map(
     Object.entries(best).map(([modeId, result]) => [`game.best.${modeId}`, JSON.stringify(result)]),
   );
+  if (crossword !== undefined) records.set('crossword.progress', JSON.stringify(crossword));
   mockComposition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'nature', displayName: 'Природа' }],
@@ -154,6 +188,10 @@ async function open({
       corrections: Array.from({ length: corrections }, (_, i) => correction(i)),
       idioms: Array.from({ length: idioms }, (_, i) => idiom(i)),
     }),
+    crossword: {
+      crosswordDay: (date) =>
+        Promise.resolve(date === crosswordDay.date ? crosswordDay : undefined),
+    },
     edition: mockEdition,
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock: { now: () => new Date('2026-10-26T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
@@ -328,6 +366,54 @@ describe('the Game screen', () => {
       'game-mode-build-idiom',
     ]);
     expect(screen.queryByText('Виправлення')).toBeNull();
+  });
+
+  it('puts the Daily Crossword’s card with today’s date above the groups, offering «Почати»', async () => {
+    await renderScreen();
+
+    const card = await screen.findByTestId('daily-crossword');
+    expect(card).toHaveTextContent('Кросворд дня · 26 жовтня', { exact: false });
+    expect(card.props['accessibilityLabel']).toBe('Кросворд дня · 26 жовтня. Почати');
+    const cards = within(screen.getByTestId('game-modes'))
+      .getAllByTestId(/^(daily-crossword|game-mode-.+)$/)
+      .map((node): unknown => node.props['testID']);
+    expect(cards[0]).toBe('daily-crossword');
+    expect(cards.slice(1)).toContain('game-mode-guess-word');
+  });
+
+  it('offers «Продовжити» on the Daily Crossword’s card once some of today’s letters are in', async () => {
+    await open({ crossword: { date: '2026-10-26', letters: { '0,0': 'к', '1,0': 'а' } } });
+    await renderScreen();
+
+    expect((await screen.findByTestId('daily-crossword')).props['accessibilityLabel']).toBe(
+      'Кросворд дня · 26 жовтня. Продовжити',
+    );
+  });
+
+  it('marks the Daily Crossword’s card solved once today’s is', async () => {
+    await open({ crossword: { date: '2026-10-26', letters: SOLVED } });
+    await renderScreen();
+
+    const card = await screen.findByTestId('daily-crossword');
+    expect(card.props['accessibilityLabel']).toBe('Кросворд дня · 26 жовтня. ✓ Розв’язано');
+    expect(within(card).queryByText('Продовжити')).toBeNull();
+  });
+
+  it('offers «Почати» again on a new day, whatever the day before held', async () => {
+    await open({ crossword: { date: '2026-10-25', letters: SOLVED } });
+    await renderScreen();
+
+    expect((await screen.findByTestId('daily-crossword')).props['accessibilityLabel']).toBe(
+      'Кросворд дня · 26 жовтня. Почати',
+    );
+  });
+
+  it('leaves out the Daily Crossword’s card with its Feature Switch off', async () => {
+    await open({ switchedOff: ['dailyCrossword'] });
+    await renderScreen();
+
+    expect(screen.queryByTestId('daily-crossword')).toBeNull();
+    expect(screen.getByTestId('game-mode-guess-word')).toBeOnTheScreen();
   });
 
   it('starts «Наголос» from its card and plays a whole Game to the result screen', async () => {

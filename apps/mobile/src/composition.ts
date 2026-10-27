@@ -16,6 +16,7 @@ import { storedUserState } from './user-state/stored-user-state';
 async function openOver(content: PackReader): Promise<Composition> {
   const composition = await openComposition({
     content,
+    crossword: content,
     edition: (await remoteSwitchesOpening.opened()).edition,
     userState: await storedUserState.opened(),
     clock: deviceClock,
