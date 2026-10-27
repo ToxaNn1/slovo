@@ -211,7 +211,7 @@ describe('the settings and the composition over the tracked user state', () => {
     const { userState, time } = await tracked();
     const settings = createSettings({
       userState,
-      defaults: { theme: 'system', fontSize: 'M', vibration: true },
+      defaults: { theme: 'system', fontSize: 'M', vibration: true, dailyLimit: 'off' },
     });
     const app = await openComposition({
       content: createMemoryContentPort({ words: [word('w_one'), word('w_two')], corrections: [] }),

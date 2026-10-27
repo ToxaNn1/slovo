@@ -1,4 +1,4 @@
-import type { FontSize, Theme } from '@slovo/contracts';
+import type { DailyLimit, FontSize, Theme } from '@slovo/contracts';
 
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
@@ -13,6 +13,8 @@ export interface UserSettings {
   readonly hideStreak: boolean;
   /** Whether Self-check hides the answer on an Entry card until the reader taps. */
   readonly selfCheck: boolean;
+  /** The Daily Limit: off, or the distinct Entries Seen on a local day before the Feed says «enough». */
+  readonly dailyLimit: DailyLimit;
 }
 
 /**
@@ -63,6 +65,7 @@ export function createSettings({
       vibration: (await userState.read(userStateRecords.vibration)) ?? all.vibration,
       hideStreak: (await userState.read(userStateRecords.hideStreak)) ?? all.hideStreak,
       selfCheck: (await userState.read(userStateRecords.selfCheck)) ?? all.selfCheck,
+      dailyLimit: (await userState.read(userStateRecords.dailyLimit)) ?? all.dailyLimit,
     };
   }
 
@@ -79,6 +82,9 @@ export function createSettings({
             ? userStateRecords.hideStreak.change(changes.hideStreak)
             : []),
           ...('selfCheck' in changes ? userStateRecords.selfCheck.change(changes.selfCheck) : []),
+          ...('dailyLimit' in changes
+            ? userStateRecords.dailyLimit.change(changes.dailyLimit)
+            : []),
         ]),
       );
       return read();

@@ -61,6 +61,7 @@
     "theme": "system",
     "fontSize": "M",
     "vibration": true,
+    "dailyLimit": "off",
     "notificationTimes": ["09:00"],
     "mix": {
       "categories": "all",

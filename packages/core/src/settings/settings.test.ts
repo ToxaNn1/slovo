@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { colorSchemeFor, createMemoryUserStatePort, createSettings, openUserState } from '../index';
 
-const defaults = { theme: 'system', fontSize: 'M', vibration: true } as const;
+const defaults = { theme: 'system', fontSize: 'M', vibration: true, dailyLimit: 'off' } as const;
 
 async function settingsOver(records = new Map<string, string>()) {
   const userState = await openUserState({ port: createMemoryUserStatePort(records) });
@@ -19,6 +19,7 @@ describe('settings', () => {
       vibration: true,
       hideStreak: false,
       selfCheck: false,
+      dailyLimit: 'off',
     });
   });
 
@@ -32,6 +33,7 @@ describe('settings', () => {
       vibration: true,
       hideStreak: false,
       selfCheck: false,
+      dailyLimit: 'off',
     });
   });
 
@@ -44,6 +46,7 @@ describe('settings', () => {
       vibration: true,
       hideStreak: false,
       selfCheck: false,
+      dailyLimit: 'off',
     });
     expect(await settings.read()).toEqual({
       theme: 'dark',
@@ -51,6 +54,7 @@ describe('settings', () => {
       vibration: true,
       hideStreak: false,
       selfCheck: false,
+      dailyLimit: 'off',
     });
   });
 
@@ -63,6 +67,7 @@ describe('settings', () => {
       vibration: true,
       hideStreak: false,
       selfCheck: false,
+      dailyLimit: 'off',
     });
     expect(await settings.read()).toEqual({
       theme: 'system',
@@ -70,6 +75,7 @@ describe('settings', () => {
       vibration: true,
       hideStreak: false,
       selfCheck: false,
+      dailyLimit: 'off',
     });
   });
 
@@ -83,6 +89,7 @@ describe('settings', () => {
       vibration: true,
       hideStreak: false,
       selfCheck: false,
+      dailyLimit: 'off',
     });
   });
 
@@ -96,6 +103,7 @@ describe('settings', () => {
       vibration: true,
       hideStreak: false,
       selfCheck: false,
+      dailyLimit: 'off',
     });
   });
 
@@ -108,6 +116,7 @@ describe('settings', () => {
       vibration: true,
       hideStreak: false,
       selfCheck: false,
+      dailyLimit: 'off',
     });
   });
 
@@ -125,6 +134,7 @@ describe('settings', () => {
       vibration: true,
       hideStreak: false,
       selfCheck: false,
+      dailyLimit: 'off',
     });
   });
 
@@ -132,7 +142,7 @@ describe('settings', () => {
     const userState = await openUserState({ port: createMemoryUserStatePort() });
     const settings = createSettings({
       userState,
-      defaults: { theme: 'light', fontSize: 'L', vibration: false },
+      defaults: { theme: 'light', fontSize: 'L', vibration: false, dailyLimit: 'off' },
     });
 
     expect(await settings.read()).toEqual({
@@ -141,6 +151,7 @@ describe('settings', () => {
       vibration: false,
       hideStreak: false,
       selfCheck: false,
+      dailyLimit: 'off',
     });
   });
 });
@@ -162,6 +173,7 @@ describe('settings: Vibration', () => {
       vibration: false,
       hideStreak: false,
       selfCheck: false,
+      dailyLimit: 'off',
     });
     expect((await settings.read()).vibration).toBe(false);
   });
@@ -190,6 +202,7 @@ describe('settings: Vibration', () => {
       vibration: false,
       hideStreak: false,
       selfCheck: false,
+      dailyLimit: 'off',
     });
   });
 
@@ -216,6 +229,7 @@ describe('settings: hide the Streak', () => {
       vibration: true,
       hideStreak: true,
       selfCheck: false,
+      dailyLimit: 'off',
     });
     expect((await settings.read()).hideStreak).toBe(true);
   });
@@ -244,6 +258,7 @@ describe('settings: hide the Streak', () => {
       vibration: false,
       hideStreak: true,
       selfCheck: false,
+      dailyLimit: 'off',
     });
   });
 
@@ -268,6 +283,7 @@ describe('settings: hide the Streak', () => {
       vibration: true,
       hideStreak: false,
       selfCheck: false,
+      dailyLimit: 'off',
     });
   });
 });
@@ -288,6 +304,7 @@ describe('settings: Self-check', () => {
       vibration: true,
       hideStreak: false,
       selfCheck: true,
+      dailyLimit: 'off',
     });
     expect((await settings.read()).selfCheck).toBe(true);
   });
@@ -309,6 +326,7 @@ describe('settings: Self-check', () => {
       vibration: true,
       hideStreak: true,
       selfCheck: true,
+      dailyLimit: 'off',
     });
   });
 
@@ -317,6 +335,76 @@ describe('settings: Self-check', () => {
 
     expect((await settings.read()).selfCheck).toBe(false);
   });
+});
+
+describe('settings: Daily Limit', () => {
+  it("is the Edition's default until the user chooses, and off in an Edition that keeps it off", async () => {
+    const settings = await settingsOver();
+
+    expect((await settings.read()).dailyLimit).toBe('off');
+    expect(settings.defaults.dailyLimit).toBe('off');
+  });
+
+  it.each([10, 20, 30] as const)(
+    'takes a limit of %i once the user chooses it, and returns the settings in effect',
+    async (limit) => {
+      const settings = await settingsOver();
+
+      expect(await settings.update({ dailyLimit: limit })).toEqual({
+        theme: 'system',
+        fontSize: 'M',
+        vibration: true,
+        hideStreak: false,
+        selfCheck: false,
+        dailyLimit: limit,
+      });
+      expect((await settings.read()).dailyLimit).toBe(limit);
+    },
+  );
+
+  it('lets the user turn the limit off again', async () => {
+    const settings = await settingsOver();
+    await settings.update({ dailyLimit: 20 });
+
+    expect((await settings.update({ dailyLimit: 'off' })).dailyLimit).toBe('off');
+  });
+
+  it("starts from a different Edition's default", async () => {
+    const userState = await openUserState({ port: createMemoryUserStatePort() });
+    const settings = createSettings({ userState, defaults: { ...defaults, dailyLimit: 30 } });
+
+    expect((await settings.read()).dailyLimit).toBe(30);
+  });
+
+  it('keeps the choice when the user state is opened again', async () => {
+    const records = new Map<string, string>();
+    await (await settingsOver(records)).update({ dailyLimit: 10 });
+
+    expect((await (await settingsOver(records)).read()).dailyLimit).toBe(10);
+  });
+
+  it('changes the limit without touching the other settings', async () => {
+    const settings = await settingsOver();
+    await settings.update({ theme: 'dark', selfCheck: true });
+
+    expect(await settings.update({ dailyLimit: 30 })).toEqual({
+      theme: 'dark',
+      fontSize: 'M',
+      vibration: true,
+      hideStreak: false,
+      selfCheck: true,
+      dailyLimit: 30,
+    });
+  });
+
+  it.each(['15', '"10"', '"on"', 'true'])(
+    "falls back to the Edition's default when the stored limit is %s, not one the Core offers",
+    async (stored) => {
+      const settings = await settingsOver(new Map([['settings.dailyLimit', stored]]));
+
+      expect((await settings.read()).dailyLimit).toBe('off');
+    },
+  );
 });
 
 describe('colorSchemeFor', () => {

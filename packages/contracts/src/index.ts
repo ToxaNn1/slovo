@@ -6,6 +6,7 @@
  */
 export {
   CategorySchema,
+  DailyLimitSchema,
   DistractorRuleSchema,
   EditionConfigSchema,
   FeatureSwitchesSchema,
@@ -19,6 +20,7 @@ export {
   UserSettingDefaultsConfigSchema,
   editionAppGroup,
   type Category,
+  type DailyLimit,
   type DistractorRule,
   type EditionConfig,
   type FeatureSwitch,

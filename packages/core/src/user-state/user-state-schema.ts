@@ -1,4 +1,5 @@
 import {
+  DailyLimitSchema,
   FontSizeSchema,
   NotificationTimesSchema,
   RaritySchema,
@@ -66,6 +67,11 @@ export const userStateRecords = {
    * Theme (ADR 0041); a new key needs no migration, since without it Self-check is off.
    */
   selfCheck: declareRecord('settings.selfCheck', z.boolean()),
+  /**
+   * The user's Daily Limit (ADR 0054). It syncs last write wins like the Theme
+   * (ADR 0041); a new key needs no migration, since without it the Edition's default holds.
+   */
+  dailyLimit: declareRecord('settings.dailyLimit', DailyLimitSchema),
   /** That the Feed's swipe hint was shown on this device. */
   swipeHintShown: declareRecord('feed.swipeHintShown', z.literal(true), { sync: 'device-only' }),
   /**

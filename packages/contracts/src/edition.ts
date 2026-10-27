@@ -224,6 +224,19 @@ export const FontSizeSchema = z.enum(['S', 'M', 'L', 'XL']);
 
 export type FontSize = z.infer<typeof FontSizeSchema>;
 
+/**
+ * The Daily Limit (ADR 0054): off, or the distinct Entries Seen on a local day
+ * after which the Feed says «enough for today».
+ */
+export const DailyLimitSchema = z.union([
+  z.literal('off'),
+  z.literal(10),
+  z.literal(20),
+  z.literal(30),
+]);
+
+export type DailyLimit = z.infer<typeof DailyLimitSchema>;
+
 /** A local time of day, `HH:MM` on a 24-hour clock. */
 export const TimeOfDaySchema = z
   .string()
@@ -277,6 +290,8 @@ export const UserSettingDefaultsConfigSchema = z.strictObject({
   fontSize: FontSizeSchema,
   /** Whether haptics are on for a new user. */
   vibration: z.boolean(),
+  /** The Daily Limit a new user starts with. */
+  dailyLimit: DailyLimitSchema,
   /** The default notification times, kept in time order. */
   notificationTimes: NotificationTimesSchema.transform((times) => [...times].sort()),
   mix: MixConfigSchema,
