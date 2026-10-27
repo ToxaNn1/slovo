@@ -1,4 +1,3 @@
-import type { FeedCard } from '@slovo/core';
 import {
   DecorBackground,
   EndOfCycleCard,
@@ -20,6 +19,7 @@ import { editionStrings } from '@/edition/edition';
 import { EntryActions } from '@/entries/entry-actions';
 import { useOpenScreen } from '@/entries/use-open-screen';
 import { useFeed } from '@/feed/feed';
+import type { DrawnCard } from '@/feed/feed-screen';
 import { TOP_ROW } from '@/edition/feed-loading';
 import { StatsPillAndSheet } from '@/progress/progress';
 import { useShown } from '@/shown-in-effect';
@@ -52,7 +52,7 @@ function FeedScreen() {
   // Kept from render to render: a swipe re-renders the pager, and its pages
   // re-render only when their card changes.
   const renderPage = useCallback(
-    (card: FeedCard, position: number) => (
+    (card: DrawnCard, position: number) => (
       <FeedPage
         // A card that takes the place of a hidden one starts afresh, scrolled to its top.
         key={card.entryId ?? card.kind}
@@ -106,7 +106,7 @@ const FeedPage = memo(function FeedPage({
   position,
   onOpenCorrection,
 }: {
-  card: FeedCard;
+  card: DrawnCard;
   position: number;
   /** Opens the Correction that the Word card at `position` links. */
   onOpenCorrection: (position: number, correctionId: string) => void;
