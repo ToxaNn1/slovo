@@ -78,15 +78,18 @@ const word = (index: number): Word => ({
 });
 
 /**
- * A Correction with nothing but what the Game reads: the non-standard
- * «хибне» and its number in a sentence of its own, the standard «добре» and
- * its number.
+ * A Correction of the given Correction Type, a calque unless said, with
+ * nothing but what the Game reads: the non-standard «хибне» and its number in
+ * a sentence of its own, the standard «добре» and its number.
  */
-const correction = (index: number): Correction => ({
+const correction = (
+  index: number,
+  correctionType: Correction['correctionType'] = 'calque',
+): Correction => ({
   kind: 'correction',
   id: `c_test${String(index)}`,
   nonStandardForm: `хибне${String(index)}`,
-  correctionType: 'calque',
+  correctionType,
   standardEquivalents: [`добре${String(index)}`],
   explanation: `Чому добре${String(index)} краще.`,
   examplePair: {
@@ -163,19 +166,22 @@ const SOLVED = {
 };
 
 /**
- * Opens the composition over 15 Words, the given numbers of Corrections and
- * Idioms and the Daily Crossword of the day, with the given Best results by
- * mode id and the crossword's letters, typed on the given date, kept from before.
+ * Opens the composition over 15 Words, the given numbers of calque
+ * Corrections, anglicisms (numbered after the calques) and Idioms and the
+ * Daily Crossword of the day, with the given Best results by mode id and the
+ * crossword's letters, typed on the given date, kept from before.
  */
 async function open({
   best = {},
   corrections = 0,
+  anglicisms = 0,
   idioms = 0,
   switchedOff = [],
   crossword,
 }: {
   best?: Record<string, number>;
   corrections?: number;
+  anglicisms?: number;
   idioms?: number;
   switchedOff?: readonly string[];
   crossword?: { date: string; letters: Record<string, string> };
@@ -189,7 +195,10 @@ async function open({
     content: createMemoryContentPort({
       categories: [{ id: 'nature', displayName: 'Природа' }],
       words: Array.from({ length: 15 }, (_, i) => word(i)),
-      corrections: Array.from({ length: corrections }, (_, i) => correction(i)),
+      corrections: [
+        ...Array.from({ length: corrections }, (_, i) => correction(i)),
+        ...Array.from({ length: anglicisms }, (_, i) => correction(corrections + i, 'anglicism')),
+      ],
       idioms: Array.from({ length: idioms }, (_, i) => idiom(i)),
     }),
     crossword: {
@@ -304,6 +313,16 @@ function theStandardFormOfThePrompt(): string {
   return `добре${/хибне(\d+)/.exec(prompt)?.[1] ?? ''}`;
 }
 
+/** The number in the prompt of a pick Round: «хибне{n}» of a Correction or «перше{n}» of an Idiom. */
+function theNumberOfThePrompt(): number {
+  const prompt = String(screen.getByTestId('game-prompt').props['accessibilityLabel']);
+  return Number(/(?:хибне|перше)(\d+)/.exec(prompt)?.[1]);
+}
+
+/** The option whose text is the given one, as VoiceOver names it. */
+const theOption = (text: string) =>
+  screen.getByRole('button', { name: new RegExp(`^${text}(,|$)`) });
+
 /** The Word a Round of «За буквами» or «Анаграми» asks about: «слово{n}», its Definition «The meaning of test{n}.». */
 function theWordOfThePrompt(): string {
   const prompt = String(screen.getByTestId('game-prompt').props['accessibilityLabel']);
@@ -329,7 +348,9 @@ describe('the Game screen', () => {
       'game-mode-type-word',
       'Виправлення',
       'game-mode-correction',
+      'game-mode-anglicism',
       'Вислови',
+      'game-mode-idiom-meaning',
       'game-mode-build-idiom',
     ]);
   });
@@ -368,6 +389,7 @@ describe('the Game screen', () => {
       'game-mode-anagram',
       'game-mode-by-letters',
       'Вислови',
+      'game-mode-idiom-meaning',
       'game-mode-build-idiom',
     ]);
     expect(screen.queryByText('Виправлення')).toBeNull();
@@ -751,6 +773,110 @@ describe('the Game screen', () => {
     expect(screen.getByTestId('game-sheet')).toHaveTextContent(`${words[0] ?? ''}, друге — третє`, {
       exact: false,
     });
+    expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 4 з 5');
+    expect(warning).toHaveBeenCalled();
+  });
+
+  it('starts «Англіцизми» from its card and plays a whole Game of anglicisms alone, picking each standard form, to the result screen', async () => {
+    await open({ corrections: 15, anglicisms: 15 });
+    await renderScreen();
+
+    await fireEvent.press(screen.getByTestId('game-mode-anglicism'));
+
+    for (let round = 1; round <= 15; round += 1) {
+      await waitFor(() => {
+        expect(screen.getByTestId('game-progress').props['accessibilityLabel']).toBe(
+          `Пройдено раундів: ${String(round - 1)} з 15`,
+        );
+      });
+      // The pick Round of «Обери правильне»: the sentence, its non-standard form marked.
+      expect(screen.getByTestId('game-prompt').props['accessibilityLabel']).toMatch(
+        /^Як сказати краще\? Речення (\d+): тут хибне\1\. Виділено: хибне\1$/,
+      );
+      // Anglicisms are numbered after the 15 calques, which never play here.
+      const n = theNumberOfThePrompt();
+      expect(n).toBeGreaterThanOrEqual(15);
+      expect(screen.getAllByTestId(/^game-option-\d+$/)).toHaveLength(4);
+      await fireEvent.press(theOption(`добре${String(n)}`));
+      expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Правильно!');
+      await fireEvent.press(screen.getByTestId('game-next'));
+    }
+
+    await waitFor(() => {
+      expect(screen.getByText('Перемога!')).toBeOnTheScreen();
+    });
+  });
+
+  it('takes a Life for a wrong pick in «Англіцизми» and shows the standard form with its explanation', async () => {
+    await open({ anglicisms: 15 });
+    await renderScreen();
+
+    await fireEvent.press(screen.getByTestId('game-mode-anglicism'));
+    await waitFor(() => {
+      expect(screen.getAllByTestId(/^game-option-\d+$/)).toHaveLength(4);
+    });
+    const standard = `добре${String(theNumberOfThePrompt())}`;
+    const wrong = screen
+      .getAllByTestId(/^game-option-\d+$/)
+      .find((option) => option.props['accessibilityLabel'] !== standard);
+    if (wrong === undefined) throw new Error('No wrong option');
+    warning.mockClear();
+    await fireEvent.press(wrong);
+
+    expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
+    expect(screen.getByTestId('game-sheet')).toHaveTextContent(new RegExp(standard));
+    expect(screen.getByTestId('game-sheet-explanation')).toHaveTextContent(
+      `Чому ${standard} краще.`,
+    );
+    expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 4 з 5');
+    expect(warning).toHaveBeenCalled();
+  });
+
+  it('starts «Фразеологізми» from its card and plays a whole Game, picking each meaning, to the result screen', async () => {
+    await open({ idioms: 15 });
+    await renderScreen();
+
+    await fireEvent.press(screen.getByTestId('game-mode-idiom-meaning'));
+
+    for (let round = 1; round <= 15; round += 1) {
+      await waitFor(() => {
+        expect(screen.getByTestId('game-progress').props['accessibilityLabel']).toBe(
+          `Пройдено раундів: ${String(round - 1)} з 15`,
+        );
+      });
+      // The whole expression, its punctuation too, over four meanings.
+      expect(screen.getByTestId('game-prompt').props['accessibilityLabel']).toMatch(
+        /^Що це означає\? перше\d+, друге — третє$/,
+      );
+      expect(screen.getAllByTestId(/^game-option-\d+$/)).toHaveLength(4);
+      await fireEvent.press(theOption(`The sense of idiom${String(theNumberOfThePrompt())}\\.`));
+      expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Правильно!');
+      await fireEvent.press(screen.getByTestId('game-next'));
+    }
+
+    await waitFor(() => {
+      expect(screen.getByText('Перемога!')).toBeOnTheScreen();
+    });
+  });
+
+  it('takes a Life for a wrong meaning in «Фразеологізми» and shows the right one', async () => {
+    await open({ idioms: 15 });
+    await renderScreen();
+
+    await fireEvent.press(screen.getByTestId('game-mode-idiom-meaning'));
+    await waitFor(() => {
+      expect(screen.getAllByTestId(/^game-option-\d+$/)).toHaveLength(4);
+    });
+    const meaning = `The sense of idiom${String(theNumberOfThePrompt())}.`;
+    const wrong = screen
+      .getAllByTestId(/^game-option-\d+$/)
+      .find((option) => option.props['accessibilityLabel'] !== meaning);
+    if (wrong === undefined) throw new Error('No wrong option');
+    warning.mockClear();
+    await fireEvent.press(wrong);
+
+    expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
+    expect(screen.getByTestId('game-sheet')).toHaveTextContent(meaning, { exact: false });
     expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 4 з 5');
     expect(warning).toHaveBeenCalled();
   });
