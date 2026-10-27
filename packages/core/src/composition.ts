@@ -44,6 +44,7 @@ import {
 import { openOnboarding, type Onboarding } from './onboarding/onboarding';
 import type { Clock, ContentReadPort, Random, Schedule } from './ports';
 import { openProgress, type Progress } from './progress/progress';
+import { createWeeklyRecap, type WeeklyRecap } from './progress/weekly-recap';
 import { createRarityTest, type RarityTest } from './rarity-test/rarity-test';
 import type { UserState } from './user-state/user-state';
 import { createWidget, type Widget } from './widget/widget';
@@ -78,6 +79,8 @@ export interface Composition extends Hiding {
    * Entry change at once, the Game's best result and the knowledge counts.
    */
   readonly progress: Progress;
+  /** The Weekly Recap, whose numbers its Feed Notice shows on a local Monday (ADR 0054). */
+  readonly weeklyRecap: WeeklyRecap;
   /**
    * Tells the composition the app is in the foreground: it came back from the
    * background, or the shell's timer fired when the next local day started
@@ -282,7 +285,7 @@ export async function openComposition({
   scheduling?: NotificationScheduling;
   schedule?: Schedule;
   gameModes?: readonly GameMode[];
-  /** The Feed Notices of each day beside the Daily Limit card; without it, there is no other. */
+  /** Feed Notices of each day beside those the Core makes, the Weekly Recap and the Daily Limit card; without it, none. */
   feedNotices?: FeedNotices;
 }): Promise<Composition> {
   const { userState, scheduling, schedule, close } = closable(ports);
@@ -330,11 +333,19 @@ export async function openComposition({
     history: recorder,
     archive: createWordOfTheDayArchiveRecorder({ edition }),
     entrySeen: followSeen,
+    // The Weekly Recap is declared below, once Favorites and Progress it reads
+    // are open; that is safe, as the Feed asks for a day's Feed Notices only
+    // for a card after the first, which none asks for before the composition opens.
     notices: {
-      forDay: async (day) => [
-        ...(await feedNotices.forDay(day)),
-        ...(await dailyLimit.forDay(day)),
-      ],
+      async forDay(day) {
+        const [given, limit, recap] = await Promise.all([
+          feedNotices.forDay(day),
+          dailyLimit.forDay(day),
+          weeklyRecap.of(day),
+        ]);
+        const notices = [...given, ...limit];
+        return recap === undefined ? notices : [...notices, 'weeklyRecap'];
+      },
     },
   });
   const {
@@ -378,6 +389,14 @@ export async function openComposition({
     collections,
     game,
     knowledge,
+  });
+  const weeklyRecap = createWeeklyRecap({
+    edition,
+    userState,
+    clock,
+    history,
+    favorites,
+    progress,
   });
   const day = createDayChange({
     clock,
@@ -429,6 +448,7 @@ export async function openComposition({
     mix,
     knowledge,
     progress,
+    weeklyRecap,
     resume() {
       planOffers();
       return day.resume();
