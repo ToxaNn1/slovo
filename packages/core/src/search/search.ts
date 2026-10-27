@@ -10,6 +10,9 @@ import { searchKey } from './search-key';
 /** The shortest query Search answers, in letters of its Search key (ADR 0054). */
 const SHORTEST_QUERY = 2;
 
+/** The shortest query «За значенням» answers, in letters of its Search key (ADR 0054). */
+const SHORTEST_MEANING_QUERY = 3;
+
 /** The most Entries a group of results holds (ADR 0054). */
 const GROUP_LIMIT = 50;
 
@@ -30,6 +33,12 @@ export interface SearchResults {
   readonly synonymRows: readonly SynonymRow[];
   /** The Tips whose title matches. */
   readonly tips: readonly Tip[];
+  /**
+   * «За значенням»: the Words whose Definition contains the query and the
+   * Synonym Rows that contain it, together in the Edition's alphabet by the
+   * Lemma or the dominant.
+   */
+  readonly byMeaning: readonly (Word | SynonymRow)[];
 }
 
 /**
@@ -40,7 +49,8 @@ export interface SearchResults {
 export interface Search {
   /**
    * The Entries whose text, or any of its words, starts with the query, as
-   * the Search key reads both: from 2 letters, up to 50 a group. Nothing
+   * the Search key reads both: from 2 letters, up to 50 a group; from 3
+   * letters, «За значенням» as well. Nothing
    * while the Edition turns Search off. The Hidden Entries are read afresh on
    * every call, the Language Pack once: it never changes while it is open.
    */
@@ -53,6 +63,7 @@ const NOTHING: SearchResults = {
   idioms: [],
   synonymRows: [],
   tips: [],
+  byMeaning: [],
 };
 
 /** The texts Search reads of an Entry, the first the one it is shown and sorted by. */
@@ -71,11 +82,29 @@ const textsOf = (entry: Entry): readonly [string, ...string[]] => {
   }
 };
 
+/** The texts «За значенням» reads of a Word or a Synonym Row: its Definitions, or all of the row. */
+const meaningTextsOf = (entry: Entry): readonly string[] => {
+  switch (entry.kind) {
+    case 'word':
+      return [entry.primaryDefinition, ...entry.extraDefinitions];
+    case 'synonymRow':
+      return [
+        entry.meaning,
+        entry.dominant.text,
+        ...entry.members.flatMap(({ text, shadeNote }) => (shadeNote ? [text, shadeNote] : [text])),
+      ];
+    default:
+      return [];
+  }
+};
+
 /** An Entry with the Search keys of its texts. */
 interface Keyed<Found extends Entry> {
   readonly entry: Found;
   readonly shown: string;
   readonly keys: readonly string[];
+  /** The Search keys of the texts «За значенням» reads. */
+  readonly meaningKeys: readonly string[];
 }
 
 /** Whether the text, as its Search key, or any of its words starts with the query's key. */
@@ -113,7 +142,12 @@ export function createSearch({
         .then((entries) =>
           entries.map((entry) => {
             const texts = textsOf(entry);
-            return { entry, shown: texts[0], keys: texts.map(keyOf) };
+            return {
+              entry,
+              shown: texts[0],
+              keys: texts.map(keyOf),
+              meaningKeys: meaningTextsOf(entry).map(keyOf),
+            };
           }),
         )
         .catch((error: unknown) => {
@@ -156,6 +190,20 @@ export function createSearch({
           .sort((a, b) => exact(a) - exact(b) || collator.compare(a.shown, b.shown))
           .slice(0, GROUP_LIMIT)
           .map(({ entry }) => entry);
+      const byMeaning = <Found extends Entry>(
+        keyed: readonly Keyed<Found>[],
+        hidden: ReadonlyMap<string, string>,
+      ) =>
+        Array.from(wanted).length < SHORTEST_MEANING_QUERY
+          ? []
+          : keyed
+              .filter(
+                ({ entry, meaningKeys }) =>
+                  !hidden.has(entry.id) && meaningKeys.some((key) => key.includes(wanted)),
+              )
+              .sort((a, b) => collator.compare(a.shown, b.shown))
+              .slice(0, GROUP_LIMIT)
+              .map(({ entry }) => entry);
       const ofKind = <Found extends Entry>(
         kind: MixKind,
         read: () => Promise<readonly Keyed<Found>[]>,
@@ -175,6 +223,7 @@ export function createSearch({
         idioms: group(idioms, hidden),
         synonymRows: group(synonymRows, hidden),
         tips: group(tips, hidden),
+        byMeaning: byMeaning<Word | SynonymRow>([...wordsFound, ...synonymRows], hidden),
       };
     },
   };
