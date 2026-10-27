@@ -1,7 +1,7 @@
 import type { Example } from '@slovo/contracts';
 
 import type { PlayedRound } from './game-in-play';
-import type { RoundOption } from './game-mode';
+import type { FixedChip, RoundOption } from './game-mode';
 import { rowWordOption } from './guess-word';
 import { renderStress, stressedVowelsOf } from '../entries/stress';
 
@@ -99,9 +99,19 @@ function detailsOf({ entry, answer }: PlayedRound): GameReviewDetails {
 /** A chip that is one character, such as a letter of «Анаграми»; the words of «Склади вислів» are longer. */
 const isLetter = (chip: string) => Array.from(chip).length === 1;
 
+/** The letters tapped as one Word, each character that stays in place before the chip it precedes. */
+const lettersJoined = (tapped: readonly string[], fixed: readonly FixedChip[] = []) =>
+  tapped
+    .map(
+      (letter, place) =>
+        fixed.flatMap(({ at, text }) => (at === place ? [text] : [])).join('') + letter,
+    )
+    .join('');
+
 /**
  * The reader's answer instead of the right one, in the Round's form; nothing
- * on a right answer. Letter chips join into one Word, word chips with spaces.
+ * on a right answer. Letter chips join into one Word, the characters that
+ * stay in place among them, word chips with spaces.
  */
 function pickedOf(round: PlayedRound): RoundOption | undefined {
   if (round.right) return undefined;
@@ -120,7 +130,7 @@ function pickedOf(round: PlayedRound): RoundOption | undefined {
     case 'chips': {
       if (round.form !== 'chips') return undefined;
       const tapped = answer.chosen.flatMap((place) => round.chips[place] ?? []);
-      return plain(tapped.join(tapped.every(isLetter) ? '' : ' '));
+      return plain(tapped.every(isLetter) ? lettersJoined(tapped, round.fixed) : tapped.join(' '));
     }
     case 'typed':
       return plain(answer.typed.trim());
