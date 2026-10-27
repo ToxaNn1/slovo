@@ -57,7 +57,7 @@ Until 0.8.13 SLOVO handed the reader one Entry after another but didn't help the
 - **The roulette.** 🎲 «Слово під настрій» in the «Головна» header opens the six moods as chips; a chip runs a 1–2 second roulette over Lemmas that lands on a random Eligible Word of that mood, drawn with injected randomness (the Mix applies), and opens its card, which makes nothing Seen. A mood with no Eligible Word is disabled with a reason. Under Reduce Motion the card opens straight away.
 - **Pack format 7.** The pack carries each Word's `moods`, which an app on format 6 can't read, so the build writes pack format 7 and the app reads only it (ADR 0032); format 6 is no longer published.
 
-**Not Seen, in one place.** Opening an Entry from Search or from the mood roulette, the Rarity Test and every Feed Notice make nothing Seen; Seen stays the Feed's dwell rule and an Entry opened from a notification or the widget (ADR 0016, 0018).
+**Not Seen, in one place.** Opening an Entry from Search or from the mood roulette, the Rarity Test and every Feed Notice make nothing Seen; Seen stays the Feed's dwell rule and an Entry opened from a notification or the widget (ADR 0016, 0018). The Core names each way in: an Entry opened from Search (`openedFromSearch`) or from the mood roulette (`openedFromMood`) gets its card and writes nothing, beside the notification and the widget, which make it Seen.
 
 ## Considered Options
 
