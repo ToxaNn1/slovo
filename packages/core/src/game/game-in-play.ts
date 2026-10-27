@@ -89,6 +89,8 @@ export type Round = {
   readonly prompt: string;
   /** The part of the prompt to mark, which the shell draws and VoiceOver names; none to mark. */
   readonly highlight: TextRange | undefined;
+  /** The Definition shown under the prompt, such as a Word's in «Звідки слово»; none when left out. */
+  readonly definition?: string;
   /** The answer, once given; a Round is answered once. */
   readonly answer: RoundAnswer | undefined;
 } & (
@@ -235,6 +237,7 @@ function roundOf(
     entryKind: entry.kind,
     prompt: content.prompt,
     highlight: content.highlight,
+    ...(content.definition !== undefined && { definition: content.definition }),
     answer: undefined,
   };
   switch (content.form) {
