@@ -330,6 +330,13 @@ export const shareCardLayout = {
 /** The smallest side of anything the user taps. */
 export const minTouchTarget = 44;
 
+/**
+ * A day of the Active Days calendar on the stats sheet: the ring that
+ * outlines today around the day's number, its line, and the dot under the
+ * number of an Active Day or a missed one.
+ */
+export const calendarDay = { ring: 32, ringBorder: 1.5, dot: 6, dotGap: 3 } as const;
+
 /** How much a button that takes no press is dimmed. */
 export const disabledOpacity = 0.5;
 

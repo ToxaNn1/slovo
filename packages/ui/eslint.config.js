@@ -53,6 +53,7 @@ export default [
       'src/game/VowelButtons.tsx',
       'src/onboarding/Onboarding.tsx',
       'src/onboarding/SplashOverlay.tsx',
+      'src/progress/ActiveDaysCalendar.tsx',
       'src/primitives/BottomSheet.tsx',
       'src/primitives/UndoToast.tsx',
       'src/primitives/VerticalPager.tsx',

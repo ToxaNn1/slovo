@@ -10,6 +10,7 @@ The app and `@slovo/ui` memoise by hand with `useMemo`, `useCallback` and `React
 - `feed/FeedStates.tsx`
 - `game/GameRound.tsx`, `game/OrderedChips.tsx`, `game/PairsGrid.tsx`, `game/VowelButtons.tsx`
 - `onboarding/Onboarding.tsx`, `onboarding/SplashOverlay.tsx`
+- `progress/ActiveDaysCalendar.tsx`
 - `primitives/BottomSheet.tsx`, `primitives/UndoToast.tsx`, `primitives/VerticalPager.tsx`
 - `saved/FavoriteButton.tsx`
 - `settings/WidgetGuide.tsx`
