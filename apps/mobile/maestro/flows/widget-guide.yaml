@@ -1,4 +1,4 @@
-# Settings › «Віджети: як додати»: the row opens the widget guide (it is no
+# Settings › «Як додати віджет»: the row opens the widget guide (it is no
 # longer a dimmed «СКОРО» row), the guide shows its title and the three steps,
 # and back leads to the list; the flow ends on Home. The drawing of the widgets
 # is a picture that VoiceOver skips, so the flow does not look for it. A subflow

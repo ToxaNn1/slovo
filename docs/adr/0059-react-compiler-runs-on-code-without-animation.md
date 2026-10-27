@@ -12,6 +12,7 @@ The app and `@slovo/ui` memoise by hand with `useMemo`, `useCallback` and `React
 - `onboarding/Onboarding.tsx`, `onboarding/SplashOverlay.tsx`
 - `primitives/BottomSheet.tsx`, `primitives/UndoToast.tsx`, `primitives/VerticalPager.tsx`
 - `saved/FavoriteButton.tsx`
+- `settings/WidgetGuide.tsx`
 - `share/ShareSheet.tsx`
 
 `game/round-motion.ts` holds Reanimated helpers but no component or hook, so the compiler leaves it alone anyway. In the app, only the root layout imports gesture-handler, for `GestureHandlerRootView`, with no animation of its own, so it is compiled. A test in `@slovo/ui` fails when a component module imports Reanimated, Worklets or gesture-handler without the directive, so a new animated component opts out until it is checked.

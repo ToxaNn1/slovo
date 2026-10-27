@@ -57,6 +57,7 @@ export default [
       'src/primitives/UndoToast.tsx',
       'src/primitives/VerticalPager.tsx',
       'src/saved/FavoriteButton.tsx',
+      'src/settings/WidgetGuide.tsx',
       'src/share/ShareSheet.tsx',
     ],
     rules: compilerRulesOff,

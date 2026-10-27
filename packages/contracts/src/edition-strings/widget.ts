@@ -47,10 +47,12 @@ export const WidgetStringsSchema = z.strictObject({
   deletedCollection: TextSchema,
   /** What the Collection's Widget Mode says before a Collection is chosen. */
   noCollection: TextSchema,
-  /** The widget guide that Settings › «Віджети: як додати» opens. */
+  /** The widget guide that Settings › «Як додати віджет» opens and the widget hint shows. */
   guide: z.strictObject({
-    /** The screen's title. */
+    /** The title of the screen and of the widget hint's sheet. */
     title: TextSchema,
+    /** The button that closes the widget hint's sheet. */
+    close: TextSchema,
     /** The steps, in the order the reader does them. */
     steps: z.tuple([GuideStepSchema, GuideStepSchema, GuideStepSchema]),
     /** The sizes the widget comes in, as the widget gallery lists them. */
