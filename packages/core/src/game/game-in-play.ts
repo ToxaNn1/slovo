@@ -155,8 +155,12 @@ export interface CurrentGame {
    * Life; it moves up on «Далі». A won Game passed every Round the mode had.
    */
   readonly roundsPassed: number;
+  /** The mode's Round limit (`GAME_ROUNDS` by default); none in a mode without one. */
+  readonly roundLimit: number | undefined;
   /** The Lives left, from the mode's Lives (`GAME_LIVES` by default) to 0; none in a mode without Lives. */
   readonly lives: number | undefined;
+  /** The mode's Lives, which the Game starts with; none in a mode without Lives. */
+  readonly livesAtStart: number | undefined;
   /** The play time left, in a mode with a time limit; none in another mode. */
   readonly time?: GameTime;
   /**
@@ -430,7 +434,9 @@ export function createGameInPlay(
       modeId: mode.id,
       round: roundOf(first, 1, [], 0),
       roundsPassed: 0,
+      roundLimit,
       lives: livesOf(mode),
+      livesAtStart: livesOf(mode),
       played: [],
       status: 'playing',
     },
