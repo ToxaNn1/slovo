@@ -55,6 +55,12 @@ export interface Search {
    * every call, the Language Pack once: it never changes while it is open.
    */
   search(query: string): Promise<SearchResults>;
+  /**
+   * Whether Search answers the query: 2 letters of its Search key at least,
+   * while the Edition turns Search on. A query it answers with no Entry found
+   * is «Нічого не знайдено»; one it doesn't answer, nothing yet.
+   */
+  answers(query: string): boolean;
 }
 
 const NOTHING: SearchResults = {
@@ -127,7 +133,7 @@ export function createSearch({
     | 'listTipIds'
   >;
   edition: Pick<Edition, 'isFeatureEnabled' | 'searchLetters'> & {
-    readonly languageTraits: Pick<Edition['languageTraits'], 'sortLocale'>;
+    readonly languageTraits: Partial<Pick<Edition['languageTraits'], 'sortLocale'>>;
   };
   userState: Pick<UserState, 'list'>;
 }): Search {
@@ -172,12 +178,14 @@ export function createSearch({
     tip: readKeyedOnce(entriesOf('tip', () => content.listTipIds())),
   } satisfies Record<MixKind, unknown>;
 
+  const answers = (query: string) =>
+    edition.isFeatureEnabled('search') && Array.from(keyOf(query)).length >= SHORTEST_QUERY;
+
   return {
+    answers,
     async search(query) {
+      if (!answers(query)) return NOTHING;
       const wanted = keyOf(query);
-      if (!edition.isFeatureEnabled('search') || Array.from(wanted).length < SHORTEST_QUERY) {
-        return NOTHING;
-      }
       const exact = ({ keys }: Keyed<Entry>) => (keys.includes(wanted) ? 0 : 1);
       const group = <Found extends Entry>(
         keyed: readonly Keyed<Found>[],

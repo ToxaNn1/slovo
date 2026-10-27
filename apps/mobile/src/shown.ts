@@ -54,6 +54,8 @@ export interface Shown {
   readonly sync: boolean;
   /** The Daily Limit choice of Settings. */
   readonly dailyLimit: boolean;
+  /** The Search button of the «Головна» header, which opens the Search screen. */
+  readonly search: boolean;
 }
 
 /**
@@ -98,5 +100,6 @@ export function shownOf({
       : undefined,
     sync: on('sync'),
     dailyLimit: on('dailyLimit'),
+    search: on('search'),
   };
 }

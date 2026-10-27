@@ -52,6 +52,7 @@ export {
   type SampleNotificationLook,
 } from './onboarding/Onboarding';
 export { OutlineButton } from './primitives/OutlineButton';
+export { OutlinedChip } from './primitives/OutlinedChip';
 export { GoogleSignInButton } from './primitives/GoogleSignInButton';
 export { PrimaryButton } from './primitives/PrimaryButton';
 export { SecondaryButton } from './primitives/SecondaryButton';
@@ -77,6 +78,7 @@ export { ShareButton } from './share/ShareButton';
 export { ShareSheet, type ShareSheetOutcome } from './share/ShareSheet';
 export { NavigationRow, SettingsGroup, SoonRow, SwitchRow, TimeRow } from './settings/SettingsRows';
 export { SplashOverlay } from './onboarding/SplashOverlay';
+export { SearchButton } from './search/SearchButton';
 export { StatsPill } from './progress/StatsPill';
 export { StatsSheet } from './progress/StatsSheet';
 export { stressLabel } from './entries/stress-label';

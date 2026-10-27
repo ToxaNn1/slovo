@@ -46,6 +46,8 @@ import type { Clock, ContentReadPort, Random, Schedule } from './ports';
 import { openProgress, type Progress } from './progress/progress';
 import { createWeeklyRecap, type WeeklyRecap } from './progress/weekly-recap';
 import { createRarityTest, type RarityTest } from './rarity-test/rarity-test';
+import { createRecentQueries, type RecentQueries } from './search/recent-queries';
+import { createSearch, type Search } from './search/search';
 import type { UserState } from './user-state/user-state';
 import { createWidget, type Widget } from './widget/widget';
 import { openWordOfTheDay } from './feed/word-of-the-day';
@@ -107,6 +109,14 @@ export interface Composition extends Hiding {
    * permission, and its sample notification, taken from the plan.
    */
   readonly onboarding: Onboarding;
+  /**
+   * Search, over every live Entry that is not Hidden, the Mix and the Rarity
+   * Floor aside; nothing while the Edition turns it off (ADR 0054). Open what
+   * it finds with `openedFromSearch`.
+   */
+  readonly search: Search;
+  /** The last 10 queries a Search result was opened from, kept on this device. */
+  readonly recentQueries: RecentQueries;
   /** The Rarity Test, which draws the Words it asks about and sets the Rarity Floor by the answers. */
   readonly rarityTest: RarityTest;
   /**
@@ -274,11 +284,19 @@ export async function openComposition({
   content: ContentReadPort;
   /** The Daily Crossword's days, which the pack reader gives next to `content`; without it, as in tests of other features, there is none. */
   crossword?: CrosswordReadPort;
+  /**
+   * An Edition that leaves out `searchLetters` or its sort locale, as in
+   * tests of other features, has Search read each letter as itself and sort
+   * in the default locale.
+   */
   edition: Pick<Edition, 'id' | 'isFeatureEnabled'> &
+    Partial<Pick<Edition, 'searchLetters'>> &
     MixEdition &
     NotificationsEdition &
     GameEdition &
-    DailyLimitEdition;
+    DailyLimitEdition & {
+      readonly languageTraits: Partial<Pick<Edition['languageTraits'], 'sortLocale'>>;
+    };
   userState: UserState;
   clock: Clock;
   random: Random;
@@ -439,6 +457,7 @@ export async function openComposition({
     await day.opened((activeDay) => markOpenedSeen(entryId, activeDay));
     return entryCard(entryId);
   }
+  const searchEdition = { ...edition, searchLetters: edition.searchLetters ?? {} };
   return {
     feed,
     favorites,
@@ -456,6 +475,8 @@ export async function openComposition({
     notifications,
     game,
     onboarding,
+    search: createSearch({ content, edition: searchEdition, userState }),
+    recentQueries: createRecentQueries({ edition: searchEdition, userState }),
     rarityTest: createRarityTest({ edition, entries, mix, random }),
     async openDailyCrossword() {
       if (crossword === undefined) return undefined;

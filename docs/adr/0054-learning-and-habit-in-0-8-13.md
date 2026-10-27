@@ -13,6 +13,7 @@ Until 0.8.13 SLOVO handed the reader one Entry after another but didn't help the
 - **«За значенням».** From 3 characters, a further group lists Words whose primary or further Definition contains the query, anywhere in it, and Synonym Rows whose meaning line, dominant, members or shade notes contain it, so a reader finds a word for a meaning. Its Search key is the one above; the same scope applies; Words and Synonym Rows come together in the Edition's sort locale by Lemma or dominant, up to 50.
 - **Opening a result** opens the Entry card and makes nothing Seen. The last 10 queries, each saved only when a result was opened from it, are a `device-only` record with «Очистити».
 - Each result reads its kind and text to VoiceOver.
+- **The screen.** The magnifier opens a Search screen of its own stack, a field over the groups, each under its kind's chip; a result opens its Entry card on that stack, so «Назад» returns to the results. The composition holds Search and its recent queries, and Search says which queries it answers, so a query shorter than 2 letters shows nothing rather than «Нічого не знайдено».
 
 **The Rarity Test** («Перевірити рівень») is offered once in onboarding after the Mix, skippable, and again from Settings («Пройти тест ще раз»).
 

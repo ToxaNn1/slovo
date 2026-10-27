@@ -5,18 +5,22 @@ import { outlinedChipPadding, typeSize, withAlpha } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /**
- * A short label in an accent outline, such as a register («розм.») or a
- * Correction Type («росіянізм»). The register's chip is the tighter one.
+ * A short label in an accent outline, such as a register («розм.»), a
+ * Correction Type («росіянізм») or a group of Search results («Слова»). The
+ * register's chip is the tighter one.
  */
 export function OutlinedChip({
   text,
   accessibilityLabel,
+  accessibilityRole,
   testID,
   size,
 }: {
   text: string;
   /** What VoiceOver says, where it differs from the text. */
   accessibilityLabel: string;
+  /** `header` where the chip heads a group, as VoiceOver's headings rotor finds it. */
+  accessibilityRole?: 'header';
   testID: string;
   size: 'tight' | 'roomy';
 }) {
@@ -27,6 +31,7 @@ export function OutlinedChip({
       testID={testID}
       accessible
       accessibilityLabel={accessibilityLabel}
+      accessibilityRole={accessibilityRole}
       {...voice}
       style={[
         styles.chip,
