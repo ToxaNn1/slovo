@@ -1,3 +1,4 @@
+import type { WordCardModel } from '../entries/word-card';
 import type { LocalDate } from '../local-date';
 import type { UserStateChanges } from '../ports';
 import type { UserState } from '../user-state/user-state';
@@ -16,10 +17,15 @@ export type FeedNotice = (typeof FEED_NOTICES)[number];
 /** A day of the first week, the first Active Day after the onboarding day 1 (ADR 0054). */
 export type FirstWeekDay = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
-/** What a Feed Notice shows: the first-week card, also its day of the first week. */
+/**
+ * What a Feed Notice shows: the first-week card, also its day of the first
+ * week; Yesterday, the card of the day before's Word of the Day, which the
+ * shell shows in Self-check style with the Knowledge Marks of its Word.
+ */
 export type FeedNoticeContent =
-  | { readonly notice: Exclude<FeedNotice, 'firstWeek'> }
-  | { readonly notice: 'firstWeek'; readonly firstWeekDay: FirstWeekDay };
+  | { readonly notice: Exclude<FeedNotice, 'firstWeek' | 'yesterday'> }
+  | { readonly notice: 'firstWeek'; readonly firstWeekDay: FirstWeekDay }
+  | { readonly notice: 'yesterday'; readonly word: WordCardModel };
 
 /** What gives the Feed the Feed Notices of a local day, in any order. */
 export interface FeedNotices {

@@ -38,7 +38,7 @@ describe('the pages of the Feed', () => {
   const end: FeedCard = { kind: 'end-of-cycle' };
   const notice: FeedCard = {
     kind: 'notice',
-    notice: 'yesterday',
+    notice: 'weeklyRecap',
     day: { year: 2026, month: 10, day: 27 },
   };
   const otherEnd: FeedCard = { kind: 'end-of-cycle' };

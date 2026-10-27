@@ -12,6 +12,7 @@ import {
   type FeedNotice,
   type FeedNoticeContent,
   type FeedNotices,
+  type WordCardModel,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
 import { correction, fakeClock, idiom, randomOf, word } from '../test-support';
@@ -19,6 +20,28 @@ import { correction, fakeClock, idiom, randomOf, word } from '../test-support';
 const words: readonly Word[] = Array.from({ length: 30 }, (_, index) =>
   word(`w_${String(index).padStart(2, '0')}`),
 );
+
+/** The card Yesterday shows: that of a Word, as the Feed Notices of these tests need no more. */
+const yesterdaysWord: WordCardModel = {
+  kind: 'word',
+  wordId: 'w_00',
+  lemma: '00',
+  stressedVowels: [],
+  partOfSpeech: 'noun',
+  gender: undefined,
+  primaryDefinition: 'The meaning of 00.',
+  example: undefined,
+  synonyms: [],
+  antonyms: [],
+  registers: [],
+  region: undefined,
+  history: undefined,
+  categoryId: 'test',
+  categoryName: undefined,
+  details: undefined,
+  linkedCorrections: [],
+  synonymRow: undefined,
+};
 
 const synonymRows: readonly SynonymRow[] = Array.from({ length: 3 }, (_, index) => ({
   kind: 'synonymRow',
@@ -57,9 +80,12 @@ const fakeNotices = (notices: readonly FeedNotice[]): FeedNotices => ({
   forDay: () => Promise.resolve(notices.map(contentOf)),
 });
 
-/** What the Feed Notice shows; a first-week card, that of day 1. */
-const contentOf = (notice: FeedNotice): FeedNoticeContent =>
-  notice === 'firstWeek' ? { notice, firstWeekDay: 1 } : { notice };
+/** What the Feed Notice shows; a first-week card, that of day 1; Yesterday, the card of `w_00`. */
+const contentOf = (notice: FeedNotice): FeedNoticeContent => {
+  if (notice === 'firstWeek') return { notice, firstWeekDay: 1 };
+  if (notice === 'yesterday') return { notice, word: yesterdaysWord };
+  return { notice };
+};
 
 /** The Core composition of one app run on the day, over the records, so the user state survives between runs. */
 async function run({
