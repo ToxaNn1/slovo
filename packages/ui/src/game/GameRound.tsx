@@ -2,6 +2,7 @@ import type { EditionStrings } from '@slovo/contracts';
 import {
   GAME_LIVES,
   GAME_ROUNDS,
+  gapOf,
   LIFE_LOST_DELAY,
   type CurrentGame,
   type GivenAnswer,
@@ -223,10 +224,11 @@ export function GameRound({
 /**
  * The label and the prompt a Round shows by the kind of Entry it asks about:
  * a Synonym Row's question on its dominant, a Tip's own question under the
- * Tip's label, any other Round's prompt under the mode's label.
+ * Tip's label, an Example with a gap under the gap's label, any other Round's
+ * prompt under the mode's label.
  */
 function askedAs(
-  { entryKind, prompt }: Round,
+  { entryKind, prompt, highlight }: Round,
   label: string,
   strings: EditionStrings['game']['round'],
 ): { label: string; prompt: string } {
@@ -235,6 +237,7 @@ function askedAs(
     return { label: synonymRow.label, prompt: fill(synonymRow.prompt, { dominant: prompt }) };
   }
   if (entryKind === 'tip') return { label: strings.tip.label, prompt };
+  if (gapOf({ prompt, highlight }) !== undefined) return { label: strings.gap.label, prompt };
   return { label, prompt };
 }
 
@@ -411,7 +414,8 @@ function Life({ full }: { full: boolean }) {
  * The Round's prompt (`game-round-dark`, `game-round-correction-answered-light`):
  * its label over the prompt on a surface card with the Edition's corners, the
  * highlight, such as a non-standard form, on the sunken fill and underlined in
- * the accent. VoiceOver reads it before the options, then names the highlight.
+ * the accent. VoiceOver reads it before the options, then names the highlight;
+ * a gap it reads in its place, as the Edition calls it.
  * An answer drawn in the prompt's place, such as the vowel buttons, stands in
  * for the prompt, and VoiceOver reads the label, then each of its buttons.
  */
@@ -430,8 +434,13 @@ function RoundCard({
 }) {
   const { colors, fontFamilies, radii } = useTokens();
   const { strings, voice } = useEdition();
+  const gap = gapOf({ prompt, highlight });
+  const read =
+    gap === undefined
+      ? prompt
+      : `${prompt.slice(0, gap.start)}${strings.game.round.gap.voiceOver}${prompt.slice(gap.end)}`;
   const marked =
-    highlight === undefined
+    highlight === undefined || gap !== undefined
       ? undefined
       : fill(strings.game.round.highlight, {
           text: prompt.slice(highlight.start, highlight.end),
@@ -442,7 +451,7 @@ function RoundCard({
       accessible={children === undefined}
       accessibilityLabel={
         children === undefined
-          ? [`${label}${ENDS_IN_PUNCTUATION.test(label) ? '' : '.'} ${prompt}`, marked]
+          ? [`${label}${ENDS_IN_PUNCTUATION.test(label) ? '' : '.'} ${read}`, marked]
               .filter(Boolean)
               .join(' ')
           : undefined

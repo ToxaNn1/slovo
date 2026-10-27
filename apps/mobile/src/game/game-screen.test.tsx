@@ -50,7 +50,10 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ navigate: () => undefined, push: () => undefined }),
 }));
 
-/** A Word of one Category, with nothing but what the Game reads: «слово» and its number, stressed on its first vowel. */
+/**
+ * A Word of one Category, with nothing but what the Game reads: «слово» and
+ * its number, stressed on its first vowel, in an Example of its own.
+ */
 const word = (index: number): Word => ({
   kind: 'word',
   id: `w_test${String(index)}`,
@@ -59,7 +62,7 @@ const word = (index: number): Word => ({
   partOfSpeech: 'noun',
   primaryDefinition: `The meaning of test${String(index)}.`,
   extraDefinitions: [],
-  examples: [],
+  examples: [{ text: `Речення ${String(index)}: ось слово${String(index)} тут.` }],
   synonyms: [],
   antonyms: [],
   registers: [],
@@ -149,6 +152,13 @@ function pairsLeft(): { word: number; definition: number }[] {
   });
 }
 
+/** Picks the option of the Word whose number is the prompt's, right in a Round of «Вгадай слово». */
+async function pickTheWordOfThePrompt() {
+  const prompt = String(screen.getByTestId('game-prompt').props['accessibilityLabel']);
+  const n = /\d+/.exec(prompt)?.[0] ?? '';
+  await fireEvent.press(screen.getByRole('button', { name: new RegExp(`^слово${n},`) }));
+}
+
 beforeEach(async () => {
   await open();
 });
@@ -222,6 +232,30 @@ describe('the Game screen', () => {
     await waitFor(() => {
       expect(screen.getByText('Перемога!')).toBeOnTheScreen();
     });
+  });
+
+  it('asks «Вгадай слово»’s sixth Round by an Example with a gap, which VoiceOver reads, and takes an answer', async () => {
+    await renderScreen();
+
+    await fireEvent.press(screen.getByTestId('game-mode-guess-word'));
+    for (let round = 1; round <= 5; round += 1) {
+      await waitFor(() => {
+        expect(screen.getByText('Визначення')).toBeOnTheScreen();
+      });
+      await pickTheWordOfThePrompt();
+      await fireEvent.press(screen.getByTestId('game-next'));
+    }
+
+    await waitFor(() => {
+      expect(screen.getByText('Яке слово пропущено?')).toBeOnTheScreen();
+    });
+    expect(screen.getByTestId('game-prompt').props['accessibilityLabel']).toMatch(
+      /^Яке слово пропущено\? Речення \d+: ось пропуск тут\.$/,
+    );
+    expect(screen.getByText(/^Речення \d+: ось … тут\.$/)).toBeOnTheScreen();
+    await pickTheWordOfThePrompt();
+
+    expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Правильно!');
   });
 
   it('starts «Пари» from its card and plays four grids of 4, 4, 4 and 3 pairs to the result screen', async () => {

@@ -121,6 +121,11 @@ export const GameStringsSchema = z.strictObject({
     synonymRow: z.strictObject({ label: TextSchema, prompt: templateOf('dominant') }),
     /** A Tip's Round, which asks the Tip's own question: the label over it, e.g. «ПОРАДА». */
     tip: z.strictObject({ label: TextSchema }),
+    /**
+     * A Round that asks a Word by its Example with a gap: the label over it,
+     * e.g. «ЯКЕ СЛОВО ПРОПУЩЕНО?», and what VoiceOver reads for the gap, e.g. «пропуск».
+     */
+    gap: z.strictObject({ label: TextSchema, voiceOver: TextSchema }),
     /** What VoiceOver reads of the timer of a mode with a time limit, e.g. «лишилось 40 секунд». Takes `{count}`, the seconds left. */
     timer: PluralSchema,
   }),
