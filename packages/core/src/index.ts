@@ -97,6 +97,13 @@ export { GAME_ROUNDS, roundLimitOf } from './game/round-plan';
 export { staysInPlace } from './game/by-letters-mode';
 export { gapOf } from './game/guess-word';
 export { typedAnswerMatches } from './game/typed-answer';
+export {
+  createMoodDraw,
+  type MoodChoice,
+  type MoodDraw,
+  type MoodRefusal,
+  type MoodRoulette,
+} from './mood/mood-draw';
 export { createRecentQueries, type RecentQueries } from './search/recent-queries';
 export { createSearch, type Search, type SearchResults } from './search/search';
 export { searchKey, type SearchLetters } from './search/search-key';
