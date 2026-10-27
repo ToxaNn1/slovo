@@ -52,6 +52,8 @@ export interface Shown {
     | undefined;
   /** The Sync status line of the SLOVO ID screen. */
   readonly sync: boolean;
+  /** The Daily Limit choice of Settings. */
+  readonly dailyLimit: boolean;
 }
 
 /**
@@ -95,5 +97,6 @@ export function shownOf({
         }
       : undefined,
     sync: on('sync'),
+    dailyLimit: on('dailyLimit'),
   };
 }
