@@ -1,4 +1,4 @@
-# Opens Settings › «Віджети: як додати», the widget guide. The row is near the
+# Opens Settings › «Як додати віджет», the widget guide. The row is near the
 # bottom of Settings, so the list cannot centre it, and the flow only scrolls
 # until it shows (`open-settings-row.yaml` centres the row). A double tap opens
 # the guide once: one back returns to the list.

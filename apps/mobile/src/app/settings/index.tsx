@@ -180,14 +180,19 @@ export default function SettingsScreen() {
           </SettingsGroup>
         </View>
         <View style={styles.section}>
+          <SectionLabel>{strings.widgets}</SectionLabel>
           <SettingsGroup>
             <NavigationRow
               testID="settings-row-widgets"
-              label={strings.rows.widgets}
+              label={strings.howToAddWidget}
               onPress={() => {
                 openScreen('/settings/widgets');
               }}
             />
+          </SettingsGroup>
+        </View>
+        <View style={styles.section}>
+          <SettingsGroup>
             <NavigationRow
               testID="settings-row-about"
               label={strings.rows.about}

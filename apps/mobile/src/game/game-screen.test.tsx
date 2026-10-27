@@ -419,6 +419,21 @@ async function pass(ms: number) {
   });
 }
 
+/** Plays a whole Game of «Наголос», started from its card unless said, each Round right, to the result screen. */
+async function winStress({ fromCard = true } = {}) {
+  if (fromCard) await fireEvent.press(screen.getByTestId('game-mode-stress'));
+  for (let round = 1; round <= 15; round += 1) {
+    await waitFor(() => {
+      expect(screen.getByTestId('game-vowels')).toBeOnTheScreen();
+    });
+    await fireEvent.press(screen.getByRole('button', { name: 'о, третя літера' }));
+    await fireEvent.press(screen.getByTestId('game-next'));
+  }
+  await waitFor(() => {
+    expect(screen.getByText('Перемога!')).toBeOnTheScreen();
+  });
+}
+
 beforeEach(async () => {
   mockInForeground = true;
   await open();
@@ -1028,6 +1043,8 @@ describe('the Game screen', () => {
       'Пройдено раундів: 11',
     );
     expect(screen.getByTestId('game-result-best')).toHaveTextContent(/^11/);
+    // A Game with no Life left offers no widget hint.
+    expect(screen.queryByTestId('widget-guide-sheet')).toBeNull();
   });
 
   describe('«На час»', () => {
@@ -1179,5 +1196,51 @@ describe('the Game screen', () => {
     expect(screen.getByTestId('game-sheet-explanation')).toHaveTextContent(`Від test${String(n)}.`);
     expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 4 з 5');
     expect(warning).toHaveBeenCalled();
+  });
+
+  describe('the widget hint', () => {
+    it('shows the widget guide over the result of the first won Game, with its 3 steps, until «Зрозуміло» closes it', async () => {
+      await renderScreen();
+
+      await winStress();
+
+      const sheet = await screen.findByTestId('widget-guide-sheet');
+      expect(within(sheet).getByRole('header', { name: 'Слово на головному екрані' })).toBeTruthy();
+      for (const [index, step] of editionStrings.widget.guide.steps.entries()) {
+        expect(
+          screen.getByTestId(`widget-guide-sheet-step-${String(index + 1)}`),
+        ).toHaveTextContent(`${String(index + 1)}${step.title}${step.hint}`);
+      }
+
+      await fireEvent.press(screen.getByRole('button', { name: 'Зрозуміло' }));
+
+      await waitFor(() => {
+        expect(screen.queryByTestId('widget-guide-sheet')).toBeNull();
+      });
+      expect(screen.getByText('Перемога!')).toBeOnTheScreen();
+    });
+
+    it('offers the widget guide once ever: the next won Game shows none', async () => {
+      await renderScreen();
+      await winStress();
+      await fireEvent.press(await screen.findByRole('button', { name: 'Зрозуміло' }));
+      await waitFor(() => {
+        expect(screen.queryByTestId('widget-guide-sheet')).toBeNull();
+      });
+
+      await fireEvent.press(screen.getByTestId('game-again'));
+      await winStress({ fromCard: false });
+
+      expect(screen.queryByTestId('widget-guide-sheet')).toBeNull();
+    });
+
+    it('offers no widget guide with the widget switched off', async () => {
+      await open({ switchedOff: ['widget'] });
+      await renderScreen();
+
+      await winStress();
+
+      expect(screen.queryByTestId('widget-guide-sheet')).toBeNull();
+    });
   });
 });

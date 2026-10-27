@@ -35,6 +35,8 @@ export const SettingsStringsSchema = z.strictObject({
     /** The choice that turns the Daily Limit off. */
     off: TextSchema,
   }),
+  /** The title over the widget's rows. */
+  widgets: TextSchema,
   /** The row under «Віджети» that opens the widget guide. */
   howToAddWidget: TextSchema,
   /** The names of the rows under the Theme and the font size. */
@@ -42,7 +44,6 @@ export const SettingsStringsSchema = z.strictObject({
     notifications: TextSchema,
     myMix: TextSchema,
     hidden: TextSchema,
-    widgets: TextSchema,
     about: TextSchema,
   }),
   /** The Sounds section and its rows. */

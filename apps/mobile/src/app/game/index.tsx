@@ -10,8 +10,10 @@ import {
   SectionLabel,
   space,
   useTokens,
+  WidgetGuideSheet,
 } from '@slovo/ui';
 import { Redirect, useRouter } from 'expo-router';
+import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -22,12 +24,13 @@ import { useGameActions, useGameState, usePauseInBackground, useTimeLeft } from 
 import { gameModeCard, gameModeGroups, gameModeStrings } from '@/game/game-modes';
 import { useShown } from '@/shown-in-effect';
 
-const { game: strings } = editionStrings;
+const { game: strings, widget: widgetStrings } = editionStrings;
 
 /**
  * The Game tab: the mode screen, a Round with its answer sheet, or the result
  * screen with its Game Review, as the Core's Game stands, while the Game is on
- * in effect. A timed Game's timer ticks, and stops while the app is in the
+ * in effect. A result that offers the widget hint shows the widget guide in a
+ * sheet over it, until the reader closes it. A timed Game's timer ticks, and stops while the app is in the
  * background. The Game stays in the Core composition, so another tab and back,
  * or an Entry the Game Review opens and back, finds it where it was.
  */
@@ -45,6 +48,8 @@ function Game() {
   const { gameReview } = useShown();
   const { colors } = useTokens();
   usePauseInBackground();
+  /** Whether the reader closed the widget hint, which is offered once ever. */
+  const [hintClosed, setHintClosed] = useState(false);
 
   const { current } = state;
   const timeLeft = useTimeLeft(current?.time);
@@ -57,24 +62,38 @@ function Game() {
       {current === undefined ? (
         <ModeScreen modes={state.modes} onStart={actions.start} />
       ) : current.status === 'won' || current.status === 'lost' ? (
-        <GameResult
-          game={current}
-          bestResult={state.bestResults[current.modeId]}
-          onAgain={() => {
-            actions.start(current.modeId);
-          }}
-          onHome={() => {
-            actions.leave();
-            router.navigate('/');
-          }}
-          onOpenEntry={
-            gameReview
-              ? (entryId) => {
-                  openScreen(`/game/${entryId}`);
-                }
-              : undefined
-          }
-        />
+        <>
+          <GameResult
+            game={current}
+            bestResult={state.bestResults[current.modeId]}
+            onAgain={() => {
+              actions.start(current.modeId);
+            }}
+            onHome={() => {
+              actions.leave();
+              router.navigate('/');
+            }}
+            onOpenEntry={
+              gameReview
+                ? (entryId) => {
+                    openScreen(`/game/${entryId}`);
+                  }
+                : undefined
+            }
+          />
+          <WidgetGuideSheet
+            visible={state.widgetHint && !hintClosed}
+            title={widgetStrings.guide.title}
+            closeLabel={widgetStrings.guide.close}
+            onClose={() => {
+              setHintClosed(true);
+            }}
+            steps={widgetStrings.guide.steps}
+            caption={widgetStrings.guide.sizes}
+            mode={widgetStrings.allEntries}
+            {...widgetStrings.guide.sample}
+          />
+        </>
       ) : (
         <GameRound
           game={current}
