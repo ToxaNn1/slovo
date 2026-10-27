@@ -1,6 +1,10 @@
 import { z } from 'zod';
 
 import { TextSchema } from '../shared';
+import { pluralOf } from './shared';
+
+/** A first-week card of days 1 to 6: what the app offers that day. */
+const FirstWeekCardSchema = z.strictObject({ title: TextSchema, text: TextSchema });
 
 /** The Feed Notices: Feed cards that are not Entries. */
 export const FeedNoticesStringsSchema = z.strictObject({
@@ -19,5 +23,18 @@ export const FeedNoticesStringsSchema = z.strictObject({
     close: TextSchema,
     /** The title of the seventh day's card, beside the Streak. */
     lastDayTitle: TextSchema,
+    /** The cards of days 1 to 6, in order: Знаю / Не знаю, Гра, Збережене і Колекції, Мікс, Віджет, Перевір себе. */
+    days: z.tuple([
+      FirstWeekCardSchema,
+      FirstWeekCardSchema,
+      FirstWeekCardSchema,
+      FirstWeekCardSchema,
+      FirstWeekCardSchema,
+      FirstWeekCardSchema,
+    ]),
+    /** The text of the seventh day's card. Takes `{count}`, the Streak. */
+    lastDayText: pluralOf(),
+    /** The seventh day's text for a reader who hides the Streak, so it names no Streak. */
+    lastDayTextNoStreak: TextSchema,
   }),
 });
