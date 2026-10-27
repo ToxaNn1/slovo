@@ -29,6 +29,14 @@ export const SettingsStringsSchema = z.strictObject({
   hideStreak: TextSchema,
   /** The switch that turns Self-check on. */
   selfCheck: TextSchema,
+  /** The Daily Limit choice; its numbers are drawn as they are. */
+  dailyLimit: z.strictObject({
+    title: TextSchema,
+    /** The choice that turns the Daily Limit off. */
+    off: TextSchema,
+  }),
+  /** The row under «Віджети» that opens the widget guide. */
+  howToAddWidget: TextSchema,
   /** The names of the rows under the Theme and the font size. */
   rows: z.strictObject({
     notifications: TextSchema,
