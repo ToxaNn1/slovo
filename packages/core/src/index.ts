@@ -62,7 +62,12 @@ export {
   type TipFeedCard,
   type WordFeedCard,
 } from './feed/feed-card';
-export { type FeedNotice, type FeedNotices } from './feed/feed-notices';
+export {
+  type FeedNotice,
+  type FeedNoticeContent,
+  type FeedNotices,
+  type FirstWeekDay,
+} from './feed/feed-notices';
 export { type GameModeOffer, type GameState, type OfferedBest } from './game/game';
 export {
   GAME_LIVES,

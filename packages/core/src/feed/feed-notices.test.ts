@@ -10,6 +10,7 @@ import {
   type Feed,
   type FeedCard,
   type FeedNotice,
+  type FeedNoticeContent,
   type FeedNotices,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
@@ -53,8 +54,12 @@ const dayTwo = '2026-10-12T09:00:00+03:00';
 
 /** A fake that gives the same Feed Notices every day, as the features that make them will. */
 const fakeNotices = (notices: readonly FeedNotice[]): FeedNotices => ({
-  forDay: () => Promise.resolve(notices),
+  forDay: () => Promise.resolve(notices.map(contentOf)),
 });
+
+/** What the Feed Notice shows; a first-week card, that of day 1. */
+const contentOf = (notice: FeedNotice): FeedNoticeContent =>
+  notice === 'firstWeek' ? { notice, firstWeekDay: 1 } : { notice };
 
 /** The Core composition of one app run on the day, over the records, so the user state survives between runs. */
 async function run({
@@ -163,12 +168,16 @@ describe('Feed Notices', () => {
     const opened: { history?: Composition['history'] } = {};
     const feedNotices: FeedNotices = {
       forDay: () =>
-        Promise.resolve([
-          'yesterday',
-          'weeklyRecap',
-          'firstWeek',
-          ...((opened.history?.list.length ?? 0) >= limit ? (['dailyLimit'] as const) : []),
-        ]),
+        Promise.resolve(
+          (
+            [
+              'yesterday',
+              'weeklyRecap',
+              'firstWeek',
+              ...((opened.history?.list.length ?? 0) >= limit ? (['dailyLimit'] as const) : []),
+            ] as const
+          ).map(contentOf),
+        ),
     };
     const app = await run({ records: new Map(), at: dayOne, feedNotices });
     opened.history = app.history;
