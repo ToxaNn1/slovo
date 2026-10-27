@@ -21,9 +21,12 @@
     "deps": "depcruise apps packages tools editions --config .dependency-cruiser.mjs",
     "test": "turbo run test",
     "format": "prettier --write .",
+    "commitlint": "commitlint",
     "knip": "SLOVO_EDITION=uk knip"
   },
   "devDependencies": {
+    "@commitlint/cli": "^21.2.4",
+    "@commitlint/config-conventional": "^21.2.4",
     "@slovo/config": "workspace:*",
     "dependency-cruiser": "^18.7.0",
     "knip": "^6.42.1",
