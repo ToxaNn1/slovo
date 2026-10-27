@@ -933,3 +933,100 @@ describe("a Word's origin", () => {
     );
   });
 });
+
+describe("a Word's moods", () => {
+  const moodIds = ukrainian.config.moods.map(({ id, name }) => `${id} (${name})`);
+  const [first = '', second = ''] = ukrainian.config.moods.map(({ id }) => id);
+  const offer = `moods: any of ${moodIds.join(', ')}, or none`;
+
+  it("are offered from the Edition's list when a Word is drafted, and recorded once they pass", () => {
+    const run = content(['new', 'word', '--edition', 'uk'], {
+      edits: [{ ...validWord, moods: [first, second] }],
+    });
+
+    expect(run.stderr).toBe('');
+    expect(run.status).toBe(0);
+    expect(run.stdout).toContain(offer);
+    const [file = ''] = run.opened;
+    expect(readJson(file)).toMatchObject({ moods: [first, second] });
+    expect(run.stdout).toContain(`Recorded ${file}`);
+    expect(content(['check', '--edition', 'uk']).status).toBe(0);
+  });
+
+  it("are offered from the Edition's list when a Word is edited, and recorded once they pass", () => {
+    const file = ukrainian.entryFile(word.id);
+
+    const run = content(['edit', word.id, '--edition', 'uk'], { edits: [{ moods: [first] }] });
+
+    expect(run.stderr).toBe('');
+    expect(run.status).toBe(0);
+    expect(run.stdout).toContain(offer);
+    expect(readJson(file)).toMatchObject({ id: word.id, moods: [first] });
+    expect(run.stdout).toContain(`Recorded ${file}`);
+  });
+
+  it('leave the Word without the field once the last mood is removed', () => {
+    const file = ukrainian.entryFile(word.id);
+    expect(
+      content(['edit', word.id, '--edition', 'uk'], { edits: [{ moods: [first] }] }).status,
+    ).toBe(0);
+
+    const run = content(['edit', word.id, '--edition', 'uk'], { edits: [{ moods: [] }] });
+
+    expect(run.stderr).toBe('');
+    expect(run.status).toBe(0);
+    expect(readJson(file)).not.toHaveProperty('moods');
+    expect(run.stdout).toContain(`Recorded ${file}`);
+    expect(content(['check', '--edition', 'uk']).status).toBe(0);
+  });
+
+  it('are not offered for an Entry of another kind', () => {
+    const run = content(['edit', idiom.id, '--edition', 'uk'], { edits: [null] });
+
+    expect(run.stdout).not.toContain('moods:');
+  });
+
+  it('refuse an id the Edition does not list, and record nothing', () => {
+    const before = { registry: registry(), manifest: manifest() };
+
+    const run = content(['new', 'word', '--edition', 'uk'], {
+      edits: [{ ...validWord, moods: ['grumpy'] }],
+      answers: 'n\n',
+    });
+
+    expect(run.status).toBe(1);
+    const [file = ''] = run.opened;
+    const id = file.slice('content/words/'.length, -'.json'.length);
+    expect(run.stderr).toContain(`${file} › Entry ${id} › moods: Unknown mood "grumpy"`);
+    expect(run.stderr).toContain(`Kept ${file}, not recorded`);
+    expect(registry()).toEqual(before.registry);
+    expect(manifest()).toEqual(before.manifest);
+  });
+
+  it('are checked with the rest of the Edition, an unknown id reported in its file and field', () => {
+    const file = ukrainian.entryFile(word.id);
+    const entry = readJson(file) as Record<string, unknown>;
+    writeFileSync(join(editionDir, file), JSON.stringify({ ...entry, moods: ['grumpy'] }));
+
+    const run = content(['check', '--edition', 'uk']);
+
+    expect(run.status).toBe(1);
+    expect(run.stderr).toContain('Edition "uk": 1 problem(s)');
+    expect(run.stderr).toContain(`${file} › Entry ${word.id} › moods: Unknown mood "grumpy"`);
+  });
+
+  it('are not offered when the Edition lists none', () => {
+    const config = readJson('edition.json') as { featureSwitches: Record<string, unknown> };
+    const switches = config.featureSwitches;
+    writeFileSync(
+      join(editionDir, 'edition.json'),
+      JSON.stringify({ ...config, featureSwitches: { ...switches, moods: false }, moods: [] }),
+    );
+
+    const run = content(['edit', word.id, '--edition', 'uk'], { edits: [null] });
+
+    expect(run.stderr).toBe('');
+    expect(run.stdout).toContain('origin:');
+    expect(run.stdout).not.toContain('moods:');
+  });
+});
