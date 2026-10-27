@@ -102,8 +102,7 @@ type PickAnswer = Extract<RoundAnswer, { form: 'pick' }>;
  * chips, a Word's letters or an expression's words, stand under the card in
  * place of the options, and the typed form,
  * whose field stands under the card in place of the options, with the
- * Word's blanks and «Відкрити літеру» in a Round that shows blanks; the
- * screens of the other answer forms come with their Game Modes (spec #772). A
+ * Word's blanks and «Відкрити літеру» in a Round that shows blanks. A
  * Synonym Row's Round asks «Що є синонімом до „{dominant}“?» and a Tip's its
  * own question, each under its kind's label rather than the mode's.
  * The ✕ asks first, with the SLOVO confirmation dialog, as «Очистити Історію?»

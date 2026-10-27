@@ -54,7 +54,8 @@ export const mainEquivalentOf = (correction: Correction): string =>
 export const correctionMode: GameMode = {
   id: 'correction',
   entryKind: 'correction',
-  isOn: (edition) => edition.isFeatureEnabled('corrections'),
+  isOn: (edition) =>
+    edition.isFeatureEnabled('gameCorrection') && edition.isFeatureEnabled('corrections'),
   buildRound({ answer, eligible, random }) {
     if (answer.kind !== 'correction' || !plays(answer)) return undefined;
     const taken = new Set(answer.standardEquivalents.map(folded));

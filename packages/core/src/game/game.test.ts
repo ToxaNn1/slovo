@@ -180,6 +180,7 @@ async function run({
   planned = true,
   schedule,
   on = ['rarityFloor', 'knowledge'],
+  off = [],
 }: {
   records?: Map<string, string>;
   port?: UserStatePort;
@@ -187,6 +188,8 @@ async function run({
   game?: boolean;
   /** The Feature Switches on besides the Game's. */
   on?: readonly FeatureSwitch[];
+  /** The Feature Switches off, the Game's own included. */
+  off?: readonly FeatureSwitch[];
   gameModes?: readonly GameMode[];
   time?: Clock;
   pack?: ContentReadPort;
@@ -198,7 +201,9 @@ async function run({
     content: pack,
     edition: {
       id: 'test',
-      isFeatureEnabled: (feature) => (feature === 'game' && game) || on.includes(feature),
+      isFeatureEnabled: (feature) =>
+        !off.includes(feature) &&
+        (((feature === 'game' || feature === 'gameGuessWord') && game) || on.includes(feature)),
       userSettingDefaults: {
         mix: {
           categoryIds: categories.map(({ id }) => id),
@@ -289,6 +294,12 @@ describe('the Game Modes on offer', () => {
 
   it('offers no mode when the Edition turns the Game off', async () => {
     const app = await run({ game: false });
+
+    expect(app.game.state.modes).toEqual([]);
+  });
+
+  it('leaves out «Вгадай слово» when its Feature Switch is off', async () => {
+    const app = await run({ off: ['gameGuessWord'] });
 
     expect(app.game.state.modes).toEqual([]);
   });

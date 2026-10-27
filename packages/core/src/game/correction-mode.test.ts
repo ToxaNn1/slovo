@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Correction, CorrectionType, Word } from '@slovo/contracts';
+import type { Correction, CorrectionType, FeatureSwitch, Word } from '@slovo/contracts';
 
 import {
   buildGameReview,
@@ -145,10 +145,13 @@ async function run({
   withCorrections = true,
   correctionsInMix = true,
   pack = content,
+  off = [],
 }: {
   records?: Map<string, string>;
   seed?: number;
   withCorrections?: boolean;
+  /** The Feature Switches off, whatever `withCorrections` says. */
+  off?: readonly FeatureSwitch[];
   correctionsInMix?: boolean;
   pack?: ContentReadPort;
 } = {}): Promise<Composition> {
@@ -156,7 +159,9 @@ async function run({
     content: pack,
     edition: {
       id: 'test',
-      isFeatureEnabled: (feature) => feature === 'game' || withCorrections,
+      isFeatureEnabled: (feature) =>
+        !off.includes(feature) &&
+        (feature === 'game' || feature === 'gameGuessWord' || withCorrections),
       userSettingDefaults: {
         mix: {
           categoryIds: ['nature'],
@@ -231,6 +236,13 @@ describe('«Обери правильне» on offer', () => {
     const app = await run({ withCorrections: false });
 
     expect(app.game.state.modes.map(({ modeId }) => modeId)).toEqual(['guess-word']);
+  });
+
+  it('is off when its Feature Switch is off, though Corrections are on', async () => {
+    const app = await run({ withCorrections: true, off: ['gameCorrection'] });
+
+    expect(app.game.state.modes.map(({ modeId }) => modeId)).not.toContain('correction');
+    expect(app.game.state.modes.map(({ modeId }) => modeId)).toContain('anglicism');
   });
 
   it("can't start while Corrections are out of the Mix, says so, and can once they are back", async () => {

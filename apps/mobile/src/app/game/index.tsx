@@ -22,7 +22,7 @@ import { editionStrings } from '../../edition/edition';
 import { useOpenScreen } from '../../entries/use-open-screen';
 import { useDailyCrosswordCard } from '../../game/daily-crossword';
 import { useGameActions, useGameState, usePauseInBackground, useTimeLeft } from '../../game/game';
-import { gameModeCard, gameModeGroups, gameModeStrings, playedOffers } from '../../game/game-modes';
+import { gameModeCard, gameModeGroups, gameModeStrings } from '../../game/game-modes';
 import { useShown } from '../../shown-in-effect';
 
 const { game: strings } = editionStrings;
@@ -62,7 +62,7 @@ function Game() {
     >
       {current === undefined ? (
         <ModeScreen
-          modes={playedOffers(state.modes)}
+          modes={state.modes}
           bestResult={state.bestResults['guess-word']}
           onStart={actions.start}
         />
