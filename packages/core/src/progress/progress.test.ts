@@ -604,7 +604,7 @@ describe('The Active Days calendar', () => {
       },
     ]);
     const [first] = app.progress.calendar()[0]?.weeks[0]?.slice(6) ?? [];
-    expect(first).toEqual({ date: '2026-11-01', day: 1, state: 'active', active: true });
+    expect(first).toEqual({ date: '2026-11-01', day: 1, state: 'active' });
   });
 
   it('runs from the first Active Day’s month to the current one, and no further', async () => {

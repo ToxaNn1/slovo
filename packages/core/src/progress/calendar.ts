@@ -7,22 +7,22 @@ import {
 } from '../local-date';
 
 /**
- * A day of the Active Days calendar: `active` an Active Day before today,
- * `missed` a day before today that isn't one, `today`, or `future` a day still
- * to come.
+ * A day in a month of the Active Days calendar: an Active Day before today,
+ * a `missed` day before today that isn't one, today, outlined, with its dot
+ * once it is an Active Day, or a day still to come.
  */
-export type CalendarDayState = 'active' | 'missed' | 'today' | 'future';
-
-/** A day in a month of the Active Days calendar. */
-export interface CalendarDay {
+export type CalendarDay = {
   /** The local date: `YYYY-MM-DD`. */
   readonly date: string;
   /** The day of the month, from 1. */
   readonly day: number;
-  readonly state: CalendarDayState;
-  /** Whether the day is an Active Day, today's too, so the outlined today carries its dot. */
-  readonly active: boolean;
-}
+} & (
+  | { readonly state: 'active' | 'missed' | 'future' }
+  | { readonly state: 'today'; readonly active: boolean }
+);
+
+/** The state of a day of the Active Days calendar. */
+export type CalendarDayState = CalendarDay['state'];
 
 /** A month of the Active Days calendar. */
 export interface CalendarMonth {
@@ -53,9 +53,11 @@ function monthOf(
     const date = dateKeyOf({ year, month, day });
     const number = dayNumber({ year, month, day });
     const active = activeDays.has(date);
-    const state =
-      number === today ? 'today' : number > today ? 'future' : active ? 'active' : 'missed';
-    slots.push({ date, day, state, active });
+    slots.push(
+      number === today
+        ? { date, day, state: 'today', active }
+        : { date, day, state: number > today ? 'future' : active ? 'active' : 'missed' },
+    );
   }
   while (slots.length % DAYS_IN_WEEK !== 0) slots.push(undefined);
   const weeks = Array.from({ length: slots.length / DAYS_IN_WEEK }, (_, week) =>
