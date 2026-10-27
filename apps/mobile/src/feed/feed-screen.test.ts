@@ -60,6 +60,35 @@ describe('the pages of the Feed', () => {
     expect(pagesOf([end, firstWeek, otherEnd]).pages).toEqual([end, firstWeek, otherEnd]);
   });
 
+  it('give Yesterday a page', () => {
+    const yesterday: FeedCard = {
+      ...notice,
+      notice: 'yesterday',
+      word: {
+        kind: 'word',
+        wordId: 'w1',
+        lemma: 'сумирний',
+        stressedVowels: [],
+        partOfSpeech: 'adjective',
+        gender: undefined,
+        primaryDefinition: 'Тихий, лагідний.',
+        example: undefined,
+        synonyms: [],
+        antonyms: [],
+        registers: [],
+        region: undefined,
+        history: undefined,
+        categoryId: 'k1',
+        categoryName: undefined,
+        details: undefined,
+        linkedCorrections: [],
+        synonymRow: undefined,
+      },
+    };
+
+    expect(pagesOf([end, yesterday, otherEnd]).pages).toEqual([end, yesterday, otherEnd]);
+  });
+
   it("map each page to the Feed's position of its card, and a page past the last on from the last card", () => {
     const { positionOf } = pagesOf(cards);
 
