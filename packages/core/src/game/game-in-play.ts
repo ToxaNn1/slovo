@@ -390,7 +390,7 @@ export function createGameInPlay(
       if (game.lives === 0) return { ...game, status: 'lost' };
       const roundsPassed = game.roundsPassed + 1;
       if (roundLimit === undefined && plannedAt(roundsPassed + 1) === undefined) {
-        const more = planRounds(mode, eligible, GAME_ROUNDS, askedIn(rounds));
+        const more = planRounds(mode, eligible, GAME_ROUNDS, askedIn(rounds), roundsPassed + 1);
         if ('rounds' in more) rounds = [...rounds, ...more.rounds];
       }
       const upcoming =
@@ -413,7 +413,13 @@ export function createGameInPlay(
       const shown = rounds.slice(0, at.place + 1);
       const shownRounds = shown.reduce((sum, { content }) => sum + roundsIn(content), 0);
       const all = rounds.reduce((sum, { content }) => sum + roundsIn(content), 0);
-      const rest = planRounds(mode, eligible, (roundLimit ?? all) - shownRounds, askedIn(shown));
+      const rest = planRounds(
+        mode,
+        eligible,
+        (roundLimit ?? all) - shownRounds,
+        askedIn(shown),
+        shownRounds + 1,
+      );
       if ('rounds' in rest) rounds = [...shown, ...rest.rounds];
     },
   };

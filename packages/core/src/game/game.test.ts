@@ -18,6 +18,7 @@ import {
   openComposition,
   openUserState,
   renderStress,
+  withoutStress,
   SEEN_DWELL_MS,
   userStateRecords,
   type Clock,
@@ -25,6 +26,7 @@ import {
   type ContentReadPort,
   type CurrentGame,
   type FeatureSwitch,
+  type PlayedRound,
   type GameMode,
   type RoundContent,
   type Round,
@@ -42,7 +44,8 @@ function word(
     partOfSpeech = 'noun',
     lemma = id.slice(2),
     stress = [0],
-    examples = [{ text: `An example of ${id.slice(2)}.`, author: 'An author' }],
+    // The Lemma in a longer word, so no Round asks the Word with a gap (L10).
+    examples = [{ text: `An example of ${id.slice(2)}s.`, author: 'An author' }],
     rarity = 3,
     retired = false,
   }: {
@@ -335,7 +338,7 @@ describe('a Round of «Вгадай слово»', () => {
       right: true,
       sheet: {
         answer: { text: renderStress(answer), stressedVowels: [answer.lemma[0]] },
-        example: { text: `An example of ${answer.id.slice(2)}.`, author: 'An author' },
+        example: { text: `An example of ${answer.id.slice(2)}s.`, author: 'An author' },
       },
     });
   });
@@ -2813,5 +2816,127 @@ describe('weak Rounds and reshuffled repeats in every Game Mode', () => {
       canStart: false,
       refusal: 'too-few-entries',
     });
+  });
+});
+
+describe('«Вгадай слово» harder as it goes (L10)', () => {
+  const trees = ['alder', 'birch', 'cedar', 'daisy', 'elder', 'fennel', 'gorse', 'hazel'];
+  const herbs = ['iris', 'juniper', 'kale', 'larch', 'maple', 'nettle', 'olive', 'poplar'];
+  const capitalised = (text: string) => `${text.charAt(0).toUpperCase()}${text.slice(1)}`;
+  /** A noun whose only Example is the sentence, «{Lemma}» standing for its Lemma with its Stress and a capital letter. */
+  const nounIn = (lemma: string, ...sentences: string[]) =>
+    word(`w_${lemma}`, 'nature', {
+      lemma,
+      stress: [1],
+      examples: sentences.map((sentence) => ({
+        text: sentence.replace('{Lemma}', renderStress({ lemma: capitalised(lemma), stress: [1] })),
+      })),
+    });
+  /** A noun whose Example has its Lemma; each Example tells its Word apart by the number of trees. */
+  const inUse = (lemma: string, trees: number) =>
+    nounIn(lemma, `{Lemma} grew by ${String(trees)} trees.`);
+
+  const definitionOf = (entry: PlayedRound['entry']) =>
+    'primaryDefinition' in entry ? entry.primaryDefinition : undefined;
+
+  /** Plays «Вгадай слово» to its end over the pack, right in every Round. */
+  async function playRight(entries: readonly (Word | Idiom)[]) {
+    const app = await run({
+      pack: createMemoryContentPort({
+        categories,
+        words: entries.filter((entry): entry is Word => entry.kind === 'word'),
+        idioms: entries.filter((entry): entry is Idiom => entry.kind === 'idiom'),
+      }),
+      on: ['knowledge', 'idioms'],
+    });
+    /** The Entry the Round asks about: by its Definition, or by the Example its gap stands in. */
+    const askedIn = ({ prompt, highlight }: Round) =>
+      entries.find((entry) => {
+        if (highlight === undefined) return entry.primaryDefinition === prompt;
+        const [before, after] = [prompt.slice(0, highlight.start), prompt.slice(highlight.end)];
+        return (
+          entry.kind === 'word' &&
+          entry.examples.some(
+            ({ text }) =>
+              text.startsWith(before) &&
+              text.endsWith(after) &&
+              withoutStress(text.slice(before.length, text.length - after.length)).toLowerCase() ===
+                entry.lemma,
+          )
+        );
+      });
+    await app.game.start('guess-word');
+    while (current(app).status === 'playing') {
+      await play(app, true, (round) => {
+        const asked = askedIn(round);
+        const text = asked?.kind === 'word' ? renderStress(asked) : asked?.expression;
+        const right = optionsOf(round).findIndex((option) => option.text === text);
+        if (right < 0) throw new Error(`No option answers «${round.prompt}»`);
+        return right;
+      });
+    }
+    expect(current(app).status).toBe('won');
+    return current(app).played;
+  }
+
+  it('asks Rounds 1–5 a Definition and Rounds 6–10 an Example with the Lemma, in any case and with its Stress, left as a gap', async () => {
+    const played = await playRight([...trees, ...herbs].map(inUse));
+
+    for (const round of played.slice(0, 5)) {
+      expect(round.prompt).toBe(definitionOf(round.entry));
+      expect(round.highlight).toBeUndefined();
+    }
+    for (const round of played.slice(5, 10)) {
+      const { entry, prompt, highlight } = round;
+      if (entry.kind !== 'word' || highlight === undefined) throw new Error('No gap Round');
+      const filled = `${prompt.slice(0, highlight.start)}${renderStress({ ...entry, lemma: capitalised(entry.lemma) })}${prompt.slice(highlight.end)}`;
+      expect(filled).toBe(entry.examples[0]?.text);
+      expect(prompt.toLowerCase()).not.toContain(entry.lemma);
+      expect(pickPlayed(round).options).toHaveLength(4);
+    }
+  });
+
+  it('asks a Definition in Rounds 6–10 when no Example has the Lemma as written', async () => {
+    const played = await playRight([
+      ...trees.map((lemma) => nounIn(lemma, 'Many {Lemma}s grew by the river.')),
+      ...herbs.map((lemma) => nounIn(lemma, 'Nothing like it grew by the river.')),
+      word('w_quince', 'nature', { lemma: 'quince', examples: [] }),
+    ]);
+
+    for (const round of played.slice(0, 10)) {
+      expect(round.prompt).toBe(definitionOf(round.entry));
+      expect(round.highlight).toBeUndefined();
+    }
+  });
+
+  it('leaves a gap in the Example that has the Lemma, whichever of them it is', async () => {
+    const played = await playRight(
+      [...trees, ...herbs].map((lemma, times) =>
+        nounIn(lemma, 'Nothing like it grew here.', `There {Lemma} grew ${String(times)} times.`),
+      ),
+    );
+
+    for (const { prompt, highlight } of played.slice(5, 10)) {
+      expect(highlight).toBeDefined();
+      expect(prompt.startsWith('There ')).toBe(true);
+      expect(prompt).toMatch(/ grew \d+ times\.$/);
+    }
+  });
+
+  it("asks an idiom's Definition in every Round, even with an Example that has its expression", async () => {
+    const idioms = numbered('i_idiom', 16).map((id) =>
+      idiom(id, {
+        primaryDefinition: `The sense of ${id}.`,
+        examples: [{ text: `They went to ${id.slice(2)} at once.` }],
+      }),
+    );
+    const played = await playRight([...trees.map(inUse), ...idioms]);
+
+    const idiomRounds = played.filter(({ entry }) => entry.kind === 'idiom');
+    expect(idiomRounds.some(({ number }) => number >= 6 && number <= 10)).toBe(true);
+    for (const round of idiomRounds) {
+      expect(round.prompt).toBe(definitionOf(round.entry));
+      expect(round.highlight).toBeUndefined();
+    }
   });
 });
