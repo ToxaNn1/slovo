@@ -60,6 +60,8 @@ export interface Shown {
   readonly moods: boolean;
   /** The «Слова дня» card of the Saved tab and the Word of the Day archive it opens. */
   readonly wordOfTheDayArchive: boolean;
+  /** The «Пройти тест ще раз» row of Settings, while the Rarity Floor it sets is on as well. */
+  readonly rarityTest: boolean;
 }
 
 /**
@@ -107,5 +109,6 @@ export function shownOf({
     search: on('search'),
     moods: on('moods'),
     wordOfTheDayArchive: on('wordOfTheDayArchive'),
+    rarityTest: on('rarityTest') && on('rarityFloor'),
   };
 }

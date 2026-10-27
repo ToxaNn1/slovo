@@ -21,6 +21,7 @@ const everything: Shown = {
   search: true,
   moods: true,
   wordOfTheDayArchive: true,
+  rarityTest: true,
 };
 
 interface Case {
@@ -52,6 +53,14 @@ describe('what the reader is shown', () => {
       { off: ['dailyLimit'], shown: { dailyLimit: false } },
     ],
     ['no 🎲 «Слово під настрій» with moods off', { off: ['moods'], shown: { moods: false } }],
+    [
+      'no «Пройти тест ще раз» with the Rarity Test off',
+      { off: ['rarityTest'], shown: { rarityTest: false } },
+    ],
+    [
+      'no «Пройти тест ще раз» with the Rarity Floor it sets off',
+      { off: ['rarityFloor'], shown: { rarityTest: false } },
+    ],
     [
       'no Share Card button with Share Cards off',
       {
