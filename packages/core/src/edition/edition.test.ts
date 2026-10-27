@@ -92,6 +92,10 @@ const validConfig = {
     { code: 'la', name: 'Latin' },
     { code: 'other', name: 'Other' },
   ],
+  moods: [
+    { id: 'joyful', name: 'Joyful', emoji: '😊' },
+    { id: 'calm', name: 'Calm', emoji: '😌' },
+  ],
 };
 
 /** The Feature Switches of the Game Modes and the Daily Crossword (ADR 0052). */
@@ -304,6 +308,10 @@ describe('loadEdition', () => {
 
   it('accepts an Edition that lists no origin languages', () => {
     expect(() => loadEdition({ ...validConfig, originLanguages: [] })).not.toThrow();
+  });
+
+  it('accepts an Edition that lists no moods', () => {
+    expect(() => loadEdition({ ...validConfig, moods: [] })).not.toThrow();
   });
 
   it('accepts an Edition whose Categories require no history', () => {
@@ -600,6 +608,28 @@ describe('loadEdition', () => {
       'an origin language without a name',
       { originLanguages: [{ code: 'la', name: '' }] },
       'originLanguages.0.name',
+    ],
+    ['no moods', { moods: undefined }, 'moods'],
+    [
+      'a repeated mood id',
+      {
+        moods: [
+          { id: 'joyful', name: 'Joyful', emoji: '😊' },
+          { id: 'joyful', name: 'Glad', emoji: '😀' },
+        ],
+      },
+      'moods.1.id',
+    ],
+    ['a mood without a name', { moods: [{ id: 'calm', name: '', emoji: '😌' }] }, 'moods.0.name'],
+    [
+      'a mood without an emoji',
+      { moods: [{ id: 'calm', name: 'Calm', emoji: '' }] },
+      'moods.0.emoji',
+    ],
+    [
+      'a mood id not in kebab case',
+      { moods: [{ id: 'In Love', name: 'In love', emoji: '😍' }] },
+      'moods.0.id',
     ],
   ])('rejects %s, naming the field', (_, override, field) => {
     const load = () => loadEdition({ ...validConfig, ...override });
