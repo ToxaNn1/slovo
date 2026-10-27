@@ -30,7 +30,8 @@ const SEARCH_BUDGET = 500;
  * content (ADR 0052): 4–6 crossing words of 3–5 letters on a 5 × 5 grid, from
  * the Words that are not Retired, clued by their primary Definition, and the
  * one-word main standard forms of the Corrections that are not Retired, clued
- * by their explanation. The same content and date always give the same day.
+ * by their explanation, with «…» in place of the answer wherever a clue names
+ * it. The same content and date always give the same day.
  * It refuses when the content has errors or no grid can be made.
  */
 export function generateDailyCrossword({
@@ -124,8 +125,21 @@ function crosswordSupply({ words, corrections }: PackContent): Clued[] {
     const answer = withoutStress(form).normalize('NFC').toLowerCase();
     if (!answerSchema.safeParse(answer).success || answers.has(answer)) return [];
     answers.add(answer);
-    return [{ entryId, answer, clue }];
+    return [{ entryId, answer, clue: withoutAnswer(clue, answer) }];
   });
+}
+
+/** A run of letters with its Stress marks and apostrophes: one word of a clue. */
+const CLUE_WORD = /\p{L}[\p{L}\p{M}ʼ'’]*/gu;
+
+/**
+ * A clue that doesn't give its answer away: each word of it that is the
+ * answer, ignoring case and Stress, becomes «…» (ADR 0052).
+ */
+function withoutAnswer(clue: string, answer: string): string {
+  return clue
+    .normalize('NFC')
+    .replaceAll(CLUE_WORD, (word) => (withoutStress(word).toLowerCase() === answer ? '…' : word));
 }
 
 /**
