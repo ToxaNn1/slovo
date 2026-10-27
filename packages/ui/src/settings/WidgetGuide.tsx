@@ -1,15 +1,28 @@
+'use no memo';
+// Reanimated code: the React Compiler skips this module (ADR 0059).
+
+import { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import Animated, {
+  Easing,
+  ReduceMotion,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { OrnamentBand } from '../decor/DecorSlots';
 import { useEdition } from '../providers/EditionProvider';
 import { guideStep, overlineType, space, typeSize, widgetDrawing, withAlpha } from '../tokens';
 import { InvertedTokens, useTokens } from '../providers/TokensProvider';
+import { useReduceMotionKnown } from '../providers/useReduceMotion';
 
 /** How far the largest text sizes of iOS may scale a step's title and hint, so no word breaks and the hint stays under its title. */
 const STEP_MAX_FONT_SCALE = 1.3;
 
 /** One numbered step of the widget guide: its number in a square, what to do and a hint under it. */
-export function GuideStep({
+function GuideStep({
   number,
   title,
   hint,
@@ -119,7 +132,7 @@ function SampleWidget({
  * in the other colour scheme than the screen, as the design has them. The
  * drawing is a picture: VoiceOver skips it, the steps carry the guide.
  */
-export function WidgetDrawing({
+function WidgetDrawing({
   caption,
   mode,
   lemma,
@@ -174,7 +187,98 @@ export function WidgetDrawing({
   );
 }
 
+/** How long a step of the widget guide takes to come in. */
+const STEP_IN = {
+  duration: 400,
+  easing: Easing.out(Easing.quad),
+  reduceMotion: ReduceMotion.Never,
+};
+/** How long after the step before it the next step starts to come in. */
+const STEP_STAGGER_MS = 600;
+/** How far below its place a step starts to rise from. */
+const STEP_RISE = space[3];
+
+/**
+ * A step of the widget guide that rises and fades in at its turn, or stands
+ * still from the start with Reduce Motion. It waits, unseen, until the system
+ * says whether Reduce Motion is on, so the motion never starts for a reader who
+ * turned it off.
+ */
+function AnimatedGuideStep({
+  index,
+  testID,
+  ...step
+}: Parameters<typeof GuideStep>[0] & { index: number }) {
+  const reduceMotion = useReduceMotionKnown();
+  /** 0 before the step comes in, 1 once it is in place. */
+  const shown = useSharedValue(0);
+  useEffect(() => {
+    if (reduceMotion === undefined) return;
+    shown.value = reduceMotion ? 1 : withDelay(index * STEP_STAGGER_MS, withTiming(1, STEP_IN));
+    // The shared value is stable, so only the answer about Reduce Motion starts the motion.
+  }, [reduceMotion, index, shown]);
+  const style = useAnimatedStyle(() => ({
+    opacity: shown.value,
+    transform: [{ translateY: (1 - shown.value) * STEP_RISE }],
+  }));
+  return (
+    <Animated.View testID={testID} style={style}>
+      <GuideStep {...step} />
+    </Animated.View>
+  );
+}
+
+/**
+ * The widget guide: the drawing of the widgets over the steps, in the order
+ * the reader does them, each coming in at its turn (still with Reduce Motion).
+ * Settings › «Як додати віджет» and the widget hint on the Game's result both
+ * show it. The `testID` names the drawing (`${testID}-drawing`) and the steps
+ * (`${testID}-step-1` on).
+ */
+export function WidgetGuide({
+  steps,
+  caption,
+  mode,
+  lemma,
+  definition,
+  testID,
+}: {
+  steps: readonly { readonly title: string; readonly hint: string }[];
+  /** The caption under the widgets, e.g. «Малий · Середній». */
+  caption: string;
+  mode: string;
+  lemma: string;
+  definition: string;
+  testID: string;
+}) {
+  return (
+    <View>
+      <WidgetDrawing
+        testID={`${testID}-drawing`}
+        caption={caption}
+        mode={mode}
+        lemma={lemma}
+        definition={definition}
+      />
+      <View style={styles.steps}>
+        {steps.map((step, index) => (
+          <AnimatedGuideStep
+            key={index}
+            index={index}
+            testID={`${testID}-step-${String(index + 1)}`}
+            number={index + 1}
+            title={step.title}
+            hint={step.hint}
+            last={index === steps.length - 1}
+          />
+        ))}
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  steps: { marginTop: space[4] },
   step: { flexDirection: 'row', gap: space[4], paddingVertical: space[4] },
   badge: {
     width: guideStep.badge,

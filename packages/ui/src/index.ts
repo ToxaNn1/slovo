@@ -104,4 +104,5 @@ export {
   type VerticalPagerHandle,
 } from './primitives/VerticalPager';
 export { VowelButtons } from './game/VowelButtons';
-export { GuideStep, WidgetDrawing } from './settings/WidgetGuide';
+export { WidgetGuide } from './settings/WidgetGuide';
+export { WidgetGuideSheet } from './settings/WidgetGuideSheet';
