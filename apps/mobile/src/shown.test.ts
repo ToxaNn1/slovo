@@ -19,6 +19,7 @@ const everything: Shown = {
   sync: true,
   dailyLimit: true,
   search: true,
+  moods: true,
 };
 
 interface Case {
@@ -45,6 +46,7 @@ describe('what the reader is shown', () => {
       'no Daily Limit choice with the Daily Limit off',
       { off: ['dailyLimit'], shown: { dailyLimit: false } },
     ],
+    ['no 🎲 «Слово під настрій» with moods off', { off: ['moods'], shown: { moods: false } }],
     [
       'no Share Card button with Share Cards off',
       {

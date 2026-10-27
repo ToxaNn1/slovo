@@ -56,6 +56,8 @@ export interface Shown {
   readonly dailyLimit: boolean;
   /** The Search button of the «Головна» header, which opens the Search screen. */
   readonly search: boolean;
+  /** The 🎲 «Слово під настрій» of the «Головна» header, which opens the moods. */
+  readonly moods: boolean;
 }
 
 /**
@@ -101,5 +103,6 @@ export function shownOf({
     sync: on('sync'),
     dailyLimit: on('dailyLimit'),
     search: on('search'),
+    moods: on('moods'),
   };
 }

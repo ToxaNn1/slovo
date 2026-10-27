@@ -6,4 +6,6 @@ import { TextSchema } from '../shared';
 export const MoodStringsSchema = z.strictObject({
   /** The 🎲 button in the «Головна» header and the screen title. */
   title: TextSchema,
+  /** Under a disabled mood chip, and its VoiceOver hint: none of the mood's Words is Eligible. */
+  noEligibleWord: TextSchema,
 });

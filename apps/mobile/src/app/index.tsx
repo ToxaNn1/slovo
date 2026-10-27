@@ -23,6 +23,7 @@ import { useOpenScreen } from '@/entries/use-open-screen';
 import { useFeed } from '@/feed/feed';
 import type { DrawnCard } from '@/feed/feed-screen';
 import { TOP_ROW } from '@/edition/feed-loading';
+import { MoodButtonAndSheet } from '@/mood/mood';
 import { StatsPillAndSheet } from '@/progress/progress';
 import { useShown } from '@/shown-in-effect';
 import { useSwipeHint } from '@/feed/swipe-hint';
@@ -94,15 +95,16 @@ function FeedScreen() {
       {/* The top row stays put over the cards, like the background. */}
       <View pointerEvents="box-none" style={[styles.topRow, { top }]}>
         <StatsPillAndSheet />
-        {shown.search && (
-          <View style={styles.search}>
+        <View style={styles.headerButtons}>
+          {shown.search && (
             <SearchButton
               onPress={() => {
                 openScreen('/search');
               }}
             />
-          </View>
-        )}
+          )}
+          <MoodButtonAndSheet />
+        </View>
       </View>
       {swipeHint.visible ? (
         <SwipeHint
@@ -182,7 +184,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   // At the row's right end, in the middle of its height, with the Stats pill or without it.
-  search: { position: 'absolute', right: 0 },
+  headerButtons: { position: 'absolute', right: 0, flexDirection: 'row', gap: space[2] },
   page: { flex: 1 },
   // A card that fits sits in the middle of the page; a taller one starts at the top.
   content: {
