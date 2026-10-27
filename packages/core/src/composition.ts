@@ -15,6 +15,7 @@ import { asReviewIfDue, type AnyEntryCard } from './feed/feed-card';
 import { openGame, type Game } from './game/game';
 import type { GameEdition, GameMode } from './game/game-mode';
 import { guessWord } from './game/guess-word';
+import { idiomMeaningMode } from './game/idiom-meaning-mode';
 import { pairsMode } from './game/pairs-mode';
 import { stressMode } from './game/stress-mode';
 import { typeWordMode } from './game/type-word-mode';
@@ -204,6 +205,7 @@ const coreGameModes: readonly GameMode[] = [
   typeWordMode,
   anglicismMode,
   buildIdiomMode,
+  idiomMeaningMode,
 ];
 
 /**

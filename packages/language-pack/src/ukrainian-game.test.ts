@@ -239,6 +239,12 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
         canStart: false,
         refusal: 'idioms-out-of-mix',
       },
+      {
+        modeId: 'idiom-meaning',
+        entryKind: 'idiom',
+        canStart: false,
+        refusal: 'idioms-out-of-mix',
+      },
     ]);
 
     const asked = await playGame(app);
