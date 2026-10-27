@@ -19,6 +19,7 @@ import { buildEntryCard, buildFeedCard, openFeed, type Feed } from './feed/feed'
 import { dailyLimitNotices, type DailyLimitEdition } from './feed/daily-limit';
 import { allFeedNotices, noFeedNotices, type FeedNotices } from './feed/feed-notices';
 import { createFirstWeek } from './feed/first-week';
+import { createYesterday } from './feed/yesterday';
 import { asReviewIfDue, type AnyEntryCard } from './feed/feed-card';
 import { openGame, type Game } from './game/game';
 import type { GameEdition, GameMode } from './game/game-mode';
@@ -310,7 +311,7 @@ export async function openComposition({
   scheduling?: NotificationScheduling;
   schedule?: Schedule;
   gameModes?: readonly GameMode[];
-  /** Feed Notices of each day beside those the Core makes, the Weekly Recap, the first-week card and the Daily Limit card; without it, none. */
+  /** Feed Notices of each day beside those the Core makes, the Weekly Recap, the first-week card, Yesterday and the Daily Limit card; without it, none. */
   feedNotices?: FeedNotices;
 }): Promise<Composition> {
   const { userState, scheduling, schedule, close } = closable(ports);
@@ -361,10 +362,16 @@ export async function openComposition({
     // The Weekly Recap is declared below, once Favorites and Progress it reads
     // are open; that is safe, as the Feed asks for a day's Feed Notices only
     // for a card after the first, which none asks for before the composition opens.
-    notices: allFeedNotices(feedNotices, createFirstWeek({ edition, userState }), dailyLimit, {
-      forDay: async (day) =>
-        (await weeklyRecap.of(day)) === undefined ? [] : [{ notice: 'weeklyRecap' }],
-    }),
+    notices: allFeedNotices(
+      feedNotices,
+      {
+        forDay: async (day) =>
+          (await weeklyRecap.of(day)) === undefined ? [] : [{ notice: 'weeklyRecap' }],
+      },
+      createFirstWeek({ edition, userState }),
+      createYesterday({ edition, entries, hiddenEntries, userState }),
+      dailyLimit,
+    ),
   });
   const {
     game,
