@@ -9,12 +9,13 @@ export const ROUND_OPTIONS = 4;
 
 /**
  * What the Game needs to know of the Edition: its Feature Switches, its
- * Distractor rule, and whether it marks Stress and on which vowels; an
- * Edition that leaves them out marks no Stress.
+ * Distractor rule, whether it marks Stress and on which vowels, and the
+ * punctuation an Idiom's expression may hold; an Edition that leaves them
+ * out marks no Stress and has no expression punctuation.
  */
 export type GameEdition = Pick<Edition, 'isFeatureEnabled'> & {
   readonly languageTraits: Pick<LanguageTraits, 'distractorRule'> &
-    Partial<Pick<LanguageTraits, 'marksStress' | 'vowels'>>;
+    Partial<Pick<LanguageTraits, 'marksStress' | 'vowels' | 'expressionPunctuation'>>;
 };
 
 /** One option of a Round, or the answer its sheet names. */
@@ -190,6 +191,22 @@ export interface GameMode {
  * out of the Mix.
  */
 export type GameModeRefusal = 'too-few-entries' | KindRefusal;
+
+/** Whether the chips stand in the right order, equal chips interchangeable and case ignored. */
+export const chipsMatch = (chips: readonly string[], right: readonly string[]): boolean =>
+  chips.length === right.length &&
+  chips.every((chip, place) => chip.toLowerCase() === right[place]?.toLowerCase());
+
+/**
+ * The chips of a shuffle, never in the right order: when the shuffle left
+ * them so, they move one place on, which leaves chips of at least two
+ * different texts out of order.
+ */
+export const outOfOrder = (
+  right: readonly string[],
+  chips: readonly string[],
+): readonly string[] =>
+  chipsMatch(chips, right) ? [...chips.slice(1), ...chips.slice(0, 1)] : chips;
 
 /** The items in an order drawn from the random source. */
 export function shuffled<T>(items: readonly T[], random: Random): T[] {

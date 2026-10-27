@@ -1,6 +1,7 @@
 import { openCollections, type Collections } from './saved/collections';
 import { anagramMode } from './game/anagram-mode';
 import { anglicismMode } from './game/anglicism-mode';
+import { buildIdiomMode } from './game/build-idiom-mode';
 import { byLettersMode } from './game/by-letters-mode';
 import { correctionMode } from './game/correction-mode';
 import { openCycle } from './feed/cycle';
@@ -202,6 +203,7 @@ const coreGameModes: readonly GameMode[] = [
   byLettersMode,
   typeWordMode,
   anglicismMode,
+  buildIdiomMode,
 ];
 
 /**
