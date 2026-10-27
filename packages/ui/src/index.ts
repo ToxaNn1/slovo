@@ -12,6 +12,7 @@ export { FontSizeProvider } from './providers/FontSizeProvider';
 export { DecorProvider } from './decor/DecorProvider';
 export { EditionProvider, fill, useEdition } from './providers/EditionProvider';
 export { EndOfCycleCard } from './feed/EndOfCycleCard';
+export { DailyLimitCard, FeedNoticeCard } from './feed/FeedNoticeCard';
 export { EntryCard } from './entries/EntryCard';
 export {
   CardCorners,
@@ -102,6 +103,7 @@ export { UndoToastProvider, useUndoToast, type UndoToastContent } from './primit
 export {
   PagerScrollView,
   usePageTurnActions,
+  useTurnToNextPage,
   VerticalPager,
   type VerticalPagerHandle,
 } from './primitives/VerticalPager';

@@ -48,6 +48,12 @@ describe('the pages of the Feed', () => {
     expect(pagesOf(cards).pages).toEqual([end, otherEnd]);
   });
 
+  it('give the Daily Limit card a page', () => {
+    const dailyLimit: FeedCard = { ...notice, notice: 'dailyLimit' };
+
+    expect(pagesOf([end, dailyLimit, otherEnd]).pages).toEqual([end, dailyLimit, otherEnd]);
+  });
+
   it("map each page to the Feed's position of its card, and a page past the last on from the last card", () => {
     const { positionOf } = pagesOf(cards);
 
