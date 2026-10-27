@@ -13,6 +13,7 @@ const strings = {
       progressLabel: 'Rounds passed: {passed} of {total}',
       lives: 'Lives: {count} of {total}',
       highlight: 'Marked: {text}',
+      gap: { label: 'Which word is missing?', voiceOver: 'gap' },
       correct: 'Right',
       chosen: 'Your choice',
       synonymRow: { label: 'Synonyms', prompt: 'What is a synonym of “{dominant}”?' },
@@ -184,6 +185,17 @@ const tipRound: CurrentGame = {
   },
 };
 
+/** The sixth Round of «Вгадай слово», an Example with a gap where its Word stands, as the Core builds it. */
+const gapRound: CurrentGame = {
+  ...first,
+  round: {
+    ...first.round,
+    number: 6,
+    prompt: 'She gave a … account of the evening.',
+    highlight: { start: 11, end: 12 },
+  },
+};
+
 /** A pairs grid of «Пари»: its Words, and the place of each one's Definition among the Definitions. */
 const PAIR_WORDS = ['ardent', 'candid'] as const;
 const PAIR_DEFINITIONS = ['open and honest', 'full of passion'] as const;
@@ -340,6 +352,23 @@ describe('GameRound', () => {
     expect(screen.getByRole('button', { name: 'dour, Your choice' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'candid, Right' })).toBeTruthy();
     expect(screen.getByRole('header', { name: 'Not this time' })).toBeTruthy();
+  });
+
+  it('asks a Word by its Example with a gap under its own label, VoiceOver reading the gap, and takes an answer', async () => {
+    const onAnswer = jest.fn();
+    await renderRound(onAnswer, jest.fn(), gapRound);
+
+    expect(screen.getByTestId('game-prompt')).toHaveAccessibleName(
+      'Which word is missing? She gave a gap account of the evening.',
+    );
+    expect(screen.getByText('She gave a … account of the evening.')).toBeOnTheScreen();
+    expect(screen.queryByText('Definition')).not.toBeOnTheScreen();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'candid' }));
+
+    expect(onAnswer).toHaveBeenCalledWith({ form: 'pick', option: CORRECT });
+    expect(screen.getByRole('button', { name: 'candid, Right' })).toBeTruthy();
+    expect(screen.getByRole('header', { name: 'Right!' })).toBeTruthy();
   });
 
   describe('a vowel Round', () => {

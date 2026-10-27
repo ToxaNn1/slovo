@@ -71,6 +71,21 @@ const GAP_ROUNDS = { first: 6, last: 10 };
 /** What stands for the Lemma in an Example with a gap. */
 const GAP = '…';
 
+/**
+ * The gap in a Round's prompt, the highlight that stands for the Lemma in an
+ * Example, which the shell reads aloud as a gap; nothing in another Round.
+ */
+export const gapOf = ({
+  prompt,
+  highlight,
+}: {
+  readonly prompt: string;
+  readonly highlight?: TextRange | undefined;
+}): TextRange | undefined =>
+  highlight !== undefined && prompt.slice(highlight.start, highlight.end) === GAP
+    ? highlight
+    : undefined;
+
 /** A character that belongs to a word: a letter, a mark, a digit, an apostrophe or a hyphen. */
 const wordCharacter = /[\p{L}\p{M}\p{N}'’ʼ-]/u;
 
