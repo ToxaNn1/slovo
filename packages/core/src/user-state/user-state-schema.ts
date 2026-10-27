@@ -112,8 +112,10 @@ export const userStateRecords = {
   hiddenEntries: declareRecords('hidden.', InstantSchema),
   /**
    * The Knowledge Marks, one record per Entry, by Entry id: the mark, the
-   * Review step, the next Review local day and whether the Entry is Learned
-   * (ADR 0043). Removing a mark deletes the record. A new key, so no migration.
+   * Review step, the next Review local day, whether the Entry is Learned and,
+   * from 0.8.13, the instant the mark was set (ADR 0043, 0054). Removing a mark
+   * deletes the record. The mark time is optional, so a record kept before it
+   * still reads and needs no migration.
    */
   knowledge: declareRecords(
     'knowledge.',
@@ -122,6 +124,7 @@ export const userStateRecords = {
       step: z.union([z.literal(1), z.literal(3), z.literal(7)]).nullable(),
       reviewDay: z.iso.date().nullable(),
       learned: z.boolean(),
+      markedAt: InstantSchema.exactOptional(),
     }),
   ),
   /**
