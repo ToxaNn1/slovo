@@ -817,7 +817,7 @@
     }
   },
   "wordOfTheDayArchive": { "title": "Слова дня" },
-  "mood": { "title": "Слово під настрій" },
+  "mood": { "title": "Слово під настрій", "noEligibleWord": "Немає слів у вашому Міксі" },
   "game": {
     "title": "Гра",
     "groups": {

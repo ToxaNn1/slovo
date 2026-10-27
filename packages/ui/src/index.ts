@@ -41,6 +41,8 @@ export { HapticsProvider } from './providers/HapticsProvider';
 export { HideButton } from './mix/HideButton';
 export { KnowledgeButtons } from './knowledge/KnowledgeButtons';
 export { HideChoiceSheet } from './mix/HideChoiceSheet';
+export { MoodButton } from './mood/MoodButton';
+export { MoodSheet, type MoodChip } from './mood/MoodSheet';
 export { ScreenTitle, SectionLabel } from './primitives/headings';
 export { MixChip } from './mix/MixChip';
 export { RarityFloorChoice } from './mix/RarityFloorChoice';
@@ -99,6 +101,7 @@ export {
   type ShareCardFormat,
 } from './tokens';
 export { TokensProvider, useTokens } from './providers/TokensProvider';
+export { useReduceMotion } from './providers/useReduceMotion';
 export { UndoToastProvider, useUndoToast, type UndoToastContent } from './primitives/UndoToast';
 export {
   PagerScrollView,

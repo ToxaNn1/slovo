@@ -43,10 +43,11 @@ export function EntryScreen({
   /**
    * Where outside the app it opened from, if it did: the Entry is Seen, in
    * History and today is an Active Day. An id the Language Pack doesn't have
-   * opens the Feed. A Search result opens through Search's own way in, which
-   * makes nothing Seen (`search`).
+   * opens the Feed. A Search result, or the Word the mood roulette landed
+   * on, opens through its own way in, which makes nothing Seen (`search`,
+   * `mood`).
    */
-  openedFrom?: OpenedFrom | 'search' | undefined;
+  openedFrom?: OpenedFrom | 'search' | 'mood' | undefined;
 }) {
   const { colors } = useTokens();
   const router = useRouter();
@@ -58,7 +59,13 @@ export function EntryScreen({
   );
   const card = useCompositionRead(read, 'Could not open the Entry');
   useEffect(() => {
-    if (openedFrom !== undefined && openedFrom !== 'search' && card === null) router.replace('/');
+    if (
+      openedFrom !== undefined &&
+      openedFrom !== 'search' &&
+      openedFrom !== 'mood' &&
+      card === null
+    )
+      router.replace('/');
   }, [openedFrom, card, router]);
 
   return (
@@ -111,11 +118,13 @@ export function EntryScreen({
 function openEntry(
   composition: Composition,
   entryId: string,
-  openedFrom: OpenedFrom | 'search' | undefined,
+  openedFrom: OpenedFrom | 'search' | 'mood' | undefined,
 ): Promise<AnyEntryCard | undefined> {
   switch (openedFrom) {
     case 'search':
       return composition.openedFromSearch(entryId);
+    case 'mood':
+      return composition.openedFromMood(entryId);
     case 'notification':
       return composition.openedFromNotification(entryId);
     case 'widget':

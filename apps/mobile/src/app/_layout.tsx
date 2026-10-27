@@ -201,6 +201,8 @@ function EditionTabs({ screenOptions }: { screenOptions: TabOptions }) {
       <Tabs.Screen name="entry" options={{ href: null }} />
       {/* Search, from the magnifier of the «Головна» header; no tab leads to it. */}
       <Tabs.Screen name="search" options={{ href: null }} />
+      {/* The Word the mood roulette of the «Головна» header lands on; no tab leads to it. */}
+      <Tabs.Screen name="mood" options={{ href: null }} />
       {/* The dev-only Decor showcase; no tab leads to it. */}
       <Tabs.Screen name="decor" options={{ href: null }} />
     </Tabs>

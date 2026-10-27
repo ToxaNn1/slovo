@@ -46,6 +46,7 @@ import { openOnboarding, type Onboarding } from './onboarding/onboarding';
 import type { Clock, ContentReadPort, Random, Schedule } from './ports';
 import { openProgress, type Progress } from './progress/progress';
 import { createWeeklyRecap, type WeeklyRecap } from './progress/weekly-recap';
+import { createMoodDraw, type MoodDraw } from './mood/mood-draw';
 import { createRarityTest, type RarityTest } from './rarity-test/rarity-test';
 import { createRecentQueries, type RecentQueries } from './search/recent-queries';
 import { createSearch, type Search } from './search/search';
@@ -120,6 +121,11 @@ export interface Composition extends Hiding {
   readonly recentQueries: RecentQueries;
   /** The Rarity Test, which draws the Words it asks about and sets the Rarity Floor by the answers. */
   readonly rarityTest: RarityTest;
+  /**
+   * «Слово під настрій» (ADR 0054): the Edition's moods and a mood's roulette,
+   * which lands on a Word the shell opens with `openedFromMood`.
+   */
+  readonly moodDraw: MoodDraw;
   /**
    * Opens today's Daily Crossword with the letters this device kept for it,
    * for its card and its screen; nothing when the Edition has it off, the pack
@@ -288,10 +294,10 @@ export async function openComposition({
   /**
    * An Edition that leaves out `searchLetters` or its sort locale, as in
    * tests of other features, has Search read each letter as itself and sort
-   * in the default locale.
+   * in the default locale; one that leaves out `moods` offers none.
    */
   edition: Pick<Edition, 'id' | 'isFeatureEnabled'> &
-    Partial<Pick<Edition, 'searchLetters'>> &
+    Partial<Pick<Edition, 'searchLetters' | 'moods'>> &
     MixEdition &
     NotificationsEdition &
     GameEdition &
@@ -472,6 +478,12 @@ export async function openComposition({
     search: createSearch({ content, edition: searchEdition, userState }),
     recentQueries: createRecentQueries({ edition: searchEdition, userState }),
     rarityTest: createRarityTest({ edition, entries, mix, random }),
+    moodDraw: createMoodDraw({
+      content,
+      edition: { ...edition, moods: edition.moods ?? [] },
+      userState,
+      random,
+    }),
     async openDailyCrossword() {
       if (crossword === undefined) return undefined;
       return openDailyCrossword({ content: crossword, userState, clock, edition });
