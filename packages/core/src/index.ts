@@ -64,6 +64,7 @@ export {
   GAME_LIVES,
   livesOf,
   type CurrentGame,
+  type GameTime,
   type GivenAnswer,
   type GridCell,
   type PlayedRound,
