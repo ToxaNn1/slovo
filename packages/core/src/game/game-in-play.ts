@@ -163,6 +163,8 @@ export interface CurrentGame {
   readonly lives: number | undefined;
   /** The mode's Lives, which the Game starts with; none in a mode without Lives. */
   readonly livesAtStart: number | undefined;
+  /** The mode's time limit, in milliseconds of play; none in a mode without one. */
+  readonly timeLimit?: number;
   /** The play time left, in a mode with a time limit; none in another mode. */
   readonly time?: GameTime;
   /**

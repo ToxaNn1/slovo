@@ -329,7 +329,7 @@ export async function openGame({
     stopTime();
     const first =
       played && mode.timeLimit !== undefined
-        ? { ...played.first, time: runTime(mode.timeLimit) }
+        ? { ...played.first, timeLimit: mode.timeLimit, time: runTime(mode.timeLimit) }
         : played?.first;
     change({ ...state, modes: modesNow, current: first });
   }
