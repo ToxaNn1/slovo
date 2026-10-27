@@ -69,14 +69,18 @@ export interface WeeklyRecapShareCardModel {
   readonly title: string;
   /** The week's dates, e.g. «20–26 жовтня». */
   readonly week: string;
-  /** Seen, saved, Known (when the recap has it) and the Streak, in this order. */
+  /** Seen, saved, Known (when the recap has it) and the Streak (when shown), in this order. */
   readonly numbers: readonly { readonly label: string; readonly count: number }[];
 }
 
-/** The Share Card of a Weekly Recap, in the Edition's texts. */
+/**
+ * The Share Card of a Weekly Recap, in the Edition's texts, without the Streak
+ * while the reader hides it, as on the recap's card.
+ */
 export function buildWeeklyRecapShareCard(
   recap: WeeklyRecapModel,
   strings: EditionStrings['share']['weeklyRecap'],
+  hideStreak = false,
 ): WeeklyRecapShareCardModel {
   const { firstDay, lastDay, seen, saved, known, streak } = recap;
   const monthOf = ({ month }: LocalDate) => strings.months[month - 1] ?? '';
@@ -101,7 +105,7 @@ export function buildWeeklyRecapShareCard(
       { label: strings.seen, count: seen },
       { label: strings.saved, count: saved },
       ...(known === undefined ? [] : [{ label: strings.known, count: known }]),
-      { label: strings.streak, count: streak },
+      ...(hideStreak ? [] : [{ label: strings.streak, count: streak }]),
     ],
   };
 }
