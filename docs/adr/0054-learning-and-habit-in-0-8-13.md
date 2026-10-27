@@ -16,7 +16,7 @@ Until 0.8.13 SLOVO handed the reader one Entry after another but didn't help the
 
 **The Rarity Test** («Перевірити рівень») is offered once in onboarding after the Mix, skippable, and again from Settings («Пройти тест ще раз»).
 
-- **The draw.** 10 Words, 2 of each rarity 1–5, drawn with injected randomness from the Words that are eligible but for the Rarity Floor; each shows only its Lemma with Stress and the buttons «Знаю» / «Не знаю».
+- **The draw.** 10 Words, 2 of each rarity 1–5, drawn with injected randomness from the Words that are eligible but for the Rarity Floor (not Retired, not Hidden, of a Category in the Mix), asked the commonest first; a rarity with fewer than 2 such Words gives what it has. Each shows only its Lemma with Stress and the buttons «Знаю» / «Не знаю». The test sets the Rarity Floor, so it is absent while the `rarityFloor` switch is off as well as while `rarityTest` is.
 - **The floor.** The Rarity Floor becomes the lowest rarity with a «Не знаю», or «від 5» when the reader knew all 10, and applies at once; the result screen says «Ваш рівень: від {n}». The floor stays a part of the Mix the reader changes there (ADR 0019); a test from Settings overwrites it.
 - **Nothing else changes.** Test answers set no Knowledge Mark, start no Review and make no Word Seen.
 

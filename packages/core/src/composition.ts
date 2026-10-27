@@ -42,6 +42,7 @@ import {
 import { openOnboarding, type Onboarding } from './onboarding/onboarding';
 import type { Clock, ContentReadPort, Random, Schedule } from './ports';
 import { openProgress, type Progress } from './progress/progress';
+import { createRarityTest, type RarityTest } from './rarity-test/rarity-test';
 import type { UserState } from './user-state/user-state';
 import { createWidget, type Widget } from './widget/widget';
 import { openWordOfTheDay } from './feed/word-of-the-day';
@@ -101,6 +102,8 @@ export interface Composition extends Hiding {
    * permission, and its sample notification, taken from the plan.
    */
   readonly onboarding: Onboarding;
+  /** The Rarity Test, which draws the Words it asks about. */
+  readonly rarityTest: RarityTest;
   /**
    * Opens today's Daily Crossword with the letters this device kept for it,
    * for its card and its screen; nothing when the Edition has it off, the pack
@@ -409,6 +412,7 @@ export async function openComposition({
     notifications,
     game,
     onboarding,
+    rarityTest: createRarityTest({ edition, entries, random }),
     async openDailyCrossword() {
       if (crossword === undefined) return undefined;
       return openDailyCrossword({ content: crossword, userState, clock, edition });

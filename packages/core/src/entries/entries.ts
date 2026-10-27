@@ -75,6 +75,13 @@ export interface Entries {
    */
   eligible(): Promise<EntryIds>;
   /**
+   * The Words that would be eligible at the lowest Rarity Floor: the live
+   * Words of the Categories in the Mix that are not Hidden, whatever the
+   * Rarity Floor, in the order `eligible` gives Words, for the Rarity Test
+   * that sets the floor. Read afresh on every call, as `eligible` reads.
+   */
+  eligibleWordsOfAnyRarity(): Promise<readonly Word[]>;
+  /**
    * The eligible Entries of one kind themselves, in the order `eligible` gives
    * their ids, for a feature that weighs them all at once, such as the Game;
    * or, for Corrections or Idioms out of the Mix, whether or not the Edition
@@ -286,11 +293,12 @@ export function createEntries(
     });
   }
 
+  /** The ids of the Hidden Entries; none without the user state. */
+  const hiddenIds = () =>
+    'userState' in options ? options.userState.list(hiddenRecords) : new Map<string, string>();
+
   async function eligible(): Promise<EntryIds> {
-    const [mix, hidden] = await Promise.all([
-      readUserMix(),
-      'userState' in options ? options.userState.list(hiddenRecords) : new Map<string, string>(),
-    ]);
+    const [mix, hidden] = await Promise.all([readUserMix(), hiddenIds()]);
     const ofKind = (kind: MixKind) => (kindShown(kind, mix) ? listIds[kind]() : []);
     const [words, corrections, idioms, synonymRows, tips] = await Promise.all([
       wordIds(mix?.categoryIds).then((ids) => atRarityFloor(ids, mix?.rarityFloor)),
@@ -334,8 +342,18 @@ export function createEntries(
     };
   }
 
+  async function eligibleWordsOfAnyRarity(): Promise<readonly Word[]> {
+    const [mix, hidden, words] = await Promise.all([readUserMix(), hiddenIds(), live.word()]);
+    const ids = await wordIds(mix?.categoryIds);
+    return ids.flatMap((id) => {
+      const entry = words.get(id);
+      return entry?.kind === 'word' && !hidden.has(id) ? [entry] : [];
+    });
+  }
+
   return {
     eligible,
+    eligibleWordsOfAnyRarity,
     // The kinds asked for pick the Entries returned, as the generic signature says.
     eligibleOfKind: eligibleOfKind as Entries['eligibleOfKind'],
     async get(id) {
