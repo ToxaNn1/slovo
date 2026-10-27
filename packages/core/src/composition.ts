@@ -16,6 +16,7 @@ import { createEntries } from './entries/entries';
 import { createEntryRows, type EntryRowModel } from './entries/entry-row';
 import { openFavorites, type Favorites } from './saved/favorites';
 import { buildEntryCard, buildFeedCard, openFeed, type Feed } from './feed/feed';
+import { dailyLimitNotices, type DailyLimitEdition } from './feed/daily-limit';
 import { noFeedNotices, type FeedNotices } from './feed/feed-notices';
 import { asReviewIfDue, type AnyEntryCard } from './feed/feed-card';
 import { openGame, type Game } from './game/game';
@@ -273,14 +274,15 @@ export async function openComposition({
   edition: Pick<Edition, 'id' | 'isFeatureEnabled'> &
     MixEdition &
     NotificationsEdition &
-    GameEdition;
+    GameEdition &
+    DailyLimitEdition;
   userState: UserState;
   clock: Clock;
   random: Random;
   scheduling?: NotificationScheduling;
   schedule?: Schedule;
   gameModes?: readonly GameMode[];
-  /** The Feed Notices of each day; without it, as long as no feature makes one, there is none. */
+  /** The Feed Notices of each day beside the Daily Limit card; without it, there is no other. */
   feedNotices?: FeedNotices;
 }): Promise<Composition> {
   const { userState, scheduling, schedule, close } = closable(ports);
@@ -317,6 +319,7 @@ export async function openComposition({
     userState,
     clock,
   });
+  const dailyLimit = dailyLimitNotices({ edition, userState, history, clock });
   const { feed, followEligibility, markOpenedSeen, openDay } = await openFeed({
     entries,
     userState,
@@ -327,7 +330,12 @@ export async function openComposition({
     history: recorder,
     archive: createWordOfTheDayArchiveRecorder({ edition }),
     entrySeen: followSeen,
-    notices: feedNotices,
+    notices: {
+      forDay: async (day) => [
+        ...(await feedNotices.forDay(day)),
+        ...(await dailyLimit.forDay(day)),
+      ],
+    },
   });
   const {
     game,
