@@ -182,6 +182,17 @@ export interface GameMode {
    * eligible; when left out, the kinds come in no order of their own.
    */
   readonly takesTurns?: boolean;
+  /**
+   * How long a Game in the mode lasts, in milliseconds of play: it ends when
+   * they run out, the time in the background left out. No time limit when
+   * left out.
+   */
+  readonly timeLimit?: number;
+  /**
+   * Whether an answer moves on to the next Round at once, with no answer
+   * sheet and no «Далі»; when left out, the Round waits for «Далі».
+   */
+  readonly movesOn?: boolean;
   /** Whether the Edition turns the mode on; a mode that is off is never on offer. */
   isOn(edition: GameEdition): boolean;
   /**

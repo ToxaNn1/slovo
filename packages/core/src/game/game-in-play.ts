@@ -134,6 +134,17 @@ export type PlayedRound = Round & {
  */
 export type GameStatus = 'playing' | 'answered' | 'won' | 'lost';
 
+/**
+ * The play time a Game in a mode with a time limit has left: `left`
+ * milliseconds when it last paused or started, and while its clock runs, the
+ * moment it ends, which pauses leave out.
+ */
+export interface GameTime {
+  readonly left: number;
+  /** When the Game ends while its clock runs; none while it is paused or over. */
+  readonly endsAt: Date | undefined;
+}
+
 /** The Game in play, or just over. */
 export interface CurrentGame {
   readonly modeId: string;
@@ -146,6 +157,8 @@ export interface CurrentGame {
   readonly roundsPassed: number;
   /** The Lives left, from the mode's Lives (`GAME_LIVES` by default) to 0; none in a mode without Lives. */
   readonly lives: number | undefined;
+  /** The play time left, in a mode with a time limit; none in another mode. */
+  readonly time?: GameTime;
   /**
    * Every Round answered so far, in order, the one that cost the last Life
    * included; kept in memory only, until the Game is left.
@@ -166,7 +179,8 @@ export interface GameInPlay {
   readonly first: CurrentGame;
   /**
    * The Game with its Round answered: a wrong answer costs a Life, in a mode
-   * with Lives. Nothing unless a Round waits for an answer in that form and
+   * with Lives. In a mode that moves on, the Game goes on to its next Round
+   * at once, as `next` does. Nothing unless a Round waits for an answer in that form and
    * the answer names something the Round has.
    */
   answer(game: CurrentGame, given: GivenAnswer): CurrentGame | undefined;
@@ -389,6 +403,27 @@ export function createGameInPlay(
     return undefined;
   }
 
+  function next(game: CurrentGame): CurrentGame | undefined {
+    if (game.status !== 'answered') return undefined;
+    if (game.lives === 0) return { ...game, status: 'lost' };
+    const roundsPassed = game.roundsPassed + 1;
+    if (roundLimit === undefined && plannedAt(roundsPassed + 1) === undefined) {
+      const more = planRounds(mode, eligible, GAME_ROUNDS, askedIn(rounds), roundsPassed + 1);
+      if ('rounds' in more) rounds = [...rounds, ...more.rounds];
+    }
+    const upcoming =
+      roundLimit === undefined || roundsPassed < roundLimit
+        ? plannedAt(roundsPassed + 1)
+        : undefined;
+    if (upcoming === undefined) return { ...game, roundsPassed, status: 'won' };
+    return {
+      ...game,
+      roundsPassed,
+      round: roundOf(upcoming.planned, roundsPassed + 1, game.played, upcoming.inGrid),
+      status: 'playing',
+    };
+  }
+
   return {
     mode,
     first: {
@@ -405,34 +440,16 @@ export function createGameInPlay(
       const judged = at && judge(at.planned, game.round, given);
       if (judged === undefined) return undefined;
       const { answer, entry } = judged;
-      return {
+      const answered: CurrentGame = {
         ...game,
         round: { ...game.round, answer },
         played: [...game.played, { ...game.round, answer, entry, right: answer.right }],
         lives: answer.right || game.lives === undefined ? game.lives : game.lives - 1,
         status: 'answered',
       };
+      return mode.movesOn === true ? next(answered) : answered;
     },
-    next(game) {
-      if (game.status !== 'answered') return undefined;
-      if (game.lives === 0) return { ...game, status: 'lost' };
-      const roundsPassed = game.roundsPassed + 1;
-      if (roundLimit === undefined && plannedAt(roundsPassed + 1) === undefined) {
-        const more = planRounds(mode, eligible, GAME_ROUNDS, askedIn(rounds), roundsPassed + 1);
-        if ('rounds' in more) rounds = [...rounds, ...more.rounds];
-      }
-      const upcoming =
-        roundLimit === undefined || roundsPassed < roundLimit
-          ? plannedAt(roundsPassed + 1)
-          : undefined;
-      if (upcoming === undefined) return { ...game, roundsPassed, status: 'won' };
-      return {
-        ...game,
-        roundsPassed,
-        round: roundOf(upcoming.planned, roundsPassed + 1, game.played, upcoming.inGrid),
-        status: 'playing',
-      };
-    },
+    next,
     openLetter(game) {
       const { round } = game;
       if (game.status !== 'playing' || round.form !== 'typed' || !round.canOpenLetter) {

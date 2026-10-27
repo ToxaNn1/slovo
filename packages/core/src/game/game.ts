@@ -4,7 +4,7 @@ import type { Entries } from '../entries/entries';
 import type { Knowledge } from '../knowledge/knowledge';
 import type { History } from '../saved/history';
 import { createInTurn, createSubscribers } from '../in-turn';
-import type { Random, Schedule } from '../ports';
+import type { Clock, Random, Schedule } from '../ports';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
 import type { GameEdition, GameMode, GameModeRefusal } from './game-mode';
@@ -12,6 +12,7 @@ import {
   createGameInPlay,
   type CurrentGame,
   type GameInPlay,
+  type GameTime,
   type GivenAnswer,
 } from './game-in-play';
 import { createRoundPlanner, roundLimitOf, type RoundPlan } from './round-plan';
@@ -67,7 +68,7 @@ export interface GameState {
  * Round limit, 15 by default (`roundsToPlanOf`), each pair of a grid
  * counted: up to 5 the reader is weak on, first (ADR 0043, 0052), the rest
  * those in History when there are at least 15, else any (ADR 0024). A mode
- * with no Round limit asks them again, reshuffled, once it has asked them all. A mode may set its own Lives too, or none (ADR 0052). Playing never writes Seen, History or Active Days; a finished Game
+ * with no Round limit asks them again, reshuffled, once it has asked them all. A mode may set its own Lives too, or none, and a time limit (ADR 0052). Playing never writes Seen, History or Active Days; a finished Game
  * writes only its mode's Best result, when it beats it (ADR 0052).
  */
 export interface Game {
@@ -88,8 +89,11 @@ export interface Game {
    * Answers the current Round in its form: an option picked, a vowel tapped,
    * a pair matched, chips in order or typed text. A wrong answer costs a Life
    * at once and marks the Round's Entry «Не знаю» in the background, before
-   * the next «Далі» goes on. Resolves once the mark is written; a mark that
-   * fails to write rejects, for the shell to log, and the Game goes on.
+   * the next «Далі» goes on. In a mode that moves on, the next Round comes at
+   * once. Once the play time of a timed Game is up, the answer counts for
+   * nothing and the Game ends, should its schedule not have ended it yet.
+   * Resolves once the mark is written; a mark that fails to write rejects,
+   * for the shell to log, and the Game goes on.
    * Nothing changes once the Round is answered, or on an answer of another
    * form than the Round's.
    */
@@ -109,6 +113,18 @@ export interface Game {
   openLetter(): void;
   /** Drops the Game in play or just over, so the mode screen shows again. It never writes the best result. */
   leave(): void;
+  /**
+   * Stops the clock of a timed Game in play, as the app goes to the
+   * background, keeping the play time it has left. Nothing changes in
+   * another Game or one already paused.
+   */
+  pause(): Promise<void>;
+  /**
+   * Runs the clock of a paused timed Game again, as the app comes back from
+   * the background, from the play time it had left. Nothing changes in
+   * another Game or one whose clock runs.
+   */
+  resume(): Promise<void>;
 }
 
 /** Whether two offers say the same, field by field, their Best results included. */
@@ -125,6 +141,9 @@ const sameOffers = (one: readonly GameModeOffer[], other: readonly GameModeOffer
   one.length === other.length && one.every((offer, index) => sameOffer(offer, other[index]));
 
 const { gameBest } = userStateRecords;
+
+/** Whether the Game is still in play: a Round to answer, or one answered and waiting for «Далі». */
+const inPlay = ({ status }: CurrentGame) => status === 'playing' || status === 'answered';
 
 /**
  * The result of a finished Game, which its mode's Best result keeps: the
@@ -169,6 +188,7 @@ export async function openGame({
   history,
   knowledge,
   userState,
+  clock,
   random,
   schedule,
   modes: registered,
@@ -178,8 +198,14 @@ export async function openGame({
   history: Pick<History, 'list'>;
   knowledge: Pick<Knowledge, 'weak' | 'answer'>;
   userState: Pick<UserState, 'read' | 'write'>;
+  /** What a timed Game's play time is told by. */
+  clock: Pick<Clock, 'now'>;
   random: Random;
-  /** What a failed planning of the offers is tried again by; without it, only the next `planOffers` tries. */
+  /**
+   * What a failed planning of the offers is tried again by, and what ends a
+   * timed Game once its play time is up; without it, only the next
+   * `planOffers` tries, and a timed Game ends on its first answer after.
+   */
   schedule?: Schedule;
   modes: readonly GameMode[];
 }): Promise<{
@@ -218,6 +244,8 @@ export async function openGame({
   };
   /** The Game in play, or just over; none on the mode screen. */
   let played: GameInPlay | undefined;
+  /** Cancels the end of the timed Game in play, scheduled while its clock runs. */
+  let cancelTimeUp: (() => void) | undefined;
 
   function change(next: GameState): void {
     state = next;
@@ -298,14 +326,56 @@ export async function openGame({
     const modesNow = sameOffers(offers, state.modes) ? state.modes : offers;
     played =
       'rounds' in plan ? createGameInPlay(mode, plan.rounds, planRounds, eligible) : undefined;
-    change({ ...state, modes: modesNow, current: played?.first });
+    stopTime();
+    const first =
+      played && mode.timeLimit !== undefined
+        ? { ...played.first, time: runTime(mode.timeLimit) }
+        : played?.first;
+    change({ ...state, modes: modesNow, current: first });
+  }
+
+  /** Cancels the scheduled end of the timed Game in play, if any. */
+  function stopTime(): void {
+    cancelTimeUp?.();
+    cancelTimeUp = undefined;
+  }
+
+  /** The clock of a timed Game run from the play time left, its end scheduled. */
+  function runTime(left: number): GameTime {
+    const time: GameTime = { left, endsAt: new Date(clock.now().getTime() + left) };
+    cancelTimeUp = schedule?.(() => {
+      // A write that fails leaves the Game to end on its next answer.
+      inTurn(() => timeUp(time)).catch(() => undefined);
+    }, left);
+    return time;
+  }
+
+  /** Whether the play time of the Game has run out by the clock. */
+  const outOfTime = ({ time }: CurrentGame) =>
+    time?.endsAt !== undefined && time.endsAt.getTime() <= clock.now().getTime();
+
+  /**
+   * Ends the Game in play once the clock that `time` started has run out,
+   * unless the Game paused or ended since.
+   */
+  async function timeUp(time: GameTime): Promise<void> {
+    const game = state.current;
+    if (game?.time !== time || !inPlay(game)) return;
+    stopTime();
+    await finish(game, { ...game, time: { left: 0, endsAt: undefined }, status: 'won' });
   }
 
   async function answer(given: GivenAnswer): Promise<void> {
     const game = state.current;
+    const { time } = game ?? {};
+    if (game !== undefined && time !== undefined && outOfTime(game)) {
+      await inTurn(() => timeUp(time));
+      return;
+    }
     const answered = game && played?.answer(game, given);
-    if (answered === undefined) return;
-    changeCurrent(answered);
+    if (game === undefined || answered === undefined) return;
+    if (inPlay(answered)) changeCurrent(answered);
+    else await inTurn(() => finish(game, answered));
     const round = answered.played.at(-1);
     if (round !== undefined && !round.right) {
       await inTurn(() => knowledge.answer(round.entry.id, 'unknown'));
@@ -341,6 +411,26 @@ export async function openGame({
     });
   }
 
+  /** Stops the clock of the timed Game in play while it runs. */
+  function pause(): void {
+    const game = state.current;
+    const endsAt = game?.time?.endsAt;
+    if (game === undefined || endsAt === undefined || !inPlay(game)) return;
+    stopTime();
+    const left = Math.max(0, endsAt.getTime() - clock.now().getTime());
+    changeCurrent({ ...game, time: { left, endsAt: undefined } });
+  }
+
+  /** Runs the clock of the paused timed Game in play again. */
+  function resume(): void {
+    const game = state.current;
+    const time = game?.time;
+    if (game === undefined || time === undefined || time.endsAt !== undefined || !inPlay(game)) {
+      return;
+    }
+    changeCurrent({ ...game, time: runTime(time.left) });
+  }
+
   /** The Best result of each mode, read from the user state; a mode with none is left out. */
   async function bestResultsOf(
     on: readonly GameMode[],
@@ -360,6 +450,16 @@ export async function openGame({
       start: (modeId) => inTurn(() => start(modeId)),
       answer,
       next: () => inTurn(next),
+      pause: () =>
+        inTurn(() => {
+          pause();
+          return Promise.resolve();
+        }),
+      resume: () =>
+        inTurn(() => {
+          resume();
+          return Promise.resolve();
+        }),
       openLetter() {
         const game = state.current;
         const opened = game && played?.openLetter(game);
@@ -367,6 +467,7 @@ export async function openGame({
       },
       leave() {
         played = undefined;
+        stopTime();
         if (state.current !== undefined) changeCurrent(undefined);
       },
     },
