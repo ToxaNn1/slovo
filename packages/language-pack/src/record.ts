@@ -1,7 +1,11 @@
 import { existsSync, writeFileSync } from 'node:fs';
 
+import type { CrosswordDay } from '@slovo/contracts';
+
 import type { BuildError } from './build-error';
-import { checkContentVersion } from './content-manifest';
+import { checkContentVersion, type ContentManifest } from './content-manifest';
+import { newCrosswordDays } from './crossword';
+import { crosswordDaysChecksum } from './crossword-days';
 import { editionFiles } from './edition-folder';
 import { ID_REGISTRY_FILE, unregisteredEntries } from './id-registry';
 import { protectedLiteraryUses } from './public-domain';
@@ -15,6 +19,8 @@ export type RecordResult =
       readonly contentChecksum: string;
       /** The ids added to the end of the registry, in code-unit order. */
       readonly newIds: readonly string[];
+      /** The dates of the days appended to the crossword days. */
+      readonly newCrosswordDays: readonly string[];
     }
   | { readonly ok: false; readonly errors: readonly BuildError[] };
 
@@ -26,7 +32,9 @@ export type RecordResult =
  * recorded: one recorded before may have shipped ids a new registry would
  * free (ADR 0010). Writes nothing when the content has errors, a literary
  * use not yet in the public domain on `today` among them, as the build
- * refuses it.
+ * refuses it. An Edition that keeps crossword days gets new days appended so
+ * that 400 lie ahead of `today`, and the manifest records the days as
+ * published (ADR 0052).
  */
 export function recordContent({
   editionDir,
@@ -43,7 +51,8 @@ export function recordContent({
   }
   const { registry } = source;
 
-  const { content, manifest } = source.valid;
+  const { manifest } = source.valid;
+  let { content } = source.valid;
   const folder = editionFiles(editionDir);
   if (manifest.contentChecksum !== undefined && !existsSync(folder.path('idRegistry'))) {
     return {
@@ -69,9 +78,25 @@ export function recordContent({
   )
     .map(({ entry }) => entry.id)
     .toSorted(compare);
+  let newDays: readonly CrosswordDay[] = [];
+  if (content.crosswordDays !== undefined) {
+    const appended = newCrosswordDays(content, today.toISOString().slice(0, 10));
+    if (!appended.ok) return appended;
+    newDays = appended.days;
+    content = { ...content, crosswordDays: [...content.crosswordDays, ...newDays] };
+  }
   const check = checkContentVersion(content, manifest);
-  if (!check.recorded) writeJson(folder.path('manifest'), check.next);
   const recorded = check.recorded ? check.manifest : check.next;
+  const nextManifest: ContentManifest = {
+    ...recorded,
+    ...(content.crosswordDays === undefined
+      ? {}
+      : { crosswordDaysChecksum: crosswordDaysChecksum(content.crosswordDays) }),
+  };
+  if (newDays.length > 0) writeJson(folder.path('crosswordDays'), content.crosswordDays);
+  if (JSON.stringify(nextManifest) !== JSON.stringify(manifest)) {
+    writeJson(folder.path('manifest'), nextManifest);
+  }
   if (newIds.length > 0) {
     writeJson(folder.path('idRegistry'), [...registry, ...newIds]);
   }
@@ -81,6 +106,7 @@ export function recordContent({
     contentVersion: recorded.contentVersion,
     contentChecksum: recorded.contentChecksum,
     newIds,
+    newCrosswordDays: newDays.map(({ date }) => date),
   };
 }
 

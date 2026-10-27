@@ -1,6 +1,6 @@
 # The content version follows the content checksum
 
-`content/manifest.json` records the content version together with the content checksum (`contentChecksum`) of the pack built at that version. The Language Pack build fails when the content checksum no longer matches, so a content change that leaves the version behind fails CI, and two different packs never share one version. `pnpm build:pack <edition-id> --record` raises the version by one and records the new checksum; it leaves both alone when the content is unchanged.
+`content/manifest.json` records the content version together with the content checksum (`contentChecksum`) of the pack built at that version. The Language Pack build fails when the content checksum no longer matches, so a content change that leaves the version behind fails CI, and two different packs never share one version. `pnpm build:pack <edition-id> --record` raises the version by one and records the new checksum; it leaves both alone when the content is unchanged. For an Edition that keeps crossword days, the manifest also records their checksum, `crosswordDaysChecksum`, which marks them published (ADR 0052).
 
 The checksum covers the version, so copying a new checksum without raising the version still fails the build. A version may skip numbers when the content is recorded several times before it ships; only its growth matters to Content updates.
 

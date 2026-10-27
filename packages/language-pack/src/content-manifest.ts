@@ -17,6 +17,8 @@ export const MANIFEST_FILE = 'content/manifest.json';
 export const ContentManifestSchema = z.strictObject({
   contentVersion: PackMetadataSchema.shape.contentVersion,
   contentChecksum: PackMetadataSchema.shape.contentChecksum.optional(),
+  /** The checksum of the crossword days as last recorded, the days published (ADR 0052). */
+  crosswordDaysChecksum: PackMetadataSchema.shape.contentChecksum.optional(),
 });
 
 export type ContentManifest = z.infer<typeof ContentManifestSchema>;
@@ -72,7 +74,8 @@ export function checkContentVersion(
   };
 }
 
-function checksumOf(content: PackContent): string {
+/** The SHA-256 of a value's canonical JSON. */
+export function checksumOf(content: unknown): string {
   return `sha256:${createHash('sha256').update(canonicalJson(content)).digest('hex')}`;
 }
 

@@ -11,6 +11,7 @@ import {
 import { withoutStress } from '@slovo/core';
 
 import type { BuildError } from './build-error';
+import { CROSSWORD_DAYS_AHEAD, CROSSWORD_REPEAT_DAYS, dateAfter } from './crossword-days';
 import type { PackContent } from './pack-layout';
 import { readEdition } from './read-edition';
 
@@ -46,7 +47,46 @@ export function generateDailyCrossword({
   if (source.errors.length > 0 || source.valid === undefined) {
     return { ok: false, errors: source.errors };
   }
-  const supply = crosswordSupply(source.valid.content);
+  return crosswordDayOf(source.valid.content, date, new Set());
+}
+
+/**
+ * The days to append to an Edition's crossword days so that 400 lie ahead of
+ * `today` (ADR 0052): from the day after its last one, or from `today` when
+ * it has none. No word of a new day was in the
+ * 29 days before it. It gives the new days, none when enough lie ahead, and
+ * refuses when a day can't be made.
+ */
+export function newCrosswordDays(
+  content: PackContent,
+  today: string,
+):
+  | { readonly ok: true; readonly days: readonly CrosswordDay[] }
+  | Extract<CrosswordResult, { ok: false }> {
+  const days = [...(content.crosswordDays ?? [])];
+  const last = dateAfter(today, CROSSWORD_DAYS_AHEAD);
+  const known = days.length;
+  for (
+    let date = days.length === 0 ? today : dateAfter(days.at(-1)?.date ?? today, 1);
+    date <= last;
+    date = dateAfter(date, 1)
+  ) {
+    const since = dateAfter(date, 1 - CROSSWORD_REPEAT_DAYS);
+    const recent = days.filter((day) => day.date >= since).flatMap(({ words }) => words);
+    const result = crosswordDayOf(content, date, new Set(recent.map((word) => word.entryId)));
+    if (!result.ok) return result;
+    days.push(result.day);
+  }
+  return { ok: true, days: days.slice(known) };
+}
+
+/** The Daily Crossword of a date from content, with none of the Entries to avoid. */
+function crosswordDayOf(
+  content: PackContent,
+  date: string,
+  avoid: ReadonlySet<string>,
+): CrosswordResult {
+  const supply = crosswordSupply(content).filter(({ entryId }) => !avoid.has(entryId));
   const words = searchGrid(supply, randomOf(date));
   if (words === undefined) {
     return {
@@ -152,18 +192,20 @@ function placementsOn(
   grid: Grid,
   unused: readonly { clued: Clued; letters: readonly string[] }[],
 ): Placement[] {
+  // Read once: this loop runs millions of times for 400 days.
+  const size = CROSSWORD_SIZE;
   const empty = grid.letters.every((letter) => letter === '');
   const letterAt = (row: number, column: number) =>
-    row < 0 || column < 0 || row >= CROSSWORD_SIZE || column >= CROSSWORD_SIZE
+    row < 0 || column < 0 || row >= size || column >= size
       ? ''
-      : (grid.letters[row * CROSSWORD_SIZE + column] ?? '');
+      : (grid.letters[row * size + column] ?? '');
   const placements: Placement[] = [];
   for (const { clued, letters } of unused) {
     const { length } = letters;
     for (const direction of ['across', 'down'] as const) {
       const [dRow, dColumn] = direction === 'across' ? [0, 1] : [1, 0];
-      const rows = CROSSWORD_SIZE - dRow * (length - 1);
-      const columns = CROSSWORD_SIZE - dColumn * (length - 1);
+      const rows = size - dRow * (length - 1);
+      const columns = size - dColumn * (length - 1);
       for (let row = 0; row < rows; row += 1) {
         for (let column = 0; column < columns; column += 1) {
           if (
@@ -172,12 +214,12 @@ function placementsOn(
           ) {
             continue;
           }
-          const cells: number[] = [];
           let shared = 0;
           let fits = true;
           for (let i = 0; i < length && fits; i += 1) {
-            const [r, c] = [row + dRow * i, column + dColumn * i];
-            const cell = r * CROSSWORD_SIZE + c;
+            const r = row + dRow * i;
+            const c = column + dColumn * i;
+            const cell = r * size + c;
             const letter = grid.letters[cell] ?? '';
             if (letter === '') {
               fits =
@@ -186,9 +228,9 @@ function placementsOn(
               fits = letter === letters[i] && grid[direction][cell] !== true;
               shared += 1;
             }
-            cells.push(cell);
           }
           if (!fits || shared === length || (!empty && shared === 0)) continue;
+          const cells = letters.map((_, i) => (row + dRow * i) * size + column + dColumn * i);
           placements.push({ word: { ...clued, row, column, direction }, cells, letters });
         }
       }
