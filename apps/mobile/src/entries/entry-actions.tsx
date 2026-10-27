@@ -41,16 +41,11 @@ export function EntryActions({ card }: { card: AnyEntryCard }) {
   const hide = useHide(card);
   const collection = useCollectionAction(entryId);
   const share = useShareAction(card);
-  const buttons = useShown().entryButtons;
-  const knowledge = useKnowledgeMark(entryId);
+  const marks = useKnowledgeButtons(card);
   return (
     <>
       <ActionRow
-        marks={
-          buttons.knowledge ? (
-            <KnowledgeButtons entryKind={card.kind} mark={knowledge.mark} onTap={knowledge.tap} />
-          ) : undefined
-        }
+        marks={marks}
         favorite={<FavoriteButton inFavorites={favorite.inFavorites} onToggle={favorite.toggle} />}
         share={share.button}
         collection={collection.button}
@@ -61,6 +56,19 @@ export function EntryActions({ card }: { card: AnyEntryCard }) {
       {share.sheet}
     </>
   );
+}
+
+/**
+ * The «Знаю» and «Не знаю» buttons of an Entry's card, wherever the card
+ * appears, Yesterday's too: there only when the Knowledge switch is on in
+ * effect.
+ */
+export function useKnowledgeButtons(card: Pick<AnyEntryCard, 'entryId' | 'kind'>): ReactNode {
+  const shown = useShown().entryButtons.knowledge;
+  const knowledge = useKnowledgeMark(card.entryId);
+  return shown ? (
+    <KnowledgeButtons entryKind={card.kind} mark={knowledge.mark} onTap={knowledge.tap} />
+  ) : undefined;
 }
 
 /**

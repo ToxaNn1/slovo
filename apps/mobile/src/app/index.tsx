@@ -12,14 +12,16 @@ import {
   UndoToastProvider,
   useTokens,
   VerticalPager,
+  YesterdayCard,
   type VerticalPagerHandle,
 } from '@slovo/ui';
+import type { WordCardModel } from '@slovo/core';
 import { memo, useCallback, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { editionStrings } from '@/edition/edition';
-import { EntryActions } from '@/entries/entry-actions';
+import { EntryActions, useKnowledgeButtons } from '@/entries/entry-actions';
 import { useOpenScreen } from '@/entries/use-open-screen';
 import { useFeed } from '@/feed/feed';
 import type { DrawnCard, DrawnNoticeCard } from '@/feed/feed-screen';
@@ -132,7 +134,7 @@ const FeedPage = memo(function FeedPage({
   const { top } = useSafeAreaInsets();
   const { selfCheck } = useShown();
   const openScreen = useOpenScreen();
-  if (card.kind === 'end-of-cycle' || card.kind === 'notice')
+  if (card.kind === 'end-of-cycle' || (card.kind === 'notice' && card.notice !== 'yesterday'))
     return (
       <View
         testID={`feed-card-${String(position)}`}
@@ -145,7 +147,9 @@ const FeedPage = memo(function FeedPage({
     // The content scrolls under the top row but stops at the status bar.
     <View testID={`feed-card-${String(position)}`} style={[styles.page, { paddingTop: top }]}>
       <PagerScrollView contentContainerStyle={styles.content}>
-        {card.kind === 'tip' ? (
+        {card.kind === 'notice' ? (
+          <YesterdayNotice word={card.word} />
+        ) : card.kind === 'tip' ? (
           <EntryCard card={card} selfCheck={selfCheck} actions={<EntryActions card={card} />} />
         ) : card.kind === 'synonymRow' ? (
           <EntryCard
@@ -176,13 +180,20 @@ const FeedPage = memo(function FeedPage({
   );
 });
 
-function NoticeCard({ card }: { card: DrawnNoticeCard }) {
+/** A Feed Notice that sits in the middle of its page: the first-week card or the Daily Limit card. */
+function NoticeCard({ card }: { card: Exclude<DrawnNoticeCard, { notice: 'yesterday' }> }) {
   const streak = useFirstWeekStreak();
   return card.notice === 'firstWeek' ? (
     <FirstWeekCard day={card.firstWeekDay} streak={streak} />
   ) : (
     <DailyLimitCard />
   );
+}
+
+/** Yesterday's Word in Self-check style, with its Knowledge Marks as on any card. */
+function YesterdayNotice({ word }: { word: WordCardModel }) {
+  const marks = useKnowledgeButtons({ kind: 'word', entryId: word.wordId });
+  return <YesterdayCard word={word} marks={marks} />;
 }
 
 const styles = StyleSheet.create({
@@ -205,6 +216,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: space[6],
     paddingBottom: space[6],
   },
-  // The end-of-Cycle card and a Feed Notice sit in the middle of the page, under the top row.
+  // The end-of-Cycle card and a Feed Notice but Yesterday sit in the middle of the page, under the top row.
   centred: { paddingHorizontal: space[6], paddingBottom: space[6] },
 });

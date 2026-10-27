@@ -31,7 +31,11 @@ export function cardOnScreen({
 }
 
 /** The Feed Notices the shell draws a card for; the others wait for theirs. */
-const DRAWN_NOTICES = ['firstWeek', 'dailyLimit'] as const satisfies readonly FeedNotice[];
+const DRAWN_NOTICES = [
+  'firstWeek',
+  'yesterday',
+  'dailyLimit',
+] as const satisfies readonly FeedNotice[];
 
 /** A card the shell draws: every card but a Feed Notice that has no card yet. */
 export type DrawnCard = Exclude<FeedCard, FeedNoticeCard> | DrawnNoticeCard;
