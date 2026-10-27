@@ -1,6 +1,6 @@
 import type { Knowledge } from '../knowledge/knowledge';
 import type { CorrectionCardModel } from '../entries/correction-card';
-import type { FeedNotice } from './feed-notices';
+import type { FeedNoticeContent } from './feed-notices';
 import type { IdiomCardModel } from '../entries/idiom-card';
 import type { LocalDate } from '../local-date';
 import type { SynonymRowCardModel } from '../entries/synonym-row-card';
@@ -50,15 +50,14 @@ export type AnyEntryCard = EntryFeedCard | SynonymRowFeedCard | TipFeedCard;
  * no turn and no Review slot and makes nothing Seen; swiping past it closes
  * it for its local day (ADR 0054).
  */
-export interface FeedNoticeCard {
+export type FeedNoticeCard = FeedNoticeContent & {
   readonly kind: 'notice';
-  readonly notice: FeedNotice;
   /** The local day the Feed Notice is of. */
   readonly day: LocalDate;
   readonly entryId?: undefined;
   /** A Feed Notice is never a Review. */
   readonly review?: undefined;
-}
+};
 
 /**
  * One card of the Feed: an Entry, the end-of-Cycle card that tells the

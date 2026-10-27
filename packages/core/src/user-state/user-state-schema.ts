@@ -240,6 +240,13 @@ export const userStateRecords = {
    */
   onboardingFinished: declareRecord('onboarding.finished', InstantSchema, { sync: 'device-only' }),
   /**
+   * The local date `YYYY-MM-DD` a reader finished or skipped the onboarding
+   * with 0.8.13 or later, from which their first week counts its Active Days;
+   * without the record, as for a reader who finished it before, there is no
+   * first week. It stays on the device, like the onboarding finished (ADR 0054).
+   */
+  firstWeekFrom: declareRecord('firstWeek.from', z.string(), { sync: 'device-only' }),
+  /**
    * The instant the last check for a content update started; without the
    * record, none has, so one is due. It stays on the device, like the pack it
    * downloads.

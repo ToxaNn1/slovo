@@ -1,7 +1,7 @@
 import type { AccountState } from '../account/account';
 import type { Entries } from '../entries/entries';
 import { createSubscribers } from '../in-turn';
-import { formatTimeOfDay } from '../local-date';
+import { formatTimeOfDay, todayKey } from '../local-date';
 import type { MorningNotification } from '../notifications/notification-plan';
 import type { Notifications } from '../notifications/notifications';
 import type { Clock } from '../ports';
@@ -123,7 +123,7 @@ export interface Onboarding {
   subscribe(listener: () => void): () => void;
 }
 
-const { onboardingFinished } = userStateRecords;
+const { onboardingFinished, firstWeekFrom } = userStateRecords;
 
 const noSample = (): undefined => undefined;
 
@@ -211,7 +211,13 @@ export async function openOnboarding({
 
   async function keepFinished(): Promise<void> {
     const finishedAt = clock.now();
-    await userState.write(onboardingFinished.change(finishedAt.toISOString()));
+    // The first week counts from this day (ADR 0054).
+    await userState.write(
+      new Map([
+        ...onboardingFinished.change(finishedAt.toISOString()),
+        ...firstWeekFrom.change(todayKey(clock)),
+      ]),
+    );
     change({ finishedAt, step: undefined });
   }
 

@@ -106,6 +106,7 @@ describe('the 0.8 sync marks', () => {
       'notifications.sound',
       'notifications.plan.2026-10-18T09:00',
       'onboarding.finished',
+      'firstWeek.from',
       'contentUpdate.checkedAt',
       'edition.switches',
     ]) {

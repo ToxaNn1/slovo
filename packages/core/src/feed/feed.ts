@@ -417,18 +417,20 @@ export async function openFeed({
     if (session.cards.length === 0) return undefined;
     const day = todayDate(clock);
     const date = dateKeyOf(day);
-    const given = new Set(await notices.forDay(day));
+    const given = await notices.forDay(day);
     const closed = await closedNotices(userState, date);
     const inSession = new Set(
       session.all.flatMap((card) =>
         card.kind === 'notice' && dateKeyOf(card.day) === date ? [card.notice] : [],
       ),
     );
-    const notice = FEED_NOTICES.find(
-      (each) => given.has(each) && !closed.has(each) && !inSession.has(each),
-    );
-    if (notice === undefined) return undefined;
-    const card: FeedCard = { kind: 'notice', notice, day };
+    const content = FEED_NOTICES.flatMap((notice) =>
+      closed.has(notice) || inSession.has(notice)
+        ? []
+        : given.filter((each) => each.notice === notice),
+    )[0];
+    if (content === undefined) return undefined;
+    const card: FeedCard = { ...content, kind: 'notice', day };
     session.add(card);
     subscribers.tell();
     return card;

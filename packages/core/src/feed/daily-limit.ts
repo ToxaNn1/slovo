@@ -45,7 +45,7 @@ export function dailyLimitNotices({
       const seen = history.list.filter(
         ({ seenAt }) => dateKeyOf(localDayOf(seenAt, clock).date) === date,
       ).length;
-      return seen >= limit ? ['dailyLimit'] : [];
+      return seen >= limit ? [{ notice: 'dailyLimit' }] : [];
     },
   };
 }
