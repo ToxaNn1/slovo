@@ -21,12 +21,13 @@ How to write screens and components in `apps/mobile` and `packages/ui`. `CONTEXT
 ## Lists
 
 - Render collections through `FlatList` / `SectionList` (virtualized) with `keyExtractor` returning a stable id such as `entryId`. `ScrollView` is for short, fixed content like a settings page.
-- Memoize derived list data (`useMemo`) in the hook module; the React Compiler is not enabled, so memoize what feeds a list and props of heavy rows by hand, only where it is measurable.
+- Memoize derived list data (`useMemo`) in the hook module. The React Compiler memoizes components and hooks, but not the modules that opt out of it (ADR 0059), and existing hand memoization stays; add new hand memoization only where it is measurable.
 
 ## Gestures and animation
 
 - One `GestureHandlerRootView` wraps the app in `apps/mobile/src/app/_layout.tsx`, and screens and components rely on it. A screen does not add its own wrapper. The exceptions are in `packages/ui`: `BottomSheet` keeps one inside its Modal, which is its own native root, and `VerticalPager` keeps its own.
 - Animate with Reanimated shared values and `useAnimatedStyle` so motion runs on the UI thread. Respect `useReduceMotion()` for every animation.
+- A module with Reanimated, Worklets or gesture-handler code starts with `'use no memo'`, so the React Compiler leaves it alone, and joins the opt-out list of ADR 0059 and of `packages/ui/eslint.config.js`.
 
 ## Safe area and platform
 
