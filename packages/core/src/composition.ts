@@ -23,6 +23,7 @@ import { guessWord } from './game/guess-word';
 import { idiomMeaningMode } from './game/idiom-meaning-mode';
 import { pairsMode } from './game/pairs-mode';
 import { stressMode } from './game/stress-mode';
+import { survivalMode } from './game/survival-mode';
 import { typeWordMode } from './game/type-word-mode';
 import { openHistory, type History } from './saved/history';
 import { openKnowledge, type Knowledge } from './knowledge/knowledge';
@@ -218,6 +219,7 @@ const coreGameModes: readonly GameMode[] = [
   anglicismMode,
   buildIdiomMode,
   idiomMeaningMode,
+  survivalMode,
 ];
 
 /**

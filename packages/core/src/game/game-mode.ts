@@ -176,6 +176,12 @@ export interface GameMode {
    * on until its Lives run out or the mode has no Round left.
    */
   readonly roundLimit?: number | 'none';
+  /**
+   * Whether its Rounds take turns between the kinds of Entry it asks about,
+   * so each kind gets about an equal share however many of each are
+   * eligible; when left out, the kinds come in no order of their own.
+   */
+  readonly takesTurns?: boolean;
   /** Whether the Edition turns the mode on; a mode that is off is never on offer. */
   isOn(edition: GameEdition): boolean;
   /**
