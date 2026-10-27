@@ -220,7 +220,13 @@ describe('the 0.8.13 strings', () => {
 
   it('the Ukrainian Edition carries the agreed Feed Notice texts verbatim', () => {
     expect(parsed.feedNotices).toMatchObject({
-      weeklyRecap: { title: 'Ваш тиждень' },
+      weeklyRecap: {
+        title: 'Ваш тиждень',
+        seen: 'переглянуто',
+        saved: 'збережено',
+        known: 'знаю',
+        streak: 'серія',
+      },
       yesterday: { title: 'Пам’ятаєте вчорашнє слово?' },
       dailyLimit: { message: 'На сьогодні досить. Повертайтеся завтра', keepGoing: 'Гортати далі' },
       firstWeek: { close: 'Зрозуміло', lastDayTitle: 'Тиждень із нами' },

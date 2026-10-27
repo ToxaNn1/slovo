@@ -1,4 +1,4 @@
-import type { Feed, FeedCard, FeedNotice, FeedNoticeCard } from '@slovo/core';
+import type { Feed } from '@slovo/core';
 
 /** The page the reader turned to, in the Feed they turned it in. */
 export interface TurnedTo {
@@ -28,43 +28,4 @@ export function cardOnScreen({
 }): number | undefined {
   if (!focused || !inForeground || covered) return undefined;
   return turnedTo?.in === feed ? turnedTo.position : feed.startPosition;
-}
-
-/** The Feed Notices the shell draws a card for; the others wait for theirs. */
-const DRAWN_NOTICES = [
-  'firstWeek',
-  'yesterday',
-  'dailyLimit',
-] as const satisfies readonly FeedNotice[];
-
-/** A card the shell draws: every card but a Feed Notice that has no card yet. */
-export type DrawnCard = Exclude<FeedCard, FeedNoticeCard> | DrawnNoticeCard;
-
-/** The card of a Feed Notice the shell draws. */
-export type DrawnNoticeCard = FeedNoticeCard & { readonly notice: (typeof DRAWN_NOTICES)[number] };
-
-const drawn = (card: FeedCard): card is DrawnCard =>
-  card.kind !== 'notice' || (DRAWN_NOTICES as readonly FeedNotice[]).includes(card.notice);
-
-/**
- * The pages of the pager over the Feed's cards: a card the shell can't draw
- * yet gets no page, so the reader never meets a blank one, and the Feed
- * makes nothing of a Feed Notice it never shows (ADR 0054).
- */
-export function pagesOf(cards: readonly FeedCard[]): {
-  readonly pages: readonly DrawnCard[];
-  /** The Feed's position of the page's card; a page past the last counts on from the last card. */
-  readonly positionOf: (page: number) => number;
-  /** The page of the card at the Feed's position, or of the first drawn card after it. */
-  readonly pageOf: (position: number) => number;
-} {
-  const pages = cards.filter(drawn);
-  return {
-    pages,
-    positionOf: (page) => {
-      const card = pages[page];
-      return card === undefined ? cards.length + page - pages.length : cards.indexOf(card);
-    },
-    pageOf: (position) => cards.slice(0, position).filter(drawn).length,
-  };
 }
