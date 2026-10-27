@@ -32,6 +32,9 @@
         // A false positive: Knip's Expo plugin expects it from Expo's default
         // config, but no file of the app imports it and it is not installed.
         "expo-updates",
+        // Expo's CLI loads it by name when EXPO_ATLAS is set; it is run by
+        // hand (README, «Check the bundle with Expo Atlas»).
+        "expo-atlas",
         // Not a package: Metro resolves `slovo-edition/*` into the Edition's
         // folder (metro.config.cjs).
         "slovo-edition",

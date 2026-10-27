@@ -160,6 +160,28 @@ Version 0.8.9, at the EAS build of 0.9, on a real iPhone:
 
 3. **Google sign-in reaches the Account.** With a build made with `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` and a backend whose `GOOGLE_CLIENT_IDS` names the same id ([Sign in with Google](#sign-in-with-google)), open the SLOVO ID screen and tap «Увійти через Google»: Google's own sheet opens. Dismiss it: the screen stays signed out with no problem. Tap again and sign in with a Google account: the screen shows its email, signed in. Sign out and sign in with a Sign-in code for the same email: the same Account opens, with the same words.
 
+## Check the bundle with Expo Atlas
+
+No test or CI job looks at what goes into the app's JavaScript bundle. [Expo Atlas](https://docs.expo.dev/guides/analyzing-bundles/) shows it in the browser: every module, its size and who imports it. Run it by hand before each EAS build (the next one is the build of 0.9) and when a change adds a runtime dependency to `apps/mobile` or to a package it imports. It needs no simulator and no backend; `expo-atlas` is a devDependency of `apps/mobile`.
+
+1. Build the Language Pack once (`pnpm build:pack uk`), then export the production bundle with Atlas on, from `apps/mobile`:
+
+   ```sh
+   SLOVO_EDITION=uk EXPO_ATLAS=true npx expo export --platform ios
+   ```
+
+   The export writes the bundle to `apps/mobile/dist/` and Atlas's data to `apps/mobile/.expo/atlas.jsonl`; git ignores both. Each export starts a fresh `atlas.jsonl`.
+
+2. Open it: `pnpm exec expo-atlas .expo/atlas.jsonl` (still in `apps/mobile`) serves Atlas on `http://localhost:3000` and opens the browser.
+3. Look for:
+   - **The largest modules.** Sort by size and ask whether each big one earns its place, and whether a dependency pulls in more than the part the app uses. Compare the total with the previous check; a jump needs a reason.
+   - **Node-only or development code.** Nothing from `node_modules` that only runs in Node (`node:` built-ins, `fs`, polyfills for them), and nothing that belongs to tests or tooling: Vitest, Jest, Testing Library, ESLint, `@slovo/core/testing` and its fakes, `tools/`.
+   - **The Core pulling in what it should not.** Nothing that `packages/core` imports, directly or through a dependency, is React, React Native, Expo or Node ([ADR 0002](docs/adr/0002-one-app-per-language.md), [ADR 0006](docs/adr/0006-editions-extend-core-only-through-extension-points.md)). ESLint bans these imports in the Core's own files; Atlas shows what arrives through its dependencies. And nothing from the backend in the app at all: `@slovo/server-core`, Hono, SQL drivers.
+
+   Anything wrong goes into a ticket before the build.
+
+Atlas also runs beside Metro for a development build: start with `SLOVO_EDITION=uk EXPO_ATLAS=true pnpm start` in `apps/mobile`, press `shift+m` and open **expo-atlas**. A development bundle holds development code on purpose, so judge size and leaks on the export above.
+
 ## Sign in with Google
 
 The app signs in with Google through Google's own native sheet ([ADR 0047](docs/adr/0047-one-account-per-email-whatever-the-sign-in-method.md)); the backend verifies the identity token it gets. Both need SLOVO's OAuth client ids at Google, which come from the environment and never the repository. Without them «Увійти через Google» stays hidden and the backend refuses Google sign-ins.
