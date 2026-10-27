@@ -68,6 +68,15 @@ export const userStateRecords = {
   selfCheck: declareRecord('settings.selfCheck', z.boolean()),
   /** That the Feed's swipe hint was shown on this device. */
   swipeHintShown: declareRecord('feed.swipeHintShown', z.literal(true), { sync: 'device-only' }),
+  /**
+   * The Feed Notices the reader swiped past on this device and the local
+   * date they are closed for; on another date none is closed (ADR 0054).
+   */
+  feedNoticesClosed: declareRecord(
+    'feed.noticesClosed',
+    z.object({ date: z.string(), notices: z.array(z.string()) }),
+    { sync: 'device-only' },
+  ),
   /** The card the reader was on last on this device, and the local date they were on it. */
   feedPosition: declareRecord('feed.position', EntryOnDateSchema, { sync: 'device-only' }),
   /** The current Cycle: its number and the seed of its shuffle. */

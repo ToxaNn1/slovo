@@ -16,6 +16,7 @@ import { createEntries } from './entries/entries';
 import { createEntryRows, type EntryRowModel } from './entries/entry-row';
 import { openFavorites, type Favorites } from './saved/favorites';
 import { buildEntryCard, buildFeedCard, openFeed, type Feed } from './feed/feed';
+import { noFeedNotices, type FeedNotices } from './feed/feed-notices';
 import { asReviewIfDue, type AnyEntryCard } from './feed/feed-card';
 import { openGame, type Game } from './game/game';
 import type { GameEdition, GameMode } from './game/game-mode';
@@ -247,6 +248,7 @@ export async function openComposition({
   random,
   gameModes = [],
   crossword,
+  feedNotices = noFeedNotices,
   ...ports
 }: {
   content: ContentReadPort;
@@ -262,6 +264,8 @@ export async function openComposition({
   scheduling?: NotificationScheduling;
   schedule?: Schedule;
   gameModes?: readonly GameMode[];
+  /** The Feed Notices of each day; without it, as long as no feature makes one, there is none. */
+  feedNotices?: FeedNotices;
 }): Promise<Composition> {
   const { userState, scheduling, schedule, close } = closable(ports);
   const entries = createEntries({ content, edition, userState });
@@ -305,6 +309,7 @@ export async function openComposition({
     wordOfTheDay,
     history: recorder,
     entrySeen: followSeen,
+    notices: feedNotices,
   });
   const {
     game,

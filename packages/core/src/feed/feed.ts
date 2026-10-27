@@ -13,11 +13,12 @@ import {
   type FeedCard,
   type WordFeedCard,
 } from './feed-card';
+import { closedNotices, closeNotice, FEED_NOTICES, type FeedNotices } from './feed-notices';
 import { createFeedSession, type FeedSession } from './feed-session';
 import type { HistoryRecorder, Seen } from '../saved/history';
 import { createInTurn, createSubscribers } from '../in-turn';
 import type { Knowledge } from '../knowledge/knowledge';
-import { dateKeyOf, todayKey, type LocalDate } from '../local-date';
+import { dateKeyOf, todayDate, todayKey, type LocalDate } from '../local-date';
 import type { Clock, UserStateChanges } from '../ports';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
@@ -61,7 +62,7 @@ const TURNS = [
   { kind: 'synonymRow', ids: 'synonymRows', every: SYNONYM_ROW_EVERY },
   { kind: 'tip', ids: 'tips', every: TIP_EVERY },
 ] as const satisfies readonly {
-  kind: Exclude<FeedCard['kind'], 'word' | 'end-of-cycle'>;
+  kind: Exclude<FeedCard['kind'], 'word' | 'end-of-cycle' | 'notice'>;
   ids: keyof EntryIds;
   every: number;
 }[];
@@ -72,6 +73,9 @@ const TURNS = [
  * its kind's turn itself.
  */
 const REVIEW_EVERY = 3;
+
+/** Whether the card is no Feed Notice, so it counts in the turns and the Review slots (ADR 0054). */
+const takesTurns = (card: FeedCard) => card.kind !== 'notice';
 
 /**
  * The Feed of one app session. Its cards are the ones shown so far, oldest
@@ -123,7 +127,8 @@ export interface Feed {
   /**
    * Adds the next card to the session and returns it, or nothing when the
    * Language Pack has no live Entry. After the last unseen Entry of the Cycle
-   * comes the end-of-Cycle card.
+   * comes the end-of-Cycle card. From the second card on, each Feed Notice of
+   * the day not closed takes the next card, in the order of `FEED_NOTICES`.
    */
   next(): Promise<FeedCard | undefined>;
   /**
@@ -206,8 +211,8 @@ const { feedPosition } = userStateRecords;
  */
 function nextEntryId(unseen: EntryIds, session: FeedSession, due: EntryIds): string | undefined {
   const shown = session.shownIds();
-  const last = session.cards.at(-1)?.entryId;
-  const inCycle = session.cycleCards();
+  const last = session.cards.findLast(takesTurns)?.entryId;
+  const inCycle = session.cycleCards().filter(takesTurns);
   /** Whether the next card is the turn of the kind that comes every `every`th card. */
   function turnOf(kind: FeedCard['kind'], every: number): boolean {
     const since = [...inCycle].reverse().findIndex((card) => card.kind === kind);
@@ -234,7 +239,7 @@ function nextEntryId(unseen: EntryIds, session: FeedSession, due: EntryIds): str
     if (id !== undefined && unseen[ids].includes(id)) return id;
   }
   // Counting every card of the session, also the dropped ones, so a hide never moves the slots.
-  const reviewSlot = (session.all.length + 1) % REVIEW_EVERY === 0;
+  const reviewSlot = (session.all.filter(takesTurns).length + 1) % REVIEW_EVERY === 0;
   return (reviewSlot ? reviewEntryId(due.words, session) : undefined) ?? id;
 }
 
@@ -245,7 +250,7 @@ function nextEntryId(unseen: EntryIds, session: FeedSession, due: EntryIds): str
  * the reader answers it, Seen or not.
  */
 function reviewEntryId(due: readonly string[], session: FeedSession): string | undefined {
-  const last = session.cards.at(-1)?.entryId;
+  const last = session.cards.findLast(takesTurns)?.entryId;
   // Each Entry's last place in the session.
   const shownAt = new Map(session.cards.map((card, place) => [card.entryId, place]));
   return due
@@ -322,6 +327,13 @@ function eligibleDue(cycle: Cycle, knowledge: Pick<Knowledge, 'state'>): EntryId
  *
  * Once an Entry becomes Seen, by either way, the Feed calls `entrySeen`, for
  * the composition to follow it.
+ *
+ * Beside the Entry cards come the Feed Notices `notices` gives for the day:
+ * from the second card on, each not closed takes the next card, in the order
+ * of `FEED_NOTICES`. A Feed Notice counts in no turn and no Review slot, makes
+ * nothing Seen and keeps no reader's place, and the Feed keeps the next card
+ * after it ready too. Swiping past one to another card closes it for its
+ * local day on this device (ADR 0054).
  */
 export async function openFeed({
   entries,
@@ -332,6 +344,7 @@ export async function openFeed({
   wordOfTheDay,
   history,
   entrySeen,
+  notices,
 }: {
   entries: Entries;
   userState: UserState;
@@ -341,6 +354,7 @@ export async function openFeed({
   wordOfTheDay: WordOfTheDay;
   history: HistoryRecorder;
   entrySeen: (entryId: string) => Promise<void>;
+  notices: FeedNotices;
 }): Promise<{
   feed: Feed;
   followEligibility: () => Promise<void>;
@@ -390,8 +404,33 @@ export async function openFeed({
   // One request at a time, so two requests never pick the same Entry.
   const inTurn = createInTurn();
 
+  /**
+   * Adds the next Feed Notice of today, if one is not closed nor in the
+   * session yet and the session has a card before it.
+   */
+  async function addNotice(): Promise<FeedCard | undefined> {
+    if (session.cards.length === 0) return undefined;
+    const day = todayDate(clock);
+    const date = dateKeyOf(day);
+    const given = new Set(await notices.forDay(day));
+    const closed = await closedNotices(userState, date);
+    const inSession = new Set(
+      session.all.flatMap((card) =>
+        card.kind === 'notice' && dateKeyOf(card.day) === date ? [card.notice] : [],
+      ),
+    );
+    const notice = FEED_NOTICES.find(
+      (each) => given.has(each) && !closed.has(each) && !inSession.has(each),
+    );
+    if (notice === undefined) return undefined;
+    const card: FeedCard = { kind: 'notice', notice, day };
+    session.add(card);
+    subscribers.tell();
+    return card;
+  }
+
   async function addNextCard(): Promise<FeedCard | undefined> {
-    const last = session.cards.at(-1);
+    const last = session.cards.findLast(takesTurns);
     // The last card shown is the current Cycle's end-of-Cycle card, not one of
     // an earlier Cycle whose next cards were all dropped.
     const atEnd = last?.kind === 'end-of-cycle' && session.inCurrentCycle(last);
@@ -407,6 +446,10 @@ export async function openFeed({
     if (dayToOpen !== undefined) {
       const card = await addWordOfTheDay(tooEarly);
       if (card !== undefined) return card;
+    }
+    if (tooEarly === undefined) {
+      const notice = await addNotice();
+      if (notice !== undefined) return notice;
     }
     if (cycle.isEmpty()) return undefined;
     // The card after the end-of-Cycle card starts a new Cycle.
@@ -472,9 +515,12 @@ export async function openFeed({
 
   const next = () => inTurn(addNextCard);
 
-  /** Whether the card on screen is the last one, so the card after it is not ready yet. */
+  /**
+   * Whether no card but Feed Notices comes after the card on screen, so the
+   * next card is not ready yet.
+   */
   const nextCardMissing = () =>
-    onScreenSince !== undefined && session.position >= session.cards.length - 1;
+    onScreenSince !== undefined && !session.cards.slice(session.position + 1).some(takesTurns);
 
   /**
    * Whether the ready card, the last one, which the reader hasn't reached, was
@@ -532,6 +578,7 @@ export async function openFeed({
     entryId,
     now,
     date,
+    swiped = false,
   }: {
     left: FeedCard | undefined;
     stayed: number;
@@ -539,14 +586,24 @@ export async function openFeed({
     now: number;
     /** Today's key, as the reader's place keeps it. */
     date: string;
+    /** Whether the reader swiped from the card that left to another card. */
+    swiped?: boolean;
   }): Promise<string | undefined> {
     const seenId = seenOnLeaving(left, stayed);
     const leftWordOfTheDay = left?.kind === 'word' && left.wordOfTheDay !== undefined;
+    // A Feed Notice of a day before, left open over midnight, is closed already.
+    const closed =
+      swiped && left?.kind === 'notice' && dateKeyOf(left.day) === date
+        ? await closeNotice(userState, left.notice, date)
+        : new Map();
     return keepSeen(
       seenId === undefined
         ? undefined
         : { entryId: seenId, seenAt: new Date(now), wordOfTheDay: leftWordOfTheDay },
-      entryId === undefined ? new Map() : feedPosition.change({ entryId, date }),
+      new Map([
+        ...closed,
+        ...(entryId === undefined ? new Map() : feedPosition.change({ entryId, date })),
+      ]),
     );
   }
 
@@ -595,7 +652,10 @@ export async function openFeed({
     const entryId = shown === undefined ? undefined : session.readerCard?.entryId;
     // In turn with the requests that change the cards, so a new Cycle never
     // starts between the card leaving the screen and its Entry becoming Seen.
-    const kept = inTurnTellingSeen(() => keepScreenChange({ left, stayed, entryId, now, date }));
+    const swiped = left !== undefined && shown !== undefined;
+    const kept = inTurnTellingSeen(() =>
+      keepScreenChange({ left, stayed, entryId, now, date, swiped }),
+    );
     await Promise.all([kept, keepNextCardReady()]);
   }
 
