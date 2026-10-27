@@ -156,7 +156,7 @@ function current(app: Composition): CurrentGame {
   return game;
 }
 
-/** A Round as it was asked: the Word it asks about and the Words it offers. */
+/** A Round as it was asked: the Word it asks about and the Words it offers, none when typed. */
 interface Asked {
   readonly answer: Word;
   readonly options: readonly Word[];
@@ -193,6 +193,18 @@ async function playGame(app: Composition): Promise<Asked[]> {
   const asked: Asked[] = [];
   while (current(app).status === 'playing') {
     const { round } = current(app);
+    if (round.form === 'typed') {
+      // A typed Round asks a Definition no other eligible Word has, so the pack's one Word with it.
+      const typed = words.filter((word) => asks(word, round));
+      const [answer] = typed;
+      if (answer === undefined || typed.length > 1) {
+        throw new Error(`No one Word answers «${round.prompt}»`);
+      }
+      void app.game.answer({ form: 'typed', text: answer.lemma });
+      asked.push({ answer, options: [], round: current(app).round });
+      await app.game.next();
+      continue;
+    }
     const options = optionsOf(round).map(({ text }) => {
       const reading = wordsReading(text);
       const word = reading.find((candidate) => asks(candidate, round)) ?? reading[0];
@@ -236,7 +248,8 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
     // One composition plays three Games: opening one plans the Game over the whole pack, the slow part.
     const app = await runWords(1);
     for (let game = 0; game < 3; game += 1) {
-      for (const { answer, options } of await playGame(app)) {
+      for (const { answer, options, round } of await playGame(app)) {
+        if (round.form === 'typed') continue;
         expect(
           options.filter((option) => option.partOfSpeech === answer.partOfSpeech),
         ).toHaveLength(Math.min(4, wordsOf(answer.partOfSpeech)));
@@ -271,7 +284,7 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
       }
 
       expect(asked.some(({ round }) => shared(definitionOf(round.prompt)))).toBe(true);
-      for (const { answer, round } of asked) {
+      for (const { answer, round } of asked.filter(({ round }) => round.form === 'pick')) {
         const prompt = definitionOf(answer.primaryDefinition);
         expect(
           optionsOf(round).filter(({ text }) =>
@@ -310,7 +323,7 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
       }
 
       expect(verbRounds.length).toBeGreaterThan(0);
-      for (const { options } of verbRounds) {
+      for (const { options } of verbRounds.filter(({ round }) => round.form === 'pick')) {
         expect(options.filter((option) => option.partOfSpeech === 'verb')).toHaveLength(1);
         expect(options.every((option) => option.categoryId === 'human-body')).toBe(true);
       }
@@ -357,20 +370,25 @@ describe('the idioms «Вгадай слово» asks about in the Ukrainian Lan
       await app.game.start('guess-word');
       while (current(app).status === 'playing') {
         const { round } = current(app);
-        void app.game.answer({
-          form: 'pick',
-          option: offered(round).findIndex((entry) => asks(entry, round)),
-        });
+        const typed = words.find((entry) => asks(entry, round));
+        void app.game.answer(
+          round.form === 'typed'
+            ? { form: 'typed', text: typed?.lemma ?? '' }
+            : { form: 'pick', option: offered(round).findIndex((entry) => asks(entry, round)) },
+        );
         await app.game.next();
       }
       expect(current(app)).toMatchObject({ roundsPassed: GAME_ROUNDS, status: 'won' });
       played.push(...current(app).played);
     }
 
-    for (const round of played) {
+    for (const round of played.filter(({ form }) => form === 'pick')) {
       expect(offered(round).map(({ kind }) => kind)).toEqual(Array(4).fill(round.entry.kind));
     }
-    const shown = played.flatMap((round) => [round.entry, ...offered(round)]);
+    const shown = played.flatMap((round) => [
+      round.entry,
+      ...(round.form === 'pick' ? offered(round) : []),
+    ]);
     expect(shown.filter((entry) => entry.kind === 'idiom' && entry.idiomType !== 'idiom')).toEqual(
       [],
     );

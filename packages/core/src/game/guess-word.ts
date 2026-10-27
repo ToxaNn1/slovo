@@ -68,6 +68,24 @@ const isIdiomProper = (entry: Entry): entry is Idiom =>
 /** The Rounds of a Game that ask a Word in an Example with a gap, when one has its Lemma (spec #772, L10). */
 const GAP_ROUNDS = { first: 6, last: 10 };
 
+/**
+ * The first Round of a Game that asks a Word's Definition for the Word typed
+ * (spec #772, L10), unless another eligible Word has the same Definition.
+ */
+const FIRST_TYPED_ROUND = 11;
+
+/**
+ * The Round that asks the Word's primary Definition for the Word typed, with
+ * no blanks; its sheet shows the Lemma with its Stress and its first Example,
+ * if it has one.
+ */
+const typedRound = (word: Word): RoundContent => ({
+  form: 'typed',
+  prompt: word.primaryDefinition,
+  expected: word.lemma,
+  sheet: { answer: wordOptions.optionOf(word), example: word.examples[0] },
+});
+
 /** What stands for the Lemma in an Example with a gap. */
 const GAP = '…';
 
@@ -244,9 +262,13 @@ function tipRound({ gameQuestion, example }: Tip, random: Random): RoundContent 
  * options, none with the answer's primary Definition, so the prompt fits one
  * option only. In Rounds 6–10 a Word's Round shows instead its first Example
  * with the Lemma as written, a gap in its place, which the Round marks; a
- * Word with no such Example is asked by its Definition (ADR 0052). A Word's Round offers four Lemmas with their Stress, the three
- * Distractors by the Edition's Distractor rule, no two with the same Lemma,
- * so homonyms never share a Round. An idiom's Round offers four idioms, the
+ * Word with no such Example is asked by its Definition (ADR 0052). From Round
+ * 11 a Word's Round asks its Definition for the Word typed, compared the way
+ * `typedAnswerMatches` does, and its sheet shows the Lemma with its Stress; a
+ * Word whose Definition another eligible Word shares is asked by a pick
+ * instead, so the Round keeps one right answer. A pick of a Word offers four
+ * Lemmas with their Stress, the three Distractors by the Edition's Distractor
+ * rule, no two with the same Lemma, so homonyms never share a Round. An idiom's Round offers four idioms, the
  * three Distractors drawn at random from the other idioms; a place name is
  * never asked or offered. Its sheet shows the answer and its first Example,
  * if it has one. It asks about Synonym Rows too, with no quota, only while at
@@ -265,9 +287,12 @@ export const guessWord: GameMode = {
   buildRound({ answer, eligible, round, random, edition }) {
     if (answer.kind === 'word') {
       const definition = definitionOf(answer);
-      const others = eligible.filter(
-        (entry): entry is Word => entry.kind === 'word' && definitionOf(entry) !== definition,
+      const words = eligible.filter((entry): entry is Word => entry.kind === 'word');
+      const others = words.filter((entry) => definitionOf(entry) !== definition);
+      const sharesDefinition = words.some(
+        (entry) => entry.id !== answer.id && definitionOf(entry) === definition,
       );
+      if (round >= FIRST_TYPED_ROUND && !sharesDefinition) return typedRound(answer);
       const order = distractorOrder[edition.languageTraits.distractorRule](answer, others, random);
       return roundOf(answer, order, wordOptions, random, gapIn(answer, round));
     }
