@@ -18,7 +18,7 @@
     "smoke:halves": "node scripts/smoke-halves.mjs",
     "lint": "oxlint && turbo run lint && prettier --check .",
     "typecheck": "turbo run typecheck",
-    "deps": "depcruise apps packages tools editions --config .dependency-cruiser.mjs",
+    "deps": "depcruise apps packages tools editions --config .dependency-cruiser.mjs && depcruise apps/mobile/src packages/core/src packages/ui/src --config .dependency-cruiser.folders.mjs",
     "test": "turbo run test",
     "format": "prettier --write .",
     "knip": "SLOVO_EDITION=uk knip"
