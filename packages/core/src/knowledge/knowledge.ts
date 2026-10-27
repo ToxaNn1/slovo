@@ -203,7 +203,10 @@ export async function openKnowledge({
     follow();
   }
 
-  /** Marks the Entry by the change the record and today give, unless the switch is off. */
+  /**
+   * Marks the Entry by the change the record and today give, with the instant
+   * of the mark, unless the switch is off.
+   */
   const change = (
     entryId: string,
     next: (record: KnowledgeRecord | undefined) => KnowledgeRecord | undefined,
@@ -211,7 +214,11 @@ export async function openKnowledge({
     inTurn(async () => {
       if (!edition.isFeatureEnabled('knowledge')) return;
       await readRow(entryId);
-      await keep(entryId, next(records.get(entryId)));
+      const record = next(records.get(entryId));
+      await keep(
+        entryId,
+        record === undefined ? undefined : { ...record, markedAt: clock.now().toISOString() },
+      );
     });
 
   return {

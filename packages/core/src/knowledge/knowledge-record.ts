@@ -18,6 +18,11 @@ export interface KnowledgeRecord {
   readonly reviewDay: string | null;
   /** Whether the Entry is Learned: it no longer comes back for Review. */
   readonly learned: boolean;
+  /**
+   * The instant the mark was set or changed, ISO 8601 in UTC, which the
+   * Weekly Recap counts (ADR 0054); none on a mark kept before 0.8.13.
+   */
+  readonly markedAt?: string;
 }
 
 const learned: KnowledgeRecord = { mark: 'known', step: null, reviewDay: null, learned: true };

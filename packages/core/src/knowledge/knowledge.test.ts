@@ -8,6 +8,7 @@ import {
   type Composition,
   type ContentReadPort,
   type FeatureSwitch,
+  userStateRecords,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
 import { correction, fakeClock, knownCounts, word } from '../test-support';
@@ -128,6 +129,46 @@ describe('Knowledge Marks', () => {
     await app.knowledge.tap('w_one', 'known');
     expect(app.knowledge.state.shown.get('w_one')).toBe('known');
     expect(await app.entryCard('w_one')).not.toHaveProperty('review');
+  });
+
+  it('keeps the instant a mark is set or changed, from a tap and from an answer alike', async () => {
+    const records = new Map<string, string>();
+    const time = fakeClock('2026-10-19T09:00:00.000Z');
+    const app = await run({ records, clock: time.clock });
+    const markTime = (entryId: string) =>
+      userStateRecords.knowledge.record(entryId).decode(records.get(`knowledge.${entryId}`))
+        ?.markedAt;
+
+    await app.knowledge.tap('w_one', 'unknown');
+    expect(markTime('w_one')).toBe('2026-10-19T09:00:00.000Z');
+
+    time.advance(HOUR);
+    await app.knowledge.tap('w_one', 'known');
+    expect(markTime('w_one')).toBe('2026-10-19T10:00:00.000Z');
+
+    time.advance(HOUR);
+    await app.knowledge.answer('w_two', 'unknown');
+    expect(markTime('w_two')).toBe('2026-10-19T11:00:00.000Z');
+  });
+
+  it('reads a mark kept before 0.8.13, with no mark time, and gives it one once it changes', async () => {
+    const records = new Map([
+      [
+        'knowledge.w_one',
+        JSON.stringify({ mark: 'unknown', step: 1, reviewDay: '2026-10-20', learned: false }),
+      ],
+    ]);
+    const time = fakeClock('2026-10-19T09:00:00.000Z');
+    const app = await run({ records, clock: time.clock });
+    const record = () =>
+      userStateRecords.knowledge.record('w_one').decode(records.get('knowledge.w_one'));
+
+    expect(app.knowledge.state.shown.get('w_one')).toBe('unknown');
+    expect(learningOf(app)).toEqual([['w_one', 1]]);
+    expect(record()).not.toHaveProperty('markedAt');
+
+    await app.knowledge.tap('w_one', 'known');
+    expect(record()).toMatchObject({ mark: 'known', markedAt: '2026-10-19T09:00:00.000Z' });
   });
 
   it('answers by the local day: Unknown at 23:50 is due the morning after', async () => {

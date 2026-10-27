@@ -296,6 +296,7 @@ describe('two devices of one Account', () => {
       step: null,
       reviewDay: null,
       learned: true,
+      markedAt: '2026-10-18T10:00:00.000Z',
     });
   });
 
