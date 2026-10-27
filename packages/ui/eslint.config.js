@@ -8,6 +8,12 @@ const cyrillicBan = {
   message: 'The UI must not contain language-specific text; read it from the Edition.',
 };
 
+const compilerRulesOff = Object.fromEntries(
+  Object.keys(reactHooks.configs.flat['recommended-latest'].rules)
+    .filter((rule) => !['react-hooks/rules-of-hooks', 'react-hooks/exhaustive-deps'].includes(rule))
+    .map((rule) => [rule, 'off']),
+);
+
 export default [
   ...shared,
   {
@@ -27,13 +33,32 @@ export default [
     },
   },
   {
-    // The rules of hooks and effect dependencies. The React Compiler rules of
-    // the plugin's presets are left out.
+    // The rules of hooks, effect dependencies and the React Compiler's rules.
     files: ['**/*.{ts,tsx}'],
     plugins: { 'react-hooks': reactHooks },
     rules: {
-      'react-hooks/rules-of-hooks': 'error',
+      ...reactHooks.configs.flat['recommended-latest'].rules,
       'react-hooks/exhaustive-deps': 'error',
     },
+  },
+  {
+    // Modules with Reanimated or gesture code opt out of the compiler with
+    // 'use no memo' (ADR 0059), so its rules do not apply to them.
+    files: [
+      'src/decor/DecorSlots.tsx',
+      'src/feed/FeedStates.tsx',
+      'src/game/GameRound.tsx',
+      'src/game/OrderedChips.tsx',
+      'src/game/PairsGrid.tsx',
+      'src/game/VowelButtons.tsx',
+      'src/onboarding/Onboarding.tsx',
+      'src/onboarding/SplashOverlay.tsx',
+      'src/primitives/BottomSheet.tsx',
+      'src/primitives/UndoToast.tsx',
+      'src/primitives/VerticalPager.tsx',
+      'src/saved/FavoriteButton.tsx',
+      'src/share/ShareSheet.tsx',
+    ],
+    rules: compilerRulesOff,
   },
 ];

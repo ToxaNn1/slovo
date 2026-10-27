@@ -39,6 +39,7 @@ export function NotificationTimes() {
   const [duplicate, setDuplicate] = useState(false);
   // The hint is about the list as it was when the time was refused.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- predates the compiler rules; rewrite is pending (ADR 0059)
     setDuplicate(false);
   }, [state.times]);
 

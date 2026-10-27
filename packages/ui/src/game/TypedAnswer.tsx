@@ -144,6 +144,7 @@ function Blanks({
             </Text>
           );
         const label = blankLabel(place, blank.letter);
+        // eslint-disable-next-line react-hooks/immutability -- the compiler skips this function until it is rewritten (ADR 0059)
         place += 1;
         return (
           <View
