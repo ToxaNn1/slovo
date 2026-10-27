@@ -104,6 +104,12 @@ describe('app config', () => {
     expect(config.extra?.['edition']).toEqual({ id: 'uk' });
   });
 
+  it('turns on the React Compiler (ADR 0059)', () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+
+    expect(appConfig(context).experiments?.reactCompiler).toBe(true);
+  });
+
   it('names the field when the Edition config is invalid', () => {
     vi.stubEnv('SLOVO_EDITION', 'uk');
     const broken = repoWithEdition((config) => {

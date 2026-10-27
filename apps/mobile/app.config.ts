@@ -220,6 +220,9 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
     orientation: 'portrait',
     userInterfaceStyle: 'automatic',
     icon: relative(projectRoot, icon),
+    // Memoises components and hooks at build time; modules with Reanimated or
+    // gesture code opt out with 'use no memo' (ADR 0059).
+    experiments: { reactCompiler: true },
     ios: {
       bundleIdentifier: edition.config.bundleId,
       supportsTablet: false,
