@@ -118,7 +118,7 @@ export interface Composition extends Hiding {
    * today's Word of the Day carries its day, and the card of an Entry due for
    * Review is a Review (`review`), as in the Feed. Opening it never
    * makes the Entry Seen: Seen comes from the Feed, a notification or the
-   * widget.
+   * widget, never from Search or the mood roulette.
    */
   entryCard(entryId: string): Promise<AnyEntryCard | undefined>;
   /**
@@ -133,6 +133,18 @@ export interface Composition extends Hiding {
    * the day, as `resume` does, with today's Active Day in the Word's write.
    */
   openedFromNotification(entryId: string): Promise<AnyEntryCard | undefined>;
+  /**
+   * Opens an Entry from a Search result: its Entry card, like `entryCard`.
+   * It writes nothing, so the Entry is not Seen and History stays as it was
+   * (ADR 0054).
+   */
+  openedFromSearch(entryId: string): Promise<AnyEntryCard | undefined>;
+  /**
+   * Opens the Word the mood roulette landed on: its Entry card, like
+   * `entryCard`. It writes nothing, so the Word is not Seen and History stays
+   * as it was (ADR 0054).
+   */
+  openedFromMood(entryId: string): Promise<AnyEntryCard | undefined>;
   /** The row model of any Entry, Retired or not, for a list; nothing for an id the Language Pack doesn't have. */
   entryRow(entryId: string): Promise<EntryRowModel | undefined>;
   /**
@@ -424,6 +436,9 @@ export async function openComposition({
     ...createHiding({ rows, hiddenEntries, mix }),
     entryCard,
     openedFromNotification: openedFromOutside,
+    // Opened from inside the app: one rule for both, nothing Seen (ADR 0054).
+    openedFromSearch: entryCard,
+    openedFromMood: entryCard,
     entryRow: (entryId) => rows.row(entryId),
     widget: createWidget({
       edition,
