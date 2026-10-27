@@ -33,8 +33,10 @@ export {
 export {
   buildSynonymRowShareCard,
   buildTipShareCard,
+  buildWeeklyRecapShareCard,
   type SynonymRowShareCardModel,
   type TipShareCardModel,
+  type WeeklyRecapShareCardModel,
 } from './share/share-card';
 export { coreDecor, loadDecor, type Decor } from './edition/decor';
 export { createEntries, type Entries, type ShownEntry, type ShownKind } from './entries/entries';
