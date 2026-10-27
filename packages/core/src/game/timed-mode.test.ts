@@ -194,6 +194,7 @@ describe('a Game of «На час»', () => {
     expect(current(app)).toMatchObject({
       lives: undefined,
       status: 'playing',
+      timeLimit: 60_000,
       time: { left: 60_000, endsAt: new Date(time.clock.now().getTime() + 60_000) },
     });
     for (let answered = 0; answered < 5; answered += 1) {

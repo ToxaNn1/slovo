@@ -1,6 +1,9 @@
-import type { GameState, GivenAnswer } from '@slovo/core';
+import type { GameState, GameTime, GivenAnswer } from '@slovo/core';
+import { useEffect, useState } from 'react';
 
 import { useComposition } from '../composition';
+import { deviceClock } from '../device/device-clock';
+import { useInForeground } from '../foreground/in-foreground';
 import { keep } from '../keep';
 import { logError } from '../log';
 import { useSubscribed } from '../opening';
@@ -38,4 +41,46 @@ export function useGameActions() {
       game.leave();
     },
   };
+}
+
+/** How often the timer of a timed Game reads the clock, in milliseconds, so each second turns on time. */
+const TICK_MS = 250;
+
+/**
+ * The play time a timed Game has left now, in milliseconds, read from the
+ * clock while it runs and kept as the Core gave it while it is paused; none
+ * in another Game.
+ */
+export function useTimeLeft(time: GameTime | undefined): number | undefined {
+  const endsAt = time?.endsAt?.getTime();
+  const [now, setNow] = useState(() => deviceClock.now().getTime());
+  useEffect(() => {
+    if (endsAt === undefined) return undefined;
+    const tick = () => {
+      setNow(deviceClock.now().getTime());
+    };
+    tick();
+    const ticking = setInterval(tick, TICK_MS);
+    return () => {
+      clearInterval(ticking);
+    };
+  }, [endsAt]);
+  if (time === undefined) return undefined;
+  // Never more than the Core gave, before the first tick of a clock run again.
+  return endsAt === undefined ? time.left : Math.max(0, Math.min(time.left, endsAt - now));
+}
+
+/**
+ * Pauses the clock of a timed Game while the app is in the background and
+ * runs it again on return, so that time never counts (ADR 0052). A pause or
+ * a resume that fails is logged.
+ */
+export function usePauseInBackground(): void {
+  const { game } = useComposition();
+  const inForeground = useInForeground();
+  useEffect(() => {
+    (inForeground ? game.resume() : game.pause()).catch((error: unknown) => {
+      logError('Could not pause or resume the Game', error);
+    });
+  }, [game, inForeground]);
 }

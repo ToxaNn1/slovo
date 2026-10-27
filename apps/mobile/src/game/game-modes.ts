@@ -44,6 +44,7 @@ const PLAYED_MODES: ReadonlySet<string> = new Set([
   'idiom-meaning',
   'build-idiom',
   'survival',
+  'timed',
 ]);
 
 /** The offers of the modes the app plays, in the Core's order. */

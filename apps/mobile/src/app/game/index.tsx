@@ -21,7 +21,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { editionStrings } from '../../edition/edition';
 import { useOpenScreen } from '../../entries/use-open-screen';
 import { useDailyCrosswordCard } from '../../game/daily-crossword';
-import { useGameActions, useGameState } from '../../game/game';
+import { useGameActions, useGameState, usePauseInBackground, useTimeLeft } from '../../game/game';
 import { gameModeCard, gameModeGroups, gameModeStrings, playedOffers } from '../../game/game-modes';
 import { useShown } from '../../shown-in-effect';
 
@@ -33,7 +33,8 @@ const RULES_MAX_FONT_SCALE = 1.5;
 /**
  * The Game tab: the mode screen, a Round with its answer sheet, or the result
  * screen with its Game Review, as the Core's Game stands, while the Game is on
- * in effect. The Game stays in the Core composition, so another tab and back,
+ * in effect. A timed Game's timer ticks, and stops while the app is in the
+ * background. The Game stays in the Core composition, so another tab and back,
  * or an Entry the Game Review opens and back, finds it where it was.
  */
 export default function GameScreen() {
@@ -49,8 +50,10 @@ function Game() {
   const openScreen = useOpenScreen();
   const { gameReview } = useShown();
   const { colors } = useTokens();
+  usePauseInBackground();
 
   const { current } = state;
+  const timeLeft = useTimeLeft(current?.time);
   return (
     <SafeAreaView
       testID="game"
@@ -85,6 +88,7 @@ function Game() {
       ) : (
         <GameRound
           game={current}
+          timeLeft={timeLeft}
           label={gameModeStrings(strings.modes, current.modeId).roundLabel}
           onAnswer={actions.answer}
           onNext={actions.next}

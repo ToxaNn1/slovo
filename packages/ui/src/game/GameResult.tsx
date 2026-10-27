@@ -56,7 +56,8 @@ function ResultNumber({
  * The result screen (`game-result-win-dark`, `game-result-loss-dark`): the
  * title and the line of a win or a loss, the Rounds passed (out of the
  * mode's Round limit, or alone in a mode without one), the Lives left
- * and the best result when there is one, «Ще раз» for a new Game in the same
+ * and the best result; a timed Game ends with its time up, its right answers
+ * in place of the Rounds passed when there is one, «Ще раз» for a new Game in the same
  * mode and «На головну» for the Feed. A win arrives with the success haptic
  * twice. The Edition's victory illustration (Decor slot 6) sits over the
  * title, large and stitched in on a win, small and still on a loss. The Game
@@ -83,6 +84,9 @@ export function GameResult({
   const words = strings.game;
   const { roundsPassed, roundLimit, lives } = game;
   const won = game.status === 'won';
+  // A timed Game ends once its time is up, and counts its right answers.
+  const timed = game.time !== undefined;
+  const right = game.played.filter((round) => round.right).length;
   const progress = { passed: String(roundsPassed), total: String(roundLimit ?? '') };
   const gameHaptics = useGameHaptics();
   // Whether the win has played, so only the screen's arrival plays it.
@@ -107,7 +111,13 @@ export function GameResult({
       />
       <View accessible {...voice} style={styles.text}>
         <WholeWordsText
-          text={won ? words.result.won.title : words.result.lost.title}
+          text={
+            timed
+              ? words.result.timeUp.title
+              : won
+                ? words.result.won.title
+                : words.result.lost.title
+          }
           size={TITLE_SIZE}
           tracking={0}
           accessibilityRole="header"
@@ -117,21 +127,34 @@ export function GameResult({
           maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
           style={[styles.line, { color: colors.muted, fontFamily: fontFamilies.ui }]}
         >
-          {won ? count(words.result.won.line, roundsPassed) : words.result.lost.line}
+          {timed
+            ? words.result.timeUp.line
+            : won
+              ? count(words.result.won.line, roundsPassed)
+              : words.result.lost.line}
         </Text>
       </View>
       <View style={styles.numbers}>
-        <ResultNumber
-          testID="game-result-rounds"
-          value={
-            roundLimit === undefined ? String(roundsPassed) : fill(words.round.progress, progress)
-          }
-          label={count(words.result.rounds, roundLimit ?? roundsPassed)}
-          spoken={fill(
-            roundLimit === undefined ? words.round.passedLabel : words.round.progressLabel,
-            progress,
-          )}
-        />
+        {timed ? (
+          <ResultNumber
+            testID="game-result-right"
+            value={String(right)}
+            label={count(words.result.right, right)}
+            spoken={`${String(right)} ${count(words.result.right, right)}`}
+          />
+        ) : (
+          <ResultNumber
+            testID="game-result-rounds"
+            value={
+              roundLimit === undefined ? String(roundsPassed) : fill(words.round.progress, progress)
+            }
+            label={count(words.result.rounds, roundLimit ?? roundsPassed)}
+            spoken={fill(
+              roundLimit === undefined ? words.round.passedLabel : words.round.progressLabel,
+              progress,
+            )}
+          />
+        )}
         {lives !== undefined && (
           <ResultNumber
             testID="game-result-lives"

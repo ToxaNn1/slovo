@@ -43,6 +43,7 @@ import {
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { ease, RIGHT_FILL, shake, WRONG_FILL } from './round-motion';
 import { OrderedChips } from './OrderedChips';
+import { GameTimer } from './GameTimer';
 import { PairsGrid } from './PairsGrid';
 import { TypedAnswer, type TypedAnswerBlank } from './TypedAnswer';
 import { useGameHaptics } from './useGameHaptics';
@@ -115,6 +116,7 @@ export function GameRound({
   onNext,
   onLeave,
   onOpenLetter,
+  timeLeft,
 }: {
   game: CurrentGame;
   /** The label over the prompt, the Game Mode's, for a Round about a Word, an idiom or a Correction. */
@@ -125,25 +127,26 @@ export function GameRound({
   onLeave: () => void;
   /** «Відкрити літеру» in a typed Round with blanks. */
   onOpenLetter: () => void;
+  /** The play time left now in a timed Game, as the screen ticks it; the Game's own when none. */
+  timeLeft?: number | undefined;
 }) {
   const { strings } = useEdition();
   const { round } = game;
   const { answer } = round;
   const gameHaptics = useGameHaptics();
-  // Whether the Round showed an answer before, so only the answer given now plays.
-  const shownAnswered = useRef(answer !== undefined);
+  // The answer just given: the Round's, or in a timed Game, which moves on at once, the last Round's.
+  const given = game.time === undefined ? answer : game.played.at(-1)?.answer;
+  // The answer shown before, so only the answer given now plays.
+  const shownAnswer = useRef(given);
 
   useEffect(() => {
-    if (answer === undefined) {
-      shownAnswered.current = false;
-      return;
-    }
-    if (shownAnswered.current) return;
-    shownAnswered.current = true;
-    if (answer.right) gameHaptics.rightAnswer();
+    if (given === shownAnswer.current) return;
+    shownAnswer.current = given;
+    if (given === undefined) return;
+    if (given.right) gameHaptics.rightAnswer();
     else gameHaptics.wrongAnswer();
     // New haptics, after a change of Vibration, find the answer already played.
-  }, [answer, gameHaptics]);
+  }, [given, gameHaptics]);
 
   const [asking, setAsking] = useState(false);
   const exit = strings.game.exit;
@@ -158,6 +161,11 @@ export function GameRound({
         roundLimit={game.roundLimit}
         lives={game.lives}
         livesAtStart={game.livesAtStart}
+        time={
+          game.time === undefined || game.timeLimit === undefined
+            ? undefined
+            : { left: timeLeft ?? game.time.left, limit: game.timeLimit }
+        }
         onExit={() => {
           setAsking(true);
         }}
@@ -334,14 +342,16 @@ function TypedRoundAnswer({
 /**
  * The Round's header (`game-round-dark`): the ✕ at its start, the Rounds
  * passed over a bar that grows as they pass towards the mode's Round limit,
- * or with no limit just the Rounds passed, and the Lives on the right, full
- * in the heart colour, lost as an outline.
+ * or with no limit just the Rounds passed, or in a timed Game the timer in
+ * their place, and the Lives on the right, full in the heart colour, lost as
+ * an outline.
  */
 function GameHeader({
   roundsPassed,
   roundLimit,
   lives,
   livesAtStart,
+  time,
   onExit,
 }: {
   roundsPassed: number;
@@ -351,10 +361,12 @@ function GameHeader({
   lives: number | undefined;
   /** The Lives the Game started with. */
   livesAtStart: number | undefined;
+  /** The play time left of a timed Game and its whole time, in milliseconds; none in another Game. */
+  time: { left: number; limit: number } | undefined;
   onExit: () => void;
 }) {
   const { colors, fontFamilies } = useTokens();
-  const { strings, voice } = useEdition();
+  const { strings, voice, count } = useEdition();
   const words = strings.game.round;
   const progress = { passed: String(roundsPassed), total: String(roundLimit ?? '') };
   const passed = useSharedValue(roundsPassed);
@@ -368,29 +380,41 @@ function GameHeader({
   return (
     <View style={styles.header}>
       <ExitButton onPress={onExit} />
-      <View
-        testID="game-progress"
-        accessible
-        accessibilityLabel={fill(
-          roundLimit === undefined ? words.passedLabel : words.progressLabel,
-          progress,
-        )}
-        {...voice}
-        style={styles.progress}
-      >
-        <Text
-          maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
-          style={[styles.progressText, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+      {time === undefined ? (
+        <View
+          testID="game-progress"
+          accessible
+          accessibilityLabel={fill(
+            roundLimit === undefined ? words.passedLabel : words.progressLabel,
+            progress,
+          )}
+          {...voice}
+          style={styles.progress}
         >
-          {fill(roundLimit === undefined ? words.passed : words.progress, progress)}
-        </Text>
-        {roundLimit === undefined ? null : (
-          <View testID="game-progress-bar" style={[styles.bar, { backgroundColor: colors.track }]}>
-            <Animated.View style={[filled, { backgroundColor: colors.accent }]} />
-            <Animated.View style={unfilled} />
-          </View>
-        )}
-      </View>
+          <Text
+            maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+            style={[styles.progressText, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+          >
+            {fill(roundLimit === undefined ? words.passed : words.progress, progress)}
+          </Text>
+          {roundLimit === undefined ? null : (
+            <View
+              testID="game-progress-bar"
+              style={[styles.bar, { backgroundColor: colors.track }]}
+            >
+              <Animated.View style={[filled, { backgroundColor: colors.accent }]} />
+              <Animated.View style={unfilled} />
+            </View>
+          )}
+        </View>
+      ) : (
+        <GameTimer
+          remainingMs={time.left}
+          totalMs={time.limit}
+          texts={{ remaining: (seconds) => count(words.timer, seconds) }}
+          testID="game-timer"
+        />
+      )}
       {lives !== undefined && livesAtStart !== undefined && (
         <View
           testID="game-lives"

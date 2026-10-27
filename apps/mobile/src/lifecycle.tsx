@@ -1,5 +1,5 @@
 import type { Composition, FeatureSwitch } from '@slovo/core';
-import { useEffect, useSyncExternalStore } from 'react';
+import { useEffect } from 'react';
 import { AppState } from 'react-native';
 
 import { accountOpening } from './account/device-account';
@@ -8,7 +8,6 @@ import { editionStrings } from './edition/edition';
 import { deviceClock } from './device/device-clock';
 import { languagePackOpening } from './edition/language-pack';
 import { remoteSwitchesOpening } from './edition/remote-switches';
-import { createForeground } from './foreground/foreground';
 import { reportForeground } from './foreground/foreground-reports';
 import { logError } from './log';
 import { settingsOpening } from './settings/settings';
@@ -20,14 +19,6 @@ import { createWidgetSnapshotWriter } from './widget/widget-snapshot';
 /** Whether the feature is on in effect, by the remote Feature Switches the app knows (ADR 0040). */
 async function isOnInEffect(feature: FeatureSwitch): Promise<boolean> {
   return (await remoteSwitchesOpening.opened()).edition.isFeatureEnabled(feature);
-}
-
-/** The shell's one source of whether the app is in the foreground, for the Feed. */
-const foreground = createForeground(AppState);
-
-/** Whether the app is in the foreground, kept up to date. */
-export function useInForeground(): boolean {
-  return useSyncExternalStore(foreground.subscribe, foreground.active);
 }
 
 /**
