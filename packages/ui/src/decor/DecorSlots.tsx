@@ -1,3 +1,6 @@
+'use no memo';
+// Reanimated or gesture code: the React Compiler skips this module (ADR 0059).
+
 import type { DecorMotif } from '@slovo/contracts';
 import { useEffect, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';

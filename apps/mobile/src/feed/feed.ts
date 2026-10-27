@@ -73,6 +73,7 @@ export function useFeed(pager: RefObject<VerticalPagerHandle | null>): FeedState
   useEffect(() => {
     if (turnTo === undefined) return;
     pager.current?.turnTo(turnTo);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- predates the compiler rules; rewrite is pending (ADR 0059)
     setTurnTo(undefined);
   }, [pager, turnTo]);
   // A hide or its undo drops or puts back cards, and the reader's card moves
@@ -83,6 +84,7 @@ export function useFeed(pager: RefObject<VerticalPagerHandle | null>): FeedState
     const position = feed.position;
     if (position >= cards.length) return;
     pager.current?.showPage(position);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- predates the compiler rules; rewrite is pending (ADR 0059)
     onCardChange(position);
   }, [pager, feed, cards, onCardChange]);
 

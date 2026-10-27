@@ -1,3 +1,6 @@
+'use no memo';
+// Reanimated or gesture code: the React Compiler skips this module (ADR 0059).
+
 import { useEffect, useRef } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, {

@@ -7,12 +7,11 @@ export default [
   ...tokenLint,
   { ignores: ['.expo/**', 'ios/**', 'android/**', 'expo-env.d.ts'] },
   {
-    // The rules of hooks and effect dependencies. The React Compiler rules of
-    // the plugin's presets are left out.
+    // The rules of hooks, effect dependencies and the React Compiler's rules.
     files: ['**/*.{ts,tsx}'],
     plugins: { 'react-hooks': reactHooks },
     rules: {
-      'react-hooks/rules-of-hooks': 'error',
+      ...reactHooks.configs.flat['recommended-latest'].rules,
       'react-hooks/exhaustive-deps': 'error',
     },
   },
