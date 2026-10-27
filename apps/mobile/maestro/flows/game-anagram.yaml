@@ -1,0 +1,72 @@
+# The chips mode «Анаграми»: it plays from its card, each Round tapping the
+# letter chips in the order shown, which the Core never leaves the Word's, so
+# each Word is wrong and its sheet shows the right one, and «Далі», until five
+# wrong Words end the Game on the result screen; «На головну» goes to the
+# Feed. A subflow of `smoke.yaml`; run it from there. It leaves no Game in play.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- tapOn:
+    id: tab-game
+- scrollUntilVisible:
+    element:
+      id: game-mode-anagram
+    direction: DOWN
+- tapOn:
+    id: game-mode-anagram
+- assertVisible:
+    id: game-round
+- assertVisible:
+    id: chips
+# Five Rounds, a Life each. A Word has 4–9 letters, so the chips past the
+# fourth are optional. Each scroll brings its target up at the largest text
+# sizes and does nothing otherwise.
+- repeat:
+    while:
+      notVisible:
+        id: game-result
+    times: 5
+    commands:
+      - tapOn:
+          id: chips-0
+      - tapOn:
+          id: chips-1
+      - tapOn:
+          id: chips-2
+      - tapOn:
+          id: chips-3
+      - tapOn:
+          id: chips-4
+          optional: true
+      - tapOn:
+          id: chips-5
+          optional: true
+      - tapOn:
+          id: chips-6
+          optional: true
+      - tapOn:
+          id: chips-7
+          optional: true
+      - tapOn:
+          id: chips-8
+          optional: true
+      - assertVisible:
+          id: game-sheet-title
+      - scrollUntilVisible:
+          element:
+            id: game-next
+          direction: DOWN
+      # One tap: a second one, while the sheet slides away, would land on the tab bar.
+      - tapOn:
+          id: game-next
+          retryTapIfNoChange: false
+      - waitForAnimationToEnd
+- assertVisible:
+    id: game-result
+- scrollUntilVisible:
+    element:
+      id: game-home
+    direction: DOWN
+- tapOn:
+    id: game-home
+- assertVisible:
+    id: home

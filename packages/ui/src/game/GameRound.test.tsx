@@ -83,6 +83,7 @@ function answered(game: CurrentGame, given: GivenAnswer): CurrentGame {
   if (given.form === 'vowel') return answeredVowel(game, given.position);
   if (given.form === 'pairs') return answeredPair(game, given.word, given.definition);
   if (given.form === 'typed') return answeredTyped(game, given.text);
+  if (given.form === 'chips') return answeredChips(game, given.chips);
   return answeredPick(game, given);
 }
 
@@ -294,6 +295,47 @@ function withLetterOpened(game: CurrentGame): CurrentGame {
   return { ...game, round: { ...round, blanks, canOpenLetter: left > 1 } };
 }
 
+/** A Round of «Анаграми»: «o'brok» from shuffled letters, its apostrophe in place. */
+const CHIPS = ['k', 'o', 'r', 'b', 'o'] as const;
+const ANAGRAM = ['o', 'b', 'r', 'o', 'k'] as const;
+const chipsRound: CurrentGame = {
+  ...first,
+  modeId: 'anagram',
+  round: {
+    number: 1,
+    entryKind: 'word',
+    prompt: 'a tribute paid in kind',
+    highlight: undefined,
+    form: 'chips',
+    chips: CHIPS,
+    fixed: [{ at: 1, text: "'" }],
+    answer: undefined,
+  },
+};
+
+/** The Game with its chips Round answered with the chips at those places, equal chips interchangeable. */
+function answeredChips(game: CurrentGame, chosen: readonly number[]): CurrentGame {
+  const right = chosen.every((place, index) => CHIPS[place] === ANAGRAM[index]);
+  return {
+    ...game,
+    round: {
+      ...game.round,
+      answer: {
+        form: 'chips',
+        chosen,
+        expected: ANAGRAM,
+        right,
+        sheet: {
+          answer: { text: "o'brok", stressedVowels: [] },
+          example: { text: 'An o’brok of grain.', author: undefined },
+        },
+      },
+    },
+    lives: right || game.lives === undefined ? game.lives : game.lives - 1,
+    status: 'answered',
+  };
+}
+
 /** The mode's label over a Round, by its answer form. */
 const LABELS: Partial<Record<CurrentGame['round']['form'], string>> = {
   vowel: 'Where is the stress?',
@@ -503,6 +545,44 @@ describe('GameRound', () => {
       await fireEvent.press(screen.getByRole('button', { name: 'open and honest' }));
 
       expect(screen.getByRole('header', { name: 'Not this time' })).toBeTruthy();
+      expect(screen.getByLabelText('Lives: 4 of 5')).toBeOnTheScreen();
+    });
+  });
+
+  describe('a chips Round', () => {
+    it('asks a Definition under the mode’s label, with the letters as chips and the apostrophe in place', async () => {
+      await renderRound(jest.fn(), jest.fn(), chipsRound);
+
+      expect(screen.getByTestId('game-prompt').props['accessibilityLabel']).toBe(
+        'Definition. a tribute paid in kind',
+      );
+      expect(screen.queryAllByTestId(/^chips-\d+$/)).toHaveLength(5);
+      expect(screen.getByRole('button', { name: 'k' })).toBeEnabled();
+    });
+
+    it('answers with the chips in the order tapped and shows the Word with its Example', async () => {
+      const onAnswer = jest.fn();
+      await renderRound(onAnswer, jest.fn(), chipsRound);
+
+      for (const place of [1, 3, 2, 4, 0]) {
+        await fireEvent.press(screen.getByTestId(`chips-${String(place)}`));
+      }
+
+      expect(onAnswer).toHaveBeenCalledWith({ form: 'chips', chips: [1, 3, 2, 4, 0] });
+      expect(screen.getByTestId('chips-line')).toHaveTextContent("o'brok");
+      expect(screen.getByRole('header', { name: 'Right!' })).toBeTruthy();
+      expect(screen.getByText('An o’brok of grain.')).toBeOnTheScreen();
+    });
+
+    it('takes a Life for a Word assembled wrong and shows the right one in the sheet', async () => {
+      await renderRound(jest.fn(), jest.fn(), chipsRound);
+
+      for (const place of [0, 1, 2, 3, 4]) {
+        await fireEvent.press(screen.getByTestId(`chips-${String(place)}`));
+      }
+
+      expect(screen.getByRole('header', { name: 'Not this time' })).toBeTruthy();
+      expect(screen.getByTestId('game-sheet')).toHaveTextContent("o'brok", { exact: false });
       expect(screen.getByLabelText('Lives: 4 of 5')).toBeOnTheScreen();
     });
   });
