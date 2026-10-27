@@ -24,7 +24,7 @@ export const roundLimitOf = ({ roundLimit = GAME_ROUNDS }: GameMode): number | u
  * How many Rounds a Game in the mode starts with, and so how many eligible
  * Entries the mode needs: its Round limit, or `GAME_ROUNDS` without one.
  */
-export const roundsToPlanOf = (mode: GameMode): number => roundLimitOf(mode) ?? GAME_ROUNDS;
+const roundsToPlanOf = (mode: GameMode): number => roundLimitOf(mode) ?? GAME_ROUNDS;
 
 /** How many Rounds of a Game, at most, ask about Entries the reader is weak on (ADR 0043). */
 const WEAK_ROUNDS = 5;

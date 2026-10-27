@@ -59,6 +59,12 @@ export interface GameState {
    * A mode has none before its first finished Game; none has with the Game off.
    */
   readonly bestResults: Readonly<Partial<Record<string, number>>>;
+  /**
+   * Whether the result of the Game just over offers the widget hint: after
+   * the first finished Game with at least one Life left, once ever on the
+   * device (ADR 0054), and never with the widget or its hint switched off.
+   */
+  readonly widgetHint: boolean;
 }
 
 /**
@@ -140,7 +146,7 @@ const sameOffer = (one: GameModeOffer, other: GameModeOffer | undefined) =>
 const sameOffers = (one: readonly GameModeOffer[], other: readonly GameModeOffer[]) =>
   one.length === other.length && one.every((offer, index) => sameOffer(offer, other[index]));
 
-const { gameBest } = userStateRecords;
+const { gameBest, widgetHintOffered } = userStateRecords;
 
 /** Whether the Game is still in play: a Round to answer, or one answered and waiting for «Далі». */
 const inPlay = ({ status }: CurrentGame) => status === 'playing' || status === 'answered';
@@ -241,7 +247,13 @@ export async function openGame({
     })),
     current: undefined,
     bestResults,
+    widgetHint: false,
   };
+  /** Whether the next finished Game with a Life left offers the widget hint. */
+  let widgetHintDue =
+    edition.isFeatureEnabled('widget') &&
+    edition.isFeatureEnabled('widgetHint') &&
+    (await userState.read(widgetHintOffered)) === undefined;
   /** The Game in play, or just over; none on the mode screen. */
   let played: GameInPlay | undefined;
   /** Cancels the end of the timed Game in play, scheduled while its clock runs. */
@@ -253,7 +265,7 @@ export async function openGame({
   }
 
   const changeCurrent = (current: CurrentGame | undefined) => {
-    change({ ...state, current });
+    change({ ...state, current, widgetHint: false });
   };
 
   /** The one place that decides whether a mode can start, see `createRoundPlanner`. */
@@ -331,7 +343,7 @@ export async function openGame({
       played && mode.timeLimit !== undefined
         ? { ...played.first, timeLimit: mode.timeLimit, time: runTime(mode.timeLimit) }
         : played?.first;
-    change({ ...state, modes: modesNow, current: first });
+    change({ ...state, modes: modesNow, current: first, widgetHint: false });
   }
 
   /** Cancels the scheduled end of the timed Game in play, if any. */
@@ -391,15 +403,22 @@ export async function openGame({
   }
 
   /**
-   * Ends the Game, its Rounds passed the best result when they beat it: kept
-   * in the user state first, so a failed write changes nothing. A Game left
-   * during the write stays left.
+   * Ends the Game, its Rounds passed the best result when they beat it, and
+   * offers the widget hint when it is due and a Life is left: both kept in
+   * the user state first, in one write, so a failed write changes nothing. A
+   * Game left during the write stays left.
    */
   async function finish(game: CurrentGame, over: CurrentGame): Promise<void> {
     const result = resultOf(over);
     const best = state.bestResults[over.modeId];
     const beaten = best === undefined || result > best;
-    if (beaten) await userState.write(gameBest.record(over.modeId).change(result));
+    const widgetHint = widgetHintDue && over.lives !== undefined && over.lives > 0;
+    const changes = new Map([
+      ...(beaten ? gameBest.record(over.modeId).change(result) : []),
+      ...(widgetHint ? widgetHintOffered.change(true) : []),
+    ]);
+    if (changes.size > 0) await userState.write(changes);
+    if (widgetHint) widgetHintDue = false;
     const mode = beaten ? modes.find(({ id }) => id === over.modeId) : undefined;
     change({
       ...state,
@@ -408,6 +427,7 @@ export async function openGame({
       ),
       current: state.current === game ? over : state.current,
       bestResults: beaten ? { ...state.bestResults, [over.modeId]: result } : state.bestResults,
+      widgetHint: widgetHint && state.current === game,
     });
   }
 
