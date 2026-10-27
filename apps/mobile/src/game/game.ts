@@ -11,7 +11,7 @@ export function useGameState(): GameState {
 }
 
 /**
- * What the Game screens do: start a Game, answer, «Далі» and leave. A start
+ * What the Game screens do: start a Game, answer, «Відкрити літеру», «Далі» and leave. A start
  * or a «Далі» that fails is logged and leaves the Game as it was. A «Не знаю»
  * mark of a wrong answer that fails to write is logged too, and the Game goes on.
  */
@@ -25,6 +25,9 @@ export function useGameActions() {
     },
     answer: (given: GivenAnswer) => {
       void keep('the Knowledge Mark', game.answer(given), undefined);
+    },
+    openLetter: () => {
+      game.openLetter();
     },
     next: () => {
       game.next().catch((error: unknown) => {

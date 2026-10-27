@@ -32,7 +32,13 @@ export function gameModeStrings(modes: GameModesStrings, modeId: string): GameMo
  * gets its card once its screen comes (spec #772), so no card opens a Round
  * the app can't show.
  */
-const PLAYED_MODES: ReadonlySet<string> = new Set(['guess-word', 'correction', 'stress', 'pairs']);
+const PLAYED_MODES: ReadonlySet<string> = new Set([
+  'guess-word',
+  'correction',
+  'stress',
+  'pairs',
+  'by-letters',
+]);
 
 /** The offers of the modes the app plays, in the Core's order. */
 export const playedOffers = (offers: readonly GameModeOffer[]): GameModeOffer[] =>

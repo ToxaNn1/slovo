@@ -126,6 +126,11 @@ export const GameStringsSchema = z.strictObject({
      * e.g. «ЯКЕ СЛОВО ПРОПУЩЕНО?», and what VoiceOver reads for the gap, e.g. «пропуск».
      */
     gap: z.strictObject({ label: TextSchema, voiceOver: TextSchema }),
+    /**
+     * A Round the reader answers by typing: the field's placeholder, which
+     * VoiceOver reads as its name, e.g. «Ваша відповідь», and its submit button, e.g. «Перевірити».
+     */
+    typed: z.strictObject({ label: TextSchema, submit: TextSchema }),
     /** What VoiceOver reads of the timer of a mode with a time limit, e.g. «лишилось 40 секунд». Takes `{count}`, the seconds left. */
     timer: PluralSchema,
   }),

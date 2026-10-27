@@ -1,0 +1,59 @@
+# The typing mode «За буквами»: it plays from its card, each Round opening a
+# letter, then typing «а» and «Перевірити», a wrong Word whose sheet shows the
+# right one, and «Далі», until five wrong Words end the Game on the result
+# screen; «На головну» goes to the Feed. A subflow of `smoke.yaml`; run it
+# from there. It leaves no Game in play.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- tapOn:
+    id: tab-game
+- scrollUntilVisible:
+    element:
+      id: game-mode-by-letters
+    direction: DOWN
+- tapOn:
+    id: game-mode-by-letters
+- assertVisible:
+    id: game-round
+- assertVisible:
+    id: game-typed-blanks
+# Five Rounds, a Life each. Each scroll brings its target up at the largest
+# text sizes and does nothing otherwise.
+- repeat:
+    while:
+      notVisible:
+        id: game-result
+    times: 5
+    commands:
+      - scrollUntilVisible:
+          element:
+            id: game-typed-open-letter
+          direction: DOWN
+      - tapOn:
+          id: game-typed-open-letter
+      - tapOn:
+          id: game-typed
+      - inputText: а
+      - tapOn:
+          id: game-typed-submit
+      - assertVisible:
+          id: game-sheet-title
+      - scrollUntilVisible:
+          element:
+            id: game-next
+          direction: DOWN
+      # One tap: a second one, while the sheet slides away, would land on the tab bar.
+      - tapOn:
+          id: game-next
+          retryTapIfNoChange: false
+      - waitForAnimationToEnd
+- assertVisible:
+    id: game-result
+- scrollUntilVisible:
+    element:
+      id: game-home
+    direction: DOWN
+- tapOn:
+    id: game-home
+- assertVisible:
+    id: home
