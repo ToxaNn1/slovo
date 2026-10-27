@@ -217,12 +217,51 @@ describe('the 0.8.13 strings', () => {
   });
 
   it('the Ukrainian Edition carries the agreed Feed Notice texts verbatim', () => {
-    expect(parsed.feedNotices).toEqual({
+    expect(parsed.feedNotices).toMatchObject({
       weeklyRecap: { title: 'Ваш тиждень' },
       yesterday: { title: 'Пам’ятаєте вчорашнє слово?' },
       dailyLimit: { message: 'На сьогодні досить. Повертайтеся завтра', keepGoing: 'Гортати далі' },
       firstWeek: { close: 'Зрозуміло', lastDayTitle: 'Тиждень із нами' },
     });
+  });
+
+  it('the Ukrainian Edition carries a first-week card with a title and a text for days 1 to 6', () => {
+    const { days } = parsed.feedNotices.firstWeek;
+
+    expect(days).toHaveLength(6);
+    for (const day of days) {
+      expect(day.title).not.toBe('');
+      expect(day.text).not.toBe('');
+    }
+  });
+
+  it('needs six first-week cards before the seventh day', () => {
+    const feedNotices = strings['feedNotices'] as { firstWeek: { days: unknown[] } };
+    const changed = {
+      ...strings,
+      feedNotices: {
+        ...feedNotices,
+        firstWeek: { ...feedNotices.firstWeek, days: feedNotices.firstWeek.days.slice(0, 5) },
+      },
+    };
+
+    expect(issuesOf(changed)).toEqual(['feedNotices.firstWeek.days']);
+  });
+
+  it('needs the Streak as {count} in every form of the seventh day’s text', () => {
+    const feedNotices = strings['feedNotices'] as { firstWeek: { lastDayText: object } };
+    const changed = {
+      ...strings,
+      feedNotices: {
+        ...feedNotices,
+        firstWeek: {
+          ...feedNotices.firstWeek,
+          lastDayText: { ...feedNotices.firstWeek.lastDayText, few: 'Ваша серія — кілька днів.' },
+        },
+      },
+    };
+
+    expect(issuesOf(changed)).toEqual(['feedNotices.firstWeek.lastDayText.few']);
   });
 
   it('the Ukrainian Edition carries the agreed texts of Settings, «Збережене», Mood and the widget', () => {
