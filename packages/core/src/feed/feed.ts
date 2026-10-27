@@ -16,6 +16,7 @@ import {
 import { closedNotices, closeNotice, FEED_NOTICES, type FeedNotices } from './feed-notices';
 import { createFeedSession, type FeedSession } from './feed-session';
 import type { HistoryRecorder, Seen } from '../saved/history';
+import type { WordOfTheDayArchiveRecorder } from '../saved/word-of-the-day-archive';
 import { createInTurn, createSubscribers } from '../in-turn';
 import type { Knowledge } from '../knowledge/knowledge';
 import { dateKeyOf, todayDate, todayKey, type LocalDate } from '../local-date';
@@ -323,7 +324,9 @@ function eligibleDue(cycle: Cycle, knowledge: Pick<Knowledge, 'state'>): EntryId
  * new Cycle never starts in between. It joins History as the Word of the
  * Day's card only if it is today's Word of the Day. An Entry the Cycle
  * doesn't cover (Hidden, Retired, out of the Mix) or one Seen already gets
- * only `changes` written, so a Hidden Entry never re-enters History.
+ * only `changes` written, so a Hidden Entry never re-enters History. The
+ * Word of the Day's card becoming Seen keeps its day in the archive in the
+ * same write.
  *
  * Once an Entry becomes Seen, by either way, the Feed calls `entrySeen`, for
  * the composition to follow it.
@@ -343,6 +346,7 @@ export async function openFeed({
   knowledge,
   wordOfTheDay,
   history,
+  archive,
   entrySeen,
   notices,
 }: {
@@ -353,6 +357,7 @@ export async function openFeed({
   knowledge: Pick<Knowledge, 'state'>;
   wordOfTheDay: WordOfTheDay;
   history: HistoryRecorder;
+  archive: WordOfTheDayArchiveRecorder;
   entrySeen: (entryId: string) => Promise<void>;
   notices: FeedNotices;
 }): Promise<{
@@ -590,7 +595,7 @@ export async function openFeed({
     swiped?: boolean;
   }): Promise<string | undefined> {
     const seenId = seenOnLeaving(left, stayed);
-    const leftWordOfTheDay = left?.kind === 'word' && left.wordOfTheDay !== undefined;
+    const leftWordOfTheDay = left?.kind === 'word' ? left.wordOfTheDay : undefined;
     // A Feed Notice of a day before, left open over midnight, is closed already.
     const closed =
       swiped && left?.kind === 'notice' && dateKeyOf(left.day) === date
@@ -607,20 +612,29 @@ export async function openFeed({
     );
   }
 
+  /** An Entry becoming Seen: on the Word of the Day's card of the day, if it was one. */
+  type Seeing = Omit<Seen, 'wordOfTheDay'> & { readonly wordOfTheDay: LocalDate | undefined };
+
   /**
    * Writes `changes` in one write with the Entry's Seen mark and History
-   * entry, if given and it isn't Seen yet (ADR 0018), and then makes the Seen
-   * mark in memory. Returns the Entry that became Seen, if one did.
+   * entry, if given and it isn't Seen yet (ADR 0018), and the archive's day
+   * for the Word of the Day's card, and then makes the Seen mark in memory.
+   * Returns the Entry that became Seen, if one did.
    */
   async function keepSeen(
-    seen: Seen | undefined,
+    seen: Seeing | undefined,
     changes: UserStateChanges,
   ): Promise<string | undefined> {
     const mark = seen === undefined ? undefined : cycle.markSeen(seen.entryId);
-    const all = new Map([...(mark?.changes ?? []), ...changes]);
     // An Entry that becomes Seen joins History in the same write.
     const becomesSeen = seen !== undefined && (mark?.changes.size ?? 0) > 0;
-    if (becomesSeen) await history.record(seen, all);
+    const archived =
+      becomesSeen && seen.wordOfTheDay !== undefined
+        ? archive.record(seen.wordOfTheDay, seen.entryId)
+        : new Map<string, string | undefined>();
+    const all = new Map([...(mark?.changes ?? []), ...archived, ...changes]);
+    if (becomesSeen)
+      await history.record({ ...seen, wordOfTheDay: seen.wordOfTheDay !== undefined }, all);
     else if (all.size > 0) await userState.write(all);
     mark?.commit();
     return becomesSeen ? seen.entryId : undefined;
@@ -743,10 +757,11 @@ export async function openFeed({
     entryId: string,
     changes: UserStateChanges,
   ): Promise<string | undefined> {
+    const chosen = wordOfTheDay.chosen();
     const seen = {
       entryId,
       seenAt: clock.now(),
-      wordOfTheDay: wordOfTheDay.chosen()?.wordId === entryId,
+      wordOfTheDay: chosen?.wordId === entryId ? chosen.date : undefined,
     };
     return keepSeen(cycle.covers(entryId) ? seen : undefined, changes);
   }
