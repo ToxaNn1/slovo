@@ -1,5 +1,5 @@
-import type { RoundAnswer } from '@slovo/core';
-import { useEffect, useRef, useState } from 'react';
+import type { FixedChip, RoundAnswer } from '@slovo/core';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   interpolateColor,
@@ -34,12 +34,15 @@ type ChipsAnswer = Extract<RoundAnswer, { form: 'chips' }>;
  * judged, a right line fills in the correct colour and, in a wrong one, the
  * first chip out of place fills in the wrong colour and shakes, which Reduce
  * Motion leaves out; the screen plays the answer's haptic. VoiceOver reads
- * every chip by its text, the line's in the order placed. Key it by the Round,
- * so a new Round starts with an empty line.
+ * every chip by its text, the line's in the order placed. A character that
+ * stays in place, such as an apostrophe, is no chip: it shows in the line
+ * once the chips before it are there. Key it by the Round, so a new Round
+ * starts with an empty line.
  */
 export function OrderedChips({
   chips,
   kind,
+  fixed = [],
   answer,
   onAnswer,
 }: {
@@ -47,6 +50,8 @@ export function OrderedChips({
   chips: readonly string[];
   /** Whether the chips are a Word's letters or an expression's words, which sets their size. */
   kind: 'letter' | 'word';
+  /** The characters that stay in place among the chips; none when left out. */
+  fixed?: readonly FixedChip[] | undefined;
   /** The Round's answer, once given. */
   answer: ChipsAnswer | undefined;
   /** The places of the chips, in the order tapped, once every chip is in the line. */
@@ -63,26 +68,34 @@ export function OrderedChips({
     <View testID="chips" style={styles.chips}>
       <View testID="chips-line" style={styles.line}>
         <LineRule />
-        {line.map((place, index) => (
-          <LineChip
-            key={place}
-            index={index}
-            text={chips[place] ?? ''}
-            kind={kind}
-            fill={
-              answer === undefined
-                ? undefined
-                : answer.right
-                  ? 'right'
-                  : wrongAt === index
-                    ? 'wrong'
-                    : undefined
-            }
-            disabled={answer !== undefined}
-            onPress={() => {
-              setTapped(tapped.filter((other) => other !== place));
-            }}
-          />
+        {[...line, undefined].map((place, index) => (
+          <Fragment key={place ?? 'end'}>
+            {fixed
+              .filter(({ at }) => at === index)
+              .map(({ text }, mark) => (
+                <FixedMark key={mark} text={text} kind={kind} />
+              ))}
+            {place !== undefined && (
+              <LineChip
+                index={index}
+                text={chips[place] ?? ''}
+                kind={kind}
+                fill={
+                  answer === undefined
+                    ? undefined
+                    : answer.right
+                      ? 'right'
+                      : wrongAt === index
+                        ? 'wrong'
+                        : undefined
+                }
+                disabled={answer !== undefined}
+                onPress={() => {
+                  setTapped(tapped.filter((other) => other !== place));
+                }}
+              />
+            )}
+          </Fragment>
         ))}
       </View>
       <View style={styles.tray}>
@@ -234,6 +247,17 @@ function LineChip({
   );
 }
 
+/** A character in place in the answer line, such as an apostrophe: no chip, never tapped. */
+function FixedMark({ text, kind }: { text: string; kind: 'letter' | 'word' }) {
+  const { colors } = useTokens();
+  const { voice } = useEdition();
+  return (
+    <View style={styles.mark} {...voice}>
+      <ChipText text={text} kind={kind} color={colors.ink} />
+    </View>
+  );
+}
+
 function ChipText({ text, kind, color }: { text: string; kind: 'letter' | 'word'; color: string }) {
   const { fontFamilies } = useTokens();
   return (
@@ -276,6 +300,7 @@ const styles = StyleSheet.create({
   letter: { paddingHorizontal: space[3] },
   word: { paddingHorizontal: space[4] },
   placed: { opacity: 0 },
+  mark: { minHeight: CHIP_HEIGHT, justifyContent: 'center' },
   letterText: { fontSize: typeSize.roundOption, fontWeight: '500' },
   wordText: { fontSize: WORD_SIZE, fontWeight: '500' },
 });

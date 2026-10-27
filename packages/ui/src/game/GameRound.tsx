@@ -44,6 +44,7 @@ import {
 } from '../tokens';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { ease, RIGHT_FILL, shake, WRONG_FILL } from './round-motion';
+import { OrderedChips } from './OrderedChips';
 import { PairsGrid } from './PairsGrid';
 import { TypedAnswer, type TypedAnswerBlank } from './TypedAnswer';
 import { useGameHaptics } from './useGameHaptics';
@@ -98,7 +99,9 @@ type PickAnswer = Extract<RoundAnswer, { form: 'pick' }>;
  * prompt under its label, the four options and, once answered, the sheet.
  * It plays the pick form, the vowel form, whose Word stands in the card
  * with each vowel a button, and the pairs form, whose grid stands under the
- * mode's label in place of the card and the options, and the typed form,
+ * mode's label in place of the card and the options, the chips form, whose
+ * chips, a Word's letters or an expression's words, stand under the card in
+ * place of the options, and the typed form,
  * whose field stands under the card in place of the options, with the
  * Word's blanks and «Відкрити літеру» in a Round that shows blanks; the
  * screens of the other answer forms come with their Game Modes (spec #772). A
@@ -193,6 +196,18 @@ export function GameRound({
           </>
         ) : (
           <RoundCard label={asked.label} prompt={asked.prompt} highlight={round.highlight} />
+        )}
+        {round.form === 'chips' && (
+          <OrderedChips
+            key={round.number}
+            chips={round.chips}
+            kind={round.entryKind === 'idiom' ? 'word' : 'letter'}
+            fixed={round.fixed}
+            answer={answer?.form === 'chips' ? answer : undefined}
+            onAnswer={(chips) => {
+              onAnswer({ form: 'chips', chips });
+            }}
+          />
         )}
         {round.form === 'typed' && (
           <TypedRoundAnswer

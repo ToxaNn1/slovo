@@ -1,5 +1,5 @@
 import type { EditionStrings } from '@slovo/contracts';
-import type { RoundAnswer } from '@slovo/core';
+import type { FixedChip, RoundAnswer } from '@slovo/core';
 import { EditionProvider, OrderedChips } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
@@ -31,11 +31,13 @@ function Round({
   chips,
   expected,
   kind,
+  fixed,
   onAnswer,
 }: {
   chips: readonly string[];
   expected: readonly string[];
   kind: 'letter' | 'word';
+  fixed: readonly FixedChip[] | undefined;
   onAnswer: (chosen: number[]) => void;
 }) {
   const [answer, setAnswer] = useState<ChipsAnswer>();
@@ -43,6 +45,7 @@ function Round({
     <OrderedChips
       chips={chips}
       kind={kind}
+      fixed={fixed}
       answer={answer}
       onAnswer={(chosen) => {
         onAnswer(chosen);
@@ -56,16 +59,18 @@ async function renderChips({
   chips = LETTERS,
   expected = WORD,
   kind = 'letter',
+  fixed,
   onAnswer = jest.fn(),
 }: {
   chips?: readonly string[];
   expected?: readonly string[];
   kind?: 'letter' | 'word';
+  fixed?: readonly FixedChip[];
   onAnswer?: (chosen: number[]) => void;
 } = {}) {
   await render(
     <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-      <Round chips={chips} expected={expected} kind={kind} onAnswer={onAnswer} />
+      <Round chips={chips} expected={expected} kind={kind} fixed={fixed} onAnswer={onAnswer} />
     </EditionProvider>,
   );
 }
@@ -181,6 +186,24 @@ describe('OrderedChips', () => {
     expect(screen.getByRole('button', { name: 'k' })).toBeEnabled();
     expect(screen.getByTestId('chips-line-0')).toHaveAccessibleName('o');
     expect(screen.getAllByRole('button', { name: 'o' })).toHaveLength(2);
+  });
+
+  it('keeps an apostrophe in its place in the line, after the chips before it, and never a chip', async () => {
+    // «p'yat» as shuffled letters, its apostrophe after the first letter.
+    await renderChips({
+      chips: ['t', 'y', 'p', 'a'],
+      expected: ['p', 'y', 'a', 't'],
+      fixed: [{ at: 1, text: "'" }],
+    });
+
+    expect(screen.queryByText("'")).toBeNull();
+    expect(screen.queryAllByTestId(/^chips-\d+$/)).toHaveLength(4);
+    await tap(2);
+    expect(screen.getByTestId('chips-line')).toHaveTextContent("p'", { exact: false });
+    await tap(1, 3, 0);
+
+    expect(screen.getByTestId('chips-line')).toHaveTextContent("p'yat");
+    expect(lineText()).toEqual(['p', 'y', 'a', 't']);
   });
 
   it('plays words as chips the same way', async () => {
