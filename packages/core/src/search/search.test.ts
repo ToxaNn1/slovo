@@ -47,6 +47,7 @@ describe('Search over Word Lemmas', () => {
   it('gives nothing for a query of one character, however it is padded', async () => {
     const search = await searchOver(words);
 
+    expect(await lemmasOf(search, 'су')).toEqual(['на сумирному', 'сумирний']);
     expect(await lemmasOf(search, 'с')).toEqual([]);
     expect(await lemmasOf(search, ' с ')).toEqual([]);
     expect(await lemmasOf(search, 'с́')).toEqual([]);
@@ -121,8 +122,10 @@ describe('Search over Word Lemmas', () => {
   });
 
   it('finds nothing while the Edition turns Search off', async () => {
-    const search = await searchOver(words, { off: ['search'] });
+    const on = await searchOver(words);
+    const off = await searchOver(words, { off: ['search'] });
 
-    expect(await lemmasOf(search, 'сум')).toEqual([]);
+    expect(await lemmasOf(on, 'сум')).toEqual(['на сумирному', 'сумирний']);
+    expect(await lemmasOf(off, 'сум')).toEqual([]);
   });
 });
