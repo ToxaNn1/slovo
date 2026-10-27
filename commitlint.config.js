@@ -4,7 +4,8 @@ export default {
   extends: ['@commitlint/config-conventional'],
   rules: {
     'type-enum': [2, 'always', ['feat', 'fix', 'docs', 'chore', 'test', 'refactor']],
-    // A workspace package by its folder name, or `deps` for dependency bumps.
+    // A workspace package by its folder name, or `deps` and `deps-dev`
+    // for dependency bumps (Dependabot uses both).
     'scope-enum': [
       2,
       'always',
@@ -15,6 +16,7 @@ export default {
         'contracts',
         'core',
         'deps',
+        'deps-dev',
         'language-pack',
         'mobile',
         'server-core',
