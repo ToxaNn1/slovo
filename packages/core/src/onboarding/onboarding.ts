@@ -5,6 +5,7 @@ import { formatTimeOfDay, todayKey } from '../local-date';
 import type { MorningNotification } from '../notifications/notification-plan';
 import type { Notifications } from '../notifications/notifications';
 import type { Clock } from '../ports';
+import type { RarityTest, RarityTestWord } from '../rarity-test/rarity-test';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
 import { buildWordCard, type WordCardModel } from '../entries/word-card';
@@ -12,10 +13,10 @@ import type { WordOfTheDay } from '../feed/word-of-the-day';
 
 /**
  * The steps of the onboarding, in order: the one place that has them, so a
- * step that joins changes the count everywhere. The SLOVO ID step comes last,
- * only with the Account on.
+ * step that joins changes the count everywhere. The Rarity Test step comes
+ * only with the Rarity Test on, the SLOVO ID step last, only with the Account on.
  */
-const STEPS = ['welcome', 'mix', 'notifications', 'account'] as const;
+const STEPS = ['welcome', 'mix', 'rarityTest', 'notifications', 'account'] as const;
 
 type StepKind = (typeof STEPS)[number];
 
@@ -49,6 +50,12 @@ export type OnboardingStep =
     })
   /** The Mix, which the step changes through the composition's Mix. */
   | (StepPlace & { readonly kind: 'mix' })
+  /**
+   * The Rarity Test, offered after the Mix and skippable: the Words to ask
+   * about, drawn when the step opens from the Mix the reader just chose. The
+   * shell applies the answers through the composition's Rarity Test.
+   */
+  | (StepPlace & { readonly kind: 'rarityTest'; readonly words: readonly RarityTestWord[] })
   | (StepPlace & {
       readonly kind: 'notifications';
       /**
@@ -71,8 +78,8 @@ export interface OnboardingState {
 }
 
 /**
- * The onboarding: its steps in order (the welcome, the Mix, the
- * notifications and, with the Account on, SLOVO ID), and whether the reader
+ * The onboarding: its steps in order (the welcome, the Mix, with the Rarity
+ * Test on the Rarity Test, the notifications and, with the Account on, SLOVO ID), and whether the reader
  * finished it, which is also when they skipped it. It opens on launch until
  * then, at the welcome, and never again after. The step on screen is not kept: closing the app halfway
  * starts over at the welcome. Read from the user state once, when it opens,
@@ -94,7 +101,8 @@ export interface Onboarding {
   readonly state: OnboardingState;
   /**
    * Goes on to the next step, for the welcome's and the Mix step's button,
-   * the notifications step's quiet "later" and the SLOVO ID step's «continue
+   * the Rarity Test step's way past it or on from its result, the
+   * notifications step's quiet "later" and the SLOVO ID step's «continue
    * without an Account». Past the last step it finishes.
    */
   next(): Promise<void>;
@@ -131,7 +139,9 @@ const noSample = (): undefined => undefined;
  * Opens the onboarding over the user state, for the Core composition, once
  * today's Word of the Day is chosen. `nextMorning` is the plan's next morning
  * notification, which the sample shows. `account` says whether the Edition
- * has the Account, which brings the SLOVO ID step.
+ * has the Account, which brings the SLOVO ID step. `rarityTest` is the
+ * composition's Rarity Test while the Edition turns it on, which brings the
+ * Rarity Test step; the step is passed over when its draw has no Word.
  */
 export async function openOnboarding({
   userState,
@@ -141,6 +151,7 @@ export async function openOnboarding({
   notifications,
   nextMorning,
   account,
+  rarityTest,
 }: {
   userState: UserState;
   clock: Clock;
@@ -152,9 +163,12 @@ export async function openOnboarding({
   notifications: Pick<Notifications, 'askPermission' | 'subscribe'>;
   nextMorning: () => Promise<MorningNotification | undefined>;
   account: boolean;
+  rarityTest: Pick<RarityTest, 'draw'> | undefined;
 }): Promise<Onboarding> {
   const subscribers = createSubscribers();
-  const steps: readonly StepKind[] = account ? STEPS : STEPS.filter((kind) => kind !== 'account');
+  const steps: readonly StepKind[] = STEPS.filter(
+    (kind) => (kind !== 'account' || account) && (kind !== 'rarityTest' || rarityTest),
+  );
 
   async function wordCardOf(wordId: string | undefined): Promise<WordCardModel | undefined> {
     const word = wordId === undefined ? undefined : await entries.get(wordId);
@@ -173,14 +187,22 @@ export async function openOnboarding({
         };
   }
 
-  /** The step at `index` in the order, with what it shows. */
-  async function stepAt(index: number): Promise<OnboardingStep> {
+  /**
+   * The step at `index` in the order, with what it shows, or the one after it
+   * when it has nothing to show; nothing past the last step.
+   */
+  async function stepAt(index: number): Promise<OnboardingStep | undefined> {
     const place = { number: index + 1, total: steps.length };
     const kind = steps[index];
+    if (kind === undefined) return undefined;
     if (kind === 'welcome') {
       return { kind, ...place, hero: await wordCardOf(wordOfTheDay.chosen()?.wordId) };
     }
     if (kind === 'mix' || kind === 'account') return { kind, ...place };
+    if (kind === 'rarityTest') {
+      const words = (await rarityTest?.draw()) ?? [];
+      return words.length === 0 ? stepAt(index + 1) : { kind, ...place, words };
+    }
     // The step comes without a sample rather than not at all when it can't be read.
     return { kind: 'notifications', ...place, sample: await sampleNotification().catch(noSample) };
   }
@@ -223,12 +245,12 @@ export async function openOnboarding({
 
   /** Goes on from the step of `kind` to the next one, or finishes past the last. */
   async function goOn(kind: StepKind): Promise<void> {
-    const index = steps.indexOf(kind) + 1;
-    if (index === steps.length) {
+    const step = await stepAt(steps.indexOf(kind) + 1);
+    if (step === undefined) {
       await keepFinished();
       return;
     }
-    change({ ...state, step: await stepAt(index) });
+    change({ ...state, step });
   }
 
   /** Counts the samples asked for, so only the latest one reaches the step. */

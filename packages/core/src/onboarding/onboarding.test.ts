@@ -53,6 +53,7 @@ async function run({
   content = twoCategories,
   account = false,
   notifications = true,
+  rarityTest = false,
 }: {
   content?: ContentReadPort;
   records?: Map<string, string>;
@@ -62,6 +63,8 @@ async function run({
   account?: boolean;
   /** Whether the Edition in effect has the Feature Switch of notifications on. */
   notifications?: boolean;
+  /** Whether the Edition turns the Rarity Test and the Rarity Floor it sets on. */
+  rarityTest?: boolean;
 } = {}): Promise<Composition> {
   return openComposition({
     content,
@@ -81,6 +84,7 @@ async function run({
       isFeatureEnabled: (feature) =>
         (feature === 'account' && account) ||
         (feature === 'notifications' && notifications) ||
+        ((feature === 'rarityTest' || feature === 'rarityFloor') && rarityTest) ||
         feature === 'wordOfTheDay',
       languageTraits: { distractorRule: 'same-part-of-speech' },
     },
@@ -652,6 +656,59 @@ describe('Onboarding', () => {
       await app.onboarding.finish();
 
       expect(app.onboarding.state.finishedAt).toBeDefined();
+    });
+  });
+
+  describe('the Rarity Test step', () => {
+    it('comes third, after the Mix, with the Words drawn from the Mix the reader chose', async () => {
+      const app = await run({ rarityTest: true });
+      expect(stepOf(app)).toMatchObject({ kind: 'welcome', number: 1, total: 4 });
+      await goTo(app, 'mix');
+      await app.mix.takeOut('other');
+
+      await app.onboarding.next();
+
+      const step = stepOf(app);
+      expect(step).toMatchObject({ kind: 'rarityTest', number: 3, total: 4 });
+      if (step.kind !== 'rarityTest') throw new Error('Expected the Rarity Test step');
+      // Every Word is of rarity 3 here, so the draw has two.
+      expect(step.words).toHaveLength(2);
+      expect(step.words.every(({ wordId }) => wordId.startsWith('w_test'))).toBe(true);
+      expect(step.words[0]).toMatchObject({ rarity: 3, stressedVowels: ['t'] });
+    });
+
+    it('goes on to the notifications, whether the reader took the test or not', async () => {
+      const app = await run({ rarityTest: true });
+      await goTo(app, 'rarityTest');
+
+      await app.onboarding.next();
+
+      expect(stepOf(app)).toMatchObject({ kind: 'notifications', number: 4, total: 4 });
+    });
+
+    it('is left out while the Edition turns the Rarity Test off', async () => {
+      const app = await run();
+      await goTo(app, 'mix');
+
+      await app.onboarding.next();
+
+      expect(stepOf(app)).toMatchObject({ kind: 'notifications', number: 3, total: 3 });
+    });
+
+    it('is passed over when it has no Word to ask about', async () => {
+      const app = await run({
+        rarityTest: true,
+        content: createMemoryContentPort({
+          categories,
+          words: [word('w_gone', { retired: true })],
+          corrections: [],
+        }),
+      });
+      await goTo(app, 'mix');
+
+      await app.onboarding.next();
+
+      expect(stepOf(app).kind).toBe('notifications');
     });
   });
 
