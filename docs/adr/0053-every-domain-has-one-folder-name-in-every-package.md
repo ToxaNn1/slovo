@@ -10,9 +10,9 @@ The rules, in place of ADR 0027's "a folder appears when a domain has at least t
 - **What stays at the root.** In the Core: `composition.ts` (the top, ADR 0018) with its tests `composition.test.ts`, `opened-from-notification.test.ts` and `opened-from-widget.test.ts`; `ports.ts`, `in-turn.ts`, `local-date.ts` and `retry.ts`, the shared base (`retry.ts` is the one rule by which `account/`, `sync/`, `edition/` and `content-update/` try a request again, ADR 0037); `index.ts`, `testing.ts` and `test-support.ts`. In the UI: `index.ts` and `tokens.ts`. In the app: `composition.ts`; `opening.ts` and its gate `opened.tsx` (ADR 0036), which every domain opens through and the account screen draws over; `api.ts`, the backend's address the API adapters of four domains share; `keep.ts`, which four domains wait on; `shown.ts` and `shown-in-effect.ts`, what the reader is shown of the switched-off or hidden features, read by the routes, the Entries and Sync; `test-support.ts`; and the type declarations `env.d.ts` and `slovo-edition.d.ts`.
 - **The app's own folders.** Beside `device/` and `foreground/` (ADR 0027), the app has `shell/`, what the root layout sets up before and around every screen (`lifecycle`, `launch-splash`, `intl-polyfill`), which only the routes import, and `diagnostics/`, the log and the crash reports with the scrubbing of personal data they share (ADR 0048), which import no domain. `foreground/` stays its own folder below the domains: the Feed, the Game and Sync import it, so inside `shell/`, which imports Sync, it would close a cycle. For the same reason `opening.ts` and `opened.tsx` stay at the root rather than in `shell/`.
 - **The routes import `src` through `@/`.** The Expo Router routes in `apps/mobile/src/app/` import the app's modules as `@/opening` or `@/entries/entry-screen`, not `../../opening`, so a route's imports don't change with its depth. `@/` maps to `apps/mobile/src/` in the app's `tsconfig.json`, which Metro reads, in Jest's `moduleNameMapper` and in dependency-cruiser's resolution. The modules inside `src` keep their relative imports.
-- **Domain folders import each other in one direction.** dependency-cruiser's `domain-folders-import-one-way` (in `.dependency-cruiser.folders.mjs`, run by `pnpm deps`) rejects a cycle between two domain folders of a package. It counts the modules a package ships, not their tests: a test may set its scene up with another domain's module, as `user-state.test.ts` does with the Feed's Cycle. The rule warns until the cycles it finds today are cut: in the app `account/` ↔ `sync/` (`sync/device-sync.ts` opens through `account/device-account.ts`, and `account/account-screen.tsx` draws `sync/sync-status-line.tsx`), `content-update/` ↔ `edition/` (`edition/language-pack.tsx` opens the downloaded pack, and `content-update/device-content-updates.ts` reads `edition/edition.ts`) and `entries/` ↔ `notifications/` (`entries/entry-link.ts` and `notifications/notification-taps.tsx` read each other). Once they are cut it becomes an error.
+- **Domain folders import each other in one direction.** dependency-cruiser's `domain-folders-import-one-way` (in `.dependency-cruiser.folders.mjs`, run by `pnpm deps`) rejects a cycle between two domain folders of a package. It counts the modules a package ships, not their tests: a test may set its scene up with another domain's module, as `user-state.test.ts` does with the Feed's Cycle. It is an error. Three cycles it found in the app were cut by moving the module that sat in the wrong folder: `content-update/` imports `edition/`, and `language-pack.tsx`, which opens the downloaded pack, is part of the Content Update; the Entry stack's opener `notification-taps.tsx` joins `entries/`, which reads a notification's link mark, so `notifications/` imports no Entry module; and Sync needs an Account (`CONTEXT.md`), so the SLOVO ID screen `account-screen.tsx`, which draws Sync's status line, sits with the other settings screens in `settings/` beside `about-screen.tsx`.
 
-Files move with `git mv` and keep their names, and a test moves with its module (ADR 0027). Three tickets follow the table below, one per package, and only move files and fix their import paths and the config that names a path: the ESLint override for `src/log.ts` and Metro's comment on `src/intl-polyfill.ts`.
+Files move with `git mv` and keep their names, and a test moves with its module (ADR 0027). Three tickets follow the table below, one per package, and only move files and fix their import paths and the config that names a path: the ESLint override for `src/diagnostics/log.ts` and Metro's comment on `src/shell/intl-polyfill.ts`.
 
 ## The moves
 
@@ -52,20 +52,26 @@ The Share card moves too: the UI and the app keep sharing in `share/`, so the Co
 
 ### App (`apps/mobile/src/`)
 
-| Old path                | New path                            |
-| ----------------------- | ----------------------------------- |
-| `lifecycle.tsx`         | `shell/lifecycle.tsx`               |
-| `launch-splash.tsx`     | `shell/launch-splash.tsx`           |
-| `intl-polyfill.ts`      | `shell/intl-polyfill.ts`            |
-| `log.ts`                | `diagnostics/log.ts`                |
-| `log.test.ts`           | `diagnostics/log.test.ts`           |
-| `crash-reports.ts`      | `diagnostics/crash-reports.ts`      |
-| `crash-reports.test.ts` | `diagnostics/crash-reports.test.ts` |
-| `personal-data.ts`      | `diagnostics/personal-data.ts`      |
-| `onboarding.tsx`        | `onboarding/onboarding.tsx`         |
-| `progress.tsx`          | `progress/progress.tsx`             |
-| `known-line.test.ts`    | `progress/known-line.test.ts`       |
-| `haptics.ts`            | `game/haptics.ts`                   |
+| Old path                                   | New path                                   |
+| ------------------------------------------ | ------------------------------------------ |
+| `lifecycle.tsx`                            | `shell/lifecycle.tsx`                      |
+| `launch-splash.tsx`                        | `shell/launch-splash.tsx`                  |
+| `intl-polyfill.ts`                         | `shell/intl-polyfill.ts`                   |
+| `log.ts`                                   | `diagnostics/log.ts`                       |
+| `log.test.ts`                              | `diagnostics/log.test.ts`                  |
+| `crash-reports.ts`                         | `diagnostics/crash-reports.ts`             |
+| `crash-reports.test.ts`                    | `diagnostics/crash-reports.test.ts`        |
+| `personal-data.ts`                         | `diagnostics/personal-data.ts`             |
+| `onboarding.tsx`                           | `onboarding/onboarding.tsx`                |
+| `progress.tsx`                             | `progress/progress.tsx`                    |
+| `known-line.test.ts`                       | `progress/known-line.test.ts`              |
+| `haptics.ts`                               | `game/haptics.ts`                          |
+| `edition/language-pack.tsx`                | `content-update/language-pack.tsx`         |
+| `notifications/notification-taps.tsx`      | `entries/notification-taps.tsx`            |
+| `notifications/notification-taps.test.tsx` | `entries/notification-taps.test.tsx`       |
+| `account/account-screen.tsx`               | `settings/account-screen.tsx`              |
+| `account/account-screen.test.tsx`          | `settings/account-screen.test.tsx`         |
+| `account/google-sign-in-missing.test.tsx`  | `settings/google-sign-in-missing.test.tsx` |
 
 `haptics.ts` is the device's haptic motor, which only the Game's haptic sequence plays (ADR 0025), so it sits in `game/` as the Core's `haptics` does. The app ticket also adds the `@/` alias and rewrites every `../` import of `src/app/` to it.
 

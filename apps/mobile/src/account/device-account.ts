@@ -5,7 +5,7 @@ import { apiClient, apiClientOf } from '../api';
 import { deviceClock } from '../device/device-clock';
 import { nativeModules } from '../device/device-native-modules';
 import { edition } from '../edition/edition';
-import { logError } from '../log';
+import { logError } from '../diagnostics/log';
 import { openOnce, type Opening } from '../opening';
 import { storedUserState } from '../user-state/stored-user-state';
 import { createAccountApi } from './account-api';

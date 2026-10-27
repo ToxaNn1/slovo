@@ -11,7 +11,7 @@ import HistoryEntryScreen from '../app/saved/history/[entryId]';
 import LearningEntryScreen from '../app/saved/learning/[entryId]';
 import { editionStrings } from '../edition/edition';
 import { createOutsideLinks } from './entry-link';
-import { NotificationTaps } from '../notifications/notification-taps';
+import { NotificationTaps } from './notification-taps';
 
 /**
  * The Entry screen's place: what the Entry route hands it, its «Назад» label

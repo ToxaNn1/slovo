@@ -2,19 +2,19 @@ import type { Composition, FeatureSwitch } from '@slovo/core';
 import { useEffect } from 'react';
 import { AppState } from 'react-native';
 
-import { accountOpening } from './account/device-account';
-import { compositionOpening } from './composition';
-import { editionStrings } from './edition/edition';
-import { deviceClock } from './device/device-clock';
-import { languagePackOpening } from './edition/language-pack';
-import { remoteSwitchesOpening } from './edition/remote-switches';
-import { reportForeground } from './foreground/foreground-reports';
-import { logError } from './log';
-import { settingsOpening } from './settings/settings';
-import { syncInBackground, reopenAfterSync } from './sync/background-sync';
-import { syncOpening } from './sync/device-sync';
-import { deviceWidget, deviceWidgetLinkKey } from './widget/device-widget';
-import { createWidgetSnapshotWriter } from './widget/widget-snapshot';
+import { accountOpening } from '../account/device-account';
+import { compositionOpening } from '../composition';
+import { editionStrings } from '../edition/edition';
+import { deviceClock } from '../device/device-clock';
+import { languagePackOpening } from '../content-update/language-pack';
+import { remoteSwitchesOpening } from '../edition/remote-switches';
+import { reportForeground } from '../foreground/foreground-reports';
+import { logError } from '../diagnostics/log';
+import { settingsOpening } from '../settings/settings';
+import { syncInBackground, reopenAfterSync } from '../sync/background-sync';
+import { syncOpening } from '../sync/device-sync';
+import { deviceWidget, deviceWidgetLinkKey } from '../widget/device-widget';
+import { createWidgetSnapshotWriter } from '../widget/widget-snapshot';
 
 /** Whether the feature is on in effect, by the remote Feature Switches the app knows (ADR 0040). */
 async function isOnInEffect(feature: FeatureSwitch): Promise<boolean> {

@@ -11,15 +11,15 @@ import {
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { useAccountScreenGoogle } from './account/account';
-import { AccountScreen } from './account/account-screen';
-import { accountOpening } from './account/device-account';
-import { useComposition } from './composition';
-import { editionStrings } from './edition/edition';
-import { logError } from './log';
-import { MixChoices } from './mix/mix-choices';
-import { NotificationTimes } from './notifications/notification-times';
-import { useSubscribed, type Opening } from './opening';
+import { useAccountScreenGoogle } from '../account/account';
+import { AccountScreen } from '../settings/account-screen';
+import { accountOpening } from '../account/device-account';
+import { useComposition } from '../composition';
+import { editionStrings } from '../edition/edition';
+import { logError } from '../diagnostics/log';
+import { MixChoices } from '../mix/mix-choices';
+import { NotificationTimes } from '../notifications/notification-times';
+import { useSubscribed, type Opening } from '../opening';
 
 /** A Word's Lemma as the steps draw it: with its Stress, and what VoiceOver reads for it. */
 function lemmaOf(wordCard: WordCardModel): { lemma: string; accessibilityLabel: string } {

@@ -5,7 +5,7 @@ import {
 } from '@slovo/contracts';
 import type { Random } from '@slovo/core';
 
-import { logWarning } from '../log';
+import { logWarning } from '../diagnostics/log';
 
 /** The file in the App Group's container the widget reads the Widget Snapshot from. */
 export const WIDGET_SNAPSHOT_FILE = 'widget-snapshot.json';

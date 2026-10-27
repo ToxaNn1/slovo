@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import { compositionOpening, useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
 import { useEditionInEffect } from '../edition/remote-switches';
-import { logError } from '../log';
+import { logError } from '../diagnostics/log';
 import { useSubscribed } from '../opening';
 import { hiddenScreenModel, hiddenSummary, type HiddenScreenModel } from './hidden-screen';
 import { undoRestore } from './hiding-undo';

@@ -1,8 +1,8 @@
 import { useRootNavigationState, useRouter, useSegments } from 'expo-router';
 import { useEffect, useEffectEvent } from 'react';
 
-import { openedFromOf } from '../entries/entry-link';
-import { onDeviceNotificationTap } from './device-notifications';
+import { openedFromOf } from './entry-link';
+import { onDeviceNotificationTap } from '../notifications/device-notifications';
 
 /** What the opener reads of a navigator's state: its screens, the one on top, and theirs. */
 interface ScreensState {

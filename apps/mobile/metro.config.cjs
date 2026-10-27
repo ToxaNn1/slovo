@@ -38,7 +38,7 @@ const editionModules = {
 
 /**
  * The CLDR plural rules of the Edition's language for the `Intl.PluralRules`
- * polyfill, which Hermes needs (see src/intl-polyfill.ts): the data of its
+ * polyfill, which Hermes needs (see src/shell/intl-polyfill.ts): the data of its
  * locale, or of the locale's language when the polyfill has no data for the
  * locale itself.
  */

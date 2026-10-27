@@ -22,5 +22,5 @@ export default [
     // logger, which scrubs personal data the way crash reports do (#661).
     rules: { 'no-console': 'error' },
   },
-  { files: ['src/log.ts'], rules: { 'no-console': 'off' } },
+  { files: ['src/diagnostics/log.ts'], rules: { 'no-console': 'off' } },
 ];

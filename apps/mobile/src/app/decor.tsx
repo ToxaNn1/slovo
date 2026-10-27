@@ -19,8 +19,8 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { editionDecor, editionStrings, editionTokens, splashImageWidth } from '../edition/edition';
-import { useEntries } from '../edition/language-pack';
+import { editionDecor, editionStrings, editionTokens, splashImageWidth } from '@/edition/edition';
+import { useEntries } from '@/content-update/language-pack';
 
 type Look = 'edition' | 'core';
 

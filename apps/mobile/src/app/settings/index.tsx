@@ -14,15 +14,15 @@ import {
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AccountRow } from '../../account/account-row';
-import { useAccountInEffect } from '../../account/account';
-import { editionStrings } from '../../edition/edition';
-import { useHiddenSummary } from '../../mix/hidden';
-import { useMixSummary } from '../../mix/mix';
-import { useNotificationsSummary } from '../../notifications/notifications';
-import { useShown } from '../../shown-in-effect';
-import { useSettings } from '../../settings/settings';
-import { useOpenScreen } from '../../entries/use-open-screen';
+import { AccountRow } from '@/account/account-row';
+import { useAccountInEffect } from '@/account/account';
+import { editionStrings } from '@/edition/edition';
+import { useHiddenSummary } from '@/mix/hidden';
+import { useMixSummary } from '@/mix/mix';
+import { useNotificationsSummary } from '@/notifications/notifications';
+import { useShown } from '@/shown-in-effect';
+import { useSettings } from '@/settings/settings';
+import { useOpenScreen } from '@/entries/use-open-screen';
 
 const strings = editionStrings.settings;
 

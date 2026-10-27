@@ -1,7 +1,7 @@
 import { createSwipeHint, type SwipeHint } from '@slovo/core';
 import { useCallback, useEffect, useState } from 'react';
 
-import { logError } from '../log';
+import { logError } from '../diagnostics/log';
 import { storedUserState } from '../user-state/stored-user-state';
 
 /**

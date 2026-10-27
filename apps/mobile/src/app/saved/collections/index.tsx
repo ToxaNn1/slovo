@@ -15,11 +15,11 @@ import { memo, useCallback, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { editionStrings } from '../../../edition/edition';
-import { useOpenScreen } from '../../../entries/use-open-screen';
-import { useCollectionChanges, useCollectionRows } from '../../../saved/collections';
-import type { CollectionRowModel } from '../../../saved/collections-screen';
-import { createMenuFollowUp } from '../../../saved/menu-follow-up';
+import { editionStrings } from '@/edition/edition';
+import { useOpenScreen } from '@/entries/use-open-screen';
+import { useCollectionChanges, useCollectionRows } from '@/saved/collections';
+import type { CollectionRowModel } from '@/saved/collections-screen';
+import { createMenuFollowUp } from '@/saved/menu-follow-up';
 
 const { collections: collectionStrings } = editionStrings;
 const strings = collectionStrings.screen;

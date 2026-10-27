@@ -16,10 +16,10 @@ import { useRouter } from 'expo-router';
 import { SectionList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { editionStrings } from '../../../edition/edition';
-import { useOpenScreen } from '../../../entries/use-open-screen';
-import { useClearHistory, useHistorySections } from '../../../saved/history';
-import type { HistoryEntryModel, HistorySection } from '../../../saved/history-screen';
+import { editionStrings } from '@/edition/edition';
+import { useOpenScreen } from '@/entries/use-open-screen';
+import { useClearHistory, useHistorySections } from '@/saved/history';
+import type { HistoryEntryModel, HistorySection } from '@/saved/history-screen';
 
 const { history: strings } = editionStrings;
 

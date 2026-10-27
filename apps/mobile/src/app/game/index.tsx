@@ -15,12 +15,12 @@ import { Redirect, useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { editionStrings } from '../../edition/edition';
-import { useOpenScreen } from '../../entries/use-open-screen';
-import { useDailyCrosswordCard } from '../../game/daily-crossword';
-import { useGameActions, useGameState, usePauseInBackground, useTimeLeft } from '../../game/game';
-import { gameModeCard, gameModeGroups, gameModeStrings } from '../../game/game-modes';
-import { useShown } from '../../shown-in-effect';
+import { editionStrings } from '@/edition/edition';
+import { useOpenScreen } from '@/entries/use-open-screen';
+import { useDailyCrosswordCard } from '@/game/daily-crossword';
+import { useGameActions, useGameState, usePauseInBackground, useTimeLeft } from '@/game/game';
+import { gameModeCard, gameModeGroups, gameModeStrings } from '@/game/game-modes';
+import { useShown } from '@/shown-in-effect';
 
 const { game: strings } = editionStrings;
 

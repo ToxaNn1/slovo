@@ -6,7 +6,7 @@ import { apiClientOf } from '../api';
 import { deviceClock } from '../device/device-clock';
 import { edition } from '../edition/edition';
 import { remoteSwitchesOpening } from '../edition/remote-switches';
-import { logError } from '../log';
+import { logError } from '../diagnostics/log';
 import { openOnce, type Opening } from '../opening';
 import { storedUserState } from '../user-state/stored-user-state';
 import { createSyncApi } from './sync-api';

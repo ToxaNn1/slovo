@@ -1,4 +1,4 @@
-import { logError } from '../log';
+import { logError } from '../diagnostics/log';
 
 /** A voice the device can speak with, as `expo-speech` lists it. */
 export interface SpeechVoice {

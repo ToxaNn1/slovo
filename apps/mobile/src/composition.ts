@@ -4,10 +4,10 @@ import { systemSchedule } from '@slovo/ui';
 import { useEffect, useState } from 'react';
 
 import { deviceClock } from './device/device-clock';
-import { logError } from './log';
+import { logError } from './diagnostics/log';
 import { deviceNotificationScheduler } from './notifications/device-notifications';
 import { editionStrings } from './edition/edition';
-import { languagePackOpening } from './edition/language-pack';
+import { languagePackOpening } from './content-update/language-pack';
 import { remoteSwitchesOpening } from './edition/remote-switches';
 import { gameModeStrings } from './game/game-modes';
 import { openOnce, useOpened } from './opening';

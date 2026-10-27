@@ -8,7 +8,7 @@ import {
 import { openDatabaseAsync } from 'expo-sqlite';
 
 import { deviceClock } from '../device/device-clock';
-import { logError } from '../log';
+import { logError } from '../diagnostics/log';
 import { openOnce } from '../opening';
 import { openSqliteUserState } from './user-state-sqlite';
 

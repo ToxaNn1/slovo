@@ -1,9 +1,9 @@
 import { StatsPill, StatsSheet } from '@slovo/ui';
 import { useState } from 'react';
 
-import { useComposition } from './composition';
-import { useSubscribed } from './opening';
-import { useShown } from './shown-in-effect';
+import { useComposition } from '../composition';
+import { useSubscribed } from '../opening';
+import { useShown } from '../shown-in-effect';
 
 /**
  * The Stats pill (the flame alone while the Streak is hidden), and the stats

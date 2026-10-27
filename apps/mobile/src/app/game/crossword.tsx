@@ -13,8 +13,8 @@ import { useEffect } from 'react';
 import { AccessibilityInfo, Keyboard, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { editionStrings } from '../../edition/edition';
-import { crosswordCellLabel, useDailyCrossword } from '../../game/daily-crossword';
+import { editionStrings } from '@/edition/edition';
+import { crosswordCellLabel, useDailyCrossword } from '@/game/daily-crossword';
 
 const { game: strings } = editionStrings;
 

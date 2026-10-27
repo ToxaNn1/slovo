@@ -1,4 +1,7 @@
 {
+  // dependency-cruiser resolves through this file: the app's routes import its
+  // `src` as `@/…` (ADR 0053), as apps/mobile/tsconfig.json maps it.
+  "compilerOptions": { "paths": { "@/*": ["./apps/mobile/src/*"] } },
   "files": [],
   "references": [
     {

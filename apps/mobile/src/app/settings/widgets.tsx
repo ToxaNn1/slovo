@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { editionStrings } from '../../edition/edition';
+import { editionStrings } from '@/edition/edition';
 
 const { allEntries, guide } = editionStrings.widget;
 
