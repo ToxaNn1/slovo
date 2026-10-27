@@ -95,6 +95,8 @@ function shiftOf(index: number): number {
 describe('OrderedChips', () => {
   beforeEach(() => {
     jest.useFakeTimers();
+    // Reduce Motion off, whatever a test before turned on.
+    jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(false);
   });
 
   afterEach(() => {
@@ -219,5 +221,22 @@ describe('OrderedChips', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'tail' }));
 
     expect(lineText()).toEqual(['the', 'tail']);
+  });
+
+  it('shakes the first word out of place in a wrong expression', async () => {
+    await renderChips({
+      chips: ['tail', 'the', 'wag', 'dog'],
+      expected: ['the', 'tail', 'wag', 'dog'],
+      kind: 'word',
+    });
+
+    // «tail» where «the» belongs, then the rest.
+    await tap(0, 1, 2, 3);
+    await act(() => {
+      jest.advanceTimersByTime(80);
+    });
+
+    expect(shiftOf(0)).toBe(-4);
+    expect([1, 2, 3].map(shiftOf)).toEqual([0, 0, 0]);
   });
 });
