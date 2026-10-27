@@ -114,6 +114,11 @@ export { createHaptics, type HapticEngine, type Haptics } from './game/haptics';
 export { type HiddenEntry } from './mix/hidden-entries';
 export { type HideTarget, type HidingChange } from './mix/hiding';
 export { HISTORY_CAP, type HistoryEntry } from './saved/history';
+export {
+  createWordOfTheDayArchive,
+  type WordOfTheDayArchive,
+  type WordOfTheDayArchiveDay,
+} from './saved/word-of-the-day-archive';
 export { groupByLocalDay, relativeTimeOf, type RelativeTime } from './saved/history-time';
 export { type KnowledgeMark } from './knowledge/knowledge-record';
 export { type KnownCounts, type LearningEntry } from './knowledge/knowledge';

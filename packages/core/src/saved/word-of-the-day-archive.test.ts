@@ -2,12 +2,14 @@ import { describe, expect, it } from 'vitest';
 
 import {
   createMemoryUserStatePort,
+  createWordOfTheDayArchive,
   openComposition,
   openUserState,
   SEEN_DWELL_MS,
   type Clock,
   type Composition,
   type FeatureSwitch,
+  type LocalDate,
   type UserStateChanges,
   type UserStatePort,
 } from '../index';
@@ -156,5 +158,96 @@ describe('The Word of the Day archive', () => {
 
     expect(archiveOf(records)).toEqual([]);
     expect(records.has(`feed.seen.${today}`)).toBe(true);
+  });
+});
+
+/** The archive list of the Ukrainian Edition over the kept records, its Feature Switch on. */
+async function listOf(records: Map<string, string>) {
+  const archive = createWordOfTheDayArchive({
+    content: createMemoryContentPort({
+      words: [
+        word('w_sumyrnyi', { lemma: 'сумирний', stress: [3] }),
+        word('w_lahidnyi', { lemma: 'лагідний', stress: [3] }),
+        word('w_oldword', { lemma: 'стародавній', stress: [6], retired: true }),
+      ],
+    }),
+    edition: { locale: 'uk-UA', isFeatureEnabled: () => true },
+    userState: await openUserState({ port: createMemoryUserStatePort(records) }),
+  });
+  return (await archive.list()).map(({ date, dateLabel, row }) => [
+    keyOf(date),
+    dateLabel,
+    row.entryId,
+    row.title,
+  ]);
+}
+
+/** A local date as its `YYYY-MM-DD` key. */
+const keyOf = ({ year, month, day }: LocalDate) =>
+  [year, month, day].map((part) => String(part).padStart(2, '0')).join('-');
+
+/** The records of an archive kept on each date, by Word id. */
+const kept = (days: Record<string, string>) =>
+  new Map(
+    Object.entries(days).map(([date, wordId]) => [
+      `wordOfTheDayArchive.${date}`,
+      JSON.stringify(wordId),
+    ]),
+  );
+
+describe('The Word of the Day archive list', () => {
+  it("lists each kept date newest first, with the date in the Edition's locale and the Lemma", async () => {
+    const list = await listOf(
+      kept({
+        '2026-10-25': 'w_lahidnyi',
+        '2026-10-27': 'w_sumyrnyi',
+        '2026-09-30': 'w_lahidnyi',
+      }),
+    );
+
+    expect(list).toEqual([
+      ['2026-10-27', '27 жовтня', 'w_sumyrnyi', 'суми\u0301рний'],
+      ['2026-10-25', '25 жовтня', 'w_lahidnyi', 'лагі\u0301дний'],
+      ['2026-09-30', '30 вересня', 'w_lahidnyi', 'лагі\u0301дний'],
+    ]);
+  });
+
+  it('keeps a Retired Word in its place', async () => {
+    const list = await listOf(
+      kept({ '2026-10-26': 'w_oldword', '2026-10-27': 'w_sumyrnyi', '2026-10-25': 'w_lahidnyi' }),
+    );
+
+    expect(list.map(([dateKey, , entryId]) => [dateKey, entryId])).toEqual([
+      ['2026-10-27', 'w_sumyrnyi'],
+      ['2026-10-26', 'w_oldword'],
+      ['2026-10-25', 'w_lahidnyi'],
+    ]);
+  });
+
+  it('leaves out a Word the Language Pack no longer has', async () => {
+    const list = await listOf(kept({ '2026-10-26': 'w_gone', '2026-10-27': 'w_sumyrnyi' }));
+
+    expect(list.map(([dateKey]) => dateKey)).toEqual(['2026-10-27']);
+  });
+
+  it('is empty while nothing is kept', async () => {
+    expect(await listOf(new Map())).toEqual([]);
+  });
+
+  it('lists the day the Feed keeps once the card is Seen', async () => {
+    const time = fakeClock('2026-10-26T09:00:00+03:00');
+    const { app, records } = await run({ clock: time.clock });
+    const today = idAt(app, 0);
+    await look(app, time, 0, SEEN_DWELL_MS);
+
+    const archive = createWordOfTheDayArchive({
+      content,
+      edition: { locale: 'uk-UA', isFeatureEnabled: () => true },
+      userState: await openUserState({ port: createMemoryUserStatePort(records) }),
+    });
+
+    expect((await archive.list()).map(({ date, row }) => [keyOf(date), row.entryId])).toEqual([
+      ['2026-10-26', today],
+    ]);
   });
 });
