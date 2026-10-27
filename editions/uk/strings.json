@@ -818,7 +818,20 @@
       "lastDayTextNoStreak": "Дякуємо, що ви з нами! Повертайтеся по нові слова."
     }
   },
-  "wordOfTheDayArchive": { "title": "Слова дня" },
+  "wordOfTheDayArchive": {
+    "title": "Слова дня",
+    "count": {
+      "one": "{count} слово",
+      "few": "{count} слова",
+      "many": "{count} слів",
+      "other": "{count} слова"
+    },
+    "cardLabel": "Слова дня, {count}",
+    "empty": {
+      "title": "Слів дня ще немає",
+      "message": "Слово дня з’явиться тут, щойно ви його побачите."
+    }
+  },
   "mood": { "title": "Слово під настрій", "noEligibleWord": "Немає слів у вашому Міксі" },
   "game": {
     "title": "Гра",
