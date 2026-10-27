@@ -173,6 +173,7 @@ async function listOf(records: Map<string, string>) {
     }),
     edition: { locale: 'uk-UA', isFeatureEnabled: () => true },
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
+    clock: fakeClock('2026-10-27T09:00:00+02:00').clock,
   });
   return (await archive.list()).map(({ date, dateLabel, row }) => [
     keyOf(date),
@@ -212,6 +213,18 @@ describe('The Word of the Day archive list', () => {
     ]);
   });
 
+  it('gives the year only to a date of a past year', async () => {
+    const list = await listOf(
+      kept({ '2026-01-02': 'w_sumyrnyi', '2025-12-31': 'w_lahidnyi', '2025-10-26': 'w_sumyrnyi' }),
+    );
+
+    expect(list.map(([dateKey, dateLabel]) => [dateKey, dateLabel])).toEqual([
+      ['2026-01-02', '2 січня'],
+      ['2025-12-31', '31 грудня 2025'],
+      ['2025-10-26', '26 жовтня 2025'],
+    ]);
+  });
+
   it('keeps a Retired Word in its place', async () => {
     const list = await listOf(
       kept({ '2026-10-26': 'w_oldword', '2026-10-27': 'w_sumyrnyi', '2026-10-25': 'w_lahidnyi' }),
@@ -244,6 +257,7 @@ describe('The Word of the Day archive list', () => {
       content,
       edition: { locale: 'uk-UA', isFeatureEnabled: () => true },
       userState: await openUserState({ port: createMemoryUserStatePort(records) }),
+      clock: time.clock,
     });
 
     expect((await archive.list()).map(({ date, row }) => [keyOf(date), row.entryId])).toEqual([
