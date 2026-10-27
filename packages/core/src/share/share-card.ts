@@ -1,3 +1,7 @@
+import { fill, type EditionStrings } from '@slovo/contracts';
+
+import type { LocalDate } from '../local-date';
+import type { WeeklyRecapModel } from '../progress/weekly-recap';
 import type { SynonymRowCardModel } from '../entries/synonym-row-card';
 import type { TipCardModel } from '../entries/tip-card';
 
@@ -52,5 +56,52 @@ export function buildTipShareCard(card: TipCardModel): TipShareCardModel {
     title: card.title,
     nonStandardForm: card.nonStandardForm,
     standardForm: card.standardForm,
+  };
+}
+
+/**
+ * What the Share Card of a Weekly Recap shows, decided by the Core (ADR 0054):
+ * the title, the week's dates and the recap's numbers, with no words.
+ */
+export interface WeeklyRecapShareCardModel {
+  readonly kind: 'weeklyRecap';
+  /** «Мій тиждень у SLOVO». */
+  readonly title: string;
+  /** The week's dates, e.g. «20–26 жовтня». */
+  readonly week: string;
+  /** Seen, saved, Known (when the recap has it) and the Streak, in this order. */
+  readonly numbers: readonly { readonly label: string; readonly count: number }[];
+}
+
+/** The Share Card of a Weekly Recap, in the Edition's texts. */
+export function buildWeeklyRecapShareCard(
+  recap: WeeklyRecapModel,
+  strings: EditionStrings['share']['weeklyRecap'],
+): WeeklyRecapShareCardModel {
+  const { firstDay, lastDay, seen, saved, known, streak } = recap;
+  const monthOf = ({ month }: LocalDate) => strings.months[month - 1] ?? '';
+  const week =
+    firstDay.month === lastDay.month
+      ? fill(strings.week, {
+          from: String(firstDay.day),
+          to: String(lastDay.day),
+          month: monthOf(lastDay),
+        })
+      : fill(strings.weekAcrossMonths, {
+          from: String(firstDay.day),
+          fromMonth: monthOf(firstDay),
+          to: String(lastDay.day),
+          toMonth: monthOf(lastDay),
+        });
+  return {
+    kind: 'weeklyRecap',
+    title: strings.title,
+    week,
+    numbers: [
+      { label: strings.seen, count: seen },
+      { label: strings.saved, count: saved },
+      ...(known === undefined ? [] : [{ label: strings.known, count: known }]),
+      { label: strings.streak, count: streak },
+    ],
   };
 }

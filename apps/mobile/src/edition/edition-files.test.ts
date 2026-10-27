@@ -776,6 +776,7 @@ describe('the 0.6 share strings group', () => {
     'nonStandard',
     'standard',
     'captureFailed',
+    'weeklyRecap',
   ])('the Ukrainian Edition needs share.%s', (key) => {
     const shareWithout = Object.fromEntries(Object.entries(share).filter(([name]) => name !== key));
 

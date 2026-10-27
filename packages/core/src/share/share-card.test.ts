@@ -7,7 +7,9 @@ import {
   buildSynonymRowShareCard,
   buildTipCard,
   buildTipShareCard,
+  buildWeeklyRecapShareCard,
   createEntries,
+  type WeeklyRecapModel,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
 
@@ -130,5 +132,85 @@ describe('the Share Card of a Tip', () => {
       nonStandardForm: undefined,
       standardForm: 'пане Андрію',
     });
+  });
+});
+
+/** The Ukrainian Edition's texts of the Weekly Recap's Share Card. */
+const WEEK_STRINGS = {
+  title: 'Мій тиждень у SLOVO',
+  week: '{from}–{to} {month}',
+  weekAcrossMonths: '{from} {fromMonth} – {to} {toMonth}',
+  months: [
+    'січня',
+    'лютого',
+    'березня',
+    'квітня',
+    'травня',
+    'червня',
+    'липня',
+    'серпня',
+    'вересня',
+    'жовтня',
+    'листопада',
+    'грудня',
+  ],
+  seen: 'переглянуто',
+  saved: 'збережено',
+  known: 'знаю',
+  streak: 'серія',
+};
+
+/** The numbers of the week of Monday 20 to Sunday 26 October 2025. */
+const RECAP: WeeklyRecapModel = {
+  firstDay: { year: 2025, month: 10, day: 20 },
+  lastDay: { year: 2025, month: 10, day: 26 },
+  seen: 34,
+  saved: 5,
+  known: 12,
+  streak: 9,
+};
+
+describe('the Share Card of a Weekly Recap', () => {
+  it('shows the title, the week and the four numbers in order, with no words', () => {
+    expect(buildWeeklyRecapShareCard(RECAP, WEEK_STRINGS)).toEqual({
+      kind: 'weeklyRecap',
+      title: 'Мій тиждень у SLOVO',
+      week: '20–26 жовтня',
+      numbers: [
+        { label: 'переглянуто', count: 34 },
+        { label: 'збережено', count: 5 },
+        { label: 'знаю', count: 12 },
+        { label: 'серія', count: 9 },
+      ],
+    });
+  });
+
+  it('names both months of a week across two months', () => {
+    const card = buildWeeklyRecapShareCard(
+      {
+        ...RECAP,
+        firstDay: { year: 2025, month: 10, day: 27 },
+        lastDay: { year: 2025, month: 11, day: 2 },
+      },
+      WEEK_STRINGS,
+    );
+
+    expect(card.week).toBe('27 жовтня – 2 листопада');
+  });
+
+  it('leaves «знаю» out when the recap has no Known marks, as with the Knowledge Marks off', () => {
+    const { known: _known, ...withoutKnown } = RECAP;
+
+    expect(buildWeeklyRecapShareCard(withoutKnown, WEEK_STRINGS).numbers).toEqual([
+      { label: 'переглянуто', count: 34 },
+      { label: 'збережено', count: 5 },
+      { label: 'серія', count: 9 },
+    ]);
+  });
+
+  it('shows a 0 as a number', () => {
+    const card = buildWeeklyRecapShareCard({ ...RECAP, saved: 0, known: 0 }, WEEK_STRINGS);
+
+    expect(card.numbers.map(({ count }) => count)).toEqual([34, 0, 0, 9]);
   });
 });
