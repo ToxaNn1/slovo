@@ -12,11 +12,14 @@ const TEXT_MAX_FONT_SCALE = 1.5;
 
 /**
  * The Game Review under the result: every Round of the Game just over, in
- * order, as the Core's Game Review items, with ✓ or ✗ and the reader's wrong
- * pick. A tap expands a Round: a Word's or an idiom's Definition, Example and
- * etymology, a Correction's right form and explanation, a Synonym Row's
- * members, or a Tip's explanation; a second tap opens the Entry. One Round is
- * expanded at a time.
+ * order, as the Core's Game Review items, with ✓ or ✗ and, on a mistake, the
+ * reader's answer in the Round's form: the option picked, the form stressed on
+ * the vowel tapped, the Definition matched to a pair's Word, the chips tapped
+ * as one Word or expression, or the text typed; VoiceOver reads a stressed
+ * answer without its marks, then where the Stress falls. A tap expands a
+ * Round: a Word's or an idiom's Definition, Example and etymology, a
+ * Correction's right form and explanation, a Synonym Row's members, or a Tip's
+ * explanation; a second tap opens the Entry. One Round is expanded at a time.
  */
 export function GameReview({
   rounds,
@@ -74,7 +77,13 @@ function ReviewRow({
     String(number),
     stressLabel(strings.wordCard, title.text, title.stressedVowels),
     right ? review.right : review.wrong,
-    ...(picked === undefined ? [] : [picked]),
+    ...(pickedOption === undefined
+      ? []
+      : [
+          fill(review.picked, {
+            text: stressLabel(strings.wordCard, pickedOption.text, pickedOption.stressedVowels),
+          }),
+        ]),
   ].join(', ');
   return (
     <View style={[styles.row, { borderColor: colors.line }]}>
