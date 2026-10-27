@@ -56,6 +56,6 @@ The Game screen lists the Daily Crossword's card on top, then the mode cards in 
 - **Typed or staged Rounds for Idioms, Synonym Rows and Tips**: rejected. Their answers are long or have more than one way to write them, so only a pick stays fair.
 - **The timer from the Round screen's own clock**: rejected. Time must be injected for tests, and a phone call must not cost the run.
 - **The Daily Crossword generated on the device**: rejected. Every reader must get the same grid on a date, and a content update must never swap today's crossword.
-- **The Daily Crossword synced, with an archive or streaks**: rejected for now. A daily puzzle needs neither, and they are out of scope for 0.8.12.
+- **The Daily Crossword synced, with an archive or streaks**: rejected for now. The Daily Crossword needs neither, and they are out of scope for 0.8.12.
 - **A word never repeats in the crossword**: rejected. The supply of 3–5-letter words would run out within the 400 days ahead.
 - **Origins as free text on the Word**: rejected. «Звідки слово» needs a closed list to draw Distractors from, and the build can check a code.
