@@ -17,6 +17,7 @@ const everything: Shown = {
   learning: true,
   stats: { streak: true, knowledge: ['word', 'correction', 'idiom', 'synonymRow', 'tip'] },
   sync: true,
+  dailyLimit: true,
 };
 
 interface Case {
@@ -38,6 +39,10 @@ describe('what the reader is shown', () => {
       { off: ['game'], shown: { tabs: ['home', 'settings', 'saved'] } },
     ],
     ['no Game Review with its switch off', { off: ['gameReview'], shown: { gameReview: false } }],
+    [
+      'no Daily Limit choice with the Daily Limit off',
+      { off: ['dailyLimit'], shown: { dailyLimit: false } },
+    ],
     [
       'no Share Card button with Share Cards off',
       {

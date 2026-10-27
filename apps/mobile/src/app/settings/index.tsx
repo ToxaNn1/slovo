@@ -1,4 +1,4 @@
-import { FontSizeSchema, ThemeSchema } from '@slovo/contracts';
+import { DailyLimitSchema, FontSizeSchema, ThemeSchema, type DailyLimit } from '@slovo/contracts';
 import {
   FontSizePreview,
   NavigationRow,
@@ -38,9 +38,18 @@ const fontSizeSegments = FontSizeSchema.options.map((fontSize) => ({
   testID: `settings-font-size-${fontSize}`,
 }));
 
+const dailyLimits: readonly DailyLimit[] = DailyLimitSchema.options.map(({ value }) => value);
+
+// A segment's value is text, so each Daily Limit is drawn by its own name: «Вимк.» or its number.
+const dailyLimitSegments = dailyLimits.map((dailyLimit) => ({
+  value: String(dailyLimit),
+  label: dailyLimit === 'off' ? strings.dailyLimit.off : String(dailyLimit),
+  testID: `settings-daily-limit-${String(dailyLimit)}`,
+}));
+
 /**
  * Settings: SLOVO ID when the Account is on in effect, the Theme, the font
- * size and the rows of the design. The rows of later versions show as soon.
+ * size, the Daily Limit while it is on in effect and the rows of the design. The rows of later versions show as soon.
  */
 export default function SettingsScreen() {
   const { current, update } = useSettings();
@@ -93,6 +102,20 @@ export default function SettingsScreen() {
             }}
           />
         </View>
+        {shown.dailyLimit && (
+          <View style={styles.section}>
+            <SectionLabel>{strings.dailyLimit.title}</SectionLabel>
+            <SegmentedControl
+              accessibilityLabel={strings.dailyLimit.title}
+              segments={dailyLimitSegments}
+              selected={String(current.dailyLimit)}
+              onSelect={(value) => {
+                const dailyLimit = dailyLimits.find((limit) => String(limit) === value);
+                if (dailyLimit !== undefined) update({ dailyLimit });
+              }}
+            />
+          </View>
+        )}
         <View style={styles.section}>
           <SettingsGroup>
             {shown.stats !== undefined && (
