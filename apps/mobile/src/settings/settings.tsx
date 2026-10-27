@@ -19,8 +19,8 @@ function applyToNativeViews({ theme }: UserSettings): void {
   Appearance.setColorScheme(theme === 'system' ? 'unspecified' : theme);
 }
 
-const { theme, fontSize, vibration } = edition.userSettingDefaults;
-const defaults: SettingsDefaults = { theme, fontSize, vibration };
+const { theme, fontSize, vibration, dailyLimit } = edition.userSettingDefaults;
+const defaults: SettingsDefaults = { theme, fontSize, vibration, dailyLimit };
 
 async function settingsOverUserState(): Promise<Settings> {
   return createSettings({ userState: await storedUserState.opened(), defaults });

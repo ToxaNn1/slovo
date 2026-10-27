@@ -39,7 +39,7 @@ Until 0.8.13 SLOVO handed the reader one Entry after another but didn't help the
 
 **The Active Days calendar** on the statistics screen is built from the existing synced Active Days: a month grid, Monday first, from the month of the first Active Day to the current one and no further, today outlined, a filled dot on an Active Day and a quiet grey on a missed one, never red.
 
-**The Daily Limit** («Ліміт на день») is a setting: «Вимк.» (the default), 10, 20 or 30, synced like the other settings (ADR 0041). It counts the distinct Entries Seen on the local day, the Word of the Day included. At the limit the Feed shows the Feed Notice «На сьогодні досить. Повертайтеся завтра» with «Гортати далі», which removes it until the next local day; the Feed goes on under it, so the limit is soft.
+**The Daily Limit** («Ліміт на день») is a setting: «Вимк.», 10, 20 or 30, synced like the other settings (ADR 0041). Each Edition declares its default among its user-setting defaults, like the Theme; the Ukrainian Edition's is «Вимк.». It counts the distinct Entries Seen on the local day, the Word of the Day included. At the limit the Feed shows the Feed Notice «На сьогодні досить. Повертайтеся завтра» with «Гортати далі», which removes it until the next local day; the Feed goes on under it, so the limit is soft.
 
 **Notifications** (ADR 0021).
 

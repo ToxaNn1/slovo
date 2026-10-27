@@ -55,7 +55,7 @@ describe('openUserState', () => {
     const userState = await openUserState({ port: createMemoryUserStatePort(records) });
     const settings = createSettings({
       userState,
-      defaults: { theme: 'system', fontSize: 'M', vibration: true },
+      defaults: { theme: 'system', fontSize: 'M', vibration: true, dailyLimit: 'off' },
     });
     const cycle = await openCycle({
       entries: {
@@ -73,6 +73,7 @@ describe('openUserState', () => {
       vibration: true,
       hideStreak: false,
       selfCheck: false,
+      dailyLimit: 'off',
     });
     expect(await createSwipeHint({ userState }).isDue()).toBe(false);
     expect(new Set(cycle.unseen().words)).toEqual(new Set(['w_0', 'w_3', 'w_4']));

@@ -65,6 +65,7 @@ const validConfig = {
     theme: 'system',
     fontSize: 'M',
     vibration: true,
+    dailyLimit: 'off',
     notificationTimes: ['09:00'],
     mix: {
       categories: 'all',
@@ -223,6 +224,7 @@ describe('loadEdition', () => {
       theme: 'system',
       fontSize: 'M',
       vibration: true,
+      dailyLimit: 'off',
       notificationTimes: ['09:00'],
       mix: {
         categoryIds: 'all',
@@ -292,6 +294,15 @@ describe('loadEdition', () => {
     });
 
     expect(edition.userSettingDefaults.vibration).toBe(false);
+  });
+
+  it('reports a Daily Limit default of 20', () => {
+    const edition = loadEdition({
+      ...validConfig,
+      userSettingDefaults: { ...validConfig.userSettingDefaults, dailyLimit: 20 },
+    });
+
+    expect(edition.userSettingDefaults.dailyLimit).toBe(20);
   });
 
   it('reports the addresses of its privacy policy and its terms, which About opens', () => {
@@ -456,6 +467,16 @@ describe('loadEdition', () => {
       'a Vibration default that is not on or off',
       { userSettingDefaults: { ...userSettingDefaults, vibration: 'on' } },
       'userSettingDefaults.vibration',
+    ],
+    [
+      'a missing Daily Limit default',
+      { userSettingDefaults: { ...userSettingDefaults, dailyLimit: undefined } },
+      'userSettingDefaults.dailyLimit',
+    ],
+    [
+      'a Daily Limit default the Core does not offer',
+      { userSettingDefaults: { ...userSettingDefaults, dailyLimit: 15 } },
+      'userSettingDefaults.dailyLimit',
     ],
     [
       'a notification time that is not HH:MM',

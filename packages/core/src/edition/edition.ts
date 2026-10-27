@@ -1,5 +1,6 @@
 import {
   EditionConfigSchema,
+  type DailyLimit,
   type FeatureSwitch,
   type FontSize,
   type LanguageTraits,
@@ -30,6 +31,7 @@ export interface UserSettingDefaults {
   readonly fontSize: FontSize;
   /** Whether haptics are on. */
   readonly vibration: boolean;
+  readonly dailyLimit: DailyLimit;
   /** Local times of day, `HH:MM` on a 24-hour clock. */
   readonly notificationTimes: readonly string[];
   readonly mix: DefaultMix;
