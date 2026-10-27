@@ -347,6 +347,7 @@ export async function openComposition({
     ),
   ]);
   const { progress, recordToday, todayChange } = await openProgress({
+    edition,
     userState,
     clock,
     history,

@@ -142,6 +142,7 @@ export { buildWordCard, type WordCardModel } from './entries/word-card';
 export { createContentUpdate, type ContentUpdate } from './content-update/content-update';
 export type { ContentApi, PackFiles, PackVersion } from './ports';
 export { type ProgressState } from './progress/progress';
+export type { CalendarDay, CalendarDayState, CalendarMonth } from './progress/calendar';
 export {
   CATEGORY_KINDS,
   categoriesInMix,

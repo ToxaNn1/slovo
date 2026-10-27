@@ -543,3 +543,96 @@ describe('The knowledge counts', () => {
     });
   });
 });
+
+describe('The Active Days calendar', () => {
+  /** Opens the app on each local date with the Active Days calendar on, unless `calendarOn` is false. */
+  async function openWithCalendar(
+    records: Map<string, string>,
+    dates: readonly string[],
+    calendarOn = true,
+  ): Promise<Composition> {
+    let app: Composition | undefined;
+    for (const date of dates) {
+      app = await openComposition({
+        content,
+        edition: {
+          ...testCategories,
+          isFeatureEnabled: (feature: FeatureSwitch) =>
+            calendarOn && feature === 'activeDaysCalendar',
+        },
+        userState: await openUserState({ port: createMemoryUserStatePort(records) }),
+        clock: fakeClock(`${date}T09:00:00+03:00`).clock,
+        random: steppingRandom(),
+      });
+    }
+    if (app === undefined) throw new Error('No date to open the app on');
+    return app;
+  }
+
+  const letters = { active: 'a', missed: 'm', today: 't', future: 'f' } as const;
+
+  /** Each month as `YYYY-MM` and its weeks, a day as its number and state, `t*` today when it is an Active Day, `.` no day. */
+  const shown = (app: Composition) =>
+    app.progress.calendar().map(({ year, month, weeks }) => ({
+      month: `${String(year)}-${String(month).padStart(2, '0')}`,
+      weeks: weeks.map((week) =>
+        week
+          .map((day) =>
+            day === undefined
+              ? '.'
+              : `${String(day.day)}${letters[day.state]}${day.state === 'today' && day.active ? '*' : ''}`,
+          )
+          .join(' '),
+      ),
+    }));
+
+  it('lays out a month starting on a Sunday from Monday, with today outlined and the rest to come', async () => {
+    // 2026-11-01 is a Sunday.
+    const app = await openWithCalendar(new Map(), ['2026-11-01', '2026-11-03']);
+
+    expect(shown(app)).toEqual([
+      {
+        month: '2026-11',
+        weeks: [
+          '. . . . . . 1a',
+          '2m 3t* 4f 5f 6f 7f 8f',
+          '9f 10f 11f 12f 13f 14f 15f',
+          '16f 17f 18f 19f 20f 21f 22f',
+          '23f 24f 25f 26f 27f 28f 29f',
+          '30f . . . . . .',
+        ],
+      },
+    ]);
+    const [first] = app.progress.calendar()[0]?.weeks[0]?.slice(6) ?? [];
+    expect(first).toEqual({ date: '2026-11-01', day: 1, state: 'active', active: true });
+  });
+
+  it('runs from the first Active Day’s month to the current one, and no further', async () => {
+    const app = await openWithCalendar(new Map(), ['2026-09-30', '2026-10-12', '2026-11-03']);
+
+    const months = shown(app);
+    expect(months.map(({ month }) => month)).toEqual(['2026-09', '2026-10', '2026-11']);
+    // September 2026 starts on a Tuesday; its days before the first Active Day are missed.
+    expect(months[0]?.weeks[0]).toBe('. 1m 2m 3m 4m 5m 6m');
+    expect(months[0]?.weeks.at(-1)).toBe('28m 29m 30a . . . .');
+    expect(months[1]?.weeks[2]).toBe('12a 13m 14m 15m 16m 17m 18m');
+    expect(months[2]?.weeks[0]).toBe('. . . . . . 1m');
+  });
+
+  it('shows no future month, even for an Active Day kept ahead of a clock moved back', async () => {
+    const records = new Map<string, string>();
+    await openWithCalendar(records, ['2026-12-02']);
+
+    const app = await openWithCalendar(records, ['2026-11-03']);
+
+    const months = shown(app);
+    expect(months.map(({ month }) => month)).toEqual(['2026-11']);
+    expect(months[0]?.weeks[1]).toBe('2m 3t* 4f 5f 6f 7f 8f');
+  });
+
+  it('shows no month with the Active Days calendar off', async () => {
+    const app = await openWithCalendar(new Map(), ['2026-11-03'], false);
+
+    expect(app.progress.calendar()).toEqual([]);
+  });
+});
