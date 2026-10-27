@@ -1,8 +1,8 @@
 import type { EditionStrings } from '@slovo/contracts';
 import type { WeeklyRecapModel } from '@slovo/core';
 import { EditionProvider, WeeklyRecapCard } from '@slovo/ui';
-import { describe, expect, it } from '@jest/globals';
-import { render, screen } from '@testing-library/react-native';
+import { describe, expect, it, jest } from '@jest/globals';
+import { fireEvent, render, screen } from '@testing-library/react-native';
 
 const strings = {
   feedNotices: {
@@ -14,6 +14,7 @@ const strings = {
       streak: 'streak',
     },
   },
+  share: { share: 'Share' },
 } as unknown as EditionStrings;
 
 const recap: WeeklyRecapModel = {
@@ -65,5 +66,22 @@ describe('the Weekly Recap card', () => {
 
     expect(screen.getByText('Your week')).toBeTruthy();
     expect(screen.queryByText('seen')).toBeNull();
+  });
+
+  it('opens its Share Card from «Share» once its numbers are read', async () => {
+    const onShare = jest.fn();
+    await renderCard({ recap, onShare });
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Share' }));
+
+    expect(onShare).toHaveBeenCalledTimes(1);
+  });
+
+  it('has no «Share» without sharing, or while its numbers are not read', async () => {
+    await renderCard({ recap });
+    expect(screen.queryByRole('button', { name: 'Share' })).toBeNull();
+
+    await renderCard({ recap: undefined, onShare: jest.fn() });
+    expect(screen.queryByRole('button', { name: 'Share' })).toBeNull();
   });
 });

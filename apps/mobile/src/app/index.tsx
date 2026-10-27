@@ -14,7 +14,6 @@ import {
   VerticalPager,
   YesterdayCard,
   type VerticalPagerHandle,
-  WeeklyRecapCard,
 } from '@slovo/ui';
 import type { FeedCard, FeedNoticeCard, WordCardModel } from '@slovo/core';
 import { memo, useCallback, useRef } from 'react';
@@ -31,7 +30,7 @@ import { MoodButtonAndSheet } from '@/mood/mood';
 import { StatsPillAndSheet } from '@/progress/progress';
 import { useShown } from '@/shown-in-effect';
 import { useSwipeHint } from '@/feed/swipe-hint';
-import { useWeeklyRecap } from '@/feed/weekly-recap';
+import { WeeklyRecapNotice } from '@/feed/weekly-recap-notice';
 
 const { feed: feedStrings } = editionStrings;
 const turnActionLabels = { next: feedStrings.nextEntry, previous: feedStrings.previousEntry };
@@ -184,7 +183,7 @@ const FeedPage = memo(function FeedPage({
 /** A Feed Notice that sits in the middle of its page: the Weekly Recap, the first-week card or the Daily Limit card. */
 function NoticeCard({ card }: { card: Exclude<FeedNoticeCard, { notice: 'yesterday' }> }) {
   const streak = useFirstWeekStreak();
-  if (card.notice === 'weeklyRecap') return <WeeklyRecapNotice card={card} />;
+  if (card.notice === 'weeklyRecap') return <WeeklyRecapNotice day={card.day} />;
   return card.notice === 'firstWeek' ? (
     <FirstWeekCard day={card.firstWeekDay} streak={streak} />
   ) : (
@@ -196,13 +195,6 @@ function NoticeCard({ card }: { card: Exclude<FeedNoticeCard, { notice: 'yesterd
 function YesterdayNotice({ word }: { word: WordCardModel }) {
   const marks = useKnowledgeButtons({ kind: 'word', entryId: word.wordId });
   return <YesterdayCard word={word} marks={marks} />;
-}
-
-/** The Weekly Recap card with the numbers of its day, without the Streak while it is not shown. */
-function WeeklyRecapNotice({ card }: { card: FeedNoticeCard }) {
-  const recap = useWeeklyRecap(card.day);
-  const { stats } = useShown();
-  return <WeeklyRecapCard recap={recap} hideStreak={stats?.streak !== true} />;
 }
 
 const styles = StyleSheet.create({

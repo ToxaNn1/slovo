@@ -15,22 +15,22 @@ export interface ShareImagePorts {
 }
 
 /**
- * Shares the Share Card of an Entry as an image: captures it as a PNG of its
- * format (1080×1920 for a Story, 1080×1080 for a Square), keeps the file in the
- * cache directory under the Entry's name, so a new share of the same Entry
- * replaces it, and opens the system share sheet with the file. Resolves to
+ * Shares a Share Card as an image: captures it as a PNG of its format
+ * (1080×1920 for a Story, 1080×1080 for a Square), keeps the file in the cache
+ * directory under the name of what it shows (an Entry's id, or
+ * `weekly-recap`), so a new share of the same card replaces it, and opens the system share sheet with the file. Resolves to
  * `closed` once the system share sheet closes, shared or cancelled alike, or to
  * `failed` when a step fails, so the reader can try again. Writes no user
  * state.
  */
 export async function shareCardImage(
   ports: ShareImagePorts,
-  entryId: string,
+  cardId: string,
   format: ShareCardFormat,
 ): Promise<ShareSheetOutcome> {
   try {
     const file = await ports.capture(shareImage[format]);
-    const url = await ports.keepInCache(file, `share-card-${entryId}.png`);
+    const url = await ports.keepInCache(file, `share-card-${cardId}.png`);
     await ports.openShareSheet(url);
     return 'closed';
   } catch {
@@ -58,3 +58,6 @@ export function createShareFormatMemory(): ShareFormatMemory {
     },
   };
 }
+
+/** The Share Card format of this session: every share sheet opens in the one chosen last. */
+export const sessionShareFormat = createShareFormatMemory();

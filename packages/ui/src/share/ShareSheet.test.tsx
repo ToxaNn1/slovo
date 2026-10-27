@@ -8,6 +8,7 @@ import type {
   SynonymRowFeedCard,
   TipCardModel,
   TipFeedCard,
+  WeeklyRecapShareCardModel,
 } from '@slovo/core';
 import { EditionProvider, ShareSheet, type ShareSheetOutcome } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
@@ -270,5 +271,66 @@ describe('The Share Card of a Tip', () => {
     expect(within(shown).getByText('Better')).toBeOnTheScreen();
     expect(within(shown).getByText('Good day!')).toBeOnTheScreen();
     expect(shown).toHaveAccessibleName('Tip: Greeting. Better: Good day!');
+  });
+});
+
+const recap: WeeklyRecapShareCardModel = {
+  kind: 'weeklyRecap',
+  title: 'My week in SLOVO',
+  week: '20–26 October',
+  numbers: [
+    { label: 'seen', count: 34 },
+    { label: 'saved', count: 5 },
+    { label: 'known', count: 0 },
+    { label: 'streak', count: 9 },
+  ],
+};
+
+async function renderRecapSheet(format: 'story' | 'square') {
+  await render(
+    <SafeAreaProvider initialMetrics={metrics}>
+      <EditionProvider edition={{ locale: 'en' }} strings={strings}>
+        <ShareSheet
+          visible
+          recap={recap}
+          watermark="SLOVO"
+          initialFormat={format}
+          onFormatChange={jest.fn()}
+          onShare={() => Promise.resolve('closed')}
+          onClose={jest.fn()}
+        />
+      </EditionProvider>
+    </SafeAreaProvider>,
+  );
+}
+
+describe('The Share Card of a Weekly Recap', () => {
+  it.each(['story', 'square'] as const)(
+    'shows the title, the dates and each number with its label in a %s',
+    async (format) => {
+      await renderRecapSheet(format);
+
+      const shown = previewCard();
+      expect(within(shown).getByText('My week in SLOVO')).toBeOnTheScreen();
+      expect(within(shown).getByText('20–26 October')).toBeOnTheScreen();
+      for (const [count, label] of [
+        ['34', 'seen'],
+        ['5', 'saved'],
+        ['0', 'known'],
+        ['9', 'streak'],
+      ] as const) {
+        expect(within(shown).getByText(count)).toBeOnTheScreen();
+        expect(within(shown).getByText(label)).toBeOnTheScreen();
+      }
+      expect(within(shown).getByText('SLOVO')).toBeOnTheScreen();
+    },
+  );
+
+  it('reads the dates, the title and the numbers to VoiceOver', async () => {
+    await renderRecapSheet('story');
+
+    expect(previewCard()).toHaveAccessibleName(
+      '20–26 October. My week in SLOVO. 34 seen. 5 saved. 0 known. 9 streak',
+    );
   });
 });

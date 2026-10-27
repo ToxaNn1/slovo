@@ -21,16 +21,16 @@ const modules = nativeModules.load('shareCapture', () => ({
 const fileUrl = (path: string) => (path.startsWith('file://') ? path : `file://${path}`);
 
 /**
- * Shares the Share Card of an Entry, drawn in `view` in a format, through the
- * iOS share sheet, or undefined when the binary can't capture a view, so the
- * share button stays out of the action row.
+ * Shares a Share Card, drawn in `view` in a format and named by what it shows
+ * (an Entry's id, or `weekly-recap`), through the iOS share sheet, or
+ * undefined when the binary can't capture a view, so no share button shows.
  */
 export const shareCardOnDevice:
-  | ((view: View, entryId: string, format: ShareCardFormat) => Promise<ShareSheetOutcome>)
+  | ((view: View, cardId: string, format: ShareCardFormat) => Promise<ShareSheetOutcome>)
   | undefined =
   modules === undefined
     ? undefined
-    : (view, entryId, format) => {
+    : (view, cardId, format) => {
         const { viewShot, fileSystem } = modules;
         return shareCardImage(
           {
@@ -53,7 +53,7 @@ export const shareCardOnDevice:
               return action === Share.sharedAction ? 'shared' : 'cancelled';
             },
           },
-          entryId,
+          cardId,
           format,
         );
       };

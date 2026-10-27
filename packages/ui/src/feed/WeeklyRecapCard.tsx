@@ -13,15 +13,19 @@ const NUMBER_MAX_FONT_SCALE = 1.5;
  * The Weekly Recap card «Ваш тиждень» in the Feed Notice frame: the past
  * week's Entries Seen, Favorites added and Known marks, and the current
  * Streak, two numbers to a row (ADR 0054). The Known number is left out when
- * the recap has none, and the Streak while the reader hides it. Until its
- * numbers are read the card shows its title alone.
+ * the recap has none, and the Streak while the reader hides it. «Поділитися»
+ * under the numbers opens the recap's Share Card, when sharing is there.
+ * Until its numbers are read the card shows its title alone.
  */
 export function WeeklyRecapCard({
   recap,
   hideStreak = false,
+  onShare,
 }: {
   recap: WeeklyRecapModel | undefined;
   hideStreak?: boolean;
+  /** Opens the share sheet with the recap's Share Card; without it, no «Поділитися». */
+  onShare?: (() => void) | undefined;
 }) {
   const { strings } = useEdition();
   const words = strings.feedNotices.weeklyRecap;
@@ -37,7 +41,15 @@ export function WeeklyRecapCard({
           ...(hideStreak ? [] : [{ key: 'streak', value: recap.streak, label: words.streak }]),
         ];
   return (
-    <FeedNoticeCard notice="weeklyRecap" title={words.title}>
+    <FeedNoticeCard
+      notice="weeklyRecap"
+      title={words.title}
+      action={
+        recap === undefined || onShare === undefined
+          ? undefined
+          : { label: strings.share.share, onPress: onShare }
+      }
+    >
       {numbers.length > 0 && (
         <View style={styles.grid}>
           {numbers.map(({ key, value, label }) => (

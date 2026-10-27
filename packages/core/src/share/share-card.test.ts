@@ -208,6 +208,14 @@ describe('the Share Card of a Weekly Recap', () => {
     ]);
   });
 
+  it('leaves «серія» out while the reader hides the Streak', () => {
+    expect(buildWeeklyRecapShareCard(RECAP, WEEK_STRINGS, true).numbers).toEqual([
+      { label: 'переглянуто', count: 34 },
+      { label: 'збережено', count: 5 },
+      { label: 'знаю', count: 12 },
+    ]);
+  });
+
   it('shows a 0 as a number', () => {
     const card = buildWeeklyRecapShareCard({ ...RECAP, saved: 0, known: 0 }, WEEK_STRINGS);
 
