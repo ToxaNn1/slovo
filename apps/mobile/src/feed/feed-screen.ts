@@ -31,12 +31,13 @@ export function cardOnScreen({
 }
 
 /** The Feed Notices the shell draws a card for; the others wait for theirs. */
-const DRAWN_NOTICES = ['dailyLimit'] as const satisfies readonly FeedNotice[];
+const DRAWN_NOTICES = ['firstWeek', 'dailyLimit'] as const satisfies readonly FeedNotice[];
 
 /** A card the shell draws: every card but a Feed Notice that has no card yet. */
-export type DrawnCard =
-  | Exclude<FeedCard, FeedNoticeCard>
-  | (FeedNoticeCard & { readonly notice: (typeof DRAWN_NOTICES)[number] });
+export type DrawnCard = Exclude<FeedCard, FeedNoticeCard> | DrawnNoticeCard;
+
+/** The card of a Feed Notice the shell draws. */
+export type DrawnNoticeCard = FeedNoticeCard & { readonly notice: (typeof DRAWN_NOTICES)[number] };
 
 const drawn = (card: FeedCard): card is DrawnCard =>
   card.kind !== 'notice' || (DRAWN_NOTICES as readonly FeedNotice[]).includes(card.notice);

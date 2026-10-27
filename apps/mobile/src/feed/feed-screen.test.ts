@@ -54,6 +54,12 @@ describe('the pages of the Feed', () => {
     expect(pagesOf([end, dailyLimit, otherEnd]).pages).toEqual([end, dailyLimit, otherEnd]);
   });
 
+  it('give the first-week card a page', () => {
+    const firstWeek: FeedCard = { ...notice, notice: 'firstWeek', firstWeekDay: 7 };
+
+    expect(pagesOf([end, firstWeek, otherEnd]).pages).toEqual([end, firstWeek, otherEnd]);
+  });
+
   it("map each page to the Feed's position of its card, and a page past the last on from the last card", () => {
     const { positionOf } = pagesOf(cards);
 

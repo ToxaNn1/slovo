@@ -1,4 +1,4 @@
-import type { FeedNotice } from '@slovo/core';
+import type { FeedNotice, FirstWeekDay } from '@slovo/core';
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -85,6 +85,48 @@ export function DailyLimitCard() {
       notice="dailyLimit"
       message={message}
       action={{ label: keepGoing, onPress: () => turnToNext?.() }}
+    />
+  );
+}
+
+/**
+ * The first-week card of its day: what the app offers that day, and on day 7
+ * «Тиждень із нами» with the Streak, or with no Streak named while the reader
+ * doesn't see it. «Зрозуміло» turns to the next card as a swipe would, and so
+ * closes the card; no later day brings it back (ADR 0054).
+ */
+export function FirstWeekCard({
+  day,
+  streak,
+}: {
+  day: FirstWeekDay;
+  /** The Streak, or undefined while the reader doesn't see it. */
+  streak: number | undefined;
+}) {
+  const { strings, count } = useEdition();
+  const { close, days, lastDayTitle, lastDayText, lastDayTextNoStreak } =
+    strings.feedNotices.firstWeek;
+  const turnToNext = useTurnToNextPage();
+  const [day1, day2, day3, day4, day5, day6] = days;
+  const cards: Record<FirstWeekDay, { readonly title: string; readonly text: string }> = {
+    1: day1,
+    2: day2,
+    3: day3,
+    4: day4,
+    5: day5,
+    6: day6,
+    7: {
+      title: lastDayTitle,
+      text: streak === undefined ? lastDayTextNoStreak : count(lastDayText, streak),
+    },
+  };
+  const { title, text } = cards[day];
+  return (
+    <FeedNoticeCard
+      notice="firstWeek"
+      title={title}
+      message={text}
+      action={{ label: close, onPress: () => turnToNext?.() }}
     />
   );
 }
