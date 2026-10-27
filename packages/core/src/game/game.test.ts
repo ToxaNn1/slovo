@@ -48,6 +48,7 @@ function word(
     examples = [{ text: `An example of ${id.slice(2)}s.`, author: 'An author' }],
     rarity = 3,
     retired = false,
+    primaryDefinition = `The meaning of ${id.slice(2)}.`,
   }: {
     partOfSpeech?: PartOfSpeech;
     lemma?: string;
@@ -55,6 +56,7 @@ function word(
     examples?: Example[];
     rarity?: number;
     retired?: boolean;
+    primaryDefinition?: string;
   } = {},
 ): Word {
   return {
@@ -63,7 +65,7 @@ function word(
     lemma,
     stress,
     partOfSpeech,
-    primaryDefinition: `The meaning of ${id.slice(2)}.`,
+    primaryDefinition,
     extraDefinitions: [],
     examples,
     synonyms: [],
@@ -121,6 +123,10 @@ const optionWordsOf = (round: Round) =>
     if (option === undefined) throw new Error(`No Word reads «${text}»`);
     return option;
   });
+
+/** The Words a Round shows: the options of a pick, the Word asked in a typed Round. */
+const shownWordsOf = (round: Round) =>
+  round.form === 'pick' ? optionWordsOf(round) : [answerOf(round)];
 
 /** The option that names the answer. */
 const rightOf = (round: Round) =>
@@ -234,14 +240,28 @@ function current(app: Composition): CurrentGame {
   return game;
 }
 
+/** The Rounds of a pick among them, which offer options. */
+const picksOf = <T extends Round | PlayedRound>(rounds: readonly T[]): T[] =>
+  rounds.filter(({ form }) => form === 'pick');
+
+/** The right answer to a Round of «Вгадай слово» about a Word: the right option, or its Lemma typed. */
+const rightAnswerTo = (round: Round) =>
+  round.form === 'typed'
+    ? ({ form: 'typed', text: answerOf(round).lemma } as const)
+    : ({ form: 'pick', option: rightOf(round) } as const);
+
 /** Answers the current Round right or wrong and taps «Далі». */
 async function play(app: Composition, right: boolean, rightOption = rightOf): Promise<void> {
   const { round } = current(app);
-  const option = rightOption(round);
-  void app.game.answer({
-    form: 'pick',
-    option: right ? option : (option + 1) % optionsOf(round).length,
-  });
+  if (round.form === 'typed') {
+    void app.game.answer({ form: 'typed', text: right ? answerOf(round).lemma : 'no such word' });
+  } else {
+    const option = rightOption(round);
+    void app.game.answer({
+      form: 'pick',
+      option: right ? option : (option + 1) % optionsOf(round).length,
+    });
+  }
   await app.game.next();
 }
 
@@ -350,7 +370,7 @@ describe('a Round of «Вгадай слово»', () => {
       await app.game.start('guess-word');
       while (current(app).status === 'playing') {
         const { round } = current(app);
-        void app.game.answer({ form: 'pick', option: rightOf(round) });
+        void app.game.answer(rightAnswerTo(round));
         sheets.push({ answer: answerOf(round), sheet: current(app).round.answer?.sheet });
         await app.game.next();
       }
@@ -370,7 +390,7 @@ describe('a Round of «Вгадай слово»', () => {
     for (const seed of [1, 2, 3, 4, 5]) {
       const app = await run({ seed });
 
-      for (const round of await playGame(app)) {
+      for (const round of picksOf(await playGame(app))) {
         const answer = answerOf(round);
         const distractors = optionWordsOf(round).filter((option) => option !== answer);
         const samePartOfSpeech = words.filter(
@@ -391,7 +411,9 @@ describe('a Round of «Вгадай слово»', () => {
     const rounds = await playGame(app);
 
     // Nature has 14 nouns and 3 adjectives, so 15 Rounds ask about an adjective at least once.
-    const adjectiveRounds = rounds.filter((round) => answerOf(round).partOfSpeech === 'adjective');
+    const adjectiveRounds = picksOf(rounds).filter(
+      (round) => answerOf(round).partOfSpeech === 'adjective',
+    );
     expect(adjectiveRounds.length).toBeGreaterThan(0);
     for (const round of adjectiveRounds) {
       const partsOfSpeech = optionWordsOf(round).map((option) => option.partOfSpeech);
@@ -404,7 +426,7 @@ describe('a Round of «Вгадай слово»', () => {
     for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
       const app = await run({ seed });
 
-      for (const round of await playGame(app)) {
+      for (const round of picksOf(await playGame(app))) {
         const lemmas = optionWordsOf(round).map((option) => option.lemma);
         expect(new Set(lemmas).size).toBe(4);
         if (answerOf(round).lemma === 'kupyna') homonymRounds += 1;
@@ -416,7 +438,7 @@ describe('a Round of «Вгадай слово»', () => {
   it('puts the answer in different places, as the random source has it', async () => {
     const app = await run();
 
-    const places = (await playGame(app)).map(rightOf);
+    const places = picksOf(await playGame(app)).map(rightOf);
 
     expect(new Set(places).size).toBeGreaterThan(1);
   });
@@ -453,7 +475,7 @@ describe('the idioms «Вгадай слово» asks about', () => {
 
   /** The Entries a Round offers, in the order shown. */
   const offered = (round: Round) =>
-    optionsOf(round).map(({ text }) => {
+    (round.form === 'pick' ? round.options : []).map(({ text }) => {
       const option = entries.find((entry) => textOf(entry) === text);
       if (option === undefined) throw new Error(`No Entry reads «${text}»`);
       return option;
@@ -592,7 +614,7 @@ describe('the idioms «Вгадай слово» asks about', () => {
     const kinds = played.map(({ entry }) => entry.kind);
     expect(kinds).toContain('word');
     expect(kinds).toContain('idiom');
-    for (const round of played) {
+    for (const round of picksOf(played)) {
       expect(offered(round).map(({ kind }) => kind)).toEqual(Array(4).fill(round.entry.kind));
     }
     expect(played.filter(({ entry }) => unknown.includes(entry.id))).toHaveLength(3);
@@ -993,7 +1015,7 @@ describe('the Tips «Вгадай слово» asks about', () => {
     const places = new Set<number>();
     for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
       const app = await unknown(await runWith({ seed }), live);
-      for (const { entry, answer } of (await playAll(app)).map(pickPlayed)) {
+      for (const { entry, answer } of picksOf(await playAll(app)).map(pickPlayed)) {
         if (entry.kind === 'tip') places.add(answer.correct);
       }
     }
@@ -1162,6 +1184,10 @@ describe('the rules of a Game', () => {
       const wrong = [2, 5].includes(round.number);
       expect(entry.entry).toEqual(answerOf(round));
       expect(entry.right).toBe(!wrong);
+      if (round.form === 'typed') {
+        expect(entry.answer).toMatchObject({ typed: answerOf(round).lemma, right: true });
+        return;
+      }
       expect(entry.answer).toMatchObject({
         correct: rightOf(round),
         chosen: wrong ? (rightOf(round) + 1) % 4 : rightOf(round),
@@ -1364,7 +1390,7 @@ describe('the Words a Game asks about', () => {
     const rounds = await playGame(app);
 
     expect(rounds.map((round) => answerOf(round).id).toSorted()).toEqual(met.toSorted());
-    const distractors = rounds.flatMap((round) =>
+    const distractors = picksOf(rounds).flatMap((round) =>
       optionWordsOf(round).filter((option) => option !== answerOf(round)),
     );
     expect(distractors.some((distractor) => !met.includes(distractor.id))).toBe(true);
@@ -1401,7 +1427,7 @@ describe('the Words a Game asks about', () => {
       await app.hide({ kind: 'category', categoryId: 'crafts' });
 
       for (const round of await playGame(app)) {
-        const shown = optionWordsOf(round).map((option) => option.id);
+        const shown = shownWordsOf(round).map((option) => option.id);
         expect(shown.filter((id) => left.includes(id))).toEqual([]);
       }
     }
@@ -1421,6 +1447,13 @@ describe('the Words a Game asks about', () => {
       await app.game.start('guess-word');
       while (current(app).status === 'playing') {
         const { round } = current(app);
+        if (round.form === 'typed') {
+          const asked = rare.find(({ primaryDefinition }) => primaryDefinition === round.prompt);
+          expect(asked).toBeDefined();
+          void app.game.answer({ form: 'typed', text: asked?.lemma ?? '' });
+          await app.game.next();
+          continue;
+        }
         expect(optionsOf(round).every(({ text }) => rareReading(text) !== undefined)).toBe(true);
         const right = optionsOf(round).findIndex(
           ({ text }) => rareReading(text)?.primaryDefinition === round.prompt,
@@ -1449,7 +1482,7 @@ describe('the Words a Game asks about', () => {
 
       expect(later).toHaveLength(GAME_ROUNDS - 2);
       for (const round of later) {
-        const shown = optionWordsOf(round);
+        const shown = shownWordsOf(round);
         expect(shown.filter((w) => w.categoryId === 'speech' || w.id === hiddenWord)).toEqual([]);
       }
     }
@@ -2455,9 +2488,10 @@ describe('the answer forms of a Round', () => {
     roundLimit: 8,
     buildRound: ({ answer, next }) => {
       const words = [answer, ...next].filter((entry): entry is Word => entry.kind === 'word');
+      // A Word shows by its id, which tells homonyms apart.
       const pairs = words.slice(0, 4).map((entry) => ({
         entry,
-        word: option(entry.lemma),
+        word: option(entry.id.slice(2)),
         definition: entry.primaryDefinition,
         sheet: sheetOf(entry.primaryDefinition),
       }));
@@ -2867,6 +2901,14 @@ describe('«Вгадай слово» harder as it goes (L10)', () => {
       });
     await app.game.start('guess-word');
     while (current(app).status === 'playing') {
+      const { round } = current(app);
+      const asked = askedIn(round);
+      if (round.form === 'typed') {
+        if (asked?.kind !== 'word') throw new Error(`No Word answers «${round.prompt}»`);
+        void app.game.answer({ form: 'typed', text: asked.lemma });
+        await app.game.next();
+        continue;
+      }
       await play(app, true, (round) => {
         const asked = askedIn(round);
         const text = asked?.kind === 'word' ? renderStress(asked) : asked?.expression;
@@ -2877,6 +2919,31 @@ describe('«Вгадай слово» harder as it goes (L10)', () => {
     }
     expect(current(app).status).toBe('won');
     return current(app).played;
+  }
+
+  /** Starts «Вгадай слово» over the Words, none in an Example with a gap, and answers Rounds 1–10 right. */
+  async function atRound11() {
+    const entries = [...trees, ...herbs].map((lemma) =>
+      nounIn(lemma, 'Nothing like it grew here.'),
+    );
+    const app = await run({ pack: createMemoryContentPort({ categories, words: entries }) });
+    /** The Word whose Definition the Round asks. */
+    const askedIn = ({ prompt }: Round) => {
+      const asked = entries.find((entry) => entry.primaryDefinition === prompt);
+      if (asked === undefined) throw new Error(`No Word answers «${prompt}»`);
+      return asked;
+    };
+    await app.game.start('guess-word');
+    while (current(app).round.number < 11) {
+      const { round } = current(app);
+      const text = renderStress(askedIn(round));
+      void app.game.answer({
+        form: 'pick',
+        option: optionsOf(round).findIndex((option) => option.text === text),
+      });
+      await app.game.next();
+    }
+    return { app, askedIn };
   }
 
   it('asks Rounds 1–5 a Definition and Rounds 6–10 an Example with the Lemma, in any case and with its Stress, left as a gap', async () => {
@@ -2923,6 +2990,68 @@ describe('«Вгадай слово» harder as it goes (L10)', () => {
     }
   });
 
+  it('asks Rounds 11–15 a Definition and takes the Word typed, its case and Stress set aside', async () => {
+    const { app, askedIn } = await atRound11();
+
+    for (let number = 11; number <= 15; number += 1) {
+      const { round } = current(app);
+      const asked = askedIn(round);
+      expect(round).toMatchObject({ number, form: 'typed', blanks: undefined });
+      expect(round.highlight).toBeUndefined();
+      await app.game.answer({ form: 'typed', text: renderStress(asked).toUpperCase() });
+      expect(current(app)).toMatchObject({ status: 'answered', lives: GAME_LIVES });
+      expect(current(app).round.answer).toMatchObject({
+        form: 'typed',
+        right: true,
+        expected: asked.lemma,
+        sheet: { answer: { text: renderStress(asked) } },
+      });
+      await app.game.next();
+    }
+    expect(current(app)).toMatchObject({ status: 'won', roundsPassed: 15 });
+  });
+
+  it('takes a Life for a wrong typed Word and shows the Word on the sheet', async () => {
+    const { app, askedIn } = await atRound11();
+    const asked = askedIn(current(app).round);
+
+    await app.game.answer({ form: 'typed', text: asked.lemma.slice(1) });
+
+    expect(current(app)).toMatchObject({ status: 'answered', lives: GAME_LIVES - 1 });
+    expect(current(app).round.answer).toMatchObject({
+      form: 'typed',
+      typed: asked.lemma.slice(1),
+      right: false,
+      sheet: { answer: { text: renderStress(asked) } },
+    });
+  });
+
+  it('asks a pick in Rounds 11–15 for a Word whose Definition another eligible Word shares', async () => {
+    // Every Definition is two Words', so no typed Round would have one right answer.
+    const entries = [...trees, ...herbs].map((lemma, place) =>
+      word(`w_${lemma}`, 'nature', {
+        lemma,
+        primaryDefinition: `The sense of pair ${String(place % 8)}.`,
+        examples: [],
+      }),
+    );
+    const app = await run({ pack: createMemoryContentPort({ categories, words: entries }) });
+    await app.game.start('guess-word');
+    while (current(app).status === 'playing') {
+      const { round } = current(app);
+      const right = optionsOf(round).findIndex(({ text }) =>
+        entries.some(
+          (entry) => renderStress(entry) === text && entry.primaryDefinition === round.prompt,
+        ),
+      );
+      void app.game.answer({ form: 'pick', option: right });
+      await app.game.next();
+    }
+
+    expect(current(app)).toMatchObject({ status: 'won', roundsPassed: 15 });
+    expect(current(app).played.map(({ form }) => form)).toEqual(Array(15).fill('pick'));
+  });
+
   it("asks an idiom's Definition in every Round, even with an Example that has its expression", async () => {
     const idioms = numbered('i_idiom', 16).map((id) =>
       idiom(id, {
@@ -2934,9 +3063,11 @@ describe('«Вгадай слово» harder as it goes (L10)', () => {
 
     const idiomRounds = played.filter(({ entry }) => entry.kind === 'idiom');
     expect(idiomRounds.some(({ number }) => number >= 6 && number <= 10)).toBe(true);
+    expect(idiomRounds.some(({ number }) => number >= 11)).toBe(true);
     for (const round of idiomRounds) {
       expect(round.prompt).toBe(definitionOf(round.entry));
       expect(round.highlight).toBeUndefined();
+      expect(pickPlayed(round).options).toHaveLength(4);
     }
   });
 });

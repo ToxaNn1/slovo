@@ -251,10 +251,15 @@ describe('a Round of «Анаграми»', () => {
     expect(current(app).round.answer).toMatchObject({ form: 'chips', chosen: wrong, right: false });
     expect(current(app).lives).toBe(4);
     expect(app.knowledge.state.shown.get(idOf(asked))).toBe('unknown');
+    const tapped = [...lettersOf(asked).slice(1), ...lettersOf(asked).slice(0, 1)];
+    /** The letters tapped, the characters that stay in place in their places. */
+    const shown = Array.from(asked, (character) =>
+      inPlace.has(character) ? character : tapped.shift(),
+    ).join('');
     expect(buildGameReview(current(app).played)[0]).toMatchObject({
       entryId: idOf(asked),
       right: false,
-      picked: { text: [...lettersOf(asked).slice(1), lettersOf(asked)[0]].join('') },
+      picked: { text: shown },
     });
   });
 
