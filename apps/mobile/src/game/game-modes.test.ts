@@ -11,7 +11,7 @@ import {
 import { createMemoryContentPort } from '@slovo/core/testing';
 import { describe, expect, it } from 'vitest';
 
-import { gameModeCard, gameModeGroups, gameModeStrings, playedOffers } from './game-modes';
+import { gameModeCard, gameModeGroups, gameModeStrings } from './game-modes';
 import { strings as allStrings } from '../test-support';
 
 const { game: strings } = allStrings;
@@ -98,10 +98,9 @@ async function open({
   return offersPlanned(app);
 }
 
-/** The cards of the modes on offer, in the Edition's texts. */
-/** The cards of the modes the app plays, as the Game screen shows them. */
+/** The cards of the modes on offer, as the Game screen shows them. */
 const cardsOf = ({ game }: Composition) =>
-  playedOffers(game.state.modes).map((offer) => gameModeCard(offer, strings));
+  game.state.modes.map((offer) => gameModeCard(offer, strings));
 
 const guessWordCard = {
   entryKind: 'word',
@@ -193,42 +192,6 @@ describe('the card of each Game Mode on offer', () => {
   });
 });
 
-describe('the modes the Game screen offers', () => {
-  it('keeps the modes the app plays and leaves out one whose screen is still to come', () => {
-    const offers = [
-      { modeId: 'guess-word', entryKind: 'word', canStart: true },
-      { modeId: 'stress', entryKind: 'word', canStart: true },
-      { modeId: 'pairs', entryKind: 'word', canStart: true },
-      { modeId: 'anagram', entryKind: 'word', canStart: true },
-      { modeId: 'by-letters', entryKind: 'word', canStart: true },
-      { modeId: 'type-word', entryKind: 'correction', canStart: true },
-      { modeId: 'correction', entryKind: 'correction', canStart: true },
-      { modeId: 'anglicism', entryKind: 'correction', canStart: true },
-      { modeId: 'idiom-meaning', entryKind: 'idiom', canStart: true },
-      { modeId: 'build-idiom', entryKind: 'idiom', canStart: true },
-      { modeId: 'origin', entryKind: 'word', canStart: true },
-      { modeId: 'survival', entryKind: 'correction', canStart: true },
-      { modeId: 'timed', entryKind: 'word', canStart: true },
-    ] as const;
-
-    expect(playedOffers(offers).map(({ modeId }) => modeId)).toEqual([
-      'guess-word',
-      'stress',
-      'pairs',
-      'anagram',
-      'by-letters',
-      'type-word',
-      'correction',
-      'anglicism',
-      'idiom-meaning',
-      'build-idiom',
-      'origin',
-      'survival',
-      'timed',
-    ]);
-  });
-});
-
 describe('the label over a Round', () => {
   it.each([
     ['guess-word', 'Визначення'],
@@ -289,7 +252,7 @@ describe('the groups of the modes on offer', () => {
   it('lists only the modes the Core offers, and no group without one', async () => {
     const app = await open({ words: 15 });
 
-    expect(shapeOf(gameModeGroups(playedOffers(app.game.state.modes), strings))).toEqual([
+    expect(shapeOf(gameModeGroups(app.game.state.modes, strings))).toEqual([
       ['Слова', ['guess-word', 'pairs', 'anagram', 'by-letters', 'type-word', 'origin']],
       ['Виправлення', ['correction', 'anglicism']],
       ['Вислови', ['idiom-meaning', 'build-idiom']],
@@ -300,7 +263,7 @@ describe('the groups of the modes on offer', () => {
   it('leaves out a mode the Edition switches off', async () => {
     const app = await open({ words: 15, switchedOff: ['corrections'] });
 
-    expect(shapeOf(gameModeGroups(playedOffers(app.game.state.modes), strings))).toEqual([
+    expect(shapeOf(gameModeGroups(app.game.state.modes, strings))).toEqual([
       ['Слова', ['guess-word', 'pairs', 'anagram', 'by-letters', 'origin']],
       ['Вислови', ['idiom-meaning', 'build-idiom']],
       ['Виклик', ['timed']],
