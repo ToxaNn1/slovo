@@ -60,7 +60,7 @@
     "@types/node": "^22.20.5",
     "@types/react": "~19.2.18",
     "babel-jest": "29.7.0",
-    "babel-preset-expo": "57.0.14",
+    "babel-preset-expo": "58.0.20",
     "eslint": "^10.13.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "expo-atlas": "~0.4.3",
