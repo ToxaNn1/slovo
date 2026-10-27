@@ -203,7 +203,12 @@ export function GameRound({
             />
           </>
         ) : (
-          <RoundCard label={asked.label} prompt={asked.prompt} highlight={round.highlight} />
+          <RoundCard
+            label={asked.label}
+            prompt={asked.prompt}
+            highlight={round.highlight}
+            definition={round.definition}
+          />
         )}
         {round.form === 'chips' && (
           <OrderedChips
@@ -530,6 +535,8 @@ function Life({ full }: { full: boolean }) {
  * highlight, such as a non-standard form, on the sunken fill and underlined in
  * the accent. VoiceOver reads it before the options, then names the highlight;
  * a gap it reads in its place, as the Edition calls it.
+ * A Definition, such as a Word's in «Звідки слово», stands under the prompt,
+ * and VoiceOver reads it after the prompt.
  * An answer drawn in the prompt's place, such as the vowel buttons, stands in
  * for the prompt, and VoiceOver reads the label, then each of its buttons.
  */
@@ -537,12 +544,15 @@ function RoundCard({
   label,
   prompt,
   highlight,
+  definition,
   children,
 }: {
   label: string;
   prompt: string;
   /** The part of the prompt to mark; nothing to mark. */
   highlight: TextRange | undefined;
+  /** The Definition under the prompt; none to show. */
+  definition?: string | undefined;
   /** What the card shows for the prompt, the answer drawn in it; the prompt's text if nothing. */
   children?: ReactNode;
 }) {
@@ -559,13 +569,15 @@ function RoundCard({
       : fill(strings.game.round.highlight, {
           text: prompt.slice(highlight.start, highlight.end),
         });
+  const defined =
+    definition === undefined ? '' : `${ENDS_IN_PUNCTUATION.test(read) ? '' : '.'} ${definition}`;
   return (
     <View
       testID="game-prompt"
       accessible={children === undefined}
       accessibilityLabel={
         children === undefined
-          ? [`${label}${ENDS_IN_PUNCTUATION.test(label) ? '' : '.'} ${read}`, marked]
+          ? [`${label}${ENDS_IN_PUNCTUATION.test(label) ? '' : '.'} ${read}${defined}`, marked]
               .filter(Boolean)
               .join(' ')
           : undefined
@@ -603,6 +615,16 @@ function RoundCard({
                 }
           }
         />
+      )}
+      {definition !== undefined && (
+        <Text
+          testID="game-definition"
+          maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+          {...voice}
+          style={[styles.explanation, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+        >
+          {definition}
+        </Text>
       )}
     </View>
   );

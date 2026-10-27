@@ -222,6 +222,7 @@ describe('the modes the Game screen offers', () => {
       'anglicism',
       'idiom-meaning',
       'build-idiom',
+      'origin',
       'survival',
       'timed',
     ]);
@@ -240,6 +241,7 @@ describe('the label over a Round', () => {
     ['build-idiom', 'Складіть вислів'],
     ['anglicism', 'Як сказати краще?'],
     ['idiom-meaning', 'Що це означає?'],
+    ['origin', 'Звідки це слово?'],
     ['survival', 'Виживання'],
     ['timed', 'Визначення'],
   ])('reads the %s mode’s own label', (modeId, label) => {
@@ -288,7 +290,7 @@ describe('the groups of the modes on offer', () => {
     const app = await open({ words: 15 });
 
     expect(shapeOf(gameModeGroups(playedOffers(app.game.state.modes), strings))).toEqual([
-      ['Слова', ['guess-word', 'pairs', 'anagram', 'by-letters', 'type-word']],
+      ['Слова', ['guess-word', 'pairs', 'anagram', 'by-letters', 'type-word', 'origin']],
       ['Виправлення', ['correction', 'anglicism']],
       ['Вислови', ['idiom-meaning', 'build-idiom']],
       ['Виклик', ['survival', 'timed']],
@@ -299,7 +301,7 @@ describe('the groups of the modes on offer', () => {
     const app = await open({ words: 15, switchedOff: ['corrections'] });
 
     expect(shapeOf(gameModeGroups(playedOffers(app.game.state.modes), strings))).toEqual([
-      ['Слова', ['guess-word', 'pairs', 'anagram', 'by-letters']],
+      ['Слова', ['guess-word', 'pairs', 'anagram', 'by-letters', 'origin']],
       ['Вислови', ['idiom-meaning', 'build-idiom']],
       ['Виклик', ['timed']],
     ]);

@@ -510,6 +510,32 @@ describe('GameRound', () => {
     expect(screen.getByRole('header', { name: 'Right!' })).toBeTruthy();
   });
 
+  it('shows a Word with its Definition under it, VoiceOver reading both, and takes an answer', async () => {
+    const onAnswer = jest.fn();
+    await renderRound(onAnswer, jest.fn(), {
+      ...first,
+      modeId: 'origin',
+      round: { ...first.round, prompt: 'candour', definition: 'Open honesty.' },
+    });
+
+    expect(screen.getByTestId('game-prompt')).toHaveAccessibleName(
+      'Definition. candour. Open honesty.',
+    );
+    expect(screen.getByText('candour')).toBeOnTheScreen();
+    expect(screen.getByTestId('game-definition')).toHaveTextContent('Open honesty.');
+
+    await fireEvent.press(screen.getByRole('button', { name: 'candid' }));
+
+    expect(onAnswer).toHaveBeenCalledWith({ form: 'pick', option: CORRECT });
+    expect(screen.getByRole('header', { name: 'Right!' })).toBeTruthy();
+  });
+
+  it('shows no Definition for a Round without one', async () => {
+    await renderRound();
+
+    expect(screen.queryByTestId('game-definition')).toBeNull();
+  });
+
   describe('a vowel Round', () => {
     it('asks under the mode’s label with the Word’s vowels as buttons VoiceOver reads by place', async () => {
       await renderRound(jest.fn(), jest.fn(), wordVowelRound);

@@ -192,8 +192,22 @@ const SOLVED = {
   '2,4': 'т',
 };
 
+/** The Ukrainian Edition's origin languages, in its order. */
+const { originLanguages } = config as { originLanguages: { code: string; name: string }[] };
+
+/** The language «слово{n}» comes from, when it has an origin: the Edition's languages in turn. */
+const originOf = (index: number) => originLanguages[index % originLanguages.length];
+
+/** The Word «слово{n}» with its origin and an etymology that names it. */
+const withOrigin = (index: number): Word => ({
+  ...word(index),
+  origin: originOf(index)?.code,
+  etymology: `Від test${String(index)}.`,
+});
+
 /**
- * Opens the composition over 15 Words, the given numbers of calque
+ * Opens the composition over 15 Words, the first given number of them with
+ * an origin, the given numbers of calque
  * Corrections, anglicisms (numbered after the calques) and Idioms and the
  * Daily Crossword of the day, with the given Best results by mode id and the
  * crossword's letters, typed on the given date, kept from before.
@@ -203,11 +217,13 @@ async function open({
   corrections = 0,
   anglicisms = 0,
   idioms = 0,
+  origins = 0,
   switchedOff = [],
   crossword,
   clock = { now: () => new Date('2026-10-26T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
   schedule,
 }: {
+  origins?: number;
   best?: Record<string, number>;
   corrections?: number;
   anglicisms?: number;
@@ -227,7 +243,7 @@ async function open({
   mockComposition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'nature', displayName: 'Природа' }],
-      words: Array.from({ length: 15 }, (_, i) => word(i)),
+      words: Array.from({ length: 15 }, (_, i) => (i < origins ? withOrigin(i) : word(i))),
       corrections: [
         ...Array.from({ length: corrections }, (_, i) => correction(i)),
         ...Array.from({ length: anglicisms }, (_, i) => correction(corrections + i, 'anglicism')),
@@ -421,6 +437,7 @@ describe('the Game screen', () => {
       'game-mode-anagram',
       'game-mode-by-letters',
       'game-mode-type-word',
+      'game-mode-origin',
       'Виправлення',
       'game-mode-correction',
       'game-mode-anglicism',
@@ -468,6 +485,7 @@ describe('the Game screen', () => {
       'game-mode-pairs',
       'game-mode-anagram',
       'game-mode-by-letters',
+      'game-mode-origin',
       'Вислови',
       'game-mode-idiom-meaning',
       'game-mode-build-idiom',
@@ -1086,5 +1104,74 @@ describe('the Game screen', () => {
         expect(screen.getByText('Час вийшов!')).toBeOnTheScreen();
       });
     });
+  });
+
+  it('refuses «Звідки слово» with fewer than 8 Words with an origin in the Mix, saying why', async () => {
+    await open({ origins: 7 });
+    await renderScreen();
+
+    const card = screen.getByTestId('game-mode-origin');
+    expect(card.props['accessibilityState']).toEqual({ disabled: true });
+    expect(card).toHaveTextContent(/Замало слів із відомим походженням у вашому Міксі\./);
+  });
+
+  it('starts «Звідки слово» from its card and plays a whole Game of 8 Rounds, picking each Word’s language, to the result screen', async () => {
+    await open({ origins: 8 });
+    await renderScreen();
+
+    expect(screen.getByTestId('game-mode-origin').props['accessibilityState']).toEqual({
+      disabled: false,
+    });
+    await fireEvent.press(screen.getByTestId('game-mode-origin'));
+
+    for (let round = 1; round <= 8; round += 1) {
+      await waitFor(() => {
+        expect(screen.getByTestId('game-progress').props['accessibilityLabel']).toBe(
+          `Пройдено раундів: ${String(round - 1)} з 8`,
+        );
+      });
+      // The Word with its Stress, then its Definition, over four languages.
+      expect(screen.getByTestId('game-prompt').props['accessibilityLabel']).toMatch(
+        /^Звідки це слово\? сло\u0301?во(\d+)\. The meaning of test\1\.$/,
+      );
+      const n = Number(
+        /test(\d+)/.exec(String(screen.getByTestId('game-definition').props['children']))?.[1],
+      );
+      expect(n).toBeLessThan(8);
+      expect(screen.getAllByTestId(/^game-option-\d+$/)).toHaveLength(4);
+      await fireEvent.press(theOption(originOf(n)?.name ?? ''));
+      expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Правильно!');
+      await fireEvent.press(screen.getByTestId('game-next'));
+    }
+
+    await waitFor(() => {
+      expect(screen.getByText('Перемога!')).toBeOnTheScreen();
+    });
+  });
+
+  it('takes a Life for a wrong language in «Звідки слово» and shows the right one with the Word’s etymology', async () => {
+    await open({ origins: 8 });
+    await renderScreen();
+
+    await fireEvent.press(screen.getByTestId('game-mode-origin'));
+    await waitFor(() => {
+      expect(screen.getAllByTestId(/^game-option-\d+$/)).toHaveLength(4);
+    });
+    const n = Number(
+      /test(\d+)/.exec(String(screen.getByTestId('game-definition').props['children']))?.[1],
+    );
+    const language = originOf(n)?.name ?? '';
+    const wrong = screen
+      .getAllByTestId(/^game-option-\d+$/)
+      .find((option) => option.props['accessibilityLabel'] !== language);
+    if (wrong === undefined) throw new Error('No wrong option');
+    warning.mockClear();
+    await fireEvent.press(wrong);
+
+    expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
+    expect(screen.getByTestId('game-sheet')).toHaveTextContent(language, { exact: false });
+    expect(screen.getByTestId('game-sheet-explanation')).toHaveTextContent(`Від test${String(n)}.`);
+    expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 4 з 5');
+    expect(warning).toHaveBeenCalled();
   });
 });
