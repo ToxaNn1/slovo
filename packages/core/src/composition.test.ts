@@ -57,7 +57,7 @@ async function run({
     userState: await openUserState({ port }),
     clock: time.clock,
     random: { next: () => 0.25 },
-    scheduling: { scheduler, ellipsis: '…' },
+    scheduling: { scheduler, ellipsis: '…', titles: ['{word}'] },
     ...(schedule === undefined ? {} : { schedule }),
   });
   return { app, time, scheduler, records };

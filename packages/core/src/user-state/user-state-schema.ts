@@ -220,6 +220,20 @@ export const userStateRecords = {
     sync: 'device-only',
   }),
   /**
+   * The title templates of the notifications (ADR 0054), by their index in
+   * the Edition's list: `last`, the template of the last notification that
+   * came, and `planned`, each planned notification's, by the id of its plan
+   * record. The plan reads them so no template comes twice in a row.
+   */
+  notificationTitles: declareRecord(
+    'notifications.titles',
+    z.strictObject({
+      last: z.number().int().nonnegative().optional(),
+      planned: z.record(z.string(), z.number().int().nonnegative()),
+    }),
+    { sync: 'device-only' },
+  ),
+  /**
    * That the onboarding was finished or skipped, and the instant it was;
    * without the record, it opens. It stays on the device: the onboarding asks
    * this device for permission to notify.
