@@ -247,6 +247,39 @@ describe('the 0.8.13 strings', () => {
   ])('needs every placeholder in %s', (path, changed) => {
     expect(issuesOf({ ...strings, ...changed })).toEqual([path]);
   });
+
+  describe('notification templates', () => {
+    const templates = strings['notificationTemplates'] as { titles: string[]; farewell: string };
+    const withTemplates = (changed: Partial<typeof templates>) =>
+      issuesOf({ ...strings, notificationTemplates: { ...templates, ...changed } });
+
+    it('the Ukrainian Edition carries 10 title templates, each with {word}, and a farewell text', () => {
+      expect(parsed.notificationTemplates.titles).toHaveLength(10);
+      for (const title of parsed.notificationTemplates.titles) expect(title).toContain('{word}');
+      expect(parsed.notificationTemplates.farewell).not.toBe('');
+    });
+
+    it('every Edition needs the templates and the farewell text', () => {
+      const without = Object.fromEntries(
+        Object.entries(strings).filter(([name]) => name !== 'notificationTemplates'),
+      );
+
+      expect(issuesOf(without)).toEqual(['notificationTemplates']);
+      expect(withTemplates({ farewell: '' })).toEqual(['notificationTemplates.farewell']);
+    });
+
+    it.each([9, 11])('refuses %i title templates', (count) => {
+      const titles = Array.from({ length: count }, (_, index) => `{word} ${String(index)}`);
+
+      expect(withTemplates({ titles })).toEqual(['notificationTemplates.titles']);
+    });
+
+    it('refuses a title template without {word}', () => {
+      const titles = templates.titles.with(3, 'Слово дня');
+
+      expect(withTemplates({ titles })).toEqual(['notificationTemplates.titles.3']);
+    });
+  });
 });
 
 describe('the 0.6 widget strings group', () => {
