@@ -158,6 +158,39 @@ describe('Feed Notices', () => {
     expect(cards[5]?.kind).toBe('word');
   });
 
+  it('give the Word of the Day the first card and the three notices of the day cards 2, 3 and 4, and the Daily Limit card the card after the limit', async () => {
+    const limit = 3;
+    const opened: { history?: Composition['history'] } = {};
+    const feedNotices: FeedNotices = {
+      forDay: () =>
+        Promise.resolve([
+          'yesterday',
+          'weeklyRecap',
+          'firstWeek',
+          ...((opened.history?.list.length ?? 0) >= limit ? (['dailyLimit'] as const) : []),
+        ]),
+    };
+    const app = await run({ records: new Map(), at: dayOne, feedNotices });
+    opened.history = app.history;
+    // The card on screen when the limit is reached.
+    let onScreenAtLimit: number | undefined;
+
+    for (let position = 0; position < 12; position += 1) {
+      await app.feed.show(position);
+      if (onScreenAtLimit === undefined && app.history.list.length >= limit)
+        onScreenAtLimit = position;
+      app.advance(1000);
+    }
+
+    const cards = app.feed.cards;
+    expect(cards[0]?.kind === 'word' && cards[0].wordOfTheDay !== undefined).toBe(true);
+    expect(shownBy(cards.slice(1, 4))).toEqual(['weeklyRecap', 'firstWeek', 'yesterday']);
+    expect(onScreenAtLimit).toBeDefined();
+    expect(cards.findIndex((card) => card.kind === 'notice' && card.notice === 'dailyLimit')).toBe(
+      (onScreenAtLimit ?? 0) + 1,
+    );
+  });
+
   it('make nothing Seen, however long they stay on screen', async () => {
     const records = new Map<string, string>();
     const app = await run({ records, at: dayOne, feedNotices: fakeNotices(['yesterday']) });
