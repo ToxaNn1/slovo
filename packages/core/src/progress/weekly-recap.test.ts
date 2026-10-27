@@ -163,4 +163,16 @@ describe('the Weekly Recap', () => {
     expect(recapCards(await firstCards(app))).toEqual([]);
     expect(await app.weeklyRecap.of({ year: 2026, month: 10, day: 26 })).toBeUndefined();
   });
+
+  it('leaves the Known marks out with the Knowledge Marks off', async () => {
+    const app = await run({ records: fakeWeek(), at: monday, off: ['knowledge'] });
+
+    expect(await app.weeklyRecap.of({ year: 2026, month: 10, day: 26 })).toEqual({
+      firstDay: { year: 2026, month: 10, day: 19 },
+      lastDay: { year: 2026, month: 10, day: 25 },
+      seen: 3,
+      saved: 1,
+      streak: 3,
+    });
+  });
 });

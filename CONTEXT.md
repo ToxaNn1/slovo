@@ -236,7 +236,7 @@ _Avoid_: Lookup, filter, dictionary
 _Avoid_: Level test, placement test, quiz
 
 **Weekly Recap**:
-«Ваш тиждень»: a Feed Notice on the first open of a local Monday about the Monday–Sunday week before it: the Entries Seen, the Favorites added, the Known marks set in that week and the current Streak, with a Share Card. No Weekly Recap follows a week without an Active Day.
+«Ваш тиждень»: a Feed Notice on the first open of a local Monday about the Monday–Sunday week before it: the Entries Seen, the Favorites added, the Known marks set in that week (left out with the Knowledge Marks off) and the current Streak, with a Share Card. No Weekly Recap follows a week without an Active Day.
 _Avoid_: Weekly report, digest, summary
 
 **Daily Limit**:

@@ -17,8 +17,11 @@ export interface WeeklyRecapModel {
   readonly seen: number;
   /** The Favorites added in the week. */
   readonly saved: number;
-  /** The Known marks set in the week; a mark kept without its time counts in no week. */
-  readonly known: number;
+  /**
+   * The Known marks set in the week; a mark kept without its time counts in
+   * no week. Absent with the `knowledge` Feature Switch off.
+   */
+  readonly known?: number;
   /** The current Streak. */
   readonly streak: number;
 }
@@ -66,22 +69,24 @@ export function createWeeklyRecap({
       const week = new Set(
         Array.from({ length: 7 }, (_, index) => dateKeyOf(localDateAfter(day, index - 7))),
       );
-      const [days, marks] = await Promise.all([
-        userState.list(activeDays),
-        userState.list(knowledge),
-      ]);
+      const days = await userState.list(activeDays);
       if (![...days.keys()].some((date) => week.has(date))) return undefined;
       /** Whether the instant fell in the week, in the clock's time zone. */
       const inWeek = (instant: Date) => week.has(dateKeyOf(localDayOf(instant, clock).date));
+      /** The Known marks set in the week. */
+      async function knownInWeek(): Promise<number> {
+        const marks = await userState.list(knowledge);
+        return [...marks.values()].filter(
+          ({ mark, markedAt }) =>
+            mark === 'known' && markedAt !== undefined && inWeek(new Date(markedAt)),
+        ).length;
+      }
       return {
         firstDay: localDateAfter(day, -7),
         lastDay: localDateAfter(day, -1),
         seen: history.list.filter(({ seenAt }) => inWeek(seenAt)).length,
         saved: favorites.list.filter(({ addedAt }) => inWeek(addedAt)).length,
-        known: [...marks.values()].filter(
-          ({ mark, markedAt }) =>
-            mark === 'known' && markedAt !== undefined && inWeek(new Date(markedAt)),
-        ).length,
+        ...(edition.isFeatureEnabled('knowledge') ? { known: await knownInWeek() } : {}),
         streak: progress.state.streak,
       };
     },
