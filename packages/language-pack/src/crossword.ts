@@ -31,7 +31,9 @@ const SEARCH_BUDGET = 500;
  * the Words that are not Retired, clued by their primary Definition, and the
  * one-word main standard forms of the Corrections that are not Retired, clued
  * by their explanation, with «…» in place of the answer wherever a clue names
- * it. The same content and date always give the same day.
+ * it. It is the day `--record` keeps or would append for the date: a recorded
+ * day as it is, and a later one with no word of the 23 days before it. The
+ * same content and date always give the same day.
  * It refuses when the content has errors or no grid can be made.
  */
 export function generateDailyCrossword({
@@ -48,37 +50,65 @@ export function generateDailyCrossword({
   if (source.errors.length > 0 || source.valid === undefined) {
     return { ok: false, errors: source.errors };
   }
-  return crosswordDayOf(source.valid.content, date, new Set());
+  const { content } = source.valid;
+  const days = content.crosswordDays ?? [];
+  const recorded = days.find((day) => day.date === date);
+  if (recorded !== undefined) return { ok: true, day: recorded };
+  const last = days.at(-1)?.date;
+  if (last === undefined || date < last) return dayAfterDays(content, [], date);
+  const between = daysThrough(content, days, dateAfter(last, 1), dateAfter(date, -1));
+  return between.ok ? dayAfterDays(content, [...days, ...between.days], date) : between;
 }
 
 /**
  * The days to append to an Edition's crossword days so that 400 lie ahead of
  * `today` (ADR 0052): from the day after its last one, or from `today` when
- * it has none. No word of a new day was in the
- * 29 days before it. It gives the new days, none when enough lie ahead, and
+ * it has none. It gives the new days, none when enough lie ahead, and
  * refuses when a day can't be made.
  */
-export function newCrosswordDays(
-  content: PackContent,
-  today: string,
-):
+export function newCrosswordDays(content: PackContent, today: string): DaysResult {
+  const days = content.crosswordDays ?? [];
+  const last = days.at(-1)?.date;
+  return daysThrough(
+    content,
+    days,
+    last === undefined ? today : dateAfter(last, 1),
+    dateAfter(today, CROSSWORD_DAYS_AHEAD),
+  );
+}
+
+type DaysResult =
   | { readonly ok: true; readonly days: readonly CrosswordDay[] }
-  | Extract<CrosswordResult, { ok: false }> {
-  const days = [...(content.crosswordDays ?? [])];
-  const last = dateAfter(today, CROSSWORD_DAYS_AHEAD);
-  const known = days.length;
-  for (
-    let date = days.length === 0 ? today : dateAfter(days.at(-1)?.date ?? today, 1);
-    date <= last;
-    date = dateAfter(date, 1)
-  ) {
-    const since = dateAfter(date, 1 - CROSSWORD_REPEAT_DAYS);
-    const recent = days.filter((day) => day.date >= since).flatMap(({ words }) => words);
-    const result = crosswordDayOf(content, date, new Set(recent.map((word) => word.entryId)));
+  | Extract<CrosswordResult, { ok: false }>;
+
+/**
+ * The days from `first` through `last` that follow the days given, one a
+ * day, each with no word of the 23 days before it.
+ */
+function daysThrough(
+  content: PackContent,
+  before: readonly CrosswordDay[],
+  first: string,
+  last: string,
+): DaysResult {
+  const days = [...before];
+  for (let date = first; date <= last; date = dateAfter(date, 1)) {
+    const result = dayAfterDays(content, days, date);
     if (!result.ok) return result;
     days.push(result.day);
   }
-  return { ok: true, days: days.slice(known) };
+  return { ok: true, days: days.slice(before.length) };
+}
+
+/** The Daily Crossword of a date with no word of the 23 days before it among the days given. */
+function dayAfterDays(
+  content: PackContent,
+  days: readonly CrosswordDay[],
+  date: string,
+): CrosswordResult {
+  const since = dateAfter(date, 1 - CROSSWORD_REPEAT_DAYS);
+  const recent = days.filter((day) => day.date >= since).flatMap(({ words }) => words);
+  return crosswordDayOf(content, date, new Set(recent.map((word) => word.entryId)));
 }
 
 /** The Daily Crossword of a date from content, with none of the Entries to avoid. */
