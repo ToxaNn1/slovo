@@ -231,6 +231,10 @@ export const userStateRecords = {
    * in the mode has finished yet. Sync keeps the higher of two devices'
    * results (ADR 0052).
    */
+  /** That the result of a finished Game offered the widget hint on this device, once ever (ADR 0054). */
+  widgetHintOffered: declareRecord('game.widgetHintOffered', z.literal(true), {
+    sync: 'device-only',
+  }),
   gameBest: declareRecords('game.best.', z.number().int().nonnegative(), { sync: 'highest' }),
   /**
    * The letters typed into the Daily Crossword and the local date of its day:

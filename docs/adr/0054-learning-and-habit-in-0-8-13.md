@@ -48,7 +48,7 @@ Until 0.8.13 SLOVO handed the reader one Entry after another but didn't help the
 
 **The first week** is one intro card a day as a Feed Notice on the reader's first 7 Active Days after onboarding: the first Active Day after onboarding is day 1, so a missed calendar day eats no card. Day 1 Знаю / Не знаю, 2 Гра, 3 Збережене і Колекції, 4 Мікс, 5 Віджет, 6 Перевір себе, 7 «Тиждень із нами» with the Streak. «Зрозуміло» or a swipe closes a card for good. Only a reader who finishes onboarding with 0.8.13 or later gets the first week, so an existing reader is never treated as new; like the onboarding finished (ADR 0013), its state is `device-only`. There are no other Streak milestones.
 
-**The widget hint** is a sheet on the result screen after the reader's first finished Game with at least one Life left, once ever (`device-only`): a guide of 3 animated steps on adding the widget. Settings → Віджети → «Як додати віджет» opens the same guide.
+**The widget hint** is a sheet on the result screen after the reader's first finished Game with at least one Life left, once ever (`device-only`): a guide of 3 animated steps on adding the widget. The Game's state says whether the result on screen offers it; the record that it was offered is written with the Game's Best result, before the result shows, so a lost Game or a Game in a mode without Lives never offers it and a later one never does again. `widgetHint` is read together with `widget`. Settings → Віджети → «Як додати віджет» opens the same guide.
 
 **Mood** («настрій»).
 

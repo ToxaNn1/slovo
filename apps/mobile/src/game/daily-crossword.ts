@@ -24,7 +24,7 @@ export type DailyCrosswordCardContent = Omit<
  * The Daily Crossword's card in the Edition's texts: its name with the day
  * and month of its date, and «Почати», «Продовжити» or the solved mark.
  */
-export function dailyCrosswordCard(
+function dailyCrosswordCard(
   { date, progress }: DailyCrosswordState,
   strings: EditionStrings['game']['dailyCrossword'],
 ): DailyCrosswordCardContent {
