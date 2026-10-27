@@ -80,8 +80,10 @@ export const GameStringsSchema = z.strictObject({
   dailyCrossword: z.strictObject({
     /** Its name, e.g. «Кросворд дня». */
     title: TextSchema,
-    /** Its name with the day on the card, e.g. «Кросворд дня · 26 жовтня». Takes `{date}`, the day and month. */
-    dated: templateOf('date'),
+    /** Its name with the day on the card, e.g. «Кросворд дня · 26 жовтня». Takes `{day}`, the day of the month, and `{month}`, one of the `months`. */
+    dated: templateOf('day', 'month'),
+    /** The month names as the card uses them, January first. */
+    months: z.array(TextSchema).length(12),
     /** The card's button before any letter is in, e.g. «Почати». */
     start: TextSchema,
     /** The card's button once some letters are in, e.g. «Продовжити». */
