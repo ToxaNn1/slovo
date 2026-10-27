@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import type { Word } from '@slovo/contracts';
+import type { Correction, Word } from '@slovo/contracts';
 import {
   createMemoryUserStatePort,
   loadEdition,
@@ -73,6 +73,28 @@ const word = (index: number): Word => ({
   retired: false,
 });
 
+/**
+ * A Correction with nothing but what the Game reads: the non-standard
+ * «хибне» and its number in a sentence of its own, the standard «добре» and
+ * its number.
+ */
+const correction = (index: number): Correction => ({
+  kind: 'correction',
+  id: `c_test${String(index)}`,
+  nonStandardForm: `хибне${String(index)}`,
+  correctionType: 'calque',
+  standardEquivalents: [`добре${String(index)}`],
+  explanation: `Чому добре${String(index)} краще.`,
+  examplePair: {
+    nonStandard: `Речення ${String(index)}: тут хибне${String(index)}.`,
+    standard: `Речення ${String(index)}: тут добре${String(index)}.`,
+  },
+  categoryId: 'everyday',
+  sources: [{ title: 'Test source' }],
+  literaryUses: [],
+  retired: false,
+});
+
 const haptics: Haptics = {
   selection: jest.fn(),
   impactLight: jest.fn(),
@@ -86,11 +108,19 @@ const metrics = {
   insets: { top: 0, left: 0, right: 0, bottom: 0 },
 };
 
-/** Opens the composition over 15 Words, with the given Best results by mode id kept from before. */
+/**
+ * Opens the composition over 15 Words and the given number of Corrections,
+ * with the given Best results by mode id kept from before.
+ */
 async function open({
   best = {},
+  corrections = 0,
   switchedOff = [],
-}: { best?: Record<string, number>; switchedOff?: readonly string[] } = {}) {
+}: {
+  best?: Record<string, number>;
+  corrections?: number;
+  switchedOff?: readonly string[];
+} = {}) {
   mockEdition = editionWithout(switchedOff);
   const records = new Map(
     Object.entries(best).map(([modeId, result]) => [`game.best.${modeId}`, JSON.stringify(result)]),
@@ -99,6 +129,7 @@ async function open({
     content: createMemoryContentPort({
       categories: [{ id: 'nature', displayName: 'Природа' }],
       words: Array.from({ length: 15 }, (_, i) => word(i)),
+      corrections: Array.from({ length: corrections }, (_, i) => correction(i)),
     }),
     edition: mockEdition,
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
@@ -184,6 +215,12 @@ async function assemble(text: string) {
   }
 }
 
+/** The standard form a Round of «Впиши слово» asks for: «добре{n}» for the prompt's «хибне{n}». */
+function theStandardFormOfThePrompt(): string {
+  const prompt = String(screen.getByTestId('game-prompt').props['accessibilityLabel']);
+  return `добре${/хибне(\d+)/.exec(prompt)?.[1] ?? ''}`;
+}
+
 /** The Word a Round of «За буквами» or «Анаграми» asks about: «слово{n}», its Definition «The meaning of test{n}.». */
 function theWordOfThePrompt(): string {
   const prompt = String(screen.getByTestId('game-prompt').props['accessibilityLabel']);
@@ -206,6 +243,7 @@ describe('the Game screen', () => {
       'game-mode-pairs',
       'game-mode-anagram',
       'game-mode-by-letters',
+      'game-mode-type-word',
       'Виправлення',
       'game-mode-correction',
     ]);
@@ -471,6 +509,58 @@ describe('the Game screen', () => {
 
     expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
     expect(screen.getByTestId('game-sheet')).toHaveTextContent(word, { exact: false });
+    expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 4 з 5');
+  });
+
+  it('starts «Впиши слово» from its card and plays a whole Game, typing each standard form, to the result screen', async () => {
+    await open({ corrections: 15 });
+    await renderScreen();
+
+    await fireEvent.press(screen.getByTestId('game-mode-type-word'));
+
+    for (let round = 1; round <= 15; round += 1) {
+      await waitFor(() => {
+        expect(screen.getByTestId('game-progress').props['accessibilityLabel']).toBe(
+          `Пройдено раундів: ${String(round - 1)} з 15`,
+        );
+      });
+      // VoiceOver reads the sentence, then names the non-standard form marked in it.
+      expect(screen.getByTestId('game-prompt').props['accessibilityLabel']).toMatch(
+        /^Як сказати краще\? Речення (\d+): тут хибне\1\. Виділено: хибне\1$/,
+      );
+      // The reader types the whole form: no blanks, no «Відкрити літеру».
+      expect(screen.queryByTestId('game-typed-blanks')).toBeNull();
+      await fireEvent.changeText(
+        screen.getByLabelText('Ваша відповідь'),
+        theStandardFormOfThePrompt(),
+      );
+      await fireEvent.press(screen.getByRole('button', { name: 'Перевірити' }));
+      expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Правильно!');
+      await fireEvent.press(screen.getByTestId('game-next'));
+    }
+
+    await waitFor(() => {
+      expect(screen.getByText('Перемога!')).toBeOnTheScreen();
+    });
+  });
+
+  it('takes a Life for a wrong form in «Впиши слово» and shows the standard form with its explanation', async () => {
+    await open({ corrections: 15 });
+    await renderScreen();
+
+    await fireEvent.press(screen.getByTestId('game-mode-type-word'));
+    await waitFor(() => {
+      expect(screen.getByLabelText('Ваша відповідь')).toBeOnTheScreen();
+    });
+    const standard = theStandardFormOfThePrompt();
+    await fireEvent.changeText(screen.getByLabelText('Ваша відповідь'), 'хибне');
+    await fireEvent(screen.getByLabelText('Ваша відповідь'), 'submitEditing');
+
+    expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
+    expect(screen.getByTestId('game-sheet')).toHaveTextContent(new RegExp(standard));
+    expect(screen.getByTestId('game-sheet-explanation')).toHaveTextContent(
+      `Чому ${standard} краще.`,
+    );
     expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 4 з 5');
   });
 });

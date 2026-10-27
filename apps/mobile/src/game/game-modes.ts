@@ -39,6 +39,7 @@ const PLAYED_MODES: ReadonlySet<string> = new Set([
   'pairs',
   'anagram',
   'by-letters',
+  'type-word',
 ]);
 
 /** The offers of the modes the app plays, in the Core's order. */
