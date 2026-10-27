@@ -251,3 +251,103 @@ describe('Search over every kind of Entry', () => {
     expect(await groupsOf(search, 'ба')).toEqual(NO_GROUPS);
   });
 });
+
+describe('Search by meaning («За значенням»)', () => {
+  const byMeaningOf = async (search: Awaited<ReturnType<typeof searchOver>>, query: string) =>
+    (await search.search(query)).byMeaning.map((entry) =>
+      entry.kind === 'word' ? entry.lemma : entry.dominant.text,
+    );
+
+  const pack = {
+    words: [
+      word('w_quiet', { lemma: 'сумирний', primaryDefinition: 'Тихий, спокійний, лагідний.' }),
+      word('w_still', {
+        lemma: 'безгомінний',
+        primaryDefinition: 'Без гомону.',
+        extraDefinitions: ['Дуже тихий; мовчазний.'],
+      }),
+      word('w_loud', { lemma: 'гучний', primaryDefinition: 'Голосний.' }),
+    ],
+    synonymRows: [
+      synonymRow('s_quiet', {
+        dominant: { text: 'тихий', stress: [1] },
+        meaning: 'Який не шумить.',
+        members: ['безшумний', 'нечутний', 'сумирний', 'мовчазний', 'приглушений'].map((text) => ({
+          text,
+          stress: [0],
+        })),
+      }),
+      synonymRow('s_go', {
+        dominant: { text: 'іти', stress: [1] },
+        meaning: 'Рухатися кроками.',
+        members: ['простувати', 'чимчикувати', 'шкандибати', 'плентатися', 'дибати'].map(
+          (text) => ({ text, stress: [0], shadeNote: 'тихо' }),
+        ),
+      }),
+    ],
+  };
+
+  it('gives no group for a query of 2 characters', async () => {
+    const search = await searchOver(pack);
+
+    expect(await byMeaningOf(search, 'ти')).toEqual([]);
+    expect(await byMeaningOf(search, ' ти́ ')).toEqual([]);
+  });
+
+  it('lists the Words whose primary or further Definition contains the query, anywhere in it', async () => {
+    const search = await searchOver({ words: pack.words });
+
+    expect(await byMeaningOf(search, 'ТИХ')).toEqual(['безгомінний', 'сумирний']);
+    expect(await byMeaningOf(search, 'покій')).toEqual(['сумирний']);
+  });
+
+  it('lists the Synonym Rows whose meaning, dominant, members or notes contain the query', async () => {
+    const search = await searchOver({ synonymRows: pack.synonymRows });
+
+    expect(await byMeaningOf(search, 'шумит')).toEqual(['тихий']);
+    expect(await byMeaningOf(search, 'чутн')).toEqual(['тихий']);
+    expect(await byMeaningOf(search, 'тих')).toEqual(['іти', 'тихий']);
+  });
+
+  it('lists Words and Synonym Rows together in the Edition’s alphabet', async () => {
+    const search = await searchOver(pack);
+
+    expect(await byMeaningOf(search, 'тих')).toEqual(['безгомінний', 'іти', 'сумирний', 'тихий']);
+  });
+
+  it('gives at most 50', async () => {
+    const search = await searchOver({
+      words: Array.from({ length: 60 }, (_, index) =>
+        word(`w_${String(index)}`, { primaryDefinition: 'Тихий.' }),
+      ),
+    });
+
+    expect(await byMeaningOf(search, 'тих')).toHaveLength(50);
+  });
+
+  it('leaves out Hidden and Retired Words and Synonym Rows', async () => {
+    const search = await searchOver(
+      {
+        words: [
+          word('w_hidden', { primaryDefinition: 'Тихий.' }),
+          word('w_retired', { primaryDefinition: 'Тихий.', retired: true }),
+        ],
+        synonymRows: [
+          synonymRow('s_hidden', { meaning: 'Тихий.' }),
+          synonymRow('s_retired', { meaning: 'Тихий.', retired: true }),
+        ],
+      },
+      { hidden: ['w_hidden', 's_hidden'] },
+    );
+
+    expect(await byMeaningOf(search, 'тих')).toEqual([]);
+  });
+
+  it('leaves out Synonym Rows while the Edition turns them off, and all while Search is off', async () => {
+    expect(await byMeaningOf(await searchOver(pack, { off: ['synonymRows'] }), 'тих')).toEqual([
+      'безгомінний',
+      'сумирний',
+    ]);
+    expect(await byMeaningOf(await searchOver(pack, { off: ['search'] }), 'тих')).toEqual([]);
+  });
+});
