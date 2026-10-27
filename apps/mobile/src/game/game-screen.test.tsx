@@ -159,6 +159,20 @@ async function pickTheWordOfThePrompt() {
   await fireEvent.press(screen.getByRole('button', { name: new RegExp(`^слово${n},`) }));
 }
 
+/** Starts «Вгадай слово» from its card and picks the right Word in each of its first ten Rounds. */
+async function startGuessWordAtRound11() {
+  await fireEvent.press(screen.getByTestId('game-mode-guess-word'));
+  for (let round = 1; round <= 10; round += 1) {
+    await waitFor(() => {
+      expect(screen.getByTestId('game-progress').props['accessibilityLabel']).toBe(
+        `Пройдено раундів: ${String(round - 1)} з 15`,
+      );
+    });
+    await pickTheWordOfThePrompt();
+    await fireEvent.press(screen.getByTestId('game-next'));
+  }
+}
+
 /** Taps the shuffled letter chips of a Round of «Анаграми» in the order of the text. */
 async function assemble(text: string) {
   for (const letter of text) {
@@ -277,6 +291,48 @@ describe('the Game screen', () => {
     await pickTheWordOfThePrompt();
 
     expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Правильно!');
+  });
+
+  it('asks «Вгадай слово»’s Rounds 11–15 by a Definition for the Word typed, with no blanks, to the result screen', async () => {
+    await renderScreen();
+
+    await startGuessWordAtRound11();
+    for (let round = 11; round <= 15; round += 1) {
+      await waitFor(() => {
+        expect(screen.getByTestId('game-progress').props['accessibilityLabel']).toBe(
+          `Пройдено раундів: ${String(round - 1)} з 15`,
+        );
+      });
+      expect(screen.getByTestId('game-prompt').props['accessibilityLabel']).toMatch(
+        /^Визначення\. The meaning of test\d+\.$/,
+      );
+      expect(screen.queryByTestId('game-typed-blanks')).not.toBeOnTheScreen();
+      expect(screen.queryByRole('button', { name: 'Відкрити літеру' })).not.toBeOnTheScreen();
+      await fireEvent.changeText(screen.getByLabelText('Ваша відповідь'), theWordOfThePrompt());
+      await fireEvent.press(screen.getByRole('button', { name: 'Перевірити' }));
+      expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Правильно!');
+      await fireEvent.press(screen.getByTestId('game-next'));
+    }
+
+    await waitFor(() => {
+      expect(screen.getByText('Перемога!')).toBeOnTheScreen();
+    });
+  });
+
+  it('takes a Life for a Word of «Вгадай слово» typed wrong in Round 11 and shows the right one', async () => {
+    await renderScreen();
+
+    await startGuessWordAtRound11();
+    await waitFor(() => {
+      expect(screen.getByLabelText('Ваша відповідь')).toBeOnTheScreen();
+    });
+    const word = theWordOfThePrompt();
+    await fireEvent.changeText(screen.getByLabelText('Ваша відповідь'), 'слово');
+    await fireEvent(screen.getByLabelText('Ваша відповідь'), 'submitEditing');
+
+    expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
+    expect(screen.getByTestId('game-sheet')).toHaveTextContent(word, { exact: false });
+    expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 4 з 5');
   });
 
   it('starts «Пари» from its card and plays four grids of 4, 4, 4 and 3 pairs to the result screen', async () => {
