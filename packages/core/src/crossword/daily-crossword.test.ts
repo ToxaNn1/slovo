@@ -8,6 +8,7 @@ import {
   type Clock,
   type CrosswordReadPort,
   type FeatureSwitch,
+  type UserStatePort,
 } from '../index';
 import { fakeClock } from '../test-support';
 
@@ -49,8 +50,14 @@ async function open({
   records = new Map<string, string>(),
   clock = fakeClock().clock,
   on = ['game', 'dailyCrossword'],
-}: { records?: Map<string, string>; clock?: Clock; on?: readonly FeatureSwitch[] } = {}) {
-  const userState = await openUserState({ port: createMemoryUserStatePort(records) });
+  port = createMemoryUserStatePort(records),
+}: {
+  records?: Map<string, string>;
+  clock?: Clock;
+  on?: readonly FeatureSwitch[];
+  port?: UserStatePort;
+} = {}) {
+  const userState = await openUserState({ port });
   return openDailyCrossword({
     content: pack,
     userState,
@@ -276,5 +283,33 @@ describe('the Daily Crossword', () => {
 
   it('is absent on a date the pack has no crossword for', async () => {
     expect(await open({ clock: fakeClock('2026-10-20T09:00:00+03:00').clock })).toBeUndefined();
+  });
+
+  it('keeps the letters in play as they were when keeping them on the device fails', async () => {
+    const records = new Map<string, string>();
+    const memory = createMemoryUserStatePort(records);
+    let failing = false;
+    const port: UserStatePort = {
+      ...memory,
+      write: (changes) =>
+        failing ? Promise.reject(new Error('Disk full')) : memory.write(changes),
+    };
+    const crossword = await open({ records, port });
+    if (crossword === undefined) throw new Error('Expected a crossword');
+    await crossword.setLetter({ row: 0, column: 0 }, 'к');
+    const kept = crossword.state;
+
+    failing = true;
+    await expect(crossword.setLetter({ row: 0, column: 1 }, 'і')).rejects.toThrow('Disk full');
+    await expect(crossword.openCell({ row: 0, column: 2 })).rejects.toThrow('Disk full');
+    await expect(crossword.setLetter({ row: 0, column: 0 }, undefined)).rejects.toThrow(
+      'Disk full',
+    );
+
+    expect(crossword.state).toEqual(kept);
+    failing = false;
+    expect((await open({ records }))?.state.letters).toEqual(kept.letters);
+    await crossword.setLetter({ row: 1, column: 0 }, 'о');
+    expect(crossword.state.letters[0]).toEqual(['к', undefined, undefined, undefined, undefined]);
   });
 });
