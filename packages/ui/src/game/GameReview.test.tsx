@@ -1,5 +1,5 @@
 import type { Correction, EditionStrings, Idiom, SynonymRow, Tip, Word } from '@slovo/contracts';
-import type { PlayedRound } from '@slovo/core';
+import type { PlayedRound, RoundAnswer } from '@slovo/core';
 import { EditionProvider, GameReview } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
@@ -113,6 +113,8 @@ const whatTime: Tip = {
   retired: false,
 };
 
+const option = (text: string, stressedVowels: readonly string[] = []) => ({ text, stressedVowels });
+
 /** A Round of the Game over, asked about `entry`, with the reader's pick among four options. */
 function played(
   number: number,
@@ -121,7 +123,8 @@ function played(
   chosen: string,
 ): PlayedRound {
   const texts = [answer, chosen === answer ? 'other' : chosen, 'third', 'fourth'];
-  const options = texts.map((text) => ({ text, stressedVowels: [] }));
+  // A stressed option names its stressed vowel, the letter before the mark.
+  const options = texts.map((text) => option(text, /(.)\u0301/.exec(text)?.slice(1) ?? []));
   const roundAnswer = {
     form: 'pick' as const,
     chosen: texts.indexOf(chosen),
@@ -158,10 +161,158 @@ const rounds = [
   played(6, whatTime, 'What time is it?', 'How many hours?'),
 ];
 
-async function renderReview({ onOpen = jest.fn() }: { onOpen?: (entryId: string) => void } = {}) {
+/** What a Round of the Game over has whatever its form, with its answer judged. */
+const playedIn = (
+  number: number,
+  entry: Word | Correction | Idiom,
+  prompt: string,
+  answer: RoundAnswer,
+) => ({
+  number,
+  entryKind: entry.kind,
+  prompt,
+  highlight: undefined,
+  answer,
+  entry,
+  right: answer.right,
+});
+
+const sheetOf = (text: string, stressedVowels: readonly string[] = []) => ({
+  answer: option(text, stressedVowels),
+  example: undefined,
+});
+
+const record: Word = { ...candid, id: 'w_record', lemma: 'record', stress: [1] };
+
+const vowels = { form: 'vowel' as const, vowels: [1, 3] };
+const grid = {
+  form: 'pairs' as const,
+  words: [
+    { shown: option('candid'), gone: true },
+    { shown: option('dour'), gone: false },
+  ],
+  definitions: [
+    { shown: 'open and honest', gone: true },
+    { shown: 'stern and gloomy', gone: false },
+  ],
+};
+const letters = { form: 'chips' as const, chips: ['r', 'o', 'd', 'u'], fixed: [] };
+const words = { form: 'chips' as const, chips: ['beans', 'the', 'spill'], fixed: [] };
+const typed = { form: 'typed' as const, blanks: undefined, canOpenLetter: false as const };
+
+/** Every answer form other than a pick, each answered right, then wrong. */
+const formRounds: PlayedRound[] = [
+  {
+    ...playedIn(1, record, 'record', {
+      form: 'vowel',
+      chosen: 1,
+      stressed: [1],
+      right: true,
+      sheet: sheetOf('re\u0301cord', ['e']),
+    }),
+    ...vowels,
+  },
+  {
+    ...playedIn(2, record, 'record', {
+      form: 'vowel',
+      chosen: 3,
+      stressed: [1],
+      right: false,
+      sheet: sheetOf('re\u0301cord', ['e']),
+    }),
+    ...vowels,
+  },
+  {
+    ...playedIn(3, candid, '', {
+      form: 'pairs',
+      word: 0,
+      definition: 0,
+      correct: 0,
+      right: true,
+      sheet: sheetOf('candid'),
+    }),
+    ...grid,
+  },
+  {
+    ...playedIn(4, dour, '', {
+      form: 'pairs',
+      word: 1,
+      definition: 0,
+      correct: 1,
+      right: false,
+      sheet: sheetOf('dour'),
+    }),
+    ...grid,
+  },
+  {
+    ...playedIn(5, dour, 'stern and gloomy', {
+      form: 'chips',
+      chosen: [2, 1, 3, 0],
+      expected: ['d', 'o', 'u', 'r'],
+      right: true,
+      sheet: sheetOf('dour'),
+    }),
+    ...letters,
+  },
+  {
+    ...playedIn(6, dour, 'stern and gloomy', {
+      form: 'chips',
+      chosen: [2, 3, 1, 0],
+      expected: ['d', 'o', 'u', 'r'],
+      right: false,
+      sheet: sheetOf('dour'),
+    }),
+    ...letters,
+  },
+  {
+    ...playedIn(7, spillTheBeans, 'to give away a secret', {
+      form: 'chips',
+      chosen: [2, 1, 0],
+      expected: ['spill', 'the', 'beans'],
+      right: true,
+      sheet: sheetOf('spill the beans'),
+    }),
+    ...words,
+  },
+  {
+    ...playedIn(8, spillTheBeans, 'to give away a secret', {
+      form: 'chips',
+      chosen: [0, 1, 2],
+      expected: ['spill', 'the', 'beans'],
+      right: false,
+      sheet: sheetOf('spill the beans'),
+    }),
+    ...words,
+  },
+  {
+    ...playedIn(9, correction, 'We waited in the meantimes.', {
+      form: 'typed',
+      typed: 'In the meantime',
+      expected: 'in the meantime',
+      right: true,
+      sheet: sheetOf('in the meantime'),
+    }),
+    ...typed,
+  },
+  {
+    ...playedIn(10, candid, 'open and honest', {
+      form: 'typed',
+      typed: '  candit ',
+      expected: 'candid',
+      right: false,
+      sheet: sheetOf('candid'),
+    }),
+    ...typed,
+  },
+];
+
+async function renderReview({
+  onOpen = jest.fn(),
+  played = rounds,
+}: { onOpen?: (entryId: string) => void; played?: readonly PlayedRound[] } = {}) {
   await render(
     <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-      <GameReview rounds={rounds} onOpen={onOpen} />
+      <GameReview rounds={played} onOpen={onOpen} />
     </EditionProvider>,
   );
 }
@@ -177,7 +328,7 @@ describe('GameReview', () => {
         '2, dour, wrong, you picked brittle',
         '3, in the meantimes, wrong, you picked in the meanwhiles',
         '4, spill the beans, wrong, you picked bite the dust',
-        '5, walk, stress on a, wrong, you picked ru\u0301n',
+        '5, walk, stress on a, wrong, you picked run, stress on u',
         '6, What time is it?, wrong, you picked How many hours?',
       ].map((name) => screen.getByRole('button', { name })),
     );
@@ -244,7 +395,7 @@ describe('GameReview', () => {
 
     expect(
       screen.getByRole('button', {
-        name: '5, walk, stress on a, wrong, you picked ru\u0301n',
+        name: '5, walk, stress on a, wrong, you picked run, stress on u',
         expanded: true,
       }),
     ).toBeTruthy();
@@ -298,5 +449,55 @@ describe('GameReview', () => {
     await fireEvent.press(screen.getByTestId('game-review-row-6'));
 
     expect(onOpen.mock.calls).toEqual([['r_walk'], ['t_whattime']]);
+  });
+  it("lists a Round of every answer form, right or wrong, with the reader's answer on a mistake", async () => {
+    await renderReview({ played: formRounds });
+
+    expect(screen.getAllByRole('button')).toEqual(
+      [
+        '1, record, stress on e, right',
+        '2, record, stress on e, wrong, you picked record, stress on o',
+        '3, candid, right',
+        '4, dour, wrong, you picked open and honest',
+        '5, dour, right',
+        '6, dour, wrong, you picked duor',
+        '7, spill the beans, right',
+        '8, spill the beans, wrong, you picked beans the spill',
+        '9, in the meantimes, right',
+        '10, candid, wrong, you picked candit',
+      ].map((name) => screen.getByRole('button', { name })),
+    );
+    expect(screen.getByTestId('game-review-row-1')).toHaveTextContent('1re\u0301cord✓');
+    expect(screen.getByTestId('game-review-row-2')).toHaveTextContent(
+      '2re\u0301cordyou picked reco\u0301rd✗',
+    );
+    expect(screen.getByTestId('game-review-row-4')).toHaveTextContent(
+      '4douryou picked open and honest✗',
+    );
+    expect(screen.getByTestId('game-review-row-6')).toHaveTextContent('6douryou picked duor✗');
+    expect(screen.getByTestId('game-review-row-7')).toHaveTextContent('7spill the beans✓');
+    expect(screen.getByTestId('game-review-row-8')).toHaveTextContent(
+      '8spill the beansyou picked beans the spill✗',
+    );
+    expect(screen.getByTestId('game-review-row-10')).toHaveTextContent(
+      '10candidyou picked candit✗',
+    );
+  });
+
+  it('expands a Round of any answer form and opens its Entry on a second tap', async () => {
+    const onOpen = jest.fn();
+    await renderReview({ onOpen, played: formRounds });
+
+    await fireEvent.press(screen.getByTestId('game-review-row-4'));
+    expect(screen.getByText('stern and gloomy')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('game-review-row-4'));
+    await fireEvent.press(screen.getByTestId('game-review-row-8'));
+    expect(screen.getByText('to give away a secret')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('game-review-row-8'));
+    await fireEvent.press(screen.getByTestId('game-review-row-9'));
+    expect(screen.getByText('The phrase takes the singular.')).toBeTruthy();
+    await fireEvent.press(screen.getByTestId('game-review-row-9'));
+
+    expect(onOpen.mock.calls).toEqual([['w_dour'], ['i_spillthebeans'], ['c_meanwhile']]);
   });
 });
