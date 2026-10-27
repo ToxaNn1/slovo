@@ -29,6 +29,7 @@ import { survivalMode } from './game/survival-mode';
 import { timedMode } from './game/timed-mode';
 import { typeWordMode } from './game/type-word-mode';
 import { openHistory, type History } from './saved/history';
+import { createWordOfTheDayArchiveRecorder } from './saved/word-of-the-day-archive';
 import { openKnowledge, type Knowledge } from './knowledge/knowledge';
 import { openHiddenEntries, type HiddenEntries } from './mix/hidden-entries';
 import { createHiding, type Hiding } from './mix/hiding';
@@ -311,6 +312,7 @@ export async function openComposition({
     knowledge,
     wordOfTheDay,
     history: recorder,
+    archive: createWordOfTheDayArchiveRecorder({ edition }),
     entrySeen: followSeen,
     notices: feedNotices,
   });

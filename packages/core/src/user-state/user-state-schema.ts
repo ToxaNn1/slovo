@@ -102,6 +102,13 @@ export const userStateRecords = {
    * Reserves (ADR 0021, 0022).
    */
   wordOfTheDay: declareRecord('feed.wordOfTheDay', EntryOnDateSchema, { sync: 'device-only' }),
+  /**
+   * The Word of the Day archive, one record per local date `YYYY-MM-DD`, by
+   * that date: the id of the Word of the Day whose card the reader Seen on it,
+   * written in the same write as the Seen mark (ADR 0054). It syncs last write
+   * wins (ADR 0041); a new key, so no migration.
+   */
+  wordOfTheDayArchive: declareRecords('wordOfTheDayArchive.', z.string().min(1)),
   /** The Entries in Favorites, one record per Entry, by Entry id: the instant it was added. */
   favorites: declareRecords('favorites.', InstantSchema),
   /** The Collections, one record per Collection, by Collection id: its name and the instant it was created. */

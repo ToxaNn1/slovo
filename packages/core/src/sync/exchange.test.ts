@@ -14,8 +14,15 @@ import { createFakeSyncApi, createMemoryContentPort } from '../testing';
 import { createSyncExchange } from './exchange';
 import { fakeClock, randomOf, word } from '../test-support';
 
-const { activeDays, collectionEntries, collections, favorites, gameBest, history } =
-  userStateRecords;
+const {
+  activeDays,
+  collectionEntries,
+  collections,
+  favorites,
+  gameBest,
+  history,
+  wordOfTheDayArchive,
+} = userStateRecords;
 const guessWordBest = gameBest.record('guess-word');
 
 const content = createMemoryContentPort({
@@ -307,6 +314,39 @@ describe('two devices of one Account', () => {
     await phone.sync();
 
     expect((await phone.settings.read()).dailyLimit).toBe('off');
+  });
+
+  it('let the newer Word of the Day of a date win in the archive, on either device', async () => {
+    const { device, server, time } = account();
+    const phone = await device();
+    const tablet = await device();
+    const day = wordOfTheDayArchive.record('2026-10-18');
+    await phone.write(day.change('w_one'));
+    time.advance(HOUR);
+    await tablet.write(day.change('w_two'));
+    await tablet.sync();
+    time.advance(HOUR);
+
+    await phone.sync();
+    await tablet.sync();
+
+    expect(await phone.userState.read(day)).toBe('w_two');
+    expect(await tablet.userState.read(day)).toBe('w_two');
+    expect(server.records.get('wordOfTheDayArchive.2026-10-18')?.value).toBe('w_two');
+  });
+
+  it('carry a day of the Word of the Day archive to the other device', async () => {
+    const { device, time } = account();
+    const phone = await device();
+    const tablet = await device();
+    const day = wordOfTheDayArchive.record('2026-10-18');
+    await phone.write(day.change('w_one'));
+    await phone.sync();
+    time.advance(HOUR);
+
+    await tablet.sync();
+
+    expect(await tablet.userState.read(day)).toBe('w_one');
   });
 
   it('let the newer Knowledge Mark of an Entry win, on either device', async () => {

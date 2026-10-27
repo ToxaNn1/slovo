@@ -131,6 +131,7 @@ describe('the 0.8 sync marks', () => {
       'mix.rarityFloor',
       'feed.cycle',
       'feed.seen.w_1',
+      'wordOfTheDayArchive.2026-10-26',
     ]) {
       expect(syncMarkOf(key), key).toBe('last-write-wins');
     }
