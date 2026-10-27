@@ -17,6 +17,7 @@ import { LearningStringsSchema } from './learning';
 import { MixStringsSchema } from './mix';
 import { MoodStringsSchema } from './mood';
 import { NotificationBodyStringsSchema } from './notification-body';
+import { NotificationTemplatesStringsSchema } from './notification-templates';
 import { NotificationsStringsSchema } from './notifications';
 import { OnboardingStringsSchema } from './onboarding';
 import { RarityTestStringsSchema } from './rarity-test';
@@ -62,6 +63,7 @@ export const EditionStringsSchema = z.strictObject({
   onboarding: OnboardingStringsSchema,
   notifications: NotificationsStringsSchema,
   notificationBody: NotificationBodyStringsSchema,
+  notificationTemplates: NotificationTemplatesStringsSchema,
   search: SearchStringsSchema,
   rarityTest: RarityTestStringsSchema,
   feedNotices: FeedNoticesStringsSchema,
