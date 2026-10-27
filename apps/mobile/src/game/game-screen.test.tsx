@@ -159,6 +159,12 @@ async function pickTheWordOfThePrompt() {
   await fireEvent.press(screen.getByRole('button', { name: new RegExp(`^слово${n},`) }));
 }
 
+/** The Word a Round of «За буквами» asks about: «слово{n}», its Definition «The meaning of test{n}.». */
+function theWordOfThePrompt(): string {
+  const prompt = String(screen.getByTestId('game-prompt').props['accessibilityLabel']);
+  return `слово${/\d+/.exec(prompt)?.[0] ?? ''}`;
+}
+
 beforeEach(async () => {
   await open();
 });
@@ -173,6 +179,7 @@ describe('the Game screen', () => {
       'game-mode-guess-word',
       'game-mode-stress',
       'game-mode-pairs',
+      'game-mode-by-letters',
       'Виправлення',
       'game-mode-correction',
     ]);
@@ -209,6 +216,7 @@ describe('the Game screen', () => {
       'game-mode-guess-word',
       'game-mode-stress',
       'game-mode-pairs',
+      'game-mode-by-letters',
     ]);
     expect(screen.queryByText('Виправлення')).toBeNull();
   });
@@ -300,6 +308,58 @@ describe('the Game screen', () => {
     await fireEvent.press(screen.getByTestId(`pairs-definition-${String((definition + 1) % 4)}`));
 
     expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
+    expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 4 з 5');
+  });
+
+  it('starts «За буквами» from its card and plays a whole Game, typing each Word, to the result screen', async () => {
+    await renderScreen();
+
+    await fireEvent.press(screen.getByTestId('game-mode-by-letters'));
+
+    for (let round = 1; round <= 15; round += 1) {
+      await waitFor(() => {
+        expect(screen.getByTestId('game-progress').props['accessibilityLabel']).toBe(
+          `Пройдено раундів: ${String(round - 1)} з 15`,
+        );
+      });
+      expect(screen.getByTestId('game-prompt').props['accessibilityLabel']).toMatch(
+        /^Визначення\. The meaning of test\d+\.$/,
+      );
+      // A blank for each of «слово{n}»'s letters and digits.
+      expect(screen.getAllByLabelText(/ літера, порожня$/)).toHaveLength(
+        theWordOfThePrompt().length,
+      );
+      await fireEvent.changeText(screen.getByLabelText('Ваша відповідь'), theWordOfThePrompt());
+      await fireEvent.press(screen.getByRole('button', { name: 'Перевірити' }));
+      expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Правильно!');
+      await fireEvent.press(screen.getByTestId('game-next'));
+    }
+
+    await waitFor(() => {
+      expect(screen.getByText('Перемога!')).toBeOnTheScreen();
+    });
+  });
+
+  it('opens the letters of «За буквами» one at a time, at no cost, and takes a Life for a wrong Word', async () => {
+    await renderScreen();
+
+    await fireEvent.press(screen.getByTestId('game-mode-by-letters'));
+    await waitFor(() => {
+      expect(screen.getByTestId('game-typed-blanks')).toBeOnTheScreen();
+    });
+    await fireEvent.press(screen.getByRole('button', { name: 'Відкрити літеру' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Відкрити літеру' }));
+
+    expect(screen.getByLabelText('с, перша літера')).toBeOnTheScreen();
+    expect(screen.getByLabelText('л, друга літера')).toBeOnTheScreen();
+    expect(screen.getByLabelText('третя літера, порожня')).toBeOnTheScreen();
+    expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 5 з 5');
+
+    await fireEvent.changeText(screen.getByLabelText('Ваша відповідь'), 'слово');
+    await fireEvent(screen.getByLabelText('Ваша відповідь'), 'submitEditing');
+
+    expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
+    expect(screen.getByTestId('game-sheet')).toHaveTextContent(/слово\d+/);
     expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 4 з 5');
   });
 });

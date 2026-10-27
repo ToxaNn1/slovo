@@ -87,6 +87,7 @@ function Game() {
           onAnswer={actions.answer}
           onNext={actions.next}
           onLeave={actions.leave}
+          onOpenLetter={actions.openLetter}
         />
       )}
     </SafeAreaView>
