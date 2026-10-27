@@ -69,17 +69,18 @@ export interface Entries {
    * Mix at the Rarity Floor or rarer, Category by Category in the Language
    * Pack's order, and the live Corrections, Idioms, Synonym Rows and Tips,
    * each kind when the Edition turns it on and it is in the Mix, each in the
-   * Language Pack's stable order, leaving out every Hidden Entry. Read afresh
-   * on every call.
+   * Language Pack's stable order, leaving out every Hidden Entry. The Mix and
+   * the Hidden Entries are read afresh on every call, the ids of the live
+   * Entries from the Language Pack once: it never changes while it is open.
    */
   eligible(): Promise<EntryIds>;
   /**
    * The eligible Entries of one kind themselves, in the order `eligible` gives
    * their ids, for a feature that weighs them all at once, such as the Game;
    * or, for Corrections or Idioms out of the Mix, whether or not the Edition
-   * turns them on, why none are. Read afresh on every call, but for the live
-   * Entries themselves, which are read from the Language Pack once: it never
-   * changes while it is open. With `alsoOf`, the eligible Entries of those
+   * turns them on, why none are. Read afresh on every call, as `eligible`
+   * reads, but for the live Entries themselves, which are read from the
+   * Language Pack once. With `alsoOf`, the eligible Entries of those
    * kinds follow, none of a kind out of the Mix, and only `kind` can refuse;
    * they may be Synonym Rows or Tips, which the Game asks about.
    */
@@ -192,12 +193,15 @@ export function createEntries(
 
   const linksCorrections = async () => kindShown('correction', await readUserMix());
 
-  /** How to list the ids of every live Entry of a kind in the Mix as a whole from the Language Pack. */
+  /**
+   * The ids of every live Entry of a kind in the Mix as a whole, read once
+   * from the Language Pack: every Game Mode's offer reads them again.
+   */
   const listIds: Record<MixKind, () => Promise<readonly string[]>> = {
-    correction: () => content.listCorrectionIds(),
-    idiom: () => content.listIdiomIds(),
-    synonymRow: () => content.listSynonymRowIds(),
-    tip: () => content.listTipIds(),
+    correction: readOnce(() => content.listCorrectionIds()),
+    idiom: readOnce(() => content.listIdiomIds()),
+    synonymRow: readOnce(() => content.listSynonymRowIds()),
+    tip: readOnce(() => content.listTipIds()),
   };
 
   /** How to read every live Entry of a kind from the Language Pack. */
@@ -227,13 +231,25 @@ export function createEntries(
     tip: byId('tip'),
   };
 
+  /** The ids of every live Word, and of the live Words of each Category, each read once. */
+  const allWordIds = readOnce(() => content.listWordIds());
+  const wordIdsByCategory = new Map<string, () => Promise<readonly string[]>>();
+  function wordIdsOf(categoryId: string): Promise<readonly string[]> {
+    let read = wordIdsByCategory.get(categoryId);
+    if (read === undefined) {
+      read = readOnce(() => content.listWordIds(categoryId));
+      wordIdsByCategory.set(categoryId, read);
+    }
+    return read();
+  }
+
   /**
-   * The live Words of the Categories in the Mix, one query per Category, or
-   * every live Word without a Mix.
+   * The live Words of the Categories in the Mix, one query per Category the
+   * first time, or every live Word without a Mix.
    */
   async function wordIds(categoryIds: readonly string[] | undefined): Promise<readonly string[]> {
-    if (categoryIds === undefined) return content.listWordIds();
-    const words = await Promise.all(categoryIds.map((id) => content.listWordIds(id)));
+    if (categoryIds === undefined) return allWordIds();
+    const words = await Promise.all(categoryIds.map(wordIdsOf));
     return words.flat();
   }
 
