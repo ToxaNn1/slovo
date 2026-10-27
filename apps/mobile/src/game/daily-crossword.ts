@@ -29,8 +29,10 @@ export function dailyCrosswordCard(
   strings: EditionStrings['game']['dailyCrossword'],
 ): DailyCrosswordCardContent {
   const [, month = 0, day = 0] = date.split('-').map(Number);
+  const monthName = strings.months[month - 1];
+  if (monthName === undefined) throw new Error(`The Daily Crossword's date «${date}» has no month`);
   return {
-    title: fill(strings.dated, { day: String(day), month: strings.months[month - 1] ?? '' }),
+    title: fill(strings.dated, { day: String(day), month: monthName }),
     state:
       progress === 'solved'
         ? strings.solvedMark
