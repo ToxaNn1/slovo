@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { TextSchema } from '../shared';
-import { pluralOf, PluralLabelSchema, PluralSchema, templateOf } from './shared';
+import { PluralLabelSchema, PluralSchema, templateOf } from './shared';
 
 /**
  * The texts of one Game Mode, alike for every mode: its card on the mode
@@ -36,17 +36,6 @@ const GameModeStringsSchema = z.strictObject({
 export const GameStringsSchema = z.strictObject({
   /** The mode screen's title. */
   title: TextSchema,
-  /** The line under it, e.g. «15 раундів, 5 життів.». Takes `{rounds}` and `{lives}`, the two counts in words. */
-  rules: templateOf('rounds', 'lives'),
-  /** A count of Rounds, e.g. «15 раундів». */
-  rounds: PluralSchema,
-  /** A count of Lives, e.g. «5 життів». */
-  lives: PluralSchema,
-  /**
-   * The best result after the line above, e.g. «Найкраще — 13 / 15.». Takes
-   * `{count}`, the best result, which picks the form, and `{total}`, the Rounds of a Game.
-   */
-  best: pluralOf('total'),
   /** The titles of the mode screen's groups of mode cards, e.g. «Слова». */
   groups: z.strictObject({
     /** The modes that ask about Words, e.g. «Слова». */

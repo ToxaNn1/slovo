@@ -83,7 +83,6 @@ describe('the 0.5 UI strings group', () => {
   const game = strings['game'] as Record<string, unknown>;
 
   it.each([
-    ['game.best', { ...strings, game: without(game, 'best') }],
     [
       'game.result.best',
       { ...strings, game: { ...game, result: without(game['result'], 'best') } },
@@ -94,14 +93,6 @@ describe('the 0.5 UI strings group', () => {
     const result = EditionStringsSchema.safeParse(stringsWithout);
 
     expect(result.error?.issues.map((issue) => issue.path.join('.'))).toContain(path);
-  });
-
-  it('needs the Rounds of a Game in every form of the best result on the mode screen', () => {
-    const best = { ...(game['best'] as object), few: 'Найкраще — {count}.' };
-
-    const result = EditionStringsSchema.safeParse({ ...strings, game: { ...game, best } });
-
-    expect(result.error?.issues.map((issue) => issue.path.join('.'))).toEqual(['game.best.few']);
   });
 });
 

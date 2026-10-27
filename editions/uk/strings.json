@@ -696,25 +696,6 @@
   },
   "game": {
     "title": "Гра",
-    "rules": "{rounds}, {lives}.",
-    "rounds": {
-      "one": "{count} раунд",
-      "few": "{count} раунди",
-      "many": "{count} раундів",
-      "other": "{count} раунду"
-    },
-    "lives": {
-      "one": "{count} життя",
-      "few": "{count} життя",
-      "many": "{count} життів",
-      "other": "{count} життя"
-    },
-    "best": {
-      "one": "Найкраще — {count} / {total}.",
-      "few": "Найкраще — {count} / {total}.",
-      "many": "Найкраще — {count} / {total}.",
-      "other": "Найкраще — {count} / {total}."
-    },
     "groups": {
       "words": "Слова",
       "corrections": "Виправлення",

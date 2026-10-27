@@ -346,7 +346,7 @@ Listed for the owner to decide; the design itself is left unchanged. Gaps marked
 16. **The light Correction card has no action row**, while Corrections in the dark Feed have one. **Closed in 0.3:** the Word and the Correction card share one action row: three 52 pt buttons spread evenly (the heart, Add to Collection, Hide); Share joins in 0.6.
 17. **The story Share Card is not 9:16.** It is 324 wide plus 34 padding on each side (content-box), so it renders at 392×576, not 324×576. **Closed in 0.6:** the Story Share Card is 324×576 with the 34 pt padding inside it, a true 9:16, and its image is captured at 1080×1920.
 18. **The wrong-answer sheet hides the correct option.** The brief wants the chosen button red and the correct one green; the sheet covers the lower buttons, so the green one is often out of sight (the sheet does name the right Word).
-19. **The win screen still shows "рекорд 13"** after a 15 / 15 result; the best result does not update. **Closed in 0.5:** «рекорд» is the best result with the Game just over included, so a 15 / 15 win shows «15». It shows on the result screen after every finished Game; the mode screen adds «Найкраще — 13 / 15.» to the line under its title, and the stats sheet the fourth cell «13 / 15» over «найкраще у Грі», both left out before the first finished Game and when the Edition turns the Game off. The best result is one per Edition across both Game Modes.
+19. **The win screen still shows "рекорд 13"** after a 15 / 15 result; the best result does not update. **Closed in 0.5:** «рекорд» is the best result with the Game just over included, so a 15 / 15 win shows «15». It shows on the result screen after every finished Game; each mode card on the mode screen shows its own Best result (the line under its title, with its Rounds, Lives and «Найкраще — 13 / 15.», went in 0.8.12), and the stats sheet the fourth cell «13 / 15» over «найкраще у Грі», both left out before the first finished Game and when the Edition turns the Game off. The best result is one per Edition across both Game Modes.
 20. **Lives use `#A3221B` in light but `#C8372D` in dark**, and the light Favorites heart is never shown filled. **Closed in 0.3 for the heart:** the filled Favorites heart is `color.heart` `#C8372D` in both Themes (3:1 or more against the background and the surface); Lives stay open for 0.5. **Closed in 0.5 for the Lives:** they are `color.heart` in both Themes, full when filled and an outline in ink at 32% when lost.
 
 ### Missing screens and states (the brief asked for light and dark of every screen)
@@ -425,7 +425,7 @@ Ukrainian copy from the canvas, quoted as is, for implementers to reuse. Sample 
 
 ### Game
 
-- Mode select: «Гра», «15 раундів, 5 життів. Найкраще — 13 / 15.»; «ВИЗНАЧЕННЯ → СЛОВО», «Вгадай слово», «Читаєте визначення — обираєте одне слово з чотирьох.»; «ВИПРАВЛЕННЯ», «Обери правильне», «У реченні — поширена ненормативна форма. Знайдіть нормативну.»
+- Mode select: «Гра»; «ВИЗНАЧЕННЯ → СЛОВО», «Вгадай слово», «Читаєте визначення — обираєте одне слово з чотирьох.»; «ВИПРАВЛЕННЯ», «Обери правильне», «У реченні — поширена ненормативна форма. Знайдіть нормативну.»
 - Round: «Вийти з гри» (VoiceOver), «7 / 15», «Життів: 4 з 5» (VoiceOver), «ВИЗНАЧЕННЯ», «ЯК СКАЗАТИ КРАЩЕ?»
 - Answers: tags «Правильно», «Ваш вибір»; sheet «Правильно!» or «Не цього разу», «Далі»
 - Exit: «Вийти з гри?» / «Прогрес буде втрачено.» / «Вийти» / «Грати далі»

@@ -24,7 +24,7 @@ export function fill(template: string, values: Readonly<Record<string, string>>)
 
 /**
  * A count in every plural form, like `PluralSchema`, each form also holding
- * the placeholders `names`, e.g. «Найкраще — {count} / {total}.».
+ * the placeholders `names`, e.g. «Найкраще у Грі: {count} з {total}».
  */
 export function pluralOf(...names: readonly string[]) {
   const form = templateOf('count', ...names);
