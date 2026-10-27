@@ -83,7 +83,8 @@ export function createWordOfTheDayArchive({
   clock,
 }: {
   content: ContentReadPort;
-  edition: Pick<Edition, 'locale' | 'isFeatureEnabled'>;
+  /** Without a `locale`, the dates are in the default locale. */
+  edition: Pick<Edition, 'isFeatureEnabled'> & Partial<Pick<Edition, 'locale'>>;
   userState: Pick<UserState, 'list'>;
   /** Tells the current year, whose dates go without it. */
   clock: Clock;

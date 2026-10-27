@@ -247,20 +247,16 @@ describe('The Word of the Day archive list', () => {
     expect(await listOf(new Map())).toEqual([]);
   });
 
-  it('lists the day the Feed keeps once the card is Seen', async () => {
+  it('lists through the composition the day the Feed keeps once the card is Seen', async () => {
     const time = fakeClock('2026-10-26T09:00:00+03:00');
-    const { app, records } = await run({ clock: time.clock });
+    const { app } = await run({ clock: time.clock });
     const today = idAt(app, 0);
+    expect(await app.wordOfTheDayArchive.list()).toEqual([]);
+
     await look(app, time, 0, SEEN_DWELL_MS);
 
-    const archive = createWordOfTheDayArchive({
-      content,
-      edition: { locale: 'uk-UA', isFeatureEnabled: () => true },
-      userState: await openUserState({ port: createMemoryUserStatePort(records) }),
-      clock: time.clock,
-    });
-
-    expect((await archive.list()).map(({ date, row }) => [keyOf(date), row.entryId])).toEqual([
+    const list = await app.wordOfTheDayArchive.list();
+    expect(list.map(({ date, row }) => [keyOf(date), row.entryId])).toEqual([
       ['2026-10-26', today],
     ]);
   });
