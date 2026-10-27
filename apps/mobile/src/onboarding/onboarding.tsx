@@ -1,11 +1,20 @@
-import type { Account, OnboardingStep, SampleNotification, WordCardModel } from '@slovo/core';
+import type {
+  Account,
+  OnboardingStep,
+  RarityTestAnswer,
+  RarityTestWord,
+  SampleNotification,
+  WordCardModel,
+} from '@slovo/core';
 import {
   OnboardingAccount,
   OnboardingMix,
   OnboardingNotifications,
+  OnboardingRarityTest,
   OnboardingWelcome,
   stressLabel,
   type HeroWord,
+  type RarityTestQuestion,
   type SampleNotificationLook,
 } from '@slovo/ui';
 import { useState, type ReactNode } from 'react';
@@ -45,6 +54,18 @@ function sampleLookOf(sample: SampleNotification | undefined): SampleNotificatio
     : { ...lemmaOf(sample.wordCard), body: sample.body, time: sample.time };
 }
 
+function questionOf({
+  rarity,
+  lemmaWithStress,
+  stressedVowels,
+}: RarityTestWord): RarityTestQuestion {
+  return {
+    rarity,
+    lemma: lemmaWithStress,
+    accessibilityLabel: stressLabel(editionStrings.wordCard, lemmaWithStress, stressedVowels),
+  };
+}
+
 /** Logs what the onboarding could not do on a tap. */
 function report(done: Promise<void>): void {
   done.catch((error: unknown) => {
@@ -60,7 +81,7 @@ function report(done: Promise<void>): void {
  * step.
  */
 export function Onboarding() {
-  const { onboarding } = useComposition();
+  const { onboarding, rarityTest } = useComposition();
   const step = useSubscribed(onboarding, ({ state }) => state.step);
   /** Whether the SLOVO ID screen is open over the step. */
   const [signingIn, setSigningIn] = useState(false);
@@ -76,6 +97,13 @@ export function Onboarding() {
       step={step}
       onNext={next}
       onSkip={skip}
+      onApplyRarityTest={(answers) =>
+        // A floor that can't be set leaves the one the Mix has, and the step goes on.
+        rarityTest.apply(answers).catch((error: unknown) => {
+          logError('Could not set the Rarity Floor', error);
+          return undefined;
+        })
+      }
       onAllow={() => {
         report(onboarding.allowNotifications());
       }}
@@ -137,12 +165,14 @@ function Step({
   step,
   onNext,
   onSkip,
+  onApplyRarityTest,
   onAllow,
   onSignIn,
 }: {
   step: OnboardingStep;
   onNext: () => void;
   onSkip: () => void;
+  onApplyRarityTest: (answers: readonly RarityTestAnswer[]) => Promise<number | undefined>;
   onAllow: () => void;
   onSignIn: () => void;
 }) {
@@ -163,6 +193,18 @@ function Step({
       <OnboardingMix step={number} total={total} onNext={onNext} onSkip={onSkip}>
         <MixChoices />
       </OnboardingMix>
+    );
+  }
+  if (step.kind === 'rarityTest') {
+    return (
+      <OnboardingRarityTest
+        step={number}
+        total={total}
+        words={step.words.map(questionOf)}
+        onApply={onApplyRarityTest}
+        onNext={onNext}
+        onSkip={onSkip}
+      />
     );
   }
   if (step.kind === 'notifications') {

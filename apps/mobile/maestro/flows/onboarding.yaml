@@ -1,5 +1,6 @@
 # Onboarding: a fresh install shows the welcome over the Feed; «Почати»,
-# «Далі» and «Пізніше» lead to the fourth step, «КРОК 4 З 4», SLOVO ID, whose
+# «Далі», the Rarity Test's «Пізніше» and «Пізніше» lead to the fifth step,
+# «КРОК 5 З 5», SLOVO ID, whose
 # «Увійти через SLOVO ID» opens the SLOVO ID screen and whose back link,
 # signed out, comes back to the step; «Продовжити без акаунта» finishes the
 # onboarding, and a relaunch shows no onboarding. («Пропустити» finishes it on
@@ -29,11 +30,13 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - tapOn:
     id: onboarding-next
 - tapOn:
+    id: onboarding-rarity-later
+- tapOn:
     id: onboarding-later
-# The fourth step, with the Edition's Account on.
+# The fifth step, with the Edition's Account on.
 - assertVisible:
     id: onboarding-account
-- assertVisible: КРОК 4 З 4
+- assertVisible: КРОК 5 З 5
 - assertVisible:
     id: onboarding-sign-in
     text: Увійти через SLOVO ID
