@@ -153,6 +153,7 @@ export {
   type MixState,
 } from './entries/mix';
 export { type OnboardingStep, type SampleNotification } from './onboarding/onboarding';
+export { type RarityTest, type RarityTestWord } from './rarity-test/rarity-test';
 // The shell keeps the Session in memory on a development client without the Keychain.
 export { createMemorySessionStore } from './account/memory-session-store';
 export { openSync, type Sync, type SyncState } from './sync/sync';
