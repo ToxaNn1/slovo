@@ -17,7 +17,7 @@ const folded = (text: string) => text.toLowerCase();
  * It compares stretch by stretch, so a letter whose lower case is longer never
  * shifts the range.
  */
-function firstOccurrence(text: string, form: string): TextRange | undefined {
+export function firstOccurrence(text: string, form: string): TextRange | undefined {
   const wanted = folded(form);
   for (let start = 0; start + form.length <= text.length; start += 1) {
     const end = start + form.length;
@@ -33,10 +33,12 @@ const optionOf = (text: string): RoundOption => ({ text, stressedVowels: [] });
  * their Stress marks, so a Round would be trivial and a Distractor would give
  * the Round away (ADR 0045).
  */
-const plays = (correction: Correction) => correction.correctionType !== 'wrongStress';
+export const plays = (correction: Correction): boolean =>
+  correction.correctionType !== 'wrongStress';
 
 /** A Correction's main standard equivalent, the right option of a Round that asks about it. */
-const mainEquivalentOf = (correction: Correction) => correction.standardEquivalents[0] ?? '';
+export const mainEquivalentOf = (correction: Correction): string =>
+  correction.standardEquivalents[0] ?? '';
 
 /**
  * «Обери правильне», the Core's Correction mode, on when the Edition turns
