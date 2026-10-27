@@ -1,8 +1,9 @@
 import type { EntryKind } from '@slovo/contracts';
-import { GAME_ROUNDS, type ProgressState } from '@slovo/core';
+import { GAME_ROUNDS, type CalendarMonth, type ProgressState } from '@slovo/core';
 import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { BottomSheet } from '../primitives/BottomSheet';
+import { ActiveDaysCalendar } from './ActiveDaysCalendar';
 import { knownLine } from './known-line';
 import { OrnamentBand } from '../decor/DecorSlots';
 import { fill, useEdition } from '../providers/EditionProvider';
@@ -57,7 +58,8 @@ function Count({
  * today, the Favorites count, the Entries in Collections and the best Game
  * result once a Game has finished, each in the Edition's plural form, and
  * under them the Known count of each kind of Entry shown, and the Entries
- * due for Review today, unless the knowledge rows are hidden. It
+ * due for Review today, unless the knowledge rows are hidden, and last the
+ * Active Days calendar, with its months, unless it has none. It
  * closes with a swipe down, a tap outside or VoiceOver's escape gesture, and
  * with Reduce Motion it appears without sliding. While the reader hides the
  * Streak, the Streak with its Best Streak is left out. Needs a
@@ -68,6 +70,7 @@ export function StatsSheet({
   stats,
   hideStreak = false,
   knowledge = ['word', 'correction', 'idiom'],
+  calendar = [],
   onClose,
 }: {
   visible: boolean;
@@ -75,6 +78,8 @@ export function StatsSheet({
   hideStreak?: boolean;
   /** The knowledge rows, with the kinds of Entry whose Known count shows, in order, or none. */
   knowledge?: readonly EntryKind[] | 'none';
+  /** The months of the Active Days calendar, oldest first; none leaves it out. */
+  calendar?: readonly CalendarMonth[];
   onClose: () => void;
 }) {
   const { colors, fontFamilies } = useTokens();
@@ -170,6 +175,7 @@ export function StatsSheet({
             </Text>
           </View>
         )}
+        <ActiveDaysCalendar months={calendar} />
       </ScrollView>
     </BottomSheet>
   );
