@@ -10,8 +10,8 @@ import {
   type FeatureSwitch,
   type UserStateChanges,
   type UserStatePort,
-} from './index';
-import { createMemoryContentPort } from './testing';
+} from '../index';
+import { createMemoryContentPort } from '../testing';
 import {
   correction,
   fakeClock,
@@ -20,7 +20,7 @@ import {
   synonymRow,
   tip,
   word,
-} from './test-support';
+} from '../test-support';
 
 /** The Edition's one Category, the test Words' own, and its default Mix of every Category. */
 const testCategories = {

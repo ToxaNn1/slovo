@@ -2,7 +2,7 @@ import type { EntryKind } from '@slovo/contracts';
 
 import type { Edition } from '../edition/edition';
 import type { EntryRowModel, EntryRows } from '../entries/entry-row';
-import type { HiddenEntries } from '../hidden/hidden-entries';
+import type { HiddenEntries } from '../mix/hidden-entries';
 import { createInTurn, createSubscribers } from '../in-turn';
 import { dayNumber, parseLocalDate, todayDate } from '../local-date';
 import type { Clock } from '../ports';
