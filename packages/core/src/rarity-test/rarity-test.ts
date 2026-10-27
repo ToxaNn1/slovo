@@ -1,7 +1,7 @@
 import type { Edition } from '../edition/edition';
 import type { Entries } from '../entries/entries';
 import type { Mix } from '../entries/mix';
-import { renderStress } from '../entries/stress';
+import { renderStress, stressedVowelsOf } from '../entries/stress';
 import { shuffled } from '../game/game-mode';
 import type { Random } from '../ports';
 
@@ -17,6 +17,8 @@ export interface RarityTestWord {
   readonly rarity: number;
   /** The Lemma with Stress, as the Word card shows it. */
   readonly lemmaWithStress: string;
+  /** The stressed vowels of the Lemma, in order, as VoiceOver names them. */
+  readonly stressedVowels: readonly string[];
 }
 
 /** The reader's answer on a drawn Word: «Знаю» (`known`) or «Не знаю». */
@@ -69,7 +71,12 @@ export function createRarityTest({
           random,
         )
           .slice(0, WORDS_PER_RARITY)
-          .map((word) => ({ wordId: word.id, rarity, lemmaWithStress: renderStress(word) })),
+          .map((word) => ({
+            wordId: word.id,
+            rarity,
+            lemmaWithStress: renderStress(word),
+            stressedVowels: stressedVowelsOf(word),
+          })),
       );
     },
     async apply(answers) {

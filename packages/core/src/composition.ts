@@ -434,6 +434,7 @@ export async function openComposition({
   });
   await day.resume();
   // Once the day is turned to, so the welcome shows today's Word of the Day.
+  const rarityTest = createRarityTest({ edition, entries, mix, random });
   const onboarding = await openOnboarding({
     userState,
     clock,
@@ -442,6 +443,10 @@ export async function openComposition({
     notifications,
     nextMorning,
     account: edition.isFeatureEnabled('account'),
+    rarityTest:
+      edition.isFeatureEnabled('rarityTest') && edition.isFeatureEnabled('rarityFloor')
+        ? rarityTest
+        : undefined,
   });
   // The Game Modes are planned last: planning reads the whole pack, so the
   // launch never waits for it. A start or a change of eligibility waits its turn
@@ -484,7 +489,7 @@ export async function openComposition({
     onboarding,
     search: createSearch({ content, edition: searchEdition, userState }),
     recentQueries: createRecentQueries({ edition: searchEdition, userState }),
-    rarityTest: createRarityTest({ edition, entries, mix, random }),
+    rarityTest,
     moodDraw: createMoodDraw({
       content,
       edition: { ...edition, moods: edition.moods ?? [] },

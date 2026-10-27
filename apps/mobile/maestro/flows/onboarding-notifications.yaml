@@ -1,4 +1,5 @@
-# Onboarding step 3, notifications: «Почати» and «Далі» lead to «КРОК 3 З 4»
+# Onboarding step 4, notifications: «Почати», «Далі» and the Rarity Test's
+# «Пізніше» lead to «КРОК 4 З 5»
 # with a sample of the Word of the Day's notification and the Notification
 # times; a time taken out here is gone from Settings › Сповіщення; «Пізніше»
 # goes on to the SLOVO ID step without asking, and «Продовжити без акаунта»
@@ -24,11 +25,14 @@ appId: ${APP_ID || 'app.slovo.uk'}
 # Keep a Category chosen: the Edition's default Mix, taken as it is.
 - tapOn:
     id: onboarding-next
+# «Пізніше» on the Rarity Test step goes on past it.
+- tapOn:
+    id: onboarding-rarity-later
 - assertVisible:
     id: onboarding-notifications
 - assertVisible:
     id: onboarding-step
-- assertVisible: КРОК 3 З 4
+- assertVisible: КРОК 4 З 5
 # The sample: today's Word of the Day, at the earliest default time.
 - assertVisible:
     id: onboarding-sample

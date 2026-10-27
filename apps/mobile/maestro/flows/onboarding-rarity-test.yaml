@@ -1,0 +1,55 @@
+# Onboarding step 3, the Rarity Test: «Почати» and «Далі» lead to «КРОК 3 З 5»,
+# «Перевірити рівень»; its «Почати» asks about each Word by its Lemma with
+# Stress, and «Знаю» on every one ends on «Ваш рівень: від 5», whose «Далі»
+# goes on to the notifications step. A subflow of `smoke.yaml`; run it from
+# there. It starts from a fresh install, whatever the simulator holds, so it
+# clears the app's state: put it last in the smoke flow, as it takes the
+# Favorites and the other choices with it.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+# A fresh install shows the welcome.
+- runFlow:
+    file: ../fresh-onboarding.yaml
+- tapOn:
+    id: onboarding-start
+- tapOn:
+    id: onboarding-next
+- assertVisible:
+    id: onboarding-rarity-test
+- assertVisible: КРОК 3 З 5
+- assertVisible: Перевірити рівень
+- assertVisible: 10 слів — і ми підберемо рідкість саме для вас
+- assertVisible:
+    id: onboarding-rarity-later
+- takeScreenshot: onboarding-rarity-test
+- tapOn:
+    id: onboarding-rarity-start
+- assertVisible:
+    id: onboarding-rarity-lemma
+- assertVisible:
+    id: onboarding-rarity-progress
+    text: 1 з 10
+- takeScreenshot: onboarding-rarity-question
+# «Знаю» on every Word: the floor is the rarest.
+- repeat:
+    while:
+      visible:
+        id: onboarding-rarity-known
+    commands:
+      - tapOn:
+          id: onboarding-rarity-known
+- assertVisible:
+    id: onboarding-rarity-result
+- assertVisible: 'Ваш рівень: від 5'
+- takeScreenshot: onboarding-rarity-result
+- tapOn:
+    id: onboarding-rarity-next
+- assertVisible:
+    id: onboarding-notifications
+- assertVisible: КРОК 4 З 5
+- tapOn:
+    id: onboarding-later
+- tapOn:
+    id: onboarding-continue
+- assertVisible:
+    id: feed-card-.*

@@ -50,8 +50,10 @@ export {
   OnboardingAccount,
   OnboardingMix,
   OnboardingNotifications,
+  OnboardingRarityTest,
   OnboardingWelcome,
   type HeroWord,
+  type RarityTestQuestion,
   type SampleNotificationLook,
 } from './onboarding/Onboarding';
 export { OutlineButton } from './primitives/OutlineButton';

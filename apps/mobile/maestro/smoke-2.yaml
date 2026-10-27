@@ -30,4 +30,5 @@ appId: ${APP_ID || 'app.slovo.uk'}
 # Also from a fresh install.
 - runFlow: flows/onboarding.yaml
 - runFlow: flows/onboarding-mix.yaml
+- runFlow: flows/onboarding-rarity-test.yaml
 - runFlow: flows/onboarding-notifications.yaml

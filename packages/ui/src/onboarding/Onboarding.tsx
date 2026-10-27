@@ -2,7 +2,7 @@
 // Reanimated or gesture code: the React Compiler skips this module (ADR 0059).
 
 import { ACCOUNT_NAME } from '@slovo/contracts';
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   AccessibilityInfo,
   findNodeHandle,
@@ -373,20 +373,7 @@ export function OnboardingNotifications({
       footer={
         <>
           <PrimaryButton testID="onboarding-allow" label={notifications.allow} onPress={onAllow} />
-          <Pressable
-            testID="onboarding-later"
-            accessibilityRole="button"
-            {...voice}
-            onPress={onLater}
-            style={styles.later}
-          >
-            <Text
-              maxFontSizeMultiplier={HEADLINE_MAX_FONT_SCALE}
-              style={[styles.laterLabel, { color: colors.muted, fontFamily: fontFamilies.ui }]}
-            >
-              {notifications.later}
-            </Text>
-          </Pressable>
+          <LaterButton testID="onboarding-later" onPress={onLater} />
         </>
       }
     >
@@ -410,6 +397,222 @@ export function OnboardingNotifications({
       {sample !== undefined && <SampleNotification sample={sample} />}
       {/* A block of its own: the times space themselves, not by the step's gap. */}
       <View>{children}</View>
+    </OnboardingStep>
+  );
+}
+
+/** The quiet «Пізніше» under a step's main button, which goes on without it. */
+function LaterButton({ testID, onPress }: { testID: string; onPress: () => void }) {
+  const { colors, fontFamilies } = useTokens();
+  const { voice, strings } = useEdition();
+  return (
+    <Pressable
+      testID={testID}
+      accessibilityRole="button"
+      {...voice}
+      onPress={onPress}
+      style={styles.later}
+    >
+      <Text
+        maxFontSizeMultiplier={HEADLINE_MAX_FONT_SCALE}
+        style={[styles.laterLabel, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+      >
+        {strings.onboarding.notifications.later}
+      </Text>
+    </Pressable>
+  );
+}
+
+/** A Word the Rarity Test asks about. */
+export interface RarityTestQuestion {
+  readonly rarity: number;
+  /** The Lemma with its Stress mark. */
+  readonly lemma: string;
+  /** What VoiceOver reads for the Lemma, which says where the Stress falls. */
+  readonly accessibilityLabel: string;
+}
+
+/** Where the Rarity Test step is: its offer, the Word asked about, or the floor it set. */
+type RarityTestPhase =
+  | { readonly kind: 'offer' }
+  | { readonly kind: 'asking'; readonly answers: readonly { rarity: number; known: boolean }[] }
+  | { readonly kind: 'result'; readonly floor: number };
+
+/**
+ * The Rarity Test step, after the Mix: «Перевірити рівень» with «Почати» and
+ * the quiet «Пізніше», which goes on past it. The test asks about each Word in
+ * turn by its Lemma with Stress, with «Знаю» and «Не знаю»; the last answer
+ * applies them all, and the result says «Ваш рівень: від {n}» over «Далі».
+ * «Пропустити» finishes the onboarding at any point, setting nothing.
+ */
+export function OnboardingRarityTest({
+  step,
+  total,
+  words,
+  onApply,
+  onNext,
+  onSkip,
+}: {
+  /** This step's number, from 1, in the Core's order. */
+  step: number;
+  total: number;
+  /** The Words to ask about, in the order asked. */
+  words: readonly RarityTestQuestion[];
+  /**
+   * Applies the answers and resolves to the Rarity Floor they set, or to
+   * nothing when none was set; it never rejects.
+   */
+  onApply: (answers: readonly { rarity: number; known: boolean }[]) => Promise<number | undefined>;
+  onNext: () => void;
+  onSkip: () => void;
+}) {
+  const { colors, fontFamilies } = useTokens();
+  const { voice, strings } = useEdition();
+  const [phase, setPhase] = useState<RarityTestPhase>({ kind: 'offer' });
+  /** Whether the answers are applied, so a second tap on the last Word applies nothing. */
+  const applied = useRef(false);
+  /** «3 з 10» over the Word asked about. */
+  const progressOf = (asked: number) =>
+    fill(strings.rarityTest.progress, { n: String(asked + 1), total: String(words.length) });
+  // VoiceOver stays on the buttons, so it says where the test is and each next Word.
+  const asked = phase.kind === 'asking' ? phase.answers.length : 0;
+  const spoken = asked > 0 ? words[asked] : undefined;
+  const announcement =
+    spoken === undefined ? undefined : `${progressOf(asked)}, ${spoken.accessibilityLabel}`;
+  useEffect(() => {
+    if (announcement !== undefined) AccessibilityInfo.announceForAccessibility(announcement);
+  }, [announcement]);
+
+  const answer = (known: boolean) => {
+    if (phase.kind !== 'asking') return;
+    const word = words[phase.answers.length];
+    if (word === undefined) return;
+    const answers = [...phase.answers, { rarity: word.rarity, known }];
+    setPhase({ kind: 'asking', answers });
+    if (answers.length < words.length || applied.current) return;
+    applied.current = true;
+    void onApply(answers).then((floor) => {
+      if (floor === undefined) onNext();
+      else setPhase({ kind: 'result', floor });
+    });
+  };
+  const title = (text: string) => (
+    <Text
+      accessibilityRole="header"
+      {...voice}
+      maxFontSizeMultiplier={HEADLINE_MAX_FONT_SCALE}
+      style={[styles.title, { color: colors.ink, fontFamily: fontFamilies.word }]}
+    >
+      {text}
+    </Text>
+  );
+
+  if (phase.kind === 'offer') {
+    return (
+      <OnboardingStep
+        testID="onboarding-rarity-test"
+        step={step}
+        total={total}
+        onSkip={onSkip}
+        footer={
+          <>
+            <PrimaryButton
+              testID="onboarding-rarity-start"
+              label={strings.onboarding.welcome.start}
+              onPress={() => {
+                setPhase({ kind: 'asking', answers: [] });
+              }}
+            />
+            <LaterButton testID="onboarding-rarity-later" onPress={onNext} />
+          </>
+        }
+      >
+        <View style={styles.heading}>
+          {title(strings.rarityTest.start)}
+          <Text
+            {...voice}
+            maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+            style={[styles.subtitle, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+          >
+            {strings.rarityTest.subtitle}
+          </Text>
+        </View>
+      </OnboardingStep>
+    );
+  }
+  if (phase.kind === 'result') {
+    return (
+      <OnboardingStep
+        testID="onboarding-rarity-result"
+        step={step}
+        total={total}
+        onSkip={onSkip}
+        footer={
+          <PrimaryButton
+            testID="onboarding-rarity-next"
+            label={strings.onboarding.mix.next}
+            onPress={onNext}
+          />
+        }
+      >
+        {title(fill(strings.rarityTest.result, { n: String(phase.floor) }))}
+      </OnboardingStep>
+    );
+  }
+  const word = words[phase.answers.length];
+  const applying = word === undefined;
+  return (
+    <OnboardingStep
+      testID="onboarding-rarity-question"
+      step={step}
+      total={total}
+      onSkip={onSkip}
+      footer={
+        <>
+          <PrimaryButton
+            testID="onboarding-rarity-known"
+            label={strings.knowledge.known}
+            busy={applying}
+            onPress={() => {
+              answer(true);
+            }}
+          />
+          <SecondaryButton
+            testID="onboarding-rarity-unknown"
+            label={strings.knowledge.unknown}
+            disabled={applying}
+            onPress={() => {
+              answer(false);
+            }}
+          />
+        </>
+      }
+    >
+      {word !== undefined && (
+        <Text
+          testID="onboarding-rarity-progress"
+          {...voice}
+          maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+          style={[styles.counter, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+        >
+          {progressOf(phase.answers.length)}
+        </Text>
+      )}
+      {word !== undefined && (
+        <WholeWordsText
+          text={word.lemma}
+          size={HERO_LEMMA}
+          tracking={-0.02}
+          testID="onboarding-rarity-lemma"
+          accessibilityLabel={word.accessibilityLabel}
+          {...voice}
+          maxFontSizeMultiplier={HEADLINE_MAX_FONT_SCALE}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.5}
+          style={{ color: colors.ink, fontFamily: fontFamilies.word, fontWeight: '500' }}
+        />
+      )}
     </OnboardingStep>
   );
 }
@@ -628,6 +831,7 @@ const styles = StyleSheet.create({
   },
   footer: { paddingHorizontal: SIDE, paddingTop: space[3], paddingBottom: space[4], gap: space[5] },
   dots: { flexDirection: 'row', alignItems: 'center', gap: DOT.gap },
+  counter: { fontSize: typeSize.body, fontWeight: '600' },
   later: { minHeight: minTouchTarget, alignItems: 'center', justifyContent: 'center' },
   laterLabel: { fontSize: typeSize.button, fontWeight: '600' },
   sample: {
