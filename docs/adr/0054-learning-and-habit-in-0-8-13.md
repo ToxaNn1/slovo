@@ -29,7 +29,7 @@ Until 0.8.13 SLOVO handed the reader one Entry after another but didn't help the
 
 **The Weekly Recap** («Ваш тиждень») is a Feed Notice from the first open of a local Monday, about the local Monday–Sunday week before it, with no card when that week had no Active Day.
 
-- **Numbers.** The Entries in History whose last Seen falls in the week, the Favorites added in the week, the Known marks set in the week and the current Streak. History keeps only an Entry's last Seen (ADR 0013), so an Entry Seen again later counts in the later week; the small undercount is accepted rather than adding a Seen log.
+- **Numbers.** The Entries in History whose last Seen falls in the week, the Favorites added in the week, the Known marks set in the week and the current Streak. With `knowledge` off the Known marks are left out, so the recap shows no «знаю» rather than a 0. History keeps only an Entry's last Seen (ADR 0013), so an Entry Seen again later counts in the later week; the small undercount is accepted rather than adding a Seen log.
 - **The mark time.** A Knowledge Mark record gains an optional mark time, the instant from the injected clock when the mark was set (ADR 0043); the record only grows (ADR 0013), and an older app that rewrites a record leaves it without a time. Only marks with a time count, so marks made before 0.8.13 never inflate a week.
 - **The Share Card** «Мій тиждень у SLOVO» is a new Share Card kind in the existing style: the four numbers (переглянуто, збережено, знаю, серія) and the week's date range («20–26 жовтня»), with no words.
 

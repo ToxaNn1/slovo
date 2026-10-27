@@ -151,6 +151,7 @@ export { createContentUpdate, type ContentUpdate } from './content-update/conten
 export type { ContentApi, PackFiles, PackVersion } from './ports';
 export { type ProgressState } from './progress/progress';
 export type { CalendarDay, CalendarDayState, CalendarMonth } from './progress/calendar';
+export { type WeeklyRecap, type WeeklyRecapModel } from './progress/weekly-recap';
 export {
   CATEGORY_KINDS,
   categoriesInMix,
