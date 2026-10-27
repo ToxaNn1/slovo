@@ -1,10 +1,10 @@
 import { sha256 } from '@noble/hashes/sha2.js';
 import { bytesToHex } from '@noble/hashes/utils.js';
 
-import type { Clock, ContentApi, PackFiles, PackVersion, Random, Schedule } from './ports';
-import { withRetries } from './retry';
-import type { UserState } from './user-state/user-state';
-import { userStateRecords } from './user-state/user-state-schema';
+import type { Clock, ContentApi, PackFiles, PackVersion, Random, Schedule } from '../ports';
+import { withRetries } from '../retry';
+import type { UserState } from '../user-state/user-state';
+import { userStateRecords } from '../user-state/user-state-schema';
 
 /** How long after a check the next one is due: 24 hours. */
 const CONTENT_UPDATE_EVERY = 24 * 60 * 60 * 1000;

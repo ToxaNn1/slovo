@@ -8,7 +8,7 @@ import {
   openDailyCrossword,
   type CrosswordReadPort,
   type DailyCrossword,
-} from './crossword/daily-crossword';
+} from './game/daily-crossword';
 import { openCycle } from './feed/cycle';
 import { createDayChange } from './feed/day-change';
 import type { Edition } from './edition/edition';
@@ -29,8 +29,8 @@ import { timedMode } from './game/timed-mode';
 import { typeWordMode } from './game/type-word-mode';
 import { openHistory, type History } from './saved/history';
 import { openKnowledge, type Knowledge } from './knowledge/knowledge';
-import { openHiddenEntries, type HiddenEntries } from './hidden/hidden-entries';
-import { createHiding, type Hiding } from './hidden/hiding';
+import { openHiddenEntries, type HiddenEntries } from './mix/hidden-entries';
+import { createHiding, type Hiding } from './mix/hiding';
 import { openMix, type Mix, type MixEdition } from './entries/mix';
 import type { NotificationScheduling } from './notifications/notification-plan';
 import {
@@ -38,11 +38,11 @@ import {
   type Notifications,
   type NotificationsEdition,
 } from './notifications/notifications';
-import { openOnboarding, type Onboarding } from './onboarding';
+import { openOnboarding, type Onboarding } from './onboarding/onboarding';
 import type { Clock, ContentReadPort, Random, Schedule } from './ports';
-import { openProgress, type Progress } from './progress';
+import { openProgress, type Progress } from './progress/progress';
 import type { UserState } from './user-state/user-state';
-import { createWidget, type Widget } from './widget';
+import { createWidget, type Widget } from './widget/widget';
 import { openWordOfTheDay } from './feed/word-of-the-day';
 
 /**

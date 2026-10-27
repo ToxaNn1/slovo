@@ -1,5 +1,5 @@
-import type { SynonymRowCardModel } from './synonym-row-card';
-import type { TipCardModel } from './tip-card';
+import type { SynonymRowCardModel } from '../entries/synonym-row-card';
+import type { TipCardModel } from '../entries/tip-card';
 
 /** How many members of a Synonym Row its Share Card shows. */
 const SHARED_MEMBERS = 6;

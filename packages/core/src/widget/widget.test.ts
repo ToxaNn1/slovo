@@ -14,9 +14,9 @@ import {
   type Clock,
   type Composition,
   type ContentReadPort,
-} from './index';
-import { createMemoryContentPort } from './testing';
-import { correction, fakeClock, idiom, steppingRandom, word } from './test-support';
+} from '../index';
+import { createMemoryContentPort } from '../testing';
+import { correction, fakeClock, idiom, steppingRandom, word } from '../test-support';
 
 /** The instant these tests start at. */
 const start = '2026-10-16T09:00:00+03:00';

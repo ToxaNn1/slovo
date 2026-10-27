@@ -8,16 +8,16 @@ import {
   type WidgetSnapshot,
 } from '@slovo/contracts';
 
-import type { Collections } from './saved/collections';
-import type { EligibleOfKind, Entries, ShownEntry } from './entries/entries';
-import { buildEntryRow } from './entries/entry-row';
-import type { Favorites } from './saved/favorites';
-import type { AnyEntryCard } from './feed/feed-card';
-import type { Edition } from './edition/edition';
-import type { Onboarding } from './onboarding';
-import { notificationText } from './notifications/notification-text';
-import type { Clock } from './ports';
-import { withoutStress } from './entries/stress';
+import type { Collections } from '../saved/collections';
+import type { EligibleOfKind, Entries, ShownEntry } from '../entries/entries';
+import { buildEntryRow } from '../entries/entry-row';
+import type { Favorites } from '../saved/favorites';
+import type { AnyEntryCard } from '../feed/feed-card';
+import type { Edition } from '../edition/edition';
+import type { Onboarding } from '../onboarding/onboarding';
+import { notificationText } from '../notifications/notification-text';
+import type { Clock } from '../ports';
+import { withoutStress } from '../entries/stress';
 
 /**
  * What the home-screen widget shows, decided by the Core, so the widget holds

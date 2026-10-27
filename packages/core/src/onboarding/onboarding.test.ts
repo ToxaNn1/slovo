@@ -11,9 +11,9 @@ import {
   type NotificationSchedulerPort,
   type OnboardingStep,
   type PlannedNotification,
-} from './index';
-import { createFakeNotificationScheduler, createMemoryContentPort } from './testing';
-import { fakeClock, word } from './test-support';
+} from '../index';
+import { createFakeNotificationScheduler, createMemoryContentPort } from '../testing';
+import { fakeClock, word } from '../test-support';
 
 /** The instant these tests start at. */
 const start = '2026-10-14T08:00:00+03:00';

@@ -1,7 +1,7 @@
 import { createInTurn } from '../in-turn';
 import { parseLocalDate, todayKey, type LocalDate } from '../local-date';
 import type { Clock, UserStateChanges } from '../ports';
-import type { ActiveDayChange } from '../progress';
+import type { ActiveDayChange } from '../progress/progress';
 import type { WordOfTheDay } from './word-of-the-day';
 
 /**

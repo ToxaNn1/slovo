@@ -35,7 +35,7 @@ export {
   buildTipShareCard,
   type SynonymRowShareCardModel,
   type TipShareCardModel,
-} from './entries/share-card';
+} from './share/share-card';
 export { coreDecor, loadDecor, type Decor } from './edition/decor';
 export { createEntries, type Entries, type ShownEntry, type ShownKind } from './entries/entries';
 export type { EntryRowModel } from './entries/entry-row';
@@ -97,8 +97,8 @@ export { gapOf } from './game/guess-word';
 export { typedAnswerMatches } from './game/typed-answer';
 export { createGameHaptics, LIFE_LOST_DELAY, type GameHaptics } from './game/game-haptics';
 export { createHaptics, type HapticEngine, type Haptics } from './game/haptics';
-export { type HiddenEntry } from './hidden/hidden-entries';
-export { type HideTarget, type HidingChange } from './hidden/hiding';
+export { type HiddenEntry } from './mix/hidden-entries';
+export { type HideTarget, type HidingChange } from './mix/hiding';
 export { HISTORY_CAP, type HistoryEntry } from './saved/history';
 export { groupByLocalDay, relativeTimeOf, type RelativeTime } from './saved/history-time';
 export { type KnowledgeMark } from './knowledge/knowledge-record';
@@ -121,7 +121,7 @@ export {
   type DailyCrosswordProgress,
   type DailyCrosswordState,
   type DailyCrosswordWord,
-} from './crossword/daily-crossword';
+} from './game/daily-crossword';
 export { loadEdition, type Edition } from './edition/edition';
 export { openRemoteSwitches } from './edition/remote-switches';
 export {
@@ -131,13 +131,13 @@ export {
   type Settings,
   type SettingsDefaults,
   type UserSettings,
-} from './settings';
+} from './settings/settings';
 export { renderStress, STRESS_MARK, withoutStress } from './entries/stress';
 export { createSwipeHint, type SwipeHint } from './feed/swipe-hint';
 export { buildWordCard, type WordCardModel } from './entries/word-card';
-export { createContentUpdate, type ContentUpdate } from './content-update';
+export { createContentUpdate, type ContentUpdate } from './content-update/content-update';
 export type { ContentApi, PackFiles, PackVersion } from './ports';
-export { type ProgressState } from './progress';
+export { type ProgressState } from './progress/progress';
 export {
   CATEGORY_KINDS,
   categoriesInMix,
@@ -149,7 +149,7 @@ export {
   type MixKindName,
   type MixState,
 } from './entries/mix';
-export { type OnboardingStep, type SampleNotification } from './onboarding';
+export { type OnboardingStep, type SampleNotification } from './onboarding/onboarding';
 // The shell keeps the Session in memory on a development client without the Keychain.
 export { createMemorySessionStore } from './account/memory-session-store';
 export { openSync, type Sync, type SyncState } from './sync/sync';
