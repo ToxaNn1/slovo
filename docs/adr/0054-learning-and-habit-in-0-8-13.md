@@ -1,0 +1,76 @@
+# Learning and habit in 0.8.13
+
+Until 0.8.13 SLOVO handed the reader one Entry after another but didn't help them find, remember or come back. There was no way to look up a Word or a meaning; a new reader who knew many rare words started at the commonest, since nobody knew what to set the Rarity Floor to; the app never showed the reader their week, never asked about yesterday's Word and kept no list of past Words of the Day; the Feed never said «enough for today», notifications sounded the same every day and kept coming to someone who stopped opening the app; and a reader couldn't ask for a word that fits how they feel. Spec #832 adds Search, the Rarity Test, Feed Notices, the Word of the Day archive, the Active Days calendar, the Daily Limit, the polite pause, notification templates, the first week, the widget hint and Mood. The decisions come from the owner's grilling of 2026-10-25.
+
+**Feature Switches.** Each feature has its own Feature Switch: `search`, `rarityTest`, `weeklyRecap`, `yesterday`, `wordOfTheDayArchive`, `activeDaysCalendar`, `dailyLimit`, `politePause`, `firstWeek`, `widgetHint` and `moods`. They are required of every Edition and all on in the Ukrainian Edition. A feature whose switch is off is absent: no header button, no Settings row, no Feed Notice, no list; its records are kept. A remote switch only turns a feature off (ADR 0040).
+
+**Search** («Пошук») is a Core Search behind a magnifier in the «Головна» header, over the open Language Pack and the user state.
+
+- **Scope.** Every Entry of a kind the Edition turns on (and not off remotely) that is neither Retired nor Hidden; the Mix and the Rarity Floor don't apply, so a reader finds anything the app knows.
+- **Texts.** A Word's Lemma; both forms of a Correction; an Idiom's expression; a Synonym Row's dominant and members; a Tip's title.
+- **Normalisation.** The typed-answer comparison of ADR 0052 (case, Stress marks, the kind of apostrophe, spaces at the ends), plus г = ґ and е = ё, since a reader looking something up shouldn't have to know its spelling.
+- **Match.** From 2 characters, a text matches when it, or any of its words, starts with the query, so «сум» finds «сумирний» and «на сумирному». Results come in groups «Слова», «Виправлення», «Вислови», «Синоніми», «Поради», exact matches first, then in the Edition's sort locale, up to 50 per group; nothing found reads «Нічого не знайдено».
+- **«За значенням».** From 3 characters, a further group lists Words whose Definition contains the query and Synonym Rows that contain it, so a reader finds a word for a meaning.
+- **Opening a result** opens the Entry card and makes nothing Seen. The last 10 queries, each saved only when a result was opened from it, are a `device-only` record with «Очистити».
+- Each result reads its kind and text to VoiceOver.
+
+**The Rarity Test** («Перевірити рівень») is offered once in onboarding after the Mix, skippable, and again from Settings («Пройти тест ще раз»).
+
+- **The draw.** 10 Words, 2 of each rarity 1–5, drawn with injected randomness from the Words that are eligible but for the Rarity Floor; each shows only its Lemma with Stress and the buttons «Знаю» / «Не знаю».
+- **The floor.** The Rarity Floor becomes the lowest rarity with a «Не знаю», or «від 5» when the reader knew all 10, and applies at once; the result screen says «Ваш рівень: від {n}». The floor stays a part of the Mix the reader changes there (ADR 0019); a test from Settings overwrites it.
+- **Nothing else changes.** Test answers set no Knowledge Mark, start no Review and make no Word Seen.
+
+**Feed Notices** are a new kind of Feed card, beside Entry cards and the end-of-Cycle card, that are not Entries: the Weekly Recap, the first-week card, Yesterday and the Daily Limit card. The Feed (ADR 0016) owns them like its other cards.
+
+- **Rhythm untouched.** A Feed Notice counts in no turn of Corrections, Idioms, Synonym Rows or Tips and in no Review slot (ADR 0043, 0051), and makes nothing Seen; the Word of the Day still opens the Feed.
+- **Placement.** From the second card on, the Feed Notices of the day each take a card of their own, in the order Weekly Recap, first-week card, Yesterday. The Daily Limit card comes as the next card once the limit is reached.
+- **Closing.** Swiping past a Feed Notice closes it for the local day; what is closed is a `device-only` record.
+
+**The Weekly Recap** («Ваш тиждень») is a Feed Notice from the first open of a local Monday, about the local Monday–Sunday week before it, with no card when that week had no Active Day.
+
+- **Numbers.** The Entries in History whose last Seen falls in the week, the Favorites added in the week, the Known marks set in the week and the current Streak. History keeps only an Entry's last Seen (ADR 0013), so an Entry Seen again later counts in the later week; the small undercount is accepted rather than adding a Seen log.
+- **The mark time.** A Knowledge Mark record gains an optional mark time, the instant from the injected clock when the mark was set (ADR 0043); the record only grows (ADR 0013), and an older app that rewrites a record leaves it without a time. Only marks with a time count, so marks made before 0.8.13 never inflate a week.
+- **The Share Card** «Мій тиждень у SLOVO» is a new Share Card kind in the existing style: the four numbers (переглянуто, збережено, знаю, серія) and the week's date range («20–26 жовтня»), with no words.
+
+**The Word of the Day archive** («Слова дня» in «Збережене») is a new synced user-state record per local date, holding the Word's id, written in the same write as the Seen mark of the Word of the Day's card; a conflict keeps the last write (ADR 0041). The Word of the Day itself stays `device-only` (ADR 0013): the archive records what the reader saw, not what a device planned. The list runs newest first, one row a date («26 жовтня · сумирний»); a tap opens the Entry; a Retired Word stays; there is no search and no month groups.
+
+**Yesterday** («Пам'ятаєте вчорашнє слово?») is a Feed Notice once a day when the archive has yesterday's date and that Word is neither Hidden nor Retired. It shows the Word in Self-check style; its Knowledge Marks work as on any card, so «Не знаю» starts a Review.
+
+**The Active Days calendar** on the statistics screen is built from the existing synced Active Days: a month grid, Monday first, from the month of the first Active Day to the current one and no further, today outlined, a filled dot on an Active Day and a quiet grey on a missed one, never red.
+
+**The Daily Limit** («Ліміт на день») is a setting: «Вимк.» (the default), 10, 20 or 30, synced like the other settings (ADR 0041). It counts the distinct Entries Seen on the local day, the Word of the Day included. At the limit the Feed shows the Feed Notice «На сьогодні досить. Повертайтеся завтра» with «Гортати далі», which removes it until the next local day; the Feed goes on under it, so the limit is soft.
+
+**Notifications** (ADR 0021).
+
+- **Templates.** Each Edition lists 10 title templates, each with `{word}`, the Lemma with its Stress marks. The body stays the primary Definition. The last template used is a `device-only` record, and no template comes twice in a row.
+- **The polite pause.** The plan never schedules beyond 14 days after the last open of the app. The last notification of the 14th day carries the Edition's warm farewell text instead of a Word, so it Reserves none; after it nothing comes until the next open plans again. With `politePause` off the plan keeps its 14 days from the time it is made.
+
+**The first week** is one intro card a day as a Feed Notice on the reader's first 7 Active Days after onboarding: the first Active Day after onboarding is day 1, so a missed calendar day eats no card. Day 1 Знаю / Не знаю, 2 Гра, 3 Збережене і Колекції, 4 Мікс, 5 Віджет, 6 Перевір себе, 7 «Тиждень із нами» with the Streak. «Зрозуміло» or a swipe closes a card for good. Only a reader who finishes onboarding with 0.8.13 or later gets the first week, so an existing reader is never treated as new; like the onboarding finished (ADR 0013), its state is `device-only`. There are no other Streak milestones.
+
+**The widget hint** is a sheet on the result screen after the reader's first finished Game with at least one Life left, once ever (`device-only`): a guide of 3 animated steps on adding the widget. Settings → Віджети → «Як додати віджет» opens the same guide.
+
+**Mood** («настрій»).
+
+- **The Edition lists its moods**, each an id, a name and an emoji, so the Core stays language-agnostic. The Ukrainian Edition has 😊 Радісний, 😢 Сумний, 😍 Закоханий, ⚡ Бадьорий, 😌 Спокійний and 🤔 Задумливий, and tags 15 existing Words with each.
+- **Words carry `moods`**, an optional array of the Edition's mood ids. The Language Pack build refuses an unknown id, and the content CLI adds, edits and checks `moods`.
+- **The roulette.** 🎲 «Слово під настрій» in the «Головна» header opens the six moods as chips; a chip runs a 1–2 second roulette over Lemmas that lands on a random Eligible Word of that mood, drawn with injected randomness (the Mix applies), and opens its card, which makes nothing Seen. A mood with no Eligible Word is disabled with a reason. Under Reduce Motion the card opens straight away.
+- **Pack format 7.** The pack carries each Word's `moods`, which an app on format 6 can't read, so the build writes pack format 7 and the app reads only it (ADR 0032); format 6 is no longer published.
+
+**Not Seen, in one place.** Opening an Entry from Search or from the mood roulette, the Rarity Test and every Feed Notice make nothing Seen; Seen stays the Feed's dwell rule and an Entry opened from a notification or the widget (ADR 0016, 0018).
+
+## Considered Options
+
+- **Search through the Mix and the Rarity Floor**: rejected. A reader looking a word up wants the word, not the Feed's choice.
+- **Search with the Game's strict г/ґ and е/ё**: rejected. The Game teaches spelling; Search must find a word however it is typed.
+- **Fuzzy or typo-tolerant search, or full text in Examples and explanations**: rejected for now. A prefix match over visible texts and Definitions answers the stories, and fuzzy results would be hard to rank.
+- **Opening a Search result, or a Word from the roulette, makes it Seen**: rejected. Looking something up would move the reader's Cycle.
+- **The Rarity Test sets Knowledge Marks**: rejected. A quick «Знаю» on a Lemma alone is not the reader's answer on the card.
+- **Feed Notices take turns like Entries**: rejected. The rhythm of Corrections, Idioms, Synonym Rows, Tips and Review would shift every Monday.
+- **Notices as banners over the Feed**: rejected. A card the reader swipes past keeps the Feed one gesture.
+- **A Seen log for the Weekly Recap**: rejected. History's last Seen is close enough, and a log would grow without bound and sync every card.
+- **Count Known marks without a time**: rejected. Marks set before 0.8.13 would all fall in no week, or all in one.
+- **The archive from the device-only Word of the Day**: rejected. The archive must follow the reader across devices and list only Words they saw.
+- **A hard Daily Limit**: rejected. The app asks the reader to stop, it never locks them out.
+- **Keep notifying until the reader comes back**: rejected. Two weeks of unopened notifications already say enough.
+- **First-week days by calendar days**: rejected. A reader who skips a day would lose a card.
+- **Moods in the Core**: rejected. Mood names and which words fit them belong to the Edition's language.
