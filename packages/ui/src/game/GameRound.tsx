@@ -4,6 +4,7 @@ import {
   GAME_ROUNDS,
   gapOf,
   LIFE_LOST_DELAY,
+  staysInPlace,
   type CurrentGame,
   type GivenAnswer,
   type Round,
@@ -12,7 +13,7 @@ import {
   type TextRange,
 } from '@slovo/core';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Keyboard, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
   interpolateColor,
@@ -44,6 +45,7 @@ import {
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { ease, RIGHT_FILL, shake, WRONG_FILL } from './round-motion';
 import { PairsGrid } from './PairsGrid';
+import { TypedAnswer, type TypedAnswerBlank } from './TypedAnswer';
 import { useGameHaptics } from './useGameHaptics';
 import { VowelButtons } from './VowelButtons';
 import { useReduceMotion } from '../providers/useReduceMotion';
@@ -96,8 +98,10 @@ type PickAnswer = Extract<RoundAnswer, { form: 'pick' }>;
  * prompt under its label, the four options and, once answered, the sheet.
  * It plays the pick form, the vowel form, whose Word stands in the card
  * with each vowel a button, and the pairs form, whose grid stands under the
- * mode's label in place of the card and the options; the screens of the other
- * answer forms come with their Game Modes (spec #772). A
+ * mode's label in place of the card and the options, and the typed form,
+ * whose field stands under the card in place of the options, with the
+ * Word's blanks and «Відкрити літеру» in a Round that shows blanks; the
+ * screens of the other answer forms come with their Game Modes (spec #772). A
  * Synonym Row's Round asks «Що є синонімом до „{dominant}“?» and a Tip's its
  * own question, each under its kind's label rather than the mode's.
  * The ✕ asks first, with the SLOVO confirmation dialog, as «Очистити Історію?»
@@ -109,6 +113,7 @@ export function GameRound({
   onAnswer,
   onNext,
   onLeave,
+  onOpenLetter,
 }: {
   game: CurrentGame;
   /** The label over the prompt, the Game Mode's, for a Round about a Word, an idiom or a Correction. */
@@ -117,6 +122,8 @@ export function GameRound({
   onNext: () => void;
   /** Leaves the Game, once the reader has confirmed it. */
   onLeave: () => void;
+  /** «Відкрити літеру» in a typed Round with blanks. */
+  onOpenLetter: () => void;
 }) {
   const { strings } = useEdition();
   const { round } = game;
@@ -187,6 +194,16 @@ export function GameRound({
         ) : (
           <RoundCard label={asked.label} prompt={asked.prompt} highlight={round.highlight} />
         )}
+        {round.form === 'typed' && (
+          <TypedRoundAnswer
+            key={round.number}
+            blanks={round.blanks}
+            onAnswer={(text) => {
+              onAnswer({ form: 'typed', text });
+            }}
+            onOpenLetter={onOpenLetter}
+          />
+        )}
         <View style={styles.options}>
           {options.map((option, place) => (
             <AnswerOption
@@ -251,6 +268,52 @@ function letterLabel(
   place: number,
 ): string {
   return fill(texts.label, { letter, place: texts.ordinals[place] ?? String(place + 1) });
+}
+
+/**
+ * A typed Round's answer under its card: the Word's blanks, if the Round
+ * shows them, with «Відкрити літеру», and the field, which keeps what the
+ * reader typed until the Round is answered. VoiceOver reads each blank by its
+ * place among the letters. The keyboard goes as the answer is given, so the
+ * sheet shows whole.
+ */
+function TypedRoundAnswer({
+  blanks,
+  onAnswer,
+  onOpenLetter,
+}: {
+  /** The Word's blanks, as the Core opens them; none in a Round that shows none. */
+  blanks: readonly (string | undefined)[] | undefined;
+  onAnswer: (text: string) => void;
+  onOpenLetter: () => void;
+}) {
+  const { strings } = useEdition();
+  const { letters, openLetter, round } = strings.game;
+  const [text, setText] = useState('');
+  return (
+    <TypedAnswer
+      value={text}
+      onChangeText={setText}
+      onSubmit={() => {
+        Keyboard.dismiss();
+        onAnswer(text);
+      }}
+      blanks={blanks?.map((blank): TypedAnswerBlank =>
+        blank === undefined ? {} : staysInPlace(blank) ? { mark: blank } : { letter: blank },
+      )}
+      onOpenLetter={blanks === undefined ? undefined : onOpenLetter}
+      texts={{
+        label: round.typed.label,
+        submit: round.typed.submit,
+        openLetter,
+        blankLabel: (place, letter) =>
+          letter === undefined
+            ? fill(letters.empty, { place: letters.ordinals[place] ?? String(place + 1) })
+            : letterLabel(letters, letter, place),
+      }}
+      testID="game-typed"
+    />
+  );
 }
 
 /**

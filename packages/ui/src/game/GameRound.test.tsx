@@ -18,7 +18,9 @@ const strings = {
       chosen: 'Your choice',
       synonymRow: { label: 'Synonyms', prompt: 'What is a synonym of “{dominant}”?' },
       tip: { label: 'Tip' },
+      typed: { label: 'Your answer', submit: 'Check' },
     },
+    openLetter: 'Open a letter',
     letters: {
       label: '{letter}, {place} letter',
       empty: '{place} letter, empty',
@@ -80,6 +82,7 @@ const first: CurrentGame = {
 function answered(game: CurrentGame, given: GivenAnswer): CurrentGame {
   if (given.form === 'vowel') return answeredVowel(game, given.position);
   if (given.form === 'pairs') return answeredPair(game, given.word, given.definition);
+  if (given.form === 'typed') return answeredTyped(game, given.text);
   return answeredPick(game, given);
 }
 
@@ -241,6 +244,56 @@ function answeredPair(game: CurrentGame, word: number, definition: number): Curr
   };
 }
 
+/** A Round of «За буквами»: «well-read» to type, its hyphen in place from the start. */
+const TYPED = 'well-read';
+const typedRound: CurrentGame = {
+  ...first,
+  modeId: 'by-letters',
+  round: {
+    number: 1,
+    entryKind: 'word',
+    prompt: 'having read much',
+    highlight: undefined,
+    form: 'typed',
+    blanks: Array.from(TYPED, (character) => (character === '-' ? character : undefined)),
+    canOpenLetter: true,
+    answer: undefined,
+  },
+};
+
+/** The Game with its typed Round answered with the text, right only as typed exactly. */
+function answeredTyped(game: CurrentGame, typed: string): CurrentGame {
+  const right = typed === TYPED;
+  return {
+    ...game,
+    round: {
+      ...game.round,
+      answer: {
+        form: 'typed',
+        typed,
+        expected: TYPED,
+        right,
+        sheet: {
+          answer: { text: TYPED, stressedVowels: [] },
+          example: { text: 'A well-read friend.', author: undefined },
+        },
+      },
+    },
+    lives: right || game.lives === undefined ? game.lives : game.lives - 1,
+    status: 'answered',
+  };
+}
+
+/** The Game with the first blank of its typed Round opened, as the Game in play opens it. */
+function withLetterOpened(game: CurrentGame): CurrentGame {
+  const { round } = game;
+  if (round.form !== 'typed' || round.blanks === undefined) return game;
+  const first = round.blanks.indexOf(undefined);
+  const blanks = round.blanks.map((blank, place) => (place === first ? TYPED[place] : blank));
+  const left = blanks.filter((blank) => blank === undefined).length;
+  return { ...game, round: { ...round, blanks, canOpenLetter: left > 1 } };
+}
+
 /** The mode's label over a Round, by its answer form. */
 const LABELS: Partial<Record<CurrentGame['round']['form'], string>> = {
   vowel: 'Where is the stress?',
@@ -251,10 +304,12 @@ function Game({
   start,
   onAnswer,
   onLeave,
+  onOpenLetter,
 }: {
   start: CurrentGame;
   onAnswer: (given: GivenAnswer) => void;
   onLeave: () => void;
+  onOpenLetter: () => void;
 }) {
   const [game, setGame] = useState(start);
   return (
@@ -267,6 +322,10 @@ function Game({
       }}
       onNext={jest.fn()}
       onLeave={onLeave}
+      onOpenLetter={() => {
+        onOpenLetter();
+        setGame(withLetterOpened);
+      }}
     />
   );
 }
@@ -275,12 +334,13 @@ async function renderRound(
   onAnswer: (given: GivenAnswer) => void = jest.fn(),
   onLeave: () => void = jest.fn(),
   start: CurrentGame = first,
+  onOpenLetter: () => void = jest.fn(),
 ) {
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
       <EditionProvider edition={{ locale: 'en' }} strings={strings}>
         <HapticsProvider haptics={haptics}>
-          <Game start={start} onAnswer={onAnswer} onLeave={onLeave} />
+          <Game start={start} onAnswer={onAnswer} onLeave={onLeave} onOpenLetter={onOpenLetter} />
         </HapticsProvider>
       </EditionProvider>
     </SafeAreaProvider>,
@@ -443,6 +503,60 @@ describe('GameRound', () => {
       await fireEvent.press(screen.getByRole('button', { name: 'open and honest' }));
 
       expect(screen.getByRole('header', { name: 'Not this time' })).toBeTruthy();
+      expect(screen.getByLabelText('Lives: 4 of 5')).toBeOnTheScreen();
+    });
+  });
+
+  describe('a typed Round with blanks', () => {
+    it('asks under the mode’s label with a blank per letter VoiceOver reads by place, the hyphen in place', async () => {
+      await renderRound(jest.fn(), jest.fn(), typedRound);
+
+      expect(screen.getByTestId('game-prompt').props['accessibilityLabel']).toBe(
+        'Definition. having read much',
+      );
+      // Eight letters, the fifth the «r» after the hyphen, which stands in its place.
+      expect(screen.getAllByLabelText(/ letter, empty$/)).toHaveLength(8);
+      expect(screen.getByLabelText('fifth letter, empty')).toBeOnTheScreen();
+      expect(screen.getByTestId('game-typed-blanks')).toHaveTextContent('-', { exact: false });
+      expect(screen.getByLabelText('Your answer')).toBeOnTheScreen();
+      expect(screen.getByRole('button', { name: 'Open a letter' })).toBeEnabled();
+      expect(screen.getByRole('button', { name: 'Check' })).toBeDisabled();
+    });
+
+    it('opens the first blank’s letter at «Open a letter», at no cost', async () => {
+      const onOpenLetter = jest.fn();
+      await renderRound(jest.fn(), jest.fn(), typedRound, onOpenLetter);
+
+      await fireEvent.press(screen.getByRole('button', { name: 'Open a letter' }));
+      await fireEvent.press(screen.getByRole('button', { name: 'Open a letter' }));
+
+      expect(onOpenLetter).toHaveBeenCalledTimes(2);
+      expect(screen.getByLabelText('w, first letter')).toBeOnTheScreen();
+      expect(screen.getByLabelText('e, second letter')).toBeOnTheScreen();
+      expect(screen.getByLabelText('third letter, empty')).toBeOnTheScreen();
+      expect(screen.getByLabelText('Lives: 5 of 5')).toBeOnTheScreen();
+    });
+
+    it('answers with the text typed and shows the Word with its Example', async () => {
+      const onAnswer = jest.fn();
+      await renderRound(onAnswer, jest.fn(), typedRound);
+
+      await fireEvent.changeText(screen.getByLabelText('Your answer'), TYPED);
+      await fireEvent.press(screen.getByRole('button', { name: 'Check' }));
+
+      expect(onAnswer).toHaveBeenCalledWith({ form: 'typed', text: TYPED });
+      expect(screen.getByRole('header', { name: 'Right!' })).toBeTruthy();
+      expect(screen.getByText('A well-read friend.')).toBeOnTheScreen();
+    });
+
+    it('takes a Life for a wrong Word and shows the right one in the sheet', async () => {
+      await renderRound(jest.fn(), jest.fn(), typedRound);
+
+      await fireEvent.changeText(screen.getByLabelText('Your answer'), 'well-bred');
+      await fireEvent(screen.getByLabelText('Your answer'), 'submitEditing');
+
+      expect(screen.getByRole('header', { name: 'Not this time' })).toBeTruthy();
+      expect(screen.getByTestId('game-sheet')).toHaveTextContent(TYPED, { exact: false });
       expect(screen.getByLabelText('Lives: 4 of 5')).toBeOnTheScreen();
     });
   });
