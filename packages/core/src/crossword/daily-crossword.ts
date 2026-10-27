@@ -132,15 +132,22 @@ export async function openDailyCrossword({
   if (day === undefined) return undefined;
 
   const kept = await userState.read(crosswordProgress);
-  const letters = new Map(kept?.date === date ? Object.entries(kept.letters) : []);
+  let letters: ReadonlyMap<string, string> = new Map(
+    kept?.date === date ? Object.entries(kept.letters) : [],
+  );
   const inTurn = createInTurn();
   let state = stateOf(day, letters);
 
   const wordsAt = (place: CrosswordPlace) =>
     day.words.filter((word) => placesOf(word).some((at) => placeKey(at) === placeKey(place)));
 
-  const keep = async () => {
-    await userState.write(crosswordProgress.change({ date, letters: Object.fromEntries(letters) }));
+  /** Keeps the cell's letter, or its erasure, on this device first, so a failed write changes nothing. */
+  const keep = async (place: CrosswordPlace, letter: string | undefined) => {
+    const next = new Map(letters);
+    if (letter === undefined) next.delete(placeKey(place));
+    else next.set(placeKey(place), letter);
+    await userState.write(crosswordProgress.change({ date, letters: Object.fromEntries(next) }));
+    letters = next;
     state = stateOf(day, letters);
     return state;
   };
@@ -156,9 +163,7 @@ export async function openDailyCrossword({
         const fits = lowercase === undefined || /^\p{L}$/u.test(lowercase);
         if (words.length === 0 || !fits || words.some((word) => isRight(word, letters)))
           return state;
-        if (lowercase === undefined) letters.delete(placeKey(place));
-        else letters.set(placeKey(place), lowercase);
-        return keep();
+        return keep(place, lowercase);
       }),
     openCell: (place) =>
       inTurn(async () => {
@@ -167,8 +172,7 @@ export async function openDailyCrossword({
         const index = placesOf(word).findIndex((at) => placeKey(at) === placeKey(place));
         const letter = Array.from(word.answer)[index];
         if (letter === undefined || letters.get(placeKey(place)) === letter) return state;
-        letters.set(placeKey(place), letter);
-        return keep();
+        return keep(place, letter);
       }),
   };
 }
