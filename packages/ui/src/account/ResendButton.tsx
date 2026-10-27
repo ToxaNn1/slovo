@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
-import { useEdition } from './providers/EditionProvider';
-import { SecondaryButton } from './primitives/SecondaryButton';
+import { useEdition } from '../providers/EditionProvider';
+import { SecondaryButton } from '../primitives/SecondaryButton';
 
 /** The seconds left until `at`, counted up, so the button never reads 0. */
 const secondsUntil = (at: Date, now: Date) =>
