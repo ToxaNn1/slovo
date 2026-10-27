@@ -9,10 +9,10 @@ export const CROSSWORD_DAYS_AHEAD = 400;
 
 /**
  * How many days apart a word may come back in the Daily Crossword, at the
- * least: the longest that lets the Ukrainian Edition's 3–5-letter words fill
- * the 400 days ahead (ADR 0052).
+ * least: a margin under the 24 days with which the Ukrainian Edition's
+ * 3–5-letter words just fill the 400 days ahead (ADR 0052).
  */
-export const CROSSWORD_REPEAT_DAYS = 24;
+export const CROSSWORD_REPEAT_DAYS = 20;
 
 /** The date `days` after `date`, both `YYYY-MM-DD`. */
 export function dateAfter(date: string, days: number): string {
@@ -28,7 +28,7 @@ export function crosswordDaysChecksum(days: readonly CrosswordDay[]): string {
  * What the rules of ADR 0052 refuse in an Edition's crossword days: days
  * other than those last recorded, days with no checksum recorded among them,
  * since a published day never changes and only the build appends; a gap
- * between days; and a word that comes back within 24 days.
+ * between days; and a word that comes back within 20 days.
  */
 export function crosswordDayErrors(
   days: readonly CrosswordDay[] | undefined,
@@ -51,7 +51,7 @@ export function crosswordDayErrors(
   return [...checksumErrors, ...ruleErrors(days ?? [])];
 }
 
-/** A gap between days, and a word that comes back within 24 days. */
+/** A gap between days, and a word that comes back within 20 days. */
 function ruleErrors(days: readonly CrosswordDay[]): BuildError[] {
   return days.flatMap((day, i) => {
     const before = days[i - 1];
