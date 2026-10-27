@@ -310,7 +310,7 @@ Dependency advisories that have no fix yet are ignored in [`pnpm-workspace.yaml`
 
 - Work comes from GitHub issues written as STAR tickets (Situation / Task / Action / Result / Blocked by). The **Result** checklist is the definition of done.
 - Issues carry one type label (`feature`, `bug`, `chore`, `docs`), `area:*` labels and a version milestone (`0.1` to `1.0`). `ready-for-agent` marks a ticket that is fully specified, and `spec` marks a spec.
-- Commits follow [Conventional Commits](https://www.conventionalcommits.org/). Everything in the repo is written in English.
+- Commits follow [Conventional Commits](https://www.conventionalcommits.org/); CI checks the PR title and every commit of a PR with commitlint ([`commitlint.config.js`](commitlint.config.js)). To check locally, put `pnpm commitlint --edit "$1"` in your own `.git/hooks/commit-msg`. Everything in the repo is written in English.
 
 ### `main` is protected by convention
 
