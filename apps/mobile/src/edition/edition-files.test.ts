@@ -184,6 +184,71 @@ describe('the 0.8.12 Game strings', () => {
   });
 });
 
+describe('the 0.8.13 strings', () => {
+  const strings = readJson('uk', 'strings') as Record<string, Record<string, unknown>>;
+  /** The issues the strings schema finds, as paths. */
+  const issuesOf = (changed: unknown) =>
+    EditionStringsSchema.safeParse(changed).error?.issues.map((issue) => issue.path.join('.'));
+  const parsed = EditionStringsSchema.parse(strings);
+
+  it('the Ukrainian Edition carries the agreed Search texts verbatim', () => {
+    expect(parsed.search).toMatchObject({
+      title: 'Пошук',
+      clear: 'Очистити',
+      groups: {
+        words: 'Слова',
+        corrections: 'Виправлення',
+        idioms: 'Вислови',
+        synonymRows: 'Синоніми',
+        tips: 'Поради',
+        byMeaning: 'За значенням',
+      },
+      nothingFound: 'Нічого не знайдено',
+    });
+  });
+
+  it('the Ukrainian Edition carries the agreed Rarity Test texts verbatim', () => {
+    expect(parsed.rarityTest).toMatchObject({
+      start: 'Перевірити рівень',
+      retake: 'Пройти тест ще раз',
+      result: 'Ваш рівень: від {n}',
+    });
+    expect(parsed.knowledge).toMatchObject({ known: 'Знаю', unknown: 'Не знаю' });
+  });
+
+  it('the Ukrainian Edition carries the agreed Feed Notice texts verbatim', () => {
+    expect(parsed.feedNotices).toEqual({
+      weeklyRecap: { title: 'Ваш тиждень' },
+      yesterday: { title: 'Пам’ятаєте вчорашнє слово?' },
+      dailyLimit: { message: 'На сьогодні досить. Повертайтеся завтра', keepGoing: 'Гортати далі' },
+      firstWeek: { close: 'Зрозуміло', lastDayTitle: 'Тиждень із нами' },
+    });
+  });
+
+  it('the Ukrainian Edition carries the agreed texts of Settings, «Збережене», Mood and the widget', () => {
+    expect(parsed.settings.dailyLimit).toEqual({ title: 'Ліміт на день', off: 'Вимк.' });
+    expect(parsed.wordOfTheDayArchive.title).toBe('Слова дня');
+    expect(parsed.mood.title).toBe('Слово під настрій');
+    expect(parsed.settings.howToAddWidget).toBe('Як додати віджет');
+  });
+
+  it.each(['search', 'rarityTest', 'feedNotices', 'wordOfTheDayArchive', 'mood'])(
+    'every Edition needs %s',
+    (key) => {
+      const without = Object.fromEntries(Object.entries(strings).filter(([name]) => name !== key));
+
+      expect(issuesOf(without)).toEqual([key]);
+    },
+  );
+
+  it.each([
+    ['rarityTest.result', { rarityTest: { ...strings['rarityTest'], result: 'Ваш рівень' } }],
+    ['search.resultLabel', { search: { ...strings['search'], resultLabel: '{kind}' } }],
+  ])('needs every placeholder in %s', (path, changed) => {
+    expect(issuesOf({ ...strings, ...changed })).toEqual([path]);
+  });
+});
+
 describe('the 0.6 widget strings group', () => {
   const strings = readJson('uk', 'strings') as Record<string, unknown>;
   const widget = strings['widget'] as { guide: Record<string, unknown> };

@@ -67,6 +67,8 @@
     "selfCheck": "Перевір себе",
     "soon": "СКОРО",
     "soonAccessibilityLabel": "{label}, скоро буде доступно",
+    "dailyLimit": { "title": "Ліміт на день", "off": "Вимк." },
+    "howToAddWidget": "Як додати віджет",
     "rows": {
       "notifications": "Сповіщення",
       "myMix": "Мій Мікс",
@@ -694,6 +696,36 @@
     "ellipsis": "…",
     "tipStandardForm": "Так: {form}"
   },
+  "search": {
+    "title": "Пошук",
+    "clear": "Очистити",
+    "groups": {
+      "words": "Слова",
+      "corrections": "Виправлення",
+      "idioms": "Вислови",
+      "synonymRows": "Синоніми",
+      "tips": "Поради",
+      "byMeaning": "За значенням"
+    },
+    "nothingFound": "Нічого не знайдено",
+    "resultLabel": "{kind}: {text}"
+  },
+  "rarityTest": {
+    "start": "Перевірити рівень",
+    "retake": "Пройти тест ще раз",
+    "result": "Ваш рівень: від {n}"
+  },
+  "feedNotices": {
+    "weeklyRecap": { "title": "Ваш тиждень" },
+    "yesterday": { "title": "Пам’ятаєте вчорашнє слово?" },
+    "dailyLimit": {
+      "message": "На сьогодні досить. Повертайтеся завтра",
+      "keepGoing": "Гортати далі"
+    },
+    "firstWeek": { "close": "Зрозуміло", "lastDayTitle": "Тиждень із нами" }
+  },
+  "wordOfTheDayArchive": { "title": "Слова дня" },
+  "mood": { "title": "Слово під настрій" },
   "game": {
     "title": "Гра",
     "groups": {

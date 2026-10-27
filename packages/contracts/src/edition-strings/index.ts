@@ -6,6 +6,7 @@ import { CollectionsStringsSchema } from './collections';
 import { CorrectionCardStringsSchema } from './correction-card';
 import { FavoritesStringsSchema } from './favorites';
 import { feedStringsShape } from './feed';
+import { FeedNoticesStringsSchema } from './feed-notices';
 import { GameStringsSchema } from './game';
 import { HiddenStringsSchema } from './hidden';
 import { HidingStringsSchema } from './hiding';
@@ -14,9 +15,12 @@ import { IdiomCardStringsSchema } from './idiom-card';
 import { KnowledgeStringsSchema } from './knowledge';
 import { LearningStringsSchema } from './learning';
 import { MixStringsSchema } from './mix';
+import { MoodStringsSchema } from './mood';
 import { NotificationBodyStringsSchema } from './notification-body';
 import { NotificationsStringsSchema } from './notifications';
 import { OnboardingStringsSchema } from './onboarding';
+import { RarityTestStringsSchema } from './rarity-test';
+import { SearchStringsSchema } from './search';
 import { SettingsStringsSchema } from './settings';
 import { ShareStringsSchema } from './share';
 import { SplashStringsSchema } from './splash';
@@ -25,6 +29,7 @@ import { SynonymRowCardStringsSchema } from './synonym-row-card';
 import { TabsStringsSchema } from './tabs';
 import { TipCardStringsSchema } from './tip-card';
 import { WidgetStringsSchema } from './widget';
+import { WordOfTheDayArchiveStringsSchema } from './word-of-the-day-archive';
 import { WordCardStringsSchema } from './word-card';
 
 /**
@@ -57,6 +62,11 @@ export const EditionStringsSchema = z.strictObject({
   onboarding: OnboardingStringsSchema,
   notifications: NotificationsStringsSchema,
   notificationBody: NotificationBodyStringsSchema,
+  search: SearchStringsSchema,
+  rarityTest: RarityTestStringsSchema,
+  feedNotices: FeedNoticesStringsSchema,
+  wordOfTheDayArchive: WordOfTheDayArchiveStringsSchema,
+  mood: MoodStringsSchema,
   game: GameStringsSchema,
   widget: WidgetStringsSchema,
   share: ShareStringsSchema,
