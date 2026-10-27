@@ -152,18 +152,20 @@ function placementsOn(
   grid: Grid,
   unused: readonly { clued: Clued; letters: readonly string[] }[],
 ): Placement[] {
+  // Read once: this loop runs millions of times for 400 days.
+  const size = CROSSWORD_SIZE;
   const empty = grid.letters.every((letter) => letter === '');
   const letterAt = (row: number, column: number) =>
-    row < 0 || column < 0 || row >= CROSSWORD_SIZE || column >= CROSSWORD_SIZE
+    row < 0 || column < 0 || row >= size || column >= size
       ? ''
-      : (grid.letters[row * CROSSWORD_SIZE + column] ?? '');
+      : (grid.letters[row * size + column] ?? '');
   const placements: Placement[] = [];
   for (const { clued, letters } of unused) {
     const { length } = letters;
     for (const direction of ['across', 'down'] as const) {
       const [dRow, dColumn] = direction === 'across' ? [0, 1] : [1, 0];
-      const rows = CROSSWORD_SIZE - dRow * (length - 1);
-      const columns = CROSSWORD_SIZE - dColumn * (length - 1);
+      const rows = size - dRow * (length - 1);
+      const columns = size - dColumn * (length - 1);
       for (let row = 0; row < rows; row += 1) {
         for (let column = 0; column < columns; column += 1) {
           if (
@@ -172,12 +174,12 @@ function placementsOn(
           ) {
             continue;
           }
-          const cells: number[] = [];
           let shared = 0;
           let fits = true;
           for (let i = 0; i < length && fits; i += 1) {
-            const [r, c] = [row + dRow * i, column + dColumn * i];
-            const cell = r * CROSSWORD_SIZE + c;
+            const r = row + dRow * i;
+            const c = column + dColumn * i;
+            const cell = r * size + c;
             const letter = grid.letters[cell] ?? '';
             if (letter === '') {
               fits =
@@ -186,9 +188,9 @@ function placementsOn(
               fits = letter === letters[i] && grid[direction][cell] !== true;
               shared += 1;
             }
-            cells.push(cell);
           }
           if (!fits || shared === length || (!empty && shared === 0)) continue;
+          const cells = letters.map((_, i) => (row + dRow * i) * size + column + dColumn * i);
           placements.push({ word: { ...clued, row, column, direction }, cells, letters });
         }
       }
