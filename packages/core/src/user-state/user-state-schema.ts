@@ -83,6 +83,14 @@ export const userStateRecords = {
     z.object({ date: z.string(), notices: z.array(z.string()) }),
     { sync: 'device-only' },
   ),
+  /**
+   * The last 10 Search queries a result was opened from, newest first, no two
+   * alike as Search reads them (ADR 0054). It stays on the device; a new key
+   * needs no migration.
+   */
+  recentQueries: declareRecord('search.recentQueries', z.array(z.string()).max(10), {
+    sync: 'device-only',
+  }),
   /** The card the reader was on last on this device, and the local date they were on it. */
   feedPosition: declareRecord('feed.position', EntryOnDateSchema, { sync: 'device-only' }),
   /** The current Cycle: its number and the seed of its shuffle. */
