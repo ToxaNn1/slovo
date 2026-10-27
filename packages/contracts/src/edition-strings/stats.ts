@@ -50,4 +50,31 @@ export const StatsStringsSchema = z.strictObject({
   }),
   /** The row of the Entries due for Review today, e.g. «На повторення сьогодні: 4». Takes `{count}`. */
   dueToday: templateOf('count'),
+  /** The Active Days calendar under the counts. */
+  calendar: z.strictObject({
+    /** What VoiceOver reads for the month control, e.g. «Активні дні». */
+    label: TextSchema,
+    /** The name of the month shown, e.g. «Жовтень 2026». Takes `{month}` and `{year}`. */
+    title: templateOf('month', 'year'),
+    /** The month names as the title takes them, January first. */
+    months: z.array(TextSchema).length(12),
+    /** The short weekday names over the grid, Monday first. */
+    weekdays: z.array(TextSchema).length(7),
+    /** What VoiceOver reads after the month control: how to change the month. */
+    hint: TextSchema,
+    /** The month names as a day takes them, January first. */
+    dayMonths: z.array(TextSchema).length(12),
+    /**
+     * What VoiceOver reads for each day, e.g. «27 жовтня, активний день». Each takes `{day}`
+     * and `{month}`: an Active Day, a day missed, today before and after it is an Active Day,
+     * and a day still to come.
+     */
+    days: z.strictObject({
+      active: templateOf('day', 'month'),
+      missed: templateOf('day', 'month'),
+      today: templateOf('day', 'month'),
+      todayActive: templateOf('day', 'month'),
+      future: templateOf('day', 'month'),
+    }),
+  }),
 });
