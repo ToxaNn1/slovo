@@ -9,7 +9,7 @@ const APOSTROPHES = /['ʼ’]/g;
  * otherwise, so г and ґ, е and ё never match: decomposing first takes out a
  * Stress mark typed over a precomposed letter and keeps the diaeresis of ё.
  */
-function comparable(text: string): string {
+export function typedAnswerKey(text: string): string {
   return text
     .normalize('NFD')
     .replaceAll(STRESS_MARK, '')
@@ -21,5 +21,5 @@ function comparable(text: string): string {
 
 /** Whether the reader's typed text is the Round's right answer (spec #772). */
 export function typedAnswerMatches(typed: string, right: string): boolean {
-  return comparable(typed) === comparable(right);
+  return typedAnswerKey(typed) === typedAnswerKey(right);
 }
