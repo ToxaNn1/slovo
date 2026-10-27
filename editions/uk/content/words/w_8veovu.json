@@ -38,5 +38,6 @@
       "url": "https://goroh.pp.ua/Етимологія/падолист"
     }
   ],
-  "registers": ["archaic"]
+  "registers": ["archaic"],
+  "moods": ["sad"]
 }
