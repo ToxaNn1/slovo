@@ -5,6 +5,13 @@ import type { GameMode } from './game-mode';
 const IN_PLACE = new Set(["'", 'ʼ', '’', '-']);
 
 /**
+ * Whether a character of a Word stays in place among its blanks, an
+ * apostrophe of any kind or a hyphen, so that the shell draws it as a mark
+ * rather than a letter opened.
+ */
+export const staysInPlace = (character: string): boolean => IN_PLACE.has(character);
+
+/**
  * «За буквами», the Core's typing mode (ADR 0052): a Round shows a Word's
  * primary Definition and a blank for each of its letters; the reader types
  * the Word, compared the way `typedAnswerMatches` does. «Відкрити літеру»
@@ -20,7 +27,7 @@ export const byLettersMode: GameMode = {
   buildRound({ answer }) {
     if (answer.kind !== 'word' || answer.lemma.includes(' ')) return undefined;
     const inPlace = Array.from(answer.lemma).flatMap((character, place) =>
-      IN_PLACE.has(character) ? [place] : [],
+      staysInPlace(character) ? [place] : [],
     );
     return {
       form: 'typed',

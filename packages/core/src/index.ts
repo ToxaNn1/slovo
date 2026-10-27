@@ -86,6 +86,7 @@ export {
 } from './game/game-mode';
 export { buildGameReview, type GameReviewDetails, type GameReviewItem } from './game/game-review';
 export { GAME_ROUNDS, roundLimitOf } from './game/round-plan';
+export { staysInPlace } from './game/by-letters-mode';
 export { gapOf } from './game/guess-word';
 export { typedAnswerMatches } from './game/typed-answer';
 export { createGameHaptics, LIFE_LOST_DELAY, type GameHaptics } from './game/game-haptics';

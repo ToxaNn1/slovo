@@ -8,6 +8,7 @@ import {
   GAME_ROUNDS,
   openComposition,
   openUserState,
+  staysInPlace,
   type Composition,
   type CurrentGame,
   type Round,
@@ -218,6 +219,11 @@ describe('a Round of «За буквами»', () => {
     expect((await startAt('будь-що')).game.state.current?.round).toMatchObject({
       blanks: [undefined, undefined, undefined, undefined, '-', undefined, undefined],
     });
+  });
+
+  it('tells the shell which characters among the blanks are marks in place, not letters', () => {
+    expect(["'", 'ʼ', '’', '-'].map(staysInPlace)).toEqual([true, true, true, true]);
+    expect(['р', 'ґ', '1', ' '].map(staysInPlace)).toEqual([false, false, false, false]);
   });
 
   it('never asks about a Word with a space', async () => {
