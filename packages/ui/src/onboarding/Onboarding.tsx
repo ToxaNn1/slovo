@@ -1,3 +1,6 @@
+'use no memo';
+// Reanimated or gesture code: the React Compiler skips this module (ADR 0059).
+
 import { ACCOUNT_NAME } from '@slovo/contracts';
 import { useEffect, useRef, type ReactNode } from 'react';
 import {

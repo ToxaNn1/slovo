@@ -1,3 +1,6 @@
+'use no memo';
+// Reanimated or gesture code: the React Compiler skips this module (ADR 0059).
+
 import type { EditionStrings } from '@slovo/contracts';
 import {
   gapOf,

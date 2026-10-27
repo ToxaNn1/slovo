@@ -1,3 +1,6 @@
+'use no memo';
+// Reanimated or gesture code: the React Compiler skips this module (ADR 0059).
+
 import type { FixedChip, RoundAnswer } from '@slovo/core';
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
