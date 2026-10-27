@@ -21,11 +21,8 @@ import { useCompositionRead } from '../composition';
 import { useFavorite } from '../saved/favorites';
 import { useKnowledgeMark } from '../knowledge/marks';
 import { useHide } from '../mix/hiding';
-import { createShareFormatMemory } from '../share/share-card';
+import { sessionShareFormat } from '../share/share-card';
 import { useShown } from '../shown-in-effect';
-
-/** The Share Card format of this session: every share sheet opens in the one chosen last. */
-const shareFormat = createShareFormatMemory();
 
 /**
  * The action row of an Entry card of any kind, wherever the card appears: the
@@ -122,9 +119,9 @@ function EntryShareSheet({
       card={card}
       todaysWordOfTheDay={card.kind === 'word' && isTodaysWordOfTheDay(card, deviceClock)}
       watermark={edition.displayName}
-      initialFormat={shareFormat.format}
+      initialFormat={sessionShareFormat.format}
       onFormatChange={(format) => {
-        shareFormat.choose(format);
+        sessionShareFormat.choose(format);
       }}
       onShare={(view, format) => share(view, card.entryId, format)}
       onClose={onClose}
