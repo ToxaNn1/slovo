@@ -40,6 +40,10 @@ Write everything in the repo in English: code, comments, tests, docs, commit mes
 
 - Keep the Core language-agnostic and free of React and React Native imports (ADR 0002, 0006). An Edition is configuration plus content and assets.
 - Test through the public seams named in the version spec's "Testing Decisions", never internals. Inject time and randomness. Write the test first where there is behaviour.
+- A test that would still pass if the code returned nothing proves nothing. Delete or rewrite it.
+- Parse outside data once, where it enters (Edition content, storage, network). Inside the Core, trust the types.
+- Make illegal states unrepresentable: prefer discriminated unions over optional flags. Don't silence the compiler with `as`, `!` or `@ts-expect-error` to get past an error.
+- Remove complexity before adding code. Before bolting a feature onto the old design, ask what you'd build if the requirement had been there from the start.
 - Native iOS builds run in EAS cloud only (ADR 0004). Batch native changes.
 - Before writing or reviewing a screen, component or hook in `apps/mobile` or `packages/ui`, read `docs/react-native.md`.
 - When a package is blocked as too recently published, choose an older version that passes. The check stays on.
