@@ -174,11 +174,15 @@ _Avoid_: Provider, login type, auth method
 ### Discovery
 
 **Feed**:
-The vertical stream of Entries the user swipes through on the home screen; Corrections, Idioms, Synonym Rows and Tips are mixed in among Words. Every 5th card of the Cycle is a Correction's turn while the Cycle has unseen Corrections, every 7th an Idiom's turn while it has unseen Idioms, every 9th a Synonym Row's turn while it has unseen Synonym Rows and every 11th a Tip's turn while it has unseen Tips, each counted from its kind's last card. When turns fall on one card the order is Correction, Idiom, Synonym Row, Tip, and each loser takes the next card. While Entries are due for Review, every 3rd card that is no other kind's turn is a Word due for Review, labelled «Повторення», and a Correction, an Idiom, a Synonym Row or a Tip due for Review takes the next turn of its kind before a new one, Seen in this Cycle or not. The Word of the Day and the Review slot stay Words only.
+The vertical stream of Entries the user swipes through on the home screen; Corrections, Idioms, Synonym Rows and Tips are mixed in among Words. Every 5th card of the Cycle is a Correction's turn while the Cycle has unseen Corrections, every 7th an Idiom's turn while it has unseen Idioms, every 9th a Synonym Row's turn while it has unseen Synonym Rows and every 11th a Tip's turn while it has unseen Tips, each counted from its kind's last card. When turns fall on one card the order is Correction, Idiom, Synonym Row, Tip, and each loser takes the next card. While Entries are due for Review, every 3rd card that is no other kind's turn is a Word due for Review, labelled «Повторення», and a Correction, an Idiom, a Synonym Row or a Tip due for Review takes the next turn of its kind before a new one, Seen in this Cycle or not. The Word of the Day and the Review slot stay Words only. Beside Entry cards the Feed shows Feed Notices, which take no turn.
 _Avoid_: Timeline, home list
 
+**Feed Notice**:
+A Feed card that is not an Entry: the Weekly Recap, a first-week card, «Пам'ятаєте вчорашнє слово?» (yesterday's Word of the Day in Self-check style) or the Daily Limit card. From the second card on, the day's Feed Notices take a card each, in the order Weekly Recap, first-week card, yesterday's Word; the Daily Limit card comes once the limit is reached. A Feed Notice counts in no turn and no Review slot and makes nothing Seen; swiping past it closes it for the local day.
+_Avoid_: Banner, tip (a Tip is an Entry)
+
 **Seen**:
-An Entry is Seen in the current Cycle once its card stayed on screen for a minimum dwell time in the Feed, or the user opened it from a notification or widget.
+An Entry is Seen in the current Cycle once its card stayed on screen for a minimum dwell time in the Feed, or the user opened it from a notification or widget. Opening an Entry from Search or the mood roulette, the Rarity Test and Feed Notices make nothing Seen.
 _Avoid_: Viewed, read
 
 **Cycle**:
@@ -186,7 +190,7 @@ One pass through all eligible Entries. When every Entry is Seen, the user is tol
 _Avoid_: Round (that is a Game term), loop
 
 **Knowledge Mark**:
-What the reader says about an Entry on its card: Known («Знаю») or Unknown («Не знаю»). Tapping the other mark changes it, tapping the same one again removes it. On a Correction, Known means "I already say it right". A mistake in any Game Mode is an Unknown mark; there is no separate list of hard words.
+What the reader says about an Entry on its card: Known («Знаю») or Unknown («Не знаю»). Tapping the other mark changes it, tapping the same one again removes it. A mark set from 0.8.13 on keeps the time it was set; only marks with a time count in a Weekly Recap. On a Correction, Known means "I already say it right". A mistake in any Game Mode is an Unknown mark; there is no separate list of hard words.
 _Avoid_: Rating, grade
 
 **Review**:
@@ -208,7 +212,7 @@ The set of Categories of Words, plus Corrections as a whole with their own Categ
 _Avoid_: Filter, preferences
 
 **Rarity Floor**:
-The lowest rarity of Words the reader wants, «від 1» to «від 5», default «від 1». Only Words of that rarity or rarer are eligible, in the Feed and the Game, so a high floor leaves only the rarest Words. Entries of other kinds have no rarity and are not affected. Part of the Mix.
+The lowest rarity of Words the reader wants, «від 1» to «від 5», default «від 1». Only Words of that rarity or rarer are eligible, in the Feed and the Game, so a high floor leaves only the rarest Words. Entries of other kinds have no rarity and are not affected. Set in the Mix or by the Rarity Test. Part of the Mix.
 _Avoid_: Difficulty, level
 
 **Hidden Entry**:
@@ -223,15 +227,35 @@ _Avoid_: Muted topic
 An Entry that may appear anywhere new (the Feed, notifications, widgets, the Game): not Retired, of a kind the Edition turns on (and not off remotely), in the user's Mix (a Word of a Category in the Mix at the Rarity Floor or rarer; a Correction while Corrections and its Category are in; an Idiom while Idioms are in; a Synonym Row while Synonym Rows are in; a Tip while Tips are in) and not Hidden. An Entry that is not eligible stays visible wherever the user already keeps it.
 _Avoid_: Available, visible, active entry
 
+**Search**:
+«Пошук»: finding Entries by their visible text, behind a magnifier in the «Головна» header. It covers every Entry of a kind the Edition turns on that is neither Retired nor Hidden, the Mix and the Rarity Floor aside, and ignores case, Stress, the kind of apostrophe, г/ґ and е/ё. A text matches from 2 characters when it or one of its words starts with the query; «За значенням», from 3 characters, finds Words by their Definition and the Synonym Rows that contain the query. Opening a result makes nothing Seen. The last 10 queries stay on the device.
+_Avoid_: Lookup, filter, dictionary
+
+**Rarity Test**:
+«Перевірка рівня»: 10 Words, 2 of each rarity, each shown as its Lemma with Stress for «Знаю» or «Не знаю», which set the Rarity Floor to the lowest rarity with «Не знаю» («від 5» if all are known). Optional in onboarding after the Mix and again from Settings. It sets no Knowledge Mark, starts no Review and makes nothing Seen.
+_Avoid_: Level test, placement test, quiz
+
+**Weekly Recap**:
+«Ваш тиждень»: a Feed Notice on the first open of a local Monday about the Monday–Sunday week before it: the Entries Seen, the Favorites added, the Known marks set in that week and the current Streak, with a Share Card. No Weekly Recap follows a week without an Active Day.
+_Avoid_: Weekly report, digest, summary
+
+**Daily Limit**:
+«Ліміт на день»: a setting, off by default, of 10, 20 or 30 distinct Entries Seen on a local day, the Word of the Day included. At the limit the Feed shows the Feed Notice «На сьогодні досить. Повертайтеся завтра»; «Гортати далі» removes it until tomorrow. The limit never locks the Feed.
+_Avoid_: Cap, quota, screen time
+
+**Mood**:
+«настрій»: one of the moods an Edition lists (id, name, emoji) that a Word may carry. «Слово під настрій» opens a mood's roulette, which lands on a random Eligible Word of that mood and opens its card without making it Seen.
+_Avoid_: Emotion, feeling, vibe
+
 **Reserved**:
 A Word already promised to a scheduled notification, so no other notification picks it. Reserved is not Seen.
 
 **Notification time**:
-One of the user's local times of day at which a notification comes, such as 09:00. A new user has the Edition's default times; the user may keep up to 10, no two equal, always in time order. With none left, notifications are off. Notification times stay on the device.
+One of the user's local times of day at which a notification comes, such as 09:00. A new user has the Edition's default times; the user may keep up to 10, no two equal, always in time order. With none left, notifications are off. Notification times stay on the device. Notifications come at most 14 days after the user last opened the app: the last one of the 14th day is a farewell with no Word, and nothing comes after it until the next open.
 _Avoid_: Reminder, alarm, schedule
 
 **Word of the Day**:
-One unseen Word fixed for the user's local calendar day; it opens the Feed and is the morning notification.
+One unseen Word fixed for the user's local calendar day; it opens the Feed and is the morning notification. Each day its card was Seen joins the reader's archive «Слова дня» in Saved, synced, newest first; a Retired Word stays there.
 _Avoid_: Daily word
 
 **Pronunciation**:
@@ -239,7 +263,7 @@ The Word read aloud by the device's voice for the Edition's language.
 _Avoid_: Audio, TTS
 
 **Share Card**:
-A branded image of an Entry made for sharing outside the app.
+A branded image of an Entry, or of the reader's Weekly Recap («Мій тиждень у SLOVO»), made for sharing outside the app.
 _Avoid_: Screenshot
 
 **Widget Mode**:
