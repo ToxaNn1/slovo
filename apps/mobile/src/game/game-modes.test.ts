@@ -203,7 +203,10 @@ describe('the modes the Game screen offers', () => {
       { modeId: 'by-letters', entryKind: 'word', canStart: true },
       { modeId: 'type-word', entryKind: 'correction', canStart: true },
       { modeId: 'correction', entryKind: 'correction', canStart: true },
+      { modeId: 'anglicism', entryKind: 'correction', canStart: true },
+      { modeId: 'idiom-meaning', entryKind: 'idiom', canStart: true },
       { modeId: 'build-idiom', entryKind: 'idiom', canStart: true },
+      { modeId: 'origin', entryKind: 'word', canStart: true },
     ] as const;
 
     expect(playedOffers(offers).map(({ modeId }) => modeId)).toEqual([
@@ -214,6 +217,8 @@ describe('the modes the Game screen offers', () => {
       'by-letters',
       'type-word',
       'correction',
+      'anglicism',
+      'idiom-meaning',
       'build-idiom',
     ]);
   });
@@ -229,6 +234,8 @@ describe('the label over a Round', () => {
     ['by-letters', 'Визначення'],
     ['type-word', 'Як сказати краще?'],
     ['build-idiom', 'Складіть вислів'],
+    ['anglicism', 'Як сказати краще?'],
+    ['idiom-meaning', 'Що це означає?'],
   ])('reads the %s mode’s own label', (modeId, label) => {
     expect(gameModeStrings(strings.modes, modeId).roundLabel).toBe(label);
   });
@@ -276,8 +283,8 @@ describe('the groups of the modes on offer', () => {
 
     expect(shapeOf(gameModeGroups(playedOffers(app.game.state.modes), strings))).toEqual([
       ['Слова', ['guess-word', 'pairs', 'anagram', 'by-letters', 'type-word']],
-      ['Виправлення', ['correction']],
-      ['Вислови', ['build-idiom']],
+      ['Виправлення', ['correction', 'anglicism']],
+      ['Вислови', ['idiom-meaning', 'build-idiom']],
     ]);
   });
 
@@ -286,7 +293,7 @@ describe('the groups of the modes on offer', () => {
 
     expect(shapeOf(gameModeGroups(playedOffers(app.game.state.modes), strings))).toEqual([
       ['Слова', ['guess-word', 'pairs', 'anagram', 'by-letters']],
-      ['Вислови', ['build-idiom']],
+      ['Вислови', ['idiom-meaning', 'build-idiom']],
     ]);
   });
 

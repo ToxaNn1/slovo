@@ -35,11 +35,13 @@ export function gameModeStrings(modes: GameModesStrings, modeId: string): GameMo
 const PLAYED_MODES: ReadonlySet<string> = new Set([
   'guess-word',
   'correction',
+  'anglicism',
   'stress',
   'pairs',
   'anagram',
   'by-letters',
   'type-word',
+  'idiom-meaning',
   'build-idiom',
 ]);
 
