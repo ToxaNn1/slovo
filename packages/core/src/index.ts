@@ -107,6 +107,14 @@ export {
   type LocalDate,
   type LocalDay,
 } from './local-date';
+export {
+  openDailyCrossword,
+  type CrosswordPlace,
+  type CrosswordReadPort,
+  type DailyCrossword,
+  type DailyCrosswordState,
+  type DailyCrosswordWord,
+} from './crossword/daily-crossword';
 export { loadEdition, type Edition } from './edition/edition';
 export { openRemoteSwitches } from './edition/remote-switches';
 export {

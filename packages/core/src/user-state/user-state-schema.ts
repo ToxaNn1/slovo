@@ -221,6 +221,17 @@ export const userStateRecords = {
    */
   gameBest: declareRecords('game.best.', z.number().int().nonnegative(), { sync: 'highest' }),
   /**
+   * The letters typed into the Daily Crossword and the local date of its day:
+   * each letter by its cell, `row,column`. Only today's day counts; a new day
+   * starts an empty grid. It stays on the device, with no Sync (ADR 0052). A
+   * new key, so no migration.
+   */
+  crosswordProgress: declareRecord(
+    'crossword.progress',
+    z.object({ date: z.iso.date(), letters: z.record(z.string(), z.string()) }),
+    { sync: 'device-only' },
+  ),
+  /**
    * The changes of synced records not yet sent to the Account, one record per
    * changed record, by its key: the instant it changed and its new text, or
    * `null` for a deletion (a tombstone). The tracked user state writes one with
