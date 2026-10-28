@@ -251,11 +251,15 @@ export interface UserRecords {
 
 /**
  * The Community Counters of every Edition and Entry (Postgres in the
- * backend): known, unknown and saved, totals only, each never below zero. It
- * keeps no per-reader rows, so nothing links two changes to one reader
- * (ADR 0060).
+ * backend): known, unknown and saved, totals only, each never below zero, and
+ * the Favorites adds of each ISO week. It keeps no per-reader rows, so nothing
+ * links two changes to one reader (ADR 0060).
  */
 export interface CounterStore {
-  /** Adds the events' deltas to their Entries' counts, all of them or none. */
-  add(editionId: string, events: readonly CounterEvent[]): Promise<void>;
+  /**
+   * Adds the events' deltas to their Entries' counts, and each saved +1 to
+   * the Entry's adds of the week, all of them or none. The week is its Monday
+   * (UTC) as `YYYY-MM-DD`.
+   */
+  add(editionId: string, events: readonly CounterEvent[], week: string): Promise<void>;
 }

@@ -1,10 +1,10 @@
 import { randomInt } from 'node:crypto';
 
 import { and, eq } from 'drizzle-orm';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import type { Database } from '../database/database';
-import { communityCounters } from '../database/schema';
+import { communityCounters, favoritesAdds } from '../database/schema';
 import { testApp, testEditions } from '../test-support';
 
 /**
@@ -33,6 +33,16 @@ async function countsOf({ db }: Database, entryId: string, editionId = 'uk') {
     .from(communityCounters)
     .where(and(eq(communityCounters.editionId, editionId), eq(communityCounters.entryId, entryId)));
   return rows.map(({ known, unknown, saved }) => ({ known, unknown, saved }));
+}
+
+/** What the database keeps of the Entry's Favorites adds in the Edition: each ISO week by its Monday, oldest first. */
+async function weeklyAddsOf({ db }: Database, entryId: string, editionId = 'uk') {
+  const rows = await db
+    .select()
+    .from(favoritesAdds)
+    .where(and(eq(favoritesAdds.editionId, editionId), eq(favoritesAdds.entryId, entryId)))
+    .orderBy(favoritesAdds.week);
+  return rows.map(({ week, adds }) => ({ week, adds }));
 }
 
 describe('counters.send', () => {
@@ -232,5 +242,112 @@ describe('counters.send', () => {
       client.counters.send({ editionId: 'remote', events: [event(word, { known: 1 })] }),
     ).rejects.toMatchObject({ code: 'NOT_FOUND', status: 404 });
     await expect(countsOf(database, word, 'remote')).resolves.toEqual([]);
+  });
+});
+
+describe('the Favorites adds of an ISO week', () => {
+  it('adds a saved +1 to the ISO week (UTC) it arrives in, across a Sunday/Monday boundary', async () => {
+    const { client, database } = testApp();
+    const word = newEntryId();
+    const save = () =>
+      client.counters.send({ editionId: 'uk', events: [event(word, { saved: 1 })] });
+
+    // Monday 26 October 2026 at midnight UTC opens the week.
+    vi.setSystemTime(new Date('2026-10-26T00:00:00Z'));
+    await save();
+    // Sunday 1 November, the last second of the week in UTC, though Monday already in Kyiv.
+    vi.setSystemTime(new Date('2026-11-01T23:59:59Z'));
+    await save();
+    // Monday 2 November at midnight UTC opens the next week.
+    vi.setSystemTime(new Date('2026-11-02T00:00:00Z'));
+    await save();
+
+    await expect(weeklyAddsOf(database, word)).resolves.toEqual([
+      { week: '2026-10-26', adds: 2 },
+      { week: '2026-11-02', adds: 1 },
+    ]);
+  });
+
+  it('keeps an ISO week that spans two years under its Monday', async () => {
+    const { client, database } = testApp();
+    const word = newEntryId();
+
+    vi.setSystemTime(new Date('2027-01-03T12:00:00Z'));
+    await client.counters.send({ editionId: 'uk', events: [event(word, { saved: 1 })] });
+
+    await expect(weeklyAddsOf(database, word)).resolves.toEqual([{ week: '2026-12-28', adds: 1 }]);
+  });
+
+  it('takes nothing from the adds of a week when a Favorite is removed', async () => {
+    const { client, database } = testApp();
+    const word = newEntryId();
+    vi.setSystemTime(new Date('2026-10-30T10:00:00Z'));
+    await client.counters.send({ editionId: 'uk', events: [event(word, { saved: 1 })] });
+
+    // Removed in the same week, and again in the next.
+    await client.counters.send({ editionId: 'uk', events: [event(word, { saved: -1 })] });
+    vi.setSystemTime(new Date('2026-11-03T10:00:00Z'));
+    await client.counters.send({ editionId: 'uk', events: [event(word, { saved: -1 })] });
+
+    await expect(weeklyAddsOf(database, word)).resolves.toEqual([{ week: '2026-10-26', adds: 1 }]);
+    await expect(countsOf(database, word)).resolves.toEqual([{ known: 0, unknown: 0, saved: 0 }]);
+  });
+
+  it('counts only Favorites as adds, not marks', async () => {
+    const { client, database } = testApp();
+    const marked = newEntryId();
+    const saved = newEntryId();
+    vi.setSystemTime(new Date('2026-10-28T09:00:00Z'));
+
+    await client.counters.send({
+      editionId: 'uk',
+      events: [event(marked, { known: 1 }), event(saved, { unknown: 1, saved: 1 })],
+    });
+
+    await expect(weeklyAddsOf(database, marked)).resolves.toEqual([]);
+    await expect(weeklyAddsOf(database, saved)).resolves.toEqual([{ week: '2026-10-26', adds: 1 }]);
+  });
+
+  it('keeps the adds of each Edition apart, with no row that names a reader', async () => {
+    const { client, database, ip } = testApp({ editions: testEditions(['uk', 'other']).read() });
+    const word = newEntryId();
+    vi.setSystemTime(new Date('2026-10-28T09:00:00Z'));
+
+    await client.counters.send({ editionId: 'uk', events: [event(word, { saved: 1 })] });
+    await client.counters.send({ editionId: 'uk', events: [event(word, { saved: 1 })] });
+    await client.counters.send({ editionId: 'other', events: [event(word, { saved: 1 })] });
+
+    const rows = await database.db
+      .select()
+      .from(favoritesAdds)
+      .where(eq(favoritesAdds.entryId, word))
+      .orderBy(favoritesAdds.editionId);
+    // The Edition, the Entry, the week and the adds, nothing else.
+    expect(rows).toEqual([
+      { editionId: 'other', entryId: word, week: '2026-10-26', adds: 1 },
+      { editionId: 'uk', entryId: word, week: '2026-10-26', adds: 2 },
+    ]);
+    expect(JSON.stringify(rows)).not.toContain(ip);
+  });
+
+  it('adds nothing for a batch refused, or for an Edition with Community Counters switched off', async () => {
+    const folder = testEditions(['uk', 'off'], (config) =>
+      config.id === 'off'
+        ? { ...config, featureSwitches: { ...config.featureSwitches, communityCounters: false } }
+        : config,
+    );
+    const { request, client, database } = testApp({ editions: folder.read() });
+    const word = newEntryId();
+
+    await request(
+      '/v1/counters/events',
+      post({ editionId: 'uk', events: [event(word, { saved: 1 }), { ...event('w_a'), known: 2 }] }),
+    );
+    await expect(
+      client.counters.send({ editionId: 'off', events: [event(word, { saved: 1 })] }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+
+    await expect(weeklyAddsOf(database, word)).resolves.toEqual([]);
+    await expect(weeklyAddsOf(database, word, 'off')).resolves.toEqual([]);
   });
 });

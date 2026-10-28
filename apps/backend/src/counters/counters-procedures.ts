@@ -6,8 +6,8 @@ import type { CommunityCounters } from '@slovo/server-core';
  * The Community Counters procedures of the contract, over the server Core's
  * Community Counters. An Edition with Community Counters switched off answers
  * `NOT_FOUND`, which the app shows as no line and no Community Word
- * (ADR 0060). Until the backend reads the counters (#924) and counts the
- * Favorites adds of a week (#922), it answers those as switched off.
+ * (ADR 0060). Until the backend reads the counters (#924) and answers the
+ * Community Word (#925), it answers those as switched off.
  */
 export function countersProcedures(communityCounters: CommunityCounters) {
   const counters = implement(apiContract.counters);

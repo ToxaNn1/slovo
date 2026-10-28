@@ -10,6 +10,7 @@ import {
   bigserial,
   boolean,
   customType,
+  date,
   index,
   integer,
   jsonb,
@@ -263,4 +264,24 @@ export const communityCounters = pgTable(
     saved: integer('saved').notNull().default(0),
   },
   (table) => [primaryKey({ columns: [table.editionId, table.entryId] })],
+);
+
+/**
+ * The Favorites adds of each Edition, Entry and ISO week (UTC), for the
+ * Community Word (ADR 0060): a week's adds only grow, since a Favorite removed
+ * takes nothing from the week it was added in. Like the Community Counters, a
+ * row holds no reader.
+ */
+export const favoritesAdds = pgTable(
+  'favorites_adds',
+  {
+    editionId: text('edition_id').notNull(),
+    /** The ISO week the adds arrived in, by its Monday (UTC). */
+    week: date('week', { mode: 'string' }).notNull(),
+    /** The id of the Entry added, of any kind. */
+    entryId: text('entry_id').notNull(),
+    /** The Favorites adds of the Entry in the week. */
+    adds: integer('adds').notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.editionId, table.week, table.entryId] })],
 );
