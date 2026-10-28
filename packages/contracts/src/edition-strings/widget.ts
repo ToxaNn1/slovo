@@ -47,6 +47,20 @@ export const WidgetStringsSchema = z.strictObject({
   deletedCollection: TextSchema,
   /** What the Collection's Widget Mode says before a Collection is chosen. */
   noCollection: TextSchema,
+  /** What VoiceOver reads for the ✓ once today's Word of the Day is Seen. */
+  wordOfTheDaySeen: TextSchema,
+  /** The widget's setting «Тло», beside its Widget Mode, that chooses its background. */
+  backgroundTitle: TextSchema,
+  /** The background that follows the phone's light or dark appearance, the default. */
+  backgroundAuto: TextSchema,
+  /** The theme's light background. */
+  backgroundLight: TextSchema,
+  /** The theme's dark background. */
+  backgroundDark: TextSchema,
+  /** The warm cream background of the Edition's widget palette. */
+  backgroundParchment: TextSchema,
+  /** The deep blue background of the Edition's widget palette. */
+  backgroundBlue: TextSchema,
   /** The widget guide that Settings › «Як додати віджет» opens and the widget hint shows. */
   guide: z.strictObject({
     /** The title of the screen and of the widget hint's sheet. */

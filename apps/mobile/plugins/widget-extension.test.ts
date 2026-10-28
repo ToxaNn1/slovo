@@ -136,7 +136,14 @@ describe("the widget extension's Edition files", () => {
         '"noFavorites" = "Додайте слова в Улюблене";\n' +
         '"emptyCollection" = "Колекція порожня";\n' +
         '"deletedCollection" = "Колекцію видалено — оберіть інший режим";\n' +
-        '"noCollection" = "Оберіть колекцію для віджета";\n',
+        '"noCollection" = "Оберіть колекцію для віджета";\n' +
+        '"wordOfTheDaySeen" = "Слово дня переглянуто";\n' +
+        '"backgroundTitle" = "Тло";\n' +
+        '"backgroundAuto" = "Авто";\n' +
+        '"backgroundLight" = "Світлий";\n' +
+        '"backgroundDark" = "Темний";\n' +
+        '"backgroundParchment" = "Пергамент";\n' +
+        '"backgroundBlue" = "Синій";\n',
     );
   });
 
