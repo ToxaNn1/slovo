@@ -158,7 +158,7 @@ describe.each(kinds)('$name', ({ kind, feature, entry, title, subtitle }) => {
     await renderInApp(<MixChoices />);
     const toggle = screen.getByTestId(`mix-${feature}`);
     expect(toggle).toHaveAccessibleName(title);
-    expect(screen.getByText(subtitle)).toBeOnTheScreen();
+    expect(screen.getByHintText(subtitle)).toBe(toggle);
 
     await fireEvent(toggle, 'valueChange', false);
     await settle();

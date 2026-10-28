@@ -106,7 +106,11 @@ export function NavigationRow({
   );
 }
 
-/** A row with an on/off switch, and an optional line of muted text under its label. */
+/**
+ * A row with an on/off switch, and an optional line of muted text under its
+ * label. VoiceOver reads the row once, at its switch: the label, then the
+ * line as the switch's hint.
+ */
 export function SwitchRow({
   label,
   subtitle,
@@ -119,13 +123,18 @@ export function SwitchRow({
   const stacked = useWindowDimensions().fontScale > STACK_AT_FONT_SCALE;
   return (
     <View style={[styles.row, stacked && styles.stackedRow]}>
-      <View style={!stacked && styles.grow}>
+      <View
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        style={!stacked && styles.grow}
+      >
         <Text style={look.label}>{label}</Text>
         {subtitle !== undefined && <Text style={look.value}>{subtitle}</Text>}
       </View>
       <Switch
         testID={testID}
         accessibilityLabel={label}
+        accessibilityHint={subtitle}
         {...look.voice}
         value={value}
         onValueChange={onChange}
