@@ -156,23 +156,30 @@ export interface Mailer {
   send(mail: Mail): Promise<void>;
 }
 
+/** How many requests a window of time takes. */
+export interface RequestLimit {
+  readonly requests: number;
+  readonly windowSeconds: number;
+}
+
 /**
  * Counts requests under a key in windows of time, one key at a time (Postgres
  * in the backend). A key's window opens with its first request after the
- * last window ended, and lasts as long as the request asks.
+ * last window ended, and lasts as long as the limit asks.
  */
 export interface RateLimits {
   /**
-   * Counts a request under the key at `now` as `weight` requests, and answers
-   * how many requests its window holds, this one included, and when the
-   * window ends.
+   * Takes a request under the key at `now` as `weight` requests, at most the
+   * limit's, into its window when they fit in the limit, and answers whether
+   * they did and when the window ends. A request that does not fit counts
+   * nothing.
    */
-  count(
+  take(
     key: string,
-    windowSeconds: number,
+    limit: RequestLimit,
     now: Date,
     weight: number,
-  ): Promise<{ readonly count: number; readonly windowEnds: Date }>;
+  ): Promise<{ readonly taken: boolean; readonly windowEnds: Date }>;
 }
 
 /**

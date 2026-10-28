@@ -1,7 +1,7 @@
 import { createHmac } from 'node:crypto';
 
 import type { RateLimits } from '@slovo/server-core';
-import { lte, sql } from 'drizzle-orm';
+import { eq, lte, sql } from 'drizzle-orm';
 
 import type { Database } from './database/database';
 import { rateLimits } from './database/schema';
@@ -15,27 +15,34 @@ import { rateLimits } from './database/schema';
 export function createRateLimits({ db }: Database, { secret }: { secret: string }): RateLimits {
   const hmacKey = createHmac('sha256', secret).update('rate-limits').digest();
   const keyOf = (key: string) => createHmac('sha256', hmacKey).update(key).digest('base64url');
-  return {
-    async count(subject, windowSeconds, now, weight) {
-      const key = keyOf(subject);
-      // Windows that have ended count nothing any more.
-      await db.delete(rateLimits).where(lte(rateLimits.windowEnds, now));
-      // One statement, so requests that come together each count. A window
-      // that ended since the line above opens anew here.
-      const ended = sql`${rateLimits.windowEnds} <= ${now}`;
-      const [window] = await db
-        .insert(rateLimits)
-        .values({ key, count: weight, windowEnds: new Date(now.getTime() + windowSeconds * 1000) })
-        .onConflictDoUpdate({
-          target: rateLimits.key,
-          set: {
-            count: sql`case when ${ended} then excluded.count else ${rateLimits.count} + excluded.count end`,
-            windowEnds: sql`case when ${ended} then excluded.window_ends else ${rateLimits.windowEnds} end`,
-          },
-        })
-        .returning({ count: rateLimits.count, windowEnds: rateLimits.windowEnds });
-      if (window === undefined) throw new Error('the window of a rate limit came back empty');
-      return window;
-    },
+  const take: RateLimits['take'] = async (subject, { requests, windowSeconds }, now, weight) => {
+    const key = keyOf(subject);
+    // Windows that have ended count nothing any more.
+    await db.delete(rateLimits).where(lte(rateLimits.windowEnds, now));
+    // One statement, so requests that come together each count, and only
+    // when they fit: a request that would cross the limit leaves its window
+    // as it was. A window that ended since the line above opens anew here.
+    const ended = sql`${rateLimits.windowEnds} <= ${now}`;
+    const [taken] = await db
+      .insert(rateLimits)
+      .values({ key, count: weight, windowEnds: new Date(now.getTime() + windowSeconds * 1000) })
+      .onConflictDoUpdate({
+        target: rateLimits.key,
+        set: {
+          count: sql`case when ${ended} then excluded.count else ${rateLimits.count} + excluded.count end`,
+          windowEnds: sql`case when ${ended} then excluded.window_ends else ${rateLimits.windowEnds} end`,
+        },
+        setWhere: sql`${ended} or ${rateLimits.count} + excluded.count <= ${requests}`,
+      })
+      .returning({ windowEnds: rateLimits.windowEnds });
+    if (taken !== undefined) return { taken: true, windowEnds: taken.windowEnds };
+    const [full] = await db
+      .select({ windowEnds: rateLimits.windowEnds })
+      .from(rateLimits)
+      .where(eq(rateLimits.key, key));
+    // The full window ended and went since the statement above: take it anew.
+    if (full === undefined) return take(subject, { requests, windowSeconds }, now, weight);
+    return { taken: false, windowEnds: full.windowEnds };
   };
+  return { take };
 }

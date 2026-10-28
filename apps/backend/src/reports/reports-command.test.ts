@@ -1,3 +1,5 @@
+import { spawn } from 'node:child_process';
+
 import type { MistakeReport } from '@slovo/contracts';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -127,6 +129,34 @@ describe('the reports list command', () => {
       'No Mistake Reports to check.',
     ]);
   });
+});
+
+/** Runs `pnpm reports` with the arguments and no database, and answers its exit code and what it printed to stderr. */
+async function runCommand(...args: string[]) {
+  const child = spawn(
+    process.execPath,
+    ['--import', 'tsx', 'src/reports/reports-command.ts', ...args],
+    {
+      cwd: new URL('../..', import.meta.url),
+      env: { PATH: process.env['PATH'] ?? '' },
+    },
+  );
+  let stderr = '';
+  child.stderr.on('data', (chunk: Buffer) => (stderr += chunk.toString()));
+  const exitCode = await new Promise<number | null>((resolve) => child.on('exit', resolve));
+  return { exitCode, stderr };
+}
+
+describe('the reports list command given --since', { timeout: 30_000 }, () => {
+  it.each(['2026-02-30', '2026-13-01', '2026-04-31', '2026-00-10'])(
+    'refuses %s, a day that is no day of the calendar, saying so, and exits non-zero',
+    async (since) => {
+      const { exitCode, stderr } = await runCommand('list', '--since', since);
+
+      expect(exitCode).toBe(2);
+      expect(stderr).toContain(`--since ${since} is no day of the calendar.`);
+    },
+  );
 });
 
 /** The ids `reports list` prints, in its order. */

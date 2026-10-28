@@ -209,6 +209,26 @@ describe('counters.send', () => {
     });
   });
 
+  it('counts two batches sent at once that name the same Entries in opposite orders, both whole', async () => {
+    const { clientFrom, database } = testApp();
+    const words = Array.from({ length: 100 }, newEntryId);
+    const events = words.map((word) => event(word, { known: 1, saved: 1 }));
+    const rounds = 50;
+
+    for (let round = 0; round < rounds; round++) {
+      await Promise.all([
+        clientFrom(newIp()).counters.send({ editionId: 'uk', events }),
+        clientFrom(newIp()).counters.send({ editionId: 'uk', events: [...events].reverse() }),
+      ]);
+    }
+
+    for (const word of words) {
+      await expect(countsOf(database, word)).resolves.toEqual([
+        { known: 2 * rounds, unknown: 0, saved: 2 * rounds },
+      ]);
+    }
+  });
+
   it('answers an Edition it does not serve as NOT_FOUND and counts nothing', async () => {
     const { client, database } = testApp();
     const word = newEntryId();
@@ -397,6 +417,32 @@ describe('the counter events from one IP address', () => {
     for (const { entryId } of crossing) {
       await expect(countsOf(database, entryId)).resolves.toEqual([]);
     }
+  });
+
+  it('count nothing of a batch refused, so a later batch that fits is taken', async () => {
+    const { client, database } = testApp();
+    for (let sent = 0; sent < 4; sent++) {
+      await client.counters.send({ editionId: 'uk', events: batch(100) });
+    }
+    await client.counters.send({ editionId: 'uk', events: batch(90) });
+    const refused = batch(20);
+    const fitting = batch(10);
+
+    await expect(client.counters.send({ editionId: 'uk', events: refused })).rejects.toMatchObject({
+      code: 'TOO_MANY_REQUESTS',
+    });
+    await expect(
+      client.counters.send({ editionId: 'uk', events: fitting }),
+    ).resolves.toBeUndefined();
+
+    for (const { entryId } of fitting) {
+      await expect(countsOf(database, entryId)).resolves.toEqual([
+        { known: 1, unknown: 0, saved: 0 },
+      ]);
+    }
+    await expect(client.counters.send({ editionId: 'uk', events: batch(1) })).rejects.toMatchObject(
+      { code: 'TOO_MANY_REQUESTS' },
+    );
   });
 
   it('hold back no other IP address, and are taken again the next day', async () => {
