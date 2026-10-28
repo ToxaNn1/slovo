@@ -5,8 +5,10 @@ import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
 import type { Database } from '../database/database';
-import { mistakeReports } from '../database/schema';
-import { passTime, testApp, testEditions } from '../test-support';
+import { mistakeReports, rateLimits } from '../database/schema';
+import { newIp, passTime, testApp, testEditions } from '../test-support';
+
+const DAY = 24 * 60 * 60 * 1000;
 
 /**
  * A Word id no other test reports, since the tests of the file share its
@@ -174,5 +176,82 @@ describe('reports.send', () => {
     await expect(
       client.reports.send(validReport(newEntryId(), { editionId: 'remote' })),
     ).rejects.toMatchObject({ code: 'NOT_FOUND', status: 404 });
+  });
+});
+
+describe('the reports from one IP address', () => {
+  it('are at most 10 a day: the 11th is TOO_MANY_REQUESTS with Retry-After, and keeps nothing', async () => {
+    const { client, request, database } = testApp();
+    const entryId = newEntryId();
+    for (let sent = 0; sent < 10; sent++) {
+      await client.reports.send(validReport(entryId));
+    }
+    passTime(DAY / 2);
+
+    const eleventh = await request('/v1/reports', post(validReport(entryId)));
+
+    expect(eleventh.status).toBe(429);
+    await expect(eleventh.json()).resolves.toMatchObject({
+      code: 'TOO_MANY_REQUESTS',
+      message: 'Too many requests',
+    });
+    expect(eleventh.headers.get('retry-after')).toBe(String(DAY / 2 / 1000));
+    await expect(keptOf(database, entryId)).resolves.toHaveLength(10);
+  });
+
+  it('hold back no other IP address, and take reports again the next day', async () => {
+    const { client, clientFrom, database } = testApp();
+    const entryId = newEntryId();
+    for (let sent = 0; sent < 10; sent++) {
+      await client.reports.send(validReport(entryId));
+    }
+    await expect(client.reports.send(validReport(entryId))).rejects.toMatchObject({
+      code: 'TOO_MANY_REQUESTS',
+    });
+
+    await expect(clientFrom(newIp()).reports.send(validReport(entryId))).resolves.toBeUndefined();
+    passTime(DAY);
+    await expect(client.reports.send(validReport(entryId))).resolves.toBeUndefined();
+    await expect(keptOf(database, entryId)).resolves.toHaveLength(12);
+  });
+
+  it('count an IPv6 client by its /64: the addresses of one share the count', async () => {
+    const { clientFrom } = testApp();
+    const entryId = newEntryId();
+    for (let sent = 0; sent < 10; sent++) {
+      await clientFrom(`2001:db8:9:1::${(sent + 1).toString(16)}`).reports.send(
+        validReport(entryId),
+      );
+    }
+
+    await expect(
+      clientFrom('2001:db8:9:1::ff').reports.send(validReport(entryId)),
+    ).rejects.toMatchObject({ code: 'TOO_MANY_REQUESTS', status: 429 });
+  });
+
+  it('count no report to an Edition that does not take them', async () => {
+    const { client } = testApp();
+    for (let sent = 0; sent < 10; sent++) {
+      await expect(
+        client.reports.send(validReport(newEntryId(), { editionId: 'xx' })),
+      ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    }
+
+    await expect(client.reports.send(validReport(newEntryId()))).resolves.toBeUndefined();
+  });
+
+  it('are counted in a window that names no IP address', async () => {
+    const { clientFrom, database } = testApp();
+    const ip = '2001:db8:9:7::15';
+    await clientFrom(ip).reports.send(validReport(newEntryId()));
+
+    const keys = (await database.db.select({ key: rateLimits.key }).from(rateLimits)).map(
+      (row) => row.key,
+    );
+    expect(keys.length).toBeGreaterThanOrEqual(1);
+    for (const key of keys) {
+      expect(key).not.toContain('2001:db8');
+      expect(key).not.toContain(':');
+    }
   });
 });
