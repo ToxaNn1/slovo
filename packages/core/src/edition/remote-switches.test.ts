@@ -122,6 +122,18 @@ describe('the remote Feature Switches', () => {
     expect(switches.edition.isFeatureEnabled('dailyLimit')).toBe(true);
   });
 
+  it('turn the Community Counters off remotely and keep the other features of 0.8.14', async () => {
+    const app = device();
+    app.backend.turnOff('communityCounters');
+    const switches = await app.launch();
+
+    await switches.ask();
+
+    expect(switches.edition.isFeatureEnabled('communityCounters')).toBe(false);
+    expect(switches.edition.isFeatureEnabled('communityWord')).toBe(true);
+    expect(switches.edition.isFeatureEnabled('mistakeReports')).toBe(true);
+  });
+
   it('give every Game Mode and the Daily Crossword as off once the Game is off remotely', async () => {
     const app = device();
     app.backend.turnOff('game');

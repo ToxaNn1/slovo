@@ -60,6 +60,12 @@ const validConfig = {
     firstWeek: true,
     widgetHint: true,
     moods: true,
+    seasonalDecor: true,
+    stressAnimation: true,
+    illustrations: true,
+    mistakeReports: true,
+    communityCounters: true,
+    communityWord: true,
   },
   userSettingDefaults: {
     theme: 'system',
@@ -133,6 +139,16 @@ const learningSwitches = [
   'moods',
 ] as const;
 
+/** The Feature Switches of the features of 0.8.14. */
+const feelSwitches = [
+  'seasonalDecor',
+  'stressAnimation',
+  'illustrations',
+  'mistakeReports',
+  'communityCounters',
+  'communityWord',
+] as const;
+
 describe('loadEdition', () => {
   it('reports the Edition id, locale and whether it marks Stress', () => {
     const edition = loadEdition(validConfig);
@@ -182,6 +198,7 @@ describe('loadEdition', () => {
   it.each([
     ...gamePartSwitches,
     ...learningSwitches,
+    ...feelSwitches,
     'synonymRows',
     'tips',
     'account',
@@ -427,6 +444,36 @@ describe('loadEdition', () => {
       'featureSwitches.synonymRows',
     ],
     ['a missing Tips Feature Switch', withoutSwitch('tips'), 'featureSwitches.tips'],
+    [
+      'a missing Seasonal Decor Feature Switch',
+      withoutSwitch('seasonalDecor'),
+      'featureSwitches.seasonalDecor',
+    ],
+    [
+      'a missing falling Stress Feature Switch',
+      withoutSwitch('stressAnimation'),
+      'featureSwitches.stressAnimation',
+    ],
+    [
+      'a missing Illustrations Feature Switch',
+      withoutSwitch('illustrations'),
+      'featureSwitches.illustrations',
+    ],
+    [
+      'a missing Mistake Reports Feature Switch',
+      withoutSwitch('mistakeReports'),
+      'featureSwitches.mistakeReports',
+    ],
+    [
+      'a missing Community Counters Feature Switch',
+      withoutSwitch('communityCounters'),
+      'featureSwitches.communityCounters',
+    ],
+    [
+      'a missing Community Word Feature Switch',
+      withoutSwitch('communityWord'),
+      'featureSwitches.communityWord',
+    ],
     [
       'an unknown Feature Switch',
       { featureSwitches: { ...validConfig.featureSwitches, share: true } },

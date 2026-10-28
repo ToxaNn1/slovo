@@ -55,7 +55,13 @@
     "politePause": true,
     "firstWeek": true,
     "widgetHint": true,
-    "moods": true
+    "moods": true,
+    "seasonalDecor": true,
+    "stressAnimation": true,
+    "illustrations": true,
+    "mistakeReports": true,
+    "communityCounters": true,
+    "communityWord": true
   },
   "userSettingDefaults": {
     "theme": "system",

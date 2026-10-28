@@ -58,6 +58,12 @@ describe('the Ukrainian Edition', () => {
     expect(edition.isFeatureEnabled('firstWeek')).toBe(true);
     expect(edition.isFeatureEnabled('widgetHint')).toBe(true);
     expect(edition.isFeatureEnabled('moods')).toBe(true);
+    expect(edition.isFeatureEnabled('seasonalDecor')).toBe(true);
+    expect(edition.isFeatureEnabled('stressAnimation')).toBe(true);
+    expect(edition.isFeatureEnabled('illustrations')).toBe(true);
+    expect(edition.isFeatureEnabled('mistakeReports')).toBe(true);
+    expect(edition.isFeatureEnabled('communityCounters')).toBe(true);
+    expect(edition.isFeatureEnabled('communityWord')).toBe(true);
   });
 
   it('starts new users on the agreed defaults', () => {

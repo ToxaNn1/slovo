@@ -210,6 +210,18 @@ export const FeatureSwitchesSchema = z.strictObject({
   widgetHint: z.boolean(),
   /** Mood: the moods a Word may carry and «Слово під настрій» (ADR 0054). */
   moods: z.boolean(),
+  /** «Сезонний декор»: the Decor motif of the local date's Holiday or Season, and its setting (ADR 0055). */
+  seasonalDecor: z.boolean(),
+  /** The falling Stress: the Stress mark of a Word card's Lemma falls onto its vowel (ADR 0055). */
+  stressAnimation: z.boolean(),
+  /** Illustrations: the picture a Word may carry above its Definition (ADR 0055). */
+  illustrations: z.boolean(),
+  /** Mistake Reports: the Entry card's menu item, its sheet and the queue that sends them (ADR 0056). */
+  mistakeReports: z.boolean(),
+  /** Community Counters: the line under the mark buttons and the changes the device sends (ADR 0060). */
+  communityCounters: z.boolean(),
+  /** The Community Word «Слово тижня спільноти»: its Monday Feed Notice (ADR 0060). */
+  communityWord: z.boolean(),
 });
 
 export type FeatureSwitches = z.infer<typeof FeatureSwitchesSchema>;
