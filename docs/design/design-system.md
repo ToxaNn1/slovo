@@ -149,7 +149,7 @@ Small extras: switch thumb `0 1 3 rgba(0,0,0,.25)`; selected segment `0 1 3 rgba
 
 ## Motion, sound and haptics
 
-From artboard 3e and the canvas keyframes. Every animation has a Reduce Motion variant.
+From artboard 3e and the canvas keyframes. Every animation has a Reduce Motion variant. The [animation audit](animation-audit.md) of 0.8.14 lists every animation of the app against the motion rules of ADR 0055 and the change each needs.
 
 | Moment           | Motion                                                                     | Haptic                           | Sound                    | Reduce Motion                 |
 | ---------------- | -------------------------------------------------------------------------- | -------------------------------- | ------------------------ | ----------------------------- |
