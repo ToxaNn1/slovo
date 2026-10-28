@@ -8,6 +8,7 @@ import { readConfig, ServerConfigSchema } from './config';
 import { createDatabase } from './database/database';
 import { readEditions } from './edition/edition-folders';
 import { createLogger } from './logger';
+import { systemRandom } from './random';
 import { createSentryReporter } from './sentry-reporter';
 import { startServer } from './server';
 
@@ -19,6 +20,7 @@ const mailer = createSmtpMailer({ url: config.SMTP_URL, from: config.MAIL_FROM }
 const app = createApp({
   database,
   clock: systemClock,
+  random: systemRandom,
   logger,
   editions,
   mailer,

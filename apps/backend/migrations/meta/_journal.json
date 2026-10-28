@@ -64,6 +64,13 @@
       "when": 1793200815834,
       "tag": "0008_favorites_adds",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793213464152,
+      "tag": "0009_collection_links",
+      "breakpoints": true
     }
   ]
 }

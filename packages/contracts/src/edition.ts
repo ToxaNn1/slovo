@@ -328,6 +328,17 @@ export const LegalPagesSchema = z.strictObject({
 
 export type LegalPages = z.infer<typeof LegalPagesSchema>;
 
+/**
+ * A domain such as `slovo.example`: dot-separated lower-case labels of letters,
+ * digits and inner hyphens, ending in a top-level domain of letters.
+ */
+const DomainSchema = z
+  .string()
+  .regex(
+    /^([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/,
+    'Expected a lower-case domain such as slovo.example',
+  );
+
 /** The id of an Edition, e.g. `uk`. */
 export const EditionIdSchema = z.string().regex(/^[a-z][a-z0-9-]*$/, 'Expected a lowercase id');
 
@@ -350,6 +361,12 @@ export const EditionConfigSchema = z
      */
     notificationSound: NotificationSoundFileSchema.optional(),
     legalPages: LegalPagesSchema,
+    /**
+     * The domain of the Edition's Collection Links, `https://<linkDomain>/c/<id>`
+     * (ADR 0058): the backend builds each link's URL from it, and the app config
+     * turns it into the associated domains entitlement.
+     */
+    linkDomain: DomainSchema,
     /**
      * The Categories, in their order, as the Language Pack build writes them
      * into the pack. The app reads them from the pack only (ADR 0033).

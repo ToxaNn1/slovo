@@ -87,6 +87,7 @@
     "privacy": "https://example.org/privacy",
     "terms": "https://example.org/terms"
   },
+  "linkDomain": "slovo.example",
   "categories": [
     {
       "id": "nature",
