@@ -43,6 +43,16 @@ describe('MistakeReportSheet', () => {
     expect(send()).toBeDisabled();
   });
 
+  it('is read by VoiceOver as a heading, the four types, the comment field once and «Send»', async () => {
+    await renderSheet();
+
+    expect(screen.getByRole('header', { name: 'Report a mistake' })).toBeOnTheScreen();
+    expect(screen.getByLabelText('Comment (optional)')).toBeOnTheScreen();
+    // The field says its own name; the line over it is not read a second time.
+    expect(screen.queryByText('Comment (optional)')).not.toBeOnTheScreen();
+    expect(screen.getByText('Comment (optional)', { includeHiddenElements: true })).toBeTruthy();
+  });
+
   it('sends the chosen type with the comment as typed', async () => {
     const { onSend } = await renderSheet();
 

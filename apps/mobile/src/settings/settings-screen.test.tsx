@@ -86,7 +86,12 @@ describe('Settings › «Сезонний декор»', () => {
 
     const row = screen.getByRole('switch', { name: 'Сезонний декор' });
     expect(row).toHaveProp('value', true);
-    expect(screen.getByText(editionStrings.settings.seasonalDecor.explanation)).toBeOnTheScreen();
+    const { title, explanation } = editionStrings.settings.seasonalDecor;
+    expect(screen.getByText(explanation, { includeHiddenElements: true })).toBeOnTheScreen();
+    // VoiceOver reads the row once, at its switch, with the explanation as its hint.
+    expect(screen.getByHintText(explanation)).toBe(row);
+    expect(screen.queryByText(title)).not.toBeOnTheScreen();
+    expect(screen.queryByText(explanation)).not.toBeOnTheScreen();
 
     await fireEvent(row, 'valueChange', false);
 
@@ -108,11 +113,12 @@ describe('Settings › «Ділитися анонімною статистик�
 
     const row = screen.getByRole('switch', { name: 'Ділитися анонімною статистикою' });
     expect(row).toHaveProp('value', true);
-    expect(
-      screen.getByText(
-        'Лише анонімні лічильники: скільки читачів знають і зберегли слово. Без акаунта й без даних пристрою.',
-      ),
-    ).toBeOnTheScreen();
+    const explanation =
+      'Лише анонімні лічильники: скільки читачів знають і зберегли слово. Без акаунта й без даних пристрою.';
+    expect(screen.getByText(explanation, { includeHiddenElements: true })).toBeOnTheScreen();
+    // VoiceOver reads the row once, at its switch, with the explanation as its hint.
+    expect(screen.getByHintText(explanation)).toBe(row);
+    expect(screen.queryByText(explanation)).not.toBeOnTheScreen();
 
     await fireEvent(row, 'valueChange', false);
 
