@@ -195,6 +195,12 @@ export {
 // The shell keeps the Session in memory on a development client without the Keychain.
 export { createMemorySessionStore } from './account/memory-session-store';
 export {
+  openCollectionSharing,
+  type CollectionShare,
+  type CollectionShareRefusal,
+  type CollectionSharing,
+} from './collection-links/share-collection';
+export {
   openMistakeReports,
   type MistakeReportAnswer,
   type MistakeReportDraft,
@@ -216,6 +222,8 @@ export {
   type AccountApi,
   type AccountApiFailure,
   type Clock,
+  type CollectionLinksApi,
+  type CollectionLinksApiFailure,
   type CommunityWordAnswer,
   type CommunityWordApi,
   type ContentReadPort,
