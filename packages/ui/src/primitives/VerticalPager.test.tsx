@@ -2,9 +2,10 @@ import type { Haptics } from '@slovo/core';
 import { HapticsProvider, usePageTurnActions, VerticalPager } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
-import { Text } from 'react-native';
+import { AccessibilityInfo, Text } from 'react-native';
 import { State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
+import { getAnimatedStyle } from 'react-native-reanimated';
 
 const PAGES = ['First', 'Second', 'Third'];
 /** The pager's height, in points. */
@@ -57,8 +58,33 @@ async function renderPager({
   };
 }
 
-/** How long a swipe's motion takes, from the design. */
-const SWIPE_MS = 420;
+/** The longest a page takes to settle, swiped or turned without a swipe (ADR 0055). */
+const SETTLE_MS = 300;
+
+/** Where the page showing `text` stands: its offset in points and its opacity. */
+function pageAt(text: string): { y: number; opacity: number } {
+  let node = screen.getByText(text, { includeHiddenElements: true }).parent;
+  while (node !== null && node.props['jestAnimatedStyle'] === undefined) node = node.parent;
+  if (node === null) throw new Error(`No page holds «${text}».`);
+  const style = getAnimatedStyle(node) as {
+    opacity?: number;
+    transform?: { translateY?: number }[];
+  };
+  const y = style.transform?.find((step) => step.translateY !== undefined)?.translateY ?? 0;
+  return { y, opacity: style.opacity ?? 1 };
+}
+
+/** Where the page showing `text` stands every frame for that many milliseconds. */
+async function pageOver(text: string, ms: number) {
+  const frames: { y: number; opacity: number }[] = [];
+  for (let time = 0; time < ms; time += 16) {
+    await act(() => {
+      jest.advanceTimersByTime(16);
+    });
+    frames.push(pageAt(text));
+  }
+  return frames;
+}
 
 /** How far, in points, a drag goes before the swipe takes it, as on the device. */
 const ACTIVATION = 12;
@@ -68,7 +94,7 @@ const ACTIVATION = 12;
  * points per second. The swipe takes it after `ACTIVATION` points, and the
  * first move it reports is from there.
  */
-async function swipe(distance: number, velocity: number) {
+async function swipe(distance: number, velocity: number, { settle = true } = {}) {
   const start = Math.sign(distance) * ACTIVATION;
   await act(() => {
     fireGestureHandler(getByGestureTestId('pager-swipe'), [
@@ -80,9 +106,9 @@ async function swipe(distance: number, velocity: number) {
       { state: State.END, translationY: distance, velocityY: velocity },
     ]);
   });
-  // The page settles.
+  if (!settle) return;
   await act(async () => {
-    await jest.advanceTimersByTimeAsync(SWIPE_MS);
+    await jest.advanceTimersByTimeAsync(SETTLE_MS);
   });
 }
 
@@ -93,6 +119,7 @@ describe('VerticalPager', () => {
 
   afterEach(() => {
     jest.useRealTimers();
+    jest.restoreAllMocks();
   });
 
   it('puts only the current page before the reader', async () => {
@@ -187,7 +214,7 @@ describe('VerticalPager', () => {
       nativeEvent: { actionName: 'next' },
     });
     await act(async () => {
-      await jest.advanceTimersByTimeAsync(SWIPE_MS);
+      await jest.advanceTimersByTimeAsync(SETTLE_MS);
     });
 
     expect(onIndexChange).toHaveBeenCalledWith(1);
@@ -199,5 +226,46 @@ describe('VerticalPager', () => {
     expect(
       screen.getByText('First', { includeHiddenElements: true }).props['accessibilityActions'],
     ).toBeUndefined();
+  });
+
+  it('settles a swipe on a spring within 300 ms, never past the page', async () => {
+    await renderPager({});
+
+    await swipe(-HEIGHT / 2, -1500, { settle: false });
+    const frames = await pageOver('Second', SETTLE_MS);
+
+    // Let go half way, the page moves on from there and stops on its place.
+    expect(frames[0]?.y).toBeGreaterThan(0);
+    expect(frames[0]?.y).toBeLessThan(HEIGHT / 2);
+    expect(frames.every(({ y }) => y >= 0)).toBe(true);
+    expect(frames.at(-1)?.y).toBe(0);
+    expect(pageAt('First').y).toBe(-HEIGHT);
+  });
+
+  it('turns without a swipe in 300 ms', async () => {
+    await renderPager({});
+
+    await fireEvent(screen.getByText('First'), 'accessibilityAction', {
+      nativeEvent: { actionName: 'next' },
+    });
+    const frames = await pageOver('Second', SETTLE_MS);
+
+    expect(frames[0]?.y).toBeGreaterThan(0);
+    expect(frames.at(-1)?.y).toBe(0);
+  });
+
+  it('cross-fades the pages in place under Reduce Motion', async () => {
+    jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
+    const onIndexChange = jest.fn();
+    await renderPager({ onIndexChange });
+
+    await swipe(-HEIGHT / 2, -100, { settle: false });
+    const frames = await pageOver('Second', SETTLE_MS);
+
+    expect(onIndexChange).toHaveBeenCalledWith(1);
+    expect(frames.every(({ y }) => y === 0)).toBe(true);
+    expect(frames.some(({ opacity }) => opacity > 0 && opacity < 1)).toBe(true);
+    expect(frames.at(-1)?.opacity).toBe(1);
+    expect(pageAt('First')).toEqual({ y: 0, opacity: 0 });
   });
 });

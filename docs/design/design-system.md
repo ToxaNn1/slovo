@@ -153,7 +153,7 @@ From artboard 3e and the canvas keyframes. Every animation has a Reduce Motion v
 
 | Moment           | Motion                                                                     | Haptic                           | Sound                    | Reduce Motion                 |
 | ---------------- | -------------------------------------------------------------------------- | -------------------------------- | ------------------------ | ----------------------------- |
-| Feed swipe       | 420 ms, `cubic-bezier(.2,.8,.2,1)`, snaps one card per screen              | selection, on every card         | none                     | 200 ms cross-fade             |
+| Feed swipe       | 300 ms spring at the swipe's speed, one card per screen; no swipe: eased   | selection, on every card         | none                     | 200 ms cross-fade             |
 | Heart (Favorite) | 300 ms: springs to 1.2, then back to 1 with a small bounce                 | impact light                     | a soft "tuk"             | fill only                     |
 | Correct answer   | 250 ms fill to `color.correct` and scale 1.03; the fill stays until «Далі» | notification success             | a plucked string, rising | fill only                     |
 | Wrong answer     | 200 ms fill to `color.wrong`, then a ±4 pt shake twice (300 ms)            | notification warning (not error) | a muted string           | fill only                     |

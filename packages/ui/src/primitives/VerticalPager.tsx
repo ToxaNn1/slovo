@@ -39,6 +39,7 @@ import Animated, {
   useAnimatedScrollHandler,
   useAnimatedStyle,
   useSharedValue,
+  withSpring,
   withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
@@ -48,15 +49,30 @@ import { useHaptics } from '../providers/HapticsProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
 
 /**
- * The Feed swipe from the design: 420 ms, `cubic-bezier(.2, .8, .2, 1)`. With
- * Reduce Motion the pages stay put and cross-fade in 200 ms instead. Both run
- * whatever the system setting, which would otherwise skip the cross-fade too.
+ * How a swipe let go settles (ADR 0055, the audit's C1): a critically damped
+ * spring that never passes the page, carrying on at the swipe's speed.
+ * Reanimated takes a spring's `duration` as perceptual and runs 1.5 times it,
+ * so 200 here settles in 300 ms; a mass of 1 lets a spring this short reach
+ * its time, which the default mass of 4 would stretch.
  */
-const SWIPE = {
-  duration: 420,
+const SETTLE = {
+  duration: 200,
+  dampingRatio: 1,
+  mass: 1,
+  overshootClamping: true,
+  reduceMotion: ReduceMotion.Never,
+};
+/** A page turned without a swipe, with no finger to follow: 300 ms on the design's curve (C2). */
+const TURN = {
+  duration: 300,
   easing: Easing.bezier(0.2, 0.8, 0.2, 1),
   reduceMotion: ReduceMotion.Never,
 };
+/**
+ * With Reduce Motion the pages stay put and cross-fade in 200 ms instead,
+ * swiped or not. Every motion here runs whatever the system setting, which
+ * would otherwise skip the cross-fade too: the hook alone decides.
+ */
 const CROSS_FADE = { duration: 200, easing: Easing.linear, reduceMotion: ReduceMotion.Never };
 
 /** How far, as a share of the page, a slow drag must go to turn the page. */
@@ -70,7 +86,7 @@ const EDGE_RESISTANCE = 0.3;
 
 /** Turns a `VerticalPager` from code. */
 export interface VerticalPagerHandle {
-  /** Moves to the page at `index` with the swipe's motion, as if the reader swiped there. */
+  /** Moves to the page at `index` in 300 ms, or with a cross-fade under Reduce Motion. */
   turnTo(index: number): void;
   /**
    * Puts the page at `index` on screen at once, without motion, as when pages
@@ -164,7 +180,7 @@ export function VerticalPager<Item>({
 }: VerticalPagerProps<Item>) {
   const reduceMotion = useReduceMotion();
   const haptics = useHaptics();
-  const motion = reduceMotion ? CROSS_FADE : SWIPE;
+  const motion = reduceMotion ? CROSS_FADE : TURN;
   /** The page the last swipe went to, which may still be moving in. */
   const [index, setIndex] = useState(initialIndex);
   /** The page nearest to the screen's position, while a swipe moves. */
@@ -322,7 +338,10 @@ export function VerticalPager<Item>({
           turnedTo.value = target;
           scheduleOnRN(swipeTo, target);
         }
-        position.value = withTiming(target, motion);
+        position.value = reduceMotion
+          ? withTiming(target, CROSS_FADE)
+          : // The spring's speed is the finger's, in pages per second.
+            withSpring(target, { ...SETTLE, velocity: -velocityY / pageHeight.value });
       })
       .onFinalize(() => {
         turning.value = false;
@@ -335,9 +354,9 @@ export function VerticalPager<Item>({
     dragStart,
     haptics,
     lastIndex,
-    motion,
     pageHeight,
     position,
+    reduceMotion,
     scrolls,
     testID,
     turn,
@@ -443,9 +462,9 @@ export function usePageTurnActions(): Partial<TurnActions> {
 }
 
 /**
- * Turns a `VerticalPager` from its current page to the next with the swipe's
- * motion, as if the reader swiped there, such as a card's button that leads
- * on. None outside a pager, on a page that isn't current or on the last page.
+ * Turns a `VerticalPager` from its current page to the next in 300 ms, as
+ * `turnTo` does, such as a card's button that leads on. None outside a
+ * pager, on a page that isn't current or on the last page.
  */
 export function useTurnToNextPage(): (() => void) | undefined {
   return useContext(TurnToNextPageContext);
