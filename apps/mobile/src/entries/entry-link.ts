@@ -1,6 +1,7 @@
 import { CollectionLinkIdSchema } from '@slovo/contracts';
 
 import { isFromNotification } from '../notifications/notification-scheduler';
+import { APP_INTENT_PARAM, APP_INTENT_ROUTES, APP_INTENTS, type AppIntent } from './app-intents';
 
 /** Where outside the app an Entry link opened from: a notification or the home-screen widget. */
 export type OpenedFrom = 'notification' | 'widget';
@@ -94,13 +95,45 @@ function outsidePath(link: string, widgetLinkKey: string | undefined): string | 
   return fromWidget ? `${path}?from=${widgetSource}` : path;
 }
 
+/** The App Intent a link is, by its route and mark (`APP_INTENT_ROUTES`), or none. */
+function appIntentOf(link: string): AppIntent | undefined {
+  const route = routeOf(link);
+  const path = normalPath(route.path);
+  const named = new URLSearchParams(route.search).get(APP_INTENT_PARAM);
+  return APP_INTENTS.find(
+    (intent) => intent === named && routeOf(APP_INTENT_ROUTES[intent]).path === path,
+  );
+}
+
+/** What the outside links read and ask of the app for the App Intents (ADR 0057). */
+export interface AppIntentLandings {
+  /** Whether the Feature Switch `appIntents` is on in effect. */
+  on(): Promise<boolean>;
+  /** Asks the Feed to land on today's Word of the Day card. */
+  landOnWordOfTheDay(): void;
+}
+
 /**
  * Expo Router's `redirectSystemPath` (`app/+native-intent.tsx`), which sees
  * every link from outside the app and none from inside it, over the key of
- * the Widget Snapshot the widget reads now, or none without one.
+ * the Widget Snapshot the widget reads now, or none without one. An App
+ * Intent's link opens its route without its mark: «Слово дня» the Feed,
+ * landing on today's Word of the Day card, and «Відкрити гру» the Game; with
+ * `appIntents` off in effect, or unknown, both open the app's start, the Feed
+ * as it was (ADR 0057).
  */
-export function createOutsideLinks(
-  widgetLinkKey: () => Promise<string | undefined>,
-): (link: { path: string }) => Promise<string | null> {
-  return async ({ path }) => outsidePath(path, await widgetLinkKey());
+export function createOutsideLinks({
+  widgetLinkKey,
+  appIntents,
+}: {
+  widgetLinkKey: () => Promise<string | undefined>;
+  appIntents: AppIntentLandings;
+}): (link: { path: string }) => Promise<string | null> {
+  return async ({ path }) => {
+    const intent = appIntentOf(path);
+    if (intent === undefined) return outsidePath(path, await widgetLinkKey());
+    if (!(await appIntents.on().catch(() => false))) return '/';
+    if (intent === 'wordOfTheDay') appIntents.landOnWordOfTheDay();
+    return routeOf(APP_INTENT_ROUTES[intent]).path;
+  };
 }

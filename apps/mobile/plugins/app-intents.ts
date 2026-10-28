@@ -4,6 +4,8 @@ import { fileURLToPath } from 'node:url';
 
 import type { EditionStrings } from '@slovo/contracts';
 
+import { APP_INTENT_ROUTES } from '../src/entries/app-intents';
+
 /**
  * What the App Intents take from the Edition at prebuild (ADR 0057), so the
  * Swift code holds no Edition text: only the intents that open a route.
@@ -18,15 +20,19 @@ type IntentKey = keyof EditionStrings['appIntents'];
 
 /**
  * Each intent's Swift type (`SlovoAppIntents.swift`), the route it hands the
- * app as `<scheme>://<route>`, and the SF Symbol of its App Shortcut. «Слово
- * дня» opens the app's start, the Feed, whose first card is the Word of the
- * Day; «Відкрити гру» opens the Game. The app decides the landing from there.
+ * app as `<scheme>://<route>` (`APP_INTENT_ROUTES`), and the SF Symbol of its
+ * App Shortcut. «Слово дня» opens the Feed, «Відкрити гру» the Game; the app
+ * decides the landing from there.
  */
 export const APP_INTENTS: Readonly<
   Record<IntentKey, { readonly type: string; readonly route: string; readonly symbol: string }>
 > = {
-  wordOfTheDay: { type: 'WordOfTheDayIntent', route: '', symbol: 'text.book.closed' },
-  openGame: { type: 'OpenGameIntent', route: 'game', symbol: 'puzzlepiece' },
+  wordOfTheDay: {
+    type: 'WordOfTheDayIntent',
+    route: APP_INTENT_ROUTES.wordOfTheDay,
+    symbol: 'text.book.closed',
+  },
+  openGame: { type: 'OpenGameIntent', route: APP_INTENT_ROUTES.openGame, symbol: 'puzzlepiece' },
 };
 
 /** The key of an intent's title in the app's `Localizable.strings`, as the Swift code names it. */

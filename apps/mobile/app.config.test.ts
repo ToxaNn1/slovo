@@ -485,8 +485,12 @@ describe('app config', () => {
       'intent: OpenGameIntent(),\n      phrases: ["Відкрий гру в \\(.applicationName)", "Грати в \\(.applicationName)"]',
     );
     // «Слово дня» opens the app's start, the Feed; «Відкрити гру» the Game.
-    expect(shortcuts).toContain('extension WordOfTheDayIntent {\n  static let route = ""\n}');
-    expect(shortcuts).toContain('extension OpenGameIntent {\n  static let route = "game"\n}');
+    expect(shortcuts).toContain(
+      'extension WordOfTheDayIntent {\n  static let route = "?intent=wordOfTheDay"\n}',
+    );
+    expect(shortcuts).toContain(
+      'extension OpenGameIntent {\n  static let route = "game?intent=openGame"\n}',
+    );
   });
 
   it("titles the intents with the Edition's strings, which the Swift code names only by key", () => {

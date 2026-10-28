@@ -23,7 +23,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { editionStrings } from '@/edition/edition';
 import { EntryActions, useKnowledgeButtons } from '@/entries/entry-actions';
 import { useOpenScreen } from '@/entries/use-open-screen';
+import { deviceClock } from '@/device/device-clock';
 import { useFeed } from '@/feed/feed';
+import { wordOfTheDayLanding } from '@/feed/word-of-the-day-landing';
 import { useFirstWeekStreak } from '@/feed/first-week';
 import { TOP_ROW } from '@/edition/feed-loading';
 import { MoodButtonAndSheet } from '@/mood/mood';
@@ -51,7 +53,7 @@ export default function HomeScreen() {
 
 function FeedScreen() {
   const pager = useRef<VerticalPagerHandle>(null);
-  const feed = useFeed(pager);
+  const feed = useFeed(pager, { clock: deviceClock, landing: wordOfTheDayLanding });
   const swipeHint = useSwipeHint();
   const { colors } = useTokens();
   const { top } = useSafeAreaInsets();

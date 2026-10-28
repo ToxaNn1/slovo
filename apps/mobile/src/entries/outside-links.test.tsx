@@ -10,6 +10,7 @@ import FavoriteEntryScreen from '../app/saved/favorites/[entryId]';
 import HistoryEntryScreen from '../app/saved/history/[entryId]';
 import LearningEntryScreen from '../app/saved/learning/[entryId]';
 import { editionStrings } from '../edition/edition';
+import { APP_INTENT_ROUTES } from './app-intents';
 import { createOutsideLinks } from './entry-link';
 import { NotificationTaps } from './notification-taps';
 
@@ -56,11 +57,17 @@ function fakeNotificationTaps() {
 }
 
 /**
- * The app on the Feed, with the Entry stack and the notification taps at the
- * root, and the outside links of `+native-intent`. `open` hands it a link as
- * iOS hands over one another app or the widget opened, with the scheme.
+ * The app on the Feed, or the given route, with the Entry stack and the
+ * notification taps at the root, and the outside links of `+native-intent`,
+ * with the App Intents on or off. `open` hands it a link as iOS hands over
+ * one another app, the widget or an App Intent opened, with the scheme;
+ * `landings` counts the asks to land on the Word of the Day card.
  */
-async function renderApp() {
+async function renderApp({
+  initialUrl = '/',
+  appIntents = true,
+}: { initialUrl?: string; appIntents?: boolean } = {}) {
+  let landings = 0;
   const listeners: ((event: { url: string }) => void)[] = [];
   jest.spyOn(Linking, 'addEventListener').mockImplementation((_type, listener) => {
     listeners.push(listener);
@@ -76,9 +83,18 @@ async function renderApp() {
         </>
       ),
       '+native-intent': {
-        redirectSystemPath: createOutsideLinks(() => Promise.resolve(WIDGET_LINK_KEY)),
+        redirectSystemPath: createOutsideLinks({
+          widgetLinkKey: () => Promise.resolve(WIDGET_LINK_KEY),
+          appIntents: {
+            on: () => Promise.resolve(appIntents),
+            landOnWordOfTheDay: () => {
+              landings += 1;
+            },
+          },
+        }),
       },
       index: () => <Text>Feed</Text>,
+      'game/index': () => <Text>Game</Text>,
       // Expo Router's own screen for a path with no route, which needs the app's manifest.
       '+not-found': () => <Text>No such route</Text>,
       'entry/_layout': EntryLayout,
@@ -90,12 +106,13 @@ async function renderApp() {
       // The recipient sheet needs the composition; its own test draws it.
       'c/[linkId]': () => <Text>Recipient sheet</Text>,
     },
-    { initialUrl: '/' },
+    { initialUrl },
   );
   await app;
   await settle();
   return {
     pathname: () => app.getPathname(),
+    landings: () => landings,
     taps,
     open: (url: string) =>
       settle(() => {
@@ -197,6 +214,57 @@ describe('a Collection Link from outside the app', () => {
 
     expect(app.pathname()).toBe('/');
     expect(screen.getByText('Feed')).toBeTruthy();
+  });
+});
+
+describe('an App Intent', () => {
+  const wordOfTheDay = `slovo-uk://${APP_INTENT_ROUTES.wordOfTheDay}`;
+  const openGame = `slovo-uk://${APP_INTENT_ROUTES.openGame}`;
+
+  it('«Слово дня» opens the Feed and lands on the Word of the Day card', async () => {
+    const app = await renderApp({ initialUrl: '/saved/history/w_bevz' });
+    await app.open(wordOfTheDay);
+
+    expect(app.pathname()).toBe('/');
+    expect(screen.getByText('Feed')).toBeTruthy();
+    expect(app.landings()).toBe(1);
+  });
+
+  it('«Слово дня» lands again when the reader is on the Feed', async () => {
+    const app = await renderApp();
+    await app.open(wordOfTheDay);
+    await app.open(wordOfTheDay);
+
+    expect(app.pathname()).toBe('/');
+    expect(app.landings()).toBe(2);
+  });
+
+  it('«Відкрити гру» opens the Game', async () => {
+    const app = await renderApp();
+    await app.open(openGame);
+
+    expect(app.pathname()).toBe('/game');
+    expect(screen.getByText('Game')).toBeTruthy();
+    expect(app.landings()).toBe(0);
+  });
+
+  it.each([
+    ['«Слово дня»', wordOfTheDay],
+    ['«Відкрити гру»', openGame],
+  ])('%s with the App Intents off opens the app’s start and lands nowhere', async (_, link) => {
+    const app = await renderApp({ initialUrl: '/saved/history/w_bevz', appIntents: false });
+    await app.open(link);
+
+    expect(app.pathname()).toBe('/');
+    expect(screen.getByText('Feed')).toBeTruthy();
+    expect(app.landings()).toBe(0);
+  });
+
+  it('a link to the Game without the intent’s mark opens it, the App Intents off or not', async () => {
+    const app = await renderApp({ appIntents: false });
+    await app.open('slovo-uk://game');
+
+    expect(app.pathname()).toBe('/game');
   });
 });
 
