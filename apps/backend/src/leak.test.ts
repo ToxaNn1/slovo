@@ -32,6 +32,8 @@ const ANSWERED_COLUMNS = new Set([
   'known',
   'unknown',
   'saved',
+  // The Community Word: an Entry and its Favorites adds of a week, naming no reader.
+  'adds',
 ]);
 
 /**

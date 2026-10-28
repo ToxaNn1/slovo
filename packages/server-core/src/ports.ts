@@ -266,6 +266,18 @@ export interface CounterStore {
   add(editionId: string, events: readonly CounterEvent[], week: string): Promise<void>;
   /** The counts kept of those of the Entries ever counted, in any order. */
   read(editionId: string, entryIds: readonly string[]): Promise<readonly EntryCounts[]>;
+  /**
+   * The Entry with the most Favorites adds in the Edition's ISO week, by its
+   * Monday as `YYYY-MM-DD`, the lower Entry id by code points winning a tie;
+   * none when nobody added anything that week.
+   */
+  mostAdded(editionId: string, week: string): Promise<CommunityWord | undefined>;
+}
+
+/** The Community Word of a week: the Entry most added to Favorites, with its adds (ADR 0060). */
+export interface CommunityWord {
+  readonly entryId: string;
+  readonly adds: number;
 }
 
 /** An Entry's Community Counters: the readers who know it, don't and saved it. */
