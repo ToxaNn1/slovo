@@ -1,0 +1,53 @@
+# A shared Collection is a server snapshot behind a link
+
+Until 0.8.15 a Collection couldn't leave the phone: a teacher who built «Осінь» for a class had no way to hand it to anyone. Spec #937 adds the Collection Link: «Поділитися посиланням» stores a snapshot of the Collection on the server and shares `https://<linkDomain>/c/<id>`; whoever opens it sees a preview and «Додати собі» makes their own copy. Most readers have no Account and many recipients are pupils without one, so neither side may need it. The decisions come from the owner's grilling of 2026-10-25 and 2026-10-26.
+
+**Feature Switch.** `collectionLinks` is required of every Edition and on in the Ukrainian Edition. A remote switch only turns it off (ADR 0040), so the owner can stop sharing at once. While it is off in effect the Collection menu has no «Поділитися посиланням», a link that opens the app says it isn't available, and the backend answers both requests for that Edition as for an Edition it doesn't find (`NOT_FOUND`), as the Mistake Reports do (ADR 0056).
+
+**A snapshot, not a live list.** A Collection Link holds the Collection as it was when it was shared: its name and its Entry ids in the Collection's order. It is immutable: later edits to the Collection never reach it, and neither its author nor anyone else can edit it through the API. Sharing again makes a new link with the current contents. It never expires; only the owner deletes one.
+
+**The requests.** Both are procedures of the API contract (ADR 0031), so the contract only grows and the committed description changes with them (`pnpm describe:api`).
+
+- **`POST /v1/collection-links`** with `{edition, name, entryIds}` answers `{id, url}`. The id is 10 random characters, letters and digits, from the injected random source; the URL is `https://<linkDomain>/c/<id>`. The backend checks the shape, not whether the Entries are in a pack: a known Edition, a name of 1–60 characters, 1–200 Entry ids with none repeated. A body it refuses answers `400`.
+- **`GET /v1/collection-links/{id}`** answers `{edition, name, entryIds}` as they were stored; an unknown id answers `404`.
+
+**No Account on either side.** Neither request carries a Session, even when the reader is signed in, nor a device id, and the body has no field for either. The backend keeps each link with its Edition, name, Entry ids and the time it was made, and nothing else.
+
+**Limited without keeping the IP.** 20 new links a day per IP, a window of the existing rate limits keyed by the HMAC-SHA256 like them, so the `rate_limits` table names no IP (ADR 0030); a request over it answers `TOO_MANY_REQUESTS` (429) and stores nothing. The backend never stores the IP address. Reading a link is not limited.
+
+**The address is not Edition-scoped.** Sync and content live under `/v1/editions/{edition}/…`; `/v1/collection-links` follows the owner's choice for 0.8.14's endpoints (ADR 0056, ADR 0060) and carries the Edition in its body. The link's id alone finds it, so the shared URL stays short and holds no Edition; the backend keeps links per Edition like all its data (ADR 0030), and a link of another Edition opens in this app as not available.
+
+**The link domain comes from the Edition.** The Edition config names `linkDomain`, required of every Edition; until 0.9 it is a placeholder, and the real domain arrives with no code change. The app config turns it into the associated domains entitlement (`applinks:<linkDomain>`), and the backend builds each link's URL from the Edition's `linkDomain`.
+
+**Universal links.** The backend serves `/.well-known/apple-app-site-association`, listing the app for `/c/*` with the Apple Developer Team ID from the backend's environment, never from the repository. Until 0.9 there is no Team ID; with none set the backend answers that path `404`. The app opens `https://<linkDomain>/c/<id>` and `slovo-uk://c/<id>` the same way: both reach the app through `app/+native-intent.tsx` like every link from outside (ADR 0026) and open the recipient sheet. The scheme's link lets the flow be checked on a simulator before the real domain exists. A web page for people without the app is out of scope until 0.9.
+
+**Sharing.** «Поділитися посиланням» in a Collection's menu is disabled on an empty Collection. It asks the server for a link and opens the system share sheet with «Колекція «{name}» у SLOVO: {url}». The request goes once through the one retry rule (ADR 0037) and is never queued: offline it shows «Немає з'єднання. Спробуйте пізніше.» and shares nothing.
+
+**The recipient sheet.** It shows the snapshot's name, how many Entries it holds and its first 5 Entries this Language Pack has, and «Додати собі». When some of its Entries are missing from the reader's pack it says how many: «1 слово недоступне», «{n} слова недоступні», «{n} слів недоступні» in the Edition's plural forms (ADR 0020). Offline it says «Немає з'єднання»; an unknown link, a link of another Edition, or one with `collectionLinks` off says the link isn't available.
+
+**The Core makes the copy.** «Додати собі» creates a new Collection of the reader's, as if they had made it:
+
+- **Name**: the snapshot's name; when the reader already has a Collection of that name, the first free of «{name} (2)», «{name} (3)»….
+- **Entries**: the snapshot's, in its order, skipping those missing from the reader's Language Pack; the sheet has already counted them.
+- **Hidden Entries stay**: an Entry the reader hid goes into the copy and stays Hidden everywhere else, so the copy is complete and the reader's choice holds.
+- **Every tap copies**: opening the same link twice and adding twice makes two copies, so the behaviour is predictable.
+- **It syncs as any Collection** the reader made (ADR 0041): the link and its id are not kept with it.
+
+**A channel apart from Sync.** Sync (ADR 0041) keeps an Account's own records behind a Session; a Collection Link is a public snapshot that anyone with its id may read, made by readers with or without an Account. It is not a synced record, shares nothing of the author's user state beyond the name and Entry ids, and the copy it makes enters Sync only as the recipient's own Collection.
+
+**The owner's script.** `collection-links delete <id>` deletes one link from the database directly, like `switch-off` (ADR 0040) and `reports resolve` (ADR 0056), so the owner can take down an abusive name. No API route deletes or lists links.
+
+**The privacy policy** (ADR 0049) says what a Collection Link stores (the Collection's name and its Entry ids, with no Account or device data), that anyone with the link can see it, and that it stays until the owner deletes it.
+
+**Testing.** Sharing, offline, the copy and its name clashes, skipped Entries, Hidden kept, an unknown link and the switch off are tested in the Core with a fake Language Pack, fake user state and a fake API. The requests (validation, ids, 404, immutability, 20 a day, no IP stored), the app-site-association file, the remote switch, the OpenAPI description and the `collection-links delete` script are tested in the backend; the menu item, its toast, the recipient sheet and the `c/<id>` routes in the app shell; the associated domains entitlement through the app config. Universal links on a device are an owner check on the EAS build of 0.9 (ADR 0004).
+
+## Considered Options
+
+- **Share through Sync or an Account**: rejected. Most readers have no Account, and a pupil must be able to add a teacher's Collection without one.
+- **A live link that follows the author's edits**: rejected. The recipient's copy is theirs once added; a list that changes under the link would surprise them, and the author can share again.
+- **Entries in the URL itself**: rejected. 200 Entry ids make an unwieldy link, and the owner could never take down an abusive name.
+- **Links that expire**: rejected for now. A teacher's link should keep working next term; the owner deletes the abusive ones.
+- **An Edition-scoped address, `/v1/editions/{edition}/collection-links`**: rejected, following the owner's choice for 0.8.14's endpoints. The Edition travels in the body.
+- **Keep the IP to fight abuse**: rejected. The HMAC-keyed window limits flooding without storing who shared.
+- **Merge into an existing Collection of the same name**: rejected. It would change what the reader already made; a numbered copy overwrites nothing.
+- **Drop Hidden Entries from the copy**: rejected. The copy would be silently shorter, and hiding already keeps them out everywhere else.
