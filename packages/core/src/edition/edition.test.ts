@@ -91,6 +91,7 @@ const validConfig = {
     terms: 'https://example.org/test/terms',
   },
   linkDomain: 'slovo.example',
+  wordOfTheDayFont: 'Script-Regular.ttf',
   categories: [
     { id: 'nature', displayName: 'Nature' },
     { id: 'speech', displayName: 'Speech' },
@@ -396,6 +397,20 @@ describe('loadEdition', () => {
 
     expect(() => loadEdition(config)).toThrow('legalPages');
   });
+
+  it('requires the font file of the Word of the Day', () => {
+    const { wordOfTheDayFont: _removed, ...config } = validConfig;
+
+    expect(() => loadEdition(config)).toThrow('wordOfTheDayFont');
+    expect(() => loadEdition({ ...validConfig, wordOfTheDayFont: 'Script.otf' })).not.toThrow();
+  });
+
+  it.each(['script.woff', 'fonts/Script.ttf', '', '.ttf'])(
+    'refuses %j as the font file of the Word of the Day',
+    (wordOfTheDayFont) => {
+      expect(() => loadEdition({ ...validConfig, wordOfTheDayFont })).toThrow('wordOfTheDayFont');
+    },
+  );
 
   it('rejects a legal page address that is not a web address', () => {
     expect(() =>

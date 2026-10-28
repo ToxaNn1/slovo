@@ -339,6 +339,14 @@ const DomainSchema = z
     'Expected a lower-case domain such as slovo.example',
   );
 
+/** The file name of a font among an Edition's fonts, in its `assets/fonts/` folder. */
+const FontFileSchema = z
+  .string()
+  .regex(
+    /^[A-Za-z0-9][A-Za-z0-9._-]*\.(ttf|otf)$/,
+    'Expected a plain file name ending in .ttf or .otf',
+  );
+
 /** The id of an Edition, e.g. `uk`. */
 export const EditionIdSchema = z.string().regex(/^[a-z][a-z0-9-]*$/, 'Expected a lowercase id');
 
@@ -367,6 +375,12 @@ export const EditionConfigSchema = z
      * turns it into the associated domains entitlement.
      */
     linkDomain: DomainSchema,
+    /**
+     * The font file, among the Edition's fonts, that sets the Lemma on the
+     * Word of the Day card. The Edition check refuses a font without a glyph
+     * for a letter of the alphabet, in either case, or for the Stress mark.
+     */
+    wordOfTheDayFont: FontFileSchema,
     /**
      * The Categories, in their order, as the Language Pack build writes them
      * into the pack. The app reads them from the pack only (ADR 0033).
