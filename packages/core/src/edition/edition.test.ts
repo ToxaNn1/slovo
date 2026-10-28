@@ -92,6 +92,10 @@ const validConfig = {
   },
   linkDomain: 'slovo.example',
   wordOfTheDayFont: 'Script-Regular.ttf',
+  widgetPalette: {
+    parchment: { background: '#F3E9D2', text: '#3B2A1A' },
+    blue: { background: '#1F3A5F', text: '#F3EEE2' },
+  },
   categories: [
     { id: 'nature', displayName: 'Nature' },
     { id: 'speech', displayName: 'Speech' },
@@ -409,6 +413,54 @@ describe('loadEdition', () => {
     'refuses %j as the font file of the Word of the Day',
     (wordOfTheDayFont) => {
       expect(() => loadEdition({ ...validConfig, wordOfTheDayFont })).toThrow('wordOfTheDayFont');
+    },
+  );
+
+  it('requires the widget palette', () => {
+    const { widgetPalette: _removed, ...config } = validConfig;
+
+    expect(() => loadEdition(config)).toThrow('widgetPalette');
+  });
+
+  it.each(['parchment', 'blue'] as const)('requires the %s background of the widget', (name) => {
+    const { [name]: _removed, ...widgetPalette } = validConfig.widgetPalette;
+
+    expect(() => loadEdition({ ...validConfig, widgetPalette })).toThrow(`widgetPalette.${name}`);
+  });
+
+  it.each([
+    ['parchment', '#F3E9D2', '#A08C70'],
+    ['blue', '#1F3A5F', '#4F6A8F'],
+  ] as const)(
+    'refuses %s text below 4.5:1 contrast with its background (%s on %s)',
+    (name, background, text) => {
+      expect(() =>
+        loadEdition({
+          ...validConfig,
+          widgetPalette: { ...validConfig.widgetPalette, [name]: { background, text } },
+        }),
+      ).toThrow(`widgetPalette.${name}.text`);
+    },
+  );
+
+  it('accepts text at 4.5:1 contrast with its background', () => {
+    // #767676 on white is 4.54:1, the lightest grey that passes WCAG AA.
+    const parchment = { background: '#FFFFFF', text: '#767676' };
+
+    expect(() =>
+      loadEdition({ ...validConfig, widgetPalette: { ...validConfig.widgetPalette, parchment } }),
+    ).not.toThrow();
+  });
+
+  it.each(['F3E9D2', '#F3E9D', 'rgba(0, 0, 0, 1)'])(
+    'refuses %j as a colour of the widget palette',
+    (background) => {
+      expect(() =>
+        loadEdition({
+          ...validConfig,
+          widgetPalette: { ...validConfig.widgetPalette, blue: { background, text: '#FFFFFF' } },
+        }),
+      ).toThrow('widgetPalette.blue.background');
     },
   );
 

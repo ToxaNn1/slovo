@@ -89,6 +89,10 @@
   },
   "linkDomain": "slovo.example",
   "wordOfTheDayFont": "Fixture-Script.ttf",
+  "widgetPalette": {
+    "parchment": { "background": "#F3E9D2", "text": "#3B2A1A" },
+    "blue": { "background": "#1F3A5F", "text": "#F3E9D2" }
+  },
   "categories": [
     {
       "id": "nature",
