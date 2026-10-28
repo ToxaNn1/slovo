@@ -549,6 +549,7 @@ export async function openComposition({
       entries,
       favorites,
       collections,
+      history,
       onboarding,
       clock,
       opened: openedFromOutside,
