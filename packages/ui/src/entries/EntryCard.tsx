@@ -41,6 +41,12 @@ export interface EntryCardProps {
    * Entry screen, while the Edition's `stressAnimation` is on in effect.
    */
   stressFalls?: boolean;
+  /**
+   * The Edition's calligraphic font family, which the Lemma on the card of
+   * the Word of the Day is set in: only in the Feed, while the Edition's
+   * `calligraphy` is on in effect. Any other card keeps the Word font.
+   */
+  wordOfTheDayFont?: string | undefined;
 }
 
 /** On the SE the padding shrinks by 25% (the Lemma's size is in `useLemmaSize`). */
@@ -76,6 +82,7 @@ export function EntryCard({
   actions,
   selfCheck = false,
   stressFalls = false,
+  wordOfTheDayFont,
 }: EntryCardProps) {
   const { concealed, reveal } = useSelfCheck(selfCheck);
   const { strings } = useEdition();
@@ -113,6 +120,7 @@ export function EntryCard({
             onOpenSynonymRow={onOpenSynonymRow}
             concealed={concealed}
             stressFalls={stressFalls}
+            wordOfTheDayFont={wordOfTheDayFont}
           />
         ) : card.kind === 'correction' ? (
           <CorrectionCardBody card={card.model} lemmaSize={lemmaSize} concealed={concealed} />

@@ -44,6 +44,7 @@ export function WordCardBody({
   onOpenSynonymRow,
   concealed,
   stressFalls,
+  wordOfTheDayFont,
 }: {
   card: WordCardModel;
   /** On the card of the Word of the Day: the local day it is the Word of. */
@@ -58,6 +59,8 @@ export function WordCardBody({
   concealed: boolean;
   /** The falling Stress: on a Word card in the Feed and on the Entry screen, while its Feature Switch is on. */
   stressFalls: boolean;
+  /** The calligraphic font family the Lemma is set in on the card of the Word of the Day. */
+  wordOfTheDayFont: string | undefined;
 }) {
   const { colors, fontFamilies } = useTokens();
   const sizes = useWordTextSizes();
@@ -79,6 +82,8 @@ export function WordCardBody({
     stressFalls && reduceMotion !== true && card.stressedVowels.length > 0
       ? { mark: STRESS_MARK, playing: onScreen && reduceMotion === false }
       : undefined;
+  const lemmaFont =
+    (wordOfTheDay === undefined ? undefined : wordOfTheDayFont) ?? fontFamilies.word;
 
   const grammar = (form: 'short' | 'full') => partOfSpeechText(strings, card, form);
 
@@ -109,7 +114,7 @@ export function WordCardBody({
             numberOfLines={card.lemma.includes(' ') ? 2 : 1}
             adjustsFontSizeToFit
             minimumFontScale={0.5}
-            style={[styles.lemma, { color: colors.ink, fontFamily: fontFamilies.word }]}
+            style={[styles.lemma, { color: colors.ink, fontFamily: lemmaFont }]}
           />
           <View style={styles.grammar}>
             <Text
