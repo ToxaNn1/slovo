@@ -235,6 +235,20 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
           await client.edition.switches({ params: { editionId: 'pl' } }).catch(refused);
         },
       },
+      reports: {
+        send: async () => {
+          const report = {
+            editionId: EDITION,
+            entryId: 'w_a1',
+            type: 'other',
+            comment: 'reader@example.com',
+            appVersion: '0.8.14',
+            contentVersion: 1,
+          } as const;
+          await client.reports.send(report).catch(refused);
+          await client.reports.send({ ...report, comment: '' }).catch(refused);
+        },
+      },
       sync: {
         push: async () => {
           const device = await signIn();
