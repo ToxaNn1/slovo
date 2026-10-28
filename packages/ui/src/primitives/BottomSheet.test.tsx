@@ -165,6 +165,23 @@ describe('BottomSheet', () => {
     expect(onDismissed).toHaveBeenCalledTimes(1);
   });
 
+  it('slides up again in 300 ms when opened after a flick closed it', async () => {
+    const { onClose, onDismissed } = await renderSheet();
+    await pass(300);
+    await drag(40, 1500);
+    await screen.rerender(sheet(false, onClose, onDismissed));
+    await pass(500);
+
+    await screen.rerender(sheet(true, onClose, onDismissed));
+    await pass(150);
+
+    expect(sheetNow().down).toBeGreaterThan(0);
+
+    await pass(150);
+
+    expect(sheetNow()).toEqual({ down: 0, opacity: 1 });
+  });
+
   it('fades out where a flick leaves it, with Reduce Motion', async () => {
     reduceMotion(true);
     const { onDismissed, close } = await renderSheet();

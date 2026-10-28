@@ -131,9 +131,14 @@ export function BottomSheet({
         scheduleOnRN(setMounted, false);
         if (wasOpen) scheduleOnRN(dismissed);
       };
-      // A drag that closed it carries on down from where the finger left it.
+      // A drag that closed it carries on down from where the finger left it,
+      // and leaves it away, so the next open slides up again.
       if (velocity !== undefined && !reduceMotion) {
-        drag.value = withSpring(height.value, { ...DRAG_SPRING, velocity }, gone);
+        drag.value = withSpring(height.value, { ...DRAG_SPRING, velocity }, (finished) => {
+          'worklet';
+          if (finished === true) progress.value = 0;
+          gone(finished);
+        });
       } else {
         progress.value = withTiming(0, SLIDE_OUT, gone);
       }
