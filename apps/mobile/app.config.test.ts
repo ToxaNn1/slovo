@@ -4,7 +4,12 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { EDITIONS_DIR, openEdition, type EditionFolder } from '@slovo/language-pack/edition';
+import {
+  EDITIONS_DIR,
+  FONTS_DIR,
+  openEdition,
+  type EditionFolder,
+} from '@slovo/language-pack/edition';
 import type { ConfigContext, ExpoConfig } from 'expo/config';
 import { compileModsAsync } from 'expo/config-plugins';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -159,7 +164,7 @@ describe('app config', () => {
     expect(config.ios?.bundleIdentifier).toBe('app.slovo.uk');
     expect(config.icon).toMatch(/editions\/uk\/assets\/icon\.png$/);
     expect(config.ios?.infoPlist?.['CFBundleDevelopmentRegion']).toBe('uk');
-    expect(config.extra?.['edition']).toEqual({ id: 'uk' });
+    expect(config.extra?.['edition']).toMatchObject({ id: 'uk' });
   });
 
   it('turns on the React Compiler (ADR 0059)', () => {
@@ -222,15 +227,47 @@ describe('app config', () => {
     );
   });
 
-  it('embeds no fonts when the Edition brings none', () => {
+  it('embeds the Word of the Day font and passes its family on to the app', () => {
     vi.stubEnv('SLOVO_EDITION', 'uk');
-    const withoutFonts = repoWithEdition(() => undefined, {
+
+    const config = appConfig(context);
+    const { fonts } = pluginOptions(config, 'expo-font') as { fonts: string[] };
+
+    expect(fonts).toContain('../../editions/uk/assets/fonts/Kurale-Regular.ttf');
+    expect(config.extra?.['edition']).toEqual({ id: 'uk', wordOfTheDayFontFamily: 'Kurale' });
+  });
+
+  it('passes on the family of whichever font the Edition names for the Word of the Day', () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+    const config = appConfig(
+      repoWithEdition((edition) => {
+        edition['wordOfTheDayFont'] = 'Literata-Italic.ttf';
+      }),
+    );
+
+    expect(config.extra?.['edition']).toMatchObject({ wordOfTheDayFontFamily: 'Literata' });
+  });
+
+  it('fails clearly when the Word of the Day font is not among the Edition fonts', () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+    const withoutFont = repoWithEdition(() => undefined, {
       change: (edition) => {
-        for (const font of edition.fonts()) rmSync(font);
+        rmSync(join(edition.dir, FONTS_DIR, 'Kurale-Regular.ttf'));
       },
     });
 
-    expect(pluginOptions(appConfig(withoutFonts), 'expo-font')).toEqual({ fonts: [] });
+    expect(() => appConfig(withoutFont)).toThrow(/wordOfTheDayFont.*Kurale-Regular\.ttf/);
+  });
+
+  it('fails clearly when the Word of the Day font is not a font', () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+    const notAFont = repoWithEdition(() => undefined, {
+      change: (edition) => {
+        writeFileSync(join(edition.dir, FONTS_DIR, 'Kurale-Regular.ttf'), 'not a font');
+      },
+    });
+
+    expect(() => appConfig(notAFont)).toThrow(/Kurale-Regular\.ttf has no family name/);
   });
 
   it("takes the splash from the Edition's Decor in both Themes", () => {

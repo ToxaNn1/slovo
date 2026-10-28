@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { basename, join, relative } from 'node:path';
 
 import type * as Contracts from '@slovo/contracts';
 import type * as EditionFolders from '@slovo/language-pack/edition';
@@ -10,6 +10,7 @@ import type * as ConfigPlugins from 'expo/config-plugins';
 import { require as tsxRequire } from 'tsx/cjs/api';
 
 import type * as AppIntents from './plugins/app-intents';
+import type * as FontFamily from './plugins/font-family';
 import type * as NotificationSound from './plugins/notification-sound';
 import type * as WidgetExtension from './plugins/widget-extension';
 
@@ -41,6 +42,10 @@ const { appIntentTitles, writeAppIntents } = tsxRequire(
   './plugins/app-intents.ts',
   import.meta.url,
 ) as typeof AppIntents;
+const { readFontFamily } = tsxRequire(
+  './plugins/font-family.ts',
+  import.meta.url,
+) as typeof FontFamily;
 const { readNotificationSound } = tsxRequire(
   './plugins/notification-sound.ts',
   import.meta.url,
@@ -122,6 +127,24 @@ function editionNotificationSounds(edition: EditionFolder, projectRoot: string):
     );
   }
   return [relative(projectRoot, file)];
+}
+
+/**
+ * The family of the Word of the Day font the Edition names, which the app
+ * sets the Lemma on the Word of the Day card in (ADR 0006). The font is
+ * embedded with the Edition's other fonts.
+ */
+function wordOfTheDayFontFamily(edition: EditionFolder): string {
+  const name = edition.config.wordOfTheDayFont;
+  const file = edition.fonts().find((font) => basename(font) === name);
+  if (file === undefined) {
+    throw new Error(
+      `${edition.path('config')} names a wordOfTheDayFont that is not among the Edition's fonts: ${name}`,
+    );
+  }
+  const family = readFontFamily(readFileSync(file));
+  if (family === undefined) throw new Error(`${file} has no family name: is it a font?`);
+  return family;
 }
 
 /**
@@ -289,7 +312,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       ...googleSignIn(),
     ],
     extra: {
-      edition: { id: edition.config.id },
+      edition: { id: edition.config.id, wordOfTheDayFontFamily: wordOfTheDayFontFamily(edition) },
       // The EAS project @anton_de/slovo.
       eas: { projectId: 'e2401ef2-2a47-407e-b0ff-03706421b71c' },
     },
