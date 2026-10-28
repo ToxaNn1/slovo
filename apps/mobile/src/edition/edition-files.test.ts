@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 
 import {
+  COLLECTION_LINK_SIZE,
   EditionConfigSchema,
   EditionDecorSchema,
   EditionStringsSchema,
@@ -496,6 +497,13 @@ describe('the 0.8.15 strings', () => {
     expect(link.offline).toBe('Немає з’єднання. Спробуйте пізніше.');
     expect(link.add).toBe('Додати собі');
     expect(link.notFound).not.toBe('');
+  });
+
+  it('the Ukrainian Edition says how many Entries a Collection Link holds, as the contract does', () => {
+    const { link } = parsed.collections;
+
+    expect(link.tooManyEntries).toContain(String(COLLECTION_LINK_SIZE));
+    expect(link.failed).not.toBe('');
   });
 
   it.each([
