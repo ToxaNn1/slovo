@@ -1,8 +1,12 @@
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
 import { checkLanguagePack, formatBuildError, recordContent } from '@slovo/language-pack';
-import { EditionFolderError, type EditionFolder } from '@slovo/language-pack/edition';
+import {
+  EditionFolderError,
+  ILLUSTRATIONS_DIR,
+  type EditionFolder,
+} from '@slovo/language-pack/edition';
 
 /** Opens a file for the owner and returns once they close it. */
 export interface Editor {
@@ -43,8 +47,8 @@ export type EntryKind = keyof typeof ENTRY_KINDS;
 /**
  * Drafts an Entry of the given kind with an id no Entry of the Edition has
  * had, in the file the build reads it from, and opens it in the editor. For
- * a Word it first prints the origin codes and the moods the Edition lists.
- * Once the draft passes the build's checks, the content is recorded as
+ * a Word it first prints the origin codes and the moods the Edition lists,
+ * and the Illustrations it has. Once the draft passes the build's checks, the content is recorded as
  * `pnpm build:pack --record` records it: the new id joins the id registry
  * and the content version grows. A draft closed unchanged is removed, so
  * nothing is written and no id is issued. Returns the exit code.
@@ -81,7 +85,7 @@ export async function newEntry(kind: EntryKind, tool: ContentTool): Promise<numb
  * expression, non-standard form, a Synonym Row's dominant or a Tip's title, with or without stress marks and in any
  * case. When the text matches several Entries, such as homonyms, it lists
  * them and asks which one to open. For a Word it first prints the origin
- * codes and the moods the Edition lists. After each save the content is checked
+ * codes and the moods the Edition lists, and the Illustrations it has. After each save the content is checked
  * and recorded as `newEntry` does; an Entry closed unchanged writes nothing.
  * Returns the exit code.
  */
@@ -183,7 +187,8 @@ export function checkEdition({ edition, terminal }: ContentTool): number {
  * nothing: a draft is removed, an existing Entry kept as it was. A deleted
  * draft is gone; a deleted Entry is written back, since its id stays taken
  * (ADR 0010) and only retiring withdraws it. A Word saved with its last
- * mood removed loses the field, since a Word without moods leaves it out.
+ * mood removed, or its `illustration` empty, loses the field, since a Word
+ * without one leaves it out.
  */
 async function editUntilRecorded(
   file: string,
@@ -201,7 +206,7 @@ async function editUntilRecorded(
       terminal.print(`${file} closed unchanged: nothing written`);
       return 0;
     }
-    dropEmptyMoods(path);
+    dropEmptyFields(path);
     const recorded = recordContent({ editionDir: edition.dir });
     if (recorded.ok) {
       terminal.print(`Recorded ${file}`);
@@ -220,29 +225,45 @@ async function editUntilRecorded(
 
 /**
  * Prints the origin codes the Edition lists, which a Word's optional `origin`
- * takes one of, and the moods, which its optional `moods` takes any of.
+ * takes one of, the moods, which its optional `moods` takes any of, and the
+ * files its optional `illustration` may name (ADR 0055).
  */
 function offerWordFields({ edition, terminal }: ContentTool): void {
   const { originLanguages, moods } = edition.config;
   const codes = originLanguages.map(({ code, name }) => `${code} (${name})`);
   terminal.print(`  origin: one of ${codes.join(', ')}, or none`);
-  if (moods.length === 0) return;
-  const ids = moods.map(({ id, name }) => `${id} (${name})`);
-  terminal.print(`  moods: any of ${ids.join(', ')}, or none`);
+  if (moods.length > 0) {
+    const ids = moods.map(({ id, name }) => `${id} (${name})`);
+    terminal.print(`  moods: any of ${ids.join(', ')}, or none`);
+  }
+  const dir = join(edition.dir, ILLUSTRATIONS_DIR);
+  const files = existsSync(dir) ? readdirSync(dir).toSorted() : [];
+  const listed = files.length === 0 ? '' : ` (${files.join(', ')})`;
+  terminal.print(
+    `  illustration: a square PNG of at most 150 KB in ${ILLUSTRATIONS_DIR}/${listed}, or none`,
+  );
 }
 
-/** Rewrites a Word saved with an empty `moods` list without the field. */
-function dropEmptyMoods(path: string): void {
+/**
+ * Rewrites a Word saved with an empty `moods` list or an empty
+ * `illustration` without that field.
+ */
+function dropEmptyFields(path: string): void {
   let entry: unknown;
   try {
     entry = JSON.parse(readFileSync(path, 'utf8'));
   } catch {
     return;
   }
-  if (typeof entry !== 'object' || entry === null || !('moods' in entry)) return;
-  const { moods, ...rest } = entry;
-  if (!Array.isArray(moods) || moods.length > 0) return;
-  writeFileSync(path, `${JSON.stringify(rest, null, 2)}\n`);
+  if (typeof entry !== 'object' || entry === null) return;
+  const fields = Object.entries(entry);
+  const kept = fields.filter(
+    ([key, value]) =>
+      !(key === 'moods' && Array.isArray(value) && value.length === 0) &&
+      !(key === 'illustration' && value === ''),
+  );
+  if (kept.length === fields.length) return;
+  writeFileSync(path, `${JSON.stringify(Object.fromEntries(kept), null, 2)}\n`);
 }
 
 function printContentVersion(
@@ -365,6 +386,7 @@ function draftEntry(kind: EntryKind, id: string, edition: EditionFolder): Record
         rarity: 3,
         sources,
         correctionIds: [],
+        illustration: '',
       };
     case 'correction':
       return {
