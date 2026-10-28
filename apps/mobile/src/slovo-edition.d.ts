@@ -30,6 +30,12 @@ declare module 'slovo-edition/splash' {
   export default splash;
 }
 
+/** The asset ids of the Illustrations the Edition brings, by file name. */
+declare module 'slovo-edition/illustrations' {
+  const illustrations: Readonly<Record<string, number>>;
+  export default illustrations;
+}
+
 declare module 'slovo-edition/language-pack' {
   /** The asset id of the compiled Language Pack. */
   const assetId: number;

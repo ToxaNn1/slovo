@@ -1,4 +1,5 @@
-const { existsSync } = require('node:fs');
+const { existsSync, mkdirSync, writeFileSync } = require('node:fs');
+const { dirname, relative } = require('node:path');
 
 const { getConfig } = require('expo/config');
 const { getDefaultConfig } = require('expo/metro-config');
@@ -29,12 +30,31 @@ const editionModules = {
   // Optional: an Edition without Decor gets the Core's neutral Decor.
   'slovo-edition/decor': { type: 'sourceFile', editionFile: 'decor', optional: true },
   'slovo-edition/splash': { type: 'sourceFile', editionFile: 'splash', optional: true },
+  'slovo-edition/illustrations': { type: 'sourceFile', editionFile: 'illustrations' },
   'slovo-edition/language-pack': {
     type: 'assetFiles',
     editionFile: 'languagePack',
     missing: `Run \`pnpm build:pack ${editionId}\` to build the Language Pack first.`,
   },
 };
+
+/**
+ * The Illustrations of the Edition as a module Metro bundles (ADR 0055): each
+ * PNG of its `assets/illustrations/` by file name, written next to the
+ * Language Pack in the Edition's build output, which git ignores.
+ */
+function illustrationsModule() {
+  const filePath = `${dirname(edition.path('languagePack'))}/illustrations.js`;
+  const lines = edition.illustrations().map((name) => {
+    const asset = relative(dirname(filePath), edition.illustration(name));
+    return `  ${JSON.stringify(name)}: require(${JSON.stringify(`./${asset}`)}),`;
+  });
+  mkdirSync(dirname(filePath), { recursive: true });
+  writeFileSync(filePath, `module.exports = {\n${lines.join('\n')}\n};\n`);
+  return filePath;
+}
+
+const editionPaths = { illustrations: illustrationsModule() };
 
 /**
  * The CLDR plural rules of the Edition's language for the `Intl.PluralRules`
@@ -68,7 +88,8 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   if (editionModule === undefined) {
     return (resolveRequest ?? context.resolveRequest)(context, moduleName, platform);
   }
-  const filePath = edition.path(editionModule.editionFile);
+  const filePath =
+    editionPaths[editionModule.editionFile] ?? edition.path(editionModule.editionFile);
   if (editionModule.optional && (useCoreTokens || !existsSync(filePath))) {
     return { type: 'empty' };
   }

@@ -18,7 +18,13 @@ import { useMemo, type ComponentProps } from 'react';
 import { Pressable } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
-import { edition, editionDecor, editionStrings, editionTokens } from '@/edition/edition';
+import {
+  edition,
+  editionDecor,
+  editionIllustrations,
+  editionStrings,
+  editionTokens,
+} from '@/edition/edition';
 import { hapticEngine } from '@/game/haptics';
 import { languagePackOpening } from '@/content-update/language-pack';
 import { compositionOpening } from '@/composition';
@@ -110,6 +116,7 @@ export default function RootLayout() {
           edition={edition}
           strings={editionStrings}
           pronunciation={LemmaPronunciation}
+          illustrations={editionIllustrations}
         >
           <DecorProvider decor={editionDecor}>
             <ThemedTabs />
