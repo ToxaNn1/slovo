@@ -74,6 +74,13 @@ describe('the Daily Limit card', () => {
     expect(screen.getByRole('button', { name: 'Keep going' })).toBeTruthy();
   });
 
+  it('reads its text to VoiceOver as one element, then the button', async () => {
+    await renderFeed(<DailyLimitCard />);
+
+    expect(screen.getByLabelText('Enough for today. Come back tomorrow')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Keep going' })).toBeTruthy();
+  });
+
   it('turns to the next card on «Keep going», as a swipe would, so it leaves the screen', async () => {
     const onIndexChange = jest.fn();
     await renderFeed(<DailyLimitCard />, onIndexChange);
@@ -94,6 +101,20 @@ describe('the first-week card', () => {
     expect(screen.getByText('Know it or not?')).toBeTruthy();
     expect(screen.getByText('Tap Know or Don’t know.')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Got it' })).toBeTruthy();
+  });
+
+  it('reads its title and text to VoiceOver as one element, with no stop after a question mark', async () => {
+    await renderFeed(<FirstWeekCard day={1} streak={undefined} />);
+
+    expect(screen.getByLabelText('Know it or not? Tap Know or Don’t know.')).toBeTruthy();
+  });
+
+  it('puts a stop between a title and its text where the title has none', async () => {
+    await renderFeed(<FirstWeekCard day={7} streak={undefined} />);
+
+    expect(
+      screen.getByLabelText('A week with us. Thanks for staying! Come back for new words.'),
+    ).toBeTruthy();
   });
 
   it('shows the card of its own day', async () => {

@@ -98,6 +98,7 @@ describe('the Yesterday card', () => {
 
     expect(screen.getByTestId('feed-notice-yesterday')).toBeTruthy();
     expect(screen.getByText('Remember yesterday’s word?')).toBeTruthy();
+    expect(screen.getByLabelText('Remember yesterday’s word?')).toBeTruthy();
     expect(screen.getByText('meek')).toBeTruthy();
     expect(screen.queryByText('Quiet and gentle.')).toBeNull();
 
