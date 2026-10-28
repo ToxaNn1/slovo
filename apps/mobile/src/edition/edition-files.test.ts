@@ -1232,14 +1232,29 @@ describe('Edition Decor', () => {
     'the %s Edition',
     (edition) => {
       const { colors } = EditionTokensSchema.parse(readJson(edition, 'tokens'));
-      const { background } = EditionDecorSchema.parse(readJson(edition, 'decor'));
+      const { background, seasons, holidays } = EditionDecorSchema.parse(
+        readJson(edition, 'decor'),
+      );
+      /** Every tile Decor slot 1 may repeat: the plain one, each Season's and each Holiday's. */
+      const tiles = [
+        ...(background === undefined ? [] : [background.tile]),
+        ...Object.values(seasons ?? {}).map(({ tile }) => tile),
+        ...(holidays ?? []).map(({ motif }) => motif.tile),
+      ];
+      /** Every divider centre slot 2 may draw on a Season or a Holiday. */
+      const centres = [
+        ...Object.values(seasons ?? {}).map(({ centre }) => centre),
+        ...(holidays ?? []).map(({ motif }) => motif.centre),
+      ];
 
       it.each(['light', 'dark'] as const)(
         'keeps text at WCAG AA contrast over its background Decor in %s',
         (scheme) => {
-          if (colors === undefined || background === undefined) return;
+          if (colors === undefined) return;
           const screen = colors[scheme].background;
-          const stitched = background.tile.layers.map((layer) => over(layer[scheme], screen));
+          const stitched = tiles.flatMap(({ layers }) =>
+            layers.map((layer) => over(layer[scheme], screen)),
+          );
 
           for (const role of textRoles) {
             const text = colors[scheme][role satisfies keyof ColorTokens];
@@ -1252,8 +1267,37 @@ describe('Edition Decor', () => {
           }
         },
       );
+
+      it.each(['light', 'dark'] as const)(
+        'draws each Season and Holiday divider centre at 3:1 or more over the screen in %s',
+        (scheme) => {
+          if (colors === undefined) return;
+          const screen = colors[scheme].background;
+
+          for (const { layers } of centres) {
+            const strongest = Math.max(
+              ...layers.map((layer) => contrast(over(layer[scheme], screen), parseColor(screen))),
+            );
+            expect(strongest, JSON.stringify(layers)).toBeGreaterThanOrEqual(3);
+          }
+        },
+      );
     },
   );
+
+  it('gives every Ukrainian Season and Holiday a motif of its own', () => {
+    const { background, divider, seasons, holidays } = EditionDecorSchema.parse(
+      readJson('uk', 'decor'),
+    );
+    const motifs = [...Object.values(seasons ?? {}), ...(holidays ?? []).map(({ motif }) => motif)];
+    const drawn = (motif: unknown) => JSON.stringify(motif);
+
+    expect(motifs).toHaveLength(8);
+    expect(new Set(motifs.map(({ tile }) => drawn(tile))).size).toBe(8);
+    expect(new Set(motifs.map(({ centre }) => drawn(centre))).size).toBe(8);
+    expect(motifs.map(({ tile }) => drawn(tile))).not.toContain(drawn(background?.tile));
+    expect(motifs.map(({ centre }) => drawn(centre))).not.toContain(drawn(divider?.centre));
+  });
 });
 
 /**
