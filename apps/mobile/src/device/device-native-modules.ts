@@ -12,7 +12,8 @@ import { createNativeModules } from './native-module';
  * reload. Sharing needs the view capture, with `expo-file-system` to move
  * its image into the cache. Content updates need `expo-file-system` to keep
  * a downloaded Language Pack, and the Session needs `expo-secure-store`, the
- * Keychain. Google sign-in needs Google's SDK, a module of the registry.
+ * Keychain. Google sign-in needs Google's SDK, a module of the registry. The iPhone search needs the app's own
+ * Spotlight module (`modules/spotlight`).
  */
 export const nativeModules = createNativeModules({
   notifications: () =>
@@ -28,4 +29,5 @@ export const nativeModules = createNativeModules({
   contentUpdates: () => requireOptionalNativeModule('FileSystem') !== null,
   keychain: () => requireOptionalNativeModule('ExpoSecureStore') !== null,
   googleSignIn: () => TurboModuleRegistry.get('RNGoogleSignin') !== null,
+  spotlight: () => requireOptionalNativeModule('SlovoSpotlight') !== null,
 });
