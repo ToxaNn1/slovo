@@ -204,8 +204,10 @@ export async function openKnowledge({
   }
 
   /**
-   * Marks the Entry by the change the record and today give, with the instant
-   * of the mark, unless the switch is off.
+   * Marks the Entry by the change the record and today give, unless the switch
+   * is off. The record keeps the instant its mark was set: a change that
+   * leaves the same mark, as a Review answer «Знаю» on a Known Entry, keeps
+   * the time it had (or none, for a mark set before 0.8.13).
    */
   const change = (
     entryId: string,
@@ -214,10 +216,16 @@ export async function openKnowledge({
     inTurn(async () => {
       if (!edition.isFeatureEnabled('knowledge')) return;
       await readRow(entryId);
-      const record = next(records.get(entryId));
-      await keep(
+      const previous = records.get(entryId);
+      const record = next(previous);
+      if (record === undefined) return keep(entryId, undefined);
+      const { mark, step, reviewDay, learned } = record;
+      const markedAt = mark === previous?.mark ? previous.markedAt : clock.now().toISOString();
+      return keep(
         entryId,
-        record === undefined ? undefined : { ...record, markedAt: clock.now().toISOString() },
+        markedAt === undefined
+          ? { mark, step, reviewDay, learned }
+          : { mark, step, reviewDay, learned, markedAt },
       );
     });
 
