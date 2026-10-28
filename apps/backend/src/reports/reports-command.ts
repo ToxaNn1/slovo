@@ -20,8 +20,12 @@ type Request =
   | { readonly command: 'list'; readonly filter: ReportFilter }
   | { readonly command: 'resolve'; readonly id: string };
 
-/** The filter the arguments of `list` name, or undefined when they are not the ones it takes. */
-function listFilter(args: string[]): ReportFilter | undefined {
+/**
+ * The filter the arguments of `list` name; a line saying what is wrong with
+ * `--since` when it is no day of the calendar; or undefined when they are not
+ * the arguments it takes.
+ */
+function listFilter(args: string[]): ReportFilter | string | undefined {
   let values: { edition?: string; since?: string };
   try {
     ({ values } = parseArgs({
@@ -33,25 +37,33 @@ function listFilter(args: string[]): ReportFilter | undefined {
   }
   const { edition, since } = values;
   if (since === undefined) return { editionId: edition };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(since)) return undefined;
+  // Date reads 2026-02-30 as 2 March, so a day counts only when it reads back the same.
   const day = new Date(since);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(since) || Number.isNaN(day.getTime())) return undefined;
+  if (Number.isNaN(day.getTime()) || day.toISOString().slice(0, 10) !== since) {
+    return `--since ${since} is no day of the calendar.`;
+  }
   return { editionId: edition, since: day };
 }
 
-/** The request the arguments make, or undefined when they are not ones the command takes. */
-function readRequest([command, ...args]: string[]): Request | undefined {
+/**
+ * The request the arguments make; a line saying what is wrong with them; or
+ * undefined when they are not ones the command takes.
+ */
+function readRequest([command, ...args]: string[]): Request | string | undefined {
   if (command === 'resolve') {
     const [id, ...rest] = args;
     return id === undefined || rest.length > 0 ? undefined : { command, id };
   }
   if (command !== 'list') return undefined;
   const filter = listFilter(args);
-  return filter === undefined ? undefined : { command, filter };
+  return filter === undefined || typeof filter === 'string' ? filter : { command, filter };
 }
 
 async function main(): Promise<number> {
   const request = readRequest(process.argv.slice(2));
-  if (request === undefined) {
+  if (request === undefined || typeof request === 'string') {
+    if (request !== undefined) console.error(request);
     console.error(USAGE);
     return 2;
   }
