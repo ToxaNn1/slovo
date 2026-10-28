@@ -110,6 +110,7 @@ export function createApp({
   const mistakeReports = createMistakeReports({
     editions: editionRegistry,
     store: createMistakeReportStore(database),
+    rateLimits,
     clock,
   });
   const api = createApiHandler({
