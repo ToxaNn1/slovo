@@ -4,6 +4,7 @@
  * `timestamptz` and every id a UUID (spec #333, Data model). The tables come
  * with the tickets that need them.
  */
+import type { MistakeType } from '@slovo/contracts';
 import type { Json } from '@slovo/server-core';
 import {
   bigserial,
@@ -214,4 +215,30 @@ export const userRecords = pgTable(
     primaryKey({ columns: [table.accountId, table.editionId, table.key] }),
     index().on(table.accountId, table.editionId, table.sequence),
   ],
+);
+
+/**
+ * The Mistake Reports still to check (ADR 0056): one row per report, with
+ * its time of arrival. It holds no IP address, no device id and no Account.
+ * The owner deletes a report once it is checked, so the table keeps only
+ * those still to check.
+ */
+export const mistakeReports = pgTable(
+  'mistake_reports',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    editionId: text('edition_id').notNull(),
+    /** The id of the Entry reported, of any kind. */
+    entryId: text('entry_id').notNull(),
+    /** What is wrong: `typo`, `stress`, `definition` or `other`. */
+    type: text('type').$type<MistakeType>().notNull(),
+    /** The reader's comment, trimmed; empty when there is none. */
+    comment: text('comment').notNull(),
+    /** The app version the report came from (ADR 0044). */
+    appVersion: text('app_version').notNull(),
+    /** The content version of the Language Pack the reader had open. */
+    contentVersion: integer('content_version').notNull(),
+    receivedAt: time('received_at'),
+  },
+  (table) => [index().on(table.editionId, table.receivedAt)],
 );
