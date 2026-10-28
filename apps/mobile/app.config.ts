@@ -9,6 +9,7 @@ import type { ConfigContext, ExpoConfig } from 'expo/config';
 import type * as ConfigPlugins from 'expo/config-plugins';
 import { require as tsxRequire } from 'tsx/cjs/api';
 
+import type * as AppIntents from './plugins/app-intents';
 import type * as NotificationSound from './plugins/notification-sound';
 import type * as WidgetExtension from './plugins/widget-extension';
 
@@ -32,10 +33,14 @@ const { EditionFolderError, listEditions, openEdition } = tsxRequire(
   import.meta.url,
 ) as typeof EditionFolders;
 const { loadDecor } = tsxRequire('@slovo/core', import.meta.url) as typeof Core;
-const { withDangerousMod } = tsxRequire(
+const { IOSConfig, withDangerousMod, withXcodeProject } = tsxRequire(
   'expo/config-plugins',
   import.meta.url,
 ) as typeof ConfigPlugins;
+const { appIntentTitles, writeAppIntents } = tsxRequire(
+  './plugins/app-intents.ts',
+  import.meta.url,
+) as typeof AppIntents;
 const { readNotificationSound } = tsxRequire(
   './plugins/notification-sound.ts',
   import.meta.url,
@@ -157,6 +162,25 @@ function withWidgetExtension(
   ]);
 }
 
+/**
+ * Compiles the App Intents and their App Shortcuts, made from the Edition's
+ * strings, into the app's target at prebuild (ADR 0057).
+ */
+function withAppIntents(config: ExpoConfig, edition: AppIntents.AppIntentsEdition): ExpoConfig {
+  return withXcodeProject(config, (modConfig) => {
+    const { platformProjectRoot, projectName = '' } = modConfig.modRequest;
+    writeAppIntents({ iosDir: platformProjectRoot, projectName }, edition, (filepath) => {
+      // Expo skips a file already in the group, from an earlier prebuild.
+      IOSConfig.XcodeUtils.addBuildSourceFileToGroup({
+        filepath,
+        groupName: projectName,
+        project: modConfig.modResults,
+      });
+    });
+    return modConfig;
+  });
+}
+
 /** The build's Google client id for iOS, as `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` names it (ADR 0047). */
 const GOOGLE_CLIENT_ID_VARIABLE = 'EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID';
 const GOOGLE_CLIENT_ID_SUFFIX = '.apps.googleusercontent.com';
@@ -209,6 +233,10 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
 
   const scheme = `slovo-${edition.config.id}`;
   const widget = widgetEdition(edition, scheme);
+  const appIntents: AppIntents.AppIntentsEdition = {
+    displayName: edition.config.displayName,
+    strings: edition.read('strings').appIntents,
+  };
 
   const expoConfig: ExpoConfig = {
     ...config,
@@ -241,6 +269,12 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
         'com.apple.developer.associated-domains': [`applinks:${edition.config.linkDomain}`],
       },
     },
+    // The App Intents' titles, which their Swift code names by key (ADR 0057).
+    locales: {
+      [language ?? edition.config.locale]: {
+        ios: { 'Localizable.strings': appIntentTitles(appIntents.strings) },
+      },
+    },
     plugins: [
       'expo-router',
       'expo-sqlite',
@@ -260,5 +294,8 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       eas: { projectId: 'e2401ef2-2a47-407e-b0ff-03706421b71c' },
     },
   };
-  return withWidgetExtension(expoConfig, join(projectRoot, '../widget'), widget);
+  return withAppIntents(
+    withWidgetExtension(expoConfig, join(projectRoot, '../widget'), widget),
+    appIntents,
+  );
 };
