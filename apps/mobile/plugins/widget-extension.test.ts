@@ -69,26 +69,51 @@ describe("the widget extension's Edition files", () => {
 
   const fixed = (name: string) =>
     json(files, `Generated/Assets.xcassets/${name}.colorset/Contents.json`);
-  const oneColor = ([red, green, blue]: string[]) => ({
+  const oneColor = ([red, green, blue, alpha = '1.000']: string[]) => ({
     colors: [
       {
         idiom: 'universal',
-        color: { 'color-space': 'srgb', components: { red, green, blue, alpha: '1.000' } },
+        color: { 'color-space': 'srgb', components: { red, green, blue, alpha } },
       },
     ],
     info: { author: 'xcode', version: 1 },
   });
 
   it.each([
-    ['Light', ['0.961', '0.933', '0.886'], ['0.118', '0.094', '0.075']],
-    ['Dark', ['0.082', '0.067', '0.055'], ['0.953', '0.918', '0.859']],
+    [
+      'Light',
+      ['0.961', '0.933', '0.886'],
+      ['0.118', '0.094', '0.075'],
+      ['0.243', '0.204', '0.165'],
+      ['0.639', '0.133', '0.106'],
+    ],
+    [
+      'Dark',
+      ['0.082', '0.067', '0.055'],
+      ['0.953', '0.918', '0.859'],
+      ['0.851', '0.804', '0.725'],
+      ['0.831', '0.682', '0.361'],
+    ],
+  ])(
+    'writes the %s background with its ink, secondary ink and accent as colour sets that ignore the appearance',
+    (name, background, ink, inkSecondary, accent) => {
+      expect(fixed(`background${name}`)).toEqual(oneColor(background));
+      expect(fixed(`ink${name}`)).toEqual(oneColor(ink));
+      expect(fixed(`inkSecondary${name}`)).toEqual(oneColor(inkSecondary));
+      expect(fixed(`accent${name}`)).toEqual(oneColor(accent));
+    },
+  );
+
+  it.each([
     ['Parchment', ['0.953', '0.914', '0.824'], ['0.231', '0.165', '0.102']],
     ['Blue', ['0.122', '0.227', '0.373'], ['0.953', '0.914', '0.824']],
   ])(
-    'writes the %s background and its ink as colour sets that ignore the appearance',
+    'writes the %s background and its ink, with the secondary ink as the ink at 72%% and the accent as the ink, since the widget palette has one text colour',
     (name, background, ink) => {
       expect(fixed(`background${name}`)).toEqual(oneColor(background));
       expect(fixed(`ink${name}`)).toEqual(oneColor(ink));
+      expect(fixed(`inkSecondary${name}`)).toEqual(oneColor([...ink, '0.720']));
+      expect(fixed(`accent${name}`)).toEqual(oneColor(ink));
     },
   );
 
