@@ -10,6 +10,7 @@ const installed: NativeModuleProbes = {
   contentUpdates: () => true,
   keychain: () => true,
   googleSignIn: () => true,
+  spotlight: () => true,
 };
 
 describe('the native modules of the installed dev client', () => {

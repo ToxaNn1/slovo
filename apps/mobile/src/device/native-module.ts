@@ -2,8 +2,8 @@
  * The native modules a batch adds (0.4: notifications and the time picker;
  * 0.6: the widget's and the Share Card's view capture, and the file system
  * that content updates keep a downloaded pack with; 0.7: the Keychain that
- * keeps the Session; 0.8.9: Google's sign-in SDK), which a dev client built
- * before that batch lacks.
+ * keeps the Session; 0.8.9: Google's sign-in SDK; 0.8.15: the app's own
+ * Spotlight module), which a dev client built before that batch lacks.
  */
 export type NativeModuleName =
   | 'notifications'
@@ -12,7 +12,8 @@ export type NativeModuleName =
   | 'shareCapture'
   | 'contentUpdates'
   | 'keychain'
-  | 'googleSignIn';
+  | 'googleSignIn'
+  | 'spotlight';
 
 /** How to tell whether the installed binary has each native module. A probe may throw. */
 export type NativeModuleProbes = Record<NativeModuleName, () => boolean>;

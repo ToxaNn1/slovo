@@ -121,6 +121,7 @@ describe('the Language Pack the app opens at launch', () => {
       contentUpdates: () => false,
       keychain: () => false,
       googleSignIn: () => false,
+      spotlight: () => false,
     });
 
     const launched = await app.launch({
