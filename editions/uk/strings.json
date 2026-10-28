@@ -67,6 +67,14 @@
     "selfCheck": "Перевір себе",
     "soon": "СКОРО",
     "soonAccessibilityLabel": "{label}, скоро буде доступно",
+    "seasonalDecor": {
+      "title": "Сезонний декор",
+      "explanation": "Тло й роздільник змінюються з порою року та на свята. Вимкніть, щоб лишити звичайний вигляд."
+    },
+    "anonymousStats": {
+      "title": "Ділитися анонімною статистикою",
+      "explanation": "Лише анонімні лічильники: скільки читачів знають і зберегли слово. Без акаунта й без даних пристрою."
+    },
     "dailyLimit": { "title": "Ліміт на день", "off": "Вимк." },
     "widgets": "ВІДЖЕТИ",
     "howToAddWidget": "Як додати віджет",
@@ -204,6 +212,7 @@
     "oftenSaidHint": "Відкриває виправлення",
     "synonymRow": "У синонімічному ряду: {dominant}",
     "synonymRowHint": "Відкриває синонімічний ряд",
+    "illustration": "Ілюстрація до слова {lemma}",
     "reveal": "Показати значення"
   },
   "correctionCard": {
@@ -451,7 +460,30 @@
     "known": "Знаю",
     "correctionKnownHint": "Я й так кажу правильно",
     "unknown": "Не знаю",
-    "review": "Повторення"
+    "review": "Повторення",
+    "communityCounters": {
+      "known": {
+        "one": "Знають {known} з {count} читача",
+        "few": "Знають {known} з {count} читачів",
+        "many": "Знають {known} з {count} читачів",
+        "other": "Знають {known} з {count} читача"
+      },
+      "saved": "зберегли {saved}",
+      "line": "{known} · {saved}"
+    }
+  },
+  "mistakeReport": {
+    "action": "Повідомити про помилку",
+    "types": {
+      "typo": "Друкарська помилка",
+      "stress": "Наголос",
+      "definition": "Визначення",
+      "other": "Інше"
+    },
+    "comment": "Коментар (необов’язково)",
+    "send": "Надіслати",
+    "sent": "Дякуємо! Ми перевіримо.",
+    "tooMany": "Забагато повідомлень сьогодні. Спробуйте завтра."
   },
   "learning": {
     "title": "Вчу",
@@ -822,6 +854,15 @@
         "other": "Дякуємо, що ви з нами! Ваша серія — {count} дня поспіль. Повертайтеся по нові слова."
       },
       "lastDayTextNoStreak": "Дякуємо, що ви з нами! Повертайтеся по нові слова."
+    },
+    "communityWord": {
+      "title": "Слово тижня спільноти",
+      "added": {
+        "one": "додав {count} читач",
+        "few": "додали {count} читачі",
+        "many": "додали {count} читачів",
+        "other": "додали {count} читача"
+      }
     }
   },
   "wordOfTheDayArchive": {

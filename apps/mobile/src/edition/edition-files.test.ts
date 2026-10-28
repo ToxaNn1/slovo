@@ -5,6 +5,7 @@ import {
   EditionDecorSchema,
   EditionStringsSchema,
   EditionTokensSchema,
+  fill,
   PluralLabelSchema,
   PluralSchema,
   SplashDecorSchema,
@@ -339,6 +340,117 @@ describe('the 0.8.13 strings', () => {
 
       expect(withTemplates({ titles })).toEqual(['notificationTemplates.titles.3']);
     });
+  });
+});
+
+describe('the 0.8.14 strings', () => {
+  const strings = readJson('uk', 'strings') as Record<string, Record<string, unknown>>;
+  const issuesOf = (changed: unknown) =>
+    EditionStringsSchema.safeParse(changed).error?.issues.map((issue) => issue.path.join('.'));
+  const parsed = EditionStringsSchema.parse(strings);
+  const pluralRules = new Intl.PluralRules('uk');
+  /** A count text as the app fills it: the form of `count`, then the other placeholders. */
+  const countText = (forms: Record<string, string | undefined>, count: number, values = {}) =>
+    fill(forms[pluralRules.select(count)] ?? forms['other'] ?? '', {
+      count: String(count),
+      ...values,
+    });
+
+  it('the Ukrainian Edition carries the agreed Mistake Report texts verbatim', () => {
+    expect(parsed.mistakeReport).toEqual({
+      action: 'Повідомити про помилку',
+      types: {
+        typo: 'Друкарська помилка',
+        stress: 'Наголос',
+        definition: 'Визначення',
+        other: 'Інше',
+      },
+      comment: 'Коментар (необов’язково)',
+      send: 'Надіслати',
+      sent: 'Дякуємо! Ми перевіримо.',
+      tooMany: 'Забагато повідомлень сьогодні. Спробуйте завтра.',
+    });
+  });
+
+  it('the Ukrainian Edition carries the agreed Settings texts verbatim, with an explanation under each', () => {
+    expect(parsed.settings.seasonalDecor.title).toBe('Сезонний декор');
+    expect(parsed.settings.seasonalDecor.explanation).not.toBe('');
+    expect(parsed.settings.anonymousStats).toEqual({
+      title: 'Ділитися анонімною статистикою',
+      explanation:
+        'Лише анонімні лічильники: скільки читачів знають і зберегли слово. Без акаунта й без даних пристрою.',
+    });
+  });
+
+  it('the Ukrainian Edition carries the agreed Community Word and Illustration texts verbatim', () => {
+    expect(parsed.feedNotices.communityWord.title).toBe('Слово тижня спільноти');
+    expect(parsed.wordCard.illustration).toBe('Ілюстрація до слова {lemma}');
+  });
+
+  it.each([
+    [1, 'Знають 1 з 1 читача · зберегли 0'],
+    [2, 'Знають 1 з 2 читачів · зберегли 0'],
+    [5, 'Знають 1 з 5 читачів · зберегли 0'],
+    [21, 'Знають 1 з 21 читача · зберегли 0'],
+  ])('the Ukrainian counter line of %i readers reads «%s»', (total, line) => {
+    const counters = parsed.knowledge.communityCounters;
+
+    expect(
+      fill(counters.line, {
+        known: countText(counters.known, total, { known: '1' }),
+        saved: fill(counters.saved, { saved: '0' }),
+      }),
+    ).toBe(line);
+  });
+
+  it.each([
+    [1, 'додав 1 читач'],
+    [2, 'додали 2 читачі'],
+    [5, 'додали 5 читачів'],
+    [12, 'додали 12 читачів'],
+    [21, 'додав 21 читач'],
+  ])('the Ukrainian Community Word of %i readers reads «%s»', (count, text) => {
+    expect(countText(parsed.feedNotices.communityWord.added, count)).toBe(text);
+  });
+
+  it.each(['mistakeReport'])('every Edition needs %s', (key) => {
+    const without = Object.fromEntries(Object.entries(strings).filter(([name]) => name !== key));
+
+    expect(issuesOf(without)).toEqual([key]);
+  });
+
+  it.each([
+    ['settings', 'seasonalDecor'],
+    ['settings', 'anonymousStats'],
+    ['knowledge', 'communityCounters'],
+    ['feedNotices', 'communityWord'],
+    ['wordCard', 'illustration'],
+  ])('every Edition needs %s.%s', (group, key) => {
+    const without = Object.fromEntries(
+      Object.entries(strings[group] ?? {}).filter(([name]) => name !== key),
+    );
+
+    expect(issuesOf({ ...strings, [group]: without })).toEqual([`${group}.${key}`]);
+  });
+
+  it.each([
+    ['knowledge.communityCounters.known.other', 'knowledge', 'communityCounters', 'known'],
+    ['knowledge.communityCounters.saved', 'knowledge', 'communityCounters', 'saved'],
+    ['knowledge.communityCounters.line', 'knowledge', 'communityCounters', 'line'],
+    ['feedNotices.communityWord.added.other', 'feedNotices', 'communityWord', 'added'],
+  ])('needs every placeholder in %s', (path, group, area, key) => {
+    const groupStrings = strings[group] as Record<string, Record<string, unknown>>;
+    const value = groupStrings[area]?.[key];
+    const broken = typeof value === 'string' ? 'текст' : { ...(value as object), other: 'текст' };
+    const changed = { ...groupStrings, [area]: { ...groupStrings[area], [key]: broken } };
+
+    expect(issuesOf({ ...strings, [group]: changed })).toEqual([path]);
+  });
+
+  it('needs the {lemma} of the Illustration label', () => {
+    const wordCard = { ...strings['wordCard'], illustration: 'Ілюстрація' };
+
+    expect(issuesOf({ ...strings, wordCard })).toEqual(['wordCard.illustration']);
   });
 });
 
@@ -900,11 +1012,15 @@ describe('the 0.7 account and email strings groups', () => {
   });
 });
 
+/** The CLDR plural categories, the only keys of a plural-forms object. */
+const PLURAL_CATEGORIES = new Set(['zero', 'one', 'two', 'few', 'many', 'other']);
+
 /** Every plural-forms object (one with an `other` form) in the strings or a group of them. */
 function pluralsOf(value: unknown): Record<string, string>[] {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return [];
   const record = value as Record<string, unknown>;
-  return 'other' in record
+  // A Mistake Report's types hold an `other` too, beside keys no plural has.
+  return 'other' in record && Object.keys(record).every((key) => PLURAL_CATEGORIES.has(key))
     ? [record as Record<string, string>]
     : Object.values(record).flatMap(pluralsOf);
 }
