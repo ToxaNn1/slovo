@@ -12,6 +12,7 @@ const everything: Shown = {
   tabs: ['home', 'settings', 'game', 'saved'],
   gameReview: true,
   entryButtons: { shareCard: true, pronunciation: true, knowledge: true },
+  stressFall: true,
   selfCheck: false,
   selfCheckSetting: true,
   learning: true,
@@ -41,6 +42,10 @@ describe('what the reader is shown', () => {
     [
       'no Game tab with the Game off',
       { off: ['game'], shown: { tabs: ['home', 'settings', 'saved'] } },
+    ],
+    [
+      'a still Stress mark with the falling Stress off',
+      { off: ['stressAnimation'], shown: { stressFall: false } },
     ],
     ['no Search button with Search off', { off: ['search'], shown: { search: false } }],
     [
