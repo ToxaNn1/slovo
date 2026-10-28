@@ -1,5 +1,6 @@
 import {
   createAccounts,
+  createCommunityCounters,
   createContentPacks,
   createMistakeReports,
   createSync,
@@ -17,6 +18,7 @@ import type { Logger } from 'pino';
 import { createAuthenticator } from './account/authenticator';
 import { createApiHandler, INTERNAL_FAILURE, onUnexpectedFailure } from './api';
 import { createContentPackStore } from './content/content-pack-store';
+import { createCounterStore } from './counters/counter-store';
 import type { Database } from './database/database';
 import type { ErrorReporter } from './error-reporter';
 import { createEditions } from './edition/editions';
@@ -113,8 +115,13 @@ export function createApp({
     rateLimits,
     clock,
   });
+  const communityCounters = createCommunityCounters({
+    editions: editionRegistry,
+    store: createCounterStore(database),
+  });
   const api = createApiHandler({
     accounts,
+    communityCounters,
     contentPacks,
     editions: editionRegistry,
     mistakeReports,

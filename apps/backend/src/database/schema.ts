@@ -242,3 +242,25 @@ export const mistakeReports = pgTable(
   },
   (table) => [index().on(table.editionId, table.receivedAt)],
 );
+
+/**
+ * The Community Counters (ADR 0060): one row per Edition and Entry with its
+ * totals, each never below zero. A row holds no reader, IP address, device id
+ * or Account, and there is no per-reader row, so nothing links two changes to
+ * one reader.
+ */
+export const communityCounters = pgTable(
+  'community_counters',
+  {
+    editionId: text('edition_id').notNull(),
+    /** The id of the Entry counted, of any kind. */
+    entryId: text('entry_id').notNull(),
+    /** The readers who marked the Entry Known. */
+    known: integer('known').notNull().default(0),
+    /** The readers who marked the Entry Unknown. */
+    unknown: integer('unknown').notNull().default(0),
+    /** The readers who keep the Entry in their Favorites. */
+    saved: integer('saved').notNull().default(0),
+  },
+  (table) => [primaryKey({ columns: [table.editionId, table.entryId] })],
+);

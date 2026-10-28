@@ -6,6 +6,7 @@ import { apiContract } from '@slovo/contracts/api';
 import { apiDescriptionOptions } from '@slovo/contracts/api-description';
 import type {
   Accounts,
+  CommunityCounters,
   ContentPacks,
   EditionRegistry,
   MistakeReports,
@@ -61,12 +62,14 @@ interface ApiContext extends ResponseHeadersPluginContext, FailureContext {
  */
 export function createApiHandler({
   accounts,
+  communityCounters,
   contentPacks,
   editions,
   mistakeReports,
   sync,
 }: {
   accounts: Accounts;
+  communityCounters: CommunityCounters;
   contentPacks: ContentPacks;
   editions: EditionRegistry;
   mistakeReports: MistakeReports;
@@ -77,7 +80,7 @@ export function createApiHandler({
     .router({
       account: accountProcedures(accounts),
       content: contentProcedures(contentPacks),
-      counters: countersProcedures(),
+      counters: countersProcedures(communityCounters),
       edition: editionProcedures(editions),
       reports: reportsProcedures(mistakeReports),
       sync: syncProcedures(sync, accounts),

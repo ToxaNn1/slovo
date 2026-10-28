@@ -15,6 +15,7 @@ export {
   type NotServing,
   type SwitchRefusal,
 } from './edition/edition-registry';
+export { createCommunityCounters, type CommunityCounters } from './counters/community-counters';
 export { createMistakeReports, type MistakeReports } from './reports/mistake-reports';
 export { createSync, type Sync, type SyncChange, type SyncPage } from './sync/sync';
 export {
@@ -24,6 +25,7 @@ export {
   type Clock,
   type CodeCheck,
   type ContentPackStore,
+  type CounterStore,
   type GoogleIdentity,
   type GoogleTokenCheck,
   type GoogleVerifier,
