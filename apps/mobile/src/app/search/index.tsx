@@ -11,8 +11,8 @@ import {
   useTokens,
 } from '@slovo/ui';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { SectionList, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { AccessibilityInfo, SectionList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { editionStrings } from '@/edition/edition';
@@ -122,14 +122,19 @@ function SearchHeader({
   );
 }
 
-/** «Нічого не знайдено», for a query Search answered with no Entry. */
+/**
+ * «Нічого не знайдено», for a query Search answered with no Entry. VoiceOver
+ * stays in the field while the reader types, so the screen says it aloud.
+ */
 function NothingFound() {
   const { colors, fontFamilies } = useTokens();
   const { voice } = useEdition();
+  useEffect(() => {
+    AccessibilityInfo.announceForAccessibility(strings.nothingFound);
+  }, []);
   return (
     <Text
       testID="search-nothing-found"
-      accessibilityLiveRegion="polite"
       {...voice}
       style={[styles.nothingFound, { color: colors.muted, fontFamily: fontFamilies.ui }]}
     >

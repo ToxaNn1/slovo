@@ -11,6 +11,7 @@ import type { Word } from '@slovo/contracts';
 import { createMemoryContentPort } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { AccessibilityInfo } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import config from 'slovo-edition/config';
 
@@ -139,6 +140,17 @@ describe('the Search screen', () => {
     await type('ж');
     expect(screen.queryByTestId('search-nothing-found')).not.toBeOnTheScreen();
     expect(screen.queryByTestId('search-group-words')).not.toBeOnTheScreen();
+  });
+
+  it('announces «Нічого не знайдено» to VoiceOver, which stays in the field while typing', async () => {
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockClear();
+    await renderSearch();
+
+    await type('гре');
+    expect(announce).not.toHaveBeenCalled();
+
+    await type('жжж');
+    expect(announce).toHaveBeenCalledWith(strings.nothingFound);
   });
 
   it('opens a result as an Entry card over Search and keeps its query, making nothing Seen', async () => {

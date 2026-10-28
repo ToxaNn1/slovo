@@ -33,11 +33,15 @@ export function FeedNoticeCard({
   const { colors, fontFamilies } = useTokens();
   const { voice } = useEdition();
   const turnActions = usePageTurnActions();
-  const text = [title, message].filter((each) => each !== undefined);
+  // A title that ends a sentence of its own («Знаю чи не знаю?») takes no stop after it.
+  const spoken =
+    title === undefined || message === undefined
+      ? (title ?? message)
+      : `${title}${/[.?!…]$/.test(title) ? '' : '.'} ${message}`;
   return (
     <View testID={`feed-notice-${notice}`} style={styles.card}>
-      {text.length > 0 && (
-        <View accessible accessibilityLabel={text.join('. ')} {...voice} {...turnActions}>
+      {spoken !== undefined && (
+        <View accessible accessibilityLabel={spoken} {...voice} {...turnActions}>
           {title !== undefined && (
             <Text style={[styles.title, { color: colors.ink, fontFamily: fontFamilies.word }]}>
               {title}
