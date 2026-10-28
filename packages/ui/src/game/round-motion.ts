@@ -22,10 +22,10 @@ export const WRONG_FILL = {
   reduceMotion: ReduceMotion.Never,
 };
 
-/** A wrong choice shakes ±4 pt twice in 400 ms: five steps between the keyframes. */
+/** A wrong choice shakes ±4 pt twice in 300 ms: five steps between the keyframes. */
 const SHAKE = [-4, 4, -4, 4, 0] as const;
 const SHAKE_STEP = {
-  duration: 80,
+  duration: 60,
   easing: Easing.inOut(Easing.ease),
   reduceMotion: ReduceMotion.Never,
 };

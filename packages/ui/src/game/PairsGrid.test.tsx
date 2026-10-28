@@ -184,7 +184,7 @@ describe('PairsGrid', () => {
 
     await match(0, 2);
     await act(() => {
-      jest.advanceTimersByTime(80);
+      jest.advanceTimersByTime(60);
     });
 
     expect(shiftOf('pairs-word-0')).toBe(-4);
@@ -197,7 +197,7 @@ describe('PairsGrid', () => {
 
     await match(0, 1);
     await act(() => {
-      jest.advanceTimersByTime(80);
+      jest.advanceTimersByTime(60);
     });
 
     expect(shiftOf('pairs-word-0')).toBe(0);
@@ -210,7 +210,7 @@ describe('PairsGrid', () => {
 
     await match(0, 2);
     await act(() => {
-      jest.advanceTimersByTime(80);
+      jest.advanceTimersByTime(60);
     });
 
     expect(shiftOf('pairs-word-0')).toBe(0);

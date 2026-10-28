@@ -1,9 +1,11 @@
 import type { EditionStrings } from '@slovo/contracts';
 import type { CurrentGame, GivenAnswer, Haptics, PlayedRound, RoundAnswer } from '@slovo/core';
 import { EditionProvider, GameRound, HapticsProvider } from '@slovo/ui';
-import { describe, expect, it, jest } from '@jest/globals';
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { useState } from 'react';
+import { AccessibilityInfo } from 'react-native';
+import { getAnimatedStyle } from 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 const strings = {
@@ -398,6 +400,32 @@ async function renderRound(
   );
 }
 
+/** An element on the screen, as the queries return it. */
+type Shown = ReturnType<typeof screen.getByTestId>;
+
+/** A Round on its own, which a test moves on by `rerender`. */
+function PlainRound({ game }: { game: CurrentGame }) {
+  return (
+    <SafeAreaProvider initialMetrics={metrics}>
+      <EditionProvider edition={{ locale: 'en' }} strings={strings}>
+        <HapticsProvider haptics={haptics}>
+          <GameRound
+            game={game}
+            label="Definition"
+            onAnswer={jest.fn()}
+            onNext={jest.fn()}
+            onLeave={jest.fn()}
+            onOpenLetter={jest.fn()}
+          />
+        </HapticsProvider>
+      </EditionProvider>
+    </SafeAreaProvider>
+  );
+}
+
+/** The filled part of the progress bar, its share of the Rounds passed as a flex weight. */
+const barFill = () => screen.getByTestId('game-progress-filled');
+
 describe('GameRound', () => {
   it('counts the Rounds passed out of the Round limit and the Lives out of those the Game started with', async () => {
     await renderRound(jest.fn(), jest.fn(), { ...first, roundsPassed: 7, lives: 4 });
@@ -775,6 +803,138 @@ describe('GameRound', () => {
       expect(success).toHaveBeenCalledTimes(1);
       expect(warning).toHaveBeenCalledTimes(1);
       expect(screen.queryByTestId('game-next')).not.toBeOnTheScreen();
+    });
+  });
+
+  describe('the feedback of an answer', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+      // Reduce Motion off, whatever a test before turned on.
+      jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(false);
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+      jest.restoreAllMocks();
+    });
+
+    /** What an option, a Life or the progress bar's filled part shows now. */
+    function styleOf(element: Shown) {
+      const { backgroundColor, opacity, flex, transform } = getAnimatedStyle(element);
+      return {
+        backgroundColor,
+        opacity,
+        flex,
+        transform: transform as { translateX?: number; scale?: number }[] | undefined,
+      };
+    }
+
+    /** The face of the option at that place, which fills, grows and shakes. */
+    const optionFace = (place: number) => {
+      const [face] = screen.getByTestId(`game-option-${String(place)}`).children;
+      if (typeof face !== 'object') throw new Error('No option face');
+      return face;
+    };
+    const step = (element: Shown, key: 'translateX' | 'scale') =>
+      styleOf(element).transform?.find((one) => one[key] !== undefined)?.[key];
+    /** The Life at that place, which pops when lost, and its fill, which fades. */
+    const life = (place: number) => screen.getByTestId(`game-life-${String(place)}`);
+    const lifeFill = (place: number) => screen.getByTestId(`game-life-${String(place)}-fill`);
+
+    async function wait(ms: number) {
+      await act(() => {
+        jest.advanceTimersByTime(ms);
+      });
+    }
+
+    it('fills a right answer green and grows it, both within 300 ms', async () => {
+      await renderRound();
+      const before = styleOf(optionFace(CORRECT)).backgroundColor;
+
+      await fireEvent.press(screen.getByRole('button', { name: 'candid' }));
+      await wait(300);
+
+      const filled = styleOf(optionFace(CORRECT)).backgroundColor;
+      expect(filled).not.toBe(before);
+      expect(step(optionFace(CORRECT), 'scale')).toBeCloseTo(1.03);
+      await wait(1000);
+      expect(styleOf(optionFace(CORRECT)).backgroundColor).toBe(filled);
+      expect(step(optionFace(CORRECT), 'translateX')).toBe(0);
+    });
+
+    it('shakes a wrong choice ±4 pt and settles it within 300 ms, the lost Life popping back within 300 ms more', async () => {
+      await renderRound();
+
+      await fireEvent.press(screen.getByRole('button', { name: 'brittle' }));
+      await wait(60);
+      expect(step(optionFace(1), 'translateX')).toBe(-4);
+      await wait(60);
+      expect(step(optionFace(1), 'translateX')).toBe(4);
+      await wait(180);
+      expect(step(optionFace(1), 'translateX')).toBe(0);
+
+      // The Life pops once the choice has filled, 200 ms after the answer.
+      await wait(50);
+      expect(step(life(4), 'scale')).toBeGreaterThan(1);
+      await wait(200);
+      expect(step(life(4), 'scale')).toBe(1);
+      expect(styleOf(lifeFill(4)).opacity).toBe(0);
+    });
+
+    it('grows the progress bar within 300 ms when a Round passes', async () => {
+      const { rerender } = await render(<PlainRound game={first} />);
+
+      await rerender(<PlainRound game={{ ...first, roundsPassed: 1 }} />);
+      await wait(16);
+      expect(styleOf(barFill()).flex).toBeLessThan(1);
+      await wait(284);
+
+      expect(styleOf(barFill()).flex).toBe(1);
+    });
+
+    describe('with Reduce Motion', () => {
+      beforeEach(() => {
+        jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
+      });
+
+      it('fills a right answer green in place, growing nothing', async () => {
+        await renderRound();
+        const before = styleOf(optionFace(CORRECT)).backgroundColor;
+
+        await fireEvent.press(screen.getByRole('button', { name: 'candid' }));
+        await wait(300);
+
+        expect(styleOf(optionFace(CORRECT)).backgroundColor).not.toBe(before);
+        expect(step(optionFace(CORRECT), 'scale')).toBe(1);
+      });
+
+      it('fills a wrong choice in place, shaking nothing, and fades the lost Life without a pop', async () => {
+        await renderRound();
+        const before = styleOf(optionFace(1)).backgroundColor;
+
+        await fireEvent.press(screen.getByRole('button', { name: 'brittle' }));
+        for (const ms of [60, 60, 60, 60, 60]) {
+          await wait(ms);
+          expect(step(optionFace(1), 'translateX')).toBe(0);
+        }
+        expect(styleOf(optionFace(1)).backgroundColor).not.toBe(before);
+
+        for (const ms of [100, 100, 100]) {
+          await wait(ms);
+          expect(step(life(4), 'scale')).toBe(1);
+        }
+        expect(styleOf(lifeFill(4)).opacity).toBe(0);
+      });
+
+      it('sets the progress bar at once when a Round passes', async () => {
+        const { rerender } = await render(<PlainRound game={first} />);
+
+        await rerender(<PlainRound game={{ ...first, roundsPassed: 1 }} />);
+        // The next frame.
+        await wait(16);
+
+        expect(styleOf(barFill()).flex).toBe(1);
+      });
     });
   });
 
