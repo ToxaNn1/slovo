@@ -200,6 +200,51 @@ describe('too many reports today', () => {
     expect(app.received()).toEqual([]);
   });
 
+  it('tells the reader of a report that meets the limit after failed tries, and drops it', async () => {
+    const app = await device();
+    app.api.failNext('server-error');
+    app.api.failNext('too-many-requests', { retryAfter: 3_600 });
+
+    expect(await app.report()).toBe('too-many-requests');
+
+    await app.advance(HOUR * 2);
+    app.reports.foreground();
+    await app.advance(ALL_TRIES);
+    expect(app.api.calls).toBe(2);
+    expect(app.received()).toEqual([]);
+  });
+
+  it('keeps the reports queued before one over the limit, and sends them after `Retry-After`', async () => {
+    const app = await device();
+    app.api.online = false;
+    await app.report(typoIn('older'));
+    app.api.online = true;
+    app.api.failNext('too-many-requests', { retryAfter: 3_600 });
+
+    expect(await app.report()).toBe('too-many-requests');
+    const calls = app.api.calls;
+    app.reports.foreground();
+    await app.advance(HOUR / 2);
+    expect(app.api.calls).toBe(calls);
+
+    await app.advance(HOUR);
+    app.reports.foreground();
+    await app.advance(ALL_TRIES);
+    expect(app.received()).toEqual(['w_older']);
+  });
+
+  it('thanks for and keeps a report whose every try met a server error, and sends it on the next return', async () => {
+    const app = await device();
+    for (let i = 0; i < 4; i += 1) app.api.failNext('server-error');
+
+    expect(await app.report()).toBe('thanked');
+    expect(app.received()).toEqual([]);
+
+    app.reports.foreground();
+    await app.advance(ALL_TRIES);
+    expect(app.received()).toEqual(['w_kvasha']);
+  });
+
   it('holds a queued report that meets the limit until `Retry-After`, and sends it then', async () => {
     const app = await device();
     app.api.online = false;
