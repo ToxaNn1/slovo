@@ -11,7 +11,10 @@ const metrics = {
 
 const copy = { rename: 'Rename', delete: 'Delete', cancel: 'Cancel' };
 
-async function renderMenu(visible = true) {
+async function renderMenu(
+  visible = true,
+  share?: { label: string; disabled: boolean; onPress: () => void },
+) {
   const onRename = jest.fn();
   const onDelete = jest.fn();
   const onCancel = jest.fn();
@@ -21,6 +24,7 @@ async function renderMenu(visible = true) {
         <CollectionMenuSheet
           visible={visible}
           copy={copy}
+          share={share}
           onRename={onRename}
           onDelete={onDelete}
           onCancel={onCancel}
@@ -38,6 +42,46 @@ describe('CollectionMenuSheet', () => {
     expect(screen.getByRole('button', { name: 'Rename' })).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Delete' })).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeOnTheScreen();
+  });
+
+  it('offers no share row unless it is given one', async () => {
+    await renderMenu();
+
+    expect(screen.queryByText('Share a link')).not.toBeOnTheScreen();
+  });
+
+  it('offers the share row first and asks to share', async () => {
+    const onShare = jest.fn();
+    const { onRename, onCancel } = await renderMenu(true, {
+      label: 'Share a link',
+      disabled: false,
+      onPress: onShare,
+    });
+
+    expect(
+      screen
+        .getAllByRole('button', { name: /^(Share a link|Rename|Delete|Cancel)$/ })
+        .map((row) => String(row.props['testID'])),
+    ).toEqual([
+      'collection-menu-share',
+      'collection-menu-rename',
+      'collection-menu-delete',
+      'collection-menu-cancel',
+    ]);
+    await fireEvent.press(screen.getByRole('button', { name: 'Share a link' }));
+    expect(onShare).toHaveBeenCalledTimes(1);
+    expect(onRename).not.toHaveBeenCalled();
+    expect(onCancel).not.toHaveBeenCalled();
+  });
+
+  it('dims the share row and takes no press while it is disabled', async () => {
+    const onShare = jest.fn();
+    await renderMenu(true, { label: 'Share a link', disabled: true, onPress: onShare });
+
+    const row = screen.getByRole('button', { name: 'Share a link' });
+    expect(row).toBeDisabled();
+    await fireEvent.press(row);
+    expect(onShare).not.toHaveBeenCalled();
   });
 
   it('shows nothing while it is not visible', async () => {

@@ -6,7 +6,8 @@ import { space } from '../tokens';
 
 /**
  * The menu a Collection's «…» button opens: a bottom sheet with «rename» and
- * «delete» and the cancel row last. A tap on a row asks for its action; the
+ * «delete» and the cancel row last, and «share a link» first when it is given
+ * one, dimmed while it is disabled. A tap on a row asks for its action; the
  * cancel row, a tap on the scrim, a drag on the grabber and VoiceOver's escape
  * gesture ask `onCancel`. The caller turns `visible` off in all three callbacks;
  * `onDismissed` runs once the sheet has slid away.
@@ -14,6 +15,7 @@ import { space } from '../tokens';
 export function CollectionMenuSheet({
   visible,
   copy,
+  share,
   onRename,
   onDelete,
   onCancel,
@@ -22,6 +24,8 @@ export function CollectionMenuSheet({
 }: {
   visible: boolean;
   copy: { rename: string; delete: string; cancel: string };
+  /** The row that shares the Collection by a link, when the menu offers it. */
+  share?: { label: string; disabled: boolean; onPress: () => void } | undefined;
   onRename: () => void;
   onDelete: () => void;
   onCancel: () => void;
@@ -31,6 +35,14 @@ export function CollectionMenuSheet({
   return (
     <BottomSheet visible={visible} onClose={onCancel} onDismissed={onDismissed} testID={testID}>
       <View style={styles.rows}>
+        {share !== undefined && (
+          <SecondaryButton
+            label={share.label}
+            onPress={share.onPress}
+            disabled={share.disabled}
+            testID={`${testID}-share`}
+          />
+        )}
         <SecondaryButton label={copy.rename} onPress={onRename} testID={`${testID}-rename`} />
         <SecondaryButton
           label={copy.delete}
