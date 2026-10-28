@@ -75,6 +75,12 @@ export const userStateRecords = {
    */
   selfCheck: declareRecord('settings.selfCheck', z.boolean()),
   /**
+   * Whether the user has «Сезонний декор» on (ADR 0055). It syncs last write
+   * wins like the Theme (ADR 0041); a new key needs no migration, since
+   * without it Seasonal Decor is on.
+   */
+  seasonalDecor: declareRecord('settings.seasonalDecor', z.boolean()),
+  /**
    * The user's Daily Limit (ADR 0054). It syncs last write wins like the Theme
    * (ADR 0041); a new key needs no migration, since without it the Edition's default holds.
    */

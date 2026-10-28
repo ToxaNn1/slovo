@@ -19,6 +19,7 @@ describe('settings', () => {
       vibration: true,
       hideStreak: false,
       selfCheck: false,
+      seasonalDecor: true,
       dailyLimit: 'off',
     });
   });
@@ -33,6 +34,7 @@ describe('settings', () => {
       vibration: true,
       hideStreak: false,
       selfCheck: false,
+      seasonalDecor: true,
       dailyLimit: 'off',
     });
   });
@@ -46,6 +48,7 @@ describe('settings', () => {
       vibration: true,
       hideStreak: false,
       selfCheck: false,
+      seasonalDecor: true,
       dailyLimit: 'off',
     });
     expect(await settings.read()).toEqual({
@@ -54,6 +57,7 @@ describe('settings', () => {
       vibration: true,
       hideStreak: false,
       selfCheck: false,
+      seasonalDecor: true,
       dailyLimit: 'off',
     });
   });
@@ -67,6 +71,7 @@ describe('settings', () => {
       vibration: true,
       hideStreak: false,
       selfCheck: false,
+      seasonalDecor: true,
       dailyLimit: 'off',
     });
     expect(await settings.read()).toEqual({
@@ -75,6 +80,7 @@ describe('settings', () => {
       vibration: true,
       hideStreak: false,
       selfCheck: false,
+      seasonalDecor: true,
       dailyLimit: 'off',
     });
   });
@@ -89,6 +95,7 @@ describe('settings', () => {
       vibration: true,
       hideStreak: false,
       selfCheck: false,
+      seasonalDecor: true,
       dailyLimit: 'off',
     });
   });
@@ -103,6 +110,7 @@ describe('settings', () => {
       vibration: true,
       hideStreak: false,
       selfCheck: false,
+      seasonalDecor: true,
       dailyLimit: 'off',
     });
   });
@@ -116,6 +124,7 @@ describe('settings', () => {
       vibration: true,
       hideStreak: false,
       selfCheck: false,
+      seasonalDecor: true,
       dailyLimit: 'off',
     });
   });
@@ -134,6 +143,7 @@ describe('settings', () => {
       vibration: true,
       hideStreak: false,
       selfCheck: false,
+      seasonalDecor: true,
       dailyLimit: 'off',
     });
   });
@@ -151,6 +161,7 @@ describe('settings', () => {
       vibration: false,
       hideStreak: false,
       selfCheck: false,
+      seasonalDecor: true,
       dailyLimit: 'off',
     });
   });
@@ -173,6 +184,7 @@ describe('settings: Vibration', () => {
       vibration: false,
       hideStreak: false,
       selfCheck: false,
+      seasonalDecor: true,
       dailyLimit: 'off',
     });
     expect((await settings.read()).vibration).toBe(false);
@@ -202,6 +214,7 @@ describe('settings: Vibration', () => {
       vibration: false,
       hideStreak: false,
       selfCheck: false,
+      seasonalDecor: true,
       dailyLimit: 'off',
     });
   });
@@ -229,6 +242,7 @@ describe('settings: hide the Streak', () => {
       vibration: true,
       hideStreak: true,
       selfCheck: false,
+      seasonalDecor: true,
       dailyLimit: 'off',
     });
     expect((await settings.read()).hideStreak).toBe(true);
@@ -258,6 +272,7 @@ describe('settings: hide the Streak', () => {
       vibration: false,
       hideStreak: true,
       selfCheck: false,
+      seasonalDecor: true,
       dailyLimit: 'off',
     });
   });
@@ -283,6 +298,7 @@ describe('settings: hide the Streak', () => {
       vibration: true,
       hideStreak: false,
       selfCheck: false,
+      seasonalDecor: true,
       dailyLimit: 'off',
     });
   });
@@ -304,6 +320,7 @@ describe('settings: Self-check', () => {
       vibration: true,
       hideStreak: false,
       selfCheck: true,
+      seasonalDecor: true,
       dailyLimit: 'off',
     });
     expect((await settings.read()).selfCheck).toBe(true);
@@ -326,6 +343,7 @@ describe('settings: Self-check', () => {
       vibration: true,
       hideStreak: true,
       selfCheck: true,
+      seasonalDecor: true,
       dailyLimit: 'off',
     });
   });
@@ -356,6 +374,7 @@ describe('settings: Daily Limit', () => {
         vibration: true,
         hideStreak: false,
         selfCheck: false,
+        seasonalDecor: true,
         dailyLimit: limit,
       });
       expect((await settings.read()).dailyLimit).toBe(limit);
@@ -393,6 +412,7 @@ describe('settings: Daily Limit', () => {
       vibration: true,
       hideStreak: false,
       selfCheck: true,
+      seasonalDecor: true,
       dailyLimit: 30,
     });
   });
@@ -405,6 +425,43 @@ describe('settings: Daily Limit', () => {
       expect((await settings.read()).dailyLimit).toBe('off');
     },
   );
+});
+
+describe('settings: Seasonal Decor', () => {
+  it('is on until the user turns it off', async () => {
+    const settings = await settingsOver();
+
+    expect((await settings.read()).seasonalDecor).toBe(true);
+    expect(settings.defaults.seasonalDecor).toBe(true);
+  });
+
+  it('turns off once the user chooses to, without touching the other settings', async () => {
+    const settings = await settingsOver();
+    await settings.update({ theme: 'dark', selfCheck: true });
+
+    expect(await settings.update({ seasonalDecor: false })).toEqual({
+      theme: 'dark',
+      fontSize: 'M',
+      vibration: true,
+      hideStreak: false,
+      selfCheck: true,
+      seasonalDecor: false,
+      dailyLimit: 'off',
+    });
+  });
+
+  it('keeps the choice when the user state is opened again', async () => {
+    const records = new Map<string, string>();
+    await (await settingsOver(records)).update({ seasonalDecor: false });
+
+    expect((await (await settingsOver(records)).read()).seasonalDecor).toBe(false);
+  });
+
+  it('is on when the stored choice is not on or off', async () => {
+    const settings = await settingsOver(new Map([['settings.seasonalDecor', '"yes"']]));
+
+    expect((await settings.read()).seasonalDecor).toBe(true);
+  });
 });
 
 describe('colorSchemeFor', () => {

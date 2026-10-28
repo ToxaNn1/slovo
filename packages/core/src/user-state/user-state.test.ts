@@ -73,6 +73,7 @@ describe('openUserState', () => {
       vibration: true,
       hideStreak: false,
       selfCheck: false,
+      seasonalDecor: true,
       dailyLimit: 'off',
     });
     expect(await createSwipeHint({ userState }).isDue()).toBe(false);

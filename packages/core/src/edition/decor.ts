@@ -1,4 +1,4 @@
-import { EditionDecorSchema, type DecorMotif } from '@slovo/contracts';
+import { EditionDecorSchema, type DecorMotif, type EditionDecor } from '@slovo/contracts';
 
 /**
  * The Decor the app draws, slot by slot (`docs/design/design-system.md`). A
@@ -58,11 +58,8 @@ export class InvalidDecorError extends Error {
   override readonly name = 'InvalidDecorError';
 }
 
-/**
- * Validates an Edition's Decor and fills every slot it leaves out with the
- * Core's neutral Decor. An Edition without Decor gets the Core's throughout.
- */
-export function loadDecor(decor: unknown): Decor {
+/** Validates an Edition's Decor as the contracts define it. */
+export function parseDecor(decor: unknown): EditionDecor {
   const result = EditionDecorSchema.safeParse(decor ?? {});
   if (!result.success) {
     const problems = result.error.issues.map(
@@ -70,7 +67,16 @@ export function loadDecor(decor: unknown): Decor {
     );
     throw new InvalidDecorError(`Invalid Decor:\n${problems.join('\n')}`);
   }
-  const { background, divider, corners, emptyState, splash, victory, shareCard } = result.data;
+  return result.data;
+}
+
+/**
+ * Validates an Edition's Decor and fills every slot it leaves out with the
+ * Core's neutral Decor. An Edition without Decor gets the Core's throughout.
+ */
+export function loadDecor(decor: unknown): Decor {
+  const { background, divider, corners, emptyState, splash, victory, shareCard } =
+    parseDecor(decor);
   return {
     background: background ?? coreDecor.background,
     divider: divider ?? coreDecor.divider,

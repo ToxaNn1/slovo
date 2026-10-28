@@ -281,6 +281,24 @@ describe('two devices of one Account', () => {
     expect((await tablet.settings.read()).selfCheck).toBe(true);
   });
 
+  it('let the newer choice of Seasonal Decor win, on either device', async () => {
+    const { device, server, time } = account();
+    const phone = await device();
+    const tablet = await device();
+    await phone.settings.update({ seasonalDecor: true });
+    time.advance(HOUR);
+    await tablet.settings.update({ seasonalDecor: false });
+    await tablet.sync();
+    time.advance(HOUR);
+
+    await phone.sync();
+    await tablet.sync();
+
+    expect((await phone.settings.read()).seasonalDecor).toBe(false);
+    expect((await tablet.settings.read()).seasonalDecor).toBe(false);
+    expect(server.records.get('settings.seasonalDecor')?.value).toBe(false);
+  });
+
   it('let the newer Daily Limit win, on either device', async () => {
     const { device, server, time } = account();
     const phone = await device();
