@@ -4,14 +4,16 @@ import { and, eq } from 'drizzle-orm';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { Database } from '../database/database';
-import { communityCounters, favoritesAdds } from '../database/schema';
-import { testApp, testEditions } from '../test-support';
+import { communityCounters, favoritesAdds, rateLimits } from '../database/schema';
+import { newIp, passTime, testApp, testEditions } from '../test-support';
 
 /**
  * A Word id no other test counts, since the tests of the file share its
  * database: the backend doesn't check that the Entry is in a pack.
  */
 const newEntryId = () => `w_${randomInt(2 ** 47).toString(36)}`;
+
+const DAY = 24 * 60 * 60 * 1000;
 
 type Delta = -1 | 0 | 1;
 
@@ -349,5 +351,96 @@ describe('the Favorites adds of an ISO week', () => {
 
     await expect(weeklyAddsOf(database, word)).resolves.toEqual([]);
     await expect(weeklyAddsOf(database, word, 'off')).resolves.toEqual([]);
+  });
+});
+
+describe('the counter events from one IP address', () => {
+  /** A batch of `size` events, each of a new Entry known once more. */
+  const batch = (size: number) =>
+    Array.from({ length: size }, () => event(newEntryId(), { known: 1 }));
+
+  it('are at most 500 a day, each event of a batch counting: the 501st is TOO_MANY_REQUESTS with Retry-After, and counts nothing', async () => {
+    const { client, request, database } = testApp();
+    for (let sent = 0; sent < 5; sent++) {
+      await client.counters.send({ editionId: 'uk', events: batch(100) });
+    }
+    passTime(DAY / 2);
+    const word = newEntryId();
+
+    const next = await request(
+      '/v1/counters/events',
+      post({ editionId: 'uk', events: [event(word, { known: 1, saved: 1 })] }),
+    );
+
+    expect(next.status).toBe(429);
+    await expect(next.json()).resolves.toMatchObject({
+      code: 'TOO_MANY_REQUESTS',
+      message: 'Too many requests',
+    });
+    expect(next.headers.get('retry-after')).toBe(String(DAY / 2 / 1000));
+    await expect(countsOf(database, word)).resolves.toEqual([]);
+    await expect(weeklyAddsOf(database, word)).resolves.toEqual([]);
+  });
+
+  it('refuse a batch that crosses the limit whole', async () => {
+    const { client, database } = testApp();
+    for (let sent = 0; sent < 4; sent++) {
+      await client.counters.send({ editionId: 'uk', events: batch(100) });
+    }
+    await client.counters.send({ editionId: 'uk', events: batch(99) });
+    const crossing = batch(2);
+
+    await expect(client.counters.send({ editionId: 'uk', events: crossing })).rejects.toMatchObject(
+      { code: 'TOO_MANY_REQUESTS', status: 429 },
+    );
+
+    for (const { entryId } of crossing) {
+      await expect(countsOf(database, entryId)).resolves.toEqual([]);
+    }
+  });
+
+  it('hold back no other IP address, and are taken again the next day', async () => {
+    const { client, clientFrom } = testApp();
+    for (let sent = 0; sent < 5; sent++) {
+      await client.counters.send({ editionId: 'uk', events: batch(100) });
+    }
+    await expect(client.counters.send({ editionId: 'uk', events: batch(1) })).rejects.toMatchObject(
+      { code: 'TOO_MANY_REQUESTS' },
+    );
+
+    await expect(
+      clientFrom(newIp()).counters.send({ editionId: 'uk', events: batch(100) }),
+    ).resolves.toBeUndefined();
+    passTime(DAY);
+    await expect(
+      client.counters.send({ editionId: 'uk', events: batch(100) }),
+    ).resolves.toBeUndefined();
+  });
+
+  it('count nothing sent to an Edition that does not serve Community Counters', async () => {
+    const { client } = testApp();
+    for (let sent = 0; sent < 6; sent++) {
+      await expect(
+        client.counters.send({ editionId: 'xx', events: batch(100) }),
+      ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    }
+
+    await expect(
+      client.counters.send({ editionId: 'uk', events: batch(100) }),
+    ).resolves.toBeUndefined();
+  });
+
+  it('are counted in a window that names no IP address', async () => {
+    const { clientFrom, database } = testApp();
+    await clientFrom('2001:db8:9:8::15').counters.send({ editionId: 'uk', events: batch(1) });
+
+    const keys = (await database.db.select({ key: rateLimits.key }).from(rateLimits)).map(
+      (row) => row.key,
+    );
+    expect(keys.length).toBeGreaterThanOrEqual(1);
+    for (const key of keys) {
+      expect(key).not.toContain('2001:db8');
+      expect(key).not.toContain(':');
+    }
   });
 });

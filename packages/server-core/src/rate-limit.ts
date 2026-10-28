@@ -14,16 +14,19 @@ export interface TooManyRequests {
 }
 
 /**
- * Counts one request under the key at `now` against the limit, and answers
- * when it may come again if it is over; none when it may go on.
+ * Counts a request under the key at `now` against the limit, as `weight`
+ * requests (one unless told), and answers when it may come again if it is
+ * over; none when it may go on. A request that crosses the limit is over it
+ * whole.
  */
 export async function countRequest(
   rateLimits: RateLimits,
   key: string,
   { requests, windowSeconds }: RequestLimit,
   now: Date,
+  weight = 1,
 ): Promise<TooManyRequests | undefined> {
-  const { count, windowEnds } = await rateLimits.count(key, windowSeconds, now);
+  const { count, windowEnds } = await rateLimits.count(key, windowSeconds, now, weight);
   if (count <= requests) return undefined;
   const left = Math.ceil((windowEnds.getTime() - now.getTime()) / 1000);
   return { ok: false, reason: 'too-many-requests', retryAfterSeconds: Math.max(1, left) };

@@ -163,13 +163,15 @@ export interface Mailer {
  */
 export interface RateLimits {
   /**
-   * Counts one request under the key at `now`, and answers how many requests
-   * its window holds, this one included, and when the window ends.
+   * Counts a request under the key at `now` as `weight` requests, and answers
+   * how many requests its window holds, this one included, and when the
+   * window ends.
    */
   count(
     key: string,
     windowSeconds: number,
     now: Date,
+    weight: number,
   ): Promise<{ readonly count: number; readonly windowEnds: Date }>;
 }
 

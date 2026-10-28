@@ -118,6 +118,7 @@ export function createApp({
   const communityCounters = createCommunityCounters({
     editions: editionRegistry,
     store: createCounterStore(database),
+    rateLimits,
     clock,
   });
   const api = createApiHandler({
