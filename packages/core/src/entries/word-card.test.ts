@@ -74,7 +74,15 @@ const build = (
     words = [],
     synonymRows = [],
     synonymRowsOn = true,
-  }: { words?: readonly Word[]; synonymRows?: readonly SynonymRow[]; synonymRowsOn?: boolean } = {},
+    illustrations = [],
+    illustrationsOn = true,
+  }: {
+    words?: readonly Word[];
+    synonymRows?: readonly SynonymRow[];
+    synonymRowsOn?: boolean;
+    illustrations?: readonly string[];
+    illustrationsOn?: boolean;
+  } = {},
 ) =>
   buildWordCard({
     word: from,
@@ -85,7 +93,12 @@ const build = (
         corrections,
         synonymRows,
       }),
-      edition: { isFeatureEnabled: (feature) => feature !== 'synonymRows' || synonymRowsOn },
+      edition: {
+        isFeatureEnabled: (feature) =>
+          (feature !== 'synonymRows' || synonymRowsOn) &&
+          (feature !== 'illustrations' || illustrationsOn),
+        illustrations: new Set(illustrations),
+      },
     }),
   });
 
@@ -110,6 +123,7 @@ describe('the Word card', () => {
       details: undefined,
       linkedCorrections: [],
       synonymRow: undefined,
+      illustration: undefined,
     });
   });
 
@@ -341,6 +355,35 @@ describe('the Word card', () => {
         extraDefinitions: [],
         examples: [{ text: 'Друга веремія.', author: 'Леся Українка' }, { text: 'Третя веремія.' }],
       });
+    });
+  });
+
+  describe('its Illustration', () => {
+    const illustrated = word({ illustration: 'veremija.png' });
+
+    it('is the file the Word names when the app bundles it', async () => {
+      expect((await build(illustrated, [], { illustrations: ['veremija.png'] })).illustration).toBe(
+        'veremija.png',
+      );
+    });
+
+    it('is none when a content update names a file the app does not bundle', async () => {
+      expect(
+        (await build(illustrated, [], { illustrations: ['other.png'] })).illustration,
+      ).toBeUndefined();
+    });
+
+    it('is none while the illustrations Feature Switch is off', async () => {
+      expect(
+        (await build(illustrated, [], { illustrations: ['veremija.png'], illustrationsOn: false }))
+          .illustration,
+      ).toBeUndefined();
+    });
+
+    it('is none for a Word without an Illustration', async () => {
+      expect(
+        (await build(word(), [], { illustrations: ['veremija.png'] })).illustration,
+      ).toBeUndefined();
     });
   });
 });

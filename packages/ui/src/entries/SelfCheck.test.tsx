@@ -66,6 +66,7 @@ function wordCard(lemma: string): EntryFeedCard {
       details: undefined,
       linkedCorrections: [],
       synonymRow: undefined,
+      illustration: undefined,
     },
   };
 }

@@ -28,6 +28,8 @@ export interface Shown {
     /** The «Знаю» and «Не знаю» buttons of the action row. */
     readonly knowledge: boolean;
   };
+  /** Whether the Stress mark of a Word card's Lemma falls onto its vowel in the Feed and on the Entry screen. */
+  readonly stressFall: boolean;
   /** Whether an Entry card is in Self-check. */
   readonly selfCheck: boolean;
   /** The Settings switch for Self-check. */
@@ -95,6 +97,7 @@ export function shownOf({
       pronunciation: on('pronunciation'),
       knowledge,
     },
+    stressFall: on('stressAnimation'),
     selfCheck: on('selfCheck') && settings.selfCheck,
     selfCheckSetting: on('selfCheck'),
     learning: knowledge,

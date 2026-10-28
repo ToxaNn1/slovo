@@ -307,10 +307,11 @@ export async function openComposition({
    * tests of other features, has Search read each letter as itself and sort
    * in the default locale; one that leaves out `moods` offers none, and one
    * that leaves out its `locale` has the Word of the Day archive write its
-   * dates in the default locale.
+   * dates in the default locale; one that leaves out `illustrations` bundles
+   * no Illustration.
    */
   edition: Pick<Edition, 'id' | 'isFeatureEnabled'> &
-    Partial<Pick<Edition, 'searchLetters' | 'moods' | 'locale'>> &
+    Partial<Pick<Edition, 'searchLetters' | 'moods' | 'locale' | 'illustrations'>> &
     MixEdition &
     NotificationsEdition &
     GameEdition &

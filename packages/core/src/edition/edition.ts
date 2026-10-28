@@ -61,6 +61,11 @@ export interface Edition {
   readonly moods: readonly Mood[];
   /** The letters Search reads as another, such as ґ as г (ADR 0054). */
   readonly searchLetters: Readonly<Record<string, string>>;
+  /**
+   * The file names of the Illustrations the app bundles as Edition assets; a
+   * Word naming any other file shows no Illustration (ADR 0055).
+   */
+  readonly illustrations: ReadonlySet<string>;
   /** Whether the Edition turns the given Core feature on. */
   isFeatureEnabled(feature: FeatureSwitch): boolean;
 }
@@ -98,10 +103,11 @@ export class InvalidEditionConfigError extends Error {
 }
 
 /**
- * Validates an Edition config and reports the Edition. Every feature asks the
+ * Validates an Edition config and reports the Edition, with the file names of
+ * the Illustrations the app bundles (none by default). Every feature asks the
  * Edition returned here instead of reading the config directly.
  */
-export function loadEdition(config: unknown): Edition {
+export function loadEdition(config: unknown, illustrations: readonly string[] = []): Edition {
   const result = EditionConfigSchema.safeParse(config);
   if (!result.success) {
     const problems = result.error.issues.map(
@@ -146,6 +152,7 @@ export function loadEdition(config: unknown): Edition {
     originLanguages,
     moods,
     searchLetters,
+    illustrations: new Set(illustrations),
     isFeatureEnabled: switchedOn((feature) => featureSwitches[feature]),
   };
 }

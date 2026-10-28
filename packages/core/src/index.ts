@@ -147,6 +147,7 @@ export {
   type DailyCrosswordState,
   type DailyCrosswordWord,
 } from './game/daily-crossword';
+export { seasonOf, type Season } from './decor/season';
 export { loadEdition, type Edition } from './edition/edition';
 export { openRemoteSwitches } from './edition/remote-switches';
 export {

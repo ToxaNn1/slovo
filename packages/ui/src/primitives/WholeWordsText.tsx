@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 
 import type { TextSize } from '../providers/FontSizeProvider';
+import { clearMarks, FallingMarks, withMarks, type FallingMarksOf } from './FallingMarks';
 
 /**
  * Large text that wraps between words and never inside one. On iOS,
@@ -18,7 +19,8 @@ import type { TextSize } from '../providers/FontSizeProvider';
  * keeps its size and the word splits. Here the widest word is measured at
  * `size` first, and the text is drawn small enough for that word to fit on a
  * line; `numberOfLines` and `adjustsFontSizeToFit` still apply on top.
- * A `highlight` draws one stretch of the text in a style of its own.
+ * A `highlight` draws one stretch of the text in a style of its own, or
+ * `falling` lets the text's marks fall into place over it.
  */
 export function WholeWordsText({
   text,
@@ -26,6 +28,7 @@ export function WholeWordsText({
   tracking,
   style,
   highlight,
+  falling,
   ...props
 }: Omit<TextProps, 'children' | 'style'> & {
   text: string;
@@ -35,9 +38,18 @@ export function WholeWordsText({
   tracking: number;
   /** Everything but the size and letter spacing: colour, font and weight. */
   style: StyleProp<TextStyle>;
-  /** A stretch of the text to mark, and how it looks on top of `style`. */
-  highlight?: { readonly range: TextRange; readonly style: StyleProp<TextStyle> } | undefined;
-}) {
+} & (
+    | {
+        /** A stretch of the text to mark, and how it looks on top of `style`. */
+        highlight?: { readonly range: TextRange; readonly style: StyleProp<TextStyle> } | undefined;
+        falling?: never;
+      }
+    | {
+        highlight?: never;
+        /** Marks that fall into place over the text, which leaves them clear meanwhile. */
+        falling: FallingMarksOf | undefined;
+      }
+  )) {
   const [lineWidth, setLineWidth] = useState<number>();
   const [widestWord, setWidestWord] = useState<number>();
   // A point of slack, so rounding never pushes the widest word back over the edge.
@@ -51,6 +63,9 @@ export function WholeWordsText({
     letterSpacing: size.fontSize * ratio * tracking,
   });
 
+  // Hidden until measured, so a word never shows split for a frame.
+  const textStyle = [style, sized(scale ?? 1), scale === undefined && styles.hidden];
+
   return (
     <View
       onLayout={(event) => {
@@ -58,12 +73,10 @@ export function WholeWordsText({
         if (event.nativeEvent.layout.width > 0) setLineWidth(event.nativeEvent.layout.width);
       }}
     >
-      <Text
-        {...props}
-        // Hidden until measured, so a word never shows split for a frame.
-        style={[style, sized(scale ?? 1), scale === undefined && styles.hidden]}
-      >
-        {highlight === undefined ? (
+      <Text {...props} style={textStyle}>
+        {falling !== undefined ? (
+          withMarks(text, falling.mark, clearMarks)
+        ) : highlight === undefined ? (
           text
         ) : (
           <>
@@ -75,6 +88,22 @@ export function WholeWordsText({
           </>
         )}
       </Text>
+      {falling === undefined ? null : (
+        <FallingMarks
+          text={text}
+          falling={falling}
+          fontSize={size.fontSize * (scale ?? 1)}
+          textProps={{
+            numberOfLines: props.numberOfLines,
+            adjustsFontSizeToFit: props.adjustsFontSizeToFit,
+            minimumFontScale: props.minimumFontScale,
+            allowFontScaling: props.allowFontScaling,
+            maxFontSizeMultiplier: props.maxFontSizeMultiplier,
+          }}
+          style={textStyle}
+          testID={props.testID === undefined ? undefined : `${props.testID}-falling`}
+        />
+      )}
       {/* Every word on its own line, wide enough that none of them wraps. */}
       <View
         pointerEvents="none"
