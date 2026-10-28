@@ -45,7 +45,7 @@ export const ServerConfigSchema = z.object({
   EDITIONS_DIR: z.string().min(1).default(EDITIONS_DIR),
 });
 
-/** The environment the migrate command reads. */
+/** The environment the migrate and reports commands read. */
 export const MigrateConfigSchema = ServerConfigSchema.pick({ DATABASE_URL: true });
 
 /** The environment the publish command reads. */
