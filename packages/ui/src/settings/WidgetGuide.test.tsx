@@ -72,6 +72,18 @@ describe('WidgetGuide', () => {
     expect([1, 2, 3].map(shownOf)).toEqual([1, 1, 1]);
   });
 
+  it('brings each step in within 300 ms', async () => {
+    await renderGuide();
+    await pass(150);
+
+    expect(shownOf(1)).toBeGreaterThan(0);
+    expect(shownOf(1)).toBeLessThan(1);
+
+    await pass(150);
+
+    expect(shownOf(1)).toBe(1);
+  });
+
   it('shows every step still, at once, with Reduce Motion', async () => {
     jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
     await renderGuide();

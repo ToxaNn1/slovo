@@ -187,9 +187,9 @@ function WidgetDrawing({
   );
 }
 
-/** How long a step of the widget guide takes to come in. */
+/** How long a step of the widget guide takes to come in: 300 ms (ADR 0055). */
 const STEP_IN = {
-  duration: 400,
+  duration: 300,
   easing: Easing.out(Easing.quad),
   reduceMotion: ReduceMotion.Never,
 };
