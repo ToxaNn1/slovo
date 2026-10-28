@@ -66,6 +66,10 @@ const validConfig = {
     mistakeReports: true,
     communityCounters: true,
     communityWord: true,
+    calligraphy: true,
+    spotlight: true,
+    appIntents: true,
+    collectionLinks: true,
   },
   userSettingDefaults: {
     theme: 'system',
@@ -149,6 +153,9 @@ const feelSwitches = [
   'communityWord',
 ] as const;
 
+/** The Feature Switches of the features of 0.8.15. */
+const nativeSwitches = ['calligraphy', 'spotlight', 'appIntents', 'collectionLinks'] as const;
+
 describe('loadEdition', () => {
   it('reports the Edition id, locale and whether it marks Stress', () => {
     const edition = loadEdition(validConfig);
@@ -199,6 +206,7 @@ describe('loadEdition', () => {
     ...gamePartSwitches,
     ...learningSwitches,
     ...feelSwitches,
+    ...nativeSwitches,
     'synonymRows',
     'tips',
     'account',
@@ -483,6 +491,22 @@ describe('loadEdition', () => {
       'a missing Community Word Feature Switch',
       withoutSwitch('communityWord'),
       'featureSwitches.communityWord',
+    ],
+    [
+      'a missing calligraphic Lemma Feature Switch',
+      withoutSwitch('calligraphy'),
+      'featureSwitches.calligraphy',
+    ],
+    ['a missing Spotlight Feature Switch', withoutSwitch('spotlight'), 'featureSwitches.spotlight'],
+    [
+      'a missing App Intents Feature Switch',
+      withoutSwitch('appIntents'),
+      'featureSwitches.appIntents',
+    ],
+    [
+      'a missing Collection Links Feature Switch',
+      withoutSwitch('collectionLinks'),
+      'featureSwitches.collectionLinks',
     ],
     [
       'an unknown Feature Switch',
