@@ -90,6 +90,7 @@ const validConfig = {
     privacy: 'https://example.org/test/privacy',
     terms: 'https://example.org/test/terms',
   },
+  linkDomain: 'slovo.example',
   categories: [
     { id: 'nature', displayName: 'Nature' },
     { id: 'speech', displayName: 'Speech' },
@@ -342,6 +343,19 @@ describe('loadEdition', () => {
 
     expect(() => loadEdition({ ...validConfig, legalPages })).toThrow(`legalPages.${page}`);
   });
+
+  it('requires the domain of its Collection Links', () => {
+    const { linkDomain: _removed, ...config } = validConfig;
+
+    expect(() => loadEdition(config)).toThrow('linkDomain');
+  });
+
+  it.each(['https://slovo.example', 'Slovo.example', 'slovo', 'slovo.example/c', '-slovo.example'])(
+    'refuses %s as the domain of its Collection Links',
+    (linkDomain) => {
+      expect(() => loadEdition({ ...validConfig, linkDomain })).toThrow('linkDomain');
+    },
+  );
 
   it('accepts an Edition that lists no origin languages', () => {
     expect(() => loadEdition({ ...validConfig, originLanguages: [] })).not.toThrow();
