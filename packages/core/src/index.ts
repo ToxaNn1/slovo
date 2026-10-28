@@ -152,6 +152,7 @@ export {
   type DailyCrosswordState,
   type DailyCrosswordWord,
 } from './game/daily-crossword';
+export { holidayOf, motifOf, type SeasonalMotifs } from './decor/holiday';
 export { seasonOf, type Season } from './decor/season';
 export { loadEdition, type Edition } from './edition/edition';
 export { openRemoteSwitches } from './edition/remote-switches';
