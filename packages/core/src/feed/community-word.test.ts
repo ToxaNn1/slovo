@@ -22,7 +22,7 @@ const monday = '2026-10-26T09:00:00+03:00';
 const mondayEvening = '2026-10-26T21:00:00+03:00';
 const tuesday = '2026-10-27T09:00:00+03:00';
 
-const ON = ['weeklyRecap', 'communityWord'];
+const ON = ['weeklyRecap', 'communityCounters', 'communityWord'];
 
 /** The Core composition of one app run at `at`, over the records, so the user state survives between runs. */
 async function run({
@@ -158,7 +158,25 @@ describe('The Community Word', () => {
 
   it('is not there with the Feature Switch communityWord off, and the week is not asked for', async () => {
     const api = apiOfWord();
-    const app = await run({ records: new Map(), at: monday, api, features: ['weeklyRecap'] });
+    const app = await run({
+      records: new Map(),
+      at: monday,
+      api,
+      features: ['weeklyRecap', 'communityCounters'],
+    });
+
+    expect((await firstCards(app.feed, 4)).some((card) => card.kind === 'notice')).toBe(false);
+    expect(api.asked).toBe(0);
+  });
+
+  it('is not there with the Feature Switch communityCounters off, even with communityWord on, and the week is not asked for', async () => {
+    const api = apiOfWord();
+    const app = await run({
+      records: new Map(),
+      at: monday,
+      api,
+      features: ['weeklyRecap', 'communityWord'],
+    });
 
     expect((await firstCards(app.feed, 4)).some((card) => card.kind === 'notice')).toBe(false);
     expect(api.asked).toBe(0);

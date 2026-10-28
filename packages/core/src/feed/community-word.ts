@@ -16,7 +16,7 @@ const { communityWord: kept } = userStateRecords;
  * while that Entry is in the Language Pack and neither Hidden nor Retired. The
  * week is read once a day: the answer is kept for its local date, and a read
  * that fails is tried again on the next card. It is there only while the
- * Feature Switch `communityWord` is on. Swiping past it closes it for its day
+ * Feature Switches `communityCounters` and `communityWord` are both on. Swiping past it closes it for its day
  * (ADR 0060).
  */
 export function createCommunityWord({
@@ -46,7 +46,9 @@ export function createCommunityWord({
 
   return {
     async forDay(day) {
-      if (!edition.isFeatureEnabled('communityWord') || !isMonday(day)) return [];
+      const switchedOn =
+        edition.isFeatureEnabled('communityCounters') && edition.isFeatureEnabled('communityWord');
+      if (!switchedOn || !isMonday(day)) return [];
       const communityWord = await ofDay(day);
       if (communityWord === undefined || hiddenEntries.has(communityWord.entryId)) return [];
       const { entryId, adds } = communityWord;
