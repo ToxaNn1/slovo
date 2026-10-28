@@ -14,23 +14,16 @@ import {
 } from '@slovo/ui';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
-import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { edition, editionStrings } from '../edition/edition';
-import { logError } from '../diagnostics/log';
+import { openLegalPage } from './legal-page';
 
 const strings = editionStrings.settings;
 
 /** The version of the app, as the build declares it. */
 const version = Constants.expoConfig?.version ?? '';
-
-/** Opens one of the Edition's legal pages in the browser. */
-function openLegalPage(address: string) {
-  Linking.openURL(address).catch((error: unknown) => {
-    logError('Could not open a legal page', error);
-  });
-}
 
 /**
  * About: the Edition's name and version, what SLOVO is and where its words
