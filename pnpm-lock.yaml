@@ -408,6 +408,9 @@ importers:
       '@types/react':
         specifier: ~19.2.18
         version: 19.2.18
+      '@types/xcode':
+        specifier: 3.0.0
+        version: 3.0.0
       babel-jest:
         specifier: 29.7.0
         version: 29.7.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1)
@@ -3543,6 +3546,9 @@ packages:
 
   '@types/tough-cookie@4.0.5':
     resolution: {integrity: sha512-/Ad8+nIOV7Rl++6f1BdKxFSMgmoqEoYbHRpPcx3JEfv8VRsQe9Z4mCXeJBzxs7mbHY/XOZZuXlRNfhpVPbs6ZA==}
+
+  '@types/xcode@3.0.0':
+    resolution: {integrity: sha512-QF542gE2z7c5mVAKYPu7WnLv7TX+O/m2ZcCAsK2mstzeh8X0Q4ueC52DL8sSRFnQdTzF4WU+G/sWWx5cRO7HcQ==}
 
   '@types/yargs-parser@21.0.3':
     resolution: {integrity: sha512-I4q9QU9MQv4oEOz4tAHJtNz1cwuLxn2F3xcc2iV5WdqLPpUnj30aUuxt1mAxYTG+oe8CZMV/+6rU4S4gRDzqtQ==}
@@ -10305,6 +10311,8 @@ snapshots:
   '@types/stack-utils@2.0.3': {}
 
   '@types/tough-cookie@4.0.5': {}
+
+  '@types/xcode@3.0.0': {}
 
   '@types/yargs-parser@21.0.3': {}
 

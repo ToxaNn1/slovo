@@ -6,9 +6,11 @@ import { fileURLToPath } from 'node:url';
 
 import { EDITIONS_DIR, openEdition, type EditionFolder } from '@slovo/language-pack/edition';
 import type { ConfigContext, ExpoConfig } from 'expo/config';
+import { compileModsAsync } from 'expo/config-plugins';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import appConfig from './app.config';
+import { APP_INTENTS_SOURCE } from './plugins/app-intents';
 import { wav } from './plugins/wav-builder';
 
 const context: ConfigContext = {
@@ -72,6 +74,61 @@ function pluginOptions(config: ExpoConfig, name: string): unknown {
     (entry) => (Array.isArray(entry) ? entry[0] : entry) === name,
   );
   return Array.isArray(plugin) ? plugin[1] : undefined;
+}
+
+/** The app's target in a native project as small as Expo's prebuild can change. */
+const NATIVE_PROJECT = `// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 54;
+	objects = {
+
+/* Begin PBXBuildFile section */
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		A2 = {isa = PBXGroup; children = (A3 /* SLOVO */,); sourceTree = "<group>"; };
+		A3 /* SLOVO */ = {isa = PBXGroup; children = (); name = SLOVO; path = SLOVO; sourceTree = "<group>"; };
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A4 /* SLOVO */ = {isa = PBXNativeTarget; buildPhases = (A5 /* Sources */,); name = SLOVO; productName = SLOVO; productType = "com.apple.product-type.application"; };
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A1 /* Project object */ = {isa = PBXProject; mainGroup = A2; targets = (A4 /* SLOVO */,); };
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A5 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXSourcesBuildPhase section */
+	};
+	rootObject = A1 /* Project object */;
+}
+`;
+
+/**
+ * Runs the native project changes the app config makes at prebuild on a
+ * minimal native project in the context's folder, and returns that folder's
+ * `ios`.
+ */
+async function prebuildIos(context: ConfigContext, times = 1): Promise<string> {
+  const iosDir = join(context.projectRoot, 'ios');
+  mkdirSync(join(iosDir, 'SLOVO.xcodeproj'), { recursive: true });
+  writeFileSync(join(iosDir, 'SLOVO.xcodeproj/project.pbxproj'), NATIVE_PROJECT);
+  for (let run = 0; run < times; run += 1) {
+    await compileModsAsync(appConfig(context), {
+      projectRoot: context.projectRoot,
+      platforms: ['ios'],
+      assertMissingModProviders: false,
+    });
+  }
+  return iosDir;
 }
 
 describe('app config', () => {
@@ -356,6 +413,76 @@ describe('app config', () => {
     vi.stubEnv('SLOVO_EDITION', 'uk');
 
     expect(appConfig(context).ios?.infoPlist?.['SlovoLinkScheme']).toBe('slovo-uk');
+  });
+
+  it('compiles the App Intents and their App Shortcuts into the app, however often it is prebuilt', async () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+
+    // iOS reads App Shortcuts only from the app's own target, never from a pod (ADR 0057).
+    const iosDir = await prebuildIos(
+      repoWithEdition(() => undefined),
+      2,
+    );
+
+    const project = readFileSync(join(iosDir, 'SLOVO.xcodeproj/project.pbxproj'), 'utf8');
+    const sources = /isa = PBXSourcesBuildPhase;[^}]*files = \(([^)]*)\)/.exec(project)?.[1] ?? '';
+    expect(sources.match(/\/\* (\S+) in Sources \*\//g)).toEqual([
+      '/* SlovoAppIntents.swift in Sources */',
+      '/* SlovoAppShortcuts.swift in Sources */',
+    ]);
+    expect(readFileSync(join(iosDir, 'SLOVO/SlovoAppIntents.swift'), 'utf8')).toBe(
+      readFileSync(APP_INTENTS_SOURCE, 'utf8'),
+    );
+  });
+
+  it("gives Siri the Edition's phrases, each naming the app as Siri hears it, and each intent its route", async () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+
+    const iosDir = await prebuildIos(repoWithEdition(() => undefined));
+
+    const shortcuts = readFileSync(join(iosDir, 'SLOVO/SlovoAppShortcuts.swift'), 'utf8');
+    expect(shortcuts).toContain(
+      'intent: WordOfTheDayIntent(),\n      phrases: ["Слово дня в \\(.applicationName)", "Покажи слово дня в \\(.applicationName)"]',
+    );
+    expect(shortcuts).toContain(
+      'intent: OpenGameIntent(),\n      phrases: ["Відкрий гру в \\(.applicationName)", "Грати в \\(.applicationName)"]',
+    );
+    // «Слово дня» opens the app's start, the Feed; «Відкрити гру» the Game.
+    expect(shortcuts).toContain('extension WordOfTheDayIntent {\n  static let route = ""\n}');
+    expect(shortcuts).toContain('extension OpenGameIntent {\n  static let route = "game"\n}');
+  });
+
+  it("titles the intents with the Edition's strings, which the Swift code names only by key", () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+
+    const titles = {
+      'appIntents.wordOfTheDay': 'Слово дня',
+      'appIntents.openGame': 'Відкрити гру',
+    };
+
+    expect(appConfig(context).locales).toEqual({ uk: { ios: { 'Localizable.strings': titles } } });
+    const swift = readFileSync(APP_INTENTS_SOURCE, 'utf8');
+    for (const [key, title] of Object.entries(titles)) {
+      expect(swift).toContain(`"${key}"`);
+      expect(swift).not.toContain(title);
+    }
+  });
+
+  it('refuses a phrase that does not name the app, which Siri would never answer', async () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+    const broken = repoWithEdition(() => undefined, {
+      change: (edition) => {
+        editJson(edition.path('strings'), (strings) => {
+          const appIntents = strings['appIntents'] as { openGame: { phrases: string[] } };
+          appIntents.openGame.phrases = ['Грати в слова'];
+          return strings;
+        });
+      },
+    });
+
+    await expect(prebuildIos(broken)).rejects.toThrow(
+      /appIntents\.openGame\.phrases\.0: «Грати в слова» must name the app, SLOVO, exactly once/,
+    );
   });
 
   it('accepts a notification sound of 30 seconds', () => {
