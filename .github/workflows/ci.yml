@@ -46,7 +46,20 @@ jobs:
             echo '```'
           } | tee -a "$GITHUB_STEP_SUMMARY"
       - run: pnpm typecheck
+      # The app's Jest transforms, kept from run to run. React Native loads
+      # most of its modules lazily, so on a cold cache the first test to open,
+      # say, a sheet pays for Babel over dozens of them within its 5 seconds.
+      # A transform is keyed by the file and the config, so an older cache
+      # restored after a dependency change still serves every file it holds.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: apps/mobile/node_modules/.cache/jest
+          key: jest-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'apps/mobile/jest.config.js') }}
+          restore-keys: jest-${{ runner.os }}-
       # The backend's tests need Postgres; the job "Backend" runs them.
+      # `pnpm test` runs one package at a time (--concurrency=1): each test
+      # runner already spreads over every core, and side by side they slowed
+      # the app's screen tests eightfold, past Jest's 5 seconds a test.
       - run: pnpm test --filter='!@slovo/backend'
       # The contracts' tests hold the contract to the committed description of
       # /v1. This holds it to the one on the base branch too, so a description
