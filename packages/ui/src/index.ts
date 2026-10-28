@@ -84,6 +84,11 @@ export { PronunciationButton } from './entries/PronunciationButton';
 export { SegmentedControl } from './primitives/SegmentedControl';
 export { ProblemLine, TextField } from './primitives/TextField';
 export { ShareButton } from './share/ShareButton';
+export { MistakeReportButton } from './mistake-reports/MistakeReportButton';
+export {
+  MistakeReportSheet,
+  type MistakeReportSheetDraft,
+} from './mistake-reports/MistakeReportSheet';
 export { ShareSheet, type ShareSheetOutcome } from './share/ShareSheet';
 export { NavigationRow, SettingsGroup, SoonRow, SwitchRow, TimeRow } from './settings/SettingsRows';
 export { SplashOverlay } from './onboarding/SplashOverlay';

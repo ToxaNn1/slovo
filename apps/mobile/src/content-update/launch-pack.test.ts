@@ -127,7 +127,11 @@ describe('the Language Pack the app opens at launch', () => {
       onDevice: nativeModules.load('contentUpdates', () => app.contentUpdates),
     });
 
-    expect(launched).toEqual({ reader: 'bundled 4', contentUpdate: undefined });
+    expect(launched).toEqual({
+      reader: 'bundled 4',
+      version: { contentVersion: 4, packFormat: PACK_FORMAT },
+      contentUpdate: undefined,
+    });
     expect(app.packFiles.kept).toEqual(newerKept);
   });
 
@@ -136,16 +140,21 @@ describe('the Language Pack the app opens at launch', () => {
 
     const launched = await app.launch({ edition: withContentUpdatesOff() });
 
-    expect(launched).toEqual({ reader: 'bundled 4', contentUpdate: undefined });
+    expect(launched).toEqual({
+      reader: 'bundled 4',
+      version: { contentVersion: 4, packFormat: PACK_FORMAT },
+      contentUpdate: undefined,
+    });
     expect(app.packFiles.kept).toEqual(newerKept);
   });
 
   it('opens the bundled pack, with content updates on, when no pack is kept', async () => {
     const app = device();
 
-    const { reader, contentUpdate } = await app.launch();
+    const { reader, version, contentUpdate } = await app.launch();
 
     expect(reader).toBe('bundled 4');
+    expect(version).toEqual({ contentVersion: 4, packFormat: PACK_FORMAT });
     expect(contentUpdate).toBeDefined();
     expect(app.closed).toEqual([]);
   });
@@ -153,9 +162,10 @@ describe('the Language Pack the app opens at launch', () => {
   it('opens the kept pack when it is newer than the bundled one, and closes the bundled one', async () => {
     const app = device({ kept: newerKept });
 
-    const { reader } = await app.launch();
+    const { reader, version } = await app.launch();
 
     expect(reader).toBe('kept 5');
+    expect(version).toEqual({ contentVersion: 5, packFormat: PACK_FORMAT });
     expect(app.closed).toEqual(['bundled']);
   });
 
@@ -193,7 +203,11 @@ describe('the Language Pack the app opens at launch', () => {
 
     const launched = await app.launch({ onDevice: failing });
 
-    expect(launched).toEqual({ reader: 'bundled 4', contentUpdate: undefined });
+    expect(launched).toEqual({
+      reader: 'bundled 4',
+      version: { contentVersion: 4, packFormat: PACK_FORMAT },
+      contentUpdate: undefined,
+    });
     expect(app.errors).toHaveLength(1);
   });
 

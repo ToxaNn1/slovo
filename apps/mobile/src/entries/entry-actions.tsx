@@ -7,6 +7,8 @@ import {
   HideButton,
   HideChoiceSheet,
   KnowledgeButtons,
+  MistakeReportButton,
+  MistakeReportSheet,
   ShareButton,
   ShareSheet,
 } from '@slovo/ui';
@@ -21,6 +23,8 @@ import { useCompositionRead } from '../composition';
 import { useFavorite } from '../saved/favorites';
 import { useKnowledgeMark } from '../knowledge/marks';
 import { useHide } from '../mix/hiding';
+import { logError } from '../diagnostics/log';
+import { mistakeReportsOpening } from '../mistake-reports/device-mistake-reports';
 import { sessionShareFormat } from '../share/share-card';
 import { useShown } from '../shown-in-effect';
 
@@ -29,7 +33,8 @@ import { useShown } from '../shown-in-effect';
  * Feed (its Word of the Day too) and the Entry screen a list opens. Each action
  * fills its own slot. The «Знаю» and «Не знаю» buttons are there only when the
  * Knowledge switch is on in effect, and inactive while Self-check conceals the
- * card's meaning (the card tells them). Its screen gives it an
+ * card's meaning (the card tells them); the «Повідомити про помилку» flag only
+ * while Mistake Reports are on in effect. Its screen gives it an
  * `UndoToastProvider` for the toast after a hide.
  */
 export function EntryActions({ card }: { card: AnyEntryCard }) {
@@ -39,6 +44,7 @@ export function EntryActions({ card }: { card: AnyEntryCard }) {
   const collection = useCollectionAction(entryId);
   const share = useShareAction(card);
   const marks = useKnowledgeButtons(card);
+  const report = useMistakeReportAction(entryId);
   return (
     <>
       <ActionRow
@@ -47,10 +53,12 @@ export function EntryActions({ card }: { card: AnyEntryCard }) {
         share={share.button}
         collection={collection.button}
         hide={<HideButton onPress={hide.open} />}
+        report={report.button}
       />
       <HideChoiceSheet {...hide.choice} />
       {collection.sheet}
       {share.sheet}
+      {report.sheet}
     </>
   );
 }
@@ -127,6 +135,45 @@ function EntryShareSheet({
       onClose={onClose}
     />
   );
+}
+
+/**
+ * The «Повідомити про помилку» flag of an Entry's action row, and the sheet
+ * it opens: there only while Mistake Reports are on in effect (ADR 0056).
+ * «Надіслати» closes the sheet and hands the report to the Core's queue,
+ * which sends it now or later.
+ */
+function useMistakeReportAction(entryId: string): { button: ReactNode; sheet: ReactNode } {
+  const [open, setOpen] = useState(false);
+  const shown = useShown().entryButtons.mistakeReport;
+  if (!shown) return { button: undefined, sheet: undefined };
+  const close = () => {
+    setOpen(false);
+  };
+  return {
+    button: (
+      <MistakeReportButton
+        onPress={() => {
+          setOpen(true);
+        }}
+      />
+    ),
+    sheet: (
+      <MistakeReportSheet
+        visible={open}
+        onClose={close}
+        onSend={({ type, comment }) => {
+          close();
+          mistakeReportsOpening
+            .opened()
+            .then((reports) => reports.report({ entryId, type, comment }))
+            .catch((error: unknown) => {
+              logError('Could not report the mistake', error);
+            });
+        }}
+      />
+    ),
+  };
 }
 
 /** The «До колекції» button of an Entry's action row, and the sheet it opens. */

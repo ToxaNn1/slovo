@@ -10,6 +10,7 @@ import { languagePackOpening } from '../content-update/language-pack';
 import { remoteSwitchesOpening } from '../edition/remote-switches';
 import { reportForeground } from '../foreground/foreground-reports';
 import { logError } from '../diagnostics/log';
+import { mistakeReportsOpening } from '../mistake-reports/device-mistake-reports';
 import { settingsOpening } from '../settings/settings';
 import { syncInBackground, reopenAfterSync } from '../sync/background-sync';
 import { syncOpening } from '../sync/device-sync';
@@ -34,7 +35,8 @@ async function isOnInEffect(feature: FeatureSwitch): Promise<boolean> {
  * the background, and a sync that changed the user state reopens the settings
  * and the composition and writes the Widget Snapshot (spec #378). The Content update module checks then too, when content updates
  * are on in effect, at most once a day; the Account checks its Session then,
- * when it is on in effect, at most once an hour. Draws nothing.
+ * when it is on in effect, at most once an hour. Mistake Reports send their
+ * queue at launch and on each return (ADR 0056). Draws nothing.
  */
 export function Lifecycle() {
   useEffect(() => {
@@ -81,6 +83,9 @@ export function Lifecycle() {
       void isOnInEffect('contentUpdates').then(async (on) => {
         if (on) await contentUpdate?.checkForUpdate();
       });
+    });
+    reports.listen(mistakeReportsOpening, (mistakeReports, moment) => {
+      if (moment === 'launch' || moment === 'return') mistakeReports.foreground();
     });
     if (accountOpening !== undefined) {
       reports.listen(accountOpening, (account, moment) => {

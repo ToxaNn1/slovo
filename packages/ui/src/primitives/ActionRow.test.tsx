@@ -55,4 +55,19 @@ describe('ActionRow', () => {
     const [slots] = screen.getByTestId('action-row').children;
     expect(typeof slots === 'string' ? [] : slots?.children).toHaveLength(2);
   });
+
+  it('has a slot for the report flag when it is given one', async () => {
+    await render(
+      <ActionRow
+        favorite={<Text testID="favorite">♡</Text>}
+        collection={<Text testID="collection">+</Text>}
+        report={<Text testID="report">⚑</Text>}
+      />,
+    );
+
+    const [slots] = screen.getByTestId('action-row').children;
+    const children = typeof slots === 'string' ? [] : (slots?.children ?? []);
+    expect(children).toHaveLength(3);
+    expect(screen.getByTestId('report')).toBeOnTheScreen();
+  });
 });

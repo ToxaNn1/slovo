@@ -1,16 +1,22 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import type { SynonymRow, Tip } from '@slovo/contracts';
+import type { Correction, Idiom, SynonymRow, Tip, Word } from '@slovo/contracts';
 import {
   createMemoryUserStatePort,
   loadEdition,
   openComposition,
+  openMistakeReports,
   openUserState,
   systemRandom,
   type AnyEntryCard,
   type Composition,
   type Haptics,
+  type MistakeReports,
 } from '@slovo/core';
-import { createMemoryContentPort } from '@slovo/core/testing';
+import {
+  createFakeReportsApi,
+  createMemoryContentPort,
+  type FakeReportsApi,
+} from '@slovo/core/testing';
 import { EditionProvider, EntryCard, HapticsProvider, UndoToastProvider } from '@slovo/ui';
 import { act, fireEvent, render, screen, within } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -31,14 +37,77 @@ jest.mock('../composition', () => ({
   useCompositionRead: () => undefined,
 }));
 jest.mock('../edition/remote-switches', () => ({ useEditionInEffect: () => mockEdition }));
+/** Whether Mistake Reports are on in effect, as the Edition ships them unless a test turns them off. */
+let mockMistakeReportsOn: boolean;
+
 // The buttons of the action row as the Edition ships them, without the settings and the Mix.
 jest.mock('../shown-in-effect', () => ({
-  useShown: () => ({ entryButtons: { shareCard: true, pronunciation: true, knowledge: true } }),
+  useShown: () => ({
+    entryButtons: {
+      shareCard: true,
+      pronunciation: true,
+      knowledge: true,
+      mistakeReport: mockMistakeReportsOn,
+    },
+  }),
+}));
+
+/** The Core's Mistake Reports over a fake backend, opened afresh for each test. */
+let mockMistakeReports: MistakeReports;
+let reportsApi: FakeReportsApi;
+
+jest.mock('../mistake-reports/device-mistake-reports', () => ({
+  mistakeReportsOpening: { opened: () => Promise.resolve(mockMistakeReports) },
 }));
 // A binary that can capture the Share Card.
 jest.mock('../share/device-share', () => ({
   shareCardOnDevice: () => Promise.resolve('closed'),
 }));
+
+const word: Word = {
+  kind: 'word',
+  id: 'w_test',
+  lemma: 'слово',
+  stress: [2],
+  partOfSpeech: 'noun',
+  primaryDefinition: 'The meaning of the test Word.',
+  extraDefinitions: [],
+  examples: [{ text: 'Ось слово тут.' }],
+  synonyms: [],
+  antonyms: [],
+  registers: [],
+  categoryId: 'nature',
+  rarity: 3,
+  sources: [{ title: 'Test source' }],
+  correctionIds: [],
+  retired: false,
+};
+
+const correction: Correction = {
+  kind: 'correction',
+  id: 'c_test',
+  nonStandardForm: 'хибне',
+  correctionType: 'calque',
+  standardEquivalents: ['добре'],
+  explanation: 'Чому добре краще.',
+  examplePair: { nonStandard: 'Тут хибне.', standard: 'Тут добре.' },
+  categoryId: 'everyday',
+  sources: [{ title: 'Test source' }],
+  literaryUses: [],
+  retired: false,
+};
+
+const idiom: Idiom = {
+  kind: 'idiom',
+  id: 'i_test',
+  expression: 'бити байдики',
+  idiomType: 'idiom',
+  primaryDefinition: 'Ледарювати.',
+  extraDefinitions: [],
+  examples: [],
+  sources: [{ title: 'Test source' }],
+  retired: false,
+};
 
 const row: SynonymRow = {
   kind: 'synonymRow',
@@ -82,12 +151,34 @@ const metrics = {
   insets: { top: 0, left: 0, right: 0, bottom: 0 },
 };
 
+const clock = { now: () => new Date('2026-10-26T09:00:00Z'), timeZone: () => 'Europe/Kyiv' };
+
 beforeEach(async () => {
+  const userState = await openUserState({ port: createMemoryUserStatePort(new Map()) });
   mockComposition = await openComposition({
-    content: createMemoryContentPort({ synonymRows: [row], tips: [tip] }),
+    content: createMemoryContentPort({
+      words: [word],
+      corrections: [correction],
+      idioms: [idiom],
+      synonymRows: [row],
+      tips: [tip],
+    }),
     edition: mockEdition,
-    userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
-    clock: { now: () => new Date('2026-10-26T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
+    userState,
+    clock,
+    random: systemRandom,
+  });
+  mockMistakeReportsOn = true;
+  reportsApi = createFakeReportsApi();
+  mockMistakeReports = openMistakeReports({
+    userState,
+    api: reportsApi,
+    edition: mockEdition,
+    appVersion: '0.8.14',
+    contentVersion: 42,
+    clock,
+    // A report the backend takes at once waits for nothing.
+    schedule: () => () => undefined,
     random: systemRandom,
   });
 });
@@ -206,5 +297,59 @@ describe.each([
 
     expect(mockComposition.hiddenEntries.has(entryId)).toBe(true);
     expect(screen.getByText(`«${title}» приховано`)).toBeOnTheScreen();
+  });
+});
+
+describe.each([
+  ['a Word', 'w_test'],
+  ['a Correction', 'c_test'],
+  ['an Idiom', 'i_test'],
+  ['a Synonym Row', 'r_walk'],
+  ['a Tip', 't_hour'],
+])('«Повідомити про помилку» on %s', (_, entryId) => {
+  const send = () => screen.getByRole('button', { name: 'Надіслати' });
+
+  it('reports a mistake in it, with no Account, from the flag of its action row', async () => {
+    await renderCard(entryId);
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Повідомити про помилку' }));
+    expect(send()).toBeDisabled();
+    await fireEvent.press(screen.getByRole('radio', { name: 'Наголос' }));
+    await fireEvent.changeText(
+      screen.getByLabelText('Коментар (необов’язково)'),
+      ' Наголос на першому. ',
+    );
+    await fireEvent.press(send());
+    await settle();
+
+    expect(reportsApi.received).toEqual([
+      {
+        editionId: 'uk',
+        entryId,
+        type: 'stress',
+        comment: 'Наголос на першому.',
+        appVersion: '0.8.14',
+        contentVersion: 42,
+      },
+    ]);
+  });
+
+  it('keeps «Надіслати» disabled for «Інше» until the comment says something', async () => {
+    await renderCard(entryId);
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Повідомити про помилку' }));
+    await fireEvent.press(screen.getByRole('radio', { name: 'Інше' }));
+    expect(send()).toBeDisabled();
+    await fireEvent.changeText(screen.getByLabelText('Коментар (необов’язково)'), 'Приклад хибний');
+
+    expect(send()).toBeEnabled();
+  });
+
+  it('has no flag while Mistake Reports are off in effect', async () => {
+    mockMistakeReportsOn = false;
+    await renderCard(entryId);
+
+    expect(screen.getByTestId('favorite-button')).toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: 'Повідомити про помилку' })).toBeNull();
   });
 });

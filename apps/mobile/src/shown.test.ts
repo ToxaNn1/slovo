@@ -11,7 +11,12 @@ function editionWithout(...off: FeatureSwitch[]) {
 const everything: Shown = {
   tabs: ['home', 'settings', 'game', 'saved'],
   gameReview: true,
-  entryButtons: { shareCard: true, pronunciation: true, knowledge: true },
+  entryButtons: {
+    shareCard: true,
+    pronunciation: true,
+    knowledge: true,
+    mistakeReport: true,
+  },
   stressFall: true,
   selfCheck: false,
   selfCheckSetting: true,
@@ -70,14 +75,28 @@ describe('what the reader is shown', () => {
       'no Share Card button with Share Cards off',
       {
         off: ['shareCards'],
-        shown: { entryButtons: { shareCard: false, pronunciation: true, knowledge: true } },
+        shown: {
+          entryButtons: {
+            shareCard: false,
+            pronunciation: true,
+            knowledge: true,
+            mistakeReport: true,
+          },
+        },
       },
     ],
     [
       'no Pronunciation button with Pronunciation off',
       {
         off: ['pronunciation'],
-        shown: { entryButtons: { shareCard: true, pronunciation: false, knowledge: true } },
+        shown: {
+          entryButtons: {
+            shareCard: true,
+            pronunciation: false,
+            knowledge: true,
+            mistakeReport: true,
+          },
+        },
       },
     ],
     [
@@ -85,9 +104,28 @@ describe('what the reader is shown', () => {
       {
         off: ['knowledge'],
         shown: {
-          entryButtons: { shareCard: true, pronunciation: true, knowledge: false },
+          entryButtons: {
+            shareCard: true,
+            pronunciation: true,
+            knowledge: false,
+            mistakeReport: true,
+          },
           learning: false,
           stats: { streak: true, knowledge: 'none' },
+        },
+      },
+    ],
+    [
+      'no «Повідомити про помилку» with Mistake Reports off',
+      {
+        off: ['mistakeReports'],
+        shown: {
+          entryButtons: {
+            shareCard: true,
+            pronunciation: true,
+            knowledge: true,
+            mistakeReport: false,
+          },
         },
       },
     ],

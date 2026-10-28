@@ -4,7 +4,7 @@ Until 0.8.14 a reader who spotted a wrong Stress or a typo in a Definition could
 
 **Feature Switch.** `mistakeReports` is required of every Edition and on in the Ukrainian Edition. While it is off in effect the card menu has no «Повідомити про помилку» and nothing is sent; reports already queued stay until it is on again. The backend answers an Edition with the switch off as one it doesn't find (`NOT_FOUND`), as content does (ADR 0032). A remote switch only turns it off (ADR 0040).
 
-**On the card.** «Повідомити про помилку» is an item of the card menu on cards of all five kinds of Entry: Word, Correction, Idiom, Synonym Row and Tip. It opens a sheet:
+**On the card.** «Повідомити про помилку» is an item of the card menu on cards of all five kinds of Entry: Word, Correction, Idiom, Synonym Row and Tip. The card menu is the action row under the card (ADR 0017): the item is a flag in its last slot, which VoiceOver reads as «Повідомити про помилку», so it takes no new text and the actions stay one tap away. It opens a sheet:
 
 - **The type**, required, one of «Друкарська помилка» (`typo`), «Наголос» (`stress`), «Визначення» (`definition`) and «Інше» (`other`).
 - **«Коментар (необов'язково)»**, at most 500 characters, with a counter. «Інше» needs a comment, since the owner can't guess what it means.
@@ -34,6 +34,7 @@ Until 0.8.14 a reader who spotted a wrong Stress or a typo in a Definition could
 - **An Edition-scoped address, `/v1/editions/{edition}/reports`**: rejected by the owner (2026-10-26). The Edition travels in the body.
 - **Store the IP address to stop abuse**: rejected. The hashed window of the rate limits stops a flood without keeping who sent what.
 - **The backend checks that the Entry is in the Edition's pack**: rejected. An older pack's Entry is still a real report, and the owner reads every one anyway.
+- **A «…» menu on the card with «Повідомити про помилку» in it**: rejected for now. A menu of one item is one more tap and needs a name of its own; a flag in the action row does the same.
 - **Send at once, with no queue**: rejected. A reader on a train would lose their report.
 - **An unbounded queue**: rejected. Twenty reports cover any honest reader; the cap keeps a stuck queue from growing without end.
 - **Keep resolved reports**: rejected. A checked report has done its job, and deleting it keeps the comments readers wrote no longer than needed.

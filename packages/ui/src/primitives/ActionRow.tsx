@@ -14,17 +14,20 @@ export interface ActionRowProps {
   collection?: ReactNode;
   /** Hides the Entry, or its Category; the row leaves its slot out without it. */
   hide?: ReactNode;
+  /** Opens the sheet of a Mistake Report; the row leaves its slot out without it. */
+  report?: ReactNode;
 }
 
 /**
  * The action row under the Entry card (ADR 0017): one 52 pt slot per action,
  * spread evenly across the card's width, the same on a Word and a Correction
- * card: the heart, share, Collections and hide, as the design has it. Without
- * a share or a hide action the others spread over the row, as on a Synonym
- * Row's and a Tip's card (spec #730). The mark buttons, when given, sit on a
+ * card: the heart, share, Collections and hide, as the design has it, and the
+ * flag of «Повідомити про помилку» last (ADR 0056). Without a share, a hide
+ * or a report action the others spread over the row, as on a Synonym Row's
+ * and a Tip's card (spec #730). The mark buttons, when given, sit on a
  * line above them.
  */
-export function ActionRow({ marks, favorite, share, collection, hide }: ActionRowProps) {
+export function ActionRow({ marks, favorite, share, collection, hide, report }: ActionRowProps) {
   return (
     <View testID="action-row" style={styles.container}>
       {marks !== undefined && <View style={styles.marks}>{marks}</View>}
@@ -33,6 +36,7 @@ export function ActionRow({ marks, favorite, share, collection, hide }: ActionRo
         {share !== undefined && <View style={styles.slot}>{share}</View>}
         <View style={styles.slot}>{collection}</View>
         {hide !== undefined && <View style={styles.slot}>{hide}</View>}
+        {report !== undefined && <View style={styles.slot}>{report}</View>}
       </View>
     </View>
   );
