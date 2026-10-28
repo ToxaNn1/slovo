@@ -57,6 +57,9 @@ jobs:
           key: jest-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'apps/mobile/jest.config.js') }}
           restore-keys: jest-${{ runner.os }}-
       # The backend's tests need Postgres; the job "Backend" runs them.
+      # `pnpm test` runs one package at a time (--concurrency=1): each test
+      # runner already spreads over every core, and side by side they slowed
+      # the app's screen tests eightfold, past Jest's 5 seconds a test.
       - run: pnpm test --filter='!@slovo/backend'
       # The contracts' tests hold the contract to the committed description of
       # /v1. This holds it to the one on the base branch too, so a description
