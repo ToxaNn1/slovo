@@ -446,3 +446,24 @@ export interface SwitchesApi {
     { readonly ok: true; readonly answer: RemoteSwitchesAnswer | 'unchanged' } | RequestFailure
   >;
 }
+
+/** The Community Counters of one Entry, as the backend answers them (ADR 0060). */
+export interface EntryCounters {
+  readonly entryId: string;
+  readonly known: number;
+  readonly unknown: number;
+  readonly saved: number;
+}
+
+/**
+ * The backend's `counters.read` procedure for the running Edition, as the
+ * Core sees it. It needs no Account and sends no Session (ADR 0060). The
+ * shell implements this port on the API contract's client. A call never
+ * rejects: every answer of the backend comes back as success or a failure.
+ */
+export interface CountersApi {
+  /** The counters of the Entries, 1 to 100, each once, in the order asked; an Entry nobody counted answers zeros. */
+  read(
+    entryIds: readonly string[],
+  ): Promise<{ readonly ok: true; readonly counters: readonly EntryCounters[] } | RequestFailure>;
+}

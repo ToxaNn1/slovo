@@ -333,6 +333,22 @@ export const userStateRecords = {
     }),
     { sync: 'device-only' },
   ),
+  /**
+   * The Community Counters this device read from the backend, one record per
+   * Entry, by Entry id: its known, unknown and saved counts and when they
+   * were read, kept for 24 hours (ADR 0060). It stays on the device: the
+   * server's numbers are no reader's own. A new key, so no migration.
+   */
+  countersRead: declareRecords(
+    'counters.read.',
+    z.object({
+      readAt: InstantSchema,
+      known: z.int().nonnegative(),
+      unknown: z.int().nonnegative(),
+      saved: z.int().nonnegative(),
+    }),
+    { sync: 'device-only' },
+  ),
   /** The Sync cursor: the server's sequence number of the last record pulled; without it, no sync has pulled yet. */
   syncCursor: declareRecord('sync.cursor', z.number().int().nonnegative(), {
     sync: 'device-only',

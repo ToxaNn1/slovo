@@ -5,6 +5,7 @@
  */
 export { createFakeAccountApi } from './fakes/fake-account-api';
 export { createFakeContentApi } from './fakes/fake-content-api';
+export { createFakeCountersApi, type FakeCountersApi } from './fakes/fake-counters-api';
 export {
   createFakeGoogleSignInSheet,
   type FakeGoogleSignInSheet,

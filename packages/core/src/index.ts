@@ -133,6 +133,11 @@ export {
   type CounterDelta,
 } from './community-counters/counter-deltas';
 export {
+  openCounterReads,
+  type CounterLine,
+  type CounterReads,
+} from './community-counters/counter-reads';
+export {
   dateKeyOf,
   formatTimeOfDay,
   localDayOf,
@@ -214,6 +219,8 @@ export {
   type AccountApiFailure,
   type Clock,
   type ContentReadPort,
+  type CountersApi,
+  type EntryCounters,
   type GoogleSignInSheet,
   type KeptSession,
   type NotificationPermission,
