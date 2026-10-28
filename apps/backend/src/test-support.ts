@@ -14,7 +14,12 @@ import type { HttpBindings } from '@hono/node-server';
 import { createApiClient } from '@slovo/contracts/api';
 import type { EditionConfig } from '@slovo/contracts';
 import { buildLanguagePack, recordContent } from '@slovo/language-pack';
-import { EDITIONS_DIR, editionFiles, openEdition } from '@slovo/language-pack/edition';
+import {
+  EDITIONS_DIR,
+  editionFiles,
+  ILLUSTRATIONS_DIR,
+  openEdition,
+} from '@slovo/language-pack/edition';
 import {
   systemClock,
   type Edition,
@@ -269,6 +274,10 @@ export function testEditions(
       // The Editions read before would carry a manifest that doesn't record it.
       if (read) throw new Error(`build or correct ${id} before reading the Editions`);
       cpSync(join(ukrainian.dir, 'content'), join(editionDir, 'content'), { recursive: true });
+      // The Words name these, so the content is recorded only with them.
+      cpSync(join(ukrainian.dir, ILLUSTRATIONS_DIR), join(editionDir, ILLUSTRATIONS_DIR), {
+        recursive: true,
+      });
       // The content checksum takes in the Edition, so the copy is recorded under its own id.
       record(editionDir);
       withContent.add(id);

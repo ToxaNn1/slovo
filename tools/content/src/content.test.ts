@@ -4,6 +4,7 @@ import {
   existsSync,
   mkdirSync,
   mkdtempSync,
+  readdirSync,
   readFileSync,
   rmSync,
   writeFileSync,
@@ -1042,6 +1043,12 @@ describe("a Word's moods", () => {
 describe("a Word's Illustration", () => {
   const offer = 'illustration: a square PNG of at most 150 KB in assets/illustrations/';
 
+  /** The files the copy offers: the Edition's own Illustrations and the ones a test adds. */
+  function offered(...added: string[]): string {
+    const own = readdirSync(join(ukrainian.dir, 'assets/illustrations'));
+    return [...own, ...added].toSorted().join(', ');
+  }
+
   /** The header of a 4×4 PNG: all the build reads of an Illustration. */
   function addPng(name: string): void {
     const header = Buffer.alloc(13);
@@ -1067,7 +1074,7 @@ describe("a Word's Illustration", () => {
 
     expect(run.stderr).toBe('');
     expect(run.status).toBe(0);
-    expect(run.stdout).toContain(`${offer} (bervy.png, kupyna.png), or none`);
+    expect(run.stdout).toContain(`${offer} (${offered('bervy.png', 'kupyna.png')}), or none`);
     const [file = ''] = run.opened;
     expect(readJson(file)).toMatchObject({ illustration: 'kupyna.png' });
     expect(run.stdout).toContain(`Recorded ${file}`);
@@ -1096,12 +1103,14 @@ describe("a Word's Illustration", () => {
 
     expect(run.stderr).toBe('');
     expect(run.status).toBe(0);
-    expect(run.stdout).toContain(`${offer} (kupyna.png), or none`);
+    expect(run.stdout).toContain(`${offer} (${offered('kupyna.png')}), or none`);
     expect(readJson(file)).toMatchObject({ id: word.id, illustration: 'kupyna.png' });
     expect(run.stdout).toContain(`Recorded ${file}`);
   });
 
   it('is offered without files when the Edition has none', () => {
+    rmSync(join(editionDir, 'assets/illustrations'), { recursive: true });
+
     const run = content(['edit', word.id, '--edition', 'uk'], { edits: [null] });
 
     expect(run.stdout).toContain(`${offer}, or none`);
