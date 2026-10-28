@@ -16,11 +16,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AccountRow } from '@/account/account-row';
 import { useAccountInEffect } from '@/account/account';
-import { editionStrings } from '@/edition/edition';
+import { edition, editionStrings } from '@/edition/edition';
 import { useHiddenSummary } from '@/mix/hidden';
 import { useMixSummary } from '@/mix/mix';
 import { useNotificationsSummary } from '@/notifications/notifications';
 import { useShown } from '@/shown-in-effect';
+import { openLegalPage } from '@/settings/legal-page';
 import { useSettings } from '@/settings/settings';
 import { useOpenScreen } from '@/entries/use-open-screen';
 
@@ -50,7 +51,9 @@ const dailyLimitSegments = dailyLimits.map((dailyLimit) => ({
 /**
  * Settings: SLOVO ID when the Account is on in effect, the Theme, the font
  * size, the Daily Limit while it is on in effect, «Пройти тест ще раз» while
- * the Rarity Test is, «Сезонний декор» while its Feature Switch is, and the rows of the design. The rows of later versions show as soon.
+ * the Rarity Test is, «Сезонний декор» while its Feature Switch is,
+ * «Ділитися анонімною статистикою» with its privacy policy link while the
+ * Community Counters are, and the rows of the design. The rows of later versions show as soon.
  */
 export default function SettingsScreen() {
   const { current, update } = useSettings();
@@ -185,6 +188,28 @@ export default function SettingsScreen() {
             />
           </SettingsGroup>
         </View>
+        {shown.shareCountersSetting && (
+          <View style={styles.section}>
+            <SettingsGroup>
+              <SwitchRow
+                testID="settings-share-counters"
+                label={strings.anonymousStats.title}
+                subtitle={strings.anonymousStats.explanation}
+                value={current.shareCounters}
+                onChange={(shareCounters) => {
+                  update({ shareCounters });
+                }}
+              />
+              <NavigationRow
+                testID="settings-row-privacy"
+                label={strings.about.privacyPolicy}
+                onPress={() => {
+                  openLegalPage(edition.legalPages.privacy);
+                }}
+              />
+            </SettingsGroup>
+          </View>
+        )}
         <View style={styles.section}>
           <SectionLabel>{strings.sounds.section}</SectionLabel>
           <SettingsGroup>

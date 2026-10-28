@@ -38,6 +38,8 @@ export interface Shown {
   readonly selfCheckSetting: boolean;
   /** The Settings switch for «Сезонний декор» (ADR 0055). */
   readonly seasonalDecorSetting: boolean;
+  /** The Settings switch «Ділитися анонімною статистикою», with its privacy policy link (ADR 0060). */
+  readonly shareCountersSetting: boolean;
   /** The «Вчу» card of the Saved tab and the list it opens. */
   readonly learning: boolean;
   /**
@@ -106,6 +108,7 @@ export function shownOf({
     selfCheck: on('selfCheck') && settings.selfCheck,
     selfCheckSetting: on('selfCheck'),
     seasonalDecorSetting: on('seasonalDecor'),
+    shareCountersSetting: on('communityCounters'),
     learning: knowledge,
     stats: on('statistics')
       ? {
