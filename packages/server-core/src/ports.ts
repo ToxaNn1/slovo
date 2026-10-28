@@ -264,4 +264,14 @@ export interface CounterStore {
    * (UTC) as `YYYY-MM-DD`.
    */
   add(editionId: string, events: readonly CounterEvent[], week: string): Promise<void>;
+  /** The counts kept of those of the Entries ever counted, in any order. */
+  read(editionId: string, entryIds: readonly string[]): Promise<readonly EntryCounts[]>;
+}
+
+/** An Entry's Community Counters: the readers who know it, don't and saved it. */
+export interface EntryCounts {
+  readonly entryId: string;
+  readonly known: number;
+  readonly unknown: number;
+  readonly saved: number;
 }

@@ -27,6 +27,11 @@ const ANSWERED_COLUMNS = new Set([
   'size',
   'fileSha256',
   'off',
+  // An Entry's Community Counters, totals that name no reader.
+  'entryId',
+  'known',
+  'unknown',
+  'saved',
 ]);
 
 /**

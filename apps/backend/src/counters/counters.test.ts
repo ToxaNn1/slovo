@@ -444,3 +444,103 @@ describe('the counter events from one IP address', () => {
     }
   });
 });
+
+describe('counters.read', () => {
+  it('answers known, unknown and saved of several Entries, in the order asked, cached for 24 hours', async () => {
+    const { client, request } = testApp();
+    const word = newEntryId();
+    const other = newEntryId();
+    await client.counters.send({
+      editionId: 'uk',
+      events: [event(word, { known: 1, saved: 1 }), event(other, { unknown: 1 })],
+    });
+    await client.counters.send({ editionId: 'uk', events: [event(word, { known: 1 })] });
+
+    const response = await request(`/v1/counters?edition=uk&entries=${other},${word}`);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('cache-control')).toBe('public, max-age=86400');
+    await expect(response.json()).resolves.toEqual({
+      counters: [
+        { entryId: other, known: 0, unknown: 1, saved: 0 },
+        { entryId: word, known: 2, unknown: 0, saved: 1 },
+      ],
+    });
+  });
+
+  it('answers zeros for an Entry never counted, and for one whose counts went back to zero', async () => {
+    const { client } = testApp();
+    const neverCounted = newEntryId();
+    const removed = newEntryId();
+    await client.counters.send({ editionId: 'uk', events: [event(removed, { saved: 1 })] });
+    await client.counters.send({ editionId: 'uk', events: [event(removed, { saved: -1 })] });
+
+    await expect(
+      client.counters.read({ edition: 'uk', entries: [neverCounted, removed].join(',') }),
+    ).resolves.toEqual({
+      counters: [
+        { entryId: neverCounted, known: 0, unknown: 0, saved: 0 },
+        { entryId: removed, known: 0, unknown: 0, saved: 0 },
+      ],
+    });
+  });
+
+  it('answers the counts of the Edition asked, not another’s', async () => {
+    const { client } = testApp({ editions: testEditions(['uk', 'other']).read() });
+    const word = newEntryId();
+    await client.counters.send({ editionId: 'other', events: [event(word, { known: 1 })] });
+
+    await expect(client.counters.read({ edition: 'uk', entries: word })).resolves.toEqual({
+      counters: [{ entryId: word, known: 0, unknown: 0, saved: 0 }],
+    });
+  });
+
+  it('answers 100 Entries at once', async () => {
+    const { client } = testApp();
+    const entries = Array.from({ length: 100 }, newEntryId);
+
+    const { counters } = await client.counters.read({ edition: 'uk', entries: entries.join(',') });
+
+    expect(counters.map(({ entryId }) => entryId)).toEqual(entries);
+  });
+
+  it.each([
+    ['over 100 Entries', Array.from({ length: 101 }, newEntryId).join(',')],
+    ['no Entry', ''],
+    ['an Entry twice', 'w_a,w_a'],
+    ['an Entry id that is not one', 'w_a,not-an-entry-id'],
+  ])('refuses a request with %s as 400', async (_, entries) => {
+    const { request } = testApp();
+
+    const response = await request(`/v1/counters?edition=uk&entries=${entries}`);
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({ code: 'BAD_REQUEST' });
+  });
+
+  it('answers an Edition it does not serve as NOT_FOUND', async () => {
+    const { client } = testApp();
+
+    await expect(client.counters.read({ edition: 'xx', entries: 'w_a' })).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+      status: 404,
+    });
+  });
+
+  it('answers NOT_FOUND for an Edition with Community Counters switched off, locally or remotely', async () => {
+    const folder = testEditions(['off', 'remote'], (config) =>
+      config.id === 'off'
+        ? { ...config, featureSwitches: { ...config.featureSwitches, communityCounters: false } }
+        : config,
+    );
+    const { client, switchOff } = testApp({ editions: folder.read() });
+    await switchOff('remote', 'communityCounters');
+
+    for (const edition of ['off', 'remote']) {
+      await expect(client.counters.read({ edition, entries: 'w_a' })).rejects.toMatchObject({
+        code: 'NOT_FOUND',
+        status: 404,
+      });
+    }
+  });
+});
