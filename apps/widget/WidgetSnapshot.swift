@@ -20,6 +20,9 @@ struct WidgetSnapshot: Decodable {
   /// The key the widget's links to an Entry carry, so the app opens only
   /// those as the widget's; the Edition's example has none.
   let linkKey: String?
+  /// The local date, as `yyyy-MM-dd`, on which the Word of the Day was last
+  /// Seen; none before the first or when the Edition has no Word of the Day.
+  let wordOfTheDaySeenOn: String?
 
   /// The Entries of `ids`, in that order.
   func entries(_ ids: [String]) -> [WidgetEntry] {
