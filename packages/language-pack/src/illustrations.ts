@@ -7,7 +7,7 @@ import type { Authored } from './check-content';
 import { ILLUSTRATIONS_DIR } from './edition-folder';
 
 /** The largest Illustration the build takes, in bytes: 150 KB (ADR 0055). */
-export const MAX_ILLUSTRATION_BYTES = 150_000;
+const MAX_ILLUSTRATION_BYTES = 150_000;
 
 const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
