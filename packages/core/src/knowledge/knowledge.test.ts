@@ -151,6 +151,26 @@ describe('Knowledge Marks', () => {
     expect(markTime('w_two')).toBe('2026-10-19T11:00:00.000Z');
   });
 
+  it('keeps the mark time while a Review answer leaves the same mark', async () => {
+    const records = new Map<string, string>();
+    const time = fakeClock('2026-10-19T09:00:00.000Z');
+    const app = await run({ records, clock: time.clock });
+    const record = () =>
+      userStateRecords.knowledge.record('w_one').decode(records.get('knowledge.w_one'));
+
+    await app.knowledge.tap('w_one', 'unknown');
+    time.advance(DAY);
+    await app.resume();
+    await app.knowledge.answer('w_one', 'known');
+    expect(record()).toMatchObject({ mark: 'known', markedAt: '2026-10-20T09:00:00.000Z' });
+
+    time.advance(7 * DAY);
+    await app.resume();
+    await app.knowledge.answer('w_one', 'known');
+    expect(record()).toMatchObject({ mark: 'known', markedAt: '2026-10-20T09:00:00.000Z' });
+    expect(record()?.step).not.toBe(1);
+  });
+
   it('reads a mark kept before 0.8.13, with no mark time, and gives it one once it changes', async () => {
     const records = new Map([
       [

@@ -261,9 +261,10 @@ describe("the crossword days of the Ukrainian Edition's content", () => {
     if (!existsSync(join(editionDir, DAYS_FILE)))
       writeFileSync(join(editionDir, DAYS_FILE), '[]\n');
 
-    record(editionDir, '2026-10-27');
+    // Half a year past the recorded days' start, so --record writes new days too.
+    record(editionDir, '2027-06-01');
 
-    expect(daysOf(editionDir).at(-1)?.date).toBe(dayAfter('2026-10-27', 400));
+    expect(daysOf(editionDir).at(-1)?.date).toBe(dayAfter('2027-06-01', 400));
     expect(buildErrors(editionDir)).toEqual([]);
   }, 120_000);
 });

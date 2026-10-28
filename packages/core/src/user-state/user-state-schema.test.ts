@@ -109,6 +109,10 @@ describe('the 0.8 sync marks', () => {
       'firstWeek.from',
       'contentUpdate.checkedAt',
       'edition.switches',
+      'feed.noticesClosed',
+      'search.recentQueries',
+      'notifications.titles',
+      'game.widgetHintOffered',
     ]) {
       expect(syncMarkOf(key), key).toBe('device-only');
     }
@@ -133,6 +137,7 @@ describe('the 0.8 sync marks', () => {
       'feed.cycle',
       'feed.seen.w_1',
       'wordOfTheDayArchive.2026-10-26',
+      'settings.dailyLimit',
     ]) {
       expect(syncMarkOf(key), key).toBe('last-write-wins');
     }

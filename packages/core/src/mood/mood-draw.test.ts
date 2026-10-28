@@ -187,8 +187,8 @@ describe('the mood draw', () => {
 
     const before = new Map(records);
 
-    await draw.moods();
-    await draw.draw('calm');
+    expect(await draw.moods()).not.toEqual([]);
+    expect((await draw.draw('calm'))?.wordId).toBeDefined();
 
     expect(records).toEqual(before);
   });

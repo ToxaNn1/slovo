@@ -54,12 +54,13 @@ export const DistractorRuleSchema = z.enum(['same-part-of-speech']);
 
 export type DistractorRule = z.infer<typeof DistractorRuleSchema>;
 
+/** One lower-case letter. */
+const LowerCaseLetterSchema = z.string().regex(/^\p{Ll}$/u, 'Expected one lower-case letter');
+
 /**
  * Letters authored as one string separated by spaces (a letter may span
  * several characters) and parsed into a list of unique letters.
  */
-/** One lower-case letter. */
-const LowerCaseLetterSchema = z.string().regex(/^\p{Ll}$/u, 'Expected one lower-case letter');
 
 const LetterListSchema = z
   .string()

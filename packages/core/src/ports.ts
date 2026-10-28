@@ -146,7 +146,7 @@ export interface PlannedNotification {
   readonly date: string;
   /** The local time, `HH:MM` on a 24-hour clock. */
   readonly time: string;
-  /** The Lemma with its Stress marks; empty for the farewell, under which the device shows the app's name. */
+  /** A title template filled with the Lemma and its Stress marks; empty for the farewell, under which the device shows the app's name. */
   readonly title: string;
   /** The primary Definition, cut short at a word boundary, or the Edition's farewell. */
   readonly body: string;

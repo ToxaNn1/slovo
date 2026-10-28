@@ -11,12 +11,12 @@ The app and `@slovo/ui` memoise by hand with `useMemo`, `useCallback` and `React
 - `game/GameRound.tsx`, `game/OrderedChips.tsx`, `game/PairsGrid.tsx`, `game/VowelButtons.tsx`
 - `onboarding/Onboarding.tsx`, `onboarding/SplashOverlay.tsx`
 - `progress/ActiveDaysCalendar.tsx`
-- `primitives/BottomSheet.tsx`, `primitives/UndoToast.tsx`, `primitives/VerticalPager.tsx`
+- `primitives/BottomSheet.tsx`, `primitives/SwipeableRow.tsx`, `primitives/UndoToast.tsx`, `primitives/VerticalPager.tsx`
 - `saved/FavoriteButton.tsx`
 - `settings/WidgetGuide.tsx`
 - `share/ShareSheet.tsx`
 
-`game/round-motion.ts` holds Reanimated helpers but no component or hook, so the compiler leaves it alone anyway. In the app, only the root layout imports gesture-handler, for `GestureHandlerRootView`, with no animation of its own, so it is compiled. A test in `@slovo/ui` fails when a component module imports Reanimated, Worklets or gesture-handler without the directive, so a new animated component opts out until it is checked.
+`game/round-motion.ts` holds Reanimated helpers but no component or hook, so the compiler leaves it alone anyway. In the app, only the root layout imports gesture-handler, for `GestureHandlerRootView`, with no animation of its own, so it is compiled. A test in `@slovo/ui` fails when a component module imports Reanimated, Worklets or gesture-handler, or a subpath of one, without the directive, so a new animated component opts out until it is checked.
 
 **Lint follows the compiler.** Both `apps/mobile` and `packages/ui` lint with the compiler rules of `eslint-plugin-react-hooks` (`recommended-latest`) as errors, with effect dependencies kept as errors. The opted-out modules are exempt in `packages/ui/eslint.config.js`, which lists them again. The findings in compiled code that predate this decision carry an `eslint-disable-next-line` naming this ADR: three state resets in effects (`apps/mobile/src/feed/feed.ts`, `apps/mobile/src/notifications/notification-times.tsx`), which the compiler compiles as they behave today, and a counter mutated while rendering in `packages/ui/src/game/TypedAnswer.tsx`, which the compiler skips.
 
