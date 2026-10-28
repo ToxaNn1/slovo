@@ -135,7 +135,10 @@ async function renderApp() {
         </SafeAreaProvider>
       ),
       '+native-intent': {
-        redirectSystemPath: createOutsideLinks(() => Promise.resolve(undefined)),
+        redirectSystemPath: createOutsideLinks({
+          widgetLinkKey: () => Promise.resolve(undefined),
+          appIntents: { on: () => Promise.resolve(true), landOnWordOfTheDay: () => undefined },
+        }),
       },
       index: () => <Text>Feed</Text>,
       'entry/_layout': EntryLayout,
