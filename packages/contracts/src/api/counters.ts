@@ -31,6 +31,9 @@ const CounterEventSchema = z
     message: 'An event changes something',
   });
 
+/** What one Entry's counts change by, as one device counted it. */
+export type CounterEvent = z.output<typeof CounterEventSchema>;
+
 /** An Entry's Community Counters, each never below zero. */
 const CountersSchema = z.object({
   entryId: EntryIdSchema,

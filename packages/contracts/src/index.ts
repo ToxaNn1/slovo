@@ -118,6 +118,7 @@ export {
   type TipInput,
 } from './tip';
 export { EntrySchema, type Entry, type EntryKind } from './entry';
+export { type CounterEvent } from './api/counters';
 export {
   MistakeReportSchema,
   MistakeTypeSchema,

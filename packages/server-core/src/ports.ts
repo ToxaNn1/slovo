@@ -3,7 +3,7 @@
  * the backend's adapters give. Modules take them in an object of dependencies,
  * so a test gives its own.
  */
-import type { MistakeReport, PackMetadata, PublishedPack } from '@slovo/contracts';
+import type { CounterEvent, MistakeReport, PackMetadata, PublishedPack } from '@slovo/contracts';
 
 /** The current time, injected so the rules that read it stay testable. */
 export interface Clock {
@@ -247,4 +247,15 @@ export interface UserRecords {
     sequence: number,
     limit: number,
   ): Promise<readonly KeptRecord[]>;
+}
+
+/**
+ * The Community Counters of every Edition and Entry (Postgres in the
+ * backend): known, unknown and saved, totals only, each never below zero. It
+ * keeps no per-reader rows, so nothing links two changes to one reader
+ * (ADR 0060).
+ */
+export interface CounterStore {
+  /** Adds the events' deltas to their Entries' counts, all of them or none. */
+  add(editionId: string, events: readonly CounterEvent[]): Promise<void>;
 }
