@@ -265,6 +265,10 @@ export const userStateRecords = {
     z.object({ off: z.array(z.string()), etag: z.string() }),
     { sync: 'device-only' },
   ),
+  /** That the result of a finished Game offered the widget hint on this device, once ever (ADR 0054). */
+  widgetHintOffered: declareRecord('game.widgetHintOffered', z.literal(true), {
+    sync: 'device-only',
+  }),
   /**
    * The Best result of each Game Mode, one record per mode, by mode id: the
    * best result of one finished Game in it, Rounds passed or, in a mode with
@@ -273,10 +277,6 @@ export const userStateRecords = {
    * in the mode has finished yet. Sync keeps the higher of two devices'
    * results (ADR 0052).
    */
-  /** That the result of a finished Game offered the widget hint on this device, once ever (ADR 0054). */
-  widgetHintOffered: declareRecord('game.widgetHintOffered', z.literal(true), {
-    sync: 'device-only',
-  }),
   gameBest: declareRecords('game.best.', z.number().int().nonnegative(), { sync: 'highest' }),
   /**
    * The letters typed into the Daily Crossword and the local date of its day:
