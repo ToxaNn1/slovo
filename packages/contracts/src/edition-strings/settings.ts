@@ -29,6 +29,10 @@ export const SettingsStringsSchema = z.strictObject({
   hideStreak: TextSchema,
   /** The switch that turns Self-check on. */
   selfCheck: TextSchema,
+  /** The switch that makes the Decor follow the Season and the Holidays, and the explanation under it. */
+  seasonalDecor: z.strictObject({ title: TextSchema, explanation: TextSchema }),
+  /** The switch that shares the Community Counters, and the explanation under it. */
+  anonymousStats: z.strictObject({ title: TextSchema, explanation: TextSchema }),
   /** The Daily Limit choice; its numbers are drawn as they are. */
   dailyLimit: z.strictObject({
     title: TextSchema,

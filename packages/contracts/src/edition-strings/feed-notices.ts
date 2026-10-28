@@ -48,4 +48,10 @@ export const FeedNoticesStringsSchema = z.strictObject({
     /** The seventh day's text for a reader who hides the Streak, so it names no Streak. */
     lastDayTextNoStreak: TextSchema,
   }),
+  /** The Community Word card. */
+  communityWord: z.strictObject({
+    title: TextSchema,
+    /** How many readers added the Entry to Favorites last week, `{count}`. */
+    added: pluralOf(),
+  }),
 });

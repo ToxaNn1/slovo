@@ -56,6 +56,8 @@ export const WordCardStringsSchema = z.strictObject({
   synonymRow: templateOf('dominant'),
   /** What VoiceOver says the Synonym Row line does when tapped, e.g. "Відкриває синонімічний ряд". */
   synonymRowHint: TextSchema,
+  /** What VoiceOver reads for the Illustration, e.g. "Ілюстрація до слова {lemma}". */
+  illustration: templateOf('lemma'),
   /** Self-check: the button that reveals a hidden Word card's meaning, e.g. "Показати значення". */
   reveal: TextSchema,
 });
