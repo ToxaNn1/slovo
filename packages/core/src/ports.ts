@@ -478,10 +478,40 @@ export interface EntryCounters {
   readonly saved: number;
 }
 
+/** A change of one Community Counter: one taken away, none or one added. */
+export type CounterChange = -1 | 0 | 1;
+
+/** What one Entry's Community Counters change by: its known, unknown and saved counts. */
+export interface CounterDelta {
+  readonly known: CounterChange;
+  readonly unknown: CounterChange;
+  readonly saved: CounterChange;
+}
+
+/** One Entry's change of its Community Counters, as the device sends it (ADR 0060). */
+export interface CounterEvent extends CounterDelta {
+  readonly entryId: string;
+}
+
 /**
- * The backend's `counters.read` procedure for the running Edition, as the
- * Core sees it. It needs no Account and sends no Session (ADR 0060). The
- * shell implements this port on the API contract's client. A call never
+ * A request of the Community Counters' changes that failed as any request
+ * does, or found no such Edition or counters switched off (404).
+ */
+export type CounterEventsFailure =
+  | { readonly ok: false; readonly reason: Exclude<RequestFailure['reason'], 'too-many-requests'> }
+  | {
+      readonly ok: false;
+      readonly reason: 'too-many-requests';
+      /** How long to wait before the next request, in seconds; none when the answer didn't say. */
+      readonly retryAfter: number | undefined;
+    }
+  | { readonly ok: false; readonly reason: 'not-found' };
+
+/**
+ * The backend's `counters.read` and `counters.send` procedures for the
+ * running Edition, as the Core sees them. They need no Account, send no
+ * Session and carry no device id (ADR 0060). The shell implements this port
+ * on the API contract's client, which names the Edition. A call never
  * rejects: every answer of the backend comes back as success or a failure.
  */
 export interface CountersApi {
@@ -489,4 +519,6 @@ export interface CountersApi {
   read(
     entryIds: readonly string[],
   ): Promise<{ readonly ok: true; readonly counters: readonly EntryCounters[] } | RequestFailure>;
+  /** Sends the changes of 1 to 100 Entries, each once; the backend counts them whole or not at all. */
+  send(events: readonly CounterEvent[]): Promise<{ readonly ok: true } | CounterEventsFailure>;
 }

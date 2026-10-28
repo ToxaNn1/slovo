@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { AppState } from 'react-native';
 
 import { accountOpening } from '../account/device-account';
+import { counterSendingOpening } from '../community-counters/device-counter-sending';
 import { compositionOpening } from '../composition';
 import { editionStrings } from '../edition/edition';
 import { deviceClock } from '../device/device-clock';
@@ -36,7 +37,9 @@ async function isOnInEffect(feature: FeatureSwitch): Promise<boolean> {
  * and the composition and writes the Widget Snapshot (spec #378). The Content update module checks then too, when content updates
  * are on in effect, at most once a day; the Account checks its Session then,
  * when it is on in effect, at most once an hour. Mistake Reports send their
- * queue at launch and on each return (ADR 0056). Draws nothing.
+ * queue at launch and on each return (ADR 0056). The Community Counters send
+ * their unsent changes at launch, on each return and every few minutes while
+ * the app is in the foreground (ADR 0060). Draws nothing.
  */
 export function Lifecycle() {
   useEffect(() => {
@@ -86,6 +89,10 @@ export function Lifecycle() {
     });
     reports.listen(mistakeReportsOpening, (mistakeReports, moment) => {
       if (moment === 'launch' || moment === 'return') mistakeReports.foreground();
+    });
+    reports.listen(counterSendingOpening, (counterSending, moment) => {
+      if (moment === 'launch' || moment === 'return') counterSending.foreground();
+      if (moment === 'background') counterSending.background();
     });
     if (accountOpening !== undefined) {
       reports.listen(accountOpening, (account, moment) => {

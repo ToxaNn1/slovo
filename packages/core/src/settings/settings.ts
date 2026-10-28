@@ -1,5 +1,6 @@
 import type { DailyLimit, FontSize, Theme } from '@slovo/contracts';
 
+import { forgetUnsentCounters } from '../community-counters/counter-deltas';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
 
@@ -15,6 +16,12 @@ export interface UserSettings {
   readonly selfCheck: boolean;
   /** Whether «Сезонний декор» is on: slots 1 and 2 of the Decor follow the local date (ADR 0055). */
   readonly seasonalDecor: boolean;
+  /**
+   * Whether «Ділитися анонімною статистикою» is on: this device counts and
+   * sends its Community Counters (ADR 0060). Turning it off forgets what
+   * waits to be sent.
+   */
+  readonly shareCounters: boolean;
   /** The Daily Limit: off, or the distinct Entries Seen on a local day before the Feed says «enough». */
   readonly dailyLimit: DailyLimit;
 }
@@ -22,10 +29,13 @@ export interface UserSettings {
 /**
  * The settings an Edition sets the defaults of. The Streak is shown until the
  * user hides it, Self-check is off until the user turns it on and Seasonal
- * Decor is on until the user turns it off, in every Edition, so none of them
- * has an Edition default.
+ * Decor and sharing the Community Counters are on until the user turns them
+ * off, in every Edition, so none of them has an Edition default.
  */
-export type SettingsDefaults = Omit<UserSettings, 'hideStreak' | 'selfCheck' | 'seasonalDecor'>;
+export type SettingsDefaults = Omit<
+  UserSettings,
+  'hideStreak' | 'selfCheck' | 'seasonalDecor' | 'shareCounters'
+>;
 
 /** The user's settings: their own choices over the Edition's defaults. */
 export interface Settings {
@@ -64,6 +74,7 @@ export function createSettings({
     hideStreak: false,
     selfCheck: false,
     seasonalDecor: true,
+    shareCounters: true,
   };
 
   async function read(): Promise<UserSettings> {
@@ -74,6 +85,7 @@ export function createSettings({
       hideStreak: (await userState.read(userStateRecords.hideStreak)) ?? all.hideStreak,
       selfCheck: (await userState.read(userStateRecords.selfCheck)) ?? all.selfCheck,
       seasonalDecor: (await userState.read(userStateRecords.seasonalDecor)) ?? all.seasonalDecor,
+      shareCounters: (await userState.read(userStateRecords.shareCounters)) ?? all.shareCounters,
       dailyLimit: (await userState.read(userStateRecords.dailyLimit)) ?? all.dailyLimit,
     };
   }
@@ -97,6 +109,10 @@ export function createSettings({
           ...('dailyLimit' in changes
             ? userStateRecords.dailyLimit.change(changes.dailyLimit)
             : []),
+          ...('shareCounters' in changes
+            ? userStateRecords.shareCounters.change(changes.shareCounters)
+            : []),
+          ...(changes.shareCounters === false ? await forgetUnsentCounters(userState) : []),
         ]),
       );
       return read();

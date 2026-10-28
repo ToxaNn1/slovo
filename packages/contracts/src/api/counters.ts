@@ -1,12 +1,10 @@
 import { z } from 'zod';
 
+import { COUNTERS_BATCH_SIZE } from '../community-counters';
 import { EditionIdSchema } from '../edition';
 import { EntryIdSchema } from '../entry';
 import { hasNoRepeats } from '../shared';
 import { procedure } from './procedure';
-
-/** How many Entries one request names at most, events or a read. */
-export const COUNTERS_BATCH_SIZE = 100;
 
 /** A change of one count: one taken away, none or one added. */
 const DeltaSchema = z.literal([-1, 0, 1]);

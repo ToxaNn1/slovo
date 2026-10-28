@@ -20,10 +20,7 @@ export const counterReadsOpening = openOnce(
     const switches = await remoteSwitchesOpening.opened();
     return openCounterReads({
       edition: { isFeatureEnabled: (feature) => switches.edition.isFeatureEnabled(feature) },
-      api: createCountersApi({
-        client: anonymousApiClientOf((request, init) => globalThis.fetch(request, init)),
-        editionId: edition.id,
-      }),
+      api: createCountersApi({ clientOf: anonymousApiClientOf, editionId: edition.id }),
       userState: await storedUserState.opened(),
       clock: deviceClock,
     });
