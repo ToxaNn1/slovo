@@ -102,6 +102,10 @@ export const CollectionsStringsSchema = z.strictObject({
     message: templateOf('name', 'url'),
     /** The toast, and the recipient's sheet, when there is no connection. */
     offline: TextSchema,
+    /** The toast when the Collection holds more Entries than a link does. */
+    tooManyEntries: TextSchema,
+    /** The toast when the backend makes no link for any other reason, such as the day's limit. */
+    failed: TextSchema,
     /** The recipient's button that makes their own copy of the Collection. */
     add: TextSchema,
     /** How many Entries of the link the reader's pack lacks, so the copy skipped them, `{count}`. */

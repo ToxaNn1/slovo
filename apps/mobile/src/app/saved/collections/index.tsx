@@ -8,6 +8,7 @@ import {
   NewCollectionButton,
   ScreenTitle,
   space,
+  UndoToastProvider,
   useTokens,
 } from '@slovo/ui';
 import { useRouter } from 'expo-router';
@@ -17,6 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { editionStrings } from '@/edition/edition';
 import { useOpenScreen } from '@/entries/use-open-screen';
+import { useCollectionSharing } from '@/saved/collection-sharing';
 import { useCollectionChanges, useCollectionRows } from '@/saved/collections';
 import type { CollectionRowModel } from '@/saved/collections-screen';
 import { createMenuFollowUp } from '@/saved/menu-follow-up';
@@ -32,11 +34,21 @@ type Editing = { readonly kind: 'new' } | { readonly kind: 'rename'; readonly id
  * holds and its newest Lemmas; a tap opens the Collection. «+» makes a new one
  * from here; a swipe or the row's «…» offers rename (in place) and delete (after a
  * SLOVO confirmation dialog that says the Entries stay), and the same actions go to
- * VoiceOver.
+ * VoiceOver. The «…» menu also offers «Поділитися посиланням» while Collection Links
+ * are on, disabled for an empty Collection; a share that fails says why in a toast.
  */
 export default function CollectionsScreen() {
+  return (
+    <UndoToastProvider>
+      <Collections />
+    </UndoToastProvider>
+  );
+}
+
+function Collections() {
   const rows = useCollectionRows();
   const { create, rename, remove } = useCollectionChanges();
+  const { available: sharingAvailable, share } = useCollectionSharing();
   const { colors } = useTokens();
   const router = useRouter();
   const openScreen = useOpenScreen();
@@ -67,6 +79,9 @@ export default function CollectionsScreen() {
         startRename(collection.id);
       },
       remove: confirmDelete,
+      share: (collection) => {
+        share(collection.id);
+      },
     }),
   );
   const openMenu = useCallback(
@@ -169,6 +184,18 @@ export default function CollectionsScreen() {
         testID="collections-menu"
         visible={menu !== undefined}
         copy={strings.menu}
+        share={
+          sharingAvailable
+            ? {
+                label: collectionStrings.link.share,
+                disabled: menu?.empty ?? true,
+                onPress: () => {
+                  if (menu !== undefined) afterMenu.chooseShare(menu);
+                  setMenu(undefined);
+                },
+              }
+            : undefined
+        }
         onRename={() => {
           if (menu !== undefined) afterMenu.chooseRename(menu);
           setMenu(undefined);

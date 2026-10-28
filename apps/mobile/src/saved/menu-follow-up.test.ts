@@ -7,7 +7,8 @@ const books = { id: 'c1', name: 'Books' };
 function followUp() {
   const rename = vi.fn();
   const remove = vi.fn();
-  return { rename, remove, ...createMenuFollowUp({ rename, remove }) };
+  const share = vi.fn();
+  return { rename, remove, share, ...createMenuFollowUp({ rename, remove, share }) };
 }
 
 describe('a Collection menu follow-up', () => {
@@ -29,6 +30,18 @@ describe('a Collection menu follow-up', () => {
 
     dismissed();
     expect(remove).toHaveBeenCalledExactlyOnceWith(books);
+  });
+
+  it('shares only once the menu has slid away', () => {
+    const { share, rename, remove, chooseShare, dismissed } = followUp();
+
+    chooseShare(books);
+    expect(share).not.toHaveBeenCalled();
+
+    dismissed();
+    expect(share).toHaveBeenCalledExactlyOnceWith(books);
+    expect(rename).not.toHaveBeenCalled();
+    expect(remove).not.toHaveBeenCalled();
   });
 
   it('does nothing when the menu is cancelled', () => {
