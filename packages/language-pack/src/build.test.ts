@@ -1928,7 +1928,8 @@ describe('checkLanguagePack', () => {
 describe('the Word of the Day font', () => {
   const letters = 'абвгґдеєжзиіїйклмнопрстуфхцчшщьюя';
   const stressMark = '\u0301';
-  const everyCharacter = `${letters}${letters.toLocaleUpperCase('uk')}${stressMark}`;
+  const punctuation = "'-";
+  const everyCharacter = `${letters}${letters.toLocaleUpperCase('uk')}${punctuation}${stressMark}`;
 
   /** A copy of the valid fixture whose Word of the Day font is the given file. */
   function withFont(name: string, font?: Buffer): string {
@@ -1943,7 +1944,7 @@ describe('the Word of the Day font', () => {
     return result.ok ? [] : result.errors;
   };
 
-  it('passes a font with every letter of the alphabet, in both cases, and the Stress mark', () => {
+  it('passes a font with every letter of the alphabet, in both cases, the punctuation of a Lemma and the Stress mark', () => {
     expect(errorsOf(withFont('Script.ttf', fontWith(everyCharacter)))).toEqual([]);
   });
 
@@ -1980,12 +1981,24 @@ describe('the Word of the Day font', () => {
   });
 
   it('refuses a font without capital letters, naming each', () => {
-    const font = fontWith(`${letters}${stressMark}Ґ`);
+    const font = fontWith(`${letters}${punctuation}${stressMark}Ґ`);
 
     expect(errorsOf(withFont('Script.ttf', font))).toEqual([
       expect.objectContaining({
         message: expect.stringMatching(/ has no glyph for А, Б, В, Г, Д, Е, .*, Ю, Я$/) as unknown,
       }),
+    ]);
+  });
+
+  it("refuses a font without the punctuation a Lemma may hold, such as the apostrophe of «м'ята»", () => {
+    const font = fontWith(everyCharacter.replace("'", '').replace('-', ''));
+
+    expect(errorsOf(withFont('Script.ttf', font))).toEqual([
+      {
+        file: 'edition.json',
+        field: 'wordOfTheDayFont',
+        message: "assets/fonts/Script.ttf has no glyph for ', -",
+      },
     ]);
   });
 

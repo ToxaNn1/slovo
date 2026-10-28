@@ -9,6 +9,6 @@ The app embeds every font file in this folder at build time (see `apps/mobile/ap
 
 On iOS a font is selected by its PostScript name, which is also its file name here without `.ttf`: `Literata-Regular`, `Literata-Italic`, `Literata-Medium`, `Literata-SemiBold`, `Manrope-Regular`, `Manrope-Medium`, `Manrope-SemiBold` and `Manrope-Bold`. Literata covers Cyrillic and the combining acute (U+0301) that marks Stress; Manrope has no combining acute, so a Lemma is always set in Literata.
 
-`wordOfTheDayFont` in `edition.json` names the font file that sets the Lemma on the Word of the Day card: `Literata-Regular.ttf` until the calligraphic font arrives. The Edition check (`pnpm content check`, `pnpm build:pack`) refuses a font without a glyph for a letter of the alphabet, in either case, or for the Stress mark.
+`wordOfTheDayFont` in `edition.json` names the font file that sets the Lemma on the Word of the Day card: `Literata-Regular.ttf` until the calligraphic font arrives. The Edition check (`pnpm content check`, `pnpm build:pack`) refuses a font without a glyph for a letter of the alphabet, in either case, for the apostrophe or hyphen a Lemma may hold, or for the Stress mark.
 
 The files are the static Google Fonts builds, taken unmodified from `@expo-google-fonts/literata` 0.4.3 and `@expo-google-fonts/manrope` 0.4.2 and renamed after their PostScript names. Both families are under the SIL Open Font License 1.1, which allows bundling them with the app: see `OFL-Literata.txt` and `OFL-Manrope.txt`.

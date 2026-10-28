@@ -378,7 +378,8 @@ export const EditionConfigSchema = z
     /**
      * The font file, among the Edition's fonts, that sets the Lemma on the
      * Word of the Day card. The Edition check refuses a font without a glyph
-     * for a letter of the alphabet, in either case, or for the Stress mark.
+     * for a letter of the alphabet, in either case, for the punctuation a
+     * Lemma may hold, or for the Stress mark.
      */
     wordOfTheDayFont: FontFileSchema,
     /**

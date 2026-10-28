@@ -10,9 +10,9 @@ import { FONTS_DIR } from './edition-folder';
 /**
  * Why the Word of the Day font named in the Edition config can't set every
  * Lemma: it is not among the Edition's fonts, is not a font, or has no
- * glyph for a letter of the alphabet, in either case, or for the Stress
- * mark of an Edition that marks Stress. The refusal names every missing
- * character.
+ * glyph for a letter of the alphabet, in either case, for the punctuation
+ * a Lemma may hold, or for the Stress mark of an Edition that marks Stress.
+ * The refusal names every missing character.
  */
 export function wordOfTheDayFontErrors(
   { wordOfTheDayFont: name, locale, languageTraits }: EditionConfig,
@@ -26,12 +26,12 @@ export function wordOfTheDayFontErrors(
   const shown = `${FONTS_DIR}/${name}`;
   const hasGlyph = characterMap(readFileSync(path));
   if (hasGlyph === undefined) return refuse(`${shown} is not a TrueType or OpenType font`);
-  const letters = languageTraits.alphabet.flatMap((letter) => [
-    letter,
-    letter.toLocaleUpperCase(locale),
-  ]);
-  const missing = [...new Set(letters)]
-    .filter((letter) => Array.from(letter).some((character) => !hasGlyph(character)))
+  const characters = [
+    ...languageTraits.alphabet.flatMap((letter) => [letter, letter.toLocaleUpperCase(locale)]),
+    ...(languageTraits.lemmaPunctuation ?? []),
+  ];
+  const missing = [...new Set(characters)]
+    .filter((shown) => Array.from(shown).some((character) => !hasGlyph(character)))
     .concat(
       languageTraits.marksStress && !hasGlyph(STRESS_MARK) ? ['the Stress mark (U+0301)'] : [],
     );
