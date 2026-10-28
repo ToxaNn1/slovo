@@ -281,6 +281,19 @@ async function playGame(app: Composition, wrongIn: readonly number[] = []): Prom
   return rounds;
 }
 
+// Spec #886 story 44, ADR 0060: a Game answer is not the reader's judgement of a word.
+describe('the Game and the Community Counters', () => {
+  it('counts nothing for the Unknown mark a wrong answer sets', async () => {
+    const app = await run({ on: ['rarityFloor', 'knowledge', 'communityCounters'] });
+
+    const [first] = await playGame(app, [1]);
+    if (first === undefined) throw new Error('No Round');
+
+    expect(app.knowledge.state.shown.get(answerOf(first).id)).toBe('unknown');
+    expect([...(await app.communityCounters.unsent())]).toEqual([]);
+  });
+});
+
 describe('the Game Modes on offer', () => {
   it('offers «Вгадай слово», ready to start, and no Game in play', async () => {
     const app = await run();

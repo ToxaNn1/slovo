@@ -167,4 +167,21 @@ describe('Yesterday', () => {
     expect(app.knowledge.state.shown.get(wordId)).toBe('unknown');
     expect(app.knowledge.state.learning).toMatchObject([{ entryId: wordId, daysUntilReview: 1 }]);
   });
+
+  // Spec #886 story 44, ADR 0060.
+  it('counts its marks for the Community Counters as on any card', async () => {
+    const { records, wordId } = await sawWordOfTheDay('2026-10-26');
+    const app = await run({
+      records,
+      on: '2026-10-27',
+      switches: [...everySwitch, 'communityCounters'],
+    });
+    if ((await yesterdayOf(app)) === undefined) throw new Error('No Yesterday');
+
+    await app.knowledge.tap(wordId, 'known');
+
+    expect([...(await app.communityCounters.unsent())]).toEqual([
+      [wordId, { known: 1, unknown: 0, saved: 0 }],
+    ]);
+  });
 });

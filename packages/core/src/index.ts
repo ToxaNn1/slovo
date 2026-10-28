@@ -128,6 +128,11 @@ export { groupByLocalDay, relativeTimeOf, type RelativeTime } from './saved/hist
 export { type KnowledgeMark } from './knowledge/knowledge-record';
 export { type KnownCounts, type LearningEntry } from './knowledge/knowledge';
 export {
+  type CommunityCounters,
+  type CounterChange,
+  type CounterDelta,
+} from './community-counters/counter-deltas';
+export {
   dateKeyOf,
   formatTimeOfDay,
   localDayOf,

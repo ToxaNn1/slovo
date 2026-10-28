@@ -5,7 +5,7 @@ import type { EntryRowModel, EntryRows } from '../entries/entry-row';
 import type { HiddenEntries } from '../mix/hidden-entries';
 import { createInTurn, createSubscribers } from '../in-turn';
 import { dayNumber, parseLocalDate, todayDate } from '../local-date';
-import type { Clock } from '../ports';
+import type { Clock, UserStateChanges } from '../ports';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
 import {
@@ -90,10 +90,13 @@ export interface Knowledge {
   /**
    * The reader taps a mark on the Entry's card: the mark the card shows
    * removes it, deleting the record; any other tap answers the Entry today,
-   * as `answer` does.
+   * as `answer` does. The change counts for the Community Counters (ADR 0060).
    */
   tap(entryId: string, mark: KnowledgeMark): Promise<void>;
-  /** Answers the Entry today by the interval rule alone, as a mistake in the Game does with Unknown. */
+  /**
+   * Answers the Entry today by the interval rule alone, as a mistake in the
+   * Game does with Unknown. It counts nothing for the Community Counters.
+   */
   answer(entryId: string, mark: KnowledgeMark): Promise<void>;
   /** Calls `listener` after each change of the state. Returns the call that stops it. */
   subscribe(listener: () => void): () => void;
@@ -123,7 +126,8 @@ const sameState = (one: KnowledgeState, other: KnowledgeState) =>
 /**
  * Opens the Knowledge Marks over the user state, for the Core composition,
  * with `followDay`, which the day change calls when it turns to a new local
- * day so the state follows it.
+ * day so the state follows it, and `countMark`, the Community Counters'
+ * changes a tapped mark writes with it.
  */
 export async function openKnowledge({
   edition,
@@ -131,12 +135,14 @@ export async function openKnowledge({
   hiddenEntries,
   userState,
   clock,
+  countMark,
 }: {
   edition: Pick<Edition, 'isFeatureEnabled'>;
   rows: EntryRows;
   hiddenEntries: Pick<HiddenEntries, 'has' | 'subscribe'>;
   userState: UserState;
   clock: Clock;
+  countMark: (entryId: string, mark: KnowledgeMark | undefined) => Promise<UserStateChanges>;
 }): Promise<{ knowledge: Knowledge; followDay: () => void }> {
   const { knowledge } = userStateRecords;
   let records: ReadonlyMap<string, KnowledgeRecord> = await userState.list(knowledge);
@@ -193,9 +199,17 @@ export async function openKnowledge({
     subscribers.tell();
   }
 
-  /** Keeps the Entry's next record, or deletes it for nothing, then follows it. */
-  async function keep(entryId: string, record: KnowledgeRecord | undefined): Promise<void> {
-    await userState.write(knowledge.record(entryId).change(record));
+  /**
+   * Keeps the Entry's next record, or deletes it for nothing, with the
+   * Community Counters' changes when it counts, then follows it.
+   */
+  async function keep(
+    entryId: string,
+    record: KnowledgeRecord | undefined,
+    counts: boolean,
+  ): Promise<void> {
+    const counted = counts ? await countMark(entryId, record?.mark) : new Map();
+    await userState.write(new Map([...knowledge.record(entryId).change(record), ...counted]));
     const changed = new Map(records);
     if (record === undefined) changed.delete(entryId);
     else changed.set(entryId, record);
@@ -207,10 +221,12 @@ export async function openKnowledge({
    * Marks the Entry by the change the record and today give, unless the switch
    * is off. The record keeps the instant its mark was set: a change that
    * leaves the same mark, as a Review answer «Знаю» on a Known Entry, keeps
-   * the time it had (or none, for a mark set before 0.8.13).
+   * the time it had (or none, for a mark set before 0.8.13). A tap `counts`
+   * for the Community Counters; a Game answer doesn't.
    */
   const change = (
     entryId: string,
+    counts: boolean,
     next: (record: KnowledgeRecord | undefined) => KnowledgeRecord | undefined,
   ) =>
     inTurn(async () => {
@@ -218,7 +234,7 @@ export async function openKnowledge({
       await readRow(entryId);
       const previous = records.get(entryId);
       const record = next(previous);
-      if (record === undefined) return keep(entryId, undefined);
+      if (record === undefined) return keep(entryId, undefined, counts);
       const { mark, step, reviewDay, learned } = record;
       const markedAt = mark === previous?.mark ? previous.markedAt : clock.now().toISOString();
       return keep(
@@ -226,6 +242,7 @@ export async function openKnowledge({
         markedAt === undefined
           ? { mark, step, reviewDay, learned }
           : { mark, step, reviewDay, learned, markedAt },
+        counts,
       );
     });
 
@@ -243,14 +260,14 @@ export async function openKnowledge({
         return [...new Set([...unknown, ...state.due])];
       },
       tap: (entryId, mark) =>
-        change(entryId, (record) => {
+        change(entryId, true, (record) => {
           const today = todayDate(clock);
           return shownMark(record, today) === mark
             ? undefined
             : answerKnowledge(record, mark, today);
         }),
       answer: (entryId, mark) =>
-        change(entryId, (record) => answerKnowledge(record, mark, todayDate(clock))),
+        change(entryId, false, (record) => answerKnowledge(record, mark, todayDate(clock))),
       subscribe: subscribers.subscribe,
     },
     followDay: follow,
