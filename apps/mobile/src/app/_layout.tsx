@@ -22,7 +22,9 @@ import { edition, editionDecor, editionStrings, editionTokens } from '@/edition/
 import { hapticEngine } from '@/game/haptics';
 import { languagePackOpening } from '@/content-update/language-pack';
 import { compositionOpening } from '@/composition';
+import { deviceClock } from '@/device/device-clock';
 import { startCrashReports } from '@/diagnostics/crash-reports';
+import { DecorInEffect } from '@/shell/decor-in-effect';
 import { LaunchSplash } from '@/shell/launch-splash';
 import { Lifecycle } from '@/shell/lifecycle';
 import { NotificationTaps } from '@/entries/notification-taps';
@@ -157,23 +159,26 @@ function ThemedTabs() {
             {/* Every screen draws over the open Language Pack and composition. */}
             <Opened opening={languagePackOpening} failedTestID="language-pack-failed">
               <Opened opening={compositionOpening} failedTestID="feed-error">
-                <NotificationTaps />
-                <EditionTabs
-                  screenOptions={{
-                    headerShown: false,
-                    tabBarIcon: () => null,
-                    tabBarButton: TabButton,
-                    tabBarActiveTintColor: colors.accent,
-                    tabBarInactiveTintColor: colors.inactiveTab,
-                    tabBarLabelStyle: {
-                      fontFamily: ui,
-                      fontSize: typeSize.tabLabel,
-                      fontWeight: '600',
-                    },
-                  }}
-                />
-                {/* Over the tabs until the reader finishes or skips it. */}
-                <Onboarding />
+                {/* The screens' background and divider follow the local date (ADR 0055). */}
+                <DecorInEffect clock={deviceClock}>
+                  <NotificationTaps />
+                  <EditionTabs
+                    screenOptions={{
+                      headerShown: false,
+                      tabBarIcon: () => null,
+                      tabBarButton: TabButton,
+                      tabBarActiveTintColor: colors.accent,
+                      tabBarInactiveTintColor: colors.inactiveTab,
+                      tabBarLabelStyle: {
+                        fontFamily: ui,
+                        fontSize: typeSize.tabLabel,
+                        fontWeight: '600',
+                      },
+                    }}
+                  />
+                  {/* Over the tabs until the reader finishes or skips it. */}
+                  <Onboarding />
+                </DecorInEffect>
               </Opened>
             </Opened>
           </HapticsProvider>

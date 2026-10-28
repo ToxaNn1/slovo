@@ -4,7 +4,7 @@ import {
   EditionTokensSchema,
   SplashDecorSchema,
 } from '@slovo/contracts';
-import { loadDecor, loadEdition } from '@slovo/core';
+import { loadDecor, loadEdition, loadSeasonalMotifs } from '@slovo/core';
 import { designTokens } from '@slovo/ui';
 import config from 'slovo-edition/config';
 import decor from 'slovo-edition/decor';
@@ -26,6 +26,9 @@ export const editionTokens = designTokens(EditionTokensSchema.parse(tokens ?? {}
 
 /** The Edition's Decor over the Core's neutral Decor, slot by slot. */
 export const editionDecor = loadDecor(decor);
+
+/** The Edition's motifs per Season and per Holiday, or none when its Decor stays plain (ADR 0055). */
+export const seasonalMotifs = loadSeasonalMotifs(decor);
 
 /** An optional Edition file it leaves out reaches the app as an empty module. */
 const isLeftOut = (file: unknown) =>
