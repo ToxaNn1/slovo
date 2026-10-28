@@ -1152,12 +1152,66 @@ describe('Edition Decor', () => {
       'corners',
       'divider',
       'emptyState',
+      'holidays',
+      'seasons',
       'shareCard',
       'splash',
       'victory',
     ]);
     expect(decor.emptyState?.error).toBeDefined();
     expect(decor.splash?.band).toBeDefined();
+  });
+
+  it.each(editions.filter((edition) => has(edition, 'decor')))(
+    'the %s Edition supplies Season motifs while its seasonalDecor switch is on',
+    (edition) => {
+      const { featureSwitches } = EditionConfigSchema.parse(readJson(edition, 'config'));
+      const { seasons } = EditionDecorSchema.parse(readJson(edition, 'decor'));
+
+      if (featureSwitches.seasonalDecor) expect(seasons).toBeDefined();
+    },
+  );
+
+  it('the Ukrainian Edition lists its Holidays by rule', () => {
+    const { holidays } = EditionDecorSchema.parse(readJson('uk', 'decor'));
+
+    expect(holidays?.map(({ rule }) => rule)).toEqual([
+      { kind: 'fixed', day: 24, month: 8 },
+      { kind: 'nthWeekday', nth: 3, weekday: 'thursday', month: 5 },
+      { kind: 'fixed', day: 25, month: 12 },
+      { kind: 'fixed', day: 1, month: 1 },
+    ]);
+  });
+
+  /** The Ukrainian Decor with its first Holiday's rule replaced. */
+  const withFirstHolidayRule = (rule: unknown) => {
+    const decor = EditionDecorSchema.parse(readJson('uk', 'decor'));
+    const [first, ...rest] = decor.holidays ?? [];
+    return { ...decor, holidays: [{ ...first, rule }, ...rest] };
+  };
+
+  it.each([
+    ['an unknown rule', { kind: 'easter' }],
+    ['30 February', { kind: 'fixed', day: 30, month: 2 }],
+    ['31 April', { kind: 'fixed', day: 31, month: 4 }],
+    ['month 13', { kind: 'fixed', day: 1, month: 13 }],
+    ['a fifth weekday', { kind: 'nthWeekday', nth: 5, weekday: 'thursday', month: 5 }],
+    ['an unknown weekday', { kind: 'nthWeekday', nth: 3, weekday: 'четвер', month: 5 }],
+  ])('refuses a Holiday on %s', (_, rule) => {
+    expect(EditionDecorSchema.safeParse(withFirstHolidayRule(rule)).success).toBe(false);
+  });
+
+  it('accepts a Holiday on 29 February', () => {
+    const decor = withFirstHolidayRule({ kind: 'fixed', day: 29, month: 2 });
+
+    expect(EditionDecorSchema.safeParse(decor).error).toBeUndefined();
+  });
+
+  it('refuses Season motifs without every Season', () => {
+    const decor = EditionDecorSchema.parse(readJson('uk', 'decor'));
+    const { winter: _, ...withoutWinter } = decor.seasons ?? {};
+
+    expect(EditionDecorSchema.safeParse({ ...decor, seasons: withoutWinter }).success).toBe(false);
   });
 
   it.each(editions.filter((edition) => has(edition, 'tokens') && has(edition, 'splash')))(
