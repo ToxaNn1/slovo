@@ -1,5 +1,6 @@
 import type {
   Category,
+  CollectionLink,
   Entry,
   MistakeReport,
   PackMetadata,
@@ -350,6 +351,29 @@ export type ReportsApiFailure =
 export interface ReportsApi {
   /** Sends the report; the backend answers 202 when it keeps it. */
   send(report: MistakeReport): Promise<{ readonly ok: true } | ReportsApiFailure>;
+}
+
+/**
+ * A Collection Link the backend didn't make, as any request may fail, or
+ * because it serves no Collection Links for the Edition, or has them switched
+ * off (404).
+ */
+export type CollectionLinksApiFailure =
+  RequestFailure | { readonly ok: false; readonly reason: 'not-found' };
+
+/**
+ * The backend's Collection Link procedures, as the Core sees them. They need
+ * no Account and send no Session (ADR 0058). The shell implements this port on
+ * the API contract's client. A call never rejects: every answer of the
+ * backend comes back as success or a failure.
+ */
+export interface CollectionLinksApi {
+  /** Stores the Collection as it is now and answers the link's id and its URL. */
+  create(
+    link: CollectionLink,
+  ): Promise<
+    { readonly ok: true; readonly id: string; readonly url: string } | CollectionLinksApiFailure
+  >;
 }
 
 /** This device's Session as the device keeps it: its token and the email of its Account. */

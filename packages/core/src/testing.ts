@@ -8,6 +8,10 @@ export {
   createFakeCommunityWordApi,
   type FakeCommunityWordApi,
 } from './fakes/fake-community-word-api';
+export {
+  createFakeCollectionLinksApi,
+  type FakeCollectionLinksApi,
+} from './fakes/fake-collection-links-api';
 export { createFakeContentApi } from './fakes/fake-content-api';
 export { createFakeCountersApi, type FakeCountersApi } from './fakes/fake-counters-api';
 export {
