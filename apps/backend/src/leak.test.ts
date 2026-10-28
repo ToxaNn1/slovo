@@ -34,6 +34,10 @@ const ANSWERED_COLUMNS = new Set([
   'saved',
   // The Community Word: an Entry and its Favorites adds of a week, naming no reader.
   'adds',
+  // A Collection Link: its id and the Collection as shared, naming no reader.
+  'id',
+  'name',
+  'entryIds',
 ]);
 
 /**
@@ -236,10 +240,13 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
       collectionLinks: {
         create: async () => {
           const link = { edition: EDITION, name: 'reader@example.com', entryIds: ['w_a1'] };
-          await client.collectionLinks.create(link).catch(refused);
+          await client.collectionLinks.create(link);
           await client.collectionLinks.create({ ...link, edition: 'pl' }).catch(refused);
         },
         read: async () => {
+          const link = { edition: EDITION, name: 'Осінь', entryIds: ['w_a1'] };
+          const { id } = await client.collectionLinks.create(link);
+          await client.collectionLinks.read({ id });
           await client.collectionLinks.read({ id: 'aZ3kQ9mB0x' }).catch(refused);
         },
       },

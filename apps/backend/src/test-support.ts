@@ -27,6 +27,7 @@ import {
   type GoogleVerifier,
   type Mail,
   type Mailer,
+  type Random,
 } from '@slovo/server-core';
 import { eq } from 'drizzle-orm';
 import pg from 'pg';
@@ -41,6 +42,7 @@ import { migrateDatabase } from './database/migrate';
 import { accounts, sessions, signInMethods } from './database/schema';
 import { readEditions } from './edition/edition-folders';
 import { createEditions } from './edition/editions';
+import { systemRandom } from './random';
 import { listReports, type ReportFilter } from './reports/report-list';
 import { resolveReport } from './reports/report-resolve';
 import type { ErrorReport } from './error-reporter';
@@ -352,6 +354,8 @@ interface TestAppOptions {
   readonly googleClientIds?: readonly string[];
   /** The Google verifier; the fake Google of the client ids unless given. */
   readonly google?: GoogleVerifier;
+  /** Where the ids of new Collection Links come from; the system's randomness unless given. */
+  readonly random?: Random;
   /** Sees every answer before the test gets it, with the request it answers. */
   readonly onAnswer?: (request: Request, response: Response) => Promise<void>;
 }
@@ -370,6 +374,7 @@ export function testApp({
   editions = readEditions(EDITIONS_DIR),
   googleClientIds = [TEST_GOOGLE_CLIENT_ID],
   google: givenGoogle,
+  random = systemRandom,
   onAnswer,
 }: TestAppOptions = {}) {
   const database = given ?? createDatabase(testDatabaseUrl(), silentLogger);
@@ -379,6 +384,7 @@ export function testApp({
   const app = createApp({
     database,
     clock: systemClock,
+    random,
     logger,
     editions,
     mailer,

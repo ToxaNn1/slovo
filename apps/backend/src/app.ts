@@ -1,5 +1,6 @@
 import {
   createAccounts,
+  createCollectionLinks,
   createCommunityCounters,
   createContentPacks,
   createMistakeReports,
@@ -8,6 +9,7 @@ import {
   type Edition,
   type GoogleVerifier,
   type Mailer,
+  type Random,
 } from '@slovo/server-core';
 import type { HttpBindings } from '@hono/node-server';
 import { Hono } from 'hono';
@@ -17,6 +19,7 @@ import type { Logger } from 'pino';
 
 import { createAuthenticator } from './account/authenticator';
 import { createApiHandler, INTERNAL_FAILURE, onUnexpectedFailure } from './api';
+import { createCollectionLinkStore } from './collection-links/collection-link-store';
 import { createContentPackStore } from './content/content-pack-store';
 import { createCounterStore } from './counters/counter-store';
 import type { Database } from './database/database';
@@ -38,6 +41,8 @@ const MAX_BODY_BYTES = 8 * 1024 * 1024;
 export interface AppDependencies {
   readonly database: Database;
   readonly clock: Clock;
+  /** Where the ids of new Collection Links come from. */
+  readonly random: Random;
   readonly logger: Logger;
   /** Every Edition the backend serves, read from the Edition folders at start. */
   readonly editions: readonly Edition[];
@@ -81,6 +86,7 @@ function connectionIp(bindings: Partial<HttpBindings> | undefined): string | und
 export function createApp({
   database,
   clock,
+  random,
   logger,
   editions,
   mailer,
@@ -121,8 +127,15 @@ export function createApp({
     rateLimits,
     clock,
   });
+  const collectionLinks = createCollectionLinks({
+    editions: editionRegistry,
+    store: createCollectionLinkStore(database),
+    clock,
+    random,
+  });
   const api = createApiHandler({
     accounts,
+    collectionLinks,
     communityCounters,
     contentPacks,
     editions: editionRegistry,

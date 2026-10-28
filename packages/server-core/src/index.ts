@@ -3,6 +3,7 @@
  * through this module only (ADR 0030).
  */
 export { createAccounts, type Accounts, type Session } from './account/accounts';
+export { createCollectionLinks, type CollectionLinks } from './collection-links/collection-links';
 export {
   createContentPacks,
   type ContentPacks,
@@ -24,6 +25,7 @@ export {
   type Authenticator,
   type Clock,
   type CodeCheck,
+  type CollectionLinkStore,
   type ContentPackStore,
   type CounterStore,
   type EntryCounts,
@@ -31,12 +33,14 @@ export {
   type GoogleTokenCheck,
   type GoogleVerifier,
   type Json,
+  type KeptCollectionLink,
   type KeptRecord,
   type KeptReport,
   type Mail,
   type Mailer,
   type MistakeReportStore,
   type PublishedFile,
+  type Random,
   type RateLimits,
   type RecordChange,
   type RemoteSwitchStore,

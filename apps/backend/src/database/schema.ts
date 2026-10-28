@@ -285,3 +285,19 @@ export const favoritesAdds = pgTable(
   },
   (table) => [primaryKey({ columns: [table.editionId, table.week, table.entryId] })],
 );
+
+/**
+ * The Collection Links (ADR 0058): one row per link with the Collection as it
+ * was shared. A row is never updated, and holds no IP address, device id or
+ * Account; only the owner's script deletes one.
+ */
+export const collectionLinks = pgTable('collection_links', {
+  /** The link's 10 random letters and digits, the `<id>` of `c/<id>`. */
+  id: text('id').primaryKey(),
+  editionId: text('edition_id').notNull(),
+  /** The Collection's name, trimmed. */
+  name: text('name').notNull(),
+  /** The Collection's Entry ids, in its order. */
+  entryIds: text('entry_ids').array().notNull(),
+  createdAt: time('created_at'),
+});

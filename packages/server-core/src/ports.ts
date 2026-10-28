@@ -3,7 +3,13 @@
  * the backend's adapters give. Modules take them in an object of dependencies,
  * so a test gives its own.
  */
-import type { CounterEvent, MistakeReport, PackMetadata, PublishedPack } from '@slovo/contracts';
+import type {
+  CollectionLink,
+  CounterEvent,
+  MistakeReport,
+  PackMetadata,
+  PublishedPack,
+} from '@slovo/contracts';
 
 /** The current time, injected so the rules that read it stay testable. */
 export interface Clock {
@@ -11,6 +17,12 @@ export interface Clock {
 }
 
 export const systemClock: Clock = { now: () => new Date() };
+
+/** Randomness, injected so the rules that draw on it stay testable. */
+export interface Random {
+  /** A whole number from 0 up to, not including, `bound`. */
+  int(bound: number): number;
+}
 
 /** The published Language Packs of every Edition, kept by the backend. */
 export interface ContentPackStore {
@@ -205,6 +217,26 @@ export interface KeptReport extends MistakeReport {
  */
 export interface MistakeReportStore {
   keep(report: KeptReport): Promise<void>;
+}
+
+/**
+ * A Collection Link as the backend keeps it: the Collection as it was shared
+ * and the time it was made, nothing else (ADR 0058).
+ */
+export interface KeptCollectionLink extends CollectionLink {
+  readonly createdAt: Date;
+}
+
+/**
+ * The Collection Links of every Edition (Postgres in the backend), each under
+ * its id. A link is never changed; it keeps no IP address, no device id and
+ * no Account (ADR 0058).
+ */
+export interface CollectionLinkStore {
+  /** Keeps the link under the id, unless the id is taken: then it keeps nothing and answers false. */
+  keep(id: string, link: KeptCollectionLink): Promise<boolean>;
+  /** The link kept under the id, if any. */
+  find(id: string): Promise<KeptCollectionLink | undefined>;
 }
 
 /** A JSON value, as a record of the user state holds it. */
