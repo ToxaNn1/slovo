@@ -1,10 +1,14 @@
 import type { CollectionLink } from '@slovo/contracts';
 
 import type { EditionRegistry, NotServing } from '../edition/edition-registry';
-import type { Clock, CollectionLinkStore, Random } from '../ports';
+import type { Clock, CollectionLinkStore, Random, RateLimits } from '../ports';
+import { countRequest, ipSubject, type TooManyRequests } from '../rate-limit';
 
 /** The characters of a Collection Link's id: letters and digits (ADR 0058). */
 const ID_CHARACTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
+/** The new links one IP address may make in a day (ADR 0058). */
+const LINKS_PER_IP = { requests: 20, windowSeconds: 24 * 60 * 60 } as const;
 
 /** How many characters a Collection Link's id has. */
 const ID_LENGTH = 10;
@@ -27,11 +31,16 @@ export interface CollectionLinks {
    * Keeps the Collection as it is now under a new random id, when its Edition
    * serves Collection Links, and answers the id and the link's URL,
    * `https://<linkDomain>/c/<id>`. Its shape is checked where it enters;
-   * whether its Entries are in a pack is not.
+   * whether its Entries are in a pack is not. A link over the day's limit of
+   * its IP address is refused and keeps nothing; one its Edition doesn't take
+   * counts nothing. The IP address is never kept.
    */
   create(
     link: CollectionLink,
-  ): Promise<{ readonly ok: true; readonly id: string; readonly url: string } | NotServing>;
+    ip: string,
+  ): Promise<
+    { readonly ok: true; readonly id: string; readonly url: string } | NotServing | TooManyRequests
+  >;
   /**
    * The Collection as it was kept under the id, when its Edition serves
    * Collection Links now.
@@ -44,11 +53,13 @@ export interface CollectionLinks {
 export function createCollectionLinks({
   editions,
   store,
+  rateLimits,
   clock,
   random,
 }: {
   editions: EditionRegistry;
   store: CollectionLinkStore;
+  rateLimits: RateLimits;
   clock: Clock;
   random: Random;
 }): CollectionLinks {
@@ -58,9 +69,16 @@ export function createCollectionLinks({
     ).join('');
 
   return {
-    async create(link) {
+    async create(link, ip) {
       const serving = await editions.serving(link.edition, 'collectionLinks');
       if (!serving.ok) return serving;
+      const refused = await countRequest(
+        rateLimits,
+        `collectionLinksPerIp:${ipSubject(ip)}`,
+        LINKS_PER_IP,
+        clock.now(),
+      );
+      if (refused !== undefined) return refused;
       const kept = { ...link, createdAt: clock.now() };
       for (let draw = 0; draw < ID_DRAWS; draw += 1) {
         const id = newId();

@@ -130,6 +130,7 @@ export function createApp({
   const collectionLinks = createCollectionLinks({
     editions: editionRegistry,
     store: createCollectionLinkStore(database),
+    rateLimits,
     clock,
     random,
   });

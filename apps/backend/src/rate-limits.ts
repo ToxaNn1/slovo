@@ -7,8 +7,8 @@ import type { Database } from './database/database';
 import { rateLimits } from './database/schema';
 
 /**
- * The windows of the sign-in limits, of Sync's requests, of Mistake Reports
- * and of counter events, kept in the `rate_limits` table under the HMAC-SHA256 of their key (ADR 0030), so the
+ * The windows of the sign-in limits, of Sync's requests, of Mistake Reports,
+ * of counter events and of new Collection Links, kept in the `rate_limits` table under the HMAC-SHA256 of their key (ADR 0030), so the
  * table names no email and no IP address. The HMAC's key is derived from the
  * secret, so it is not the one that signs the Sessions' tokens.
  */
