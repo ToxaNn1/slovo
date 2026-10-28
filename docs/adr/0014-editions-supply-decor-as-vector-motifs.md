@@ -6,6 +6,8 @@ The Share Card frame (slot 5) holds two motifs, a band and a corner, drawn at th
 
 The victory illustration (slot 6) is one such motif; the Game's result screen stitches its layers in one after another and fades them with Reduce Motion, so the motion belongs to the Core and the Edition only supplies the drawing.
 
+Seasonal Decor (ADR 0055) changes only slot 1 and slot 2. Beside their motifs, `decor/decor.json` holds a motif for each Season and the Edition's Holidays, each a rule (a fixed day and month, or the nth weekday of a month) with its motif. While «Сезонний декор» and the `seasonalDecor` switch are on, the Core draws in those two slots the motif of the local date's Holiday, or else of its Season, and the Edition's own motifs otherwise; the other slots never change with the date.
+
 Decor holds shapes and colours only. Words drawn with Decor, such as the splash's wordmark and tagline, are Edition strings that the Core lays out. The native splash stays a PNG described by `decor/splash.json`, because it is baked into the build before any JavaScript runs; the app's splash then draws slot 7 from the motifs over it, with the mark exactly where the native image was.
 
 ## Considered Options
