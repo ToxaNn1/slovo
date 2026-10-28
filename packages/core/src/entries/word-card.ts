@@ -66,6 +66,12 @@ export interface WordCardModel {
   readonly linkedCorrections: readonly LinkedCorrection[];
   /** The first live Synonym Row that links the Word as a member; nothing for a Word in no row. */
   readonly synonymRow: WordCardSynonymRow | undefined;
+  /**
+   * The file name of the Illustration above the Definition, among the
+   * Edition's bundled assets; nothing when the Word has none, the app doesn't
+   * bundle it or `illustrations` is off (ADR 0055).
+   */
+  readonly illustration: string | undefined;
 }
 
 /** The most Synonyms a Word card shows. */
@@ -80,7 +86,10 @@ export async function buildWordCard({
   entries,
 }: {
   word: Word;
-  entries: Pick<Entries, 'linkedCorrections' | 'categories' | 'linkingSynonymRow' | 'getMany'>;
+  entries: Pick<
+    Entries,
+    'linkedCorrections' | 'categories' | 'linkingSynonymRow' | 'getMany' | 'illustrationOf'
+  >;
 }): Promise<WordCardModel> {
   const [linked, categories, synonymRow] = await Promise.all([
     entries.linkedCorrections(word),
@@ -109,6 +118,7 @@ export async function buildWordCard({
       nonStandardForm,
     })),
     synonymRow,
+    illustration: entries.illustrationOf(word),
   };
 }
 

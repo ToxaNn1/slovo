@@ -146,6 +146,12 @@ export interface Entries {
    * Derived from the rows: nothing on the Word names it.
    */
   linkingSynonymRow(word: Word): Promise<SynonymRow | undefined>;
+  /**
+   * The file name of the Word's Illustration, or none when the Word has none,
+   * the app doesn't bundle the file a content update names or the Edition or
+   * a remote Feature Switch turns `illustrations` off (ADR 0055).
+   */
+  illustrationOf(word: Word): string | undefined;
 }
 
 const { hiddenEntries: hiddenRecords } = userStateRecords;
@@ -164,6 +170,12 @@ function readOnce<T>(read: () => Promise<T>): () => Promise<T> {
 }
 
 /**
+ * What the Entries ask of the Edition. One that leaves out `illustrations`,
+ * as in tests of other features, bundles no Illustration.
+ */
+type EntriesEdition = Pick<Edition, 'isFeatureEnabled'> & Partial<Pick<Edition, 'illustrations'>>;
+
+/**
  * The Entries over the Language Pack, and over the user's choices in the user
  * state when it is given. Without it there is no Mix and no Entry is Hidden,
  * so every live Word is eligible, for the tools and screens that only read
@@ -171,10 +183,10 @@ function readOnce<T>(read: () => Promise<T>): () => Promise<T> {
  */
 export function createEntries(
   options:
-    | { content: ContentReadPort; edition: Pick<Edition, 'isFeatureEnabled'> }
+    | { content: ContentReadPort; edition: EntriesEdition }
     | {
         content: ContentReadPort;
-        edition: Pick<Edition, 'isFeatureEnabled'> & MixEdition;
+        edition: EntriesEdition & MixEdition;
         userState: Pick<UserState, 'list' | 'read'>;
       },
 ): Entries {
@@ -395,6 +407,13 @@ export function createEntries(
       if (first === undefined) return undefined;
       const [row] = await content.getEntries([first]);
       return row?.kind === 'synonymRow' ? row : undefined;
+    },
+    illustrationOf({ illustration }) {
+      return illustration !== undefined &&
+        edition.isFeatureEnabled('illustrations') &&
+        edition.illustrations?.has(illustration) === true
+        ? illustration
+        : undefined;
     },
   };
 }
