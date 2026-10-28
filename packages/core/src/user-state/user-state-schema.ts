@@ -91,6 +91,19 @@ export const userStateRecords = {
     { sync: 'device-only' },
   ),
   /**
+   * The Community Word the backend answered on the local date `date`, kept so
+   * the week is read once a day; `null`, none (ADR 0060). It stays on the
+   * device; a new key needs no migration.
+   */
+  communityWord: declareRecord(
+    'feed.communityWord',
+    z.object({
+      date: z.string(),
+      communityWord: z.object({ entryId: z.string(), adds: z.number() }).nullable(),
+    }),
+    { sync: 'device-only' },
+  ),
+  /**
    * The last 10 Search queries a result was opened from, newest first, no two
    * alike as Search reads them (ADR 0054). It stays on the device; a new key
    * needs no migration.

@@ -17,6 +17,7 @@ import { createEntryRows, type EntryRowModel } from './entries/entry-row';
 import { openFavorites, type Favorites } from './saved/favorites';
 import { buildEntryCard, buildFeedCard, openFeed, type Feed } from './feed/feed';
 import { dailyLimitNotices, type DailyLimitEdition } from './feed/daily-limit';
+import { createCommunityWord } from './feed/community-word';
 import { allFeedNotices, noFeedNotices, type FeedNotices } from './feed/feed-notices';
 import { createFirstWeek } from './feed/first-week';
 import { createYesterday } from './feed/yesterday';
@@ -49,7 +50,7 @@ import {
   type NotificationsEdition,
 } from './notifications/notifications';
 import { openOnboarding, type Onboarding } from './onboarding/onboarding';
-import type { Clock, ContentReadPort, Random, Schedule } from './ports';
+import type { Clock, CommunityWordApi, ContentReadPort, Random, Schedule } from './ports';
 import { openProgress, type Progress } from './progress/progress';
 import { createWeeklyRecap, type WeeklyRecap } from './progress/weekly-recap';
 import { createMoodDraw, type MoodDraw } from './mood/mood-draw';
@@ -300,6 +301,7 @@ export async function openComposition({
   gameModes = [],
   crossword,
   feedNotices = noFeedNotices,
+  communityWord,
   ...ports
 }: {
   content: ContentReadPort;
@@ -329,6 +331,8 @@ export async function openComposition({
   gameModes?: readonly GameMode[];
   /** Feed Notices of each day beside those the Core makes, the Weekly Recap, the first-week card, Yesterday and the Daily Limit card; without it, none. */
   feedNotices?: FeedNotices;
+  /** The backend's Community Word, which the Feed shows on a Monday; without it, as in tests of other features, none. */
+  communityWord?: CommunityWordApi;
 }): Promise<Composition> {
   const { userState, scheduling, schedule, close } = closable(ports);
   const entries = createEntries({ content, edition, userState });
@@ -389,6 +393,9 @@ export async function openComposition({
         forDay: async (day) =>
           (await weeklyRecap.of(day)) === undefined ? [] : [{ notice: 'weeklyRecap' }],
       },
+      communityWord === undefined
+        ? noFeedNotices
+        : createCommunityWord({ edition, entries, hiddenEntries, userState, api: communityWord }),
       createFirstWeek({ edition, userState }),
       createYesterday({ edition, entries, hiddenEntries, userState }),
       dailyLimit,
