@@ -1,12 +1,14 @@
 import type { CounterEvent } from '@slovo/contracts';
 
 import type { EditionRegistry, NotServing } from '../edition/edition-registry';
-import type { Clock, CounterStore, EntryCounts, RateLimits } from '../ports';
+import type { Clock, CommunityWord, CounterStore, EntryCounts, RateLimits } from '../ports';
 import { countRequest, ipSubject, type TooManyRequests } from '../rate-limit';
 import { isoWeekOf } from './iso-week';
 
 /** The counter events one IP address may send in a day, each event of a batch counting (ADR 0060). */
 const EVENTS_PER_IP = { requests: 500, windowSeconds: 24 * 60 * 60 } as const;
+
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
 /** The Community Counters readers' devices send their changes to (ADR 0060). */
 export interface CommunityCounters {
@@ -33,6 +35,14 @@ export interface CommunityCounters {
     readonly editionId: string;
     readonly entryIds: readonly string[];
   }): Promise<{ readonly ok: true; readonly counters: readonly EntryCounts[] } | NotServing>;
+  /**
+   * The Community Word of the Edition, when it serves the Community Word: the
+   * Entry most added to Favorites in the last full ISO week (UTC), the lower
+   * Entry id winning a tie, or none when nobody added anything that week.
+   */
+  communityWord(
+    editionId: string,
+  ): Promise<{ readonly ok: true; readonly communityWord: CommunityWord | undefined } | NotServing>;
 }
 
 export function createCommunityCounters({
@@ -72,6 +82,13 @@ export function createCommunityCounters({
         (entryId) => kept.get(entryId) ?? { entryId, known: 0, unknown: 0, saved: 0 },
       );
       return { ok: true, counters };
+    },
+
+    async communityWord(editionId) {
+      const serving = await editions.serving(editionId, 'communityWord');
+      if (!serving.ok) return serving;
+      const lastWeek = isoWeekOf(new Date(clock.now().getTime() - WEEK_MS));
+      return { ok: true, communityWord: await store.mostAdded(editionId, lastWeek) };
     },
   };
 }

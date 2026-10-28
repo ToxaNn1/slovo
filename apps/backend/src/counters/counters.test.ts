@@ -544,3 +544,128 @@ describe('counters.read', () => {
     }
   });
 });
+
+describe('counters.communityWord', () => {
+  /**
+   * The backend serving an Edition of its own, since the Community Word is
+   * the Edition's and the tests of the file share its database.
+   */
+  const newEditionId = () => `cw-${randomInt(2 ** 47).toString(36)}`;
+  const ownEdition = () => {
+    const editionId = newEditionId();
+    return { editionId, ...testApp({ editions: testEditions([editionId]).read() }) };
+  };
+
+  /** One device adding each Entry to Favorites, on the test's clock. */
+  const addToFavorites = (
+    client: ReturnType<typeof testApp>['client'],
+    editionId: string,
+    entryIds: readonly string[],
+  ) =>
+    client.counters.send({
+      editionId,
+      events: entryIds.map((entryId) => event(entryId, { saved: 1 })),
+    });
+
+  it('answers the Entry most added to Favorites last ISO week, with its adds', async () => {
+    const { editionId, client, request } = ownEdition();
+    // The ISO week of Monday 2026-10-26.
+    vi.setSystemTime(new Date('2026-10-26T00:00:00Z'));
+    await addToFavorites(client, editionId, ['w_a', 'w_b', 'w_c']);
+    vi.setSystemTime(new Date('2026-10-28T12:00:00Z'));
+    await addToFavorites(client, editionId, ['w_b', 'w_c']);
+    vi.setSystemTime(new Date('2026-11-01T23:59:59Z'));
+    await addToFavorites(client, editionId, ['w_b']);
+    // A Favorite removed takes nothing from the week's adds.
+    await client.counters.send({ editionId, events: [event('w_b', { saved: -1 })] });
+
+    vi.setSystemTime(new Date('2026-11-04T09:00:00Z'));
+    const response = await request(`/v1/community/week?edition=${editionId}`);
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      communityWord: { entryId: 'w_b', adds: 3 },
+    });
+  });
+
+  it('gives a tie to the lower Entry id', async () => {
+    const { editionId, client } = ownEdition();
+    vi.setSystemTime(new Date('2026-10-27T09:00:00Z'));
+    await addToFavorites(client, editionId, ['w_b', 'w_ab', 'w_a1']);
+    await addToFavorites(client, editionId, ['w_b', 'w_ab', 'w_a1', 'w_a']);
+
+    vi.setSystemTime(new Date('2026-11-02T09:00:00Z'));
+
+    // Lower by the code points of the id, as `<` compares strings: `1` comes before `b`.
+    await expect(client.counters.communityWord({ edition: editionId })).resolves.toEqual({
+      communityWord: { entryId: 'w_a1', adds: 2 },
+    });
+  });
+
+  it('answers none for a week nobody added anything in, whatever the weeks around it had', async () => {
+    const { editionId, client } = ownEdition();
+    vi.setSystemTime(new Date('2026-10-21T09:00:00Z'));
+    await addToFavorites(client, editionId, ['w_a']);
+    // Marks and a Favorite removed are no adds.
+    vi.setSystemTime(new Date('2026-10-28T09:00:00Z'));
+    await client.counters.send({
+      editionId,
+      events: [event('w_b', { known: 1 }), event('w_a', { saved: -1 })],
+    });
+    vi.setSystemTime(new Date('2026-11-03T09:00:00Z'));
+    await addToFavorites(client, editionId, ['w_c']);
+
+    await expect(client.counters.communityWord({ edition: editionId })).resolves.toEqual({
+      communityWord: null,
+    });
+  });
+
+  it('ignores the current week until it is over, by UTC', async () => {
+    const { editionId, client } = ownEdition();
+    vi.setSystemTime(new Date('2026-10-28T09:00:00Z'));
+    await addToFavorites(client, editionId, ['w_a']);
+    vi.setSystemTime(new Date('2026-11-03T09:00:00Z'));
+    await addToFavorites(client, editionId, ['w_b']);
+    await addToFavorites(client, editionId, ['w_b']);
+
+    vi.setSystemTime(new Date('2026-11-08T23:59:59Z'));
+    await expect(client.counters.communityWord({ edition: editionId })).resolves.toEqual({
+      communityWord: { entryId: 'w_a', adds: 1 },
+    });
+
+    vi.setSystemTime(new Date('2026-11-09T00:00:00Z'));
+    await expect(client.counters.communityWord({ edition: editionId })).resolves.toEqual({
+      communityWord: { entryId: 'w_b', adds: 2 },
+    });
+  });
+
+  it('answers from the Edition’s own adds, not another’s', async () => {
+    const editionId = newEditionId();
+    const { client } = testApp({ editions: testEditions([editionId, 'other']).read() });
+    vi.setSystemTime(new Date('2026-10-28T09:00:00Z'));
+    await addToFavorites(client, 'other', ['w_a']);
+    await addToFavorites(client, editionId, ['w_b']);
+
+    vi.setSystemTime(new Date('2026-11-04T09:00:00Z'));
+    await expect(client.counters.communityWord({ edition: editionId })).resolves.toEqual({
+      communityWord: { entryId: 'w_b', adds: 1 },
+    });
+  });
+
+  it('answers NOT_FOUND for an Edition it does not serve, or with the Community Word switched off, locally or remotely', async () => {
+    const folder = testEditions(['off', 'remote'], (config) =>
+      config.id === 'off'
+        ? { ...config, featureSwitches: { ...config.featureSwitches, communityWord: false } }
+        : config,
+    );
+    const { client, switchOff } = testApp({ editions: folder.read() });
+    await switchOff('remote', 'communityWord');
+
+    for (const edition of ['xx', 'off', 'remote']) {
+      await expect(client.counters.communityWord({ edition })).rejects.toMatchObject({
+        code: 'NOT_FOUND',
+        status: 404,
+      });
+    }
+  });
+});

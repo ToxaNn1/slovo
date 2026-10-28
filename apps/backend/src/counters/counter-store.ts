@@ -1,5 +1,5 @@
 import type { CounterStore } from '@slovo/server-core';
-import { and, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 
 import type { Database } from '../database/database';
 import { communityCounters, favoritesAdds } from '../database/schema';
@@ -55,6 +55,17 @@ export function createCounterStore({ db }: Database): CounterStore {
         .select({ entryId, known, unknown, saved })
         .from(communityCounters)
         .where(and(eq(communityCounters.editionId, editionId), inArray(entryId, [...entryIds])));
+    },
+
+    async mostAdded(editionId, week) {
+      const [mostAdded] = await db
+        .select({ entryId: favoritesAdds.entryId, adds: favoritesAdds.adds })
+        .from(favoritesAdds)
+        .where(and(eq(favoritesAdds.editionId, editionId), eq(favoritesAdds.week, week)))
+        // The "C" collation compares code points, whatever the database's locale.
+        .orderBy(desc(favoritesAdds.adds), asc(sql`${favoritesAdds.entryId} collate "C"`))
+        .limit(1);
+      return mostAdded;
     },
   };
 }

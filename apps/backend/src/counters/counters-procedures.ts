@@ -21,14 +21,11 @@ interface CountersContext {
  * `NOT_FOUND`, which the app shows as no line and no Community Word, and a
  * batch over the day's limit of events of its IP address `TOO_MANY_REQUESTS`
  * with `Retry-After` (ADR 0060). The counters read may be kept for 24 hours,
- * as the device keeps them. Until the backend answers the Community Word
- * (#925), it answers it as switched off.
+ * as the device keeps them. An Edition with the Community Word switched off
+ * answers its Community Word `NOT_FOUND` too.
  */
 export function countersProcedures(communityCounters: CommunityCounters) {
   const counters = implement(apiContract.counters).$context<CountersContext>();
-  const switchedOff = ({ errors }: { errors: { NOT_FOUND: () => Error } }) => {
-    throw errors.NOT_FOUND();
-  };
   return counters.router({
     send: counters.send.handler(async ({ input, context, errors }) => {
       const sent = await communityCounters.send(input, context.ip);
@@ -51,6 +48,10 @@ export function countersProcedures(communityCounters: CommunityCounters) {
       context.resHeaders?.set('cache-control', COUNTERS_CACHE_CONTROL);
       return { counters: [...read.counters] };
     }),
-    communityWord: counters.communityWord.handler(switchedOff),
+    communityWord: counters.communityWord.handler(async ({ input, errors }) => {
+      const answer = await communityCounters.communityWord(input.edition);
+      if (!answer.ok) throw errors.NOT_FOUND();
+      return { communityWord: answer.communityWord ?? null };
+    }),
   });
 }
