@@ -3,7 +3,6 @@ import { router, Slot } from 'expo-router';
 import { act, renderRouter, screen } from 'expo-router/testing-library';
 import { Linking, Text } from 'react-native';
 
-import CollectionLinkScreen from '../app/c/[linkId]';
 import EntryLayout from '../app/entry/_layout';
 import EntryFromLinkScreen from '../app/entry/[entryId]';
 import GameEntryScreen from '../app/game/[entryId]';
@@ -88,7 +87,8 @@ async function renderApp() {
       'saved/history/[entryId]': HistoryEntryScreen,
       'saved/learning/[entryId]': LearningEntryScreen,
       'game/[entryId]': GameEntryScreen,
-      'c/[linkId]': CollectionLinkScreen,
+      // The recipient sheet needs the composition; its own test draws it.
+      'c/[linkId]': () => <Text>Recipient sheet</Text>,
     },
     { initialUrl: '/' },
   );
