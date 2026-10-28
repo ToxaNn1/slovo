@@ -80,6 +80,10 @@ export const RaritySchema = z.int().min(1).max(5);
  * which the Language Pack build checks (ADR 0054). A Word without moods
  * leaves the field out rather than listing none.
  *
+ * `illustration` names the Word's Illustration, a PNG file in the Edition's
+ * illustrations bundled in the app, not in the Language Pack (ADR 0055). It
+ * is a bare file name, never a path, so it can't point outside that folder.
+ *
  * `correctionIds` links the Corrections the Word is the standard form for.
  *
  * List fields default to empty and `retired` to false, so authored content
@@ -121,6 +125,10 @@ export const WordSchema = z
       .array(MoodSchema.shape.id)
       .min(1, 'Leave moods out of a Word without moods')
       .refine(hasNoRepeats, 'Moods must not repeat')
+      .optional(),
+    illustration: z
+      .string()
+      .regex(/^[^./\\][^/\\]*$/, 'Expected a file name in the illustrations, not a path')
       .optional(),
     categoryId: z.string().min(1),
     rarity: RaritySchema,
