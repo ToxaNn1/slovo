@@ -91,8 +91,10 @@ export function MistakeReportSheet({
       </View>
       <View style={styles.comment}>
         <View style={styles.commentHeader}>
+          {/* The field below says the same name to VoiceOver, so this line is not read twice. */}
           <Text
-            {...voice}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
             style={[styles.label, { color: colors.muted, fontFamily: fontFamilies.ui }]}
           >
             {sheet.comment}
