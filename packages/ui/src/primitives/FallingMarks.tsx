@@ -15,7 +15,7 @@ import Animated, {
 export interface FallingMarksOf {
   /** The mark that falls, wherever it is in the text. */
   readonly mark: string;
-  /** Whether the fall plays; until then the marks wait above the text, unseen. */
+  /** Whether the fall plays; until then, and once it stops, the marks wait above the text, unseen. */
   readonly playing: boolean;
 }
 
@@ -75,7 +75,8 @@ export function FallingMarks({
 }) {
   const progress = useSharedValue(0);
   useEffect(() => {
-    if (playing) progress.value = withTiming(1, FALL);
+    // Each play falls from above; a mark that stops playing waits above again.
+    progress.value = playing ? withTiming(1, FALL) : 0;
   }, [playing, progress]);
   const height = fontSize * FALL_HEIGHT;
   const fall = useAnimatedStyle(

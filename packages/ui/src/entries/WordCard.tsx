@@ -73,10 +73,11 @@ export function WordCardBody({
   // A page of the Feed comes on screen again each time the reader turns back to it.
   const onScreen = useIsPageOnScreen();
   const reduceMotion = useReduceMotionKnown();
-  // Until the system answers on Reduce Motion, the mark waits unseen above its vowel.
+  // Until the system answers on Reduce Motion, and while the page is off screen,
+  // as when a drag shows it beside the current one, the mark waits unseen above its vowel.
   const falling =
-    stressFalls && onScreen && reduceMotion !== true && card.stressedVowels.length > 0
-      ? { mark: STRESS_MARK, playing: reduceMotion === false }
+    stressFalls && reduceMotion !== true && card.stressedVowels.length > 0
+      ? { mark: STRESS_MARK, playing: onScreen && reduceMotion === false }
       : undefined;
 
   const grammar = (form: 'short' | 'full') => partOfSpeechText(strings, card, form);
