@@ -31,8 +31,16 @@ A place the Core deliberately opens for an Edition to plug in its own behaviour 
 _Avoid_: Hook, override, plugin
 
 **Decor**:
-Purely visual elements an Edition supplies for slots the Core defines, such as backgrounds or an embroidery-style ornament divider. Decor never carries behaviour.
+Purely visual elements an Edition supplies for slots the Core defines, such as backgrounds or an embroidery-style ornament divider. Decor never carries behaviour. While «Сезонний декор» is on, slot 1 (the background) and slot 2 (the divider centre) show the motif of the local date's Holiday, or else of its Season; the other slots never change with the date.
 _Avoid_: Skin, theme (a Theme is the user's light/dark choice)
+
+**Season**:
+The meteorological season of the reader's local date: December–February winter, March–May spring, June–August summer, September–November autumn. The Edition supplies a Decor motif for each; it changes at local midnight.
+_Avoid_: Time of year, theme
+
+**Holiday**:
+A date the Edition lists by a rule, a fixed day and month (24 August) or the nth weekday of a month (День вишиванки, the third Thursday of May), with its own Decor motif. On a Holiday its motif shows instead of the Season's.
+_Avoid_: Event, celebration, special day
 
 ### Entries
 
@@ -47,6 +55,10 @@ _Avoid_: Card, entry, term
 **Word History**:
 How a Word left the language or changed its meaning, a text in the Edition's language that the Word may carry (the field `history`). An Edition may require it of the Words of some Categories. It is neither where the Word comes from, its etymology, nor the user's History of Seen Entries.
 _Avoid_: Etymology, history on its own
+
+**Illustration**:
+A PNG picture a Word may carry above its Definition, named by its field `illustration` and bundled in the app as an Edition asset, not in the Language Pack. It is square, at most 150 KB, shown at most 160 pt high and the same in both Themes. Only Words carry Illustrations.
+_Avoid_: Image, picture, Decor (Decor belongs to slots, not to Words)
 
 **Retired Word**:
 A Word withdrawn from the Language Pack. It never appears in the Feed, notifications, widgets or the Game, but stays visible wherever the user already keeps it (Favorites, Collections, History).
@@ -178,7 +190,7 @@ The vertical stream of Entries the user swipes through on the home screen; Corre
 _Avoid_: Timeline, home list
 
 **Feed Notice**:
-A Feed card that is not an Entry: the Weekly Recap, a first-week card, «Пам'ятаєте вчорашнє слово?» (yesterday's Word of the Day in Self-check style) or the Daily Limit card. From the second card on, the day's Feed Notices take a card each, in the order Weekly Recap, first-week card, yesterday's Word; the Daily Limit card comes once the limit is reached. A Feed Notice counts in no turn and no Review slot and makes nothing Seen; swiping past it closes it for the local day.
+A Feed card that is not an Entry: the Weekly Recap, the Community Word, a first-week card, «Пам'ятаєте вчорашнє слово?» (yesterday's Word of the Day in Self-check style) or the Daily Limit card. From the second card on, the day's Feed Notices take a card each, in the order Weekly Recap, Community Word, first-week card, yesterday's Word; the Daily Limit card comes once the limit is reached. A Feed Notice counts in no turn and no Review slot and makes nothing Seen; swiping past it closes it for the local day.
 _Avoid_: Banner, tip (a Tip is an Entry)
 
 **Seen**:
@@ -238,6 +250,18 @@ _Avoid_: Level test, placement test, quiz
 **Weekly Recap**:
 «Ваш тиждень»: a Feed Notice on the first open of a local Monday about the Monday–Sunday week before it: the Entries Seen, the Favorites added, the Known marks set in that week (left out with the Knowledge Marks off) and the current Streak, with a Share Card. No Weekly Recap follows a week without an Active Day.
 _Avoid_: Weekly report, digest, summary
+
+**Community Word**:
+«Слово тижня спільноти»: a Feed Notice on a local Monday right after the Weekly Recap, showing the Entry readers most added to Favorites in the last ISO week (the lower id on a tie) as a mini Entry card with «додали {n} читачів». There is none when nobody added anything or the Entry is Hidden or Retired for the reader. A tap opens the Entry.
+_Avoid_: Word of the week, top word, trending word, Word of the Day
+
+**Community Counters**:
+Anonymous counts of how many readers know an Entry, don't know it and saved it, shown under its mark buttons as «Знають {known} з {total} читачів · зберегли {saved}», and of its Favorites adds per ISO week, which choose the Community Word. A device sends only the changes it made itself after the update, with no Account and no device id, never Game answers, and nothing while «Ділитися анонімною статистикою» is off; the server keeps totals, never one reader's marks.
+_Avoid_: Analytics, stats, statistics (the reader's own numbers), ratings
+
+**Mistake Report**:
+«Повідомлення про помилку»: what a reader sends from an Entry card's menu about a mistake in that Entry: its type (typo, Stress, Definition or other), an optional comment of at most 500 characters (required for other), the Edition, the Entry id, the app version and the content version. It carries no Account and no device id, waits on the device until it can be sent, and is kept on the server until the owner resolves it.
+_Avoid_: Bug report, feedback, complaint
 
 **Daily Limit**:
 «Ліміт на день»: a setting, off by default, of 10, 20 or 30 distinct Entries Seen on a local day, the Word of the Day included. At the limit the Feed shows the Feed Notice «На сьогодні досить. Повертайтеся завтра»; «Гортати далі» removes it until tomorrow. The limit never locks the Feed.
