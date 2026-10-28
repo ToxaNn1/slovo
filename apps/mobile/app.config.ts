@@ -231,9 +231,11 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
         CFBundleLocalizations: [language],
         ITSAppUsesNonExemptEncryption: false,
       },
-      // The widget extension gets the same App Group from the Apple targets plugin.
       entitlements: {
+        // The widget extension gets the same App Group from the Apple targets plugin.
         'com.apple.security.application-groups': [editionAppGroup(edition.config.bundleId)],
+        // Collection Links, https://<linkDomain>/c/<id>, open in the app (ADR 0058).
+        'com.apple.developer.associated-domains': [`applinks:${edition.config.linkDomain}`],
       },
     },
     plugins: [
