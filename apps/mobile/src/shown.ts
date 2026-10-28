@@ -32,6 +32,8 @@ export interface Shown {
   };
   /** Whether the Stress mark of a Word card's Lemma falls onto its vowel in the Feed and on the Entry screen. */
   readonly stressFall: boolean;
+  /** Whether the Lemma on the Word of the Day card in the Feed is set in the Edition's calligraphic font. */
+  readonly calligraphicLemma: boolean;
   /** Whether an Entry card is in Self-check. */
   readonly selfCheck: boolean;
   /** The Settings switch for Self-check. */
@@ -105,6 +107,7 @@ export function shownOf({
       mistakeReport: on('mistakeReports'),
     },
     stressFall: on('stressAnimation'),
+    calligraphicLemma: on('calligraphy'),
     selfCheck: on('selfCheck') && settings.selfCheck,
     selfCheckSetting: on('selfCheck'),
     seasonalDecorSetting: on('seasonalDecor'),

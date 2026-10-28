@@ -18,6 +18,7 @@ const everything: Shown = {
     mistakeReport: true,
   },
   stressFall: true,
+  calligraphicLemma: true,
   selfCheck: false,
   selfCheckSetting: true,
   seasonalDecorSetting: true,
@@ -53,6 +54,10 @@ describe('what the reader is shown', () => {
     [
       'a still Stress mark with the falling Stress off',
       { off: ['stressAnimation'], shown: { stressFall: false } },
+    ],
+    [
+      'the Word of the Day Lemma in the Word font with the calligraphic Lemma off',
+      { off: ['calligraphy'], shown: { calligraphicLemma: false } },
     ],
     ['no Search button with Search off', { off: ['search'], shown: { search: false } }],
     [
