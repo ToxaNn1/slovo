@@ -22,6 +22,7 @@ import { CROSSWORD_DAYS_FILE, editionFiles, EditionFolderError } from './edition
 import { illustrationErrors } from './illustrations';
 import { missingEntryErrors } from './id-registry';
 import type { PackContent } from './pack-layout';
+import { wordOfTheDayFontErrors } from './word-of-the-day-font';
 
 /** An Edition's folder as read and checked, ready to compile when nothing is wrong. */
 export interface EditionSource {
@@ -82,6 +83,7 @@ export function readEdition(
       ...checkContent(config, words, corrections, idioms),
       ...checkSynonymRows(config, words, synonymRows),
       ...checkTips(config, tips),
+      ...wordOfTheDayFontErrors(config, folder.fonts()),
     );
   }
   errors.push(...illustrationErrors(words, (name) => folder.illustration(name)));

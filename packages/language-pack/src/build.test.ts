@@ -27,6 +27,7 @@ import {
   recordContent,
   type BuildError,
 } from './index';
+import { fontWith } from './test-support';
 
 const fixture = (name: string) => fileURLToPath(new URL(`../fixtures/${name}`, import.meta.url));
 
@@ -1921,6 +1922,109 @@ describe('checkLanguagePack', () => {
       expect.objectContaining({ file: 'content/words/w_fx0002.json', field: 'rarity' }),
     ]);
     expect(existsSync(join(editionDir, 'dist'))).toBe(false);
+  });
+});
+
+describe('the Word of the Day font', () => {
+  const letters = 'абвгґдеєжзиіїйклмнопрстуфхцчшщьюя';
+  const stressMark = '\u0301';
+  const everyCharacter = `${letters}${letters.toLocaleUpperCase('uk')}${stressMark}`;
+
+  /** A copy of the valid fixture whose Word of the Day font is the given file. */
+  function withFont(name: string, font?: Buffer): string {
+    const editionDir = copyFixture('valid');
+    if (font !== undefined) writeFileSync(join(editionDir, 'assets/fonts', name), font);
+    editJson(editionDir, 'edition.json', (config) => ({ ...config, wordOfTheDayFont: name }));
+    return editionDir;
+  }
+
+  const errorsOf = (editionDir: string) => {
+    const result = checkLanguagePack({ editionDir });
+    return result.ok ? [] : result.errors;
+  };
+
+  it('passes a font with every letter of the alphabet, in both cases, and the Stress mark', () => {
+    expect(errorsOf(withFont('Script.ttf', fontWith(everyCharacter)))).toEqual([]);
+  });
+
+  it('refuses a font file the Edition does not bring', () => {
+    expect(errorsOf(withFont('Missing.ttf'))).toEqual([
+      {
+        file: 'edition.json',
+        field: 'wordOfTheDayFont',
+        message: 'No font file Missing.ttf in assets/fonts/',
+      },
+    ]);
+  });
+
+  it('refuses a file that is not a font', () => {
+    expect(errorsOf(withFont('Script.ttf', Buffer.from('not a font')))).toEqual([
+      {
+        file: 'edition.json',
+        field: 'wordOfTheDayFont',
+        message: 'assets/fonts/Script.ttf is not a TrueType or OpenType font',
+      },
+    ]);
+  });
+
+  it('refuses a font without «ї», naming the missing letter', () => {
+    const font = fontWith(everyCharacter.replace('ї', ''));
+
+    expect(errorsOf(withFont('Script.ttf', font))).toEqual([
+      {
+        file: 'edition.json',
+        field: 'wordOfTheDayFont',
+        message: 'assets/fonts/Script.ttf has no glyph for ї',
+      },
+    ]);
+  });
+
+  it('refuses a font without capital letters, naming each', () => {
+    const font = fontWith(`${letters}${stressMark}Ґ`);
+
+    expect(errorsOf(withFont('Script.ttf', font))).toEqual([
+      expect.objectContaining({
+        message: expect.stringMatching(/ has no glyph for А, Б, В, Г, Д, Е, .*, Ю, Я$/) as unknown,
+      }),
+    ]);
+  });
+
+  it('refuses a font without the Stress mark, naming it', () => {
+    const font = fontWith(everyCharacter.replace(stressMark, ''));
+
+    expect(errorsOf(withFont('Script.ttf', font))).toEqual([
+      {
+        file: 'edition.json',
+        field: 'wordOfTheDayFont',
+        message: 'assets/fonts/Script.ttf has no glyph for the Stress mark (U+0301)',
+      },
+    ]);
+  });
+
+  it('asks no Stress mark of an Edition that does not mark Stress', () => {
+    const editionDir = withFont('Script.ttf', fontWith(everyCharacter.replace(stressMark, '')));
+    editJson(editionDir, 'edition.json', (config) => ({
+      ...config,
+      languageTraits: { ...(config['languageTraits'] as Json), marksStress: false },
+    }));
+
+    expect(errorsOf(editionDir).filter(({ file }) => file === 'edition.json')).toEqual([]);
+  });
+
+  it('reads the character map of a real font: Manrope has Cyrillic but no Stress mark', () => {
+    const manrope = readFileSync(
+      fileURLToPath(
+        new URL('../../../editions/uk/assets/fonts/Manrope-Regular.ttf', import.meta.url),
+      ),
+    );
+
+    expect(errorsOf(withFont('Manrope-Regular.ttf', manrope))).toEqual([
+      {
+        file: 'edition.json',
+        field: 'wordOfTheDayFont',
+        message: 'assets/fonts/Manrope-Regular.ttf has no glyph for the Stress mark (U+0301)',
+      },
+    ]);
   });
 });
 
