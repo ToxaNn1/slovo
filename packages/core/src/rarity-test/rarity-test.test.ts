@@ -185,8 +185,12 @@ describe('the Rarity Test floor', () => {
     expect(app.knowledge.state).toEqual(before);
     expect(app.knowledge.weak()).toEqual([]);
     expect(app.history.list).toEqual([]);
-    for (const { wordId } of await app.rarityTest.draw()) {
-      expect((await app.entryCard(wordId))?.review).toBeFalsy();
+    const drawn = await app.rarityTest.draw();
+    expect(drawn).not.toEqual([]);
+    for (const { wordId } of drawn) {
+      const card = await app.entryCard(wordId);
+      expect(card?.entryId).toBe(wordId);
+      expect(card).not.toHaveProperty('review');
     }
   });
 
