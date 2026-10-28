@@ -49,17 +49,25 @@ export interface UndoToastContent {
   readonly onUndo: () => void;
 }
 
-const UndoToastContext = createContext<((toast: UndoToastContent) => void) | undefined>(undefined);
+/** A toast that only says something, in the Edition's language, such as the thanks for a Mistake Report. */
+export interface MessageToastContent {
+  readonly message: string;
+}
+
+/** What one toast says: with an undo, or a message alone. */
+export type ToastContent = UndoToastContent | MessageToastContent;
+
+const UndoToastContext = createContext<((toast: ToastContent) => void) | undefined>(undefined);
 
 /**
- * Shows undo toasts at the bottom of the screen it wraps, one at a time: a
- * new toast takes the place of the one before. The toasts live here, not in
- * what opened them, so a toast stays when the card it came from leaves.
+ * Shows toasts at the bottom of the screen it wraps, one at a time: a new
+ * toast takes the place of the one before. The toasts live here, not in what
+ * opened them, so a toast stays when the card it came from leaves.
  */
 export function UndoToastProvider({ children }: { children: ReactNode }) {
-  const [toast, setToast] = useState<{ readonly id: number; readonly content: UndoToastContent }>();
+  const [toast, setToast] = useState<{ readonly id: number; readonly content: ToastContent }>();
   const lastId = useRef(0);
-  const show = useCallback((content: UndoToastContent) => {
+  const show = useCallback((content: ToastContent) => {
     lastId.current += 1;
     setToast({ id: lastId.current, content });
   }, []);
@@ -71,34 +79,36 @@ export function UndoToastProvider({ children }: { children: ReactNode }) {
       <View style={styles.fill}>
         {children}
         {toast !== undefined && (
-          <UndoToast key={toast.id} id={toast.id} {...toast.content} onDismiss={dismiss} />
+          <UndoToast key={toast.id} id={toast.id} content={toast.content} onDismiss={dismiss} />
         )}
       </View>
     </UndoToastContext>
   );
 }
 
-/** Shows an undo toast on the screen of the nearest `UndoToastProvider`. */
-export function useUndoToast(): (toast: UndoToastContent) => void {
+/** Shows a toast, with an undo or without, on the screen of the nearest `UndoToastProvider`. */
+export function useUndoToast(): (toast: ToastContent) => void {
   const show = useContext(UndoToastContext);
   if (show === undefined) throw new Error('useUndoToast needs an UndoToastProvider above it');
   return show;
 }
 
 /**
- * The undo toast from the design: radius 6, inverted colours, `elev.toast`,
- * for 4 s. With VoiceOver on, VoiceOver moves to it and reads it, and it stays
- * until the reader takes the undo or dismisses it with the escape gesture, so
- * the undo is always in reach.
+ * The toast from the design: radius 6, inverted colours, `elev.toast`, for
+ * 4 s. With VoiceOver on, VoiceOver moves to it and reads it, and a toast with
+ * an undo stays until the reader takes the undo or dismisses it with the
+ * escape gesture, so the undo is always in reach; one without leaves after 4 s.
  */
 function UndoToast({
   id,
-  message,
-  undoLabel,
-  onUndo,
+  content,
   onDismiss,
-}: UndoToastContent & { id: number; onDismiss: (id: number) => void }) {
-  const { colors, fontFamilies, radii } = useTokens();
+}: {
+  id: number;
+  content: ToastContent;
+  onDismiss: (id: number) => void;
+}) {
+  const { colors, fontFamilies } = useTokens();
   const { voice } = useEdition();
   const messageRef = useRef<Text>(null);
   const opacity = useSharedValue(0);
@@ -106,17 +116,20 @@ function UndoToast({
     onDismiss(id);
   }
   const timeOut = useEffectEvent(close);
+  const hasUndo = 'onUndo' in content;
 
   useEffect(() => {
     let active = true;
     let timer: ReturnType<typeof setTimeout> | undefined;
     void AccessibilityInfo.isScreenReaderEnabled().then((screenReader) => {
       if (!active) return;
-      if (!screenReader) {
-        opacity.value = withTiming(1, { duration: FADE_MS, reduceMotion: ReduceMotion.Never });
+      if (!screenReader || !hasUndo) {
         timer = setTimeout(() => {
           timeOut();
         }, TOAST_MS);
+      }
+      if (!screenReader) {
+        opacity.value = withTiming(1, { duration: FADE_MS, reduceMotion: ReduceMotion.Never });
         return;
       }
       // VoiceOver skips a view that is still fading in, so the toast shows at once.
@@ -128,7 +141,7 @@ function UndoToast({
       active = false;
       clearTimeout(timer);
     };
-  }, [opacity]);
+  }, [opacity, hasUndo]);
 
   const fadeStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
 
@@ -144,34 +157,43 @@ function UndoToast({
         {...voice}
         style={[styles.message, { color: colors.background, fontFamily: fontFamilies.ui }]}
       >
-        {message}
+        {content.message}
       </Text>
-      <Pressable
-        testID="undo-toast-undo"
-        accessibilityRole="button"
-        accessibilityLabel={undoLabel}
-        {...voice}
-        onPress={() => {
-          onUndo();
-          close();
-        }}
-        style={({ pressed }) => [
-          styles.undo,
-          {
-            backgroundColor: colors.background,
-            borderRadius: radii.button,
-            opacity: pressed ? 0.7 : 1,
-          },
-        ]}
-      >
-        <Text
-          maxFontSizeMultiplier={UNDO_MAX_FONT_SCALE}
-          style={[styles.undoLabel, { color: colors.ink, fontFamily: fontFamilies.ui }]}
-        >
-          {undoLabel}
-        </Text>
-      </Pressable>
+      {'onUndo' in content && <UndoButton {...content} onPress={close} />}
     </Animated.View>
+  );
+}
+
+/** The toast's undo button: undoes what just happened, then closes the toast. */
+function UndoButton({ undoLabel, onUndo, onPress }: UndoToastContent & { onPress: () => void }) {
+  const { colors, fontFamilies, radii } = useTokens();
+  const { voice } = useEdition();
+  return (
+    <Pressable
+      testID="undo-toast-undo"
+      accessibilityRole="button"
+      accessibilityLabel={undoLabel}
+      {...voice}
+      onPress={() => {
+        onUndo();
+        onPress();
+      }}
+      style={({ pressed }) => [
+        styles.undo,
+        {
+          backgroundColor: colors.background,
+          borderRadius: radii.button,
+          opacity: pressed ? 0.7 : 1,
+        },
+      ]}
+    >
+      <Text
+        maxFontSizeMultiplier={UNDO_MAX_FONT_SCALE}
+        style={[styles.undoLabel, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+      >
+        {undoLabel}
+      </Text>
+    </Pressable>
   );
 }
 
