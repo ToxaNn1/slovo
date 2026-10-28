@@ -1,0 +1,125 @@
+import { COUNTERS_BATCH_SIZE } from '@slovo/contracts';
+
+import type { Edition } from '../edition/edition';
+import type { Clock, CounterEvent, CountersApi, Random, Schedule } from '../ports';
+import { withRetries } from '../retry';
+import type { UserState } from '../user-state/user-state';
+import { userStateRecords } from '../user-state/user-state-schema';
+import { unsentAfterSending } from './counter-deltas';
+
+/** How long the app waits, while it is in the foreground, between two sends of the unsent changes, in milliseconds. */
+const SEND_EVERY = 5 * 60_000;
+
+/**
+ * The sending of this device's Community Counters (ADR 0060): the changes it
+ * counted and not yet sent go to the backend in batches of at most
+ * `COUNTERS_BATCH_SIZE` Entries, at launch, on each return to the foreground
+ * and every few minutes while the app is open, each batch by the one retry
+ * rule (ADR 0037). A request carries the Edition and the events alone: no
+ * Account, no Session, no device id. A batch leaves the unsent changes when
+ * the backend counts it, or refuses it as a request it never expects; it
+ * stays offline, after a server error, for an Edition the backend doesn't
+ * find, and after too many requests, until the answer's `Retry-After`.
+ * Nothing goes out while the `communityCounters` Feature Switch is off in
+ * effect or «Ділитися анонімною статистикою» is off, both read each time.
+ * Nothing it does rejects.
+ */
+export interface CounterSending {
+  /** The app is in the foreground, at launch or on a return: sends now, and every few minutes until `background`. */
+  foreground(): void;
+  /** The app went to the background: no more sends until the next `foreground`. */
+  background(): void;
+}
+
+/**
+ * Opens the sending of the Community Counters over the user state the
+ * Knowledge Marks and Favorites write their unsent changes to, for the shell
+ * to open beside the Core composition, like the counters' reads.
+ */
+export function openCounterSending({
+  edition,
+  api,
+  userState,
+  clock,
+  schedule,
+  random,
+}: {
+  /** The Edition as the app runs it, with each Feature Switch at its effective value. */
+  edition: Pick<Edition, 'isFeatureEnabled'>;
+  api: Pick<CountersApi, 'send'>;
+  userState: Pick<UserState, 'read' | 'list' | 'write'>;
+  clock: Clock;
+  /** What the waits between tries and between sends wait by. */
+  schedule: Schedule;
+  /** What the waits between tries are jittered by. */
+  random: Random;
+}): CounterSending {
+  const { countersUnsent, shareCounters } = userStateRecords;
+  /** Until when, in milliseconds, nothing goes out, by a 429's `Retry-After`. */
+  let heldUntil: number | undefined;
+  let draining = false;
+  let again = false;
+  let stopSending: (() => void) | undefined;
+
+  const held = () => heldUntil !== undefined && clock.now().getTime() < heldUntil;
+
+  /** Sends the first batch of the unsent changes; answers whether it left them, so the next may follow. */
+  async function sendBatch(): Promise<boolean> {
+    if (!edition.isFeatureEnabled('communityCounters') || held()) return false;
+    if ((await userState.read(shareCounters)) === false) return false;
+    const events: CounterEvent[] = [...(await userState.list(countersUnsent))]
+      .slice(0, COUNTERS_BATCH_SIZE)
+      .map(([entryId, delta]) => ({ entryId, ...delta }));
+    if (events.length === 0) return false;
+    const answer = await withRetries(() => api.send(events), { schedule, random });
+    if (answer.ok) {
+      heldUntil = undefined;
+    } else {
+      if (answer.reason === 'too-many-requests' && answer.retryAfter !== undefined) {
+        heldUntil = clock.now().getTime() + answer.retryAfter * 1000;
+      }
+      if (answer.reason !== 'unexpected') return false;
+    }
+    await userState.write(await unsentAfterSending(userState, events));
+    return true;
+  }
+
+  /** Whether a call during the drain asked for one more. */
+  const askedAgain = () => again;
+
+  /** Sends the unsent changes, one drain at a time; a call during one drains once more after it. */
+  async function drain(): Promise<void> {
+    if (draining) {
+      again = true;
+      return;
+    }
+    draining = true;
+    try {
+      do {
+        again = false;
+        while (await sendBatch());
+      } while (askedAgain());
+    } catch {
+      // Silent: the user state failed to be read or written, and the next send tries again.
+    } finally {
+      draining = false;
+    }
+  }
+
+  /** Sends now and again after `SEND_EVERY`, until stopped. */
+  function sendNowAndEvery(): void {
+    void drain();
+    stopSending = schedule(sendNowAndEvery, SEND_EVERY);
+  }
+
+  return {
+    foreground() {
+      stopSending?.();
+      sendNowAndEvery();
+    },
+    background() {
+      stopSending?.();
+      stopSending = undefined;
+    },
+  };
+}

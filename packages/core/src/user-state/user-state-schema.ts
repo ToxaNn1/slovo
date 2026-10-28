@@ -81,6 +81,13 @@ export const userStateRecords = {
    */
   seasonalDecor: declareRecord('settings.seasonalDecor', z.boolean()),
   /**
+   * Whether the user has «Ділитися анонімною статистикою» on: this device
+   * counts and sends its Community Counters (ADR 0060). It stays on the
+   * device, since syncing it would tie the counters to an Account; a new key
+   * needs no migration, since without it sharing is on.
+   */
+  shareCounters: declareRecord('settings.shareCounters', z.boolean(), { sync: 'device-only' }),
+  /**
    * The user's Daily Limit (ADR 0054). It syncs last write wins like the Theme
    * (ADR 0041); a new key needs no migration, since without it the Edition's default holds.
    */

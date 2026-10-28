@@ -127,16 +127,13 @@ export {
 export { groupByLocalDay, relativeTimeOf, type RelativeTime } from './saved/history-time';
 export { type KnowledgeMark } from './knowledge/knowledge-record';
 export { type KnownCounts, type LearningEntry } from './knowledge/knowledge';
-export {
-  type CommunityCounters,
-  type CounterChange,
-  type CounterDelta,
-} from './community-counters/counter-deltas';
+export { type CommunityCounters } from './community-counters/counter-deltas';
 export {
   openCounterReads,
   type CounterLine,
   type CounterReads,
 } from './community-counters/counter-reads';
+export { openCounterSending, type CounterSending } from './community-counters/counter-sending';
 export {
   dateKeyOf,
   formatTimeOfDay,
@@ -222,6 +219,10 @@ export {
   type CommunityWordAnswer,
   type CommunityWordApi,
   type ContentReadPort,
+  type CounterChange,
+  type CounterDelta,
+  type CounterEvent,
+  type CounterEventsFailure,
   type CountersApi,
   type EntryCounters,
   type GoogleSignInSheet,

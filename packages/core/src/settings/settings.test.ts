@@ -20,6 +20,7 @@ describe('settings', () => {
       hideStreak: false,
       selfCheck: false,
       seasonalDecor: true,
+      shareCounters: true,
       dailyLimit: 'off',
     });
   });
@@ -35,6 +36,7 @@ describe('settings', () => {
       hideStreak: false,
       selfCheck: false,
       seasonalDecor: true,
+      shareCounters: true,
       dailyLimit: 'off',
     });
   });
@@ -49,6 +51,7 @@ describe('settings', () => {
       hideStreak: false,
       selfCheck: false,
       seasonalDecor: true,
+      shareCounters: true,
       dailyLimit: 'off',
     });
     expect(await settings.read()).toEqual({
@@ -58,6 +61,7 @@ describe('settings', () => {
       hideStreak: false,
       selfCheck: false,
       seasonalDecor: true,
+      shareCounters: true,
       dailyLimit: 'off',
     });
   });
@@ -72,6 +76,7 @@ describe('settings', () => {
       hideStreak: false,
       selfCheck: false,
       seasonalDecor: true,
+      shareCounters: true,
       dailyLimit: 'off',
     });
     expect(await settings.read()).toEqual({
@@ -81,6 +86,7 @@ describe('settings', () => {
       hideStreak: false,
       selfCheck: false,
       seasonalDecor: true,
+      shareCounters: true,
       dailyLimit: 'off',
     });
   });
@@ -96,6 +102,7 @@ describe('settings', () => {
       hideStreak: false,
       selfCheck: false,
       seasonalDecor: true,
+      shareCounters: true,
       dailyLimit: 'off',
     });
   });
@@ -111,6 +118,7 @@ describe('settings', () => {
       hideStreak: false,
       selfCheck: false,
       seasonalDecor: true,
+      shareCounters: true,
       dailyLimit: 'off',
     });
   });
@@ -125,6 +133,7 @@ describe('settings', () => {
       hideStreak: false,
       selfCheck: false,
       seasonalDecor: true,
+      shareCounters: true,
       dailyLimit: 'off',
     });
   });
@@ -144,6 +153,7 @@ describe('settings', () => {
       hideStreak: false,
       selfCheck: false,
       seasonalDecor: true,
+      shareCounters: true,
       dailyLimit: 'off',
     });
   });
@@ -162,6 +172,7 @@ describe('settings', () => {
       hideStreak: false,
       selfCheck: false,
       seasonalDecor: true,
+      shareCounters: true,
       dailyLimit: 'off',
     });
   });
@@ -185,6 +196,7 @@ describe('settings: Vibration', () => {
       hideStreak: false,
       selfCheck: false,
       seasonalDecor: true,
+      shareCounters: true,
       dailyLimit: 'off',
     });
     expect((await settings.read()).vibration).toBe(false);
@@ -215,6 +227,7 @@ describe('settings: Vibration', () => {
       hideStreak: false,
       selfCheck: false,
       seasonalDecor: true,
+      shareCounters: true,
       dailyLimit: 'off',
     });
   });
@@ -243,6 +256,7 @@ describe('settings: hide the Streak', () => {
       hideStreak: true,
       selfCheck: false,
       seasonalDecor: true,
+      shareCounters: true,
       dailyLimit: 'off',
     });
     expect((await settings.read()).hideStreak).toBe(true);
@@ -273,6 +287,7 @@ describe('settings: hide the Streak', () => {
       hideStreak: true,
       selfCheck: false,
       seasonalDecor: true,
+      shareCounters: true,
       dailyLimit: 'off',
     });
   });
@@ -299,6 +314,7 @@ describe('settings: hide the Streak', () => {
       hideStreak: false,
       selfCheck: false,
       seasonalDecor: true,
+      shareCounters: true,
       dailyLimit: 'off',
     });
   });
@@ -321,6 +337,7 @@ describe('settings: Self-check', () => {
       hideStreak: false,
       selfCheck: true,
       seasonalDecor: true,
+      shareCounters: true,
       dailyLimit: 'off',
     });
     expect((await settings.read()).selfCheck).toBe(true);
@@ -344,6 +361,7 @@ describe('settings: Self-check', () => {
       hideStreak: true,
       selfCheck: true,
       seasonalDecor: true,
+      shareCounters: true,
       dailyLimit: 'off',
     });
   });
@@ -375,6 +393,7 @@ describe('settings: Daily Limit', () => {
         hideStreak: false,
         selfCheck: false,
         seasonalDecor: true,
+        shareCounters: true,
         dailyLimit: limit,
       });
       expect((await settings.read()).dailyLimit).toBe(limit);
@@ -413,6 +432,7 @@ describe('settings: Daily Limit', () => {
       hideStreak: false,
       selfCheck: true,
       seasonalDecor: true,
+      shareCounters: true,
       dailyLimit: 30,
     });
   });
@@ -446,6 +466,7 @@ describe('settings: Seasonal Decor', () => {
       hideStreak: false,
       selfCheck: true,
       seasonalDecor: false,
+      shareCounters: true,
       dailyLimit: 'off',
     });
   });
