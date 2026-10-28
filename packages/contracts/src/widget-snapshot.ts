@@ -37,7 +37,7 @@ const WidgetEntryText = {
  * An Entry any Widget Mode may show, ready to draw. The widget never reads
  * `kind`, so a new kind keeps the format (ADR 0026).
  */
-const WidgetEntrySchema = z.discriminatedUnion('kind', [
+export const WidgetEntrySchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('word'), id: WordIdSchema, ...WidgetEntryText }),
   z.strictObject({ kind: z.literal('correction'), id: CorrectionIdSchema, ...WidgetEntryText }),
   z.strictObject({ kind: z.literal('idiom'), id: IdiomIdSchema, ...WidgetEntryText }),
