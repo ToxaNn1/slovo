@@ -209,6 +209,26 @@ describe('counters.send', () => {
     });
   });
 
+  it('counts two batches sent at once that name the same Entries in opposite orders, both whole', async () => {
+    const { clientFrom, database } = testApp();
+    const words = Array.from({ length: 100 }, newEntryId);
+    const events = words.map((word) => event(word, { known: 1, saved: 1 }));
+    const rounds = 50;
+
+    for (let round = 0; round < rounds; round++) {
+      await Promise.all([
+        clientFrom(newIp()).counters.send({ editionId: 'uk', events }),
+        clientFrom(newIp()).counters.send({ editionId: 'uk', events: [...events].reverse() }),
+      ]);
+    }
+
+    for (const word of words) {
+      await expect(countsOf(database, word)).resolves.toEqual([
+        { known: 2 * rounds, unknown: 0, saved: 2 * rounds },
+      ]);
+    }
+  });
+
   it('answers an Edition it does not serve as NOT_FOUND and counts nothing', async () => {
     const { client, database } = testApp();
     const word = newEntryId();

@@ -12,8 +12,12 @@ import { communityCounters, favoritesAdds } from '../database/schema';
 export function createCounterStore({ db }: Database): CounterStore {
   return {
     async add(editionId, events, week) {
+      // Every batch writes its Entries in the order of their ids, so two
+      // batches with the same Entries never wait on each other in a circle.
+      const sorted = [...events].sort((a, b) => (a.entryId < b.entryId ? -1 : 1));
+      const entryIds = sorted.map(({ entryId }) => entryId);
       const deltas = sql.join(
-        events.map(
+        sorted.map(
           ({ entryId, known, unknown, saved }) =>
             sql`(${entryId}::text, ${known}::integer, ${unknown}::integer, ${saved}::integer)`,
         ),
@@ -21,15 +25,29 @@ export function createCounterStore({ db }: Database): CounterStore {
       );
       const { known, unknown, saved } = communityCounters;
       // An Entry is named once in a batch, so each saved +1 is one add.
-      const added = events.filter(({ saved }) => saved === 1);
+      const added = sorted.filter(({ saved }) => saved === 1);
       // One transaction, so a batch is counted whole or not at all: a row of
-      // zeros for each Entry not counted yet, then each delta added, no count
-      // going below zero, then the week's adds.
+      // zeros for each Entry not counted yet, its rows locked in order, then
+      // each delta added, no count going below zero, then the week's adds.
       await db.transaction(async (tx) => {
         await tx
           .insert(communityCounters)
-          .values(events.map(({ entryId }) => ({ editionId, entryId })))
+          .values(entryIds.map((entryId) => ({ editionId, entryId })))
           .onConflictDoNothing();
+        // An update takes its rows in an order of the plan's choosing, so the
+        // rows are locked first, in the order of the ids ("C" compares code
+        // points, as the sort above does for these ids).
+        await tx
+          .select({ entryId: communityCounters.entryId })
+          .from(communityCounters)
+          .where(
+            and(
+              eq(communityCounters.editionId, editionId),
+              inArray(communityCounters.entryId, entryIds),
+            ),
+          )
+          .orderBy(sql`${communityCounters.entryId} collate "C"`)
+          .for('update');
         await tx.execute(sql`
           update ${communityCounters}
           set ${sql.identifier(known.name)} = greatest(0, ${known} + deltas.known),
