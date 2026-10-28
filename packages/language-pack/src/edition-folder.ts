@@ -139,6 +139,8 @@ export interface EditionFiles {
   decorFile(name: string): string;
   /** Where the Illustration a Word names lies, whether or not it is there. */
   illustration(name: string): string;
+  /** The file names of the Illustrations the Edition brings (its PNGs), in code-unit order. */
+  illustrations(): string[];
   /** Every font file the Edition brings, in code-unit order. */
   fonts(): string[];
   /** Every Word, Correction, Idiom, Synonym Row and Tip the Edition authors, in a stable order. */
@@ -238,6 +240,13 @@ export function editionFiles(dir: string): EditionFiles {
     asset: (name) => join(dir, ASSETS_DIR, name),
     decorFile: (name) => join(dir, DECOR_DIR, name),
     illustration: (name) => join(dir, ILLUSTRATIONS_DIR, name),
+    illustrations() {
+      const illustrationsDir = join(dir, ILLUSTRATIONS_DIR);
+      if (!existsSync(illustrationsDir)) return [];
+      return readdirSync(illustrationsDir)
+        .filter((file) => file.endsWith('.png'))
+        .toSorted();
+    },
     fonts() {
       const fontsDir = join(dir, FONTS_DIR);
       if (!existsSync(fontsDir)) return [];

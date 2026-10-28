@@ -27,6 +27,7 @@ export default {
     '^slovo-edition/tokens$': `${EDITION}/tokens.json`,
     '^slovo-edition/decor$': `${EDITION}/decor/decor.json`,
     '^slovo-edition/splash$': `${EDITION}/decor/splash.json`,
+    '^slovo-edition/illustrations$': '<rootDir>/jest.illustrations.cjs',
     '^slovo-edition/language-pack$': '<rootDir>/jest.language-pack.js',
   },
   resolver: './jest.resolver.cjs',
