@@ -7,9 +7,8 @@ import type { Database } from './database/database';
 import { rateLimits } from './database/schema';
 
 /**
- * The windows of the sign-in limits, of Sync's requests and of Mistake
- * Reports, kept in the
- * `rate_limits` table under the HMAC-SHA256 of their key (ADR 0030), so the
+ * The windows of the sign-in limits, of Sync's requests, of Mistake Reports
+ * and of counter events, kept in the `rate_limits` table under the HMAC-SHA256 of their key (ADR 0030), so the
  * table names no email and no IP address. The HMAC's key is derived from the
  * secret, so it is not the one that signs the Sessions' tokens.
  */
@@ -17,7 +16,7 @@ export function createRateLimits({ db }: Database, { secret }: { secret: string 
   const hmacKey = createHmac('sha256', secret).update('rate-limits').digest();
   const keyOf = (key: string) => createHmac('sha256', hmacKey).update(key).digest('base64url');
   return {
-    async count(subject, windowSeconds, now) {
+    async count(subject, windowSeconds, now, weight) {
       const key = keyOf(subject);
       // Windows that have ended count nothing any more.
       await db.delete(rateLimits).where(lte(rateLimits.windowEnds, now));
@@ -26,11 +25,11 @@ export function createRateLimits({ db }: Database, { secret }: { secret: string 
       const ended = sql`${rateLimits.windowEnds} <= ${now}`;
       const [window] = await db
         .insert(rateLimits)
-        .values({ key, count: 1, windowEnds: new Date(now.getTime() + windowSeconds * 1000) })
+        .values({ key, count: weight, windowEnds: new Date(now.getTime() + windowSeconds * 1000) })
         .onConflictDoUpdate({
           target: rateLimits.key,
           set: {
-            count: sql`case when ${ended} then 1 else ${rateLimits.count} + 1 end`,
+            count: sql`case when ${ended} then excluded.count else ${rateLimits.count} + excluded.count end`,
             windowEnds: sql`case when ${ended} then excluded.window_ends else ${rateLimits.windowEnds} end`,
           },
         })
