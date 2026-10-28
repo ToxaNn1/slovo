@@ -65,7 +65,7 @@ export function WordCardBody({
   const { voice, Pronunciation } = edition;
   const strings = edition.strings.wordCard;
   const { categoryName } = card;
-  // The same image in light and dark mode; a file the app lacks shows none (ADR 0055).
+  // The same Illustration in light and dark mode; a file the app lacks shows none (ADR 0055).
   const illustration =
     card.illustration === undefined ? undefined : edition.illustrations[card.illustration];
   // In the Feed, VoiceOver turns to the next or previous card from the Lemma and the Definition.

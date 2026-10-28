@@ -10,4 +10,4 @@ The sound is a **placeholder**: a 0.6 s plucked string synthesized by `generate-
 
 `illustrations/` holds the Illustrations a Word names in its `illustration` field (ADR 0055): square PNGs of at most 150 000 bytes, which the Language Pack build checks. Keep only those PNGs there, since the content CLI lists the folder as the files a Word may name.
 
-The 15 Illustrations are **placeholders**: simple vector drawings in `illustration-sources/`, one SVG per PNG of the same name, exported at 512×512 by a headless browser. Each sits on its own light tile, so the one image reads on light and dark cards alike. `illustration-sources/contact-sheet.png` shows all 15 on the light and the dark background. Final art replaces them before 1.0.
+The 15 Illustrations are **placeholders**: simple vector drawings in `illustration-sources/`, one SVG per PNG of the same name, exported at 512×512 by a headless browser. Each sits on its own light tile, so the one Illustration reads on light and dark cards alike. `illustration-sources/contact-sheet.png` shows all 15 on the light and the dark background. Final art replaces them before 1.0.
