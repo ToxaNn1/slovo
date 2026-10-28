@@ -32,18 +32,40 @@ export interface WidgetEdition {
 const WIDGET_COLORS = ['background', 'ink', 'inkSecondary', 'accent'] as const;
 
 /**
+ * The opacity of the secondary ink on Пергамент and Синій: the widget palette
+ * gives each one text colour, so the second line and the ✓ draw it fainter.
+ */
+const SECONDARY_INK_OPACITY = 0.72;
+
+/** A `#RRGGBB` colour at an opacity, as a colour token. */
+function withOpacity(color: string, opacity: number): string {
+  const [red, green, blue] = rgba(color);
+  return `rgba(${String(red)}, ${String(green)}, ${String(blue)}, ${String(opacity)})`;
+}
+
+/**
  * The widget's backgrounds («Тло», ADR 0026) besides Авто, which is the
- * `background` and `ink` tokens: Світлий and Темний keep one appearance of
- * the colour tokens, Пергамент and Синій take the Edition's widget palette.
+ * colour tokens in the phone's appearance, each with the colours the widget
+ * draws on it: Світлий and Темний keep one appearance of the colour tokens;
+ * Пергамент and Синій take the Edition's widget palette, whose text colour
+ * is also the accent and, fainter, the secondary ink.
  */
 function fixedBackgrounds({ config, tokens }: WidgetEdition) {
   const { parchment, blue } = config.widgetPalette;
   const { light, dark } = tokens.colors;
+  const fromPalette = ({ background, text }: { background: string; text: string }) => ({
+    background,
+    ink: text,
+    inkSecondary: withOpacity(text, SECONDARY_INK_OPACITY),
+    accent: text,
+  });
+  const oneAppearance = (colors: DesignTokens['colors']['light']) =>
+    Object.fromEntries(WIDGET_COLORS.map((name) => [name, colors[name]]));
   return {
-    Light: { background: light.background, ink: light.ink },
-    Dark: { background: dark.background, ink: dark.ink },
-    Parchment: { background: parchment.background, ink: parchment.text },
-    Blue: { background: blue.background, ink: blue.text },
+    Light: oneAppearance(light),
+    Dark: oneAppearance(dark),
+    Parchment: fromPalette(parchment),
+    Blue: fromPalette(blue),
   };
 }
 
@@ -103,7 +125,7 @@ const quoted = (value: string) =>
  * The files the prebuild writes into the widget extension's folder
  * (`apps/widget`), by path in that folder: the colour tokens the widget uses
  * as colour sets and the divider band as a vector image, both light and dark;
- * the background and ink of each «Тло» other than Авто as colour sets of one
+ * the same colours for each «Тло» other than Авто as colour sets of one
  * colour; the widget's strings in the Edition's language; the fonts; the example
  * Widget Snapshot for the gallery; and the Info.plist, which names the
  * fonts, the App Group, the URL scheme and the font families. None of them

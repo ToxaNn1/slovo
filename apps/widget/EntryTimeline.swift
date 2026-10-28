@@ -12,6 +12,8 @@ struct EntryMoment: TimelineEntry {
   let linkKey: String?
   /// Whether the Word of the Day was Seen on this moment's local date: the ✓.
   let wordOfTheDaySeen: Bool
+  /// The widget's «Тло».
+  let background: BackgroundChoice
 }
 
 /// The widget's timeline over the Entries of its Widget Mode.
@@ -34,7 +36,8 @@ struct EntryTimeline: AppIntentTimelineProvider {
   /// goes with the day it speaks of (ADR 0026). The widget shuffles with the
   /// system random source.
   static func moments<R: RandomNumberGenerator>(
-    of content: ModeContent, from start: Date, using random: inout R
+    of content: ModeContent, on background: BackgroundChoice, from start: Date,
+    using random: inout R
   ) -> [EntryMoment] {
     let midnight =
       calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: start))
@@ -45,7 +48,7 @@ struct EntryTimeline: AppIntentTimelineProvider {
       shuffled.isEmpty ? [start] : Array(stride(from: start, to: midnight, by: step))
     return (times + [midnight]).enumerated().map { index, date in
       moment(
-        of: content, at: date,
+        of: content, on: background, at: date,
         showing: shuffled.isEmpty ? nil : shuffled[index % shuffled.count])
     }
   }
@@ -54,15 +57,18 @@ struct EntryTimeline: AppIntentTimelineProvider {
   /// mode in the Edition's example.
   static func preview(_ configuration: ChooseMode) -> EntryMoment {
     let content = ModeContent(of: SnapshotStore.example(), configuration)
-    return moment(of: content, at: Date(), showing: content.entries.first)
+    return moment(
+      of: content, on: configuration.background, at: Date(), showing: content.entries.first)
   }
 
-  private static func moment(of content: ModeContent, at date: Date, showing entry: WidgetEntry?)
-    -> EntryMoment
-  {
+  private static func moment(
+    of content: ModeContent, on background: BackgroundChoice, at date: Date,
+    showing entry: WidgetEntry?
+  ) -> EntryMoment {
     EntryMoment(
       date: date, overline: content.overline, entry: entry, emptyState: content.emptyState,
-      linkKey: content.linkKey, wordOfTheDaySeen: content.wordOfTheDaySeenOn == localDate(date))
+      linkKey: content.linkKey, wordOfTheDaySeen: content.wordOfTheDaySeenOn == localDate(date),
+      background: background)
   }
 
   /// The local date of `date` as the Widget Snapshot writes it: `yyyy-MM-dd`.
@@ -80,14 +86,16 @@ struct EntryTimeline: AppIntentTimelineProvider {
     var random = SystemRandomNumberGenerator()
     let content = ModeContent(of: SnapshotStore.latest(), configuration)
     return Self.moment(
-      of: content, at: Date(), showing: content.entries.randomElement(using: &random))
+      of: content, on: configuration.background, at: Date(),
+      showing: content.entries.randomElement(using: &random))
   }
 
   func timeline(for configuration: ChooseMode, in context: Context) async -> Timeline<EntryMoment>
   {
     var random = SystemRandomNumberGenerator()
     let content = ModeContent(of: SnapshotStore.latest(), configuration)
-    let moments = Self.moments(of: content, from: Date(), using: &random)
+    let moments = Self.moments(
+      of: content, on: configuration.background, from: Date(), using: &random)
     // An empty or broken state waits, after its midnight moment drops the ✓,
     // for the app's reload after its next write.
     return Timeline(entries: moments, policy: content.entries.isEmpty ? .never : .atEnd)
