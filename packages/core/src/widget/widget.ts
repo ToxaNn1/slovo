@@ -127,23 +127,7 @@ export function createWidget({
   return {
     async snapshot(strings) {
       if (!edition.isFeatureEnabled('widget')) return undefined;
-      const [words, corrections, idioms, { synonymRows, tips }] = await Promise.all([
-        entries.eligibleOfKind('word'),
-        entries.eligibleOfKind('correction'),
-        entries.eligibleOfKind('idiom'),
-        entries.eligible(),
-      ]);
-      const rowOrTipIds = [...synonymRows, ...tips];
-      const read = await entries.getManyOfAnyKind(rowOrTipIds);
-      // In the order `eligible` gives, whatever order the Language Pack reads them in.
-      const rowsAndTips = rowOrTipIds.flatMap((id) => {
-        const entry = read.get(id);
-        return entry !== undefined && isRowOrTip(entry) ? [entry] : [];
-      });
-      const eligible = [
-        ...[...entriesOf(words), ...entriesOf(corrections), ...entriesOf(idioms)].map(widgetEntry),
-        ...rowsAndTips.map((entry) => widgetRowOrTip(entry, strings)),
-      ];
+      const eligible = await eligibleWidgetEntries(entries, strings);
       const eligibleIds = new Set(eligible.map(({ id }) => id));
       const onlyEligible = (kept: readonly { entryId: string }[]) =>
         kept.map(({ entryId }) => entryId).filter((id) => eligibleIds.has(id));
@@ -168,4 +152,32 @@ export function createWidget({
     },
     opened,
   };
+}
+
+/**
+ * Every Eligible Entry as the widget shows it, each once, Words, Corrections
+ * and Idioms first, then Synonym Rows and Tips, each kind in the order
+ * `eligible` gives. The Spotlight Snapshot shows its Entries the same way.
+ */
+export async function eligibleWidgetEntries(
+  entries: Entries,
+  strings: EditionStrings['notificationBody'],
+): Promise<WidgetEntry[]> {
+  const [words, corrections, idioms, { synonymRows, tips }] = await Promise.all([
+    entries.eligibleOfKind('word'),
+    entries.eligibleOfKind('correction'),
+    entries.eligibleOfKind('idiom'),
+    entries.eligible(),
+  ]);
+  const rowOrTipIds = [...synonymRows, ...tips];
+  const read = await entries.getManyOfAnyKind(rowOrTipIds);
+  // In the order `eligible` gives, whatever order the Language Pack reads them in.
+  const rowsAndTips = rowOrTipIds.flatMap((id) => {
+    const entry = read.get(id);
+    return entry !== undefined && isRowOrTip(entry) ? [entry] : [];
+  });
+  return [
+    ...[...entriesOf(words), ...entriesOf(corrections), ...entriesOf(idioms)].map(widgetEntry),
+    ...rowsAndTips.map((entry) => widgetRowOrTip(entry, strings)),
+  ];
 }

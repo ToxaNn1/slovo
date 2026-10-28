@@ -58,6 +58,7 @@ import { createRarityTest, type RarityTest } from './rarity-test/rarity-test';
 import { createRecentQueries, type RecentQueries } from './search/recent-queries';
 import { createSearch, type Search } from './search/search';
 import type { UserState } from './user-state/user-state';
+import { createSpotlight, type Spotlight } from './spotlight/spotlight';
 import { createWidget, type Widget } from './widget/widget';
 import { openWordOfTheDay } from './feed/word-of-the-day';
 
@@ -188,6 +189,8 @@ export interface Composition extends Hiding {
    * Entry opened from it (ADR 0026).
    */
   readonly widget: Widget;
+  /** The iPhone search: the Spotlight Snapshot the app hands its native module (ADR 0057). */
+  readonly spotlight: Spotlight;
   /**
    * Closes the composition, once the shell opened another over the same user
    * state (ADR 0036): from then on it writes nothing to the user state, hands
@@ -505,12 +508,13 @@ export async function openComposition({
     return entryCard(entryId);
   }
   const searchEdition = { ...edition, searchLetters: edition.searchLetters ?? {} };
+  const wordOfTheDayArchive = createWordOfTheDayArchive({ content, edition, userState, clock });
   return {
     feed,
     favorites,
     collections,
     history,
-    wordOfTheDayArchive: createWordOfTheDayArchive({ content, edition, userState, clock }),
+    wordOfTheDayArchive,
     hiddenEntries,
     mix,
     knowledge,
@@ -554,6 +558,7 @@ export async function openComposition({
       clock,
       opened: openedFromOutside,
     }),
+    spotlight: createSpotlight({ edition, entries, favorites, collections, wordOfTheDayArchive }),
     close,
   };
 }
