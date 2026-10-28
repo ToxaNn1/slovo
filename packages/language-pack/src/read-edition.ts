@@ -19,6 +19,7 @@ import type { ContentManifest } from './content-manifest';
 import type { ContentTargets } from './content-targets';
 import { crosswordDayErrors } from './crossword-days';
 import { CROSSWORD_DAYS_FILE, editionFiles, EditionFolderError } from './edition-folder';
+import { illustrationErrors } from './illustrations';
 import { missingEntryErrors } from './id-registry';
 import type { PackContent } from './pack-layout';
 
@@ -83,6 +84,7 @@ export function readEdition(
       ...checkTips(config, tips),
     );
   }
+  errors.push(...illustrationErrors(words, (name) => folder.illustration(name)));
   errors.push(
     ...unknownCrosswordEntries(crosswordDays ?? [], [...words, ...corrections]),
     ...crosswordDayErrors(crosswordDays, manifest, config?.id),
