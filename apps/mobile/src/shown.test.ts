@@ -21,6 +21,7 @@ const everything: Shown = {
   selfCheck: false,
   selfCheckSetting: true,
   seasonalDecorSetting: true,
+  shareCountersSetting: true,
   learning: true,
   stats: { streak: true, knowledge: ['word', 'correction', 'idiom', 'synonymRow', 'tip'] },
   sync: true,
@@ -57,6 +58,10 @@ describe('what the reader is shown', () => {
     [
       'no «Сезонний декор» switch with Seasonal Decor off',
       { off: ['seasonalDecor'], shown: { seasonalDecorSetting: false } },
+    ],
+    [
+      'no «Ділитися анонімною статистикою» switch with Community Counters off',
+      { off: ['communityCounters'], shown: { shareCountersSetting: false } },
     ],
     [
       'no «Слова дня» card with the Word of the Day archive off',

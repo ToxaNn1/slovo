@@ -1,4 +1,5 @@
 import { describe, expect, it, jest } from '@jest/globals';
+import { Linking } from 'react-native';
 import { EditionProvider } from '@slovo/ui';
 import { Stack } from 'expo-router';
 import { fireEvent, renderRouter, screen, within } from 'expo-router/testing-library';
@@ -18,16 +19,19 @@ jest.mock('./settings', () => ({
       hideStreak: false,
       selfCheck: false,
       seasonalDecor: true,
+      shareCounters: true,
     },
     update: mockUpdate,
   }),
 }));
 let mockSeasonalDecorSetting = false;
+let mockShareCountersSetting = false;
 jest.mock('../shown-in-effect', () => ({
   useShown: () => ({
     stats: undefined,
     selfCheckSetting: false,
     seasonalDecorSetting: mockSeasonalDecorSetting,
+    shareCountersSetting: mockShareCountersSetting,
   }),
 }));
 jest.mock('../account/account', () => ({ useAccountInEffect: () => undefined }));
@@ -94,5 +98,44 @@ describe('Settings › «Сезонний декор»', () => {
     await renderSettings();
 
     expect(screen.queryByRole('switch', { name: 'Сезонний декор' })).not.toBeOnTheScreen();
+  });
+});
+
+describe('Settings › «Ділитися анонімною статистикою»', () => {
+  it('turns sharing the Community Counters off from its switch, which explains what it shares', async () => {
+    mockShareCountersSetting = true;
+    await renderSettings();
+
+    const row = screen.getByRole('switch', { name: 'Ділитися анонімною статистикою' });
+    expect(row).toHaveProp('value', true);
+    expect(
+      screen.getByText(
+        'Лише анонімні лічильники: скільки читачів знають і зберегли слово. Без акаунта й без даних пристрою.',
+      ),
+    ).toBeOnTheScreen();
+
+    await fireEvent(row, 'valueChange', false);
+
+    expect(mockUpdate).toHaveBeenCalledWith({ shareCounters: false });
+  });
+
+  it("opens the Edition's privacy policy from the link under the switch", async () => {
+    mockShareCountersSetting = true;
+    const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
+    await renderSettings();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Політика приватності' }));
+
+    expect(openURL).toHaveBeenCalledWith(edition.legalPages.privacy);
+  });
+
+  it('has no switch and no link while the Edition turns Community Counters off', async () => {
+    mockShareCountersSetting = false;
+    await renderSettings();
+
+    expect(
+      screen.queryByRole('switch', { name: 'Ділитися анонімною статистикою' }),
+    ).not.toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: 'Політика приватності' })).not.toBeOnTheScreen();
   });
 });
