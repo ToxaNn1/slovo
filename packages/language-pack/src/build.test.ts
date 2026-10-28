@@ -1692,6 +1692,15 @@ describe('buildLanguagePack', () => {
       ]);
     });
 
+    it('refuses an Illustration whose name is a folder, not a file', () => {
+      const editionDir = withIllustration('w_fx0002.png');
+      mkdirSync(join(editionDir, 'assets/illustrations/w_fx0002.png'), { recursive: true });
+
+      expect(buildErrors(editionDir)).toEqual([
+        refusal('No file w_fx0002.png in assets/illustrations/'),
+      ]);
+    });
+
     it.each([
       ['a JPEG named .png', 'w_fx0002.png', Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 0x10])],
       ['a PNG not named .png', 'w_fx0002.jpg', png(320, 320)],

@@ -1081,6 +1081,17 @@ describe("a Word's Illustration", () => {
     expect(content(['check', '--edition', 'uk']).status).toBe(0);
   });
 
+  it('is offered with the PNGs alone, not the other files of the folder', () => {
+    addPng('kupyna.png');
+    writeFileSync(join(editionDir, 'assets/illustrations', '.DS_Store'), '');
+
+    const run = content(['new', 'word', '--edition', 'uk'], { edits: [validWord] });
+
+    expect(run.status).toBe(0);
+    expect(run.stdout).toContain(offer);
+    expect(run.stdout).not.toContain('.DS_Store');
+  });
+
   it('is in the draft, and a Word saved with it empty leaves the field out', () => {
     const run = content(['new', 'word', '--edition', 'uk'], { edits: [validWord] });
 

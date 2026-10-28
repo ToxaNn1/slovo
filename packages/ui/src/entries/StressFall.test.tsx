@@ -205,6 +205,31 @@ describe('The falling Stress', () => {
     expect(landed.opacity).toBe(1);
   });
 
+  it('keeps the mark of the next card unseen above its vowel until that card is on screen', async () => {
+    const second = 'se\u0301cond';
+    await render(
+      inEdition(
+        <HapticsProvider haptics={haptics}>
+          <VerticalPager
+            testID="pager"
+            items={[wordOf('fi\u0301rst'), wordOf(second)]}
+            initialIndex={0}
+            onIndexChange={jest.fn()}
+            renderPage={(card) => <EntryCard card={card} stressFalls />}
+            turnActionLabels={{ next: 'Next page', previous: 'Previous page' }}
+          />
+        </HapticsProvider>,
+      ),
+    );
+    await fireEvent(screen.getByTestId('pager'), 'layout', {
+      nativeEvent: { layout: { x: 0, y: 0, width: 400, height: 800 } },
+    });
+    await settle();
+    await advance(SWIPE_MS);
+
+    expect(marks(second).opacity).toBe(0);
+  });
+
   it('keeps what VoiceOver reads of the Lemma while the mark falls', async () => {
     await render(inEdition(<EntryCard card={word} stressFalls />));
     await settle();

@@ -395,7 +395,14 @@ export async function openComposition({
       },
       communityWord === undefined
         ? noFeedNotices
-        : createCommunityWord({ edition, entries, hiddenEntries, userState, api: communityWord }),
+        : createCommunityWord({
+            edition,
+            entries,
+            hiddenEntries,
+            userState,
+            api: communityWord,
+            clock,
+          }),
       createFirstWeek({ edition, userState }),
       createYesterday({ edition, entries, hiddenEntries, userState }),
       dailyLimit,

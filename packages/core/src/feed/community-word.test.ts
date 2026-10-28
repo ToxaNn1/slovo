@@ -19,6 +19,7 @@ const words: readonly Word[] = [
 
 const lastWednesday = '2026-10-21T09:00:00+03:00';
 const monday = '2026-10-26T09:00:00+03:00';
+const mondayPastMidnight = '2026-10-26T00:30:00+02:00';
 const mondayEvening = '2026-10-26T21:00:00+03:00';
 const tuesday = '2026-10-27T09:00:00+03:00';
 
@@ -218,5 +219,17 @@ describe('The Community Word', () => {
     expect(cards.map((card) => card.kind)).toEqual(['word', 'word', 'notice', 'word']);
     expect(shownBy(cards)[2]).toBe('communityWord');
     expect(api.asked).toBe(2);
+  });
+
+  it('waits for the backend’s week to turn, as just past a local midnight east of UTC, and asks on a later run that day', async () => {
+    const records = new Map<string, string>();
+    const api = apiOfWord();
+
+    const early = await firstCards((await run({ records, at: mondayPastMidnight, api })).feed, 3);
+    const later = await firstCards((await run({ records, at: monday, api })).feed, 3);
+
+    expect(shownBy(early)).not.toContain('communityWord');
+    expect(shownBy(later)[1]).toBe('communityWord');
+    expect(api.asked).toBe(1);
   });
 });

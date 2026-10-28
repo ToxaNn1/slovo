@@ -4,12 +4,13 @@ import {
   createMemoryUserStatePort,
   openComposition,
   openCounterReads,
+  openCounterSending,
   openUserState,
   type CounterReads,
   type FeatureSwitch,
 } from '../index';
 import { createFakeCountersApi, createMemoryContentPort, type FakeCountersApi } from '../testing';
-import { fakeClock, word } from '../test-support';
+import { fakeClock, randomOf, testSchedule, word } from '../test-support';
 import type { UserState } from '../user-state/user-state';
 
 const content = createMemoryContentPort({ words: [word('w_one'), word('w_two'), word('w_three')] });
@@ -141,6 +142,30 @@ describe('Reading Community Counters', () => {
       ['w_two', { known: 1, total: 2, saved: 0 }],
       ['w_three', { known: 0, total: 1, saved: 0 }],
     ]);
+  });
+
+  it('keeps the reader’s own change in the line once it is sent, until the numbers are read again', async () => {
+    const api = createFakeCountersApi();
+    api.count('w_one', { known: 3, unknown: 2, saved: 1 });
+    const { reads, app, time, userState } = await run({ api });
+    await reads.lines(['w_one']);
+    await app.knowledge.tap('w_one', 'known');
+    const timers = testSchedule(time);
+    const sending = openCounterSending({
+      edition: editionWith(['knowledge', 'communityCounters']),
+      api,
+      userState,
+      clock: time.clock,
+      schedule: timers.schedule,
+      random: randomOf(0.5),
+    });
+
+    sending.foreground();
+    await timers.advance(10_000);
+    sending.background();
+
+    expect(api.sent).toEqual([[{ entryId: 'w_one', known: 1, unknown: 0, saved: 0 }]]);
+    expect(await linesOf(reads, ['w_one'])).toEqual([['w_one', { known: 4, total: 6, saved: 1 }]]);
   });
 
   it('never shows a count below zero when the own change takes away what the server has not counted yet', async () => {
