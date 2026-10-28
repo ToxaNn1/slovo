@@ -2,12 +2,14 @@ import { randomInt } from 'node:crypto';
 
 import type { CollectionLink } from '@slovo/contracts';
 import type { Random } from '@slovo/server-core';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
 import type { Database } from '../database/database';
-import { collectionLinks } from '../database/schema';
-import { testApp, testEditions } from '../test-support';
+import { collectionLinks, rateLimits } from '../database/schema';
+import { newIp, passTime, testApp, testEditions } from '../test-support';
+
+const DAY = 24 * 60 * 60 * 1000;
 
 const ID_CHARACTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
@@ -47,6 +49,16 @@ const post = (body: unknown, headers: Record<string, string> = {}): RequestInit 
   headers: { 'content-type': 'application/json', ...headers },
   body: JSON.stringify(body),
 });
+
+/** A Collection name no other test shares, so a test counts only its own links. */
+const newName = () => `Осінь ${String(randomInt(1_000_000_000))}`;
+
+/** The links the database keeps of the Edition under the name. */
+const keptNamed = async ({ db }: Database, name: string, edition = 'uk') =>
+  db
+    .select()
+    .from(collectionLinks)
+    .where(and(eq(collectionLinks.name, name), eq(collectionLinks.editionId, edition)));
 
 /** The row the database keeps of the link, if any. */
 const keptOf = async ({ db }: Database, id: string) => {
@@ -295,5 +307,79 @@ describe('Collection Links switched off', () => {
     await expect(client.collectionLinks.read({ id })).resolves.toEqual(
       validLink({ edition: 'remote' }),
     );
+  });
+});
+
+describe('the links from one IP address', () => {
+  it('are at most 20 a day: the 21st is TOO_MANY_REQUESTS with Retry-After, and keeps nothing', async () => {
+    const { client, request, database } = testApp();
+    const name = newName();
+    for (let made = 0; made < 20; made++) {
+      await client.collectionLinks.create(validLink({ name }));
+    }
+    passTime(DAY / 2);
+
+    const twentyFirst = await request('/v1/collection-links', post(validLink({ name })));
+
+    expect(twentyFirst.status).toBe(429);
+    await expect(twentyFirst.json()).resolves.toMatchObject({
+      code: 'TOO_MANY_REQUESTS',
+      message: 'Too many requests',
+    });
+    expect(twentyFirst.headers.get('retry-after')).toBe(String(DAY / 2 / 1000));
+    await expect(keptNamed(database, name)).resolves.toHaveLength(20);
+  });
+
+  it('hold back no other IP address, and are taken again the next day', async () => {
+    const { client, clientFrom, database } = testApp();
+    const name = newName();
+    for (let made = 0; made < 20; made++) {
+      await client.collectionLinks.create(validLink({ name }));
+    }
+    await expect(client.collectionLinks.create(validLink({ name }))).rejects.toMatchObject({
+      code: 'TOO_MANY_REQUESTS',
+    });
+
+    await clientFrom(newIp()).collectionLinks.create(validLink({ name }));
+    passTime(DAY);
+    await client.collectionLinks.create(validLink({ name }));
+    await expect(keptNamed(database, name)).resolves.toHaveLength(22);
+  });
+
+  it('count no link to an Edition that does not serve them', async () => {
+    const { client } = testApp();
+    for (let made = 0; made < 20; made++) {
+      await expect(
+        client.collectionLinks.create(validLink({ edition: 'xx' })),
+      ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    }
+
+    const { id } = await client.collectionLinks.create(validLink());
+    await expect(client.collectionLinks.read({ id })).resolves.toEqual(validLink());
+  });
+
+  it('may read links without a limit', async () => {
+    const { client } = testApp();
+    const { id } = await client.collectionLinks.create(validLink());
+    for (let read = 0; read < 25; read++) {
+      await client.collectionLinks.read({ id });
+    }
+
+    await expect(client.collectionLinks.read({ id })).resolves.toEqual(validLink());
+  });
+
+  it('are counted in a window that names no IP address', async () => {
+    const { clientFrom, database } = testApp();
+    const ip = '2001:db8:9:58::15';
+    await clientFrom(ip).collectionLinks.create(validLink());
+
+    const keys = (await database.db.select({ key: rateLimits.key }).from(rateLimits)).map(
+      (row) => row.key,
+    );
+    expect(keys.length).toBeGreaterThanOrEqual(1);
+    for (const key of keys) {
+      expect(key).not.toContain('2001:db8');
+      expect(key).not.toContain(':');
+    }
   });
 });
