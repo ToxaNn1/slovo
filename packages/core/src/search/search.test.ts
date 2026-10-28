@@ -236,16 +236,31 @@ describe('Search over every kind of Entry', () => {
         corrections: [
           correction('c_hidden', { nonStandardForm: 'бажаючий' }),
           correction('c_retired', { nonStandardForm: 'бажаний', retired: true }),
+          correction('c_live', { nonStandardForm: 'бакалійний' }),
         ],
-        idioms: [idiom('i_retired', { expression: 'бити байдики', retired: true })],
-        synonymRows: [synonymRow('s_hidden', { dominant: { text: 'бравий', stress: [2] } })],
-        tips: [tip('t_retired', { title: 'Бажано', retired: true })],
+        idioms: [
+          idiom('i_retired', { expression: 'бити байдики', retired: true }),
+          idiom('i_live', { expression: 'бачити наскрізь' }),
+        ],
+        synonymRows: [
+          synonymRow('s_hidden', { dominant: { text: 'бравий', stress: [2] } }),
+          synonymRow('s_live', { dominant: { text: 'бравурний', stress: [2] } }),
+        ],
+        tips: [
+          tip('t_retired', { title: 'Бажано', retired: true }),
+          tip('t_live', { title: 'Багато чи багатьох?' }),
+        ],
       },
       { hidden: ['c_hidden', 's_hidden'] },
     );
 
-    expect(await groupsOf(search, 'ба')).toEqual(NO_GROUPS);
-    expect(await groupsOf(search, 'бр')).toEqual(NO_GROUPS);
+    expect(await groupsOf(search, 'ба')).toEqual({
+      ...NO_GROUPS,
+      corrections: ['бакалійний'],
+      idioms: ['бачити наскрізь'],
+      tips: ['Багато чи багатьох?'],
+    });
+    expect(await groupsOf(search, 'бр')).toEqual({ ...NO_GROUPS, synonymRows: ['бравурний'] });
   });
 
   it('gives no group for a kind the Edition turns off', async () => {
@@ -342,16 +357,18 @@ describe('Search by meaning («За значенням»)', () => {
         words: [
           word('w_hidden', { primaryDefinition: 'Тихий.' }),
           word('w_retired', { primaryDefinition: 'Тихий.', retired: true }),
+          word('w_live', { lemma: 'сумирний', primaryDefinition: 'Тихий.' }),
         ],
         synonymRows: [
           synonymRow('s_hidden', { meaning: 'Тихий.' }),
           synonymRow('s_retired', { meaning: 'Тихий.', retired: true }),
+          synonymRow('s_live', { dominant: { text: 'тихий', stress: [1] }, meaning: 'Тихий.' }),
         ],
       },
       { hidden: ['w_hidden', 's_hidden'] },
     );
 
-    expect(await byMeaningOf(search, 'тих')).toEqual([]);
+    expect(await byMeaningOf(search, 'тих')).toEqual(['сумирний', 'тихий']);
   });
 
   it('leaves out Synonym Rows while the Edition turns them off, and all while Search is off', async () => {
