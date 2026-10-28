@@ -6,7 +6,7 @@ import {
   type WordCardModel,
 } from '@slovo/core';
 import { useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { OrnamentDivider } from '../decor/DecorSlots';
@@ -27,7 +27,7 @@ import { CategoryChip } from './CategoryChip';
 /**
  * The Word card's blocks inside the Entry card's frame: the Lemma with Stress,
  * part of speech and register chips, the dialectal one with the region, the primary Definition, the first
- * Example, the Word History under its heading, Synonyms and antonyms, the Category chip, the details behind
+ * Example, the Illustration above the Definition, the Word History under its heading, Synonyms and antonyms, the Category chip, the details behind
  * "more", the Synonym Row the Word is a member of and the linked Corrections. It draws only the sections the Core put
  * in the card, at the user's font size. Under Self-check it keeps the Lemma,
  * part of speech and Category; the Entry card draws the button that reveals
@@ -65,6 +65,9 @@ export function WordCardBody({
   const { voice, Pronunciation } = edition;
   const strings = edition.strings.wordCard;
   const { categoryName } = card;
+  // The same image in light and dark mode; a file the app lacks shows none (ADR 0055).
+  const illustration =
+    card.illustration === undefined ? undefined : edition.illustrations[card.illustration];
   // In the Feed, VoiceOver turns to the next or previous card from the Lemma and the Definition.
   const turnActions = usePageTurnActions();
   // A page of the Feed comes on screen again each time the reader turns back to it.
@@ -138,6 +141,19 @@ export function WordCardBody({
         categoryChip
       ) : (
         <>
+          {illustration === undefined ? null : (
+            <Image
+              testID="word-illustration"
+              source={illustration}
+              accessible
+              accessibilityRole="image"
+              accessibilityLabel={fill(strings.illustration, { lemma: withoutStress(card.lemma) })}
+              {...voice}
+              {...turnActions}
+              resizeMode="contain"
+              style={styles.illustration}
+            />
+          )}
           <Text
             testID="word-definition"
             {...voice}
@@ -421,7 +437,11 @@ export function DetailSection({
   );
 }
 
+/** The tallest an Illustration is drawn, in points (ADR 0055). */
+const ILLUSTRATION_HEIGHT = 160;
+
 const styles = StyleSheet.create({
+  illustration: { width: '100%', height: ILLUSTRATION_HEIGHT },
   // Over the blocks below it, so the Pronunciation message can open over them.
   header: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3], zIndex: 1 },
   headline: { flex: 1, minWidth: 0, gap: space[2] },
