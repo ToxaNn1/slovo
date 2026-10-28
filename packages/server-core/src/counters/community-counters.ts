@@ -1,7 +1,7 @@
 import type { CounterEvent } from '@slovo/contracts';
 
 import type { EditionRegistry, NotServing } from '../edition/edition-registry';
-import type { Clock, CounterStore, RateLimits } from '../ports';
+import type { Clock, CounterStore, EntryCounts, RateLimits } from '../ports';
 import { countRequest, ipSubject, type TooManyRequests } from '../rate-limit';
 import { isoWeekOf } from './iso-week';
 
@@ -25,6 +25,14 @@ export interface CommunityCounters {
     },
     ip: string,
   ): Promise<{ readonly ok: true } | NotServing | TooManyRequests>;
+  /**
+   * The counts of each Entry, in the order asked, when the Edition serves
+   * Community Counters; an Entry nobody counted has zeros.
+   */
+  read(request: {
+    readonly editionId: string;
+    readonly entryIds: readonly string[];
+  }): Promise<{ readonly ok: true; readonly counters: readonly EntryCounts[] } | NotServing>;
 }
 
 export function createCommunityCounters({
@@ -52,6 +60,18 @@ export function createCommunityCounters({
       if (refused !== undefined) return refused;
       await store.add(editionId, events, isoWeekOf(clock.now()));
       return { ok: true };
+    },
+
+    async read({ editionId, entryIds }) {
+      const serving = await editions.serving(editionId, 'communityCounters');
+      if (!serving.ok) return serving;
+      const kept = new Map(
+        (await store.read(editionId, entryIds)).map((counts) => [counts.entryId, counts]),
+      );
+      const counters = entryIds.map(
+        (entryId) => kept.get(entryId) ?? { entryId, known: 0, unknown: 0, saved: 0 },
+      );
+      return { ok: true, counters };
     },
   };
 }

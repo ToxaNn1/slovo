@@ -1,5 +1,5 @@
 import type { CounterStore } from '@slovo/server-core';
-import { sql } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 
 import type { Database } from '../database/database';
 import { communityCounters, favoritesAdds } from '../database/schema';
@@ -47,6 +47,14 @@ export function createCounterStore({ db }: Database): CounterStore {
             set: { adds: sql`${favoritesAdds.adds} + 1` },
           });
       });
+    },
+
+    async read(editionId, entryIds) {
+      const { entryId, known, unknown, saved } = communityCounters;
+      return db
+        .select({ entryId, known, unknown, saved })
+        .from(communityCounters)
+        .where(and(eq(communityCounters.editionId, editionId), inArray(entryId, [...entryIds])));
     },
   };
 }

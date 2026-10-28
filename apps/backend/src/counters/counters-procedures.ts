@@ -4,6 +4,9 @@ import type { CommunityCounters } from '@slovo/server-core';
 
 import { retryAfter } from '../retry-after';
 
+/** The counters change slowly and name no reader, so any cache may keep them a day. */
+const COUNTERS_CACHE_CONTROL = 'public, max-age=86400';
+
 /** What a request brings to the Community Counters procedures. */
 interface CountersContext {
   /** The IP address of the request's connection, which the day's limit counts. */
@@ -17,8 +20,9 @@ interface CountersContext {
  * Community Counters. An Edition with Community Counters switched off answers
  * `NOT_FOUND`, which the app shows as no line and no Community Word, and a
  * batch over the day's limit of events of its IP address `TOO_MANY_REQUESTS`
- * with `Retry-After` (ADR 0060). Until the backend reads the counters (#924)
- * and answers the Community Word (#925), it answers those as switched off.
+ * with `Retry-After` (ADR 0060). The counters read may be kept for 24 hours,
+ * as the device keeps them. Until the backend answers the Community Word
+ * (#925), it answers it as switched off.
  */
 export function countersProcedures(communityCounters: CommunityCounters) {
   const counters = implement(apiContract.counters).$context<CountersContext>();
@@ -38,7 +42,15 @@ export function countersProcedures(communityCounters: CommunityCounters) {
           throw errors.TOO_MANY_REQUESTS();
       }
     }),
-    read: counters.read.handler(switchedOff),
+    read: counters.read.handler(async ({ input, context, errors }) => {
+      const read = await communityCounters.read({
+        editionId: input.edition,
+        entryIds: input.entries,
+      });
+      if (!read.ok) throw errors.NOT_FOUND();
+      context.resHeaders?.set('cache-control', COUNTERS_CACHE_CONTROL);
+      return { counters: [...read.counters] };
+    }),
     communityWord: counters.communityWord.handler(switchedOff),
   });
 }

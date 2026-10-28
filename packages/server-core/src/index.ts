@@ -26,6 +26,7 @@ export {
   type CodeCheck,
   type ContentPackStore,
   type CounterStore,
+  type EntryCounts,
   type GoogleIdentity,
   type GoogleTokenCheck,
   type GoogleVerifier,
