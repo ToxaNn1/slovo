@@ -1,4 +1,5 @@
 import type { WordCardModel } from '../entries/word-card';
+import type { AnyEntryCard } from './entry-feed-card';
 import type { LocalDate } from '../local-date';
 import type { UserStateChanges } from '../ports';
 import type { UserState } from '../user-state/user-state';
@@ -6,10 +7,16 @@ import { userStateRecords } from '../user-state/user-state-schema';
 
 /**
  * The Feed Notices, in the order the Feed shows those of one day: the Weekly
- * Recap, the first-week card, Yesterday, and the Daily Limit card once the
- * limit is reached (ADR 0054).
+ * Recap, the Community Word, the first-week card, Yesterday, and the Daily
+ * Limit card once the limit is reached (ADR 0054, 0060).
  */
-export const FEED_NOTICES = ['weeklyRecap', 'firstWeek', 'yesterday', 'dailyLimit'] as const;
+export const FEED_NOTICES = [
+  'weeklyRecap',
+  'communityWord',
+  'firstWeek',
+  'yesterday',
+  'dailyLimit',
+] as const;
 
 /** A Feed Notice: a Feed card that is not an Entry. */
 export type FeedNotice = (typeof FEED_NOTICES)[number];
@@ -20,12 +27,14 @@ export type FirstWeekDay = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 /**
  * What a Feed Notice shows: the first-week card, also its day of the first
  * week; Yesterday, the card of the day before's Word of the Day, which the
- * shell shows in Self-check style with the Knowledge Marks of its Word.
+ * shell shows in Self-check style with the Knowledge Marks of its Word; the
+ * Community Word, the card of its Entry and how many readers added it.
  */
 export type FeedNoticeContent =
-  | { readonly notice: Exclude<FeedNotice, 'firstWeek' | 'yesterday'> }
+  | { readonly notice: Exclude<FeedNotice, 'firstWeek' | 'yesterday' | 'communityWord'> }
   | { readonly notice: 'firstWeek'; readonly firstWeekDay: FirstWeekDay }
-  | { readonly notice: 'yesterday'; readonly word: WordCardModel };
+  | { readonly notice: 'yesterday'; readonly word: WordCardModel }
+  | { readonly notice: 'communityWord'; readonly card: AnyEntryCard; readonly adds: number };
 
 /** What gives the Feed the Feed Notices of a local day, in any order. */
 export interface FeedNotices {

@@ -420,6 +420,29 @@ export interface PackFiles {
 }
 
 /**
+ * The Community Word the backend answers for the running Edition: the Entry
+ * readers most added to Favorites in the last full ISO week, with its adds
+ * (ADR 0060).
+ */
+export interface CommunityWordAnswer {
+  readonly entryId: string;
+  readonly adds: number;
+}
+
+/**
+ * The backend's `communityWord` procedure for the running Edition, as the Core
+ * sees it. It needs no Account and carries no device id. The shell implements
+ * this port on the API contract's client. A call never rejects: every answer
+ * of the backend comes back as success or a failure.
+ */
+export interface CommunityWordApi {
+  /** The Community Word of the last ISO week; none when nobody added anything. */
+  communityWord(): Promise<
+    { readonly ok: true; readonly communityWord: CommunityWordAnswer | undefined } | RequestFailure
+  >;
+}
+
+/**
  * What the backend answers for the running Edition's remote Feature Switches:
  * the features the owner turned off remotely, by their Feature Switch's name,
  * and the ETag that names them (ADR 0040).

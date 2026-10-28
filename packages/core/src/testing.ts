@@ -4,6 +4,10 @@
  * it (dependency-cruiser's `only-tests-import-the-core-testing-entry`).
  */
 export { createFakeAccountApi } from './fakes/fake-account-api';
+export {
+  createFakeCommunityWordApi,
+  type FakeCommunityWordApi,
+} from './fakes/fake-community-word-api';
 export { createFakeContentApi } from './fakes/fake-content-api';
 export { createFakeCountersApi, type FakeCountersApi } from './fakes/fake-counters-api';
 export {

@@ -81,10 +81,15 @@ const fakeNotices = (notices: readonly FeedNotice[]): FeedNotices => ({
   forDay: () => Promise.resolve(notices.map(contentOf)),
 });
 
-/** What the Feed Notice shows; a first-week card, that of day 1; Yesterday, the card of `w_00`. */
+/**
+ * What the Feed Notice shows; a first-week card, that of day 1; Yesterday,
+ * the card of `w_00`; the Community Word, the card of `w_00` with 3 adds.
+ */
 const contentOf = (notice: FeedNotice): FeedNoticeContent => {
   if (notice === 'firstWeek') return { notice, firstWeekDay: 1 };
   if (notice === 'yesterday') return { notice, word: yesterdaysWord };
+  if (notice === 'communityWord')
+    return { notice, card: { kind: 'word', entryId: 'w_00', model: yesterdaysWord }, adds: 3 };
   return { notice };
 };
 
@@ -173,21 +178,28 @@ describe('Feed Notices', () => {
     expect(cards.some((card) => 'review' in card && card.review === true)).toBe(true);
   });
 
-  it('take a card each in the order Weekly Recap, first-week card, Yesterday, then the Daily Limit card', async () => {
-    const feedNotices = fakeNotices(['dailyLimit', 'yesterday', 'firstWeek', 'weeklyRecap']);
+  it('take a card each in the order Weekly Recap, Community Word, first-week card, Yesterday, then the Daily Limit card', async () => {
+    const feedNotices = fakeNotices([
+      'dailyLimit',
+      'yesterday',
+      'firstWeek',
+      'communityWord',
+      'weeklyRecap',
+    ]);
 
     const cards = await firstCards(
       (await run({ records: new Map(), at: dayOne, feedNotices })).feed,
-      6,
+      7,
     );
 
-    expect(shownBy(cards.slice(1, 5))).toEqual([
+    expect(shownBy(cards.slice(1, 6))).toEqual([
       'weeklyRecap',
+      'communityWord',
       'firstWeek',
       'yesterday',
       'dailyLimit',
     ]);
-    expect(cards[5]?.kind).toBe('word');
+    expect(cards[6]?.kind).toBe('word');
   });
 
   it('give the Word of the Day the first card and the three notices of the day cards 2, 3 and 4, and the Daily Limit card the card after the limit', async () => {

@@ -218,6 +218,8 @@ export {
   type AccountApi,
   type AccountApiFailure,
   type Clock,
+  type CommunityWordAnswer,
+  type CommunityWordApi,
   type ContentReadPort,
   type CountersApi,
   type EntryCounters,
