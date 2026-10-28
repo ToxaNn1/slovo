@@ -4,6 +4,7 @@ import type { Edition } from '../edition/edition';
 import type { Entries } from '../entries/entries';
 import type { Collections } from '../saved/collections';
 import type { Favorites } from '../saved/favorites';
+import type { History } from '../saved/history';
 import type { WordOfTheDayArchive } from '../saved/word-of-the-day-archive';
 import { eligibleWidgetEntries } from '../widget/widget';
 
@@ -22,6 +23,12 @@ export interface Spotlight {
   snapshot(
     strings: Pick<EditionStrings, 'notificationBody' | 'spotlight'>,
   ): Promise<SpotlightSnapshot>;
+  /**
+   * Calls `listener` after each change of Favorites, the Collections or the
+   * Word of the Day archive, so the shell hands the native module a fresh
+   * snapshot. Returns the call that stops it.
+   */
+  subscribe(listener: () => void): () => void;
 }
 
 /** The Spotlight over the composition's Entries, Favorites, Collections and Word of the Day archive. */
@@ -30,6 +37,7 @@ export function createSpotlight({
   entries,
   favorites,
   collections,
+  history,
   wordOfTheDayArchive,
 }: {
   /** Without a `locale`, the plural forms are picked in the default locale. */
@@ -37,8 +45,19 @@ export function createSpotlight({
   entries: Entries;
   favorites: Favorites;
   collections: Collections;
+  history: Pick<History, 'list' | 'subscribe'>;
   wordOfTheDayArchive: WordOfTheDayArchive;
 }): Spotlight {
+  /**
+   * The newest Word of the Day card in History. The archive gains its day in
+   * the very write that marks that card Seen and records it in History.
+   */
+  const newestWordOfTheDay = () => {
+    const newest = history.list.find(({ wordOfTheDay }) => wordOfTheDay);
+    return newest === undefined
+      ? undefined
+      : `${newest.entryId} ${String(newest.seenAt.getTime())}`;
+  };
   const pluralRules = new Intl.PluralRules(edition.locale);
   return {
     async snapshot(strings) {
@@ -69,6 +88,22 @@ export function createSpotlight({
           }),
           route: `saved/collections/${id}`,
         })),
+      };
+    },
+    subscribe(listener) {
+      let archived = newestWordOfTheDay();
+      const stops = [
+        favorites.subscribe(listener),
+        collections.subscribe(listener),
+        history.subscribe(() => {
+          const newest = newestWordOfTheDay();
+          if (newest === archived) return;
+          archived = newest;
+          listener();
+        }),
+      ];
+      return () => {
+        for (const stop of stops) stop();
       };
     },
   };

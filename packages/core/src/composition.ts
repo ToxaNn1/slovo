@@ -582,7 +582,14 @@ export async function openComposition({
       clock,
       opened: openedFromOutside,
     }),
-    spotlight: createSpotlight({ edition, entries, favorites, collections, wordOfTheDayArchive }),
+    spotlight: createSpotlight({
+      edition,
+      entries,
+      favorites,
+      collections,
+      history,
+      wordOfTheDayArchive,
+    }),
     close,
   };
 }

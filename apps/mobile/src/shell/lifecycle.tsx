@@ -13,6 +13,8 @@ import { reportForeground } from '../foreground/foreground-reports';
 import { logError } from '../diagnostics/log';
 import { mistakeReportsOpening } from '../mistake-reports/device-mistake-reports';
 import { settingsOpening } from '../settings/settings';
+import { deviceSpotlight } from '../spotlight/device-spotlight';
+import { handOverSpotlight } from '../spotlight/spotlight-hand-over';
 import { syncInBackground, reopenAfterSync } from '../sync/background-sync';
 import { syncOpening } from '../sync/device-sync';
 import { deviceWidget, deviceWidgetLinkKey } from '../widget/device-widget';
@@ -34,7 +36,11 @@ async function isOnInEffect(feature: FeatureSwitch): Promise<boolean> {
  * and a changed answer reopens the composition over the Edition in effect and
  * writes the Widget Snapshot again (ADR 0040). Sync follows the foreground and
  * the background, and a sync that changed the user state reopens the settings
- * and the composition and writes the Widget Snapshot (spec #378). The Content update module checks then too, when content updates
+ * and the composition and writes the Widget Snapshot (spec #378). The
+ * Spotlight Snapshot is handed to the iPhone search when the composition
+ * opens or reopens, each time the app goes to the background and after each
+ * change of Favorites, the Collections or the Word of the Day archive (ADR
+ * 0057). The Content update module checks then too, when content updates
  * are on in effect, at most once a day; the Account checks its Session then,
  * when it is on in effect, at most once an hour. Mistake Reports send their
  * queue at launch and on each return (ADR 0056). The Community Counters send
@@ -68,6 +74,12 @@ export function Lifecycle() {
         const { state } = compositionOpening;
         if (state.status === 'ready') writeWidgetSnapshot(state.value.widget);
       });
+    });
+    const stopSpotlight = handOverSpotlight({
+      reports,
+      composition: compositionOpening,
+      index: deviceSpotlight,
+      strings: editionStrings,
     });
     if (syncOpening !== undefined) {
       syncInBackground({
@@ -106,7 +118,10 @@ export function Lifecycle() {
           });
       });
     }
-    return reports.stop;
+    return () => {
+      stopSpotlight();
+      reports.stop();
+    };
   }, []);
   return null;
 }

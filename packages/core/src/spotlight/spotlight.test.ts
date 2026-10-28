@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   createMemoryUserStatePort,
   openComposition,
+  SEEN_DWELL_MS,
   openUserState,
   type Clock,
   type Composition,
@@ -219,5 +220,41 @@ describe('The Spotlight Snapshot', () => {
     const off = await run({ records, withSpotlight: false });
 
     expect(await snapshotOf(off)).toEqual({ entries: [], collections: [] });
+  });
+});
+
+describe('The Spotlight Snapshot changing', () => {
+  it('tells its listener after each change of Favorites, the Collections and the archive, until it stops', async () => {
+    const time = fakeClock(start);
+    const app = await run({ clock: time.clock });
+    let told = 0;
+    const stop = app.spotlight.subscribe(() => {
+      told += 1;
+    });
+    /** Shows the card at `position` long enough to be Seen and takes it off screen. */
+    const look = async (position: number) => {
+      await app.feed.show(position);
+      time.advance(SEEN_DWELL_MS);
+      await app.feed.show(undefined);
+    };
+
+    await app.favorites.add('w_sumyrnyi');
+    expect(told).toBe(1);
+    const kept = await collection(app, 'Kept');
+    expect(told).toBe(2);
+    await app.collections.add(kept, 'c_one');
+    expect(told).toBe(3);
+
+    const today = app.feed.cards[0]?.entryId;
+    await look(0);
+    expect(told).toBe(4);
+    expect(entryIdsOf(await snapshotOf(app))).toContain(today);
+
+    await look(1);
+    expect(told).toBe(4);
+
+    stop();
+    await app.favorites.add('w_lahidnyi');
+    expect(told).toBe(4);
   });
 });
