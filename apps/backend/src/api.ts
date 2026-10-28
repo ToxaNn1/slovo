@@ -11,6 +11,7 @@ import { accountProcedures } from './account/account-procedures';
 import { contentProcedures } from './content/content-procedures';
 import { reportOf, type ErrorReporter } from './error-reporter';
 import { editionProcedures } from './edition/edition-procedures';
+import { reportsProcedures } from './reports/reports-procedures';
 import { syncProcedures } from './sync/sync-procedures';
 
 /** What every unexpected failure answers, with status 500: nothing internal (spec #333). */
@@ -68,6 +69,7 @@ export function createApiHandler({
       account: accountProcedures(accounts),
       content: contentProcedures(contentPacks),
       edition: editionProcedures(editions),
+      reports: reportsProcedures(),
       sync: syncProcedures(sync, accounts),
     });
   return new OpenAPIHandler(router, {
