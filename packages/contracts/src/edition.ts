@@ -214,7 +214,7 @@ export const FeatureSwitchesSchema = z.strictObject({
   seasonalDecor: z.boolean(),
   /** The falling Stress: the Stress mark of a Word card's Lemma falls onto its vowel (ADR 0055). */
   stressAnimation: z.boolean(),
-  /** Illustrations: the picture a Word may carry above its Definition (ADR 0055). */
+  /** Illustrations: the Illustration a Word may carry above its Definition (ADR 0055). */
   illustrations: z.boolean(),
   /** Mistake Reports: the Entry card's menu item, its sheet and the queue that sends them (ADR 0056). */
   mistakeReports: z.boolean(),
