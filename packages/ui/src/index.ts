@@ -116,7 +116,13 @@ export {
 } from './tokens';
 export { TokensProvider, useTokens } from './providers/TokensProvider';
 export { useReduceMotion } from './providers/useReduceMotion';
-export { UndoToastProvider, useUndoToast, type UndoToastContent } from './primitives/UndoToast';
+export {
+  UndoToastProvider,
+  useUndoToast,
+  type MessageToastContent,
+  type ToastContent,
+  type UndoToastContent,
+} from './primitives/UndoToast';
 export {
   PagerScrollView,
   usePageTurnActions,

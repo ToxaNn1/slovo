@@ -12,6 +12,7 @@ import {
   MistakeReportSheet,
   ShareButton,
   ShareSheet,
+  useUndoToast,
 } from '@slovo/ui';
 import { useCallback, useState, type ReactNode } from 'react';
 
@@ -37,7 +38,7 @@ import { useShown } from '../shown-in-effect';
  * Knowledge switch is on in effect, and inactive while Self-check conceals the
  * card's meaning (the card tells them); the «Повідомити про помилку» flag only
  * while Mistake Reports are on in effect. Its screen gives it an
- * `UndoToastProvider` for the toast after a hide.
+ * `UndoToastProvider` for the toasts after a hide and a Mistake Report.
  */
 export function EntryActions({ card }: { card: AnyEntryCard }) {
   const { entryId } = card;
@@ -147,10 +148,13 @@ function EntryShareSheet({
  * The «Повідомити про помилку» flag of an Entry's action row, and the sheet
  * it opens: there only while Mistake Reports are on in effect (ADR 0056).
  * «Надіслати» closes the sheet and hands the report to the Core's queue,
- * which sends it now or later.
+ * which sends it now or later; once the Core answers, a toast thanks the
+ * reader («Дякуємо! Ми перевіримо.», offline too) or says the daily limit
+ * is spent.
  */
 function useMistakeReportAction(entryId: string): { button: ReactNode; sheet: ReactNode } {
   const [open, setOpen] = useState(false);
+  const showToast = useUndoToast();
   const shown = useShown().entryButtons.mistakeReport;
   if (!shown) return { button: undefined, sheet: undefined };
   const close = () => {
@@ -173,6 +177,11 @@ function useMistakeReportAction(entryId: string): { button: ReactNode; sheet: Re
           mistakeReportsOpening
             .opened()
             .then((reports) => reports.report({ entryId, type, comment }))
+            .then((answer) => {
+              const toasts = editionStrings.mistakeReport;
+              if (answer === 'thanked') showToast({ message: toasts.sent });
+              if (answer === 'too-many-requests') showToast({ message: toasts.tooMany });
+            })
             .catch((error: unknown) => {
               logError('Could not report the mistake', error);
             });

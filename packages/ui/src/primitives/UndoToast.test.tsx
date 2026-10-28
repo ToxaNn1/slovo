@@ -4,13 +4,14 @@ import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { AccessibilityInfo, Pressable, Text } from 'react-native';
 
-function Opener({ message, onUndo }: { message: string; onUndo: () => void }) {
+/** Opens a toast with the message, and an undo when it has `onUndo`. */
+function Opener({ message, onUndo }: { message: string; onUndo?: () => void }) {
   const show = useUndoToast();
   return (
     <Pressable
       testID={`open-${message}`}
       onPress={() => {
-        show({ message, undoLabel: 'Undo', onUndo });
+        show(onUndo === undefined ? { message } : { message, undoLabel: 'Undo', onUndo });
       }}
     >
       <Text>{message}</Text>
@@ -18,7 +19,7 @@ function Opener({ message, onUndo }: { message: string; onUndo: () => void }) {
   );
 }
 
-async function renderOpeners(...openers: readonly { message: string; onUndo: () => void }[]) {
+async function renderOpeners(...openers: readonly { message: string; onUndo?: () => void }[]) {
   await render(
     <EditionProvider edition={{ locale: 'en' }} strings={{} as EditionStrings}>
       <UndoToastProvider>
@@ -102,6 +103,29 @@ describe('UndoToast', () => {
     await passTime(10_000);
     expect(screen.queryByTestId('undo-toast')).not.toBeNull();
     await fireEvent(screen.getByTestId('undo-toast'), 'accessibilityEscape');
+
+    expect(screen.queryByTestId('undo-toast')).toBeNull();
+  });
+
+  it('says a message with no undo and leaves after 4 s', async () => {
+    await renderOpeners({ message: 'Thanks' });
+
+    await fireEvent.press(screen.getByTestId('open-Thanks'));
+    expect(screen.getByTestId('undo-toast-message')).toHaveTextContent('Thanks');
+    expect(screen.queryByRole('button')).toBeNull();
+    await passTime(4000);
+
+    expect(screen.queryByTestId('undo-toast')).toBeNull();
+  });
+
+  it('leaves after 4 s with VoiceOver on when it has no undo to reach', async () => {
+    jest.spyOn(AccessibilityInfo, 'isScreenReaderEnabled').mockResolvedValue(true);
+    await renderOpeners({ message: 'Thanks' });
+
+    await fireEvent.press(screen.getByTestId('open-Thanks'));
+    await passTime(3999);
+    expect(screen.queryByTestId('undo-toast')).not.toBeNull();
+    await passTime(1);
 
     expect(screen.queryByTestId('undo-toast')).toBeNull();
   });
