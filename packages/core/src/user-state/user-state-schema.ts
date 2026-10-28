@@ -1,6 +1,7 @@
 import {
   DailyLimitSchema,
   FontSizeSchema,
+  MistakeReportSchema,
   NotificationTimesSchema,
   RaritySchema,
   ThemeSchema,
@@ -28,6 +29,9 @@ export const SCHEMA_VERSION_KEY = 'schema.version';
 
 /** The record that marks the user state as kept by this install of the app. */
 const INSTALLED_KEY = 'app.installed';
+
+/** How many unsent Mistake Reports the device keeps at most (ADR 0056). */
+export const MISTAKE_REPORT_QUEUE_SIZE = 20;
 
 /** An instant, kept as an ISO 8601 date and time in UTC. */
 const InstantSchema = z.iso.datetime();
@@ -339,6 +343,16 @@ export const userStateRecords = {
    * Session ends.
    */
   syncSyncedAt: declareRecord('sync.syncedAt', InstantSchema, { sync: 'device-only' }),
+  /**
+   * The Mistake Reports not yet sent, oldest first, at most
+   * `MISTAKE_REPORT_QUEUE_SIZE` (ADR 0056). They stay on the device, with
+   * no Sync. A new key, so no migration.
+   */
+  mistakeReportQueue: declareRecord(
+    'reports.queue',
+    z.array(MistakeReportSchema).max(MISTAKE_REPORT_QUEUE_SIZE),
+    { sync: 'device-only' },
+  ),
 };
 
 /** Every declared record and kind of record, for finding the one a key belongs to. */

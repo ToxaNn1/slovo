@@ -1,4 +1,11 @@
-import type { Category, Entry, PackMetadata, PublishedPack, Word } from '@slovo/contracts';
+import type {
+  Category,
+  Entry,
+  MistakeReport,
+  PackMetadata,
+  PublishedPack,
+  Word,
+} from '@slovo/contracts';
 
 /**
  * Reads a compiled Language Pack. Each platform supplies an adapter (Node for
@@ -317,6 +324,32 @@ export interface SyncApi {
       }
     | SyncApiFailure
   >;
+}
+
+/**
+ * A Mistake Report the backend didn't take, as any request may fail, or
+ * because it serves no Mistake Reports for the Edition (404). Too many
+ * requests (429) carries the answer's `Retry-After`.
+ */
+export type ReportsApiFailure =
+  | { readonly ok: false; readonly reason: Exclude<RequestFailure['reason'], 'too-many-requests'> }
+  | {
+      readonly ok: false;
+      readonly reason: 'too-many-requests';
+      /** How long to wait before the next report, in seconds; none when the answer didn't say. */
+      readonly retryAfter: number | undefined;
+    }
+  | { readonly ok: false; readonly reason: 'not-found' };
+
+/**
+ * The backend's Mistake Report procedure, as the Core sees it. It needs no
+ * Account and sends no Session (ADR 0056). The shell implements this port on
+ * the API contract's client. A call never rejects: every answer of the
+ * backend comes back as success or a failure.
+ */
+export interface ReportsApi {
+  /** Sends the report; the backend answers 202 when it keeps it. */
+  send(report: MistakeReport): Promise<{ readonly ok: true } | ReportsApiFailure>;
 }
 
 /** This device's Session as the device keeps it: its token and the email of its Account. */

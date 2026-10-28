@@ -13,6 +13,7 @@ export {
   createFakeNotificationScheduler,
   type FakeNotificationScheduler,
 } from './fakes/fake-notification-scheduler';
+export { createFakeReportsApi, type FakeReportsApi } from './fakes/fake-reports-api';
 export { createFakeSyncApi } from './fakes/fake-sync-api';
 export { createMemoryContentPort } from './fakes/memory-content';
 export { createMemoryPackFiles, type MemoryPackFile } from './fakes/memory-pack-files';
