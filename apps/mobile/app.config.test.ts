@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -301,6 +302,36 @@ describe('app config', () => {
     vi.stubEnv('SLOVO_EDITION', 'uk');
 
     expect(appConfig(context).plugins).toContain('@react-native-community/datetimepicker');
+  });
+
+  it('links the local Spotlight module, with its handler of a tap on a search result, into the native app', () => {
+    // What Expo's autolinking hands the native build of this app (ADR 0057).
+    const resolved = JSON.parse(
+      execFileSync(
+        join(context.projectRoot, 'node_modules/.bin/expo-modules-autolinking'),
+        ['resolve', '--platform', 'apple', '--json'],
+        { cwd: context.projectRoot, encoding: 'utf8' },
+      ),
+    ) as {
+      modules: {
+        packageName: string;
+        pods: { podName: string }[];
+        modules: { class: string }[];
+        appDelegateSubscribers: string[];
+      }[];
+    };
+
+    expect(resolved.modules.find(({ packageName }) => packageName === 'spotlight')).toMatchObject({
+      pods: [{ podName: 'SlovoSpotlight' }],
+      modules: [{ class: 'SpotlightModule' }],
+      appDelegateSubscribers: ['SpotlightAppDelegateSubscriber'],
+    });
+  });
+
+  it("gives the Spotlight module the Edition's scheme, so a tapped result opens as its link", () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+
+    expect(appConfig(context).ios?.infoPlist?.['SlovoLinkScheme']).toBe('slovo-uk');
   });
 
   it('accepts a notification sound of 30 seconds', () => {

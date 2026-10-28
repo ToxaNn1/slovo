@@ -230,6 +230,9 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
         CFBundleDevelopmentRegion: language,
         CFBundleLocalizations: [language],
         ITSAppUsesNonExemptEncryption: false,
+        // The local Spotlight module (`modules/spotlight`, ADR 0057) opens a
+        // tapped search result as the link `<scheme>://<route>`.
+        SlovoLinkScheme: scheme,
       },
       // The widget extension gets the same App Group from the Apple targets plugin.
       entitlements: {
