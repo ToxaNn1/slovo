@@ -1,4 +1,5 @@
 import {
+  serializeWidgetSnapshot,
   WidgetSnapshotSchema,
   type Category,
   type SynonymRow,
@@ -11,6 +12,7 @@ import {
   createMemoryUserStatePort,
   openComposition,
   openUserState,
+  SEEN_DWELL_MS,
   type Clock,
   type Composition,
   type ContentReadPort,
@@ -105,6 +107,7 @@ async function run({
   withIdioms = true,
   withRowsAndTips = true,
   withWidget = true,
+  withWordOfTheDay = true,
 }: {
   records?: Map<string, string>;
   content?: ContentReadPort;
@@ -115,6 +118,8 @@ async function run({
   withRowsAndTips?: boolean;
   /** Whether the Feature Switch of the widget is on, as the Edition in effect has it. */
   withWidget?: boolean;
+  /** Whether the Feature Switch of the Word of the Day is on. */
+  withWordOfTheDay?: boolean;
 } = {}): Promise<Composition> {
   return openComposition({
     content,
@@ -123,7 +128,8 @@ async function run({
       isFeatureEnabled: (feature) =>
         feature === 'widget'
           ? withWidget
-          : (withCorrections && feature === 'corrections') ||
+          : (withWordOfTheDay && feature === 'wordOfTheDay') ||
+            (withCorrections && feature === 'corrections') ||
             (withIdioms && feature === 'idioms') ||
             (withRowsAndTips && (feature === 'synonymRows' || feature === 'tips')),
       languageTraits: { distractorRule: 'same-part-of-speech' },
@@ -143,6 +149,18 @@ async function run({
     clock,
     random: steppingRandom(),
   });
+}
+
+/** Shows the Feed's card at `position` for `ms` and takes it off screen, as the UI reports it. */
+async function look(
+  app: Composition,
+  advance: (ms: number) => void,
+  position: number,
+  ms: number,
+): Promise<void> {
+  await app.feed.show(position);
+  advance(ms);
+  await app.feed.show(undefined);
 }
 
 /** The Widget Snapshot of an app whose widget is on; it fails the test when there is none. */
@@ -514,5 +532,87 @@ describe('The Widget Snapshot', () => {
       writtenAt: '2026-10-16T06:01:00.000Z',
       onboardingFinished: true,
     });
+  });
+});
+
+describe("The Widget Snapshot's day the Word of the Day was Seen", () => {
+  it("is today once today's Word of the Day card is Seen, and none before", async () => {
+    const { clock, advance } = fakeClock(start);
+    const app = await run({ clock });
+
+    expect(await snapshotOf(app)).not.toHaveProperty('wordOfTheDaySeenOn');
+    await look(app, advance, 0, SEEN_DWELL_MS - 1);
+    expect(await snapshotOf(app)).not.toHaveProperty('wordOfTheDaySeenOn');
+
+    await look(app, advance, 0, SEEN_DWELL_MS);
+    expect((await snapshotOf(app)).wordOfTheDaySeenOn).toBe('2026-10-16');
+  });
+
+  it('is today once the Word of the Day is opened from the widget', async () => {
+    const app = await run();
+    const today = app.feed.cards[0]?.entryId;
+    if (today === undefined) throw new Error('The Feed has no Word of the Day');
+
+    await app.widget.opened(today);
+
+    expect((await snapshotOf(app)).wordOfTheDaySeenOn).toBe('2026-10-16');
+  });
+
+  it('stays none when only another card is Seen', async () => {
+    const { clock, advance } = fakeClock(start);
+    const app = await run({ clock });
+
+    await look(app, advance, 1, SEEN_DWELL_MS);
+
+    expect(await snapshotOf(app)).not.toHaveProperty('wordOfTheDaySeenOn');
+  });
+
+  it("stays yesterday's until the new day's Word of the Day is Seen", async () => {
+    const records = new Map<string, string>();
+    const time = fakeClock(start);
+    const yesterday = await run({ records, clock: time.clock });
+    await look(yesterday, time.advance, 0, SEEN_DWELL_MS);
+
+    time.set('2026-10-17T09:00:00+03:00');
+    const today = await run({ records, clock: time.clock });
+    expect((await snapshotOf(today)).wordOfTheDaySeenOn).toBe('2026-10-16');
+
+    await look(today, time.advance, 0, SEEN_DWELL_MS);
+    expect((await snapshotOf(today)).wordOfTheDaySeenOn).toBe('2026-10-17');
+  });
+
+  it("is the local date in the clock's time zone", async () => {
+    // 23:30 in Kyiv is 05:30 of the next day in Tokyo.
+    const { clock, advance, moveTo } = fakeClock('2026-10-16T23:30:00+03:00');
+    const app = await run({ clock });
+    await look(app, advance, 0, SEEN_DWELL_MS);
+    expect((await snapshotOf(app)).wordOfTheDaySeenOn).toBe('2026-10-16');
+
+    moveTo('Asia/Tokyo');
+    expect((await snapshotOf(app)).wordOfTheDaySeenOn).toBe('2026-10-17');
+  });
+
+  it('is none while the Edition turns the Word of the Day off, even once its card is Seen', async () => {
+    const { clock, advance } = fakeClock(start);
+    const app = await run({ clock, withWordOfTheDay: false });
+
+    await look(app, advance, 0, SEEN_DWELL_MS);
+
+    expect(await snapshotOf(app)).not.toHaveProperty('wordOfTheDaySeenOn');
+  });
+
+  it('keeps the format the widget reads, with the day or without it', async () => {
+    const { clock, advance } = fakeClock(start);
+    const app = await run({ clock });
+    const before = await snapshotOf(app);
+    await look(app, advance, 0, SEEN_DWELL_MS);
+    const after = await snapshotOf(app);
+
+    expect(after.format).toBe(1);
+    expect(WidgetSnapshotSchema.parse(JSON.parse(serializeWidgetSnapshot(before)))).toEqual(before);
+    expect(WidgetSnapshotSchema.parse(JSON.parse(serializeWidgetSnapshot(after)))).toEqual(after);
+    expect(() =>
+      WidgetSnapshotSchema.parse({ ...after, wordOfTheDaySeenOn: '16.10.2026' }),
+    ).toThrow();
   });
 });

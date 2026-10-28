@@ -16,6 +16,8 @@ import type { AnyEntryCard } from '../feed/feed-card';
 import type { Edition } from '../edition/edition';
 import type { Onboarding } from '../onboarding/onboarding';
 import { notificationText } from '../notifications/notification-text';
+import type { History } from '../saved/history';
+import { dateKeyOf, localDayOf } from '../local-date';
 import type { Clock } from '../ports';
 import { withoutStress } from '../entries/stress';
 
@@ -32,7 +34,9 @@ export interface Widget {
    * notification reads. Pure data; the contracts serialize it. Nothing while
    * the widget's Feature Switch is off, by its effective value at the time of
    * the call: the app writes no new snapshot and the widget just stops
-   * updating, with no placeholder (ADR 0026).
+   * updating, with no placeholder (ADR 0026). It carries the local date of
+   * the newest Entry History keeps as Seen as the Word of the Day, in the
+   * clock's time zone, while the Edition has the Word of the Day.
    */
   snapshot(strings: EditionStrings['notificationBody']): Promise<WidgetSnapshot | undefined>;
   /**
@@ -88,8 +92,17 @@ const isRowOrTip = (entry: Entry): entry is SynonymRow | Tip =>
   entry.kind === 'synonymRow' || entry.kind === 'tip';
 
 /**
- * The widget over the composition's Entries, Favorites, Collections and
- * onboarding. `opened` is the composition's step for an Entry opened from
+ * The local date on which History last kept a Word of the Day Seen, or
+ * nothing when it keeps none.
+ */
+function wordOfTheDaySeenOn(history: History, clock: Clock): string | undefined {
+  const seen = history.list.find(({ wordOfTheDay }) => wordOfTheDay);
+  return seen === undefined ? undefined : dateKeyOf(localDayOf(seen.seenAt, clock).date);
+}
+
+/**
+ * The widget over the composition's Entries, Favorites, Collections, History
+ * and onboarding. `opened` is the composition's step for an Entry opened from
  * outside the app, which a notification shares.
  */
 export function createWidget({
@@ -97,6 +110,7 @@ export function createWidget({
   entries,
   favorites,
   collections,
+  history,
   onboarding,
   clock,
   opened,
@@ -105,6 +119,7 @@ export function createWidget({
   entries: Entries;
   favorites: Favorites;
   collections: Collections;
+  history: History;
   onboarding: Onboarding;
   clock: Clock;
   opened: Widget['opened'];
@@ -132,6 +147,9 @@ export function createWidget({
       const eligibleIds = new Set(eligible.map(({ id }) => id));
       const onlyEligible = (kept: readonly { entryId: string }[]) =>
         kept.map(({ entryId }) => entryId).filter((id) => eligibleIds.has(id));
+      const seenOn = edition.isFeatureEnabled('wordOfTheDay')
+        ? wordOfTheDaySeenOn(history, clock)
+        : undefined;
       return {
         format: WIDGET_SNAPSHOT_FORMAT,
         editionId: edition.id,
@@ -145,6 +163,7 @@ export function createWidget({
           name,
           entryIds: onlyEligible(collections.entries(id)),
         })),
+        ...(seenOn === undefined ? {} : { wordOfTheDaySeenOn: seenOn }),
       };
     },
     opened,

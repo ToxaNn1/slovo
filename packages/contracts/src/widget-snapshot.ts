@@ -86,6 +86,13 @@ export const WidgetSnapshotSchema = z
      * it from one snapshot to the next; the Edition's example has none.
      */
     linkKey: z.string().min(1).optional(),
+    /**
+     * The local date, in ISO 8601, on which the reader last Saw a Word of
+     * the Day, so the widget marks it ✓ while that date is today; none
+     * before the first, and none while the Edition has no Word of the Day.
+     * Optional, so a snapshot without it keeps the format.
+     */
+    wordOfTheDaySeenOn: z.iso.date().optional(),
   })
   .superRefine((snapshot, context) => {
     const ids = snapshot.entries.map(({ id }) => id);
