@@ -119,6 +119,13 @@ export {
   type TipInput,
 } from './tip';
 export { EntrySchema, type Entry, type EntryKind } from './entry';
+export {
+  COLLECTION_LINK_NAME_LENGTH,
+  COLLECTION_LINK_SIZE,
+  CollectionLinkIdSchema,
+  CollectionLinkSchema,
+  type CollectionLink,
+} from './collection-link';
 export { type CounterEvent } from './api/counters';
 export {
   MistakeReportSchema,

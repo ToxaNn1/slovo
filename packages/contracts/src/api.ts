@@ -4,6 +4,7 @@ import type { JsonifiedClient } from '@orpc/openapi-client';
 import { OpenAPILink, type OpenAPILinkOptions } from '@orpc/openapi-client/fetch';
 
 import { accountContract } from './api/account';
+import { collectionLinksContract } from './api/collection-links';
 import { contentContract } from './api/content';
 import { countersContract } from './api/counters';
 import { editionContract } from './api/edition';
@@ -33,6 +34,7 @@ export { safe, type ClientPromiseResult } from '@orpc/client';
  */
 export const apiContract = oc.prefix('/v1').router({
   account: accountContract,
+  collectionLinks: collectionLinksContract,
   content: contentContract,
   counters: countersContract,
   edition: editionContract,
