@@ -3,12 +3,11 @@
 
 import { Pressable, StyleSheet } from 'react-native';
 import Animated, {
-  Easing,
   ReduceMotion,
   useAnimatedStyle,
   useSharedValue,
   withSequence,
-  withTiming,
+  withSpring,
 } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 
@@ -25,24 +24,22 @@ export const HEART_PATH =
 const ICON_SIZE = 26;
 
 /**
- * The design's 450 ms pop: scale 1 → 1.35 → 0.92 → 1, each step a third of
- * the time or so, eased like its `cubic-bezier(.3, 1.6, .5, 1)` spring.
+ * The pop, 300 ms in all (ADR 0055, the audit's H1): a critically damped
+ * spring up to 1.2, then a softer one back to 1 that settles with a small
+ * bounce. Reanimated takes a spring's `duration` as perceptual and runs 1.5
+ * times it, so 80 + 120 here is 120 + 180 ms; a mass of 1 lets a spring this
+ * short reach its time, which the default mass of 4 would stretch.
  */
 const POP = [
-  { toValue: 1.35, duration: 158 },
-  { toValue: 0.92, duration: 157 },
-  { toValue: 1, duration: 135 },
+  { toValue: 1.2, duration: 80, dampingRatio: 1, mass: 1 },
+  { toValue: 1, duration: 120, dampingRatio: 0.6, mass: 1 },
 ] as const;
-
-const popEasing = Easing.bezier(0.3, 1.6, 0.5, 1);
-
-// The hook gates the motion, so the animation never second-guesses it.
-const popTiming = { easing: popEasing, reduceMotion: ReduceMotion.Never };
 
 /**
  * The heart of the action row: an outline, or filled with the heart colour
- * while the Entry is in Favorites. A tap that fills it pops it with a light
- * haptic; with Reduce Motion it only fills. VoiceOver reads what a tap will do.
+ * while the Entry is in Favorites. A tap that fills it springs it to 1.2 and
+ * back with a light haptic; with Reduce Motion it only fills. VoiceOver reads
+ * what a tap will do.
  */
 export function FavoriteButton({
   inFavorites,
@@ -67,7 +64,9 @@ export function FavoriteButton({
     // Assigning 1 first stops a pop still running, so a new one starts from rest.
     scale.value = 1;
     scale.value = withSequence(
-      ...POP.map(({ toValue, duration }) => withTiming(toValue, { ...popTiming, duration })),
+      ...POP.map(({ toValue, ...spring }) =>
+        withSpring(toValue, { ...spring, reduceMotion: ReduceMotion.Never }),
+      ),
     );
   }
 

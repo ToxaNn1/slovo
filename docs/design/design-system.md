@@ -154,7 +154,7 @@ From artboard 3e and the canvas keyframes. Every animation has a Reduce Motion v
 | Moment           | Motion                                                                     | Haptic                           | Sound                    | Reduce Motion                 |
 | ---------------- | -------------------------------------------------------------------------- | -------------------------------- | ------------------------ | ----------------------------- |
 | Feed swipe       | 420 ms, `cubic-bezier(.2,.8,.2,1)`, snaps one card per screen              | selection, on every card         | none                     | 200 ms cross-fade             |
-| Heart (Favorite) | 450 ms spring: scale 1 → 1.35 → 0.92 → 1, `cubic-bezier(.3,1.6,.5,1)`      | impact light                     | a soft "tuk"             | fill only                     |
+| Heart (Favorite) | 300 ms: springs to 1.2, then back to 1 with a small bounce                 | impact light                     | a soft "tuk"             | fill only                     |
 | Correct answer   | 250 ms fill to `color.correct` and scale 1.03                              | notification success             | a plucked string, rising | fill only                     |
 | Wrong answer     | 200 ms fill to `color.wrong`, then a ±4 pt shake twice (400 ms)            | notification warning (not error) | a muted string           | fill only                     |
 | Life lost        | 500 ms: scale 1.4 and rotate −12°, then the heart turns to an outline      | impact medium                    | none                     | the fill fades to the outline |
