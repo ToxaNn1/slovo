@@ -90,6 +90,10 @@
   },
   "linkDomain": "slovo.example",
   "wordOfTheDayFont": "Kurale-Regular.ttf",
+  "widgetPalette": {
+    "parchment": { "background": "#F3E9D2", "text": "#3B2A1A" },
+    "blue": { "background": "#1F3A5F", "text": "#F3E9D2" }
+  },
   "categories": [
     {
       "id": "human-body",

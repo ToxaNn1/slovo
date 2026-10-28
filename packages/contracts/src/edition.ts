@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { NotificationSoundFileSchema } from './notification-sound';
-import { WebAddressSchema } from './shared';
+import { HexColorSchema, WebAddressSchema } from './shared';
 
 const KebabCaseIdSchema = z
   .string()
@@ -347,6 +347,44 @@ const FontFileSchema = z
     'Expected a plain file name ending in .ttf or .otf',
   );
 
+/** The relative luminance of a `#RRGGBB` colour, as WCAG 2 defines it. */
+function relativeLuminance(color: string): number {
+  const [red = 0, green = 0, blue = 0] = [1, 3, 5].map((start) => {
+    const channel = parseInt(color.slice(start, start + 2), 16) / 255;
+    return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+}
+
+/** The WCAG 2 contrast ratio of two `#RRGGBB` colours, from 1 to 21. */
+function contrastRatio(first: string, second: string): number {
+  const [lighter = 0, darker = 0] = [relativeLuminance(first), relativeLuminance(second)].sort(
+    (a, b) => b - a,
+  );
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+/** The least contrast of text with its background, WCAG AA for body text. */
+const MINIMUM_CONTRAST = 4.5;
+
+/** A background of the widget and the colour of its text, at least 4.5:1 apart (WCAG AA). */
+const WidgetBackgroundSchema = z
+  .strictObject({ background: HexColorSchema, text: HexColorSchema })
+  .refine(({ background, text }) => contrastRatio(background, text) >= MINIMUM_CONTRAST, {
+    path: ['text'],
+    message: `Expected text at least ${String(MINIMUM_CONTRAST)}:1 in contrast with its background (WCAG AA)`,
+  });
+
+/**
+ * The widget palette: the colours of the widget's Пергамент and Синій
+ * backgrounds (ADR 0026). Світлий and Темний take the Edition's light and
+ * dark colour tokens.
+ */
+const WidgetPaletteSchema = z.strictObject({
+  parchment: WidgetBackgroundSchema,
+  blue: WidgetBackgroundSchema,
+});
+
 /** The id of an Edition, e.g. `uk`. */
 export const EditionIdSchema = z.string().regex(/^[a-z][a-z0-9-]*$/, 'Expected a lowercase id');
 
@@ -382,6 +420,8 @@ export const EditionConfigSchema = z
      * Lemma may hold, or for the Stress mark.
      */
     wordOfTheDayFont: FontFileSchema,
+    /** The colours of the widget's Пергамент and Синій backgrounds (ADR 0026). */
+    widgetPalette: WidgetPaletteSchema,
     /**
      * The Categories, in their order, as the Language Pack build writes them
      * into the pack. The app reads them from the pack only (ADR 0033).

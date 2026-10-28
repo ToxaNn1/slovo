@@ -67,6 +67,51 @@ describe("the widget extension's Edition files", () => {
     },
   );
 
+  const fixed = (name: string) =>
+    json(files, `Generated/Assets.xcassets/${name}.colorset/Contents.json`);
+  const oneColor = ([red, green, blue]: string[]) => ({
+    colors: [
+      {
+        idiom: 'universal',
+        color: { 'color-space': 'srgb', components: { red, green, blue, alpha: '1.000' } },
+      },
+    ],
+    info: { author: 'xcode', version: 1 },
+  });
+
+  it.each([
+    ['Light', ['0.961', '0.933', '0.886'], ['0.118', '0.094', '0.075']],
+    ['Dark', ['0.082', '0.067', '0.055'], ['0.953', '0.918', '0.859']],
+    ['Parchment', ['0.953', '0.914', '0.824'], ['0.231', '0.165', '0.102']],
+    ['Blue', ['0.122', '0.227', '0.373'], ['0.953', '0.914', '0.824']],
+  ])(
+    'writes the %s background and its ink as colour sets that ignore the appearance',
+    (name, background, ink) => {
+      expect(fixed(`background${name}`)).toEqual(oneColor(background));
+      expect(fixed(`ink${name}`)).toEqual(oneColor(ink));
+    },
+  );
+
+  it("takes the Parchment and Blue backgrounds from the Edition's widget palette", () => {
+    const palette = widgetExtensionFiles({
+      ...ukrainian,
+      config: {
+        ...ukrainian.config,
+        widgetPalette: {
+          parchment: { background: '#FFFFFF', text: '#000000' },
+          blue: { background: '#000000', text: '#FFFFFF' },
+        },
+      },
+    });
+    const color = (name: string) =>
+      json(palette, `Generated/Assets.xcassets/${name}.colorset/Contents.json`);
+
+    expect(color('backgroundParchment')).toEqual(oneColor(['1.000', '1.000', '1.000']));
+    expect(color('inkParchment')).toEqual(oneColor(['0.000', '0.000', '0.000']));
+    expect(color('backgroundBlue')).toEqual(oneColor(['0.000', '0.000', '0.000']));
+    expect(color('inkBlue')).toEqual(oneColor(['1.000', '1.000', '1.000']));
+  });
+
   it('writes a colour drawn over others with its opacity', () => {
     const translucent = widgetExtensionFiles({
       ...ukrainian,
