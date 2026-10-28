@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
 import { checkLanguagePack, formatBuildError, recordContent } from '@slovo/language-pack';
@@ -236,8 +236,7 @@ function offerWordFields({ edition, terminal }: ContentTool): void {
     const ids = moods.map(({ id, name }) => `${id} (${name})`);
     terminal.print(`  moods: any of ${ids.join(', ')}, or none`);
   }
-  const dir = join(edition.dir, ILLUSTRATIONS_DIR);
-  const files = existsSync(dir) ? readdirSync(dir).toSorted() : [];
+  const files = edition.illustrations();
   const listed = files.length === 0 ? '' : ` (${files.join(', ')})`;
   terminal.print(
     `  illustration: a square PNG of at most 150 KB in ${ILLUSTRATIONS_DIR}/${listed}, or none`,
