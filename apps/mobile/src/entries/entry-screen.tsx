@@ -43,10 +43,11 @@ export function EntryScreen({
   route: string;
   /**
    * Where outside the app it opened from, if it did: the Entry is Seen, in
-   * History and today is an Active Day. An id the Language Pack doesn't have
-   * opens the Feed. A Search result, or the Word the mood roulette landed
-   * on, opens through its own way in, which makes nothing Seen (`search`,
-   * `mood`).
+   * History and today is an Active Day. A Search result, or the Word the mood
+   * roulette landed on, opens through its own way in, which makes nothing
+   * Seen (`search`, `mood`). On any way in, an id the Language Pack doesn't
+   * have opens the Feed, such as a plain link's or a Spotlight result's to an
+   * Entry a pack update took out (ADR 0057).
    */
   openedFrom?: OpenedFrom | 'search' | 'mood' | undefined;
 }) {
@@ -61,14 +62,8 @@ export function EntryScreen({
   );
   const card = useCompositionRead(read, 'Could not open the Entry');
   useEffect(() => {
-    if (
-      openedFrom !== undefined &&
-      openedFrom !== 'search' &&
-      openedFrom !== 'mood' &&
-      card === null
-    )
-      router.replace('/');
-  }, [openedFrom, card, router]);
+    if (card === null) router.replace('/');
+  }, [card, router]);
 
   return (
     <UndoToastProvider>
