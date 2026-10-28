@@ -35,5 +35,6 @@
       "url": "https://goroh.pp.ua/Тлумачення/зорепад"
     }
   ],
-  "moods": ["in-love"]
+  "moods": ["in-love"],
+  "illustration": "zorepad.png"
 }
