@@ -7,9 +7,25 @@ import { createCountersApi } from './counters-api';
 /** The Counters API of the Ukrainian Edition over a backend that serves the contract's `procedures`. */
 const countersApiServedBy = (procedures: ApiProcedures) =>
   createCountersApi({
-    client: createApiClient({ url: 'http://backend.test', fetch: serveApi(procedures) }),
+    clientOf: (fetch) => createApiClient({ url: 'http://backend.test', fetch }),
+    fetch: serveApi(procedures),
     editionId: 'uk',
   });
+
+/** A backend whose counter events refuse with `code`, setting `Retry-After` when given. */
+const refusing = (code: 'TOO_MANY_REQUESTS' | 'NOT_FOUND', retryAfter?: string): ApiProcedures => ({
+  counters: {
+    send: ({ errors, context }) => {
+      if (retryAfter !== undefined) context.resHeaders?.set('retry-after', retryAfter);
+      throw errors[code]();
+    },
+  },
+});
+
+const events = [
+  { entryId: 'w_abc123', known: 1, unknown: 0, saved: 1 },
+  { entryId: 'c_def456', known: -1, unknown: 1, saved: 0 },
+] as const;
 
 describe('the Counters API over the contract’s client', () => {
   it('reads the counters of several Entries in one request, with no Session', async () => {
@@ -52,5 +68,35 @@ describe('the Counters API over the contract’s client', () => {
     });
 
     await expect(api.read(['w_abc123'])).resolves.toEqual({ ok: false, reason: 'server-error' });
+  });
+
+  it('sends the events with the Edition alone, no Session, and the backend counts them', async () => {
+    const asked: unknown[] = [];
+    const api = countersApiServedBy({
+      counters: {
+        send: ({ input, context }) => {
+          asked.push({ input, session: context.headers.get('authorization') });
+        },
+      },
+    });
+
+    await expect(api.send(events)).resolves.toEqual({ ok: true });
+    expect(asked).toEqual([{ input: { editionId: 'uk', events }, session: null }]);
+  });
+
+  it('answers too many requests with the seconds of Retry-After', async () => {
+    const api = countersApiServedBy(refusing('TOO_MANY_REQUESTS', '3600'));
+
+    await expect(api.send(events)).resolves.toEqual({
+      ok: false,
+      reason: 'too-many-requests',
+      retryAfter: 3600,
+    });
+  });
+
+  it('answers an Edition the backend doesn’t find, or counters switched off, as not found', async () => {
+    const api = countersApiServedBy(refusing('NOT_FOUND'));
+
+    await expect(api.send(events)).resolves.toEqual({ ok: false, reason: 'not-found' });
   });
 });
