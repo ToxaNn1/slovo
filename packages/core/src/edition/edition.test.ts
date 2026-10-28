@@ -339,6 +339,16 @@ describe('loadEdition', () => {
     expect(() => loadEdition({ ...validConfig, originLanguages: [] })).not.toThrow();
   });
 
+  it('lists the Illustrations the app bundles as Edition assets', () => {
+    expect(loadEdition(validConfig, ['a.png', 'b.png']).illustrations).toEqual(
+      new Set(['a.png', 'b.png']),
+    );
+  });
+
+  it('lists no Illustrations when the app bundles none', () => {
+    expect(loadEdition(validConfig).illustrations).toEqual(new Set());
+  });
+
   it('reports the letters Search reads as another', () => {
     expect(loadEdition(validConfig).searchLetters).toEqual({ b: 'a' });
   });
