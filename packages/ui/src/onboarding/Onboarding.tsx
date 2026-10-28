@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import Animated, {
   Easing,
+  ReduceMotion,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
@@ -35,9 +36,10 @@ import {
   typeSize,
 } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
+import { useReduceMotion } from '../providers/useReduceMotion';
 
-/** How long a step takes to slide in, and how far from the side it starts. */
-const SLIDE_MS = 320;
+/** How long a step takes to slide in (ADR 0055), and how far from the side it starts. */
+const SLIDE_MS = 300;
 const SLIDE_DISTANCE = 40;
 /**
  * How far the largest text sizes of iOS may scale the step's text, so no word
@@ -53,7 +55,7 @@ const DOT = { height: 4, width: 16, currentWidth: 44, gap: space[3] } as const;
 /**
  * One step of the onboarding, over the whole screen: the wordmark and
  * «Пропустити» at the top end, the step's content, the progress dots and the
- * step's buttons. It slides in from the side; with Reduce Motion it appears
+ * step's buttons. It slides in from the side; with Reduce Motion it fades in
  * where it is. VoiceOver reads the step top to bottom and says its number
  * once: with the dots on the welcome, with the overline «КРОК N З M» on the
  * steps after it.
@@ -85,10 +87,15 @@ function OnboardingStep({
   const { onboarding } = strings;
   const numbers = { step: String(step), total: String(total) };
 
-  // Reanimated skips the motion when Reduce Motion is on, so the step just appears.
+  // With Reduce Motion the step only fades in, so the timing runs whatever the system says.
+  const reduceMotion = useReduceMotion();
   const progress = useSharedValue(0);
   useEffect(() => {
-    progress.value = withTiming(1, { duration: SLIDE_MS, easing: Easing.out(Easing.cubic) });
+    progress.value = withTiming(1, {
+      duration: SLIDE_MS,
+      easing: Easing.out(Easing.cubic),
+      reduceMotion: ReduceMotion.Never,
+    });
   }, [progress]);
   // A step after the welcome replaces the one VoiceOver was on: start at its number.
   const overline = useRef<Text>(null);
@@ -98,7 +105,7 @@ function OnboardingStep({
   }, []);
   const slide = useAnimatedStyle(() => ({
     opacity: progress.value,
-    transform: [{ translateX: (1 - progress.value) * SLIDE_DISTANCE }],
+    transform: [{ translateX: reduceMotion ? 0 : (1 - progress.value) * SLIDE_DISTANCE }],
   }));
 
   return (
