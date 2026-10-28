@@ -151,6 +151,7 @@ describe('app config', () => {
 
     expect(fonts).toEqual(
       [
+        'Kurale-Regular.ttf',
         'Literata-Italic.ttf',
         'Literata-Medium.ttf',
         'Literata-Regular.ttf',
