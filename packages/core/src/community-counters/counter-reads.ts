@@ -23,7 +23,8 @@ export interface CounterReads {
    * the Entry screen, by Entry id. The numbers kept from the last 24 hours
    * hold; the Entries without them are asked for in one request, and the
    * answer is kept. The reader's own change not yet sent is applied on top,
-   * no count below zero. An Entry with no numbers from the last 24 hours and
+   * no count below zero, and one sent since the numbers were read stays in
+   * them. An Entry with no numbers from the last 24 hours and
    * no answer, as offline, has no line, and with the `communityCounters`
    * Feature Switch off none has. It never rejects on a failed request.
    */

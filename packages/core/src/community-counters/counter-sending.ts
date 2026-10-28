@@ -1,7 +1,14 @@
 import { COUNTERS_BATCH_SIZE } from '@slovo/contracts';
 
 import type { Edition } from '../edition/edition';
-import type { Clock, CounterEvent, CountersApi, Random, Schedule } from '../ports';
+import type {
+  Clock,
+  CounterEvent,
+  CountersApi,
+  Random,
+  Schedule,
+  UserStateChanges,
+} from '../ports';
 import { withRetries } from '../retry';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
@@ -54,12 +61,33 @@ export function openCounterSending({
   /** What the waits between tries are jittered by. */
   random: Random;
 }): CounterSending {
-  const { countersUnsent, shareCounters } = userStateRecords;
+  const { countersRead, countersUnsent, shareCounters } = userStateRecords;
   /** Until when, in milliseconds, nothing goes out, by a 429's `Retry-After`. */
   let heldUntil: number | undefined;
   let draining = false;
   let again = false;
   let stopSending: (() => void) | undefined;
+
+  /**
+   * The changes that add what the backend just counted to the numbers kept
+   * from the last read, so the reader's own change stays in the line once it
+   * leaves the unsent changes, until the numbers are read again.
+   */
+  async function readAfterCounting(events: readonly CounterEvent[]): Promise<UserStateChanges> {
+    const changes = new Map<string, string | undefined>();
+    for (const { entryId, known, unknown, saved } of events) {
+      const read = await userState.read(countersRead.record(entryId));
+      if (read === undefined) continue;
+      const counted = {
+        readAt: read.readAt,
+        known: Math.max(0, read.known + known),
+        unknown: Math.max(0, read.unknown + unknown),
+        saved: Math.max(0, read.saved + saved),
+      };
+      for (const change of countersRead.record(entryId).change(counted)) changes.set(...change);
+    }
+    return changes;
+  }
 
   const held = () => heldUntil !== undefined && clock.now().getTime() < heldUntil;
 
@@ -72,15 +100,17 @@ export function openCounterSending({
       .map(([entryId, delta]) => ({ entryId, ...delta }));
     if (events.length === 0) return false;
     const answer = await withRetries(() => api.send(events), { schedule, random });
+    let counted: UserStateChanges = new Map();
     if (answer.ok) {
       heldUntil = undefined;
+      counted = await readAfterCounting(events);
     } else {
       if (answer.reason === 'too-many-requests' && answer.retryAfter !== undefined) {
         heldUntil = clock.now().getTime() + answer.retryAfter * 1000;
       }
       if (answer.reason !== 'unexpected') return false;
     }
-    await userState.write(await unsentAfterSending(userState, events));
+    await userState.write(new Map([...counted, ...(await unsentAfterSending(userState, events))]));
     return true;
   }
 
