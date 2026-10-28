@@ -42,6 +42,7 @@ import { accounts, sessions, signInMethods } from './database/schema';
 import { readEditions } from './edition/edition-folders';
 import { createEditions } from './edition/editions';
 import { listReports, type ReportFilter } from './reports/report-list';
+import { resolveReport } from './reports/report-resolve';
 import type { ErrorReport } from './error-reporter';
 
 /** The Postgres of the repo's `compose.yaml`, which the tests use unless `DATABASE_URL` names another. */
@@ -460,6 +461,8 @@ export function testApp({
       createEditions({ database, clock: systemClock, editions }).clearSwitch(editionId, feature),
     /** The lines the reports list command prints of the reports the backend keeps. */
     listReports: (filter?: ReportFilter) => listReports(database, filter),
+    /** What the reports resolve command prints and exits with for the id. */
+    resolveReport: (id: string) => resolveReport(database, id),
     /** Closes the database the backend opened, as when Postgres goes away. */
     close,
   };

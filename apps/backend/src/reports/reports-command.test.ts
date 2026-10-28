@@ -128,3 +128,39 @@ describe('the reports list command', () => {
     ]);
   });
 });
+
+/** The ids `reports list` prints, in its order. */
+const printedIds = (printed: string[]) =>
+  printed.flatMap((line) => /^ {2}id ([0-9a-f-]{36}),/.exec(line)?.[1] ?? []);
+
+describe('the reports resolve command', () => {
+  it('takes the report off the list and keeps the others', async () => {
+    const { sendAt, listReports, resolveReport } = await servingEditions('uk');
+    await sendAt('2026-10-27T10:00:00Z', report('uk', 'w_kept'));
+    await sendAt('2026-10-28T10:00:00Z', report('uk', 'w_checked'));
+    const [checked, kept] = printedIds(await listReports());
+
+    const resolved = await resolveReport(String(checked));
+
+    expect(resolved).toEqual({ exitCode: 0, line: `Resolved Mistake Report ${String(checked)}.` });
+    const printed = await listReports();
+    expect(printed.join('\n')).not.toContain('w_checked');
+    expect(printedIds(printed)).toEqual([kept]);
+  });
+
+  it('says so and exits non-zero for an id it does not keep', async () => {
+    const { sendAt, listReports, resolveReport } = await servingEditions('uk');
+    await sendAt('2026-10-28T10:00:00Z', report('uk', 'w_kept'));
+    const [kept] = printedIds(await listReports());
+    await resolveReport(String(kept));
+
+    await expect(resolveReport(String(kept))).resolves.toEqual({
+      exitCode: 1,
+      line: `No Mistake Report ${String(kept)} to resolve.`,
+    });
+    await expect(resolveReport('not-an-id')).resolves.toEqual({
+      exitCode: 1,
+      line: 'No Mistake Report not-an-id to resolve.',
+    });
+  });
+});
