@@ -27,6 +27,8 @@ export interface Shown {
     readonly pronunciation: boolean;
     /** The «Знаю» and «Не знаю» buttons of the action row. */
     readonly knowledge: boolean;
+    /** The «Повідомити про помилку» flag of the action row (ADR 0056). */
+    readonly mistakeReport: boolean;
   };
   /** Whether the Stress mark of a Word card's Lemma falls onto its vowel in the Feed and on the Entry screen. */
   readonly stressFall: boolean;
@@ -96,6 +98,7 @@ export function shownOf({
       shareCard: on('shareCards'),
       pronunciation: on('pronunciation'),
       knowledge,
+      mistakeReport: on('mistakeReports'),
     },
     stressFall: on('stressAnimation'),
     selfCheck: on('selfCheck') && settings.selfCheck,

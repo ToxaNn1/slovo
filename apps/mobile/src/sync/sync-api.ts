@@ -1,12 +1,7 @@
 import type { ApiClient } from '@slovo/contracts/api';
 import type { RequestFailure, SyncApi, SyncApiFailure } from '@slovo/core';
 
-import { answerOf, type ClientFetch } from '../api';
-
-/** `Retry-After` in whole seconds; none when the answer has no such header or it says anything else. */
-function secondsOf(header: string | null): number | undefined {
-  return header !== null && /^\d+$/.test(header) ? Number(header) : undefined;
-}
+import { answerOf, secondsOf, type ClientFetch } from '../api';
 
 /** A failure of a call as the contract's errors and the request itself make it, before a 429 gets its `Retry-After`. */
 type CallFailure = RequestFailure | Exclude<SyncApiFailure, { reason: 'too-many-requests' }>;

@@ -13,6 +13,11 @@ export const apiClient = createApiClient({ url: API_URL });
 /** The `fetch` the contract's client sends its requests with. */
 export type ClientFetch = NonNullable<Parameters<typeof createApiClient>[0]['fetch']>;
 
+/** `Retry-After` in whole seconds; none when the answer has no such header or it says anything else. */
+export function secondsOf(header: string | null): number | undefined {
+  return header !== null && /^\d+$/.test(header) ? Number(header) : undefined;
+}
+
 /** The errors the contract defines for a procedure that throws `E`, each with its code and data. */
 type DefinedError<E> = Extract<E, ORPCError<string, unknown>>;
 
@@ -50,3 +55,7 @@ export const apiClientOf = (token: string, fetch?: ClientFetch) =>
     headers: { authorization: `Bearer ${token}` },
     ...(fetch === undefined ? {} : { fetch }),
   });
+
+/** The client of a device that sends no Session, as a Mistake Report does (ADR 0056); `fetch` replaces the global one. */
+export const anonymousApiClientOf = (fetch: ClientFetch) =>
+  createApiClient({ url: API_URL, fetch });
