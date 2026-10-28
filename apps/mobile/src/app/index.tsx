@@ -31,6 +31,7 @@ import { StatsPillAndSheet } from '@/progress/progress';
 import { useShown } from '@/shown-in-effect';
 import { useSwipeHint } from '@/feed/swipe-hint';
 import { WeeklyRecapNotice } from '@/feed/weekly-recap-notice';
+import { CommunityWordNotice } from '@/feed/community-word-notice';
 
 const { feed: feedStrings } = editionStrings;
 const turnActionLabels = { next: feedStrings.nextEntry, previous: feedStrings.previousEntry };
@@ -181,10 +182,15 @@ const FeedPage = memo(function FeedPage({
   );
 });
 
-/** A Feed Notice that sits in the middle of its page: the Weekly Recap, the first-week card or the Daily Limit card. */
+/**
+ * A Feed Notice that sits in the middle of its page: the Weekly Recap, the
+ * Community Word, the first-week card or the Daily Limit card.
+ */
 function NoticeCard({ card }: { card: Exclude<FeedNoticeCard, { notice: 'yesterday' }> }) {
   const streak = useFirstWeekStreak();
   if (card.notice === 'weeklyRecap') return <WeeklyRecapNotice day={card.day} />;
+  if (card.notice === 'communityWord')
+    return <CommunityWordNotice entryId={card.card.entryId} adds={card.adds} />;
   return card.notice === 'firstWeek' ? (
     <FirstWeekCard day={card.firstWeekDay} streak={streak} />
   ) : (

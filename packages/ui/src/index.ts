@@ -14,6 +14,7 @@ export { EditionProvider, fill, useEdition } from './providers/EditionProvider';
 export { EndOfCycleCard } from './feed/EndOfCycleCard';
 export { DailyLimitCard, FeedNoticeCard, FirstWeekCard } from './feed/FeedNoticeCard';
 export { WeeklyRecapCard } from './feed/WeeklyRecapCard';
+export { CommunityWordCard } from './feed/CommunityWordCard';
 export { YesterdayCard } from './feed/YesterdayCard';
 export { EntryCard } from './entries/EntryCard';
 export {
