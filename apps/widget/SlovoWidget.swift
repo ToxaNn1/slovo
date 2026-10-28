@@ -4,7 +4,7 @@ import WidgetKit
 
 /// SLOVO's home-screen widget: an Entry of its Widget Mode every five
 /// minutes, in the Edition's colours, fonts and band (ADR 0001, 0026). Each
-/// widget chooses its mode: Улюблене, a Collection or Усі слова.
+/// widget chooses its mode, Улюблене, a Collection or Усі слова, and its «Тло».
 @main
 struct SlovoWidget: Widget {
   let kind = "SlovoWidget"
@@ -13,7 +13,6 @@ struct SlovoWidget: Widget {
     AppIntentConfiguration(kind: kind, intent: ChooseMode.self, provider: EntryTimeline()) {
       moment in
       EntryView(moment: moment)
-        .containerBackground(Color("background"), for: .widget)
         .widgetURL(EditionInfo.url(opening: moment.entry, key: moment.linkKey))
     }
     .configurationDisplayName(Text("galleryName"))
@@ -27,9 +26,39 @@ struct SlovoWidget: Widget {
 /// band at the bottom.
 struct EntryView: View {
   @Environment(\.widgetFamily) private var family
+  @Environment(\.widgetRenderingMode) private var renderingMode
+  @Environment(\.colorScheme) private var colorScheme
   let moment: EntryMoment
 
   private var isSmall: Bool { family == .systemSmall }
+
+  /// The widget's «Тло». In the tinted and clear modes the system colours the
+  /// widget whatever the choice, so it draws as Авто there.
+  private var background: BackgroundChoice {
+    renderingMode == .fullColor ? moment.background : .auto
+  }
+
+  /// A colour token on the widget's «Тло»: Авто's colour set follows the
+  /// phone's appearance, each other choice has colour sets of its own.
+  private func color(_ token: String) -> Color {
+    switch background {
+    case .auto: Color(token)
+    case .light: Color(token + "Light")
+    case .dark: Color(token + "Dark")
+    case .parchment: Color(token + "Parchment")
+    case .blue: Color(token + "Blue")
+    }
+  }
+
+  /// The appearance the band is drawn in: the phone's on Авто, the light one
+  /// on the light backgrounds (Світлий, Пергамент), the dark one on the dark.
+  private var bandScheme: ColorScheme {
+    switch background {
+    case .auto: colorScheme
+    case .light, .parchment: .light
+    case .dark, .blue: .dark
+    }
+  }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 0) {
@@ -40,7 +69,7 @@ struct EntryView: View {
           // A quiet ✓ in the corner once today's Word of the Day is Seen (ADR 0026).
           Image(systemName: "checkmark")
             .font(.system(size: 11, weight: .semibold))
-            .foregroundStyle(Color("inkSecondary"))
+            .foregroundStyle(color("inkSecondary"))
         }
       }
       Spacer(minLength: 8)
@@ -49,7 +78,7 @@ struct EntryView: View {
         if !isSmall {
           Text(entry.secondLine)
             .font(EditionInfo.wordFont(size: 15, weight: .regular))
-            .foregroundStyle(Color("inkSecondary"))
+            .foregroundStyle(color("inkSecondary"))
             .lineLimit(2)
             .minimumScaleFactor(0.75)
             .padding(.top, 2)
@@ -57,7 +86,7 @@ struct EntryView: View {
       } else if let emptyState = moment.emptyState {
         Text(emptyState)
           .font(EditionInfo.wordFont(size: isSmall ? 19 : 21, weight: .medium))
-          .foregroundStyle(Color("ink"))
+          .foregroundStyle(color("ink"))
           .lineLimit(4)
           .minimumScaleFactor(0.7)
       }
@@ -65,9 +94,11 @@ struct EntryView: View {
       Image("band")
         .resizable(resizingMode: .tile)
         .frame(height: UIImage(named: "band")?.size.height ?? 0)
+        .environment(\.colorScheme, bandScheme)
         .padding(.top, 10)
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+    .containerBackground(color("background"), for: .widget)
     // One element for VoiceOver: the Widget Mode's name, then the Entry's
     // VoiceOver text, which has no Stress mark, or the mode's state, then the
     // ✓'s label (ADR 0026).
@@ -89,7 +120,7 @@ struct EntryView: View {
       // The overline type of the app (`overlineType` in the UI tokens).
       .font(EditionInfo.uiFont(size: 11, weight: .bold))
       .tracking(11 * 0.14)
-      .foregroundStyle(Color("accent"))
+      .foregroundStyle(color("accent"))
       // In capitals, as the app's overline type draws it, a Collection's name too.
       .textCase(.uppercase)
       .lineLimit(1)
@@ -101,7 +132,7 @@ struct EntryView: View {
   private func headline(_ text: String) -> some View {
     Text(text)
       .font(EditionInfo.wordFont(size: isSmall ? 30 : 34, weight: .medium))
-      .foregroundStyle(Color("ink"))
+      .foregroundStyle(color("ink"))
       .lineLimit(text.contains(" ") ? 3 : 1)
       .minimumScaleFactor(0.4)
   }

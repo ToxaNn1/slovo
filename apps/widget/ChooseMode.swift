@@ -16,6 +16,26 @@ enum ModeChoice: String, AppEnum {
   ]
 }
 
+/// The widget's background, «Тло», chosen beside its Widget Mode (ADR 0026).
+/// Each widget keeps its own; a new one starts in Авто, which follows the
+/// phone's light or dark appearance.
+enum BackgroundChoice: String, AppEnum {
+  case auto
+  case light
+  case dark
+  case parchment
+  case blue
+
+  static let typeDisplayRepresentation = TypeDisplayRepresentation(name: "backgroundTitle")
+  static let caseDisplayRepresentations: [BackgroundChoice: DisplayRepresentation] = [
+    .auto: DisplayRepresentation(title: "backgroundAuto"),
+    .light: DisplayRepresentation(title: "backgroundLight"),
+    .dark: DisplayRepresentation(title: "backgroundDark"),
+    .parchment: DisplayRepresentation(title: "backgroundParchment"),
+    .blue: DisplayRepresentation(title: "backgroundBlue"),
+  ]
+}
+
 /// A Collection the widget's picker lists, keyed by its id, so a renamed
 /// Collection stays chosen and shows its new name.
 struct CollectionChoice: AppEntity {
@@ -51,7 +71,8 @@ struct CollectionQuery: EntityQuery {
   }
 }
 
-/// The widget's configuration: its Widget Mode and, for Колекція, which Collection.
+/// The widget's configuration: its Widget Mode, for Колекція which Collection,
+/// and its «Тло».
 struct ChooseMode: WidgetConfigurationIntent {
   static let title: LocalizedStringResource = "modeTitle"
 
@@ -61,15 +82,20 @@ struct ChooseMode: WidgetConfigurationIntent {
   @Parameter(title: "collectionTitle")
   var collection: CollectionChoice?
 
+  @Parameter(title: "backgroundTitle", default: .auto)
+  var background: BackgroundChoice
+
   static var parameterSummary: some ParameterSummary {
     When(\ChooseMode.$mode, .equalTo, ModeChoice.collection) {
       Summary {
         \.$mode
         \.$collection
+        \.$background
       }
     } otherwise: {
       Summary {
         \.$mode
+        \.$background
       }
     }
   }
