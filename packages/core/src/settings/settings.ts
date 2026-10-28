@@ -13,16 +13,19 @@ export interface UserSettings {
   readonly hideStreak: boolean;
   /** Whether Self-check hides the answer on an Entry card until the reader taps. */
   readonly selfCheck: boolean;
+  /** Whether «Сезонний декор» is on: slots 1 and 2 of the Decor follow the local date (ADR 0055). */
+  readonly seasonalDecor: boolean;
   /** The Daily Limit: off, or the distinct Entries Seen on a local day before the Feed says «enough». */
   readonly dailyLimit: DailyLimit;
 }
 
 /**
  * The settings an Edition sets the defaults of. The Streak is shown until the
- * user hides it, and Self-check is off until the user turns it on, in every
- * Edition, so neither has an Edition default.
+ * user hides it, Self-check is off until the user turns it on and Seasonal
+ * Decor is on until the user turns it off, in every Edition, so none of them
+ * has an Edition default.
  */
-export type SettingsDefaults = Omit<UserSettings, 'hideStreak' | 'selfCheck'>;
+export type SettingsDefaults = Omit<UserSettings, 'hideStreak' | 'selfCheck' | 'seasonalDecor'>;
 
 /** The user's settings: their own choices over the Edition's defaults. */
 export interface Settings {
@@ -56,7 +59,12 @@ export function createSettings({
   userState: UserState;
   defaults: SettingsDefaults;
 }): Settings {
-  const all: UserSettings = { ...defaults, hideStreak: false, selfCheck: false };
+  const all: UserSettings = {
+    ...defaults,
+    hideStreak: false,
+    selfCheck: false,
+    seasonalDecor: true,
+  };
 
   async function read(): Promise<UserSettings> {
     return {
@@ -65,6 +73,7 @@ export function createSettings({
       vibration: (await userState.read(userStateRecords.vibration)) ?? all.vibration,
       hideStreak: (await userState.read(userStateRecords.hideStreak)) ?? all.hideStreak,
       selfCheck: (await userState.read(userStateRecords.selfCheck)) ?? all.selfCheck,
+      seasonalDecor: (await userState.read(userStateRecords.seasonalDecor)) ?? all.seasonalDecor,
       dailyLimit: (await userState.read(userStateRecords.dailyLimit)) ?? all.dailyLimit,
     };
   }
@@ -82,6 +91,9 @@ export function createSettings({
             ? userStateRecords.hideStreak.change(changes.hideStreak)
             : []),
           ...('selfCheck' in changes ? userStateRecords.selfCheck.change(changes.selfCheck) : []),
+          ...('seasonalDecor' in changes
+            ? userStateRecords.seasonalDecor.change(changes.seasonalDecor)
+            : []),
           ...('dailyLimit' in changes
             ? userStateRecords.dailyLimit.change(changes.dailyLimit)
             : []),
