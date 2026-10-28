@@ -222,6 +222,14 @@ export const FeatureSwitchesSchema = z.strictObject({
   communityCounters: z.boolean(),
   /** The Community Word «Слово тижня спільноти»: its Monday Feed Notice (ADR 0060). */
   communityWord: z.boolean(),
+  /** The calligraphic Lemma: the Lemma on the Word of the Day card in the Feed set in the Edition's calligraphic font. */
+  calligraphy: z.boolean(),
+  /** Spotlight: the Spotlight Snapshot the app writes into the system search; off, the snapshot is empty (ADR 0057). */
+  spotlight: z.boolean(),
+  /** App Intents: «Слово дня» and «Відкрити гру» open the Word of the Day card and the Game; off, they open the app's start (ADR 0057). */
+  appIntents: z.boolean(),
+  /** Collection Links: «Поділитися посиланням» on a Collection and the `c/<id>` links that open its copy (ADR 0058). */
+  collectionLinks: z.boolean(),
 });
 
 export type FeatureSwitches = z.infer<typeof FeatureSwitchesSchema>;

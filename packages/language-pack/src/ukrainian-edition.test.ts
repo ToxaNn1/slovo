@@ -64,6 +64,10 @@ describe('the Ukrainian Edition', () => {
     expect(edition.isFeatureEnabled('mistakeReports')).toBe(true);
     expect(edition.isFeatureEnabled('communityCounters')).toBe(true);
     expect(edition.isFeatureEnabled('communityWord')).toBe(true);
+    expect(edition.isFeatureEnabled('calligraphy')).toBe(true);
+    expect(edition.isFeatureEnabled('spotlight')).toBe(true);
+    expect(edition.isFeatureEnabled('appIntents')).toBe(true);
+    expect(edition.isFeatureEnabled('collectionLinks')).toBe(true);
   });
 
   it('starts new users on the agreed defaults', () => {

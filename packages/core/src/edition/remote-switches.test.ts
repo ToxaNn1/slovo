@@ -134,6 +134,19 @@ describe('the remote Feature Switches', () => {
     expect(switches.edition.isFeatureEnabled('mistakeReports')).toBe(true);
   });
 
+  it('turn the Collection Links off remotely and keep the other features of 0.8.15', async () => {
+    const app = device();
+    app.backend.turnOff('collectionLinks');
+    const switches = await app.launch();
+
+    await switches.ask();
+
+    expect(switches.edition.isFeatureEnabled('collectionLinks')).toBe(false);
+    expect(switches.edition.isFeatureEnabled('spotlight')).toBe(true);
+    expect(switches.edition.isFeatureEnabled('appIntents')).toBe(true);
+    expect(switches.edition.isFeatureEnabled('calligraphy')).toBe(true);
+  });
+
   it('give every Game Mode and the Daily Crossword as off once the Game is off remotely', async () => {
     const app = device();
     app.backend.turnOff('game');
