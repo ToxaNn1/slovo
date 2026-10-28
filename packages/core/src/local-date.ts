@@ -99,6 +99,9 @@ function localDateAt(instant: Date, timeZone: string): LocalDate {
 export const dayNumber = ({ year, month, day }: LocalDate) =>
   Date.UTC(year, month - 1, day) / DAY_MS;
 
+/** 1970-01-01, day number 0, was a Thursday, so a Monday's day number leaves 4 over 7. */
+export const isMonday = (day: LocalDate) => (((dayNumber(day) - 4) % 7) + 7) % 7 === 0;
+
 /** The local date `days` after the date. */
 export function localDateAfter(date: LocalDate, days: number): LocalDate {
   const after = new Date((dayNumber(date) + days) * DAY_MS);

@@ -1,7 +1,7 @@
 import type { Edition } from '../edition/edition';
 import type { Favorites } from '../saved/favorites';
 import type { History } from '../saved/history';
-import { dateKeyOf, dayNumber, localDateAfter, localDayOf, type LocalDate } from '../local-date';
+import { dateKeyOf, isMonday, localDateAfter, localDayOf, type LocalDate } from '../local-date';
 import type { Clock } from '../ports';
 import type { Progress } from './progress';
 import type { UserState } from '../user-state/user-state';
@@ -40,9 +40,6 @@ export interface WeeklyRecap {
 }
 
 const { activeDays, knowledge } = userStateRecords;
-
-/** 1970-01-01, day number 0, was a Thursday, so a Monday's day number leaves 4 over 7. */
-const isMonday = (day: LocalDate) => (((dayNumber(day) - 4) % 7) + 7) % 7 === 0;
 
 /**
  * Creates the Weekly Recap over History, Favorites, the Knowledge Marks' times
