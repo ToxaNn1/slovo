@@ -80,18 +80,20 @@ const ENDS_IN_PUNCTUATION = /\p{P}$/u;
 /** A right answer's option grows to 1.03 as it fills. */
 const RIGHT_SCALE = 1.03;
 /**
- * A lost Life pops in 500 ms, up to 1.4 and −12° and back, and its fill fades
+ * A lost Life pops in 300 ms, up to 1.4 and −12° and back, and its fill fades
  * to the outline on the way back. It comes once the wrong choice has filled,
  * `LIFE_LOST_DELAY` after the answer, as its haptic does.
  */
 const LIFE_POP = { scale: 1.4, rotate: -12 };
 const LIFE_STEP = {
-  duration: 250,
+  duration: 150,
   easing: Easing.out(Easing.ease),
   reduceMotion: ReduceMotion.Never,
 };
-/** The progress bar grows in 400 ms. */
-const BAR_GROWTH = { duration: 400, easing: ease, reduceMotion: ReduceMotion.Never };
+/** With Reduce Motion a lost Life's fill only fades, in 250 ms. */
+const LIFE_FADE = { ...LIFE_STEP, duration: 250 };
+/** The progress bar grows in 300 ms; with Reduce Motion it is set at once, as its edge moves across the header. */
+const BAR_GROWTH = { duration: 300, easing: ease, reduceMotion: ReduceMotion.Never };
 
 /** The answer to a Round of the pick form. */
 type PickAnswer = Extract<RoundAnswer, { form: 'pick' }>;
@@ -376,11 +378,12 @@ function GameHeader({
   const { strings, voice, count } = useEdition();
   const words = strings.game.round;
   const progress = { passed: String(roundsPassed), total: String(roundLimit ?? '') };
+  const reduceMotion = useReduceMotion();
   const passed = useSharedValue(roundsPassed);
   useEffect(() => {
-    passed.value = withTiming(roundsPassed, BAR_GROWTH);
+    passed.value = reduceMotion ? roundsPassed : withTiming(roundsPassed, BAR_GROWTH);
     // The shared value is stable, so only a Round passing grows the bar.
-  }, [roundsPassed, passed]);
+  }, [roundsPassed, reduceMotion, passed]);
   // The share of the Rounds passed, as flex weights, so the bar needs no width.
   const filled = useAnimatedStyle(() => ({ flex: passed.value }));
   const unfilled = useAnimatedStyle(() => ({ flex: (roundLimit ?? 0) - passed.value }));
@@ -409,7 +412,10 @@ function GameHeader({
               testID="game-progress-bar"
               style={[styles.bar, { backgroundColor: colors.track }]}
             >
-              <Animated.View style={[filled, { backgroundColor: colors.accent }]} />
+              <Animated.View
+                testID="game-progress-filled"
+                style={[filled, { backgroundColor: colors.accent }]}
+              />
               <Animated.View style={unfilled} />
             </View>
           )}
@@ -434,7 +440,7 @@ function GameHeader({
           style={styles.lives}
         >
           {Array.from({ length: livesAtStart }, (_, life) => (
-            <Life key={life} full={life < lives} />
+            <Life key={life} place={life} full={life < lives} />
           ))}
         </View>
       )}
@@ -476,7 +482,7 @@ function ExitButton({ onPress }: { onPress: () => void }) {
  * meanwhile pops to the outline; with Reduce Motion its fill only fades. Its
  * haptic comes with the wrong answer that cost it.
  */
-function Life({ full }: { full: boolean }) {
+function Life({ place, full }: { place: number; full: boolean }) {
   const { colors } = useTokens();
   const reduceMotion = useReduceMotion();
   /** 1 while full, 0 once lost. */
@@ -496,7 +502,7 @@ function Life({ full }: { full: boolean }) {
     // The fill fades as the pop comes back, or at once with Reduce Motion.
     fullness.value = withDelay(
       reduceMotion ? LIFE_LOST_DELAY : LIFE_LOST_DELAY + LIFE_STEP.duration,
-      withTiming(0, LIFE_STEP),
+      withTiming(0, reduceMotion ? LIFE_FADE : LIFE_STEP),
     );
     if (!reduceMotion) {
       pop.value = withDelay(
@@ -522,9 +528,12 @@ function Life({ full }: { full: boolean }) {
     </Svg>
   );
   return (
-    <Animated.View style={popStyle}>
+    <Animated.View testID={`game-life-${String(place)}`} style={popStyle}>
       {heart('none', withAlpha(colors.ink, 0.32))}
-      <Animated.View style={[StyleSheet.absoluteFill, fillStyle]}>
+      <Animated.View
+        testID={`game-life-${String(place)}-fill`}
+        style={[StyleSheet.absoluteFill, fillStyle]}
+      >
         {heart(colors.heart, colors.heart)}
       </Animated.View>
     </Animated.View>

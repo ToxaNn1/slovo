@@ -145,14 +145,14 @@ describe('OrderedChips', () => {
     // o, r where b belongs, then the rest.
     await tap(1, 2, 3, 4, 0);
     await act(() => {
-      jest.advanceTimersByTime(80);
+      jest.advanceTimersByTime(60);
     });
 
     expect(shiftOf(1)).toBe(-4);
     expect(shiftOf(0)).toBe(0);
     expect(shiftOf(2)).toBe(0);
     await act(() => {
-      jest.advanceTimersByTime(400);
+      jest.advanceTimersByTime(240);
     });
     expect(shiftOf(1)).toBe(0);
   });
@@ -163,7 +163,7 @@ describe('OrderedChips', () => {
     // The two o chips are interchangeable.
     await tap(4, 3, 2, 1, 0);
     await act(() => {
-      jest.advanceTimersByTime(80);
+      jest.advanceTimersByTime(60);
     });
 
     expect([0, 1, 2, 3, 4].map(shiftOf)).toEqual([0, 0, 0, 0, 0]);
@@ -175,7 +175,7 @@ describe('OrderedChips', () => {
 
     await tap(1, 2, 3, 4, 0);
     await act(() => {
-      jest.advanceTimersByTime(80);
+      jest.advanceTimersByTime(60);
     });
 
     expect(shiftOf(1)).toBe(0);
@@ -233,7 +233,7 @@ describe('OrderedChips', () => {
     // «tail» where «the» belongs, then the rest.
     await tap(0, 1, 2, 3);
     await act(() => {
-      jest.advanceTimersByTime(80);
+      jest.advanceTimersByTime(60);
     });
 
     expect(shiftOf(0)).toBe(-4);

@@ -209,8 +209,8 @@ export function EmptyStateIllustration({
 
 /** The design's win motion: each stitch starts 120 ms after the one before. */
 const STITCH_GAP_MS = 120;
-/** One stitch takes the design's 500 ms spring, eased like its `cubic-bezier(.3, 1.6, .5, 1)`. */
-const STITCH_MS = 500;
+/** One stitch takes 300 ms, eased like the design's `cubic-bezier(.3, 1.6, .5, 1)` overshoot. */
+const STITCH_MS = 300;
 const stitchEasing = Easing.bezier(0.3, 1.6, 0.5, 1);
 /** What Reduce Motion does in place of the stitching: a fade. */
 const FADE_MS = 250;
@@ -280,7 +280,14 @@ function StitchedLayer({
       : [{ scale: interpolate(progress.value, [0, 1], [STITCH_FROM_SCALE, 1]) }],
   }));
 
-  return <Animated.View style={[StyleSheet.absoluteFill, stitchStyle]}>{children}</Animated.View>;
+  return (
+    <Animated.View
+      testID={`victory-layer-${String(index)}`}
+      style={[StyleSheet.absoluteFill, stitchStyle]}
+    >
+      {children}
+    </Animated.View>
+  );
 }
 
 /**
