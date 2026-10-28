@@ -652,16 +652,26 @@ describe('counters.communityWord', () => {
     });
   });
 
-  it('answers NOT_FOUND for an Edition it does not serve, or with the Community Word switched off, locally or remotely', async () => {
-    const folder = testEditions(['off', 'remote'], (config) =>
-      config.id === 'off'
-        ? { ...config, featureSwitches: { ...config.featureSwitches, communityWord: false } }
-        : config,
-    );
+  it('answers NOT_FOUND for an Edition it does not serve, or with the Community Word or the Community Counters switched off, locally or remotely', async () => {
+    const locallyOff = new Map([
+      ['off', 'communityWord'],
+      ['counters-off', 'communityCounters'],
+    ]);
+    const folder = testEditions(['off', 'remote', 'counters-off', 'counters-remote'], (config) => {
+      const feature = locallyOff.get(config.id);
+      return feature === undefined
+        ? config
+        : { ...config, featureSwitches: { ...config.featureSwitches, [feature]: false } };
+    });
     const { client, switchOff } = testApp({ editions: folder.read() });
+    // Adds kept before the counters went off remotely give no Community Word after.
+    vi.setSystemTime(new Date('2026-10-28T09:00:00Z'));
+    await addToFavorites(client, 'counters-remote', ['w_a']);
     await switchOff('remote', 'communityWord');
+    await switchOff('counters-remote', 'communityCounters');
+    vi.setSystemTime(new Date('2026-11-04T09:00:00Z'));
 
-    for (const edition of ['xx', 'off', 'remote']) {
+    for (const edition of ['xx', 'off', 'remote', 'counters-off', 'counters-remote']) {
       await expect(client.counters.communityWord({ edition })).rejects.toMatchObject({
         code: 'NOT_FOUND',
         status: 404,
