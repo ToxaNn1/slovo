@@ -87,6 +87,7 @@
     "terms": "https://example.org/terms"
   },
   "linkDomain": "slovo.example",
+  "wordOfTheDayFont": "Fixture-Script.ttf",
   "categories": [
     {
       "id": "nature",

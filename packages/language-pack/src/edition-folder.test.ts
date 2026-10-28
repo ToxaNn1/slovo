@@ -249,12 +249,20 @@ describe('an Edition folder', () => {
     );
 
     expect(edition.fonts()).toEqual(
-      ['Sans.otf', 'Serif.ttf'].map((file) => join(edition.dir, 'assets/fonts', file)),
+      ['Fixture-Script.ttf', 'Sans.otf', 'Serif.ttf'].map((file) =>
+        join(edition.dir, 'assets/fonts', file),
+      ),
     );
   });
 
   it('brings no fonts when it has no font folder', () => {
-    expect(openEdition(editionsWith(), 'fixture').fonts()).toEqual([]);
+    const editionsDir = editionsWith({
+      change: (dir) => {
+        rmSync(join(dir, 'assets/fonts'), { recursive: true });
+      },
+    });
+
+    expect(openEdition(editionsDir, 'fixture').fonts()).toEqual([]);
   });
 });
 

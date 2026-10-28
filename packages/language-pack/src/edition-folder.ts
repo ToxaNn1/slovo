@@ -54,7 +54,8 @@ const FILES = {
 } as const;
 
 const ASSETS_DIR = 'assets';
-const FONTS_DIR = 'assets/fonts';
+/** Where an Edition keeps the fonts the app embeds. */
+export const FONTS_DIR = 'assets/fonts';
 /** Where an Edition keeps the Illustrations its Words name (ADR 0055). */
 export const ILLUSTRATIONS_DIR = 'assets/illustrations';
 const DECOR_DIR = 'decor';
