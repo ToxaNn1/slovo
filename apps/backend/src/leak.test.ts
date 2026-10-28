@@ -233,6 +233,16 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
             .catch(refused);
         },
       },
+      collectionLinks: {
+        create: async () => {
+          const link = { edition: EDITION, name: 'reader@example.com', entryIds: ['w_a1'] };
+          await client.collectionLinks.create(link).catch(refused);
+          await client.collectionLinks.create({ ...link, edition: 'pl' }).catch(refused);
+        },
+        read: async () => {
+          await client.collectionLinks.read({ id: 'aZ3kQ9mB0x' }).catch(refused);
+        },
+      },
       counters: {
         send: async () => {
           const events = [{ entryId: 'w_a1', known: 1, unknown: 0, saved: 1 } as const];
