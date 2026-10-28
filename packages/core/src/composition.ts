@@ -38,6 +38,7 @@ import {
   type WordOfTheDayArchive,
 } from './saved/word-of-the-day-archive';
 import { openKnowledge, type Knowledge } from './knowledge/knowledge';
+import { openCommunityCounters, type CommunityCounters } from './community-counters/counter-deltas';
 import { openHiddenEntries, type HiddenEntries } from './mix/hidden-entries';
 import { createHiding, type Hiding } from './mix/hiding';
 import { openMix, type Mix, type MixEdition } from './entries/mix';
@@ -88,6 +89,8 @@ export interface Composition extends Hiding {
   readonly mix: Mix;
   /** The Knowledge Marks, which an Entry card's «Знаю» and «Не знаю» change (ADR 0043). */
   readonly knowledge: Knowledge;
+  /** The Community Counters, which the reader's own Knowledge Marks change (ADR 0060). */
+  readonly communityCounters: CommunityCounters;
   /**
    * Progress: the Streak and the Best Streak, derived from the Active Days,
    * the stats sheet's counts, which a heart, a Collection change and a Seen
@@ -354,12 +357,14 @@ export async function openComposition({
   // restore calls `eligibilityChanged`, which needs the Feed and the Game
   // declared below; that is safe, as none can come before the composition opens.
   const hiddenEntries = await openHiddenEntries({ rows, userState, clock, eligibilityChanged });
+  const { communityCounters, countMark } = openCommunityCounters({ edition, userState });
   const { knowledge, followDay: followKnowledgeDay } = await openKnowledge({
     edition,
     rows,
     hiddenEntries,
     userState,
     clock,
+    countMark,
   });
   const dailyLimit = dailyLimitNotices({ edition, userState, history, clock });
   const { feed, followEligibility, markOpenedSeen, openDay } = await openFeed({
@@ -492,6 +497,7 @@ export async function openComposition({
     hiddenEntries,
     mix,
     knowledge,
+    communityCounters,
     progress,
     weeklyRecap,
     resume() {

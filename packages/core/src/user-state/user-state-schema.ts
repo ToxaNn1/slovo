@@ -32,6 +32,9 @@ const INSTALLED_KEY = 'app.installed';
 /** An instant, kept as an ISO 8601 date and time in UTC. */
 const InstantSchema = z.iso.datetime();
 
+/** A change of one Community Counter: one taken away, none or one added. */
+const CounterChangeSchema = z.literal([-1, 0, 1]);
+
 /** A card's Entry and the local date it was on screen. */
 const EntryOnDateSchema = z.object({ entryId: z.string(), date: z.string() });
 
@@ -298,6 +301,32 @@ export const userStateRecords = {
   syncPending: declareRecords(
     'sync.pending.',
     z.object({ changedAt: InstantSchema, value: z.string().nullable() }),
+    { sync: 'device-only' },
+  ),
+  /**
+   * What this device counted for the Community Counters, one record per
+   * Entry, by Entry id: the mark it counted, or none, and whether it counted
+   * the Entry saved (ADR 0060). A device starts with none at the update, so
+   * nothing from before it is ever counted. It stays on the device: what one
+   * device counted is not the Account's. A new key, so no migration.
+   */
+  countersCounted: declareRecords(
+    'counters.counted.',
+    z.object({ mark: z.enum(['known', 'unknown']).nullable(), saved: z.boolean() }),
+    { sync: 'device-only' },
+  ),
+  /**
+   * The Community Counter changes counted and not yet sent, one record per
+   * Entry, by Entry id: the change of its known, unknown and saved counts,
+   * merged (ADR 0060). It stays on the device. A new key, so no migration.
+   */
+  countersUnsent: declareRecords(
+    'counters.unsent.',
+    z.object({
+      known: CounterChangeSchema,
+      unknown: CounterChangeSchema,
+      saved: CounterChangeSchema,
+    }),
     { sync: 'device-only' },
   ),
   /** The Sync cursor: the server's sequence number of the last record pulled; without it, no sync has pulled yet. */
