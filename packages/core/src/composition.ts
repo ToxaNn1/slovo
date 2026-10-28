@@ -89,7 +89,7 @@ export interface Composition extends Hiding {
   readonly mix: Mix;
   /** The Knowledge Marks, which an Entry card's «Знаю» and «Не знаю» change (ADR 0043). */
   readonly knowledge: Knowledge;
-  /** The Community Counters, which the reader's own Knowledge Marks change (ADR 0060). */
+  /** The Community Counters, which the reader's own Knowledge Marks and Favorites change (ADR 0060). */
   readonly communityCounters: CommunityCounters;
   /**
    * Progress: the Streak and the Best Streak, derived from the Active Days,
@@ -357,7 +357,10 @@ export async function openComposition({
   // restore calls `eligibilityChanged`, which needs the Feed and the Game
   // declared below; that is safe, as none can come before the composition opens.
   const hiddenEntries = await openHiddenEntries({ rows, userState, clock, eligibilityChanged });
-  const { communityCounters, countMark } = openCommunityCounters({ edition, userState });
+  const { communityCounters, countMark, countSaved } = openCommunityCounters({
+    edition,
+    userState,
+  });
   const { knowledge, followDay: followKnowledgeDay } = await openKnowledge({
     edition,
     rows,
@@ -417,7 +420,7 @@ export async function openComposition({
     await followGameEligibility();
   }
   const [favorites, collections, mix] = await Promise.all([
-    openFavorites({ rows, userState, clock }),
+    openFavorites({ rows, userState, clock, countSaved }),
     openCollections({ rows, userState, clock, random }),
     Promise.all([entries.categories(), entries.correctionCategories()]).then(([word, correction]) =>
       openMix({ edition, categories: { word, correction }, userState, eligibilityChanged }),
