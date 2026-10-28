@@ -6,6 +6,7 @@ import { OpenAPILink, type OpenAPILinkOptions } from '@orpc/openapi-client/fetch
 import { accountContract } from './api/account';
 import { contentContract } from './api/content';
 import { editionContract } from './api/edition';
+import { reportsContract } from './api/reports';
 import { syncContract } from './api/sync';
 
 export { PACK_MEDIA_TYPE } from './api/content';
@@ -33,6 +34,7 @@ export const apiContract = oc.prefix('/v1').router({
   account: accountContract,
   content: contentContract,
   edition: editionContract,
+  reports: reportsContract,
   sync: syncContract,
 });
 
