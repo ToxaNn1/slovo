@@ -248,9 +248,20 @@ describe('app config', () => {
   it('shares the App Group derived from the bundle id between the app and the widget', () => {
     vi.stubEnv('SLOVO_EDITION', 'uk');
 
-    expect(appConfig(context).ios?.entitlements).toEqual({
-      'com.apple.security.application-groups': ['group.app.slovo.uk'],
+    expect(appConfig(context).ios?.entitlements?.['com.apple.security.application-groups']).toEqual(
+      ['group.app.slovo.uk'],
+    );
+  });
+
+  it("claims the Edition's link domain for Collection Links (ADR 0058)", () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+    const otherDomain = repoWithEdition((config) => {
+      config['linkDomain'] = 'links.slovo.test';
     });
+
+    expect(
+      appConfig(otherDomain).ios?.entitlements?.['com.apple.developer.associated-domains'],
+    ).toEqual(['applinks:links.slovo.test']);
   });
 
   it('adds the widget extension from apps/widget', () => {
