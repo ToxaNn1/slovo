@@ -140,8 +140,12 @@ The single built-in list of Entries the user marked with the heart ("save word")
 _Avoid_: Saved words, likes
 
 **Collection**:
-A list of Entries the user created and named; an Entry may be in many Collections.
+A list of Entries the user created and named; an Entry may be in many Collections. A Collection can be shared by a Collection Link, and «Додати собі» on a Collection Link copies it as the reader's own Collection, which syncs like any other.
 _Avoid_: Folder, playlist, list
+
+**Collection Link**:
+An immutable, never-expiring snapshot of a Collection on the server (its name and its Entry ids in order) behind `https://<linkDomain>/c/<id>`, made by «Поділитися посиланням». Later edits to the Collection never reach it; sharing again makes a new link. Neither side needs an Account.
+_Avoid_: Share link, invite
 
 **Saved**:
 Only the name of the tab that groups Favorites, Collections and History. Not a concept of its own.
@@ -295,8 +299,12 @@ What a home-screen widget shows, chosen per widget: Улюблене (the Favori
 _Avoid_: Game Mode, filter
 
 **Widget Snapshot**:
-Everything each Widget Mode may show, decided by the Core and ready to draw, which the app writes into the App Group for the widget to read. The widget reads nothing else.
+Everything each Widget Mode may show, decided by the Core and ready to draw, which the app writes into the App Group for the widget to read. It also says whether today's Word of the Day was Seen (`wordOfTheDaySeenOn`). The widget reads nothing else.
 _Avoid_: Widget cache, widget database
+
+**Spotlight Snapshot**:
+What the iPhone search may find, decided by the Core: each Entry in Favorites, any Collection or the Word of the Day archive once, and each Collection as «Колекція · {n} слів», Hidden and Retired Entries left out. A local Swift module writes it into CoreSpotlight, replacing the whole index; with `spotlight` off it is empty.
+_Avoid_: Search index cache
 
 ### Game
 
