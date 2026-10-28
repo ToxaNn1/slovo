@@ -1,5 +1,13 @@
 import { spawnSync } from 'node:child_process';
-import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -1028,5 +1036,116 @@ describe("a Word's moods", () => {
     expect(run.stderr).toBe('');
     expect(run.stdout).toContain('origin:');
     expect(run.stdout).not.toContain('moods:');
+  });
+});
+
+describe("a Word's Illustration", () => {
+  const offer = 'illustration: a square PNG of at most 150 KB in assets/illustrations/';
+
+  /** The header of a 4×4 PNG: all the build reads of an Illustration. */
+  function addPng(name: string): void {
+    const header = Buffer.alloc(13);
+    header.writeUInt32BE(4, 0);
+    header.writeUInt32BE(4, 4);
+    const png = Buffer.concat([
+      Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+      Buffer.from([0, 0, 0, 13]),
+      Buffer.from('IHDR', 'latin1'),
+      header,
+    ]);
+    mkdirSync(join(editionDir, 'assets/illustrations'), { recursive: true });
+    writeFileSync(join(editionDir, 'assets/illustrations', name), png);
+  }
+
+  it('is offered with the files the Edition has when a Word is drafted, and recorded once it passes', () => {
+    addPng('kupyna.png');
+    addPng('bervy.png');
+
+    const run = content(['new', 'word', '--edition', 'uk'], {
+      edits: [{ ...validWord, illustration: 'kupyna.png' }],
+    });
+
+    expect(run.stderr).toBe('');
+    expect(run.status).toBe(0);
+    expect(run.stdout).toContain(`${offer} (bervy.png, kupyna.png), or none`);
+    const [file = ''] = run.opened;
+    expect(readJson(file)).toMatchObject({ illustration: 'kupyna.png' });
+    expect(run.stdout).toContain(`Recorded ${file}`);
+    expect(content(['check', '--edition', 'uk']).status).toBe(0);
+  });
+
+  it('is in the draft, and a Word saved with it empty leaves the field out', () => {
+    const run = content(['new', 'word', '--edition', 'uk'], { edits: [validWord] });
+
+    expect(run.stderr).toBe('');
+    expect(run.status).toBe(0);
+    const drafted = JSON.parse(readFileSync(join(workDir, 'edits.json.last'), 'utf8')) as unknown;
+    expect(drafted).toMatchObject({ illustration: '' });
+    const [file = ''] = run.opened;
+    expect(readJson(file)).not.toHaveProperty('illustration');
+    expect(run.stdout).toContain(`Recorded ${file}`);
+  });
+
+  it('is offered when a Word is edited, and recorded once it passes', () => {
+    addPng('kupyna.png');
+    const file = ukrainian.entryFile(word.id);
+
+    const run = content(['edit', word.id, '--edition', 'uk'], {
+      edits: [{ illustration: 'kupyna.png' }],
+    });
+
+    expect(run.stderr).toBe('');
+    expect(run.status).toBe(0);
+    expect(run.stdout).toContain(`${offer} (kupyna.png), or none`);
+    expect(readJson(file)).toMatchObject({ id: word.id, illustration: 'kupyna.png' });
+    expect(run.stdout).toContain(`Recorded ${file}`);
+  });
+
+  it('is offered without files when the Edition has none', () => {
+    const run = content(['edit', word.id, '--edition', 'uk'], { edits: [null] });
+
+    expect(run.stdout).toContain(`${offer}, or none`);
+  });
+
+  it('is not offered for an Entry of another kind', () => {
+    const run = content(['edit', idiom.id, '--edition', 'uk'], { edits: [null] });
+
+    expect(run.stdout).not.toContain('illustration:');
+  });
+
+  it('refuses a file the Edition does not have, and records nothing', () => {
+    const before = { registry: registry(), manifest: manifest() };
+
+    const run = content(['new', 'word', '--edition', 'uk'], {
+      edits: [{ ...validWord, illustration: 'missing.png' }],
+      answers: 'n\n',
+    });
+
+    expect(run.status).toBe(1);
+    const [file = ''] = run.opened;
+    const id = file.slice('content/words/'.length, -'.json'.length);
+    expect(run.stderr).toContain(
+      `${file} › Entry ${id} › illustration: No file missing.png in assets/illustrations/`,
+    );
+    expect(run.stderr).toContain(`Kept ${file}, not recorded`);
+    expect(registry()).toEqual(before.registry);
+    expect(manifest()).toEqual(before.manifest);
+  });
+
+  it('is checked with the rest of the Edition, a missing file reported in its file and field', () => {
+    const file = ukrainian.entryFile(word.id);
+    const entry = readJson(file) as Record<string, unknown>;
+    writeFileSync(
+      join(editionDir, file),
+      JSON.stringify({ ...entry, illustration: 'missing.png' }),
+    );
+
+    const run = content(['check', '--edition', 'uk']);
+
+    expect(run.status).toBe(1);
+    expect(run.stderr).toContain('Edition "uk": 1 problem(s)');
+    expect(run.stderr).toContain(
+      `${file} › Entry ${word.id} › illustration: No file missing.png in assets/illustrations/`,
+    );
   });
 });
