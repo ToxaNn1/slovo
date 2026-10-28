@@ -10,27 +10,43 @@ struct EntryMoment: TimelineEntry {
   let emptyState: String?
   /// The snapshot's key, which the link to the Entry carries.
   let linkKey: String?
+  /// Whether the Word of the Day was Seen on this moment's local date: the ✓.
+  let wordOfTheDaySeen: Bool
 }
 
 /// The widget's timeline over the Entries of its Widget Mode.
 struct EntryTimeline: AppIntentTimelineProvider {
   /// How long each Entry stays on the home screen.
   static let step: TimeInterval = 5 * 60
-  /// How far ahead one timeline reaches; WidgetKit asks for the next at its end.
+  /// A day, should the calendar give no next local midnight.
   static let span: TimeInterval = 24 * 60 * 60
+  /// The phone's time zone in the Gregorian calendar, as the Core writes
+  /// `wordOfTheDaySeenOn`, whatever calendar the reader chose.
+  private static var calendar: Calendar {
+    var calendar = Calendar(identifier: .gregorian)
+    calendar.timeZone = .current
+    return calendar
+  }
 
-  /// The mode's Entries from `start`, one every five minutes for 24 hours, in
-  /// a shuffle taken in turn, so none comes back before every one has shown.
-  /// The widget shuffles with the system random source.
+  /// The mode's Entries from `start`, one every five minutes up to the next
+  /// local midnight and one at it, in a shuffle taken in turn, so none comes
+  /// back before every one has shown. The timeline ends at midnight, so the ✓
+  /// goes with the day it speaks of (ADR 0026). The widget shuffles with the
+  /// system random source.
   static func moments<R: RandomNumberGenerator>(
     of content: ModeContent, from start: Date, using random: inout R
   ) -> [EntryMoment] {
+    let midnight =
+      calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: start))
+      ?? start.addingTimeInterval(span)
     let shuffled = content.entries.shuffled(using: &random)
-    guard !shuffled.isEmpty else { return [moment(of: content, at: start, showing: nil)] }
-    return (0..<Int(span / step)).map { index in
+    // An empty or broken state stays as it is until midnight.
+    let times =
+      shuffled.isEmpty ? [start] : Array(stride(from: start, to: midnight, by: step))
+    return (times + [midnight]).enumerated().map { index, date in
       moment(
-        of: content, at: start.addingTimeInterval(Double(index) * step),
-        showing: shuffled[index % shuffled.count])
+        of: content, at: date,
+        showing: shuffled.isEmpty ? nil : shuffled[index % shuffled.count])
     }
   }
 
@@ -46,7 +62,13 @@ struct EntryTimeline: AppIntentTimelineProvider {
   {
     EntryMoment(
       date: date, overline: content.overline, entry: entry, emptyState: content.emptyState,
-      linkKey: content.linkKey)
+      linkKey: content.linkKey, wordOfTheDaySeen: content.wordOfTheDaySeenOn == localDate(date))
+  }
+
+  /// The local date of `date` as the Widget Snapshot writes it: `yyyy-MM-dd`.
+  private static func localDate(_ date: Date) -> String {
+    let day = calendar.dateComponents([.year, .month, .day], from: date)
+    return String(format: "%04d-%02d-%02d", day.year ?? 0, day.month ?? 0, day.day ?? 0)
   }
 
   func placeholder(in context: Context) -> EntryMoment {
@@ -66,7 +88,8 @@ struct EntryTimeline: AppIntentTimelineProvider {
     var random = SystemRandomNumberGenerator()
     let content = ModeContent(of: SnapshotStore.latest(), configuration)
     let moments = Self.moments(of: content, from: Date(), using: &random)
-    // An empty or broken state waits for the app's reload after its next write.
+    // An empty or broken state waits, after its midnight moment drops the ✓,
+    // for the app's reload after its next write.
     return Timeline(entries: moments, policy: content.entries.isEmpty ? .never : .atEnd)
   }
 }

@@ -11,6 +11,8 @@ struct ModeContent {
   let emptyState: String?
   /// The snapshot's key for the widget's links to an Entry.
   let linkKey: String?
+  /// The local date on which the Word of the Day was last Seen, for the ✓.
+  let wordOfTheDaySeenOn: String?
 
   init(of snapshot: WidgetSnapshot?, _ configuration: ChooseMode) {
     self.init(of: snapshot, mode: configuration.mode, collectionId: configuration.collection?.id)
@@ -20,6 +22,7 @@ struct ModeContent {
     let ids: [String]
     let empty: String
     linkKey = snapshot?.linkKey
+    wordOfTheDaySeenOn = snapshot?.wordOfTheDaySeenOn
     switch mode {
     case .allEntries:
       overline = Self.text("allEntries")

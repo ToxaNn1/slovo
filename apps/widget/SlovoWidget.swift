@@ -33,15 +33,16 @@ struct EntryView: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 0) {
-      Text(moment.overline)
-        // The overline type of the app (`overlineType` in the UI tokens).
-        .font(EditionInfo.uiFont(size: 11, weight: .bold))
-        .tracking(11 * 0.14)
-        .foregroundStyle(Color("accent"))
-        // In capitals, as the app's overline type draws it, a Collection's name too.
-        .textCase(.uppercase)
-        .lineLimit(1)
-        .minimumScaleFactor(0.7)
+      HStack(alignment: .firstTextBaseline, spacing: 6) {
+        overline
+        Spacer(minLength: 0)
+        if moment.wordOfTheDaySeen {
+          // A quiet ✓ in the corner once today's Word of the Day is Seen (ADR 0026).
+          Image(systemName: "checkmark")
+            .font(.system(size: 11, weight: .semibold))
+            .foregroundStyle(Color("inkSecondary"))
+        }
+      }
       Spacer(minLength: 8)
       if let entry = moment.entry {
         headline(entry.headline)
@@ -68,15 +69,31 @@ struct EntryView: View {
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
     // One element for VoiceOver: the Widget Mode's name, then the Entry's
-    // VoiceOver text, which has no Stress mark, or the mode's state (ADR 0026).
+    // VoiceOver text, which has no Stress mark, or the mode's state, then the
+    // ✓'s label (ADR 0026).
     .accessibilityElement(children: .combine)
     .accessibilityLabel(accessibilityText)
   }
 
   private var accessibilityText: String {
-    [moment.overline, moment.entry?.voiceOver ?? moment.emptyState]
-      .compactMap { $0 }
-      .joined(separator: ". ")
+    [
+      moment.overline, moment.entry?.voiceOver ?? moment.emptyState,
+      moment.wordOfTheDaySeen ? NSLocalizedString("wordOfTheDaySeen", comment: "") : nil,
+    ]
+    .compactMap { $0 }
+    .joined(separator: ". ")
+  }
+
+  private var overline: some View {
+    Text(moment.overline)
+      // The overline type of the app (`overlineType` in the UI tokens).
+      .font(EditionInfo.uiFont(size: 11, weight: .bold))
+      .tracking(11 * 0.14)
+      .foregroundStyle(Color("accent"))
+      // In capitals, as the app's overline type draws it, a Collection's name too.
+      .textCase(.uppercase)
+      .lineLimit(1)
+      .minimumScaleFactor(0.7)
   }
 
   /// The headline scales down before it wraps, and wraps only between words,
