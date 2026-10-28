@@ -9,6 +9,7 @@ import type { Logger } from 'pino';
 
 import { accountProcedures } from './account/account-procedures';
 import { contentProcedures } from './content/content-procedures';
+import { countersProcedures } from './counters/counters-procedures';
 import { reportOf, type ErrorReporter } from './error-reporter';
 import { editionProcedures } from './edition/edition-procedures';
 import { reportsProcedures } from './reports/reports-procedures';
@@ -68,6 +69,7 @@ export function createApiHandler({
     .router({
       account: accountProcedures(accounts),
       content: contentProcedures(contentPacks),
+      counters: countersProcedures(),
       edition: editionProcedures(editions),
       reports: reportsProcedures(),
       sync: syncProcedures(sync, accounts),
