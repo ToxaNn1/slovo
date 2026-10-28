@@ -1,3 +1,5 @@
+'use no memo';
+
 import { useRef, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import ReanimatedSwipeable, {

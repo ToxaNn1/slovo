@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 
 const sourceDir = fileURLToPath(new URL('.', import.meta.url));
 
-const animationImport = /from 'react-native-(reanimated|gesture-handler|worklets)'/;
+const animationImport = /from 'react-native-(reanimated|gesture-handler|worklets)(\/[^']*)?'/;
 
 /** Every component module of the UI, by path relative to `src`. */
 function componentModules(): string[] {
