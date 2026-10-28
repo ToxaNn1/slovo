@@ -454,6 +454,117 @@ describe('the 0.8.14 strings', () => {
   });
 });
 
+describe('the 0.8.15 strings', () => {
+  const strings = readJson('uk', 'strings') as Record<string, Record<string, unknown>>;
+  const issuesOf = (changed: unknown) =>
+    EditionStringsSchema.safeParse(changed).error?.issues.map((issue) => issue.path.join('.'));
+  const parsed = EditionStringsSchema.parse(strings);
+  const pluralRules = new Intl.PluralRules('uk');
+  /** A count text as the app fills it: the form of `count`. */
+  const countText = (forms: Record<string, string | undefined>, count: number) =>
+    fill(forms[pluralRules.select(count)] ?? forms['other'] ?? '', { count: String(count) });
+
+  it('the Ukrainian Edition carries the agreed widget texts verbatim', () => {
+    expect(parsed.widget).toMatchObject({
+      wordOfTheDaySeen: 'Слово дня переглянуто',
+      backgroundTitle: 'Тло',
+      backgroundAuto: 'Авто',
+      backgroundLight: 'Світлий',
+      backgroundDark: 'Темний',
+      backgroundParchment: 'Пергамент',
+      backgroundBlue: 'Синій',
+    });
+  });
+
+  it('the Ukrainian Edition carries the agreed App Intents texts and Siri phrases verbatim', () => {
+    expect(parsed.appIntents).toEqual({
+      wordOfTheDay: {
+        title: 'Слово дня',
+        phrases: ['Слово дня в SLOVO', 'Покажи слово дня в SLOVO'],
+      },
+      openGame: { title: 'Відкрити гру', phrases: ['Відкрий гру в SLOVO', 'Грати в SLOVO'] },
+    });
+  });
+
+  it('the Ukrainian Edition carries the agreed Collection Link texts verbatim', () => {
+    const { link } = parsed.collections;
+
+    expect(link.share).toBe('Поділитися посиланням');
+    expect(fill(link.message, { name: 'Осінь', url: 'https://slovo.example/c/abc123' })).toBe(
+      'Колекція «Осінь» у SLOVO: https://slovo.example/c/abc123',
+    );
+    expect(link.offline).toBe('Немає з’єднання. Спробуйте пізніше.');
+    expect(link.add).toBe('Додати собі');
+    expect(link.notFound).not.toBe('');
+  });
+
+  it.each([
+    [1, '1 слово недоступне'],
+    [2, '2 слова недоступні'],
+    [5, '5 слів недоступні'],
+    [21, '21 слово недоступне'],
+  ])('the Ukrainian count of %i skipped Entries reads «%s»', (count, text) => {
+    expect(countText(parsed.collections.link.unavailable, count)).toBe(text);
+  });
+
+  it.each([
+    [0, 'Колекція · 0 слів'],
+    [1, 'Колекція · 1 слово'],
+    [2, 'Колекція · 2 слова'],
+    [5, 'Колекція · 5 слів'],
+    [12, 'Колекція · 12 слів'],
+    [21, 'Колекція · 21 слово'],
+  ])('the Ukrainian Spotlight line of a Collection of %i Entries reads «%s»', (count, text) => {
+    expect(countText(parsed.spotlight.collection, count)).toBe(text);
+  });
+
+  it.each(['appIntents', 'spotlight'])('every Edition needs %s', (key) => {
+    const without = Object.fromEntries(Object.entries(strings).filter(([name]) => name !== key));
+
+    expect(issuesOf(without)).toEqual([key]);
+  });
+
+  it.each([
+    ['widget', 'wordOfTheDaySeen'],
+    ['widget', 'backgroundTitle'],
+    ['widget', 'backgroundAuto'],
+    ['widget', 'backgroundLight'],
+    ['widget', 'backgroundDark'],
+    ['widget', 'backgroundParchment'],
+    ['widget', 'backgroundBlue'],
+    ['collections', 'link'],
+  ])('every Edition needs %s.%s', (group, key) => {
+    const without = Object.fromEntries(
+      Object.entries(strings[group] ?? {}).filter(([name]) => name !== key),
+    );
+
+    expect(issuesOf({ ...strings, [group]: without })).toEqual([`${group}.${key}`]);
+  });
+
+  it('needs at least one Siri phrase for each App Intent', () => {
+    const appIntents = {
+      ...strings['appIntents'],
+      openGame: { title: 'Відкрити гру', phrases: [] },
+    };
+
+    expect(issuesOf({ ...strings, appIntents })).toEqual(['appIntents.openGame.phrases']);
+  });
+
+  it.each([
+    ['collections.link.message', 'collections', 'link', 'message', 'Колекція «{name}»'],
+    ['collections.link.unavailable.other', 'collections', 'link', 'unavailable', undefined],
+    ['spotlight.collection.other', 'spotlight', undefined, 'collection', undefined],
+  ])('needs every placeholder in %s', (path, group, area, key, broken) => {
+    const groupStrings = strings[group] as Record<string, Record<string, unknown>>;
+    const holder = area === undefined ? groupStrings : (groupStrings[area] ?? {});
+    const value = { ...(holder[key] as object), other: 'текст' };
+    const changedHolder = { ...holder, [key]: broken ?? value };
+    const changed = area === undefined ? changedHolder : { ...groupStrings, [area]: changedHolder };
+
+    expect(issuesOf({ ...strings, [group]: changed })).toEqual([path]);
+  });
+});
+
 describe('the 0.6 widget strings group', () => {
   const strings = readJson('uk', 'strings') as Record<string, unknown>;
   const widget = strings['widget'] as { guide: Record<string, unknown> };

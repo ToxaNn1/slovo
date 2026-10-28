@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { AccountStringsSchema, EmailStringsSchema } from './account';
 import { appStringsShape } from './app';
+import { AppIntentsStringsSchema } from './app-intents';
 import { CollectionsStringsSchema } from './collections';
 import { CorrectionCardStringsSchema } from './correction-card';
 import { FavoritesStringsSchema } from './favorites';
@@ -26,6 +27,7 @@ import { SearchStringsSchema } from './search';
 import { SettingsStringsSchema } from './settings';
 import { ShareStringsSchema } from './share';
 import { SplashStringsSchema } from './splash';
+import { SpotlightStringsSchema } from './spotlight';
 import { StatsStringsSchema } from './stats';
 import { SynonymRowCardStringsSchema } from './synonym-row-card';
 import { TabsStringsSchema } from './tabs';
@@ -73,6 +75,8 @@ export const EditionStringsSchema = z.strictObject({
   mood: MoodStringsSchema,
   game: GameStringsSchema,
   widget: WidgetStringsSchema,
+  spotlight: SpotlightStringsSchema,
+  appIntents: AppIntentsStringsSchema,
   share: ShareStringsSchema,
   account: AccountStringsSchema,
   email: EmailStringsSchema,

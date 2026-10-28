@@ -1,9 +1,9 @@
 import { z } from 'zod';
 
 import { TextSchema } from '../shared';
-import { PluralSchema, templateOf } from './shared';
+import { pluralOf, PluralSchema, templateOf } from './shared';
 
-/** The texts of Collections: the Collections card of the Saved tab and the Add to Collection sheet. The Collections screen and a Collection's screen add their own. */
+/** The texts of Collections: the Collections card of the Saved tab and the Add to Collection sheet. The Collections screen, a Collection's screen and Collection Links add their own. */
 export const CollectionsStringsSchema = z.strictObject({
   /** The name of Collections: the Saved tab's card. */
   title: TextSchema,
@@ -93,5 +93,20 @@ export const CollectionsStringsSchema = z.strictObject({
       tooLong: TextSchema,
       duplicate: TextSchema,
     }),
+  }),
+  /** Collection Links: sharing a Collection and the recipient's sheet that copies it (ADR 0058). */
+  link: z.strictObject({
+    /** The Collection menu's action that shares a link. */
+    share: TextSchema,
+    /** The message the share sheet sends. Takes `{name}`, the Collection's, and `{url}`, the link. */
+    message: templateOf('name', 'url'),
+    /** The toast, and the recipient's sheet, when there is no connection. */
+    offline: TextSchema,
+    /** The recipient's button that makes their own copy of the Collection. */
+    add: TextSchema,
+    /** How many Entries of the link the reader's pack lacks, so the copy skipped them, `{count}`. */
+    unavailable: pluralOf(),
+    /** What the recipient's sheet says when the link no longer exists. */
+    notFound: TextSchema,
   }),
 });

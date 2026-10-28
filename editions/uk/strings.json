@@ -367,6 +367,19 @@
         "tooLong": "Назва задовга: не більше 40 символів.",
         "duplicate": "Колекція з такою назвою вже є."
       }
+    },
+    "link": {
+      "share": "Поділитися посиланням",
+      "message": "Колекція «{name}» у SLOVO: {url}",
+      "offline": "Немає з’єднання. Спробуйте пізніше.",
+      "add": "Додати собі",
+      "unavailable": {
+        "one": "{count} слово недоступне",
+        "few": "{count} слова недоступні",
+        "many": "{count} слів недоступні",
+        "other": "{count} слова недоступні"
+      },
+      "notFound": "Цього посилання більше немає."
     }
   },
   "history": {
@@ -1189,6 +1202,13 @@
     "emptyCollection": "Колекція порожня",
     "deletedCollection": "Колекцію видалено — оберіть інший режим",
     "noCollection": "Оберіть колекцію для віджета",
+    "wordOfTheDaySeen": "Слово дня переглянуто",
+    "backgroundTitle": "Тло",
+    "backgroundAuto": "Авто",
+    "backgroundLight": "Світлий",
+    "backgroundDark": "Темний",
+    "backgroundParchment": "Пергамент",
+    "backgroundBlue": "Синій",
     "guide": {
       "title": "Слово на головному екрані",
       "close": "Зрозуміло",
@@ -1208,6 +1228,24 @@
         "lemma": "ке\u0301бета",
         "definition": "кмітливість, тямущість"
       }
+    }
+  },
+  "spotlight": {
+    "collection": {
+      "one": "Колекція · {count} слово",
+      "few": "Колекція · {count} слова",
+      "many": "Колекція · {count} слів",
+      "other": "Колекція · {count} слова"
+    }
+  },
+  "appIntents": {
+    "wordOfTheDay": {
+      "title": "Слово дня",
+      "phrases": ["Слово дня в SLOVO", "Покажи слово дня в SLOVO"]
+    },
+    "openGame": {
+      "title": "Відкрити гру",
+      "phrases": ["Відкрий гру в SLOVO", "Грати в SLOVO"]
     }
   },
   "share": {
