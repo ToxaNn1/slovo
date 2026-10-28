@@ -13,6 +13,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useCompositionRead } from '../composition';
+import { useShown } from '../shown-in-effect';
 import { EntryActions } from './entry-actions';
 import type { OpenedFrom } from './entry-link';
 import { useOpenScreen } from './use-open-screen';
@@ -52,6 +53,7 @@ export function EntryScreen({
   const { colors } = useTokens();
   const router = useRouter();
   const openScreen = useOpenScreen();
+  const { stressFall } = useShown();
   // `null` once read for an id the Language Pack doesn't have.
   const read = useCallback(
     async (open: Composition) => (await openEntry(open, entryId, openedFrom)) ?? null,
@@ -106,6 +108,7 @@ export function EntryScreen({
                 openScreen(`${route}/${synonymRowId}?back=${encodeURIComponent(word)}`);
               }}
               actions={<EntryActions card={card} />}
+              stressFalls={stressFall}
             />
           </ScrollView>
         )}

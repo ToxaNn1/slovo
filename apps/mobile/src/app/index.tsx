@@ -132,7 +132,7 @@ const FeedPage = memo(function FeedPage({
   onOpenCorrection: (position: number, correctionId: string) => void;
 }) {
   const { top } = useSafeAreaInsets();
-  const { selfCheck } = useShown();
+  const { selfCheck, stressFall } = useShown();
   const openScreen = useOpenScreen();
   if (card.kind === 'end-of-cycle' || (card.kind === 'notice' && card.notice !== 'yesterday'))
     return (
@@ -172,6 +172,7 @@ const FeedPage = memo(function FeedPage({
               openScreen(`/entry/${synonymRowId}`);
             }}
             selfCheck={selfCheck}
+            stressFalls={stressFall}
             actions={<EntryActions card={card} />}
           />
         )}

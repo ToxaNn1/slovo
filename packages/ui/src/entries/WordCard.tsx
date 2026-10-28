@@ -1,4 +1,10 @@
-import { withoutStress, type Example, type LocalDate, type WordCardModel } from '@slovo/core';
+import {
+  STRESS_MARK,
+  withoutStress,
+  type Example,
+  type LocalDate,
+  type WordCardModel,
+} from '@slovo/core';
 import { useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
@@ -12,7 +18,8 @@ import { partOfSpeechText, registerText } from './part-of-speech';
 import { stressLabel } from './stress-label';
 import { blockGap, minTouchTarget, space, typeSize, wordCardControls } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
-import { usePageTurnActions } from '../primitives/VerticalPager';
+import { useIsPageOnScreen, usePageTurnActions } from '../primitives/VerticalPager';
+import { useReduceMotionKnown } from '../providers/useReduceMotion';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 import { WordOfTheDayBadge } from './WordOfTheDayBadge';
 import { CategoryChip } from './CategoryChip';
@@ -24,7 +31,9 @@ import { CategoryChip } from './CategoryChip';
  * "more", the Synonym Row the Word is a member of and the linked Corrections. It draws only the sections the Core put
  * in the card, at the user's font size. Under Self-check it keeps the Lemma,
  * part of speech and Category; the Entry card draws the button that reveals
- * the rest under them.
+ * the rest under them. Where the Stress falls, the Lemma's Stress mark falls
+ * onto its vowel each time the card comes on screen, unless the reader turned
+ * on Reduce Motion (ADR 0055).
  */
 export function WordCardBody({
   card,
@@ -34,6 +43,7 @@ export function WordCardBody({
   onOpenCorrection,
   onOpenSynonymRow,
   concealed,
+  stressFalls,
 }: {
   card: WordCardModel;
   /** On the card of the Word of the Day: the local day it is the Word of. */
@@ -46,6 +56,8 @@ export function WordCardBody({
   onOpenSynonymRow: ((synonymRowId: string) => void) | undefined;
   /** Self-check: only the Lemma, part of speech and Category. */
   concealed: boolean;
+  /** The falling Stress: on a Word card in the Feed and on the Entry screen, while its Feature Switch is on. */
+  stressFalls: boolean;
 }) {
   const { colors, fontFamilies } = useTokens();
   const sizes = useWordTextSizes();
@@ -55,6 +67,14 @@ export function WordCardBody({
   const { categoryName } = card;
   // In the Feed, VoiceOver turns to the next or previous card from the Lemma and the Definition.
   const turnActions = usePageTurnActions();
+  // A page of the Feed comes on screen again each time the reader turns back to it.
+  const onScreen = useIsPageOnScreen();
+  const reduceMotion = useReduceMotionKnown();
+  // Until the system answers on Reduce Motion, the mark waits unseen above its vowel.
+  const falling =
+    stressFalls && onScreen && reduceMotion !== true && card.stressedVowels.length > 0
+      ? { mark: STRESS_MARK, playing: reduceMotion === false }
+      : undefined;
 
   const grammar = (form: 'short' | 'full') => partOfSpeechText(strings, card, form);
 
@@ -75,6 +95,7 @@ export function WordCardBody({
             size={lemmaSize}
             tracking={-0.01}
             testID="word-lemma"
+            falling={falling}
             accessibilityRole="header"
             // The voices skip the Stress mark, so VoiceOver also says where it falls.
             accessibilityLabel={stressLabel(strings, card.lemma, card.stressedVowels)}

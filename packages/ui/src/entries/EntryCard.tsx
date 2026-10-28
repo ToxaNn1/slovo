@@ -36,6 +36,11 @@ export interface EntryCardProps {
    * inactive. The reveal resets once the card leaves the screen.
    */
   selfCheck?: boolean;
+  /**
+   * The falling Stress of a Word card (ADR 0055): only in the Feed and on the
+   * Entry screen, while the Edition's `stressAnimation` is on in effect.
+   */
+  stressFalls?: boolean;
 }
 
 /** On the SE the padding shrinks by 25% (the Lemma's size is in `useLemmaSize`). */
@@ -70,6 +75,7 @@ export function EntryCard({
   onOpenSynonymRow,
   actions,
   selfCheck = false,
+  stressFalls = false,
 }: EntryCardProps) {
   const { concealed, reveal } = useSelfCheck(selfCheck);
   const { strings } = useEdition();
@@ -106,6 +112,7 @@ export function EntryCard({
             onOpenCorrection={onOpenCorrection}
             onOpenSynonymRow={onOpenSynonymRow}
             concealed={concealed}
+            stressFalls={stressFalls}
           />
         ) : card.kind === 'correction' ? (
           <CorrectionCardBody card={card.model} lemmaSize={lemmaSize} concealed={concealed} />
