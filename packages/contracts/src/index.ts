@@ -151,6 +151,7 @@ export {
   type Word,
   type WordInput,
 } from './word';
+export { SpotlightSnapshotSchema, type SpotlightSnapshot } from './spotlight-snapshot';
 export {
   serializeWidgetSnapshot,
   WIDGET_SNAPSHOT_FORMAT,
