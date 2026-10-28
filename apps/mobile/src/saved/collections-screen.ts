@@ -7,6 +7,8 @@ export interface CollectionRowModel {
   readonly name: string;
   /** How many Entries it holds, in the Edition's plural form. */
   readonly count: string;
+  /** Whether it holds no Entries, so it has nothing to share. */
+  readonly empty: boolean;
   /** Its newest Lemmas. */
   readonly lemmas: readonly string[];
   /** What VoiceOver reads for the row: the name, the count and the newest Lemmas. */
@@ -36,6 +38,7 @@ export function collectionRows({
       id,
       name,
       count: entries,
+      empty: total === 0,
       lemmas: newestLemmas,
       accessibilityLabel:
         newestLemmas.length === 0
