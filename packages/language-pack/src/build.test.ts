@@ -11,6 +11,7 @@ import {
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { crc32, deflateSync } from 'node:zlib';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -1606,12 +1607,58 @@ describe('buildLanguagePack', () => {
   });
 
   describe('the Illustration of a Word', () => {
-    it('builds a Word that names an Illustration and reads the name back, in pack format 8', async () => {
+    function pngChunk(type: string, data: Buffer): Buffer {
+      const body = Buffer.concat([Buffer.from(type, 'latin1'), data]);
+      const length = Buffer.alloc(4);
+      length.writeUInt32BE(data.length);
+      const crc = Buffer.alloc(4);
+      crc.writeUInt32BE(crc32(body));
+      return Buffer.concat([length, body, crc]);
+    }
+
+    /** A blank greyscale PNG, padded with a comment to `bytes` when given. */
+    function png(width: number, height: number, bytes?: number): Buffer {
+      const header = Buffer.alloc(13);
+      header.writeUInt32BE(width, 0);
+      header.writeUInt32BE(height, 4);
+      header.writeUInt8(8, 8);
+      const rows = Buffer.alloc((width + 1) * height);
+      const parts = [
+        Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+        pngChunk('IHDR', header),
+        pngChunk('IDAT', deflateSync(rows)),
+        pngChunk('IEND', Buffer.alloc(0)),
+      ];
+      if (bytes === undefined) return Buffer.concat(parts);
+      const keyword = Buffer.from('Comment\0', 'latin1');
+      const padding = bytes - Buffer.concat(parts).length - 12 - keyword.length;
+      const comment = pngChunk('tEXt', Buffer.concat([keyword, Buffer.alloc(padding, 'x')]));
+      return Buffer.concat([...parts.slice(0, -1), comment, parts.at(-1) ?? Buffer.alloc(0)]);
+    }
+
+    /** A copy of the valid fixture whose Word w_fx0002 names `name`, with `file` in its illustrations. */
+    function withIllustration(name: string, file?: Buffer): string {
       const editionDir = copyFixture('valid');
       editJson(editionDir, 'content/words/w_fx0002.json', (word) => ({
         ...word,
-        illustration: 'w_fx0002.png',
+        illustration: name,
       }));
+      if (file !== undefined) {
+        mkdirSync(join(editionDir, 'assets/illustrations'), { recursive: true });
+        writeFileSync(join(editionDir, 'assets/illustrations', name), file);
+      }
+      return editionDir;
+    }
+
+    const refusal = (message: string): BuildError => ({
+      file: 'content/words/w_fx0002.json',
+      entryId: 'w_fx0002',
+      field: 'illustration',
+      message,
+    });
+
+    it('builds a Word that names an Illustration and reads the name back, in pack format 8', async () => {
+      const editionDir = withIllustration('w_fx0002.png', png(320, 320));
       record(editionDir);
       const outFile = packPath();
 
@@ -1625,6 +1672,72 @@ describe('buildLanguagePack', () => {
         if (word?.kind !== 'word' || other?.kind !== 'word') throw new Error('No Words');
         expect(word.illustration).toBe('w_fx0002.png');
         expect(other).not.toHaveProperty('illustration');
+      });
+    });
+
+    it('builds an Illustration of exactly 150 KB', () => {
+      const editionDir = withIllustration('w_fx0002.png', png(320, 320, 150_000));
+      record(editionDir);
+
+      const result = buildLanguagePack({ editionDir, outFile: packPath() });
+
+      expect(result.ok ? [] : result.errors).toEqual([]);
+    });
+
+    it('refuses an Illustration whose file is missing', () => {
+      const editionDir = withIllustration('w_fx0002.png');
+
+      expect(buildErrors(editionDir)).toEqual([
+        refusal('No file w_fx0002.png in assets/illustrations/'),
+      ]);
+    });
+
+    it.each([
+      ['a JPEG named .png', 'w_fx0002.png', Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 0x10])],
+      ['a PNG not named .png', 'w_fx0002.jpg', png(320, 320)],
+    ])('refuses an Illustration that is %s as not a PNG', (_, name, file) => {
+      const editionDir = withIllustration(name, file);
+
+      expect(buildErrors(editionDir)).toEqual([
+        refusal(`assets/illustrations/${name} is not a PNG`),
+      ]);
+    });
+
+    it('refuses an Illustration over 150 KB', () => {
+      const editionDir = withIllustration('w_fx0002.png', png(320, 320, 150_001));
+
+      expect(buildErrors(editionDir)).toEqual([
+        refusal(
+          'assets/illustrations/w_fx0002.png is 150001 bytes, over the 150 KB (150000 bytes) limit',
+        ),
+      ]);
+    });
+
+    it('refuses an Illustration that is not square', () => {
+      const editionDir = withIllustration('w_fx0002.png', png(320, 200));
+
+      expect(buildErrors(editionDir)).toEqual([
+        refusal('assets/illustrations/w_fx0002.png is 320×200 px, not square'),
+      ]);
+    });
+
+    it('refuses an Illustration with every reason that applies', () => {
+      const editionDir = withIllustration('w_fx0002.png', png(320, 200, 150_001));
+
+      expect(buildErrors(editionDir)).toEqual([
+        refusal(
+          'assets/illustrations/w_fx0002.png is 150001 bytes, over the 150 KB (150000 bytes) limit',
+        ),
+        refusal('assets/illustrations/w_fx0002.png is 320×200 px, not square'),
+      ]);
+    });
+
+    it('refuses the same broken Illustration in checkLanguagePack', () => {
+      const editionDir = withIllustration('w_fx0002.png', png(320, 200));
+
+      expect(checkLanguagePack({ editionDir })).toEqual({
+        ok: false,
+        errors: [refusal('assets/illustrations/w_fx0002.png is 320×200 px, not square')],
       });
     });
 
