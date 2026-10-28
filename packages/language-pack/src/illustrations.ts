@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync, statSync } from 'node:fs';
 
 import type { Word } from '@slovo/contracts';
 
@@ -31,7 +31,8 @@ export function illustrationErrors(
       message,
     });
     const path = pathOf(name);
-    if (!existsSync(path)) return [refuse(`No file ${name} in ${ILLUSTRATIONS_DIR}/`)];
+    if (statSync(path, { throwIfNoEntry: false })?.isFile() !== true)
+      return [refuse(`No file ${name} in ${ILLUSTRATIONS_DIR}/`)];
     const shown = `${ILLUSTRATIONS_DIR}/${name}`;
     const bytes = readFileSync(path);
     const size = pngSize(bytes);
