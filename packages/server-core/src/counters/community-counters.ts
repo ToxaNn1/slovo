@@ -36,7 +36,8 @@ export interface CommunityCounters {
     readonly entryIds: readonly string[];
   }): Promise<{ readonly ok: true; readonly counters: readonly EntryCounts[] } | NotServing>;
   /**
-   * The Community Word of the Edition, when it serves the Community Word: the
+   * The Community Word of the Edition, when it serves both the Community
+   * Counters and the Community Word: the
    * Entry most added to Favorites in the last full ISO week (UTC), the lower
    * Entry id winning a tie, or none when nobody added anything that week.
    */
@@ -85,6 +86,9 @@ export function createCommunityCounters({
     },
 
     async communityWord(editionId) {
+      // The Community Word is made of the counters' adds, so it goes when they do.
+      const counting = await editions.serving(editionId, 'communityCounters');
+      if (!counting.ok) return counting;
       const serving = await editions.serving(editionId, 'communityWord');
       if (!serving.ok) return serving;
       const lastWeek = isoWeekOf(new Date(clock.now().getTime() - WEEK_MS));
