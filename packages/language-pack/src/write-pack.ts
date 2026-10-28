@@ -48,8 +48,8 @@ export function writePack(outFile: string, content: PackContent, metadata: PackM
     }
 
     const insertWord = db.prepare(`
-      INSERT INTO words (id, lemma, part_of_speech, gender, category_id, rarity, etymology, region, history, origin, retired)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO words (id, lemma, part_of_speech, gender, category_id, rarity, etymology, region, history, origin, illustration, retired)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     const insertStress = db.prepare('INSERT INTO word_stress (word_id, position) VALUES (?, ?)');
     const insertDefinition = db.prepare(
@@ -169,6 +169,7 @@ export function writePack(outFile: string, content: PackContent, metadata: PackM
         word.region ?? null,
         word.history ?? null,
         word.origin ?? null,
+        word.illustration ?? null,
         word.retired ? 1 : 0,
       );
       for (const position of word.stress) insertStress.run(word.id, position);

@@ -50,6 +50,7 @@ CREATE TABLE words (
   region TEXT,
   history TEXT,
   origin TEXT,
+  illustration TEXT,
   retired INTEGER NOT NULL
 ) WITHOUT ROWID;
 
@@ -259,9 +260,11 @@ CREATE TABLE sources (
  * keeps format 5's layout, adding only the Word's origin column and the table
  * `crossword_words`, and admits the Word's origin and the Daily Crossword of
  * 0.8.12 (ADR 0052); format 7 keeps format 6's layout, adding only the table
- * `word_moods`, and admits the Word's moods of 0.8.13 (ADR 0054).
+ * `word_moods`, and admits the Word's moods of 0.8.13 (ADR 0054); format 8
+ * keeps format 7's layout, adding only the Word's illustration column, and
+ * admits the Word's Illustration of 0.8.14 (ADR 0055).
  */
-export const PACK_FORMAT = 7;
+export const PACK_FORMAT = 8;
 
 /**
  * Where each field of the pack metadata lies in the `metadata` table, and how

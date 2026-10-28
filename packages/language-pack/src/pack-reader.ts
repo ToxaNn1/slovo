@@ -65,6 +65,7 @@ interface WordRow {
   region: string | null;
   history: string | null;
   origin: string | null;
+  illustration: string | null;
   retired: number;
 }
 
@@ -335,6 +336,7 @@ export function createPackReader(db: PackDatabase): PackReader {
         ...(row.region === null ? {} : { region: row.region }),
         ...(row.history === null ? {} : { history: row.history }),
         ...(row.origin === null ? {} : { origin: row.origin }),
+        ...(row.illustration === null ? {} : { illustration: row.illustration }),
         ...(moods.has(row.id) ? { moods: (moods.get(row.id) ?? []).map((r) => r.mood) } : {}),
         categoryId: row.category_id,
         rarity: row.rarity,

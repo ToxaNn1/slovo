@@ -22,6 +22,7 @@
   "history": "Тестова історія слова.",
   "origin": "proto-slavic",
   "moods": ["calm"],
+  "illustration": "w_fx0001.png",
   "registers": ["bookish", "colloquial", "dialectal"],
   "region": "Гуцульщина",
   "categoryId": "nature",
