@@ -3,6 +3,7 @@ import {
   ActionRow,
   CollectionButton,
   CollectionSheet,
+  CommunityCountersLine,
   FavoriteButton,
   HideButton,
   HideChoiceSheet,
@@ -20,6 +21,7 @@ import { shareCardOnDevice } from '../share/device-share';
 import { edition, editionStrings } from '../edition/edition';
 import { useEntryCollections } from '../saved/collections';
 import { useCompositionRead } from '../composition';
+import { useCounterLine } from '../community-counters/counter-line';
 import { useFavorite } from '../saved/favorites';
 import { useKnowledgeMark } from '../knowledge/marks';
 import { useHide } from '../mix/hiding';
@@ -65,14 +67,18 @@ export function EntryActions({ card }: { card: AnyEntryCard }) {
 
 /**
  * The «Знаю» and «Не знаю» buttons of an Entry's card, wherever the card
- * appears, Yesterday's too: there only when the Knowledge switch is on in
- * effect.
+ * appears, Yesterday's too, with the Community Counters line under them
+ * (ADR 0060): there only when the Knowledge switch is on in effect.
  */
 export function useKnowledgeButtons(card: Pick<AnyEntryCard, 'entryId' | 'kind'>): ReactNode {
   const shown = useShown().entryButtons.knowledge;
   const knowledge = useKnowledgeMark(card.entryId);
+  const line = useCounterLine(card.entryId);
   return shown ? (
-    <KnowledgeButtons entryKind={card.kind} mark={knowledge.mark} onTap={knowledge.tap} />
+    <>
+      <KnowledgeButtons entryKind={card.kind} mark={knowledge.mark} onTap={knowledge.tap} />
+      <CommunityCountersLine line={line} />
+    </>
   ) : undefined;
 }
 

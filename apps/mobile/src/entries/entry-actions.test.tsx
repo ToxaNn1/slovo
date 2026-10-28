@@ -4,17 +4,21 @@ import {
   createMemoryUserStatePort,
   loadEdition,
   openComposition,
+  openCounterReads,
   openMistakeReports,
   openUserState,
   systemRandom,
   type AnyEntryCard,
   type Composition,
+  type CounterReads,
   type Haptics,
   type MistakeReports,
 } from '@slovo/core';
 import {
+  createFakeCountersApi,
   createFakeReportsApi,
   createMemoryContentPort,
+  type FakeCountersApi,
   type FakeReportsApi,
 } from '@slovo/core/testing';
 import { EditionProvider, EntryCard, HapticsProvider, UndoToastProvider } from '@slovo/ui';
@@ -58,6 +62,13 @@ let reportsApi: FakeReportsApi;
 
 jest.mock('../mistake-reports/device-mistake-reports', () => ({
   mistakeReportsOpening: { opened: () => Promise.resolve(mockMistakeReports) },
+}));
+/** The Core's reads of the Community Counters over a fake backend, opened afresh for each test. */
+let mockCounterReads: CounterReads;
+let countersApi: FakeCountersApi;
+
+jest.mock('../community-counters/device-counter-reads', () => ({
+  counterReadsOpening: { opened: () => Promise.resolve(mockCounterReads) },
 }));
 // A binary that can capture the Share Card.
 jest.mock('../share/device-share', () => ({
@@ -168,6 +179,8 @@ beforeEach(async () => {
     clock,
     random: systemRandom,
   });
+  countersApi = createFakeCountersApi();
+  mockCounterReads = openCounterReads({ edition: mockEdition, api: countersApi, userState, clock });
   mockMistakeReportsOn = true;
   reportsApi = createFakeReportsApi();
   mockMistakeReports = openMistakeReports({
@@ -351,5 +364,61 @@ describe.each([
 
     expect(screen.getByTestId('favorite-button')).toBeOnTheScreen();
     expect(screen.queryByRole('button', { name: 'Повідомити про помилку' })).toBeNull();
+  });
+});
+
+describe.each([
+  ['a Word', 'w_test'],
+  ['a Correction', 'c_test'],
+  ['an Idiom', 'i_test'],
+  ['a Synonym Row', 'r_walk'],
+  ['a Tip', 't_hour'],
+])('the Community Counters line on %s', (_, entryId) => {
+  const line = () => screen.getByTestId('community-counters');
+
+  it.each([
+    [{ known: 1, unknown: 0, saved: 4 }, 'Знають 1 з 1 читача · зберегли 4'],
+    [{ known: 1, unknown: 1, saved: 1 }, 'Знають 1 з 2 читачів · зберегли 1'],
+    [{ known: 3, unknown: 2, saved: 0 }, 'Знають 3 з 5 читачів · зберегли 0'],
+    [{ known: 20, unknown: 1, saved: 7 }, 'Знають 20 з 21 читача · зберегли 7'],
+  ])('says %o under the mark buttons as %s', async (counts, text) => {
+    countersApi.count(entryId, counts);
+    await renderCard(entryId);
+    await settle();
+
+    expect(line()).toHaveTextContent(text);
+  });
+
+  it('shows the zeros of an Entry nobody counted, read as one sentence', async () => {
+    await renderCard(entryId);
+    await settle();
+
+    expect(line()).toHaveTextContent('Знають 0 з 0 читачів · зберегли 0');
+    expect(line()).toHaveAccessibleName('Знають 0 з 0 читачів, зберегли 0');
+  });
+
+  it('has no line offline with nothing kept', async () => {
+    countersApi.fail('offline');
+    await renderCard(entryId);
+    await settle();
+
+    expect(screen.getByTestId('knowledge-known')).toBeOnTheScreen();
+    expect(screen.queryByTestId('community-counters')).toBeNull();
+  });
+
+  it('counts the reader’s own mark and Favorite at once', async () => {
+    countersApi.count(entryId, { known: 3, unknown: 2, saved: 0 });
+    await renderCard(entryId);
+    await settle();
+
+    await fireEvent.press(screen.getByTestId('knowledge-unknown'));
+    await settle();
+    expect(line()).toHaveTextContent('Знають 3 з 6 читачів · зберегли 0');
+
+    await fireEvent.press(screen.getByTestId('knowledge-known'));
+    await fireEvent.press(screen.getByTestId('favorite-button'));
+    await settle();
+    expect(line()).toHaveTextContent('Знають 4 з 6 читачів · зберегли 1');
+    expect(countersApi.asked).toEqual([[entryId]]);
   });
 });
