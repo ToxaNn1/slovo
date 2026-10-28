@@ -356,6 +356,8 @@ interface TestAppOptions {
   readonly google?: GoogleVerifier;
   /** Where the ids of new Collection Links come from; the system's randomness unless given. */
   readonly random?: Random;
+  /** SLOVO's Apple Developer Team ID; none unless given. */
+  readonly appleTeamId?: string;
   /** Sees every answer before the test gets it, with the request it answers. */
   readonly onAnswer?: (request: Request, response: Response) => Promise<void>;
 }
@@ -375,6 +377,7 @@ export function testApp({
   googleClientIds = [TEST_GOOGLE_CLIENT_ID],
   google: givenGoogle,
   random = systemRandom,
+  appleTeamId,
   onAnswer,
 }: TestAppOptions = {}) {
   const database = given ?? createDatabase(testDatabaseUrl(), silentLogger);
@@ -392,6 +395,7 @@ export function testApp({
     authSecret: TEST_AUTH_SECRET,
     // A fake Sentry: it keeps every report.
     reporter: { report: (report) => reports.push(report) },
+    appleTeamId,
   });
   const ip = newIp();
   // The one way a request reaches the app.

@@ -39,6 +39,16 @@ export const ServerConfigSchema = z.object({
     (dsn) => (dsn === '' ? undefined : dsn),
     z.url({ protocol: /^https$/, error: 'must be an https:// Sentry DSN' }).optional(),
   ),
+  // SLOVO's Apple Developer Team ID, which the apple-app-site-association
+  // file names the apps by (ADR 0058). Empty, or unset, serves no such file;
+  // the repository holds no Team ID.
+  APPLE_TEAM_ID: z.preprocess(
+    (teamId) => (teamId === '' ? undefined : teamId),
+    z
+      .string()
+      .regex(/^[A-Z0-9]{10}$/, 'must be 10 capital letters and digits')
+      .optional(),
+  ),
   // 0 takes any free port.
   PORT: z.coerce.number().int().min(0).max(65535).default(8787),
   // The folder that holds one folder per Edition (ADR 0035).
