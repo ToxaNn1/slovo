@@ -1,13 +1,14 @@
-import type { FeedCard } from '@slovo/core';
+import { isTodaysWordOfTheDay, type Clock, type FeedCard } from '@slovo/core';
 import type { VerticalPagerHandle } from '@slovo/ui';
 import { useIsFocused } from 'expo-router';
-import { useCallback, useEffect, useState, type RefObject } from 'react';
+import { useCallback, useEffect, useState, useSyncExternalStore, type RefObject } from 'react';
 
 import { useComposition } from '../composition';
 import { useInForeground } from '../foreground/in-foreground';
 import { logError } from '../diagnostics/log';
 import { useSubscribed } from '../opening';
 import { cardOnScreen, type TurnedTo } from './feed-screen';
+import type { LandingAsked, WordOfTheDayLanding } from './word-of-the-day-landing';
 
 /** The Feed as the pager shows it: a page for each of its cards. */
 export interface FeedState {
@@ -26,9 +27,14 @@ export interface FeedState {
 /**
  * The Feed of the session's Core composition, on the pager that shows it.
  * It tells the Feed which card is on screen while the Feed is in sight, and
- * that none is otherwise, and keeps the pager on the reader's card.
+ * that none is otherwise, and keeps the pager on the reader's card. An ask
+ * of `landing` puts today's Word of the Day card on screen, by `clock`, once
+ * the Feed has it (ADR 0057).
  */
-export function useFeed(pager: RefObject<VerticalPagerHandle | null>): FeedState {
+export function useFeed(
+  pager: RefObject<VerticalPagerHandle | null>,
+  { clock, landing }: { clock: Clock; landing: WordOfTheDayLanding },
+): FeedState {
   const { feed, onboarding } = useComposition();
   const cards = useSubscribed(feed, (open) => open.cards);
   /** The card the reader turned to last, by the Feed's position, in the Feed they turned it in. */
@@ -93,6 +99,24 @@ export function useFeed(pager: RefObject<VerticalPagerHandle | null>): FeedState
     // eslint-disable-next-line react-hooks/set-state-in-effect -- predates the compiler rules; rewrite is pending (ADR 0059)
     onCardChange(page);
   }, [pager, feed, cards, onCardChange]);
+
+  const asked = useSyncExternalStore(landing.subscribe, landing.asked);
+  const landingPage =
+    asked === undefined
+      ? -1
+      : cards.findIndex((card) => card.kind === 'word' && isTodaysWordOfTheDay(card, clock));
+  /** The last ask the Feed landed, and the page it landed on. */
+  const [landed, setLanded] = useState<{ ask: LandingAsked; page: number }>();
+  // The reader is on the landing page from this render on, as if they turned to it.
+  if (asked !== undefined && landingPage !== -1 && asked !== landed?.ask) {
+    setLanded({ ask: asked, page: landingPage });
+    setTurnedTo({ in: feed, position: landingPage });
+  }
+  useEffect(() => {
+    if (landed === undefined) return;
+    landing.landed();
+    pager.current?.showPage(landed.page);
+  }, [landed, landing, pager]);
 
   return { cards, startPosition: feed.startPosition, onCardChange, openCorrection };
 }

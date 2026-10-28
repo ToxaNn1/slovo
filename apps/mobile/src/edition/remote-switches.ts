@@ -38,3 +38,8 @@ export const remoteSwitchesOpening = openOnce(
 export function useEditionInEffect(): Edition {
   return useSubscribed(useOpened(remoteSwitchesOpening), ({ edition }) => edition);
 }
+
+/** Whether the App Intents are on in effect, by the remote Feature Switches the app knows (ADR 0057). */
+export async function appIntentsOn(): Promise<boolean> {
+  return (await remoteSwitchesOpening.opened()).edition.isFeatureEnabled('appIntents');
+}
