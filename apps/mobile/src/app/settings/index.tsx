@@ -50,7 +50,7 @@ const dailyLimitSegments = dailyLimits.map((dailyLimit) => ({
 /**
  * Settings: SLOVO ID when the Account is on in effect, the Theme, the font
  * size, the Daily Limit while it is on in effect, «Пройти тест ще раз» while
- * the Rarity Test is, and the rows of the design. The rows of later versions show as soon.
+ * the Rarity Test is, «Сезонний декор» while its Feature Switch is, and the rows of the design. The rows of later versions show as soon.
  */
 export default function SettingsScreen() {
   const { current, update } = useSettings();
@@ -136,6 +136,17 @@ export default function SettingsScreen() {
                 value={current.selfCheck}
                 onChange={(selfCheck) => {
                   update({ selfCheck });
+                }}
+              />
+            )}
+            {shown.seasonalDecorSetting && (
+              <SwitchRow
+                testID="settings-seasonal-decor"
+                label={strings.seasonalDecor.title}
+                subtitle={strings.seasonalDecor.explanation}
+                value={current.seasonalDecor}
+                onChange={(seasonalDecor) => {
+                  update({ seasonalDecor });
                 }}
               />
             )}

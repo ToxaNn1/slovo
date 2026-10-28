@@ -20,6 +20,7 @@ const everything: Shown = {
   stressFall: true,
   selfCheck: false,
   selfCheckSetting: true,
+  seasonalDecorSetting: true,
   learning: true,
   stats: { streak: true, knowledge: ['word', 'correction', 'idiom', 'synonymRow', 'tip'] },
   sync: true,
@@ -53,6 +54,10 @@ describe('what the reader is shown', () => {
       { off: ['stressAnimation'], shown: { stressFall: false } },
     ],
     ['no Search button with Search off', { off: ['search'], shown: { search: false } }],
+    [
+      'no «Сезонний декор» switch with Seasonal Decor off',
+      { off: ['seasonalDecor'], shown: { seasonalDecorSetting: false } },
+    ],
     [
       'no «Слова дня» card with the Word of the Day archive off',
       { off: ['wordOfTheDayArchive'], shown: { wordOfTheDayArchive: false } },

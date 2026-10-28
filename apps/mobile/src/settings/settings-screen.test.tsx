@@ -9,14 +9,26 @@ import WidgetGuideScreen from '../app/settings/widgets';
 import { edition, editionStrings } from '../edition/edition';
 
 // Settings reads the composition through these; the widget's rows need none of it.
+const mockUpdate = jest.fn();
 jest.mock('./settings', () => ({
   useSettings: () => ({
-    current: { theme: 'system', fontSize: 'M', hideStreak: false, selfCheck: false },
-    update: () => undefined,
+    current: {
+      theme: 'system',
+      fontSize: 'M',
+      hideStreak: false,
+      selfCheck: false,
+      seasonalDecor: true,
+    },
+    update: mockUpdate,
   }),
 }));
+let mockSeasonalDecorSetting = false;
 jest.mock('../shown-in-effect', () => ({
-  useShown: () => ({ stats: undefined, selfCheckSetting: false }),
+  useShown: () => ({
+    stats: undefined,
+    selfCheckSetting: false,
+    seasonalDecorSetting: mockSeasonalDecorSetting,
+  }),
 }));
 jest.mock('../account/account', () => ({ useAccountInEffect: () => undefined }));
 jest.mock('../mix/mix', () => ({ useMixSummary: () => 'Усі' }));
@@ -60,5 +72,27 @@ describe('Settings › Віджети', () => {
         `${String(index + 1)}${step.title}${step.hint}`,
       );
     }
+  });
+});
+
+describe('Settings › «Сезонний декор»', () => {
+  it('turns Seasonal Decor off from its switch, which explains what it changes', async () => {
+    mockSeasonalDecorSetting = true;
+    await renderSettings();
+
+    const row = screen.getByRole('switch', { name: 'Сезонний декор' });
+    expect(row).toHaveProp('value', true);
+    expect(screen.getByText(editionStrings.settings.seasonalDecor.explanation)).toBeOnTheScreen();
+
+    await fireEvent(row, 'valueChange', false);
+
+    expect(mockUpdate).toHaveBeenCalledWith({ seasonalDecor: false });
+  });
+
+  it('has no switch while the Edition turns Seasonal Decor off', async () => {
+    mockSeasonalDecorSetting = false;
+    await renderSettings();
+
+    expect(screen.queryByRole('switch', { name: 'Сезонний декор' })).not.toBeOnTheScreen();
   });
 });
