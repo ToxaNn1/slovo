@@ -1,10 +1,10 @@
 import { z } from 'zod';
 
-import { CorrectionSchema } from './correction';
-import { IdiomSchema } from './idiom';
-import { SynonymRowSchema } from './synonym-row';
-import { TipSchema } from './tip';
-import { WordSchema } from './word';
+import { CorrectionIdSchema, CorrectionSchema } from './correction';
+import { IdiomIdSchema, IdiomSchema } from './idiom';
+import { SynonymRowIdSchema, SynonymRowSchema } from './synonym-row';
+import { TipIdSchema, TipSchema } from './tip';
+import { WordIdSchema, WordSchema } from './word';
 
 /**
  * Anything the user can discover, keep and share: a Word, a Correction, an
@@ -22,3 +22,12 @@ export const EntrySchema = z.discriminatedUnion('kind', [
 export type Entry = z.output<typeof EntrySchema>;
 
 export type EntryKind = Entry['kind'];
+
+/** The id of an Entry of any of the five kinds, told apart by its prefix. */
+export const EntryIdSchema = z.union([
+  WordIdSchema,
+  CorrectionIdSchema,
+  IdiomIdSchema,
+  SynonymRowIdSchema,
+  TipIdSchema,
+]);
