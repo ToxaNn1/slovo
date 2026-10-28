@@ -22,7 +22,7 @@ import {
   type FakeReportsApi,
 } from '@slovo/core/testing';
 import { EditionProvider, EntryCard, HapticsProvider, UndoToastProvider } from '@slovo/ui';
-import { act, fireEvent, render, screen, within } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import config from 'slovo-edition/config';
 
@@ -190,8 +190,11 @@ beforeEach(async () => {
     appVersion: '0.8.14',
     contentVersion: 42,
     clock,
-    // A report the backend takes at once waits for nothing.
-    schedule: () => () => undefined,
+    // The tries again wait for nothing.
+    schedule: (run) => {
+      run();
+      return () => undefined;
+    },
     random: systemRandom,
   });
 });
@@ -345,6 +348,55 @@ describe.each([
         contentVersion: 42,
       },
     ]);
+  });
+
+  /** Reports a typo in the Entry from its flag, with no comment. */
+  async function reportTypo() {
+    await fireEvent.press(screen.getByRole('button', { name: 'Повідомити про помилку' }));
+    await fireEvent.press(screen.getByRole('radio', { name: 'Друкарська помилка' }));
+    await fireEvent.press(send());
+    await settle();
+  }
+
+  it('closes the sheet and thanks the reader once the backend took it', async () => {
+    await renderCard(entryId);
+
+    await reportTypo();
+
+    expect(reportsApi.received).toHaveLength(1);
+    expect(screen.getByTestId('undo-toast-message')).toHaveTextContent('Дякуємо! Ми перевіримо.');
+    // The sheet slides away under the toast.
+    await waitFor(() => {
+      expect(screen.queryByRole('button', { name: 'Надіслати' })).toBeNull();
+    });
+  });
+
+  it('thanks the reader offline too, and keeps the report to send later', async () => {
+    reportsApi.online = false;
+    await renderCard(entryId);
+
+    await reportTypo();
+    expect(screen.getByTestId('undo-toast-message')).toHaveTextContent('Дякуємо! Ми перевіримо.');
+    reportsApi.online = true;
+    await act(async () => {
+      mockMistakeReports.foreground();
+      await Promise.resolve();
+    });
+    await settle();
+
+    expect(reportsApi.received).toEqual([expect.objectContaining({ entryId, type: 'typo' })]);
+  });
+
+  it('says to try tomorrow over the daily limit', async () => {
+    reportsApi.failNext('too-many-requests', { retryAfter: 3600 });
+    await renderCard(entryId);
+
+    await reportTypo();
+
+    expect(reportsApi.received).toEqual([]);
+    expect(screen.getByTestId('undo-toast-message')).toHaveTextContent(
+      'Забагато повідомлень сьогодні. Спробуйте завтра.',
+    );
   });
 
   it('keeps «Надіслати» disabled for «Інше» until the comment says something', async () => {
