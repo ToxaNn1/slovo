@@ -18,9 +18,11 @@ export interface ContentUpdates<R> {
   readonly openKeptPack: (version: PackVersion) => Promise<R>;
 }
 
-/** The Language Pack of the app run, and the Content update module, when content updates are on. */
+/** The Language Pack of the app run, with its version, and the Content update module, when content updates are on. */
 export interface LaunchPack<R> {
   readonly reader: R;
+  /** The version of the pack open, which a Mistake Report carries (ADR 0056). */
+  readonly version: PackVersion;
   readonly contentUpdate: ContentUpdate | undefined;
 }
 
@@ -49,22 +51,26 @@ export async function openLaunchPack<R>({
 }): Promise<LaunchPack<R>> {
   const bundled = await openBundled();
   if (contentUpdates === undefined || !edition.isFeatureEnabled('contentUpdates')) {
-    return { reader: bundled.reader, contentUpdate: undefined };
+    return { reader: bundled.reader, version: bundled.version, contentUpdate: undefined };
   }
   let contentUpdate: ContentUpdate;
   try {
     contentUpdate = await contentUpdates.open(bundled.version);
   } catch (error) {
     onError(error);
-    return { reader: bundled.reader, contentUpdate: undefined };
+    return { reader: bundled.reader, version: bundled.version, contentUpdate: undefined };
   }
-  let kept: R | undefined;
+  let kept: { readonly reader: R; readonly version: PackVersion } | undefined;
   try {
-    kept = await contentUpdate.openKept(contentUpdates.openKeptPack);
+    kept = await contentUpdate.openKept(async (version) => ({
+      reader: await contentUpdates.openKeptPack(version),
+      version,
+    }));
   } catch (error) {
     onError(error);
   }
-  if (kept === undefined) return { reader: bundled.reader, contentUpdate };
+  if (kept === undefined)
+    return { reader: bundled.reader, version: bundled.version, contentUpdate };
   await bundled.close().catch(onError);
-  return { reader: kept, contentUpdate };
+  return { ...kept, contentUpdate };
 }
