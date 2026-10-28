@@ -28,12 +28,12 @@ import { InvertedTokens, useTokens } from '../providers/TokensProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
 
 /**
- * The sheet's slide from the design: 320 ms, `cubic-bezier(.2, .8, .2, 1)`.
- * With Reduce Motion it fades in place instead. Both run whatever the system
+ * The sheet's slide: 300 ms, `cubic-bezier(.2, .8, .2, 1)` (ADR 0055). With
+ * Reduce Motion it fades in place instead. Both run whatever the system
  * setting, which would otherwise skip the fade too.
  */
 const SLIDE_IN = {
-  duration: 320,
+  duration: 300,
   easing: Easing.bezier(0.2, 0.8, 0.2, 1),
   reduceMotion: ReduceMotion.Never,
 };
@@ -41,6 +41,18 @@ const SLIDE_IN = {
 const SLIDE_OUT = {
   duration: 220,
   easing: Easing.in(Easing.quad),
+  reduceMotion: ReduceMotion.Never,
+};
+
+/**
+ * What follows a drag: a critically damped spring that settles in about
+ * 300 ms, so the sheet neither bounces nor stops dead (ADR 0055). It takes
+ * the release velocity.
+ */
+const DRAG_SPRING = {
+  dampingRatio: 1,
+  duration: 300,
+  overshootClamping: true,
   reduceMotion: ReduceMotion.Never,
 };
 
@@ -92,6 +104,8 @@ export function BottomSheet({
   const drag = useSharedValue(0);
   const height = useSharedValue(windowHeight);
   const wasVisible = useRef(false);
+  /** The velocity a drag that closed the sheet let go at, until the sheet leaves. */
+  const flick = useRef<number | undefined>(undefined);
   // Read through a ref, so a new callback each render does not restart the slide.
   const onDismissedRef = useRef(onDismissed);
   onDismissedRef.current = onDismissed;
@@ -102,20 +116,36 @@ export function BottomSheet({
   useEffect(() => {
     if (visible) {
       setMounted(true);
+      flick.current = undefined;
       drag.value = 0;
       progress.value = withTiming(1, SLIDE_IN);
       wasVisible.current = true;
     } else {
       const wasOpen = wasVisible.current;
       wasVisible.current = false;
-      progress.value = withTiming(0, SLIDE_OUT, (finished) => {
-        if (!finished) return;
+      const velocity = flick.current;
+      flick.current = undefined;
+      const gone = (finished?: boolean) => {
+        'worklet';
+        if (finished !== true) return;
         scheduleOnRN(setMounted, false);
         if (wasOpen) scheduleOnRN(dismissed);
-      });
+      };
+      // A drag that closed it carries on down from where the finger left it.
+      if (velocity !== undefined && !reduceMotion) {
+        drag.value = withSpring(height.value, { ...DRAG_SPRING, velocity }, gone);
+      } else {
+        progress.value = withTiming(0, SLIDE_OUT, gone);
+      }
     }
-    // The shared values are stable, so only `visible` starts a slide.
-  }, [visible, drag, progress]);
+    // The shared values are stable, so only `visible` starts a slide; a change
+    // of Reduce Motion runs it again towards the same end, which moves nothing.
+  }, [visible, reduceMotion, drag, progress, height]);
+
+  const closeByDrag = (velocity: number) => {
+    flick.current = velocity;
+    onClose?.();
+  };
 
   // Only a sheet with `onClose` has the grabber that takes the drag.
   const pan = Gesture.Pan()
@@ -124,11 +154,15 @@ export function BottomSheet({
     })
     .onEnd(({ translationY, velocityY }) => {
       if (onClose !== undefined && (translationY > CLOSE_DISTANCE || velocityY > CLOSE_VELOCITY)) {
-        scheduleOnRN(onClose);
+        scheduleOnRN(closeByDrag, velocityY);
+      } else if (reduceMotion) {
+        // Under Reduce Motion the sheet is simply back in place.
+        drag.value = 0;
       } else {
-        drag.value = withSpring(0, { reduceMotion: ReduceMotion.Never });
+        drag.value = withSpring(0, { ...DRAG_SPRING, velocity: velocityY });
       }
     });
+  if (testID !== undefined) pan.withTestId(`${testID}-drag`);
 
   const sheetStyle = useAnimatedStyle(() => ({
     transform: [
@@ -136,7 +170,10 @@ export function BottomSheet({
     ],
     opacity: reduceMotion ? progress.value : 1,
   }));
-  const scrimStyle = useAnimatedStyle(() => ({ opacity: progress.value }));
+  // The scrim lightens as the sheet goes down, so it fades with a drag that closes it too.
+  const scrimStyle = useAnimatedStyle(() => ({
+    opacity: progress.value * (1 - Math.min(drag.value / height.value, 1)),
+  }));
 
   if (!mounted) return null;
   const scrim = onClose === undefined ? 'transparent' : scrimColor(colors.ink, colorScheme);
@@ -203,6 +240,7 @@ function SheetPanel({
     <Animated.View
       accessibilityViewIsModal
       onAccessibilityEscape={onClose}
+      testID={testID === undefined ? undefined : `${testID}-panel`}
       onLayout={({ nativeEvent }) => {
         onHeight(nativeEvent.layout.height);
       }}
