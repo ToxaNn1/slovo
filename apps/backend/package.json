@@ -13,6 +13,7 @@
     "switch-off": "tsx --env-file-if-exists=.env src/edition/switch-command.ts off",
     "switch-clear": "tsx --env-file-if-exists=.env src/edition/switch-command.ts clear",
     "reports": "tsx --env-file-if-exists=.env src/reports/reports-command.ts",
+    "collection-links": "tsx --env-file-if-exists=.env src/collection-links/collection-links-command.ts",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
