@@ -23,11 +23,11 @@ Until 0.8.15 a Collection couldn't leave the phone: a teacher who built «Осі
 
 **Sharing.** «Поділитися посиланням» in a Collection's menu is disabled on an empty Collection. It asks the server for a link and opens the system share sheet with «Колекція «{name}» у SLOVO: {url}». The request goes once through the one retry rule (ADR 0037) and is never queued: offline it shows «Немає з'єднання. Спробуйте пізніше.» and shares nothing.
 
-**The recipient sheet.** It shows the snapshot's name, how many Entries it holds and its first 5 Entries this Language Pack has, and «Додати собі». When some of its Entries are missing from the reader's pack it says how many: «1 слово недоступне», «{n} слова недоступні», «{n} слів недоступні» in the Edition's plural forms (ADR 0020). Offline it says «Немає з'єднання»; an unknown link, a link of another Edition, or one with `collectionLinks` off says the link isn't available.
+**The recipient sheet.** It shows the snapshot's name, how many Entries it holds and its first 5 Entries this Language Pack has, and «Додати собі». When some of its Entries are missing from the reader's pack it says how many: «1 слово недоступне», «{n} слова недоступні», «{n} слів недоступні» in the Edition's plural forms (ADR 0020). The link is read through the one retry rule (ADR 0037). Offline, or when every try met a server error, it says «Немає з'єднання»; an unknown link, a link of another Edition, or one with `collectionLinks` off says the link isn't available.
 
 **The Core makes the copy.** «Додати собі» creates a new Collection of the reader's, as if they had made it:
 
-- **Name**: the snapshot's name; when the reader already has a Collection of that name, the first free of «{name} (2)», «{name} (3)»….
+- **Name**: the snapshot's name; when the reader already has a Collection of that name, in any letter case, the first free of «{name} (2)», «{name} (3)»…. A link's name may hold 60 characters and a Collection's 40, so the name is cut to fit 40 with its number.
 - **Entries**: the snapshot's, in its order, skipping those missing from the reader's Language Pack; the sheet has already counted them.
 - **Hidden Entries stay**: an Entry the reader hid goes into the copy and stays Hidden everywhere else, so the copy is complete and the reader's choice holds.
 - **Every tap copies**: opening the same link twice and adding twice makes two copies, so the behaviour is predictable.

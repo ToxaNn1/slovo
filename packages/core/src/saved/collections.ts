@@ -74,6 +74,15 @@ export interface Collections {
    */
   create(name: string, entryId?: string): Promise<CollectionResult>;
   /**
+   * Creates a Collection, as of now, of the Entries in the order given, the
+   * first listed first, skipping those the Language Pack doesn't have, in one
+   * write: the copy of a Collection Link (ADR 0058). It takes the name, cut to
+   * the longest a name may be, or, when another Collection has it in any
+   * letter case, the first free of «{name} (2)», «{name} (3)»…, cut so the
+   * number fits.
+   */
+  createCopy(name: string, entryIds: readonly string[]): Promise<Collection>;
+  /**
    * Gives the Collection a new name, by the same rules as `create`; its own
    * name, in any letter case, is not a duplicate. The time it was created, its
    * Entries and its place in the list stay. Nothing for a Collection that
@@ -289,6 +298,41 @@ export async function openCollections({
     return { ok: true, collection: change({ id, name, createdAt, filed }) };
   }
 
+  /** The name, or the first free of it numbered « (2)», « (3)»…, each cut to the longest a name may be. */
+  function freeName(name: string): string {
+    const taken = new Set(list.map((collection) => nameKey(collection.name)));
+    for (let number = 1; ; number += 1) {
+      const suffix = number === 1 ? '' : ` (${String(number)})`;
+      // Count characters, not UTF-16 code units.
+      const cut = Array.from(name)
+        .slice(0, NAME_MAX_LENGTH - suffix.length)
+        .join('')
+        .trimEnd();
+      if (!taken.has(nameKey(`${cut}${suffix}`))) return `${cut}${suffix}`;
+    }
+  }
+
+  async function createCopy(untrimmed: string, entryIds: readonly string[]): Promise<Collection> {
+    const name = freeName(untrimmed.trim());
+    const id = newId();
+    const createdAt = clock.now();
+    const rowOf = await rows.rows(entryIds);
+    const changes = new Map<string, string | undefined>(
+      collectionRecords.record(id).change({ name, createdAt: createdAt.toISOString() }),
+    );
+    const filed = new Map<string, Filed>();
+    for (const entryId of entryIds) {
+      const row = rowOf.get(entryId);
+      if (row === undefined || filed.has(entryId)) continue;
+      // A millisecond apart, the first given the newest, so the copy lists them in the order given.
+      const addedAt = new Date(createdAt.getTime() - filed.size);
+      filed.set(entryId, { addedAt, row });
+      mergeInto(changes, entryRecord(id, entryId).change(addedAt.toISOString()));
+    }
+    await write(changes);
+    return change({ id, name, createdAt, filed });
+  }
+
   async function rename(
     collectionId: string,
     untrimmed: string,
@@ -358,6 +402,7 @@ export async function openCollections({
     entries,
     has,
     create: (name, entryId) => inTurn(() => create(name, entryId)),
+    createCopy: (name, entryIds) => inTurn(() => createCopy(name, entryIds)),
     rename: (collectionId, name) => inTurn(() => rename(collectionId, name)),
     delete: (collectionId) => inTurn(() => deleteCollection(collectionId)),
     add: (collectionId, entryId) => inTurn(() => add(collectionId, entryId)),
