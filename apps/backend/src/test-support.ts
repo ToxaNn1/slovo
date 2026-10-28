@@ -37,6 +37,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, onTestFinished, vi } from '
 
 import { keptSignInCode } from './account/authenticator';
 import { createApp } from './app';
+import { deleteCollectionLink } from './collection-links/collection-link-delete';
 import { publishPack } from './content/publish-pack';
 import { createDatabase, type Database } from './database/database';
 import { migrateDatabase } from './database/migrate';
@@ -476,6 +477,8 @@ export function testApp({
     listReports: (filter?: ReportFilter) => listReports(database, filter),
     /** What the reports resolve command prints and exits with for the id. */
     resolveReport: (id: string) => resolveReport(database, id),
+    /** What the collection-links delete command prints and exits with for the id. */
+    deleteCollectionLink: (id: string) => deleteCollectionLink(database, id),
     /** Closes the database the backend opened, as when Postgres goes away. */
     close,
   };
