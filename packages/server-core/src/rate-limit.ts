@@ -1,10 +1,4 @@
-import type { RateLimits } from './ports';
-
-/** How many requests a window of time takes. */
-export interface RequestLimit {
-  readonly requests: number;
-  readonly windowSeconds: number;
-}
+import type { RateLimits, RequestLimit } from './ports';
 
 /** What a request over a limit gets: when, in whole seconds, it may come again. */
 export interface TooManyRequests {
@@ -14,20 +8,20 @@ export interface TooManyRequests {
 }
 
 /**
- * Counts a request under the key at `now` against the limit, as `weight`
- * requests (one unless told), and answers when it may come again if it is
- * over; none when it may go on. A request that crosses the limit is over it
- * whole.
+ * Takes a request under the key at `now` within the limit, as `weight`
+ * requests (one unless told), and answers when it may come again if it does
+ * not fit; none when it may go on. A request that would cross the limit is
+ * refused whole and counts nothing.
  */
 export async function countRequest(
   rateLimits: RateLimits,
   key: string,
-  { requests, windowSeconds }: RequestLimit,
+  limit: RequestLimit,
   now: Date,
   weight = 1,
 ): Promise<TooManyRequests | undefined> {
-  const { count, windowEnds } = await rateLimits.count(key, windowSeconds, now, weight);
-  if (count <= requests) return undefined;
+  const { taken, windowEnds } = await rateLimits.take(key, limit, now, weight);
+  if (taken) return undefined;
   const left = Math.ceil((windowEnds.getTime() - now.getTime()) / 1000);
   return { ok: false, reason: 'too-many-requests', retryAfterSeconds: Math.max(1, left) };
 }

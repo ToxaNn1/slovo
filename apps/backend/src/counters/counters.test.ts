@@ -419,6 +419,32 @@ describe('the counter events from one IP address', () => {
     }
   });
 
+  it('count nothing of a batch refused, so a later batch that fits is taken', async () => {
+    const { client, database } = testApp();
+    for (let sent = 0; sent < 4; sent++) {
+      await client.counters.send({ editionId: 'uk', events: batch(100) });
+    }
+    await client.counters.send({ editionId: 'uk', events: batch(90) });
+    const refused = batch(20);
+    const fitting = batch(10);
+
+    await expect(client.counters.send({ editionId: 'uk', events: refused })).rejects.toMatchObject({
+      code: 'TOO_MANY_REQUESTS',
+    });
+    await expect(
+      client.counters.send({ editionId: 'uk', events: fitting }),
+    ).resolves.toBeUndefined();
+
+    for (const { entryId } of fitting) {
+      await expect(countsOf(database, entryId)).resolves.toEqual([
+        { known: 1, unknown: 0, saved: 0 },
+      ]);
+    }
+    await expect(client.counters.send({ editionId: 'uk', events: batch(1) })).rejects.toMatchObject(
+      { code: 'TOO_MANY_REQUESTS' },
+    );
+  });
+
   it('hold back no other IP address, and are taken again the next day', async () => {
     const { client, clientFrom } = testApp();
     for (let sent = 0; sent < 5; sent++) {
