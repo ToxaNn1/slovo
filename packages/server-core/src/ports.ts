@@ -3,7 +3,7 @@
  * the backend's adapters give. Modules take them in an object of dependencies,
  * so a test gives its own.
  */
-import type { PackMetadata, PublishedPack } from '@slovo/contracts';
+import type { MistakeReport, PackMetadata, PublishedPack } from '@slovo/contracts';
 
 /** The current time, injected so the rules that read it stay testable. */
 export interface Clock {
@@ -183,6 +183,19 @@ export interface RemoteSwitchStore {
   off(editionId: string): Promise<readonly string[]>;
   /** Sets whether the feature is off in the Edition, as of `at`. */
   set(editionId: string, feature: string, off: boolean, at: Date): Promise<void>;
+}
+
+/** A Mistake Report as the backend keeps it: the report and its time of arrival, nothing else. */
+export interface KeptReport extends MistakeReport {
+  readonly receivedAt: Date;
+}
+
+/**
+ * The Mistake Reports still to check, per Edition (Postgres in the backend).
+ * It keeps no IP address, no device id and no Account (ADR 0056).
+ */
+export interface MistakeReportStore {
+  keep(report: KeptReport): Promise<void>;
 }
 
 /** A JSON value, as a record of the user state holds it. */

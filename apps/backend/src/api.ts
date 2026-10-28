@@ -4,7 +4,13 @@ import { implement, ORPCError } from '@orpc/server';
 import { ResponseHeadersPlugin, type ResponseHeadersPluginContext } from '@orpc/server/plugins';
 import { apiContract } from '@slovo/contracts/api';
 import { apiDescriptionOptions } from '@slovo/contracts/api-description';
-import type { Accounts, ContentPacks, EditionRegistry, Sync } from '@slovo/server-core';
+import type {
+  Accounts,
+  ContentPacks,
+  EditionRegistry,
+  MistakeReports,
+  Sync,
+} from '@slovo/server-core';
 import type { Logger } from 'pino';
 
 import { accountProcedures } from './account/account-procedures';
@@ -57,11 +63,13 @@ export function createApiHandler({
   accounts,
   contentPacks,
   editions,
+  mistakeReports,
   sync,
 }: {
   accounts: Accounts;
   contentPacks: ContentPacks;
   editions: EditionRegistry;
+  mistakeReports: MistakeReports;
   sync: Sync;
 }) {
   const router = implement(apiContract)
@@ -71,7 +79,7 @@ export function createApiHandler({
       content: contentProcedures(contentPacks),
       counters: countersProcedures(),
       edition: editionProcedures(editions),
-      reports: reportsProcedures(),
+      reports: reportsProcedures(mistakeReports),
       sync: syncProcedures(sync, accounts),
     });
   return new OpenAPIHandler(router, {

@@ -15,6 +15,7 @@ export {
   type NotServing,
   type SwitchRefusal,
 } from './edition/edition-registry';
+export { createMistakeReports, type MistakeReports } from './reports/mistake-reports';
 export { createSync, type Sync, type SyncChange, type SyncPage } from './sync/sync';
 export {
   systemClock,
@@ -28,8 +29,10 @@ export {
   type GoogleVerifier,
   type Json,
   type KeptRecord,
+  type KeptReport,
   type Mail,
   type Mailer,
+  type MistakeReportStore,
   type PublishedFile,
   type RateLimits,
   type RecordChange,

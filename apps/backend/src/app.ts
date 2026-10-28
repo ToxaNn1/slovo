@@ -1,6 +1,7 @@
 import {
   createAccounts,
   createContentPacks,
+  createMistakeReports,
   createSync,
   type Clock,
   type Edition,
@@ -20,6 +21,7 @@ import type { Database } from './database/database';
 import type { ErrorReporter } from './error-reporter';
 import { createEditions } from './edition/editions';
 import { createRateLimits } from './rate-limits';
+import { createMistakeReportStore } from './reports/mistake-report-store';
 import { createUserRecords } from './sync/user-records';
 
 /**
@@ -105,7 +107,18 @@ export function createApp({
     rateLimits,
     clock,
   });
-  const api = createApiHandler({ accounts, contentPacks, editions: editionRegistry, sync });
+  const mistakeReports = createMistakeReports({
+    editions: editionRegistry,
+    store: createMistakeReportStore(database),
+    clock,
+  });
+  const api = createApiHandler({
+    accounts,
+    contentPacks,
+    editions: editionRegistry,
+    mistakeReports,
+    sync,
+  });
 
   const app = new Hono<Env>();
 
