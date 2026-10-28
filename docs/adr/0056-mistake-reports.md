@@ -16,7 +16,7 @@ Until 0.8.14 a reader who spotted a wrong Stress or a typo in a Definition could
 
 **The address is not Edition-scoped.** Sync and content live under `/v1/editions/{edition}/…`; `/v1/reports` is the owner's choice of 2026-10-26 and carries the Edition in its body. A report is a one-way message to the owner, not a resource of an Edition a reader reads back, and the counters' addresses follow the same pattern (ADR 0060). The backend keeps reports per Edition like all its data (ADR 0030).
 
-**The device queue.** «Надіслати» puts the report in a `device-only` queue of at most 20 unsent reports and tries to send it at once; a 21st unsent report pushes out the oldest. The queue sends through the one retry rule (ADR 0037), again at launch and on each return to the foreground, so a report written offline goes out later and is never lost to a dropped connection.
+**The device queue.** «Надіслати» puts the report in a `device-only` queue of at most 20 unsent reports and tries to send it at once; a 21st unsent report pushes out the oldest. The queue sends through the one retry rule (ADR 0037), oldest first and one report at a time, again at launch, on each return to the foreground and after a report the backend took, so a report written offline goes out later and is never lost to a dropped connection. The sheet's answer waits for the tries of the report just written.
 
 - **`202`** takes the report off the queue.
 - **`429`** on the report just written shows «Забагато повідомлень сьогодні. Спробуйте завтра.» and takes it off the queue, since the reader was told to try tomorrow; a queued report that meets a 429 later waits for `Retry-After`, as Sync does (ADR 0041).

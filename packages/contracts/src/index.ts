@@ -118,6 +118,13 @@ export {
   type TipInput,
 } from './tip';
 export { EntrySchema, type Entry, type EntryKind } from './entry';
+export {
+  MistakeReportSchema,
+  MistakeTypeSchema,
+  REPORT_COMMENT_LENGTH,
+  type MistakeReport,
+  type MistakeType,
+} from './mistake-report';
 export { SYNC_BATCH_SIZE } from './sync';
 export { SourceSchema, type Source } from './shared';
 export {

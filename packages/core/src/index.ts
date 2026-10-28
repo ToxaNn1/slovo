@@ -190,6 +190,12 @@ export {
 } from './rarity-test/rarity-test';
 // The shell keeps the Session in memory on a development client without the Keychain.
 export { createMemorySessionStore } from './account/memory-session-store';
+export {
+  openMistakeReports,
+  type MistakeReportAnswer,
+  type MistakeReportDraft,
+  type MistakeReports,
+} from './mistake-reports/mistake-reports';
 export { openSync, type Sync, type SyncState } from './sync/sync';
 export {
   NOTIFICATION_BODY_LENGTH,
@@ -219,12 +225,14 @@ export {
   type Schedule,
   type SessionStore,
   type SwitchesApi,
+  type ReportsApi,
+  type ReportsApiFailure,
   type SyncApi,
   type SyncApiFailure,
   type UserStateChanges,
   type UserStatePort,
 } from './ports';
-export { userStateRecords } from './user-state/user-state-schema';
+export { MISTAKE_REPORT_QUEUE_SIZE, userStateRecords } from './user-state/user-state-schema';
 export {
   createMemoryUserStatePort,
   openUserState,

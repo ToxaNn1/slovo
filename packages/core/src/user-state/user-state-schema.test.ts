@@ -113,6 +113,7 @@ describe('the 0.8 sync marks', () => {
       'search.recentQueries',
       'notifications.titles',
       'game.widgetHintOffered',
+      'reports.queue',
     ]) {
       expect(syncMarkOf(key), key).toBe('device-only');
     }

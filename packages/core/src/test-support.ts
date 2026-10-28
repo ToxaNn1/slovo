@@ -3,7 +3,7 @@ import type { Correction, Idiom, SynonymRow, Tip, Word } from '@slovo/contracts'
 import type { PlayedRound, Round, RoundAnswer } from './game/game-in-play';
 import type { RoundOption } from './game/game-mode';
 import type { KnownCounts } from './knowledge/knowledge';
-import type { Clock, ContentReadPort, Random } from './ports';
+import type { Clock, ContentReadPort, Random, Schedule } from './ports';
 
 // Helpers the Core's tests share. They are not part of the public `index.ts`.
 
@@ -40,6 +40,44 @@ export function fakeClock(start = defaultStart, timeZone = 'Europe/Kyiv') {
       zone = timeZoneName;
     },
   };
+}
+
+/**
+ * Lets every promise the Core has started settle: with the user state in
+ * memory and the fakes, nothing it waits for takes more than a microtask.
+ */
+export async function settle(): Promise<void> {
+  for (let tick = 0; tick < 1_000; tick += 1) await Promise.resolve();
+}
+
+/**
+ * A test `Schedule` on the fake clock: what is scheduled runs only when the
+ * test moves time past it, in the order it is due.
+ */
+export function testSchedule(time: ReturnType<typeof fakeClock>) {
+  const waiting = new Set<{ at: number; run: () => void }>();
+  const schedule: Schedule = (run, delay) => {
+    const timer = { at: time.clock.now().getTime() + delay, run };
+    waiting.add(timer);
+    return () => {
+      waiting.delete(timer);
+    };
+  };
+  /** Moves the clock on by `ms`, running each timer when it is due. */
+  async function advance(ms: number): Promise<void> {
+    const end = time.clock.now().getTime() + ms;
+    for (;;) {
+      await settle();
+      const [next] = [...waiting].filter(({ at }) => at <= end).sort((a, b) => a.at - b.at);
+      if (next === undefined) break;
+      waiting.delete(next);
+      time.advance(next.at - time.clock.now().getTime());
+      next.run();
+    }
+    time.advance(end - time.clock.now().getTime());
+    await settle();
+  }
+  return { schedule, advance };
 }
 
 /** A live noun of the Category `test`, with nothing but what the Core reads. */
