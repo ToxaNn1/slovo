@@ -1,6 +1,6 @@
 import type { EntryRowModel, EntryRows } from './entry-row';
 import { createSubscribers, newestFirst } from '../in-turn';
-import type { Clock } from '../ports';
+import type { Clock, UserStateChanges } from '../ports';
 import type { UserState } from '../user-state/user-state';
 import type { UserStateRecords } from '../user-state/user-state-record';
 
@@ -48,7 +48,8 @@ export interface EntryList<TimeKey extends string> {
  * Opens the list over its records. `afterWrite`, when given, runs after each
  * change is written and before the list changes in memory and its subscribers
  * hear of it, so a subscriber finds what it changed done. The list follows
- * the written change even when `afterWrite` fails.
+ * the written change even when `afterWrite` fails. `changesWith`, when given,
+ * gives the changes to write together with the Entry going in or out.
  */
 export async function openEntryList<TimeKey extends string>({
   records,
@@ -57,6 +58,7 @@ export async function openEntryList<TimeKey extends string>({
   userState,
   clock,
   afterWrite,
+  changesWith,
 }: {
   records: UserStateRecords<string>;
   /** The name of an Entry's time in the list. */
@@ -65,6 +67,7 @@ export async function openEntryList<TimeKey extends string>({
   userState: UserState;
   clock: Clock;
   afterWrite?: () => Promise<void>;
+  changesWith?: (entryId: string, isIn: boolean) => Promise<UserStateChanges>;
 }): Promise<EntryList<TimeKey>> {
   const listed = (entryId: string, at: Date, row: EntryRowModel) =>
     // A computed key widens to a string index; `timeKey` is the one it holds.
@@ -91,6 +94,14 @@ export async function openEntryList<TimeKey extends string>({
     }
   }
 
+  /** Writes the Entry's record, or deletes it for none, with the changes that go with it. */
+  async function write(entryId: string, at: Date | undefined): Promise<void> {
+    const withIt = (await changesWith?.(entryId, at !== undefined)) ?? new Map();
+    await userState.write(
+      new Map([...records.record(entryId).change(at?.toISOString()), ...withIt]),
+    );
+  }
+
   const has = (entryId: string) => list.some((entry) => entry.entryId === entryId);
 
   return {
@@ -102,13 +113,13 @@ export async function openEntryList<TimeKey extends string>({
       if (has(entryId)) return;
       const row = await rows.row(entryId);
       if (row === undefined) return;
-      await userState.write(records.record(entryId).change(at.toISOString()));
+      await write(entryId, at);
       await changeList([...list, listed(entryId, at, row)].sort(newest));
     },
     async remove(entryId) {
       const removed = list.find((entry) => entry.entryId === entryId);
       if (removed === undefined) return undefined;
-      await userState.write(records.record(entryId).change(undefined));
+      await write(entryId, undefined);
       await changeList(list.filter((entry) => entry !== removed));
       return timeOf(removed);
     },

@@ -149,3 +149,106 @@ describe('Community Counter deltas from Knowledge Marks', () => {
     expect(await unsentOf(app)).toEqual([]);
   });
 });
+
+/** Records where the reader added the Word to Favorites before the update, which counted nothing. */
+async function savedBeforeTheUpdate(entryId: string) {
+  const records = new Map<string, string>();
+  const userState = await openUserState({ port: createMemoryUserStatePort(records) });
+  await userState.write(
+    userStateRecords.favorites.record(entryId).change('2026-10-01T09:00:00.000Z'),
+  );
+  return records;
+}
+
+/** Records where this device counted the Word added to Favorites, and sent it. */
+async function savedAndSent(entryId: string) {
+  const records = new Map<string, string>();
+  const app = await run({ records });
+  await app.favorites.add(entryId);
+  for (const key of records.keys()) if (key.startsWith('counters.unsent.')) records.delete(key);
+  return records;
+}
+
+// Spec #886 stories 41, 45; ADR 0060: the deltas a reader's Favorites give.
+describe('Community Counter deltas from Favorites', () => {
+  it('counts an Entry added to Favorites as saved one', async () => {
+    const app = await run();
+
+    await app.favorites.add('w_one');
+    await app.favorites.toggle('w_two');
+
+    expect(await unsentOf(app)).toEqual([
+      ['w_one', { known: 0, unknown: 0, saved: 1 }],
+      ['w_two', { known: 0, unknown: 0, saved: 1 }],
+    ]);
+  });
+
+  it('takes a sent Favorite away when the reader removes it', async () => {
+    const app = await run({ records: await savedAndSent('w_one') });
+
+    await app.favorites.remove('w_one');
+
+    expect(await unsentOf(app)).toEqual([['w_one', { known: 0, unknown: 0, saved: -1 }]]);
+  });
+
+  it('sends nothing for a Favorite added and removed again before sending', async () => {
+    const app = await run();
+
+    await app.favorites.add('w_one');
+    await app.favorites.toggle('w_one');
+
+    expect(app.favorites.has('w_one')).toBe(false);
+    expect(await unsentOf(app)).toEqual([]);
+  });
+
+  it('counts nothing for adding an Entry already in Favorites', async () => {
+    const app = await run({ records: await savedAndSent('w_one') });
+
+    await app.favorites.add('w_one');
+
+    expect(await unsentOf(app)).toEqual([]);
+  });
+
+  it('merges a Favorite and a mark of the same Entry', async () => {
+    const app = await run();
+
+    await app.knowledge.tap('w_one', 'known');
+    await app.favorites.add('w_one');
+
+    expect(await unsentOf(app)).toEqual([['w_one', { known: 1, unknown: 0, saved: 1 }]]);
+  });
+
+  it('keeps the counted mark when the Favorite is removed, and the Favorite when the mark is', async () => {
+    const app = await run();
+    await app.knowledge.tap('w_one', 'known');
+    await app.favorites.add('w_one');
+
+    await app.favorites.remove('w_one');
+    await app.knowledge.tap('w_one', 'known');
+    expect(await unsentOf(app)).toEqual([]);
+
+    await app.favorites.add('w_one');
+    expect(await unsentOf(app)).toEqual([['w_one', { known: 0, unknown: 0, saved: 1 }]]);
+  });
+
+  it('never sends a Favorite from before the update, and takes nothing away when it is removed', async () => {
+    const app = await run({ records: await savedBeforeTheUpdate('w_one') });
+    expect(app.favorites.has('w_one')).toBe(true);
+    expect(await unsentOf(app)).toEqual([]);
+
+    await app.favorites.remove('w_one');
+    expect(await unsentOf(app)).toEqual([]);
+
+    await app.favorites.add('w_one');
+    expect(await unsentOf(app)).toEqual([['w_one', { known: 0, unknown: 0, saved: 1 }]]);
+  });
+
+  it('counts nothing with the communityCounters Feature Switch off', async () => {
+    const app = await run({ on: ['knowledge'] });
+
+    await app.favorites.add('w_one');
+
+    expect(app.favorites.has('w_one')).toBe(true);
+    expect(await unsentOf(app)).toEqual([]);
+  });
+});

@@ -16,7 +16,7 @@ export interface CounterDelta {
 
 /**
  * The Community Counters of this device (ADR 0060): the changes it counted
- * from the reader's own Knowledge Marks, kept `device-only` until they are
+ * from the reader's own Knowledge Marks and Favorites, kept `device-only` until they are
  * sent.
  */
 export interface CommunityCounters {
@@ -65,7 +65,8 @@ const isUnchanged = (delta: CounterDelta) =>
 /**
  * Opens the Community Counters over the user state, for the Core composition,
  * with `countMark`, which the Knowledge Marks call when the reader taps a mark
- * on a card, the Yesterday card's included, and never for a Game answer.
+ * on a card, the Yesterday card's included, and never for a Game answer, and
+ * `countSaved`, which Favorites call when the reader adds or removes an Entry.
  */
 export function openCommunityCounters({
   edition,
@@ -84,30 +85,44 @@ export function openCommunityCounters({
    * None with the `communityCounters` Feature Switch off.
    */
   countMark: (entryId: string, mark: KnowledgeMark | undefined) => Promise<UserStateChanges>;
+  /**
+   * The changes to write with the Entry going into Favorites or out of them,
+   * by the same rule: adding it saves one, removing an Entry this device
+   * counted saved takes one away. A Favorite from before the update was never
+   * counted, so removing it changes nothing and adding it again counts as new.
+   * None with the `communityCounters` Feature Switch off.
+   */
+  countSaved: (entryId: string, saved: boolean) => Promise<UserStateChanges>;
 } {
   const { countersCounted, countersUnsent } = userStateRecords;
+
+  /** The changes that count the Entry as `next` gives it from what this device counted. */
+  async function count(
+    entryId: string,
+    next: (counted: Counted) => Counted,
+  ): Promise<UserStateChanges> {
+    if (!edition.isFeatureEnabled('communityCounters')) return new Map();
+    const counted = (await userState.read(countersCounted.record(entryId))) ?? nothingCounted;
+    const is = next(counted);
+    const delta: CounterDelta = {
+      known: changeOf(counted.mark === 'known', is.mark === 'known'),
+      unknown: changeOf(counted.mark === 'unknown', is.mark === 'unknown'),
+      saved: changeOf(counted.saved, is.saved),
+    };
+    if (isUnchanged(delta)) return new Map();
+    const unsent = merged(
+      (await userState.read(countersUnsent.record(entryId))) ?? unchanged,
+      delta,
+    );
+    return new Map([
+      ...countersCounted.record(entryId).change(is.mark === null && !is.saved ? undefined : is),
+      ...countersUnsent.record(entryId).change(isUnchanged(unsent) ? undefined : unsent),
+    ]);
+  }
+
   return {
     communityCounters: { unsent: () => userState.list(countersUnsent) },
-    async countMark(entryId, mark) {
-      if (!edition.isFeatureEnabled('communityCounters')) return new Map();
-      const counted = (await userState.read(countersCounted.record(entryId))) ?? nothingCounted;
-      const next: Counted = { ...counted, mark: mark ?? null };
-      const delta: CounterDelta = {
-        known: changeOf(counted.mark === 'known', next.mark === 'known'),
-        unknown: changeOf(counted.mark === 'unknown', next.mark === 'unknown'),
-        saved: 0,
-      };
-      if (isUnchanged(delta)) return new Map();
-      const unsent = merged(
-        (await userState.read(countersUnsent.record(entryId))) ?? unchanged,
-        delta,
-      );
-      return new Map([
-        ...countersCounted
-          .record(entryId)
-          .change(next.mark === null && !next.saved ? undefined : next),
-        ...countersUnsent.record(entryId).change(isUnchanged(unsent) ? undefined : unsent),
-      ]);
-    },
+    countMark: (entryId, mark) => count(entryId, (counted) => ({ ...counted, mark: mark ?? null })),
+    countSaved: (entryId, saved) => count(entryId, (counted) => ({ ...counted, saved })),
   };
 }
