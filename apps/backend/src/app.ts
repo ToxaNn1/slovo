@@ -19,6 +19,10 @@ import type { Logger } from 'pino';
 
 import { createAuthenticator } from './account/authenticator';
 import { createApiHandler, INTERNAL_FAILURE, onUnexpectedFailure } from './api';
+import {
+  APP_SITE_ASSOCIATION_PATH,
+  appSiteAssociation,
+} from './collection-links/app-site-association';
 import { createCollectionLinkStore } from './collection-links/collection-link-store';
 import { createContentPackStore } from './content/content-pack-store';
 import { createCounterStore } from './counters/counter-store';
@@ -54,6 +58,11 @@ export interface AppDependencies {
   readonly authSecret: string;
   /** Where the unexpected failures (500) are reported. */
   readonly reporter: ErrorReporter;
+  /**
+   * SLOVO's Apple Developer Team ID, which the apple-app-site-association
+   * file names the apps by; with none the backend serves no such file.
+   */
+  readonly appleTeamId: string | undefined;
 }
 
 type Variables = RequestIdVariables & {
@@ -93,6 +102,7 @@ export function createApp({
   google,
   authSecret,
   reporter,
+  appleTeamId,
 }: AppDependencies) {
   const editionRegistry = createEditions({ database, clock, editions });
   const rateLimits = createRateLimits(database, { secret: authSecret });
@@ -184,6 +194,13 @@ export function createApp({
       return c.json({ status: 'unavailable' }, 503);
     }
   });
+
+  // The file that lets the apps open their Collection Links (ADR 0058).
+  // Without a Team ID there is none, so the path is not found.
+  if (appleTeamId !== undefined) {
+    const file = appSiteAssociation(appleTeamId, editions);
+    app.get(APP_SITE_ASSOCIATION_PATH, (c) => c.json(file));
+  }
 
   // A body too large to be a request of the API is refused before it is
   // parsed and before any Session is checked: at once when its Content-Length
