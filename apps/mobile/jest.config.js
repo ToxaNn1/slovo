@@ -31,4 +31,6 @@ export default {
   },
   resolver: './jest.resolver.cjs',
   setupFiles: ['./jest.setup.js'],
+  // Where CI keeps the transforms from run to run (.github/workflows/ci.yml).
+  cacheDirectory: '<rootDir>/node_modules/.cache/jest',
 };
