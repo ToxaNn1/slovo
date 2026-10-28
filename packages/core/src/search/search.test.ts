@@ -197,6 +197,17 @@ describe('Search over every kind of Entry', () => {
     expect((await groupsOf(search, 'хороб')).synonymRows).toEqual(['сміливий']);
   });
 
+  it('finds a word after a quote, a bracket or a hyphen by its own start', async () => {
+    const search = await searchOver({
+      idioms: [idiom('i_stump', { expression: 'через пень-колоду' })],
+      tips: [tip('t_greet', { title: 'Вітаємося: «Добрий день!»' })],
+    });
+
+    expect((await groupsOf(search, 'колод')).idioms).toEqual(['через пень-колоду']);
+    expect((await groupsOf(search, 'пень-кол')).idioms).toEqual(['через пень-колоду']);
+    expect((await groupsOf(search, 'добр')).tips).toEqual(['Вітаємося: «Добрий день!»']);
+  });
+
   it('puts an Entry with an exact text first, then the rest in the Edition’s alphabet', async () => {
     const search = await searchOver({
       corrections: [

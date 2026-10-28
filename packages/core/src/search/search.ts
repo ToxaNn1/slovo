@@ -113,9 +113,18 @@ interface Keyed<Found extends Entry> {
   readonly meaningKeys: readonly string[];
 }
 
-/** Whether the text, as its Search key, or any of its words starts with the query's key. */
+/** A character that ends a word: anything but a letter, a mark or the apostrophe inside a word. */
+const WORD_BREAK = /[^\p{L}\p{M}ʼ]/u;
+
+/**
+ * Whether the text, as its Search key, or any of its words starts with the
+ * query's key; a word starts after a space, a quote, a bracket or a hyphen.
+ */
 const matches = (key: string, query: string) =>
-  key.startsWith(query) || key.split(' ').some((part) => part.startsWith(query));
+  Array.from({ length: key.length }).some(
+    (_, index) =>
+      key.startsWith(query, index) && (index === 0 || WORD_BREAK.test(key.charAt(index - 1))),
+  );
 
 /** Opens Search over the Language Pack and the user's Hidden Entries. */
 export function createSearch({
