@@ -310,6 +310,18 @@ describe('app config', () => {
     expect(() => appConfig(broken)).toThrow(/strings\.json › widget\.galleryName/);
   });
 
+  it("names the field when the widget palette's text is too faint for its background", () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+    const faint = repoWithEdition((config) => {
+      config['widgetPalette'] = {
+        parchment: { background: '#F3E9D2', text: '#C8BBA0' },
+        blue: { background: '#1F3A5F', text: '#F3E9D2' },
+      };
+    });
+
+    expect(() => appConfig(faint)).toThrow(/widgetPalette\.parchment\.text/);
+  });
+
   it('registers the native time picker', () => {
     vi.stubEnv('SLOVO_EDITION', 'uk');
 
