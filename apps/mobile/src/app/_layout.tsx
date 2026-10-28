@@ -211,6 +211,8 @@ function EditionTabs({ screenOptions }: { screenOptions: TabOptions }) {
       <Tabs.Screen name="saved" options={tabOptions('saved', tabOrder)} />
       {/* An Entry opened from a link, such as a notification's; no tab leads to it. */}
       <Tabs.Screen name="entry" options={{ href: null }} />
+      {/* The recipient sheet of a Collection Link opened from outside; no tab leads to it. */}
+      <Tabs.Screen name="c/[linkId]" options={{ href: null }} />
       {/* Search, from the magnifier of the «Головна» header; no tab leads to it. */}
       <Tabs.Screen name="search" options={{ href: null }} />
       {/* The Word the mood roulette of the «Головна» header lands on; no tab leads to it. */}

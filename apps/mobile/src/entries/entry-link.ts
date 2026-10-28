@@ -1,3 +1,5 @@
+import { CollectionLinkIdSchema } from '@slovo/contracts';
+
 import { isFromNotification } from '../notifications/notification-scheduler';
 
 /** Where outside the app an Entry link opened from: a notification or the home-screen widget. */
@@ -29,21 +31,27 @@ const linkEntryPath = /^\/entry\/[^/]+$/;
 const entryPath =
   /^\/(?:entry|game|saved\/(?:favorites|history|learning)|saved\/collections\/[^/]+)\/[^/]+$/;
 
+/** A path under `/c`, where a Collection Link opens as `/c/<id>` (ADR 0058). */
+const collectionLinksPath = /^\/c(?:\/|$)/;
+
 /** A link's scheme, such as `slovo-uk://`, after which its host is the first part of the path. */
 const schemePrefix = /^[a-z][a-z0-9+.-]*:\/\//i;
 
+/** The origin of a web address, which Expo Router leaves out of the path it opens. */
+const webOrigin = /^https?:\/\/[^/?#]*/i;
+
 /**
  * The path and search of the route a link opens, as Expo Router reads it:
- * after the scheme, or, for the dev client's link
- * (`<scheme>://expo-development-client/?url=<link>`), that of the link in its
- * `url`, with the origin of a web address taken away.
+ * after the scheme or the origin of a web address, or, for the dev client's
+ * link (`<scheme>://expo-development-client/?url=<link>`), that of the link in
+ * its `url`.
  */
 function routeOf(link: string): { path: string; search: string } {
-  const [location = '', search = ''] = link.replace(/#.*$/, '').split('?');
+  const [location = '', search = ''] = link.replace(webOrigin, '').replace(/#.*$/, '').split('?');
   const rest = location.replace(schemePrefix, '');
   if (schemePrefix.test(location) && /^expo-development-client\/?$/.test(rest)) {
     const inner = new URLSearchParams(search).get('url') ?? '';
-    return routeOf(inner.replace(/^https?:\/\/[^/?#]*/i, ''));
+    return routeOf(inner);
   }
   return { path: `/${rest.replace(/^\/+/, '')}`, search };
 }
@@ -55,7 +63,11 @@ function normalPath(path: string): string {
 
 /**
  * The path a link from outside the app opens, such as a link another app or
- * a web page opens with the Edition's scheme. A link to an Entry, on any of
+ * a web page opens with the Edition's scheme, or nothing for a link the app
+ * ignores. A Collection Link, `https://<linkDomain>/c/<id>` (the only web
+ * address iOS hands the app) or the scheme + `c/<id>`, opens `/c/<id>` with
+ * none of its search params; any other link under `c/`, with an id the
+ * backend never makes, opens nothing (ADR 0058). A link to an Entry, on any of
  * its routes and whatever its slashes, opens with its path and none of its
  * search params, so it can't name the label of «Назад» or pass for a
  * notification's link, which never comes from outside (`NotificationTaps`
@@ -65,9 +77,13 @@ function normalPath(path: string): string {
  * its Entry is not Seen and goes into no History. Every other link, the dev
  * client's among them, goes on to Expo Router as it came.
  */
-function outsidePath(link: string, widgetLinkKey: string | undefined): string {
+function outsidePath(link: string, widgetLinkKey: string | undefined): string | null {
   const route = routeOf(link);
   const path = normalPath(route.path);
+  if (collectionLinksPath.test(path)) {
+    const id = path.slice('/c/'.length);
+    return CollectionLinkIdSchema.safeParse(id).success ? `/c/${id}` : null;
+  }
   if (!entryPath.test(path)) return link;
   const params = new URLSearchParams(route.search);
   const fromWidget =
@@ -85,6 +101,6 @@ function outsidePath(link: string, widgetLinkKey: string | undefined): string {
  */
 export function createOutsideLinks(
   widgetLinkKey: () => Promise<string | undefined>,
-): (link: { path: string }) => Promise<string> {
+): (link: { path: string }) => Promise<string | null> {
   return async ({ path }) => outsidePath(path, await widgetLinkKey());
 }

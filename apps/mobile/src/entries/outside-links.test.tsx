@@ -3,6 +3,7 @@ import { router, Slot } from 'expo-router';
 import { act, renderRouter, screen } from 'expo-router/testing-library';
 import { Linking, Text } from 'react-native';
 
+import CollectionLinkScreen from '../app/c/[linkId]';
 import EntryLayout from '../app/entry/_layout';
 import EntryFromLinkScreen from '../app/entry/[entryId]';
 import GameEntryScreen from '../app/game/[entryId]';
@@ -26,6 +27,9 @@ jest.mock('./entry-screen', () => {
       createElement(StandIn, { testID: 'entry-screen' }, `${back} | ${openedFrom ?? 'inside'}`),
   };
 });
+
+/** The Edition's link domain, the only one whose web addresses iOS hands the app. */
+const LINK_DOMAIN = 'slovo.example';
 
 /** The key of the snapshot the widget reads now, which its links carry. */
 const WIDGET_LINK_KEY = 'the-widgets-own';
@@ -84,6 +88,7 @@ async function renderApp() {
       'saved/history/[entryId]': HistoryEntryScreen,
       'saved/learning/[entryId]': LearningEntryScreen,
       'game/[entryId]': GameEntryScreen,
+      'c/[linkId]': CollectionLinkScreen,
     },
     { initialUrl: '/' },
   );
@@ -158,6 +163,40 @@ describe('a link from outside the app', () => {
     await app.open(`slovo-uk://entry/c_77szl9?from=widget&key=${WIDGET_LINK_KEY}`);
 
     expect(entryScreen()).toBe(`${home} | widget`);
+  });
+});
+
+describe('a Collection Link from outside the app', () => {
+  it.each([
+    ['its web address', `https://${LINK_DOMAIN}/c/aB3dE5gH7k`],
+    ["the Edition's scheme", 'slovo-uk://c/aB3dE5gH7k'],
+    [
+      'its web address in other letter case, a slash and params',
+      `HTTPS://Slovo.Example/c/aB3dE5gH7k/?x=1#top`,
+    ],
+    [
+      "the dev client's link",
+      `slovo-uk://expo-development-client/?url=${encodeURIComponent(`https://${LINK_DOMAIN}/c/aB3dE5gH7k`)}`,
+    ],
+  ])('as %s opens the recipient sheet of its id', async (_, link) => {
+    const app = await renderApp();
+    await app.open(link);
+
+    expect(app.pathname()).toBe('/c/aB3dE5gH7k');
+  });
+
+  it.each([
+    ['an id too short', 'slovo-uk://c/aB3dE5gH7'],
+    ['an id too long', `https://${LINK_DOMAIN}/c/aB3dE5gH7kX`],
+    ['a sign the backend never puts in an id', 'slovo-uk://c/aB3dE5gH7-'],
+    ['no id', `https://${LINK_DOMAIN}/c/`],
+    ['a path after the id', 'slovo-uk://c/aB3dE5gH7k/more'],
+  ])('with %s is ignored: the app stays where it is', async (_, link) => {
+    const app = await renderApp();
+    await app.open(link);
+
+    expect(app.pathname()).toBe('/');
+    expect(screen.getByText('Feed')).toBeTruthy();
   });
 });
 
