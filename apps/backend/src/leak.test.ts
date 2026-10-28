@@ -226,6 +226,21 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
             .catch(refused);
         },
       },
+      counters: {
+        send: async () => {
+          const events = [{ entryId: 'w_a1', known: 1, unknown: 0, saved: 1 } as const];
+          await client.counters.send({ editionId: EDITION, events }).catch(refused);
+          await client.counters.send({ editionId: 'pl', events }).catch(refused);
+        },
+        read: async () => {
+          await client.counters.read({ edition: EDITION, entries: 'w_a1,c_a1' }).catch(refused);
+          await client.counters.read({ edition: 'pl', entries: 'w_a1' }).catch(refused);
+        },
+        communityWord: async () => {
+          await client.counters.communityWord({ edition: EDITION }).catch(refused);
+          await client.counters.communityWord({ edition: 'pl' }).catch(refused);
+        },
+      },
       edition: {
         switches: async () => {
           const params = { editionId: EDITION };

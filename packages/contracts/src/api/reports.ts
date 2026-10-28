@@ -1,12 +1,8 @@
 import { z } from 'zod';
 
-import { CorrectionIdSchema } from '../correction';
 import { EditionIdSchema } from '../edition';
-import { IdiomIdSchema } from '../idiom';
+import { EntryIdSchema } from '../entry';
 import { PackMetadataSchema } from '../language-pack';
-import { SynonymRowIdSchema } from '../synonym-row';
-import { TipIdSchema } from '../tip';
-import { WordIdSchema } from '../word';
 import { procedure } from './procedure';
 
 /** How many characters a Mistake Report's comment has at most, trimmed. */
@@ -25,13 +21,7 @@ export const MistakeReportSchema = z
   .strictObject({
     editionId: EditionIdSchema,
     /** The id of the Entry reported, of any of the five kinds. */
-    entryId: z.union([
-      WordIdSchema,
-      CorrectionIdSchema,
-      IdiomIdSchema,
-      SynonymRowIdSchema,
-      TipIdSchema,
-    ]),
+    entryId: EntryIdSchema,
     type: MistakeTypeSchema,
     /** The reader's comment, trimmed; empty when there is none. */
     comment: z.string().trim().max(REPORT_COMMENT_LENGTH),
