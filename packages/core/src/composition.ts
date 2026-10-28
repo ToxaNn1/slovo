@@ -1,3 +1,7 @@
+import {
+  createCollectionLinkCopy,
+  type CollectionLinkCopy,
+} from './collection-links/copy-collection';
 import { openCollections, type Collections } from './saved/collections';
 import { anagramMode } from './game/anagram-mode';
 import { anglicismMode } from './game/anglicism-mode';
@@ -50,7 +54,14 @@ import {
   type NotificationsEdition,
 } from './notifications/notifications';
 import { openOnboarding, type Onboarding } from './onboarding/onboarding';
-import type { Clock, CommunityWordApi, ContentReadPort, Random, Schedule } from './ports';
+import type {
+  Clock,
+  CollectionLinksApi,
+  CommunityWordApi,
+  ContentReadPort,
+  Random,
+  Schedule,
+} from './ports';
 import { openProgress, type Progress } from './progress/progress';
 import { createWeeklyRecap, type WeeklyRecap } from './progress/weekly-recap';
 import { createMoodDraw, type MoodDraw } from './mood/mood-draw';
@@ -76,6 +87,8 @@ export interface Composition extends Hiding {
   readonly favorites: Favorites;
   /** Collections, which the sheet and the Collections screens change. */
   readonly collections: Collections;
+  /** The recipient's side of a Collection Link: its preview and «Додати собі». */
+  readonly collectionLinkCopy: CollectionLinkCopy;
   /** History, which the Feed records in the same write as Seen. */
   readonly history: History;
   /**
@@ -302,6 +315,7 @@ export async function openComposition({
   crossword,
   feedNotices = noFeedNotices,
   communityWord,
+  collectionLinks,
   ...ports
 }: {
   content: ContentReadPort;
@@ -333,6 +347,8 @@ export async function openComposition({
   feedNotices?: FeedNotices;
   /** The backend's Community Word, which the Feed shows on a Monday; without it, as in tests of other features, none. */
   communityWord?: CommunityWordApi;
+  /** The backend's Collection Links, which a link opened from outside reads; without it, as in tests of other features, no link is available. */
+  collectionLinks?: CollectionLinksApi;
 }): Promise<Composition> {
   const { userState, scheduling, schedule, close } = closable(ports);
   const entries = createEntries({ content, edition, userState });
@@ -509,6 +525,14 @@ export async function openComposition({
     feed,
     favorites,
     collections,
+    collectionLinkCopy: createCollectionLinkCopy({
+      api: collectionLinks,
+      edition,
+      rows,
+      collections,
+      schedule,
+      random,
+    }),
     history,
     wordOfTheDayArchive: createWordOfTheDayArchive({ content, edition, userState, clock }),
     hiddenEntries,

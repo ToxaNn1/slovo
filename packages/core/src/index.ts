@@ -14,6 +14,10 @@ export {
   type CollectionResult,
   type Collections,
 } from './saved/collections';
+export {
+  type CollectionLinkCopy,
+  type CollectionLinkPreview,
+} from './collection-links/copy-collection';
 export { buildCorrectionCard, type CorrectionCardModel } from './entries/correction-card';
 export { type IdiomCardModel } from './entries/idiom-card';
 export {

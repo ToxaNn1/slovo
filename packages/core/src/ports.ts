@@ -374,6 +374,10 @@ export interface CollectionLinksApi {
   ): Promise<
     { readonly ok: true; readonly id: string; readonly url: string } | CollectionLinksApiFailure
   >;
+  /** The Collection as the link of the id holds it; `not-found` for an unknown id. */
+  read(
+    id: string,
+  ): Promise<{ readonly ok: true; readonly link: CollectionLink } | CollectionLinksApiFailure>;
 }
 
 /** This device's Session as the device keeps it: its token and the email of its Account. */
