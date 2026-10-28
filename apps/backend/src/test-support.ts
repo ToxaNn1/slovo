@@ -41,6 +41,7 @@ import { migrateDatabase } from './database/migrate';
 import { accounts, sessions, signInMethods } from './database/schema';
 import { readEditions } from './edition/edition-folders';
 import { createEditions } from './edition/editions';
+import { listReports, type ReportFilter } from './reports/report-list';
 import type { ErrorReport } from './error-reporter';
 
 /** The Postgres of the repo's `compose.yaml`, which the tests use unless `DATABASE_URL` names another. */
@@ -457,6 +458,8 @@ export function testApp({
     /** Clears the Edition's remote switch of the feature, as the clear command does. */
     clearSwitch: (editionId: string, feature: string) =>
       createEditions({ database, clock: systemClock, editions }).clearSwitch(editionId, feature),
+    /** The lines the reports list command prints of the reports the backend keeps. */
+    listReports: (filter?: ReportFilter) => listReports(database, filter),
     /** Closes the database the backend opened, as when Postgres goes away. */
     close,
   };
