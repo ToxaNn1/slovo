@@ -162,6 +162,8 @@ export function WordCardBody({
           )}
           <Text
             testID="word-definition"
+            // The voices break a word at its Stress mark, so VoiceOver reads the text without it.
+            accessibilityLabel={withoutStress(card.primaryDefinition)}
             {...voice}
             {...turnActions}
             style={[sizes.definition, { color: colors.ink, fontFamily: fontFamilies.word }]}
@@ -174,6 +176,7 @@ export function WordCardBody({
           {card.history === undefined ? null : (
             <DetailSection testID="word-history" title={strings.history}>
               <Text
+                accessibilityLabel={withoutStress(card.history)}
                 {...voice}
                 style={[
                   styles.sectionText,
@@ -192,6 +195,9 @@ export function WordCardBody({
                     <Text
                       key={key}
                       testID={`word-${key}`}
+                      accessibilityLabel={withoutStress(
+                        `${words.length === 1 ? one : many} ${words.join(', ')}`,
+                      )}
                       {...voice}
                       style={[
                         styles.relation,
@@ -334,8 +340,19 @@ export function ExampleText({
 }) {
   const { colors, fontFamilies } = useTokens();
   const { strings, voice } = useEdition();
+  const text = fill(strings.wordCard.example, { text: example.text });
+  const author =
+    example.author === undefined
+      ? undefined
+      : fill(strings.wordCard.exampleAuthor, { author: example.author });
   return (
-    <View testID={testID} accessible {...voice}>
+    <View
+      testID={testID}
+      accessible
+      // The Example and its author's line, as VoiceOver joins them, without the Stress marks.
+      accessibilityLabel={withoutStress(author === undefined ? text : `${text}, ${author}`)}
+      {...voice}
+    >
       <Text
         style={[
           styles.example,
@@ -343,11 +360,11 @@ export function ExampleText({
           { color: colors.inkSecondary, fontFamily: fontFamilies.word },
         ]}
       >
-        {fill(strings.wordCard.example, { text: example.text })}
+        {text}
       </Text>
-      {example.author === undefined ? null : (
+      {author === undefined ? null : (
         <Text style={[styles.author, { color: colors.muted, fontFamily: fontFamilies.ui }]}>
-          {fill(strings.wordCard.exampleAuthor, { author: example.author })}
+          {author}
         </Text>
       )}
     </View>
@@ -392,7 +409,12 @@ function Details({ details }: { details: NonNullable<WordCardModel['details']> }
           {details.extraDefinitions.length === 0 ? null : (
             <DetailSection title={strings.wordCard.extraDefinitions}>
               {details.extraDefinitions.map((definition, index) => (
-                <Text key={index} {...voice} style={bodyText}>
+                <Text
+                  key={index}
+                  accessibilityLabel={withoutStress(`${String(index + 2)}. ${definition}`)}
+                  {...voice}
+                  style={bodyText}
+                >
                   {/* The primary Definition is the first; these number on from 2. */}
                   {`${String(index + 2)}. ${definition}`}
                 </Text>
@@ -409,6 +431,7 @@ function Details({ details }: { details: NonNullable<WordCardModel['details']> }
           {details.etymology === undefined ? null : (
             <DetailSection title={strings.wordCard.etymology}>
               <Text
+                accessibilityLabel={withoutStress(details.etymology)}
                 {...voice}
                 style={[
                   styles.sectionText,

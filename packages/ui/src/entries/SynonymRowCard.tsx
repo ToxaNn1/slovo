@@ -93,6 +93,8 @@ export function SynonymRowCardBody({
         <>
           <Text
             testID="synonym-row-meaning"
+            // The voices break a word at its Stress mark, so VoiceOver reads the text without it.
+            accessibilityLabel={withoutStress(shown.card.meaning)}
             {...voice}
             {...turnActions}
             style={[sizes.definition, { color: colors.ink, fontFamily: fontFamilies.word }]}

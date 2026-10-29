@@ -176,3 +176,30 @@ describe('Self-check on a Synonym Row card', () => {
     expect(onMark).toHaveBeenCalledWith('known');
   });
 });
+
+describe('VoiceOver on the texts of a Synonym Row card with a Stress mark', () => {
+  it('shows the Stress marks and reads the meaning and the example without them', async () => {
+    const stressed: SynonymRowFeedCard = {
+      ...card,
+      model: {
+        ...model,
+        meaning: 'To move on fóot.',
+        example: { text: 'They wálked to the river.' },
+      },
+    };
+    await render(inEdition(<EntryCard card={stressed} />));
+
+    expect(screen.getByTestId('synonym-row-meaning')).toHaveTextContent('To move on fóot.');
+    expect(screen.getByTestId('synonym-row-meaning')).toHaveProp(
+      'accessibilityLabel',
+      'To move on foot.',
+    );
+    expect(screen.getByTestId('synonym-row-example')).toHaveTextContent(
+      'They wálked to the river.',
+    );
+    expect(screen.getByTestId('synonym-row-example')).toHaveProp(
+      'accessibilityLabel',
+      'They walked to the river.',
+    );
+  });
+});
