@@ -14,7 +14,7 @@ import {
   createMemoryContentPort,
   type FakeCollectionLinksApi,
 } from '@slovo/core/testing';
-import { EditionProvider } from '@slovo/ui';
+import { EditionProvider, systemSchedule } from '@slovo/ui';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { Share } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -26,20 +26,13 @@ import { edition, editionStrings } from '../edition/edition';
 /** The composition the screen reads, opened afresh for each test. */
 let mockComposition: Composition;
 
-/** The Edition as the app runs it, `collectionLinks` on unless a test turns it off. */
-let mockEdition: Edition;
+/** Whether a test turned `collectionLinks` off, as a remote switch does. */
+let collectionLinksOff: boolean;
 
 /** The backend of Collection Links, online unless a test takes it off. */
-let mockApi: FakeCollectionLinksApi;
+let api: FakeCollectionLinksApi;
 
 jest.mock('../composition', () => ({ useComposition: () => mockComposition }));
-jest.mock('../edition/remote-switches', () => ({ useEditionInEffect: () => mockEdition }));
-jest.mock('./collection-links-api', () => ({
-  createCollectionLinksApi: () => ({
-    create: (link: Parameters<FakeCollectionLinksApi['create']>[0]) => mockApi.create(link),
-    read: (id: string) => mockApi.read(id),
-  }),
-}));
 jest.mock('expo-router', () => ({
   useRouter: () => ({ back: () => undefined, push: () => undefined }),
 }));
@@ -79,18 +72,27 @@ let now: number;
 beforeEach(async () => {
   jest.useFakeTimers();
   share = jest.spyOn(Share, 'share').mockResolvedValue({ action: Share.sharedAction });
-  mockApi = createFakeCollectionLinksApi({ linkDomain: 'slovo.example' });
-  mockEdition = loadEdition(config);
+  api = createFakeCollectionLinksApi({ linkDomain: 'slovo.example' });
+  collectionLinksOff = false;
+  const loaded = loadEdition(config);
+  /** The Edition as the app runs it, `collectionLinks` on unless a test turns it off. */
+  const inEffect: Edition = {
+    ...loaded,
+    isFeatureEnabled: (feature) =>
+      !(feature === 'collectionLinks' && collectionLinksOff) && loaded.isFeatureEnabled(feature),
+  };
   now = Date.parse('2026-10-28T09:00:00Z');
   mockComposition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'nature', displayName: 'Природа' }],
       words: [word('w_kvasha', 'кваша'), word('w_buzok', 'бузок')],
     }),
-    edition: mockEdition,
+    edition: inEffect,
     userState: await openUserState({ port: createMemoryUserStatePort() }),
     clock: { now: () => new Date(now), timeZone: () => 'Europe/Kyiv' },
     random: systemRandom,
+    schedule: systemSchedule,
+    collectionLinks: api,
   });
 });
 
@@ -150,9 +152,7 @@ describe('«Поділитися посиланням» in a Collection’s menu
     expect(screen.getByRole('button', { name: strings.share })).toBeEnabled();
     await shareFromMenu();
 
-    expect(mockApi.made).toEqual([
-      { edition: 'uk', name: 'Осінь', entryIds: ['w_buzok', 'w_kvasha'] },
-    ]);
+    expect(api.made).toEqual([{ edition: 'uk', name: 'Осінь', entryIds: ['w_buzok', 'w_kvasha'] }]);
     expect(share).toHaveBeenCalledTimes(1);
     expect(share).toHaveBeenCalledWith({
       message: 'Колекція «Осінь» у SLOVO: https://slovo.example/c/link000001',
@@ -168,23 +168,23 @@ describe('«Поділитися посиланням» in a Collection’s menu
     expect(row).toBeDisabled();
     await shareFromMenu();
 
-    expect(mockApi.calls).toBe(0);
+    expect(api.calls).toBe(0);
     expect(share).not.toHaveBeenCalled();
   });
 
   it('says «Немає з’єднання. Спробуйте пізніше.» offline and shares nothing', async () => {
     const autumn = await collection('Осінь', ['w_kvasha']);
-    mockApi.online = false;
+    api.online = false;
     await openMenuOf(autumn);
 
     expect(await toast()).toHaveTextContent('Немає з’єднання. Спробуйте пізніше.');
-    expect(mockApi.made).toEqual([]);
+    expect(api.made).toEqual([]);
     expect(share).not.toHaveBeenCalled();
   });
 
   it('says it failed when the backend makes no link', async () => {
     const autumn = await collection('Осінь', ['w_kvasha']);
-    mockApi.failNext('too-many-requests');
+    api.failNext('too-many-requests');
     await openMenuOf(autumn);
 
     expect(await toast()).toHaveTextContent(strings.failed);
@@ -193,10 +193,7 @@ describe('«Поділитися посиланням» in a Collection’s menu
 
   it('is not offered while Collection Links are switched off', async () => {
     const autumn = await collection('Осінь', ['w_kvasha']);
-    mockEdition = {
-      ...mockEdition,
-      isFeatureEnabled: (feature) => feature !== 'collectionLinks',
-    };
+    collectionLinksOff = true;
     await openMenuOf(autumn);
 
     expect(screen.queryByRole('button', { name: strings.share })).not.toBeOnTheScreen();

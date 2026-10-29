@@ -146,10 +146,7 @@ export { type OnboardingStep, type SampleNotification } from './onboarding/onboa
 export { type RarityTestAnswer, type RarityTestWord } from './rarity-test/rarity-test';
 // The shell keeps the Session in memory on a development client without the Keychain.
 export { createMemorySessionStore } from './account/memory-session-store';
-export {
-  openCollectionSharing,
-  type CollectionShareRefusal,
-} from './collection-links/share-collection';
+export { type CollectionShareRefusal } from './collection-links/share-collection';
 export { openMistakeReports, type MistakeReports } from './mistake-reports/mistake-reports';
 export { openSync, type Sync, type SyncState } from './sync/sync';
 export { NOTIFICATION_BODY_LENGTH } from './notifications/notification-text';
