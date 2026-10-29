@@ -26,9 +26,10 @@ export interface ContentPacks {
   ): Promise<{ readonly ok: true; readonly pack: PublishedPack | undefined } | NotServing>;
   /**
    * The file of the Edition's pack published at the content version. A
-   * published version never changes, so its file is read from the store
-   * once and kept in memory: a release that every device downloads at once
-   * reads it once. Every download of a version answers that one object.
+   * published version never changes, so the files of the Edition's 2 newest
+   * versions downloaded are read from the store once and kept in memory: a
+   * release that every device downloads at once reads it once, and every
+   * download of it answers that one object. An older version is read again.
    */
   download(
     editionId: string,
@@ -52,6 +53,14 @@ export interface ContentPacks {
   >;
 }
 
+/**
+ * How many published files of an Edition the server keeps in memory: those of
+ * its newest content versions downloaded: the latest one, and the one before
+ * it, which devices that asked before a release, or apps of an older pack
+ * format, still download. An older one is read again.
+ */
+const KEPT_FILES = 2;
+
 export function createContentPacks({
   editions,
   store,
@@ -61,23 +70,27 @@ export function createContentPacks({
   store: ContentPackStore;
   clock: Clock;
 }): ContentPacks {
-  // The published files read so far, by Edition and content version. A
-  // download that comes while its file is being read waits for that read.
-  const files = new Map<string, Promise<PublishedFile | undefined>>();
+  // The published files of the newest content versions read so far, by
+  // Edition, and so at most `KEPT_FILES` per Edition. A download that comes
+  // while its file is being read waits for that read.
+  const files = new Map<string, Map<number, Promise<PublishedFile | undefined>>>();
 
   function publishedFile(editionId: string, contentVersion: number) {
-    const key = JSON.stringify([editionId, contentVersion]);
-    const kept = files.get(key);
-    if (kept !== undefined) return kept;
+    const kept = files.get(editionId) ?? new Map<number, Promise<PublishedFile | undefined>>();
+    files.set(editionId, kept);
+    const keptRead = kept.get(contentVersion);
+    if (keptRead !== undefined) return keptRead;
     const read = store.file(editionId, contentVersion);
-    files.set(key, read);
-    // Only a published file stays: the version may be published later, and
-    // a read that failed is tried again.
+    kept.set(contentVersion, read);
+    // Only a published file stays, so a version not published pushes no
+    // file out: it may be published later, and a read that failed is tried
+    // again. A published one pushes out the oldest version kept.
     const forget = () => {
-      if (files.get(key) === read) files.delete(key);
+      if (kept.get(contentVersion) === read) kept.delete(contentVersion);
     };
     read.then((file) => {
       if (file === undefined) forget();
+      else if (kept.size > KEPT_FILES) kept.delete(Math.min(...kept.keys()));
     }, forget);
     return read;
   }

@@ -236,6 +236,34 @@ describe('content.download', () => {
     expect(await sha256Of(again.body)).toBe(pack.announced.fileSha256);
   });
 
+  it('keeps the files of the 2 newest versions an Edition served, and reads an older one again', async () => {
+    const folder = testEditions(['kept-newest']);
+    const first = folder.buildPack('kept-newest');
+    const packs = [first];
+    const { client, publish, database } = testApp({ editions: folder.read() });
+    await publish(first);
+    for (let version = 1; version < 3; version++) {
+      folder.correctWord('kept-newest');
+      const pack = folder.buildPack('kept-newest');
+      await publish(pack, folder.read());
+      packs.push(pack);
+    }
+    const download = (pack: (typeof packs)[number]) =>
+      client.content.download({
+        params: { editionId: 'kept-newest', contentVersion: pack.announced.contentVersion },
+      });
+    for (const pack of packs) await download(pack);
+
+    // The database still answers whether the feature is on, but has no file to give.
+    await database.db.delete(contentPacks).where(eq(contentPacks.editionId, 'kept-newest'));
+    const [oldest, older, newest] = packs;
+    if (oldest === undefined || older === undefined || newest === undefined) return;
+
+    expect((await download(newest)).status).toBe(200);
+    expect((await download(older)).status).toBe(200);
+    await expect(download(oldest)).rejects.toMatchObject({ code: 'NOT_FOUND', status: 404 });
+  });
+
   it('answers NOT_FOUND for a content version not published', async () => {
     const { client, pack } = await publishedPack('one-version');
 

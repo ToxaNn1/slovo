@@ -6,22 +6,33 @@ import { eq, lte, sql } from 'drizzle-orm';
 import type { Database } from './database/database';
 import { rateLimits } from './database/schema';
 
+/** How often the ended windows are removed. */
+const SWEEP_INTERVAL_MS = 60 * 60 * 1000;
+
 /**
  * The windows of the sign-in limits, of Sync's requests, of Mistake Reports,
  * of counter events and of new Collection Links, kept in the `rate_limits` table under the HMAC-SHA256 of their key (ADR 0030), so the
  * table names no email and no IP address. The HMAC's key is derived from the
- * secret, so it is not the one that signs the Sessions' tokens.
+ * secret, so it is not the one that signs the Sessions' tokens. A request
+ * touches only its own window; the ended windows of every key are removed
+ * by a request at most once an hour.
  */
 export function createRateLimits({ db }: Database, { secret }: { secret: string }): RateLimits {
   const hmacKey = createHmac('sha256', secret).update('rate-limits').digest();
   const keyOf = (key: string) => createHmac('sha256', hmacKey).update(key).digest('base64url');
+  // When the ended windows go next; the first request removes them.
+  let nextSweep: Date | undefined;
   const take: RateLimits['take'] = async (subject, { requests, windowSeconds }, now, weight) => {
     const key = keyOf(subject);
-    // Windows that have ended count nothing any more.
-    await db.delete(rateLimits).where(lte(rateLimits.windowEnds, now));
+    // Windows that have ended count nothing any more, so they go, at most
+    // once an hour rather than on every request.
+    if (nextSweep === undefined || now >= nextSweep) {
+      nextSweep = new Date(now.getTime() + SWEEP_INTERVAL_MS);
+      await db.delete(rateLimits).where(lte(rateLimits.windowEnds, now));
+    }
     // One statement, so requests that come together each count, and only
     // when they fit: a request that would cross the limit leaves its window
-    // as it was. A window that ended since the line above opens anew here.
+    // as it was. An ended window of the key opens anew here.
     const ended = sql`${rateLimits.windowEnds} <= ${now}`;
     const [taken] = await db
       .insert(rateLimits)
