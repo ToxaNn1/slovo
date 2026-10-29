@@ -128,6 +128,7 @@ interface TipRow {
 
 interface SourceRow {
   title: string;
+  short_name: string | null;
   url: string | null;
   archived_url: string | null;
 }
@@ -185,7 +186,7 @@ const correctionParts = (list: string) => ({
   corrections: `SELECT * FROM corrections WHERE id IN ${list} ORDER BY id`,
   equivalents: `SELECT correction_id AS entry_id, text FROM correction_equivalents WHERE correction_id IN ${list} ORDER BY correction_id, position`,
   literaryUses: `SELECT correction_id AS entry_id, text, author, work, author_death_year, work_year, url FROM correction_literary_uses WHERE correction_id IN ${list} ORDER BY correction_id, position`,
-  sources: `SELECT entry_id, title, url, archived_url FROM sources WHERE entry_id IN ${list} ORDER BY entry_id, position`,
+  sources: `SELECT entry_id, title, short_name, url, archived_url FROM sources WHERE entry_id IN ${list} ORDER BY entry_id, position`,
 });
 
 /** The parts of the Idioms of the ids, each row with the id of its Idiom. */
@@ -193,7 +194,7 @@ const idiomParts = (list: string) => ({
   idioms: `SELECT * FROM idioms WHERE id IN ${list} ORDER BY id`,
   definitions: `SELECT idiom_id AS entry_id, text FROM idiom_definitions WHERE idiom_id IN ${list} ORDER BY idiom_id, position`,
   examples: `SELECT idiom_id AS entry_id, text, author FROM idiom_examples WHERE idiom_id IN ${list} ORDER BY idiom_id, position`,
-  sources: `SELECT entry_id, title, url, archived_url FROM sources WHERE entry_id IN ${list} ORDER BY entry_id, position`,
+  sources: `SELECT entry_id, title, short_name, url, archived_url FROM sources WHERE entry_id IN ${list} ORDER BY entry_id, position`,
 });
 
 /**
@@ -216,14 +217,14 @@ const synonymRowParts = (list: string) => ({
     WHERE row_id IN ${list} ORDER BY row_id, position
   `,
   stress: `SELECT row_id AS entry_id, member, position FROM synonym_row_stress WHERE row_id IN ${list} ORDER BY row_id, member, position`,
-  sources: `SELECT entry_id, title, url, archived_url FROM sources WHERE entry_id IN ${list} ORDER BY entry_id, position`,
+  sources: `SELECT entry_id, title, short_name, url, archived_url FROM sources WHERE entry_id IN ${list} ORDER BY entry_id, position`,
 });
 
 /** The parts of the Tips of the ids, each row with the id of its Tip. */
 const tipParts = (list: string) => ({
   tips: `SELECT id, title, non_standard_form, standard_form, explanation, example_text, example_author, question_prompt, right_answer, retired FROM tips WHERE id IN ${list} ORDER BY id`,
   wrongAnswers: `SELECT tip_id AS entry_id, text FROM tip_wrong_answers WHERE tip_id IN ${list} ORDER BY tip_id, position`,
-  sources: `SELECT entry_id, title, url, archived_url FROM sources WHERE entry_id IN ${list} ORDER BY entry_id, position`,
+  sources: `SELECT entry_id, title, short_name, url, archived_url FROM sources WHERE entry_id IN ${list} ORDER BY entry_id, position`,
 });
 
 /**
@@ -240,7 +241,7 @@ const wordParts = (where: string) => {
     relatedWords: `SELECT word_id, relation, text FROM related_words WHERE word_id ${ofTheWords} ORDER BY word_id, relation, position`,
     registers: `SELECT word_id, register FROM word_registers WHERE word_id ${ofTheWords} ORDER BY word_id, position`,
     moods: `SELECT word_id, mood FROM word_moods WHERE word_id ${ofTheWords} ORDER BY word_id, position`,
-    sources: `SELECT entry_id AS word_id, title, url, archived_url FROM sources WHERE entry_id ${ofTheWords} ORDER BY entry_id, position`,
+    sources: `SELECT entry_id AS word_id, title, short_name, url, archived_url FROM sources WHERE entry_id ${ofTheWords} ORDER BY entry_id, position`,
     links: `SELECT word_id, correction_id FROM word_corrections WHERE word_id ${ofTheWords} ORDER BY word_id, position`,
   };
 };
@@ -264,8 +265,9 @@ const byWord = <T extends { word_id: string }>(rows: readonly T[]) =>
 const byEntry = <T extends { entry_id: string }>(rows: readonly T[]) =>
   grouped(rows, (row) => row.entry_id);
 
-const sourceOf = ({ title, url, archived_url }: SourceRow): Source => ({
+const sourceOf = ({ title, short_name, url, archived_url }: SourceRow): Source => ({
   title,
+  ...(short_name === null ? {} : { shortName: short_name }),
   ...(url === null ? {} : { url }),
   ...(archived_url === null ? {} : { archivedUrl: archived_url }),
 });
