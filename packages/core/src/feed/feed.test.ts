@@ -20,11 +20,10 @@ import {
   type FeedCard,
   IDIOM_EVERY,
   type Random,
-  SYNONYM_ROW_EVERY,
-  TIP_EVERY,
   type UserStatePort,
   type WordFeedCard,
 } from '../index';
+import { SYNONYM_ROW_EVERY, TIP_EVERY } from './feed';
 import { createMemoryContentPort } from '../testing';
 import { type MixEdition } from '../entries/mix';
 import { type NotificationsEdition } from '../notifications/notifications';

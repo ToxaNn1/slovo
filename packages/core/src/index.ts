@@ -1,8 +1,8 @@
 /**
  * The Core's public interface. Every Edition reaches Core behaviour through
  * this module only (ADR 0006). It exports what the rest of the workspace
- * imports and every Extension Point; the fakes of the ports sit behind
- * `@slovo/core/testing`.
+ * imports, never what only the Core's own tests use, and every Extension
+ * Point; the fakes of the ports sit behind `@slovo/core/testing`.
  */
 export type { Correction, Entry, Example, FeatureSwitch, Idiom, Word } from '@slovo/contracts';
 export { openAccount, type Account, type AccountState } from './account/account';
@@ -17,12 +17,8 @@ export {
 export { type CollectionLinkPreview } from './collection-links/copy-collection';
 export { buildCorrectionCard, type CorrectionCardModel } from './entries/correction-card';
 export { type IdiomCardModel } from './entries/idiom-card';
-export {
-  buildSynonymRowCard,
-  type SynonymRowCardModel,
-  type SynonymRowMemberModel,
-} from './entries/synonym-row-card';
-export { buildTipCard, type TipCardModel } from './entries/tip-card';
+export { type SynonymRowCardModel, type SynonymRowMemberModel } from './entries/synonym-row-card';
+export { type TipCardModel } from './entries/tip-card';
 export { selfCheckSynonymRowCard, selfCheckTipCard } from './entries/self-check';
 export {
   buildSynonymRowShareCard,
@@ -42,8 +38,6 @@ export {
   IDIOM_EVERY,
   isTodaysWordOfTheDay,
   SEEN_DWELL_MS,
-  SYNONYM_ROW_EVERY,
-  TIP_EVERY,
   type Feed,
 } from './feed/feed';
 export {
@@ -56,15 +50,9 @@ export {
   type TipFeedCard,
   type WordFeedCard,
 } from './feed/feed-card';
-export {
-  type FeedNotice,
-  type FeedNoticeContent,
-  type FeedNotices,
-  type FirstWeekDay,
-} from './feed/feed-notices';
+export { type FeedNotice, type FirstWeekDay } from './feed/feed-notices';
 export { type GameModeOffer, type GameState, type OfferedBest } from './game/game';
 export {
-  GAME_LIVES,
   type CurrentGame,
   type GameTime,
   type GivenAnswer,
@@ -91,24 +79,17 @@ export { buildGameReview, type GameReviewItem } from './game/game-review';
 export { GAME_ROUNDS } from './game/round-plan';
 export { staysInPlace } from './game/by-letters-mode';
 export { gapOf } from './game/guess-word';
-export { typedAnswerMatches } from './game/typed-answer';
-export { createMoodDraw, type MoodChoice, type MoodDraw } from './mood/mood-draw';
-export { createRecentQueries, type RecentQueries } from './search/recent-queries';
-export { createSearch, type Search, type SearchResults } from './search/search';
-export { searchKey, type SearchLetters } from './search/search-key';
+export { type MoodChoice } from './mood/mood-draw';
+export { type SearchResults } from './search/search';
 export { createGameHaptics, LIFE_LOST_DELAY, type GameHaptics } from './game/game-haptics';
 export { createHaptics, type HapticEngine, type Haptics } from './game/haptics';
 export { type HiddenEntry } from './mix/hidden-entries';
 export { type HideTarget, type HidingChange } from './mix/hiding';
 export { HISTORY_CAP, type HistoryEntry } from './saved/history';
-export {
-  createWordOfTheDayArchive,
-  type WordOfTheDayArchiveDay,
-} from './saved/word-of-the-day-archive';
+export { type WordOfTheDayArchiveDay } from './saved/word-of-the-day-archive';
 export { groupByLocalDay, relativeTimeOf, type RelativeTime } from './saved/history-time';
 export { type KnowledgeMark } from './knowledge/knowledge-record';
 export { type KnownCounts, type LearningEntry } from './knowledge/knowledge';
-export { type CommunityCounters } from './community-counters/counter-deltas';
 export {
   openCounterReads,
   type CounterLine,
@@ -127,16 +108,12 @@ export {
   type LocalDay,
 } from './local-date';
 export {
-  openDailyCrossword,
   type CrosswordPlace,
-  type CrosswordReadPort,
   type DailyCrossword,
   type DailyCrosswordState,
   type DailyCrosswordWord,
 } from './game/daily-crossword';
 export { decorOf, loadSeasonalMotifs } from './decor/decor-of';
-export { holidayOf, motifOf } from './decor/holiday';
-export { seasonOf, type Season } from './decor/season';
 export { loadEdition, type Edition } from './edition/edition';
 export { openRemoteSwitches } from './edition/remote-switches';
 export {
@@ -173,13 +150,9 @@ export {
   openCollectionSharing,
   type CollectionShareRefusal,
 } from './collection-links/share-collection';
-export {
-  openMistakeReports,
-  type MistakeReportDraft,
-  type MistakeReports,
-} from './mistake-reports/mistake-reports';
+export { openMistakeReports, type MistakeReports } from './mistake-reports/mistake-reports';
 export { openSync, type Sync, type SyncState } from './sync/sync';
-export { NOTIFICATION_BODY_LENGTH, notificationText } from './notifications/notification-text';
+export { NOTIFICATION_BODY_LENGTH } from './notifications/notification-text';
 export {
   type NotificationTimeRefusal,
   type NotificationsState,
@@ -193,7 +166,6 @@ export {
   type CollectionLinksApi,
   type CommunityWordApi,
   type ContentReadPort,
-  type CounterEvent,
   type CountersApi,
   type GoogleSignInSheet,
   type KeptSession,
@@ -213,7 +185,7 @@ export {
   type UserStateChanges,
   type UserStatePort,
 } from './ports';
-export { MISTAKE_REPORT_QUEUE_SIZE, userStateRecords } from './user-state/user-state-schema';
+export { userStateRecords } from './user-state/user-state-schema';
 export {
   createMemoryUserStatePort,
   openUserState,

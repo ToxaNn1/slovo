@@ -1,11 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  createMemoryUserStatePort,
-  createRecentQueries,
-  createSearch,
-  openUserState,
-} from '../index';
+import { createMemoryUserStatePort, openUserState } from '../index';
+import { createRecentQueries } from './recent-queries';
+import { createSearch } from './search';
 import { createMemoryContentPort } from '../testing';
 import { word } from '../test-support';
 

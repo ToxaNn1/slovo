@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { typedAnswerMatches } from '../index';
+import { typedAnswerMatches } from './typed-answer';
 
 describe('a typed answer', () => {
   it('matches the right answer typed exactly', () => {

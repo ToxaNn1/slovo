@@ -3,14 +3,14 @@ import { describe, expect, it } from 'vitest';
 import type { SynonymRow, SynonymRowMember, Tip } from '@slovo/contracts';
 
 import {
-  buildSynonymRowCard,
   buildSynonymRowShareCard,
-  buildTipCard,
   buildTipShareCard,
   buildWeeklyRecapShareCard,
   createEntries,
   type WeeklyRecapModel,
 } from '../index';
+import { buildSynonymRowCard } from '../entries/synonym-row-card';
+import { buildTipCard } from '../entries/tip-card';
 import { createMemoryContentPort } from '../testing';
 
 /** Twelve members of «іти», each with its Stress. */

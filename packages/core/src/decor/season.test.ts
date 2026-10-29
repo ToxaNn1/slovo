@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { localDayOf, parseLocalDate as on, seasonOf } from '../index';
+import { localDayOf, parseLocalDate as on } from '../index';
+import { seasonOf } from './season';
 import { fakeClock } from '../test-support';
 
 describe('seasonOf', () => {

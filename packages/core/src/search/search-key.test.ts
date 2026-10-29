@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { searchKey as searchKeyOf, typedAnswerMatches, type SearchLetters } from '../index';
+import { searchKey as searchKeyOf, type SearchLetters } from './search-key';
+import { typedAnswerMatches } from '../game/typed-answer';
 
 /** The Ukrainian Edition's Search letters (ADR 0054). */
 const LETTERS: SearchLetters = { ґ: 'г', ё: 'е' };

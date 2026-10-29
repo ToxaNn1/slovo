@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import type { SynonymRow, SynonymRowMember, Word } from '@slovo/contracts';
 
-import { buildSynonymRowCard, createEntries } from '../index';
+import { createEntries } from '../index';
+import { buildSynonymRowCard } from './synonym-row-card';
 import { createMemoryContentPort } from '../testing';
 import { word } from '../test-support';
 

@@ -13,7 +13,6 @@ import type {
 import {
   buildGameReview,
   createMemoryUserStatePort,
-  GAME_LIVES,
   GAME_ROUNDS,
   openComposition,
   openUserState,
@@ -34,6 +33,7 @@ import {
   type UserStateChanges,
   type UserStatePort,
 } from '../index';
+import { GAME_LIVES } from './game-in-play';
 import { createMemoryContentPort } from '../testing';
 import { idiom, optionsOf, pickPlayed, seededRandom } from '../test-support';
 

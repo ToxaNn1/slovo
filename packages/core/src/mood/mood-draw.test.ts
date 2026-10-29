@@ -1,13 +1,8 @@
 import type { FeatureSwitch, Mood, Word } from '@slovo/contracts';
 import { describe, expect, it } from 'vitest';
 
-import {
-  createMemoryUserStatePort,
-  createMoodDraw,
-  openUserState,
-  type MoodDraw,
-  type Random,
-} from '../index';
+import { createMemoryUserStatePort, openUserState, type Random } from '../index';
+import { createMoodDraw, type MoodDraw } from './mood-draw';
 import { createMemoryContentPort } from '../testing';
 import { seededRandom, word } from '../test-support';
 

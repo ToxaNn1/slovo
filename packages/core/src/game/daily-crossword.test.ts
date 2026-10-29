@@ -3,13 +3,12 @@ import { describe, expect, it } from 'vitest';
 
 import {
   createMemoryUserStatePort,
-  openDailyCrossword,
   openUserState,
   type Clock,
-  type CrosswordReadPort,
   type FeatureSwitch,
   type UserStatePort,
 } from '../index';
+import { openDailyCrossword, type CrosswordReadPort } from './daily-crossword';
 import { fakeClock } from '../test-support';
 
 /**
