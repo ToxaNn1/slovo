@@ -124,9 +124,10 @@ export function appIntentTitles(strings: EditionStrings['appIntents']): Record<s
 
 /**
  * Writes the intents and the App Shortcuts into the app's own folder of the
- * native project (`ios/<project>`) and hands each file, by its path in that
- * folder, to `compile`, which adds it to the app's target: iOS reads App
- * Shortcuts only from the app itself, never from a pod.
+ * native project (`ios/<project>`) and hands each file, by its path from
+ * `ios` (`<project>/<file>`, since the app's group names no folder), to
+ * `compile`, which adds it to the app's target: iOS reads App Shortcuts only
+ * from the app itself, never from a pod.
  */
 export function writeAppIntents(
   { iosDir, projectName }: { readonly iosDir: string; readonly projectName: string },
@@ -137,6 +138,6 @@ export function writeAppIntents(
   mkdirSync(appDir, { recursive: true });
   copyFileSync(APP_INTENTS_SOURCE, join(appDir, APP_INTENTS_FILE));
   writeFileSync(join(appDir, SHORTCUTS_FILE), appShortcutsSwift(edition));
-  compile(APP_INTENTS_FILE);
-  compile(SHORTCUTS_FILE);
+  compile(join(projectName, APP_INTENTS_FILE));
+  compile(join(projectName, SHORTCUTS_FILE));
 }
