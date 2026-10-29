@@ -1,5 +1,5 @@
 import { fill, type EditionStrings, type Plural } from '@slovo/contracts';
-import type { Collection } from '@slovo/core';
+import { withoutStress, type Collection } from '@slovo/core';
 
 /** A Collection's row on the Collections screen. */
 export interface CollectionRowModel {
@@ -11,7 +11,10 @@ export interface CollectionRowModel {
   readonly empty: boolean;
   /** Its newest Lemmas. */
   readonly lemmas: readonly string[];
-  /** What VoiceOver reads for the row: the name, the count and the newest Lemmas. */
+  /**
+   * What VoiceOver reads for the row: the name, the count and the newest
+   * Lemmas, without the Stress mark the voices break a word at.
+   */
   readonly accessibilityLabel: string;
   /** What VoiceOver reads for the row's rename action. */
   readonly renameLabel: string;
@@ -43,7 +46,11 @@ export function collectionRows({
       accessibilityLabel:
         newestLemmas.length === 0
           ? fill(strings.collectionLabel, { name, count: entries })
-          : fill(screen.rowLabel, { name, count: entries, lemmas: newestLemmas.join(', ') }),
+          : fill(screen.rowLabel, {
+              name,
+              count: entries,
+              lemmas: withoutStress(newestLemmas.join(', ')),
+            }),
       renameLabel: fill(screen.renameLabel, { name }),
       deleteLabel: fill(screen.deleteLabel, { name }),
       moreLabel: fill(screen.moreLabel, { name }),
