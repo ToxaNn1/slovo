@@ -26,7 +26,9 @@ const strings = collectionStrings.entries;
  * A Collection: its Entries newest first, each row with its kind and when it
  * was added. A tap opens the Entry screen; a swipe (or the VoiceOver action)
  * takes the Entry out of this Collection only. An empty Collection says so,
- * with a hint.
+ * with a hint. «Колекції» goes back to Collections, or opens them when the
+ * Collection came first in the Saved tab, as a Collection Link's copy or a
+ * Spotlight result does.
  */
 export default function CollectionScreen() {
   const { collectionId } = useLocalSearchParams<{ collectionId: string }>();
@@ -71,7 +73,8 @@ export default function CollectionScreen() {
                 testID="collection-back"
                 label={collectionStrings.title}
                 onPress={() => {
-                  router.back();
+                  if (router.canDismiss()) router.back();
+                  else router.replace('/saved/collections');
                 }}
               />
             </View>
