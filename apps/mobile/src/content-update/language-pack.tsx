@@ -1,12 +1,12 @@
 import { createEntries, type Entries } from '@slovo/core';
 import { openPack, type PackReader } from '@slovo/language-pack/reader';
-import Constants from 'expo-constants';
 import { importDatabaseFromAssetAsync, openDatabaseAsync, type SQLiteDatabase } from 'expo-sqlite';
 import languagePack from 'slovo-edition/language-pack';
 import { useMemo } from 'react';
 
 import { logError } from '../diagnostics/log';
 import { edition } from '../edition/edition';
+import { reportedEditionId } from '../edition/reported-edition';
 import { openDeviceContentUpdate } from './device-content-updates';
 import { devicePackFiles, type DevicePackFiles } from './device-pack-files';
 import {
@@ -20,19 +20,12 @@ import { remoteSwitchesOpening, useEditionInEffect } from '../edition/remote-swi
 
 const DATABASE_NAME = 'language-pack.db';
 
-/** The Edition in the app's Expo config (see app.config.ts), if the build reports one. */
-function nativeEditionId(): string | undefined {
-  const reported: unknown = Constants.expoConfig?.extra?.['edition'];
-  if (typeof reported !== 'object' || reported === null || !('id' in reported)) return undefined;
-  return typeof reported.id === 'string' ? reported.id : undefined;
-}
-
 /** Opens a pack read-only, refusing one of another Edition than the app; a refused pack is closed. */
 async function prepare(db: SQLiteDatabase): Promise<OpenedPack<PackReader>> {
   try {
     // expo-sqlite has no read-only open mode; this refuses every write instead.
     await db.execAsync('PRAGMA query_only = ON');
-    const opening = await openPack(db, { bundle: edition.id, native: nativeEditionId() });
+    const opening = await openPack(db, { bundle: edition.id, native: reportedEditionId });
     if (!opening.ok) throw new Error(opening.reason);
     return { reader: opening.reader, version: opening.metadata, close: () => db.closeAsync() };
   } catch (error) {

@@ -28,6 +28,7 @@ import { useFeed } from '@/feed/feed';
 import { wordOfTheDayLanding } from '@/feed/word-of-the-day-landing';
 import { useFirstWeekStreak } from '@/feed/first-week';
 import { TOP_ROW } from '@/edition/feed-loading';
+import { wordOfTheDayFontFamily } from '@/edition/reported-edition';
 import { MoodButtonAndSheet } from '@/mood/mood';
 import { StatsPillAndSheet } from '@/progress/progress';
 import { useShown } from '@/shown-in-effect';
@@ -135,7 +136,7 @@ const FeedPage = memo(function FeedPage({
   onOpenCorrection: (position: number, correctionId: string) => void;
 }) {
   const { top } = useSafeAreaInsets();
-  const { selfCheck, stressFall } = useShown();
+  const { selfCheck, stressFall, calligraphicLemma } = useShown();
   const openScreen = useOpenScreen();
   if (card.kind === 'end-of-cycle' || (card.kind === 'notice' && card.notice !== 'yesterday'))
     return (
@@ -176,6 +177,8 @@ const FeedPage = memo(function FeedPage({
             }}
             selfCheck={selfCheck}
             stressFalls={stressFall}
+            // Only here, on the Word of the Day card; in the Word font with the switch off.
+            wordOfTheDayFont={calligraphicLemma ? wordOfTheDayFontFamily : undefined}
             actions={<EntryActions card={card} />}
           />
         )}
