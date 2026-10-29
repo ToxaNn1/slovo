@@ -155,13 +155,19 @@ function wordOfTheDayFontFamily(edition: EditionFolder): string {
 function widgetEdition(edition: EditionFolder, scheme: string): WidgetExtension.WidgetEdition {
   // The example the widget gallery shows must be there and be a valid Widget Snapshot.
   edition.read('widgetSnapshotExample');
+  const tokens = designTokens(edition.readIfPresent('tokens') ?? {});
+  // The widget draws in the word and UI families alone, so the Word of the Day font stays out.
+  const families = new Set(Object.values(tokens.fontFamilies));
   return {
     config: edition.config,
     scheme,
     strings: edition.read('strings').widget,
-    tokens: designTokens(edition.readIfPresent('tokens') ?? {}),
+    tokens,
     band: loadDecor(edition.readIfPresent('decor')).divider.band,
-    fontFiles: edition.fonts(),
+    fontFiles: edition.fonts().filter((font) => {
+      const family = readFontFamily(readFileSync(font));
+      return family !== undefined && families.has(family);
+    }),
     exampleSnapshot: edition.path('widgetSnapshotExample'),
   };
 }

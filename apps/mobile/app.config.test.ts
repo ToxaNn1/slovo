@@ -1,5 +1,13 @@
 import { execFileSync } from 'node:child_process';
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  cpSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -367,6 +375,26 @@ describe('app config', () => {
       root: '..',
       match: 'widget',
     });
+  });
+
+  it('bundles into the widget extension only the fonts of the families it draws with', async () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+    const repo = repoWithEdition(() => undefined);
+
+    await prebuildIos(repo);
+
+    // The widget draws in the word and UI families of the tokens, never in the Word of the Day font.
+    const generated = join(repo.projectRoot, '../widget/Generated');
+    expect(readdirSync(generated).filter((file) => file.endsWith('.ttf'))).toEqual([
+      'Literata-Italic.ttf',
+      'Literata-Medium.ttf',
+      'Literata-Regular.ttf',
+      'Literata-SemiBold.ttf',
+      'Manrope-Bold.ttf',
+      'Manrope-Medium.ttf',
+      'Manrope-Regular.ttf',
+      'Manrope-SemiBold.ttf',
+    ]);
   });
 
   it('fails clearly when the Edition has no example Widget Snapshot for the gallery', () => {
