@@ -3,14 +3,22 @@ import { EditionProvider, GameModeCard } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { render, screen } from '@testing-library/react-native';
 
-function Card({ best, refusal }: { best?: string; refusal?: string }) {
+function Card({
+  best,
+  refusal,
+  description = 'Read a Definition, pick a word',
+}: {
+  best?: string;
+  refusal?: string;
+  description?: string;
+}) {
   return (
     <EditionProvider edition={{ locale: 'uk' }} strings={{} as EditionStrings}>
       <GameModeCard
         entryKind="word"
         overline="Definition → word"
         title="Guess the word"
-        description="Read a Definition, pick a word"
+        description={description}
         sample={{ prompt: 'a fuss', answer: 'bustle' }}
         canStart={refusal === undefined}
         refusal={refusal}
@@ -45,6 +53,14 @@ describe('GameModeCard', () => {
     expect(screen.queryByText(/Best/)).toBeNull();
     expect(screen.getByRole('button').props['accessibilityLabel']).toBe(
       'Guess the word. Read a Definition, pick a word',
+    );
+  });
+
+  it('reads a description ending in its own full stop without another', async () => {
+    await render(<Card description="Pick one of four." best="Best: 7 of 15" />);
+
+    expect(screen.getByRole('button').props['accessibilityLabel']).toBe(
+      'Guess the word. Pick one of four. Best: 7 of 15',
     );
   });
 });

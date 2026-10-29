@@ -16,6 +16,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { DecorBackground, OrnamentDivider, ShareCardFrame } from '../decor/DecorSlots';
 import { fill, useEdition } from '../providers/EditionProvider';
+import { sentences } from '../primitives/sentences';
 import { wordGrammarText } from '../entries/part-of-speech';
 import { stressLabel } from '../entries/stress-label';
 import { shareCardLayout, withAlpha, type ShareCardFormat } from '../tokens';
@@ -612,20 +613,6 @@ function Forms({
       </View>
     </>
   );
-}
-
-/**
- * The parts VoiceOver reads, one sentence each: a part ending in its own full
- * stop takes no other.
- */
-function sentences(parts: (string | undefined)[]): string {
-  return parts
-    .filter((part) => part !== undefined)
-    .reduce(
-      (label, part) =>
-        label === '' ? part : `${label}${/[.!?…]$/.test(label) ? ' ' : '. '}${part}`,
-      '',
-    );
 }
 
 /** A Synonym Row's members on its Share Card, ending in «…» when it has more. */

@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { CardCorners } from '../decor/DecorSlots';
+import { sentences } from '../primitives/sentences';
 import { useEdition } from '../providers/EditionProvider';
 import { modeCardPaddingHorizontal, overlineType, space, typeSize, withAlpha } from '../tokens';
 import { InvertedTokens, useTokens } from '../providers/TokensProvider';
@@ -76,7 +77,7 @@ export function GameModeCard({
     <Pressable
       testID={testID}
       accessibilityRole="button"
-      accessibilityLabel={[title, description, refusal, best].filter(Boolean).join('. ')}
+      accessibilityLabel={sentences([title, description, refusal, best])}
       accessibilityState={{ disabled: unavailable }}
       {...voice}
       disabled={unavailable}
