@@ -9,7 +9,7 @@ Until 0.8.15 a Collection couldn't leave the phone: a teacher who built «Осі
 **The requests.** Both are procedures of the API contract (ADR 0031), so the contract only grows and the committed description changes with them (`pnpm describe:api`).
 
 - **`POST /v1/collection-links`** with `{edition, name, entryIds}` answers `{id, url}`. The id is 10 random characters, letters and digits, from the injected random source; the URL is `https://<linkDomain>/c/<id>`. The backend checks the shape, not whether the Entries are in a pack: a known Edition, a name of 1–60 characters, 1–200 Entry ids with none repeated. A body it refuses answers `400`.
-- **`GET /v1/collection-links/{id}`** answers `{edition, name, entryIds}` as they were stored; an unknown id answers `404`.
+- **`GET /v1/collection-links/{id}`** answers `{edition, name, entryIds}` as they were stored; an unknown id answers `404` and a malformed id answers `400`.
 
 **No Account on either side.** Neither request carries a Session, even when the reader is signed in, nor a device id, and the body has no field for either. The backend keeps each link with its Edition, name, Entry ids and the time it was made, and nothing else.
 

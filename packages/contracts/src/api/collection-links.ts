@@ -39,7 +39,7 @@ export const collectionLinksContract = {
       path: '/collection-links/{id}',
       summary: 'A shared Collection',
       description:
-        'The Collection as it was stored when it was shared: its Edition, its name and its Entry ids in its order. Reading a link is not limited (ADR 0058).',
+        'The Collection as it was stored when it was shared: its Edition, its name and its Entry ids in its order. An unknown id answers 404 and a malformed id answers 400. Reading a link is not limited (ADR 0058).',
       tags: ['collection-links'],
     })
     .input(z.strictObject({ id: CollectionLinkIdSchema }))
