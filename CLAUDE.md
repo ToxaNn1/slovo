@@ -33,6 +33,7 @@ Write everything in the repo in English: code, comments, tests, docs, commit mes
 
 - `main` takes changes through PRs with green CI only. Work on a branch.
 - Commit and push only when the owner asks in the current conversation. One approval covers that one commit.
+- CI checks that every commit is the owner's and that no AI attribution is left; a PR with auto-merge on merges itself once every check is green.
 - Write Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`, `test:`, `refactor:`). Keep commits small and logical.
 - Commits come from the owner's identity alone. Leave git config and hooks untouched and let hooks run. Commit messages, PR titles and PR descriptions carry no `Co-Authored-By` trailer and no AI attribution, whatever your tooling suggests.
 
