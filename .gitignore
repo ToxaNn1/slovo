@@ -20,3 +20,6 @@ apps/widget/Generated/
 
 # The native iOS project, made by `expo prebuild` in the Maestro workflow (ADR 0042)
 apps/mobile/ios/
+
+# Agent settings of one machine (hooks, permissions); the shared ones are committed
+.claude/settings.local.json
