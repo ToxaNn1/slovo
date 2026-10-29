@@ -329,8 +329,8 @@ export async function openComposition({
    * tests of other features, has Search read each letter as itself and sort
    * in the default locale; one that leaves out `moods` offers none, and one
    * that leaves out its `locale` has the Word of the Day archive write its
-   * dates in the default locale; one that leaves out `illustrations` bundles
-   * no Illustration.
+   * dates, and the Spotlight its counts, in the default locale; one that
+   * leaves out `illustrations` bundles no Illustration.
    */
   edition: Pick<Edition, 'id' | 'isFeatureEnabled'> &
     Partial<Pick<Edition, 'searchLetters' | 'moods' | 'locale' | 'illustrations'>> &
@@ -524,6 +524,10 @@ export async function openComposition({
     return entryCard(entryId);
   }
   const searchEdition = { ...edition, searchLetters: edition.searchLetters ?? {} };
+  const spotlightEdition = {
+    ...edition,
+    locale: edition.locale ?? new Intl.PluralRules().resolvedOptions().locale,
+  };
   const wordOfTheDayArchive = createWordOfTheDayArchive({ content, edition, userState, clock });
   return {
     feed,
@@ -583,7 +587,7 @@ export async function openComposition({
       opened: openedFromOutside,
     }),
     spotlight: createSpotlight({
-      edition,
+      edition: spotlightEdition,
       entries,
       favorites,
       collections,

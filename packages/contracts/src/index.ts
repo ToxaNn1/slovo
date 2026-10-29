@@ -47,6 +47,7 @@ export {
   ACCOUNT_NAME,
   EditionStringsSchema,
   fill,
+  pluralCount,
   PluralLabelSchema,
   PluralSchema,
   type EditionStrings,
