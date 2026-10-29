@@ -6,8 +6,10 @@ import {
   ScreenTitle,
   space,
   typeSize,
+  UndoToastProvider,
   useEdition,
   useTokens,
+  useUndoToast,
 } from '@slovo/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -27,8 +29,9 @@ const strings = collectionStrings.link;
  * `https://<linkDomain>/c/<id>` or `slovo-<edition id>://c/<id>` (ADR 0058):
  * the shared Collection's name, how many Entries it holds and its first 5
  * Entries this Language Pack has, how many it lacks, and «Додати собі», which
- * makes the reader's own copy and opens it. Offline it says there is no
- * connection; an unknown link, one of another Edition or one with Collection
+ * makes the reader's own copy and opens it, or says in a toast that it could
+ * not; with none of its Entries in the pack, «Додати собі» is disabled.
+ * Offline it says there is no connection; an unknown link, one of another Edition or one with Collection
  * Links off says the link isn't available.
  */
 export default function CollectionLinkScreen() {
@@ -38,36 +41,43 @@ export default function CollectionLinkScreen() {
   const router = useRouter();
 
   return (
-    <SafeAreaView
-      testID="collection-link"
-      edges={['top']}
-      style={[styles.screen, { backgroundColor: colors.background }]}
-    >
-      <View style={styles.bar}>
-        <BackLink
-          testID="collection-link-back"
-          label={editionStrings.tabs.home}
-          onPress={() => {
-            router.navigate('/');
-          }}
-        />
-      </View>
-      {preview !== undefined &&
-        (preview.ok ? (
-          <Preview preview={preview} />
-        ) : (
-          <Failure text={preview.reason === 'offline' ? strings.offline : strings.notFound} />
-        ))}
-    </SafeAreaView>
+    <UndoToastProvider>
+      <SafeAreaView
+        testID="collection-link"
+        edges={['top']}
+        style={[styles.screen, { backgroundColor: colors.background }]}
+      >
+        <View style={styles.bar}>
+          <BackLink
+            testID="collection-link-back"
+            label={editionStrings.tabs.home}
+            onPress={() => {
+              router.navigate('/');
+            }}
+          />
+        </View>
+        {preview !== undefined &&
+          (preview.ok ? (
+            <Preview preview={preview} />
+          ) : (
+            <Failure text={preview.reason === 'offline' ? strings.offline : strings.notFound} />
+          ))}
+      </SafeAreaView>
+    </UndoToastProvider>
   );
 }
 
-/** The link's name, count, first Entries and «Додати собі»; the copy opens once made. */
+/**
+ * The link's name, count, first Entries and «Додати собі», disabled with
+ * nothing to copy; the copy opens once made, or a toast says it wasn't.
+ */
 function Preview({ preview }: { preview: Extract<CollectionLinkPreview, { ok: true }> }) {
   const { colors, fontFamilies } = useTokens();
   const { count, voice } = useEdition();
   const openScreen = useOpenScreen();
+  const showToast = useUndoToast();
   const [adding, setAdding] = useState(false);
+  const { add } = preview;
 
   return (
     <FlatList
@@ -101,9 +111,11 @@ function Preview({ preview }: { preview: Extract<CollectionLinkPreview, { ok: tr
             testID="collection-link-add"
             label={strings.add}
             busy={adding}
+            disabled={add === undefined}
             onPress={() => {
+              if (add === undefined) return;
               setAdding(true);
-              preview.add().then(
+              add().then(
                 (copy) => {
                   setAdding(false);
                   openScreen(`/saved/collections/${copy.id}`);
@@ -111,6 +123,7 @@ function Preview({ preview }: { preview: Extract<CollectionLinkPreview, { ok: tr
                 (error: unknown) => {
                   setAdding(false);
                   logError('Could not copy the Collection Link', error);
+                  showToast({ message: strings.addFailed });
                 },
               );
             }}

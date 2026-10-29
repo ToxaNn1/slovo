@@ -349,6 +349,10 @@ describe('loadEdition', () => {
     expect(() => loadEdition({ ...validConfig, legalPages })).toThrow(`legalPages.${page}`);
   });
 
+  it('reports the domain of its Collection Links, the only one whose links the app opens', () => {
+    expect(loadEdition(validConfig).linkDomain).toBe('slovo.example');
+  });
+
   it('requires the domain of its Collection Links', () => {
     const { linkDomain: _removed, ...config } = validConfig;
 

@@ -28,9 +28,10 @@ export type CollectionLinkPreview =
       readonly skipped: number;
       /**
        * «Додати собі»: makes the reader's own copy of it, a new Collection on
-       * every call, and answers it.
+       * every call, and answers it; none when the Language Pack has none of
+       * its Entries, so there is never an empty copy.
        */
-      add(): Promise<Collection>;
+      readonly add: (() => Promise<Collection>) | undefined;
     }
   | { readonly ok: false; readonly reason: 'offline' | 'unavailable' };
 
@@ -92,7 +93,10 @@ export function createCollectionLinkCopy({
         count: link.entryIds.length,
         firstEntries: available.slice(0, PREVIEW_SIZE),
         skipped: link.entryIds.length - available.length,
-        add: () => collections.createCopy(link.name, link.entryIds),
+        add:
+          available.length === 0
+            ? undefined
+            : () => collections.createCopy(link.name, link.entryIds),
       };
     },
   };
