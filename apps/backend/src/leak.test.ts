@@ -34,11 +34,20 @@ const ANSWERED_COLUMNS = new Set([
   'saved',
   // The Community Word: an Entry and its Favorites adds of a week, naming no reader.
   'adds',
-  // A Collection Link: its id and the Collection as shared, naming no reader.
-  'id',
-  'name',
+  // A Collection Link's Entries, as shared, naming no reader.
   'entryIds',
 ]);
+
+/**
+ * The internal columns a Collection Link's answers carry by design: its id
+ * and the name of the Collection as shared, naming no reader. They stay
+ * internal in every other answer, where an Account's or a Session's id or an
+ * Account's name would show.
+ */
+const COLLECTION_LINK_KEYS = new Set(['id', 'name']);
+
+/** The requests of the Collection Links procedures. */
+const COLLECTION_LINK_REQUEST = /^(POST|GET) \/v1\/collection-links(\/|$)/;
 
 /**
  * The fields of a record in a Sync answer. They name the device's own data,
@@ -333,7 +342,11 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
     expect({
       request,
       secrets: [...secrets].filter((secret) => text.includes(secret)),
-      columns: keysOf(body).filter((key) => INTERNAL_COLUMNS.includes(key)),
+      columns: keysOf(body).filter(
+        (key) =>
+          INTERNAL_COLUMNS.includes(key) &&
+          !(COLLECTION_LINK_REQUEST.test(request) && COLLECTION_LINK_KEYS.has(key)),
+      ),
       password: /password/i.test(text),
       cookie: /set-cookie|set-auth-token/i.test(headers),
     }).toEqual({ request, secrets: [], columns: [], password: false, cookie: false });
