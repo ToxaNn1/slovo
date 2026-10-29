@@ -51,10 +51,11 @@ jobs:
           if git log --format='%ae' "$BASE_SHA..$HEAD_SHA" | grep -qvx 'antondemydenko113@gmail.com'; then
             echo "::error::Every commit must be authored by antondemydenko113@gmail.com"; status=1
           fi
-          if git log --format='%B' "$BASE_SHA..$HEAD_SHA" | grep -qiE 'Co-Authored|Claude|Generated with'; then
+          # The agent guide's file name is not an attribution.
+          if git log --format='%B' "$BASE_SHA..$HEAD_SHA" | sed 's/CLAUDE\.md//g' | grep -qiE 'Co-Authored|Claude|Generated with'; then
             echo "::error::A commit message carries an AI attribution"; status=1
           fi
-          if printf '%s' "$PR_TEXT" | grep -qiE 'Co-Authored|Claude|Generated with'; then
+          if printf '%s' "$PR_TEXT" | sed 's/CLAUDE\.md//g' | grep -qiE 'Co-Authored|Claude|Generated with'; then
             echo "::error::The PR title or body carries an AI attribution"; status=1
           fi
           exit $status
