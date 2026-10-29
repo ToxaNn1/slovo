@@ -98,7 +98,7 @@ const NATIVE_PROJECT = `// !$*UTF8*$!
 
 /* Begin PBXGroup section */
 		A2 = {isa = PBXGroup; children = (A3 /* SLOVO */,); sourceTree = "<group>"; };
-		A3 /* SLOVO */ = {isa = PBXGroup; children = (); name = SLOVO; path = SLOVO; sourceTree = "<group>"; };
+		A3 /* SLOVO */ = {isa = PBXGroup; children = (); name = SLOVO; sourceTree = "<group>"; };
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -470,6 +470,12 @@ describe('app config', () => {
     expect(readFileSync(join(iosDir, 'SLOVO/SlovoAppIntents.swift'), 'utf8')).toBe(
       readFileSync(APP_INTENTS_SOURCE, 'utf8'),
     );
+    // The app's group names no folder, as in Expo's template, so Xcode finds each file by its path from `ios`.
+    const references = [...project.matchAll(/isa = PBXFileReference;[^}]*\bpath = "?([^";]+)"?;/g)];
+    expect(references.map(([, path]) => path)).toEqual([
+      'SLOVO/SlovoAppIntents.swift',
+      'SLOVO/SlovoAppShortcuts.swift',
+    ]);
   });
 
   it("gives Siri the Edition's phrases, each naming the app as Siri hears it, and each intent its route", async () => {
