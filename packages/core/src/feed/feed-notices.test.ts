@@ -10,10 +10,9 @@ import {
   type Feed,
   type FeedCard,
   type FeedNotice,
-  type FeedNoticeContent,
-  type FeedNotices,
   type WordCardModel,
 } from '../index';
+import { type FeedNoticeContent, type FeedNotices } from './feed-notices';
 import { createMemoryContentPort } from '../testing';
 import { correction, fakeClock, idiom, randomOf, word } from '../test-support';
 

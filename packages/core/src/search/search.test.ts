@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import type { FeatureSwitch } from '@slovo/contracts';
 
-import { createMemoryUserStatePort, createSearch, openUserState } from '../index';
+import { createMemoryUserStatePort, openUserState } from '../index';
+import { createSearch } from './search';
 import { createMemoryContentPort } from '../testing';
 import { correction, idiom, synonymRow, tip, word } from '../test-support';
 

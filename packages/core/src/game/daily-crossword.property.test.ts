@@ -10,12 +10,12 @@ import {
 
 import {
   createMemoryUserStatePort,
-  openDailyCrossword,
   openUserState,
   type CrosswordPlace,
   type DailyCrossword,
   type DailyCrosswordWord,
 } from '../index';
+import { openDailyCrossword } from './daily-crossword';
 import { fakeClock } from '../test-support';
 
 /** Seeded, so CI checks the same inputs on every run. */

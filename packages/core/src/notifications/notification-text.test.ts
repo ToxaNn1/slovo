@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { SynonymRow, SynonymRowMember, Tip } from '@slovo/contracts';
 
-import { notificationText } from '../index';
+import { notificationText } from './notification-text';
 
 /** The Edition's words for notifications, as the shell passes them. */
 const strings = { ellipsis: '…', tipStandardForm: 'Так: {form}' };

@@ -2,12 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import type { Tip } from '@slovo/contracts';
 
-import {
-  buildTipCard,
-  selfCheckSynonymRowCard,
-  selfCheckTipCard,
-  type SynonymRowCardModel,
-} from '../index';
+import { selfCheckSynonymRowCard, selfCheckTipCard, type SynonymRowCardModel } from '../index';
+import { buildTipCard } from './tip-card';
 
 const rowCard: SynonymRowCardModel = {
   kind: 'synonymRow',

@@ -1,7 +1,8 @@
 import type { Holiday, SeasonalMotif, SeasonMotifs } from '@slovo/contracts';
 import { describe, expect, it } from 'vitest';
 
-import { holidayOf, motifOf, parseLocalDate as on } from '../index';
+import { parseLocalDate as on } from '../index';
+import { holidayOf, motifOf } from './holiday';
 
 /** A motif told apart by its tile's width alone. */
 function motif(width: number): SeasonalMotif {

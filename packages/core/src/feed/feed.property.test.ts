@@ -7,12 +7,11 @@ import {
   IDIOM_EVERY,
   openComposition,
   openUserState,
-  SYNONYM_ROW_EVERY,
-  TIP_EVERY,
   type Edition,
   type Feed,
   type GameEdition,
 } from '../index';
+import { SYNONYM_ROW_EVERY, TIP_EVERY } from './feed';
 import { createMemoryContentPort } from '../testing';
 import { type MixEdition } from '../entries/mix';
 import { type NotificationsEdition } from '../notifications/notifications';

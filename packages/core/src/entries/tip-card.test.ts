@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { Tip } from '@slovo/contracts';
 
-import { buildTipCard } from '../index';
+import { buildTipCard } from './tip-card';
 
 /** A Tip with a non-standard form and no example; each test adds or drops what it needs. */
 function tip(overrides: Partial<Tip> = {}): Tip {

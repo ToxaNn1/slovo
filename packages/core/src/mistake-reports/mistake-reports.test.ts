@@ -1,13 +1,9 @@
 import type { FeatureSwitch } from '@slovo/contracts';
 import { describe, expect, it } from 'vitest';
 
-import {
-  createMemoryUserStatePort,
-  MISTAKE_REPORT_QUEUE_SIZE,
-  openMistakeReports,
-  openUserState,
-  type MistakeReportDraft,
-} from '../index';
+import { createMemoryUserStatePort, openMistakeReports, openUserState } from '../index';
+import { MISTAKE_REPORT_QUEUE_SIZE } from '../user-state/user-state-schema';
+import { type MistakeReportDraft } from './mistake-reports';
 import { createFakeReportsApi } from '../testing';
 import { fakeClock, randomOf, settle, testSchedule } from '../test-support';
 
