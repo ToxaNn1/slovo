@@ -10,18 +10,20 @@ import {
 import { createMemoryContentPort } from '@slovo/core/testing';
 import { fill } from '@slovo/contracts';
 import { EditionProvider } from '@slovo/ui';
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { Stack } from 'expo-router';
+import { act, fireEvent, renderRouter, screen } from 'expo-router/testing-library';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import config from 'slovo-edition/config';
 
+import MixScreen from '../app/settings/mix';
 import { edition, editionStrings } from '../edition/edition';
-import { MixChoices } from './mix-choices';
 
 const strings = editionStrings.mix.corrections;
 
 /** The Ukrainian Edition as its config file gives it, every Feature Switch as it ships. */
 const mockEdition = loadEdition(config);
 
-/** The composition the Mix choices read, opened afresh for each test. */
+/** The composition the Mix screen reads, opened afresh for each test. */
 let mockComposition: Composition;
 
 jest.mock('../composition', () => ({ useComposition: () => mockComposition }));
@@ -68,11 +70,25 @@ beforeEach(async () => {
   });
 });
 
+const metrics = {
+  frame: { x: 0, y: 0, width: 390, height: 844 },
+  insets: { top: 0, left: 0, right: 0, bottom: 0 },
+};
+
+/** Settings › Мій Мікс as the app routes to it. */
 async function renderChoices() {
-  await render(
-    <EditionProvider edition={edition} strings={editionStrings}>
-      <MixChoices />
-    </EditionProvider>,
+  await renderRouter(
+    {
+      _layout: () => (
+        <SafeAreaProvider initialMetrics={metrics}>
+          <EditionProvider edition={edition} strings={editionStrings}>
+            <Stack screenOptions={{ headerShown: false }} />
+          </EditionProvider>
+        </SafeAreaProvider>
+      ),
+      'settings/mix': MixScreen,
+    },
+    { initialUrl: '/settings/mix' },
   );
   await settle();
 }
