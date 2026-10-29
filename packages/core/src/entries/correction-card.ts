@@ -1,6 +1,7 @@
 import type { Correction, CorrectionType, ExamplePair, LiteraryUse } from '@slovo/contracts';
 
 import type { Entries } from './entries';
+import { sourceNamesOf } from './source-names';
 import { markedStressedVowelsOf } from './stress';
 
 /**
@@ -32,8 +33,8 @@ export interface CorrectionCardModel {
   readonly categoryName: string | undefined;
   readonly explanation: string;
   readonly examplePair: ExamplePair;
-  /** The titles of the Correction's sources, in their order; the card names them in a line. */
-  readonly sourceTitles: readonly string[];
+  /** The names of the Correction's sources, in their order: each one's short name, or its title without one; the card names them in a line. */
+  readonly sourceNames: readonly string[];
   /** Real uses of the standard form in literature, in their order; empty when there are none. */
   readonly literaryUses: readonly LiteraryUse[];
 }
@@ -65,7 +66,7 @@ export async function buildCorrectionCard({
     categoryName: categories.find(({ id }) => id === correction.categoryId)?.displayName,
     explanation: correction.explanation,
     examplePair: correction.examplePair,
-    sourceTitles: correction.sources.map((source) => source.title),
+    sourceNames: sourceNamesOf(correction.sources),
     literaryUses: correction.literaryUses,
   };
 }

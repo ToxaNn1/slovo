@@ -1386,7 +1386,7 @@ describe('Idioms in the Feed', () => {
       expression: `to ${id.slice(2)}`,
       idiomType: 'idiom',
       primaryDefinition: 'A meaning.',
-      sourceTitles: ['Test source'],
+      sourceNames: ['Test source'],
     });
   });
 
@@ -1639,7 +1639,7 @@ describe('Synonym Rows and Tips in the Feed', () => {
         kind: 'synonymRow',
         synonymRowId: rowCard?.entryId,
         meaning: 'Рухатися пішки.',
-        sourceTitles: ['Test source'],
+        sourceNames: ['Test source'],
       },
     });
     expect(tipCard?.entryId).toMatch(/^t_live/);

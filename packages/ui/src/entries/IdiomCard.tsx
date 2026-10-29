@@ -131,13 +131,13 @@ export function IdiomCardBody({
               </Text>
             </DetailSection>
           )}
-          {card.sourceTitles.length === 0 ? null : (
+          {card.sourceNames.length === 0 ? null : (
             <Text
               testID="idiom-source"
               {...voice}
               style={[styles.source, { color: colors.muted, fontFamily: fontFamilies.ui }]}
             >
-              {fill(strings.source, { source: card.sourceTitles.join(SOURCE_SEPARATOR) })}
+              {fill(strings.source, { source: card.sourceNames.join(SOURCE_SEPARATOR) })}
             </Text>
           )}
         </>

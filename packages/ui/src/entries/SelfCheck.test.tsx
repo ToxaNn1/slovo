@@ -87,7 +87,7 @@ const correctionCard: EntryFeedCard = {
     categoryName: 'Everyday speech',
     explanation: 'Why join in is better.',
     examplePair: { nonStandard: 'I take part.', standard: 'I join in.' },
-    sourceTitles: [],
+    sourceNames: [],
     literaryUses: [],
   },
 };
@@ -104,7 +104,7 @@ const idiomCard: EntryFeedCard = {
     extraDefinitions: ['To search everywhere.'],
     examples: [{ text: 'He beat the bushes all day.' }],
     etymology: 'From the hunt.',
-    sourceTitles: [],
+    sourceNames: [],
   },
 };
 

@@ -1,6 +1,7 @@
 import type { Example, SynonymRow, SynonymRowDominant } from '@slovo/contracts';
 
 import type { Entries } from './entries';
+import { sourceNamesOf } from './source-names';
 import { renderStress, stressedVowelsOf } from './stress';
 
 /** A word of a Synonym Row as its card shows it: the dominant or a member. */
@@ -38,8 +39,8 @@ export interface SynonymRowCardModel {
   /** The members, in the row's order. */
   readonly members: readonly SynonymRowMemberModel[];
   readonly example: Example | undefined;
-  /** The titles of the row's sources, in their order; the card names them in a line. */
-  readonly sourceTitles: readonly string[];
+  /** The names of the row's sources, in their order: each one's short name, or its title without one; the card names them in a line. */
+  readonly sourceNames: readonly string[];
 }
 
 /** The Synonym Row card of a row, linking only the live Words the Entries give for it. */
@@ -73,6 +74,6 @@ export async function buildSynonymRowCard({
       shadeNote: member.shadeNote,
     })),
     example: synonymRow.example,
-    sourceTitles: synonymRow.sources.map((source) => source.title),
+    sourceNames: sourceNamesOf(synonymRow.sources),
   };
 }

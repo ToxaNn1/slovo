@@ -12,7 +12,13 @@ describe('the Idiom card', () => {
         extraDefinitions: ['Марнувати час.'],
         examples: [{ text: 'Годі бити байдики!', author: 'Test author' }],
         etymology: 'Байдики — цурки для дитячих ігор.',
-        sources: [{ title: 'СУМ-11' }, { title: 'Фразеологічний словник' }],
+        sources: [
+          { title: 'СУМ-11' },
+          {
+            title: 'Фразеологічний словник української мови, 1993',
+            shortName: 'Фразеологічний словник',
+          },
+        ],
       }),
     );
 
@@ -25,7 +31,7 @@ describe('the Idiom card', () => {
       extraDefinitions: ['Марнувати час.'],
       examples: [{ text: 'Годі бити байдики!', author: 'Test author' }],
       etymology: 'Байдики — цурки для дитячих ігор.',
-      sourceTitles: ['СУМ-11', 'Фразеологічний словник'],
+      sourceNames: ['СУМ-11', 'Фразеологічний словник'],
     });
   });
 

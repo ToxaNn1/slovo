@@ -54,7 +54,7 @@ const card: EntryFeedCard = {
     categoryName: 'Everyday speech',
     explanation: 'Why join in is better.',
     examplePair: { nonStandard: 'I take part.', standard: 'I join in.' },
-    sourceTitles: [],
+    sourceNames: [],
     literaryUses: [],
   },
 };
@@ -125,7 +125,7 @@ function idiomCard(overrides: Partial<IdiomCardModel> = {}): IdiomFeedCard {
     extraDefinitions: ['To waste time.'],
     examples: [{ text: 'He beat the bushes all day.' }],
     etymology: 'From the hunt.',
-    sourceTitles: ['A phrase dictionary'],
+    sourceNames: ['A phrase dictionary'],
     ...overrides,
   };
   return { kind: 'idiom', entryId: model.idiomId, model };
@@ -187,7 +187,7 @@ function synonymRowCard(members: readonly string[]): SynonymRowFeedCard {
       shadeNote: 'a shade',
     })),
     example: { text: 'They walked to the river.' },
-    sourceTitles: ['A synonym dictionary'],
+    sourceNames: ['A synonym dictionary'],
   };
   return { kind: 'synonymRow', entryId: model.synonymRowId, model };
 }
@@ -230,7 +230,7 @@ function tipCard(overrides: Partial<TipCardModel> = {}): TipFeedCard {
     standardForm: 'What time is it?',
     explanation: 'Why the hour is asked so.',
     example: { text: 'What time is it, please?' },
-    sourceTitles: ['A style guide'],
+    sourceNames: ['A style guide'],
     ...overrides,
   };
   return { kind: 'tip', entryId: model.tipId, model };

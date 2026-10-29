@@ -1,5 +1,7 @@
 import type { Example, Tip } from '@slovo/contracts';
 
+import { sourceNamesOf } from './source-names';
+
 /**
  * What a Tip card shows, decided by the Core: the UI draws it and never picks
  * sections itself. It carries data and keys only; the UI turns the kind into
@@ -19,8 +21,8 @@ export interface TipCardModel {
   readonly standardForm: string;
   readonly explanation: string;
   readonly example: Example | undefined;
-  /** The titles of the Tip's sources, in their order; the card names them in a line. */
-  readonly sourceTitles: readonly string[];
+  /** The names of the Tip's sources, in their order: each one's short name, or its title without one; the card names them in a line. */
+  readonly sourceNames: readonly string[];
 }
 
 /** The Tip card of a Tip. */
@@ -33,6 +35,6 @@ export function buildTipCard({ tip }: { tip: Tip }): TipCardModel {
     standardForm: tip.standardForm,
     explanation: tip.explanation,
     example: tip.example,
-    sourceTitles: tip.sources.map((source) => source.title),
+    sourceNames: sourceNamesOf(tip.sources),
   };
 }

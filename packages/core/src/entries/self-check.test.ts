@@ -20,7 +20,7 @@ const rowCard: SynonymRowCardModel = {
     },
   ],
   example: { text: 'Простує він полем.', author: 'Test author' },
-  sourceTitles: ['Словник синонімів'],
+  sourceNames: ['Словник синонімів'],
 };
 
 /** A Tip with a non-standard form; each test drops what it needs. */
