@@ -38,3 +38,24 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: pnpm commitlint --from "$BASE_SHA" --to "$HEAD_SHA"
+      # Auto-merge squashes a green PR without anyone reading it, so the
+      # owner's authorship rules (CLAUDE.md, Git) are checked here.
+      - name: Check the authors and that no AI attribution is left
+        if: ${{ github.event.pull_request.user.login != 'dependabot[bot]' }}
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_TEXT: ${{ github.event.pull_request.title }} ${{ github.event.pull_request.body }}
+        run: |
+          status=0
+          if git log --format='%ae' "$BASE_SHA..$HEAD_SHA" | grep -qvx 'antondemydenko113@gmail.com'; then
+            echo "::error::Every commit must be authored by antondemydenko113@gmail.com"; status=1
+          fi
+          # The agent guide's file name is not an attribution.
+          if git log --format='%B' "$BASE_SHA..$HEAD_SHA" | sed 's/CLAUDE\.md//g' | grep -qiE 'Co-Authored|Claude|Generated with'; then
+            echo "::error::A commit message carries an AI attribution"; status=1
+          fi
+          if printf '%s' "$PR_TEXT" | sed 's/CLAUDE\.md//g' | grep -qiE 'Co-Authored|Claude|Generated with'; then
+            echo "::error::The PR title or body carries an AI attribution"; status=1
+          fi
+          exit $status
