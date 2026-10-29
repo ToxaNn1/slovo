@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import {
   createMemoryUserStatePort,
   loadEdition,
+  type UserStatePort,
   openComposition,
   openUserState,
   systemRandom,
@@ -92,16 +93,26 @@ const metrics = {
 
 let api: FakeCollectionLinksApi;
 
+/** Whether the reader's user state refuses each write from now on, as a full disk would. */
+let writesFail: boolean;
+
 /** The reader's Core over a fake Collection Link backend, which holds no link yet. */
 async function open() {
   api = createFakeCollectionLinksApi();
+  writesFail = false;
+  const memory = createMemoryUserStatePort();
+  const port: UserStatePort = {
+    ...memory,
+    write: (changes) =>
+      writesFail ? Promise.reject(new Error('The disk is full')) : memory.write(changes),
+  };
   mockComposition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'nature', displayName: 'Природа' }],
       words: PACK.map((id) => word(id, `слово-${id}`)),
     }),
     edition: loadEdition(config),
-    userState: await openUserState({ port: createMemoryUserStatePort() }),
+    userState: await openUserState({ port }),
     clock: { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     random: systemRandom,
     collectionLinks: api,
@@ -170,6 +181,38 @@ describe('the recipient sheet of a Collection Link', () => {
     const copied = mockComposition.collections.entries(copy?.id ?? '').map((e) => e.entryId);
     expect(copied.toSorted()).toEqual(['w_one', 'w_two']);
     expect(mockPushed).toEqual([`/saved/collections/${copy?.id ?? ''}`]);
+  });
+
+  it('says when «Додати собі» could not make the copy, and opens nothing', async () => {
+    await share('Осінь', ['w_two', 'w_one']);
+    await renderSheet();
+    writesFail = true;
+
+    await fireEvent.press(screen.getByRole('button', { name: strings.add }));
+
+    expect(
+      await screen.findByTestId('undo-toast-message', {}, { timeout: 10_000 }),
+    ).toHaveTextContent(strings.addFailed);
+    expect(mockComposition.collections.list).toEqual([]);
+    expect(mockPushed).toEqual([]);
+  });
+
+  it('with none of its Entries in the pack, shows only how many are unavailable and disables «Додати собі»', async () => {
+    await share('Осінь', ['w_gone0', 'w_gone1']);
+    await renderSheet();
+
+    expect(screen.getByTestId('collection-link-skipped').props).toMatchObject({
+      children: '2 слова недоступні',
+    });
+    expect(screen.queryByTestId(/^entry-row-/)).toBeNull();
+    const add = screen.getByRole('button', { name: strings.add });
+    expect(add).toBeDisabled();
+
+    await fireEvent.press(add);
+    await settle();
+
+    expect(mockComposition.collections.list).toEqual([]);
+    expect(mockPushed).toEqual([]);
   });
 
   it.each([

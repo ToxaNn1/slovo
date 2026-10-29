@@ -105,10 +105,18 @@ async function reader({
 }
 
 /** Opens the preview of the link, which must be available. */
-async function preview(app: Composition, id: string) {
+async function open(app: Composition, id: string) {
   const opened = await app.collectionLinkCopy.preview(id);
   if (!opened.ok) throw new Error(`The link was not available: ${opened.reason}`);
   return opened;
+}
+
+/** Opens the preview of the link, which must be available with something to copy. */
+async function preview(app: Composition, id: string) {
+  const opened = await open(app, id);
+  const { add } = opened;
+  if (add === undefined) throw new Error('The link had nothing to copy');
+  return { ...opened, add };
 }
 
 /** The Entry ids of the Collection, as its screen lists them. */
@@ -211,6 +219,19 @@ describe('a Collection Link', () => {
       expect(entryIdsOf(app, copy.id)).toEqual(['w_one', 'w_two']);
     },
   );
+
+  it('offers no copy when the Language Pack has none of its Entries, so no empty Collection', async () => {
+    const { app, share } = await reader();
+    const id = await share(link('Осінь', ['w_gone', 'c_gone']));
+
+    const opened = await open(app, id);
+
+    expect(opened.count).toBe(2);
+    expect(opened.skipped).toBe(2);
+    expect(opened.firstEntries).toEqual([]);
+    expect(opened.add).toBeUndefined();
+    expect(app.collections.list).toEqual([]);
+  });
 
   it('keeps a Hidden Entry in the preview and the copy, still Hidden everywhere else', async () => {
     const { app, share } = await reader();

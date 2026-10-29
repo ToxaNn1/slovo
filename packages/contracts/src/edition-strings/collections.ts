@@ -108,6 +108,8 @@ export const CollectionsStringsSchema = z.strictObject({
     failed: TextSchema,
     /** The recipient's button that makes their own copy of the Collection. */
     add: TextSchema,
+    /** The toast when the recipient's copy could not be written. */
+    addFailed: TextSchema,
     /** How many Entries of the link the reader's pack lacks, so the copy skipped them, `{count}`. */
     unavailable: pluralOf(),
     /** What the recipient's sheet says when the link no longer exists. */
