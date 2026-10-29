@@ -144,6 +144,39 @@ async function prebuildIos(context: ConfigContext, times = 1): Promise<string> {
   return iosDir;
 }
 
+/**
+ * The bytes of a font with only a `name` table holding the Windows Unicode
+ * records, in order: enough for the family to be read from it.
+ */
+function fontWithNames(
+  records: readonly {
+    readonly nameId: number;
+    readonly languageId: number;
+    readonly text: string;
+  }[],
+): Buffer {
+  const texts = records.map(({ text }) => Buffer.from(text, 'utf16le').swap16());
+  const table = Buffer.alloc(6 + 12 * records.length);
+  table.writeUInt16BE(records.length, 2);
+  table.writeUInt16BE(table.length, 4);
+  let offset = 0;
+  records.forEach(({ nameId, languageId }, index) => {
+    const record = 6 + 12 * index;
+    table.writeUInt16BE(3, record);
+    table.writeUInt16BE(1, record + 2);
+    table.writeUInt16BE(languageId, record + 4);
+    table.writeUInt16BE(nameId, record + 6);
+    table.writeUInt16BE(texts[index]?.length ?? 0, record + 8);
+    table.writeUInt16BE(offset, record + 10);
+    offset += texts[index]?.length ?? 0;
+  });
+  const header = Buffer.alloc(12 + 16);
+  header.writeUInt16BE(1, 4);
+  header.write('name', 12, 'latin1');
+  header.writeUInt32BE(header.length, 12 + 8);
+  return Buffer.concat([header, table, ...texts]);
+}
+
 describe('app config', () => {
   it('fails clearly when no Edition is selected', () => {
     vi.stubEnv('SLOVO_EDITION', undefined);
@@ -254,6 +287,41 @@ describe('app config', () => {
     );
 
     expect(config.extra?.['edition']).toMatchObject({ wordOfTheDayFontFamily: 'Literata' });
+  });
+
+  it('passes on the English (US) family of a font that also names it in other languages', () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+    const localised = repoWithEdition(() => undefined, {
+      change(edition) {
+        writeFileSync(
+          join(edition.dir, FONTS_DIR, 'Kurale-Regular.ttf'),
+          fontWithNames([
+            { nameId: 1, languageId: 0x409, text: 'Kurale' },
+            { nameId: 1, languageId: 0x422, text: 'Курале' },
+          ]),
+        );
+      },
+    });
+
+    expect(appConfig(localised).extra?.['edition']).toMatchObject({
+      wordOfTheDayFontFamily: 'Kurale',
+    });
+  });
+
+  it('passes on the family in another language when the font has no English (US) one', () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+    const localised = repoWithEdition(() => undefined, {
+      change(edition) {
+        writeFileSync(
+          join(edition.dir, FONTS_DIR, 'Kurale-Regular.ttf'),
+          fontWithNames([{ nameId: 1, languageId: 0x422, text: 'Курале' }]),
+        );
+      },
+    });
+
+    expect(appConfig(localised).extra?.['edition']).toMatchObject({
+      wordOfTheDayFontFamily: 'Курале',
+    });
   });
 
   it('fails clearly when the Word of the Day font is not among the Edition fonts', () => {
