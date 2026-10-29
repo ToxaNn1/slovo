@@ -84,6 +84,7 @@ async function renderApp({
       ),
       '+native-intent': {
         redirectSystemPath: createOutsideLinks({
+          linkDomain: LINK_DOMAIN,
           widgetLinkKey: () => Promise.resolve(WIDGET_LINK_KEY),
           appIntents: {
             on: () => Promise.resolve(appIntents),
@@ -208,6 +209,13 @@ describe('a Collection Link from outside the app', () => {
     ['a sign the backend never puts in an id', 'slovo-uk://c/aB3dE5gH7-'],
     ['no id', `https://${LINK_DOMAIN}/c/`],
     ['a path after the id', 'slovo-uk://c/aB3dE5gH7k/more'],
+    ['the web address of another host', 'https://other.example/c/aB3dE5gH7k'],
+    ['the web address of a host ending in its domain', `https://not${LINK_DOMAIN}/c/aB3dE5gH7k`],
+    ['the web address of a host under its domain', `https://www.${LINK_DOMAIN}/c/aB3dE5gH7k`],
+    [
+      "the dev client's link to another host",
+      `slovo-uk://expo-development-client/?url=${encodeURIComponent('https://other.example/c/aB3dE5gH7k')}`,
+    ],
   ])('with %s is ignored: the app stays where it is', async (_, link) => {
     const app = await renderApp();
     await app.open(link);

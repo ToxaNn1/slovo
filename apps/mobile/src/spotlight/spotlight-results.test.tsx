@@ -136,6 +136,7 @@ async function renderApp() {
       ),
       '+native-intent': {
         redirectSystemPath: createOutsideLinks({
+          linkDomain: edition.linkDomain,
           widgetLinkKey: () => Promise.resolve(undefined),
           appIntents: { on: () => Promise.resolve(true), landOnWordOfTheDay: () => undefined },
         }),

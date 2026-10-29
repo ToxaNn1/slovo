@@ -38,21 +38,30 @@ const collectionLinksPath = /^\/c(?:\/|$)/;
 /** A link's scheme, such as `slovo-uk://`, after which its host is the first part of the path. */
 const schemePrefix = /^[a-z][a-z0-9+.-]*:\/\//i;
 
-/** The origin of a web address, which Expo Router leaves out of the path it opens. */
-const webOrigin = /^https?:\/\/[^/?#]*/i;
+/** The origin of a web address, with its host, which Expo Router leaves out of the path it opens. */
+const webOrigin = /^https?:\/\/([^/?#]*)/i;
+
+/** The path and search of the route a link opens. */
+interface Route {
+  readonly path: string;
+  readonly search: string;
+}
 
 /**
- * The path and search of the route a link opens, as Expo Router reads it:
- * after the scheme or the origin of a web address, or, for the dev client's
+ * The route a link opens, as Expo Router reads it: after the scheme or the
+ * origin `https://<linkDomain>`, in any letter case, or, for the dev client's
  * link (`<scheme>://expo-development-client/?url=<link>`), that of the link in
- * its `url`.
+ * its `url`. Nothing for a web address of any other host, which the app never
+ * opens (ADR 0058).
  */
-function routeOf(link: string): { path: string; search: string } {
+function routeOf(link: string, linkDomain: string): Route | undefined {
+  const host = webOrigin.exec(link)?.[1];
+  if (host !== undefined && host.toLowerCase() !== linkDomain.toLowerCase()) return undefined;
   const [location = '', search = ''] = link.replace(webOrigin, '').replace(/#.*$/, '').split('?');
   const rest = location.replace(schemePrefix, '');
   if (schemePrefix.test(location) && /^expo-development-client\/?$/.test(rest)) {
     const inner = new URLSearchParams(search).get('url') ?? '';
-    return routeOf(inner);
+    return routeOf(inner, linkDomain);
   }
   return { path: `/${rest.replace(/^\/+/, '')}`, search };
 }
@@ -66,7 +75,8 @@ function normalPath(path: string): string {
  * The path a link from outside the app opens, such as a link another app or
  * a web page opens with the Edition's scheme, or nothing for a link the app
  * ignores. A Collection Link, `https://<linkDomain>/c/<id>` (the only web
- * address iOS hands the app) or the scheme + `c/<id>`, opens `/c/<id>` with
+ * address iOS hands the app; one of any other host opens nothing) or the
+ * scheme + `c/<id>`, opens `/c/<id>` with
  * none of its search params; any other link under `c/`, with an id the
  * backend never makes, opens nothing (ADR 0058). A link to an Entry, on any of
  * its routes and whatever its slashes, opens with its path and none of its
@@ -78,8 +88,7 @@ function normalPath(path: string): string {
  * its Entry is not Seen and goes into no History. Every other link, the dev
  * client's among them, goes on to Expo Router as it came.
  */
-function outsidePath(link: string, widgetLinkKey: string | undefined): string | null {
-  const route = routeOf(link);
+function outsidePath(link: string, route: Route, widgetLinkKey: string | undefined): string | null {
   const path = normalPath(route.path);
   if (collectionLinksPath.test(path)) {
     const id = path.slice('/c/'.length);
@@ -95,13 +104,12 @@ function outsidePath(link: string, widgetLinkKey: string | undefined): string | 
   return fromWidget ? `${path}?from=${widgetSource}` : path;
 }
 
-/** The App Intent a link is, by its route and mark (`APP_INTENT_ROUTES`), or none. */
-function appIntentOf(link: string): AppIntent | undefined {
-  const route = routeOf(link);
+/** The App Intent a link's route is, by its path and mark (`APP_INTENT_ROUTES`), or none. */
+function appIntentOf(route: Route, linkDomain: string): AppIntent | undefined {
   const path = normalPath(route.path);
   const named = new URLSearchParams(route.search).get(APP_INTENT_PARAM);
   return APP_INTENTS.find(
-    (intent) => intent === named && routeOf(APP_INTENT_ROUTES[intent]).path === path,
+    (intent) => intent === named && routeOf(APP_INTENT_ROUTES[intent], linkDomain)?.path === path,
   );
 }
 
@@ -123,17 +131,22 @@ export interface AppIntentLandings {
  * as it was (ADR 0057).
  */
 export function createOutsideLinks({
+  linkDomain,
   widgetLinkKey,
   appIntents,
 }: {
+  /** The Edition's link domain, the one host whose web addresses the app opens. */
+  linkDomain: string;
   widgetLinkKey: () => Promise<string | undefined>;
   appIntents: AppIntentLandings;
 }): (link: { path: string }) => Promise<string | null> {
   return async ({ path }) => {
-    const intent = appIntentOf(path);
-    if (intent === undefined) return outsidePath(path, await widgetLinkKey());
+    const route = routeOf(path, linkDomain);
+    if (route === undefined) return null;
+    const intent = appIntentOf(route, linkDomain);
+    if (intent === undefined) return outsidePath(path, route, await widgetLinkKey());
     if (!(await appIntents.on().catch(() => false))) return '/';
     if (intent === 'wordOfTheDay') appIntents.landOnWordOfTheDay();
-    return routeOf(APP_INTENT_ROUTES[intent]).path;
+    return routeOf(APP_INTENT_ROUTES[intent], linkDomain)?.path ?? '/';
   };
 }

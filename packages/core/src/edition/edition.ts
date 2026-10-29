@@ -55,6 +55,8 @@ export interface Edition {
   readonly notificationSound: string | undefined;
   /** The addresses of the privacy policy and the terms, which About opens in the browser. */
   readonly legalPages: LegalPages;
+  /** The domain of its Collection Links, `https://<linkDomain>/c/<id>`, the one host whose links the app opens (ADR 0058). */
+  readonly linkDomain: string;
   /** The languages Words come from, in their order, which «Звідки слово» offers (ADR 0052). */
   readonly originLanguages: readonly OriginLanguage[];
   /** The moods a Word may carry, in their order, which «Слово під настрій» offers (ADR 0054). */
@@ -125,6 +127,7 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
     userSettingDefaults,
     notificationSound,
     legalPages,
+    linkDomain,
     originLanguages,
     moods,
     searchLetters,
@@ -149,6 +152,7 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
     },
     notificationSound,
     legalPages,
+    linkDomain,
     originLanguages,
     moods,
     searchLetters,

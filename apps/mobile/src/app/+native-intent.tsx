@@ -1,3 +1,4 @@
+import { edition } from '@/edition/edition';
 import { appIntentsOn } from '@/edition/remote-switches';
 import { createOutsideLinks } from '@/entries/entry-link';
 import { wordOfTheDayLanding } from '@/feed/word-of-the-day-landing';
@@ -5,6 +6,7 @@ import { deviceWidgetLinkKey } from '@/widget/device-widget';
 
 /** Each link from outside the app, as `createOutsideLinks` lets it open. */
 export const redirectSystemPath = createOutsideLinks({
+  linkDomain: edition.linkDomain,
   widgetLinkKey: deviceWidgetLinkKey,
   appIntents: { on: appIntentsOn, landOnWordOfTheDay: wordOfTheDayLanding.ask },
 });
