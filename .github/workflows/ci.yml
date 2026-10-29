@@ -33,18 +33,6 @@ jobs:
       - run: pnpm lint
       # The package boundaries the ADRs set, import cycles and orphan modules.
       - run: pnpm deps
-      # Unused files, exports and dependencies. A report for now: it does not
-      # fail the build until the owner decides to make it blocking. The report
-      # goes to the job summary, since a step that never fails shows no warning.
-      - name: Report unused code and dependencies
-        shell: bash
-        run: |
-          {
-            echo '## Knip report'
-            echo '```text'
-            pnpm knip 2>&1 || true
-            echo '```'
-          } | tee -a "$GITHUB_STEP_SUMMARY"
       - run: pnpm typecheck
       # The app's Jest transforms, kept from run to run. React Native loads
       # most of its modules lazily, so on a cold cache the first test to open,
@@ -123,19 +111,6 @@ jobs:
       - run: pnpm --filter @slovo/backend db:migrate
       # Each test file makes its own database on the same server and drops it after.
       - run: pnpm test --filter=@slovo/backend
-
-  audit:
-    name: Dependency audit
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: .nvmrc
-      # Only high and critical advisories fail the build, to keep it quiet.
-      - run: pnpm audit --audit-level high
 
   secrets:
     name: Secret scanning
