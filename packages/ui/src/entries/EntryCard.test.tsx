@@ -94,7 +94,7 @@ const correctionCard: CorrectionCardModel = {
   categoryName: 'Everyday speech',
   explanation: 'A long explanation.',
   examplePair: { nonStandard: 'I take part.', standard: 'I join in.' },
-  sourceTitles: [],
+  sourceNames: [],
   literaryUses: [],
 };
 
@@ -134,9 +134,9 @@ const paronym: EntryFeedCard = {
   },
 };
 
-function cardWithSources(sourceTitles: readonly string[]): EntryFeedCard {
+function cardWithSources(sourceNames: readonly string[]): EntryFeedCard {
   if (card.kind !== 'correction') throw new Error('The fixture is a Correction card');
-  return { ...card, model: { ...card.model, sourceTitles } };
+  return { ...card, model: { ...card.model, sourceNames } };
 }
 
 const wordCard: WordFeedCard = {
@@ -744,7 +744,7 @@ function idiomCard(overrides: Partial<IdiomCardModel> = {}): IdiomCardModel {
     extraDefinitions: ['To search everywhere.'],
     examples: [{ text: 'He beat the bushes all day.' }, { text: 'Stop beating the bushes.' }],
     etymology: 'From the hunt.',
-    sourceTitles: ['A phrase dictionary'],
+    sourceNames: ['A phrase dictionary'],
     ...overrides,
   };
 }
@@ -758,7 +758,7 @@ const placeName = idiomCard({
   extraDefinitions: [],
   examples: [{ text: 'They drove to Berdychiv.' }],
   etymology: 'Named after the Berdy tribe.',
-  sourceTitles: [],
+  sourceNames: [],
 });
 
 /** A proverb: the Idiom card with its own chip. */
@@ -770,7 +770,7 @@ const proverb = idiomCard({
   extraDefinitions: [],
   examples: [],
   etymology: undefined,
-  sourceTitles: ['A book of proverbs'],
+  sourceNames: ['A book of proverbs'],
 });
 
 describe('the Idiom card', () => {

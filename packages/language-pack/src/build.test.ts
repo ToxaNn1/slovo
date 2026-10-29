@@ -16,7 +16,7 @@ import { crc32, deflateSync } from 'node:zlib';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { CorrectionSchema, WordSchema } from '@slovo/contracts';
-import { buildWordCard, createEntries, type Entries } from '@slovo/core';
+import { buildEntryCard, buildWordCard, createEntries, type Entries } from '@slovo/core';
 
 import {
   buildLanguagePack,
@@ -628,6 +628,34 @@ describe('buildLanguagePack', () => {
     });
   });
 
+  it("names a Correction's source on its card by its short name, and one without by its title", async () => {
+    const editionDir = copyFixture('valid');
+    editJson(editionDir, 'content/corrections/c_fx0001.json', (correction) => ({
+      ...correction,
+      sources: [
+        {
+          title: 'Тестове джерело: повна назва з посиланням на сторінку',
+          shortName: 'Тестове джерело',
+          url: 'https://example.org/vsihda',
+        },
+        { title: 'Друге тестове джерело' },
+      ],
+    }));
+    record(editionDir);
+    const outFile = packPath();
+
+    expect(buildLanguagePack({ editionDir, outFile }).ok).toBe(true);
+    const card = await withEntries(outFile, async (entries) => {
+      const correction = await entries.get('c_fx0001');
+      if (correction === undefined) throw new Error('No Correction c_fx0001');
+      return buildEntryCard(entries, correction);
+    });
+    expect(card.kind === 'correction' && card.model.sourceNames).toEqual([
+      'Тестове джерело',
+      'Друге тестове джерело',
+    ]);
+  });
+
   it('rejects Stress in an Edition that does not mark Stress', () => {
     const editionDir = copyFixture('valid');
     editJson(editionDir, 'edition.json', (config) => ({
@@ -816,7 +844,13 @@ describe('buildLanguagePack', () => {
       standardForm: 'Котра година?',
       explanation: 'Тестове пояснення: про час питають порядковим числівником.',
       example: { text: 'Перепрошую, котра година?', author: 'Тестовий автор' },
-      sources: [{ title: 'Тестове джерело', url: 'https://example.com/tips' }],
+      sources: [
+        {
+          title: 'Тестове джерело: повна назва з посиланням на сторінку',
+          shortName: 'Тестове джерело',
+          url: 'https://example.com/tips',
+        },
+      ],
       gameQuestion: {
         prompt: 'Як правильно спитати про час?',
         rightAnswer: 'Котра година?',
@@ -846,14 +880,14 @@ describe('buildLanguagePack', () => {
       }
     }
 
-    it('builds a Tip and reads it back with every field, in pack format 8', async () => {
+    it('builds a Tip and reads it back with every field, in pack format 9', async () => {
       const editionDir = withTips([fullTip]);
       const outFile = packPath();
 
       const result = buildLanguagePack({ editionDir, outFile });
 
       expect(result.ok ? [] : result.errors).toEqual([]);
-      expect(result).toMatchObject({ ok: true, metadata: { packFormat: 8 } });
+      expect(result).toMatchObject({ ok: true, metadata: { packFormat: 9 } });
       expect(await readTips(outFile, ['t_fx0001'])).toEqual([
         { ...fullTip, kind: 'tip', retired: false },
       ]);
@@ -1028,14 +1062,14 @@ describe('buildLanguagePack', () => {
       }
     }
 
-    it('builds a Synonym Row and reads it back with every field, in pack format 8', async () => {
+    it('builds a Synonym Row and reads it back with every field, in pack format 9', async () => {
       const editionDir = withRows([fullRow]);
       const outFile = packPath();
 
       const result = buildLanguagePack({ editionDir, outFile });
 
       expect(result.ok ? [] : result.errors).toEqual([]);
-      expect(result).toMatchObject({ ok: true, metadata: { packFormat: 8 } });
+      expect(result).toMatchObject({ ok: true, metadata: { packFormat: 9 } });
       expect(await readRows(outFile, ['r_fx0001'])).toEqual([
         { ...fullRow, kind: 'synonymRow', retired: false },
       ]);
@@ -1498,7 +1532,7 @@ describe('buildLanguagePack', () => {
       return editionDir;
     }
 
-    it("builds a Word with an origin from the Edition's list and reads it back, in pack format 8", async () => {
+    it("builds a Word with an origin from the Edition's list and reads it back, in pack format 9", async () => {
       const editionDir = withOriginLanguages();
       editJson(editionDir, 'content/words/w_fx0002.json', (word) => ({ ...word, origin: 'la' }));
       record(editionDir);
@@ -1507,7 +1541,7 @@ describe('buildLanguagePack', () => {
       const result = buildLanguagePack({ editionDir, outFile });
 
       if (!result.ok) throw new Error(result.errors.map(formatBuildError).join('\n'));
-      expect(result.metadata.packFormat).toBe(8);
+      expect(result.metadata.packFormat).toBe(9);
       await withEntries(outFile, async (entries) => {
         const word = await entries.get('w_fx0002');
         const other = await entries.get('w_fx0003');
@@ -1555,7 +1589,7 @@ describe('buildLanguagePack', () => {
       return editionDir;
     }
 
-    it("builds a Word with moods from the Edition's list and reads them back in order, in pack format 8", async () => {
+    it("builds a Word with moods from the Edition's list and reads them back in order, in pack format 9", async () => {
       const editionDir = withMoods();
       editJson(editionDir, 'content/words/w_fx0002.json', (word) => ({
         ...word,
@@ -1567,7 +1601,7 @@ describe('buildLanguagePack', () => {
       const result = buildLanguagePack({ editionDir, outFile });
 
       if (!result.ok) throw new Error(result.errors.map(formatBuildError).join('\n'));
-      expect(result.metadata.packFormat).toBe(8);
+      expect(result.metadata.packFormat).toBe(9);
       await withEntries(outFile, async (entries) => {
         const word = await entries.get('w_fx0002');
         const other = await entries.get('w_fx0003');
@@ -1658,7 +1692,7 @@ describe('buildLanguagePack', () => {
       message,
     });
 
-    it('builds a Word that names an Illustration and reads the name back, in pack format 8', async () => {
+    it('builds a Word that names an Illustration and reads the name back, in pack format 9', async () => {
       const editionDir = withIllustration('w_fx0002.png', png(320, 320));
       record(editionDir);
       const outFile = packPath();
@@ -1666,7 +1700,7 @@ describe('buildLanguagePack', () => {
       const result = buildLanguagePack({ editionDir, outFile });
 
       if (!result.ok) throw new Error(result.errors.map(formatBuildError).join('\n'));
-      expect(result.metadata.packFormat).toBe(8);
+      expect(result.metadata.packFormat).toBe(9);
       await withEntries(outFile, async (entries) => {
         const word = await entries.get('w_fx0002');
         const other = await entries.get('w_fx0003');
@@ -1836,7 +1870,7 @@ describe('buildLanguagePack', () => {
       editionId: 'fixture',
       contentVersion: 7,
       contentChecksum: expect.stringMatching(/^sha256:[0-9a-f]{64}$/) as string,
-      packFormat: 8,
+      packFormat: 9,
     });
     expect(b.metadata).toEqual(a.metadata);
     expect(readFileSync(second).equals(readFileSync(first))).toBe(true);
@@ -1847,8 +1881,8 @@ describe('buildLanguagePack', () => {
 
     const result = buildLanguagePack({ editionDir: fixture('valid'), outFile });
 
-    expect(result).toMatchObject({ ok: true, metadata: { packFormat: 8 } });
-    expect((await readBack(outFile)).metadata.packFormat).toBe(8);
+    expect(result).toMatchObject({ ok: true, metadata: { packFormat: 9 } });
+    expect((await readBack(outFile)).metadata.packFormat).toBe(9);
   });
 
   it.each([

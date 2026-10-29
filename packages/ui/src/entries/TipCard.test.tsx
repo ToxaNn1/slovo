@@ -28,7 +28,7 @@ const model: TipCardModel = {
   standardForm: 'What time is it?',
   explanation: 'Time is asked by its hour, not by its amount.',
   example: { text: 'Excuse me, what time is it?' },
-  sourceTitles: ['A style guide', 'A dictionary of usage'],
+  sourceNames: ['A style guide', 'A dictionary of usage'],
 };
 
 const card: TipFeedCard = { kind: 'tip', entryId: 't_time', model };
@@ -36,7 +36,7 @@ const card: TipFeedCard = { kind: 'tip', entryId: 't_time', model };
 /** A Tip that shows only the right way, with no wrong form. */
 const withoutNonStandard: TipFeedCard = {
   ...card,
-  model: { ...model, nonStandardForm: undefined, example: undefined, sourceTitles: [] },
+  model: { ...model, nonStandardForm: undefined, example: undefined, sourceNames: [] },
 };
 
 function inEdition(children: React.ReactNode) {

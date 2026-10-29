@@ -55,7 +55,7 @@ describe('the Correction card', () => {
       },
       categoryId: 'everyday',
       categoryName: 'Побут',
-      sourceTitles: ['Test source'],
+      sourceNames: ['Test source'],
       literaryUses: [],
     });
   });
@@ -74,7 +74,20 @@ describe('the Correction card', () => {
       }),
     );
 
-    expect(card.sourceTitles).toEqual(['За СУМ-20', 'Антоненко-Давидович']);
+    expect(card.sourceNames).toEqual(['За СУМ-20', 'Антоненко-Давидович']);
+  });
+
+  it('names a source by its short name when it has one, and the others by their titles', async () => {
+    const card = await build(
+      correction({
+        sources: [
+          { title: 'Горох. Слововживання: «на протязі». Джерела на сторінці', shortName: 'Горох' },
+          { title: 'Антоненко-Давидович' },
+        ],
+      }),
+    );
+
+    expect(card.sourceNames).toEqual(['Горох', 'Антоненко-Давидович']);
   });
 
   it('puts the first standard equivalent first and the others after it, in their order', async () => {

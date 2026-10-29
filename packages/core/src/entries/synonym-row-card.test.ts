@@ -56,7 +56,10 @@ describe('the Synonym Row card', () => {
           member('чалапати', { stress: [3] }),
         ],
         example: { text: 'Простує він полем.', author: 'Test author' },
-        sources: [{ title: 'Словник синонімів' }, { title: 'Горох' }],
+        sources: [
+          { title: 'Словник синонімів' },
+          { title: 'Горох. Синоніми до слова «іти»', shortName: 'Горох' },
+        ],
       }),
       [word('w_ity'), word('w_prostuvaty')],
     );
@@ -89,7 +92,7 @@ describe('the Synonym Row card', () => {
         { text: 'чала́пати', stressedVowels: ['а'], wordId: undefined, shadeNote: undefined },
       ],
       example: { text: 'Простує він полем.', author: 'Test author' },
-      sourceTitles: ['Словник синонімів', 'Горох'],
+      sourceNames: ['Словник синонімів', 'Горох'],
     });
   });
 

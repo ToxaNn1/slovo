@@ -29,7 +29,13 @@ describe('the Tip card', () => {
     const card = buildTipCard({
       tip: tip({
         example: { text: '— Котра година? — Пів на третю.', author: 'Test author' },
-        sources: [{ title: 'Антоненко-Давидович' }, { title: 'Горох' }],
+        sources: [
+          { title: 'Антоненко-Давидович' },
+          {
+            title: 'Горох. Слововживання: «котра година». Джерела на сторінці',
+            shortName: 'Горох',
+          },
+        ],
       }),
     });
 
@@ -41,7 +47,7 @@ describe('the Tip card', () => {
       standardForm: 'Котра година?',
       explanation: 'Про час питають «котра година».',
       example: { text: '— Котра година? — Пів на третю.', author: 'Test author' },
-      sourceTitles: ['Антоненко-Давидович', 'Горох'],
+      sourceNames: ['Антоненко-Давидович', 'Горох'],
     });
   });
 
@@ -64,7 +70,7 @@ describe('the Tip card', () => {
       standardForm: 'пане Андрію',
       explanation: 'У звертанні ім’я стоїть у кличному відмінку.',
       example: undefined,
-      sourceTitles: ['Test source'],
+      sourceNames: ['Test source'],
     });
   });
 });

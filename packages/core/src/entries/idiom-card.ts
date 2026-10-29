@@ -1,5 +1,7 @@
 import type { Example, Idiom, IdiomType } from '@slovo/contracts';
 
+import { sourceNamesOf } from './source-names';
+
 /**
  * What an Idiom card shows, decided by the Core: the UI draws it and never
  * picks sections itself. It carries data and keys only; the UI turns the
@@ -19,8 +21,8 @@ export interface IdiomCardModel {
   readonly examples: readonly Example[];
   /** «Походження»: where the expression comes from; a place name always has it. */
   readonly etymology: string | undefined;
-  /** The titles of the Idiom's sources, in their order; the card names them in a line. */
-  readonly sourceTitles: readonly string[];
+  /** The names of the Idiom's sources, in their order: each one's short name, or its title without one; the card names them in a line. */
+  readonly sourceNames: readonly string[];
 }
 
 /** The Idiom card of an Idiom. */
@@ -34,6 +36,6 @@ export function buildIdiomCard(idiom: Idiom): IdiomCardModel {
     extraDefinitions: idiom.extraDefinitions,
     examples: idiom.examples,
     etymology: idiom.etymology,
-    sourceTitles: idiom.sources.map((source) => source.title),
+    sourceNames: sourceNamesOf(idiom.sources),
   };
 }

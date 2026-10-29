@@ -119,13 +119,13 @@ export function SynonymRowCardBody({
               size={sizes.example}
             />
           )}
-          {shown.card.sourceTitles.length === 0 ? null : (
+          {shown.card.sourceNames.length === 0 ? null : (
             <Text
               testID="synonym-row-source"
               {...voice}
               style={[styles.source, { color: colors.muted, fontFamily: fontFamilies.ui }]}
             >
-              {fill(strings.source, { source: shown.card.sourceTitles.join(SOURCE_SEPARATOR) })}
+              {fill(strings.source, { source: shown.card.sourceNames.join(SOURCE_SEPARATOR) })}
             </Text>
           )}
         </>

@@ -68,7 +68,7 @@ export function writePack(outFile: string, content: PackContent, metadata: PackM
       'INSERT INTO word_moods (word_id, position, mood) VALUES (?, ?, ?)',
     );
     const insertSource = db.prepare(
-      'INSERT INTO sources (entry_id, position, title, url, archived_url) VALUES (?, ?, ?, ?, ?)',
+      'INSERT INTO sources (entry_id, position, title, short_name, url, archived_url) VALUES (?, ?, ?, ?, ?, ?)',
     );
     const insertSources = ({ id, sources }: Entry) => {
       sources.forEach((source, position) => {
@@ -76,6 +76,7 @@ export function writePack(outFile: string, content: PackContent, metadata: PackM
           id,
           position,
           source.title,
+          source.shortName ?? null,
           source.url ?? null,
           source.archivedUrl ?? null,
         );

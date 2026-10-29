@@ -181,8 +181,8 @@ const today = '2026-10-11T09:00:00+03:00';
 const WALK_TIMEOUT_MS = 20_000;
 
 describe('the Feed over the Ukrainian Language Pack', () => {
-  it('opens a pack the build writes in pack format 8 and shows its first card', async () => {
-    expect(await pack.metadata()).toMatchObject({ editionId: 'uk', packFormat: 8 });
+  it('opens a pack the build writes in pack format 9 and shows its first card', async () => {
+    expect(await pack.metadata()).toMatchObject({ editionId: 'uk', packFormat: 9 });
 
     const feed = await run(new Map(), fakeClock(today).clock);
 
@@ -307,7 +307,7 @@ describe('Corrections in the Feed over the Ukrainian Language Pack', () => {
       correctionType: correction?.correctionType,
       explanation: correction?.explanation,
       examplePair: correction?.examplePair,
-      sourceTitles: correction?.sources.map((source) => source.title),
+      sourceNames: correction?.sources.map((source) => source.shortName ?? source.title),
     });
   });
 });
@@ -355,7 +355,7 @@ describe('Idioms in the Feed over the Ukrainian Language Pack', () => {
       extraDefinitions: idiom?.extraDefinitions,
       examples: idiom?.examples,
       etymology: idiom?.etymology,
-      sourceTitles: idiom?.sources.map((source) => source.title),
+      sourceNames: idiom?.sources.map((source) => source.shortName ?? source.title),
     });
   });
 });

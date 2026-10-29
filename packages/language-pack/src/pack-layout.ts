@@ -234,6 +234,7 @@ CREATE TABLE sources (
   entry_id TEXT NOT NULL REFERENCES entries (id),
   position INTEGER NOT NULL,
   title TEXT NOT NULL,
+  short_name TEXT,
   url TEXT,
   archived_url TEXT,
   PRIMARY KEY (entry_id, position)
@@ -262,9 +263,11 @@ CREATE TABLE sources (
  * 0.8.12 (ADR 0052); format 7 keeps format 6's layout, adding only the table
  * `word_moods`, and admits the Word's moods of 0.8.13 (ADR 0054); format 8
  * keeps format 7's layout, adding only the Word's illustration column, and
- * admits the Word's Illustration of 0.8.14 (ADR 0055).
+ * admits the Word's Illustration of 0.8.14 (ADR 0055); format 9 keeps format
+ * 8's layout, adding only the source's short name column, and admits the
+ * short names of the «Джерело:» line (ADR 0032).
  */
-export const PACK_FORMAT = 8;
+export const PACK_FORMAT = 9;
 
 /**
  * Where each field of the pack metadata lies in the `metadata` table, and how

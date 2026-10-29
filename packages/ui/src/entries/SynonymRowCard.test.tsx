@@ -33,7 +33,7 @@ const model: SynonymRowCardModel = {
     { text: 'trámp', stressedVowels: ['a'], wordId: 'w-tramp', shadeNote: undefined },
   ],
   example: { text: 'They walked to the river.' },
-  sourceTitles: ['A dictionary of synonyms', 'A style guide'],
+  sourceNames: ['A dictionary of synonyms', 'A style guide'],
 };
 
 const card: SynonymRowFeedCard = { kind: 'synonymRow', entryId: 'r1', model };
@@ -74,7 +74,7 @@ describe('the Synonym Row card', () => {
   it('leaves out the example and the source line when the row has none', async () => {
     await render(
       inEdition(
-        <EntryCard card={{ ...card, model: { ...model, example: undefined, sourceTitles: [] } }} />,
+        <EntryCard card={{ ...card, model: { ...model, example: undefined, sourceNames: [] } }} />,
       ),
     );
 

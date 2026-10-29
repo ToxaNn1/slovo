@@ -20,9 +20,14 @@ export const ColorSchema = z.union(
 /** A web address, `http` or `https`. */
 export const WebAddressSchema = z.url({ protocol: /^https?$/ });
 
-/** Where content was taken from: a citation, its web address and an archived copy. */
+/**
+ * Where content was taken from: a citation, its web address and an archived
+ * copy. `shortName` names the source in the card's «Джерело:» line; a card
+ * names a source without one by its `title`.
+ */
 export const SourceSchema = z.strictObject({
   title: TextSchema,
+  shortName: TextSchema.optional(),
   url: WebAddressSchema.optional(),
   archivedUrl: WebAddressSchema.optional(),
 });
