@@ -38,6 +38,9 @@ const strings = {
     stress: 'stress on {vowels}',
     stressOr: 'or',
     extraDefinitions: 'Other meanings',
+    moreExamples: 'More examples',
+    etymology: 'Etymology',
+    more: 'More',
     history: 'History of the word',
     synonymRow: 'In the synonym row: {dominant}',
     synonymRowHint: 'Opens the synonym row',
@@ -850,5 +853,82 @@ describe('the Idiom card', () => {
 
     expect(screen.getByTestId('idiom-definition')).toHaveTextContent('To idle about.');
     expect(screen.getByTestId('idiom-etymology')).toBeTruthy();
+  });
+});
+
+describe('VoiceOver on Entry texts with a Stress mark', () => {
+  const stressedWord: EntryFeedCard = {
+    ...wordCard,
+    model: {
+      ...wordCard.model,
+      primaryDefinition: 'Same as adónis.',
+      example: { text: 'The adónis bloomed.', author: 'A poét' },
+      history: 'Named after Adónis.',
+      synonyms: ['pheasant́ eye'],
+      details: {
+        extraDefinitions: ['A handsome yóuth.'],
+        examples: [{ text: 'He was an adónis.' }],
+        etymology: 'From the Greék.',
+      },
+    },
+  };
+
+  it('shows the Stress marks on a Word card and reads its texts without them', async () => {
+    await render(inEdition(<EntryCard card={stressedWord} />));
+    await fireEvent.press(screen.getByTestId('word-more'));
+
+    expect(screen.getByTestId('word-definition')).toHaveTextContent('Same as adónis.');
+    expect(screen.getByTestId('word-definition')).toHaveProp(
+      'accessibilityLabel',
+      'Same as adonis.',
+    );
+    expect(screen.getByTestId('word-example')).toHaveTextContent('The adónis bloomed.— A poét');
+    expect(screen.getByTestId('word-example')).toHaveProp(
+      'accessibilityLabel',
+      'The adonis bloomed., — A poet',
+    );
+    expect(screen.getByText('Named after Adónis.')).toHaveProp(
+      'accessibilityLabel',
+      'Named after Adonis.',
+    );
+    expect(screen.getByTestId('word-synonyms')).toHaveProp(
+      'accessibilityLabel',
+      'Synonym pheasant eye',
+    );
+    expect(screen.getByText('2. A handsome yóuth.')).toHaveProp(
+      'accessibilityLabel',
+      '2. A handsome youth.',
+    );
+    expect(screen.getByLabelText('He was an adonis.')).toBeTruthy();
+    expect(screen.getByText('From the Greék.')).toHaveProp('accessibilityLabel', 'From the Greek.');
+  });
+
+  it('shows the Stress marks on an Idiom card and reads its texts without them', async () => {
+    const stressedIdiom = idiomCard({
+      expression: 'to beát the bushes',
+      primaryDefinition: 'To ídle about.',
+      extraDefinitions: ['To seárch everywhere.'],
+      examples: [{ text: 'He beát the bushes all day.' }],
+      etymology: 'From the húnt.',
+    });
+    await render(
+      inEdition(<EntryCard card={{ kind: 'idiom', entryId: 'i1', model: stressedIdiom }} />),
+    );
+
+    expect(screen.getByRole('header', { name: 'to beat the bushes, idiom' })).toBeTruthy();
+    expect(screen.getByTestId('idiom-definition')).toHaveTextContent('To ídle about.');
+    expect(screen.getByTestId('idiom-definition')).toHaveProp(
+      'accessibilityLabel',
+      'To idle about.',
+    );
+    expect(screen.getByText('2. To seárch everywhere.')).toHaveProp(
+      'accessibilityLabel',
+      '2. To search everywhere.',
+    );
+    expect(screen.getByTestId('idiom-example')).toHaveProp(
+      'accessibilityLabel',
+      'He beat the bushes all day.',
+    );
+    expect(screen.getByText('From the húnt.')).toHaveProp('accessibilityLabel', 'From the hunt.');
   });
 });

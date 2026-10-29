@@ -1,4 +1,4 @@
-import type { IdiomCardModel } from '@slovo/core';
+import { withoutStress, type IdiomCardModel } from '@slovo/core';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { OrnamentDivider } from '../decor/DecorSlots';
@@ -47,7 +47,10 @@ export function IdiomCardBody({
       <View
         accessible
         accessibilityRole="header"
-        accessibilityLabel={fill(strings.heading, { expression: card.expression, type: idiomType })}
+        accessibilityLabel={fill(strings.heading, {
+          expression: withoutStress(card.expression),
+          type: idiomType,
+        })}
         {...voice}
         {...turnActions}
         style={styles.header}
@@ -80,6 +83,8 @@ export function IdiomCardBody({
         <>
           <Text
             testID="idiom-definition"
+            // The voices break a word at its Stress mark, so VoiceOver reads the text without it.
+            accessibilityLabel={withoutStress(card.primaryDefinition)}
             {...voice}
             {...turnActions}
             style={[sizes.definition, { color: colors.ink, fontFamily: fontFamilies.word }]}
@@ -92,7 +97,12 @@ export function IdiomCardBody({
               title={edition.strings.wordCard.extraDefinitions}
             >
               {card.extraDefinitions.map((definition, index) => (
-                <Text key={index} {...voice} style={bodyText}>
+                <Text
+                  key={index}
+                  accessibilityLabel={withoutStress(`${String(index + 2)}. ${definition}`)}
+                  {...voice}
+                  style={bodyText}
+                >
                   {/* The primary Definition is the first; these number on from 2. */}
                   {`${String(index + 2)}. ${definition}`}
                 </Text>
@@ -110,6 +120,7 @@ export function IdiomCardBody({
           {card.etymology === undefined ? null : (
             <DetailSection testID="idiom-etymology" title={strings.etymology}>
               <Text
+                accessibilityLabel={withoutStress(card.etymology)}
                 {...voice}
                 style={[
                   styles.etymology,
