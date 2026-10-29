@@ -2,6 +2,7 @@ import {
   createCollectionLinkCopy,
   type CollectionLinkCopy,
 } from './collection-links/copy-collection';
+import { openCollectionSharing, type CollectionSharing } from './collection-links/share-collection';
 import { openCollections, type Collections } from './saved/collections';
 import { anagramMode } from './game/anagram-mode';
 import { anglicismMode } from './game/anglicism-mode';
@@ -90,6 +91,8 @@ export interface Composition extends Hiding {
   readonly collections: Collections;
   /** The recipient's side of a Collection Link: its preview and «Додати собі». */
   readonly collectionLinkCopy: CollectionLinkCopy;
+  /** The sender's side of a Collection Link: «Поділитися посиланням» of a Collection's menu. */
+  readonly collectionSharing: CollectionSharing;
   /** History, which the Feed records in the same write as Seen. */
   readonly history: History;
   /**
@@ -329,8 +332,8 @@ export async function openComposition({
    * tests of other features, has Search read each letter as itself and sort
    * in the default locale; one that leaves out `moods` offers none, and one
    * that leaves out its `locale` has the Word of the Day archive write its
-   * dates in the default locale; one that leaves out `illustrations` bundles
-   * no Illustration.
+   * dates, and the Spotlight its counts, in the default locale; one that
+   * leaves out `illustrations` bundles no Illustration.
    */
   edition: Pick<Edition, 'id' | 'isFeatureEnabled'> &
     Partial<Pick<Edition, 'searchLetters' | 'moods' | 'locale' | 'illustrations'>> &
@@ -350,7 +353,7 @@ export async function openComposition({
   feedNotices?: FeedNotices;
   /** The backend's Community Word, which the Feed shows on a Monday; without it, as in tests of other features, none. */
   communityWord?: CommunityWordApi;
-  /** The backend's Collection Links, which a link opened from outside reads; without it, as in tests of other features, no link is available. */
+  /** The backend's Collection Links, which a link opened from outside reads and sharing a Collection makes; without it, as in tests of other features, no link is available and none is shared. */
   collectionLinks?: CollectionLinksApi;
 }): Promise<Composition> {
   const { userState, scheduling, schedule, close } = closable(ports);
@@ -524,6 +527,10 @@ export async function openComposition({
     return entryCard(entryId);
   }
   const searchEdition = { ...edition, searchLetters: edition.searchLetters ?? {} };
+  const spotlightEdition = {
+    ...edition,
+    locale: edition.locale ?? new Intl.PluralRules().resolvedOptions().locale,
+  };
   const wordOfTheDayArchive = createWordOfTheDayArchive({ content, edition, userState, clock });
   return {
     feed,
@@ -533,6 +540,13 @@ export async function openComposition({
       api: collectionLinks,
       edition,
       rows,
+      collections,
+      schedule,
+      random,
+    }),
+    collectionSharing: openCollectionSharing({
+      api: collectionLinks,
+      edition,
       collections,
       schedule,
       random,
@@ -583,7 +597,7 @@ export async function openComposition({
       opened: openedFromOutside,
     }),
     spotlight: createSpotlight({
-      edition,
+      edition: spotlightEdition,
       entries,
       favorites,
       collections,

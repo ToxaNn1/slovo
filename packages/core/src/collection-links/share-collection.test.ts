@@ -1,12 +1,7 @@
 import { COLLECTION_LINK_SIZE, type FeatureSwitch } from '@slovo/contracts';
 import { describe, expect, it } from 'vitest';
 
-import {
-  createMemoryUserStatePort,
-  openCollectionSharing,
-  openComposition,
-  openUserState,
-} from '../index';
+import { createMemoryUserStatePort, openComposition, openUserState } from '../index';
 import { createFakeCollectionLinksApi, createMemoryContentPort } from '../testing';
 import { fakeClock, randomOf, testSchedule, word } from '../test-support';
 
@@ -30,6 +25,9 @@ const testCategories = {
   },
 };
 
+/** The share sheet's message of the Ukrainian Edition. */
+const strings = { message: 'Колекція «{name}» у SLOVO: {url}' };
+
 /** Ids of more Words than a link holds. */
 const manyIds = Array.from({ length: COLLECTION_LINK_SIZE + 1 }, (_, n) => `w_many${String(n)}`);
 
@@ -46,7 +44,14 @@ const content = createMemoryContentPort({
  * The app of the Ukrainian Edition over a fake backend, with
  * `collectionLinks` on unless the test turns it off.
  */
-async function device({ off = [] }: { off?: FeatureSwitch[] } = {}) {
+async function device({
+  off = [],
+  withBackend = true,
+}: {
+  off?: FeatureSwitch[];
+  /** Whether the composition has the backend's Collection Links, as the app always has. */
+  withBackend?: boolean;
+} = {}) {
   const time = fakeClock('2026-10-28T09:00:00.000Z');
   const timers = testSchedule(time);
   const api = createFakeCollectionLinksApi({ linkDomain: 'slovo.example' });
@@ -54,19 +59,14 @@ async function device({ off = [] }: { off?: FeatureSwitch[] } = {}) {
   const isFeatureEnabled = (feature: FeatureSwitch) => !switchedOff.has(feature);
   const app = await openComposition({
     content,
-    edition: { ...testCategories, isFeatureEnabled },
+    edition: { ...testCategories, id: 'uk', isFeatureEnabled },
     userState: await openUserState({ port: createMemoryUserStatePort() }),
     clock: time.clock,
     random: randomOf(0.5),
-  });
-  const sharing = openCollectionSharing({
-    collections: app.collections,
-    api,
-    edition: { id: 'uk', isFeatureEnabled },
-    strings: { message: 'Колекція «{name}» у SLOVO: {url}' },
     schedule: timers.schedule,
-    random: randomOf(0.5),
+    ...(withBackend ? { collectionLinks: api } : {}),
   });
+  const sharing = app.collectionSharing;
 
   return {
     api,
@@ -89,7 +89,7 @@ async function device({ off = [] }: { off?: FeatureSwitch[] } = {}) {
     },
     /** Shares the Collection and lets every try and wait of it run. */
     async share(collectionId: string) {
-      const answer = sharing.share(collectionId);
+      const answer = sharing.share(collectionId, strings);
       await timers.advance(ALL_TRIES);
       return answer;
     },
@@ -190,6 +190,15 @@ describe('sharing a Collection that the backend does not link', () => {
 describe('Collection Links switched off', () => {
   it('offers no sharing and asks the backend nothing while collectionLinks is off', async () => {
     const app = await device({ off: ['collectionLinks'] });
+    const autumn = await app.collection('Осінь', ['w_kvasha']);
+
+    expect(app.sharing.available()).toBe(false);
+    expect(await app.share(autumn)).toEqual({ ok: false, reason: 'switched-off' });
+    expect(app.api.calls).toBe(0);
+  });
+
+  it('offers no sharing in a composition without the backend', async () => {
+    const app = await device({ withBackend: false });
     const autumn = await app.collection('Осінь', ['w_kvasha']);
 
     expect(app.sharing.available()).toBe(false);

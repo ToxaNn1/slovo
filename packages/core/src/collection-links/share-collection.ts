@@ -30,45 +30,57 @@ export type CollectionShare =
  * never queued. Nothing it does rejects.
  */
 export interface CollectionSharing {
-  /** Whether a Collection's menu offers «Поділитися посиланням»: `collectionLinks` is on in effect, read each time. */
+  /**
+   * Whether a Collection's menu offers «Поділитися посиланням»: the
+   * composition has the backend and `collectionLinks` is on in effect, read
+   * each time.
+   */
   available(): boolean;
-  /** Asks the backend for a new link to the Collection as it is now; each call makes a new one. */
-  share(collectionId: string): Promise<CollectionShare>;
+  /**
+   * Asks the backend for a new link to the Collection as it is now, each call
+   * a new one, and fills the share sheet's message from `strings`.
+   */
+  share(
+    collectionId: string,
+    strings: Pick<EditionStrings['collections']['link'], 'message'>,
+  ): Promise<CollectionShare>;
 }
 
-/** Opens the sharing of Collections over the Collections of the composition. */
+/**
+ * Opens the sharing of Collections over the Collections of the composition;
+ * without `api`, as in tests of other features, none is offered, and without
+ * `schedule` a request is tried once.
+ */
 export function openCollectionSharing({
   collections,
   api,
   edition,
-  strings,
   schedule,
   random,
 }: {
   collections: Pick<Collections, 'list' | 'entries'>;
-  api: CollectionLinksApi;
+  api: CollectionLinksApi | undefined;
   /** The Edition as the app runs it, with each Feature Switch at its effective value. */
   edition: Pick<Edition, 'id' | 'isFeatureEnabled'>;
-  strings: Pick<EditionStrings['collections']['link'], 'message'>;
   /** What the waits between tries wait by. */
-  schedule: Schedule;
+  schedule: Schedule | undefined;
   /** What the waits between tries are jittered by. */
   random: Random;
 }): CollectionSharing {
-  const available = () => edition.isFeatureEnabled('collectionLinks');
-
   return {
-    available,
-    async share(collectionId) {
-      if (!available()) return { ok: false, reason: 'switched-off' };
+    available: () => api !== undefined && edition.isFeatureEnabled('collectionLinks'),
+    async share(collectionId, strings) {
+      if (api === undefined || !edition.isFeatureEnabled('collectionLinks')) {
+        return { ok: false, reason: 'switched-off' };
+      }
       const collection = collections.list.find(({ id }) => id === collectionId);
       const entryIds = collections.entries(collectionId).map(({ entryId }) => entryId);
       if (collection === undefined || entryIds.length === 0) return { ok: false, reason: 'empty' };
       if (entryIds.length > COLLECTION_LINK_SIZE) return { ok: false, reason: 'too-many-entries' };
-      const answer = await withRetries(
-        () => api.create({ edition: edition.id, name: collection.name, entryIds }),
-        { schedule, random },
-      );
+      const create = () => api.create({ edition: edition.id, name: collection.name, entryIds });
+      const answer = await (schedule === undefined
+        ? create()
+        : withRetries(create, { schedule, random }));
       if (answer.ok) {
         const message = fill(strings.message, { name: collection.name, url: answer.url });
         return { ok: true, url: answer.url, message };

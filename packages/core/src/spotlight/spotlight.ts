@@ -1,4 +1,4 @@
-import { fill, type EditionStrings, type SpotlightSnapshot } from '@slovo/contracts';
+import { pluralCount, type EditionStrings, type SpotlightSnapshot } from '@slovo/contracts';
 
 import type { Edition } from '../edition/edition';
 import type { Entries } from '../entries/entries';
@@ -40,8 +40,7 @@ export function createSpotlight({
   history,
   wordOfTheDayArchive,
 }: {
-  /** Without a `locale`, the plural forms are picked in the default locale. */
-  edition: Pick<Edition, 'isFeatureEnabled'> & Partial<Pick<Edition, 'locale'>>;
+  edition: Pick<Edition, 'isFeatureEnabled' | 'locale'>;
   entries: Entries;
   favorites: Favorites;
   collections: Collections;
@@ -58,7 +57,7 @@ export function createSpotlight({
       ? undefined
       : `${newest.entryId} ${String(newest.seenAt.getTime())}`;
   };
-  const pluralRules = new Intl.PluralRules(edition.locale);
+  const countOf = pluralCount(edition.locale);
   return {
     async snapshot(strings) {
       if (!edition.isFeatureEnabled('spotlight')) return { entries: [], collections: [] };
@@ -74,7 +73,6 @@ export function createSpotlight({
         ...archive.map(({ row }) => row.entryId),
       ]);
       const byId = new Map(eligible.map((entry) => [entry.id, entry]));
-      const forms = strings.spotlight.collection;
       return {
         entries: [...kept].flatMap((id) => {
           const entry = byId.get(id);
@@ -83,9 +81,7 @@ export function createSpotlight({
         collections: collections.list.map(({ id, name, count }) => ({
           id,
           name,
-          secondLine: fill(forms[pluralRules.select(count)] ?? forms.other, {
-            count: String(count),
-          }),
+          secondLine: countOf(strings.spotlight.collection, count),
           route: `saved/collections/${id}`,
         })),
       };

@@ -1,4 +1,4 @@
-import { fill, type EditionStrings, type Plural } from '@slovo/contracts';
+import { fill, pluralCount, type EditionStrings, type Plural } from '@slovo/contracts';
 import type { Edition } from '@slovo/core';
 import { createContext, useContext, useMemo, type ComponentType, type ReactNode } from 'react';
 import type { ImageSourcePropType } from 'react-native';
@@ -44,17 +44,16 @@ export function EditionProvider({
   illustrations?: Readonly<Record<string, ImageSourcePropType>>;
   children: ReactNode;
 }) {
-  const value = useMemo((): EditionPresentation => {
-    const pluralRules = new Intl.PluralRules(edition.locale);
-    return {
+  const value = useMemo(
+    (): EditionPresentation => ({
       strings,
       voice: { accessibilityLanguage: edition.locale },
-      count: (forms, count) =>
-        fill(forms[pluralRules.select(count)] ?? forms.other, { count: String(count) }),
+      count: pluralCount(edition.locale),
       Pronunciation: pronunciation,
       illustrations,
-    };
-  }, [edition, strings, pronunciation, illustrations]);
+    }),
+    [edition, strings, pronunciation, illustrations],
+  );
   return <EditionContext value={value}>{children}</EditionContext>;
 }
 
