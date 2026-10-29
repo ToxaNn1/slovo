@@ -14,7 +14,11 @@ struct SpotlightItem: Record {
     attributes.title = title
     attributes.contentDescription = details
     attributes.textContent = searchText
-    return CSSearchableItem(uniqueIdentifier: route, domainIdentifier: nil, attributeSet: attributes)
+    let item = CSSearchableItem(uniqueIdentifier: route, domainIdentifier: nil, attributeSet: attributes)
+    // CoreSpotlight drops an item a month after it was written unless told otherwise;
+    // it stays until the next hand-over replaces the index, however long the app sleeps.
+    item.expirationDate = .distantFuture
+    return item
   }
 }
 
