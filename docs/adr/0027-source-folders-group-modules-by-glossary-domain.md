@@ -15,7 +15,7 @@ The rules:
 
 Not regrouped: `apps/mobile/src/app/` holds the Expo Router routes, whose paths are the app's links. `packages/language-pack` is one build pipeline, `packages/contracts` already has its `edition-strings/`, and `tools/sourcing` is small. Edition content, `docs/` and the Maestro flows are data and documents, whose numbering or ids give their order. An older ADR keeps the path it was written with, such as ADR 0013's `packages/core/src/user-state-schema.ts`, now `packages/core/src/user-state/user-state-schema.ts`.
 
-**Two Core entry points.** `index.ts` (`@slovo/core`) exports only what another part of the workspace imports, a test of another package included, plus every Extension Point (ADR 0006). `testing.ts` (`@slovo/core/testing`) exports the fakes in `fakes/` that the tests of the app and the Language Pack use; only a test or a test-support module imports it, and nothing ships it (dependency-cruiser's `only-tests-import-the-core-testing-entry`).
+**Two Core entry points.** `index.ts` (`@slovo/core`) exports only what another workspace package or app imports, a test of another package included, plus every Extension Point (ADR 0006). The Core's own tests do not count: they import from the module files, such as `../search/search`, and import `../index` only for what it exports anyway. `testing.ts` (`@slovo/core/testing`) exports the fakes in `fakes/` that the tests of the app and the Language Pack use; only a test or a test-support module imports it, and nothing ships it (dependency-cruiser's `only-tests-import-the-core-testing-entry`).
 
 ## Considered Options
 
