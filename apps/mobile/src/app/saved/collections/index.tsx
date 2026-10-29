@@ -189,6 +189,7 @@ function Collections() {
             ? {
                 label: collectionStrings.link.share,
                 disabled: menu?.empty ?? true,
+                disabledHint: collectionStrings.entries.empty.title,
                 onPress: () => {
                   if (menu !== undefined) afterMenu.chooseShare(menu);
                   setMenu(undefined);

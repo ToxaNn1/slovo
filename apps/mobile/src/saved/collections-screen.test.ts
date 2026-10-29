@@ -15,12 +15,12 @@ import { count, fakeClock, strings, ukrainian } from '../test-support';
 /** The Language Pack's one Category, the test Words' own. */
 const categoryId = 'nature-weather';
 
-function word(id: string, lemma: string): Word {
+function word(id: string, lemma: string, stress: number[] = []): Word {
   return {
     kind: 'word',
     id,
     lemma,
-    stress: [],
+    stress,
     partOfSpeech: 'noun',
     primaryDefinition: 'A meaning.',
     extraDefinitions: [],
@@ -37,7 +37,7 @@ function word(id: string, lemma: string): Word {
 }
 
 const content = createMemoryContentPort({
-  words: [word('w_one', 'веремія'), word('w_two', 'гармидер')],
+  words: [word('w_one', 'веремія'), word('w_two', 'гармидер'), word('w_three', 'кракелюр', [6])],
   corrections: [],
 });
 
@@ -118,6 +118,15 @@ describe('the «Колекції» screen', () => {
         moreLabel: 'Дії з колекцією «Читання»',
       },
     ]);
+  });
+
+  it('shows the newest Lemmas with their Stress mark and reads them to VoiceOver without it', async () => {
+    const { app } = await open();
+    await create(app, 'Мистецтво', 'w_three');
+
+    const [row] = rowsOf(app);
+    expect(row?.lemmas).toEqual(['кракелю\u0301р']);
+    expect(row?.accessibilityLabel).toBe('Мистецтво, 1 запис: кракелюр');
   });
 
   it('follows a rename', async () => {

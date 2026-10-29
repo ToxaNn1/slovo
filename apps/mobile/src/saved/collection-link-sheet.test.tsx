@@ -169,6 +169,26 @@ describe('the recipient sheet of a Collection Link', () => {
     expect(screen.queryByTestId('collection-link-skipped')).toBeNull();
   });
 
+  it('reads to VoiceOver as its name, its count, each Entry without the Stress mark and «Додати собі»', async () => {
+    await share('Осінь', ['w_one', 'w_two', 'w_gone0']);
+
+    await renderSheet();
+
+    expect(screen.getByRole('button', { name: editionStrings.tabs.home })).toBeOnTheScreen();
+    expect(screen.getByRole('header', { name: 'Осінь' })).toBeOnTheScreen();
+    expect(screen.getByText('3 записи')).toBeOnTheScreen();
+    for (const id of ['w_one', 'w_two']) {
+      // The row shows the Lemma with its Stress mark; VoiceOver reads it without.
+      expect(screen.getByTestId(`entry-row-${id}-text`)).toHaveTextContent(/\u0301/);
+      expect(screen.getByTestId(`entry-row-${id}-text`)).toHaveProp(
+        'accessibilityLabel',
+        `слово-${id}, The meaning of слово-${id}.`,
+      );
+    }
+    expect(screen.getByText('1 слово недоступне')).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: strings.add })).toBeEnabled();
+  });
+
   it('«Додати собі» makes the reader’s own Collection of it and opens it', async () => {
     await share('Осінь', ['w_two', 'w_one']);
     await renderSheet();

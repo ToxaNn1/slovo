@@ -210,6 +210,7 @@ describe('the calligraphic Lemma', () => {
     const today = feedLemmas().find(({ wordOfTheDay }) => wordOfTheDay);
     expect(today?.lemma).toHaveStyle({ fontFamily: CALLIGRAPHIC });
     expect(today?.lemma.props['accessibilityLabel']).toBe('лагідний, наголос на а');
+    expect(today?.lemma.props['accessibilityRole']).toBe('header');
   });
 
   it('sets the Word of the Day in the Word font with `calligraphy` off', async () => {
