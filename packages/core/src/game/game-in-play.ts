@@ -8,7 +8,7 @@ import { typedAnswerMatches } from './typed-answer';
 export const GAME_LIVES = 5;
 
 /** The Lives a Game in the mode starts with; none in a mode without Lives. */
-export const livesOf = ({ lives = GAME_LIVES }: GameMode): number | undefined =>
+const livesOf = ({ lives = GAME_LIVES }: GameMode): number | undefined =>
   lives === 'none' ? undefined : lives;
 
 /** The answer the reader gives a Round, in the Round's form. */

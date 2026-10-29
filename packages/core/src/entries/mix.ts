@@ -18,7 +18,7 @@ export interface MixEdition {
 export type CategoryKind = Extract<EntryKind, 'word' | 'correction'>;
 
 /** The kinds of Entry with Categories, in the Mix screen's order. */
-export const CATEGORY_KINDS: readonly CategoryKind[] = ['word', 'correction'];
+const CATEGORY_KINDS: readonly CategoryKind[] = ['word', 'correction'];
 
 /**
  * A kind of Entry that is in or out of the Mix as a whole: Corrections,

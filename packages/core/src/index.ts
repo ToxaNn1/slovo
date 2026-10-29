@@ -14,26 +14,16 @@ export {
   type CollectionResult,
   type Collections,
 } from './saved/collections';
-export {
-  type CollectionLinkCopy,
-  type CollectionLinkPreview,
-} from './collection-links/copy-collection';
+export { type CollectionLinkPreview } from './collection-links/copy-collection';
 export { buildCorrectionCard, type CorrectionCardModel } from './entries/correction-card';
 export { type IdiomCardModel } from './entries/idiom-card';
 export {
   buildSynonymRowCard,
   type SynonymRowCardModel,
   type SynonymRowMemberModel,
-  type SynonymRowWordModel,
 } from './entries/synonym-row-card';
 export { buildTipCard, type TipCardModel } from './entries/tip-card';
-export {
-  selfCheckSynonymRowCard,
-  selfCheckTipCard,
-  type ConcealedSynonymRowCardModel,
-  type ConcealedTipCardModel,
-  type SelfCheckCardModel,
-} from './entries/self-check';
+export { selfCheckSynonymRowCard, selfCheckTipCard } from './entries/self-check';
 export {
   buildSynonymRowShareCard,
   buildTipShareCard,
@@ -43,7 +33,7 @@ export {
   type WeeklyRecapShareCardModel,
 } from './share/share-card';
 export { coreDecor, loadDecor, type Decor } from './edition/decor';
-export { createEntries, type Entries, type ShownEntry, type ShownKind } from './entries/entries';
+export { createEntries, type Entries } from './entries/entries';
 export type { EntryRowModel } from './entries/entry-row';
 export { type Favorite } from './saved/favorites';
 export {
@@ -75,7 +65,6 @@ export {
 export { type GameModeOffer, type GameState, type OfferedBest } from './game/game';
 export {
   GAME_LIVES,
-  livesOf,
   type CurrentGame,
   type GameTime,
   type GivenAnswer,
@@ -98,23 +87,12 @@ export {
   type RoundOption,
   type TextRange,
 } from './game/game-mode';
-export {
-  buildGameReview,
-  type GameReviewAnswer,
-  type GameReviewDetails,
-  type GameReviewItem,
-} from './game/game-review';
-export { GAME_ROUNDS, roundLimitOf } from './game/round-plan';
+export { buildGameReview, type GameReviewItem } from './game/game-review';
+export { GAME_ROUNDS } from './game/round-plan';
 export { staysInPlace } from './game/by-letters-mode';
 export { gapOf } from './game/guess-word';
 export { typedAnswerMatches } from './game/typed-answer';
-export {
-  createMoodDraw,
-  type MoodChoice,
-  type MoodDraw,
-  type MoodRefusal,
-  type MoodRoulette,
-} from './mood/mood-draw';
+export { createMoodDraw, type MoodChoice, type MoodDraw } from './mood/mood-draw';
 export { createRecentQueries, type RecentQueries } from './search/recent-queries';
 export { createSearch, type Search, type SearchResults } from './search/search';
 export { searchKey, type SearchLetters } from './search/search-key';
@@ -125,7 +103,6 @@ export { type HideTarget, type HidingChange } from './mix/hiding';
 export { HISTORY_CAP, type HistoryEntry } from './saved/history';
 export {
   createWordOfTheDayArchive,
-  type WordOfTheDayArchive,
   type WordOfTheDayArchiveDay,
 } from './saved/word-of-the-day-archive';
 export { groupByLocalDay, relativeTimeOf, type RelativeTime } from './saved/history-time';
@@ -137,7 +114,7 @@ export {
   type CounterLine,
   type CounterReads,
 } from './community-counters/counter-reads';
-export { openCounterSending, type CounterSending } from './community-counters/counter-sending';
+export { openCounterSending } from './community-counters/counter-sending';
 export {
   dateKeyOf,
   formatTimeOfDay,
@@ -154,12 +131,11 @@ export {
   type CrosswordPlace,
   type CrosswordReadPort,
   type DailyCrossword,
-  type DailyCrosswordProgress,
   type DailyCrosswordState,
   type DailyCrosswordWord,
 } from './game/daily-crossword';
 export { decorOf, loadSeasonalMotifs } from './decor/decor-of';
-export { holidayOf, motifOf, type SeasonalMotifs } from './decor/holiday';
+export { holidayOf, motifOf } from './decor/holiday';
 export { seasonOf, type Season } from './decor/season';
 export { loadEdition, type Edition } from './edition/edition';
 export { openRemoteSwitches } from './edition/remote-switches';
@@ -177,10 +153,9 @@ export { buildWordCard, type WordCardModel } from './entries/word-card';
 export { createContentUpdate, type ContentUpdate } from './content-update/content-update';
 export type { ContentApi, PackFiles, PackVersion } from './ports';
 export { type ProgressState } from './progress/progress';
-export type { CalendarDay, CalendarDayState, CalendarMonth } from './progress/calendar';
-export { type WeeklyRecap, type WeeklyRecapModel } from './progress/weekly-recap';
+export type { CalendarDay, CalendarMonth } from './progress/calendar';
+export { type WeeklyRecapModel } from './progress/weekly-recap';
 export {
-  CATEGORY_KINDS,
   categoriesInMix,
   featureOfKind,
   MIX_KINDS,
@@ -191,31 +166,20 @@ export {
   type MixState,
 } from './entries/mix';
 export { type OnboardingStep, type SampleNotification } from './onboarding/onboarding';
-export {
-  type RarityTest,
-  type RarityTestAnswer,
-  type RarityTestWord,
-} from './rarity-test/rarity-test';
+export { type RarityTestAnswer, type RarityTestWord } from './rarity-test/rarity-test';
 // The shell keeps the Session in memory on a development client without the Keychain.
 export { createMemorySessionStore } from './account/memory-session-store';
 export {
   openCollectionSharing,
-  type CollectionShare,
   type CollectionShareRefusal,
-  type CollectionSharing,
 } from './collection-links/share-collection';
 export {
   openMistakeReports,
-  type MistakeReportAnswer,
   type MistakeReportDraft,
   type MistakeReports,
 } from './mistake-reports/mistake-reports';
 export { openSync, type Sync, type SyncState } from './sync/sync';
-export {
-  NOTIFICATION_BODY_LENGTH,
-  notificationText,
-  type NotificationText,
-} from './notifications/notification-text';
+export { NOTIFICATION_BODY_LENGTH, notificationText } from './notifications/notification-text';
 export {
   type NotificationTimeRefusal,
   type NotificationsState,
@@ -227,16 +191,10 @@ export {
   type AccountApiFailure,
   type Clock,
   type CollectionLinksApi,
-  type CollectionLinksApiFailure,
-  type CommunityWordAnswer,
   type CommunityWordApi,
   type ContentReadPort,
-  type CounterChange,
-  type CounterDelta,
   type CounterEvent,
-  type CounterEventsFailure,
   type CountersApi,
-  type EntryCounters,
   type GoogleSignInSheet,
   type KeptSession,
   type NotificationPermission,
@@ -250,7 +208,6 @@ export {
   type SessionStore,
   type SwitchesApi,
   type ReportsApi,
-  type ReportsApiFailure,
   type SyncApi,
   type SyncApiFailure,
   type UserStateChanges,

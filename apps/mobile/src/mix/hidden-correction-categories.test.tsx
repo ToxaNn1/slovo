@@ -11,7 +11,9 @@ import {
 } from '@slovo/core';
 import { createMemoryContentPort } from '@slovo/core/testing';
 import { EditionProvider, HideButton, HideChoiceSheet, UndoToastProvider } from '@slovo/ui';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { Link, Stack } from 'expo-router';
+import { act, fireEvent, renderRouter, screen, waitFor } from 'expo-router/testing-library';
+import { Text } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import config from 'slovo-edition/config';
 
@@ -30,7 +32,6 @@ jest.mock('../composition', () => ({
   compositionOpening: { opened: () => Promise.resolve(mockComposition) },
 }));
 jest.mock('../edition/remote-switches', () => ({ useEditionInEffect: () => mockEdition }));
-jest.mock('expo-router', () => ({ useRouter: () => ({ back: () => undefined }) }));
 
 /** The Language Pack's Categories of Corrections, in its order. */
 const work = { id: 'work', displayName: 'На роботі' };
@@ -96,26 +97,45 @@ function CardHide({ card }: { card: EntryFeedCard }) {
   );
 }
 
-async function renderInApp(children: React.ReactNode) {
-  await render(
-    <SafeAreaProvider initialMetrics={metrics}>
-      <EditionProvider edition={edition} strings={editionStrings}>
-        <UndoToastProvider>{children}</UndoToastProvider>
-      </EditionProvider>
-    </SafeAreaProvider>,
+/** A stand-in for the Feed: the card's hide, under the screen's toasts, and a link to Settings › Приховане. */
+function CardScreen({ card }: { card: EntryFeedCard }) {
+  return (
+    <UndoToastProvider>
+      <CardHide card={card} />
+      <Link href="/settings/hidden">
+        <Text>Приховане</Text>
+      </Link>
+    </UndoToastProvider>
   );
-  await settle();
 }
 
+/** The app with the card of the Entry as its first screen and the Hidden screen a push away. */
 async function openHideChoice(entryId: string) {
-  await renderInApp(<CardHide card={await cardOf(entryId)} />);
+  const card = await cardOf(entryId);
+  const app = renderRouter(
+    {
+      _layout: () => (
+        <SafeAreaProvider initialMetrics={metrics}>
+          <EditionProvider edition={edition} strings={editionStrings}>
+            <Stack screenOptions={{ headerShown: false }} />
+          </EditionProvider>
+        </SafeAreaProvider>
+      ),
+      index: () => <CardScreen card={card} />,
+      'settings/hidden': HiddenScreen,
+    },
+    { initialUrl: '/' },
+  );
+  await app;
+  await settle();
   await fireEvent.press(screen.getByTestId('hide-button'));
   await settle();
+  return { pathname: () => app.getPathname() };
 }
 
 describe('a Category of Corrections hidden from its card', () => {
   it('is offered on the Correction card, hides there, and shows on the Hidden screen until it is put back', async () => {
-    await openHideChoice('c_work');
+    const app = await openHideChoice('c_work');
     expect(screen.getByTestId('hide-choice-category')).toHaveTextContent(
       `Не показувати категорію «${work.displayName}»`,
     );
@@ -125,7 +145,9 @@ describe('a Category of Corrections hidden from its card', () => {
     expect(mockComposition.mix.state.correctionCategories.categoryIds).toEqual([shop.id]);
     expect(screen.getByText(`Категорію «${work.displayName}» приховано`)).toBeOnTheScreen();
 
-    await renderInApp(<HiddenScreen />);
+    await fireEvent.press(screen.getByText('Приховане'));
+    await settle();
+    expect(app.pathname()).toBe('/settings/hidden');
     expect(screen.getByTestId(`hidden-correction-category-${work.id}`)).toHaveTextContent(
       `Виправлення: ${work.displayName}`,
       { exact: false },
