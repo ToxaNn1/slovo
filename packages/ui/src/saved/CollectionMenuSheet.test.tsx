@@ -13,7 +13,7 @@ const copy = { rename: 'Rename', delete: 'Delete', cancel: 'Cancel' };
 
 async function renderMenu(
   visible = true,
-  share?: { label: string; disabled: boolean; onPress: () => void },
+  share?: { label: string; disabled: boolean; disabledHint: string; onPress: () => void },
 ) {
   const onRename = jest.fn();
   const onDelete = jest.fn();
@@ -55,6 +55,7 @@ describe('CollectionMenuSheet', () => {
     const { onRename, onCancel } = await renderMenu(true, {
       label: 'Share a link',
       disabled: false,
+      disabledHint: 'The Collection is empty',
       onPress: onShare,
     });
 
@@ -68,18 +69,28 @@ describe('CollectionMenuSheet', () => {
       'collection-menu-delete',
       'collection-menu-cancel',
     ]);
+    expect(screen.getByRole('button', { name: 'Share a link' }).props).not.toHaveProperty(
+      'accessibilityHint',
+      'The Collection is empty',
+    );
     await fireEvent.press(screen.getByRole('button', { name: 'Share a link' }));
     expect(onShare).toHaveBeenCalledTimes(1);
     expect(onRename).not.toHaveBeenCalled();
     expect(onCancel).not.toHaveBeenCalled();
   });
 
-  it('dims the share row and takes no press while it is disabled', async () => {
+  it('dims the share row, says why to VoiceOver and takes no press while it is disabled', async () => {
     const onShare = jest.fn();
-    await renderMenu(true, { label: 'Share a link', disabled: true, onPress: onShare });
+    await renderMenu(true, {
+      label: 'Share a link',
+      disabled: true,
+      disabledHint: 'The Collection is empty',
+      onPress: onShare,
+    });
 
     const row = screen.getByRole('button', { name: 'Share a link' });
     expect(row).toBeDisabled();
+    expect(row).toHaveProp('accessibilityHint', 'The Collection is empty');
     await fireEvent.press(row);
     expect(onShare).not.toHaveBeenCalled();
   });
