@@ -5,6 +5,7 @@ import { Writable } from 'node:stream';
 import { describeApi } from '@slovo/contracts/api-description';
 import { sql } from 'drizzle-orm';
 import { describe, expect, it, onTestFinished } from 'vitest';
+import { z } from 'zod';
 
 import { createDatabase } from './database/database';
 import { createLogger } from './logger';
@@ -310,6 +311,37 @@ describe('the server', { timeout: 30_000 }, () => {
 
     expect(await server.exited).toBe(1);
     expect(server.output().stderr).toContain('SENTRY_DSN: must be an https:// Sentry DSN');
+  });
+
+  it('starts with an empty APPLE_TEAM_ID, as .env.example gives it, and then serves no apple-app-site-association file', async () => {
+    const server = runServer({
+      ...VALID_ENV,
+      DATABASE_URL: testDatabaseUrl(),
+      PORT: '0',
+      APPLE_TEAM_ID: '',
+    });
+    await server.listening;
+    const listening = server
+      .output()
+      .stdout.split('\n')
+      .map((line) => (line.includes('"msg":"listening"') ? (JSON.parse(line) as unknown) : null))
+      .find((line) => line !== null);
+    const { port } = z.object({ port: z.number() }).parse(listening);
+
+    const response = await fetch(
+      `http://localhost:${String(port)}/.well-known/apple-app-site-association`,
+    );
+
+    expect(response.status).toBe(404);
+  });
+
+  it('refuses to start with an APPLE_TEAM_ID that is not 10 capital letters and digits, naming it', async () => {
+    const server = runServer({ ...VALID_ENV, APPLE_TEAM_ID: 'abcde12345' });
+
+    expect(await server.exited).toBe(1);
+    expect(server.output().stderr).toContain(
+      'APPLE_TEAM_ID: must be 10 capital letters and digits',
+    );
   });
 
   it('stops on SIGTERM', async () => {
