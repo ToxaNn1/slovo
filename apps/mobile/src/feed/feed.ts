@@ -51,13 +51,13 @@ export function useFeed(
   const onScreen = cardOnScreen({ feed, turnedTo, focused, inForeground, covered });
   const inSight = onScreen !== undefined;
   /** The page to turn to once it is drawn, such as a Correction opened from a Word. */
-  const [turnTo, setTurnTo] = useState<number>();
+  const [turnTo, setTurnTo] = useState<{ readonly page: number }>();
   // Kept from render to render, so the Feed's pages re-render only when their card changes.
   const openCorrection = useCallback(
     (position: number, correctionId: string) => {
       feed.openLinkedCorrection(position, correctionId).then(
         (opened) => {
-          setTurnTo(opened);
+          if (opened !== undefined) setTurnTo({ page: opened });
         },
         (error: unknown) => {
           logError('Could not open the linked Correction', error);
@@ -82,23 +82,27 @@ export function useFeed(
     };
   }, [feed, inSight]);
 
+  // Each opening is a new turn, even to the same page.
   useEffect(() => {
     if (turnTo === undefined) return;
-    pager.current?.turnTo(turnTo);
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- predates the compiler rules; rewrite is pending (ADR 0059)
-    setTurnTo(undefined);
+    pager.current?.turnTo(turnTo.page);
   }, [pager, turnTo]);
   // A hide or its undo drops or puts back cards, and the reader's card moves
   // with them, also out of sight: the pager shows it at once. When the Feed
   // has no card to put after a hidden one, the Feed is told no position past
   // its cards, and the pager shows its last card.
-  useEffect(() => {
+  /** The cards the reader's position was last taken for, and that position. */
+  const [placed, setPlaced] = useState<{ cards: readonly FeedCard[]; page: number }>();
+  // The reader is on the Feed's position from this render on, as if they turned to it.
+  if (cards !== placed?.cards) {
     const page = feed.position;
-    if (page >= cards.length) return;
-    pager.current?.showPage(page);
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- predates the compiler rules; rewrite is pending (ADR 0059)
-    onCardChange(page);
-  }, [pager, feed, cards, onCardChange]);
+    setPlaced({ cards, page });
+    if (page < cards.length) setTurnedTo({ in: feed, position: page });
+  }
+  useEffect(() => {
+    if (placed === undefined || placed.page >= placed.cards.length) return;
+    pager.current?.showPage(placed.page);
+  }, [placed, pager]);
 
   const asked = useSyncExternalStore(landing.subscribe, landing.asked);
   const landingPage =
