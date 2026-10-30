@@ -14,10 +14,9 @@ import {
   type Sync,
 } from '@slovo/core';
 import {
-  createFakeAccountApi,
   createFakeGoogleSignInSheet,
   createFakeNotificationScheduler,
-  createFakeSyncApi,
+  createFakeBackend,
   createMemoryContentPort,
 } from '@slovo/core/testing';
 import type { AppStateStatus } from 'react-native';
@@ -76,7 +75,7 @@ async function held<T>(opening: Opening<T>): Promise<T> {
  */
 async function app() {
   const time = fakeClock('2026-10-18T09:00:00.000Z');
-  const server = createFakeSyncApi({ clock: time.clock });
+  const server = createFakeBackend({ clock: time.clock });
   const userState = trackChanges({
     userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
     clock: time.clock,
@@ -84,7 +83,8 @@ async function app() {
   // This install has run before, so the Account keeps the Session it finds.
   await userState.write(userStateRecords.installed.change(true));
   const account = await openAccount({
-    api: createFakeAccountApi(),
+    backend: server.backend,
+    edition: ukrainian,
     googleSheet: createFakeGoogleSignInSheet(),
     sessions: createMemorySessionStore({ token: 'a-session', email: 'anna@mail.com' }),
     userState,
@@ -128,7 +128,7 @@ async function app() {
       await opening;
       return openSync({
         userState,
-        api: server,
+        backend: server.backend,
         account,
         edition: ukrainian,
         clock: time.clock,
@@ -164,7 +164,7 @@ async function app() {
 }
 
 const pulls = (server: { calls: readonly string[] }) =>
-  server.calls.filter((call) => call === 'pull').length;
+  server.calls.filter((call) => call === 'sync.pull').length;
 
 describe('the shell syncs in the background', () => {
   beforeEach(() => {
@@ -215,8 +215,15 @@ describe('the shell syncs in the background', () => {
     expect(first.mix.state.kinds.correction).toBe(true);
     const plansBefore = plans.length;
     const changedAt = time.clock.now().getTime() + 1_000;
-    await server.push('another-session', [{ key: 'mix.corrections', value: false, changedAt }]);
-    await server.push('another-session', [{ key: 'settings.theme', value: 'dark', changedAt }]);
+    const elsewhere = { context: { token: 'another-session' } };
+    await server.backend.sync.push(
+      { editionId: ukrainian.id, changes: [{ key: 'mix.corrections', value: false, changedAt }] },
+      elsewhere,
+    );
+    await server.backend.sync.push(
+      { editionId: ukrainian.id, changes: [{ key: 'settings.theme', value: 'dark', changedAt }] },
+      elsewhere,
+    );
 
     openSyncModule();
     await settled();

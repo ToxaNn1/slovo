@@ -14,13 +14,7 @@ import {
   type Haptics,
   type MistakeReports,
 } from '@slovo/core';
-import {
-  createFakeCountersApi,
-  createFakeReportsApi,
-  createMemoryContentPort,
-  type FakeCountersApi,
-  type FakeReportsApi,
-} from '@slovo/core/testing';
+import { createFakeBackend, createMemoryContentPort, type FakeBackend } from '@slovo/core/testing';
 import { EditionProvider, EntryCard, HapticsProvider, UndoToastProvider } from '@slovo/ui';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -55,10 +49,10 @@ jest.mock('../shown-in-effect', () => ({
 
 /** The Core's Mistake Reports over a fake backend, opened afresh for each test. */
 let mistakeReports: MistakeReports;
-let reportsApi: FakeReportsApi;
+let reportsApi: FakeBackend;
 /** The Core's reads of the Community Counters over a fake backend, opened afresh for each test. */
 let counterReads: CounterReads;
-let countersApi: FakeCountersApi;
+let countersApi: FakeBackend;
 
 /**
  * The Shell the card draws under: the composition, Mistake Reports and the
@@ -176,13 +170,18 @@ beforeEach(async () => {
     clock,
     random: systemRandom,
   });
-  countersApi = createFakeCountersApi();
-  counterReads = openCounterReads({ edition: mockEdition, api: countersApi, userState, clock });
+  countersApi = createFakeBackend();
+  counterReads = openCounterReads({
+    edition: mockEdition,
+    backend: countersApi.backend,
+    userState,
+    clock,
+  });
   mockMistakeReportsOn = true;
-  reportsApi = createFakeReportsApi();
+  reportsApi = createFakeBackend();
   mistakeReports = openMistakeReports({
     userState,
-    api: reportsApi,
+    backend: reportsApi.backend,
     edition: mockEdition,
     appVersion: '0.8.14',
     contentVersion: 42,
@@ -339,7 +338,7 @@ describe.each([
     await fireEvent.press(send());
     await settle();
 
-    expect(reportsApi.received).toEqual([
+    expect(reportsApi.reports.received).toEqual([
       {
         editionId: 'uk',
         entryId,
@@ -364,7 +363,7 @@ describe.each([
 
     await reportTypo();
 
-    expect(reportsApi.received).toHaveLength(1);
+    expect(reportsApi.reports.received).toHaveLength(1);
     expect(screen.getByTestId('undo-toast-message')).toHaveTextContent('Дякуємо! Ми перевіримо.');
     // The sheet slides away under the toast.
     await waitFor(() => {
@@ -385,16 +384,18 @@ describe.each([
     });
     await settle();
 
-    expect(reportsApi.received).toEqual([expect.objectContaining({ entryId, type: 'typo' })]);
+    expect(reportsApi.reports.received).toEqual([
+      expect.objectContaining({ entryId, type: 'typo' }),
+    ]);
   });
 
   it('says to try tomorrow over the daily limit', async () => {
-    reportsApi.failNext('too-many-requests', { retryAfter: 3600 });
+    reportsApi.failNext({ reason: 'too-many-requests', retryAfter: 3600 });
     await renderCard(entryId);
 
     await reportTypo();
 
-    expect(reportsApi.received).toEqual([]);
+    expect(reportsApi.reports.received).toEqual([]);
     expect(screen.getByTestId('undo-toast-message')).toHaveTextContent(
       'Забагато повідомлень сьогодні. Спробуйте завтра.',
     );
@@ -435,7 +436,7 @@ describe.each([
     [{ known: 3, unknown: 2, saved: 0 }, 'Знають 3 з 5 читачів · зберегли 0'],
     [{ known: 20, unknown: 1, saved: 7 }, 'Знають 20 з 21 читача · зберегли 7'],
   ])('says %o under the mark buttons as %s', async (counts, text) => {
-    countersApi.count(entryId, counts);
+    countersApi.counters.count(entryId, counts);
     await renderCard(entryId);
     await settle();
 
@@ -451,7 +452,7 @@ describe.each([
   });
 
   it('has no line offline with nothing kept', async () => {
-    countersApi.fail('offline');
+    countersApi.failNext('offline');
     await renderCard(entryId);
     await settle();
 
@@ -460,7 +461,7 @@ describe.each([
   });
 
   it('counts the reader’s own mark and Favorite at once', async () => {
-    countersApi.count(entryId, { known: 3, unknown: 2, saved: 0 });
+    countersApi.counters.count(entryId, { known: 3, unknown: 2, saved: 0 });
     await renderCard(entryId);
     await settle();
 
@@ -472,6 +473,6 @@ describe.each([
     await fireEvent.press(screen.getByTestId('favorite-button'));
     await settle();
     expect(line()).toHaveTextContent('Знають 4 з 6 читачів · зберегли 1');
-    expect(countersApi.asked).toEqual([[entryId]]);
+    expect(countersApi.counters.asked).toEqual([[entryId]]);
   });
 });

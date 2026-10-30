@@ -1,12 +1,11 @@
 import { openRemoteSwitches, systemRandom, type Edition, type TrackedUserState } from '@slovo/core';
 import { systemSchedule } from '@slovo/ui';
 
-import { apiClient } from '../api';
+import { backend } from '../api';
 import { logError } from '../diagnostics/log';
 import { openOnce, useOpened, useSubscribed, type Opening } from '../opening';
 import { useShell, type EditionSwitches } from '../shell-value';
 import { edition } from './edition';
-import { createSwitchesApi } from './switches-api';
 
 /**
  * The remote Feature Switches (ADR 0040), opened once per app run over the
@@ -23,7 +22,7 @@ export function remoteSwitchesOpening({
     async () =>
       openRemoteSwitches({
         edition,
-        api: createSwitchesApi({ client: apiClient, editionId: edition.id }),
+        backend,
         userState: await userState.opened(),
         schedule: systemSchedule,
         random: systemRandom,

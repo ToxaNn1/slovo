@@ -9,9 +9,10 @@ export default {
   testMatch: ['<rootDir>/src/**/*.test.tsx'],
   // The app's Babel config is Metro's own default, so the tests name the same preset.
   transform: { '\\.m?[jt]sx?$': ['babel-jest', { presets: ['babel-preset-expo'] }] },
-  // The preset's patterns, with @noble/hashes, the Core's SHA-256, which ships ES modules only.
+  // The preset's patterns, with @noble/hashes, the Core's SHA-256, and rou3, the router of the
+  // API contract served in process by the fake backend, which ship ES modules only.
   transformIgnorePatterns: [
-    '/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|@sentry/react-native|native-base|standard-navigation|@noble/hashes|@orpc))',
+    '/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|@sentry/react-native|native-base|standard-navigation|@noble/hashes|@orpc|rou3))',
     '/node_modules/react-native-reanimated/plugin/',
     '/node_modules/@react-native/babel-preset/',
   ],

@@ -9,11 +9,10 @@ import {
 import { PACK_FORMAT } from '@slovo/language-pack/reader';
 import { systemSchedule } from '@slovo/ui';
 
-import { apiClient } from '../api';
+import { backend } from '../api';
 import { deviceClock } from '../device/device-clock';
 import { edition } from '../edition/edition';
 import type { Opening } from '../opening';
-import { createContentApi } from './content-api';
 
 /** The bytes of a file the API answered, read as React Native can: its `Blob` has no `arrayBuffer()`. */
 function readBytes(file: Blob): Promise<Uint8Array> {
@@ -40,7 +39,9 @@ export async function openDeviceContentUpdate(
   userState: Opening<TrackedUserState>,
 ): Promise<ContentUpdate> {
   return createContentUpdate({
-    contentApi: createContentApi({ client: apiClient, editionId: edition.id, readBytes }),
+    backend,
+    edition,
+    readBytes,
     packFiles,
     userState: await userState.opened(),
     clock: deviceClock,

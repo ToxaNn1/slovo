@@ -7,13 +7,12 @@ import {
 } from '@slovo/core';
 import { systemSchedule } from '@slovo/ui';
 
-import { apiClientOf } from '../api';
+import { backend } from '../api';
 import { deviceClock } from '../device/device-clock';
 import { edition } from '../edition/edition';
 import type { EditionSwitches } from '../shell-value';
 import { logError } from '../diagnostics/log';
 import { openOnce, type Opening } from '../opening';
-import { createSyncApi } from './sync-api';
 
 /**
  * The Sync module (spec #378), opened once per app run apart from the
@@ -36,9 +35,12 @@ export function syncOpening({
       const switches = await remoteSwitches.opened();
       return openSync({
         userState: await userState.opened(),
-        api: createSyncApi({ clientOf: apiClientOf, editionId: edition.id }),
+        backend,
         account: await account.opened(),
-        edition: { isFeatureEnabled: (feature) => switches.edition.isFeatureEnabled(feature) },
+        edition: {
+          id: edition.id,
+          isFeatureEnabled: (feature) => switches.edition.isFeatureEnabled(feature),
+        },
         clock: deviceClock,
         schedule: systemSchedule,
         random: systemRandom,

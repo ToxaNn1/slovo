@@ -1,13 +1,12 @@
 import { openAccount, systemRandom, type Account, type TrackedUserState } from '@slovo/core';
 import { systemSchedule } from '@slovo/ui';
 
-import { apiClient, apiClientOf } from '../api';
+import { backend } from '../api';
 import { deviceClock } from '../device/device-clock';
 import { nativeModules } from '../device/device-native-modules';
 import { edition } from '../edition/edition';
 import { logError } from '../diagnostics/log';
 import { openOnce, type Opening } from '../opening';
-import { createAccountApi } from './account-api';
 import { createGoogleSignInSheet, noGoogleSignInSheet } from './google-sign-in-sheet';
 import { createSessionStore } from './session-store';
 
@@ -72,11 +71,8 @@ export function accountOpening({
   return openOnce(
     async () =>
       openAccount({
-        api: createAccountApi({
-          client: apiClient,
-          clientOf: apiClientOf,
-          editionId: edition.id,
-        }),
+        backend,
+        edition,
         googleSheet: googleSignInSheet,
         sessions: createSessionStore(keychain),
         userState: await userState.opened(),

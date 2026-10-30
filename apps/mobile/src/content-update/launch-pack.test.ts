@@ -8,11 +8,7 @@ import {
   type Edition,
   type PackVersion,
 } from '@slovo/core';
-import {
-  createFakeContentApi,
-  createMemoryPackFiles,
-  type MemoryPackFile,
-} from '@slovo/core/testing';
+import { createFakeBackend, createMemoryPackFiles, type MemoryPackFile } from '@slovo/core/testing';
 import { PACK_FORMAT } from '@slovo/language-pack/reader';
 import { describe, expect, it } from 'vitest';
 
@@ -42,7 +38,7 @@ function device({
   bundled = { contentVersion: 4, packFormat: PACK_FORMAT },
   kept,
 }: { bundled?: PackVersion; kept?: MemoryPackFile } = {}) {
-  const contentApi = createFakeContentApi();
+  const contentApi = createFakeBackend();
   const packFiles = createMemoryPackFiles(kept);
   const records = new Map<string, string>();
   const { clock } = fakeClock();
@@ -58,7 +54,8 @@ function device({
         : Promise.resolve(`kept ${String(contentVersion)}`),
     async open(bundledVersion) {
       return createContentUpdate({
-        contentApi,
+        backend: contentApi.backend,
+        edition: { id: 'uk' },
         packFiles,
         userState: await openUserState({ port: createMemoryUserStatePort(records) }),
         clock,
@@ -218,12 +215,12 @@ describe('the Language Pack the app opens at launch', () => {
     const { contentUpdate } = await app.launch();
     await contentUpdate?.checkForUpdate();
 
-    expect(app.contentApi.asked).toEqual([9]);
+    expect(app.contentApi.content.asked).toEqual([9]);
   });
 
   it('opens a pack downloaded in one run from the next launch, never in the run that kept it', async () => {
     const app = device();
-    app.contentApi.publish({
+    app.contentApi.content.publish({
       contentVersion: 5,
       packFormat: PACK_FORMAT,
       bytes: bytesOf('pack 5'),
