@@ -16,7 +16,7 @@ const config = readConfig(ServerConfigSchema, process.env);
 const logger = createLogger();
 const database = createDatabase(config.DATABASE_URL, logger);
 const editions = readEditions(config.EDITIONS_DIR);
-const mailer = createSmtpMailer({ url: config.SMTP_URL, from: config.MAIL_FROM });
+const mailer = createSmtpMailer(config.smtp);
 const app = createApp({
   database,
   clock: systemClock,

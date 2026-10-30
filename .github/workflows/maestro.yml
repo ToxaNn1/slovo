@@ -25,7 +25,8 @@ env:
   MAESTRO_DRIVER_STARTUP_TIMEOUT: 240000
   DATABASE_URL: postgres://slovo:slovo@localhost:5432/slovo
   # Nothing listens there: the flow signs in to no Account, so no email is sent.
-  SMTP_URL: smtp://localhost:1025
+  SMTP_HOST: localhost
+  SMTP_PORT: 1025
   PORT: 8787
   EXPO_PUBLIC_SLOVO_API_URL: http://localhost:8787
   METRO_PORT: 8081
