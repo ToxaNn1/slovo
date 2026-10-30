@@ -1,0 +1,43 @@
+# The Correction card's Category chip and «Як пишуть насправді»: the link to
+# приймати участь → брати участь opens the Entry screen with the card; under
+# the example pair sits the chip of its Category «У школі», then the section
+# with a literary use, its quote and its author and work. Back lands on the
+# Feed. A subflow of `smoke.yaml`; run it from there. The link carries no
+# `from`, so the Correction does not become Seen.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- tapOn:
+    id: tab-home
+- openLink: ${(SCHEME || 'slovo-uk') + '://entry/c_bkkjrf'}
+# A simulator asks once whether the link may open the app.
+- runFlow:
+    when:
+      visible: Open
+    commands:
+      - tapOn: Open
+- assertVisible:
+    id: entry-screen
+- assertVisible:
+    id: correction-card
+- assertVisible:
+    id: correction-non-standard
+    text: '.*приймати участь'
+# The chip and the section sit under the example pair, which may be taller
+# than the screen. VoiceOver reads the chip as its Category.
+- scrollUntilVisible:
+    element:
+      id: correction-category
+- assertVisible:
+    id: correction-category
+    text: 'Категорія: У школі'
+- scrollUntilVisible:
+    element:
+      id: correction-literary-uses
+- assertVisible: Як пишуть насправді
+- assertVisible: '.*Першим походом, що в ньому Данило брав участь.*'
+- assertVisible: '.*Адріан Кащенко, «Під Корсунем».*'
+- takeScreenshot: correction-card-literary-uses
+- tapOn:
+    id: entry-screen-back
+- assertVisible:
+    id: home
