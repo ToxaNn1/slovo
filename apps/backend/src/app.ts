@@ -1,3 +1,4 @@
+import { CollectionLinkIdSchema } from '@slovo/contracts';
 import {
   createAccounts,
   createCollectionLinks,
@@ -24,7 +25,9 @@ import {
   appSiteAssociation,
 } from './collection-links/app-site-association';
 import { createCollectionLinkStore } from './collection-links/collection-link-store';
+import { collectionPage, unavailablePage } from './collection-links/collection-page';
 import { createContentPackStore } from './content/content-pack-store';
+import { createPackEntries } from './content/pack-entries';
 import { createCounterStore } from './counters/counter-store';
 import type { Database } from './database/database';
 import { migrationState, type MigrationState } from './database/migrate';
@@ -59,11 +62,6 @@ export interface AppDependencies {
   readonly authSecret: string;
   /** Where the unexpected failures (500) are reported. */
   readonly reporter: ErrorReporter;
-  /**
-   * SLOVO's Apple Developer Team ID, which the apple-app-site-association
-   * file names the apps by; with none the backend serves no such file.
-   */
-  readonly appleTeamId: string | undefined;
   /**
    * How many proxies in front of the backend append to `X-Forwarded-For`,
    * whose addresses it trusts: 0 when nothing is in front of it.
@@ -121,7 +119,6 @@ export function createApp({
   google,
   authSecret,
   reporter,
-  appleTeamId,
   trustedProxyHops,
 }: AppDependencies) {
   const editionRegistry = createEditions({ database, clock, editions });
@@ -134,9 +131,10 @@ export function createApp({
     rateLimits,
     clock,
   });
+  const contentPackStore = createContentPackStore(database);
   const contentPacks = createContentPacks({
     editions: editionRegistry,
-    store: createContentPackStore(database),
+    store: contentPackStore,
     clock,
   });
   const sync = createSync({
@@ -222,10 +220,10 @@ export function createApp({
   });
 
   // The file that lets the apps open their Collection Links (ADR 0058).
-  // Without a Team ID there is none, so the path is not found.
-  if (appleTeamId !== undefined) {
-    const file = appSiteAssociation(appleTeamId, editions);
-    app.get(APP_SITE_ASSOCIATION_PATH, (c) => c.json(file));
+  // While no Edition has a Team ID there is none, so the path is not found.
+  const association = appSiteAssociation(editions);
+  if (association !== undefined) {
+    app.get(APP_SITE_ASSOCIATION_PATH, (c) => c.json(association));
   }
 
   // A body too large to be a request of the API is refused before it is
@@ -239,22 +237,46 @@ export function createApp({
     }),
   );
 
+  /** The API's answer to the request, with what the backend knows of the request it came in. */
+  const handleApi = (request: Request, { logger, requestId, ip }: Variables) =>
+    api.handle(request, {
+      context: { logger, requestId, reporter, headers: request.headers, ip },
+    });
+
   // The API contract at `/v1`, its description at `/docs`.
   for (const path of ['/v1/*', '/docs', '/docs/*']) {
     app.use(path, async (c, next) => {
-      const { matched, response } = await api.handle(c.req.raw, {
-        context: {
-          logger: c.var.logger,
-          requestId: c.var.requestId,
-          reporter,
-          headers: c.req.raw.headers,
-          ip: c.var.ip,
-        },
-      });
+      const { matched, response } = await handleApi(c.req.raw, c.var);
       if (matched) return c.newResponse(response.body, response);
       return next();
     });
   }
+
+  // A Collection Link as its URL names it (ADR 0058): a browser gets its web
+  // page; any other client the API's answer for the link. Like the API's
+  // read, it is not limited. The page of a link that isn't there speaks the
+  // language of the Edition whose link domain the request came to.
+  const packEntries = createPackEntries(contentPackStore);
+  app.get('/c/:id', async (c) => {
+    const id = c.req.param('id');
+    if (!(c.req.header('accept') ?? '').includes('text/html')) {
+      const url = new URL(`/v1/collection-links/${encodeURIComponent(id)}`, c.req.url);
+      const { response } = await handleApi(new Request(url, c.req.raw), c.var);
+      return response === undefined ? c.notFound() : c.newResponse(response.body, response);
+    }
+    const host = new URL(c.req.url).hostname;
+    const ofDomain = editions.find(({ config }) => config.linkDomain === host) ?? editions[0];
+    if (ofDomain === undefined) return c.notFound();
+    if (!CollectionLinkIdSchema.safeParse(id).success) {
+      return c.html(unavailablePage(ofDomain), 400);
+    }
+    const found = await collectionLinks.read(id);
+    if (!found.ok) return c.html(unavailablePage(ofDomain), 404);
+    const { link } = found;
+    const edition = editions.find(({ config }) => config.id === link.edition) ?? ofDomain;
+    const entries = await packEntries.entries(link.edition, link.entryIds);
+    return c.html(collectionPage(edition, id, link, entries));
+  });
 
   // An address the backend doesn't serve, under `/v1` too.
   app.notFound((c) => c.json({ code: 'NOT_FOUND' }, 404));

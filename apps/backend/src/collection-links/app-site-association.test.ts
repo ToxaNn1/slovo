@@ -5,12 +5,14 @@ import { testApp, testEditions } from '../test-support';
 const PATH = '/.well-known/apple-app-site-association';
 
 describe('the apple-app-site-association file', () => {
-  it('lists the app of every Edition for its Collection Links, under the Team ID', async () => {
-    const editions = testEditions(['uk', 'pl'], (config) => ({
+  it('lists the app of every Edition with a Team ID for its Collection Links, under that Team ID', async () => {
+    const teamIds: Record<string, string> = { uk: 'ABCDE12345', pl: 'FGHIJ67890', de: '' };
+    const editions = testEditions(['uk', 'pl', 'de'], (config) => ({
       ...config,
       bundleId: `app.slovo.${config.id}`,
+      appleTeamId: teamIds[config.id] ?? '',
     }));
-    const { request } = testApp({ editions: editions.read(), appleTeamId: 'ABCDE12345' });
+    const { request } = testApp({ editions: editions.read() });
 
     const response = await request(PATH);
 
@@ -19,7 +21,7 @@ describe('the apple-app-site-association file', () => {
     // The Editions come in the order the backend finds their folders.
     const details = [
       { appIDs: ['ABCDE12345.app.slovo.uk'], components: [{ '/': '/c/*' }] },
-      { appIDs: ['ABCDE12345.app.slovo.pl'], components: [{ '/': '/c/*' }] },
+      { appIDs: ['FGHIJ67890.app.slovo.pl'], components: [{ '/': '/c/*' }] },
     ];
     const file: unknown = await response.json();
     expect(Object.keys(file ?? {})).toEqual(['applinks']);
@@ -27,8 +29,9 @@ describe('the apple-app-site-association file', () => {
     expect(file).toHaveProperty('applinks.details.length', details.length);
   });
 
-  it('is not there while the backend has no Team ID', async () => {
-    const { request } = testApp();
+  it('is not there while no Edition has a Team ID', async () => {
+    const editions = testEditions(['uk'], (config) => ({ ...config, appleTeamId: '' }));
+    const { request } = testApp({ editions: editions.read() });
 
     const response = await request(PATH);
 

@@ -27,7 +27,6 @@ const app = createApp({
   google: createGoogleVerifier({ clientIds: config.GOOGLE_CLIENT_IDS, clock: systemClock }),
   authSecret: config.AUTH_SECRET,
   reporter: await createSentryReporter(config.SENTRY_DSN),
-  appleTeamId: config.APPLE_TEAM_ID,
   trustedProxyHops: config.TRUSTED_PROXY_HOPS,
 });
 const server = await startServer({ app, database, port: config.PORT });

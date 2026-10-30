@@ -112,7 +112,26 @@ export const CollectionsStringsSchema = z.strictObject({
     addFailed: TextSchema,
     /** How many Entries of the link the reader's pack lacks, so the copy skipped them, `{count}`. */
     unavailable: pluralOf(),
-    /** What the recipient's sheet says when the link no longer exists. */
+    /** What the recipient's sheet, and the link's web page, say when the link no longer exists. */
     notFound: TextSchema,
+    /** The web page a browser gets for the link, `https://<linkDomain>/c/<id>` (ADR 0058). */
+    page: z.strictObject({
+      /** The page's title. Takes `{name}`, the Collection's. */
+      title: templateOf('name'),
+      /** The line that the page shows the Collection as it was when it was shared. */
+      snapshot: TextSchema,
+      /** The link that opens the Collection in the app. */
+      open: TextSchema,
+      /** The line on how to get the app while it is in TestFlight only. */
+      testFlight: TextSchema,
+      /** The heading of each kind of Entry the page lists. */
+      kinds: z.strictObject({
+        word: TextSchema,
+        correction: TextSchema,
+        idiom: TextSchema,
+        synonymRow: TextSchema,
+        tip: TextSchema,
+      }),
+    }),
   }),
 });

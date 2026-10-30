@@ -363,8 +363,6 @@ interface TestAppOptions {
   readonly google?: GoogleVerifier;
   /** Where the ids of new Collection Links come from; the system's randomness unless given. */
   readonly random?: Random;
-  /** SLOVO's Apple Developer Team ID; none unless given. */
-  readonly appleTeamId?: string;
   /** How many proxies in front of the backend it trusts; none unless given. */
   readonly trustedProxyHops?: number;
   /** Sees every answer before the test gets it, with the request it answers. */
@@ -386,7 +384,6 @@ export function testApp({
   googleClientIds = [TEST_GOOGLE_CLIENT_ID],
   google: givenGoogle,
   random = systemRandom,
-  appleTeamId,
   trustedProxyHops = 0,
   onAnswer,
 }: TestAppOptions = {}) {
@@ -405,7 +402,6 @@ export function testApp({
     authSecret: TEST_AUTH_SECRET,
     // A fake Sentry: it keeps every report.
     reporter: { report: (report) => reports.push(report) },
-    appleTeamId,
     trustedProxyHops,
   });
   const ip = newIp();

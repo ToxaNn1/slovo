@@ -67,16 +67,6 @@ const ServerVariablesSchema = z.object({
     (dsn) => (dsn === '' ? undefined : dsn),
     z.url({ protocol: /^https$/, error: 'must be an https:// Sentry DSN' }).optional(),
   ),
-  // SLOVO's Apple Developer Team ID, which the apple-app-site-association
-  // file names the apps by (ADR 0058). Empty, or unset, serves no such file;
-  // the repository holds no Team ID.
-  APPLE_TEAM_ID: z.preprocess(
-    (teamId) => (teamId === '' ? undefined : teamId),
-    z
-      .string()
-      .regex(/^[A-Z0-9]{10}$/, 'must be 10 capital letters and digits')
-      .optional(),
-  ),
   // How many proxies in front of the backend append to X-Forwarded-For, whose
   // addresses it trusts (ADR 0030): 0 when nothing is in front, as in local
   // Docker; 1 behind Railway's proxy.
