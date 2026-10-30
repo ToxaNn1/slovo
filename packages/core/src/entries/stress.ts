@@ -1,18 +1,6 @@
-import type { Word } from '@slovo/contracts';
+import { STRESS_MARK, type Word } from '@slovo/contracts';
 
-/** The combining acute accent, drawn over the character it follows: the Stress mark. */
-export const STRESS_MARK = '́';
-
-/**
- * The Lemma as it is shown to the reader: a combining acute accent follows each
- * stressed vowel. Stress positions count the Lemma's characters from zero.
- */
-export function renderStress({ lemma, stress }: Pick<Word, 'lemma' | 'stress'>): string {
-  const stressed = new Set(stress);
-  return Array.from(lemma, (character, position) =>
-    stressed.has(position) ? `${character}${STRESS_MARK}` : character,
-  ).join('');
-}
+export { renderStress, STRESS_MARK } from '@slovo/contracts';
 
 /**
  * The stressed vowels of the Lemma, in order: one per valid Stress, as

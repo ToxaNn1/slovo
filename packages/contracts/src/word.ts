@@ -160,3 +160,17 @@ export type Word = z.output<typeof WordSchema>;
 
 /** A Word as authored, where defaulted fields may be left out. */
 export type WordInput = z.input<typeof WordSchema>;
+
+/** The combining acute accent, drawn over the character it follows: the Stress mark. */
+export const STRESS_MARK = '́';
+
+/**
+ * The Lemma as it is shown to the reader: a combining acute accent follows each
+ * stressed vowel. Stress positions count the Lemma's characters from zero.
+ */
+export function renderStress({ lemma, stress }: Pick<Word, 'lemma' | 'stress'>): string {
+  const stressed = new Set(stress);
+  return Array.from(lemma, (character, position) =>
+    stressed.has(position) ? `${character}${STRESS_MARK}` : character,
+  ).join('');
+}

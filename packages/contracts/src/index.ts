@@ -144,6 +144,8 @@ export {
   PartOfSpeechSchema,
   RaritySchema,
   RegisterSchema,
+  renderStress,
+  STRESS_MARK,
   WordIdSchema,
   WordSchema,
   type Example,
