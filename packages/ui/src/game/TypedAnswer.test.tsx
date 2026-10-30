@@ -89,6 +89,17 @@ describe('TypedAnswer', () => {
     expect(screen.queryByLabelText(/fifth letter/)).toBeNull();
   });
 
+  it('reads the letters after a Stress mark by their place among the letters, skipping the mark', async () => {
+    const stressed: TypedAnswerBlank[] = [{ letter: 'v' }, {}, { mark: '́' }, {}, {}];
+    await render(<Answer blanks={stressed} onSubmit={jest.fn()} />);
+
+    expect(screen.getByLabelText('v, first letter')).toBeOnTheScreen();
+    expect(screen.getByLabelText('second letter, empty')).toBeOnTheScreen();
+    expect(screen.getByLabelText('third letter, empty')).toBeOnTheScreen();
+    expect(screen.getByLabelText('fourth letter, empty')).toBeOnTheScreen();
+    expect(screen.queryByLabelText(/fifth letter/)).toBeNull();
+  });
+
   it('opens a letter while more than one is left', async () => {
     const onOpenLetter = jest.fn();
     await render(<Answer blanks={dont} onSubmit={jest.fn()} onOpenLetter={onOpenLetter} />);
