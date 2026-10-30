@@ -49,6 +49,14 @@ export const ServerConfigSchema = z.object({
       .regex(/^[A-Z0-9]{10}$/, 'must be 10 capital letters and digits')
       .optional(),
   ),
+  // How many proxies in front of the backend append to X-Forwarded-For, whose
+  // addresses it trusts (ADR 0030): 0 when nothing is in front, as in local
+  // Docker; 1 behind Railway's proxy.
+  TRUSTED_PROXY_HOPS: z.coerce
+    .number()
+    .int('must be a whole number')
+    .min(0, 'must be 0 or more')
+    .default(0),
   // 0 takes any free port.
   PORT: z.coerce.number().int().min(0).max(65535).default(8787),
   // The folder that holds one folder per Edition (ADR 0035).

@@ -92,6 +92,31 @@ describe('/health', () => {
     const response = await request('/health');
 
     expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ status: 'unavailable' });
+  });
+
+  it('names the last migration the database ran, and nothing else', async () => {
+    const { request } = testApp();
+
+    const response = await request('/health');
+
+    expect(await response.json()).toEqual({
+      status: 'ok',
+      migration: expect.stringMatching(/^\d{4}_[a-z_]+$/) as unknown,
+    });
+  });
+
+  it('answers 503 while the database has not run every migration', async () => {
+    const own = await createTestDatabase(testDatabaseUrl(), { migrate: false });
+    onTestFinished(() => own.drop());
+    const database = createDatabase(own.url, silentLogger);
+    onTestFinished(() => database.close());
+    const { request } = testApp({ database });
+
+    const response = await request('/health');
+
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ status: 'migrations pending', migration: null });
   });
 });
 
@@ -333,6 +358,13 @@ describe('the server', { timeout: 30_000 }, () => {
     );
 
     expect(response.status).toBe(404);
+  });
+
+  it('refuses to start with a TRUSTED_PROXY_HOPS that is not a whole number of 0 or more, naming it', async () => {
+    const server = runServer({ ...VALID_ENV, TRUSTED_PROXY_HOPS: '-1' });
+
+    expect(await server.exited).toBe(1);
+    expect(server.output().stderr).toContain('TRUSTED_PROXY_HOPS:');
   });
 
   it('refuses to start with an APPLE_TEAM_ID that is not 10 capital letters and digits, naming it', async () => {

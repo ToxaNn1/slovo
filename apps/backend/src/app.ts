@@ -27,6 +27,7 @@ import { createCollectionLinkStore } from './collection-links/collection-link-st
 import { createContentPackStore } from './content/content-pack-store';
 import { createCounterStore } from './counters/counter-store';
 import type { Database } from './database/database';
+import { migrationState, type MigrationState } from './database/migrate';
 import type { ErrorReporter } from './error-reporter';
 import { createEditions } from './edition/editions';
 import { createRateLimits } from './rate-limits';
@@ -63,6 +64,11 @@ export interface AppDependencies {
    * file names the apps by; with none the backend serves no such file.
    */
   readonly appleTeamId: string | undefined;
+  /**
+   * How many proxies in front of the backend append to `X-Forwarded-For`,
+   * whose addresses it trusts: 0 when nothing is in front of it.
+   */
+  readonly trustedProxyHops: number;
 }
 
 type Variables = RequestIdVariables & {
@@ -78,14 +84,27 @@ interface Env {
 }
 
 /**
- * The IP address the request came from: the address of its connection. A
- * forwarding header such as `X-Forwarded-For` is not trusted, since anyone
- * can send one; trusting the one the deployed proxy sets waits for it (0.9).
- * Node gives every request its connection; a request made in process without
- * one has none.
+ * The IP address the request came from (ADR 0030). With no trusted proxy
+ * hop, the address of its connection. Behind trusted proxies, each appends
+ * the address it was reached from to `X-Forwarded-For`, so the client is the
+ * address as many places from the end as there are hops; whatever stands
+ * before it, the client wrote itself. Without that many addresses the
+ * request did not come through the proxies, so its connection counts. Node
+ * gives every request its connection; a request made in process without one
+ * has none.
  */
-function connectionIp(bindings: Partial<HttpBindings> | undefined): string | undefined {
-  return bindings?.incoming?.socket.remoteAddress;
+function clientIp(
+  bindings: Partial<HttpBindings> | undefined,
+  forwardedFor: string | undefined,
+  trustedProxyHops: number,
+): string | undefined {
+  const connection = bindings?.incoming?.socket.remoteAddress;
+  if (trustedProxyHops === 0 || forwardedFor === undefined) return connection;
+  const forwarded = forwardedFor
+    .split(',')
+    .map((address) => address.trim())
+    .filter((address) => address !== '');
+  return forwarded.at(-trustedProxyHops) ?? connection;
 }
 
 /**
@@ -103,6 +122,7 @@ export function createApp({
   authSecret,
   reporter,
   appleTeamId,
+  trustedProxyHops,
 }: AppDependencies) {
   const editionRegistry = createEditions({ database, clock, editions });
   const rateLimits = createRateLimits(database, { secret: authSecret });
@@ -175,24 +195,30 @@ export function createApp({
     );
   });
 
-  // Every request has the IP address of its connection, which the sign-in
-  // limits count (ADR 0030); one without is a broken invariant.
+  // Every request has the IP address of its client, which the limits per IP
+  // count (ADR 0030); one without is a broken invariant.
   app.use(async (c, next) => {
-    const ip = connectionIp(c.env);
+    const ip = clientIp(c.env, c.req.header('x-forwarded-for'), trustedProxyHops);
     if (ip === undefined) throw new Error('the request came on no connection');
     c.set('ip', ip);
     await next();
   });
 
-  // For a host to tell a sick server: 503 while the database doesn't answer.
+  // For a host to tell a sick server: 503 while the database doesn't answer
+  // or hasn't run every migration. It names the last migration run, nothing else.
   app.get('/health', async (c) => {
+    let state: MigrationState;
     try {
       await database.ping();
-      return c.json({ status: 'ok' });
+      state = await migrationState(database);
     } catch (error) {
       c.var.logger.warn({ err: error }, 'the database does not answer');
       return c.json({ status: 'unavailable' }, 503);
     }
+    if (state.status === 'pending') {
+      return c.json({ status: 'migrations pending', migration: state.last }, 503);
+    }
+    return c.json({ status: 'ok', migration: state.last });
   });
 
   // The file that lets the apps open their Collection Links (ADR 0058).
