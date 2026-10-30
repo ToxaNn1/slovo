@@ -26,19 +26,23 @@
   "sources": [
     {
       "title": "Словник української мови: в 11 томах. — Том 4, 1973. — Стор. 698.",
+      "shortName": "Словник української мови в 11 томах",
       "url": "https://sum.in.ua/s/mzhychka",
       "archivedUrl": "https://web.archive.org/web/20241216072945/https://sum.in.ua/s/mzhychka"
     },
     {
       "title": "Горох: тлумачення (Словник української мови у 20 томах)",
+      "shortName": "Горох",
       "url": "https://goroh.pp.ua/Тлумачення/мжичка"
     },
     {
       "title": "Горох: синонімія",
+      "shortName": "Горох",
       "url": "https://goroh.pp.ua/Синонімія/мжичка"
     },
     {
       "title": "Горох: етимологія (Етимологічний словник української мови)",
+      "shortName": "Горох",
       "url": "https://goroh.pp.ua/Етимологія/мжичка"
     }
   ],
