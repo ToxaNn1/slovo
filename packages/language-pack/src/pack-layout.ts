@@ -54,6 +54,10 @@ CREATE TABLE words (
   retired INTEGER NOT NULL
 ) WITHOUT ROWID;
 
+-- The live Words of a Category, read once per Category of the Mix. The primary
+-- key id rides along in every entry, so the read never touches the table.
+CREATE INDEX words_by_category ON words (category_id, retired);
+
 CREATE TABLE word_stress (
   word_id TEXT NOT NULL REFERENCES words (id),
   position INTEGER NOT NULL,
