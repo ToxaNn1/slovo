@@ -5,10 +5,11 @@ import { openedFromOf } from '@/entries/entry-link';
 import { EntryScreen } from '@/entries/entry-screen';
 
 /**
- * An Entry opened from a link, `slovo-<edition id>://entry/<id>`. A
- * notification's link opens its Word and the widget's link its Entry, which
- * the Entry screen opens as Seen; a Correction its Word card links opens over
- * it without.
+ * An Entry opened from a link, `slovo-<edition id>://entry/<id>`, or from the
+ * Feed. A notification's link opens its Word and the widget's link its Entry,
+ * which the Entry screen opens as Seen; a Correction its Word card links opens
+ * over it without. A notification tapped over any of them takes the place of
+ * the whole stack (`NotificationTaps`).
  */
 export default function EntryFromLinkScreen() {
   const { entryId, back, ...params } = useLocalSearchParams<{
