@@ -1,0 +1,27 @@
+# The backend runs as one container image on Railway behind the Edition's domain
+
+Until 0.9 the backend ran only in the owner's local Docker (`compose.yaml`: the server, Postgres and Mailpit), so nobody but the owner could sign in, sync, send a Mistake Report or open a Collection Link. ADR 0008 decides that every Edition shares one backend deployment and ADR 0003 that the backend is our own TypeScript service on Postgres; spec #1293 puts that one deployment on the internet. Where it runs, how it is built and migrated, how it reads the client's address behind a proxy, how it sends email and how it reports are decided here.
+
+**One container image, built from the monorepo, runs on Railway as the one Deployment for every Edition.** A Dockerfile at the repository root builds the backend with pnpm and the workspace packages it depends on, leaving the Language Pack build out: packs reach the Deployment through the publish command (ADR 0032), not the image. The same image serves the Ukrainian Edition and every Edition after it (ADR 0008); Postgres comes from Railway, and `DATABASE_URL` comes from its environment. A Railway config names the release command and the health route, so the host, not the code, knows how to start and watch the server.
+
+**Migrations run in the release step, before the new code serves traffic.** The release command is the existing `db:migrate`; Railway runs it on each deploy and starts the new server only when it succeeded, so the schema and the code never disagree and a failed migration leaves the old server running. `GET /health` answers `200` when the database answers and `503` when it doesn't; Railway watches it, and the owner tells a broken deploy from a slow one by it.
+
+**The real client address comes from the proxy's header, trusting exactly one hop.** Railway's proxy sets the forwarded-for header; when the server is configured to trust one hop it takes the client's address as the last address that proxy appended, and the sign-in and other per-IP limits (ADR 0030, 0056, 0058, 0060) key on it, so one reader's attempts never lock out everyone behind the proxy (finding F2 of #618). A forged header beyond the trusted hop is ignored: a client that appends its own addresses changes nothing. Without the setting, as in local Docker and the tests, the server trusts no header and uses the connection's address. The limits keep hashing the address (ADR 0030): the Deployment stores no IP.
+
+**HTTPS only.** The Deployment is reached only at `https://` addresses of the Edition's domain; Railway terminates TLS. A release build of the app refuses to start against an API address that is not `https://` (finding F11 of #618), while a development build keeps `http://localhost`. The API address comes from the EAS build environment, never from the Edition or the Core (ADR 0006).
+
+**Email goes through SMTP with credentials from the environment.** The one SMTP client (`smtp-mailer.ts`) sends the Sign-in codes; `SMTP_URL` names the server and its credentials. Locally it is Mailpit from `compose.yaml`, in the Deployment the owner's SMTP account, and the code is the same. The repository holds no credential; `.env.example` names each variable with a placeholder or an empty value.
+
+**Reports go to Sentry with a DSN from the environment** (ADR 0048): `SENTRY_DSN` is set in Railway and nowhere else, and without it the Deployment reports nothing. The Language Pack is published to the Deployment with the existing publish command and an operator credential from the environment.
+
+**Testing.** The backend's seam is the existing test app on a local Postgres (Vitest): the trusted hop (the limits count per real client, a forged header beyond the hop is ignored), the health route and the SMTP client against a fake server. The Dockerfile, the Railway config and the workflows have no automated test beyond a lint of the YAML; the deploy itself, the migrations on Railway and a Sign-in code in a real inbox are the owner's checks.
+
+## Considered Options
+
+- **A managed backend (Supabase, Firebase) instead of our own container**: rejected already by ADR 0003; a container of our own code keeps the deployment portable.
+- **A serverless platform (functions per route)**: rejected. The server Core, better-auth and the migration step are built for one long-running process; functions would split them and change the code to fit the host.
+- **A separate Deployment per Edition**: rejected by ADR 0008; one Deployment keeps SLOVO ID working across Editions with one migration and one bill.
+- **Migrations at server start**: rejected. Two instances starting at once would race, and a failed migration would take the serving instance down with it; the release step runs once, before the new code serves.
+- **Trust every forwarded-for header**: rejected (finding F2 of #618). Any client could name another address and escape its limits, or lock a reader out by naming theirs.
+- **An email provider's API instead of SMTP**: rejected for now. The SMTP client already exists and works against Mailpit; a provider is one `SMTP_URL`, and changing providers later changes no code.
+- **The API address in the Edition config**: rejected. The address is the Deployment's, not the Edition's, and a development build needs a different one; the build environment holds it.
