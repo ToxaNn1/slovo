@@ -12,6 +12,7 @@ import {
   SplashDecorSchema,
   type ColorTokens,
 } from '@slovo/contracts';
+import { loadEdition } from '@slovo/core';
 import {
   EDITIONS_DIR,
   listEditions,
@@ -875,14 +876,14 @@ describe('the legal pages of About', () => {
   const issuesOf = (changed: unknown) =>
     EditionStringsSchema.safeParse(changed).error?.issues.map((issue) => issue.path.join('.'));
 
-  it.each(editions)('the %s Edition names the web addresses of its legal pages', (edition) => {
-    const config = EditionConfigSchema.parse(readJson(edition, 'config'));
+  it.each(editions)('the %s Edition writes no legal page address by hand', (edition) => {
+    const config = readJson(edition, 'config') as Record<string, unknown>;
 
-    expect(Object.keys(config.legalPages)).toEqual(['privacy', 'terms']);
+    expect(config).not.toHaveProperty('legalPages');
   });
 
   it("the Ukrainian Edition opens its pages on the project's GitHub Pages", () => {
-    expect(EditionConfigSchema.parse(readJson('uk', 'config')).legalPages).toEqual({
+    expect(loadEdition(readJson('uk', 'config')).legalPages).toEqual({
       privacy: 'https://toxann1.github.io/slovo/uk/privacy',
       terms: 'https://toxann1.github.io/slovo/uk/terms',
     });

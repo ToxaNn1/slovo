@@ -57,10 +57,6 @@ const testEditionConfig = {
       tips: true,
     },
   },
-  legalPages: {
-    privacy: 'https://example.org/test/privacy',
-    terms: 'https://example.org/test/terms',
-  },
   linkDomain: 'slovo.example',
   wordOfTheDayFont: 'Test-Regular.ttf',
   widgetPalette: {

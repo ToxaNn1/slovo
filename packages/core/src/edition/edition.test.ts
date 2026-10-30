@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { loadEdition } from '../index';
+import { LEGAL_SITE, loadEdition } from '../index';
 import { InvalidEditionConfigError } from './edition';
 
 const validConfig = {
@@ -85,10 +85,6 @@ const validConfig = {
       synonymRows: true,
       tips: true,
     },
-  },
-  legalPages: {
-    privacy: 'https://example.org/test/privacy',
-    terms: 'https://example.org/test/terms',
   },
   linkDomain: 'slovo.example',
   wordOfTheDayFont: 'Script-Regular.ttf',
@@ -336,17 +332,27 @@ describe('loadEdition', () => {
     expect(edition.userSettingDefaults.dailyLimit).toBe(20);
   });
 
-  it('reports the addresses of its privacy policy and its terms, which About opens', () => {
+  it('derives the addresses of its privacy policy and its terms from the legal site and its id', () => {
     expect(loadEdition(validConfig).legalPages).toEqual({
-      privacy: 'https://example.org/test/privacy',
-      terms: 'https://example.org/test/terms',
+      privacy: `${LEGAL_SITE}/test/privacy`,
+      terms: `${LEGAL_SITE}/test/terms`,
     });
   });
 
-  it.each(['privacy', 'terms'] as const)('requires the address of the %s page', (page) => {
-    const { [page]: _removed, ...legalPages } = validConfig.legalPages;
+  it("opens the Ukrainian Edition's legal pages on the project's GitHub Pages", () => {
+    expect(loadEdition({ ...validConfig, id: 'uk' }).legalPages).toEqual({
+      privacy: 'https://toxann1.github.io/slovo/uk/privacy',
+      terms: 'https://toxann1.github.io/slovo/uk/terms',
+    });
+  });
 
-    expect(() => loadEdition({ ...validConfig, legalPages })).toThrow(`legalPages.${page}`);
+  it('refuses hand-written legal page addresses in the config', () => {
+    const legalPages = {
+      privacy: 'https://example.org/privacy',
+      terms: 'https://example.org/terms',
+    };
+
+    expect(() => loadEdition({ ...validConfig, legalPages })).toThrow('legalPages');
   });
 
   it('reports the domain of its Collection Links, the only one whose links the app opens', () => {
@@ -398,12 +404,6 @@ describe('loadEdition', () => {
 
   it('accepts an Edition whose Categories require no history', () => {
     expect(() => loadEdition({ ...validConfig, categoriesRequiringHistory: [] })).not.toThrow();
-  });
-
-  it('requires the legal pages', () => {
-    const { legalPages: _removed, ...config } = validConfig;
-
-    expect(() => loadEdition(config)).toThrow('legalPages');
   });
 
   it('requires the font file of the Word of the Day', () => {
@@ -467,12 +467,6 @@ describe('loadEdition', () => {
       ).toThrow('widgetPalette.blue.background');
     },
   );
-
-  it('rejects a legal page address that is not a web address', () => {
-    expect(() =>
-      loadEdition({ ...validConfig, legalPages: { ...validConfig.legalPages, terms: 'terms.md' } }),
-    ).toThrow('legalPages.terms');
-  });
 
   it('rejects an invalid Edition config, naming the field', () => {
     expect(() => loadEdition({ ...validConfig, locale: undefined })).toThrow(/locale/);

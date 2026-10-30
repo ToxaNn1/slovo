@@ -27,7 +27,6 @@ export {
   type FeatureSwitches,
   type FontSize,
   type LanguageTraits,
-  type LegalPages,
   type MixConfig,
   type Mood,
   type OriginLanguage,

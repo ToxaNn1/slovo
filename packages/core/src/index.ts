@@ -115,7 +115,7 @@ export {
   type DailyCrosswordWord,
 } from './game/daily-crossword';
 export { decorOf, loadSeasonalMotifs } from './decor/decor-of';
-export { loadEdition, type Edition } from './edition/edition';
+export { LEGAL_SITE, loadEdition, type Edition, type LegalPages } from './edition/edition';
 export { openRemoteSwitches } from './edition/remote-switches';
 export {
   colorSchemeFor,

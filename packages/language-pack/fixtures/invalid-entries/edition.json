@@ -82,10 +82,6 @@
       "tips": true
     }
   },
-  "legalPages": {
-    "privacy": "https://example.org/privacy",
-    "terms": "https://example.org/terms"
-  },
   "linkDomain": "slovo.example",
   "wordOfTheDayFont": "Fixture-Script.ttf",
   "widgetPalette": {
