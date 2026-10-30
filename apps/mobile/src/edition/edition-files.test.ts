@@ -725,6 +725,68 @@ describe('the Categories of Corrections', () => {
   });
 });
 
+describe('the Apple ids, the OTA channel and Sign in with Apple', () => {
+  it.each(['appleTeamId', 'appStoreConnectAppId'])('every Edition declares its %s', (field) => {
+    for (const edition of editions) {
+      const config = readJson(edition, 'config') as Record<string, unknown>;
+      const { [field]: _removed, ...without } = config;
+
+      expect(
+        EditionConfigSchema.safeParse(without).error?.issues.map((issue) => issue.path.join('.')),
+      ).toEqual([field]);
+    }
+  });
+
+  it.each(editions)('the %s Edition declares the Sign in with Apple Feature Switch', (edition) => {
+    const config = readJson(edition, 'config') as { featureSwitches: Record<string, unknown> };
+    const { signInWithApple: _removed, ...featureSwitches } = config.featureSwitches;
+
+    expect(
+      EditionConfigSchema.safeParse({ ...config, featureSwitches }).error?.issues.map((issue) =>
+        issue.path.join('.'),
+      ),
+    ).toEqual(['featureSwitches.signInWithApple']);
+  });
+
+  it('the Ukrainian Edition turns Sign in with Apple on and takes its OTA updates from its own channel', () => {
+    const config = EditionConfigSchema.parse(readJson('uk', 'config'));
+
+    expect(config.featureSwitches.signInWithApple).toBe(true);
+    expect(config.updateChannel).toBe('uk');
+  });
+
+  it('the Ukrainian Edition holds an Apple Team ID and App Store Connect app id, or placeholders until the owner fills them in', () => {
+    const { appleTeamId, appStoreConnectAppId } = EditionConfigSchema.parse(
+      readJson('uk', 'config'),
+    );
+
+    expect(appleTeamId).toMatch(/^([A-Z0-9]{10})?$/);
+    expect(appStoreConnectAppId).toMatch(/^(\d+)?$/);
+  });
+
+  it('refuses an Update channel other than the Edition id (ADR 0062)', () => {
+    const config = readJson('uk', 'config') as Record<string, unknown>;
+
+    expect(
+      EditionConfigSchema.safeParse({ ...config, updateChannel: 'uk-beta' }).error?.issues,
+    ).toMatchObject([{ code: 'unrecognized_keys', keys: ['updateChannel'] }]);
+  });
+
+  it.each([
+    ['appleTeamId', 'a1b2c3d4e5'],
+    ['appleTeamId', 'A1B2C3'],
+    ['appStoreConnectAppId', 'app-1'],
+  ])('refuses %s "%s"', (field, value) => {
+    const config = readJson('uk', 'config') as Record<string, unknown>;
+
+    expect(
+      EditionConfigSchema.safeParse({ ...config, [field]: value }).error?.issues.map((issue) =>
+        issue.path.join('.'),
+      ),
+    ).toEqual([field]);
+  });
+});
+
 describe('the strings of the Idiom Type proverb', () => {
   const strings = readJson('uk', 'strings') as Record<string, Record<string, unknown>>;
   /** The strings with one key left out of a group nested under `group`. */

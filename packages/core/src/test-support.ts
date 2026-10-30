@@ -58,6 +58,8 @@ const testEditionConfig = {
     },
   },
   linkDomain: 'slovo.example',
+  appleTeamId: '',
+  appStoreConnectAppId: '',
   wordOfTheDayFont: 'Test-Regular.ttf',
   widgetPalette: {
     parchment: { background: '#F3E9D2', text: '#3B2A1A' },

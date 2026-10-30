@@ -136,6 +136,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   account: z.boolean(),
   /** Sign in with Google: the second Sign-in method, its button and the backend's procedure for it (ADR 0047). */
   googleSignIn: z.boolean(),
+  /** Sign in with Apple: the third Sign-in method, its button on iOS and the backend's procedure for it. */
+  signInWithApple: z.boolean(),
   /** Sync: the background exchange of the reader's words with their Account. Apart from `account`, so Sync can stop while sign-in keeps working. */
   sync: z.boolean(),
   /** Content updates: the app's daily check for a newer Language Pack. */
@@ -331,6 +333,25 @@ const DomainSchema = z
     'Expected a lower-case domain such as slovo.example',
   );
 
+/**
+ * The top-level domains reserved for examples and tests (RFC 2606), such as
+ * the placeholder `slovo.example`: no link to them opens anywhere.
+ */
+const RESERVED_TOP_LEVEL_DOMAINS = ['example', 'test', 'invalid', 'localhost'];
+
+/**
+ * An Apple Developer Team ID, ten upper-case letters and digits, or empty
+ * until the owner fills it in.
+ */
+const AppleTeamIdSchema = z
+  .string()
+  .regex(/^([A-Z0-9]{10})?$/, 'Expected an Apple Team ID of ten upper-case letters and digits');
+
+/** The App Store Connect id of the app, its Apple ID of digits, or empty until the app is created. */
+const AppStoreConnectAppIdSchema = z
+  .string()
+  .regex(/^(\d+)?$/, 'Expected the App Store Connect app id, a number');
+
 /** The file name of a font among an Edition's fonts, in its `assets/fonts/` folder. */
 const FontFileSchema = z
   .string()
@@ -404,6 +425,14 @@ export const EditionConfigSchema = z
      * turns it into the associated domains entitlement.
      */
     linkDomain: DomainSchema,
+    /**
+     * The Apple Developer Team ID the app is signed with: the backend's
+     * app-site-association file names the app by it. Empty until the owner
+     * fills it in; the Edition check for a release build refuses it empty.
+     */
+    appleTeamId: AppleTeamIdSchema,
+    /** The app's id in App Store Connect, which TestFlight uploads name. Empty until the app is created. */
+    appStoreConnectAppId: AppStoreConnectAppIdSchema,
     /**
      * The font file, among the Edition's fonts, that sets the Lemma on the
      * Word of the Day card. The Edition check refuses a font without a glyph
@@ -524,9 +553,41 @@ export const EditionConfigSchema = z
         });
       }
     },
-  );
+  )
+  // The Update channel the app's OTA updates come from: the Edition id, never
+  // authored (ADR 0062).
+  .transform((config) => ({ ...config, updateChannel: config.id }));
 
 export type EditionConfig = z.infer<typeof EditionConfigSchema>;
+
+/** A field of an Edition config that a release build refuses, and why. */
+export interface ReleaseProblem {
+  readonly field: 'linkDomain' | 'appleTeamId';
+  readonly message: string;
+}
+
+/**
+ * What a release build refuses in a valid Edition config: the placeholders a
+ * development build keeps, a domain reserved for examples and an empty Team
+ * ID. Empty when the Edition is ready for release.
+ */
+export function releaseProblems({ linkDomain, appleTeamId }: EditionConfig): ReleaseProblem[] {
+  const problems: ReleaseProblem[] = [];
+  const topLevelDomain = linkDomain.slice(linkDomain.lastIndexOf('.') + 1);
+  if (RESERVED_TOP_LEVEL_DOMAINS.includes(topLevelDomain)) {
+    problems.push({
+      field: 'linkDomain',
+      message: `"${linkDomain}" is a placeholder: a release build needs the Edition's real domain`,
+    });
+  }
+  if (appleTeamId === '') {
+    problems.push({
+      field: 'appleTeamId',
+      message: 'Empty: a release build needs the Apple Team ID the app is signed with',
+    });
+  }
+  return problems;
+}
 
 /**
  * The App Group an Edition's app shares with its widget (ADR 0026), derived

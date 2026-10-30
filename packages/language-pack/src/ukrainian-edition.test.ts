@@ -21,6 +21,7 @@ describe('the Ukrainian Edition', () => {
     expect(edition.isFeatureEnabled('synonymRows')).toBe(true);
     expect(edition.isFeatureEnabled('tips')).toBe(true);
     expect(edition.isFeatureEnabled('account')).toBe(true);
+    expect(edition.isFeatureEnabled('signInWithApple')).toBe(true);
     expect(edition.isFeatureEnabled('sync')).toBe(true);
     expect(edition.isFeatureEnabled('contentUpdates')).toBe(true);
     expect(edition.isFeatureEnabled('notifications')).toBe(true);

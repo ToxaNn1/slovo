@@ -23,6 +23,7 @@ const validConfig = {
     tips: true,
     account: true,
     googleSignIn: true,
+    signInWithApple: true,
     sync: true,
     contentUpdates: true,
     notifications: true,
@@ -87,6 +88,8 @@ const validConfig = {
     },
   },
   linkDomain: 'slovo.example',
+  appleTeamId: '',
+  appStoreConnectAppId: '',
   wordOfTheDayFont: 'Script-Regular.ttf',
   widgetPalette: {
     parchment: { background: '#F3E9D2', text: '#3B2A1A' },
@@ -209,6 +212,7 @@ describe('loadEdition', () => {
     ...learningSwitches,
     ...feelSwitches,
     ...nativeSwitches,
+    'signInWithApple',
     'synonymRows',
     'tips',
     'account',
@@ -486,6 +490,11 @@ describe('loadEdition', () => {
       'a missing Google sign-in Feature Switch',
       withoutSwitch('googleSignIn'),
       'featureSwitches.googleSignIn',
+    ],
+    [
+      'a missing Sign in with Apple Feature Switch',
+      withoutSwitch('signInWithApple'),
+      'featureSwitches.signInWithApple',
     ],
     ['a missing sync Feature Switch', withoutSwitch('sync'), 'featureSwitches.sync'],
     [

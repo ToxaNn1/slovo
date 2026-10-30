@@ -20,6 +20,7 @@
     "tips": true,
     "account": true,
     "googleSignIn": true,
+    "signInWithApple": true,
     "sync": true,
     "contentUpdates": true,
     "notifications": true,
@@ -84,6 +85,8 @@
     }
   },
   "linkDomain": "slovo.example",
+  "appleTeamId": "",
+  "appStoreConnectAppId": "",
   "wordOfTheDayFont": "Fixture-Script.ttf",
   "widgetPalette": {
     "parchment": { "background": "#F3E9D2", "text": "#3B2A1A" },
