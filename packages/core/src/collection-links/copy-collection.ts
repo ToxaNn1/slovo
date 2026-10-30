@@ -2,9 +2,10 @@ import { CollectionLinkIdSchema } from '@slovo/contracts';
 
 import type { Edition } from '../edition/edition';
 import type { EntryRowModel, EntryRows } from '../entries/entry-row';
-import type { CollectionLinksApi, CollectionLinksApiFailure, Random, Schedule } from '../ports';
+import type { Backend, Random, Schedule } from '../ports';
 import { withRetries } from '../retry';
 import type { Collection, Collections } from '../saved/collections';
+import { collectionLinkRequests, type CollectionLinksApiFailure } from './collection-link-requests';
 
 /** How many Entries the recipient sheet shows of a Collection Link. */
 const PREVIEW_SIZE = 5;
@@ -52,18 +53,18 @@ const UNAVAILABLE = { ok: false, reason: 'unavailable' } as const;
 
 /**
  * Makes the copies of Collection Links for the Core composition. Without
- * `api`, as in tests of other features, every link is unavailable; without
- * `schedule` a read is tried once.
+ * `backend`, as in tests of other features, every link is unavailable;
+ * without `schedule` a read is tried once.
  */
 export function createCollectionLinkCopy({
-  api,
+  backend,
   edition,
   rows,
   collections,
   schedule,
   random,
 }: {
-  api: CollectionLinksApi | undefined;
+  backend: Pick<Backend, 'collectionLinks'> | undefined;
   /** The Edition as the app runs it, with each Feature Switch at its effective value. */
   edition: Pick<Edition, 'id' | 'isFeatureEnabled'>;
   rows: EntryRows;
@@ -71,6 +72,7 @@ export function createCollectionLinkCopy({
   schedule: Schedule | undefined;
   random: Random;
 }): CollectionLinkCopy {
+  const api = backend === undefined ? undefined : collectionLinkRequests(backend);
   return {
     async preview(linkId) {
       const id = CollectionLinkIdSchema.safeParse(linkId);

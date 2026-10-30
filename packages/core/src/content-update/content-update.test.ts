@@ -7,7 +7,14 @@ import {
   type PackVersion,
   type Schedule,
 } from '../index';
-import { createFakeContentApi, createMemoryPackFiles, type MemoryPackFile } from '../testing';
+import {
+  createFakeBackend,
+  createMemoryPackFiles,
+  type FakeFailure,
+  type FakeFailureReason,
+  type MemoryPackFile,
+  type ProcedureName,
+} from '../testing';
 import { fakeClock, randomOf } from '../test-support';
 
 const HOUR = 60 * 60 * 1000;
@@ -29,6 +36,10 @@ const openPack = ({ contentVersion }: PackVersion) =>
  * finds what the one before kept. The disk may be full, and the kept pack's
  * record unreadable.
  */
+/** The failures of the next requests of the procedure, one per reason, in order. */
+const on = (procedure: ProcedureName, ...reasons: FakeFailureReason[]): FakeFailure[] =>
+  reasons.map((reason) => ({ procedure, reason }));
+
 function device({
   bundled = { contentVersion: 4, packFormat: 1 },
   kept,
@@ -38,7 +49,7 @@ function device({
   kept?: MemoryPackFile;
   readableFormats?: readonly number[];
 } = {}) {
-  const contentApi = createFakeContentApi();
+  const contentApi = createFakeBackend();
   const packFiles = createMemoryPackFiles(kept);
   /** Whether keeping a pack fails, as on a full disk. */
   let full = false;
@@ -66,7 +77,8 @@ function device({
     },
     async launch() {
       return createContentUpdate({
-        contentApi,
+        backend: contentApi.backend,
+        edition: { id: 'uk' },
         packFiles: {
           keep: (version, bytes) =>
             full ? Promise.reject(new Error('The disk is full')) : packFiles.keep(version, bytes),
@@ -88,7 +100,7 @@ function device({
 describe('checking for a content update', () => {
   it('keeps a newer pack whose SHA-256 is right, and opens it at the next launch', async () => {
     const app = device();
-    app.contentApi.publish({
+    app.contentApi.content.publish({
       contentVersion: 5,
       packFormat: 1,
       bytes: hello,
@@ -106,33 +118,33 @@ describe('checking for a content update', () => {
 
     await (await app.launch()).checkForUpdate();
 
-    expect(app.contentApi.asked).toEqual([2]);
+    expect(app.contentApi.content.asked).toEqual([2]);
   });
 
   it('downloads only a pack newer than the bundled one', async () => {
     const app = device();
-    app.contentApi.publish({ contentVersion: 4, packFormat: 1, bytes: hello });
+    app.contentApi.content.publish({ contentVersion: 4, packFormat: 1, bytes: hello });
 
     await (await app.launch()).checkForUpdate();
 
-    expect(app.contentApi.downloaded).toEqual([]);
+    expect(app.contentApi.content.downloaded).toEqual([]);
     expect(app.packFiles.kept).toBeUndefined();
   });
 
   it('downloads only a pack newer than the kept one', async () => {
     const app = device({ kept: { contentVersion: 6, packFormat: 1, bytes: hello } });
-    app.contentApi.publish({ contentVersion: 5, packFormat: 1, bytes: hello });
-    app.contentApi.publish({ contentVersion: 6, packFormat: 1, bytes: hello });
+    app.contentApi.content.publish({ contentVersion: 5, packFormat: 1, bytes: hello });
+    app.contentApi.content.publish({ contentVersion: 6, packFormat: 1, bytes: hello });
 
     await (await app.launch()).checkForUpdate();
 
-    expect(app.contentApi.downloaded).toEqual([]);
+    expect(app.contentApi.content.downloaded).toEqual([]);
   });
 
   it('throws a pack with a wrong SHA-256 away and keeps the pack kept before', async () => {
     const kept = { contentVersion: 5, packFormat: 1, bytes: hello };
     const app = device({ kept });
-    app.contentApi.publish({
+    app.contentApi.content.publish({
       contentVersion: 6,
       packFormat: 1,
       bytes: bytesOf('hello, tampered'),
@@ -141,7 +153,7 @@ describe('checking for a content update', () => {
 
     await (await app.launch()).checkForUpdate();
 
-    expect(app.contentApi.downloaded).toEqual([6]);
+    expect(app.contentApi.content.downloaded).toEqual([6]);
     expect(app.packFiles.kept).toEqual(kept);
   });
 
@@ -154,11 +166,11 @@ describe('checking for a content update', () => {
     await (await app.launch()).checkForUpdate();
     app.time.advance(24 * HOUR - 1);
     await (await app.launch()).checkForUpdate();
-    expect(app.contentApi.asked).toHaveLength(1);
+    expect(app.contentApi.content.asked).toHaveLength(1);
 
     app.time.advance(1);
     await launched.checkForUpdate();
-    expect(app.contentApi.asked).toHaveLength(2);
+    expect(app.contentApi.content.asked).toHaveLength(2);
   });
 
   it('checks again when the clock was put back before the last check', async () => {
@@ -168,7 +180,7 @@ describe('checking for a content update', () => {
     app.time.advance(-HOUR);
     await (await app.launch()).checkForUpdate();
 
-    expect(app.contentApi.asked).toHaveLength(2);
+    expect(app.contentApi.content.asked).toHaveLength(2);
   });
 
   it('runs one check at a time', async () => {
@@ -177,30 +189,32 @@ describe('checking for a content update', () => {
 
     await Promise.all([launched.checkForUpdate(), launched.checkForUpdate()]);
 
-    expect(app.contentApi.asked).toHaveLength(1);
+    expect(app.contentApi.content.asked).toHaveLength(1);
   });
 });
 
 describe('a failed check', () => {
   it('tries a request again at most 3 times, backing off with jitter', async () => {
     const app = device();
-    app.contentApi.fail('latest', 'offline', 'server-error', 'offline', 'offline');
+    app.contentApi.failNext(
+      ...on('content.latest', 'offline', 'server-error', 'offline', 'offline'),
+    );
 
     await expect((await app.launch()).checkForUpdate()).resolves.toBeUndefined();
 
-    expect(app.contentApi.asked).toHaveLength(4);
+    expect(app.contentApi.content.asked).toHaveLength(4);
     // Between half and all of 1, 2 and 4 s; the random source draws 0.5.
     expect(app.delays).toEqual([750, 1_500, 3_000]);
   });
 
   it('tries a failed download again', async () => {
     const app = device();
-    app.contentApi.publish({ contentVersion: 5, packFormat: 1, bytes: hello });
-    app.contentApi.fail('download', 'offline');
+    app.contentApi.content.publish({ contentVersion: 5, packFormat: 1, bytes: hello });
+    app.contentApi.failNext(...on('content.download', 'offline'));
 
     await (await app.launch()).checkForUpdate();
 
-    expect(app.contentApi.downloaded).toEqual([5, 5]);
+    expect(app.contentApi.content.downloaded).toEqual([5, 5]);
     expect(app.packFiles.kept?.contentVersion).toBe(5);
   });
 
@@ -210,33 +224,33 @@ describe('a failed check', () => {
     ['answers what the request never expects', 'unexpected'],
   ] as const)('is not tried again when the backend %s', async (_, reason) => {
     const app = device();
-    app.contentApi.fail('latest', reason);
+    app.contentApi.failNext(...on('content.latest', reason));
 
     await (await app.launch()).checkForUpdate();
 
-    expect(app.contentApi.asked).toHaveLength(1);
+    expect(app.contentApi.content.asked).toHaveLength(1);
     expect(app.delays).toEqual([]);
   });
 
   it('waits for the next due check, a day later, also across launches', async () => {
     const app = device();
-    app.contentApi.publish({ contentVersion: 5, packFormat: 1, bytes: hello });
-    app.contentApi.fail('latest', 'offline', 'offline', 'offline', 'offline');
+    app.contentApi.content.publish({ contentVersion: 5, packFormat: 1, bytes: hello });
+    app.contentApi.failNext(...on('content.latest', 'offline', 'offline', 'offline', 'offline'));
     await (await app.launch()).checkForUpdate();
     await (await app.launch()).checkForUpdate();
-    expect(app.contentApi.asked).toHaveLength(4);
+    expect(app.contentApi.content.asked).toHaveLength(4);
     expect(app.packFiles.kept).toBeUndefined();
 
     app.time.advance(24 * HOUR);
     await (await app.launch()).checkForUpdate();
 
-    expect(app.contentApi.asked).toHaveLength(5);
+    expect(app.contentApi.content.asked).toHaveLength(5);
     expect(app.packFiles.kept?.contentVersion).toBe(5);
   });
 
   it('throws nothing when keeping the pack fails, and waits for the next due check', async () => {
     const app = device();
-    app.contentApi.publish({ contentVersion: 5, packFormat: 1, bytes: hello });
+    app.contentApi.content.publish({ contentVersion: 5, packFormat: 1, bytes: hello });
     const launched = await app.launch();
     app.diskFull(true);
 
@@ -320,7 +334,7 @@ describe('opening the kept pack at launch', () => {
 
   it('downloads the pack again at the next due check after forgetting one that failed to open', async () => {
     const app = device({ kept: { contentVersion: 5, packFormat: 1, bytes: hello } });
-    app.contentApi.publish({ contentVersion: 5, packFormat: 1, bytes: hello });
+    app.contentApi.content.publish({ contentVersion: 5, packFormat: 1, bytes: hello });
     const launched = await app.launch();
     await launched
       .openKept(() => Promise.reject(new Error('The app mixes Editions')))
@@ -328,7 +342,7 @@ describe('opening the kept pack at launch', () => {
 
     await launched.checkForUpdate();
 
-    expect(app.contentApi.downloaded).toEqual([5]);
+    expect(app.contentApi.content.downloaded).toEqual([5]);
     expect(await (await app.launch()).openKept(openPack)).toBe('kept 5');
   });
 });

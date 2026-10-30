@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { createMemoryUserStatePort, openMistakeReports, openUserState } from '../index';
 import { MISTAKE_REPORT_QUEUE_SIZE } from '../user-state/user-state-schema';
 import { type MistakeReportDraft } from './mistake-reports';
-import { createFakeReportsApi } from '../testing';
+import { createFakeBackend } from '../testing';
 import { fakeClock, randomOf, settle, testSchedule } from '../test-support';
 
 const HOUR = 60 * 60_000;
@@ -25,14 +25,14 @@ const typoIn = (id: string): MistakeReportDraft => ({ ...typo, entryId: `w_${id}
 async function device({ off = [] }: { off?: FeatureSwitch[] } = {}) {
   const time = fakeClock('2026-10-28T09:00:00.000Z');
   const timers = testSchedule(time);
-  const api = createFakeReportsApi();
+  const api = createFakeBackend();
   const records = new Map<string, string>();
   const switchedOff = new Set<FeatureSwitch>(off);
 
   async function launch() {
     return openMistakeReports({
       userState: await openUserState({ port: createMemoryUserStatePort(records) }),
-      api,
+      backend: api.backend,
       edition: { id: 'uk', isFeatureEnabled: (feature) => !switchedOff.has(feature) },
       appVersion: '0.8.14',
       contentVersion: 42,
@@ -57,7 +57,7 @@ async function device({ off = [] }: { off?: FeatureSwitch[] } = {}) {
       return answer;
     },
     /** The ids of the Entries of the reports the backend took, in order. */
-    received: () => api.received.map(({ entryId }) => entryId),
+    received: () => api.reports.received.map(({ entryId }) => entryId),
   };
 }
 
@@ -72,7 +72,7 @@ describe('reporting a mistake online', () => {
     });
 
     expect(answer).toBe('thanked');
-    expect(app.api.received).toEqual([
+    expect(app.api.reports.received).toEqual([
       {
         editionId: 'uk',
         entryId: 'w_kvasha',
@@ -92,7 +92,7 @@ describe('reporting a mistake online', () => {
     relaunched.foreground();
     await settle();
 
-    expect(app.api.calls).toBe(1);
+    expect(app.api.calls).toHaveLength(1);
   });
 
   it('tries a report again by the one rule after a server error', async () => {
@@ -100,7 +100,7 @@ describe('reporting a mistake online', () => {
     app.api.failNext('server-error');
 
     expect(await app.report()).toBe('thanked');
-    expect(app.api.calls).toBe(2);
+    expect(app.api.calls).toHaveLength(2);
     expect(app.received()).toEqual(['w_kvasha']);
   });
 });
@@ -112,7 +112,7 @@ describe('reporting a mistake offline', () => {
 
     expect(await app.report()).toBe('thanked');
     // The first try and three more (ADR 0037).
-    expect(app.api.calls).toBe(4);
+    expect(app.api.calls).toHaveLength(4);
     expect(app.received()).toEqual([]);
 
     app.api.online = true;
@@ -186,27 +186,27 @@ describe('the queue of at most 20 unsent reports', () => {
 describe('too many reports today', () => {
   it('tells the reader of a report just written, and drops it, since they were told to try tomorrow', async () => {
     const app = await device();
-    app.api.failNext('too-many-requests', { retryAfter: 3_600 });
+    app.api.failNext({ reason: 'too-many-requests', retryAfter: 3_600 });
 
     expect(await app.report()).toBe('too-many-requests');
 
     app.reports.foreground();
     await app.advance(ALL_TRIES);
-    expect(app.api.calls).toBe(1);
+    expect(app.api.calls).toHaveLength(1);
     expect(app.received()).toEqual([]);
   });
 
   it('tells the reader of a report that meets the limit after failed tries, and drops it', async () => {
     const app = await device();
     app.api.failNext('server-error');
-    app.api.failNext('too-many-requests', { retryAfter: 3_600 });
+    app.api.failNext({ reason: 'too-many-requests', retryAfter: 3_600 });
 
     expect(await app.report()).toBe('too-many-requests');
 
     await app.advance(HOUR * 2);
     app.reports.foreground();
     await app.advance(ALL_TRIES);
-    expect(app.api.calls).toBe(2);
+    expect(app.api.calls).toHaveLength(2);
     expect(app.received()).toEqual([]);
   });
 
@@ -215,13 +215,13 @@ describe('too many reports today', () => {
     app.api.online = false;
     await app.report(typoIn('older'));
     app.api.online = true;
-    app.api.failNext('too-many-requests', { retryAfter: 3_600 });
+    app.api.failNext({ reason: 'too-many-requests', retryAfter: 3_600 });
 
     expect(await app.report()).toBe('too-many-requests');
-    const calls = app.api.calls;
+    const calls = app.api.calls.length;
     app.reports.foreground();
     await app.advance(HOUR / 2);
-    expect(app.api.calls).toBe(calls);
+    expect(app.api.calls).toHaveLength(calls);
 
     await app.advance(HOUR);
     app.reports.foreground();
@@ -246,14 +246,14 @@ describe('too many reports today', () => {
     app.api.online = false;
     await app.report();
     app.api.online = true;
-    app.api.failNext('too-many-requests', { retryAfter: 3_600 });
+    app.api.failNext({ reason: 'too-many-requests', retryAfter: 3_600 });
     app.reports.foreground();
     await app.advance(ALL_TRIES);
-    const calls = app.api.calls;
+    const calls = app.api.calls.length;
 
     app.reports.foreground();
     await app.advance(HOUR / 2);
-    expect(app.api.calls).toBe(calls);
+    expect(app.api.calls).toHaveLength(calls);
 
     await app.advance(HOUR);
     app.reports.foreground();
@@ -291,7 +291,7 @@ describe('a report the backend refuses', () => {
     await app.advance(ALL_TRIES);
 
     expect(app.received()).toEqual(['w_next']);
-    expect(app.api.calls).toBe(2 * 4 + 2);
+    expect(app.api.calls).toHaveLength(2 * 4 + 2);
   });
 });
 
@@ -309,7 +309,7 @@ describe('a draft that is no report', () => {
 
       app.reports.foreground();
       await app.advance(ALL_TRIES);
-      expect(app.api.calls).toBe(0);
+      expect(app.api.calls).toHaveLength(0);
     },
   );
 
@@ -319,7 +319,7 @@ describe('a draft that is no report', () => {
     await app.report({ entryId: 'w_kvasha', type: 'other', comment: 'Приклад не про це.' });
     await app.report({ ...typo, comment: 'а'.repeat(500) });
 
-    expect(app.api.received).toHaveLength(2);
+    expect(app.api.reports.received).toHaveLength(2);
   });
 });
 
@@ -340,7 +340,7 @@ describe('the `mistakeReports` Feature Switch', () => {
     app.switchedOff.clear();
     app.reports.foreground();
     await app.advance(ALL_TRIES);
-    expect(app.api.calls).toBe(0);
+    expect(app.api.calls).toHaveLength(0);
   });
 
   it('keeps the queued reports while off and sends them once it is on again', async () => {

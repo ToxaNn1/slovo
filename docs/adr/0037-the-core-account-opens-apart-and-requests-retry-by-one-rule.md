@@ -14,10 +14,10 @@ From 0.7 the Core has an Account module that owns every rule of the SLOVO ID scr
 
 ## Answers and the retry rule
 
-- **Every answer is a value.** `answerOf` in `apps/mobile/src/api.ts` turns every answer of a call into what the Core's ports answer, and the ports never reject. An error the contract defines for the procedure becomes its adapter's failure, typed by the contract; otherwise no answer is `offline`, a 429 `too-many-requests`, a 5xx `server-error`, and anything else `unexpected`.
+- **Every answer is a value.** The Core reaches the backend through one port, the API contract's client (ADR 0064), and `answerOf` in `packages/core/src/backend.ts` turns every answer of a call into a value: a Core module's request never rejects. An error the contract defines for the procedure becomes the module's failure, typed by the contract; otherwise no answer is `offline`, a 429 `too-many-requests`, with the seconds of the answer's `Retry-After`, a 5xx `server-error`, and anything else `unexpected`.
 - **One retry rule.** Every Core request to the backend tries again through `withRetries` in `packages/core/src/retry.ts`: only no answer or a 5xx is tried again, at most 3 times; before the nth try it waits between half and all of 1 s × 2ⁿ⁻¹, drawn from the injected `Random`, through the injected `Schedule`. A 429, an `unexpected` answer or a code the contract defines is never tried again.
-- **A 429.** The Account shows `too-many-requests` at once: the sign-in limits' windows are minutes long, and a spent Sign-in code passes only with a new code. Sync, which runs in the background, waits for the answer's `Retry-After` instead (ADR 0041). The Content update module waits for its next due check.
-- **Values come from the contracts.** `@slovo/contracts` holds `SIGN_IN_CODE_DIGITS`, `SignInCodeSchema`, `AccountEmailSchema` and `PublishedPack` once; the Core, the server Core, the adapter and the code field derive from them. The `/v1` API still takes the email as typed.
+- **A 429.** The Account shows `too-many-requests` at once: the sign-in limits' windows are minutes long, and a spent Sign-in code passes only with a new code. Sync, which runs in the background, waits for the answer's `Retry-After` instead (ADR 0041), as Mistake Reports and the Community Counters do. The Content update module waits for its next due check.
+- **Values come from the contracts.** `@slovo/contracts` holds `SIGN_IN_CODE_DIGITS`, `SignInCodeSchema`, `AccountEmailSchema` and `PublishedPack` once; the Core, the server Core and the code field derive from them. The `/v1` API still takes the email as typed.
 - **The Game's retry of its planning** (ADR 0024) stays apart: it reads the Language Pack on the device, with no server to spare.
 
 ## Considered Options

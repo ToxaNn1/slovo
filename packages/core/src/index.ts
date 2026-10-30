@@ -129,7 +129,7 @@ export { renderStress, STRESS_MARK, withoutStress } from './entries/stress';
 export { createSwipeHint, type SwipeHint } from './feed/swipe-hint';
 export { buildWordCard, type WordCardModel } from './entries/word-card';
 export { createContentUpdate, type ContentUpdate } from './content-update/content-update';
-export type { ContentApi, PackFiles, PackVersion } from './ports';
+export type { PackFiles, PackVersion } from './ports';
 export { type ProgressState } from './progress/progress';
 export type { CalendarDay, CalendarMonth } from './progress/calendar';
 export { type WeeklyRecapModel } from './progress/weekly-recap';
@@ -148,8 +148,15 @@ export { type RarityTestAnswer, type RarityTestWord } from './rarity-test/rarity
 // The shell keeps the Session in memory on a development client without the Keychain.
 export { createMemorySessionStore } from './account/memory-session-store';
 export { type CollectionShareRefusal } from './collection-links/share-collection';
-export { openMistakeReports, type MistakeReports } from './mistake-reports/mistake-reports';
+export {
+  openMistakeReports,
+  type MistakeReports,
+  type ReportsApiFailure,
+} from './mistake-reports/mistake-reports';
 export { openSync, type Sync, type SyncState } from './sync/sync';
+export { type SyncApiFailure } from './sync/exchange';
+export { type AccountApiFailure } from './account/account-requests';
+export { type CollectionLinksApiFailure } from './collection-links/collection-link-requests';
 export { NOTIFICATION_BODY_LENGTH } from './notifications/notification-text';
 export {
   type NotificationTimeRefusal,
@@ -158,13 +165,9 @@ export {
 export {
   systemClock,
   systemRandom,
-  type AccountApi,
-  type AccountApiFailure,
+  type Backend,
   type Clock,
-  type CollectionLinksApi,
-  type CommunityWordApi,
   type ContentReadPort,
-  type CountersApi,
   type GoogleSignInSheet,
   type KeptSession,
   type NotificationPermission,
@@ -176,10 +179,6 @@ export {
   type RequestFailure,
   type Schedule,
   type SessionStore,
-  type SwitchesApi,
-  type ReportsApi,
-  type SyncApi,
-  type SyncApiFailure,
   type UserStateChanges,
   type UserStatePort,
 } from './ports';

@@ -1,7 +1,8 @@
 import { FeatureSwitchesSchema, type FeatureSwitch } from '@slovo/contracts';
 
+import { answerOf } from '../backend';
 import { createSubscribers } from '../in-turn';
-import type { Random, RemoteSwitchesAnswer, Schedule, SwitchesApi } from '../ports';
+import type { Backend, Random, RemoteSwitchesAnswer, Schedule } from '../ports';
 import { withRetries } from '../retry';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
@@ -17,7 +18,7 @@ const everyFeature = FeatureSwitchesSchema.keyof().options;
  * and not off remotely, and a Game Mode's or the Daily Crossword's only while
  * `game`'s is on too (ADR 0052).
  */
-export interface RemoteSwitches<E extends Pick<Edition, 'isFeatureEnabled'>> {
+export interface RemoteSwitches<E extends Pick<Edition, 'id' | 'isFeatureEnabled'>> {
   /**
    * The Edition as the app runs it: the Edition with each Feature Switch at
    * its effective value, by the last answer known. A change of an effective
@@ -45,15 +46,15 @@ export interface RemoteSwitches<E extends Pick<Edition, 'isFeatureEnabled'>> {
  * without one or when it can't be read, with none, so the Edition's own
  * values hold, offline too.
  */
-export async function openRemoteSwitches<E extends Pick<Edition, 'isFeatureEnabled'>>({
+export async function openRemoteSwitches<E extends Pick<Edition, 'id' | 'isFeatureEnabled'>>({
   edition,
-  api,
+  backend,
   userState,
   schedule,
   random,
 }: {
   edition: E;
-  api: SwitchesApi;
+  backend: Pick<Backend, 'edition'>;
   userState: Pick<UserState, 'read' | 'write'>;
   /** What failed requests wait by before they are tried again. */
   schedule: Schedule;
@@ -73,9 +74,29 @@ export async function openRemoteSwitches<E extends Pick<Edition, 'isFeatureEnabl
   const inEffect = (): E => ({ ...edition, isFeatureEnabled });
   let current = inEffect();
 
+  /**
+   * The remote Feature Switches, or `unchanged` when `etag`, the ETag of the
+   * answer the app keeps, still names them. `edition.switches` needs no
+   * Account; an Edition the backend doesn't serve is `unexpected`, as any
+   * other refusal.
+   */
+  async function switches(etag: string | undefined) {
+    const answer = await answerOf(
+      backend.edition.switches({
+        params: { editionId: edition.id },
+        headers: etag === undefined ? {} : { 'if-none-match': etag },
+      }),
+    );
+    if (!answer.ok) return answer;
+    const { output } = answer;
+    return output.status === 304
+      ? ({ ok: true, answer: 'unchanged' } as const)
+      : ({ ok: true, answer: { off: output.body.off, etag: output.headers.etag } } as const);
+  }
+
   async function askOnce(): Promise<boolean> {
     try {
-      const reply = await withRetries(() => api.switches(kept?.etag), { schedule, random });
+      const reply = await withRetries(() => switches(kept?.etag), { schedule, random });
       if (!reply.ok || reply.answer === 'unchanged') return false;
       const before = effective();
       kept = reply.answer;

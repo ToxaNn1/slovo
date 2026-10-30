@@ -1,5 +1,6 @@
 import type { Edition } from '../edition/edition';
-import type { Clock, CountersApi, EntryCounters } from '../ports';
+import { answerOf } from '../backend';
+import type { Backend, Clock, EntryCounters } from '../ports';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
 
@@ -38,12 +39,12 @@ export interface CounterReads {
  */
 export function openCounterReads({
   edition,
-  api,
+  backend,
   userState,
   clock,
 }: {
-  edition: Pick<Edition, 'isFeatureEnabled'>;
-  api: CountersApi;
+  edition: Pick<Edition, 'id' | 'isFeatureEnabled'>;
+  backend: Pick<Backend, 'counters'>;
   userState: Pick<UserState, 'read' | 'write'>;
   clock: Clock;
 }): CounterReads {
@@ -66,12 +67,15 @@ export function openCounterReads({
       const counts = await keptOf(entryIds, now.getTime());
       const missing = entryIds.filter((entryId) => !counts.has(entryId));
       if (missing.length > 0) {
-        const reply = await api.read(missing);
+        // `counters.read` needs no Account, sends no Session and carries no device id (ADR 0060).
+        const reply = await answerOf(
+          backend.counters.read({ edition: edition.id, entries: missing.join(',') }),
+        );
         if (reply.ok) {
           const readAt = now.toISOString();
           await userState.write(
             new Map(
-              reply.counters.flatMap(({ entryId, ...read }) => {
+              reply.output.counters.flatMap(({ entryId, ...read }) => {
                 counts.set(entryId, read);
                 return [...countersRead.record(entryId).change({ readAt, ...read })];
               }),

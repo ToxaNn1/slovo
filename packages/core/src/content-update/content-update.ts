@@ -1,10 +1,33 @@
 import { sha256 } from '@noble/hashes/sha2.js';
 import { bytesToHex } from '@noble/hashes/utils.js';
 
-import type { Clock, ContentApi, PackFiles, PackVersion, Random, Schedule } from '../ports';
+import { answerOf } from '../backend';
+import type { Edition } from '../edition/edition';
+import type {
+  Backend,
+  Clock,
+  PackFiles,
+  PackVersion,
+  Random,
+  RequestFailure,
+  Schedule,
+} from '../ports';
 import { withRetries } from '../retry';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
+
+/** A content request that failed as any request does, or found no such Edition or pack (404). */
+type ContentApiFailure = RequestFailure | { readonly ok: false; readonly reason: 'not-found' };
+
+/** An Edition the backend doesn't serve, one with content updates off, or a pack not published. */
+const notFound = ({ code }: { code: string }) =>
+  code === 'NOT_FOUND' ? ({ ok: false, reason: 'not-found' } as const) : undefined;
+
+/** The file of a pack as the backend answers it. */
+type PackFile = Extract<
+  Awaited<ReturnType<Backend['content']['download']>>,
+  { status: 200 }
+>['body'];
 
 /** How long after a check the next one is due: 24 hours. */
 const CONTENT_UPDATE_EVERY = 24 * 60 * 60 * 1000;
@@ -46,8 +69,10 @@ export interface ContentUpdate {
  * launches. It throws when the app does not read the bundled pack's format.
  */
 export function createContentUpdate({
-  contentApi,
+  backend,
+  edition,
   packFiles,
+  readBytes = async (file) => new Uint8Array(await file.arrayBuffer()),
   userState,
   clock,
   random,
@@ -55,8 +80,11 @@ export function createContentUpdate({
   bundled,
   readableFormats,
 }: {
-  contentApi: ContentApi;
+  backend: Pick<Backend, 'content'>;
+  edition: Pick<Edition, 'id'>;
   packFiles: PackFiles;
+  /** Reads the bytes of a downloaded file, as the platform can: React Native's `Blob` has no `arrayBuffer()`. */
+  readBytes?: (file: PackFile) => Promise<Uint8Array>;
   userState: Pick<UserState, 'read' | 'write'>;
   clock: Clock;
   random: Random;
@@ -73,6 +101,27 @@ export function createContentUpdate({
   }
   const lastCheck = userStateRecords.contentUpdateCheckedAt;
   const retrying = { schedule, random };
+  const editionId = edition.id;
+
+  /** The newest published pack of the pack format; none when nothing of it is published. The content procedures need no Account. */
+  async function latest(packFormat: number) {
+    const answer = await answerOf(backend.content.latest({ editionId, packFormat }), notFound);
+    return answer.ok ? ({ ok: true, pack: answer.output.pack ?? undefined } as const) : answer;
+  }
+
+  /** The bytes of the pack file of the content version. */
+  async function download(
+    contentVersion: number,
+  ): Promise<{ readonly ok: true; readonly bytes: Uint8Array } | ContentApiFailure> {
+    const answer = await answerOf(
+      backend.content.download({ params: { editionId, contentVersion } }),
+      notFound,
+    );
+    if (!answer.ok) return answer;
+    // 304 answers only a download that names an ETag, which this one never does.
+    if (answer.output.status !== 200) return { ok: false, reason: 'unexpected' };
+    return { ok: true, bytes: await readBytes(answer.output.body) };
+  }
 
   /** The kept pack, when the app reads its format and it is newer than the bundled one. */
   async function newerKept(): Promise<PackVersion | undefined> {
@@ -107,18 +156,15 @@ export function createContentUpdate({
 
   /** Downloads a pack newer than the newest the app has, if one is published, and keeps it. */
   async function check(): Promise<void> {
-    const latest = await withRetries(
-      () => contentApi.latest(Math.max(...readableFormats)),
-      retrying,
-    );
-    if (!latest.ok || latest.pack === undefined) return;
-    const { contentVersion, packFormat, fileSha256 } = latest.pack;
-    const newest = (await newerKept()) ?? bundled;
-    if (contentVersion <= newest.contentVersion) return;
-    const download = await withRetries(() => contentApi.download(contentVersion), retrying);
+    const newest = await withRetries(() => latest(Math.max(...readableFormats)), retrying);
+    if (!newest.ok || newest.pack === undefined) return;
+    const { contentVersion, packFormat, fileSha256 } = newest.pack;
+    const has = (await newerKept()) ?? bundled;
+    if (contentVersion <= has.contentVersion) return;
+    const downloaded = await withRetries(() => download(contentVersion), retrying);
     // A damaged or tampered download is thrown away.
-    if (!download.ok || bytesToHex(sha256(download.bytes)) !== fileSha256) return;
-    await packFiles.keep({ contentVersion, packFormat }, download.bytes);
+    if (!downloaded.ok || bytesToHex(sha256(downloaded.bytes)) !== fileSha256) return;
+    await packFiles.keep({ contentVersion, packFormat }, downloaded.bytes);
   }
 
   async function checkIfDue(): Promise<void> {
