@@ -1,9 +1,10 @@
-import type {
-  Account,
-  OnboardingStep,
-  RarityTestAnswer,
-  SampleNotification,
-  WordCardModel,
+import {
+  stressLabel,
+  type Account,
+  type OnboardingStep,
+  type RarityTestAnswer,
+  type SampleNotification,
+  type WordCardModel,
 } from '@slovo/core';
 import {
   OnboardingAccount,
@@ -11,7 +12,6 @@ import {
   OnboardingNotifications,
   OnboardingRarityTest,
   OnboardingWelcome,
-  stressLabel,
   type HeroWord,
   type SampleNotificationLook,
 } from '@slovo/ui';

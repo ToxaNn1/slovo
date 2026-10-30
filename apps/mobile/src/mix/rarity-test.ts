@@ -1,5 +1,5 @@
-import type { RarityTestAnswer, RarityTestWord } from '@slovo/core';
-import { stressLabel, type RarityTestQuestion } from '@slovo/ui';
+import { stressLabel, type RarityTestAnswer, type RarityTestWord } from '@slovo/core';
+import type { RarityTestQuestion } from '@slovo/ui';
 import { useCallback } from 'react';
 
 import { useComposition } from '../composition';

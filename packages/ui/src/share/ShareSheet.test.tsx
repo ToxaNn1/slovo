@@ -1,14 +1,15 @@
 import type { EditionStrings } from '@slovo/contracts';
-import type {
-  AnyEntryCard,
-  EntryFeedCard,
-  IdiomCardModel,
-  IdiomFeedCard,
-  SynonymRowCardModel,
-  SynonymRowFeedCard,
-  TipCardModel,
-  TipFeedCard,
-  WeeklyRecapShareCardModel,
+import {
+  buildShareCardContent,
+  type AnyEntryCard,
+  type EntryFeedCard,
+  type IdiomCardModel,
+  type IdiomFeedCard,
+  type SynonymRowCardModel,
+  type SynonymRowFeedCard,
+  type TipCardModel,
+  type TipFeedCard,
+  type WeeklyRecapModel,
 } from '@slovo/core';
 import { EditionProvider, ShareSheet, type ShareSheetOutcome } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
@@ -31,6 +32,15 @@ const strings = {
     captureFailed: 'Could not make the image.',
     nonStandard: 'Often said',
     standard: 'Better',
+    weeklyRecap: {
+      title: 'My week in SLOVO',
+      week: '{from}–{to} {month}',
+      months: ['', '', '', '', '', '', '', '', '', 'October'],
+      seen: 'seen',
+      saved: 'saved',
+      known: 'known',
+      streak: 'streak',
+    },
   },
   correctionCard: { correctionTypes: { calque: 'calque' } },
   idiomCard: { idiomTypes: { idiom: 'idiom', placeName: 'place name' }, etymology: 'Origin' },
@@ -69,8 +79,7 @@ async function renderSheet(outcome: ShareSheetOutcome, shown: AnyEntryCard = car
       <EditionProvider edition={{ locale: 'en' }} strings={strings}>
         <ShareSheet
           visible
-          card={shown}
-          todaysWordOfTheDay={false}
+          content={buildShareCardContent({ card: shown, todaysWordOfTheDay: false }, strings)}
           watermark="SLOVO"
           initialFormat="story"
           onFormatChange={jest.fn()}
@@ -274,16 +283,14 @@ describe('The Share Card of a Tip', () => {
   });
 });
 
-const recap: WeeklyRecapShareCardModel = {
-  kind: 'weeklyRecap',
-  title: 'My week in SLOVO',
-  week: '20–26 October',
-  numbers: [
-    { label: 'seen', count: 34 },
-    { label: 'saved', count: 5 },
-    { label: 'known', count: 0 },
-    { label: 'streak', count: 9 },
-  ],
+/** The week of Monday 20 to Sunday 26 October 2025. */
+const recap: WeeklyRecapModel = {
+  firstDay: { year: 2025, month: 10, day: 20 },
+  lastDay: { year: 2025, month: 10, day: 26 },
+  seen: 34,
+  saved: 5,
+  known: 0,
+  streak: 9,
 };
 
 async function renderRecapSheet(format: 'story' | 'square') {
@@ -292,7 +299,7 @@ async function renderRecapSheet(format: 'story' | 'square') {
       <EditionProvider edition={{ locale: 'en' }} strings={strings}>
         <ShareSheet
           visible
-          recap={recap}
+          content={buildShareCardContent({ recap, hideStreak: false }, strings)}
           watermark="SLOVO"
           initialFormat={format}
           onFormatChange={jest.fn()}

@@ -1,24 +1,9 @@
-import type { EditionStrings } from '@slovo/contracts';
-import {
-  buildSynonymRowShareCard,
-  buildTipShareCard,
-  withoutStress,
-  type AnyEntryCard,
-  type CorrectionCardModel,
-  type IdiomCardModel,
-  type SynonymRowShareCardModel,
-  type TipShareCardModel,
-  type WeeklyRecapShareCardModel,
-  type WordCardModel,
-} from '@slovo/core';
+import type { ShareCardBody, ShareCardContent } from '@slovo/core';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { DecorBackground, OrnamentDivider, ShareCardFrame } from '../decor/DecorSlots';
-import { fill, useEdition } from '../providers/EditionProvider';
-import { sentences } from '../primitives/sentences';
-import { wordGrammarText } from '../entries/part-of-speech';
-import { stressLabel } from '../entries/stress-label';
+import { useEdition } from '../providers/EditionProvider';
 import { shareCardLayout, withAlpha, type ShareCardFormat } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
@@ -47,8 +32,6 @@ const FOOTER_LINE_HEIGHT = 1.4;
 const STRIKE_ALPHA = 0.5;
 /** A Tip's title, above its forms, at the Definition's size and this much larger. */
 const TIP_TITLE_SCALE = 1.2;
-/** What ends the members of a Synonym Row that has more than its Share Card shows. */
-const MORE_MEMBERS = '…';
 
 /** Text that doesn't fit shrinks by this share of its size at a time. */
 const SHRINK_STEP = 0.05;
@@ -78,22 +61,13 @@ function useShrinkToFit(floor: number): [number, (measuredAt: number, fits: bool
   return [scale, report];
 }
 
-/** What a Share Card shows: an Entry or a Weekly Recap. */
-export type ShareCardContent = (
-  | {
-      /** The Entry's card, as the Core built it for the Feed. */
-      card: AnyEntryCard;
-      /** Whether it is today's Word of the Day, which the overline then says in place of the Category. */
-      todaysWordOfTheDay: boolean;
-    }
-  | {
-      /** The Weekly Recap's Share Card, as the Core built it (ADR 0054). */
-      recap: WeeklyRecapShareCardModel;
-    }
-) & {
+/** What the Share Card draws: the content the Core built, and the watermark. */
+export interface ShareCardProps {
+  /** What the card shows, as the Core built it (ADR 0017). */
+  content: ShareCardContent;
   /** The watermark: the Edition's display name. */
   watermark: string;
-};
+}
 
 /**
  * The Share Card of an Entry in a format, `width` points wide, in the app's
@@ -118,17 +92,19 @@ export type ShareCardContent = (
  * A headline too wide for its line shrinks to a floor and then wraps; text too
  * tall for the card shrinks until it fits; nothing is cut.
  */
-export function ShareCard(props: ShareCardContent & { format: ShareCardFormat; width: number }) {
+export function ShareCard(props: ShareCardProps & { format: ShareCardFormat; width: number }) {
   // A new Entry, week or format measures from the design's sizes again.
-  const shown = 'recap' in props ? props.recap.week : props.card.entryId;
-  return <FittedCard key={`${shown}-${props.format}`} {...props} />;
+  return <FittedCard key={`${props.content.shows}-${props.format}`} {...props} />;
 }
 
-function FittedCard(props: ShareCardContent & { format: ShareCardFormat; width: number }) {
-  const { watermark, format, width } = props;
+function FittedCard({
+  content: { overline, label, body },
+  watermark,
+  format,
+  width,
+}: ShareCardProps & { format: ShareCardFormat; width: number }) {
   const { colors, fontFamilies } = useTokens();
-  const edition = useEdition();
-  const { voice } = edition;
+  const { voice } = useEdition();
   const layout = shareCardLayout[format];
   /** The design's points in this card's points. */
   const unit = width / SHARE_CARD[format].width;
@@ -136,13 +112,13 @@ function FittedCard(props: ShareCardContent & { format: ShareCardFormat; width: 
   // No floor: shrinking is all that keeps a long text whole on the card.
   const [textScale, reportText] = useShrinkToFit(SHRINK_STEP);
   const [room, setRoom] = useState<number>();
-  const [content, setContent] = useState<{ height: number; at: number }>();
+  const [measured, setMeasured] = useState<{ height: number; at: number }>();
 
   useEffect(() => {
-    if (room !== undefined && content !== undefined) {
-      reportText(content.at, content.height <= room + LAYOUT_SLACK);
+    if (room !== undefined && measured !== undefined) {
+      reportText(measured.at, measured.height <= room + LAYOUT_SLACK);
     }
-  }, [room, content, reportText]);
+  }, [room, measured, reportText]);
 
   /** A size of the design's text, shrunk with the rest of the text. */
   const text = (size: number) => size * unit * textScale;
@@ -165,15 +141,9 @@ function FittedCard(props: ShareCardContent & { format: ShareCardFormat; width: 
       {value}
     </Text>
   );
-  const blockProps = { headline, text, format, dividerScale: unit };
-  const { overline, label, blocks } =
-    'recap' in props
-      ? {
-          overline: props.recap.week,
-          label: weeklyRecapLabel(props.recap),
-          blocks: <WeeklyRecapBlocks card={props.recap} {...blockProps} />,
-        }
-      : entryDrawing(props.card.model, props.todaysWordOfTheDay, edition.strings, blockProps);
+  const blocks = (
+    <Blocks body={body} headline={headline} text={text} format={format} dividerScale={unit} />
+  );
 
   return (
     <View
@@ -202,7 +172,7 @@ function FittedCard(props: ShareCardContent & { format: ShareCardFormat; width: 
       >
         <View
           onLayout={({ nativeEvent }) => {
-            setContent({ height: nativeEvent.layout.height, at: textScale });
+            setMeasured({ height: nativeEvent.layout.height, at: textScale });
           }}
           style={{ gap: text(layout.gap) }}
         >
@@ -230,27 +200,24 @@ function FittedCard(props: ShareCardContent & { format: ShareCardFormat; width: 
   );
 }
 
-/** What an Entry's card draws: its overline, what VoiceOver reads and its blocks. */
-function entryDrawing(
-  model: AnyEntryCard['model'],
-  todaysWordOfTheDay: boolean,
-  strings: EditionStrings,
-  blockProps: BlockProps,
-): { overline: string | undefined; label: string; blocks: ReactNode } {
-  const overline = overlineOf(model, todaysWordOfTheDay, strings);
-  const blocks =
-    model.kind === 'word' ? (
-      <WordBlocks card={model} {...blockProps} />
-    ) : model.kind === 'idiom' ? (
-      <IdiomBlocks card={model} {...blockProps} />
-    ) : model.kind === 'synonymRow' ? (
-      <SynonymRowBlocks card={buildSynonymRowShareCard(model)} {...blockProps} />
-    ) : model.kind === 'tip' ? (
-      <TipBlocks card={buildTipShareCard(model)} {...blockProps} />
-    ) : (
-      <CorrectionBlocks card={model} {...blockProps} />
-    );
-  return { overline, label: accessibilityLabel(model, overline, strings), blocks };
+/** The blocks of what the card shows. */
+function Blocks({ body, ...props }: BlockProps & { body: ShareCardBody }) {
+  switch (body.kind) {
+    case 'word':
+      return <WordBlocks card={body} {...props} />;
+    case 'idiom':
+      return <IdiomBlocks card={body} {...props} />;
+    case 'correction':
+      return (
+        <Forms {...props} nonStandardForm={body.nonStandardForm} standardForm={body.standardForm} />
+      );
+    case 'synonymRow':
+      return <SynonymRowBlocks card={body} {...props} />;
+    case 'tip':
+      return <TipBlocks card={body} {...props} />;
+    case 'weeklyRecap':
+      return <WeeklyRecapBlocks card={body} {...props} />;
+  }
 }
 
 /**
@@ -262,7 +229,7 @@ function WeeklyRecapBlocks({
   text,
   format,
   dividerScale,
-}: BlockProps & { card: WeeklyRecapShareCardModel }) {
+}: BlockProps & { card: BodyOf<'weeklyRecap'> }) {
   const { colors, fontFamilies } = useTokens();
   const { type, gap, labelGap } = shareCardLayout[format];
   const titleSize = text(type.nonStandard);
@@ -314,15 +281,6 @@ function WeeklyRecapBlocks({
       </View>
     </>
   );
-}
-
-/** What VoiceOver reads of a Weekly Recap's card: the dates, the title, then each number with its label. */
-function weeklyRecapLabel(card: WeeklyRecapShareCardModel): string {
-  return sentences([
-    card.week,
-    card.title,
-    ...card.numbers.map(({ label, count }) => `${String(count)} ${label}`),
-  ]);
 }
 
 /**
@@ -398,13 +356,15 @@ interface BlockProps {
   dividerScale: number;
 }
 
+/** The body of one kind. */
+type BodyOf<Kind extends ShareCardBody['kind']> = Extract<ShareCardBody, { kind: Kind }>;
+
 /**
  * A Word's blocks: the Lemma with Stress, the part of speech with gender and
  * registers, and the primary Definition.
  */
-function WordBlocks({ card, headline, text, format }: BlockProps & { card: WordCardModel }) {
+function WordBlocks({ card, headline, text, format }: BlockProps & { card: BodyOf<'word'> }) {
   const { colors, fontFamilies } = useTokens();
-  const { strings } = useEdition();
   const { type } = shareCardLayout[format];
   return (
     <>
@@ -416,9 +376,9 @@ function WordBlocks({ card, headline, text, format }: BlockProps & { card: WordC
           { fontSize: text(type.partOfSpeech), color: colors.muted, fontFamily: fontFamilies.ui },
         ]}
       >
-        {wordGrammarText(strings.wordCard, card, 'short')}
+        {card.grammar}
       </Text>
-      <Definition text={text} size={type.definition} value={card.primaryDefinition} />
+      <Definition text={text} size={type.definition} value={card.definition} />
     </>
   );
 }
@@ -427,15 +387,15 @@ function WordBlocks({ card, headline, text, format }: BlockProps & { card: WordC
  * An Idiom's blocks: the expression and the primary Definition, and a place
  * name's «Походження» over its etymology, the story of its name.
  */
-function IdiomBlocks({ card, headline, text, format }: BlockProps & { card: IdiomCardModel }) {
+function IdiomBlocks({ card, headline, text, format }: BlockProps & { card: BodyOf<'idiom'> }) {
   const { colors, fontFamilies } = useTokens();
   const { strings } = useEdition();
   const { type, labelGap } = shareCardLayout[format];
   return (
     <>
       {headline(card.expression)}
-      <Definition text={text} size={type.definition} value={card.primaryDefinition} />
-      {card.idiomType === 'placeName' && card.etymology !== undefined && (
+      <Definition text={text} size={type.definition} value={card.definition} />
+      {card.etymology !== undefined && (
         <View style={{ gap: text(labelGap) }}>
           <Text
             allowFontScaling={false}
@@ -486,17 +446,6 @@ function Definition({
 }
 
 /**
- * A Correction's blocks: «Так часто кажуть» over the non-standard form struck
- * through, Decor slot 2 with the Correction's arrow, and «Українською краще»
- * over the main standard equivalent.
- */
-function CorrectionBlocks({ card, ...props }: BlockProps & { card: CorrectionCardModel }) {
-  return (
-    <Forms {...props} nonStandardForm={card.nonStandardForm} standardForm={card.mainEquivalent} />
-  );
-}
-
-/**
  * A Synonym Row's blocks: the dominant, its meaning and the members the Core
  * shares, ending in «…» when the row has more.
  */
@@ -505,7 +454,7 @@ function SynonymRowBlocks({
   headline,
   text,
   format,
-}: BlockProps & { card: SynonymRowShareCardModel }) {
+}: BlockProps & { card: BodyOf<'synonymRow'> }) {
   const { colors, fontFamilies } = useTokens();
   const { type } = shareCardLayout[format];
   return (
@@ -521,7 +470,7 @@ function SynonymRowBlocks({
           fontFamily: fontFamilies.word,
         }}
       >
-        {membersText(card)}
+        {card.members}
       </Text>
     </>
   );
@@ -532,7 +481,7 @@ function SynonymRowBlocks({
  * non-standard form, Decor slot 2 has no arrow and only the standard form
  * follows it.
  */
-function TipBlocks({ card, ...props }: BlockProps & { card: TipShareCardModel }) {
+function TipBlocks({ card, ...props }: BlockProps & { card: BodyOf<'tip'> }) {
   const { colors, fontFamilies } = useTokens();
   const { type } = shareCardLayout[props.format];
   const size = props.text(type.definition) * TIP_TITLE_SCALE;
@@ -613,95 +562,6 @@ function Forms({
       </View>
     </>
   );
-}
-
-/** A Synonym Row's members on its Share Card, ending in «…» when it has more. */
-function membersText(card: SynonymRowShareCardModel): string {
-  return `${card.members.join(', ')}${card.moreMembers ? MORE_MEMBERS : ''}`;
-}
-
-/**
- * The overline: today's Word of the Day or the Category of a Word, the
- * Correction Type, the chip of the Idiom Type, or the chip of a row or a Tip.
- */
-function overlineOf(
-  card: AnyEntryCard['model'],
-  todaysWordOfTheDay: boolean,
-  strings: EditionStrings,
-): string | undefined {
-  switch (card.kind) {
-    case 'correction':
-      return strings.correctionCard.correctionTypes[card.correctionType];
-    case 'idiom':
-      return strings.idiomCard.idiomTypes[card.idiomType];
-    case 'synonymRow':
-      return strings.synonymRowCard.chip;
-    case 'tip':
-      return strings.tipCard.chip;
-    case 'word':
-      return todaysWordOfTheDay ? strings.share.wordOfTheDay : card.categoryName;
-  }
-}
-
-/**
- * What VoiceOver reads of the card: its overline, then its parts. A row's and
- * a Tip's heading already name their kind, as on their cards, so they start
- * with it in place of the overline.
- */
-function accessibilityLabel(
-  card: AnyEntryCard['model'],
-  overline: string | undefined,
-  strings: EditionStrings,
-): string {
-  if (card.kind === 'synonymRow') {
-    const shared = buildSynonymRowShareCard(card);
-    return sentences([
-      fill(strings.synonymRowCard.heading, {
-        dominant: withoutStress(shared.dominant),
-        members: withoutStress(membersText(shared)),
-      }),
-      shared.meaning,
-    ]);
-  }
-  if (card.kind === 'tip') {
-    const shared = buildTipShareCard(card);
-    return sentences([
-      fill(strings.tipCard.heading, { title: withoutStress(shared.title) }),
-      shared.nonStandardForm === undefined
-        ? undefined
-        : `${strings.share.nonStandard}: ${withoutStress(shared.nonStandardForm)}`,
-      `${strings.share.standard}: ${withoutStress(shared.standardForm)}`,
-    ]);
-  }
-  return sentences([overline, ...accessibilityParts(card, strings)]);
-}
-
-/** What VoiceOver reads of a Word's, a Correction's or an Idiom's card after its overline. */
-function accessibilityParts(
-  card: Exclude<AnyEntryCard['model'], { kind: 'synonymRow' | 'tip' }>,
-  strings: EditionStrings,
-): (string | undefined)[] {
-  if (card.kind === 'idiom') {
-    return [
-      card.expression,
-      card.primaryDefinition,
-      card.idiomType === 'placeName' && card.etymology !== undefined
-        ? `${strings.idiomCard.etymology}: ${card.etymology}`
-        : undefined,
-    ];
-  }
-  if (card.kind === 'correction') {
-    return [
-      `${strings.share.nonStandard}: ${stressLabel(strings.wordCard, card.nonStandardForm, card.nonStandardStressedVowels)}`,
-      `${strings.share.standard}: ${stressLabel(strings.wordCard, card.mainEquivalent, card.mainEquivalentStressedVowels)}`,
-    ];
-  }
-  return [
-    stressLabel(strings.wordCard, card.lemma, card.stressedVowels),
-    wordGrammarText(strings.wordCard, card, 'full'),
-    // Last, as it ends with its own full stop.
-    card.primaryDefinition,
-  ];
 }
 
 const styles = StyleSheet.create({
