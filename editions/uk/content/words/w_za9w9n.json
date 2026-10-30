@@ -18,15 +18,18 @@
   "sources": [
     {
       "title": "Словник української мови: в 11 томах. — Том 1, 1970. — Стор. 687.",
+      "shortName": "Словник української мови в 11 томах",
       "url": "http://sum.in.ua/s/vitijstvo",
       "archivedUrl": "https://web.archive.org/web/20220806021701/http://sum.in.ua/s/vitijstvo"
     },
     {
       "title": "Горох: тлумачення (Словник української мови у 20 томах)",
+      "shortName": "Горох",
       "url": "https://goroh.pp.ua/Тлумачення/вітійство"
     },
     {
       "title": "Горох: синонімія (Словник синонімів Караванського)",
+      "shortName": "Горох",
       "url": "https://goroh.pp.ua/Синонімія/вітійство"
     }
   ]
