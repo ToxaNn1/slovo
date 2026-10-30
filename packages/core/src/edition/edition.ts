@@ -39,10 +39,11 @@ export interface UserSettingDefaults {
 
 /**
  * The base address of the site that publishes every Edition's legal pages,
- * each under `/<id>/` (ADR 0049). The one place that names it: a new address,
- * such as a custom domain, changes here and nowhere else.
+ * each under `/<id>/` (ADR 0049): GitHub Pages behind the custom domain that
+ * `.github/pages/CNAME` names, which a test keeps equal to this host. The one
+ * place in code that names it: a new address changes here and in that file.
  */
-export const LEGAL_SITE = 'https://toxann1.github.io/slovo';
+export const LEGAL_SITE = 'https://legal.slovo.example';
 
 /** The web addresses of the Edition's legal pages, which About opens in the browser. */
 export interface LegalPages {

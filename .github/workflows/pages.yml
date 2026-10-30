@@ -1,8 +1,12 @@
 name: Pages
 
 # Publishes each Edition's legal pages, editions/<edition-id>/legal/*.md, to
-# GitHub Pages at /<edition-id>/<page>, e.g. /uk/privacy. Pages must be on in
-# the repository settings with "GitHub Actions" as its source.
+# GitHub Pages at /<edition-id>/<page>, e.g. /uk/privacy, behind the custom
+# domain that .github/pages/CNAME names. Pages must be on in the repository
+# settings with "GitHub Actions" as its source and that domain as its custom
+# domain: a site deployed by a workflow takes the domain from the settings, so
+# the published CNAME records it and a test keeps it equal to the Core's
+# LEGAL_SITE.
 on:
   push:
     branches: [main]
