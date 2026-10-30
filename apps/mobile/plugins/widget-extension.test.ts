@@ -5,6 +5,7 @@ import { basename, join } from 'node:path';
 import plist from '@expo/plist';
 import { WidgetSnapshotSchema } from '@slovo/contracts';
 import { coreDecor, loadDecor } from '@slovo/core';
+import { coreFonts } from '@slovo/ui/fonts';
 import { coreTokens, designTokens } from '@slovo/ui/tokens';
 import { describe, expect, it } from 'vitest';
 
@@ -12,10 +13,10 @@ import { strings, ukrainianFolder } from '../src/test-support';
 
 import { widgetExtensionFiles, writeWidgetExtension, type WidgetEdition } from './widget-extension';
 
-/** The two fonts the widget draws with, of the Ukrainian Edition's fonts. */
-const fontFiles = ukrainianFolder
-  .fonts()
-  .filter((font) => ['Literata-Medium.ttf', 'Manrope-Bold.ttf'].includes(basename(font)));
+/** Two of the Core's fonts, which the widget draws with. */
+const fontFiles = coreFonts().filter((font) =>
+  ['Literata-Medium.ttf', 'Manrope-Bold.ttf'].includes(basename(font)),
+);
 
 /** The Ukrainian Edition as the prebuild hands it to the widget extension. */
 const ukrainian: WidgetEdition = {

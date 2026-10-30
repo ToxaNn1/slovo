@@ -9,7 +9,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
@@ -18,6 +18,7 @@ import {
   openEdition,
   type EditionFolder,
 } from '@slovo/language-pack/edition';
+import { coreFonts } from '@slovo/ui/fonts';
 import type { ConfigContext, ExpoConfig } from 'expo/config';
 import { compileModsAsync } from 'expo/config-plugins';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -248,14 +249,13 @@ describe('app config', () => {
     expect(appConfig(repoWithEdition(() => undefined)).ios?.bundleIdentifier).toBe('app.slovo.uk');
   });
 
-  it('embeds every font file of the Edition in the native app', () => {
+  it("embeds the Core's fonts and the Edition's own in the native app", () => {
     vi.stubEnv('SLOVO_EDITION', 'uk');
 
     const { fonts } = pluginOptions(appConfig(context), 'expo-font') as { fonts: string[] };
 
-    expect(fonts).toEqual(
-      [
-        'Kurale-Regular.ttf',
+    expect(fonts).toEqual([
+      ...[
         'Literata-Italic.ttf',
         'Literata-Medium.ttf',
         'Literata-Regular.ttf',
@@ -264,8 +264,21 @@ describe('app config', () => {
         'Manrope-Medium.ttf',
         'Manrope-Regular.ttf',
         'Manrope-SemiBold.ttf',
-      ].map((file) => `../../editions/uk/assets/fonts/${file}`),
-    );
+      ].map((file) => `../../packages/ui/assets/fonts/${file}`),
+      '../../editions/uk/assets/fonts/Kurale-Regular.ttf',
+    ]);
+  });
+
+  it("embeds the Core's fonts alone for an Edition that brings none", () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+    const repo = repoWithEdition(() => undefined, {
+      change: (edition) => {
+        // Its Word of the Day font is then one of the Core's, which it may not name.
+        rmSync(join(edition.dir, FONTS_DIR), { recursive: true });
+      },
+    });
+
+    expect(() => appConfig(repo)).toThrow(/not among the Edition's fonts: Kurale-Regular\.ttf/);
   });
 
   it('embeds the Word of the Day font and passes its family on to the app', () => {
@@ -281,9 +294,17 @@ describe('app config', () => {
   it('passes on the family of whichever font the Edition names for the Word of the Day', () => {
     vi.stubEnv('SLOVO_EDITION', 'uk');
     const config = appConfig(
-      repoWithEdition((edition) => {
-        edition['wordOfTheDayFont'] = 'Literata-Italic.ttf';
-      }),
+      repoWithEdition(
+        (edition) => {
+          edition['wordOfTheDayFont'] = 'Literata-Italic.ttf';
+        },
+        {
+          change: (edition) => {
+            const literata = coreFonts().find((font) => basename(font) === 'Literata-Italic.ttf');
+            cpSync(literata ?? '', join(edition.dir, FONTS_DIR, 'Literata-Italic.ttf'));
+          },
+        },
+      ),
     );
 
     expect(config.extra?.['edition']).toMatchObject({ wordOfTheDayFontFamily: 'Literata' });

@@ -3,6 +3,7 @@ import { basename, join, relative } from 'node:path';
 
 import type * as Contracts from '@slovo/contracts';
 import type * as EditionFolders from '@slovo/language-pack/edition';
+import type * as UiFonts from '@slovo/ui/fonts';
 import type * as UiTokens from '@slovo/ui/tokens';
 import type * as Core from '@slovo/core';
 import type { ConfigContext, ExpoConfig } from 'expo/config';
@@ -50,6 +51,7 @@ const { readNotificationSound } = tsxRequire(
   './plugins/notification-sound.ts',
   import.meta.url,
 ) as typeof NotificationSound;
+const { coreFonts } = tsxRequire('@slovo/ui/fonts', import.meta.url) as typeof UiFonts;
 const { coreTokens, designTokens } = tsxRequire(
   '@slovo/ui/tokens',
   import.meta.url,
@@ -131,8 +133,8 @@ function editionNotificationSounds(edition: EditionFolder, projectRoot: string):
 
 /**
  * The family of the Word of the Day font the Edition names, which the app
- * sets the Lemma on the Word of the Day card in (ADR 0006). The font is
- * embedded with the Edition's other fonts.
+ * sets the Lemma on the Word of the Day card in (ADR 0006). It is one of
+ * the Edition's own fonts, never one of the Core's (ADR 0061).
  */
 function wordOfTheDayFontFamily(edition: EditionFolder): string {
   const name = edition.config.wordOfTheDayFont;
@@ -145,6 +147,11 @@ function wordOfTheDayFontFamily(edition: EditionFolder): string {
   const family = readFontFamily(readFileSync(file));
   if (family === undefined) throw new Error(`${file} has no family name: is it a font?`);
   return family;
+}
+
+/** Every font file the app embeds: the Core's, then the Edition's own (ADR 0061). */
+function appFonts(edition: EditionFolder): string[] {
+  return [...coreFonts(), ...edition.fonts()];
 }
 
 /**
@@ -164,7 +171,7 @@ function widgetEdition(edition: EditionFolder, scheme: string): WidgetExtension.
     strings: edition.read('strings').widget,
     tokens,
     band: loadDecor(edition.readIfPresent('decor')).divider.band,
-    fontFiles: edition.fonts().filter((font) => {
+    fontFiles: appFonts(edition).filter((font) => {
       const family = readFontFamily(readFileSync(font));
       return family !== undefined && families.has(family);
     }),
@@ -307,8 +314,8 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
     plugins: [
       'expo-router',
       'expo-sqlite',
-      // Every font file the Edition brings, embedded in the native app.
-      ['expo-font', { fonts: edition.fonts().map((font) => relative(projectRoot, font)) }],
+      // The Core's fonts and the Edition's own, embedded in the native app.
+      ['expo-font', { fonts: appFonts(edition).map((font) => relative(projectRoot, font)) }],
       ['expo-splash-screen', editionSplash(edition, projectRoot)],
       ['expo-notifications', { sounds: editionNotificationSounds(edition, projectRoot) }],
       '@react-native-community/datetimepicker',
