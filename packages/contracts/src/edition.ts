@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { NotificationSoundFileSchema } from './notification-sound';
-import { HexColorSchema, WebAddressSchema } from './shared';
+import { HexColorSchema } from './shared';
 
 const KebabCaseIdSchema = z
   .string()
@@ -320,14 +320,6 @@ export const UserSettingDefaultsConfigSchema = z.strictObject({
 
 export type UserSettingDefaultsConfig = z.infer<typeof UserSettingDefaultsConfigSchema>;
 
-/** The web addresses of the Edition's legal pages, which About opens in the browser. */
-export const LegalPagesSchema = z.strictObject({
-  privacy: WebAddressSchema,
-  terms: WebAddressSchema,
-});
-
-export type LegalPages = z.infer<typeof LegalPagesSchema>;
-
 /**
  * A domain such as `slovo.example`: dot-separated lower-case labels of letters,
  * digits and inner hyphens, ending in a top-level domain of letters.
@@ -406,7 +398,6 @@ export const EditionConfigSchema = z
      * system default sound.
      */
     notificationSound: NotificationSoundFileSchema.optional(),
-    legalPages: LegalPagesSchema,
     /**
      * The domain of the Edition's Collection Links, `https://<linkDomain>/c/<id>`
      * (ADR 0058): the backend builds each link's URL from it, and the app config

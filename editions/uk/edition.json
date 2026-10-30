@@ -84,10 +84,6 @@
     }
   },
   "notificationSound": "notification.wav",
-  "legalPages": {
-    "privacy": "https://toxann1.github.io/slovo/uk/privacy",
-    "terms": "https://toxann1.github.io/slovo/uk/terms"
-  },
   "linkDomain": "slovo.example",
   "wordOfTheDayFont": "Kurale-Regular.ttf",
   "widgetPalette": {

@@ -4,7 +4,6 @@ import {
   type FeatureSwitch,
   type FontSize,
   type LanguageTraits,
-  type LegalPages,
   type Mood,
   type OriginLanguage,
   type Theme,
@@ -39,6 +38,24 @@ export interface UserSettingDefaults {
 }
 
 /**
+ * The base address of the site that publishes every Edition's legal pages,
+ * each under `/<id>/` (ADR 0049). The one place that names it: a new address,
+ * such as a custom domain, changes here and nowhere else.
+ */
+export const LEGAL_SITE = 'https://toxann1.github.io/slovo';
+
+/** The web addresses of the Edition's legal pages, which About opens in the browser. */
+export interface LegalPages {
+  readonly privacy: string;
+  readonly terms: string;
+}
+
+/** The addresses of an Edition's legal pages, `<LEGAL_SITE>/<id>/<page>` (ADR 0049). */
+function legalPagesOf(id: string): LegalPages {
+  return { privacy: `${LEGAL_SITE}/${id}/privacy`, terms: `${LEGAL_SITE}/${id}/terms` };
+}
+
+/**
  * What the Core knows about the Edition it runs as: only what can't change
  * without a store build. Its Categories come from the Language Pack (ADR 0033).
  */
@@ -53,7 +70,7 @@ export interface Edition {
   readonly userSettingDefaults: UserSettingDefaults;
   /** The file name of the Edition's notification sound, which the shell bundles; without one, notifications play the system sound. */
   readonly notificationSound: string | undefined;
-  /** The addresses of the privacy policy and the terms, which About opens in the browser. */
+  /** The addresses of the privacy policy and the terms, derived from `LEGAL_SITE` and the id, which About opens in the browser. */
   readonly legalPages: LegalPages;
   /** The domain of its Collection Links, `https://<linkDomain>/c/<id>`, the one host whose links the app opens (ADR 0058). */
   readonly linkDomain: string;
@@ -126,7 +143,6 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
     featureSwitches,
     userSettingDefaults,
     notificationSound,
-    legalPages,
     linkDomain,
     originLanguages,
     moods,
@@ -151,7 +167,7 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
       },
     },
     notificationSound,
-    legalPages,
+    legalPages: legalPagesOf(id),
     linkDomain,
     originLanguages,
     moods,
