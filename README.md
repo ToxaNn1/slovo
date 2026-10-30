@@ -158,9 +158,7 @@ What the tests can't reach runs on the simulator after the native build that bri
 1. **A Content update downloads, is kept and opens at the next launch.** Start the backend ([Run the backend](#run-the-backend)). In a second worktree with the same `apps/backend/.env`, correct a Definition, record and build the content with `pnpm build:pack uk --record`, and publish it with `pnpm publish:pack uk`. The checkout Metro runs from keeps the older content, so the app bundles an older pack than the published one. Delete the app from the simulator, install the build again and open it: the first check is due at once. The app's data folder (`xcrun simctl get_app_container booted app.slovo.uk data`) then holds `Documents/content-update/kept.json`, naming the new content version, beside `language-pack-<version>.db`. The open app still shows the old Definition. Add a Word to Favorites, force-quit the app and open it again: the corrected Definition shows, and the Word is still in Favorites. Opening it again the same day asks the backend nothing (no `content.latest` request in its log).
 2. **The SLOVO ID Session survives a restart.** Sign in on the SLOVO ID screen with a code from Mailpit, force-quit the app and open it again: the screen still shows the email, signed in.
 
-Version 0.8.9, at the EAS build of 0.9, on a real iPhone:
-
-3. **Google sign-in reaches the Account.** With a build made with `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` and a backend whose `GOOGLE_CLIENT_IDS` names the same id ([Sign in with Google](#sign-in-with-google)), open the SLOVO ID screen and tap «Увійти через Google»: Google's own sheet opens. Dismiss it: the screen stays signed out with no problem. Tap again and sign in with a Google account: the screen shows its email, signed in. Sign out and sign in with a Sign-in code for the same email: the same Account opens, with the same words.
+The checks of the native build of 0.9, on a real iPhone, are in [the owner's checks](docs/owner-checks.md#09-build).
 
 ## Check the bundle with Expo Atlas
 
