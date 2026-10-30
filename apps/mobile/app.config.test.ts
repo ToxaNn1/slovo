@@ -209,6 +209,12 @@ describe('app config', () => {
     expect(config.extra?.['edition']).toMatchObject({ id: 'uk' });
   });
 
+  it('carries the version of the milestone the code belongs to (ADR 0044)', () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+
+    expect(appConfig(context).version).toBe('0.9');
+  });
+
   it('turns on the React Compiler (ADR 0059)', () => {
     vi.stubEnv('SLOVO_EDITION', 'uk');
 
