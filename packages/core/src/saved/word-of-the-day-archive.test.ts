@@ -14,25 +14,9 @@ import {
 } from '../index';
 import { createWordOfTheDayArchive } from './word-of-the-day-archive';
 import { createMemoryContentPort } from '../testing';
-import { fakeClock, word } from '../test-support';
+import { fakeClock, testEdition, word } from '../test-support';
 
 /** The Edition's one Category, the test Words' own, and its default Mix of every Category. */
-const testCategories = {
-  id: 'test',
-  languageTraits: { distractorRule: 'same-part-of-speech' as const },
-  userSettingDefaults: {
-    mix: {
-      categoryIds: ['test'],
-      correctionCategoryIds: 'all' as const,
-      corrections: false,
-      idioms: true,
-      synonymRows: true,
-      tips: true,
-    },
-    notificationTimes: [],
-  },
-};
-
 const content = createMemoryContentPort({
   words: [word('w_one'), word('w_two'), word('w_three')],
 });
@@ -57,7 +41,10 @@ async function run({
   };
   const app: Composition = await openComposition({
     content,
-    edition: { ...testCategories, isFeatureEnabled: (feature) => on.includes(feature) },
+    edition: testEdition({
+      isFeatureEnabled: (feature) => on.includes(feature),
+      userSettingDefaults: { mix: { corrections: false } },
+    }),
     userState: await openUserState({ port }),
     clock,
     random: { next: () => 0.25 },

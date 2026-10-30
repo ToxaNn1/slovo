@@ -9,7 +9,7 @@ import {
   type UserStatePort,
 } from './index';
 import { createFakeNotificationScheduler, createMemoryContentPort } from './testing';
-import { fakeClock, word } from './test-support';
+import { fakeClock, testEdition, word } from './test-support';
 
 const SECOND = 1000;
 
@@ -38,22 +38,10 @@ async function run({
   const scheduler = createFakeNotificationScheduler();
   const app = await openComposition({
     content: pack,
-    edition: {
-      id: 'test',
+    edition: testEdition({
       isFeatureEnabled: () => true,
-      languageTraits: { distractorRule: 'same-part-of-speech' },
-      userSettingDefaults: {
-        mix: {
-          categoryIds: ['test'],
-          correctionCategoryIds: 'all' as const,
-          corrections: true,
-          idioms: true,
-          synonymRows: true,
-          tips: true,
-        },
-        notificationTimes: ['09:00', '13:00', '19:00'],
-      },
-    },
+      userSettingDefaults: { notificationTimes: ['09:00', '13:00', '19:00'] },
+    }),
     userState: await openUserState({ port }),
     clock: time.clock,
     random: { next: () => 0.25 },

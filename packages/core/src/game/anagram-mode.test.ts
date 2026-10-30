@@ -13,7 +13,7 @@ import {
   type Round,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
-import { seededRandom, word } from '../test-support';
+import { seededRandom, testEdition, word } from '../test-support';
 
 /**
  * The pack's Words that play, of 4 to 9 letters: one with an apostrophe, one
@@ -87,22 +87,9 @@ async function run({
 }: { seed?: number; off?: readonly string[] } = {}): Promise<Composition> {
   const app = await openComposition({
     content,
-    edition: {
-      id: 'test',
+    edition: testEdition({
       isFeatureEnabled: (feature) => !off.includes(feature),
-      userSettingDefaults: {
-        mix: {
-          categoryIds: ['test'],
-          correctionCategoryIds: 'all' as const,
-          corrections: true,
-          idioms: true,
-          synonymRows: true,
-          tips: true,
-        },
-        notificationTimes: [],
-      },
-      languageTraits: { distractorRule: 'same-part-of-speech' },
-    },
+    }),
     userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
     clock: {
       now: () => new Date('2026-10-26T09:00:00+02:00'),

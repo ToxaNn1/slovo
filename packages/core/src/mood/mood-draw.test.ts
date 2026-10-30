@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { createMemoryUserStatePort, openUserState, type Random } from '../index';
 import { createMoodDraw, type MoodDraw } from './mood-draw';
 import { createMemoryContentPort } from '../testing';
-import { seededRandom, word } from '../test-support';
+import { seededRandom, testEdition, word } from '../test-support';
 
 const moods: readonly Mood[] = [
   { id: 'calm', name: 'Calm', emoji: '😌' },
@@ -45,20 +45,19 @@ async function open({
       words,
       corrections: [],
     }),
-    edition: {
+    edition: testEdition({
       moods,
       isFeatureEnabled: (feature) => !off.includes(feature),
       userSettingDefaults: {
         mix: {
           categoryIds: 'all',
-          correctionCategoryIds: 'all',
           corrections: false,
           idioms: false,
           synonymRows: false,
           tips: false,
         },
       },
-    },
+    }),
     userState: await openUserState({ port }),
     random,
   });
@@ -162,20 +161,19 @@ describe('the mood draw', () => {
     const records = new Map<string, string>();
     const draw = createMoodDraw({
       content: createMemoryContentPort({ words }),
-      edition: {
+      edition: testEdition({
         moods,
         isFeatureEnabled: () => true,
         userSettingDefaults: {
           mix: {
             categoryIds: 'all',
-            correctionCategoryIds: 'all',
             corrections: false,
             idioms: false,
             synonymRows: false,
             tips: false,
           },
         },
-      },
+      }),
       userState: await openUserState({ port: createMemoryUserStatePort(records) }),
       random: seededRandom(3),
     });

@@ -11,7 +11,7 @@ import {
   userStateRecords,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
-import { correction, fakeClock, knownCounts, word } from '../test-support';
+import { correction, fakeClock, knownCounts, testEdition, word } from '../test-support';
 
 const content = createMemoryContentPort({
   words: [word('w_one'), word('w_two'), word('w_three')],
@@ -32,22 +32,9 @@ async function run({
 } = {}): Promise<Composition> {
   return openComposition({
     content: pack,
-    edition: {
-      id: 'test',
+    edition: testEdition({
       isFeatureEnabled: (feature) => on.includes(feature),
-      languageTraits: { distractorRule: 'same-part-of-speech' },
-      userSettingDefaults: {
-        mix: {
-          categoryIds: ['test'],
-          correctionCategoryIds: 'all' as const,
-          corrections: true,
-          idioms: true,
-          synonymRows: true,
-          tips: true,
-        },
-        notificationTimes: [],
-      },
-    },
+    }),
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock,
     random: { next: () => 0.25 },
@@ -374,22 +361,10 @@ describe('Knowledge Marks', () => {
     const port = createMemoryUserStatePort(records);
     const app = await openComposition({
       content,
-      edition: {
-        id: 'test',
+      edition: testEdition({
         isFeatureEnabled: (feature) => feature === 'knowledge',
-        languageTraits: { distractorRule: 'same-part-of-speech' },
-        userSettingDefaults: {
-          mix: {
-            categoryIds: ['test'],
-            correctionCategoryIds: 'all' as const,
-            corrections: false,
-            idioms: true,
-            synonymRows: true,
-            tips: true,
-          },
-          notificationTimes: [],
-        },
-      },
+        userSettingDefaults: { mix: { corrections: false } },
+      }),
       userState: await openUserState({ port }),
       clock: fakeClock().clock,
       random: { next: () => 0.25 },

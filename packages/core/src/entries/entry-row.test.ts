@@ -8,6 +8,7 @@ import {
   fakeClock,
   idiom,
   synonymRow,
+  testEdition,
   tip,
   word,
 } from '../test-support';
@@ -46,22 +47,9 @@ async function open(records: Map<string, string>) {
   const { content: counted, reads } = countingReads(content);
   const app = await openComposition({
     content: counted,
-    edition: {
-      id: 'test',
+    edition: testEdition({
       isFeatureEnabled: (feature) => feature === 'corrections' || feature === 'knowledge',
-      languageTraits: { distractorRule: 'same-part-of-speech' },
-      userSettingDefaults: {
-        mix: {
-          categoryIds: ['test'],
-          correctionCategoryIds: 'all' as const,
-          corrections: true,
-          idioms: true,
-          synonymRows: true,
-          tips: true,
-        },
-        notificationTimes: [],
-      },
-    },
+    }),
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock: fakeClock().clock,
     random: { next: () => 0.25 },

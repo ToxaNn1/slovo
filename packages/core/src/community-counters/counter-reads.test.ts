@@ -10,28 +10,19 @@ import {
   type FeatureSwitch,
 } from '../index';
 import { createFakeCountersApi, createMemoryContentPort, type FakeCountersApi } from '../testing';
-import { fakeClock, randomOf, testSchedule, word } from '../test-support';
+import { fakeClock, randomOf, testEdition, testSchedule, word } from '../test-support';
 import type { UserState } from '../user-state/user-state';
 
 const content = createMemoryContentPort({ words: [word('w_one'), word('w_two'), word('w_three')] });
 
 /** The Edition with the Feature Switches in `on` on. */
-const editionWith = (on: readonly FeatureSwitch[]) => ({
-  id: 'test',
-  isFeatureEnabled: (feature: FeatureSwitch) => on.includes(feature),
-  languageTraits: { distractorRule: 'same-part-of-speech' as const },
-  userSettingDefaults: {
-    mix: {
-      categoryIds: ['test'],
-      correctionCategoryIds: 'all' as const,
-      corrections: false,
-      idioms: false,
-      synonymRows: false,
-      tips: false,
+const editionWith = (on: readonly FeatureSwitch[]) =>
+  testEdition({
+    isFeatureEnabled: (feature) => on.includes(feature),
+    userSettingDefaults: {
+      mix: { corrections: false, idioms: false, synonymRows: false, tips: false },
     },
-    notificationTimes: [],
-  },
-});
+  });
 
 /** One app run: the counter reads and the Core composition over the same user state, at a time the test moves. */
 async function run({

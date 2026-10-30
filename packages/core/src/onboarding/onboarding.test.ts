@@ -13,7 +13,7 @@ import {
   type PlannedNotification,
 } from '../index';
 import { createFakeNotificationScheduler, createMemoryContentPort } from '../testing';
-import { fakeClock, word } from '../test-support';
+import { fakeClock, testEdition, word } from '../test-support';
 
 /** The instant these tests start at. */
 const start = '2026-10-14T08:00:00+03:00';
@@ -68,26 +68,17 @@ async function run({
 } = {}): Promise<Composition> {
   return openComposition({
     content,
-    edition: {
-      id: 'test',
-      userSettingDefaults: {
-        mix: {
-          categoryIds: ['test', 'other'],
-          correctionCategoryIds: 'all' as const,
-          corrections: false,
-          idioms: true,
-          synonymRows: true,
-          tips: true,
-        },
-        notificationTimes: ['09:00', '13:00', '19:00'],
-      },
+    edition: testEdition({
       isFeatureEnabled: (feature) =>
         (feature === 'account' && account) ||
         (feature === 'notifications' && notifications) ||
         ((feature === 'rarityTest' || feature === 'rarityFloor') && rarityTest) ||
         feature === 'wordOfTheDay',
-      languageTraits: { distractorRule: 'same-part-of-speech' },
-    },
+      userSettingDefaults: {
+        mix: { categoryIds: ['test', 'other'], corrections: false },
+        notificationTimes: ['09:00', '13:00', '19:00'],
+      },
+    }),
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock,
     random: { next: () => 0.25 },

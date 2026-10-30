@@ -14,8 +14,6 @@ import {
   type Clock,
   type Composition,
   type ContentReadPort,
-  type Edition,
-  type GameEdition,
   type Feed,
   type FeedCard,
   IDIOM_EVERY,
@@ -25,14 +23,13 @@ import {
 } from '../index';
 import { SYNONYM_ROW_EVERY, TIP_EVERY } from './feed';
 import { createMemoryContentPort } from '../testing';
-import { type MixEdition } from '../entries/mix';
-import { type NotificationsEdition } from '../notifications/notifications';
 import {
   correction,
   fakeClock,
   idiom,
   randomOf,
   randomSequence,
+  testEdition,
   word as sharedWord,
 } from '../test-support';
 
@@ -53,31 +50,14 @@ const pack = [
  * Switches on or off, whose one Category, the test Words' own, is in its
  * default Mix.
  */
-const editionWith = (
-  corrections: boolean,
-  idioms = true,
-  synonymRows = true,
-  tips = true,
-): Pick<Edition, 'id' | 'isFeatureEnabled'> & MixEdition & NotificationsEdition & GameEdition => ({
-  id: 'test',
-  isFeatureEnabled: (feature) =>
-    (feature === 'corrections' && corrections) ||
-    (feature === 'idioms' && idioms) ||
-    (feature === 'synonymRows' && synonymRows) ||
-    (feature === 'tips' && tips),
-  languageTraits: { distractorRule: 'same-part-of-speech' },
-  userSettingDefaults: {
-    mix: {
-      categoryIds: ['test'],
-      correctionCategoryIds: 'all' as const,
-      corrections: true,
-      idioms: true,
-      synonymRows: true,
-      tips: true,
-    },
-    notificationTimes: [],
-  },
-});
+const editionWith = (corrections: boolean, idioms = true, synonymRows = true, tips = true) =>
+  testEdition({
+    isFeatureEnabled: (feature) =>
+      (feature === 'corrections' && corrections) ||
+      (feature === 'idioms' && idioms) ||
+      (feature === 'synonymRows' && synonymRows) ||
+      (feature === 'tips' && tips),
+  });
 
 /** The local day a card is the Word of the Day of, if it is. */
 const wordOfTheDayOf = (card: FeedCard | undefined) =>

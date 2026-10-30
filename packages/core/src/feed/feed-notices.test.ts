@@ -14,7 +14,7 @@ import {
 } from '../index';
 import { type FeedNoticeContent, type FeedNotices } from './feed-notices';
 import { createMemoryContentPort } from '../testing';
-import { correction, fakeClock, idiom, randomOf, word } from '../test-support';
+import { correction, fakeClock, idiom, randomOf, testEdition, word } from '../test-support';
 
 const words: readonly Word[] = Array.from({ length: 30 }, (_, index) =>
   word(`w_${String(index).padStart(2, '0')}`),
@@ -111,23 +111,10 @@ async function run({
       synonymRows,
       tips,
     }),
-    edition: {
-      id: 'test',
+    edition: testEdition({
       isFeatureEnabled: (feature) =>
         ['knowledge', 'corrections', 'idioms', 'synonymRows', 'tips'].includes(feature),
-      languageTraits: { distractorRule: 'same-part-of-speech' },
-      userSettingDefaults: {
-        mix: {
-          categoryIds: ['test'],
-          correctionCategoryIds: 'all' as const,
-          corrections: true,
-          idioms: true,
-          synonymRows: true,
-          tips: true,
-        },
-        notificationTimes: [],
-      },
-    },
+    }),
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock,
     random: randomOf(0.25),

@@ -10,25 +10,9 @@ import {
   type Random,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
-import { correction, fakeClock, steppingRandom, word } from '../test-support';
+import { correction, fakeClock, steppingRandom, testEdition, word } from '../test-support';
 
 /** The Edition's one Category, the test Words' own, and its default Mix of every Category. */
-const testCategories = {
-  id: 'test',
-  languageTraits: { distractorRule: 'same-part-of-speech' as const },
-  userSettingDefaults: {
-    mix: {
-      categoryIds: ['test'],
-      correctionCategoryIds: 'all' as const,
-      corrections: true,
-      idioms: true,
-      synonymRows: true,
-      tips: true,
-    },
-    notificationTimes: [],
-  },
-};
-
 const content = createMemoryContentPort({
   words: [
     word('w_one'),
@@ -50,7 +34,7 @@ async function run({
 }: { records?: Map<string, string>; clock?: Clock; random?: Random } = {}): Promise<Composition> {
   return openComposition({
     content,
-    edition: { ...testCategories, isFeatureEnabled: (feature) => feature === 'corrections' },
+    edition: testEdition({ isFeatureEnabled: (feature) => feature === 'corrections' }),
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock,
     random,
@@ -330,7 +314,7 @@ describe('Collections', () => {
     records.set('collectionEntries.k_deleted.c_one', JSON.stringify('2026-10-11T07:30:00.000Z'));
     const app = await openComposition({
       content,
-      edition: { ...testCategories, isFeatureEnabled: () => true },
+      edition: testEdition({ isFeatureEnabled: () => true }),
       userState: await openUserState({
         port: {
           ...port,
@@ -376,7 +360,7 @@ describe('Collections', () => {
     let failing = false;
     const app = await openComposition({
       content,
-      edition: { ...testCategories, isFeatureEnabled: () => false },
+      edition: testEdition({ isFeatureEnabled: () => false }),
       userState: await openUserState({
         port: {
           ...port,
@@ -508,7 +492,7 @@ describe('Collections', () => {
       const open = async () =>
         openComposition({
           content,
-          edition: { ...testCategories, isFeatureEnabled: () => false },
+          edition: testEdition({ isFeatureEnabled: () => false }),
           userState: await openUserState({
             port: {
               ...port,
@@ -539,7 +523,7 @@ describe('Collections', () => {
       const port = createMemoryUserStatePort(records);
       const app = await openComposition({
         content,
-        edition: { ...testCategories, isFeatureEnabled: () => true },
+        edition: testEdition({ isFeatureEnabled: () => true }),
         userState: await openUserState({
           port: {
             ...port,
@@ -634,7 +618,7 @@ describe('Collections', () => {
       let failing = false;
       const app = await openComposition({
         content,
-        edition: { ...testCategories, isFeatureEnabled: () => false },
+        edition: testEdition({ isFeatureEnabled: () => false }),
         userState: await openUserState({
           port: {
             ...port,

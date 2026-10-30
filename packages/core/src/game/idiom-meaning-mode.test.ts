@@ -13,7 +13,7 @@ import {
   type Round,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
-import { seededRandom } from '../test-support';
+import { seededRandom, testEdition } from '../test-support';
 
 function idiom(id: string, idiomType: IdiomType = 'idiom'): Idiom {
   return {
@@ -54,22 +54,10 @@ async function run({
 } = {}): Promise<Composition> {
   const app = await openComposition({
     content,
-    edition: {
-      id: 'test',
+    edition: testEdition({
       isFeatureEnabled: (feature) => !off.includes(feature),
-      userSettingDefaults: {
-        mix: {
-          categoryIds: [],
-          correctionCategoryIds: 'all' as const,
-          corrections: true,
-          idioms: idiomsInMix,
-          synonymRows: true,
-          tips: true,
-        },
-        notificationTimes: [],
-      },
-      languageTraits: { distractorRule: 'same-part-of-speech' },
-    },
+      userSettingDefaults: { mix: { categoryIds: [], idioms: idiomsInMix } },
+    }),
     userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
     clock: {
       now: () => new Date('2026-10-27T09:00:00+02:00'),

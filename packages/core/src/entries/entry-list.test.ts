@@ -9,25 +9,9 @@ import {
   type UserStatePort,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
-import { correction, fakeClock, word } from '../test-support';
+import { correction, fakeClock, testEdition, word } from '../test-support';
 
 /** The Edition's one Category, the test Words' own, and its default Mix of every Category. */
-const testCategories = {
-  id: 'test',
-  languageTraits: { distractorRule: 'same-part-of-speech' as const },
-  userSettingDefaults: {
-    mix: {
-      categoryIds: ['test'],
-      correctionCategoryIds: 'all' as const,
-      corrections: true,
-      idioms: true,
-      synonymRows: true,
-      tips: true,
-    },
-    notificationTimes: [],
-  },
-};
-
 /** A small pack: live Words, a Retired Word, a live and a Retired Correction. */
 const content = createMemoryContentPort({
   words: [word('w_one'), word('w_two'), word('w_three'), word('w_old', { retired: true })],
@@ -48,7 +32,7 @@ async function run({
 } = {}): Promise<Composition> {
   return openComposition({
     content,
-    edition: { ...testCategories, isFeatureEnabled: (feature) => feature === 'corrections' },
+    edition: testEdition({ isFeatureEnabled: (feature) => feature === 'corrections' }),
     userState: await openUserState({ port }),
     clock,
     random: { next: () => 0.25 },

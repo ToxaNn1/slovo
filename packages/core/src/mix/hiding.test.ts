@@ -12,7 +12,7 @@ import {
 } from '../index';
 import { createMemoryContentPort } from '../testing';
 import type { Category } from '@slovo/contracts';
-import { correction, fakeClock, word } from '../test-support';
+import { correction, fakeClock, testEdition, word } from '../test-support';
 
 /** The Language Pack's Categories, in its order. */
 const nature: Category = { id: 'nature', displayName: 'Nature' };
@@ -43,22 +43,10 @@ async function run({
 } = {}): Promise<Composition> {
   return openComposition({
     content,
-    edition: {
-      id: 'test',
+    edition: testEdition({
       isFeatureEnabled: (feature) => feature === 'corrections',
-      languageTraits: { distractorRule: 'same-part-of-speech' },
-      userSettingDefaults: {
-        mix: {
-          categoryIds: categories.map(({ id }) => id),
-          correctionCategoryIds: 'all' as const,
-          corrections: true,
-          idioms: true,
-          synonymRows: true,
-          tips: true,
-        },
-        notificationTimes: [],
-      },
-    },
+      userSettingDefaults: { mix: { categoryIds: categories.map(({ id }) => id) } },
+    }),
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock,
     random: { next: () => 0.25 },

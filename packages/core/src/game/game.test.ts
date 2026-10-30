@@ -36,7 +36,7 @@ import {
 } from '../index';
 import { GAME_LIVES } from './game-in-play';
 import { createMemoryContentPort } from '../testing';
-import { idiom, optionsOf, pickPlayed, seededRandom } from '../test-support';
+import { idiom, optionsOf, pickPlayed, seededRandom, testEdition } from '../test-support';
 
 function word(
   id: string,
@@ -200,24 +200,14 @@ async function run({
 } = {}): Promise<Composition> {
   const app = await openComposition({
     content: pack,
-    edition: {
-      id: 'test',
+    edition: testEdition({
       isFeatureEnabled: (feature) =>
         !off.includes(feature) &&
         (((feature === 'game' || feature === 'gameGuessWord') && game) || on.includes(feature)),
       userSettingDefaults: {
-        mix: {
-          categoryIds: categories.map(({ id }) => id),
-          correctionCategoryIds: 'all' as const,
-          corrections: false,
-          idioms: true,
-          synonymRows: true,
-          tips: true,
-        },
-        notificationTimes: [],
+        mix: { categoryIds: categories.map(({ id }) => id), corrections: false },
       },
-      languageTraits: { distractorRule: 'same-part-of-speech' },
-    },
+    }),
     userState: await openUserState({ port }),
     clock: time,
     random: seededRandom(seed),

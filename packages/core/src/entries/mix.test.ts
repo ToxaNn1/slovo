@@ -14,7 +14,7 @@ import {
 } from '../index';
 import { createMemoryContentPort } from '../testing';
 import type { Category } from '@slovo/contracts';
-import { correction, fakeClock, idiom, word } from '../test-support';
+import { correction, fakeClock, idiom, testEdition, word } from '../test-support';
 
 /** The Language Pack's Categories, in its order. */
 const nature: Category = { id: 'nature', displayName: 'Nature' };
@@ -84,25 +84,18 @@ async function run({
 } = {}): Promise<Composition> {
   return openComposition({
     content: pack,
-    edition: {
-      id: 'test',
+    edition: testEdition({
       isFeatureEnabled: (feature) =>
         (feature === 'corrections' && correctionsSwitch) ||
         (feature === 'idioms' && idiomsSwitch) ||
         (feature === 'rarityFloor' && rarityFloorSwitch),
-      languageTraits: { distractorRule: 'same-part-of-speech' },
       userSettingDefaults: {
         mix: {
           categoryIds: defaultCategoryIds,
           correctionCategoryIds: defaultCorrectionCategoryIds,
-          corrections: true,
-          idioms: true,
-          synonymRows: true,
-          tips: true,
         },
-        notificationTimes: [],
       },
-    },
+    }),
     userState: await openUserState({ port }),
     clock,
     random: { next: () => 0.25 },

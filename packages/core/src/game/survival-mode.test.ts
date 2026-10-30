@@ -13,7 +13,7 @@ import {
   type Round,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
-import { correction, optionsOf, seededRandom, word } from '../test-support';
+import { correction, optionsOf, seededRandom, testEdition, word } from '../test-support';
 
 /** A Word with an Example that holds its Lemma, which «Вгадай слово» would ask with a gap in Rounds 6–10. */
 const wordOf = (index: number): Word => {
@@ -50,22 +50,10 @@ async function run({
 } = {}): Promise<Composition> {
   const app = await openComposition({
     content: createMemoryContentPort({ words: [...words], corrections: [...corrections] }),
-    edition: {
-      id: 'test',
+    edition: testEdition({
       isFeatureEnabled: (feature) => !off.includes(feature),
-      userSettingDefaults: {
-        mix: {
-          categoryIds: ['test'],
-          correctionCategoryIds: 'all' as const,
-          corrections: correctionsInMix,
-          idioms: true,
-          synonymRows: true,
-          tips: true,
-        },
-        notificationTimes: [],
-      },
-      languageTraits: { distractorRule: 'same-part-of-speech' },
-    },
+      userSettingDefaults: { mix: { corrections: correctionsInMix } },
+    }),
     userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
     clock: {
       now: () => new Date('2026-10-27T09:00:00+02:00'),
