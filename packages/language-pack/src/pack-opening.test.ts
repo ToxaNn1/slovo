@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { buildLanguagePack, openLanguagePack } from './index';
-import { openPack, type AppEditions } from './pack-reader';
+import { openPack, type AppEditions, type PackDatabase } from './pack-reader';
 import { nodePackDatabase } from './read-pack';
 
 // Opening a compiled pack the way the mobile shell does, over the Node driver.
@@ -68,6 +68,31 @@ describe('openPack', () => {
     expect(opening.metadata).toEqual(metadata);
     expect(await opening.reader.metadata()).toEqual(metadata);
     expect(await opening.reader.listWordIds()).toEqual(['w_fx0002', 'w_fx0003']);
+  });
+
+  it('reads the Words of a Category through the index words_by_category', async () => {
+    const db = new DatabaseSync(builtPack(), { readOnly: true });
+    openDatabases.push(db);
+    const pack = nodePackDatabase(db);
+    const run: string[] = [];
+    const recording: PackDatabase = {
+      getAllAsync(sql, params) {
+        run.push(sql);
+        return pack.getAllAsync(sql, params);
+      },
+    };
+    const opening = await openPack(recording, { bundle: 'fixture', native: 'fixture' });
+    if (!opening.ok) throw new Error(opening.reason);
+    run.length = 0;
+
+    expect(await opening.reader.listWordIds('speech')).toEqual(['w_fx0002', 'w_fx0003']);
+
+    const [sql] = run;
+    if (sql === undefined) throw new Error('The reader ran no query');
+    const plan = db.prepare(`EXPLAIN QUERY PLAN ${sql}`).all('speech') as { detail: string }[];
+    expect(plan.map((step) => step.detail).join('\n')).toContain(
+      'USING COVERING INDEX words_by_category',
+    );
   });
 
   it('opens it when the native app does not report its Edition', async () => {
