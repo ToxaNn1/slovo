@@ -322,21 +322,25 @@ describe('a Round of «Обери правильне»', () => {
     const highlighted = (id: string) =>
       rounds
         .filter((round) => askedOf(round).id === id)
-        .map(({ prompt, highlight }) => ({
+        .map(({ prompt, highlight, gap }) => ({
           highlight,
+          gap,
           text: highlight === undefined ? undefined : prompt.slice(highlight.start, highlight.end),
         }));
 
     expect(highlighted('c_calque01')[0]).toEqual({
       highlight: { start: 0, end: 10 },
+      gap: undefined,
       text: 'На протязі',
     });
     expect(highlighted('c_russian01')[0]).toEqual({
       highlight: { start: 6, end: 19 },
+      gap: undefined,
       text: 'приймати міри',
     });
     expect(highlighted('c_calque05')[0]).toEqual({
       highlight: { start: 10, end: 22 },
+      gap: undefined,
       text: 'bad calque05',
     });
   });

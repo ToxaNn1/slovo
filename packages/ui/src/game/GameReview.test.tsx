@@ -146,6 +146,8 @@ function played(
             ? entry.gameQuestion.prompt
             : entry.primaryDefinition,
     highlight: undefined,
+    gap: undefined,
+    lifeLostAfter: 200,
     form: 'pick',
     options,
     answer: roundAnswer,
@@ -174,6 +176,8 @@ const playedIn = (
   entryKind: entry.kind,
   prompt,
   highlight: undefined,
+  gap: undefined,
+  lifeLostAfter: 200,
   answer,
   entry,
   right: answer.right,

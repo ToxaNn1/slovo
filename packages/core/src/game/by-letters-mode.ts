@@ -4,12 +4,8 @@ import type { GameMode } from './game-mode';
 /** The characters of a Word that stay in place and are never blanks: an apostrophe of any kind or a hyphen. */
 const IN_PLACE = new Set(["'", 'ʼ', '’', '-']);
 
-/**
- * Whether a character of a Word stays in place among its blanks, an
- * apostrophe of any kind or a hyphen, so that the shell draws it as a mark
- * rather than a letter opened.
- */
-export const staysInPlace = (character: string): boolean => IN_PLACE.has(character);
+/** Whether a character of a Word stays in place among its blanks: an apostrophe of any kind or a hyphen. */
+const staysInPlace = (character: string): boolean => IN_PLACE.has(character);
 
 /**
  * «За буквами», the Core's typing mode (ADR 0052): a Round shows a Word's

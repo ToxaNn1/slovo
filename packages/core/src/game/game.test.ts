@@ -12,6 +12,8 @@ import type {
 
 import {
   buildGameReview,
+  createGameHaptics,
+  createHaptics,
   createMemoryUserStatePort,
   GAME_ROUNDS,
   openComposition,
@@ -1132,6 +1134,35 @@ describe('the rules of a Game', () => {
 
     expect(current(app)).toMatchObject({ lives: 4, roundsPassed: 0, status: 'answered' });
     expect(current(app).round.answer).toMatchObject({ chosen: (right + 1) % 4, correct: right });
+  });
+
+  it('tells the shell when a wrong answer costs its Life: as the Life haptic comes', async () => {
+    const app = await run();
+    await app.game.start('guess-word');
+    const pending: { delay: number; run: () => void }[] = [];
+    const played: string[] = [];
+    const haptics = createGameHaptics({
+      haptics: createHaptics({
+        engine: {
+          selection: () => played.push('selection'),
+          impactLight: () => played.push('impactLight'),
+          impactMedium: () => played.push('impactMedium'),
+          success: () => played.push('success'),
+          warning: () => played.push('warning'),
+        },
+        vibration: () => true,
+      }),
+      schedule: (run, delay) => {
+        pending.push({ delay, run });
+        return () => undefined;
+      },
+    });
+
+    haptics.wrongAnswer();
+
+    expect(pending.map(({ delay }) => delay)).toEqual([current(app).round.lifeLostAfter]);
+    pending[0]?.run();
+    expect(played).toEqual(['warning', 'impactMedium']);
   });
 
   it('counts a Round passed on «Далі», right or wrong, and moves to the next Round', async () => {
@@ -3002,10 +3033,13 @@ describe('«Вгадай слово» harder as it goes (L10)', () => {
     for (const round of played.slice(0, 5)) {
       expect(round.prompt).toBe(definitionOf(round.entry));
       expect(round.highlight).toBeUndefined();
+      expect(round.gap).toBeUndefined();
     }
     for (const round of played.slice(5, 10)) {
-      const { entry, prompt, highlight } = round;
+      const { entry, prompt, highlight, gap } = round;
       if (entry.kind !== 'word' || highlight === undefined) throw new Error('No gap Round');
+      expect(gap).toEqual(highlight);
+      expect(prompt.slice(highlight.start, highlight.end)).toBe('…');
       const filled = `${prompt.slice(0, highlight.start)}${renderStress({ ...entry, lemma: capitalised(entry.lemma) })}${prompt.slice(highlight.end)}`;
       expect(filled).toBe(entry.examples[0]?.text);
       expect(prompt.toLowerCase()).not.toContain(entry.lemma);

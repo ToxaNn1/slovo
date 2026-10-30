@@ -60,6 +60,7 @@ export {
   type PlayedRound,
   type Round,
   type RoundAnswer,
+  type RoundBlank,
 } from './game/game-in-play';
 export {
   ROUND_OPTIONS,
@@ -77,8 +78,6 @@ export {
 } from './game/game-mode';
 export { buildGameReview, type GameReviewItem } from './game/game-review';
 export { GAME_ROUNDS } from './game/round-plan';
-export { staysInPlace } from './game/by-letters-mode';
-export { gapOf } from './game/guess-word';
 export { type MoodChoice } from './mood/mood-draw';
 export { type SearchResults } from './search/search';
 export { createGameHaptics, LIFE_LOST_DELAY, type GameHaptics } from './game/game-haptics';
