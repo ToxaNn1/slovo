@@ -196,13 +196,13 @@ export interface CurrentGame {
 }
 
 /**
- * The Game in play, for `openGame`, which keeps the Game's state and its
- * async work: the Game Mode and the Rounds, built when the Game starts, and
- * the moves of a `CurrentGame` through them. A move never edits the Game it
- * takes: it makes a new one, and leaves showing it to `openGame`.
+ * The Game in play: the Rounds, planned when the Game starts, and the moves
+ * of a `CurrentGame` through them, which `openGame` wraps with what the
+ * Rounds know nothing of: the play time, the Knowledge Marks, the Best
+ * result and the order of the Game's changes (ADR 0052). A move never edits
+ * the Game it takes: it makes a new one, and leaves showing it to `openGame`.
  */
 export interface GameInPlay {
-  readonly mode: GameMode;
   /** The Game at its first Round, with every Life. */
   readonly first: CurrentGame;
   /**
@@ -398,18 +398,25 @@ function judge(
 }
 
 /**
- * Starts a Game in the mode over its planned Rounds, which `planRounds`
- * builds anew from the eligible Entries on `replan`; nothing without a Round.
- * The pairs of a pairs grid are Rounds of their own, one after another, until
- * the grid is empty. In a mode with no Round limit, the Game plans
- * `GAME_ROUNDS` more Rounds whenever it runs out of them.
+ * Starts a Game in the mode over the Rounds planned for it, which
+ * `planRounds` builds anew from the eligible Entries on `replan`; nothing
+ * without a Round. The pairs of a pairs grid are Rounds of their own, one
+ * after another, until the grid is empty. In a mode with no Round limit, the
+ * Game plans `GAME_ROUNDS` more Rounds whenever it runs out of them.
  */
-export function createGameInPlay(
-  mode: GameMode,
-  planned: readonly PlannedRound[],
-  planRounds: RoundPlanner,
-  eligibleAtStart: EligibleOfKind<AskableEntry>,
-): GameInPlay | undefined {
+export function createGameInPlay({
+  mode,
+  rounds: planned,
+  planRounds,
+  eligible: eligibleAtStart,
+}: {
+  mode: GameMode;
+  /** The Rounds the Game starts over, as the mode planned them. */
+  rounds: readonly PlannedRound[];
+  planRounds: RoundPlanner;
+  /** The eligible Entries of the mode's kinds the Rounds were planned from. */
+  eligible: EligibleOfKind<AskableEntry>;
+}): GameInPlay | undefined {
   const first = planned[0];
   if (first === undefined) return undefined;
   let rounds = planned;
@@ -459,7 +466,6 @@ export function createGameInPlay(
   }
 
   return {
-    mode,
     first: {
       modeId: mode.id,
       round: roundOf(first, 1, [], 0),
