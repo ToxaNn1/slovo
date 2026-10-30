@@ -765,4 +765,43 @@ describe('app config', () => {
       /EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID.*\.apps\.googleusercontent\.com/s,
     );
   });
+
+  it.each(['testflight-uk', 'production'])(
+    'refuses a release build (%s) with no API address, naming the variable',
+    (profile) => {
+      vi.stubEnv('SLOVO_EDITION', 'uk');
+      vi.stubEnv('EAS_BUILD_PROFILE', profile);
+      vi.stubEnv('EXPO_PUBLIC_SLOVO_API_URL', undefined);
+
+      expect(() => appConfig(context)).toThrow(/EXPO_PUBLIC_SLOVO_API_URL is not set/);
+    },
+  );
+
+  it('refuses a release build whose API address is not https', () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+    vi.stubEnv('EAS_BUILD_PROFILE', 'testflight-uk');
+    vi.stubEnv('EXPO_PUBLIC_SLOVO_API_URL', 'http://api.example.com');
+
+    expect(() => appConfig(context)).toThrow(/EXPO_PUBLIC_SLOVO_API_URL.*https:\/\//s);
+  });
+
+  it('builds a release with an https API address', () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+    vi.stubEnv('EAS_BUILD_PROFILE', 'testflight-uk');
+    vi.stubEnv('EXPO_PUBLIC_SLOVO_API_URL', 'https://api.example.com');
+
+    expect(appConfig(context).name).toBe(ukrainian.config.displayName);
+  });
+
+  it.each([
+    ['a development profile', 'development-simulator-uk', 'http://localhost:8787'],
+    ['a development profile with no address', 'development-simulator', undefined],
+    ['Metro outside EAS', undefined, 'http://localhost:8788'],
+  ])('keeps localhost for %s', (_, profile, address) => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+    vi.stubEnv('EAS_BUILD_PROFILE', profile);
+    vi.stubEnv('EXPO_PUBLIC_SLOVO_API_URL', address);
+
+    expect(appConfig(context).name).toBe(ukrainian.config.displayName);
+  });
 });

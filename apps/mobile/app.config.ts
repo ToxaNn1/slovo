@@ -240,6 +240,32 @@ function googleSignIn(): NonNullable<ExpoConfig['plugins']> {
   return [['@react-native-google-signin/google-signin', { iosUrlScheme }]];
 }
 
+/** The backend's address the bundle carries (`src/api.ts`). */
+const API_URL_VARIABLE = 'EXPO_PUBLIC_SLOVO_API_URL';
+
+/**
+ * Refuses a release build that would talk to localhost or over plain HTTP:
+ * every EAS build profile but a development one (`development…`) must carry
+ * an `https://` API address. Development builds and Metro outside EAS keep
+ * the localhost fallback.
+ */
+function requireReleaseApiUrl(): void {
+  // Expo types every environment variable as `any`; narrow it here.
+  const profile: unknown = process.env['EAS_BUILD_PROFILE'];
+  if (typeof profile !== 'string' || profile === '' || profile.startsWith('development')) return;
+  const value: unknown = process.env[API_URL_VARIABLE];
+  if (typeof value !== 'string' || value === '') {
+    throw new Error(
+      `${API_URL_VARIABLE} is not set, so the release build "${profile}" would talk to localhost: set it to the backend's https:// address`,
+    );
+  }
+  if (!value.startsWith('https://')) {
+    throw new Error(
+      `${API_URL_VARIABLE} is "${value}", but the release build "${profile}" needs an https:// address`,
+    );
+  }
+}
+
 function selectEdition(editionsDir: string): EditionFolder {
   const known = listEditions(editionsDir);
   const hint = `Known Editions: ${known.join(', ')}. Example: ${EDITION_VARIABLE}=${known[0] ?? '<edition>'} pnpm start`;
@@ -260,6 +286,7 @@ function selectEdition(editionsDir: string): EditionFolder {
 }
 
 export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
+  requireReleaseApiUrl();
   const edition = selectEdition(join(projectRoot, '../../editions'));
   const [language] = edition.config.locale.split('-');
   const icon = edition.path('icon');
