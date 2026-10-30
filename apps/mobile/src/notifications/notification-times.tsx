@@ -8,7 +8,7 @@ import {
   useEdition,
   useTokens,
 } from '@slovo/ui';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { AccessibilityInfo, Pressable, StyleSheet, Text } from 'react-native';
 
 import { deviceClock } from '../device/device-clock';
@@ -36,12 +36,9 @@ export function NotificationTimes() {
   const { count, voice } = useEdition();
   /** The time being picked: the one it replaces (none when adding), and where the picker starts. */
   const [picking, setPicking] = useState<{ replacing?: string; value: Date }>();
-  const [duplicate, setDuplicate] = useState(false);
-  // The hint is about the list as it was when the time was refused.
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- predates the compiler rules; rewrite is pending (ADR 0059)
-    setDuplicate(false);
-  }, [state.times]);
+  /** The list a time was refused for as a duplicate; the hint shows while the list is still that list. */
+  const [refusedFor, setRefusedFor] = useState<string>();
+  const duplicate = refusedFor === listKey(state.times);
 
   const limitHint = count(strings.limitHint, MAX_NOTIFICATION_TIMES);
   const pickerAvailable = timePickerAvailable();
@@ -50,7 +47,7 @@ export function NotificationTimes() {
   function pick(replacing?: string) {
     if (!pickerAvailable) return;
     const now = deviceClock.now();
-    setDuplicate(false);
+    setRefusedFor(undefined);
     setPicking({
       ...(replacing === undefined ? {} : { replacing }),
       value: replacing === undefined ? now : dateOfTime(replacing, now),
@@ -59,9 +56,11 @@ export function NotificationTimes() {
 
   function keep(picked: Date) {
     const replacing = picking?.replacing;
+    const list = listKey(state.times);
     setPicking(undefined);
     void keepTime(timeOfDay(picked), replacing).then((refusal) => {
-      setDuplicate(refusal === 'duplicate');
+      // A refusal writes nothing, so the list is the one the time was picked for.
+      setRefusedFor(refusal === 'duplicate' ? list : undefined);
       if (refusal === 'duplicate')
         AccessibilityInfo.announceForAccessibility(strings.duplicateHint);
     });
@@ -151,6 +150,11 @@ export function NotificationTimes() {
       />
     </>
   );
+}
+
+/** The Notification times as one key, the same for the same list whatever object holds it. */
+function listKey(times: readonly string[]): string {
+  return times.join(',');
 }
 
 const styles = StyleSheet.create({
