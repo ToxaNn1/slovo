@@ -169,7 +169,7 @@ export default {
           '^packages/$2/',
           SHARED_CONFIG,
           '^packages/[^/]+/package\\.json$',
-          '^packages/[^/]+/src/(index|testing|tokens|entries/part-of-speech|entries/entry-row-text|progress/known-line|pack-reader|edition-folder|api|api-description|api/test-support)\\.ts$',
+          '^packages/[^/]+/src/(index|testing|tokens|fonts|entries/part-of-speech|entries/entry-row-text|progress/known-line|pack-reader|edition-folder|api|api-description|api/test-support)\\.ts$',
         ],
       },
     },

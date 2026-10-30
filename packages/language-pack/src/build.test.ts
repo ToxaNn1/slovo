@@ -2060,9 +2060,7 @@ describe('the Word of the Day font', () => {
 
   it('reads the character map of a real font: Manrope has Cyrillic but no Stress mark', () => {
     const manrope = readFileSync(
-      fileURLToPath(
-        new URL('../../../editions/uk/assets/fonts/Manrope-Regular.ttf', import.meta.url),
-      ),
+      fileURLToPath(new URL('../../ui/assets/fonts/Manrope-Regular.ttf', import.meta.url)),
     );
 
     expect(errorsOf(withFont('Manrope-Regular.ttf', manrope))).toEqual([
