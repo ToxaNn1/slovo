@@ -51,7 +51,7 @@ export default [
       'src/game/OrderedChips.tsx',
       'src/game/PairsGrid.tsx',
       'src/game/VowelButtons.tsx',
-      'src/onboarding/Onboarding.tsx',
+      'src/onboarding/OnboardingStep.tsx',
       'src/onboarding/SplashOverlay.tsx',
       'src/progress/ActiveDaysCalendar.tsx',
       'src/primitives/BottomSheet.tsx',
