@@ -18,6 +18,14 @@ _Avoid_: Locale bundle, dictionary
 A newer Language Pack of the Edition that the app downloads by itself, without an Account, and opens from the next launch.
 _Avoid_: OTA (that is an update of the app's JavaScript), patch
 
+**Update channel**:
+An Edition's stream of signed OTA updates to the app's JavaScript, named after the Edition id and bound to its builds; an update reaches only the builds whose native code it was made for, and the owner publishes one deliberately, to a share of readers first (ADR 0062).
+_Avoid_: Release, release channel, branch
+
+**Deployment**:
+The one running backend that serves every Edition: one container image on Railway with its Postgres, behind the Edition's domain (ADR 0063). Its secrets and addresses live in its environment variables, never in the repository.
+_Avoid_: Env, prod, server (the backend is the code; the Deployment is its running copy)
+
 **Core**:
 The language-agnostic behaviour and screens shared by every Edition. Editions never replace Core code.
 _Avoid_: Engine, base app
@@ -168,7 +176,7 @@ The most consecutive Active Days the user has ever had, derived from them like t
 _Avoid_: Top streak, longest chain
 
 **Account**:
-The optional identity ("SLOVO ID") that keeps a user's words and progress across devices. One Account works in every Edition, and the user sees it as «SLOVO ID» in each of them; each Edition's data stays separate. An email has one Account, which every Sign-in method reaches: a Sign-in code or Sign in with Google. Without an Account everything lives on the device only.
+The optional identity ("SLOVO ID") that keeps a user's words and progress across devices. One Account works in every Edition, and the user sees it as «SLOVO ID» in each of them; each Edition's data stays separate. An email has one Account, which every Sign-in method reaches: a Sign-in code, Sign in with Google or Sign in with Apple. Without an Account everything lives on the device only.
 _Avoid_: Cabinet, profile, login
 
 **Session**:
@@ -184,7 +192,7 @@ The one-time six-digit code from the email that signs the reader in. The first r
 _Avoid_: OTP, PIN, password
 
 **Sign-in method**:
-A way a reader proves an email to sign in: a Sign-in code, or Sign in with Google, whose identity token the backend verifies. Whatever the method, the email's one Account signs in, and the first sign-in of an email creates it (ADR 0047). The Edition's Feature Switch `googleSignIn` turns the Google method on.
+A way a reader proves an email to sign in: a Sign-in code, or Sign in with Google or Sign in with Apple, whose identity token the backend verifies. Whatever the method, the email's one Account signs in, and the first sign-in of an email creates it (ADR 0047). The Edition's Feature Switches `googleSignIn` and `signInWithApple` turn the Google and the Apple method on.
 _Avoid_: Provider, login type, auth method
 
 ### Discovery
