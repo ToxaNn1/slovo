@@ -74,6 +74,20 @@ function repoWithEdition(
   return { ...context, projectRoot };
 }
 
+/**
+ * A throwaway repo layout with the public code-signing certificate of OTA
+ * updates in `apps/mobile/certs` (ADR 0062), as a release build needs.
+ */
+function repoWithCertificate(): ConfigContext {
+  const repo = repoWithEdition(() => undefined);
+  mkdirSync(join(repo.projectRoot, 'certs'));
+  writeFileSync(
+    join(repo.projectRoot, 'certs/certificate.pem'),
+    '-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----\n',
+  );
+  return repo;
+}
+
 /** A JSON file of the copied Edition, changed by `edit`. */
 function editJson(file: string, edit: (json: Record<string, unknown>) => unknown): void {
   writeFileSync(
@@ -796,7 +810,7 @@ describe('app config', () => {
     vi.stubEnv('EAS_BUILD_PROFILE', 'testflight-uk');
     vi.stubEnv('EXPO_PUBLIC_SLOVO_API_URL', 'https://api.example.com');
 
-    expect(appConfig(context).name).toBe(ukrainian.config.displayName);
+    expect(appConfig(repoWithCertificate()).name).toBe(ukrainian.config.displayName);
   });
 
   it.each([
@@ -809,5 +823,53 @@ describe('app config', () => {
     vi.stubEnv('EXPO_PUBLIC_SLOVO_API_URL', address);
 
     expect(appConfig(context).name).toBe(ukrainian.config.displayName);
+  });
+
+  describe('OTA updates (ADR 0062)', () => {
+    it("checks the Edition's channel on launch for updates signed with SLOVO's certificate and made for its native code", () => {
+      vi.stubEnv('SLOVO_EDITION', 'uk');
+      vi.stubEnv('EAS_BUILD_PROFILE', 'testflight-uk');
+      vi.stubEnv('EXPO_PUBLIC_SLOVO_API_URL', 'https://api.example.com');
+
+      const config = appConfig(repoWithCertificate());
+
+      expect(config.runtimeVersion).toEqual({ policy: 'fingerprint' });
+      expect(config.updates).toEqual({
+        enabled: true,
+        url: 'https://u.expo.dev/e2401ef2-2a47-407e-b0ff-03706421b71c',
+        requestHeaders: { 'expo-channel-name': 'uk' },
+        checkAutomatically: 'ON_LOAD',
+        fallbackToCacheTimeout: 3000,
+        codeSigningCertificate: './certs/certificate.pem',
+        codeSigningMetadata: { keyid: 'main', alg: 'rsa-v1_5-sha256' },
+      });
+    });
+
+    it('takes the channel from the Edition id', () => {
+      vi.stubEnv('SLOVO_EDITION', 'uk');
+
+      const config = appConfig(context);
+
+      expect(config.updates?.requestHeaders).toEqual({
+        'expo-channel-name': ukrainian.config.updateChannel,
+      });
+    });
+
+    it('turns updates off in a development build', () => {
+      vi.stubEnv('SLOVO_EDITION', 'uk');
+      vi.stubEnv('EAS_BUILD_PROFILE', 'development-simulator-uk');
+
+      expect(appConfig(context).updates?.enabled).toBe(false);
+    });
+
+    it('refuses a release build without the code-signing certificate', () => {
+      vi.stubEnv('SLOVO_EDITION', 'uk');
+      vi.stubEnv('EAS_BUILD_PROFILE', 'testflight-uk');
+      vi.stubEnv('EXPO_PUBLIC_SLOVO_API_URL', 'https://api.example.com');
+
+      expect(() => appConfig(repoWithEdition(() => undefined))).toThrow(
+        /code-signing certificate.*certs\/certificate\.pem/s,
+      );
+    });
   });
 });

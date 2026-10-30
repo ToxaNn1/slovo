@@ -23,3 +23,6 @@ apps/mobile/ios/
 
 # Agent settings of one machine (hooks, permissions); the shared ones are committed
 .claude/settings.local.json
+
+# The private code-signing key of OTA updates lives in EAS only (ADR 0062).
+private-key.pem
