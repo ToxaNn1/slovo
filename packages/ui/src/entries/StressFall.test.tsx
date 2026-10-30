@@ -1,5 +1,11 @@
 import type { EditionStrings } from '@slovo/contracts';
-import type { EntryFeedCard, EntryRowModel, Haptics, WordFeedCard } from '@slovo/core';
+import {
+  buildShareCardContent,
+  type EntryFeedCard,
+  type EntryRowModel,
+  type Haptics,
+  type WordFeedCard,
+} from '@slovo/core';
 import {
   EditionProvider,
   EntryCard,
@@ -281,8 +287,7 @@ describe('The falling Stress', () => {
         {inEdition(
           <ShareSheet
             visible
-            card={shared}
-            todaysWordOfTheDay={false}
+            content={buildShareCardContent({ card: shared, todaysWordOfTheDay: false }, strings)}
             watermark="SLOVO"
             initialFormat="story"
             onFormatChange={jest.fn()}

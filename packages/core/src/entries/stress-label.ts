@@ -1,5 +1,5 @@
 import { fill, type EditionStrings } from '@slovo/contracts';
-import { withoutStress } from '@slovo/core';
+import { withoutStress } from './stress';
 
 /**
  * What VoiceOver reads for text with Stress, such as a Lemma or a stress

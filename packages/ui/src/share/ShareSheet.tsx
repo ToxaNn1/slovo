@@ -22,7 +22,7 @@ import { BottomSheet } from '../primitives/BottomSheet';
 import { useEdition } from '../providers/EditionProvider';
 import { PrimaryButton } from '../primitives/PrimaryButton';
 import { SegmentedControl } from '../primitives/SegmentedControl';
-import { SHARE_CARD, ShareCard, type ShareCardContent } from './ShareCard';
+import { SHARE_CARD, ShareCard, type ShareCardProps } from './ShareCard';
 import { SheetTitle } from '../primitives/SheetParts';
 import {
   lineHeight,
@@ -67,7 +67,7 @@ export function ShareSheet({
   onShare,
   onClose,
   ...card
-}: ShareCardContent & {
+}: ShareCardProps & {
   visible: boolean;
   /** The format the sheet opens in. */
   initialFormat: ShareCardFormat;
@@ -97,7 +97,7 @@ function ShareSheetContent({
   onShare,
   onClose,
 }: {
-  card: ShareCardContent;
+  card: ShareCardProps;
   initialFormat: ShareCardFormat;
   onFormatChange: (format: ShareCardFormat) => void;
   onShare: (cardView: View, format: ShareCardFormat) => Promise<ShareSheetOutcome>;

@@ -21,13 +21,15 @@ export { type SynonymRowCardModel, type SynonymRowMemberModel } from './entries/
 export { type TipCardModel } from './entries/tip-card';
 export { selfCheckSynonymRowCard, selfCheckTipCard } from './entries/self-check';
 export {
-  buildSynonymRowShareCard,
-  buildTipShareCard,
-  buildWeeklyRecapShareCard,
-  type SynonymRowShareCardModel,
-  type TipShareCardModel,
-  type WeeklyRecapShareCardModel,
+  buildShareCardContent,
+  type ShareCardBody,
+  type ShareCardContent,
+  type ShareCardStrings,
+  type ShareCardSubject,
 } from './share/share-card';
+export { partOfSpeechText, registerText, wordGrammarText } from './entries/part-of-speech';
+export { stressLabel } from './entries/stress-label';
+export { sentences } from './sentences';
 export { coreDecor, loadDecor, type Decor } from './edition/decor';
 export { createEntries, type Entries } from './entries/entries';
 export type { EntryRowModel } from './entries/entry-row';

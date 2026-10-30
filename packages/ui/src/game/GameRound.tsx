@@ -2,14 +2,15 @@
 // Reanimated or gesture code: the React Compiler skips this module (ADR 0059).
 
 import type { EditionStrings } from '@slovo/contracts';
-import type {
-  CurrentGame,
-  GivenAnswer,
-  Round,
-  RoundAnswer,
-  RoundBlank,
-  RoundOption,
-  TextRange,
+import {
+  stressLabel,
+  type CurrentGame,
+  type GivenAnswer,
+  type Round,
+  type RoundAnswer,
+  type RoundBlank,
+  type RoundOption,
+  type TextRange,
 } from '@slovo/core';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Keyboard, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -31,7 +32,6 @@ import { CardCorners } from '../decor/DecorSlots';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { HEART_PATH } from '../saved/FavoriteButton';
 import { PrimaryButton } from '../primitives/PrimaryButton';
-import { stressLabel } from '../entries/stress-label';
 import {
   minTouchTarget,
   onFill,

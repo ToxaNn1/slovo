@@ -1,4 +1,4 @@
-import { wordGrammarText } from '@slovo/ui/part-of-speech';
+import { wordGrammarText } from '@slovo/core';
 import { describe, expect, it } from 'vitest';
 
 import { strings as editionStrings } from '../test-support';

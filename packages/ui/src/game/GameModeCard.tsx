@@ -1,9 +1,9 @@
 import type { EntryKind } from '@slovo/contracts';
+import { sentences } from '@slovo/core';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { CardCorners } from '../decor/DecorSlots';
-import { sentences } from '../primitives/sentences';
 import { useEdition } from '../providers/EditionProvider';
 import { modeCardPaddingHorizontal, overlineType, space, typeSize, withAlpha } from '../tokens';
 import { InvertedTokens, useTokens } from '../providers/TokensProvider';

@@ -1,5 +1,8 @@
 import {
+  partOfSpeechText,
+  registerText,
   STRESS_MARK,
+  stressLabel,
   withoutStress,
   type Example,
   type LocalDate,
@@ -14,8 +17,6 @@ import { fill, useEdition } from '../providers/EditionProvider';
 import { useWordTextSizes, type TextSize } from '../providers/FontSizeProvider';
 import { SectionLabel } from '../primitives/headings';
 import { OutlinedChip } from '../primitives/OutlinedChip';
-import { partOfSpeechText, registerText } from './part-of-speech';
-import { stressLabel } from './stress-label';
 import { blockGap, minTouchTarget, space, typeSize, wordCardControls } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { useIsPageOnScreen, usePageTurnActions } from '../primitives/VerticalPager';

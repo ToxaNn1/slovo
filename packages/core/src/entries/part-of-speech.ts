@@ -1,5 +1,5 @@
 import { fill, type EditionStrings, type Register } from '@slovo/contracts';
-import type { WordCardModel } from '@slovo/core';
+import type { WordCardModel } from './word-card';
 
 /**
  * A Word's part of speech with its gender, if it has one: in the short form

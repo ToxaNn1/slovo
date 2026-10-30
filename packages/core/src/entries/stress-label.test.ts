@@ -1,4 +1,4 @@
-import { stressLabel } from '@slovo/ui/stress-label';
+import { stressLabel } from '../index';
 import { describe, expect, it } from 'vitest';
 
 const strings = { stress: 'stress on {vowels}', stressOr: 'or' };

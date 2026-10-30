@@ -1,5 +1,6 @@
 import {
   selfCheckSynonymRowCard,
+  stressLabel,
   withoutStress,
   type SynonymRowCardModel,
   type SynonymRowMemberModel,
@@ -14,7 +15,6 @@ import { space, typeSize } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { usePageTurnActions } from '../primitives/VerticalPager';
 import { WholeWordsText } from '../primitives/WholeWordsText';
-import { stressLabel } from './stress-label';
 import { ExampleText } from './WordCard';
 
 /**

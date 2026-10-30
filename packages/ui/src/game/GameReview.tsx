@@ -1,8 +1,7 @@
-import { buildGameReview, type GameReviewItem, type PlayedRound } from '@slovo/core';
+import { buildGameReview, stressLabel, type GameReviewItem, type PlayedRound } from '@slovo/core';
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { stressLabel } from '../entries/stress-label';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
 import { minTouchTarget, rowPadding, space, typeSize } from '../tokens';

@@ -1,4 +1,4 @@
-import { withoutStress, type CorrectionCardModel } from '@slovo/core';
+import { stressLabel, withoutStress, type CorrectionCardModel } from '@slovo/core';
 import type { EditionStrings, LiteraryUse } from '@slovo/contracts';
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -14,7 +14,6 @@ import { useTokens } from '../providers/TokensProvider';
 import { usePageTurnActions } from '../primitives/VerticalPager';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 import { CategoryChip } from './CategoryChip';
-import { stressLabel } from './stress-label';
 import { DetailSection, ExampleText } from './WordCard';
 
 /**

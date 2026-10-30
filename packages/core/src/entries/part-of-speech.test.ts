@@ -1,4 +1,4 @@
-import { partOfSpeechText, wordGrammarText } from '@slovo/ui/part-of-speech';
+import { partOfSpeechText, wordGrammarText } from '../index';
 import { describe, expect, it } from 'vitest';
 
 type Strings = Parameters<typeof wordGrammarText>[0];
