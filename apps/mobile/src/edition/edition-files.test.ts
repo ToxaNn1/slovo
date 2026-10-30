@@ -1270,10 +1270,10 @@ describe('UI strings the app fills in', () => {
       { ...strings, settings: { ...settings, soonAccessibilityLabel: 'скоро буде доступно' } },
     ],
     [
-      'settings.about.editionLine',
+      'settings.about.versionLine',
       {
         ...strings,
-        settings: { ...settings, about: { ...settings.about, editionLine: 'Українське видання' } },
+        settings: { ...settings, about: { ...settings.about, versionLine: 'Версія {version}' } },
       },
     ],
   ])('needs every placeholder in %s', (path, changed) => {
