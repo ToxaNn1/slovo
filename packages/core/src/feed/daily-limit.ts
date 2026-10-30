@@ -11,8 +11,8 @@ import { userStateRecords } from '../user-state/user-state-schema';
 /** What the Daily Limit needs of the Edition. */
 export interface DailyLimitEdition {
   isFeatureEnabled(feature: FeatureSwitch): boolean;
-  /** Without the default, as in tests of other features, the Daily Limit is off until the reader sets it. */
-  readonly userSettingDefaults: Partial<Pick<UserSettingDefaults, 'dailyLimit'>>;
+  /** The Daily Limit a new user starts with, until the reader sets one. */
+  readonly userSettingDefaults: Pick<UserSettingDefaults, 'dailyLimit'>;
 }
 
 /**
@@ -38,8 +38,7 @@ export function dailyLimitNotices({
       if (!edition.isFeatureEnabled('dailyLimit')) return [];
       const limit =
         (await userState.read(userStateRecords.dailyLimit)) ??
-        edition.userSettingDefaults.dailyLimit ??
-        'off';
+        edition.userSettingDefaults.dailyLimit;
       if (limit === 'off') return [];
       const date = dateKeyOf(day);
       const seen = history.list.filter(

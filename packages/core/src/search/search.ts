@@ -142,7 +142,7 @@ export function createSearch({
     | 'listTipIds'
   >;
   edition: Pick<Edition, 'isFeatureEnabled' | 'searchLetters'> & {
-    readonly languageTraits: Partial<Pick<Edition['languageTraits'], 'sortLocale'>>;
+    readonly languageTraits: Pick<Edition['languageTraits'], 'sortLocale'>;
   };
   userState: Pick<UserState, 'list'>;
 }): Search {
