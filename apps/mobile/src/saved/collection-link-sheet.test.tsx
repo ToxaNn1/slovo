@@ -22,9 +22,11 @@ import config from 'slovo-edition/config';
 
 import CollectionLinkScreen from '../app/c/[linkId]';
 import { edition, editionStrings } from '../edition/edition';
+import { ShellProvider } from '../shell-value';
+import { opened, testShell } from '../shell/test-support';
 
 /** The composition the sheet reads, opened afresh for each test. */
-let mockComposition: Composition;
+let composition: Composition;
 
 /** The link id the route hands the sheet. */
 let mockLinkId: string;
@@ -32,19 +34,6 @@ let mockLinkId: string;
 /** The screens the sheet pushed, in order. */
 const mockPushed: string[] = [];
 
-jest.mock('../composition', () => {
-  const { useEffect, useState } = jest.requireActual<typeof import('react')>('react');
-  return {
-    useComposition: () => mockComposition,
-    useCompositionRead: <T,>(read: (composition: Composition) => Promise<T>) => {
-      const [value, setValue] = useState<T>();
-      useEffect(() => {
-        void read(mockComposition).then(setValue);
-      }, [read]);
-      return value;
-    },
-  };
-});
 jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({ linkId: mockLinkId }),
   useRouter: () => ({
@@ -106,7 +95,7 @@ async function open() {
     write: (changes) =>
       writesFail ? Promise.reject(new Error('The disk is full')) : memory.write(changes),
   };
-  mockComposition = await openComposition({
+  composition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'nature', displayName: 'Природа' }],
       words: PACK.map((id) => word(id, `слово-${id}`)),
@@ -137,9 +126,11 @@ async function renderSheet() {
   await render(
     <GestureHandlerRootView>
       <SafeAreaProvider initialMetrics={metrics}>
-        <EditionProvider edition={edition} strings={editionStrings}>
-          <CollectionLinkScreen />
-        </EditionProvider>
+        <ShellProvider shell={testShell({ composition: opened(composition) })}>
+          <EditionProvider edition={edition} strings={editionStrings}>
+            <CollectionLinkScreen />
+          </EditionProvider>
+        </ShellProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>,
   );
@@ -196,9 +187,9 @@ describe('the recipient sheet of a Collection Link', () => {
     await fireEvent.press(screen.getByRole('button', { name: strings.add }));
     await settle();
 
-    const [copy] = mockComposition.collections.list;
+    const [copy] = composition.collections.list;
     expect(copy?.name).toBe('Осінь');
-    const copied = mockComposition.collections.entries(copy?.id ?? '').map((e) => e.entryId);
+    const copied = composition.collections.entries(copy?.id ?? '').map((e) => e.entryId);
     expect(copied.toSorted()).toEqual(['w_one', 'w_two']);
     expect(mockPushed).toEqual([`/saved/collections/${copy?.id ?? ''}`]);
   });
@@ -213,7 +204,7 @@ describe('the recipient sheet of a Collection Link', () => {
     expect(
       await screen.findByTestId('undo-toast-message', {}, { timeout: 10_000 }),
     ).toHaveTextContent(strings.addFailed);
-    expect(mockComposition.collections.list).toEqual([]);
+    expect(composition.collections.list).toEqual([]);
     expect(mockPushed).toEqual([]);
   });
 
@@ -231,7 +222,7 @@ describe('the recipient sheet of a Collection Link', () => {
     await fireEvent.press(add);
     await settle();
 
-    expect(mockComposition.collections.list).toEqual([]);
+    expect(composition.collections.list).toEqual([]);
     expect(mockPushed).toEqual([]);
   });
 

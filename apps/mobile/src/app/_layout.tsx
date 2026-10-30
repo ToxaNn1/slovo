@@ -26,13 +26,13 @@ import {
   editionTokens,
 } from '@/edition/edition';
 import { hapticEngine } from '@/game/haptics';
-import { languagePackOpening } from '@/content-update/language-pack';
-import { compositionOpening } from '@/composition';
 import { deviceClock } from '@/device/device-clock';
 import { startCrashReports } from '@/diagnostics/crash-reports';
 import { DecorInEffect } from '@/shell/decor-in-effect';
+import { appShell } from '@/shell/app-shell';
 import { LaunchSplash } from '@/shell/launch-splash';
 import { Lifecycle } from '@/shell/lifecycle';
+import { ShellProvider, useShell } from '@/shell-value';
 import { NotificationTaps } from '@/entries/notification-taps';
 import { Onboarding } from '@/onboarding/onboarding';
 import { Opened } from '@/opened';
@@ -111,24 +111,28 @@ export default function RootLayout() {
   return (
     // The one gesture root of the app: swipe rows, sheets and the pager rely on it.
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <SettingsProvider>
-        <EditionProvider
-          edition={edition}
-          strings={editionStrings}
-          pronunciation={LemmaPronunciation}
-          illustrations={editionIllustrations}
-        >
-          <DecorProvider decor={editionDecor}>
-            <ThemedTabs />
-          </DecorProvider>
-        </EditionProvider>
-      </SettingsProvider>
+      {/* Every opening of the app run, for every screen (ADR 0036). */}
+      <ShellProvider shell={appShell}>
+        <SettingsProvider>
+          <EditionProvider
+            edition={edition}
+            strings={editionStrings}
+            pronunciation={LemmaPronunciation}
+            illustrations={editionIllustrations}
+          >
+            <DecorProvider decor={editionDecor}>
+              <ThemedTabs />
+            </DecorProvider>
+          </EditionProvider>
+        </SettingsProvider>
+      </ShellProvider>
     </GestureHandlerRootView>
   );
 }
 
 /** The tabs in their final order: Home, Settings, Game (when it is on in effect), Saved. */
 function ThemedTabs() {
+  const { languagePack, composition } = useShell();
   const colorScheme = useColorSchemeInEffect();
   const { fontSize, vibration } = useSettings().current;
   const haptics = useMemo(
@@ -164,8 +168,8 @@ function ThemedTabs() {
             {/* Outside the gates: each of its listeners waits for its own opening (ADR 0036, 0037). */}
             <Lifecycle />
             {/* Every screen draws over the open Language Pack and composition. */}
-            <Opened opening={languagePackOpening} failedTestID="language-pack-failed">
-              <Opened opening={compositionOpening} failedTestID="feed-error">
+            <Opened opening={languagePack} failedTestID="language-pack-failed">
+              <Opened opening={composition} failedTestID="feed-error">
                 {/* The screens' background and divider follow the local date (ADR 0055). */}
                 <DecorInEffect clock={deviceClock}>
                   <NotificationTaps />

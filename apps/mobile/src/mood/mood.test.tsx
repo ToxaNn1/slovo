@@ -6,6 +6,7 @@ import {
   openComposition,
   openUserState,
   systemRandom,
+  trackChanges,
   type Composition,
   type Edition,
 } from '@slovo/core';
@@ -19,6 +20,8 @@ import config from 'slovo-edition/config';
 import { edition, editionStrings } from '../edition/edition';
 import { screenSettled } from '../entries/use-open-screen';
 import { SettingsProvider } from '../settings/settings';
+import { ShellProvider } from '../shell-value';
+import { opened, testShell } from '../shell/test-support';
 import { MoodButtonAndSheet } from './mood';
 
 /** The Ukrainian Edition with the Account off, and moods on or off. */
@@ -34,21 +37,17 @@ function editionWith({ moods }: { moods: boolean }): Edition {
 let mockEdition: Edition;
 
 /** The user state the settings and the composition keep, one for the whole file. */
-let mockUserState: Awaited<ReturnType<typeof openUserState>>;
+let userState: Awaited<ReturnType<typeof openUserState>>;
+
+/** The clock of the test. */
+const clock = { now: () => new Date('2026-10-27T09:00:00Z'), timeZone: () => 'Europe/Kyiv' };
 
 /** The composition the shell reads, opened afresh for each test. */
-let mockComposition: Composition;
+let composition: Composition;
 
 /** The screens the shell opens. */
 const mockPush = jest.fn<(href: string) => void>();
 
-jest.mock('../user-state/stored-user-state', () => ({
-  storedUserState: { opened: () => Promise.resolve(mockUserState) },
-}));
-jest.mock('../composition', () => ({
-  useComposition: () => mockComposition,
-  compositionOpening: { opened: () => Promise.resolve(mockComposition) },
-}));
 jest.mock('../edition/remote-switches', () => ({ useEditionInEffect: () => mockEdition }));
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }));
 
@@ -90,21 +89,21 @@ const words = [
 ];
 
 beforeAll(async () => {
-  mockUserState = await openUserState({ port: createMemoryUserStatePort(new Map()) });
+  userState = await openUserState({ port: createMemoryUserStatePort(new Map()) });
 });
 
 beforeEach(async () => {
   jest.useFakeTimers();
   mockPush.mockClear();
   mockEdition = editionWith({ moods: true });
-  mockComposition = await openComposition({
+  composition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'emotions-character', displayName: 'Емоції' }],
       words,
     }),
     edition: mockEdition,
-    userState: mockUserState,
-    clock: { now: () => new Date('2026-10-27T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
+    userState,
+    clock,
     random: systemRandom,
   });
 });
@@ -135,11 +134,18 @@ async function settle(ms = 0) {
 async function renderHeader() {
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
-      <EditionProvider edition={edition} strings={editionStrings}>
-        <SettingsProvider>
-          <MoodButtonAndSheet />
-        </SettingsProvider>
-      </EditionProvider>
+      <ShellProvider
+        shell={testShell({
+          userState: opened(trackChanges({ userState, clock })),
+          composition: opened(composition),
+        })}
+      >
+        <EditionProvider edition={edition} strings={editionStrings}>
+          <SettingsProvider>
+            <MoodButtonAndSheet />
+          </SettingsProvider>
+        </EditionProvider>
+      </ShellProvider>
     </SafeAreaProvider>,
   );
   await settle();

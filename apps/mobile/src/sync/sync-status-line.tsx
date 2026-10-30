@@ -5,8 +5,8 @@ import { Text } from 'react-native';
 import { deviceClock } from '../device/device-clock';
 import { editionStrings } from '../edition/edition';
 import { useSubscribed, type Opening } from '../opening';
+import { useShell } from '../shell-value';
 import { useShown } from '../shown-in-effect';
-import { syncOpening } from './device-sync';
 import { syncStatusLine } from './sync-status';
 
 /**
@@ -16,8 +16,9 @@ import { syncStatusLine } from './sync-status';
  * before a first sync has gone through.
  */
 export function SyncStatusLine() {
-  if (!useShown().sync || syncOpening === undefined) return null;
-  return <Opened opening={syncOpening} />;
+  const { sync } = useShell();
+  if (!useShown().sync || sync === undefined) return null;
+  return <Opened opening={sync} />;
 }
 
 function Opened({ opening }: { opening: Opening<Sync> }) {

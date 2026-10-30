@@ -2,7 +2,7 @@ import { createSwipeHint, type SwipeHint } from '@slovo/core';
 import { useCallback, useEffect, useState } from 'react';
 
 import { logError } from '../diagnostics/log';
-import { storedUserState } from '../user-state/stored-user-state';
+import { useShell } from '../shell-value';
 
 /**
  * The Feed's swipe hint, shown on the first launch only. It is due until it
@@ -15,10 +15,11 @@ export function useSwipeHint(): { visible: boolean; markShown: () => void; dismi
   /** The hint, once it is known to be due. */
   const [due, setDue] = useState<SwipeHint>();
   const [dismissed, setDismissed] = useState(false);
+  const { userState } = useShell();
 
   useEffect(() => {
     let active = true;
-    storedUserState
+    userState
       .opened()
       .then(async (userState) => {
         const hint = createSwipeHint({ userState });
@@ -30,7 +31,7 @@ export function useSwipeHint(): { visible: boolean; markShown: () => void; dismi
     return () => {
       active = false;
     };
-  }, []);
+  }, [userState]);
 
   const markShown = useCallback(() => {
     due?.markShown().catch((error: unknown) => {

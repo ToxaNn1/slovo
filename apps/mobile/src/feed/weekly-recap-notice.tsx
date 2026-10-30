@@ -3,7 +3,7 @@ import { ShareSheet, WeeklyRecapCard } from '@slovo/ui';
 import { useState } from 'react';
 
 import { edition, editionStrings } from '../edition/edition';
-import { shareCardOnDevice } from '../share/device-share';
+import { useShell } from '../shell-value';
 import { sessionShareFormat } from '../share/share-card';
 import { useShown } from '../shown-in-effect';
 import { useWeeklyRecap } from './weekly-recap';
@@ -20,7 +20,8 @@ export function WeeklyRecapNotice({ day }: { day: LocalDate }) {
   const recap = useWeeklyRecap(day);
   const shown = useShown();
   const hideStreak = shown.stats?.streak !== true;
-  const share = shown.entryButtons.shareCard ? shareCardOnDevice : undefined;
+  const { shareCard } = useShell();
+  const share = shown.entryButtons.shareCard ? shareCard : undefined;
   const [open, setOpen] = useState(false);
   return (
     <>

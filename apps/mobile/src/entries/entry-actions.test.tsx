@@ -27,19 +27,16 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import config from 'slovo-edition/config';
 
 import { edition, editionStrings } from '../edition/edition';
+import { ShellProvider } from '../shell-value';
+import { opened, testShell } from '../shell/test-support';
 import { EntryActions } from './entry-actions';
 
 /** The Ukrainian Edition as its config file gives it, every Feature Switch as it ships. */
 const mockEdition = loadEdition(config);
 
 /** The composition the card's actions change, opened afresh for each test. */
-let mockComposition: Composition;
+let composition: Composition;
 
-jest.mock('../composition', () => ({
-  useComposition: () => mockComposition,
-  // The sheet's title only; the Collections it lists come from the composition.
-  useCompositionRead: () => undefined,
-}));
 jest.mock('../edition/remote-switches', () => ({ useEditionInEffect: () => mockEdition }));
 /** Whether Mistake Reports are on in effect, as the Edition ships them unless a test turns them off. */
 let mockMistakeReportsOn: boolean;
@@ -57,23 +54,23 @@ jest.mock('../shown-in-effect', () => ({
 }));
 
 /** The Core's Mistake Reports over a fake backend, opened afresh for each test. */
-let mockMistakeReports: MistakeReports;
+let mistakeReports: MistakeReports;
 let reportsApi: FakeReportsApi;
-
-jest.mock('../mistake-reports/device-mistake-reports', () => ({
-  mistakeReportsOpening: { opened: () => Promise.resolve(mockMistakeReports) },
-}));
 /** The Core's reads of the Community Counters over a fake backend, opened afresh for each test. */
-let mockCounterReads: CounterReads;
+let counterReads: CounterReads;
 let countersApi: FakeCountersApi;
 
-jest.mock('../community-counters/device-counter-reads', () => ({
-  counterReadsOpening: { opened: () => Promise.resolve(mockCounterReads) },
-}));
-// A binary that can capture the Share Card.
-jest.mock('../share/device-share', () => ({
-  shareCardOnDevice: () => Promise.resolve('closed'),
-}));
+/**
+ * The Shell the card draws under: the composition, Mistake Reports and the
+ * Community Counters of the test, on a binary that can capture the Share Card.
+ */
+const shell = () =>
+  testShell({
+    composition: opened(composition),
+    mistakeReports: opened(mistakeReports),
+    counterReads: opened(counterReads),
+    shareCard: () => Promise.resolve('closed'),
+  });
 
 const word: Word = {
   kind: 'word',
@@ -166,7 +163,7 @@ const clock = { now: () => new Date('2026-10-26T09:00:00Z'), timeZone: () => 'Eu
 
 beforeEach(async () => {
   const userState = await openUserState({ port: createMemoryUserStatePort(new Map()) });
-  mockComposition = await openComposition({
+  composition = await openComposition({
     content: createMemoryContentPort({
       words: [word],
       corrections: [correction],
@@ -180,10 +177,10 @@ beforeEach(async () => {
     random: systemRandom,
   });
   countersApi = createFakeCountersApi();
-  mockCounterReads = openCounterReads({ edition: mockEdition, api: countersApi, userState, clock });
+  counterReads = openCounterReads({ edition: mockEdition, api: countersApi, userState, clock });
   mockMistakeReportsOn = true;
   reportsApi = createFakeReportsApi();
-  mockMistakeReports = openMistakeReports({
+  mistakeReports = openMistakeReports({
     userState,
     api: reportsApi,
     edition: mockEdition,
@@ -208,17 +205,19 @@ async function settle() {
 
 /** The card of the Entry, as the Entry screen a list opens draws it, with its action row. */
 async function renderCard(entryId: string): Promise<AnyEntryCard> {
-  const card = await mockComposition.entryCard(entryId);
+  const card = await composition.entryCard(entryId);
   if (card === undefined) throw new Error(`No card for ${entryId}`);
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
-      <EditionProvider edition={edition} strings={editionStrings}>
-        <HapticsProvider haptics={haptics}>
-          <UndoToastProvider>
-            <EntryCard card={card} actions={<EntryActions card={card} />} />
-          </UndoToastProvider>
-        </HapticsProvider>
-      </EditionProvider>
+      <ShellProvider shell={shell()}>
+        <EditionProvider edition={edition} strings={editionStrings}>
+          <HapticsProvider haptics={haptics}>
+            <UndoToastProvider>
+              <EntryCard card={card} actions={<EntryActions card={card} />} />
+            </UndoToastProvider>
+          </HapticsProvider>
+        </EditionProvider>
+      </ShellProvider>
     </SafeAreaProvider>,
   );
   return card;
@@ -253,8 +252,8 @@ describe.each([
     await fireEvent.press(screen.getByTestId('favorite-button'));
     await settle();
 
-    expect(mockComposition.favorites.has(entryId)).toBe(true);
-    expect(mockComposition.favorites.list.map((favorite) => favorite.row.title)).toEqual([title]);
+    expect(composition.favorites.has(entryId)).toBe(true);
+    expect(composition.favorites.list.map((favorite) => favorite.row.title)).toEqual([title]);
   });
 
   it('files it in a new Collection from the «До колекції» sheet', async () => {
@@ -265,9 +264,9 @@ describe.each([
     await fireEvent.press(screen.getByTestId('collection-create'));
     await settle();
 
-    const [collection] = mockComposition.collections.list;
+    const [collection] = composition.collections.list;
     expect(collection?.name).toBe('Мої');
-    expect(mockComposition.collections.entries(collection?.id ?? '')).toMatchObject([
+    expect(composition.collections.entries(collection?.id ?? '')).toMatchObject([
       { entryId, row: { title } },
     ]);
   });
@@ -278,22 +277,24 @@ describe.each([
     await fireEvent.press(screen.getByTestId('knowledge-known'));
     await settle();
 
-    expect(mockComposition.knowledge.state.shown.get(entryId)).toBe('known');
+    expect(composition.knowledge.state.shown.get(entryId)).toBe('known');
     expect(screen.getByTestId('knowledge-known')).toBeSelected();
   });
 
   it('keeps «Знаю» and «Не знаю» inactive until Self-check is revealed', async () => {
-    const card = await mockComposition.entryCard(entryId);
+    const card = await composition.entryCard(entryId);
     if (card === undefined) throw new Error(`No card for ${entryId}`);
     await render(
       <SafeAreaProvider initialMetrics={metrics}>
-        <EditionProvider edition={edition} strings={editionStrings}>
-          <HapticsProvider haptics={haptics}>
-            <UndoToastProvider>
-              <EntryCard card={card} actions={<EntryActions card={card} />} selfCheck />
-            </UndoToastProvider>
-          </HapticsProvider>
-        </EditionProvider>
+        <ShellProvider shell={shell()}>
+          <EditionProvider edition={edition} strings={editionStrings}>
+            <HapticsProvider haptics={haptics}>
+              <UndoToastProvider>
+                <EntryCard card={card} actions={<EntryActions card={card} />} selfCheck />
+              </UndoToastProvider>
+            </HapticsProvider>
+          </EditionProvider>
+        </ShellProvider>
       </SafeAreaProvider>,
     );
 
@@ -311,7 +312,7 @@ describe.each([
     await fireEvent.press(screen.getByTestId('hide-choice-entry'));
     await settle();
 
-    expect(mockComposition.hiddenEntries.has(entryId)).toBe(true);
+    expect(composition.hiddenEntries.has(entryId)).toBe(true);
     expect(screen.getByText(`«${title}» приховано`)).toBeOnTheScreen();
   });
 });
@@ -379,7 +380,7 @@ describe.each([
     expect(screen.getByTestId('undo-toast-message')).toHaveTextContent('Дякуємо! Ми перевіримо.');
     reportsApi.online = true;
     await act(async () => {
-      mockMistakeReports.foreground();
+      mistakeReports.foreground();
       await Promise.resolve();
     });
     await settle();

@@ -1,4 +1,4 @@
-import { createEntries, type Entries } from '@slovo/core';
+import { createEntries, type Entries, type TrackedUserState } from '@slovo/core';
 import { openPack, type PackReader } from '@slovo/language-pack/reader';
 import { importDatabaseFromAssetAsync, openDatabaseAsync, type SQLiteDatabase } from 'expo-sqlite';
 import languagePack from 'slovo-edition/language-pack';
@@ -15,8 +15,9 @@ import {
   type LaunchPack,
   type OpenedPack,
 } from './launch-pack';
-import { openOnce, useOpened } from '../opening';
-import { remoteSwitchesOpening, useEditionInEffect } from '../edition/remote-switches';
+import { openOnce, useOpened, type Opening } from '../opening';
+import { useEditionInEffect } from '../edition/remote-switches';
+import { useShell, type EditionSwitches } from '../shell-value';
 
 const DATABASE_NAME = 'language-pack.db';
 
@@ -48,9 +49,12 @@ async function openBundled(): Promise<OpenedPack<PackReader>> {
 }
 
 /** Content updates on a device that keeps downloaded packs; a kept pack opens as the bundled one does. */
-function contentUpdatesOn(packFiles: DevicePackFiles): ContentUpdates<PackReader> {
+function contentUpdatesOn(
+  packFiles: DevicePackFiles,
+  userState: Opening<TrackedUserState>,
+): ContentUpdates<PackReader> {
   return {
-    open: (bundled) => openDeviceContentUpdate(packFiles, bundled),
+    open: (bundled) => openDeviceContentUpdate(packFiles, bundled, userState),
     async openKeptPack(version) {
       const { directory, name } = packFiles.throwAwayAllBut(version);
       return (await prepare(await openDatabaseAsync(name, undefined, directory))).reader;
@@ -65,27 +69,36 @@ function contentUpdatesOn(packFiles: DevicePackFiles): ContentUpdates<PackReader
  * remote Feature Switches. Either pack is refused when it is of another
  * Edition than the app.
  */
-export const languagePackOpening = openOnce(
-  async (): Promise<LaunchPack<PackReader>> =>
-    openLaunchPack({
-      edition: (await remoteSwitchesOpening.opened()).edition,
-      // Off on a binary without the file-system module.
-      contentUpdates: devicePackFiles === undefined ? undefined : contentUpdatesOn(devicePackFiles),
-      openBundled,
+export function languagePackOpening({
+  remoteSwitches,
+  userState,
+}: {
+  remoteSwitches: Opening<EditionSwitches>;
+  userState: Opening<TrackedUserState>;
+}): Opening<LaunchPack<PackReader>> {
+  return openOnce(
+    async () =>
+      openLaunchPack({
+        edition: (await remoteSwitches.opened()).edition,
+        // Off on a binary without the file-system module.
+        contentUpdates:
+          devicePackFiles === undefined ? undefined : contentUpdatesOn(devicePackFiles, userState),
+        openBundled,
+        onError(error) {
+          logError('Content updates failed at launch', error);
+        },
+      }),
+    {
       onError(error) {
-        logError('Content updates failed at launch', error);
+        logError('Could not open the Language Pack', error);
       },
-    }),
-  {
-    onError(error) {
-      logError('Could not open the Language Pack', error);
     },
-  },
-);
+  );
+}
 
 /** The Core's Entries of this Edition, read from the Language Pack of the app run. */
 export function useEntries(): Entries {
-  const content = useOpened(languagePackOpening).reader;
+  const content = useOpened(useShell().languagePack).reader;
   const inEffect = useEditionInEffect();
   return useMemo(() => createEntries({ content, edition: inEffect }), [content, inEffect]);
 }

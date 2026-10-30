@@ -6,6 +6,7 @@ import {
   openComposition,
   openUserState,
   systemRandom,
+  trackChanges,
   type Composition,
 } from '@slovo/core';
 import { createMemoryContentPort } from '@slovo/core/testing';
@@ -23,35 +24,19 @@ import { edition, editionStrings } from '../edition/edition';
 import { createOutsideLinks } from '../entries/entry-link';
 import { screenSettled } from '../entries/use-open-screen';
 import { SettingsProvider } from '../settings/settings';
+import { ShellProvider } from '../shell-value';
+import { opened, testShell } from '../shell/test-support';
 
 /** The Ukrainian Edition as its config file gives it, every Feature Switch as it ships. */
 const mockEdition = loadEdition(config);
 
+const clock = { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Europe/Kyiv' };
+
 /** The user state the settings and the composition keep, opened afresh for each test. */
-let mockUserState: Awaited<ReturnType<typeof openUserState>>;
+let userState: Awaited<ReturnType<typeof openUserState>>;
 
 /** The composition the screens read, opened afresh for each test. */
-let mockComposition: Composition;
-
-jest.mock('../user-state/stored-user-state', () => ({
-  storedUserState: { opened: () => Promise.resolve(mockUserState) },
-}));
-
-jest.mock('../composition', () => {
-  const { useEffect, useState } = jest.requireActual<typeof import('react')>('react');
-  return {
-    useComposition: () => mockComposition,
-    compositionOpening: { opened: () => Promise.resolve(mockComposition) },
-    // The composition's one read, as the shell makes it, over this test's composition.
-    useCompositionRead<T>(read: (composition: Composition) => Promise<T>) {
-      const [value, setValue] = useState<T>();
-      useEffect(() => {
-        void read(mockComposition).then(setValue);
-      }, [read]);
-      return value;
-    },
-  };
-});
+let composition: Composition;
 jest.mock('../edition/remote-switches', () => ({ useEditionInEffect: () => mockEdition }));
 // The Entry card's action row has its own tests.
 jest.mock('../entries/entry-actions', () => ({ EntryActions: () => null }));
@@ -85,15 +70,15 @@ function word(id: string, lemma: string): Word {
 
 beforeEach(async () => {
   jest.useFakeTimers();
-  mockUserState = await openUserState({ port: createMemoryUserStatePort(new Map()) });
-  mockComposition = await openComposition({
+  userState = await openUserState({ port: createMemoryUserStatePort(new Map()) });
+  composition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'emotions-character', displayName: 'Емоції' }],
       words: [word('w_sumyrnyi', 'сумирний')],
     }),
     edition: mockEdition,
-    userState: mockUserState,
-    clock: { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
+    userState,
+    clock,
     random: systemRandom,
   });
 });
@@ -123,15 +108,22 @@ async function renderApp() {
     listeners.push(listener);
     return { remove: () => undefined } as ReturnType<typeof Linking.addEventListener>;
   });
+  // The settings and the screens open over this test's user state and composition.
+  const shell = testShell({
+    userState: opened(trackChanges({ userState, clock })),
+    composition: opened(composition),
+  });
   const app = renderRouter(
     {
       _layout: () => (
         <SafeAreaProvider initialMetrics={metrics}>
-          <EditionProvider edition={edition} strings={editionStrings}>
-            <SettingsProvider>
-              <Slot />
-            </SettingsProvider>
-          </EditionProvider>
+          <ShellProvider shell={shell}>
+            <EditionProvider edition={edition} strings={editionStrings}>
+              <SettingsProvider>
+                <Slot />
+              </SettingsProvider>
+            </EditionProvider>
+          </ShellProvider>
         </SafeAreaProvider>
       ),
       '+native-intent': {
@@ -161,14 +153,14 @@ async function renderApp() {
 
 /** The Spotlight Snapshot the shell hands the iPhone search now. */
 const snapshot = () =>
-  mockComposition.spotlight.snapshot({
+  composition.spotlight.snapshot({
     notificationBody: editionStrings.notificationBody,
     spotlight: editionStrings.spotlight,
   });
 
 describe('a tap on a Spotlight result', () => {
   it('on an Entry opens its Entry screen as a plain link: not Seen, in no History', async () => {
-    await mockComposition.favorites.add('w_sumyrnyi');
+    await composition.favorites.add('w_sumyrnyi');
     const [result] = (await snapshot()).entries;
     const app = await renderApp();
 
@@ -176,11 +168,11 @@ describe('a tap on a Spotlight result', () => {
 
     expect(app.pathname()).toBe('/entry/w_sumyrnyi');
     expect(screen.getByText('Значення слова сумирний.')).toBeTruthy();
-    expect(mockComposition.history.list).toEqual([]);
+    expect(composition.history.list).toEqual([]);
   });
 
   it('on a Collection opens that Collection', async () => {
-    await mockComposition.collections.create('Тихі слова', 'w_sumyrnyi');
+    await composition.collections.create('Тихі слова', 'w_sumyrnyi');
     const [result] = (await snapshot()).collections;
     const app = await renderApp();
 

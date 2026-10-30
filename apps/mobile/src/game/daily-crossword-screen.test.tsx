@@ -17,15 +17,13 @@ import GameScreen from '../app/game';
 import GameLayout from '../app/game/_layout';
 import DailyCrosswordScreen from '../app/game/crossword';
 import { edition, editionStrings } from '../edition/edition';
+import { ShellProvider } from '../shell-value';
+import { opened, testShell } from '../shell/test-support';
 import { SCREEN_OPEN_TIMEOUT_MS } from '../entries/open-screen';
 
 /** The composition the screens read, opened afresh for each test. */
-let mockComposition: Composition;
+let composition: Composition;
 
-jest.mock('../composition', () => ({
-  useComposition: () => mockComposition,
-  compositionOpening: { opened: () => Promise.resolve(mockComposition) },
-}));
 jest.mock('../edition/remote-switches', () => ({
   useEditionInEffect: () =>
     jest.requireActual<typeof import('../edition/edition')>('../edition/edition').edition,
@@ -89,7 +87,7 @@ async function settle(action: () => unknown = () => undefined) {
 
 /** The Game tab as the app routes it, opened on its mode screen over a fresh composition. */
 async function renderGame() {
-  mockComposition = await openComposition({
+  composition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'nature', displayName: 'Природа' }],
       words: Array.from({ length: 15 }, (_, i) => word(i)),
@@ -103,13 +101,16 @@ async function renderGame() {
     clock: { now: () => new Date('2026-10-26T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     random: systemRandom,
   });
+  const shell = testShell({ composition: opened(composition) });
   const app = renderRouter(
     {
       _layout: () => (
         <SafeAreaProvider initialMetrics={metrics}>
-          <EditionProvider edition={edition} strings={editionStrings}>
-            <Slot />
-          </EditionProvider>
+          <ShellProvider shell={shell}>
+            <EditionProvider edition={edition} strings={editionStrings}>
+              <Slot />
+            </EditionProvider>
+          </ShellProvider>
         </SafeAreaProvider>
       ),
       'game/_layout': GameLayout,

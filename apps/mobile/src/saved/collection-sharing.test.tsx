@@ -22,9 +22,11 @@ import config from 'slovo-edition/config';
 
 import CollectionsScreen from '../app/saved/collections/index';
 import { edition, editionStrings } from '../edition/edition';
+import { ShellProvider } from '../shell-value';
+import { opened, testShell } from '../shell/test-support';
 
 /** The composition the screen reads, opened afresh for each test. */
-let mockComposition: Composition;
+let composition: Composition;
 
 /** Whether a test turned `collectionLinks` off, as a remote switch does. */
 let collectionLinksOff: boolean;
@@ -32,7 +34,6 @@ let collectionLinksOff: boolean;
 /** The backend of Collection Links, online unless a test takes it off. */
 let api: FakeCollectionLinksApi;
 
-jest.mock('../composition', () => ({ useComposition: () => mockComposition }));
 jest.mock('expo-router', () => ({
   useRouter: () => ({ back: () => undefined, push: () => undefined }),
 }));
@@ -82,7 +83,7 @@ beforeEach(async () => {
       !(feature === 'collectionLinks' && collectionLinksOff) && loaded.isFeatureEnabled(feature),
   };
   now = Date.parse('2026-10-28T09:00:00Z');
-  mockComposition = await openComposition({
+  composition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'nature', displayName: 'Природа' }],
       words: [word('w_kvasha', 'кваша'), word('w_buzok', 'бузок')],
@@ -103,12 +104,12 @@ afterEach(() => {
 
 /** Makes a Collection with the Entries, added a minute apart in order, and answers its id. */
 async function collection(name: string, entryIds: readonly string[] = []) {
-  const created = await mockComposition.collections.create(name);
+  const created = await composition.collections.create(name);
   if (!created.ok) throw new Error(`"${name}" was refused: ${created.reason}`);
   const { id } = created.collection;
   for (const entryId of entryIds) {
     now += 60_000;
-    await mockComposition.collections.add(id, entryId);
+    await composition.collections.add(id, entryId);
   }
   return id;
 }
@@ -123,9 +124,11 @@ async function settle() {
 async function openMenuOf(collectionId: string) {
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
-      <EditionProvider edition={edition} strings={editionStrings}>
-        <CollectionsScreen />
-      </EditionProvider>
+      <ShellProvider shell={testShell({ composition: opened(composition) })}>
+        <EditionProvider edition={edition} strings={editionStrings}>
+          <CollectionsScreen />
+        </EditionProvider>
+      </ShellProvider>
     </SafeAreaProvider>,
   );
   await settle();

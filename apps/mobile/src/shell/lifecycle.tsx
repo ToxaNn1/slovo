@@ -1,28 +1,27 @@
-import type { Composition, FeatureSwitch } from '@slovo/core';
+import type { Clock, Composition, FeatureSwitch } from '@slovo/core';
 import { useEffect } from 'react';
 import { AppState } from 'react-native';
 
-import { accountOpening } from '../account/device-account';
-import { counterSendingOpening } from '../community-counters/device-counter-sending';
-import { compositionOpening } from '../composition';
 import { editionStrings } from '../edition/edition';
 import { deviceClock } from '../device/device-clock';
-import { languagePackOpening } from '../content-update/language-pack';
-import { remoteSwitchesOpening } from '../edition/remote-switches';
+import type { AppStateSource } from '../foreground/foreground';
 import { reportForeground } from '../foreground/foreground-reports';
 import { logError } from '../diagnostics/log';
-import { mistakeReportsOpening } from '../mistake-reports/device-mistake-reports';
-import { settingsOpening } from '../settings/settings';
 import { deviceSpotlight } from '../spotlight/device-spotlight';
 import { handOverSpotlight } from '../spotlight/spotlight-hand-over';
+import type { SpotlightIndex } from '../spotlight/spotlight-index';
 import { syncInBackground, reopenAfterSync } from '../sync/background-sync';
-import { syncOpening } from '../sync/device-sync';
 import { deviceWidget, deviceWidgetLinkKey } from '../widget/device-widget';
 import { createWidgetSnapshotWriter } from '../widget/widget-snapshot';
+import { useShell, type Shell } from '../shell-value';
 
-/** Whether the feature is on in effect, by the remote Feature Switches the app knows (ADR 0040). */
-async function isOnInEffect(feature: FeatureSwitch): Promise<boolean> {
-  return (await remoteSwitchesOpening.opened()).edition.isFeatureEnabled(feature);
+/** What the lifecycle reaches on the device beside the Shell. */
+export interface LifecycleDevice {
+  readonly clock: Clock;
+  readonly appState: AppStateSource;
+  /** Writes the Widget Snapshot the widget builds. */
+  readonly writeWidgetSnapshot: (widget: Composition['widget']) => void;
+  readonly spotlight: SpotlightIndex;
 }
 
 /**
@@ -45,83 +44,97 @@ async function isOnInEffect(feature: FeatureSwitch): Promise<boolean> {
  * when it is on in effect, at most once an hour. Mistake Reports send their
  * queue at launch and on each return (ADR 0056). The Community Counters send
  * their unsent changes at launch, on each return and every few minutes while
- * the app is in the foreground (ADR 0060). Draws nothing.
+ * the app is in the foreground (ADR 0060). Returns the call that stops
+ * listening.
  */
-export function Lifecycle() {
-  useEffect(() => {
-    const reports = reportForeground({ clock: deviceClock, appState: AppState });
-    reports.listen(compositionOpening, (composition, moment) => {
-      if (moment !== 'return' && moment !== 'new-day') return;
-      composition.resume().catch((error: unknown) => {
-        logError('Could not follow the app into the foreground', error);
-      });
+export function listen(shell: Shell, device: LifecycleDevice): () => void {
+  const { composition, remoteSwitches, languagePack, account, sync } = shell;
+  const { writeWidgetSnapshot } = device;
+  /** Whether the feature is on in effect, by the remote Feature Switches the app knows (ADR 0040). */
+  async function isOnInEffect(feature: FeatureSwitch): Promise<boolean> {
+    return (await remoteSwitches.opened()).edition.isFeatureEnabled(feature);
+  }
+  const reports = reportForeground({ clock: device.clock, appState: device.appState });
+  reports.listen(composition, (opened, moment) => {
+    if (moment !== 'return' && moment !== 'new-day') return;
+    opened.resume().catch((error: unknown) => {
+      logError('Could not follow the app into the foreground', error);
     });
-    const writeSnapshot = createWidgetSnapshotWriter(deviceWidget, deviceWidgetLinkKey);
-    // The widget writes a Synonym Row's and a Tip's text in the Edition's words.
-    const writeWidgetSnapshot = (widget: Composition['widget']) => {
-      writeSnapshot(() => widget.snapshot(editionStrings.notificationBody));
-    };
-    reports.listen(compositionOpening, (composition, moment) => {
-      if (moment === 'launch' || moment === 'background') writeWidgetSnapshot(composition.widget);
+  });
+  reports.listen(composition, (opened, moment) => {
+    if (moment === 'launch' || moment === 'background') writeWidgetSnapshot(opened.widget);
+  });
+  reports.listen(remoteSwitches, (switches, moment) => {
+    if (moment !== 'launch' && moment !== 'return') return;
+    // Neither the ask nor a reopen rejects.
+    void switches.ask().then(async (changed) => {
+      if (!changed) return;
+      await composition.reopen();
+      // A reopen does what the launch did: the composition makes the plan as it opens.
+      const { state } = composition;
+      if (state.status === 'ready') writeWidgetSnapshot(state.value.widget);
     });
-    reports.listen(remoteSwitchesOpening, (switches, moment) => {
-      if (moment !== 'launch' && moment !== 'return') return;
-      // Neither the ask nor a reopen rejects.
-      void switches.ask().then(async (changed) => {
-        if (!changed) return;
-        await compositionOpening.reopen();
-        // A reopen does what the launch did: the composition makes the plan as it opens.
-        const { state } = compositionOpening;
-        if (state.status === 'ready') writeWidgetSnapshot(state.value.widget);
-      });
-    });
-    const stopSpotlight = handOverSpotlight({
+  });
+  const stopSpotlight = handOverSpotlight({
+    reports,
+    composition,
+    index: device.spotlight,
+    strings: editionStrings,
+  });
+  if (sync !== undefined) {
+    syncInBackground({
       reports,
-      composition: compositionOpening,
-      index: deviceSpotlight,
-      strings: editionStrings,
+      sync,
+      reopen: reopenAfterSync({ settings: shell.settings, composition, writeWidgetSnapshot }),
     });
-    if (syncOpening !== undefined) {
-      syncInBackground({
-        reports,
-        sync: syncOpening,
-        reopen: reopenAfterSync({
-          settings: settingsOpening,
-          composition: compositionOpening,
-          writeWidgetSnapshot,
-        }),
-      });
-    }
-    reports.listen(languagePackOpening, ({ contentUpdate }, moment) => {
+  }
+  reports.listen(languagePack, ({ contentUpdate }, moment) => {
+    if (moment !== 'launch' && moment !== 'return') return;
+    // Neither rejects.
+    void isOnInEffect('contentUpdates').then(async (on) => {
+      if (on) await contentUpdate?.checkForUpdate();
+    });
+  });
+  reports.listen(shell.mistakeReports, (mistakeReports, moment) => {
+    if (moment === 'launch' || moment === 'return') mistakeReports.foreground();
+  });
+  reports.listen(shell.counterSending, (counterSending, moment) => {
+    if (moment === 'launch' || moment === 'return') counterSending.foreground();
+    if (moment === 'background') counterSending.background();
+  });
+  if (account !== undefined) {
+    reports.listen(account, (opened, moment) => {
       if (moment !== 'launch' && moment !== 'return') return;
-      // Neither rejects.
-      void isOnInEffect('contentUpdates').then(async (on) => {
-        if (on) await contentUpdate?.checkForUpdate();
-      });
+      isOnInEffect('account')
+        .then(async (on) => {
+          if (on) await opened.refresh();
+        })
+        .catch((error: unknown) => {
+          logError('Could not refresh the Account', error);
+        });
     });
-    reports.listen(mistakeReportsOpening, (mistakeReports, moment) => {
-      if (moment === 'launch' || moment === 'return') mistakeReports.foreground();
-    });
-    reports.listen(counterSendingOpening, (counterSending, moment) => {
-      if (moment === 'launch' || moment === 'return') counterSending.foreground();
-      if (moment === 'background') counterSending.background();
-    });
-    if (accountOpening !== undefined) {
-      reports.listen(accountOpening, (account, moment) => {
-        if (moment !== 'launch' && moment !== 'return') return;
-        isOnInEffect('account')
-          .then(async (on) => {
-            if (on) await account.refresh();
-          })
-          .catch((error: unknown) => {
-            logError('Could not refresh the Account', error);
-          });
-      });
-    }
-    return () => {
-      stopSpotlight();
-      reports.stop();
-    };
-  }, []);
+  }
+  return () => {
+    stopSpotlight();
+    reports.stop();
+  };
+}
+
+/** The Widget Snapshot's writer of the device; the widget writes a Synonym Row's and a Tip's text in the Edition's words. */
+const writeSnapshot = createWidgetSnapshotWriter(deviceWidget, deviceWidgetLinkKey);
+
+const device: LifecycleDevice = {
+  clock: deviceClock,
+  appState: AppState,
+  writeWidgetSnapshot(widget) {
+    writeSnapshot(() => widget.snapshot(editionStrings.notificationBody));
+  },
+  spotlight: deviceSpotlight,
+};
+
+/** The lifecycle adapter of the app run, over the Shell it is drawn under (`listen`). Draws nothing. */
+export function Lifecycle() {
+  const shell = useShell();
+  useEffect(() => listen(shell, device), [shell]);
   return null;
 }

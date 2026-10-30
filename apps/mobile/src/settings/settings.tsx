@@ -4,6 +4,7 @@ import {
   type ColorScheme,
   type Settings,
   type SettingsDefaults,
+  type TrackedUserState,
   type UserSettings,
 } from '@slovo/core';
 import { createContext, useContext, useState, type ReactNode } from 'react';
@@ -11,8 +12,8 @@ import { Appearance, useColorScheme } from 'react-native';
 
 import { edition } from '../edition/edition';
 import { logError } from '../diagnostics/log';
-import { openOnce, useSubscribed } from '../opening';
-import { storedUserState } from '../user-state/stored-user-state';
+import { openOnce, useSubscribed, type Opening } from '../opening';
+import { useShell, type OpenedSettings } from '../shell-value';
 
 /** Makes native views (alerts, keyboards) follow the Theme too. */
 function applyToNativeViews({ theme }: UserSettings): void {
@@ -22,12 +23,8 @@ function applyToNativeViews({ theme }: UserSettings): void {
 const { theme, fontSize, vibration, dailyLimit } = edition.userSettingDefaults;
 const defaults: SettingsDefaults = { theme, fontSize, vibration, dailyLimit };
 
-async function settingsOverUserState(): Promise<Settings> {
-  return createSettings({ userState: await storedUserState.opened(), defaults });
-}
-
 /** The settings with those in effect, which native views follow from the start. */
-function opened(settings: Settings, current: UserSettings) {
+function opened(settings: Settings, current: UserSettings): OpenedSettings {
   applyToNativeViews(current);
   return { settings, current };
 }
@@ -37,21 +34,30 @@ function opened(settings: Settings, current: UserSettings) {
  * Language Pack, and reopened over it when it changes. The app still starts
  * when they can't be read, on their defaults.
  */
-export const settingsOpening = openOnce(
-  async () => {
-    const settings = await settingsOverUserState();
-    return opened(settings, await settings.read());
-  },
-  {
-    onError(error) {
-      logError('Could not read the settings; using their defaults', error);
-    },
-    fallback: async () => {
+export function settingsOpening({
+  userState,
+}: {
+  userState: Opening<TrackedUserState>;
+}): Opening<OpenedSettings> {
+  async function settingsOverUserState(): Promise<Settings> {
+    return createSettings({ userState: await userState.opened(), defaults });
+  }
+  return openOnce(
+    async () => {
       const settings = await settingsOverUserState();
-      return opened(settings, settings.defaults);
+      return opened(settings, await settings.read());
     },
-  },
-);
+    {
+      onError(error) {
+        logError('Could not read the settings; using their defaults', error);
+      },
+      fallback: async () => {
+        const settings = await settingsOverUserState();
+        return opened(settings, settings.defaults);
+      },
+    },
+  );
+}
 
 interface SettingsContextValue {
   readonly current: UserSettings;
@@ -65,7 +71,7 @@ const SettingsContext = createContext<SettingsContextValue | undefined>(undefine
  * flashes in the wrong Theme, and keeps every change in the user state.
  */
 export function SettingsProvider({ children }: { children: ReactNode }) {
-  const opening = useSubscribed(settingsOpening, ({ state }) => state);
+  const opening = useSubscribed(useShell().settings, ({ state }) => state);
   /**
    * The settings in effect once the reader changed one, over the settings
    * they changed; until then, and once the settings reopen, those opened.

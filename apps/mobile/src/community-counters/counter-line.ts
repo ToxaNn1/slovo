@@ -1,29 +1,40 @@
-import type { CounterLine } from '@slovo/core';
+import type { CounterLine, CounterReads } from '@slovo/core';
 import { useEffect, useState } from 'react';
 
 import { logError } from '../diagnostics/log';
 import { useKnowledgeMark } from '../knowledge/marks';
 import { useFavorite } from '../saved/favorites';
-import { counterReadsOpening } from './device-counter-reads';
+import type { Opening } from '../opening';
+import { useShell } from '../shell-value';
 
-/** The Entries whose lines were asked in this turn, read together in one request, and who waits for each. */
-let asked = new Map<string, ((line: CounterLine | undefined) => void)[]>();
+type Asked = Map<string, ((line: CounterLine | undefined) => void)[]>;
+
+/** By the reads, the Entries whose lines were asked in this turn, read together in one request, and who waits for each. */
+const askedOf = new WeakMap<Opening<CounterReads>, Asked>();
 
 /**
  * The line of one Entry. The cards drawn together, those near the current
  * Feed card, ask in the same turn, so their Entries go out in one request.
  */
-function lineOf(entryId: string): Promise<CounterLine | undefined> {
+function lineOf(reads: Opening<CounterReads>, entryId: string): Promise<CounterLine | undefined> {
   return new Promise((resolve) => {
-    if (asked.size === 0) queueMicrotask(readAsked);
+    let asked = askedOf.get(reads);
+    if (asked === undefined) {
+      asked = new Map();
+      askedOf.set(reads, asked);
+      queueMicrotask(() => {
+        readAsked(reads);
+      });
+    }
     asked.set(entryId, [...(asked.get(entryId) ?? []), resolve]);
   });
 }
 
-function readAsked(): void {
-  const waiting = asked;
-  asked = new Map();
-  void counterReadsOpening
+function readAsked(reads: Opening<CounterReads>): void {
+  const waiting = askedOf.get(reads);
+  if (waiting === undefined) return;
+  askedOf.delete(reads);
+  void reads
     .opened()
     .then((reads) => reads.lines([...waiting.keys()]))
     .catch((error: unknown) => {
@@ -46,14 +57,15 @@ export function useCounterLine(entryId: string): CounterLine | undefined {
   const [line, setLine] = useState<CounterLine | undefined>();
   const { mark } = useKnowledgeMark(entryId);
   const { inFavorites } = useFavorite(entryId);
+  const reads = useShell().counterReads;
   useEffect(() => {
     let current = true;
-    void lineOf(entryId).then((read) => {
+    void lineOf(reads, entryId).then((read) => {
       if (current) setLine(read);
     });
     return () => {
       current = false;
     };
-  }, [entryId, mark, inFavorites]);
+  }, [reads, entryId, mark, inFavorites]);
   return line;
 }

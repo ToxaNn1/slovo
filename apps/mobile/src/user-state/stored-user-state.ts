@@ -9,7 +9,7 @@ import { openDatabaseAsync } from 'expo-sqlite';
 
 import { deviceClock } from '../device/device-clock';
 import { logError } from '../diagnostics/log';
-import { openOnce } from '../opening';
+import { openOnce, type Opening } from '../opening';
 import { openSqliteUserState } from './user-state-sqlite';
 
 /**
@@ -36,9 +36,11 @@ async function openStoredUserState(): Promise<TrackedUserState> {
  * tracked. The app still works without it, on the Edition's defaults: choices
  * last until it quits.
  */
-export const storedUserState = openOnce(openStoredUserState, {
-  onError(error) {
-    logError('Could not open the user state; nothing will be kept', error);
-  },
-  fallback: () => openTracked(createMemoryUserStatePort()),
-});
+export function storedUserStateOpening(): Opening<TrackedUserState> {
+  return openOnce(openStoredUserState, {
+    onError(error) {
+      logError('Could not open the user state; nothing will be kept', error);
+    },
+    fallback: () => openTracked(createMemoryUserStatePort()),
+  });
+}

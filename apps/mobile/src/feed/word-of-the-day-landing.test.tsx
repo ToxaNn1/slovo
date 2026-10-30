@@ -13,15 +13,17 @@ import {
 import { createMemoryContentPort } from '@slovo/core/testing';
 import type { VerticalPagerHandle } from '@slovo/ui';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
+import type { ReactNode } from 'react';
 import config from 'slovo-edition/config';
 
+import { ShellProvider } from '../shell-value';
+import { opened, testShell } from '../shell/test-support';
 import { useFeed } from './feed';
 import { createWordOfTheDayLanding, type WordOfTheDayLanding } from './word-of-the-day-landing';
 
 /** The composition the Feed reads, opened afresh for each test. */
-let mockComposition: Composition;
+let composition: Composition;
 
-jest.mock('../composition', () => ({ useComposition: () => mockComposition }));
 // The Feed is in sight: its tab is focused.
 jest.mock('expo-router', () => ({ useIsFocused: () => true }));
 
@@ -100,7 +102,7 @@ function fakePager() {
  * on the given clock, with a landing of its own.
  */
 async function openFeed(clock: Clock, kept: Record<string, unknown> = {}) {
-  mockComposition = await openComposition({
+  composition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'nature', displayName: 'Природа' }],
       words: Array.from({ length: 10 }, (_, i) => word(i)),
@@ -122,7 +124,12 @@ async function openFeed(clock: Clock, kept: Record<string, unknown> = {}) {
   const pager = fakePager();
   const ref = { current: pager };
   const landing = createWordOfTheDayLanding();
-  const feed = await renderHook(() => useFeed(ref, { clock, landing }));
+  const shell = testShell({ composition: opened(composition) });
+  const feed = await renderHook(() => useFeed(ref, { clock, landing }), {
+    wrapper: ({ children }: { children: ReactNode }) => (
+      <ShellProvider shell={shell}>{children}</ShellProvider>
+    ),
+  });
   await waitFor(() => {
     expect(feed.result.current.cards.length).toBeGreaterThan(1);
   });
@@ -164,7 +171,7 @@ describe('the «Слово дня» intent', () => {
     expect(wordOfTheDayOn(feed.result.current.cards[0])).toBe('2026-10-26');
     // The Feed is told the reader is on it, so it is Seen like any card on screen.
     await waitFor(() => {
-      expect(mockComposition.feed.position).toBe(0);
+      expect(composition.feed.position).toBe(0);
     });
     expect(landing.asked()).toBeUndefined();
   });
@@ -195,7 +202,7 @@ describe('the «Слово дня» intent', () => {
     await ask(landing);
     // The Feed still holds yesterday's Word of the Day: the ask waits.
     expect(landing.asked()).toBeDefined();
-    await act(() => mockComposition.resume());
+    await act(() => composition.resume());
     await moveApp('foreground');
 
     await waitFor(() => {

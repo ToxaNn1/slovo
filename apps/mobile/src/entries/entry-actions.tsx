@@ -18,7 +18,6 @@ import { useCallback, useState, type ReactNode } from 'react';
 
 import { refusalText } from '../saved/collection-refusal';
 import { deviceClock } from '../device/device-clock';
-import { shareCardOnDevice } from '../share/device-share';
 import { edition, editionStrings } from '../edition/edition';
 import { useEntryCollections } from '../saved/collections';
 import { useCompositionRead } from '../composition';
@@ -27,8 +26,8 @@ import { useFavorite } from '../saved/favorites';
 import { useKnowledgeMark } from '../knowledge/marks';
 import { useHide } from '../mix/hiding';
 import { logError } from '../diagnostics/log';
-import { mistakeReportsOpening } from '../mistake-reports/device-mistake-reports';
 import { sessionShareFormat } from '../share/share-card';
+import { useShell, type ShareCard } from '../shell-value';
 import { useShown } from '../shown-in-effect';
 
 /**
@@ -90,7 +89,8 @@ export function useKnowledgeButtons(card: Pick<AnyEntryCard, 'entryId' | 'kind'>
  */
 function useShareAction(card: AnyEntryCard): { button: ReactNode; sheet: ReactNode } {
   const [open, setOpen] = useState(false);
-  const share = useShown().entryButtons.shareCard ? shareCardOnDevice : undefined;
+  const { shareCard } = useShell();
+  const share = useShown().entryButtons.shareCard ? shareCard : undefined;
   if (share === undefined) return { button: undefined, sheet: undefined };
   return {
     button: (
@@ -124,7 +124,7 @@ function EntryShareSheet({
   onClose,
 }: {
   card: AnyEntryCard;
-  share: NonNullable<typeof shareCardOnDevice>;
+  share: ShareCard;
   visible: boolean;
   onClose: () => void;
 }) {
@@ -155,6 +155,7 @@ function EntryShareSheet({
 function useMistakeReportAction(entryId: string): { button: ReactNode; sheet: ReactNode } {
   const [open, setOpen] = useState(false);
   const showToast = useUndoToast();
+  const { mistakeReports } = useShell();
   const shown = useShown().entryButtons.mistakeReport;
   if (!shown) return { button: undefined, sheet: undefined };
   const close = () => {
@@ -174,7 +175,7 @@ function useMistakeReportAction(entryId: string): { button: ReactNode; sheet: Re
         onClose={close}
         onSend={({ type, comment }) => {
           close();
-          mistakeReportsOpening
+          mistakeReports
             .opened()
             .then((reports) => reports.report({ entryId, type, comment }))
             .then((answer) => {

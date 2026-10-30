@@ -1,7 +1,7 @@
-import type { ShareCardFormat, ShareSheetOutcome } from '@slovo/ui';
-import { PixelRatio, Share, type View } from 'react-native';
+import { PixelRatio, Share } from 'react-native';
 
 import { nativeModules } from '../device/device-native-modules';
+import type { ShareCard } from '../shell-value';
 import { shareCardImage } from './share-card';
 
 /**
@@ -25,9 +25,7 @@ const fileUrl = (path: string) => (path.startsWith('file://') ? path : `file://$
  * (an Entry's id, or `weekly-recap`), through the iOS share sheet, or
  * undefined when the binary can't capture a view, so no share button shows.
  */
-export const shareCardOnDevice:
-  | ((view: View, cardId: string, format: ShareCardFormat) => Promise<ShareSheetOutcome>)
-  | undefined =
+export const shareCardOnDevice: ShareCard | undefined =
   modules === undefined
     ? undefined
     : (view, cardId, format) => {
