@@ -50,18 +50,19 @@ export { MoodSheet, type MoodChip } from './mood/MoodSheet';
 export { ScreenTitle, SectionLabel } from './primitives/headings';
 export { MixChip } from './mix/MixChip';
 export { RarityFloorChoice } from './mix/RarityFloorChoice';
+export { OnboardingAccount } from './onboarding/OnboardingAccount';
+export { OnboardingMix } from './onboarding/OnboardingMix';
 export {
-  OnboardingAccount,
-  OnboardingMix,
   OnboardingNotifications,
-  OnboardingRarityTest,
-  OnboardingWelcome,
+  type SampleNotificationLook,
+} from './onboarding/OnboardingNotifications';
+export { OnboardingRarityTest } from './onboarding/OnboardingRarityTest';
+export { OnboardingWelcome, type HeroWord } from './onboarding/OnboardingWelcome';
+export {
   RarityTestQuestions,
-  type HeroWord,
   type RarityTestQuestion,
   type RarityTestScreen,
-  type SampleNotificationLook,
-} from './onboarding/Onboarding';
+} from './onboarding/RarityTestQuestions';
 export { OutlineButton } from './primitives/OutlineButton';
 export { OutlinedChip } from './primitives/OutlinedChip';
 export { GoogleSignInButton } from './primitives/GoogleSignInButton';
