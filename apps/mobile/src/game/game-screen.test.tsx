@@ -20,6 +20,8 @@ import config from 'slovo-edition/config';
 
 import GameScreen from '../app/game';
 import { edition, editionStrings } from '../edition/edition';
+import { ShellProvider } from '../shell-value';
+import { opened, testShell } from '../shell/test-support';
 
 /** The Ukrainian Edition with the given Feature Switches turned off. */
 function editionWithout(switchedOff: readonly string[]): Edition {
@@ -37,12 +39,8 @@ function editionWithout(switchedOff: readonly string[]): Edition {
 let mockEdition: Edition;
 
 /** The composition the screen reads, opened afresh for each test. */
-let mockComposition: Composition;
+let composition: Composition;
 
-jest.mock('../composition', () => ({
-  useComposition: () => mockComposition,
-  compositionOpening: { opened: () => Promise.resolve(mockComposition) },
-}));
 /** Whether the app is in the foreground, as a test moves it, and who listens to it. */
 let mockInForeground = true;
 const mockForegroundListeners = new Set<() => void>();
@@ -240,7 +238,7 @@ async function open({
     Object.entries(best).map(([modeId, result]) => [`game.best.${modeId}`, JSON.stringify(result)]),
   );
   if (crossword !== undefined) records.set('crossword.progress', JSON.stringify(crossword));
-  mockComposition = await openComposition({
+  composition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'nature', displayName: 'Природа' }],
       words: Array.from({ length: 15 }, (_, i) => (i < origins ? withOrigin(i) : word(i))),
@@ -265,11 +263,13 @@ async function open({
 async function renderScreen() {
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
-      <EditionProvider edition={edition} strings={editionStrings}>
-        <HapticsProvider haptics={haptics}>
-          <GameScreen />
-        </HapticsProvider>
-      </EditionProvider>
+      <ShellProvider shell={testShell({ composition: opened(composition) })}>
+        <EditionProvider edition={edition} strings={editionStrings}>
+          <HapticsProvider haptics={haptics}>
+            <GameScreen />
+          </HapticsProvider>
+        </EditionProvider>
+      </ShellProvider>
     </SafeAreaProvider>,
   );
   // The Game plans its offers once the composition is open.

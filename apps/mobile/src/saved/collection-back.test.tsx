@@ -21,24 +21,12 @@ import CollectionLinkScreen from '../app/c/[linkId]';
 import SavedLayout from '../app/saved/_layout';
 import CollectionScreen from '../app/saved/collections/[collectionId]';
 import { edition, editionStrings } from '../edition/edition';
+import { ShellProvider } from '../shell-value';
+import { opened, testShell } from '../shell/test-support';
 import { screenSettled } from '../entries/use-open-screen';
 
 /** The composition the screens read, opened afresh for each test. */
-let mockComposition: Composition;
-
-jest.mock('../composition', () => {
-  const { useEffect, useState } = jest.requireActual<typeof import('react')>('react');
-  return {
-    useComposition: () => mockComposition,
-    useCompositionRead<T>(read: (composition: Composition) => Promise<T>) {
-      const [value, setValue] = useState<T>();
-      useEffect(() => {
-        void read(mockComposition).then(setValue);
-      }, [read]);
-      return value;
-    },
-  };
-});
+let composition: Composition;
 
 const { collections: strings } = editionStrings;
 
@@ -71,7 +59,7 @@ const api = createFakeCollectionLinksApi();
 
 beforeEach(async () => {
   jest.useFakeTimers();
-  mockComposition = await openComposition({
+  composition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'nature', displayName: 'Природа' }],
       words: [word('w_one', 'тихий'), word('w_two', 'лагідний')],
@@ -104,9 +92,11 @@ async function renderApp(url: string) {
       _layout: () => (
         <GestureHandlerRootView>
           <SafeAreaProvider initialMetrics={metrics}>
-            <EditionProvider edition={edition} strings={editionStrings}>
-              <Tabs screenOptions={{ headerShown: false }} />
-            </EditionProvider>
+            <ShellProvider shell={testShell({ composition: opened(composition) })}>
+              <EditionProvider edition={edition} strings={editionStrings}>
+                <Tabs screenOptions={{ headerShown: false }} />
+              </EditionProvider>
+            </ShellProvider>
           </SafeAreaProvider>
         </GestureHandlerRootView>
       ),
@@ -139,7 +129,7 @@ describe('«Колекції» on a Collection', () => {
     const app = await renderApp(`/c/${made.id}`);
 
     await settle(() => fireEvent.press(screen.getByRole('button', { name: strings.link.add })));
-    const [copy] = mockComposition.collections.list;
+    const [copy] = composition.collections.list;
     expect(app.pathname()).toBe(`/saved/collections/${copy?.id ?? ''}`);
 
     await pressBack();
@@ -149,7 +139,7 @@ describe('«Колекції» on a Collection', () => {
   });
 
   it('goes back to Collections it was opened from', async () => {
-    const created = await mockComposition.collections.create('Осінь', 'w_one');
+    const created = await composition.collections.create('Осінь', 'w_one');
     if (!created.ok) throw new Error(`The Collection was refused: ${created.reason}`);
     const app = await renderApp('/saved/collections');
 

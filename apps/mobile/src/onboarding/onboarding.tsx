@@ -20,8 +20,8 @@ import { StyleSheet, View } from 'react-native';
 
 import { useAccountScreenGoogle } from '../account/account';
 import { AccountScreen } from '../settings/account-screen';
-import { accountOpening } from '../account/device-account';
 import { useComposition } from '../composition';
+import { useShell } from '../shell-value';
 import { editionStrings } from '../edition/edition';
 import { logError } from '../diagnostics/log';
 import { MixChoices } from '../mix/mix-choices';
@@ -69,6 +69,7 @@ function report(done: Promise<void>): void {
  */
 export function Onboarding() {
   const { onboarding } = useComposition();
+  const accountOpening = useShell().account;
   const applyRarityTest = useApplyRarityTest();
   const step = useSubscribed(onboarding, ({ state }) => state.step);
   /** Whether the SLOVO ID screen is open over the step. */

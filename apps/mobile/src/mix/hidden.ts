@@ -2,11 +2,12 @@ import type { CategoryKind, HiddenEntry, HideTarget, MixKind } from '@slovo/core
 import { fill, useEdition, useUndoToast } from '@slovo/ui';
 import { useMemo } from 'react';
 
-import { compositionOpening, useComposition } from '../composition';
+import { useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
 import { useEditionInEffect } from '../edition/remote-switches';
 import { logError } from '../diagnostics/log';
 import { useSubscribed } from '../opening';
+import { useShell } from '../shell-value';
 import { hiddenScreenModel, hiddenSummary, type HiddenScreenModel } from './hidden-screen';
 import { undoRestore } from './hiding-undo';
 import { useMixState } from './mix';
@@ -52,6 +53,7 @@ export function useHiddenChanges(): {
   turnKindOn: (entryKind: MixKind) => void;
 } {
   const composition = useComposition();
+  const compositionOpening = useShell().composition;
   const showToast = useUndoToast();
 
   function unhide(target: HideTarget): void {

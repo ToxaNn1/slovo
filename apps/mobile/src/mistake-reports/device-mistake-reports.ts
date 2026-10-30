@@ -1,15 +1,20 @@
-import { openMistakeReports, systemRandom } from '@slovo/core';
+import {
+  openMistakeReports,
+  systemRandom,
+  type MistakeReports,
+  type TrackedUserState,
+} from '@slovo/core';
+import type { PackReader } from '@slovo/language-pack/reader';
 import { systemSchedule } from '@slovo/ui';
 import Constants from 'expo-constants';
 
 import { anonymousApiClientOf } from '../api';
-import { languagePackOpening } from '../content-update/language-pack';
+import type { LaunchPack } from '../content-update/launch-pack';
 import { deviceClock } from '../device/device-clock';
 import { edition } from '../edition/edition';
-import { remoteSwitchesOpening } from '../edition/remote-switches';
+import type { EditionSwitches } from '../shell-value';
 import { logError } from '../diagnostics/log';
-import { openOnce } from '../opening';
-import { storedUserState } from '../user-state/stored-user-state';
+import { openOnce, type Opening } from '../opening';
 import { createReportsApi } from './reports-api';
 
 /**
@@ -19,26 +24,36 @@ import { createReportsApi } from './reports-api';
  * Pack the app run opened. They read the Edition in effect each time they
  * act, so a remote switch stops them.
  */
-export const mistakeReportsOpening = openOnce(
-  async () => {
-    const switches = await remoteSwitchesOpening.opened();
-    return openMistakeReports({
-      userState: await storedUserState.opened(),
-      api: createReportsApi({ clientOf: anonymousApiClientOf }),
-      edition: {
-        id: edition.id,
-        isFeatureEnabled: (feature) => switches.edition.isFeatureEnabled(feature),
-      },
-      appVersion: Constants.expoConfig?.version ?? '',
-      contentVersion: (await languagePackOpening.opened()).version.contentVersion,
-      clock: deviceClock,
-      schedule: systemSchedule,
-      random: systemRandom,
-    });
-  },
-  {
-    onError(error) {
-      logError('Could not open Mistake Reports', error);
+export function mistakeReportsOpening({
+  userState,
+  remoteSwitches,
+  languagePack,
+}: {
+  userState: Opening<TrackedUserState>;
+  remoteSwitches: Opening<EditionSwitches>;
+  languagePack: Opening<LaunchPack<PackReader>>;
+}): Opening<MistakeReports> {
+  return openOnce(
+    async () => {
+      const switches = await remoteSwitches.opened();
+      return openMistakeReports({
+        userState: await userState.opened(),
+        api: createReportsApi({ clientOf: anonymousApiClientOf }),
+        edition: {
+          id: edition.id,
+          isFeatureEnabled: (feature) => switches.edition.isFeatureEnabled(feature),
+        },
+        appVersion: Constants.expoConfig?.version ?? '',
+        contentVersion: (await languagePack.opened()).version.contentVersion,
+        clock: deviceClock,
+        schedule: systemSchedule,
+        random: systemRandom,
+      });
     },
-  },
-);
+    {
+      onError(error) {
+        logError('Could not open Mistake Reports', error);
+      },
+    },
+  );
+}

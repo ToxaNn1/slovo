@@ -16,14 +16,15 @@ import config from 'slovo-edition/config';
 
 import WordOfTheDayArchiveScreen from '../app/saved/words-of-the-day/index';
 import { edition, editionStrings } from '../edition/edition';
+import { ShellProvider } from '../shell-value';
+import { opened, testShell } from '../shell/test-support';
 
 /** The composition the screen reads, opened afresh for each test. */
-let mockComposition: Composition;
+let composition: Composition;
 
 /** The screens the screen pushed, in order. */
 const mockPushed: string[] = [];
 
-jest.mock('../composition', () => ({ useComposition: () => mockComposition }));
 jest.mock('expo-router', () => ({
   useRouter: () => ({
     back: () => undefined,
@@ -74,7 +75,7 @@ const kept = (days: Record<string, string>) =>
   );
 
 async function open(records: Map<string, string>) {
-  mockComposition = await openComposition({
+  composition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'nature', displayName: 'Природа' }],
       words: [
@@ -100,9 +101,11 @@ async function settle() {
 async function renderArchive() {
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
-      <EditionProvider edition={edition} strings={editionStrings}>
-        <WordOfTheDayArchiveScreen />
-      </EditionProvider>
+      <ShellProvider shell={testShell({ composition: opened(composition) })}>
+        <EditionProvider edition={edition} strings={editionStrings}>
+          <WordOfTheDayArchiveScreen />
+        </EditionProvider>
+      </ShellProvider>
     </SafeAreaProvider>,
   );
   await settle();
@@ -139,8 +142,8 @@ describe('the Word of the Day archive screen «Слова дня»', () => {
     await settle();
 
     expect(mockPushed).toEqual(['/saved/words-of-the-day/w_gentle']);
-    expect((await mockComposition.entryCard('w_gentle'))?.entryId).toBe('w_gentle');
-    expect(mockComposition.history.list).toEqual([]);
+    expect((await composition.entryCard('w_gentle'))?.entryId).toBe('w_gentle');
+    expect(composition.history.list).toEqual([]);
   });
 
   it('says so while no day is kept', async () => {

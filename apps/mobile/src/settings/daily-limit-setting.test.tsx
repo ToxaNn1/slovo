@@ -6,6 +6,7 @@ import {
   openComposition,
   openUserState,
   systemRandom,
+  trackChanges,
   type Composition,
   type Edition,
 } from '@slovo/core';
@@ -17,6 +18,8 @@ import config from 'slovo-edition/config';
 
 import SettingsScreen from '../app/settings/index';
 import { edition, editionStrings } from '../edition/edition';
+import { ShellProvider } from '../shell-value';
+import { opened, testShell } from '../shell/test-support';
 import { SettingsProvider } from './settings';
 
 /** The Ukrainian Edition with the Account off, and the Daily Limit on or off. */
@@ -32,18 +35,11 @@ function editionWith({ dailyLimit }: { dailyLimit: boolean }): Edition {
 let mockEdition: Edition;
 
 /** The user state the settings and the composition keep, one for the whole file. */
-let mockUserState: Awaited<ReturnType<typeof openUserState>>;
+let userState: Awaited<ReturnType<typeof openUserState>>;
 
 /** The composition the screen reads, opened afresh for each test. */
-let mockComposition: Composition;
+let composition: Composition;
 
-jest.mock('../user-state/stored-user-state', () => ({
-  storedUserState: { opened: () => Promise.resolve(mockUserState) },
-}));
-jest.mock('../composition', () => ({
-  useComposition: () => mockComposition,
-  compositionOpening: { opened: () => Promise.resolve(mockComposition) },
-}));
 jest.mock('../edition/remote-switches', () => ({ useEditionInEffect: () => mockEdition }));
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: () => undefined }) }));
 
@@ -54,18 +50,20 @@ const metrics = {
 
 const strings = editionStrings.settings.dailyLimit;
 
+const clock = { now: () => new Date('2026-10-27T09:00:00Z'), timeZone: () => 'Europe/Kyiv' };
+
 // The settings open once per app run, so the user state under them stays the same for the file.
 beforeAll(async () => {
-  mockUserState = await openUserState({ port: createMemoryUserStatePort(new Map()) });
+  userState = await openUserState({ port: createMemoryUserStatePort(new Map()) });
 });
 
 beforeEach(async () => {
   mockEdition = editionWith({ dailyLimit: true });
-  mockComposition = await openComposition({
+  composition = await openComposition({
     content: createMemoryContentPort({}),
     edition: mockEdition,
-    userState: mockUserState,
-    clock: { now: () => new Date('2026-10-27T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
+    userState: userState,
+    clock,
     random: systemRandom,
   });
 });
@@ -73,11 +71,18 @@ beforeEach(async () => {
 async function renderSettings() {
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
-      <EditionProvider edition={edition} strings={editionStrings}>
-        <SettingsProvider>
-          <SettingsScreen />
-        </SettingsProvider>
-      </EditionProvider>
+      <ShellProvider
+        shell={testShell({
+          userState: opened(trackChanges({ userState, clock })),
+          composition: opened(composition),
+        })}
+      >
+        <EditionProvider edition={edition} strings={editionStrings}>
+          <SettingsProvider>
+            <SettingsScreen />
+          </SettingsProvider>
+        </EditionProvider>
+      </ShellProvider>
     </SafeAreaProvider>,
   );
   await act(async () => {
@@ -89,7 +94,7 @@ async function renderSettings() {
 async function keptDailyLimit() {
   const { theme, fontSize, vibration, dailyLimit } = edition.userSettingDefaults;
   const settings = createSettings({
-    userState: mockUserState,
+    userState: userState,
     defaults: { theme, fontSize, vibration, dailyLimit },
   });
   return (await settings.read()).dailyLimit;

@@ -1,4 +1,9 @@
-import { openComposition, systemRandom, type Composition } from '@slovo/core';
+import {
+  openComposition,
+  systemRandom,
+  type Composition,
+  type TrackedUserState,
+} from '@slovo/core';
 import type { PackReader } from '@slovo/language-pack/reader';
 import { systemSchedule } from '@slovo/ui';
 import { useEffect, useState } from 'react';
@@ -8,20 +13,31 @@ import { deviceClock } from './device/device-clock';
 import { logError } from './diagnostics/log';
 import { deviceNotificationScheduler } from './notifications/device-notifications';
 import { edition, editionStrings } from './edition/edition';
-import { languagePackOpening } from './content-update/language-pack';
-import { remoteSwitchesOpening } from './edition/remote-switches';
+import type { LaunchPack } from './content-update/launch-pack';
 import { createCommunityWordApi } from './feed/community-word-api';
 import { createCollectionLinksApi } from './saved/collection-links-api';
 import { gameModeStrings } from './game/game-modes';
-import { openOnce, useOpened } from './opening';
-import { storedUserState } from './user-state/stored-user-state';
+import { openOnce, useOpened, type Opening } from './opening';
+import { useShell, type EditionSwitches } from './shell-value';
 
-async function openOver(content: PackReader): Promise<Composition> {
+/** What the composition opens over. */
+interface CompositionSources {
+  languagePack: Opening<LaunchPack<PackReader>>;
+  remoteSwitches: Opening<EditionSwitches>;
+  userState: Opening<TrackedUserState>;
+}
+
+async function openOver({
+  languagePack,
+  remoteSwitches,
+  userState,
+}: CompositionSources): Promise<Composition> {
+  const content = (await languagePack.opened()).reader;
   const composition = await openComposition({
     content,
     crossword: content,
-    edition: (await remoteSwitchesOpening.opened()).edition,
-    userState: await storedUserState.opened(),
+    edition: (await remoteSwitches.opened()).edition,
+    userState: await userState.opened(),
     clock: deviceClock,
     random: systemRandom,
     schedule: systemSchedule,
@@ -51,9 +67,8 @@ async function openOver(content: PackReader): Promise<Composition> {
  * what still holds that one, such as a Feed effect's cleanup, changes
  * nothing; an undo toast undoes in the composition open at the tap (ADR 0018).
  */
-export const compositionOpening = openOnce(
-  async () => openOver((await languagePackOpening.opened()).reader),
-  {
+export function compositionOpening(sources: CompositionSources): Opening<Composition> {
+  return openOnce(() => openOver(sources), {
     onError(error) {
       logError('Could not open the Core composition', error);
     },
@@ -61,12 +76,12 @@ export const compositionOpening = openOnce(
       // It never rejects.
       void old.close();
     },
-  },
-);
+  });
+}
 
 /** The Core composition of the app run, for a screen drawn under its gate (`Opened`). */
 export function useComposition(): Composition {
-  return useOpened(compositionOpening);
+  return useOpened(useShell().composition);
 }
 
 /**

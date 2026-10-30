@@ -22,6 +22,8 @@ import MixScreen from '../app/settings/mix';
 import RarityTestScreen from '../app/settings/rarity-test';
 import { edition, editionStrings } from '../edition/edition';
 import { screenSettled } from '../entries/use-open-screen';
+import { ShellProvider } from '../shell-value';
+import { opened, testShell } from '../shell/test-support';
 
 /** The Ukrainian Edition as it ships, with the Feature Switches given off. */
 function editionWithout(...off: FeatureSwitch[]): Edition {
@@ -40,9 +42,8 @@ function editionWithout(...off: FeatureSwitch[]): Edition {
 let mockEdition: Edition;
 
 /** The composition the shell reads, opened afresh for each test. */
-let mockComposition: Composition;
+let composition: Composition;
 
-jest.mock('../composition', () => ({ useComposition: () => mockComposition }));
 jest.mock('../edition/remote-switches', () => ({ useEditionInEffect: () => mockEdition }));
 jest.mock('./settings', () => ({
   useSettings: () => ({
@@ -97,7 +98,7 @@ async function settle() {
 
 async function openWith(edition: Edition) {
   mockEdition = edition;
-  mockComposition = await openComposition({
+  composition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'nature', displayName: 'Природа' }],
       words,
@@ -111,13 +112,16 @@ async function openWith(edition: Edition) {
 
 /** Settings as the app routes to it, with the Rarity Test and «Мій Мікс» a push away. */
 async function renderSettings() {
+  const shell = testShell({ composition: opened(composition) });
   await renderRouter(
     {
       _layout: () => (
         <SafeAreaProvider initialMetrics={metrics}>
-          <EditionProvider edition={edition} strings={editionStrings}>
-            <Stack screenOptions={{ headerShown: false }} />
-          </EditionProvider>
+          <ShellProvider shell={shell}>
+            <EditionProvider edition={edition} strings={editionStrings}>
+              <Stack screenOptions={{ headerShown: false }} />
+            </EditionProvider>
+          </ShellProvider>
         </SafeAreaProvider>
       ),
       'settings/index': SettingsScreen,
@@ -142,7 +146,7 @@ beforeEach(async () => {
 
 describe('Settings › «Пройти тест ще раз»', () => {
   it('takes the Rarity Test again, and its result overwrites the Rarity Floor of the Mix', async () => {
-    await mockComposition.mix.setRarityFloor(4);
+    await composition.mix.setRarityFloor(4);
     await renderSettings();
 
     await open(rarityTest.retake);
@@ -166,7 +170,7 @@ describe('Settings › «Пройти тест ще раз»', () => {
   });
 
   it('leaves the Rarity Floor as it was when the reader goes back halfway', async () => {
-    await mockComposition.mix.setRarityFloor(4);
+    await composition.mix.setRarityFloor(4);
     await renderSettings();
     await open(rarityTest.retake);
     await fireEvent.press(screen.getByRole('button', { name: knowledge.unknown }));
@@ -174,7 +178,7 @@ describe('Settings › «Пройти тест ще раз»', () => {
     await fireEvent.press(screen.getByRole('button', { name: editionStrings.settings.title }));
     await settle();
 
-    expect(mockComposition.mix.state.rarityFloor).toBe(4);
+    expect(composition.mix.state.rarityFloor).toBe(4);
   });
 
   it.each<[string, FeatureSwitch]>([

@@ -2,10 +2,12 @@ import type { AnyEntryCard, Composition } from '@slovo/core';
 import { useUndoToast, type UndoToastContent } from '@slovo/ui';
 import { useState } from 'react';
 
-import { compositionOpening, useComposition } from '../composition';
+import { useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
 import { useEditionInEffect } from '../edition/remote-switches';
 import { logError } from '../diagnostics/log';
+import type { Opening } from '../opening';
+import { useShell } from '../shell-value';
 import { hideChoice, hideToast, type HideOption } from './hide-choice';
 import { undoHide } from './hiding-undo';
 
@@ -37,6 +39,7 @@ export interface HideChoiceProps {
  */
 export function useHide(card: AnyEntryCard): { open: () => void; choice: HideChoiceProps } {
   const composition = useComposition();
+  const compositionOpening = useShell().composition;
   const edition = useEditionInEffect();
   const showToast = useUndoToast();
   const [visible, setVisible] = useState(false);
@@ -65,7 +68,7 @@ export function useHide(card: AnyEntryCard): { open: () => void; choice: HideCho
         setVisible(false);
         const option = options.find(({ kind }) => kind === key);
         if (option === undefined || (option.kind === 'category' && option.disabledHint)) return;
-        hide(composition, option, showToast).catch((error: unknown) => {
+        hide(composition, option, showToast, compositionOpening).catch((error: unknown) => {
           logError('Could not hide from the card', error);
         });
       },
@@ -81,6 +84,8 @@ async function hide(
   composition: Composition,
   option: HideOption,
   showToast: (toast: UndoToastContent) => void,
+  /** The composition open at the undo tap (ADR 0018). */
+  compositionOpening: Opening<Composition>,
 ): Promise<void> {
   const result = await composition.hide(option.target);
   if (result === undefined) return;

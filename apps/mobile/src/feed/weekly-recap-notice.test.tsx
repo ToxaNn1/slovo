@@ -5,9 +5,11 @@ import { act, fireEvent, render, screen, within } from '@testing-library/react-n
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { edition, editionStrings } from '../edition/edition';
+import { ShellProvider } from '../shell-value';
+import { opened, testShell } from '../shell/test-support';
 import { WeeklyRecapNotice } from './weekly-recap-notice';
 
-const mockRecap: WeeklyRecapModel = {
+const recap: WeeklyRecapModel = {
   firstDay: { year: 2026, month: 10, day: 19 },
   lastDay: { year: 2026, month: 10, day: 25 },
   seen: 23,
@@ -16,17 +18,9 @@ const mockRecap: WeeklyRecapModel = {
   streak: 6,
 };
 
-/** The composition, as far as the card reads it: one object, as the app keeps it. */
-const mockComposition = { weeklyRecap: { of: () => Promise.resolve(mockRecap) } };
-jest.mock('../composition', () => ({ useComposition: () => mockComposition }));
-
 /** What the reader sees in effect: the Share Cards switch and the Streak. */
 let mockShown: { entryButtons: { shareCard: boolean }; stats: { streak: boolean } };
 jest.mock('../shown-in-effect', () => ({ useShown: () => mockShown }));
-// A binary that can capture the Share Card.
-jest.mock('../share/device-share', () => ({
-  shareCardOnDevice: () => Promise.resolve('closed'),
-}));
 
 const metrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
@@ -37,12 +31,26 @@ beforeEach(() => {
   mockShown = { entryButtons: { shareCard: true }, stats: { streak: true } };
 });
 
+/**
+ * The card over the Core's composition of a test Shell, whose recap of the
+ * week holds the numbers above, on a binary that can capture the Share Card.
+ */
 async function renderNotice() {
+  const composition = await testShell().composition.opened();
+  const shell = testShell({
+    composition: opened({
+      ...composition,
+      weeklyRecap: { ...composition.weeklyRecap, of: () => Promise.resolve(recap) },
+    }),
+    shareCard: () => Promise.resolve('closed'),
+  });
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
-      <EditionProvider edition={edition} strings={editionStrings}>
-        <WeeklyRecapNotice day={{ year: 2026, month: 10, day: 26 }} />
-      </EditionProvider>
+      <ShellProvider shell={shell}>
+        <EditionProvider edition={edition} strings={editionStrings}>
+          <WeeklyRecapNotice day={{ year: 2026, month: 10, day: 26 }} />
+        </EditionProvider>
+      </ShellProvider>
     </SafeAreaProvider>,
   );
   // The recap's numbers are read once the card is drawn.

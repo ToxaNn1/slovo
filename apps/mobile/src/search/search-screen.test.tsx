@@ -18,14 +18,15 @@ import config from 'slovo-edition/config';
 import SearchScreen from '../app/search/index';
 import { edition, editionStrings } from '../edition/edition';
 import { screenSettled } from '../entries/use-open-screen';
+import { ShellProvider } from '../shell-value';
+import { opened, testShell } from '../shell/test-support';
 
 /** The composition the screen reads, opened afresh for each test. */
-let mockComposition: Composition;
+let composition: Composition;
 
 /** The screens the screen pushed, in order. */
 const mockPushed: string[] = [];
 
-jest.mock('../composition', () => ({ useComposition: () => mockComposition }));
 jest.mock('expo-router', () => ({
   useRouter: () => ({
     back: () => undefined,
@@ -66,7 +67,7 @@ beforeEach(async () => {
   mockPushed.length = 0;
   // A screen an earlier test opened would hold the next tap.
   screenSettled();
-  mockComposition = await openComposition({
+  composition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'nature', displayName: 'Природа' }],
       words: [
@@ -92,9 +93,11 @@ async function settle() {
 async function renderSearch() {
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
-      <EditionProvider edition={edition} strings={editionStrings}>
-        <SearchScreen />
-      </EditionProvider>
+      <ShellProvider shell={testShell({ composition: opened(composition) })}>
+        <EditionProvider edition={edition} strings={editionStrings}>
+          <SearchScreen />
+        </EditionProvider>
+      </ShellProvider>
     </SafeAreaProvider>,
   );
   await settle();
@@ -161,9 +164,9 @@ describe('the Search screen', () => {
     await settle();
 
     expect(mockPushed).toEqual([`/search/w_sad?back=${encodeURIComponent(strings.title)}`]);
-    expect(await mockComposition.recentQueries.list()).toEqual(['сум']);
-    expect((await mockComposition.openedFromSearch('w_sad'))?.entryId).toBe('w_sad');
-    expect(mockComposition.history.list).toEqual([]);
+    expect(await composition.recentQueries.list()).toEqual(['сум']);
+    expect((await composition.openedFromSearch('w_sad'))?.entryId).toBe('w_sad');
+    expect(composition.history.list).toEqual([]);
   });
 
   it('shows «За значенням» from 3 letters: the Words whose Definition holds the query', async () => {
@@ -196,8 +199,8 @@ describe('the Search screen', () => {
   });
 
   it('shows the recent queries, newest first, while the field is empty', async () => {
-    await mockComposition.recentQueries.resultOpened('сум');
-    await mockComposition.recentQueries.resultOpened('гре');
+    await composition.recentQueries.resultOpened('сум');
+    await composition.recentQueries.resultOpened('гре');
     await renderSearch();
 
     expect(screen.getByTestId('search-recent-0')).toHaveAccessibleName('гре');
@@ -210,7 +213,7 @@ describe('the Search screen', () => {
   });
 
   it('runs a recent query on a tap', async () => {
-    await mockComposition.recentQueries.resultOpened('гре');
+    await composition.recentQueries.resultOpened('гре');
     await renderSearch();
 
     await fireEvent.press(screen.getByTestId('search-recent-0'));
@@ -221,7 +224,7 @@ describe('the Search screen', () => {
   });
 
   it('empties the recent queries with «Очистити»', async () => {
-    await mockComposition.recentQueries.resultOpened('сум');
+    await composition.recentQueries.resultOpened('сум');
     await renderSearch();
 
     await fireEvent.press(screen.getByTestId('search-recent-clear'));
@@ -229,7 +232,7 @@ describe('the Search screen', () => {
 
     expect(screen.queryByTestId('search-recent-0')).not.toBeOnTheScreen();
     expect(screen.queryByTestId('search-recent-clear')).not.toBeOnTheScreen();
-    expect(await mockComposition.recentQueries.list()).toEqual([]);
+    expect(await composition.recentQueries.list()).toEqual([]);
   });
 
   it('shows a query kept from an opened result once the field is emptied again', async () => {
@@ -248,6 +251,6 @@ describe('the Search screen', () => {
 
     await type('сум');
 
-    expect(await mockComposition.recentQueries.list()).toEqual([]);
+    expect(await composition.recentQueries.list()).toEqual([]);
   });
 });

@@ -1,12 +1,11 @@
-import { openCounterReads } from '@slovo/core';
+import { openCounterReads, type CounterReads, type TrackedUserState } from '@slovo/core';
 
 import { anonymousApiClientOf } from '../api';
 import { deviceClock } from '../device/device-clock';
 import { edition } from '../edition/edition';
-import { remoteSwitchesOpening } from '../edition/remote-switches';
+import type { EditionSwitches } from '../shell-value';
 import { logError } from '../diagnostics/log';
-import { openOnce } from '../opening';
-import { storedUserState } from '../user-state/stored-user-state';
+import { openOnce, type Opening } from '../opening';
 import { createCountersApi } from './counters-api';
 
 /**
@@ -15,19 +14,27 @@ import { createCountersApi } from './counters-api';
  * and Favorites write their unsent changes to. They read the Edition in
  * effect each time, so a remote switch takes the line away.
  */
-export const counterReadsOpening = openOnce(
-  async () => {
-    const switches = await remoteSwitchesOpening.opened();
-    return openCounterReads({
-      edition: { isFeatureEnabled: (feature) => switches.edition.isFeatureEnabled(feature) },
-      api: createCountersApi({ clientOf: anonymousApiClientOf, editionId: edition.id }),
-      userState: await storedUserState.opened(),
-      clock: deviceClock,
-    });
-  },
-  {
-    onError(error) {
-      logError('Could not open the Community Counters', error);
+export function counterReadsOpening({
+  userState,
+  remoteSwitches,
+}: {
+  userState: Opening<TrackedUserState>;
+  remoteSwitches: Opening<EditionSwitches>;
+}): Opening<CounterReads> {
+  return openOnce(
+    async () => {
+      const switches = await remoteSwitches.opened();
+      return openCounterReads({
+        edition: { isFeatureEnabled: (feature) => switches.edition.isFeatureEnabled(feature) },
+        api: createCountersApi({ clientOf: anonymousApiClientOf, editionId: edition.id }),
+        userState: await userState.opened(),
+        clock: deviceClock,
+      });
     },
-  },
-);
+    {
+      onError(error) {
+        logError('Could not open the Community Counters', error);
+      },
+    },
+  );
+}

@@ -17,6 +17,8 @@ import config from 'slovo-edition/config';
 
 import HiddenScreen from '../app/settings/hidden';
 import { edition, editionStrings } from '../edition/edition';
+import { ShellProvider } from '../shell-value';
+import { opened, testShell } from '../shell/test-support';
 import { useHide } from './hiding';
 import { MixChoices } from './mix-choices';
 
@@ -33,12 +35,8 @@ function editionWith(on: boolean): Edition {
 let mockEdition: Edition;
 
 /** The composition the screens read, opened afresh for each test. */
-let mockComposition: Composition;
+let composition: Composition;
 
-jest.mock('../composition', () => ({
-  useComposition: () => mockComposition,
-  compositionOpening: { opened: () => Promise.resolve(mockComposition) },
-}));
 jest.mock('../edition/remote-switches', () => ({ useEditionInEffect: () => mockEdition }));
 jest.mock('expo-router', () => ({ useRouter: () => ({ back: () => undefined }) }));
 
@@ -78,7 +76,7 @@ const metrics = {
 
 async function open(on: boolean) {
   mockEdition = editionWith(on);
-  mockComposition = await openComposition({
+  composition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'nature', displayName: 'Природа' }],
       synonymRows: [row],
@@ -105,9 +103,11 @@ async function settle() {
 async function renderInApp(children: React.ReactNode) {
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
-      <EditionProvider edition={edition} strings={editionStrings}>
-        <UndoToastProvider>{children}</UndoToastProvider>
-      </EditionProvider>
+      <ShellProvider shell={testShell({ composition: opened(composition) })}>
+        <EditionProvider edition={edition} strings={editionStrings}>
+          <UndoToastProvider>{children}</UndoToastProvider>
+        </EditionProvider>
+      </ShellProvider>
     </SafeAreaProvider>,
   );
   await settle();
@@ -125,7 +125,7 @@ function CardHide({ card }: { card: Parameters<typeof useHide>[0] }) {
 }
 
 async function hideFromCard(entryId: string, option: 'entry' | 'whole-kind') {
-  const card = await mockComposition.entryCard(entryId);
+  const card = await composition.entryCard(entryId);
   if (card === undefined) throw new Error(`No card for ${entryId}`);
   await renderInApp(<CardHide card={card} />);
   await fireEvent.press(screen.getByTestId('hide-button'));
@@ -162,16 +162,16 @@ describe.each(kinds)('$name', ({ kind, feature, entry, title, subtitle }) => {
 
     await fireEvent(toggle, 'valueChange', false);
     await settle();
-    expect(mockComposition.mix.state.kinds[kind]).toBe(false);
+    expect(composition.mix.state.kinds[kind]).toBe(false);
 
     await fireEvent(toggle, 'valueChange', true);
     await settle();
-    expect(mockComposition.mix.state.kinds[kind]).toBe(true);
+    expect(composition.mix.state.kinds[kind]).toBe(true);
   });
 
   it('show a hidden one in their own section of the Hidden screen until it is put back', async () => {
     await hideFromCard(entry.id, 'entry');
-    expect(mockComposition.hiddenEntries.has(entry.id)).toBe(true);
+    expect(composition.hiddenEntries.has(entry.id)).toBe(true);
 
     await renderInApp(<HiddenScreen />);
     expect(screen.getByTestId(`hidden-section-${feature}`)).toHaveTextContent(title, {
@@ -183,14 +183,14 @@ describe.each(kinds)('$name', ({ kind, feature, entry, title, subtitle }) => {
     await waitFor(() => {
       expect(screen.queryByTestId(`hidden-entry-${entry.id}`)).toBeNull();
     });
-    expect(mockComposition.hiddenEntries.has(entry.id)).toBe(false);
+    expect(composition.hiddenEntries.has(entry.id)).toBe(false);
     expect(screen.queryByTestId(`hidden-section-${feature}`)).toBeNull();
     expect(screen.getByText(editionStrings.hidden.empty)).toBeOnTheScreen();
   });
 
   it('as a whole, hidden from a card, wait on the Hidden screen to be turned on', async () => {
     await hideFromCard(entry.id, 'whole-kind');
-    expect(mockComposition.mix.state.kinds[kind]).toBe(false);
+    expect(composition.mix.state.kinds[kind]).toBe(false);
     expect(screen.getByText(`${title} приховано`)).toBeOnTheScreen();
 
     await renderInApp(<HiddenScreen />);
@@ -201,13 +201,13 @@ describe.each(kinds)('$name', ({ kind, feature, entry, title, subtitle }) => {
     await waitFor(() => {
       expect(screen.queryByTestId(`hidden-${feature}`)).toBeNull();
     });
-    expect(mockComposition.mix.state.kinds[kind]).toBe(true);
+    expect(composition.mix.state.kinds[kind]).toBe(true);
   });
 
   it('show nothing while the Edition turns them off', async () => {
     await open(false);
-    await mockComposition.hide({ kind: 'entry', entryId: entry.id });
-    await mockComposition.mix.setKind(kind, false);
+    await composition.hide({ kind: 'entry', entryId: entry.id });
+    await composition.mix.setKind(kind, false);
 
     await renderInApp(<MixChoices />);
     expect(screen.queryByTestId(`mix-${feature}`)).toBeNull();

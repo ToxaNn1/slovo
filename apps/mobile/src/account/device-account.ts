@@ -1,4 +1,4 @@
-import { openAccount, systemRandom, type Account } from '@slovo/core';
+import { openAccount, systemRandom, type Account, type TrackedUserState } from '@slovo/core';
 import { systemSchedule } from '@slovo/ui';
 
 import { apiClient, apiClientOf } from '../api';
@@ -7,7 +7,6 @@ import { nativeModules } from '../device/device-native-modules';
 import { edition } from '../edition/edition';
 import { logError } from '../diagnostics/log';
 import { openOnce, type Opening } from '../opening';
-import { storedUserState } from '../user-state/stored-user-state';
 import { createAccountApi } from './account-api';
 import { createGoogleSignInSheet, noGoogleSignInSheet } from './google-sign-in-sheet';
 import { createSessionStore } from './session-store';
@@ -64,26 +63,31 @@ const googleSignInSheet =
  * after the user state, whose installed marker tells a Session of this install
  * from one an earlier install left in the Keychain.
  */
-export const accountOpening: Opening<Account> | undefined = edition.isFeatureEnabled('account')
-  ? openOnce(
-      async () =>
-        openAccount({
-          api: createAccountApi({
-            client: apiClient,
-            clientOf: apiClientOf,
-            editionId: edition.id,
-          }),
-          googleSheet: googleSignInSheet,
-          sessions: createSessionStore(keychain),
-          userState: await storedUserState.opened(),
-          clock: deviceClock,
-          schedule: systemSchedule,
-          random: systemRandom,
+export function accountOpening({
+  userState,
+}: {
+  userState: Opening<TrackedUserState>;
+}): Opening<Account> | undefined {
+  if (!edition.isFeatureEnabled('account')) return undefined;
+  return openOnce(
+    async () =>
+      openAccount({
+        api: createAccountApi({
+          client: apiClient,
+          clientOf: apiClientOf,
+          editionId: edition.id,
         }),
-      {
-        onError(error) {
-          logError('Could not read the Session', error);
-        },
+        googleSheet: googleSignInSheet,
+        sessions: createSessionStore(keychain),
+        userState: await userState.opened(),
+        clock: deviceClock,
+        schedule: systemSchedule,
+        random: systemRandom,
+      }),
+    {
+      onError(error) {
+        logError('Could not read the Session', error);
       },
-    )
-  : undefined;
+    },
+  );
+}

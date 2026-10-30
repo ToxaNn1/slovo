@@ -4,7 +4,8 @@ import { useEdition } from '@slovo/ui';
 import { editionStrings } from '../edition/edition';
 import { useEditionInEffect } from '../edition/remote-switches';
 import { useSubscribed, type Opening, type Source } from '../opening';
-import { accountOpening, googleClientId } from './device-account';
+import { useShell } from '../shell-value';
+import { googleClientId } from './device-account';
 import { accountProblemLine, accountSummary } from './account-texts';
 
 /**
@@ -13,7 +14,8 @@ import { accountProblemLine, accountSummary } from './account-texts';
  * Edition has no Account. The Session stays kept either way (ADR 0040).
  */
 export function useAccountInEffect(): Opening<Account> | undefined {
-  return useEditionInEffect().isFeatureEnabled('account') ? accountOpening : undefined;
+  const { account } = useShell();
+  return useEditionInEffect().isFeatureEnabled('account') ? account : undefined;
 }
 
 /** What the SLOVO ID screen offers Google sign-in by: the Edition's switch in effect and the build's client id. */

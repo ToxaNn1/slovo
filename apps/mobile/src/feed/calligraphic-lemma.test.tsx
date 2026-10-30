@@ -5,6 +5,7 @@ import {
   loadEdition,
   openComposition,
   openUserState,
+  trackChanges,
   type Composition,
   type Edition,
   type Haptics,
@@ -17,6 +18,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import config from 'slovo-edition/config';
 
 import HomeScreen from '../app/index';
+import { ShellProvider } from '../shell-value';
+import { opened, testShell } from '../shell/test-support';
 import EntryLayout from '../app/entry/_layout';
 import EntryFromLinkScreen from '../app/entry/[entryId]';
 import { edition, editionStrings, editionTokens } from '../edition/edition';
@@ -38,29 +41,11 @@ jest.mock('expo-constants', () => ({
 let mockEdition: Edition;
 
 /** The user state the settings and the composition keep, opened afresh for each test. */
-let mockUserState: Awaited<ReturnType<typeof openUserState>>;
+let userState: Awaited<ReturnType<typeof openUserState>>;
 
 /** The composition the screens read, opened afresh for each test. */
-let mockComposition: Composition;
+let composition: Composition;
 
-jest.mock('../user-state/stored-user-state', () => ({
-  storedUserState: { opened: () => Promise.resolve(mockUserState) },
-}));
-
-jest.mock('../composition', () => {
-  const { useEffect, useState } = jest.requireActual<typeof import('react')>('react');
-  return {
-    useComposition: () => mockComposition,
-    compositionOpening: { opened: () => Promise.resolve(mockComposition) },
-    useCompositionRead<T>(read: (composition: Composition) => Promise<T>) {
-      const [value, setValue] = useState<T>();
-      useEffect(() => {
-        void read(mockComposition).then(setValue);
-      }, [read]);
-      return value;
-    },
-  };
-});
 // The app in the foreground, where the Feed gets its next card ready.
 jest.mock('../foreground/in-foreground', () => ({ useInForeground: () => true }));
 jest.mock('../edition/remote-switches', () => ({ useEditionInEffect: () => mockEdition }));
@@ -117,14 +102,14 @@ async function open(calligraphy: boolean) {
   const records = new Map([
     ['onboarding.finished', JSON.stringify(new Date('2026-09-01T09:00:00Z'))],
   ]);
-  mockUserState = await openUserState({ port: createMemoryUserStatePort(records) });
-  mockComposition = await openComposition({
+  userState = await openUserState({ port: createMemoryUserStatePort(records) });
+  composition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'emotions-character', displayName: 'Емоції' }],
       words: [word('w_sumyrnyi', 'сумирний'), word('w_lahidnyi', 'лагідний')],
     }),
     edition: mockEdition,
-    userState: mockUserState,
+    userState: userState,
     clock: { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     // The first Word in each draw, so each opening shows the same Word of the Day.
     random: { next: () => 0 },
@@ -147,6 +132,18 @@ async function settle(action: () => unknown = () => undefined) {
   });
 }
 
+/** The Shell the app draws under: the settings and the composition over the test's user state. */
+const shell = () =>
+  testShell({
+    userState: opened(
+      trackChanges({
+        userState,
+        clock: { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
+      }),
+    ),
+    composition: opened(composition),
+  });
+
 /** The app on the Feed, with the Entry screen a link opens. */
 async function renderApp() {
   await renderRouter(
@@ -154,13 +151,15 @@ async function renderApp() {
       _layout: () => (
         <SafeAreaProvider initialMetrics={metrics}>
           <TokensProvider tokens={editionTokens} colorScheme="light">
-            <EditionProvider edition={edition} strings={editionStrings}>
-              <HapticsProvider haptics={haptics}>
-                <SettingsProvider>
-                  <Slot />
-                </SettingsProvider>
-              </HapticsProvider>
-            </EditionProvider>
+            <ShellProvider shell={shell()}>
+              <EditionProvider edition={edition} strings={editionStrings}>
+                <HapticsProvider haptics={haptics}>
+                  <SettingsProvider>
+                    <Slot />
+                  </SettingsProvider>
+                </HapticsProvider>
+              </EditionProvider>
+            </ShellProvider>
           </TokensProvider>
         </SafeAreaProvider>
       ),
@@ -225,7 +224,7 @@ describe('the calligraphic Lemma', () => {
   it('leaves the Entry screen of the Word of the Day in the Word font', async () => {
     await open(true);
     await renderApp();
-    const today = mockComposition.feed.cards.find(
+    const today = composition.feed.cards.find(
       (card) => card.kind === 'word' && card.wordOfTheDay !== undefined,
     );
 

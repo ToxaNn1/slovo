@@ -17,6 +17,8 @@ import config from 'slovo-edition/config';
 
 import MixScreen from '../app/settings/mix';
 import { edition, editionStrings } from '../edition/edition';
+import { ShellProvider } from '../shell-value';
+import { opened, testShell } from '../shell/test-support';
 
 const strings = editionStrings.mix.corrections;
 
@@ -24,9 +26,8 @@ const strings = editionStrings.mix.corrections;
 const mockEdition = loadEdition(config);
 
 /** The composition the Mix screen reads, opened afresh for each test. */
-let mockComposition: Composition;
+let composition: Composition;
 
-jest.mock('../composition', () => ({ useComposition: () => mockComposition }));
 jest.mock('../edition/remote-switches', () => ({ useEditionInEffect: () => mockEdition }));
 
 /** The Language Pack's Categories of Corrections, in its order. */
@@ -55,7 +56,7 @@ async function turnCorrections(on: boolean) {
 }
 
 beforeEach(async () => {
-  mockComposition = await openComposition({
+  composition = await openComposition({
     content: createMemoryContentPort({
       categories: [
         { id: 'nature', displayName: 'Природа' },
@@ -77,13 +78,16 @@ const metrics = {
 
 /** Settings › Мій Мікс as the app routes to it. */
 async function renderChoices() {
+  const shell = testShell({ composition: opened(composition) });
   await renderRouter(
     {
       _layout: () => (
         <SafeAreaProvider initialMetrics={metrics}>
-          <EditionProvider edition={edition} strings={editionStrings}>
-            <Stack screenOptions={{ headerShown: false }} />
-          </EditionProvider>
+          <ShellProvider shell={shell}>
+            <EditionProvider edition={edition} strings={editionStrings}>
+              <Stack screenOptions={{ headerShown: false }} />
+            </EditionProvider>
+          </ShellProvider>
         </SafeAreaProvider>
       ),
       'settings/mix': MixScreen,
@@ -113,7 +117,7 @@ describe('the Categories of Corrections on the Мій Мікс screen', () => {
     expect(chipOf('work')).not.toBeSelected();
     expect(chipOf('shop')).toBeSelected();
     expect(screen.getByTestId('mix-chip-nature')).toBeSelected();
-    expect(mockComposition.mix.state.correctionCategories.categoryIds).toEqual(['shop']);
+    expect(composition.mix.state.correctionCategories.categoryIds).toEqual(['shop']);
 
     await press('mix-correction-chip-work');
     expect(chipOf('work')).toBeSelected();

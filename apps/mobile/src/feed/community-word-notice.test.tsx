@@ -1,27 +1,41 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import type { EntryRowModel } from '@slovo/core';
+import type { Correction } from '@slovo/contracts';
+import {
+  createMemoryUserStatePort,
+  loadEdition,
+  openComposition,
+  openUserState,
+  systemRandom,
+  type Composition,
+} from '@slovo/core';
+import { createMemoryContentPort } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import config from 'slovo-edition/config';
 
 import { edition, editionStrings } from '../edition/edition';
+import { ShellProvider } from '../shell-value';
+import { opened, testShell } from '../shell/test-support';
 import { CommunityWordNotice } from './community-word-notice';
 
-const mockRow: EntryRowModel = {
+/** The Community Word: a Correction of the pack. */
+const correction: Correction = {
   kind: 'correction',
-  entryId: 'c_abc123',
-  title: 'зважати на',
-  secondLine: 'приймати до уваги',
-  labelKey: 'correction',
-  spoken: 'зважати на, приймати до уваги',
+  id: 'c_abc123',
+  nonStandardForm: 'приймати до уваги',
   correctionType: 'calque',
+  standardEquivalents: ['зважати на'],
+  explanation: 'Чому краще зважати.',
+  examplePair: { nonStandard: 'Прийняти до уваги.', standard: 'Зважати на це.' },
+  categoryId: 'everyday',
+  sources: [{ title: 'Test source' }],
+  literaryUses: [],
+  retired: false,
 };
 
-/** The composition, as far as the card reads it: one object, as the app keeps it. */
-const mockComposition = {
-  entryRow: (entryId: string) => Promise.resolve(entryId === mockRow.entryId ? mockRow : undefined),
-};
-jest.mock('../composition', () => ({ useComposition: () => mockComposition }));
+/** The composition the card reads the Entry's row from, opened afresh for each test. */
+let composition: Composition;
 
 /** The screens the card opens, by their path. */
 const mockOpened: string[] = [];
@@ -34,16 +48,25 @@ const metrics = {
   insets: { top: 0, left: 0, right: 0, bottom: 0 },
 };
 
-beforeEach(() => {
+beforeEach(async () => {
   mockOpened.length = 0;
+  composition = await openComposition({
+    content: createMemoryContentPort({ corrections: [correction] }),
+    edition: loadEdition(config),
+    userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
+    clock: { now: () => new Date('2026-10-26T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
+    random: systemRandom,
+  });
 });
 
 async function renderNotice(adds: number) {
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
-      <EditionProvider edition={edition} strings={editionStrings}>
-        <CommunityWordNotice entryId="c_abc123" adds={adds} />
-      </EditionProvider>
+      <ShellProvider shell={testShell({ composition: opened(composition) })}>
+        <EditionProvider edition={edition} strings={editionStrings}>
+          <CommunityWordNotice entryId="c_abc123" adds={adds} />
+        </EditionProvider>
+      </ShellProvider>
     </SafeAreaProvider>,
   );
   // The Entry's row is read once the card is drawn.

@@ -19,18 +19,16 @@ import config from 'slovo-edition/config';
 
 import HiddenScreen from '../app/settings/hidden';
 import { edition, editionStrings } from '../edition/edition';
+import { ShellProvider } from '../shell-value';
+import { opened, testShell } from '../shell/test-support';
 import { useHide } from './hiding';
 
 /** The Ukrainian Edition as its config file gives it, every Feature Switch as it ships. */
 const mockEdition = loadEdition(config);
 
 /** The composition the card and the Hidden screen read, opened afresh for each test. */
-let mockComposition: Composition;
+let composition: Composition;
 
-jest.mock('../composition', () => ({
-  useComposition: () => mockComposition,
-  compositionOpening: { opened: () => Promise.resolve(mockComposition) },
-}));
 jest.mock('../edition/remote-switches', () => ({ useEditionInEffect: () => mockEdition }));
 
 /** The Language Pack's Categories of Corrections, in its order. */
@@ -59,7 +57,7 @@ const metrics = {
 };
 
 beforeEach(async () => {
-  mockComposition = await openComposition({
+  composition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'nature', displayName: 'Природа' }],
       correctionCategories: [work, shop],
@@ -80,7 +78,7 @@ async function settle() {
 }
 
 async function cardOf(entryId: string): Promise<EntryFeedCard> {
-  const card = await mockComposition.entryCard(entryId);
+  const card = await composition.entryCard(entryId);
   if (card === undefined || card.kind === 'synonymRow' || card.kind === 'tip')
     throw new Error(`No card of a Word, a Correction or an Idiom for ${entryId}`);
   return card;
@@ -112,13 +110,16 @@ function CardScreen({ card }: { card: EntryFeedCard }) {
 /** The app with the card of the Entry as its first screen and the Hidden screen a push away. */
 async function openHideChoice(entryId: string) {
   const card = await cardOf(entryId);
+  const shell = testShell({ composition: opened(composition) });
   const app = renderRouter(
     {
       _layout: () => (
         <SafeAreaProvider initialMetrics={metrics}>
-          <EditionProvider edition={edition} strings={editionStrings}>
-            <Stack screenOptions={{ headerShown: false }} />
-          </EditionProvider>
+          <ShellProvider shell={shell}>
+            <EditionProvider edition={edition} strings={editionStrings}>
+              <Stack screenOptions={{ headerShown: false }} />
+            </EditionProvider>
+          </ShellProvider>
         </SafeAreaProvider>
       ),
       index: () => <CardScreen card={card} />,
@@ -142,7 +143,7 @@ describe('a Category of Corrections hidden from its card', () => {
 
     await fireEvent.press(screen.getByTestId('hide-choice-category'));
     await settle();
-    expect(mockComposition.mix.state.correctionCategories.categoryIds).toEqual([shop.id]);
+    expect(composition.mix.state.correctionCategories.categoryIds).toEqual([shop.id]);
     expect(screen.getByText(`Категорію «${work.displayName}» приховано`)).toBeOnTheScreen();
 
     await fireEvent.press(screen.getByText('Приховане'));
@@ -157,12 +158,12 @@ describe('a Category of Corrections hidden from its card', () => {
     await waitFor(() => {
       expect(screen.queryByTestId(`hidden-correction-category-${work.id}`)).toBeNull();
     });
-    expect(mockComposition.mix.state.correctionCategories.categoryIds).toEqual([work.id, shop.id]);
+    expect(composition.mix.state.correctionCategories.categoryIds).toEqual([work.id, shop.id]);
     expect(screen.getByText(editionStrings.hidden.empty)).toBeOnTheScreen();
   });
 
   it('is offered disabled, saying why, while it is the last Category of Corrections in the Mix', async () => {
-    await mockComposition.mix.takeOut(shop.id, 'correction');
+    await composition.mix.takeOut(shop.id, 'correction');
 
     await openHideChoice('c_work');
 

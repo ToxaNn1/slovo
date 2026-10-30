@@ -1,13 +1,12 @@
-import { openCounterSending, systemRandom } from '@slovo/core';
+import { openCounterSending, systemRandom, type TrackedUserState } from '@slovo/core';
 import { systemSchedule } from '@slovo/ui';
 
 import { anonymousApiClientOf } from '../api';
 import { deviceClock } from '../device/device-clock';
 import { edition } from '../edition/edition';
-import { remoteSwitchesOpening } from '../edition/remote-switches';
+import type { CounterSending, EditionSwitches } from '../shell-value';
 import { logError } from '../diagnostics/log';
-import { openOnce } from '../opening';
-import { storedUserState } from '../user-state/stored-user-state';
+import { openOnce, type Opening } from '../opening';
 import { createCountersApi } from './counters-api';
 
 /**
@@ -16,21 +15,29 @@ import { createCountersApi } from './counters-api';
  * Knowledge Marks and Favorites write their unsent changes to. It reads the
  * Edition in effect each time, so a remote switch stops it.
  */
-export const counterSendingOpening = openOnce(
-  async () => {
-    const switches = await remoteSwitchesOpening.opened();
-    return openCounterSending({
-      edition: { isFeatureEnabled: (feature) => switches.edition.isFeatureEnabled(feature) },
-      api: createCountersApi({ clientOf: anonymousApiClientOf, editionId: edition.id }),
-      userState: await storedUserState.opened(),
-      clock: deviceClock,
-      schedule: systemSchedule,
-      random: systemRandom,
-    });
-  },
-  {
-    onError(error) {
-      logError('Could not open the sending of the Community Counters', error);
+export function counterSendingOpening({
+  userState,
+  remoteSwitches,
+}: {
+  userState: Opening<TrackedUserState>;
+  remoteSwitches: Opening<EditionSwitches>;
+}): Opening<CounterSending> {
+  return openOnce(
+    async () => {
+      const switches = await remoteSwitches.opened();
+      return openCounterSending({
+        edition: { isFeatureEnabled: (feature) => switches.edition.isFeatureEnabled(feature) },
+        api: createCountersApi({ clientOf: anonymousApiClientOf, editionId: edition.id }),
+        userState: await userState.opened(),
+        clock: deviceClock,
+        schedule: systemSchedule,
+        random: systemRandom,
+      });
     },
-  },
-);
+    {
+      onError(error) {
+        logError('Could not open the sending of the Community Counters', error);
+      },
+    },
+  );
+}
