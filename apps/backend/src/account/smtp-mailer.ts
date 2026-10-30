@@ -1,13 +1,28 @@
 import type { Mailer } from '@slovo/server-core';
 import { createTransport } from 'nodemailer';
 
+/** Where and how the SMTP client sends, from the environment (`config.ts`). */
+export interface SmtpOptions {
+  readonly host: string;
+  readonly port: number;
+  /** TLS from the first byte; otherwise STARTTLS when the server offers it. */
+  readonly tls: boolean;
+  readonly credentials: { readonly user: string; readonly password: string } | undefined;
+  /** The sender's address; the server Core names the sender. */
+  readonly from: string;
+}
+
 /**
  * Sends the emails over SMTP: to Mailpit locally (`compose.yaml`), to a real
- * provider from 0.9. `from` is the sender's address; the server Core names
- * the sender.
+ * provider in production.
  */
-export function createSmtpMailer({ url, from }: { url: string; from: string }): Mailer {
-  const transport = createTransport(url);
+export function createSmtpMailer({ host, port, tls, credentials, from }: SmtpOptions): Mailer {
+  const transport = createTransport({
+    host,
+    port,
+    secure: tls,
+    auth: credentials && { user: credentials.user, pass: credentials.password },
+  });
   return {
     async send({ to, senderName, subject, text }) {
       try {

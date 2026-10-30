@@ -18,7 +18,6 @@ const DOWN_DATABASE_URL = 'postgres://slovo:slovo@127.0.0.1:1/slovo';
 /** Every variable the server needs, valid. */
 const VALID_ENV = {
   DATABASE_URL: DOWN_DATABASE_URL,
-  SMTP_URL: 'smtp://localhost:1025',
   AUTH_SECRET: 'a-test-secret-that-is-at-least-32-characters',
 };
 
@@ -283,6 +282,39 @@ describe('the server', { timeout: 30_000 }, () => {
 
     expect(await server.exited).toBe(1);
     expect(server.output().stderr).toContain('AUTH_SECRET: is the example value');
+  });
+
+  it('refuses to start in production without its SMTP settings and sender, naming each', async () => {
+    const server = runServer({ ...VALID_ENV, NODE_ENV: 'production' });
+
+    expect(await server.exited).toBe(1);
+    for (const name of ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASSWORD', 'MAIL_FROM']) {
+      expect(server.output().stderr).toContain(`${name}: is not set`);
+    }
+  });
+
+  it('starts in production with its SMTP settings and sender', async () => {
+    const server = runServer({
+      ...VALID_ENV,
+      DATABASE_URL: testDatabaseUrl(),
+      PORT: '0',
+      NODE_ENV: 'production',
+      SMTP_HOST: 'smtp.example.com',
+      SMTP_PORT: '465',
+      SMTP_USER: 'slovo',
+      SMTP_PASSWORD: 'a-password',
+      SMTP_TLS: 'true',
+      MAIL_FROM: 'no-reply@example.com',
+    });
+
+    await server.listening;
+  });
+
+  it('refuses to start with an SMTP_USER but no SMTP_PASSWORD, naming it', async () => {
+    const server = runServer({ ...VALID_ENV, SMTP_USER: 'slovo' });
+
+    expect(await server.exited).toBe(1);
+    expect(server.output().stderr).toContain('SMTP_PASSWORD: is not set');
   });
 
   it('starts with no SENTRY_DSN, as .env.example gives it, and then reports nothing', async () => {
