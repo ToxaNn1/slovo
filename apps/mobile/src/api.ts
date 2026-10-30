@@ -1,5 +1,5 @@
-import { createApiClient, ORPCError, safe, type ClientPromiseResult } from '@slovo/contracts/api';
-import type { RequestFailure } from '@slovo/core';
+import { createApiClient } from '@slovo/contracts/api';
+import type { Backend } from '@slovo/core';
 
 /**
  * The backend's address: `EXPO_PUBLIC_SLOVO_API_URL`, or in development the
@@ -7,55 +7,9 @@ import type { RequestFailure } from '@slovo/core';
  */
 const API_URL = process.env.EXPO_PUBLIC_SLOVO_API_URL ?? 'http://localhost:8787';
 
-/** The app's client of the API, built from the contract (spec #333). */
-export const apiClient = createApiClient({ url: API_URL });
-
-/** The `fetch` the contract's client sends its requests with. */
-export type ClientFetch = NonNullable<Parameters<typeof createApiClient>[0]['fetch']>;
-
-/** `Retry-After` in whole seconds; none when the answer has no such header or it says anything else. */
-export function secondsOf(header: string | null): number | undefined {
-  return header !== null && /^\d+$/.test(header) ? Number(header) : undefined;
-}
-
-/** The errors the contract defines for a procedure that throws `E`, each with its code and data. */
-type DefinedError<E> = Extract<E, ORPCError<string, unknown>>;
-
 /**
- * What a call of the API comes to for the Core; it never rejects. Success
- * carries the call's output. An error the contract defines for the procedure
- * comes to the failure `failureOf` makes of it, if any; its code is typed by
- * the contract, so comparing it with a code the procedure doesn't define, or
- * renaming one in the contract, fails typecheck. Otherwise no answer is
- * `offline`, a 429 `too-many-requests`, a 5xx `server-error`, and any other
- * answer `unexpected`, such as a request the backend refuses (400) or an
- * Edition it doesn't serve (404).
+ * The Core's Backend port of this device: the API contract's client (spec
+ * #333, ADR 0064). The Core answers, retries and maps every call itself; the
+ * shell supplies only the client.
  */
-export async function answerOf<O, E, F extends { readonly ok: false } = never>(
-  call: ClientPromiseResult<O, E>,
-  failureOf?: (error: DefinedError<E>) => F | undefined,
-): Promise<{ readonly ok: true; readonly output: O } | F | RequestFailure> {
-  const { error, data, isDefined, isSuccess } = await safe(call);
-  if (isSuccess) return { ok: true, output: data };
-  const failure = isDefined ? failureOf?.(error) : undefined;
-  if (failure !== undefined) return failure;
-  if (!(error instanceof ORPCError)) return { ok: false, reason: 'offline' };
-  if (error.status === 429) return { ok: false, reason: 'too-many-requests' };
-  if (error.status >= 500) return { ok: false, reason: 'server-error' };
-  return { ok: false, reason: 'unexpected' };
-}
-
-/**
- * The client of a device signed in with the Session's token, which it sends as
- * `Authorization: Bearer`; `fetch` replaces the global one.
- */
-export const apiClientOf = (token: string, fetch?: ClientFetch) =>
-  createApiClient({
-    url: API_URL,
-    headers: { authorization: `Bearer ${token}` },
-    ...(fetch === undefined ? {} : { fetch }),
-  });
-
-/** The client of a device that sends no Session, as a Mistake Report does (ADR 0056); `fetch` replaces the global one. */
-export const anonymousApiClientOf = (fetch: ClientFetch) =>
-  createApiClient({ url: API_URL, fetch });
+export const backend: Backend = createApiClient({ url: API_URL });

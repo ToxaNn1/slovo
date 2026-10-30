@@ -51,14 +51,7 @@ import { openMix, type Mix } from './entries/mix';
 import type { NotificationScheduling } from './notifications/notification-plan';
 import { openNotifications, type Notifications } from './notifications/notifications';
 import { openOnboarding, type Onboarding } from './onboarding/onboarding';
-import type {
-  Clock,
-  CollectionLinksApi,
-  CommunityWordApi,
-  ContentReadPort,
-  Random,
-  Schedule,
-} from './ports';
+import type { Backend, Clock, ContentReadPort, Random, Schedule } from './ports';
 import { openProgress, type Progress } from './progress/progress';
 import { createWeeklyRecap, type WeeklyRecap } from './progress/weekly-recap';
 import { createMoodDraw, type MoodDraw } from './mood/mood-draw';
@@ -316,8 +309,7 @@ export async function openComposition({
   gameModes = [],
   crossword,
   feedNotices = noFeedNotices,
-  communityWord,
-  collectionLinks,
+  backend,
   ...ports
 }: {
   content: ContentReadPort;
@@ -333,10 +325,14 @@ export async function openComposition({
   gameModes?: readonly GameMode[];
   /** Feed Notices of each day beside those the Core makes, the Weekly Recap, the first-week card, Yesterday and the Daily Limit card; without it, none. */
   feedNotices?: FeedNotices;
-  /** The backend's Community Word, which the Feed shows on a Monday; without it, as in tests of other features, none. */
-  communityWord?: CommunityWordApi;
-  /** The backend's Collection Links, which a link opened from outside reads and sharing a Collection makes; without it, as in tests of other features, no link is available and none is shared. */
-  collectionLinks?: CollectionLinksApi;
+  /**
+   * The backend (ADR 0064), which the Community Word the Feed shows on a
+   * Monday and the Collection Links, which a link opened from outside reads
+   * and sharing a Collection makes, reach; without it, as in tests of other
+   * features, there is no Community Word, no link is available and none is
+   * shared.
+   */
+  backend?: Pick<Backend, 'collectionLinks' | 'counters'>;
 }): Promise<Composition> {
   const { userState, scheduling, schedule, close } = closable(ports);
   const entries = createEntries({ content, edition, userState });
@@ -397,16 +393,9 @@ export async function openComposition({
         forDay: async (day) =>
           (await weeklyRecap.of(day)) === undefined ? [] : [{ notice: 'weeklyRecap' }],
       },
-      communityWord === undefined
+      backend === undefined
         ? noFeedNotices
-        : createCommunityWord({
-            edition,
-            entries,
-            hiddenEntries,
-            userState,
-            api: communityWord,
-            clock,
-          }),
+        : createCommunityWord({ edition, entries, hiddenEntries, userState, backend, clock }),
       createFirstWeek({ edition, userState }),
       createYesterday({ edition, entries, hiddenEntries, userState }),
       dailyLimit,
@@ -514,7 +503,7 @@ export async function openComposition({
     favorites,
     collections,
     collectionLinkCopy: createCollectionLinkCopy({
-      api: collectionLinks,
+      backend,
       edition,
       rows,
       collections,
@@ -522,7 +511,7 @@ export async function openComposition({
       random,
     }),
     collectionSharing: openCollectionSharing({
-      api: collectionLinks,
+      backend,
       edition,
       collections,
       schedule,

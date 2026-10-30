@@ -6,18 +6,16 @@ import {
   loadEdition,
   openAccount,
   systemRandom,
-  type AccountApi,
+  type Backend,
   type GoogleSignInSheet,
 } from '@slovo/core';
-import { createFakeAccountApi, createFakeGoogleSignInSheet } from '@slovo/core/testing';
+import { createFakeBackend, createFakeGoogleSignInSheet } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
-import { createApiClient } from '@slovo/contracts/api';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import config from 'slovo-edition/config';
 
 import { editionStrings } from '../edition/edition';
 import { openOnce } from '../opening';
-import { createAccountApi } from '../account/account-api';
 import { AccountScreen } from './account-screen';
 
 const strings = editionStrings.account;
@@ -50,17 +48,18 @@ async function renderScreen({
   googleSignIn = true,
   withClientId = true,
   googleSheet = createFakeGoogleSignInSheet(),
-  api = createFakeAccountApi(),
+  backend = createFakeBackend().backend,
 }: {
   googleSignIn?: boolean;
   withClientId?: boolean;
   googleSheet?: GoogleSignInSheet;
-  api?: AccountApi;
+  backend?: Pick<Backend, 'account'>;
 } = {}) {
   const opening = openOnce(
     async () =>
       openAccount({
-        api,
+        backend,
+        edition: { id: 'uk' },
         googleSheet,
         sessions: createMemorySessionStore(),
         userState: await openUserState({ port: createMemoryUserStatePort() }),
@@ -180,11 +179,9 @@ describe('«Увійти через Google» on the SLOVO ID screen', () => {
     const googleSheet = createFakeGoogleSignInSheet();
     googleSheet.signsIn('anna@mail.com');
     // The switch turned off remotely, or a backend without Google's client ids.
-    const notFound = { defined: true, code: 'NOT_FOUND', status: 404, message: 'Not found' };
-    const backend = () => Promise.resolve(Response.json(notFound, { status: 404 }));
-    const client = createApiClient({ url: 'http://backend.test', fetch: backend });
-    const api = createAccountApi({ client, clientOf: () => client, editionId: 'uk' });
-    await renderScreen({ googleSheet, api });
+    const fake = createFakeBackend();
+    fake.failNext({ procedure: 'account.signInWithGoogle', reason: 'not-found' });
+    await renderScreen({ googleSheet, backend: fake.backend });
 
     await signInWithGoogle();
 

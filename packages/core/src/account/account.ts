@@ -1,9 +1,9 @@
 import { AccountEmailSchema, SignInCodeSchema } from '@slovo/contracts';
 
 import { createSubscribers } from '../in-turn';
+import type { Edition } from '../edition/edition';
 import type {
-  AccountApi,
-  AccountApiFailure,
+  Backend,
   Clock,
   GoogleSignInSheet,
   Random,
@@ -14,6 +14,7 @@ import type {
 import { withRetries, type Answer } from '../retry';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
+import { accountRequests, type AccountApiFailure } from './account-requests';
 
 /** How long after a Sign-in code was sent another can be sent, in milliseconds. */
 const RESEND_AFTER = 60_000;
@@ -164,7 +165,8 @@ const signedIn = (email: string): AccountState => ({
  * server is told in the background, and the marker is written.
  */
 export async function openAccount({
-  api,
+  backend,
+  edition,
   googleSheet,
   sessions,
   userState,
@@ -172,7 +174,9 @@ export async function openAccount({
   schedule,
   random,
 }: {
-  api: AccountApi;
+  backend: Pick<Backend, 'account'>;
+  /** The Edition, which the Sign-in code email and the Google sign-in name. */
+  edition: Pick<Edition, 'id'>;
   googleSheet: GoogleSignInSheet;
   sessions: SessionStore;
   /** The user state, opened, which holds the installed marker. */
@@ -183,6 +187,7 @@ export async function openAccount({
   /** What the waits between tries are jittered by. */
   random: Random;
 }): Promise<Account> {
+  const api = accountRequests(backend, edition.id);
   const subscribers = createSubscribers();
   const kept = await sessions.read();
   let state: AccountState = kept === undefined ? signedOut : signedIn(kept.email);

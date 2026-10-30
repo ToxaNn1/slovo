@@ -13,17 +13,20 @@ import {
   type Random,
   type Schedule,
 } from '@slovo/core';
-import {
-  createFakeCountersApi,
-  createFakeReportsApi,
-  createMemoryContentPort,
-} from '@slovo/core/testing';
+import { createFakeBackend, createMemoryContentPort } from '@slovo/core/testing';
 
 import { edition } from '../edition/edition';
 import { openOnce, type Opening } from '../opening';
 import type { Shell } from '../shell-value';
 
 // Helpers the Jest tests share to draw a route under `ShellProvider`. No screen or module of the app imports them.
+
+/** A backend that answers nothing, as when offline. */
+function unreachableBackend() {
+  const fake = createFakeBackend();
+  fake.online = false;
+  return fake.backend;
+}
 
 /** An opening already open with `value`, as a screen under its gate reads it. */
 export function opened<T>(value: T): Opening<T> {
@@ -77,7 +80,7 @@ export function testShell(overrides: Partial<Shell> = {}): Shell {
       async () =>
         openRemoteSwitches({
           edition,
-          api: { switches: () => Promise.resolve({ ok: false, reason: 'offline' }) },
+          backend: unreachableBackend(),
           userState: await userState.opened(),
           schedule: never,
           random,
@@ -138,7 +141,7 @@ export function testShell(overrides: Partial<Shell> = {}): Shell {
       async () =>
         openMistakeReports({
           userState: await userState.opened(),
-          api: createFakeReportsApi(),
+          backend: createFakeBackend().backend,
           edition: await switchedEdition(),
           appVersion: 'test',
           contentVersion: (await languagePack.opened()).version.contentVersion,
@@ -152,7 +155,7 @@ export function testShell(overrides: Partial<Shell> = {}): Shell {
       async () =>
         openCounterReads({
           edition: await switchedEdition(),
-          api: createFakeCountersApi(),
+          backend: createFakeBackend().backend,
           userState: await userState.opened(),
           clock,
         }),
@@ -162,7 +165,7 @@ export function testShell(overrides: Partial<Shell> = {}): Shell {
       async () =>
         openCounterSending({
           edition: await switchedEdition(),
-          api: createFakeCountersApi(),
+          backend: createFakeBackend().backend,
           userState: await userState.opened(),
           clock,
           schedule: never,

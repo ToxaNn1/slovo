@@ -1,11 +1,13 @@
 import { COUNTERS_BATCH_SIZE } from '@slovo/contracts';
 
 import type { Edition } from '../edition/edition';
+import { answerOf } from '../backend';
 import type {
+  Backend,
   Clock,
   CounterEvent,
-  CountersApi,
   Random,
+  RequestFailure,
   Schedule,
   UserStateChanges,
 } from '../ports';
@@ -45,15 +47,15 @@ export interface CounterSending {
  */
 export function openCounterSending({
   edition,
-  api,
+  backend,
   userState,
   clock,
   schedule,
   random,
 }: {
   /** The Edition as the app runs it, with each Feature Switch at its effective value. */
-  edition: Pick<Edition, 'isFeatureEnabled'>;
-  api: Pick<CountersApi, 'send'>;
+  edition: Pick<Edition, 'id' | 'isFeatureEnabled'>;
+  backend: Pick<Backend, 'counters'>;
   userState: Pick<UserState, 'read' | 'list' | 'write'>;
   clock: Clock;
   /** What the waits between tries and between sends wait by. */
@@ -62,6 +64,24 @@ export function openCounterSending({
   random: Random;
 }): CounterSending {
   const { countersRead, countersUnsent, shareCounters } = userStateRecords;
+
+  /**
+   * Sends the changes of 1 to 100 Entries, each once, with no Session and no
+   * device id (ADR 0060); the backend counts them whole or not at all, or
+   * answers `not-found` for an Edition it doesn't serve or counters off.
+   */
+  async function send(
+    events: readonly CounterEvent[],
+  ): Promise<
+    { readonly ok: true } | RequestFailure | { readonly ok: false; readonly reason: 'not-found' }
+  > {
+    const answer = await answerOf(
+      backend.counters.send({ editionId: edition.id, events: [...events] }),
+      ({ code }) =>
+        code === 'NOT_FOUND' ? ({ ok: false, reason: 'not-found' } as const) : undefined,
+    );
+    return answer.ok ? { ok: true } : answer;
+  }
   /** Until when, in milliseconds, nothing goes out, by a 429's `Retry-After`. */
   let heldUntil: number | undefined;
   let draining = false;
@@ -99,7 +119,7 @@ export function openCounterSending({
       .slice(0, COUNTERS_BATCH_SIZE)
       .map(([entryId, delta]) => ({ entryId, ...delta }));
     if (events.length === 0) return false;
-    const answer = await withRetries(() => api.send(events), { schedule, random });
+    const answer = await withRetries(() => send(events), { schedule, random });
     let counted: UserStateChanges = new Map();
     if (answer.ok) {
       heldUntil = undefined;

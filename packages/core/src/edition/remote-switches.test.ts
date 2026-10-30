@@ -6,11 +6,10 @@ import {
   openUserState,
   type Edition,
   type FeatureSwitch,
-  type RequestFailure,
   type Schedule,
-  type SwitchesApi,
 } from '../index';
 import { randomOf } from '../test-support';
+import { createFakeBackend } from '../testing';
 
 /** An Edition that turns on every Feature Switch but those named. */
 const editionWithout = (
@@ -20,40 +19,6 @@ const editionWithout = (
   locale: 'uk-UA',
   isFeatureEnabled: (feature) => !off.includes(feature),
 });
-
-/**
- * A backend that answers `edition.switches` like the real one: the features
- * the owner turned off remotely, with an ETag that names them, and nothing
- * new when the app names that ETag.
- */
-function fakeBackend() {
-  let off: string[] = [];
-  const failures: RequestFailure['reason'][] = [];
-  /** The ETag each request named, in order, the failed ones included. */
-  const asked: (string | undefined)[] = [];
-  const etagOf = (names: readonly string[]) => `"${names.join(',')}"`;
-  const api: SwitchesApi = {
-    switches(etag) {
-      asked.push(etag);
-      const reason = failures.shift();
-      if (reason !== undefined) return Promise.resolve({ ok: false, reason });
-      const answer = etag === etagOf(off) ? 'unchanged' : { off: [...off], etag: etagOf(off) };
-      return Promise.resolve({ ok: true, answer });
-    },
-  };
-  return {
-    api,
-    asked,
-    /** Sets the features turned off remotely, as `pnpm switch:off` and `switch:clear` do. */
-    turnOff(...features: string[]) {
-      off = [...features].sort();
-    },
-    /** Fails the next requests, one per reason, in order. */
-    fail(...reasons: RequestFailure['reason'][]) {
-      failures.push(...reasons);
-    },
-  };
-}
 
 /** The schedule of the tries again: it runs each at once and keeps its delay. */
 function immediateSchedule() {
@@ -71,7 +36,7 @@ function immediateSchedule() {
  * launches, so a new launch finds the answer the one before kept.
  */
 function device(edition = editionWithout()) {
-  const backend = fakeBackend();
+  const backend = createFakeBackend();
   const records = new Map<string, string>();
   const { schedule, delays } = immediateSchedule();
   return {
@@ -81,7 +46,7 @@ function device(edition = editionWithout()) {
     async launch() {
       return openRemoteSwitches({
         edition,
-        api: backend.api,
+        backend: backend.backend,
         userState: await openUserState({ port: createMemoryUserStatePort(records) }),
         schedule,
         random: randomOf(0.5),
@@ -101,7 +66,7 @@ describe('the remote Feature Switches', () => {
 
   it('give a feature turned off remotely as off once asked', async () => {
     const app = device();
-    app.backend.turnOff('game');
+    app.backend.switches.turnOff('game');
     const switches = await app.launch();
 
     await switches.ask();
@@ -112,7 +77,7 @@ describe('the remote Feature Switches', () => {
 
   it('turn one feature of 0.8.13 off remotely and keep the others', async () => {
     const app = device();
-    app.backend.turnOff('search');
+    app.backend.switches.turnOff('search');
     const switches = await app.launch();
 
     await switches.ask();
@@ -124,7 +89,7 @@ describe('the remote Feature Switches', () => {
 
   it('turn the Community Counters off remotely and keep the other features of 0.8.14', async () => {
     const app = device();
-    app.backend.turnOff('communityCounters');
+    app.backend.switches.turnOff('communityCounters');
     const switches = await app.launch();
 
     await switches.ask();
@@ -136,7 +101,7 @@ describe('the remote Feature Switches', () => {
 
   it('turn the Collection Links off remotely and keep the other features of 0.8.15', async () => {
     const app = device();
-    app.backend.turnOff('collectionLinks');
+    app.backend.switches.turnOff('collectionLinks');
     const switches = await app.launch();
 
     await switches.ask();
@@ -170,7 +135,7 @@ describe('the remote Feature Switches', () => {
 
   it('give every Game Mode and the Daily Crossword as off once the Game is off remotely', async () => {
     const app = device();
-    app.backend.turnOff('game');
+    app.backend.switches.turnOff('game');
     const switches = await app.launch();
 
     await switches.ask();
@@ -182,7 +147,7 @@ describe('the remote Feature Switches', () => {
 
   it('turn one Game Mode off remotely and keep the others', async () => {
     const app = device();
-    app.backend.turnOff('gameAnagram');
+    app.backend.switches.turnOff('gameAnagram');
     const switches = await app.launch();
 
     await switches.ask();
@@ -202,11 +167,11 @@ describe('the remote Feature Switches', () => {
 
   it('never turn on a feature the Edition turns off', async () => {
     const app = device(editionWithout('game'));
-    app.backend.turnOff('account');
+    app.backend.switches.turnOff('account');
     const switches = await app.launch();
 
     await switches.ask();
-    app.backend.turnOff();
+    app.backend.switches.turnOff();
     await switches.ask();
 
     expect(switches.edition.isFeatureEnabled('game')).toBe(false);
@@ -214,11 +179,11 @@ describe('the remote Feature Switches', () => {
 
   it('give a feature back once the remote switch is cleared', async () => {
     const app = device();
-    app.backend.turnOff('game');
+    app.backend.switches.turnOff('game');
     const switches = await app.launch();
     await switches.ask();
 
-    app.backend.turnOff();
+    app.backend.switches.turnOff();
     await switches.ask();
 
     expect(switches.edition.isFeatureEnabled('game')).toBe(true);
@@ -226,7 +191,7 @@ describe('the remote Feature Switches', () => {
 
   it('skip a name the app doesn’t know', async () => {
     const app = device();
-    app.backend.turnOff('chat', 'game');
+    app.backend.switches.turnOff('chat', 'game');
     const switches = await app.launch();
 
     await switches.ask();
@@ -238,7 +203,7 @@ describe('the remote Feature Switches', () => {
   describe('at launch', () => {
     it('give the answer the device kept, before asking', async () => {
       const app = device();
-      app.backend.turnOff('game');
+      app.backend.switches.turnOff('game');
       await (await app.launch()).ask();
 
       const next = await app.launch();
@@ -248,7 +213,7 @@ describe('the remote Feature Switches', () => {
 
     it('keep the answer as a record that stays on the device', async () => {
       const app = device();
-      app.backend.turnOff('game');
+      app.backend.switches.turnOff('game');
 
       await (await app.launch()).ask();
 
@@ -273,7 +238,7 @@ describe('the remote Feature Switches', () => {
 
       const switches = await openRemoteSwitches({
         edition: editionWithout(),
-        api: fakeBackend().api,
+        backend: createFakeBackend().backend,
         userState: {
           ...userState,
           read: () => Promise.reject(new Error('The database is locked')),
@@ -289,11 +254,11 @@ describe('the remote Feature Switches', () => {
   describe('offline', () => {
     it('keep the answer the device kept', async () => {
       const app = device();
-      app.backend.turnOff('game');
+      app.backend.switches.turnOff('game');
       await (await app.launch()).ask();
       const next = await app.launch();
-      app.backend.turnOff();
-      app.backend.fail('offline', 'offline', 'offline', 'offline');
+      app.backend.switches.turnOff();
+      app.backend.failNext('offline', 'offline', 'offline', 'offline');
 
       await next.ask();
 
@@ -302,9 +267,9 @@ describe('the remote Feature Switches', () => {
 
     it('give the Edition’s values without a kept answer', async () => {
       const app = device();
-      app.backend.turnOff('game');
+      app.backend.switches.turnOff('game');
       const switches = await app.launch();
-      app.backend.fail('offline', 'offline', 'offline', 'offline');
+      app.backend.failNext('offline', 'offline', 'offline', 'offline');
 
       await switches.ask();
 
@@ -314,13 +279,13 @@ describe('the remote Feature Switches', () => {
 
     it('try again by the one rule, with backoff and jitter', async () => {
       const app = device();
-      app.backend.turnOff('game');
+      app.backend.switches.turnOff('game');
       const switches = await app.launch();
-      app.backend.fail('offline', 'server-error');
+      app.backend.failNext('offline', 'server-error');
 
       await switches.ask();
 
-      expect(app.backend.asked).toHaveLength(3);
+      expect(app.backend.switches.asked).toHaveLength(3);
       expect(app.delays).toEqual([750, 1500]);
       expect(switches.edition.isFeatureEnabled('game')).toBe(false);
     });
@@ -328,12 +293,12 @@ describe('the remote Feature Switches', () => {
     it('keep the answer through a refusal, which is not tried again', async () => {
       const app = device();
       const switches = await app.launch();
-      app.backend.turnOff('game');
-      app.backend.fail('unexpected');
+      app.backend.switches.turnOff('game');
+      app.backend.failNext('unexpected');
 
       await expect(switches.ask()).resolves.toBe(false);
 
-      expect(app.backend.asked).toHaveLength(1);
+      expect(app.backend.switches.asked).toHaveLength(1);
       expect(switches.edition.isFeatureEnabled('game')).toBe(true);
     });
   });
@@ -347,7 +312,7 @@ describe('the remote Feature Switches', () => {
       switches.subscribe(() => {
         told += 1;
       });
-      app.backend.turnOff('game');
+      app.backend.switches.turnOff('game');
 
       await expect(switches.ask()).resolves.toBe(true);
 
@@ -359,7 +324,7 @@ describe('the remote Feature Switches', () => {
       const app = device();
       const switches = await app.launch();
       const kept = switches.edition;
-      app.backend.turnOff('game');
+      app.backend.switches.turnOff('game');
 
       await switches.ask();
 
@@ -370,7 +335,7 @@ describe('the remote Feature Switches', () => {
   describe('an unchanged answer', () => {
     it('asks for no reopen when the backend names the switches the app keeps', async () => {
       const app = device();
-      app.backend.turnOff('game');
+      app.backend.switches.turnOff('game');
       await (await app.launch()).ask();
       const switches = await app.launch();
       const before = switches.edition;
@@ -381,7 +346,7 @@ describe('the remote Feature Switches', () => {
 
       await expect(switches.ask()).resolves.toBe(false);
 
-      expect(app.backend.asked).toEqual([undefined, '"game"']);
+      expect(app.backend.switches.asked).toEqual([undefined, '"game"']);
       expect(told).toBe(0);
       expect(switches.edition).toBe(before);
     });
@@ -389,7 +354,7 @@ describe('the remote Feature Switches', () => {
     it('asks for no reopen when only a feature the Edition turns off is turned off too', async () => {
       const app = device(editionWithout('game'));
       const switches = await app.launch();
-      app.backend.turnOff('game');
+      app.backend.switches.turnOff('game');
 
       await expect(switches.ask()).resolves.toBe(false);
     });
@@ -406,22 +371,22 @@ describe('the remote Feature Switches', () => {
 
   it('joins an ask under way', async () => {
     const app = device();
-    app.backend.turnOff('game');
+    app.backend.switches.turnOff('game');
     const switches = await app.launch();
 
     const [first, second] = await Promise.all([switches.ask(), switches.ask()]);
 
     expect([first, second]).toEqual([true, true]);
-    expect(app.backend.asked).toHaveLength(1);
+    expect(app.backend.switches.asked).toHaveLength(1);
   });
 
   it('never rejects, even when the answer can’t be kept', async () => {
-    const backend = fakeBackend();
-    backend.turnOff('game');
+    const backend = createFakeBackend();
+    backend.switches.turnOff('game');
     const userState = await openUserState({ port: createMemoryUserStatePort() });
     const switches = await openRemoteSwitches({
       edition: editionWithout(),
-      api: backend.api,
+      backend: backend.backend,
       userState: { ...userState, write: () => Promise.reject(new Error('The disk is full')) },
       schedule: immediateSchedule().schedule,
       random: randomOf(0.5),

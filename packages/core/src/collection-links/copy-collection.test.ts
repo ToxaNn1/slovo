@@ -14,10 +14,8 @@ import {
   type TrackedUserState,
 } from '../index';
 import {
-  createFakeAccountApi,
-  createFakeCollectionLinksApi,
+  createFakeBackend,
   createFakeGoogleSignInSheet,
-  createFakeSyncApi,
   createMemoryContentPort,
 } from '../testing';
 import {
@@ -66,7 +64,7 @@ async function reader({
   userState?: TrackedUserState;
   schedule?: ReturnType<typeof testSchedule>['schedule'];
 } = {}) {
-  const api = createFakeCollectionLinksApi();
+  const api = createFakeBackend();
   const switchedOff = new Set<FeatureSwitch>(off);
   const app = await openComposition({
     content,
@@ -76,13 +74,12 @@ async function reader({
     userState: userState ?? (await openUserState({ port: createMemoryUserStatePort(new Map()) })),
     clock: fakeClock().clock,
     random: steppingRandom(),
-    collectionLinks: api,
+    backend: api.backend,
     ...(schedule === undefined ? {} : { schedule }),
   });
   /** Shares the link as its author would, and answers its id. */
   async function share(shared: CollectionLink): Promise<string> {
-    const made = await api.create(shared);
-    if (!made.ok) throw new Error(`The link was not made: ${made.reason}`);
+    const made = await api.backend.collectionLinks.create(shared);
     return made.id;
   }
   return { app, api, share };
@@ -129,7 +126,7 @@ describe('a Collection Link', () => {
     expect(opened.firstEntries[1]?.title).toBe('one');
     expect(opened.skipped).toBe(1);
     // The author's share, and the reader's one read.
-    expect(api.calls).toBe(2);
+    expect(api.calls).toHaveLength(2);
   });
 
   it('copies into a new Collection of the reader with its name and its Entries in its order', async () => {
@@ -258,7 +255,7 @@ describe('a Collection Link', () => {
       ok: false,
       reason: 'unavailable',
     });
-    expect(api.calls).toBe(0);
+    expect(api.calls).toHaveLength(0);
   });
 
   it('is not available, asking nothing, while collectionLinks is off', async () => {
@@ -270,7 +267,7 @@ describe('a Collection Link', () => {
       reason: 'unavailable',
     });
     // The author's share alone.
-    expect(api.calls).toBe(1);
+    expect(api.calls).toHaveLength(1);
   });
 
   it('says there is no connection when offline, after the tries of the one retry rule', async () => {
@@ -285,7 +282,7 @@ describe('a Collection Link', () => {
 
     expect(await opened).toEqual({ ok: false, reason: 'offline' });
     // The author's share, then the reader's try and its 3 tries again.
-    expect(api.calls).toBe(5);
+    expect(api.calls).toHaveLength(5);
     expect(app.collections.list).toEqual([]);
   });
 
@@ -305,7 +302,7 @@ describe('a Collection Link', () => {
   it('enters the next Sync as a Collection the reader made, with no trace of the link', async () => {
     const time = fakeClock('2026-10-18T09:00:00.000Z');
     const timers = testSchedule(time);
-    const server = createFakeSyncApi({ clock: time.clock });
+    const server = createFakeBackend({ clock: time.clock });
     const userState = trackChanges({
       userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
       clock: time.clock,
@@ -313,7 +310,8 @@ describe('a Collection Link', () => {
     // This install has run before, so the Account keeps the Session it finds.
     await userState.write(userStateRecords.installed.change(true));
     const account = await openAccount({
-      api: createFakeAccountApi(),
+      backend: server.backend,
+      edition: { id: 'uk' },
       googleSheet: createFakeGoogleSignInSheet(),
       userState,
       sessions: createMemorySessionStore({ token: 'a-session', email: 'anna@mail.com' }),
@@ -323,9 +321,9 @@ describe('a Collection Link', () => {
     });
     const sync = await openSync({
       userState,
-      api: server,
+      backend: server.backend,
       account,
-      edition: { isFeatureEnabled: () => true },
+      edition: { id: 'uk', isFeatureEnabled: () => true },
       clock: time.clock,
       schedule: timers.schedule,
       random: randomOf(0.5),
@@ -337,12 +335,12 @@ describe('a Collection Link', () => {
     sync.foreground();
     await timers.advance(0);
 
-    const kept = [...server.records.keys()].filter((key) => key.startsWith('collection'));
+    const kept = [...server.sync.records.keys()].filter((key) => key.startsWith('collection'));
     expect(kept.sort()).toEqual([
       `collectionEntries.${copy.id}.w_one`,
       `collectionEntries.${copy.id}.w_two`,
       `collections.${copy.id}`,
     ]);
-    expect(JSON.stringify([...server.records.values()])).not.toContain(id);
+    expect(JSON.stringify([...server.sync.records.values()])).not.toContain(id);
   });
 });

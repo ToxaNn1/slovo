@@ -1,9 +1,10 @@
 import { COLLECTION_LINK_SIZE, fill, type EditionStrings } from '@slovo/contracts';
 
 import type { Edition } from '../edition/edition';
-import type { CollectionLinksApi, Random, Schedule } from '../ports';
+import type { Backend, Random, Schedule } from '../ports';
 import { withRetries } from '../retry';
 import type { Collections } from '../saved/collections';
+import { collectionLinkRequests } from './collection-link-requests';
 
 /**
  * Why a Collection is not shared, for the shell to say in the Edition's words:
@@ -48,18 +49,18 @@ export interface CollectionSharing {
 
 /**
  * Opens the sharing of Collections over the Collections of the composition;
- * without `api`, as in tests of other features, none is offered, and without
- * `schedule` a request is tried once.
+ * without `backend`, as in tests of other features, none is offered, and
+ * without `schedule` a request is tried once.
  */
 export function openCollectionSharing({
   collections,
-  api,
+  backend,
   edition,
   schedule,
   random,
 }: {
   collections: Pick<Collections, 'list' | 'entries'>;
-  api: CollectionLinksApi | undefined;
+  backend: Pick<Backend, 'collectionLinks'> | undefined;
   /** The Edition as the app runs it, with each Feature Switch at its effective value. */
   edition: Pick<Edition, 'id' | 'isFeatureEnabled'>;
   /** What the waits between tries wait by. */
@@ -67,6 +68,7 @@ export function openCollectionSharing({
   /** What the waits between tries are jittered by. */
   random: Random;
 }): CollectionSharing {
+  const api = backend === undefined ? undefined : collectionLinkRequests(backend);
   return {
     available: () => api !== undefined && edition.isFeatureEnabled('collectionLinks'),
     async share(collectionId, strings) {

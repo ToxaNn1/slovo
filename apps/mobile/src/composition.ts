@@ -8,14 +8,12 @@ import type { PackReader } from '@slovo/language-pack/reader';
 import { systemSchedule } from '@slovo/ui';
 import { useEffect, useState } from 'react';
 
-import { apiClient } from './api';
+import { backend } from './api';
 import { deviceClock } from './device/device-clock';
 import { logError } from './diagnostics/log';
 import { deviceNotificationScheduler } from './notifications/device-notifications';
-import { edition, editionStrings } from './edition/edition';
+import { editionStrings } from './edition/edition';
 import type { LaunchPack } from './content-update/launch-pack';
-import { createCommunityWordApi } from './feed/community-word-api';
-import { createCollectionLinksApi } from './saved/collection-links-api';
 import { gameModeStrings } from './game/game-modes';
 import { openOnce, useOpened, type Opening } from './opening';
 import { useShell, type EditionSwitches } from './shell-value';
@@ -47,8 +45,7 @@ async function openOver({
       titles: editionStrings.notificationTemplates.titles,
       farewell: editionStrings.notificationTemplates.farewell,
     },
-    communityWord: createCommunityWordApi({ client: apiClient, editionId: edition.id }),
-    collectionLinks: createCollectionLinksApi({ client: apiClient }),
+    backend,
   });
   // The modes on offer stay the same for the session: one without its strings fails here, at launch.
   for (const { modeId } of composition.game.state.modes) {

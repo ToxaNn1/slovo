@@ -6,7 +6,7 @@ import {
   openUserState,
   systemRandom,
 } from '@slovo/core';
-import { createFakeAccountApi, createFakeGoogleSignInSheet } from '@slovo/core/testing';
+import { createFakeBackend, createFakeGoogleSignInSheet } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
 import { act, render, screen } from '@testing-library/react-native';
 
@@ -42,7 +42,8 @@ describe('A binary without the Google sign-in module', () => {
     const opening = openOnce(
       async () =>
         openAccount({
-          api: createFakeAccountApi(),
+          backend: createFakeBackend().backend,
+          edition: { id: 'uk' },
           googleSheet: createFakeGoogleSignInSheet(),
           sessions: createMemorySessionStore(),
           userState: await openUserState({ port: createMemoryUserStatePort() }),

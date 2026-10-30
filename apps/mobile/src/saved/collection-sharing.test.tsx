@@ -9,11 +9,7 @@ import {
   type Composition,
   type Edition,
 } from '@slovo/core';
-import {
-  createFakeCollectionLinksApi,
-  createMemoryContentPort,
-  type FakeCollectionLinksApi,
-} from '@slovo/core/testing';
+import { createFakeBackend, createMemoryContentPort, type FakeBackend } from '@slovo/core/testing';
 import { EditionProvider, systemSchedule } from '@slovo/ui';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { Share } from 'react-native';
@@ -32,7 +28,7 @@ let composition: Composition;
 let collectionLinksOff: boolean;
 
 /** The backend of Collection Links, online unless a test takes it off. */
-let api: FakeCollectionLinksApi;
+let api: FakeBackend;
 
 jest.mock('expo-router', () => ({
   useRouter: () => ({ back: () => undefined, push: () => undefined }),
@@ -73,7 +69,7 @@ let now: number;
 beforeEach(async () => {
   jest.useFakeTimers();
   share = jest.spyOn(Share, 'share').mockResolvedValue({ action: Share.sharedAction });
-  api = createFakeCollectionLinksApi({ linkDomain: 'slovo.example' });
+  api = createFakeBackend({ linkDomain: 'slovo.example' });
   collectionLinksOff = false;
   const loaded = loadEdition(config);
   /** The Edition as the app runs it, `collectionLinks` on unless a test turns it off. */
@@ -93,7 +89,7 @@ beforeEach(async () => {
     clock: { now: () => new Date(now), timeZone: () => 'Europe/Kyiv' },
     random: systemRandom,
     schedule: systemSchedule,
-    collectionLinks: api,
+    backend: api.backend,
   });
 });
 
@@ -155,7 +151,9 @@ describe('«Поділитися посиланням» in a Collection’s menu
     expect(screen.getByRole('button', { name: strings.share })).toBeEnabled();
     await shareFromMenu();
 
-    expect(api.made).toEqual([{ edition: 'uk', name: 'Осінь', entryIds: ['w_buzok', 'w_kvasha'] }]);
+    expect(api.collectionLinks.made).toEqual([
+      { edition: 'uk', name: 'Осінь', entryIds: ['w_buzok', 'w_kvasha'] },
+    ]);
     expect(share).toHaveBeenCalledTimes(1);
     expect(share).toHaveBeenCalledWith({
       message: 'Колекція «Осінь» у SLOVO: https://slovo.example/c/link000001',
@@ -171,7 +169,7 @@ describe('«Поділитися посиланням» in a Collection’s menu
     expect(row).toBeDisabled();
     await shareFromMenu();
 
-    expect(api.calls).toBe(0);
+    expect(api.calls).toHaveLength(0);
     expect(share).not.toHaveBeenCalled();
   });
 
@@ -181,7 +179,7 @@ describe('«Поділитися посиланням» in a Collection’s menu
     await openMenuOf(autumn);
 
     expect(await toast()).toHaveTextContent('Немає з’єднання. Спробуйте пізніше.');
-    expect(api.made).toEqual([]);
+    expect(api.collectionLinks.made).toEqual([]);
     expect(share).not.toHaveBeenCalled();
   });
 

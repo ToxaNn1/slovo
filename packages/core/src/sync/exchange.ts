@@ -1,12 +1,25 @@
 import { SYNC_BATCH_SIZE } from '@slovo/contracts';
 import { z } from 'zod';
 
+import { answerOf } from '../backend';
 import { newestFirst } from '../in-turn';
-import type { Json, RecordChange, SyncApi, SyncApiFailure, UserStateChanges } from '../ports';
+import type { Backend, Json, RecordChange, RequestFailure, UserStateChanges } from '../ports';
 import { HISTORY_CAP } from '../saved/history';
 import type { PendingChange, TrackedUserState } from '../user-state/tracked-user-state';
 import { declareRecords } from '../user-state/user-state-record';
 import { syncMarkOf, syncs, userStateRecords } from '../user-state/user-state-schema';
+
+/**
+ * A request of Sync that failed as any request does, because the Session it
+ * carried has ended (401), because the backend serves no Sync for the
+ * Edition (404), or because a push would take the Account's records in the
+ * Edition over their limit (409, `TOO_MANY_RECORDS`).
+ */
+export type SyncApiFailure =
+  | RequestFailure
+  | { readonly ok: false; readonly reason: 'unauthorized' }
+  | { readonly ok: false; readonly reason: 'not-found' }
+  | { readonly ok: false; readonly reason: 'too-many-records' };
 
 /**
  * What one sync came to: done, or the failure that stopped it; and either way
@@ -90,14 +103,73 @@ function changeOf(key: string, { changedAt, value }: PendingChange): RecordChang
   };
 }
 
-/** Makes one sync over the tracked user state and the backend's Sync procedures. */
+/**
+ * The Sync requests of the running Edition to the backend, each answered as a
+ * value (ADR 0064), on the Account of the Session whose token each carries.
+ */
+function syncRequests(backend: Pick<Backend, 'sync'>, editionId: string) {
+  const { sync } = backend;
+  return {
+    /** Keeps the changes, at most `SYNC_BATCH_SIZE`: each replaces the record kept under its key only when it is later (ADR 0041). */
+    async push(
+      token: string,
+      changes: readonly RecordChange[],
+    ): Promise<{ readonly ok: true } | SyncApiFailure> {
+      const answer = await answerOf(
+        sync.push({ editionId, changes: [...changes] }, { context: { token } }),
+        ({ code }) => {
+          if (code === 'UNAUTHORIZED') return { ok: false, reason: 'unauthorized' } as const;
+          if (code === 'NOT_FOUND') return { ok: false, reason: 'not-found' } as const;
+          if (code === 'TOO_MANY_RECORDS')
+            return { ok: false, reason: 'too-many-records' } as const;
+          return undefined;
+        },
+      );
+      return answer.ok ? { ok: true } : answer;
+    },
+    /**
+     * One page of the records kept after the cursor, from the first without
+     * one, in the order the backend kept them: at most `SYNC_BATCH_SIZE`, the
+     * cursor to ask after next, and whether more follow.
+     */
+    async pull(
+      token: string,
+      after: number | undefined,
+    ): Promise<
+      | {
+          readonly ok: true;
+          readonly records: readonly RecordChange[];
+          readonly cursor: number;
+          readonly more: boolean;
+        }
+      | SyncApiFailure
+    > {
+      const answer = await answerOf(
+        sync.pull(after === undefined ? { editionId } : { editionId, after }, {
+          context: { token },
+        }),
+        ({ code }) => {
+          if (code === 'UNAUTHORIZED') return { ok: false, reason: 'unauthorized' } as const;
+          if (code === 'NOT_FOUND') return { ok: false, reason: 'not-found' } as const;
+          return undefined;
+        },
+      );
+      return answer.ok ? { ok: true, ...answer.output } : answer;
+    },
+  };
+}
+
+/** Makes one sync of the running Edition over the tracked user state and the backend. */
 export function createSyncExchange({
   userState,
-  api,
+  backend,
+  editionId,
 }: {
   userState: TrackedUserState;
-  api: SyncApi;
+  backend: Pick<Backend, 'sync'>;
+  editionId: string;
 }): SyncExchange {
+  const api = syncRequests(backend, editionId);
   /** The first-sign-in rule: a change with change time 0 for every synced record with none. */
   function joinAccount(): Promise<void> {
     return userState.merge(async () => {

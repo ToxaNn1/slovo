@@ -2,7 +2,7 @@ import { COLLECTION_LINK_SIZE, type FeatureSwitch } from '@slovo/contracts';
 import { describe, expect, it } from 'vitest';
 
 import { createMemoryUserStatePort, openComposition, openUserState } from '../index';
-import { createFakeCollectionLinksApi, createMemoryContentPort } from '../testing';
+import { createFakeBackend, createMemoryContentPort } from '../testing';
 import { fakeClock, randomOf, testEdition, testSchedule, word } from '../test-support';
 
 /** Long enough for every wait between the tries of one request (ADR 0037). */
@@ -38,7 +38,7 @@ async function device({
 } = {}) {
   const time = fakeClock('2026-10-28T09:00:00.000Z');
   const timers = testSchedule(time);
-  const api = createFakeCollectionLinksApi({ linkDomain: 'slovo.example' });
+  const api = createFakeBackend({ linkDomain: 'slovo.example' });
   const switchedOff = new Set<FeatureSwitch>(off);
   const isFeatureEnabled = (feature: FeatureSwitch) => !switchedOff.has(feature);
   const app = await openComposition({
@@ -48,7 +48,7 @@ async function device({
     clock: time.clock,
     random: randomOf(0.5),
     schedule: timers.schedule,
-    ...(withBackend ? { collectionLinks: api } : {}),
+    ...(withBackend ? { backend: api.backend } : {}),
   });
   const sharing = app.collectionSharing;
 
@@ -92,7 +92,7 @@ describe('sharing a Collection by a Collection Link', () => {
       url: 'https://slovo.example/c/link000001',
       message: 'Колекція «Осінь» у SLOVO: https://slovo.example/c/link000001',
     });
-    expect(app.api.made).toEqual([
+    expect(app.api.collectionLinks.made).toEqual([
       { edition: 'uk', name: 'Осінь', entryIds: ['w_buzok', 'w_old', 'w_kvasha'] },
     ]);
   });
@@ -106,7 +106,7 @@ describe('sharing a Collection by a Collection Link', () => {
     const again = await app.share(autumn);
 
     expect(again).toMatchObject({ ok: true, url: 'https://slovo.example/c/link000002' });
-    expect(app.api.made.map(({ entryIds }) => entryIds)).toEqual([
+    expect(app.api.collectionLinks.made.map(({ entryIds }) => entryIds)).toEqual([
       ['w_kvasha'],
       ['w_buzok', 'w_kvasha'],
     ]);
@@ -118,7 +118,7 @@ describe('sharing a Collection by a Collection Link', () => {
 
     expect(await app.share(empty)).toEqual({ ok: false, reason: 'empty' });
     expect(await app.share('no-such-collection')).toEqual({ ok: false, reason: 'empty' });
-    expect(app.api.calls).toBe(0);
+    expect(app.api.calls).toHaveLength(0);
   });
 
   it('refuses a Collection of more Entries than a link holds, without asking the backend', async () => {
@@ -126,7 +126,7 @@ describe('sharing a Collection by a Collection Link', () => {
     const big = await app.collection('Усе', manyIds);
 
     expect(await app.share(big)).toEqual({ ok: false, reason: 'too-many-entries' });
-    expect(app.api.calls).toBe(0);
+    expect(app.api.calls).toHaveLength(0);
   });
 
   it('tries again by the one rule after a server error', async () => {
@@ -135,7 +135,7 @@ describe('sharing a Collection by a Collection Link', () => {
     app.api.failNext('server-error');
 
     expect(await app.share(autumn)).toMatchObject({ ok: true });
-    expect(app.api.calls).toBe(2);
+    expect(app.api.calls).toHaveLength(2);
   });
 });
 
@@ -147,8 +147,8 @@ describe('sharing a Collection that the backend does not link', () => {
 
     expect(await app.share(autumn)).toEqual({ ok: false, reason: 'offline' });
     // The first try and three more (ADR 0037).
-    expect(app.api.calls).toBe(4);
-    expect(app.api.made).toEqual([]);
+    expect(app.api.calls).toHaveLength(4);
+    expect(app.api.collectionLinks.made).toEqual([]);
   });
 
   it('answers too many requests at once over the daily limit, without trying again', async () => {
@@ -157,7 +157,7 @@ describe('sharing a Collection that the backend does not link', () => {
     app.api.failNext('too-many-requests');
 
     expect(await app.share(autumn)).toEqual({ ok: false, reason: 'too-many-requests' });
-    expect(app.api.calls).toBe(1);
+    expect(app.api.calls).toHaveLength(1);
   });
 
   it('answers failed when the backend refuses the link or every try meets a server error', async () => {
@@ -178,7 +178,7 @@ describe('Collection Links switched off', () => {
 
     expect(app.sharing.available()).toBe(false);
     expect(await app.share(autumn)).toEqual({ ok: false, reason: 'switched-off' });
-    expect(app.api.calls).toBe(0);
+    expect(app.api.calls).toHaveLength(0);
   });
 
   it('offers no sharing in a composition without the backend', async () => {
@@ -187,7 +187,7 @@ describe('Collection Links switched off', () => {
 
     expect(app.sharing.available()).toBe(false);
     expect(await app.share(autumn)).toEqual({ ok: false, reason: 'switched-off' });
-    expect(app.api.calls).toBe(0);
+    expect(app.api.calls).toHaveLength(0);
   });
 
   it('reads the switch each time, so a remote switch turns sharing off at once', async () => {

@@ -8,7 +8,7 @@ import {
   openUserState,
   type FeatureSwitch,
 } from '../index';
-import { createFakeCountersApi, createMemoryContentPort } from '../testing';
+import { createFakeBackend, createMemoryContentPort } from '../testing';
 import { fakeClock, randomOf, testEdition, testSchedule, word } from '../test-support';
 
 /** Long enough for every wait between the tries of one request (ADR 0037). */
@@ -28,7 +28,7 @@ const content = createMemoryContentPort({ words: ids.map((id) => word(id)) });
 async function device() {
   const time = fakeClock('2026-10-28T09:00:00.000Z');
   const timers = testSchedule(time);
-  const api = createFakeCountersApi();
+  const api = createFakeBackend();
   const switchedOff = new Set<FeatureSwitch>();
   const edition = testEdition({
     isFeatureEnabled: (feature) => !switchedOff.has(feature),
@@ -50,7 +50,7 @@ async function device() {
   });
   const sending = openCounterSending({
     edition,
-    api,
+    backend: api.backend,
     userState,
     clock: time.clock,
     schedule: timers.schedule,
@@ -83,7 +83,7 @@ describe('sending the Community Counters', () => {
 
     await phone.foreground();
 
-    expect(phone.api.sent).toEqual([
+    expect(phone.api.counters.sent).toEqual([
       [
         { entryId: 'w_000', known: 1, unknown: 0, saved: 0 },
         { entryId: 'w_001', known: 0, unknown: 1, saved: 1 },
@@ -97,7 +97,7 @@ describe('sending the Community Counters', () => {
 
     await phone.foreground();
 
-    expect(phone.api.sent).toEqual([]);
+    expect(phone.api.counters.sent).toEqual([]);
   });
 
   it('sends at most 100 Entries in a request, the rest in the next', async () => {
@@ -106,7 +106,7 @@ describe('sending the Community Counters', () => {
 
     await phone.foreground();
 
-    expect(phone.api.sent.map((events) => events.length)).toEqual([100, 1]);
+    expect(phone.api.counters.sent.map((events) => events.length)).toEqual([100, 1]);
     expect(await phone.unsent()).toEqual([]);
   });
 
@@ -116,25 +116,27 @@ describe('sending the Community Counters', () => {
     phone.api.online = false;
 
     await phone.foreground();
-    expect(phone.api.sends).toBe(4);
+    expect(phone.api.calls).toHaveLength(4);
     expect(await phone.unsent()).toEqual([['w_000', { known: 1, unknown: 0, saved: 0 }]]);
 
     phone.api.online = true;
     await phone.foreground();
-    expect(phone.api.sent).toEqual([[{ entryId: 'w_000', known: 1, unknown: 0, saved: 0 }]]);
+    expect(phone.api.counters.sent).toEqual([
+      [{ entryId: 'w_000', known: 1, unknown: 0, saved: 0 }],
+    ]);
     expect(await phone.unsent()).toEqual([]);
   });
 
   it('keeps a change made while its request was out, and sends it next', async () => {
     const phone = await device();
     await phone.app.knowledge.tap('w_000', 'known');
-    phone.api.failSend('server-error');
+    phone.api.failNext('server-error');
 
     phone.sending.foreground();
     await phone.app.knowledge.tap('w_000', 'unknown');
     await phone.advance(ALL_TRIES);
 
-    expect(phone.api.sent).toEqual([
+    expect(phone.api.counters.sent).toEqual([
       [{ entryId: 'w_000', known: 1, unknown: 0, saved: 0 }],
       [{ entryId: 'w_000', known: -1, unknown: 1, saved: 0 }],
     ]);
@@ -144,31 +146,33 @@ describe('sending the Community Counters', () => {
   it('waits for Retry-After after too many requests', async () => {
     const phone = await device();
     await phone.app.knowledge.tap('w_000', 'known');
-    phone.api.failSend('too-many-requests', { retryAfter: 3600 });
+    phone.api.failNext({ reason: 'too-many-requests', retryAfter: 3600 });
 
     await phone.foreground();
-    expect(phone.api.sends).toBe(1);
+    expect(phone.api.calls).toHaveLength(1);
     await phone.advance(59 * MINUTE);
     await phone.foreground();
-    expect(phone.api.sends).toBe(1);
+    expect(phone.api.calls).toHaveLength(1);
 
     await phone.advance(MINUTE);
     await phone.foreground();
-    expect(phone.api.sent).toEqual([[{ entryId: 'w_000', known: 1, unknown: 0, saved: 0 }]]);
+    expect(phone.api.counters.sent).toEqual([
+      [{ entryId: 'w_000', known: 1, unknown: 0, saved: 0 }],
+    ]);
   });
 
   it('drops a batch the backend refuses as wrong, and keeps one for an Edition it does not find', async () => {
     const phone = await device();
     await phone.app.knowledge.tap('w_000', 'known');
 
-    phone.api.failSend('not-found');
+    phone.api.failNext('not-found');
     await phone.foreground();
     expect(await phone.unsent()).toEqual([['w_000', { known: 1, unknown: 0, saved: 0 }]]);
 
-    phone.api.failSend('unexpected');
+    phone.api.failNext('unexpected');
     await phone.foreground();
     expect(await phone.unsent()).toEqual([]);
-    expect(phone.api.sent).toEqual([]);
+    expect(phone.api.counters.sent).toEqual([]);
   });
 
   it('sends again while the app is open, and not in the background', async () => {
@@ -177,12 +181,14 @@ describe('sending the Community Counters', () => {
 
     await phone.app.knowledge.tap('w_000', 'known');
     await phone.advance(5 * MINUTE);
-    expect(phone.api.sent).toEqual([[{ entryId: 'w_000', known: 1, unknown: 0, saved: 0 }]]);
+    expect(phone.api.counters.sent).toEqual([
+      [{ entryId: 'w_000', known: 1, unknown: 0, saved: 0 }],
+    ]);
 
     phone.sending.background();
     await phone.app.knowledge.tap('w_001', 'known');
     await phone.advance(60 * MINUTE);
-    expect(phone.api.sent).toHaveLength(1);
+    expect(phone.api.counters.sent).toHaveLength(1);
   });
 
   it('sends nothing with the communityCounters Feature Switch off, and keeps what waits', async () => {
@@ -191,11 +197,13 @@ describe('sending the Community Counters', () => {
     phone.switchedOff.add('communityCounters');
 
     await phone.foreground();
-    expect(phone.api.sends).toBe(0);
+    expect(phone.api.calls).toHaveLength(0);
 
     phone.switchedOff.delete('communityCounters');
     await phone.foreground();
-    expect(phone.api.sent).toEqual([[{ entryId: 'w_000', known: 1, unknown: 0, saved: 0 }]]);
+    expect(phone.api.counters.sent).toEqual([
+      [{ entryId: 'w_000', known: 1, unknown: 0, saved: 0 }],
+    ]);
   });
 });
 
@@ -219,7 +227,7 @@ describe('sharing the Community Counters', () => {
     await phone.foreground();
 
     expect(await phone.unsent()).toEqual([]);
-    expect(phone.api.sends).toBe(0);
+    expect(phone.api.calls).toHaveLength(0);
   });
 
   it('turned on again, counts as new what was never sent', async () => {
@@ -233,7 +241,9 @@ describe('sharing the Community Counters', () => {
     await phone.app.knowledge.tap('w_001', 'known');
     await phone.foreground();
 
-    expect(phone.api.sent).toEqual([[{ entryId: 'w_001', known: 1, unknown: 0, saved: 0 }]]);
+    expect(phone.api.counters.sent).toEqual([
+      [{ entryId: 'w_001', known: 1, unknown: 0, saved: 0 }],
+    ]);
   });
 
   it('turned off, takes back only what was not sent', async () => {
@@ -247,7 +257,7 @@ describe('sharing the Community Counters', () => {
     await phone.app.knowledge.tap('w_000', 'unknown');
     await phone.foreground();
 
-    expect(phone.api.sent).toEqual([
+    expect(phone.api.counters.sent).toEqual([
       [{ entryId: 'w_000', known: 1, unknown: 0, saved: 0 }],
       [{ entryId: 'w_000', known: -1, unknown: 0, saved: 0 }],
     ]);

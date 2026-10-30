@@ -12,11 +12,7 @@ import {
   type Schedule,
   type Sync,
 } from '@slovo/core';
-import {
-  createFakeAccountApi,
-  createFakeGoogleSignInSheet,
-  createFakeSyncApi,
-} from '@slovo/core/testing';
+import { createFakeGoogleSignInSheet, createFakeBackend } from '@slovo/core/testing';
 import { waitFor } from '@testing-library/react-native';
 import type { AppStateStatus } from 'react-native';
 
@@ -62,7 +58,7 @@ function recorded<T>(name: string, opening: Opening<T>, events: string[]): Openi
  * lets it (`openSyncModule`), after the launch.
  */
 async function app() {
-  const server = createFakeSyncApi({ clock });
+  const server = createFakeBackend({ clock });
   const userState = trackChanges({
     userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
     clock,
@@ -70,7 +66,8 @@ async function app() {
   // This install has run before, so the Account keeps the Session it finds.
   await userState.write(userStateRecords.installed.change(true));
   const account = await openAccount({
-    api: createFakeAccountApi(),
+    backend: server.backend,
+    edition,
     googleSheet: createFakeGoogleSignInSheet(),
     sessions: createMemorySessionStore({ token: 'a-session', email: 'anna@mail.com' }),
     userState,
@@ -79,8 +76,15 @@ async function app() {
     random: systemRandom,
   });
   const changedAt = clock.now().getTime() + 1_000;
-  await server.push('another-session', [{ key: 'mix.corrections', value: false, changedAt }]);
-  await server.push('another-session', [{ key: 'settings.theme', value: 'dark', changedAt }]);
+  const elsewhere = { context: { token: 'another-session' } };
+  await server.backend.sync.push(
+    { editionId: edition.id, changes: [{ key: 'mix.corrections', value: false, changedAt }] },
+    elsewhere,
+  );
+  await server.backend.sync.push(
+    { editionId: edition.id, changes: [{ key: 'settings.theme', value: 'dark', changedAt }] },
+    elsewhere,
+  );
   let openSyncModule!: () => void;
   const syncLet = new Promise<void>((resolve) => {
     openSyncModule = resolve;
@@ -90,7 +94,7 @@ async function app() {
       await syncLet;
       return openSync({
         userState,
-        api: server,
+        backend: server.backend,
         account,
         edition,
         clock,

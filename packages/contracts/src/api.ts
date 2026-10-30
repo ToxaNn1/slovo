@@ -1,7 +1,7 @@
-import { createORPCClient, type ClientContext } from '@orpc/client';
+import { createORPCClient, isORPCErrorJson, ORPCError } from '@orpc/client';
 import { oc, type ContractRouterClient } from '@orpc/contract';
 import type { JsonifiedClient } from '@orpc/openapi-client';
-import { OpenAPILink, type OpenAPILinkOptions } from '@orpc/openapi-client/fetch';
+import { OpenAPILink } from '@orpc/openapi-client/fetch';
 
 import { accountContract } from './api/account';
 import { collectionLinksContract } from './api/collection-links';
@@ -42,15 +42,77 @@ export const apiContract = oc.prefix('/v1').router({
   sync: syncContract,
 });
 
-/** The API as the app calls it: one function per procedure. */
-export type ApiClient = JsonifiedClient<ContractRouterClient<typeof apiContract>>;
+/**
+ * What a call carries besides its input: the Session it acts with, when it
+ * acts on an Account, which the client sends as `Authorization: Bearer`.
+ */
+export interface ApiCallContext {
+  readonly token?: string;
+}
 
 /**
- * A client of the API built from the contract. `url` is the backend's origin,
- * such as `http://localhost:8787`; `fetch` replaces the global one, as a test
- * does to reach the backend in process. A client that acts on an Account
- * sends its Session in `headers`, as `authorization: Bearer <token>`.
+ * The API as the app calls it: one function per procedure, each taking its
+ * input and, as its options, the `context` of the call.
  */
-export function createApiClient(options: OpenAPILinkOptions<ClientContext>): ApiClient {
-  return createORPCClient(new OpenAPILink(apiContract, options));
+export type ApiClient = JsonifiedClient<ContractRouterClient<typeof apiContract, ApiCallContext>>;
+
+/** The `fetch` the client sends its requests with: the global one, or a test's backend in process. */
+export type ApiFetch = (request: Request) => Promise<Response>;
+
+export interface ApiClientOptions {
+  /** The backend's origin, such as `http://localhost:8787`. */
+  readonly url: string;
+  /** Replaces the global `fetch`, as a test does to reach the backend in process. */
+  readonly fetch?: ApiFetch;
+  /** Headers every request carries, such as a test's address of the device. */
+  readonly headers?: Readonly<Record<string, string>>;
+}
+
+/** The seconds of a `Retry-After` header; none when the answer has no such header or it says anything else. */
+function secondsOf(header: string | readonly string[] | undefined): number | undefined {
+  const value = typeof header === 'string' ? header : header?.[0];
+  return typeof value === 'string' && /^\d+$/.test(value) ? Number(value) : undefined;
+}
+
+/**
+ * What a call throws on a 429, whatever its body: the contract's
+ * `TOO_MANY_REQUESTS`, with the seconds of the answer's `Retry-After`, which
+ * the backend sets on every limit (ADR 0037); none when the answer has no
+ * such header or it says anything else.
+ */
+export class TooManyRequestsError extends ORPCError<'TOO_MANY_REQUESTS', unknown> {
+  readonly retryAfter: number | undefined;
+
+  constructor(body: unknown, retryAfter: number | undefined) {
+    const json = isORPCErrorJson(body) ? body : undefined;
+    super('TOO_MANY_REQUESTS', {
+      status: 429,
+      defined: json?.defined ?? false,
+      message: json?.message ?? 'Too many requests',
+      data: json?.data,
+    });
+    this.retryAfter = retryAfter;
+  }
+}
+
+/**
+ * A client of the API built from the contract. A call that acts on an
+ * Account names its Session as `context.token`, which the client sends as
+ * `authorization: Bearer <token>`; a 429 throws `TooManyRequestsError`.
+ */
+export function createApiClient({ url, fetch, headers = {} }: ApiClientOptions): ApiClient {
+  return createORPCClient(
+    new OpenAPILink(apiContract, {
+      url,
+      ...(fetch === undefined ? {} : { fetch }),
+      headers: ({ context }) =>
+        context.token === undefined
+          ? headers
+          : { ...headers, authorization: `Bearer ${context.token}` },
+      customErrorResponseBodyDecoder: (body, response) =>
+        response.status === 429
+          ? new TooManyRequestsError(body, secondsOf(response.headers['retry-after']))
+          : undefined,
+    }),
+  );
 }

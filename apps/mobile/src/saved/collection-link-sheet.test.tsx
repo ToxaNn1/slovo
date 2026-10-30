@@ -9,11 +9,7 @@ import {
   type Composition,
 } from '@slovo/core';
 import type { Word } from '@slovo/contracts';
-import {
-  createFakeCollectionLinksApi,
-  createMemoryContentPort,
-  type FakeCollectionLinksApi,
-} from '@slovo/core/testing';
+import { createFakeBackend, createMemoryContentPort, type FakeBackend } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -80,14 +76,14 @@ const metrics = {
   insets: { top: 0, left: 0, right: 0, bottom: 0 },
 };
 
-let api: FakeCollectionLinksApi;
+let api: FakeBackend;
 
 /** Whether the reader's user state refuses each write from now on, as a full disk would. */
 let writesFail: boolean;
 
 /** The reader's Core over a fake Collection Link backend, which holds no link yet. */
 async function open() {
-  api = createFakeCollectionLinksApi();
+  api = createFakeBackend();
   writesFail = false;
   const memory = createMemoryUserStatePort();
   const port: UserStatePort = {
@@ -104,14 +100,13 @@ async function open() {
     userState: await openUserState({ port }),
     clock: { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     random: systemRandom,
-    collectionLinks: api,
+    backend: api.backend,
   });
 }
 
 /** Shares a link of the reader's Edition and makes it the one the route opens. */
 async function share(name: string, entryIds: string[]) {
-  const made = await api.create({ edition: edition.id, name, entryIds });
-  if (!made.ok) throw new Error(`The fake refused the link: ${made.reason}`);
+  const made = await api.backend.collectionLinks.create({ edition: edition.id, name, entryIds });
   mockLinkId = made.id;
 }
 

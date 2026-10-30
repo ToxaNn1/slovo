@@ -1,13 +1,12 @@
 import { openCounterSending, systemRandom, type TrackedUserState } from '@slovo/core';
 import { systemSchedule } from '@slovo/ui';
 
-import { anonymousApiClientOf } from '../api';
+import { backend } from '../api';
 import { deviceClock } from '../device/device-clock';
 import { edition } from '../edition/edition';
 import type { CounterSending, EditionSwitches } from '../shell-value';
 import { logError } from '../diagnostics/log';
 import { openOnce, type Opening } from '../opening';
-import { createCountersApi } from './counters-api';
 
 /**
  * The sending of the Community Counters (ADR 0060), opened once per app run
@@ -26,8 +25,11 @@ export function counterSendingOpening({
     async () => {
       const switches = await remoteSwitches.opened();
       return openCounterSending({
-        edition: { isFeatureEnabled: (feature) => switches.edition.isFeatureEnabled(feature) },
-        api: createCountersApi({ clientOf: anonymousApiClientOf, editionId: edition.id }),
+        edition: {
+          id: edition.id,
+          isFeatureEnabled: (feature) => switches.edition.isFeatureEnabled(feature),
+        },
+        backend,
         userState: await userState.opened(),
         clock: deviceClock,
         schedule: systemSchedule,

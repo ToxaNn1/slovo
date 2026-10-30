@@ -2,7 +2,8 @@ import type { Edition } from '../edition/edition';
 import type { Entries } from '../entries/entries';
 import { dateKeyOf, isMonday, type LocalDate } from '../local-date';
 import type { HiddenEntries } from '../mix/hidden-entries';
-import type { Clock, CommunityWordAnswer, CommunityWordApi } from '../ports';
+import { answerOf } from '../backend';
+import type { Backend, Clock, CommunityWordAnswer } from '../ports';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
 import { buildFeedCard } from './feed';
@@ -27,14 +28,14 @@ export function createCommunityWord({
   entries,
   hiddenEntries,
   userState,
-  api,
+  backend,
   clock,
 }: {
-  edition: Pick<Edition, 'isFeatureEnabled'>;
+  edition: Pick<Edition, 'id' | 'isFeatureEnabled'>;
   entries: Entries;
   hiddenEntries: Pick<HiddenEntries, 'has'>;
   userState: UserState;
-  api: CommunityWordApi;
+  backend: Pick<Backend, 'counters'>;
   clock: Clock;
 }): FeedNotices {
   /** The Community Word of the day, read once a day; none when there is none or it can't be read. */
@@ -43,11 +44,12 @@ export function createCommunityWord({
     const keptOfDay = await userState.read(kept);
     if (keptOfDay?.date === date) return keptOfDay.communityWord ?? undefined;
     if (clock.now().toISOString().slice(0, 10) < date) return undefined;
-    const answer = await api.communityWord();
+    // `counters.communityWord` needs no Account and carries no device id (ADR 0060).
+    const answer = await answerOf(backend.counters.communityWord({ edition: edition.id }));
     if (!answer.ok) return undefined;
-    const communityWord = answer.communityWord ?? null;
+    const communityWord = answer.output.communityWord ?? null;
     await userState.write(kept.change({ date, communityWord }));
-    return answer.communityWord;
+    return communityWord ?? undefined;
   }
 
   return {

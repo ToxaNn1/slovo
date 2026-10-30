@@ -1,12 +1,14 @@
-import type {
-  AnyContractProcedure,
-  ContractProcedure,
-  InferSchemaInput,
-  InferSchemaOutput,
+import {
+  isContractProcedure,
+  type AnyContractProcedure,
+  type ContractProcedure,
+  type InferSchemaInput,
+  type InferSchemaOutput,
 } from '@orpc/contract';
 import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import { implement, ORPCError, type ProcedureHandler } from '@orpc/server';
 import { ResponseHeadersPlugin, type ResponseHeadersPluginContext } from '@orpc/server/plugins';
+import { z } from 'zod';
 
 import { apiContract } from '../api';
 
@@ -50,7 +52,7 @@ export type ApiProcedures = {
 };
 
 /** Every error code the contract lists, on any of its procedures. */
-type ApiErrorCode = {
+export type ApiErrorCode = {
   [Domain in keyof Contract]: {
     [Name in keyof Contract[Domain]]: Contract[Domain][Name] extends ContractProcedure<
       infer _Input,
@@ -116,13 +118,74 @@ export function serveApi(procedures: ApiProcedures): (request: Request) => Promi
   };
 }
 
+/** The status an error code has on a procedure, read from the contract's error map. */
+const ErrorStatusesSchema = z.record(
+  z.string(),
+  z.object({ status: z.number().optional() }).optional(),
+);
+
+/**
+ * The status the contract gives the error code, on whichever procedure lists
+ * it: a code keeps one meaning across `/v1` (ADR 0031). A code no procedure
+ * gives a status has oRPC's status of the code.
+ */
+function statusOf(code: ApiErrorCode): number | undefined {
+  const routers: unknown[] = Object.values(apiContract);
+  for (const router of routers) {
+    if (typeof router !== 'object' || router === null) continue;
+    const procedures: unknown[] = Object.values(router);
+    for (const procedure of procedures) {
+      if (!isContractProcedure(procedure)) continue;
+      const statuses = ErrorStatusesSchema.safeParse(procedure['~orpc'].errorMap);
+      const status = statuses.success ? statuses.data[code]?.status : undefined;
+      if (status !== undefined) return status;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * The error a procedure of a test's backend throws to refuse the request
+ * with `code`, whether or not the procedure lists it, with the status the
+ * code has; a 429 also sets `Retry-After` to `retryAfter` seconds on the
+ * answer, through the request's `context`, as the backend's limits do.
+ */
+export function refusal(
+  code: ApiErrorCode,
+  context?: ResponseHeadersPluginContext,
+  { retryAfter }: { readonly retryAfter?: number } = {},
+): ORPCError<ApiErrorCode, undefined> {
+  if (retryAfter !== undefined) context?.resHeaders?.set('retry-after', String(retryAfter));
+  const status = statusOf(code);
+  return new ORPCError(code, status === undefined ? {} : { status });
+}
+
+/**
+ * A `fetch` that answers every request with the status and the body, as a
+ * proxy in front of the backend does, which is no answer of the contract.
+ */
+export function answeringWith(
+  status: number,
+  body: string,
+): (request: Request) => Promise<Response> {
+  return () => Promise.resolve(new Response(body, { status }));
+}
+
+/**
+ * A file as a procedure of a test's backend answers one, such as the file of
+ * a Language Pack: `File` is a web global that the Core's own lib doesn't name.
+ */
+export function fileOf(bytes: Uint8Array, name: string, type: string): File {
+  return new File([bytes], name, { type });
+}
+
 /**
  * Every procedure of the contract, each refusing with the error `code` names,
  * whether or not the procedure lists it, with the status the code has.
  */
 export function failingWith(code: ApiErrorCode): ApiProcedures {
   const fail = () => {
-    throw new ORPCError(code);
+    throw refusal(code);
   };
   return Object.fromEntries(
     Object.entries(apiContract).map(([domain, contracts]) => [

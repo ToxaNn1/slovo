@@ -8,7 +8,7 @@ import {
   openRemoteSwitches,
   openUserState,
 } from '../index';
-import { createMemoryContentPort } from '../testing';
+import { createFakeBackend, createMemoryContentPort } from '../testing';
 import { countingReads, idiom, randomOf, testEdition } from '../test-support';
 
 function word(id: string, overrides: Partial<Word> = {}): Word {
@@ -111,6 +111,13 @@ const categories = [
  * those of Synonym Rows and Tips on unless `off` names them; `speech` and
  * `nature`, and every kind as a whole, in its default Mix.
  */
+/** A backend that answers nothing, as when offline. */
+function unreachableBackend() {
+  const backend = createFakeBackend();
+  backend.online = false;
+  return backend.backend;
+}
+
 const editionWith = (corrections: boolean, idioms = true, off: readonly FeatureSwitch[] = []) =>
   testEdition({
     isFeatureEnabled: (feature) =>
@@ -186,7 +193,7 @@ describe('the Entries', () => {
       );
       const remote = await openRemoteSwitches({
         edition: editionWith(true),
-        api: { switches: () => Promise.reject(new Error('offline')) },
+        backend: unreachableBackend(),
         userState,
         schedule: (run) => {
           run();
@@ -386,7 +393,7 @@ describe('the Entries', () => {
         );
         const remote = await openRemoteSwitches({
           edition: editionWith(true),
-          api: { switches: () => Promise.reject(new Error('offline')) },
+          backend: unreachableBackend(),
           userState,
           schedule: (run) => {
             run();

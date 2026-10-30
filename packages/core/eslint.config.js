@@ -4,6 +4,19 @@ import shared from '@slovo/config/eslint';
 
 const uiFrameworks = ['react', 'react-dom', 'react-native', 'expo', '@expo/*', 'expo-*'];
 const nodeMessage = 'The Core must not depend on Node; put platform code behind a port.';
+const webMessage =
+  'The Core must not depend on a browser or reach the network itself; the Backend port does (ADR 0064).';
+/** The browser's and the network's globals, which the DOM lib names for the contract's client. */
+const webGlobals = [
+  'window',
+  'document',
+  'navigator',
+  'localStorage',
+  'sessionStorage',
+  'fetch',
+  'XMLHttpRequest',
+  'WebSocket',
+];
 
 export default [
   ...shared,
@@ -12,7 +25,14 @@ export default [
     // (Node included) stay outside it, behind ports.
     files: ['**/*.ts'],
     rules: {
-      'no-restricted-globals': ['error', 'process', 'Buffer', 'require', '__dirname', '__filename'],
+      'no-restricted-globals': [
+        'error',
+        ...['process', 'Buffer', 'require', '__dirname', '__filename'].map((name) => ({
+          name,
+          message: nodeMessage,
+        })),
+        ...webGlobals.map((name) => ({ name, message: webMessage })),
+      ],
       '@typescript-eslint/no-restricted-imports': [
         'error',
         {

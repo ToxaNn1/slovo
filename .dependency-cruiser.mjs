@@ -83,7 +83,9 @@ export default {
         'ADR 0039: the API contract served in process is a test backend, so only a test ' +
         'or a test-support module imports it, and no app or backend module ships oRPC server code.',
       severity: 'error',
-      from: { pathNot: ['\\.test\\.tsx?$', '(^|/)test-support\\.ts$'] },
+      from: {
+        pathNot: ['\\.test\\.tsx?$', '(^|/)test-support\\.ts$', '^packages/core/src/fakes/'],
+      },
       to: { path: '^packages/contracts/src/api/test-support\\.ts$' },
     },
     {

@@ -9,7 +9,7 @@ import {
   type Feed,
   type FeedCard,
 } from '../index';
-import { createFakeCommunityWordApi, createMemoryContentPort } from '../testing';
+import { createFakeBackend, type FakeBackend, createMemoryContentPort } from '../testing';
 import { fakeClock, randomOf, testEdition, word } from '../test-support';
 
 const words: readonly Word[] = [
@@ -34,7 +34,7 @@ async function run({
 }: {
   records: Map<string, string>;
   at: string;
-  api?: ReturnType<typeof createFakeCommunityWordApi>;
+  api?: FakeBackend;
   features?: readonly string[];
 }) {
   const { clock, advance } = fakeClock(at);
@@ -49,7 +49,7 @@ async function run({
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock,
     random: randomOf(0.25),
-    ...(api === undefined ? {} : { communityWord: api }),
+    ...(api === undefined ? {} : { backend: api.backend }),
   });
   return Object.assign(app, { advance });
 }
@@ -75,8 +75,8 @@ async function withLastWeek(): Promise<Map<string, string>> {
 
 /** A Community Word API that answers `w_07` with 12 adds. */
 function apiOfWord(entryId = 'w_07') {
-  const api = createFakeCommunityWordApi();
-  api.answer({ entryId, adds: 12 });
+  const api = createFakeBackend();
+  api.counters.answerCommunityWord({ entryId, adds: 12 });
   return api;
 }
 
@@ -113,14 +113,14 @@ describe('The Community Word', () => {
     const cards = await firstCards(app.feed, 4);
 
     expect(cards.some((card) => card.kind === 'notice')).toBe(false);
-    expect(api.asked).toBe(0);
+    expect(api.calls).toHaveLength(0);
   });
 
   it('is not there when nobody added anything', async () => {
     const app = await run({
       records: new Map(),
       at: monday,
-      api: createFakeCommunityWordApi(),
+      api: createFakeBackend(),
     });
 
     expect((await firstCards(app.feed, 4)).some((card) => card.kind === 'notice')).toBe(false);
@@ -157,7 +157,7 @@ describe('The Community Word', () => {
     });
 
     expect((await firstCards(app.feed, 4)).some((card) => card.kind === 'notice')).toBe(false);
-    expect(api.asked).toBe(0);
+    expect(api.calls).toHaveLength(0);
   });
 
   it('is not there with the Feature Switch communityCounters off, even with communityWord on, and the week is not asked for', async () => {
@@ -170,7 +170,7 @@ describe('The Community Word', () => {
     });
 
     expect((await firstCards(app.feed, 4)).some((card) => card.kind === 'notice')).toBe(false);
-    expect(api.asked).toBe(0);
+    expect(api.calls).toHaveLength(0);
   });
 
   it('is gone for the day once swiped past', async () => {
@@ -196,19 +196,19 @@ describe('The Community Word', () => {
     const later = await firstCards((await run({ records, at: mondayEvening, api })).feed, 3);
 
     expect(shownBy(later)[1]).toBe('communityWord');
-    expect(api.asked).toBe(1);
+    expect(api.calls).toHaveLength(1);
   });
 
   it('asks again on a later card when the week could not be read', async () => {
     const api = apiOfWord();
-    api.fail('offline');
+    api.failNext('offline');
     const app = await run({ records: new Map(), at: monday, api });
 
     const cards = await firstCards(app.feed, 4);
 
     expect(cards.map((card) => card.kind)).toEqual(['word', 'word', 'notice', 'word']);
     expect(shownBy(cards)[2]).toBe('communityWord');
-    expect(api.asked).toBe(2);
+    expect(api.calls).toHaveLength(2);
   });
 
   it('waits for the backend’s week to turn, as just past a local midnight east of UTC, and asks on a later run that day', async () => {
@@ -220,6 +220,6 @@ describe('The Community Word', () => {
 
     expect(shownBy(early)).not.toContain('communityWord');
     expect(shownBy(later)[1]).toBe('communityWord');
-    expect(api.asked).toBe(1);
+    expect(api.calls).toHaveLength(1);
   });
 });

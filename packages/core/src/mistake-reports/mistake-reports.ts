@@ -2,7 +2,8 @@ import { MistakeReportSchema, type MistakeReport, type MistakeType } from '@slov
 
 import type { Edition } from '../edition/edition';
 import { createInTurn } from '../in-turn';
-import type { Clock, Random, ReportsApi, ReportsApiFailure, Schedule } from '../ports';
+import { answerOf } from '../backend';
+import type { Backend, Clock, Random, RequestFailure, Schedule } from '../ports';
 import { withRetries } from '../retry';
 import type { UserState } from '../user-state/user-state';
 import { MISTAKE_REPORT_QUEUE_SIZE, userStateRecords } from '../user-state/user-state-schema';
@@ -53,6 +54,13 @@ export interface MistakeReports {
 
 const { mistakeReportQueue } = userStateRecords;
 
+/**
+ * A Mistake Report the backend didn't take, as any request may fail, or
+ * because it serves no Mistake Reports for the Edition (404).
+ */
+export type ReportsApiFailure =
+  RequestFailure | { readonly ok: false; readonly reason: 'not-found' };
+
 /** The failures after which a report just written stays in the queue: they may pass by themselves. */
 const newStaysFor: ReadonlySet<ReportsApiFailure['reason']> = new Set(['offline', 'server-error']);
 
@@ -69,7 +77,7 @@ const queuedStaysFor: ReadonlySet<ReportsApiFailure['reason']> = new Set([
  */
 export function openMistakeReports({
   userState,
-  api,
+  backend,
   edition,
   appVersion,
   contentVersion,
@@ -78,7 +86,7 @@ export function openMistakeReports({
   random,
 }: {
   userState: Pick<UserState, 'read' | 'write'>;
-  api: ReportsApi;
+  backend: Pick<Backend, 'reports'>;
   /** The Edition as the app runs it, with each Feature Switch at its effective value. */
   edition: Pick<Edition, 'id' | 'isFeatureEnabled'>;
   /** The app version, the release it belongs to (ADR 0044). */
@@ -101,6 +109,16 @@ export function openMistakeReports({
 
   const queue = async () => (await userState.read(mistakeReportQueue)) ?? [];
 
+  /** Sends the report, with no Session (ADR 0056); the backend answers 202 when it keeps it. */
+  async function sendOnce(
+    report: MistakeReport,
+  ): Promise<{ readonly ok: true } | ReportsApiFailure> {
+    const answer = await answerOf(backend.reports.send(report), ({ code }) =>
+      code === 'NOT_FOUND' ? ({ ok: false, reason: 'not-found' } as const) : undefined,
+    );
+    return answer.ok ? { ok: true } : answer;
+  }
+
   /** Takes the oldest report equal to `report` off the queue, if it is still there. */
   async function remove(report: MistakeReport): Promise<void> {
     const reports = await queue();
@@ -118,7 +136,7 @@ export function openMistakeReports({
     report: MistakeReport,
     staysFor: ReadonlySet<ReportsApiFailure['reason']>,
   ): Promise<{ readonly ok: true } | ReportsApiFailure> {
-    const answer = await withRetries(() => api.send(report), { schedule, random });
+    const answer = await withRetries(() => sendOnce(report), { schedule, random });
     if (answer.ok) heldUntil = undefined;
     if (!answer.ok && answer.reason === 'too-many-requests' && answer.retryAfter !== undefined) {
       heldUntil = clock.now().getTime() + answer.retryAfter * 1000;

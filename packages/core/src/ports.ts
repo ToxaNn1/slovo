@@ -1,12 +1,5 @@
-import type {
-  Category,
-  CollectionLink,
-  Entry,
-  MistakeReport,
-  PackMetadata,
-  PublishedPack,
-  Word,
-} from '@slovo/contracts';
+import type { Category, Entry, PackMetadata, Word } from '@slovo/contracts';
+import type { ApiClient } from '@slovo/contracts/api';
 
 /**
  * Reads a compiled Language Pack. Each platform supplies an adapter (Node for
@@ -123,16 +116,31 @@ export interface Random {
 export type Schedule = (run: () => void, delay: number) => () => void;
 
 /**
- * A request to the backend that failed as any request may: no answer
- * (`offline`), a server error (5xx), too many requests (429), or an answer the
- * request never expects (`unexpected`), such as a request the backend refuses
- * (400) or an Edition it doesn't serve (404). The first two may pass by
- * themselves, and they alone are tried again (ADR 0037).
+ * The backend as the Core reaches it: the API contract's client, one function
+ * per procedure, which the shell builds with `createApiClient` and a test
+ * builds over the contract served in process (ADR 0039, 0062). The Core
+ * calls it only through `answerOf`, which turns every answer into a value,
+ * and `withRetries`, the one retry rule (ADR 0037). A call that acts on an
+ * Account names its Session as `context.token`.
  */
-export interface RequestFailure {
-  readonly ok: false;
-  readonly reason: 'offline' | 'server-error' | 'too-many-requests' | 'unexpected';
-}
+export type Backend = ApiClient;
+
+/**
+ * A request to the backend that failed as any request may: no answer
+ * (`offline`), a server error (5xx), too many requests (429, with the seconds
+ * of the answer's `Retry-After`, none when it has no such header), or an
+ * answer the request never expects (`unexpected`), such as a request the
+ * backend refuses (400) or an Edition it doesn't serve (404). The first two
+ * may pass by themselves, and they alone are tried again (ADR 0037).
+ */
+export type RequestFailure =
+  | { readonly ok: false; readonly reason: 'offline' | 'server-error' | 'unexpected' }
+  | {
+      readonly ok: false;
+      readonly reason: 'too-many-requests';
+      /** How long to wait before the next request, in seconds; none when the answer didn't say. */
+      readonly retryAfter: number | undefined;
+    };
 
 /** Whether the device lets the app notify: the reader allowed it, denied it, or hasn't been asked yet. */
 export type NotificationPermission = 'allowed' | 'denied' | 'not-asked';
@@ -180,63 +188,6 @@ export interface NotificationSchedulerPort {
 }
 
 /**
- * A call of the Account API that failed as any request does, or because the
- * Session it carried has ended (401).
- */
-export type AccountApiFailure =
-  RequestFailure | { readonly ok: false; readonly reason: 'unauthorized' };
-
-/**
- * The backend's Account procedures, as the Core sees them. The shell
- * implements this port on the API contract's client, which also names the
- * Edition whose language the Sign-in code email is in. The calls that act on
- * an Account carry the token of its Session. A call never rejects: every
- * answer of the backend comes back as success or a failure.
- */
-export interface AccountApi {
-  /**
-   * Sends a Sign-in code to the email. The answer is the same whether or not
-   * the email has an Account.
-   */
-  requestCode(email: string): Promise<{ readonly ok: true } | AccountApiFailure>;
-  /**
-   * Checks the code last sent to the email. The first right code creates the
-   * Account; the answer is the new Session's token and the Account's email.
-   */
-  verifyCode(
-    email: string,
-    code: string,
-  ): Promise<
-    | { readonly ok: true; readonly token: string; readonly email: string }
-    | { readonly ok: false; readonly reason: 'wrong-code'; readonly triesLeft: number }
-    | { readonly ok: false; readonly reason: 'code-expired' }
-    | AccountApiFailure
-  >;
-  /**
-   * Signs in with a Google identity token. The first sign-in of an email
-   * creates its Account, whatever Sign-in method (ADR 0047); the answer is the
-   * new Session's token and the Account's email. The backend refuses a token
-   * that is not Google's, has expired, is for another app or names an email
-   * Google hasn't verified.
-   */
-  signInWithGoogle(
-    idToken: string,
-  ): Promise<
-    | { readonly ok: true; readonly token: string; readonly email: string }
-    | { readonly ok: false; readonly reason: 'refused' }
-    | AccountApiFailure
-  >;
-  /** The email of the Session's Account. */
-  me(token: string): Promise<{ readonly ok: true; readonly email: string } | AccountApiFailure>;
-  /** Ends the Session. */
-  signOut(token: string): Promise<{ readonly ok: true } | AccountApiFailure>;
-  /** Ends every Session of the Session's Account. */
-  signOutEverywhere(token: string): Promise<{ readonly ok: true } | AccountApiFailure>;
-  /** Deletes the Session's Account with every Session of it, for good. */
-  delete(token: string): Promise<{ readonly ok: true } | AccountApiFailure>;
-}
-
-/**
  * Google's native sign-in sheet, as the Core sees it (ADR 0047): the shell
  * implements this port on Google's SDK. The sheet never rejects: the reader
  * signs in, dismisses it, or it fails.
@@ -274,112 +225,6 @@ export interface RecordChange {
   readonly changedAt: number;
 }
 
-/**
- * A call of the Sync API that failed as any request does, because the
- * Session it carried has ended (401), because the backend serves no Sync
- * for the Edition (404), or because a push would take the Account's records
- * in the Edition over their limit (409, `TOO_MANY_RECORDS`). Too many
- * requests (429) carries the answer's `Retry-After`.
- */
-export type SyncApiFailure =
-  | { readonly ok: false; readonly reason: Exclude<RequestFailure['reason'], 'too-many-requests'> }
-  | {
-      readonly ok: false;
-      readonly reason: 'too-many-requests';
-      /** How long to wait before the next Sync request, in seconds; none when the answer didn't say. */
-      readonly retryAfter: number | undefined;
-    }
-  | { readonly ok: false; readonly reason: 'unauthorized' }
-  | { readonly ok: false; readonly reason: 'not-found' }
-  | { readonly ok: false; readonly reason: 'too-many-records' };
-
-/**
- * The backend's Sync procedures for the running Edition, as the Core sees
- * them, on the Account of the Session whose token each call carries. The
- * shell implements this port on the API contract's client. A call never
- * rejects: every answer of the backend comes back as success or a failure.
- */
-export interface SyncApi {
-  /**
-   * Keeps the changes, at most `SYNC_BATCH_SIZE`: each replaces the record
-   * kept under its key only when it is later (ADR 0041).
-   */
-  push(
-    token: string,
-    changes: readonly RecordChange[],
-  ): Promise<{ readonly ok: true } | SyncApiFailure>;
-  /**
-   * One page of the records kept after the cursor, from the first without
-   * one, in the order the backend kept them: at most `SYNC_BATCH_SIZE`, the
-   * cursor to ask after next, and whether more follow.
-   */
-  pull(
-    token: string,
-    after: number | undefined,
-  ): Promise<
-    | {
-        readonly ok: true;
-        readonly records: readonly RecordChange[];
-        readonly cursor: number;
-        readonly more: boolean;
-      }
-    | SyncApiFailure
-  >;
-}
-
-/**
- * A Mistake Report the backend didn't take, as any request may fail, or
- * because it serves no Mistake Reports for the Edition (404). Too many
- * requests (429) carries the answer's `Retry-After`.
- */
-export type ReportsApiFailure =
-  | { readonly ok: false; readonly reason: Exclude<RequestFailure['reason'], 'too-many-requests'> }
-  | {
-      readonly ok: false;
-      readonly reason: 'too-many-requests';
-      /** How long to wait before the next report, in seconds; none when the answer didn't say. */
-      readonly retryAfter: number | undefined;
-    }
-  | { readonly ok: false; readonly reason: 'not-found' };
-
-/**
- * The backend's Mistake Report procedure, as the Core sees it. It needs no
- * Account and sends no Session (ADR 0056). The shell implements this port on
- * the API contract's client. A call never rejects: every answer of the
- * backend comes back as success or a failure.
- */
-export interface ReportsApi {
-  /** Sends the report; the backend answers 202 when it keeps it. */
-  send(report: MistakeReport): Promise<{ readonly ok: true } | ReportsApiFailure>;
-}
-
-/**
- * A Collection Link the backend didn't make, as any request may fail, or
- * because it serves no Collection Links for the Edition, or has them switched
- * off (404).
- */
-export type CollectionLinksApiFailure =
-  RequestFailure | { readonly ok: false; readonly reason: 'not-found' };
-
-/**
- * The backend's Collection Link procedures, as the Core sees them. They need
- * no Account and send no Session (ADR 0058). The shell implements this port on
- * the API contract's client. A call never rejects: every answer of the
- * backend comes back as success or a failure.
- */
-export interface CollectionLinksApi {
-  /** Stores the Collection as it is now and answers the link's id and its URL. */
-  create(
-    link: CollectionLink,
-  ): Promise<
-    { readonly ok: true; readonly id: string; readonly url: string } | CollectionLinksApiFailure
-  >;
-  /** The Collection as the link of the id holds it; `not-found` for an unknown id. */
-  read(
-    id: string,
-  ): Promise<{ readonly ok: true; readonly link: CollectionLink } | CollectionLinksApiFailure>;
-}
-
 /** This device's Session as the device keeps it: its token and the email of its Account. */
 export interface KeptSession {
   readonly token: string;
@@ -413,27 +258,6 @@ export const systemRandom: Random = { next: () => Math.random() };
  */
 export type PackVersion = Readonly<Pick<PackMetadata, 'contentVersion' | 'packFormat'>>;
 
-/** A call of the content API that failed as any request does, or found no such Edition or pack (404). */
-export type ContentApiFailure =
-  RequestFailure | { readonly ok: false; readonly reason: 'not-found' };
-
-/**
- * The backend's content procedures for the running Edition, as the Core sees
- * them. They need no Account. The shell implements this port on the API
- * contract's client. A call never rejects: every answer of the backend comes
- * back as success or a failure.
- */
-export interface ContentApi {
-  /** The newest published pack of the pack format; none when nothing of it is published. */
-  latest(
-    packFormat: number,
-  ): Promise<{ readonly ok: true; readonly pack: PublishedPack | undefined } | ContentApiFailure>;
-  /** The bytes of the pack file of the content version. */
-  download(
-    contentVersion: number,
-  ): Promise<{ readonly ok: true; readonly bytes: Uint8Array } | ContentApiFailure>;
-}
-
 /**
  * Keeps one downloaded Language Pack on the device, apart from the pack
  * bundled with the app, for the shell to open at the next launch.
@@ -458,19 +282,6 @@ export interface CommunityWordAnswer {
 }
 
 /**
- * The backend's `communityWord` procedure for the running Edition, as the Core
- * sees it. It needs no Account and carries no device id. The shell implements
- * this port on the API contract's client. A call never rejects: every answer
- * of the backend comes back as success or a failure.
- */
-export interface CommunityWordApi {
-  /** The Community Word of the last ISO week; none when nobody added anything. */
-  communityWord(): Promise<
-    { readonly ok: true; readonly communityWord: CommunityWordAnswer | undefined } | RequestFailure
-  >;
-}
-
-/**
  * What the backend answers for the running Edition's remote Feature Switches:
  * the features the owner turned off remotely, by their Feature Switch's name,
  * and the ETag that names them (ADR 0040).
@@ -478,24 +289,6 @@ export interface CommunityWordApi {
 export interface RemoteSwitchesAnswer {
   readonly off: readonly string[];
   readonly etag: string;
-}
-
-/**
- * The backend's `edition.switches` procedure for the running Edition, as the
- * Core sees it. It needs no Account. The shell implements this port on the
- * API contract's client. A call never rejects: every answer of the backend
- * comes back as success or a failure.
- */
-export interface SwitchesApi {
-  /**
-   * The remote Feature Switches, or `unchanged` when `etag`, the ETag of the
-   * answer the app keeps, still names them.
-   */
-  switches(
-    etag: string | undefined,
-  ): Promise<
-    { readonly ok: true; readonly answer: RemoteSwitchesAnswer | 'unchanged' } | RequestFailure
-  >;
 }
 
 /** The Community Counters of one Entry, as the backend answers them (ADR 0060). */
@@ -519,34 +312,4 @@ export interface CounterDelta {
 /** One Entry's change of its Community Counters, as the device sends it (ADR 0060). */
 export interface CounterEvent extends CounterDelta {
   readonly entryId: string;
-}
-
-/**
- * A request of the Community Counters' changes that failed as any request
- * does, or found no such Edition or counters switched off (404).
- */
-export type CounterEventsFailure =
-  | { readonly ok: false; readonly reason: Exclude<RequestFailure['reason'], 'too-many-requests'> }
-  | {
-      readonly ok: false;
-      readonly reason: 'too-many-requests';
-      /** How long to wait before the next request, in seconds; none when the answer didn't say. */
-      readonly retryAfter: number | undefined;
-    }
-  | { readonly ok: false; readonly reason: 'not-found' };
-
-/**
- * The backend's `counters.read` and `counters.send` procedures for the
- * running Edition, as the Core sees them. They need no Account, send no
- * Session and carry no device id (ADR 0060). The shell implements this port
- * on the API contract's client, which names the Edition. A call never
- * rejects: every answer of the backend comes back as success or a failure.
- */
-export interface CountersApi {
-  /** The counters of the Entries, 1 to 100, each once, in the order asked; an Entry nobody counted answers zeros. */
-  read(
-    entryIds: readonly string[],
-  ): Promise<{ readonly ok: true; readonly counters: readonly EntryCounters[] } | RequestFailure>;
-  /** Sends the changes of 1 to 100 Entries, each once; the backend counts them whole or not at all. */
-  send(events: readonly CounterEvent[]): Promise<{ readonly ok: true } | CounterEventsFailure>;
 }

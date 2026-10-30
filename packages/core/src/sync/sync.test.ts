@@ -9,9 +9,10 @@ import {
   openUserState,
   trackChanges,
   userStateRecords,
+  type RecordChange,
   type UserStateChanges,
 } from '../index';
-import { createFakeAccountApi, createFakeGoogleSignInSheet, createFakeSyncApi } from '../testing';
+import { createFakeBackend, createFakeGoogleSignInSheet } from '../testing';
 import { SYNC_AFTER_WRITE } from './sync';
 import { fakeClock, randomOf, testSchedule } from '../test-support';
 
@@ -29,14 +30,14 @@ async function device({
 }: { signedIn?: boolean; off?: FeatureSwitch[] } = {}) {
   const time = fakeClock('2026-10-18T09:00:00.000Z');
   const timers = testSchedule(time);
-  const server = createFakeSyncApi({ clock: time.clock });
-  /** Whether the backend can be reached; without it every call answers `offline`, and counts. */
+  const server = createFakeBackend({ clock: time.clock });
+  /** Whether the backend can be reached by Sync; without it every Sync request gets no answer, and counts. */
   const network = { up: true, unanswered: 0 };
-  const unanswered = () => {
+  const unanswered = (): Promise<never> => {
     network.unanswered += 1;
-    return Promise.resolve({ ok: false, reason: 'offline' } as const);
+    return Promise.reject(new TypeError('Network request failed'));
   };
-  const accountApi = createFakeAccountApi();
+  const { push, pull } = server.backend.sync;
   const googleSheet = createFakeGoogleSignInSheet();
   const records = new Map<string, string>();
   /** Which writes the device's store refuses: none, unless the test says. */
@@ -55,7 +56,8 @@ async function device({
   // This install has run before, so the Account keeps the Session it finds.
   await userState.write(userStateRecords.installed.change(true));
   const account = await openAccount({
-    api: accountApi,
+    backend: server.backend,
+    edition: { id: 'uk' },
     googleSheet,
     userState,
     sessions: createMemorySessionStore(
@@ -68,12 +70,16 @@ async function device({
   const switchedOff = new Set<FeatureSwitch>(off);
   const sync = await openSync({
     userState,
-    api: {
-      push: (token, changes) => (network.up ? server.push(token, changes) : unanswered()),
-      pull: (token, after) => (network.up ? server.pull(token, after) : unanswered()),
+    backend: {
+      sync: {
+        push: (...request: Parameters<typeof push>) =>
+          network.up ? push(...request) : unanswered(),
+        pull: (...request: Parameters<typeof pull>) =>
+          network.up ? pull(...request) : unanswered(),
+      },
     },
     account,
-    edition: { isFeatureEnabled: (feature) => !switchedOff.has(feature) },
+    edition: { id: 'uk', isFeatureEnabled: (feature) => !switchedOff.has(feature) },
     clock: time.clock,
     schedule: timers.schedule,
     random: randomOf(0.5),
@@ -86,7 +92,7 @@ async function device({
     sync,
     server,
     account,
-    accountApi,
+    accountApi: server,
     googleSheet,
     userState,
     records,
@@ -98,7 +104,13 @@ async function device({
     /** How many times Sync said a pull wrote something. */
     changes: () => changes,
     /** How many syncs reached the backend: each starts with a pull. */
-    syncs: () => server.calls.filter((call) => call === 'pull').length,
+    syncs: () => server.calls.filter((call) => call === 'sync.pull').length,
+    /** Pushes the changes as another device of the Account would. */
+    pushFromElsewhere: (changes: RecordChange[]) =>
+      server.backend.sync.push(
+        { editionId: 'uk', changes },
+        { context: { token: 'another-session' } },
+      ),
     /** Writes a Favorite, as the reader adding one does. */
     addFavorite: (id: string) =>
       userState.write(favorites.record(id).change(time.clock.now().toISOString())),
@@ -114,8 +126,8 @@ describe('Sync syncs', () => {
     sync.foreground();
     await advance(0);
 
-    expect(server.calls).toEqual(['pull', 'push']);
-    expect(server.records.has('favorites.w_one')).toBe(true);
+    expect(server.calls).toEqual(['sync.pull', 'sync.push']);
+    expect(server.sync.records.has('favorites.w_one')).toBe(true);
   });
 
   it('on each return to the foreground', async () => {
@@ -131,7 +143,7 @@ describe('Sync syncs', () => {
     await advance(0);
 
     expect(syncs()).toBe(2);
-    expect(server.records.has('favorites.w_one')).toBe(true);
+    expect(server.sync.records.has('favorites.w_one')).toBe(true);
   });
 
   it('5 s after the last write while in the foreground, once for a burst of writes', async () => {
@@ -147,7 +159,7 @@ describe('Sync syncs', () => {
     await advance(1);
 
     expect(syncs()).toBe(2);
-    expect([...server.records.keys()]).toEqual(['favorites.w_one', 'favorites.w_two']);
+    expect([...server.sync.records.keys()]).toEqual(['favorites.w_one', 'favorites.w_two']);
     await advance(HOUR);
     expect(syncs()).toBe(2);
   });
@@ -178,7 +190,7 @@ describe('Sync syncs', () => {
     await advance(0);
 
     expect(syncs()).toBe(1);
-    expect(server.records.has('favorites.w_one')).toBe(true);
+    expect(server.sync.records.has('favorites.w_one')).toBe(true);
   });
 
   it('when a Session starts with Google in the foreground, so the first Google sign-in merges the device’s user state', async () => {
@@ -193,7 +205,7 @@ describe('Sync syncs', () => {
     await advance(0);
 
     expect(syncs()).toBe(1);
-    expect(server.records.has('favorites.w_one')).toBe(true);
+    expect(server.sync.records.has('favorites.w_one')).toBe(true);
   });
 });
 
@@ -246,7 +258,7 @@ describe('Sync runs one sync at a time', () => {
     await advance(HOUR);
 
     expect(syncs()).toBe(2);
-    expect(server.records.has('favorites.w_one')).toBe(true);
+    expect(server.sync.records.has('favorites.w_one')).toBe(true);
     expect(sync.state.running).toBe(false);
   });
 });
@@ -258,18 +270,18 @@ describe('Sync tries a sync again', () => {
     async (reason) => {
       const { sync, server, addFavorite, advance, syncs } = await device();
       await addFavorite('w_one');
-      server.failNext('push', reason);
+      server.failNext({ procedure: 'sync.push', reason });
       sync.foreground();
       await advance(0);
-      expect(server.calls).toEqual(['pull', 'push']);
+      expect(server.calls).toEqual(['sync.pull', 'sync.push']);
 
       // The first wait is between half and all of 1 s: 750 ms with a draw of 0.5.
       await advance(749);
       expect(syncs()).toBe(1);
       await advance(1);
 
-      expect(server.calls).toEqual(['pull', 'push', 'pull', 'push']);
-      expect(server.records.has('favorites.w_one')).toBe(true);
+      expect(server.calls).toEqual(['sync.pull', 'sync.push', 'sync.pull', 'sync.push']);
+      expect(server.sync.records.has('favorites.w_one')).toBe(true);
       expect(sync.state).toMatchObject({ running: false, offline: false });
     },
   );
@@ -296,11 +308,11 @@ describe('Sync tries a sync again', () => {
     async (reason) => {
       const { sync, server, addFavorite, advance } = await device();
       await addFavorite('w_one');
-      server.failNext('push', reason);
+      server.failNext({ procedure: 'sync.push', reason });
       sync.foreground();
       await advance(HOUR);
 
-      expect(server.calls).toEqual(['pull', 'push']);
+      expect(server.calls).toEqual(['sync.pull', 'sync.push']);
       expect(sync.state).toEqual({ syncedAt: undefined, running: false, offline: false });
     },
   );
@@ -309,7 +321,7 @@ describe('Sync tries a sync again', () => {
 describe('Sync, when too many requests', () => {
   it('waits for the Retry-After and syncs then', async () => {
     const { sync, server, advance, syncs } = await device();
-    server.failNext('pull', 'too-many-requests', { retryAfter: 60 });
+    server.failNext({ procedure: 'sync.pull', reason: 'too-many-requests', retryAfter: 60 });
     sync.foreground();
     await advance(59_999);
     expect(syncs()).toBe(1);
@@ -321,7 +333,7 @@ describe('Sync, when too many requests', () => {
 
   it('syncs at no moment sooner', async () => {
     const { sync, server, addFavorite, advance, syncs } = await device();
-    server.failNext('pull', 'too-many-requests', { retryAfter: 60 });
+    server.failNext({ procedure: 'sync.pull', reason: 'too-many-requests', retryAfter: 60 });
     sync.foreground();
     await advance(0);
     expect(syncs()).toBe(1);
@@ -335,12 +347,12 @@ describe('Sync, when too many requests', () => {
     await advance(1);
 
     expect(syncs()).toBe(2);
-    expect(server.records.has('favorites.w_one')).toBe(true);
+    expect(server.sync.records.has('favorites.w_one')).toBe(true);
   });
 
   it('syncs at the next moment when the answer says nothing of when', async () => {
     const { sync, server, advance, syncs } = await device();
-    server.failNext('pull', 'too-many-requests');
+    server.failNext({ procedure: 'sync.pull', reason: 'too-many-requests' });
     sync.foreground();
     await advance(HOUR);
     expect(syncs()).toBe(1);
@@ -354,8 +366,8 @@ describe('Sync, when too many requests', () => {
 
 describe('Sync, when the device fails to write a sync', () => {
   it('stops it quietly and syncs at the next moment', async () => {
-    const { sync, server, disk, advance, syncs } = await device();
-    await server.push('another-session', [{ key: 'settings.theme', value: 'dark', changedAt: 1 }]);
+    const { sync, pushFromElsewhere, disk, advance, syncs } = await device();
+    await pushFromElsewhere([{ key: 'settings.theme', value: 'dark', changedAt: 1 }]);
     disk.refuses = () => true;
     sync.foreground();
     await advance(HOUR);
@@ -371,8 +383,9 @@ describe('Sync, when the device fails to write a sync', () => {
   });
 
   it('says the user state may have changed when it fails after a pull wrote', async () => {
-    const { sync, server, disk, userState, addFavorite, advance, changes } = await device();
-    await server.push('another-session', [{ key: 'settings.theme', value: 'dark', changedAt: 1 }]);
+    const { sync, pushFromElsewhere, disk, userState, addFavorite, advance, changes } =
+      await device();
+    await pushFromElsewhere([{ key: 'settings.theme', value: 'dark', changedAt: 1 }]);
     await addFavorite('w_one');
     // The store refuses only the deletion of the pending changes the push sent.
     disk.refuses = (changes) => [...changes.values()].every((value) => value === undefined);
@@ -391,7 +404,7 @@ describe('Sync and the end of a Session', () => {
     sync.foreground();
     await advance(0);
     await addFavorite('w_one');
-    server.failNext('pull', 'unauthorized');
+    server.failNext({ procedure: 'sync.pull', reason: 'unauthorized' });
     await advance(SYNC_AFTER_WRITE);
 
     expect(account.state).toEqual({
@@ -455,8 +468,8 @@ describe('Sync and the end of a Session', () => {
   });
 
   it('forgets the cursor once a sync running at the sign-out ends', async () => {
-    const { sync, server, account, userState, advance } = await device();
-    await server.push('another-session', [{ key: 'settings.theme', value: 'dark', changedAt: 1 }]);
+    const { sync, server, account, userState, advance, pushFromElsewhere } = await device();
+    await pushFromElsewhere([{ key: 'settings.theme', value: 'dark', changedAt: 1 }]);
     const release = server.hold();
     sync.foreground();
     await advance(0);
@@ -479,9 +492,10 @@ describe('Sync and the end of a Session', () => {
     const time = fakeClock();
     await openSync({
       userState,
-      api: createFakeSyncApi({ clock: time.clock }),
+      backend: createFakeBackend({ clock: time.clock }).backend,
       account: await openAccount({
-        api: createFakeAccountApi(),
+        backend: createFakeBackend().backend,
+        edition: { id: 'uk' },
         googleSheet: createFakeGoogleSignInSheet(),
         sessions: createMemorySessionStore(),
         userState,
@@ -489,7 +503,7 @@ describe('Sync and the end of a Session', () => {
         schedule: testSchedule(time).schedule,
         random: randomOf(0.5),
       }),
-      edition: { isFeatureEnabled: () => true },
+      edition: { id: 'uk', isFeatureEnabled: () => true },
       clock: time.clock,
       schedule: testSchedule(time).schedule,
       random: randomOf(0.5),
@@ -534,9 +548,9 @@ describe('Sync says how it went', () => {
 
     const relaunched = await openSync({
       userState,
-      api: server,
+      backend: server.backend,
       account,
-      edition: { isFeatureEnabled: () => true },
+      edition: { id: 'uk', isFeatureEnabled: () => true },
       clock: time.clock,
       schedule: testSchedule(time).schedule,
       random: randomOf(0.5),
@@ -546,13 +560,13 @@ describe('Sync says how it went', () => {
   });
 
   it('that the user state changed, once per sync whose pull wrote something', async () => {
-    const { sync, server, time, addFavorite, advance, changes } = await device();
+    const { sync, pushFromElsewhere, time, addFavorite, advance, changes } = await device();
     sync.foreground();
     await advance(0);
     expect(changes()).toBe(0);
 
     time.advance(HOUR);
-    await server.push('another-session', [
+    await pushFromElsewhere([
       {
         key: 'favorites.w_one',
         value: '2026-10-18T10:00:00.000Z',
@@ -574,10 +588,10 @@ describe('Sync says how it went', () => {
   });
 
   it('that the user state changed when a sync that wrote something fails after', async () => {
-    const { sync, server, addFavorite, advance, changes } = await device();
-    await server.push('another-session', [{ key: 'settings.theme', value: 'dark', changedAt: 1 }]);
+    const { sync, server, addFavorite, advance, changes, pushFromElsewhere } = await device();
+    await pushFromElsewhere([{ key: 'settings.theme', value: 'dark', changedAt: 1 }]);
     await addFavorite('w_one');
-    server.failNext('push', 'not-found');
+    server.failNext({ procedure: 'sync.push', reason: 'not-found' });
     sync.foreground();
     await advance(HOUR);
 

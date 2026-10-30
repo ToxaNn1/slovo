@@ -1,7 +1,7 @@
 import type { Account } from '../account/account';
 import type { Edition } from '../edition/edition';
 import { createSubscribers } from '../in-turn';
-import type { Clock, Random, Schedule, SyncApi } from '../ports';
+import type { Backend, Clock, Random, Schedule } from '../ports';
 import { withRetries } from '../retry';
 import type { TrackedUserState } from '../user-state/tracked-user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
@@ -69,7 +69,7 @@ const { syncCursor, syncSyncedAt } = userStateRecords;
  */
 export async function openSync({
   userState,
-  api,
+  backend,
   account,
   edition,
   clock,
@@ -77,17 +77,17 @@ export async function openSync({
   random,
 }: {
   userState: TrackedUserState;
-  api: SyncApi;
+  backend: Pick<Backend, 'sync'>;
   account: Pick<Account, 'state' | 'subscribe' | 'withSession'>;
   /** The Edition as the app runs it, with each Feature Switch at its effective value. */
-  edition: Pick<Edition, 'isFeatureEnabled'>;
+  edition: Pick<Edition, 'id' | 'isFeatureEnabled'>;
   clock: Clock;
   /** What the waits wait by: after a write, between tries, and for `Retry-After`. */
   schedule: Schedule;
   /** What the waits between tries are jittered by. */
   random: Random;
 }): Promise<Sync> {
-  const exchange = createSyncExchange({ userState, api });
+  const exchange = createSyncExchange({ userState, backend, editionId: edition.id });
   const subscribers = createSubscribers();
   const changeListeners = createSubscribers();
   const signedIn = () => account.state.status === 'signed-in';

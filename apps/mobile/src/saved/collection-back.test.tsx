@@ -8,7 +8,7 @@ import {
   systemRandom,
   type Composition,
 } from '@slovo/core';
-import { createFakeCollectionLinksApi, createMemoryContentPort } from '@slovo/core/testing';
+import { createFakeBackend, createMemoryContentPort } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
 import { router, Tabs } from 'expo-router';
 import { act, fireEvent, renderRouter, screen } from 'expo-router/testing-library';
@@ -55,7 +55,7 @@ const word = (id: string, lemma: string): Word => ({
   retired: false,
 });
 
-const api = createFakeCollectionLinksApi();
+const api = createFakeBackend();
 
 beforeEach(async () => {
   jest.useFakeTimers();
@@ -68,7 +68,7 @@ beforeEach(async () => {
     userState: await openUserState({ port: createMemoryUserStatePort() }),
     clock: { now: () => new Date('2026-10-29T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     random: systemRandom,
-    collectionLinks: api,
+    backend: api.backend,
   });
 });
 
@@ -120,12 +120,11 @@ const pressBack = () =>
 
 describe('«Колекції» on a Collection', () => {
   it('opens Collections from the copy «Додати собі» made of a Collection Link', async () => {
-    const made = await api.create({
+    const made = await api.backend.collectionLinks.create({
       edition: edition.id,
       name: 'Осінь',
       entryIds: ['w_one', 'w_two'],
     });
-    if (!made.ok) throw new Error(`The fake refused the link: ${made.reason}`);
     const app = await renderApp(`/c/${made.id}`);
 
     await settle(() => fireEvent.press(screen.getByRole('button', { name: strings.link.add })));
