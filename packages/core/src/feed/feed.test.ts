@@ -4,7 +4,6 @@ import type { Correction, Idiom, SynonymRow, Tip, Word } from '@slovo/contracts'
 
 import {
   buildEntryCard,
-  CORRECTION_EVERY,
   createEntries,
   createMemoryUserStatePort,
   isTodaysWordOfTheDay,
@@ -16,12 +15,11 @@ import {
   type ContentReadPort,
   type Feed,
   type FeedCard,
-  IDIOM_EVERY,
   type Random,
   type UserStatePort,
   type WordFeedCard,
 } from '../index';
-import { SYNONYM_ROW_EVERY, TIP_EVERY } from './feed';
+import { ENTRY_KINDS } from '../entries/entry-kinds';
 import { createMemoryContentPort } from '../testing';
 import {
   correction,
@@ -32,6 +30,12 @@ import {
   testEdition,
   word as sharedWord,
 } from '../test-support';
+
+/** The Feed turns of the kinds, from the kind table: every how many cards each takes one. */
+const CORRECTION_EVERY = ENTRY_KINDS.correction.feedTurn;
+const IDIOM_EVERY = ENTRY_KINDS.idiom.feedTurn;
+const SYNONYM_ROW_EVERY = ENTRY_KINDS.synonymRow.feedTurn;
+const TIP_EVERY = ENTRY_KINDS.tip.feedTurn;
 
 /** A Word whose Definition is the same for every id, so a card can be matched to it. */
 const word = (id: string, overrides: Partial<Word> = {}) =>

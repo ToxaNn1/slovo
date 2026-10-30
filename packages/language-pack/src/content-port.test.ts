@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { type ContentReadPort } from '@slovo/core';
+import { ALL_KINDS, ENTRY_KINDS, type ContentReadPort } from '@slovo/core';
 import { createMemoryContentPort } from '@slovo/core/testing';
 
 import { editionFiles } from './edition-folder';
@@ -140,14 +140,36 @@ describe.each(adapters)('the content read port %s', (_, open) => {
   });
 
   it('lists the live Words in a stable order, leaving a Retired Word out', async () => {
-    expect(await content.listWordIds()).toEqual(['w_fx0002', 'w_fx0003']);
+    expect(await content.listIds('word')).toEqual(['w_fx0002', 'w_fx0003']);
+  });
+
+  it("lists the live ids of every kind, each with the kind's prefix, leaving a Retired Entry out", async () => {
+    for (const kind of ALL_KINDS) {
+      const ids = await content.listIds(kind);
+      const { idPrefix } = ENTRY_KINDS[kind];
+
+      expect(
+        ids.every((id) => id.startsWith(idPrefix)),
+        kind,
+      ).toBe(true);
+      const listed = await content.getEntries(ids);
+      expect(idsOf(listed), kind).toEqual([...ids].toSorted());
+      expect(
+        listed.every((entry) => entry.kind === kind && !entry.retired),
+        kind,
+      ).toBe(true);
+    }
+    expect(await content.listIds('correction')).toEqual(['c_fx0001', 'c_fx0003', 'c_fx0004']);
+    expect(await content.listIds('idiom')).toEqual(['i_fx0001']);
+    expect(await content.listIds('synonymRow')).toEqual(['r_fx0002', 'r_fx0003', 'r_fx0004']);
+    expect(await content.listIds('tip')).toEqual([]);
   });
 
   it('lists the live Words of one Category', async () => {
-    expect(await content.listWordIds('speech')).toEqual(['w_fx0002', 'w_fx0003']);
+    expect(await content.listIds('word', 'speech')).toEqual(['w_fx0002', 'w_fx0003']);
     // Its only Word is Retired.
-    expect(await content.listWordIds('nature')).toEqual([]);
-    expect(await content.listWordIds('unknown')).toEqual([]);
+    expect(await content.listIds('word', 'nature')).toEqual([]);
+    expect(await content.listIds('word', 'unknown')).toEqual([]);
   });
 
   /** The Entries by id, as `getEntries` gives them, in id order. */
@@ -160,7 +182,7 @@ describe.each(adapters)('the content read port %s', (_, open) => {
   it('gives the live Words themselves in the order it lists them, each as by id', async () => {
     const words = await content.listWords();
 
-    expect(words.map((word) => word.id)).toEqual(await content.listWordIds());
+    expect(words.map((word) => word.id)).toEqual(await content.listIds('word'));
     expect(byId(await content.getEntries(words.map((word) => word.id)))).toEqual(words);
   });
 
@@ -260,7 +282,7 @@ describe('the Ukrainian Language Pack', () => {
     const pack = openPack(ukrainianDir);
     try {
       const categories = await pack.listCorrectionCategories();
-      const corrections = await pack.getEntries(await pack.listCorrectionIds());
+      const corrections = await pack.getEntries(await pack.listIds('correction'));
 
       expect(categories.map(({ displayName }) => displayName)).toEqual([
         'У розмові',
@@ -282,7 +304,7 @@ describe('the Ukrainian Language Pack', () => {
   it('holds 15 Words in «Діалекти», each with the dialectal register label and a region', async () => {
     const pack = openPack(ukrainianDir);
     try {
-      const words = await pack.getEntries(await pack.listWordIds('dialects'));
+      const words = await pack.getEntries(await pack.listIds('word', 'dialects'));
 
       expect(words).toHaveLength(15);
       for (const word of words) {
@@ -300,7 +322,7 @@ describe('the Ukrainian Language Pack', () => {
   it('holds 15 Words in «Дотепна лайка», each with its Stress', async () => {
     const pack = openPack(ukrainianDir);
     try {
-      const words = await pack.getEntries(await pack.listWordIds('witty-insults'));
+      const words = await pack.getEntries(await pack.listIds('word', 'witty-insults'));
 
       expect(words).toHaveLength(15);
       for (const word of words) {
@@ -314,7 +336,7 @@ describe('the Ukrainian Language Pack', () => {
   it('holds 15 Words in «Народні назви», each with its sources', async () => {
     const pack = openPack(ukrainianDir);
     try {
-      const words = await pack.getEntries(await pack.listWordIds('folk-names'));
+      const words = await pack.getEntries(await pack.listIds('word', 'folk-names'));
 
       expect(words).toHaveLength(15);
       for (const word of words) {
@@ -328,7 +350,7 @@ describe('the Ukrainian Language Pack', () => {
   it('holds 15 Words in «Старі ремесла», each with its sources', async () => {
     const pack = openPack(ukrainianDir);
     try {
-      const words = await pack.getEntries(await pack.listWordIds('old-crafts'));
+      const words = await pack.getEntries(await pack.listIds('word', 'old-crafts'));
 
       expect(words).toHaveLength(15);
       for (const word of words) {
@@ -342,7 +364,7 @@ describe('the Ukrainian Language Pack', () => {
   it('holds at least 15 Idioms of type proverb, each with its sources', async () => {
     const pack = openPack(ukrainianDir);
     try {
-      const idioms = await pack.getEntries(await pack.listIdiomIds());
+      const idioms = await pack.getEntries(await pack.listIds('idiom'));
       const proverbs = idioms.filter(
         (idiom) => idiom.kind === 'idiom' && idiom.idiomType === 'proverb',
       );
@@ -362,7 +384,7 @@ describe('the Ukrainian Language Pack', () => {
   ])('holds 15 Words in «%s», each with its history and sources', async (_name, categoryId) => {
     const pack = openPack(ukrainianDir);
     try {
-      const words = await pack.getEntries(await pack.listWordIds(categoryId));
+      const words = await pack.getEntries(await pack.listIds('word', categoryId));
 
       expect(words).toHaveLength(15);
       for (const word of words) {
@@ -380,7 +402,7 @@ describe('the Ukrainian Language Pack', () => {
       const byCategory = await Promise.all(
         (await pack.listCategories()).map(async ({ id }) => ({
           id,
-          wordIds: await pack.listWordIds(id),
+          wordIds: await pack.listIds('word', id),
         })),
       );
       for (const { id, wordIds } of byCategory) {
@@ -391,7 +413,7 @@ describe('the Ukrainian Language Pack', () => {
         ).toBe(true);
       }
       const listed = byCategory.flatMap(({ wordIds }) => wordIds);
-      expect(listed.toSorted()).toEqual([...(await pack.listWordIds())].toSorted());
+      expect(listed.toSorted()).toEqual([...(await pack.listIds('word'))].toSorted());
     } finally {
       pack.close();
     }
@@ -402,7 +424,7 @@ describe('the Ukrainian Language Pack', () => {
     try {
       const words = await pack.listWords();
 
-      expect(words.map((word) => word.id)).toEqual(await pack.listWordIds());
+      expect(words.map((word) => word.id)).toEqual(await pack.listIds('word'));
       const each = await pack.getEntries(words.map((word) => word.id));
       expect(each.toSorted((a, b) => a.id.localeCompare(b.id))).toEqual(words);
     } finally {

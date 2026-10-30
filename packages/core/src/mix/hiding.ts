@@ -1,7 +1,8 @@
 import type { EntryRowModel, EntryRows } from '../entries/entry-row';
 import type { HiddenEntries } from './hidden-entries';
 import { createInTurn } from '../in-turn';
-import { categoriesInMix, type CategoryKind, type Mix, type MixKind } from '../entries/mix';
+import type { CategoryKind, MixKind } from '../entries/entry-kinds';
+import { categoriesInMix, type Mix } from '../entries/mix';
 
 /** What a hide or an unhide is for: one Entry, one Category, or a kind of Entry (Corrections, Idioms, Synonym Rows, Tips) as a whole. */
 export type HideTarget =

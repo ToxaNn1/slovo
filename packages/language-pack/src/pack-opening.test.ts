@@ -67,7 +67,7 @@ describe('openPack', () => {
     };
     expect(opening.metadata).toEqual(metadata);
     expect(await opening.reader.metadata()).toEqual(metadata);
-    expect(await opening.reader.listWordIds()).toEqual(['w_fx0002', 'w_fx0003']);
+    expect(await opening.reader.listIds('word')).toEqual(['w_fx0002', 'w_fx0003']);
   });
 
   it('reads the Words of a Category through the index words_by_category', async () => {
@@ -85,7 +85,7 @@ describe('openPack', () => {
     if (!opening.ok) throw new Error(opening.reason);
     run.length = 0;
 
-    expect(await opening.reader.listWordIds('speech')).toEqual(['w_fx0002', 'w_fx0003']);
+    expect(await opening.reader.listIds('word', 'speech')).toEqual(['w_fx0002', 'w_fx0003']);
 
     const [sql] = run;
     if (sql === undefined) throw new Error('The reader ran no query');

@@ -1,5 +1,7 @@
-import type { Category, Entry, PackMetadata, Word } from '@slovo/contracts';
+import type { Category, Entry, EntryKind, PackMetadata, Word } from '@slovo/contracts';
 import type { ApiClient } from '@slovo/contracts/api';
+
+import type { CategoryKind } from './entries/entry-kinds';
 
 /**
  * Reads a compiled Language Pack. Each platform supplies an adapter (Node for
@@ -19,14 +21,18 @@ export interface ContentReadPort {
    */
   listCorrectionCategories(): Promise<readonly Category[]>;
   /**
-   * The ids of the Words that are not retired, in a stable order; only those
-   * of the Category when one is given. A Retired Word is left out, so nothing
-   * new picks it.
+   * The ids of the Entries of the kind that are not retired, in a stable
+   * order; of a kind with Categories, only those of the Category when one is
+   * given, so the Mix costs one query per Category. A Retired Entry is left
+   * out, so nothing new picks it. One method for every kind: the Entries
+   * module's kind table says which kinds there are (ADR 0015).
    */
-  listWordIds(categoryId?: string): Promise<readonly string[]>;
+  listIds(kind: EntryKind): Promise<readonly string[]>;
+  listIds(kind: CategoryKind, categoryId: string): Promise<readonly string[]>;
   /**
-   * Every Word that is not retired, in the order of `listWordIds`, read at
-   * once, for a feature that needs them all, such as the Game's Distractors.
+   * Every Word that is not retired, in the order `listIds` gives the Words,
+   * read at once, for a feature that needs them all, such as the Game's
+   * Distractors.
    */
   listWords(): Promise<readonly Word[]>;
   /**
@@ -37,36 +43,17 @@ export interface ContentReadPort {
    */
   getEntries(ids: readonly string[]): Promise<readonly Entry[]>;
   /**
-   * The ids of the Corrections that are not retired, in a stable order. A
-   * Retired Correction is left out, so nothing new picks it.
-   */
-  listCorrectionIds(): Promise<readonly string[]>;
-  /**
    * The ids of the Words that are not retired and are the standard form for
-   * the Correction, in a stable order.
+   * the Correction, in a stable order: a link followed, not a kind listed.
    */
   listLinkedWordIds(correctionId: string): Promise<readonly string[]>;
   /**
-   * The ids of the Idioms that are not retired, in a stable order. A Retired
-   * Idiom is left out, so nothing new picks it.
-   */
-  listIdiomIds(): Promise<readonly string[]>;
-  /**
    * The ids of the Synonym Rows that are not retired and link the Word as a
-   * member while the Word is not retired, in a stable order. A row that names
-   * the Word only as its dominant, or only as plain text, doesn't link it.
+   * member while the Word is not retired, in a stable order: a link followed,
+   * not a kind listed. A row that names the Word only as its dominant, or
+   * only as plain text, doesn't link it.
    */
   listLinkingSynonymRowIds(wordId: string): Promise<readonly string[]>;
-  /**
-   * The ids of the Synonym Rows that are not retired, in a stable order. A
-   * Retired Synonym Row is left out, so nothing new picks it.
-   */
-  listSynonymRowIds(): Promise<readonly string[]>;
-  /**
-   * The ids of the Tips that are not retired, in a stable order. A Retired
-   * Tip is left out, so nothing new picks it.
-   */
-  listTipIds(): Promise<readonly string[]>;
 }
 
 /**

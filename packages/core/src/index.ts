@@ -34,14 +34,7 @@ export { coreDecor, loadDecor, type Decor } from './edition/decor';
 export { createEntries, type Entries } from './entries/entries';
 export type { EntryRowModel } from './entries/entry-row';
 export { type Favorite } from './saved/favorites';
-export {
-  buildEntryCard,
-  CORRECTION_EVERY,
-  IDIOM_EVERY,
-  isTodaysWordOfTheDay,
-  SEEN_DWELL_MS,
-  type Feed,
-} from './feed/feed';
+export { buildEntryCard, isTodaysWordOfTheDay, SEEN_DWELL_MS, type Feed } from './feed/feed';
 export {
   type AnyEntryCard,
   type EntryFeedCard,
@@ -134,15 +127,15 @@ export { type ProgressState } from './progress/progress';
 export type { CalendarDay, CalendarMonth } from './progress/calendar';
 export { type WeeklyRecapModel } from './progress/weekly-recap';
 export {
-  categoriesInMix,
+  ALL_KINDS,
+  ENTRY_KINDS,
   featureOfKind,
   MIX_KINDS,
-  type CategoriesInMix,
   type CategoryKind,
   type MixKind,
   type MixKindName,
-  type MixState,
-} from './entries/mix';
+} from './entries/entry-kinds';
+export { categoriesInMix, type CategoriesInMix, type MixState } from './entries/mix';
 export { type OnboardingStep, type SampleNotification } from './onboarding/onboarding';
 export { type RarityTestAnswer, type RarityTestWord } from './rarity-test/rarity-test';
 // The shell keeps the Session in memory on a development client without the Keychain.

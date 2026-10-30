@@ -133,15 +133,22 @@ interface SourceRow {
   archived_url: string | null;
 }
 
+/** The table of each kind of Entry, whose `id` and `retired` columns list its live ids. */
+const TABLE_OF_KIND: Readonly<Record<EntryKind, string>> = {
+  word: 'words',
+  correction: 'corrections',
+  idiom: 'idioms',
+  synonymRow: 'synonym_rows',
+  tip: 'tips',
+};
+
 const SQL = {
   categories: 'SELECT id, display_name FROM categories ORDER BY position',
   correctionCategories: 'SELECT id, display_name FROM correction_categories ORDER BY position',
-  wordIds: 'SELECT id FROM words WHERE retired = 0 ORDER BY id',
-  wordIdsInCategory: 'SELECT id FROM words WHERE retired = 0 AND category_id = ? ORDER BY id',
-  correctionIds: 'SELECT id FROM corrections WHERE retired = 0 ORDER BY id',
-  idiomIds: 'SELECT id FROM idioms WHERE retired = 0 ORDER BY id',
-  synonymRowIds: 'SELECT id FROM synonym_rows WHERE retired = 0 ORDER BY id',
-  tipIds: 'SELECT id FROM tips WHERE retired = 0 ORDER BY id',
+  ids: (kind: EntryKind) => `SELECT id FROM ${TABLE_OF_KIND[kind]} WHERE retired = 0 ORDER BY id`,
+  /** Only the tables of the kinds with Categories have the column; the port's signature admits only those kinds. */
+  idsInCategory: (kind: EntryKind) =>
+    `SELECT id FROM ${TABLE_OF_KIND[kind]} WHERE retired = 0 AND category_id = ? ORDER BY id`,
   entryKinds: (list: string) => `SELECT id, kind FROM entries WHERE id IN ${list}`,
   linkedWordIds: `
     SELECT words.id FROM word_corrections JOIN words ON words.id = word_corrections.word_id
@@ -556,18 +563,14 @@ export function createPackReader(db: PackDatabase): PackReader {
   return {
     listCategories: () => readCategories(SQL.categories),
     listCorrectionCategories: () => readCategories(SQL.correctionCategories),
-    listWordIds: (categoryId) =>
+    listIds: (kind: EntryKind, categoryId?: string) =>
       categoryId === undefined
-        ? column(SQL.wordIds, [], 'id')
-        : column(SQL.wordIdsInCategory, [categoryId], 'id'),
+        ? column(SQL.ids(kind), [], 'id')
+        : column(SQL.idsInCategory(kind), [categoryId], 'id'),
     listWords: () => readWords(liveWords),
     getEntries: readEntries,
-    listCorrectionIds: () => column(SQL.correctionIds, [], 'id'),
     listLinkedWordIds: (correctionId) => column(SQL.linkedWordIds, [correctionId], 'id'),
-    listIdiomIds: () => column(SQL.idiomIds, [], 'id'),
     listLinkingSynonymRowIds: (wordId) => column(SQL.linkingSynonymRowIds, [wordId], 'id'),
-    listSynonymRowIds: () => column(SQL.synonymRowIds, [], 'id'),
-    listTipIds: () => column(SQL.tipIds, [], 'id'),
     metadata: async () => metadataOf(await db.getAllAsync<MetadataRow>(SQL.metadata, [])),
     crosswordDay: async (date) => {
       const rows = await db.getAllAsync<CrosswordWordRow>(SQL.crosswordDay, [date]);

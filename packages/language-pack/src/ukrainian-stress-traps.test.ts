@@ -27,7 +27,7 @@ beforeAll(async () => {
   const result = buildLanguagePack({ editionDir: ukrainianFolder.dir, outFile });
   if (!result.ok) throw new Error('The Ukrainian Language Pack does not build');
   pack = openLanguagePack(outFile);
-  corrections = (await pack.getEntries(await pack.listCorrectionIds())).filter(
+  corrections = (await pack.getEntries(await pack.listIds('correction'))).filter(
     (entry): entry is Correction => entry.kind === 'correction',
   );
   stressTraps = corrections.filter((correction) => correction.correctionType === 'wrongStress');

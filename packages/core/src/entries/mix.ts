@@ -1,6 +1,7 @@
-import { RaritySchema, type Category, type EntryKind } from '@slovo/contracts';
+import { RaritySchema, type Category } from '@slovo/contracts';
 
 import type { DefaultMix, UserSettingDefaults } from '../edition/edition';
+import { MIX_KINDS, type CategoryKind, type MixKind } from './entry-kinds';
 import { createInTurn, createSubscribers } from '../in-turn';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
@@ -10,75 +11,31 @@ export interface MixEdition {
   readonly userSettingDefaults: Pick<UserSettingDefaults, 'mix'>;
 }
 
-/**
- * A kind of Entry with Categories of its own: Words and Corrections each have
- * the Edition's list, in or out of the Mix one by one (ADR 0019, 0050).
- * Idioms have none.
- */
-export type CategoryKind = Extract<EntryKind, 'word' | 'correction'>;
-
 /** The kinds of Entry with Categories, in the Mix screen's order. */
 const CATEGORY_KINDS: readonly CategoryKind[] = ['word', 'correction'];
-
-/**
- * A kind of Entry that is in or out of the Mix as a whole: Corrections,
- * Idioms, Synonym Rows and Tips (ADR 0051). The Word's Categories are in or
- * out one by one (ADR 0019).
- */
-export type MixKind = Extract<EntryKind, 'correction' | 'idiom' | 'synonymRow' | 'tip'>;
 
 /** Whether each kind of Entry is in the Mix as a whole. */
 export type KindsInMix = Readonly<Record<MixKind, boolean>>;
 
 /**
- * The name of each kind of Entry as a whole: its Feature Switch, the key of
- * its Edition strings and the first word of its Game refusal.
+ * Each kind of Entry in the Mix as a whole (the kind table names them, ADR
+ * 0015): its user-state record (ADR 0013, 0041) and whether the Edition's
+ * default Mix holds it.
  */
-interface KindNames {
-  readonly correction: 'corrections';
-  readonly idiom: 'idioms';
-  readonly synonymRow: 'synonymRows';
-  readonly tip: 'tips';
-}
-
-/** The name of a kind of Entry as a whole. */
-export type MixKindName = KindNames[MixKind];
-
-/**
- * Each kind of Entry in the Mix as a whole, in the Mix screen's order: the
- * Feature Switch that turns it on, which names the kind as a whole
- * (`corrections`, `idioms`, `synonymRows`, `tips`) in the Edition strings and
- * the Game's refusals; its user-state record (ADR 0013, 0041); and whether
- * the Edition's default Mix holds it. A further kind is one more line here
- * and nowhere else.
- */
-const KINDS: {
-  readonly [Kind in MixKind]: {
-    readonly feature: KindNames[Kind];
-    readonly record: typeof userStateRecords.mixCorrections;
-    readonly byDefault: (mix: DefaultMix) => boolean;
-  };
-} = {
-  correction: {
-    feature: 'corrections',
-    record: userStateRecords.mixCorrections,
-    byDefault: (mix) => mix.corrections,
-  },
-  idiom: { feature: 'idioms', record: userStateRecords.mixIdioms, byDefault: (mix) => mix.idioms },
-  synonymRow: {
-    feature: 'synonymRows',
-    record: userStateRecords.mixSynonymRows,
-    byDefault: (mix) => mix.synonymRows,
-  },
-  tip: { feature: 'tips', record: userStateRecords.mixTips, byDefault: (mix) => mix.tips },
+const KINDS: Readonly<
+  Record<
+    MixKind,
+    {
+      readonly record: typeof userStateRecords.mixCorrections;
+      readonly byDefault: (mix: DefaultMix) => boolean;
+    }
+  >
+> = {
+  correction: { record: userStateRecords.mixCorrections, byDefault: (mix) => mix.corrections },
+  idiom: { record: userStateRecords.mixIdioms, byDefault: (mix) => mix.idioms },
+  synonymRow: { record: userStateRecords.mixSynonymRows, byDefault: (mix) => mix.synonymRows },
+  tip: { record: userStateRecords.mixTips, byDefault: (mix) => mix.tips },
 };
-
-/** Every kind of Entry in the Mix as a whole, in the Mix screen's order. */
-export const MIX_KINDS = Object.keys(KINDS) as readonly MixKind[];
-
-/** The Feature Switch that turns the kind of Entry on, which also names the kind as a whole. */
-export const featureOfKind = <Kind extends MixKind>(kind: Kind): KindNames[Kind] =>
-  KINDS[kind].feature;
 
 /** One list of Categories in the Mix, the Words' or the Corrections', as it stands. */
 export interface CategoriesInMix {

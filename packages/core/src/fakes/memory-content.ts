@@ -1,4 +1,13 @@
-import type { Category, Correction, Entry, Idiom, SynonymRow, Tip, Word } from '@slovo/contracts';
+import type {
+  Category,
+  Correction,
+  Entry,
+  EntryKind,
+  Idiom,
+  SynonymRow,
+  Tip,
+  Word,
+} from '@slovo/contracts';
 
 import type { ContentReadPort } from '../ports';
 
@@ -28,9 +37,14 @@ export function createMemoryContentPort({
   tips?: readonly Tip[];
 } = {}): ContentReadPort {
   const liveWords = words.filter((word) => !word.retired);
+  const ofKind: Readonly<Record<EntryKind, readonly Entry[]>> = {
+    word: words,
+    correction: corrections,
+    idiom: idioms,
+    synonymRow: synonymRows,
+    tip: tips,
+  };
   const entries = [...words, ...corrections, ...idioms, ...synonymRows, ...tips];
-  const liveIds = (of: readonly Entry[]) =>
-    Promise.resolve(of.filter((entry) => !entry.retired).map((entry) => entry.id));
   const categoriesOf = (entries: readonly (Word | Correction)[]) =>
     [...new Set(entries.map((entry) => entry.categoryId))].map((id) => ({ id, displayName: id }));
   const packCategories = categories ?? categoriesOf(words);
@@ -38,27 +52,25 @@ export function createMemoryContentPort({
   return {
     listCategories: () => Promise.resolve(packCategories),
     listCorrectionCategories: () => Promise.resolve(packCorrectionCategories),
-    listWordIds: (categoryId) =>
+    listIds: (kind: EntryKind, categoryId?: string) =>
       Promise.resolve(
-        liveWords
-          .filter((word) => categoryId === undefined || word.categoryId === categoryId)
-          .map((word) => word.id),
+        ofKind[kind]
+          .filter(
+            (entry) =>
+              !entry.retired &&
+              (categoryId === undefined ||
+                ('categoryId' in entry && entry.categoryId === categoryId)),
+          )
+          .map((entry) => entry.id),
       ),
     listWords: () => Promise.resolve(liveWords),
     getEntries: (ids) => Promise.resolve(entries.filter((entry) => ids.includes(entry.id))),
-    listCorrectionIds: () =>
-      Promise.resolve(
-        corrections.filter((correction) => !correction.retired).map((correction) => correction.id),
-      ),
     listLinkedWordIds: (correctionId) =>
       Promise.resolve(
         liveWords
           .filter((word) => word.correctionIds.includes(correctionId))
           .map((word) => word.id),
       ),
-    listIdiomIds: () => liveIds(idioms),
-    listSynonymRowIds: () => liveIds(synonymRows),
-    listTipIds: () => liveIds(tips),
     listLinkingSynonymRowIds: (wordId) =>
       Promise.resolve(
         liveWords.some((word) => word.id === wordId)

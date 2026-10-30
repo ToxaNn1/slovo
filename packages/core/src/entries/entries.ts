@@ -1,17 +1,30 @@
-import type { Category, Correction, Entry, SynonymRow, Tip, Word } from '@slovo/contracts';
+import type {
+  Category,
+  Correction,
+  Entry,
+  EntryKind,
+  SynonymRow,
+  Tip,
+  Word,
+} from '@slovo/contracts';
 
 import type { Edition } from '../edition/edition';
 import {
+  ENTRY_KINDS,
   featureOfKind,
-  readMix,
-  type MixEdition,
+  tableOfKinds,
+  type EntryOfKind,
+  type KindNames,
   type MixKind,
   type MixKindName,
-  type MixState,
-} from './mix';
+  type ShownKind,
+} from './entry-kinds';
+import { readMix, type MixEdition, type MixState } from './mix';
 import type { ContentReadPort } from '../ports';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
+
+export type { ShownKind } from './entry-kinds';
 
 /**
  * An Entry of a kind every screen shows: every kind but the Synonym Row and
@@ -19,13 +32,9 @@ import { userStateRecords } from '../user-state/user-state-schema';
  * show yet (spec #730). `get` and `getMany` leave them out, as if the
  * Language Pack didn't have them, so no other screen is handed one.
  */
-export type ShownEntry = Exclude<Entry, { kind: 'synonymRow' | 'tip' }>;
+export type ShownEntry = EntryOfKind<ShownKind>;
 
-/** The kind of an Entry the screens show. */
-export type ShownKind = ShownEntry['kind'];
-
-const isShown = (entry: Entry): entry is ShownEntry =>
-  entry.kind !== 'synonymRow' && entry.kind !== 'tip';
+const isShown = (entry: Entry): entry is ShownEntry => ENTRY_KINDS[entry.kind].shown;
 
 /** An Entry of a kind the Game may ask about: one the screens show, a Synonym Row or a Tip (spec #730). */
 export type AskableEntry = ShownEntry | SynonymRow | Tip;
@@ -33,14 +42,10 @@ export type AskableEntry = ShownEntry | SynonymRow | Tip;
 /** The kind of an Entry the Game may ask about. */
 export type AskableKind = AskableEntry['kind'];
 
-/** The ids of Entries, each kind in its own list. */
-export interface EntryIds {
-  readonly words: readonly string[];
-  readonly corrections: readonly string[];
-  readonly idioms: readonly string[];
-  readonly synonymRows: readonly string[];
-  readonly tips: readonly string[];
-}
+/** The ids of Entries, each kind in its own list, under the kind's name as a whole. */
+export type EntryIds = {
+  readonly [Kind in EntryKind as KindNames[Kind]]: readonly string[];
+};
 
 /**
  * Why no Entry of a kind is eligible, whatever the Language Pack holds: the
@@ -213,23 +218,19 @@ export function createEntries(
   const linksCorrections = async () => kindShown('correction', await readUserMix());
 
   /**
-   * The ids of every live Entry of a kind in the Mix as a whole, read once
-   * from the Language Pack: every Game Mode's offer reads them again.
+   * The ids of every live Entry of each kind, read once from the Language
+   * Pack: every Game Mode's offer reads them again.
    */
-  const listIds: Record<MixKind, () => Promise<readonly string[]>> = {
-    correction: readOnce(() => content.listCorrectionIds()),
-    idiom: readOnce(() => content.listIdiomIds()),
-    synonymRow: readOnce(() => content.listSynonymRowIds()),
-    tip: readOnce(() => content.listTipIds()),
-  };
+  const listIds = tableOfKinds((kind) => readOnce(() => content.listIds(kind)));
 
-  /** How to read every live Entry of a kind from the Language Pack. */
-  const readLive: Record<AskableKind, () => Promise<readonly Entry[]>> = {
+  /**
+   * How to read every live Entry of a kind from the Language Pack: the Words
+   * at once, as the Game's Distractors need them all, the other kinds by
+   * their ids.
+   */
+  const readLive: Readonly<Record<EntryKind, () => Promise<readonly Entry[]>>> = {
+    ...tableOfKinds((kind) => async () => content.getEntries(await listIds[kind]())),
     word: () => content.listWords(),
-    correction: async () => content.getEntries(await listIds.correction()),
-    idiom: async () => content.getEntries(await listIds.idiom()),
-    synonymRow: async () => content.getEntries(await listIds.synonymRow()),
-    tip: async () => content.getEntries(await listIds.tip()),
   };
 
   /** The Entries of the ids the screens show, read together. */
@@ -240,23 +241,16 @@ export function createEntries(
    * The live Entries of each kind by id, read once: the Language Pack never
    * changes while it is open. A read that fails is tried again on the next call.
    */
-  const byId = (kind: AskableKind) =>
-    readOnce(async () => new Map((await readLive[kind]()).map((entry) => [entry.id, entry])));
-  const live: Record<AskableKind, () => Promise<ReadonlyMap<string, AskableEntry>>> = {
-    word: byId('word'),
-    correction: byId('correction'),
-    idiom: byId('idiom'),
-    synonymRow: byId('synonymRow'),
-    tip: byId('tip'),
-  };
+  const live = tableOfKinds((kind) =>
+    readOnce(async () => new Map((await readLive[kind]()).map((entry) => [entry.id, entry]))),
+  );
 
-  /** The ids of every live Word, and of the live Words of each Category, each read once. */
-  const allWordIds = readOnce(() => content.listWordIds());
+  /** The ids of the live Words of each Category, each read once. */
   const wordIdsByCategory = new Map<string, () => Promise<readonly string[]>>();
   function wordIdsOf(categoryId: string): Promise<readonly string[]> {
     let read = wordIdsByCategory.get(categoryId);
     if (read === undefined) {
-      read = readOnce(() => content.listWordIds(categoryId));
+      read = readOnce(() => content.listIds('word', categoryId));
       wordIdsByCategory.set(categoryId, read);
     }
     return read();
@@ -267,7 +261,7 @@ export function createEntries(
    * first time, or every live Word without a Mix.
    */
   async function wordIds(categoryIds: readonly string[] | undefined): Promise<readonly string[]> {
-    if (categoryIds === undefined) return allWordIds();
+    if (categoryIds === undefined) return listIds.word();
     const words = await Promise.all(categoryIds.map(wordIdsOf));
     return words.flat();
   }
@@ -329,14 +323,8 @@ export function createEntries(
     };
   }
 
-  /** The ids of the eligible Entries of the kind. */
-  const idsOfKind: Record<AskableKind, (ids: EntryIds) => readonly string[]> = {
-    word: ({ words }) => words,
-    correction: ({ corrections }) => corrections,
-    idiom: ({ idioms }) => idioms,
-    synonymRow: ({ synonymRows }) => synonymRows,
-    tip: ({ tips }) => tips,
-  };
+  /** The ids of the eligible Entries of the kind, under the kind's name. */
+  const idsOfKind = (kind: AskableKind, ids: EntryIds) => ids[ENTRY_KINDS[kind].name];
 
   async function eligibleOfKind(
     kind: ShownKind,
@@ -349,7 +337,7 @@ export function createEntries(
     const [ids, ...entries] = await Promise.all([eligible(), ...kinds.map((each) => live[each]())]);
     return {
       entries: kinds.flatMap((each, index) =>
-        idsOfKind[each](ids).flatMap((id) => entries[index]?.get(id) ?? []),
+        idsOfKind(each, ids).flatMap((id) => entries[index]?.get(id) ?? []),
       ),
     };
   }
@@ -373,7 +361,7 @@ export function createEntries(
     },
     async getSynonymRowOrTip(id) {
       const [entry] = await content.getEntries([id]);
-      return entry?.kind === 'synonymRow' || entry?.kind === 'tip' ? entry : undefined;
+      return entry !== undefined && !isShown(entry) ? entry : undefined;
     },
     async getMany(ids) {
       const unique = [...new Set(ids)];

@@ -1,7 +1,7 @@
 import type { Correction, Entry, Idiom, SynonymRow, Tip, Word } from '@slovo/contracts';
 
 import type { Edition } from '../edition/edition';
-import { featureOfKind, type MixKind } from '../entries/mix';
+import { byKind, featureOfKind, type ByKind, type MixKind } from '../entries/entry-kinds';
 import type { ContentReadPort } from '../ports';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
@@ -72,36 +72,29 @@ const NOTHING: SearchResults = {
   byMeaning: [],
 };
 
-/** The texts Search reads of an Entry, the first the one it is shown and sorted by. */
-const textsOf = (entry: Entry): readonly [string, ...string[]] => {
-  switch (entry.kind) {
-    case 'word':
-      return [entry.lemma];
-    case 'correction':
-      return [entry.nonStandardForm, ...entry.standardEquivalents];
-    case 'idiom':
-      return [entry.expression];
-    case 'synonymRow':
-      return [entry.dominant.text, ...entry.members.map(({ text }) => text)];
-    case 'tip':
-      return [entry.title];
-  }
+/** The texts Search reads of an Entry of each kind, the first the one it is shown and sorted by. */
+const TEXTS: ByKind<readonly [string, ...string[]]> = {
+  word: ({ lemma }) => [lemma],
+  correction: ({ nonStandardForm, standardEquivalents }) => [
+    nonStandardForm,
+    ...standardEquivalents,
+  ],
+  idiom: ({ expression }) => [expression],
+  synonymRow: ({ dominant, members }) => [dominant.text, ...members.map(({ text }) => text)],
+  tip: ({ title }) => [title],
 };
 
-/** The texts «За значенням» reads of a Word or a Synonym Row: its Definitions, or all of the row. */
-const meaningTextsOf = (entry: Entry): readonly string[] => {
-  switch (entry.kind) {
-    case 'word':
-      return [entry.primaryDefinition, ...entry.extraDefinitions];
-    case 'synonymRow':
-      return [
-        entry.meaning,
-        entry.dominant.text,
-        ...entry.members.flatMap(({ text, shadeNote }) => (shadeNote ? [text, shadeNote] : [text])),
-      ];
-    default:
-      return [];
-  }
+/** The texts «За значенням» reads of an Entry of each kind: a Word's Definitions, all of a Synonym Row, nothing of the rest. */
+const MEANING_TEXTS: ByKind<readonly string[]> = {
+  word: ({ primaryDefinition, extraDefinitions }) => [primaryDefinition, ...extraDefinitions],
+  correction: () => [],
+  idiom: () => [],
+  synonymRow: ({ meaning, dominant, members }) => [
+    meaning,
+    dominant.text,
+    ...members.flatMap(({ text, shadeNote }) => (shadeNote ? [text, shadeNote] : [text])),
+  ],
+  tip: () => [],
 };
 
 /** An Entry with the Search keys of its texts. */
@@ -132,15 +125,7 @@ export function createSearch({
   edition,
   userState,
 }: {
-  content: Pick<
-    ContentReadPort,
-    | 'listWords'
-    | 'getEntries'
-    | 'listCorrectionIds'
-    | 'listIdiomIds'
-    | 'listSynonymRowIds'
-    | 'listTipIds'
-  >;
+  content: Pick<ContentReadPort, 'listWords' | 'getEntries' | 'listIds'>;
   edition: Pick<Edition, 'isFeatureEnabled' | 'searchLetters'> & {
     readonly languageTraits: Pick<Edition['languageTraits'], 'sortLocale'>;
   };
@@ -156,12 +141,12 @@ export function createSearch({
       (keyed ??= read()
         .then((entries) =>
           entries.map((entry) => {
-            const texts = textsOf(entry);
+            const texts = byKind(entry, TEXTS);
             return {
               entry,
               shown: texts[0],
               keys: texts.map(keyOf),
-              meaningKeys: meaningTextsOf(entry).map(keyOf),
+              meaningKeys: byKind(entry, MEANING_TEXTS).map(keyOf),
             };
           }),
         )
@@ -172,19 +157,19 @@ export function createSearch({
   };
   /** The live Entries of a kind other than the Word, read by their ids. */
   const entriesOf =
-    <Kind extends MixKind>(kind: Kind, listIds: () => Promise<readonly string[]>) =>
+    <Kind extends MixKind>(kind: Kind) =>
     async () =>
-      (await content.getEntries(await listIds())).filter(
+      (await content.getEntries(await content.listIds(kind))).filter(
         (entry): entry is Extract<Entry, { kind: Kind }> => entry.kind === kind,
       );
 
   const words = readKeyedOnce(() => content.listWords());
   /** The other kinds, each read only while the Edition turns it on. */
   const others = {
-    correction: readKeyedOnce(entriesOf('correction', () => content.listCorrectionIds())),
-    idiom: readKeyedOnce(entriesOf('idiom', () => content.listIdiomIds())),
-    synonymRow: readKeyedOnce(entriesOf('synonymRow', () => content.listSynonymRowIds())),
-    tip: readKeyedOnce(entriesOf('tip', () => content.listTipIds())),
+    correction: readKeyedOnce(entriesOf('correction')),
+    idiom: readKeyedOnce(entriesOf('idiom')),
+    synonymRow: readKeyedOnce(entriesOf('synonymRow')),
+    tip: readKeyedOnce(entriesOf('tip')),
   } satisfies Record<MixKind, unknown>;
 
   const answers = (query: string) =>
