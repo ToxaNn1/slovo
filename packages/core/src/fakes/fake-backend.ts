@@ -21,7 +21,7 @@ import { fakeGoogleIdentityOf } from './fake-google-sign-in-sheet';
 export type ProcedureName = {
   [
     Domain in keyof ApiProcedures
-  ]: `${Domain}.${Extract<keyof NonNullable<ApiProcedures[Domain]>, string>}`;
+  ]-?: `${Domain}.${Extract<keyof NonNullable<ApiProcedures[Domain]>, string>}`;
 }[keyof ApiProcedures];
 
 /**
