@@ -292,7 +292,7 @@ export async function openGame({
     );
     if (!sameOffers(offers, state.modes)) change({ ...state, modes: offers });
     const game = state.current;
-    const eligible = read.find(({ mode }) => mode === played?.mode)?.eligible;
+    const eligible = read.find(({ mode }) => mode.id === game?.modeId)?.eligible;
     if (game !== undefined && eligible !== undefined) played?.replan(game, eligible);
   }
 
@@ -337,7 +337,9 @@ export async function openGame({
     );
     const modesNow = sameOffers(offers, state.modes) ? state.modes : offers;
     played =
-      'rounds' in plan ? createGameInPlay(mode, plan.rounds, planRounds, eligible) : undefined;
+      'rounds' in plan
+        ? createGameInPlay({ mode, rounds: plan.rounds, planRounds, eligible })
+        : undefined;
     stopTime();
     const first =
       played && mode.timeLimit !== undefined
