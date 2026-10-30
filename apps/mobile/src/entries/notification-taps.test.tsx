@@ -135,7 +135,19 @@ describe('a tapped notification opens its Entry', () => {
     expect(app.pathname()).toBe('/');
   });
 
-  it('opens on top of an Entry opened inside the app', async () => {
+  it('replaces the Entry the Feed opened, so «Назад» returns to the Feed', async () => {
+    const taps = fakeNotificationTaps();
+    const app = await renderApp(taps);
+
+    await push('/entry/w_bevz');
+    await taps.tap('/entry/w_khalamydnyk?from=notification');
+
+    expect(app.entryStack()).toEqual(['w_khalamydnyk']);
+    await back('w_khalamydnyk');
+    expect(app.pathname()).toBe('/');
+  });
+
+  it('replaces the whole Entry stack, a Correction over an Entry too, so «Назад» returns to the Feed', async () => {
     const taps = fakeNotificationTaps();
     const app = await renderApp(taps);
 
@@ -143,8 +155,9 @@ describe('a tapped notification opens its Entry', () => {
     await push('/entry/c_0a1b2c');
     await taps.tap('/entry/w_khalamydnyk?from=notification');
 
-    expect(app.entryStack()).toEqual(['w_bevz', 'c_0a1b2c', 'w_khalamydnyk']);
+    expect(app.pathname()).toBe('/entry/w_khalamydnyk');
+    expect(app.entryStack()).toEqual(['w_khalamydnyk']);
     await back('w_khalamydnyk');
-    expect(app.pathname()).toBe('/entry/c_0a1b2c');
+    expect(app.pathname()).toBe('/');
   });
 });
