@@ -229,7 +229,7 @@ The backend serves every Edition from one deployment ([ADR 0008](docs/adr/0008-o
    pnpm --filter @slovo/backend db:migrate
    ```
 
-4. Start the backend in watch mode and check it. `/health` answers 200 while the database answers and 503 when it doesn't. The logs are JSON lines on stdout, each with the request's `x-request-id`; emails, codes and tokens are redacted. On SIGTERM (and Ctrl-C) the server stops taking requests, finishes those in flight and closes its database pool.
+4. Start the backend in watch mode and check it. `/health` answers 200 with the name of the last migration while the database answers and has run every migration, and 503 otherwise. The logs are JSON lines on stdout, each with the request's `x-request-id`; emails, codes and tokens are redacted. On SIGTERM (and Ctrl-C) the server stops taking requests, finishes those in flight and closes its database pool.
 
    ```sh
    pnpm --filter @slovo/backend dev

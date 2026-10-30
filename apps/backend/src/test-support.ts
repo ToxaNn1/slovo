@@ -63,16 +63,19 @@ interface TestDatabase {
 
 /**
  * Makes a database with a random name on the server `serverUrl` names and
- * runs the migrations on it, so a test file never meets another's data.
+ * runs the migrations on it unless told not to, so a test file never meets another's data.
  */
-export async function createTestDatabase(serverUrl: string): Promise<TestDatabase> {
+export async function createTestDatabase(
+  serverUrl: string,
+  { migrate = true }: { readonly migrate?: boolean } = {},
+): Promise<TestDatabase> {
   const name = `slovo_test_${randomUUID().replaceAll('-', '')}`;
   await onServer(serverUrl, `CREATE DATABASE ${name}`);
   const drop = () => onServer(serverUrl, `DROP DATABASE IF EXISTS ${name} WITH (FORCE)`);
   const url = new URL(serverUrl);
   url.pathname = `/${name}`;
   try {
-    await migrateDatabase(url.href, silentLogger);
+    if (migrate) await migrateDatabase(url.href, silentLogger);
   } catch (error) {
     await drop();
     throw error;
@@ -362,6 +365,8 @@ interface TestAppOptions {
   readonly random?: Random;
   /** SLOVO's Apple Developer Team ID; none unless given. */
   readonly appleTeamId?: string;
+  /** How many proxies in front of the backend it trusts; none unless given. */
+  readonly trustedProxyHops?: number;
   /** Sees every answer before the test gets it, with the request it answers. */
   readonly onAnswer?: (request: Request, response: Response) => Promise<void>;
 }
@@ -382,6 +387,7 @@ export function testApp({
   google: givenGoogle,
   random = systemRandom,
   appleTeamId,
+  trustedProxyHops = 0,
   onAnswer,
 }: TestAppOptions = {}) {
   const database = given ?? createDatabase(testDatabaseUrl(), silentLogger);
@@ -400,6 +406,7 @@ export function testApp({
     // A fake Sentry: it keeps every report.
     reporter: { report: (report) => reports.push(report) },
     appleTeamId,
+    trustedProxyHops,
   });
   const ip = newIp();
   // The one way a request reaches the app.
