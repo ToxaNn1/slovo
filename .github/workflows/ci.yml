@@ -112,6 +112,54 @@ jobs:
       # Each test file makes its own database on the same server and drops it after.
       - run: pnpm test --filter=@slovo/backend
 
+  image:
+    name: Container image
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: slovo
+          POSTGRES_PASSWORD: slovo
+          POSTGRES_DB: slovo
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready --username=slovo --dbname=slovo"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # Builds the image the Deployment runs (ADR 0063) and pushes it nowhere.
+      - run: docker build --tag slovo-backend .
+      # As on Railway: the release command first, then the server, which must
+      # answer /health. The SMTP settings are placeholders: production refuses
+      # to start without them, and nothing is sent here.
+      - name: Migrate and start the image against Postgres
+        shell: bash
+        run: |
+          cat > "$RUNNER_TEMP/backend.env" <<EOF
+          DATABASE_URL=postgres://slovo:slovo@localhost:5432/slovo
+          AUTH_SECRET=$(openssl rand -base64 32)
+          SMTP_HOST=localhost
+          SMTP_PORT=1025
+          SMTP_USER=ci
+          SMTP_PASSWORD=ci
+          MAIL_FROM=no-reply@example.com
+          TRUSTED_PROXY_HOPS=1
+          EOF
+          run=(docker run --network host --env-file "$RUNNER_TEMP/backend.env")
+          "${run[@]}" --rm slovo-backend pnpm db:migrate
+          "${run[@]}" --detach --name backend slovo-backend
+          for _ in $(seq 1 30); do
+            if curl --silent --fail http://localhost:8787/health; then exit 0; fi
+            sleep 2
+          done
+          docker logs backend
+          exit 1
+
   secrets:
     name: Secret scanning
     runs-on: ubuntu-latest
