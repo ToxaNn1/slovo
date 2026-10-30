@@ -9,7 +9,7 @@ const API_URL = process.env.EXPO_PUBLIC_SLOVO_API_URL ?? 'http://localhost:8787'
 
 /**
  * The Core's Backend port of this device: the API contract's client (spec
- * #333, ADR 0062). The Core answers, retries and maps every call itself; the
+ * #333, ADR 0064). The Core answers, retries and maps every call itself; the
  * shell supplies only the client.
  */
 export const backend: Backend = createApiClient({ url: API_URL });
