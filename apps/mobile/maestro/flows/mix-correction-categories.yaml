@@ -1,0 +1,162 @@
+# The Categories of Corrections in Мій Мікс: chips under the «Виправлення»
+# switch, all in by default. Taking one out leaves the Words' «Усі» on; with
+# the switch off the chips are hidden, and on again they come back as they
+# were; the last one in is disabled; «Усі» puts back every Category, the
+# Corrections' too. A subflow of `smoke.yaml`; run it from there. It starts by
+# putting every Category and Corrections back into the Mix, and leaves it so.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- runFlow:
+    file: ../open-settings-row.yaml
+    env:
+      ROW: settings-row-my-mix
+# A tap while Settings still glides only stops it.
+- waitForAnimationToEnd
+- tapOn:
+    id: settings-row-my-mix
+- assertVisible:
+    id: mix
+# Start from the full Mix, whatever an earlier run left: «Усі» puts back every
+# Category, and the switch Corrections.
+- tapOn:
+    id: mix-chip-all
+- scrollUntilVisible:
+    element:
+      id: mix-corrections
+    centerElement: true
+- runFlow:
+    when:
+      visible:
+        id: mix-corrections
+        checked: false
+    commands:
+      - tapOn:
+          id: mix-corrections
+# The chips sit under the switch; VoiceOver reads each as a Category of
+# Corrections.
+- scrollUntilVisible:
+    element:
+      id: mix-correction-chip-leisure-media
+    centerElement: true
+- assertVisible:
+    id: mix-correction-chip-conversation
+    text: 'Виправлення: У розмові'
+    selected: true
+- assertVisible:
+    id: mix-correction-chip-home
+    selected: true
+- assertVisible:
+    id: mix-correction-chip-work
+    selected: true
+- assertVisible:
+    id: mix-correction-chip-shop
+    selected: true
+- assertVisible:
+    id: mix-correction-chip-transport
+    selected: true
+- assertVisible:
+    id: mix-correction-chip-school
+    selected: true
+- assertVisible:
+    id: mix-correction-chip-leisure-media
+    text: 'Виправлення: Дозвілля і медіа'
+    selected: true
+- takeScreenshot: mix-correction-categories
+# Taking one out applies at once, and only to that chip.
+- tapOn:
+    id: mix-correction-chip-home
+- assertVisible:
+    id: mix-correction-chip-home
+    selected: false
+- assertVisible:
+    id: mix-correction-chip-work
+    selected: true
+# With Corrections off the chips are hidden; on again, they are as they were.
+# Bring the switch to the middle of the screen first: at the top, the
+# development client's floating tools button may cover it.
+- scrollUntilVisible:
+    element:
+      id: mix-corrections
+    direction: UP
+    centerElement: true
+- waitForAnimationToEnd
+- tapOn:
+    id: mix-corrections
+- assertVisible:
+    id: mix-corrections
+    checked: false
+- assertNotVisible:
+    id: mix-correction-chip-.*
+- tapOn:
+    id: mix-corrections
+- scrollUntilVisible:
+    element:
+      id: mix-correction-chip-leisure-media
+    centerElement: true
+- assertVisible:
+    id: mix-correction-chip-home
+    selected: false
+- assertVisible:
+    id: mix-correction-chip-school
+    selected: true
+# Take them out until one is left; its chip is disabled. The hint line under
+# the chips is hidden from the accessibility tree (VoiceOver reads it as the
+# disabled chip's hint), so Maestro cannot see it; the screenshot records it.
+- tapOn:
+    id: mix-correction-chip-conversation
+- tapOn:
+    id: mix-correction-chip-work
+- tapOn:
+    id: mix-correction-chip-shop
+- tapOn:
+    id: mix-correction-chip-transport
+- tapOn:
+    id: mix-correction-chip-leisure-media
+- assertVisible:
+    id: mix-correction-chip-school
+    selected: true
+    enabled: false
+- takeScreenshot: mix-correction-last-category
+# A tap on it changes nothing.
+- tapOn:
+    id: mix-correction-chip-school
+- assertVisible:
+    id: mix-correction-chip-school
+    selected: true
+# The Words' Categories are still all in: «Усі» puts back every Category of
+# Corrections too.
+- scrollUntilVisible:
+    element:
+      id: mix-chip-all
+    direction: UP
+    centerElement: true
+# A tap while the list still glides only stops it.
+- waitForAnimationToEnd
+- assertVisible:
+    id: mix-chip-all
+    selected: true
+- tapOn:
+    id: mix-chip-all
+- scrollUntilVisible:
+    element:
+      id: mix-correction-chip-leisure-media
+    centerElement: true
+- assertVisible:
+    id: mix-correction-chip-home
+    selected: true
+- assertVisible:
+    id: mix-correction-chip-leisure-media
+    selected: true
+- assertVisible:
+    id: mix-correction-chip-school
+    enabled: true
+# The back link sits at the top of the list.
+- scrollUntilVisible:
+    element:
+      id: mix-back
+    direction: UP
+- tapOn:
+    id: mix-back
+- assertVisible:
+    id: settings-row-my-mix
+    text: Мій Мікс, Усі

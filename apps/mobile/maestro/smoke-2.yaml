@@ -18,6 +18,9 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - runFlow: flows/hiding.yaml
 - runFlow: flows/hiding-mix.yaml
 - runFlow: flows/hidden.yaml
+# 0.8.10 Categories of Corrections (#976).
+- runFlow: flows/mix-correction-categories.yaml
+- runFlow: flows/hidden-correction-category.yaml
 - runFlow: flows/notifications.yaml
 # Need the backend; see the flows.
 - runFlow: flows/account.yaml

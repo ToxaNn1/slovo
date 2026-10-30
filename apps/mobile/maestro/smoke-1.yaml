@@ -54,3 +54,6 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - runFlow: flows/idiom.yaml
 - runFlow: flows/place-name.yaml
 - runFlow: flows/mix-kinds.yaml
+# 0.8.10 Content depth (#976).
+- runFlow: flows/word-history.yaml
+- runFlow: flows/correction-card.yaml

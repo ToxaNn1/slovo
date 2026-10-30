@@ -1,0 +1,33 @@
+# «Історія слова» on the Word card: the link to вертеп, a Word whose meaning
+# changed, opens the Entry screen with its card; under the Definition and the
+# first Example sits the section with its heading and the Word's history.
+# Back lands on the Feed. A subflow of `smoke.yaml`; run it from there. The
+# link carries no `from`, so the Word does not become Seen.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- tapOn:
+    id: tab-home
+- openLink: ${(SCHEME || 'slovo-uk') + '://entry/w_0wr2ne'}
+# A simulator asks once whether the link may open the app.
+- runFlow:
+    when:
+      visible: Open
+    commands:
+      - tapOn: Open
+- assertVisible:
+    id: entry-screen
+- assertVisible:
+    id: word-card
+- assertVisible:
+    id: word-definition
+# The section may sit below the screen.
+- scrollUntilVisible:
+    element:
+      id: word-history
+- assertVisible: Історія слова
+- assertVisible: 'Давнє значення слова — «печера».*'
+- takeScreenshot: word-history
+- tapOn:
+    id: entry-screen-back
+- assertVisible:
+    id: home

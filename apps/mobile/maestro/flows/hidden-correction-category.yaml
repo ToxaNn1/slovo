@@ -1,0 +1,156 @@
+# Hiding a Category of Corrections: the hide action on the card of
+# приймати участь offers the Entry, its Category «У школі» and Corrections as a
+# whole; hiding the Category lists it on the Hidden screen as «Виправлення: У
+# школі», and «Увімкнути» there puts it back. When «У школі» is the last
+# Category of Corrections in the Mix, its row is disabled. A subflow of
+# `smoke.yaml`; run it from there. It expects every Category and Corrections
+# in the Mix, and leaves them so.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- tapOn:
+    id: tab-home
+- openLink: ${(SCHEME || 'slovo-uk') + '://entry/c_bkkjrf'}
+# A simulator asks once whether the link may open the app.
+- runFlow:
+    when:
+      visible: Open
+    commands:
+      - tapOn: Open
+- assertVisible:
+    id: correction-card
+# The hide button sits under the card, which is taller than the screen;
+# centred, so the tab bar does not cover it.
+- scrollUntilVisible:
+    element:
+      id: hide-button
+    centerElement: true
+- waitForAnimationToEnd
+- tapOn:
+    id: hide-button
+- assertVisible:
+    id: hide-choice-entry
+    text: Не показувати цей запис
+- assertVisible:
+    id: hide-choice-category
+    text: Не показувати категорію «У школі»
+    enabled: true
+- assertVisible:
+    id: hide-choice-whole-kind
+    text: Не показувати Виправлення
+- takeScreenshot: hidden-correction-category-choice
+- tapOn:
+    id: hide-choice-category
+- assertVisible:
+    id: undo-toast-message
+    text: Категорію «У школі» приховано
+- tapOn:
+    id: entry-screen-back
+# The Hidden screen lists it under the Categories, named as a Category of
+# Corrections.
+- runFlow:
+    file: ../open-settings-row.yaml
+    env:
+      ROW: settings-row-hidden
+- tapOn:
+    id: settings-row-hidden
+- assertVisible:
+    id: hidden
+- scrollUntilVisible:
+    element:
+      id: hidden-correction-category-school
+    centerElement: true
+- assertVisible:
+    id: hidden-categories
+- assertVisible: 'Виправлення: У школі'
+- assertVisible:
+    id: hidden-correction-category-school-turn-on
+    text: 'Увімкнути категорію «Виправлення: У школі»'
+- takeScreenshot: hidden-correction-category
+- tapOn:
+    id: hidden-correction-category-school-turn-on
+- assertNotVisible:
+    id: hidden-correction-category-school
+- tapOn:
+    id: hidden-back
+# Leave «У школі» the last Category of Corrections in the Mix.
+- runFlow:
+    file: ../open-settings-row.yaml
+    env:
+      ROW: settings-row-my-mix
+# A tap while Settings still glides only stops it.
+- waitForAnimationToEnd
+- tapOn:
+    id: settings-row-my-mix
+- assertVisible:
+    id: mix
+- scrollUntilVisible:
+    element:
+      id: mix-correction-chip-leisure-media
+    centerElement: true
+- assertVisible:
+    id: mix-correction-chip-school
+    selected: true
+- tapOn:
+    id: mix-correction-chip-conversation
+- tapOn:
+    id: mix-correction-chip-home
+- tapOn:
+    id: mix-correction-chip-work
+- tapOn:
+    id: mix-correction-chip-shop
+- tapOn:
+    id: mix-correction-chip-transport
+- tapOn:
+    id: mix-correction-chip-leisure-media
+- assertVisible:
+    id: mix-correction-chip-school
+    enabled: false
+# The back link sits at the top of the list.
+- scrollUntilVisible:
+    element:
+      id: mix-back
+    direction: UP
+- tapOn:
+    id: mix-back
+# Its row on the card's hide action is disabled now. The reason under it is
+# hidden from the accessibility tree (VoiceOver reads it as the row's hint),
+# so Maestro cannot see it; the screenshot records it.
+- tapOn:
+    id: tab-home
+- openLink: ${(SCHEME || 'slovo-uk') + '://entry/c_bkkjrf'}
+- assertVisible:
+    id: correction-card
+- scrollUntilVisible:
+    element:
+      id: hide-button
+    centerElement: true
+- waitForAnimationToEnd
+- tapOn:
+    id: hide-button
+- assertVisible:
+    id: hide-choice-category
+    text: Не показувати категорію «У школі»
+    enabled: false
+- takeScreenshot: hidden-correction-last-category
+- tapOn:
+    id: hide-choice-cancel
+- tapOn:
+    id: entry-screen-back
+# «Усі» puts every Category back.
+- runFlow:
+    file: ../open-settings-row.yaml
+    env:
+      ROW: settings-row-my-mix
+# A tap while Settings still glides only stops it.
+- waitForAnimationToEnd
+- tapOn:
+    id: settings-row-my-mix
+- assertVisible:
+    id: mix
+- tapOn:
+    id: mix-chip-all
+- tapOn:
+    id: mix-back
+- assertVisible:
+    id: settings-row-my-mix
+    text: Мій Мікс, Усі
