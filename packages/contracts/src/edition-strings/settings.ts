@@ -59,8 +59,12 @@ export const SettingsStringsSchema = z.strictObject({
   }),
   /** The About screen. */
   about: z.strictObject({
-    /** The Edition's line under its name. Takes `{version}`. */
-    editionLine: templateOf('version'),
+    /** The Edition's line under its name. */
+    editionLine: TextSchema,
+    /** The installed build's line. Takes `{version}` and `{build}`. */
+    versionLine: templateOf('version', 'build'),
+    /** The OTA update the app runs (ADR 0062). Takes `{id}`. */
+    updateLine: templateOf('id'),
     /** What SLOVO is. */
     description: TextSchema,
     /** Where the words come from. */

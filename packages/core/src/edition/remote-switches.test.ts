@@ -114,7 +114,7 @@ describe('the remote Feature Switches', () => {
 
   it('turn Sign in with Apple off remotely and keep the other Sign-in methods', async () => {
     const app = device();
-    app.backend.turnOff('signInWithApple');
+    app.backend.switches.turnOff('signInWithApple');
     const switches = await app.launch();
 
     await switches.ask();

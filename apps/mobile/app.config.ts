@@ -243,16 +243,28 @@ function googleSignIn(): NonNullable<ExpoConfig['plugins']> {
 /** The backend's address the bundle carries (`src/api.ts`). */
 const API_URL_VARIABLE = 'EXPO_PUBLIC_SLOVO_API_URL';
 
+/** How the app is being built: by EAS with a profile, or by Metro outside EAS. */
+type Build = { kind: 'release' | 'development'; profile: string } | { kind: 'metro' };
+
 /**
- * Refuses a release build that would talk to localhost or over plain HTTP:
- * every EAS build profile but a development one (`development…`) must carry
- * an `https://` API address. Development builds and Metro outside EAS keep
- * the localhost fallback.
+ * Every EAS build profile but a development one (`development…`) builds a
+ * release; without a profile, Metro (or `eas update`) runs outside an EAS build.
  */
-function requireReleaseApiUrl(): void {
+function currentBuild(): Build {
   // Expo types every environment variable as `any`; narrow it here.
   const profile: unknown = process.env['EAS_BUILD_PROFILE'];
-  if (typeof profile !== 'string' || profile === '' || profile.startsWith('development')) return;
+  if (typeof profile !== 'string' || profile === '') return { kind: 'metro' };
+  return { kind: profile.startsWith('development') ? 'development' : 'release', profile };
+}
+
+/**
+ * Refuses a release build that would talk to localhost or over plain HTTP:
+ * a release must carry an `https://` API address. Development builds and
+ * Metro outside EAS keep the localhost fallback.
+ */
+function requireReleaseApiUrl(build: Build): void {
+  if (build.kind !== 'release') return;
+  const { profile } = build;
   const value: unknown = process.env[API_URL_VARIABLE];
   if (typeof value !== 'string' || value === '') {
     throw new Error(
@@ -264,6 +276,47 @@ function requireReleaseApiUrl(): void {
       `${API_URL_VARIABLE} is "${value}", but the release build "${profile}" needs an https:// address`,
     );
   }
+}
+
+/** The EAS project @anton_de/slovo. */
+const EAS_PROJECT_ID = 'e2401ef2-2a47-407e-b0ff-03706421b71c';
+
+/** The public code-signing certificate of OTA updates; its private key lives in EAS only. */
+const UPDATES_CERTIFICATE = './certs/certificate.pem';
+
+/**
+ * OTA updates (ADR 0062): on launch the app checks the Edition's channel,
+ * waits a few seconds at most and otherwise starts the code it has; it
+ * accepts only an update signed with SLOVO's key and made for its native
+ * code (the fingerprint runtime version). A development build takes no
+ * updates, and a release refuses to build without the certificate.
+ */
+function updates(
+  build: Build,
+  channel: string,
+  projectRoot: string,
+): Pick<ExpoConfig, 'runtimeVersion' | 'updates'> {
+  const certificate = join(projectRoot, UPDATES_CERTIFICATE);
+  const signed = existsSync(certificate);
+  if (!signed && build.kind === 'release') {
+    throw new Error(
+      `The release build "${build.profile}" has no code-signing certificate for OTA updates: expected ${certificate}`,
+    );
+  }
+  return {
+    runtimeVersion: { policy: 'fingerprint' },
+    updates: {
+      enabled: build.kind !== 'development',
+      url: `https://u.expo.dev/${EAS_PROJECT_ID}`,
+      requestHeaders: { 'expo-channel-name': channel },
+      checkAutomatically: 'ON_LOAD',
+      fallbackToCacheTimeout: 3000,
+      ...(signed && {
+        codeSigningCertificate: UPDATES_CERTIFICATE,
+        codeSigningMetadata: { keyid: 'main', alg: 'rsa-v1_5-sha256' },
+      }),
+    },
+  };
 }
 
 function selectEdition(editionsDir: string): EditionFolder {
@@ -286,7 +339,8 @@ function selectEdition(editionsDir: string): EditionFolder {
 }
 
 export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
-  requireReleaseApiUrl();
+  const build = currentBuild();
+  requireReleaseApiUrl(build);
   const edition = selectEdition(join(projectRoot, '../../editions'));
   const [language] = edition.config.locale.split('-');
   const icon = edition.path('icon');
@@ -314,6 +368,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
     // Memoises components and hooks at build time; modules with Reanimated or
     // gesture code opt out with 'use no memo' (ADR 0059).
     experiments: { reactCompiler: true },
+    ...updates(build, edition.config.updateChannel, projectRoot),
     ios: {
       bundleIdentifier: edition.config.bundleId,
       supportsTablet: false,
@@ -353,8 +408,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
     ],
     extra: {
       edition: { id: edition.config.id, wordOfTheDayFontFamily: wordOfTheDayFontFamily(edition) },
-      // The EAS project @anton_de/slovo.
-      eas: { projectId: 'e2401ef2-2a47-407e-b0ff-03706421b71c' },
+      eas: { projectId: EAS_PROJECT_ID },
     },
   };
   return withAppIntents(

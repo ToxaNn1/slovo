@@ -12,8 +12,9 @@ import {
   useEdition,
   useTokens,
 } from '@slovo/ui';
-import Constants from 'expo-constants';
+import * as Application from 'expo-application';
 import { useRouter } from 'expo-router';
+import * as Updates from 'expo-updates';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -22,12 +23,10 @@ import { openLegalPage } from './legal-page';
 
 const strings = editionStrings.settings;
 
-/** The version of the app, as the build declares it. */
-const version = Constants.expoConfig?.version ?? '';
-
 /**
- * About: the Edition's name and version, what SLOVO is and where its words
- * come from, and its privacy policy and terms, which open in the browser.
+ * About: the Edition's name, the installed build and the OTA update it runs
+ * (ADR 0062), so a bug report names the exact code; what SLOVO is and where
+ * its words come from, and its privacy policy and terms, which open in the browser.
  * Suggesting a word and reporting a mistake wait for the backend (0.7).
  */
 export function AboutScreen() {
@@ -60,8 +59,27 @@ export function AboutScreen() {
             {...voice}
             style={[styles.editionLine, { color: colors.muted, fontFamily: fontFamilies.ui }]}
           >
-            {fill(strings.about.editionLine, { version })}
+            {strings.about.editionLine}
           </Text>
+          <Text
+            testID="about-version"
+            {...voice}
+            style={[styles.editionLine, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+          >
+            {fill(strings.about.versionLine, {
+              version: Application.nativeApplicationVersion ?? '',
+              build: Application.nativeBuildVersion ?? '',
+            })}
+          </Text>
+          {Updates.updateId !== null && (
+            <Text
+              testID="about-update"
+              {...voice}
+              style={[styles.editionLine, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+            >
+              {fill(strings.about.updateLine, { id: Updates.updateId })}
+            </Text>
+          )}
         </View>
         <View
           style={[
