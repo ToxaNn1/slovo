@@ -1,6 +1,8 @@
 import type { AskableEntry, AskableKind, EligibleOfKind } from '../entries/entries';
 import type { AnswerSheet, FixedChip, GameMode, RoundOption, TextRange } from './game-mode';
 import { chipsMatch, entriesIn, roundsIn } from './game-mode';
+import { LIFE_LOST_DELAY } from './game-haptics';
+import { gapOf } from './guess-word';
 import { GAME_ROUNDS, roundLimitOf, type PlannedRound, type RoundPlanner } from './round-plan';
 import { typedAnswerMatches } from './typed-answer';
 
@@ -80,7 +82,18 @@ export interface GridCell<T> {
   readonly gone: boolean;
 }
 
-/** A Round as the reader plays it, in its answer form, the right answer kept out. */
+/**
+ * One character of a typed Round's text shown as blanks: a mark that stays in
+ * place, such as an apostrophe, a letter «Відкрити літеру» opened, or a blank
+ * with no letter yet.
+ */
+export type RoundBlank = { readonly mark: string } | { readonly letter?: string };
+
+/**
+ * A Round as the reader plays it, in its answer form, the right answer kept
+ * out, and resolved for the shell to draw: whether its prompt has a gap, how
+ * each blank shows and when a wrong answer costs its Life (ADR 0017).
+ */
 export type Round = {
   /** Which Round of the Game it is, from 1 up to the mode's Round limit, `GAME_ROUNDS` by default. */
   readonly number: number;
@@ -89,8 +102,19 @@ export type Round = {
   readonly prompt: string;
   /** The part of the prompt to mark, which the shell draws and VoiceOver names; none to mark. */
   readonly highlight: TextRange | undefined;
+  /**
+   * The gap in the prompt: the highlight when it stands for the Lemma in an
+   * Example, which the shell labels and reads aloud as a gap, and marks no
+   * further; none in another Round.
+   */
+  readonly gap: TextRange | undefined;
   /** The Definition shown under the prompt, such as a Word's in «Звідки слово»; none when left out. */
   readonly definition?: string;
+  /**
+   * How long after a wrong answer its Life is lost, in milliseconds: when its
+   * haptic comes (`LIFE_LOST_DELAY`), so the shell pops the Life then too.
+   */
+  readonly lifeLostAfter: number;
   /** The answer, once given; a Round is answered once. */
   readonly answer: RoundAnswer | undefined;
 } & (
@@ -110,12 +134,8 @@ export type Round = {
     }
   | {
       readonly form: 'typed';
-      /**
-       * The text to type as blanks, one per character: a character in place
-       * or a letter opened, or nothing while blank; no blanks in a Round
-       * that shows none.
-       */
-      readonly blanks: readonly (string | undefined)[] | undefined;
+      /** The text to type as blanks, one per character; no blanks in a Round that shows none. */
+      readonly blanks: readonly RoundBlank[] | undefined;
       /** Whether «Відкрити літеру» opens a letter: while more than one blank is left. */
       readonly canOpenLetter: boolean;
     }
@@ -239,7 +259,9 @@ function roundOf(
     entryKind: entry.kind,
     prompt: content.prompt,
     highlight: content.highlight,
+    gap: gapOf(content),
     ...(content.definition !== undefined && { definition: content.definition }),
+    lifeLostAfter: LIFE_LOST_DELAY,
     answer: undefined,
   };
   switch (content.form) {
@@ -273,17 +295,20 @@ function roundOf(
       const inPlace = content.blanks?.inPlace;
       const blanks =
         inPlace &&
-        Array.from(content.expected, (character, place) =>
-          inPlace.includes(place) ? character : undefined,
+        Array.from(content.expected, (character, place): RoundBlank =>
+          inPlace.includes(place) ? { mark: character } : {},
         );
       return { ...base, form: 'typed', blanks, canOpenLetter: canOpenLetterIn(blanks) };
     }
   }
 }
 
+/** Whether a blank shows no letter or mark yet. */
+const isEmpty = (blank: RoundBlank) => !('mark' in blank) && blank.letter === undefined;
+
 /** Whether more than one blank is left, so that «Відкрити літеру» may open one. */
-const canOpenLetterIn = (blanks: readonly (string | undefined)[] | undefined) =>
-  blanks !== undefined && blanks.filter((blank) => blank === undefined).length > 1;
+const canOpenLetterIn = (blanks: readonly RoundBlank[] | undefined) =>
+  blanks !== undefined && blanks.filter(isEmpty).length > 1;
 
 /**
  * The answer judged against the Round's content, with the Entry it asked
@@ -469,9 +494,10 @@ export function createGameInPlay(
       const at = plannedAt(round.number);
       if (at?.planned.content.form !== 'typed') return undefined;
       const letters = Array.from(at.planned.content.expected);
-      const first = round.blanks?.indexOf(undefined) ?? -1;
+      const first = round.blanks?.findIndex(isEmpty) ?? -1;
+      const opened = letters[first];
       const blanks = round.blanks?.map((blank, place) =>
-        place === first ? letters[place] : blank,
+        place === first && opened !== undefined ? { letter: opened } : blank,
       );
       return { ...game, round: { ...round, blanks, canOpenLetter: canOpenLetterIn(blanks) } };
     },

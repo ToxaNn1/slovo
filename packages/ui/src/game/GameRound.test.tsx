@@ -1,5 +1,12 @@
 import type { EditionStrings } from '@slovo/contracts';
-import type { CurrentGame, GivenAnswer, Haptics, PlayedRound, RoundAnswer } from '@slovo/core';
+import type {
+  CurrentGame,
+  GivenAnswer,
+  Haptics,
+  PlayedRound,
+  RoundAnswer,
+  RoundBlank,
+} from '@slovo/core';
 import { EditionProvider, GameRound, HapticsProvider } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
@@ -77,6 +84,8 @@ const first: CurrentGame = {
     entryKind: 'word',
     prompt: 'open and honest',
     highlight: undefined,
+    gap: undefined,
+    lifeLostAfter: 200,
     form: 'pick',
     options: OPTIONS.map((text) => ({ text, stressedVowels: [] })),
     answer: undefined,
@@ -127,6 +136,8 @@ const wordVowelRound: CurrentGame = {
     entryKind: 'word',
     prompt: 'banana',
     highlight: undefined,
+    gap: undefined,
+    lifeLostAfter: 200,
     form: 'vowel',
     vowels: [1, 3, 5],
     answer: undefined,
@@ -142,6 +153,8 @@ const trapVowelRound: CurrentGame = {
     entryKind: 'correction',
     prompt: 'mango',
     highlight: undefined,
+    gap: undefined,
+    lifeLostAfter: 200,
     form: 'vowel',
     vowels: [1, 4],
     answer: undefined,
@@ -208,6 +221,18 @@ const gapRound: CurrentGame = {
     number: 6,
     prompt: 'She gave a … account of the evening.',
     highlight: { start: 11, end: 12 },
+    gap: { start: 11, end: 12 },
+  },
+};
+
+/** A Round of «Знайди помилку»: a sentence with its non-standard form highlighted, no gap. */
+const highlightRound: CurrentGame = {
+  ...first,
+  round: {
+    ...first.round,
+    entryKind: 'correction',
+    prompt: 'She took measures quickly.',
+    highlight: { start: 4, end: 17 },
   },
 };
 
@@ -224,6 +249,8 @@ const pairsRound: CurrentGame = {
     entryKind: 'word',
     prompt: '',
     highlight: undefined,
+    gap: undefined,
+    lifeLostAfter: 200,
     form: 'pairs',
     words: PAIR_WORDS.map((text) => ({ shown: { text, stressedVowels: [] }, gone: false })),
     definitions: PAIR_DEFINITIONS.map((shown) => ({ shown, gone: false })),
@@ -266,8 +293,10 @@ const typedRound: CurrentGame = {
     entryKind: 'word',
     prompt: 'having read much',
     highlight: undefined,
+    gap: undefined,
+    lifeLostAfter: 200,
     form: 'typed',
-    blanks: Array.from(TYPED, (character) => (character === '-' ? character : undefined)),
+    blanks: Array.from(TYPED, (character): RoundBlank => (character === '-' ? { mark: '-' } : {})),
     canOpenLetter: true,
     answer: undefined,
   },
@@ -300,9 +329,12 @@ function answeredTyped(game: CurrentGame, typed: string): CurrentGame {
 function withLetterOpened(game: CurrentGame): CurrentGame {
   const { round } = game;
   if (round.form !== 'typed' || round.blanks === undefined) return game;
-  const first = round.blanks.indexOf(undefined);
-  const blanks = round.blanks.map((blank, place) => (place === first ? TYPED[place] : blank));
-  const left = blanks.filter((blank) => blank === undefined).length;
+  const empty = (blank: RoundBlank) => !('mark' in blank) && blank.letter === undefined;
+  const first = round.blanks.findIndex(empty);
+  const blanks = round.blanks.map((blank, place) =>
+    place === first ? { letter: TYPED[place] ?? '' } : blank,
+  );
+  const left = blanks.filter(empty).length;
   return { ...game, round: { ...round, blanks, canOpenLetter: left > 1 } };
 }
 
@@ -317,6 +349,8 @@ const chipsRound: CurrentGame = {
     entryKind: 'word',
     prompt: 'a tribute paid in kind',
     highlight: undefined,
+    gap: undefined,
+    lifeLostAfter: 200,
     form: 'chips',
     chips: CHIPS,
     fixed: [{ at: 1, text: "'" }],
@@ -503,6 +537,14 @@ describe('GameRound', () => {
     expect(onAnswer).toHaveBeenCalledWith({ form: 'pick', option: CORRECT });
     expect(screen.getByRole('button', { name: 'candid, Right' })).toBeTruthy();
     expect(screen.getByRole('header', { name: 'Right!' })).toBeTruthy();
+  });
+
+  it('names a highlight that is no gap after the prompt, under the mode’s label', async () => {
+    await renderRound(jest.fn(), jest.fn(), highlightRound);
+
+    expect(screen.getByTestId('game-prompt')).toHaveAccessibleName(
+      'Definition. She took measures quickly. Marked: took measures',
+    );
   });
 
   it('asks a Tip its own question, whole however long, under its own label, and takes an answer', async () => {
@@ -879,6 +921,19 @@ describe('GameRound', () => {
       await wait(200);
       expect(step(life(4), 'scale')).toBe(1);
       expect(styleOf(lifeFill(4)).opacity).toBe(0);
+    });
+
+    it('pops the lost Life when the Round says the Life is lost', async () => {
+      await renderRound(jest.fn(), jest.fn(), {
+        ...first,
+        round: { ...first.round, lifeLostAfter: 400 },
+      });
+
+      await fireEvent.press(screen.getByRole('button', { name: 'brittle' }));
+      await wait(350);
+      expect(step(life(4), 'scale')).toBe(1);
+      await wait(100);
+      expect(step(life(4), 'scale')).toBeGreaterThan(1);
     });
 
     it('grows the progress bar within 300 ms when a Round passes', async () => {

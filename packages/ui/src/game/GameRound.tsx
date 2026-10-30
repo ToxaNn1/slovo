@@ -2,16 +2,14 @@
 // Reanimated or gesture code: the React Compiler skips this module (ADR 0059).
 
 import type { EditionStrings } from '@slovo/contracts';
-import {
-  gapOf,
-  LIFE_LOST_DELAY,
-  staysInPlace,
-  type CurrentGame,
-  type GivenAnswer,
-  type Round,
-  type RoundAnswer,
-  type RoundOption,
-  type TextRange,
+import type {
+  CurrentGame,
+  GivenAnswer,
+  Round,
+  RoundAnswer,
+  RoundBlank,
+  RoundOption,
+  TextRange,
 } from '@slovo/core';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Keyboard, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -48,7 +46,7 @@ import { ease, RIGHT_FILL, shake, WRONG_FILL } from './round-motion';
 import { OrderedChips } from './OrderedChips';
 import { GameTimer } from './GameTimer';
 import { PairsGrid } from './PairsGrid';
-import { TypedAnswer, type TypedAnswerBlank } from './TypedAnswer';
+import { TypedAnswer } from './TypedAnswer';
 import { useGameHaptics } from './useGameHaptics';
 import { VowelButtons } from './VowelButtons';
 import { useReduceMotion } from '../providers/useReduceMotion';
@@ -82,7 +80,7 @@ const RIGHT_SCALE = 1.03;
 /**
  * A lost Life pops in 300 ms, up to 1.4 and −12° and back, and its fill fades
  * to the outline on the way back. It comes once the wrong choice has filled,
- * `LIFE_LOST_DELAY` after the answer, as its haptic does.
+ * when the Round says the Life is lost, as its haptic does.
  */
 const LIFE_POP = { scale: 1.4, rotate: -12 };
 const LIFE_STEP = {
@@ -165,6 +163,7 @@ export function GameRound({
         roundLimit={game.roundLimit}
         lives={game.lives}
         livesAtStart={game.livesAtStart}
+        lifeLostAfter={round.lifeLostAfter}
         time={
           game.time === undefined || game.timeLimit === undefined
             ? undefined
@@ -176,7 +175,12 @@ export function GameRound({
       />
       <ScrollView contentContainerStyle={styles.round}>
         {round.form === 'vowel' ? (
-          <RoundCard label={asked.label} prompt={asked.prompt} highlight={undefined}>
+          <RoundCard
+            label={asked.label}
+            prompt={asked.prompt}
+            highlight={undefined}
+            gap={undefined}
+          >
             <VowelButtons
               key={round.number}
               text={round.prompt}
@@ -211,6 +215,7 @@ export function GameRound({
             label={asked.label}
             prompt={asked.prompt}
             highlight={round.highlight}
+            gap={round.gap}
             definition={round.definition}
           />
         )}
@@ -277,7 +282,7 @@ export function GameRound({
  * prompt under the mode's label.
  */
 function askedAs(
-  { entryKind, prompt, highlight }: Round,
+  { entryKind, prompt, gap }: Round,
   label: string,
   strings: EditionStrings['game']['round'],
 ): { label: string; prompt: string } {
@@ -286,7 +291,7 @@ function askedAs(
     return { label: synonymRow.label, prompt: fill(synonymRow.prompt, { dominant: prompt }) };
   }
   if (entryKind === 'tip') return { label: strings.tip.label, prompt };
-  if (gapOf({ prompt, highlight }) !== undefined) return { label: strings.gap.label, prompt };
+  if (gap !== undefined) return { label: strings.gap.label, prompt };
   return { label, prompt };
 }
 
@@ -315,7 +320,7 @@ function TypedRoundAnswer({
   onOpenLetter,
 }: {
   /** The Word's blanks, as the Core opens them; none in a Round that shows none. */
-  blanks: readonly (string | undefined)[] | undefined;
+  blanks: readonly RoundBlank[] | undefined;
   onAnswer: (text: string) => void;
   onOpenLetter: () => void;
 }) {
@@ -330,9 +335,7 @@ function TypedRoundAnswer({
         Keyboard.dismiss();
         onAnswer(text);
       }}
-      blanks={blanks?.map((blank): TypedAnswerBlank =>
-        blank === undefined ? {} : staysInPlace(blank) ? { mark: blank } : { letter: blank },
-      )}
+      blanks={blanks}
       onOpenLetter={blanks === undefined ? undefined : onOpenLetter}
       texts={{
         label: round.typed.label,
@@ -360,6 +363,7 @@ function GameHeader({
   roundLimit,
   lives,
   livesAtStart,
+  lifeLostAfter,
   time,
   onExit,
 }: {
@@ -370,6 +374,8 @@ function GameHeader({
   lives: number | undefined;
   /** The Lives the Game started with. */
   livesAtStart: number | undefined;
+  /** How long after a wrong answer its Life is lost, in milliseconds. */
+  lifeLostAfter: number;
   /** The play time left of a timed Game and its whole time, in milliseconds; none in another Game. */
   time: { left: number; limit: number } | undefined;
   onExit: () => void;
@@ -440,7 +446,7 @@ function GameHeader({
           style={styles.lives}
         >
           {Array.from({ length: livesAtStart }, (_, life) => (
-            <Life key={life} place={life} full={life < lives} />
+            <Life key={life} place={life} full={life < lives} lostAfter={lifeLostAfter} />
           ))}
         </View>
       )}
@@ -482,7 +488,16 @@ function ExitButton({ onPress }: { onPress: () => void }) {
  * meanwhile pops to the outline; with Reduce Motion its fill only fades. Its
  * haptic comes with the wrong answer that cost it.
  */
-function Life({ place, full }: { place: number; full: boolean }) {
+function Life({
+  place,
+  full,
+  lostAfter,
+}: {
+  place: number;
+  full: boolean;
+  /** How long after the wrong answer the Life is lost, in milliseconds: when it pops. */
+  lostAfter: number;
+}) {
   const { colors } = useTokens();
   const reduceMotion = useReduceMotion();
   /** 1 while full, 0 once lost. */
@@ -501,18 +516,18 @@ function Life({ place, full }: { place: number; full: boolean }) {
     shownFull.current = false;
     // The fill fades as the pop comes back, or at once with Reduce Motion.
     fullness.value = withDelay(
-      reduceMotion ? LIFE_LOST_DELAY : LIFE_LOST_DELAY + LIFE_STEP.duration,
+      reduceMotion ? lostAfter : lostAfter + LIFE_STEP.duration,
       withTiming(0, reduceMotion ? LIFE_FADE : LIFE_STEP),
     );
     if (!reduceMotion) {
       pop.value = withDelay(
-        LIFE_LOST_DELAY,
+        lostAfter,
         withSequence(withTiming(1, LIFE_STEP), withTiming(0, LIFE_STEP)),
       );
     }
     // The shared values are stable, and a change of Reduce Motion finds the
     // Life already lost.
-  }, [full, reduceMotion, fullness, pop]);
+  }, [full, reduceMotion, lostAfter, fullness, pop]);
 
   const popStyle = useAnimatedStyle(() => ({
     transform: [
@@ -555,6 +570,7 @@ function RoundCard({
   label,
   prompt,
   highlight,
+  gap,
   definition,
   children,
 }: {
@@ -562,6 +578,8 @@ function RoundCard({
   prompt: string;
   /** The part of the prompt to mark; nothing to mark. */
   highlight: TextRange | undefined;
+  /** The gap in the prompt, which VoiceOver reads as one and which is no highlight to name; none. */
+  gap: TextRange | undefined;
   /** The Definition under the prompt; none to show. */
   definition?: string | undefined;
   /** What the card shows for the prompt, the answer drawn in it; the prompt's text if nothing. */
@@ -569,7 +587,6 @@ function RoundCard({
 }) {
   const { colors, fontFamilies, radii } = useTokens();
   const { strings, voice } = useEdition();
-  const gap = gapOf({ prompt, highlight });
   const read =
     gap === undefined
       ? prompt

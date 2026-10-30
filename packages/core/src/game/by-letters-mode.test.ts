@@ -8,10 +8,11 @@ import {
   GAME_ROUNDS,
   openComposition,
   openUserState,
-  staysInPlace,
   type Composition,
+  type ContentReadPort,
   type CurrentGame,
   type Round,
+  type RoundBlank,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
 import { seededRandom, word } from '../test-support';
@@ -61,9 +62,10 @@ const content = createMemoryContentPort({ categories: [test, crafts], words });
 async function run({
   seed = 7,
   off = [],
-}: { seed?: number; off?: readonly string[] } = {}): Promise<Composition> {
+  words = content,
+}: { seed?: number; off?: readonly string[]; words?: ContentReadPort } = {}): Promise<Composition> {
   const app = await openComposition({
-    content,
+    content: words,
     edition: {
       id: 'test',
       isFeatureEnabled: (feature) => !off.includes(feature),
@@ -107,7 +109,7 @@ function current(app: Composition): CurrentGame {
 }
 
 /** The blanks of the current Round, which must be typed. */
-function blanksOf(app: Composition): readonly (string | undefined)[] | undefined {
+function blanksOf(app: Composition): readonly RoundBlank[] | undefined {
   const { round } = current(app);
   if (round.form !== 'typed') throw new Error(`The Round is a ${round.form} Round`);
   return round.blanks;
@@ -115,6 +117,12 @@ function blanksOf(app: Composition): readonly (string | undefined)[] | undefined
 
 const byLettersOffer = (app: Composition) =>
   app.game.state.modes.find(({ modeId }) => modeId === 'by-letters');
+
+/** The blanks of a Word, each character a blank but those that stay in place, which are marks. */
+const blanksIn = (lemma: string): RoundBlank[] =>
+  Array.from(lemma, (character): RoundBlank =>
+    /['ʼ-]/.test(character) ? { mark: character } : {},
+  );
 
 /** The Word the Round asks about, by its Definition. */
 function lemmaOf({ prompt }: Round): string {
@@ -205,7 +213,7 @@ describe('a Round of «За буквами»', () => {
       expect(round).toMatchObject({
         form: 'typed',
         prompt: `The meaning of ${lemma}.`,
-        blanks: Array.from(lemma, (character) => (/['ʼ-]/.test(character) ? character : undefined)),
+        blanks: blanksIn(lemma),
       });
       expect(round.answer).toMatchObject({ form: 'typed', expected: lemma, right: true });
     }
@@ -214,16 +222,39 @@ describe('a Round of «За буквами»', () => {
 
   it('keeps an apostrophe and a hyphen in place, never a blank', async () => {
     expect((await startAt('пірʼя')).game.state.current?.round).toMatchObject({
-      blanks: [undefined, undefined, undefined, 'ʼ', undefined],
+      blanks: [{}, {}, {}, { mark: 'ʼ' }, {}],
     });
     expect((await startAt('будь-що')).game.state.current?.round).toMatchObject({
-      blanks: [undefined, undefined, undefined, undefined, '-', undefined, undefined],
+      blanks: [{}, {}, {}, {}, { mark: '-' }, {}, {}],
     });
   });
 
-  it('tells the shell which characters among the blanks are marks in place, not letters', () => {
-    expect(["'", 'ʼ', '’', '-'].map(staysInPlace)).toEqual([true, true, true, true]);
-    expect(['р', 'ґ', '1', ' '].map(staysInPlace)).toEqual([false, false, false, false]);
+  it('draws an apostrophe of any kind and a hyphen as a mark in place, never a letter', async () => {
+    const marked = ["п'ять", 'м’ята', 'пірʼя', 'будь-що'];
+    const lemmas = [...playing.slice(0, GAME_ROUNDS - marked.length), ...marked];
+    const app = await run({
+      words: createMemoryContentPort({
+        categories: [test],
+        words: lemmas.map((lemma) => word(idOf(lemma), { lemma, stress: [1], categoryId: 'test' })),
+      }),
+    });
+    await app.game.start('by-letters');
+    const blanks = new Map<string, readonly RoundBlank[] | undefined>();
+    while (current(app).status === 'playing') {
+      const { round } = current(app);
+      const lemma = lemmas.find((asked) => `The meaning of ${asked}.` === round.prompt) ?? '';
+      blanks.set(lemma, round.form === 'typed' ? round.blanks : undefined);
+      await app.game.answer({ form: 'typed', text: lemma });
+      await app.game.next();
+    }
+
+    expect(Object.fromEntries(marked.map((lemma) => [lemma, blanks.get(lemma)]))).toEqual({
+      "п'ять": [{}, { mark: "'" }, {}, {}, {}],
+      'м’ята': [{}, { mark: '’' }, {}, {}, {}],
+      пірʼя: [{}, {}, {}, { mark: 'ʼ' }, {}],
+      'будь-що': [{}, {}, {}, {}, { mark: '-' }, {}, {}],
+    });
+    expect(blanks.get('кобза')).toEqual([{}, {}, {}, {}, {}]);
   });
 
   it('never asks about a Word with a space', async () => {
@@ -284,10 +315,16 @@ describe('«Відкрити літеру» in «За буквами»', () => {
     expect(current(app).round).toMatchObject({ canOpenLetter: true });
 
     app.game.openLetter();
-    expect(blanks()).toEqual(['п', undefined, undefined, 'ʼ', undefined]);
+    expect(blanks()).toEqual([{ letter: 'п' }, {}, {}, { mark: 'ʼ' }, {}]);
     app.game.openLetter();
     app.game.openLetter();
-    expect(blanks()).toEqual(['п', 'і', 'р', 'ʼ', undefined]);
+    expect(blanks()).toEqual([
+      { letter: 'п' },
+      { letter: 'і' },
+      { letter: 'р' },
+      { mark: 'ʼ' },
+      {},
+    ]);
     expect(current(app).round).toMatchObject({ canOpenLetter: false });
 
     const before = app.game.state;
@@ -309,9 +346,7 @@ describe('«Відкрити літеру» in «За буквами»', () => {
     expect(app.game.state).toBe(answered);
 
     await app.game.next();
-    expect(blanksOf(app)?.every((blank) => blank === undefined || ['ʼ', '-'].includes(blank))).toBe(
-      true,
-    );
+    expect(blanksOf(app)?.every((blank) => !('letter' in blank))).toBe(true);
     expect(current(app).round).toMatchObject({ canOpenLetter: true });
   });
 });
