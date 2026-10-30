@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 import {
   COLLECTION_LINK_SIZE,
@@ -12,7 +13,7 @@ import {
   SplashDecorSchema,
   type ColorTokens,
 } from '@slovo/contracts';
-import { loadEdition } from '@slovo/core';
+import { LEGAL_SITE, loadEdition } from '@slovo/core';
 import {
   EDITIONS_DIR,
   listEditions,
@@ -882,11 +883,17 @@ describe('the legal pages of About', () => {
     expect(config).not.toHaveProperty('legalPages');
   });
 
-  it("the Ukrainian Edition opens its pages on the project's GitHub Pages", () => {
+  it("the Ukrainian Edition opens its pages at the Edition's domain", () => {
     expect(loadEdition(readJson('uk', 'config')).legalPages).toEqual({
-      privacy: 'https://toxann1.github.io/slovo/uk/privacy',
-      terms: 'https://toxann1.github.io/slovo/uk/terms',
+      privacy: 'https://legal.slovo.example/uk/privacy',
+      terms: 'https://legal.slovo.example/uk/terms',
     });
+  });
+
+  it('the Pages site names the host of the legal site as its custom domain', () => {
+    const cname = readFileSync(join(EDITIONS_DIR, '..', '.github', 'pages', 'CNAME'), 'utf8');
+
+    expect(`https://${cname.trim()}`).toBe(LEGAL_SITE);
   });
 
   it.each(['privacyPolicy', 'terms'])('the Ukrainian Edition needs settings.about.%s', (key) => {

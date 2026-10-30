@@ -339,10 +339,10 @@ describe('loadEdition', () => {
     });
   });
 
-  it("opens the Ukrainian Edition's legal pages on the project's GitHub Pages", () => {
+  it("opens the Ukrainian Edition's legal pages at the Edition's domain", () => {
     expect(loadEdition({ ...validConfig, id: 'uk' }).legalPages).toEqual({
-      privacy: 'https://toxann1.github.io/slovo/uk/privacy',
-      terms: 'https://toxann1.github.io/slovo/uk/terms',
+      privacy: 'https://legal.slovo.example/uk/privacy',
+      terms: 'https://legal.slovo.example/uk/terms',
     });
   });
 
