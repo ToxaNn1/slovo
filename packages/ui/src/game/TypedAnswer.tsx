@@ -127,10 +127,9 @@ function Blanks({
     styles.letter,
     { color: colors.ink, fontFamily: fontFamilies.word },
   ];
-  let place = 0;
   return (
     <View testID={testID} style={styles.blanks}>
-      {blanks.map((blank, index) => {
+      {placeBlanks(blanks).map((blank, index) => {
         if ('mark' in blank)
           return (
             <Text
@@ -143,9 +142,7 @@ function Blanks({
               {blank.mark}
             </Text>
           );
-        const label = blankLabel(place, blank.letter);
-        // eslint-disable-next-line react-hooks/immutability -- the compiler skips this function until it is rewritten (ADR 0059)
-        place += 1;
+        const label = blankLabel(blank.place, blank.letter);
         return (
           <View
             key={index}
@@ -162,6 +159,14 @@ function Blanks({
       })}
     </View>
   );
+}
+
+/** Each letter blank with its place among the letters, so a mark takes no place. */
+function placeBlanks(
+  blanks: readonly TypedAnswerBlank[],
+): ({ readonly mark: string } | { readonly letter?: string; readonly place: number })[] {
+  let letters = 0;
+  return blanks.map((blank) => ('mark' in blank ? blank : { ...blank, place: letters++ }));
 }
 
 const styles = StyleSheet.create({
