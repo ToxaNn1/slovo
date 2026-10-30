@@ -7,6 +7,7 @@ import { sql } from 'drizzle-orm';
 import { describe, expect, it, onTestFinished } from 'vitest';
 import { z } from 'zod';
 
+import { ServerConfigSchema } from './config';
 import { createDatabase } from './database/database';
 import { createLogger } from './logger';
 import { startServer } from './server';
@@ -443,6 +444,26 @@ describe('the server', { timeout: 30_000 }, () => {
     await stopped;
     await expect(database.ping()).rejects.toThrow();
     await expect(fetch(`http://localhost:${String(server.port)}/health`)).rejects.toThrow();
+  });
+});
+
+describe('the variables documents', () => {
+  const variables = Object.keys(ServerConfigSchema.in.shape).sort();
+
+  it('.env.example names every variable the server reads, and no other', () => {
+    const example = readFileSync(new URL('../.env.example', import.meta.url), 'utf8');
+    const named = [...example.matchAll(/^(?:# )?([A-Z][A-Z0-9_]*)=/gm)].map((match) => match[1]);
+
+    expect(named.sort()).toEqual(variables);
+  });
+
+  it("the deployment's document gives every variable the server reads, and no other", () => {
+    const deployment = readFileSync(new URL('../../../docs/deploy.md', import.meta.url), 'utf8');
+    const named = [...deployment.matchAll(/^\| `([A-Z][A-Z0-9_]*)` +\|/gm)].map(
+      (match) => match[1],
+    );
+
+    expect(named.sort()).toEqual(variables);
   });
 });
 

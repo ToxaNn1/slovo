@@ -1,0 +1,17 @@
+# What the backend image leaves out (Dockerfile): installs, tool output, local
+# secrets and every built Language Pack.
+**/node_modules
+**/.turbo
+**/coverage
+**/dist
+**/*.tsbuildinfo
+**/.env
+**/.env.*
+!**/.env.example
+.git
+.github
+.claude
+apps/mobile/ios
+apps/widget/Generated
+tools/sourcing/.cache
+tools/sourcing/review

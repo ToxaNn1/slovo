@@ -47,6 +47,8 @@ Parts marked as placeholders are reserved and filled by later versions.
 
 - [`CONTEXT.md`](CONTEXT.md): the domain glossary.
 - [`docs/adr/`](docs/adr/README.md): architecture decision records, with an index of every number.
+- [`docs/deploy.md`](docs/deploy.md): the Deployment on Railway, its container image and every variable it reads.
+- [`docs/owner-checks.md`](docs/owner-checks.md): the steps only the owner takes, by version.
 - [Master spec, issue #1](https://github.com/ToxaNn1/slovo/issues/1): product vision, every decision so far and the roadmap from 0.1 to 1.0.
 - [0.1 Foundation spec, issue #2](https://github.com/ToxaNn1/slovo/issues/2) and [0.2 Feed spec, issue #51](https://github.com/ToxaNn1/slovo/issues/51): the versions built so far and their tickets.
 - `editions/<edition>/legal/`: the Edition's privacy policy and terms, which the workflow `Pages` publishes to GitHub Pages at `<LEGAL_SITE>/<edition>/<page>` on every change on `main`; the Core constant `LEGAL_SITE` is the one place that names the site's base (ADR 0049). Pages must be on in the repository settings with "GitHub Actions" as its source.
