@@ -20,6 +20,7 @@
     "tips": true,
     "account": true,
     "googleSignIn": true,
+    "signInWithApple": true,
     "sync": true,
     "contentUpdates": true,
     "notifications": true,
@@ -85,6 +86,8 @@
   },
   "notificationSound": "notification.wav",
   "linkDomain": "slovo.example",
+  "appleTeamId": "",
+  "appStoreConnectAppId": "",
   "wordOfTheDayFont": "Kurale-Regular.ttf",
   "widgetPalette": {
     "parchment": { "background": "#F3E9D2", "text": "#3B2A1A" },

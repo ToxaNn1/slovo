@@ -19,6 +19,7 @@ export {
   TimeOfDaySchema,
   UserSettingDefaultsConfigSchema,
   editionAppGroup,
+  releaseProblems,
   type Category,
   type DailyLimit,
   type DistractorRule,
@@ -30,6 +31,7 @@ export {
   type MixConfig,
   type Mood,
   type OriginLanguage,
+  type ReleaseProblem,
   type Theme,
   type UserSettingDefaultsConfig,
 } from './edition';

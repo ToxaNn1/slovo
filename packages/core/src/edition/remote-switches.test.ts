@@ -147,6 +147,27 @@ describe('the remote Feature Switches', () => {
     expect(switches.edition.isFeatureEnabled('calligraphy')).toBe(true);
   });
 
+  it('turn Sign in with Apple off remotely and keep the other Sign-in methods', async () => {
+    const app = device();
+    app.backend.turnOff('signInWithApple');
+    const switches = await app.launch();
+
+    await switches.ask();
+
+    expect(switches.edition.isFeatureEnabled('signInWithApple')).toBe(false);
+    expect(switches.edition.isFeatureEnabled('googleSignIn')).toBe(true);
+    expect(switches.edition.isFeatureEnabled('account')).toBe(true);
+  });
+
+  it('never turn Sign in with Apple on when the Edition turns it off', async () => {
+    const app = device(editionWithout('signInWithApple'));
+    const switches = await app.launch();
+
+    await switches.ask();
+
+    expect(switches.edition.isFeatureEnabled('signInWithApple')).toBe(false);
+  });
+
   it('give every Game Mode and the Daily Crossword as off once the Game is off remotely', async () => {
     const app = device();
     app.backend.turnOff('game');

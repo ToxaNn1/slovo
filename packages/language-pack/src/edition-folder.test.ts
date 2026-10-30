@@ -140,6 +140,61 @@ describe('openEdition', () => {
     expect(failure?.message).toMatch(/fixture.*edition\.json › locale/s);
   });
 
+  it('keeps the placeholder domain and an empty Team ID for a development build', () => {
+    const editionsDir = editionsWith();
+
+    const edition = openEdition(editionsDir, 'fixture');
+
+    expect(edition.config).toMatchObject({ linkDomain: 'slovo.example', appleTeamId: '' });
+  });
+
+  it('refuses the placeholder domain and an empty Team ID for a release build', () => {
+    const editionsDir = editionsWith();
+
+    const failure = failureOf(() => openEdition(editionsDir, 'fixture', { build: 'release' }));
+
+    expect(failure?.reason).toBe('invalid');
+    expect(failure?.errors.map(({ file, field }) => `${file} › ${field ?? ''}`)).toEqual([
+      'edition.json › linkDomain',
+      'edition.json › appleTeamId',
+    ]);
+  });
+
+  it.each(['slovo.test', 'links.slovo.invalid', 'slovo.localhost'])(
+    'refuses %s, a domain reserved for examples, for a release build',
+    (linkDomain) => {
+      const editionsDir = editionsWith({
+        change: (dir) => {
+          editJson(join(dir, 'edition.json'), (config) => ({
+            ...config,
+            linkDomain,
+            appleTeamId: 'A1B2C3D4E5',
+          }));
+        },
+      });
+
+      const failure = failureOf(() => openEdition(editionsDir, 'fixture', { build: 'release' }));
+
+      expect(failure?.errors.map(({ field }) => field)).toEqual(['linkDomain']);
+    },
+  );
+
+  it('opens an Edition with its real domain and Team ID for a release build', () => {
+    const editionsDir = editionsWith({
+      change: (dir) => {
+        editJson(join(dir, 'edition.json'), (config) => ({
+          ...config,
+          linkDomain: 'slovo.app',
+          appleTeamId: 'A1B2C3D4E5',
+        }));
+      },
+    });
+
+    const edition = openEdition(editionsDir, 'fixture', { build: 'release' });
+
+    expect(edition.config).toMatchObject({ linkDomain: 'slovo.app', appleTeamId: 'A1B2C3D4E5' });
+  });
+
   it('reports a config that is not JSON', () => {
     const editionsDir = editionsWith({
       change: (dir) => {
