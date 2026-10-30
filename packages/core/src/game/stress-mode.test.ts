@@ -13,7 +13,7 @@ import {
   type Round,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
-import { correction, seededRandom, word } from '../test-support';
+import { correction, seededRandom, testEdition, word } from '../test-support';
 
 /** The Ukrainian Edition's vowels. */
 const vowels = ['а', 'е', 'є', 'и', 'і', 'ї', 'о', 'у', 'ю', 'я'];
@@ -142,26 +142,11 @@ async function run({
 } = {}): Promise<Composition> {
   const app = await openComposition({
     content: pack,
-    edition: {
-      id: 'test',
+    edition: testEdition({
       isFeatureEnabled: (feature) => !off.includes(feature),
-      userSettingDefaults: {
-        mix: {
-          categoryIds: ['test'],
-          correctionCategoryIds: 'all' as const,
-          corrections,
-          idioms: true,
-          synonymRows: true,
-          tips: true,
-        },
-        notificationTimes: [],
-      },
-      languageTraits: {
-        distractorRule: 'same-part-of-speech',
-        marksStress,
-        ...(marksStress ? { vowels } : {}),
-      },
-    },
+      userSettingDefaults: { mix: { corrections } },
+      languageTraits: { marksStress, ...(marksStress ? { vowels } : {}) },
+    }),
     userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
     clock: {
       now: () => new Date('2026-10-26T09:00:00+02:00'),

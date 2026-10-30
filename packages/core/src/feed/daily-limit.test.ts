@@ -11,7 +11,7 @@ import {
   type FeedCard,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
-import { fakeClock, randomOf, word } from '../test-support';
+import { fakeClock, randomOf, testEdition, word } from '../test-support';
 
 const words: readonly Word[] = Array.from({ length: 40 }, (_, index) =>
   word(`w_${String(index).padStart(2, '0')}`),
@@ -33,23 +33,12 @@ async function run({
   const { clock, advance } = fakeClock(at);
   const app = await openComposition({
     content: createMemoryContentPort({ words }),
-    edition: {
-      id: 'test',
+    edition: testEdition({
       isFeatureEnabled: (feature) => switches.includes(feature),
-      languageTraits: { distractorRule: 'same-part-of-speech' },
       userSettingDefaults: {
-        mix: {
-          categoryIds: ['test'],
-          correctionCategoryIds: 'all' as const,
-          corrections: false,
-          idioms: false,
-          synonymRows: false,
-          tips: false,
-        },
-        notificationTimes: [],
-        dailyLimit: 'off',
+        mix: { corrections: false, idioms: false, synonymRows: false, tips: false },
       },
-    },
+    }),
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock,
     random: randomOf(0.25),
@@ -149,23 +138,13 @@ describe('The Daily Limit', () => {
     const { clock, advance } = fakeClock(dayOne);
     const app = await openComposition({
       content: createMemoryContentPort({ words }),
-      edition: {
-        id: 'test',
+      edition: testEdition({
         isFeatureEnabled: (feature) => feature === 'dailyLimit',
-        languageTraits: { distractorRule: 'same-part-of-speech' },
         userSettingDefaults: {
-          mix: {
-            categoryIds: ['test'],
-            correctionCategoryIds: 'all' as const,
-            corrections: false,
-            idioms: false,
-            synonymRows: false,
-            tips: false,
-          },
-          notificationTimes: [],
+          mix: { corrections: false, idioms: false, synonymRows: false, tips: false },
           dailyLimit: 20,
         },
-      },
+      }),
       userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
       clock,
       random: randomOf(0.25),

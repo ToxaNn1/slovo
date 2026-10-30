@@ -9,7 +9,7 @@ import {
   type FeatureSwitch,
 } from '../index';
 import { createFakeCountersApi, createMemoryContentPort } from '../testing';
-import { fakeClock, randomOf, testSchedule, word } from '../test-support';
+import { fakeClock, randomOf, testEdition, testSchedule, word } from '../test-support';
 
 /** Long enough for every wait between the tries of one request (ADR 0037). */
 const ALL_TRIES = 10_000;
@@ -30,22 +30,12 @@ async function device() {
   const timers = testSchedule(time);
   const api = createFakeCountersApi();
   const switchedOff = new Set<FeatureSwitch>();
-  const edition = {
-    id: 'test',
-    isFeatureEnabled: (feature: FeatureSwitch) => !switchedOff.has(feature),
-    languageTraits: { distractorRule: 'same-part-of-speech' as const },
+  const edition = testEdition({
+    isFeatureEnabled: (feature) => !switchedOff.has(feature),
     userSettingDefaults: {
-      mix: {
-        categoryIds: ['test'],
-        correctionCategoryIds: 'all' as const,
-        corrections: false,
-        idioms: false,
-        synonymRows: false,
-        tips: false,
-      },
-      notificationTimes: [],
+      mix: { corrections: false, idioms: false, synonymRows: false, tips: false },
     },
-  };
+  });
   const userState = await openUserState({ port: createMemoryUserStatePort() });
   const app = await openComposition({
     content,

@@ -7,6 +7,7 @@ import {
   type Composition,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
+import { testEdition } from '../test-support';
 
 const defaultTimes = ['09:00', '13:00', '19:00'];
 
@@ -21,22 +22,10 @@ async function run({
 } = {}): Promise<Composition> {
   return openComposition({
     content: createMemoryContentPort(),
-    edition: {
-      id: 'test',
+    edition: testEdition({
       isFeatureEnabled: () => true,
-      languageTraits: { distractorRule: 'same-part-of-speech' },
-      userSettingDefaults: {
-        mix: {
-          categoryIds: ['test'],
-          correctionCategoryIds: 'all' as const,
-          corrections: true,
-          idioms: true,
-          synonymRows: true,
-          tips: true,
-        },
-        notificationTimes,
-      },
-    },
+      userSettingDefaults: { notificationTimes },
+    }),
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock: { now: () => new Date('2026-10-14T08:00:00+03:00'), timeZone: () => 'Europe/Kyiv' },
     random: { next: () => 0.25 },

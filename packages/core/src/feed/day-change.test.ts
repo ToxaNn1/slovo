@@ -14,7 +14,7 @@ import {
   createMemoryContentPort,
   type FakeNotificationScheduler,
 } from '../testing';
-import { fakeClock, word } from '../test-support';
+import { fakeClock, testEdition, word } from '../test-support';
 
 /** More Words than the plan holds, so every notification gets one. */
 const words = Array.from({ length: 60 }, (_, index) => word(`w_${String(index).padStart(2, '0')}`));
@@ -36,22 +36,10 @@ async function run({
   const writes: UserStateChanges[] = [];
   const app: Composition = await openComposition({
     content: createMemoryContentPort({ words }),
-    edition: {
-      id: 'test',
+    edition: testEdition({
       isFeatureEnabled: () => true,
-      languageTraits: { distractorRule: 'same-part-of-speech' },
-      userSettingDefaults: {
-        mix: {
-          categoryIds: ['test'],
-          correctionCategoryIds: 'all' as const,
-          corrections: false,
-          idioms: true,
-          synonymRows: true,
-          tips: true,
-        },
-        notificationTimes: ['09:00', '19:00'],
-      },
-    },
+      userSettingDefaults: { mix: { corrections: false }, notificationTimes: ['09:00', '19:00'] },
+    }),
     userState: await openUserState({
       port: {
         ...memory,

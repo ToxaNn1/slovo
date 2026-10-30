@@ -5,33 +5,16 @@ import {
   systemRandom,
   type Composition,
 } from '@slovo/core';
-import { createMemoryContentPort } from '@slovo/core/testing';
+import { createMemoryContentPort, testEdition } from '@slovo/core/testing';
 import { describe, expect, it } from 'vitest';
 
 import { refusalText } from './collection-refusal';
 import { strings } from '../test-support';
 
-/** The Edition, with the test Words' one Category in its default Mix. */
-const testCategories = {
-  id: 'test',
-  languageTraits: { distractorRule: 'same-part-of-speech' as const },
-  userSettingDefaults: {
-    mix: {
-      categoryIds: ['test'],
-      correctionCategoryIds: 'all' as const,
-      corrections: true,
-      idioms: true,
-      synonymRows: true,
-      tips: true,
-    },
-    notificationTimes: [],
-  },
-};
-
 async function open(): Promise<Composition> {
   return openComposition({
     content: createMemoryContentPort(),
-    edition: { ...testCategories, isFeatureEnabled: () => false },
+    edition: testEdition({ isFeatureEnabled: () => false }),
     userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
     clock: { now: () => new Date('2026-10-13T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     random: systemRandom,

@@ -1,11 +1,120 @@
-import type { Correction, Idiom, SynonymRow, Tip, Word } from '@slovo/contracts';
+import {
+  FeatureSwitchesSchema,
+  type Correction,
+  type Idiom,
+  type LanguageTraits,
+  type SynonymRow,
+  type Tip,
+  type Word,
+} from '@slovo/contracts';
 
+import {
+  loadEdition,
+  type DefaultMix,
+  type Edition,
+  type UserSettingDefaults,
+} from './edition/edition';
 import type { PlayedRound, Round, RoundAnswer } from './game/game-in-play';
 import type { RoundOption } from './game/game-mode';
 import type { KnownCounts } from './knowledge/knowledge';
 import type { Clock, ContentReadPort, Random, Schedule } from './ports';
 
-// Helpers the Core's tests share. They are not part of the public `index.ts`.
+// Helpers the Core's tests share. They are not part of the public `index.ts`;
+// `testing.ts` exports `testEdition` to the tests of other packages.
+
+/**
+ * The config of the test Edition, in the shape of a real Edition's
+ * `edition.json`: every Feature Switch on, one Category `test`, the one the
+ * test Words carry, in its default Mix with every kind of Entry, the Daily
+ * Limit off, and no notification time, mood, origin language or search letter.
+ */
+const testEditionConfig = {
+  id: 'test',
+  locale: 'en-US',
+  displayName: 'SLOVO Test',
+  bundleId: 'app.slovo.test',
+  languageTraits: {
+    marksStress: false,
+    alphabet: 'a b c d e f g h i j k l m n o p q r s t u v w x y z',
+    sortLocale: 'en',
+    distractorRule: 'same-part-of-speech',
+  },
+  featureSwitches: Object.fromEntries(
+    Object.keys(FeatureSwitchesSchema.shape).map((feature) => [feature, true]),
+  ),
+  userSettingDefaults: {
+    theme: 'system',
+    fontSize: 'M',
+    vibration: true,
+    dailyLimit: 'off',
+    notificationTimes: [],
+    mix: {
+      categories: ['test'],
+      correctionCategories: 'all',
+      corrections: true,
+      idioms: true,
+      synonymRows: true,
+      tips: true,
+    },
+  },
+  legalPages: {
+    privacy: 'https://example.org/test/privacy',
+    terms: 'https://example.org/test/terms',
+  },
+  linkDomain: 'slovo.example',
+  wordOfTheDayFont: 'Test-Regular.ttf',
+  widgetPalette: {
+    parchment: { background: '#F3E9D2', text: '#3B2A1A' },
+    blue: { background: '#1F3A5F', text: '#F3EEE2' },
+  },
+  categories: [{ id: 'test', displayName: 'Test' }],
+  correctionCategories: [{ id: 'everyday', displayName: 'Everyday' }],
+  categoriesRequiringHistory: [],
+  originLanguages: [],
+  moods: [],
+  searchLetters: {},
+};
+
+/** The test Edition as `loadEdition` gives it, which every `testEdition` starts from. */
+const baseTestEdition = loadEdition(testEditionConfig);
+
+/**
+ * What a test changes of the test Edition: any field of the Edition, and
+ * `languageTraits` and `userSettingDefaults`, its `mix` included, field by
+ * field over the defaults.
+ */
+export interface TestEditionOverrides extends Partial<
+  Omit<Edition, 'languageTraits' | 'userSettingDefaults'>
+> {
+  readonly languageTraits?: Partial<LanguageTraits>;
+  readonly userSettingDefaults?: Partial<Omit<UserSettingDefaults, 'mix'>> & {
+    readonly mix?: Partial<DefaultMix>;
+  };
+}
+
+/**
+ * The Edition a test runs the Core as: the test Edition with the overrides,
+ * most often `isFeatureEnabled` and the default Mix. Built by `loadEdition`
+ * from a config in the shape of a real Edition's, so what the Core reads of
+ * an Edition is what a config can say.
+ */
+export function testEdition({
+  languageTraits = {},
+  userSettingDefaults = {},
+  ...overrides
+}: TestEditionOverrides = {}): Edition {
+  const { mix = {}, ...settings } = userSettingDefaults;
+  return {
+    ...baseTestEdition,
+    ...overrides,
+    languageTraits: { ...baseTestEdition.languageTraits, ...languageTraits },
+    userSettingDefaults: {
+      ...baseTestEdition.userSettingDefaults,
+      ...settings,
+      mix: { ...baseTestEdition.userSettingDefaults.mix, ...mix },
+    },
+  };
+}
 
 /** The Known counts by kind of Entry: those named, and 0 for every other kind. */
 export const knownCounts = (counts: Partial<KnownCounts> = {}): KnownCounts => ({

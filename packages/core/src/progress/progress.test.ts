@@ -18,27 +18,12 @@ import {
   knownCounts,
   steppingRandom,
   synonymRow,
+  testEdition,
   tip,
   word,
 } from '../test-support';
 
 /** The Edition's one Category, the test Words' own, and its default Mix of every Category. */
-const testCategories = {
-  id: 'test',
-  languageTraits: { distractorRule: 'same-part-of-speech' as const },
-  userSettingDefaults: {
-    mix: {
-      categoryIds: ['test'],
-      correctionCategoryIds: 'all' as const,
-      corrections: false,
-      idioms: true,
-      synonymRows: true,
-      tips: true,
-    },
-    notificationTimes: [],
-  },
-};
-
 const content = createMemoryContentPort({ words: [word('w_one'), word('w_two')] });
 
 /** A user-state port over the records that keeps every write it is given. */
@@ -69,7 +54,10 @@ async function run({
 } = {}): Promise<Composition> {
   return openComposition({
     content,
-    edition: { ...testCategories, isFeatureEnabled: () => false },
+    edition: testEdition({
+      isFeatureEnabled: () => false,
+      userSettingDefaults: { mix: { corrections: false } },
+    }),
     userState: await openUserState({ port }),
     clock,
     random: steppingRandom(),
@@ -383,21 +371,7 @@ describe('The knowledge counts', () => {
         words: [word('w_one'), word('w_two'), word('w_three')],
         corrections: [correction('c_one'), correction('c_two')],
       }),
-      edition: {
-        ...testCategories,
-        userSettingDefaults: {
-          ...testCategories.userSettingDefaults,
-          mix: {
-            categoryIds: ['test'],
-            correctionCategoryIds: 'all' as const,
-            corrections: true,
-            idioms: true,
-            synonymRows: true,
-            tips: true,
-          },
-        },
-        isFeatureEnabled: (feature) => on.includes(feature),
-      },
+      edition: testEdition({ isFeatureEnabled: (feature) => on.includes(feature) }),
       userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
       clock,
       random: steppingRandom(),
@@ -436,7 +410,10 @@ describe('The knowledge counts', () => {
         synonymRows: [synonymRow('s_one'), synonymRow('s_two')],
         tips: [tip('t_one')],
       }),
-      edition: { ...testCategories, isFeatureEnabled: (feature) => feature === 'knowledge' },
+      edition: testEdition({
+        isFeatureEnabled: (feature) => feature === 'knowledge',
+        userSettingDefaults: { mix: { corrections: false } },
+      }),
       userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
       clock: fakeClock('2026-10-19T09:00:00+03:00').clock,
       random: steppingRandom(),
@@ -555,11 +532,10 @@ describe('The Active Days calendar', () => {
     for (const date of dates) {
       app = await openComposition({
         content,
-        edition: {
-          ...testCategories,
-          isFeatureEnabled: (feature: FeatureSwitch) =>
-            calendarOn && feature === 'activeDaysCalendar',
-        },
+        edition: testEdition({
+          isFeatureEnabled: (feature) => calendarOn && feature === 'activeDaysCalendar',
+          userSettingDefaults: { mix: { corrections: false } },
+        }),
         userState: await openUserState({ port: createMemoryUserStatePort(records) }),
         clock: fakeClock(`${date}T09:00:00+03:00`).clock,
         random: steppingRandom(),

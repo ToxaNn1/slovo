@@ -10,7 +10,7 @@ import {
   type UserStatePort,
 } from './index';
 import { createMemoryContentPort } from './testing';
-import { correction, fakeClock, word } from './test-support';
+import { correction, fakeClock, testEdition, word } from './test-support';
 
 const content = createMemoryContentPort({
   words: [word('w_one'), word('w_two'), word('w_three'), word('w_old', { retired: true })],
@@ -40,22 +40,10 @@ async function run({
   };
   const app: Composition = await openComposition({
     content,
-    edition: {
-      id: 'test',
+    edition: testEdition({
       isFeatureEnabled: (feature) => feature === 'corrections',
-      languageTraits: { distractorRule: 'same-part-of-speech' },
-      userSettingDefaults: {
-        mix: {
-          categoryIds: ['test'],
-          correctionCategoryIds: 'all' as const,
-          corrections,
-          idioms: true,
-          synonymRows: true,
-          tips: true,
-        },
-        notificationTimes: [],
-      },
-    },
+      userSettingDefaults: { mix: { corrections } },
+    }),
     userState: await openUserState({ port }),
     clock,
     random: { next: () => 0.25 },

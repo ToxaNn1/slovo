@@ -13,7 +13,7 @@ import {
   type Round,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
-import { idiom, seededRandom } from '../test-support';
+import { idiom, seededRandom, testEdition } from '../test-support';
 
 /**
  * The pack's expressions that play, of 2 to 8 words: idioms and proverbs,
@@ -116,25 +116,11 @@ async function run({
 }: { seed?: number; off?: readonly string[]; idiomsInMix?: boolean } = {}): Promise<Composition> {
   const app = await openComposition({
     content,
-    edition: {
-      id: 'test',
+    edition: testEdition({
       isFeatureEnabled: (feature) => !off.includes(feature),
-      userSettingDefaults: {
-        mix: {
-          categoryIds: ['test'],
-          correctionCategoryIds: 'all' as const,
-          corrections: true,
-          idioms: idiomsInMix,
-          synonymRows: true,
-          tips: true,
-        },
-        notificationTimes: [],
-      },
-      languageTraits: {
-        distractorRule: 'same-part-of-speech',
-        expressionPunctuation: [',', '—'],
-      },
-    },
+      userSettingDefaults: { mix: { idioms: idiomsInMix } },
+      languageTraits: { expressionPunctuation: [',', '—'] },
+    }),
     userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
     clock: {
       now: () => new Date('2026-10-26T09:00:00+02:00'),

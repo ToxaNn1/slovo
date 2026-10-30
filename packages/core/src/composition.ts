@@ -21,14 +21,14 @@ import { createEntries } from './entries/entries';
 import { createEntryRows, type EntryRowModel } from './entries/entry-row';
 import { openFavorites, type Favorites } from './saved/favorites';
 import { buildEntryCard, buildFeedCard, openFeed, type Feed } from './feed/feed';
-import { dailyLimitNotices, type DailyLimitEdition } from './feed/daily-limit';
+import { dailyLimitNotices } from './feed/daily-limit';
 import { createCommunityWord } from './feed/community-word';
 import { allFeedNotices, noFeedNotices, type FeedNotices } from './feed/feed-notices';
 import { createFirstWeek } from './feed/first-week';
 import { createYesterday } from './feed/yesterday';
 import { asReviewIfDue, type AnyEntryCard } from './feed/feed-card';
 import { openGame, type Game } from './game/game';
-import type { GameEdition, GameMode } from './game/game-mode';
+import type { GameMode } from './game/game-mode';
 import { guessWord } from './game/guess-word';
 import { idiomMeaningMode } from './game/idiom-meaning-mode';
 import { originMode } from './game/origin-mode';
@@ -47,13 +47,9 @@ import { openKnowledge, type Knowledge } from './knowledge/knowledge';
 import { openCommunityCounters, type CommunityCounters } from './community-counters/counter-deltas';
 import { openHiddenEntries, type HiddenEntries } from './mix/hidden-entries';
 import { createHiding, type Hiding } from './mix/hiding';
-import { openMix, type Mix, type MixEdition } from './entries/mix';
+import { openMix, type Mix } from './entries/mix';
 import type { NotificationScheduling } from './notifications/notification-plan';
-import {
-  openNotifications,
-  type Notifications,
-  type NotificationsEdition,
-} from './notifications/notifications';
+import { openNotifications, type Notifications } from './notifications/notifications';
 import { openOnboarding, type Onboarding } from './onboarding/onboarding';
 import type {
   Clock,
@@ -327,22 +323,8 @@ export async function openComposition({
   content: ContentReadPort;
   /** The Daily Crossword's days, which the pack reader gives next to `content`; without it, as in tests of other features, there is none. */
   crossword?: CrosswordReadPort;
-  /**
-   * An Edition that leaves out `searchLetters` or its sort locale, as in
-   * tests of other features, has Search read each letter as itself and sort
-   * in the default locale; one that leaves out `moods` offers none, and one
-   * that leaves out its `locale` has the Word of the Day archive write its
-   * dates, and the Spotlight its counts, in the default locale; one that
-   * leaves out `illustrations` bundles no Illustration.
-   */
-  edition: Pick<Edition, 'id' | 'isFeatureEnabled'> &
-    Partial<Pick<Edition, 'searchLetters' | 'moods' | 'locale' | 'illustrations'>> &
-    MixEdition &
-    NotificationsEdition &
-    GameEdition &
-    DailyLimitEdition & {
-      readonly languageTraits: Partial<Pick<Edition['languageTraits'], 'sortLocale'>>;
-    };
+  /** The Edition as the app runs it (`loadEdition`); each module reads of it what it names. */
+  edition: Edition;
   userState: UserState;
   clock: Clock;
   random: Random;
@@ -526,11 +508,6 @@ export async function openComposition({
     await day.opened((activeDay) => markOpenedSeen(entryId, activeDay));
     return entryCard(entryId);
   }
-  const searchEdition = { ...edition, searchLetters: edition.searchLetters ?? {} };
-  const spotlightEdition = {
-    ...edition,
-    locale: edition.locale ?? new Intl.PluralRules().resolvedOptions().locale,
-  };
   const wordOfTheDayArchive = createWordOfTheDayArchive({ content, edition, userState, clock });
   return {
     feed,
@@ -566,15 +543,10 @@ export async function openComposition({
     notifications,
     game,
     onboarding,
-    search: createSearch({ content, edition: searchEdition, userState }),
-    recentQueries: createRecentQueries({ edition: searchEdition, userState }),
+    search: createSearch({ content, edition, userState }),
+    recentQueries: createRecentQueries({ edition, userState }),
     rarityTest,
-    moodDraw: createMoodDraw({
-      content,
-      edition: { ...edition, moods: edition.moods ?? [] },
-      userState,
-      random,
-    }),
+    moodDraw: createMoodDraw({ content, edition, userState, random }),
     async openDailyCrossword() {
       if (crossword === undefined) return undefined;
       return openDailyCrossword({ content: crossword, userState, clock, edition });
@@ -597,7 +569,7 @@ export async function openComposition({
       opened: openedFromOutside,
     }),
     spotlight: createSpotlight({
-      edition: spotlightEdition,
+      edition,
       entries,
       favorites,
       collections,

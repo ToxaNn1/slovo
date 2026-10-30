@@ -8,7 +8,7 @@ import {
   type GameMode,
   type GameModeOffer,
 } from '@slovo/core';
-import { createMemoryContentPort } from '@slovo/core/testing';
+import { createMemoryContentPort, testEdition } from '@slovo/core/testing';
 import { describe, expect, it } from 'vitest';
 
 import { gameModeCard, gameModeGroups, gameModeStrings } from './game-modes';
@@ -74,22 +74,10 @@ async function open({
 }): Promise<Composition> {
   const app = await openComposition({
     content: createMemoryContentPort({ words: Array.from({ length: words }, (_, i) => word(i)) }),
-    edition: {
-      id: 'test',
-      languageTraits: { distractorRule: 'same-part-of-speech' },
-      userSettingDefaults: {
-        mix: {
-          categoryIds: ['test'],
-          correctionCategoryIds: 'all' as const,
-          corrections: correctionsInMix,
-          idioms: true,
-          synonymRows: true,
-          tips: true,
-        },
-        notificationTimes: [],
-      },
+    edition: testEdition({
       isFeatureEnabled: (feature) => !switchedOff.includes(feature),
-    },
+      userSettingDefaults: { mix: { corrections: correctionsInMix } },
+    }),
     userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
     clock: { now: () => new Date('2026-10-15T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     random: systemRandom,

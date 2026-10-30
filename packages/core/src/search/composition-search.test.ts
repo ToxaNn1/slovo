@@ -4,26 +4,16 @@ import type { FeatureSwitch } from '@slovo/contracts';
 
 import { createMemoryUserStatePort, openComposition, openUserState } from '../index';
 import { createMemoryContentPort } from '../testing';
-import { fakeClock, word } from '../test-support';
+import { fakeClock, testEdition, word } from '../test-support';
 
 /** An Edition whose Mix holds only the Category `test`, with Search on unless `off` names it. */
-const edition = (off: readonly FeatureSwitch[] = []) => ({
-  id: 'test',
-  isFeatureEnabled: (feature: FeatureSwitch) => !off.includes(feature),
-  languageTraits: { distractorRule: 'same-part-of-speech' as const, sortLocale: 'uk' },
-  searchLetters: { ґ: 'г' },
-  userSettingDefaults: {
-    mix: {
-      categoryIds: ['test'],
-      correctionCategoryIds: 'all' as const,
-      corrections: false,
-      idioms: true,
-      synonymRows: true,
-      tips: true,
-    },
-    notificationTimes: [],
-  },
-});
+const edition = (off: readonly FeatureSwitch[] = []) =>
+  testEdition({
+    isFeatureEnabled: (feature) => !off.includes(feature),
+    languageTraits: { sortLocale: 'uk' },
+    searchLetters: { ґ: 'г' },
+    userSettingDefaults: { mix: { corrections: false } },
+  });
 
 const content = createMemoryContentPort({
   categories: [

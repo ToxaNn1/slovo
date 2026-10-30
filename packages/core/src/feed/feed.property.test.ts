@@ -7,39 +7,28 @@ import {
   IDIOM_EVERY,
   openComposition,
   openUserState,
-  type Edition,
   type Feed,
-  type GameEdition,
 } from '../index';
 import { SYNONYM_ROW_EVERY, TIP_EVERY } from './feed';
 import { createMemoryContentPort } from '../testing';
-import { type MixEdition } from '../entries/mix';
-import { type NotificationsEdition } from '../notifications/notifications';
-import { correction, fakeClock, idiom, randomOf, synonymRow, tip, word } from '../test-support';
+import {
+  correction,
+  fakeClock,
+  idiom,
+  randomOf,
+  synonymRow,
+  testEdition,
+  tip,
+  word,
+} from '../test-support';
 
 /** Seeded, so CI checks the same inputs on every run. */
 const runs = { seed: 20261027, numRuns: 100 };
 
 /** An Edition with every kind of Entry on, whose one Category, the test Words' own, is in its default Mix. */
-const edition: Pick<Edition, 'id' | 'isFeatureEnabled'> &
-  MixEdition &
-  NotificationsEdition &
-  GameEdition = {
-  id: 'test',
+const edition = testEdition({
   isFeatureEnabled: (feature) => ['corrections', 'idioms', 'synonymRows', 'tips'].includes(feature),
-  languageTraits: { distractorRule: 'same-part-of-speech' },
-  userSettingDefaults: {
-    mix: {
-      categoryIds: ['test'],
-      correctionCategoryIds: 'all' as const,
-      corrections: true,
-      idioms: true,
-      synonymRows: true,
-      tips: true,
-    },
-    notificationTimes: [],
-  },
-};
+});
 
 /** The kinds that take turns, by their letter, in the order they win a card both turns fall on. */
 const TURNS = [

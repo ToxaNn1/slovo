@@ -9,7 +9,7 @@ import {
   type Random,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
-import { fakeClock, seededRandom, word } from '../test-support';
+import { fakeClock, seededRandom, testEdition, word } from '../test-support';
 
 /** Three Words of each rarity 1–5 in the Category `test`, ids like `w_r3_1`. */
 const threeOfEachRarity: Word[] = [1, 2, 3, 4, 5].flatMap((rarity) =>
@@ -35,12 +35,11 @@ async function open({
       words: [...words],
       corrections: [],
     }),
-    edition: {
-      id: 'test',
+    edition: testEdition({
+      isFeatureEnabled: (feature) => !off.includes(feature),
       userSettingDefaults: {
         mix: {
           categoryIds: 'all',
-          correctionCategoryIds: 'all',
           corrections: false,
           idioms: false,
           synonymRows: false,
@@ -48,9 +47,7 @@ async function open({
         },
         notificationTimes: ['09:00'],
       },
-      isFeatureEnabled: (feature) => !off.includes(feature),
-      languageTraits: { distractorRule: 'same-part-of-speech' },
-    },
+    }),
     userState: await openUserState({ port: createMemoryUserStatePort() }),
     clock: fakeClock().clock,
     random,

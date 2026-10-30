@@ -15,7 +15,7 @@ import {
   type Round,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
-import { optionsOf, seededRandom } from '../test-support';
+import { optionsOf, seededRandom, testEdition } from '../test-support';
 
 function correction(
   id: string,
@@ -157,24 +157,12 @@ async function run({
 } = {}): Promise<Composition> {
   const app = await openComposition({
     content: pack,
-    edition: {
-      id: 'test',
+    edition: testEdition({
       isFeatureEnabled: (feature) =>
         !off.includes(feature) &&
         (feature === 'game' || feature === 'gameGuessWord' || withCorrections),
-      userSettingDefaults: {
-        mix: {
-          categoryIds: ['nature'],
-          correctionCategoryIds: 'all' as const,
-          corrections: correctionsInMix,
-          idioms: true,
-          synonymRows: true,
-          tips: true,
-        },
-        notificationTimes: [],
-      },
-      languageTraits: { distractorRule: 'same-part-of-speech' },
-    },
+      userSettingDefaults: { mix: { categoryIds: ['nature'], corrections: correctionsInMix } },
+    }),
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock: {
       now: () => new Date('2026-10-15T09:00:00+03:00'),

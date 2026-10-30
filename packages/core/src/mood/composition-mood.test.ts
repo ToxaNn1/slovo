@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createMemoryUserStatePort, openComposition, openUserState } from '../index';
 import { createMemoryContentPort } from '../testing';
-import { fakeClock, word } from '../test-support';
+import { fakeClock, testEdition, word, type TestEditionOverrides } from '../test-support';
 
 const moods = [
   { id: 'calm', name: 'Calm', emoji: '😌' },
@@ -10,28 +10,24 @@ const moods = [
 ];
 
 /** The Core composition of one app run over a calm Word and a Word without moods. */
-async function run({ edition = {} }: { edition?: { moods?: typeof moods } } = {}) {
+async function run({ edition = {} }: { edition?: TestEditionOverrides } = {}) {
   return openComposition({
     content: createMemoryContentPort({
       words: [word('w_quiet', { moods: ['calm'] }), word('w_plain')],
     }),
-    edition: {
-      id: 'test',
-      languageTraits: { distractorRule: 'same-part-of-speech' },
+    edition: testEdition({
+      isFeatureEnabled: (feature) => feature === 'moods',
       userSettingDefaults: {
         mix: {
           categoryIds: 'all',
-          correctionCategoryIds: 'all',
           corrections: false,
           idioms: false,
           synonymRows: false,
           tips: false,
         },
-        notificationTimes: [],
       },
-      isFeatureEnabled: (feature) => feature === 'moods',
       ...edition,
-    },
+    }),
     userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
     clock: fakeClock().clock,
     random: { next: () => 0.25 },

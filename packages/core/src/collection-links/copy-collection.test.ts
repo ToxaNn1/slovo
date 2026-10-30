@@ -25,6 +25,7 @@ import {
   fakeClock,
   randomOf,
   steppingRandom,
+  testEdition,
   testSchedule,
   word,
 } from '../test-support';
@@ -41,22 +42,6 @@ const content = createMemoryContentPort({
   ],
   corrections: [correction('c_one')],
 });
-
-const edition = {
-  id: 'test',
-  languageTraits: { distractorRule: 'same-part-of-speech' as const },
-  userSettingDefaults: {
-    mix: {
-      categoryIds: ['test'],
-      correctionCategoryIds: 'all' as const,
-      corrections: true,
-      idioms: true,
-      synonymRows: true,
-      tips: true,
-    },
-    notificationTimes: [],
-  },
-};
 
 /** An id no link was made with. */
 const UNKNOWN_ID = 'Ab3dE5gH9k';
@@ -85,10 +70,9 @@ async function reader({
   const switchedOff = new Set<FeatureSwitch>(off);
   const app = await openComposition({
     content,
-    edition: {
-      ...edition,
+    edition: testEdition({
       isFeatureEnabled: (feature) => feature !== 'knowledge' && !switchedOff.has(feature),
-    },
+    }),
     userState: userState ?? (await openUserState({ port: createMemoryUserStatePort(new Map()) })),
     clock: fakeClock().clock,
     random: steppingRandom(),

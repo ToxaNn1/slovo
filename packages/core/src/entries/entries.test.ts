@@ -7,11 +7,9 @@ import {
   createMemoryUserStatePort,
   openRemoteSwitches,
   openUserState,
-  type Edition,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
-import { type MixEdition } from './mix';
-import { countingReads, idiom, randomOf } from '../test-support';
+import { countingReads, idiom, randomOf, testEdition } from '../test-support';
 
 function word(id: string, overrides: Partial<Word> = {}): Word {
   return {
@@ -113,28 +111,16 @@ const categories = [
  * those of Synonym Rows and Tips on unless `off` names them; `speech` and
  * `nature`, and every kind as a whole, in its default Mix.
  */
-const editionWith = (
-  corrections: boolean,
-  idioms = true,
-  off: readonly FeatureSwitch[] = [],
-): Pick<Edition, 'isFeatureEnabled'> & MixEdition => ({
-  isFeatureEnabled: (feature) =>
-    !off.includes(feature) &&
-    ((feature === 'corrections' && corrections) ||
-      (feature === 'idioms' && idioms) ||
-      feature === 'synonymRows' ||
-      feature === 'tips'),
-  userSettingDefaults: {
-    mix: {
-      categoryIds: ['speech', 'nature'],
-      correctionCategoryIds: 'all' as const,
-      corrections: true,
-      idioms: true,
-      synonymRows: true,
-      tips: true,
-    },
-  },
-});
+const editionWith = (corrections: boolean, idioms = true, off: readonly FeatureSwitch[] = []) =>
+  testEdition({
+    isFeatureEnabled: (feature) =>
+      !off.includes(feature) &&
+      ((feature === 'corrections' && corrections) ||
+        (feature === 'idioms' && idioms) ||
+        feature === 'synonymRows' ||
+        feature === 'tips'),
+    userSettingDefaults: { mix: { categoryIds: ['speech', 'nature'] } },
+  });
 
 const openContent = () =>
   createMemoryContentPort({ categories, words, corrections, idioms, synonymRows, tips });
@@ -323,6 +309,7 @@ describe('the Entries', () => {
       const edition = {
         ...editionWith(true),
         userSettingDefaults: {
+          ...editionWith(true).userSettingDefaults,
           mix: {
             categoryIds: 'all' as const,
             correctionCategoryIds: 'all' as const,
@@ -372,6 +359,7 @@ describe('the Entries', () => {
           {
             ...edition,
             userSettingDefaults: {
+              ...edition.userSettingDefaults,
               mix: { ...edition.userSettingDefaults.mix, [feature]: false },
             },
           },

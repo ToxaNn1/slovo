@@ -15,7 +15,7 @@ import {
   type RoundBlank,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
-import { seededRandom, word } from '../test-support';
+import { seededRandom, testEdition, word } from '../test-support';
 
 const test: Category = { id: 'test', displayName: 'Test' };
 const crafts: Category = { id: 'crafts', displayName: 'Crafts' };
@@ -66,22 +66,10 @@ async function run({
 }: { seed?: number; off?: readonly string[]; words?: ContentReadPort } = {}): Promise<Composition> {
   const app = await openComposition({
     content: words,
-    edition: {
-      id: 'test',
+    edition: testEdition({
       isFeatureEnabled: (feature) => !off.includes(feature),
-      userSettingDefaults: {
-        mix: {
-          categoryIds: ['test', 'crafts'],
-          correctionCategoryIds: 'all' as const,
-          corrections: true,
-          idioms: true,
-          synonymRows: true,
-          tips: true,
-        },
-        notificationTimes: [],
-      },
-      languageTraits: { distractorRule: 'same-part-of-speech' },
-    },
+      userSettingDefaults: { mix: { categoryIds: ['test', 'crafts'] } },
+    }),
     userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
     clock: {
       now: () => new Date('2026-10-26T09:00:00+02:00'),

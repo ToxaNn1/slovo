@@ -11,7 +11,7 @@ import {
   type FeedCard,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
-import { fakeClock, randomOf, word } from '../test-support';
+import { fakeClock, randomOf, testEdition, word } from '../test-support';
 
 const words: readonly Word[] = Array.from({ length: 20 }, (_, index) =>
   word(`w_${String(index).padStart(2, '0')}`),
@@ -33,22 +33,12 @@ async function run({
   const { clock, advance } = fakeClock(morningOf(on));
   const app = await openComposition({
     content: createMemoryContentPort({ words }),
-    edition: {
-      id: 'test',
+    edition: testEdition({
       isFeatureEnabled: (feature) => feature === 'firstWeek' && firstWeek,
-      languageTraits: { distractorRule: 'same-part-of-speech' },
       userSettingDefaults: {
-        mix: {
-          categoryIds: ['test'],
-          correctionCategoryIds: 'all' as const,
-          corrections: false,
-          idioms: false,
-          synonymRows: false,
-          tips: false,
-        },
-        notificationTimes: [],
+        mix: { corrections: false, idioms: false, synonymRows: false, tips: false },
       },
-    },
+    }),
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock,
     random: randomOf(0.25),

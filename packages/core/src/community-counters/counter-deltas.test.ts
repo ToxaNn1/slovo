@@ -9,7 +9,7 @@ import {
   userStateRecords,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
-import { fakeClock, word } from '../test-support';
+import { fakeClock, testEdition, word } from '../test-support';
 
 const content = createMemoryContentPort({ words: [word('w_one'), word('w_two')] });
 
@@ -23,22 +23,12 @@ async function run({
 } = {}): Promise<Composition> {
   return openComposition({
     content,
-    edition: {
-      id: 'test',
+    edition: testEdition({
       isFeatureEnabled: (feature) => on.includes(feature),
-      languageTraits: { distractorRule: 'same-part-of-speech' },
       userSettingDefaults: {
-        mix: {
-          categoryIds: ['test'],
-          correctionCategoryIds: 'all' as const,
-          corrections: false,
-          idioms: false,
-          synonymRows: false,
-          tips: false,
-        },
-        notificationTimes: [],
+        mix: { corrections: false, idioms: false, synonymRows: false, tips: false },
       },
-    },
+    }),
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock: fakeClock('2026-10-28T09:00:00.000Z').clock,
     random: { next: () => 0.25 },

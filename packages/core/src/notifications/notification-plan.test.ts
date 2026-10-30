@@ -16,7 +16,7 @@ import {
   createMemoryContentPort,
   type FakeNotificationScheduler,
 } from '../testing';
-import { correction, countingReads, fakeClock, word } from '../test-support';
+import { correction, countingReads, fakeClock, testEdition, word } from '../test-support';
 
 /** The instant these tests start at. */
 const start = '2026-10-14T08:00:00+03:00';
@@ -74,24 +74,15 @@ async function run({
   );
   const app = await openComposition({
     content,
-    edition: {
-      id: 'test',
+    edition: testEdition({
       isFeatureEnabled: (feature) =>
         !switchedOff.includes(feature) && (politePause || feature !== 'politePause'),
-      languageTraits: { distractorRule: 'same-part-of-speech' },
       userSettingDefaults: {
-        mix: {
-          categoryIds: mixCategoryIds,
-          correctionCategoryIds: 'all' as const,
-          corrections: true,
-          idioms: true,
-          synonymRows: true,
-          tips: true,
-        },
+        mix: { categoryIds: mixCategoryIds },
         notificationTimes: defaultTimes,
       },
       notificationSound: notificationSound ?? undefined,
-    },
+    }),
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock,
     random: { next: () => 0.25 },

@@ -18,7 +18,7 @@ import {
   type ContentReadPort,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
-import { correction, fakeClock, idiom, steppingRandom, word } from '../test-support';
+import { correction, fakeClock, idiom, steppingRandom, testEdition, word } from '../test-support';
 
 /** The instant these tests start at. */
 const start = '2026-10-16T09:00:00+03:00';
@@ -123,8 +123,7 @@ async function run({
 } = {}): Promise<Composition> {
   return openComposition({
     content,
-    edition: {
-      id: 'test',
+    edition: testEdition({
       isFeatureEnabled: (feature) =>
         feature === 'widget'
           ? withWidget
@@ -132,19 +131,8 @@ async function run({
             (withCorrections && feature === 'corrections') ||
             (withIdioms && feature === 'idioms') ||
             (withRowsAndTips && (feature === 'synonymRows' || feature === 'tips')),
-      languageTraits: { distractorRule: 'same-part-of-speech' },
-      userSettingDefaults: {
-        mix: {
-          categoryIds: categories.map(({ id }) => id),
-          correctionCategoryIds: 'all' as const,
-          corrections: true,
-          idioms: true,
-          synonymRows: true,
-          tips: true,
-        },
-        notificationTimes: [],
-      },
-    },
+      userSettingDefaults: { mix: { categoryIds: categories.map(({ id }) => id) } },
+    }),
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock,
     random: steppingRandom(),

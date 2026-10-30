@@ -26,3 +26,4 @@ export { createFakeReportsApi, type FakeReportsApi } from './fakes/fake-reports-
 export { createFakeSyncApi } from './fakes/fake-sync-api';
 export { createMemoryContentPort } from './fakes/memory-content';
 export { createMemoryPackFiles, type MemoryPackFile } from './fakes/memory-pack-files';
+export { testEdition, type TestEditionOverrides } from './test-support';

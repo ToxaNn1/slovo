@@ -12,7 +12,7 @@ import {
 } from '../index';
 import { createFakeSyncApi, createMemoryContentPort } from '../testing';
 import { createSyncExchange } from './exchange';
-import { fakeClock, randomOf, word } from '../test-support';
+import { fakeClock, randomOf, testEdition, word } from '../test-support';
 
 const {
   activeDays,
@@ -30,22 +30,10 @@ const content = createMemoryContentPort({
   corrections: [],
 });
 
-const edition = {
-  id: 'test',
-  isFeatureEnabled: (feature: string) => feature === 'knowledge',
-  languageTraits: { distractorRule: 'same-part-of-speech' as const },
-  userSettingDefaults: {
-    mix: {
-      categoryIds: ['test', 'sea'],
-      correctionCategoryIds: 'all' as const,
-      corrections: false,
-      idioms: true,
-      synonymRows: true,
-      tips: true,
-    },
-    notificationTimes: [],
-  },
-};
+const edition = testEdition({
+  isFeatureEnabled: (feature) => feature === 'knowledge',
+  userSettingDefaults: { mix: { categoryIds: ['test', 'sea'], corrections: false } },
+});
 
 /** One Account on a fake backend, and the devices signed into it, on one clock. */
 function account(start = '2026-10-18T09:00:00.000Z') {

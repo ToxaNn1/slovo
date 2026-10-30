@@ -3,28 +3,12 @@ import { describe, expect, it } from 'vitest';
 
 import { createMemoryUserStatePort, openComposition, openUserState } from '../index';
 import { createFakeCollectionLinksApi, createMemoryContentPort } from '../testing';
-import { fakeClock, randomOf, testSchedule, word } from '../test-support';
+import { fakeClock, randomOf, testEdition, testSchedule, word } from '../test-support';
 
 /** Long enough for every wait between the tries of one request (ADR 0037). */
 const ALL_TRIES = 10_000;
 
 /** The Edition's one Category, the test Words' own, and its default Mix of every Category. */
-const testCategories = {
-  id: 'test',
-  languageTraits: { distractorRule: 'same-part-of-speech' as const },
-  userSettingDefaults: {
-    mix: {
-      categoryIds: ['test'],
-      correctionCategoryIds: 'all' as const,
-      corrections: true,
-      idioms: true,
-      synonymRows: true,
-      tips: true,
-    },
-    notificationTimes: [],
-  },
-};
-
 /** The share sheet's message of the Ukrainian Edition. */
 const strings = { message: 'Колекція «{name}» у SLOVO: {url}' };
 
@@ -59,7 +43,7 @@ async function device({
   const isFeatureEnabled = (feature: FeatureSwitch) => !switchedOff.has(feature);
   const app = await openComposition({
     content,
-    edition: { ...testCategories, id: 'uk', isFeatureEnabled },
+    edition: testEdition({ id: 'uk', isFeatureEnabled }),
     userState: await openUserState({ port: createMemoryUserStatePort() }),
     clock: time.clock,
     random: randomOf(0.5),

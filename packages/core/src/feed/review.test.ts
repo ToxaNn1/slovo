@@ -11,7 +11,7 @@ import {
   type Feed,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
-import { correction, fakeClock, idiom, randomOf, word } from '../test-support';
+import { correction, fakeClock, idiom, randomOf, testEdition, word } from '../test-support';
 
 /** Twenty Words of the test Category, one of another Category and one of rarity 1. */
 const words: readonly Word[] = [
@@ -85,22 +85,10 @@ async function run({
       synonymRows: withRowsAndTips ? synonymRows : [],
       tips: withRowsAndTips ? tips : [],
     }),
-    edition: {
-      id: 'test',
+    edition: testEdition({
       isFeatureEnabled: (feature) => on.includes(feature),
-      languageTraits: { distractorRule: 'same-part-of-speech' },
-      userSettingDefaults: {
-        mix: {
-          categoryIds: ['test', 'other'],
-          correctionCategoryIds: 'all' as const,
-          corrections: true,
-          idioms: true,
-          synonymRows: true,
-          tips: true,
-        },
-        notificationTimes: [],
-      },
-    },
+      userSettingDefaults: { mix: { categoryIds: ['test', 'other'] } },
+    }),
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock,
     random: randomOf(0.25),

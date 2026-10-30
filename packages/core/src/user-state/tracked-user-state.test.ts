@@ -11,7 +11,7 @@ import {
   type UserStatePort,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
-import { fakeClock, word } from '../test-support';
+import { fakeClock, testEdition, word } from '../test-support';
 
 const {
   activeDays,
@@ -215,22 +215,10 @@ describe('the settings and the composition over the tracked user state', () => {
     });
     const app = await openComposition({
       content: createMemoryContentPort({ words: [word('w_one'), word('w_two')], corrections: [] }),
-      edition: {
-        id: 'test',
+      edition: testEdition({
         isFeatureEnabled: () => false,
-        languageTraits: { distractorRule: 'same-part-of-speech' },
-        userSettingDefaults: {
-          mix: {
-            categoryIds: ['test'],
-            correctionCategoryIds: 'all' as const,
-            corrections: false,
-            idioms: true,
-            synonymRows: true,
-            tips: true,
-          },
-          notificationTimes: [],
-        },
-      },
+        userSettingDefaults: { mix: { corrections: false } },
+      }),
       userState,
       clock: time.clock,
       random: { next: () => 0.25 },
