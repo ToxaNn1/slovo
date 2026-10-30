@@ -1,6 +1,6 @@
 # Property tests
 
-The Core keeps example tests as its main tests. Add a property test with [fast-check](https://fast-check.dev) (a devDependency of `packages/core` only) when a rule must hold for every input of a pure seam, and a few examples would leave whole classes of input unchecked: dates across daylight-saving changes, the Feed's turn order over any Cycle size, the grid of any Daily Crossword day.
+The Core keeps example tests as its main tests. Add a property test with [fast-check](https://fast-check.dev) (a devDependency of `packages/core` and `packages/language-pack` only) when a rule must hold for every input of a pure seam, and a few examples would leave whole classes of input unchecked: dates across daylight-saving changes, the Feed's turn order over any Cycle size, the grid of any Daily Crossword day.
 
 - Name the file `<module>.property.test.ts`, next to the module's example tests, so `pnpm test` runs it.
 - Go through the public seams (`@slovo/core`, `../index`), as every Core test does. Inject time and randomness as usual; fast-check draws only the inputs.
