@@ -53,6 +53,18 @@ export const MixStringsSchema = z.strictObject({
     normal: TextSchema,
     more: TextSchema,
   }),
+  /**
+   * The Quick Question frequency choice: its title, its subtitle and the names
+   * of the four frequencies, never, every 20th, every 10th and every 6th card.
+   */
+  quickQuestion: z.strictObject({
+    title: TextSchema,
+    subtitle: TextSchema,
+    off: TextSchema,
+    rare: TextSchema,
+    normal: TextSchema,
+    often: TextSchema,
+  }),
   /** The line that says why the last Category's chip can't be turned off. VoiceOver reads it as that chip's hint. */
   lastCategoryHint: TextSchema,
 });

@@ -24,6 +24,8 @@ export const feedStringsShape = {
     /** The VoiceOver actions that stand in for swiping up and down. */
     nextEntry: TextSchema,
     previousEntry: TextSchema,
+    /** The title over a Quick Question in the Feed. */
+    quickQuestion: TextSchema,
   }),
   /** The badge on the card of the Word of the Day. */
   wordOfTheDay: z.strictObject({

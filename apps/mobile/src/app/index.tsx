@@ -6,6 +6,7 @@ import {
   FirstWeekCard,
   PagerScrollView,
   Placeholder,
+  QuickQuestionRound,
   SearchButton,
   space,
   SwipeHint,
@@ -25,6 +26,7 @@ import { EntryActions, useKnowledgeButtons } from '@/entries/entry-actions';
 import { useOpenScreen } from '@/entries/use-open-screen';
 import { deviceClock } from '@/device/device-clock';
 import { useFeed } from '@/feed/feed';
+import { gameModeStrings } from '@/game/game-modes';
 import { wordOfTheDayLanding } from '@/feed/word-of-the-day-landing';
 import { useFirstWeekStreak } from '@/feed/first-week';
 import { TOP_ROW } from '@/edition/feed-loading';
@@ -62,7 +64,7 @@ function FeedScreen() {
   const shown = useShown();
   const openScreen = useOpenScreen();
 
-  const { cards, onCardChange, openCorrection } = feed;
+  const { cards, onCardChange, openCorrection, answerQuickQuestion } = feed;
   const { dismiss: dismissSwipeHint } = swipeHint;
   // Kept from render to render: a swipe re-renders the pager, and its pages
   // re-render only when their card changes.
@@ -70,13 +72,14 @@ function FeedScreen() {
     (card: FeedCard, position: number) => (
       <FeedPage
         // A card that takes the place of a hidden one starts afresh, scrolled to its top.
-        key={card.kind === 'notice' ? `notice-${card.notice}` : (card.entryId ?? card.kind)}
+        key={pageKey(card)}
         card={card}
         position={position}
         onOpenCorrection={openCorrection}
+        onAnswerQuickQuestion={answerQuickQuestion}
       />
     ),
-    [openCorrection],
+    [openCorrection, answerQuickQuestion],
   );
   const onIndexChange = useCallback(
     (position: number) => {
@@ -129,19 +132,48 @@ function FeedScreen() {
   );
 }
 
+/** The key of a card's page, by the Entry, Feed Notice or Quick Question it shows. */
+function pageKey(card: FeedCard): string {
+  if (card.kind === 'notice') return `notice-${card.notice}`;
+  if (card.kind === 'quick-question') return `quick-question-${card.askedId}`;
+  return card.entryId ?? card.kind;
+}
+
 const FeedPage = memo(function FeedPage({
   card,
   position,
   onOpenCorrection,
+  onAnswerQuickQuestion,
 }: {
   card: FeedCard;
   position: number;
   /** Opens the Correction that the Word card at `position` links. */
   onOpenCorrection: (position: number, correctionId: string) => void;
+  /** Keeps the option picked on the Quick Question at `position`. */
+  onAnswerQuickQuestion: (position: number, option: number) => void;
 }) {
   const { top } = useSafeAreaInsets();
   const { selfCheck, stressFall, calligraphicLemma } = useShown();
   const openScreen = useOpenScreen();
+  if (card.kind === 'quick-question')
+    return (
+      <View
+        testID={`feed-card-${String(position)}`}
+        style={[styles.page, { paddingTop: top + TOP_ROW }]}
+      >
+        <PagerScrollView>
+          <QuickQuestionRound
+            title={feedStrings.quickQuestion}
+            round={card.round}
+            label={gameModeStrings(editionStrings.game.modes, card.modeId).roundLabel}
+            answered={card.answered}
+            onAnswer={(option) => {
+              onAnswerQuickQuestion(position, option);
+            }}
+          />
+        </PagerScrollView>
+      </View>
+    );
   if (card.kind === 'end-of-cycle' || (card.kind === 'notice' && card.notice !== 'yesterday'))
     return (
       <View

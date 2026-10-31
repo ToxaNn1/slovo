@@ -34,7 +34,7 @@ export { DailyCrosswordCard } from './game/DailyCrosswordCard';
 export { GameModeCard } from './game/GameModeCard';
 export { GameResult } from './game/GameResult';
 export { GameReview } from './game/GameReview';
-export { GameRound } from './game/GameRound';
+export { GameRound, QuickQuestionRound } from './game/GameRound';
 export { TypedAnswer, type TypedAnswerBlank } from './game/TypedAnswer';
 export { OrderedChips } from './game/OrderedChips';
 export { PairsGrid } from './game/PairsGrid';
