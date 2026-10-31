@@ -122,7 +122,7 @@ describe('openEdition', () => {
       change: (dir) => {
         editJson(join(dir, 'edition.json'), ({ locale: _locale, ...config }) => ({
           ...config,
-          linkDomain: 'Not A Domain',
+          featureSwitches: 'all',
           extra: true,
         }));
       },
@@ -133,91 +133,10 @@ describe('openEdition', () => {
     expect(failure?.reason).toBe('invalid');
     expect(failure?.errors.map(({ file, field }) => `${file} › ${field ?? ''}`)).toEqual([
       'edition.json › locale',
-      'edition.json › linkDomain',
+      'edition.json › featureSwitches',
       'edition.json › extra',
     ]);
     expect(failure?.message).toMatch(/fixture.*edition\.json › locale/s);
-  });
-
-  it('keeps the placeholder domains for a development build', () => {
-    const editionsDir = editionsWith();
-
-    const edition = openEdition(editionsDir, 'fixture');
-
-    expect(edition.config).toMatchObject({
-      linkDomain: 'slovo.example',
-      legalDomain: 'legal.slovo.example',
-    });
-  });
-
-  it('refuses the placeholder domains for a release build', () => {
-    const editionsDir = editionsWith();
-
-    const failure = failureOf(() => openEdition(editionsDir, 'fixture', { build: 'release' }));
-
-    expect(failure?.reason).toBe('invalid');
-    expect(failure?.errors.map(({ file, field }) => `${file} › ${field ?? ''}`)).toEqual([
-      'edition.json › linkDomain',
-      'edition.json › legalDomain',
-    ]);
-  });
-
-  it('refuses a placeholder legal domain alone for a release build', () => {
-    const editionsDir = editionsWith({
-      change: (dir) => {
-        editJson(join(dir, 'edition.json'), (config) => ({
-          ...config,
-          linkDomain: 'slovo.app',
-          legalDomain: 'legal.slovo.example',
-        }));
-      },
-    });
-
-    const failure = failureOf(() => openEdition(editionsDir, 'fixture', { build: 'release' }));
-
-    expect(failure?.errors.map(({ field }) => field)).toEqual(['legalDomain']);
-  });
-
-  it.each([
-    'slovo.test',
-    'links.slovo.invalid',
-    'slovo.localhost',
-    'example.com',
-    'slovo.example.net',
-    'links.slovo.example.org',
-  ])('refuses %s, a domain reserved for examples, for a release build', (linkDomain) => {
-    const editionsDir = editionsWith({
-      change: (dir) => {
-        editJson(join(dir, 'edition.json'), (config) => ({
-          ...config,
-          linkDomain,
-          legalDomain: 'legal.slovo.app',
-        }));
-      },
-    });
-
-    const failure = failureOf(() => openEdition(editionsDir, 'fixture', { build: 'release' }));
-
-    expect(failure?.errors.map(({ field }) => field)).toEqual(['linkDomain']);
-  });
-
-  it('opens an Edition with its real domains for a release build', () => {
-    const editionsDir = editionsWith({
-      change: (dir) => {
-        editJson(join(dir, 'edition.json'), (config) => ({
-          ...config,
-          linkDomain: 'slovo.app',
-          legalDomain: 'legal.slovo.app',
-        }));
-      },
-    });
-
-    const edition = openEdition(editionsDir, 'fixture', { build: 'release' });
-
-    expect(edition.config).toMatchObject({
-      linkDomain: 'slovo.app',
-      legalDomain: 'legal.slovo.app',
-    });
   });
 
   it('reports a config that is not JSON', () => {

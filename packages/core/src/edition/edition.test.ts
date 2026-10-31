@@ -96,8 +96,6 @@ const validConfig = {
       rarityCeiling: 5,
     },
   },
-  linkDomain: 'slovo.example',
-  legalDomain: 'legal.slovo.example',
   wordOfTheDayFont: 'Script-Regular.ttf',
   widgetPalette: {
     parchment: { background: '#F3E9D2', text: '#3B2A1A' },
@@ -382,28 +380,6 @@ describe('loadEdition', () => {
     expect(edition.userSettingDefaults.dailyLimit).toBe(20);
   });
 
-  it('derives the addresses of its privacy policy and its terms from its legal domain and its id', () => {
-    expect(loadEdition(validConfig).legalPages).toEqual({
-      privacy: 'https://legal.slovo.example/test/privacy',
-      terms: 'https://legal.slovo.example/test/terms',
-    });
-  });
-
-  it("opens the legal pages at the Edition's own domain, not another Edition's", () => {
-    expect(
-      loadEdition({ ...validConfig, id: 'uk', legalDomain: 'legal.slovo.app' }).legalPages,
-    ).toEqual({
-      privacy: 'https://legal.slovo.app/uk/privacy',
-      terms: 'https://legal.slovo.app/uk/terms',
-    });
-  });
-
-  it('refuses a config without a legal domain', () => {
-    const { legalDomain: _removed, ...without } = validConfig;
-
-    expect(() => loadEdition(without)).toThrow('legalDomain');
-  });
-
   it('refuses hand-written legal page addresses in the config', () => {
     const legalPages = {
       privacy: 'https://example.org/privacy',
@@ -413,20 +389,10 @@ describe('loadEdition', () => {
     expect(() => loadEdition({ ...validConfig, legalPages })).toThrow('legalPages');
   });
 
-  it('reports the domain of its Collection Links, the only one whose links the app opens', () => {
-    expect(loadEdition(validConfig).linkDomain).toBe('slovo.example');
-  });
-
-  it('requires the domain of its Collection Links', () => {
-    const { linkDomain: _removed, ...config } = validConfig;
-
-    expect(() => loadEdition(config)).toThrow('linkDomain');
-  });
-
-  it.each(['https://slovo.example', 'Slovo.example', 'slovo', 'slovo.example/c', '-slovo.example'])(
-    'refuses %s as the domain of its Collection Links',
-    (linkDomain) => {
-      expect(() => loadEdition({ ...validConfig, linkDomain })).toThrow('linkDomain');
+  it.each(['linkDomain', 'legalDomain'])(
+    'refuses a %s of its own: every Edition lives under the one domain of the app (ADR 0065)',
+    (field) => {
+      expect(() => loadEdition({ ...validConfig, [field]: 'slovo.example' })).toThrow(field);
     },
   );
 

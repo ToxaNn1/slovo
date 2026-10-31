@@ -94,12 +94,6 @@ function repoWithEdition(
   return { ...context, projectRoot };
 }
 
-/** The real domains the Edition check asks of a release build. */
-function withReleaseIds(config: Record<string, unknown>): void {
-  config['linkDomain'] = 'slovo.app';
-  config['legalDomain'] = 'legal.slovo.app';
-}
-
 /** The real domain and Apple Team ID the AppConfig check asks of a release build. */
 function withReleaseApp(config: Record<string, unknown>): void {
   config['domain'] = 'slovo.app';
@@ -112,7 +106,7 @@ function withReleaseApp(config: Record<string, unknown>): void {
  * as a release build needs.
  */
 function repoWithCertificate(): ConfigContext {
-  const repo = repoWithEdition(withReleaseIds, { editApp: withReleaseApp });
+  const repo = repoWithEdition(() => undefined, { editApp: withReleaseApp });
   mkdirSync(join(repo.projectRoot, 'certs'));
   writeFileSync(
     join(repo.projectRoot, 'certs/certificate.pem'),
@@ -275,11 +269,11 @@ describe('app config', () => {
   it('names the field when the Edition config is invalid', () => {
     const broken = repoWithEdition((config) => {
       delete config['locale'];
-      config['linkDomain'] = 'Not A Domain';
+      delete config['displayName'];
     });
 
     expect(() => appConfig(broken)).toThrow(
-      /editions\/uk is not valid.*edition\.json › locale.*edition\.json › linkDomain/s,
+      /editions\/uk is not valid.*edition\.json › locale.*edition\.json › displayName/s,
     );
   });
 
@@ -508,30 +502,15 @@ describe('app config', () => {
   });
 
   it("claims the app's domain for Collection Links (ADR 0058, 0065)", () => {
-    const otherDomain = repoWithEdition(
-      (config) => {
-        config['linkDomain'] = 'links.slovo.test';
+    const otherDomain = repoWithEdition(() => undefined, {
+      editApp: (config) => {
+        config['domain'] = 'links.slovo.test';
       },
-      {
-        editApp: (config) => {
-          config['domain'] = 'links.slovo.test';
-        },
-      },
-    );
+    });
 
     expect(
       appConfig(otherDomain).ios?.entitlements?.['com.apple.developer.associated-domains'],
     ).toEqual(['applinks:links.slovo.test']);
-  });
-
-  it("refuses an Edition whose link domain is not the app's domain", () => {
-    const otherDomain = repoWithEdition((config) => {
-      config['linkDomain'] = 'links.slovo.test';
-    });
-
-    expect(() => appConfig(otherDomain)).toThrow(
-      /linkDomain "links\.slovo\.test".*"slovo\.example"/s,
-    );
   });
 
   it('adds the widget extension from apps/widget', () => {
@@ -656,7 +635,16 @@ describe('app config', () => {
   });
 
   it("gives the Spotlight module the app's scheme, so a tapped result opens as its link", () => {
-    expect(appConfig(context).ios?.infoPlist?.['SlovoLinkScheme']).toBe('slovo-uk');
+    expect(appConfig(context).ios?.infoPlist?.['SlovoLinkScheme']).toBe('slovo');
+  });
+
+  it('opens every Edition under one scheme and one domain (ADR 0065)', () => {
+    const config = appConfig(context);
+
+    expect(config.scheme).toBe('slovo');
+    expect(config.ios?.entitlements?.['com.apple.developer.associated-domains']).toEqual([
+      'applinks:slovo.example',
+    ]);
   });
 
   it('compiles the App Intents and their App Shortcuts into the app, however often it is prebuilt', async () => {
@@ -869,7 +857,7 @@ describe('app config', () => {
 
     expect(() =>
       appConfig(
-        repoWithEdition(withReleaseIds, {
+        repoWithEdition(() => undefined, {
           editApp: (config) => {
             config['domain'] = 'slovo.example';
             config['appleTeamId'] = '';
@@ -877,22 +865,6 @@ describe('app config', () => {
         }),
       ),
     ).toThrow(/app\/app\.json › domain.*app\/app\.json › appleTeamId/s);
-  });
-
-  it('refuses a release build of an Edition with a placeholder link domain, naming the field', () => {
-    vi.stubEnv('EAS_BUILD_PROFILE', 'testflight');
-    vi.stubEnv('EXPO_PUBLIC_SLOVO_API_URL', 'https://api.example.com');
-
-    expect(() =>
-      appConfig(
-        repoWithEdition(
-          (config) => {
-            config['legalDomain'] = 'legal.slovo.example';
-          },
-          { editApp: withReleaseApp },
-        ),
-      ),
-    ).toThrow(/legalDomain/);
   });
 
   it("keeps the app's placeholder domain and empty Team ID in a development build", () => {
@@ -962,9 +934,9 @@ describe('app config', () => {
       vi.stubEnv('EAS_BUILD_PROFILE', 'testflight');
       vi.stubEnv('EXPO_PUBLIC_SLOVO_API_URL', 'https://api.example.com');
 
-      expect(() => appConfig(repoWithEdition(withReleaseIds, { editApp: withReleaseApp }))).toThrow(
-        /code-signing certificate.*certs\/certificate\.pem/s,
-      );
+      expect(() =>
+        appConfig(repoWithEdition(() => undefined, { editApp: withReleaseApp })),
+      ).toThrow(/code-signing certificate.*certs\/certificate\.pem/s);
     });
   });
 });

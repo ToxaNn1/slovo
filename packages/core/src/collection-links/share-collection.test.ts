@@ -38,7 +38,7 @@ async function device({
 } = {}) {
   const time = fakeClock('2026-10-28T09:00:00.000Z');
   const timers = testSchedule(time);
-  const api = createFakeBackend({ linkDomain: 'slovo.example' });
+  const api = createFakeBackend({ domain: 'slovo.example' });
   const switchedOff = new Set<FeatureSwitch>(off);
   const isFeatureEnabled = (feature: FeatureSwitch) => !switchedOff.has(feature);
   const app = await openComposition({
@@ -89,8 +89,8 @@ describe('sharing a Collection by a Collection Link', () => {
 
     expect(answer).toEqual({
       ok: true,
-      url: 'https://slovo.example/c/link000001',
-      message: 'Колекція «Осінь» у SLOVO: https://slovo.example/c/link000001',
+      url: 'https://slovo.example/uk/c/link000001',
+      message: 'Колекція «Осінь» у SLOVO: https://slovo.example/uk/c/link000001',
     });
     expect(app.api.collectionLinks.made).toEqual([
       { edition: 'uk', name: 'Осінь', entryIds: ['w_buzok', 'w_old', 'w_kvasha'] },
@@ -105,7 +105,7 @@ describe('sharing a Collection by a Collection Link', () => {
 
     const again = await app.share(autumn);
 
-    expect(again).toMatchObject({ ok: true, url: 'https://slovo.example/c/link000002' });
+    expect(again).toMatchObject({ ok: true, url: 'https://slovo.example/uk/c/link000002' });
     expect(app.api.collectionLinks.made.map(({ entryIds }) => entryIds)).toEqual([
       ['w_kvasha'],
       ['w_buzok', 'w_kvasha'],

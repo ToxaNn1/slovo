@@ -11,7 +11,7 @@ const APPLE_ISSUER = 'https://appleid.apple.com';
 /**
  * The Apple verifier (ADR 0047): it checks the token's signature against
  * Apple's published keys, which it keeps for as long as Apple says, its
- * issuer, its expiry and its audience against the Edition's bundle id, which
+ * issuer, its expiry and its audience against the app's bundle id, which
  * is SLOVO's client id at Apple. The email claim is the Account's email, a
  * private relay address included. When Apple's keys can't be fetched, it
  * fails: that is no fault of the token.

@@ -173,11 +173,11 @@ interface ServedRequest {
   offline: boolean;
 }
 
-/** The fake backend's time is the clock's; its links are on the link domain. */
+/** The fake backend's time is the clock's; its links are under each Edition's path on the domain. */
 export function createFakeBackend({
   clock = systemClock,
-  linkDomain = 'links.example',
-}: { clock?: Clock; linkDomain?: string } = {}): FakeBackend {
+  domain = 'links.example',
+}: { clock?: Clock; domain?: string } = {}): FakeBackend {
   const calls: ProcedureName[] = [];
   const failures: FakeFailure[] = [];
   let held: Promise<void> | undefined;
@@ -382,7 +382,7 @@ export function createFakeBackend({
         made.push(input);
         const id = `link${String(made.length).padStart(6, '0')}`;
         linksById.set(id, input);
-        return { id, url: `https://${linkDomain}/c/${id}` };
+        return { id, url: `https://${domain}/${input.edition}/c/${id}` };
       },
       async read({ input, context, errors }) {
         await arrive('collectionLinks.read', context);

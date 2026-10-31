@@ -17,7 +17,6 @@ import {
   WidgetSnapshotSchema,
   WordSchema,
   appReleaseProblems,
-  releaseProblems,
   type AppConfig,
   type Correction,
   type EditionConfig,
@@ -233,7 +232,7 @@ export function listEditions(editionsDir: string): string[] {
 }
 
 /**
- * The build an Edition is opened for: a release build refuses the
+ * The build an AppConfig is opened for: a release build refuses the
  * placeholders a development build keeps, such as `slovo.example`.
  */
 export type EditionBuild = 'development' | 'release';
@@ -242,14 +241,9 @@ export type EditionBuild = 'development' | 'release';
  * Opens the Edition with the given id in an editions folder. The id must
  * name one of its Editions, and the Edition's config must be valid and carry
  * the folder's name as its id, since the app, Metro and the Language Pack
- * look the Edition up by it; for a release build it must hold no
- * placeholder. Throws an EditionFolderError otherwise.
+ * look the Edition up by it. Throws an EditionFolderError otherwise.
  */
-export function openEdition(
-  editionsDir: string,
-  editionId: string,
-  { build = 'development' }: { build?: EditionBuild } = {},
-): EditionFolder {
+export function openEdition(editionsDir: string, editionId: string): EditionFolder {
   const known = listEditions(editionsDir);
   if (!known.includes(editionId)) {
     throw new EditionFolderError(
@@ -269,13 +263,6 @@ export function openEdition(
         message: `The id "${config.id}" differs from its folder "${editionId}": the Edition is looked up by its folder name`,
       },
     ]);
-  }
-  const problems = build === 'release' ? releaseProblems(config) : [];
-  if (problems.length > 0) {
-    throw invalid(
-      files.dir,
-      problems.map(({ field, message }) => ({ file: FILES.config, field, message })),
-    );
   }
   let content: AuthoredContent | undefined;
   return {

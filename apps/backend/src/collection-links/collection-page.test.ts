@@ -25,13 +25,14 @@ describe('the web page of a Collection Link', () => {
    * pack published, and a link shared on it.
    */
   async function shared(entryIds: string[], edition = 'uk') {
-    const folder = testEditions([edition]);
+    // The UA Edition is always there, so a link of another Edition can be asked for under its path.
+    const folder = testEditions([...new Set(['uk', edition])]);
     const pack = folder.buildPack(edition);
     const backend = testApp({ editions: folder.read() });
     await backend.publish(pack);
     const name = newName();
     const { id } = await backend.client.collectionLinks.create({ edition, name, entryIds });
-    return { ...backend, id, name };
+    return { ...backend, id, name, edition };
   }
 
   it('shows a browser the Collection: its name and its Entries by kind, with Stress and the first Definition', async () => {
@@ -43,7 +44,7 @@ describe('the web page of a Collection Link', () => {
       't_18wszq',
     ]);
 
-    const response = await request(`/c/${id}`, { headers: HTML });
+    const response = await request(`/uk/c/${id}`, { headers: HTML });
 
     expect(response.status).toBe(200);
     expect(response.headers.get('content-type')).toMatch(/^text\/html; charset=utf-8/i);
@@ -72,13 +73,13 @@ describe('the web page of a Collection Link', () => {
       'Відкрити в SLOVO',
       'SLOVO поки що в бета-тестуванні: застосунок можна встановити через TestFlight.',
     ]);
-    expect(page).toContain(`<a href="slovo-uk://c/${id}">Відкрити в SLOVO</a>`);
+    expect(page).toContain(`<a href="slovo://c/${id}?edition=uk">Відкрити в SLOVO</a>`);
   });
 
   it('lists only the Entries the published pack has', async () => {
     const { request, id } = await shared(['w_00g2ap', 'w_zzzzzz']);
 
-    const page = await (await request(`/c/${id}`, { headers: HTML })).text();
+    const page = await (await request(`/uk/c/${id}`, { headers: HTML })).text();
 
     expect(textOf(page)).toContain('кракелю́р');
     expect(page).not.toContain('w_zzzzzz');
@@ -87,7 +88,7 @@ describe('the web page of a Collection Link', () => {
   it('answers an unknown link with a page that says it is not available, 404', async () => {
     const { request } = testApp();
 
-    const response = await request('/c/Unknown123', { headers: HTML });
+    const response = await request('/uk/c/Unknown123', { headers: HTML });
 
     expect(response.status).toBe(404);
     expect(response.headers.get('content-type')).toMatch(/^text\/html/);
@@ -99,7 +100,7 @@ describe('the web page of a Collection Link', () => {
   it('answers a malformed id with the same page, 400', async () => {
     const { request } = testApp();
 
-    const response = await request('/c/short', { headers: HTML });
+    const response = await request('/uk/c/short', { headers: HTML });
 
     expect(response.status).toBe(400);
     expect(textOf(await response.text())).toContain('Цього посилання більше немає.');
@@ -110,20 +111,40 @@ describe('the web page of a Collection Link', () => {
     const { request, id, switchOff } = await shared(['w_00g2ap'], 'switched');
     await switchOff('switched', 'collectionLinks');
 
-    const response = await request(`/c/${id}`, { headers: HTML });
+    const response = await request(`/switched/c/${id}`, { headers: HTML });
 
     expect(response.status).toBe(404);
     expect(await response.text()).not.toContain('кракелю́р');
   });
 
+  it('answers a link under the path of another Edition as not available there, 404', async () => {
+    const { request, id } = await shared(['w_00g2ap'], 'other');
+
+    const response = await request(`/uk/c/${id}`, { headers: HTML });
+
+    expect(response.status).toBe(404);
+    const page = await response.text();
+    expect(page).not.toContain('кракелю́р');
+    expect(textOf(page)).toContain('Цього посилання більше немає.');
+  });
+
+  it('serves no link under a path that names no Edition', async () => {
+    const { request, id } = await shared(['w_00g2ap']);
+
+    const response = await request(`/xx/c/${id}`, { headers: HTML });
+
+    expect(response.status).toBe(404);
+    expect(await response.json()).toMatchObject({ code: 'NOT_FOUND' });
+  });
+
   it('keeps the JSON answer for a client that asks for JSON', async () => {
     const { request, id, name } = await shared(['w_00g2ap']);
 
-    const response = await request(`/c/${id}`, { headers: { accept: 'application/json' } });
+    const response = await request(`/uk/c/${id}`, { headers: { accept: 'application/json' } });
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ edition: 'uk', name, entryIds: ['w_00g2ap'] });
-    const unknown = await request('/c/Unknown123', { headers: { accept: 'application/json' } });
+    const unknown = await request('/uk/c/Unknown123', { headers: { accept: 'application/json' } });
     expect(unknown.status).toBe(404);
     expect(await unknown.json()).toMatchObject({ code: 'NOT_FOUND' });
   });

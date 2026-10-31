@@ -70,7 +70,7 @@ let now: number;
 beforeEach(async () => {
   jest.useFakeTimers();
   share = jest.spyOn(Share, 'share').mockResolvedValue({ action: Share.sharedAction });
-  api = createFakeBackend({ linkDomain: 'slovo.example' });
+  api = createFakeBackend({ domain: 'slovo.example' });
   collectionLinksOff = false;
   const loaded = loadEdition(config);
   /** The Edition as the app runs it, `collectionLinks` on unless a test turns it off. */
@@ -157,7 +157,7 @@ describe('«Поділитися посиланням» in a Collection’s menu
     ]);
     expect(share).toHaveBeenCalledTimes(1);
     expect(share).toHaveBeenCalledWith({
-      message: 'Колекція «Осінь» у SLOVO: https://slovo.example/c/link000001',
+      message: 'Колекція «Осінь» у SLOVO: https://slovo.example/uk/c/link000001',
     });
     expect(screen.queryByTestId('undo-toast')).not.toBeOnTheScreen();
   });

@@ -12,7 +12,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - runFlow:
     file: ../fresh-install.yaml
 # A notification's mark and a label of its own, for кракелюр, a Word of the UA Edition.
-- openLink: ${(SCHEME || 'slovo-uk') + '://entry/w_00g2ap?from=notification&back=%D0%92%D1%85%D1%96%D0%B4'}
+- openLink: ${(SCHEME || 'slovo') + '://entry/w_00g2ap?from=notification&back=%D0%92%D1%85%D1%96%D0%B4'}
 # A simulator asks once whether the link may open the app.
 - runFlow:
     when:
@@ -28,7 +28,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - assertVisible:
     id: home
 # The widget's mark without its key, for «приймати до уваги» → «брати до уваги», a Correction.
-- openLink: ${(SCHEME || 'slovo-uk') + '://entry/c_77szl9?from=widget'}
+- openLink: ${(SCHEME || 'slovo') + '://entry/c_77szl9?from=widget'}
 - runFlow:
     when:
       visible: Open

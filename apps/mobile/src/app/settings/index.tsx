@@ -15,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AccountRow } from '@/account/account-row';
 import { useAccountInEffect } from '@/account/account';
-import { edition, editionStrings } from '@/edition/edition';
+import { editionStrings } from '@/edition/edition';
 import { useHiddenSummary } from '@/mix/hidden';
 import { useMixSummary } from '@/mix/mix';
 import { useNotificationsSummary } from '@/notifications/notifications';
@@ -212,7 +212,7 @@ export default function SettingsScreen() {
                 testID="settings-row-privacy"
                 label={strings.about.privacyPolicy}
                 onPress={() => {
-                  openLegalPage(edition.legalPages.privacy);
+                  openLegalPage('privacy');
                 }}
               />
             </SettingsGroup>

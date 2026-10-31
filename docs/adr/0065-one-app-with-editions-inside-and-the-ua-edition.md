@@ -24,7 +24,7 @@ ADR 0002 made every language its own App Store app, an Edition built from the sh
 
 - ADR 0002 is superseded. The 4.3 mitigation list (a name, Decor, content and listing per Edition) is no longer a rule: Decor, content and the store page stay per Edition because they are the Edition, not to pass review.
 - The factory rule that a language needs features of its own to become an Edition goes; a language needs a store page localization for its market. Two or more unique features remain a wish.
-- ADRs written for one app per Edition give way to this one where they conflict and are rewritten with the tickets that do the work: the Edition's own bundle id, Apple ids and link domain (ADR 0006), legal pages behind the Edition's domain (ADR 0049), Collection Links (ADR 0058) and the backend behind the Edition's domain (ADR 0063).
+- ADRs written for one app per Edition give way to this one where they conflict and are rewritten with the tickets that do the work. Done for the link domain, the legal pages, Collection Links and the backend's domain: ADR 0006 (no `linkDomain`), 0049 (legal pages on the app's domain), 0058 (Collection Links at `/<edition>/c/<id>`) and 0063 (the backend behind the app's domain). The rest of the Edition's own bundle id and Apple ids stays for the tickets that do it.
 - The widget, Spotlight and App Intents show only the active Edition: the Widget Snapshot carries the Edition id and the widget, built with the Edition id, reads only that Edition's (ADR 0026); Spotlight items and App Intents name the Edition in their routes as `edition=<id>` (ADR 0057). A link of a native surface naming another Edition opens the app's start. The native parts (strings, fonts, palette) are baked for the bundled Edition at prebuild.
 
 ## Considered Options

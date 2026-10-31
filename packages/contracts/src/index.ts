@@ -1,5 +1,6 @@
 export {
   AppConfigSchema,
+  editionSite,
   DomainSchema,
   appReleaseProblems,
   type AppConfig,
@@ -26,7 +27,6 @@ export {
   ThemeSchema,
   TimeOfDaySchema,
   UserSettingDefaultsConfigSchema,
-  releaseProblems,
   type Category,
   type DailyLimit,
   type DistractorRule,

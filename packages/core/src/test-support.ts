@@ -58,8 +58,6 @@ const testEditionConfig = {
       rarityCeiling: 5,
     },
   },
-  linkDomain: 'slovo.example',
-  legalDomain: 'legal.slovo.example',
   wordOfTheDayFont: 'Test-Regular.ttf',
   widgetPalette: {
     parchment: { background: '#F3E9D2', text: '#3B2A1A' },
