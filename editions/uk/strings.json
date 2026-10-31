@@ -970,7 +970,8 @@
       "start": "Почати",
       "resume": "Продовжити",
       "solvedMark": "✓ Розв’язано",
-      "solved": "Розв’язано!"
+      "solved": "Розв’язано!",
+      "cellLabel": "{cell}. {clue}. Рядок {row}, стовпець {column}"
     },
     "modes": {
       "guess-word": {

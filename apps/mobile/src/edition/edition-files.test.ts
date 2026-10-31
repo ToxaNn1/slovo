@@ -169,6 +169,15 @@ describe('the 0.8.12 Game strings', () => {
       'dailyCrossword.dated',
       { dailyCrossword: { ...(game['dailyCrossword'] as object), dated: 'Кросворд дня' } },
     ],
+    [
+      'dailyCrossword.cellLabel',
+      {
+        dailyCrossword: {
+          ...(game['dailyCrossword'] as object),
+          cellLabel: '{cell}. {clue}. Рядок {row}',
+        },
+      },
+    ],
     ['letters.label', { letters: { ...(game['letters'] as object), label: '{letter}, літера' } }],
     ['letters.empty', { letters: { ...(game['letters'] as object), empty: 'порожня' } }],
   ])('needs the placeholders of game.%s', (path, changed) => {

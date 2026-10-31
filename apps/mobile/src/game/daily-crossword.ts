@@ -140,12 +140,13 @@ export function useDailyCrossword(): DailyCrosswordPlay | null | undefined {
 
 /**
  * What VoiceOver reads for a cell of the Daily Crossword: its letter, if any,
- * and its place in the word that reads across through it, or else down, such
- * as «к, перша літера».
+ * and its place in the word that reads across through it, or else down, that
+ * word's clue and the cell's row and column, such as «к, перша літера. Звір.
+ * Рядок 1, стовпець 1».
  */
 export function crosswordCellLabel(
   words: readonly DailyCrosswordWord[],
-  texts: EditionStrings['game']['letters'],
+  strings: Pick<EditionStrings['game'], 'letters' | 'dailyCrossword'>,
   letter: string | undefined,
   { row, column }: CrosswordPlace,
 ): string {
@@ -158,6 +159,15 @@ export function crosswordCellLabel(
     words.find((word) => word.direction === direction && placeIn(word) !== undefined);
   const word = through('across') ?? through('down');
   const index = (word && placeIn(word)) ?? 0;
-  const place = texts.ordinals[index] ?? String(index + 1);
-  return letter === undefined ? fill(texts.empty, { place }) : fill(texts.label, { letter, place });
+  const { letters, dailyCrossword } = strings;
+  const place = letters.ordinals[index] ?? String(index + 1);
+  return fill(dailyCrossword.cellLabel, {
+    cell:
+      letter === undefined
+        ? fill(letters.empty, { place })
+        : fill(letters.label, { letter, place }),
+    clue: word?.clue ?? '',
+    row: String(row + 1),
+    column: String(column + 1),
+  });
 }

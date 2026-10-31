@@ -81,6 +81,12 @@ export const GameStringsSchema = z.strictObject({
     solvedMark: TextSchema,
     /** The screen's line once it is solved, e.g. «Розв’язано!». */
     solved: TextSchema,
+    /**
+     * What VoiceOver reads for a cell of its grid, e.g. «к, перша літера. Звір. Рядок 1, стовпець 1».
+     * Takes `{cell}`, the letter in its place as `letters` reads it, `{clue}`, the clue of the word
+     * that place is in, and `{row}` and `{column}`, counted from 1 at the top left corner.
+     */
+    cellLabel: templateOf('cell', 'clue', 'row', 'column'),
   }),
   /**
    * The texts of each Game Mode on offer, by its id: the Core's own and any

@@ -173,7 +173,7 @@ describe('the Daily Crossword screen', () => {
     expect(app.pathname()).toBe('/game/crossword');
     expect(screen.getByText('Кросворд дня')).toBeOnTheScreen();
     expect(screen.getByTestId('daily-crossword-grid-clue')).toHaveTextContent('Звір');
-    expect(cell(0, 0)).toBe('перша літера, порожня');
+    expect(cell(0, 0)).toBe('перша літера, порожня. Звір. Рядок 1, стовпець 1');
     expect(screen.getByTestId('daily-crossword-grid-open-letter')).toBeOnTheScreen();
   });
 
@@ -184,8 +184,9 @@ describe('the Daily Crossword screen', () => {
     await type('кі');
     await tap(1, 2);
 
-    expect(cell(0, 0)).toBe('к, перша літера');
-    expect(cell(0, 1)).toBe('і, друга літера');
+    expect(cell(0, 0)).toBe('к, перша літера. Звір. Рядок 1, стовпець 1');
+    expect(cell(0, 1)).toBe('і, друга літера. Звір. Рядок 1, стовпець 2');
+    expect(cell(1, 2)).toBe('друга літера, порожня. Згода. Рядок 2, стовпець 3');
     expect(screen.getByTestId('daily-crossword-grid-clue')).toHaveTextContent('Згода');
   });
 
@@ -195,7 +196,7 @@ describe('the Daily Crossword screen', () => {
 
     await settle(() => fireEvent.press(screen.getByText('Відкрити літеру')));
 
-    expect(cell(0, 0)).toBe('к, перша літера');
+    expect(cell(0, 0)).toBe('к, перша літера. Звір. Рядок 1, стовпець 1');
   });
 
   it('keeps the letters on leaving, and the card offers «Продовжити»', async () => {
@@ -207,8 +208,8 @@ describe('the Daily Crossword screen', () => {
     expect(card()).toBe('Кросворд дня · 26 жовтня. Продовжити');
 
     await openFromCard();
-    expect(cell(0, 0)).toBe('к, перша літера');
-    expect(cell(0, 1)).toBe('і, друга літера');
+    expect(cell(0, 0)).toBe('к, перша літера. Звір. Рядок 1, стовпець 1');
+    expect(cell(0, 1)).toBe('і, друга літера. Звір. Рядок 1, стовпець 2');
   });
 
   it('shows «Розв’язано!» once solved, and the card marks it solved', async () => {

@@ -74,7 +74,7 @@ export default function DailyCrosswordScreen() {
             onOpenLetter={solved ? undefined : crossword.openCell}
             texts={{
               cellLabel: (letter, place) =>
-                crosswordCellLabel(crossword.state.words, strings.letters, letter, place),
+                crosswordCellLabel(crossword.state.words, strings, letter, place),
               openLetter: strings.openLetter,
             }}
           />
