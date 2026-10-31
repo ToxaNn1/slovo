@@ -151,7 +151,7 @@ export function openProgress({
       STREAK_MILESTONES.has(next.streak);
     state = next;
     subscribers.tell();
-    if (celebrated) for (const listener of [...milestones]) listener(next.streak);
+    if (celebrated) for (const listener of milestones) listener(next.streak);
   }
 
   for (const source of [activeDays, history, favorites, collections, game, knowledge]) {
