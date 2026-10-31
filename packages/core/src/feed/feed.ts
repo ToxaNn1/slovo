@@ -396,7 +396,7 @@ export async function openFeed({
     if (session.cards.length === 0) return undefined;
     const day = todayDate(clock);
     const date = dateKeyOf(day);
-    const given = await notices.forDay(day);
+    const given = await notices.forDay(day, session.cards.at(-1)?.entryId);
     const closed = await closedNotices(userState, date);
     const inSession = new Set(
       session.all.flatMap((card) =>

@@ -82,13 +82,14 @@ describe('The Daily Limit', () => {
   it('comes as the card after the 10th distinct Entry Seen today, the Word of the Day included', async () => {
     const app = await run({ records: await withLimit(10), at: dayOne });
 
-    // Nine cards Seen, the Word of the Day first: the tenth is on screen, Seen once it leaves.
-    expect(await readOn(app, 0, 10)).toBeUndefined();
+    // Nine cards on screen, the Word of the Day first: eight Seen, the ninth on screen.
+    expect(await readOn(app, 0, 9)).toBeUndefined();
     const cards = app.feed.cards;
     expect(cards[0]?.kind === 'word' && cards[0].wordOfTheDay !== undefined).toBe(true);
 
-    await app.feed.show(10);
-    expect(app.feed.cards.findIndex(isDailyLimit)).toBe(11);
+    // The tenth on screen: the card after it, not after the eleventh, is the Daily Limit card.
+    await app.feed.show(9);
+    expect(app.feed.cards.findIndex(isDailyLimit)).toBe(10);
   });
 
   it('counts an Entry Seen again today once', async () => {
@@ -100,22 +101,22 @@ describe('The Daily Limit', () => {
     const seen = app.feed.cards[3]?.entryId;
     expect(seen).toBeDefined();
     await app.openedFromNotification(seen ?? '');
-    // Nine distinct Entries Seen, the tenth on screen.
-    expect(await readOn(app, 8, 2)).toBeUndefined();
+    // Nine distinct Entries Seen, none new on screen.
+    expect(await readOn(app, 8, 1)).toBeUndefined();
 
-    // The tenth distinct one brings it.
-    await app.feed.show(10);
-    expect(app.feed.cards.findIndex(isDailyLimit)).toBe(11);
+    // The tenth distinct one brings it as the card after it.
+    await app.feed.show(9);
+    expect(app.feed.cards.findIndex(isDailyLimit)).toBe(10);
   });
 
   it('is gone until tomorrow once the reader turns past it, and comes again the next day', async () => {
     const records = await withLimit(10);
     const app = await run({ records, at: dayOne });
-    const at = await readOn(app, 0, 11);
-    expect(at).toBe(11);
+    const at = await readOn(app, 0, 10);
+    expect(at).toBe(10);
 
     // «Гортати далі» turns to the next card, like a swipe.
-    expect(await readOn(app, 11, 10)).toBe(11);
+    expect(await readOn(app, 10, 10)).toBe(10);
     expect(app.feed.cards.filter(isDailyLimit)).toHaveLength(1);
 
     const later = await run({ records: new Map(records), at: '2026-10-11T20:00:00+03:00' });
@@ -123,7 +124,7 @@ describe('The Daily Limit', () => {
 
     const tomorrow = await run({ records: new Map(records), at: dayTwo });
     expect(await readOn(tomorrow, 0, 9)).toBeUndefined();
-    expect(await readOn(tomorrow, 9, 2)).toBe(11);
+    expect(await readOn(tomorrow, 9, 1)).toBe(10);
   });
 
   it('never comes while it is off, or while its Feature Switch is', async () => {
@@ -149,6 +150,6 @@ describe('The Daily Limit', () => {
       clock,
       random: randomOf(0.25),
     });
-    expect(await readOn(Object.assign(app, { advance }), 0, 21)).toBe(21);
+    expect(await readOn(Object.assign(app, { advance }), 0, 20)).toBe(20);
   });
 });

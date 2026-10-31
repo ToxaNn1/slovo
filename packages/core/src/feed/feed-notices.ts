@@ -36,15 +36,20 @@ export type FeedNoticeContent =
   | { readonly notice: 'yesterday'; readonly word: WordCardModel }
   | { readonly notice: 'communityWord'; readonly card: AnyEntryCard; readonly adds: number };
 
-/** What gives the Feed the Feed Notices of a local day, in any order. */
+/**
+ * What gives the Feed the Feed Notices of a local day, in any order, for the
+ * card after the Entry `after`, if one comes before it: the reader reaches
+ * that card only by leaving the Entry, which so becomes Seen.
+ */
 export interface FeedNotices {
-  forDay(day: LocalDate): Promise<readonly FeedNoticeContent[]>;
+  forDay(day: LocalDate, after?: string): Promise<readonly FeedNoticeContent[]>;
 }
 
 /** The Feed Notices of each day that every one of `sources` gives. */
 export function allFeedNotices(...sources: readonly FeedNotices[]): FeedNotices {
   return {
-    forDay: async (day) => (await Promise.all(sources.map((each) => each.forDay(day)))).flat(),
+    forDay: async (day, after) =>
+      (await Promise.all(sources.map((each) => each.forDay(day, after)))).flat(),
   };
 }
 
