@@ -58,6 +58,7 @@ const testEditionConfig = {
     },
   },
   linkDomain: 'slovo.example',
+  legalDomain: 'legal.slovo.example',
   appleTeamId: '',
   appStoreConnectAppId: '',
   wordOfTheDayFont: 'Test-Regular.ttf',

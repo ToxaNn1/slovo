@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { LEGAL_SITE, loadEdition } from '../index';
+import { loadEdition } from '../index';
 import { InvalidEditionConfigError } from './edition';
 
 const validConfig = {
@@ -89,6 +89,7 @@ const validConfig = {
     },
   },
   linkDomain: 'slovo.example',
+  legalDomain: 'legal.slovo.example',
   appleTeamId: '',
   appStoreConnectAppId: '',
   wordOfTheDayFont: 'Script-Regular.ttf',
@@ -337,18 +338,26 @@ describe('loadEdition', () => {
     expect(edition.userSettingDefaults.dailyLimit).toBe(20);
   });
 
-  it('derives the addresses of its privacy policy and its terms from the legal site and its id', () => {
+  it('derives the addresses of its privacy policy and its terms from its legal domain and its id', () => {
     expect(loadEdition(validConfig).legalPages).toEqual({
-      privacy: `${LEGAL_SITE}/test/privacy`,
-      terms: `${LEGAL_SITE}/test/terms`,
+      privacy: 'https://legal.slovo.example/test/privacy',
+      terms: 'https://legal.slovo.example/test/terms',
     });
   });
 
-  it("opens the Ukrainian Edition's legal pages at the Edition's domain", () => {
-    expect(loadEdition({ ...validConfig, id: 'uk' }).legalPages).toEqual({
-      privacy: 'https://legal.slovo.example/uk/privacy',
-      terms: 'https://legal.slovo.example/uk/terms',
+  it("opens the legal pages at the Edition's own domain, not another Edition's", () => {
+    expect(
+      loadEdition({ ...validConfig, id: 'uk', legalDomain: 'legal.slovo.app' }).legalPages,
+    ).toEqual({
+      privacy: 'https://legal.slovo.app/uk/privacy',
+      terms: 'https://legal.slovo.app/uk/terms',
     });
+  });
+
+  it('refuses a config without a legal domain', () => {
+    const { legalDomain: _removed, ...without } = validConfig;
+
+    expect(() => loadEdition(without)).toThrow('legalDomain');
   });
 
   it('refuses hand-written legal page addresses in the config', () => {

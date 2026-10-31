@@ -156,8 +156,26 @@ describe('openEdition', () => {
     expect(failure?.reason).toBe('invalid');
     expect(failure?.errors.map(({ file, field }) => `${file} › ${field ?? ''}`)).toEqual([
       'edition.json › linkDomain',
+      'edition.json › legalDomain',
       'edition.json › appleTeamId',
     ]);
+  });
+
+  it('refuses a placeholder legal domain alone for a release build', () => {
+    const editionsDir = editionsWith({
+      change: (dir) => {
+        editJson(join(dir, 'edition.json'), (config) => ({
+          ...config,
+          linkDomain: 'slovo.app',
+          legalDomain: 'legal.slovo.example',
+          appleTeamId: 'A1B2C3D4E5',
+        }));
+      },
+    });
+
+    const failure = failureOf(() => openEdition(editionsDir, 'fixture', { build: 'release' }));
+
+    expect(failure?.errors.map(({ field }) => field)).toEqual(['legalDomain']);
   });
 
   it.each([
@@ -167,24 +185,22 @@ describe('openEdition', () => {
     'example.com',
     'slovo.example.net',
     'links.slovo.example.org',
-  ])(
-    'refuses %s, a domain reserved for examples, for a release build',
-    (linkDomain) => {
-      const editionsDir = editionsWith({
-        change: (dir) => {
-          editJson(join(dir, 'edition.json'), (config) => ({
-            ...config,
-            linkDomain,
-            appleTeamId: 'A1B2C3D4E5',
-          }));
-        },
-      });
+  ])('refuses %s, a domain reserved for examples, for a release build', (linkDomain) => {
+    const editionsDir = editionsWith({
+      change: (dir) => {
+        editJson(join(dir, 'edition.json'), (config) => ({
+          ...config,
+          linkDomain,
+          legalDomain: 'legal.slovo.app',
+          appleTeamId: 'A1B2C3D4E5',
+        }));
+      },
+    });
 
-      const failure = failureOf(() => openEdition(editionsDir, 'fixture', { build: 'release' }));
+    const failure = failureOf(() => openEdition(editionsDir, 'fixture', { build: 'release' }));
 
-      expect(failure?.errors.map(({ field }) => field)).toEqual(['linkDomain']);
-    },
-  );
+    expect(failure?.errors.map(({ field }) => field)).toEqual(['linkDomain']);
+  });
 
   it('opens an Edition with its real domain and Team ID for a release build', () => {
     const editionsDir = editionsWith({
@@ -192,6 +208,7 @@ describe('openEdition', () => {
         editJson(join(dir, 'edition.json'), (config) => ({
           ...config,
           linkDomain: 'slovo.app',
+          legalDomain: 'legal.slovo.app',
           appleTeamId: 'A1B2C3D4E5',
         }));
       },
@@ -199,7 +216,11 @@ describe('openEdition', () => {
 
     const edition = openEdition(editionsDir, 'fixture', { build: 'release' });
 
-    expect(edition.config).toMatchObject({ linkDomain: 'slovo.app', appleTeamId: 'A1B2C3D4E5' });
+    expect(edition.config).toMatchObject({
+      linkDomain: 'slovo.app',
+      legalDomain: 'legal.slovo.app',
+      appleTeamId: 'A1B2C3D4E5',
+    });
   });
 
   it('reports a config that is not JSON', () => {

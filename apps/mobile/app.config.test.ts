@@ -77,6 +77,7 @@ function repoWithEdition(
 /** The real domain and Apple Team ID the Edition check asks of a release build. */
 function withReleaseIds(config: Record<string, unknown>): void {
   config['linkDomain'] = 'slovo.app';
+  config['legalDomain'] = 'legal.slovo.app';
   config['appleTeamId'] = 'A1B2C3D4E5';
 }
 
