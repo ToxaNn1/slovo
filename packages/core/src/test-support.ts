@@ -32,7 +32,6 @@ const testEditionConfig = {
   id: 'test',
   locale: 'en-US',
   displayName: 'SLOVO Test',
-  bundleId: 'app.slovo.test',
   languageTraits: {
     marksStress: false,
     alphabet: 'a b c d e f g h i j k l m n o p q r s t u v w x y z',
@@ -61,8 +60,6 @@ const testEditionConfig = {
   },
   linkDomain: 'slovo.example',
   legalDomain: 'legal.slovo.example',
-  appleTeamId: '',
-  appStoreConnectAppId: '',
   wordOfTheDayFont: 'Test-Regular.ttf',
   widgetPalette: {
     parchment: { background: '#F3E9D2', text: '#3B2A1A' },

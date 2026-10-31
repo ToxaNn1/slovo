@@ -2,12 +2,7 @@ import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 
 import plist from '@expo/plist';
-import {
-  editionAppGroup,
-  type DecorMotif,
-  type EditionConfig,
-  type EditionStrings,
-} from '@slovo/contracts';
+import { type DecorMotif, type EditionConfig, type EditionStrings } from '@slovo/contracts';
 import type { DesignTokens } from '@slovo/ui/tokens';
 
 /**
@@ -18,6 +13,8 @@ export interface WidgetEdition {
   readonly config: EditionConfig;
   /** The app's URL scheme, which the widget's links open. */
   readonly scheme: string;
+  /** The App Group the app shares with its widget (ADR 0026). */
+  readonly appGroup: string;
   readonly strings: EditionStrings['widget'];
   readonly tokens: DesignTokens;
   /** The divider's band (Decor slot 2), drawn under the headline. */
@@ -198,7 +195,7 @@ export function widgetExtensionFiles(edition: WidgetEdition): Map<string, string
       CFBundleLocalizations: [language],
       NSExtension: { NSExtensionPointIdentifier: 'com.apple.widgetkit-extension' },
       UIAppFonts: fonts,
-      SLOVOAppGroup: editionAppGroup(config.bundleId),
+      SLOVOAppGroup: edition.appGroup,
       SLOVOURLScheme: edition.scheme,
       ...(word === undefined ? {} : { SLOVOWordFont: word }),
       ...(ui === undefined ? {} : { SLOVOUIFont: ui }),

@@ -22,6 +22,7 @@ const fontFiles = coreFonts().filter((font) =>
 const ukrainian: WidgetEdition = {
   config: ukrainianFolder.config,
   scheme: 'slovo-uk',
+  appGroup: 'group.app.slovo.uk',
   strings: strings.widget,
   tokens: designTokens(ukrainianFolder.read('tokens')),
   band: loadDecor(ukrainianFolder.read('decor')).divider.band,

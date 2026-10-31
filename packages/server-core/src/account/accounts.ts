@@ -140,6 +140,7 @@ export function createAccounts({
   authenticator,
   google,
   apple,
+  bundleId,
   mailer,
   rateLimits,
   clock,
@@ -148,6 +149,8 @@ export function createAccounts({
   authenticator: Authenticator;
   google: GoogleVerifier;
   apple: AppleVerifier;
+  /** The app's bundle id, SLOVO's client id at Apple (ADR 0047), from the AppConfig. */
+  bundleId: string;
   mailer: Mailer;
   rateLimits: RateLimits;
   clock: Clock;
@@ -203,8 +206,8 @@ export function createAccounts({
       const overLimit = await limits.appleSignIn(ip);
       if (overLimit !== undefined) return overLimit;
 
-      // The Edition's bundle id is SLOVO's client id at Apple (ADR 0047).
-      const check = await apple.verify(idToken, serving.edition.config.bundleId);
+      // The app's bundle id is SLOVO's client id at Apple (ADR 0047).
+      const check = await apple.verify(idToken, bundleId);
       if (!check.ok) return check;
       // Apple gives emails, so one that is not an email is no token of Apple's.
       const email = normalised(check.identity.email);

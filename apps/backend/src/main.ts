@@ -1,4 +1,5 @@
 // The backend's entry point (`pnpm dev`, `pnpm start`).
+import { openAppConfig, REPO_DIR } from '@slovo/language-pack/edition';
 import { systemClock } from '@slovo/server-core';
 
 import { createAppleVerifier } from './account/apple-verifier';
@@ -17,12 +18,14 @@ const config = readConfig(ServerConfigSchema, process.env);
 const logger = createLogger();
 const database = createDatabase(config.DATABASE_URL, logger);
 const editions = readEditions(config.EDITIONS_DIR);
+const appConfig = openAppConfig(REPO_DIR).config;
 const mailer = createSmtpMailer(config.smtp);
 const app = createApp({
   database,
   clock: systemClock,
   random: systemRandom,
   logger,
+  app: appConfig,
   editions,
   mailer,
   google: createGoogleVerifier({ clientIds: config.GOOGLE_CLIENT_IDS, clock: systemClock }),

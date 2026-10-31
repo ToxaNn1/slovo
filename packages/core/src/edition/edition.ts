@@ -67,8 +67,6 @@ export interface Edition {
   readonly locale: string;
   /** The app's name, such as «SLOVO»; its Share Cards carry it as their watermark. */
   readonly displayName: string;
-  /** The app's bundle id, such as `app.slovo.uk`. */
-  readonly bundleId: string;
   readonly languageTraits: LanguageTraits;
   readonly userSettingDefaults: UserSettingDefaults;
   /** The file name of the Edition's notification sound, which the shell bundles; without one, notifications play the system sound. */
@@ -141,7 +139,6 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
     id,
     locale,
     displayName,
-    bundleId,
     languageTraits,
     featureSwitches,
     userSettingDefaults,
@@ -157,7 +154,6 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
     id,
     locale,
     displayName,
-    bundleId,
     languageTraits,
     userSettingDefaults: {
       ...settings,

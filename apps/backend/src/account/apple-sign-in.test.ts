@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 
 import { describe, expect, it } from 'vitest';
 
-import { passTime, testApp, testEditions, UK_BUNDLE_ID } from '../test-support';
+import { passTime, testApp, testAppConfig, testEditions, UK_BUNDLE_ID } from '../test-support';
 
 const MINUTE = 60 * 1000;
 
@@ -198,9 +198,8 @@ describe('an Apple identity token', () => {
     });
   });
 
-  it("is checked against the Edition's own bundle id", async () => {
-    const folder = testEditions(['uk'], (config) => ({ ...config, bundleId: 'app.slovo.other' }));
-    const backend = testApp({ editions: folder.read() });
+  it("is checked against the app's bundle id from the AppConfig", async () => {
+    const backend = testApp({ app: { ...testAppConfig, bundleId: 'app.slovo.other' } });
     const email = newEmail();
 
     await expect(

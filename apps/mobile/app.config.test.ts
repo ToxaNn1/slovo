@@ -13,9 +13,12 @@ import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
+  APP_CONFIG_FILE,
   EDITIONS_DIR,
   FONTS_DIR,
+  openAppConfig,
   openEdition,
+  REPO_DIR,
   type EditionFolder,
 } from '@slovo/language-pack/edition';
 import { coreFonts } from '@slovo/ui/fonts';
@@ -35,6 +38,7 @@ const context: ConfigContext = {
 };
 
 const ukrainian = openEdition(EDITIONS_DIR, 'uk');
+const app = openAppConfig(REPO_DIR);
 
 const temporaryRepos: string[] = [];
 
@@ -44,16 +48,22 @@ afterEach(() => {
 });
 
 /**
- * A throwaway repo layout (`apps/mobile` next to `editions/uk`) holding a copy
- * of the UA Edition with its config changed by `edit`. The icon is
- * copied unless `withIcon` is false; `change` may then edit the copy.
+ * A throwaway repo layout (`apps/mobile` next to `editions/uk` and the
+ * AppConfig) holding a copy of the UA Edition with its config changed by
+ * `edit` and of the AppConfig changed by `editApp`. The icon is copied unless
+ * `withIcon` is false; `change` may then edit the copies.
  */
 function repoWithEdition(
   edit: (config: Record<string, unknown>) => void,
   {
     withIcon = true,
+    editApp = () => undefined,
     change = () => undefined,
-  }: { withIcon?: boolean; change?: (edition: EditionFolder) => void } = {},
+  }: {
+    withIcon?: boolean;
+    editApp?: (config: Record<string, unknown>) => void;
+    change?: (edition: EditionFolder, appFile: (file: 'icon' | 'splash') => string) => void;
+  } = {},
 ): ConfigContext {
   const repo = mkdtempSync(join(tmpdir(), 'slovo-app-config-'));
   temporaryRepos.push(repo);
@@ -69,15 +79,30 @@ function repoWithEdition(
   const config = JSON.parse(readFileSync(copy.path('config'), 'utf8')) as Record<string, unknown>;
   edit(config);
   writeFileSync(copy.path('config'), JSON.stringify(config));
-  if (!withIcon) rmSync(copy.path('icon'));
-  change(copy);
+  mkdirSync(join(repo, dirname(APP_CONFIG_FILE)));
+  cpSync(join(REPO_DIR, APP_CONFIG_FILE), join(repo, APP_CONFIG_FILE));
+  const appJson = JSON.parse(readFileSync(join(repo, APP_CONFIG_FILE), 'utf8')) as Record<
+    string,
+    unknown
+  >;
+  editApp(appJson);
+  writeFileSync(join(repo, APP_CONFIG_FILE), JSON.stringify(appJson));
+  // Where the copy keeps a file the AppConfig names, read without checking it.
+  const appFile = (file: 'icon' | 'splash') => join(repo, String(appJson[file]));
+  if (!withIcon) rmSync(appFile('icon'));
+  change(copy, appFile);
   return { ...context, projectRoot };
 }
 
-/** The real domain and Apple Team ID the Edition check asks of a release build. */
+/** The real domains the Edition check asks of a release build. */
 function withReleaseIds(config: Record<string, unknown>): void {
   config['linkDomain'] = 'slovo.app';
   config['legalDomain'] = 'legal.slovo.app';
+}
+
+/** The real domain and Apple Team ID the AppConfig check asks of a release build. */
+function withReleaseApp(config: Record<string, unknown>): void {
+  config['domain'] = 'slovo.app';
   config['appleTeamId'] = 'A1B2C3D4E5';
 }
 
@@ -87,7 +112,7 @@ function withReleaseIds(config: Record<string, unknown>): void {
  * as a release build needs.
  */
 function repoWithCertificate(): ConfigContext {
-  const repo = repoWithEdition(withReleaseIds);
+  const repo = repoWithEdition(withReleaseIds, { editApp: withReleaseApp });
   mkdirSync(join(repo.projectRoot, 'certs'));
   writeFileSync(
     join(repo.projectRoot, 'certs/certificate.pem'),
@@ -219,7 +244,7 @@ describe('app config', () => {
     expect(() => appConfig(context)).toThrow(/Unknown Edition "\.\.\/uk"/);
   });
 
-  it('takes the name, bundle id, icon and locale from the selected Edition', () => {
+  it('takes the name, bundle id and icon from the AppConfig and the locale from the selected Edition', () => {
     vi.stubEnv('SLOVO_EDITION', 'uk');
 
     const config = appConfig(context);
@@ -247,12 +272,49 @@ describe('app config', () => {
     vi.stubEnv('SLOVO_EDITION', 'uk');
     const broken = repoWithEdition((config) => {
       delete config['locale'];
-      config['bundleId'] = 'NotReverseDns';
+      config['linkDomain'] = 'Not A Domain';
     });
 
     expect(() => appConfig(broken)).toThrow(
-      /editions\/uk is not valid.*edition\.json › locale.*edition\.json › bundleId/s,
+      /editions\/uk is not valid.*edition\.json › locale.*edition\.json › linkDomain/s,
     );
+  });
+
+  it('names the field when the AppConfig is invalid', () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+    const broken = repoWithEdition(() => undefined, {
+      editApp: (config) => {
+        config['bundleId'] = 'NotReverseDns';
+      },
+    });
+
+    expect(() => appConfig(broken)).toThrow(/AppConfig.*is not valid.*app\/app\.json › bundleId/s);
+  });
+
+  it('takes the name, scheme, bundle id and App Group from the AppConfig alone', () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+    const renamed = repoWithEdition(
+      (config) => {
+        config['displayName'] = 'Інша назва';
+      },
+      {
+        editApp: (config) => {
+          config['name'] = 'SLOVO Next';
+          config['scheme'] = 'slovo';
+          config['bundleId'] = 'app.slovo.next';
+        },
+      },
+    );
+
+    const config = appConfig(renamed);
+
+    expect(config.name).toBe('SLOVO Next');
+    expect(config.scheme).toBe('slovo');
+    expect(config.ios?.bundleIdentifier).toBe('app.slovo.next');
+    expect(config.ios?.entitlements?.['com.apple.security.application-groups']).toEqual([
+      'group.app.slovo.next',
+    ]);
+    expect(config.ios?.infoPlist?.['SlovoLinkScheme']).toBe('slovo');
   });
 
   it('rejects a config whose id differs from its folder name', () => {
@@ -264,7 +326,7 @@ describe('app config', () => {
     expect(() => appConfig(mismatched)).toThrow(/id "xx".*folder "uk"/s);
   });
 
-  it('fails clearly when the Edition has no icon', () => {
+  it('fails clearly when the app has no icon', () => {
     vi.stubEnv('SLOVO_EDITION', 'uk');
     const withoutIcon = repoWithEdition(() => undefined, { withIcon: false });
 
@@ -395,7 +457,7 @@ describe('app config', () => {
     expect(() => appConfig(notAFont)).toThrow(/Kurale-Regular\.ttf has no family name/);
   });
 
-  it("takes the splash from the Edition's Decor in both Themes", () => {
+  it('takes the splash the AppConfig names in both Themes', () => {
     vi.stubEnv('SLOVO_EDITION', 'uk');
 
     expect(pluginOptions(appConfig(context), 'expo-splash-screen')).toEqual({
@@ -406,25 +468,11 @@ describe('app config', () => {
     });
   });
 
-  it('falls back to the plain Core splash when the Edition has no splash Decor', () => {
-    vi.stubEnv('SLOVO_EDITION', 'uk');
-    const withoutSplash = repoWithEdition(() => undefined, {
-      change: (edition) => {
-        rmSync(edition.path('splash'));
-      },
-    });
-
-    expect(pluginOptions(appConfig(withoutSplash), 'expo-splash-screen')).toEqual({
-      backgroundColor: '#F4F4F2',
-      dark: { backgroundColor: '#111111' },
-    });
-  });
-
   it('names the field when the splash Decor is invalid', () => {
     vi.stubEnv('SLOVO_EDITION', 'uk');
     const broken = repoWithEdition(() => undefined, {
-      change: (edition) => {
-        editJson(edition.path('splash'), (splash) => ({
+      change: (_, appFile) => {
+        editJson(appFile('splash'), (splash) => ({
           ...splash,
           dark: { image: 'splash-dark.png', backgroundColor: 'black' },
         }));
@@ -432,15 +480,15 @@ describe('app config', () => {
     });
 
     expect(() => appConfig(broken)).toThrow(
-      /editions\/uk is not valid.*decor\/splash\.json › dark\.backgroundColor/s,
+      /AppConfig.*is not valid.*decor\/splash\.json › dark\.backgroundColor/s,
     );
   });
 
   it('fails clearly when a splash image is missing', () => {
     vi.stubEnv('SLOVO_EDITION', 'uk');
     const withoutImage = repoWithEdition(() => undefined, {
-      change: (edition) => {
-        rmSync(edition.decorFile('splash-dark.png'));
+      change: (_, appFile) => {
+        rmSync(join(dirname(appFile('splash')), 'splash-dark.png'));
       },
     });
 
@@ -483,15 +531,33 @@ describe('app config', () => {
     expect(ios?.entitlements?.['com.apple.developer.applesignin']).toEqual(['Default']);
   });
 
-  it("claims the Edition's link domain for Collection Links (ADR 0058)", () => {
+  it("claims the app's domain for Collection Links (ADR 0058, 0065)", () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+    const otherDomain = repoWithEdition(
+      (config) => {
+        config['linkDomain'] = 'links.slovo.test';
+      },
+      {
+        editApp: (config) => {
+          config['domain'] = 'links.slovo.test';
+        },
+      },
+    );
+
+    expect(
+      appConfig(otherDomain).ios?.entitlements?.['com.apple.developer.associated-domains'],
+    ).toEqual(['applinks:links.slovo.test']);
+  });
+
+  it("refuses an Edition whose link domain is not the app's domain", () => {
     vi.stubEnv('SLOVO_EDITION', 'uk');
     const otherDomain = repoWithEdition((config) => {
       config['linkDomain'] = 'links.slovo.test';
     });
 
-    expect(
-      appConfig(otherDomain).ios?.entitlements?.['com.apple.developer.associated-domains'],
-    ).toEqual(['applinks:links.slovo.test']);
+    expect(() => appConfig(otherDomain)).toThrow(
+      /linkDomain "links\.slovo\.test".*"slovo\.example"/s,
+    );
   });
 
   it('adds the widget extension from apps/widget', () => {
@@ -600,7 +666,7 @@ describe('app config', () => {
     });
   });
 
-  it("gives the Spotlight module the Edition's scheme, so a tapped result opens as its link", () => {
+  it("gives the Spotlight module the app's scheme, so a tapped result opens as its link", () => {
     vi.stubEnv('SLOVO_EDITION', 'uk');
 
     expect(appConfig(context).ios?.infoPlist?.['SlovoLinkScheme']).toBe('slovo-uk');
@@ -827,32 +893,53 @@ describe('app config', () => {
     vi.stubEnv('EAS_BUILD_PROFILE', 'testflight-uk');
     vi.stubEnv('EXPO_PUBLIC_SLOVO_API_URL', 'https://api.example.com');
 
-    expect(appConfig(repoWithCertificate()).name).toBe(ukrainian.config.displayName);
+    expect(appConfig(repoWithCertificate()).name).toBe(app.config.name);
   });
 
-  it('refuses a release build of an Edition with the placeholder domain and no Team ID, naming the fields', () => {
+  it('refuses a release build of an app with the placeholder domain and no Team ID, naming the fields', () => {
     vi.stubEnv('SLOVO_EDITION', 'uk');
     vi.stubEnv('EAS_BUILD_PROFILE', 'testflight-uk');
     vi.stubEnv('EXPO_PUBLIC_SLOVO_API_URL', 'https://api.example.com');
 
     expect(() =>
       appConfig(
-        repoWithEdition((config) => {
-          config['linkDomain'] = 'slovo.example';
-          config['appleTeamId'] = '';
+        repoWithEdition(withReleaseIds, {
+          editApp: (config) => {
+            config['domain'] = 'slovo.example';
+            config['appleTeamId'] = '';
+          },
         }),
       ),
-    ).toThrow(/linkDomain.*appleTeamId/s);
+    ).toThrow(/app\/app\.json › domain.*app\/app\.json › appleTeamId/s);
   });
 
-  it("keeps the Edition's placeholder domain and empty Team ID in a development build", () => {
+  it('refuses a release build of an Edition with a placeholder link domain, naming the field', () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+    vi.stubEnv('EAS_BUILD_PROFILE', 'testflight-uk');
+    vi.stubEnv('EXPO_PUBLIC_SLOVO_API_URL', 'https://api.example.com');
+
+    expect(() =>
+      appConfig(
+        repoWithEdition(
+          (config) => {
+            config['legalDomain'] = 'legal.slovo.example';
+          },
+          { editApp: withReleaseApp },
+        ),
+      ),
+    ).toThrow(/legalDomain/);
+  });
+
+  it("keeps the app's placeholder domain and empty Team ID in a development build", () => {
     vi.stubEnv('SLOVO_EDITION', 'uk');
     vi.stubEnv('EAS_BUILD_PROFILE', 'development-simulator-uk');
 
     const config = appConfig(
-      repoWithEdition((edition) => {
-        edition['linkDomain'] = 'slovo.example';
-        edition['appleTeamId'] = '';
+      repoWithEdition(() => undefined, {
+        editApp: (app) => {
+          app['domain'] = 'slovo.example';
+          app['appleTeamId'] = '';
+        },
       }),
     );
 
@@ -870,11 +957,11 @@ describe('app config', () => {
     vi.stubEnv('EAS_BUILD_PROFILE', profile);
     vi.stubEnv('EXPO_PUBLIC_SLOVO_API_URL', address);
 
-    expect(appConfig(context).name).toBe(ukrainian.config.displayName);
+    expect(appConfig(context).name).toBe(app.config.name);
   });
 
   describe('OTA updates (ADR 0062)', () => {
-    it("checks the Edition's channel on launch for updates signed with SLOVO's certificate and made for its native code", () => {
+    it("checks the app's channel on launch for updates signed with SLOVO's certificate and made for its native code", () => {
       vi.stubEnv('SLOVO_EDITION', 'uk');
       vi.stubEnv('EAS_BUILD_PROFILE', 'testflight-uk');
       vi.stubEnv('EXPO_PUBLIC_SLOVO_API_URL', 'https://api.example.com');
@@ -893,14 +980,15 @@ describe('app config', () => {
       });
     });
 
-    it('takes the channel from the Edition id', () => {
+    it('takes the one channel from the AppConfig', () => {
       vi.stubEnv('SLOVO_EDITION', 'uk');
-
-      const config = appConfig(context);
-
-      expect(config.updates?.requestHeaders).toEqual({
-        'expo-channel-name': ukrainian.config.updateChannel,
+      const channel = repoWithEdition(() => undefined, {
+        editApp: (config) => {
+          config['updateChannel'] = 'main';
+        },
       });
+
+      expect(appConfig(channel).updates?.requestHeaders).toEqual({ 'expo-channel-name': 'main' });
     });
 
     it('turns updates off in a development build', () => {
@@ -915,7 +1003,7 @@ describe('app config', () => {
       vi.stubEnv('EAS_BUILD_PROFILE', 'testflight-uk');
       vi.stubEnv('EXPO_PUBLIC_SLOVO_API_URL', 'https://api.example.com');
 
-      expect(() => appConfig(repoWithEdition(withReleaseIds))).toThrow(
+      expect(() => appConfig(repoWithEdition(withReleaseIds, { editApp: withReleaseApp }))).toThrow(
         /code-signing certificate.*certs\/certificate\.pem/s,
       );
     });

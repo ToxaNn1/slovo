@@ -28,7 +28,9 @@ export default {
     '^slovo-edition/strings$': `${EDITION}/strings.json`,
     '^slovo-edition/tokens$': `${EDITION}/tokens.json`,
     '^slovo-edition/decor$': `${EDITION}/decor/decor.json`,
-    '^slovo-edition/splash$': `${EDITION}/decor/splash.json`,
+    // The AppConfig and the splash it names (ADR 0065).
+    '^slovo-app/config$': '<rootDir>/../../app/app.json',
+    '^slovo-app/splash$': `${EDITION}/decor/splash.json`,
     '^slovo-edition/illustrations$': '<rootDir>/jest.illustrations.cjs',
     '^slovo-edition/language-pack$': '<rootDir>/jest.language-pack.js',
   },

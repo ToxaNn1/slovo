@@ -6,7 +6,10 @@ const { getDefaultConfig } = require('expo/metro-config');
 const { require: tsxRequire } = require('tsx/cjs/api');
 
 // The Edition folder module is TypeScript, which tsx loads, as for app.config.ts.
-const { EDITIONS_DIR, openEdition } = tsxRequire('@slovo/language-pack/edition', __filename);
+const { APP_CONFIG_FILE, EDITIONS_DIR, REPO_DIR, openAppConfig, openEdition } = tsxRequire(
+  '@slovo/language-pack/edition',
+  __filename,
+);
 
 /**
  * Bundles the Edition selected by SLOVO_EDITION. The app imports it through
@@ -16,6 +19,13 @@ const { EDITIONS_DIR, openEdition } = tsxRequire('@slovo/language-pack/edition',
 const { exp } = getConfig(__dirname, { skipSDKVersionRequirement: true });
 const editionId = exp.extra.edition.id;
 const edition = openEdition(EDITIONS_DIR, editionId);
+const app = openAppConfig(REPO_DIR);
+
+/** The AppConfig and the native splash it names, as `slovo-app/*` (ADR 0065). */
+const appModules = {
+  'slovo-app/config': `${REPO_DIR}/${APP_CONFIG_FILE}`,
+  'slovo-app/splash': app.path('splash'),
+};
 
 // SLOVO_CORE_TOKENS=1 draws the app with the Core's neutral tokens and Decor
 // instead of the Edition's, to check the Core look. Restart Metro with --clear
@@ -29,7 +39,6 @@ const editionModules = {
   'slovo-edition/tokens': { type: 'sourceFile', editionFile: 'tokens', optional: true },
   // Optional: an Edition without Decor gets the Core's neutral Decor.
   'slovo-edition/decor': { type: 'sourceFile', editionFile: 'decor', optional: true },
-  'slovo-edition/splash': { type: 'sourceFile', editionFile: 'splash', optional: true },
   'slovo-edition/illustrations': { type: 'sourceFile', editionFile: 'illustrations' },
   'slovo-edition/language-pack': {
     type: 'assetFiles',
@@ -84,6 +93,8 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   if (moduleName === 'slovo-edition/plural-rules') {
     return { type: 'sourceFile', filePath: pluralRulesData() };
   }
+  const appModule = appModules[moduleName];
+  if (appModule !== undefined) return { type: 'sourceFile', filePath: appModule };
   const editionModule = editionModules[moduleName];
   if (editionModule === undefined) {
     return (resolveRequest ?? context.resolveRequest)(context, moduleName, platform);

@@ -1,0 +1,14 @@
+{
+  "name": "SLOVO",
+  "scheme": "slovo-uk",
+  "bundleId": "app.slovo.uk",
+  "appleTeamId": "",
+  "appStoreConnectAppId": "",
+  "domain": "slovo.example",
+  "icon": "editions/uk/assets/icon.png",
+  "splash": "editions/uk/decor/splash.json",
+  "updateChannel": "uk",
+  "buildProfiles": {
+    "ios": { "development": "development-simulator-uk", "release": "testflight-uk" }
+  }
+}

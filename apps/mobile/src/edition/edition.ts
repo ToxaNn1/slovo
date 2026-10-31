@@ -1,15 +1,16 @@
 import {
-  editionAppGroup,
+  AppConfigSchema,
   EditionStringsSchema,
   EditionTokensSchema,
   SplashDecorSchema,
 } from '@slovo/contracts';
 import { loadDecor, loadEdition, loadSeasonalMotifs } from '@slovo/core';
 import { designTokens } from '@slovo/ui';
+import appConfig from 'slovo-app/config';
 import config from 'slovo-edition/config';
 import decor from 'slovo-edition/decor';
 import illustrations from 'slovo-edition/illustrations';
-import splash from 'slovo-edition/splash';
+import splash from 'slovo-app/splash';
 import strings from 'slovo-edition/strings';
 import tokens from 'slovo-edition/tokens';
 
@@ -19,8 +20,8 @@ export const editionIllustrations = illustrations;
 /** The Edition this build runs as, validated by the Core at startup. */
 export const edition = loadEdition(config, Object.keys(illustrations));
 
-/** The App Group the app shares with the Edition's widget. */
-export const appGroup = editionAppGroup(edition.bundleId);
+/** The App Group the app shares with its widget (ADR 0026), from the AppConfig. */
+export const appGroup = AppConfigSchema.parse(appConfig).appGroup;
 
 /** The UI text of the Edition, in its language. */
 export const editionStrings = EditionStringsSchema.parse(strings);
@@ -34,12 +35,5 @@ export const editionDecor = loadDecor(decor);
 /** The Edition's motifs per Season and per Holiday, or none when its Decor stays plain (ADR 0055). */
 export const seasonalMotifs = loadSeasonalMotifs(decor);
 
-/** An optional Edition file it leaves out reaches the app as an empty module. */
-const isLeftOut = (file: unknown) =>
-  file === undefined ||
-  (typeof file === 'object' && file !== null && Object.keys(file).length === 0);
-
 /** The width of the native splash image, which the app's splash draws its mark over. */
-export const splashImageWidth = isLeftOut(splash)
-  ? undefined
-  : SplashDecorSchema.parse(splash).imageWidth;
+export const splashImageWidth = SplashDecorSchema.parse(splash).imageWidth;

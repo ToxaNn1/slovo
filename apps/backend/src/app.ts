@@ -1,4 +1,4 @@
-import { CollectionLinkIdSchema } from '@slovo/contracts';
+import { CollectionLinkIdSchema, type AppConfig } from '@slovo/contracts';
 import {
   createAccounts,
   createCollectionLinks,
@@ -53,13 +53,15 @@ export interface AppDependencies {
   /** Where the ids of new Collection Links come from. */
   readonly random: Random;
   readonly logger: Logger;
+  /** The identity of the one app (ADR 0065), read from the AppConfig at start. */
+  readonly app: AppConfig;
   /** Every Edition the backend serves, read from the Edition folders at start. */
   readonly editions: readonly Edition[];
   /** Sends the sign-in emails. */
   readonly mailer: Mailer;
   /** Verifies the Google identity tokens of Google sign-ins. */
   readonly google: GoogleVerifier;
-  /** Verifies the Apple identity tokens of Apple sign-ins, for the Edition's bundle id. */
+  /** Verifies the Apple identity tokens of Apple sign-ins, for the app's bundle id. */
   readonly apple: AppleVerifier;
   /** Signs the Sessions' tokens. */
   readonly authSecret: string;
@@ -117,6 +119,7 @@ export function createApp({
   clock,
   random,
   logger,
+  app: appConfig,
   editions,
   mailer,
   google,
@@ -132,6 +135,7 @@ export function createApp({
     authenticator: createAuthenticator(database, { secret: authSecret, logger }),
     google,
     apple,
+    bundleId: appConfig.bundleId,
     mailer,
     rateLimits,
     clock,
@@ -224,9 +228,9 @@ export function createApp({
     return c.json({ status: 'ok', migration: state.last });
   });
 
-  // The file that lets the apps open their Collection Links (ADR 0058).
-  // While no Edition has a Team ID there is none, so the path is not found.
-  const association = appSiteAssociation(editions);
+  // The file that lets the app open its Collection Links (ADR 0058).
+  // While the app has no Team ID there is none, so the path is not found.
+  const association = appSiteAssociation(appConfig);
   if (association !== undefined) {
     app.get(APP_SITE_ASSOCIATION_PATH, (c) => c.json(association));
   }

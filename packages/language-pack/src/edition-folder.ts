@@ -3,6 +3,7 @@ import { basename, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
+  AppConfigSchema,
   CorrectionSchema,
   CrosswordDaysSchema,
   EditionConfigSchema,
@@ -15,11 +16,14 @@ import {
   TipSchema,
   WidgetSnapshotSchema,
   WordSchema,
+  appReleaseProblems,
   releaseProblems,
+  type AppConfig,
   type Correction,
   type EditionConfig,
   type Entry,
   type Idiom,
+  type SplashDecor,
   type SynonymRow,
   type Tip,
   type Word,
@@ -35,6 +39,12 @@ import { ID_REGISTRY_FILE, IdRegistrySchema } from './id-registry';
 /** The editions folder of this repo, which holds one folder per Edition. */
 export const EDITIONS_DIR = fileURLToPath(new URL('../../../editions', import.meta.url));
 
+/** The root of this repo, which holds the app's AppConfig. */
+export const REPO_DIR = fileURLToPath(new URL('../../..', import.meta.url));
+
+/** Where the repo keeps the AppConfig, the identity of the one app (ADR 0065). */
+export const APP_CONFIG_FILE = 'app/app.json';
+
 /** Where an Edition keeps the days of its Daily Crossword (ADR 0052). */
 export const CROSSWORD_DAYS_FILE = 'content/crossword-days.json';
 
@@ -44,13 +54,11 @@ const FILES = {
   strings: 'strings.json',
   tokens: 'tokens.json',
   decor: 'decor/decor.json',
-  splash: 'decor/splash.json',
   widgetSnapshotExample: 'widget-snapshot.example.json',
   idRegistry: ID_REGISTRY_FILE,
   manifest: MANIFEST_FILE,
   targets: 'content/targets.json',
   crosswordDays: CROSSWORD_DAYS_FILE,
-  icon: 'assets/icon.png',
   languagePack: 'dist/language-pack.db',
 } as const;
 
@@ -59,7 +67,6 @@ const ASSETS_DIR = 'assets';
 export const FONTS_DIR = 'assets/fonts';
 /** Where an Edition keeps the Illustrations its Words name (ADR 0055). */
 export const ILLUSTRATIONS_DIR = 'assets/illustrations';
-const DECOR_DIR = 'decor';
 const WORDS_DIR = 'content/words';
 const CORRECTIONS_DIR = 'content/corrections';
 const IDIOMS_DIR = 'content/idioms';
@@ -81,7 +88,6 @@ const SCHEMAS = {
   strings: EditionStringsSchema,
   tokens: EditionTokensSchema,
   decor: EditionDecorSchema,
-  splash: SplashDecorSchema,
   widgetSnapshotExample: WidgetSnapshotSchema,
   idRegistry: IdRegistrySchema,
   manifest: ContentManifestSchema,
@@ -114,6 +120,60 @@ export class EditionFolderError extends Error {
   }
 }
 
+/** Why the AppConfig can't be read: it is missing or wrong, or a release build refuses it. */
+export class AppConfigError extends Error {
+  override readonly name = 'AppConfigError';
+
+  constructor(
+    /** Every problem, in the file it lies in. */
+    readonly errors: readonly BuildError[],
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
+/** The AppConfig of a repo, with the files it names. */
+export interface AppFolder {
+  readonly config: AppConfig;
+  /** Where the icon or the splash the AppConfig names lies, whether or not it is there. */
+  path(file: 'icon' | 'splash'): string;
+  /** The native splash, checked against its contract; its images lie beside it. */
+  splash(): SplashDecor;
+}
+
+/**
+ * Reads the AppConfig of the repo in `repoDir`. It must be valid, and for a
+ * release build hold no placeholder, such as the `slovo.example` domain or an
+ * empty Apple Team ID. Throws an AppConfigError otherwise.
+ */
+export function openAppConfig(
+  repoDir: string,
+  { build = 'development' }: { build?: EditionBuild } = {},
+): AppFolder {
+  const fail = (errors: readonly BuildError[]) => {
+    const problems = errors.map((error) => `  ${formatBuildError(error)}`).join('\n');
+    return new AppConfigError(errors, `The AppConfig in ${repoDir} is not valid:\n${problems}`);
+  };
+  const result = parseFile(repoDir, APP_CONFIG_FILE, AppConfigSchema);
+  if (!result.ok) throw fail(result.errors);
+  const config = result.value;
+  const problems = build === 'release' ? appReleaseProblems(config) : [];
+  if (problems.length > 0) {
+    throw fail(problems.map(({ field, message }) => ({ file: APP_CONFIG_FILE, field, message })));
+  }
+  const path = (file: 'icon' | 'splash') => join(repoDir, config[file]);
+  return {
+    config,
+    path,
+    splash() {
+      const splash = parseFile(repoDir, config.splash, SplashDecorSchema);
+      if (!splash.ok) throw fail(splash.errors);
+      return splash.value;
+    },
+  };
+}
+
 /** The content of an Edition's Entry folders, each Entry with the file it was authored in. */
 export interface AuthoredContent {
   readonly words: readonly Authored<Word>[];
@@ -137,8 +197,6 @@ export interface EditionFiles {
   readIfPresent<F extends EditionJsonFile>(file: F): EditionFileContent<F> | undefined;
   /** Where a file the Edition brings in `assets/` lies, such as its notification sound. */
   asset(name: string): string;
-  /** Where a file of the Edition's Decor lies, such as a splash image. */
-  decorFile(name: string): string;
   /** Where the Illustration a Word names lies, whether or not it is there. */
   illustration(name: string): string;
   /** The file names of the Illustrations the Edition brings (its PNGs), in code-unit order. */
@@ -258,7 +316,6 @@ export function editionFiles(dir: string): EditionFiles {
     read,
     readIfPresent: (file) => (existsSync(join(dir, FILES[file])) ? read(file) : undefined),
     asset: (name) => join(dir, ASSETS_DIR, name),
-    decorFile: (name) => join(dir, DECOR_DIR, name),
     illustration: (name) => join(dir, ILLUSTRATIONS_DIR, name),
     illustrations() {
       const illustrationsDir = join(dir, ILLUSTRATIONS_DIR);

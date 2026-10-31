@@ -140,7 +140,7 @@ function Showcase({
           <SplashOverlay
             wordmark={editionStrings.splash.wordmark}
             tagline={editionStrings.splash.tagline}
-            markWidth={splashImageWidth ?? 72}
+            markWidth={splashImageWidth}
             visible={splash === 'shown'}
             onHidden={() => {
               setSplash('hidden');

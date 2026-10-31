@@ -2,7 +2,6 @@
   "id": "fixture",
   "locale": "uk-UA",
   "displayName": "SLOVO Fixture",
-  "bundleId": "app.slovo.fixture",
   "languageTraits": {
     "marksStress": true,
     "vowels": "а е є и і ї о у ю я",
@@ -89,8 +88,6 @@
   },
   "linkDomain": "slovo.example",
   "legalDomain": "legal.slovo.example",
-  "appleTeamId": "",
-  "appStoreConnectAppId": "",
   "wordOfTheDayFont": "Fixture-Script.ttf",
   "widgetPalette": {
     "parchment": { "background": "#F3E9D2", "text": "#3B2A1A" },
