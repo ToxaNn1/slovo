@@ -14,7 +14,7 @@ const { APP_CONFIG_FILE, EDITIONS_DIR, REPO_DIR, openAppConfig, openEdition } = 
 /**
  * The Editions the app bundles (ADR 0065), as the one module `slovo-editions`
  * the app's Edition registry reads, so the app code never names an Edition.
- * The build bundles the Edition selected by SLOVO_EDITION, its default.
+ * The build bundles the AppConfig's default Edition.
  */
 const { exp } = getConfig(__dirname, { skipSDKVersionRequirement: true });
 const defaultId = exp.extra.edition.id;
