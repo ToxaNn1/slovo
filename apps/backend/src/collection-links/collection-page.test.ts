@@ -25,7 +25,8 @@ describe('the web page of a Collection Link', () => {
    * pack published, and a link shared on it.
    */
   async function shared(entryIds: string[], edition = 'uk') {
-    const folder = testEditions([edition]);
+    // The UA Edition is always there, so a link of another Edition can be asked for under its path.
+    const folder = testEditions([...new Set(['uk', edition])]);
     const pack = folder.buildPack(edition);
     const backend = testApp({ editions: folder.read() });
     await backend.publish(pack);
