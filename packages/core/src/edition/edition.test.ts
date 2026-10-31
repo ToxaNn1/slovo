@@ -121,7 +121,15 @@ const validConfig = {
     { id: 'calm', name: 'Calm', emoji: '😌' },
   ],
   searchLetters: { b: 'a' },
-  xp: { round: 1, finishedGame: 5, finishedGameShare: 0.5, bestResult: 5 },
+  xp: {
+    round: 1,
+    finishedGame: 5,
+    finishedGameShare: 0.5,
+    bestResult: 5,
+    dailyCrossword: 15,
+    reviewAnswer: 1,
+    reviewDailyCap: 10,
+  },
 };
 
 /** The Feature Switches of the Game Modes and the Daily Crossword (ADR 0052). */
@@ -322,12 +330,15 @@ describe('loadEdition', () => {
     ]);
   });
 
-  it('reports the XP table, what each Game learning action earns (ADR 0066)', () => {
+  it('reports the XP table, what each learning action earns (ADR 0066)', () => {
     expect(loadEdition(validConfig).xp).toEqual({
       round: 1,
       finishedGame: 5,
       finishedGameShare: 0.5,
       bestResult: 5,
+      dailyCrossword: 15,
+      reviewAnswer: 1,
+      reviewDailyCap: 10,
     });
   });
 
@@ -338,6 +349,10 @@ describe('loadEdition', () => {
       InvalidEditionConfigError,
     );
     expect(() => loadEdition({ ...validConfig, xp: { ...xp, finishedGameShare: 1.5 } })).toThrow(
+      InvalidEditionConfigError,
+    );
+    const { reviewDailyCap: _, ...withoutCap } = xp;
+    expect(() => loadEdition({ ...validConfig, xp: withoutCap })).toThrow(
       InvalidEditionConfigError,
     );
   });

@@ -71,7 +71,15 @@ const testEditionConfig = {
   originLanguages: [],
   moods: [],
   searchLetters: {},
-  xp: { round: 1, finishedGame: 5, finishedGameShare: 0.5, bestResult: 5 },
+  xp: {
+    round: 1,
+    finishedGame: 5,
+    finishedGameShare: 0.5,
+    bestResult: 5,
+    dailyCrossword: 15,
+    reviewAnswer: 1,
+    reviewDailyCap: 10,
+  },
 };
 
 /** The test Edition as `loadEdition` gives it, which every `testEdition` starts from. */

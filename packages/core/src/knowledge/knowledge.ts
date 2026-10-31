@@ -1,6 +1,8 @@
 import type { EntryKind, Rarity } from '@slovo/contracts';
 
+import type { Analytics } from '../analytics/analytics';
 import type { Edition } from '../edition/edition';
+import type { GameXp, XpAward } from '../game/game-xp';
 import type { EntryRowModel, EntryRows } from '../entries/entry-row';
 import type { HiddenEntries } from '../mix/hidden-entries';
 import { createInTurn, createSubscribers } from '../in-turn';
@@ -109,6 +111,8 @@ export interface Knowledge {
    * The reader taps a mark on the Entry's card: the mark the card shows
    * removes it, deleting the record; any other tap answers the Entry today,
    * as `answer` does. The change counts for the Community Counters (ADR 0060).
+   * A tap on an Entry due for Review is a Review answer: it earns its XP, up
+   * to the Edition's daily cap (ADR 0066).
    */
   tap(entryId: string, mark: KnowledgeMark): Promise<void>;
   /**
@@ -176,6 +180,8 @@ export async function openKnowledge({
   clock,
   countMark,
   dayStarted,
+  xp,
+  analytics,
 }: {
   edition: Pick<Edition, 'isFeatureEnabled'>;
   rows: EntryRows;
@@ -184,6 +190,9 @@ export async function openKnowledge({
   clock: Clock;
   countMark: (entryId: string, mark: KnowledgeMark | undefined) => Promise<UserStateChanges>;
   dayStarted: Pick<Subject<LocalDate>, 'subscribe'>;
+  /** The XP log, which a Review answer earns XP in. */
+  xp: GameXp;
+  analytics: Pick<Analytics, 'track'>;
 }): Promise<Knowledge> {
   const { knowledge, confirmed: confirmedRecords } = userStateRecords;
   let records: ReadonlyMap<string, KnowledgeRecord> = await userState.list(knowledge);
@@ -267,20 +276,27 @@ export async function openKnowledge({
 
   /**
    * Keeps the Entry's next record, or deletes it for nothing, with the
-   * Community Counters' changes when it counts and the confirmation when the
-   * answer `confirms` the Entry, then follows it.
+   * Community Counters' changes when it counts, the confirmation when the
+   * answer `confirms` the Entry and the XP of a Review answer, then follows it.
    */
   async function keep(
     entryId: string,
     record: KnowledgeRecord | undefined,
     counts: boolean,
     confirms: boolean,
+    reviewXp?: XpAward,
   ): Promise<void> {
     const counted = counts ? await countMark(entryId, record?.mark) : new Map();
     const confirming = confirms ? confirmation(entryId) : new Map();
     await userState.write(
-      new Map([...knowledge.record(entryId).change(record), ...counted, ...confirming]),
+      new Map([
+        ...knowledge.record(entryId).change(record),
+        ...counted,
+        ...confirming,
+        ...(reviewXp?.changes ?? []),
+      ]),
     );
+    reviewXp?.commit();
     const changed = new Map(records);
     if (record === undefined) changed.delete(entryId);
     else changed.set(entryId, record);
@@ -310,7 +326,9 @@ export async function openKnowledge({
       if (record === undefined) return keep(entryId, undefined, counts, false);
       const { mark, step, reviewDay, learned } = record;
       const markedAt = mark === previous?.mark ? previous.markedAt : clock.now().toISOString();
-      return keep(
+      // Only the reader's own tap answers a Review; a Game answer earns the Game's XP.
+      const review = counts && previous !== undefined && isDue(previous, todayDate(clock));
+      await keep(
         entryId,
         markedAt === undefined
           ? { mark, step, reviewDay, learned }
@@ -319,7 +337,9 @@ export async function openKnowledge({
         mark === 'known' &&
           confirmsOnKnown(previous) &&
           edition.isFeatureEnabled('confirmedEntries'),
+        review ? xp.award({ source: 'review-answer' }) : undefined,
       );
+      if (review) await analytics.track('reviewAnswered', { mark }).catch(() => undefined);
     });
 
   /** Confirms the Entry, unless the `confirmedEntries` switch is off or it is confirmed already. */
