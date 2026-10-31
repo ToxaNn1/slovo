@@ -7,5 +7,7 @@ declare namespace NodeJS {
     readonly EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID?: string;
     /** The DSN of the app's project at Sentry; unset, the app reports no crashes. */
     readonly EXPO_PUBLIC_SENTRY_DSN?: string;
+    /** The project API key of the app's PostHog project in the EU; unset, the app sends no Analytics (ADR 0068). */
+    readonly EXPO_PUBLIC_POSTHOG_KEY?: string;
   }
 }

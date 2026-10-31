@@ -30,9 +30,7 @@ function fakePort() {
 }
 
 /** One app run with the Analytics port, its settings over the same user state. */
-async function run({
-  on = ['knowledge', 'analytics'],
-}: { on?: readonly FeatureSwitch[] } = {}) {
+async function run({ on = ['knowledge', 'analytics'] }: { on?: readonly FeatureSwitch[] } = {}) {
   const fake = fakePort();
   const edition = testEdition({ isFeatureEnabled: (feature) => on.includes(feature) });
   const userState = await openUserState({ port: createMemoryUserStatePort(new Map()) });

@@ -1,5 +1,6 @@
 import {
   colorSchemeFor,
+  createAnalytics,
   createSettings,
   type ColorScheme,
   type Settings,
@@ -10,6 +11,7 @@ import {
 import { createContext, useContext, useState, type ReactNode } from 'react';
 import { Appearance, useColorScheme } from 'react-native';
 
+import { deviceAnalytics } from '../analytics/posthog-analytics';
 import { edition } from '../edition/edition';
 import { logError } from '../diagnostics/log';
 import { openOnce, useSubscribed, type Opening } from '../opening';
@@ -40,7 +42,12 @@ export function settingsOpening({
   userState: Opening<TrackedUserState>;
 }): Opening<OpenedSettings> {
   async function settingsOverUserState(): Promise<Settings> {
-    return createSettings({ userState: await userState.opened(), defaults });
+    const opened = await userState.opened();
+    return createSettings({
+      userState: opened,
+      defaults,
+      analytics: createAnalytics({ edition, userState: opened, port: deviceAnalytics }),
+    });
   }
   return openOnce(
     async () => {
