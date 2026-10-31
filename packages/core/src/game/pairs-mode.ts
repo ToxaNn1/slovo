@@ -2,7 +2,8 @@ import type { DistractorRule, Word } from '@slovo/contracts';
 
 import type { AskableEntry } from '../entries/entries';
 import { renderStress, stressedVowelsOf, withoutStress } from '../entries/stress';
-import { ROUND_OPTIONS, shuffled, type GameMode, type GridPair } from './game-mode';
+import { ROUND_OPTIONS, type GameMode, type GridPair } from './game-mode';
+import { shuffled } from '../shuffled';
 
 /**
  * The Words that may share a grid with the answer, best first, by each

@@ -103,17 +103,19 @@ function schedulerOn(
     return sound === 'system' || inExpoGo ? 'default' : sound.file;
   }
 
-  function schedule({ date, time, title, body, wordId, sound }: PlannedNotification) {
+  function schedule(planned: PlannedNotification) {
+    const { date, time, body, sound } = planned;
     const { year, month, day } = parseLocalDate(date);
     const { hour, minute } = parseTimeOfDay(time);
     return notifications.scheduleNotificationAsync({
       identifier: `${date}T${time}`,
       content: {
-        title,
+        // The farewell has no title, so the device shows the app's name, and
+        // carries no Word: a tap on it only opens the app.
+        title: planned.kind === 'word' ? planned.title : '',
         body,
         sound: soundOf(sound),
-        // The farewell carries no Word: a tap on it only opens the app.
-        data: wordId === undefined ? {} : { wordId },
+        data: planned.kind === 'word' ? { wordId: planned.wordId } : {},
       },
       trigger: { type: SchedulableTriggerInputTypes.CALENDAR, year, month, day, hour, minute },
     });

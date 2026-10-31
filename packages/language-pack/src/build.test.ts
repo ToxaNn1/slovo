@@ -378,7 +378,13 @@ describe('buildLanguagePack', () => {
       ['a Stress position on a consonant', 'w_fx1005.json', 'w_fx1005', 'stress.0', /not a vowel/i],
       ['Stress positions out of order', 'w_fx1011.json', 'w_fx1011', 'stress', /ascending/i],
       ['a rarity outside 1–5', 'w_fx1006.json', 'w_fx1006', 'rarity', /5/],
-      ['a rarity that is not a whole number', 'w_fx1020.json', 'w_fx1020', 'rarity', /int/i],
+      [
+        'a rarity that is not a whole number',
+        'w_fx1020.json',
+        'w_fx1020',
+        'rarity',
+        /whole number from 1 to 5/i,
+      ],
       ['an unknown field', 'w_fx1019.json', 'w_fx1019', 'lemmma', /unknown field/i],
       [
         'a missing primary Definition',

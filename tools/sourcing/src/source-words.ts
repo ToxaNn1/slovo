@@ -2,11 +2,13 @@ import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import {
+  RaritySchema,
   WordSchema,
   type EditionConfig,
   type Example,
   type Gender,
   type PartOfSpeech,
+  type Rarity,
   type Register,
   type Source,
   type WordInput,
@@ -131,7 +133,7 @@ export async function sourceWords(options: SourcingOptions): Promise<SourcingRes
 interface WordRequest {
   readonly lemma: string;
   readonly categoryId: string;
-  readonly rarity: number;
+  readonly rarity: Rarity;
   readonly line: number;
 }
 
@@ -162,15 +164,15 @@ function parseLemmaList(
     }
     if (lemma !== unstressed(lemma)) fail(`Write the Lemma "${lemma}" without stress marks`);
     if (!categoryIds.has(categoryId)) fail(`Unknown Category "${categoryId}"`);
-    const rarity = Number(rarityText);
-    if (!Number.isInteger(rarity) || rarity < 1 || rarity > 5) {
-      fail(`Rarity "${rarityText}" is not a whole number from 1 to 5`);
-    }
+    const rarity = RaritySchema.safeParse(Number(rarityText));
+    if (!rarity.success) fail(`Rarity "${rarityText}" is not a whole number from 1 to 5`);
     const key = matchKey(lemma);
     const firstLine = lineOf.get(key);
     if (firstLine !== undefined) fail(`"${lemma}" is already listed on line ${String(firstLine)}`);
     lineOf.set(key, line);
-    requests.push({ lemma: lemma.normalize('NFC'), categoryId, rarity, line });
+    if (rarity.success) {
+      requests.push({ lemma: lemma.normalize('NFC'), categoryId, rarity: rarity.data, line });
+    }
   });
   return errors.length > 0 ? { ok: false, errors } : { ok: true, requests };
 }

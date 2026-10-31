@@ -55,9 +55,9 @@ import type { LocalDate } from './local-date';
 import type { Backend, Clock, ContentReadPort, Random, Schedule } from './ports';
 import { openActiveDays } from './progress/active-days';
 import { openProgress, type Progress } from './progress/progress';
-import { createWeeklyRecap, type WeeklyRecap } from './progress/weekly-recap';
+import { createWeeklyRecap, type WeeklyRecap } from './feed/weekly-recap';
 import { createMoodDraw, type MoodDraw } from './mood/mood-draw';
-import { createRarityTest, type RarityTest } from './rarity-test/rarity-test';
+import { createRarityTest, type RarityTest } from './mix/rarity-test';
 import { createRecentQueries, type RecentQueries } from './search/recent-queries';
 import { createSearch, type Search } from './search/search';
 import type { UserState } from './user-state/user-state';
@@ -534,7 +534,7 @@ export async function openComposition({
     search: createSearch({ content, edition, userState }),
     recentQueries: createRecentQueries({ edition, userState }),
     rarityTest,
-    moodDraw: createMoodDraw({ content, edition, userState, random }),
+    moodDraw: createMoodDraw({ edition, entries, random }),
     async openDailyCrossword() {
       if (crossword === undefined) return undefined;
       return openDailyCrossword({ content: crossword, userState, clock, edition });

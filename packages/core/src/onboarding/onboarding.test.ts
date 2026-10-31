@@ -13,7 +13,7 @@ import {
   type PlannedNotification,
 } from '../index';
 import { createFakeNotificationScheduler, createMemoryContentPort } from '../testing';
-import { fakeClock, testEdition, word } from '../test-support';
+import { fakeClock, testEdition, titleOf, word, wordIdOf } from '../test-support';
 
 /** The instant these tests start at. */
 const start = '2026-10-14T08:00:00+03:00';
@@ -423,7 +423,7 @@ describe('Onboarding', () => {
         body: morning.body,
         time: '09:00',
       });
-      expect(morning.wordId).toBe(wordOfTheDay.wordId);
+      expect(wordIdOf(morning)).toBe(wordOfTheDay.wordId);
     });
 
     it("is the next day's morning notification once this morning's time has passed", async () => {
@@ -437,9 +437,9 @@ describe('Onboarding', () => {
 
       const morning = morningOf(scheduler.plan);
       expect(morning.date).toBe('2026-10-15');
-      expect(sample?.wordCard.wordId).toBe(morning.wordId);
+      expect(sample?.wordCard.wordId).toBe(wordIdOf(morning));
       expect(sample?.wordCard.wordId).not.toBe(wordOfTheDay.wordId);
-      expect(sample?.wordCard.lemma).toBe(morning.title);
+      expect(sample?.wordCard.lemma).toBe(titleOf(morning));
       expect(sample?.body).toBe(morning.body);
       expect(sample?.time).toBe('09:00');
     });
@@ -456,7 +456,7 @@ describe('Onboarding', () => {
 
       const morning = morningOf(scheduler.plan);
       expect(morning.date).toBe('2026-10-15');
-      expect(sample?.wordCard.wordId).toBe(morning.wordId);
+      expect(sample?.wordCard.wordId).toBe(wordIdOf(morning));
     });
 
     it("is not today's Word of the Day once it is Seen, as in a session restored from before", async () => {
@@ -477,7 +477,7 @@ describe('Onboarding', () => {
 
       const morning = morningOf(scheduler.plan);
       expect(morning.date).toBe('2026-10-14');
-      expect(sample?.wordCard.wordId).toBe(morning.wordId);
+      expect(sample?.wordCard.wordId).toBe(wordIdOf(morning));
       expect(sample?.wordCard.wordId).not.toBe(wordOfTheDay.wordId);
     });
 
@@ -494,7 +494,7 @@ describe('Onboarding', () => {
       await app.onboarding.allowNotifications();
 
       const morning = morningOf(scheduler.plan);
-      expect(sample?.wordCard.wordId).toBe(morning.wordId);
+      expect(sample?.wordCard.wordId).toBe(wordIdOf(morning));
       expect(sample?.body).toBe(morning.body);
     });
 
@@ -511,7 +511,7 @@ describe('Onboarding', () => {
       await app.onboarding.allowNotifications();
 
       const morning = morningOf(scheduler.plan, '11:30');
-      expect(sample?.wordCard.wordId).toBe(morning.wordId);
+      expect(sample?.wordCard.wordId).toBe(wordIdOf(morning));
     });
 
     it('cuts a long Definition the way the notification does', async () => {

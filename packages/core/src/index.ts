@@ -45,7 +45,8 @@ export {
   type TipFeedCard,
   type WordFeedCard,
 } from './feed/feed-card';
-export { type FeedNotice, type FirstWeekDay } from './feed/feed-notices';
+export type { FeedNotice } from './feed-notice';
+export { type FirstWeekDay } from './feed/feed-notices';
 export { type GameModeOffer, type GameState, type OfferedBest } from './game/game';
 export {
   type CurrentGame,
@@ -125,7 +126,7 @@ export { createContentUpdate, type ContentUpdate } from './content-update/conten
 export type { PackFiles, PackVersion } from './ports';
 export { type ProgressState } from './progress/progress';
 export type { CalendarDay, CalendarMonth } from './progress/calendar';
-export { type WeeklyRecapModel } from './progress/weekly-recap';
+export { type WeeklyRecapModel } from './feed/weekly-recap';
 export {
   ALL_KINDS,
   ENTRY_KINDS,
@@ -137,7 +138,7 @@ export {
 } from './entries/entry-kinds';
 export { categoriesInMix, type CategoriesInMix, type MixState } from './entries/mix';
 export { type OnboardingStep, type SampleNotification } from './onboarding/onboarding';
-export { type RarityTestAnswer, type RarityTestWord } from './rarity-test/rarity-test';
+export { type RarityTestAnswer, type RarityTestWord } from './mix/rarity-test';
 // The shell keeps the Session in memory on a development client without the Keychain.
 export { createMemorySessionStore } from './account/memory-session-store';
 export { type CollectionShareRefusal } from './collection-links/share-collection';

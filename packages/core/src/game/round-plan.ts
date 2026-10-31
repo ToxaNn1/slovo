@@ -6,12 +6,12 @@ import {
   entriesIn,
   ROUND_OPTIONS,
   roundsIn,
-  shuffled,
   type GameEdition,
   type GameMode,
   type GameModeRefusal,
   type RoundContent,
 } from './game-mode';
+import { shuffled } from '../shuffled';
 
 /** How many Rounds a Game has, in a Game Mode that sets no Round limit of its own. */
 export const GAME_ROUNDS = 15;

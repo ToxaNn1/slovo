@@ -24,10 +24,12 @@ export interface RelativeText {
  */
 export function historyText({
   strings,
+  dates,
   count,
   clock,
 }: {
   strings: EditionStrings['history'];
+  dates: EditionStrings['dates'];
   count: (forms: Plural, count: number) => string;
   clock: Clock;
 }) {
@@ -56,7 +58,7 @@ export function historyText({
     dayHeading({ date, daysAgo }: LocalDay): string {
       if (daysAgo <= 0) return strings.days.today;
       if (daysAgo === 1) return strings.days.yesterday;
-      return dateText(date, strings.days.months, strings.days);
+      return dateText(date, dates.months, strings.days);
     },
 
     /**
@@ -88,7 +90,7 @@ export function historyText({
       // The screen abbreviates the month; VoiceOver gets it whole.
       const on = (months: readonly string[]) =>
         dateText(time.date, months, relative, { time: clockTime });
-      return { text: on(relative.months), spoken: on(strings.days.months) };
+      return { text: on(dates.shortMonths), spoken: on(dates.months) };
     },
   };
 }

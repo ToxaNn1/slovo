@@ -8,7 +8,7 @@ const FirstWeekCardSchema = z.strictObject({ title: TextSchema, text: TextSchema
 
 /** The Feed Notices: Feed cards that are not Entries. */
 export const FeedNoticesStringsSchema = z.strictObject({
-  /** The Weekly Recap card: its title and the labels of its four numbers. */
+  /** The Weekly Recap card: its title and the labels of its four numbers, which its Share Card takes too. */
   weeklyRecap: z.strictObject({
     title: TextSchema,
     /** The label of the Entries Seen in the week. */

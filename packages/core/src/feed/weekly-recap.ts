@@ -3,7 +3,7 @@ import type { Favorites } from '../saved/favorites';
 import type { History } from '../saved/history';
 import { dateKeyOf, isMonday, localDateAfter, localDayOf, type LocalDate } from '../local-date';
 import type { Clock } from '../ports';
-import type { Progress } from './progress';
+import type { Progress } from '../progress/progress';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
 

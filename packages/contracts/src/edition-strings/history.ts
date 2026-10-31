@@ -53,8 +53,6 @@ export const HistoryStringsSchema = z.strictObject({
     date: templateOf('day', 'month'),
     /** A day of another year. Takes `{day}`, `{month}` and `{year}`. */
     dateInYear: templateOf('day', 'month', 'year'),
-    /** The month names as a date takes them, January first. */
-    months: z.array(TextSchema).length(12),
   }),
   /** How long ago an Entry was Seen, on the Saved card. */
   relative: z.strictObject({
@@ -70,7 +68,5 @@ export const HistoryStringsSchema = z.strictObject({
     date: templateOf('day', 'month', 'time'),
     /** An earlier day of another year. Takes `{day}`, `{month}`, `{year}` and `{time}`. */
     dateInYear: templateOf('day', 'month', 'year', 'time'),
-    /** The short month names, January first. */
-    months: z.array(TextSchema).length(12),
   }),
 });

@@ -32,7 +32,7 @@ function Day({ day, month }: { day: CalendarDay; month: number }) {
       accessible
       accessibilityLabel={fill(words.days[spoken], {
         day: String(day.day),
-        month: words.dayMonths[month - 1] ?? '',
+        month: strings.dates.months[month - 1] ?? '',
       })}
       {...voice}
       style={styles.cell}

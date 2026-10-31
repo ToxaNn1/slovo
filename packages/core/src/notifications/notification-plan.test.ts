@@ -16,7 +16,15 @@ import {
   createMemoryContentPort,
   type FakeNotificationScheduler,
 } from '../testing';
-import { correction, countingReads, fakeClock, testEdition, word } from '../test-support';
+import {
+  correction,
+  countingReads,
+  fakeClock,
+  testEdition,
+  titleOf,
+  word,
+  wordIdOf,
+} from '../test-support';
 
 /** The instant these tests start at. */
 const start = '2026-10-14T08:00:00+03:00';
@@ -113,8 +121,10 @@ const slotsOf = (plan: readonly PlannedNotification[]) =>
 /** The Word of each planned notification with one, by its local date and time. */
 const wordsBySlot = (plan: readonly PlannedNotification[]) =>
   new Map<string, string>(
-    plan.flatMap(({ date, time, wordId }) =>
-      wordId === undefined ? [] : [[`${date}T${time}`, wordId]],
+    plan.flatMap((notification) =>
+      notification.kind === 'word'
+        ? [[`${notification.date}T${notification.time}`, notification.wordId]]
+        : [],
     ),
   );
 
@@ -234,7 +244,7 @@ describe('the notification plan', () => {
     const plan = planOf(scheduler);
     // Too few unseen Words for every time: the earliest times get one each.
     expect(slotsOf(plan)).toEqual(['2026-10-14T09:00', '2026-10-14T13:00', '2026-10-14T19:00']);
-    expect(plan.map(({ wordId }) => wordId).sort()).toEqual(['w_one', 'w_three', 'w_two']);
+    expect(plan.map(wordIdOf).sort()).toEqual(['w_one', 'w_three', 'w_two']);
   });
 
   it('keeps the notifications still valid when it plans again, and gives a new time a new Word', async () => {
@@ -371,14 +381,16 @@ describe('the notification plan', () => {
 
     const plan = planOf(scheduler);
     expect(plan).toHaveLength(20);
-    const used = plan.map(({ title }) => templateOf(title));
-    expect(plan.map(({ title }) => title)).toEqual(used.map((template) => `${template}: сло́во`));
+    const used = plan.map((notification) => templateOf(titleOf(notification)));
+    expect(plan.map(titleOf)).toEqual(used.map((template) => `${template}: сло́во`));
     expect(used.every((template) => titles.some((title) => title.startsWith(`${template}:`)))).toBe(
       true,
     );
     expect(used.slice(1).every((template, index) => template !== used[index])).toBe(true);
     expect(plan.map(({ body }) => body)).toEqual(
-      plan.map(({ wordId }) => words.find(({ id }) => id === wordId)?.primaryDefinition),
+      plan.map(
+        (notification) => words.find(({ id }) => id === wordIdOf(notification))?.primaryDefinition,
+      ),
     );
   });
 
@@ -395,7 +407,7 @@ describe('the notification plan', () => {
 
     const [next] = planOf(later);
     expect(next).toMatchObject({ date: '2026-10-14', time: '10:00' });
-    expect(templateOf(next?.title)).not.toBe(templateOf(nineToday?.title));
+    expect(templateOf(titleOf(next))).not.toBe(templateOf(titleOf(nineToday)));
   });
 
   it('titles a notification with the Lemma and its Stress, and gives the primary Definition as the body', async () => {
@@ -414,7 +426,7 @@ describe('the notification plan', () => {
     });
 
     const byWord = new Map(
-      planOf(scheduler).map((notification) => [notification.wordId, notification]),
+      planOf(scheduler).map((notification) => [wordIdOf(notification), notification]),
     );
     expect(byWord.get('w_kebeta')).toMatchObject({
       title: 'ке́бета',
@@ -423,7 +435,7 @@ describe('the notification plan', () => {
     expect(byWord.get('w_dvi')).toMatchObject({ title: 'по́ми́лка', body: 'Хибна дія.' });
 
     const long = byWord.get('w_dovge');
-    expect(long?.title).toBe('метику́ватий');
+    expect(titleOf(long)).toBe('метику́ватий');
     expect(long?.body).toBe(
       'Людина, яка вміє швидко зметикувати, що до чого, і знайти вихід навіть там, де…',
     );
@@ -568,20 +580,20 @@ describe('the polite pause', () => {
       datesFrom('2026-10-14', 15).flatMap((date) => defaultTimes.map((time) => `${date}T${time}`)),
     );
     expect(plan.at(-1)).toEqual({
+      kind: 'farewell',
       date: '2026-10-28',
       time: '19:00',
-      title: '',
       body: farewell,
       sound: { file: 'notification.wav' },
     });
-    expect(plan.slice(0, -1).every(({ wordId }) => wordId !== undefined)).toBe(true);
+    expect(plan.slice(0, -1).every(({ kind }) => kind === 'word')).toBe(true);
   });
 
   it('Reserves no Word for the farewell', async () => {
     const { app, scheduler } = await run({ politePause: true });
     await app.resume();
 
-    const words = planOf(scheduler).flatMap(({ wordId }) => (wordId === undefined ? [] : [wordId]));
+    const words = planOf(scheduler).flatMap((notification) => wordIdOf(notification) ?? []);
     expect(words).toHaveLength(44);
     expect(new Set(words).size).toBe(44);
   });
@@ -596,7 +608,7 @@ describe('the polite pause', () => {
     const plan = planOf(scheduler);
     expect(slotsOf(plan)[0]).toBe('2026-10-19T13:00');
     expect(slotsOf(plan).at(-1)).toBe('2026-11-02T19:00');
-    expect(plan.filter(({ wordId }) => wordId === undefined)).toEqual([
+    expect(plan.filter(({ kind }) => kind === 'farewell')).toEqual([
       expect.objectContaining({ date: '2026-11-02', time: '19:00', body: farewell }),
     ]);
     expect(wordsBySlot(plan).get('2026-10-28T19:00')).toBeDefined();
@@ -623,7 +635,7 @@ describe('the polite pause', () => {
     const plan = planOf(scheduler);
     expect(plan).toHaveLength(15);
     expect(plan.at(-1)).toMatchObject({ date: '2026-10-28', time: '09:00', body: farewell });
-    expect(plan.at(-1)?.wordId).toBeUndefined();
+    expect(plan.at(-1)?.kind).toBe('farewell');
   });
 
   it('keeps 14 days of times from the next one ahead, with no farewell, with it switched off', async () => {
@@ -631,7 +643,7 @@ describe('the polite pause', () => {
 
     const plan = planOf(scheduler);
     expect(plan).toHaveLength(42);
-    expect(plan.every(({ wordId }) => wordId !== undefined)).toBe(true);
+    expect(plan.every(({ kind }) => kind === 'word')).toBe(true);
   });
 
   it('plans nothing, the farewell included, with notifications switched off', async () => {
@@ -649,7 +661,7 @@ describe('the plan following the Feed', () => {
     const plan = planOf(scheduler);
     expect(today).toBeDefined();
     expect(wordAt(plan, '2026-10-14T09:00')).toBe(today);
-    expect(plan.filter(({ wordId }) => wordId === today)).toHaveLength(1);
+    expect(plan.filter((notification) => wordIdOf(notification) === today)).toHaveLength(1);
   });
 
   it("makes a later day's morning notification that day's Word of the Day when the day comes", async () => {
@@ -782,12 +794,12 @@ describe('the plan following the Feed', () => {
 
     await app.hide({ kind: 'entry', entryId: 'w_one' });
     await app.mix.takeOut('other');
-    expect(planOf(scheduler).map(({ wordId }) => wordId)).toEqual(['w_two']);
+    expect(planOf(scheduler).map(wordIdOf)).toEqual(['w_two']);
 
     await app.unhide({ kind: 'entry', entryId: 'w_one' });
     await app.mix.putBack('other');
 
-    const wordIds = planOf(scheduler).map(({ wordId }) => wordId);
+    const wordIds = planOf(scheduler).map(wordIdOf);
     expect(wordIds.sort()).toEqual(['w_four', 'w_one', 'w_three', 'w_two']);
   });
 
@@ -817,7 +829,7 @@ describe('the plan following the Feed', () => {
     const { app, scheduler } = await run({ clock: time.clock });
     const before = planOf(scheduler);
     const today = wordsOfTheDayIn(app).get('2026-10-14');
-    expect(before.map(({ wordId }) => wordId)).not.toContain(today);
+    expect(before.map(wordIdOf)).not.toContain(today);
 
     await readTo(app, time, 1);
 

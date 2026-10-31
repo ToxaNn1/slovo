@@ -28,7 +28,6 @@ const strings = testStrings({
       months: monthNames(''),
       weekdays: ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'],
       hint: 'Swipe up or down to change the month',
-      dayMonths: monthNames('.'),
       days: {
         active: '{day} {month}, active',
         missed: '{day} {month}, missed',
@@ -38,6 +37,7 @@ const strings = testStrings({
       },
     },
   },
+  dates: { months: monthNames('.') },
 });
 
 const progress: ProgressState = {

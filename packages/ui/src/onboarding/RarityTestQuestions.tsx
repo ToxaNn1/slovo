@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { AccessibilityInfo, StyleSheet, Text } from 'react-native';
 
+import type { Rarity } from '@slovo/contracts';
+
 import { fill, useEdition } from '../providers/EditionProvider';
 import { PrimaryButton } from '../primitives/PrimaryButton';
 import { SecondaryButton } from '../primitives/SecondaryButton';
@@ -16,7 +18,7 @@ import {
 
 /** A Word the Rarity Test asks about. */
 export interface RarityTestQuestion {
-  readonly rarity: number;
+  readonly rarity: Rarity;
   /** The Lemma with its Stress mark. */
   readonly lemma: string;
   /** What VoiceOver reads for the Lemma, which says where the Stress falls. */
@@ -33,8 +35,8 @@ export interface RarityTestScreen {
 
 /** Where the Rarity Test is: the Word asked about, or the floor it set. */
 type RarityTestPhase =
-  | { readonly kind: 'asking'; readonly answers: readonly { rarity: number; known: boolean }[] }
-  | { readonly kind: 'result'; readonly floor: number };
+  | { readonly kind: 'asking'; readonly answers: readonly { rarity: Rarity; known: boolean }[] }
+  | { readonly kind: 'result'; readonly floor: Rarity };
 
 /** A Rarity Test screen's title, as VoiceOver's header. */
 export function RarityTestTitle({ children }: { children: string }) {
@@ -74,7 +76,7 @@ export function RarityTestQuestions({
    * Applies the answers and resolves to the Rarity Floor they set, or to
    * nothing when none was set; it never rejects.
    */
-  onApply: (answers: readonly { rarity: number; known: boolean }[]) => Promise<number | undefined>;
+  onApply: (answers: readonly { rarity: Rarity; known: boolean }[]) => Promise<Rarity | undefined>;
   /** Goes on from the result, or at once when the answers set no floor. */
   onDone: () => void;
   frame: (screen: RarityTestScreen) => ReactNode;

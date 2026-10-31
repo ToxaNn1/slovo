@@ -11,12 +11,12 @@ import type {
 
 import {
   ROUND_OPTIONS,
-  shuffled,
   type GameMode,
   type RoundContent,
   type RoundOption,
   type TextRange,
 } from './game-mode';
+import { shuffled } from '../shuffled';
 import type { AskableEntry } from '../entries/entries';
 import type { Random } from '../ports';
 import { renderStress, STRESS_MARK, stressedVowelsOf, withoutStress } from '../entries/stress';

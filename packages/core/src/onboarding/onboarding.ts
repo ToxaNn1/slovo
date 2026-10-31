@@ -4,7 +4,7 @@ import { createSubscribers } from '../in-turn';
 import { formatTimeOfDay, todayKey } from '../local-date';
 import type { Notifications } from '../notifications/notifications';
 import type { Clock } from '../ports';
-import type { RarityTest, RarityTestWord } from '../rarity-test/rarity-test';
+import type { RarityTest, RarityTestWord } from '../mix/rarity-test';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
 import { buildWordCard, type WordCardModel } from '../entries/word-card';

@@ -4,11 +4,11 @@ import { describe, expect, it } from 'vitest';
 import { historyText } from './history-text';
 import { count, fakeClock, strings as allStrings } from '../test-support';
 
-const { history: strings } = allStrings;
+const { history: strings, dates } = allStrings;
 
 describe('the History texts', () => {
   const time = fakeClock('2026-10-11T10:00:00+03:00');
-  const text = historyText({ strings, count, clock: time.clock });
+  const text = historyText({ strings, dates, count, clock: time.clock });
   const relative = (instant: string) =>
     text.relative(relativeTimeOf(new Date(instant), time.clock));
 
@@ -43,7 +43,7 @@ describe('the History texts', () => {
 
   it('follows a time-zone change of the clock', () => {
     const late = fakeClock('2026-10-11T00:30:00+03:00');
-    const lateText = historyText({ strings, count, clock: late.clock });
+    const lateText = historyText({ strings, dates, count, clock: late.clock });
     const headingOf = () =>
       lateText.dayHeading(localDayOf(new Date('2026-10-10T23:50:00+03:00'), late.clock));
     expect(headingOf()).toBe('Учора');

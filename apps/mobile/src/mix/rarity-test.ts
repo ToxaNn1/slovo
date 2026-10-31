@@ -1,3 +1,4 @@
+import type { Rarity } from '@slovo/contracts';
 import { stressLabel, type RarityTestAnswer, type RarityTestWord } from '@slovo/core';
 import type { RarityTestQuestion } from '@slovo/ui';
 import { useCallback } from 'react';
@@ -26,7 +27,7 @@ export function rarityTestQuestionOf({
  */
 export function useApplyRarityTest(): (
   answers: readonly RarityTestAnswer[],
-) => Promise<number | undefined> {
+) => Promise<Rarity | undefined> {
   const { rarityTest } = useComposition();
   return useCallback(
     (answers) =>

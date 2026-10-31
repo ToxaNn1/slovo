@@ -27,9 +27,10 @@ export type DailyCrosswordCardContent = Omit<
 function dailyCrosswordCard(
   { date, progress }: DailyCrosswordState,
   strings: EditionStrings['game']['dailyCrossword'],
+  months: EditionStrings['dates']['months'],
 ): DailyCrosswordCardContent {
   const [, month = 0, day = 0] = date.split('-').map(Number);
-  const monthName = strings.months[month - 1];
+  const monthName = months[month - 1];
   if (monthName === undefined) throw new Error(`The Daily Crossword's date «${date}» has no month`);
   return {
     title: fill(strings.dated, { day: String(day), month: monthName }),
@@ -70,7 +71,10 @@ export function useDailyCrosswordCard(): DailyCrosswordCardContent | undefined {
     }, [composition]),
   );
   const state = read?.in === composition ? read.state : undefined;
-  return state && dailyCrosswordCard(state, editionStrings.game.dailyCrossword);
+  return (
+    state &&
+    dailyCrosswordCard(state, editionStrings.game.dailyCrossword, editionStrings.dates.months)
+  );
 }
 
 /** Today's Daily Crossword on its screen: its state, and the reader's moves. */

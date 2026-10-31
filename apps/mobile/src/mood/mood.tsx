@@ -3,6 +3,7 @@ import { MoodButton, MoodSheet, useReduceMotion, type MoodChip } from '@slovo/ui
 import { useEffect, useRef, useState } from 'react';
 
 import { useComposition } from '../composition';
+import { logError } from '../diagnostics/log';
 import { editionStrings } from '../edition/edition';
 import { useEditionInEffect } from '../edition/remote-switches';
 import { useReplaceOpenEntry } from '../entries/replace-open-entry';
@@ -58,6 +59,8 @@ export function MoodButtonAndSheet() {
   /** The Word the roulette landed on, opened once the sheet has left. */
   const landed = useRef<string | undefined>(undefined);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  /** Whether a draw is under way, so a second tap before it answers starts no second roulette. */
+  const drawing = useRef(false);
 
   const stopRoulette = () => {
     timers.current.forEach(clearTimeout);
@@ -71,12 +74,23 @@ export function MoodButtonAndSheet() {
     landed.current = wordId;
     setOpen(false);
   };
+  const showChips = async () => {
+    setChips(chipsOf(await composition.moodDraw.moods()));
+  };
   const choose = async (moodId: string) => {
-    if (lemma !== undefined) return;
+    if (lemma !== undefined || drawing.current) return;
+    drawing.current = true;
+    try {
+      await runRoulette(moodId);
+    } finally {
+      drawing.current = false;
+    }
+  };
+  const runRoulette = async (moodId: string) => {
     const roulette = await composition.moodDraw.draw(moodId);
     // The Mix changed while the sheet was open: offer the moods as they are now.
     if (roulette === undefined) {
-      setChips(chipsOf(await composition.moodDraw.moods()));
+      await showChips();
       return;
     }
     if (reduceMotion) {
@@ -104,10 +118,14 @@ export function MoodButtonAndSheet() {
     <>
       <MoodButton
         onPress={() => {
-          void composition.moodDraw.moods().then((choices) => {
-            setChips(chipsOf(choices));
-            setOpen(true);
-          });
+          showChips().then(
+            () => {
+              setOpen(true);
+            },
+            (error: unknown) => {
+              logError('Could not list the moods', error);
+            },
+          );
         }}
       />
       <MoodSheet
@@ -115,7 +133,9 @@ export function MoodButtonAndSheet() {
         moods={chips}
         roulette={lemma}
         onChoose={(moodId) => {
-          void choose(moodId);
+          choose(moodId).catch((error: unknown) => {
+            logError('Could not draw a Word of the mood', error);
+          });
         }}
         onClose={() => {
           stopRoulette();

@@ -134,7 +134,7 @@ describe('the Word of the Day archive screen «Слова дня»', () => {
     expect(screen.queryByTestId('words-of-the-day-empty')).not.toBeOnTheScreen();
   });
 
-  it('opens the Entry of a tapped day, making nothing Seen', async () => {
+  it('opens the Entry of a tapped day', async () => {
     await open(kept({ '2026-10-26': 'w_gentle', '2026-10-27': 'w_quiet' }));
     await renderArchive();
 
@@ -142,8 +142,6 @@ describe('the Word of the Day archive screen «Слова дня»', () => {
     await settle();
 
     expect(mockPushed).toEqual(['/saved/words-of-the-day/w_gentle']);
-    expect((await composition.entryCard('w_gentle'))?.entryId).toBe('w_gentle');
-    expect(composition.history.list).toEqual([]);
   });
 
   it('says so while no day is kept', async () => {

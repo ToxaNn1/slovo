@@ -1,10 +1,8 @@
 import type { Mood, Word } from '@slovo/contracts';
 
 import type { Edition } from '../edition/edition';
-import { createEntries } from '../entries/entries';
-import type { MixEdition } from '../entries/mix';
-import type { ContentReadPort, Random } from '../ports';
-import type { UserState } from '../user-state/user-state';
+import type { Entries } from '../entries/entries';
+import type { Random } from '../ports';
 
 /** How many Lemmas the roulette runs through, the last the Word it lands on. */
 const ROULETTE_LENGTH = 12;
@@ -40,17 +38,15 @@ export interface MoodDraw {
 }
 
 export function createMoodDraw({
-  content,
   edition,
-  userState,
+  entries,
   random,
 }: {
-  content: ContentReadPort;
-  edition: Pick<Edition, 'isFeatureEnabled' | 'moods'> & MixEdition;
-  userState: Pick<UserState, 'list' | 'read'>;
+  edition: Pick<Edition, 'isFeatureEnabled' | 'moods'>;
+  /** The composition's Entries, shared with the Feed and the Rarity Test, so the Words are read once. */
+  entries: Pick<Entries, 'eligibleOfKind'>;
   random: Random;
 }): MoodDraw {
-  const entries = createEntries({ content, edition, userState });
   const isOn = () => edition.isFeatureEnabled('moods');
   /** A random Word of the list; nothing of an empty one. */
   const pick = (words: readonly Word[]) => words[Math.floor(random.next() * words.length)];

@@ -14,7 +14,7 @@ import {
   createMemoryContentPort,
   type FakeNotificationScheduler,
 } from '../testing';
-import { fakeClock, testEdition, word } from '../test-support';
+import { fakeClock, testEdition, word, wordIdOf } from '../test-support';
 
 /** More Words than the plan holds, so every notification gets one. */
 const words = Array.from({ length: 60 }, (_, index) => word(`w_${String(index).padStart(2, '0')}`));
@@ -64,7 +64,7 @@ function planOf(scheduler: FakeNotificationScheduler): readonly PlannedNotificat
 
 /** The Word of a planned notification; it fails the test when the time has none. */
 function wordAt(plan: readonly PlannedNotification[], slot: string): string {
-  const wordId = plan.find(({ date, time }) => `${date}T${time}` === slot)?.wordId;
+  const wordId = wordIdOf(plan.find(({ date, time }) => `${date}T${time}` === slot));
   if (wordId === undefined) throw new Error(`Nothing is planned at ${slot}`);
   return wordId;
 }

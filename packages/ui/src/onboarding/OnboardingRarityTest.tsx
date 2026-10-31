@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Text, View } from 'react-native';
 
+import type { Rarity } from '@slovo/contracts';
+
 import { useEdition } from '../providers/EditionProvider';
 import { PrimaryButton } from '../primitives/PrimaryButton';
 import { useTokens } from '../providers/TokensProvider';
@@ -34,7 +36,7 @@ export function OnboardingRarityTest({
    * Applies the answers and resolves to the Rarity Floor they set, or to
    * nothing when none was set; it never rejects.
    */
-  onApply: (answers: readonly { rarity: number; known: boolean }[]) => Promise<number | undefined>;
+  onApply: (answers: readonly { rarity: Rarity; known: boolean }[]) => Promise<Rarity | undefined>;
   onNext: () => void;
   onSkip: () => void;
 }) {

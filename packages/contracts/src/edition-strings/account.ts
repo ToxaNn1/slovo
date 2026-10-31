@@ -47,8 +47,6 @@ const SyncStatusStringsSchema = z.strictObject({
   syncedOn: templateOf('day', 'month'),
   /** The last sync was in another year. Takes `{day}`, `{month}` and `{year}`. */
   syncedOnInYear: templateOf('day', 'month', 'year'),
-  /** The short month names, January first. */
-  months: z.array(TextSchema).length(12),
 });
 
 /**

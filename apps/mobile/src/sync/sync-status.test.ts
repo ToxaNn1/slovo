@@ -7,7 +7,12 @@ import { syncStatusLine } from './sync-status';
 const idle: SyncState = { syncedAt: undefined, running: false, offline: false };
 
 function lineOf(state: Partial<SyncState>, clock = fakeClock('2026-10-18T12:00:00Z').clock) {
-  return syncStatusLine({ state: { ...idle, ...state }, strings: strings.account.sync, clock });
+  return syncStatusLine({
+    state: { ...idle, ...state },
+    strings: strings.account.sync,
+    months: strings.dates.shortMonths,
+    clock,
+  });
 }
 
 describe('the status line of the SLOVO ID screen', () => {

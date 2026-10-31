@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import type { Word } from '@slovo/contracts';
+import type { Rarity, Word } from '@slovo/contracts';
 import {
   createMemoryUserStatePort,
   loadEdition,
@@ -62,7 +62,7 @@ const metrics = {
 const { rarityTest, knowledge } = editionStrings;
 
 /** A Word of the one Category, of the rarity given. */
-function word(index: number, rarity: number): Word {
+function word(index: number, rarity: Rarity): Word {
   return {
     kind: 'word',
     id: `w_${String(index)}`,
@@ -85,7 +85,7 @@ function word(index: number, rarity: number): Word {
 }
 
 /** Two Words of each rarity 1 to 5, so the test asks about 10. */
-const words = [1, 1, 2, 2, 3, 3, 4, 4, 5, 5].map((rarity, index) => word(index, rarity));
+const words = ([1, 1, 2, 2, 3, 3, 4, 4, 5, 5] as const).map((rarity, index) => word(index, rarity));
 
 /** Lets the Core's reads and writes and the renders after them finish. */
 async function settle() {

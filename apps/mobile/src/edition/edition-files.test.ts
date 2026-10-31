@@ -665,7 +665,7 @@ describe('the 0.8 Sync strings', () => {
     expect(issuesOf({ ...strings, account: without(account, 'sync') })).toEqual(['account.sync']);
   });
 
-  it.each(['syncing', 'waitingForNetwork', 'syncedToday', 'syncedOn', 'syncedOnInYear', 'months'])(
+  it.each(['syncing', 'waitingForNetwork', 'syncedToday', 'syncedOn', 'syncedOnInYear'])(
     'the Ukrainian Edition needs account.sync.%s',
     (key) => {
       const changed = { ...strings, account: { ...account, sync: without(sync, key) } };
@@ -686,11 +686,11 @@ describe('the 0.8 Sync strings', () => {
     expect(issuesOf(changed)).toEqual([`account.sync.${key}`]);
   });
 
-  it('needs the twelve month names of the status line', () => {
-    const months = (sync['months'] as string[]).slice(0, 11);
-    const changed = { ...strings, account: { ...account, sync: { ...sync, months } } };
+  it.each(['months', 'shortMonths'])('needs the twelve names of dates.%s', (key) => {
+    const dates = strings['dates'] as Record<string, string[]>;
+    const changed = { ...strings, dates: { ...dates, [key]: dates[key]?.slice(0, 11) } };
 
-    expect(issuesOf(changed)).toEqual(['account.sync.months']);
+    expect(issuesOf(changed)).toEqual([`dates.${key}`]);
   });
 
   it("the Ukrainian Edition needs the onboarding's SLOVO ID step", () => {

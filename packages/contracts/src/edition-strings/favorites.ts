@@ -27,8 +27,6 @@ export const FavoritesStringsSchema = z.strictObject({
     date: templateOf('day', 'month'),
     /** A day of another year. Takes `{day}`, `{month}` and `{year}`. */
     dateInYear: templateOf('day', 'month', 'year'),
-    /** The short month names, January first. */
-    months: z.array(TextSchema).length(12),
   }),
   /** The empty list. */
   empty: z.strictObject({

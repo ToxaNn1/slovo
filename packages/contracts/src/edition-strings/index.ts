@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { AccountStringsSchema, EmailStringsSchema } from './account';
+import { DatesStringsSchema } from './dates';
 import { appStringsShape } from './app';
 import { AppIntentsStringsSchema } from './app-intents';
 import { CollectionsStringsSchema } from './collections';
@@ -45,6 +46,7 @@ import { WordCardStringsSchema } from './word-card';
  */
 export const EditionStringsSchema = z.strictObject({
   tabs: TabsStringsSchema,
+  dates: DatesStringsSchema,
   ...appStringsShape,
   ...feedStringsShape,
   splash: SplashStringsSchema,

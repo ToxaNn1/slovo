@@ -1,7 +1,15 @@
 import type { FeatureSwitch, Mood, Word } from '@slovo/contracts';
 import { describe, expect, it } from 'vitest';
 
-import { createMemoryUserStatePort, openUserState, type Random } from '../index';
+import { createEntries } from '../entries/entries';
+import {
+  createMemoryUserStatePort,
+  openUserState,
+  type ContentReadPort,
+  type Edition,
+  type Random,
+} from '../index';
+import type { UserState } from '../user-state/user-state';
 import { createMoodDraw, type MoodDraw } from './mood-draw';
 import { createMemoryContentPort } from '../testing';
 import { seededRandom, testEdition, word } from '../test-support';
@@ -23,6 +31,25 @@ const words: Word[] = [
   word('w_plain'),
 ];
 
+/** The mood draw over the Entries of the content and user state given, as the composition opens it. */
+function moodDrawOver({
+  content,
+  edition,
+  userState,
+  random,
+}: {
+  content: ContentReadPort;
+  edition: Edition;
+  userState: UserState;
+  random: Random;
+}): MoodDraw {
+  return createMoodDraw({
+    edition,
+    entries: createEntries({ content, edition, userState }),
+    random,
+  });
+}
+
 /** The mood draw over the Words and the user's records, with the Edition's Feature Switches on but those in `off`. */
 async function open({
   records = {},
@@ -36,7 +63,7 @@ async function open({
   const port = createMemoryUserStatePort(
     new Map(Object.entries(records).map(([key, value]) => [key, JSON.stringify(value)])),
   );
-  return createMoodDraw({
+  return moodDrawOver({
     content: createMemoryContentPort({
       categories: [
         { id: 'test', displayName: 'Test' },
@@ -159,7 +186,7 @@ describe('the mood draw', () => {
 
   it('writes nothing, so no Word is Seen', async () => {
     const records = new Map<string, string>();
-    const draw = createMoodDraw({
+    const draw = moodDrawOver({
       content: createMemoryContentPort({ words }),
       edition: testEdition({
         moods,

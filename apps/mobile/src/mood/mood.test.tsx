@@ -5,7 +5,6 @@ import {
   loadEdition,
   openComposition,
   openUserState,
-  systemRandom,
   trackChanges,
   type Composition,
   type Edition,
@@ -44,6 +43,13 @@ const clock = { now: () => new Date('2026-10-27T09:00:00Z'), timeZone: () => 'Eu
 
 /** The composition the shell reads, opened afresh for each test. */
 let composition: Composition;
+
+/** A random source that steps through fixed values, so each test draws the same roulettes. */
+function steppingRandom() {
+  const values = [0.1, 0.6, 0.3, 0.8, 0.5];
+  let next = 0;
+  return { next: () => values[next++ % values.length] ?? 0 };
+}
 
 /** The screens the shell opens. */
 const mockPush = jest.fn<(href: string) => void>();
@@ -108,7 +114,7 @@ beforeEach(async () => {
     edition: mockEdition,
     userState,
     clock,
-    random: systemRandom,
+    random: steppingRandom(),
   });
 });
 
@@ -241,5 +247,37 @@ describe('«Слово під настрій»', () => {
     await renderHeader();
 
     expect(screen.queryByRole('button', { name: strings.title })).not.toBeOnTheScreen();
+  });
+
+  it('starts one roulette when a chip is tapped twice before the draw answers', async () => {
+    await openChips();
+    const draw = jest.spyOn(composition.moodDraw, 'draw');
+
+    const chip = screen.getByRole('button', { name: joyful?.name ?? '' });
+    await act(async () => {
+      void fireEvent.press(chip);
+      void fireEvent.press(chip);
+      await Promise.resolve();
+    });
+    await settle(2500);
+
+    expect(draw).toHaveBeenCalledTimes(1);
+    expect(mockPush).toHaveBeenCalledTimes(1);
+  });
+
+  it('logs a failed draw and a failed list of moods instead of leaving them unhandled', async () => {
+    const logged = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    await openChips();
+    jest.spyOn(composition.moodDraw, 'draw').mockRejectedValue(new Error('draw failed'));
+
+    await fireEvent.press(screen.getByRole('button', { name: joyful?.name ?? '' }));
+    await settle();
+    expect(logged).toHaveBeenCalledTimes(1);
+
+    jest.spyOn(composition.moodDraw, 'moods').mockRejectedValue(new Error('moods failed'));
+    await fireEvent.press(screen.getByRole('button', { name: strings.title }));
+    await settle();
+    expect(logged).toHaveBeenCalledTimes(2);
+    expect(mockPush).not.toHaveBeenCalled();
   });
 });

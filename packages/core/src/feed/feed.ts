@@ -14,7 +14,8 @@ import {
   type FeedCard,
   type WordFeedCard,
 } from './feed-card';
-import { closedNotices, closeNotice, FEED_NOTICES, type FeedNotices } from './feed-notices';
+import { FEED_NOTICES } from '../feed-notice';
+import { closedNotices, closeNotice, type FeedNotices } from './feed-notices';
 import { createFeedSession, type FeedSession } from './feed-session';
 import type { HistoryRecorder, Seen } from '../saved/history';
 import type { WordOfTheDayArchiveRecorder } from '../saved/word-of-the-day-archive';
