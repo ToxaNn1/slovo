@@ -28,6 +28,10 @@ overrides:
   # zod 4 before 4.6.6 can exhaust memory (GHSA-mrhx-c7xc-m3w5); tools that
   # take any zod 4 (knip, the React hooks lint plugin) get the patched one.
   'zod@>=4 <4.6.6': ^4.6.7
+  # node-forge <=1.4.0 and decode-uri-component <=0.5.0 carry high advisories
+  # (GHSA-7wch-p9px-956x and four more; GHSA-qr28-fpjm-wq7f); both have patched releases.
+  node-forge@<=1.4.0: ^1.4.1
+  decode-uri-component@<=0.5.0: ^0.5.1
 
 # High advisories with no patched release yet, reachable only through
 # build-time tooling (Expo CLI code signing, Metro's file watcher) and never
