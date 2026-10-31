@@ -6,6 +6,7 @@ import { buildSynonymRowCard } from '../entries/synonym-row-card';
 import { buildTipCard } from '../entries/tip-card';
 import type { Cycle } from './cycle';
 import type { Entries, EntryIds, ShownEntry } from '../entries/entries';
+import { ENTRY_KINDS, MIX_KINDS } from '../entries/entry-kinds';
 import {
   asReviewIfDue,
   type AnyEntryCard,
@@ -29,44 +30,19 @@ import type { WordOfTheDay, WordOfTheDayChoice } from './word-of-the-day';
 /** How long a card must stay on screen before its Entry counts as Seen. */
 export const SEEN_DWELL_MS = 500;
 
-/** One card in this many is a Correction's, while the Cycle has unseen Corrections. */
-export const CORRECTION_EVERY = 5;
-
 /**
- * One card in this many is an Idiom's, while the Cycle has unseen Idioms.
- * When it falls on a Correction's turn the Correction takes the card and the
- * Idiom the next (ADR 0046).
+ * The kinds that take turns, from the kind table, in the order they take a
+ * card their turns fall on together: each with its Entries' list and how
+ * often its turn comes (every 5th card a Correction's, every 7th an Idiom's,
+ * every 9th a Synonym Row's, every 11th a Tip's), while the Cycle has unseen
+ * Entries of it. When a turn falls on an earlier kind's, that kind takes the
+ * card and the loser the next (ADR 0046, 0051).
  */
-export const IDIOM_EVERY = 7;
-
-/**
- * One card in this many is a Synonym Row's, while the Cycle has unseen rows.
- * When it falls on a Correction's or an Idiom's turn, they take the card first
- * and the row the next (ADR 0051).
- */
-export const SYNONYM_ROW_EVERY = 9;
-
-/**
- * One card in this many is a Tip's, while the Cycle has unseen Tips. When it
- * falls on the turn of any other kind, that kind takes the card first and the
- * Tip the next (ADR 0051).
- */
-export const TIP_EVERY = 11;
-
-/**
- * The kinds that take turns, in the order they take a card their turns fall
- * on together: each with its Entries' list and how often its turn comes.
- */
-const TURNS = [
-  { kind: 'correction', ids: 'corrections', every: CORRECTION_EVERY },
-  { kind: 'idiom', ids: 'idioms', every: IDIOM_EVERY },
-  { kind: 'synonymRow', ids: 'synonymRows', every: SYNONYM_ROW_EVERY },
-  { kind: 'tip', ids: 'tips', every: TIP_EVERY },
-] as const satisfies readonly {
-  kind: Exclude<FeedCard['kind'], 'word' | 'end-of-cycle' | 'notice'>;
-  ids: keyof EntryIds;
-  every: number;
-}[];
+const TURNS = MIX_KINDS.map((kind) => ({
+  kind,
+  ids: ENTRY_KINDS[kind].name,
+  every: ENTRY_KINDS[kind].feedTurn,
+}));
 
 /**
  * One card in this many is a Word's due for Review, while any is due and it

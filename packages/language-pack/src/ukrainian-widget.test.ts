@@ -89,8 +89,8 @@ describe('The Widget Snapshot of the Ukrainian Edition', () => {
       clock,
       random: seededRandom(7),
     });
-    const [first, second, third] = await pack.listWordIds();
-    const [correctionId] = await pack.listCorrectionIds();
+    const [first, second, third] = await pack.listIds('word');
+    const [correctionId] = await pack.listIds('correction');
     if (first === undefined || second === undefined || third === undefined) {
       throw new Error('The pack has fewer than three Words');
     }
@@ -127,7 +127,7 @@ describe('The Widget Snapshot of the Ukrainian Edition', () => {
       clock: fakeClock('2026-10-16T09:00:00+03:00').clock,
       random: seededRandom(7),
     });
-    const stressTraps = (await pack.getEntries(await pack.listCorrectionIds())).filter(
+    const stressTraps = (await pack.getEntries(await pack.listIds('correction'))).filter(
       (entry): entry is Correction =>
         entry.kind === 'correction' && entry.correctionType === 'wrongStress',
     );
@@ -159,7 +159,7 @@ describe('The Widget Snapshot of the Ukrainian Edition', () => {
       clock,
       random: seededRandom(7),
     });
-    const [idiom] = await pack.getEntries(await pack.listIdiomIds());
+    const [idiom] = await pack.getEntries(await pack.listIds('idiom'));
     if (idiom?.kind !== 'idiom') throw new Error('The pack has no Idiom');
     await app.favorites.add(idiom.id);
     advance(60_000);
@@ -191,7 +191,7 @@ describe('The Widget Snapshot of the Ukrainian Edition', () => {
       clock: fakeClock('2026-10-16T09:00:00+03:00').clock,
       random: seededRandom(7),
     });
-    const [idiomId] = await pack.listIdiomIds();
+    const [idiomId] = await pack.listIds('idiom');
     if (idiomId === undefined) throw new Error('The pack has no Idiom');
 
     const card = await app.widget.opened(idiomId);

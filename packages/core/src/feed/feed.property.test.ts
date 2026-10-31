@@ -1,15 +1,8 @@
 import fc from 'fast-check';
 import { describe, it } from 'vitest';
 
-import {
-  CORRECTION_EVERY,
-  createMemoryUserStatePort,
-  IDIOM_EVERY,
-  openComposition,
-  openUserState,
-  type Feed,
-} from '../index';
-import { SYNONYM_ROW_EVERY, TIP_EVERY } from './feed';
+import { createMemoryUserStatePort, openComposition, openUserState, type Feed } from '../index';
+import { ENTRY_KINDS } from '../entries/entry-kinds';
 import { createMemoryContentPort } from '../testing';
 import {
   correction,
@@ -21,6 +14,12 @@ import {
   tip,
   word,
 } from '../test-support';
+
+/** The Feed turns of the kinds, from the kind table: every how many cards each takes one. */
+const CORRECTION_EVERY = ENTRY_KINDS.correction.feedTurn;
+const IDIOM_EVERY = ENTRY_KINDS.idiom.feedTurn;
+const SYNONYM_ROW_EVERY = ENTRY_KINDS.synonymRow.feedTurn;
+const TIP_EVERY = ENTRY_KINDS.tip.feedTurn;
 
 /** Seeded, so CI checks the same inputs on every run. */
 const runs = { seed: 20261027, numRuns: 100 };

@@ -5,10 +5,9 @@ import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
-  CORRECTION_EVERY,
   type Entry,
-  IDIOM_EVERY,
   createMemoryUserStatePort,
+  ENTRY_KINDS,
   openComposition,
   openUserState,
   SEEN_DWELL_MS,
@@ -28,6 +27,10 @@ import { ukrainian, ukrainianFolder } from './test-support';
 // The Core's Feed over the real Ukrainian Language Pack, opened through the
 // Core composition (spec #96, seam 1). It lives here because only this
 // package can build and read a pack in Node.
+
+/** The Feed turns of the kinds, from the kind table: every how many cards each takes one. */
+const CORRECTION_EVERY = ENTRY_KINDS.correction.feedTurn;
+const IDIOM_EVERY = ENTRY_KINDS.idiom.feedTurn;
 
 let workDir: string;
 let pack: NodeLanguagePack;
@@ -81,11 +84,11 @@ beforeAll(async () => {
   if (!result.ok) throw new Error('The Ukrainian Language Pack does not build');
   pack = openLanguagePack(outFile);
   content = remembering(pack);
-  liveIds = await pack.listWordIds();
-  liveCorrectionIds = await pack.listCorrectionIds();
-  liveIdiomIds = await pack.listIdiomIds();
-  liveSynonymRowIds = await pack.listSynonymRowIds();
-  liveTipIds = await pack.listTipIds();
+  liveIds = await pack.listIds('word');
+  liveCorrectionIds = await pack.listIds('correction');
+  liveIdiomIds = await pack.listIds('idiom');
+  liveSynonymRowIds = await pack.listIds('synonymRow');
+  liveTipIds = await pack.listIds('tip');
 });
 
 afterAll(() => {

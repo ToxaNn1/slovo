@@ -1,8 +1,9 @@
-import type { Example } from '@slovo/contracts';
+import type { Example, Idiom, Word } from '@slovo/contracts';
 
 import type { PlayedRound, RoundAnswer } from './game-in-play';
 import type { FixedChip, RoundOption } from './game-mode';
 import { rowWordOption } from './guess-word';
+import { byKind } from '../entries/entry-kinds';
 import { renderStress, stressedVowelsOf } from '../entries/stress';
 
 /** What an item of the Game Review expands into, by the kind of the Entry the Round asked about. */
@@ -70,43 +71,36 @@ export interface GameReviewItem {
 
 const plain = (text: string): RoundOption => ({ text, stressedVowels: [] });
 
-function titleOf({ entry, answer }: PlayedRound): RoundOption {
-  switch (entry.kind) {
-    case 'word':
-      return answer.sheet.asked ?? answer.sheet.answer;
-    case 'idiom':
-      return plain(entry.expression);
-    case 'correction':
-      return plain(entry.nonStandardForm);
-    case 'synonymRow':
-      return rowWordOption(entry.dominant);
-    case 'tip':
-      return plain(entry.title);
-  }
-}
+/** What the item leads with, by the kind of the Entry: a Word's is the Round's own sheet, with its Stress. */
+const titleOf = ({ entry, answer }: PlayedRound): RoundOption =>
+  byKind(entry, {
+    word: () => answer.sheet.asked ?? answer.sheet.answer,
+    correction: ({ nonStandardForm }) => plain(nonStandardForm),
+    idiom: ({ expression }) => plain(expression),
+    synonymRow: ({ dominant }) => rowWordOption(dominant),
+    tip: ({ title }) => plain(title),
+  });
 
-function detailsOf({ entry, answer }: PlayedRound): GameReviewDetails {
-  switch (entry.kind) {
-    case 'word':
-    case 'idiom':
-      return {
-        kind: entry.kind,
-        definition: entry.primaryDefinition,
-        example: entry.examples[0],
-        etymology: entry.etymology,
-      };
-    case 'correction':
-      return {
-        kind: 'correction',
-        standardForm: answer.sheet.answer.text,
-        explanation: entry.explanation,
-      };
-    case 'synonymRow':
-      return { kind: 'synonymRow', members: entry.members.map(rowWordOption) };
-    case 'tip':
-      return { kind: 'tip', explanation: entry.explanation };
-  }
-}
+/** The details of a Word or an Idiom: its primary Definition, first Example and etymology. */
+const definedDetails = (entry: Word | Idiom): GameReviewDetails => ({
+  kind: entry.kind,
+  definition: entry.primaryDefinition,
+  example: entry.examples[0],
+  etymology: entry.etymology,
+});
+
+const detailsOf = ({ entry, answer }: PlayedRound): GameReviewDetails =>
+  byKind<GameReviewDetails>(entry, {
+    word: definedDetails,
+    correction: ({ explanation }) => ({
+      kind: 'correction',
+      standardForm: answer.sheet.answer.text,
+      explanation,
+    }),
+    idiom: definedDetails,
+    synonymRow: ({ members }) => ({ kind: 'synonymRow', members: members.map(rowWordOption) }),
+    tip: ({ explanation }) => ({ kind: 'tip', explanation }),
+  });
 
 /** A chip that is one character, such as a letter of «Анаграми»; the words of «Склади вислів» are longer. */
 const isLetter = (chip: string) => Array.from(chip).length === 1;

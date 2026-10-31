@@ -55,7 +55,7 @@ describe('the Idioms of the Ukrainian Edition', () => {
   // The total is the Edition's `minIdioms` content target; the build checks it.
   // Spec #549 asks at least 15 of each Idiom Type on top of it.
   it('holds at least 15 Idioms of each Idiom Type, each with its sources', async () => {
-    const idioms = (await pack.getEntries(await pack.listIdiomIds())).filter(
+    const idioms = (await pack.getEntries(await pack.listIds('idiom'))).filter(
       (entry): entry is Idiom => entry.kind === 'idiom',
     );
     const ofType = (idiomType: string) => idioms.filter((idiom) => idiom.idiomType === idiomType);
@@ -113,7 +113,7 @@ describe('the Idioms of the Ukrainian Edition', () => {
 
   it('gives every Idiom at once, with the Words and Corrections, as it gives each by id', async () => {
     const ids = ['i_8f3kq2', 'i_m2vr7s', 'i_d5tc9n', 'c_0ci49m', 'w_missing'];
-    const found = await entries.getMany([...ids, ...(await pack.listWordIds()).slice(0, 2)]);
+    const found = await entries.getMany([...ids, ...(await pack.listIds('word')).slice(0, 2)]);
 
     expect([...found.keys()].filter((id) => id.startsWith('i_')).toSorted()).toEqual([
       'i_8f3kq2',
@@ -125,7 +125,7 @@ describe('the Idioms of the Ukrainian Edition', () => {
   });
 
   it('has every live Idiom eligible, in the pack order, without a user state', async () => {
-    const ids = await pack.listIdiomIds();
+    const ids = await pack.listIds('idiom');
 
     expect((await entries.eligible()).idioms).toEqual(ids);
     expect(await entries.eligibleOfKind('idiom')).toEqual({
@@ -143,7 +143,7 @@ describe('the Known Idioms of the Ukrainian Language Pack', () => {
       clock: { now: () => new Date('2026-10-23T09:00:00+03:00'), timeZone: () => 'Europe/Kyiv' },
       random: { next: () => 0.25 },
     });
-    const [wordId] = await pack.listWordIds();
+    const [wordId] = await pack.listIds('word');
     if (wordId === undefined) throw new Error('The Ukrainian Language Pack has no Words');
 
     await app.knowledge.tap('i_8f3kq2', 'known');

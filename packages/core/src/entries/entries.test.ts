@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Correction, FeatureSwitch, SynonymRow, Tip, Word } from '@slovo/contracts';
+import type { Correction, EntryKind, FeatureSwitch, SynonymRow, Tip, Word } from '@slovo/contracts';
 
 import {
   createEntries,
@@ -260,9 +260,11 @@ describe('the Entries', () => {
       const entries = createEntries({
         content: {
           ...content,
-          listWordIds(categoryId) {
-            asked.push(categoryId);
-            return content.listWordIds(categoryId);
+          listIds(kind: EntryKind, categoryId?: string) {
+            if (kind === 'word') asked.push(categoryId);
+            return categoryId === undefined
+              ? content.listIds(kind)
+              : content.listIds('word', categoryId);
           },
         },
         edition: editionWith(true),

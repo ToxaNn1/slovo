@@ -70,7 +70,7 @@ const validWordFiles = ['w_fx0001', 'w_fx0002', 'w_fx0003'].map((id) => `content
 async function readBack(outFile: string) {
   const pack = openLanguagePack(outFile);
   try {
-    return { metadata: await pack.metadata(), ids: await pack.listWordIds() };
+    return { metadata: await pack.metadata(), ids: await pack.listIds('word') };
   } finally {
     pack.close();
   }
@@ -249,7 +249,7 @@ describe('buildLanguagePack', () => {
 
     const pack = openLanguagePack(outFile);
     try {
-      expect(await pack.listCorrectionIds()).toEqual(['c_fx0001', 'c_fx0003', 'c_fx0004']);
+      expect(await pack.listIds('correction')).toEqual(['c_fx0001', 'c_fx0003', 'c_fx0004']);
     } finally {
       pack.close();
     }
@@ -922,7 +922,7 @@ describe('buildLanguagePack', () => {
 
       const pack = openLanguagePack(outFile);
       try {
-        expect(await pack.listTipIds()).toEqual(['t_fx0001']);
+        expect(await pack.listIds('tip')).toEqual(['t_fx0001']);
       } finally {
         pack.close();
       }
@@ -1223,7 +1223,7 @@ describe('buildLanguagePack', () => {
 
       const pack = openLanguagePack(outFile);
       try {
-        expect(await pack.listSynonymRowIds()).toEqual(['r_fx0001']);
+        expect(await pack.listIds('synonymRow')).toEqual(['r_fx0001']);
       } finally {
         pack.close();
       }

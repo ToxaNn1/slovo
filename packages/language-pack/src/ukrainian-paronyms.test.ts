@@ -51,7 +51,7 @@ describe('the paronyms of the Ukrainian Language Pack', () => {
   });
 
   it('holds at least 15 paronyms, each with its sources and a different non-standard form', async () => {
-    const paronyms = (await pack.getEntries(await pack.listCorrectionIds())).filter(
+    const paronyms = (await pack.getEntries(await pack.listIds('correction'))).filter(
       (entry): entry is Correction =>
         entry.kind === 'correction' && entry.correctionType === 'paronym',
     );
