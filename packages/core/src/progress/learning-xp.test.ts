@@ -236,6 +236,7 @@ describe('the Review XP', () => {
           dailyCrossword: 15,
           reviewAnswer: 2,
           reviewDailyCap: 3,
+          quickQuestion: 2,
         },
       }),
       userState: await openUserState({ port: createMemoryUserStatePort(records) }),
