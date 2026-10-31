@@ -29,7 +29,7 @@ export const StatsStringsSchema = z.strictObject({
    */
   gameBestLabel: pluralOf('total'),
   /**
-   * The row of the Known Entries, e.g. «Знаю 120 слів · 12 Виправлень · 8 фразеологізмів ·
+   * The row of the Known Entries, e.g. «знаю 120 слів · 12 виправлень · 8 фразеологізмів ·
    * 5 синонімічних рядів · 3 поради».
    * Takes `{counts}`: the Known count of each kind of Entry shown, joined by `knownJoiner`.
    */
@@ -38,7 +38,7 @@ export const StatsStringsSchema = z.strictObject({
   knownJoiner: TextSchema,
   /**
    * The Entries of each kind marked Known, in the row of the Known Entries, e.g. «12 слів»,
-   * «3 Виправлення», «8 фразеологізмів» (Idioms with place names), «5 синонімічних рядів»,
+   * «3 виправлення», «8 фразеологізмів» (Idioms with place names), «5 синонімічних рядів»,
    * «3 поради». Each takes `{count}`.
    */
   knownByKind: z.strictObject({

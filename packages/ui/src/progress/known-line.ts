@@ -4,7 +4,7 @@ import type { KnownCounts } from '@slovo/core';
 /**
  * The row of the Known Entries of the stats sheet: the Known count of each
  * kind of Entry in `kinds`, in that order, each in the plural form `count`
- * picks, e.g. «Знаю 120 слів · 12 Виправлень · 8 фразеологізмів · 3 поради».
+ * picks, e.g. «знаю 120 слів · 12 виправлень · 8 фразеологізмів · 3 поради».
  */
 export function knownLine(
   strings: Pick<EditionStrings['stats'], 'known' | 'knownJoiner' | 'knownByKind'>,
