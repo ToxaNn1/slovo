@@ -252,6 +252,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   xpLog: z.boolean(),
   /** Streak freezes: a held freeze covers a missed day automatically, 2 at the start, one more per 7 Streak days, at most 2 held (ADR 0066). */
   streakFreezes: z.boolean(),
+  /** The Break: the reader pauses the Streak for up to 7 days, once every 30 days, free; its days keep the Streak and add nothing (ADR 0066). */
+  streakBreak: z.boolean(),
 });
 
 /** A whole number of XP, which an Edition may set to 0 for an action that earns none. */

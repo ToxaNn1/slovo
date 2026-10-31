@@ -49,6 +49,22 @@ export const SettingsStringsSchema = z.strictObject({
     myMix: TextSchema,
     hidden: TextSchema,
     about: TextSchema,
+    /** The row that opens the Break screen, e.g. «Перерва». */
+    streakBreak: TextSchema,
+  }),
+  /** The Break screen: what a Break does, its length and whether one can start today (ADR 0066). */
+  streakBreak: z.strictObject({
+    title: TextSchema,
+    /** What a Break does and how often it can start. */
+    explanation: TextSchema,
+    /** The label over the length choice, in days. */
+    length: TextSchema,
+    /** The button that starts the Break of the length chosen. */
+    start: TextSchema,
+    /** While a Break runs. Takes `{date}`, its last day, e.g. «20.10». */
+    running: templateOf('date'),
+    /** While the next Break waits. Takes `{date}`, the first day it can start, e.g. «13.11». */
+    waiting: templateOf('date'),
   }),
   /** The Sounds section and its Vibration row. */
   sounds: z.strictObject({

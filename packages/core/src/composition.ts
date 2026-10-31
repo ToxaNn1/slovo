@@ -55,6 +55,7 @@ import type { LocalDate } from './local-date';
 import type { Backend, Clock, ContentReadPort, Random, Schedule } from './ports';
 import { openActiveDays } from './progress/active-days';
 import { openXpLog, type XpLog } from './progress/xp-log';
+import { openStreakBreak, type StreakBreak } from './progress/streak-break';
 import { openProgress, type Progress } from './progress/progress';
 import { createWeeklyRecap, type WeeklyRecap } from './feed/weekly-recap';
 import { createMoodDraw, type MoodDraw } from './mood/mood-draw';
@@ -115,6 +116,8 @@ export interface Composition extends Hiding {
    * (ADR 0066).
    */
   readonly xpLog: XpLog;
+  /** The Break: a pause of the Streak the reader starts, up to 7 days, once every 30 days (ADR 0066). */
+  readonly streakBreak: StreakBreak;
   /** The Weekly Recap, whose numbers its Feed Notice shows on a local Monday (ADR 0054). */
   readonly weeklyRecap: WeeklyRecap;
   /**
@@ -594,6 +597,7 @@ export async function openComposition({
     communityCounters,
     progress,
     xpLog,
+    streakBreak: openStreakBreak({ edition, userState, clock, xpLog, analytics }),
     weeklyRecap,
     resume: () => day.resume(),
     notifications,

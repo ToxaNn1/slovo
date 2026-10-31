@@ -249,3 +249,101 @@ describe('the Streak and its freezes', () => {
     expect(events).toEqual([]);
   });
 });
+
+// Ticket #1371, ADR 0066: a Break of up to 7 days, once every 30 days, free.
+describe('the Break', () => {
+  const BREAK_ON: readonly FeatureSwitch[] = [...ALL_ON, 'streakBreak'];
+
+  /** The Break-started records of the XP log: start date and length. */
+  const breaks = (records: ReadonlyMap<string, string>) =>
+    [...records]
+      .filter(([key]) => key.startsWith('xp.'))
+      .map(([, value]) => JSON.parse(value) as { kind: string; date: string; days?: number })
+      .filter(({ kind }) => kind === 'break')
+      .map(({ date, days }) => ({ date, days }));
+
+  it('keeps the Streak through its days and adds none, then counts on', async () => {
+    const records = earned(new Map<string, string>(), 5, ...october(10, 13));
+    const { app, events } = await openOn(records, '2026-10-14', BREAK_ON);
+    expect(app.streakBreak.state).toEqual({ kind: 'available', longest: 7 });
+
+    expect(await app.streakBreak.start(7)).toBe('started');
+    expect(breaks(records)).toEqual([{ date: '2026-10-14', days: 7 }]);
+    expect(app.streakBreak.state).toEqual({ kind: 'running', lastDay: '2026-10-20' });
+    expect(events).toEqual([['breakStarted', { days: 7 }]]);
+
+    // The 7 Break days, 14 to 20 October, keep the 4 Streak days and add none.
+    const after = await openOn(records, '2026-10-21', BREAK_ON);
+    expect(after.app.progress.state).toMatchObject({ streak: 4, bestStreak: 4, freezesHeld: 2 });
+    expect(frozenDays(records)).toEqual([]);
+    expect(after.events).toEqual([]);
+    await earnRounds(after.app, 5, records);
+    expect(after.app.progress.state).toMatchObject({ streak: 5, bestStreak: 5 });
+  });
+
+  it('keeps nothing after its last day: a missed day then takes a freeze or resets', async () => {
+    const records = earned(new Map<string, string>(), 5, ...october(10, 13));
+    await (await openOn(records, '2026-10-14', BREAK_ON)).app.streakBreak.start(2);
+
+    const coveredByFreeze = await openOn(records, '2026-10-17', BREAK_ON);
+    expect(coveredByFreeze.app.progress.state).toMatchObject({ streak: 4, freezesHeld: 1 });
+    expect(frozenDays(records)).toEqual(['2026-10-16']);
+
+    const reset = await openOn(records, '2026-10-20', BREAK_ON);
+    expect(reset.app.progress.state).toMatchObject({ streak: 0, bestStreak: 4 });
+  });
+
+  it('refuses a second Break within 30 days and allows one from the 30th day', async () => {
+    const records = earned(new Map<string, string>(), 5, ...october(10, 13));
+    await (await openOn(records, '2026-10-14', BREAK_ON)).app.streakBreak.start(3);
+
+    const within = await openOn(records, '2026-11-12', BREAK_ON);
+    expect(within.app.streakBreak.state).toEqual({ kind: 'waiting', nextStart: '2026-11-13' });
+    expect(await within.app.streakBreak.start(1)).toBe('refused');
+    expect(within.events.filter(([event]) => event === 'breakStarted')).toEqual([]);
+    expect(breaks(records)).toEqual([{ date: '2026-10-14', days: 3 }]);
+
+    const running = await openOn(records, '2026-10-15', BREAK_ON);
+    expect(running.app.streakBreak.state).toEqual({ kind: 'running', lastDay: '2026-10-16' });
+    expect(await running.app.streakBreak.start(1)).toBe('refused');
+
+    const later = await openOn(records, '2026-11-13', BREAK_ON);
+    expect(later.app.streakBreak.state).toEqual({ kind: 'available', longest: 7 });
+    expect(await later.app.streakBreak.start(1)).toBe('started');
+    expect(breaks(records)).toHaveLength(2);
+  });
+
+  it('refuses a length of none or over 7 days', async () => {
+    const records = new Map<string, string>();
+    const { app } = await openOn(records, '2026-10-14', BREAK_ON);
+
+    for (const days of [0, 8, 2.5]) expect(await app.streakBreak.start(days)).toBe('refused');
+    expect(breaks(records)).toEqual([]);
+  });
+
+  it('is off with the streakBreak switch off: none starts and a missed day counts as before', async () => {
+    const records = earned(new Map<string, string>(), 5, ...october(10, 13));
+    const { app } = await openOn(records, '2026-10-14', ALL_ON);
+    expect(app.streakBreak.state).toEqual({ kind: 'off' });
+    expect(await app.streakBreak.start(3)).toBe('refused');
+    expect(breaks(records)).toEqual([]);
+
+    const later = await openOn(records, '2026-10-18', ALL_ON);
+    expect(later.app.progress.state).toMatchObject({ streak: 0, bestStreak: 4 });
+  });
+
+  it('is off with the XP log off', async () => {
+    const { app } = await openOn(new Map(), '2026-10-14', ['streakBreak', 'streakFreezes']);
+    expect(app.streakBreak.state).toEqual({ kind: 'off' });
+    expect(await app.streakBreak.start(3)).toBe('refused');
+  });
+
+  it('emits no event with «Ділитися анонімною статистикою» off', async () => {
+    const records = earned(new Map<string, string>(), 5, ...october(10, 13));
+    records.set('settings.shareCounters', 'false');
+    const { app, events } = await openOn(records, '2026-10-14', BREAK_ON);
+
+    expect(await app.streakBreak.start(2)).toBe('started');
+    expect(events).toEqual([]);
+  });
+});
