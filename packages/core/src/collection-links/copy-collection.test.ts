@@ -14,6 +14,7 @@ import {
   type TrackedUserState,
 } from '../index';
 import {
+  createFakeAppleSignInSheet,
   createFakeBackend,
   createFakeGoogleSignInSheet,
   createMemoryContentPort,
@@ -313,6 +314,7 @@ describe('a Collection Link', () => {
       backend: server.backend,
       edition: { id: 'uk' },
       googleSheet: createFakeGoogleSignInSheet(),
+      appleSheet: createFakeAppleSignInSheet(),
       userState,
       sessions: createMemorySessionStore({ token: 'a-session', email: 'anna@mail.com' }),
       clock: time.clock,

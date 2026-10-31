@@ -12,6 +12,10 @@ export {
   type ProcedureName,
 } from './fakes/fake-backend';
 export {
+  createFakeAppleSignInSheet,
+  type FakeAppleSignInSheet,
+} from './fakes/fake-apple-sign-in-sheet';
+export {
   createFakeGoogleSignInSheet,
   type FakeGoogleSignInSheet,
 } from './fakes/fake-google-sign-in-sheet';

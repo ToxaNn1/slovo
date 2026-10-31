@@ -3,6 +3,7 @@ import { AccountEmailSchema, SignInCodeSchema } from '@slovo/contracts';
 import { createSubscribers } from '../in-turn';
 import type { Edition } from '../edition/edition';
 import type {
+  AppleSignInSheet,
   Backend,
   Clock,
   GoogleSignInSheet,
@@ -10,11 +11,12 @@ import type {
   RequestFailure,
   Schedule,
   SessionStore,
+  SignInSheet,
 } from '../ports';
 import { withRetries, type Answer } from '../retry';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
-import { accountRequests, type AccountApiFailure } from './account-requests';
+import { accountRequests, type AccountApiFailure, type IdTokenSignIn } from './account-requests';
 
 /** How long after a Sign-in code was sent another can be sent, in milliseconds. */
 const RESEND_AFTER = 60_000;
@@ -24,9 +26,9 @@ const CHECK_HOLDS = 60 * 60_000;
 
 /**
  * Why the last request of the Account did not do what the reader asked.
- * `refused` is a Google sign-in the backend refused: the token was not
- * Google's, had expired, was for another app or named an email Google hasn't
- * verified (ADR 0047).
+ * `refused` is a Google or Apple sign-in the backend refused: the token was
+ * not the provider's, had expired, was for another app or named an email
+ * Google hasn't verified (ADR 0047).
  */
 export type AccountProblem =
   | 'offline'
@@ -40,8 +42,17 @@ export type AccountProblem =
 /** The actions of the reader that make a request of the server, by name. */
 export type AccountRequest = keyof Pick<
   Account,
-  'requestCode' | 'resendCode' | 'verifyCode' | 'signInWithGoogle' | 'signOutEverywhere' | 'delete'
+  | 'requestCode'
+  | 'resendCode'
+  | 'verifyCode'
+  | 'signInWithGoogle'
+  | 'signInWithApple'
+  | 'signOutEverywhere'
+  | 'delete'
 >;
+
+/** The requests that sign in through a provider's sheet. */
+type SheetSignIn = Extract<AccountRequest, 'signInWithGoogle' | 'signInWithApple'>;
 
 /**
  * The Account on this device as it stands: signed out, a Sign-in code sent,
@@ -67,7 +78,7 @@ export type AccountState = (
 
 /**
  * The reader's Account («SLOVO ID») on this device, with every rule of
- * signing in, by a Sign-in code or with Google, out and deleting it. While a
+ * signing in, by a Sign-in code, with Google or with Apple, out and deleting it. While a
  * request of the reader is in flight no other starts, signing out aside. A request that fails with no answer or a server
  * error is tried again, at most 3 times, with backoff and jitter (ADR 0037).
  * Whenever the server says the Session has ended, the device forgets
@@ -106,6 +117,13 @@ export interface Account {
    * as it was, with no problem; a refused token is the problem `refused`.
    */
   signInWithGoogle(): Promise<void>;
+  /**
+   * Signs in with Apple, when signed out, exactly as with Google: Apple's
+   * sheet, then its identity token to the backend, which signs the email's
+   * one Account in (ADR 0047); a cancelled sheet changes nothing, a refused
+   * token is the problem `refused`.
+   */
+  signInWithApple(): Promise<void>;
   /**
    * Signs this device out at once, even offline, and tells the server; when
    * it can't, the next `refresh` tells it.
@@ -168,6 +186,7 @@ export async function openAccount({
   backend,
   edition,
   googleSheet,
+  appleSheet,
   sessions,
   userState,
   clock,
@@ -178,6 +197,7 @@ export async function openAccount({
   /** The Edition, which the Sign-in code email and the Google sign-in name. */
   edition: Pick<Edition, 'id'>;
   googleSheet: GoogleSignInSheet;
+  appleSheet: AppleSignInSheet;
   sessions: SessionStore;
   /** The user state, opened, which holds the installed marker. */
   userState: Pick<UserState, 'read' | 'write'>;
@@ -333,6 +353,43 @@ export async function openAccount({
     );
   }
 
+  /**
+   * Signs in through a provider's sheet as the request `name`, when signed
+   * out: shows the sheet, which counts as the request in flight, and sends
+   * the identity token it answers with `send`. A sheet the reader cancels
+   * leaves the Account as it was, with no problem; a refused token is the
+   * problem `refused`.
+   */
+  async function signInThrough(
+    name: SheetSignIn,
+    sheet: SignInSheet,
+    send: (idToken: string) => Promise<IdTokenSignIn>,
+  ): Promise<void> {
+    if (state.status !== 'signed-out' || !begin(name)) return;
+    let shown: Awaited<ReturnType<SignInSheet['signIn']>>;
+    try {
+      shown = await sheet.signIn();
+    } catch (error) {
+      change({ ...state, inFlight: undefined });
+      throw error;
+    }
+    if (!shown.ok) {
+      change({
+        ...state,
+        inFlight: undefined,
+        problem: shown.reason === 'cancelled' ? undefined : shown.reason,
+      });
+      return;
+    }
+    await complete(
+      () => send(shown.idToken),
+      (answer) =>
+        answer.ok
+          ? startSession({ token: answer.token, email: answer.email })
+          : { ...state, problem: problemOf(answer.reason) },
+    );
+  }
+
   if ((await userState.read(userStateRecords.installed)) === undefined) {
     if (token !== undefined) {
       untold.push(token);
@@ -380,31 +437,10 @@ export async function openAccount({
         },
       );
     },
-    async signInWithGoogle() {
-      if (state.status !== 'signed-out' || !begin('signInWithGoogle')) return;
-      let shown: Awaited<ReturnType<GoogleSignInSheet['signIn']>>;
-      try {
-        shown = await googleSheet.signIn();
-      } catch (error) {
-        change({ ...state, inFlight: undefined });
-        throw error;
-      }
-      if (!shown.ok) {
-        change({
-          ...state,
-          inFlight: undefined,
-          problem: shown.reason === 'cancelled' ? undefined : shown.reason,
-        });
-        return;
-      }
-      await complete(
-        () => api.signInWithGoogle(shown.idToken),
-        (answer) =>
-          answer.ok
-            ? startSession({ token: answer.token, email: answer.email })
-            : { ...state, problem: problemOf(answer.reason) },
-      );
-    },
+    signInWithGoogle: () =>
+      signInThrough('signInWithGoogle', googleSheet, (idToken) => api.signInWithGoogle(idToken)),
+    signInWithApple: () =>
+      signInThrough('signInWithApple', appleSheet, (idToken) => api.signInWithApple(idToken)),
     async signOut() {
       if (token === undefined) return;
       untold.push(token);

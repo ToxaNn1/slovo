@@ -11,10 +11,34 @@ export type AccountApiFailure =
 const unauthorized = { ok: false, reason: 'unauthorized' } as const;
 
 /**
+ * What a sign-in with a provider's identity token answers: the new Session's
+ * token and the Account's email, or that the backend refused the token.
+ */
+export type IdTokenSignIn =
+  | { readonly ok: true; readonly token: string; readonly email: string }
+  | { readonly ok: false; readonly reason: 'refused' }
+  | AccountApiFailure;
+
+/**
+ * The refusals of a Google or an Apple sign-in, which come to the reader as
+ * one problem (ADR 0047): the token didn't check, or the backend doesn't
+ * offer the method (NOT_FOUND: the switch turned off remotely, or no Google
+ * client ids), so the reader turns to the code.
+ */
+const refusedSignIn = ({ code }: { readonly code: string }) =>
+  code === 'INVALID_TOKEN' ||
+  code === 'FOREIGN_AUDIENCE' ||
+  code === 'EMAIL_NOT_VERIFIED' ||
+  code === 'NOT_FOUND'
+    ? ({ ok: false, reason: 'refused' } as const)
+    : undefined;
+
+/**
  * The Account's requests to the backend, each answered as a value (ADR 0064).
  * The Sign-in code request names the running Edition, so the email is in its
- * language, and the Google sign-in names it for its `googleSignIn` Feature
- * Switch; the requests that act on an Account carry the token of its Session.
+ * language, and the Google and the Apple sign-ins name it for its
+ * `googleSignIn` and `signInWithApple` Feature Switches and its bundle id;
+ * the requests that act on an Account carry the token of its Session.
  */
 export function accountRequests(backend: Pick<Backend, 'account'>, editionId: string) {
   const { account } = backend;
@@ -61,25 +85,24 @@ export function accountRequests(backend: Pick<Backend, 'account'>, editionId: st
      * Signs in with a Google identity token (ADR 0047); the answer is the
      * new Session's token and the Account's email. The backend refuses a
      * token that is not Google's, has expired, is for another app or names
-     * an email Google hasn't verified; a backend that doesn't offer Google
-     * sign-in (NOT_FOUND: the switch turned off remotely, or no Google
-     * client ids) refuses it too, so the reader turns to the code.
+     * an email Google hasn't verified.
      */
-    async signInWithGoogle(
-      idToken: string,
-    ): Promise<
-      | { readonly ok: true; readonly token: string; readonly email: string }
-      | { readonly ok: false; readonly reason: 'refused' }
-      | AccountApiFailure
-    > {
-      const answer = await answerOf(account.signInWithGoogle({ idToken, editionId }), ({ code }) =>
-        code === 'INVALID_TOKEN' ||
-        code === 'FOREIGN_AUDIENCE' ||
-        code === 'EMAIL_NOT_VERIFIED' ||
-        code === 'NOT_FOUND'
-          ? ({ ok: false, reason: 'refused' } as const)
-          : undefined,
+    async signInWithGoogle(idToken: string): Promise<IdTokenSignIn> {
+      const answer = await answerOf(
+        account.signInWithGoogle({ idToken, editionId }),
+        refusedSignIn,
       );
+      if (!answer.ok) return answer;
+      return { ok: true, token: answer.output.token, email: answer.output.email };
+    },
+    /**
+     * Signs in with an Apple identity token (ADR 0047); the answer is the new
+     * Session's token and the Account's email, a private relay address
+     * included. The backend refuses a token that is not Apple's, has expired
+     * or is for another app.
+     */
+    async signInWithApple(idToken: string): Promise<IdTokenSignIn> {
+      const answer = await answerOf(account.signInWithApple({ idToken, editionId }), refusedSignIn);
       if (!answer.ok) return answer;
       return { ok: true, token: answer.output.token, email: answer.output.email };
     },
