@@ -23,7 +23,6 @@ Every variable the server reads at start, with the value it takes in the Deploym
 | `MAIL_FROM`          | The address the Sign-in codes come from, on the Edition's domain.                                            |
 | `GOOGLE_CLIENT_IDS`  | The OAuth client ids of the apps at Google, comma-separated (ADR 0047). Empty turns Google sign-in off.      |
 | `SENTRY_DSN`         | Secret. The `https://` DSN of the backend's Sentry project (ADR 0048). Empty reports nothing.                |
-| `APPLE_TEAM_ID`      | SLOVO's Apple Developer Team ID, which the apple-app-site-association file names the apps by (ADR 0058).     |
 | `TRUSTED_PROXY_HOPS` | `1`: Railway's proxy is the one hop whose forwarded-for address the limits per IP trust.                     |
 | `PORT`               | Unset: Railway sets it, and its proxy sends the traffic there.                                               |
 | `EDITIONS_DIR`       | Unset: the image's `editions/`.                                                                              |
