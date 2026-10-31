@@ -2,19 +2,38 @@ import { describe, expect, it } from 'vitest';
 import type { XpTable } from '@slovo/contracts';
 
 import {
+  createMemorySessionStore,
   createMemoryUserStatePort,
+  openAccount,
   openComposition,
+  openSync,
   openUserState,
   renderStress,
+  trackChanges,
+  userStateRecords,
   type Composition,
   type CurrentGame,
   type FeatureSwitch,
   type Round,
 } from '../index';
-import { createMemoryContentPort } from '../testing';
-import { fakeClock, optionsOf, seededRandom, testEdition, word } from '../test-support';
+import {
+  createFakeAppleSignInSheet,
+  createFakeBackend,
+  createFakeGoogleSignInSheet,
+  createMemoryContentPort,
+} from '../testing';
+import {
+  fakeClock,
+  optionsOf,
+  randomOf,
+  seededRandom,
+  testEdition,
+  testSchedule,
+  word,
+} from '../test-support';
 
 // Spec #1358, ticket #1366, ADR 0066: the XP log and the XP the Game's learning actions earn.
+// Ticket #1372: the XP log syncs through the Account as a union by id.
 
 const words = Array.from({ length: 20 }, (_, index) => word(`w_${String(index).padStart(2, '0')}`));
 const content = createMemoryContentPort({
@@ -197,5 +216,144 @@ describe('the XP log and the Game', () => {
     const { app } = await run({ records: merged });
 
     expect(app.xpLog.state).toEqual({ total: 3, today: 3 });
+  });
+});
+
+// Ticket #1372, ADR 0066: XP log records merge as a set union by id across devices.
+
+const EMAIL = 'anna@mail.com';
+
+/**
+ * One device of the Account on the fake backend: the Core composition over
+ * its own records, with Sync beside it as the app shell opens it. It starts
+ * signed in with a Session unless the test says otherwise.
+ */
+async function device(
+  server: ReturnType<typeof createFakeBackend>,
+  {
+    time = fakeClock('2026-10-14T08:00:00+03:00'),
+    signedIn = true,
+    records = new Map<string, string>(),
+  }: {
+    time?: ReturnType<typeof fakeClock>;
+    signedIn?: boolean;
+    records?: Map<string, string>;
+  } = {},
+) {
+  const timers = testSchedule(time);
+  const userState = trackChanges({
+    userState: await openUserState({ port: createMemoryUserStatePort(records) }),
+    clock: time.clock,
+  });
+  // This install has run before, so the Account keeps the Session it finds.
+  await userState.write(userStateRecords.installed.change(true));
+  const account = await openAccount({
+    backend: server.backend,
+    edition: { id: 'uk' },
+    googleSheet: createFakeGoogleSignInSheet(),
+    appleSheet: createFakeAppleSignInSheet(),
+    userState,
+    sessions: createMemorySessionStore(
+      signedIn
+        ? { token: `session-of-${time.clock.now().toISOString()}`, email: EMAIL }
+        : undefined,
+    ),
+    clock: time.clock,
+    schedule: timers.schedule,
+    random: randomOf(0.5),
+  });
+  const sync = await openSync({
+    userState,
+    backend: server.backend,
+    account,
+    edition: { id: 'uk', isFeatureEnabled: () => true },
+    clock: time.clock,
+    schedule: timers.schedule,
+    random: randomOf(0.5),
+  });
+  const opened = await run({ records, time });
+  return {
+    app: opened.app,
+    account,
+    records,
+    /** Earns XP in the Game: one Round answered right per XP. */
+    async earn(xp: number): Promise<void> {
+      await opened.app.game.start('guess-word');
+      for (let round = 0; round < xp; round += 1) await play(opened.app, true);
+    },
+    /** Brings the app to the foreground, so Sync runs, and lets the sync end. */
+    async syncNow(): Promise<void> {
+      sync.foreground();
+      await timers.advance(0);
+    },
+    /** Reopens the composition over the records, as the shell does after a sync wrote. */
+    async reopened(): Promise<Composition> {
+      return (await run({ records, time })).app;
+    },
+  };
+}
+
+const xpKept = (server: ReturnType<typeof createFakeBackend>) =>
+  [...server.sync.records.keys()].filter((key) => key.startsWith('xp.'));
+
+describe('the XP log and Sync', () => {
+  it('sums the XP of two devices on one Account, with no record doubled', async () => {
+    const time = fakeClock('2026-10-14T08:00:00+03:00');
+    const server = createFakeBackend({ clock: time.clock });
+    const phone = await device(server, { time });
+    const tablet = await device(server, { time: fakeClock('2026-10-14T09:00:00+03:00') });
+    await phone.earn(2);
+    await tablet.earn(1);
+
+    await phone.syncNow();
+    await tablet.syncNow();
+    await phone.syncNow();
+
+    expect((await phone.reopened()).xpLog.state).toEqual({ total: 3, today: 3 });
+    expect((await tablet.reopened()).xpLog.state).toEqual({ total: 3, today: 3 });
+    expect(xpKept(server)).toHaveLength(3);
+    expect(xpKeys(phone.records).sort()).toEqual(xpKeys(tablet.records).sort());
+  });
+
+  it('keeps the sum once every device has synced again: a record pulled is never pushed back as new', async () => {
+    const time = fakeClock('2026-10-14T08:00:00+03:00');
+    const server = createFakeBackend({ clock: time.clock });
+    const phone = await device(server, { time });
+    const tablet = await device(server, { time: fakeClock('2026-10-14T09:00:00+03:00') });
+    await phone.earn(2);
+    await tablet.earn(1);
+    await phone.syncNow();
+    await tablet.syncNow();
+    await phone.syncNow();
+    const kept = [...server.sync.records.entries()];
+
+    await tablet.syncNow();
+    await phone.syncNow();
+
+    expect([...server.sync.records.entries()]).toEqual(kept);
+    expect((await phone.reopened()).xpLog.state.total).toBe(3);
+    expect((await tablet.reopened()).xpLog.state.total).toBe(3);
+  });
+
+  it('merges the XP earned before the first sign-in into the Account, beside what it holds', async () => {
+    const time = fakeClock('2026-10-14T08:00:00+03:00');
+    const server = createFakeBackend({ clock: time.clock });
+    const phone = await device(server, { time });
+    await phone.earn(2);
+    await phone.syncNow();
+    const tablet = await device(server, {
+      time: fakeClock('2026-10-14T09:00:00+03:00'),
+      signedIn: false,
+    });
+    await tablet.earn(1);
+    await tablet.syncNow();
+    expect(xpKept(server)).toHaveLength(2);
+
+    await tablet.account.requestCode(EMAIL);
+    await tablet.account.verifyCode('100001');
+    await tablet.syncNow();
+
+    expect(xpKept(server)).toHaveLength(3);
+    expect((await tablet.reopened()).xpLog.state).toEqual({ total: 3, today: 3 });
   });
 });
