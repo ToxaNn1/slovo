@@ -24,10 +24,9 @@ overrides:
   # zod 4 before 4.6.6 can exhaust memory (GHSA-mrhx-c7xc-m3w5); tools that
   # take any zod 4 (knip, the React hooks lint plugin) get the patched one.
   'zod@>=4 <4.6.6': ^4.6.7
-  # node-forge <=1.4.0 and decode-uri-component <=0.5.0 carry high advisories
-  # (GHSA-7wch-p9px-956x and four more; GHSA-qr28-fpjm-wq7f); both have patched releases.
+  # node-forge <=1.4.0 carries five high advisories (GHSA-7wch-p9px-956x and four more);
+  # 1.4.1 patches them.
   node-forge@<=1.4.0: ^1.4.1
-  decode-uri-component@<=0.5.0: ^0.5.1
 
 # High advisories with no patched release yet, reachable only through
 # build-time tooling (Expo CLI code signing, Metro's file watcher) and never
@@ -38,6 +37,7 @@ overrides:
 auditConfig:
   ignoreGhsas:
     - GHSA-86w9-cpqp-85rv # node-forge, via @expo/cli; reviewed 2026-10-11
+    - GHSA-qr28-fpjm-wq7f # decode-uri-component, via query-string of expo-router; reviewed 2026-10-31. The only patched release, 0.5.1, is ES-module only and query-string 7 requires it as CommonJS, which breaks every percent-encoded param. The flaw is a quadratic replacement on client-side URLs.
     - GHSA-vfj7-8cjw-p6xm # braces, via metro; reviewed 2026-10-11
     # zod 3 has no patched release; SLOVO's own zod is 4.6.7+, so this only
     # covers zod 3.25 inside @expo/cli (build-time). Reviewed 2026-10-24.
