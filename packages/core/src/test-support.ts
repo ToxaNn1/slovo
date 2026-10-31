@@ -71,6 +71,7 @@ const testEditionConfig = {
   originLanguages: [],
   moods: [],
   searchLetters: {},
+  xp: { round: 1, finishedGame: 5, finishedGameShare: 0.5, bestResult: 5 },
 };
 
 /** The test Edition as `loadEdition` gives it, which every `testEdition` starts from. */

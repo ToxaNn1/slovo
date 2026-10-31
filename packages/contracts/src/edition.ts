@@ -248,7 +248,30 @@ export const FeatureSwitchesSchema = z.strictObject({
   replaceOpenEntry: z.boolean(),
   /** The Mix kind weights: «Менше», «Звичайно» or «Більше» for each kind beside Words, which space its Feed turns; off, every kind keeps its turn of 0.9. */
   mixKindWeights: z.boolean(),
+  /** The XP log: XP for Game learning actions, kept per Edition, and the XP bar on the Feed (ADR 0066). */
+  xpLog: z.boolean(),
 });
+
+/** A whole number of XP, which an Edition may set to 0 for an action that earns none. */
+const XpAmountSchema = z.number().int().nonnegative();
+
+/**
+ * The XP table (ADR 0066): what each Game learning action earns. The amounts
+ * come from the Edition config, so they change with an update and not with a
+ * Core release; UA Edition: Round 1, finished Game +5, new Best result +5.
+ */
+export const XpTableSchema = z.strictObject({
+  /** A Round answered right. */
+  round: XpAmountSchema,
+  /** A finished Game with at least `finishedGameShare` of its answers right. */
+  finishedGame: XpAmountSchema,
+  /** The share of right answers a finished Game needs for its XP, 0.5 for «at least half». */
+  finishedGameShare: z.number().min(0).max(1),
+  /** A new Best result in a Game Mode. */
+  bestResult: XpAmountSchema,
+});
+
+export type XpTable = z.infer<typeof XpTableSchema>;
 
 export type FeatureSwitches = z.infer<typeof FeatureSwitchesSchema>;
 
@@ -472,6 +495,8 @@ export const EditionConfigSchema = z
      * itself.
      */
     searchLetters: z.record(LowerCaseLetterSchema, LowerCaseLetterSchema),
+    /** The XP table: what each Game learning action earns (ADR 0066). */
+    xp: XpTableSchema,
   })
   .superRefine(
     (

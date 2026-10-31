@@ -31,6 +31,7 @@ import { TOP_ROW } from '@/edition/feed-loading';
 import { wordOfTheDayFontFamily } from '@/edition/reported-edition';
 import { MoodButtonAndSheet } from '@/mood/mood';
 import { StatsPillAndSheet } from '@/progress/progress';
+import { XpBarToGame } from '@/progress/xp-bar';
 import { useShown } from '@/shown-in-effect';
 import { useSwipeHint } from '@/feed/swipe-hint';
 import { WeeklyRecapNotice } from '@/feed/weekly-recap-notice';
@@ -102,7 +103,10 @@ function FeedScreen() {
       />
       {/* The top row stays put over the cards, like the background. */}
       <View pointerEvents="box-none" style={[styles.topRow, { top }]}>
-        <StatsPillAndSheet />
+        <View style={styles.pills}>
+          <StatsPillAndSheet />
+          <XpBarToGame />
+        </View>
         <View style={styles.headerButtons}>
           {shown.search && (
             <SearchButton
@@ -218,6 +222,8 @@ const styles = StyleSheet.create({
     height: TOP_ROW,
     justifyContent: 'center',
   },
+  // The Stats pill and the XP bar, side by side at the row's left end.
+  pills: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   // At the row's right end, in the middle of its height, with the Stats pill or without it.
   headerButtons: { position: 'absolute', right: 0, flexDirection: 'row', gap: space[2] },
   page: { flex: 1 },

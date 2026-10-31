@@ -71,7 +71,8 @@
     "appIntents": true,
     "collectionLinks": true,
     "replaceOpenEntry": true,
-    "mixKindWeights": true
+    "mixKindWeights": true,
+    "xpLog": true
   },
   "userSettingDefaults": {
     "theme": "system",
@@ -217,5 +218,6 @@
     { "id": "calm", "name": "Спокійний", "emoji": "😌" },
     { "id": "thoughtful", "name": "Задумливий", "emoji": "🤔" }
   ],
-  "searchLetters": { "ґ": "г", "ё": "е" }
+  "searchLetters": { "ґ": "г", "ё": "е" },
+  "xp": { "round": 1, "finishedGame": 5, "finishedGameShare": 0.5, "bestResult": 5 }
 }

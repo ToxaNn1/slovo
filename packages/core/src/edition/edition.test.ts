@@ -75,6 +75,7 @@ const validConfig = {
     replaceOpenEntry: true,
     mixKindWeights: true,
     analytics: true,
+    xpLog: true,
   },
   userSettingDefaults: {
     theme: 'system',
@@ -118,6 +119,7 @@ const validConfig = {
     { id: 'calm', name: 'Calm', emoji: '😌' },
   ],
   searchLetters: { b: 'a' },
+  xp: { round: 1, finishedGame: 5, finishedGameShare: 0.5, bestResult: 5 },
 };
 
 /** The Feature Switches of the Game Modes and the Daily Crossword (ADR 0052). */
@@ -316,6 +318,26 @@ describe('loadEdition', () => {
       '13:30',
       '19:00',
     ]);
+  });
+
+  it('reports the XP table, what each Game learning action earns (ADR 0066)', () => {
+    expect(loadEdition(validConfig).xp).toEqual({
+      round: 1,
+      finishedGame: 5,
+      finishedGameShare: 0.5,
+      bestResult: 5,
+    });
+  });
+
+  it('refuses an Edition without an XP table, a negative amount or a share above 1', () => {
+    const { xp, ...withoutXp } = validConfig;
+    expect(() => loadEdition(withoutXp)).toThrow(InvalidEditionConfigError);
+    expect(() => loadEdition({ ...validConfig, xp: { ...xp, round: -1 } })).toThrow(
+      InvalidEditionConfigError,
+    );
+    expect(() => loadEdition({ ...validConfig, xp: { ...xp, finishedGameShare: 1.5 } })).toThrow(
+      InvalidEditionConfigError,
+    );
   });
 
   it("reports the file of the Edition's notification sound, if it has one", () => {

@@ -99,6 +99,7 @@ export { SearchButton } from './search/SearchButton';
 export { RecentQueries } from './search/RecentQueries';
 export { StatsPill } from './progress/StatsPill';
 export { StatsSheet } from './progress/StatsSheet';
+export { XpBar } from './progress/XpBar';
 export { systemSchedule } from './providers/system-schedule';
 export {
   cardSpace,

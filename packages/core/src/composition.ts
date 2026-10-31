@@ -54,6 +54,7 @@ import { openOnboarding, type Onboarding } from './onboarding/onboarding';
 import type { LocalDate } from './local-date';
 import type { Backend, Clock, ContentReadPort, Random, Schedule } from './ports';
 import { openActiveDays } from './progress/active-days';
+import { openXpLog, type XpLog } from './progress/xp-log';
 import { openProgress, type Progress } from './progress/progress';
 import { createWeeklyRecap, type WeeklyRecap } from './feed/weekly-recap';
 import { createMoodDraw, type MoodDraw } from './mood/mood-draw';
@@ -108,6 +109,12 @@ export interface Composition extends Hiding {
    * Entry change at once, the Game's best result and the knowledge counts.
    */
   readonly progress: Progress;
+  /**
+   * The XP log: the XP the Game's learning actions earn, kept per Edition,
+   * and the total and today's XP derived from it, which the XP bar shows
+   * (ADR 0066).
+   */
+  readonly xpLog: XpLog;
   /** The Weekly Recap, whose numbers its Feed Notice shows on a local Monday (ADR 0054). */
   readonly weeklyRecap: WeeklyRecap;
   /**
@@ -376,6 +383,7 @@ export async function openComposition({
     returned,
   });
   const { history, recorder } = await openHistory({ rows, userState });
+  const xpLog = await openXpLog({ edition, userState, clock, random, dayTurned });
   const hiddenEntries = await openHiddenEntries({ rows, userState, clock, eligibility });
   const communityCounters = openCommunityCounters({ edition, userState });
   const analytics = createAnalytics({ edition, userState, port: analyticsPort });
@@ -483,6 +491,7 @@ export async function openComposition({
     entries,
     history,
     knowledge,
+    xp: xpLog,
     userState,
     clock,
     random,
@@ -583,6 +592,7 @@ export async function openComposition({
     knowledge,
     communityCounters,
     progress,
+    xpLog,
     weeklyRecap,
     resume: () => day.resume(),
     notifications,

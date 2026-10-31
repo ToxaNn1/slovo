@@ -25,6 +25,7 @@ const everything: Shown = {
   shareCountersSetting: true,
   learning: true,
   stats: { streak: true, knowledge: ['word', 'correction', 'idiom', 'synonymRow', 'tip'] },
+  xpBar: true,
   sync: true,
   dailyLimit: true,
   search: true,
@@ -157,14 +158,16 @@ describe('what the reader is shown', () => {
       { off: ['selfCheck'], selfCheck: true, shown: { selfCheck: false, selfCheckSetting: false } },
     ],
     [
-      'the statistics without the Streak when the reader hides it',
+      'the statistics without the Streak, and no XP bar, when the reader hides the counters',
       {
         hideStreak: true,
         shown: {
           stats: { streak: false, knowledge: ['word', 'correction', 'idiom', 'synonymRow', 'tip'] },
+          xpBar: false,
         },
       },
     ],
+    ['no XP bar with the XP log off', { off: ['xpLog'], shown: { xpBar: false } }],
     [
       'no statistics, and so no setting to hide the Streak, with statistics off',
       { off: ['statistics'], shown: { stats: undefined } },

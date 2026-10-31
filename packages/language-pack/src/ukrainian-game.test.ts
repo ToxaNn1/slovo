@@ -213,7 +213,7 @@ async function playGame(app: Composition): Promise<Asked[]> {
       if (answer === undefined || typed.length > 1) {
         throw new Error(`No one Word answers «${round.prompt}»`);
       }
-      void app.game.answer({ form: 'typed', text: answer.lemma });
+      await app.game.answer({ form: 'typed', text: answer.lemma });
       asked.push({ answer, options: [], round: current(app).round });
       await app.game.next();
       continue;
@@ -227,7 +227,7 @@ async function playGame(app: Composition): Promise<Asked[]> {
     const right = options.findIndex((word) => asks(word, round));
     const answer = options[right];
     if (answer === undefined) throw new Error(`No option answers «${round.prompt}»`);
-    void app.game.answer({ form: 'pick', option: right });
+    await app.game.answer({ form: 'pick', option: right });
     asked.push({ answer, options, round: current(app).round });
     await app.game.next();
   }
@@ -339,7 +339,7 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
     }
   });
 
-  it('writes no Seen, no History and no Active Day while it is played, only the confirmed Entries and its Best result', async () => {
+  it('writes no Seen, no History and no Active Day while it is played, only the confirmed Entries, its XP and its Best result', async () => {
     const { port, writes } = recordingPort(new Map());
     const app = await runWords(6, port);
     writes.length = 0;
@@ -353,9 +353,21 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
     expect(new Set(confirmed.flatMap((write) => [...write.keys()]))).toEqual(
       new Set(played.filter(({ right }) => right).map(({ entry }) => `confirmed.${entry.id}`)),
     );
-    expect(writes.filter((write) => !confirmed.includes(write))).toEqual([
-      userStateRecords.gameBest.record('guess-word').change(roundsPassed),
-    ]);
+    // The XP of a right Round goes in its own write; the XP of the finished
+    // Game and of the new Best result share the Best result's write.
+    const [bestKey, bestValue] = [
+      ...userStateRecords.gameBest.record('guess-word').change(roundsPassed),
+    ][0] as [string, unknown];
+    const others = writes.filter((write) => !confirmed.includes(write));
+    const withBest = others.filter((write) => write.has(bestKey));
+    expect(withBest).toHaveLength(1);
+    expect(withBest[0]?.get(bestKey)).toEqual(bestValue);
+    for (const write of others) {
+      const xpKeys = [...write.keys()].filter((key) => key !== bestKey);
+      expect(xpKeys.length).toBeGreaterThan(0);
+      expect(xpKeys.every((key) => key.startsWith('xp.'))).toBe(true);
+    }
+    expect(others).toHaveLength(played.filter(({ right }) => right).length + 1);
   });
 });
 

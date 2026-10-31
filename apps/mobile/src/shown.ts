@@ -60,6 +60,11 @@ export interface Shown {
         readonly knowledge: readonly EntryKind[] | 'none';
       }
     | undefined;
+  /**
+   * The XP bar over the Feed with today's XP, while the XP log is on and the
+   * reader has not hidden the counters («Без лічильників», ADR 0066).
+   */
+  readonly xpBar: boolean;
   /** The Sync status line of the SLOVO ID screen. */
   readonly sync: boolean;
   /** The Daily Limit choice of Settings. */
@@ -119,6 +124,7 @@ export function shownOf({
           knowledge: knowledge ? knownKinds : 'none',
         }
       : undefined,
+    xpBar: on('xpLog') && !settings.hideStreak,
     sync: on('sync'),
     dailyLimit: on('dailyLimit'),
     search: on('search'),

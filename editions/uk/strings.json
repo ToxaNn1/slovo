@@ -619,6 +619,9 @@
       "other": "Статистика: серія {count} дня"
     },
     "pillLabelWithoutStreak": "Статистика",
+    "xpToday": "{count} XP",
+    "xpBarLabel": "Досвід: сьогодні {count} XP",
+    "xpBarHint": "Відкриває Гру",
     "streak": {
       "one": "день поспіль",
       "few": "дні поспіль",
