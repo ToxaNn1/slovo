@@ -167,9 +167,11 @@ export async function forgetUnsentCounters(
 }
 
 /**
- * The changes that take what a request sent off the unsent changes, keeping
- * what was counted while it was out. An Entry whose unsent change no longer
- * holds what was sent, as after sharing went off and on again, keeps its own.
+ * The changes that take what the backend counted off the unsent changes, so
+ * what this device counted stays what the backend has with the unsent
+ * changes. A change counted while the request was out stays; a mark removed
+ * while it was out, or one sharing turned off forgot, leaves the opposite of
+ * what was sent, to send next.
  */
 export async function unsentAfterSending(
   userState: Pick<UserState, 'read'>,
@@ -178,8 +180,7 @@ export async function unsentAfterSending(
   const { countersUnsent } = userStateRecords;
   const changes = new Map<string, string | undefined>();
   for (const { entryId, ...sent } of events) {
-    const unsent = await userState.read(countersUnsent.record(entryId));
-    if (unsent === undefined) continue;
+    const unsent = (await userState.read(countersUnsent.record(entryId))) ?? unchanged;
     const rest = sumOfDeltas(unsent, negated(sent));
     if (rest === undefined) continue;
     for (const change of countersUnsent
