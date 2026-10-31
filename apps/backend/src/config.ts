@@ -36,7 +36,7 @@ const ServerVariablesSchema = z.object({
   SMTP_USER: unsetWhenEmpty(z.string()),
   SMTP_PASSWORD: unsetWhenEmpty(z.string()),
   // `true` speaks TLS from the first byte (port 465, usually); otherwise the
-  // client upgrades with STARTTLS when the server offers it.
+  // client upgrades with STARTTLS, required when there is a login (Mailpit has none).
   SMTP_TLS: z.stringbool({ error: 'must be true or false' }).default(false),
   AUTH_SECRET: z
     .string()
@@ -63,9 +63,8 @@ const ServerVariablesSchema = z.object({
   // Where the backend reports its unexpected failures (spec #603). Empty, or
   // unset, reports nothing; the repository holds no real DSN. Only https://,
   // so no report crosses the network in the clear.
-  SENTRY_DSN: z.preprocess(
-    (dsn) => (dsn === '' ? undefined : dsn),
-    z.url({ protocol: /^https$/, error: 'must be an https:// Sentry DSN' }).optional(),
+  SENTRY_DSN: unsetWhenEmpty(
+    z.url({ protocol: /^https$/, error: 'must be an https:// Sentry DSN' }),
   ),
   // How many proxies in front of the backend append to X-Forwarded-For, whose
   // addresses it trusts (ADR 0030): 0 when nothing is in front, as in local
