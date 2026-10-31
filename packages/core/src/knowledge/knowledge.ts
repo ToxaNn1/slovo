@@ -68,6 +68,7 @@ export interface KnowledgeState {
    * Entry too; the same object until a count changes.
    */
   readonly confirmed: ConfirmedCounts;
+  // With the `confirmedEntries` Feature Switch off the confirmed counts are 0 and nothing is confirmed.
   /**
    * The Entries due for Review today, in no set order, for the Feed to bring
    * back, the Game to ask and Progress to count.
@@ -313,14 +314,16 @@ export async function openKnowledge({
           ? { mark, step, reviewDay, learned }
           : { mark, step, reviewDay, learned, markedAt },
         counts,
-        mark === 'known' && confirmsOnKnown(previous),
+        mark === 'known' &&
+          confirmsOnKnown(previous) &&
+          edition.isFeatureEnabled('confirmedEntries'),
       );
     });
 
-  /** Confirms the Entry, unless the switch is off or it is confirmed already. */
+  /** Confirms the Entry, unless the `confirmedEntries` switch is off or it is confirmed already. */
   const confirm = (entryId: string) =>
     inTurn(async () => {
-      if (!edition.isFeatureEnabled('knowledge') || confirmed.has(entryId)) return;
+      if (!edition.isFeatureEnabled('confirmedEntries') || confirmed.has(entryId)) return;
       await readRow(entryId);
       await userState.write(confirmation(entryId));
       confirmed = new Set([...confirmed, entryId]);
@@ -332,7 +335,10 @@ export async function openKnowledge({
   return {
     get state() {
       // The switch is read at each call, as the remote switches can turn it off while the app runs.
-      return edition.isFeatureEnabled('knowledge') ? state : off;
+      if (!edition.isFeatureEnabled('knowledge')) return off;
+      return edition.isFeatureEnabled('confirmedEntries')
+        ? state
+        : { ...state, confirmed: noneConfirmed };
     },
     weak() {
       if (!edition.isFeatureEnabled('knowledge')) return [];

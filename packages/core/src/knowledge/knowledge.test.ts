@@ -23,7 +23,7 @@ async function run({
   records = new Map<string, string>(),
   pack = content,
   clock = fakeClock('2026-10-19T09:00:00.000Z').clock,
-  on = ['knowledge', 'corrections'],
+  on = ['knowledge', 'confirmedEntries', 'corrections'],
 }: {
   records?: Map<string, string>;
   pack?: ContentReadPort;
@@ -530,15 +530,19 @@ describe('Confirmed Entries', () => {
     expect(confirmedOf(next)).toEqual(confirmedOf(app));
   });
 
-  it('counts nothing with the knowledge Feature Switch off, and confirms nothing', async () => {
+  it('hides the counts and confirms nothing with the confirmedEntries Feature Switch off, while Review goes on', async () => {
     const records = new Map<string, string>();
     const time = fakeClock('2026-10-19T09:00:00.000Z');
     const app = await run({ records, pack, clock: time.clock });
     await app.knowledge.confirm('w_one');
 
-    const off = await run({ records, pack, clock: time.clock, on: ['corrections'] });
+    const off = await run({ records, pack, clock: time.clock, on: ['knowledge', 'corrections'] });
     await off.knowledge.confirm('w_two');
+    await off.knowledge.tap('w_three', 'unknown');
+    await reviewKnown(off, time, 'w_three', 3);
+    expect(learningOf(off)).toEqual([['w_three', 30]]);
     expect(confirmedOf(off)).toEqual({ total: 0, byRarity: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } });
+    expect(off.knowledge.state.shown.get('w_three')).toBe('known');
 
     const on = await run({ records, pack, clock: time.clock });
     expect(confirmedOf(on)).toEqual({ total: 1, byRarity: { 1: 0, 2: 1, 3: 0, 4: 0, 5: 0 } });

@@ -156,6 +156,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   statistics: z.boolean(),
   /** Knowledge Marks: the Known / Unknown marks on Words, Corrections and Idioms, and the Review they feed. */
   knowledge: z.boolean(),
+  /** The confirmed-Entry counts the Profile and the Badges show; with it off they are hidden and nothing is confirmed, while Review goes on under `knowledge` (ADR 0043). */
+  confirmedEntries: z.boolean(),
   /** Self-check: the setting that hides a card's meaning until the reader reveals it. */
   selfCheck: z.boolean(),
   /** The Mix's Rarity Floor: the lowest rarity of the Words shown. */

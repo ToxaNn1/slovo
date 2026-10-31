@@ -30,6 +30,7 @@
     "wordOfTheDay": true,
     "statistics": true,
     "knowledge": true,
+    "confirmedEntries": true,
     "selfCheck": true,
     "rarityFloor": true,
     "gameReview": true,

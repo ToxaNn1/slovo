@@ -761,7 +761,7 @@ describe('the Synonym Rows «Вгадай слово» asks about', () => {
   /** The Core composition over a pack of the Words and the rows, with Synonym Rows on. */
   const runWith = ({
     synonymRows = rows,
-    on = ['knowledge', 'synonymRows'],
+    on = ['knowledge', 'confirmedEntries', 'synonymRows'],
     seed,
     records,
   }: {
