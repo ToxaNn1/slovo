@@ -11,6 +11,8 @@ const installed: NativeModuleProbes = {
   keychain: () => true,
   googleSignIn: () => true,
   appleSignIn: () => true,
+  application: () => true,
+  updates: () => true,
   spotlight: () => true,
 };
 

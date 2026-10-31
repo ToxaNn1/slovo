@@ -12,27 +12,28 @@ import {
   useEdition,
   useTokens,
 } from '@slovo/ui';
-import * as Application from 'expo-application';
 import { useRouter } from 'expo-router';
-import * as Updates from 'expo-updates';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { edition, editionStrings } from '../edition/edition';
+import { installedBuild } from './installed-build';
 import { openLegalPage } from './legal-page';
 
 const strings = editionStrings.settings;
 
 /**
  * About: the Edition's name, the installed build and the OTA update it runs
- * (ADR 0062), so a bug report names the exact code; what SLOVO is and where
- * its words come from, and its privacy policy and terms, which open in the browser.
- * Suggesting a word and reporting a mistake wait for the backend (0.7).
+ * (ADR 0062), so a bug report names the exact code, while the binary reports
+ * them; what SLOVO is and where its words come from, and its privacy policy
+ * and terms, which open in the browser. Suggesting a word and reporting a
+ * mistake wait for the backend (0.7).
  */
 export function AboutScreen() {
   const { colors, fontFamilies, radii } = useTokens();
   const router = useRouter();
   const { voice } = useEdition();
+  const build = installedBuild();
   return (
     <SafeAreaView
       testID="about"
@@ -61,23 +62,22 @@ export function AboutScreen() {
           >
             {strings.about.editionLine}
           </Text>
-          <Text
-            testID="about-version"
-            {...voice}
-            style={[styles.editionLine, { color: colors.muted, fontFamily: fontFamilies.ui }]}
-          >
-            {fill(strings.about.versionLine, {
-              version: Application.nativeApplicationVersion ?? '',
-              build: Application.nativeBuildVersion ?? '',
-            })}
-          </Text>
-          {Updates.updateId !== null && (
+          {build !== undefined && (
+            <Text
+              testID="about-version"
+              {...voice}
+              style={[styles.editionLine, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+            >
+              {fill(strings.about.versionLine, { version: build.version, build: build.build })}
+            </Text>
+          )}
+          {build?.updateId !== undefined && (
             <Text
               testID="about-update"
               {...voice}
               style={[styles.editionLine, { color: colors.muted, fontFamily: fontFamilies.ui }]}
             >
-              {fill(strings.about.updateLine, { id: Updates.updateId })}
+              {fill(strings.about.updateLine, { id: build.updateId })}
             </Text>
           )}
         </View>
