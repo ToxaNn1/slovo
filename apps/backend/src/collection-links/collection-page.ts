@@ -67,6 +67,7 @@ function page(
  */
 export function collectionPage(
   edition: Edition,
+  scheme: string,
   id: string,
   link: CollectionLink,
   entries: readonly Entry[],
@@ -87,8 +88,8 @@ export function collectionPage(
         )}
       </dl> `;
   });
-  // The app's link scheme, as its config names it: `slovo-<edition id>`.
-  const appLink = `slovo-${edition.config.id}://c/${id}`;
+  // The app's link, `<scheme>://<edition>/c/<id>`, in the Edition it names (ADR 0065).
+  const appLink = `${scheme}://${edition.config.id}/c/${id}`;
   return page(
     edition,
     strings.page.title.replace('{name}', () => link.name),

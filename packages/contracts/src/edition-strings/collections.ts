@@ -114,7 +114,7 @@ export const CollectionsStringsSchema = z.strictObject({
     unavailable: pluralOf(),
     /** What the recipient's sheet, and the link's web page, say when the link no longer exists. */
     notFound: TextSchema,
-    /** The web page a browser gets for the link, `https://<linkDomain>/c/<id>` (ADR 0058). */
+    /** The web page a browser gets for the link, `https://<domain>/<edition>/c/<id>` (ADR 0058). */
     page: z.strictObject({
       /** The page's title. Takes `{name}`, the Collection's. */
       title: templateOf('name'),

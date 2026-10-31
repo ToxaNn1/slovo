@@ -170,6 +170,7 @@ export function createApp({
     rateLimits,
     clock,
     random,
+    domain: appConfig.domain,
   });
   const api = createApiHandler({
     accounts,
@@ -264,30 +265,30 @@ export function createApp({
     });
   }
 
-  // A Collection Link as its URL names it (ADR 0058): a browser gets its web
-  // page; any other client the API's answer for the link. Like the API's
-  // read, it is not limited. The page of a link that isn't there speaks the
-  // language of the Edition whose link domain the request came to.
+  // A Collection Link as its URL names it, under its Edition's path (ADR
+  // 0058, 0065): a browser gets its web page; any other client the API's
+  // answer for the link. Like the API's read, it is not limited. The page
+  // speaks the language of the Edition the path names; a link of another
+  // Edition is unavailable there.
   const packEntries = createPackEntries(contentPackStore);
-  app.get('/c/:id', async (c) => {
+  app.get('/:edition/c/:id', async (c) => {
     const id = c.req.param('id');
+    const edition = editions.find(({ config }) => config.id === c.req.param('edition'));
+    if (edition === undefined) return c.notFound();
     if (!(c.req.header('accept') ?? '').includes('text/html')) {
       const url = new URL(`/v1/collection-links/${encodeURIComponent(id)}`, c.req.url);
       const { response } = await handleApi(new Request(url, c.req.raw), c.var);
       return response === undefined ? c.notFound() : c.newResponse(response.body, response);
     }
-    const host = new URL(c.req.url).hostname;
-    const ofDomain = editions.find(({ config }) => config.linkDomain === host) ?? editions[0];
-    if (ofDomain === undefined) return c.notFound();
     if (!CollectionLinkIdSchema.safeParse(id).success) {
-      return c.html(unavailablePage(ofDomain), 400);
+      return c.html(unavailablePage(edition), 400);
     }
     const found = await collectionLinks.read(id);
-    if (!found.ok) return c.html(unavailablePage(ofDomain), 404);
-    const { link } = found;
-    const edition = editions.find(({ config }) => config.id === link.edition) ?? ofDomain;
-    const entries = await packEntries.entries(link.edition, link.entryIds);
-    return c.html(collectionPage(edition, id, link, entries));
+    if (!found.ok || found.link.edition !== edition.config.id) {
+      return c.html(unavailablePage(edition), 404);
+    }
+    const entries = await packEntries.entries(found.link.edition, found.link.entryIds);
+    return c.html(collectionPage(edition, appConfig.scheme, id, found.link, entries));
   });
 
   // An address the backend doesn't serve, under `/v1` too.

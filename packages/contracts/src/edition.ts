@@ -1,11 +1,5 @@
 import { z } from 'zod';
 
-import {
-  DomainSchema,
-  isReservedDomain,
-  placeholderDomainMessage,
-  type ReleaseProblem,
-} from './app-config';
 import { NotificationSoundFileSchema } from './notification-sound';
 import { HexColorSchema, RaritySchema } from './shared';
 
@@ -444,18 +438,6 @@ export const EditionConfigSchema = z
      */
     notificationSound: NotificationSoundFileSchema.optional(),
     /**
-     * The domain of the Edition's Collection Links, `https://<linkDomain>/c/<id>`
-     * (ADR 0058): the backend builds each link's URL from it, and the app config
-     * turns it into the associated domains entitlement.
-     */
-    linkDomain: DomainSchema,
-    /**
-     * The domain of the site that publishes the Edition's legal pages, each
-     * under `/<id>/` (ADR 0049): the Core derives the addresses About opens
-     * from it and the Edition id, `https://<legalDomain>/<id>/privacy`.
-     */
-    legalDomain: DomainSchema,
-    /**
      * The font file, among the Edition's fonts, that sets the Lemma on the
      * Word of the Day card. The Edition check refuses a font without a glyph
      * for a letter of the alphabet, in either case, for the punctuation a
@@ -580,23 +562,3 @@ export const EditionConfigSchema = z
   );
 
 export type EditionConfig = z.infer<typeof EditionConfigSchema>;
-
-/**
- * What a release build refuses in a valid Edition config: a link or legal
- * domain reserved for examples, the placeholder a development build keeps.
- * Empty when the Edition is ready for release. The app's own identity is
- * checked by `appReleaseProblems`.
- */
-export function releaseProblems({
-  linkDomain,
-  legalDomain,
-}: EditionConfig): ReleaseProblem<'linkDomain' | 'legalDomain'>[] {
-  return (
-    [
-      ['linkDomain', linkDomain],
-      ['legalDomain', legalDomain],
-    ] as const
-  )
-    .filter(([, domain]) => isReservedDomain(domain))
-    .map(([field, domain]) => ({ field, message: placeholderDomainMessage(domain) }));
-}

@@ -1,4 +1,4 @@
-import type { CollectionLink } from '@slovo/contracts';
+import { editionSite, type CollectionLink } from '@slovo/contracts';
 
 import type { EditionRegistry, NotServing } from '../edition/edition-registry';
 import type { Clock, CollectionLinkStore, Random, RateLimits } from '../ports';
@@ -30,7 +30,7 @@ export interface CollectionLinks {
   /**
    * Keeps the Collection as it is now under a new random id, when its Edition
    * serves Collection Links, and answers the id and the link's URL,
-   * `https://<linkDomain>/c/<id>`. Its shape is checked where it enters;
+   * `https://<domain>/<edition>/c/<id>`. Its shape is checked where it enters;
    * whether its Entries are in a pack is not. A link over the day's limit of
    * its IP address is refused and keeps nothing; one its Edition doesn't take
    * counts nothing. The IP address is never kept.
@@ -56,12 +56,15 @@ export function createCollectionLinks({
   rateLimits,
   clock,
   random,
+  domain,
 }: {
   editions: EditionRegistry;
   store: CollectionLinkStore;
   rateLimits: RateLimits;
   clock: Clock;
   random: Random;
+  /** The app's one domain, under which each Edition's links live (ADR 0065). */
+  domain: string;
 }): CollectionLinks {
   const newId = () =>
     Array.from({ length: ID_LENGTH }, () =>
@@ -83,7 +86,7 @@ export function createCollectionLinks({
       for (let draw = 0; draw < ID_DRAWS; draw += 1) {
         const id = newId();
         if (await store.keep(id, kept)) {
-          return { ok: true, id, url: `https://${serving.edition.config.linkDomain}/c/${id}` };
+          return { ok: true, id, url: `${editionSite(domain, link.edition)}/c/${id}` };
         }
       }
       throw new Error(`no free Collection Link id in ${String(ID_DRAWS)} draws`);

@@ -67,14 +67,14 @@ const keptOf = async ({ db }: Database, id: string) => {
 };
 
 describe('collectionLinks.create', () => {
-  it('keeps the Collection under the id it draws and answers the link on the Edition’s domain', async () => {
+  it('keeps the Collection under the id it draws and answers the link under the Edition’s path', async () => {
     const id = newLinkId();
     const { client, database } = testApp({ random: drawing(id) });
     const made = new Date();
 
     await expect(client.collectionLinks.create(validLink())).resolves.toEqual({
       id,
-      url: `https://slovo.example/c/${id}`,
+      url: `https://slovo.example/uk/c/${id}`,
     });
     await expect(keptOf(database, id)).resolves.toEqual({
       id,
@@ -104,7 +104,7 @@ describe('collectionLinks.create', () => {
 
     await expect(client.collectionLinks.create(validLink({ name: 'Друга' }))).resolves.toEqual({
       id: free,
-      url: `https://slovo.example/c/${free}`,
+      url: `https://slovo.example/uk/c/${free}`,
     });
     await expect(client.collectionLinks.read({ id: taken })).resolves.toMatchObject({
       name: 'Перша',
@@ -193,17 +193,13 @@ describe('collectionLinks.create', () => {
     await expect(keptOf(database, id)).resolves.toBeUndefined();
   });
 
-  it('builds the link on the domain of the link’s own Edition', async () => {
+  it('builds the link under the path of the link’s own Edition on the app’s one domain', async () => {
     const id = newLinkId();
-    const folder = testEditions(['pl'], (config) => ({
-      ...config,
-      linkDomain: 'pl.slovo.example',
-    }));
-    const { client } = testApp({ editions: folder.read(), random: drawing(id) });
+    const { client } = testApp({ editions: testEditions(['pl']).read(), random: drawing(id) });
 
     await expect(
       client.collectionLinks.create(validLink({ edition: 'pl' })),
-    ).resolves.toMatchObject({ url: `https://pl.slovo.example/c/${id}` });
+    ).resolves.toMatchObject({ url: `https://slovo.example/pl/c/${id}` });
   });
 });
 

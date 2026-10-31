@@ -270,7 +270,7 @@ const FAKE_APPLE_SIGNATURE = 'signed-by-the-fake-apple';
  * A fake Apple, in two parts: the sign-in sheet's side, which gives the app
  * identity tokens, and the verifier's side, which checks them the way the
  * real verifier checks Apple's: the signature, the issuer, the expiry against
- * the test's clock and the audience against the Edition's bundle id.
+ * the test's clock and the audience against the app's bundle id.
  */
 export interface FakeApple extends AppleVerifier {
   /**

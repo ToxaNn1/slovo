@@ -102,6 +102,13 @@ export const AppConfigSchema = z
 
 export type AppConfig = z.infer<typeof AppConfigSchema>;
 
+/**
+ * The site of an Edition under the app's one domain, `https://<domain>/<edition>`
+ * (ADR 0065): its legal pages and Collection Links live under it.
+ */
+export const editionSite = (domain: string, editionId: string) =>
+  `https://${domain}/${editionId}`;
+
 /** A field of a config that a release build refuses, and why. */
 export interface ReleaseProblem<Field extends string> {
   readonly field: Field;

@@ -310,15 +310,12 @@ function updates(
 /**
  * Opens the Edition the app bundles, the AppConfig's default Edition (ADR
  * 0065): every build of the one app bundles the same one, so no build names
- * an Edition. A release build opens it for a release, which refuses the
- * placeholders a development build keeps.
+ * an Edition.
  */
-function bundledEdition(editionsDir: string, app: AppFolder, build: Build): EditionFolder {
+function bundledEdition(editionsDir: string, app: AppFolder): EditionFolder {
   const id = app.config.defaultEdition;
   try {
-    return openEdition(editionsDir, id, {
-      build: build.kind === 'release' ? 'release' : 'development',
-    });
+    return openEdition(editionsDir, id);
   } catch (error) {
     if (error instanceof EditionFolderError && error.reason === 'unknown') {
       throw new Error(
@@ -349,13 +346,8 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
   requireReleaseApiUrl(build);
   const repoDir = join(projectRoot, '../..');
   const app = openApp(repoDir, build);
-  const edition = bundledEdition(join(repoDir, 'editions'), app, build);
+  const edition = bundledEdition(join(repoDir, 'editions'), app);
   const { name, scheme, bundleId, appGroup, domain, updateChannel } = app.config;
-  if (edition.config.linkDomain !== domain) {
-    throw new Error(
-      `${edition.path('config')} names the linkDomain "${edition.config.linkDomain}", but the app's domain is "${domain}" (ADR 0065)`,
-    );
-  }
   const [language] = edition.config.locale.split('-');
 
   const widget = widgetEdition(edition, app.config);
@@ -395,7 +387,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       entitlements: {
         // The widget extension gets the same App Group from the Apple targets plugin.
         'com.apple.security.application-groups': [appGroup],
-        // Collection Links, https://<domain>/c/<id>, open in the app (ADR 0058).
+        // Collection Links, https://<domain>/<edition>/c/<id>, open in the app (ADR 0058).
         'com.apple.developer.associated-domains': [`applinks:${domain}`],
         // «Увійти через Apple» on the SLOVO ID screen (ADR 0047).
         'com.apple.developer.applesignin': ['Default'],

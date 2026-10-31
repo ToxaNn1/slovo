@@ -43,22 +43,6 @@ export interface UserSettingDefaults {
   readonly mix: DefaultMix;
 }
 
-/** The web addresses of the Edition's legal pages, which About opens in the browser. */
-export interface LegalPages {
-  readonly privacy: string;
-  readonly terms: string;
-}
-
-/**
- * The addresses of an Edition's legal pages, `https://<legalDomain>/<id>/<page>`
- * (ADR 0049): the site at the Edition's legal domain publishes them under the
- * Edition id.
- */
-function legalPagesOf(legalDomain: string, id: string): LegalPages {
-  const site = `https://${legalDomain}/${id}`;
-  return { privacy: `${site}/privacy`, terms: `${site}/terms` };
-}
-
 /**
  * What the Core knows about the Edition it runs as: only what can't change
  * without a store build. Its Categories come from the Language Pack (ADR 0033).
@@ -72,10 +56,6 @@ export interface Edition {
   readonly userSettingDefaults: UserSettingDefaults;
   /** The file name of the Edition's notification sound, which the shell bundles; without one, notifications play the system sound. */
   readonly notificationSound: string | undefined;
-  /** The addresses of the privacy policy and the terms, derived from the legal domain and the id, which About opens in the browser. */
-  readonly legalPages: LegalPages;
-  /** The domain of its Collection Links, `https://<linkDomain>/c/<id>`, the one host whose links the app opens (ADR 0058). */
-  readonly linkDomain: string;
   /** The languages Words come from, in their order, which «Звідки слово» offers (ADR 0052). */
   readonly originLanguages: readonly OriginLanguage[];
   /** The moods a Word may carry, in their order, which «Слово під настрій» offers (ADR 0054). */
@@ -146,8 +126,6 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
     featureSwitches,
     userSettingDefaults,
     notificationSound,
-    linkDomain,
-    legalDomain,
     originLanguages,
     moods,
     searchLetters,
@@ -173,8 +151,6 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
       },
     },
     notificationSound,
-    legalPages: legalPagesOf(legalDomain, id),
-    linkDomain,
     originLanguages,
     moods,
     searchLetters,

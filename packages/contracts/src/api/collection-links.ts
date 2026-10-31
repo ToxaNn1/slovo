@@ -20,7 +20,7 @@ export const collectionLinksContract = {
       path: '/collection-links',
       summary: 'Share a Collection behind a link',
       description:
-        "Stores the Collection as it is now and answers the link's id and its URL, `https://<linkDomain>/c/<id>`. The backend checks the shape, not whether the Entries are in a pack: a name of 1 to 60 characters once trimmed, 1 to 200 Entries, each once. A link never changes and never expires; it is kept with its Edition, name, Entry ids and the time it was made only: no Account, no device id, no IP address (ADR 0058).",
+        "Stores the Collection as it is now and answers the link's id and its URL, `https://<domain>/<edition>/c/<id>`. The backend checks the shape, not whether the Entries are in a pack: a name of 1 to 60 characters once trimmed, 1 to 200 Entries, each once. A link never changes and never expires; it is kept with its Edition, name, Entry ids and the time it was made only: no Account, no device id, no IP address (ADR 0058).",
       tags: ['collection-links'],
     })
     .errors({
