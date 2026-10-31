@@ -87,6 +87,7 @@ async function renderApp({
       '+native-intent': {
         redirectSystemPath: createOutsideLinks({
           linkDomain: LINK_DOMAIN,
+          editionId: 'uk',
           widgetLinkKey: () => Promise.resolve(WIDGET_LINK_KEY),
           appIntents: {
             on: () => Promise.resolve(appIntents),
@@ -185,6 +186,27 @@ describe('a link from outside the app', () => {
     await app.open(`slovo-uk://entry/c_77szl9?from=widget&key=${WIDGET_LINK_KEY}`);
 
     expect(entryScreen()).toBe(`${home} | widget`);
+  });
+
+  it('from the widget, naming the active Edition, opens the Entry as from the widget', async () => {
+    const app = await renderApp();
+    await app.open(`slovo-uk://entry/c_77szl9?from=widget&key=${WIDGET_LINK_KEY}&edition=uk`);
+
+    expect(entryScreen()).toBe(`${home} | widget`);
+  });
+});
+
+describe('a link of a native surface naming another Edition (ADR 0065)', () => {
+  it.each([
+    ['the widget', `slovo-uk://entry/c_77szl9?from=widget&key=${WIDGET_LINK_KEY}&edition=en`],
+    ['Spotlight', 'slovo-uk://saved/collections/c1?edition=en'],
+    ['an App Intent', 'slovo-uk://game?intent=openGame&edition=en'],
+  ])("opens the app's start, the active Edition's Feed, for %s", async (_, link) => {
+    const app = await renderApp();
+    await app.open(link);
+
+    expect(app.pathname()).toBe('/');
+    expect(screen.getByText('Feed')).toBeTruthy();
   });
 });
 

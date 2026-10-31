@@ -354,6 +354,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
 
   const widget = widgetEdition(edition, app.config);
   const appIntents: AppIntents.AppIntentsEdition = {
+    editionId: edition.config.id,
     displayName: edition.config.displayName,
     strings: edition.read('strings').appIntents,
   };

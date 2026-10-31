@@ -1,5 +1,7 @@
 import type { SpotlightSnapshot } from '@slovo/contracts';
 
+import { editionRoute } from '../edition/edition-link';
+
 /**
  * One result of the iPhone search as the native module writes it into
  * CoreSpotlight (`modules/spotlight`). A tap on it opens `route` as a link
@@ -31,20 +33,25 @@ export interface SpotlightIndex {
 /**
  * The index over the native module, or one that writes nothing where the
  * binary lacks it: a dev client built before 0.8.15, another platform, a test.
+ * Each item's route, its id in the index, names the active Edition
+ * (`edition=<id>`, ADR 0065), so a tap opens it in that Edition.
  */
-export function createSpotlightIndex(native: SpotlightModule | undefined): SpotlightIndex {
+export function createSpotlightIndex(
+  native: SpotlightModule | undefined,
+  editionId: string,
+): SpotlightIndex {
   if (native === undefined) return { replace: () => Promise.resolve() };
   return {
     replace: ({ entries, collections }) =>
       native.replaceIndex([
         ...entries.map(({ entry, route }) => ({
-          route,
+          route: editionRoute(route, editionId),
           title: entry.headline,
           details: entry.secondLine,
           searchText: entry.voiceOver,
         })),
         ...collections.map(({ name, secondLine, route }) => ({
-          route,
+          route: editionRoute(route, editionId),
           title: name,
           details: secondLine,
           searchText: name,

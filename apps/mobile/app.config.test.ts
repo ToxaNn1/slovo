@@ -659,7 +659,7 @@ describe('app config', () => {
     ]);
   });
 
-  it("gives Siri the Edition's phrases, each naming the app as Siri hears it, and each intent its route", async () => {
+  it("gives Siri the Edition's phrases, each naming the app as Siri hears it, and each intent its route in the Edition", async () => {
     const iosDir = await prebuildIos(repoWithEdition(() => undefined));
 
     const shortcuts = readFileSync(join(iosDir, 'SLOVO/SlovoAppShortcuts.swift'), 'utf8');
@@ -669,12 +669,12 @@ describe('app config', () => {
     expect(shortcuts).toContain(
       'intent: OpenGameIntent(),\n      phrases: ["Відкрий гру в \\(.applicationName)", "Грати в \\(.applicationName)"]',
     );
-    // «Слово дня» opens the app's start, the Feed; «Відкрити гру» the Game.
+    // «Слово дня» opens the app's start, the Feed; «Відкрити гру» the Game; each in the Edition built.
     expect(shortcuts).toContain(
-      'extension WordOfTheDayIntent {\n  static let route = "?intent=wordOfTheDay"\n}',
+      'extension WordOfTheDayIntent {\n  static let route = "?intent=wordOfTheDay&edition=uk"\n}',
     );
     expect(shortcuts).toContain(
-      'extension OpenGameIntent {\n  static let route = "game?intent=openGame"\n}',
+      'extension OpenGameIntent {\n  static let route = "game?intent=openGame&edition=uk"\n}',
     );
   });
 

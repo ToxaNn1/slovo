@@ -34,21 +34,21 @@ function fakeModule() {
 }
 
 describe('the Spotlight index', () => {
-  it('replaces the index with one item per Entry and per Collection, each opening its route', async () => {
+  it('replaces the index with one item per Entry and per Collection, each opening its route in the active Edition', async () => {
     const native = fakeModule();
 
-    await createSpotlightIndex(native).replace(snapshot);
+    await createSpotlightIndex(native, 'uk').replace(snapshot);
 
     expect(native.writes).toEqual([
       [
         {
-          route: 'entry/w_sumyrnyi',
+          route: 'entry/w_sumyrnyi?edition=uk',
           title: 'суми́рний',
           details: 'Лагідний, тихий.',
           searchText: 'сумирний. Лагідний, тихий.',
         },
         {
-          route: 'saved/collections/c1',
+          route: 'saved/collections/c1?edition=uk',
           title: 'Осінь',
           details: 'Колекція · 12 слів',
           searchText: 'Осінь',
@@ -60,12 +60,12 @@ describe('the Spotlight index', () => {
   it('empties the index with an empty snapshot', async () => {
     const native = fakeModule();
 
-    await createSpotlightIndex(native).replace({ entries: [], collections: [] });
+    await createSpotlightIndex(native, 'uk').replace({ entries: [], collections: [] });
 
     expect(native.writes).toEqual([[]]);
   });
 
   it('writes nothing, and does not fail, without the native module', async () => {
-    await expect(createSpotlightIndex(undefined).replace(snapshot)).resolves.toBeUndefined();
+    await expect(createSpotlightIndex(undefined, 'uk').replace(snapshot)).resolves.toBeUndefined();
   });
 });
