@@ -17,8 +17,10 @@ export const MistakeReportStringsSchema = z.strictObject({
   comment: TextSchema,
   /** The button that sends the report and closes the sheet. */
   send: TextSchema,
-  /** The toast once the report is taken. */
+  /** The toast as soon as the report is sent, before the Core answers. */
   sent: TextSchema,
-  /** The toast when the reader has sent too many reports today. */
+  /** The toast that replaces it when the reader has sent too many reports today. */
   tooMany: TextSchema,
+  /** The toast that replaces it when the report could not be kept to send. */
+  failed: TextSchema,
 });

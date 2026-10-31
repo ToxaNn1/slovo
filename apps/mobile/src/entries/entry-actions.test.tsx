@@ -50,6 +50,8 @@ jest.mock('../shown-in-effect', () => ({
 /** The Core's Mistake Reports over a fake backend, opened afresh for each test. */
 let mistakeReports: MistakeReports;
 let reportsApi: FakeBackend;
+/** Mistake Reports as the Shell opens them, when a test makes them fail to open. */
+let mockReportsOpening: ReturnType<typeof opened<MistakeReports>> | undefined;
 /** The Core's reads of the Community Counters over a fake backend, opened afresh for each test. */
 let counterReads: CounterReads;
 let countersApi: FakeBackend;
@@ -61,7 +63,7 @@ let countersApi: FakeBackend;
 const shell = () =>
   testShell({
     composition: opened(composition),
-    mistakeReports: opened(mistakeReports),
+    mistakeReports: mockReportsOpening ?? opened(mistakeReports),
     counterReads: opened(counterReads),
     shareCard: () => Promise.resolve('closed'),
   });
@@ -178,6 +180,7 @@ beforeEach(async () => {
     clock,
   });
   mockMistakeReportsOn = true;
+  mockReportsOpening = undefined;
   reportsApi = createFakeBackend();
   mistakeReports = openMistakeReports({
     userState,
@@ -369,6 +372,40 @@ describe.each([
     await waitFor(() => {
       expect(screen.queryByRole('button', { name: 'Надіслати' })).toBeNull();
     });
+  });
+
+  it('thanks the reader at once, before the backend answers', async () => {
+    const release = reportsApi.hold();
+    await renderCard(entryId);
+
+    await reportTypo();
+
+    expect(reportsApi.reports.received).toEqual([]);
+    expect(screen.getByTestId('undo-toast-message')).toHaveTextContent('Дякуємо! Ми перевіримо.');
+    await act(async () => {
+      release();
+      await Promise.resolve();
+    });
+    await settle();
+    expect(reportsApi.reports.received).toEqual([
+      expect.objectContaining({ entryId, type: 'typo' }),
+    ]);
+    expect(screen.getByTestId('undo-toast-message')).toHaveTextContent('Дякуємо! Ми перевіримо.');
+  });
+
+  it('says the report did not go when Mistake Reports fail to open', async () => {
+    mockReportsOpening = {
+      ...opened(mistakeReports),
+      opened: () => Promise.reject(new Error('The queue could not open')),
+    };
+    await renderCard(entryId);
+
+    await reportTypo();
+    await settle();
+
+    expect(screen.getByTestId('undo-toast-message')).toHaveTextContent(
+      'Не вдалося надіслати. Спробуйте ще раз.',
+    );
   });
 
   it('thanks the reader offline too, and keeps the report to send later', async () => {
