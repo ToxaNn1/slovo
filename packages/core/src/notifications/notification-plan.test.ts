@@ -576,7 +576,7 @@ describe('the Feature Switches of notifications and the Word of the Day', () => 
 });
 
 describe('the Edition of the plan', () => {
-  it("carries the id of the Edition the app runs as on every notification, the farewell included", async () => {
+  it('carries the id of the Edition the app runs as on every notification, the farewell included', async () => {
     const { scheduler } = await run({ editionId: 'en', politePause: true });
 
     const plan = planOf(scheduler);
