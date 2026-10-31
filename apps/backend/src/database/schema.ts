@@ -241,7 +241,8 @@ export const mistakeReports = pgTable(
     contentVersion: integer('content_version').notNull(),
     receivedAt: time('received_at'),
   },
-  (table) => [index().on(table.editionId, table.receivedAt)],
+  // By Edition for `reports list --edition`, by time alone for every Edition.
+  (table) => [index().on(table.editionId, table.receivedAt), index().on(table.receivedAt)],
 );
 
 /**
