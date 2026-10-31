@@ -13,7 +13,7 @@ One set of rules governs every animation of the app, Decor follows the Season an
 
 The animation audit (`docs/design/animation-audit.md`) lists every animation with its timing and its Reduce Motion behaviour. The heart springs to 1.2 and back with a light haptic when the reader saves; a right Game answer flashes green briefly and a wrong one shakes.
 
-**Seasons and Holidays.**
+**Seasons and Holidays.** Paused in the UA Edition in 1.0 (spec #1358): the Feature Switch of the Decor is off, so Decor stays the Edition's own all year, the Settings row «Сезонний декор» is gone, and the code and the Edition's Holiday list stay so Decor can return after 1.0. The Word of the Day calligraphy (the `wordOfTheDayFont` of ADR 0006) is paused the same way.
 
 - **The Season** of a local date is the meteorological one: December–February winter, March–May spring, June–August summer, September–November autumn. The Core computes it from the local date alone, so it is the same in every Edition and needs no hemisphere setting.
 - **A Holiday** is a date the Edition lists, each by a rule: a fixed day and month, or the nth weekday of a month. The UA Edition lists 24 August, День вишиванки (the third Thursday of May), 25 December and 1 January. The Core decides whether a local date is a Holiday from the rules, so it knows no calendar of any language (ADR 0006).
