@@ -79,7 +79,6 @@ describe('openEdition', () => {
 
     expect(edition.id).toBe('fixture');
     expect(edition.dir).toBe(join(editionsDir, 'fixture'));
-    expect(edition.config.bundleId).toBe('app.slovo.fixture');
   });
 
   it('refuses an unknown Edition and names the known ones', () => {
@@ -123,7 +122,7 @@ describe('openEdition', () => {
       change: (dir) => {
         editJson(join(dir, 'edition.json'), ({ locale: _locale, ...config }) => ({
           ...config,
-          bundleId: 'NotReverseDns',
+          linkDomain: 'Not A Domain',
           extra: true,
         }));
       },
@@ -134,21 +133,24 @@ describe('openEdition', () => {
     expect(failure?.reason).toBe('invalid');
     expect(failure?.errors.map(({ file, field }) => `${file} › ${field ?? ''}`)).toEqual([
       'edition.json › locale',
-      'edition.json › bundleId',
+      'edition.json › linkDomain',
       'edition.json › extra',
     ]);
     expect(failure?.message).toMatch(/fixture.*edition\.json › locale/s);
   });
 
-  it('keeps the placeholder domain and an empty Team ID for a development build', () => {
+  it('keeps the placeholder domains for a development build', () => {
     const editionsDir = editionsWith();
 
     const edition = openEdition(editionsDir, 'fixture');
 
-    expect(edition.config).toMatchObject({ linkDomain: 'slovo.example', appleTeamId: '' });
+    expect(edition.config).toMatchObject({
+      linkDomain: 'slovo.example',
+      legalDomain: 'legal.slovo.example',
+    });
   });
 
-  it('refuses the placeholder domain and an empty Team ID for a release build', () => {
+  it('refuses the placeholder domains for a release build', () => {
     const editionsDir = editionsWith();
 
     const failure = failureOf(() => openEdition(editionsDir, 'fixture', { build: 'release' }));
@@ -157,7 +159,6 @@ describe('openEdition', () => {
     expect(failure?.errors.map(({ file, field }) => `${file} › ${field ?? ''}`)).toEqual([
       'edition.json › linkDomain',
       'edition.json › legalDomain',
-      'edition.json › appleTeamId',
     ]);
   });
 
@@ -168,7 +169,6 @@ describe('openEdition', () => {
           ...config,
           linkDomain: 'slovo.app',
           legalDomain: 'legal.slovo.example',
-          appleTeamId: 'A1B2C3D4E5',
         }));
       },
     });
@@ -192,7 +192,6 @@ describe('openEdition', () => {
           ...config,
           linkDomain,
           legalDomain: 'legal.slovo.app',
-          appleTeamId: 'A1B2C3D4E5',
         }));
       },
     });
@@ -202,14 +201,13 @@ describe('openEdition', () => {
     expect(failure?.errors.map(({ field }) => field)).toEqual(['linkDomain']);
   });
 
-  it('opens an Edition with its real domain and Team ID for a release build', () => {
+  it('opens an Edition with its real domains for a release build', () => {
     const editionsDir = editionsWith({
       change: (dir) => {
         editJson(join(dir, 'edition.json'), (config) => ({
           ...config,
           linkDomain: 'slovo.app',
           legalDomain: 'legal.slovo.app',
-          appleTeamId: 'A1B2C3D4E5',
         }));
       },
     });
@@ -219,7 +217,6 @@ describe('openEdition', () => {
     expect(edition.config).toMatchObject({
       linkDomain: 'slovo.app',
       legalDomain: 'legal.slovo.app',
-      appleTeamId: 'A1B2C3D4E5',
     });
   });
 
@@ -258,7 +255,6 @@ describe('an Edition folder', () => {
 
     expect(edition.readIfPresent('tokens')).toBeUndefined();
     expect(edition.readIfPresent('decor')).toBeUndefined();
-    expect(edition.readIfPresent('splash')).toBeUndefined();
     expect(edition.readIfPresent('targets')).toBeUndefined();
   });
 
@@ -312,7 +308,6 @@ describe('an Edition folder', () => {
     const edition = openEdition(editionsWith(), 'fixture');
 
     expect(edition.path('config')).toBe(join(edition.dir, 'edition.json'));
-    expect(edition.path('icon')).toBe(join(edition.dir, 'assets/icon.png'));
     expect(edition.path('languagePack')).toBe(join(edition.dir, 'dist/language-pack.db'));
     expect(edition.asset('notification.wav')).toBe(join(edition.dir, 'assets/notification.wav'));
     expect(edition.decorFile('splash-light.png')).toBe(join(edition.dir, 'decor/splash-light.png'));

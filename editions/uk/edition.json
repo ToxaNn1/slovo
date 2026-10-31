@@ -2,7 +2,6 @@
   "id": "uk",
   "locale": "uk-UA",
   "displayName": "SLOVO",
-  "bundleId": "app.slovo.uk",
   "languageTraits": {
     "marksStress": true,
     "vowels": "а е є и і ї о у ю я",
@@ -88,8 +87,6 @@
   "notificationSound": "notification.wav",
   "linkDomain": "slovo.example",
   "legalDomain": "legal.slovo.example",
-  "appleTeamId": "",
-  "appStoreConnectAppId": "",
   "wordOfTheDayFont": "Kurale-Regular.ttf",
   "widgetPalette": {
     "parchment": { "background": "#F3E9D2", "text": "#3B2A1A" },
