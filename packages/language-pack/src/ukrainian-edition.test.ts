@@ -15,7 +15,7 @@ describe('the UA Edition', () => {
     });
   });
 
-  it('turns every Feature Switch on', () => {
+  it('turns every Feature Switch on but the paused Mood, Seasonal Decor and calligraphy', () => {
     expect(edition.isFeatureEnabled('game')).toBe(true);
     expect(edition.isFeatureEnabled('corrections')).toBe(true);
     expect(edition.isFeatureEnabled('synonymRows')).toBe(true);

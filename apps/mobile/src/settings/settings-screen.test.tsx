@@ -118,7 +118,6 @@ describe('Settings › «Сезонний декор»', () => {
 
     expect((await settings.read()).seasonalDecor).toBe(false);
   });
-
 });
 
 describe('Settings › «Ділитися анонімною статистикою»', () => {
