@@ -859,7 +859,6 @@ export async function openFeed({
     next,
     openLinkedCorrection: (position, correctionId) =>
       inTurn(() => insertLinkedCorrection(position, correctionId)),
-    answerQuickQuestion: (position, option) =>
-      inTurn(() => answerQuickQuestion(position, option)),
+    answerQuickQuestion: (position, option) => inTurn(() => answerQuickQuestion(position, option)),
   };
 }

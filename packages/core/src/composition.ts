@@ -28,6 +28,7 @@ import { createFirstWeek } from './feed/first-week';
 import { createYesterday } from './feed/yesterday';
 import { asReviewIfDue, type AnyEntryCard } from './feed/feed-card';
 import { openGame, type Game } from './game/game';
+import { createQuickQuestion } from './game/quick-question';
 import type { GameMode } from './game/game-mode';
 import { guessWord } from './game/guess-word';
 import { idiomMeaningMode } from './game/idiom-meaning-mode';
@@ -486,6 +487,23 @@ export async function openComposition({
     seen,
     dayTurned,
     opened,
+    quickQuestion: {
+      every: () => {
+        const on = edition.isFeatureEnabled('game') && edition.isFeatureEnabled('quickQuestion');
+        const every = mix.state.quickQuestionEvery;
+        return on && every !== 'off' ? every : undefined;
+      },
+      questions: createQuickQuestion({
+        edition,
+        entries,
+        knowledge,
+        xp: xpLog,
+        userState,
+        random,
+        modes: [...coreGameModes, ...gameModes],
+        analytics,
+      }),
+    },
   });
   // The Game Modes are planned once the day is turned to, last of what follows
   // it: planning reads the whole pack, so the launch never waits for it. A
