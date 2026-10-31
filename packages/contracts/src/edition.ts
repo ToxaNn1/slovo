@@ -336,10 +336,24 @@ const DomainSchema = z
   );
 
 /**
- * The top-level domains reserved for examples and tests (RFC 2606), such as
- * the placeholder `slovo.example`: no link to them opens anywhere.
+ * The domains reserved for examples and tests (RFC 2606), the top-level ones
+ * and the second-level `example.com`, `example.net` and `example.org`, such as
+ * the placeholder `slovo.example`: no link to them, or to a name under them,
+ * opens anywhere.
  */
-const RESERVED_TOP_LEVEL_DOMAINS = ['example', 'test', 'invalid', 'localhost'];
+const RESERVED_DOMAINS = [
+  'example',
+  'test',
+  'invalid',
+  'localhost',
+  'example.com',
+  'example.net',
+  'example.org',
+];
+
+/** Whether the domain is a reserved one or a name under it. */
+const isReservedDomain = (domain: string) =>
+  RESERVED_DOMAINS.some((reserved) => domain === reserved || domain.endsWith(`.${reserved}`));
 
 /**
  * An Apple Developer Team ID, ten upper-case letters and digits, or empty
@@ -430,7 +444,7 @@ export const EditionConfigSchema = z
     /**
      * The Apple Developer Team ID the app is signed with: the backend's
      * app-site-association file names the app by it. Empty until the owner
-     * fills it in; the Edition check for a release build refuses it empty.
+     * fills it in; the app config of a release build refuses it empty.
      */
     appleTeamId: AppleTeamIdSchema,
     /** The app's id in App Store Connect, which TestFlight uploads name. Empty until the app is created. */
@@ -575,8 +589,7 @@ export interface ReleaseProblem {
  */
 export function releaseProblems({ linkDomain, appleTeamId }: EditionConfig): ReleaseProblem[] {
   const problems: ReleaseProblem[] = [];
-  const topLevelDomain = linkDomain.slice(linkDomain.lastIndexOf('.') + 1);
-  if (RESERVED_TOP_LEVEL_DOMAINS.includes(topLevelDomain)) {
+  if (isReservedDomain(linkDomain)) {
     problems.push({
       field: 'linkDomain',
       message: `"${linkDomain}" is a placeholder: a release build needs the Edition's real domain`,

@@ -160,7 +160,14 @@ describe('openEdition', () => {
     ]);
   });
 
-  it.each(['slovo.test', 'links.slovo.invalid', 'slovo.localhost'])(
+  it.each([
+    'slovo.test',
+    'links.slovo.invalid',
+    'slovo.localhost',
+    'example.com',
+    'slovo.example.net',
+    'links.slovo.example.org',
+  ])(
     'refuses %s, a domain reserved for examples, for a release build',
     (linkDomain) => {
       const editionsDir = editionsWith({
