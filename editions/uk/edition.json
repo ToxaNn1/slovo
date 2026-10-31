@@ -73,7 +73,8 @@
     "replaceOpenEntry": true,
     "mixKindWeights": true,
     "xpLog": true,
-    "streakFreezes": true
+    "streakFreezes": true,
+    "streakBreak": true
   },
   "userSettingDefaults": {
     "theme": "system",

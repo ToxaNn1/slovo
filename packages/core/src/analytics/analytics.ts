@@ -25,6 +25,8 @@ export interface AnalyticsEvents {
   readonly freezeUsed: { readonly freezesHeld: number };
   /** A missed day with no freeze reset the Streak; the Streak it broke. */
   readonly streakBroken: { readonly streak: number };
+  /** The reader started a Break of `days`. */
+  readonly breakStarted: { readonly days: number };
   readonly settingChanged: { readonly setting: string; readonly value: string | number | boolean };
 }
 

@@ -77,6 +77,7 @@ const validConfig = {
     analytics: true,
     xpLog: true,
     streakFreezes: true,
+    streakBreak: true,
   },
   userSettingDefaults: {
     theme: 'system',

@@ -79,6 +79,7 @@ export async function openActiveDays({
     deriveStreak({
       activeDays: days,
       frozen: xpLog.days.frozen,
+      breaks: xpLog.days.breaks,
       today: todayKey(clock),
       freezes: xpOn && edition.isFeatureEnabled('streakFreezes'),
     });
