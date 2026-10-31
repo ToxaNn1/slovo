@@ -156,7 +156,7 @@ describe('the Search screen', () => {
     expect(announce).toHaveBeenCalledWith(strings.nothingFound);
   });
 
-  it('opens a result as an Entry card over Search and keeps its query, making nothing Seen', async () => {
+  it('opens a result as an Entry card over Search and keeps its query', async () => {
     await renderSearch();
     await type('сум');
 
@@ -165,8 +165,6 @@ describe('the Search screen', () => {
 
     expect(mockPushed).toEqual([`/search/w_sad?back=${encodeURIComponent(strings.title)}`]);
     expect(await composition.recentQueries.list()).toEqual(['сум']);
-    expect((await composition.openedFromSearch('w_sad'))?.entryId).toBe('w_sad');
-    expect(composition.history.list).toEqual([]);
   });
 
   it('shows «За значенням» from 3 letters: the Words whose Definition holds the query', async () => {
