@@ -1,8 +1,8 @@
-import { sentences, type FeedNotice, type FirstWeekDay } from '@slovo/core';
+import { sentences, type FeedNotice, type FirstWeekDay, type LevelMilestone } from '@slovo/core';
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { useEdition } from '../providers/EditionProvider';
+import { fill, useEdition } from '../providers/EditionProvider';
 import { space, typeSize } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { SecondaryButton } from '../primitives/SecondaryButton';
@@ -85,6 +85,24 @@ export function DailyLimitCard() {
       notice="dailyLimit"
       message={message}
       action={{ label: keepGoing, onPress: () => turnToNext?.() }}
+    />
+  );
+}
+
+/**
+ * The level-milestone card at Levels 5, 10 and 20: the Level with the
+ * Edition's name for it, and a suggestion of a wider rarity or a new
+ * Category that forces nothing, so it has no button; a swipe closes it
+ * (ADR 0066).
+ */
+export function LevelMilestoneCard({ level, name }: { level: LevelMilestone; name: string }) {
+  const { strings } = useEdition();
+  const { title, message } = strings.feedNotices.levelMilestone;
+  return (
+    <FeedNoticeCard
+      notice="levelMilestone"
+      title={fill(title, { level: String(level), name })}
+      message={message}
     />
   );
 }

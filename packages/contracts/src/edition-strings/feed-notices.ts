@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { TextSchema } from '../shared';
-import { pluralOf } from './shared';
+import { pluralOf, templateOf } from './shared';
 
 /** A first-week card of days 1 to 6: what the app offers that day. */
 const FirstWeekCardSchema = z.strictObject({ title: TextSchema, text: TextSchema });
@@ -58,6 +58,13 @@ export const FeedNoticesStringsSchema = z.strictObject({
     lastDayText: pluralOf(),
     /** The seventh day's text for a reader who hides the Streak, so it names no Streak. */
     lastDayTextNoStreak: TextSchema,
+  }),
+  /** The level-milestone card at Levels 5, 10 and 20, which suggests and forces nothing (ADR 0066). */
+  levelMilestone: z.strictObject({
+    /** Its title. Takes `{level}` and `{name}`, the Edition's name for the Level. */
+    title: templateOf('level', 'name'),
+    /** What it suggests: a wider rarity or a new Category. */
+    message: TextSchema,
   }),
   /** The Community Word card. */
   communityWord: z.strictObject({

@@ -4,14 +4,16 @@
 
 /**
  * The Feed Notices, in the order the Feed shows those of one day: the Weekly
- * Recap, the Community Word, the first-week card, Yesterday, and the Daily
- * Limit card once the limit is reached (ADR 0054, 0060).
+ * Recap, the Community Word, the first-week card, Yesterday, a level
+ * milestone, and the Daily Limit card once the limit is reached (ADR 0054,
+ * 0060, 0066).
  */
 export const FEED_NOTICES = [
   'weeklyRecap',
   'communityWord',
   'firstWeek',
   'yesterday',
+  'levelMilestone',
   'dailyLimit',
 ] as const;
 

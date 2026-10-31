@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { NotificationSoundFileSchema } from './notification-sound';
-import { HexColorSchema, RaritySchema } from './shared';
+import { HexColorSchema, RaritySchema, TextSchema } from './shared';
 
 const KebabCaseIdSchema = z
   .string()
@@ -250,6 +250,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   streakBreak: z.boolean(),
   /** The Quick Question: every Nth Feed card asks one Round from an enabled Game Mode over an Eligible Entry; off, the Feed of 0.9. */
   quickQuestion: z.boolean(),
+  /** Levels: the Level derived from total XP, its Edition name and the level-milestone Feed Notices (ADR 0066). */
+  levels: z.boolean(),
 });
 
 /** A whole number of XP, which an Edition may set to 0 for an action that earns none. */
@@ -282,6 +284,26 @@ export const XpTableSchema = z.strictObject({
 });
 
 export type XpTable = z.infer<typeof XpTableSchema>;
+
+/** A whole number of XP above 0, which a Level costs. */
+const LevelCostSchema = z.number().int().positive();
+
+/**
+ * The Level curve and the Level names (ADR 0066): level 1 costs `first` XP,
+ * each level up to `growingUntil` costs `growth` more than the one before
+ * (0.1 for 10%), rounded to whole XP, and every later level costs `later`,
+ * with no top. `names` holds one name per five levels, from level 0; the
+ * last name stays for every level above. UA Edition: 50, 10% up to 10, 120.
+ */
+export const LevelsSchema = z.strictObject({
+  first: LevelCostSchema,
+  growth: z.number().nonnegative(),
+  growingUntil: z.number().int().positive(),
+  later: LevelCostSchema,
+  names: z.array(TextSchema).min(1),
+});
+
+export type Levels = z.infer<typeof LevelsSchema>;
 
 export type FeatureSwitches = z.infer<typeof FeatureSwitchesSchema>;
 
@@ -505,6 +527,8 @@ export const EditionConfigSchema = z
     searchLetters: z.record(LowerCaseLetterSchema, LowerCaseLetterSchema),
     /** The XP table: what each Game learning action earns (ADR 0066). */
     xp: XpTableSchema,
+    /** The Level curve and the Level names (ADR 0066). */
+    levels: LevelsSchema,
   })
   .superRefine(
     (

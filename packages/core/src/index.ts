@@ -137,6 +137,7 @@ export { type ProgressState } from './progress/progress';
 export type { XpAction, XpAward } from './game/game-xp';
 export type { XpLog, XpLogState } from './progress/xp-log';
 export type { BreakState, StreakBreak } from './progress/streak-break';
+export type { LevelMilestone, LevelState } from './progress/levels';
 export type { XpRecord, XpSource } from './user-state/user-state-schema';
 export type { CalendarDay, CalendarMonth } from './progress/calendar';
 export { type WeeklyRecapModel } from './feed/weekly-recap';

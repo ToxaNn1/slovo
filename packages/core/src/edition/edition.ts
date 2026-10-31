@@ -9,6 +9,7 @@ import {
   type Rarity,
   type Theme,
   type XpTable,
+  type Levels,
 } from '@slovo/contracts';
 
 /**
@@ -64,6 +65,8 @@ export interface Edition {
   readonly searchLetters: Readonly<Record<string, string>>;
   /** The XP table: what each Game learning action earns (ADR 0066). */
   readonly xp: XpTable;
+  /** The Level curve and the Level names (ADR 0066). */
+  readonly levels: Levels;
   /**
    * The file names of the Illustrations the app bundles as Edition assets; a
    * Word naming any other file shows no Illustration (ADR 0055).
@@ -130,6 +133,7 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
     moods,
     searchLetters,
     xp,
+    levels,
   } = result.data;
   const { mix, ...settings } = userSettingDefaults;
   return {
@@ -155,6 +159,7 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
     moods,
     searchLetters,
     xp,
+    levels,
     illustrations: new Set(illustrations),
     isFeatureEnabled: switchedOn((feature) => featureSwitches[feature]),
   };

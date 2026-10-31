@@ -26,6 +26,7 @@ import { createCommunityWord } from './feed/community-word';
 import { allFeedNotices, noFeedNotices, type FeedNotices } from './feed/feed-notices';
 import { createFirstWeek } from './feed/first-week';
 import { createYesterday } from './feed/yesterday';
+import { createLevelMilestones } from './feed/level-milestone';
 import { asReviewIfDue, type AnyEntryCard } from './feed/feed-card';
 import { openGame, type Game } from './game/game';
 import { createQuickQuestion } from './game/quick-question';
@@ -376,8 +377,8 @@ export async function openComposition({
   // The Cycle reads the eligible Entries first; the Feed, the plan and the Game follow it.
   eligibility.subscribe(() => cycle.readEligibleAgain());
   const wordOfTheDay = await openWordOfTheDay({ cycle, userState, clock });
-  const xpLog = await openXpLog({ edition, userState, clock, random, dayTurned });
   const analytics = createAnalytics({ edition, userState, port: analyticsPort });
+  const xpLog = await openXpLog({ edition, userState, clock, random, dayTurned, analytics });
   const activeDays = await openActiveDays({ edition, userState, clock, xpLog, analytics });
   const day = createDayChange({
     clock,
@@ -479,6 +480,7 @@ export async function openComposition({
         : createCommunityWord({ edition, entries, hiddenEntries, userState, backend, clock }),
       createFirstWeek({ edition, userState, activeDays }),
       createYesterday({ edition, entries, hiddenEntries, userState }),
+      createLevelMilestones({ edition, xpLog, userState }),
       dailyLimit,
     ),
     kindWeights: () =>

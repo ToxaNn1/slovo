@@ -2,6 +2,7 @@ import type { WordCardModel } from '../entries/word-card';
 import type { AnyEntryCard } from './entry-feed-card';
 import type { FeedNotice } from '../feed-notice';
 import type { LocalDate } from '../local-date';
+import type { LevelMilestone } from '../progress/levels';
 import type { UserStateChanges } from '../ports';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
@@ -13,13 +14,20 @@ export type FirstWeekDay = 1 | 2 | 3 | 4 | 5 | 6 | 7;
  * What a Feed Notice shows: the first-week card, also its day of the first
  * week; Yesterday, the card of the day before's Word of the Day, which the
  * shell shows in Self-check style with the Knowledge Marks of its Word; the
- * Community Word, the card of its Entry and how many readers added it.
+ * Community Word, the card of its Entry and how many readers added it; a
+ * level milestone, its Level and the Edition's name for it.
  */
 export type FeedNoticeContent =
-  | { readonly notice: Exclude<FeedNotice, 'firstWeek' | 'yesterday' | 'communityWord'> }
+  | {
+      readonly notice: Exclude<
+        FeedNotice,
+        'firstWeek' | 'yesterday' | 'communityWord' | 'levelMilestone'
+      >;
+    }
   | { readonly notice: 'firstWeek'; readonly firstWeekDay: FirstWeekDay }
   | { readonly notice: 'yesterday'; readonly word: WordCardModel }
-  | { readonly notice: 'communityWord'; readonly card: AnyEntryCard; readonly adds: number };
+  | { readonly notice: 'communityWord'; readonly card: AnyEntryCard; readonly adds: number }
+  | { readonly notice: 'levelMilestone'; readonly level: LevelMilestone; readonly name: string };
 
 /**
  * What gives the Feed the Feed Notices of a local day, in any order, for the
