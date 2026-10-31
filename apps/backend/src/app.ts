@@ -230,7 +230,10 @@ export function createApp({
 
   // The file that lets the app open its Collection Links (ADR 0058).
   // While the app has no Team ID there is none, so the path is not found.
-  const association = appSiteAssociation(appConfig);
+  const association = appSiteAssociation(
+    appConfig,
+    editions.map(({ config }) => config.id),
+  );
   if (association !== undefined) {
     app.get(APP_SITE_ASSOCIATION_PATH, (c) => c.json(association));
   }
