@@ -42,6 +42,11 @@ export interface MixScreenModel extends MixCategoriesModel {
   readonly correctionCategories: MixCategoriesModel | undefined;
   /** The Rarity Floor choice, left out while the Edition turns its rarityFloor switch off. */
   readonly rarity: { readonly floor: number; readonly floors: readonly number[] } | undefined;
+  /**
+   * The Rarity Ceiling choice, left out while the Edition turns its
+   * rarityCeiling switch off: the ceilings on offer are those at the floor or above it.
+   */
+  readonly ceiling: { readonly ceiling: number; readonly ceilings: readonly number[] } | undefined;
 }
 
 /** The floors on offer: every rarity of a Word, 1 to 5. */
@@ -66,6 +71,12 @@ export function mixScreenModel({
       : undefined,
     rarity: edition.isFeatureEnabled('rarityFloor')
       ? { floor: mix.rarityFloor, floors: RARITY_FLOORS }
+      : undefined,
+    ceiling: edition.isFeatureEnabled('rarityCeiling')
+      ? {
+          ceiling: mix.rarityCeiling,
+          ceilings: RARITY_FLOORS.filter((ceiling) => ceiling >= mix.rarityFloor),
+        }
       : undefined,
   };
 }

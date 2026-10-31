@@ -9,6 +9,7 @@ import { MixChip } from './MixChip';
  * The Rarity Floor choice of the Mix screen: one chip per floor, «від 1» to
  * «від 5», the one in the Mix filled. Nothing is drawn while `shown` is false,
  * which is while the rarityFloor Feature Switch is off in effect (ADR 0040).
+ * The Rarity Ceiling choice, «до 1» to «до 5», draws the same with its own `testID`.
  */
 export function RarityFloorChoice({
   shown,
@@ -17,8 +18,11 @@ export function RarityFloorChoice({
   options,
   floor,
   onChange,
+  testID = 'mix-rarity',
 }: {
   shown: boolean;
+  /** The group's test id, which each chip's id extends with its rarity; the Rarity Ceiling's has its own. */
+  testID?: string;
   title: string;
   subtitle: string;
   options: readonly { floor: number; label: string }[];
@@ -29,7 +33,7 @@ export function RarityFloorChoice({
   const { voice } = useEdition();
   if (!shown) return null;
   return (
-    <View testID="mix-rarity" style={styles.group}>
+    <View testID={testID} style={styles.group}>
       <Text
         accessibilityRole="header"
         {...voice}
@@ -47,7 +51,7 @@ export function RarityFloorChoice({
         {options.map((option) => (
           <MixChip
             key={option.floor}
-            testID={`mix-rarity-${String(option.floor)}`}
+            testID={`${testID}-${String(option.floor)}`}
             label={option.label}
             on={option.floor === floor}
             onPress={() => {
