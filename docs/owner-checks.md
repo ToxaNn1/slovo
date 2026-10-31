@@ -33,7 +33,7 @@ The one native build of 0.9 goes to TestFlight (ADR 0004). It carries every nati
 
 ### Sign in with Apple and Sign in with Google
 
-1. **Sign in with Apple.** On the SLOVO ID screen, the Sign in with Apple button shows; tap it and dismiss Apple's sheet: the screen stays signed out with no problem. Sign in: the screen shows the email, signed in. Sign out and sign in with a Sign-in code for the same email: the same Account opens, with the same words.
+1. **Sign in with Apple on a device.** On the SLOVO ID screen, Apple's own button stands after «Увійти через Google»; tap it and dismiss Apple's sheet: the screen stays signed out with no problem. Sign in sharing the email: the screen shows the email, signed in. Sign out and sign in with a Sign-in code for the same email: the same Account opens, with the same words. Sign in with another Apple ID hiding the email: the screen shows the private relay address, and a Sign-in code to that address opens the same Account.
 2. **Sign in with Google.** With the backend's `GOOGLE_CLIENT_IDS` naming the build's `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` (README, «Sign in with Google»), open the SLOVO ID screen and tap «Увійти через Google»: Google's own sheet opens. Dismiss it: the screen stays signed out with no problem. Tap again and sign in with a Google account: the screen shows its email, signed in. Sign out and sign in with a Sign-in code for the same email: the same Account opens, with the same words.
 
 ### Railway (ADR 0063, `docs/deploy.md`)

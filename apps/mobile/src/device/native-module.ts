@@ -3,7 +3,8 @@
  * 0.6: the widget's and the Share Card's view capture, and the file system
  * that content updates keep a downloaded pack with; 0.7: the Keychain that
  * keeps the Session; 0.8.9: Google's sign-in SDK; 0.8.15: the app's own
- * Spotlight module), which a dev client built before that batch lacks.
+ * Spotlight module; 0.9: Expo's Apple authentication module), which a dev
+ * client built before that batch lacks.
  */
 export type NativeModuleName =
   | 'notifications'
@@ -13,6 +14,7 @@ export type NativeModuleName =
   | 'contentUpdates'
   | 'keychain'
   | 'googleSignIn'
+  | 'appleSignIn'
   | 'spotlight';
 
 /** How to tell whether the installed binary has each native module. A probe may throw. */

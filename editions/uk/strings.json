@@ -1304,6 +1304,7 @@
   "account": {
     "signedOut": "Увійти",
     "signInWithGoogle": "Увійти через Google",
+    "signInWithApple": "Увійти через Apple",
     "emailLabel": "Електронна пошта",
     "sendCode": "Надіслати код",
     "codeLabel": "Код із листа",

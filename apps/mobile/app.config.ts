@@ -379,6 +379,8 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
     ios: {
       bundleIdentifier: edition.config.bundleId,
       supportsTablet: false,
+      // Sign in with Apple (ADR 0047): the bundle id is SLOVO's client id at Apple.
+      usesAppleSignIn: true,
       infoPlist: {
         CFBundleDevelopmentRegion: language,
         CFBundleLocalizations: [language],
@@ -392,6 +394,8 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
         'com.apple.security.application-groups': [editionAppGroup(edition.config.bundleId)],
         // Collection Links, https://<linkDomain>/c/<id>, open in the app (ADR 0058).
         'com.apple.developer.associated-domains': [`applinks:${edition.config.linkDomain}`],
+        // «Увійти через Apple» on the SLOVO ID screen (ADR 0047).
+        'com.apple.developer.applesignin': ['Default'],
       },
     },
     // The App Intents' titles, which their Swift code names by key (ADR 0057).

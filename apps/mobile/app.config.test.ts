@@ -473,6 +473,15 @@ describe('app config', () => {
     );
   });
 
+  it('declares the Sign in with Apple entitlement (ADR 0047)', () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+
+    const { ios } = appConfig(context);
+
+    expect(ios?.usesAppleSignIn).toBe(true);
+    expect(ios?.entitlements?.['com.apple.developer.applesignin']).toEqual(['Default']);
+  });
+
   it("claims the Edition's link domain for Collection Links (ADR 0058)", () => {
     vi.stubEnv('SLOVO_EDITION', 'uk');
     const otherDomain = repoWithEdition((config) => {

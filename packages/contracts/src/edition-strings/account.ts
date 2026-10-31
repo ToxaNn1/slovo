@@ -26,7 +26,7 @@ const AccountProblemsSchema = z.strictObject({
   'code-expired': TextSchema,
   /** Too many requests, for this email or from this network. */
   'too-many-requests': TextSchema,
-  /** The backend refused the Google sign-in: the token didn't check, or Google hasn't verified the email (ADR 0047). */
+  /** The backend refused the Google or Apple sign-in: the token didn't check, or Google hasn't verified the email (ADR 0047). */
   refused: TextSchema,
   /** The backend answered what the request never expects, such as an Edition it doesn't serve. */
   unexpected: TextSchema,
@@ -61,6 +61,8 @@ export const AccountStringsSchema = z.strictObject({
   signedOut: TextSchema,
   /** The button that signs in with Google, above the email field, in the words of Google's branding rules (ADR 0047). */
   signInWithGoogle: TextSchema,
+  /** The accessibility label of Apple's own button that signs in with Apple, after Google's, on iOS only (ADR 0047). */
+  signInWithApple: TextSchema,
   /** The label of the email field. */
   emailLabel: TextSchema,
   /** The button that sends the Sign-in code. */

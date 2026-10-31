@@ -3,7 +3,13 @@ import Svg, { Path } from 'react-native-svg';
 
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { disabledOpacity, googleSignInButton, space, typeSize } from '../tokens';
+import {
+  disabledOpacity,
+  googleSignInButton,
+  signInButtonHeight,
+  space,
+  typeSize,
+} from '../tokens';
 
 /** How far the largest text sizes of iOS may scale the label, so the button never outgrows its screen. */
 const LABEL_MAX_FONT_SCALE = 1.3;
@@ -95,7 +101,7 @@ export function GoogleSignInButton({
 
 const styles = StyleSheet.create({
   button: {
-    minHeight: 50,
+    minHeight: signInButtonHeight,
     paddingHorizontal: space[5],
     alignItems: 'center',
     justifyContent: 'center',

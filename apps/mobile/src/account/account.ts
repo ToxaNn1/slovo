@@ -5,7 +5,7 @@ import { editionStrings } from '../edition/edition';
 import { useEditionInEffect } from '../edition/remote-switches';
 import { useSubscribed, type Opening, type Source } from '../opening';
 import { useShell } from '../shell-value';
-import { googleClientId } from './device-account';
+import { googleClientId, hasAppleSignIn } from './device-account';
 import { accountProblemLine, accountSummary } from './account-texts';
 
 /**
@@ -18,17 +18,22 @@ export function useAccountInEffect(): Opening<Account> | undefined {
   return useEditionInEffect().isFeatureEnabled('account') ? account : undefined;
 }
 
-/** What the SLOVO ID screen offers Google sign-in by: the Edition's switch in effect and the build's client id. */
-export interface AccountScreenGoogle {
-  /** The Edition as the app runs it, its `googleSignIn` switch at its effective value. */
+/**
+ * What the SLOVO ID screen offers the Google and the Apple sign-in by: the
+ * Edition's switches in effect and what the build has (ADR 0047).
+ */
+export interface AccountScreenSignIn {
+  /** The Edition as the app runs it, its `googleSignIn` and `signInWithApple` switches at their effective values. */
   readonly edition: Edition;
-  /** The build's Google client id, if it has one. */
-  readonly clientId: string | undefined;
+  /** The build's Google client id, if it has one; «Увійти через Google» shows only with one. */
+  readonly googleClientId: string | undefined;
+  /** Whether the binary has Expo's Apple authentication module; «Увійти через Apple» shows only with it, on iOS. */
+  readonly appleModule: boolean;
 }
 
-/** What the SLOVO ID screen offers Google sign-in by on this device: the switch in effect and the build's client id. */
-export function useAccountScreenGoogle(): AccountScreenGoogle {
-  return { edition: useEditionInEffect(), clientId: googleClientId };
+/** What the SLOVO ID screen offers the Google and the Apple sign-in by on this device. */
+export function useAccountScreenSignIn(): AccountScreenSignIn {
+  return { edition: useEditionInEffect(), googleClientId, appleModule: hasAppleSignIn };
 }
 
 /** The Account as it stands, or undefined while it opens or when it failed to. */
