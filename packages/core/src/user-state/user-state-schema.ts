@@ -226,10 +226,16 @@ export const userStateRecords = {
    */
   mixTips: declareRecord('mix.tips', z.boolean()),
   /**
-   * The Rarity Floor the user chose, 1 to 5; without it, 1, so every Word is
-   * in. It syncs last write wins like the rest of the Mix (ADR 0041).
+   * The Rarity Floor the user chose, 1 to 5; without it, the Edition's
+   * default. It syncs last write wins like the rest of the Mix (ADR 0041).
    */
   mixRarityFloor: declareRecord('mix.rarityFloor', RaritySchema),
+  /**
+   * The Rarity Ceiling the user chose, 1 to 5; without it, the Edition's
+   * default. Never below the Rarity Floor when read. It syncs last write wins
+   * like the rest of the Mix (ADR 0041).
+   */
+  mixRarityCeiling: declareRecord('mix.rarityCeiling', RaritySchema),
   /**
    * The Active Days, one record per day, by local date `YYYY-MM-DD`: that the
    * app was opened that day. They sync as a union (0.8).

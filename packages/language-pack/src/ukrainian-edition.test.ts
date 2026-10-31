@@ -86,6 +86,8 @@ describe('the UA Edition', () => {
         idioms: true,
         synonymRows: true,
         tips: true,
+        rarityFloor: 1,
+        rarityCeiling: 5,
       },
     });
   });

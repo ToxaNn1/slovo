@@ -258,3 +258,40 @@ describe('the «Мій Мікс» row of Settings', () => {
     ]);
   });
 });
+
+describe('the Rarity Ceiling choice of the Мій Мікс screen', () => {
+  const withoutRarityCeiling: Edition = {
+    ...ukrainian,
+    isFeatureEnabled: (feature) =>
+      feature !== 'rarityCeiling' && ukrainian.isFeatureEnabled(feature),
+  };
+
+  it('offers ceilings from 1 to 5, on «до 5» until the reader chooses one', async () => {
+    const { mix } = await open(ukrainian);
+
+    expect(mixScreenModel({ edition: ukrainian, mix: mix.state }).ceiling).toEqual({
+      ceiling: 5,
+      ceilings: [1, 2, 3, 4, 5],
+    });
+  });
+
+  it('offers no ceiling below the floor and shows the one the reader chose', async () => {
+    const { mix } = await open(ukrainian);
+
+    await mix.setRarityFloor(3);
+    await mix.setRarityCeiling(4);
+
+    expect(mixScreenModel({ edition: ukrainian, mix: mix.state }).ceiling).toEqual({
+      ceiling: 4,
+      ceilings: [3, 4, 5],
+    });
+  });
+
+  it('leaves the choice out while the rarityCeiling switch is off', async () => {
+    const { mix } = await open(ukrainian);
+
+    expect(mixScreenModel({ edition: withoutRarityCeiling, mix: mix.state }).ceiling).toBe(
+      undefined,
+    );
+  });
+});

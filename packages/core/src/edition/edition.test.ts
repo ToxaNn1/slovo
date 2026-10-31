@@ -35,6 +35,7 @@ const validConfig = {
     knowledge: true,
     selfCheck: true,
     rarityFloor: true,
+    rarityCeiling: true,
     gameReview: true,
     gameGuessWord: true,
     gameCorrection: true,
@@ -86,6 +87,8 @@ const validConfig = {
       idioms: true,
       synonymRows: true,
       tips: true,
+      rarityFloor: 1,
+      rarityCeiling: 5,
     },
   },
   linkDomain: 'slovo.example',
@@ -266,6 +269,8 @@ describe('loadEdition', () => {
         idioms: true,
         synonymRows: true,
         tips: true,
+        rarityFloor: 1,
+        rarityCeiling: 5,
       },
     });
   });
@@ -282,6 +287,8 @@ describe('loadEdition', () => {
           idioms: true,
           synonymRows: true,
           tips: true,
+          rarityFloor: 1,
+          rarityCeiling: 5,
         },
       },
     });
@@ -293,6 +300,8 @@ describe('loadEdition', () => {
       idioms: true,
       synonymRows: true,
       tips: true,
+      rarityFloor: 1,
+      rarityCeiling: 5,
     });
   });
 
@@ -698,6 +707,8 @@ describe('loadEdition', () => {
             idioms: true,
             synonymRows: true,
             tips: true,
+            rarityFloor: 1,
+            rarityCeiling: 5,
           },
         },
       },
@@ -715,6 +726,8 @@ describe('loadEdition', () => {
             idioms: true,
             synonymRows: true,
             tips: true,
+            rarityFloor: 1,
+            rarityCeiling: 5,
           },
         },
       },
@@ -732,6 +745,8 @@ describe('loadEdition', () => {
             idioms: true,
             synonymRows: true,
             tips: true,
+            rarityFloor: 1,
+            rarityCeiling: 5,
           },
         },
       },
@@ -749,6 +764,8 @@ describe('loadEdition', () => {
             idioms: true,
             synonymRows: true,
             tips: true,
+            rarityFloor: 1,
+            rarityCeiling: 5,
           },
         },
       },
@@ -765,10 +782,32 @@ describe('loadEdition', () => {
             idioms: true,
             synonymRows: true,
             tips: true,
+            rarityFloor: 1,
+            rarityCeiling: 5,
           },
         },
       },
       'userSettingDefaults.mix.correctionCategories',
+    ],
+    [
+      'a default Rarity Floor above the default Rarity Ceiling',
+      {
+        userSettingDefaults: {
+          ...userSettingDefaults,
+          mix: { ...userSettingDefaults.mix, rarityFloor: 4, rarityCeiling: 3 },
+        },
+      },
+      'userSettingDefaults.mix.rarityCeiling',
+    ],
+    [
+      'a default Mix without a Rarity Ceiling',
+      {
+        userSettingDefaults: {
+          ...userSettingDefaults,
+          mix: { ...userSettingDefaults.mix, rarityCeiling: undefined },
+        },
+      },
+      'userSettingDefaults.mix.rarityCeiling',
     ],
     [
       'a repeated Category id',

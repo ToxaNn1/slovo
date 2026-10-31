@@ -6,6 +6,7 @@ import {
   type LanguageTraits,
   type Mood,
   type OriginLanguage,
+  type Rarity,
   type Theme,
 } from '@slovo/contracts';
 
@@ -23,6 +24,10 @@ export interface DefaultMix {
   readonly idioms: boolean;
   readonly synonymRows: boolean;
   readonly tips: boolean;
+  /** The Rarity Floor a new user starts with. */
+  readonly rarityFloor: Rarity;
+  /** The Rarity Ceiling a new user starts with, never below the Rarity Floor. */
+  readonly rarityCeiling: Rarity;
 }
 
 /** The settings a new user starts with, as declared by the Edition. */
@@ -163,6 +168,8 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
         idioms: mix.idioms,
         synonymRows: mix.synonymRows,
         tips: mix.tips,
+        rarityFloor: mix.rarityFloor,
+        rarityCeiling: mix.rarityCeiling,
       },
     },
     notificationSound,

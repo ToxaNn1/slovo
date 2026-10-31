@@ -171,6 +171,7 @@ describe('the Mix', () => {
       hiddenCategories: [],
       lastCategoryId: undefined,
       rarityFloor: 1,
+      rarityCeiling: 5,
     });
   });
 

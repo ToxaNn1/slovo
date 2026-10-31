@@ -24,14 +24,15 @@ const strings = editionStrings.mix;
  * The choices of the Mix, for Settings › Мій Мікс and the onboarding's Mix
  * step: a chip for «Усі» and every Category of the Edition, the line saying
  * why the last Category's chip is disabled, the Rarity Floor choice while the
- * rarityFloor switch is on, and the Corrections and Idioms switches, each when
+ * rarityFloor switch is on, the Rarity Ceiling choice while the rarityCeiling
+ * switch is on, and the Corrections and Idioms switches, each when
  * the Edition turns it on, with the chips of the Categories of Corrections
  * under the Corrections switch while it is on (ADR 0033). A change applies at
  * once (the Core's Mix, ADR 0019).
  */
 export function MixChoices() {
   const state = useMixState();
-  const { toggleCategory, turnAllOn, setKind, setRarityFloor } = useMixChanges();
+  const { toggleCategory, turnAllOn, setKind, setRarityFloor, setRarityCeiling } = useMixChanges();
   const edition = useEditionInEffect();
 
   const model = mixScreenModel({ edition, mix: state });
@@ -67,6 +68,22 @@ export function MixChoices() {
             }))}
             floor={model.rarity.floor}
             onChange={setRarityFloor}
+          />
+        </View>
+      )}
+      {model.ceiling !== undefined && (
+        <View style={styles.rarity}>
+          <RarityFloorChoice
+            shown
+            testID="mix-rarity-ceiling"
+            title={strings.rarity.ceilingTitle}
+            subtitle={strings.rarity.ceilingSubtitle}
+            options={model.ceiling.ceilings.map((ceiling) => ({
+              floor: ceiling,
+              label: fill(strings.rarity.ceiling, { rarity: String(ceiling) }),
+            }))}
+            floor={model.ceiling.ceiling}
+            onChange={setRarityCeiling}
           />
         </View>
       )}

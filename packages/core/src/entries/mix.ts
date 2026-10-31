@@ -1,15 +1,19 @@
 import { RaritySchema, type Category, type Rarity } from '@slovo/contracts';
 
-import type { DefaultMix, UserSettingDefaults } from '../edition/edition';
+import type { DefaultMix, Edition, UserSettingDefaults } from '../edition/edition';
 import { MIX_KINDS, type CategoryKind, type MixKind } from './entry-kinds';
 import { createInTurn, createSubscribers } from '../in-turn';
 import type { Subject } from '../subject';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
 
-/** What the Mix needs to know of the Edition: its default Mix. Its Categories come from the Language Pack. */
+/**
+ * What the Mix needs to know of the Edition: its default Mix, and whether the
+ * Rarity Ceiling is on. Its Categories come from the Language Pack.
+ */
 export interface MixEdition {
   readonly userSettingDefaults: Pick<UserSettingDefaults, 'mix'>;
+  readonly isFeatureEnabled: Edition['isFeatureEnabled'];
 }
 
 /** The kinds of Entry with Categories, in the Mix screen's order. */
@@ -65,6 +69,11 @@ export interface MixState extends CategoriesInMix {
    * while the Edition turns its rarityFloor switch on. No other kind of Entry has a rarity.
    */
   readonly rarityFloor: Rarity;
+  /**
+   * The Rarity Ceiling, 1 to 5, never below the Rarity Floor: only Words up to
+   * that rarity are eligible while the Edition turns its rarityCeiling switch on.
+   */
+  readonly rarityCeiling: Rarity;
 }
 
 /**
@@ -94,8 +103,22 @@ export interface Mix {
   turnAllOn(): Promise<void>;
   /** Puts the kind of Entry, as a whole, in the Mix or takes it out. */
   setKind(kind: MixKind, inMix: boolean): Promise<void>;
-  /** Sets the Rarity Floor. A floor that is not a rarity, a whole number from 1 to 5, is skipped. */
+  /**
+   * Sets the Rarity Floor. A floor that is not a rarity, a whole number from
+   * 1 to 5, is skipped, and so is one above the Rarity Ceiling while the
+   * rarityCeiling switch is on; while it is off, the ceiling rises with the floor.
+   */
   setRarityFloor(floor: number): Promise<void>;
+  /**
+   * Sets the Rarity Floor the Rarity Test found, raising the Rarity Ceiling to
+   * it when it is below, so the result always applies. A floor that is not a rarity is skipped.
+   */
+  setRarityFloorRaisingCeiling(floor: number): Promise<void>;
+  /**
+   * Sets the Rarity Ceiling. A ceiling that is not a rarity, or that is below
+   * the Rarity Floor, is skipped, and so is any while the rarityCeiling switch is off.
+   */
+  setRarityCeiling(ceiling: number): Promise<void>;
   /** Calls `listener` after each change of the state. Returns the call that stops it. */
   subscribe(listener: () => void): () => void;
 }
@@ -121,10 +144,8 @@ const CATEGORY_LISTS: Readonly<
   },
 };
 
-const { mixRarityFloor: rarityFloorRecord } = userStateRecords;
-
-/** The Rarity Floor while the user chose none: every Word is in. */
-const DEFAULT_RARITY_FLOOR = 1;
+const { mixRarityFloor: rarityFloorRecord, mixRarityCeiling: rarityCeilingRecord } =
+  userStateRecords;
 
 /** The Categories of the Language Pack, each kind's list. */
 export type CategoryLists = Readonly<Record<CategoryKind, readonly Category[]>>;
@@ -137,6 +158,7 @@ interface MixChoices {
   readonly categories: CategoryChoices;
   readonly kinds: Readonly<Record<MixKind, boolean | undefined>>;
   readonly rarityFloor: Rarity | undefined;
+  readonly rarityCeiling: Rarity | undefined;
 }
 
 /** A record over each kind of Entry in the Mix as a whole, from what `of` gives for it. */
@@ -213,20 +235,37 @@ function mixStateOf(lists: CategoryLists, edition: MixEdition, choices: MixChoic
     ...categoriesInMixOf(lists.word, edition, choices, 'word'),
     correctionCategories: categoriesInMixOf(lists.correction, edition, choices, 'correction'),
     kinds: eachKind((kind) => choices.kinds[kind] ?? KINDS[kind].byDefault(mix)),
-    rarityFloor: choices.rarityFloor ?? DEFAULT_RARITY_FLOOR,
+    ...raritiesOf(mix, choices),
   };
 }
 
+/**
+ * The Rarity Floor and Ceiling of the user's choices over the Edition's
+ * default. The floor is never above the ceiling: it is refused when set, but
+ * a merge of two devices could still store one above; then the ceiling rises
+ * to it, and nothing is written for it (ADR 0013).
+ */
+function raritiesOf(
+  mix: DefaultMix,
+  choices: MixChoices,
+): Pick<MixState, 'rarityFloor' | 'rarityCeiling'> {
+  const rarityFloor = choices.rarityFloor ?? mix.rarityFloor;
+  const rarityCeiling = choices.rarityCeiling ?? mix.rarityCeiling;
+  return { rarityFloor, rarityCeiling: rarityCeiling < rarityFloor ? rarityFloor : rarityCeiling };
+}
+
 async function readChoices(userState: Pick<UserState, 'list' | 'read'>): Promise<MixChoices> {
-  const [lists, rarityFloor, read] = await Promise.all([
+  const [lists, rarityFloor, rarityCeiling, read] = await Promise.all([
     Promise.all(CATEGORY_KINDS.map((kind) => userState.list(CATEGORY_LISTS[kind].records))),
     userState.read(rarityFloorRecord),
+    userState.read(rarityCeilingRecord),
     Promise.all(MIX_KINDS.map((kind) => userState.read(KINDS[kind].record))),
   ]);
   return {
     categories: eachList((kind) => lists[CATEGORY_KINDS.indexOf(kind)] ?? new Map()),
     kinds: eachKind((kind) => read[MIX_KINDS.indexOf(kind)]),
     rarityFloor,
+    rarityCeiling,
   };
 }
 
@@ -279,7 +318,11 @@ export async function openMix({
    */
   async function change(
     places: Partial<Record<CategoryKind, ReadonlyMap<string, boolean>>>,
-    { kinds = state.kinds, rarityFloor = state.rarityFloor } = {},
+    {
+      kinds = state.kinds,
+      rarityFloor = state.rarityFloor,
+      rarityCeiling = state.rarityCeiling,
+    }: { kinds?: KindsInMix; rarityFloor?: Rarity; rarityCeiling?: Rarity } = {},
   ): Promise<void> {
     const writes = new Map<string, string | undefined>();
     const changed = eachList((of) => {
@@ -305,6 +348,9 @@ export async function openMix({
     if (rarityFloor !== state.rarityFloor) {
       for (const [key, value] of rarityFloorRecord.change(rarityFloor)) writes.set(key, value);
     }
+    if (rarityCeiling !== state.rarityCeiling) {
+      for (const [key, value] of rarityCeilingRecord.change(rarityCeiling)) writes.set(key, value);
+    }
     if (writes.size === 0) return;
     await userState.write(writes);
     const next: MixChoices = {
@@ -313,6 +359,7 @@ export async function openMix({
         kinds[kind] === state.kinds[kind] ? choices.kinds[kind] : kinds[kind],
       ),
       rarityFloor: rarityFloor === state.rarityFloor ? choices.rarityFloor : rarityFloor,
+      rarityCeiling: rarityCeiling === state.rarityCeiling ? choices.rarityCeiling : rarityCeiling,
     };
     try {
       await eligibility.publish();
@@ -350,10 +397,26 @@ export async function openMix({
     await change({}, { kinds: { ...state.kinds, [kind]: inMix } });
   }
 
-  async function setRarityFloor(floor: number): Promise<void> {
+  const ceilingOn = () => edition.isFeatureEnabled('rarityCeiling');
+
+  async function setRarityFloor(floor: number, raisingCeiling: boolean): Promise<void> {
     const rarity = RaritySchema.safeParse(floor);
     if (!rarity.success) return;
-    await change({}, { rarityFloor: rarity.data });
+    const rarityFloor = rarity.data;
+    if (rarityFloor <= state.rarityCeiling) {
+      await change({}, { rarityFloor });
+      return;
+    }
+    // Off, the ceiling isn't seen, so the floor is set as before 1.0 and the
+    // ceiling only keeps up with it.
+    if (!raisingCeiling && ceilingOn()) return;
+    await change({}, { rarityFloor, rarityCeiling: rarityFloor });
+  }
+
+  async function setRarityCeiling(ceiling: number): Promise<void> {
+    const rarity = RaritySchema.safeParse(ceiling);
+    if (!rarity.success || !ceilingOn() || rarity.data < state.rarityFloor) return;
+    await change({}, { rarityCeiling: rarity.data });
   }
 
   const inTurn = createInTurn();
@@ -366,7 +429,9 @@ export async function openMix({
     putBack: (categoryId, of = 'word') => inTurn(() => putBack(categoryId, of)),
     turnAllOn: () => inTurn(turnAllOn),
     setKind: (kind, inMix) => inTurn(() => setKind(kind, inMix)),
-    setRarityFloor: (floor) => inTurn(() => setRarityFloor(floor)),
+    setRarityFloor: (floor) => inTurn(() => setRarityFloor(floor, false)),
+    setRarityFloorRaisingCeiling: (floor) => inTurn(() => setRarityFloor(floor, true)),
+    setRarityCeiling: (ceiling) => inTurn(() => setRarityCeiling(ceiling)),
     subscribe: subscribers.subscribe,
   };
 }

@@ -34,6 +34,7 @@ export function useMixChanges(): {
   /** Puts the kind of Entry (Corrections, Idioms, Synonym Rows, Tips) as a whole in the Mix (`inMix`) or takes it out. */
   setKind: (kind: MixKind, inMix: boolean) => void;
   setRarityFloor: (floor: number) => void;
+  setRarityCeiling: (ceiling: number) => void;
 } {
   const { mix } = useComposition();
   const keep = (change: Promise<unknown>) => {
@@ -53,6 +54,9 @@ export function useMixChanges(): {
     },
     setRarityFloor: (floor) => {
       keep(mix.setRarityFloor(floor));
+    },
+    setRarityCeiling: (ceiling) => {
+      keep(mix.setRarityCeiling(ceiling));
     },
   };
 }

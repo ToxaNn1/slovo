@@ -39,7 +39,8 @@ export interface RarityTest {
   /**
    * Sets the Rarity Floor by the answers, at once, and resolves to it: the
    * lowest rarity with «Не знаю», or 5 when every Word is known. A retake
-   * overwrites the floor. It sets no Knowledge Mark, starts no Review and
+   * overwrites the floor, and a floor above the Rarity Ceiling raises the
+   * ceiling to it, so the result always applies. It sets no Knowledge Mark, starts no Review and
    * makes nothing Seen. Nothing is set, and it resolves to nothing, for no
    * answers or while the Edition turns the Rarity Test or the Rarity Floor
    * off (or a remote switch does).
@@ -55,7 +56,7 @@ export function createRarityTest({
 }: {
   edition: Pick<Edition, 'isFeatureEnabled'>;
   entries: Pick<Entries, 'eligibleWordsOfAnyRarity'>;
-  mix: Pick<Mix, 'setRarityFloor'>;
+  mix: Pick<Mix, 'setRarityFloorRaisingCeiling'>;
   random: Random;
 }): RarityTest {
   const isOn = () =>
@@ -82,7 +83,7 @@ export function createRarityTest({
       if (!isOn() || answers.length === 0) return undefined;
       const unknown = answers.filter((answer) => !answer.known).map((answer) => answer.rarity);
       const floor = RARITIES.find((rarity) => unknown.includes(rarity)) ?? 5;
-      await mix.setRarityFloor(floor);
+      await mix.setRarityFloorRaisingCeiling(floor);
       return floor;
     },
   };
