@@ -18,6 +18,7 @@ import {
   type UserStateRecords,
 } from './user-state-record';
 import { FEED_NOTICES } from '../feed-notice';
+import { BREAK_DAYS_AT_MOST } from '../progress/streak';
 import type { UserStateMigration } from './user-state-migration';
 
 /**
@@ -49,9 +50,10 @@ export const XpSourceSchema = z.literal(['game-round', 'game-finished', 'game-be
 
 /**
  * One record of the XP log (ADR 0066): its local date and instant, and what
- * it records: XP a learning action earned on its date, or a Streak freeze
- * consumed for its date, a missed day it covers. The kinds the ADR names
- * besides these come with their own tickets.
+ * it records: XP a learning action earned on its date, a Streak freeze
+ * consumed for its date, a missed day it covers, or a Break started on its
+ * date for its days. The kinds the ADR names besides these come with their
+ * own tickets.
  */
 const XpRecordSchema = z.discriminatedUnion('kind', [
   z.object({
@@ -62,6 +64,12 @@ const XpRecordSchema = z.discriminatedUnion('kind', [
     amount: z.number().int().positive(),
   }),
   z.object({ kind: z.literal('freeze'), date: z.string(), at: InstantSchema }),
+  z.object({
+    kind: z.literal('break'),
+    date: z.string(),
+    at: InstantSchema,
+    days: z.number().int().min(1).max(BREAK_DAYS_AT_MOST),
+  }),
 ]);
 
 export type XpRecord = z.infer<typeof XpRecordSchema>;

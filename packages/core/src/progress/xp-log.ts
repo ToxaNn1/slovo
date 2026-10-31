@@ -7,6 +7,7 @@ import type { Edition } from '../edition/edition';
 import type { XpAction, XpAward } from '../game/game-xp';
 import type { LocalDate } from '../local-date';
 import type { Subject } from '../subject';
+import type { StartedBreak } from './streak';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords, type XpRecord } from '../user-state/user-state-schema';
 
@@ -26,6 +27,8 @@ export interface XpLogDays {
   readonly byDate: ReadonlyMap<string, number>;
   /** The missed local dates a consumed Streak freeze covers. */
   readonly frozen: ReadonlySet<string>;
+  /** The Breaks started, each on its local date for its days. */
+  readonly breaks: readonly StartedBreak[];
 }
 
 /** Records to append for another write, and the step that makes them in memory once written. */
@@ -54,6 +57,12 @@ export interface XpLog {
    * same day merge into one.
    */
   freeze(dates: readonly string[]): XpLogAppend;
+  /**
+   * The Break-started record of a Break of `days` from today, for another
+   * write. A date has one such record by its id, so two devices that start a
+   * Break on the same day merge into one.
+   */
+  startBreak(days: number): XpLogAppend;
   /** Calls `listener` after each change of the XP. Returns the call that stops it. */
   subscribe(listener: () => void): () => void;
 }
@@ -104,15 +113,21 @@ export async function openXpLog({
     let total = 0;
     const byDate = new Map<string, number>();
     const frozen = new Set<string>();
+    const breaks: StartedBreak[] = [];
     for (const record of records.values()) {
-      if (record.kind === 'freeze') {
-        frozen.add(record.date);
-        continue;
+      switch (record.kind) {
+        case 'freeze':
+          frozen.add(record.date);
+          break;
+        case 'break':
+          breaks.push({ date: record.date, days: record.days });
+          break;
+        case 'xp':
+          total += record.amount;
+          byDate.set(record.date, (byDate.get(record.date) ?? 0) + record.amount);
       }
-      total += record.amount;
-      byDate.set(record.date, (byDate.get(record.date) ?? 0) + record.amount);
     }
-    return { total, today: byDate.get(today) ?? 0, byDate, frozen };
+    return { total, today: byDate.get(today) ?? 0, byDate, frozen, breaks };
   }
   let derived = derive();
   let state: XpLogState = { total: derived.total, today: derived.today };
@@ -171,6 +186,20 @@ export async function openXpLog({
     };
   }
 
+  function startBreak(days: number): XpLogAppend {
+    const at = clock.now();
+    const date = todayKey(clock);
+    const id = `break-${date}`;
+    const record: XpRecord = { kind: 'break', date, at: at.toISOString(), days };
+    return {
+      changes: xpRecords.record(id).change(record),
+      commit() {
+        records.set(id, record);
+        change();
+      },
+    };
+  }
+
   dayTurned.subscribe(change);
 
   return {
@@ -182,6 +211,7 @@ export async function openXpLog({
     },
     award,
     freeze,
+    startBreak,
     subscribe: subscribers.subscribe,
   };
 }

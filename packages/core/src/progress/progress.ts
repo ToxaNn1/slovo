@@ -9,7 +9,7 @@ import type { Clock } from '../ports';
 import type { Edition } from '../edition/edition';
 import type { ActiveDays } from './active-days';
 import { calendarMonths, type CalendarMonth } from './calendar';
-import { STREAK_MILESTONES } from './streak';
+import { STREAK_MILESTONES, type BreakState } from './streak';
 
 /**
  * The reader's progress as it stands, as the stats sheet shows it: the Streak
@@ -28,6 +28,8 @@ export interface ProgressState {
   readonly bestStreak: number;
   /** The Streak freezes held, 0 to 2; 0 with freezes off. */
   readonly freezesHeld: number;
+  /** Whether the reader can start a Break today; `off` with its Feature Switch off. */
+  readonly streakBreak: BreakState;
   /** The Entries Seen today: the History entries whose time falls on today's local date. */
   readonly seenToday: number;
   /** The Entries in Favorites. */
@@ -73,10 +75,27 @@ export interface Progress {
    * Returns the call that stops it.
    */
   onStreakMilestone(listener: (streak: number) => void): () => void;
+  /**
+   * Starts a Break of `days`, 1 to 7, from today while it is `available`
+   * (ADR 0066). Resolves whether it started.
+   */
+  startBreak(days: number): Promise<boolean>;
 }
 
+/** The Break state as one value, which is the same while the state is. */
+const breakKey = (state: BreakState) =>
+  state.kind === 'on'
+    ? `on ${state.lastDay}`
+    : state.kind === 'waiting'
+      ? `waiting ${state.from}`
+      : state.kind;
+
 const sameState = (one: ProgressState, other: ProgressState) =>
-  (Object.keys(one) as (keyof ProgressState)[]).every((key) => one[key] === other[key]);
+  (Object.keys(one) as (keyof ProgressState)[]).every((key) =>
+    key === 'streakBreak'
+      ? breakKey(one.streakBreak) === breakKey(other.streakBreak)
+      : one[key] === other[key],
+  );
 
 /**
  * Opens Progress over the Active Days, which the day change records (ADR
@@ -96,7 +115,7 @@ export function openProgress({
 }: {
   edition: Pick<Edition, 'isFeatureEnabled'>;
   clock: Clock;
-  activeDays: Pick<ActiveDays, 'days' | 'streak' | 'subscribe'>;
+  activeDays: Pick<ActiveDays, 'days' | 'streak' | 'streakBreak' | 'startBreak' | 'subscribe'>;
   history: History;
   favorites: Favorites;
   collections: Collections;
@@ -126,6 +145,7 @@ export function openProgress({
   function stateOf(): ProgressState {
     return {
       ...activeDays.streak,
+      streakBreak: activeDays.streakBreak,
       seenToday: seenTodayIn(history.list),
       favorites: favorites.list.length,
       inCollections: new Set(
@@ -167,6 +187,7 @@ export function openProgress({
         ? calendarMonths(activeDays.days, todayKey(clock))
         : [],
     subscribe: subscribers.subscribe,
+    startBreak: (days) => activeDays.startBreak(days),
     onStreakMilestone(listener) {
       milestones.add(listener);
       return () => {

@@ -5,7 +5,15 @@ import type { Clock, UserStateChanges } from '../ports';
 import type { Edition } from '../edition/edition';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
-import { ACTIVE_DAY_XP, deriveStreak, type DerivedStreak, type StreakState } from './streak';
+import {
+  ACTIVE_DAY_XP,
+  BREAK_DAYS_AT_MOST,
+  breakStateOn,
+  deriveStreak,
+  type BreakState,
+  type DerivedStreak,
+  type StreakState,
+} from './streak';
 import type { XpLog } from './xp-log';
 
 const { activeDays: activeDayRecords, streakBrokenReported } = userStateRecords;
@@ -35,6 +43,14 @@ export interface ActiveDays {
   readonly days: ReadonlySet<string>;
   /** The Streak, the Best Streak and the freezes held, derived on today's local date. */
   readonly streak: StreakState;
+  /** Whether the reader can start a Break today, derived on today's local date. */
+  readonly streakBreak: BreakState;
+  /**
+   * Starts a Break of `days`, 1 to 7, from today, appends its record and
+   * emits «Break started». Refused, with nothing written, unless the Break is
+   * `available`. Resolves whether it started.
+   */
+  startBreak(days: number): Promise<boolean>;
   /**
    * Makes today's change, then makes it in memory: covers the missed days up
    * to yesterday with held freezes, and with the XP log off records today. The
@@ -59,7 +75,7 @@ export async function openActiveDays({
   edition: Pick<Edition, 'isFeatureEnabled'>;
   userState: UserState;
   clock: Clock;
-  xpLog: Pick<XpLog, 'days' | 'freeze' | 'subscribe'>;
+  xpLog: Pick<XpLog, 'days' | 'freeze' | 'startBreak' | 'subscribe'>;
   analytics: Pick<Analytics, 'track'>;
 }): Promise<ActiveDays> {
   const xpOn = edition.isFeatureEnabled('xpLog');
@@ -79,6 +95,7 @@ export async function openActiveDays({
     deriveStreak({
       activeDays: days,
       frozen: xpLog.days.frozen,
+      breaks: xpLog.days.breaks,
       today: todayKey(clock),
       freezes: xpOn && edition.isFeatureEnabled('streakFreezes'),
     });
@@ -127,6 +144,20 @@ export async function openActiveDays({
     change.commit();
   }
 
+  const breakOn = xpOn && edition.isFeatureEnabled('streakBreak');
+  const streakBreak = (): BreakState =>
+    breakOn ? breakStateOn(todayKey(clock), xpLog.days.breaks) : { kind: 'off' };
+
+  async function startBreak(days: number): Promise<boolean> {
+    const allowed = Number.isInteger(days) && days >= 1 && days <= BREAK_DAYS_AT_MOST;
+    if (!allowed || streakBreak().kind !== 'available') return false;
+    const append = xpLog.startBreak(days);
+    await userState.write(append.changes);
+    append.commit();
+    emit(analytics.track('breakStarted', { days }));
+    return true;
+  }
+
   return {
     get days() {
       return days;
@@ -135,6 +166,10 @@ export async function openActiveDays({
       const { streak, bestStreak, freezesHeld } = derive();
       return { streak, bestStreak, freezesHeld };
     },
+    get streakBreak() {
+      return streakBreak();
+    },
+    startBreak: (days) => inTurn(() => startBreak(days)),
     recordToday: () => inTurn(recordToday),
     todayChange,
     subscribe: subscribers.subscribe,

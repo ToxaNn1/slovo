@@ -10,6 +10,11 @@ const FREEZES_HELD_AT_MOST = 2;
 /** The Streak days that add one freeze. */
 const STREAK_DAYS_PER_FREEZE = 7;
 
+/** The most days a Break lasts. */
+export const BREAK_DAYS_AT_MOST = 7;
+/** The days from the start of one Break to the first day the next one can start. */
+const DAYS_BETWEEN_BREAKS = 30;
+
 /** The Streak days that fire a celebration: 1 to 7, then 14, 30, 50, 100, 200 and 365. */
 export const STREAK_MILESTONES: ReadonlySet<number> = new Set([
   1, 2, 3, 4, 5, 6, 7, 14, 30, 50, 100, 200, 365,
@@ -29,6 +34,46 @@ export interface StreakState {
   readonly freezesHeld: number;
 }
 
+/**
+ * Whether the reader can start a Break today (ADR 0066): `off` with its
+ * Feature Switch off; `on` while a Break covers today, up to its last day;
+ * `waiting` until the first day the next one can start, 30 days after the
+ * last one started; otherwise `available`.
+ */
+export type BreakState =
+  | { readonly kind: 'off' }
+  | { readonly kind: 'available' }
+  | { readonly kind: 'on'; readonly lastDay: string }
+  | { readonly kind: 'waiting'; readonly from: string };
+
+/** The Break started on a local date `YYYY-MM-DD` and the days it lasts, that day in. */
+export interface StartedBreak {
+  readonly date: string;
+  readonly days: number;
+}
+
+/** The Break state on the local date `today`, from the Breaks started. */
+export function breakStateOn(today: string, breaks: readonly StartedBreak[]): BreakState {
+  const todayDate = parseLocalDate(today);
+  const todayNumber = dayNumber(todayDate);
+  const last = breaks
+    .map(({ date, days }) => ({ start: dayNumber(parseLocalDate(date)), days }))
+    .filter(({ start }) => Number.isFinite(start))
+    .reduce<{ start: number; days: number } | undefined>(
+      (latest, started) =>
+        latest === undefined || started.start > latest.start ? started : latest,
+      undefined,
+    );
+  if (last === undefined) return { kind: 'available' };
+  const dateOf = (number: number) => dateKeyOf(localDateAfter(todayDate, number - todayNumber));
+  const lastDay = last.start + last.days - 1;
+  if (todayNumber >= last.start && todayNumber <= lastDay)
+    return { kind: 'on', lastDay: dateOf(lastDay) };
+  const from = last.start + DAYS_BETWEEN_BREAKS;
+  if (todayNumber < from) return { kind: 'waiting', from: dateOf(from) };
+  return { kind: 'available' };
+}
+
 /** The Streak, with what the day change makes of it. */
 export interface DerivedStreak extends StreakState {
   /** The missed days up to yesterday held freezes cover, which no record covers yet. */
@@ -41,19 +86,21 @@ export interface DerivedStreak extends StreakState {
  * Derives the Streak by local date from the Active Days and the days freezes
  * covered, all `YYYY-MM-DD`, on the local date `today` (ADR 0066). From the
  * first Active Day the reader holds 2 freezes, gains one for every 7 Streak
- * days and holds at most 2. A missed day a freeze record covers keeps the
- * Streak. With `freezes` on, the missed days up to yesterday are covered by
+ * days and holds at most 2. A missed day a freeze record covers, or a Break
+ * started, keeps the Streak without adding to it. With `freezes` on, the missed days up to yesterday are covered by
  * held freezes when they all can be, and `toFreeze` names them; otherwise a
  * missed day resets the Streak, with no repair.
  */
 export function deriveStreak({
   activeDays,
   frozen,
+  breaks,
   today,
   freezes,
 }: {
   activeDays: ReadonlySet<string>;
   frozen: ReadonlySet<string>;
+  breaks: readonly StartedBreak[];
   today: string;
   freezes: boolean;
 }): DerivedStreak {
@@ -63,6 +110,11 @@ export function deriveStreak({
   const dateOf = (number: number) => dateKeyOf(localDateAfter(todayDate, number - todayNumber));
   const active = new Set([...activeDays].map(numberOf).filter(Number.isFinite));
   const covered = new Set([...frozen].map(numberOf).filter(Number.isFinite));
+  const bridged = new Set(
+    breaks.flatMap(({ date, days }) =>
+      Array.from({ length: days }, (_, index) => numberOf(date) + index),
+    ),
+  );
 
   let streak = 0;
   let bestStreak = 0;
@@ -85,9 +137,17 @@ export function deriveStreak({
     } else if (covered.has(day)) {
       held = Math.max(0, held - 1);
       lastKept = day;
+    } else if (bridged.has(day)) {
+      lastKept = day;
     } else {
       let end = day;
-      while (end + 1 < todayNumber && !active.has(end + 1) && !covered.has(end + 1)) end += 1;
+      while (
+        end + 1 < todayNumber &&
+        !active.has(end + 1) &&
+        !covered.has(end + 1) &&
+        !bridged.has(end + 1)
+      )
+        end += 1;
       const missed = end - day + 1;
       const upToYesterday = end === todayNumber - 1;
       if (freezes && upToYesterday && streak > 0 && missed <= held) {

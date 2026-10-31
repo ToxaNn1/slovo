@@ -248,6 +248,7 @@ describe('The stats sheet’s numbers', () => {
       streak: 1,
       bestStreak: 1,
       freezesHeld: 0,
+      streakBreak: { kind: 'off' },
       seenToday: 0,
       favorites: 0,
       inCollections: 0,
