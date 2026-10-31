@@ -8,6 +8,7 @@ import {
   type OriginLanguage,
   type Rarity,
   type Theme,
+  type XpTable,
 } from '@slovo/contracts';
 
 /**
@@ -81,6 +82,8 @@ export interface Edition {
   readonly moods: readonly Mood[];
   /** The letters Search reads as another, such as ґ as г (ADR 0054). */
   readonly searchLetters: Readonly<Record<string, string>>;
+  /** The XP table: what each Game learning action earns (ADR 0066). */
+  readonly xp: XpTable;
   /**
    * The file names of the Illustrations the app bundles as Edition assets; a
    * Word naming any other file shows no Illustration (ADR 0055).
@@ -148,6 +151,7 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
     originLanguages,
     moods,
     searchLetters,
+    xp,
   } = result.data;
   const { mix, ...settings } = userSettingDefaults;
   return {
@@ -174,6 +178,7 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
     originLanguages,
     moods,
     searchLetters,
+    xp,
     illustrations: new Set(illustrations),
     isFeatureEnabled: switchedOn((feature) => featureSwitches[feature]),
   };
