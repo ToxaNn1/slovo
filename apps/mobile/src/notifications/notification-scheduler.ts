@@ -115,7 +115,10 @@ function schedulerOn(
         title: planned.kind === 'word' ? planned.title : '',
         body,
         sound: soundOf(sound),
-        data: planned.kind === 'word' ? { wordId: planned.wordId } : {},
+        data:
+          planned.kind === 'word'
+            ? { editionId: planned.editionId, wordId: planned.wordId }
+            : { editionId: planned.editionId },
       },
       trigger: { type: SchedulableTriggerInputTypes.CALENDAR, year, month, day, hour, minute },
     });
@@ -143,30 +146,43 @@ function schedulerOn(
   };
 }
 
-/** The Word a tapped notification carries, if it carries one. */
-function wordOf(response: ExpoNotifications.NotificationResponse | null): string | undefined {
-  const wordId = response?.notification.request.content.data?.['wordId'];
+/**
+ * The Word a tapped notification carries, if it carries one and is the
+ * active Edition's. A notification planned before notifications carried an
+ * Edition is the active Edition's: before 1.0 there was one Edition, whose
+ * user state the active Edition adopts (ADR 0065).
+ */
+function wordOf(
+  response: ExpoNotifications.NotificationResponse | null,
+  activeEditionId: string,
+): string | undefined {
+  const data = response?.notification.request.content.data;
+  const editionId = data?.['editionId'];
+  if (editionId !== undefined && editionId !== activeEditionId) return undefined;
+  const wordId = data?.['wordId'];
   return typeof wordId === 'string' ? wordId : undefined;
 }
 
 /**
- * Calls `open` with the link of the Word of each notification the reader
- * taps: the one that launched the app, once, and each tap while it runs.
- * Returns the call that stops listening. Without the module there is nothing
- * to listen to.
+ * Calls `open` with the link of the Word of each notification of the active
+ * Edition the reader taps: the one that launched the app, once, and each tap
+ * while it runs. A tap on another Edition's notification opens the app as it
+ * is: its Word is not in this Edition. Returns the call that stops listening.
+ * Without the module there is nothing to listen to.
  */
 export function onNotificationTap(
   notifications: NotificationsModule | undefined,
+  activeEditionId: string,
   open: (link: string) => void,
 ): () => void {
   if (notifications === undefined) return () => undefined;
   // iOS keeps the last tap until it is cleared, so listening again, as after
   // a remount, doesn't open the same Word twice.
   function opened(response: ExpoNotifications.NotificationResponse | null): void {
-    const wordId = wordOf(response);
-    if (wordId === undefined) return;
+    if (response === null) return;
     notifications?.clearLastNotificationResponse();
-    open(notificationLink(wordId));
+    const wordId = wordOf(response, activeEditionId);
+    if (wordId !== undefined) open(notificationLink(wordId));
   }
   opened(notifications.getLastNotificationResponse());
   const subscription = notifications.addNotificationResponseReceivedListener(opened);

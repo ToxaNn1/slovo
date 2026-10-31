@@ -48,6 +48,7 @@ async function run({
   switchedOff = [],
   politePause = false,
   titles = ['{word}'],
+  editionId = 'test',
 }: {
   words?: readonly Word[];
   corrections?: readonly Correction[];
@@ -63,6 +64,8 @@ async function run({
   politePause?: boolean;
   /** The Edition's notification title templates. */
   titles?: readonly string[];
+  /** The id of the Edition the app runs as. */
+  editionId?: string;
 } = {}): Promise<{
   app: Composition;
   scheduler: FakeNotificationScheduler;
@@ -83,6 +86,7 @@ async function run({
   const app = await openComposition({
     content,
     edition: testEdition({
+      id: editionId,
       isFeatureEnabled: (feature) =>
         !switchedOff.includes(feature) && (politePause || feature !== 'politePause'),
       userSettingDefaults: {
@@ -571,6 +575,17 @@ describe('the Feature Switches of notifications and the Word of the Day', () => 
   });
 });
 
+describe('the Edition of the plan', () => {
+  it("carries the id of the Edition the app runs as on every notification, the farewell included", async () => {
+    const { scheduler } = await run({ editionId: 'en', politePause: true });
+
+    const plan = planOf(scheduler);
+    expect(plan.map(({ kind }) => kind)).toContain('farewell');
+    expect(plan.length).toBeGreaterThan(1);
+    expect(new Set(plan.map(({ editionId }) => editionId))).toEqual(new Set(['en']));
+  });
+});
+
 describe('the polite pause', () => {
   it('plans up to the 14th day after the last open, and its last time is the farewell with no Word', async () => {
     const { scheduler } = await run({ politePause: true });
@@ -581,6 +596,7 @@ describe('the polite pause', () => {
     );
     expect(plan.at(-1)).toEqual({
       kind: 'farewell',
+      editionId: 'test',
       date: '2026-10-28',
       time: '19:00',
       body: farewell,

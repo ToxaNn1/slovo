@@ -145,6 +145,8 @@ export type PlannedSound = { readonly file: string } | 'system' | 'silent';
  * whatever time zone the device is in when it is due.
  */
 export type PlannedNotification = {
+  /** The id of the Edition that planned it, the active Edition (ADR 0065), so a tap opens its target in that Edition. */
+  readonly editionId: string;
   /** The local date, `YYYY-MM-DD`. */
   readonly date: string;
   /** The local time, `HH:MM` on a 24-hour clock. */
