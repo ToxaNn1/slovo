@@ -35,7 +35,7 @@ jest.mock('expo-constants', () => ({
   default: { expoConfig: { extra: { edition: { id: 'uk', wordOfTheDayFontFamily: 'Kurale' } } } },
 }));
 
-/** The Ukrainian Edition as its config file gives it, every Feature Switch as it ships. */
+/** The UA Edition as its config file gives it, every Feature Switch as it ships. */
 const shippedEdition: Edition = loadEdition(config);
 
 /** The user state the settings and the composition keep, opened afresh for each test. */

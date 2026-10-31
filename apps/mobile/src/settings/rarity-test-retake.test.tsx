@@ -26,7 +26,7 @@ import { ShellProvider } from '../shell-value';
 import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
 import { SettingsProvider } from './settings';
 
-/** The Ukrainian Edition as it ships, with the Feature Switches given off. */
+/** The UA Edition as it ships, with the Feature Switches given off. */
 function editionWithout(...off: FeatureSwitch[]): Edition {
   const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, boolean> };
   return loadEdition({

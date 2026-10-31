@@ -1,4 +1,4 @@
-// The Illustrations of the Ukrainian Edition in place of the module Metro
+// The Illustrations of the UA Edition in place of the module Metro
 // writes (see metro.config.cjs): each PNG by file name, as jest-expo stubs it.
 const { readdirSync } = require('node:fs');
 const { join } = require('node:path');

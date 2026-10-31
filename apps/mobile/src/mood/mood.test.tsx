@@ -23,7 +23,7 @@ import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 import { MoodButtonAndSheet } from './mood';
 
-/** The Ukrainian Edition with the Account off, and moods on or off. */
+/** The UA Edition with the Account off, and moods on or off. */
 function editionWith({ moods }: { moods: boolean }): Edition {
   const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, boolean> };
   return loadEdition({

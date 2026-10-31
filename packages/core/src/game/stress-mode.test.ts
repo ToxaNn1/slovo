@@ -15,7 +15,7 @@ import {
 import { createMemoryContentPort } from '../testing';
 import { correction, seededRandom, testEdition, word } from '../test-support';
 
-/** The Ukrainian Edition's vowels. */
+/** The UA Edition's vowels. */
 const vowels = ['а', 'е', 'є', 'и', 'і', 'ї', 'о', 'у', 'ю', 'я'];
 
 /**

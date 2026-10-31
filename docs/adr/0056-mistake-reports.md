@@ -2,7 +2,7 @@
 
 Until 0.8.14 a reader who spotted a wrong Stress or a typo in a Definition couldn't say so, and the mistake stayed until the owner happened to find it. Spec #886 adds the Mistake Report («Повідомлення про помилку»): a reader reports a mistake from an Entry's card, anonymously, and the owner works through the reports with a backend script. The decisions come from the owner's grilling of 2026-10-25 and 2026-10-26.
 
-**Feature Switch.** `mistakeReports` is required of every Edition and on in the Ukrainian Edition. While it is off in effect the card menu has no «Повідомити про помилку» and nothing is sent; reports already queued stay until it is on again. The backend answers an Edition with the switch off as one it doesn't find (`NOT_FOUND`), as content does (ADR 0032). A remote switch only turns it off (ADR 0040).
+**Feature Switch.** `mistakeReports` is required of every Edition and on in the UA Edition. While it is off in effect the card menu has no «Повідомити про помилку» and nothing is sent; reports already queued stay until it is on again. The backend answers an Edition with the switch off as one it doesn't find (`NOT_FOUND`), as content does (ADR 0032). A remote switch only turns it off (ADR 0040).
 
 **On the card.** «Повідомити про помилку» is an item of the card menu on cards of all five kinds of Entry: Word, Correction, Idiom, Synonym Row and Tip. The card menu is the action row under the card (ADR 0017): the item is a flag in its last slot, which VoiceOver reads as «Повідомити про помилку», so it takes no new text and the actions stay one tap away. It opens a sheet:
 

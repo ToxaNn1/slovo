@@ -18,7 +18,7 @@ import { NotificationTimes } from './notification-times';
 
 const strings = editionStrings.notifications;
 
-/** The Ukrainian Edition as its config file gives it. */
+/** The UA Edition as its config file gives it. */
 const mockEdition = loadEdition(config);
 
 /** The composition the times read, opened afresh for each test. */

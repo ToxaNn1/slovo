@@ -22,7 +22,7 @@ type AppleKey = Awaited<ReturnType<typeof appleKey>>;
 
 /**
  * An identity token for the email as Apple signs it with the key, issued at
- * the time for ten minutes, by Apple for the Ukrainian Edition's app unless
+ * the time for ten minutes, by Apple for the UA Edition's app unless
  * another issuer or audience is named.
  */
 function tokenOf(

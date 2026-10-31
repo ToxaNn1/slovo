@@ -16,7 +16,7 @@ import { ShellProvider } from '../shell-value';
 import { DecorInEffect } from './decor-in-effect';
 import { settingsAt, switchedTo, testShell } from './test-support';
 
-/** The Ukrainian Edition's plain Decor and its motifs. */
+/** The UA Edition's plain Decor and its motifs. */
 const { background, divider } = editionDecor;
 if (background === undefined || seasonalMotifs === undefined) {
   throw new Error('The Edition has a background and seasonal motifs');

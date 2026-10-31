@@ -82,7 +82,7 @@ let editionDir: string;
 beforeEach(() => {
   workDir = mkdtempSync(join(tmpdir(), 'slovo-content-'));
   editionDir = join(workDir, 'editions', 'uk');
-  // The Ukrainian Edition as it is, without its built pack.
+  // The UA Edition as it is, without its built pack.
   cpSync(ukrainian.dir, editionDir, {
     recursive: true,
     filter: (source) => !relative(ukrainian.dir, source).startsWith('dist'),
@@ -277,7 +277,7 @@ describe('pnpm content new', () => {
   });
 });
 
-/** The Ukrainian Edition's Entries, to pick the ones the tests open. */
+/** The UA Edition's Entries, to pick the ones the tests open. */
 const authored = ukrainian.entries();
 const unstressed = (text: string) =>
   text

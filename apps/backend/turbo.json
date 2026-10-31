@@ -9,7 +9,7 @@
       // The tests make their own database on the Postgres server this names
       // (src/test-support.ts); the server is not an input of the results.
       "passThroughEnv": ["DATABASE_URL"],
-      // The test Editions are copies of the Ukrainian Edition (src/test-support.ts).
+      // The test Editions are copies of the UA Edition (src/test-support.ts).
       "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/editions/**", "!$TURBO_ROOT$/editions/*/dist/**"]
     }
   }

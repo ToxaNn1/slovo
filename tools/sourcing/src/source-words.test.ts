@@ -194,7 +194,7 @@ function setup(overrides: Partial<SourcingOptions> = {}, network?: NetworkOption
   const workDir = mkdtempSync(join(tmpdir(), 'slovo-sourcing-'));
   const options: SourcingOptions = {
     lemmaList: '',
-    // The Ukrainian Edition's config with no Words, so its authored Words don't duplicate the drafts.
+    // The UA Edition's config with no Words, so its authored Words don't duplicate the drafts.
     edition: editionWith((config) => config),
     outDir: join(workDir, 'review'),
     cacheDir: join(workDir, 'cache'),
@@ -206,7 +206,7 @@ function setup(overrides: Partial<SourcingOptions> = {}, network?: NetworkOption
   return { options, net, workDir, clock };
 }
 
-/** A copy of the Ukrainian Edition's config with the given edit, and the given Words as its content. */
+/** A copy of the UA Edition's config with the given edit, and the given Words as its content. */
 function editionWith(
   edit: (config: Record<string, unknown>) => Record<string, unknown>,
   words: Record<string, unknown> = {},

@@ -1,4 +1,4 @@
-# Claude Design prompt: SLOVO (Ukrainian Edition)
+# Claude Design prompt: SLOVO (UA Edition)
 
 > How to use: paste everything below the line into Claude Design. Add your references in the **References** section at the end before sending. Sample words are placeholders that show realistic content lengths.
 
@@ -8,7 +8,7 @@
 
 **SLOVO** is an iOS app, like Instagram but for rare words. It helps people **discover, learn and share rare words** of their native language. You swipe through a vertical feed of word cards, keep the ones you like, share them as beautiful images, and practise them in a small game.
 
-This brief covers the **Ukrainian Edition**: the whole UI and all content are in Ukrainian. The closest existing product is **"Vocabulary – Learn words daily"** (Monkey Taps). SLOVO should feel just as calm and focused, but warmer and more cultural.
+This brief covers the **UA Edition**: the whole UI and all content are in Ukrainian. The closest existing product is **"Vocabulary – Learn words daily"** (Monkey Taps). SLOVO should feel just as calm and focused, but warmer and more cultural.
 
 **Audience:** Ukrainian speakers aged 16–45 who love their language and want to speak it more richly. They read on their phone in short moments: morning coffee, commute, before sleep.
 
@@ -19,7 +19,7 @@ This brief covers the **Ukrainian Edition**: the whole UI and all content are in
 SLOVO is a **factory**: one shared **Core** design powers many single-language apps (Polish, Armenian, Azerbaijani … later). So please design in two layers:
 
 1. **Core design system:** neutral, elegant and complete on its own. All layouts, components and states.
-2. **Ukrainian Edition skin** on top: design tokens (colours, typography) and **Decor**, a set of purely visual elements in predefined slots. The Ukrainian Decor is inspired by **vyshyvanka embroidery**. Think a thin golden zig-zag/cross-stitch ornament used as a divider on a dark background (see references).
+2. **UA Edition skin** on top: design tokens (colours, typography) and **Decor**, a set of purely visual elements in predefined slots. The Ukrainian Decor is inspired by **vyshyvanka embroidery**. Think a thin golden zig-zag/cross-stitch ornament used as a divider on a dark background (see references).
 
 A second Edition must be possible by only swapping tokens and Decor, never layouts. Please show this: render one screen (the word card) in the neutral Core skin and in the Ukrainian skin side by side.
 
@@ -142,7 +142,7 @@ Show how a notification reads: the lemma with stress plus a short definition, pl
 
 ### 5.11 App icon & splash
 
-The **SLOVO** wordmark (Latin script, kept for the Ukrainian Edition), an icon in the Ukrainian skin, and the splash (Decor slot 7).
+The **SLOVO** wordmark (Latin script, kept for the UA Edition), an icon in the Ukrainian skin, and the splash (Decor slot 7).
 
 ## 6. Sample content (placeholders)
 

@@ -9,7 +9,7 @@ import { fakeClock, randomOf, testEdition, testSchedule, word } from '../test-su
 const ALL_TRIES = 10_000;
 
 /** The Edition's one Category, the test Words' own, and its default Mix of every Category. */
-/** The share sheet's message of the Ukrainian Edition. */
+/** The share sheet's message of the UA Edition. */
 const strings = { message: 'Колекція «{name}» у SLOVO: {url}' };
 
 /** Ids of more Words than a link holds. */
@@ -25,7 +25,7 @@ const content = createMemoryContentPort({
 });
 
 /**
- * The app of the Ukrainian Edition over a fake backend, with
+ * The app of the UA Edition over a fake backend, with
  * `collectionLinks` on unless the test turns it off.
  */
 async function device({

@@ -1,5 +1,5 @@
 // Generates notification.wav, the placeholder notification sound of the
-// Ukrainian Edition: a short plucked-string note, synthesized here, so no
+// UA Edition: a short plucked-string note, synthesized here, so no
 // third-party licence is involved. The final royalty-free bandura pluck from
 // the design replaces it before 1.0.
 //

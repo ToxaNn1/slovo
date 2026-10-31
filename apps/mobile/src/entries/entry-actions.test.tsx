@@ -26,7 +26,7 @@ import { SettingsProvider } from '../settings/settings';
 import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
 import { EntryActions } from './entry-actions';
 
-/** The Ukrainian Edition as its config file gives it, every Feature Switch as it ships. */
+/** The UA Edition as its config file gives it, every Feature Switch as it ships. */
 const shippedEdition = loadEdition(config);
 
 /** The composition the card's actions change, opened afresh for each test. */

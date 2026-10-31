@@ -233,7 +233,7 @@ export function createFakeGoogle(clientIds: readonly string[]): FakeGoogle {
 }
 
 /**
- * The bundle id of the Ukrainian Edition (`editions/uk/edition.json`), the
+ * The bundle id of the UA Edition (`editions/uk/edition.json`), the
  * audience of the fake Apple's tokens unless a test names another: the
  * backend checks an Apple token against the Edition's bundle id (ADR 0047).
  */
@@ -273,7 +273,7 @@ const FAKE_APPLE_SIGNATURE = 'signed-by-the-fake-apple';
 export interface FakeApple extends AppleVerifier {
   /**
    * An identity token for the email, as the sign-in sheet would give it: from
-   * Apple, for the Ukrainian Edition's app, for ten minutes, unless the test
+   * Apple, for the UA Edition's app, for ten minutes, unless the test
    * says otherwise.
    */
   token(
@@ -337,7 +337,7 @@ interface BuiltPack {
 
 /**
  * An editions folder made for one test, with an Edition for each id: a copy of
- * the Ukrainian Edition's config, strings and content under its own id.
+ * the UA Edition's config, strings and content under its own id.
  * `change` changes each config. Copying and recording the content takes a
  * while, so an Edition gets it when a test first builds or corrects it, which
  * comes before the test reads the Editions.

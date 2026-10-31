@@ -13,7 +13,7 @@ export default [
   },
   {
     // Language-specific text comes from the Edition, never from server Core
-    // code. Cyrillic text is the tripwire for the Ukrainian Edition leaking in.
+    // code. Cyrillic text is the tripwire for the UA Edition leaking in.
     files: ['**/*.ts'],
     ignores: ['**/*.test.ts'],
     rules: {

@@ -1,6 +1,6 @@
 # Ukrainian Definitions and Examples come from goroh «Тлумачення»
 
-The Ukrainian Edition takes its Definitions and Examples from the «Тлумачення» pages of goroh.pp.ua, and only from the explanatory dictionary each page cites: СУМ-20 (vols 1–15, А to П'ЯТЬ) for the Lemmas it already covers, and СУМ-11 for the rest. The specs named СУМ-11 on sum.in.ua as the source. While the content was being sourced, sum.in.ua stopped answering, and the Wayback Machine started refusing this machine after parallel use, so neither could supply about 500 Words. The owner was told and agreed to the switch.
+The UA Edition takes its Definitions and Examples from the «Тлумачення» pages of goroh.pp.ua, and only from the explanatory dictionary each page cites: СУМ-20 (vols 1–15, А to П'ЯТЬ) for the Lemmas it already covers, and СУМ-11 for the rest. The specs named СУМ-11 on sum.in.ua as the source. While the content was being sourced, sum.in.ua stopped answering, and the Wayback Machine started refusing this machine after parallel use, so neither could supply about 500 Words. The owner was told and agreed to the switch.
 
 What this means for the content:
 

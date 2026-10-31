@@ -40,7 +40,7 @@ Write everything in the repo in English: code, comments, tests, docs, commit mes
 
 ## Code
 
-- Keep the Core language-agnostic and free of React and React Native imports (ADR 0002, 0006). An Edition is configuration plus content and assets.
+- Keep the Core language-agnostic and free of React and React Native imports (ADR 0065, 0006). An Edition is configuration plus content and assets.
 - Test through the public seams named in the version spec's "Testing Decisions", never internals. Inject time and randomness. Write the test first where there is behaviour.
 - A test that would still pass if the code returned nothing proves nothing. Delete or rewrite it.
 - Parse outside data once, where it enters (Edition content, storage, network). Inside the Core, trust the types.

@@ -26,7 +26,7 @@ import { edition, editionStrings, editionTokens } from '../edition/edition';
 import { screenSettled } from '../entries/use-open-screen';
 import { SettingsProvider } from '../settings/settings';
 
-/** The family app.config.ts reports for the Ukrainian Edition's Word of the Day font. */
+/** The family app.config.ts reports for the UA Edition's Word of the Day font. */
 const CALLIGRAPHIC = 'Kurale';
 
 /** The Word font every other Lemma is set in. */
@@ -37,7 +37,7 @@ jest.mock('expo-constants', () => ({
   default: { expoConfig: { extra: { edition: { id: 'uk', wordOfTheDayFontFamily: 'Kurale' } } } },
 }));
 
-/** The Ukrainian Edition in effect, with `calligraphy` as the test sets it. */
+/** The UA Edition in effect, with `calligraphy` as the test sets it. */
 let editionInEffect: Edition;
 
 /** The user state the settings and the composition keep, opened afresh for each test. */

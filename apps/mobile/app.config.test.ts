@@ -45,7 +45,7 @@ afterEach(() => {
 
 /**
  * A throwaway repo layout (`apps/mobile` next to `editions/uk`) holding a copy
- * of the Ukrainian Edition with its config changed by `edit`. The icon is
+ * of the UA Edition with its config changed by `edit`. The icon is
  * copied unless `withIcon` is false; `change` may then edit the copy.
  */
 function repoWithEdition(

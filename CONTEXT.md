@@ -7,8 +7,8 @@ SLOVO helps people discover, learn and share rare words of a single language. It
 ### Factory
 
 **Edition**:
-A standalone app dedicated to exactly one language; its UI language, content language and store listing are all that language. The first Edition is Ukrainian.
-_Avoid_: Flavor, variant, localization
+One language inside the one SLOVO app (ADR 0065): its configuration, content and assets, with its UI language and content language the same, its own progress and its own localized store page. One Edition is active at a time. The first Edition is the UA Edition, Ukrainian, whose id is the language code `uk`.
+_Avoid_: Flavor, variant, localization, separate app, Ukrainian Edition, UK Edition
 
 **Language Pack**:
 Everything that makes an Edition specific to its language: words, categories, UI strings and language traits (e.g. whether the language marks stress).

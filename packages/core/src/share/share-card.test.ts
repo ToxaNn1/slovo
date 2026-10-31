@@ -17,7 +17,7 @@ import { buildTipCard } from '../entries/tip-card';
 import { correction, idiom, synonymRow, tip, word } from '../test-support';
 import { createMemoryContentPort } from '../testing';
 
-/** The texts of the Ukrainian Edition a Share Card reads. */
+/** The texts of the UA Edition a Share Card reads. */
 const STRINGS = {
   share: {
     wordOfTheDay: 'Слово дня',

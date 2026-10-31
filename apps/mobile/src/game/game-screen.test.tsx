@@ -24,7 +24,7 @@ import { ShellProvider } from '../shell-value';
 import { SettingsProvider } from '../settings/settings';
 import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
 
-/** The Ukrainian Edition with the given Feature Switches turned off. */
+/** The UA Edition with the given Feature Switches turned off. */
 function editionWithout(switchedOff: readonly string[]): Edition {
   const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, boolean> };
   return loadEdition({
@@ -187,7 +187,7 @@ const SOLVED = {
   '2,4': 'т',
 };
 
-/** The Ukrainian Edition's origin languages, in its order. */
+/** The UA Edition's origin languages, in its order. */
 const { originLanguages } = config as { originLanguages: { code: string; name: string }[] };
 
 /** The language «слово{n}» comes from, when it has an origin: the Edition's languages in turn. */

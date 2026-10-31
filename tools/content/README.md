@@ -49,4 +49,4 @@ Checks the whole Edition with the build's rules and writes nothing: every proble
 
 ## Tests
 
-The tests run the CLI as a process over a copy of the Ukrainian Edition, with a fake editor in `$EDITOR`; `$SLOVO_EDITIONS_DIR` points the tool at the copy.
+The tests run the CLI as a process over a copy of the UA Edition, with a fake editor in `$EDITOR`; `$SLOVO_EDITIONS_DIR` points the tool at the copy.

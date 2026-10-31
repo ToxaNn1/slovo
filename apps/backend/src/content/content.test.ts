@@ -7,7 +7,7 @@ import { contentPacks } from '../database/schema';
 import { sha256, testApp, testEditions } from '../test-support';
 
 describe('content.latest', () => {
-  it('answers none for the Ukrainian Edition while no pack is published', async () => {
+  it('answers none for the UA Edition while no pack is published', async () => {
     const { client } = testApp();
 
     const latest = await client.content.latest({ editionId: 'uk', packFormat: PACK_FORMAT });

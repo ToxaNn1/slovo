@@ -1,4 +1,4 @@
-# Fonts of the Ukrainian Edition
+# Fonts of the UA Edition
 
 The Edition's own fonts (ADR 0006). The app embeds every font file in this folder at build time, with the Core's Literata and Manrope from `packages/ui/assets/fonts/` (see `apps/mobile/app.config.ts`), so text never waits for the network. Changing a font needs a new development build.
 

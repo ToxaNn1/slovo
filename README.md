@@ -1,14 +1,14 @@
 # SLOVO
 
-SLOVO helps people discover, learn and share rare words of a single language. The first app is the **Ukrainian Edition**: a vertical Feed of Rare Words with stress marks and definitions, Corrections of common non-standard phrases, a Game, a home-screen widget and optional sync across devices.
+SLOVO helps people discover, learn and share rare words of a single language. The first app is the **UA Edition**: a vertical Feed of Rare Words with stress marks and definitions, Corrections of common non-standard phrases, a Game, a home-screen widget and optional sync across devices.
 
 > Status: version 0.2 (Feed) is built; 0.3 (My words) is next. What exists today:
 >
 > - the monorepo with the Core, the shared contracts, the Language Pack build and a UI package;
-> - the mobile shell: one Expo app that builds the Ukrainian Edition, with the final four tabs;
+> - the mobile shell: one Expo app that builds the UA Edition, with the final four tabs;
 > - Home is the Feed: the Word of the Day, Word cards with Pronunciation, Corrections and Idioms mixed in, Seen and Cycles kept on the device, in the Ukrainian Decor;
 > - Settings with the Theme and the font size;
-> - the Ukrainian Edition's content (Words, Corrections and Idioms) and a content quality gate that CI runs on every change;
+> - the UA Edition's content (Words, Corrections and Idioms) and a content quality gate that CI runs on every change;
 > - CI with lint, typecheck, tests and secret scanning on every change, and a daily dependency audit and Knip report.
 >
 > My words, the Game, the widget and the backend arrive in later versions; see the [master spec](https://github.com/ToxaNn1/slovo/issues/1) for the roadmap.
@@ -54,7 +54,7 @@ Parts marked as placeholders are reserved and filled by later versions.
 - `editions/<edition>/legal/`: the Edition's privacy policy and terms, which the workflow `Pages` publishes to GitHub Pages at `<LEGAL_SITE>/<edition>/<page>` on every change on `main`; the Core constant `LEGAL_SITE` is the one place that names the site's base (ADR 0049). Pages must be on in the repository settings with "GitHub Actions" as its source.
 - [`CLAUDE.md`](CLAUDE.md): the guide for coding agents (`AGENTS.md` points to it).
 
-## Run the Ukrainian Edition on the simulator
+## Run the UA Edition on the simulator
 
 The native app is a development build made in EAS cloud ([ADR 0004](docs/adr/0004-native-builds-in-eas-cloud.md)). The JavaScript runs locally against it, served by Metro with fast refresh, so day-to-day work never waits for a cloud build.
 
@@ -141,7 +141,7 @@ You need the Node version in [`.nvmrc`](.nvmrc), pnpm, Xcode with an iOS Simulat
 
 ## Verify the app with networking off
 
-The Ukrainian Edition must work offline (ticket #6). No automated check covers this yet, so run it by hand on the simulator. The iOS Simulator shares the Mac's network, and Metro on `localhost` keeps working without it.
+The UA Edition must work offline (ticket #6). No automated check covers this yet, so run it by hand on the simulator. The iOS Simulator shares the Mac's network, and Metro on `localhost` keeps working without it.
 
 1. Do steps 1 to 3 above, so that the development build is installed and Metro is running.
 2. Turn off Wi-Fi and unplug Ethernet on the Mac. Check that the network is down, e.g. `ping -c 1 1.1.1.1` fails.
@@ -176,7 +176,7 @@ No test or CI job looks at what goes into the app's JavaScript bundle. [Expo Atl
 3. Look for:
    - **The largest modules.** Sort by size and ask whether each big one earns its place, and whether a dependency pulls in more than the part the app uses. Compare the total with the previous check; a jump needs a reason.
    - **Node-only or development code.** Nothing from `node_modules` that only runs in Node (`node:` built-ins, `fs`, polyfills for them), and nothing that belongs to tests or tooling: Vitest, Jest, Testing Library, ESLint, `@slovo/core/testing` and its fakes, `tools/`.
-   - **The Core pulling in what it should not.** Nothing that `packages/core` imports, directly or through a dependency, is React, React Native, Expo or Node ([ADR 0002](docs/adr/0002-one-app-per-language.md), [ADR 0006](docs/adr/0006-editions-extend-core-only-through-extension-points.md)). ESLint bans these imports in the Core's own files; Atlas shows what arrives through its dependencies. And nothing from the backend in the app at all: `@slovo/server-core`, Hono, SQL drivers.
+   - **The Core pulling in what it should not.** Nothing that `packages/core` imports, directly or through a dependency, is React, React Native, Expo or Node ([ADR 0065](docs/adr/0065-one-app-with-editions-inside-and-the-ua-edition.md), [ADR 0006](docs/adr/0006-editions-extend-core-only-through-extension-points.md)). ESLint bans these imports in the Core's own files; Atlas shows what arrives through its dependencies. And nothing from the backend in the app at all: `@slovo/server-core`, Hono, SQL drivers.
 
    Anything wrong goes into a ticket before the build.
 
@@ -187,7 +187,7 @@ Atlas also runs beside Metro for a development build: start with `SLOVO_EDITION=
 The app signs in with Google through Google's own native sheet ([ADR 0047](docs/adr/0047-one-account-per-email-whatever-the-sign-in-method.md)); the backend verifies the identity token it gets. Both need SLOVO's OAuth client ids at Google, which come from the environment and never the repository. Without them «Увійти через Google» stays hidden and the backend refuses Google sign-ins.
 
 1. In the [Google Cloud console](https://console.cloud.google.com/), pick or create the project for SLOVO and set up its **OAuth consent screen** (Google Auth Platform → Branding): the app's name, a support email, and the privacy policy and terms addresses. While it is in testing, only the test users listed there can sign in; publish it before the beta.
-2. **The iOS client id.** Google Auth Platform → Clients → Create client, type **iOS**, with the Edition's bundle id (`app.slovo.uk` for the Ukrainian Edition). Google shows its client id, `…apps.googleusercontent.com`. One per Edition, since each Edition is its own app.
+2. **The iOS client id.** Google Auth Platform → Clients → Create client, type **iOS**, with the Edition's bundle id (`app.slovo.uk` for the UA Edition). Google shows its client id, `…apps.googleusercontent.com`. One per Edition, since each Edition is its own app.
 3. **The Web client id** (optional). Create a client of type **Web application**. The app doesn't use it today: an identity token from the iOS sheet names the iOS client id as its audience. Keep it for a later backend or Android client; add it to `GOOGLE_CLIENT_IDS` only once a client asks for tokens with it.
 4. **The app.** Build with the iOS client id in `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID`: as an EAS environment variable of the build's profile, or in the shell for a local build. The app config adds Google's sign-in SDK with its URL scheme, the client id reversed (`com.googleusercontent.apps.…`), and refuses an id that is not one for iOS. A build without it still holds the SDK, but registers no URL scheme and hides the button.
 5. **The backend.** Put the iOS client id, and every other one a client signs in with, in `GOOGLE_CLIENT_IDS`, comma-separated ([Run the backend](#run-the-backend)). The backend refuses a token whose audience is not on the list.
@@ -303,7 +303,7 @@ All commands run from the repo root. CI runs `lint`, `typecheck`, `deps` and `te
 | `pnpm reports list`            | Prints the Mistake Reports still to check, newest first (ADR 0056). `--edition uk` keeps one Edition's, `--since 2026-10-27` those received from that day on (UTC).                                                                                                                                                                                              |
 | `pnpm reports resolve`         | `pnpm reports resolve <id>` deletes a Mistake Report once checked, so the list no longer prints it; an id it doesn't keep exits non-zero and says so.                                                                                                                                                                                                            |
 | `pnpm collection-links delete` | `pnpm collection-links delete <id>` deletes a Collection Link, so the owner can take down an abusive name (ADR 0058); an id it doesn't keep exits non-zero and says so.                                                                                                                                                                                          |
-| `pnpm smoke:halves`            | The full Maestro smoke as two halves at once on two simulators, with a pass/fail list per half; see [Run the Ukrainian Edition on the simulator](#run-the-ukrainian-edition-on-the-simulator).                                                                                                                                                                   |
+| `pnpm smoke:halves`            | The full Maestro smoke as two halves at once on two simulators, with a pass/fail list per half; see [Run the UA Edition on the simulator](#run-the-ukrainian-edition-on-the-simulator).                                                                                                                                                                          |
 | `pnpm source:words`            | Drafts Words for review; see [`tools/sourcing/README.md`](tools/sourcing/README.md).                                                                                                                                                                                                                                                                             |
 | `pnpm content`                 | `pnpm content new word --edition uk` drafts an Entry with a fresh id in `$EDITOR` and records it once it passes; `pnpm content edit <id or text> --edition uk` opens an existing one; `pnpm content retire <id> --edition uk` retires one; `pnpm content check --edition uk` checks the whole Edition. See [`tools/content/README.md`](tools/content/README.md). |
 | `pnpm format`                  | Rewrites files with Prettier.                                                                                                                                                                                                                                                                                                                                    |

@@ -11,7 +11,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
 # A fresh install, so History starts empty.
 - runFlow:
     file: ../fresh-install.yaml
-# A notification's mark and a label of its own, for кракелюр, a Word of the Ukrainian Edition.
+# A notification's mark and a label of its own, for кракелюр, a Word of the UA Edition.
 - openLink: ${(SCHEME || 'slovo-uk') + '://entry/w_00g2ap?from=notification&back=%D0%92%D1%85%D1%96%D0%B4'}
 # A simulator asks once whether the link may open the app.
 - runFlow:

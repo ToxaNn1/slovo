@@ -9,7 +9,7 @@ export const CROSSWORD_DAYS_AHEAD = 400;
 
 /**
  * How many days apart a word may come back in the Daily Crossword, at the
- * least: a margin under the 24 days with which the Ukrainian Edition's
+ * least: a margin under the 24 days with which the UA Edition's
  * 3–5-letter words just fill the 400 days ahead (ADR 0052).
  */
 export const CROSSWORD_REPEAT_DAYS = 20;

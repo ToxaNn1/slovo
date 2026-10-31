@@ -22,7 +22,7 @@ import { opened, switchedTo, testShell } from '../shell/test-support';
 import { useHide } from './hiding';
 import { MixChoices } from './mix-choices';
 
-/** The Ukrainian Edition with Synonym Rows and Tips turned on or off. */
+/** The UA Edition with Synonym Rows and Tips turned on or off. */
 function editionWith(on: boolean): Edition {
   const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, boolean> };
   return loadEdition({

@@ -23,7 +23,7 @@ import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 import { useHide } from './hiding';
 
-/** The Ukrainian Edition as its config file gives it, every Feature Switch as it ships. */
+/** The UA Edition as its config file gives it, every Feature Switch as it ships. */
 const shippedEdition = loadEdition(config);
 
 /** The composition the card and the Hidden screen read, opened afresh for each test. */

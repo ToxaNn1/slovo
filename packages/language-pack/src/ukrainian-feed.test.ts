@@ -70,7 +70,7 @@ function remembering(port: ContentReadPort): ContentReadPort {
   };
 }
 
-/** The Ukrainian Edition with every other kind of Entry turned off, so a test counts Words only. */
+/** The UA Edition with every other kind of Entry turned off, so a test counts Words only. */
 const otherKinds = new Set(['corrections', 'idioms', 'synonymRows', 'tips']);
 const wordsOnly: Edition = {
   ...ukrainian,

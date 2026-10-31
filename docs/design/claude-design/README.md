@@ -1,6 +1,6 @@
 # Claude Design export
 
-The owner's design for SLOVO (Ukrainian Edition), made with Claude Design and exported on **2026-10-11**. It is kept byte for byte as exported, so do not edit or reformat these files; Prettier skips this folder.
+The owner's design for SLOVO (UA Edition), made with Claude Design and exported on **2026-10-11**. It is kept byte for byte as exported, so do not edit or reformat these files; Prettier skips this folder.
 
 What is here:
 

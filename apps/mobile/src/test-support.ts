@@ -6,13 +6,13 @@ import { EDITIONS_DIR, openEdition } from '@slovo/language-pack/edition';
 
 // Helpers the mobile tests share. No screen or module of the app imports them.
 
-/** The Ukrainian Edition's folder. */
+/** The UA Edition's folder. */
 export const ukrainianFolder = openEdition(EDITIONS_DIR, 'uk');
 
-/** The Ukrainian Edition's UI strings. */
+/** The UA Edition's UI strings. */
 export const strings = ukrainianFolder.read('strings');
 
-/** The Ukrainian Edition, loaded as the shell loads it: by the Core, from its config file. */
+/** The UA Edition, loaded as the shell loads it: by the Core, from its config file. */
 export const ukrainian = loadEdition(
   JSON.parse(readFileSync(ukrainianFolder.path('config'), 'utf8')) as unknown,
 );

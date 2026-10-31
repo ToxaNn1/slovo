@@ -27,7 +27,7 @@ import { SettingsProvider } from '../settings/settings';
 import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 
-/** The Ukrainian Edition as its config file gives it, every Feature Switch as it ships. */
+/** The UA Edition as its config file gives it, every Feature Switch as it ships. */
 const shippedEdition = loadEdition(config);
 
 const clock = { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Europe/Kyiv' };
