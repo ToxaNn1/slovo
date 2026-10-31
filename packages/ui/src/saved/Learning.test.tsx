@@ -42,6 +42,7 @@ const word = (entryId: string, title: string): EntryRowModel => ({
   spoken: `${title}, what ${title} means`,
   partOfSpeech: 'noun',
   registers: [],
+  rarity: 3,
 });
 
 const idiom: EntryRowModel = {

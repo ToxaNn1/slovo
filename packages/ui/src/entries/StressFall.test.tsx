@@ -77,6 +77,7 @@ const row: EntryRowModel = {
   spoken: 'catalog, A list of things.',
   partOfSpeech: 'noun',
   registers: [],
+  rarity: 3,
 };
 
 const haptics: Haptics = {

@@ -32,6 +32,7 @@ const word: EntryRowModel = {
   spoken: 'river, what river means',
   partOfSpeech: 'noun',
   registers: [],
+  rarity: 3,
 };
 
 const idiom = (labelKey: 'idiom' | 'placeName'): EntryRowModel => ({

@@ -28,6 +28,7 @@
     "wordOfTheDay": true,
     "statistics": true,
     "knowledge": true,
+    "confirmedEntries": true,
     "selfCheck": true,
     "rarityFloor": true,
     "rarityCeiling": true,

@@ -60,7 +60,15 @@ describe('the History texts', () => {
       const text = { title: 'a', secondLine: 'b', spoken: 'a, b' };
       const row: EntryRowModel =
         labelKey === 'word'
-          ? { kind: 'word', entryId: 'w_a', ...text, labelKey, partOfSpeech: 'noun', registers: [] }
+          ? {
+              kind: 'word',
+              entryId: 'w_a',
+              ...text,
+              labelKey,
+              partOfSpeech: 'noun',
+              registers: [],
+              rarity: 3,
+            }
           : labelKey === 'correction'
             ? { kind: 'correction', entryId: 'c_a', ...text, labelKey, correctionType: 'calque' }
             : labelKey === 'synonymRow' || labelKey === 'tip'

@@ -25,6 +25,7 @@ const word: EntryRowModel = {
   spoken: 'meek, Quiet and gentle.',
   partOfSpeech: 'adjective',
   registers: [],
+  rarity: 3,
 };
 
 const correction: EntryRowModel = {

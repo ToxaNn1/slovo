@@ -53,6 +53,7 @@ const validConfig = {
     search: true,
     rarityTest: true,
     weeklyRecap: true,
+    confirmedEntries: true,
     yesterday: true,
     wordOfTheDayArchive: true,
     activeDaysCalendar: true,

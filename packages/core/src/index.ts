@@ -84,7 +84,7 @@ export { HISTORY_CAP, type HistoryEntry } from './saved/history';
 export { type WordOfTheDayArchiveDay } from './saved/word-of-the-day-archive';
 export { groupByLocalDay, relativeTimeOf, type RelativeTime } from './saved/history-time';
 export { type KnowledgeMark } from './knowledge/knowledge-record';
-export { type KnownCounts, type LearningEntry } from './knowledge/knowledge';
+export { type ConfirmedCounts, type KnownCounts, type LearningEntry } from './knowledge/knowledge';
 export {
   openCounterReads,
   type CounterLine,

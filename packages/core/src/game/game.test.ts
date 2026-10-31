@@ -761,7 +761,7 @@ describe('the Synonym Rows «Вгадай слово» asks about', () => {
   /** The Core composition over a pack of the Words and the rows, with Synonym Rows on. */
   const runWith = ({
     synonymRows = rows,
-    on = ['knowledge', 'synonymRows'],
+    on = ['knowledge', 'confirmedEntries', 'synonymRows'],
     seed,
     records,
   }: {
@@ -881,6 +881,23 @@ describe('the Synonym Rows «Вгадай слово» asks about', () => {
       expect(app.knowledge.state.shown.get(entry.id)).toBe(right ? undefined : 'unknown');
     }
     expect(rowRounds.some(({ right }) => !right)).toBe(true);
+  });
+
+  it('confirms the Entry of every right answer, a Word by its rarity, and not the Entry of a wrong one', async () => {
+    const app = await runWith({ seed: 3 });
+
+    const played = await playAll(app, ['r_go', 'r_say', 'w_nnoun01', 'w_nnoun02']);
+
+    const right = new Set(played.filter(({ right }) => right).map(({ entry }) => entry.id));
+    const wrong = played.filter(({ right }) => !right).map(({ entry }) => entry.id);
+    expect(wrong.length).toBeGreaterThan(0);
+    const rightWords = [...right].filter((id) => id.startsWith('w_'));
+    expect(rightWords.length).toBeGreaterThan(0);
+    expect(right.size).toBeGreaterThan(rightWords.length);
+    expect(app.knowledge.state.confirmed).toEqual({
+      total: right.size,
+      byRarity: { 1: 0, 2: 0, 3: rightWords.length, 4: 0, 5: 0 },
+    });
   });
 
   it('lists a row Round in the Game Review led by its dominant, expanding into every member, with the wrong pick, to open the row', async () => {

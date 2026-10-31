@@ -19,9 +19,9 @@ Until 0.8.6 SLOVO could not tell whether the reader knew an Entry: an unknown En
 
 **The «Вчу» list** holds every Entry with a Review day (marked Unknown and not yet Learned, including one since answered Known on a Review), sorted by that day, each row with its local days until the Review, so a due Entry leads. An id the Language Pack no longer has is left out, as in Favorites.
 
-**The counts.** Progress gets one Known count per kind of Entry (`known`, keyed by kind, Learned and not yet Learned alike) and the Entries due today. Badges and the Profile count **confirmed Entries** only: an Entry Known on a Review of 7 days or later, or answered right in a Game or a Quick Question (ADR 0066). The stats sheet joins the counts it shows with the Edition's joiner.
+**The counts.** Progress gets one Known count per kind of Entry (`known`, keyed by kind, Learned and not yet Learned alike) and the Entries due today. Badges and the Profile count **confirmed Entries** only: an Entry Known on a Review of 7 days or later, or answered right in a Game or a Quick Question (ADR 0066). A confirmed Entry keeps `confirmed.<entry id>`, the instant it was confirmed, apart from its Knowledge Mark: the record is never removed, so the Entry stays confirmed whatever its mark does, and the counts go by the Word's rarity from the Language Pack, with a total every kind of Entry counts in. The stats sheet joins the counts it shows with the Edition's joiner.
 
-**Switch.** The Feature Switch `knowledge` guards marks, Review, the Game's share, the «Вчу» list and the counts. With it off, `tap` and `answer` write nothing, nothing is due or labelled, the list is empty, the counts are 0, and the records are kept (ADR 0040).
+**Switch.** The Feature Switch `knowledge` guards marks, Review, the Game's share, the «Вчу» list and the counts. With it off, `tap` and `answer` write nothing, nothing is due or labelled, the list is empty, the counts are 0, and the records are kept (ADR 0040). The Feature Switch `confirmedEntries` guards the confirmed-Entry counts on their own: with it off the counts are 0 and nothing is confirmed, while Review goes on; the confirmed records are kept.
 
 Full spaced repetition beyond 1, 3, 7, 30 and 90 days, and a global reset of marks, are not part of this decision.
 
