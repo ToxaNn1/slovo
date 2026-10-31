@@ -13,26 +13,17 @@
         "simulator": true
       }
     },
-    "development-simulator-uk": {
-      "extends": "development-simulator",
-      "env": {
-        "SLOVO_EDITION": "uk"
-      }
-    },
-    "testflight-uk": {
+    "testflight": {
       "distribution": "store",
       "autoIncrement": true,
       "environment": "production",
       "channel": "uk",
       "node": "22.23.3",
-      "pnpm": "12.9.1",
-      "env": {
-        "SLOVO_EDITION": "uk"
-      }
+      "pnpm": "12.9.1"
     }
   },
   "submit": {
-    "testflight-uk": {
+    "testflight": {
       "ios": {}
     }
   }

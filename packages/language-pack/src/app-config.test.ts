@@ -44,8 +44,9 @@ describe('the AppConfig', () => {
     expect(app.config).toMatchObject({
       bundleId: 'app.slovo.uk',
       appGroup: 'group.app.slovo.uk',
+      defaultEdition: 'uk',
       updateChannel: 'uk',
-      buildProfiles: { ios: { development: 'development-simulator-uk', release: 'testflight-uk' } },
+      buildProfiles: { ios: { development: 'development-simulator', release: 'testflight' } },
     });
     expect(app.path('icon')).toBe(join(REPO_DIR, 'editions/uk/assets/icon.png'));
     expect(app.splash().light.image).toMatch(/\.png$/);
