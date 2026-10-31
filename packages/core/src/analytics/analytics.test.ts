@@ -12,6 +12,8 @@ import {
 import { createMemoryContentPort } from '../testing';
 import { correction, fakeClock, idiom, settle, testEdition, word } from '../test-support';
 
+const SECOND = 1000;
+
 const content = createMemoryContentPort({
   words: [word('w_one', { rarity: 4, categoryId: 'human-body' })],
   corrections: [correction('c_one', { categoryId: 'calques' })],
@@ -34,11 +36,12 @@ async function run({ on = ['knowledge', 'analytics'] }: { on?: readonly FeatureS
   const fake = fakePort();
   const edition = testEdition({ isFeatureEnabled: (feature) => on.includes(feature) });
   const userState = await openUserState({ port: createMemoryUserStatePort(new Map()) });
+  const time = fakeClock('2026-10-31T09:00:00.000Z');
   const app = await openComposition({
     content,
     edition,
     userState,
-    clock: fakeClock('2026-10-31T09:00:00.000Z').clock,
+    clock: time.clock,
     random: { next: () => 0.25 },
     analytics: fake.port,
   });
@@ -47,7 +50,7 @@ async function run({ on = ['knowledge', 'analytics'] }: { on?: readonly FeatureS
     defaults: edition.userSettingDefaults,
     analytics: createAnalytics({ edition, userState, port: fake.port }),
   });
-  return { app, settings, ...fake };
+  return { app, settings, time, ...fake };
 }
 
 const theWord = { entryKind: 'word', rarity: 4, categoryId: 'human-body' };
@@ -73,6 +76,22 @@ describe('Analytics', () => {
       ['pronunciationPlayed', theWord],
       ['wordHistoryOpened', theWord],
     ]);
+  });
+
+  it('sends Seen once a card has been on screen, with what the Entry is', async () => {
+    const { app, time, events } = await run();
+
+    await app.feed.show(0);
+    time.advance(2 * SECOND);
+    await app.feed.show(undefined);
+    await settle();
+
+    expect(events).toHaveLength(1);
+    expect([
+      ['seen', theWord],
+      ['seen', { entryKind: 'correction', rarity: null, categoryId: 'calques' }],
+      ['seen', { entryKind: 'idiom', rarity: null, categoryId: null }],
+    ]).toContainEqual(events[0]);
   });
 
   it('sends a screen viewed and a setting changed', async () => {
