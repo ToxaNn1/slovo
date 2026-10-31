@@ -1,12 +1,12 @@
-import type { EditionStrings } from '@slovo/contracts';
 import { coreDecor, type CurrentGame, type Decor, type Haptics } from '@slovo/core';
 import { DecorProvider, EditionProvider, GameResult, HapticsProvider } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, render, screen } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
+import { testStrings } from '../test-strings';
 
-const strings = {
+const strings = testStrings({
   game: {
     round: {
       progress: '{passed} / {total}',
@@ -26,7 +26,7 @@ const strings = {
       home: 'Home',
     },
   },
-} as unknown as EditionStrings;
+});
 
 const haptics: Haptics = {
   selection: jest.fn(),

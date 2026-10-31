@@ -1,9 +1,9 @@
-import type { EditionStrings } from '@slovo/contracts';
 import { EditionProvider, KnowledgeButtons } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import { testStrings } from '../test-strings';
 
-const strings = { knowledge: { known: 'Known', unknown: 'Unknown' } } as EditionStrings;
+const strings = testStrings({ knowledge: { known: 'Known', unknown: 'Unknown' } });
 
 function buttons(
   mark: 'known' | 'unknown' | undefined,

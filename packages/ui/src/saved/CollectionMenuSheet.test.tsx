@@ -1,8 +1,8 @@
-import type { EditionStrings } from '@slovo/contracts';
 import { CollectionMenuSheet, EditionProvider } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { testStrings } from '../test-strings';
 
 const metrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
@@ -20,7 +20,7 @@ async function renderMenu(
   const onCancel = jest.fn();
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
-      <EditionProvider edition={{ locale: 'en' }} strings={{} as EditionStrings}>
+      <EditionProvider edition={{ locale: 'en' }} strings={testStrings({})}>
         <CollectionMenuSheet
           visible={visible}
           copy={copy}
@@ -134,7 +134,7 @@ describe('CollectionMenuSheet', () => {
 });
 
 describe('CollectionMenuSheet dismissal', () => {
-  const strings = {} as EditionStrings;
+  const strings = testStrings({});
   function menu(visible: boolean, onDismissed: () => void) {
     return (
       <SafeAreaProvider initialMetrics={metrics}>

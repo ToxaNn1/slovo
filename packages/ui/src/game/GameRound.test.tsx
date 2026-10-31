@@ -1,4 +1,3 @@
-import type { EditionStrings } from '@slovo/contracts';
 import type {
   CurrentGame,
   GivenAnswer,
@@ -14,8 +13,9 @@ import { useState } from 'react';
 import { AccessibilityInfo } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { testStrings } from '../test-strings';
 
-const strings = {
+const strings = testStrings({
   game: {
     round: {
       progress: '{passed} / {total}',
@@ -53,7 +53,7 @@ const strings = {
     example: '{text}',
     exampleAuthor: '{author}',
   },
-} as unknown as EditionStrings;
+});
 
 /** A screen with no insets, so the sheet needn't wait for the device's. */
 const metrics = {

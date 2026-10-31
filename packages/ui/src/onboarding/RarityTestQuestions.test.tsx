@@ -1,4 +1,3 @@
-import type { EditionStrings } from '@slovo/contracts';
 import {
   EditionProvider,
   RarityTestQuestions,
@@ -8,12 +7,13 @@ import {
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { View } from 'react-native';
+import { testStrings } from '../test-strings';
 
-const strings = {
+const strings = testStrings({
   onboarding: { mix: { next: 'Next' } },
   rarityTest: { progress: '{n} of {total}', result: 'Your level: from {n}' },
   knowledge: { known: 'Known', unknown: 'Unknown' },
-} as unknown as EditionStrings;
+});
 
 const words: RarityTestQuestion[] = [
   { rarity: 1, lemma: 'first', accessibilityLabel: 'first word' },

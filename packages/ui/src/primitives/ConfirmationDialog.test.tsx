@@ -1,13 +1,13 @@
-import type { EditionStrings } from '@slovo/contracts';
 import { ConfirmationDialog, EditionProvider } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import { testStrings } from '../test-strings';
 
 async function renderDialog(props: Partial<Parameters<typeof ConfirmationDialog>[0]> = {}) {
   const onConfirm = jest.fn();
   const onCancel = jest.fn();
   await render(
-    <EditionProvider edition={{ locale: 'en' }} strings={{} as EditionStrings}>
+    <EditionProvider edition={{ locale: 'en' }} strings={testStrings({})}>
       <ConfirmationDialog
         visible
         title="Clear History?"

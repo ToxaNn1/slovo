@@ -1,4 +1,3 @@
-import type { EditionStrings } from '@slovo/contracts';
 import {
   buildShareCardContent,
   type AnyEntryCard,
@@ -15,13 +14,14 @@ import { EditionProvider, ShareSheet, type ShareSheetOutcome } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen, within } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { testStrings } from '../test-strings';
 
 const metrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
   insets: { top: 0, left: 0, right: 0, bottom: 0 },
 };
 
-const strings = {
+const strings = testStrings({
   wordCard: { stress: 'stress on {vowels}', stressOr: 'or' },
   share: {
     title: 'Share the card',
@@ -46,7 +46,7 @@ const strings = {
   idiomCard: { idiomTypes: { idiom: 'idiom', placeName: 'place name' }, etymology: 'Origin' },
   synonymRowCard: { chip: 'synonyms', heading: '{dominant}, synonym row: {members}' },
   tipCard: { chip: 'tip', heading: 'Tip: {title}' },
-} as unknown as EditionStrings;
+});
 
 const card: EntryFeedCard = {
   kind: 'correction',

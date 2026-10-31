@@ -1,4 +1,3 @@
-import type { EditionStrings } from '@slovo/contracts';
 import type { GridCell, RoundAnswer, RoundOption } from '@slovo/core';
 import { EditionProvider, PairsGrid } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
@@ -6,12 +5,13 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { useState } from 'react';
 import { AccessibilityInfo, Pressable, Text } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
+import { testStrings } from '../test-strings';
 
 type PairsAnswer = Extract<RoundAnswer, { form: 'pairs' }>;
 
-const strings = {
+const strings = testStrings({
   wordCard: { stress: 'stress on {vowels}', stressOr: 'or' },
-} as unknown as EditionStrings;
+});
 
 /** The grid's Words in the order shown, and the place of each one's Definition among the Definitions. */
 const WORDS: readonly RoundOption[] = [

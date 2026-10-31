@@ -1,11 +1,11 @@
-import type { EditionStrings } from '@slovo/contracts';
 import type { SynonymRowCardModel, SynonymRowFeedCard } from '@slovo/core';
 import { ActionRow, EditionProvider, EntryCard, KnowledgeButtons } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen, within } from '@testing-library/react-native';
 import { Dimensions } from 'react-native';
+import { testStrings } from '../test-strings';
 
-const strings = {
+const strings = testStrings({
   wordCard: {
     reveal: 'Show the meaning',
     example: '{text}',
@@ -20,7 +20,7 @@ const strings = {
     source: 'Source: {source}',
   },
   knowledge: { known: 'Known', unknown: 'Unknown' },
-} as unknown as EditionStrings;
+});
 
 const model: SynonymRowCardModel = {
   kind: 'synonymRow',

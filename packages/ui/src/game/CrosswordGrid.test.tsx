@@ -1,4 +1,3 @@
-import type { EditionStrings } from '@slovo/contracts';
 import {
   coreTokens,
   CrosswordGrid,
@@ -10,6 +9,7 @@ import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { useState } from 'react';
 import { TextInput } from 'react-native';
+import { testStrings } from '../test-strings';
 
 const texts = {
   cellLabel: (letter: string | undefined, place: CrosswordPlace) =>
@@ -52,7 +52,7 @@ function Crossword({ onOpenLetter }: { onOpenLetter?: (place: CrosswordPlace) =>
         : letters[word.start.row + index]?.[word.start.column],
     ).join('');
   return (
-    <EditionProvider edition={{ locale: 'uk' }} strings={{} as EditionStrings}>
+    <EditionProvider edition={{ locale: 'uk' }} strings={testStrings({})}>
       <CrosswordGrid
         letters={letters}
         words={words.map((word) => ({ ...word, right: read(word) === answers[word.clue] }))}

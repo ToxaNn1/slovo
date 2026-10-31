@@ -1,8 +1,8 @@
-import type { EditionStrings } from '@slovo/contracts';
 import { EditionProvider, TextField } from '@slovo/ui';
 import { afterEach, describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
+import { testStrings } from '../test-strings';
 
 function Field({
   problem,
@@ -16,7 +16,7 @@ function Field({
   onChangeText?: (text: string) => void;
 }) {
   return (
-    <EditionProvider edition={{ locale: 'en' }} strings={{} as EditionStrings}>
+    <EditionProvider edition={{ locale: 'en' }} strings={testStrings({})}>
       <TextField
         testID="email"
         label="Email"

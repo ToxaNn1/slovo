@@ -1,10 +1,10 @@
-import type { EditionStrings } from '@slovo/contracts';
 import type { EntryRowModel, LearningEntry } from '@slovo/core';
 import { EditionProvider, LearningCard, LearningRow } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import type { ReactElement } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { testStrings } from '../test-strings';
 
 /** The kinds of Entry and how a row names one beside its time. */
 const history = {
@@ -19,7 +19,7 @@ const history = {
   kindBeside: '{kind} · {time}',
 };
 
-const strings = {
+const strings = testStrings({
   history,
   learning: {
     title: 'Learning',
@@ -31,7 +31,7 @@ const strings = {
       inDays: { one: 'in {count} day', other: 'in {count} days' },
     },
   },
-} as EditionStrings;
+});
 
 const word = (entryId: string, title: string): EntryRowModel => ({
   kind: 'word',
@@ -71,7 +71,7 @@ const learning = (row: EntryRowModel, days: number): LearningEntry => ({
 });
 
 /** The same strings in a language with four plural forms, as Ukrainian has. */
-const ukStrings = {
+const ukStrings = testStrings({
   history,
   learning: {
     ...strings.learning,
@@ -85,16 +85,14 @@ const ukStrings = {
       },
     },
   },
-} as EditionStrings;
+});
 
 async function renderInEdition(element: ReactElement, { locale = 'en', learning = strings } = {}) {
   await render(
     <GestureHandlerRootView>
       <EditionProvider
         edition={{ locale }}
-        strings={
-          { ...learning, correctionCard: { insteadOf: 'instead of {form}' } } as EditionStrings
-        }
+        strings={testStrings({ ...learning, correctionCard: { insteadOf: 'instead of {form}' } })}
       >
         {element}
       </EditionProvider>

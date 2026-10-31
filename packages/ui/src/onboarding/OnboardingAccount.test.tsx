@@ -1,10 +1,11 @@
-import { ACCOUNT_NAME, type EditionStrings } from '@slovo/contracts';
+import { ACCOUNT_NAME } from '@slovo/contracts';
 import { EditionProvider, OnboardingAccount } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { testStrings } from '../test-strings';
 
-const strings = {
+const strings = testStrings({
   splash: { wordmark: 'SLOVO' },
   onboarding: {
     skip: 'Skip',
@@ -17,7 +18,7 @@ const strings = {
       continueWithout: 'Continue without an account',
     },
   },
-} as unknown as EditionStrings;
+});
 
 const metrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },

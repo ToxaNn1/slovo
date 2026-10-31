@@ -1,4 +1,3 @@
-import type { EditionStrings } from '@slovo/contracts';
 import type { CalendarDay, CalendarMonth, ProgressState } from '@slovo/core';
 import { coreTokens, EditionProvider, StatsSheet } from '@slovo/ui';
 import { describe, expect, it } from '@jest/globals';
@@ -6,6 +5,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
+import { testStrings } from '../test-strings';
 
 const plural = (text: string) => ({ one: text, few: text, many: text, other: text });
 const monthNames = (suffix: string) =>
@@ -13,7 +13,7 @@ const monthNames = (suffix: string) =>
     (name) => `${name}${suffix}`,
   );
 
-const strings = {
+const strings = testStrings({
   game: { round: { progress: '{passed} of {total}' } },
   stats: {
     title: 'Stats',
@@ -38,7 +38,7 @@ const strings = {
       },
     },
   },
-} as unknown as EditionStrings;
+});
 
 const progress: ProgressState = {
   streak: 1,

@@ -1,15 +1,15 @@
-import type { EditionStrings } from '@slovo/contracts';
 import { EditionProvider, MistakeReportSheet } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { testStrings } from '../test-strings';
 
 const metrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
   insets: { top: 0, left: 0, right: 0, bottom: 0 },
 };
 
-const strings = {
+const strings = testStrings({
   mistakeReport: {
     action: 'Report a mistake',
     types: { typo: 'Typo', stress: 'Stress', definition: 'Definition', other: 'Other' },
@@ -18,7 +18,7 @@ const strings = {
     sent: 'Thanks!',
     tooMany: 'Too many today.',
   },
-} as unknown as EditionStrings;
+});
 
 async function renderSheet(onSend = jest.fn(), onClose = jest.fn()) {
   await render(

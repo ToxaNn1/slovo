@@ -1,12 +1,12 @@
-import type { EditionStrings } from '@slovo/contracts';
 import { EditionProvider, RarityFloorChoice } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import type { ReactElement } from 'react';
+import { testStrings } from '../test-strings';
 
 async function renderInEdition(choice: ReactElement) {
   await render(
-    <EditionProvider edition={{ locale: 'en' }} strings={{} as EditionStrings}>
+    <EditionProvider edition={{ locale: 'en' }} strings={testStrings({})}>
       {choice}
     </EditionProvider>,
   );

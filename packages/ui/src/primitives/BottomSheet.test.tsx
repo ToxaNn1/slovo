@@ -1,4 +1,3 @@
-import type { EditionStrings } from '@slovo/contracts';
 import { BottomSheet, EditionProvider } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, render, screen } from '@testing-library/react-native';
@@ -7,6 +6,7 @@ import { State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 import { getAnimatedStyle } from 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { testStrings } from '../test-strings';
 
 const metrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
@@ -16,7 +16,7 @@ const metrics = {
 function sheet(visible: boolean, onClose: () => void, onDismissed: () => void) {
   return (
     <SafeAreaProvider initialMetrics={metrics}>
-      <EditionProvider edition={{ locale: 'en' }} strings={{} as EditionStrings}>
+      <EditionProvider edition={{ locale: 'en' }} strings={testStrings({})}>
         <BottomSheet visible={visible} onClose={onClose} onDismissed={onDismissed} testID="sheet">
           <Text>Content</Text>
         </BottomSheet>

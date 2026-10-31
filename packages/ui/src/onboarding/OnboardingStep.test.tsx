@@ -1,12 +1,12 @@
-import type { EditionStrings } from '@slovo/contracts';
 import { EditionProvider, OnboardingWelcome } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, render, screen } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { testStrings } from '../test-strings';
 
-const strings = {
+const strings = testStrings({
   splash: { wordmark: 'SLOVO' },
   onboarding: {
     skip: 'Skip',
@@ -14,7 +14,7 @@ const strings = {
     stepLabel: 'Step {step} of {total}',
     welcome: { start: 'Start', title: 'Rare words', subtitle: 'One a day' },
   },
-} as unknown as EditionStrings;
+});
 
 const metrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },

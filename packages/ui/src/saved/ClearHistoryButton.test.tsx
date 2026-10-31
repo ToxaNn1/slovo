@@ -1,7 +1,7 @@
-import type { EditionStrings } from '@slovo/contracts';
 import { ClearHistoryButton, EditionProvider } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import { testStrings } from '../test-strings';
 
 const copy = {
   action: 'Clear',
@@ -15,7 +15,7 @@ const copy = {
 async function renderButton() {
   const onClear = jest.fn();
   await render(
-    <EditionProvider edition={{ locale: 'en' }} strings={{} as EditionStrings}>
+    <EditionProvider edition={{ locale: 'en' }} strings={testStrings({})}>
       <ClearHistoryButton copy={copy} onClear={onClear} testID="history-clear" />
     </EditionProvider>,
   );

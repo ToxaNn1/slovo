@@ -1,4 +1,3 @@
-import type { EditionStrings } from '@slovo/contracts';
 import type { EntryFeedCard, Haptics } from '@slovo/core';
 import {
   EditionProvider,
@@ -9,8 +8,9 @@ import {
 } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { testStrings } from '../test-strings';
 
-const strings = {
+const strings = testStrings({
   wordCard: {
     partsOfSpeech: { noun: { short: 'n.', full: 'noun' } },
     genders: {},
@@ -41,7 +41,7 @@ const strings = {
     reveal: 'Show',
   },
   knowledge: { known: 'Known', unknown: 'Unknown', correctionKnownHint: 'I say it right' },
-} as unknown as EditionStrings;
+});
 
 function wordCard(lemma: string): EntryFeedCard {
   return {

@@ -1,13 +1,13 @@
-import type { EditionStrings } from '@slovo/contracts';
 import { EditionProvider, GoogleSignInButton, PrimaryButton, SecondaryButton } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 import { Text } from 'react-native';
+import { testStrings } from '../test-strings';
 
 function Edition({ children }: { children: ReactNode }) {
   return (
-    <EditionProvider edition={{ locale: 'en' }} strings={{} as EditionStrings}>
+    <EditionProvider edition={{ locale: 'en' }} strings={testStrings({})}>
       {children}
     </EditionProvider>
   );

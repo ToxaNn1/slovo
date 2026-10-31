@@ -1,15 +1,15 @@
-import type { EditionStrings } from '@slovo/contracts';
 import { CollectionRow, EditionProvider } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { testStrings } from '../test-strings';
 
 async function renderRow() {
   const onPress = jest.fn();
   const onMore = jest.fn();
   await render(
     <GestureHandlerRootView>
-      <EditionProvider edition={{ locale: 'en' }} strings={{} as EditionStrings}>
+      <EditionProvider edition={{ locale: 'en' }} strings={testStrings({})}>
         <CollectionRow
           testID="collection-1"
           name="Nature"

@@ -1,10 +1,10 @@
-import type { EditionStrings } from '@slovo/contracts';
 import type { TipCardModel, TipFeedCard } from '@slovo/core';
 import { ActionRow, EditionProvider, EntryCard, KnowledgeButtons } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import { testStrings } from '../test-strings';
 
-const strings = {
+const strings = testStrings({
   wordCard: {
     reveal: 'Show the meaning',
     example: '{text}',
@@ -18,7 +18,7 @@ const strings = {
   },
   tipCard: { chip: 'tip', heading: 'Tip: {title}' },
   knowledge: { known: 'Known', unknown: 'Unknown' },
-} as unknown as EditionStrings;
+});
 
 const model: TipCardModel = {
   kind: 'tip',
