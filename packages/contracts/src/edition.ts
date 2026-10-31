@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { NotificationSoundFileSchema } from './notification-sound';
-import { HexColorSchema } from './shared';
+import { HexColorSchema, RaritySchema } from './shared';
 
 const KebabCaseIdSchema = z
   .string()
@@ -160,6 +160,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   selfCheck: z.boolean(),
   /** The Mix's Rarity Floor: the lowest rarity of the Words shown. */
   rarityFloor: z.boolean(),
+  /** The Mix's Rarity Ceiling: the highest rarity of the Words shown. Off, every Word up to rarity 5 is in, as before 1.0. */
+  rarityCeiling: z.boolean(),
   /** Game Review: the list of every Round on the Game's result. */
   gameReview: z.boolean(),
   /** The Game Mode «Вгадай слово» (`guess-word`); off while `game` is (ADR 0052). */
@@ -281,31 +283,40 @@ export const NotificationTimesSchema = z
   .max(MAX_NOTIFICATION_TIMES)
   .refine((times) => new Set(times).size === times.length, 'Expected unique times');
 
-export const MixConfigSchema = z.strictObject({
-  /** Either every Category of the Language Pack, also one a content update adds, or the listed Category ids. */
-  categories: z.union([
-    z.literal('all'),
-    // At least one Category always stays in the Mix (ADR 0019).
-    z.array(KebabCaseIdSchema).min(1, 'Expected at least one Category'),
-  ]),
-  /**
-   * The Categories of Corrections in the Mix (ADR 0033): every one of the
-   * Language Pack, or the listed ids. They sit under Corrections as a whole.
-   */
-  correctionCategories: z.union([
-    z.literal('all'),
-    // At least one Category of Corrections always stays in the Mix, as of Words (ADR 0019).
-    z.array(KebabCaseIdSchema).min(1, 'Expected at least one Category of Corrections'),
-  ]),
-  /** Whether Corrections, as a whole, are in the Mix. */
-  corrections: z.boolean(),
-  /** Whether Idioms, as a whole, are in the Mix. */
-  idioms: z.boolean(),
-  /** Whether Synonym Rows, as a whole, are in the Mix (ADR 0051). */
-  synonymRows: z.boolean(),
-  /** Whether Tips, as a whole, are in the Mix (ADR 0051). */
-  tips: z.boolean(),
-});
+export const MixConfigSchema = z
+  .strictObject({
+    /** Either every Category of the Language Pack, also one a content update adds, or the listed Category ids. */
+    categories: z.union([
+      z.literal('all'),
+      // At least one Category always stays in the Mix (ADR 0019).
+      z.array(KebabCaseIdSchema).min(1, 'Expected at least one Category'),
+    ]),
+    /**
+     * The Categories of Corrections in the Mix (ADR 0033): every one of the
+     * Language Pack, or the listed ids. They sit under Corrections as a whole.
+     */
+    correctionCategories: z.union([
+      z.literal('all'),
+      // At least one Category of Corrections always stays in the Mix, as of Words (ADR 0019).
+      z.array(KebabCaseIdSchema).min(1, 'Expected at least one Category of Corrections'),
+    ]),
+    /** Whether Corrections, as a whole, are in the Mix. */
+    corrections: z.boolean(),
+    /** Whether Idioms, as a whole, are in the Mix. */
+    idioms: z.boolean(),
+    /** Whether Synonym Rows, as a whole, are in the Mix (ADR 0051). */
+    synonymRows: z.boolean(),
+    /** Whether Tips, as a whole, are in the Mix (ADR 0051). */
+    tips: z.boolean(),
+    /** The Rarity Floor a new user starts with, «від 1» to «від 5». */
+    rarityFloor: RaritySchema,
+    /** The Rarity Ceiling a new user starts with, «до 1» to «до 5»; never below the Rarity Floor. */
+    rarityCeiling: RaritySchema,
+  })
+  .refine(({ rarityFloor, rarityCeiling }) => rarityFloor <= rarityCeiling, {
+    path: ['rarityCeiling'],
+    message: 'Expected a Rarity Ceiling at the Rarity Floor or above it',
+  });
 
 export type MixConfig = z.infer<typeof MixConfigSchema>;
 

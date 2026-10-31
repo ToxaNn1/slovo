@@ -65,8 +65,8 @@ export type EligibleOfKind<E extends AskableEntry = ShownEntry> =
  * the Feed, the Cycle, the Word of the Day and the card builders never check
  * Retired, a Feature Switch or the Mix themselves. An eligible Entry is live
  * (not Retired), of a kind the Edition turns on and no remote Feature Switch
- * turns off, in the user's Mix (a Word at its Rarity Floor or rarer; the
- * Rarity Floor touches no other kind) and not Hidden (ADR 0015, 0019, 0040,
+ * turns off, in the user's Mix (a Word from its Rarity Floor up to its Rarity Ceiling; the
+ * rarities touch no other kind) and not Hidden (ADR 0015, 0019, 0040,
  * 0051). Synonym Rows and Tips are eligible by the same rules.
  */
 export interface Entries {
@@ -290,6 +290,25 @@ export function createEntries(
     });
   }
 
+  /**
+   * The Words of the ids up to the Rarity Ceiling, while the Edition turns its
+   * rarityCeiling switch on; every one of them otherwise, or at the highest
+   * ceiling, without reading the Words.
+   */
+  async function atRarityCeiling(
+    ids: readonly string[],
+    ceiling: number | undefined,
+  ): Promise<readonly string[]> {
+    if (ceiling === undefined || ceiling >= 5 || !edition.isFeatureEnabled('rarityCeiling')) {
+      return ids;
+    }
+    const words = await live.word();
+    return ids.filter((id) => {
+      const word = words.get(id);
+      return word?.kind === 'word' && word.rarity <= ceiling;
+    });
+  }
+
   /** The ids of the Hidden Entries; none without the user state. */
   const hiddenIds = () =>
     'userState' in options ? options.userState.list(hiddenRecords) : new Map<string, string>();
@@ -298,7 +317,9 @@ export function createEntries(
     const [mix, hidden] = await Promise.all([readUserMix(), hiddenIds()]);
     const ofKind = (kind: MixKind) => (kindShown(kind, mix) ? listIds[kind]() : []);
     const [words, corrections, idioms, synonymRows, tips] = await Promise.all([
-      idsInCategories('word', mix?.categoryIds).then((ids) => atRarityFloor(ids, mix?.rarityFloor)),
+      idsInCategories('word', mix?.categoryIds)
+        .then((ids) => atRarityFloor(ids, mix?.rarityFloor))
+        .then((ids) => atRarityCeiling(ids, mix?.rarityCeiling)),
       kindShown('correction', mix)
         ? idsInCategories('correction', mix?.correctionCategories.categoryIds)
         : [],

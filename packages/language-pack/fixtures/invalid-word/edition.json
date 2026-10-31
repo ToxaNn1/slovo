@@ -31,6 +31,7 @@
     "knowledge": true,
     "selfCheck": true,
     "rarityFloor": true,
+    "rarityCeiling": true,
     "gameReview": true,
     "gameGuessWord": true,
     "gameCorrection": true,
@@ -81,7 +82,9 @@
       "corrections": true,
       "idioms": true,
       "synonymRows": true,
-      "tips": true
+      "tips": true,
+      "rarityFloor": 1,
+      "rarityCeiling": 5
     }
   },
   "linkDomain": "slovo.example",

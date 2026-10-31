@@ -35,3 +35,11 @@ export const SourceSchema = z.strictObject({
 export type Source = z.infer<typeof SourceSchema>;
 
 export const hasNoRepeats = (items: readonly unknown[]) => new Set(items).size === items.length;
+
+/** The rarities of Words, the commonest first: 1 ("heard it, never use it") to 5 ("almost nobody knows it"). */
+export const RARITIES = [1, 2, 3, 4, 5] as const;
+
+/** A rarity of Words, from 1 ("heard it, never use it") to 5 ("almost nobody knows it"). */
+export const RaritySchema = z.literal(RARITIES, { error: 'Expected a whole number from 1 to 5' });
+
+export type Rarity = z.infer<typeof RaritySchema>;

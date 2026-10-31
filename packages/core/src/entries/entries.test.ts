@@ -328,6 +328,8 @@ describe('the Entries', () => {
             idioms: false,
             synonymRows: true,
             tips: true,
+            rarityFloor: 1 as const,
+            rarityCeiling: 5 as const,
           },
         },
       };

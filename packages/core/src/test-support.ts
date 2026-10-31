@@ -55,6 +55,8 @@ const testEditionConfig = {
       idioms: true,
       synonymRows: true,
       tips: true,
+      rarityFloor: 1,
+      rarityCeiling: 5,
     },
   },
   linkDomain: 'slovo.example',
