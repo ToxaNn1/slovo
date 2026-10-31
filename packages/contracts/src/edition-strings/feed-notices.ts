@@ -19,6 +19,17 @@ export const FeedNoticesStringsSchema = z.strictObject({
     known: TextSchema,
     /** The label of the Streak. */
     streak: TextSchema,
+    /**
+     * What VoiceOver reads for each number, in every plural form the
+     * Edition's language has. Takes `{count}`. The Share Card of the recap
+     * reads the same.
+     */
+    spoken: z.strictObject({
+      seen: pluralOf(),
+      saved: pluralOf(),
+      known: pluralOf(),
+      streak: pluralOf(),
+    }),
   }),
   /** Asks about yesterday's Word of the Day. */
   yesterday: z.strictObject({ title: TextSchema }),

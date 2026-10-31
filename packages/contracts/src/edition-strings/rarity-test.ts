@@ -14,6 +14,11 @@ export const RarityTestStringsSchema = z.strictObject({
   subtitle: TextSchema,
   /** Where the test is, over the Word asked about. Takes `{n}`, its number, and `{total}`. */
   progress: templateOf('n', 'total'),
+  /**
+   * What VoiceOver announces when the next Word comes up: where the test is
+   * and the Word. Takes `{n}`, `{total}` and `{word}`, what VoiceOver reads for the Word.
+   */
+  announcement: templateOf('n', 'total', 'word'),
   /** The Settings row that takes the test again. */
   retake: TextSchema,
   /** The result screen. Takes `{n}`, the Rarity Floor. */

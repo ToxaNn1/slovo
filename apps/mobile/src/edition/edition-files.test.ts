@@ -585,6 +585,92 @@ describe('the 0.8.15 strings', () => {
   });
 });
 
+describe('the 0.9 VoiceOver templates', () => {
+  const strings = readJson('uk', 'strings') as Record<string, Record<string, unknown>>;
+  const issuesOf = (changed: unknown) =>
+    EditionStringsSchema.safeParse(changed).error?.issues.map((issue) => issue.path.join('.'));
+  const parsed = EditionStringsSchema.parse(strings);
+  const pluralRules = new Intl.PluralRules('uk');
+  /** A count text as the app fills it: the form of `count`. */
+  const countText = (forms: Record<string, string | undefined>, count: number) =>
+    fill(forms[pluralRules.select(count)] ?? forms['other'] ?? '', { count: String(count) });
+  const { spoken } = parsed.feedNotices.weeklyRecap;
+
+  it.each([
+    [
+      1,
+      'переглянуто 1 запис',
+      'збережено 1 запис',
+      'позначено «Знаю»: 1 запис',
+      'серія: 1 день поспіль',
+    ],
+    [
+      2,
+      'переглянуто 2 записи',
+      'збережено 2 записи',
+      'позначено «Знаю»: 2 записи',
+      'серія: 2 дні поспіль',
+    ],
+    [
+      5,
+      'переглянуто 5 записів',
+      'збережено 5 записів',
+      'позначено «Знаю»: 5 записів',
+      'серія: 5 днів поспіль',
+    ],
+    [
+      21,
+      'переглянуто 21 запис',
+      'збережено 21 запис',
+      'позначено «Знаю»: 21 запис',
+      'серія: 21 день поспіль',
+    ],
+  ])(
+    'VoiceOver reads the Weekly Recap numbers of %i in Ukrainian',
+    (count, seen, saved, known, streak) => {
+      expect(countText(spoken.seen, count)).toBe(seen);
+      expect(countText(spoken.saved, count)).toBe(saved);
+      expect(countText(spoken.known, count)).toBe(known);
+      expect(countText(spoken.streak, count)).toBe(streak);
+    },
+  );
+
+  it('VoiceOver announces where the Rarity Test is and the Word', () => {
+    expect(fill(parsed.rarityTest.announcement, { n: '3', total: '10', word: 'каганець' })).toBe(
+      'Слово 3 з 10: каганець',
+    );
+  });
+
+  it.each([
+    ['feedNotices', 'weeklyRecap', 'spoken'],
+    ['rarityTest', undefined, 'announcement'],
+  ])('every Edition needs %s.%s%s', (group, area, key) => {
+    const groupStrings = strings[group] as Record<string, Record<string, unknown>>;
+    const holder = area === undefined ? groupStrings : (groupStrings[area] ?? {});
+    const without = Object.fromEntries(Object.entries(holder).filter(([name]) => name !== key));
+    const changed = area === undefined ? without : { ...groupStrings, [area]: without };
+
+    expect(issuesOf({ ...strings, [group]: changed })).toEqual([
+      [group, area, key].filter((part) => part !== undefined).join('.'),
+    ]);
+  });
+
+  it('needs the {count} of every spoken Weekly Recap number and the {word} of the announcement', () => {
+    const feedNotices = strings['feedNotices'] as Record<string, Record<string, unknown>>;
+    const weeklyRecap = feedNotices['weeklyRecap'] ?? {};
+    const brokenSpoken = { ...(weeklyRecap['spoken'] as object), streak: { other: 'серія' } };
+    const rarityTest = { ...strings['rarityTest'], announcement: 'Слово {n} з {total}' };
+
+    expect(
+      issuesOf({
+        ...strings,
+        feedNotices: { ...feedNotices, weeklyRecap: { ...weeklyRecap, spoken: brokenSpoken } },
+        rarityTest,
+      }),
+    ).toEqual(['rarityTest.announcement', 'feedNotices.weeklyRecap.spoken.streak.other']);
+  });
+});
+
 describe('the 0.6 widget strings group', () => {
   const strings = readJson('uk', 'strings') as Record<string, unknown>;
   const widget = strings['widget'] as { guide: Record<string, unknown> };

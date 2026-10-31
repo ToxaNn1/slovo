@@ -76,7 +76,7 @@ describe('the Weekly Recap card', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Поділитися' }));
 
     expect(previewCard()).toHaveAccessibleName(
-      '19–25 жовтня. Мій тиждень у SLOVO. 23 переглянуто. 4 збережено. 9 знаю. 6 серія',
+      '19–25 жовтня. Мій тиждень у SLOVO. переглянуто 23 записи. збережено 4 записи. позначено «Знаю»: 9 записів. серія: 6 днів поспіль',
     );
   });
 
@@ -86,14 +86,14 @@ describe('the Weekly Recap card', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Поділитися' }));
 
     expect(previewCard()).toHaveAccessibleName(
-      '19–25 жовтня. Мій тиждень у SLOVO. 23 переглянуто. 4 збережено. 9 знаю',
+      '19–25 жовтня. Мій тиждень у SLOVO. переглянуто 23 записи. збережено 4 записи. позначено «Знаю»: 9 записів',
     );
   });
 
   it('has no «Поділитися» with the Share Cards switch off', async () => {
     await renderNotice({ shareCards: false });
 
-    expect(screen.getByLabelText('23 переглянуто')).toBeOnTheScreen();
+    expect(screen.getByLabelText('переглянуто 23 записи')).toBeOnTheScreen();
     expect(screen.queryByRole('button', { name: 'Поділитися' })).not.toBeOnTheScreen();
   });
 });

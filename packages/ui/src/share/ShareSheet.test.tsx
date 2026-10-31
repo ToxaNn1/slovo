@@ -37,7 +37,20 @@ const strings = testStrings({
       week: '{from}–{to} {month}',
     },
   },
-  feedNotices: { weeklyRecap: { seen: 'seen', saved: 'saved', known: 'known', streak: 'streak' } },
+  feedNotices: {
+    weeklyRecap: {
+      seen: 'seen',
+      saved: 'saved',
+      known: 'known',
+      streak: 'streak',
+      spoken: {
+        seen: { one: '{count} entry seen', other: '{count} entries seen' },
+        saved: { one: '{count} entry saved', other: '{count} entries saved' },
+        known: { one: 'marked known: {count} entry', other: 'marked known: {count} entries' },
+        streak: { one: 'streak: {count} day', other: 'streak: {count} days' },
+      },
+    },
+  },
   dates: { months: ['', '', '', '', '', '', '', '', '', 'October'] },
   correctionCard: { correctionTypes: { calque: 'calque' } },
   idiomCard: { idiomTypes: { idiom: 'idiom', placeName: 'place name' }, etymology: 'Origin' },
@@ -76,7 +89,7 @@ async function renderSheet(outcome: ShareSheetOutcome, shown: AnyEntryCard = car
       <EditionProvider edition={{ locale: 'en' }} strings={strings}>
         <ShareSheet
           visible
-          content={buildShareCardContent({ card: shown, todaysWordOfTheDay: false }, strings)}
+          content={buildShareCardContent({ card: shown, todaysWordOfTheDay: false }, strings, 'en')}
           watermark="SLOVO"
           initialFormat="story"
           onFormatChange={jest.fn()}
@@ -296,7 +309,7 @@ async function renderRecapSheet(format: 'story' | 'square') {
       <EditionProvider edition={{ locale: 'en' }} strings={strings}>
         <ShareSheet
           visible
-          content={buildShareCardContent({ recap, hideStreak: false }, strings)}
+          content={buildShareCardContent({ recap, hideStreak: false }, strings, 'en')}
           watermark="SLOVO"
           initialFormat={format}
           onFormatChange={jest.fn()}
@@ -334,7 +347,7 @@ describe('The Share Card of a Weekly Recap', () => {
     await renderRecapSheet('story');
 
     expect(previewCard()).toHaveAccessibleName(
-      '20–26 October. My week in SLOVO. 34 seen. 5 saved. 0 known. 9 streak',
+      '20–26 October. My week in SLOVO. 34 entries seen. 5 entries saved. marked known: 0 entries. streak: 9 days',
     );
   });
 });

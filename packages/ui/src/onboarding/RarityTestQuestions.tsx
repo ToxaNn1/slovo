@@ -93,7 +93,13 @@ export function RarityTestQuestions({
   const asked = phase.kind === 'asking' ? phase.answers.length : 0;
   const spoken = asked > 0 ? words[asked] : undefined;
   const announcement =
-    spoken === undefined ? undefined : `${progressOf(asked)}, ${spoken.accessibilityLabel}`;
+    spoken === undefined
+      ? undefined
+      : fill(strings.rarityTest.announcement, {
+          n: String(asked + 1),
+          total: String(words.length),
+          word: spoken.accessibilityLabel,
+        });
   useEffect(() => {
     if (announcement !== undefined) AccessibilityInfo.announceForAccessibility(announcement);
   }, [announcement]);

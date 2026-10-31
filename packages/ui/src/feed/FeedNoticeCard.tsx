@@ -1,4 +1,4 @@
-import type { FeedNotice, FirstWeekDay } from '@slovo/core';
+import { sentences, type FeedNotice, type FirstWeekDay } from '@slovo/core';
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -12,8 +12,8 @@ import { usePageTurnActions, useTurnToNextPage } from '../primitives/VerticalPag
  * The frame of a Feed Notice's card: a title and a line of muted text,
  * centred on the Feed's background like the end-of-Cycle card, then what
  * the notice shows of its own and a button, if it has them. VoiceOver reads
- * the title and the text as one element, which turns the page as a swipe
- * would.
+ * the title and the text as one element, a sentence each, which turns the
+ * page as a swipe would.
  */
 export function FeedNoticeCard({
   notice,
@@ -33,14 +33,10 @@ export function FeedNoticeCard({
   const { colors, fontFamilies } = useTokens();
   const { voice } = useEdition();
   const turnActions = usePageTurnActions();
-  // A title that ends a sentence of its own («Знаю чи не знаю?») takes no stop after it.
-  const spoken =
-    title === undefined || message === undefined
-      ? (title ?? message)
-      : `${title}${/[.?!…]$/.test(title) ? '' : '.'} ${message}`;
+  const spoken = sentences([title, message]);
   return (
     <View testID={`feed-notice-${notice}`} style={styles.card}>
-      {spoken !== undefined && (
+      {spoken !== '' && (
         <View accessible accessibilityLabel={spoken} {...voice} {...turnActions}>
           {title !== undefined && (
             <Text style={[styles.title, { color: colors.ink, fontFamily: fontFamilies.word }]}>

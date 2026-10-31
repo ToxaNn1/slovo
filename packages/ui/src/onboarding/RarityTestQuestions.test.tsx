@@ -7,12 +7,16 @@ import {
 } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
-import { View } from 'react-native';
+import { AccessibilityInfo, View } from 'react-native';
 import { testStrings } from '../test-strings';
 
 const strings = testStrings({
   onboarding: { mix: { next: 'Next' } },
-  rarityTest: { progress: '{n} of {total}', result: 'Your level: from {n}' },
+  rarityTest: {
+    progress: '{n} of {total}',
+    announcement: 'Word {n} of {total}: {word}',
+    result: 'Your level: from {n}',
+  },
   knowledge: { known: 'Known', unknown: 'Unknown' },
 });
 
@@ -57,6 +61,17 @@ describe('RarityTestQuestions', () => {
     expect(screen.getByText('2 of 2')).toBeTruthy();
     expect(screen.getByLabelText('second word')).toBeTruthy();
     expect(onApply).not.toHaveBeenCalled();
+  });
+
+  it("announces each next Word to VoiceOver with where the test is, in the Edition's words", async () => {
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockClear();
+    await renderTest(2);
+
+    expect(announce).not.toHaveBeenCalled();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Known' }));
+
+    expect(announce).toHaveBeenCalledWith('Word 2 of 2: second word');
   });
 
   it('applies all the answers on the last one and shows the floor they set', async () => {
