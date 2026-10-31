@@ -105,9 +105,7 @@
     },
     "sounds": {
       "section": "ЗВУКИ",
-      "sounds": "Звуки",
-      "vibration": "Вібрація",
-      "music": "Музика"
+      "vibration": "Вібрація"
     },
     "about": {
       "editionLine": "Українське видання",

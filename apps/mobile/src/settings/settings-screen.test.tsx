@@ -19,16 +19,10 @@ jest.mock('../account/account', () => ({ useAccountInEffect: () => undefined }))
 jest.mock('../mix/hidden', () => ({ useHiddenSummary: () => '' }));
 jest.mock('../notifications/notifications', () => ({ useNotificationsSummary: () => '' }));
 
-/** The UA Edition as it ships, with the Feature Switches named turned off. */
-function editionWithout(switchedOff: readonly FeatureSwitch[]): Edition {
+/** The UA Edition as it ships, with the Feature Switches named set as given. */
+function editionWith(switches: Partial<Record<FeatureSwitch, boolean>>): Edition {
   const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, boolean> };
-  return loadEdition({
-    ...rest,
-    featureSwitches: {
-      ...featureSwitches,
-      ...Object.fromEntries(switchedOff.map((name) => [name, false])),
-    },
-  });
+  return loadEdition({ ...rest, featureSwitches: { ...featureSwitches, ...switches } });
 }
 
 const metrics = {
@@ -38,14 +32,14 @@ const metrics = {
 
 /**
  * Settings as the app routes to it, over the Edition in effect with the
- * switches named off and the settings as they ship, with the widget guide a
+ * switches named set as given and the settings as they ship, with the widget guide a
  * push away. Gives the settings, which keep what the screen changes.
  */
-async function renderSettings(switchedOff: readonly FeatureSwitch[] = []) {
+async function renderSettings(switches: Partial<Record<FeatureSwitch, boolean>> = {}) {
   const settings = await settingsAt();
   const shell = testShell({
     composition: opened(await testShell().composition.opened()),
-    remoteSwitches: switchedTo(editionWithout(switchedOff)),
+    remoteSwitches: switchedTo(editionWith(switches)),
     settings,
   });
   await renderRouter(
@@ -86,9 +80,30 @@ describe('Settings › Віджети', () => {
   });
 });
 
-describe('Settings › «Сезонний декор»', () => {
-  it('turns Seasonal Decor off from its switch, which explains what it changes', async () => {
+describe('Settings › ЗВУКИ', () => {
+  it('shows only «Вібрація», with no «Звуки» or «Музика» row', async () => {
     const settings = await renderSettings();
+
+    expect(screen.getByText('ЗВУКИ')).toBeOnTheScreen();
+    expect(screen.queryByText('Звуки', { includeHiddenElements: true })).not.toBeOnTheScreen();
+    expect(screen.queryByText('Музика', { includeHiddenElements: true })).not.toBeOnTheScreen();
+    expect(screen.queryByText('СКОРО', { includeHiddenElements: true })).not.toBeOnTheScreen();
+
+    await fireEvent(screen.getByRole('switch', { name: 'Вібрація' }), 'valueChange', false);
+
+    expect((await settings.read()).vibration).toBe(false);
+  });
+});
+
+describe('Settings › «Сезонний декор»', () => {
+  it('has no switch in the UA Edition, which pauses Seasonal Decor', async () => {
+    await renderSettings();
+
+    expect(screen.queryByRole('switch', { name: 'Сезонний декор' })).not.toBeOnTheScreen();
+  });
+
+  it('turns Seasonal Decor off from its switch while the Edition turns it on', async () => {
+    const settings = await renderSettings({ seasonalDecor: true });
 
     const row = screen.getByRole('switch', { name: 'Сезонний декор' });
     expect(row).toHaveProp('value', true);
@@ -104,11 +119,6 @@ describe('Settings › «Сезонний декор»', () => {
     expect((await settings.read()).seasonalDecor).toBe(false);
   });
 
-  it('has no switch while the Edition turns Seasonal Decor off', async () => {
-    await renderSettings(['seasonalDecor']);
-
-    expect(screen.queryByRole('switch', { name: 'Сезонний декор' })).not.toBeOnTheScreen();
-  });
 });
 
 describe('Settings › «Ділитися анонімною статистикою»', () => {
@@ -139,7 +149,7 @@ describe('Settings › «Ділитися анонімною статистик�
   });
 
   it('has no switch and no link while the Edition turns Community Counters off', async () => {
-    await renderSettings(['communityCounters']);
+    await renderSettings({ communityCounters: false });
 
     expect(
       screen.queryByRole('switch', { name: 'Ділитися анонімною статистикою' }),
