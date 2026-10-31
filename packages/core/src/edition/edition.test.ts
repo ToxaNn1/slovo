@@ -71,6 +71,7 @@ const validConfig = {
     spotlight: true,
     appIntents: true,
     collectionLinks: true,
+    replaceOpenEntry: true,
   },
   userSettingDefaults: {
     theme: 'system',

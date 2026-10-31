@@ -49,7 +49,11 @@ let composition: Composition;
 const mockPush = jest.fn<(href: string) => void>();
 
 jest.mock('../edition/remote-switches', () => ({ useEditionInEffect: () => mockEdition }));
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }));
+jest.mock('expo-router', () => ({
+  useRouter: () => ({ push: mockPush }),
+  // No stack of links holds anything yet, so the card opens on top.
+  useNavigationContainerRef: () => ({ getRootState: () => undefined }),
+}));
 
 const metrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },

@@ -131,6 +131,8 @@ async function renderApp() {
           linkDomain: edition.linkDomain,
           widgetLinkKey: () => Promise.resolve(undefined),
           appIntents: { on: () => Promise.resolve(true), landOnWordOfTheDay: () => undefined },
+          // With no Widget Snapshot no link is the widget's.
+          widgetEntries: { replaceOpenEntry: () => Promise.resolve(true), open: () => undefined },
         }),
       },
       index: () => <Text>Feed</Text>,
