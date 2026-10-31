@@ -13,7 +13,11 @@ const SWIPE_START = 15;
 /** How far, in points, a swipe goes to turn the month. */
 const SWIPE_DISTANCE = 50;
 
-/** One day of the grid: its number, today's ring, and the dot of an Active Day or the quiet grey of a missed one. */
+/**
+ * One day of the grid: its number, today's ring, and the dot of an Active Day,
+ * in the success colour (the accent reads as an error in an Edition whose
+ * accent is red), or the quiet grey of a missed one.
+ */
 function Day({ day, month }: { day: CalendarDay; month: number }) {
   const { colors, fontFamilies } = useTokens();
   const { strings, voice } = useEdition();
@@ -21,7 +25,7 @@ function Day({ day, month }: { day: CalendarDay; month: number }) {
   const today = day.state === 'today';
   const active = day.state === 'active' || (today && day.active);
   const spoken = today ? (active ? 'todayActive' : 'today') : day.state;
-  const dot = active ? colors.accent : day.state === 'missed' ? colors.track : 'transparent';
+  const dot = active ? colors.correct : day.state === 'missed' ? colors.track : 'transparent';
   return (
     <View
       testID={`stats-calendar-${day.date}`}
@@ -46,7 +50,10 @@ function Day({ day, month }: { day: CalendarDay; month: number }) {
           {day.day}
         </Text>
       </View>
-      <View style={[styles.dot, { backgroundColor: dot }]} />
+      <View
+        testID={`stats-calendar-${day.date}-dot`}
+        style={[styles.dot, { backgroundColor: dot }]}
+      />
     </View>
   );
 }
