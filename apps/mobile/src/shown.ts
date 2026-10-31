@@ -111,7 +111,7 @@ export function shownOf({
     selfCheck: on('selfCheck') && settings.selfCheck,
     selfCheckSetting: on('selfCheck'),
     seasonalDecorSetting: on('seasonalDecor'),
-    shareCountersSetting: on('communityCounters'),
+    shareCountersSetting: on('communityCounters') || on('analytics'),
     learning: knowledge,
     stats: on('statistics')
       ? {

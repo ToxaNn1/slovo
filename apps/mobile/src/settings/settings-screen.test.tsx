@@ -147,8 +147,8 @@ describe('Settings › «Ділитися анонімною статистик�
     expect(openURL).toHaveBeenCalledWith(edition.legalPages.privacy);
   });
 
-  it('has no switch and no link while the Edition turns Community Counters off', async () => {
-    await renderSettings({ communityCounters: false });
+  it('has no switch and no link while the Edition turns Community Counters and Analytics off', async () => {
+    await renderSettings({ communityCounters: false, analytics: false });
 
     expect(
       screen.queryByRole('switch', { name: 'Ділитися анонімною статистикою' }),

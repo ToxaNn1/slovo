@@ -8,6 +8,7 @@ import type { PackReader } from '@slovo/language-pack/reader';
 import { systemSchedule } from '@slovo/ui';
 import { useEffect, useState } from 'react';
 
+import { deviceAnalytics } from './analytics/posthog-analytics';
 import { backend } from './api';
 import { deviceClock } from './device/device-clock';
 import { logError } from './diagnostics/log';
@@ -39,6 +40,7 @@ async function openOver({
     clock: deviceClock,
     random: systemRandom,
     schedule: systemSchedule,
+    analytics: deviceAnalytics,
     scheduling: {
       scheduler: deviceNotificationScheduler,
       ellipsis: editionStrings.notificationBody.ellipsis,

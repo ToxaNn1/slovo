@@ -25,6 +25,7 @@ import {
   editionStrings,
   editionTokens,
 } from '@/edition/edition';
+import { ScreenViews } from '@/analytics/screen-views';
 import { hapticEngine } from '@/game/haptics';
 import { deviceClock } from '@/device/device-clock';
 import { startCrashReports } from '@/diagnostics/crash-reports';
@@ -167,6 +168,7 @@ function ThemedTabs() {
             <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
             {/* Outside the gates: each of its listeners waits for its own opening (ADR 0036, 0037). */}
             <Lifecycle />
+            <ScreenViews />
             {/* Every screen draws over the open Language Pack and composition. */}
             <Opened opening={languagePack} failedTestID="language-pack-failed">
               <Opened opening={composition} failedTestID="feed-error">

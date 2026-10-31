@@ -92,6 +92,15 @@ export {
 } from './community-counters/counter-reads';
 export { openCounterSending } from './community-counters/counter-sending';
 export {
+  createAnalytics,
+  noAnalytics,
+  type Analytics,
+  type AnalyticsEvent,
+  type AnalyticsEvents,
+  type AnalyticsPort,
+  type EntryEventProperties,
+} from './analytics/analytics';
+export {
   dateKeyOf,
   formatTimeOfDay,
   localDayOf,

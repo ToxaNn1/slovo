@@ -74,6 +74,7 @@ const validConfig = {
     collectionLinks: true,
     replaceOpenEntry: true,
     mixKindWeights: true,
+    analytics: true,
   },
   userSettingDefaults: {
     theme: 'system',

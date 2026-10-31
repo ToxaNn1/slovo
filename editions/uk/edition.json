@@ -65,6 +65,7 @@
     "mistakeReports": true,
     "communityCounters": true,
     "communityWord": true,
+    "analytics": true,
     "calligraphy": false,
     "spotlight": true,
     "appIntents": true,
