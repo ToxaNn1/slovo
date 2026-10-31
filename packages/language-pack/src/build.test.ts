@@ -1525,7 +1525,7 @@ describe('buildLanguagePack', () => {
         ...config,
         originLanguages: [
           ...(config['originLanguages'] as Json[]),
-          { code: 'la', name: 'латина' },
+          { code: 'la', name: 'латинська' },
           { code: 'grc', name: 'грецька' },
         ],
       }));

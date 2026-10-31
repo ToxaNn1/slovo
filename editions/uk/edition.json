@@ -191,7 +191,7 @@
   ],
   "categoriesRequiringHistory": ["repressed-words", "chameleon-words"],
   "originLanguages": [
-    { "code": "la", "name": "латина" },
+    { "code": "la", "name": "латинська" },
     { "code": "el", "name": "грецька" },
     { "code": "trk", "name": "тюркські" },
     { "code": "pl", "name": "польська" },
