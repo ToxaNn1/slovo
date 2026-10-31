@@ -14,12 +14,13 @@ import { EditionProvider } from '@slovo/ui';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import config from 'slovo-edition/config';
 
 import CollectionLinkScreen from '../app/c/[linkId]';
-import { edition, editionStrings } from '../edition/edition';
+import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
 import { ShellProvider } from '../shell-value';
 import { opened, testShell } from '../shell/test-support';
+
+const { config } = activeEditionFiles;
 
 /** The composition the sheet reads, opened afresh for each test. */
 let composition: Composition;

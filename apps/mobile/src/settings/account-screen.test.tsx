@@ -18,11 +18,12 @@ import {
 import { EditionProvider } from '@slovo/ui';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { Platform } from 'react-native';
-import config from 'slovo-edition/config';
 
-import { editionStrings } from '../edition/edition';
+import { activeEditionFiles, editionStrings } from '../edition/edition';
 import { openOnce } from '../opening';
 import { AccountScreen } from './account-screen';
+
+const { config } = activeEditionFiles;
 
 // The Sync status line under the signed-in email is Sync's, tested with it;
 // it draws over the whole shell, which this screen's test never stands up.

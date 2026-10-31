@@ -22,17 +22,12 @@ export default {
     '^@/(.*)$': '<rootDir>/src/$1',
     // A plain view in place of the one native view jest-expo has no double for.
     '^expo-glass-effect$': '<rootDir>/jest.glass-effect.js',
-    // The app imports its Edition as `slovo-edition/*`, which Metro resolves
-    // into the Edition's folder; the tests run as the UA Edition.
-    '^slovo-edition/config$': `${EDITION}/edition.json`,
-    '^slovo-edition/strings$': `${EDITION}/strings.json`,
-    '^slovo-edition/tokens$': `${EDITION}/tokens.json`,
-    '^slovo-edition/decor$': `${EDITION}/decor/decor.json`,
+    // The app imports its Editions as `slovo-editions`, which Metro writes
+    // from the Edition folders; the tests run with the UA Edition alone.
+    '^slovo-editions$': '<rootDir>/jest.editions.cjs',
     // The AppConfig and the splash it names (ADR 0065).
     '^slovo-app/config$': '<rootDir>/../../app/app.json',
     '^slovo-app/splash$': `${EDITION}/decor/splash.json`,
-    '^slovo-edition/illustrations$': '<rootDir>/jest.illustrations.cjs',
-    '^slovo-edition/language-pack$': '<rootDir>/jest.language-pack.js',
   },
   resolver: './jest.resolver.cjs',
   setupFiles: ['./jest.setup.js'],

@@ -7,17 +7,27 @@ import {
 import { loadDecor, loadEdition, loadSeasonalMotifs } from '@slovo/core';
 import { designTokens } from '@slovo/ui';
 import appConfig from 'slovo-app/config';
-import config from 'slovo-edition/config';
-import decor from 'slovo-edition/decor';
-import illustrations from 'slovo-edition/illustrations';
 import splash from 'slovo-app/splash';
-import strings from 'slovo-edition/strings';
-import tokens from 'slovo-edition/tokens';
 
-/** The Illustrations this build bundles as Edition assets, by file name (ADR 0055). */
+import { deviceActiveEdition } from './device-active-edition';
+import { bundledEditions } from './registry';
+
+/**
+ * The id of the Edition this app run is for, chosen at launch and fixed for
+ * the run (ADR 0065): every module reads the Edition in effect from here, and
+ * the shell opens its one Shell for it (ADR 0036).
+ */
+export const activeEditionId = deviceActiveEdition(bundledEditions);
+
+/** The bundled files of the active Edition. */
+export const activeEditionFiles = bundledEditions.files(activeEditionId);
+
+const { config, strings, tokens, decor, illustrations } = activeEditionFiles;
+
+/** The Illustrations the active Edition bundles as assets, by file name (ADR 0055). */
 export const editionIllustrations = illustrations;
 
-/** The Edition this build runs as, validated by the Core at startup. */
+/** The active Edition, validated by the Core at startup. */
 export const edition = loadEdition(config, Object.keys(illustrations));
 
 /** The App Group the app shares with its widget (ADR 0026), from the AppConfig. */

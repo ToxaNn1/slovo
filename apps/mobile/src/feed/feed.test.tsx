@@ -10,10 +10,12 @@ import {
 import { createMemoryContentPort } from '@slovo/core/testing';
 import type { VerticalPagerHandle } from '@slovo/ui';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
-import config from 'slovo-edition/config';
 
 import { useFeed } from './feed';
 import { createWordOfTheDayLanding } from './word-of-the-day-landing';
+import { activeEditionFiles } from '../edition/edition';
+
+const { config } = activeEditionFiles;
 
 /** The composition the Feed reads, opened afresh for each test. */
 let mockComposition: Composition;

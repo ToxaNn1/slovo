@@ -14,13 +14,14 @@ import { createMemoryContentPort } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import config from 'slovo-edition/config';
 
 import SettingsScreen from '../app/settings/index';
-import { edition, editionStrings } from '../edition/edition';
+import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
 import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 import { SettingsProvider } from './settings';
+
+const { config } = activeEditionFiles;
 
 /** The UA Edition with the Account off, and the Daily Limit on or off. */
 function editionWith({ dailyLimit }: { dailyLimit: boolean }): Edition {

@@ -14,12 +14,14 @@ import { createMemoryContentPort } from '@slovo/core/testing';
 import type { VerticalPagerHandle } from '@slovo/ui';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
-import config from 'slovo-edition/config';
 
 import { ShellProvider } from '../shell-value';
 import { opened, testShell } from '../shell/test-support';
 import { useFeed } from './feed';
 import { createWordOfTheDayLanding, type WordOfTheDayLanding } from './word-of-the-day-landing';
+import { activeEditionFiles } from '../edition/edition';
+
+const { config } = activeEditionFiles;
 
 /** The composition the Feed reads, opened afresh for each test. */
 let composition: Composition;

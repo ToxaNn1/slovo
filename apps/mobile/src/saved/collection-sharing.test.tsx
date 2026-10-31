@@ -14,12 +14,13 @@ import { EditionProvider, systemSchedule } from '@slovo/ui';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { Share } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import config from 'slovo-edition/config';
 
 import CollectionsScreen from '../app/saved/collections/index';
-import { edition, editionStrings } from '../edition/edition';
+import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
 import { ShellProvider } from '../shell-value';
 import { opened, testShell } from '../shell/test-support';
+
+const { config } = activeEditionFiles;
 
 /** The composition the screen reads, opened afresh for each test. */
 let composition: Composition;

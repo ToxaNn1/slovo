@@ -13,12 +13,13 @@ import { EditionProvider } from '@slovo/ui';
 import { Stack } from 'expo-router';
 import { act, fireEvent, renderRouter, screen } from 'expo-router/testing-library';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import config from 'slovo-edition/config';
 
 import MixScreen from '../app/settings/mix';
-import { edition, editionStrings } from '../edition/edition';
+import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
 import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
+
+const { config } = activeEditionFiles;
 
 const strings = editionStrings.mix.corrections;
 

@@ -5,14 +5,15 @@ import { EditionProvider } from '@slovo/ui';
 import { Stack } from 'expo-router';
 import { fireEvent, renderRouter, screen, within } from 'expo-router/testing-library';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import config from 'slovo-edition/config';
 
 import SettingsScreen from '../app/settings';
 import WidgetGuideScreen from '../app/settings/widgets';
-import { edition, editionStrings } from '../edition/edition';
+import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
 import { ShellProvider } from '../shell-value';
 import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
 import { SettingsProvider } from './settings';
+
+const { config } = activeEditionFiles;
 
 // Settings reads the Account, the Hidden Entries and the Notifications through these; the rows under test need none of them.
 jest.mock('../account/account', () => ({ useAccountInEffect: () => undefined }));

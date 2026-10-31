@@ -15,15 +15,16 @@ import { act, fireEvent, renderRouter, screen } from 'expo-router/testing-librar
 import { Text } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import config from 'slovo-edition/config';
 
 import CollectionLinkScreen from '../app/c/[linkId]';
 import SavedLayout from '../app/saved/_layout';
 import CollectionScreen from '../app/saved/collections/[collectionId]';
-import { edition, editionStrings } from '../edition/edition';
+import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
 import { ShellProvider } from '../shell-value';
 import { opened, testShell } from '../shell/test-support';
 import { screenSettled } from '../entries/use-open-screen';
+
+const { config } = activeEditionFiles;
 
 /** The composition the screens read, opened afresh for each test. */
 let composition: Composition;
