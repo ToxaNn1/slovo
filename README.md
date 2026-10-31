@@ -58,7 +58,7 @@ Parts marked as placeholders are reserved and filled by later versions.
 
 The native app is a development build made in EAS cloud ([ADR 0004](docs/adr/0004-native-builds-in-eas-cloud.md)). The JavaScript runs locally against it, served by Metro with fast refresh, so day-to-day work never waits for a cloud build.
 
-The `SLOVO_EDITION` environment variable selects the Edition. Every Expo and EAS command fails with a clear message when it is missing or names an unknown Edition. The app name, bundle id, icon, locale, fonts, notification sound and splash come from `editions/<edition>/`: the fonts are the Core's (`packages/ui/assets/fonts/`) and every file in the Edition's `assets/fonts/` (ADR 0006), and the splash is Decor slot 7, described by `decor/splash.json`. An Edition without a splash gets the Core's plain one. Once the JavaScript runs, the app draws the rest of slot 7 over the native splash (the background, the wordmark, the tagline and the band from `decor/decor.json`) and fades it out.
+Every build is the one app (ADR 0065) and bundles the AppConfig's default Edition (`defaultEdition` in `app/app.json`); no command names an Edition. The app name, bundle id, icon and splash come from the AppConfig, and the locale, fonts and notification sound from `editions/<edition>/`: the fonts are the Core's (`packages/ui/assets/fonts/`) and every file in the Edition's `assets/fonts/` (ADR 0006), and the splash is Decor slot 7, described by `decor/splash.json`. An Edition without a splash gets the Core's plain one. Once the JavaScript runs, the app draws the rest of slot 7 over the native splash (the background, the wordmark, the tagline and the band from `decor/decor.json`) and fades it out.
 
 You need the Node version in [`.nvmrc`](.nvmrc), pnpm, Xcode with an iOS Simulator (iOS 17 or later) and access to the Expo account `anton_de`. The commands below run the Expo CLI and `eas-cli` through `npx`, so neither needs a global install.
 
@@ -83,21 +83,21 @@ You need the Node version in [`.nvmrc`](.nvmrc), pnpm, Xcode with an iOS Simulat
 
    ```sh
    cd apps/mobile
-   SLOVO_EDITION=uk npx eas-cli build -p ios --profile development-simulator-uk
+   npx eas-cli build -p ios --profile development-simulator
    ```
 
    When the build is done, install the latest one on the booted simulator:
 
    ```sh
-   SLOVO_EDITION=uk npx eas-cli build:run -p ios --latest --profile development-simulator-uk
+   npx eas-cli build:run -p ios --latest --profile development-simulator
    ```
 
    To install a build by hand instead, download its `.tar.gz` from the EAS dashboard, unpack it and run `xcrun simctl install booted SLOVO.app`.
 
-3. Start Metro from `apps/mobile`, then open SLOVO on the simulator. The development client connects to the server on `localhost:8081`; pressing `i` in the Metro terminal opens the app for you. When port 8081 is taken, pass another one, e.g. `SLOVO_EDITION=uk pnpm start --port 8162`, and give the smoke flow the same port (step 5).
+3. Start Metro from `apps/mobile`, then open SLOVO on the simulator. The development client connects to the server on `localhost:8081`; pressing `i` in the Metro terminal opens the app for you. When port 8081 is taken, pass another one, e.g. `pnpm start --port 8162`, and give the smoke flow the same port (step 5).
 
    ```sh
-   SLOVO_EDITION=uk pnpm start
+   pnpm start
    ```
 
    The app draws itself with the Edition's design tokens (`editions/<edition>/tokens.json`) and Decor (`editions/<edition>/decor/decor.json`, [ADR 0014](docs/adr/0014-editions-supply-decor-as-vector-motifs.md)). To check the Core's neutral look instead, start Metro with `SLOVO_CORE_TOKENS=1 SLOVO_EDITION=uk pnpm start --clear`, and drop the variable (with `--clear` again) to go back.
@@ -167,7 +167,7 @@ No test or CI job looks at what goes into the app's JavaScript bundle. [Expo Atl
 1. Build the Language Pack once (`pnpm build:pack uk`), then export the production bundle with Atlas on, from `apps/mobile`:
 
    ```sh
-   SLOVO_EDITION=uk EXPO_ATLAS=true npx expo export --platform ios
+   EXPO_ATLAS=true npx expo export --platform ios
    ```
 
    The export writes the bundle to `apps/mobile/dist/` and Atlas's data to `apps/mobile/.expo/atlas.jsonl`; git ignores both. Each export starts a fresh `atlas.jsonl`.
@@ -180,7 +180,7 @@ No test or CI job looks at what goes into the app's JavaScript bundle. [Expo Atl
 
    Anything wrong goes into a ticket before the build.
 
-Atlas also runs beside Metro for a development build: start with `SLOVO_EDITION=uk EXPO_ATLAS=true pnpm start` in `apps/mobile`, press `shift+m` and open **expo-atlas**. A development bundle holds development code on purpose, so judge size and leaks on the export above.
+Atlas also runs beside Metro for a development build: start with `EXPO_ATLAS=true pnpm start` in `apps/mobile`, press `shift+m` and open **expo-atlas**. A development bundle holds development code on purpose, so judge size and leaks on the export above.
 
 ## Sign in with Google
 
@@ -289,7 +289,7 @@ All commands run from the repo root. CI runs `lint`, `typecheck`, `deps` and `te
 
 | Command                        | What it does                                                                                                                                                                                                                                                                                                                                                     |
 | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm dev`                     | Starts the whole project for local work: Docker and the local services, `apps/backend/.env` when missing, the migrations, the Language Pack, then the backend and Metro on the first free ports, with the app pointed at that backend. `SLOVO_EDITION`, `PORT` and `SLOVO_METRO_PORT` change the defaults (`uk`, 8787, 8081).                                    |
+| `pnpm dev`                     | Starts the whole project for local work: Docker and the local services, `apps/backend/.env` when missing, the migrations, the Language Pack, then the backend and Metro on the first free ports, with the app pointed at that backend. `PORT` and `SLOVO_METRO_PORT` change the defaults (8787, 8081).                                                         |
 | `pnpm lint`                    | ESLint in every package, then Prettier.                                                                                                                                                                                                                                                                                                                          |
 | `pnpm typecheck`               | TypeScript in every package.                                                                                                                                                                                                                                                                                                                                     |
 | `pnpm deps`                    | dependency-cruiser: the package boundaries the ADRs set, import cycles and orphan modules. Rules and their ADRs are in [`.dependency-cruiser.mjs`](.dependency-cruiser.mjs).                                                                                                                                                                                     |

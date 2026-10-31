@@ -12,7 +12,7 @@ const { APP_CONFIG_FILE, EDITIONS_DIR, REPO_DIR, openAppConfig, openEdition } = 
 );
 
 /**
- * Bundles the Edition selected by SLOVO_EDITION. The app imports it through
+ * Bundles the Edition the app config bundles, the AppConfig's default Edition. The app imports it through
  * `slovo-edition/*`, which resolves into that Edition's folder here, so the
  * app code never names an Edition.
  */

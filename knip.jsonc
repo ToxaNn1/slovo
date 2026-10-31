@@ -20,10 +20,9 @@
     },
     "apps/mobile": {
       // The Expo plugin finds the routes in src/app, app.config.ts and
-      // metro.config.cjs. app.config.ts reads SLOVO_EDITION when it loads: run
-      // Knip with it set (see `pnpm knip`). Maestro's `runScript` runs the
-      // flows' scripts in maestro/, found by their place, not by an import, as
-      // the no-orphans rule of .dependency-cruiser.mjs already treats them.
+      // metro.config.cjs. Maestro's `runScript` runs the flows' scripts in
+      // maestro/, found by their place, not by an import, as the no-orphans
+      // rule of .dependency-cruiser.mjs already treats them.
       "entry": ["**/*.d.ts", "maestro/*.js"],
       "ignoreDependencies": [
         // Native module the Expo SDK pins; autolinking only finds it while the

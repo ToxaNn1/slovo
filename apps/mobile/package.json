@@ -2,7 +2,7 @@
   "name": "@slovo/mobile",
   "version": "0.0.0",
   "private": true,
-  "description": "The mobile shell: one Expo app that builds whichever Edition SLOVO_EDITION selects.",
+  "description": "The mobile shell: the one Expo app with the Editions inside.",
   "type": "module",
   "main": "expo-router/entry",
   "scripts": {
@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run && jest",
-    "eas-build-post-install": "pnpm --dir ../.. build:pack \"$SLOVO_EDITION\"",
+    "eas-build-post-install": "pnpm --dir ../.. build:pack",
     "test:smoke": "maestro test maestro/smoke.yaml"
   },
   "dependencies": {
