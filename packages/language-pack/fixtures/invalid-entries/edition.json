@@ -70,7 +70,8 @@
     "collectionLinks": true,
     "replaceOpenEntry": true,
     "mixKindWeights": true,
-    "analytics": true
+    "analytics": true,
+    "xpLog": true
   },
   "userSettingDefaults": {
     "theme": "system",
@@ -93,8 +94,14 @@
   "legalDomain": "legal.slovo.example",
   "wordOfTheDayFont": "Fixture-Script.ttf",
   "widgetPalette": {
-    "parchment": { "background": "#F3E9D2", "text": "#3B2A1A" },
-    "blue": { "background": "#1F3A5F", "text": "#F3E9D2" }
+    "parchment": {
+      "background": "#F3E9D2",
+      "text": "#3B2A1A"
+    },
+    "blue": {
+      "background": "#1F3A5F",
+      "text": "#F3E9D2"
+    }
   },
   "categories": [
     {
@@ -119,5 +126,13 @@
   "categoriesRequiringHistory": [],
   "originLanguages": [],
   "moods": [],
-  "searchLetters": { "ґ": "г" }
+  "searchLetters": {
+    "ґ": "г"
+  },
+  "xp": {
+    "round": 1,
+    "finishedGame": 5,
+    "finishedGameShare": 0.5,
+    "bestResult": 5
+  }
 }
