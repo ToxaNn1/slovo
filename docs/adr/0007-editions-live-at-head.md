@@ -1,4 +1,4 @@
-# Every Edition builds from the latest Core; per-Edition control comes from switches and release channels
+# Every Edition builds from the latest Core; per-Edition control comes from switches and update channels
 
 The Core is not versioned or published. Every Edition always builds from the Core on `main`. Each Edition is controlled separately in three ways:
 
@@ -11,4 +11,4 @@ Native changes still need a store build per Edition.
 ## Considered Options
 
 - **Versioned Core pinned per Edition**: more explicit, but with one developer and many Editions it means supporting several Core versions at once and backporting fixes. Rejected.
-- **Per-Edition release branches cut from `main`**: kept as a cheap fallback if Editions ever need to drift.
+- **Per-Edition branches cut from `main`**: kept as a cheap fallback if Editions ever need to drift.
