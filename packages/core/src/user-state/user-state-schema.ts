@@ -3,6 +3,7 @@ import {
   FontSizeSchema,
   MistakeReportSchema,
   MixKindWeightSchema,
+  QuickQuestionEverySchema,
   NotificationTimesSchema,
   RaritySchema,
   ThemeSchema,
@@ -287,6 +288,8 @@ export const userStateRecords = {
    * like the rest of the Mix (ADR 0041).
    */
   mixRarityCeiling: declareRecord('mix.rarityCeiling', RaritySchema),
+  /** How often the Feed asks a Quick Question; the Core's default unless the user chose. */
+  mixQuickQuestion: declareRecord('mix.quickQuestion', QuickQuestionEverySchema),
   /**
    * The Active Days, one record per day, by local date `YYYY-MM-DD`: that the
    * app was opened that day. They sync as a union (0.8).

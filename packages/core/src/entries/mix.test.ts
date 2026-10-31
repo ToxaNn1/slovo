@@ -155,6 +155,20 @@ const isCorrection = (id: string) => id.startsWith('c_');
 const isWordBelow = (floor: number) => (id: string) => (rarityOf.get(id) ?? floor) < floor;
 
 describe('the Mix', () => {
+  it('keeps how often the Quick Question comes across app sessions, every 10th card until chosen', async () => {
+    const records = new Map<string, string>();
+    const app = await run({ records });
+    const before = app.feed.cards;
+
+    await app.mix.setQuickQuestionEvery(6);
+
+    expect(app.mix.state.quickQuestionEvery).toBe(6);
+    expect(app.feed.cards).toBe(before);
+    expect((await run({ records })).mix.state.quickQuestionEvery).toBe(6);
+    await app.mix.setQuickQuestionEvery('off');
+    expect((await run({ records })).mix.state.quickQuestionEvery).toBe('off');
+  });
+
   it('starts as the Edition default: every Category and every kind as a whole in, no Hidden Category', async () => {
     const app = await run();
 
@@ -173,6 +187,7 @@ describe('the Mix', () => {
       lastCategoryId: undefined,
       rarityFloor: 1,
       rarityCeiling: 5,
+      quickQuestionEvery: 10,
     });
   });
 
