@@ -74,12 +74,19 @@ function repoWithEdition(
   return { ...context, projectRoot };
 }
 
+/** The real domain and Apple Team ID the Edition check asks of a release build. */
+function withReleaseIds(config: Record<string, unknown>): void {
+  config['linkDomain'] = 'slovo.app';
+  config['appleTeamId'] = 'A1B2C3D4E5';
+}
+
 /**
- * A throwaway repo layout with the public code-signing certificate of OTA
- * updates in `apps/mobile/certs` (ADR 0062), as a release build needs.
+ * A throwaway repo layout with an Edition ready for a release and the public
+ * code-signing certificate of OTA updates in `apps/mobile/certs` (ADR 0062),
+ * as a release build needs.
  */
 function repoWithCertificate(): ConfigContext {
-  const repo = repoWithEdition(() => undefined);
+  const repo = repoWithEdition(withReleaseIds);
   mkdirSync(join(repo.projectRoot, 'certs'));
   writeFileSync(
     join(repo.projectRoot, 'certs/certificate.pem'),
@@ -813,6 +820,37 @@ describe('app config', () => {
     expect(appConfig(repoWithCertificate()).name).toBe(ukrainian.config.displayName);
   });
 
+  it('refuses a release build of an Edition with the placeholder domain and no Team ID, naming the fields', () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+    vi.stubEnv('EAS_BUILD_PROFILE', 'testflight-uk');
+    vi.stubEnv('EXPO_PUBLIC_SLOVO_API_URL', 'https://api.example.com');
+
+    expect(() =>
+      appConfig(
+        repoWithEdition((config) => {
+          config['linkDomain'] = 'slovo.example';
+          config['appleTeamId'] = '';
+        }),
+      ),
+    ).toThrow(/linkDomain.*appleTeamId/s);
+  });
+
+  it("keeps the Edition's placeholder domain and empty Team ID in a development build", () => {
+    vi.stubEnv('SLOVO_EDITION', 'uk');
+    vi.stubEnv('EAS_BUILD_PROFILE', 'development-simulator-uk');
+
+    const config = appConfig(
+      repoWithEdition((edition) => {
+        edition['linkDomain'] = 'slovo.example';
+        edition['appleTeamId'] = '';
+      }),
+    );
+
+    expect(config.ios?.entitlements?.['com.apple.developer.associated-domains']).toEqual([
+      'applinks:slovo.example',
+    ]);
+  });
+
   it.each([
     ['a development profile', 'development-simulator-uk', 'http://localhost:8787'],
     ['a development profile with no address', 'development-simulator', undefined],
@@ -867,7 +905,7 @@ describe('app config', () => {
       vi.stubEnv('EAS_BUILD_PROFILE', 'testflight-uk');
       vi.stubEnv('EXPO_PUBLIC_SLOVO_API_URL', 'https://api.example.com');
 
-      expect(() => appConfig(repoWithEdition(() => undefined))).toThrow(
+      expect(() => appConfig(repoWithEdition(withReleaseIds))).toThrow(
         /code-signing certificate.*certs\/certificate\.pem/s,
       );
     });

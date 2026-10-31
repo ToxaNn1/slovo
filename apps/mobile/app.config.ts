@@ -319,7 +319,12 @@ function updates(
   };
 }
 
-function selectEdition(editionsDir: string): EditionFolder {
+/**
+ * Opens the Edition the build selects. A release build opens it for a
+ * release, which refuses the placeholders a development build keeps, such as
+ * the `slovo.example` domain and an empty Apple Team ID.
+ */
+function selectEdition(editionsDir: string, build: Build): EditionFolder {
   const known = listEditions(editionsDir);
   const hint = `Known Editions: ${known.join(', ')}. Example: ${EDITION_VARIABLE}=${known[0] ?? '<edition>'} pnpm start`;
   // Expo types every environment variable as `any`; narrow it here.
@@ -329,7 +334,9 @@ function selectEdition(editionsDir: string): EditionFolder {
     throw new Error(`${EDITION_VARIABLE} is not set, so there is no Edition to build.\n${hint}`);
   }
   try {
-    return openEdition(editionsDir, id);
+    return openEdition(editionsDir, id, {
+      build: build.kind === 'release' ? 'release' : 'development',
+    });
   } catch (error) {
     if (error instanceof EditionFolderError && error.reason === 'unknown') {
       throw new Error(`Unknown Edition "${id}" in ${EDITION_VARIABLE}.\n${hint}`, { cause: error });
@@ -341,7 +348,7 @@ function selectEdition(editionsDir: string): EditionFolder {
 export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
   const build = currentBuild();
   requireReleaseApiUrl(build);
-  const edition = selectEdition(join(projectRoot, '../../editions'));
+  const edition = selectEdition(join(projectRoot, '../../editions'), build);
   const [language] = edition.config.locale.split('-');
   const icon = edition.path('icon');
   if (!existsSync(icon)) {

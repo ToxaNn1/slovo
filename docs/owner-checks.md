@@ -4,6 +4,38 @@ The steps only the owner can take or check, by version: accounts, consoles and d
 
 ## 0.9 build
 
+The one native build of 0.9 goes to TestFlight (ADR 0004). It carries every native feature since 0.6, so each is checked here, on a real iPhone, once the build is installed from TestFlight.
+
+### Before the build
+
+1. In `editions/uk/edition.json`, set `linkDomain` to the Edition's real domain and `appleTeamId` to the Team ID the app is signed with: the release build refuses the `slovo.example` placeholder and an empty Team ID.
+2. Create the app in App Store Connect (bundle id `app.slovo.uk`), set its id as `appStoreConnectAppId` in `editions/uk/edition.json` and as `submit.testflight-uk.ios.ascAppId` in `apps/mobile/eas.json` (a test keeps the two equal).
+3. Turn on the Sign in with Apple, App Groups and Associated Domains capabilities for `app.slovo.uk` in the Apple Developer account.
+4. Check that `apps/mobile/certs/certificate.pem`, the public certificate of OTA updates, is on `main`; its private key lives only in EAS (ADR 0062). The release build refuses to start without the certificate.
+5. Set the EAS `production` environment's variables: `EXPO_PUBLIC_SLOVO_API_URL` (the backend's `https://` address; the release build refuses any other), `EXPO_PUBLIC_SENTRY_DSN` and `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID`.
+6. Build and submit from `apps/mobile`: `npx eas-cli build -p ios --profile testflight-uk`, then `npx eas-cli submit -p ios --profile testflight-uk --latest`. Neither needs another flag; the build number rises by itself. Install the build from TestFlight.
+
+### Native features since 0.6
+
+1. **Widget.** Add the SLOVO widget to the Home Screen: it shows the Word of the Day; open the Word in the app and the widget shows the ✓ («Слово дня переглянуто»). In the widget's settings, «Тло» switches between «Авто», «Світлий», «Темний» and «Пергамент», and the widget redraws in each.
+2. **Notification sound.** Turn on the Word of the Day notification and wait for it with the phone not muted: it plays the Edition's own sound, not the iOS default.
+3. **Calligraphic Lemma.** The Lemma on the Word of the Day card is set in the Edition's calligraphic font (Kurale), every letter and the Stress mark included.
+4. **Spotlight.** Search for a Seen Word in Spotlight: it is found, and a tap opens its Entry in the app.
+5. **App Intents.** Say «Слово дня в SLOVO» and «Відкрий гру в SLOVO» to Siri, and find both in the Shortcuts app: each opens the app on its screen.
+6. **Collection Links.** Share a Collection; open its `https://<domain>/c/<id>` link from Notes on a phone with the app: it opens in the app and offers the copy. On a phone without the app the link opens the web page.
+
+### OTA updates (ADR 0062)
+
+1. About («Про застосунок») shows «Версія 0.9 · збірка {build}» with the TestFlight build number.
+2. Publish a signed update to the `uk` channel; launch the app twice: it runs the update, and About shows «Оновлення {id}» with its id.
+3. Publish an update signed with another key, or unsigned: the app refuses it and keeps running the code it has.
+4. Publish to a share of readers, then widen the rollout with a second run: both runs reach the channel.
+
+### Sign in with Apple and Sign in with Google
+
+1. **Sign in with Apple.** On the SLOVO ID screen, the Sign in with Apple button shows; tap it and dismiss Apple's sheet: the screen stays signed out with no problem. Sign in: the screen shows the email, signed in. Sign out and sign in with a Sign-in code for the same email: the same Account opens, with the same words.
+2. **Sign in with Google.** With the backend's `GOOGLE_CLIENT_IDS` naming the build's `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` (README, «Sign in with Google»), open the SLOVO ID screen and tap «Увійти через Google»: Google's own sheet opens. Dismiss it: the screen stays signed out with no problem. Tap again and sign in with a Google account: the screen shows its email, signed in. Sign out and sign in with a Sign-in code for the same email: the same Account opens, with the same words.
+
 ### Railway (ADR 0063, `docs/deploy.md`)
 
 1. Create a Railway project and, in it, a service from this GitHub repository (branch `main`); Railway finds `railway.json` and builds the `Dockerfile`.
