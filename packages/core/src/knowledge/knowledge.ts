@@ -247,6 +247,8 @@ export async function openKnowledge({
   }
 
   let state = stateOf();
+  /** The state with the confirmed counts hidden, of the state it was made from. */
+  let hiding: { of: KnowledgeState; state: KnowledgeState } | undefined;
   hiddenEntries.subscribe(follow);
 
   /** Makes the state again, and tells the subscribers when it changed. */
@@ -336,9 +338,11 @@ export async function openKnowledge({
     get state() {
       // The switch is read at each call, as the remote switches can turn it off while the app runs.
       if (!edition.isFeatureEnabled('knowledge')) return off;
-      return edition.isFeatureEnabled('confirmedEntries')
-        ? state
-        : { ...state, confirmed: noneConfirmed };
+      if (edition.isFeatureEnabled('confirmedEntries')) return state;
+      // The same object until the state changes, as with the counts shown.
+      if (hiding?.of !== state)
+        hiding = { of: state, state: { ...state, confirmed: noneConfirmed } };
+      return hiding.state;
     },
     weak() {
       if (!edition.isFeatureEnabled('knowledge')) return [];
