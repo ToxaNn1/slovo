@@ -16,6 +16,7 @@ import {
   type UserStateRecord,
   type UserStateRecords,
 } from './user-state-record';
+import { FEED_NOTICES } from '../feed-notice';
 import type { UserStateMigration } from './user-state-migration';
 
 /**
@@ -100,7 +101,7 @@ export const userStateRecords = {
    */
   feedNoticesClosed: declareRecord(
     'feed.noticesClosed',
-    z.object({ date: z.string(), notices: z.array(z.string()) }),
+    z.object({ date: z.string(), notices: z.array(z.enum(FEED_NOTICES)) }),
     { sync: 'device-only' },
   ),
   /**

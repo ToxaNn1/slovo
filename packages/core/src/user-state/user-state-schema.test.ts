@@ -64,6 +64,16 @@ describe('the 0.4 user-state records', () => {
     expect(onboardingFinished.decode('"yesterday"')).toBeUndefined();
     expect(notificationPlan.record('2026-10-14T09:00').decode('7')).toBeUndefined();
   });
+
+  it('reads the closed Feed Notices of a day only when each is a Feed Notice', () => {
+    const { feedNoticesClosed } = userStateRecords;
+    expect(
+      feedNoticesClosed.decode('{"date":"2026-10-31","notices":["weeklyRecap","dailyLimit"]}'),
+    ).toEqual({ date: '2026-10-31', notices: ['weeklyRecap', 'dailyLimit'] });
+    expect(
+      feedNoticesClosed.decode('{"date":"2026-10-31","notices":["weeklyRecap","banner"]}'),
+    ).toBeUndefined();
+  });
 });
 
 // Spec #772, "Best result per mode": one Best result per Game Mode.

@@ -45,7 +45,8 @@ export {
   type TipFeedCard,
   type WordFeedCard,
 } from './feed/feed-card';
-export { type FeedNotice, type FirstWeekDay } from './feed/feed-notices';
+export type { FeedNotice } from './feed-notice';
+export { type FirstWeekDay } from './feed/feed-notices';
 export { type GameModeOffer, type GameState, type OfferedBest } from './game/game';
 export {
   type CurrentGame,
