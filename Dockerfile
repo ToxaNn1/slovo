@@ -28,11 +28,12 @@ RUN pnpm install --frozen-lockfile --prod \
 # The image keeps the backend, the workspace packages it imports, the Editions
 # it serves and their installs: no app, no tools, no package store. The
 # release command runs through pnpm, which would otherwise try to reinstall
-# this partial workspace before the script.
+# this partial workspace before the script, and which writes its own version
+# into a missing lockfile (the user cannot write /app).
 FROM base
 ENV pnpm_config_verify_deps_before_run=false
 COPY --from=install /usr/local/share/corepack /usr/local/share/corepack
-COPY --from=install /app/package.json /app/pnpm-workspace.yaml ./
+COPY --from=install /app/package.json /app/pnpm-workspace.yaml /app/pnpm-lock.yaml ./
 COPY --from=install /app/node_modules node_modules
 COPY --from=install /app/packages/contracts packages/contracts
 COPY --from=install /app/packages/core packages/core
