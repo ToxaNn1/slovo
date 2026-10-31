@@ -150,6 +150,19 @@ async function runWords(seed: number, port?: UserStatePort, edition = ukrainian)
   return app;
 }
 
+/**
+ * The composition of `runWords` with «Вгадай слово» the only Game Mode and
+ * every Category but `human-body` hidden. Each hide plans the Rounds again,
+ * so the tests hide once and play their Games in a row on one composition.
+ */
+async function humanBodyOnly(seed: number) {
+  const app = await runWords(seed, undefined, guessWordOnly);
+  for (const { id } of await pack.listCategories()) {
+    if (id !== 'human-body') await app.hide({ kind: 'category', categoryId: id });
+  }
+  return app;
+}
+
 function current(app: Composition): CurrentGame {
   const game = app.game.state.current;
   if (game === undefined) throw new Error('No Game in play');
@@ -274,42 +287,32 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
     }
   });
 
-  // Each hide plans the Rounds again, so four narrowed Games outrun Vitest's 5 s default on CI.
-  it(
-    "never offers a Distractor with the answer's Definition, as «Кістлявий, худий.» three Words share",
-    { timeout: 20_000 },
-    async () => {
-      const definitionOf = (text: string) =>
-        withoutStress(text).toLowerCase().replace(/\s+/g, ' ').trim();
-      const shared = (definition: string) =>
-        words.filter((word) => definitionOf(word.primaryDefinition) === definition).length > 1;
-      const asked: Asked[] = [];
-      // Play seeded Games until one asks a shared Definition, so new content never hides the case.
-      for (
-        let seed = 1;
-        seed <= 20 && !asked.some(({ round }) => shared(definitionOf(round.prompt)));
-        seed += 1
-      ) {
-        const app = await runWords(seed, undefined, guessWordOnly);
-        for (const { id } of (await pack.listCategories()).filter(
-          ({ id }) => id !== 'human-body',
-        )) {
-          await app.hide({ kind: 'category', categoryId: id });
-        }
-        asked.push(...(await playGame(app)));
-      }
+  it("never offers a Distractor with the answer's Definition, as «Кістлявий, худий.» three Words share", async () => {
+    const definitionOf = (text: string) =>
+      withoutStress(text).toLowerCase().replace(/\s+/g, ' ').trim();
+    const shared = (definition: string) =>
+      words.filter((word) => definitionOf(word.primaryDefinition) === definition).length > 1;
+    const app = await humanBodyOnly(1);
+    const asked: Asked[] = [];
+    // Play Games until one asks a shared Definition, so new content never hides the case.
+    for (
+      let game = 1;
+      game <= 20 && !asked.some(({ round }) => shared(definitionOf(round.prompt)));
+      game += 1
+    ) {
+      asked.push(...(await playGame(app)));
+    }
 
-      expect(asked.some(({ round }) => shared(definitionOf(round.prompt)))).toBe(true);
-      for (const { answer, round } of asked.filter(({ round }) => round.form === 'pick')) {
-        const prompt = definitionOf(answer.primaryDefinition);
-        expect(
-          optionsOf(round).filter(({ text }) =>
-            wordsReading(text).some((word) => definitionOf(word.primaryDefinition) === prompt),
-          ),
-        ).toHaveLength(1);
-      }
-    },
-  );
+    expect(asked.some(({ round }) => shared(definitionOf(round.prompt)))).toBe(true);
+    for (const { answer, round } of asked.filter(({ round }) => round.form === 'pick')) {
+      const prompt = definitionOf(answer.primaryDefinition);
+      expect(
+        optionsOf(round).filter(({ text }) =>
+          wordsReading(text).some((word) => definitionOf(word.primaryDefinition) === prompt),
+        ),
+      ).toHaveLength(1);
+    }
+  });
 
   it('shows the Lemma and its first Example, or the one with the gap, with its author, on the sheet', async () => {
     for (const { answer, round } of await playGame(await runWords(11))) {
@@ -320,31 +323,21 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
     }
   });
 
-  // Like the test above, each hide plans the Rounds again, for as many Games as it takes to ask the verb.
-  it(
-    'tops the Distractors up with other Words for the only verb of a one-Category Mix',
-    { timeout: 20_000 },
-    async () => {
-      const verbRounds: Asked[] = [];
-      for (let seed = 1; verbRounds.length === 0 && seed <= 40; seed += 1) {
-        const app = await runWords(seed, undefined, guessWordOnly);
-        for (const { id } of (await pack.listCategories()).filter(
-          ({ id }) => id !== 'human-body',
-        )) {
-          await app.hide({ kind: 'category', categoryId: id });
-        }
-        const asked = await playGame(app);
-        expect(asked.every(({ answer }) => answer.categoryId === 'human-body')).toBe(true);
-        verbRounds.push(...asked.filter(({ answer }) => answer.partOfSpeech === 'verb'));
-      }
+  it('tops the Distractors up with other Words for the only verb of a one-Category Mix', async () => {
+    const app = await humanBodyOnly(1);
+    const verbRounds: Asked[] = [];
+    for (let game = 1; verbRounds.length === 0 && game <= 40; game += 1) {
+      const asked = await playGame(app);
+      expect(asked.every(({ answer }) => answer.categoryId === 'human-body')).toBe(true);
+      verbRounds.push(...asked.filter(({ answer }) => answer.partOfSpeech === 'verb'));
+    }
 
-      expect(verbRounds.length).toBeGreaterThan(0);
-      for (const { options } of verbRounds.filter(({ round }) => round.form === 'pick')) {
-        expect(options.filter((option) => option.partOfSpeech === 'verb')).toHaveLength(1);
-        expect(options.every((option) => option.categoryId === 'human-body')).toBe(true);
-      }
-    },
-  );
+    expect(verbRounds.length).toBeGreaterThan(0);
+    for (const { options } of verbRounds.filter(({ round }) => round.form === 'pick')) {
+      expect(options.filter((option) => option.partOfSpeech === 'verb')).toHaveLength(1);
+      expect(options.every((option) => option.categoryId === 'human-body')).toBe(true);
+    }
+  });
 
   it('writes no Seen, no History and no Active Day while it is played, only its Best result and the widget hint offered', async () => {
     const { port, writes } = recordingPort(new Map());
