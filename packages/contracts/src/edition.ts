@@ -232,6 +232,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   communityCounters: z.boolean(),
   /** The Community Word «Слово тижня спільноти»: its Monday Feed Notice (ADR 0060). */
   communityWord: z.boolean(),
+  /** Analytics: the product events sent through the Core's port while the reader shares anonymous statistics (ADR 0068). */
+  analytics: z.boolean(),
   /** The calligraphic Lemma: the Lemma on the Word of the Day card in the Feed set in the Edition's calligraphic font. */
   calligraphy: z.boolean(),
   /** Spotlight: the Spotlight Snapshot the app writes into the system search; off, the snapshot is empty (ADR 0057). */

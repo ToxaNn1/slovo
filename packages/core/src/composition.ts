@@ -63,6 +63,7 @@ import { createSearch, type Search } from './search/search';
 import type { UserState } from './user-state/user-state';
 import { createSpotlight, type Spotlight } from './spotlight/spotlight';
 import { createSubject, type Subject } from './subject';
+import { createAnalytics, type AnalyticsPort } from './analytics/analytics';
 import { createWidget, type Widget } from './widget/widget';
 import { openWordOfTheDay } from './feed/word-of-the-day';
 
@@ -197,6 +198,15 @@ export interface Composition extends Hiding {
    * Entry opened from it (ADR 0026).
    */
   readonly widget: Widget;
+  /**
+   * The Analytics events of what the shell draws and plays (ADR 0068): sent
+   * only while sharing is allowed, and never failing.
+   */
+  readonly analytics: {
+    pronunciationPlayed(entryId: string): Promise<void>;
+    wordHistoryOpened(entryId: string): Promise<void>;
+    screenViewed(screen: string): Promise<void>;
+  };
   /** The iPhone search: the Spotlight Snapshot the app hands its native module (ADR 0057). */
   readonly spotlight: Spotlight;
   /**
@@ -313,6 +323,7 @@ export async function openComposition({
   crossword,
   feedNotices = noFeedNotices,
   backend,
+  analytics: analyticsPort,
   ...ports
 }: {
   content: ContentReadPort;
@@ -336,6 +347,8 @@ export async function openComposition({
    * shared.
    */
   backend?: Pick<Backend, 'collectionLinks' | 'counters'>;
+  /** Where the Analytics events go (ADR 0068); without it, as in tools and tests of other features, nowhere. */
+  analytics?: AnalyticsPort;
 }): Promise<Composition> {
   const { userState, scheduling, schedule, close } = closable(ports);
   // The named subjects the modules link through (ADR 0018), made before any
@@ -365,6 +378,32 @@ export async function openComposition({
   const { history, recorder } = await openHistory({ rows, userState });
   const hiddenEntries = await openHiddenEntries({ rows, userState, clock, eligibility });
   const communityCounters = openCommunityCounters({ edition, userState });
+  const analytics = createAnalytics({ edition, userState, port: analyticsPort });
+  /** Emits the event about the Entry with its kind, rarity and Category; a failure is lost, never thrown. */
+  async function entryEvent(
+    event:
+      | 'seen'
+      | 'known'
+      | 'unknown'
+      | 'favoriteAdded'
+      | 'favoriteRemoved'
+      | 'pronunciationPlayed'
+      | 'wordHistoryOpened',
+    entryId: string,
+  ): Promise<void> {
+    try {
+      const entry = await entries.get(entryId);
+      if (entry === undefined) return;
+      await analytics.track(event, {
+        entryKind: entry.kind,
+        rarity: entry.kind === 'word' ? entry.rarity : null,
+        categoryId: entry.kind === 'word' || entry.kind === 'correction' ? entry.categoryId : null,
+      });
+    } catch {
+      // Analytics never stands in the way of what the reader does.
+    }
+  }
+  seen.subscribe((entryId) => entryEvent('seen', entryId));
   // The Knowledge Marks leave a Hidden Entry out, and turn to a new day before anything of it is written.
   const knowledge = await openKnowledge({
     edition,
@@ -372,7 +411,10 @@ export async function openComposition({
     hiddenEntries,
     userState,
     clock,
-    countMark: (entryId, mark) => communityCounters.countMark(entryId, mark),
+    countMark: async (entryId, mark) => {
+      if (mark !== undefined) void entryEvent(mark, entryId);
+      return communityCounters.countMark(entryId, mark);
+    },
     dayStarted,
   });
   // On a day turned to, the plan is made again before the Feed opens the day
@@ -451,7 +493,17 @@ export async function openComposition({
     returned,
   });
   const [favorites, collections] = await Promise.all([
-    openFavorites({ rows, userState, clock, communityCounters }),
+    openFavorites({
+      rows,
+      userState,
+      clock,
+      communityCounters: {
+        countSaved: async (entryId, saved) => {
+          void entryEvent(saved ? 'favoriteAdded' : 'favoriteRemoved', entryId);
+          return communityCounters.countSaved(entryId, saved);
+        },
+      },
+    }),
     openCollections({ rows, userState, clock, random }),
   ]);
   const progress = openProgress({
@@ -569,6 +621,11 @@ export async function openComposition({
       history,
       wordOfTheDayArchive,
     }),
+    analytics: {
+      pronunciationPlayed: (entryId) => entryEvent('pronunciationPlayed', entryId),
+      wordHistoryOpened: (entryId) => entryEvent('wordHistoryOpened', entryId),
+      screenViewed: (screen) => analytics.track('screenViewed', { screen }).catch(() => undefined),
+    },
     close,
   };
 }

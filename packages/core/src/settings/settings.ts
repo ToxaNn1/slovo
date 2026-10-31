@@ -1,5 +1,6 @@
 import type { DailyLimit, FontSize, Theme } from '@slovo/contracts';
 
+import type { Analytics } from '../analytics/analytics';
 import { forgetUnsentCounters } from '../community-counters/counter-deltas';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
@@ -65,9 +66,12 @@ export function colorSchemeFor(
 export function createSettings({
   userState,
   defaults,
+  analytics,
 }: {
   userState: UserState;
   defaults: SettingsDefaults;
+  /** Where a changed setting is told (ADR 0068); turning sharing off stops it. Without it, nowhere. */
+  analytics?: Analytics;
 }): Settings {
   const all: UserSettings = {
     ...defaults,
@@ -115,6 +119,11 @@ export function createSettings({
           ...(changes.shareCounters === false ? await forgetUnsentCounters(userState) : []),
         ]),
       );
+      if (changes.shareCounters === false) analytics?.stop();
+      for (const [setting, value] of Object.entries(changes)) {
+        if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')
+          await analytics?.track('settingChanged', { setting, value }).catch(() => undefined);
+      }
       return read();
     },
   };
