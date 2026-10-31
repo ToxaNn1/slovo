@@ -44,6 +44,26 @@ const CounterChangeSchema = z.literal([-1, 0, 1]);
 /** A card's Entry and the local date it was on screen. */
 const EntryOnDateSchema = z.object({ entryId: z.string(), date: z.string() });
 
+/** The learning actions XP comes from (ADR 0066); the Game's in 1.0's first step. */
+export const XpSourceSchema = z.literal(['game-round', 'game-finished', 'game-best']);
+
+/**
+ * One record of the XP log (ADR 0066): its local date and instant, and what
+ * it records. The kinds the ADR names besides XP come with their own tickets.
+ */
+const XpRecordSchema = z.discriminatedUnion('kind', [
+  z.object({
+    kind: z.literal('xp'),
+    date: z.string(),
+    at: InstantSchema,
+    source: XpSourceSchema,
+    amount: z.number().int().positive(),
+  }),
+]);
+
+export type XpRecord = z.infer<typeof XpRecordSchema>;
+export type XpSource = z.infer<typeof XpSourceSchema>;
+
 /**
  * Every record of the user state. The Cycle and the Word of the Day keep the
  * `feed.` keys from 0.2, when the Feed held them.
@@ -255,6 +275,13 @@ export const userStateRecords = {
    * app was opened that day. They sync as a union (0.8).
    */
   activeDays: declareRecords('activeDays.', z.literal(true), { sync: 'union' }),
+  /**
+   * The XP log, one record per entry, by a unique id: XP for a learning
+   * action with its source, on a local date `YYYY-MM-DD` at an instant. It is
+   * append-only and syncs as a union by id, so a total derived from it is the
+   * same on every device and never doubles (ADR 0066).
+   */
+  xpLog: declareRecords('xp.', XpRecordSchema, { sync: 'union' }),
   /**
    * The user's notification times, local times `HH:MM`. Without the record,
    * the Edition's default times; an empty list is a record of its own, so no

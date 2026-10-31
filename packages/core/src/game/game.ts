@@ -2,10 +2,11 @@ import type { EntryKind } from '@slovo/contracts';
 
 import type { Entries } from '../entries/entries';
 import type { Knowledge } from '../knowledge/knowledge';
+import type { XpAward, XpLog } from '../progress/xp-log';
 import type { History } from '../saved/history';
 import { createInTurn, createSubscribers } from '../in-turn';
 import type { LocalDate } from '../local-date';
-import type { Clock, Random, Schedule } from '../ports';
+import type { Clock, Random, Schedule, UserStateChanges } from '../ports';
 import type { Subject } from '../subject';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
@@ -77,8 +78,10 @@ export interface GameState {
  * Round limit, 15 by default (`roundsToPlanOf`), each pair of a grid
  * counted: up to 5 the reader is weak on, first (ADR 0043, 0052), the rest
  * those in History when there are at least 15, else any (ADR 0024). A mode
- * with no Round limit asks them again, reshuffled, once it has asked them all. A mode may set its own Lives too, or none, and a time limit (ADR 0052). Playing never writes Seen, History or Active Days; a finished Game
- * writes only its mode's Best result, when it beats it (ADR 0052).
+ * with no Round limit asks them again, reshuffled, once it has asked them all. A mode may set its own Lives too, or none, and a time limit (ADR 0052). Playing never writes Seen, History or Active Days; a Round
+ * answered right writes its XP, and a finished Game its mode's Best result,
+ * when it beats it (ADR 0052), with the XP of the finished Game and of the
+ * new Best result (ADR 0066).
  */
 export interface Game {
   /**
@@ -202,6 +205,7 @@ export async function openGame({
   entries,
   history,
   knowledge,
+  xp,
   userState,
   clock,
   random,
@@ -215,6 +219,8 @@ export async function openGame({
   entries: Pick<Entries, 'eligibleOfKind'>;
   history: Pick<History, 'list'>;
   knowledge: Pick<Knowledge, 'weak' | 'answer' | 'confirm'>;
+  /** The XP log, which a right Round, a finished Game and a new Best result earn XP in. */
+  xp: Pick<XpLog, 'award'>;
   userState: Pick<UserState, 'read' | 'write'>;
   /** What a timed Game's play time is told by. */
   clock: Pick<Clock, 'now'>;
@@ -398,9 +404,12 @@ export async function openGame({
     }
     const answered = game && played?.answer(game, given);
     if (game === undefined || answered === undefined) return;
-    if (inPlay(answered)) changeCurrent(answered);
-    else await inTurn(() => finish(game, answered));
     const round = answered.played.at(-1);
+    const roundXp = round?.right ? xp.award({ source: 'game-round' }) : undefined;
+    if (inPlay(answered)) {
+      changeCurrent(answered);
+      if (roundXp !== undefined) await inTurn(() => writeAwards([roundXp]));
+    } else await inTurn(() => finish(game, answered, roundXp));
     if (round === undefined) return;
     await inTurn(() =>
       round.right ? knowledge.confirm(round.entry.id) : knowledge.answer(round.entry.id, 'unknown'),
@@ -415,18 +424,34 @@ export async function openGame({
     else await finish(game, after);
   }
 
+  /** Writes the XP the awards append, at once, then makes them in memory. */
+  async function writeAwards(awards: readonly XpAward[], own: UserStateChanges = new Map()) {
+    const changes = new Map([...own, ...awards.flatMap((award) => [...award.changes])]);
+    if (changes.size > 0) await userState.write(changes);
+    for (const award of awards) award.commit();
+  }
+
   /**
    * Ends the Game, its Rounds passed the best result when they beat it, kept
-   * in the user state first, so a failed write changes nothing, and offers the
-   * widget hint when it is due and a Life is left. A Game left during the
-   * write stays left.
+   * in the user state in one write with the XP of the last Round, of the
+   * finished Game and of the new Best result, so a failed write changes
+   * nothing, and offers the widget hint when it is due and a Life is left. A
+   * Game left during the write stays left.
    */
-  async function finish(game: CurrentGame, over: CurrentGame): Promise<void> {
+  async function finish(game: CurrentGame, over: CurrentGame, roundXp?: XpAward): Promise<void> {
     const result = resultOf(over);
     const best = state.bestResults[over.modeId];
     const beaten = best === undefined || result > best;
     const widgetHint = widgetHintDue && over.lives !== undefined && over.lives > 0;
-    if (beaten) await userState.write(gameBest.record(over.modeId).change(result));
+    const right = over.played.filter((round) => round.right).length;
+    await writeAwards(
+      [
+        ...(roundXp === undefined ? [] : [roundXp]),
+        xp.award({ source: 'game-finished', right, played: over.played.length }),
+        ...(beaten ? [xp.award({ source: 'game-best' })] : []),
+      ],
+      beaten ? gameBest.record(over.modeId).change(result) : new Map(),
+    );
     const mode = beaten ? modes.find(({ id }) => id === over.modeId) : undefined;
     change({
       ...state,
