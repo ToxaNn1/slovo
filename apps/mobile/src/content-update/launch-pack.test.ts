@@ -119,6 +119,8 @@ describe('the Language Pack the app opens at launch', () => {
       keychain: () => false,
       googleSignIn: () => false,
       appleSignIn: () => false,
+      application: () => false,
+      updates: () => false,
       spotlight: () => false,
     });
 

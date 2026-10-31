@@ -13,8 +13,10 @@ import { createNativeModules } from './native-module';
  * its image into the cache. Content updates need `expo-file-system` to keep
  * a downloaded Language Pack, and the Session needs `expo-secure-store`, the
  * Keychain. Google sign-in needs Google's SDK, a module of the registry, and
- * Sign in with Apple Expo's Apple authentication module. The iPhone search
- * needs the app's own Spotlight module (`modules/spotlight`).
+ * Sign in with Apple Expo's Apple authentication module. About reports the
+ * installed build with `expo-application` and the update it runs with
+ * `expo-updates`. The iPhone search needs the app's own Spotlight module
+ * (`modules/spotlight`).
  */
 export const nativeModules = createNativeModules({
   notifications: () =>
@@ -31,5 +33,7 @@ export const nativeModules = createNativeModules({
   keychain: () => requireOptionalNativeModule('ExpoSecureStore') !== null,
   googleSignIn: () => TurboModuleRegistry.get('RNGoogleSignin') !== null,
   appleSignIn: () => requireOptionalNativeModule('ExpoAppleAuthentication') !== null,
+  application: () => requireOptionalNativeModule('ExpoApplication') !== null,
+  updates: () => requireOptionalNativeModule('ExpoUpdates') !== null,
   spotlight: () => requireOptionalNativeModule('SlovoSpotlight') !== null,
 });
