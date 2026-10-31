@@ -1,6 +1,6 @@
 # SLOVO agent guide
 
-SLOVO is a factory of single-language rare-word apps: one language-agnostic Core, many Editions. Read `README.md` for the map.
+SLOVO is a factory of single-language rare-word apps: one language-agnostic Core, many Editions. Read `docs/agents/map.md` for the map; `README.md` is for people.
 
 ## Core Principles
 
@@ -50,3 +50,13 @@ Write everything in the repo in English: code, comments, tests, docs, commit mes
 - Before writing or reviewing a screen, component or hook in `apps/mobile` or `packages/ui`, read `docs/react-native.md`.
 - When a package is blocked as too recently published, choose an older version that passes. The check stays on.
 - Read lint, typecheck and test commands from the root `package.json`. Run all three before you finish.
+
+## Token economy
+
+Cost = context size × steps × model price. `.claude/hooks/token-budget.mjs` enforces the hard parts in every session, local and cloud; never work around a block, follow its message.
+
+- Context limits: the coordinator 90k soft, 120k hard; every other session and subagent 120k soft, 160k hard. At the hard limit only git and writing a handoff (≤ 2 KB) run: hand off to a fresh session. Never `/compact`.
+- Subagents: a fresh agent with a brief of at most 1.5 KB (goal, what is ruled out, files by path, result format). No fork once the context is over 60k. Long results go to a file; the reply is 5–10 lines. Use `Explore` for searches.
+- Models: code on Opus; Fable only for Core logic, sync, architecture, specs, the version review and proofreading; the coordinator and questions on Opus; Sonnet for bumps, renames and docs-only.
+- Output: read in parts (`grep -n`, `sed -n`, offset and limit); never print `README.md`, `CONTEXT.md` or a file over 40 KB whole; test, lint and CI output through `tail` or `grep` (`gh run view --log-failed | tail -80`); a text snapshot before a screenshot, one screenshot per check.
+- Deterministic waiting (CI, merges, queues) belongs in one blocking command or a script, not in a step per poll.
