@@ -250,3 +250,20 @@ describe.each(kinds)('$name', ({ kind, feature, entry, title, subtitle }) => {
     expect(screen.queryByTestId(`hidden-entry-${entry.id}`)).toBeNull();
   });
 });
+
+// Spec #1358, ticket #1374: how often the Feed asks a Quick Question.
+describe('the Quick Question frequency on the Мій Мікс screen', () => {
+  it('starts at every 10th card and keeps the frequency chosen', async () => {
+    await renderInApp(<MixChoices />);
+    expect(screen.getByText(editionStrings.mix.quickQuestion.title)).toBeTruthy();
+    expect(composition.mix.state.quickQuestionEvery).toBe(10);
+
+    await fireEvent.press(screen.getByTestId('mix-quick-question-6'));
+    await settle();
+    expect(composition.mix.state.quickQuestionEvery).toBe(6);
+
+    await fireEvent.press(screen.getByTestId('mix-quick-question-off'));
+    await settle();
+    expect(composition.mix.state.quickQuestionEvery).toBe('off');
+  });
+});

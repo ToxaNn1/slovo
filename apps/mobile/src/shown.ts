@@ -67,6 +67,8 @@ export interface Shown {
   readonly xpBar: boolean;
   /** The Settings row of the Break and its screen. */
   readonly streakBreak: boolean;
+  /** The Quick Question in the Feed and its «Швидкі питання» row in the Mix; it asks the Game's Modes. */
+  readonly quickQuestion: boolean;
   /** The Sync status line of the SLOVO ID screen. */
   readonly sync: boolean;
   /** The Daily Limit choice of Settings. */
@@ -128,6 +130,7 @@ export function shownOf({
       : undefined,
     xpBar: on('xpLog') && !settings.hideStreak,
     streakBreak: on('xpLog') && on('streakBreak'),
+    quickQuestion: on('game') && on('quickQuestion'),
     sync: on('sync'),
     dailyLimit: on('dailyLimit'),
     search: on('search'),

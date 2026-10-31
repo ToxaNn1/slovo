@@ -3,6 +3,7 @@ import {
   FontSizeSchema,
   MistakeReportSchema,
   MixKindWeightSchema,
+  QuickQuestionEverySchema,
   NotificationTimesSchema,
   RaritySchema,
   ThemeSchema,
@@ -44,13 +45,14 @@ const CounterChangeSchema = z.literal([-1, 0, 1]);
 /** A card's Entry and the local date it was on screen. */
 const EntryOnDateSchema = z.object({ entryId: z.string(), date: z.string() });
 
-/** The learning actions XP comes from (ADR 0066); the Quick Question's comes with its ticket. */
+/** The learning actions XP comes from (ADR 0066). */
 export const XpSourceSchema = z.literal([
   'game-round',
   'game-finished',
   'game-best',
   'daily-crossword',
   'review-answer',
+  'quick-question',
 ]);
 
 /**
@@ -286,6 +288,8 @@ export const userStateRecords = {
    * like the rest of the Mix (ADR 0041).
    */
   mixRarityCeiling: declareRecord('mix.rarityCeiling', RaritySchema),
+  /** How often the Feed asks a Quick Question; the Core's default unless the user chose. */
+  mixQuickQuestion: declareRecord('mix.quickQuestion', QuickQuestionEverySchema),
   /**
    * The Active Days, one record per day, by local date `YYYY-MM-DD`: that the
    * app was opened that day. They sync as a union (0.8).

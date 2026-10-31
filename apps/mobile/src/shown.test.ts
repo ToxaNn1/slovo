@@ -27,6 +27,7 @@ const everything: Shown = {
   stats: { streak: true, knowledge: ['word', 'correction', 'idiom', 'synonymRow', 'tip'] },
   xpBar: true,
   streakBreak: true,
+  quickQuestion: true,
   sync: true,
   dailyLimit: true,
   search: true,
@@ -51,7 +52,7 @@ describe('what the reader is shown', () => {
     ['everything, with every switch on and the settings as they start', { shown: everything }],
     [
       'no Game tab with the Game off',
-      { off: ['game'], shown: { tabs: ['home', 'settings', 'saved'] } },
+      { off: ['game'], shown: { tabs: ['home', 'settings', 'saved'], quickQuestion: false } },
     ],
     [
       'a still Stress mark with the falling Stress off',
@@ -173,6 +174,10 @@ describe('what the reader is shown', () => {
       { off: ['xpLog'], shown: { xpBar: false, streakBreak: false } },
     ],
     ['no Break with its switch off', { off: ['streakBreak'], shown: { streakBreak: false } }],
+    [
+      'no Quick Question with its switch off',
+      { off: ['quickQuestion'], shown: { quickQuestion: false } },
+    ],
     [
       'no statistics, and so no setting to hide the Streak, with statistics off',
       { off: ['statistics'], shown: { stats: undefined } },

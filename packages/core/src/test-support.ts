@@ -77,6 +77,7 @@ const testEditionConfig = {
     dailyCrossword: 15,
     reviewAnswer: 1,
     reviewDailyCap: 10,
+    quickQuestion: 2,
   },
 };
 

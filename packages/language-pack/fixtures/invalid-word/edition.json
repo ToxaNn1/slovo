@@ -73,7 +73,8 @@
     "analytics": true,
     "xpLog": true,
     "streakFreezes": true,
-    "streakBreak": true
+    "streakBreak": true,
+    "quickQuestion": true
   },
   "userSettingDefaults": {
     "theme": "system",
@@ -136,6 +137,7 @@
     "bestResult": 5,
     "dailyCrossword": 15,
     "reviewAnswer": 1,
-    "reviewDailyCap": 10
+    "reviewDailyCap": 10,
+    "quickQuestion": 2
   }
 }

@@ -9,6 +9,7 @@ import {
   type Round,
   type RoundAnswer,
   type RoundBlank,
+  type RoundContent,
   type RoundOption,
   type TextRange,
 } from '@slovo/core';
@@ -293,6 +294,58 @@ function askedAs(
   if (entryKind === 'tip') return { label: strings.tip.label, prompt };
   if (gap !== undefined) return { label: strings.gap.label, prompt };
   return { label, prompt };
+}
+
+/**
+ * A Quick Question in the Feed: its title, then one pick Round as the Game
+ * draws it, the prompt under the mode's label and the four options. Once
+ * answered, the options show the right one and the one picked, with no
+ * sheet; the reader turns on to the next card.
+ */
+export function QuickQuestionRound({
+  title,
+  round,
+  label,
+  answered,
+  onAnswer,
+}: {
+  title: string;
+  round: Extract<RoundContent, { readonly form: 'pick' }>;
+  /** The Game Mode's label over the prompt. */
+  label: string;
+  /** The option the reader picked; none yet. */
+  answered: number | undefined;
+  onAnswer: (option: number) => void;
+}) {
+  const gameHaptics = useGameHaptics();
+  const answer = answered === undefined ? undefined : { chosen: answered, correct: round.correct };
+  return (
+    <View testID="quick-question" style={styles.round}>
+      <RoundLabel label={title} />
+      <RoundCard
+        label={label}
+        prompt={round.prompt}
+        highlight={round.highlight}
+        gap={undefined}
+        definition={round.definition}
+      />
+      <View style={styles.options}>
+        {round.options.map((option, place) => (
+          <AnswerOption
+            key={String(place)}
+            option={option}
+            place={place}
+            answer={answer}
+            onPress={() => {
+              if (place === round.correct) gameHaptics.rightAnswer();
+              else gameHaptics.wrongAnswer();
+              onAnswer(place);
+            }}
+          />
+        ))}
+      </View>
+    </View>
+  );
 }
 
 /**
@@ -697,7 +750,7 @@ function AnswerOption({
   /** Its place among the options. */
   place: number;
   /** The Round's answer, once given. */
-  answer: PickAnswer | undefined;
+  answer: Pick<PickAnswer, 'chosen' | 'correct'> | undefined;
   onPress: () => void;
 }) {
   const { colors, fontFamilies, radii } = useTokens();

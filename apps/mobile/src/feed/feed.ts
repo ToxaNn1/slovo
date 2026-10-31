@@ -22,6 +22,8 @@ export interface FeedState {
    * after it, and turns the pager to it once it is drawn.
    */
   readonly openCorrection: (position: number, correctionId: string) => void;
+  /** Keeps the option the reader picked on the Quick Question at `position`. */
+  readonly answerQuickQuestion: (position: number, option: number) => void;
 }
 
 /**
@@ -63,6 +65,15 @@ export function useFeed(
           logError('Could not open the linked Correction', error);
         },
       );
+    },
+    [feed],
+  );
+
+  const answerQuickQuestion = useCallback(
+    (position: number, option: number) => {
+      feed.answerQuickQuestion(position, option).catch((error: unknown) => {
+        logError('Could not keep the answer to the Quick Question', error);
+      });
     },
     [feed],
   );
@@ -122,7 +133,13 @@ export function useFeed(
     pager.current?.showPage(landed.page);
   }, [landed, landing, pager]);
 
-  return { cards, startPosition: feed.startPosition, onCardChange, openCorrection };
+  return {
+    cards,
+    startPosition: feed.startPosition,
+    onCardChange,
+    openCorrection,
+    answerQuickQuestion,
+  };
 }
 
 function report(done: Promise<void>): void {

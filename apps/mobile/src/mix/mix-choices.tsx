@@ -1,4 +1,4 @@
-import { fill, type MixKindWeight } from '@slovo/contracts';
+import { fill, type MixKindWeight, type QuickQuestionEvery } from '@slovo/contracts';
 import { featureOfKind, type MixKind } from '@slovo/core';
 import {
   MixChip,
@@ -29,14 +29,24 @@ const strings = editionStrings.mix;
  * switch is on, and the Corrections and Idioms switches, each when
  * the Edition turns it on, with the chips of the Categories of Corrections
  * under the Corrections switch while it is on (ADR 0033), and under each kind
- * in the Mix its Mix kind weight while the mixKindWeights switch is on. A change applies at
- * once (the Core's Mix, ADR 0019).
+ * in the Mix its Mix kind weight while the mixKindWeights switch is on, and
+ * how often the Feed asks a Quick Question while the game and quickQuestion
+ * switches are on. A change applies at once (the Core's Mix, ADR 0019).
  */
 export function MixChoices() {
   const state = useMixState();
-  const { toggleCategory, turnAllOn, setKind, setKindWeight, setRarityFloor, setRarityCeiling } =
-    useMixChanges();
+  const {
+    toggleCategory,
+    turnAllOn,
+    setKind,
+    setKindWeight,
+    setRarityFloor,
+    setRarityCeiling,
+    setQuickQuestionEvery,
+  } = useMixChanges();
   const edition = useEditionInEffect();
+  const quickQuestion =
+    edition.isFeatureEnabled('game') && edition.isFeatureEnabled('quickQuestion');
 
   const model = mixScreenModel({ edition, mix: state });
 
@@ -139,9 +149,36 @@ export function MixChoices() {
           </SettingsGroup>
         </View>
       )}
+      {quickQuestion && (
+        <View style={styles.rarity}>
+          <RarityFloorChoice
+            shown
+            testID="mix-quick-question"
+            title={strings.quickQuestion.title}
+            subtitle={strings.quickQuestion.subtitle}
+            options={QUICK_QUESTION_EVERY.map(({ every, name }) => ({
+              floor: every,
+              label: strings.quickQuestion[name],
+            }))}
+            floor={state.quickQuestionEvery}
+            onChange={setQuickQuestionEvery}
+          />
+        </View>
+      )}
     </>
   );
 }
+
+/** The Quick Question frequencies on offer, from never to every 6th card, by their names. */
+const QUICK_QUESTION_EVERY: readonly {
+  every: QuickQuestionEvery;
+  name: 'off' | 'rare' | 'normal' | 'often';
+}[] = [
+  { every: 'off', name: 'off' },
+  { every: 20, name: 'rare' },
+  { every: 10, name: 'normal' },
+  { every: 6, name: 'often' },
+];
 
 const WEIGHTS: readonly MixKindWeight[] = ['less', 'normal', 'more'];
 

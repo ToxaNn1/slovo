@@ -42,6 +42,8 @@ export {
   type Theme,
   type UserSettingDefaultsConfig,
   MixKindWeightSchema,
+  QuickQuestionEverySchema,
+  type QuickQuestionEvery,
   type MixKindWeight,
 } from './edition';
 export { COUNTERS_BATCH_SIZE } from './community-counters';

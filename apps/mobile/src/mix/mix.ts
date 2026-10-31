@@ -1,4 +1,4 @@
-import type { MixKindWeight } from '@slovo/contracts';
+import type { MixKindWeight, QuickQuestionEvery } from '@slovo/contracts';
 import type { CategoryKind, MixKind, MixState } from '@slovo/core';
 import { useEdition } from '@slovo/ui';
 import { useMemo } from 'react';
@@ -38,6 +38,8 @@ export function useMixChanges(): {
   setKindWeight: (kind: MixKind, weight: MixKindWeight) => void;
   setRarityFloor: (floor: number) => void;
   setRarityCeiling: (ceiling: number) => void;
+  /** Sets how often the Feed asks a Quick Question. */
+  setQuickQuestionEvery: (every: QuickQuestionEvery) => void;
 } {
   const { mix } = useComposition();
   const keep = (change: Promise<unknown>) => {
@@ -63,6 +65,9 @@ export function useMixChanges(): {
     },
     setRarityCeiling: (ceiling) => {
       keep(mix.setRarityCeiling(ceiling));
+    },
+    setQuickQuestionEvery: (every) => {
+      keep(mix.setQuickQuestionEvery(every));
     },
   };
 }
