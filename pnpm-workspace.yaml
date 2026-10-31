@@ -17,6 +17,10 @@ allowBuilds:
 overrides:
   '@react-native/metro-config': 0.86.3
   react-dom: 19.2.3
+  # drizzle-orm's optional expo-sqlite peer: only the backend uses drizzle,
+  # but pnpm fills the peer from the app's expo-sqlite and the backend image
+  # then carries expo and react-native.
+  'drizzle-orm>expo-sqlite': '-'
   # The Apple targets plugin's Xcode library pins an old plist reader whose
   # @xmldom/xmldom has high advisories; Expo's own reader has the same API
   # and a patched xmldom.
