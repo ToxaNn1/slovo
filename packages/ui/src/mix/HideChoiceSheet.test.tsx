@@ -1,9 +1,9 @@
-import type { EditionStrings } from '@slovo/contracts';
 import { EditionProvider, HideChoiceSheet } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import type { ComponentProps } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { testStrings } from '../test-strings';
 
 const metrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
@@ -20,7 +20,7 @@ async function renderSheet(visible = true, shown: typeof options = options) {
   const onCancel = jest.fn();
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
-      <EditionProvider edition={{ locale: 'en' }} strings={{} as EditionStrings}>
+      <EditionProvider edition={{ locale: 'en' }} strings={testStrings({})}>
         <HideChoiceSheet
           visible={visible}
           options={shown}

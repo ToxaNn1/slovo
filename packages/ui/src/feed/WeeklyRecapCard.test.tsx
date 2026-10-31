@@ -1,10 +1,10 @@
-import type { EditionStrings } from '@slovo/contracts';
 import type { WeeklyRecapModel } from '@slovo/core';
 import { EditionProvider, WeeklyRecapCard } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import { testStrings } from '../test-strings';
 
-const strings = {
+const strings = testStrings({
   feedNotices: {
     weeklyRecap: {
       title: 'Your week',
@@ -15,7 +15,7 @@ const strings = {
     },
   },
   share: { share: 'Share' },
-} as unknown as EditionStrings;
+});
 
 const recap: WeeklyRecapModel = {
   firstDay: { year: 2026, month: 10, day: 19 },

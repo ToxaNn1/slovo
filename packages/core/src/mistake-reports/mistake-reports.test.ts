@@ -196,6 +196,19 @@ describe('too many reports today', () => {
     expect(app.received()).toEqual([]);
   });
 
+  it('answers a new report while `Retry-After` holds without asking the backend, and sends one after it', async () => {
+    const app = await device();
+    app.api.failNext({ reason: 'too-many-requests', retryAfter: 3_600 });
+    await app.report();
+
+    expect(await app.report(typoIn('held'))).toBe('too-many-requests');
+    expect(app.api.calls).toHaveLength(1);
+
+    await app.advance(HOUR);
+    expect(await app.report(typoIn('later'))).toBe('thanked');
+    expect(app.received()).toEqual(['w_later']);
+  });
+
   it('tells the reader of a report that meets the limit after failed tries, and drops it', async () => {
     const app = await device();
     app.api.failNext('server-error');

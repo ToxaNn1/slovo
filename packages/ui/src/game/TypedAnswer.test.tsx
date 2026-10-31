@@ -1,8 +1,8 @@
-import type { EditionStrings } from '@slovo/contracts';
 import { EditionProvider, TypedAnswer, type TypedAnswerBlank } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { useState } from 'react';
+import { testStrings } from '../test-strings';
 
 const ORDINALS = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth'];
 
@@ -31,7 +31,7 @@ function Answer({
 }) {
   const [text, setText] = useState('');
   return (
-    <EditionProvider edition={{ locale: 'uk' }} strings={{} as EditionStrings}>
+    <EditionProvider edition={{ locale: 'uk' }} strings={testStrings({})}>
       <TypedAnswer
         value={text}
         onChangeText={setText}

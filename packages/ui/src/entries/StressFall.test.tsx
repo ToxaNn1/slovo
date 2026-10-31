@@ -1,4 +1,3 @@
-import type { EditionStrings } from '@slovo/contracts';
 import {
   buildShareCardContent,
   type EntryFeedCard,
@@ -21,8 +20,9 @@ import { AccessibilityInfo } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { getAnimatedStyle } from 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { testStrings } from '../test-strings';
 
-const strings = {
+const strings = testStrings({
   wordCard: {
     partsOfSpeech: { noun: { short: 'n.', full: 'noun' } },
     genders: {},
@@ -39,7 +39,7 @@ const strings = {
     captureFailed: 'Could not make the image.',
   },
   correctionCard: { correctionTypes: { calque: 'calque' } },
-} as unknown as EditionStrings;
+});
 
 /** A Word whose Lemma carries its Stress mark after the stressed vowel. */
 const word: WordFeedCard = {

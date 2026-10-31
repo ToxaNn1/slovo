@@ -1,4 +1,3 @@
-import type { EditionStrings } from '@slovo/contracts';
 import type { Haptics } from '@slovo/core';
 import { EditionProvider, FavoriteButton, HapticsProvider } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
@@ -6,10 +5,11 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { useState } from 'react';
 import { AccessibilityInfo } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
+import { testStrings } from '../test-strings';
 
-const strings = {
+const strings = testStrings({
   favorites: { heart: { add: 'Add to Favorites', remove: 'Remove from Favorites' } },
-} as unknown as EditionStrings;
+});
 
 const impactLight = jest.fn();
 

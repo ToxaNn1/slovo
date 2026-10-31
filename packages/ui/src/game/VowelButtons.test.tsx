@@ -1,8 +1,8 @@
-import type { EditionStrings } from '@slovo/contracts';
 import type { RoundAnswer } from '@slovo/core';
 import { EditionProvider, VowelButtons } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import { testStrings } from '../test-strings';
 
 const ORDINALS = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh'];
 
@@ -39,7 +39,7 @@ function Vowels({
   onAnswer?: (position: number) => void;
 }) {
   return (
-    <EditionProvider edition={{ locale: 'uk' }} strings={{} as EditionStrings}>
+    <EditionProvider edition={{ locale: 'uk' }} strings={testStrings({})}>
       <VowelButtons
         text={text}
         vowels={vowels}

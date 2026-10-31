@@ -1,10 +1,10 @@
-import type { EditionStrings } from '@slovo/contracts';
 import type { ProgressState } from '@slovo/core';
 import { EditionProvider, StatsPill, StatsSheet } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { testStrings } from '../test-strings';
 
 const plural = (text: string) => ({ one: text, few: text, many: text, other: text });
 /** A count whose every form names itself, so a test reads which form the language picked. */
@@ -15,7 +15,7 @@ const forms = (noun: string) => ({
   other: `{count} ${noun} (other)`,
 });
 
-const strings = {
+const strings = testStrings({
   game: { round: { progress: '{passed} of {total}' } },
   stats: {
     title: 'Stats',
@@ -39,7 +39,7 @@ const strings = {
     },
     dueToday: 'due today: {count}',
   },
-} as unknown as EditionStrings;
+});
 
 const progress: ProgressState = {
   streak: 12,

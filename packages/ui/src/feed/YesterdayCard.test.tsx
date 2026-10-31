@@ -1,4 +1,3 @@
-import type { EditionStrings } from '@slovo/contracts';
 import type { Haptics, WordCardModel } from '@slovo/core';
 import {
   EditionProvider,
@@ -10,8 +9,9 @@ import {
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { Text } from 'react-native';
+import { testStrings } from '../test-strings';
 
-const strings = {
+const strings = testStrings({
   feedNotices: { yesterday: { title: 'Remember yesterday’s word?' } },
   wordCard: {
     partsOfSpeech: { noun: { short: 'n.', full: 'noun' } },
@@ -24,7 +24,7 @@ const strings = {
     example: '{text}',
   },
   knowledge: { known: 'Known', unknown: 'Unknown', correctionKnownHint: 'I say it right' },
-} as unknown as EditionStrings;
+});
 
 const word: WordCardModel = {
   kind: 'word',

@@ -1,14 +1,14 @@
-import type { EditionStrings } from '@slovo/contracts';
 import { EditionProvider, GameTimer } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { render, screen } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
+import { testStrings } from '../test-strings';
 
 const texts = { remaining: (seconds: number) => `${String(seconds)} seconds left` };
 
 function Timer({ remainingMs }: { remainingMs: number }) {
   return (
-    <EditionProvider edition={{ locale: 'uk' }} strings={{} as EditionStrings}>
+    <EditionProvider edition={{ locale: 'uk' }} strings={testStrings({})}>
       <GameTimer remainingMs={remainingMs} totalMs={60_000} texts={texts} testID="timer" />
     </EditionProvider>
   );

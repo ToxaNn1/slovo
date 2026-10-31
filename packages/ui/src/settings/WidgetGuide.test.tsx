@@ -1,11 +1,11 @@
-import type { EditionStrings } from '@slovo/contracts';
 import { EditionProvider, WidgetGuide } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, render, screen } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
+import { testStrings } from '../test-strings';
 
-const strings = {} as unknown as EditionStrings;
+const strings = testStrings({});
 
 const STEPS = [
   { title: 'Hold an empty spot', hint: 'The icons start to jiggle.' },

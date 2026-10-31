@@ -3,13 +3,14 @@ import { describe, expect, it } from 'vitest';
 import {
   createMemoryUserStatePort,
   openComposition,
+  openCounterSending,
   openUserState,
   type Composition,
   type FeatureSwitch,
   userStateRecords,
 } from '../index';
-import { createMemoryContentPort } from '../testing';
-import { fakeClock, testEdition, word } from '../test-support';
+import { createFakeBackend, createMemoryContentPort } from '../testing';
+import { fakeClock, randomOf, testEdition, testSchedule, word } from '../test-support';
 
 const content = createMemoryContentPort({ words: [word('w_one'), word('w_two')] });
 
@@ -50,13 +51,31 @@ async function markedBeforeTheUpdate(entryId: string, mark: 'known' | 'unknown')
   return records;
 }
 
+/** The records after this device sent what waits to a backend that counts it. */
+async function sent(records: Map<string, string>) {
+  const time = fakeClock('2026-10-28T09:00:00.000Z');
+  const timers = testSchedule(time);
+  const api = createFakeBackend();
+  const sending = openCounterSending({
+    edition: testEdition({ isFeatureEnabled: () => true }),
+    backend: api.backend,
+    userState: await openUserState({ port: createMemoryUserStatePort(records) }),
+    clock: time.clock,
+    schedule: timers.schedule,
+    random: randomOf(0.5),
+  });
+  sending.foreground();
+  await timers.advance(0);
+  sending.background();
+  expect(api.counters.sent).toHaveLength(1);
+  return records;
+}
+
 /** Records where this device counted the Word marked, and sent it. */
 async function countedAndSent(entryId: string, mark: 'known' | 'unknown') {
   const records = new Map<string, string>();
-  const app = await run({ records });
-  await app.knowledge.tap(entryId, mark);
-  for (const key of records.keys()) if (key.startsWith('counters.unsent.')) records.delete(key);
-  return records;
+  await (await run({ records })).knowledge.tap(entryId, mark);
+  return sent(records);
 }
 
 // Spec #886 stories 41, 44, 45; ADR 0060: the deltas a reader's Knowledge Marks give.
@@ -153,10 +172,8 @@ async function savedBeforeTheUpdate(entryId: string) {
 /** Records where this device counted the Word added to Favorites, and sent it. */
 async function savedAndSent(entryId: string) {
   const records = new Map<string, string>();
-  const app = await run({ records });
-  await app.favorites.add(entryId);
-  for (const key of records.keys()) if (key.startsWith('counters.unsent.')) records.delete(key);
-  return records;
+  await (await run({ records })).favorites.add(entryId);
+  return sent(records);
 }
 
 // Spec #886 stories 41, 45; ADR 0060: the deltas a reader's Favorites give.

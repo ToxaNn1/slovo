@@ -14,7 +14,7 @@ import type {
 import { withRetries } from '../retry';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
-import { unsentAfterSending } from './counter-deltas';
+import { forgetUnsentCounters, unsentAfterSending } from './counter-deltas';
 
 /** How long the app waits, while it is in the foreground, between two sends of the unsent changes, in milliseconds. */
 const SEND_EVERY = 5 * 60_000;
@@ -131,6 +131,10 @@ export function openCounterSending({
       if (answer.reason !== 'unexpected') return false;
     }
     await userState.write(new Map([...counted, ...(await unsentAfterSending(userState, events))]));
+    // Sharing went off while the request was out: what it counted is forgotten too.
+    if ((await userState.read(shareCounters)) === false) {
+      await userState.write(await forgetUnsentCounters(userState));
+    }
     return true;
   }
 

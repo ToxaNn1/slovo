@@ -1,4 +1,3 @@
-import type { EditionStrings } from '@slovo/contracts';
 import {
   coreDecor,
   type CorrectionCardModel,
@@ -18,8 +17,9 @@ import {
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen, within } from '@testing-library/react-native';
 import { Dimensions, Text } from 'react-native';
+import { testStrings } from '../test-strings';
 
-const strings = {
+const strings = testStrings({
   wordCard: {
     partsOfSpeech: { noun: { short: 'n.', full: 'noun' } },
     genders: {},
@@ -79,7 +79,7 @@ const strings = {
     correctionKnownHint: 'I already say it right',
     review: 'Review',
   },
-} as unknown as EditionStrings;
+});
 
 const correctionCard: CorrectionCardModel = {
   kind: 'correction',

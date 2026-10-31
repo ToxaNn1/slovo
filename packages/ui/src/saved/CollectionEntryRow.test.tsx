@@ -1,11 +1,11 @@
-import type { EditionStrings } from '@slovo/contracts';
 import type { CollectionEntry, EntryRowModel } from '@slovo/core';
 import { CollectionEntryRow, EditionProvider } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { testStrings } from '../test-strings';
 
-const strings = {
+const strings = testStrings({
   history: {
     kinds: {
       word: 'word',
@@ -21,7 +21,7 @@ const strings = {
   },
   collections: { entries: { remove: 'Remove', removeLabel: 'Remove «{title}» from «{name}»' } },
   correctionCard: { insteadOf: 'instead of {form}' },
-} as EditionStrings;
+});
 
 const word: EntryRowModel = {
   kind: 'word',

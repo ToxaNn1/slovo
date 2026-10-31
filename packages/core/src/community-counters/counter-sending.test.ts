@@ -143,6 +143,22 @@ describe('sending the Community Counters', () => {
     expect(await phone.unsent()).toEqual([]);
   });
 
+  it('takes back a mark removed while its request was out', async () => {
+    const phone = await device();
+    await phone.app.knowledge.tap('w_000', 'known');
+    phone.api.failNext('server-error');
+
+    phone.sending.foreground();
+    await phone.app.knowledge.tap('w_000', 'known');
+    await phone.advance(ALL_TRIES);
+
+    expect(phone.api.counters.sent).toEqual([
+      [{ entryId: 'w_000', known: 1, unknown: 0, saved: 0 }],
+      [{ entryId: 'w_000', known: -1, unknown: 0, saved: 0 }],
+    ]);
+    expect(await phone.unsent()).toEqual([]);
+  });
+
   it('waits for Retry-After after too many requests', async () => {
     const phone = await device();
     await phone.app.knowledge.tap('w_000', 'known');
@@ -260,6 +276,26 @@ describe('sharing the Community Counters', () => {
     expect(phone.api.counters.sent).toEqual([
       [{ entryId: 'w_000', known: 1, unknown: 0, saved: 0 }],
       [{ entryId: 'w_000', known: -1, unknown: 0, saved: 0 }],
+    ]);
+  });
+
+  it('turned off while a request is out, counts from what the backend counted', async () => {
+    const phone = await device();
+    await phone.app.knowledge.tap('w_000', 'known');
+    phone.api.failNext('server-error');
+
+    phone.sending.foreground();
+    await phone.settings.update({ shareCounters: false });
+    await phone.advance(ALL_TRIES);
+    expect(await phone.unsent()).toEqual([]);
+
+    await phone.settings.update({ shareCounters: true });
+    await phone.app.knowledge.tap('w_000', 'unknown');
+    await phone.foreground();
+
+    expect(phone.api.counters.sent).toEqual([
+      [{ entryId: 'w_000', known: 1, unknown: 0, saved: 0 }],
+      [{ entryId: 'w_000', known: -1, unknown: 1, saved: 0 }],
     ]);
   });
 });

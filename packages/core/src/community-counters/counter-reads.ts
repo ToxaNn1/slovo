@@ -1,3 +1,5 @@
+import { COUNTERS_BATCH_SIZE } from '@slovo/contracts';
+
 import type { Edition } from '../edition/edition';
 import { answerOf } from '../backend';
 import type { Backend, Clock, EntryCounters } from '../ports';
@@ -22,8 +24,8 @@ export interface CounterReads {
   /**
    * The lines of the Entries, those near the current Feed card or the one on
    * the Entry screen, by Entry id. The numbers kept from the last 24 hours
-   * hold; the Entries without them are asked for in one request, and the
-   * answer is kept. The reader's own change not yet sent is applied on top,
+   * hold; the Entries without them are asked for in requests of at most
+   * `COUNTERS_BATCH_SIZE` Entries, and the answers are kept. The reader's own change not yet sent is applied on top,
    * no count below zero, and one sent since the numbers were read stays in
    * them. An Entry with no numbers from the last 24 hours and
    * no answer, as offline, has no line, and with the `communityCounters`
@@ -66,10 +68,11 @@ export function openCounterReads({
       const now = clock.now();
       const counts = await keptOf(entryIds, now.getTime());
       const missing = entryIds.filter((entryId) => !counts.has(entryId));
-      if (missing.length > 0) {
+      for (let start = 0; start < missing.length; start += COUNTERS_BATCH_SIZE) {
+        const batch = missing.slice(start, start + COUNTERS_BATCH_SIZE);
         // `counters.read` needs no Account, sends no Session and carries no device id (ADR 0060).
         const reply = await answerOf(
-          backend.counters.read({ edition: edition.id, entries: missing.join(',') }),
+          backend.counters.read({ edition: edition.id, entries: batch.join(',') }),
         );
         if (reply.ok) {
           const readAt = now.toISOString();

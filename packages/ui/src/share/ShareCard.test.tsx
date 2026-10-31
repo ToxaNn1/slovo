@@ -1,15 +1,15 @@
-import type { EditionStrings } from '@slovo/contracts';
 import type { ShareCardContent } from '@slovo/core';
 import { EditionProvider } from '@slovo/ui';
 import { describe, expect, it } from '@jest/globals';
 import { render, screen, within } from '@testing-library/react-native';
 
 import { ShareCard } from './ShareCard';
+import { testStrings } from '../test-strings';
 
-const strings = {
+const strings = testStrings({
   share: { nonStandard: 'Often said', standard: 'Better' },
   idiomCard: { etymology: 'Origin' },
-} as unknown as EditionStrings;
+});
 
 async function renderCard(content: ShareCardContent, format: 'story' | 'square') {
   await render(

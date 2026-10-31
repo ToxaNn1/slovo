@@ -1,7 +1,7 @@
-import type { EditionStrings } from '@slovo/contracts';
 import { EditionProvider, SearchButton } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import { testStrings } from '../test-strings';
 
 describe('SearchButton', () => {
   it('is a button VoiceOver reads by the name of Search, and opens it on a press', async () => {
@@ -9,7 +9,7 @@ describe('SearchButton', () => {
     await render(
       <EditionProvider
         edition={{ locale: 'en' }}
-        strings={{ search: { title: 'Search' } } as EditionStrings}
+        strings={testStrings({ search: { title: 'Search' } })}
       >
         <SearchButton onPress={onPress} />
       </EditionProvider>,

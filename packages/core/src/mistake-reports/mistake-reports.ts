@@ -33,7 +33,8 @@ export type MistakeReportAnswer = 'thanked' | 'too-many-requests' | 'switched-of
  * launch, on each return to the foreground and after a report the backend
  * took, oldest first, each by the one retry rule (ADR 0037). A report leaves
  * the queue when the backend takes it or refuses it with a 4xx; a queued
- * report that meets too many requests waits for the answer's `Retry-After`.
+ * report that meets too many requests waits for the answer's `Retry-After`,
+ * and a new report while it holds is answered `too-many-requests` unsent.
  * Nothing goes out while `mistakeReports` is off in effect, read each time,
  * and the queued reports stay. Nothing it does rejects.
  */
@@ -191,6 +192,8 @@ export function openMistakeReports({
         contentVersion,
       });
       if (!parsed.success) return 'invalid';
+      // Still over the limit by an earlier `Retry-After`: the backend would refuse it too.
+      if (held()) return 'too-many-requests';
       const report = parsed.data;
       const answer = await inTurn(async () => {
         try {

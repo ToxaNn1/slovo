@@ -1,7 +1,7 @@
-import type { EditionStrings } from '@slovo/contracts';
 import { EditionProvider, GameModeCard } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { render, screen } from '@testing-library/react-native';
+import { testStrings } from '../test-strings';
 
 function Card({
   best,
@@ -13,7 +13,7 @@ function Card({
   description?: string;
 }) {
   return (
-    <EditionProvider edition={{ locale: 'uk' }} strings={{} as EditionStrings}>
+    <EditionProvider edition={{ locale: 'uk' }} strings={testStrings({})}>
       <GameModeCard
         entryKind="word"
         overline="Definition → word"

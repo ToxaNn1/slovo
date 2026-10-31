@@ -1,12 +1,12 @@
-import type { EditionStrings } from '@slovo/contracts';
 import type { EntryRowModel } from '@slovo/core';
 import { EditionProvider, EntryRow, type EntryRowAction } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import type { ComponentProps } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { testStrings } from '../test-strings';
 
-const strings = { correctionCard: { insteadOf: 'instead of «{form}»' } } as EditionStrings;
+const strings = testStrings({ correctionCard: { insteadOf: 'instead of «{form}»' } });
 
 const row: EntryRowModel = {
   kind: 'word',

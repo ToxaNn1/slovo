@@ -1,7 +1,7 @@
-import type { EditionStrings } from '@slovo/contracts';
 import { DeleteAccountButton, EditionProvider } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import { testStrings } from '../test-strings';
 
 const copy = {
   button: 'Delete SLOVO ID',
@@ -14,7 +14,7 @@ const copy = {
 async function renderButton(props: { busy?: boolean; disabled?: boolean } = {}) {
   const onDelete = jest.fn();
   await render(
-    <EditionProvider edition={{ locale: 'en' }} strings={{} as EditionStrings}>
+    <EditionProvider edition={{ locale: 'en' }} strings={testStrings({})}>
       <DeleteAccountButton copy={copy} onDelete={onDelete} testID="account-delete" {...props} />
     </EditionProvider>,
   );

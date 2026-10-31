@@ -1,14 +1,14 @@
-import type { EditionStrings } from '@slovo/contracts';
 import { EditionProvider, ResendButton } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { testStrings } from '../test-strings';
 
-const strings = {
+const strings = testStrings({
   account: {
     resend: 'Send again',
     resendIn: { one: 'Send again in {count} second', other: 'Send again in {count} seconds' },
   },
-} as unknown as EditionStrings;
+});
 
 const SENT = new Date('2026-10-17T09:00:00Z');
 

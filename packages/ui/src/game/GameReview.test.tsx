@@ -1,10 +1,11 @@
-import type { Correction, EditionStrings, Idiom, SynonymRow, Tip, Word } from '@slovo/contracts';
+import type { Correction, Idiom, SynonymRow, Tip, Word } from '@slovo/contracts';
 import type { PlayedRound, RoundAnswer } from '@slovo/core';
 import { EditionProvider, GameReview } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import { testStrings } from '../test-strings';
 
-const strings = {
+const strings = testStrings({
   game: {
     review: {
       title: 'Your Rounds',
@@ -26,7 +27,7 @@ const strings = {
   },
   correctionCard: { standard: 'Better' },
   idiomCard: { etymology: 'Origin' },
-} as unknown as EditionStrings;
+});
 
 const candid: Word = {
   kind: 'word',

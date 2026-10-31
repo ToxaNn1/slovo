@@ -1,8 +1,8 @@
-import type { EditionStrings } from '@slovo/contracts';
 import { EditionProvider, UndoToastProvider, useUndoToast } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { AccessibilityInfo, Pressable, Text } from 'react-native';
+import { testStrings } from '../test-strings';
 
 /** Opens a toast with the message, and an undo when it has `onUndo`. */
 function Opener({ message, onUndo }: { message: string; onUndo?: () => void }) {
@@ -21,7 +21,7 @@ function Opener({ message, onUndo }: { message: string; onUndo?: () => void }) {
 
 async function renderOpeners(...openers: readonly { message: string; onUndo?: () => void }[]) {
   await render(
-    <EditionProvider edition={{ locale: 'en' }} strings={{} as EditionStrings}>
+    <EditionProvider edition={{ locale: 'en' }} strings={testStrings({})}>
       <UndoToastProvider>
         {openers.map((opener) => (
           <Opener key={opener.message} {...opener} />

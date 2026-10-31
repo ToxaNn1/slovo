@@ -1,4 +1,3 @@
-import type { EditionStrings } from '@slovo/contracts';
 import type { FixedChip, RoundAnswer } from '@slovo/core';
 import { EditionProvider, OrderedChips } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
@@ -6,10 +5,11 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { useState } from 'react';
 import { AccessibilityInfo } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
+import { testStrings } from '../test-strings';
 
 type ChipsAnswer = Extract<RoundAnswer, { form: 'chips' }>;
 
-const strings = {} as unknown as EditionStrings;
+const strings = testStrings({});
 
 /** «obrok» as shuffled letters, and the letters in the right order. */
 const LETTERS = ['k', 'o', 'r', 'b', 'o'] as const;

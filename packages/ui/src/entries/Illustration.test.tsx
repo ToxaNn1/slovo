@@ -1,11 +1,11 @@
-import type { EditionStrings } from '@slovo/contracts';
 import type { WordFeedCard } from '@slovo/core';
 import { EditionProvider, EntryCard } from '@slovo/ui';
 import { describe, expect, it } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
+import { testStrings } from '../test-strings';
 
-const strings = {
+const strings = testStrings({
   wordCard: {
     partsOfSpeech: { noun: { short: 'n.', full: 'noun' } },
     genders: {},
@@ -15,7 +15,7 @@ const strings = {
     illustration: 'Illustration of the word {lemma}',
     reveal: 'Show the meaning',
   },
-} as unknown as EditionStrings;
+});
 
 /** A Word that names the Illustration `abacus.png`. */
 const word: WordFeedCard = {

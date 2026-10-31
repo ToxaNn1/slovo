@@ -9,8 +9,8 @@ import { space, typeSize } from '../tokens';
  * The Community Counters line under an Entry card's mark buttons (ADR 0060),
  * e.g. «Знають 3 з 5 читачів · зберегли 0»: the plural form follows the
  * total, and zeros are shown. VoiceOver reads it as one sentence, its two
- * parts joined by a comma instead of the dot. Without a line, as offline with
- * nothing kept, it draws nothing.
+ * parts joined as the Edition's spoken line says. Without a line, as offline
+ * with nothing kept, it draws nothing.
  */
 export function CommunityCountersLine({ line }: { line: CounterLine | undefined }) {
   const { strings, voice, count } = useEdition();
@@ -23,7 +23,7 @@ export function CommunityCountersLine({ line }: { line: CounterLine | undefined 
     <Text
       testID="community-counters"
       accessible
-      accessibilityLabel={`${known}, ${saved}`}
+      accessibilityLabel={fill(texts.spokenLine, { known, saved })}
       {...voice}
       style={[styles.line, { color: colors.muted, fontFamily: fontFamilies.ui }]}
     >

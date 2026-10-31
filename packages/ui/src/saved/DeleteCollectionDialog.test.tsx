@@ -1,7 +1,7 @@
-import type { EditionStrings } from '@slovo/contracts';
 import { DeleteCollectionDialog, EditionProvider } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import { testStrings } from '../test-strings';
 
 const copy = {
   title: 'Delete the Collection “{name}”?',
@@ -14,7 +14,7 @@ async function renderDialog(name?: string) {
   const onDelete = jest.fn();
   const onCancel = jest.fn();
   await render(
-    <EditionProvider edition={{ locale: 'en' }} strings={{} as EditionStrings}>
+    <EditionProvider edition={{ locale: 'en' }} strings={testStrings({})}>
       <DeleteCollectionDialog
         name={name}
         copy={copy}

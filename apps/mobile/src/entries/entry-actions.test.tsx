@@ -34,6 +34,8 @@ let composition: Composition;
 jest.mock('../edition/remote-switches', () => ({ useEditionInEffect: () => mockEdition }));
 /** Whether Mistake Reports are on in effect, as the Edition ships them unless a test turns them off. */
 let mockMistakeReportsOn: boolean;
+/** Whether the Knowledge switch is on in effect, as the Edition ships it unless a test turns it off. */
+let mockKnowledgeOn: boolean;
 
 // The buttons of the action row as the Edition ships them, without the settings and the Mix.
 jest.mock('../shown-in-effect', () => ({
@@ -41,7 +43,7 @@ jest.mock('../shown-in-effect', () => ({
     entryButtons: {
       shareCard: true,
       pronunciation: true,
-      knowledge: true,
+      knowledge: mockKnowledgeOn,
       mistakeReport: mockMistakeReportsOn,
     },
   }),
@@ -181,6 +183,7 @@ beforeEach(async () => {
   });
   mockMistakeReportsOn = true;
   mockReportsOpening = undefined;
+  mockKnowledgeOn = true;
   reportsApi = createFakeBackend();
   mistakeReports = openMistakeReports({
     userState,
@@ -511,5 +514,15 @@ describe.each([
     await settle();
     expect(line()).toHaveTextContent('Знають 4 з 6 читачів · зберегли 1');
     expect(countersApi.counters.asked).toEqual([[entryId]]);
+  });
+
+  it('is not read while the Knowledge switch hides it', async () => {
+    mockKnowledgeOn = false;
+    await renderCard(entryId);
+    await settle();
+
+    expect(screen.queryByTestId('knowledge-known')).toBeNull();
+    expect(screen.queryByTestId('community-counters')).toBeNull();
+    expect(countersApi.counters.asked).toEqual([]);
   });
 });

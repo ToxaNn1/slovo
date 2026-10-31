@@ -74,6 +74,14 @@ describe('Reading Community Counters', () => {
     expect(api.counters.asked).toEqual([['w_one', 'w_two']]);
   });
 
+  it('asks for at most 100 Entries in a request, the rest in the next', async () => {
+    const ids = Array.from({ length: 101 }, (_, index) => `w_${String(index).padStart(3, '0')}`);
+    const { api, reads } = await run();
+
+    expect(await linesOf(reads, ids)).toHaveLength(101);
+    expect(api.counters.asked).toEqual([ids.slice(0, 100), ids.slice(100)]);
+  });
+
   it('keeps the numbers for 24 hours and asks only for the Entries it has none of', async () => {
     const api = createFakeBackend();
     api.counters.count('w_one', { known: 3, unknown: 2, saved: 1 });

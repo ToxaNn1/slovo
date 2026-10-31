@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   cancelAnimation,
+  Easing,
   ReduceMotion,
   useAnimatedStyle,
   useSharedValue,
@@ -33,42 +34,60 @@ const PULSE_FAINT = 0.45;
 
 /**
  * Decor slot 2 being stitched: the divider fills in from the left one stitch
- * at a time over a faint print of itself, then starts again. With Reduce
- * Motion it is drawn whole and still.
+ * at a time over a faint print of itself, then starts again, on the UI
+ * thread. With Reduce Motion it is drawn whole and still.
  */
 function StitchedDivider() {
   const { divider } = useDecor();
   const reduceMotion = useReduceMotion();
   const [width, setWidth] = useState(0);
-  const [stitched, setStitched] = useState(0);
   const stitch = Math.max(divider.band.width, MIN_STITCH);
   const stitches = Math.ceil(width / stitch);
+  /** The stitches drawn, counting up through each round of stitching and holding. */
+  const stitched = useSharedValue(0);
+  /** The divider's width, on the UI thread. */
+  const whole = useSharedValue(0);
 
   useEffect(() => {
-    if (reduceMotion || stitches === 0) return;
-    const timer = setInterval(() => {
-      setStitched((count) => (count >= stitches + STITCHES_HELD ? 0 : count + 1));
-    }, STITCH_MS);
+    if (reduceMotion || stitches === 0) {
+      stitched.value = stitches;
+      return;
+    }
+    const steps = stitches + STITCHES_HELD + 1;
+    stitched.value = 0;
+    stitched.value = withRepeat(
+      withTiming(steps, {
+        duration: steps * STITCH_MS,
+        easing: Easing.linear,
+        reduceMotion: ReduceMotion.Never,
+      }),
+      -1,
+    );
     return () => {
-      clearInterval(timer);
+      cancelAnimation(stitched);
     };
-  }, [reduceMotion, stitches]);
+  }, [reduceMotion, stitches, stitched]);
 
-  const shown = reduceMotion ? width : Math.min(stitched * stitch, width);
+  const stitchedStyle = useAnimatedStyle(() => ({
+    width: Math.min(Math.floor(stitched.value) * stitch, whole.value),
+  }));
+
   return (
     <View
+      testID="feed-loading-divider"
       onLayout={(event) => {
         setWidth(event.nativeEvent.layout.width);
+        whole.value = event.nativeEvent.layout.width;
       }}
     >
       <View style={styles.print}>
         <OrnamentDivider />
       </View>
-      <View style={[styles.stitched, { width: shown }]}>
+      <Animated.View testID="feed-loading-stitched" style={[styles.stitched, stitchedStyle]}>
         <View style={{ width }}>
           <OrnamentDivider />
         </View>
-      </View>
+      </Animated.View>
     </View>
   );
 }
