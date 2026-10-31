@@ -2,7 +2,6 @@ import type { EntryKind, Rarity } from '@slovo/contracts';
 
 import type { Analytics } from '../analytics/analytics';
 import type { Edition } from '../edition/edition';
-import type { GameXp, XpAward } from '../game/game-xp';
 import type { EntryRowModel, EntryRows } from '../entries/entry-row';
 import type { HiddenEntries } from '../mix/hidden-entries';
 import { createInTurn, createSubscribers } from '../in-turn';
@@ -19,6 +18,17 @@ import {
   type KnowledgeMark,
   type KnowledgeRecord,
 } from './knowledge-record';
+
+/** The record a Review answer appends in the XP log, and the step that makes it in memory once written. */
+interface ReviewXpAward {
+  readonly changes: UserStateChanges;
+  commit(): void;
+}
+
+/** What Knowledge needs of the XP log (ADR 0066): the XP of a Review answer. */
+export interface ReviewXp {
+  award(action: { readonly source: 'review-answer' }): ReviewXpAward;
+}
 
 /** An Entry the reader is learning, in the «Вчу» list. */
 export interface LearningEntry {
@@ -191,7 +201,7 @@ export async function openKnowledge({
   countMark: (entryId: string, mark: KnowledgeMark | undefined) => Promise<UserStateChanges>;
   dayStarted: Pick<Subject<LocalDate>, 'subscribe'>;
   /** The XP log, which a Review answer earns XP in. */
-  xp: GameXp;
+  xp: ReviewXp;
   analytics: Pick<Analytics, 'track'>;
 }): Promise<Knowledge> {
   const { knowledge, confirmed: confirmedRecords } = userStateRecords;
@@ -284,7 +294,7 @@ export async function openKnowledge({
     record: KnowledgeRecord | undefined,
     counts: boolean,
     confirms: boolean,
-    reviewXp?: XpAward,
+    reviewXp?: ReviewXpAward,
   ): Promise<void> {
     const counted = counts ? await countMark(entryId, record?.mark) : new Map();
     const confirming = confirms ? confirmation(entryId) : new Map();
