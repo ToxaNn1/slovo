@@ -905,6 +905,19 @@ describe("a Word's origin", () => {
     expect(run.stdout).toContain(`Recorded ${file}`);
   });
 
+  it('is left out of the draft, so a Word recorded without one carries none', () => {
+    const run = content(['new', 'word', '--edition', 'uk'], { edits: [validWord] });
+
+    expect(run.stderr).toBe('');
+    expect(run.status).toBe(0);
+    const drafted = JSON.parse(readFileSync(join(workDir, 'edits.json.last'), 'utf8')) as unknown;
+    expect(drafted).toMatchObject({ kind: 'word', lemma: '' });
+    expect(drafted).not.toHaveProperty('origin');
+    const [file = ''] = run.opened;
+    expect(readJson(file)).not.toHaveProperty('origin');
+    expect(run.stdout).toContain(`Recorded ${file}`);
+  });
+
   it('is not offered for an Entry of another kind', () => {
     const run = content(['edit', idiom.id, '--edition', 'uk'], { edits: [null] });
 
