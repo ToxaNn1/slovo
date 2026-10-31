@@ -24,6 +24,8 @@ interface Received {
  */
 async function startFakeSmtpServer(tlsOptions?: tls.TlsOptions) {
   const received: Received[] = [];
+  /** Every login the server was given, decoded. */
+  const logins: string[] = [];
   const onConnection = (socket: Socket) => {
     const encrypted = socket instanceof tls.TLSSocket;
     let login: string | undefined;
@@ -56,8 +58,12 @@ async function startFakeSmtpServer(tlsOptions?: tls.TlsOptions) {
           socket.write('250 queued\r\n');
         } else if (/^(EHLO|HELO) /.test(line)) {
           socket.write('250-fake\r\n250 AUTH PLAIN\r\n');
+        } else if (line === 'STARTTLS') {
+          // Offered by no fake server: a plain one refuses it, as a real one that lacks it does.
+          socket.write('502 command not implemented\r\n');
         } else if (line.startsWith('AUTH PLAIN ')) {
           login = Buffer.from(line.slice('AUTH PLAIN '.length), 'base64').toString();
+          logins.push(login);
           socket.write('235 accepted\r\n');
         } else if (line.startsWith('MAIL FROM:')) {
           envelopeFrom = line;
@@ -89,7 +95,7 @@ async function startFakeSmtpServer(tlsOptions?: tls.TlsOptions) {
         });
       }),
   );
-  return { port: (server.address() as AddressInfo).port, received };
+  return { port: (server.address() as AddressInfo).port, received, logins };
 }
 
 /** A certificate for 127.0.0.1 made for this file alone, which the process trusts. */
@@ -187,6 +193,21 @@ describe('the SMTP client', () => {
     });
 
     await expect(mailer.send(CODE_EMAIL)).rejects.toThrow('the email was not sent');
+    expect(server.received).toHaveLength(0);
+  });
+
+  it('gives the credentials to no server that offers no STARTTLS when TLS is off', async () => {
+    const server = await startFakeSmtpServer();
+    const mailer = createSmtpMailer({
+      host: '127.0.0.1',
+      port: server.port,
+      tls: false,
+      credentials: { user: 'slovo', password: 'a-password' },
+      from: 'codes@slovo.test',
+    });
+
+    await expect(mailer.send(CODE_EMAIL)).rejects.toThrow('the email was not sent');
+    expect(server.logins).toHaveLength(0);
     expect(server.received).toHaveLength(0);
   });
 });
