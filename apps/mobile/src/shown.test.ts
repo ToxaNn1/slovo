@@ -65,8 +65,12 @@ describe('what the reader is shown', () => {
       { off: ['seasonalDecor'], shown: { seasonalDecorSetting: false } },
     ],
     [
-      'no «Ділитися анонімною статистикою» switch with Community Counters off',
-      { off: ['communityCounters'], shown: { shareCountersSetting: false } },
+      'no «Ділитися анонімною статистикою» switch with Community Counters and Analytics off',
+      { off: ['communityCounters', 'analytics'], shown: { shareCountersSetting: false } },
+    ],
+    [
+      'the «Ділитися анонімною статистикою» switch with Analytics on alone',
+      { off: ['communityCounters'], shown: { shareCountersSetting: true } },
     ],
     [
       'no «Слова дня» card with the Word of the Day archive off',
