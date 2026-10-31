@@ -475,6 +475,76 @@ const syncProcedures: Record<
 
 const notFound = { code: 'NOT_FOUND', status: 404, defined: true };
 
+// Ticket #1372, ADR 0066: XP log records sync as any record, a union by id per Account per Edition.
+
+/** One XP log record as the app's Core writes it, under its unique id. */
+function xpRecord(id: string, amount: number, changedAt: number) {
+  return {
+    key: `xp.${id}`,
+    value: {
+      kind: 'xp',
+      date: '2026-10-14',
+      at: new Date(changedAt).toISOString(),
+      source: 'game-round',
+      amount,
+    },
+    changedAt,
+  };
+}
+
+/** The XP the pulled records sum to: what a device derives from the Account's log. */
+const xpOf = (records: readonly { value: unknown }[]) =>
+  records.reduce((sum, { value }) => sum + (value as { amount: number }).amount, 0);
+
+describe('XP log records', () => {
+  it('sum the XP of two devices of the Account, each record kept once by its id', async () => {
+    const { signIn } = syncing();
+    const email = newEmail();
+    const phone = await signIn(email);
+    const tablet = await signIn(email);
+    const now = Date.now();
+    const phones = [xpRecord('phone-1', 1, now - 2 * MINUTE), xpRecord('phone-2', 5, now - MINUTE)];
+    const tablets = [xpRecord('tablet-1', 1, now)];
+
+    await phone.sync.push({ editionId: 'uk', changes: phones });
+    await tablet.sync.push({ editionId: 'uk', changes: tablets });
+    // The tablet pulled the phone's records and pushes them back, as a first sync does.
+    await tablet.sync.push({ editionId: 'uk', changes: phones });
+    await phone.sync.push({ editionId: 'uk', changes: [...tablets, ...phones] });
+
+    const pulled = await pullAll(phone);
+    expect(pulled).toEqual([...phones, ...tablets]);
+    expect(xpOf(pulled)).toBe(7);
+    await expect(pullAll(tablet)).resolves.toEqual(pulled);
+  });
+
+  it('stay in their Edition', async () => {
+    const { signIn } = syncing(['uk', 'pl']);
+    const reader = await signIn();
+    const now = Date.now();
+    const record = xpRecord('one', 1, now);
+
+    await reader.sync.push({ editionId: 'uk', changes: [record] });
+
+    await expect(pullAll(reader, 'uk')).resolves.toEqual([record]);
+    await expect(pullAll(reader, 'pl')).resolves.toEqual([]);
+  });
+
+  it('never reach another Account, even under the same id', async () => {
+    const { signIn } = syncing();
+    const reader = await signIn();
+    const other = await signIn();
+    const now = Date.now();
+    const readers = xpRecord('same-id', 1, now);
+
+    await reader.sync.push({ editionId: 'uk', changes: [readers] });
+    await other.sync.push({ editionId: 'uk', changes: [xpRecord('same-id', 5, now + MINUTE)] });
+
+    await expect(pullAll(reader)).resolves.toEqual([readers]);
+    expect(xpOf(await pullAll(other))).toBe(5);
+  });
+});
+
 describe('a Sync procedure', () => {
   it.each(Object.entries(syncProcedures))(
     '%s is UNAUTHORIZED without a Session and after the Session ended',
