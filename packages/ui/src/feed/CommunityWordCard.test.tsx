@@ -1,11 +1,11 @@
-import type { EditionStrings } from '@slovo/contracts';
 import type { EntryRowModel, Haptics } from '@slovo/core';
 import { CommunityWordCard, EditionProvider, HapticsProvider, VerticalPager } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { Text } from 'react-native';
+import { testStrings } from '../test-strings';
 
-const strings = {
+const strings = testStrings({
   feedNotices: {
     communityWord: {
       title: 'Community word of the week',
@@ -13,7 +13,7 @@ const strings = {
     },
   },
   correctionCard: { insteadOf: 'instead of “{form}”' },
-} as unknown as EditionStrings;
+});
 
 /** A Word whose Lemma carries its Stress mark. */
 const word: EntryRowModel = {

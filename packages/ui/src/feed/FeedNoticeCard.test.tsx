@@ -1,4 +1,3 @@
-import type { EditionStrings } from '@slovo/contracts';
 import type { Haptics } from '@slovo/core';
 import {
   DailyLimitCard,
@@ -11,8 +10,9 @@ import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 import { Text } from 'react-native';
+import { testStrings } from '../test-strings';
 
-const strings = {
+const strings = testStrings({
   feedNotices: {
     dailyLimit: { message: 'Enough for today. Come back tomorrow', keepGoing: 'Keep going' },
     firstWeek: {
@@ -33,7 +33,7 @@ const strings = {
       lastDayTextNoStreak: 'Thanks for staying! Come back for new words.',
     },
   },
-} as unknown as EditionStrings;
+});
 
 /** The Feed's pages: a Feed Notice's card, then the next Entry's card behind it. */
 const PAGES = ['notice', 'next'] as const;
