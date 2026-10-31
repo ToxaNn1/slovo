@@ -43,7 +43,11 @@ describe('eas.json', () => {
   it('builds a development client for the simulator only in the development profile', () => {
     expect(eas).toMatchObject({
       build: {
-        [development]: { developmentClient: true, distribution: 'internal', ios: { simulator: true } },
+        [development]: {
+          developmentClient: true,
+          distribution: 'internal',
+          ios: { simulator: true },
+        },
       },
     });
     expect(eas).not.toHaveProperty(['build', release, 'developmentClient']);

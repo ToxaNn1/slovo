@@ -255,7 +255,6 @@ describe('app config', () => {
   });
 
   it('takes the name, bundle id and icon from the AppConfig and the locale from the default Edition', () => {
-
     const config = appConfig(context);
 
     expect(config.name).toBe('SLOVO');
@@ -266,12 +265,10 @@ describe('app config', () => {
   });
 
   it('carries the version of the milestone the code belongs to (ADR 0044)', () => {
-
     expect(appConfig(context).version).toBe('0.9');
   });
 
   it('turns on the React Compiler (ADR 0059)', () => {
-
     expect(appConfig(context).experiments?.reactCompiler).toBe(true);
   });
 
@@ -336,12 +333,10 @@ describe('app config', () => {
   });
 
   it('builds a config from a valid Edition copied elsewhere', () => {
-
     expect(appConfig(repoWithEdition(() => undefined)).ios?.bundleIdentifier).toBe('app.slovo.uk');
   });
 
   it("embeds the Core's fonts and the Edition's own in the native app", () => {
-
     const { fonts } = pluginOptions(appConfig(context), 'expo-font') as { fonts: string[] };
 
     expect(fonts).toEqual([
@@ -371,7 +366,6 @@ describe('app config', () => {
   });
 
   it('embeds the Word of the Day font and passes its family on to the app', () => {
-
     const config = appConfig(context);
     const { fonts } = pluginOptions(config, 'expo-font') as { fonts: string[] };
 
@@ -451,7 +445,6 @@ describe('app config', () => {
   });
 
   it('takes the splash the AppConfig names in both Themes', () => {
-
     expect(pluginOptions(appConfig(context), 'expo-splash-screen')).toEqual({
       image: '../../editions/uk/decor/splash-light.png',
       backgroundColor: '#F5EEE2',
@@ -488,7 +481,6 @@ describe('app config', () => {
   });
 
   it('bundles the notification sound of the Edition through expo-notifications', () => {
-
     expect(pluginOptions(appConfig(context), 'expo-notifications')).toEqual({
       sounds: ['../../editions/uk/assets/notification.wav'],
     });
@@ -503,14 +495,12 @@ describe('app config', () => {
   });
 
   it('shares the App Group derived from the bundle id between the app and the widget', () => {
-
     expect(appConfig(context).ios?.entitlements?.['com.apple.security.application-groups']).toEqual(
       ['group.app.slovo.uk'],
     );
   });
 
   it('declares the Sign in with Apple entitlement (ADR 0047)', () => {
-
     const { ios } = appConfig(context);
 
     expect(ios?.usesAppleSignIn).toBe(true);
@@ -545,7 +535,6 @@ describe('app config', () => {
   });
 
   it('adds the widget extension from apps/widget', () => {
-
     expect(pluginOptions(appConfig(context), '@bacons/apple-targets')).toEqual({
       root: '..',
       match: 'widget',
@@ -615,7 +604,6 @@ describe('app config', () => {
   });
 
   it('registers the native time picker', () => {
-
     expect(appConfig(context).plugins).toContain('@react-native-community/datetimepicker');
   });
 
@@ -644,12 +632,10 @@ describe('app config', () => {
   });
 
   it("gives the Spotlight module the app's scheme, so a tapped result opens as its link", () => {
-
     expect(appConfig(context).ios?.infoPlist?.['SlovoLinkScheme']).toBe('slovo-uk');
   });
 
   it('compiles the App Intents and their App Shortcuts into the app, however often it is prebuilt', async () => {
-
     // iOS reads App Shortcuts only from the app's own target, never from a pod (ADR 0057).
     const iosDir = await prebuildIos(
       repoWithEdition(() => undefined),
@@ -674,7 +660,6 @@ describe('app config', () => {
   });
 
   it("gives Siri the Edition's phrases, each naming the app as Siri hears it, and each intent its route", async () => {
-
     const iosDir = await prebuildIos(repoWithEdition(() => undefined));
 
     const shortcuts = readFileSync(join(iosDir, 'SLOVO/SlovoAppShortcuts.swift'), 'utf8');
@@ -694,7 +679,6 @@ describe('app config', () => {
   });
 
   it("titles the intents with the Edition's strings, which the Swift code names only by key", () => {
-
     const titles = {
       'appIntents.wordOfTheDay': 'Слово дня',
       'appIntents.openGame': 'Відкрити гру',
