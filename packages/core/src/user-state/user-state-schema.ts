@@ -49,7 +49,9 @@ export const XpSourceSchema = z.literal(['game-round', 'game-finished', 'game-be
 
 /**
  * One record of the XP log (ADR 0066): its local date and instant, and what
- * it records. The kinds the ADR names besides XP come with their own tickets.
+ * it records: XP a learning action earned on its date, or a Streak freeze
+ * consumed for its date, a missed day it covers. The kinds the ADR names
+ * besides these come with their own tickets.
  */
 const XpRecordSchema = z.discriminatedUnion('kind', [
   z.object({
@@ -59,6 +61,7 @@ const XpRecordSchema = z.discriminatedUnion('kind', [
     source: XpSourceSchema,
     amount: z.number().int().positive(),
   }),
+  z.object({ kind: z.literal('freeze'), date: z.string(), at: InstantSchema }),
 ]);
 
 export type XpRecord = z.infer<typeof XpRecordSchema>;
@@ -282,6 +285,14 @@ export const userStateRecords = {
    * same on every device and never doubles (ADR 0066).
    */
   xpLog: declareRecords('xp.', XpRecordSchema, { sync: 'union' }),
+  /**
+   * The last day of the Streak a missed day broke, once the Analytics event of
+   * that break is emitted, so a later app run emits it no more. Without it, no
+   * break is reported yet. It stays on the device, like the events.
+   */
+  streakBrokenReported: declareRecord('progress.streakBrokenReported', z.string(), {
+    sync: 'device-only',
+  }),
   /**
    * The user's notification times, local times `HH:MM`. Without the record,
    * the Edition's default times; an empty list is a record of its own, so no

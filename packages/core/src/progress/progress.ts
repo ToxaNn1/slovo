@@ -4,11 +4,12 @@ import type { Game } from '../game/game';
 import type { History } from '../saved/history';
 import type { Knowledge, KnownCounts } from '../knowledge/knowledge';
 import { createSubscribers } from '../in-turn';
-import { dayNumber, parseLocalDate, todayBounds, todayKey } from '../local-date';
+import { todayBounds, todayKey } from '../local-date';
 import type { Clock } from '../ports';
 import type { Edition } from '../edition/edition';
 import type { ActiveDays } from './active-days';
 import { calendarMonths, type CalendarMonth } from './calendar';
+import { STREAK_MILESTONES } from './streak';
 
 /**
  * The reader's progress as it stands, as the stats sheet shows it: the Streak
@@ -19,11 +20,14 @@ import { calendarMonths, type CalendarMonth } from './calendar';
 export interface ProgressState {
   /**
    * The consecutive Active Days up to today, or up to yesterday while today
-   * isn't an Active Day yet; 0 once a day is missed.
+   * isn't an Active Day yet, which a day a Streak freeze covers keeps; 0 once
+   * a missed day with no freeze breaks it.
    */
   readonly streak: number;
-  /** The Best Streak: the most consecutive Active Days there have ever been. */
+  /** The Best Streak: the longest Streak there has ever been. */
   readonly bestStreak: number;
+  /** The Streak freezes held, 0 to 2; 0 with freezes off. */
+  readonly freezesHeld: number;
   /** The Entries Seen today: the History entries whose time falls on today's local date. */
   readonly seenToday: number;
   /** The Entries in Favorites. */
@@ -63,29 +67,12 @@ export interface Progress {
   calendar(): readonly CalendarMonth[];
   /** Calls `listener` after each change of the state. Returns the call that stops it. */
   subscribe(listener: () => void): () => void;
-}
-
-/** The Streak and the Best Streak of the Active Days, by `YYYY-MM-DD`, on the local date `today`. */
-function streaksOf(
-  activeDays: ReadonlySet<string>,
-  today: string,
-): Pick<ProgressState, 'streak' | 'bestStreak'> {
-  const days = new Set(
-    [...activeDays].map((date) => dayNumber(parseLocalDate(date))).filter(Number.isFinite),
-  );
-  const todayNumber = dayNumber(parseLocalDate(today));
-  let streak = 0;
-  for (let day = days.has(todayNumber) ? todayNumber : todayNumber - 1; days.has(day); day -= 1) {
-    streak += 1;
-  }
-  let bestStreak = 0;
-  for (const first of days) {
-    if (days.has(first - 1)) continue;
-    let length = 1;
-    while (days.has(first + length)) length += 1;
-    bestStreak = Math.max(bestStreak, length);
-  }
-  return { streak, bestStreak };
+  /**
+   * Calls `listener` with the Streak each time today's Active Day makes it a
+   * Streak day that is celebrated: 1 to 7, then 14, 30, 50, 100, 200 and 365.
+   * Returns the call that stops it.
+   */
+  onStreakMilestone(listener: (streak: number) => void): () => void;
 }
 
 const sameState = (one: ProgressState, other: ProgressState) =>
@@ -109,7 +96,7 @@ export function openProgress({
 }: {
   edition: Pick<Edition, 'isFeatureEnabled'>;
   clock: Clock;
-  activeDays: Pick<ActiveDays, 'days' | 'subscribe'>;
+  activeDays: Pick<ActiveDays, 'days' | 'streak' | 'subscribe'>;
   history: History;
   favorites: Favorites;
   collections: Collections;
@@ -117,6 +104,7 @@ export function openProgress({
   knowledge: Pick<Knowledge, 'state' | 'subscribe'>;
 }): Progress {
   const subscribers = createSubscribers();
+  const milestones = new Set<(streak: number) => void>();
 
   /**
    * The History entries Seen on today's local date. History is newest first,
@@ -134,10 +122,10 @@ export function openProgress({
     return seenToday;
   }
 
-  /** The state as of now, on the local date `today` in the clock's time zone. */
-  function stateOf(today: string): ProgressState {
+  /** The state as of now, on today's local date in the clock's time zone. */
+  function stateOf(): ProgressState {
     return {
-      ...streaksOf(activeDays.days, today),
+      ...activeDays.streak,
       seenToday: seenTodayIn(history.list),
       favorites: favorites.list.length,
       inCollections: new Set(
@@ -151,14 +139,19 @@ export function openProgress({
     };
   }
 
-  let state = stateOf(todayKey(clock));
+  let state = stateOf();
 
   /** Makes the state again on today's local date, and tells the subscribers when a number changed. */
   function follow(): void {
-    const next = stateOf(todayKey(clock));
+    const next = stateOf();
     if (sameState(next, state)) return;
+    const celebrated =
+      next.streak > state.streak &&
+      activeDays.days.has(todayKey(clock)) &&
+      STREAK_MILESTONES.has(next.streak);
     state = next;
     subscribers.tell();
+    if (celebrated) for (const listener of milestones) listener(next.streak);
   }
 
   for (const source of [activeDays, history, favorites, collections, game, knowledge]) {
@@ -174,5 +167,11 @@ export function openProgress({
         ? calendarMonths(activeDays.days, todayKey(clock))
         : [],
     subscribe: subscribers.subscribe,
+    onStreakMilestone(listener) {
+      milestones.add(listener);
+      return () => {
+        milestones.delete(listener);
+      };
+    },
   };
 }

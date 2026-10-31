@@ -73,6 +73,7 @@ describe('opening a Word from a notification', () => {
     expect(app.progress.state).toEqual({
       streak: 2,
       bestStreak: 2,
+      freezesHeld: 0,
       seenToday: 1,
       favorites: 0,
       inCollections: 0,

@@ -1,3 +1,4 @@
+import type { ActiveDays } from '../progress/active-days';
 import type { Edition } from '../edition/edition';
 import type { Favorites } from '../saved/favorites';
 import type { History } from '../saved/history';
@@ -39,11 +40,11 @@ export interface WeeklyRecap {
   of(day: LocalDate): Promise<WeeklyRecapModel | undefined>;
 }
 
-const { activeDays, knowledge } = userStateRecords;
+const { knowledge } = userStateRecords;
 
 /**
  * Creates the Weekly Recap over History, Favorites, the Knowledge Marks' times
- * and the Active Days in the user state, and Progress's Streak.
+ * in the user state, the Active Days and Progress's Streak.
  */
 export function createWeeklyRecap({
   edition,
@@ -52,6 +53,7 @@ export function createWeeklyRecap({
   history,
   favorites,
   progress,
+  activeDays,
 }: {
   edition: Pick<Edition, 'isFeatureEnabled'>;
   userState: UserState;
@@ -59,6 +61,7 @@ export function createWeeklyRecap({
   history: Pick<History, 'list'>;
   favorites: Pick<Favorites, 'list'>;
   progress: Pick<Progress, 'state'>;
+  activeDays: Pick<ActiveDays, 'days'>;
 }): WeeklyRecap {
   return {
     async of(day) {
@@ -66,8 +69,7 @@ export function createWeeklyRecap({
       const week = new Set(
         Array.from({ length: 7 }, (_, index) => dateKeyOf(localDateAfter(day, index - 7))),
       );
-      const days = await userState.list(activeDays);
-      if (![...days.keys()].some((date) => week.has(date))) return undefined;
+      if (![...activeDays.days].some((date) => week.has(date))) return undefined;
       /** Whether the instant fell in the week, in the clock's time zone. */
       const inWeek = (instant: Date) => week.has(dateKeyOf(localDayOf(instant, clock).date));
       /** The Known marks set in the week. */

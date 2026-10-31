@@ -43,6 +43,7 @@ const strings = testStrings({
 const progress: ProgressState = {
   streak: 1,
   bestStreak: 1,
+  freezesHeld: 0,
   seenToday: 0,
   favorites: 0,
   inCollections: 0,

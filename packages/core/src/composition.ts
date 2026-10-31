@@ -372,7 +372,9 @@ export async function openComposition({
   // The Cycle reads the eligible Entries first; the Feed, the plan and the Game follow it.
   eligibility.subscribe(() => cycle.readEligibleAgain());
   const wordOfTheDay = await openWordOfTheDay({ cycle, userState, clock });
-  const activeDays = await openActiveDays({ userState, clock });
+  const xpLog = await openXpLog({ edition, userState, clock, random, dayTurned });
+  const analytics = createAnalytics({ edition, userState, port: analyticsPort });
+  const activeDays = await openActiveDays({ edition, userState, clock, xpLog, analytics });
   const day = createDayChange({
     clock,
     wordOfTheDay,
@@ -383,10 +385,8 @@ export async function openComposition({
     returned,
   });
   const { history, recorder } = await openHistory({ rows, userState });
-  const xpLog = await openXpLog({ edition, userState, clock, random, dayTurned });
   const hiddenEntries = await openHiddenEntries({ rows, userState, clock, eligibility });
   const communityCounters = openCommunityCounters({ edition, userState });
-  const analytics = createAnalytics({ edition, userState, port: analyticsPort });
   /** Emits the event about the Entry with its kind, rarity and Category; a failure is lost, never thrown. */
   async function entryEvent(
     event:
@@ -471,7 +471,7 @@ export async function openComposition({
       backend === undefined
         ? noFeedNotices
         : createCommunityWord({ edition, entries, hiddenEntries, userState, backend, clock }),
-      createFirstWeek({ edition, userState }),
+      createFirstWeek({ edition, userState, activeDays }),
       createYesterday({ edition, entries, hiddenEntries, userState }),
       dailyLimit,
     ),
@@ -532,6 +532,7 @@ export async function openComposition({
     history,
     favorites,
     progress,
+    activeDays,
   });
   await day.resume();
   // Once the day is turned to, so the welcome shows today's Word of the Day.

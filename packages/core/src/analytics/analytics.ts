@@ -21,6 +21,10 @@ export interface AnalyticsEvents {
   readonly pronunciationPlayed: EntryEventProperties;
   readonly wordHistoryOpened: EntryEventProperties;
   readonly screenViewed: { readonly screen: string };
+  /** A held Streak freeze covered a missed day; the freezes held after it. */
+  readonly freezeUsed: { readonly freezesHeld: number };
+  /** A missed day with no freeze reset the Streak; the Streak it broke. */
+  readonly streakBroken: { readonly streak: number };
   readonly settingChanged: { readonly setting: string; readonly value: string | number | boolean };
 }
 

@@ -72,7 +72,8 @@
     "collectionLinks": true,
     "replaceOpenEntry": true,
     "mixKindWeights": true,
-    "xpLog": true
+    "xpLog": true,
+    "streakFreezes": true
   },
   "userSettingDefaults": {
     "theme": "system",
