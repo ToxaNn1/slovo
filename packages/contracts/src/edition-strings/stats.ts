@@ -50,6 +50,12 @@ export const StatsStringsSchema = z.strictObject({
   }),
   /** The row of the Entries due for Review today, e.g. «На повторення сьогодні: 4». Takes `{count}`. */
   dueToday: templateOf('count'),
+  /** The XP bar's text, today's XP from the XP log, e.g. «12 XP». Takes `{count}`. */
+  xpToday: templateOf('count'),
+  /** What VoiceOver reads for the XP bar, e.g. «Досвід: сьогодні 12 XP». Takes `{count}`. */
+  xpBarLabel: templateOf('count'),
+  /** What VoiceOver reads after the XP bar: that a tap opens the Game, e.g. «Відкриває Гру». */
+  xpBarHint: TextSchema,
   /** The Active Days calendar under the counts. */
   calendar: z.strictObject({
     /** What VoiceOver reads for the month control, e.g. «Активні дні». */
