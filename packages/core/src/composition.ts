@@ -534,7 +534,7 @@ export async function openComposition({
     search: createSearch({ content, edition, userState }),
     recentQueries: createRecentQueries({ edition, userState }),
     rarityTest,
-    moodDraw: createMoodDraw({ content, edition, userState, random }),
+    moodDraw: createMoodDraw({ edition, entries, random }),
     async openDailyCrossword() {
       if (crossword === undefined) return undefined;
       return openDailyCrossword({ content: crossword, userState, clock, edition });
