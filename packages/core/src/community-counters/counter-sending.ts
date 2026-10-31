@@ -120,17 +120,28 @@ export function openCounterSending({
       .map(([entryId, delta]) => ({ entryId, ...delta }));
     if (events.length === 0) return false;
     const answer = await withRetries(() => send(events), { schedule, random });
-    let counted: UserStateChanges = new Map();
+    let changes: UserStateChanges;
     if (answer.ok) {
       heldUntil = undefined;
-      counted = await readAfterCounting(events);
+      changes = new Map([
+        ...(await readAfterCounting(events)),
+        ...(await unsentAfterSending(userState, events)),
+      ]);
     } else {
       if (answer.reason === 'too-many-requests' && answer.retryAfter !== undefined) {
         heldUntil = clock.now().getTime() + answer.retryAfter * 1000;
       }
       if (answer.reason !== 'unexpected') return false;
+      // The backend refused the batch as wrong, so it counted nothing of it: the
+      // batch is dropped, and what this device counted of its Entries goes back
+      // to what the backend has, as turning sharing off does, so nothing the
+      // backend never counted is taken back and a later change counts as new.
+      changes = await forgetUnsentCounters(
+        userState,
+        events.map(({ entryId }) => entryId),
+      );
     }
-    await userState.write(new Map([...counted, ...(await unsentAfterSending(userState, events))]));
+    await userState.write(changes);
     // Sharing went off while the request was out: what it counted is forgotten too.
     if ((await userState.read(shareCounters)) === false) {
       await userState.write(await forgetUnsentCounters(userState));

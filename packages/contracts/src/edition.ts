@@ -336,10 +336,24 @@ const DomainSchema = z
   );
 
 /**
- * The top-level domains reserved for examples and tests (RFC 2606), such as
- * the placeholder `slovo.example`: no link to them opens anywhere.
+ * The domains reserved for examples and tests (RFC 2606), the top-level ones
+ * and the second-level `example.com`, `example.net` and `example.org`, such as
+ * the placeholder `slovo.example`: no link to them, or to a name under them,
+ * opens anywhere.
  */
-const RESERVED_TOP_LEVEL_DOMAINS = ['example', 'test', 'invalid', 'localhost'];
+const RESERVED_DOMAINS = [
+  'example',
+  'test',
+  'invalid',
+  'localhost',
+  'example.com',
+  'example.net',
+  'example.org',
+];
+
+/** Whether the domain is a reserved one or a name under it. */
+const isReservedDomain = (domain: string) =>
+  RESERVED_DOMAINS.some((reserved) => domain === reserved || domain.endsWith(`.${reserved}`));
 
 /**
  * An Apple Developer Team ID, ten upper-case letters and digits, or empty
@@ -428,9 +442,15 @@ export const EditionConfigSchema = z
      */
     linkDomain: DomainSchema,
     /**
+     * The domain of the site that publishes the Edition's legal pages, each
+     * under `/<id>/` (ADR 0049): the Core derives the addresses About opens
+     * from it and the Edition id, `https://<legalDomain>/<id>/privacy`.
+     */
+    legalDomain: DomainSchema,
+    /**
      * The Apple Developer Team ID the app is signed with: the backend's
      * app-site-association file names the app by it. Empty until the owner
-     * fills it in; the Edition check for a release build refuses it empty.
+     * fills it in; the app config of a release build refuses it empty.
      */
     appleTeamId: AppleTeamIdSchema,
     /** The app's id in App Store Connect, which TestFlight uploads name. Empty until the app is created. */
@@ -564,23 +584,31 @@ export type EditionConfig = z.infer<typeof EditionConfigSchema>;
 
 /** A field of an Edition config that a release build refuses, and why. */
 export interface ReleaseProblem {
-  readonly field: 'linkDomain' | 'appleTeamId';
+  readonly field: 'linkDomain' | 'legalDomain' | 'appleTeamId';
   readonly message: string;
 }
 
 /**
  * What a release build refuses in a valid Edition config: the placeholders a
- * development build keeps, a domain reserved for examples and an empty Team
- * ID. Empty when the Edition is ready for release.
+ * development build keeps, a link or legal domain reserved for examples and
+ * an empty Team ID. Empty when the Edition is ready for release.
  */
-export function releaseProblems({ linkDomain, appleTeamId }: EditionConfig): ReleaseProblem[] {
+export function releaseProblems({
+  linkDomain,
+  legalDomain,
+  appleTeamId,
+}: EditionConfig): ReleaseProblem[] {
   const problems: ReleaseProblem[] = [];
-  const topLevelDomain = linkDomain.slice(linkDomain.lastIndexOf('.') + 1);
-  if (RESERVED_TOP_LEVEL_DOMAINS.includes(topLevelDomain)) {
-    problems.push({
-      field: 'linkDomain',
-      message: `"${linkDomain}" is a placeholder: a release build needs the Edition's real domain`,
-    });
+  for (const [field, domain] of [
+    ['linkDomain', linkDomain],
+    ['legalDomain', legalDomain],
+  ] as const) {
+    if (isReservedDomain(domain)) {
+      problems.push({
+        field,
+        message: `"${domain}" is a placeholder: a release build needs the Edition's real domain`,
+      });
+    }
   }
   if (appleTeamId === '') {
     problems.push({

@@ -191,6 +191,25 @@ describe('sending the Community Counters', () => {
     expect(phone.api.counters.sent).toEqual([]);
   });
 
+  it('a refused batch takes back nothing the backend never counted, and a later mark counts as new', async () => {
+    const phone = await device();
+    await phone.app.knowledge.tap('w_000', 'known');
+    phone.api.failNext('unexpected');
+    const release = phone.api.hold();
+
+    phone.sending.foreground();
+    await phone.app.knowledge.tap('w_000', 'known');
+    release();
+    await phone.advance(ALL_TRIES);
+    expect(await phone.unsent()).toEqual([]);
+
+    await phone.app.knowledge.tap('w_000', 'known');
+    await phone.foreground();
+    expect(phone.api.counters.sent).toEqual([
+      [{ entryId: 'w_000', known: 1, unknown: 0, saved: 0 }],
+    ]);
+  });
+
   it('sends again while the app is open, and not in the background', async () => {
     const phone = await device();
     await phone.foreground();

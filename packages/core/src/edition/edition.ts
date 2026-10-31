@@ -37,23 +37,20 @@ export interface UserSettingDefaults {
   readonly mix: DefaultMix;
 }
 
-/**
- * The base address of the site that publishes every Edition's legal pages,
- * each under `/<id>/` (ADR 0049): GitHub Pages behind the custom domain that
- * `.github/pages/CNAME` names, which a test keeps equal to this host. The one
- * place in code that names it: a new address changes here and in that file.
- */
-export const LEGAL_SITE = 'https://legal.slovo.example';
-
 /** The web addresses of the Edition's legal pages, which About opens in the browser. */
 export interface LegalPages {
   readonly privacy: string;
   readonly terms: string;
 }
 
-/** The addresses of an Edition's legal pages, `<LEGAL_SITE>/<id>/<page>` (ADR 0049). */
-function legalPagesOf(id: string): LegalPages {
-  return { privacy: `${LEGAL_SITE}/${id}/privacy`, terms: `${LEGAL_SITE}/${id}/terms` };
+/**
+ * The addresses of an Edition's legal pages, `https://<legalDomain>/<id>/<page>`
+ * (ADR 0049): the site at the Edition's legal domain publishes them under the
+ * Edition id.
+ */
+function legalPagesOf(legalDomain: string, id: string): LegalPages {
+  const site = `https://${legalDomain}/${id}`;
+  return { privacy: `${site}/privacy`, terms: `${site}/terms` };
 }
 
 /**
@@ -71,7 +68,7 @@ export interface Edition {
   readonly userSettingDefaults: UserSettingDefaults;
   /** The file name of the Edition's notification sound, which the shell bundles; without one, notifications play the system sound. */
   readonly notificationSound: string | undefined;
-  /** The addresses of the privacy policy and the terms, derived from `LEGAL_SITE` and the id, which About opens in the browser. */
+  /** The addresses of the privacy policy and the terms, derived from the legal domain and the id, which About opens in the browser. */
   readonly legalPages: LegalPages;
   /** The domain of its Collection Links, `https://<linkDomain>/c/<id>`, the one host whose links the app opens (ADR 0058). */
   readonly linkDomain: string;
@@ -145,6 +142,7 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
     userSettingDefaults,
     notificationSound,
     linkDomain,
+    legalDomain,
     originLanguages,
     moods,
     searchLetters,
@@ -168,7 +166,7 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
       },
     },
     notificationSound,
-    legalPages: legalPagesOf(id),
+    legalPages: legalPagesOf(legalDomain, id),
     linkDomain,
     originLanguages,
     moods,

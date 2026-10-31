@@ -13,7 +13,7 @@ import {
   SplashDecorSchema,
   type ColorTokens,
 } from '@slovo/contracts';
-import { LEGAL_SITE, loadEdition } from '@slovo/core';
+import { loadEdition } from '@slovo/core';
 import {
   EDITIONS_DIR,
   listEditions,
@@ -736,16 +736,19 @@ describe('the Categories of Corrections', () => {
 });
 
 describe('the Apple ids, the OTA channel and Sign in with Apple', () => {
-  it.each(['appleTeamId', 'appStoreConnectAppId'])('every Edition declares its %s', (field) => {
-    for (const edition of editions) {
-      const config = readJson(edition, 'config') as Record<string, unknown>;
-      const { [field]: _removed, ...without } = config;
+  it.each(['legalDomain', 'appleTeamId', 'appStoreConnectAppId'])(
+    'every Edition declares its %s',
+    (field) => {
+      for (const edition of editions) {
+        const config = readJson(edition, 'config') as Record<string, unknown>;
+        const { [field]: _removed, ...without } = config;
 
-      expect(
-        EditionConfigSchema.safeParse(without).error?.issues.map((issue) => issue.path.join('.')),
-      ).toEqual([field]);
-    }
-  });
+        expect(
+          EditionConfigSchema.safeParse(without).error?.issues.map((issue) => issue.path.join('.')),
+        ).toEqual([field]);
+      }
+    },
+  );
 
   it.each(editions)('the %s Edition declares the Sign in with Apple Feature Switch', (edition) => {
     const config = readJson(edition, 'config') as { featureSwitches: Record<string, unknown> };
@@ -962,10 +965,10 @@ describe('the legal pages of About', () => {
     });
   });
 
-  it('the Pages site names the host of the legal site as its custom domain', () => {
+  it("the Pages site names the Ukrainian Edition's legal domain as its custom domain", () => {
     const cname = readFileSync(join(EDITIONS_DIR, '..', '.github', 'pages', 'CNAME'), 'utf8');
 
-    expect(`https://${cname.trim()}`).toBe(LEGAL_SITE);
+    expect(cname.trim()).toBe(EditionConfigSchema.parse(readJson('uk', 'config')).legalDomain);
   });
 
   it.each(['privacyPolicy', 'terms'])('the Ukrainian Edition needs settings.about.%s', (key) => {

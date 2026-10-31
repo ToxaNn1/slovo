@@ -85,6 +85,7 @@
     }
   },
   "linkDomain": "slovo.example",
+  "legalDomain": "legal.slovo.example",
   "appleTeamId": "",
   "appStoreConnectAppId": "",
   "wordOfTheDayFont": "Fixture-Script.ttf",

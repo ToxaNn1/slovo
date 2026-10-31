@@ -8,7 +8,7 @@ The one native build of 0.9 goes to TestFlight (ADR 0004). It carries every nati
 
 ### Before the build
 
-1. In `editions/uk/edition.json`, set `linkDomain` to the Edition's real domain and `appleTeamId` to the Team ID the app is signed with: the release build refuses the `slovo.example` placeholder and an empty Team ID.
+1. In `editions/uk/edition.json`, set `linkDomain` and `legalDomain` to the Edition's real domains and `appleTeamId` to the Team ID the app is signed with: the release build refuses the `slovo.example` placeholder and an empty Team ID.
 2. Create the app in App Store Connect (bundle id `app.slovo.uk`), set its id as `appStoreConnectAppId` in `editions/uk/edition.json` and as `submit.testflight-uk.ios.ascAppId` in `apps/mobile/eas.json` (a test keeps the two equal).
 3. Turn on the Sign in with Apple, App Groups and Associated Domains capabilities for `app.slovo.uk` in the Apple Developer account.
 4. Check that `apps/mobile/certs/certificate.pem`, the public certificate of OTA updates, is on `main`; its private key lives only in EAS (ADR 0062). The release build refuses to start without the certificate.

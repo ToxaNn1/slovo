@@ -87,6 +87,7 @@
   },
   "notificationSound": "notification.wav",
   "linkDomain": "slovo.example",
+  "legalDomain": "legal.slovo.example",
   "appleTeamId": "",
   "appStoreConnectAppId": "",
   "wordOfTheDayFont": "Kurale-Regular.ttf",
