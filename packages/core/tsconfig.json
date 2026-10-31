@@ -1,10 +1,9 @@
 {
   "extends": "@slovo/config/tsconfig.base.json",
   "compilerOptions": {
-    // The web platform's request types (`Headers`, `Request`, `Response`, `File`), the vocabulary of
-    // the API contract's client, the Core's Backend port (ADR 0064). ESLint bans the browser's and
-    // the network's globals, so the Core still reaches nothing itself.
-    "lib": ["ES2023", "DOM"],
+    // No DOM lib: `src/fetch-types.d.ts` declares the web platform's request types the API
+    // contract's client names, as types only, and ESLint bans the browser's and the network's globals.
+    "lib": ["ES2023"],
     "rootDir": "src",
     "outDir": "dist",
     "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo"

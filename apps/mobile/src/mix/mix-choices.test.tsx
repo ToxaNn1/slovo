@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { beforeEach, describe, expect, it } from '@jest/globals';
 import {
   createMemoryUserStatePort,
   loadEdition,
@@ -18,17 +18,15 @@ import config from 'slovo-edition/config';
 import MixScreen from '../app/settings/mix';
 import { edition, editionStrings } from '../edition/edition';
 import { ShellProvider } from '../shell-value';
-import { opened, testShell } from '../shell/test-support';
+import { opened, switchedTo, testShell } from '../shell/test-support';
 
 const strings = editionStrings.mix.corrections;
 
 /** The Ukrainian Edition as its config file gives it, every Feature Switch as it ships. */
-const mockEdition = loadEdition(config);
+const shippedEdition = loadEdition(config);
 
 /** The composition the Mix screen reads, opened afresh for each test. */
 let composition: Composition;
-
-jest.mock('../edition/remote-switches', () => ({ useEditionInEffect: () => mockEdition }));
 
 /** The Language Pack's Categories of Corrections, in its order. */
 const correctionCategories = [
@@ -64,7 +62,7 @@ beforeEach(async () => {
       ],
       correctionCategories,
     }),
-    edition: mockEdition,
+    edition: shippedEdition,
     userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
     clock: { now: () => new Date('2026-10-25T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     random: systemRandom,
@@ -78,7 +76,10 @@ const metrics = {
 
 /** Settings › Мій Мікс as the app routes to it. */
 async function renderChoices() {
-  const shell = testShell({ composition: opened(composition) });
+  const shell = testShell({
+    composition: opened(composition),
+    remoteSwitches: switchedTo(shippedEdition),
+  });
   await renderRouter(
     {
       _layout: () => (

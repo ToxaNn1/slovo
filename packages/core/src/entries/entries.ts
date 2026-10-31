@@ -13,6 +13,7 @@ import {
   ENTRY_KINDS,
   featureOfKind,
   tableOfKinds,
+  type CategoryKind,
   type EntryOfKind,
   type KindNames,
   type MixKind,
@@ -245,25 +246,31 @@ export function createEntries(
     readOnce(async () => new Map((await readLive[kind]()).map((entry) => [entry.id, entry]))),
   );
 
-  /** The ids of the live Words of each Category, each read once. */
-  const wordIdsByCategory = new Map<string, () => Promise<readonly string[]>>();
-  function wordIdsOf(categoryId: string): Promise<readonly string[]> {
-    let read = wordIdsByCategory.get(categoryId);
+  /** The ids of the live Entries of each Category of a kind with Categories, each read once. */
+  const idsByCategory = new Map<string, () => Promise<readonly string[]>>();
+  function idsOfCategory(kind: CategoryKind, categoryId: string): Promise<readonly string[]> {
+    const key = `${kind} ${categoryId}`;
+    let read = idsByCategory.get(key);
     if (read === undefined) {
-      read = readOnce(() => content.listIds('word', categoryId));
-      wordIdsByCategory.set(categoryId, read);
+      read = readOnce(() => content.listIds(kind, categoryId));
+      idsByCategory.set(key, read);
     }
     return read();
   }
 
   /**
-   * The live Words of the Categories in the Mix, one query per Category the
-   * first time, or every live Word without a Mix.
+   * The live Entries of the kind in the Categories, one query per Category
+   * the first time, Category by Category in the Categories' order (the Words'
+   * of the Mix, or the Corrections' under Corrections as a whole, ADR 0050),
+   * or every live Entry of the kind without a Mix.
    */
-  async function wordIds(categoryIds: readonly string[] | undefined): Promise<readonly string[]> {
-    if (categoryIds === undefined) return listIds.word();
-    const words = await Promise.all(categoryIds.map(wordIdsOf));
-    return words.flat();
+  async function idsInCategories(
+    kind: CategoryKind,
+    categoryIds: readonly string[] | undefined,
+  ): Promise<readonly string[]> {
+    if (categoryIds === undefined) return listIds[kind]();
+    const ids = await Promise.all(categoryIds.map((categoryId) => idsOfCategory(kind, categoryId)));
+    return ids.flat();
   }
 
   /**
@@ -283,22 +290,6 @@ export function createEntries(
     });
   }
 
-  /**
-   * The live Corrections of the Categories of Corrections in the Mix, in the
-   * Language Pack's order, or every live Correction without a Mix (ADR 0050).
-   */
-  async function correctionIds(
-    categoryIds: readonly string[] | undefined,
-  ): Promise<readonly string[]> {
-    const ids = await listIds.correction();
-    if (categoryIds === undefined) return ids;
-    const corrections = await live.correction();
-    return ids.filter((id) => {
-      const correction = corrections.get(id);
-      return correction?.kind === 'correction' && categoryIds.includes(correction.categoryId);
-    });
-  }
-
   /** The ids of the Hidden Entries; none without the user state. */
   const hiddenIds = () =>
     'userState' in options ? options.userState.list(hiddenRecords) : new Map<string, string>();
@@ -307,8 +298,10 @@ export function createEntries(
     const [mix, hidden] = await Promise.all([readUserMix(), hiddenIds()]);
     const ofKind = (kind: MixKind) => (kindShown(kind, mix) ? listIds[kind]() : []);
     const [words, corrections, idioms, synonymRows, tips] = await Promise.all([
-      wordIds(mix?.categoryIds).then((ids) => atRarityFloor(ids, mix?.rarityFloor)),
-      kindShown('correction', mix) ? correctionIds(mix?.correctionCategories.categoryIds) : [],
+      idsInCategories('word', mix?.categoryIds).then((ids) => atRarityFloor(ids, mix?.rarityFloor)),
+      kindShown('correction', mix)
+        ? idsInCategories('correction', mix?.correctionCategories.categoryIds)
+        : [],
       ofKind('idiom'),
       ofKind('synonymRow'),
       ofKind('tip'),
@@ -344,7 +337,7 @@ export function createEntries(
 
   async function eligibleWordsOfAnyRarity(): Promise<readonly Word[]> {
     const [mix, hidden, words] = await Promise.all([readUserMix(), hiddenIds(), live.word()]);
-    const ids = await wordIds(mix?.categoryIds);
+    const ids = await idsInCategories('word', mix?.categoryIds);
     return ids.flatMap((id) => {
       const entry = words.get(id);
       return entry?.kind === 'word' && !hidden.has(id) ? [entry] : [];

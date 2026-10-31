@@ -25,10 +25,10 @@ import { createOutsideLinks } from '../entries/entry-link';
 import { screenSettled } from '../entries/use-open-screen';
 import { SettingsProvider } from '../settings/settings';
 import { ShellProvider } from '../shell-value';
-import { opened, testShell } from '../shell/test-support';
+import { opened, switchedTo, testShell } from '../shell/test-support';
 
 /** The Ukrainian Edition as its config file gives it, every Feature Switch as it ships. */
-const mockEdition = loadEdition(config);
+const shippedEdition = loadEdition(config);
 
 const clock = { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Europe/Kyiv' };
 
@@ -37,7 +37,6 @@ let userState: Awaited<ReturnType<typeof openUserState>>;
 
 /** The composition the screens read, opened afresh for each test. */
 let composition: Composition;
-jest.mock('../edition/remote-switches', () => ({ useEditionInEffect: () => mockEdition }));
 // The Entry card's action row has its own tests.
 jest.mock('../entries/entry-actions', () => ({ EntryActions: () => null }));
 
@@ -76,7 +75,7 @@ beforeEach(async () => {
       categories: [{ id: 'emotions-character', displayName: 'Емоції' }],
       words: [word('w_sumyrnyi', 'сумирний')],
     }),
-    edition: mockEdition,
+    edition: shippedEdition,
     userState,
     clock,
     random: systemRandom,
@@ -111,6 +110,7 @@ async function renderApp() {
   // The settings and the screens open over this test's user state and composition.
   const shell = testShell({
     userState: opened(trackChanges({ userState, clock })),
+    remoteSwitches: switchedTo(shippedEdition),
     composition: opened(composition),
   });
   const app = renderRouter(

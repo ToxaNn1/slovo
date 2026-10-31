@@ -18,7 +18,7 @@ import config from 'slovo-edition/config';
 import HiddenScreen from '../app/settings/hidden';
 import { edition, editionStrings } from '../edition/edition';
 import { ShellProvider } from '../shell-value';
-import { opened, testShell } from '../shell/test-support';
+import { opened, switchedTo, testShell } from '../shell/test-support';
 import { useHide } from './hiding';
 import { MixChoices } from './mix-choices';
 
@@ -32,12 +32,11 @@ function editionWith(on: boolean): Edition {
 }
 
 /** The Edition the screens read, as it ships unless a test turns the kinds off. */
-let mockEdition: Edition;
+let editionInEffect: Edition;
 
 /** The composition the screens read, opened afresh for each test. */
 let composition: Composition;
 
-jest.mock('../edition/remote-switches', () => ({ useEditionInEffect: () => mockEdition }));
 jest.mock('expo-router', () => ({ useRouter: () => ({ back: () => undefined }) }));
 
 const row: SynonymRow = {
@@ -75,14 +74,14 @@ const metrics = {
 };
 
 async function open(on: boolean) {
-  mockEdition = editionWith(on);
+  editionInEffect = editionWith(on);
   composition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'nature', displayName: 'Природа' }],
       synonymRows: [row],
       tips: [tip],
     }),
-    edition: mockEdition,
+    edition: editionInEffect,
     userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
     clock: { now: () => new Date('2026-10-26T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     random: systemRandom,
@@ -103,7 +102,12 @@ async function settle() {
 async function renderInApp(children: React.ReactNode) {
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
-      <ShellProvider shell={testShell({ composition: opened(composition) })}>
+      <ShellProvider
+        shell={testShell({
+          composition: opened(composition),
+          remoteSwitches: switchedTo(editionInEffect),
+        })}
+      >
         <EditionProvider edition={edition} strings={editionStrings}>
           <UndoToastProvider>{children}</UndoToastProvider>
         </EditionProvider>

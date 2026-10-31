@@ -23,7 +23,8 @@ import RarityTestScreen from '../app/settings/rarity-test';
 import { edition, editionStrings } from '../edition/edition';
 import { screenSettled } from '../entries/use-open-screen';
 import { ShellProvider } from '../shell-value';
-import { opened, testShell } from '../shell/test-support';
+import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
+import { SettingsProvider } from './settings';
 
 /** The Ukrainian Edition as it ships, with the Feature Switches given off. */
 function editionWithout(...off: FeatureSwitch[]): Edition {
@@ -39,18 +40,11 @@ function editionWithout(...off: FeatureSwitch[]): Edition {
 }
 
 /** The Edition the shell reads in effect. */
-let mockEdition: Edition;
+let editionInEffect: Edition;
 
 /** The composition the shell reads, opened afresh for each test. */
 let composition: Composition;
 
-jest.mock('../edition/remote-switches', () => ({ useEditionInEffect: () => mockEdition }));
-jest.mock('./settings', () => ({
-  useSettings: () => ({
-    current: { theme: 'system', fontSize: 'M', hideStreak: false, selfCheck: false },
-    update: () => undefined,
-  }),
-}));
 jest.mock('../account/account', () => ({ useAccountInEffect: () => undefined }));
 jest.mock('../notifications/notifications', () => ({ useNotificationsSummary: () => '' }));
 
@@ -97,7 +91,7 @@ async function settle() {
 }
 
 async function openWith(edition: Edition) {
-  mockEdition = edition;
+  editionInEffect = edition;
   composition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'nature', displayName: 'Природа' }],
@@ -112,14 +106,20 @@ async function openWith(edition: Edition) {
 
 /** Settings as the app routes to it, with the Rarity Test and «Мій Мікс» a push away. */
 async function renderSettings() {
-  const shell = testShell({ composition: opened(composition) });
+  const shell = testShell({
+    composition: opened(composition),
+    remoteSwitches: switchedTo(editionInEffect),
+    settings: await settingsAt(),
+  });
   await renderRouter(
     {
       _layout: () => (
         <SafeAreaProvider initialMetrics={metrics}>
           <ShellProvider shell={shell}>
             <EditionProvider edition={edition} strings={editionStrings}>
-              <Stack screenOptions={{ headerShown: false }} />
+              <SettingsProvider>
+                <Stack screenOptions={{ headerShown: false }} />
+              </SettingsProvider>
             </EditionProvider>
           </ShellProvider>
         </SafeAreaProvider>

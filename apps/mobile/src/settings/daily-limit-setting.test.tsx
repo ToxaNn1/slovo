@@ -19,7 +19,7 @@ import config from 'slovo-edition/config';
 import SettingsScreen from '../app/settings/index';
 import { edition, editionStrings } from '../edition/edition';
 import { ShellProvider } from '../shell-value';
-import { opened, testShell } from '../shell/test-support';
+import { opened, switchedTo, testShell } from '../shell/test-support';
 import { SettingsProvider } from './settings';
 
 /** The Ukrainian Edition with the Account off, and the Daily Limit on or off. */
@@ -32,7 +32,7 @@ function editionWith({ dailyLimit }: { dailyLimit: boolean }): Edition {
 }
 
 /** The Edition the screen reads, as it ships unless a test turns the Daily Limit off. */
-let mockEdition: Edition;
+let editionInEffect: Edition;
 
 /** The user state the settings and the composition keep, one for the whole file. */
 let userState: Awaited<ReturnType<typeof openUserState>>;
@@ -40,7 +40,6 @@ let userState: Awaited<ReturnType<typeof openUserState>>;
 /** The composition the screen reads, opened afresh for each test. */
 let composition: Composition;
 
-jest.mock('../edition/remote-switches', () => ({ useEditionInEffect: () => mockEdition }));
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: () => undefined }) }));
 
 const metrics = {
@@ -58,10 +57,10 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  mockEdition = editionWith({ dailyLimit: true });
+  editionInEffect = editionWith({ dailyLimit: true });
   composition = await openComposition({
     content: createMemoryContentPort({}),
-    edition: mockEdition,
+    edition: editionInEffect,
     userState: userState,
     clock,
     random: systemRandom,
@@ -74,6 +73,7 @@ async function renderSettings() {
       <ShellProvider
         shell={testShell({
           userState: opened(trackChanges({ userState, clock })),
+          remoteSwitches: switchedTo(editionInEffect),
           composition: opened(composition),
         })}
       >
@@ -131,7 +131,7 @@ describe('the Daily Limit setting', () => {
   });
 
   it('is left out while the Daily Limit is off in effect', async () => {
-    mockEdition = editionWith({ dailyLimit: false });
+    editionInEffect = editionWith({ dailyLimit: false });
     await renderSettings();
 
     expect(screen.queryByText(strings.title)).not.toBeOnTheScreen();

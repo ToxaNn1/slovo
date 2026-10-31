@@ -1,12 +1,13 @@
-import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { describe, expect, it } from '@jest/globals';
 import type { WeeklyRecapModel } from '@slovo/core';
 import { EditionProvider } from '@slovo/ui';
 import { act, fireEvent, render, screen, within } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { edition, editionStrings } from '../edition/edition';
+import { SettingsProvider } from '../settings/settings';
 import { ShellProvider } from '../shell-value';
-import { opened, testShell } from '../shell/test-support';
+import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
 import { WeeklyRecapNotice } from './weekly-recap-notice';
 
 const recap: WeeklyRecapModel = {
@@ -18,37 +19,41 @@ const recap: WeeklyRecapModel = {
   streak: 6,
 };
 
-/** What the reader sees in effect: the Share Cards switch and the Streak. */
-let mockShown: { entryButtons: { shareCard: boolean }; stats: { streak: boolean } };
-jest.mock('../shown-in-effect', () => ({ useShown: () => mockShown }));
+/** The Edition in effect: as it ships, or with Share Cards off. */
+const editionWith = ({ shareCards }: { shareCards: boolean }): typeof edition => ({
+  ...edition,
+  isFeatureEnabled: (feature) =>
+    feature === 'shareCards' ? shareCards : edition.isFeatureEnabled(feature),
+});
 
 const metrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
   insets: { top: 0, left: 0, right: 0, bottom: 0 },
 };
 
-beforeEach(() => {
-  mockShown = { entryButtons: { shareCard: true }, stats: { streak: true } };
-});
-
 /**
  * The card over the Core's composition of a test Shell, whose recap of the
- * week holds the numbers above, on a binary that can capture the Share Card.
+ * week holds the numbers above, on a binary that can capture the Share Card,
+ * with Share Cards on in effect and the Streak shown unless a test says otherwise.
  */
-async function renderNotice() {
+async function renderNotice({ shareCards = true, hideStreak = false } = {}) {
   const composition = await testShell().composition.opened();
   const shell = testShell({
     composition: opened({
       ...composition,
       weeklyRecap: { ...composition.weeklyRecap, of: () => Promise.resolve(recap) },
     }),
+    remoteSwitches: switchedTo(editionWith({ shareCards })),
+    settings: await settingsAt({ hideStreak }),
     shareCard: () => Promise.resolve('closed'),
   });
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
       <ShellProvider shell={shell}>
         <EditionProvider edition={edition} strings={editionStrings}>
-          <WeeklyRecapNotice day={{ year: 2026, month: 10, day: 26 }} />
+          <SettingsProvider>
+            <WeeklyRecapNotice day={{ year: 2026, month: 10, day: 26 }} />
+          </SettingsProvider>
         </EditionProvider>
       </ShellProvider>
     </SafeAreaProvider>,
@@ -76,8 +81,7 @@ describe('the Weekly Recap card', () => {
   });
 
   it('leaves the Streak off its Share Card while the reader hides it', async () => {
-    mockShown.stats.streak = false;
-    await renderNotice();
+    await renderNotice({ hideStreak: true });
 
     await fireEvent.press(screen.getByRole('button', { name: 'Поділитися' }));
 
@@ -87,8 +91,7 @@ describe('the Weekly Recap card', () => {
   });
 
   it('has no «Поділитися» with the Share Cards switch off', async () => {
-    mockShown.entryButtons.shareCard = false;
-    await renderNotice();
+    await renderNotice({ shareCards: false });
 
     expect(screen.getByLabelText('23 переглянуто')).toBeOnTheScreen();
     expect(screen.queryByRole('button', { name: 'Поділитися' })).not.toBeOnTheScreen();
