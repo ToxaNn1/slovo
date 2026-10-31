@@ -2,7 +2,7 @@ import type { EntryKind } from '@slovo/contracts';
 
 import type { Entries } from '../entries/entries';
 import type { Knowledge } from '../knowledge/knowledge';
-import type { XpAward, XpLog } from '../progress/xp-log';
+import type { GameXp, XpAward } from './game-xp';
 import type { History } from '../saved/history';
 import { createInTurn, createSubscribers } from '../in-turn';
 import type { LocalDate } from '../local-date';
@@ -220,7 +220,7 @@ export async function openGame({
   history: Pick<History, 'list'>;
   knowledge: Pick<Knowledge, 'weak' | 'answer' | 'confirm'>;
   /** The XP log, which a right Round, a finished Game and a new Best result earn XP in. */
-  xp: Pick<XpLog, 'award'>;
+  xp: GameXp;
   userState: Pick<UserState, 'read' | 'write'>;
   /** What a timed Game's play time is told by. */
   clock: Pick<Clock, 'now'>;
