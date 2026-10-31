@@ -1,22 +1,19 @@
-import type { Edition } from '@slovo/server-core';
+import type { AppConfig } from '@slovo/contracts';
 
-/** Where iOS looks for the file on a link domain. */
+/** Where iOS looks for the file on the app's domain. */
 export const APP_SITE_ASSOCIATION_PATH = '/.well-known/apple-app-site-association';
 
 /**
- * The apple-app-site-association file (ADR 0058): it lets the app of every
- * Edition the backend serves open the Collection Links of its link domain,
- * `https://<linkDomain>/c/<id>`, under the Team ID and bundle id of the
- * Edition's config. Each app claims only its own domain in its associated
- * domains entitlement, so one file serves every domain. An Edition whose
- * Team ID is still empty has no app to name; with none, there is no file.
+ * The apple-app-site-association file (ADR 0058, 0065): it lets the one app
+ * open the Collection Links of its domain, `https://<domain>/c/<id>`, under
+ * the Team ID and bundle id of the AppConfig. While the Team ID is still
+ * empty there is no app to name, so there is no file.
  */
-export function appSiteAssociation(editions: readonly Edition[]) {
-  const details = editions
-    .filter(({ config }) => config.appleTeamId !== '')
-    .map(({ config }) => ({
-      appIDs: [`${config.appleTeamId}.${config.bundleId}`],
-      components: [{ '/': '/c/*' }],
-    }));
-  return details.length === 0 ? undefined : { applinks: { details } };
+export function appSiteAssociation({ appleTeamId, bundleId }: AppConfig) {
+  if (appleTeamId === '') return undefined;
+  return {
+    applinks: {
+      details: [{ appIDs: [`${appleTeamId}.${bundleId}`], components: [{ '/': '/c/*' }] }],
+    },
+  };
 }

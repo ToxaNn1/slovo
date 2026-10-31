@@ -9,8 +9,6 @@ void SplashScreen.preventAutoHideAsync();
 
 /** How long the splash stays once the wordmark and tagline are in. */
 const HOLD_MS = 1000;
-/** The mark's width when the native splash has no image to line it up with. */
-const DEFAULT_MARK_WIDTH = 72;
 
 /**
  * Decor slot 7: takes over from the native splash with the Edition's full
@@ -24,7 +22,7 @@ export function LaunchSplash() {
     <SplashOverlay
       wordmark={editionStrings.splash.wordmark}
       tagline={editionStrings.splash.tagline}
-      markWidth={splashImageWidth ?? DEFAULT_MARK_WIDTH}
+      markWidth={splashImageWidth}
       visible={visible}
       onShown={() => {
         void SplashScreen.hideAsync();

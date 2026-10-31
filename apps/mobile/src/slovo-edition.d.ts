@@ -24,8 +24,14 @@ declare module 'slovo-edition/decor' {
   export default decor;
 }
 
-/** The native splash the Edition's Decor describes; empty when it has none. */
-declare module 'slovo-edition/splash' {
+/** The AppConfig of the one app (ADR 0065), from `app/app.json`. */
+declare module 'slovo-app/config' {
+  const config: unknown;
+  export default config;
+}
+
+/** The native splash the AppConfig names (Decor slot 7). */
+declare module 'slovo-app/splash' {
   const splash: unknown;
   export default splash;
 }

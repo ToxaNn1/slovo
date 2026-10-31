@@ -12,14 +12,16 @@ import { join } from 'node:path';
 
 import type { HttpBindings } from '@hono/node-server';
 import { createApiClient } from '@slovo/contracts/api';
-import type { EditionConfig } from '@slovo/contracts';
+import type { AppConfig, EditionConfig } from '@slovo/contracts';
 import { buildLanguagePack, recordContent } from '@slovo/language-pack';
 import {
   EDITIONS_DIR,
   editionFiles,
   FONTS_DIR,
   ILLUSTRATIONS_DIR,
+  openAppConfig,
   openEdition,
+  REPO_DIR,
 } from '@slovo/language-pack/edition';
 import {
   systemClock,
@@ -233,9 +235,9 @@ export function createFakeGoogle(clientIds: readonly string[]): FakeGoogle {
 }
 
 /**
- * The bundle id of the UA Edition (`editions/uk/edition.json`), the
- * audience of the fake Apple's tokens unless a test names another: the
- * backend checks an Apple token against the Edition's bundle id (ADR 0047).
+ * The app's bundle id (`app/app.json`), the audience of the fake Apple's
+ * tokens unless a test names another: the backend checks an Apple token
+ * against the AppConfig's bundle id (ADR 0047).
  */
 export const UK_BUNDLE_ID = 'app.slovo.uk';
 
@@ -438,11 +440,16 @@ export const newIp = () =>
 const connectionFrom = (ip: string) =>
   ({ incoming: { socket: { remoteAddress: ip } } }) as unknown as HttpBindings;
 
+/** The AppConfig of the repo (ADR 0065), the one app the backend serves. */
+export const testAppConfig = openAppConfig(REPO_DIR).config;
+
 interface TestAppOptions {
   /** A database of the test's own, which the test closes; the file's database unless given. */
   readonly database?: Database;
   /** A silent logger unless given. */
   readonly logger?: Logger;
+  /** The repo's AppConfig unless given. */
+  readonly app?: AppConfig;
   /** The Editions the backend serves; the repo's own unless given. */
   readonly editions?: readonly Edition[];
   /** The backend's Google client ids; the test one unless given. None turns Google sign-in off. */
@@ -470,6 +477,7 @@ interface TestAppOptions {
 export function testApp({
   database: given,
   logger = silentLogger,
+  app: appConfig = testAppConfig,
   editions = readEditions(EDITIONS_DIR),
   googleClientIds = [TEST_GOOGLE_CLIENT_ID],
   google: givenGoogle,
@@ -488,6 +496,7 @@ export function testApp({
     clock: systemClock,
     random,
     logger,
+    app: appConfig,
     editions,
     mailer,
     google: givenGoogle ?? google,

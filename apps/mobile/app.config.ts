@@ -1,7 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
-import { basename, join, relative } from 'node:path';
+import { basename, dirname, join, relative } from 'node:path';
 
-import type * as Contracts from '@slovo/contracts';
 import type * as EditionFolders from '@slovo/language-pack/edition';
 import type * as UiFonts from '@slovo/ui/fonts';
 import type * as UiTokens from '@slovo/ui/tokens';
@@ -16,6 +15,7 @@ import type * as NotificationSound from './plugins/notification-sound';
 import type * as WidgetExtension from './plugins/widget-extension';
 
 type EditionFolder = EditionFolders.EditionFolder;
+type AppFolder = EditionFolders.AppFolder;
 
 /** The options of the `expo-splash-screen` config plugin that the config sets. */
 interface SplashPluginOptions {
@@ -29,8 +29,7 @@ interface SplashPluginOptions {
 // sources of the workspace packages (their relative imports have no file
 // extension). tsx loads them, so the Edition is read by the same module, and
 // checked by the same schemas, as the Language Pack build and the app.
-const { editionAppGroup } = tsxRequire('@slovo/contracts', import.meta.url) as typeof Contracts;
-const { EditionFolderError, listEditions, openEdition } = tsxRequire(
+const { EditionFolderError, listEditions, openAppConfig, openEdition } = tsxRequire(
   '@slovo/language-pack/edition',
   import.meta.url,
 ) as typeof EditionFolders;
@@ -52,10 +51,7 @@ const { readNotificationSound } = tsxRequire(
   import.meta.url,
 ) as typeof NotificationSound;
 const { coreFonts } = tsxRequire('@slovo/ui/fonts', import.meta.url) as typeof UiFonts;
-const { coreTokens, designTokens } = tsxRequire(
-  '@slovo/ui/tokens',
-  import.meta.url,
-) as typeof UiTokens;
+const { designTokens } = tsxRequire('@slovo/ui/tokens', import.meta.url) as typeof UiTokens;
 const { writeWidgetExtension } = tsxRequire(
   './plugins/widget-extension.ts',
   import.meta.url,
@@ -68,24 +64,13 @@ const { writeWidgetExtension } = tsxRequire(
  */
 const EDITION_VARIABLE = 'SLOVO_EDITION';
 
-/**
- * The Core shows nothing in Decor slot 7: its splash is a plain screen in the
- * Core's neutral background colours (docs/design/design-system.md).
- */
-const CORE_SPLASH: SplashPluginOptions = {
-  backgroundColor: coreTokens.colors.light.background,
-  dark: { backgroundColor: coreTokens.colors.dark.background },
-};
-
-/** The splash from the Edition's Decor (`decor/splash.json`), or the Core's plain one. */
-function editionSplash(edition: EditionFolder, projectRoot: string): SplashPluginOptions {
-  const splash = edition.readIfPresent('splash');
-  if (splash === undefined) return CORE_SPLASH;
-  const { imageWidth, light, dark } = splash;
+/** The native splash the AppConfig names (Decor slot 7), its images beside it. */
+function appSplash(app: AppFolder, projectRoot: string): SplashPluginOptions {
+  const { imageWidth, light, dark } = app.splash();
   const image = (name: string) => {
-    const path = edition.decorFile(name);
+    const path = join(dirname(app.path('splash')), name);
     if (!existsSync(path))
-      throw new Error(`${edition.path('splash')} names a missing splash image: expected ${path}`);
+      throw new Error(`${app.path('splash')} names a missing splash image: expected ${path}`);
     return relative(projectRoot, path);
   };
   return {
@@ -159,7 +144,10 @@ function appFonts(edition: EditionFolder): string[] {
  * Edition stops the config rather than the native build. The files
  * themselves are made at prebuild (`widget-extension.ts`).
  */
-function widgetEdition(edition: EditionFolder, scheme: string): WidgetExtension.WidgetEdition {
+function widgetEdition(
+  edition: EditionFolder,
+  { scheme, appGroup }: AppFolder['config'],
+): WidgetExtension.WidgetEdition {
   // The example the widget gallery shows must be there and be a valid Widget Snapshot.
   edition.read('widgetSnapshotExample');
   const tokens = designTokens(edition.readIfPresent('tokens') ?? {});
@@ -168,6 +156,7 @@ function widgetEdition(edition: EditionFolder, scheme: string): WidgetExtension.
   return {
     config: edition.config,
     scheme,
+    appGroup,
     strings: edition.read('strings').widget,
     tokens,
     band: loadDecor(edition.readIfPresent('decor')).divider.band,
@@ -285,7 +274,7 @@ const EAS_PROJECT_ID = 'e2401ef2-2a47-407e-b0ff-03706421b71c';
 const UPDATES_CERTIFICATE = './certs/certificate.pem';
 
 /**
- * OTA updates (ADR 0062): on launch the app checks the Edition's channel,
+ * OTA updates (ADR 0062): on launch the app checks the app's one channel,
  * waits a few seconds at most and otherwise starts the code it has; it
  * accepts only an update signed with SLOVO's key and made for its native
  * code (the fingerprint runtime version). A development build takes no
@@ -345,18 +334,35 @@ function selectEdition(editionsDir: string, build: Build): EditionFolder {
   }
 }
 
+/**
+ * Opens the AppConfig, the identity of the one app (ADR 0065). A release
+ * build refuses its placeholders, such as the `slovo.example` domain and an
+ * empty Apple Team ID.
+ */
+function openApp(repoDir: string, build: Build): AppFolder {
+  const app = openAppConfig(repoDir, {
+    build: build.kind === 'release' ? 'release' : 'development',
+  });
+  const icon = app.path('icon');
+  if (!existsSync(icon)) throw new Error(`The app has no icon: expected ${icon}`);
+  return app;
+}
+
 export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
   const build = currentBuild();
   requireReleaseApiUrl(build);
-  const edition = selectEdition(join(projectRoot, '../../editions'), build);
-  const [language] = edition.config.locale.split('-');
-  const icon = edition.path('icon');
-  if (!existsSync(icon)) {
-    throw new Error(`Edition "${edition.config.id}" has no icon: expected ${icon}`);
+  const repoDir = join(projectRoot, '../..');
+  const app = openApp(repoDir, build);
+  const edition = selectEdition(join(repoDir, 'editions'), build);
+  const { name, scheme, bundleId, appGroup, domain, updateChannel } = app.config;
+  if (edition.config.linkDomain !== domain) {
+    throw new Error(
+      `${edition.path('config')} names the linkDomain "${edition.config.linkDomain}", but the app's domain is "${domain}" (ADR 0065)`,
+    );
   }
+  const [language] = edition.config.locale.split('-');
 
-  const scheme = `slovo-${edition.config.id}`;
-  const widget = widgetEdition(edition, scheme);
+  const widget = widgetEdition(edition, app.config);
   const appIntents: AppIntents.AppIntentsEdition = {
     displayName: edition.config.displayName,
     strings: edition.read('strings').appIntents,
@@ -364,20 +370,20 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
 
   const expoConfig: ExpoConfig = {
     ...config,
-    name: edition.config.displayName,
+    name,
     slug: 'slovo',
     owner: 'anton_de',
     version: '0.9',
     scheme,
     orientation: 'portrait',
     userInterfaceStyle: 'automatic',
-    icon: relative(projectRoot, icon),
+    icon: relative(projectRoot, app.path('icon')),
     // Memoises components and hooks at build time; modules with Reanimated or
     // gesture code opt out with 'use no memo' (ADR 0059).
     experiments: { reactCompiler: true },
-    ...updates(build, edition.config.updateChannel, projectRoot),
+    ...updates(build, updateChannel, projectRoot),
     ios: {
-      bundleIdentifier: edition.config.bundleId,
+      bundleIdentifier: bundleId,
       supportsTablet: false,
       // Sign in with Apple (ADR 0047): the bundle id is SLOVO's client id at Apple.
       usesAppleSignIn: true,
@@ -391,9 +397,9 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       },
       entitlements: {
         // The widget extension gets the same App Group from the Apple targets plugin.
-        'com.apple.security.application-groups': [editionAppGroup(edition.config.bundleId)],
-        // Collection Links, https://<linkDomain>/c/<id>, open in the app (ADR 0058).
-        'com.apple.developer.associated-domains': [`applinks:${edition.config.linkDomain}`],
+        'com.apple.security.application-groups': [appGroup],
+        // Collection Links, https://<domain>/c/<id>, open in the app (ADR 0058).
+        'com.apple.developer.associated-domains': [`applinks:${domain}`],
         // «Увійти через Apple» on the SLOVO ID screen (ADR 0047).
         'com.apple.developer.applesignin': ['Default'],
       },
@@ -409,7 +415,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       'expo-sqlite',
       // The Core's fonts and the Edition's own, embedded in the native app.
       ['expo-font', { fonts: appFonts(edition).map((font) => relative(projectRoot, font)) }],
-      ['expo-splash-screen', editionSplash(edition, projectRoot)],
+      ['expo-splash-screen', appSplash(app, projectRoot)],
       ['expo-notifications', { sounds: editionNotificationSounds(edition, projectRoot) }],
       '@react-native-community/datetimepicker',
       ['expo-build-properties', { ios: { deploymentTarget: '17.0' } }],

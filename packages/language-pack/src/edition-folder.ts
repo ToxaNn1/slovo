@@ -67,7 +67,6 @@ const ASSETS_DIR = 'assets';
 export const FONTS_DIR = 'assets/fonts';
 /** Where an Edition keeps the Illustrations its Words name (ADR 0055). */
 export const ILLUSTRATIONS_DIR = 'assets/illustrations';
-const DECOR_DIR = 'decor';
 const WORDS_DIR = 'content/words';
 const CORRECTIONS_DIR = 'content/corrections';
 const IDIOMS_DIR = 'content/idioms';
@@ -198,8 +197,6 @@ export interface EditionFiles {
   readIfPresent<F extends EditionJsonFile>(file: F): EditionFileContent<F> | undefined;
   /** Where a file the Edition brings in `assets/` lies, such as its notification sound. */
   asset(name: string): string;
-  /** Where a file of the Edition's Decor lies, such as a splash image. */
-  decorFile(name: string): string;
   /** Where the Illustration a Word names lies, whether or not it is there. */
   illustration(name: string): string;
   /** The file names of the Illustrations the Edition brings (its PNGs), in code-unit order. */
@@ -319,7 +316,6 @@ export function editionFiles(dir: string): EditionFiles {
     read,
     readIfPresent: (file) => (existsSync(join(dir, FILES[file])) ? read(file) : undefined),
     asset: (name) => join(dir, ASSETS_DIR, name),
-    decorFile: (name) => join(dir, DECOR_DIR, name),
     illustration: (name) => join(dir, ILLUSTRATIONS_DIR, name),
     illustrations() {
       const illustrationsDir = join(dir, ILLUSTRATIONS_DIR);

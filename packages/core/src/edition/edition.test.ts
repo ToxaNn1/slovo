@@ -7,7 +7,6 @@ const validConfig = {
   id: 'test',
   locale: 'xx-XX',
   displayName: 'SLOVO Test',
-  bundleId: 'app.slovo.test',
   languageTraits: {
     marksStress: true,
     alphabet: 'a b c',
@@ -90,8 +89,6 @@ const validConfig = {
   },
   linkDomain: 'slovo.example',
   legalDomain: 'legal.slovo.example',
-  appleTeamId: '',
-  appStoreConnectAppId: '',
   wordOfTheDayFont: 'Script-Regular.ttf',
   widgetPalette: {
     parchment: { background: '#F3E9D2', text: '#3B2A1A' },
@@ -174,10 +171,6 @@ describe('loadEdition', () => {
 
   it('reports the display name, the watermark of its Share Cards', () => {
     expect(loadEdition(validConfig).displayName).toBe('SLOVO Test');
-  });
-
-  it('reports the bundle id, which names the App Group the app shares with its widget', () => {
-    expect(loadEdition(validConfig).bundleId).toBe('app.slovo.test');
   });
 
   it('reports an Edition that does not mark Stress', () => {

@@ -39,6 +39,7 @@ COPY --from=install /app/packages/contracts packages/contracts
 COPY --from=install /app/packages/core packages/core
 COPY --from=install /app/packages/language-pack packages/language-pack
 COPY --from=install /app/packages/server-core packages/server-core
+COPY --from=install /app/app app
 COPY --from=install /app/editions editions
 COPY --from=install /app/apps/backend apps/backend
 

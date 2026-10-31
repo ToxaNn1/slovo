@@ -10,14 +10,15 @@ import {
   fill,
   PluralLabelSchema,
   PluralSchema,
-  SplashDecorSchema,
   type ColorTokens,
 } from '@slovo/contracts';
 import { loadEdition } from '@slovo/core';
 import {
   EDITIONS_DIR,
   listEditions,
+  openAppConfig,
   openEdition,
+  REPO_DIR,
   type EditionJsonFile,
 } from '@slovo/language-pack/edition';
 import { coreTokens } from '@slovo/ui/tokens';
@@ -821,20 +822,17 @@ describe('the Categories of Corrections', () => {
   });
 });
 
-describe('the Apple ids, the OTA channel and Sign in with Apple', () => {
-  it.each(['legalDomain', 'appleTeamId', 'appStoreConnectAppId'])(
-    'every Edition declares its %s',
-    (field) => {
-      for (const edition of editions) {
-        const config = readJson(edition, 'config') as Record<string, unknown>;
-        const { [field]: _removed, ...without } = config;
+describe('the legal domain and Sign in with Apple', () => {
+  it.each(editions)('the %s Edition declares its legalDomain', (edition) => {
+    const { legalDomain: _removed, ...without } = readJson(edition, 'config') as Record<
+      string,
+      unknown
+    >;
 
-        expect(
-          EditionConfigSchema.safeParse(without).error?.issues.map((issue) => issue.path.join('.')),
-        ).toEqual([field]);
-      }
-    },
-  );
+    expect(
+      EditionConfigSchema.safeParse(without).error?.issues.map((issue) => issue.path.join('.')),
+    ).toEqual(['legalDomain']);
+  });
 
   it.each(editions)('the %s Edition declares the Sign in with Apple Feature Switch', (edition) => {
     const config = readJson(edition, 'config') as { featureSwitches: Record<string, unknown> };
@@ -847,43 +845,22 @@ describe('the Apple ids, the OTA channel and Sign in with Apple', () => {
     ).toEqual(['featureSwitches.signInWithApple']);
   });
 
-  it('the UA Edition turns Sign in with Apple on and takes its OTA updates from its own channel', () => {
-    const config = EditionConfigSchema.parse(readJson('uk', 'config'));
-
-    expect(config.featureSwitches.signInWithApple).toBe(true);
-    expect(config.updateChannel).toBe('uk');
-  });
-
-  it('the UA Edition holds an Apple Team ID and App Store Connect app id, or placeholders until the owner fills them in', () => {
-    const { appleTeamId, appStoreConnectAppId } = EditionConfigSchema.parse(
-      readJson('uk', 'config'),
-    );
-
-    expect(appleTeamId).toMatch(/^([A-Z0-9]{10})?$/);
-    expect(appStoreConnectAppId).toMatch(/^(\d+)?$/);
-  });
-
-  it('refuses an Update channel other than the Edition id (ADR 0062)', () => {
-    const config = readJson('uk', 'config') as Record<string, unknown>;
-
+  it('the UA Edition turns Sign in with Apple on', () => {
     expect(
-      EditionConfigSchema.safeParse({ ...config, updateChannel: 'uk-beta' }).error?.issues,
-    ).toMatchObject([{ code: 'unrecognized_keys', keys: ['updateChannel'] }]);
+      EditionConfigSchema.parse(readJson('uk', 'config')).featureSwitches.signInWithApple,
+    ).toBe(true);
   });
 
-  it.each([
-    ['appleTeamId', 'a1b2c3d4e5'],
-    ['appleTeamId', 'A1B2C3'],
-    ['appStoreConnectAppId', 'app-1'],
-  ])('refuses %s "%s"', (field, value) => {
-    const config = readJson('uk', 'config') as Record<string, unknown>;
+  it.each(['bundleId', 'appleTeamId', 'appStoreConnectAppId', 'updateChannel'])(
+    'refuses %s in an Edition: it is the app identity of the AppConfig (ADR 0065)',
+    (field) => {
+      const config = readJson('uk', 'config') as Record<string, unknown>;
 
-    expect(
-      EditionConfigSchema.safeParse({ ...config, [field]: value }).error?.issues.map((issue) =>
-        issue.path.join('.'),
-      ),
-    ).toEqual([field]);
-  });
+      expect(
+        EditionConfigSchema.safeParse({ ...config, [field]: 'app.slovo.uk' }).error?.issues,
+      ).toMatchObject([{ code: 'unrecognized_keys', keys: [field] }]);
+    },
+  );
 });
 
 describe('the strings of the Idiom Type proverb', () => {
@@ -1502,16 +1479,13 @@ describe('Edition Decor', () => {
     expect(EditionDecorSchema.safeParse({ ...decor, seasons: withoutWinter }).success).toBe(false);
   });
 
-  it.each(editions.filter((edition) => has(edition, 'tokens') && has(edition, 'splash')))(
-    'the %s Edition has a native splash on its own background colour in both Themes',
-    (edition) => {
-      const { colors } = EditionTokensSchema.parse(readJson(edition, 'tokens'));
-      const splash = SplashDecorSchema.parse(readJson(edition, 'splash'));
+  it("the app's native splash sits on the UA Edition's background colour in both Themes", () => {
+    const { colors } = EditionTokensSchema.parse(readJson('uk', 'tokens'));
+    const splash = openAppConfig(REPO_DIR).splash();
 
-      expect(splash.light.backgroundColor).toBe(colors?.light.background);
-      expect(splash.dark.backgroundColor).toBe(colors?.dark.background);
-    },
-  );
+    expect(splash.light.backgroundColor).toBe(colors?.light.background);
+    expect(splash.dark.backgroundColor).toBe(colors?.dark.background);
+  });
 
   /** The text colour roles drawn straight on the screen background. */
   const textRoles = ['ink', 'muted', 'inkSecondary', 'accent'] as const;

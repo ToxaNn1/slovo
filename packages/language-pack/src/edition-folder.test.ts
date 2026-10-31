@@ -310,7 +310,6 @@ describe('an Edition folder', () => {
     expect(edition.path('config')).toBe(join(edition.dir, 'edition.json'));
     expect(edition.path('languagePack')).toBe(join(edition.dir, 'dist/language-pack.db'));
     expect(edition.asset('notification.wav')).toBe(join(edition.dir, 'assets/notification.wav'));
-    expect(edition.decorFile('splash-light.png')).toBe(join(edition.dir, 'decor/splash-light.png'));
   });
 
   it('lists the font files it brings, in code-unit order', () => {
