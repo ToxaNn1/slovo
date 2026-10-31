@@ -3,6 +3,7 @@ import { RaritySchema, type Category } from '@slovo/contracts';
 import type { DefaultMix, UserSettingDefaults } from '../edition/edition';
 import { MIX_KINDS, type CategoryKind, type MixKind } from './entry-kinds';
 import { createInTurn, createSubscribers } from '../in-turn';
+import type { Subject } from '../subject';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
 
@@ -248,19 +249,19 @@ export async function readMix({
 /**
  * Opens the Mix over the user state and the Language Pack's Categories, which
  * the Entries read once, as the pack never changes while it is open. For the
- * Core composition, which reads eligibility again in `eligibilityChanged`
- * after each change.
+ * Core composition: each change publishes `eligibility`, so the Cycle reads
+ * the eligible Entries again and the Feed, the plan and the Game follow.
  */
 export async function openMix({
   edition,
   categories,
   userState,
-  eligibilityChanged,
+  eligibility,
 }: {
   edition: MixEdition;
   categories: CategoryLists;
   userState: UserState;
-  eligibilityChanged: () => Promise<void>;
+  eligibility: Pick<Subject<void>, 'publish'>;
 }): Promise<Mix> {
   let choices = await readChoices(userState);
   let state = mixStateOf(categories, edition, choices);
@@ -314,7 +315,7 @@ export async function openMix({
       rarityFloor: rarityFloor === state.rarityFloor ? choices.rarityFloor : rarityFloor,
     };
     try {
-      await eligibilityChanged();
+      await eligibility.publish();
     } finally {
       choices = next;
       state = mixStateOf(categories, edition, next);

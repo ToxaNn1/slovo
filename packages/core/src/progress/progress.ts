@@ -3,12 +3,11 @@ import type { Favorites } from '../saved/favorites';
 import type { Game } from '../game/game';
 import type { History } from '../saved/history';
 import type { Knowledge, KnownCounts } from '../knowledge/knowledge';
-import { createInTurn, createSubscribers } from '../in-turn';
+import { createSubscribers } from '../in-turn';
 import { dayNumber, parseLocalDate, todayBounds, todayKey } from '../local-date';
-import type { Clock, UserStateChanges } from '../ports';
+import type { Clock } from '../ports';
 import type { Edition } from '../edition/edition';
-import type { UserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import type { ActiveDays } from './active-days';
 import { calendarMonths, type CalendarMonth } from './calendar';
 
 /**
@@ -66,8 +65,6 @@ export interface Progress {
   subscribe(listener: () => void): () => void;
 }
 
-const { activeDays: activeDayRecords } = userStateRecords;
-
 /** The Streak and the Best Streak of the Active Days, by `YYYY-MM-DD`, on the local date `today`. */
 function streaksOf(
   activeDays: ReadonlySet<string>,
@@ -95,29 +92,15 @@ const sameState = (one: ProgressState, other: ProgressState) =>
   (Object.keys(one) as (keyof ProgressState)[]).every((key) => one[key] === other[key]);
 
 /**
- * A change of the Active Days not made yet, like a Cycle change: the
- * user-state changes that keep it, for the caller to write alone or in one
- * write with its own, and the step that makes it in memory once they are
- * written (ADR 0013).
+ * Opens Progress over the Active Days, which the day change records (ADR
+ * 0022), for the Core composition. It follows them, History, Favorites,
+ * Collections, the Knowledge Marks and the Game, so a change of any of them
+ * changes the state at once.
  */
-export interface ActiveDayChange {
-  readonly changes: UserStateChanges;
-  /** Makes the change in memory. Call it once the changes are written. */
-  commit(): void;
-}
-
-/**
- * Opens Progress over the user state, for the Core composition, with
- * `recordToday`, which records today's local date in the clock's time zone as
- * an Active Day, and `todayChange`, the change that records it for the caller
- * to write with its own. Recording a day already recorded writes nothing. It
- * follows History, Favorites, Collections, the Knowledge Marks and the
- * Game, so a change of any of them changes the state at once.
- */
-export async function openProgress({
+export function openProgress({
   edition,
-  userState,
   clock,
+  activeDays,
   history,
   favorites,
   collections,
@@ -125,21 +108,15 @@ export async function openProgress({
   knowledge,
 }: {
   edition: Pick<Edition, 'isFeatureEnabled'>;
-  userState: UserState;
   clock: Clock;
+  activeDays: Pick<ActiveDays, 'days' | 'subscribe'>;
   history: History;
   favorites: Favorites;
   collections: Collections;
   game: Pick<Game, 'state' | 'subscribe'>;
   knowledge: Pick<Knowledge, 'state' | 'subscribe'>;
-}): Promise<{
-  progress: Progress;
-  recordToday: () => Promise<void>;
-  todayChange: () => ActiveDayChange;
-}> {
-  const activeDays = new Set((await userState.list(activeDayRecords)).keys());
+}): Progress {
   const subscribers = createSubscribers();
-  const inTurn = createInTurn();
 
   /**
    * The History entries Seen on today's local date. History is newest first,
@@ -160,7 +137,7 @@ export async function openProgress({
   /** The state as of now, on the local date `today` in the clock's time zone. */
   function stateOf(today: string): ProgressState {
     return {
-      ...streaksOf(activeDays, today),
+      ...streaksOf(activeDays.days, today),
       seenToday: seenTodayIn(history.list),
       favorites: favorites.list.length,
       inCollections: new Set(
@@ -176,59 +153,26 @@ export async function openProgress({
 
   let state = stateOf(todayKey(clock));
 
-  /** Makes the state again on the local date `today`, and tells the subscribers when a number changed. */
-  function follow(today = todayKey(clock)): void {
-    const next = stateOf(today);
+  /** Makes the state again on today's local date, and tells the subscribers when a number changed. */
+  function follow(): void {
+    const next = stateOf(todayKey(clock));
     if (sameState(next, state)) return;
     state = next;
     subscribers.tell();
   }
 
-  for (const source of [history, favorites, collections, game, knowledge]) {
-    source.subscribe(() => {
-      follow();
-    });
-  }
-
-  /** The change that records `today` as an Active Day; no changes when it is recorded already. */
-  function todayChange(today: string): ActiveDayChange {
-    return {
-      changes: activeDays.has(today) ? new Map() : activeDayRecords.record(today).change(true),
-      commit() {
-        activeDays.add(today);
-        follow(today);
-      },
-    };
-  }
-
-  /**
-   * Writes today as an Active Day, then makes the change in memory. The state
-   * follows today even when the write fails, so the Streak counts back from
-   * yesterday until today is kept.
-   */
-  async function recordToday(): Promise<void> {
-    const today = todayKey(clock);
-    const change = todayChange(today);
-    try {
-      if (change.changes.size > 0) await userState.write(change.changes);
-      change.commit();
-    } finally {
-      follow(today);
-    }
+  for (const source of [activeDays, history, favorites, collections, game, knowledge]) {
+    source.subscribe(follow);
   }
 
   return {
-    progress: {
-      get state() {
-        return state;
-      },
-      calendar: () =>
-        edition.isFeatureEnabled('activeDaysCalendar')
-          ? calendarMonths(activeDays, todayKey(clock))
-          : [],
-      subscribe: subscribers.subscribe,
+    get state() {
+      return state;
     },
-    recordToday: () => inTurn(recordToday),
-    todayChange: () => todayChange(todayKey(clock)),
+    calendar: () =>
+      edition.isFeatureEnabled('activeDaysCalendar')
+        ? calendarMonths(activeDays.days, todayKey(clock))
+        : [],
+    subscribe: subscribers.subscribe,
   };
 }

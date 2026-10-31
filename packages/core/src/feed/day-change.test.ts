@@ -120,6 +120,39 @@ describe('the day change', () => {
     expect(wordAt(planOf(scheduler), '2026-10-15T09:00')).toBe(morning);
   });
 
+  it('turns to a new day in one fixed order: the Knowledge Marks, then the plan, then the Feed', async () => {
+    const time = fakeClock('2026-10-14T23:50:00+03:00');
+    const order: string[] = [];
+    const fake = createFakeNotificationScheduler();
+    const scheduler: FakeNotificationScheduler = {
+      ...fake,
+      get plan() {
+        return fake.plan;
+      },
+      replacePlan(plan) {
+        order.push('plan');
+        return fake.replacePlan(plan);
+      },
+    };
+    const { app } = await run({ clock: time.clock, scheduler });
+    await app.feed.show(0);
+    const today = app.feed.cards[0]?.entryId;
+    if (today === undefined) throw new Error('The Feed opened on no card');
+    // Not known: due for Review on the next day, so the Knowledge Marks change as the day turns.
+    await app.knowledge.tap(today, 'unknown');
+    order.length = 0;
+    app.knowledge.subscribe(() => order.push('knowledge'));
+    app.feed.subscribe(() => order.push('feed'));
+
+    // The reader is on the Feed when the day turns, so the Feed opens the day at once.
+    time.set('2026-10-15T00:00:01+03:00');
+    await app.feed.show(0);
+    await app.resume();
+
+    expect(order).toEqual(['knowledge', 'plan', 'feed']);
+    expect(app.knowledge.state.due).toEqual([today]);
+  });
+
   it('turns to the new day once, however often the app comes back that day', async () => {
     const time = fakeClock('2026-10-14T23:50:00+03:00');
     const { app, writes, scheduler } = await run({ clock: time.clock });

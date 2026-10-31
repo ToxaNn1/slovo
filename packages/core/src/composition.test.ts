@@ -146,6 +146,31 @@ describe('a closed composition', () => {
   });
 });
 
+describe('a hidden Entry', () => {
+  it('leaves the Feed, the notification plan and the Game Modes on offer at once', async () => {
+    const { app, scheduler } = await run();
+    await app.feed.show(0);
+    const next = app.feed.cards[1]?.entryId;
+    if (next === undefined) throw new Error('No card is ready after the Word of the Day');
+    const guessWord = () => app.game.state.modes.find(({ modeId }) => modeId === 'guess-word');
+    await vi.waitFor(() => {
+      expect(guessWord()).toMatchObject({ canStart: true });
+    });
+    expect(scheduler.plan?.map(({ wordId }) => wordId)).toContain(next);
+
+    // Six of the twenty Words hidden leave fewer than the 15 a Game needs.
+    const shown = new Set(app.feed.cards.map((card) => card.entryId));
+    const others = Array.from({ length: 20 }, (_, index) => `w_${String(index).padStart(2, '0')}`)
+      .filter((id) => !shown.has(id))
+      .slice(0, 5);
+    for (const entryId of [next, ...others]) await app.hide({ kind: 'entry', entryId });
+
+    expect(app.feed.cards.map((card) => card.entryId)).not.toContain(next);
+    expect(scheduler.plan?.map(({ wordId }) => wordId)).not.toContain(next);
+    expect(guessWord()).toMatchObject({ canStart: false, refusal: 'too-few-entries' });
+  });
+});
+
 describe('an Entry opened by id', () => {
   /** A pack with a Word, a Synonym Row that links it as a member and a Tip. */
   const withRowAndTip = createMemoryContentPort({

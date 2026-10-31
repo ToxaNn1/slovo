@@ -1782,8 +1782,14 @@ describe('the Best result per mode', () => {
   });
 
   it('rides on the offer while the modes are still planned', async () => {
+    // The Game alone reads the Words in full, so only its planning waits.
+    const pack: ContentReadPort = {
+      ...content,
+      listWords: () => new Promise(() => undefined),
+    };
     const app = await run({
       records: guessWordBest.change(12) as Map<string, string>,
+      pack,
       planned: false,
     });
 

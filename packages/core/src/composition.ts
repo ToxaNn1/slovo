@@ -15,7 +15,7 @@ import {
   type DailyCrossword,
 } from './game/daily-crossword';
 import { openCycle } from './feed/cycle';
-import { createDayChange } from './feed/day-change';
+import { createDayChange, type OpenedEntry } from './feed/day-change';
 import type { Edition } from './edition/edition';
 import { createEntries } from './entries/entries';
 import { createEntryRows, type EntryRowModel } from './entries/entry-row';
@@ -51,7 +51,9 @@ import { openMix, type Mix } from './entries/mix';
 import type { NotificationScheduling } from './notifications/notification-plan';
 import { openNotifications, type Notifications } from './notifications/notifications';
 import { openOnboarding, type Onboarding } from './onboarding/onboarding';
+import type { LocalDate } from './local-date';
 import type { Backend, Clock, ContentReadPort, Random, Schedule } from './ports';
+import { openActiveDays } from './progress/active-days';
 import { openProgress, type Progress } from './progress/progress';
 import { createWeeklyRecap, type WeeklyRecap } from './progress/weekly-recap';
 import { createMoodDraw, type MoodDraw } from './mood/mood-draw';
@@ -60,6 +62,7 @@ import { createRecentQueries, type RecentQueries } from './search/recent-queries
 import { createSearch, type Search } from './search/search';
 import type { UserState } from './user-state/user-state';
 import { createSpotlight, type Spotlight } from './spotlight/spotlight';
+import { createSubject, type Subject } from './subject';
 import { createWidget, type Widget } from './widget/widget';
 import { openWordOfTheDay } from './feed/word-of-the-day';
 
@@ -335,13 +338,47 @@ export async function openComposition({
   backend?: Pick<Backend, 'collectionLinks' | 'counters'>;
 }): Promise<Composition> {
   const { userState, scheduling, schedule, close } = closable(ports);
+  // The named subjects the modules link through (ADR 0018), made before any
+  // module opens. A subject's listeners follow in the order the modules open.
+  const eligibility: Subject<void> = createSubject();
+  const seen: Subject<string> = createSubject();
+  const dayStarted: Subject<LocalDate> = createSubject();
+  const opened: Subject<OpenedEntry> = createSubject();
+  const dayTurned: Subject<LocalDate> = createSubject();
+  const returned: Subject<void> = createSubject();
   const entries = createEntries({ content, edition, userState });
   const rows = createEntryRows(entries);
   const cycle = await openCycle({ entries, userState, random });
+  // The Cycle reads the eligible Entries first; the Feed, the plan and the Game follow it.
+  eligibility.subscribe(() => cycle.readEligibleAgain());
   const wordOfTheDay = await openWordOfTheDay({ cycle, userState, clock });
+  const activeDays = await openActiveDays({ userState, clock });
+  const day = createDayChange({
+    clock,
+    wordOfTheDay,
+    activeDays,
+    dayStarted,
+    opened,
+    dayTurned,
+    returned,
+  });
   const { history, recorder } = await openHistory({ rows, userState });
-  // The plan follows the Feed: a Reserved Word Seen there gets its notification a new Word.
-  const { notifications, replan, followSeen, nextMorning } = await openNotifications({
+  const hiddenEntries = await openHiddenEntries({ rows, userState, clock, eligibility });
+  const communityCounters = openCommunityCounters({ edition, userState });
+  // The Knowledge Marks leave a Hidden Entry out, and turn to a new day before anything of it is written.
+  const knowledge = await openKnowledge({
+    edition,
+    rows,
+    hiddenEntries,
+    userState,
+    clock,
+    countMark: (entryId, mark) => communityCounters.countMark(entryId, mark),
+    dayStarted,
+  });
+  // On a day turned to, the plan is made again before the Feed opens the day
+  // and the Game plans its offers; on a change of eligibility, before the Feed
+  // follows the Cycle, so the order the three open in is the order they follow in.
+  const notifications = await openNotifications({
     edition,
     userState,
     cycle,
@@ -349,32 +386,15 @@ export async function openComposition({
     clock,
     random,
     wordOfTheDay,
-    // The plan and the day change need each other (`replan`, `takeMorningWord`),
-    // so `day` is declared below, once the plan and the Feed it turns are open.
-    // That is safe: only a plan and `nextMorning` call it, a plan comes only
-    // from `replan`, `followSeen` or a change of the Notification times, sound
-    // or permission, and the composition calls none of them before `day.resume()`.
     takeMorningWord: () => day.takeMorningWord(),
     scheduling,
-  });
-  // Before the Knowledge Marks, which leave a Hidden Entry out. A hide or a
-  // restore calls `eligibilityChanged`, which needs the Feed and the Game
-  // declared below; that is safe, as none can come before the composition opens.
-  const hiddenEntries = await openHiddenEntries({ rows, userState, clock, eligibilityChanged });
-  const { communityCounters, countMark, countSaved } = openCommunityCounters({
-    edition,
-    userState,
-  });
-  const { knowledge, followDay: followKnowledgeDay } = await openKnowledge({
-    edition,
-    rows,
-    hiddenEntries,
-    userState,
-    clock,
-    countMark,
+    eligibility,
+    seen,
+    dayTurned,
+    returned,
   });
   const dailyLimit = dailyLimitNotices({ edition, userState, history, clock });
-  const { feed, followEligibility, markOpenedSeen, openDay } = await openFeed({
+  const feed = await openFeed({
     entries,
     userState,
     clock,
@@ -383,10 +403,9 @@ export async function openComposition({
     wordOfTheDay,
     history: recorder,
     archive: createWordOfTheDayArchiveRecorder({ edition }),
-    entrySeen: followSeen,
-    // The Weekly Recap is declared below, once Favorites and Progress it reads
-    // are open; that is safe, as the Feed asks for a day's Feed Notices only
-    // for a card after the first, which none asks for before the composition opens.
+    // The Weekly Recap opens below, once Favorites and Progress it reads are
+    // open; the Feed asks for a day's Feed Notices only for a card after the
+    // first, which none asks for before the composition opens.
     notices: allFeedNotices(
       feedNotices,
       {
@@ -400,12 +419,16 @@ export async function openComposition({
       createYesterday({ edition, entries, hiddenEntries, userState }),
       dailyLimit,
     ),
+    eligibility,
+    seen,
+    dayTurned,
+    opened,
   });
-  const {
-    game,
-    followEligibility: followGameEligibility,
-    planOffers,
-  } = await openGame({
+  // The Game Modes are planned once the day is turned to, last of what follows
+  // it: planning reads the whole pack, so the launch never waits for it. A
+  // start or a change of eligibility waits its turn behind it, and a planning
+  // that fails is tried again.
+  const game = await openGame({
     edition,
     entries,
     history,
@@ -415,28 +438,21 @@ export async function openComposition({
     random,
     ...(schedule === undefined ? {} : { schedule }),
     modes: [...coreGameModes, ...gameModes],
+    eligibility,
+    dayTurned,
+    returned,
   });
-  /**
-   * After a hide, a restore or a Mix change, the Cycle reads the eligible
-   * Entries again, and the Feed, the plan and the Game Modes on offer follow.
-   */
-  async function eligibilityChanged(): Promise<void> {
-    await cycle.readEligibleAgain();
-    await followEligibility();
-    await replan();
-    await followGameEligibility();
-  }
   const [favorites, collections, mix] = await Promise.all([
-    openFavorites({ rows, userState, clock, countSaved }),
+    openFavorites({ rows, userState, clock, communityCounters }),
     openCollections({ rows, userState, clock, random }),
     Promise.all([entries.categories(), entries.correctionCategories()]).then(([word, correction]) =>
-      openMix({ edition, categories: { word, correction }, userState, eligibilityChanged }),
+      openMix({ edition, categories: { word, correction }, userState, eligibility }),
     ),
   ]);
-  const { progress, recordToday, todayChange } = await openProgress({
+  const progress = openProgress({
     edition,
-    userState,
     clock,
+    activeDays,
     history,
     favorites,
     collections,
@@ -451,15 +467,6 @@ export async function openComposition({
     favorites,
     progress,
   });
-  const day = createDayChange({
-    clock,
-    wordOfTheDay,
-    followKnowledgeDay,
-    recordToday,
-    todayChange,
-    replan,
-    openFeedDay: openDay,
-  });
   await day.resume();
   // Once the day is turned to, so the welcome shows today's Word of the Day.
   const rarityTest = createRarityTest({ edition, entries, mix, random });
@@ -469,17 +476,12 @@ export async function openComposition({
     entries,
     wordOfTheDay,
     notifications,
-    nextMorning,
     account: edition.isFeatureEnabled('account'),
     rarityTest:
       edition.isFeatureEnabled('rarityTest') && edition.isFeatureEnabled('rarityFloor')
         ? rarityTest
         : undefined,
   });
-  // The Game Modes are planned last: planning reads the whole pack, so the
-  // launch never waits for it. A start or a change of eligibility waits its turn
-  // behind it, and a planning that fails is tried again (see `planOffers`).
-  planOffers();
   async function entryCard(entryId: string): Promise<AnyEntryCard | undefined> {
     const entry = await entries.get(entryId);
     // Today's Word of the Day carries its day, as on its Feed card.
@@ -494,7 +496,7 @@ export async function openComposition({
   }
   /** An Entry opened from outside the app, from a notification or the widget: one rule for both. */
   async function openedFromOutside(entryId: string): Promise<AnyEntryCard | undefined> {
-    await day.opened((activeDay) => markOpenedSeen(entryId, activeDay));
+    await day.opened(entryId);
     return entryCard(entryId);
   }
   const wordOfTheDayArchive = createWordOfTheDayArchive({ content, edition, userState, clock });
@@ -525,10 +527,7 @@ export async function openComposition({
     communityCounters,
     progress,
     weeklyRecap,
-    resume() {
-      planOffers();
-      return day.resume();
-    },
+    resume: () => day.resume(),
     notifications,
     game,
     onboarding,

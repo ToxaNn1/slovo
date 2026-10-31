@@ -15,6 +15,26 @@ export interface CommunityCounters {
    * afresh on each call. An Entry whose changes cancel out is not in it.
    */
   unsent(): Promise<ReadonlyMap<string, CounterDelta>>;
+  /**
+   * The changes to write with the Entry's new mark, none for no mark, that
+   * count the difference between what this device counted and the mark: a
+   * new mark adds one, a move Known ↔ Unknown moves one, removing a mark this
+   * device counted takes one away. A mark from before the update was never
+   * counted, so removing it changes nothing and changing it counts as new.
+   * None with the `communityCounters` Feature Switch off or sharing off. The
+   * Knowledge Marks call it when the reader taps a mark on a card, the
+   * Yesterday card's included, and never for a Game answer.
+   */
+  countMark(entryId: string, mark: KnowledgeMark | undefined): Promise<UserStateChanges>;
+  /**
+   * The changes to write with the Entry going into Favorites or out of them,
+   * by the same rule: adding it saves one, removing an Entry this device
+   * counted saved takes one away. A Favorite from before the update was never
+   * counted, so removing it changes nothing and adding it again counts as new.
+   * None with the `communityCounters` Feature Switch off or sharing off.
+   * Favorites call it when the reader adds or removes an Entry.
+   */
+  countSaved(entryId: string, saved: boolean): Promise<UserStateChanges>;
 }
 
 /** What this device counted for an Entry. */
@@ -71,38 +91,14 @@ const negated = (delta: CounterDelta): CounterDelta => ({
 const isUnchanged = (delta: CounterDelta) =>
   delta.known === 0 && delta.unknown === 0 && delta.saved === 0;
 
-/**
- * Opens the Community Counters over the user state, for the Core composition,
- * with `countMark`, which the Knowledge Marks call when the reader taps a mark
- * on a card, the Yesterday card's included, and never for a Game answer, and
- * `countSaved`, which Favorites call when the reader adds or removes an Entry.
- */
+/** Opens the Community Counters over the user state, for the Core composition. */
 export function openCommunityCounters({
   edition,
   userState,
 }: {
   edition: Pick<Edition, 'isFeatureEnabled'>;
   userState: UserState;
-}): {
-  communityCounters: CommunityCounters;
-  /**
-   * The changes to write with the Entry's new mark, none for no mark, that
-   * count the difference between what this device counted and the mark: a
-   * new mark adds one, a move Known ↔ Unknown moves one, removing a mark this
-   * device counted takes one away. A mark from before the update was never
-   * counted, so removing it changes nothing and changing it counts as new.
-   * None with the `communityCounters` Feature Switch off or sharing off.
-   */
-  countMark: (entryId: string, mark: KnowledgeMark | undefined) => Promise<UserStateChanges>;
-  /**
-   * The changes to write with the Entry going into Favorites or out of them,
-   * by the same rule: adding it saves one, removing an Entry this device
-   * counted saved takes one away. A Favorite from before the update was never
-   * counted, so removing it changes nothing and adding it again counts as new.
-   * None with the `communityCounters` Feature Switch off or sharing off.
-   */
-  countSaved: (entryId: string, saved: boolean) => Promise<UserStateChanges>;
-} {
+}): CommunityCounters {
   const { countersCounted, countersUnsent } = userStateRecords;
 
   /** The changes that count the Entry as `next` gives it from what this device counted. */
@@ -131,7 +127,7 @@ export function openCommunityCounters({
   }
 
   return {
-    communityCounters: { unsent: () => userState.list(countersUnsent) },
+    unsent: () => userState.list(countersUnsent),
     countMark: (entryId, mark) => count(entryId, (counted) => ({ ...counted, mark: mark ?? null })),
     countSaved: (entryId, saved) => count(entryId, (counted) => ({ ...counted, saved })),
   };
