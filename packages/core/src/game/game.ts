@@ -214,7 +214,7 @@ export async function openGame({
   edition: GameEdition;
   entries: Pick<Entries, 'eligibleOfKind'>;
   history: Pick<History, 'list'>;
-  knowledge: Pick<Knowledge, 'weak' | 'answer'>;
+  knowledge: Pick<Knowledge, 'weak' | 'answer' | 'confirm'>;
   userState: Pick<UserState, 'read' | 'write'>;
   /** What a timed Game's play time is told by. */
   clock: Pick<Clock, 'now'>;
@@ -401,9 +401,10 @@ export async function openGame({
     if (inPlay(answered)) changeCurrent(answered);
     else await inTurn(() => finish(game, answered));
     const round = answered.played.at(-1);
-    if (round !== undefined && !round.right) {
-      await inTurn(() => knowledge.answer(round.entry.id, 'unknown'));
-    }
+    if (round === undefined) return;
+    await inTurn(() =>
+      round.right ? knowledge.confirm(round.entry.id) : knowledge.answer(round.entry.id, 'unknown'),
+    );
   }
 
   async function next(): Promise<void> {

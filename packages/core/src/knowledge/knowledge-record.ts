@@ -4,7 +4,7 @@ import { dateKeyOf, localDateAfter, type LocalDate } from '../local-date';
 export type KnowledgeMark = 'known' | 'unknown';
 
 /** The days a Review waits, one step after the other. */
-export type ReviewStep = 1 | 3 | 7;
+export type ReviewStep = 1 | 3 | 7 | 30 | 90;
 
 /**
  * The Knowledge Mark of one Entry and where its Review stands (ADR 0043). An
@@ -28,15 +28,22 @@ export interface KnowledgeRecord {
 const learned: KnowledgeRecord = { mark: 'known', step: null, reviewDay: null, learned: true };
 
 /** The step after a Review answered Known, or nothing when the Entry becomes Learned. */
-const nextStep: Record<ReviewStep, ReviewStep | undefined> = { 1: 3, 3: 7, 7: undefined };
+const nextStep: Record<ReviewStep, ReviewStep | undefined> = {
+  1: 3,
+  3: 7,
+  7: 30,
+  30: 90,
+  90: undefined,
+};
 
 /**
  * The record after the reader answers the Entry on the local day `today`, by
  * the interval rule: Unknown starts a Review at 1 day, from any step and a
- * Learned Entry too; Known moves a Review from 1 to 3 days, then to 7, and
- * makes the Entry Learned after 7; Known with no earlier mark makes it
- * Learned at once. The next Review day is `today` plus the step, so an Entry
- * marked late at night is due the morning after.
+ * Learned Entry too; Known moves a Review from 1 to 3 days, then to 7, 30
+ * and 90, and makes the Entry Learned after 90; Known with no earlier mark
+ * makes it Learned at once. An Entry kept on the 7-day step before 1.0 moves
+ * on to 30 days like any other. The next Review day is `today` plus the
+ * step, so an Entry marked late at night is due the morning after.
  */
 export function answerKnowledge(
   record: KnowledgeRecord | undefined,
@@ -57,6 +64,13 @@ export function isDue(record: KnowledgeRecord | undefined, day: LocalDate): bool
   const reviewDay = record?.reviewDay ?? undefined;
   return reviewDay !== undefined && reviewDay <= dateKeyOf(day);
 }
+
+/**
+ * Whether answering the record Known confirms the Entry: it is on a Review of
+ * 7 days or later (ADR 0043).
+ */
+export const confirmsOnKnown = (record: KnowledgeRecord | undefined): boolean =>
+  record?.step !== undefined && record.step !== null && record.step >= 7;
 
 /** Whether the Entry is Learned. */
 export const isLearned = (record: KnowledgeRecord | undefined): boolean => record?.learned === true;

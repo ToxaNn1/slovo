@@ -1,4 +1,11 @@
-import type { CorrectionType, Gender, IdiomType, PartOfSpeech, Register } from '@slovo/contracts';
+import type {
+  CorrectionType,
+  Gender,
+  IdiomType,
+  PartOfSpeech,
+  Rarity,
+  Register,
+} from '@slovo/contracts';
 
 import type { AskableEntry, Entries } from './entries';
 import { renderStress, withoutStress } from './stress';
@@ -52,6 +59,8 @@ export type EntryRowModel =
       /** Only a noun has one. */
       readonly gender?: Gender;
       readonly registers: readonly Register[];
+      /** The Word's rarity, which the confirmed-Entry counts go by (ADR 0043). */
+      readonly rarity: Rarity;
     })
   | (EntryRowText & {
       readonly kind: 'correction';
@@ -87,6 +96,7 @@ export function buildEntryRow(entry: AskableEntry): EntryRowModel {
       partOfSpeech: entry.partOfSpeech,
       ...(entry.gender === undefined ? {} : { gender: entry.gender }),
       registers: entry.registers,
+      rarity: entry.rarity,
     };
   }
   if (entry.kind === 'idiom') {

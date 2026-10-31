@@ -185,12 +185,19 @@ export const userStateRecords = {
     'knowledge.',
     z.object({
       mark: z.enum(['known', 'unknown']),
-      step: z.union([z.literal(1), z.literal(3), z.literal(7)]).nullable(),
+      step: z.literal([1, 3, 7, 30, 90]).nullable(),
       reviewDay: z.iso.date().nullable(),
       learned: z.boolean(),
       markedAt: InstantSchema.exactOptional(),
     }),
   ),
+  /**
+   * The confirmed Entries, one record per Entry, by Entry id: the instant the
+   * Entry was confirmed, Known on a Review of 7 days or later or answered
+   * right in a Game or a Quick Question (ADR 0043). A record is never
+   * removed: a confirmed Entry stays confirmed whatever its mark does.
+   */
+  confirmed: declareRecords('confirmed.', InstantSchema),
   /**
    * The Categories the user put in the Mix or took out of it, one record per
    * Category, by Category id (which holds no `.`): whether it is in. A

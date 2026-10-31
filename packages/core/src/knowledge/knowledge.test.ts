@@ -351,6 +351,7 @@ describe('Knowledge Marks', () => {
     expect((await run({ records, on: ['corrections'] })).knowledge.state).toEqual({
       learning: [],
       known: knownCounts(),
+      confirmed: { total: 0, byRarity: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } },
       due: [],
       shown: new Map(),
     });
@@ -376,5 +377,170 @@ describe('Knowledge Marks', () => {
 
     expect(app.knowledge.state.shown.get('w_one')).toBeUndefined();
     expect(app.knowledge.state).toBe(before);
+  });
+});
+
+/** Answers the Entry Known on each of its Reviews in turn, `times` times, the clock moved to each Review day. */
+async function reviewKnown(
+  app: Composition,
+  time: ReturnType<typeof fakeClock>,
+  entryId: string,
+  times: number,
+): Promise<void> {
+  for (let count = 0; count < times; count += 1) {
+    const days = app.knowledge.state.learning.find((entry) => entry.entryId === entryId);
+    if (days === undefined) throw new Error(`${entryId} has no Review`);
+    time.advance(days.daysUntilReview * DAY);
+    await app.resume();
+    expect(app.knowledge.state.due).toContain(entryId);
+    await app.knowledge.tap(entryId, 'known');
+  }
+}
+
+// Spec #1358, ADR 0043 as amended: Review at 1, 3, 7, 30 and 90 local days.
+describe('Review 1–3–7–30–90', () => {
+  it('brings an Entry back after 1, 3, 7, 30 and 90 days, and Known on the 90-day Review makes it Learned', async () => {
+    const records = new Map<string, string>();
+    const time = fakeClock('2026-10-19T09:00:00.000Z');
+    const app = await run({ records, clock: time.clock });
+    await app.knowledge.tap('w_one', 'unknown');
+
+    const waits: number[] = [];
+    for (let count = 0; count < 5; count += 1) {
+      const days = learningOf(app)[0]?.[1];
+      if (typeof days !== 'number') throw new Error('No Review');
+      waits.push(days);
+      await reviewKnown(app, time, 'w_one', 1);
+    }
+
+    expect(waits).toEqual([1, 3, 7, 30, 90]);
+    expect(learningOf(app)).toEqual([]);
+    expect(app.knowledge.state.due).toEqual([]);
+    expect(app.knowledge.state.shown.get('w_one')).toBe('known');
+    expect(app.knowledge.state).toMatchObject({ known: knownCounts({ word: 1 }) });
+    const next = await run({ records, clock: fakeClock('2028-01-01T09:00:00.000Z').clock });
+    expect(next.knowledge.state.due).toEqual([]);
+    expect(learningOf(next)).toEqual([]);
+  });
+
+  it('starts a Review again at 1 day on Unknown at any step', async () => {
+    const time = fakeClock('2026-10-19T09:00:00.000Z');
+    const app = await run({ clock: time.clock });
+    await app.knowledge.tap('w_one', 'unknown');
+    await reviewKnown(app, time, 'w_one', 3);
+    expect(learningOf(app)).toEqual([['w_one', 30]]);
+
+    time.advance(30 * DAY);
+    await app.resume();
+    await app.knowledge.tap('w_one', 'unknown');
+
+    expect(learningOf(app)).toEqual([['w_one', 1]]);
+    expect(app.knowledge.state.shown.get('w_one')).toBe('unknown');
+  });
+
+  it('moves an Entry kept on the old 7-day step on to 30 days on Known, not to Learned', async () => {
+    const records = new Map([
+      [
+        'knowledge.w_one',
+        JSON.stringify({ mark: 'known', step: 7, reviewDay: '2026-10-19', learned: false }),
+      ],
+      [
+        'knowledge.w_two',
+        JSON.stringify({ mark: 'known', step: null, reviewDay: null, learned: true }),
+      ],
+    ]);
+    const time = fakeClock('2026-10-19T09:00:00.000Z');
+    const app = await run({ records, clock: time.clock });
+
+    expect(app.knowledge.state.due).toEqual(['w_one']);
+    expect(app.knowledge.state.shown.get('w_one')).toBe('review');
+    await app.knowledge.tap('w_one', 'known');
+
+    expect(learningOf(app)).toEqual([['w_one', 30]]);
+    expect(app.knowledge.state.shown.get('w_one')).toBe('known');
+    // An Entry Learned before 1.0 stays Learned.
+    expect(app.knowledge.state.shown.get('w_two')).toBe('known');
+    expect(app.knowledge.state).toMatchObject({ known: knownCounts({ word: 2 }) });
+  });
+});
+
+/** The confirmed-Entry counts as the Profile and the Badges read them. */
+const confirmedOf = (app: Composition) => app.knowledge.state.confirmed;
+
+// Spec #1358, ADR 0043: an Entry is confirmed on Known at a Review of 7 days
+// or later, or answered right in a Game or a Quick Question, and stays so.
+describe('Confirmed Entries', () => {
+  const pack = createMemoryContentPort({
+    words: [word('w_one', { rarity: 2 }), word('w_two', { rarity: 5 }), word('w_three')],
+    corrections: [correction('c_one')],
+  });
+
+  it('counts an Entry on Known at its 7-day Review, by rarity, once, and not before', async () => {
+    const records = new Map<string, string>();
+    const time = fakeClock('2026-10-19T09:00:00.000Z');
+    const app = await run({ records, pack, clock: time.clock });
+    await app.knowledge.tap('w_one', 'unknown');
+    await app.knowledge.tap('w_two', 'unknown');
+    await reviewKnown(app, time, 'w_one', 2);
+    await reviewKnown(app, time, 'w_two', 2);
+    expect(confirmedOf(app)).toEqual({ total: 0, byRarity: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } });
+
+    await reviewKnown(app, time, 'w_one', 1);
+    expect(confirmedOf(app)).toEqual({ total: 1, byRarity: { 1: 0, 2: 1, 3: 0, 4: 0, 5: 0 } });
+
+    await reviewKnown(app, time, 'w_one', 2);
+    await reviewKnown(app, time, 'w_two', 1);
+    expect(confirmedOf(app)).toEqual({ total: 2, byRarity: { 1: 0, 2: 1, 3: 0, 4: 0, 5: 1 } });
+
+    const next = await run({ records, pack, clock: time.clock });
+    expect(confirmedOf(next)).toEqual(confirmedOf(app));
+  });
+
+  it('counts a Correction confirmed on its 30-day Review in the total, with no rarity', async () => {
+    const time = fakeClock('2026-10-19T09:00:00.000Z');
+    const app = await run({ pack, clock: time.clock });
+    await app.knowledge.tap('c_one', 'unknown');
+    await reviewKnown(app, time, 'c_one', 4);
+
+    expect(confirmedOf(app)).toEqual({ total: 1, byRarity: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } });
+  });
+
+  it('counts an Entry answered right in a Game or a Quick Question, and keeps it whatever its mark does', async () => {
+    const records = new Map<string, string>();
+    const time = fakeClock('2026-10-19T09:00:00.000Z');
+    const app = await run({ records, pack, clock: time.clock });
+    let told = 0;
+    app.knowledge.subscribe(() => {
+      told += 1;
+    });
+
+    await app.knowledge.confirm('w_two');
+    expect(confirmedOf(app)).toEqual({ total: 1, byRarity: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 1 } });
+    expect(app.knowledge.state.shown.get('w_two')).toBeUndefined();
+    expect(told).toBe(1);
+
+    await app.knowledge.confirm('w_two');
+    expect(told).toBe(1);
+    await app.knowledge.answer('w_two', 'unknown');
+    await app.knowledge.tap('w_two', 'unknown');
+    expect(app.knowledge.state.shown.get('w_two')).toBeUndefined();
+    expect(confirmedOf(app)).toEqual({ total: 1, byRarity: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 1 } });
+
+    const next = await run({ records, pack, clock: time.clock });
+    expect(confirmedOf(next)).toEqual(confirmedOf(app));
+  });
+
+  it('counts nothing with the knowledge Feature Switch off, and confirms nothing', async () => {
+    const records = new Map<string, string>();
+    const time = fakeClock('2026-10-19T09:00:00.000Z');
+    const app = await run({ records, pack, clock: time.clock });
+    await app.knowledge.confirm('w_one');
+
+    const off = await run({ records, pack, clock: time.clock, on: ['corrections'] });
+    await off.knowledge.confirm('w_two');
+    expect(confirmedOf(off)).toEqual({ total: 0, byRarity: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } });
+
+    const on = await run({ records, pack, clock: time.clock });
+    expect(confirmedOf(on)).toEqual({ total: 1, byRarity: { 1: 0, 2: 1, 3: 0, 4: 0, 5: 0 } });
   });
 });

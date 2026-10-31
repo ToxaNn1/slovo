@@ -39,7 +39,7 @@ describe('the interval rule of a Knowledge Mark', () => {
     expect(isDue(record, day('2027-01-01'))).toBe(false);
   });
 
-  it('moves a Review Known from 1 to 3 days, then to 7, then makes the Entry Learned', () => {
+  it('moves a Review Known from 1 to 3 days, then 7, 30 and 90, then makes the Entry Learned', () => {
     const one = answered(['unknown', '2026-10-19']);
     const three = answered(['unknown', '2026-10-19'], ['known', '2026-10-20']);
     const seven = answered(
@@ -47,16 +47,33 @@ describe('the interval rule of a Knowledge Mark', () => {
       ['known', '2026-10-20'],
       ['known', '2026-10-23'],
     );
-    const learned = answered(
+    const thirty = answered(
       ['unknown', '2026-10-19'],
       ['known', '2026-10-20'],
       ['known', '2026-10-23'],
       ['known', '2026-10-30'],
     );
+    const ninety = answered(
+      ['unknown', '2026-10-19'],
+      ['known', '2026-10-20'],
+      ['known', '2026-10-23'],
+      ['known', '2026-10-30'],
+      ['known', '2026-11-29'],
+    );
+    const learned = answered(
+      ['unknown', '2026-10-19'],
+      ['known', '2026-10-20'],
+      ['known', '2026-10-23'],
+      ['known', '2026-10-30'],
+      ['known', '2026-11-29'],
+      ['known', '2027-02-27'],
+    );
 
     expect(one).toMatchObject({ step: 1, reviewDay: '2026-10-20', learned: false });
     expect(three).toEqual({ mark: 'known', step: 3, reviewDay: '2026-10-23', learned: false });
     expect(seven).toEqual({ mark: 'known', step: 7, reviewDay: '2026-10-30', learned: false });
+    expect(thirty).toEqual({ mark: 'known', step: 30, reviewDay: '2026-11-29', learned: false });
+    expect(ninety).toEqual({ mark: 'known', step: 90, reviewDay: '2027-02-27', learned: false });
     expect(learned).toEqual({ mark: 'known', step: null, reviewDay: null, learned: true });
   });
 

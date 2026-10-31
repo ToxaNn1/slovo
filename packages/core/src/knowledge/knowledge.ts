@@ -1,4 +1,4 @@
-import type { EntryKind } from '@slovo/contracts';
+import type { EntryKind, Rarity } from '@slovo/contracts';
 
 import type { Edition } from '../edition/edition';
 import type { EntryRowModel, EntryRows } from '../entries/entry-row';
@@ -11,6 +11,7 @@ import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
 import {
   answerKnowledge,
+  confirmsOnKnown,
   isDue,
   shownMark,
   type KnowledgeMark,
@@ -33,6 +34,16 @@ export interface LearningEntry {
  */
 export type KnownCounts = Readonly<Record<EntryKind, number>>;
 
+/**
+ * The confirmed Entries (ADR 0043): Known on a Review of 7 days or later, or
+ * answered right in a Game or a Quick Question. Every confirmed Entry the
+ * Language Pack has counts in the total; a Word counts by its rarity too.
+ */
+export interface ConfirmedCounts {
+  readonly total: number;
+  readonly byRarity: Readonly<Record<Rarity, number>>;
+}
+
 /** What an Entry's card shows about knowledge: its Knowledge Mark, or none while it is due, as a Review. */
 export type ShownKnowledge = KnowledgeMark | 'review';
 
@@ -52,6 +63,11 @@ export interface KnowledgeState {
   readonly learning: readonly LearningEntry[];
   /** The Entries marked Known, by kind; the same object until a count changes. */
   readonly known: KnownCounts;
+  /**
+   * The confirmed Entries, which the Profile and the Badges count, a Hidden
+   * Entry too; the same object until a count changes.
+   */
+  readonly confirmed: ConfirmedCounts;
   /**
    * The Entries due for Review today, in no set order, for the Feed to bring
    * back, the Game to ask and Progress to count.
@@ -99,20 +115,40 @@ export interface Knowledge {
    * Game does with Unknown. It counts nothing for the Community Counters.
    */
   answer(entryId: string, mark: KnowledgeMark): Promise<void>;
+  /**
+   * The reader answered the Entry right in a Game or a Quick Question: it is
+   * confirmed from now on, its mark and Review as they are. Nothing changes
+   * for an Entry confirmed before.
+   */
+  confirm(entryId: string): Promise<void>;
   /** Calls `listener` after each change of the state. Returns the call that stops it. */
   subscribe(listener: () => void): () => void;
 }
 
 const noneKnown: KnownCounts = { word: 0, correction: 0, idiom: 0, synonymRow: 0, tip: 0 };
+const noneConfirmed: ConfirmedCounts = { total: 0, byRarity: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } };
 
 /** The state with the `knowledge` Feature Switch off. */
-const off: KnowledgeState = { learning: [], known: noneKnown, due: [], shown: new Map() };
+const off: KnowledgeState = {
+  learning: [],
+  known: noneKnown,
+  confirmed: noneConfirmed,
+  due: [],
+  shown: new Map(),
+};
 
 const sameCounts = (one: KnownCounts, other: KnownCounts) =>
   (Object.keys(one) as EntryKind[]).every((kind) => one[kind] === other[kind]);
 
+const sameConfirmed = (one: ConfirmedCounts, other: ConfirmedCounts) =>
+  one.total === other.total &&
+  (Object.keys(one.byRarity) as unknown as Rarity[]).every(
+    (rarity) => one.byRarity[rarity] === other.byRarity[rarity],
+  );
+
 const sameState = (one: KnowledgeState, other: KnowledgeState) =>
   one.known === other.known &&
+  one.confirmed === other.confirmed &&
   one.due.length === other.due.length &&
   one.due.every((entryId, place) => other.due[place] === entryId) &&
   one.shown.size === other.shown.size &&
@@ -148,12 +184,14 @@ export async function openKnowledge({
   countMark: (entryId: string, mark: KnowledgeMark | undefined) => Promise<UserStateChanges>;
   dayStarted: Pick<Subject<LocalDate>, 'subscribe'>;
 }): Promise<Knowledge> {
-  const { knowledge } = userStateRecords;
+  const { knowledge, confirmed: confirmedRecords } = userStateRecords;
   let records: ReadonlyMap<string, KnowledgeRecord> = await userState.list(knowledge);
+  /** The confirmed Entries' ids; the instant of each is kept for the Badges' dates. */
+  let confirmed: ReadonlySet<string> = new Set((await userState.list(confirmedRecords)).keys());
   const inTurn = createInTurn();
   const subscribers = createSubscribers();
-  /** The row of each marked Entry the Language Pack has, so the state needs no read. */
-  const rowOf = new Map(await rows.rows(records.keys()));
+  /** The row of each marked or confirmed Entry the Language Pack has, so the state needs no read. */
+  const rowOf = new Map(await rows.rows([...records.keys(), ...confirmed]));
 
   /** Reads the Entry's row, once. */
   async function readRow(entryId: string): Promise<void> {
@@ -162,11 +200,26 @@ export async function openKnowledge({
     if (row !== undefined) rowOf.set(entryId, row);
   }
 
+  /** The confirmed-Entry counts, keeping the object `had` while they are the same. */
+  function confirmedOf(had: ConfirmedCounts): ConfirmedCounts {
+    let total = 0;
+    const byRarity: Record<Rarity, number> = { ...noneConfirmed.byRarity };
+    for (const entryId of confirmed) {
+      const row = rowOf.get(entryId);
+      if (row === undefined) continue;
+      total += 1;
+      if (row.kind === 'word') byRarity[row.rarity] += 1;
+    }
+    const counts = { total, byRarity };
+    return sameConfirmed(counts, had) ? had : counts;
+  }
+
   /**
    * The state of the records on today's local day, the `knowledge` Feature
-   * Switch aside, keeping the `known` counts it had while they are the same.
+   * Switch aside, keeping the `known` and `confirmed` counts it had while
+   * they are the same.
    */
-  function stateOf(had: KnownCounts = noneKnown): KnowledgeState {
+  function stateOf(had: Pick<KnowledgeState, 'known' | 'confirmed'> = off): KnowledgeState {
     const today = todayDate(clock);
     const reviews: { entryId: string; reviewDay: string }[] = [];
     const due: string[] = [];
@@ -188,8 +241,8 @@ export async function openKnowledge({
         const daysUntilReview = dayNumber(parseLocalDate(reviewDay)) - dayNumber(today);
         return row === undefined ? [] : [{ entryId, daysUntilReview, row }];
       });
-    const known = sameCounts(counts, had) ? had : counts;
-    return { learning, known, due, shown };
+    const known = sameCounts(counts, had.known) ? had.known : counts;
+    return { learning, known, confirmed: confirmedOf(had.confirmed), due, shown };
   }
 
   let state = stateOf();
@@ -197,27 +250,39 @@ export async function openKnowledge({
 
   /** Makes the state again, and tells the subscribers when it changed. */
   function follow(): void {
-    const next = stateOf(state.known);
+    const next = stateOf(state);
     if (sameState(next, state)) return;
     state = next;
     subscribers.tell();
   }
 
+  /** The change that confirms the Entry now, or none when it is confirmed already. */
+  const confirmation = (entryId: string): UserStateChanges =>
+    confirmed.has(entryId)
+      ? new Map()
+      : confirmedRecords.record(entryId).change(clock.now().toISOString());
+
   /**
    * Keeps the Entry's next record, or deletes it for nothing, with the
-   * Community Counters' changes when it counts, then follows it.
+   * Community Counters' changes when it counts and the confirmation when the
+   * answer `confirms` the Entry, then follows it.
    */
   async function keep(
     entryId: string,
     record: KnowledgeRecord | undefined,
     counts: boolean,
+    confirms: boolean,
   ): Promise<void> {
     const counted = counts ? await countMark(entryId, record?.mark) : new Map();
-    await userState.write(new Map([...knowledge.record(entryId).change(record), ...counted]));
+    const confirming = confirms ? confirmation(entryId) : new Map();
+    await userState.write(
+      new Map([...knowledge.record(entryId).change(record), ...counted, ...confirming]),
+    );
     const changed = new Map(records);
     if (record === undefined) changed.delete(entryId);
     else changed.set(entryId, record);
     records = changed;
+    if (confirms) confirmed = new Set([...confirmed, entryId]);
     follow();
   }
 
@@ -226,7 +291,8 @@ export async function openKnowledge({
    * is off. The record keeps the instant its mark was set: a change that
    * leaves the same mark, as a Review answer «Знаю» on a Known Entry, keeps
    * the time it had (or none, for a mark set before 0.8.13). A tap `counts`
-   * for the Community Counters; a Game answer doesn't.
+   * for the Community Counters; a Game answer doesn't. Known on a Review of
+   * 7 days or later confirms the Entry.
    */
   const change = (
     entryId: string,
@@ -238,7 +304,7 @@ export async function openKnowledge({
       await readRow(entryId);
       const previous = records.get(entryId);
       const record = next(previous);
-      if (record === undefined) return keep(entryId, undefined, counts);
+      if (record === undefined) return keep(entryId, undefined, counts, false);
       const { mark, step, reviewDay, learned } = record;
       const markedAt = mark === previous?.mark ? previous.markedAt : clock.now().toISOString();
       return keep(
@@ -247,7 +313,18 @@ export async function openKnowledge({
           ? { mark, step, reviewDay, learned }
           : { mark, step, reviewDay, learned, markedAt },
         counts,
+        mark === 'known' && confirmsOnKnown(previous),
       );
+    });
+
+  /** Confirms the Entry, unless the switch is off or it is confirmed already. */
+  const confirm = (entryId: string) =>
+    inTurn(async () => {
+      if (!edition.isFeatureEnabled('knowledge') || confirmed.has(entryId)) return;
+      await readRow(entryId);
+      await userState.write(confirmation(entryId));
+      confirmed = new Set([...confirmed, entryId]);
+      follow();
     });
 
   dayStarted.subscribe(follow);
@@ -271,6 +348,7 @@ export async function openKnowledge({
       }),
     answer: (entryId, mark) =>
       change(entryId, false, (record) => answerKnowledge(record, mark, todayDate(clock))),
+    confirm,
     subscribe: subscribers.subscribe,
   };
 }
