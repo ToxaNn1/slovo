@@ -2,7 +2,7 @@
 
 One set of rules governs every animation of the app, Decor follows the Season and the Edition's Holidays, a Word's Stress falls into place and a Word may carry an Illustration; the decisions come from spec #886 and the owner's grilling of 2026-10-25.
 
-**Feature Switches.** `seasonalDecor`, `stressAnimation` and `illustrations` are required of every Edition and all on in the Ukrainian Edition. A feature whose switch is off is absent: plain Edition Decor and no «Сезонний декор» row, a still Stress mark, no Illustration. A remote switch only turns a feature off (ADR 0040).
+**Feature Switches.** `seasonalDecor`, `stressAnimation` and `illustrations` are required of every Edition and all on in the UA Edition. A feature whose switch is off is absent: plain Edition Decor and no «Сезонний декор» row, a still Stress mark, no Illustration. A remote switch only turns a feature off (ADR 0040).
 
 **Motion.** Every animation of the app follows four rules.
 
@@ -16,11 +16,11 @@ The animation audit (`docs/design/animation-audit.md`) lists every animation wit
 **Seasons and Holidays.**
 
 - **The Season** of a local date is the meteorological one: December–February winter, March–May spring, June–August summer, September–November autumn. The Core computes it from the local date alone, so it is the same in every Edition and needs no hemisphere setting.
-- **A Holiday** is a date the Edition lists, each by a rule: a fixed day and month, or the nth weekday of a month. The Ukrainian Edition lists 24 August, День вишиванки (the third Thursday of May), 25 December and 1 January. The Core decides whether a local date is a Holiday from the rules, so it knows no calendar of any language (ADR 0006).
+- **A Holiday** is a date the Edition lists, each by a rule: a fixed day and month, or the nth weekday of a month. The UA Edition lists 24 August, День вишиванки (the third Thursday of May), 25 December and 1 January. The Core decides whether a local date is a Holiday from the rules, so it knows no calendar of any language (ADR 0006).
 - **A Holiday wins over the Season.** On a Holiday its motif shows instead of the Season's.
 - **Local midnight.** The motif follows the local date, so it changes at local midnight with the day change (ADR 0022).
 
-**Seasonal Decor** changes only Decor slot 1 (the background) and slot 2 (the divider centre); the other slots keep the Edition's Decor, so the app stays familiar. The Edition supplies in `decor/decor.json` a motif for each Season and, with each Holiday rule, the Holiday's motif, in the motif shape of ADR 0014. The Ukrainian Edition ships simple vector placeholders until final art: a snowflake, a flower, a sun and a leaf for the Seasons; a blue-yellow ribbon, an embroidered rhombus, a star and a firework for the Holidays. «Сезонний декор» is a synced setting (ADR 0041), on by default; off gives the plain Edition Decor.
+**Seasonal Decor** changes only Decor slot 1 (the background) and slot 2 (the divider centre); the other slots keep the Edition's Decor, so the app stays familiar. The Edition supplies in `decor/decor.json` a motif for each Season and, with each Holiday rule, the Holiday's motif, in the motif shape of ADR 0014. The UA Edition ships simple vector placeholders until final art: a snowflake, a flower, a sun and a leaf for the Seasons; a blue-yellow ribbon, an embroidered rhombus, a star and a firework for the Holidays. «Сезонний декор» is a synced setting (ADR 0041), on by default; off gives the plain Edition Decor.
 
 **The falling Stress.** On a Word card in the Feed and on the Entry screen, the Stress mark of the Word Lemma falls onto its vowel in 300 ms each time the card appears. Lists, the widget and Share Cards show the mark still, and so does every other kind of Entry. Under Reduce Motion the mark is simply in place. The animation draws the mark only: VoiceOver reads the Lemma as before.
 
@@ -31,7 +31,7 @@ The animation audit (`docs/design/animation-audit.md`) lists every animation wit
 - **The build's refusals.** The Language Pack build refuses a Word whose file is missing, is not a PNG (by its `.png` name and its content), is over 150 KB (150 000 bytes) or is not square, naming the Word and every reason, so a broken Illustration never ships.
 - **The pack format.** The pack carries each Word's `illustration`, which an older app can't read, so it took a new pack format (ADR 0032).
 - **On the card.** The Illustration sits above the Definition, at most 160 pt high, the same Illustration in light and dark mode; a tap on it does nothing. VoiceOver reads it as «Ілюстрація до слова {lemma}». A Word without an Illustration looks as before. Only Words carry Illustrations.
-- **Placeholders.** The Ukrainian Edition gives 15 Words agent-drawn vector placeholders exported as PNG until final art.
+- **Placeholders.** The UA Edition gives 15 Words agent-drawn vector placeholders exported as PNG until final art.
 
 ## Considered Options
 

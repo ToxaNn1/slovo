@@ -18,7 +18,7 @@ const fontFiles = coreFonts().filter((font) =>
   ['Literata-Medium.ttf', 'Manrope-Bold.ttf'].includes(basename(font)),
 );
 
-/** The Ukrainian Edition as the prebuild hands it to the widget extension. */
+/** The UA Edition as the prebuild hands it to the widget extension. */
 const ukrainian: WidgetEdition = {
   config: ukrainianFolder.config,
   scheme: 'slovo-uk',

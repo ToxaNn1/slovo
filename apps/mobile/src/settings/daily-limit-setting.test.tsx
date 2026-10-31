@@ -22,7 +22,7 @@ import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 import { SettingsProvider } from './settings';
 
-/** The Ukrainian Edition with the Account off, and the Daily Limit on or off. */
+/** The UA Edition with the Account off, and the Daily Limit on or off. */
 function editionWith({ dailyLimit }: { dailyLimit: boolean }): Edition {
   const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, boolean> };
   return loadEdition({

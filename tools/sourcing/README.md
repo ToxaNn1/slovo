@@ -1,6 +1,6 @@
 # Content sourcing tool
 
-Dev-only tooling, never shipped in an app. It turns a list of Lemmas into draft Words for the Ukrainian Edition, taken from real dictionaries:
+Dev-only tooling, never shipped in an app. It turns a list of Lemmas into draft Words for the UA Edition, taken from real dictionaries:
 
 - **[goroh.pp.ua](https://goroh.pp.ua)**, the main source:
   - «Тлумачення»: Definitions, Examples with their authors, register labels, part of speech, gender and Stress, from the explanatory dictionary the page cites (СУМ-20 up to П'ЯТЬ, СУМ-11 after it; see ADR 0012). The draft records that citation exactly as goroh prints it, with the goroh address. Definitions and Examples are copied word for word; only the markers СУМ puts in front of an Example (`* У порівн.`, `* Образно.`) are dropped, and the Latin look-alikes the dictionaries put into Cyrillic words (the `i` in `вiд`) are written in Cyrillic. Labels count whether goroh names them in full or prints them as bare abbreviations (`заст.`, `діал.`). A label on a meaning marks the Word only when every meaning carries it: СУМ may label just the first meaning `заст.`. Articles from other dictionaries or written by a language model are never drafted from.

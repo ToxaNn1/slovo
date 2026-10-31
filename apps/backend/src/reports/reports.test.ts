@@ -16,7 +16,7 @@ const DAY = 24 * 60 * 60 * 1000;
  */
 const newEntryId = () => `w_${randomInt(2 ** 47).toString(36)}`;
 
-/** A valid report of a mistake in a Word of the Ukrainian Edition. */
+/** A valid report of a mistake in a Word of the UA Edition. */
 const validReport = (entryId: string, change: Partial<MistakeReport> = {}): MistakeReport => ({
   editionId: 'uk',
   entryId,

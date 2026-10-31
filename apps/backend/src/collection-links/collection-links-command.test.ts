@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { newIp, testApp } from '../test-support';
 
-/** A valid Collection of the Ukrainian Edition, as «Поділитися посиланням» sends it. */
+/** A valid Collection of the UA Edition, as «Поділитися посиланням» sends it. */
 const link = (name: string): CollectionLink => ({
   edition: 'uk',
   name,

@@ -5,7 +5,7 @@ import { strings as editionStrings } from '../test-support';
 
 const strings = editionStrings.wordCard;
 
-describe('the grammar line of a Word on its Share Card, in the Ukrainian Edition', () => {
+describe('the grammar line of a Word on its Share Card, in the UA Edition', () => {
   it('is the part of speech with gender when the Word has no register', () => {
     const word = {
       partOfSpeech: 'noun',

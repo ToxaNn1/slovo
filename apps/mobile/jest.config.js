@@ -23,7 +23,7 @@ export default {
     // A plain view in place of the one native view jest-expo has no double for.
     '^expo-glass-effect$': '<rootDir>/jest.glass-effect.js',
     // The app imports its Edition as `slovo-edition/*`, which Metro resolves
-    // into the Edition's folder; the tests run as the Ukrainian Edition.
+    // into the Edition's folder; the tests run as the UA Edition.
     '^slovo-edition/config$': `${EDITION}/edition.json`,
     '^slovo-edition/strings$': `${EDITION}/strings.json`,
     '^slovo-edition/tokens$': `${EDITION}/tokens.json`,

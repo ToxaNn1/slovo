@@ -18,7 +18,7 @@ export default {
     {
       name: 'contracts-import-nothing-internal',
       comment:
-        'ADR 0002, 0006: contracts is the shared vocabulary between the Core and the ' +
+        'ADR 0065, 0006: contracts is the shared vocabulary between the Core and the ' +
         'Editions, so it sits below everything and imports no other part of the workspace.',
       severity: 'error',
       from: { path: '^packages/contracts/' },
@@ -27,7 +27,7 @@ export default {
     {
       name: 'core-imports-only-contracts',
       comment:
-        'ADR 0002, 0006: the Core is a reusable, language-agnostic product that an Edition ' +
+        'ADR 0065, 0006: the Core is a reusable, language-agnostic product that an Edition ' +
         'extends only through its Extension Points. It reaches content, UI and platform ' +
         'through ports it defines, so it imports no workspace part but contracts.',
       severity: 'error',
@@ -100,7 +100,7 @@ export default {
     {
       name: 'ui-does-not-reach-up-or-sideways',
       comment:
-        'ADR 0002, 0017: the UI draws what the Core models (ADR 0017), so it may import ' +
+        'ADR 0065, 0017: the UI draws what the Core models (ADR 0017), so it may import ' +
         'core and contracts, but not the Language Pack, an app, a tool or an Edition: ' +
         'the app hands it content.',
       severity: 'error',
@@ -124,7 +124,7 @@ export default {
     {
       name: 'packages-do-not-import-apps-tools-or-editions',
       comment:
-        'ADR 0002, 0006: an Edition is configuration plus content, and an app is one ' +
+        'ADR 0065, 0006: an Edition is configuration plus content, and an app is one ' +
         "Edition's shell. A shared package depends on neither, or the Core stops being " +
         'reusable by the next Edition.',
       severity: 'error',
@@ -134,7 +134,7 @@ export default {
     {
       name: 'apps-do-not-import-tools',
       comment:
-        'ADR 0002: tools (content sourcing) are dev-only and never shipped, so no app ' +
+        'ADR 0065: tools (content sourcing) are dev-only and never shipped, so no app ' +
         'depends on them.',
       severity: 'error',
       from: { path: '^apps/' },
@@ -142,7 +142,7 @@ export default {
     },
     {
       name: 'tools-do-not-import-apps',
-      comment: 'ADR 0002: an app is the shipped shell; build and sourcing tools do not use it.',
+      comment: 'ADR 0065: an app is the shipped shell; build and sourcing tools do not use it.',
       severity: 'error',
       from: { path: '^tools/' },
       to: { path: '^apps/' },

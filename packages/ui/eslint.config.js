@@ -18,7 +18,7 @@ export default [
   ...shared,
   {
     // Text and token values come from the Edition, never from the UI code.
-    // Cyrillic text is the tripwire for the Ukrainian Edition leaking in.
+    // Cyrillic text is the tripwire for the UA Edition leaking in.
     files: ['**/*.{ts,tsx}'],
     rules: {
       'no-restricted-syntax': ['error', cyrillicBan],

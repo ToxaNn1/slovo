@@ -252,7 +252,7 @@ describe('the crossword days the pack build keeps in the Edition', () => {
   }, 60_000);
 });
 
-describe("the crossword days of the Ukrainian Edition's content", () => {
+describe("the crossword days of the UA Edition's content", () => {
   it('reach 400 days ahead with --record, no word coming back within 20 days', () => {
     const dir = mkdtempSync(join(tmpdir(), 'slovo-crossword-uk-'));
     workDirs.push(dir);

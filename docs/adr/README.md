@@ -3,7 +3,7 @@
 Every ADR number in order, one line each, with the decision in force. Read the line first and open the ADR only when you need its detail. Numbers are never reused: a gap is marked unused, and an ADR merged into another is marked with its new home.
 
 - [0001](0001-react-native-expo-with-native-widget.md) React Native and Expo on a development build; the widget is SwiftUI over an App Group.
-- [0002](0002-one-app-per-language.md) One App Store app per language, each an Edition built from the shared Core.
+- 0002: superseded by 0065.
 - [0003](0003-own-backend-instead-of-baas.md) Our own TypeScript backend on Postgres, not a BaaS.
 - [0004](0004-native-builds-in-eas-cloud.md) Native builds run in EAS; a manual CI macOS runner builds the simulator app for Maestro.
 - 0005: merged into 0041.
@@ -66,3 +66,4 @@ Every ADR number in order, one line each, with the decision in force. Read the l
 - [0062](0062-ota-updates-are-signed-and-ship-per-edition-channel.md) OTA updates are signed, bound to the native fingerprint, one channel per Edition, published by hand.
 - [0063](0063-the-backend-runs-as-one-container-on-railway-behind-the-editions-domain.md) The backend runs as one container on Railway behind the Edition's domain; migrations in the release step, one trusted proxy hop, HTTPS only.
 - [0064](0064-one-backend-port-shaped-by-the-api-contract.md) The Core reaches the backend through one port, the contract's client; `answerOf` and the retry rule live in the Core; tests serve the contract in process.
+- [0065](0065-one-app-with-editions-inside-and-the-ua-edition.md) One app per platform with the Editions inside, one active at a time (a switch restarts the app), the others downloaded on choice; the first is the UA Edition, id `uk`.

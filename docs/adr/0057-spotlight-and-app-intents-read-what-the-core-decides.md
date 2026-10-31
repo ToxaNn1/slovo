@@ -2,7 +2,7 @@
 
 Until 0.8.15 the phone around SLOVO knew nothing of it: typing «сумир» in the iPhone search found nothing, though «сумирний» was in the reader's Favorites, and Siri and Shortcuts couldn't open the Word of the Day or the Game. Spec #937 puts SLOVO into the iPhone's search and into Siri and Shortcuts. Both need native code, and native code is where rules about Entries would hide from the Core's tests. As with the widget (ADR 0026), the Core decides what the phone shows and where a tap or a phrase lands; native code only writes and opens. The decisions come from the owner's grilling of 2026-10-25 and 2026-10-26.
 
-**Feature Switches.** `spotlight` and `appIntents` are required of every Edition and on in the Ukrainian Edition. Like every Feature Switch, a remote switch can only turn them off (ADR 0040).
+**Feature Switches.** `spotlight` and `appIntents` are required of every Edition and on in the UA Edition. Like every Feature Switch, a remote switch can only turn them off (ADR 0040).
 
 **The Spotlight Snapshot.** The Core builds a Spotlight Snapshot as pure data, beside the Widget Snapshot and from the same sources:
 

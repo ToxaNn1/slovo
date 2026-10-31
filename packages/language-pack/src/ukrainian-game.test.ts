@@ -110,7 +110,7 @@ async function offersPlanned(app: Composition): Promise<Composition> {
 }
 
 /**
- * The Ukrainian Edition with every Game Mode off but «Вгадай слово», for the
+ * The UA Edition with every Game Mode off but «Вгадай слово», for the
  * tests that play many seeded Games of it: the other modes' planning would
  * draw on the same random source and slow every hide.
  */

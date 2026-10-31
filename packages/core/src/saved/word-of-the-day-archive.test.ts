@@ -148,7 +148,7 @@ describe('The Word of the Day archive', () => {
   });
 });
 
-/** The archive list of the Ukrainian Edition over the kept records, its Feature Switch on. */
+/** The archive list of the UA Edition over the kept records, its Feature Switch on. */
 async function listOf(records: Map<string, string>) {
   const archive = createWordOfTheDayArchive({
     content: createMemoryContentPort({

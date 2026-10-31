@@ -1,4 +1,4 @@
-# Assets of the Ukrainian Edition
+# Assets of the UA Edition
 
 - `icon.png`: the app icon.
 - `fonts/`: the Edition's own fonts, described in [`fonts/README.md`](fonts/README.md). The Core's Literata and Manrope live in `packages/ui/assets/fonts/` (ADR 0006).

@@ -35,7 +35,7 @@ function drawing(...ids: string[]): Random {
   };
 }
 
-/** A valid Collection of the Ukrainian Edition, as «Поділитися посиланням» sends it. */
+/** A valid Collection of the UA Edition, as «Поділитися посиланням» sends it. */
 const validLink = (change: Partial<CollectionLink> = {}): CollectionLink => ({
   edition: 'uk',
   name: 'Осінь',

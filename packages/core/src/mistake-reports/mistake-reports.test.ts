@@ -18,7 +18,7 @@ const typo: MistakeReportDraft = { entryId: 'w_kvasha', type: 'typo', comment: '
 const typoIn = (id: string): MistakeReportDraft => ({ ...typo, entryId: `w_${id}` });
 
 /**
- * The app of the Ukrainian Edition at 0.8.14 with pack 42, over a fake
+ * The app of the UA Edition at 0.8.14 with pack 42, over a fake
  * backend, with `mistakeReports` on unless the test turns it off. `relaunch`
  * opens the app again over the same device.
  */

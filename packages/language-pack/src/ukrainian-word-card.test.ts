@@ -34,7 +34,7 @@ afterAll(() => {
 
 const STRESS_MARK = '́';
 
-describe('the Word cards of the Ukrainian Edition', () => {
+describe('the Word cards of the UA Edition', () => {
   it('mark every Stress, including the Lemmas with two', () => {
     const stressMarks = (card: WordCardModel) => card.lemma.split(STRESS_MARK).length - 1;
 

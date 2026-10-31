@@ -21,7 +21,7 @@ const textOf = (page: string) =>
 
 describe('the web page of a Collection Link', () => {
   /**
-   * A backend serving a copy of the Ukrainian Edition under the id with its
+   * A backend serving a copy of the UA Edition under the id with its
    * pack published, and a link shared on it.
    */
   async function shared(entryIds: string[], edition = 'uk') {

@@ -19,7 +19,7 @@ jest.mock('../account/account', () => ({ useAccountInEffect: () => undefined }))
 jest.mock('../mix/hidden', () => ({ useHiddenSummary: () => '' }));
 jest.mock('../notifications/notifications', () => ({ useNotificationsSummary: () => '' }));
 
-/** The Ukrainian Edition as it ships, with the Feature Switches named turned off. */
+/** The UA Edition as it ships, with the Feature Switches named turned off. */
 function editionWithout(switchedOff: readonly FeatureSwitch[]): Edition {
   const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, boolean> };
   return loadEdition({

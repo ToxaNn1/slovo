@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { ukrainian as edition } from './test-support';
 
-describe('the Ukrainian Edition', () => {
+describe('the UA Edition', () => {
   it('marks Stress, sorts with the Ukrainian alphabet and allows the apostrophe and hyphen in a Lemma, and the comma and dash in an expression', () => {
     expect(edition.languageTraits).toEqual({
       marksStress: true,

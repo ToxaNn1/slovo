@@ -197,7 +197,7 @@ const failing = {
   'server-error': () => backendServedBy({}),
 } as const;
 
-/** The Core composition of the Ukrainian Edition over `backend`, with Collection Links and the Community Word on. */
+/** The Core composition of the UA Edition over `backend`, with Collection Links and the Community Word on. */
 async function composition(backend: Backend, at = '2026-10-26T09:00:00+03:00') {
   const time = fakeClock(at);
   const timers = testSchedule(time);

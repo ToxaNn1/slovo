@@ -59,7 +59,7 @@ describe('the 0.4 UI strings groups', () => {
   const groups = ['stats', 'onboarding', 'notifications', 'notificationBody'] as const;
   const strings = readJson('uk', 'strings') as Record<string, unknown>;
 
-  it.each(groups)('the Ukrainian Edition needs the %s group', (group) => {
+  it.each(groups)('the UA Edition needs the %s group', (group) => {
     const without = Object.fromEntries(Object.entries(strings).filter(([key]) => key !== group));
 
     const result = EditionStringsSchema.safeParse(without);
@@ -71,7 +71,7 @@ describe('the 0.4 UI strings groups', () => {
 describe('the 0.5 UI strings group', () => {
   const strings = readJson('uk', 'strings') as Record<string, unknown>;
 
-  it('the Ukrainian Edition needs the game group', () => {
+  it('the UA Edition needs the game group', () => {
     const without = Object.fromEntries(Object.entries(strings).filter(([key]) => key !== 'game'));
 
     const result = EditionStringsSchema.safeParse(without);
@@ -93,7 +93,7 @@ describe('the 0.5 UI strings group', () => {
     ],
     ['stats.gameBest', { ...strings, stats: without(strings['stats'], 'gameBest') }],
     ['stats.gameBestLabel', { ...strings, stats: without(strings['stats'], 'gameBestLabel') }],
-  ])('the Ukrainian Edition needs %s, the best result', (path, stringsWithout) => {
+  ])('the UA Edition needs %s, the best result', (path, stringsWithout) => {
     const result = EditionStringsSchema.safeParse(stringsWithout);
 
     expect(result.error?.issues.map((issue) => issue.path.join('.'))).toContain(path);
@@ -113,7 +113,7 @@ describe('the 0.8.12 Game strings', () => {
     EditionStringsSchema.safeParse(changed).error?.issues.map((issue) => issue.path.join('.'));
   const parsed = EditionStringsSchema.parse(strings).game;
 
-  it('the Ukrainian Edition carries the agreed texts verbatim', () => {
+  it('the UA Edition carries the agreed texts verbatim', () => {
     expect(parsed.groups).toEqual({
       words: 'Слова',
       corrections: 'Виправлення',
@@ -133,7 +133,7 @@ describe('the 0.8.12 Game strings', () => {
     });
   });
 
-  it('the Ukrainian Edition names every mode as agreed', () => {
+  it('the UA Edition names every mode as agreed', () => {
     expect(
       Object.fromEntries(Object.entries(parsed.modes).map(([id, mode]) => [id, mode.title])),
     ).toEqual({
@@ -154,7 +154,7 @@ describe('the 0.8.12 Game strings', () => {
   });
 
   it.each(['groups', 'modeBest', 'openLetter', 'dailyCrossword', 'letters'])(
-    'the Ukrainian Edition needs game.%s',
+    'the UA Edition needs game.%s',
     (key) => {
       const without = Object.fromEntries(Object.entries(game).filter(([name]) => name !== key));
 
@@ -204,7 +204,7 @@ describe('the 0.8.13 strings', () => {
     EditionStringsSchema.safeParse(changed).error?.issues.map((issue) => issue.path.join('.'));
   const parsed = EditionStringsSchema.parse(strings);
 
-  it('the Ukrainian Edition carries the agreed Search texts verbatim', () => {
+  it('the UA Edition carries the agreed Search texts verbatim', () => {
     expect(parsed.search).toMatchObject({
       title: 'Пошук',
       clear: 'Очистити',
@@ -220,7 +220,7 @@ describe('the 0.8.13 strings', () => {
     });
   });
 
-  it('the Ukrainian Edition carries the agreed Rarity Test texts verbatim', () => {
+  it('the UA Edition carries the agreed Rarity Test texts verbatim', () => {
     expect(parsed.rarityTest).toMatchObject({
       start: 'Перевірити рівень',
       subtitle: '10 слів — і ми підберемо рідкість саме для вас',
@@ -231,7 +231,7 @@ describe('the 0.8.13 strings', () => {
     expect(parsed.knowledge).toMatchObject({ known: 'Знаю', unknown: 'Не знаю' });
   });
 
-  it('the Ukrainian Edition carries the agreed Feed Notice texts verbatim', () => {
+  it('the UA Edition carries the agreed Feed Notice texts verbatim', () => {
     expect(parsed.feedNotices).toMatchObject({
       weeklyRecap: {
         title: 'Ваш тиждень',
@@ -246,7 +246,7 @@ describe('the 0.8.13 strings', () => {
     });
   });
 
-  it('the Ukrainian Edition carries a first-week card with a title and a text for days 1 to 6', () => {
+  it('the UA Edition carries a first-week card with a title and a text for days 1 to 6', () => {
     const { days } = parsed.feedNotices.firstWeek;
 
     expect(days).toHaveLength(6);
@@ -297,7 +297,7 @@ describe('the 0.8.13 strings', () => {
     expect(issuesOf(changed)).toEqual(['feedNotices.firstWeek.lastDayText.few']);
   });
 
-  it('the Ukrainian Edition carries the agreed texts of Settings, «Збережене», Mood and the widget', () => {
+  it('the UA Edition carries the agreed texts of Settings, «Збережене», Mood and the widget', () => {
     expect(parsed.settings.dailyLimit).toEqual({ title: 'Ліміт на день', off: 'Вимк.' });
     expect(parsed.wordOfTheDayArchive.title).toBe('Слова дня');
     expect(parsed.mood.title).toBe('Слово під настрій');
@@ -326,7 +326,7 @@ describe('the 0.8.13 strings', () => {
     const withTemplates = (changed: Partial<typeof templates>) =>
       issuesOf({ ...strings, notificationTemplates: { ...templates, ...changed } });
 
-    it('the Ukrainian Edition carries 10 title templates, each with {word}, and a farewell text', () => {
+    it('the UA Edition carries 10 title templates, each with {word}, and a farewell text', () => {
       expect(parsed.notificationTemplates.titles).toHaveLength(10);
       for (const title of parsed.notificationTemplates.titles) expect(title).toContain('{word}');
       expect(parsed.notificationTemplates.farewell).not.toBe('');
@@ -368,7 +368,7 @@ describe('the 0.8.14 strings', () => {
       ...values,
     });
 
-  it('the Ukrainian Edition carries the agreed Mistake Report texts verbatim', () => {
+  it('the UA Edition carries the agreed Mistake Report texts verbatim', () => {
     expect(parsed.mistakeReport).toEqual({
       action: 'Повідомити про помилку',
       types: {
@@ -385,7 +385,7 @@ describe('the 0.8.14 strings', () => {
     });
   });
 
-  it('the Ukrainian Edition carries the agreed Settings texts verbatim, with an explanation under each', () => {
+  it('the UA Edition carries the agreed Settings texts verbatim, with an explanation under each', () => {
     expect(parsed.settings.seasonalDecor.title).toBe('Сезонний декор');
     expect(parsed.settings.seasonalDecor.explanation).not.toBe('');
     expect(parsed.settings.anonymousStats).toEqual({
@@ -395,7 +395,7 @@ describe('the 0.8.14 strings', () => {
     });
   });
 
-  it('the Ukrainian Edition carries the agreed Community Word and Illustration texts verbatim', () => {
+  it('the UA Edition carries the agreed Community Word and Illustration texts verbatim', () => {
     expect(parsed.feedNotices.communityWord.title).toBe('Слово тижня спільноти');
     expect(parsed.wordCard.illustration).toBe('Ілюстрація до слова {lemma}');
   });
@@ -477,7 +477,7 @@ describe('the 0.8.15 strings', () => {
   const countText = (forms: Record<string, string | undefined>, count: number) =>
     fill(forms[pluralRules.select(count)] ?? forms['other'] ?? '', { count: String(count) });
 
-  it('the Ukrainian Edition carries the agreed widget texts verbatim', () => {
+  it('the UA Edition carries the agreed widget texts verbatim', () => {
     expect(parsed.widget).toMatchObject({
       wordOfTheDaySeen: 'Слово дня переглянуто',
       backgroundTitle: 'Тло',
@@ -489,7 +489,7 @@ describe('the 0.8.15 strings', () => {
     });
   });
 
-  it('the Ukrainian Edition carries the agreed App Intents texts and Siri phrases verbatim', () => {
+  it('the UA Edition carries the agreed App Intents texts and Siri phrases verbatim', () => {
     expect(parsed.appIntents).toEqual({
       wordOfTheDay: {
         title: 'Слово дня',
@@ -499,7 +499,7 @@ describe('the 0.8.15 strings', () => {
     });
   });
 
-  it('the Ukrainian Edition carries the agreed Collection Link texts verbatim', () => {
+  it('the UA Edition carries the agreed Collection Link texts verbatim', () => {
     const { link } = parsed.collections;
 
     expect(link.share).toBe('Поділитися посиланням');
@@ -511,7 +511,7 @@ describe('the 0.8.15 strings', () => {
     expect(link.notFound).not.toBe('');
   });
 
-  it('the Ukrainian Edition says how many Entries a Collection Link holds, as the contract does', () => {
+  it('the UA Edition says how many Entries a Collection Link holds, as the contract does', () => {
     const { link } = parsed.collections;
 
     expect(link.tooManyEntries).toContain(String(COLLECTION_LINK_SIZE));
@@ -675,7 +675,7 @@ describe('the 0.6 widget strings group', () => {
   const strings = readJson('uk', 'strings') as Record<string, unknown>;
   const widget = strings['widget'] as { guide: Record<string, unknown> };
 
-  it('the Ukrainian Edition needs the widget group', () => {
+  it('the UA Edition needs the widget group', () => {
     const without = Object.fromEntries(Object.entries(strings).filter(([key]) => key !== 'widget'));
 
     const result = EditionStringsSchema.safeParse(without);
@@ -700,7 +700,7 @@ describe('the 0.6 widget strings group', () => {
     'deletedCollection',
     'noCollection',
     'guide',
-  ])('the Ukrainian Edition needs widget.%s', (key) => {
+  ])('the UA Edition needs widget.%s', (key) => {
     const changed = Object.fromEntries(Object.entries(widget).filter(([name]) => name !== key));
 
     const result = EditionStringsSchema.safeParse({ ...strings, widget: changed });
@@ -747,12 +747,12 @@ describe('the 0.8 Sync strings', () => {
   const without = (group: Record<string, unknown>, key: string) =>
     Object.fromEntries(Object.entries(group).filter(([name]) => name !== key));
 
-  it('the Ukrainian Edition needs the sync group of the SLOVO ID screen', () => {
+  it('the UA Edition needs the sync group of the SLOVO ID screen', () => {
     expect(issuesOf({ ...strings, account: without(account, 'sync') })).toEqual(['account.sync']);
   });
 
   it.each(['syncing', 'waitingForNetwork', 'syncedToday', 'syncedOn', 'syncedOnInYear'])(
-    'the Ukrainian Edition needs account.sync.%s',
+    'the UA Edition needs account.sync.%s',
     (key) => {
       const changed = { ...strings, account: { ...account, sync: without(sync, key) } };
 
@@ -779,14 +779,14 @@ describe('the 0.8 Sync strings', () => {
     expect(issuesOf(changed)).toEqual([`dates.${key}`]);
   });
 
-  it("the Ukrainian Edition needs the onboarding's SLOVO ID step", () => {
+  it("the UA Edition needs the onboarding's SLOVO ID step", () => {
     const changed = { ...strings, onboarding: without(onboarding, 'account') };
 
     expect(issuesOf(changed)).toEqual(['onboarding.account']);
   });
 
   it.each(['title', 'subtitle', 'signIn', 'continueWithout'])(
-    'the Ukrainian Edition needs onboarding.account.%s',
+    'the UA Edition needs onboarding.account.%s',
     (key) => {
       const changed = {
         ...strings,
@@ -847,14 +847,14 @@ describe('the Apple ids, the OTA channel and Sign in with Apple', () => {
     ).toEqual(['featureSwitches.signInWithApple']);
   });
 
-  it('the Ukrainian Edition turns Sign in with Apple on and takes its OTA updates from its own channel', () => {
+  it('the UA Edition turns Sign in with Apple on and takes its OTA updates from its own channel', () => {
     const config = EditionConfigSchema.parse(readJson('uk', 'config'));
 
     expect(config.featureSwitches.signInWithApple).toBe(true);
     expect(config.updateChannel).toBe('uk');
   });
 
-  it('the Ukrainian Edition holds an Apple Team ID and App Store Connect app id, or placeholders until the owner fills them in', () => {
+  it('the UA Edition holds an Apple Team ID and App Store Connect app id, or placeholders until the owner fills them in', () => {
     const { appleTeamId, appStoreConnectAppId } = EditionConfigSchema.parse(
       readJson('uk', 'config'),
     );
@@ -895,7 +895,7 @@ describe('the strings of the Idiom Type proverb', () => {
     return { ...strings, [group]: { ...outer, [nested]: rest } };
   };
 
-  it('the Ukrainian Edition calls a proverb «прислів’я» on its card and in its lists', () => {
+  it('the UA Edition calls a proverb «прислів’я» on its card and in its lists', () => {
     const parsed = EditionStringsSchema.parse(strings);
 
     expect(parsed.idiomCard.idiomTypes.proverb).toBe('прислів’я');
@@ -918,7 +918,7 @@ describe('the string of the Correction Type paronym', () => {
   const strings = readJson('uk', 'strings') as Record<string, Record<string, unknown>>;
   const correctionCard = strings['correctionCard'] ?? {};
 
-  it('the Ukrainian Edition calls a paronym «пароніми» on its card', () => {
+  it('the UA Edition calls a paronym «пароніми» on its card', () => {
     expect(EditionStringsSchema.parse(strings).correctionCard.correctionTypes.paronym).toBe(
       'пароніми',
     );
@@ -949,7 +949,7 @@ describe('the Categories that require history', () => {
     ).toEqual(['categoriesRequiringHistory']);
   });
 
-  it('the Ukrainian Edition requires history of «Розстріляна лексика» and «Слова-хамелеони»', () => {
+  it('the UA Edition requires history of «Розстріляна лексика» and «Слова-хамелеони»', () => {
     expect(EditionConfigSchema.parse(readJson('uk', 'config')).categoriesRequiringHistory).toEqual([
       'repressed-words',
       'chameleon-words',
@@ -969,7 +969,7 @@ describe('the origin languages', () => {
     ).toEqual(['originLanguages']);
   });
 
-  it('the Ukrainian Edition lists twelve, by ISO 639 code where one fits', () => {
+  it('the UA Edition lists twelve, by ISO 639 code where one fits', () => {
     expect(EditionConfigSchema.parse(readJson('uk', 'config')).originLanguages).toEqual([
       { code: 'la', name: 'латинська' },
       { code: 'el', name: 'грецька' },
@@ -999,7 +999,7 @@ describe('the Search letters', () => {
     ).toEqual(['searchLetters']);
   });
 
-  it('the Ukrainian Edition reads ґ as г and ё as е', () => {
+  it('the UA Edition reads ґ as г and ё as е', () => {
     expect(EditionConfigSchema.parse(readJson('uk', 'config')).searchLetters).toEqual({
       ґ: 'г',
       ё: 'е',
@@ -1019,7 +1019,7 @@ describe('the moods', () => {
     ).toEqual(['moods']);
   });
 
-  it('the Ukrainian Edition lists six moods', () => {
+  it('the UA Edition lists six moods', () => {
     expect(EditionConfigSchema.parse(readJson('uk', 'config')).moods).toEqual([
       { id: 'joyful', name: 'Радісний', emoji: '😊' },
       { id: 'sad', name: 'Сумний', emoji: '😢' },
@@ -1044,20 +1044,20 @@ describe('the legal pages of About', () => {
     expect(config).not.toHaveProperty('legalPages');
   });
 
-  it("the Ukrainian Edition opens its pages at the Edition's domain", () => {
+  it("the UA Edition opens its pages at the Edition's domain", () => {
     expect(loadEdition(readJson('uk', 'config')).legalPages).toEqual({
       privacy: 'https://legal.slovo.example/uk/privacy',
       terms: 'https://legal.slovo.example/uk/terms',
     });
   });
 
-  it("the Pages site names the Ukrainian Edition's legal domain as its custom domain", () => {
+  it("the Pages site names the UA Edition's legal domain as its custom domain", () => {
     const cname = readFileSync(join(EDITIONS_DIR, '..', '.github', 'pages', 'CNAME'), 'utf8');
 
     expect(cname.trim()).toBe(EditionConfigSchema.parse(readJson('uk', 'config')).legalDomain);
   });
 
-  it.each(['privacyPolicy', 'terms'])('the Ukrainian Edition needs settings.about.%s', (key) => {
+  it.each(['privacyPolicy', 'terms'])('the UA Edition needs settings.about.%s', (key) => {
     const changed = {
       ...strings,
       settings: {
@@ -1083,7 +1083,7 @@ describe('the strings of each Game Mode', () => {
   const issuesOf = (changed: unknown) =>
     EditionStringsSchema.safeParse(changed).error?.issues.map((issue) => issue.path.join('.'));
 
-  it('the Ukrainian Edition holds one entry per Core Game Mode, under its id', () => {
+  it('the UA Edition holds one entry per Core Game Mode, under its id', () => {
     expect(Object.keys(modes)).toEqual([
       'guess-word',
       'stress',
@@ -1168,7 +1168,7 @@ describe('the 0.6 share strings group', () => {
   const issuesOf = (changed: unknown) =>
     EditionStringsSchema.safeParse(changed).error?.issues.map((issue) => issue.path.join('.'));
 
-  it('the Ukrainian Edition needs the share group', () => {
+  it('the UA Edition needs the share group', () => {
     const without = Object.fromEntries(Object.entries(strings).filter(([key]) => key !== 'share'));
 
     expect(issuesOf(without)).toContain('share');
@@ -1186,7 +1186,7 @@ describe('the 0.6 share strings group', () => {
     'standard',
     'captureFailed',
     'weeklyRecap',
-  ])('the Ukrainian Edition needs share.%s', (key) => {
+  ])('the UA Edition needs share.%s', (key) => {
     const shareWithout = Object.fromEntries(Object.entries(share).filter(([name]) => name !== key));
 
     expect(issuesOf({ ...strings, share: shareWithout })).toEqual([`share.${key}`]);
@@ -1206,7 +1206,7 @@ describe('the 0.7 account and email strings groups', () => {
       Object.entries(group as Record<string, unknown>).filter(([name]) => name !== key),
     );
 
-  it.each(['account', 'email'])('the Ukrainian Edition needs the %s group', (group) => {
+  it.each(['account', 'email'])('the UA Edition needs the %s group', (group) => {
     expect(issuesOf(without(strings, group))).toEqual([group]);
   });
 
@@ -1224,7 +1224,7 @@ describe('the 0.7 account and email strings groups', () => {
     'signOutEverywhere',
     'delete',
     'problems',
-  ])('the Ukrainian Edition needs account.%s', (key) => {
+  ])('the UA Edition needs account.%s', (key) => {
     expect(issuesOf({ ...strings, account: without(account, key) })).toEqual([`account.${key}`]);
   });
 
@@ -1409,7 +1409,7 @@ describe('Edition design tokens', () => {
     },
   );
 
-  it('the Ukrainian Edition supplies its own colours, type families and radii', () => {
+  it('the UA Edition supplies its own colours, type families and radii', () => {
     const tokens = EditionTokensSchema.parse(readJson('uk', 'tokens'));
 
     expect(Object.keys(tokens).sort()).toEqual(['colors', 'fontFamilies', 'radii']);
@@ -1432,7 +1432,7 @@ describe('Edition Decor', () => {
     expect(EditionDecorSchema.safeParse(readJson(edition, 'decor')).error).toBeUndefined();
   });
 
-  it('the Ukrainian Edition fills every Decor slot the Feed, the Game result, the splash and the Share Cards use', () => {
+  it('the UA Edition fills every Decor slot the Feed, the Game result, the splash and the Share Cards use', () => {
     const decor = EditionDecorSchema.parse(readJson('uk', 'decor'));
 
     expect(Object.keys(decor).sort()).toEqual([
@@ -1460,7 +1460,7 @@ describe('Edition Decor', () => {
     },
   );
 
-  it('the Ukrainian Edition lists its Holidays by rule', () => {
+  it('the UA Edition lists its Holidays by rule', () => {
     const { holidays } = EditionDecorSchema.parse(readJson('uk', 'decor'));
 
     expect(holidays?.map(({ rule }) => rule)).toEqual([

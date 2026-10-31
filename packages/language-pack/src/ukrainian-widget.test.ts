@@ -26,7 +26,7 @@ import { ukrainian, ukrainianFolder } from './test-support';
 // gallery shows. It lives here because only this package can build and read
 // a pack in Node.
 
-/** The Ukrainian Edition's words the widget writes a Synonym Row's and a Tip's second line with. */
+/** The UA Edition's words the widget writes a Synonym Row's and a Tip's second line with. */
 const notificationStrings = ukrainianFolder.read('strings').notificationBody;
 
 /** The combining acute accent a stress trap writes its Stress with. */
@@ -79,7 +79,7 @@ const modeIdsOf = (snapshot: WidgetSnapshot) => [
   ...snapshot.collections.flatMap(({ entryIds }) => entryIds),
 ];
 
-describe('The Widget Snapshot of the Ukrainian Edition', () => {
+describe('The Widget Snapshot of the UA Edition', () => {
   it('serializes and parses, with every id in every mode among its Entries', async () => {
     const { clock, advance } = fakeClock('2026-10-16T09:00:00+03:00');
     const app = await openComposition({

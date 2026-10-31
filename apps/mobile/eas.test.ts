@@ -14,7 +14,7 @@ function buildProfileNames(): string[] {
 }
 
 describe('eas.json', () => {
-  it('has the simulator development profiles and the TestFlight profile of the Ukrainian Edition', () => {
+  it('has the simulator development profiles and the TestFlight profile of the UA Edition', () => {
     expect(buildProfileNames()).toEqual([
       'development-simulator',
       'development-simulator-uk',
@@ -26,7 +26,7 @@ describe('eas.json', () => {
     expect(eas).toMatchObject({ cli: { appVersionSource: 'remote' } });
   });
 
-  it("builds the Ukrainian Edition for the store from the production environment, bound to the Edition's channel", () => {
+  it("builds the UA Edition for the store from the production environment, bound to the Edition's channel", () => {
     expect(eas).toMatchObject({
       build: {
         'testflight-uk': {
