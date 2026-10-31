@@ -63,7 +63,11 @@ const INTERNAL_COLUMNS = Object.values(schema)
   .flatMap(([key, column]) => [key, column.name]);
 
 /** The requests that start a Session, whose answer carries its token. */
-const SIGN_INS = new Set(['POST /v1/account/sessions', 'POST /v1/account/google-sessions']);
+const SIGN_INS = new Set([
+  'POST /v1/account/sessions',
+  'POST /v1/account/google-sessions',
+  'POST /v1/account/apple-sessions',
+]);
 
 /** One answer of the API, as its client got it. */
 interface Answer {
@@ -111,7 +115,7 @@ async function recordedBackend() {
 }
 
 it("answers no stored token, Sign-in code or its hash, password field, internal column or another Account's record in any procedure", async () => {
-  const { client, clientOf, answers, mailer, google, keptSignInCode, db, pack, switchOff } =
+  const { client, clientOf, answers, mailer, google, apple, keptSignInCode, db, pack, switchOff } =
     await recordedBackend();
   /** What the database keeps that no answer may show. */
   const secrets = new Set<string>();
@@ -202,6 +206,45 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
           expect(overLimit?.headers).toContain('retry-after');
           await switchOff(EDITION, 'googleSignIn');
           await refusedGoogle(google.token({ email }));
+        },
+        signInWithApple: async () => {
+          const email = `${randomUUID().slice(0, 12)}@privaterelay.appleid.com`;
+          const idToken = apple.token({ email });
+          secrets.add(idToken);
+          const { token } = await client.account.signInWithApple({ idToken, editionId: EDITION });
+          const rows = await db
+            .select({ session: sessions.token, method: schema.signInMethods.providerAccountId })
+            .from(sessions)
+            .innerJoin(accounts, eq(accounts.id, sessions.accountId))
+            .innerJoin(schema.signInMethods, eq(schema.signInMethods.accountId, accounts.id))
+            .where(eq(accounts.email, email));
+          for (const row of rows) for (const secret of Object.values(row)) secrets.add(secret);
+          await clientOf(token).account.me();
+          /** An Apple sign-in the backend refuses, whose token no answer may echo. */
+          const refusedApple = async (refusedToken: string, editionId = EDITION) => {
+            secrets.add(refusedToken);
+            await client.account
+              .signInWithApple({ idToken: refusedToken, editionId })
+              .catch(refused);
+          };
+          await refusedApple('not-a-token');
+          await refusedApple(apple.token({ email }, { audience: 'app.slovo.another' }));
+          await refusedApple(apple.token({ email }, { expiresAt: new Date(Date.now() - 1000) }));
+          await refusedApple(apple.token({ email }, { issuer: 'https://accounts.google.com' }));
+          await refusedApple(apple.token({ email }), 'pl');
+          // Over the per-IP limit of Apple sign-ins: TOO_MANY_REQUESTS with Retry-After.
+          for (let tried = 0; tried < 30; tried++) {
+            await client.account
+              .signInWithApple({ idToken: apple.token({ email }), editionId: EDITION })
+              .catch(refused);
+          }
+          await refusedApple(apple.token({ email }));
+          expect(answers.at(-1)).toMatchObject({
+            request: 'POST /v1/account/apple-sessions',
+            status: 429,
+          });
+          await switchOff(EDITION, 'signInWithApple');
+          await refusedApple(apple.token({ email }));
         },
         me: async () => {
           await (await signIn()).account.me();

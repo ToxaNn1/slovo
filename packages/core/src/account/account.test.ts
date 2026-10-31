@@ -11,7 +11,11 @@ import {
   type Schedule,
   type UserStatePort,
 } from '../index';
-import { createFakeBackend, createFakeGoogleSignInSheet } from '../testing';
+import {
+  createFakeAppleSignInSheet,
+  createFakeBackend,
+  createFakeGoogleSignInSheet,
+} from '../testing';
 import { fakeClock, randomOf } from '../test-support';
 
 /** A schedule that runs what it is given at once and keeps each delay asked for. */
@@ -39,6 +43,7 @@ async function setup({
 }: { kept?: KeptSession; random?: Random; port?: UserStatePort } = {}) {
   const api = createFakeBackend();
   const googleSheet = createFakeGoogleSignInSheet();
+  const appleSheet = createFakeAppleSignInSheet();
   const sessions = createMemorySessionStore(kept);
   const time = fakeClock();
   const later = atOnce();
@@ -49,6 +54,7 @@ async function setup({
       backend: api.backend,
       edition: { id: 'uk' },
       googleSheet,
+      appleSheet,
       sessions,
       userState,
       clock: time.clock,
@@ -56,7 +62,7 @@ async function setup({
       random,
     });
   const account = await open();
-  return { account, api, googleSheet, sessions, time, delays: later.delays, open };
+  return { account, api, googleSheet, appleSheet, sessions, time, delays: later.delays, open };
 }
 
 describe('the Account', () => {
@@ -832,6 +838,170 @@ describe('the Account signs in with Google', () => {
       inFlight: undefined,
       problem: undefined,
     });
+    expect(api.account.accounts).toEqual([]);
+  });
+});
+
+describe('the Account signs in with Apple', () => {
+  it('from signed out, through the sheet, and stays signed in', async () => {
+    const { account, api, appleSheet, sessions, open } = await setup();
+    appleSheet.signsIn('Anna@Mail.com');
+
+    await account.signInWithApple();
+
+    expect(account.state).toEqual({
+      status: 'signed-in',
+      email: 'anna@mail.com',
+      inFlight: undefined,
+      problem: undefined,
+    });
+    expect(api.calls).toEqual(['account.signInWithApple']);
+    expect(api.account.accounts).toEqual(['anna@mail.com']);
+    expect(await sessions.read()).toEqual({ token: 'session-1', email: 'anna@mail.com' });
+    const reopened = await open();
+    expect(reopened.state).toMatchObject({ status: 'signed-in', email: 'anna@mail.com' });
+  });
+
+  it('signs a private relay address in like any email', async () => {
+    const { account, api, appleSheet } = await setup();
+    appleSheet.signsIn('abc123@privaterelay.appleid.com');
+
+    await account.signInWithApple();
+
+    expect(account.state).toMatchObject({
+      status: 'signed-in',
+      email: 'abc123@privaterelay.appleid.com',
+    });
+    expect(api.account.accounts).toEqual(['abc123@privaterelay.appleid.com']);
+  });
+
+  it('reaches the Account a Sign-in code or Google made, and either reaches the one Apple made', async () => {
+    const { account, api, appleSheet, googleSheet } = await signedIn();
+    await account.signOut();
+    appleSheet.signsIn(anna.email);
+
+    await account.signInWithApple();
+    expect(account.state).toMatchObject({ status: 'signed-in', email: anna.email });
+    expect(api.account.accounts).toEqual([anna.email]);
+
+    await account.signOut();
+    googleSheet.signsIn(anna.email);
+    await account.signInWithGoogle();
+    expect(account.state).toMatchObject({ status: 'signed-in', email: anna.email });
+
+    await account.signOut();
+    await account.requestCode(anna.email);
+    await account.verifyCode('100002');
+    expect(account.state).toMatchObject({ status: 'signed-in', email: anna.email });
+    expect(api.account.accounts).toEqual([anna.email]);
+  });
+
+  it('stays signed out with no problem when the reader cancels the sheet', async () => {
+    const { account, api, appleSheet } = await setup();
+    appleSheet.cancels();
+
+    await account.signInWithApple();
+
+    expect(appleSheet.shown).toBe(1);
+    expect(api.calls).toEqual([]);
+    expect(account.state).toEqual({
+      status: 'signed-out',
+      inFlight: undefined,
+      problem: undefined,
+    });
+  });
+
+  it('says the sign-in was refused when the backend refuses the token, and the device stays signed out', async () => {
+    const { account, api, appleSheet, sessions } = await setup();
+    appleSheet.signsIn(anna.email, { expired: true });
+
+    await account.signInWithApple();
+
+    expect(api.calls).toEqual(['account.signInWithApple']);
+    expect(api.account.accounts).toEqual([]);
+    expect(await sessions.read()).toBeUndefined();
+    expect(account.state).toEqual({
+      status: 'signed-out',
+      inFlight: undefined,
+      problem: 'refused',
+    });
+  });
+
+  it('says the sign-in was refused when the backend does not offer Sign in with Apple', async () => {
+    const { account, api, appleSheet } = await setup();
+    appleSheet.signsIn(anna.email);
+    // The switch turned off remotely, or an Edition without it.
+    api.failNext({ procedure: 'account.signInWithApple', reason: 'not-found' });
+
+    await account.signInWithApple();
+
+    expect(account.state).toMatchObject({ status: 'signed-out', problem: 'refused' });
+  });
+
+  it('says it is offline when the sheet finds no network, or when no try reaches the server', async () => {
+    const { account, api, appleSheet } = await setup();
+    appleSheet.fails('offline');
+    await account.signInWithApple();
+    expect(account.state).toMatchObject({ status: 'signed-out', problem: 'offline' });
+
+    appleSheet.signsIn(anna.email);
+    api.failNext('offline', 'offline', 'offline', 'offline');
+    await account.signInWithApple();
+    expect(api.calls).toEqual(Array<string>(4).fill('account.signInWithApple'));
+    expect(account.state).toMatchObject({ status: 'signed-out', problem: 'offline' });
+  });
+
+  it('shows the sign-in in flight while the sheet is up, and starts no other request meanwhile', async () => {
+    const { account, api, appleSheet, googleSheet } = await setup();
+    const release = appleSheet.holds();
+    appleSheet.signsIn(anna.email);
+
+    const signingIn = account.signInWithApple();
+    expect(account.state).toMatchObject({ status: 'signed-out', inFlight: 'signInWithApple' });
+
+    await account.requestCode(anna.email);
+    await account.signInWithGoogle();
+    expect(api.calls).toEqual([]);
+    expect(googleSheet.shown).toBe(0);
+
+    release();
+    await signingIn;
+    expect(account.state).toMatchObject({ status: 'signed-in', inFlight: undefined });
+  });
+
+  it('opens no sheet once a Sign-in code is sent, nor while signed in', async () => {
+    const { account, appleSheet } = await setup();
+    await account.requestCode(anna.email);
+    await account.signInWithApple();
+    expect(appleSheet.shown).toBe(0);
+
+    await account.verifyCode('100001');
+    await account.signInWithApple();
+    expect(appleSheet.shown).toBe(0);
+  });
+
+  it('signs out, signs out everywhere and deletes the Account as after a Sign-in code', async () => {
+    const { account, api, appleSheet, googleSheet, sessions } = await setup();
+    appleSheet.signsIn(anna.email);
+    await account.signInWithApple();
+
+    await account.signOut();
+    expect(account.state).toMatchObject({ status: 'signed-out', problem: undefined });
+    expect(await sessions.read()).toBeUndefined();
+    expect(api.account.sessionTokens).toEqual([]);
+    // The Core doesn't know how the Session started, so Google's sign-in is forgotten too.
+    expect(googleSheet.forgotten).toEqual([{ revoke: false }]);
+
+    appleSheet.signsIn(anna.email);
+    await account.signInWithApple();
+    await account.signOutEverywhere();
+    expect(account.state).toMatchObject({ status: 'signed-out', problem: undefined });
+    expect(api.account.sessionTokens).toEqual([]);
+
+    appleSheet.signsIn(anna.email);
+    await account.signInWithApple();
+    await account.delete();
+    expect(account.state).toMatchObject({ status: 'signed-out', problem: undefined });
     expect(api.account.accounts).toEqual([]);
   });
 });

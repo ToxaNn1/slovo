@@ -12,7 +12,11 @@ import {
   type RecordChange,
   type UserStateChanges,
 } from '../index';
-import { createFakeBackend, createFakeGoogleSignInSheet } from '../testing';
+import {
+  createFakeAppleSignInSheet,
+  createFakeBackend,
+  createFakeGoogleSignInSheet,
+} from '../testing';
 import { SYNC_AFTER_WRITE } from './sync';
 import { fakeClock, randomOf, testSchedule } from '../test-support';
 
@@ -39,6 +43,7 @@ async function device({
   };
   const { push, pull } = server.backend.sync;
   const googleSheet = createFakeGoogleSignInSheet();
+  const appleSheet = createFakeAppleSignInSheet();
   const records = new Map<string, string>();
   /** Which writes the device's store refuses: none, unless the test says. */
   const disk = { refuses: (_changes: UserStateChanges) => false };
@@ -59,6 +64,7 @@ async function device({
     backend: server.backend,
     edition: { id: 'uk' },
     googleSheet,
+    appleSheet,
     userState,
     sessions: createMemorySessionStore(
       signedIn ? { token: 'a-session', email: 'anna@mail.com' } : undefined,
@@ -94,6 +100,7 @@ async function device({
     account,
     accountApi: server,
     googleSheet,
+    appleSheet,
     userState,
     records,
     time,
@@ -206,6 +213,37 @@ describe('Sync syncs', () => {
 
     expect(syncs()).toBe(1);
     expect(server.sync.records.has('favorites.w_one')).toBe(true);
+  });
+
+  it('when a Session starts with Apple in the foreground, so the first Apple sign-in merges the device’s user state', async () => {
+    const { sync, account, appleSheet, server, addFavorite, advance, syncs } = await device({
+      signedIn: false,
+    });
+    await addFavorite('w_one');
+    sync.foreground();
+    appleSheet.signsIn('anna@mail.com');
+
+    await account.signInWithApple();
+    await advance(0);
+
+    expect(syncs()).toBe(1);
+    expect(server.sync.records.has('favorites.w_one')).toBe(true);
+  });
+
+  it('not when Apple refuses the token: the device stays signed out and nothing is merged', async () => {
+    const { sync, account, appleSheet, server, addFavorite, advance, syncs } = await device({
+      signedIn: false,
+    });
+    await addFavorite('w_one');
+    sync.foreground();
+    appleSheet.signsIn('anna@mail.com', { expired: true });
+
+    await account.signInWithApple();
+    await advance(0);
+
+    expect(account.state).toMatchObject({ status: 'signed-out', problem: 'refused' });
+    expect(syncs()).toBe(0);
+    expect(server.sync.records.size).toBe(0);
   });
 });
 
@@ -497,6 +535,7 @@ describe('Sync and the end of a Session', () => {
         backend: createFakeBackend().backend,
         edition: { id: 'uk' },
         googleSheet: createFakeGoogleSignInSheet(),
+        appleSheet: createFakeAppleSignInSheet(),
         sessions: createMemorySessionStore(),
         userState,
         clock: time.clock,

@@ -6,7 +6,11 @@ import {
   openUserState,
   systemRandom,
 } from '@slovo/core';
-import { createFakeBackend, createFakeGoogleSignInSheet } from '@slovo/core/testing';
+import {
+  createFakeAppleSignInSheet,
+  createFakeBackend,
+  createFakeGoogleSignInSheet,
+} from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
 import { act, render, screen } from '@testing-library/react-native';
 
@@ -33,9 +37,9 @@ describe('A binary without the Google sign-in module', () => {
   it('hides «Увійти через Google» on the SLOVO ID screen', async () => {
     const { edition, editionStrings } =
       jest.requireActual<typeof import('../edition/edition')>('../edition/edition');
-    const { googleClientId } = jest.requireActual<typeof import('../account/device-account')>(
-      '../account/device-account',
-    );
+    const { googleClientId, hasAppleSignIn } = jest.requireActual<
+      typeof import('../account/device-account')
+    >('../account/device-account');
     const { openOnce } = jest.requireActual<typeof import('../opening')>('../opening');
     const { AccountScreen } =
       jest.requireActual<typeof import('./account-screen')>('./account-screen');
@@ -45,6 +49,7 @@ describe('A binary without the Google sign-in module', () => {
           backend: createFakeBackend().backend,
           edition: { id: 'uk' },
           googleSheet: createFakeGoogleSignInSheet(),
+          appleSheet: createFakeAppleSignInSheet(),
           sessions: createMemorySessionStore(),
           userState: await openUserState({ port: createMemoryUserStatePort() }),
           clock,
@@ -63,7 +68,7 @@ describe('A binary without the Google sign-in module', () => {
         <AccountScreen
           opening={opening}
           back={{ label: editionStrings.settings.title, onPress: jest.fn() }}
-          google={{ edition, clientId: googleClientId }}
+          signIn={{ edition, googleClientId, appleModule: hasAppleSignIn }}
         />
       </EditionProvider>,
     );

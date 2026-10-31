@@ -32,6 +32,8 @@ function limitedApp() {
     verifyCode: (email: string, ip?: string) => post('sessions', { email, code: '000000' }, ip),
     signInWithGoogle: (email: string, ip?: string) =>
       post('google-sessions', { idToken: backend.google.token({ email }), editionId: 'uk' }, ip),
+    signInWithApple: (email: string, ip?: string) =>
+      post('apple-sessions', { idToken: backend.apple.token({ email }), editionId: 'uk' }, ip),
   };
 }
 
@@ -383,6 +385,39 @@ describe('the Google sign-ins from one IP address', () => {
     passTime(10 * MINUTE);
 
     expect((await signInWithGoogle(email)).status).toBe(200);
+  });
+});
+
+describe('the Apple sign-ins from one IP address', () => {
+  it('are at most 30 in 10 minutes, counted apart from the Google sign-ins and the code checks', async () => {
+    const { client, clientFrom, apple, mailer, signInWithApple, signInWithGoogle } = limitedApp();
+    for (let signedIn = 0; signedIn < 30; signedIn++) {
+      await expect(signInWithApple(newEmail())).resolves.toMatchObject({ status: 200 });
+    }
+    passTime(9 * MINUTE + 59_500);
+
+    const email = newEmail();
+    expect(await refusal(await signInWithApple(email))).toEqual({
+      status: 429,
+      code: 'TOO_MANY_REQUESTS',
+      message: 'Too many requests',
+      retryAfter: '1',
+    });
+    // Another IP address, a Google sign-in and a Sign-in code are not held back.
+    await expect(
+      clientFrom(newIp()).account.signInWithApple({
+        idToken: apple.token({ email }),
+        editionId: 'uk',
+      }),
+    ).resolves.toMatchObject({ email });
+    expect((await signInWithGoogle(email)).status).toBe(200);
+    await client.account.requestCode({ email, editionId: 'uk' });
+    await expect(
+      client.account.verifyCode({ email, code: mailer.codeSentTo(email) }),
+    ).resolves.toMatchObject({ email });
+
+    passTime(500);
+    expect((await signInWithApple(email)).status).toBe(200);
   });
 });
 

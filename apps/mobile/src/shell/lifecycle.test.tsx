@@ -12,7 +12,11 @@ import {
   type Schedule,
   type Sync,
 } from '@slovo/core';
-import { createFakeGoogleSignInSheet, createFakeBackend } from '@slovo/core/testing';
+import {
+  createFakeAppleSignInSheet,
+  createFakeBackend,
+  createFakeGoogleSignInSheet,
+} from '@slovo/core/testing';
 import { waitFor } from '@testing-library/react-native';
 import type { AppStateStatus } from 'react-native';
 
@@ -69,6 +73,7 @@ async function app() {
     backend: server.backend,
     edition,
     googleSheet: createFakeGoogleSignInSheet(),
+    appleSheet: createFakeAppleSignInSheet(),
     sessions: createMemorySessionStore({ token: 'a-session', email: 'anna@mail.com' }),
     userState,
     clock,

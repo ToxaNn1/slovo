@@ -18,7 +18,7 @@ import {
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { useAccountScreenGoogle } from '../account/account';
+import { useAccountScreenSignIn } from '../account/account';
 import { AccountScreen } from '../settings/account-screen';
 import { useComposition } from '../composition';
 import { useShell } from '../shell-value';
@@ -132,12 +132,12 @@ function AccountOverStep({
   onBack: (account: Account) => void;
 }) {
   const opened = useSubscribed(opening, ({ state }) => state);
-  const google = useAccountScreenGoogle();
+  const signIn = useAccountScreenSignIn();
   if (opened.status !== 'ready') return step;
   return (
     <AccountScreen
       opening={opening}
-      google={google}
+      signIn={signIn}
       // The step it came from, by its title.
       back={{ label: editionStrings.onboarding.account.title, onPress: onBack }}
     />

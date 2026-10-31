@@ -374,6 +374,9 @@ export const googleSignInButton = {
   logo: { blue: '#4285F4', green: '#34A853', yellow: '#FBBC05', red: '#EA4335' },
 } as const;
 
+/** The height of the provider sign-in buttons, Google's and Apple's, like the secondary button's. */
+export const signInButtonHeight = 50;
+
 /** The colour of a shadow, black in both Themes. */
 export const shadowColor = '#000000';
 

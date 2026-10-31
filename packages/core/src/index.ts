@@ -158,6 +158,7 @@ export {
 export {
   systemClock,
   systemRandom,
+  type AppleSignInSheet,
   type Backend,
   type Clock,
   type ContentReadPort,

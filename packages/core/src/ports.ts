@@ -175,20 +175,31 @@ export interface NotificationSchedulerPort {
 }
 
 /**
- * Google's native sign-in sheet, as the Core sees it (ADR 0047): the shell
- * implements this port on Google's SDK. The sheet never rejects: the reader
- * signs in, dismisses it, or it fails.
+ * A provider's native sign-in sheet (Google's, Apple's), as the Core sees it
+ * (ADR 0047). The sheet never rejects: the reader signs in, dismisses it, or
+ * it fails.
  */
-export interface GoogleSignInSheet {
+export interface SignInSheet {
   /**
-   * Shows the sheet and answers the Google identity token of the reader who
-   * signed in, that the reader cancelled, or that it found no network or
-   * failed otherwise.
+   * Shows the sheet and answers the identity token of the reader who signed
+   * in, that the reader cancelled, or that it found no network or failed
+   * otherwise.
    */
   signIn(): Promise<
     | { readonly ok: true; readonly idToken: string }
     | { readonly ok: false; readonly reason: 'cancelled' | 'offline' | 'unexpected' }
   >;
+}
+
+/**
+ * Apple's sign-in sheet: the shell implements this port on Expo's Apple
+ * authentication module, on iOS only. Apple keeps nothing on the device for
+ * SLOVO to forget when the Session ends.
+ */
+export type AppleSignInSheet = SignInSheet;
+
+/** Google's sign-in sheet: the shell implements this port on Google's SDK. */
+export interface GoogleSignInSheet extends SignInSheet {
   /**
    * Forgets the Google sign-in this device keeps, once its Session has ended,
    * and with `revoke` also takes back the reader's grant to the app, as when

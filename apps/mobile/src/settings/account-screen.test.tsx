@@ -6,17 +6,27 @@ import {
   loadEdition,
   openAccount,
   systemRandom,
+  type AppleSignInSheet,
   type Backend,
   type GoogleSignInSheet,
 } from '@slovo/core';
-import { createFakeBackend, createFakeGoogleSignInSheet } from '@slovo/core/testing';
+import {
+  createFakeAppleSignInSheet,
+  createFakeBackend,
+  createFakeGoogleSignInSheet,
+} from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { Platform } from 'react-native';
 import config from 'slovo-edition/config';
 
 import { editionStrings } from '../edition/edition';
 import { openOnce } from '../opening';
 import { AccountScreen } from './account-screen';
+
+// The Sync status line under the signed-in email is Sync's, tested with it;
+// it draws over the whole shell, which this screen's test never stands up.
+jest.mock('../sync/sync-status-line', () => ({ SyncStatusLine: () => null }));
 
 const strings = editionStrings.account;
 const { problems } = strings;
@@ -24,10 +34,10 @@ const { problems } = strings;
 /** A client id of the shape Google gives an iOS app; no real one. */
 const CLIENT_ID = '123456789012-test.apps.googleusercontent.com';
 
-/** The Edition with its Google sign-in Feature Switch as given. */
-const editionWith = ({ googleSignIn }: { googleSignIn: boolean }) => {
+/** The Edition with its Google and Apple sign-in Feature Switches as given. */
+const editionWith = (switches: { googleSignIn: boolean; signInWithApple: boolean }) => {
   const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, boolean> };
-  return loadEdition({ ...rest, featureSwitches: { ...featureSwitches, googleSignIn } });
+  return loadEdition({ ...rest, featureSwitches: { ...featureSwitches, ...switches } });
 };
 
 /** The time stands still: no countdown runs on the signed-out screen. */
@@ -41,19 +51,26 @@ async function settle(action: () => unknown = () => undefined) {
 }
 
 /**
- * The SLOVO ID screen over a signed-out Account, with a fake backend and a
- * fake Google sheet, the switch on and a client id unless the test says not.
+ * The SLOVO ID screen over a signed-out Account, with a fake backend and fake
+ * Google and Apple sheets, both switches on and a build with a Google client
+ * id and Apple's module unless the test says not.
  */
 async function renderScreen({
   googleSignIn = true,
+  signInWithApple = true,
   withClientId = true,
+  appleModule = true,
   googleSheet = createFakeGoogleSignInSheet(),
   backend = createFakeBackend().backend,
+  appleSheet = createFakeAppleSignInSheet(),
 }: {
   googleSignIn?: boolean;
+  signInWithApple?: boolean;
   withClientId?: boolean;
+  appleModule?: boolean;
   googleSheet?: GoogleSignInSheet;
   backend?: Pick<Backend, 'account'>;
+  appleSheet?: AppleSignInSheet;
 } = {}) {
   const opening = openOnce(
     async () =>
@@ -61,6 +78,7 @@ async function renderScreen({
         backend,
         edition: { id: 'uk' },
         googleSheet,
+        appleSheet,
         sessions: createMemorySessionStore(),
         userState: await openUserState({ port: createMemoryUserStatePort() }),
         clock,
@@ -73,13 +91,17 @@ async function renderScreen({
     { onError: jest.fn() },
   );
   await opening.opened();
-  const edition = editionWith({ googleSignIn });
+  const edition = editionWith({ googleSignIn, signInWithApple });
   await render(
     <EditionProvider edition={edition} strings={editionStrings}>
       <AccountScreen
         opening={opening}
         back={{ label: editionStrings.settings.title, onPress: jest.fn() }}
-        google={{ edition, clientId: withClientId ? CLIENT_ID : undefined }}
+        signIn={{
+          edition,
+          googleClientId: withClientId ? CLIENT_ID : undefined,
+          appleModule,
+        }}
       />
     </EditionProvider>,
   );
@@ -87,9 +109,14 @@ async function renderScreen({
 }
 
 const googleButton = () => screen.queryByRole('button', { name: strings.signInWithGoogle });
+const appleButton = () => screen.queryByRole('button', { name: strings.signInWithApple });
 
 /** Taps «Увійти через Google» and lets the sign-in finish. */
 const signInWithGoogle = () => settle(() => fireEvent.press(screen.getByTestId('account-google')));
+
+/** Taps Apple's own button, which answers the press as its native view does, and lets the sign-in finish. */
+const signInWithApple = () =>
+  settle(() => fireEvent(screen.getByTestId('account-apple-native'), 'buttonPress'));
 
 describe('«Увійти через Google» on the SLOVO ID screen', () => {
   it('shows above the email field while signed out, with the switch on and a client id', async () => {
@@ -187,5 +214,100 @@ describe('«Увійти через Google» on the SLOVO ID screen', () => {
 
     expect(screen.getByText(problems.refused)).toBeOnTheScreen();
     expect(googleButton()).toBeOnTheScreen();
+  });
+});
+
+describe('«Увійти через Apple» on the SLOVO ID screen', () => {
+  it('shows on iOS after «Увійти через Google» and before the email field, with the switch on', async () => {
+    await renderScreen();
+
+    expect(appleButton()).toBeOnTheScreen();
+    const buttons = screen.getAllByRole('button');
+    const google = screen.getByRole('button', { name: strings.signInWithGoogle });
+    const apple = screen.getByRole('button', { name: strings.signInWithApple });
+    expect(buttons.indexOf(google)).toBeLessThan(buttons.indexOf(apple));
+    expect(screen.getByTestId('account-email')).toBeOnTheScreen();
+  });
+
+  it('stays absent on Android', async () => {
+    const os = jest.replaceProperty(Platform, 'OS', 'android');
+    try {
+      await renderScreen();
+
+      expect(appleButton()).not.toBeOnTheScreen();
+      expect(googleButton()).toBeOnTheScreen();
+      expect(screen.getByTestId('account-email')).toBeOnTheScreen();
+    } finally {
+      os.restore();
+    }
+  });
+
+  it('stays absent with the switch off, while «Увійти через Google» shows', async () => {
+    await renderScreen({ signInWithApple: false });
+
+    expect(appleButton()).not.toBeOnTheScreen();
+    expect(googleButton()).toBeOnTheScreen();
+  });
+
+  it("stays absent while the binary lacks Expo's Apple authentication module", async () => {
+    await renderScreen({ appleModule: false });
+
+    expect(appleButton()).not.toBeOnTheScreen();
+  });
+
+  it("signs the reader in through Apple's sheet, and the screen shows the email", async () => {
+    const appleSheet = createFakeAppleSignInSheet();
+    appleSheet.signsIn('abc123@privaterelay.appleid.com');
+    await renderScreen({ appleSheet });
+
+    await signInWithApple();
+
+    expect(appleSheet.shown).toBe(1);
+    expect(screen.getByTestId('account-signed-in-email')).toHaveTextContent(
+      'abc123@privaterelay.appleid.com',
+    );
+    expect(appleButton()).not.toBeOnTheScreen();
+  });
+
+  it("starts the Apple path on a tap: Apple's sheet shows and the button waits on it", async () => {
+    let shown = 0;
+    // The reader is still in Apple's sheet.
+    const appleSheet: AppleSignInSheet = {
+      signIn: () => {
+        shown += 1;
+        return new Promise(() => undefined);
+      },
+    };
+    await renderScreen({ appleSheet });
+
+    await signInWithApple();
+
+    expect(shown).toBe(1);
+    expect(appleButton()).toBeBusy();
+    expect(googleButton()).toBeDisabled();
+  });
+
+  it('shows no problem when the reader dismisses the sheet', async () => {
+    const appleSheet = createFakeAppleSignInSheet();
+    appleSheet.cancels();
+    await renderScreen({ appleSheet });
+
+    await signInWithApple();
+
+    expect(appleButton()).toBeOnTheScreen();
+    expect(screen.queryByText(problems.refused)).not.toBeOnTheScreen();
+    expect(screen.queryByText(problems.unexpected)).not.toBeOnTheScreen();
+  });
+
+  it('says so when the backend refuses the token, and stays signed out', async () => {
+    const appleSheet = createFakeAppleSignInSheet();
+    appleSheet.signsIn('anna@mail.com', { expired: true });
+    await renderScreen({ appleSheet });
+
+    await signInWithApple();
+
+    expect(screen.getByText(problems.refused)).toBeOnTheScreen();
+    expect(appleButton()).toBeOnTheScreen();
+    expect(screen.queryByTestId('account-signed-in-email')).not.toBeOnTheScreen();
   });
 });

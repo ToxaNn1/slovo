@@ -6,6 +6,7 @@ import {
   createContentPacks,
   createMistakeReports,
   createSync,
+  type AppleVerifier,
   type Clock,
   type Edition,
   type GoogleVerifier,
@@ -58,6 +59,8 @@ export interface AppDependencies {
   readonly mailer: Mailer;
   /** Verifies the Google identity tokens of Google sign-ins. */
   readonly google: GoogleVerifier;
+  /** Verifies the Apple identity tokens of Apple sign-ins, for the Edition's bundle id. */
+  readonly apple: AppleVerifier;
   /** Signs the Sessions' tokens. */
   readonly authSecret: string;
   /** Where the unexpected failures (500) are reported. */
@@ -117,6 +120,7 @@ export function createApp({
   editions,
   mailer,
   google,
+  apple,
   authSecret,
   reporter,
   trustedProxyHops,
@@ -127,6 +131,7 @@ export function createApp({
     editions: editionRegistry,
     authenticator: createAuthenticator(database, { secret: authSecret, logger }),
     google,
+    apple,
     mailer,
     rateLimits,
     clock,

@@ -3,6 +3,7 @@ import type { Account, AccountState } from '@slovo/core';
 import {
   BackLink,
   DeleteAccountButton,
+  disabledOpacity,
   fill,
   GoogleSignInButton,
   PrimaryButton,
@@ -10,14 +11,20 @@ import {
   ResendButton,
   ScreenTitle,
   SecondaryButton,
+  signInButtonHeight,
   space,
   TextField,
   typeSize,
   useEdition,
   useTokens,
 } from '@slovo/ui';
+import {
+  AppleAuthenticationButton,
+  AppleAuthenticationButtonStyle,
+  AppleAuthenticationButtonType,
+} from 'expo-apple-authentication';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { deviceClock } from '../device/device-clock';
@@ -29,7 +36,7 @@ import { SyncStatusLine } from '../sync/sync-status-line';
 import {
   useAccountProblemLine,
   useAccountState,
-  type AccountScreenGoogle,
+  type AccountScreenSignIn,
 } from '../account/account';
 
 const strings = editionStrings.account;
@@ -58,23 +65,25 @@ export interface AccountScreenBack {
 /**
  * The SLOVO ID screen, of Settings and of the onboarding's SLOVO ID step:
  * signing in with Google, while the Edition's switch is on and the build has
- * its Google client id, or with a Sign-in code sent to the email, or, signed in, the email
- * with signing out, signing out everywhere and deleting the Account behind the
- * SLOVO confirmation dialog. It draws the Account's state and calls its actions; the rules
- * are the Account's own.
+ * its Google client id, with Apple, on iOS while the Edition's switch is on
+ * and the build has Expo's Apple authentication module (ADR 0047), or with a
+ * Sign-in code sent to the email, or, signed in, the email with signing out,
+ * signing out everywhere and deleting the Account behind the SLOVO
+ * confirmation dialog. It draws the Account's state and calls its actions;
+ * the rules are the Account's own.
  */
 export function AccountScreen({
   opening,
   back,
-  google,
+  signIn,
 }: {
   opening: Opening<Account>;
   back: AccountScreenBack;
-  google: AccountScreenGoogle;
+  signIn: AccountScreenSignIn;
 }) {
   return (
     <Opened opening={opening} failedTestID="account-failed">
-      <AccountContent opening={opening} back={back} google={google} />
+      <AccountContent opening={opening} back={back} signIn={signIn} />
     </Opened>
   );
 }
@@ -82,11 +91,11 @@ export function AccountScreen({
 function AccountContent({
   opening,
   back,
-  google,
+  signIn,
 }: {
   opening: Opening<Account>;
   back: AccountScreenBack;
-  google: AccountScreenGoogle;
+  signIn: AccountScreenSignIn;
 }) {
   const account = useOpened(opening);
   const state = useAccountState(account);
@@ -121,7 +130,12 @@ function AccountContent({
             state={state}
             problem={problem}
             withGoogle={
-              google.edition.isFeatureEnabled('googleSignIn') && google.clientId !== undefined
+              signIn.edition.isFeatureEnabled('googleSignIn') && signIn.googleClientId !== undefined
+            }
+            withApple={
+              Platform.OS === 'ios' &&
+              signIn.edition.isFeatureEnabled('signInWithApple') &&
+              signIn.appleModule
             }
           />
         )}
@@ -133,22 +147,25 @@ function AccountContent({
 type StateOf<S extends AccountState['status']> = Extract<AccountState, { status: S }>;
 
 /**
- * Signed out: «Увійти через Google» when it is offered, then the email field
- * and «Надіслати код». Once the code is sent, the
- * email stays over the code field, which signs in as soon as it holds the
- * code, with «Надіслати ще раз» and «Змінити пошту» under it.
+ * Signed out: «Увійти через Google», then «Увійти через Apple», each when it
+ * is offered, then the email field and «Надіслати код». Once the code is
+ * sent, the email stays over the code field, which signs in as soon as it
+ * holds the code, with «Надіслати ще раз» and «Змінити пошту» under it.
  */
 function SignIn({
   account,
   state,
   problem,
   withGoogle,
+  withApple,
 }: {
   account: Account;
   state: StateOf<'signed-out' | 'code-sent'>;
   problem: string | undefined;
   /** Whether «Увійти через Google» is offered. */
   withGoogle: boolean;
+  /** Whether «Увійти через Apple» is offered. */
+  withApple: boolean;
 }) {
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
@@ -167,6 +184,17 @@ function SignIn({
             disabled={state.inFlight !== undefined}
             onPress={() => {
               run(account.signInWithGoogle());
+            }}
+          />
+        )}
+        {withApple && (
+          <AppleSignInButton
+            testID="account-apple"
+            label={strings.signInWithApple}
+            busy={state.inFlight === 'signInWithApple'}
+            disabled={state.inFlight !== undefined}
+            onPress={() => {
+              run(account.signInWithApple());
             }}
           />
         )}
@@ -238,6 +266,58 @@ function SignIn({
           setCode('');
           account.changeEmail();
         }}
+      />
+    </View>
+  );
+}
+
+/**
+ * «Увійти через Apple»: Apple's own button, which Apple's branding rules ask
+ * for, through Expo's Apple authentication module: black on the light Theme
+ * and white on the dark one, `radius.button`, as tall as Google's. The
+ * native button carries Apple's words in the system's language, so VoiceOver
+ * reads the Edition's label from the view around it. While its request is on
+ * the way, or another is, it is dimmed and takes no press.
+ */
+function AppleSignInButton({
+  label,
+  onPress,
+  busy,
+  disabled,
+  testID,
+}: {
+  label: string;
+  onPress: () => void;
+  /** Whether the request of the button is on the way. */
+  busy: boolean;
+  disabled: boolean;
+  testID: string;
+}) {
+  const { colorScheme, radii } = useTokens();
+  const { voice } = useEdition();
+  const inactive = busy || disabled;
+  return (
+    <View
+      testID={testID}
+      accessible
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ busy, disabled: inactive }}
+      {...voice}
+      pointerEvents={inactive ? 'none' : 'auto'}
+      style={{ opacity: inactive ? disabledOpacity : 1 }}
+    >
+      <AppleAuthenticationButton
+        testID={`${testID}-native`}
+        buttonType={AppleAuthenticationButtonType.SIGN_IN}
+        buttonStyle={
+          colorScheme === 'dark'
+            ? AppleAuthenticationButtonStyle.WHITE
+            : AppleAuthenticationButtonStyle.BLACK
+        }
+        cornerRadius={radii.button}
+        style={styles.appleButton}
+        onPress={onPress}
       />
     </View>
   );
@@ -319,6 +399,7 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: space[5], paddingTop: space[2], paddingBottom: space[8] },
   header: { paddingTop: space[2], paddingBottom: space[5] },
   form: { gap: space[4] },
+  appleButton: { height: signInButtonHeight },
   signedInAs: { gap: space[1], marginBottom: space[2] },
   signedInLabel: { fontSize: typeSize.caption, fontWeight: '600' },
   email: { fontSize: typeSize.listItem, fontWeight: '600' },

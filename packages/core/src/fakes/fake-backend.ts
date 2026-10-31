@@ -15,6 +15,7 @@ import type {
   RequestFailure,
 } from '../ports';
 import { systemClock } from '../ports';
+import { fakeAppleIdentityOf } from './fake-apple-sign-in-sheet';
 import { fakeGoogleIdentityOf } from './fake-google-sign-in-sheet';
 
 /** A procedure of the API contract by its name, `account.requestCode`. */
@@ -88,9 +89,9 @@ export interface FakeBackend {
   /**
    * The Account procedures: they send Sign-in codes `100001`, `100002` and so
    * on to a mailbox the test reads, each valid for 5 tries, a new code for an
-   * email replacing the one before; take the Google identity tokens of the
-   * fake Google sign-in sheet; create an Account on the first sign-in of its
-   * email; and keep Sessions by token.
+   * email replacing the one before; take the identity tokens of the fake
+   * Google and Apple sign-in sheets; create an Account on the first sign-in
+   * of its email; and keep Sessions by token.
    */
   readonly account: {
     /** The Sign-in codes sent, oldest first. */
@@ -301,6 +302,12 @@ export function createFakeBackend({
         const identity = fakeGoogleIdentityOf(input.idToken);
         if (identity === undefined) throw errors.INVALID_TOKEN();
         if (!identity.verified) throw errors.EMAIL_NOT_VERIFIED();
+        return startSession(identity.email.trim().toLowerCase());
+      },
+      async signInWithApple({ input, context, errors }) {
+        await arrive('account.signInWithApple', context);
+        const identity = fakeAppleIdentityOf(input.idToken);
+        if (identity === undefined || identity.expired) throw errors.INVALID_TOKEN();
         return startSession(identity.email.trim().toLowerCase());
       },
       async me({ context }) {

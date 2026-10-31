@@ -7,6 +7,7 @@ import { nativeModules } from '../device/device-native-modules';
 import { edition } from '../edition/edition';
 import { logError } from '../diagnostics/log';
 import { openOnce, type Opening } from '../opening';
+import { createAppleSignInSheet, noAppleSignInSheet } from './apple-sign-in-sheet';
 import { createGoogleSignInSheet, noGoogleSignInSheet } from './google-sign-in-sheet';
 import { createSessionStore } from './session-store';
 
@@ -53,6 +54,31 @@ const googleSignInSheet =
     ? noGoogleSignInSheet
     : createGoogleSignInSheet(googleSdk, googleClientId);
 
+type AppleAuthenticationModule = typeof import('expo-apple-authentication');
+
+/**
+ * Expo's Apple authentication module, or undefined while the installed binary
+ * lacks its native module (a dev client built before the 0.9 batch). Like
+ * the Keychain, it is required here and nowhere else.
+ */
+const appleAuthentication = nativeModules.load(
+  'appleSignIn',
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  () => require('expo-apple-authentication') as AppleAuthenticationModule,
+);
+
+/**
+ * Whether this build signs in with Apple (ADR 0047): its binary has Expo's
+ * Apple authentication module. «Увійти через Apple» shows only then, on iOS.
+ */
+export const hasAppleSignIn = appleAuthentication !== undefined;
+
+/** The Apple sign-in sheet of this device: Apple's own, or the sheet of a build without the module. */
+const appleSignInSheet =
+  appleAuthentication === undefined
+    ? noAppleSignInSheet
+    : createAppleSignInSheet(appleAuthentication);
+
 /**
  * The reader's Account («SLOVO ID»), opened once per app run apart from the
  * composition (ADR 0036, 0037), or undefined when the Edition's `account`
@@ -74,6 +100,7 @@ export function accountOpening({
         backend,
         edition,
         googleSheet: googleSignInSheet,
+        appleSheet: appleSignInSheet,
         sessions: createSessionStore(keychain),
         userState: await userState.opened(),
         clock: deviceClock,

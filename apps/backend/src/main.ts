@@ -1,6 +1,7 @@
 // The backend's entry point (`pnpm dev`, `pnpm start`).
 import { systemClock } from '@slovo/server-core';
 
+import { createAppleVerifier } from './account/apple-verifier';
 import { createGoogleVerifier } from './account/google-verifier';
 import { createSmtpMailer } from './account/smtp-mailer';
 import { createApp } from './app';
@@ -25,6 +26,7 @@ const app = createApp({
   editions,
   mailer,
   google: createGoogleVerifier({ clientIds: config.GOOGLE_CLIENT_IDS, clock: systemClock }),
+  apple: createAppleVerifier({ clock: systemClock }),
   authSecret: config.AUTH_SECRET,
   reporter: await createSentryReporter(config.SENTRY_DSN),
   trustedProxyHops: config.TRUSTED_PROXY_HOPS,

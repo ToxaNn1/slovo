@@ -3,6 +3,7 @@ import { AccountEmailSchema, ACCOUNT_NAME, fill } from '@slovo/contracts';
 import type { EditionRegistry, NotServing } from '../edition/edition-registry';
 import type {
   AccountRecord,
+  AppleVerifier,
   Authenticator,
   Clock,
   CodeCheck,
@@ -24,6 +25,12 @@ interface InvalidEmail {
 interface GoogleRefused {
   readonly ok: false;
   readonly reason: 'invalid-token' | 'foreign-audience' | 'unverified-email';
+}
+
+/** Why an Apple identity token signs nobody in. */
+interface AppleRefused {
+  readonly ok: false;
+  readonly reason: 'invalid-token' | 'foreign-audience';
 }
 
 /** What a token that carries no Session that is on gets. */
@@ -85,6 +92,19 @@ export interface Accounts {
     ip: string,
   ): Promise<({ readonly ok: true } & SignedIn) | GoogleRefused | NotServing | TooManyRequests>;
   /**
+   * Signs in with an Apple identity token (ADR 0047): the token must check
+   * against Apple's keys and be for the Edition's app, by its bundle id. Its
+   * email claim, a private relay address included, names the Account any
+   * Sign-in method reaches; the first sign-in of an email creates it. An
+   * Edition that doesn't serve Sign in with Apple refuses as switched off,
+   * and so does a request from the IP address `ip` over its limit.
+   */
+  signInWithApple(
+    idToken: string,
+    editionId: string,
+    ip: string,
+  ): Promise<({ readonly ok: true } & SignedIn) | AppleRefused | NotServing | TooManyRequests>;
+  /**
    * The Session the token carries, the one way to act on an Account; using a
    * Session extends it. Without a token, or with one that carries no Session
    * that is on, it is unauthorized.
@@ -111,7 +131,7 @@ function normalised(email: string): string | undefined {
 }
 
 const invalidEmail: InvalidEmail = { ok: false, reason: 'invalid-email' };
-const invalidToken: GoogleRefused = { ok: false, reason: 'invalid-token' };
+const invalidToken = { ok: false, reason: 'invalid-token' } as const;
 const switchedOff: NotServing = { ok: false, reason: 'switched-off' };
 const unauthorized: Unauthorized = { ok: false, reason: 'unauthorized' };
 
@@ -119,6 +139,7 @@ export function createAccounts({
   editions,
   authenticator,
   google,
+  apple,
   mailer,
   rateLimits,
   clock,
@@ -126,6 +147,7 @@ export function createAccounts({
   editions: EditionRegistry;
   authenticator: Authenticator;
   google: GoogleVerifier;
+  apple: AppleVerifier;
   mailer: Mailer;
   rateLimits: RateLimits;
   clock: Clock;
@@ -172,6 +194,22 @@ export function createAccounts({
       const email = normalised(identity.email);
       if (email === undefined) return invalidToken;
       const signedIn = await authenticator.signInWithGoogle({ ...identity, email });
+      return { ok: true, ...signedIn };
+    },
+
+    async signInWithApple(idToken, editionId, ip) {
+      const serving = await editions.serving(editionId, 'signInWithApple');
+      if (!serving.ok) return serving;
+      const overLimit = await limits.appleSignIn(ip);
+      if (overLimit !== undefined) return overLimit;
+
+      // The Edition's bundle id is SLOVO's client id at Apple (ADR 0047).
+      const check = await apple.verify(idToken, serving.edition.config.bundleId);
+      if (!check.ok) return check;
+      // Apple gives emails, so one that is not an email is no token of Apple's.
+      const email = normalised(check.identity.email);
+      if (email === undefined) return invalidToken;
+      const signedIn = await authenticator.signInWithApple({ ...check.identity, email });
       return { ok: true, ...signedIn };
     },
 

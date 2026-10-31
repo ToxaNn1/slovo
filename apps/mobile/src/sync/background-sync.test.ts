@@ -14,6 +14,7 @@ import {
   type Sync,
 } from '@slovo/core';
 import {
+  createFakeAppleSignInSheet,
   createFakeGoogleSignInSheet,
   createFakeNotificationScheduler,
   createFakeBackend,
@@ -86,6 +87,7 @@ async function app() {
     backend: server.backend,
     edition: ukrainian,
     googleSheet: createFakeGoogleSignInSheet(),
+    appleSheet: createFakeAppleSignInSheet(),
     sessions: createMemorySessionStore({ token: 'a-session', email: 'anna@mail.com' }),
     userState,
     clock: time.clock,
