@@ -242,9 +242,10 @@ describe('the Entries', () => {
       });
     });
 
-    it('are only the Words of the Categories in the Mix, Category by Category in the Language Pack order, and Corrections only while in the Mix', async () => {
+    it('are only the Words and the Corrections of the Categories in the Mix, Category by Category in the Language Pack order, and Corrections only while in the Mix', async () => {
       const port = createMemoryUserStatePort();
-      const asked: (string | undefined)[] = [];
+      /** Each Category the Entries asked the Language Pack for, with its kind, in order. */
+      const asked: string[] = [];
       const content = createMemoryContentPort({
         categories: [
           { id: 'nature', displayName: 'Nature' },
@@ -261,10 +262,11 @@ describe('the Entries', () => {
         content: {
           ...content,
           listIds(kind: EntryKind, categoryId?: string) {
-            if (kind === 'word') asked.push(categoryId);
-            return categoryId === undefined
-              ? content.listIds(kind)
-              : content.listIds('word', categoryId);
+            if (categoryId === undefined) return content.listIds(kind);
+            if (kind !== 'word' && kind !== 'correction')
+              throw new Error(`${kind} has no Category`);
+            asked.push(`${kind} ${categoryId}`);
+            return content.listIds(kind, categoryId);
           },
         },
         edition: editionWith(true),
@@ -278,7 +280,7 @@ describe('the Entries', () => {
         synonymRows: ['r_walk'],
         tips: ['t_comma'],
       });
-      expect(asked).toEqual(['nature', 'speech']);
+      expect(asked).toEqual(['word nature', 'word speech', 'correction everyday']);
 
       await port.write(
         new Map([
