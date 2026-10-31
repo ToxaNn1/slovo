@@ -15,7 +15,7 @@ export interface EditionPresentation {
   /** A count in the plural form the Edition's language takes for it, e.g. «17 записів». */
   readonly count: (forms: Plural, count: number) => string;
   /** The Pronunciation button for a Lemma; a Word card has none without it. */
-  readonly Pronunciation: ComponentType<{ lemma: string }> | undefined;
+  readonly Pronunciation: ComponentType<{ lemma: string; entryId: string }> | undefined;
   /** The Illustrations the app bundles, by file name; a Word naming any other file shows none. */
   readonly illustrations: Readonly<Record<string, ImageSourcePropType>>;
 }
@@ -40,7 +40,7 @@ export function EditionProvider({
 }: {
   edition: Pick<Edition, 'locale'>;
   strings: EditionStrings;
-  pronunciation?: ComponentType<{ lemma: string }>;
+  pronunciation?: ComponentType<{ lemma: string; entryId: string }>;
   illustrations?: Readonly<Record<string, ImageSourcePropType>>;
   children: ReactNode;
 }) {

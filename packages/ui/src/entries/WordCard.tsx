@@ -138,7 +138,7 @@ export function WordCardBody({
               ))}
           </View>
         </View>
-        {Pronunciation === undefined ? null : <Pronunciation lemma={card.lemma} />}
+        {Pronunciation === undefined ? null : <Pronunciation lemma={card.lemma} entryId={card.wordId} />}
       </View>
       <View>
         {/* Decor slot 2, between the header and the Definition. */}
