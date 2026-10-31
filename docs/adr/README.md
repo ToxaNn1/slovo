@@ -44,7 +44,7 @@ Every ADR number in order, one line each, with the decision in force. Read the l
 - [0040](0040-remote-feature-switches-only-turn-features-off.md) A remote Feature Switch only turns a feature off; every reader uses the effective value.
 - [0041](0041-offline-first-sync-opaque-records-and-the-clients-change-time-wins.md) Offline-first: the backend keeps opaque records, devices exchange changes, the client's change time, cut to the server's, wins.
 - 0042: merged into 0004.
-- [0043](0043-knowledge-marks-and-review.md) A Known or Unknown mark schedules Review at 1, 3 and 7 days, then Learned; due Entries return in the Feed and the Game.
+- [0043](0043-knowledge-marks-and-review.md) A Known or Unknown mark schedules Review at 1, 3, 7, 30 and 90 days, then Learned (1.0: extended from 7 days); due Entries return in the Feed and the Game.
 - [0044](0044-the-app-version-follows-the-release.md) The app version is the milestone the code on `main` belongs to; EAS keeps the build number.
 - [0045](0045-a-correction-writes-its-stress-in-its-text.md) A stress trap writes its Stress in its text; the Correction Types and Literary Uses, which the build checks.
 - [0046](0046-an-idiom-is-the-third-kind-of-entry.md) An Idiom is a kind of Entry with an Idiom Type (idiom, place name, proverb), not a Word.
@@ -55,15 +55,18 @@ Every ADR number in order, one line each, with the decision in force. Read the l
 - [0051](0051-synonym-row-and-tip-are-the-fourth-and-fifth-kinds-of-entry.md) A Synonym Row and a Tip are full kinds of Entry with Feed turns and Mix switches of their own; notifications stay Words.
 - [0052](0052-game-modes-typed-answers-a-best-result-per-mode-and-the-daily-crossword.md) Thirteen Game Modes with their own Lives, limits and answer forms, one typed-answer comparison, a Best result per mode, the Daily Crossword.
 - 0053: merged into 0027.
-- [0054](0054-learning-and-habit-search-the-rarity-test-feed-notices-the-daily-limit-and-mood.md) Search, the Rarity Test, the Feed Notices, the Word of the Day archive, the Active Days calendar, the Daily Limit, the polite pause, the first week, the widget hint and Mood.
-- [0055](0055-motion-seasons-and-holidays-the-falling-stress-and-illustrations.md) Animations last 200–300 ms on the UI thread and fade under Reduce Motion; Decor follows the Season or Holiday; the falling Stress; Illustrations.
+- [0054](0054-learning-and-habit-search-the-rarity-test-feed-notices-the-daily-limit-and-mood.md) Search, the Rarity Test, the Feed Notices, the Word of the Day archive, the Active Days calendar, the polite pause, the first week, the widget hint and Mood; the Daily Limit is retired for the Daily Goal (0066) and Mood is paused in 1.0.
+- [0055](0055-motion-seasons-and-holidays-the-falling-stress-and-illustrations.md) Animations last 200–300 ms on the UI thread and fade under Reduce Motion; Decor follows the Season or Holiday (paused in 1.0); the falling Stress; Illustrations.
 - [0056](0056-mistake-reports.md) «Повідомити про помилку» sends an anonymous report to `POST /v1/reports`; the owner reads and resolves them with scripts.
 - [0057](0057-spotlight-and-app-intents-read-what-the-core-decides.md) The Core builds the Spotlight Snapshot; Swift only writes it; App Intents only open the app.
 - [0058](0058-a-shared-collection-is-a-server-snapshot-behind-a-link.md) A Collection Link is an immutable server snapshot at `https://<linkDomain>/c/<id>`, with a web page and universal links.
 - [0059](0059-react-compiler-runs-on-code-without-animation.md) The React Compiler is on; animated modules opt out with `'use no memo'`.
-- [0060](0060-anonymous-community-counters.md) Community Counters are anonymous deltas aggregated per Entry; the Community Word is the week's most saved.
+- [0060](0060-anonymous-community-counters.md) Community Counters are anonymous deltas aggregated per Entry; the Community Word is the week's most saved; one switch covers them and Analytics (0068).
 - 0061: merged into 0006.
 - [0062](0062-ota-updates-are-signed-and-ship-per-edition-channel.md) OTA updates are signed, bound to the native fingerprint, one channel per Edition, published by hand.
 - [0063](0063-the-backend-runs-as-one-container-on-railway-behind-the-editions-domain.md) The backend runs as one container on Railway behind the Edition's domain; migrations in the release step, one trusted proxy hop, HTTPS only.
 - [0064](0064-one-backend-port-shaped-by-the-api-contract.md) The Core reaches the backend through one port, the contract's client; `answerOf` and the retry rule live in the Core; tests serve the contract in process.
 - [0065](0065-one-app-with-editions-inside-and-the-ua-edition.md) One app per platform with the Editions inside, one active at a time (a switch restarts the app), the others downloaded on choice; the first is the UA Edition, id `uk`.
+- [0066](0066-the-xp-log-derives-the-streak-the-active-day-freezes-and-the-break.md) An append-only XP log derives XP, Level, Active Day (≥5 XP), Streak, freezes and Break, merged by id; the Daily Goal replaces the Daily Limit (amends 0054).
+- [0067](0067-onboarding-is-short-and-asks-two-questions.md) Onboarding: welcome, the first Word, two questions, the Daily Goal, the Feed; the rest comes later as Feed Notices.
+- [0068](0068-analytics-go-through-one-port-and-questionnaire-counters-carry-no-id.md) Analytics go through one Core port behind the one privacy switch; questionnaire counters carry no reader id (amends 0060).

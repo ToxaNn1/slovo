@@ -7,7 +7,7 @@ SLOVO helps people discover, learn and share rare words of a single language. It
 ### Factory
 
 **Edition**:
-One language inside the one SLOVO app (ADR 0065): its configuration, content and assets, with its UI language and content language the same, its own progress and its own localized store page. One Edition is active at a time. The first Edition is the UA Edition, Ukrainian, whose id is the language code `uk`.
+One language inside the one SLOVO app (ADR 0065): its configuration, content and assets, with its UI language and content language the same, its own progress and its own localized store page. One Edition is active at a time. The first Edition is the UA Edition, Ukrainian, whose id is the language code `uk`; the label «UA Edition» names it in docs and code comments, and the id never changes.
 _Avoid_: Flavor, variant, localization, separate app, Ukrainian Edition, UK Edition
 
 **Language Pack**:
@@ -43,11 +43,11 @@ Purely visual elements an Edition supplies for slots the Core defines, such as b
 _Avoid_: Skin, theme (a Theme is the user's light/dark choice)
 
 **Season**:
-The meteorological season of the reader's local date: December–February winter, March–May spring, June–August summer, September–November autumn. The Edition supplies a Decor motif for each; it changes at local midnight.
+The meteorological season of the reader's local date: December–February winter, March–May spring, June–August summer, September–November autumn. The Edition supplies a Decor motif for each; it changes at local midnight. Paused in the UA Edition in 1.0 with Holiday Decor behind its Feature Switch; the code stays.
 _Avoid_: Time of year, theme
 
 **Holiday**:
-A date the Edition lists by a rule, a fixed day and month (24 August) or the nth weekday of a month (День вишиванки, the third Thursday of May), with its own Decor motif. On a Holiday its motif shows instead of the Season's.
+A date the Edition lists by a rule, a fixed day and month (24 August) or the nth weekday of a month (День вишиванки, the third Thursday of May), with its own Decor motif. On a Holiday its motif shows instead of the Season's. Paused in the UA Edition in 1.0 behind the Decor Feature Switch; the code stays.
 _Avoid_: Event, celebration, special day
 
 ### Entries
@@ -165,19 +165,56 @@ _Avoid_: Recent, log
 ### Progress
 
 **Active Day**:
-A local calendar day on which the user opened the app.
+A local calendar day on which the reader earned at least 5 XP from learning actions, counted separately from the Daily Goal. Active Days recorded before 1.0, when a day on which the app was opened was an Active Day, stay Active Days. Derived from the XP log and the kept earlier days, never stored on its own.
+_Avoid_: Opened day, visit day
 
 **Streak**:
-The number of consecutive Active Days up to today; missing a day resets it. Always derived from Active Days, never stored on its own.
+The number of consecutive Active Days up to today. A Streak freeze covers a missed day and a Break bridges its days without adding to the count; a missed day with no freeze and no Break resets the Streak, with no repair. Always derived from the XP log by local date, with the freezes and Breaks, never stored on its own.
 _Avoid_: Chain, run
 
 **Best Streak**:
-The most consecutive Active Days the user has ever had, derived from them like the Streak and never stored; a reset of the Streak leaves it.
+The longest Streak the reader has ever had, derived like the Streak and never stored; a reset of the Streak leaves it.
 _Avoid_: Top streak, longest chain
 
+**XP**:
+The points a learning action earns: a right answer in a Game (1 per Round), a finished Game with at least half the answers right (+5), a new Best result in a Game Mode (+5), the solved Daily Crossword (15), a Review answer, Known or Unknown (1, at most 10 a day), and a right answer to a Quick Question (2). These are the UA Edition's defaults; the Edition config holds the amounts. Known on a new Entry, Learned, a Streak day, the first visit of the day, sharing and the Word of the Day give 0. A mistake never takes XP away, and a Game has no daily XP cap. Badges give no XP.
+_Avoid_: Points, score, coins, experience
+
+**XP log**:
+The append-only record of the reader's progress, kept per Edition: XP records, the Daily Goal set for a day, a freeze consumed, a Break started and a Badge earned. Every record has a unique id, a local date and a time. Sync merges XP logs as a set union by id, so two devices never double the XP. Total XP, Level, today's XP, Active Days, Streak, Best Streak, freezes held and Break eligibility are derived from it and never stored.
+_Avoid_: XP history, score table, ledger
+
+**Level**:
+A step derived from total XP: 50 XP reach level 1, each level up to 10 costs 10% more than the one before, then every level costs 120 XP, with no top. The Edition supplies a name for every five levels. A Level locks nothing.
+_Avoid_: Rank, tier, grade
+
+**Daily Goal**:
+The XP the reader aims for on a local day: 10, 20, 30 or 50, chosen in onboarding with 20 highlighted. It is recorded per day in the XP log, so a past day keeps the goal the reader had then; a change applies from the same local day and a day already met stays met. It is separate from the Active Day threshold of 5 XP. It replaces the Daily Limit.
+_Avoid_: Target, quota, Daily Limit
+
+**Streak freeze**:
+A cover for one missed day that keeps the Streak, used automatically. A new reader holds 2, one is added for every 7 Streak days, and at most 2 are held at once.
+_Avoid_: Streak saver, repair, shield
+
+**Break**:
+A pause of the Streak the reader starts: up to 7 days, once every 30 days, free. Break days keep the Streak and add nothing to it.
+_Avoid_: Vacation, pause (the polite pause is a notification rule), repair
+
+**Badge**:
+A kept milestone, about 20 in all: Streak days, confirmed learned Entries, the first win in each group of Game Modes, Daily Crosswords in a row, the first right Game answer on a rarity-5 Word and Levels. A win for a Badge is a finished Game with at least half the answers right. The Core holds a catalogue of conditions; an Edition chooses its Badges, names them and adds its own from the catalogue's parameterised kinds. A Badge is never taken away, keeps the date it was earned, syncs through the Account and gives no XP.
+_Avoid_: Achievement, trophy, medal
+
+**Profile**:
+The screen of the reader's whole progress: Level and progress to the next, total XP, Streak, Best Streak, the Active Days calendar, confirmed learned Entries by rarity, Badges with progress, the Best result of each Game Mode and a button to share the Level; the reader's earlier numbers (Seen, Favorites, Known, Game results) stay available. Without an Account it offers to save the progress.
+_Avoid_: Account (the identity that syncs), dashboard, stats screen
+
+**Mascot**:
+The Edition's character, a silent figure that moves and shows short lines from the Edition in onboarding, celebrations (a new Level, a Badge, the Daily Goal, Streak milestones), Game reactions and empty states, and never interrupts the Feed. Its look and motion belong to the design.
+_Avoid_: Avatar, bot, assistant
+
 **Account**:
-The optional identity ("SLOVO ID") that keeps a user's words and progress across devices. One Account works in every Edition, and the user sees it as «SLOVO ID» in each of them; each Edition's data stays separate. An email has one Account, which every Sign-in method reaches: a Sign-in code, Sign in with Google or Sign in with Apple. Without an Account everything lives on the device only.
-_Avoid_: Cabinet, profile, login
+The optional identity that keeps a reader's words and progress across devices, shown under the name its Edition gives it (set in the Edition's config), never «SLOVO ID». One Account works in every Edition; each Edition's data stays separate. An email has one Account, which every Sign-in method reaches: a Sign-in code, Sign in with Google or Sign in with Apple. Knowledge Marks, the XP log and Badges sync through it. Without an Account everything lives on the device only.
+_Avoid_: Cabinet, login, SLOVO ID (the old name)
 
 **Session**:
 One device's sign-in to an Account, ended on that device or on all at once.
@@ -202,7 +239,7 @@ The vertical stream of Entries the user swipes through on the home screen; Corre
 _Avoid_: Timeline, home list
 
 **Feed Notice**:
-A Feed card that is not an Entry: the Weekly Recap, the Community Word, a first-week card, «Пам'ятаєте вчорашнє слово?» (yesterday's Word of the Day in Self-check style) or the Daily Limit card. From the second card on, the day's Feed Notices take a card each, in the order Weekly Recap, Community Word, first-week card, yesterday's Word; the Daily Limit card comes once the limit is reached. A Feed Notice counts in no turn and no Review slot and makes nothing Seen; swiping past it closes it for the local day.
+A Feed card that is not an Entry, shown one at a time. The 1.0 list: the Weekly Recap, the Community Word, a first-week card, «Пам'ятаєте вчорашнє слово?» (yesterday's Word of the Day in Self-check style), «Може, на сьогодні досить?», a Level milestone at Levels 5, 10 and 20 that suggests a wider rarity or a new Category, the offer to save progress, the later onboarding questions and the notification re-ask. «Може, на сьогодні досить?» comes once a local day after 50 distinct Seen Entries, has no setting and never locks the Feed. The save-progress Notice comes without an Account on day 3 of the Streak and after the first new Level, at most twice in all; the notification re-ask comes 7 days after a refusal, once. A reader who finished the old onboarding gets the Daily Goal choice once through a Feed Notice. In the Feed a Feed Notice comes before a due Review, a due Review before a Quick Question and a Quick Question before the rest. It counts in no turn and no Review slot and makes nothing Seen; swiping past it closes it for the local day.
 _Avoid_: Banner, tip (a Tip is an Entry)
 
 **Seen**:
@@ -218,26 +255,43 @@ What the reader says about an Entry on its card: Known («Знаю») or Unknown
 _Avoid_: Rating, grade
 
 **Review**:
-An Entry coming back to the Feed after 1, 3 or 7 local days. Unknown starts it at 1 day; Known on a Review moves it from 1 to 3 days, then to 7 days; Unknown at any step starts again at 1 day. A Review overrides Seen: a due Entry comes back even if it is Seen in the current Cycle. Answers in the Game never move a Review.
+An Entry coming back to the Feed after 1, 3, 7, 30 or 90 local days. Unknown starts it at 1 day; Known on a Review moves it to the next step; Unknown at any step starts again at 1 day. Entries on the old 7-day step move on to 30 days. A Review overrides Seen: a due Entry comes back even if it is Seen in the current Cycle. Game answers never move a Review, except that a wrong answer marks the Entry Unknown.
 _Avoid_: Repeat, flashcard, spaced repetition
 
 **Due**:
 An Entry is due for Review on or after its Review day, and stays due until the reader marks it. A Hidden Entry or an Entry that is not eligible is skipped until it is eligible again.
 
 **Learned**:
-An Entry that is Known on its 7-day Review, or Known with no earlier mark. It stops coming back for Review, stays in the Cycle and is counted as known in the statistics.
+An Entry that is Known on its 90-day Review. It stops coming back for Review and stays in the Cycle. Badges and the Profile count confirmed Entries: an Entry is confirmed when it is Known on a Review of 7 days or later, or answered right in a Game or a Quick Question.
+_Avoid_: Mastered
 
 **Self-check**:
 A setting («Перевір себе», off by default) that hides the answer on an Entry card until the reader taps: a Word card shows only the Lemma with Stress, part of speech and Category, a Correction card only the non-standard form, an Idiom card only the expression and the chip of its Idiom Type, a Synonym Row card only its dominant («іти → ?»), a Tip card only its title and its non-standard form (only the title when it has none). The Knowledge Mark buttons work only after the reveal. It applies to the Feed, the Word of the Day included, and not to the widget or Share Cards.
 _Avoid_: Quiz mode, test mode
 
 **Mix**:
-The set of Categories of Words, plus Corrections as a whole with their own Categories under it, plus Idioms, Synonym Rows and Tips each as a whole, that the user chose to see in the Feed, notifications, widgets and the Game. At least one Category of each list always stays in the Mix. The Mix also holds the Rarity Floor.
+The set of Categories of Words, plus Corrections as a whole with their own Categories under it, plus Idioms, Synonym Rows and Tips each as a whole, that the reader chose to see in the Feed, notifications, widgets and the Game. At least one Category of each list always stays in the Mix. The Mix also holds the Rarity Floor, the Rarity Ceiling, the Mix kind weights and the frequency of the Quick Question.
 _Avoid_: Filter, preferences
 
 **Rarity Floor**:
 The lowest rarity of Words the reader wants, «від 1» to «від 5», default «від 1». Only Words of that rarity or rarer are eligible, in the Feed and the Game, so a high floor leaves only the rarest Words. Entries of other kinds have no rarity and are not affected. Set in the Mix or by the Rarity Test. Part of the Mix.
 _Avoid_: Difficulty, level
+
+**Rarity Ceiling**:
+The highest rarity of Words the reader wants, «до 1» to «до 5», default «до 5». Only Words up to that rarity are eligible. The Rarity Floor is never above the Rarity Ceiling; a Rarity Test that sets the Floor above the Ceiling raises the Ceiling to it. Part of the Mix.
+_Avoid_: Maximum difficulty
+
+**Mix kind weight**:
+«Менше», «Звичайно» or «Більше» for each of Corrections, Idioms, Synonym Rows and Tips in the Mix; Words fill the rest. «Вимкнено» stays a separate switch per kind. The questionnaire's «Навіщо» sets the starting weights.
+_Avoid_: Ratio, priority
+
+**Quick Question**:
+A Feed slot that shows one Round from an enabled Game Mode over an Eligible Entry. The Mix sets its frequency: off, every 20th, every 10th (default) or every 6th card. A right answer earns 2 XP; a wrong one marks the Entry Unknown. It makes nothing Seen beyond its Entry's own rules.
+_Avoid_: Pop quiz, Feed Game
+
+**Questionnaire**:
+The questions that tune the Feed to the reader. Onboarding asks two: «Хто ви» (sets the Rarity Ceiling: «Навчаюсь» «до 4», the others «до 5») and «Навіщо» (sets the Mix kind weights); skipping them keeps the defaults. The interests question (unselected Categories become Hidden Categories), the vocabulary self-rating (sets the Rarity Floor and whether to offer the Rarity Test) and the Mix review come later through Feed Notices. The reader can retake it from Settings. Its answers reach the owner only as anonymous counters and as properties of the anonymous Analytics id.
+_Avoid_: Survey, form
 
 **Hidden Entry**:
 An Entry the user disliked; it never appears in the Feed, notifications, widgets or the Game again unless unhidden. Any kind of Entry can be hidden from its card, and the Hidden screen lists Hidden Entries by kind, Synonym Rows («Синонімічні ряди») and Tips («Поради») included, while the Edition turns the kind on.
@@ -268,26 +322,30 @@ _Avoid_: Weekly report, digest, summary
 _Avoid_: Word of the week, top word, trending word, Word of the Day
 
 **Community Counters**:
-Anonymous counts of how many readers know an Entry, don't know it and saved it, shown under its mark buttons as «Знають {known} з {total} читачів · зберегли {saved}», and of its Favorites adds per ISO week, which choose the Community Word. A device sends only the changes it made itself after the update, with no Account and no device id, never Game answers, and nothing while «Ділитися анонімною статистикою» is off; the server keeps totals, never one reader's marks.
-_Avoid_: Analytics, stats, statistics (the reader's own numbers), ratings
+Anonymous counts of how many readers know an Entry, don't know it and saved it, shown under its mark buttons as «Знають {known} з {total} читачів · зберегли {saved}», and of its Favorites adds per ISO week, which choose the Community Word. A device sends only the changes it made itself after the update, with no Account and no device id, never Game answers, and nothing while «Ділитися анонімною статистикою» is off; the server keeps totals, never one reader's marks. They are not Analytics.
+_Avoid_: Stats, statistics (the reader's own numbers), ratings
+
+**Analytics**:
+Reader-consented product events (onboarding steps, Games, Review, goals, Streak events, settings, screens) sent with an anonymous id through one port of the Core, to measure retention and goal completion. No advertising id, no location, no contacts, no session recording and no tracking prompt. One Settings switch, «Ділитися анонімною статистикою», turns off both Analytics and Community Counters. Distinct from Community Counters, which count Entries and never events.
+_Avoid_: Tracking, telemetry, stats (the reader's own numbers)
 
 **Mistake Report**:
 «Повідомлення про помилку»: what a reader sends from an Entry card's menu about a mistake in that Entry: its type (typo, Stress, Definition or other), an optional comment of at most 500 characters (required for other), the Edition, the Entry id, the app version and the content version. It carries no Account and no device id, waits on the device until it can be sent, and is kept on the server until the owner resolves it.
 _Avoid_: Bug report, feedback, complaint
 
 **Daily Limit**:
-«Ліміт на день»: a setting, off by default, of 10, 20 or 30 distinct Entries Seen on a local day, the Word of the Day included. At the limit the Feed shows the Feed Notice «На сьогодні досить. Повертайтеся завтра»; «Гортати далі» removes it until tomorrow. The limit never locks the Feed.
-_Avoid_: Cap, quota, screen time
+Retired in 1.0. The old setting «Ліміт на день» is replaced by the Daily Goal and by the Feed Notice «Може, на сьогодні досить?» after 50 Seen Entries. The word survives only in history, in ADR 0054.
+_Avoid_: use Daily Goal or the 50-Seen Notice
 
 **Mood**:
-«настрій»: one of the moods an Edition lists (id, name, emoji) that a Word may carry. «Слово під настрій» opens a mood's roulette, which lands on a random Eligible Word of that mood and opens its card without making it Seen.
+«настрій»: one of the moods an Edition lists (id, name, emoji) that a Word may carry. «Слово під настрій» opens a mood's roulette, which lands on a random Eligible Word of that mood and opens its card without making it Seen. Paused in the UA Edition in 1.0 behind its Feature Switch; the code stays.
 _Avoid_: Emotion, feeling, vibe
 
 **Reserved**:
 A Word already promised to a scheduled notification, so no other notification picks it. Reserved is not Seen.
 
 **Notification time**:
-One of the user's local times of day at which a notification comes, such as 09:00. A new user has the Edition's default times; the user may keep up to 10, no two equal, always in time order. With none left, notifications are off. Notification times stay on the device. Notifications come at most 14 days after the user last opened the app: the last one of the 14th day is a farewell with no Word, and nothing comes after it until the next open.
+One of the user's local times of day at which a notification comes, such as 09:00. A new user has the Edition's default times; the user may keep up to 10, no two equal, always in time order. With none left, notifications are off. Notification times stay on the device. Notifications come at most 14 days after the user last opened the app: the last one of the 14th day is a farewell with no Word, and nothing comes after it until the next open. From 1.0 the morning notification is the Word of the Day and one evening notification chooses between the Streak warning (Streak of 7 days or more, today below 5 XP, no freeze held) and «Ціль ще не виконана» (while the Daily Goal is not met), or nothing; at most 2 a day and the polite pause cover all of them, and the farewell «Ми зупиняємо нагадування» comes on the 14th day without opening.
 _Avoid_: Reminder, alarm, schedule
 
 **Word of the Day**:
