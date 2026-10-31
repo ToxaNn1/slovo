@@ -1,4 +1,5 @@
-import { outOfOrder, shuffled, type GameMode } from './game-mode';
+import { outOfOrder, type GameMode } from './game-mode';
+import { shuffled } from '../shuffled';
 
 /** How many words an expression that plays has, at least and at most. */
 const WORDS = { min: 2, max: 8 } as const;

@@ -1,5 +1,6 @@
 import { renderStress, stressedVowelsOf } from '../entries/stress';
-import { ROUND_OPTIONS, shuffled, type GameMode } from './game-mode';
+import { ROUND_OPTIONS, type GameMode } from './game-mode';
+import { shuffled } from '../shuffled';
 
 /**
  * «Звідки слово», the Core's origin mode (ADR 0052): a Round shows a Word's

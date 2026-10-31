@@ -1,6 +1,7 @@
 import type { Idiom } from '@slovo/contracts';
 
-import { ROUND_OPTIONS, shuffled, type GameMode, type RoundOption } from './game-mode';
+import { ROUND_OPTIONS, type GameMode, type RoundOption } from './game-mode';
+import { shuffled } from '../shuffled';
 
 const folded = (text: string) => text.toLowerCase();
 

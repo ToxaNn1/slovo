@@ -1,5 +1,6 @@
 import { renderStress, stressedVowelsOf } from '../entries/stress';
-import { outOfOrder, shuffled, type FixedChip, type GameMode } from './game-mode';
+import { outOfOrder, type FixedChip, type GameMode } from './game-mode';
+import { shuffled } from '../shuffled';
 
 /** How many letters a Word that plays has, at least and at most. */
 const LETTERS = { min: 4, max: 9 } as const;

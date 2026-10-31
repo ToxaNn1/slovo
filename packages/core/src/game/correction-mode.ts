@@ -1,12 +1,7 @@
 import type { Correction } from '@slovo/contracts';
 
-import {
-  ROUND_OPTIONS,
-  shuffled,
-  type GameMode,
-  type RoundOption,
-  type TextRange,
-} from './game-mode';
+import { ROUND_OPTIONS, type GameMode, type RoundOption, type TextRange } from './game-mode';
+import { shuffled } from '../shuffled';
 
 /** Text as it compares to other text, regardless of case. */
 const folded = (text: string) => text.toLowerCase();

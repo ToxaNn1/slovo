@@ -4,7 +4,7 @@ import type { Edition } from '../edition/edition';
 import type { Entries } from '../entries/entries';
 import type { Mix } from '../entries/mix';
 import { renderStress, stressedVowelsOf } from '../entries/stress';
-import { shuffled } from '../game/game-mode';
+import { shuffled } from '../shuffled';
 import type { Random } from '../ports';
 
 /** How many Words of each rarity the Rarity Test asks about. */

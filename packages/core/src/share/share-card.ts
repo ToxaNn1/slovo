@@ -2,7 +2,7 @@ import { fill, type EditionStrings } from '@slovo/contracts';
 
 import type { AnyEntryCard } from '../feed/entry-feed-card';
 import type { LocalDate } from '../local-date';
-import type { WeeklyRecapModel } from '../progress/weekly-recap';
+import type { WeeklyRecapModel } from '../feed/weekly-recap';
 import { wordGrammarText } from '../entries/part-of-speech';
 import { sentences } from '../sentences';
 import { withoutStress } from '../entries/stress';
