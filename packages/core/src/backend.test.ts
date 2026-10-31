@@ -21,7 +21,7 @@ import { fakeClock, randomOf, testEdition, testSchedule, word } from './test-sup
 
 // ADR 0064: the Core reaches the backend through one port, the contract's
 // client, and answers, retries and maps every call itself (ADR 0037); its
-// tests serve the contract in process (ADR 0039).
+// tests serve the contract in process (ADR 0064).
 
 /** The Backend port over a backend that serves the contract's `procedures`. */
 const backendServedBy = (procedures: ApiProcedures) => backendOver(serveApi(procedures));

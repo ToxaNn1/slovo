@@ -26,7 +26,7 @@ const strings = editionStrings.mix;
  * why the last Category's chip is disabled, the Rarity Floor choice while the
  * rarityFloor switch is on, and the Corrections and Idioms switches, each when
  * the Edition turns it on, with the chips of the Categories of Corrections
- * under the Corrections switch while it is on (ADR 0050). A change applies at
+ * under the Corrections switch while it is on (ADR 0033). A change applies at
  * once (the Core's Mix, ADR 0019).
  */
 export function MixChoices() {

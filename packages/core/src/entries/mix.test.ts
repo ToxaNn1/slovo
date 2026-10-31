@@ -28,7 +28,7 @@ const categories = [nature, speech, crafts];
  */
 const wordIdsOf = (category: Category) =>
   [0, 1, 2].map((index) => `w_${category.id}${String(index)}`);
-/** The Language Pack's Categories of Corrections, in its order (ADR 0050). */
+/** The Language Pack's Categories of Corrections, in its order (ADR 0033). */
 const work: Category = { id: 'work', displayName: 'At work' };
 const shop: Category = { id: 'shop', displayName: 'In the shop' };
 const correctionCategories = [work, shop];

@@ -26,7 +26,7 @@ CREATE TABLE categories (
   position INTEGER NOT NULL
 ) WITHOUT ROWID;
 
--- The Categories of Corrections, a list apart from the Words' (ADR 0050).
+-- The Categories of Corrections, a list apart from the Words' (ADR 0033).
 CREATE TABLE correction_categories (
   id TEXT PRIMARY KEY,
   display_name TEXT NOT NULL,

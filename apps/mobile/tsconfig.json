@@ -8,7 +8,7 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "types": ["node"],
-    // The routes import the app's modules as `@/…` (ADR 0053); Metro reads this too.
+    // The routes import the app's modules as `@/…` (ADR 0027); Metro reads this too.
     "paths": { "@/*": ["./src/*"] }
   },
   "include": ["**/*.ts", "**/*.tsx"],

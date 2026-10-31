@@ -200,7 +200,7 @@ export const userStateRecords = {
   /**
    * The Categories of Corrections the user put in the Mix or took out of it,
    * one record per Category, by Category id, apart from the Words' Categories,
-   * whose ids they may share (ADR 0050): whether it is in. One without a
+   * whose ids they may share (ADR 0033): whether it is in. One without a
    * record follows the Edition's default Mix. It syncs last write wins like the
    * rest of the Mix (ADR 0041); a new key needs no migration.
    */

@@ -40,7 +40,7 @@ function word(id: string, categoryId: string, extra: Partial<Word> = {}): Word {
   };
 }
 
-/** The Language Pack's Categories of Corrections, a list of their own (ADR 0050). */
+/** The Language Pack's Categories of Corrections, a list of their own (ADR 0033). */
 const everyday = { id: 'everyday', displayName: 'Щодня' };
 const work = { id: 'work', displayName: 'На роботі' };
 

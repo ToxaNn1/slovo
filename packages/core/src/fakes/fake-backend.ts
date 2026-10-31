@@ -66,7 +66,7 @@ export interface FakePublishedPack extends PackVersion {
 }
 
 /**
- * A backend for tests: the API contract served in process (ADR 0039), its
+ * A backend for tests: the API contract served in process (ADR 0064), its
  * procedures answering like the backend's over state held in memory, and
  * `backend`, the Core's Backend port over it (ADR 0064). The test reads and
  * sets the state by domain, and makes requests fail.

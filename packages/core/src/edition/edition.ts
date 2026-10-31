@@ -17,7 +17,7 @@ import {
  */
 export interface DefaultMix {
   readonly categoryIds: 'all' | readonly string[];
-  /** The Categories of Corrections in the Mix, under Corrections as a whole (ADR 0050). */
+  /** The Categories of Corrections in the Mix, under Corrections as a whole (ADR 0033). */
   readonly correctionCategoryIds: 'all' | readonly string[];
   readonly corrections: boolean;
   readonly idioms: boolean;

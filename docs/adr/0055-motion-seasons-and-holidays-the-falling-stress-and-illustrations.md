@@ -1,6 +1,6 @@
-# Feel of 0.8.14
+# Motion, Seasons and Holidays, the falling Stress and Illustrations
 
-Until 0.8.14 SLOVO worked but felt flat. Card transitions, the Favorites heart, the Game's answers and the sheets were built ticket by ticket at different speeds, and some ignored Reduce Motion; Decor was the same in January and in August, on Independence Day and on an ordinary Tuesday; a Word's Stress was simply there, with nothing to draw the eye to it; and no Word could carry an Illustration. Spec #886 sets one set of rules for motion and adds Seasons and Holidays to Decor, the falling Stress and Illustrations. The decisions come from the owner's grilling of 2026-10-25.
+One set of rules governs every animation of the app, Decor follows the Season and the Edition's Holidays, a Word's Stress falls into place and a Word may carry an Illustration; the decisions come from spec #886 and the owner's grilling of 2026-10-25.
 
 **Feature Switches.** `seasonalDecor`, `stressAnimation` and `illustrations` are required of every Edition and all on in the Ukrainian Edition. A feature whose switch is off is absent: plain Edition Decor and no «Сезонний декор» row, a still Stress mark, no Illustration. A remote switch only turns a feature off (ADR 0040).
 
@@ -11,7 +11,7 @@ Until 0.8.14 SLOVO worked but felt flat. Card transitions, the Favorites heart, 
 - **The UI thread.** Animations run in Reanimated on the UI thread, so a busy JavaScript thread never makes them stutter on an older phone.
 - **Reduce Motion.** Under Reduce Motion nothing moves across the screen: every animation becomes an opacity fade, or nothing where there is nothing to fade.
 
-An audit lists every animation of the card transition, the heart, the Game and the sheets with its timing and its Reduce Motion behaviour, in a findings document in the repository, and each area then gets one fix. The baseline the audit starts from: the heart springs to 1.2 and back with a light haptic when the reader saves; a right Game answer flashes green briefly and a wrong one shakes. The audit may change the baseline and says so in its pull request.
+The animation audit (`docs/design/animation-audit.md`) lists every animation with its timing and its Reduce Motion behaviour. The heart springs to 1.2 and back with a light haptic when the reader saves; a right Game answer flashes green briefly and a wrong one shakes.
 
 **Seasons and Holidays.**
 
@@ -29,7 +29,7 @@ An audit lists every animation of the card transition, the heart, the Game and t
 - **The field.** A Word may carry an optional `illustration`, the name of a PNG file in the Edition's `assets/illustrations/`, which the Edition folder module names (ADR 0035). The content CLI sets, edits and checks it like the other Word fields.
 - **Bundled, not in the pack.** Illustrations are Edition assets bundled in the app, so the Language Pack stays small and a Content update downloads no Illustration (ADR 0032). A Content update that names a file the app lacks shows no Illustration; the card never breaks.
 - **The build's refusals.** The Language Pack build refuses a Word whose file is missing, is not a PNG (by its `.png` name and its content), is over 150 KB (150 000 bytes) or is not square, naming the Word and every reason, so a broken Illustration never ships.
-- **Pack format 8.** The pack carries each Word's `illustration`, which an app on format 7 can't read, so the build writes pack format 8 and the app reads only it (ADR 0032); format 7 is no longer published.
+- **The pack format.** The pack carries each Word's `illustration`, which an older app can't read, so it took a new pack format (ADR 0032).
 - **On the card.** The Illustration sits above the Definition, at most 160 pt high, the same Illustration in light and dark mode; a tap on it does nothing. VoiceOver reads it as «Ілюстрація до слова {lemma}». A Word without an Illustration looks as before. Only Words carry Illustrations.
 - **Placeholders.** The Ukrainian Edition gives 15 Words agent-drawn vector placeholders exported as PNG until final art.
 

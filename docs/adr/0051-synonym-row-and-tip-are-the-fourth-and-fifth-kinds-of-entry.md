@@ -14,7 +14,7 @@ Until 0.8.11 SLOVO had three kinds of Entry: Words, Corrections and Idioms (ADR 
 
 **The build refuses**, with the reason: an unknown Word id on a dominant or a member; a row with fewer than 5 or more than 12 members; two members with the same text, in lower case; Stress on a letter of a row's text that is not a vowel, or past its end; a shade note over 60 characters; a Tip explanation over 300 characters; a Tip without a Game question, with other than one right and three wrong answers, or with two answers the same, in lower case; either kind without a source. The Language Pack build is the one place these rules live, and the content CLI (`pnpm content new synonym-row|tip`, `edit`, `retire`, `check`) calls the same rules. A Word that is Retired later loses its links silently: the member or the dominant stays as plain text, as a Correction's link to a Retired Word does.
 
-**Pack format 5.** An app on pack format 4 can't read the new kinds, so they came with pack format 5, through the one constant `PACK_FORMAT` (ADR 0032); format 6 (ADR 0052) keeps them. Packs of format 4 are no longer published, since there are no readers before 1.0.
+**The pack format.** An older app can't read the new kinds, so they took a new pack format (ADR 0032).
 
 **The Feed turns.** A Synonym Row's turn is every 9th card of the Cycle while the Cycle has unseen rows, and a Tip's every 11th card while it has unseen Tips, each counted from its kind's last card, like the Correction's turn on every 5th card and the Idiom's on every 7th. When turns fall on one card the order is Correction, Idiom, Synonym Row, Tip, and each loser takes the next card. A row or a Tip due for Review takes its kind's next turn before a new one, as Corrections and Idioms do (ADR 0043). A row or a Tip is Seen after the same dwell time as any Entry. The Word of the Day and the Review slot stay Words only.
 
@@ -34,7 +34,7 @@ Until 0.8.11 SLOVO had three kinds of Entry: Words, Corrections and Idioms (ADR 
 - **Tips as Idioms**: rejected. A Tip teaches a rule with a right form, not the meaning of a fixed expression.
 - **One kind for both**: rejected. A row and a Tip share no field beyond the sources, so every screen would branch on a flag.
 - **Categories and rarity on rows and Tips**: rejected. The Mix takes each kind in or out as a whole, as it does Idioms, and the Rarity Floor is a measure of Words.
-- **Keep pack format 4 and let an older app skip what it can't read**: rejected (ADR 0032).
+- **Keep the pack format and let an older app skip what it can't read**: rejected (ADR 0032).
 - **A new Widget Snapshot format**: rejected. The format changes only for what the widget can't read, and the widget draws the new kinds from the text it already reads.
 - **Synonym Rows or Tips as the Word of the Day or in the Review slot**: rejected. The morning stays a Word.
 - **Notifications of Synonym Rows and Tips**: rejected. A notification stays a Word, the habit the app is built on; rows and Tips reach the reader through the Feed and the widget.

@@ -4,7 +4,7 @@ The Maestro flows in `apps/mobile/maestro/` drive the development client on a si
 
 The rule:
 
-- **Maestro runs only on the owner's command**: any flow, the full smoke, and the manual CI workflow `maestro.yml`, which runs `launch.yaml` on a macOS runner (ADR 0042). Normally that is once per spec, at its end, on `main`.
+- **Maestro runs only on the owner's command**: any flow, the full smoke, and the manual CI workflow `maestro.yml`, which runs `launch.yaml` on a macOS runner (ADR 0004). Normally that is once per spec, at its end, on `main`.
 - **A ticket's PR touches no flow and takes no screenshots**, whatever screens it changes. Lint, typecheck, the unit tests and the Jest component tests guard it until the version's visual pass.
 - **One visual pass per version, at its end**, writes or updates the flows of the screens the version added or changed, takes the screenshots, and runs the smoke on the owner's command.
 - **The full smoke.** `smoke.yaml` (`pnpm test:smoke`) calls `smoke-1.yaml` and `smoke-2.yaml` in a row; `pnpm smoke:halves`, the default for the end-of-spec run, runs the two halves at once, each on its own simulator and Metro against one backend, under one machine-wide lock, and prints what passed and failed in each. The halves share no app state, and `account.yaml` and `sync.yaml`, which need the backend, are in the same half. A flow that needs a native module the installed client lacks waits for the EAS build that brings it. If a flow fails, the owner decides how to find the PR, and a small bug ticket follows.

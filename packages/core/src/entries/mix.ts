@@ -53,10 +53,10 @@ export interface CategoriesInMix {
 /**
  * The Mix as it stands. The Words' Categories are the Mix's own fields; the
  * Categories of Corrections sit under `correctionCategories`, with the same
- * rules (ADR 0050). `categoriesInMix` reads either list by kind.
+ * rules (ADR 0033). `categoriesInMix` reads either list by kind.
  */
 export interface MixState extends CategoriesInMix {
-  /** The Categories of Corrections, in or out one by one under Corrections as a whole (ADR 0050). */
+  /** The Categories of Corrections, in or out one by one under Corrections as a whole (ADR 0033). */
   readonly correctionCategories: CategoriesInMix;
   /** Whether each kind of Entry, as a whole, is in the Mix: Corrections, Idioms, Synonym Rows and Tips. */
   readonly kinds: KindsInMix;
@@ -103,7 +103,7 @@ export interface Mix {
 /**
  * Each list of Categories, by the kind of Entry it belongs to: its user-state
  * records, one per Category (ADR 0013, 0041), and the Edition's default for it.
- * The two lists may share an id, so each has records of its own (ADR 0050).
+ * The two lists may share an id, so each has records of its own (ADR 0033).
  */
 const CATEGORY_LISTS: Readonly<
   Record<

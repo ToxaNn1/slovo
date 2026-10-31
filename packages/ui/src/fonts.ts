@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 /**
  * Where the Core keeps the font files of the word and UI families its tokens
- * name (ADR 0061). Build tooling reads it; the app never imports this module.
+ * name (ADR 0006). Build tooling reads it; the app never imports this module.
  */
 export const CORE_FONTS_DIR = fileURLToPath(new URL('../assets/fonts', import.meta.url));
 

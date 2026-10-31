@@ -18,7 +18,7 @@ export default {
     '/node_modules/@react-native/babel-preset/',
   ],
   moduleNameMapper: {
-    // The routes import `src` as `@/…`, as tsconfig.json maps it for Metro (ADR 0053).
+    // The routes import `src` as `@/…`, as tsconfig.json maps it for Metro (ADR 0027).
     '^@/(.*)$': '<rootDir>/src/$1',
     // A plain view in place of the one native view jest-expo has no double for.
     '^expo-glass-effect$': '<rootDir>/jest.glass-effect.js',

@@ -1,6 +1,6 @@
 # Remote Feature Switches only turn features off
 
-A Feature Switch lives in an Edition's `edition.json` (ADR 0008, 0030), so turning a broken feature off once took a new build and an App Store review. For that emergency the backend keeps remote switches (spec #378): the owner turns a feature off in one Edition with one local command, and the apps and the backend stop offering it without a build.
+A Feature Switch lives in an Edition's `edition.json` (ADR 0030), so turning a broken feature off once took a new build and an App Store review. For that emergency the backend keeps remote switches (spec #378): the owner turns a feature off in one Edition with one local command, and the apps and the backend stop offering it without a build.
 
 **A remote switch only turns a feature off.** The effective value of a Feature Switch is the Edition's value and not off remotely, so the backend can never switch on what an Edition hasn't shipped. Every reader of a Feature Switch, in the app and on the backend, reads the effective value.
 
@@ -14,7 +14,7 @@ A Feature Switch lives in an Edition's `edition.json` (ADR 0008, 0030), so turni
 
 ## The app
 
-- **`openRemoteSwitches`** (`packages/core/src/edition/remote-switches.ts`) owns the app side, behind a `SwitchesApi` port the shell implements on the contract's client (`apps/mobile/src/edition/switches-api.ts`, tested against `serveApi`, ADR 0039). The shell opens it once per app run over the user state, before the Language Pack and the composition, from the last answer kept in the `device-only` record `edition.switches` (the names off and their ETag). Without the record, or when it can't be read, the Edition's values hold.
+- **`openRemoteSwitches`** (`packages/core/src/edition/remote-switches.ts`) owns the app side, behind a `SwitchesApi` port the shell implements on the contract's client (`apps/mobile/src/edition/switches-api.ts`, tested against `serveApi`, ADR 0064). The shell opens it once per app run over the user state, before the Language Pack and the composition, from the last answer kept in the `device-only` record `edition.switches` (the names off and their ETag). Without the record, or when it can't be read, the Edition's values hold.
 - **One Edition in effect.** It gives the Edition's object with `isFeatureEnabled` at the effective value, read from the last answer each time it is called, so modules that keep the Edition, such as Sync and the Account, act on the current value. Everything that read the Edition's switches reads this one.
 - **When it asks.** The lifecycle asks at launch and on each return to the foreground, naming the kept ETag. A request tries again by ADR 0037's rule; a failure keeps the answer the app has. A new answer is kept for the next launch.
 - **A changed effective value reopens.** The module makes a new Edition object and tells its subscribers; the lifecycle reopens the composition (ADR 0036), which plans the notifications as it opens, and writes the Widget Snapshot again. The Game tab goes and comes back while the app runs, and a reader on the Game screen when it goes is taken Home. An answer that changes no effective value reopens nothing; the settings are never reopened for a switch.

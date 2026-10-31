@@ -1,6 +1,6 @@
 # The backend is a factory too
 
-ADR 0008 makes one backend deployment serve every Edition, built like the app. A second Edition must get sign-in in its own language and its own content updates from the same deployment without a line of server code changing.
+All Editions share one backend deployment and one Postgres database, with data partitioned by Edition. That is what lets one Account (SLOVO ID) work across Editions with a single deployment, migration and bill, and because every deployment runs the same code, an Edition that ever needs isolation can get its own copy of the server without a rewrite. Inside, the backend is built like the app: a second Edition must get sign-in in its own language and its own content updates from the same deployment without a line of server code changing.
 
 The backend has two parts, like the app's Core and mobile shell (ADR 0006, 0018):
 
@@ -46,6 +46,7 @@ Each key has a fixed window that opens with its first request and lasts the limi
 
 ## Considered Options
 
+- **A separate backend and database per Edition**: rejected. It multiplies operations and cost, and it breaks a shared SLOVO ID unless a central auth service is added on top.
 - **Everything in the backend app, layered by folders**: rejected. Nothing would stop a rule from reaching into Hono or SQL, and the rules would be tested only through HTTP.
 - **The server rules in the app's Core**: rejected. Those rules never run on the reader's device, and the app would ship code it never calls.
 - **A registry of Editions in the database**: rejected. Editions live in git and change with a build; a second copy would drift.

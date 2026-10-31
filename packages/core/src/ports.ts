@@ -16,7 +16,7 @@ export interface ContentReadPort {
   listCategories(): Promise<readonly Category[]>;
   /**
    * Every Category of Corrections of the pack, a list apart from the Words'
-   * (ADR 0050), with its display name, in the pack's order, also one whose
+   * (ADR 0033), with its display name, in the pack's order, also one whose
    * Corrections are all Retired.
    */
   listCorrectionCategories(): Promise<readonly Category[]>;
@@ -105,7 +105,7 @@ export type Schedule = (run: () => void, delay: number) => () => void;
 /**
  * The backend as the Core reaches it: the API contract's client, one function
  * per procedure, which the shell builds with `createApiClient` and a test
- * builds over the contract served in process (ADR 0039, 0062). The Core
+ * builds over the contract served in process (ADR 0064). The Core
  * calls it only through `answerOf`, which turns every answer into a value,
  * and `withRetries`, the one retry rule (ADR 0037). A call that acts on an
  * Account names its Session as `context.token`.

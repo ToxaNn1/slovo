@@ -3,7 +3,7 @@ import type { z } from 'zod';
 import type { UserStateChanges } from '../ports';
 
 /**
- * How a record syncs (ADR 0005, 0013); `user-state-schema.ts` marks each
+ * How a record syncs (ADR 0013, 0041); `user-state-schema.ts` marks each
  * record. A record without a mark syncs by last write wins, one record at a
  * time.
  * - `device-only`: stays on this device (the notification times, say).

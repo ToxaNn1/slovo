@@ -53,7 +53,7 @@ export function isFromNotification({ from }: { readonly from?: string }): boolea
 export interface NotificationEnvironment {
   /**
    * Whether it is Expo Go. Expo Go never runs the `expo-notifications` config
-   * plugin that bundles the Edition's sound file (ADR 0023), so there the file
+   * plugin that bundles the Edition's sound file (ADR 0006), so there the file
    * can't be asked for by name.
    */
   readonly inExpoGo: boolean;

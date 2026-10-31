@@ -23,7 +23,7 @@ export interface HiddenEntryModel {
 /** A Hidden Category's row on the Hidden screen. */
 export interface HiddenCategoryModel {
   readonly id: string;
-  /** The list the Category is of, the Words' or the Corrections' (ADR 0050). */
+  /** The list the Category is of, the Words' or the Corrections' (ADR 0033). */
   readonly of: CategoryKind;
   /** Its display name; a Category of Corrections says so. */
   readonly name: string;
@@ -58,7 +58,7 @@ export interface HiddenScreenModel {
   readonly sections: readonly HiddenSectionModel[];
   /**
    * The Hidden Categories, in the Language Pack's order: the Categories out of
-   * the Mix (ADR 0019), the Words' and then the Corrections' (ADR 0050). The
+   * the Mix (ADR 0019), the Words' and then the Corrections' (ADR 0033). The
    * Corrections' are left out while Corrections as a whole are out or the
    * Edition turns them off, as on the Mix screen.
    */
