@@ -3,7 +3,7 @@
 # them at once on two simulators: `pnpm smoke:halves`.
 # Run it locally, never in CI:
 #
-#   SLOVO_EDITION=uk pnpm start          # Metro, in one terminal
+#   pnpm start                           # Metro, in one terminal
 #   pnpm test:smoke                      # in another, with the dev build installed
 #
 # Every setting has a default, and `-e` overrides it:

@@ -1,11 +1,10 @@
 import { readFileSync } from 'node:fs';
 
-import { EDITIONS_DIR, openAppConfig, openEdition, REPO_DIR } from '@slovo/language-pack/edition';
+import { openAppConfig, REPO_DIR } from '@slovo/language-pack/edition';
 import { describe, expect, it } from 'vitest';
 
 const eas: unknown = JSON.parse(readFileSync(new URL('eas.json', import.meta.url), 'utf8'));
 
-const ukrainian = openEdition(EDITIONS_DIR, 'uk');
 const app = openAppConfig(REPO_DIR).config;
 const { development, release } = app.buildProfiles.ios;
 
@@ -16,8 +15,12 @@ function buildProfileNames(): string[] {
 }
 
 describe('eas.json', () => {
-  it('has the build profiles the AppConfig names, one of each kind for iOS, over the simulator base', () => {
-    expect(buildProfileNames()).toEqual(['development-simulator', development, release]);
+  it('has exactly the build profiles the AppConfig names, one of each kind for iOS', () => {
+    expect(buildProfileNames()).toEqual([development, release]);
+  });
+
+  it('names no Edition in any build profile, so every build is the one app (ADR 0065)', () => {
+    expect(JSON.stringify(eas)).not.toMatch(/SLOVO_EDITION/);
   });
 
   it('keeps the build number in EAS, so a TestFlight build can raise it, and the version in the app config (ADR 0044)', () => {
@@ -32,26 +35,22 @@ describe('eas.json', () => {
           autoIncrement: true,
           environment: 'production',
           channel: app.updateChannel,
-          env: { SLOVO_EDITION: ukrainian.config.id },
         },
       },
     });
   });
 
-  it('builds a development client for the simulator only in the development profiles', () => {
+  it('builds a development client for the simulator only in the development profile', () => {
     expect(eas).toMatchObject({
       build: {
-        'development-simulator': {
+        [development]: {
           developmentClient: true,
           distribution: 'internal',
           ios: { simulator: true },
         },
-        [development]: {
-          extends: 'development-simulator',
-          env: { SLOVO_EDITION: ukrainian.config.id },
-        },
       },
     });
+    expect(eas).not.toHaveProperty(['build', release, 'developmentClient']);
   });
 
   it("submits the TestFlight build to the AppConfig's app in App Store Connect", () => {

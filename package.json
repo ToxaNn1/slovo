@@ -25,7 +25,7 @@
     "verify": "oxlint --quiet && TURBO_SCM_BASE=origin/main turbo run lint typecheck test --affected --concurrency=50% --output-logs=errors-only && pnpm --silent deps && prettier --check . --log-level warn",
     "format": "prettier --write .",
     "commitlint": "commitlint",
-    "knip": "SLOVO_EDITION=uk knip"
+    "knip": "knip"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.4",

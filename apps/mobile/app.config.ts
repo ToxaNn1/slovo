@@ -57,13 +57,6 @@ const { writeWidgetExtension } = tsxRequire(
   import.meta.url,
 ) as typeof WidgetExtension;
 
-/**
- * The one mobile shell builds whichever Edition the SLOVO_EDITION environment
- * variable selects. Everything Edition-specific in the native app comes from
- * the Edition folder; a missing or unknown Edition stops the build.
- */
-const EDITION_VARIABLE = 'SLOVO_EDITION';
-
 /** The native splash the AppConfig names (Decor slot 7), its images beside it. */
 function appSplash(app: AppFolder, projectRoot: string): SplashPluginOptions {
   const { imageWidth, light, dark } = app.splash();
@@ -309,26 +302,23 @@ function updates(
 }
 
 /**
- * Opens the Edition the build selects. A release build opens it for a
- * release, which refuses the placeholders a development build keeps, such as
- * the `slovo.example` domain and an empty Apple Team ID.
+ * Opens the Edition the app bundles, the AppConfig's default Edition (ADR
+ * 0065): every build of the one app bundles the same one, so no build names
+ * an Edition. A release build opens it for a release, which refuses the
+ * placeholders a development build keeps.
  */
-function selectEdition(editionsDir: string, build: Build): EditionFolder {
-  const known = listEditions(editionsDir);
-  const hint = `Known Editions: ${known.join(', ')}. Example: ${EDITION_VARIABLE}=${known[0] ?? '<edition>'} pnpm start`;
-  // Expo types every environment variable as `any`; narrow it here.
-  const value: unknown = process.env[EDITION_VARIABLE];
-  const id = typeof value === 'string' ? value : undefined;
-  if (id === undefined || id === '') {
-    throw new Error(`${EDITION_VARIABLE} is not set, so there is no Edition to build.\n${hint}`);
-  }
+function bundledEdition(editionsDir: string, app: AppFolder, build: Build): EditionFolder {
+  const id = app.config.defaultEdition;
   try {
     return openEdition(editionsDir, id, {
       build: build.kind === 'release' ? 'release' : 'development',
     });
   } catch (error) {
     if (error instanceof EditionFolderError && error.reason === 'unknown') {
-      throw new Error(`Unknown Edition "${id}" in ${EDITION_VARIABLE}.\n${hint}`, { cause: error });
+      throw new Error(
+        `app/app.json names the defaultEdition "${id}", which is not an Edition.\nKnown Editions: ${listEditions(editionsDir).join(', ')}`,
+        { cause: error },
+      );
     }
     throw error;
   }
@@ -353,7 +343,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
   requireReleaseApiUrl(build);
   const repoDir = join(projectRoot, '../..');
   const app = openApp(repoDir, build);
-  const edition = selectEdition(join(repoDir, 'editions'), build);
+  const edition = bundledEdition(join(repoDir, 'editions'), app, build);
   const { name, scheme, bundleId, appGroup, domain, updateChannel } = app.config;
   if (edition.config.linkDomain !== domain) {
     throw new Error(

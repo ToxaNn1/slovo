@@ -8,7 +8,7 @@ Every ADR number in order, one line each, with the decision in force. Read the l
 - [0004](0004-native-builds-in-eas-cloud.md) Native builds run in EAS; a manual CI macOS runner builds the simulator app for Maestro.
 - 0005: merged into 0041.
 - [0006](0006-editions-extend-core-only-through-extension-points.md) An Edition changes the Core only through Feature Switches, Extension Points and Decor; its config names its assets (fonts, widget palette, link domain, Apple ids, notification sound); Core fonts live in the Core.
-- [0007](0007-editions-live-at-head.md) Every Edition builds from `main`; per-Edition control is switches and update channels.
+- [0007](0007-editions-live-at-head.md) Every Edition builds from `main`; per-Edition control is switches; one build and one Update channel for the one app.
 - 0008: merged into 0030.
 - [0009](0009-editions-declare-their-content-targets.md) An Edition's content floors live in `content/targets.json`; the pack build fails on a miss.
 - [0010](0010-each-edition-keeps-an-append-only-id-registry.md) `content/ids.json` lists every Entry id ever issued; ids are never reused, a Word that goes is Retired.

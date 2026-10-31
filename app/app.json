@@ -7,8 +7,9 @@
   "domain": "slovo.example",
   "icon": "editions/uk/assets/icon.png",
   "splash": "editions/uk/decor/splash.json",
+  "defaultEdition": "uk",
   "updateChannel": "uk",
   "buildProfiles": {
-    "ios": { "development": "development-simulator-uk", "release": "testflight-uk" }
+    "ios": { "development": "development-simulator", "release": "testflight" }
   }
 }

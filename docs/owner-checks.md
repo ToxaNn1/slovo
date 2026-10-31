@@ -9,11 +9,11 @@ The one native build of 0.9 goes to TestFlight (ADR 0004). It carries every nati
 ### Before the build
 
 1. In `editions/uk/edition.json`, set `linkDomain` and `legalDomain` to the Edition's real domains and `appleTeamId` to the Team ID the app is signed with: the release build refuses the `slovo.example` placeholder and an empty Team ID.
-2. Create the app in App Store Connect (bundle id `app.slovo.uk`), set its id as `appStoreConnectAppId` in `editions/uk/edition.json` and as `submit.testflight-uk.ios.ascAppId` in `apps/mobile/eas.json` (a test keeps the two equal).
+2. Create the app in App Store Connect (bundle id `app.slovo.uk`), set its id as `appStoreConnectAppId` in `app/app.json` and as `submit.testflight.ios.ascAppId` in `apps/mobile/eas.json` (a test keeps the two equal).
 3. Turn on the Sign in with Apple, App Groups and Associated Domains capabilities for `app.slovo.uk` in the Apple Developer account.
 4. Check that `apps/mobile/certs/certificate.pem`, the public certificate of OTA updates, is on `main`; its private key lives only in EAS (ADR 0062). The release build refuses to start without the certificate.
 5. Set the EAS `production` environment's variables: `EXPO_PUBLIC_SLOVO_API_URL` (the backend's `https://` address; the release build refuses any other), `EXPO_PUBLIC_SENTRY_DSN` and `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID`.
-6. Build and submit from `apps/mobile`: `npx eas-cli build -p ios --profile testflight-uk`, then `npx eas-cli submit -p ios --profile testflight-uk --latest`. Neither needs another flag; the build number rises by itself. Install the build from TestFlight.
+6. Build and submit from `apps/mobile`: `npx eas-cli build -p ios --profile testflight`, then `npx eas-cli submit -p ios --profile testflight --latest`. Neither needs another flag; the build number rises by itself. Install the build from TestFlight.
 
 ### Native features since 0.6
 
@@ -49,6 +49,6 @@ The one native build of 0.9 goes to TestFlight (ADR 0004). It carries every nati
 ### OTA updates (ADR 0062, `.github/workflows/ota-update.yml`)
 
 1. Create the repository secret `EXPO_TOKEN` (an Expo access token of the account that owns the EAS project), and in the EAS environment `production` the file variable `UPDATES_PRIVATE_KEY` with visibility «sensitive», holding the private key of `apps/mobile/certs/certificate.pem`, beside the bundle's `EXPO_PUBLIC_*` variables.
-2. Publish a first staged update: Actions → OTA update → Run workflow with the Edition `uk`, a rollout of `10` and a message. Check that the run prints the update group and the update id, and that the EAS dashboard shows the update on the channel `uk` at 10%.
+2. Publish a first staged update: Actions → OTA update → Run workflow with a rollout of `10` and a message. Check that the run prints the update group and the update id, and that the EAS dashboard shows the update on the channel `uk` at 10%.
 3. On a TestFlight build of the channel `uk` that receives the update, check that «Про застосунок» shows its update id after the next launch.
 4. Run the workflow again with that update group and a rollout of `100`, and check that the EAS dashboard shows the update at 100%.

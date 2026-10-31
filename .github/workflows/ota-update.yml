@@ -1,7 +1,8 @@
 name: OTA update
 
-# Publishes a signed OTA update of one Edition to its Update channel, to a
-# share of its readers (ADR 0062). Started by hand only: Actions → OTA update →
+# Publishes a signed OTA update of the one app, every Edition inside it, to
+# the app's one Update channel (`updateChannel` in app/app.json), to a share
+# of its readers (ADR 0062). Started by hand only: Actions → OTA update →
 # Run workflow. Publishing is never a side effect of merging, so there is no
 # push trigger. A first run publishes the update to the rollout percentage and
 # prints its update group; a second run with that group widens the rollout.
@@ -14,10 +15,6 @@ name: OTA update
 on:
   workflow_dispatch:
     inputs:
-      edition:
-        description: Edition id; its Update channel has the same name
-        required: true
-        default: uk
       rollout:
         description: Rollout percentage, 1 to 100
         required: true
@@ -32,9 +29,9 @@ on:
 permissions:
   contents: read
 
-# One publish per Edition at a time; a newer run waits rather than cancelling one.
+# One publish at a time; a newer run waits rather than cancelling one.
 concurrency:
-  group: ota-update-${{ inputs.edition }}
+  group: ota-update
   cancel-in-progress: false
 
 env:
@@ -42,7 +39,6 @@ env:
   EAS_CLI: eas-cli@24.13.0
   EAS_ENVIRONMENT: production
   EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-  SLOVO_EDITION: ${{ inputs.edition }}
   ROLLOUT: ${{ inputs.rollout }}
   MESSAGE: ${{ inputs.message }}
   UPDATE_GROUP: ${{ inputs.update-group }}
@@ -57,10 +53,6 @@ jobs:
       - name: Check the inputs
         shell: bash
         run: |
-          if [[ ! "$SLOVO_EDITION" =~ ^[a-z0-9-]+$ || ! -f "editions/$SLOVO_EDITION/edition.json" ]]; then
-            echo "::error::Unknown Edition \"$SLOVO_EDITION\": expected a folder editions/<edition-id>"
-            exit 1
-          fi
           if [[ ! "$ROLLOUT" =~ ^[0-9]+$ ]] || (( ROLLOUT < 1 || ROLLOUT > 100 )); then
             echo "::error::The rollout percentage is \"$ROLLOUT\": expected a whole number from 1 to 100"
             exit 1
@@ -84,7 +76,7 @@ jobs:
         shell: bash
         run: |
           npx --yes "$EAS_CLI" update:edit "$UPDATE_GROUP" --rollout-percentage "$ROLLOUT" --non-interactive
-          echo "Update group \`$UPDATE_GROUP\` of the Edition \`$SLOVO_EDITION\` now reaches $ROLLOUT% of its channel." >> "$GITHUB_STEP_SUMMARY"
+          echo "Update group \`$UPDATE_GROUP\` now reaches $ROLLOUT% of its channel." >> "$GITHUB_STEP_SUMMARY"
 
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
         if: ${{ inputs.update-group == '' }}
@@ -96,7 +88,7 @@ jobs:
       - if: ${{ inputs.update-group == '' }}
         run: pnpm install --frozen-lockfile
       - if: ${{ inputs.update-group == '' }}
-        run: pnpm build:pack "$SLOVO_EDITION"
+        run: pnpm build:pack
 
       # The app accepts only an update signed with the key of this certificate.
       - name: Fetch the code-signing key
@@ -121,8 +113,9 @@ jobs:
         working-directory: apps/mobile
         shell: bash
         run: |
+          channel=$(jq -r '.updateChannel' ../../app/app.json)
           npx --yes "$EAS_CLI" update \
-            --channel "$SLOVO_EDITION" \
+            --channel "$channel" \
             --platform ios \
             --message "$MESSAGE" \
             --rollout-percentage "$ROLLOUT" \
@@ -135,7 +128,7 @@ jobs:
           echo "Update group: $group"
           echo "Update id: $ids"
           {
-            echo "Published to the channel \`$SLOVO_EDITION\` for $ROLLOUT% of its readers."
+            echo "Published to the channel \`$channel\` for $ROLLOUT% of its readers."
             echo
             echo "- Update group: \`$group\` (run again with it to widen the rollout)"
             echo "- Update id: \`$ids\`"

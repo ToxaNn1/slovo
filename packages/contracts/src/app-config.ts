@@ -83,6 +83,12 @@ export const AppConfigSchema = z
     icon: RepoFileSchema,
     /** The native splash, a `splash.json` of Decor slot 7, its images beside it (ADR 0014). */
     splash: RepoFileSchema,
+    /**
+     * The Edition the app bundles and opens when no Edition matches the
+     * device language (ADR 0065). Every build and the Language Pack build
+     * without an id take it, so no build names an Edition of its own.
+     */
+    defaultEdition: z.string().regex(/^[a-z][a-z0-9-]*$/, 'Expected an Edition id'),
     /** The one Update channel the app's OTA updates come from (ADR 0062). */
     updateChannel: z.string().regex(/^[a-z][a-z0-9-]*$/, 'Expected a lower-case channel name'),
     /** The EAS build profiles of each platform, one per kind of build. */

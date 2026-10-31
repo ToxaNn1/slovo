@@ -12,7 +12,7 @@
 //
 // Ctrl-C stops the backend and Metro; Postgres and Mailpit keep running
 // (`docker compose stop` stops them). Settings, all optional:
-// SLOVO_EDITION (default uk), PORT (backend, default 8787) and
+// PORT (backend, default 8787) and
 // SLOVO_METRO_PORT (default 8081).
 
 import { spawn, spawnSync } from 'node:child_process';
@@ -24,7 +24,6 @@ import { setTimeout as sleep } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
-const edition = process.env.SLOVO_EDITION ?? 'uk';
 
 function step(text) {
   console.log(`\n▸ ${text}`);
@@ -112,8 +111,8 @@ run('docker', ['compose', 'up', '--detach', '--wait']);
 makeEnvFile();
 step('Running the backend migrations');
 run('pnpm', ['--filter', '@slovo/backend', 'db:migrate']);
-step(`Building the Language Pack of the Edition ${edition}`);
-run('pnpm', ['build:pack', edition]);
+step("Building the Language Pack of the app's default Edition");
+run('pnpm', ['build:pack']);
 
 const apiPort = await freePortFrom(Number(process.env.PORT ?? 8787));
 const metroPort = await freePortFrom(Number(process.env.SLOVO_METRO_PORT ?? 8081));
@@ -155,7 +154,7 @@ const metro = spawn(
   {
     cwd: root,
     stdio: 'inherit',
-    env: { ...process.env, SLOVO_EDITION: edition, EXPO_PUBLIC_SLOVO_API_URL: apiUrl },
+    env: { ...process.env, EXPO_PUBLIC_SLOVO_API_URL: apiUrl },
   },
 );
 

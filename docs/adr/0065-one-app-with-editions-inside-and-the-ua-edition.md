@@ -8,7 +8,7 @@ ADR 0002 made every language its own App Store app, an Edition built from the sh
 
 **One Edition is active at a time.** The app picks the Edition of the device language; with no Edition for it, the first onboarding screen asks the reader to choose. Settings switch the active Edition, and a switch restarts the app, so every module keeps reading one Edition fixed at launch and the shell still opens one Shell per run (ADR 0036). Each Edition keeps its own progress: History, Streak, XP, badges and Review are per Edition. Notifications, the widget, Spotlight and App Intents come only from the active Edition.
 
-**The device-language Edition ships in the app; the others download on choice.** After its download an Edition works fully offline, like the bundled one. Each Edition's configuration ships with its content; how is decided when the download is built.
+**The device-language Edition ships in the app; the others download on choice.** The bundled Edition is `defaultEdition` in the AppConfig (`app/app.json`), today the UA Edition: every build of the app bundles it, from one build profile per platform, and no build, Update or CI run names an Edition. After its download an Edition works fully offline, like the bundled one. Each Edition's configuration ships with its content; how is decided when the download is built.
 
 **Feature Switches stay per Edition.** An Edition still turns Core features on and off for itself, and a remote switch still only turns one off (ADR 0040).
 
@@ -24,7 +24,7 @@ ADR 0002 made every language its own App Store app, an Edition built from the sh
 
 - ADR 0002 is superseded. The 4.3 mitigation list (a name, Decor, content and listing per Edition) is no longer a rule: Decor, content and the store page stay per Edition because they are the Edition, not to pass review.
 - The factory rule that a language needs features of its own to become an Edition goes; a language needs a store page localization for its market. Two or more unique features remain a wish.
-- ADRs written for one app per Edition give way to this one where they conflict and are rewritten with the tickets that do the work: the Edition's own bundle id, Apple ids and link domain (ADR 0006), legal pages behind the Edition's domain (ADR 0049), Collection Links (ADR 0058), one Update channel per Edition (ADR 0062) and the backend behind the Edition's domain (ADR 0063).
+- ADRs written for one app per Edition give way to this one where they conflict and are rewritten with the tickets that do the work: the Edition's own bundle id, Apple ids and link domain (ADR 0006), legal pages behind the Edition's domain (ADR 0049), Collection Links (ADR 0058) and the backend behind the Edition's domain (ADR 0063).
 - The widget and Spotlight are native code baked for one Edition today; they read the active Edition's snapshot instead.
 
 ## Considered Options

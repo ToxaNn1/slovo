@@ -1,8 +1,10 @@
 /**
  * Builds an Edition's Language Pack:
  *
- *   pnpm build:pack <edition-id> [--record] [--out <file>]
+ *   pnpm build:pack [<edition-id>] [--record] [--out <file>]
  *
+ * Without an id it builds the pack of the Edition the app bundles, the
+ * AppConfig's default Edition (ADR 0065), as every app build does.
  * The pack goes to `editions/<edition-id>/dist/language-pack.db` unless
  * `--out` says otherwise. Prints the content report after every successful
  * build. Exits non-zero, listing every error, when the content is invalid,
@@ -25,7 +27,9 @@ import { formatBuildError } from './build-error';
 import {
   EDITIONS_DIR,
   EditionFolderError,
+  openAppConfig,
   openEdition,
+  REPO_DIR,
   type EditionFolder,
 } from './edition-folder';
 import { recordContent } from './record';
@@ -38,11 +42,11 @@ function main(): number {
     allowPositionals: true,
     options: { out: { type: 'string' }, record: { type: 'boolean' } },
   });
-  const [editionId] = positionals;
-  if (editionId === undefined || positionals.length > 1) {
-    console.error('Usage: pnpm build:pack <edition-id> [--record] [--out <file>]');
+  if (positionals.length > 1) {
+    console.error('Usage: pnpm build:pack [<edition-id>] [--record] [--out <file>]');
     return 2;
   }
+  const editionId = positionals[0] ?? openAppConfig(REPO_DIR).config.defaultEdition;
 
   let edition: EditionFolder;
   try {
