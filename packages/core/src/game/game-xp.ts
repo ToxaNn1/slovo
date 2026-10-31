@@ -3,14 +3,16 @@ import type { UserStateChanges } from '../ports';
 /**
  * A learning action that earns XP (ADR 0066): a Game Round answered right, a
  * finished Game with its right answers out of those given, a new Best result,
- * the Daily Crossword of a local date solved, and a Review answer.
+ * the Daily Crossword of a local date solved, a Review answer, and a Quick
+ * Question answered right in the Feed.
  */
 export type XpAction =
   | { readonly source: 'game-round' }
   | { readonly source: 'game-finished'; readonly right: number; readonly played: number }
   | { readonly source: 'game-best' }
   | { readonly source: 'daily-crossword'; readonly date: string }
-  | { readonly source: 'review-answer' };
+  | { readonly source: 'review-answer' }
+  | { readonly source: 'quick-question' };
 
 /**
  * The record an action appends, for a caller to write in one write with its

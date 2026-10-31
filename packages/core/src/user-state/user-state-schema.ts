@@ -44,13 +44,14 @@ const CounterChangeSchema = z.literal([-1, 0, 1]);
 /** A card's Entry and the local date it was on screen. */
 const EntryOnDateSchema = z.object({ entryId: z.string(), date: z.string() });
 
-/** The learning actions XP comes from (ADR 0066); the Quick Question's comes with its ticket. */
+/** The learning actions XP comes from (ADR 0066). */
 export const XpSourceSchema = z.literal([
   'game-round',
   'game-finished',
   'game-best',
   'daily-crossword',
   'review-answer',
+  'quick-question',
 ]);
 
 /**

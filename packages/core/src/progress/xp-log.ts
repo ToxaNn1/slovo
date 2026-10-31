@@ -93,6 +93,8 @@ function amountOf(table: XpTable, action: XpAction, reviewToday: number): number
       return table.dailyCrossword;
     case 'review-answer':
       return Math.max(0, Math.min(table.reviewAnswer, table.reviewDailyCap - reviewToday));
+    case 'quick-question':
+      return table.quickQuestion;
   }
 }
 

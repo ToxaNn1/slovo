@@ -179,6 +179,7 @@ describe('the XP log and the Game', () => {
         dailyCrossword: 15,
         reviewAnswer: 1,
         reviewDailyCap: 10,
+        quickQuestion: 0,
       },
     });
 

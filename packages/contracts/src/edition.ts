@@ -263,7 +263,8 @@ const XpAmountSchema = z.number().int().nonnegative();
  * The XP table (ADR 0066): what each learning action earns. The amounts come
  * from the Edition config, so they change with an update and not with a Core
  * release; UA Edition: Round 1, finished Game +5, new Best result +5, the
- * Daily Crossword 15, a Review answer 1 with at most 10 a day.
+ * Daily Crossword 15, a Review answer 1 with at most 10 a day, a Quick
+ * Question 2.
  */
 export const XpTableSchema = z.strictObject({
   /** A Round answered right. */
@@ -280,6 +281,8 @@ export const XpTableSchema = z.strictObject({
   reviewAnswer: XpAmountSchema,
   /** The most XP Review answers earn on one local day. */
   reviewDailyCap: XpAmountSchema,
+  /** A Quick Question answered right in the Feed. */
+  quickQuestion: XpAmountSchema,
 });
 
 export type XpTable = z.infer<typeof XpTableSchema>;

@@ -129,6 +129,7 @@ const validConfig = {
     dailyCrossword: 15,
     reviewAnswer: 1,
     reviewDailyCap: 10,
+    quickQuestion: 2,
   },
 };
 
@@ -338,6 +339,7 @@ describe('loadEdition', () => {
       bestResult: 5,
       dailyCrossword: 15,
       reviewAnswer: 1,
+      quickQuestion: 2,
       reviewDailyCap: 10,
     });
   });
