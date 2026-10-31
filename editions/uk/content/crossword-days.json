@@ -15618,5 +15618,42 @@
         "direction": "across"
       }
     ]
+  },
+  {
+    "date": "2027-12-05",
+    "words": [
+      {
+        "entryId": "w_xwnlrl",
+        "answer": "бусол",
+        "clue": "Те саме, що лелека.",
+        "row": 0,
+        "column": 2,
+        "direction": "down"
+      },
+      {
+        "entryId": "w_m7ya5m",
+        "answer": "бануш",
+        "clue": "Кукурудзяний куліш на овечому салі.",
+        "row": 0,
+        "column": 4,
+        "direction": "down"
+      },
+      {
+        "entryId": "w_tpp2xt",
+        "answer": "джура",
+        "clue": "В Україні XVI–XVIII ст. – зброєносець у козацької старшини.",
+        "row": 1,
+        "column": 0,
+        "direction": "across"
+      },
+      {
+        "entryId": "w_k3jgjm",
+        "answer": "палаш",
+        "clue": "Холодна зброя з довгим прямим і широким двосічним клинком на кінці, яка нагадує шаблю.",
+        "row": 4,
+        "column": 0,
+        "direction": "across"
+      }
+    ]
   }
 ]

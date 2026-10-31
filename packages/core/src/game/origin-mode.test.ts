@@ -16,7 +16,7 @@ import { seededRandom, testEdition, word } from '../test-support';
 
 /** The Edition's origin languages, in its order. */
 const languages: readonly OriginLanguage[] = [
-  { code: 'la', name: 'латина' },
+  { code: 'la', name: 'латинська' },
   { code: 'grc', name: 'грецька' },
   { code: 'trk', name: 'тюркські' },
   { code: 'pl', name: 'польська' },

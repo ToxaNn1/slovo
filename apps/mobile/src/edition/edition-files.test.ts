@@ -872,7 +872,7 @@ describe('the origin languages', () => {
 
   it('the Ukrainian Edition lists twelve, by ISO 639 code where one fits', () => {
     expect(EditionConfigSchema.parse(readJson('uk', 'config')).originLanguages).toEqual([
-      { code: 'la', name: 'латина' },
+      { code: 'la', name: 'латинська' },
       { code: 'el', name: 'грецька' },
       { code: 'trk', name: 'тюркські' },
       { code: 'pl', name: 'польська' },

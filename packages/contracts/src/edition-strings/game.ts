@@ -163,7 +163,7 @@ export const GameStringsSchema = z.strictObject({
     typed: templateOf('text'),
     /**
      * A row whose right answer names something other than its Entry, the row's
-     * title then that answer, e.g. «бурса — латина» in «Звідки слово». Takes
+     * title then that answer, e.g. «бурса — латинська» in «Звідки слово». Takes
      * `{title}` and `{answer}`.
      */
     withAnswer: templateOf('title', 'answer'),
