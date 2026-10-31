@@ -8,6 +8,8 @@ struct WidgetSnapshot: Decodable {
   static let readableFormat = 1
 
   let format: Int
+  /// The Edition the app wrote it in; the widget reads only its own Edition's.
+  let editionId: String
   /// Whether the reader finished the onboarding; until then the widget invites them to open the app.
   let onboardingFinished: Bool
   let entries: [WidgetEntry]
@@ -66,7 +68,8 @@ enum SnapshotStore {
   /// snapshot is here, whole.
   static let stagedFileName = "widget-snapshot.staged.json"
 
-  /// The snapshot the app wrote last, or nil before the app has written one.
+  /// The snapshot the app wrote last, or nil before the app has written one
+  /// in the widget's Edition.
   /// The file is read again after the staged one, as the rename may finish
   /// between the first two reads.
   static func latest() -> WidgetSnapshot? {
@@ -76,7 +79,10 @@ enum SnapshotStore {
         forSecurityApplicationGroupIdentifier: group)
     else { return nil }
     for name in [fileName, stagedFileName, fileName] {
-      if let snapshot = decode(container.appendingPathComponent(name)) { return snapshot }
+      if let snapshot = decode(container.appendingPathComponent(name)) {
+        // Another Edition's snapshot, left from before a switch, shows as no snapshot yet.
+        return snapshot.editionId == EditionInfo.editionId ? snapshot : nil
+      }
     }
     return nil
   }

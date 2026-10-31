@@ -13,6 +13,7 @@ async function on(feature: 'appIntents' | 'replaceOpenEntry'): Promise<boolean> 
 /** Each link from outside the app, as `createOutsideLinks` lets it open. */
 export const redirectSystemPath = createOutsideLinks({
   linkDomain: edition.linkDomain,
+  editionId: edition.id,
   widgetLinkKey: deviceWidgetLinkKey,
   // The App Intents (ADR 0057).
   appIntents: { on: () => on('appIntents'), landOnWordOfTheDay: wordOfTheDayLanding.ask },

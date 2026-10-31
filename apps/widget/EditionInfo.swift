@@ -9,6 +9,9 @@ enum EditionInfo {
   static let appGroup = value("SLOVOAppGroup")
   /// The app's URL scheme, which the widget's links open.
   static let urlScheme = value("SLOVOURLScheme")
+  /// The id of the Edition the widget was built with: it reads only that
+  /// Edition's snapshot, and its links name it, so the app opens them in it.
+  static let editionId = value("SLOVOEditionId")
   /// The font family of the headline, or nil for the system font.
   static let wordFontFamily = value("SLOVOWordFont")
   /// The font family of labels, or nil for the system font.
@@ -17,12 +20,12 @@ enum EditionInfo {
   /// The link that opens an Entry in the app or, without one (an empty or
   /// broken state), the app's root, which is the Feed. It carries the
   /// snapshot's `key`, without which the app opens it as a plain link: the
-  /// Entry is not Seen.
+  /// Entry is not Seen. Each link names the Edition.
   static func url(opening entry: WidgetEntry?, key: String?) -> URL? {
-    guard let scheme = urlScheme else { return nil }
-    guard let entry else { return URL(string: "\(scheme)://") }
+    guard let scheme = urlScheme, let editionId else { return nil }
+    guard let entry else { return URL(string: "\(scheme)://?edition=\(editionId)") }
     let keyParam = key.map { "&key=\($0)" } ?? ""
-    return URL(string: "\(scheme)://entry/\(entry.id)?from=widget\(keyParam)")
+    return URL(string: "\(scheme)://entry/\(entry.id)?from=widget\(keyParam)&edition=\(editionId)")
   }
 
   /// The Edition's word font at `size`, in the upright face nearest `weight`.

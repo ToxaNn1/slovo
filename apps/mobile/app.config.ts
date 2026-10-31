@@ -141,8 +141,14 @@ function widgetEdition(
   edition: EditionFolder,
   { scheme, appGroup }: AppFolder['config'],
 ): WidgetExtension.WidgetEdition {
-  // The example the widget gallery shows must be there and be a valid Widget Snapshot.
-  edition.read('widgetSnapshotExample');
+  // The example the widget gallery shows must be there and be a valid Widget
+  // Snapshot of this Edition, since the widget shows only the Edition's own.
+  const example = edition.read('widgetSnapshotExample');
+  if (example.editionId !== edition.config.id) {
+    throw new Error(
+      `${edition.path('widgetSnapshotExample')} is the Widget Snapshot of the Edition "${example.editionId}", not of "${edition.config.id}"`,
+    );
+  }
   const tokens = designTokens(edition.readIfPresent('tokens') ?? {});
   // The widget draws in the word and UI families alone, so the Word of the Day font stays out.
   const families = new Set(Object.values(tokens.fontFamilies));
@@ -354,6 +360,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
 
   const widget = widgetEdition(edition, app.config);
   const appIntents: AppIntents.AppIntentsEdition = {
+    editionId: edition.config.id,
     displayName: edition.config.displayName,
     strings: edition.read('strings').appIntents,
   };

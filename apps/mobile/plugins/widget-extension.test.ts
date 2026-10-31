@@ -244,7 +244,7 @@ describe("the widget extension's Edition files", () => {
     ).toBe(true);
   });
 
-  it("writes the Info.plist with the fonts, the App Group, the scheme and the Edition's font families", () => {
+  it("writes the Info.plist with the fonts, the App Group, the scheme, the Edition id and the Edition's font families", () => {
     expect(plist.parse(text(files, 'Info.plist'))).toEqual({
       CFBundleDevelopmentRegion: 'uk',
       CFBundleDisplayName: 'SLOVO',
@@ -253,6 +253,7 @@ describe("the widget extension's Edition files", () => {
       UIAppFonts: ['Literata-Medium.ttf', 'Manrope-Bold.ttf'],
       SLOVOAppGroup: 'group.app.slovo.uk',
       SLOVOURLScheme: 'slovo-uk',
+      SLOVOEditionId: 'uk',
       SLOVOWordFont: 'Literata',
       SLOVOUIFont: 'Manrope',
     });

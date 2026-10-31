@@ -125,7 +125,7 @@ const quoted = (value: string) =>
  * the same colours for each «Тло» other than Авто as colour sets of one
  * colour; the widget's strings in the Edition's language; the fonts; the example
  * Widget Snapshot for the gallery; and the Info.plist, which names the
- * fonts, the App Group, the URL scheme and the font families. None of them
+ * fonts, the App Group, the URL scheme, the Edition id and the font families. None of them
  * is kept in git.
  */
 export function widgetExtensionFiles(edition: WidgetEdition): Map<string, string | Buffer> {
@@ -197,6 +197,7 @@ export function widgetExtensionFiles(edition: WidgetEdition): Map<string, string
       UIAppFonts: fonts,
       SLOVOAppGroup: edition.appGroup,
       SLOVOURLScheme: edition.scheme,
+      SLOVOEditionId: config.id,
       ...(word === undefined ? {} : { SLOVOWordFont: word }),
       ...(ui === undefined ? {} : { SLOVOUIFont: ui }),
     }),

@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 import type { EditionStrings } from '@slovo/contracts';
 
+import { editionRoute } from '../src/edition/edition-link';
 import { APP_INTENT_ROUTES } from '../src/entries/app-intents';
 
 /**
@@ -11,6 +12,8 @@ import { APP_INTENT_ROUTES } from '../src/entries/app-intents';
  * Swift code holds no Edition text: only the intents that open a route.
  */
 export interface AppIntentsEdition {
+  /** The id of the Edition the app is built with, which each intent's route names (ADR 0065). */
+  readonly editionId: string;
   /** The app's name on the home screen, which every phrase says and Siri hears as the app. */
   readonly displayName: string;
   readonly strings: EditionStrings['appIntents'];
@@ -74,9 +77,10 @@ function shortcutPhrase(phrase: string, displayName: string, field: string): str
 /**
  * The Swift source of the app's App Shortcuts: each intent with the
  * Edition's phrases, its title as short title and its symbol, so Siri and
- * the Shortcuts app know them with no setup; and the route each intent opens.
+ * the Shortcuts app know them with no setup; and the route each intent opens,
+ * which names the Edition (`edition=<id>`), so the app opens it in that Edition.
  */
-export function appShortcutsSwift({ displayName, strings }: AppIntentsEdition): string {
+export function appShortcutsSwift({ editionId, displayName, strings }: AppIntentsEdition): string {
   const intents = Object.entries(APP_INTENTS) as [IntentKey, (typeof APP_INTENTS)[IntentKey]][];
   const shortcuts = intents.map(([key, { type, symbol }]) => {
     const phrases = strings[key].phrases.map((phrase, index) =>
@@ -92,7 +96,8 @@ export function appShortcutsSwift({ displayName, strings }: AppIntentsEdition): 
     ].join('\n');
   });
   const routes = intents.map(
-    ([, { type, route }]) => `extension ${type} {\n  static let route = "${swiftText(route)}"\n}\n`,
+    ([, { type, route }]) =>
+      `extension ${type} {\n  static let route = "${swiftText(editionRoute(route, editionId))}"\n}\n`,
   );
   return [
     `// Made at prebuild from the Edition's strings (plugins/app-intents.ts); not kept in git.`,

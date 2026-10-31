@@ -1,5 +1,6 @@
 import { CollectionLinkIdSchema } from '@slovo/contracts';
 
+import { EDITION_PARAM } from '../edition/edition-link';
 import { isFromNotification } from '../notifications/notification-scheduler';
 import { APP_INTENT_PARAM, APP_INTENT_ROUTES, APP_INTENTS, type AppIntent } from './app-intents';
 
@@ -143,16 +144,21 @@ export interface WidgetEntries {
  * Intent's link opens its route without its mark: «Слово дня» the Feed,
  * landing on today's Word of the Day card, and «Відкрити гру» the Game; with
  * `appIntents` off in effect, or unknown, both open the app's start, the Feed
- * as it was (ADR 0057).
+ * as it was (ADR 0057). A link of a native surface that names another
+ * Edition than the active one (`edition=<id>`, ADR 0065), left from before a
+ * switch, opens the app's start, the active Edition's Feed.
  */
 export function createOutsideLinks({
   linkDomain,
+  editionId,
   widgetLinkKey,
   appIntents,
   widgetEntries,
 }: {
   /** The Edition's link domain, the one host whose web addresses the app opens. */
   linkDomain: string;
+  /** The active Edition's id. */
+  editionId: string;
   widgetLinkKey: () => Promise<string | undefined>;
   appIntents: AppIntentLandings;
   widgetEntries: WidgetEntries;
@@ -160,6 +166,8 @@ export function createOutsideLinks({
   return async ({ path, initial }) => {
     const route = routeOf(path, linkDomain);
     if (route === undefined) return null;
+    const named = new URLSearchParams(route.search).get(EDITION_PARAM);
+    if (named !== null && named !== editionId) return '/';
     const intent = appIntentOf(route, linkDomain);
     if (intent === undefined) {
       const opened = outsidePath(path, route, await widgetLinkKey());
