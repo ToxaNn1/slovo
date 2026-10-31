@@ -30,8 +30,13 @@ export const editionIllustrations = illustrations;
 /** The active Edition, validated by the Core at startup. */
 export const edition = loadEdition(config, Object.keys(illustrations));
 
+const app = AppConfigSchema.parse(appConfig);
+
 /** The App Group the app shares with its widget (ADR 0026), from the AppConfig. */
-export const appGroup = AppConfigSchema.parse(appConfig).appGroup;
+export const appGroup = app.appGroup;
+
+/** The app's one domain (ADR 0065), from the AppConfig: its web addresses live under `/<edition>/` paths. */
+export const appDomain = app.domain;
 
 /** The UI text of the Edition, in its language. */
 export const editionStrings = EditionStringsSchema.parse(strings);

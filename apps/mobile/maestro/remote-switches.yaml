@@ -19,7 +19,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
     when:
       true: ${STEP == 'launch'}
     commands:
-      - evalScript: ${output.devClientLink = (SCHEME || 'slovo-uk') + '://expo-development-client/?url=' + encodeURIComponent(METRO_URL || 'http://localhost:8081')}
+      - evalScript: ${output.devClientLink = (SCHEME || 'slovo') + '://expo-development-client/?url=' + encodeURIComponent(METRO_URL || 'http://localhost:8081')}
       - launchApp:
           clearState: false
       - runFlow:

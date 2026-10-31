@@ -72,7 +72,7 @@ describe('the web page of a Collection Link', () => {
       'Відкрити в SLOVO',
       'SLOVO поки що в бета-тестуванні: застосунок можна встановити через TestFlight.',
     ]);
-    expect(page).toContain(`<a href="slovo://uk/c/${id}">Відкрити в SLOVO</a>`);
+    expect(page).toContain(`<a href="slovo://c/${id}?edition=uk">Відкрити в SLOVO</a>`);
   });
 
   it('lists only the Entries the published pack has', async () => {

@@ -145,7 +145,7 @@ describe('Settings › «Ділитися анонімною статистик�
 
     await fireEvent.press(screen.getByRole('button', { name: 'Політика приватності' }));
 
-    expect(openURL).toHaveBeenCalledWith(edition.legalPages.privacy);
+    expect(openURL).toHaveBeenCalledWith('https://slovo.example/uk/privacy');
   });
 
   it('has no switch and no link while the Edition turns Community Counters and Analytics off', async () => {

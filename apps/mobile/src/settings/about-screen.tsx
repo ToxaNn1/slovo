@@ -16,7 +16,7 @@ import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { edition, editionStrings } from '../edition/edition';
+import { editionStrings } from '../edition/edition';
 import { installedBuild } from './installed-build';
 import { openLegalPage } from './legal-page';
 
@@ -124,14 +124,14 @@ export function AboutScreen() {
               testID="about-row-privacy"
               label={strings.about.privacyPolicy}
               onPress={() => {
-                openLegalPage(edition.legalPages.privacy);
+                openLegalPage('privacy');
               }}
             />
             <NavigationRow
               testID="about-row-terms"
               label={strings.about.terms}
               onPress={() => {
-                openLegalPage(edition.legalPages.terms);
+                openLegalPage('terms');
               }}
             />
           </SettingsGroup>

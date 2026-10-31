@@ -9,7 +9,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
 ---
 - tapOn:
     id: tab-home
-- openLink: ${(SCHEME || 'slovo-uk') + '://entry/c_bkkjrf'}
+- openLink: ${(SCHEME || 'slovo') + '://entry/c_bkkjrf'}
 # A simulator asks once whether the link may open the app.
 - runFlow:
     when:
@@ -117,7 +117,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
 # so Maestro cannot see it; the screenshot records it.
 - tapOn:
     id: tab-home
-- openLink: ${(SCHEME || 'slovo-uk') + '://entry/c_bkkjrf'}
+- openLink: ${(SCHEME || 'slovo') + '://entry/c_bkkjrf'}
 - assertVisible:
     id: correction-card
 - scrollUntilVisible:

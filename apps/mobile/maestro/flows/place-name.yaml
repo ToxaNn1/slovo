@@ -7,7 +7,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
 ---
 - tapOn:
     id: tab-home
-- openLink: ${(SCHEME || 'slovo-uk') + '://entry/i_25u9l7'}
+- openLink: ${(SCHEME || 'slovo') + '://entry/i_25u9l7'}
 # A simulator asks once whether the link may open the app.
 - runFlow:
     when:

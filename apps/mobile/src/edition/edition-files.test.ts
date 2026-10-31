@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import {
+  AppConfigSchema,
   COLLECTION_LINK_SIZE,
   EditionConfigSchema,
   EditionDecorSchema,
@@ -12,7 +13,6 @@ import {
   PluralSchema,
   type ColorTokens,
 } from '@slovo/contracts';
-import { loadEdition } from '@slovo/core';
 import {
   EDITIONS_DIR,
   listEditions,
@@ -822,18 +822,7 @@ describe('the Categories of Corrections', () => {
   });
 });
 
-describe('the legal domain and Sign in with Apple', () => {
-  it.each(editions)('the %s Edition declares its legalDomain', (edition) => {
-    const { legalDomain: _removed, ...without } = readJson(edition, 'config') as Record<
-      string,
-      unknown
-    >;
-
-    expect(
-      EditionConfigSchema.safeParse(without).error?.issues.map((issue) => issue.path.join('.')),
-    ).toEqual(['legalDomain']);
-  });
-
+describe('Sign in with Apple', () => {
   it.each(editions)('the %s Edition declares the Sign in with Apple Feature Switch', (edition) => {
     const config = readJson(edition, 'config') as { featureSwitches: Record<string, unknown> };
     const { signInWithApple: _removed, ...featureSwitches } = config.featureSwitches;
@@ -1021,17 +1010,11 @@ describe('the legal pages of About', () => {
     expect(config).not.toHaveProperty('legalPages');
   });
 
-  it("the UA Edition opens its pages at the Edition's domain", () => {
-    expect(loadEdition(readJson('uk', 'config')).legalPages).toEqual({
-      privacy: 'https://legal.slovo.example/uk/privacy',
-      terms: 'https://legal.slovo.example/uk/terms',
-    });
-  });
-
-  it("the Pages site names the UA Edition's legal domain as its custom domain", () => {
+  it("the Pages site names the app's one domain as its custom domain", () => {
     const cname = readFileSync(join(EDITIONS_DIR, '..', '.github', 'pages', 'CNAME'), 'utf8');
+    const app = readFileSync(join(EDITIONS_DIR, '..', 'app', 'app.json'), 'utf8');
 
-    expect(cname.trim()).toBe(EditionConfigSchema.parse(readJson('uk', 'config')).legalDomain);
+    expect(cname.trim()).toBe(AppConfigSchema.parse(JSON.parse(app)).domain);
   });
 
   it.each(['privacyPolicy', 'terms'])('the UA Edition needs settings.about.%s', (key) => {

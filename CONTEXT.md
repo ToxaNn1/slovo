@@ -23,7 +23,7 @@ An Edition's stream of signed OTA updates to the app's JavaScript, named after t
 _Avoid_: Release, release channel, branch
 
 **Deployment**:
-The one running backend that serves every Edition: one container image on Railway with its Postgres, behind the Edition's domain (ADR 0063). Its secrets and addresses live in its environment variables, never in the repository.
+The one running backend that serves every Edition: one container image on Railway with its Postgres, behind the app's domain (ADR 0063, 0065). Its secrets and addresses live in its environment variables, never in the repository.
 _Avoid_: Env, prod, server (the backend is the code; the Deployment is its running copy)
 
 **Core**:
@@ -152,7 +152,7 @@ A list of Entries the user created and named; an Entry may be in many Collection
 _Avoid_: Folder, playlist, list
 
 **Collection Link**:
-An immutable, never-expiring snapshot of a Collection on the server (its name and its Entry ids in order) behind `https://<linkDomain>/c/<id>`, made by «Поділитися посиланням». Later edits to the Collection never reach it; sharing again makes a new link. Neither side needs an Account.
+An immutable, never-expiring snapshot of a Collection on the server (its name and its Entry ids in order) behind `https://<domain>/<edition>/c/<id>` (the app's domain, the Edition's path), made by «Поділитися посиланням». Later edits to the Collection never reach it; sharing again makes a new link. Neither side needs an Account.
 _Avoid_: Share link, invite
 
 **Saved**:

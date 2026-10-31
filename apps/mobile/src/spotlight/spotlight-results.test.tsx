@@ -129,7 +129,7 @@ async function renderApp() {
       ),
       '+native-intent': {
         redirectSystemPath: createOutsideLinks({
-          linkDomain: edition.linkDomain,
+          domain: 'slovo.example',
           editionId: edition.id,
           widgetLinkKey: () => Promise.resolve(undefined),
           appIntents: { on: () => Promise.resolve(true), landOnWordOfTheDay: () => undefined },

@@ -6,7 +6,7 @@
 # as in `smoke.yaml`: `-e METRO_URL=…`, `APP_ID`, `SCHEME`.
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
-- evalScript: ${output.devClientLink = (SCHEME || 'slovo-uk') + '://expo-development-client/?url=' + encodeURIComponent(METRO_URL || 'http://localhost:8081')}
+- evalScript: ${output.devClientLink = (SCHEME || 'slovo') + '://expo-development-client/?url=' + encodeURIComponent(METRO_URL || 'http://localhost:8081')}
 # Keep the app state: clearing it brings back the development client's
 # first-launch menu sheet, which covers Home.
 - launchApp:

@@ -29,8 +29,8 @@ jest.mock('./entry-screen', () => {
   };
 });
 
-/** The Edition's link domain, the only one whose web addresses iOS hands the app. */
-const LINK_DOMAIN = 'slovo.example';
+/** The app's one domain, the only one whose web addresses iOS hands the app. */
+const DOMAIN = 'slovo.example';
 
 /** The key of the snapshot the widget reads now, which its links carry. */
 const WIDGET_LINK_KEY = 'the-widgets-own';
@@ -86,7 +86,7 @@ async function renderApp({
       ),
       '+native-intent': {
         redirectSystemPath: createOutsideLinks({
-          linkDomain: LINK_DOMAIN,
+          domain: DOMAIN,
           editionId: 'uk',
           widgetLinkKey: () => Promise.resolve(WIDGET_LINK_KEY),
           appIntents: {
@@ -138,16 +138,16 @@ const home = editionStrings.tabs.home;
 describe('a link from outside the app', () => {
   it('opens the Entry without the «Назад» label it names', async () => {
     const app = await renderApp();
-    await app.open('slovo-uk://entry/w_bevz?back=Ваш%20рахунок%20заблоковано');
+    await app.open('slovo://entry/w_bevz?back=Ваш%20рахунок%20заблоковано');
 
     expect(app.pathname()).toBe('/entry/w_bevz');
     expect(entryScreen()).toBe(`${home} | inside`);
   });
 
   it.each([
-    ['the widget’s mark without its key', 'slovo-uk://entry/w_bevz?from=widget'],
-    ['the widget’s mark with another key', 'slovo-uk://entry/w_bevz?from=widget&key=guessed'],
-    ['a notification’s mark', 'slovo-uk://entry/w_bevz?from=notification'],
+    ['the widget’s mark without its key', 'slovo://entry/w_bevz?from=widget'],
+    ['the widget’s mark with another key', 'slovo://entry/w_bevz?from=widget&key=guessed'],
+    ['a notification’s mark', 'slovo://entry/w_bevz?from=notification'],
   ])('with %s opens the Entry as a plain link, so it goes into no History', async (_, link) => {
     const app = await renderApp();
     await app.open(link);
@@ -157,9 +157,9 @@ describe('a link from outside the app', () => {
   });
 
   it.each([
-    ['a trailing slash', 'slovo-uk://entry/w_bevz/?back=Вхід&from=widget'],
-    ['a doubled slash', 'slovo-uk://entry//w_bevz?back=Вхід&from=widget'],
-    ['slashes doubled and trailing', 'slovo-uk://entry//w_bevz//?back=Вхід&from=notification'],
+    ['a trailing slash', 'slovo://entry/w_bevz/?back=Вхід&from=widget'],
+    ['a doubled slash', 'slovo://entry//w_bevz?back=Вхід&from=widget'],
+    ['slashes doubled and trailing', 'slovo://entry//w_bevz//?back=Вхід&from=notification'],
   ])('with %s opens the Entry without the label, so it goes into no History', async (_, link) => {
     const app = await renderApp();
     await app.open(link);
@@ -175,7 +175,7 @@ describe('a link from outside the app', () => {
     ['the Game', 'game', editionStrings.game.title],
   ])('to an Entry of %s opens it without the label it names', async (_, route, title) => {
     const app = await renderApp();
-    await app.open(`slovo-uk://${route}/w_bevz/?back=Вхід&from=widget`);
+    await app.open(`slovo://${route}/w_bevz/?back=Вхід&from=widget`);
 
     expect(app.pathname()).toBe(`/${route}/w_bevz`);
     expect(entryScreen()).toBe(`${title} | inside`);
@@ -183,26 +183,28 @@ describe('a link from outside the app', () => {
 
   it('from the widget, with the key of its snapshot, opens the Entry as from the widget', async () => {
     const app = await renderApp();
-    await app.open(`slovo-uk://entry/c_77szl9?from=widget&key=${WIDGET_LINK_KEY}`);
+    await app.open(`slovo://entry/c_77szl9?from=widget&key=${WIDGET_LINK_KEY}`);
 
     expect(entryScreen()).toBe(`${home} | widget`);
   });
 
   it('from the widget, naming the active Edition, opens the Entry as from the widget', async () => {
     const app = await renderApp();
-    await app.open(`slovo-uk://entry/c_77szl9?from=widget&key=${WIDGET_LINK_KEY}&edition=uk`);
+    await app.open(`slovo://entry/c_77szl9?from=widget&key=${WIDGET_LINK_KEY}&edition=uk`);
 
     expect(entryScreen()).toBe(`${home} | widget`);
   });
 });
 
-describe('a link of a native surface naming another Edition (ADR 0065)', () => {
+describe('a link naming another Edition (ADR 0065)', () => {
   it.each([
-    ['the widget', `slovo-uk://entry/c_77szl9?from=widget&key=${WIDGET_LINK_KEY}&edition=en`],
-    ['Spotlight', 'slovo-uk://saved/collections/c1?edition=en'],
-    ['an App Intent', 'slovo-uk://game?intent=openGame&edition=en'],
+    ['the widget', `slovo://entry/c_77szl9?from=widget&key=${WIDGET_LINK_KEY}&edition=en`],
+    ['Spotlight', 'slovo://saved/collections/c1?edition=en'],
+    ['an App Intent', 'slovo://game?intent=openGame&edition=en'],
+    ['a Collection Link', `https://${DOMAIN}/en/c/aB3dE5gH7k`],
+    ["a Collection Link's app link", 'slovo://c/aB3dE5gH7k?edition=en'],
   ])("opens the app's start, the active Edition's Feed, for %s", async (_, link) => {
-    const app = await renderApp();
+    const app = await renderApp({ initialUrl: '/saved/history/w_bevz' });
     await app.open(link);
 
     expect(app.pathname()).toBe('/');
@@ -212,15 +214,16 @@ describe('a link of a native surface naming another Edition (ADR 0065)', () => {
 
 describe('a Collection Link from outside the app', () => {
   it.each([
-    ['its web address', `https://${LINK_DOMAIN}/c/aB3dE5gH7k`],
-    ["the Edition's scheme", 'slovo-uk://c/aB3dE5gH7k'],
+    ['its web address, under its Edition’s path', `https://${DOMAIN}/uk/c/aB3dE5gH7k`],
+    ['the app link of its web page, naming its Edition', 'slovo://c/aB3dE5gH7k?edition=uk'],
+    ["the app's scheme", 'slovo://c/aB3dE5gH7k'],
     [
       'its web address in other letter case, a slash and params',
-      `HTTPS://Slovo.Example/c/aB3dE5gH7k/?x=1#top`,
+      `HTTPS://Slovo.Example/uk/c/aB3dE5gH7k/?x=1#top`,
     ],
     [
       "the dev client's link",
-      `slovo-uk://expo-development-client/?url=${encodeURIComponent(`https://${LINK_DOMAIN}/c/aB3dE5gH7k`)}`,
+      `slovo://expo-development-client/?url=${encodeURIComponent(`https://${DOMAIN}/uk/c/aB3dE5gH7k`)}`,
     ],
   ])('as %s opens the recipient sheet of its id', async (_, link) => {
     const app = await renderApp();
@@ -230,17 +233,18 @@ describe('a Collection Link from outside the app', () => {
   });
 
   it.each([
-    ['an id too short', 'slovo-uk://c/aB3dE5gH7'],
-    ['an id too long', `https://${LINK_DOMAIN}/c/aB3dE5gH7kX`],
-    ['a sign the backend never puts in an id', 'slovo-uk://c/aB3dE5gH7-'],
-    ['no id', `https://${LINK_DOMAIN}/c/`],
-    ['a path after the id', 'slovo-uk://c/aB3dE5gH7k/more'],
+    ['an id too short', 'slovo://c/aB3dE5gH7'],
+    ['an id too long', `https://${DOMAIN}/uk/c/aB3dE5gH7kX`],
+    ['the web address without its Edition’s path', `https://${DOMAIN}/c/aB3dE5gH7k`],
+    ['a sign the backend never puts in an id', 'slovo://c/aB3dE5gH7-'],
+    ['no id', `https://${DOMAIN}/uk/c/`],
+    ['a path after the id', 'slovo://c/aB3dE5gH7k/more'],
     ['the web address of another host', 'https://other.example/c/aB3dE5gH7k'],
-    ['the web address of a host ending in its domain', `https://not${LINK_DOMAIN}/c/aB3dE5gH7k`],
-    ['the web address of a host under its domain', `https://www.${LINK_DOMAIN}/c/aB3dE5gH7k`],
+    ['the web address of a host ending in its domain', `https://not${DOMAIN}/uk/c/aB3dE5gH7k`],
+    ['the web address of a host under its domain', `https://www.${DOMAIN}/uk/c/aB3dE5gH7k`],
     [
       "the dev client's link to another host",
-      `slovo-uk://expo-development-client/?url=${encodeURIComponent('https://other.example/c/aB3dE5gH7k')}`,
+      `slovo://expo-development-client/?url=${encodeURIComponent('https://other.example/c/aB3dE5gH7k')}`,
     ],
   ])('with %s is ignored: the app stays where it is', async (_, link) => {
     const app = await renderApp();
@@ -252,8 +256,8 @@ describe('a Collection Link from outside the app', () => {
 });
 
 describe('an App Intent', () => {
-  const wordOfTheDay = `slovo-uk://${APP_INTENT_ROUTES.wordOfTheDay}`;
-  const openGame = `slovo-uk://${APP_INTENT_ROUTES.openGame}`;
+  const wordOfTheDay = `slovo://${APP_INTENT_ROUTES.wordOfTheDay}`;
+  const openGame = `slovo://${APP_INTENT_ROUTES.openGame}`;
 
   it('«Слово дня» opens the Feed and lands on the Word of the Day card', async () => {
     const app = await renderApp({ initialUrl: '/saved/history/w_bevz' });
@@ -296,7 +300,7 @@ describe('an App Intent', () => {
 
   it('a link to the Game without the intent’s mark opens it, the App Intents off or not', async () => {
     const app = await renderApp({ appIntents: false });
-    await app.open('slovo-uk://game');
+    await app.open('slovo://game');
 
     expect(app.pathname()).toBe('/game');
   });
@@ -307,7 +311,7 @@ describe('a link from outside the app to no Entry', () => {
     const app = await renderApp();
 
     await app.open(
-      `slovo-uk://expo-development-client/?url=${encodeURIComponent('http://192.168.1.20:8082')}`,
+      `slovo://expo-development-client/?url=${encodeURIComponent('http://192.168.1.20:8082')}`,
     );
 
     expect(app.pathname()).toBe('/');
@@ -318,7 +322,7 @@ describe('a link from outside the app to no Entry', () => {
     const app = await renderApp();
 
     await app.open(
-      `slovo-uk://expo-development-client/?url=${encodeURIComponent('slovo-uk://entry/w_bevz?back=Вхід&from=notification')}`,
+      `slovo://expo-development-client/?url=${encodeURIComponent('slovo://entry/w_bevz?back=Вхід&from=notification')}`,
     );
 
     expect(app.pathname()).toBe('/entry/w_bevz');
@@ -328,7 +332,7 @@ describe('a link from outside the app to no Entry', () => {
   it('goes on to the router as it came, to a path the app has no route for', async () => {
     const app = await renderApp();
 
-    await app.open('slovo-uk://nowhere/at-all?from=widget');
+    await app.open('slovo://nowhere/at-all?from=widget');
 
     expect(app.pathname()).toBe('/nowhere/at-all');
     expect(screen.getByText('No such route')).toBeTruthy();

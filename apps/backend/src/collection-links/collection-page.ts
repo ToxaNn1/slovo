@@ -88,8 +88,8 @@ export function collectionPage(
         )}
       </dl> `;
   });
-  // The app's link, `<scheme>://<edition>/c/<id>`, in the Edition it names (ADR 0065).
-  const appLink = `${scheme}://${edition.config.id}/c/${id}`;
+  // The app's link, `<scheme>://c/<id>?edition=<id>`, which opens in the Edition it names (ADR 0065).
+  const appLink = `${scheme}://c/${id}?edition=${edition.config.id}`;
   return page(
     edition,
     strings.page.title.replace('{name}', () => link.name),
