@@ -427,6 +427,8 @@ export async function openComposition({
       return communityCounters.countMark(entryId, mark);
     },
     dayStarted,
+    xp: xpLog,
+    analytics,
   });
   // On a day turned to, the plan is made again before the Feed opens the day
   // and the Game plans its offers; on a change of eligibility, before the Feed
@@ -609,7 +611,14 @@ export async function openComposition({
     moodDraw: createMoodDraw({ edition, entries, random }),
     async openDailyCrossword() {
       if (crossword === undefined) return undefined;
-      return openDailyCrossword({ content: crossword, userState, clock, edition });
+      return openDailyCrossword({
+        content: crossword,
+        userState,
+        clock,
+        edition,
+        xp: xpLog,
+        analytics,
+      });
     },
     ...createHiding({ rows, hiddenEntries, mix }),
     entryCard,

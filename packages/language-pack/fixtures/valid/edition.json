@@ -147,6 +147,9 @@
     "round": 1,
     "finishedGame": 5,
     "finishedGameShare": 0.5,
-    "bestResult": 5
+    "bestResult": 5,
+    "dailyCrossword": 15,
+    "reviewAnswer": 1,
+    "reviewDailyCap": 10
   }
 }

@@ -27,6 +27,10 @@ export interface AnalyticsEvents {
   readonly streakBroken: { readonly streak: number };
   /** The reader started a Break of `days`. */
   readonly breakStarted: { readonly days: number };
+  /** The reader solved the Daily Crossword of the local date. */
+  readonly dailyCrosswordSolved: { readonly date: string };
+  /** The reader answered an Entry due for Review. */
+  readonly reviewAnswered: { readonly mark: 'known' | 'unknown' };
   readonly settingChanged: { readonly setting: string; readonly value: string | number | boolean };
 }
 

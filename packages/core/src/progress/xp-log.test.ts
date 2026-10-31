@@ -171,7 +171,15 @@ describe('the XP log and the Game', () => {
 
   it('appends nothing for an action the Edition sets at 0 XP', async () => {
     const { app, records } = await run({
-      xp: { round: 0, finishedGame: 5, finishedGameShare: 0.5, bestResult: 0 },
+      xp: {
+        round: 0,
+        finishedGame: 5,
+        finishedGameShare: 0.5,
+        bestResult: 0,
+        dailyCrossword: 15,
+        reviewAnswer: 1,
+        reviewDailyCap: 10,
+      },
     });
 
     await playGame(app);

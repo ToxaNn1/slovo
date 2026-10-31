@@ -1,6 +1,8 @@
 import { CROSSWORD_SIZE, type CrosswordDay, type CrosswordWord } from '@slovo/contracts';
 
+import type { Analytics } from '../analytics/analytics';
 import type { Edition } from '../edition/edition';
+import type { GameXp } from './game-xp';
 import { createInTurn } from '../in-turn';
 import { todayKey } from '../local-date';
 import type { Clock } from '../ports';
@@ -113,18 +115,24 @@ function stateOf(day: CrosswordDay, letters: ReadonlyMap<string, string>): Daily
  * the shell opens it again when the next local day starts. A solved day stays
  * solved for the rest of that day, as its right words take no more letters. It is not a Game
  * and never touches Seen or Knowledge Marks; its letters stay on this device
- * with no Sync (ADR 0052).
+ * with no Sync (ADR 0052). The letter that solves it appends its XP in the
+ * same write, which the XP log gives once for the date (ADR 0066).
  */
 export async function openDailyCrossword({
   content,
   userState,
   clock,
   edition,
+  xp = { award: () => ({ changes: new Map(), amount: 0, commit: () => undefined }) },
+  analytics,
 }: {
   content: CrosswordReadPort;
   userState: UserState;
   clock: Clock;
   edition: Pick<Edition, 'isFeatureEnabled'>;
+  /** The XP log, which solving the day earns XP in; without it, as in tests of the grid alone, none. */
+  xp?: GameXp;
+  analytics?: Pick<Analytics, 'track'>;
 }): Promise<DailyCrossword | undefined> {
   if (!edition.isFeatureEnabled('dailyCrossword')) return undefined;
   const date = todayKey(clock);
@@ -146,9 +154,18 @@ export async function openDailyCrossword({
     const next = new Map(letters);
     if (letter === undefined) next.delete(placeKey(place));
     else next.set(placeKey(place), letter);
-    await userState.write(crosswordProgress.change({ date, letters: Object.fromEntries(next) }));
+    const solves = state.progress !== 'solved' && progressOf(day, next) === 'solved';
+    const award = solves ? xp.award({ source: 'daily-crossword', date }) : undefined;
+    await userState.write(
+      new Map([
+        ...crosswordProgress.change({ date, letters: Object.fromEntries(next) }),
+        ...(award?.changes ?? []),
+      ]),
+    );
+    award?.commit();
     letters = next;
     state = stateOf(day, letters);
+    if (solves) await analytics?.track('dailyCrosswordSolved', { date }).catch(() => undefined);
     return state;
   };
 
