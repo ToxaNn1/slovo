@@ -18,7 +18,7 @@ tools/sourcing/review/
 apps/widget/Info.plist
 apps/widget/Generated/
 
-# The native iOS project, made by `expo prebuild` in the Maestro workflow (ADR 0042)
+# The native iOS project, made by `expo prebuild` in the Maestro workflow (ADR 0004)
 apps/mobile/ios/
 
 # Agent settings of one machine (hooks, permissions); the shared ones are committed

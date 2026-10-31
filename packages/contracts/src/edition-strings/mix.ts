@@ -17,7 +17,7 @@ export const MixStringsSchema = z.strictObject({
    * The Corrections switch's name and what it shows; the VoiceOver label of a
    * chip of a Category of Corrections under it, which takes `{category}`; and
    * the line that says why the last Category of Corrections can't be turned
-   * off, which VoiceOver reads as that chip's hint (ADR 0050).
+   * off, which VoiceOver reads as that chip's hint (ADR 0033).
    */
   corrections: z.strictObject({
     title: TextSchema,

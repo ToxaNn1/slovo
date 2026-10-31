@@ -15,7 +15,7 @@ const LanguageTagSchema = z
 /**
  * A thematic group of Words, or of Corrections, with its display name in the
  * Edition's language. The Words and the Corrections each have their own list
- * (ADR 0050).
+ * (ADR 0033).
  */
 export const CategorySchema = z.strictObject({
   id: KebabCaseIdSchema,
@@ -289,7 +289,7 @@ export const MixConfigSchema = z.strictObject({
     z.array(KebabCaseIdSchema).min(1, 'Expected at least one Category'),
   ]),
   /**
-   * The Categories of Corrections in the Mix (ADR 0050): every one of the
+   * The Categories of Corrections in the Mix (ADR 0033): every one of the
    * Language Pack, or the listed ids. They sit under Corrections as a whole.
    */
   correctionCategories: z.union([
@@ -471,7 +471,7 @@ export const EditionConfigSchema = z
     categories: z.array(CategorySchema).min(1),
     /**
      * The Categories of Corrections, a list of their own beside the Words'
-     * (ADR 0050), in their order, as the Language Pack build writes them into
+     * (ADR 0033), in their order, as the Language Pack build writes them into
      * the pack.
      */
     correctionCategories: z.array(CategorySchema).min(1),

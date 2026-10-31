@@ -134,7 +134,7 @@ function editionNotificationSounds(edition: EditionFolder, projectRoot: string):
 /**
  * The family of the Word of the Day font the Edition names, which the app
  * sets the Lemma on the Word of the Day card in (ADR 0006). It is one of
- * the Edition's own fonts, never one of the Core's (ADR 0061).
+ * the Edition's own fonts, never one of the Core's (ADR 0006).
  */
 function wordOfTheDayFontFamily(edition: EditionFolder): string {
   const name = edition.config.wordOfTheDayFont;
@@ -149,7 +149,7 @@ function wordOfTheDayFontFamily(edition: EditionFolder): string {
   return family;
 }
 
-/** Every font file the app embeds: the Core's, then the Edition's own (ADR 0061). */
+/** Every font file the app embeds: the Core's, then the Edition's own (ADR 0006). */
 function appFonts(edition: EditionFolder): string[] {
   return [...coreFonts(), ...edition.fonts()];
 }

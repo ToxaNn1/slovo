@@ -1,7 +1,7 @@
 name: Maestro
 
 # Builds the development client for the iOS Simulator on a macOS runner, without
-# EAS, and runs one Maestro flow against it with Metro and the backend (ADR 0042).
+# EAS, and runs one Maestro flow against it with Metro and the backend (ADR 0004).
 # Started by hand: Actions → Maestro → Run workflow. It uses only local dev
 # values; the backend's AUTH_SECRET is made fresh on each run.
 on:

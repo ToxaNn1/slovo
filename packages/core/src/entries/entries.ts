@@ -261,7 +261,7 @@ export function createEntries(
   /**
    * The live Entries of the kind in the Categories, one query per Category
    * the first time, Category by Category in the Categories' order (the Words'
-   * of the Mix, or the Corrections' under Corrections as a whole, ADR 0050),
+   * of the Mix, or the Corrections' under Corrections as a whole, ADR 0033),
    * or every live Entry of the kind without a Mix.
    */
   async function idsInCategories(

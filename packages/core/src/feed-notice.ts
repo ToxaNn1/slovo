@@ -1,6 +1,6 @@
 // The Feed Notice names sit at the root of the Core, beside `local-date.ts`, so
 // the user-state schema can parse them without a cycle between `feed/` and
-// `user-state/` (ADR 0053).
+// `user-state/` (ADR 0027).
 
 /**
  * The Feed Notices, in the order the Feed shows those of one day: the Weekly

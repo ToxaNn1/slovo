@@ -1,6 +1,6 @@
 # Fonts of the Core
 
-The families the Core's tokens (`src/tokens.ts`) name, which every Edition gets unless its `tokens.json` names others (ADR 0061). The app embeds every font file in this folder at build time, with the Edition's own fonts (see `apps/mobile/app.config.ts`), so text never waits for the network. Changing a font needs a new development build.
+The families the Core's tokens (`src/tokens.ts`) name, which every Edition gets unless its `tokens.json` names others (ADR 0006). The app embeds every font file in this folder at build time, with the Edition's own fonts (see `apps/mobile/app.config.ts`), so text never waits for the network. Changing a font needs a new development build.
 
 | Family   | Weights                   | Used for                                            |
 | -------- | ------------------------- | --------------------------------------------------- |

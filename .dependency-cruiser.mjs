@@ -80,7 +80,7 @@ export default {
     {
       name: 'only-tests-serve-the-api-in-process',
       comment:
-        'ADR 0039: the API contract served in process is a test backend, so only a test ' +
+        'ADR 0064: the API contract served in process is a test backend, so only a test ' +
         'or a test-support module imports it, and no app or backend module ships oRPC server code.',
       severity: 'error',
       from: {

@@ -723,7 +723,7 @@ describe('the 0.8 Sync strings', () => {
 });
 
 describe('the Categories of Corrections', () => {
-  // Every Edition groups its Corrections in a list of its own (ADR 0050).
+  // Every Edition groups its Corrections in a list of its own (ADR 0033).
   it.each(editions)('the %s Edition lists its Categories of Corrections', (edition) => {
     const config = readJson(edition, 'config') as Record<string, unknown>;
     const { correctionCategories: _removed, ...without } = config;

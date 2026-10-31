@@ -1,6 +1,6 @@
 # The Deployment
 
-The backend runs as one container image on Railway, one Deployment for every Edition, behind the Edition's domain (ADR 0008, 0063).
+The backend runs as one container image on Railway, one Deployment for every Edition, behind the Edition's domain (ADR 0030, 0063).
 
 - **The image**: `Dockerfile` at the repository root installs the backend and the workspace packages it needs with pnpm; tsx runs their TypeScript sources. It leaves every Language Pack out, sets `NODE_ENV=production` and starts the server. CI builds it on every pull request (the job "Container image"), runs the migrations from it against a fresh Postgres and waits for `/health` to answer `200`; it pushes nothing.
 - **The Railway config**: `railway.json` builds that Dockerfile, runs `pnpm db:migrate` as the release (pre-deploy) command, so the new server serves only once every migration ran, and watches `GET /health`, which answers `200` when the database answers.

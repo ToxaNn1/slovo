@@ -1,6 +1,6 @@
 # Animation audit (0.8.14)
 
-Every animation of the app on `main` after 0.8.13, checked against the four motion rules of [ADR 0055](../adr/0055-feel-of-0-8-14.md) (Feel of 0.8.14, the ADR spec #886 calls 0054):
+Every animation of the app on `main` after 0.8.13, checked against the four motion rules of [ADR 0055](../adr/0055-motion-seasons-and-holidays-the-falling-stress-and-illustrations.md) (the ADR spec #886 calls 0054):
 
 - **Timing:** 200–300 ms.
 - **Gestures:** what follows the finger moves with a spring, not a timed curve.

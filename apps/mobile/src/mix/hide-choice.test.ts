@@ -17,7 +17,7 @@ import { strings, ukrainian } from '../test-support';
 /** The Language Pack's Categories, in its order. */
 const first = { id: 'nature-weather', displayName: 'Природа і погода' };
 const categories = [first, { id: 'household-crafts', displayName: 'Побут і ремесла' }];
-/** The Language Pack's Categories of Corrections, a list of their own (ADR 0050). */
+/** The Language Pack's Categories of Corrections, a list of their own (ADR 0033). */
 const everyday = { id: 'everyday', displayName: 'Щодня' };
 const correctionCategories = [everyday, { id: 'work', displayName: 'На роботі' }];
 

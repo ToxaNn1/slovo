@@ -36,7 +36,7 @@ export interface MixScreenModel extends MixCategoriesModel {
   readonly kinds: readonly { readonly entryKind: MixKind; readonly on: boolean }[];
   /**
    * The chips of the Categories of Corrections, under the Corrections switch
-   * (ADR 0050), left out while Corrections are out of the Mix or the Edition
+   * (ADR 0033), left out while Corrections are out of the Mix or the Edition
    * doesn't turn them on.
    */
   readonly correctionCategories: MixCategoriesModel | undefined;
