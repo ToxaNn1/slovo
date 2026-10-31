@@ -255,8 +255,8 @@ describe('«Слово під настрій»', () => {
 
     const chip = screen.getByRole('button', { name: joyful?.name ?? '' });
     await act(async () => {
-      fireEvent.press(chip);
-      fireEvent.press(chip);
+      void fireEvent.press(chip);
+      void fireEvent.press(chip);
       await Promise.resolve();
     });
     await settle(2500);
