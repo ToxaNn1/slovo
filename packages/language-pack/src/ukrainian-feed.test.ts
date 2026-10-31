@@ -147,14 +147,14 @@ const correctionCardOf = (card: FeedCard | undefined) =>
 const entryIdsOf = (cards: readonly FeedCard[]) => cards.flatMap((card) => card.entryId ?? []);
 
 /**
- * Every Entry the Feed offers from where it stands, past its Feed Notices,
- * until it repeats, reaches the end of the Cycle or runs out.
+ * Every Entry the Feed offers from where it stands, past its Feed Notices
+ * and Quick Questions, until it repeats, reaches the end of the Cycle or runs out.
  */
 async function walk(feed: Feed): Promise<string[]> {
   const ids = entryIdsOf(feed.cards);
   for (;;) {
     const card = await feed.next();
-    if (card?.kind === 'notice') continue;
+    if (card?.kind === 'notice' || card?.kind === 'quick-question') continue;
     const id = card?.entryId;
     if (id === undefined || ids.includes(id)) return ids;
     ids.push(id);
