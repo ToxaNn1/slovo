@@ -65,6 +65,8 @@ export interface Shown {
    * reader has not hidden the counters («Без лічильників», ADR 0066).
    */
   readonly xpBar: boolean;
+  /** The Settings row of the Break and its screen. */
+  readonly streakBreak: boolean;
   /** The Sync status line of the SLOVO ID screen. */
   readonly sync: boolean;
   /** The Daily Limit choice of Settings. */
@@ -125,6 +127,7 @@ export function shownOf({
         }
       : undefined,
     xpBar: on('xpLog') && !settings.hideStreak,
+    streakBreak: on('xpLog') && on('streakBreak'),
     sync: on('sync'),
     dailyLimit: on('dailyLimit'),
     search: on('search'),

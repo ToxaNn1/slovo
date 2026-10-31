@@ -26,6 +26,7 @@ const everything: Shown = {
   learning: true,
   stats: { streak: true, knowledge: ['word', 'correction', 'idiom', 'synonymRow', 'tip'] },
   xpBar: true,
+  streakBreak: true,
   sync: true,
   dailyLimit: true,
   search: true,
@@ -167,7 +168,11 @@ describe('what the reader is shown', () => {
         },
       },
     ],
-    ['no XP bar with the XP log off', { off: ['xpLog'], shown: { xpBar: false } }],
+    [
+      'no XP bar and no Break with the XP log off',
+      { off: ['xpLog'], shown: { xpBar: false, streakBreak: false } },
+    ],
+    ['no Break with its switch off', { off: ['streakBreak'], shown: { streakBreak: false } }],
     [
       'no statistics, and so no setting to hide the Streak, with statistics off',
       { off: ['statistics'], shown: { stats: undefined } },

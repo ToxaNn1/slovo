@@ -177,6 +177,15 @@ export default function SettingsScreen() {
                 }}
               />
             )}
+            {shown.streakBreak && (
+              <NavigationRow
+                testID="settings-row-streak-break"
+                label={strings.rows.streakBreak}
+                onPress={() => {
+                  openScreen('/settings/streak-break');
+                }}
+              />
+            )}
             <NavigationRow
               testID="settings-row-hidden"
               label={strings.rows.hidden}
