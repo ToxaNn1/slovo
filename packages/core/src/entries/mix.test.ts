@@ -13,7 +13,7 @@ import {
   type UserStatePort,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
-import type { Category } from '@slovo/contracts';
+import { RARITIES, type Category } from '@slovo/contracts';
 import { correction, fakeClock, idiom, testEdition, word } from '../test-support';
 
 /** The Language Pack's Categories, in its order. */
@@ -40,7 +40,9 @@ const correctionCategoryOf = new Map([
 ]);
 const idiomIds = ['i_one', 'i_two'];
 const rarityOf = new Map(
-  categories.flatMap(wordIdsOf).map((id, index) => [id, (index % 5) + 1] as const),
+  categories
+    .flatMap(wordIdsOf)
+    .map((id, index) => [id, RARITIES[index % RARITIES.length] ?? 1] as const),
 );
 const content = createMemoryContentPort({
   categories,

@@ -1,4 +1,4 @@
-import { RaritySchema, type Category } from '@slovo/contracts';
+import { RaritySchema, type Category, type Rarity } from '@slovo/contracts';
 
 import type { DefaultMix, UserSettingDefaults } from '../edition/edition';
 import { MIX_KINDS, type CategoryKind, type MixKind } from './entry-kinds';
@@ -64,7 +64,7 @@ export interface MixState extends CategoriesInMix {
    * The Rarity Floor, 1 to 5: only Words of that rarity or rarer are eligible
    * while the Edition turns its rarityFloor switch on. No other kind of Entry has a rarity.
    */
-  readonly rarityFloor: number;
+  readonly rarityFloor: Rarity;
 }
 
 /**
@@ -136,7 +136,7 @@ type CategoryChoices = Readonly<Record<CategoryKind, ReadonlyMap<string, boolean
 interface MixChoices {
   readonly categories: CategoryChoices;
   readonly kinds: Readonly<Record<MixKind, boolean | undefined>>;
-  readonly rarityFloor: number | undefined;
+  readonly rarityFloor: Rarity | undefined;
 }
 
 /** A record over each kind of Entry in the Mix as a whole, from what `of` gives for it. */
@@ -351,8 +351,9 @@ export async function openMix({
   }
 
   async function setRarityFloor(floor: number): Promise<void> {
-    if (!RaritySchema.safeParse(floor).success) return;
-    await change({}, { rarityFloor: floor });
+    const rarity = RaritySchema.safeParse(floor);
+    if (!rarity.success) return;
+    await change({}, { rarityFloor: rarity.data });
   }
 
   const inTurn = createInTurn();

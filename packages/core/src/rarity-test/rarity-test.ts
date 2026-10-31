@@ -1,3 +1,5 @@
+import { RARITIES, type Rarity } from '@slovo/contracts';
+
 import type { Edition } from '../edition/edition';
 import type { Entries } from '../entries/entries';
 import type { Mix } from '../entries/mix';
@@ -5,16 +7,13 @@ import { renderStress, stressedVowelsOf } from '../entries/stress';
 import { shuffled } from '../game/game-mode';
 import type { Random } from '../ports';
 
-/** The rarities of Words, the commonest first. */
-const RARITIES = [1, 2, 3, 4, 5] as const;
-
 /** How many Words of each rarity the Rarity Test asks about. */
 const WORDS_PER_RARITY = 2;
 
 /** A Word the Rarity Test asks about: only its Lemma with Stress is shown. */
 export interface RarityTestWord {
   readonly wordId: string;
-  readonly rarity: number;
+  readonly rarity: Rarity;
   /** The Lemma with Stress, as the Word card shows it. */
   readonly lemmaWithStress: string;
   /** The stressed vowels of the Lemma, in order, as VoiceOver names them. */
@@ -23,7 +22,7 @@ export interface RarityTestWord {
 
 /** The reader's answer on a drawn Word: «Знаю» (`known`) or «Не знаю». */
 export interface RarityTestAnswer {
-  readonly rarity: number;
+  readonly rarity: Rarity;
   readonly known: boolean;
 }
 
@@ -45,7 +44,7 @@ export interface RarityTest {
    * answers or while the Edition turns the Rarity Test or the Rarity Floor
    * off (or a remote switch does).
    */
-  apply(answers: readonly RarityTestAnswer[]): Promise<number | undefined>;
+  apply(answers: readonly RarityTestAnswer[]): Promise<Rarity | undefined>;
 }
 
 export function createRarityTest({
@@ -82,7 +81,7 @@ export function createRarityTest({
     async apply(answers) {
       if (!isOn() || answers.length === 0) return undefined;
       const unknown = answers.filter((answer) => !answer.known).map((answer) => answer.rarity);
-      const floor = Math.min(Math.max(...RARITIES), ...unknown);
+      const floor = RARITIES.find((rarity) => unknown.includes(rarity)) ?? 5;
       await mix.setRarityFloor(floor);
       return floor;
     },

@@ -5,6 +5,7 @@ import type {
   Example,
   Idiom,
   PartOfSpeech,
+  Rarity,
   SynonymRow,
   Tip,
   Word,
@@ -55,7 +56,7 @@ function word(
     lemma?: string;
     stress?: number[];
     examples?: Example[];
-    rarity?: number;
+    rarity?: Rarity;
     retired?: boolean;
     primaryDefinition?: string;
   } = {},

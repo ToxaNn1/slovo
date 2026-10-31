@@ -1,3 +1,4 @@
+import type { Rarity } from '@slovo/contracts';
 import {
   stressLabel,
   type Account,
@@ -155,7 +156,7 @@ function Step({
   step: OnboardingStep;
   onNext: () => void;
   onSkip: () => void;
-  onApplyRarityTest: (answers: readonly RarityTestAnswer[]) => Promise<number | undefined>;
+  onApplyRarityTest: (answers: readonly RarityTestAnswer[]) => Promise<Rarity | undefined>;
   onAllow: () => void;
   onSignIn: () => void;
 }) {

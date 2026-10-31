@@ -1,3 +1,4 @@
+import type { Rarity } from '@slovo/contracts';
 import {
   EditionProvider,
   RarityTestQuestions,
@@ -30,9 +31,9 @@ function frame({ testID, footer, children }: RarityTestScreen) {
   );
 }
 
-async function renderTest(floor: number | undefined) {
+async function renderTest(floor: Rarity | undefined) {
   const handlers = {
-    onApply: jest.fn((): Promise<number | undefined> => Promise.resolve(floor)),
+    onApply: jest.fn((): Promise<Rarity | undefined> => Promise.resolve(floor)),
     onDone: jest.fn(),
   };
   await render(

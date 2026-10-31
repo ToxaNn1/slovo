@@ -1,3 +1,4 @@
+import type { Rarity } from '@slovo/contracts';
 import { EditionProvider, OnboardingRarityTest, type RarityTestQuestion } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
@@ -29,7 +30,7 @@ const metrics = {
 };
 
 /** Two Words of each of the rarities 1 to 3, the commonest first. */
-const words: RarityTestQuestion[] = [1, 1, 2, 2, 3, 3].map((rarity, index) => ({
+const words: RarityTestQuestion[] = ([1, 1, 2, 2, 3, 3] as const).map((rarity, index) => ({
   rarity,
   lemma: `word${String(index)}`,
   accessibilityLabel: `word ${String(index)}`,
@@ -37,7 +38,7 @@ const words: RarityTestQuestion[] = [1, 1, 2, 2, 3, 3].map((rarity, index) => ({
 
 async function renderStep(props: Partial<Parameters<typeof OnboardingRarityTest>[0]> = {}) {
   const handlers = {
-    onApply: jest.fn((): Promise<number | undefined> => Promise.resolve(2)),
+    onApply: jest.fn((): Promise<Rarity | undefined> => Promise.resolve(2)),
     onNext: jest.fn(),
     onSkip: jest.fn(),
   };
