@@ -21,7 +21,7 @@ import { createEntries } from './entries/entries';
 import { createEntryRows, type EntryRowModel } from './entries/entry-row';
 import { openFavorites, type Favorites } from './saved/favorites';
 import { buildEntryCard, buildFeedCard, openFeed, type Feed } from './feed/feed';
-import { dailyLimitNotices } from './feed/daily-limit';
+import { enoughForTodayNotices } from './feed/enough-for-today';
 import { createCommunityWord } from './feed/community-word';
 import { allFeedNotices, noFeedNotices, type FeedNotices } from './feed/feed-notices';
 import { createFirstWeek } from './feed/first-week';
@@ -113,9 +113,9 @@ export interface Composition extends Hiding {
    */
   readonly progress: Progress;
   /**
-   * The XP log: the XP the Game's learning actions earn, kept per Edition,
-   * and the total and today's XP derived from it, which the XP bar shows
-   * (ADR 0066).
+   * The XP log: the XP the Game's learning actions earn and the Daily Goals
+   * set, kept per Edition, and the total, today's XP and today's Daily Goal
+   * derived from it, which the XP bar shows (ADR 0066).
    */
   readonly xpLog: XpLog;
   /** The Break: a pause of the Streak the reader starts, up to 7 days, once every 30 days (ADR 0066). */
@@ -349,7 +349,7 @@ export async function openComposition({
   scheduling?: NotificationScheduling;
   schedule?: Schedule;
   gameModes?: readonly GameMode[];
-  /** Feed Notices of each day beside those the Core makes, the Weekly Recap, the first-week card, Yesterday and the Daily Limit card; without it, none. */
+  /** Feed Notices of each day beside those the Core makes, the Weekly Recap, the first-week card, Yesterday and «Може, на сьогодні досить?»; without it, none. */
   feedNotices?: FeedNotices;
   /**
    * The backend (ADR 0064), which the Community Word the Feed shows on a
@@ -450,7 +450,7 @@ export async function openComposition({
     dayTurned,
     returned,
   });
-  const dailyLimit = dailyLimitNotices({ edition, userState, history, clock });
+  const enoughForToday = enoughForTodayNotices({ edition, history, clock });
   // The Mix opens before the Feed, whose turns follow its kind weights.
   const [word, correction] = await Promise.all([
     entries.categories(),
@@ -481,7 +481,7 @@ export async function openComposition({
       createFirstWeek({ edition, userState, activeDays }),
       createYesterday({ edition, entries, hiddenEntries, userState }),
       createLevelMilestones({ edition, xpLog, userState }),
-      dailyLimit,
+      enoughForToday,
     ),
     kindWeights: () =>
       edition.isFeatureEnabled('mixKindWeights') ? mix.state.kindWeights : NORMAL_KIND_WEIGHTS,

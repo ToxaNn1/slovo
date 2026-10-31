@@ -165,9 +165,9 @@ describe('Feed Notices', () => {
     expect(cards.some((card) => 'review' in card && card.review === true)).toBe(true);
   });
 
-  it('take a card each in the order Weekly Recap, Community Word, first-week card, Yesterday, then the Daily Limit card', async () => {
+  it('take a card each in the order Weekly Recap, Community Word, first-week card, Yesterday, then «Може, на сьогодні досить?»', async () => {
     const feedNotices = fakeNotices([
-      'dailyLimit',
+      'enoughForToday',
       'yesterday',
       'firstWeek',
       'communityWord',
@@ -184,12 +184,12 @@ describe('Feed Notices', () => {
       'communityWord',
       'firstWeek',
       'yesterday',
-      'dailyLimit',
+      'enoughForToday',
     ]);
     expect(cards[6]?.kind).toBe('word');
   });
 
-  it('give the Word of the Day the first card and the three notices of the day cards 2, 3 and 4, and the Daily Limit card the card after the limit', async () => {
+  it('give the Word of the Day the first card and the three notices of the day cards 2, 3 and 4, and «Може, на сьогодні досить?» the card after the limit', async () => {
     const limit = 3;
     const opened: { history?: Composition['history'] } = {};
     const feedNotices: FeedNotices = {
@@ -204,7 +204,7 @@ describe('Feed Notices', () => {
                 ...(opened.history?.list ?? []).map(({ entryId }) => entryId),
                 ...(after === undefined ? [] : [after]),
               ]).size >= limit
-                ? (['dailyLimit'] as const)
+                ? (['enoughForToday'] as const)
                 : []),
             ] as const
           ).map(contentOf),
@@ -226,9 +226,9 @@ describe('Feed Notices', () => {
     expect(cards[0]?.kind === 'word' && cards[0].wordOfTheDay !== undefined).toBe(true);
     expect(shownBy(cards.slice(1, 4))).toEqual(['weeklyRecap', 'firstWeek', 'yesterday']);
     expect(onScreenAtLimit).toBeDefined();
-    expect(cards.findIndex((card) => card.kind === 'notice' && card.notice === 'dailyLimit')).toBe(
-      (onScreenAtLimit ?? 0) + 1,
-    );
+    expect(
+      cards.findIndex((card) => card.kind === 'notice' && card.notice === 'enoughForToday'),
+    ).toBe((onScreenAtLimit ?? 0) + 1);
   });
 
   it('make nothing Seen, however long they stay on screen', async () => {

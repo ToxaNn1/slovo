@@ -122,11 +122,11 @@ describe('the Daily Crossword XP', () => {
     const { app, events } = await run();
     const daily = await app.openDailyCrossword();
     await daily?.openCell({ row: 0, column: 0 });
-    expect(app.xpLog.state).toEqual({ total: 0, today: 0 });
+    expect(app.xpLog.state).toMatchObject({ total: 0, today: 0 });
 
     await solve(app);
 
-    expect(app.xpLog.state).toEqual({ total: 15, today: 15 });
+    expect(app.xpLog.state).toMatchObject({ total: 15, today: 15 });
     expect(events).toContainEqual(['dailyCrosswordSolved', { date: '2026-10-14' }]);
   });
 
@@ -137,7 +137,7 @@ describe('the Daily Crossword XP', () => {
 
     await solve(again.app);
 
-    expect(again.app.xpLog.state).toEqual({ total: 15, today: 15 });
+    expect(again.app.xpLog.state).toMatchObject({ total: 15, today: 15 });
     expect(xpKeys(records)).toHaveLength(1);
   });
 
@@ -150,7 +150,7 @@ describe('the Daily Crossword XP', () => {
     const merged = new Map([...phone.records, ...tablet.records]);
     const { app } = await run({ records: merged });
 
-    expect(app.xpLog.state).toEqual({ total: 15, today: 15 });
+    expect(app.xpLog.state).toMatchObject({ total: 15, today: 15 });
   });
 
   it('gives 15 XP again for the next day’s Daily Crossword', async () => {
@@ -162,7 +162,7 @@ describe('the Daily Crossword XP', () => {
 
     await solve(app);
 
-    expect(app.xpLog.state).toEqual({ total: 30, today: 15 });
+    expect(app.xpLog.state).toMatchObject({ total: 30, today: 15 });
   });
 
   it('appends nothing with the xpLog switch off', async () => {
@@ -179,7 +179,7 @@ describe('the Review XP', () => {
     await app.knowledge.tap('w_00', 'known');
     await app.knowledge.tap('w_01', 'unknown');
 
-    expect(app.xpLog.state).toEqual({ total: 2, today: 2 });
+    expect(app.xpLog.state).toMatchObject({ total: 2, today: 2 });
     expect(events.filter(([event]) => event === 'reviewAnswered')).toEqual([
       ['reviewAnswered', { mark: 'known' }],
       ['reviewAnswered', { mark: 'unknown' }],
@@ -189,7 +189,7 @@ describe('the Review XP', () => {
   it('gives nothing for a mark on an Entry that is not due for Review', async () => {
     const { app, events } = await run();
     await app.knowledge.tap('w_00', 'known');
-    expect(app.xpLog.state).toEqual({ total: 0, today: 0 });
+    expect(app.xpLog.state).toMatchObject({ total: 0, today: 0 });
     expect(events.some(([event]) => event === 'reviewAnswered')).toBe(false);
   });
 
@@ -206,7 +206,7 @@ describe('the Review XP', () => {
       time: fakeClock('2026-10-15T08:00:00+03:00'),
     });
     await next.app.knowledge.tap('w_12', 'unknown');
-    expect(next.app.xpLog.state).toEqual({ total: 11, today: 1 });
+    expect(next.app.xpLog.state).toMatchObject({ total: 11, today: 1 });
   });
 
   it('keeps the cap when two devices’ Review XP of one day merge', async () => {
@@ -219,7 +219,7 @@ describe('the Review XP', () => {
 
     const { app } = await run({ records: new Map([...phone.records, ...tablet.records]) });
 
-    expect(app.xpLog.state).toEqual({ total: 10, today: 10 });
+    expect(app.xpLog.state).toMatchObject({ total: 10, today: 10 });
   });
 
   it('takes the amount and the cap from the Edition XP table', async () => {

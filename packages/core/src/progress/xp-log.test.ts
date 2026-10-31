@@ -11,6 +11,7 @@ import {
   renderStress,
   trackChanges,
   userStateRecords,
+  type AnalyticsPort,
   type Composition,
   type CurrentGame,
   type FeatureSwitch,
@@ -27,6 +28,7 @@ import {
   optionsOf,
   randomOf,
   seededRandom,
+  settle,
   testEdition,
   testSchedule,
   word,
@@ -58,22 +60,28 @@ async function run({
   off = [],
   time = fakeClock('2026-10-14T08:00:00+03:00'),
   xp,
+  on = [],
+  analytics,
 }: {
   records?: Map<string, string>;
   off?: readonly FeatureSwitch[];
   time?: ReturnType<typeof fakeClock>;
   xp?: XpTable;
+  /** Feature Switches on beside the Game and the XP log. */
+  on?: readonly FeatureSwitch[];
+  analytics?: AnalyticsPort;
 } = {}) {
   const app = await openComposition({
     content,
     edition: testEdition({
       isFeatureEnabled: (feature) =>
-        !off.includes(feature) && ['game', 'gameGuessWord', 'xpLog'].includes(feature),
+        !off.includes(feature) && ['game', 'gameGuessWord', 'xpLog', ...on].includes(feature),
       ...(xp === undefined ? {} : { xp }),
     }),
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock: time.clock,
     random: seededRandom(7),
+    ...(analytics === undefined ? {} : { analytics }),
   });
   const planning = () => app.game.state.modes.some((offer) => 'planning' in offer);
   if (planning()) {
@@ -132,7 +140,7 @@ const xpKeys = (records: Map<string, string>) =>
 describe('the XP log and the Game', () => {
   it('starts at 0 XP and earns 1 XP for each Round answered right, none for a wrong one', async () => {
     const { app, records } = await run();
-    expect(app.xpLog.state).toEqual({ total: 0, today: 0 });
+    expect(app.xpLog.state).toMatchObject({ total: 0, today: 0 });
     const heard: number[] = [];
     app.xpLog.subscribe(() => heard.push(app.xpLog.state.today));
 
@@ -141,7 +149,7 @@ describe('the XP log and the Game', () => {
     await play(app, false);
     await play(app, true);
 
-    expect(app.xpLog.state).toEqual({ total: 2, today: 2 });
+    expect(app.xpLog.state).toMatchObject({ total: 2, today: 2 });
     expect(heard).toEqual([1, 2]);
     expect(xpKeys(records)).toHaveLength(2);
   });
@@ -152,7 +160,7 @@ describe('the XP log and the Game', () => {
     const { right, played } = await playGame(app, [2, 4]);
 
     expect(right / played).toBeGreaterThanOrEqual(0.5);
-    expect(app.xpLog.state).toEqual({ total: right + 5 + 5, today: right + 5 + 5 });
+    expect(app.xpLog.state).toMatchObject({ total: right + 5 + 5, today: right + 5 + 5 });
   });
 
   it('gives no bonus for a finished Game below half right, and none for a result that is not a new best', async () => {
@@ -185,7 +193,7 @@ describe('the XP log and the Game', () => {
 
     await playGame(app);
 
-    expect(app.xpLog.state).toEqual({ total: 5, today: 5 });
+    expect(app.xpLog.state).toMatchObject({ total: 5, today: 5 });
     expect(xpKeys(records)).toHaveLength(1);
   });
 
@@ -194,7 +202,7 @@ describe('the XP log and the Game', () => {
 
     await playGame(app);
 
-    expect(app.xpLog.state).toEqual({ total: 0, today: 0 });
+    expect(app.xpLog.state).toMatchObject({ total: 0, today: 0 });
     expect(xpKeys(records)).toEqual([]);
     expect(records.has('game.best.guess-word')).toBe(true);
   });
@@ -204,12 +212,12 @@ describe('the XP log and the Game', () => {
     const { app } = await run({ time });
     await app.game.start('guess-word');
     await play(app, true);
-    expect(app.xpLog.state).toEqual({ total: 1, today: 1 });
+    expect(app.xpLog.state).toMatchObject({ total: 1, today: 1 });
 
     time.set('2026-10-15T00:10:00+03:00');
     await app.resume();
 
-    expect(app.xpLog.state).toEqual({ total: 1, today: 0 });
+    expect(app.xpLog.state).toMatchObject({ total: 1, today: 0 });
   });
 
   it('merges the logs of two devices by id, so no XP doubles', async () => {
@@ -224,7 +232,7 @@ describe('the XP log and the Game', () => {
     const merged = new Map([...one.records, ...other.records, ...one.records]);
     const { app } = await run({ records: merged });
 
-    expect(app.xpLog.state).toEqual({ total: 3, today: 3 });
+    expect(app.xpLog.state).toMatchObject({ total: 3, today: 3 });
   });
 });
 
@@ -318,8 +326,8 @@ describe('the XP log and Sync', () => {
     await tablet.syncNow();
     await phone.syncNow();
 
-    expect((await phone.reopened()).xpLog.state).toEqual({ total: 3, today: 3 });
-    expect((await tablet.reopened()).xpLog.state).toEqual({ total: 3, today: 3 });
+    expect((await phone.reopened()).xpLog.state).toMatchObject({ total: 3, today: 3 });
+    expect((await tablet.reopened()).xpLog.state).toMatchObject({ total: 3, today: 3 });
     expect(xpKept(server)).toHaveLength(3);
     expect(xpKeys(phone.records).sort()).toEqual(xpKeys(tablet.records).sort());
   });
@@ -363,6 +371,146 @@ describe('the XP log and Sync', () => {
     await tablet.syncNow();
 
     expect(xpKept(server)).toHaveLength(3);
-    expect((await tablet.reopened()).xpLog.state).toEqual({ total: 3, today: 3 });
+    expect((await tablet.reopened()).xpLog.state).toMatchObject({ total: 3, today: 3 });
+  });
+});
+
+/** Records of XP earned before the run: an amount on a local date at an instant, each under its own id. */
+function earned(...xp: readonly [id: string, date: string, at: string, amount: number][]) {
+  return new Map(
+    xp.map(([id, date, at, amount]) => [
+      `xp.${id}`,
+      JSON.stringify({ kind: 'xp', date, at, source: 'game-round', amount }),
+    ]),
+  );
+}
+
+/** A port that keeps the events that reached it. */
+function fakeAnalytics() {
+  const events: [string, unknown][] = [];
+  const port: AnalyticsPort = {
+    track: (event, properties) => void events.push([event, properties]),
+    stop: () => undefined,
+  };
+  return { port, events };
+}
+
+// Spec #1358 stories 15-20, ticket #1369, ADR 0066: the Daily Goal, recorded per day in the XP log.
+describe('the Daily Goal', () => {
+  const dailyGoal: readonly FeatureSwitch[] = ['dailyGoal'];
+
+  it('starts at the Edition default of 20, met once today’s XP reaches it, and fires the celebration once', async () => {
+    const { app } = await run({
+      on: dailyGoal,
+      records: earned(['a', '2026-10-14', '2026-10-14T04:00:00.000Z', 19]),
+    });
+    expect(app.xpLog.state.dailyGoal).toEqual({ goal: 20, met: false });
+    let celebrations = 0;
+    app.xpLog.subscribeGoalMet(() => (celebrations += 1));
+
+    await app.game.start('guess-word');
+    await play(app, true);
+    expect(app.xpLog.state).toMatchObject({ today: 20, dailyGoal: { goal: 20, met: true } });
+    await play(app, true);
+
+    expect(celebrations).toBe(1);
+  });
+
+  it('applies a change from the same local day, and a day already met stays met', async () => {
+    const { app } = await run({
+      on: dailyGoal,
+      records: earned(['a', '2026-10-14', '2026-10-14T04:00:00.000Z', 12]),
+    });
+    let celebrations = 0;
+    app.xpLog.subscribeGoalMet(() => (celebrations += 1));
+
+    await app.xpLog.setDailyGoal(10);
+    expect(app.xpLog.state.dailyGoal).toEqual({ goal: 10, met: true });
+    expect(celebrations).toBe(1);
+
+    await app.xpLog.setDailyGoal(50);
+    expect(app.xpLog.state.dailyGoal).toEqual({ goal: 50, met: true });
+    expect(celebrations).toBe(1);
+  });
+
+  it('keeps today met after an app restart, with no second celebration', async () => {
+    const records = earned(['a', '2026-10-14', '2026-10-14T04:00:00.000Z', 12]);
+    const first = await run({ on: dailyGoal, records });
+    await first.app.xpLog.setDailyGoal(10);
+    await first.app.xpLog.setDailyGoal(30);
+
+    const { app } = await run({ on: dailyGoal, records });
+    let celebrations = 0;
+    app.xpLog.subscribeGoalMet(() => (celebrations += 1));
+    expect(app.xpLog.state.dailyGoal).toEqual({ goal: 30, met: true });
+    await app.game.start('guess-word');
+    await play(app, true);
+    expect(celebrations).toBe(0);
+  });
+
+  it('leaves a past day the goal it had, and carries the last goal into the next days', async () => {
+    const time = fakeClock('2026-10-14T08:00:00+03:00');
+    const records = earned(['a', '2026-10-14', '2026-10-14T04:00:00.000Z', 25]);
+    const { app } = await run({ on: dailyGoal, records, time });
+    await app.xpLog.setDailyGoal(30);
+    // Met at 25 XP under the goal of 20, the day stays met under 30.
+    expect(app.xpLog.dayOf('2026-10-14').dailyGoal).toEqual({ goal: 30, met: true });
+
+    time.set('2026-10-16T08:00:00+03:00');
+    await app.resume();
+    expect(app.xpLog.state.dailyGoal).toEqual({ goal: 30, met: false });
+    await app.xpLog.setDailyGoal(10);
+
+    expect(app.xpLog.dayOf('2026-10-14')).toEqual({ xp: 25, dailyGoal: { goal: 30, met: true } });
+    expect(app.xpLog.dayOf('2026-10-15')).toEqual({ xp: 0, dailyGoal: { goal: 30, met: false } });
+    expect(app.xpLog.state.dailyGoal).toEqual({ goal: 10, met: false });
+    expect(app.xpLog.dayOf('2026-10-13').dailyGoal).toEqual({ goal: 20, met: false });
+  });
+
+  it('records each goal set in the XP log, so it syncs with the log', async () => {
+    const { app, records } = await run({ on: dailyGoal });
+    await app.xpLog.setDailyGoal(50);
+
+    const goals = xpKeys(records).map((key) => JSON.parse(records.get(key) ?? '') as unknown);
+    expect(goals).toEqual([
+      { kind: 'daily-goal', date: '2026-10-14', at: '2026-10-14T05:00:00.000Z', goal: 50 },
+    ]);
+  });
+
+  it('has no goal and records none with its Feature Switch off', async () => {
+    const { app, records } = await run();
+    await app.xpLog.setDailyGoal(50);
+
+    expect(app.xpLog.state.dailyGoal).toBeNull();
+    expect(xpKeys(records)).toEqual([]);
+  });
+
+  it('emits «goal changed» and «goal met» through the analytics port, and none with sharing off', async () => {
+    const shared = fakeAnalytics();
+    const { app } = await run({
+      on: [...dailyGoal, 'analytics'],
+      analytics: shared.port,
+      records: earned(['a', '2026-10-14', '2026-10-14T04:00:00.000Z', 12]),
+    });
+    await app.xpLog.setDailyGoal(10);
+    await settle();
+    expect(shared.events).toEqual([
+      ['dailyGoalMet', { goal: 10 }],
+      ['dailyGoalChanged', { goal: 10 }],
+    ]);
+
+    const silent = fakeAnalytics();
+    const off = await run({
+      on: [...dailyGoal, 'analytics'],
+      analytics: silent.port,
+      records: new Map([
+        ...earned(['a', '2026-10-14', '2026-10-14T04:00:00.000Z', 12]),
+        ['settings.shareCounters', 'false'],
+      ]),
+    });
+    await off.app.xpLog.setDailyGoal(10);
+    await settle();
+    expect(off.app.xpLog.state.dailyGoal).toEqual({ goal: 10, met: true });
+    expect(silent.events).toEqual([]);
   });
 });

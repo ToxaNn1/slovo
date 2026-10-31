@@ -57,7 +57,6 @@ const validConfig = {
     yesterday: true,
     wordOfTheDayArchive: true,
     activeDaysCalendar: true,
-    dailyLimit: true,
     politePause: true,
     firstWeek: true,
     widgetHint: true,
@@ -81,12 +80,14 @@ const validConfig = {
     quickQuestion: true,
     levels: true,
     noCounters: true,
+    dailyGoal: true,
+    enoughForToday: true,
   },
   userSettingDefaults: {
     theme: 'system',
     fontSize: 'M',
     vibration: true,
-    dailyLimit: 'off',
+    dailyGoal: 20,
     notificationTimes: ['09:00'],
     mix: {
       categories: 'all',
@@ -161,7 +162,8 @@ const learningSwitches = [
   'yesterday',
   'wordOfTheDayArchive',
   'activeDaysCalendar',
-  'dailyLimit',
+  'dailyGoal',
+  'enoughForToday',
   'politePause',
   'firstWeek',
   'widgetHint',
@@ -271,7 +273,7 @@ describe('loadEdition', () => {
       theme: 'system',
       fontSize: 'M',
       vibration: true,
-      dailyLimit: 'off',
+      dailyGoal: 20,
       notificationTimes: ['09:00'],
       mix: {
         categoryIds: 'all',
@@ -409,13 +411,13 @@ describe('loadEdition', () => {
     expect(edition.userSettingDefaults.vibration).toBe(false);
   });
 
-  it('reports a Daily Limit default of 20', () => {
+  it('reports a Daily Goal default of 30', () => {
     const edition = loadEdition({
       ...validConfig,
-      userSettingDefaults: { ...validConfig.userSettingDefaults, dailyLimit: 20 },
+      userSettingDefaults: { ...validConfig.userSettingDefaults, dailyGoal: 30 },
     });
 
-    expect(edition.userSettingDefaults.dailyLimit).toBe(20);
+    expect(edition.userSettingDefaults.dailyGoal).toBe(30);
   });
 
   it('refuses hand-written legal page addresses in the config', () => {
@@ -700,14 +702,14 @@ describe('loadEdition', () => {
       'userSettingDefaults.vibration',
     ],
     [
-      'a missing Daily Limit default',
-      { userSettingDefaults: { ...userSettingDefaults, dailyLimit: undefined } },
-      'userSettingDefaults.dailyLimit',
+      'a missing Daily Goal default',
+      { userSettingDefaults: { ...userSettingDefaults, dailyGoal: undefined } },
+      'userSettingDefaults.dailyGoal',
     ],
     [
-      'a Daily Limit default the Core does not offer',
-      { userSettingDefaults: { ...userSettingDefaults, dailyLimit: 15 } },
-      'userSettingDefaults.dailyLimit',
+      'a Daily Goal default the Core does not offer',
+      { userSettingDefaults: { ...userSettingDefaults, dailyGoal: 15 } },
+      'userSettingDefaults.dailyGoal',
     ],
     [
       'a notification time that is not HH:MM',

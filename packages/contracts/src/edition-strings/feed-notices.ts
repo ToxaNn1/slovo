@@ -33,8 +33,8 @@ export const FeedNoticesStringsSchema = z.strictObject({
   }),
   /** Asks about yesterday's Word of the Day. */
   yesterday: z.strictObject({ title: TextSchema }),
-  /** The card at the Daily Limit. */
-  dailyLimit: z.strictObject({
+  /** «Може, на сьогодні досить?», after 50 distinct Seen Entries on a local day. */
+  enoughForToday: z.strictObject({
     message: TextSchema,
     /** Hides the card until tomorrow. */
     keepGoing: TextSchema,

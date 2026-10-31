@@ -84,7 +84,7 @@ describe('the remote Feature Switches', () => {
 
     expect(switches.edition.isFeatureEnabled('search')).toBe(false);
     expect(switches.edition.isFeatureEnabled('moods')).toBe(true);
-    expect(switches.edition.isFeatureEnabled('dailyLimit')).toBe(true);
+    expect(switches.edition.isFeatureEnabled('enoughForToday')).toBe(true);
   });
 
   it('turn the Community Counters off remotely and keep the other features of 0.8.14', async () => {

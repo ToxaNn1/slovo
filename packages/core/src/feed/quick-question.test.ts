@@ -145,7 +145,7 @@ describe('a Quick Question answered', () => {
     const right = await app.feed.answerQuickQuestion(position, card.round.correct);
 
     expect(right).toBe(true);
-    expect(app.xpLog.state).toEqual({ total: 2, today: 2 });
+    expect(app.xpLog.state).toMatchObject({ total: 2, today: 2 });
     expect(app.knowledge.state.confirmed.total).toBe(1);
     expect(app.feed.cards[position]).toMatchObject({ answered: card.round.correct });
     expect(events).toContainEqual(['quickQuestionAnswered', { right: true }]);
@@ -160,7 +160,7 @@ describe('a Quick Question answered', () => {
 
     expect(right).toBe(false);
     expect(app.knowledge.state.shown.get(card.askedId)).toBe('unknown');
-    expect(app.xpLog.state).toEqual({ total: 0, today: 0 });
+    expect(app.xpLog.state).toMatchObject({ total: 0, today: 0 });
     expect(app.knowledge.state.confirmed.total).toBe(0);
     expect(events).toContainEqual(['quickQuestionAnswered', { right: false }]);
   });
@@ -171,7 +171,7 @@ describe('a Quick Question answered', () => {
     await app.feed.answerQuickQuestion(position, card.round.correct);
 
     expect(await app.feed.answerQuickQuestion(position, card.round.correct)).toBeUndefined();
-    expect(app.xpLog.state).toEqual({ total: 2, today: 2 });
+    expect(app.xpLog.state).toMatchObject({ total: 2, today: 2 });
   });
 
   it('makes nothing Seen when the reader leaves it', async () => {

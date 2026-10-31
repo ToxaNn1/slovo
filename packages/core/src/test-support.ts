@@ -45,7 +45,7 @@ const testEditionConfig = {
     theme: 'system',
     fontSize: 'M',
     vibration: true,
-    dailyLimit: 'off',
+    dailyGoal: 20,
     notificationTimes: [],
     mix: {
       categories: ['test'],

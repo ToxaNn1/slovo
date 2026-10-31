@@ -35,12 +35,8 @@ export const SettingsStringsSchema = z.strictObject({
   seasonalDecor: z.strictObject({ title: TextSchema, explanation: TextSchema }),
   /** The switch that shares the Community Counters, and the explanation under it. */
   anonymousStats: z.strictObject({ title: TextSchema, explanation: TextSchema }),
-  /** The Daily Limit choice; its numbers are drawn as they are. */
-  dailyLimit: z.strictObject({
-    title: TextSchema,
-    /** The choice that turns the Daily Limit off. */
-    off: TextSchema,
-  }),
+  /** The Daily Goal choice; its numbers of XP are drawn as they are. */
+  dailyGoal: z.strictObject({ title: TextSchema }),
   /** The title over the widget's rows. */
   widgets: TextSchema,
   /** The row under «Віджети» that opens the widget guide. */

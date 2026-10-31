@@ -1,5 +1,5 @@
 import {
-  DailyLimitSchema,
+  DailyGoalSchema,
   FontSizeSchema,
   MistakeReportSchema,
   MixKindWeightSchema,
@@ -58,9 +58,9 @@ export const XpSourceSchema = z.literal([
 /**
  * One record of the XP log (ADR 0066): its local date and instant, and what
  * it records: XP a learning action earned on its date, a Streak freeze
- * consumed for its date, a missed day it covers, or a Break started on its
- * date, with its length in days. The kinds the ADR names besides these come
- * with their own tickets.
+ * consumed for its date, a missed day it covers, a Break started on its
+ * date, with its length in days, or the Daily Goal the reader set from that
+ * day on. The kinds the ADR names besides these come with their own tickets.
  */
 const XpRecordSchema = z.discriminatedUnion('kind', [
   z.object({
@@ -76,6 +76,12 @@ const XpRecordSchema = z.discriminatedUnion('kind', [
     date: z.string(),
     at: InstantSchema,
     days: z.number().int().positive(),
+  }),
+  z.object({
+    kind: z.literal('daily-goal'),
+    date: z.string(),
+    at: InstantSchema,
+    goal: DailyGoalSchema,
   }),
 ]);
 
@@ -130,10 +136,14 @@ export const userStateRecords = {
    */
   shareCounters: declareRecord('settings.shareCounters', z.boolean(), { sync: 'device-only' }),
   /**
-   * The user's Daily Limit (ADR 0054). It syncs last write wins like the Theme
-   * (ADR 0041); a new key needs no migration, since without it the Edition's default holds.
+   * The Daily Limit of 0.9 (ADR 0054), retired in 1.0 for the Daily Goal
+   * (ADR 0066): no longer read, and kept declared so it still syncs last
+   * write wins between devices on an older app.
    */
-  dailyLimit: declareRecord('settings.dailyLimit', DailyLimitSchema),
+  dailyLimit: declareRecord(
+    'settings.dailyLimit',
+    z.union([z.literal('off'), z.literal(10), z.literal(20), z.literal(30)]),
+  ),
   /** That the Feed's swipe hint was shown on this device. */
   swipeHintShown: declareRecord('feed.swipeHintShown', z.literal(true), { sync: 'device-only' }),
   /**
@@ -299,7 +309,7 @@ export const userStateRecords = {
   activeDays: declareRecords('activeDays.', z.literal(true), { sync: 'union' }),
   /**
    * The XP log, one record per entry, by a unique id: XP for a learning
-   * action with its source, on a local date `YYYY-MM-DD` at an instant. It is
+   * action with its source, or a Daily Goal set, on a local date `YYYY-MM-DD` at an instant. It is
    * append-only and syncs as a union by id, so a total derived from it is the
    * same on every device and never doubles (ADR 0066).
    */

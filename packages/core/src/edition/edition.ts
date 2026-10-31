@@ -1,6 +1,6 @@
 import {
   EditionConfigSchema,
-  type DailyLimit,
+  type DailyGoal,
   type FeatureSwitch,
   type FontSize,
   type LanguageTraits,
@@ -38,7 +38,8 @@ export interface UserSettingDefaults {
   readonly fontSize: FontSize;
   /** Whether haptics are on. */
   readonly vibration: boolean;
-  readonly dailyLimit: DailyLimit;
+  /** The Daily Goal of a reader who has not chosen one (ADR 0066). */
+  readonly dailyGoal: DailyGoal;
   /** Local times of day, `HH:MM` on a 24-hour clock. */
   readonly notificationTimes: readonly string[];
   readonly mix: DefaultMix;

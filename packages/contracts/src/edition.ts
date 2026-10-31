@@ -206,8 +206,6 @@ export const FeatureSwitchesSchema = z.strictObject({
   wordOfTheDayArchive: z.boolean(),
   /** The Active Days calendar on the statistics screen (ADR 0054). */
   activeDaysCalendar: z.boolean(),
-  /** The Daily Limit: its setting and its Feed Notice (ADR 0054). */
-  dailyLimit: z.boolean(),
   /** The polite pause: the notification plan stops 14 days after the last open, with the Edition's farewell (ADR 0054). */
   politePause: z.boolean(),
   /** The first week: one intro Feed Notice on each of a new reader's first 7 Active Days (ADR 0054). */
@@ -254,6 +252,10 @@ export const FeatureSwitchesSchema = z.strictObject({
   levels: z.boolean(),
   /** «Без лічильників»: the setting hides XP, Level, Streak, celebrations, level milestones and in-Game XP feedback while counting goes on; off, «Приховати Серію» of 0.9, which hides only the Streak (ADR 0066). */
   noCounters: z.boolean(),
+  /** The Daily Goal: its Settings row, its progress on the XP bar and its celebration trigger (ADR 0066). */
+  dailyGoal: z.boolean(),
+  /** The Feed Notice «Може, на сьогодні досить?» once a local day after 50 distinct Seen Entries (ADR 0066). */
+  enoughForToday: z.boolean(),
 });
 
 /** A whole number of XP, which an Edition may set to 0 for an action that earns none. */
@@ -336,17 +338,17 @@ export const FontSizeSchema = z.enum(['S', 'M', 'L', 'XL']);
 export type FontSize = z.infer<typeof FontSizeSchema>;
 
 /**
- * The Daily Limit (ADR 0054): off, or the distinct Entries Seen on a local day
- * after which the Feed says «enough for today».
+ * The Daily Goal (ADR 0066): the XP the reader aims for on a local day. It
+ * replaces the Daily Limit of ADR 0054.
  */
-export const DailyLimitSchema = z.union([
-  z.literal('off'),
+export const DailyGoalSchema = z.union([
   z.literal(10),
   z.literal(20),
   z.literal(30),
+  z.literal(50),
 ]);
 
-export type DailyLimit = z.infer<typeof DailyLimitSchema>;
+export type DailyGoal = z.infer<typeof DailyGoalSchema>;
 
 /** A local time of day, `HH:MM` on a 24-hour clock. */
 export const TimeOfDaySchema = z
@@ -410,8 +412,8 @@ export const UserSettingDefaultsConfigSchema = z.strictObject({
   fontSize: FontSizeSchema,
   /** Whether haptics are on for a new user. */
   vibration: z.boolean(),
-  /** The Daily Limit a new user starts with. */
-  dailyLimit: DailyLimitSchema,
+  /** The Daily Goal of a reader who has not chosen one. */
+  dailyGoal: DailyGoalSchema,
   /** The default notification times, kept in time order. */
   notificationTimes: NotificationTimesSchema.transform((times) => [...times].sort()),
   mix: MixConfigSchema,

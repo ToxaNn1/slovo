@@ -72,17 +72,17 @@ export function FeedNoticeCard({
 }
 
 /**
- * The Daily Limit card: «На сьогодні досить. Повертайтеся завтра» with
- * «Гортати далі», which turns to the next card as a swipe would, and so
- * closes the card for the day (ADR 0054).
+ * «Може, на сьогодні досить?» after 50 distinct Seen Entries, with «Гортати
+ * далі», which turns to the next card as a swipe would, and so closes the
+ * card for the day; it never locks the Feed (ADR 0066).
  */
-export function DailyLimitCard() {
+export function EnoughForTodayCard() {
   const { strings } = useEdition();
-  const { message, keepGoing } = strings.feedNotices.dailyLimit;
+  const { message, keepGoing } = strings.feedNotices.enoughForToday;
   const turnToNext = useTurnToNextPage();
   return (
     <FeedNoticeCard
-      notice="dailyLimit"
+      notice="enoughForToday"
       message={message}
       action={{ label: keepGoing, onPress: () => turnToNext?.() }}
     />

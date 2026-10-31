@@ -46,7 +46,7 @@ async function device() {
   });
   const settings = createSettings({
     userState,
-    defaults: { theme: 'system', fontSize: 'M', vibration: true, dailyLimit: 'off' },
+    defaults: { theme: 'system', fontSize: 'M', vibration: true },
   });
   const sending = openCounterSending({
     edition,
