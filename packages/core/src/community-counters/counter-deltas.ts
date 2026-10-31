@@ -135,15 +135,18 @@ export function openCommunityCounters({
 
 /**
  * The changes that forget what waits to be sent, for turning sharing off
- * (ADR 0060): each unsent change goes, and what this device counted goes
+ * (ADR 0060), or only what waits for the Entries `ofEntries`, for a batch the
+ * backend refused: each unsent change goes, and what this device counted goes
  * back to what it had sent, so a later change counts from there.
  */
 export async function forgetUnsentCounters(
   userState: Pick<UserState, 'read' | 'list'>,
+  ofEntries?: readonly string[],
 ): Promise<UserStateChanges> {
   const { countersCounted, countersUnsent } = userStateRecords;
   const changes = new Map<string, string | undefined>();
   for (const [entryId, unsent] of await userState.list(countersUnsent)) {
+    if (ofEntries !== undefined && !ofEntries.includes(entryId)) continue;
     const counted = (await userState.read(countersCounted.record(entryId))) ?? nothingCounted;
     const was = (is: boolean, change: CounterChange) => (is ? 1 : 0) - change === 1;
     const sent: Counted = {
